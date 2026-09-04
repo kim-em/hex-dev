@@ -653,6 +653,45 @@ theorem NodeResult.firstFinish {ctx : Ctx}
   | exhausted empty returned unchanged bestUnchanged =>
       exact (hfuel empty).elim
 
+/-- A non-discrete first-path node is its explicit prefix state, one child
+loop, and the single exit-counter update. -/
+theorem firstPath_internal_state (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells ≠ ctx.n) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let mt := maketargetcell ctx rs.lab rs.ptn level tcLevel (-1)
+    let pre0 : SearchSt := { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      firstcode := st.firstcode.set! level rs.longcode
+      firsttc := st.firsttc.set! level (Int.ofNat mt.1)
+      numnodes := st.numnodes + 1
+      tctotal := st.tctotal + mt.2.2 }
+    let pre := if pre0.noncheaplevel ≥ level ∧
+        ¬ cheapautom pre0.ptn level ctx.n then
+      { pre0 with noncheaplevel := level + 1 }
+    else pre0
+    let L := firstChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
+      rs.numcells mt.1 ((nextElem mt.2.1 none).getD 0)
+      (nextElem mt.2.1 none) mt.2.1 0 pre
+    firstPathNode ctx inf tcLevel (fuel + 1) level numcells st =
+      match L.1 with
+      | some r => (r, L.2.2)
+      | none => (Int.ofNat level - 1,
+          firstFinish level mt.2.2 L.2.1 L.2.2) := by
+  rw [firstPathNode]
+  simp only [hnum, ne_eq, not_false_eq_true, ite_true,
+    beq_eq_false_iff_ne.mpr hnum, Bool.false_eq_true, ite_false,
+    Int.ofNat_eq_natCast, Int.toNat_natCast]
+  split <;>
+    generalize hL : firstChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+      level _ _ _ _ _ _ _ = L <;>
+    rcases L with ⟨r, index, out⟩ <;>
+    cases r <;> simp only [Id.run_pure, firstFinish] <;>
+    repeat' split <;> rfl
+
 /-- The complementary off-path leaf case completes after its empty child
 sweep, retaining the exact leaf maximum installed by `processnode`. -/
 theorem otherNode_leaf_complete {ctx : Ctx} {nn inf tcLevel specFuel fuel
