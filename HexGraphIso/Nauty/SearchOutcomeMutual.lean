@@ -1363,7 +1363,14 @@ theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
     NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best best trail trail
-      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 ∧
+    ∃ target,
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 =
+        Int.ofNat target ∧
+      target < level ∧
+      ∃ payload : Unwind ctx tcLevel target
+          (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 best,
+        payload.Located trail := by
   subst n
   let leaf := otherLeafSt ctx level numcells st
   let full := codes ++
@@ -1410,11 +1417,25 @@ theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
     exact Int.ofNat_lt.mpr hbelow
   have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
     hnum hearly
+  obtain ⟨payload, hloc⟩ := hprep.guides.firstUnwind
+    (numcells := ctx.n) hprep.trailOk
+    hprep.firstPositive hbelow hgsz hprep.leafRefs.firstSize
+    (isPerm_of_cellsReach hprep.leafRefs.firstSize hn0
+      hprep.leafRefs.firstReach)
+    hprep.searchOk.labSize
+    (isPerm_of_cellsReach hprep.searchOk.labSize hn0
+      hprep.searchOk.reach)
+    hsymm hloop hgb heq hsent (by simp) hpass
   constructor
-  · exact hreceipt
-  · rw [hout]
-    exact hevent
-  · exact TrailExt.refl level trail
+  · constructor
+    · exact hreceipt
+    · rw [hout]
+      exact hevent
+    · exact TrailExt.refl level trail
+  · refine ⟨leaf.gcaFirst, ?_, hbelow, ?_⟩
+    · rw [hout, hreturn]
+    · rw [hout]
+      exact ⟨payload, hloc⟩
 
 /-- A discrete code-two row tie closes the complete node outcome for both
 the canonical-guide and first-ancestor orbit return arms. -/
