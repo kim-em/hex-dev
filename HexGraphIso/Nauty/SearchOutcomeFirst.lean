@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcomeInduction
+public import HexGraphIso.Nauty.SearchOutcomeLedger
 public import HexGraphIso.Nauty.RootEquitable
 
 public section
