@@ -970,6 +970,62 @@ theorem isCell_of_low {ptn ptn' : Array Nat} {lev a len : Nat}
   · rw [h _ (Or.inl hend)]
     exact hend
 
+private theorem cellEndGo_eq_of_low {ptn ptn' : Array Nat} {lev : Nat}
+    (h : ∀ q : Nat, ptn[q]! ≤ lev ∨ ptn'[q]! ≤ lev →
+      ptn'[q]! = ptn[q]!) :
+    ∀ fuel i, cellEnd.go ptn' lev fuel i = cellEnd.go ptn lev fuel i
+  | 0, _ => rfl
+  | fuel + 1, i => by
+      rw [cellEnd.go, cellEnd.go]
+      rcases Decidable.em (ptn[i]! > lev) with hopen | hclosed
+      · have hopen' : ptn'[i]! > lev := by
+          apply Nat.lt_of_not_ge
+          intro hnot
+          have heq := h i (Or.inr hnot)
+          rw [heq] at hnot
+          omega
+        rw [ite_eq_left hopen', ite_eq_left hopen]
+        exact cellEndGo_eq_of_low h fuel (i + 1)
+      · have heq := h i (Or.inl (Nat.le_of_not_gt hclosed))
+        have hclosed' : ¬ ptn'[i]! > lev := by
+          rw [heq]
+          exact hclosed
+        rw [ite_eq_right hclosed', ite_eq_right hclosed]
+
+/-- The exact-preservation clause identifies every cell-end walk when
+the partition arrays have the same size. -/
+theorem cellEnd_eq_of_low {ptn ptn' : Array Nat} {lev : Nat}
+    (hsize : ptn'.size = ptn.size)
+    (h : ∀ q : Nat, ptn[q]! ≤ lev ∨ ptn'[q]! ≤ lev →
+      ptn'[q]! = ptn[q]!) (i : Nat) :
+    cellEnd ptn' lev i = cellEnd ptn lev i := by
+  rw [cellEnd, cellEnd, hsize]
+  exact cellEndGo_eq_of_low h _ _
+
+/-- The exact-preservation clause identifies the ordered coarse-cell
+list when the partition arrays have the same size. -/
+theorem cells_eq_of_low {ptn ptn' : Array Nat} {lev nn : Nat}
+    (hsize : ptn'.size = ptn.size)
+    (h : ∀ q : Nat, ptn[q]! ≤ lev ∨ ptn'[q]! ≤ lev →
+      ptn'[q]! = ptn[q]!) :
+    cells ptn' lev nn = cells ptn lev nn := by
+  rw [cells, cells]
+  have hgo : ∀ fuel c1,
+      cells.go ptn' lev nn fuel c1 = cells.go ptn lev nn fuel c1 := by
+    intro fuel
+    induction fuel with
+    | zero => intro c1; rfl
+    | succ fuel ih =>
+        intro c1
+        rw [cells.go, cells.go]
+        split
+        · rw [cellEnd_eq_of_low hsize h]
+          exact congrArg (fun rest =>
+            (c1, cellEnd ptn lev c1) :: rest)
+            (ih (cellEnd ptn lev c1 + 1))
+        · rfl
+  exact hgo nn 0
+
 /-- Under the level dichotomy, the boundary count is level-blind one
 step up. -/
 theorem bcount_succ_of_vals {ptn : Array Nat} {lev nn : Nat}

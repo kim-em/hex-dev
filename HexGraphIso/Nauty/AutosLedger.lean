@@ -1173,14 +1173,33 @@ private theorem fmptnGo_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
         exact fmptnGo_cellsPerm hperm rest _ _
           (fun p hp => hcells p (by simp [hp]))
 
+/-- `fmptn` is unchanged when the two partitions list the same cells and
+the two labellings have the same contents in each such cell. -/
+theorem fmptn_congr {lab lab' ptn ptn' : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hcells : cells ptn level nn = cells ptn' level nn)
+    (hperm : cellsPerm ptn level lab lab') :
+    fmptn lab ptn level nn = fmptn lab' ptn' level nn := by
+  rw [fmptn_eq_go, fmptn_eq_go]
+  rw [← hcells]
+  exact fmptnGo_cellsPerm hperm _ 0 0 (cells_isCell hnn hend)
+
 /-- `fmptn` is unchanged when vertices are permuted within every cell
 at the level it reads. -/
 theorem fmptn_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
     (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
     (hperm : cellsPerm ptn level lab lab') :
-    fmptn lab ptn level nn = fmptn lab' ptn level nn := by
-  rw [fmptn_eq_go, fmptn_eq_go]
-  exact fmptnGo_cellsPerm hperm _ 0 0 (cells_isCell hnn hend)
+    fmptn lab ptn level nn = fmptn lab' ptn level nn :=
+  fmptn_congr hnn hend rfl hperm
+
+/-- A quartet receipt preserves the implicit cheap-automorphism pair at
+its frozen boundary. -/
+theorem SearchOut.fmptn {G : Colored n k} {level nn : Nat}
+    {st out : SearchSt} (h : SearchOut G level level st out)
+    (hnn : nn ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    fmptn out.lab out.ptn level nn = fmptn st.lab st.ptn level nn :=
+  (fmptn_congr hnn hend (cells_eq_of_low h.ptnSize h.low).symm h.perm).symm
 
 /-- The minimum scan attains a window value at or below its seed. -/
 private theorem minScan_spec {lab : Array Nat} :
