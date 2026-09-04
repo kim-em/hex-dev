@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcomeLocatedProof
+public import HexGraphIso.Nauty.SearchOutcomeTrail
 public import HexGraphIso.Nauty.QuartetNode
 import all HexGraphIso.Nauty.Search
 import all HexGraphIso.Nauty.SmallCellTie
@@ -379,6 +379,7 @@ structure RunInv (G : Colored n k) (ctx : Ctx)
     (initPtn n (n + 2) (initialPartition G).2) level st
   leafRefs : LeafRefsOk G st
   guides : GuideStore ctx tcLevel level st best trail
+  trailOk : TrailOk ctx level st trail
   nonpositive : st.compCanon ≤ 0
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
@@ -438,6 +439,7 @@ structure RunPrep (G : Colored n k) (ctx : Ctx)
     (initPtn n (n + 2) (initialPartition G).2) level st
   leafRefs : LeafRefsOk G st
   guides : GuideStore ctx tcLevel level st best trail
+  trailOk : TrailOk ctx level st trail
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
@@ -494,6 +496,14 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
   have hok : SearchOk G level rs.numcells
       (otherLeafSt ctx level numcells st) :=
     refine_searchOk hn hn0 h.searchOk hlevel hlab hptn (Or.inl hcanon)
+  have htrail : TrailOk ctx level (otherLeafSt ctx level numcells st)
+      trail := by
+    apply h.trailOk.refine
+    · rw [h.searchOk.labSize, ← hn]
+    · rw [h.searchOk.ptnSize, ← hn]
+    · exact searchOk_end hn0 h.searchOk hlevel
+    · exact hlab
+    · exact hptn
   subst level
   refine ⟨hok,
     otherNodePrep_codeInv h.codeInv
@@ -501,7 +511,7 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
         numcells) ?_,
     otherNodePrep_firstCodeInv h.firstInv
       (refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active
-        numcells), ?_, ?_, ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
+        numcells), ?_, ?_, ?_, ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
   · have hb := bcount_le st.ptn (cs.length + 1) n
     have hc := h.searchOk.bc
     omega
@@ -515,6 +525,7 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
       by rw [hcanon]; exact h.leafRefs.canonSize,
       by rw [hcanon]; exact h.leafRefs.canonReach⟩
   · exact h.guides.stateEq hgcaFirst hfirst hgcaCanon hcanon
+  · exact htrail
   · rw [hcanon]
     exact h.incumbent
 
@@ -575,6 +586,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     (hgen : st.genTrace = #[]) (hautos : st.autos = #[])
     (hcheap : CheapOk ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2) cs.length st)
+    (htrail : TrailOk ctx level st trail)
     (hne : cs ≠ []) :
     RunInv G ctx tcLevel level cs cs cs numcells
       (Nauty.firstterminal level st)
@@ -586,7 +598,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     firstterminal_codeInv hcanonSize hbound hcodes hlt,
     firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
     firstterminal_canongInv hcanong, ?_, ?_,
-    hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, hne, ?_⟩
+    hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, ?_, hne, ?_⟩
   · unfold GenTraceOk
     intro γ hγ
     rw [hstore.1, hgen] at hγ
@@ -601,6 +613,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     · intro _ hbelow
       rw [hstate.2.2.2.1] at hbelow
       omega
+  · exact htrail.stateEq hstate.1 hstate.2.1
   · rw [hstate.2.2.2.2]
     exact Int.le_refl 0
   · rw [firstterminal_canonlab]
@@ -713,6 +726,7 @@ structure RunEvent (G : Colored n k) (ctx : Ctx)
     (initPtn n (n + 2) (initialPartition G).2) current st
   leafRefs : LeafRefsOk G st
   guides : GuideStore ctx tcLevel current st best trail
+  trailOk : TrailOk ctx current st trail
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
@@ -725,8 +739,8 @@ theorem RunInv.event {G : Colored n k} {ctx : Ctx}
       trail) :
     RunEvent G ctx tcLevel level cs bs fs st best trail :=
   ⟨Or.inl ⟨h.nonpositive, h.codeInv⟩, h.firstInv, h.canongInv,
-    h.genTraceOk, h.autosOk, h.cheap, h.leafRefs, h.guides, h.bestCodes,
-    h.incumbent⟩
+    h.genTraceOk, h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
+    h.bestCodes, h.incumbent⟩
 
 /-- A nonpositive comparison sign remains nonpositive when `recover`
 either leaves it alone or resets it to zero. -/
@@ -765,7 +779,8 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     genTraceOk_of_eq hstore.1 h.genTraceOk,
     autosOk_of_eq hstore.2 h.autosOk,
     h.cheap.recover hle hlevel hinf, h.leafRefs.recover,
-    h.guides.recover hle, recover_nonpositive hnp, h.bestCodes, ?_⟩
+    h.guides.recover hle, h.trailOk.recover hle, recover_nonpositive hnp,
+    h.bestCodes, ?_⟩
   rw [hframes.1]
   exact h.incumbent
 
@@ -1570,7 +1585,8 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
       omega
   refine ⟨bs', ?_, hmax, hreturn⟩
   refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
-    h.leafRefs.processnode h.searchOk, hguides, hbs', rfl⟩
+    h.leafRefs.processnode h.searchOk, hguides, h.trailOk.processnode,
+    hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
     exact h.firstInv
   · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
@@ -1649,7 +1665,8 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
       omega
   refine ⟨bs', ?_, hmax, hreturn⟩
   refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
-    h.leafRefs.processnode h.searchOk, hguides, hbs', rfl⟩
+    h.leafRefs.processnode h.searchOk, hguides, h.trailOk.processnode,
+    hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
     exact h.firstInv
   · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
