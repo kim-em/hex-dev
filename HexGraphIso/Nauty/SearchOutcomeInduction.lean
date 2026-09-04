@@ -511,6 +511,18 @@ structure RunPrep (G : Colored n k) (ctx : Ctx)
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
+/-- Once no immediate comparison prune is pending, the prepared state is
+the ordinary state carried into a child sweep. The two records are kept
+separate because `RunPrep` is also consumed by the leaf classifiers. -/
+theorem RunPrep.run {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail) :
+    RunInv G ctx tcLevel level cs bs fs numcells st best trail :=
+  ⟨h.searchOk, h.codeInv, h.firstInv, h.canongInv, h.genTraceOk,
+    h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
+    h.firstPositive, h.canonPositive, h.bestCodes, h.incumbent⟩
+
 /-- Refinement followed by the off-path comparison step enters
 `RunPrep`.  Generator validity is global, while stabilization is proved
 only at the loop frame where a generator is consumed. -/
@@ -1385,6 +1397,17 @@ private theorem processnode_plain_autos {ctx : Ctx}
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite (fun x : Int × SearchSt => x.2.autos)]
   simp [hfast, hnc]
+
+/-- On a non-discrete node admitted to its child sweep, `processnode`
+performs no state update. -/
+theorem processnode_internal {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hgate : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0))
+    (hnc : ¬((numcells == ctx.n) = true)) :
+    processnode ctx level numcells st = (Int.ofNat level, st) := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  simp [hgate, hnc]
 
 /-- Off the first path, `processnode` preserves the root ledger in every
 comparison-machine outcome. -/
