@@ -511,20 +511,6 @@ theorem processnode_installed {ctx : Ctx} {level numcells : Nat}
 
 /-! # Root-ledger entries -/
 
-/-- A scatter loop preserves its `n`-slot workspace size. -/
-theorem firstScatter_size (n : Nat) (lab₁ lab₂ : Array Nat) :
-    (firstScatter n lab₁ lab₂).size = n := by
-  have go : ∀ (l : List Nat) (base : Array Nat),
-      (l.foldl (fun w i => w.set! lab₁[i]! lab₂[i]!) base).size =
-        base.size := by
-    intro l
-    induction l with
-    | nil => intro; rfl
-    | cons i l ih =>
-        intro base
-        rw [List.foldl_cons, ih, Array.size_set!]
-  rw [firstScatter, go, Array.size_replicate]
-
 /-- A checked scatter between two reached labellings yields a valid
 explicit autos-ledger entry at the initial coloured partition. -/
 theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx}
@@ -815,5 +801,208 @@ theorem AutosOk.processnodeRowTie {ctx : Ctx} {G : Colored n k}
   rw [processnode_rowTie_autos hef hnc hcc hge htie]
   exact hprev.pushFmperm rfl hn0 hgb hrefs.canonSize hrefs.canonReach
     hok.labSize hok.reach hsc hca
+
+/-- The shared code-three/code-four tail preserves the ledger whenever
+its optional implicit pair is valid. -/
+theorem AutosOk.pruneAutos {ctx : Ctx} {G : Colored n k}
+    {level : Nat} {st : SearchSt}
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hpair : level ≠ st.noncheaplevel →
+      PairOk ctx.g
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 ctx.n
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n (pruneAutos ctx level st) := by
+  unfold Hex.GraphIso.Nauty.pruneAutos
+  split
+  · exact hprev
+  · exact autosOk_pushAuto hprev (hpair (by assumption))
+
+private theorem processnode_plain_autos {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hfast : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0))
+    (hnc : ¬((numcells == ctx.n) = true)) :
+    (processnode ctx level numcells st).2.autos = st.autos := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  simp [hfast, hnc]
+
+/-- Off the first path, `processnode` preserves the root ledger in every
+comparison-machine outcome. -/
+theorem AutosOk.processnodeOff {ctx : Ctx} {G : Colored n k}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hpair : level ≠ st.noncheaplevel →
+      PairOk ctx.g
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 ctx.n
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2)
+    (hef : ¬((st.eqlevFirst == level) = true)) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  have hef' : st.eqlevFirst ≠ level := fun he => hef (beq_iff_eq.mpr he)
+  have hprune := hprev.pruneAutos hpair
+  rcases hcode.tri with hzero | ⟨j, hj1, hjc, hjb, heqlev, hpre, hcase⟩
+  · have hcc : st.compCanon = 0 := hzero.1
+    rcases hnc : (numcells == ctx.n) with _ | _
+    · rw [processnode_plain_autos (by rw [hcc]; omega)
+          (by simp [hnc])]
+      exact hprev
+    · have hnc' : (numcells == ctx.n) = true := hnc
+      rcases Decidable.em (level < st.canonlevel) with hlt | hge
+      · rw [processnode_shortInstall_autos hef hnc' hcc hlt]
+        exact hprune
+      · let row := (testcanlab ctx
+          (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1
+        rcases Int.lt_trichotomy row 0 with hrow | hrow | hrow
+        · rw [processnode_rowReject_autos hef hnc' hcc hge hrow]
+          exact hprune
+        · exact hprev.processnodeRowTie hn hn0 hgb hok hrefs hcanong
+            hef hnc' hcc hge hrow
+        · rw [processnode_rowInstall_autos hef hnc' hcc hge hrow]
+          exact hprune
+  · rcases hcase with hdown | hup
+    · have hcc : st.compCanon = -1 := hdown.1
+      rw [processnode_fast_autos ⟨hef', by rw [hcc]; omega⟩]
+      exact hprune
+    · have hcc : st.compCanon = 1 := hup.1
+      rcases hnc : (numcells == ctx.n) with _ | _
+      · rw [processnode_plain_autos (by rw [hcc]; omega)
+            (by simp [hnc])]
+        exact hprev
+      · have hnc' : (numcells == ctx.n) = true := hnc
+        rw [processnode_upInstall_autos hef hnc' hcc]
+        exact hprune
+
+/-- A failed first-path generator gate reduces to the ordinary off-path
+ledger proof once canonical-labelling validity discharges the reused
+workspace overwrite. -/
+theorem AutosOk.processnodeGateFail {ctx : Ctx} {G : Colored n k}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hpair : level ≠ st.noncheaplevel →
+      PairOk ctx.g
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 ctx.n
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2)
+    (heq : (st.eqlevFirst == level) = true)
+    (hnc : (numcells == ctx.n) = true)
+    (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  subst n
+  let off := { st with eqlevFirst := level + 1 }
+  have hoff : AutosOk ctx.g
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells off).2.autos := by
+    apply AutosOk.processnodeOff rfl hn0 hgb (st := off) (cs := cs)
+      (bs := bs)
+    · exact ⟨hok.labSize, hok.ptnSize, hok.reach, hok.init1, hok.vals,
+        hok.count, hok.bc, hok.canon⟩
+    · exact ⟨hrefs.firstSize, hrefs.firstReach, hrefs.canonSize,
+        hrefs.canonReach⟩
+    · change CanongInv ctx st.canong st.canonlab st.samerows
+      exact hcanong
+    · change CodeCmpInv ctx.n cs bs st.canoncode st.canonlevel
+        st.eqlevCanon st.compCanon
+      exact hcode
+    · change AutosOk ctx.g
+        (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 ctx.n st.autos
+      exact hprev
+    · change level ≠ st.noncheaplevel →
+        PairOk ctx.g
+          (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+          (initialPartition G).1 1 ctx.n
+          (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+          (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2
+      exact hpair
+    · simp [off]
+  rw [processnode_gateFail_autos hrefs.canonSize
+    (labOk_of_reach hrefs.canonSize hrefs.canonReach)
+    (labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach)
+    heq hnc hfail]
+  exact hoff
+
+/-- `processnode` preserves the root automorphism ledger in every leaf,
+internal, generator, and comparison-prune outcome. -/
+theorem AutosOk.processnode {ctx : Ctx} {G : Colored n k}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hpair : level ≠ st.noncheaplevel →
+      PairOk ctx.g
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 ctx.n
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  rcases heq : (st.eqlevFirst == level) with _ | _
+  · exact hprev.processnodeOff hn hn0 hgb hok hrefs hcanong hcode
+      hpair (by
+        intro htrue
+        rw [heq] at htrue
+        exact Bool.noConfusion htrue)
+  · rcases hnc : (numcells == ctx.n) with _ | _
+    · rw [processnode_plain_autos
+        (by intro h; exact h.1 (beq_iff_eq.mp heq)) (by simp [hnc])]
+      exact hprev
+    · have hnc' : (numcells == ctx.n) = true := hnc
+      rcases hsent : (st.firstcode[level + 1]! == codeSentinel) with _ | _
+      · apply hprev.processnodeGateFail hn hn0 hgb hok hrefs hcanong hcode
+          hpair heq hnc'
+        exact Or.inl (by simpa only [beq_eq_false_iff_ne] using hsent)
+      · have hsent' : st.firstcode[level + 1]! = codeSentinel :=
+          beq_iff_eq.mp hsent
+        rcases hpass : isautom ctx
+            (firstScatter ctx.n st.firstlab st.lab) with _ | _
+        · apply hprev.processnodeGateFail hn hn0 hgb hok hrefs hcanong
+            hcode hpair heq hnc'
+          exact Or.inr hpass
+        · exact hprev.processnodeAuto hn hn0 hgb hsymm hloop hok hrefs
+            heq hsent' hnc' hpass
 
 end Hex.GraphIso.Nauty

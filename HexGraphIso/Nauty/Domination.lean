@@ -13,6 +13,7 @@ public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.Stabilize
 public import HexGraphIso.Nauty.AutosLedger
 public import HexGraphIso.Nauty.SmallCellTie
+import HexGraphIso.Nauty.StoreValid
 import all HexGraphIso.Nauty.SmallCellTie
 import all HexGraphIso.Nauty.Search
 
@@ -866,6 +867,47 @@ private theorem firstScatter_fold (n : Nat) (flab lab : Array Nat) :
     (List.range n).foldl (fun w i => w.set! flab[i]! lab[i]!)
       (Array.replicate n 0) = firstScatter n flab lab := rfl
 
+/-- A first-to-current scatter preserves its fixed `n`-slot workspace
+size. -/
+theorem firstScatter_size (n : Nat) (lab₁ lab₂ : Array Nat) :
+    (firstScatter n lab₁ lab₂).size = n := by
+  rw [firstScatter, foldl_scatter_size, Array.size_replicate]
+
+/-- A full scatter from a permutation labelling overwrites every slot,
+so its result is independent of the initial workspace contents. -/
+theorem scatter_eq_of_full {lab₁ lab₂ base base' : Array Nat} {nn : Nat}
+    (hbase : base.size = nn) (hbase' : base'.size = nn)
+    (hsize : lab₁.size = nn) (hok : LabOk lab₁ nn)
+    (hinj : LabInj lab₁ nn) :
+    (List.range nn).foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base =
+      (List.range nn).foldl
+        (fun r i => r.set! lab₁[i]! lab₂[i]!) base' := by
+  have hs := foldl_scatter_size lab₁ lab₂ (List.range nn) base
+  have hs' := foldl_scatter_size lab₁ lab₂ (List.range nn) base'
+  apply Array.ext
+  · rw [hs, hs', hbase, hbase']
+  · intro v hv hv'
+    have hvn : v < nn := by rw [hs, hbase] at hv; exact hv
+    obtain ⟨i, hi, hiv⟩ := labInj_surj
+      (Nat.le_of_eq hsize.symm) hok hinj v hvn
+    have hget := foldl_scatter_getElem (lab₂ := lab₂) hinj
+      (base := base) (fun j hj => by
+        rw [hbase]
+        exact hok j (by rw [hsize]; exact hj))
+      (m := nn) (Nat.le_refl _) hi
+    have hget' := foldl_scatter_getElem (lab₂ := lab₂) hinj
+      (base := base') (fun j hj => by
+        rw [hbase']
+        exact hok j (by rw [hsize]; exact hj))
+      (m := nn) (Nat.le_refl _) hi
+    rw [hiv] at hget hget'
+    simpa only [
+      getElem!_pos ((List.range nn).foldl
+        (fun r i => r.set! lab₁[i]! lab₂[i]!) base) v hv,
+      getElem!_pos ((List.range nn).foldl
+        (fun r i => r.set! lab₁[i]! lab₂[i]!) base') v hv'] using
+        hget.trans hget'.symm
+
 private theorem id_run_eq {α : Type} (x : Id α) : Id.run x = x := rfl
 
 private theorem pushAuto_orbits (st : SearchSt) (p : Nat × Nat) :
@@ -1235,6 +1277,80 @@ theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
        | exact Or.inr (Or.inl rfl)
        | exact Or.inr (Or.inr rfl)
        | omega)
+
+/-- Failing the first-path admission gate has the same autos-ledger
+effect as entering the ordinary off-path comparison arm. -/
+theorem processnode_gateFail_autos {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hcanonSize : st.canonlab.size = ctx.n)
+    (hcanonOk : LabOk st.canonlab ctx.n)
+    (hcanonInj : LabInj st.canonlab ctx.n)
+    (heq : (st.eqlevFirst == level) = true)
+    (hnc : (numcells == ctx.n) = true)
+    (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
+      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+    (processnode ctx level numcells st).2.autos =
+      (processnode ctx level numcells
+        { st with eqlevFirst := level + 1 }).2.autos := by
+  have hwork :
+      (List.range ctx.n).foldl
+          (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+          (firstScatter ctx.n st.firstlab st.lab) =
+        (List.range ctx.n).foldl
+          (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+          (Array.replicate ctx.n 0) :=
+    scatter_eq_of_full (firstScatter_size ..) (Array.size_replicate ..)
+      hcanonSize hcanonOk hcanonInj
+  have hwork' :
+      (List.range' 0 ctx.n).foldl
+          (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+          (firstScatter ctx.n st.firstlab st.lab) =
+        (List.range' 0 ctx.n).foldl
+          (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+          (Array.replicate ctx.n 0) := by
+    simpa [List.range_eq_range'] using hwork
+  have hworkPure :
+      (pure ((List.range' 0 ctx.n).foldl
+        (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+        (firstScatter ctx.n st.firstlab st.lab)) : Id (Array Nat)) =
+      pure ((List.range' 0 ctx.n).foldl
+        (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+        (Array.replicate ctx.n 0)) := by
+    rw [hwork']
+  have hfm :
+      fmperm (pure ((List.range' 0 ctx.n).foldl
+        (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+        (firstScatter ctx.n st.firstlab st.lab)) : Id (Array Nat)) ctx.n =
+      fmperm (pure ((List.range' 0 ctx.n).foldl
+        (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
+        (Array.replicate ctx.n 0)) : Id (Array Nat)) ctx.n :=
+    congrArg (fun w => fmperm w ctx.n) hworkPure
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  rcases hfail with hfail | hfail <;>
+    rw [processnode, processnode] <;>
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+      apply_ite (fun x : Int × SearchSt => x.2.autos)] <;>
+    rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold] <;>
+    simp [hg, hnc, heq, hfail, id_run_eq]
+  all_goals by_cases hcc : st.compCanon = 0
+  all_goals by_cases hcanon : level < st.canonlevel
+  all_goals by_cases htie : (testcanlab ctx
+    (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0
+  all_goals by_cases hrow : 0 < (testcanlab ctx
+    (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1
+  all_goals by_cases hcomp : 0 < st.compCanon
+  all_goals by_cases hncanon : st.noncheaplevel < st.canonlevel
+  all_goals by_cases hm : st.maxlevel < level
+  all_goals by_cases hncl : level = st.noncheaplevel
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [hcc, hcanon, htie, hrow, hcomp, hncanon, hm, hncl,
+    hcap, pushAuto, hwork, hwork', hworkPure, hfm]
+  all_goals intro _
+  all_goals first
+    | exact congrArg (fun p => st.autos.push p) hfm
+    | exact congrArg (fun p => st.autos.set! (st.wsCap - 1) p) hfm
 
 /-- The leaf event at a first-path-agreeing leaf that fails the
 admission gate: identical to `processnode_leaf`, by the gate-failure

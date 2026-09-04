@@ -260,7 +260,8 @@ private theorem forIn_scatter_eq (lab₁ lab₂ : Array Nat) :
     rw [List.forIn_cons]
     exact forIn_scatter_eq lab₁ lab₂ l _
 
-private theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
+/-- A scatter fold preserves the size of its workspace. -/
+theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
     ∀ (l : List Nat) (base : Array Nat),
       (l.foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base).size =
         base.size
@@ -269,7 +270,9 @@ private theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
     rw [List.foldl_cons, foldl_scatter_size lab₁ lab₂ l,
       Array.size_set!]
 
-private theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
+/-- After scanning an injective source prefix, every scanned source slot
+contains its corresponding target value. -/
+theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
     {nn : Nat}
     (hinj : ∀ a b, a < nn → b < nn → lab₁[a]! = lab₁[b]! → a = b)
     {base : Array Nat}
