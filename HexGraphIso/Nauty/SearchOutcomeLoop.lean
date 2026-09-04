@@ -120,6 +120,35 @@ theorem FrameRefs.grow {ctx : Ctx} {tcLevel specFuel level : Nat}
     obtain ⟨o, ho, hdone, hat, hperm⟩ := h.canon heq
     exact ⟨o, ho, hdone.mono hinc, hat, hperm⟩
 
+/-- Recovering a state related to a valid loop entry restores the full
+parent invariant as well as the composable parent-level effect. -/
+theorem SearchOut.recoverOk {G : Colored n k} {ctx : Ctx}
+    {level numcells inf : Nat} {base out : SearchSt}
+    (hn : ctx.n = n) (hinf : inf = n + 2)
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base)
+    (hout : SearchOut G level level base out) :
+    SearchOut G level level base (Nauty.recover ctx.n inf level out) ∧
+      SearchOk G level numcells (Nauty.recover ctx.n inf level out) := by
+  subst inf
+  have hrec : SearchOut G level level out
+      (Nauty.recover ctx.n (n + 2) level out) := by
+    rw [hn]
+    have hle : level ≤ n := Nat.le_trans hok.bc
+      (bcount_le base.ptn level n)
+    exact recover_out (by omega) hout.reach
+  have heffect := hout.trans hrec
+  refine ⟨heffect, searchOk_of_out hok hlevel heffect ?_⟩
+  intro q hq
+  rw [hn, recover_ptn]
+  rcases Decidable.em (q < n ∧ out.ptn[q]! > level) with hc | hc
+  · rw [ite_eq_left hc]
+    exact Or.inr rfl
+  · rw [ite_eq_right hc]
+    left
+    rcases Nat.lt_or_ge level out.ptn[q]! with hgt | hle
+    · exact absurd ⟨hq, hgt⟩ hc
+    · exact hle
+
 /-- Invariant of one imperative child loop.  `base` is the refined state
 whose labelling and partition were frozen for `specNode`; `st` is the
 current recovered state after zero or more children and pruning steps. -/
@@ -280,6 +309,51 @@ theorem currentCell {G : Colored n k} {ctx : Ctx}
     IsCell st.ptn level tc len := by
   rw [h.ptnEq]
   exact h.cell
+
+/-- A recursive child effect, followed by temporary fixed-point cleanup
+and `recover`, composes back into the frozen parent frame. -/
+theorem recoverChild {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell currentOffset inf : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hinf : inf = n + 2) (hcurrent : currentOffset < len)
+    (hout : SearchOut G level (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+      out) :
+    let cleaned : SearchSt :=
+      { out with fixedpts := erase out.fixedpts st.lab[tc + currentOffset]! }
+    let recovered := Nauty.recover ctx.n inf level cleaned
+    SearchOut G level level base recovered ∧
+      SearchOk G level numcells recovered := by
+  dsimp only
+  let cleaned : SearchSt :=
+    { out with fixedpts := erase out.fixedpts st.lab[tc + currentOffset]! }
+  have hchild : SearchOut G level level st out := by
+    apply breakout_child_out hinv.nonempty hinv.run.searchOk hinv.positive
+      hinv.currentCell hinv.lenTwo
+      (by rw [← hinv.nodeCount]; exact hinv.range) hcurrent
+    · exact hout
+    · rfl
+    · exact breakout_ptn st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!
+    · rfl
+    · rfl
+  have hclean : SearchOut G level level st cleaned := by
+    exact hchild.congr rfl rfl rfl rfl
+  have hbase : SearchOut G level level base cleaned :=
+    hinv.effect.trans hclean
+  simpa only [cleaned] using hbase.recoverOk hinv.nodeCount hinf
+    hinv.positive hinv.baseOk
 
 /-- A vertex selected from the mutable bitset has both its frozen
 specification offset and its current executable offset. -/
