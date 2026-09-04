@@ -168,8 +168,8 @@ end FirstInv
 /-- The corrected first-path root result proves equality between the
 unpruned specification key and the key installed by the transcription. -/
 theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
-    {best : Option Key}
-    (hroot : FirstRun G { n := n, g := rowsOf G } 100 n (n + 2) 1 [] []
+    {fs : List Nat} {best : Option Key}
+    (hroot : FirstRun G { n := n, g := rowsOf G } 100 n (n + 2) 1 [] fs
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
