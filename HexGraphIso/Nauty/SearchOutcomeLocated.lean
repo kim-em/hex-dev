@@ -125,4 +125,114 @@ theorem GuideStore.stateEq {ctx : Ctx} {tcLevel level : Nat}
     obtain ⟨g, href, hloc⟩ := h.canon hp hlt
     exact ⟨g, href.trans hcanonlab.symm, hloc⟩
 
+/-- A node outcome whose generator unwind, when present, is tied to the
+active frame trail.  The constructors mirror `NodeResult`; keeping the
+location in the unwind constructor prevents a caller from forgetting the
+only evidence that lets the receiving loop consume that return. -/
+inductive NodeReceipt (trail : FrameTrail) (ctx : Ctx)
+    (tcLevel specFuel runFuel level : Nat) (cs : List Nat)
+    (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
+    (r : Int) : Prop where
+  | complete (sound : NodeSound ctx tcLevel specFuel level cs st numcells
+      best outBest)
+      (returned : r = Int.ofNat level - 1)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
+      (full : outBest = some (incMax best
+        (nodeKey ctx tcLevel specFuel level cs st numcells)))
+  | unwind (sound : NodeSound ctx tcLevel specFuel level cs st numcells
+      best outBest)
+      (target : Nat) (returned : r = Int.ofNat target)
+      (below : target < level)
+      (payload : Unwind ctx tcLevel target out outBest)
+      (located : payload.Located trail)
+  | pruned (sound : NodeSound ctx tcLevel specFuel level cs st numcells
+      best outBest)
+      (target : Int) (returned : r = target)
+      (below : target < Int.ofNat level)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
+      (full : outBest = some (incMax best
+        (nodeKey ctx tcLevel specFuel level cs st numcells)))
+  | exhausted (empty : runFuel = 0) (returned : r = 0)
+      (unchanged : out = st) (bestUnchanged : outBest = best)
+
+/-- Forgetting a node receipt's frame location recovers its ordinary
+semantic result. -/
+theorem NodeReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    (h : NodeReceipt trail ctx tcLevel specFuel runFuel level cs st out
+      numcells best outBest r) :
+    NodeResult ctx tcLevel specFuel runFuel level cs st out numcells best
+      outBest r := by
+  cases h with
+  | complete sound returned installed read full =>
+      exact .complete sound returned installed read full
+  | unwind sound target returned below payload located =>
+      exact .unwind sound target returned below payload
+  | pruned sound target returned below installed read full =>
+      exact .pruned sound target returned below installed read full
+  | exhausted empty returned unchanged bestUnchanged =>
+      exact .exhausted empty returned unchanged bestUnchanged
+
+/-- A loop outcome with every transported generator unwind located in
+the active frame trail. -/
+inductive LoopReceipt (trail : FrameTrail) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat) (cs : List Nat)
+    (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
+    (cursor : Option Nat) (bound : Key) (st out : SearchSt)
+    (best outBest : Option Key) (r : Option Int) : Prop where
+  | complete
+      (returned : r = none)
+      (sound : LoopSound ctx bound best outBest)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
+      (finalSet : Nat) (finalCursor : Option Nat)
+      (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+        numcells finalSet finalCursor outBest)
+      (empty : ∀ o, ¬ ChildLive rsLab tc len finalSet finalCursor o)
+  | unwind (sound : LoopSound ctx bound best outBest)
+      (target : Nat) (returned : r = some (Int.ofNat target))
+      (below : target < level)
+      (payload : Unwind ctx tcLevel target out outBest)
+      (located : payload.Located trail)
+  | pruned (target : Int) (returned : r = some target)
+      (below : target < Int.ofNat level)
+      (sound : LoopSound ctx bound best outBest)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
+      (full : outBest = some (incMax best bound))
+  | exhausted
+      (returned : r = none)
+      (sound : LoopSound ctx bound best outBest)
+      (finalSet : Nat) (finalCursor : Option Nat)
+      (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+        numcells finalSet finalCursor outBest)
+      (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
+      (bounded : ∀ v, finalCursor = some v → v < ctx.n)
+
+/-- Forgetting a loop receipt's frame location recovers its ordinary
+semantic result. -/
+theorem LoopReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tc len numcells tcell : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {r : Option Int}
+    (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest r) :
+    LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
+      tc len numcells tcell cursor bound st out best outBest r := by
+  cases h with
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned sound installed read finalSet finalCursor
+        cover empty
+  | unwind sound target returned below payload located =>
+      exact .unwind sound target returned below payload
+  | pruned target returned below sound installed read full =>
+      exact .pruned target returned below sound installed read full
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned sound finalSet finalCursor cover progress
+        bounded
+
 end Hex.GraphIso.Nauty
