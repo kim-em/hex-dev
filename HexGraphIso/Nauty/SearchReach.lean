@@ -1826,7 +1826,7 @@ private theorem ofFn_id_getElem (v : Nat) (hv : v < n) :
   rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
 
 /-- The root state satisfies the search invariant. -/
-private theorem initial_searchOk {k : Nat} (G : Colored n k)
+theorem root_searchOk {k : Nat} (G : Colored n k)
     (hn0 : 0 < n) :
     SearchOk G 1 (initialPartition G).2.length
       { lab := (initialPartition G).1
@@ -1869,7 +1869,7 @@ theorem canonlab_size {k : Nat} (G : Colored n k) :
   · rw [run_canonlab G hn0]
     exact ((firstPathNode_ok G { n := n, g := rowsOf G } rfl (n + 2)
       rfl 100 hn0 (n + 2) 1 (initialPartition G).2.length _
-      (initial_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
+      (root_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
       (fun v hv => ofFn_id_getElem v hv)).1
 
 /-- The transcribed search's canonical labelling is reached: it
@@ -1895,7 +1895,7 @@ theorem canonlab_cellsReach {k : Nat} (G : Colored n k) :
   · rw [run_canonlab G hn0]
     exact ((firstPathNode_ok G { n := n, g := rowsOf G } rfl (n + 2)
       rfl 100 hn0 (n + 2) 1 (initialPartition G).2.length _
-      (initial_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
+      (root_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
       (fun v hv => ofFn_id_getElem v hv)).2
 
 /-- The transcribed search's canonical labelling passes the colour
