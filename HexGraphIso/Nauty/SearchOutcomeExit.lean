@@ -52,6 +52,57 @@ inductive NodeExit (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
       (returned : r = 0) (state : out = st) (incumbent : outBest = best)
       (emptyFuel : runFuel = 0)
 
+/-- Provenance of the newest workspace pair while the one-shot
+`needshortprune` request is live.  Explicit code-two pairs are already
+valid at their returned frame.  Implicit cheap-cell pairs retain root
+validity and the deeper boundary needed to localize them when the return
+reaches its receiving loop. -/
+inductive ShortSource (G : Colored n k) (ctx : Ctx) (out : SearchSt)
+    (trail : FrameTrail) (r : Int) : Prop where
+  | explicit (target fix mcr : Nat)
+      (returned : r = Int.ofNat target)
+      (back : out.autos.back? = some (fix, mcr))
+      (valid : ∀ entry, trail target = some entry →
+        PairOk ctx.g entry.frame.rsPtn entry.frame.rsLab target ctx.n
+          fix mcr)
+  | implicit (target : Nat)
+      (returned : r = Int.ofNat target)
+      (below : target < out.noncheaplevel)
+      (back : out.autos.back? = some
+        (fmptn out.lab out.ptn out.noncheaplevel ctx.n))
+      (root : PairOk ctx.g
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 ctx.n
+        (fmptn out.lab out.ptn out.noncheaplevel ctx.n).1
+        (fmptn out.lab out.ptn out.noncheaplevel ctx.n).2)
+
+namespace NodeExit
+
+/-- Every result of a positive-level node lies strictly below that node's
+level.  This is the one-step bound that lets a receiving loop identify an
+explicit or implicit short-prune source with its own level. -/
+theorem below {ctx : Ctx} {tcLevel specFuel runFuel level numcells : Nat}
+    {codes : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
+      best outBest trail r) (hlevel : 0 < level) :
+    r < Int.ofNat level := by
+  cases h with
+  | done returned exact => rw [returned]; omega
+  | unwind target returned below sound payload located =>
+      rw [returned]
+      exact Int.ofNat_lt.mpr below
+  | frozen below exact freeze => exact below
+  | cheap boundary returned positive atOrAbove exact =>
+      rw [returned]
+      simp only [Int.ofNat_eq_natCast]
+      omega
+  | exhausted returned state incumbent emptyFuel =>
+      rw [returned]
+      exact Int.natCast_pos.mpr hlevel
+
+end NodeExit
+
 /-- Result of a sibling loop.  Early comparison and cheap-cell exits carry
 both the exact loop maximum and the payload required to cross an older
 frame.  Cursor-fuel exhaustion remains explicit and cannot be confused

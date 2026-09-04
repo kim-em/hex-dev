@@ -354,6 +354,77 @@ theorem fmptnPair {G : Colored n k} {ctx : Ctx}
   exact LocalAutos.reindexPair hpair (cellsPerm_symm h.labPerm)
     h.frozenPtnSize hstSize h.frozenLabSize h.frozenEnd
 
+namespace ShortSource
+
+/-- A live short-prune source that reaches a receiving loop without a
+lower return is valid in that loop's frozen frame.  The child exit bound
+identifies the recorded target with the receiver; explicit pairs then use
+their stored frame, while implicit pairs are localized from the root. -/
+theorem atReceiver {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell offset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st child out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    {fix mcr : Nat}
+    (hpathCodes : level = codes.length)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (hexit : NodeExit ctx tcLevel specFuel runFuel (level + 1) codes child
+      out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) r)
+    (hevent : EventOut G ctx tcLevel codes fs out outBest eventTrail r)
+    (hpreserved : TrailExt (level + 1)
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail)
+    (hsource : ShortSource G ctx out eventTrail r)
+    (hstay : ¬ r < Int.ofNat level)
+    (hback : out.autos.back? = some (fix, mcr)) :
+    PairOk ctx.g rsPtn rsLab level ctx.n fix mcr := by
+  have hrBelow : r < Int.ofNat (level + 1) :=
+    hexit.below (by omega)
+  cases hsource with
+  | explicit target sourceFix sourceMcr returned back valid =>
+      have htargetBelow : target < level + 1 := by
+        rw [returned] at hrBelow
+        exact Int.ofNat_lt.mp hrBelow
+      have hlevelLe : level ≤ target := by
+        rw [returned] at hstay
+        exact Int.ofNat_le.mp (Int.le_of_not_gt hstay)
+      have htarget : target = level := by omega
+      subst target
+      have hp := valid
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩
+        hpreserved.pushAt
+      have heq : (sourceFix, sourceMcr) = (fix, mcr) := by
+        apply Option.some.inj
+        rw [← back, ← hback]
+      cases heq
+      simpa only [sweepFrame] using hp
+  | implicit target returned below back root =>
+      have htargetBelow : target < level + 1 := by
+        rw [returned] at hrBelow
+        exact Int.ofNat_lt.mp hrBelow
+      have hlevelLe : level ≤ target := by
+        rw [returned] at hstay
+        exact Int.ofNat_le.mp (Int.le_of_not_gt hstay)
+      have htarget : target = level := by omega
+      subst target
+      have hp := hinv.fmptnPair hpathCodes hpath hevent hpreserved
+        (Nat.le_of_lt below) root
+      have heq :
+          (fmptn out.lab out.ptn out.noncheaplevel ctx.n) = (fix, mcr) := by
+        apply Option.some.inj
+        rw [← back, ← hback]
+      rw [heq] at hp
+      exact hp
+
+end ShortSource
+
 /-- The long-prune filter preserves the full mutable sweep invariant.
 The root ledger supplies valid pairs at the current ordering, and the
 frozen-frame permutation transports their cell stabilization back to the
