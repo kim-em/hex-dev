@@ -451,4 +451,122 @@ theorem firstLoop_orbitReceipt (ctx : Ctx)
     simp only [Bool.false_eq_true, ite_false, ite_true] <;>
     exact (hrec _ hcover').step (nextElem_after hnext)
 
+/-- An off-path child of the first-path loop transports a located unwind
+strictly past the loop. -/
+theorem firstLoop_otherReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best outBest : Option Key) (target : Nat) (trail : FrameTrail)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hother : (tv == tv1) = false)
+    (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv }
+      (numcells + 1) best outBest)
+    (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv }
+      (numcells + 1)) bound)
+    (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv }).1 = Int.ofNat target)
+    (hbelow : target < level)
+    (payload : Unwind ctx tcLevel target
+      (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv
+          cosetindex := tv }).2 outBest)
+    (hloc : payload.Located trail) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hother, Bool.false_eq_true, ite_false,
+    Id.run_pure, apply_ite Id.run]
+  rw [hreturn]
+  split
+  · exact LoopReceipt.ofChildUnwind hsound hkey hbelow payload hloc
+  · rename_i hnot
+    exact (hnot (Int.ofNat_lt.mpr hbelow)).elim
+
+/-- The guiding child transports a located unwind strictly past the loop
+after installing its first-path return controls. -/
+theorem firstLoop_guideReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best outBest : Option Key) (target : Nat) (trail : FrameTrail)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hfirst : (tv == tv1) = true)
+    (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv }
+      (numcells + 1) best outBest)
+    (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv }
+      (numcells + 1)) bound)
+    (hreturn : (firstPathNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv }).1 = Int.ofNat target)
+    (hbelow : target < level)
+    (payload : Unwind ctx tcLevel target
+      (firstPathNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv
+          cosetindex := tv }).2 outBest)
+    (hloc : payload.Located trail) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  obtain ⟨payload', hloc'⟩ := hloc.setFirst level tv1
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hfirst, Id.run_pure, apply_ite Id.run]
+  rw [hreturn]
+  split
+  · exact LoopReceipt.ofChildUnwind hsound hkey hbelow payload' hloc'
+  · rename_i hnot
+    exact (hnot (Int.ofNat_lt.mpr hbelow)).elim
+
 end Hex.GraphIso.Nauty
