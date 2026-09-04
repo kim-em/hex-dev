@@ -26,6 +26,16 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- The target-cell representation used by `maketargetcell` is the same
+bitset as the length-indexed window representation used by sweep
+coverage. -/
+theorem worksetOf_eq_windowSet (lab : Array Nat) (tc len : Nat)
+    (hlen : 1 ≤ len) :
+    worksetOf lab tc (tc + len - 1) = windowSet lab tc len := by
+  unfold worksetOf windowSet segN
+  rw [show tc + len - 1 + 1 - tc = len by omega]
+  rw [List.foldl_map]
+
 /-- Charging target-cell statistics changes no logical search field. -/
 theorem RunPrep.setTctotal {G : Colored n k} {ctx : Ctx}
     {tcLevel level numcells value : Nat} {codes bs fs : List Nat}
@@ -374,6 +384,157 @@ theorem child {G : Colored n k} {ctx : Ctx}
       htrail
   exact ⟨offset, currentOffset, hoffset, hcurrent, hatFrozen, hatCurrent,
     hnode⟩
+
+/-- An internal off-path node reaches a fresh verified child sweep after
+the executable refinement, comparison, target-accounting, and cheap-rule
+bookkeeping.  The returned target is simultaneously the executable and
+specification target, so the accompanying equality exposes the whole
+node key as this sweep's bound. -/
+theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (h : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells ≠ ctx.n)
+    (hnonneg : (otherLeafSt ctx level numcells st).compCanon ≥ 0)
+    (hfuel : level + 1 + specFuel ≤ ctx.n + 1) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    let full := codes ++ [r.longcode]
+    let pre := otherLeafSt ctx level numcells st
+    ∃ tc len,
+      let tcell := worksetOf r.lab tc (tc + len - 1)
+      let base : SearchSt := { pre with tctotal := pre.tctotal + len }
+      let start := if cheapautom base.ptn level ctx.n then base
+        else { base with noncheaplevel := level + 1 }
+      maketargetcell ctx r.lab r.ptn level tcLevel (-1) =
+          (tc, tcell, len) ∧
+        processnode ctx level r.numcells base = (Int.ofNat level, base) ∧
+        nodeKey ctx tcLevel (specFuel + 1) level codes st numcells =
+          keysMax
+            (sweepKey ctx tcLevel specFuel level full r.lab r.ptn tc
+              r.numcells 0)
+            ((List.range (len - 1)).map fun o =>
+              sweepKey ctx tcLevel specFuel level full r.lab r.ptn tc
+                r.numcells (o + 1)) ∧
+        LoopInv G ctx tcLevel specFuel level full bs fs r.numcells
+          r.lab r.ptn tc len tcell none start start best trail := by
+  dsimp only
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  let full := codes ++ [r.longcode]
+  let pre := otherLeafSt ctx level numcells st
+  have href := h.refined hn hg hn0 hlevel
+  obtain ⟨tc, len, hmk, hspec, hcell, hlen, hrange⟩ :=
+    h.target hn hg hn0 hlevel hnum
+  refine ⟨tc, len, ?_⟩
+  let tcell := worksetOf r.lab tc (tc + len - 1)
+  let base : SearchSt := { pre with tctotal := pre.tctotal + len }
+  let start := if cheapautom base.ptn level ctx.n then base
+    else { base with noncheaplevel := level + 1 }
+  have hdisc : discreteAt r.ptn level ctx.n = false := by
+    rw [← Bool.not_eq_true, ← refine_discrete_iff hn hn0
+      h.run.searchOk hlevel]
+    exact hnum
+  have hchildren := h.children (specFuel := specFuel) hdisc hspec hlen
+  have hprep : RunPrep G ctx tcLevel level full bs fs r.numcells pre
+      best trail := by
+    simpa only [r, full, pre] using
+      h.run.otherLeaf hn hn0 hlevel hpath
+  have hbase : RunPrep G ctx tcLevel level full bs fs r.numcells base
+      best trail := by
+    exact hprep.setTctotal
+  have hpreNonneg : pre.compCanon ≥ 0 := by
+    simpa only [pre] using hnonneg
+  have hprocess : processnode ctx level r.numcells base =
+      (Int.ofNat level, base) := by
+    apply processnode_internal
+    · intro hgate
+      have hcomp : base.compCanon = pre.compCanon := rfl
+      rw [hcomp] at hgate
+      omega
+    · intro heq
+      exact hnum (beq_iff_eq.mp heq)
+  have hrun : RunInv G ctx tcLevel level full bs fs r.numcells start
+      best trail := by
+    rcases hc : cheapautom base.ptn level ctx.n with _ | _
+    · have hp : CheapOk ctx (initialPartition G).1
+          (initPtn n (n + 2) (initialPartition G).2) level
+          { base with noncheaplevel := level + 1 } :=
+        hbase.cheap.park (by omega) (by omega)
+      simpa only [start, hc, Bool.false_eq_true, ite_false] using
+        hbase.run.park hp
+    · simpa only [start, hc, ite_true] using hbase.run
+  have hpreFirst : pre.gcaFirst = st.gcaFirst := by
+    dsimp only [pre, otherLeafSt, r]
+    exact (otherNodePrep_frames level
+      (refine ctx level st.lab st.ptn st.active numcells).longcode
+      { st with
+        lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+        ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+        active := (refine ctx level st.lab st.ptn st.active numcells).active
+        numnodes := st.numnodes + 1 }).2.2.2.2.2.2.1
+  have hpreCanon : pre.gcaCanon = st.gcaCanon := by
+    dsimp only [pre, otherLeafSt, r]
+    exact (otherNodePrep_frames level
+      (refine ctx level st.lab st.ptn st.active numcells).longcode
+      { st with
+        lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+        ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+        active := (refine ctx level st.lab st.ptn st.active numcells).active
+        numnodes := st.numnodes + 1 }).2.2.2.2.2.2.2.1
+  have hpreShort : pre.needshortprune = st.needshortprune := by
+    dsimp only [pre, otherLeafSt, r]
+    rw [otherNodePrep]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+      apply_ite SearchSt.needshortprune, ite_self]
+  have hstartFirst : start.gcaFirst = st.gcaFirst := by
+    unfold start base
+    split <;> exact hpreFirst
+  have hstartCanon : start.gcaCanon = st.gcaCanon := by
+    unfold start base
+    split <;> exact hpreCanon
+  have hstartShort : start.needshortprune = false := by
+    unfold start base
+    split <;> simpa only [hpreShort] using h.shortClear
+  have hstartLab : start.lab = r.lab := by
+    unfold start base pre otherLeafSt
+    split <;>
+      simpa only [r] using
+        (otherNodePrep_frames level r.longcode
+          { st with
+            lab := r.lab
+            ptn := r.ptn
+            active := r.active
+            numnodes := st.numnodes + 1 }).2.2.2.2.2.2.2.2.2.2.2.1
+  have hstartPtn : start.ptn = r.ptn := by
+    unfold start base pre otherLeafSt
+    split <;>
+      simpa only [r] using
+        (otherNodePrep_frames level r.longcode
+          { st with
+            lab := r.lab
+            ptn := r.ptn
+            active := r.active
+            numnodes := st.numnodes + 1 }).2.2.2.2.2.2.2.2.2.2.2.2
+  have hvals : ∀ q : Nat, r.ptn[q]! ≤ level ∨
+      r.ptn[q]! = ctx.n + 2 := by
+    intro q
+    rcases Nat.lt_or_ge q ctx.n with hq | hq
+    · exact href.1.vals q hq
+    · left
+      rw [getElem!_neg _ _ (by rw [href.1.ok.ptnSize]; omega)]
+      exact Nat.zero_le _
+  have hloop := LoopInv.start hn hn0 hlevel hrun
+    (by rw [hstartFirst]; exact h.firstBelow)
+    (by rw [hstartCanon]; exact h.canonBelow)
+    (by rw [hstartLab, hstartPtn]; exact href.2.1)
+    (by rw [hstartPtn]; exact hcell) hlen hrange
+    (by rw [hstartPtn]; exact hvals) hstartShort hfuel
+  refine ⟨?_, hprocess, hchildren, ?_⟩
+  · simpa only [r, tcell] using hmk
+  · rw [worksetOf_eq_windowSet r.lab tc len (by omega)]
+    simpa only [hstartLab, hstartPtn] using hloop
 
 end LoopInv
 
