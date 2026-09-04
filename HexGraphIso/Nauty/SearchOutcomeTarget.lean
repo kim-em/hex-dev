@@ -55,6 +55,31 @@ structure TrailEntry where
 /-- Active ancestor children, keyed by their parent search level. -/
 abbrev FrameTrail := Nat → Option TrailEntry
 
+/-- The empty active-frame trail. -/
+@[expose] def FrameTrail.empty : FrameTrail := fun _ => none
+
+/-- Every active ancestor frame reaches the current labelling, and its
+closed boundaries remain frozen in the current partition. -/
+structure TrailOk (ctx : Ctx) (level : Nat) (st : SearchSt)
+    (trail : FrameTrail) : Prop where
+  reach : ∀ target entry, target < level → trail target = some entry →
+    cellsPerm entry.frame.rsPtn target entry.frame.rsLab st.lab
+  ptnSize : ∀ target entry, target < level → trail target = some entry →
+    entry.frame.rsPtn.size = ctx.n
+  endClosed : ∀ target entry, target < level →
+    trail target = some entry →
+    entry.frame.rsPtn[entry.frame.rsPtn.size - 1]! ≤ target
+  frozen : ∀ target entry, target < level →
+    trail target = some entry → ∀ q : Nat,
+    entry.frame.rsPtn[q]! ≤ target →
+    st.ptn[q]! = entry.frame.rsPtn[q]!
+
+/-- No ancestor frame is present in the empty trail. -/
+theorem TrailOk.empty (ctx : Ctx) (level : Nat) (st : SearchSt) :
+    TrailOk ctx level st FrameTrail.empty := by
+  constructor <;> intro target entry _ hentry
+  all_goals simp [FrameTrail.empty] at hentry
+
 /-- Record the active child of one parent level. -/
 @[expose] def FrameTrail.push (trail : FrameTrail) (level : Nat)
     (entry : TrailEntry) : FrameTrail :=
@@ -110,6 +135,17 @@ theorem Guide.Located.pushSelf {ctx : Ctx} {tcLevel level : Nat}
     (g : Guide ctx tcLevel level best) (offset : Nat) :
     g.Located (trail.push level ⟨g.frame, offset⟩) := by
   exact ⟨⟨g.frame, offset⟩, FrameTrail.push_self _ _ _, rfl⟩
+
+/-- A located guide's ancestor frame reaches the current labelling. -/
+theorem Guide.reachAt {ctx : Ctx} {tcLevel target level : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (g : Guide ctx tcLevel target best) (hloc : g.Located trail)
+    (hok : TrailOk ctx level st trail) (hlt : target < level) :
+    cellsPerm g.rsPtn target g.rsLab st.lab := by
+  obtain ⟨entry, hentry, hframe⟩ := hloc
+  have hreach := hok.reach target entry hlt hentry
+  rw [hframe] at hreach
+  exact hreach
 
 /-- Location evidence follows a guide when a checked carrier turns it
 into an unwind anchor. -/
