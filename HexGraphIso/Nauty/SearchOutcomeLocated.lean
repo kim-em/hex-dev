@@ -397,6 +397,45 @@ theorem SweepCover.receipt {ctx : Ctx}
       hstab
       hs hinj hok hsp hend hvals hic hrange hlf
 
+/-- A located unwind from an off-path child cannot use the orbit arm at
+its parent: that arm returns to `gcaFirst`, which is strictly below this
+loop.  The two direct carrier arms therefore advance coverage without a
+`cosetindex` premise. -/
+theorem SweepCover.offPathUnwind {ctx : Ctx}
+    {tcLevel specFuel level tc len numcells tcell tv offset : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {before best : Option Key} {out : SearchSt}
+    {trail : FrameTrail} {payload : Unwind ctx tcLevel level out best}
+    (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell cursor before)
+    (hinc : IncGrows before best)
+    (hnext : nextElem tcell cursor = some tv)
+    (hloc : payload.Located trail)
+    (hframe : trail level = some
+      ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+    (hoffset : offset < len)
+    (htv : rsLab[tc + offset]! = tv)
+    (hfirst : out.gcaFirst < level)
+    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
+    (hrange : tc + len ≤ ctx.n) :
+    SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) best := by
+  have hrange' : tc + len ≤ rsLab.size := by rwa [hs]
+  have hoff : tc + offset < rsLab.size := by omega
+  cases payload with
+  | first anchor carrier =>
+      cases hloc with
+      | first _ _ located =>
+          exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
+            hrange' hoff
+  | canon anchor carrier =>
+      cases hloc with
+      | canon _ _ located =>
+          exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
+            hrange' hoff
+  | orbit orbitPayload =>
+      exact (Nat.not_lt_of_ge orbitPayload.bound hfirst).elim
+
 /-- Updating the first-path return controls preserves the source
 location of a generator unwind. -/
 theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx}

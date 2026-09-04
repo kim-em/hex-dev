@@ -162,6 +162,10 @@ structure OtherOutcome (G : Colored n k) (ctx : Ctx)
     numcells best outBest receiptTrail eventTrail r
   firstGuide : out.gcaFirst = st.gcaFirst
   order : out.gcaFirst ≤ out.gcaCanon
+  canonGuide :
+    (out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
+      (level ≤ out.gcaCanon ∧
+        cellsPerm st.ptn level st.lab out.canonlab)
 
 /-- The integer return represented by a loop result.  Exhausting the
 sweep completes its parent node one level up. -/

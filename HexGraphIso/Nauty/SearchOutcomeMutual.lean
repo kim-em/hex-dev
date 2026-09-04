@@ -153,6 +153,45 @@ theorem recover {G : Colored n k} {ctx : Ctx}
       { out with fixedpts := fixedpts }).2.2.2.2.2.2.1]
     exact hfirstOut
 
+/-- Resolving a returning off-path child advances the evolving sweep.
+The impossible orbit-return arm is discharged by the strict first-guide
+bound, so no current-child `cosetindex` equation is needed. -/
+theorem cover {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell tv offset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st child out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (h : OtherOutcome G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      child out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level))
+    (hnext : nextElem tcell cursor = some tv)
+    (hoffset : offset < len) (htv : rsLab[tc + offset]! = tv)
+    (hfirst : child.gcaFirst < level)
+    (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
+      sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
+        nodeKey ctx tcLevel specFuel (level + 1) codes child
+          (numcells + 1)) :
+    SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) outBest := by
+  rcases h.node.parentReturn hfuel hstay with hfull |
+      ⟨payload, hloc, _⟩
+  · exact hinv.cover.advanceKey hnext hfull heq
+  · apply hinv.cover.offPathUnwind
+      (h.node.receipt.sound hfuel).grows hnext hloc
+      (FrameTrail.push_self trail level _) hoffset htv
+    · rw [h.firstGuide]
+      exact hfirst
+    · exact hinv.frozenLabSize
+    · rw [← hinv.baseLab, hinv.baseOk.labSize]
+      exact labInj_of_reach hinv.baseOk.labSize hinv.nonempty
+        hinv.baseOk.reach
+    · exact hinv.range
+
 end OtherOutcome
 
 /-- The bookkeeping between an off-path node's refinement and its fresh
