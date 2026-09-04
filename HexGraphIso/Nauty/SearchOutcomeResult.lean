@@ -116,6 +116,54 @@ theorem LoopOutcome.toNodeNone {G : Colored n k} {ctx : Ctx}
   exact ⟨NodeReceipt.ofLoopNone hbound hchildren hlen hfuel h.receipt,
     h.event⟩
 
+/-- Prepending a semantic loop fragment leaves the concrete result
+package unchanged. -/
+theorem LoopOutcome.prefix {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st recSt out : SearchSt} {best mid outBest : Option Key}
+    {trail : FrameTrail} {r : Option Int}
+    (hpre : LoopSound ctx bound best mid)
+    (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound recSt out mid
+      outBest trail r) :
+    LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      trail r :=
+  ⟨h.receipt.prefix hpre, h.event⟩
+
+/-- Changing the mutable entry workset does not affect a completed loop
+outcome. -/
+theorem LoopOutcome.reindexSet {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell tcell' : Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Option Int}
+    (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest trail r) :
+    LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
+      trail r :=
+  ⟨h.receipt.reindexSet, h.event⟩
+
+/-- One successful cursor step preserves the coupled loop outcome. -/
+theorem LoopOutcome.step {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key} {trail : FrameTrail}
+    {r : Option Int} (ha : After cursor tv)
+    (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell (some tv) bound st out
+      best outBest trail r) :
+    LoopOutcome G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest trail r :=
+  ⟨h.receipt.step ha, h.event⟩
+
 /-- First-path exit bookkeeping preserves a corrected node outcome. -/
 theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells size index : Nat}
