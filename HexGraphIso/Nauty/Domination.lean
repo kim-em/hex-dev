@@ -911,6 +911,46 @@ theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
     simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
+/-- The code-one arm stores the same first-to-current scatter that it
+appends to the generator trace. -/
+theorem processnode_auto_autos {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (processnode ctx level numcells st).2.autos =
+      (pushAuto st
+        (fmperm (firstScatter ctx.n st.firstlab st.lab) ctx.n)).autos := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+  simp [hg, hnc, heq, hsent, hpass, id_run_eq]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [hm, hcap, pushAuto]
+
+/-- The scatter built from the installed canonical leaf to the current
+leaf. -/
+@[expose] def canonScatter (n : Nat) (canonlab lab : Array Nat) :
+    Array Nat :=
+  (List.range n).foldl
+    (fun w i => w.setIfInBounds canonlab[i]! lab[i]!)
+    (Array.replicate n 0)
+
+private theorem canonScatter_fold (n : Nat) (canonlab lab : Array Nat) :
+    (List.range' 0 n).foldl
+      (fun w i => w.setIfInBounds canonlab[i]! lab[i]!)
+      (Array.replicate n 0) = canonScatter n canonlab lab := by
+  simp [canonScatter, List.range_eq_range']
+
+private theorem pure_id_eq {alpha : Type} (x : alpha) :
+    (pure x : Id alpha) = x := rfl
+
 /-- The bounded-ledger effect of the shared code-three/code-four tail. -/
 @[expose] def pruneAutos (ctx : Ctx) (level : Nat)
     (st : SearchSt) : Array (Nat × Nat) :=
@@ -1108,6 +1148,31 @@ theorem processnode_rowTie_orbit {ctx : Ctx} {level numcells : Nat}
   | exact Or.inr ⟨rfl, by omega⟩
   | rfl
   | omega
+
+/-- The code-two arm stores the same incumbent-to-current scatter that
+it appends to the generator trace. -/
+theorem processnode_rowTie_autos {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    (processnode ctx level numcells st).2.autos =
+      (pushAuto st
+        (fmperm (canonScatter ctx.n st.canonlab st.lab) ctx.n)).autos := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+  rw [forIn_range_eq3, forIn_scatter_eq]
+  simp [hg, hnc, hef, hcc, hge, htie, id_run_eq]
+  rw [pure_id_eq, canonScatter_fold]
+  by_cases hm : st.maxlevel < level
+  all_goals by_cases hcap : st.autos.size = st.wsCap
+  all_goals simp [hm, hcap, pushAuto, id_run_eq]
 
 /-- A first-path-agreeing leaf failing the admission gate behaves,
 in the return level and the whole comparison state, exactly as the
