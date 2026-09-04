@@ -282,6 +282,10 @@ private theorem pushAuto_allsamelevel (st : SearchSt) (p : Nat × Nat) :
     (pushAuto st p).allsamelevel = st.allsamelevel := by
   rw [pushAuto]; split <;> rfl
 
+private theorem pushAuto_needshortprune (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).needshortprune = st.needshortprune := by
+  rw [pushAuto]; split <;> rfl
+
 /-- The unwind level of the shared prune tail. -/
 @[expose] def pruneReturn (noncheaplevel allsamelevel : Nat)
     (eqlevCanon : Int) : Int :=
@@ -334,6 +338,26 @@ theorem pruneReturn_split {noncheaplevel allsamelevel : Nat}
       rw [heqCast]
       omega
 
+/-- The shared prune tail always returns below its positive saved
+cheap-cell boundary. -/
+theorem pruneReturn_lt {noncheaplevel allsamelevel : Nat}
+    {eqlevCanon : Int} :
+    pruneReturn noncheaplevel allsamelevel eqlevCanon <
+      Int.ofNat noncheaplevel := by
+  unfold pruneReturn
+  split <;> dsimp only <;> split <;>
+    simp only [Int.ofNat_eq_natCast] at * <;> omega
+
+/-- A nonnegative comparison depth and positive saved boundary make the
+shared prune return a genuine natural-number level. -/
+theorem pruneReturn_nonneg {noncheaplevel allsamelevel : Nat}
+    {eqlevCanon : Int} (hpositive : 0 < noncheaplevel)
+    (heqlev : 0 ≤ eqlevCanon) :
+    0 ≤ pruneReturn noncheaplevel allsamelevel eqlevCanon := by
+  unfold pruneReturn
+  split <;> dsimp only <;> split <;>
+    simp only [Int.ofNat_eq_natCast] at * <;> omega
+
 /-- The pass arm: an internal node with no frozen-downward fast exit
 leaves the comparison state alone and returns its own level. -/
 theorem processnode_pass {ctx : Ctx} {level numcells : Nat}
@@ -372,6 +396,39 @@ theorem processnode_fast {ctx : Ctx} {level numcells : Nat}
   · rw [processnode]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg1, hg2, Int.not_lt.mpr, Int.lt_iff_add_one_le]
+
+/-- The frozen-downward arm raises a short-prune request exactly when it
+admits an implicit pair and does not return to the first-path guide. -/
+theorem processnode_fast_short {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+    (processnode ctx level numcells st).2.needshortprune =
+      if level ≠ st.noncheaplevel ∧
+          pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ≠
+            Int.ofNat st.gcaFirst then
+        true
+      else
+        st.needshortprune := by
+  obtain ⟨hg1, hg2⟩ := hg
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.needshortprune),
+    pushAuto_needshortprune, pushAuto_noncheaplevel,
+    pushAuto_allsamelevel, pushAuto_eqlevCanon, pushAuto_gcaFirst, ite_self]
+  simp [pruneReturn, hg1, hg2, Int.not_lt.mpr,
+    Int.lt_iff_add_one_le]
+  by_cases hncl : level = st.noncheaplevel <;> simp [hncl]
+
+/-- A fresh short-prune request in the frozen-downward arm proves that
+the implicit pair was actually admitted below the saved boundary. -/
+theorem processnode_fast_short_ne {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0)
+    (hclear : st.needshortprune = false)
+    (hshort : (processnode ctx level numcells st).2.needshortprune = true) :
+    level ≠ st.noncheaplevel := by
+  rw [processnode_fast_short hg, hclear] at hshort
+  split at hshort <;> simp_all
 
 /-- The short-leaf install: a code-tied leaf strictly above the
 incumbent's depth installs itself with no row comparison. -/
@@ -1011,6 +1068,25 @@ theorem processnode_auto_gcaCanon {ctx : Ctx} {level numcells : Nat}
   rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
   simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
+/-- A code-one admission does not create a short-prune request. -/
+theorem processnode_auto_short {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (processnode ctx level numcells st).2.needshortprune =
+      st.needshortprune := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.needshortprune),
+    pushAuto_needshortprune, ite_self]
+  rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+  simp [hg, hnc, heq, hsent, hpass, id_run_eq]
+
 /-- The code-one arm stores the same first-to-current scatter that it
 appends to the generator trace. -/
 theorem processnode_auto_autos {ctx : Ctx} {level numcells : Nat}
@@ -1057,6 +1133,16 @@ theorem canonScatter_eq_firstScatter (n : Nat)
   if level = st.noncheaplevel then st.autos
   else (pushAuto st
     (fmptn st.lab st.ptn st.noncheaplevel ctx.n)).autos
+
+/-- Whenever the shared tail admits its implicit pair, bounded workspace
+capacity makes that pair the exact newest entry read by `shortprune`. -/
+theorem pruneAutos_back {ctx : Ctx} {level : Nat} {st : SearchSt}
+    (hworkspace : WorkspaceOk st) (hne : level ≠ st.noncheaplevel) :
+    (pruneAutos ctx level st).back? =
+      some (fmptn st.lab st.ptn st.noncheaplevel ctx.n) := by
+  unfold pruneAutos
+  rw [if_neg hne]
+  exact pushAuto_back hworkspace.1 hworkspace.2
 
 /-- The frozen-downward fast arm has exactly the shared prune-tail ledger
 effect. -/
@@ -1248,6 +1334,40 @@ theorem processnode_rowTie_orbit {ctx : Ctx} {level numcells : Nat}
   | exact Or.inr ⟨rfl, by omega⟩
   | rfl
   | omega
+
+/-- A fresh short-prune request from the code-two arm accompanies the
+canonical-guide return; the special first-guide orbit return never raises
+the flag. -/
+theorem processnode_rowTie_short {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hclear : st.needshortprune = false)
+    (hshort : (processnode ctx level numcells st).2.needshortprune = true) :
+    (processnode ctx level numcells st).1 = Int.ofNat st.gcaCanon := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  rw [processnode] at hshort ⊢
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.1),
+    apply_ite (fun x : Int × SearchSt => x.2),
+    apply_ite SearchSt.needshortprune,
+    apply_ite SearchSt.orbits, apply_ite SearchSt.cosetindex,
+    pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex,
+    pushAuto_needshortprune, pushAuto_gcaCanon, pushAuto_gcaFirst,
+    ite_self] at hshort ⊢
+  rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold] at hshort ⊢
+  simp [hg, hnc, hef, hcc, hge, htie, hclear, id_run_eq] at hshort ⊢
+  repeat' split at hshort ⊢
+  all_goals simp_all
+  intro hcount hptr
+  rw [if_neg hcount] at hshort
+  omega
 
 /-- The code-two arm stores the same incumbent-to-current scatter that
 it appends to the generator trace. -/
