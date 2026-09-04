@@ -18,6 +18,47 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- The executable bookkeeping that precedes an off-path sibling sweep
+preserves its entry guide relation. -/
+theorem NodeInv.otherGuide {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells len : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    let pre := otherLeafSt ctx level numcells st
+    let base : SearchSt := { pre with tctotal := pre.tctotal + len }
+    let start := if cheapautom base.ptn level ctx.n then base
+      else { base with noncheaplevel := level + 1 }
+    GuideRel level st start := by
+  dsimp only
+  let pre := otherLeafSt ctx level numcells st
+  let base : SearchSt := { pre with tctotal := pre.tctotal + len }
+  let start := if cheapautom base.ptn level ctx.n then base
+    else { base with noncheaplevel := level + 1 }
+  have hfirst : pre.gcaFirst = st.gcaFirst := by
+    simpa only [pre] using
+      (RefTrail.otherLeaf_gcaFirst ctx level numcells st)
+  have hcanon : pre.gcaCanon = st.gcaCanon := by
+    simpa only [pre] using
+      (RefTrail.otherLeaf_gcaCanon ctx level numcells st)
+  have hcanonLab : pre.canonlab = st.canonlab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let raw : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    simpa only [pre, otherLeafSt, rs, raw] using
+      (otherNodePrep_frames level rs.longcode raw).1
+  have horder : start.gcaFirst ≤ start.gcaCanon := by
+    simpa only [pre, base, start] using
+      (hnode.otherLive (len := len) hlive).order
+  refine ⟨?_, horder, Or.inl ⟨?_, ?_⟩⟩
+  · split <;> exact hfirst
+  · split <;> exact hcanon
+  · split <;> exact hcanonLab
+
 namespace OtherOutcome
 
 /-- Resolving an ordinary off-path child after clearing a pending

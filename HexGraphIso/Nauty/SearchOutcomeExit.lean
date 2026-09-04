@@ -22,6 +22,77 @@ payload is what justifies that skipped suffix.
 
 namespace Hex.GraphIso.Nauty
 
+/-- Two states describe the same recovered search frame at `level` when
+their partitions agree and their current labellings differ only within
+that partition's cells. -/
+structure FrameRel (level : Nat) (st out : SearchSt) : Prop where
+  ptn : out.ptn = st.ptn
+  lab : cellsPerm st.ptn level st.lab out.lab
+
+namespace FrameRel
+
+theorem refl (level : Nat) (st : SearchSt) : FrameRel level st st :=
+  ⟨rfl, cellsPerm_refl _ _ _⟩
+
+theorem symm {level : Nat} {st out : SearchSt}
+    (h : FrameRel level st out) : FrameRel level out st := by
+  constructor
+  · exact h.ptn.symm
+  · rw [h.ptn]
+    exact cellsPerm_symm h.lab
+
+theorem trans {level : Nat} {a b c : SearchSt}
+    (hab : FrameRel level a b) (hbc : FrameRel level b c) :
+    FrameRel level a c := by
+  constructor
+  · exact hbc.ptn.trans hab.ptn
+  · have hbcLab := hbc.lab
+    rw [hab.ptn] at hbcLab
+    exact cellsPerm_trans hab.lab hbcLab
+
+/-- A recovered `SearchOut` between valid endpoints is exactly a frame
+relation. -/
+theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
+    {st out : SearchSt} (h : SearchOut G level level st out)
+    (hst : SearchOk G level numcells st)
+    (hout : SearchOk G level numcells out) : FrameRel level st out :=
+  ⟨h.ptnEq hst hout, h.perm⟩
+
+end FrameRel
+
+/-- The guide-control facts preserved by every off-path search fragment.
+The second canonical alternative records a newly installed descendant of
+the fragment's entry frame. -/
+structure GuideRel (level : Nat) (st out : SearchSt) : Prop where
+  first : out.gcaFirst = st.gcaFirst
+  order : out.gcaFirst ≤ out.gcaCanon
+  canon :
+    (out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
+      (level ≤ out.gcaCanon ∧ cellsPerm st.ptn level st.lab out.canonlab)
+
+namespace GuideRel
+
+theorem refl {level : Nat} {st : SearchSt}
+    (horder : st.gcaFirst ≤ st.gcaCanon) : GuideRel level st st :=
+  ⟨rfl, horder, Or.inl ⟨rfl, rfl⟩⟩
+
+/-- Guide relations compose across an equivalent recovered frame. -/
+theorem trans {level : Nat} {a b c : SearchSt}
+    (hab : GuideRel level a b) (hbc : GuideRel level b c)
+    (hframe : FrameRel level a b) : GuideRel level a c := by
+  constructor
+  · exact hbc.first.trans hab.first
+  · exact hbc.order
+  · rcases hbc.canon with hold | hnew
+    · rw [hold.1, hold.2]
+      exact hab.canon
+    · right
+      refine ⟨hnew.1, ?_⟩
+      rw [hframe.ptn] at hnew
+      exact cellsPerm_trans hframe.lab hnew.2
+
+end GuideRel
+
 /-- Result of one node call.  `done` is the ordinary one-level return;
 `frozen` and `cheap` retain the distinct witnesses needed when the return
 crosses more than one loop; `unwind` is reserved for stored generators. -/
@@ -339,6 +410,16 @@ theorem toProof {G : Colored n k} {ctx : Ctx}
 end NodeRun
 
 namespace OtherRun
+
+/-- Forget the semantic receipt and expose the off-path guide relation. -/
+theorem guide {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (h : OtherRun G ctx tcLevel specFuel runFuel level codes fs st out
+      numcells best outBest receiptTrail eventTrail r) :
+    GuideRel level st out :=
+  ⟨h.firstGuide, h.order, h.canonGuide⟩
 
 /-- Restore the established off-path interface for ordinary parent-level
 consumption and recovery. -/
