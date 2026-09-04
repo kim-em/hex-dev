@@ -401,6 +401,137 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
     fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
       numcells st hnum hearly }
 
+/-- An early off-path leaf also preserves the guide and coset fields used
+when its unwind stops at the immediately enclosing sibling loop. -/
+theorem earlyOther {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hpath : level = codes.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail)
+    (hrun : NodeRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs
+      st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1) :
+    OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  let leaf := otherLeafSt ctx level numcells st
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
+  have hprep := hnode.run.otherLeaf hn hn0 hlevel hpath
+  have hlive' : Live ctx level leaf trail := by
+    simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hfirst : (processnode ctx level ctx.n leaf).2.gcaFirst =
+      st.gcaFirst :=
+    (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.1 |>.trans
+      (by simpa only [leaf] using
+        (RefTrail.otherLeaf_gcaFirst ctx level numcells st))
+  have horder : (processnode ctx level ctx.n leaf).2.gcaFirst ≤
+      (processnode ctx level ctx.n leaf).2.gcaCanon :=
+    (hlive'.processnode (by simpa only [leaf] using hprep.trailOk)
+      (by simpa only [leaf] using hprep.firstBound)).2
+  have hleafCanonGca : leaf.gcaCanon = st.gcaCanon := by
+    simpa only [leaf] using
+      (RefTrail.otherLeaf_gcaCanon ctx level numcells st)
+  have hleafCanonLab : leaf.canonlab = st.canonlab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let base : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    change (otherNodePrep level rs.longcode base).canonlab = st.canonlab
+    rw [(otherNodePrep_frames level rs.longcode base).1]
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let base : SearchSt :=
+      { st with
+        lab := rs.lab
+        ptn := rs.ptn
+        active := rs.active
+        numnodes := st.numnodes + 1 }
+    change (otherNodePrep level rs.longcode base).lab = rs.lab
+    exact (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.2.2.2.1
+  have hcanon :
+      ((processnode ctx level ctx.n leaf).2.gcaCanon = st.gcaCanon ∧
+          (processnode ctx level ctx.n leaf).2.canonlab = st.canonlab) ∨
+        (level ≤ (processnode ctx level ctx.n leaf).2.gcaCanon ∧
+          cellsPerm st.ptn level st.lab
+            (processnode ctx level ctx.n leaf).2.canonlab) := by
+    rcases processnode_canonGuide ctx level ctx.n leaf with hold | hnew
+    · exact Or.inl ⟨hold.1.trans hleafCanonGca,
+        hold.2.trans hleafCanonLab⟩
+    · right
+      constructor
+      · rw [hnew.1]
+        exact Nat.le_refl level
+      · rw [hnew.2, hleafLab]
+        exact (refine_refInv (ctx := ctx)
+          (by
+            rw [hnode.run.searchOk.ptnSize, ← hn]
+            exact Nat.le_refl ctx.n)
+          (hnode.run.searchOk.labSize.trans
+            hnode.run.searchOk.ptnSize.symm)
+          (searchOk_end hn0 hnode.run.searchOk hlevel)).perm
+  exact {
+    node := hrun
+    firstGuide := by rw [hout]; exact hfirst
+    order := by rw [hout]; exact horder
+    canonGuide := by rw [hout]; exact hcanon
+    coset := by
+      rw [hout]
+      exact (processnode_coset ctx level ctx.n leaf).trans
+        (by simpa only [leaf] using
+          (OtherProof.otherLeafSt_coset ctx level numcells st)) }
+
+/-- The negative non-generator leaf, with the off-path fields needed by
+its parent loop retained. -/
+theorem negativeOther {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
+    (hgen : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace =
+        (otherLeafSt ctx level numcells st).genTrace)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ outBest,
+      OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+        numcells best outBest trail trail
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  obtain ⟨outBest, hrun⟩ := hnode.negativeLeaf
+    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn hn0 hgb hsymm
+    hloop hlevel hpath hcheap hnum hdisc hef hneg hgen hearly hlive
+  exact ⟨outBest, hnode.earlyOther hn hn0 hlevel hpath hnum hearly
+    hlive hrun⟩
+
 /-- A non-generator leaf whose return remains at the current boundary is
 an ordinary exact off-path node run. -/
 theorem doneLeaf {G : Colored n k} {ctx : Ctx}
