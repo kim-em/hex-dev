@@ -148,6 +148,40 @@ theorem breakout {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
 
 end FixedCells
 
+/-- Passing a fix test for a larger fixed set implies passing it for any
+pointwise smaller set. -/
+theorem fixTest_mono {small large fix : Nat}
+    (hsub : ∀ v, elem small v = true → elem large v = true)
+    (hfix : (large &&& fix == large) = true) :
+    (small &&& fix == small) = true := by
+  apply beq_iff_eq.mpr
+  apply Nat.eq_of_testBit_eq
+  intro v
+  change elem (small &&& fix) v = elem small v
+  rw [elem_and]
+  rcases hs : elem small v with _ | _
+  · simp
+  · simp only [Bool.true_and]
+    exact elem_of_and_eq hfix (hsub v hs)
+
+/-- The bounded automorphism workspace is valid at the current frame for
+every entry whose fixed set covers the current search path. -/
+@[expose] def LocalAutos (ctx : Ctx) (level : Nat) (st : SearchSt) : Prop :=
+  ∀ p ∈ st.autos.toList,
+    (st.fixedpts &&& p.1 == st.fixedpts) = true →
+      PairOk ctx.g st.ptn st.lab level ctx.n p.1 p.2
+
+namespace LocalAutos
+
+/-- An empty workspace is locally valid. -/
+theorem empty {ctx : Ctx} {level : Nat} {st : SearchSt}
+    (h : st.autos = #[]) : LocalAutos ctx level st := by
+  intro p hp
+  rw [h] at hp
+  simp at hp
+
+end LocalAutos
+
 /-- Reference history, ordered live guides, and stabilization of every
 ancestor frame to which the current node may return. -/
 structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
