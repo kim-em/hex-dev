@@ -91,6 +91,37 @@ structure LoopInv (G : Colored n k) (ctx : Ctx)
 
 namespace LoopInv
 
+/-- A fresh sweep freezes the current equitable target-cell frame.  The
+strict guide bounds make current-level frame references vacuous before
+the first child is explored. -/
+theorem start {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (h : RunInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hfirst : st.gcaFirst < level) (hcanon : st.gcaCanon < level)
+    (heq : Equitable ctx level st.lab st.ptn)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n)
+    (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
+      st.ptn[q]! = ctx.n + 2)
+    (hfuel : level + 1 + specFuel ≤ ctx.n + 1) :
+    LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      st.lab st.ptn tc len (windowSet st.lab tc len) none st st best
+      trail := by
+  refine ⟨hn, hn0, hlevel, h.searchOk, h,
+    SearchOut.refl G level level h.searchOk.reach, rfl, rfl, heq, hcell,
+    hlen, hrange, hvals, ?_, sweepCover_init ctx tcLevel specFuel level
+      codes st.lab st.ptn tc len numcells best, ?_, hfuel⟩
+  · intro v hv
+    exact elem_windowSet.mp hv
+  · constructor
+    · intro he
+      exact (Nat.ne_of_lt hfirst he).elim
+    · intro he
+      exact (Nat.ne_of_lt hcanon he).elim
+
 theorem frozenLabSize {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
