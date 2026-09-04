@@ -182,6 +182,19 @@ theorem push {st : SearchSt} {pair : Nat × Nat} (h : WorkspaceOk st) :
     · simp only [hfull, ite_true, Array.size_set!]
       exact hsize
 
+/-- `pushAuto` does not change the configured workspace capacity. -/
+theorem pushCap (st : SearchSt) (pair : Nat × Nat) :
+    (pushAuto st pair).wsCap = st.wsCap := by
+  unfold pushAuto
+  split <;> rfl
+
+/-- `processnode` never changes the configured workspace capacity. -/
+theorem processCap (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.wsCap = st.wsCap := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.wsCap), pushCap, ite_self]
+
 end WorkspaceOk
 
 /-- Recording a valid pair keeps the ledger, in both the push and the
