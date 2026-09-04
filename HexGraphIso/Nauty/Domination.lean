@@ -911,6 +911,40 @@ theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
     simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
+/-- A row-tied code-two return either uses the canonical ancestor, or its
+special first-ancestor return is backed by a strictly smaller orbit
+pointer in the output state. -/
+theorem processnode_rowTie_orbit {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    (processnode ctx level numcells st).1 = Int.ofNat st.gcaCanon ∨
+      ((processnode ctx level numcells st).1 = Int.ofNat st.gcaFirst ∧
+        (processnode ctx level numcells st).2.orbits[
+          (processnode ctx level numcells st).2.cosetindex]! <
+            (processnode ctx level numcells st).2.cosetindex) := by
+  have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    rw [hcc]
+    omega
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.1),
+    apply_ite (fun x : Int × SearchSt => x.2),
+    apply_ite SearchSt.orbits, apply_ite SearchSt.cosetindex,
+    pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex,
+    pushAuto_gcaCanon, pushAuto_gcaFirst, ite_self]
+  rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
+  simp [hg, hnc, hef, hcc, hge, htie, id_run_eq]
+  repeat' split
+  all_goals first
+  | exact Or.inl rfl
+  | exact Or.inr ⟨rfl, by omega⟩
+  | rfl
+  | omega
+
 /-- A first-path-agreeing leaf failing the admission gate behaves,
 in the return level and the whole comparison state, exactly as the
 same state entered off the first path: the gate's only effect is the
