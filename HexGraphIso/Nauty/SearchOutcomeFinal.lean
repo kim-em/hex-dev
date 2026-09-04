@@ -329,6 +329,94 @@ structure CanonTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
       st.canonlab[entry.frame.tc]! =
         entry.frame.rsLab[entry.frame.tc + entry.offset]!
 
+/-- A comparison-frozen return retains the full deep code path while
+exposing any ancestor prefix through `stem`.  The floor clause says the
+return does not jump above the recorded downward divergence. -/
+inductive FrozenOut (ctx : Ctx) (stem : List Nat) (out : SearchSt)
+    (best : Option Key) (r : Int) : Prop where
+  | mk (current : Nat) (codes bestCodes : List Nat)
+      (codeInv : CodeCmpInv ctx.n codes bestCodes out.canoncode
+        out.canonlevel out.eqlevCanon (-1))
+      (depth : current = codes.length)
+      (stemEq : codes.take stem.length = stem)
+      (incumbent : best = some (incKey ctx bestCodes out.canonlab))
+      (floor : Int.ofNat out.eqlevCanon.toNat ≤ r) :
+      FrozenOut ctx stem out best r
+
+namespace FrozenOut
+
+/-- Every subtree below an exposed ancestor prefix is below the installed
+incumbent once that ancestor lies strictly above the frozen return. -/
+theorem keyLe {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r)
+    {level : Nat} (hlevel : level = stem.length)
+    (hbelow : r < Int.ofNat level) (K : Key) :
+    ∃ b, best = some b ∧ keyLe (prefixKey stem K) b := by
+  rcases h with ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinc, hfloor⟩
+  have hM : out.eqlevCanon.toNat < level := by
+    have hi : Int.ofNat out.eqlevCanon.toNat < Int.ofNat level :=
+      Int.lt_of_le_of_lt hfloor hbelow
+    exact Int.ofNat_lt.mp hi
+  have hMcs : level ≤ codes.length := by
+    have hlen := congrArg List.length hstem
+    simp only [List.length_take] at hlen
+    omega
+  have htake : codes.take level = stem := by
+    rw [hlevel]
+    exact hstem
+  refine ⟨incKey ctx bestCodes out.canonlab, hinc, ?_⟩
+  rw [← htake]
+  exact frozen_take_keyLe hcode hM hMcs K
+
+/-- The frozen verdict bounds every still-live child of an abandoned
+ancestor sweep. -/
+theorem liveKeyLe {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r)
+    {tcLevel specFuel level tail tc numcells tcell : Nat}
+    {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    (hlevel : level = stem.length) (hbelow : r < Int.ofNat level) :
+    ∀ o, ChildLive rsLab tc (tail + 1) tcell cursor o →
+      ∃ b, best = some b ∧ Hex.GraphIso.Nauty.keyLe
+        (sweepKey ctx tcLevel specFuel level stem rsLab rsPtn tc numcells o)
+        b := by
+  intro o _
+  simpa only [sweepKey] using h.keyLe hlevel hbelow
+    (childKey ctx tcLevel specFuel level rsLab rsPtn tc numcells o)
+
+/-- A frozen verdict always names the installed incumbent that caused the
+comparison to stop. -/
+theorem present {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r) :
+    ∃ b, best = some b := by
+  rcases h with ⟨_, _, bestCodes, _, _, _, hbest, _⟩
+  exact ⟨incKey ctx bestCodes out.canonlab, hbest⟩
+
+/-- Coverage of the explored prefix and a frozen comparison of the live
+suffix recover the exact maximum of an abandoned parent sweep. -/
+theorem exactLoop {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {outBest best : Option Key} {r : Int}
+    {tcLevel specFuel level tail tc numcells tcell : Nat}
+    {rsLab rsPtn : Array Nat} {cursor : Option Nat} {bound : Key}
+    (h : FrozenOut ctx stem out outBest r)
+    (hlevel : level = stem.length) (hbelow : r < Int.ofNat level)
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level stem rsLab rsPtn tc numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level stem rsLab rsPtn tc
+          numcells (o + 1)))
+    (hcover : SweepCover ctx tcLevel specFuel level stem rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor outBest)
+    (hsound : LoopSound ctx bound best outBest) :
+    outBest = some (incMax best bound) := by
+  obtain ⟨b, hout⟩ := h.present
+  apply SweepCover.exactLive hbound hcover hsound hout
+  intro o ho
+  obtain ⟨b', hout', hle⟩ := h.liveKeyLe hlevel hbelow o ho
+  have hbb : b' = b := Option.some.inj (hout'.symm.trans hout)
+  rwa [hbb] at hle
+
+end FrozenOut
+
 /-- What a first-path node may export.  A locally absorbed/pruned node
 exports its exact maximum; a genuine generator unwind directly names the
 first or canonical reference child.  The orbit-pointer arm is resolved by
