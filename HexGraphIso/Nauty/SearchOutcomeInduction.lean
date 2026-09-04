@@ -531,6 +531,26 @@ theorem RunPrep.run {G : Colored n k} {ctx : Ctx}
 
 /-! # Node-entry refinement state -/
 
+/-- Equitability depends only on the vertex sets of the partition cells,
+not on their order inside each cell. -/
+theorem Equitable.ofCellsPerm {ctx : Ctx} {level : Nat}
+    {lab lab' ptn : Array Nat}
+    (heq : Equitable ctx level lab ptn)
+    (hperm : cellsPerm ptn level lab lab')
+    (hpsz : ptn.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    Equitable ctx level lab' ptn := by
+  intro cd hcd de hde
+  have hcdCell := cells_isCell (Nat.le_of_eq hpsz.symm) hend cd hcd
+  have hdeCell := cells_isCell (Nat.le_of_eq hpsz.symm) hend de hde
+  have hcdPerm := hperm cd.1 (cd.2 + 1 - cd.1) hcdCell
+  have hdePerm := hperm de.1 (de.2 + 1 - de.1) hdeCell
+  have hwork : worksetOf lab de.1 de.2 = worksetOf lab' de.1 de.2 :=
+    worksetOf_perm hdePerm
+  rw [splitDone_iff_constOn]
+  rw [← hwork]
+  exact (splitDone_iff_constOn.mp (heq cd hcd de hde)).perm hcdPerm.symm
+
 /-- The extra certificate state needed exactly where a node is about to
 call `refine`.  `RunInv` is deliberately weaker because it also describes
 recovered parent-loop states, whose stale `active` field is never refined
