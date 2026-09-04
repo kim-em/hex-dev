@@ -686,6 +686,30 @@ theorem GuideStore.recover {ctx : Ctx} {tcLevel current : Nat}
       (Nat.lt_of_lt_of_le hlt hle)
     exact ⟨g, href.trans hcanonlab.symm, hloc⟩
 
+/-- A leaf event preserves every older guide when the first reference is
+unchanged and any changed canonical reference is installed at the current
+level. -/
+theorem GuideStore.processnode {ctx : Ctx} {tcLevel level : Nat}
+    {st out : SearchSt} {before best : Option Key} {trail : FrameTrail}
+    (h : GuideStore ctx tcLevel level st before trail)
+    (hinc : IncGrows before best)
+    (hfirst : out.gcaFirst = st.gcaFirst)
+    (hfirstlab : out.firstlab = st.firstlab)
+    (hcanon : out.gcaCanon < level →
+      out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab) :
+    GuideStore ctx tcLevel level out best trail := by
+  have hgrow := h.grow hinc
+  constructor
+  · intro hp hlt
+    rw [hfirst] at hp hlt ⊢
+    obtain ⟨g, href, hloc⟩ := hgrow.first hp hlt
+    exact ⟨g, href.trans hfirstlab.symm, hloc⟩
+  · intro hp hlt
+    obtain ⟨hgca, href⟩ := hcanon hlt
+    rw [hgca] at hp hlt ⊢
+    obtain ⟨g, href', hloc⟩ := hgrow.canon hp hlt
+    exact ⟨g, href'.trans href.symm, hloc⟩
+
 /-! # Event state and recovery -/
 
 /-- State returned by a node event before its caller applies `recover`.
@@ -845,6 +869,11 @@ private theorem pushAuto_canonLevel (st : SearchSt) (p : Nat × Nat) :
   rw [pushAuto]
   split <;> rfl
 
+private theorem pushAuto_gcaCanon' (st : SearchSt) (p : Nat × Nat) :
+    (pushAuto st p).gcaCanon = st.gcaCanon := by
+  rw [pushAuto]
+  split <;> rfl
+
 private theorem ite_nonzero (p : Prop) [Decidable p] {a b : Nat}
     (ha : a ≠ 0) (hb : b ≠ 0) : (if p then a else b) ≠ 0 := by
   split <;> assumption
@@ -871,6 +900,24 @@ theorem processnode_canonRef (ctx : Ctx) (level numcells : Nat)
     | exact Or.inl rfl
     | exact Or.inr rfl
     | apply ite_or' (P := fun y => y = st.canonlab ∨ y = st.lab)
+
+/-- `processnode` either preserves the canonical guide and its reference,
+or installs the current leaf with the guide parked at the current level. -/
+theorem processnode_canonGuide (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    ((processnode ctx level numcells st).2.gcaCanon = st.gcaCanon ∧
+      (processnode ctx level numcells st).2.canonlab = st.canonlab) ∨
+    (processnode ctx level numcells st).2.gcaCanon = level := by
+  show (fun x : Int × SearchSt =>
+      (x.2.gcaCanon = st.gcaCanon ∧ x.2.canonlab = st.canonlab) ∨
+        x.2.gcaCanon = level) (processnode ctx level numcells st)
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt =>
+      (x.2.gcaCanon = st.gcaCanon ∧ x.2.canonlab = st.canonlab) ∨
+        x.2.gcaCanon = level),
+    pushAuto_gcaCanon', pushAuto_canonRef, ite_self]
+  simp
 
 /-- Leaf-reference validity crosses every `processnode` outcome. -/
 theorem LeafRefsOk.processnode {G : Colored n k} {ctx : Ctx}
@@ -1453,5 +1500,106 @@ theorem RunInv.processnodeAutos {ctx : Ctx} {G : Colored n k}
     h.leafRefs h.canongInv h.codeInv
   intro hne
   exact h.cheap.ready hbound hne
+
+/-- The prepared state also discharges the root-ledger premise of a leaf
+event; unlike `RunInv`, it permits the positive comparison sign produced
+by the immediately preceding code comparison. -/
+theorem RunPrep.processnodeAutos {ctx : Ctx} {G : Colored n k}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail)
+    (hbound : st.noncheaplevel ≤ level) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  apply h.autosOk.processnode hn hn0 hgb hsymm hloop h.searchOk
+    h.leafRefs h.canongInv h.codeInv
+  intro hne
+  exact h.cheap.ready hbound hne
+
+/-- An ordinary off-first-path discrete leaf turns the prepared state
+into an event state whose incumbent is exactly the maximum of the old
+incumbent and that leaf.  The return disjunction is retained for the
+node outcome split. -/
+theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = cs.length)
+    (hbound : st.noncheaplevel ≤ level)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail) :
+    ∃ bs' : List Nat,
+      RunEvent G ctx tcLevel level cs bs' fs
+        (processnode ctx level numcells st).2
+        (some (incKey ctx bs'
+          (processnode ctx level numcells st).2.canonlab)) trail ∧
+      incKey ctx bs' (processnode ctx level numcells st).2.canonlab =
+        keyMax (incKey ctx bs st.canonlab) (pathLeafKey ctx cs st.lab) ∧
+      ((processnode ctx level numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∨
+        (processnode ctx level numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel
+            (Int.ofNat cs.length) ∨
+        (processnode ctx level numcells st).1 =
+          Int.ofNat st.gcaFirst ∨
+        (processnode ctx level numcells st).1 =
+          Int.ofNat st.gcaCanon) := by
+  subst level
+  have hcsn : cs.length ≤ n := by
+    have hb := bcount_le st.ptn cs.length n
+    have hc := h.searchOk.bc
+    omega
+  obtain ⟨bs', hmax, hcanong, hmachines, hreturn⟩ :=
+    processnode_leaf h.codeInv h.canongInv hcsn hef hnc
+  have hcs : cs ≠ [] := by
+    intro he
+    subst cs
+    simp at hlevel
+  have hbs' : bs' ≠ [] :=
+    incKey_max_nonempty h.bestCodes hcs hmax
+  have hinc : IncGrows best
+      (some (incKey ctx bs'
+        (processnode ctx cs.length numcells st).2.canonlab)) := by
+    intro b hb
+    rw [h.incumbent] at hb
+    injection hb with hb
+    subst b
+    refine ⟨incKey ctx bs'
+      (processnode ctx cs.length numcells st).2.canonlab, rfl, ?_⟩
+    rw [hmax]
+    exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
+  obtain ⟨hlab, hptn, heqFirst, hfirstCode, hfirstlab, -, hgcaFirst,
+      -, -⟩ := processnode_frames ctx cs.length numcells st
+  have hguides : GuideStore ctx tcLevel cs.length
+      (processnode ctx cs.length numcells st).2
+      (some (incKey ctx bs'
+        (processnode ctx cs.length numcells st).2.canonlab)) trail := by
+    apply h.guides.processnode hinc hgcaFirst hfirstlab
+    intro hlt
+    rcases processnode_canonGuide ctx cs.length numcells st with
+      hold | hnew
+    · exact hold
+    · rw [hnew] at hlt
+      omega
+  refine ⟨bs', ?_, hmax, hreturn⟩
+  refine ⟨hmachines, ?_, hcanong, ?_, ?_, h.cheap.processnode,
+    h.leafRefs.processnode h.searchOk, hguides, hbs', rfl⟩
+  · rw [hfirstCode, heqFirst]
+    exact h.firstInv
+  · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
+      h.searchOk h.canongInv h.genTraceOk
+  · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
 
 end Hex.GraphIso.Nauty
