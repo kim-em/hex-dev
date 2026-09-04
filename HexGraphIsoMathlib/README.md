@@ -45,9 +45,9 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
 - `Colored V k` is a `SimpleGraph V` on a `Fintype` together with a
   surjective ordered colouring into `Fin k`. `Colored.ofColor?` is the
   checked constructor; it declines rather than silently compressing or
-  reordering unused colours. `Colored.singleColor` is the one-cell view of a bare
-  `SimpleGraph` over a nonempty vertex type, and the zero-colour empty graph
-  otherwise.
+  reordering unused colours. `Colored.singleColor` is the one-cell view
+  of a bare `SimpleGraph` over a nonempty vertex type, and the
+  zero-colour empty graph otherwise.
 - `Colored.Iso` and `Colored.Isomorphic` are the Mathlib-side
   colour-preserving isomorphism and its `Nonempty` form.
 - `encode` transports a Mathlib coloured graph along an equivalence

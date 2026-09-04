@@ -69,8 +69,9 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
 - `CanonCert` and `checkCanon` certify a canonical form; `DiffCert` and
   `checkDiff` certify non-isomorphism. Both are replayed by the kernel.
 - `graph_iso` closes closed goals of the form `Isomorphic G H` and
-  `¬ Isomorphic G H`, coloured or uncoloured, accepting `(maxNodes := ...)`, `(maxCertNodes := ...)`,
-  and `(maxCheckerSteps := ...)` overrides.
+  `¬ Isomorphic G H`, coloured or uncoloured, accepting
+  `(maxNodes := ...)`, `(maxCertNodes := ...)`, and
+  `(maxCheckerSteps := ...)` overrides.
 - `Hex.GraphIso.Reference` is an independent exhaustive canonical form kept
   as a cross-check of the production pipeline.
 

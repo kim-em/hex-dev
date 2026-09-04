@@ -767,7 +767,8 @@ interesting because both graphs have ten vertices and every vertex has degree
 three. Degree refinement alone does not settle it.
 
 The chapter also gives the Petersen graph three ordered two-colourings with
-identical cell sizes, which is where the coloured surface enters. Two colourings mark different edges as colour zero.
+identical cell sizes, which is where the coloured surface enters. Two
+colourings mark different edges as colour zero.
 `graph_iso` proves them isomorphic and returns a colour-preserving transporter.
 The third marks a nonadjacent pair as colour zero. `graph_iso` proves it is not
 isomorphic to either edge-marked colouring. This is the manual's compact
