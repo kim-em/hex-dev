@@ -593,6 +593,66 @@ theorem stInc_leafFinish (ctx : Ctx) (level : Nat) (st : SearchSt) :
   rw [leafFinish]
   split <;> split <;> rfl
 
+/-- The sole state adjustment after a completed first-path child sweep. -/
+@[expose] def firstFinish (level tcellsize index : Nat)
+    (st : SearchSt) : SearchSt :=
+  if tcellsize == index ∧ st.allsamelevel == level + 1 then
+    { st with allsamelevel := st.allsamelevel - 1 }
+  else st
+
+/-- First-path sweep cleanup does not alter the installed incumbent. -/
+theorem stInc_firstFinish (ctx : Ctx) (level tcellsize index : Nat)
+    (st : SearchSt) :
+    stInc ctx (firstFinish level tcellsize index st) = stInc ctx st := by
+  rw [firstFinish]
+  split <;> rfl
+
+/-- First-path sweep cleanup does not uninstall an incumbent. -/
+theorem canonlevel_firstFinish (level tcellsize index : Nat)
+    (st : SearchSt) :
+    (firstFinish level tcellsize index st).canonlevel = st.canonlevel := by
+  rw [firstFinish]
+  split <;> rfl
+
+/-- A generator payload is insensitive to the first-path exit counter. -/
+theorem Unwind.firstFinish {ctx : Ctx} {tcLevel target level size index : Nat}
+    {st : SearchSt} {best : Option Key}
+    (h : Unwind ctx tcLevel target st best) :
+    Unwind ctx tcLevel target (firstFinish level size index st) best := by
+  cases h with
+  | first anchor carrier =>
+      apply Unwind.first anchor
+      rw [Nauty.firstFinish]
+      split <;> exact carrier
+  | canon anchor carrier =>
+      apply Unwind.canon anchor
+      rw [Nauty.firstFinish]
+      split <;> exact carrier
+
+/-- Every node outcome crosses the first-path exit counter update. -/
+theorem NodeResult.firstFinish {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells size index : Nat}
+    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {r : Int}
+    (hfuel : runFuel ≠ 0)
+    (h : NodeResult ctx tcLevel specFuel runFuel level cs st out numcells
+      best outBest r) :
+    NodeResult ctx tcLevel specFuel runFuel level cs st
+      (firstFinish level size index out) numcells best outBest r := by
+  cases h with
+  | complete sound returned installed read full =>
+      exact .complete sound returned
+        (by rw [canonlevel_firstFinish]; exact installed)
+        ((stInc_firstFinish ctx level size index out).trans read) full
+  | unwind sound target returned below payload =>
+      exact .unwind sound target returned below payload.firstFinish
+  | pruned sound target returned below installed read full =>
+      exact .pruned sound target returned below
+        (by rw [canonlevel_firstFinish]; exact installed)
+        ((stInc_firstFinish ctx level size index out).trans read) full
+  | exhausted empty returned unchanged bestUnchanged =>
+      exact (hfuel empty).elim
+
 /-- The complementary off-path leaf case completes after its empty child
 sweep, retaining the exact leaf maximum installed by `processnode`. -/
 theorem otherNode_leaf_complete {ctx : Ctx} {nn inf tcLevel specFuel fuel
