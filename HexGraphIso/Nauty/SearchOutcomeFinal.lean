@@ -282,6 +282,79 @@ structure LoopProof (G : Colored n k) (ctx : Ctx)
     outBest receiptTrail eventTrail r
   fixed : out.fixedpts = st.fixedpts
 
+/-- The first leaf remembers every child selected on the unique initial
+descent.  Unlike `RefTrail.first`, this history is deliberately independent
+of the mutable `gcaFirst` return control: outer first-path loops reset that
+control while the leaf remains a descendant of all their frozen frames. -/
+structure FirstTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
+    (trail : FrameTrail) : Prop where
+  reach : ∀ target entry, target < current →
+    trail target = some entry →
+    cellsPerm entry.frame.rsPtn target entry.frame.rsLab st.firstlab
+  picked : ∀ target entry, target < current →
+    trail target = some entry →
+    ∃ len, IsCell entry.frame.rsPtn target entry.frame.tc len ∧
+      entry.offset < len ∧
+      st.firstlab[entry.frame.tc]! =
+        entry.frame.rsLab[entry.frame.tc + entry.offset]!
+
+/-- A first-path node proof additionally retains the unconditional history
+of the first leaf through every active ancestor frame. -/
+structure FirstProof (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel level : Nat) (cs fs : List Nat)
+    (st out : SearchSt) (numcells : Nat) (outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
+  node : NodeProof G ctx tcLevel specFuel runFuel level cs fs st out
+    numcells none outBest receiptTrail eventTrail r
+  trail : FirstTrail ctx level out eventTrail
+
+/-- A first-path loop keeps the current frozen frame in the first leaf's
+history until the loop is converted back to its parent node result. -/
+structure FirstLoopProof (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat)
+    (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
+    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
+    (st out : SearchSt) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
+  loop : LoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+    fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+    receiptTrail eventTrail r
+  trail : FirstTrail ctx (level + 1) out eventTrail
+
+namespace FirstTrail
+
+/-- Reindex first-leaf history along an output trail extension and a state
+update that leaves the stored first leaf unchanged. -/
+theorem retrail {ctx : Ctx} {current : Nat} {st out : SearchSt}
+    {source dest : FrameTrail}
+    (h : FirstTrail ctx current st source)
+    (hfirst : out.firstlab = st.firstlab)
+    (hext : TrailExt current source dest) :
+    FirstTrail ctx current out dest := by
+  constructor
+  · intro target entry htarget hentry
+    rw [hext target htarget] at hentry
+    rw [hfirst]
+    exact h.reach target entry htarget hentry
+  · intro target entry htarget hentry
+    rw [hext target htarget] at hentry
+    obtain ⟨len, hcell, hoff, hat⟩ :=
+      h.picked target entry htarget hentry
+    exact ⟨len, hcell, hoff, by simpa only [hfirst] using hat⟩
+
+/-- Forgetting the newest active frame gives the history expected by its
+parent node. -/
+theorem lower {ctx : Ctx} {current : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : FirstTrail ctx (current + 1) st trail) :
+    FirstTrail ctx current st trail := by
+  constructor
+  · intro target entry htarget hentry
+    exact h.reach target entry (by omega) hentry
+  · intro target entry htarget hentry
+    exact h.picked target entry (by omega) hentry
+
+end FirstTrail
+
 /-- A completed child, cleanup, and recovery restore both parent path
 facts.  The selected vertex is fresh because it lies in a non-singleton
 target cell while all older fixed vertices occupy singleton cells. -/
@@ -431,6 +504,45 @@ theorem terminalProof {G : Colored n k} {ctx : Ctx}
   dsimp only
   exact ⟨h.terminalOutcome hn hn0 hlevel hnum,
     firstPath_discrete_fixedpts ctx inf tcLevel fuel level numcells st hnum⟩
+
+/-- The first leaf also turns the accumulated active descent into an
+unconditional history of the selected child at every ancestor frame. -/
+theorem terminalFirstProof {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = cs.length + 1)
+    (h : FirstInv G ctx level cs numcells st trail)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let full := cs ++ [rs.longcode]
+    let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
+    FirstProof G ctx tcLevel (specFuel + 1) (fuel + 1) level cs full st
+      out.2 numcells (some (pathLeafKey ctx full rs.lab)) trail trail
+      out.1 := by
+  dsimp only
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let full := cs ++ [rs.longcode]
+  let leaf := firstLeafSt ctx level numcells st
+  have hstate := firstPath_discrete_state ctx inf tcLevel fuel level
+    numcells st hnum
+  have hrun : RunInv G ctx tcLevel level full full full rs.numcells
+      (firstterminal level leaf) (some (pathLeafKey ctx full rs.lab))
+      trail := by
+    simpa only [rs, full, leaf] using h.terminal hn hn0 hlevel
+  constructor
+  · exact h.terminalProof hn hn0 hlevel hnum
+  · rw [hstate]
+    constructor
+    · intro target entry htarget hentry
+      rw [firstterminal_firstlab]
+      exact hrun.trailOk.reach target entry htarget hentry
+    · intro target entry htarget hentry
+      obtain ⟨len, hcell, hoff, -, -, hat⟩ :=
+        hrun.trailOk.picked target entry htarget hentry
+      refine ⟨len, hcell, hoff, ?_⟩
+      rw [firstterminal_firstlab]
+      exact hat
 
 /-- The executable first-child prefix preserves and extends the root path
 facts before the first incumbent exists. -/
