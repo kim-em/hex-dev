@@ -693,6 +693,7 @@ offset are stored explicitly because neither `gcaFirst` nor `gcaCanon`
 retains this path history. -/
 structure Anchor (ctx : Ctx) (tcLevel target : Nat)
     (out : SearchSt) where
+  positive : 1 ≤ target
   specFuel : Nat
   codes : List Nat
   rsLab : Array Nat
@@ -950,5 +951,49 @@ theorem LoopResult.step {ctx : Ctx}
         (Nat.le_trans (by
           have := cursorRank_step ha
           omega) progress) bounded
+
+/-- The corrected node outcome closes domination at the root.  Exhaustion
+is impossible with the root runtime fuel, and every unwind anchor has a
+positive target, so neither non-complete constructor survives at level
+one. -/
+theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
+    (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
+      (rootSt n (initialPartition G).1 (initialPartition G).2)
+      (rootOut n (rowsOf G) (initialPartition G).1
+        (initialPartition G).2)
+      (initialPartition G).2.length
+      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+        (initialPartition G).2.length
+        (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
+    canonSpecKey G = tracedKey G := by
+  cases hroot with
+  | complete sound returned installed full =>
+      rw [stInc_final hn0 installed, stInc_rootSt, incMax,
+        nodeKey_root hn0] at full
+      exact (Option.some.inj full).symm
+  | unwind sound target returned below payload =>
+      cases payload with
+      | first anchor carrier =>
+          exact ((Nat.not_lt_of_ge anchor.positive) below).elim
+      | canon anchor carrier =>
+          exact ((Nat.not_lt_of_ge anchor.positive) below).elim
+      | frozen anchor =>
+          exact ((Nat.not_lt_of_ge anchor.positive) below).elim
+  | exhausted empty returned unchanged => omega
+
+/-- Certificate-checked canonicalization is total once the corrected root
+node outcome has been established. -/
+theorem certifyCanon?_isSome_of_result {n k : Nat} {G : Colored n k}
+    (hn0 : n ≠ 0)
+    (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
+      (rootSt n (initialPartition G).1 (initialPartition G).2)
+      (rootOut n (rowsOf G) (initialPartition G).1
+        (initialPartition G).2)
+      (initialPartition G).2.length
+      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+        (initialPartition G).2.length
+        (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
+    (certifyCanon? G).isSome :=
+  certifyCanon?_isSome_of_keyEq G (dominated_of_result hn0 hroot)
 
 end Hex.GraphIso.Nauty
