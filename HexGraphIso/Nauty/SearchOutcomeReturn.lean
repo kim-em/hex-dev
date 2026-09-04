@@ -47,6 +47,14 @@ theorem empty {trail : FrameTrail} {r : Int} {st : SearchSt}
   rw [h] at hγ
   simp at hγ
 
+/-- Return stabilization depends only on the recorded-generator store. -/
+theorem ofGenTraceEq {trail : FrameTrail} {r : Int} {st out : SearchSt}
+    (h : ReturnStab trail r st) (heq : out.genTrace = st.genTrace) :
+    ReturnStab trail r out := by
+  intro level entry hlevel hentry γ hγ
+  apply h level entry hlevel hentry γ
+  rwa [heq] at hγ
+
 /-- Fixed-point bookkeeping does not affect return stabilization. -/
 theorem setFixed {trail : FrameTrail} {r : Int} {st : SearchSt}
     (h : ReturnStab trail r st) (fixedpts : Nat) :
