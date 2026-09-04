@@ -126,6 +126,24 @@ structure LoopRun (G : Colored n k) (ctx : Ctx)
 
 namespace LoopExit
 
+/-- At a small-cell node, exactness of the selected child is exactness of
+the whole sibling sweep, so the saved-boundary return remains a cheap exit
+after fixed-point cleanup. -/
+theorem ofCheap {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level boundary tc len numcells tcell
+      fixedpts : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
+    {bound childKey : Key} {st out : SearchSt}
+    {best outBest : Option Key} {trail : FrameTrail}
+    (hboundary : 1 ≤ boundary) (hbelow : boundary ≤ level)
+    (hbound : bound = childKey)
+    (hexact : outBest = some (incMax best childKey)) :
+    LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab rsPtn
+      tc len numcells tcell cursor bound st { out with fixedpts := fixedpts }
+      best outBest trail (some (Int.ofNat boundary - 1)) := by
+  apply LoopExit.cheap boundary rfl hboundary hbelow
+  rwa [hbound]
+
 /-- An early frozen child absorbs both the explored prefix and every live
 suffix child, yielding the exact loop maximum while retaining the frozen
 payload for the next enclosing frame. -/
@@ -154,6 +172,68 @@ theorem ofFrozen {ctx : Ctx}
   · rw [hlen] at hcover
     exact hfreeze.exactLoop hlevel hbelow hbound hcover hsound
   · exact hfreeze'
+
+/-- Convert an integer-valued loop exit to the enclosing node, shortening
+the frozen comparison prefix at the node boundary. -/
+theorem toNodeSome {ctx : Ctx}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level
+      tc len nodeNumcells loopNumcells tcell : Nat}
+    {nodeCodes loopCodes : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {best outBest : Option Key} {trail : FrameTrail} {value : Int}
+    (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
+      nodeSt nodeNumcells)
+    (hprefix : loopCodes.take nodeCodes.length = nodeCodes)
+    (h : LoopExit ctx tcLevel loopSpecFuel runFuel loopFuel level loopCodes
+      rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out best
+      outBest trail (some value)) :
+    NodeExit ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCodes nodeSt out
+      nodeNumcells best outBest trail value := by
+  cases h with
+  | done returned => cases returned
+  | unwind target returned below sound payload located =>
+      refine NodeExit.unwind (target := target)
+        (returned := Option.some.inj returned) (below := below)
+        (sound := ?_) (payload := payload) located
+      constructor
+      · intro b hb
+        rw [← hbound]
+        exact sound.upper b hb
+      · exact sound.grows
+  | frozen value returned below exact freeze =>
+      cases Option.some.inj returned
+      apply NodeExit.frozen
+      · simpa only [← hbound] using exact
+      · exact (freeze.shrink hprefix)
+  | cheap boundary returned positive below exact =>
+      apply NodeExit.cheap boundary (Option.some.inj returned) positive below
+      simpa only [← hbound] using exact
+  | exhausted returned => cases returned
+
+/-- With nonzero cursor fuel, a `none` loop result is genuine completion
+and supplies the enclosing node's ordinary one-level return. -/
+theorem toNodeNone {ctx : Ctx}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level
+      tc len nodeNumcells loopNumcells tcell : Nat}
+    {nodeCodes loopCodes : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
+    {best outBest : Option Key} {trail : FrameTrail}
+    (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
+      nodeSt nodeNumcells)
+    (hfuel : loopFuel ≠ 0)
+    (h : LoopExit ctx tcLevel loopSpecFuel runFuel loopFuel level loopCodes
+      rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out best
+      outBest trail none) :
+    NodeExit ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCodes nodeSt out
+      nodeNumcells best outBest trail (Int.ofNat level - 1) := by
+  cases h with
+  | done _ exact =>
+      apply NodeExit.done rfl
+      simpa only [← hbound] using exact
+  | unwind _ returned => cases returned
+  | frozen _ returned => cases returned
+  | cheap _ returned => cases returned
+  | exhausted _ _ _ emptyFuel => exact (hfuel emptyFuel).elim
 
 end LoopExit
 
