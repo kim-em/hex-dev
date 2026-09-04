@@ -1231,15 +1231,6 @@ theorem getElem!_oob {arr : Array Nat} {q : Nat}
   · omega
   · rfl
 
-/-- A maximal run's end from its start is what `cellEnd` computes. -/
-theorem cellEnd_of_isCell_start {ptn : Array Nat} {level a len : Nat}
-    (h : IsCell ptn level a len) (hin : a + len - 1 < ptn.size) :
-    cellEnd ptn level a = a + len - 1 := by
-  obtain ⟨hpos, -, hint, hcend⟩ := h
-  rw [cellEnd]
-  exact cellEnd_go_unique _ a (a + len - 1) (by omega)
-    (fun i h1 h2 => hint i h1 (by omega)) hcend (by omega)
-
 /-- An in-range maximal run is a cell of the partition list. -/
 theorem mem_cells_of_isCell {ptn : Array Nat} {level nn a len : Nat}
     (hnn : nn ≤ ptn.size) (hpe : ptn[ptn.size - 1]! ≤ level)
@@ -1690,4 +1681,3 @@ theorem branch_leafRows {numcells : Nat}
 end Branch
 
 end Hex.GraphIso.Nauty
-

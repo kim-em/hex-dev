@@ -128,16 +128,31 @@ now precisely located:
    is path-determinism of the imperative descent, and no file builds
    it: the spec side has `specNode_codes_head`, but nothing states
    the transcription's descent as a function of its code path.
-2. **Seeding and preserving `FirstDescOk`.** The seed is the
-   degenerate descent at `firstterminal` (`firstlab` is the current
-   `lab`, both paths empty), which still needs `SubtreeOk` at that
-   node; a discrete node has `Equitable` by
-   `equitable_of_singletons` and `SmallShape` outright, so the seed
-   should follow from `IterOk` there. Preservation is the geometric
-   step: `childSt_eq_search_step` makes each imperative child step
-   definitionally a `DescPath.step`, and `maketargetcell_mem` gives
-   the step's cell hypotheses, so extending both descents in step is
-   bookkeeping rather than new mathematics.
+2. **Deriving `FirstDescOk` where the gate fires.** The seed is
+   proven (`firstterminal_firstDescOk`, on `subtreeOk_of_discrete`:
+   at a discrete node every cell is a singleton, which is
+   `SmallShape` outright and `Equitable` by
+   `equitable_of_singletons`, and every position carries a boundary,
+   so only `IterOk` is owed). The internal steps carry the clause:
+   the comparison step by frame (`otherNodePrep_firstDescOk`), and
+   the unwind whenever its clamp leaves the gate no wider than it
+   found it (`recover_firstDescOk`, whose side condition is the
+   unwind protocol's own bookkeeping).
+
+   What is *not* available is the clause as a `DomOk` field.
+   `firstDescOk_depth` shows why: same-target descents have equal
+   length, so a live gate forces the current labelling to be a leaf
+   at the first leaf's depth. An interior node the search passes with
+   the gate open has a strictly shorter path, so the clause is false
+   there. It must therefore be derived at the code-one gate, where
+   the arm's own discreteness supplies the depth, and that derivation
+   still owes the geometry: two descents from the gca whose target
+   projections agree. `flipData_of_subtreeOk` relates the gca's
+   children and `descPath_transport` carries a descent across that
+   relation preserving the projection, but concluding that the first
+   path's *actual* descent is the transported one is again the
+   path-determinism of obligation 1. The two obligations are one
+   piece of mathematics reached from two directions.
 
 With those two supplied, the mutual quartet induction on the
 `canonlab_cellsReach` skeleton (whose composite helpers
@@ -1754,6 +1769,160 @@ theorem rows_eq_of_firstDescOk {ctx : Ctx} {st : SearchSt}
   rw [← hUl, ← hVl]
   exact leafRows_eq_of_descPaths hgsz hgb hsymm hloop hS hU hV htcs
     hUd hVd
+
+/-! # Discreteness gives the node invariant
+
+`firstterminal` fires where the refinement is discrete. Every cell is
+then a singleton, which is `SmallShape` outright and `Equitable` by
+`equitable_of_singletons`, and every position carries a boundary, so
+the cell count is exact. The iteration invariant is the only content
+the run must supply. -/
+
+/-- A discrete partition has singleton cells. -/
+theorem cells_singleton_of_discrete {ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hdisc : ∀ q, q < nn → ptn[q]! ≤ level) :
+    ∀ cd ∈ cells ptn level nn, cd.2 = cd.1 := by
+  intro cd hcd
+  obtain ⟨c, e⟩ := cd
+  obtain ⟨hlt, -, he⟩ := (mem_cells_iff hnn hend).mp hcd
+  simp only at he ⊢
+  rw [he, cellEnd_of_closed (by omega) (by have := hdisc c hlt; omega)]
+
+/-- A discrete partition carries a boundary at every position. -/
+theorem bcount_of_discrete {ptn : Array Nat} {level nn : Nat}
+    (hdisc : ∀ q, q < nn → ptn[q]! ≤ level) :
+    bcount ptn level nn = nn := by
+  rw [bcount, List.countP_eq_length.mpr, List.length_range]
+  intro q hq
+  exact decide_eq_true (hdisc q (List.mem_range.mp hq))
+
+/-- Singleton cells are the first-branch shape. -/
+theorem smallShape_of_discrete {ctx : Ctx} {ptn : Array Nat}
+    {level : Nat} (hnn : ctx.n ≤ ptn.size)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hdisc : ∀ q, q < ctx.n → ptn[q]! ≤ level) :
+    SmallShape ctx level ptn := by
+  intro q hq
+  exact Or.inl (by
+    rw [cells_singleton_of_discrete hnn hend hdisc q hq]; omega)
+
+/-- The node invariant at a discrete node: only the iteration
+invariant and the cell count are owed. -/
+theorem subtreeOk_of_discrete {ctx : Ctx} {level : Nat} {r : RefineSt}
+    (hIt : IterOk ctx level r)
+    (hdisc : ∀ q, q < ctx.n → r.ptn[q]! ≤ level)
+    (hnc : r.numcells = ctx.n) :
+    SubtreeOk ctx level r := by
+  have hpsz := hIt.ok.ptnSize
+  refine ⟨hIt, ?_, ?_, Or.inl ?_⟩
+  · exact equitable_of_singletons
+      (cells_singleton_of_discrete (by omega) hIt.ok.ptnEnd hdisc)
+  · rw [bcount_of_discrete hdisc, hnc]
+  · exact smallShape_of_discrete (by omega) hIt.ok.ptnEnd hdisc
+
+/-! # Seeding and framing the descent bookkeeping
+
+The seed is degenerate: `firstterminal` installs the current
+labelling as the first leaf, so both descents are the empty path from
+the node itself. The comparison step carries the clause by frame, and
+the unwind carries it whenever the gate it leaves behind is dead. -/
+
+/-- `firstterminal` seeds the descent bookkeeping: the leaf it
+installs is both descents, taken from the node by the empty path. -/
+theorem firstterminal_firstDescOk {ctx : Ctx} {level : Nat}
+    {st : SearchSt} {r : RefineSt}
+    (hS : SubtreeOk ctx level r)
+    (hdisc : ∀ q, q < ctx.n → r.ptn[q]! ≤ level)
+    (hlab : r.lab = st.lab) :
+    FirstDescOk ctx (firstterminal level st) := by
+  intro _
+  rw [ftF_gcaFirst, ftF_lab, ftF_firstlab]
+  exact ⟨r, r, r, [], [], level, level, hS, .refl _ _, .refl _ _, rfl,
+    hdisc, hdisc, hlab, hlab⟩
+
+/-- The descent bookkeeping crosses a step that moves neither
+labelling nor the gate. -/
+theorem firstDescOk_of_eq {ctx : Ctx} {st st' : SearchSt}
+    (hlab : st'.lab = st.lab) (hfl : st'.firstlab = st.firstlab)
+    (hgca : st'.gcaFirst = st.gcaFirst)
+    (hncl : st'.noncheaplevel = st.noncheaplevel)
+    (h : FirstDescOk ctx st) : FirstDescOk ctx st' := by
+  intro hgate
+  rw [hncl, hgca] at hgate
+  rw [hgca, hlab, hfl]
+  exact h hgate
+
+/-- The comparison step writes only the incumbent machine, so the
+descent bookkeeping crosses it by frame. -/
+theorem otherNodePrep_firstDescOk {ctx : Ctx} {level code : Nat}
+    {st : SearchSt} (h : FirstDescOk ctx st) :
+    FirstDescOk ctx (otherNodePrep level code st) :=
+  firstDescOk_of_eq (prepF_lab level code st)
+    (prepF_firstlab level code st) (prepF_gcaFirst level code st)
+    (prepF_noncheaplevel level code st) h
+
+private theorem recF_noncheaplevel (n inf level : Nat)
+    (st : SearchSt) :
+    (recover n inf level st).noncheaplevel =
+      if level < st.noncheaplevel then level + 1
+      else st.noncheaplevel := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.noncheaplevel, ite_self]
+
+/-- The unwind carries the descent bookkeeping. It writes neither
+labelling nor the gca, and its clamp leaves the gate no wider than it
+found it: returning to a level at or above the gca pushes
+`noncheaplevel` past the gca, and returning where the gate level is
+already at or below the return level does not move it. The side
+condition is the unwind protocol's own bookkeeping. -/
+theorem recover_firstDescOk {ctx : Ctx} {n inf level : Nat}
+    {st : SearchSt} (h : FirstDescOk ctx st)
+    (hlvl : st.gcaFirst ≤ level ∨ st.noncheaplevel ≤ level) :
+    FirstDescOk ctx (recover n inf level st) := by
+  intro hgate
+  rw [recF_noncheaplevel, recF_gcaFirst] at hgate
+  rw [recF_gcaFirst, recF_lab, recF_firstlab]
+  refine h ?_
+  rcases hlvl with hle | hle <;> split at hgate <;> omega
+
+/-- A recorded descent advances the level by its path length. -/
+theorem descPath_level {ctx : Ctx} {level level' : Nat}
+    {r U : RefineSt} {p : List (Nat × Nat)}
+    (h : DescPath ctx level r p level' U) :
+    level' = level + p.length := by
+  induction h with
+  | refl => simp
+  | step tc e o hlvl hcell hne ho htail ih =>
+    simp only [List.length_cons]
+    omega
+
+/-- What the descent bookkeeping forces where it is claimed: the two
+descents run to the same depth, so the current labelling is a leaf at
+the first leaf's level. A node partway down a branch has a shorter
+path than the first leaf, so this clause cannot hold there under a
+live gate. That is why it is derived where the code-one gate fires
+rather than carried as a field of `DomOk`: as a field it would be
+false at every interior node the search passes with the gate open,
+and the events above establish only that nothing between the seed and
+the gate disturbs it. -/
+theorem firstDescOk_depth {ctx : Ctx} {st : SearchSt}
+    (h : FirstDescOk ctx st) (hgate : st.noncheaplevel ≤ st.gcaFirst) :
+    ∃ (U V : RefineSt) (l : Nat),
+      (∀ q, q < ctx.n → U.ptn[q]! ≤ l) ∧
+      (∀ q, q < ctx.n → V.ptn[q]! ≤ l) ∧
+      U.lab = st.lab ∧ V.lab = st.firstlab := by
+  obtain ⟨r, U, V, p₁, p₂, l₁, l₂, hS, hU, hV, htcs, hUd, hVd,
+    hUl, hVl⟩ := h hgate
+  have h1 := descPath_level hU
+  have h2 := descPath_level hV
+  have hlen : p₂.length = p₁.length := by
+    simpa using congrArg List.length htcs
+  have hll : l₂ = l₁ := by omega
+  refine ⟨U, V, l₁, hUd, ?_, hUl, hVl⟩
+  rw [← hll]
+  exact hVd
 
 /-! # Labelling facts of a reached state
 

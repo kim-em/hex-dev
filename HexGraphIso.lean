@@ -46,6 +46,7 @@ public import HexGraphIso.Nauty.SmallCellExotic
 public import HexGraphIso.Nauty.SmallCellExotic2
 public import HexGraphIso.Nauty.SmallCellExotic3
 public import HexGraphIso.Nauty.SmallCellAll
+public import HexGraphIso.Nauty.FirstPath
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.SearchReach
@@ -59,11 +60,15 @@ public import HexGraphIso.Nauty.SearchOrbit
 public import HexGraphIso.Nauty.Stabilize
 public import HexGraphIso.Nauty.AutosLedger
 public import HexGraphIso.Nauty.Domination
+public import HexGraphIso.Nauty.QuartetStmt
+public import HexGraphIso.Nauty.QuartetLoop
+public import HexGraphIso.Nauty.QuartetNode
 public import HexGraphIso.Nauty.OrbJoin
 public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.Equitable
 public import HexGraphIso.Nauty.EquitableStep
 public import HexGraphIso.Nauty.EquitableFix
+public import HexGraphIso.Nauty.TargetCell
 public import HexGraphIso.Ops
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
@@ -104,4 +109,3 @@ Everything under `Hex.GraphIso.Nauty` is the verified engine rather than
 the intended entry point: it is exported so that proofs can cite it, not
 because callers are expected to reach into it.
 -/
-
