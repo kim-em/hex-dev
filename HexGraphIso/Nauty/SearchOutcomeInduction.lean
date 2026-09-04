@@ -371,8 +371,6 @@ structure RunInv (G : Colored n k) (ctx : Ctx)
     st.eqlevCanon st.compCanon
   firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
-  stab : ∀ γ ∈ st.genTrace,
-    CellStab st.ptn level st.lab γ
   genTraceOk : GenTraceOk ctx st
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
@@ -392,12 +390,14 @@ theorem RunInv.dom {G : Colored n k} {ctx : Ctx}
     {st : SearchSt} {best : Option Key} {trail : FrameTrail}
     (h : RunInv G ctx tcLevel level cs bs fs numcells st best
       trail)
-    (hpath : level = cs.length + 1) :
+    (hpath : level = cs.length + 1)
+    (hstab : ∀ γ ∈ st.genTrace,
+      CellStab st.ptn level st.lab γ) :
     DomOk G ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
       cs bs fs numcells st := by
   subst level
-  exact ⟨h.searchOk, h.codeInv, h.firstInv, h.canongInv, h.stab,
+  exact ⟨h.searchOk, h.codeInv, h.firstInv, h.canongInv, hstab,
     h.genTraceOk, h.autosOk⟩
 
 /-- The semantic incumbent threaded by the induction agrees with the
@@ -430,8 +430,6 @@ structure RunPrep (G : Colored n k) (ctx : Ctx)
     st.eqlevCanon st.compCanon
   firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
-  stab : ∀ γ ∈ st.genTrace,
-    CellStab st.ptn level st.lab γ
   genTraceOk : GenTraceOk ctx st
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
@@ -444,16 +442,13 @@ structure RunPrep (G : Colored n k) (ctx : Ctx)
   incumbent : best = some (incKey ctx bs st.canonlab)
 
 /-- Refinement followed by the off-path comparison step enters
-`RunPrep`.  The active-set facts needed to transport generator cell
-stabilization are local to a node entry; loops establish them afresh for
-each child with `childNodeOk`. -/
+`RunPrep`.  Generator validity is global, while stabilization is proved
+only at the loop frame where a generator is consumed. -/
 theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
     {st : SearchSt} {best : Option Key} {trail : FrameTrail}
     (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hgsz : ctx.g.size = n)
     (hpath : level = cs.length + 1)
-    (hnode : NodeOk n level st.lab st.ptn st.active)
     (h : RunInv G ctx tcLevel level cs bs fs numcells st best trail) :
     RunPrep G ctx tcLevel level
       (cs ++ [(refine ctx level st.lab st.ptn st.active
@@ -499,20 +494,6 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
   have hok : SearchOk G level rs.numcells
       (otherLeafSt ctx level numcells st) :=
     refine_searchOk hn hn0 h.searchOk hlevel hlab hptn (Or.inl hcanon)
-  have hstab : ∀ γ ∈ (otherLeafSt ctx level numcells st).genTrace,
-      CellStab (otherLeafSt ctx level numcells st).ptn level
-        (otherLeafSt ctx level numcells st).lab γ := by
-    intro γ hγ
-    rw [hgen] at hγ
-    rw [hlab, hptn]
-    apply cellStab_refine hn (h.stab γ hγ) hgsz
-    · simpa only [hn] using h.genTraceOk γ hγ
-    · exact hnode.labSize
-    · exact hnode.labOk
-    · exact hnode.ptnSize
-    · exact hnode.act
-    · exact hnode.ptnEnd
-    · exact hnode.starts
   subst level
   refine ⟨hok,
     otherNodePrep_codeInv h.codeInv
@@ -520,7 +501,7 @@ theorem RunInv.otherLeaf {G : Colored n k} {ctx : Ctx}
         numcells) ?_,
     otherNodePrep_firstCodeInv h.firstInv
       (refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active
-        numcells), ?_, hstab, ?_, ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
+        numcells), ?_, ?_, ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
   · have hb := bcount_le st.ptn (cs.length + 1) n
     have hc := h.searchOk.bc
     omega
@@ -604,11 +585,8 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
   refine ⟨hok.firstterminal,
     firstterminal_codeInv hcanonSize hbound hcodes hlt,
     firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
-    firstterminal_canongInv hcanong, ?_, ?_, ?_,
+    firstterminal_canongInv hcanong, ?_, ?_,
     hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, hne, ?_⟩
-  · intro γ hγ
-    rw [hstore.1, hgen] at hγ
-    simp at hγ
   · unfold GenTraceOk
     intro γ hγ
     rw [hstore.1, hgen] at hγ
@@ -772,10 +750,7 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
     (hle : level ≤ current) (hlevel : 1 ≤ level) (hinf : level < inf)
     (hpath : level ≤ cs.length)
-    (hok : SearchOk G level numcells (Nauty.recover ctx.n inf level st))
-    (hstab : ∀ γ ∈ (Nauty.recover ctx.n inf level st).genTrace,
-      CellStab (Nauty.recover ctx.n inf level st).ptn level
-        (Nauty.recover ctx.n inf level st).lab γ) :
+    (hok : SearchOk G level numcells (Nauty.recover ctx.n inf level st)) :
     RunInv G ctx tcLevel level (cs.take level) bs fs numcells
       (Nauty.recover ctx.n inf level st) best trail := by
   have hm := recover_machines
@@ -786,7 +761,7 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
   have hframes := recover_frames ctx.n inf level st
   have hnp : st.compCanon ≤ 0 := h.machines.elim (fun hl => hl.1)
     (fun hr => Int.le_of_lt hr.1)
-  refine ⟨hok, hm.1, hm.2, canongInv_recover h.canongInv, hstab,
+  refine ⟨hok, hm.1, hm.2, canongInv_recover h.canongInv,
     genTraceOk_of_eq hstore.1 h.genTraceOk,
     autosOk_of_eq hstore.2 h.autosOk,
     h.cheap.recover hle hlevel hinf, h.leafRefs.recover,
