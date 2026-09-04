@@ -88,6 +88,24 @@ theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt}
   have hstore := recover_store n inf level st
   rwa [hstore.1] at hγ
 
+/-- Appending one generator preserves return stabilization when the old
+store already satisfies it and the new generator stabilizes every
+resumable frame. -/
+theorem pushGen {trail : FrameTrail} {r : Int} {st out : SearchSt}
+    {gamma : Array Nat} (h : ReturnStab trail r st)
+    (hpush : out.genTrace = st.genTrace.push gamma)
+    (hnew : ∀ level entry, Int.ofNat level ≤ r →
+      trail level = some entry →
+      CellStab entry.frame.rsPtn level entry.frame.rsLab gamma) :
+    ReturnStab trail r out := by
+  intro level entry hlevel hentry delta hdelta
+  rw [hpush, Array.toList_push] at hdelta
+  rcases List.mem_append.mp hdelta with hold | hlast
+  · exact h level entry hlevel hentry delta hold
+  · have heq : delta = gamma := by simpa using hlast
+    subst delta
+    exact hnew level entry hlevel hentry
+
 /-- Pushing a child frame preserves all older return obligations.  The
 new frame is required only when the return reaches it. -/
 theorem push {trail : FrameTrail} {r : Int} {st : SearchSt}
