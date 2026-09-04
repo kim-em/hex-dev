@@ -338,6 +338,107 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
         rw [hlab]
         exact breakout_at_target hinj (by rw [hls]; omega)
 
+/-! # Child guide installation -/
+
+/-- Package one already-covered child of a frozen sweep as a generator
+guide. The reference labelling may be either the first leaf or the current
+canonical leaf. -/
+@[expose] def Guide.ofSweep {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {codes : List Nat} {rsLab rsPtn ref : Array Nat}
+    {tc len numcells offset : Nat} {best : Option Key}
+    (hlevel : 1 ≤ level)
+    (hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells best offset)
+    (hls : rsLab.size = ctx.n) (hlab : LabOk rsLab ctx.n)
+    (hps : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hoff : offset < len)
+    (hfuel : level + 1 + specFuel ≤ ctx.n + 1)
+    (hat : ref[tc]! = rsLab[tc + offset]!)
+    (hrefSize : ref.size = ctx.n)
+    (hrefReach : cellsPerm rsPtn level rsLab ref) :
+    Guide ctx tcLevel level best :=
+  { positive := hlevel
+    specFuel := specFuel
+    codes := codes
+    rsLab := rsLab
+    rsPtn := rsPtn
+    ref := ref
+    tc := tc
+    len := len
+    numcells := numcells
+    offset := offset
+    done := hdone
+    labSize := hls
+    labOk := hlab
+    ptnSize := hps
+    endClosed := hend
+    values := hvals
+    cell := hcell
+    range := hrange
+    offsetLt := hoff
+    fuelBound := hfuel
+    atRef := hat
+    refSize := hrefSize
+    refReach := hrefReach }
+
+/-- Descending into a sweep child extends both guide ledgers. A guide
+whose control is the current level is supplied by an already-covered
+child of that sweep; older guides are transported automatically. -/
+theorem GuideStore.pushSweep {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len activeOffset : Nat}
+    {codes : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : GuideStore ctx tcLevel level st best trail)
+    (hlevel : 1 ≤ level)
+    (hls : st.lab.size = ctx.n) (hlab : LabOk st.lab ctx.n)
+    (hps : st.ptn.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
+      st.ptn[q]! = ctx.n + 2)
+    (hcell : IsCell st.ptn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hfuel : level + 1 + specFuel ≤ ctx.n + 1)
+    (hfirstSize : st.firstlab.size = ctx.n)
+    (hcanonSize : st.canonlab.size = ctx.n)
+    (hfirst : st.gcaFirst = level →
+      ∃ o, o < len ∧
+        ChildDone ctx tcLevel specFuel level codes st.lab st.ptn tc
+          numcells best o ∧
+        st.firstlab[tc]! = st.lab[tc + o]! ∧
+        cellsPerm st.ptn level st.lab st.firstlab)
+    (hcanon : st.gcaCanon = level →
+      ∃ o, o < len ∧
+        ChildDone ctx tcLevel specFuel level codes st.lab st.ptn tc
+          numcells best o ∧
+        st.canonlab[tc]! = st.lab[tc + o]! ∧
+        cellsPerm st.ptn level st.lab st.canonlab) :
+    GuideStore ctx tcLevel (level + 1) st best
+      (trail.push level
+        ⟨sweepFrame specFuel codes st.lab st.ptn tc numcells,
+          activeOffset⟩) := by
+  let entry : TrailEntry :=
+    ⟨sweepFrame specFuel codes st.lab st.ptn tc numcells, activeOffset⟩
+  apply h.push entry
+  · intro heq _
+    obtain ⟨o, ho, hdone, hat, hreach⟩ := hfirst heq
+    let g := Guide.ofSweep hlevel hdone hls hlab hps hend hvals hcell
+      hrange ho hfuel hat hfirstSize hreach
+    rw [heq]
+    refine ⟨g, rfl, ?_⟩
+    simpa only [entry, g, Guide.ofSweep, Guide.frame, sweepFrame] using
+      Guide.Located.pushSelf trail g activeOffset
+  · intro heq _
+    obtain ⟨o, ho, hdone, hat, hreach⟩ := hcanon heq
+    let g := Guide.ofSweep hlevel hdone hls hlab hps hend hvals hcell
+      hrange ho hfuel hat hcanonSize hreach
+    rw [heq]
+    refine ⟨g, rfl, ?_⟩
+    simpa only [entry, g, Guide.ofSweep, Guide.frame, sweepFrame] using
+      Guide.Located.pushSelf trail g activeOffset
+
 /-! # Located direct unwinds -/
 
 /-- Positive runtime fuel exposes the semantic soundness carried by every
