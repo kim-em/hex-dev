@@ -44,6 +44,16 @@ namespace Hex.GraphIso.Nauty
   | none => True
   | some u => u < v
 
+/-- Numeric rank used to count strict cursor progress. -/
+@[expose] def cursorRank : Option Nat → Nat
+  | none => 0
+  | some v => v + 1
+
+/-- Moving to a vertex after the cursor increases its rank. -/
+theorem cursorRank_step {cursor : Option Nat} {v : Nat}
+    (h : After cursor v) : cursorRank cursor + 1 ≤ cursorRank (some v) := by
+  cases cursor <;> simp only [After, cursorRank] at h ⊢ <;> omega
+
 /-- The prefixed specification key of offset `o` in a refined target
 cell. -/
 @[expose] def sweepKey (ctx : Ctx) (tcLevel specFuel level : Nat)
@@ -840,27 +850,57 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | unwind (sound : LoopSound ctx bound st out)
       (target : Nat) (returned : r = some (Int.ofNat target))
       (below : target < level) (payload : Unwind ctx tcLevel target out)
-  | exhausted (empty : loopFuel = 0) (returned : r = none)
-      (unchanged : out = st)
+  | exhausted
+      (returned : r = none)
+      (sound : LoopSound ctx bound st out)
+      (finalSet : Nat) (finalCursor : Option Nat)
+      (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+        numcells finalSet finalCursor out)
+      (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
+      (bounded : ∀ v, finalCursor = some v → v < ctx.n)
 
-/-- The entry set and cursor only describe where the call begins.  Every
-constructor records the final set and cursor (or an unwind), so a result
-can be reindexed after exposing one executable loop step. -/
-theorem LoopResult.reindex {ctx : Ctx}
+/-- The entry set only describes where the call begins.  Every constructor
+records the final set, so the result can cross a filter exposed in the
+caller. -/
+theorem LoopResult.reindexSet {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells tcell tcell' : Nat}
-    {cursor cursor' : Option Nat} {bound : Key} {st out : SearchSt}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
     {r : Option Int}
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
       rsPtn tc len numcells tcell cursor bound st out r) :
     LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
-      tc len numcells tcell' cursor' bound st out r := by
+      tc len numcells tcell' cursor bound st out r := by
   cases h with
   | complete returned sound finalSet finalCursor cover empty =>
       exact .complete returned sound finalSet finalCursor cover empty
   | unwind sound target returned below payload =>
       exact .unwind sound target returned below payload
-  | exhausted empty returned unchanged =>
-      exact .exhausted empty returned unchanged
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned sound finalSet finalCursor cover progress bounded
+
+/-- One successful cursor step transports every recursive loop outcome.
+For exhaustion, its rank certificate accounts for the fuel consumed by
+the exposed iteration. -/
+theorem LoopResult.step {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
+    {r : Option Int}
+    (ha : After cursor tv)
+    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
+      rsPtn tc len numcells tcell (some tv) bound st out r) :
+    LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
+      rsPtn tc len numcells tcell cursor bound st out r := by
+  cases h with
+  | complete returned sound finalSet finalCursor cover empty =>
+      exact .complete returned sound finalSet finalCursor cover empty
+  | unwind sound target returned below payload =>
+      exact .unwind sound target returned below payload
+  | exhausted returned sound finalSet finalCursor cover progress bounded =>
+      exact .exhausted returned sound finalSet finalCursor cover
+        (Nat.le_trans (by
+          have := cursorRank_step ha
+          omega) progress) bounded
 
 end Hex.GraphIso.Nauty
