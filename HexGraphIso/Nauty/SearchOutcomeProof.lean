@@ -801,6 +801,67 @@ theorem otherNode_of_loop {ctx : Ctx}
       exact NodeResult.of_loop_some (ctx := ctx) (nodeRunFuel := fuel + 1)
         rfl hloop
 
+set_option maxHeartbeats 800000 in
+/-- The ordinary off-path internal branch, with no pending short prune and
+a cheap refined partition, reaches its child loop without another state
+write. -/
+theorem otherNode_plain_state (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells < ctx.n)
+    (hnonneg : let rs := refine ctx level st.lab st.ptn st.active numcells
+      let pre := otherNodePrep level rs.longcode { st with
+        lab := rs.lab, ptn := rs.ptn, active := rs.active
+        numnodes := st.numnodes + 1 }
+      pre.compCanon ≥ 0)
+    (hshort : let rs := refine ctx level st.lab st.ptn st.active numcells
+      let pre := otherNodePrep level rs.longcode { st with
+        lab := rs.lab, ptn := rs.ptn, active := rs.active
+        numnodes := st.numnodes + 1 }
+      let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
+      let target := { pre with tctotal := pre.tctotal + mt.2.2 }
+      (processnode ctx level rs.numcells target).2.needshortprune = false)
+    (hcheap : let rs := refine ctx level st.lab st.ptn st.active numcells
+      let pre := otherNodePrep level rs.longcode { st with
+        lab := rs.lab, ptn := rs.ptn, active := rs.active
+        numnodes := st.numnodes + 1 }
+      let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
+      let target := { pre with tctotal := pre.tctotal + mt.2.2 }
+      cheapautom (processnode ctx level rs.numcells target).2.ptn
+        level ctx.n = true) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let pre := otherNodePrep level rs.longcode { st with
+      lab := rs.lab, ptn := rs.ptn, active := rs.active
+      numnodes := st.numnodes + 1 }
+    let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
+    let target := { pre with tctotal := pre.tctotal + mt.2.2 }
+    let pr := processnode ctx level rs.numcells target
+    let L := otherChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
+      rs.numcells mt.1 ((nextElem mt.2.1 none).getD 0)
+      (nextElem mt.2.1 none) mt.2.1 pr.2
+    otherNode ctx inf tcLevel (fuel + 1) level numcells st =
+      if pr.1 < Int.ofNat level then pr
+      else match L.1 with
+        | some r => (r, L.2)
+        | none => (Int.ofNat level - 1, L.2) := by
+  dsimp only at hnonneg hshort hcheap ⊢
+  rw [otherNode]
+  simp only [hnum, true_and, ne_eq, ite_eq_left (Or.inr hnonneg),
+    ite_eq_right (by omega : ¬((otherNodePrep level
+      (refine ctx level st.lab st.ptn st.active numcells).longcode
+      { st with
+        lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+        ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+        active := (refine ctx level st.lab st.ptn st.active numcells).active
+        numnodes := st.numnodes + 1 }).compCanon < 0)),
+    hshort, Bool.false_eq_true, ite_false, hcheap,
+    not_true_eq_false, Int.ofNat_eq_natCast, Int.toNat_natCast]
+  generalize hL : (otherChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+    level _ _ _ _ _ _) = L
+  rcases L with ⟨r, out⟩
+  cases r <;> simp only [Id.run_pure, apply_ite Id.run] <;>
+    rfl
+
 /-- The complementary off-path leaf case completes after its empty child
 sweep, retaining the exact leaf maximum installed by `processnode`. -/
 theorem otherNode_leaf_complete {ctx : Ctx} {nn inf tcLevel specFuel fuel
