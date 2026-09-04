@@ -886,7 +886,7 @@ structure Anchor (ctx : Ctx) (tcLevel target : Nat)
 
 /-- Turn an already-covered reference child into the current child's
 unwind anchor using a checked carrier between their leaf labellings. -/
-def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
+@[expose] def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
     (hgsz : ctx.g.size = n) {tcLevel level specFuel : Nat}
     {codes : List Nat} {rsLab rsPtn ref cur : Array Nat}
     {store : Array (Array Nat)} {tc len numcells oRef oCur : Nat}
@@ -1002,7 +1002,7 @@ structure Guide (ctx : Ctx) (tcLevel target : Nat)
 /-- A guide remains usable after the incumbent grows.  Cell stabilization
 of the current generator store and the current child's ancestor position
 are the only facts that must be supplied at the leaf event. -/
-def Guide.anchor {ctx : Ctx} {tcLevel target : Nat}
+@[expose] def Guide.anchor {ctx : Ctx} {tcLevel target : Nat}
     {best best' : Option Key} (g : Guide ctx tcLevel target best)
     (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows best best')
     {cur : Array Nat} {store : Array (Array Nat)} {oCur : Nat}
