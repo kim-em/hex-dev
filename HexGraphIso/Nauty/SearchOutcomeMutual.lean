@@ -288,6 +288,7 @@ theorem RunPrep.leafEvent {G : Colored n k} {ctx : Ctx}
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length)
     (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
     (hbound : st.noncheaplevel ≤ level)
     (hef : ¬((st.eqlevFirst == level) = true))
     (hnc : (numcells == ctx.n) = true)
@@ -308,7 +309,7 @@ theorem RunPrep.leafEvent {G : Colored n k} {ctx : Ctx}
   obtain ⟨bs', hevent, hmax, -⟩ := hprep.leaf hn hn0 hgb hsymm hloop
     hlevel hpath hbound hef hnc
   refine ⟨bs', ?_, hmax⟩
-  apply EventOut.intro level codes bs' hevent hpath hstem
+  apply EventOut.intro level codes bs' hevent hpath hstem hpast
   · omega
   · have hs := hlive.stable.ofGenTraceEq hgen
     rw [(processnode_frames ctx level numcells st).2.2.2.2.2.2.1]
@@ -328,6 +329,7 @@ theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hpath : level = codes.length)
     (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
     (hbelow : st.gcaFirst < level) (hnp : st.compCanon ≤ 0)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
@@ -376,7 +378,7 @@ theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
       exact hprep.canonBound
     · rw [hcanonlab]
       exact hprep.incumbent
-  apply EventOut.intro level codes bs hevent hpath hstem
+  apply EventOut.intro level codes bs hevent hpath hstem hpast
   · rw [hreturn]
     exact Int.ofNat_le.mpr (Nat.le_of_lt hbelow)
   · have hs := hlive.history.processnodeFirstStab hn hn0
@@ -397,6 +399,7 @@ theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
     (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length)
     (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
     (hbound : st.noncheaplevel ≤ level)
     (hef : ¬((st.eqlevFirst == level) = true))
     (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
@@ -447,7 +450,7 @@ theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
     · rw [hcanon]
       exact Int.ofNat_le.mpr hprep.canonBound
   refine ⟨bs', ?_, hmax, houtBest⟩
-  apply EventOut.intro level codes bs' hevent hpath hstem hreturned
+  apply EventOut.intro level codes bs' hevent hpath hstem hpast hreturned
   · have hs := hlive.history.processnodeTiedStab hn hn0 hprep.trailOk
       hprep.leafRefs hlive.order hlive.stable hcanonBelow hef hnc hcc hge
       htie
@@ -507,7 +510,8 @@ theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
   have hevent : EventOut G ctx tcLevel codes fs
       (processnode ctx level ctx.n leaf).2 best trail
       (processnode ctx level ctx.n leaf).1 := by
-    apply hprep.firstEvent rfl hn0 hgb hsymm hloop hfull hstem hbelow hnp
+    apply hprep.firstEvent rfl hn0 hgb hsymm hloop hfull hstem (by omega)
+      hbelow hnp
       heq hsent (by simp) hpass hlive'
   have hreceipt : NodeReceipt trail ctx tcLevel (specFuel + 1)
       (fuel + 1) level codes st
@@ -599,7 +603,7 @@ theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
     rw [RefTrail.otherLeaf_noncheaplevel]
     exact hcheap
   obtain ⟨bs', hevent, -, houtBest⟩ := hprep.tiedEvent rfl hn0 hgb
-    hsymm hloop hlevel hfull hstem hcheap' hef (by simp) hcc hge
+    hsymm hloop hlevel hfull hstem (by omega) hcheap' hef (by simp) hcc hge
     htie hcanonBelow hlive'
   rw [houtBest] at hevent
   have hrows : leafRows ctx leaf.canonlab = leafRows ctx leaf.lab :=
@@ -688,7 +692,7 @@ theorem NodeInv.plainLeaf {G : Colored n k} {ctx : Ctx}
   have hreturn : (processnode ctx level ctx.n leaf).1 ≤
       Int.ofNat level - 1 := Int.le_sub_one_iff.mpr hearly
   obtain ⟨bs', hevent, hmax⟩ := hprep.leafEvent rfl hn0 hgb hsymm
-    hloop hlevel hfull hstem hcheap' hef (by simp) hreturn hgen
+    hloop hlevel hfull hstem (by omega) hcheap' hef (by simp) hreturn hgen
     hlive'
   let outKey := incKey ctx bs'
     (processnode ctx level ctx.n leaf).2.canonlab
@@ -818,6 +822,7 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx}
   have hfinalEvent : EventOut G ctx tcLevel codes fs final
       (some outKey) trail (Int.ofNat level - 1) := by
     apply EventOut.intro level full bs' hevent.leafFinish hfull hstem
+      (by omega)
     · omega
     · have hs := ReturnStab.leafFinish (ctx := ctx) (level := level)
         (hlive'.stable.ofGenTraceEq hgen)
@@ -861,6 +866,7 @@ theorem LoopInv.firstDone {G : Colored n k} {ctx : Ctx}
     {trail : FrameTrail}
     (hpath : level = codes.length)
     (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
     (hnext : nextElem tcell cursor = none)
     (hnp : st.compCanon ≤ 0)
     (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
@@ -886,7 +892,7 @@ theorem LoopInv.firstDone {G : Colored n k} {ctx : Ctx}
       loopFuel level numcells tc tv1 codes rsLab rsPtn len tcell index
       cursor _ st best trail hinstalled hread hinv.cover hnext
   · simpa only [firstChildLoop, loopReturn] using
-      (EventOut.ofRun hinv.run hpath hstem (by omega) hnp
+      (EventOut.ofRun hinv.run hpath hstem hpast (by omega) hnp
         (hlive.stable.lower (by omega)) hlive.history)
   · exact TrailExt.refl level trail
 
@@ -901,6 +907,7 @@ theorem LoopInv.otherDone {G : Colored n k} {ctx : Ctx}
     {trail : FrameTrail}
     (hpath : level = codes.length)
     (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
     (hnext : nextElem tcell cursor = none)
     (hnp : st.compCanon ≤ 0)
     (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
@@ -926,7 +933,7 @@ theorem LoopInv.otherDone {G : Colored n k} {ctx : Ctx}
       loopFuel level numcells tc tv1 codes rsLab rsPtn len tcell cursor _
       st best trail hinstalled hread hinv.cover hnext
   · simpa only [otherChildLoop, loopReturn] using
-      (EventOut.ofRun hinv.run hpath hstem (by omega) hnp
+      (EventOut.ofRun hinv.run hpath hstem hpast (by omega) hnp
         (hlive.stable.lower (by omega)) hlive.history)
   · exact TrailExt.refl level trail
 

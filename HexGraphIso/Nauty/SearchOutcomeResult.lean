@@ -355,7 +355,7 @@ theorem FirstInv.terminalOutcome {G : Colored n k} {ctx : Ctx}
   · rw [hstate]
     have hrun := hbase.2
     rw [hstate] at hrun
-    apply EventOut.ofRun hrun hdepth hstem
+    apply EventOut.ofRun hrun hdepth hstem (by omega)
     · omega
     · rw [(firstterminal_state level leaf).2.2.2.2]
       omega
