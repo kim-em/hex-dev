@@ -648,7 +648,99 @@ theorem processnode {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
   ⟨h.history.processnode htrail,
     RefTrail.processnode_order h.order hfirst⟩
 
+/-- The explicit pair admitted by a code-two row tie is valid at its
+canonical return frame, not merely at the root ledger.  This is the local
+fact consumed when the one-shot short-prune flag reaches that frame. -/
+theorem rowTiePair {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {entry : TrailEntry}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hprep : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail)
+    (hbelow : st.gcaCanon < level)
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hentry : trail st.gcaCanon = some entry) :
+    PairOk ctx.g entry.frame.rsPtn entry.frame.rsLab st.gcaCanon ctx.n
+      (fmperm (canonScatter ctx.n st.canonlab st.lab) ctx.n).1
+      (fmperm (canonScatter ctx.n st.canonlab st.lab) ctx.n).2 := by
+  subst n
+  have hcanonOk := labOk_of_reach hprep.leafRefs.canonSize
+    hprep.leafRefs.canonReach
+  have hinj := labInj_of_reach hprep.leafRefs.canonSize hn0
+    hprep.leafRefs.canonReach
+  have hmap : ∀ i, i < ctx.n →
+      (canonScatter ctx.n st.canonlab st.lab)[st.canonlab[i]!]! =
+        st.lab[i]! := by
+    intro i hi
+    rw [canonScatter_eq_firstScatter]
+    apply firstScatter_get
+      (fun _ _ ha hb hab => hinj.eq_of_getElem! (by omega) (by omega) hab)
+      (fun j hj => hcanonOk j (by
+        rw [hprep.leafRefs.canonSize]
+        omega))
+    omega
+  have hcheck : checkAutom ctx.g
+      (canonScatter ctx.n st.canonlab st.lab) ctx.n = true := by
+    apply checkAutom_scatter_of_leafRows_eq
+      (by
+        rw [canonScatter_eq_firstScatter]
+        exact firstScatter_size ctx.n st.canonlab st.lab)
+      hprep.leafRefs.canonSize
+      (isPerm_of_cellsReach hprep.leafRefs.canonSize hn0
+        hprep.leafRefs.canonReach)
+      hprep.searchOk.labSize
+      (isPerm_of_cellsReach hprep.searchOk.labSize hn0
+        hprep.searchOk.reach)
+      (fun i hi => hmap i (by omega)) hgb
+      (rows_eq_of_testcanlab_tie hprep.canongInv htie)
+  have hstab : CellStab entry.frame.rsPtn st.gcaCanon
+      entry.frame.rsLab (canonScatter ctx.n st.canonlab st.lab) := by
+    apply hlive.history.canonStab hprep.trailOk
+      hprep.leafRefs.canonSize hbelow hmap st.gcaCanon entry
+    · exact Int.le_refl _
+    · exact hentry
+  have hframeSize := hlive.history.frameSize st.gcaCanon entry hbelow hentry
+  have hframeReach := hprep.trailOk.reach st.gcaCanon entry hbelow hentry
+  have hptnSize := hprep.trailOk.ptnSize st.gcaCanon entry hbelow hentry
+  have hend := hprep.trailOk.endClosed st.gcaCanon entry hbelow hentry
+  have hframePerm :
+      (segN entry.frame.rsLab 0 ctx.n).Perm (segN st.lab 0 ctx.n) := by
+    apply cellsPerm_segN_perm hframeReach
+    · rw [hptnSize]
+      exact Nat.le_refl _
+    · exact hend
+    · simpa only [hptnSize] using hend
+  have hframeOk : LabOk entry.frame.rsLab ctx.n := by
+    apply labOk_of_perm hframePerm
+      (labOk_of_reach hprep.searchOk.labSize hprep.searchOk.reach)
+      hprep.searchOk.labSize hframeSize
+  apply pairOk_fmperm hgb
+    hframeOk hframeSize hptnSize hend hcheck hstab
+
 end Live
+
+namespace RunPrep
+
+/-- Workspace capacity makes the code-two pair the exact final entry read
+by `shortprune`, including the full-workspace overwrite case. -/
+theorem rowTieBack {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    (processnode ctx level numcells st).2.autos.back? = some
+      (fmperm (canonScatter ctx.n st.canonlab st.lab) ctx.n) := by
+  rw [processnode_rowTie_autos hef hnc hcc hge htie]
+  exact pushAuto_back h.workspace.1 h.workspace.2
+
+end RunPrep
 
 /-- The live state of an off-path sweep.  `gcaFirst` stays strictly above
 the divergence ancestor, so a child push introduces no new stabilization
