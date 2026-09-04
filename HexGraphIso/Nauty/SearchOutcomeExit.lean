@@ -125,6 +125,79 @@ structure LoopRun (G : Colored n k) (ctx : Ctx)
   preserved : TrailExt level receiptTrail eventTrail
   fixed : out.fixedpts = st.fixedpts
 
+namespace NodeRun
+
+/-- A corrected node run can be viewed through the older local outcome
+interface.  This conversion is safe at one node: both early exit variants
+already carry exactness for that node.  What is deliberately not recovered
+is the old loop rule that treated such an exit as coverage of every later
+sibling. -/
+theorem toOutcome {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (h : NodeRun G ctx tcLevel specFuel runFuel level codes fs st out
+      numcells best outBest receiptTrail eventTrail r) :
+    NodeOutcome G ctx tcLevel specFuel runFuel level codes fs st out
+      numcells best outBest receiptTrail eventTrail r := by
+  have hreceipt : NodeReceipt receiptTrail ctx tcLevel specFuel runFuel
+      level codes st out numcells best outBest r := by
+    cases h.exit with
+    | done returned exact =>
+        apply NodeReceipt.complete (NodeSound.ofExact exact) returned
+        · exact canonlevel_ne_zero_of_stInc (h.event.read.trans exact)
+        · exact h.event.read
+        · exact exact
+    | unwind target returned below sound payload located =>
+        exact NodeReceipt.unwind sound target returned below payload located
+    | frozen below exact freeze =>
+        apply NodeReceipt.pruned (NodeSound.ofExact exact) r rfl below
+        · exact canonlevel_ne_zero_of_stInc (h.event.read.trans exact)
+        · exact h.event.read
+        · exact exact
+    | cheap boundary returned positive atOrAbove exact =>
+        apply NodeReceipt.pruned (NodeSound.ofExact exact) r rfl
+        · rw [returned]
+          simp only [Int.ofNat_eq_natCast]
+          omega
+        · exact canonlevel_ne_zero_of_stInc (h.event.read.trans exact)
+        · exact h.event.read
+        · exact exact
+    | exhausted returned state incumbent emptyFuel =>
+        exact NodeReceipt.exhausted emptyFuel returned state incumbent
+  exact ⟨hreceipt, h.event, h.preserved⟩
+
+/-- Restore the established result interface used by the invariant
+transport lemmas after the corrected exit has been classified. -/
+theorem toProof {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (h : NodeRun G ctx tcLevel specFuel runFuel level codes fs st out
+      numcells best outBest receiptTrail eventTrail r) :
+    NodeProof G ctx tcLevel specFuel runFuel level codes fs st out numcells
+      best outBest receiptTrail eventTrail r :=
+  ⟨h.toOutcome, h.fixed⟩
+
+end NodeRun
+
+namespace OtherRun
+
+/-- Restore the established off-path interface for ordinary parent-level
+consumption and recovery. -/
+theorem toProof {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Int}
+    (h : OtherRun G ctx tcLevel specFuel runFuel level codes fs st out
+      numcells best outBest receiptTrail eventTrail r) :
+    OtherProof G ctx tcLevel specFuel runFuel level codes fs st out
+      numcells best outBest receiptTrail eventTrail r :=
+  ⟨⟨h.node.toOutcome, h.firstGuide, h.order, h.canonGuide⟩,
+    h.node.fixed, h.coset⟩
+
+end OtherRun
+
 namespace LoopExit
 
 /-- At a small-cell node, exactness of the selected child is exactness of
