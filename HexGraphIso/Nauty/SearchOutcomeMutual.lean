@@ -31,6 +31,47 @@ structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
 
 namespace Live
 
+/-- `Live` depends only on the two reference controls and labellings and
+on the recorded-generator store. -/
+theorem stateEq {ctx : Ctx} {level : Nat} {st st' : SearchSt}
+    {trail : FrameTrail} (h : Live ctx level st trail)
+    (hfirstGca : st'.gcaFirst = st.gcaFirst)
+    (hfirst : st'.firstlab = st.firstlab)
+    (hcanonGca : st'.gcaCanon = st.gcaCanon)
+    (hcanon : st'.canonlab = st.canonlab)
+    (hgen : st'.genTrace = st.genTrace) :
+    Live ctx level st' trail := by
+  constructor
+  · exact h.history.stateEq hfirstGca hfirst hcanonGca hcanon
+  · rw [hfirstGca, hcanonGca]
+    exact h.order
+  · rw [hfirstGca]
+    exact h.stable.ofGenTraceEq hgen
+
+/-- Target-cell accounting changes no live field. -/
+theorem setTctotal {ctx : Ctx} {level value : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : Live ctx level st trail) :
+    Live ctx level { st with tctotal := value } trail :=
+  h.stateEq rfl rfl rfl rfl rfl
+
+/-- Parking the cheap-automorphism boundary changes no live field. -/
+theorem park {ctx : Ctx} {level boundary : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : Live ctx level st trail) :
+    Live ctx level { st with noncheaplevel := boundary } trail :=
+  h.stateEq rfl rfl rfl rfl rfl
+
+/-- Fixed-point cleanup changes no live field. -/
+theorem setFixed {ctx : Ctx} {level fixedpts : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : Live ctx level st trail) :
+    Live ctx level { st with fixedpts := fixedpts } trail :=
+  h.stateEq rfl rfl rfl rfl rfl
+
+/-- Clearing the one-shot short-prune flag changes no live field. -/
+theorem clearShort {ctx : Ctx} {level : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : Live ctx level st trail) :
+    Live ctx level { st with needshortprune := false } trail :=
+  h.stateEq rfl rfl rfl rfl rfl
+
 /-- Refinement and the off-path comparison step preserve the complete live
 package. -/
 theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
