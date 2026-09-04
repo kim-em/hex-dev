@@ -398,4 +398,57 @@ theorem otherLoop_doneReceipt (ctx : Ctx)
   exact .complete rfl (.refl ctx bound best) hinstalled hread tcell cursor
     hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
+/-- A non-root orbit pointer skips the current first-path child while
+retaining located outcomes from the recursive tail. -/
+theorem firstLoop_orbitReceipt (ctx : Ctx)
+    (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index o : Nat)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
+    (best : Option Key) (trail : FrameTrail)
+    (gens : List (Array Nat))
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hnext : nextElem tcell cursor = some tv) (ho : o < len)
+    (htv : rsLab[tc + o]! = tv)
+    (hgsz : ctx.g.size = ctx.n)
+    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ ctx.n = true)
+    (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (hsound : OrbSound (OrbConn gens ctx.n) st.orbits ctx.n)
+    (horbit : (st.orbits[tv]! == tv) = false)
+    (hrec : ∀ index',
+      SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+        tcell (some tv) best →
+      LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
+        rsLab rsPtn tc len numcells tcell (some tv) bound st
+        (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
+          tv1 (nextElem tcell (some tv)) tcell index' st).2.2
+        best best
+        (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
+          tv1 (nextElem tcell (some tv)) tcell index' st).1) :
+    LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best best
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  have hne : st.orbits[tv]! ≠ tv := by
+    simpa only [beq_eq_false_iff_ne] using horbit
+  have hcover' := hcover.orbitSkip hnext ho htv hgsz hbg hv hstab hs hinj
+    hok hsp hend hvals hic hrange hlf hsound hne
+  unfold firstChildLoop
+  simp only [horbit, Bool.false_eq_true, ite_false, Id.run_pure,
+    apply_ite Id.run]
+  rcases hidx : (st.orbits[tv]! == tv1) with _ | _ <;>
+    simp only [Bool.false_eq_true, ite_false, ite_true] <;>
+    exact (hrec _ hcover').step (nextElem_after hnext)
+
 end Hex.GraphIso.Nauty
