@@ -339,6 +339,7 @@ inductive FrozenOut (ctx : Ctx) (stem : List Nat) (out : SearchSt)
         out.canonlevel out.eqlevCanon (-1))
       (depth : current = codes.length)
       (stemEq : codes.take stem.length = stem)
+      (installed : bestCodes ≠ [])
       (incumbent : best = some (incKey ctx bestCodes out.canonlab))
       (floor : Int.ofNat out.eqlevCanon.toNat ≤ r) :
       FrozenOut ctx stem out best r
@@ -352,7 +353,8 @@ theorem keyLe {ctx : Ctx} {stem : List Nat} {out : SearchSt}
     {level : Nat} (hlevel : level = stem.length)
     (hbelow : r < Int.ofNat level) (K : Key) :
     ∃ b, best = some b ∧ keyLe (prefixKey stem K) b := by
-  rcases h with ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinc, hfloor⟩
+  rcases h with
+    ⟨current, codes, bestCodes, hcode, hdepth, hstem, _, hinc, hfloor⟩
   have hM : out.eqlevCanon.toNat < level := by
     have hi : Int.ofNat out.eqlevCanon.toNat < Int.ofNat level :=
       Int.lt_of_le_of_lt hfloor hbelow
@@ -388,8 +390,18 @@ comparison to stop. -/
 theorem present {ctx : Ctx} {stem : List Nat} {out : SearchSt}
     {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r) :
     ∃ b, best = some b := by
-  rcases h with ⟨_, _, bestCodes, _, _, _, hbest, _⟩
+  rcases h with ⟨_, _, bestCodes, _, _, _, _, hbest, _⟩
   exact ⟨incKey ctx bestCodes out.canonlab, hbest⟩
+
+/-- The concrete state read agrees with the incumbent carried by a frozen
+comparison. -/
+theorem read {ctx : Ctx} {stem : List Nat} {out : SearchSt}
+    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r) :
+    stInc ctx out = best := by
+  rcases h with
+    ⟨_, _, bestCodes, hcode, _, _, hbestCodes, hbest, _⟩
+  rw [stInc_eq_ghost hcode (by decide), ghostInc]
+  simp only [hbestCodes, ↓reduceIte, hbest]
 
 /-- Coverage of the explored prefix and a frozen comparison of the live
 suffix recover the exact maximum of an abandoned parent sweep. -/

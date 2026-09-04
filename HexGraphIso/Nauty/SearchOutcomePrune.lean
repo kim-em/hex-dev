@@ -81,7 +81,8 @@ theorem shrink {ctx : Ctx} {stem ancestor : List Nat} {out : SearchSt}
     (hprefix : stem.take ancestor.length = ancestor) :
     FrozenOut ctx ancestor out best r := by
   rcases h with
-    ⟨current, codes, bestCodes, hcode, hdepth, hstem, hbest, hfloor⟩
+    ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
+      hfloor⟩
   apply FrozenOut.mk current codes bestCodes hcode hdepth
   · have hlen := congrArg List.length hprefix
     simp only [List.length_take] at hlen
@@ -91,6 +92,7 @@ theorem shrink {ctx : Ctx} {stem ancestor : List Nat} {out : SearchSt}
           (codes.take stem.length).take ancestor.length := by
             rw [List.take_take, Nat.min_eq_left hle]
       _ = ancestor := by rw [hstem, hprefix]
+  · exact hinstalled
   · exact hbest
   · exact hfloor
 
@@ -129,6 +131,7 @@ theorem frozen {G : Colored n k} {ctx : Ctx}
     exact hinv
   · exact hpath
   · exact hstem
+  · exact h.bestCodes
   · rw [hcanonlab]
     exact h.incumbent
   · rw [heq, hr]

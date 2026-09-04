@@ -124,4 +124,94 @@ structure LoopRun (G : Colored n k) (ctx : Ctx)
   preserved : TrailExt level receiptTrail eventTrail
   fixed : out.fixedpts = st.fixedpts
 
+namespace NodeInv
+
+/-- A negative, non-generator discrete leaf produces the corrected exit:
+ordinary comparison pruning retains its frozen prefix, while the only
+remaining return is the explicit cheap-cell jump. -/
+theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hcheap : st.noncheaplevel ≤ level)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
+    (hgen : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace =
+        (otherLeafSt ctx level numcells st).genTrace)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ outBest,
+      NodeRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+        numcells best outBest trail trail
+        (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  let leaf := otherLeafSt ctx level numcells st
+  let full := codes ++
+    [(refine ctx level st.lab st.ptn st.active numcells).longcode]
+  have hfull : level = full.length := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hstem : full.take codes.length = codes := by
+    simp only [full, List.take_left']
+  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+      trail := by
+    simpa only [full, leaf, hnum] using
+      hnode.run.otherLeaf hn hn0 hlevel hpath
+  have hcheap' : leaf.noncheaplevel ≤ level := by
+    change (otherLeafSt ctx level numcells st).noncheaplevel ≤ level
+    rw [RefTrail.otherLeaf_noncheaplevel]
+    exact hcheap
+  obtain ⟨outBest, houtcome, hexact⟩ := hnode.plainLeaf
+    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn hn0 hgb
+    hsymm hloop hlevel hpath hcheap hnum hdisc hef hgen hearly hlive
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
+  have hfirstNe : leaf.eqlevFirst ≠ level := by
+    intro heq
+    apply hef
+    simpa only [leaf, heq, beq_self_eq_true]
+  have hmode := hprep.pruneMode hn hfull hstem hfirstNe hneg
+  have hexit : NodeExit ctx tcLevel (specFuel + 1) (fuel + 1) level
+      codes st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+    rcases hmode with hfreeze | hjump
+    · apply NodeExit.frozen hexact
+      have hreadOut : stInc ctx (processnode ctx level ctx.n leaf).2 =
+          outBest := by
+        rw [← hout]
+        exact houtcome.event.read
+      have hsame : best = outBest := hfreeze.read.symm.trans hreadOut
+      rw [hout, ← hsame]
+      simpa only [leaf] using hfreeze
+    · apply NodeExit.cheap leaf.noncheaplevel
+      · rw [hout]
+        exact hjump
+      · exact hprep.cheap.positive
+      · exact hcheap'
+      · exact hexact
+  refine ⟨outBest, ?_⟩
+  exact {
+    exit := hexit
+    event := houtcome.event
+    preserved := houtcome.preserved
+    fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
+      numcells st hnum hearly }
+
+end NodeInv
+
 end Hex.GraphIso.Nauty
