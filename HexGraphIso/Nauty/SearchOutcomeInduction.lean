@@ -291,4 +291,82 @@ theorem GuideStore.recover {ctx : Ctx} {tcLevel current : Nat}
       (Nat.lt_of_lt_of_le hlt hle)
     exact ⟨g, href.trans hcanonlab.symm, hloc⟩
 
+/-! # Event state and recovery -/
+
+/-- State returned by a node event before its caller applies `recover`.
+The second comparison-machine case is the row-rejection reset: the
+mutable sign is negative while the retained proof is deliberately stated
+at sign zero, exactly as required by `recover_codeInv_reset`. -/
+structure RunEvent (G : Colored n k) (ctx : Ctx)
+    (rlab rptn : Array Nat) (tcLevel current : Nat)
+    (cs bs fs : List Nat) (st : SearchSt) (best : Option Key)
+    (trail : FrameTrail) : Prop where
+  machines :
+    (st.compCanon ≤ 0 ∧ CodeCmpInv n cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon) ∨
+    (st.compCanon < 0 ∧ CodeCmpInv n cs bs st.canoncode st.canonlevel
+      st.eqlevCanon 0)
+  firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
+  canongInv : CanongInv ctx st.canong st.canonlab st.samerows
+  genTraceOk : GenTraceOk ctx st
+  autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
+  leafRefs : LeafRefsOk G st
+  guides : GuideStore ctx tcLevel current st best trail
+  bestCodes : bs ≠ []
+  incumbent : best = some (incKey ctx bs st.canonlab)
+
+/-- A stable state is already a valid event state. -/
+theorem RunInv.event {G : Colored n k} {ctx : Ctx}
+    {rlab rptn : Array Nat} {tcLevel level numcells : Nat}
+    {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : RunInv G ctx rlab rptn tcLevel level cs bs fs numcells st best
+      trail) :
+    RunEvent G ctx rlab rptn tcLevel level cs bs fs st best trail :=
+  ⟨Or.inl ⟨h.nonpositive, h.codeInv⟩, h.firstInv, h.canongInv,
+    h.genTraceOk, h.autosOk, h.leafRefs, h.guides, h.bestCodes,
+    h.incumbent⟩
+
+/-- A nonpositive comparison sign remains nonpositive when `recover`
+either leaves it alone or resets it to zero. -/
+theorem recover_nonpositive {n inf level : Nat} {st : SearchSt}
+    (h : st.compCanon ≤ 0) :
+    (Nauty.recover n inf level st).compCanon ≤ 0 := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.compCanon, ite_self]
+  repeat' split
+  all_goals omega
+
+/-- Applying `recover` to an event state restores the ordinary stable
+invariant at the selected ancestor prefix. Search reachability and cell
+stabilization are supplied by the surrounding loop, whose frozen frame
+determines the recovered partition. -/
+theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
+    {rlab rptn : Array Nat} {tcLevel current level inf numcells : Nat}
+    {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : RunEvent G ctx rlab rptn tcLevel current cs bs fs st best trail)
+    (hle : level ≤ current) (hpath : level ≤ cs.length)
+    (hok : SearchOk G level numcells (Nauty.recover ctx.n inf level st))
+    (hstab : ∀ γ ∈ (Nauty.recover ctx.n inf level st).genTrace,
+      CellStab (Nauty.recover ctx.n inf level st).ptn level
+        (Nauty.recover ctx.n inf level st).lab γ) :
+    RunInv G ctx rlab rptn tcLevel level (cs.take level) bs fs numcells
+      (Nauty.recover ctx.n inf level st) best trail := by
+  have hm := recover_machines
+    (nn := n) (N := ctx.n) (inf := inf) (cs := cs) (bs := bs)
+    (fs := fs) (st := st) (lvl := level)
+    (h.machines.elim Or.inl (fun hr => Or.inr hr.2)) h.firstInv hpath
+  have hstore := recover_store ctx.n inf level st
+  have hframes := recover_frames ctx.n inf level st
+  have hnp : st.compCanon ≤ 0 := h.machines.elim (fun hl => hl.1)
+    (fun hr => Int.le_of_lt hr.1)
+  refine ⟨hok, hm.1, hm.2, canongInv_recover h.canongInv, hstab,
+    genTraceOk_of_eq hstore.1 h.genTraceOk,
+    autosOk_of_eq hstore.2 h.autosOk, h.leafRefs.recover,
+    h.guides.recover hle, recover_nonpositive hnp, h.bestCodes, ?_⟩
+  rw [hframes.1]
+  exact h.incumbent
+
 end Hex.GraphIso.Nauty
