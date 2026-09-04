@@ -40,6 +40,35 @@ structure RefTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
 
 namespace RefTrail
 
+/-- The off-path comparison step leaves the first GCA control unchanged. -/
+theorem otherLeaf_gcaFirst (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (otherLeafSt ctx level numcells st).gcaFirst = st.gcaFirst := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  simpa only [otherLeafSt, rs, base] using
+    (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.1
+
+/-- The off-path comparison step leaves the canonical GCA control
+unchanged. -/
+theorem otherLeaf_gcaCanon (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (otherLeafSt ctx level numcells st).gcaCanon = st.gcaCanon := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  simpa only [otherLeafSt, rs, base] using
+    (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.1
+
 /-- The empty trail has no reference-history obligations. -/
 theorem empty (ctx : Ctx) (current : Nat) (st : SearchSt) :
     RefTrail ctx current st FrameTrail.empty := by
@@ -129,21 +158,7 @@ theorem otherLeaf_order {ctx : Ctx} {level numcells : Nat}
     {st : SearchSt} (h : st.gcaFirst ≤ st.gcaCanon) :
     (otherLeafSt ctx level numcells st).gcaFirst ≤
       (otherLeafSt ctx level numcells st).gcaCanon := by
-  let rs := refine ctx level st.lab st.ptn st.active numcells
-  let base : SearchSt :=
-    { st with
-      lab := rs.lab
-      ptn := rs.ptn
-      active := rs.active
-      numnodes := st.numnodes + 1 }
-  have hf := otherNodePrep_frames level rs.longcode base
-  have hfirst : (otherLeafSt ctx level numcells st).gcaFirst =
-      st.gcaFirst := by
-    simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.2.2.1
-  have hcanon : (otherLeafSt ctx level numcells st).gcaCanon =
-      st.gcaCanon := by
-    simpa only [otherLeafSt, rs, base] using hf.2.2.2.2.2.2.2.1
-  rw [hfirst, hcanon]
+  rw [otherLeaf_gcaFirst, otherLeaf_gcaCanon]
   exact h
 
 /-- Recovering an ancestor preserves both reference histories.  The

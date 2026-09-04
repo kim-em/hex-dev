@@ -208,4 +208,85 @@ theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
       htie
   · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
 
+/-- A discrete code-one branch closes the complete node outcome.  Its
+guide supplies the located unwind receipt, while `firstEvent` supplies
+the result-state invariants. -/
+theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hnp : (otherLeafSt ctx level numcells st).compCanon ≤ 0)
+    (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true)
+    (hsent : (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
+      codeSentinel)
+    (hpass : isautom ctx (firstScatter ctx.n
+      (otherLeafSt ctx level numcells st).firstlab
+      (otherLeafSt ctx level numcells st).lab) = true)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  subst n
+  let leaf := otherLeafSt ctx level numcells st
+  let full := codes ++
+    [(refine ctx level st.lab st.ptn st.active numcells).longcode]
+  have hfull : level = full.length := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hstem : full.take codes.length = codes := by
+    simp only [full, List.take_left']
+  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+      trail := by
+    simpa only [full, leaf, hnum] using
+      hnode.run.otherLeaf rfl hn0 hlevel hpath
+  have hlive' : Live ctx level leaf trail := by
+    simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hbelow : leaf.gcaFirst < level := by
+    change (otherLeafSt ctx level numcells st).gcaFirst < level
+    rw [RefTrail.otherLeaf_gcaFirst]
+    exact hnode.firstBelow
+  have hevent : EventOut G ctx tcLevel codes fs
+      (processnode ctx level ctx.n leaf).2 best trail
+      (processnode ctx level ctx.n leaf).1 := by
+    apply hprep.firstEvent rfl hn0 hgb hsymm hloop hfull hstem hbelow hnp
+      heq hsent (by simp) hpass hlive'
+  have hreceipt : NodeReceipt trail ctx tcLevel (specFuel + 1)
+      (fuel + 1) level codes st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+    apply otherNode_leaf_firstReceipt hnum hprep.guides hprep.trailOk
+      hprep.firstPositive hbelow hgsz hprep.leafRefs.firstSize
+      (isPerm_of_cellsReach hprep.leafRefs.firstSize hn0
+        hprep.leafRefs.firstReach)
+      hprep.searchOk.labSize
+      (isPerm_of_cellsReach hprep.searchOk.labSize hn0
+        hprep.searchOk.reach)
+      hsymm hloop hgb heq hsent hpass
+  have hreturn := (processnode_auto (ctx := ctx) (level := level)
+    (numcells := ctx.n) (st := leaf) heq hsent (by simp) hpass).1
+  have hearly : (processnode ctx level ctx.n leaf).1 <
+      Int.ofNat level := by
+    rw [hreturn]
+    exact Int.ofNat_lt.mpr hbelow
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
+  constructor
+  · exact hreceipt
+  · rw [hout]
+    exact hevent
+  · exact TrailExt.refl level trail
+
 end Hex.GraphIso.Nauty
