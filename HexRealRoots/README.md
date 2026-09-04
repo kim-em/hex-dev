@@ -60,8 +60,8 @@ Reference material:
 - [SPEC](SPEC/hex-real-roots.md) — Sturm convention, engines, totality, and
   performance budgets.
 - The Hex manual chapter “HexRealRoots: certified real-root isolation”.
-- `bench/HexRealRoots/` — deterministic real-root workloads.
-- `conformance/HexRealRoots/` — fixtures checked against python-flint.
+- The real-root benchmark workloads and the python-flint conformance
+  fixtures, in [`hex-dev`](https://github.com/kim-em/hex-dev).
 
 For semantic theorems and the user-facing elaborator, use the companion
 package linked above.

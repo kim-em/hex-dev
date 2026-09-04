@@ -31,11 +31,18 @@ ROOT = Path(__file__).resolve().parents[2]
 RESULTS = ROOT / "reports" / "bench-results"
 FIGURES = ROOT / "reports" / "figures"
 
+# Documentation under the library tree cannot affect measured performance,
+# so the SPEC and README are excluded: a doc-only change must not force a
+# multi-hour sweep. Keep this list identical to the pathspec in
+# scripts/bench/graphiso_cactus_sweep.sh, or the recorded and checked
+# fingerprints diverge.
 RELEVANT = (
     "HexGraphIso/",
     "HexGraph/",
     "bench/HexGraphIso/Cactus.lean",
     "scripts/plots/hexgraphiso-cactus.py",
+    ":!HexGraphIso/SPEC",
+    ":!HexGraphIso/README.md",
 )
 
 SWEEP_RE = re.compile(r"^hexgraphiso-cactus-([0-9a-f]{12})-[^.]+\.jsonl$")

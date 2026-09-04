@@ -12,7 +12,7 @@ public section
 
 /-!
 Deterministic graph families for the conformance and benchmark corpus,
-per SPEC/Libraries/hex-graph-iso.md § Reproducible generators. Each
+per HexGraphIso/SPEC/hex-graph-iso.md § Reproducible generators. Each
 generator documents its mathematical definition and its stable
 vertex-numbering rule; none uses randomness. This module carries the
 first slice — paths, cycles, circulants, generalized Petersen graphs,

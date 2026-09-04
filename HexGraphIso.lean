@@ -77,3 +77,28 @@ public import HexGraphIso.Families
 
 public section
 
+/-!
+`HexGraphIso` is the Mathlib-free coloured graph canonical labelling
+library: nauty's individualization-and-refinement algorithm, run in Lean
+and proved to agree with an exhaustive reference canonical form.
+
+The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon` and
+`label` are the fast canonical labelling; `canonicalizeChecked`, `canonChecked`
+and `labelChecked` are the twins that additionally validate every answer
+through the certificate checker, with `canonicalize_eq_canonicalizeChecked`
+identifying the two. `findIso`, `isIso` and their `Checked` twins decide
+isomorphism, and `iso_iff_canonChecked_eq` is the biconditional the whole
+library exists to prove. `certify?`, `checkCanon` and `canon?` are the
+bounded produce-then-replay pipeline for proof terms, and `checkDiff` its
+negative counterpart. `Families` supplies the named deterministic graphs
+and `Random` the reproducible pseudo-random ones.
+
+The `graph_iso` tactic closes closed `Isomorphic` and `¬ Isomorphic` goals
+with a kernel-checked proof; importing `HexGraphIsoMathlib` extends the same
+tactic to Mathlib `SimpleGraph` goals.
+
+Everything under `Hex.GraphIso.Nauty` is the verified engine rather than
+the intended entry point: it is exported so that proofs can cite it, not
+because callers are expected to reach into it.
+-/
+

@@ -1144,7 +1144,7 @@ theorem checkKeyLit_eq (G : Colored n k) (flat : List Bool)
       (initialPartition G).2.length cert B.codes]
 
 /-- Tying equalities plus two list-state key certificates with
-differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysLit`
+differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysFlat`
 with the replay over bare lists. -/
 theorem not_isomorphic_of_checkKeysL {G H : Colored n k}
     {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
@@ -1155,6 +1155,6 @@ theorem not_isomorphic_of_checkKeysL {G H : Colored n k}
     (hH : checkKeyLit H LB certH BH = true)
     (hd : Nauty.checkDiff BG BH = true) : ¬Isomorphic G H := by
   rw [checkKeyLit_eq] at hG hH
-  exact not_isomorphic_of_checkKeysLit hA hB hG hH hd
+  exact not_isomorphic_of_checkKeysFlat hA hB hG hH hd
 
 end Hex.GraphIso

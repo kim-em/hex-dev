@@ -126,8 +126,7 @@ Each library with its immediate dependencies:
 - **hex-smith**: hex-hermite
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-invariant-factors**: hex-poly-smith
-- **hex-graph**: hex-basic
-- **hex-graph-iso**: hex-graph
+- **hex-graph-iso**: hex-basic, hex-matrix (the `HexGraph` graph representation is folded into this library)
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
@@ -318,8 +317,9 @@ The graph-isomorphism pair is independent of the algebraic libraries.
 `hex-graph-iso` keeps private dense execution data but exposes only
 `hex-graph` values. Its Mathlib companion contains the finite `SimpleGraph`
 correspondence until another graph algorithm needs that conversion. The
-complete contracts are in [hex-graph-iso](hex-graph-iso.md) and
-[hex-graph-iso-mathlib](hex-graph-iso-mathlib.md).
+complete contracts are in
+[hex-graph-iso](../../HexGraphIso/SPEC/hex-graph-iso.md) and
+[hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
 
 ```
 hex-basic -- hex-graph -- hex-graph-iso -- hex-graph-iso-mathlib

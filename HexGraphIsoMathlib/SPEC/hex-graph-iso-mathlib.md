@@ -1,7 +1,7 @@
 # hex-graph-iso-mathlib (`SimpleGraph` correspondence and `graph_iso`)
 
 `hex-graph-iso-mathlib` relates the executable coloured graphs from
-[hex-graph-iso](hex-graph-iso.md) to Mathlib's `SimpleGraph`. It provides
+[hex-graph-iso](../../HexGraphIso/SPEC/hex-graph-iso.md) to Mathlib's `SimpleGraph`. It provides
 Mathlib-facing isomorphism theorems and extends the same `graph_iso` syntax to
 closed `SimpleGraph` terms. It depends on Mathlib and `hex-graph-iso`.
 
@@ -358,7 +358,7 @@ They include:
 
 Fresh-module probes separate import, reification, compiled search, literal
 elaboration, kernel replay, and whole-tactic cost as required by
-[benchmarking.md](../benchmarking.md). This Mathlib library has no ordinary
+[benchmarking.md](../../SPEC/benchmarking.md). This Mathlib library has no ordinary
 computational benchmark target. The canonical algorithm and external nauty
 comparison remain in the Mathlib-free benchmark driver.
 

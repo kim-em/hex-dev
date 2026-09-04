@@ -25,8 +25,35 @@ from release.sync_released import (  # noqa: E402
 from release import aggregate_readme  # noqa: E402
 
 
+# Fields an earlier shape used to publish benchmarks, conformance drivers,
+# fixtures and oracles into the mirrors. A released repo ships only its library,
+# so an entry carrying one of these is publishing development instruments.
+RETIRED_FIELDS = (
+    "bench",
+    "bench_dir",
+    "bench_files",
+    "bench_pins",
+    "conformance",
+    "conformance_files",
+    "conformance_pins",
+    "fixtures",
+    "oracles",
+)
+
+
 def fail(message: str) -> NoReturn:
     raise ValueError(message)
+
+
+def check_library_only(entry: dict) -> None:
+    """Reject an entry that would publish more than its library to a mirror."""
+    retired = [field for field in RETIRED_FIELDS if field in entry]
+    if retired:
+        fail(
+            f"{entry['repo']}: {retired} would publish development instruments "
+            "to the mirror; benchmarks, conformance drivers, fixtures and "
+            "oracles stay in hex-dev"
+        )
 
 
 def parse_sync_baseline(text: str, source: str) -> set[str]:
@@ -233,20 +260,7 @@ def check_ci_workflows(entries: list[dict]) -> None:
             required_paths = {
                 ".lake/build",
                 ".lake/packages/Hex*/.lake/build",
-                ".lake/packages/hex-test-kit/.lake/build",
             }
-            if job_name == "build" and entry.get("bench"):
-                required_paths |= {
-                    "bench/.lake/build",
-                    "bench/.lake/packages/Hex*/.lake/build",
-                    "bench/.lake/packages/hex-test-kit/.lake/build",
-                }
-            if job_name == "build" and entry.get("conformance"):
-                required_paths |= {
-                    "conformance/.lake/build",
-                    "conformance/.lake/packages/Hex*/.lake/build",
-                    "conformance/.lake/packages/hex-test-kit/.lake/build",
-                }
             cached_paths = {
                 path.strip()
                 for path in restore_inputs.get("path", "").splitlines()
@@ -317,6 +331,8 @@ def main() -> int:
             fail(f"duplicate released repository {repo}")
         repo_names.add(repo)
         owner_by_repo[short] = owner
+
+        check_library_only(entry)
 
         pins = entry.get("pins")
         if not isinstance(pins, list) or not all(isinstance(pin, str) for pin in pins):
@@ -567,26 +583,13 @@ def main() -> int:
         lib = entry.get("lib")
         if lib not in libraries:
             continue
+        # A released repo publishes only its library, so its pins are exactly
+        # that library's dependency closure.
         expected = {
             repo_by_library[dependency]
             for dependency in closure[lib]
             if dependency in repo_by_library
         }
-        # A repo's conformance or bench sidecar may import libraries its
-        # published library does not (declared per entry as
-        # `conformance_pins` / `bench_pins`); the SPEC of the owning library
-        # records why. These are sanctioned additions to the closure, never
-        # replacements.
-        for field in ("conformance_pins", "bench_pins"):
-            extra = set(entry.get(field, []))
-            undeclared = extra & expected
-            if undeclared:
-                fail(
-                    f"{entry['repo']}: {field} {sorted(undeclared)} are "
-                    "already in the library dependency closure; list only "
-                    "the sidecar-only additions"
-                )
-            expected |= extra
         actual = set(entry["pins"])
         if actual != expected:
             fail(

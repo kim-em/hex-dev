@@ -14,10 +14,25 @@ from types import SimpleNamespace
 
 from scripts.release.check_released_manifest import (
     check_ci_workflows,
+    check_library_only,
     check_phase_admission,
     parse_sync_baseline,
     published_repositories,
 )
+
+
+class LibraryOnlyTests(unittest.TestCase):
+    def test_library_entry_is_accepted(self) -> None:
+        check_library_only({"repo": "leanprover/hex-example", "lib": "HexExample"})
+
+    def test_bench_and_oracle_fields_are_rejected(self) -> None:
+        for field, value in (("bench", True), ("conformance", True),
+                             ("fixtures", ["HexExample"]), ("oracles", ["e.py"])):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "stay in hex-dev"):
+                    check_library_only(
+                        {"repo": "leanprover/hex-example", field: value}
+                    )
 
 
 class Phase7AdmissionTests(unittest.TestCase):
@@ -126,7 +141,7 @@ class ReleasedCiTests(unittest.TestCase):
 
     def test_restore_and_save_paths_must_match(self) -> None:
         workflow = self.workflow()
-        marker = "            .lake/packages/hex-test-kit/.lake/build\n"
+        marker = "            .lake/packages/Hex*/.lake/build\n"
         head, tail = workflow.rsplit(marker, 1)
         with self.assertRaisesRegex(ValueError, "run-unique save key"):
             self.check(

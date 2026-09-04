@@ -9,13 +9,19 @@ import tomllib
 
 
 # Repo-root modules that carry a `lean_lib` but are not project libraries:
-# `Hex` is the shared test/bench helper, `HexManual` the Verso manual, and
-# `HexAggregateCheck` the mirror of the released aggregate's umbrella.
-KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck"}
+# `Hex` is the shared test/bench helper, `HexManual` the Verso manual,
+# `HexAggregateCheck` the mirror of the released aggregate's umbrella, and
+# `HexGraph` the one-file graph representation folded into hex-graph-iso
+# (it ships inside `leanprover/hex-graph-iso` via `extra_paths`; a second
+# consumer is the trigger to promote it to a library of its own).
+KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 # Build-only lean_libs that build the per-library bench/conformance drivers under
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "HexGraphIsoProofProbe",
+    "HexGraphIsoCfiProbe",
+    "HexGraphIsoMathlibProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexBerlekampKernelProbe",

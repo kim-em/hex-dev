@@ -150,6 +150,9 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     """Yield (src, dest_rel, is_dir) managed mappings for one repo entry.
 
     Sources are absolute monorepo paths; dest_rel is relative to the repo root.
+    A released repo receives the library and its documentation, never the
+    benchmarks, conformance drivers, fixtures or oracles that exercise it here:
+    those are development instruments for the whole graph and stay in hex-dev.
     """
     # Aggregate repos (e.g. leanprover/hex) manage no library source:
     # their umbrella lakefile, umbrella .lean and README live only in the released
@@ -167,8 +170,7 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     if not entry.get("paths"):
         out.append((REPO_ROOT / lib, Path(lib), True))
     # Tight, explicitly mapped supporting files outside the conventional
-    # library/bench/conformance trees (for example a deterministic generator
-    # checker used by released CI).
+    # library tree.
     for p in entry.get("extra_paths") or []:
         src = REPO_ROOT / p["src"]
         out.append((src, Path(p["dest"]), src.is_dir()))
@@ -189,23 +191,6 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     if entry.get("spec"):
         slug = entry["spec"]
         out.append((REPO_ROOT / lib / "SPEC" / f"{slug}.md", Path("SPEC") / f"{slug}.md", False))
-    if entry.get("bench"):
-        bdir = entry.get("bench_dir", lib)
-        out.append((REPO_ROOT / "bench" / bdir, Path("bench") / bdir, True))
-        umb = REPO_ROOT / "bench" / f"{bdir}.lean"
-        if umb.exists():
-            out.append((umb, Path("bench") / f"{bdir}.lean", False))
-    for f in entry.get("bench_files") or []:
-        out.append((REPO_ROOT / "bench" / f, Path("bench") / f, False))
-    if entry.get("conformance"):
-        out.append((REPO_ROOT / "conformance" / lib, Path("conformance") / lib, True))
-    for f in entry.get("conformance_files") or []:
-        out.append((REPO_ROOT / "conformance" / f, Path("conformance") / f, False))
-    for f in entry.get("fixtures") or []:
-        out.append((REPO_ROOT / "conformance-fixtures" / f, Path("conformance-fixtures") / f, True))
-    for o in entry.get("oracles") or []:
-        src = REPO_ROOT / "scripts" / "oracle" / o
-        out.append((src, Path("scripts") / "oracle" / o, src.is_dir()))
     return out
 
 
@@ -386,8 +371,9 @@ def route_tokens(entries: list[dict], tokens: list[str]) -> tuple[dict[str, str]
 
 
 def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
-    """All matching files in the repo, excluding Lake build dirs. Covers the
-    root and the bench/ and conformance/ sub-Lake-projects."""
+    """All matching files in the repo, excluding Lake build dirs. A mirror keeps
+    only its root Lake project; the walk stays recursive so anything a skeleton
+    still carries is rewritten rather than silently left behind."""
     out: list[Path] = []
     for g in name_globs:
         out += [p for p in clone.glob(f"**/{g}") if ".lake" not in p.parts]
@@ -776,8 +762,7 @@ def rewrite_doc_verso(clone: Path) -> list[str]:
 
 def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
                  dep_owner: dict[str, str]) -> list[str]:
-    """Rewrite every synced-repo git pin across all lakefiles (root + the
-    bench/ and conformance/ sub-projects pin upstream repos and hex-test-kit)."""
+    """Rewrite every synced-repo git pin in the released repo's lakefiles."""
     notes: list[str] = []
     match_owner = r'(?:kim-em|leanprover)'
     for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
@@ -810,10 +795,10 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
 def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                      dep_owner: dict[str, str],
                      pins: dict[str, dict[str, str]]) -> list[str]:
-    """Pin the synced SHAs in every lake-manifest.json (root + sub-projects), so
-    Lake's lockfile points at the new revisions, not a stale checkout. Lake
-    trusts the manifest, and the bench/ and conformance/ sub-projects keep their
-    own manifests that otherwise pin the old hex-matrix."""
+    """Pin the synced SHAs in every lake-manifest.json, so Lake's lockfile points
+    at the new revisions, not a stale checkout: Lake trusts the manifest, and a
+    lockfile left alone keeps resolving the upstream commit it was written
+    against."""
     notes: list[str] = []
     import json as _json
     # Match either owner so a manifest still carrying the pre-transfer URL is

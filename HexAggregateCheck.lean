@@ -51,6 +51,8 @@ public import HexLLL
 public import HexBerlekampZassenhaus
 public import HexLLLMathlib
 public import HexBerlekampZassenhausMathlib
+public import HexGraphIso
+public import HexGraphIsoMathlib
 
 /-!
 Mirror of the released aggregate's umbrella.

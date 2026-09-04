@@ -1,9 +1,12 @@
 # Centrally managed released-mirror CI workflows.
 #
 # Each value is the complete .github/workflows/ci.yml published to the named
-# repository by sync_released.py. Keep repository-specific build, conformance,
-# oracle, and benchmark commands here; the sync's divergence guard protects this
-# artifact exactly like every other managed path.
+# repository by sync_released.py. A mirror ships only its library, so its
+# workflow only builds that library: one ubuntu job that restores the Lake
+# cache, builds the published targets, and saves the cache from main.
+# Benchmarks, conformance drivers, fixtures and oracles live in hex-dev and run
+# in hex-dev's CI. The sync's divergence guard protects this artifact exactly
+# like every other managed path.
 workflows:
   hex-basic: |
     name: CI
@@ -31,17 +34,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
           - name: Assert Mathlib-free
             run: |
-              if find . -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexBasic 2>/dev/null; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBasic 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -51,8 +53,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-test-kit: |
     name: CI
     on:
@@ -79,10 +81,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build
             run: lake build
           - name: Save Lake build outputs
@@ -92,8 +93,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-arith: |
     name: CI
     on:
@@ -108,10 +109,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -124,34 +121,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexArith
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexarith_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexarith_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexArith conformance/HexArith bench/HexArith 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexArith 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -161,14 +140,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-primality: |
     name: CI
     on:
@@ -183,12 +156,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user cypari2 python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -201,41 +168,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build HexPrimality
-          - name: Verify deterministic prime-table regeneration
-            run: python3 scripts/bench/check_prime_table.py
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexprimality_emit_fixtures) > /tmp/hex-primality-fresh.jsonl
-              diff -u conformance-fixtures/HexPrimality/primality.jsonl /tmp/hex-primality-fresh.jsonl
-              python3 scripts/oracle/primality_pari.py < /tmp/hex-primality-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexprimality_bench hexprimality_policy_probe hexprimality_fuel_probe
-              bash ../scripts/ci/check_bench_verify_budget.sh hexprimality_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPrimality conformance/HexPrimality bench/HexPrimality 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPrimality 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -245,14 +187,7 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   hex-primality-mathlib: |
     name: CI
@@ -280,30 +215,15 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
               lake build HexPrimalityMathlib 2>&1 | tee build.log
-              if grep -qE 'Building Mathlib\b' build.log; then
-                echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          - name: Fetch Mathlib cache for correspondence conformance
-            run: |
-              cd conformance
-              lake exe cache get
-          - name: Build correspondence conformance
-            run: |
-              cd conformance
-              set -o pipefail
-              lake build HexPrimalityMathlibConformance 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -313,11 +233,7 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   hex-poly: |
     name: CI
@@ -345,48 +261,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install FLINT oracle dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-              python3 -m pip install --user python-flint
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              cd conformance
-              lake exe hexpoly_emit_fixtures > /tmp/hex-poly-fresh.jsonl
-              cd ..
-              diff -u conformance-fixtures/HexPoly/poly.jsonl /tmp/hex-poly-fresh.jsonl
-              python3 scripts/oracle/poly_flint.py < /tmp/hex-poly-fresh.jsonl
-          - name: Build + full bench verify
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-              HEX_FLINT_BENCH_DRIVER: ${{ github.workspace }}/scripts/oracle/flint_bench_driver.py
-              HEX_FLINT_BENCH_PYTHON: python3
-            run: |
-              cd bench
-              lake build hexpoly_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexpoly_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexPoly conformance/HexPoly bench/HexPoly 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPoly 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -396,14 +280,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-mv-poly: |
     name: CI
     on:
@@ -430,43 +308,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install SymPy oracle
-            run: python3 -m pip install --user sympy
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexMvPoly HexMvPolyTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              cd conformance
-              lake exe hexmvpoly_emit_fixtures > /tmp/hex-mv-poly-fresh.jsonl
-              cd ..
-              diff -u conformance-fixtures/HexMvPoly/mvpoly.jsonl /tmp/hex-mv-poly-fresh.jsonl
-              python3 scripts/oracle/mvpoly_sympy.py < /tmp/hex-mv-poly-fresh.jsonl
-          - name: Build + full bench verify
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexmvpoly_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexmvpoly_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexMvPoly conformance/HexMvPoly bench/HexMvPoly 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexMvPoly 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -476,14 +327,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-mod-arith: |
     name: CI
     on:
@@ -498,10 +343,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -514,34 +355,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexModArith
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexmodarith_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexmodarith_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexModArith conformance/HexModArith bench/HexModArith 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexModArith 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -551,14 +374,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-poly-mathlib: |
     name: CI
     on:
@@ -585,10 +402,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -604,8 +420,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-mv-poly-mathlib: |
     name: CI
     on:
@@ -632,30 +448,15 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
               lake build HexMvPolyMathlib 2>&1 | tee build.log
-              if grep -qE 'Building Mathlib\b' build.log; then
-                echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          - name: Fetch Mathlib cache for correspondence conformance
-            run: |
-              cd conformance
-              lake exe cache get
-          - name: Build correspondence conformance
-            run: |
-              cd conformance
-              set -o pipefail
-              lake build HexMvPolyMathlibConformance 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -665,11 +466,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-poly-fp: |
     name: CI
     on:
@@ -684,12 +482,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -702,39 +494,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexPolyFp
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexpolyfp_emit_fixtures) > /tmp/hex-poly-fp-fresh.jsonl
-              diff -u conformance-fixtures/HexPolyFp/poly.jsonl /tmp/hex-poly-fp-fresh.jsonl
-              python3 scripts/oracle/polyfp_flint.py < /tmp/hex-poly-fp-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexpolyfp_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexpolyfp_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexPolyFp conformance/HexPolyFp bench/HexPolyFp 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPolyFp 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -744,14 +513,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-sparse-poly: |
     name: CI
     on:
@@ -778,43 +541,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install SymPy oracle
-            run: python3 -m pip install --user sympy
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexSparsePoly HexSparsePolyTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              cd conformance
-              lake exe hexsparsepoly_emit_fixtures > /tmp/hex-sparse-poly-fresh.jsonl
-              cd ..
-              diff -u conformance-fixtures/HexSparsePoly/sparsepoly.jsonl /tmp/hex-sparse-poly-fresh.jsonl
-              python3 scripts/oracle/sparsepoly_sympy.py /tmp/hex-sparse-poly-fresh.jsonl
-          - name: Build + full bench verify
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexsparsepoly_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexsparsepoly_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexSparsePoly conformance/HexSparsePoly bench/HexSparsePoly 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexSparsePoly 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -824,14 +560,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-sparse-poly-mathlib: |
     name: CI
     on:
@@ -858,27 +588,15 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build correspondence layer (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
               lake build HexSparsePolyMathlib HexSparsePolyMathlibTests 2>&1 | tee build.log
-              if grep -qE 'Building Mathlib\b' build.log; then
-                echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          - name: Fetch Mathlib cache for correspondence conformance
-            run: |
-              cd conformance
-              lake exe cache get
-          - name: Build correspondence conformance
-            run: |
-              cd conformance
-              set -o pipefail
-              lake build HexSparsePolyMathlibConformance 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -888,8 +606,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-poly-z: |
     name: CI
     on:
@@ -904,12 +622,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -922,39 +634,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexPolyZ
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexpolyz_emit_fixtures) > /tmp/hex-poly-z-fresh.jsonl
-              diff -u conformance-fixtures/HexPolyZ/polyz.jsonl /tmp/hex-poly-z-fresh.jsonl
-              python3 scripts/oracle/polyz_flint.py < /tmp/hex-poly-z-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexpolyz_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexpolyz_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexPolyZ conformance/HexPolyZ bench/HexPolyZ 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPolyZ 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -964,14 +653,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-mod-arith-mathlib: |
     name: CI
     on:
@@ -998,10 +681,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -1013,8 +695,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-poly-fp-mathlib: |
     name: CI
     on:
@@ -1041,10 +723,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -1056,8 +737,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gfq-ring: |
     name: CI
     on:
@@ -1072,12 +753,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1090,39 +765,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexGFqRing
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexgfqring_emit_fixtures) > /tmp/hex-gfq-ring-fresh.jsonl
-              diff -u conformance-fixtures/HexGFqRing/gfqring.jsonl /tmp/hex-gfq-ring-fresh.jsonl
-              python3 scripts/oracle/gfqring_flint.py < /tmp/hex-gfq-ring-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexgfqring_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexgfqring_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexGFqRing conformance/HexGFqRing bench/HexGFqRing 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGFqRing 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1132,14 +784,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-hensel: |
     name: CI
     on:
@@ -1154,12 +800,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user cypari2 python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1172,39 +812,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexHensel
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexhensel_emit_fixtures) > /tmp/hex-hensel-fresh.jsonl
-              diff -u conformance-fixtures/HexHensel/hensel.jsonl /tmp/hex-hensel-fresh.jsonl
-              python3 scripts/oracle/hensel_pari.py < /tmp/hex-hensel-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexhensel_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexhensel_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexHensel conformance/HexHensel bench/HexHensel 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexHensel 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1214,14 +831,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-poly-z-mathlib: |
     name: CI
     on:
@@ -1248,10 +859,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -1263,8 +873,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-hensel-mathlib: |
     name: CI
     on:
@@ -1291,10 +901,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -1306,8 +915,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-roots: |
     name: CI
     on:
@@ -1322,12 +931,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1340,39 +943,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexRoots
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexroots_emit_fixtures) > /tmp/hexroots-fresh.jsonl
-              diff -u conformance-fixtures/HexRoots/roots.jsonl /tmp/hexroots-fresh.jsonl
-              python3 scripts/oracle/roots_flint.py < /tmp/hexroots-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexroots_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexroots_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexRoots conformance/HexRoots bench/HexRoots 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexRoots 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1382,14 +962,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-real-roots: |
     name: CI
     on:
@@ -1404,12 +978,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1422,39 +990,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexRealRoots HexRealRootsTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexrealroots_emit_fixtures) > /tmp/hexrealroots-fresh.jsonl
-              diff -u conformance-fixtures/HexRealRoots/realroots.jsonl /tmp/hexrealroots-fresh.jsonl
-              python3 scripts/oracle/realroots_flint.py < /tmp/hexrealroots-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexrealroots_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexrealroots_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexRealRoots conformance/HexRealRoots bench/HexRealRoots 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexRealRoots 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1464,14 +1009,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-roots-mathlib: |
     name: CI
     on:
@@ -1498,10 +1037,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -1513,8 +1051,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-real-roots-mathlib: |
     name: CI
     on:
@@ -1541,22 +1079,13 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexRealRootsMathlib HexRealRootsMathlibTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake exe cache get
-              lake build
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1564,11 +1093,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-matrix: |
     name: CI
     on:
@@ -1595,47 +1121,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install FLINT oracle dependencies
-            run: sudo apt-get update && sudo apt-get install -y libgmp-dev
-          - name: Install python-flint
-            run: python3 -m pip install --user python-flint
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-              cd ..
-          - name: Conformance oracle (python-flint cross-check)
-            run: bash scripts/ci/run_oracles.sh
-          - name: Build + full bench verify (FLINT comparator)
-            env:
-              # Hard cap per SPEC/benchmarking.md §CI integration "Time
-              # budget". The bench verifies the fixed FLINT comparator
-              # rungs (runFlintBareissDet*), spawning the persistent
-              # python-flint driver once per run.
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-              HEX_FLINT_BENCH_DRIVER: ${{ github.workspace }}/scripts/oracle/flint_bench_driver.py
-              HEX_FLINT_BENCH_PYTHON: python3
-            run: |
-              cd bench
-              lake build hexmatrix_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexmatrix_bench
           - name: Assert Mathlib-free
             run: |
-              if find . -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexMatrix conformance bench 2>/dev/null; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexMatrix 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1645,14 +1140,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-row-reduce: |
     name: CI
     on:
@@ -1679,41 +1168,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install oracle dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-              python3 -m pip install --user python-flint
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Build conformance
-            run: cd conformance && lake build
-          - name: FLINT conformance oracle
-            run: bash scripts/ci/run_oracles.sh
-          - name: Build + full bench verify (FLINT rank comparator)
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-              HEX_FLINT_BENCH_DRIVER: ${{ github.workspace }}/scripts/oracle/flint_bench_driver.py
-              HEX_FLINT_BENCH_PYTHON: python3
-            run: |
-              cd bench
-              lake build hexrowreduce_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexrowreduce_bench
           - name: Assert Mathlib-free
             run: |
-              if find . -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexRowReduce conformance bench 2>/dev/null; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexRowReduce 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1723,14 +1187,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-berlekamp: |
     name: CI
     on:
@@ -1745,12 +1203,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1763,39 +1215,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexBerlekamp HexBerlekampTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexberlekamp_emit_fixtures) > /tmp/hex-berlekamp-fresh.jsonl
-              diff -u conformance-fixtures/HexBerlekamp/berlekamp.jsonl /tmp/hex-berlekamp-fresh.jsonl
-              python3 scripts/oracle/berlekamp_flint.py < /tmp/hex-berlekamp-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexberlekamp_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexberlekamp_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexBerlekamp conformance/HexBerlekamp bench/HexBerlekamp 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBerlekamp 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1805,14 +1234,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-conway: |
     name: CI
     on:
@@ -1827,12 +1250,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user conway-polynomials
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1845,39 +1262,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexConway
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexconway_emit_fixtures) > /tmp/hex-conway-fresh.jsonl
-              diff -u conformance-fixtures/HexConway/conway.jsonl /tmp/hex-conway-fresh.jsonl
-              python3 scripts/oracle/conway_luebeck.py --require-conway-polynomials < /tmp/hex-conway-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexconway_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexconway_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexConway conformance/HexConway bench/HexConway 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexConway 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1887,14 +1281,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gfq-field: |
     name: CI
     on:
@@ -1909,12 +1297,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -1927,39 +1309,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexGFqField
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexgfqfield_emit_fixtures) > /tmp/hex-gfq-field-fresh.jsonl
-              diff -u conformance-fixtures/HexGFqField/gfqfield.jsonl /tmp/hex-gfq-field-fresh.jsonl
-              python3 scripts/oracle/gfqfield_flint.py < /tmp/hex-gfq-field-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexgfqfield_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexgfqfield_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexGFqField conformance/HexGFqField bench/HexGFqField 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGFqField 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -1969,14 +1328,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gf2: |
     name: CI
     on:
@@ -1991,17 +1344,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libntl-dev pkg-config
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
-          # The Lake target compiles clmul.c with `-O3` only, so an ordinary build
-          # exercises the portable fallback and never the intrinsic. Compile the
-          # self-test on both paths before anything else.
-          - name: Cross-check every compiled clmul path (SPEC/hex-gf2.md)
-            run: bash scripts/ci/check_clmul_paths.sh
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -2014,47 +1356,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexGF2
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexgf2_emit_fixtures) > /tmp/hex-gf2-fresh.jsonl
-              diff -u conformance-fixtures/HexGF2/gf2.jsonl /tmp/hex-gf2-fresh.jsonl
-              python3 scripts/oracle/gf2_flint.py < /tmp/hex-gf2-fresh.jsonl
-          # `HexGF2/Bench.lean` resolves the informational NTL comparator by
-          # running `scripts/oracle/setup_gf2_ntl_driver.sh` relative to its own
-          # working directory. The bench sidecar runs from `bench/`, so build the
-          # driver here from the repository root and pass its path explicitly.
-          - name: Build the NTL bench comparator driver
-            run: |
-              echo "HEX_GF2_NTL_DRIVER=$(bash scripts/oracle/setup_gf2_ntl_driver.sh)" \
-                >> "$GITHUB_ENV"
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexgf2_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexgf2_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexGF2 conformance/HexGF2 bench/HexGF2 bench/HexGF2ReleasedBench.lean 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGF2 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2064,14 +1375,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gf2-mathlib: |
     name: CI
     on:
@@ -2098,10 +1403,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -2113,8 +1417,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gfq: |
     name: CI
     on:
@@ -2129,12 +1433,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -2147,43 +1445,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexGFq
-          # `HexGFqConformanceSupport` carries the conformance drivers themselves
-          # (see the root lakefile); the sub-project carries the emit executable,
-          # which is the only part needing `hex-test-kit`.
-          - name: Build conformance sidecar
-            run: |
-              lake build HexGFqConformanceSupport
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexgfq_emit_fixtures) > /tmp/hex-gfq-fresh.jsonl
-              diff -u conformance-fixtures/HexGFq/gfq.jsonl /tmp/hex-gfq-fresh.jsonl
-              python3 scripts/oracle/gfq_flint.py < /tmp/hex-gfq-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexgfq_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexgfq_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexGFq conformance/HexGFq bench/HexGFq 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGFq 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2193,14 +1464,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gfq-mathlib: |
     name: CI
     on:
@@ -2227,10 +1492,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -2242,8 +1506,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-determinant: |
     name: CI
     on:
@@ -2256,8 +1520,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          BENCH_VERIFY_HARD_CAP_SECONDS: 360
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2272,37 +1534,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install oracle dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-              python3 -m pip install --user python-flint
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Build conformance
-            run: cd conformance && lake build
-          - name: FLINT conformance oracle
-            run: bash scripts/ci/run_oracles.sh
-          - name: Build + verify bench
-            run: |
-              cd bench
-              lake build hexdeterminant_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexdeterminant_bench
           - name: Assert Mathlib-free
             run: |
-              if find . -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexDeterminant conformance bench 2>/dev/null; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexDeterminant 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2312,14 +1553,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-bareiss: |
     name: CI
     on:
@@ -2346,34 +1581,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install oracle dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-              python3 -m pip install --user python-flint
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Build conformance
-            run: cd conformance && lake build
-          - name: FLINT conformance oracle
-            run: bash scripts/ci/run_oracles.sh
-          - name: Build bench (build-only; the FLINT comparator ladder is heavy)
-            run: cd bench && lake build hexbareiss_bench
           - name: Assert Mathlib-free
             run: |
-              if find . -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexBareiss conformance bench 2>/dev/null; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBareiss 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2383,14 +1600,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-matrix-mathlib: |
     name: CI
     on:
@@ -2417,10 +1628,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -2436,8 +1646,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-row-reduce-mathlib: |
     name: CI
     on:
@@ -2464,10 +1674,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -2483,8 +1692,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-determinant-mathlib: |
     name: CI
     on:
@@ -2511,10 +1720,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -2530,8 +1738,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-bareiss-mathlib: |
     name: CI
     on:
@@ -2558,10 +1766,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -2577,8 +1784,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-berlekamp-mathlib: |
     name: CI
     on:
@@ -2605,10 +1812,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -2620,8 +1826,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gram-schmidt: |
     name: CI
     on:
@@ -2634,8 +1840,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          BENCH_VERIFY_HARD_CAP_SECONDS: 360
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2650,40 +1854,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Install oracle dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev
-              python3 -m pip install --user python-flint
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Build conformance
-            run: |
-              cd conformance
-              lake build
-              cd ..
-          - name: FLINT conformance oracle
-            run: bash scripts/ci/run_oracles.sh
-          - name: Build + verify bench
-            run: |
-              cd bench
-              lake build hexgramschmidt_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexgramschmidt_bench
           - name: Assert Mathlib-free
             run: |
-              if find . -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexGramSchmidt conformance bench 2>/dev/null; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGramSchmidt 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2693,14 +1873,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-gram-schmidt-mathlib: |
     name: CI
     on:
@@ -2727,10 +1901,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -2746,8 +1919,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-lll: |
     name: CI
     on:
@@ -2762,16 +1935,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-            with:
-              fetch-depth: 0
-          - name: Install oracle + comparator system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y \
-                libgmp-dev libfplll-dev fplll-tools libntl-dev libmpfr-dev \
-                libc++-dev libc++abi-dev autoconf automake libtool pkg-config curl
-          - name: Install Python oracle dependencies (fpylll conformance + FLINT HNF)
-            run: python3 -m pip install --user cysignals fpylll python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -2784,76 +1947,18 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
             run: lake build
-          - name: Configure Lean shared library path
-            # The fplll-ffi shim (`scripts/oracle/setup_fplll_ffi.sh`) re-links
-            # against the toolchain's libleanshared and bakes an rpath, but the
-            # bench process still benefits from the toolchain's lib/lean dir being
-            # on LD_LIBRARY_PATH so the dlopened shim can resolve libLake_shared.so.
-            run: |
-              toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
-              echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
-                >> "$GITHUB_ENV"
-          - name: Build external-reduction check
+          - name: Build external-reduction executable
             run: lake build hexlll_external_reduction
-          - name: External reduction (absent + explicit load present)
-            run: |
-              .lake/build/bin/hexlll_external_reduction absent
-              cc -shared -fPIC scripts/ci/hexlll_probe_provider.c -o .lake/build/hexlll_probe_provider.so
-              .lake/build/bin/hexlll_external_reduction present \
-                "$PWD/.lake/build/hexlll_probe_provider.so"
-          - name: Build conformance
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle (fpylll cross-check)
-            run: bash scripts/ci/run_oracles.sh
-          - name: Build bench executable
-            run: |
-              cd bench
-              lake build hexlll_bench
-          - name: Bench verify (fpLLL + Isabelle comparators)
-            env:
-              # Hard cap per SPEC/benchmarking.md §CI integration "Time budget".
-              # The hexlll bench's verify path runs the comparator smoke rungs
-              # (fpLLL via fplll-ffi, verified + certified Isabelle); 360 s leaves
-              # a variance buffer over those fixed rungs.
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              # verified + certified Isabelle LLL drivers (Zenodo 2636367, patched
-              # for the persistent stdin protocol).
-              HEX_LLL_ISABELLE_SVP="$(scripts/oracle/setup_lll_isabelle.sh)"
-              export HEX_LLL_ISABELLE_SVP
-              HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)"
-              export HEX_LLL_ISABELLE_CERTIFIED_SVP
-              # fpLLL comparator: build the fplll-ffi shim and dlopen it at
-              # hexlll_bench start-up. The shim resolves libLake_shared.so via the
-              # LD_LIBRARY_PATH configured above.
-              HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"
-              export HEX_FPLLL_FFI_LIB
-              cd bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexlll_bench
           - name: Assert Mathlib-free
             run: |
-              # Restrict to source trees; oracle caches (.cache/oracles), pip's
-              # --user site-packages, and Isabelle/fplll build dirs are not part of
-              # this repo's Lean dependency graph and must not trip the assertion.
-              if find HexLLL conformance/HexLLL bench/HexLLL -type d -name mathlib | grep -q .; then
-                echo "ERROR: a package pulled in Mathlib"; exit 1; fi
-              if find .lake bench/.lake conformance/.lake -type d -name 'Mathlib' 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexLLL conformance/HexLLL bench/HexLLL 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexLLL 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2863,53 +1968,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
-      # macOS job exists solely for the FFI dyld symbol-resolution cross-check
-      # (the LLL external-reduction check); per SPEC/CI.md this is the one justified second runner.
-      build-macos:
-        runs-on: macos-latest
-        steps:
-          - uses: actions/checkout@v4
-          - uses: leanprover/lean-action@v1
-            with:
-              auto-config: false
-              build: false
-              use-github-cache: false
-              use-mathlib-cache: false
-          - name: Restore Lake build outputs
-            uses: actions/cache/restore@v4
-            with:
-              path: |
-                .lake/build
-                .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
-              restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
-          - name: Build external-reduction check
-            run: lake build hexlll_external_reduction
-          - name: External reduction (absent + explicit load present)
-            run: |
-              .lake/build/bin/hexlll_external_reduction absent
-              cc -shared -fPIC scripts/ci/hexlll_probe_provider.c -o .lake/build/hexlll_probe_provider.dylib
-              .lake/build/bin/hexlll_external_reduction present \
-                "$PWD/.lake/build/hexlll_probe_provider.dylib"
-          - name: Save Lake build outputs
-            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
-            uses: actions/cache/save@v4
-            with:
-              path: |
-                .lake/build
-                .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-berlekamp-zassenhaus: |
     name: CI
     on:
@@ -2924,12 +1984,6 @@ workflows:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - name: Install system dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y libgmp-dev libpari-dev pari-gp
-          - name: Install oracle dependencies
-            run: python3 -m pip install --user python-flint
           - uses: leanprover/lean-action@v1
             with:
               auto-config: false
@@ -2942,39 +1996,16 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library and release regressions
             run: lake build HexBerlekampZassenhaus HexBerlekampZassenhausModules HexBerlekampZassenhausTests
-          - name: Build conformance sidecar
-            run: |
-              cd conformance
-              lake build
-          - name: Conformance oracle
-            run: |
-              (cd conformance && lake exe hexbz_emit_fixtures) > /tmp/hex-berlekamp-zassenhaus-fresh.jsonl
-              diff -u conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl /tmp/hex-berlekamp-zassenhaus-fresh.jsonl
-              python3 scripts/oracle/bz_flint.py < /tmp/hex-berlekamp-zassenhaus-fresh.jsonl
-          - name: Build and verify benchmarks
-            env:
-              BENCH_VERIFY_HARD_CAP_SECONDS: "360"
-            run: |
-              cd bench
-              lake build hexbz_bench
-              bash ../scripts/ci/check_bench_verify_budget.sh hexbz_bench
           - name: Assert Mathlib-free
             run: |
-              if find .lake bench/.lake conformance/.lake -type d -name Mathlib 2>/dev/null | grep -q .; then
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
                 echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
-              if grep -rqE '^import Mathlib' HexBerlekampZassenhaus conformance/HexBerlekampZassenhaus bench/HexBerlekampZassenhaus 2>/dev/null; then
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBerlekampZassenhaus 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
           - name: Save Lake build outputs
@@ -2984,14 +2015,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-                bench/.lake/build
-                bench/.lake/packages/Hex*/.lake/build
-                bench/.lake/packages/hex-test-kit/.lake/build
-                conformance/.lake/build
-                conformance/.lake/packages/Hex*/.lake/build
-                conformance/.lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-lll-mathlib: |
     name: CI
     on:
@@ -3018,10 +2043,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build bridge (Mathlib must come from cache, never rebuild)
@@ -3037,8 +2061,8 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex-berlekamp-zassenhaus-mathlib: |
     name: CI
     on:
@@ -3065,10 +2089,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
@@ -3080,8 +2103,100 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+  hex-graph-iso: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Build library and release regressions
+            run: lake build HexGraph HexGraphIso HexGraphIsoTests
+          - name: Assert Mathlib-free
+            run: |
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGraph HexGraphIso 2>/dev/null; then
+                echo "ERROR: a source file imports Mathlib"; exit 1; fi
+              echo "Mathlib-free OK"
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  hex-graph-iso-mathlib: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Fetch Mathlib cache
+            run: lake exe cache get
+          - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
+            run: |
+              set -o pipefail
+              lake build HexGraphIsoMathlib HexGraphIsoMathlibTests 2>&1 | tee build.log
+              if grep -qE 'Building Mathlib\b' build.log; then
+                echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
   hex: |
     name: CI
     on:
@@ -3108,10 +2223,9 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
-                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build all released libraries (Mathlib from cache)
@@ -3127,5 +2241,4 @@ workflows:
               path: |
                 .lake/build
                 .lake/packages/Hex*/.lake/build
-                .lake/packages/hex-test-kit/.lake/build
-              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'bench/lean-toolchain', 'bench/lake-manifest.json', 'conformance/lean-toolchain', 'conformance/lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
