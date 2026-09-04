@@ -208,6 +208,110 @@ theorem no_child_after {s : Nat} {cursor : Option Nat}
       cases hbit
     · cases hnext
 
+/-- A successful `nextElem` lies strictly after its cursor. -/
+theorem nextElem_after {s v : Nat} {cursor : Option Nat}
+    (hnext : nextElem s cursor = some v) : After cursor v := by
+  rw [nextElem.eq_def] at hnext
+  rcases cursor with _ | p
+  · trivial
+  · change p < v
+    dsimp only at hnext
+    split at hnext
+    · cases hnext
+    · next hn =>
+      injection hnext with hv
+      subst v
+      have hbit := testBit_lowBit _ hn
+      rw [Nat.testBit_shiftLeft] at hbit
+      have hle : p + 1 ≤ lowBit ((s >>> (p + 1)) <<< (p + 1)) :=
+        of_decide_eq_true ((Bool.and_eq_true _ _).mp hbit).1
+      omega
+
+/-- `nextElem` returns the least set member strictly after its cursor. -/
+theorem nextElem_le {s v w : Nat} {cursor : Option Nat}
+    (hnext : nextElem s cursor = some v)
+    (hw : elem s w = true) (ha : After cursor w) : v ≤ w := by
+  rw [nextElem.eq_def] at hnext
+  rcases cursor with _ | p
+  · dsimp only at hnext
+    split at hnext
+    · cases hnext
+    · next hn =>
+      injection hnext with hv
+      subst v
+      apply Nat.le_of_not_gt
+      intro hle
+      have hz := testBit_lt_lowBit s w hle
+      change s.testBit w = true at hw
+      rw [hz] at hw
+      cases hw
+  · dsimp only at hnext
+    change p < w at ha
+    split at hnext
+    · cases hnext
+    · next hn =>
+      injection hnext with hv
+      subst v
+      have hmasked :
+          (((s >>> (p + 1)) <<< (p + 1)).testBit w) = true := by
+        rw [Nat.testBit_shiftLeft]
+        rw [show decide (p + 1 ≤ w) = true by simp; omega]
+        rw [Nat.testBit_shiftRight]
+        rw [show p + 1 + (w - (p + 1)) = w by omega]
+        exact hw
+      apply Nat.le_of_not_gt
+      intro hle
+      have hz := testBit_lt_lowBit ((s >>> (p + 1)) <<< (p + 1)) w
+        hle
+      rw [hz] at hmasked
+      cases hmasked
+
+/-- Advancing to the least remaining vertex preserves sweep coverage once
+that vertex's child is absorbed.  The `hcur` premise identifies every
+offset carrying the chosen vertex; callers normally discharge it from
+labelling injectivity. -/
+theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells tv : Nat}
+    {tcell : Nat} {cursor : Option Nat} {out out' : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hnext : nextElem tcell cursor = some tv)
+    (hcur : ∀ o, o < len → rsLab[tc + o]! = tv →
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+        out' o)
+    (hd : ∀ o,
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o →
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+        out' o) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell (some tv) out' := by
+  refine SweepCover.step h ?_ hd ?_
+  · intro o ho
+    change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+      After cursor rsLab[tc + o]! at ho
+    rcases ho with ⟨ho, hm, ha⟩
+    have hle := nextElem_le hnext hm ha
+    rcases Nat.eq_or_lt_of_le hle with heq | hlt
+    · left
+      have hdone := hcur o ho heq.symm
+      intro j hj
+      rcases hdone with ⟨b, hb, hkb⟩
+      refine ⟨b, hb, ?_⟩
+      rw [hj]
+      exact hkb
+    · exact Or.inr ⟨o, ⟨ho, hm, hlt⟩, rfl⟩
+  · intro o ho hm hpast
+    change ¬ tv < rsLab[tc + o]! at hpast
+    rcases cursor with _ | u
+    · have hle := nextElem_le hnext hm trivial
+      exact hcur o ho (Nat.le_antisymm (Nat.le_of_not_gt hpast) hle)
+    · rcases Nat.lt_or_ge u rsLab[tc + o]! with ha | ha
+      · have hle := nextElem_le hnext hm ha
+        exact hcur o ho (Nat.le_antisymm (Nat.le_of_not_gt hpast) hle)
+      · exact hd o (h.past o ho hm (by
+          dsimp only [After]
+          omega))
+
 /-- The executable loop terminator discharges the live-set premise of
 `SweepCover.finish`. -/
 theorem SweepCover.finish_of_nextElem {ctx : Ctx}
