@@ -50,9 +50,8 @@ the admission gate, via the gate-failure reduction
 `processnode_gateFail_eq`), `processnode_auto` with `auto_keyMax`
 (the gate-passing leaf: comparison state untouched, and the skip
 sound at key level once the induction supplies the code agreement
-`firstCodeInv_eq_of_tied`, the row transport through the admitted
-scatter, and the `firstterminal_firstKeyLe`-seeded
-first-key-dominated clause), `recover_machines` with the
+`firstCodeInv_eq_of_tied` and the row transport through the admitted
+scatter), `recover_machines` with the
 `recover_frames`/`otherNodePrep_frames` threading, and the
 `firstterminal_*` seeds for all four threads.
 
@@ -1658,8 +1657,8 @@ variable {n k : Nat}
 /-- The entry invariant of the maximality induction at a node about
 to refine at `level = cs.length + 1`: the search skeleton, both
 comparison machines, the store invariant, cell stabilization of every
-recorded generator at this node, domination of the first leaf by the
-incumbent, and the two ledgers the pruning arms consume.
+recorded generator at this node, and the two ledgers the pruning arms
+consume.
 
 `genTraceOk` is store validity: every recorded generator is a checked
 automorphism, which is what `childKey_of_carried` needs of the
@@ -1677,8 +1676,6 @@ structure DomOk (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
   stab : ∀ γ ∈ st.genTrace,
     CellStab st.ptn (cs.length + 1) st.lab γ
-  firstKeyLe : keyLe (pathLeafKey ctx fs st.firstlab)
-    (incKey ctx bs st.canonlab)
   genTraceOk : GenTraceOk ctx st
   autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
 
