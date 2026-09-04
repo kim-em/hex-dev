@@ -234,19 +234,6 @@ private theorem orbitStepSet_zero {nn : Nat} {gens : List (Array Nat)} :
   rw [ite_eq_right (by simp [Nat.zero_testBit])]
   exact hacc'
 
-/-- A bounded set with no population is empty. -/
-private theorem eq_zero_of_popCount_zero {nn s : Nat} (hs : s < 2 ^ nn)
-    (hp : popCount s = 0) : s = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.zero_testBit]
-  rcases Nat.lt_or_ge i nn with hi | hi
-  · rw [popCount_eq_bitCount nn s hs, bitCount,
-      List.countP_eq_zero] at hp
-    have := hp i (List.mem_range.mpr hi)
-    simpa using this
-  · exact Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hs
-      (Nat.pow_le_pow_right (by omega) hi))
-
 /-- **The closure saturates within `nn` rounds.** After `nn` rounds a
 further round adds nothing. -/
 theorem orbitStepSet_orbitClose_nn {nn : Nat} {gens : List (Array Nat)}

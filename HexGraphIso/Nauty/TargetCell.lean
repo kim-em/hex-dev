@@ -8,7 +8,6 @@ module
 
 public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.Equitable
-public import HexGraphIso.Nauty.SmallCellBranch
 
 public section
 
@@ -19,22 +18,9 @@ partitions when the executable is not given a history-dependent hint.
 
 namespace Hex.GraphIso.Nauty
 
-/-- A bounded bitset with population zero is empty. -/
-private theorem eq_zero_of_popCount_zero {n s : Nat} (hs : s < 2 ^ n)
-    (hp : popCount s = 0) : s = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.zero_testBit]
-  rcases Nat.lt_or_ge i n with hi | hi
-  · rw [popCount_eq_bitCount n s hs, bitCount,
-      List.countP_eq_zero] at hp
-    have := hp i (List.mem_range.mpr hi)
-    simpa using this
-  · exact Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hs
-      (Nat.pow_le_pow_right (by omega) hi))
-
 /-- On an equitable pair of cells, nauty's representative test agrees with
 the specification's count-multiset test. -/
-theorem joinTest_eq_first {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
+theorem joinTest_iff_first {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
     (heq : Equitable ctx level lab ptn) (hlab : LabOk lab ctx.n)
     (hlsz : lab.size = ctx.n) (hpsz : ptn.size = ctx.n)
     (hend : ptn[ptn.size - 1]! ≤ level) {c d : Nat × Nat}
@@ -167,7 +153,7 @@ theorem bestcellRow_eq_spec {ctx : Ctx} {lab ptn : Array Nat}
     have hd' := start_cell (by omega : ctx.n ≤ ptn.size) hend hd
     rw [← hcstart] at hc'
     rw [← hdstart] at hd'
-    have hj := joinTest_eq_first heq hlab hlsz hpsz hend hc' hd'
+    have hj := joinTest_iff_first heq hlab hlsz hpsz hend hc' hd'
     rcases hjv : joinTest ctx lab
         (worksetOf lab startArr[v2]!
           (cellEnd ptn level startArr[v2]!))
@@ -261,6 +247,25 @@ theorem bestcell_eq_spec {ctx : Ctx} {lab ptn : Array Nat} {level : Nat}
     rw [bestcellRows_eq_spec heq hlab hlsz hpsz hend hstart _ _ hvs]
   · simp only [ite_true]
 
+/-- If a history-dependent hint is inadmissible, the executable falls
+through to the specification's target-cell policy. -/
+theorem targetcell_eq_spec_of_inadmissible {ctx : Ctx}
+    {lab ptn : Array Nat}
+    {level tcLevel : Nat} (heq : Equitable ctx level lab ptn)
+    (hlab : LabOk lab ctx.n) (hlsz : lab.size = ctx.n)
+    (hpsz : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hint : Int)
+    (hbad : ¬ (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
+      (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level))) :
+    targetcell ctx lab ptn level tcLevel hint =
+      specTargetcell ctx lab ptn level tcLevel := by
+  rw [targetcell, ite_eq_right hbad, specTargetcell]
+  rcases Decidable.em (level ≤ tcLevel) with h | h
+  · rw [ite_eq_left h, ite_eq_left h]
+    exact bestcell_eq_spec heq hlab hlsz hpsz hend
+  · rw [ite_eq_right h, ite_eq_right h]
+    rfl
+
 /-- With no history-dependent hint, the executable and specification
 target-cell choices agree on an equitable partition. -/
 theorem targetcell_eq_spec {ctx : Ctx} {lab ptn : Array Nat}
@@ -269,13 +274,9 @@ theorem targetcell_eq_spec {ctx : Ctx} {lab ptn : Array Nat}
     (hpsz : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level) :
     targetcell ctx lab ptn level tcLevel (-1) =
       specTargetcell ctx lab ptn level tcLevel := by
-  rw [targetcell, specTargetcell]
-  simp only [Int.reduceNeg, ge_iff_le, Int.reduceLE, false_and, ite_false]
-  rcases Decidable.em (level ≤ tcLevel) with h | h
-  · rw [ite_eq_left h, ite_eq_left h]
-    exact bestcell_eq_spec heq hlab hlsz hpsz hend
-  · rw [ite_eq_right h, ite_eq_right h]
-    rfl
+  apply targetcell_eq_spec_of_inadmissible heq hlab hlsz hpsz hend
+  rintro ⟨h, -⟩
+  omega
 
 /-- A hint agrees with the specification whenever it names exactly the
 specification's target cell; arbitrary admissible hints need not do so. -/
@@ -306,6 +307,20 @@ theorem maketargetcell_eq_spec {ctx : Ctx}
       specMaketargetcell ctx lab ptn level tcLevel := by
   rw [maketargetcell, specMaketargetcell,
     targetcell_eq_spec heq hlab hlsz hpsz hend]
+
+/-- An inadmissible hint gives the specification's complete target-cell
+record. In particular, this covers every negative stored hint. -/
+theorem maketargetcell_eq_spec_of_inadmissible {ctx : Ctx}
+    {lab ptn : Array Nat} {level tcLevel : Nat}
+    (heq : Equitable ctx level lab ptn) (hlab : LabOk lab ctx.n)
+    (hlsz : lab.size = ctx.n) (hpsz : ptn.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level) (hint : Int)
+    (hbad : ¬ (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
+      (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level))) :
+    maketargetcell ctx lab ptn level tcLevel hint =
+      specMaketargetcell ctx lab ptn level tcLevel := by
+  rw [maketargetcell, specMaketargetcell,
+    targetcell_eq_spec_of_inadmissible heq hlab hlsz hpsz hend hint hbad]
 
 /-- A matching hint also gives the specification's complete target-cell
 record. -/
