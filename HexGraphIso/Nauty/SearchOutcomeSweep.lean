@@ -128,6 +128,134 @@ end LoopInv
 
 namespace OtherLoopRun
 
+/-- A generator unwind addressed strictly above this loop crosses the
+temporary fixed-vertex cleanup and returns immediately. -/
+theorem unwind {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell tv
+      tv1 target offset : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail}
+    (hstem : codes.take stem.length = stem)
+    (hshorter : stem.length < codes.length)
+    (hsound : NodeSound ctx tcLevel specFuel (level + 1) codes
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1) best outBest)
+    (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) codes
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (numcells + 1)) bound)
+    (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }).1 = Int.ofNat target)
+    (hbelow : target < level)
+    (payload : Unwind ctx tcLevel target
+      (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }).2 outBest)
+    (hloc : payload.Located (trail.push level
+      ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩))
+    (hchild : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv }
+      (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }).2
+      (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail
+      (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := insert st.fixedpts tv }).1)
+    (hfresh : elem st.fixedpts tv = false) :
+    OtherLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).2
+      best outBest trail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+  let node := otherNode ctx inf tcLevel runFuel (level + 1)
+    (numcells + 1)
+    { st with
+      lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+      ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+      active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+      fixedpts := insert st.fixedpts tv }
+  let cleaned : SearchSt :=
+    { node.2 with fixedpts := erase node.2.fixedpts tv }
+  have hfixed : cleaned.fixedpts = st.fixedpts := by
+    change erase node.2.fixedpts tv = st.fixedpts
+    rw [hchild.node.fixed]
+    exact erase_insert_of_miss hfresh
+  have hstate : otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1)
+      level numcells tc tv1 (some tv) tcell st =
+      (some node.1, cleaned) := by
+    unfold otherChildLoop
+    simp only [Id.run_pure, apply_ite Id.run]
+    have hlt : node.1 < Int.ofNat level := by
+      rw [hreturn]
+      exact Int.ofNat_lt.mpr hbelow
+    rw [ite_eq_left hlt]
+  have hlocParent : payload.Located trail :=
+    hloc.retrail (FrameTrail.push_of_ne trail _ (by omega))
+  obtain ⟨payload', hloc'⟩ :
+      ∃ payload' : Unwind ctx tcLevel target cleaned outBest,
+        payload'.Located trail := by
+    simpa only [cleaned, node] using
+      hlocParent.setFixed (erase node.2.fixedpts tv)
+  have hreceipt := otherLoop_childReceipt ctx inf tcLevel specFuel runFuel
+    loopFuel level numcells tc tv1 tv codes rsLab rsPtn len tcell cursor
+    bound st best outBest target trail hsound hkey hreturn hbelow payload
+    hlocParent
+  have hevent : EventOut G ctx tcLevel stem fs cleaned outBest eventTrail
+      node.1 := by
+    exact (hchild.node.event.ancestor hstem hshorter).setFixed _
+  have hproof : OtherLoopProof G ctx tcLevel specFuel runFuel
+      (loopFuel + 1) level stem codes fs rsLab rsPtn tc len numcells tcell
+      cursor bound st (otherChildLoop ctx inf tcLevel runFuel
+        (loopFuel + 1) level numcells tc tv1 (some tv) tcell st).2
+      best outBest trail eventTrail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell st).1 := by
+    refine ⟨?_, ?_⟩
+    · refine ⟨?_, ?_⟩
+      · refine ⟨hreceipt, ?_, hchild.node.preserved.ofPush⟩
+        rw [hstate]
+        simpa only [loopReturn] using hevent
+      · rw [hstate]
+        exact hfixed
+    · rw [hstate]
+      exact hchild.coset
+  refine ⟨hproof, ?_⟩
+  rw [hstate, hreturn]
+  exact LoopExit.unwind target rfl hbelow (LoopSound.ofNode hsound hkey)
+    payload' hloc'
+
 /-- Zero cursor fuel is retained as exhaustion, never mistaken for a
 completed sibling sweep. -/
 theorem zero {G : Colored n k} {ctx : Ctx}
