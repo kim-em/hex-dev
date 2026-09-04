@@ -500,6 +500,54 @@ theorem canonlevel_ne_zero_of_stInc {ctx : Ctx} {st : SearchSt} {B : Key}
   rw [stInc, ite_eq_left hz] at h
   cases h
 
+/-- Any early off-path leaf event that exposes its exact incumbent read
+constructs the local pruned outcome. Event-specific comparison proofs only
+need to establish `hread`. -/
+theorem otherNode_leaf_pruned_of_read {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {cs bs : List Nat} {st : SearchSt}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
+    (hread : stInc ctx (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2 =
+      some (keyMax (incKey ctx bs st.canonlab)
+        (pathLeafKey ctx
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab))) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells (some (incKey ctx bs st.canonlab))
+      (some (keyMax (incKey ctx bs st.canonlab)
+        (pathLeafKey ctx
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab)))
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  rw [otherNode_leaf_early ctx inf tcLevel fuel level numcells st hnum
+    hearly]
+  let full := cs ++ [(refine ctx level st.lab st.ptn st.active
+    numcells).longcode]
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full
+        (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+  apply NodeResult.pruned (target :=
+    (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1)
+  · apply NodeSound.ofExact
+    rw [incMax, hnode]
+  · rfl
+  · exact hearly
+  · exact canonlevel_ne_zero_of_stInc hread
+  · exact hread
+  · rw [incMax, hnode]
+
 /-- An early non-first-path leaf return has already absorbed its whole
 (singleton) specification subtree.  Its signed comparison return is a
 local prune outcome; generator returns can subsequently be strengthened to
