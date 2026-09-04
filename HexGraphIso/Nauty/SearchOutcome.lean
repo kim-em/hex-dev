@@ -906,6 +906,24 @@ inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
   | orbit (payload : OrbitUnwind ctx target out)
 
+/-- Updating the first-path return controls changes none of the fields
+carried by a generator unwind. -/
+theorem Unwind.setFirst {ctx : Ctx} {tcLevel target : Nat}
+    {out : SearchSt} {best : Option Key} (h : Unwind ctx tcLevel target out best)
+    (gcaFirst stabvertex : Nat) :
+    Unwind ctx tcLevel target
+      { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best := by
+  cases h with
+  | first anchor carrier => exact .first anchor carrier
+  | canon anchor carrier => exact .canon anchor carrier
+  | orbit payload =>
+      apply Unwind.orbit
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · exact payload.positive
+      · exact payload.currentLt
+      · exact payload.smaller
+      · exact payload.sound
+
 /-- Removing a loop's temporary fixed vertex changes none of the fields
 carried by a generator unwind. -/
 theorem Unwind.setFixed {ctx : Ctx} {tcLevel target : Nat}
