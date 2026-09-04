@@ -456,6 +456,127 @@ theorem firstFinish_fixedpts (level size index : Nat) (st : SearchSt) :
   rw [firstFinish]
   split <;> rfl
 
+/-- The two path facts threaded only by the corrected mutual induction:
+fixed vertices are singleton cells, and root-valid automorphisms fixing
+them stabilize the current cells. -/
+structure PathOk (ctx : Ctx) (rootPtn rootLab : Array Nat)
+    (level : Nat) (st : SearchSt) : Prop where
+  fixed : FixedCells ctx level st
+  stab : PathStab ctx rootPtn rootLab level st
+
+namespace PathOk
+
+/-- The nonempty root seeds both path facts. -/
+theorem root {G : Colored n k} :
+    PathOk { n := n, g := rowsOf G }
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1
+      (rootSt n (initialPartition G).1 (initialPartition G).2) := by
+  constructor
+  · exact FixedCells.root
+  · simpa only [rootSt] using
+      (PathStab.same (ctx := { n := n, g := rowsOf G })
+        (st := rootSt n (initialPartition G).1
+          (initialPartition G).2))
+
+/-- Node-entry refinement preserves both path facts. -/
+theorem refine {G : Colored n k} {ctx : Ctx}
+    {rootPtn rootLab : Array Nat} {level active numcells : Nat}
+    {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hok : SearchOk G level numcells st)
+    (hactive : active < 2 ^ ctx.n)
+    (hstarts : ∀ v : Nat, elem active v = true →
+      v = 0 ∨ st.ptn[v - 1]! ≤ level)
+    (h : PathOk ctx rootPtn rootLab level st) :
+    PathOk ctx rootPtn rootLab level
+      { st with
+        lab := (Nauty.refine ctx level st.lab st.ptn active numcells).lab
+        ptn := (Nauty.refine ctx level st.lab st.ptn active numcells).ptn
+        active := (Nauty.refine ctx level st.lab st.ptn active numcells).active } := by
+  subst n
+  have hend := searchOk_end hn0 hok hlevel
+  have hlab : LabOk st.lab ctx.n :=
+    labOk_of_reach hok.labSize hok.reach
+  constructor
+  · exact h.fixed.refine hok.labSize hok.ptnSize hend
+  · exact h.stab.refine hgsz hok.labSize hlab hok.ptnSize hactive
+      hend hstarts
+
+/-- A loop child extends both path facts by its selected fresh vertex. -/
+theorem breakout {G : Colored n k} {ctx : Ctx}
+    {rootPtn rootLab rsLab rsPtn : Array Nat}
+    {tcLevel specFuel level numcells tc len tcell currentOffset : Nat}
+    {codes bs fs : List Nat} {cursor : Option Nat}
+    {base st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hcurrent : currentOffset < len)
+    (h : PathOk ctx rootPtn rootLab level st) :
+    PathOk ctx rootPtn rootLab (level + 1)
+      { st with
+        lab := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! } := by
+  have hn := hinv.nodeCount
+  subst n
+  have hok := hinv.run.searchOk
+  have hend := searchOk_end hinv.nonempty hok hinv.positive
+  have hlab : LabOk st.lab ctx.n :=
+    labOk_of_reach hok.labSize hok.reach
+  have hinj : LabInj st.lab ctx.n :=
+    labInj_of_reach hok.labSize hinv.nonempty hok.reach
+  have hvals : ∀ q : Nat, st.ptn[q]! ≠ level + 1 := by
+    intro q heq
+    rw [hinv.ptnEq] at heq
+    rcases hinv.values q with hle | hinf
+    · omega
+    · have hbound := hinv.fuelBound
+      omega
+  constructor
+  · exact h.fixed.breakout hinj hok.labSize hok.ptnSize
+      hinv.currentCell hinv.lenTwo hinv.range hcurrent
+  · exact h.stab.breakout hinv.currentCell
+      (by rw [hok.ptnSize]; exact hinv.range)
+      (hok.labSize.trans hok.ptnSize.symm) hlab hcurrent hinv.lenTwo
+      hend hvals
+
+/-- Recovered parent state preserves both path facts once child cleanup
+restores the parent's fixed-point set. -/
+theorem ofSearchOut {G : Colored n k} {ctx : Ctx}
+    {rootPtn rootLab : Array Nat} {level numcells : Nat}
+    {st out : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (h : PathOk ctx rootPtn rootLab level st)
+    (hfixed : out.fixedpts = st.fixedpts)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOk G level numcells out)
+    (heffect : SearchOut G level level st out) :
+    PathOk ctx rootPtn rootLab level out := by
+  constructor
+  · exact h.fixed.ofSearchOut hfixed hok hout heffect
+  · exact h.stab.ofSearchOut hn hfixed hok hout heffect
+      (searchOk_end hn0 hok hlevel)
+
+/-- The path facts and root ledger supply the exact local ledger needed
+by a pruning filter. -/
+theorem autos {G : Colored n k} {ctx : Ctx}
+    {level numcells tcLevel : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (hrun : RunInv G ctx tcLevel level cs bs fs numcells st best trail) :
+    LocalAutos ctx level st :=
+  hpath.stab.toLocal hrun.autosOk
+
+end PathOk
+
 /-- Reference history, ordered live guides, and stabilization of every
 ancestor frame to which the current node may return. -/
 structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
