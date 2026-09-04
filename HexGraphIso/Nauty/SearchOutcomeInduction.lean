@@ -566,6 +566,8 @@ structure NodeInv (G : Colored n k) (ctx : Ctx)
   activeLt : st.active < 2 ^ ctx.n
   activeStarts : ∀ v : Nat, elem st.active v = true →
     v = 0 ∨ st.ptn[v - 1]! ≤ level
+  firstBelow : st.gcaFirst < level
+  canonBelow : st.gcaCanon < level
 
 /-- Refining a valid node entry produces the equitable frame used by its
 target-cell selection and child sweep. -/
@@ -790,7 +792,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
       exact Nat.le_trans h.firstBound (Nat.le_succ level)
     · change st.gcaCanon ≤ level + 1
       exact Nat.le_trans h.canonBound (Nat.le_succ level)
-  refine ⟨hrun, ?_, ?_, ?_⟩
+  refine ⟨hrun, ?_, ?_, ?_, ?_, ?_⟩
   · have hmem : (tc, tc + len - 1) ∈ cells st.ptn level ctx.n := by
       apply isCell_mem_cells hcell
       · exact Nat.le_of_eq h.searchOk.ptnSize.symm
@@ -831,6 +833,10 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
         st.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
     rw [breakout_ptn]
     exact split_starts h.searchOk.ptnSize hcell
+  · change st.gcaFirst < level + 1
+    exact Nat.lt_succ_of_le h.firstBound
+  · change st.gcaCanon < level + 1
+    exact Nat.lt_succ_of_le h.canonBound
 
 /-- Refinement followed by the off-path comparison step enters
 `RunPrep`.  Generator validity is global, while stabilization is proved
