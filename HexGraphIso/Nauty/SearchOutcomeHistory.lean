@@ -69,6 +69,22 @@ theorem otherLeaf_gcaCanon (ctx : Ctx) (level numcells : Nat)
   simpa only [otherLeafSt, rs, base] using
     (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.1
 
+/-- The off-path comparison step leaves the cheap-automorphism boundary
+unchanged. -/
+theorem otherLeaf_noncheaplevel (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (otherLeafSt ctx level numcells st).noncheaplevel =
+      st.noncheaplevel := by
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let base : SearchSt :=
+    { st with
+      lab := rs.lab
+      ptn := rs.ptn
+      active := rs.active
+      numnodes := st.numnodes + 1 }
+  simpa only [otherLeafSt, rs, base] using
+    (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.1
+
 /-- The empty trail has no reference-history obligations. -/
 theorem empty (ctx : Ctx) (current : Nat) (st : SearchSt) :
     RefTrail ctx current st FrameTrail.empty := by

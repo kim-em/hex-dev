@@ -28,6 +28,7 @@ structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
   history : RefTrail ctx level st trail
   order : st.gcaFirst ≤ st.gcaCanon
   stable : ReturnStab trail (Int.ofNat level - 1) st
+  cheapBound : st.noncheaplevel ≤ level
 
 namespace Live
 
@@ -37,7 +38,9 @@ theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
     {trail : FrameTrail} (h : Live ctx level st trail) :
     Live ctx level (otherLeafSt ctx level numcells st) trail :=
   ⟨h.history.otherLeaf, RefTrail.otherLeaf_order h.order,
-    h.stable.otherLeaf⟩
+    h.stable.otherLeaf, by
+      rw [RefTrail.otherLeaf_noncheaplevel]
+      exact h.cheapBound⟩
 
 /-- A leaf event preserves reference history and live GCA ordering.  Its
 return-indexed generator stabilization is supplied separately by the
@@ -189,9 +192,29 @@ theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
           (processnode ctx level numcells st).1 ∧
         incKey ctx bs' (processnode ctx level numcells st).2.canonlab =
           keyMax (incKey ctx bs st.canonlab)
-            (pathLeafKey ctx codes st.lab) := by
+            (pathLeafKey ctx codes st.lab) ∧
+        some (incKey ctx bs'
+          (processnode ctx level numcells st).2.canonlab) = best := by
   obtain ⟨bs', hevent, hmax, -⟩ := hprep.leaf hn hn0 hgb hsymm hloop
     hlevel hpath hbound hef hnc
+  have hcinv : CodeCmpInv n codes bs st.canoncode st.canonlevel
+      st.eqlevCanon 0 := by
+    simpa only [hcc] using hprep.codeInv
+  have hlen : codes.length = bs.length := by
+    have hle := codeInv_tied_le hcinv
+    have hblen := hcinv.blen
+    omega
+  have hcodes : codes = bs := codeInv_eq_of_tied hcinv hlen
+  have hrows : leafRows ctx st.canonlab = leafRows ctx st.lab :=
+    rows_eq_of_testcanlab_tie hprep.canongInv htie
+  have hkey : pathLeafKey ctx codes st.lab =
+      incKey ctx bs st.canonlab := by
+    unfold pathLeafKey incKey
+    rw [hcodes, ← hrows]
+  have houtBest : some (incKey ctx bs'
+      (processnode ctx level numcells st).2.canonlab) = best := by
+    rw [hmax, hkey, keyMax_eq_left (keyLe_refl _)]
+    exact hprep.incumbent.symm
   have hreturns := (processnode_rowTie hef hnc hcc hge htie).1
   have hreturned : (processnode ctx level numcells st).1 ≤
       Int.ofNat level := by
@@ -201,7 +224,7 @@ theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
         (Nat.le_trans hlive.order hprep.canonBound)
     · rw [hcanon]
       exact Int.ofNat_le.mpr hprep.canonBound
-  refine ⟨bs', ?_, hmax⟩
+  refine ⟨bs', ?_, hmax, houtBest⟩
   apply EventOut.intro level codes bs' hevent hpath hstem hreturned
   · exact hlive.history.processnodeTiedStab hn hn0 hprep.trailOk
       hprep.leafRefs hlive.order hlive.stable hcanonBelow hef hnc hcc hge
@@ -281,6 +304,100 @@ theorem NodeInv.firstLeaf {G : Colored n k} {ctx : Ctx}
       Int.ofNat level := by
     rw [hreturn]
     exact Int.ofNat_lt.mpr hbelow
+  have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
+    hnum hearly
+  constructor
+  · exact hreceipt
+  · rw [hout]
+    exact hevent
+  · exact TrailExt.refl level trail
+
+/-- A discrete code-two row tie closes the complete node outcome for both
+the canonical-guide and first-ancestor orbit return arms. -/
+theorem NodeInv.tiedLeaf {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hcc : (otherLeafSt ctx level numcells st).compCanon = 0)
+    (hge : ¬(level < (otherLeafSt ctx level numcells st).canonlevel))
+    (htie : (testcanlab ctx (updatecan ctx
+      (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+      (otherLeafSt ctx level numcells st).lab).1 = 0)
+    (hcoset : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.cosetindex < ctx.n)
+    (horbit : OrbSound (OrbConn (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace.toList ctx.n)
+      (processnode ctx level ctx.n
+        (otherLeafSt ctx level numcells st)).2.orbits ctx.n)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  subst n
+  let leaf := otherLeafSt ctx level numcells st
+  let full := codes ++
+    [(refine ctx level st.lab st.ptn st.active numcells).longcode]
+  have hfull : level = full.length := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hstem : full.take codes.length = codes := by
+    simp only [full, List.take_left']
+  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+      trail := by
+    simpa only [full, leaf, hnum] using
+      hnode.run.otherLeaf rfl hn0 hlevel hpath
+  have hlive' : Live ctx level leaf trail := by
+    simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
+  have hcanonBelow : leaf.gcaCanon < level := by
+    change (otherLeafSt ctx level numcells st).gcaCanon < level
+    rw [RefTrail.otherLeaf_gcaCanon]
+    exact hnode.canonBelow
+  have hfirstBelow : leaf.gcaFirst < level :=
+    Nat.lt_of_le_of_lt hlive'.order hcanonBelow
+  obtain ⟨bs', hevent, -, houtBest⟩ := hprep.tiedEvent rfl hn0 hgb
+    hsymm hloop hlevel hfull hstem hlive'.cheapBound hef (by simp) hcc hge
+    htie hcanonBelow hlive'
+  rw [houtBest] at hevent
+  have hrows : leafRows ctx leaf.canonlab = leafRows ctx leaf.lab :=
+    rows_eq_of_testcanlab_tie hprep.canongInv htie
+  have hreceipt : NodeReceipt trail ctx tcLevel (specFuel + 1)
+      (fuel + 1) level codes st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+    apply otherNode_leaf_tiedReceipt hnum hprep.guides hprep.trailOk
+      hprep.canonPositive hcanonBelow hgsz hprep.leafRefs.canonSize
+      (isPerm_of_cellsReach hprep.leafRefs.canonSize hn0
+        hprep.leafRefs.canonReach)
+      hprep.searchOk.labSize
+      (isPerm_of_cellsReach hprep.searchOk.labSize hn0
+        hprep.searchOk.reach)
+      hgb hrows hef hcc hge htie hprep.firstPositive hfirstBelow hcoset
+      horbit
+  have hreturns := (processnode_rowTie (ctx := ctx) (level := level)
+    (numcells := ctx.n) (st := leaf) hef (by simp) hcc hge htie).1
+  have hearly : (processnode ctx level ctx.n leaf).1 <
+      Int.ofNat level := by
+    rcases hreturns with hfirst | hcanon
+    · rw [hfirst]
+      exact Int.ofNat_lt.mpr hfirstBelow
+    · rw [hcanon]
+      exact Int.ofNat_lt.mpr hcanonBelow
   have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
     hnum hearly
   constructor
