@@ -1464,6 +1464,35 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
       (bounded : ∀ v, finalCursor = some v → v < ctx.n)
 
+/-- A child generator unwind strictly past its parent lifts through the
+parent loop's temporary fixed-vertex cleanup. -/
+theorem LoopResult.ofChildUnwind {ctx : Ctx}
+    {tcLevel childFuel childRunFuel parentFuel loopFuel level : Nat}
+    {childCs loopCs : List Nat} {childNumcells loopNumcells : Nat}
+    {childSt loopSt out : SearchSt} {best outBest : Option Key}
+    {target fixedpts : Nat}
+    {rsLab rsPtn : Array Nat} {tc len tcell : Nat}
+    {cursor : Option Nat} {bound : Key}
+    (hsound : NodeSound ctx tcLevel childFuel (level + 1) childCs childSt
+      childNumcells best outBest)
+    (hkey : keyLe
+      (nodeKey ctx tcLevel childFuel (level + 1) childCs childSt
+        childNumcells) bound)
+    (hbelow : target < level)
+    (hpayload : Unwind ctx tcLevel target out outBest) :
+    LoopResult ctx tcLevel parentFuel childRunFuel loopFuel level loopCs
+      rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt
+      { out with fixedpts := fixedpts } best outBest
+      (some (Int.ofNat target)) := by
+  apply LoopResult.unwind
+  · constructor
+    · intro b hb
+      exact keyLe_trans (hsound.upper b hb) (incMax_mono_right best hkey)
+    · exact hsound.grows
+  · rfl
+  · exact hbelow
+  · exact hpayload.setFixed fixedpts
+
 /-- A readable completed child sweep constructs ordinary node completion
 once the specification identifies that sweep's fixed bound with the node
 subtree. -/
