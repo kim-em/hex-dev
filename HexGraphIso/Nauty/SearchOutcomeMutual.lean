@@ -8,6 +8,7 @@ module
 
 
 public import HexGraphIso.Nauty.SearchOutcomeResult
+import all HexGraphIso.Nauty.Search
 
 public section
 
@@ -412,6 +413,48 @@ theorem toLocal {ctx : Ctx} {rootPtn rootLab : Array Nat}
   exact hfixes u hu (elem_of_and_eq hfix hmem)
 
 end PathStab
+
+/-! # Fixed-point frame equations -/
+
+theorem pushAuto_fixedpts (st : SearchSt) (pair : Nat × Nat) :
+    (pushAuto st pair).fixedpts = st.fixedpts := by
+  rw [pushAuto]
+  split <;> rfl
+
+/-- Leaf processing never changes the individualized path. -/
+theorem processnode_fixedpts (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (processnode ctx level numcells st).2.fixedpts = st.fixedpts := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.fixedpts),
+    pushAuto_fixedpts, ite_self]
+
+/-- Comparison preparation never changes the individualized path. -/
+theorem otherNodePrep_fixedpts (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).fixedpts = st.fixedpts := by
+  rw [otherNodePrep]
+  simp only [Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.fixedpts, ite_self]
+
+/-- Recovery never changes the individualized path. -/
+theorem recover_fixedpts (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).fixedpts = st.fixedpts := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.fixedpts, ite_self]
+
+/-- First-leaf installation never changes the individualized path. -/
+theorem firstterminal_fixedpts (level : Nat) (st : SearchSt) :
+    (firstterminal level st).fixedpts = st.fixedpts := by
+  rw [firstterminal]
+  rfl
+
+/-- First-path sweep cleanup never changes the individualized path. -/
+theorem firstFinish_fixedpts (level size index : Nat) (st : SearchSt) :
+    (firstFinish level size index st).fixedpts = st.fixedpts := by
+  rw [firstFinish]
+  split <;> rfl
 
 /-- Reference history, ordered live guides, and stabilization of every
 ancestor frame to which the current node may return. -/
