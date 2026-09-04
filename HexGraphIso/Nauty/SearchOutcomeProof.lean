@@ -745,6 +745,7 @@ theorem firstLoop_done (ctx : Ctx)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
     (tcell index : Nat) (cursor : Option Nat) (bound : Key)
     (st : SearchSt) (best : Option Key)
+    (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = best)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hnext : nextElem tcell cursor = none) :
@@ -757,8 +758,8 @@ theorem firstLoop_done (ctx : Ctx)
         tc tv1 none tcell index st).1 := by
   rw [firstChildLoop]
   case x_1 => omega
-  exact .complete rfl (.refl ctx bound best) tcell cursor hcover fun o ho =>
-    no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+  exact .complete rfl (.refl ctx bound best) hinstalled hread tcell cursor
+    hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 /-- With positive loop fuel, an absent next child completes the off-path
 sweep rather than exhausting it. -/
@@ -767,6 +768,7 @@ theorem otherLoop_done (ctx : Ctx)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
     (cursor : Option Nat) (bound : Key) (st : SearchSt)
     (best : Option Key)
+    (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = best)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hnext : nextElem tcell cursor = none) :
@@ -779,8 +781,8 @@ theorem otherLoop_done (ctx : Ctx)
         tc tv1 none tcell st).1 := by
   rw [otherChildLoop]
   case x_1 => omega
-  exact .complete rfl (.refl ctx bound best) tcell cursor hcover fun o ho =>
-    no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
+  exact .complete rfl (.refl ctx bound best) hinstalled hread tcell cursor
+    hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 /-- A non-root orbit pointer skips the current first-path child and
 continues with ranked coverage advanced past that child. -/

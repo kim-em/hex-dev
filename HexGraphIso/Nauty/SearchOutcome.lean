@@ -1166,6 +1166,8 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | complete
       (returned : r = none)
       (sound : LoopSound ctx bound best outBest)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
       (finalSet : Nat) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells finalSet finalCursor outBest)
@@ -1177,6 +1179,8 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | pruned (target : Int) (returned : r = some target)
       (below : target < Int.ofNat level)
       (sound : LoopSound ctx bound best outBest)
+      (installed : out.canonlevel ≠ 0)
+      (read : stInc ctx out = outBest)
       (full : outBest = some (incMax best bound))
   | exhausted
       (returned : r = none)
@@ -1201,12 +1205,13 @@ theorem LoopResult.reindexSet {ctx : Ctx}
     LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab rsPtn
       tc len numcells tcell' cursor bound st out best outBest r := by
   cases h with
-  | complete returned sound finalSet finalCursor cover empty =>
-      exact .complete returned sound finalSet finalCursor cover empty
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned sound installed read finalSet finalCursor
+        cover empty
   | unwind sound target returned below payload =>
       exact .unwind sound target returned below payload
-  | pruned target returned below sound full =>
-      exact .pruned target returned below sound full
+  | pruned target returned below sound installed read full =>
+      exact .pruned target returned below sound installed read full
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
       exact .exhausted returned sound finalSet finalCursor cover progress bounded
 
@@ -1225,12 +1230,13 @@ theorem LoopResult.step {ctx : Ctx}
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
       rsPtn tc len numcells tcell cursor bound st out best outBest r := by
   cases h with
-  | complete returned sound finalSet finalCursor cover empty =>
-      exact .complete returned sound finalSet finalCursor cover empty
+  | complete returned sound installed read finalSet finalCursor cover empty =>
+      exact .complete returned sound installed read finalSet finalCursor
+        cover empty
   | unwind sound target returned below payload =>
       exact .unwind sound target returned below payload
-  | pruned target returned below sound full =>
-      exact .pruned target returned below sound full
+  | pruned target returned below sound installed read full =>
+      exact .pruned target returned below sound installed read full
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
       exact .exhausted returned sound finalSet finalCursor cover
         (Nat.le_trans (by
