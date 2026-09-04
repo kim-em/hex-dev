@@ -728,12 +728,9 @@ theorem otherNode_leaf_firstAuto {ctx : Ctx}
     apply NodeSound.ofExact
     simp only [incMax]
     rw [hnode, hmax]
-  have hpayload : Unwind ctx tcLevel leaf.gcaFirst
-      (processnode ctx level ctx.n leaf).2
-      (some (incKey ctx bs st.canonlab)) := by
-    exact g.firstUnwind (level := level) (numcells := ctx.n) href hgsz
-      hfirstSize hfirstPerm hlabSize hlabPerm hsymm hloop hbound heq hsent
-      (by simp) hpass hcurReach hcur hatCur
+  obtain ⟨hpayload⟩ := g.firstUnwind (level := level)
+    (numcells := ctx.n) href hgsz hfirstSize hfirstPerm hlabSize hlabPerm
+    hsymm hloop hbound heq hsent (by simp) hpass hcurReach hcur hatCur
   have hreturn := (processnode_auto (level := level) (numcells := ctx.n)
     (st := leaf) heq hsent (by simp) hpass).1
   exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
@@ -842,6 +839,7 @@ theorem otherNode_leaf_rowTie {ctx : Ctx}
     hcanonSize hcanonPerm hlabSize hlabPerm hbound hrows hef (by simp)
     hcc hge htie hcanonBelow hfirstPos hfirstBelow hcurReach hcur hatCur
     hcoset horbit
+  obtain ⟨hpayload⟩ := hpayload
   exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
 
 /-- A first-path-agreeing leaf whose sentinel or automorphism guard fails
@@ -1037,7 +1035,8 @@ theorem canonlevel_firstFinish (level tcellsize index : Nat)
   split <;> rfl
 
 /-- A generator payload is insensitive to the first-path exit counter. -/
-theorem Unwind.firstFinish {ctx : Ctx} {tcLevel target level size index : Nat}
+@[expose] def Unwind.firstFinish {ctx : Ctx}
+    {tcLevel target level size index : Nat}
     {st : SearchSt} {best : Option Key}
     (h : Unwind ctx tcLevel target st best) :
     Unwind ctx tcLevel target (firstFinish level size index st) best := by

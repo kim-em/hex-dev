@@ -343,9 +343,10 @@ theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx}
   | pruned sound target returned below installed read full => exact Or.inl full
   | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
 
-/-- A completed or target-addressed child receipt advances its parent's
-coverage.  Exact children may use cell-permutation key equivalence;
-generator children use their location in the just-pushed parent frame. -/
+/-- A resolved child receipt advances its parent's coverage.  Exact
+children may use cell-permutation key equivalence; generator children use
+their location in the just-pushed parent frame, with stabilization required
+only by an orbit-pointer unwind. -/
 theorem SweepCover.receipt {ctx : Ctx}
     {tcLevel specFuel runFuel level tc len numcells tcell tv offset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
@@ -359,7 +360,16 @@ theorem SweepCover.receipt {ctx : Ctx}
         ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
       ctx tcLevel specFuel runFuel (level + 1) codes child out
       (numcells + 1) before best r)
-    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level))
+    (hfuel : runFuel ≠ 0)
+    (hreturn :
+      best = some (incMax before
+        (nodeKey ctx tcLevel specFuel (level + 1) codes child
+          (numcells + 1))) ∨
+      ∃ payload : Unwind ctx tcLevel level out best,
+        payload.Located
+          (trail.push level
+            ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) ∧
+        payload.FrameStable rsPtn level rsLab)
     (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
       sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
         nodeKey ctx tcLevel specFuel (level + 1) codes child
@@ -370,8 +380,6 @@ theorem SweepCover.receipt {ctx : Ctx}
     (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hv : ∀ γ ∈ out.genTrace.toList,
       checkAutom ctx.g γ ctx.n = true)
-    (hstab : ∀ γ ∈ out.genTrace.toList,
-      CellStab rsPtn level rsLab γ)
     (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
     (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
@@ -382,10 +390,11 @@ theorem SweepCover.receipt {ctx : Ctx}
     SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell (some tv) best := by
   have hsound := hchild.sound hfuel
-  rcases hchild.parentReturn hfuel hstay with hfull | ⟨payload, hloc⟩
+  rcases hreturn with hfull | ⟨payload, hloc, hstab⟩
   · exact h.advanceKey hnext hfull heq
   · exact h.unwind hsound.grows hnext hloc
-      (FrameTrail.push_self trail level _) ho htv hcoset hgsz hbg hv hstab
+      (FrameTrail.push_self trail level _) ho htv hcoset hgsz hbg hv
+      hstab
       hs hinj hok hsp hend hvals hic hrange hlf
 
 /-- Updating the first-path return controls preserves the source

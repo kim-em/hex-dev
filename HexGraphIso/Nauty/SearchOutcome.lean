@@ -987,7 +987,7 @@ return retain their different reference labellings.  Code two's special
 child. Non-generator pruning instead returns a locally complete maximum and
 therefore has its own result constructor. -/
 inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
-    (out : SearchSt) (best : Option Key) : Prop where
+    (out : SearchSt) (best : Option Key) where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
   | canon (anchor : Anchor ctx tcLevel target best)
@@ -996,7 +996,7 @@ inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
 
 /-- Updating the first-path return controls changes none of the fields
 carried by a generator unwind. -/
-theorem Unwind.setFirst {ctx : Ctx} {tcLevel target : Nat}
+@[expose] def Unwind.setFirst {ctx : Ctx} {tcLevel target : Nat}
     {out : SearchSt} {best : Option Key} (h : Unwind ctx tcLevel target out best)
     (gcaFirst stabvertex : Nat) :
     Unwind ctx tcLevel target
@@ -1014,7 +1014,7 @@ theorem Unwind.setFirst {ctx : Ctx} {tcLevel target : Nat}
 
 /-- Removing a loop's temporary fixed vertex changes none of the fields
 carried by a generator unwind. -/
-theorem Unwind.setFixed {ctx : Ctx} {tcLevel target : Nat}
+@[expose] def Unwind.setFixed {ctx : Ctx} {tcLevel target : Nat}
     {out : SearchSt} {best : Option Key} (h : Unwind ctx tcLevel target out best)
     (fixedpts : Nat) :
     Unwind ctx tcLevel target { out with fixedpts := fixedpts } best := by
@@ -1115,8 +1115,8 @@ theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     (hcurReach : cellsPerm g.rsPtn st.gcaFirst g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
-    Unwind ctx tcLevel st.gcaFirst
-      (processnode ctx level numcells st).2 best := by
+    Nonempty (Unwind ctx tcLevel st.gcaFirst
+      (processnode ctx level numcells st).2 best) := by
   have hcarrier := processnode_firstLabelCarrier hsz₁ hp₁ hsz₂ hp₂
     hsymm hloop hbound heq hsent hnc hpass
   have hcarrierG : LabelCarrier ctx g.ref st.lab
@@ -1138,7 +1138,7 @@ theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
   have hanchor := g.anchorCell hgsz hinc hcell hcur hatCur
   have hframes := processnode_frames ctx level numcells st
   rcases hframes with ⟨hlab, _, _, _, hfirst, _, _, _, _⟩
-  apply Unwind.first hanchor
+  refine ⟨Unwind.first hanchor ?_⟩
   rw [hfirst, hlab]
   exact hcarrier
 
@@ -1163,8 +1163,8 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     (hcurReach : cellsPerm g.rsPtn st.gcaCanon g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
-    Unwind ctx tcLevel st.gcaCanon
-      (processnode ctx level numcells st).2 best := by
+    Nonempty (Unwind ctx tcLevel st.gcaCanon
+      (processnode ctx level numcells st).2 best) := by
   have hcarrier := processnode_canonLabelCarrier hsz₁ hp₁ hsz₂ hp₂
     hbound hrows hef hnc hcc hge htie
   have hcarrierG : LabelCarrier ctx g.ref st.lab
@@ -1187,7 +1187,7 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
   obtain ⟨_, _, _, _, _, hcanon, _, _⟩ :=
     processnode_rowTie hef hnc hcc hge htie
   have hframes := processnode_frames ctx level numcells st
-  apply Unwind.canon hanchor
+  refine ⟨Unwind.canon hanchor ?_⟩
   rw [hcanon, hframes.1]
   exact hcarrier
 
@@ -1220,14 +1220,15 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       (processnode ctx level numcells st).2.orbits ctx.n) :
     ∃ target, (processnode ctx level numcells st).1 = Int.ofNat target ∧
       target < level ∧
-      Unwind ctx tcLevel target (processnode ctx level numcells st).2 best := by
+      Nonempty (Unwind ctx tcLevel target
+        (processnode ctx level numcells st).2 best) := by
   rcases processnode_rowTie_orbit hef hnc hcc hge htie with hcanon |
       ⟨hfirst, hsmaller⟩
   · exact ⟨st.gcaCanon, hcanon, hcanonBelow,
       g.canonUnwind href hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows
         hef hnc hcc hge htie hcurReach hcur hatCur⟩
   · exact ⟨st.gcaFirst, hfirst, hfirstBelow,
-      .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
+      ⟨.orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩⟩
 
 /-- A guide's covered child remains covered when the incumbent grows. -/
 @[expose] def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
@@ -1579,7 +1580,7 @@ theorem NodeResult.parentReturn {ctx : Ctx}
     (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level)) :
     outBest = some (incMax best
         (nodeKey ctx tcLevel specFuel (level + 1) cs st numcells)) ∨
-      Unwind ctx tcLevel level out outBest := by
+      Nonempty (Unwind ctx tcLevel level out outBest) := by
   cases h with
   | complete sound returned installed read full => exact Or.inl full
   | unwind sound target returned below payload =>
@@ -1590,7 +1591,7 @@ theorem NodeResult.parentReturn {ctx : Ctx}
       have htarget : target = level := by
         omega
       subst target
-      exact Or.inr payload
+      exact Or.inr ⟨payload⟩
   | pruned sound target returned below installed read full => exact Or.inl full
   | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
 

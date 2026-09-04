@@ -232,15 +232,13 @@ theorem Unwind.Located.firstFinish {ctx : Ctx}
       (index := index)).Located trail := by
   cases h with
   | first anchor carrier located =>
-      apply Unwind.Located.first anchor
-      · rw [Nauty.firstFinish]
-        split <;> exact carrier
-      · exact located
+      exact Unwind.Located.first anchor (by
+        rw [Nauty.firstFinish]
+        split <;> exact carrier) located
   | canon anchor carrier located =>
-      apply Unwind.Located.canon anchor
-      · rw [Nauty.firstFinish]
-        split <;> exact carrier
-      · exact located
+      exact Unwind.Located.canon anchor (by
+        rw [Nauty.firstFinish]
+        split <;> exact carrier) located
   | orbit orbitPayload =>
       exact .orbit {
         positive := orbitPayload.positive

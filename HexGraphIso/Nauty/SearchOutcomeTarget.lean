@@ -241,6 +241,25 @@ inductive Unwind.Located (trail : FrameTrail) {ctx : Ctx} {tcLevel target : Nat}
   | orbit (payload : OrbitUnwind ctx target out) :
       Unwind.Located trail (.orbit payload)
 
+/-- The frame-local condition needed to consume an unwind.  Direct
+unwinds already carry a checked cell carrier in their anchor, while the
+orbit-pointer arm relies on every admitted generator stabilizing the
+receiving cell. -/
+inductive Unwind.FrameStable {ctx : Ctx} {tcLevel target : Nat}
+    {out : SearchSt} {best : Option Key}
+    (rsPtn : Array Nat) (level : Nat) (rsLab : Array Nat) :
+    Unwind ctx tcLevel target out best → Prop where
+  | first (anchor : Anchor ctx tcLevel target best)
+      (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace) :
+      Unwind.FrameStable rsPtn level rsLab (.first anchor carrier)
+  | canon (anchor : Anchor ctx tcLevel target best)
+      (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace) :
+      Unwind.FrameStable rsPtn level rsLab (.canon anchor carrier)
+  | orbit (payload : OrbitUnwind ctx target out)
+      (stable : ∀ γ ∈ out.genTrace.toList,
+        CellStab rsPtn level rsLab γ) :
+      Unwind.FrameStable rsPtn level rsLab (.orbit payload)
+
 /-- Extending the trail at a different, deeper level preserves the source
 location of a transported unwind. -/
 theorem Unwind.Located.push {ctx : Ctx} {tcLevel target level : Nat}
@@ -428,8 +447,7 @@ theorem SweepCover.unwind {ctx : Ctx}
     (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hv : ∀ γ ∈ out.genTrace.toList,
       checkAutom ctx.g γ ctx.n = true)
-    (hstab : ∀ γ ∈ out.genTrace.toList,
-      CellStab rsPtn level rsLab γ)
+    (hstab : payload.FrameStable rsPtn level rsLab)
     (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
     (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
@@ -449,7 +467,9 @@ theorem SweepCover.unwind {ctx : Ctx}
       exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
         hrange' hoff
   | orbit orbitPayload =>
-      exact h.orbitUnwind hinc hnext ho htv orbitPayload hcoset hgsz hbg
-        hv hstab hs hinj hok hsp hend hvals hic hrange hlf
+      cases hstab with
+      | orbit _ stable =>
+          exact h.orbitUnwind hinc hnext ho htv orbitPayload hcoset hgsz hbg
+            hv stable hs hinj hok hsp hend hvals hic hrange hlf
 
 end Hex.GraphIso.Nauty
