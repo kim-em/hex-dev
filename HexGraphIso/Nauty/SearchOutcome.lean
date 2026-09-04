@@ -877,6 +877,41 @@ def Guide.anchor {ctx : Ctx} {tcLevel target : Nat}
     hcarrier hstab g.labSize g.labOk g.ptnSize g.endClosed g.values
     g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
 
+/-- A guide's covered child remains covered when the incumbent grows. -/
+def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
+    {best best' : Option Key} (g : Guide ctx tcLevel target best)
+    (hinc : IncGrows best best') : Guide ctx tcLevel target best' :=
+  { g with done := g.done.mono hinc }
+
+/-- The first and canonical generator guides that are live strictly above
+the current node.  A guide at the current level is deliberately not
+required: leaf installation temporarily sets a gca to the leaf level, and
+the parent loop replaces it with a concrete explored-child guide. -/
+structure Guides (ctx : Ctx) (tcLevel level : Nat) (st : SearchSt)
+    (best : Option Key) : Prop where
+  first : 0 < st.gcaFirst → st.gcaFirst < level →
+    ∃ g : Guide ctx tcLevel st.gcaFirst best, g.ref = st.firstlab
+  canon : 0 < st.gcaCanon → st.gcaCanon < level →
+    ∃ g : Guide ctx tcLevel st.gcaCanon best, g.ref = st.canonlab
+
+/-- Both guide ledgers survive an incumbent increase. -/
+theorem Guides.grow {ctx : Ctx} {tcLevel level : Nat} {st : SearchSt}
+    {best best' : Option Key} (h : Guides ctx tcLevel level st best)
+    (hinc : IncGrows best best') : Guides ctx tcLevel level st best' := by
+  constructor
+  · intro hp hlt
+    obtain ⟨g, href⟩ := h.first hp hlt
+    exact ⟨g.mono hinc, href⟩
+  · intro hp hlt
+    obtain ⟨g, href⟩ := h.canon hp hlt
+    exact ⟨g.mono hinc, href⟩
+
+/-- The root has no live generator guide. -/
+theorem Guides.root {n : Nat} (g lab : Array Nat) (cellEnds : List Nat)
+    (tcLevel : Nat) (best : Option Key) :
+    Guides { n := n, g := g } tcLevel 1 (rootSt n lab cellEnds) best := by
+  constructor <;> intro hp _ <;> simp [rootSt] at hp
+
 /-- Every installed output came from the incoming incumbent or this
 node's specification subtree, and the incoming incumbent was not lost. -/
 structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
