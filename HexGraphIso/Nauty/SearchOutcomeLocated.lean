@@ -260,6 +260,101 @@ theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx}
   | pruned sound target returned below installed read full => exact Or.inl full
   | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
 
+/-- Updating the first-path return controls preserves the source
+location of a generator unwind. -/
+theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
+    {payload : Unwind ctx tcLevel target out best}
+    (h : payload.Located trail) (gcaFirst stabvertex : Nat) :
+    ∃ payload' : Unwind ctx tcLevel target
+        { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best,
+      payload'.Located trail := by
+  let out' : SearchSt :=
+    { out with gcaFirst := gcaFirst, stabvertex := stabvertex }
+  change ∃ payload' : Unwind ctx tcLevel target out' best,
+    payload'.Located trail
+  cases h with
+  | first anchor carrier located =>
+      have carrier' : LabelCarrier ctx out'.firstlab out'.lab
+          out'.genTrace := by
+        simpa only [out'] using carrier
+      refine ⟨Unwind.first anchor carrier', ?_⟩
+      exact Unwind.Located.first anchor carrier' located
+  | canon anchor carrier located =>
+      have carrier' : LabelCarrier ctx out'.canonlab out'.lab
+          out'.genTrace := by
+        simpa only [out'] using carrier
+      refine ⟨Unwind.canon anchor carrier', ?_⟩
+      exact Unwind.Located.canon anchor carrier' located
+  | orbit orbitPayload =>
+      let orbitPayload' : OrbitUnwind ctx target out' := {
+        positive := orbitPayload.positive
+        currentLt := orbitPayload.currentLt
+        smaller := orbitPayload.smaller
+        sound := orbitPayload.sound }
+      exact ⟨.orbit orbitPayload', .orbit orbitPayload'⟩
+
+/-- Removing a loop's temporary fixed vertex preserves the source
+location of a generator unwind. -/
+theorem Unwind.Located.setFixed {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
+    {payload : Unwind ctx tcLevel target out best}
+    (h : payload.Located trail) (fixedpts : Nat) :
+    ∃ payload' : Unwind ctx tcLevel target
+        { out with fixedpts := fixedpts } best,
+      payload'.Located trail := by
+  let out' : SearchSt := { out with fixedpts := fixedpts }
+  change ∃ payload' : Unwind ctx tcLevel target out' best,
+    payload'.Located trail
+  cases h with
+  | first anchor carrier located =>
+      have carrier' : LabelCarrier ctx out'.firstlab out'.lab
+          out'.genTrace := by
+        simpa only [out'] using carrier
+      refine ⟨Unwind.first anchor carrier', ?_⟩
+      exact Unwind.Located.first anchor carrier' located
+  | canon anchor carrier located =>
+      have carrier' : LabelCarrier ctx out'.canonlab out'.lab
+          out'.genTrace := by
+        simpa only [out'] using carrier
+      refine ⟨Unwind.canon anchor carrier', ?_⟩
+      exact Unwind.Located.canon anchor carrier' located
+  | orbit orbitPayload =>
+      let orbitPayload' : OrbitUnwind ctx target out' := {
+        positive := orbitPayload.positive
+        currentLt := orbitPayload.currentLt
+        smaller := orbitPayload.smaller
+        sound := orbitPayload.sound }
+      exact ⟨.orbit orbitPayload', .orbit orbitPayload'⟩
+
+/-- A located child unwind strictly past its parent lifts through the
+parent loop's fixed-vertex cleanup. -/
+theorem LoopReceipt.ofChildUnwind {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel childFuel childRunFuel parentFuel loopFuel level : Nat}
+    {childCs loopCs : List Nat} {childNumcells loopNumcells : Nat}
+    {childSt loopSt out : SearchSt} {best outBest : Option Key}
+    {target fixedpts : Nat} {rsLab rsPtn : Array Nat}
+    {tc len tcell : Nat} {cursor : Option Nat} {bound : Key}
+    (hsound : NodeSound ctx tcLevel childFuel (level + 1) childCs childSt
+      childNumcells best outBest)
+    (hkey : keyLe
+      (nodeKey ctx tcLevel childFuel (level + 1) childCs childSt
+        childNumcells) bound)
+    (hbelow : target < level)
+    (payload : Unwind ctx tcLevel target out outBest)
+    (hloc : payload.Located trail) :
+    LoopReceipt trail ctx tcLevel parentFuel childRunFuel loopFuel level
+      loopCs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt
+      { out with fixedpts := fixedpts } best outBest
+      (some (Int.ofNat target)) := by
+  obtain ⟨payload', hloc'⟩ := hloc.setFixed fixedpts
+  have hsound' : LoopSound ctx bound best outBest := by
+    constructor
+    · intro b hb
+      exact keyLe_trans (hsound.upper b hb) (incMax_mono_right best hkey)
+    · exact hsound.grows
+  exact .unwind hsound' target rfl hbelow payload' hloc'
+
 /-- A located loop return carrying an integer lifts directly through its
 parent node. -/
 theorem NodeReceipt.ofLoopSome {trail : FrameTrail} {ctx : Ctx}
