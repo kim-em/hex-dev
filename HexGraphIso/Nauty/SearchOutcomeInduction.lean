@@ -273,6 +273,73 @@ theorem CheapOk.next {ctx : Ctx} {rlab rptn : Array Nat}
   · exact hpair heq
   · exact h.pair (by omega)
 
+/-- Refinement only splits at the current level and permutes within the
+old current cells, so every pair frozen at a strictly smaller level is
+unchanged. -/
+theorem CheapOk.refine {ctx : Ctx} {rlab rptn : Array Nat}
+    {level numcells : Nat} {st out : SearchSt}
+    (h : CheapOk ctx rlab rptn level st) (hlevel : 1 ≤ level)
+    (hlab : out.lab =
+      (Nauty.refine ctx level st.lab st.ptn st.active numcells).lab)
+    (hptn : out.ptn =
+      (Nauty.refine ctx level st.lab st.ptn st.active numcells).ptn)
+    (hncl : out.noncheaplevel = st.noncheaplevel) :
+    CheapOk ctx rlab rptn level out := by
+  let rs := Nauty.refine ctx level st.lab st.ptn st.active numcells
+  have hnnEq : ctx.n = st.ptn.size := h.ptnSize.symm
+  have hnn : ctx.n ≤ st.ptn.size := Nat.le_of_eq hnnEq
+  have hls : st.lab.size = st.ptn.size := h.labSize.trans h.ptnSize.symm
+  have hend : st.ptn[st.ptn.size - 1]! ≤ level :=
+    Nat.le_trans h.rootEnd hlevel
+  have hR := refine_refInv (ctx := ctx) (level := level)
+    (lab := st.lab) (ptn := st.ptn) (active := st.active)
+    (numcells := numcells) hnn hls hend
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · rw [hncl]
+    exact h.positive
+  · rw [hlab, hR.labSize]
+    exact h.labSize
+  · rw [hptn, hR.ptnSize]
+    exact h.ptnSize
+  · rw [hptn, hR.ptnSize]
+    rw [refine_frozen hnnEq hls hend hend]
+    exact h.rootEnd
+  · intro hlt
+    rw [hncl] at hlt
+    have hpos := h.positive
+    have hendSaved : st.ptn[st.ptn.size - 1]! ≤
+        st.noncheaplevel := Nat.le_trans h.rootEnd (by omega)
+    have hcells : cells st.ptn st.noncheaplevel ctx.n =
+        cells rs.ptn st.noncheaplevel ctx.n := by
+      apply Eq.symm
+      apply cells_eq_of_low hR.ptnSize
+      intro q hq
+      rcases hq with hold | hnew
+      · exact refine_frozen hnnEq hls hend
+          (Nat.le_trans hold (Nat.le_of_lt hlt))
+      · rcases ptn_refine_vals ctx level st.lab st.ptn st.active
+            numcells q with heq | heq
+        · exact heq
+        · rw [heq] at hnew
+          omega
+    have hperm : cellsPerm st.ptn st.noncheaplevel st.lab rs.lab := by
+      apply cellsPerm_coarsen (ptnC := st.ptn) (ptnF := st.ptn)
+          (levC := st.noncheaplevel) (levF := level)
+      · rfl
+      · exact hls
+      · rw [hR.labSize]
+        exact hls
+      · exact hR.perm
+      · exact hend
+      · exact hendSaved
+      · intro q hq
+        exact Nat.le_trans hq (Nat.le_of_lt hlt)
+    have hfm : fmptn st.lab st.ptn st.noncheaplevel ctx.n =
+        fmptn rs.lab rs.ptn st.noncheaplevel ctx.n :=
+      fmptn_congr hnn hendSaved hcells hperm
+    rw [hlab, hptn, hncl, ← hfm]
+    exact h.pair hlt
+
 /-- The initial search boundary is one, so its strict pair obligation is
 empty at the root. -/
 theorem CheapOk.root {G : Colored n k} {ctx : Ctx} {numcells : Nat}
@@ -280,7 +347,8 @@ theorem CheapOk.root {G : Colored n k} {ctx : Ctx} {numcells : Nat}
     (hok : SearchOk G 1 numcells st) (hncl : st.noncheaplevel = 1) :
     CheapOk ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2) 1 st := by
-  refine ⟨by omega, ?_, ?_, searchOk_end hn0 hok (Nat.le_refl 1), ?_⟩
+  refine ⟨by rw [hncl]; exact Nat.zero_lt_succ 0, ?_, ?_,
+    searchOk_end hn0 hok (Nat.le_refl 1), ?_⟩
   · rw [hok.labSize, hn]
   · rw [hok.ptnSize, hn]
   · intro hlt
