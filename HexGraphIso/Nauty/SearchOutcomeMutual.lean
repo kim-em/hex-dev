@@ -111,6 +111,34 @@ structure FirstLive (ctx : Ctx) (level : Nat) (st : SearchSt)
   frameStab : ∀ γ ∈ st.genTrace.toList,
     CellStab rsPtn level rsLab γ
 
+/-- The bookkeeping between an off-path node's refinement and its fresh
+child sweep preserves the live package and the strict first-reference
+bound. -/
+theorem NodeInv.otherLive {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells len : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    let pre := otherLeafSt ctx level numcells st
+    let base : SearchSt := { pre with tctotal := pre.tctotal + len }
+    let start := if cheapautom base.ptn level ctx.n then base
+      else { base with noncheaplevel := level + 1 }
+    OtherLive ctx level start trail := by
+  dsimp only
+  let pre := otherLeafSt ctx level numcells st
+  let base : SearchSt := { pre with tctotal := pre.tctotal + len }
+  have hpre : Live ctx level pre trail := by
+    simpa only [pre] using hlive.otherLeaf (numcells := numcells)
+  have hbase : Live ctx level base trail := by
+    simpa only [base] using hpre.setTctotal (value := pre.tctotal + len)
+  have hbelow : base.gcaFirst < level := by
+    change (otherLeafSt ctx level numcells st).gcaFirst < level
+    rw [RefTrail.otherLeaf_gcaFirst]
+    exact hnode.firstBelow
+  split
+  · exact ⟨hbase, hbelow⟩
+  · exact ⟨hbase.park, hbelow⟩
+
 /-- A loop child inherits reference history and stabilization through its
 live first-reference GCA.  The current frozen frame is required only when
 that GCA is exactly the loop level. -/
