@@ -295,6 +295,45 @@ private theorem pushAuto_allsamelevel (st : SearchSt) (p : Nat × Nat) :
   else
     save
 
+/-- A faithful comparison machine records its agreement or divergence at
+a genuine path level. -/
+theorem CodeCmpInv.eqlev_nonneg {nn : Nat} {cs bs : List Nat}
+    {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon compCanon : Int}
+    (h : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon compCanon) :
+    0 ≤ eqlevCanon := by
+  rcases h.tri with ⟨_, heq, _⟩ | ⟨j, _, _, _, heq, _⟩
+  · rw [heq]
+    exact Int.natCast_nonneg _
+  · rw [heq]
+    exact Int.natCast_nonneg _
+
+/-- The shared prune tail either returns no lower than the frozen code
+divergence or jumps to the level immediately above the saved cheap-cell
+boundary.  These are the two logically different early-return modes. -/
+theorem pruneReturn_split {noncheaplevel allsamelevel : Nat}
+    {eqlevCanon : Int} (heqlev : 0 ≤ eqlevCanon) :
+    Int.ofNat eqlevCanon.toNat ≤
+        pruneReturn noncheaplevel allsamelevel eqlevCanon ∨
+      pruneReturn noncheaplevel allsamelevel eqlevCanon =
+        Int.ofNat noncheaplevel - 1 := by
+  have heqCast : Int.ofNat eqlevCanon.toNat = eqlevCanon := by
+    change (eqlevCanon.toNat : Int) = eqlevCanon
+    exact Int.toNat_of_nonneg heqlev
+  unfold pruneReturn
+  split <;> rename_i hsave
+  · dsimp only
+    split <;> rename_i hboundary
+    · exact Or.inr rfl
+    · left
+      rw [heqCast]
+      omega
+  · dsimp only
+    split <;> rename_i hboundary
+    · exact Or.inr rfl
+    · left
+      rw [heqCast]
+      omega
+
 /-- The pass arm: an internal node with no frozen-downward fast exit
 leaves the comparison state alone and returns its own level. -/
 theorem processnode_pass {ctx : Ctx} {level numcells : Nat}
