@@ -1249,6 +1249,21 @@ theorem NodeResult.complete_of_sweep {ctx : Ctx}
     hinstalled hread
   exact .complete (NodeSound.ofExact hfull) hreturn hinstalled hread hfull
 
+/-- A loop that has already absorbed its fixed child bound constructs the
+corresponding pruned node outcome when that bound is the node subtree. -/
+theorem NodeResult.pruned_of_loop {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat}
+    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {r target : Int}
+    (hinstalled : out.canonlevel ≠ 0) (hread : stInc ctx out = outBest)
+    (hfull : outBest = some (incMax best
+      (nodeKey ctx tcLevel specFuel level cs st numcells)))
+    (hreturn : r = target) (hbelow : target < Int.ofNat level) :
+    NodeResult ctx tcLevel specFuel runFuel level cs st out numcells
+      best outBest r :=
+  .pruned (NodeSound.ofExact hfull) target hreturn hbelow hinstalled hread
+    hfull
+
 /-- The entry set only describes where the call begins.  Every constructor
 records the final set, so the result can cross a filter exposed in the
 caller. -/
