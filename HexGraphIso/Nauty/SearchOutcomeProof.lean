@@ -72,6 +72,40 @@ theorem firstPath_discrete_state (ctx : Ctx)
     not_true_eq_false, ite_false,
     beq_self_eq_true, ite_true, firstLeafSt]
 
+/-- Under the search invariant, the transcription's refined cell-count
+guard agrees with the specification's discreteness guard. -/
+theorem refine_discrete_iff {G : Colored n k} {ctx : Ctx}
+    (hn : ctx.n = n) (hn0 : 0 < n) {level numcells : Nat}
+    {st : SearchSt} (hok : SearchOk G level numcells st)
+    (hlevel : 1 ≤ level) :
+    (refine ctx level st.lab st.ptn st.active numcells).numcells =
+        ctx.n ↔
+      discreteAt (refine ctx level st.lab st.ptn st.active
+        numcells).ptn level ctx.n = true := by
+  subst n
+  have hend := searchOk_end hn0 hok hlevel
+  have hnn : ctx.n = st.ptn.size := by rw [hok.ptnSize]
+  have hls : st.lab.size = st.ptn.size := by
+    rw [hok.labSize, hok.ptnSize]
+  have hnc := hok.count
+  have hR := refine_refInv (ctx := ctx) (level := level)
+    (lab := st.lab) (ptn := st.ptn) (active := st.active)
+    (numcells := numcells) (Nat.le_of_eq hnn) hls hend
+  have hRend : (refine ctx level st.lab st.ptn st.active
+      numcells).ptn[(refine ctx level st.lab st.ptn st.active
+        numcells).ptn.size - 1]! ≤ level := by
+    rw [hR.ptnSize, refine_frozen hnn hls hend hend]
+    exact hend
+  have hcount := refine_bcount (ctx := ctx) (level := level)
+    (lab := st.lab) (ptn := st.ptn) (active := st.active)
+    (numcells := numcells) hnn hls hend
+  have haccurate : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells =
+      bcount (refine ctx level st.lab st.ptn st.active
+        numcells).ptn level ctx.n := by omega
+  rw [haccurate]
+  exact (discreteAt_iff_bcount (by rw [hR.ptnSize, ← hnn]) hRend).symm
+
 /-- Writing the current refinement code extends the stored first-path
 code sequence by one entry. -/
 theorem firstLeafSt_codes {ctx : Ctx} {nn level numcells : Nat}
