@@ -207,6 +207,24 @@ theorem Guide.locateAnchor {ctx : Ctx} {tcLevel level : Nat}
   rw [hentry]
   congr
 
+/-- Location evidence follows a witness-local carrier into its direct
+unwind anchor. -/
+theorem Guide.locateAnchorCell {ctx : Ctx} {tcLevel level : Nat}
+    {before best : Option Key} (trail : FrameTrail)
+    (g : Guide ctx tcLevel level before)
+    {oCur : Nat} (hentry : trail level = some ⟨g.frame, oCur⟩)
+    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows before best)
+    {cur : Array Nat} {store : Array (Array Nat)}
+    (hcarrier : CellCarrier ctx g.rsPtn level g.rsLab g.ref cur store)
+    (hcur : oCur < g.len)
+    (hatCur : cur[g.tc]! = g.rsLab[g.tc + oCur]!) :
+    (g.anchorCell hgsz hinc hcarrier hcur hatCur).Located trail := by
+  change trail level = some
+    ⟨(g.anchorCell hgsz hinc hcarrier hcur hatCur).frame,
+      (g.anchorCell hgsz hinc hcarrier hcur hatCur).offset⟩
+  rw [hentry]
+  congr
+
 /-- Location evidence attached to each direct unwind constructor.  Orbit
 unwinds use only the target loop's own frame and need no stored frame. -/
 inductive Unwind.Located (trail : FrameTrail) {ctx : Ctx} {tcLevel target : Nat}

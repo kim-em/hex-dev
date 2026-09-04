@@ -338,4 +338,158 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
         rw [hlab]
         exact breakout_at_target hinj (by rw [hls]; omega)
 
+/-! # Located direct unwinds -/
+
+/-- Positive runtime fuel exposes the semantic soundness carried by every
+non-exhausted node result. -/
+theorem NodeResult.sound {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    (h : NodeResult ctx tcLevel specFuel runFuel level cs st out numcells
+      best outBest r) (hfuel : runFuel ≠ 0) :
+    NodeSound ctx tcLevel specFuel level cs st numcells best outBest := by
+  cases h with
+  | complete sound => exact sound
+  | unwind sound => exact sound
+  | pruned sound => exact sound
+  | exhausted empty => exact (hfuel empty).elim
+
+/-- A located leaf-event unwind lifts directly through `otherNode`. -/
+theorem otherNode_leaf_receipt {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells target : Nat}
+    {cs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail}
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hreturn : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 = Int.ofNat target)
+    (hbelow : target < level)
+    (hsound : NodeSound ctx tcLevel (specFuel + 1) level cs st numcells
+      best outBest)
+    (payload : Unwind ctx tcLevel target
+      (processnode ctx level ctx.n
+        (otherLeafSt ctx level numcells st)).2 outBest)
+    (hloc : payload.Located trail) :
+    NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best outBest
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  have hearly : (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level := by
+    rw [hreturn]
+    exact Int.ofNat_lt.mpr hbelow
+  rw [otherNode_leaf_early ctx inf tcLevel fuel level numcells st hnum
+    hearly]
+  exact .unwind hsound target hreturn hbelow payload hloc
+
+/-- A code-one admission at a reached active child has a located direct
+unwind payload. -/
+theorem Guide.firstLocated {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (g : Guide ctx tcLevel st.gcaFirst best)
+    (href : g.ref = st.firstlab) (hloc : g.Located trail)
+    (htrail : TrailOk ctx level st trail) (hbelow : st.gcaFirst < level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    ∃ payload : Unwind ctx tcLevel st.gcaFirst
+        (processnode ctx level numcells st).2 best,
+      payload.Located trail := by
+  obtain ⟨o, hentry, ho, hat⟩ := g.active hloc htrail hbelow
+  have hreach := g.reachAt hloc htrail hbelow
+  have hcarrier := processnode_firstLabelCarrier hsz₁ hp₁ hsz₂ hp₂
+    hsymm hloop hbound heq hsent hnc hpass
+  have hcarrierG : LabelCarrier ctx g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace := by
+    rw [href]
+    exact hcarrier
+  obtain ⟨γ, hγ, haut, hmap⟩ := hcarrierG
+  have hrefReach : cellsPerm g.rsPtn st.gcaFirst g.rsLab st.firstlab := by
+    rw [← href]
+    exact g.refReach
+  have hcell : CellCarrier ctx g.rsPtn st.gcaFirst g.rsLab g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace :=
+    ⟨γ, hγ, haut, hmap,
+      cellStab_of_scatter g.ptnSize g.labSize hsz₁ g.endClosed
+        hrefReach hreach (by simpa only [href] using hmap)⟩
+  have hinc : IncGrows best best := fun b hb ↦
+    ⟨b, hb, keyLe_refl b⟩
+  let anchor := g.anchorCell hgsz hinc hcell ho hat
+  have hanchor : anchor.Located trail := by
+    exact g.locateAnchorCell trail hentry hgsz hinc hcell ho hat
+  obtain ⟨hlab, _, _, _, hfirst, _, _, _, _⟩ :=
+    processnode_frames ctx level numcells st
+  have hout : LabelCarrier ctx
+      (processnode ctx level numcells st).2.firstlab
+      (processnode ctx level numcells st).2.lab
+      (processnode ctx level numcells st).2.genTrace := by
+    rw [hfirst, hlab]
+    exact hcarrier
+  exact ⟨Unwind.first anchor hout, .first anchor hout hanchor⟩
+
+/-- A code-two admission at a reached active child has a located direct
+canonical unwind payload. -/
+theorem Guide.canonLocated {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (g : Guide ctx tcLevel st.gcaCanon best)
+    (href : g.ref = st.canonlab) (hloc : g.Located trail)
+    (htrail : TrailOk ctx level st trail) (hbelow : st.gcaCanon < level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    ∃ payload : Unwind ctx tcLevel st.gcaCanon
+        (processnode ctx level numcells st).2 best,
+      payload.Located trail := by
+  obtain ⟨o, hentry, ho, hat⟩ := g.active hloc htrail hbelow
+  have hreach := g.reachAt hloc htrail hbelow
+  have hcarrier := processnode_canonLabelCarrier hsz₁ hp₁ hsz₂ hp₂
+    hbound hrows hef hnc hcc hge htie
+  have hcarrierG : LabelCarrier ctx g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace := by
+    rw [href]
+    exact hcarrier
+  obtain ⟨γ, hγ, haut, hmap⟩ := hcarrierG
+  have hrefReach : cellsPerm g.rsPtn st.gcaCanon g.rsLab st.canonlab := by
+    rw [← href]
+    exact g.refReach
+  have hcell : CellCarrier ctx g.rsPtn st.gcaCanon g.rsLab g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace :=
+    ⟨γ, hγ, haut, hmap,
+      cellStab_of_scatter g.ptnSize g.labSize hsz₁ g.endClosed
+        hrefReach hreach (by simpa only [href] using hmap)⟩
+  have hinc : IncGrows best best := fun b hb ↦
+    ⟨b, hb, keyLe_refl b⟩
+  let anchor := g.anchorCell hgsz hinc hcell ho hat
+  have hanchor : anchor.Located trail := by
+    exact g.locateAnchorCell trail hentry hgsz hinc hcell ho hat
+  obtain ⟨_, _, _, _, _, hcanon, _, _⟩ :=
+    processnode_rowTie hef hnc hcc hge htie
+  have hframes := processnode_frames ctx level numcells st
+  have hout : LabelCarrier ctx
+      (processnode ctx level numcells st).2.canonlab
+      (processnode ctx level numcells st).2.lab
+      (processnode ctx level numcells st).2.genTrace := by
+    rw [hcanon, hframes.1]
+    exact hcarrier
+  exact ⟨Unwind.canon anchor hout, .canon anchor hout hanchor⟩
+
 end Hex.GraphIso.Nauty
