@@ -288,4 +288,46 @@ theorem firstPath_internal_outcome {G : Colored n k} (ctx : Ctx)
   | some r =>
       exact hloop.toNodeSome (nodeRunFuel := fuel + 1) rfl
 
+/-- Once the imperative prefix exposes an off-path child loop, its
+coupled outcome constructs the corresponding node outcome. -/
+theorem otherNode_outcome {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level nodeNumcells loopNumcells tail : Nat}
+    {nodeCs loopCs fs : List Nat} {nodeSt loopSt : SearchSt}
+    {rsLab rsPtn : Array Nat} {tc len tcell : Nat}
+    {best outBest : Option Key} {trail : FrameTrail}
+    {L : Option Int × SearchSt}
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+          loopNumcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
+    (hlen : len = tail + 1)
+    (hstate : otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells
+        nodeSt =
+      match L.1 with
+      | some r => (r, L.2)
+      | none => (Int.ofNat level - 1, L.2))
+    (hloop : LoopOutcome G ctx tcLevel specFuel fuel (ctx.n + 1) level
+      nodeCs loopCs fs rsLab rsPtn tc len loopNumcells tcell none
+      (nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
+        nodeNumcells)
+      loopSt L.2 best outBest trail L.1) :
+    NodeOutcome G ctx tcLevel (specFuel + 1) (fuel + 1) level nodeCs fs
+      nodeSt (otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells
+        nodeSt).2
+      nodeNumcells best outBest trail
+      (otherNode ctx inf tcLevel (fuel + 1) level nodeNumcells
+        nodeSt).1 := by
+  rw [hstate]
+  rcases L with ⟨r, out⟩
+  cases r with
+  | none =>
+      exact hloop.toNodeNone (nodeRunFuel := fuel + 1) rfl hchildren hlen
+        (by simp only [cursorRank]; omega)
+  | some r =>
+      exact hloop.toNodeSome (nodeRunFuel := fuel + 1) rfl
+
 end Hex.GraphIso.Nauty
