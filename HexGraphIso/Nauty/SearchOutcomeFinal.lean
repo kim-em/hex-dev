@@ -329,6 +329,108 @@ structure CanonTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
       st.canonlab[entry.frame.tc]! =
         entry.frame.rsLab[entry.frame.tc + entry.offset]!
 
+/-- What a first-path node may export.  A locally absorbed/pruned node
+exports its exact maximum; a genuine generator unwind directly names the
+first or canonical reference child.  The orbit-pointer arm is resolved by
+`firstChildLoop` and is intentionally absent. -/
+inductive NodeEscape (ctx : Ctx) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st out : SearchSt) (numcells : Nat)
+    (best outBest : Option Key) (trail : FrameTrail) (r : Int) : Prop where
+  | full (eq : outBest = some (incMax best
+      (nodeKey ctx tcLevel specFuel level cs st numcells)))
+  | first (target : Nat) (returned : r = Int.ofNat target)
+      (below : target < level) (anchor : Anchor ctx tcLevel target outBest)
+      (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
+      (located : anchor.Located trail)
+  | canon (target : Nat) (returned : r = Int.ofNat target)
+      (below : target < level) (anchor : Anchor ctx tcLevel target outBest)
+      (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
+      (located : anchor.Located trail)
+
+/-- The corresponding first-path loop exit.  Fuel-exhausted intermediate
+tails may still return `none`; sufficient outer cursor fuel later rules
+that arm out. -/
+inductive LoopEscape (ctx : Ctx) (tcLevel level : Nat) (bound : Key)
+    (out : SearchSt) (best outBest : Option Key) (trail : FrameTrail)
+    (r : Option Int) : Prop where
+  | full (eq : outBest = some (incMax best bound))
+  | first (target : Nat) (returned : r = some (Int.ofNat target))
+      (below : target < level) (anchor : Anchor ctx tcLevel target outBest)
+      (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
+      (located : anchor.Located trail)
+  | canon (target : Nat) (returned : r = some (Int.ofNat target))
+      (below : target < level) (anchor : Anchor ctx tcLevel target outBest)
+      (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
+      (located : anchor.Located trail)
+  | pending (returned : r = none)
+
+namespace NodeEscape
+
+/-- First-path sweep cleanup changes no data named by an escape witness. -/
+theorem firstFinish {ctx : Ctx} {tcLevel specFuel level numcells size index : Nat}
+    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : NodeEscape ctx tcLevel specFuel level cs st out numcells best
+      outBest trail r) :
+    NodeEscape ctx tcLevel specFuel level cs st
+      (Nauty.firstFinish level size index out) numcells best outBest trail r := by
+  cases h with
+  | full eq => exact .full eq
+  | first target returned below anchor carrier located =>
+      apply NodeEscape.first target returned below anchor
+      · rw [Nauty.firstFinish]
+        split <;> exact carrier
+      · exact located
+  | canon target returned below anchor carrier located =>
+      apply NodeEscape.canon target returned below anchor
+      · rw [Nauty.firstFinish]
+        split <;> exact carrier
+      · exact located
+
+end NodeEscape
+
+namespace LoopEscape
+
+/-- Rebase direct escape locations onto a trail agreeing below the loop. -/
+theorem retrail {ctx : Ctx} {tcLevel level : Nat} {bound : Key}
+    {out : SearchSt} {best outBest : Option Key}
+    {source dest : FrameTrail} {r : Option Int}
+    (htrail : TrailExt level dest source)
+    (h : LoopEscape ctx tcLevel level bound out best outBest source r) :
+    LoopEscape ctx tcLevel level bound out best outBest dest r := by
+  cases h with
+  | full eq => exact .full eq
+  | first target returned below anchor carrier located =>
+      apply LoopEscape.first target returned below anchor carrier
+      unfold Anchor.Located at located ⊢
+      rw [← htrail target below]
+      exact located
+  | canon target returned below anchor carrier located =>
+      apply LoopEscape.canon target returned below anchor carrier
+      unfold Anchor.Located at located ⊢
+      rw [← htrail target below]
+      exact located
+  | pending returned => exact .pending returned
+
+/-- Prepending a sound loop fragment adjusts only the incoming incumbent. -/
+theorem prepend {ctx : Ctx} {tcLevel level : Nat} {bound : Key}
+    {out : SearchSt} {best mid outBest : Option Key}
+    {trail : FrameTrail} {r : Option Int}
+    (hpre : LoopSound ctx bound best mid)
+    (h : LoopEscape ctx tcLevel level bound out mid outBest trail r) :
+    LoopEscape ctx tcLevel level bound out best outBest trail r := by
+  cases h with
+  | full eq =>
+      have hsound := hpre.trans (LoopSound.ofExact eq)
+      exact .full (hsound.exact eq (keyLe_incMax_right mid bound))
+  | first target returned below anchor carrier located =>
+      exact .first target returned below anchor carrier located
+  | canon target returned below anchor carrier located =>
+      exact .canon target returned below anchor carrier located
+  | pending returned => exact .pending returned
+
+end LoopEscape
+
 /-- A first-path node proof additionally retains the unconditional history
 of the first leaf through every active ancestor frame. -/
 structure FirstProof (G : Colored n k) (ctx : Ctx)
@@ -337,6 +439,8 @@ structure FirstProof (G : Colored n k) (ctx : Ctx)
     (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
   node : NodeProof G ctx tcLevel specFuel runFuel level cs fs st out
     numcells none outBest receiptTrail eventTrail r
+  escape : NodeEscape ctx tcLevel specFuel level cs st out numcells none
+    outBest receiptTrail r
   trail : FirstTrail ctx level out eventTrail
   canonTrail : CanonTrail ctx level out eventTrail
   resumable : Int.ofNat level - 1 ≤ r → level - 1 ≤ out.gcaFirst
@@ -353,6 +457,7 @@ structure FirstLoopProof (G : Colored n k) (ctx : Ctx)
   loop : LoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
     fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail eventTrail r
+  escape : LoopEscape ctx tcLevel level bound out best outBest receiptTrail r
   trail : FirstTrail ctx (level + 1) out eventTrail
   canonTrail : CanonTrail ctx level out eventTrail
   guideLevel : level ≤ out.gcaFirst
@@ -670,8 +775,17 @@ theorem terminalFirstProof {G : Colored n k} {ctx : Ctx}
       (firstterminal level leaf) (some (pathLeafKey ctx full rs.lab))
       trail := by
     simpa only [rs, full, leaf] using h.terminal hn hn0 hlevel
+  have hdisc : discreteAt rs.ptn level ctx.n = true := by
+    rw [← refine_discrete_iff hn hn0 h.searchOk (by omega)]
+    exact hnum
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full rs.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
   constructor
   · exact h.terminalProof hn hn0 hlevel hnum
+  · apply NodeEscape.full
+    simp only [incMax, hnode, rs, full]
   · rw [hstate]
     constructor
     · intro target entry htarget hentry
@@ -1112,10 +1226,22 @@ theorem toNodeSome {G : Colored n k} {ctx : Ctx}
       loopSt out none outBest receiptTrail eventTrail (some r)) :
     FirstProof G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs nodeSt
       out nodeNumcells outBest receiptTrail eventTrail r :=
-  ⟨⟨h.loop.outcome.toNodeSome hbound, h.loop.fixed.trans hfixed⟩,
-    h.trail.lower, h.canonTrail, fun _ =>
-      Nat.le_trans (Nat.sub_le level 1) h.guideLevel,
-    h.order⟩
+  by
+    have hescape : NodeEscape ctx tcLevel nodeSpecFuel level nodeCs nodeSt
+        out nodeNumcells none outBest receiptTrail r := by
+      cases h.escape with
+      | full eq => exact .full (by simpa only [hbound] using eq)
+      | first target returned below anchor carrier located =>
+          exact .first target (Option.some.inj returned) below anchor carrier
+            located
+      | canon target returned below anchor carrier located =>
+          exact .canon target (Option.some.inj returned) below anchor carrier
+            located
+      | pending returned => cases returned
+    exact ⟨⟨h.loop.outcome.toNodeSome hbound, h.loop.fixed.trans hfixed⟩,
+      hescape, h.trail.lower, h.canonTrail, fun _ =>
+        Nat.le_trans (Nat.sub_le level 1) h.guideLevel,
+      h.order⟩
 
 /-- A fully exhausted first-path loop supplies its enclosing node once
 cursor fuel proves that exhaustion means complete child coverage. -/
@@ -1144,11 +1270,27 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx}
     FirstProof G ctx tcLevel (specFuel + 1) nodeRunFuel level nodeCs fs
       nodeSt out nodeNumcells outBest receiptTrail eventTrail
       (Int.ofNat level - 1) :=
-  ⟨⟨h.loop.outcome.toNodeNone hbound hchildren hlen hfuel,
-      h.loop.fixed.trans hfixed⟩,
-    h.trail.lower, h.canonTrail, fun _ =>
-      Nat.le_trans (Nat.sub_le level 1) h.guideLevel,
-    h.order⟩
+  by
+    have hfull : outBest = some (incMax none bound) := by
+      cases h.loop.outcome.receipt with
+      | complete returned sound installed read finalSet finalCursor cover empty =>
+          rw [hlen] at cover empty
+          exact cover.exact_of_read (hbound.trans hchildren) empty sound
+            installed read
+      | unwind sound target returned below payload located => cases returned
+      | pruned target returned below sound installed read full => cases returned
+      | exhausted returned sound finalSet finalCursor cover progress bounded =>
+          exact (LoopResult.exhaustion_false hfuel progress bounded).elim
+    have hescape : NodeEscape ctx tcLevel (specFuel + 1) level nodeCs
+        nodeSt out nodeNumcells none outBest receiptTrail
+        (Int.ofNat level - 1) := by
+      apply NodeEscape.full
+      simpa only [hbound] using hfull
+    exact ⟨⟨h.loop.outcome.toNodeNone hbound hchildren hlen hfuel,
+        h.loop.fixed.trans hfixed⟩,
+      hescape, h.trail.lower, h.canonTrail, fun _ =>
+        Nat.le_trans (Nat.sub_le level 1) h.guideLevel,
+      h.order⟩
 
 theorem reindexSet {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -1162,7 +1304,8 @@ theorem reindexSet {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.loop.reindexSet, h.trail, h.canonTrail, h.guideLevel, h.order⟩
+  ⟨h.loop.reindexSet, h.escape, h.trail, h.canonTrail, h.guideLevel,
+    h.order⟩
 
 theorem step {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level tv : Nat}
@@ -1177,7 +1320,8 @@ theorem step {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
       outBest receiptTrail eventTrail r :=
-  ⟨h.loop.step ha, h.trail, h.canonTrail, h.guideLevel, h.order⟩
+  ⟨h.loop.step ha, h.escape, h.trail, h.canonTrail, h.guideLevel,
+    h.order⟩
 
 theorem retrail {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -1192,7 +1336,8 @@ theorem retrail {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       dest eventTrail r :=
-  ⟨h.loop.retrail htrail, h.trail, h.canonTrail, h.guideLevel, h.order⟩
+  ⟨h.loop.retrail htrail, h.escape.retrail htrail, h.trail, h.canonTrail,
+    h.guideLevel, h.order⟩
 
 theorem prepend {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -1208,12 +1353,72 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.loop.prepend hfixed hpre, h.trail, h.canonTrail, h.guideLevel,
-    h.order⟩
+  ⟨h.loop.prepend hfixed hpre, h.escape.prepend hpre, h.trail,
+    h.canonTrail, h.guideLevel, h.order⟩
 
 end FirstLoopProof
 
 namespace FirstProof
+
+/-- A first-path child that stays at its parent boundary consumes the
+selected child.  `NodeEscape` rules out the orbit-pointer arm here: a
+deeper first-path loop resolves that arm before returning. -/
+theorem cover {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell tv offset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st child out : SearchSt}
+    {outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st none trail)
+    (h : FirstProof G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      child out (numcells + 1) outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level))
+    (hnext : nextElem tcell cursor = some tv)
+    (hoffset : offset < len) (htv : rsLab[tc + offset]! = tv)
+    (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
+      sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
+        nodeKey ctx tcLevel specFuel (level + 1) codes child
+          (numcells + 1)) :
+    SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) outBest := by
+  have hinc := (h.node.outcome.receipt.sound hfuel).grows
+  cases h.escape with
+  | full eq => exact hinv.cover.advanceKey hnext eq heq
+  | first target returned below anchor carrier located =>
+      have hle : level ≤ target := by
+        apply Int.ofNat_le.mp
+        rw [returned] at hstay
+        exact Int.not_lt.mp hstay
+      have htarget : target = level := by omega
+      subst target
+      have hrange : tc + len ≤ rsLab.size := by
+        rw [hinv.frozenLabSize]
+        exact hinv.range
+      have hinj : LabInj rsLab rsLab.size := by
+        rw [← hinv.baseLab, hinv.baseOk.labSize]
+        exact labInj_of_reach hinv.baseOk.labSize hinv.nonempty
+          hinv.baseOk.reach
+      exact hinv.cover.locatedAnchor hinc hnext anchor located
+        (FrameTrail.push_self trail level _) htv hinj hrange (by omega)
+  | canon target returned below anchor carrier located =>
+      have hle : level ≤ target := by
+        apply Int.ofNat_le.mp
+        rw [returned] at hstay
+        exact Int.not_lt.mp hstay
+      have htarget : target = level := by omega
+      subst target
+      have hrange : tc + len ≤ rsLab.size := by
+        rw [hinv.frozenLabSize]
+        exact hinv.range
+      have hinj : LabInj rsLab rsLab.size := by
+        rw [← hinv.baseLab, hinv.baseOk.labSize]
+        exact labInj_of_reach hinv.baseOk.labSize hinv.nonempty
+          hinv.baseOk.reach
+      exact hinv.cover.locatedAnchor hinc hnext anchor located
+        (FrameTrail.push_self trail level _) htv hinj hrange (by omega)
 
 /-- After first-child cleanup and recovery, both reference leaves still
 lie below the selected guiding child.  Thus the one absorbed child backs
@@ -1392,10 +1597,11 @@ theorem firstFinish {G : Colored n k} {ctx : Ctx}
     (hfuel : runFuel ≠ 0)
     (h : FirstProof G ctx tcLevel specFuel runFuel level cs fs st out
       numcells outBest receiptTrail eventTrail r) :
-    FirstProof G ctx tcLevel specFuel runFuel level cs fs st
+  FirstProof G ctx tcLevel specFuel runFuel level cs fs st
       (Nauty.firstFinish level size index out) numcells outBest
       receiptTrail eventTrail r :=
   ⟨h.node.firstFinish hfuel,
+    h.escape.firstFinish,
     h.trail.retrail (firstFinish_firstlab level size index out)
       (TrailExt.refl level eventTrail),
     h.canonTrail.retrail (firstFinish_canonlab level size index out)
