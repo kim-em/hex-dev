@@ -494,6 +494,65 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
         (by simpa only [leaf] using
           (OtherProof.otherLeafSt_coset ctx level numcells st)) }
 
+/-- A code-one automorphism leaf returns the stored first-path unwind,
+with all off-path control fields retained for the enclosing sibling loop. -/
+theorem firstOther {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hnp : (otherLeafSt ctx level numcells st).compCanon ≤ 0)
+    (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true)
+    (hsent : (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
+      codeSentinel)
+    (hpass : isautom ctx (firstScatter ctx.n
+      (otherLeafSt ctx level numcells st).firstlab
+      (otherLeafSt ctx level numcells st).lab) = true)
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  obtain ⟨houtcome, target, hreturned, hbelow, payload, hloc⟩ :=
+    hnode.firstLeaf (inf := inf) (specFuel := specFuel) (fuel := fuel)
+      hn hn0 hgsz hgb hsymm hloop hlevel hpath hnum hnp heq hsent hpass
+      hlive
+  let leaf := otherLeafSt ctx level numcells st
+  have hfirstBelow : leaf.gcaFirst < level := by
+    change (otherLeafSt ctx level numcells st).gcaFirst < level
+    rw [RefTrail.otherLeaf_gcaFirst]
+    exact hnode.firstBelow
+  have hreturn := (processnode_auto (ctx := ctx) (level := level)
+    (numcells := ctx.n) (st := leaf) heq hsent (by simp) hpass).1
+  have hearly : (processnode ctx level ctx.n leaf).1 <
+      Int.ofNat level := by
+    rw [hreturn]
+    exact Int.ofNat_lt.mpr hfirstBelow
+  have hrun : NodeRun G ctx tcLevel (specFuel + 1) (fuel + 1) level
+      codes fs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells best best trail trail
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := {
+    exit := NodeExit.unwind target hreturned hbelow
+      (NodeSound.refl ctx tcLevel (specFuel + 1) level codes st numcells
+        best)
+      payload hloc
+    event := houtcome.event
+    preserved := houtcome.preserved
+    fixed := otherNode_leaf_early_fixedpts ctx inf tcLevel fuel level
+      numcells st hnum hearly }
+  exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
+
 /-- The negative non-generator leaf, with the off-path fields needed by
 its parent loop retained. -/
 theorem negativeOther {G : Colored n k} {ctx : Ctx}
