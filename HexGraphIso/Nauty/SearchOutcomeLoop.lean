@@ -87,6 +87,7 @@ structure LoopInv (G : Colored n k) (ctx : Ctx)
     numcells tcell cursor best
   refs : FrameRefs ctx tcLevel specFuel level codes rsLab rsPtn tc len
     numcells st best
+  shortClear : st.needshortprune = false
   fuelBound : level + 1 + specFuel ≤ ctx.n + 1
 
 namespace LoopInv
@@ -106,6 +107,7 @@ theorem start {G : Colored n k} {ctx : Ctx}
     (hrange : tc + len ≤ ctx.n)
     (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
       st.ptn[q]! = ctx.n + 2)
+    (hshort : st.needshortprune = false)
     (hfuel : level + 1 + specFuel ≤ ctx.n + 1) :
     LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       st.lab st.ptn tc len (windowSet st.lab tc len) none st st best
@@ -113,7 +115,7 @@ theorem start {G : Colored n k} {ctx : Ctx}
   refine ⟨hn, hn0, hlevel, h.searchOk, h,
     SearchOut.refl G level level h.searchOk.reach, rfl, rfl, heq, hcell,
     hlen, hrange, hvals, ?_, sweepCover_init ctx tcLevel specFuel level
-      codes st.lab st.ptn tc len numcells best, ?_, hfuel⟩
+      codes st.lab st.ptn tc len numcells best, ?_, hshort, hfuel⟩
   · intro v hv
     exact elem_windowSet.mp hv
   · constructor
@@ -319,7 +321,8 @@ theorem child {G : Colored n k} {ctx : Ctx}
   have hnode : NodeInv G ctx tcLevel (level + 1) codes bs fs
       (numcells + 1) child best childTrail := by
     apply h.run.child h.nodeCount h.nonempty h.positive h.currentEquitable
-      h.currentCell h.lenTwo h.range hcurrent hcheap hguides htrail
+      h.currentCell h.lenTwo h.range hcurrent h.shortClear hcheap hguides
+      htrail
   exact ⟨offset, currentOffset, hoffset, hcurrent, hatFrozen, hatCurrent,
     hnode⟩
 

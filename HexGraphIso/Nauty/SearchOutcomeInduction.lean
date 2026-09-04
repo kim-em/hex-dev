@@ -568,6 +568,7 @@ structure NodeInv (G : Colored n k) (ctx : Ctx)
     v = 0 ∨ st.ptn[v - 1]! ≤ level
   firstBelow : st.gcaFirst < level
   canonBelow : st.gcaCanon < level
+  shortClear : st.needshortprune = false
 
 /-- Refining a valid node entry produces the equitable frame used by its
 target-cell selection and child sweep. -/
@@ -727,6 +728,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
     (heq : Equitable ctx level st.lab st.ptn)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
     (hrange : tc + len ≤ ctx.n) (ho : o < len)
+    (hshort : st.needshortprune = false)
     (hcheap : CheapOk ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2) (level + 1) st)
     (hguides : GuideStore ctx tcLevel (level + 1)
@@ -792,7 +794,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
       exact Nat.le_trans h.firstBound (Nat.le_succ level)
     · change st.gcaCanon ≤ level + 1
       exact Nat.le_trans h.canonBound (Nat.le_succ level)
-  refine ⟨hrun, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨hrun, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · have hmem : (tc, tc + len - 1) ∈ cells st.ptn level ctx.n := by
       apply isCell_mem_cells hcell
       · exact Nat.le_of_eq h.searchOk.ptnSize.symm
@@ -837,6 +839,8 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
     exact Nat.lt_succ_of_le h.firstBound
   · change st.gcaCanon < level + 1
     exact Nat.lt_succ_of_le h.canonBound
+  · change st.needshortprune = false
+    exact hshort
 
 /-- Refinement followed by the off-path comparison step enters
 `RunPrep`.  Generator validity is global, while stabilization is proved
