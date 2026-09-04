@@ -62,15 +62,23 @@ cell. -/
   o < len ∧ elem tcell rsLab[tc + o]! = true ∧
     After cursor rsLab[tc + o]!
 
-/-- The evolving invariant of a mutable target-cell sweep. -/
-@[expose] def SweepCover (ctx : Ctx) (tcLevel specFuel level : Nat)
+/-- The evolving invariant of a mutable target-cell sweep.
+
+`cover` follows removed children transitively to the current live suffix.
+`past` records the ordering fact needed when a pruning automorphism carries
+a live vertex backwards: every retained vertex at or before the cursor has
+already been absorbed. -/
+structure SweepCover (ctx : Ctx) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
-    (cursor : Option Nat) (out : SearchSt) : Prop :=
-  ChildCover
+    (cursor : Option Nat) (out : SearchSt) : Prop where
+  cover : ChildCover
     (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells)
     (fun o => o < len)
     (ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out)
     (ChildLive rsLab tc len tcell cursor)
+  past : ∀ o, o < len → elem tcell rsLab[tc + o]! = true →
+    ¬ After cursor rsLab[tc + o]! →
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o
 
 /-- Before the first iteration, the whole target-cell window is live. -/
 theorem sweepCover_init (ctx : Ctx) (tcLevel specFuel level : Nat)
@@ -78,10 +86,86 @@ theorem sweepCover_init (ctx : Ctx) (tcLevel specFuel level : Nat)
     (out : SearchSt) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       (windowSet rsLab tc len) none out := by
-  intro o ho
-  refine Or.inr ⟨o, ⟨ho, ?_, trivial⟩, rfl⟩
-  rw [elem_windowSet, segN]
-  exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
+  constructor
+  · intro o ho
+    refine Or.inr ⟨o, ⟨ho, ?_, trivial⟩, rfl⟩
+    rw [elem_windowSet, segN]
+    exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
+  · intro o ho hm hpast
+    exact absurd trivial hpast
+
+/-- Coverage crosses an arbitrary loop step once old covered children stay
+covered and every old survivor is either covered or replaced by a
+key-equivalent new survivor. -/
+theorem SweepCover.step {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
+    {tcell tcell' : Nat} {cursor cursor' : Option Nat}
+    {out out' : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
+      (∀ j, sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells j =
+            sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+              numcells o →
+          ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+            out' j) ∨
+        ∃ j, ChildLive rsLab tc len tcell' cursor' j ∧
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
+            sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+              numcells j)
+    (hd : ∀ o,
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells out o →
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+        out' o)
+    (hpast : ∀ o, o < len → elem tcell' rsLab[tc + o]! = true →
+      ¬ After cursor' rsLab[tc + o]! →
+      ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+        out' o) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell' cursor' out' := by
+  exact ⟨ChildCover.step h.cover hs hd, hpast⟩
+
+/-- Previously covered children remain covered when the incumbent grows. -/
+theorem ChildDone.mono {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
+    {out out' : SearchSt}
+    (h : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+      out o)
+    (hinc : ∀ b, stInc ctx out = some b →
+      ∃ b', stInc ctx out' = some b' ∧ keyLe b b') :
+    ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+      out' o := by
+  rcases h with ⟨b, hb, hkb⟩
+  obtain ⟨b', hb', hbb'⟩ := hinc b hb
+  exact ⟨b', hb', keyLe_trans hkb hbb'⟩
+
+/-- A filter preserves sweep coverage when every old live child is either
+absorbed or carried to a key-equivalent new survivor, and filtering adds no
+vertices.  A carried survivor before the cursor is discharged through
+`past`; it need not remain in the live suffix. -/
+theorem SweepCover.filter {ctx : Ctx} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
+    {tcell tcell' : Nat} {cursor : Option Nat} {out : SearchSt}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor out)
+    (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
+      (∀ j, sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells j =
+            sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+              numcells o →
+          ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
+            out j) ∨
+        ∃ j, ChildLive rsLab tc len tcell' cursor j ∧
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
+            sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+              numcells j)
+    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell' cursor out := by
+  refine ⟨ChildCover.step h.cover hs (fun _ hx => hx), ?_⟩
+  intro o ho hm hpast
+  exact h.past o ho (hsub _ hm) hpast
 
 /-- At loop completion the evolving coverage invariant says that every
 offset in the original target cell has been absorbed. -/
@@ -94,7 +178,7 @@ theorem SweepCover.finish {ctx : Ctx} {tcLevel specFuel level : Nat}
     (hempty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o) :
     ∀ o, o < len → ChildDone ctx tcLevel specFuel level cs rsLab rsPtn
       tc numcells out o :=
-  ChildCover.finish h hempty
+  ChildCover.finish h.cover hempty
 
 /-- A `none` cursor result means that no set member remains after the
 cursor. -/
