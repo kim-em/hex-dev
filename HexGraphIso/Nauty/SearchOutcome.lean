@@ -896,6 +896,47 @@ def Guide.anchor {ctx : Ctx} {tcLevel target : Nat}
     hcarrier hstab g.labSize g.labOk g.ptnSize g.endClosed g.values
     g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
 
+/-- A successful code-one leaf admission, paired with its concrete
+first-path guide, produces the corresponding generator unwind payload. -/
+theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
+    {st : SearchSt} {best : Option Key}
+    (g : Guide ctx tcLevel st.gcaFirst best)
+    (href : g.ref = st.firstlab)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true)
+    (hstab : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
+      CellStab g.rsPtn st.gcaFirst g.rsLab γ)
+    {oCur : Nat} (hcur : oCur < g.len)
+    (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
+    Unwind ctx tcLevel st.gcaFirst
+      (processnode ctx level numcells st).2 best := by
+  have hcarrier := processnode_firstLabelCarrier hsz₁ hp₁ hsz₂ hp₂
+    hsymm hloop hbound heq hsent hnc hpass
+  have hcarrierG : LabelCarrier ctx g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace := by
+    rw [href]
+    exact hcarrier
+  have hinc : IncGrows best best := by
+    intro b hb
+    exact ⟨b, hb, keyLe_refl b⟩
+  have hanchor := g.anchor hgsz hinc hcarrierG hstab hcur hatCur
+  have hframes := processnode_frames ctx level numcells st
+  rcases hframes with ⟨hlab, _, _, _, hfirst, _, _, _, _⟩
+  apply Unwind.first hanchor
+  rw [hfirst, hlab]
+  exact hcarrier
+
 /-- A guide's covered child remains covered when the incumbent grows. -/
 def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
     {best best' : Option Key} (g : Guide ctx tcLevel target best)
