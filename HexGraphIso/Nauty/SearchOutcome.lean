@@ -669,6 +669,39 @@ theorem SweepCover.maxLe {ctx : Ctx} {tcLevel specFuel level tail : Nat}
     have : b' = b := Option.some.inj (hb'.symm.trans hout)
     rwa [this] at hle
 
+/-- A partially explored sweep has the same maximum bound when every
+remaining live representative is already dominated by the installed
+incumbent. -/
+theorem SweepCover.maxLeLive {ctx : Ctx}
+    {tcLevel specFuel level tail : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc numcells tcell : Nat}
+    {cursor : Option Nat} {best : Option Key} {b : Key}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor best)
+    (hout : best = some b)
+    (hlive : ∀ o, ChildLive rsLab tc (tail + 1) tcell cursor o →
+      keyLe
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o)
+        b) :
+    keyLe
+      (keysMax
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells (o + 1))) b := by
+  have hall := h.cover.boundLive (b := b)
+    (fun o hdone => by
+      obtain ⟨b', hb', hle⟩ := hdone
+      have : b' = b := Option.some.inj (hb'.symm.trans hout)
+      rwa [this] at hle)
+    hlive
+  apply keysMax_le
+  · exact hall 0 (by omega)
+  · intro y hy
+    obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hy
+    exact hall (o + 1) (by have := List.mem_range.mp ho; omega)
+
 /-- A `none` cursor result means that no set member remains after the
 cursor. -/
 theorem no_child_after {s : Nat} {cursor : Option Nat}
@@ -1485,6 +1518,30 @@ theorem LoopSound.exact {ctx : Ctx} {bound b : Key}
       · exact hlower
   rw [hout]
   exact congrArg some (keyLe_antisym hupper hlower')
+
+/-- Loop soundness plus domination of every live suffix recovers the
+exact fixed bound without pretending that the executable loop completed. -/
+theorem SweepCover.exactLive {ctx : Ctx}
+    {tcLevel specFuel level tail : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc numcells tcell : Nat}
+    {cursor : Option Nat} {bound b : Key} {best out : Option Key}
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells (o + 1)))
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor out)
+    (hsound : LoopSound ctx bound best out)
+    (hout : out = some b)
+    (hlive : ∀ o, ChildLive rsLab tc (tail + 1) tcell cursor o →
+      keyLe
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o)
+        b) :
+    out = some (incMax best bound) := by
+  apply hsound.exact hout
+  rw [hbound]
+  exact h.maxLeLive hout hlive
 
 /-- A completed sweep whose fixed loop bound is the maximum of its
 original children recovers the exact final incumbent. -/

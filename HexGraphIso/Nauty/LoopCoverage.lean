@@ -136,4 +136,21 @@ theorem ChildCover.bound {key : Nat → Key} {rank : Nat → Nat}
   intro x hx
   exact hle x (h.finish hempty x hx)
 
+/-- Coverage transfers a common upper bound when both absorbed children
+and the surviving live representatives lie below it.  This is the form
+used by a frozen comparison unwind: the existing ledger handles the
+visited prefix, while the frozen code verdict handles the abandoned
+suffix. -/
+theorem ChildCover.boundLive {key : Nat → Key} {rank : Nat → Nat}
+    {all done live : Nat → Prop} {b : Key}
+    (h : ChildCover key rank all done live)
+    (hdone : ∀ x, done x → keyLe (key x) b)
+    (hlive : ∀ x, live x → keyLe (key x) b) :
+    ∀ x, all x → keyLe (key x) b := by
+  intro x hx
+  rcases h x hx with hxd | ⟨y, hyl, hxy, -⟩
+  · exact hdone x hxd
+  · rw [hxy]
+    exact hlive y hyl
+
 end Hex.GraphIso.Nauty
