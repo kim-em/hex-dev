@@ -628,6 +628,117 @@ theorem otherNode_leaf_unwind_of_event {ctx : Ctx}
     hearly]
   exact .unwind hsound target hreturn hbelow hpayload
 
+/-- A successful code-one leaf is a genuine generator unwind: the
+sentinel identifies its path with the stored first path, the checked
+carrier identifies the leaf rows, and the first guide supplies the
+already-covered ancestor child. -/
+theorem otherNode_leaf_firstAuto {ctx : Ctx}
+    {nn inf tcLevel specFuel fuel level numcells : Nat}
+    {cs bs fs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hfirstInv : FirstCodeInv nn
+      (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]) fs
+      (otherLeafSt ctx level numcells st).firstcode
+      (otherLeafSt ctx level numcells st).eqlevFirst)
+    (heq : (((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hsent : (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
+      codeSentinel)
+    (hpass : isautom ctx (firstScatter ctx.n
+      (otherLeafSt ctx level numcells st).firstlab
+      (otherLeafSt ctx level numcells st).lab) = true)
+    (hgsz : ctx.g.size = ctx.n)
+    (hfirstSize : (otherLeafSt ctx level numcells st).firstlab.size =
+      ctx.n)
+    (hfirstOk : LabOk (otherLeafSt ctx level numcells st).firstlab ctx.n)
+    (hfirstPerm : (otherLeafSt ctx level numcells st).firstlab.toList.Perm
+      (List.range ctx.n))
+    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = ctx.n)
+    (hlabPerm : (otherLeafSt ctx level numcells st).lab.toList.Perm
+      (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hfirstKey : keyLe (pathLeafKey ctx fs
+      (otherLeafSt ctx level numcells st).firstlab)
+      (incKey ctx bs st.canonlab))
+    (hbelow : (otherLeafSt ctx level numcells st).gcaFirst < level)
+    (g : Guide ctx tcLevel
+      (otherLeafSt ctx level numcells st).gcaFirst
+      (some (incKey ctx bs st.canonlab)))
+    (href : g.ref = (otherLeafSt ctx level numcells st).firstlab)
+    (hstab : ∀ γ ∈ (processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).2.genTrace,
+      CellStab g.rsPtn (otherLeafSt ctx level numcells st).gcaFirst
+        g.rsLab γ)
+    {oCur : Nat} (hcur : oCur < g.len)
+    (hatCur : (otherLeafSt ctx level numcells st).lab[g.tc]! =
+      g.rsLab[g.tc + oCur]!) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells (some (incKey ctx bs st.canonlab))
+      (some (incKey ctx bs st.canonlab))
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  let code := (refine ctx level st.lab st.ptn st.active numcells).longcode
+  let full := cs ++ [code]
+  let leaf := otherLeafSt ctx level numcells st
+  have hfullLen : full.length = level := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hpath : full = fs := by
+    apply firstCodeInv_eq_of_live
+    · rw [hfullLen]
+      exact beq_iff_eq.mp heq ▸ hfirstInv
+    · simpa only [hfullLen, leaf] using hsent
+  have hcarrier : LabelCarrier ctx leaf.firstlab leaf.lab
+      (processnode ctx level ctx.n leaf).2.genTrace :=
+    processnode_firstLabelCarrier (ctx := ctx) (level := level)
+      (numcells := ctx.n) (st := leaf) hfirstSize hfirstPerm
+      hlabSize hlabPerm hsymm hloop hbound heq hsent (by simp) hpass
+  have hrows : leafRows ctx leaf.lab = leafRows ctx leaf.firstlab :=
+    hcarrier.leafRows hgsz hfirstSize hfirstOk hlabSize
+  have hframes := otherNodePrep_frames level code
+    { st with
+      lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+      ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+      active := (refine ctx level st.lab st.ptn st.active numcells).active
+      numnodes := st.numnodes + 1 }
+  rcases hframes with
+    ⟨_, _, _, _, _, _, _, _, _, _, _, hlab, _⟩
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    exact hlab
+  have hmax : keyMax (incKey ctx bs st.canonlab)
+      (pathLeafKey ctx full leaf.lab) = incKey ctx bs st.canonlab := by
+    apply auto_keyMax hpath hrows
+    exact hfirstKey
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full leaf.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+    rw [hleafLab]
+  have hsound : NodeSound ctx tcLevel (specFuel + 1) level cs st numcells
+      (some (incKey ctx bs st.canonlab))
+      (some (incKey ctx bs st.canonlab)) := by
+    apply NodeSound.ofExact
+    simp only [incMax]
+    rw [hnode, hmax]
+  have hpayload : Unwind ctx tcLevel leaf.gcaFirst
+      (processnode ctx level ctx.n leaf).2
+      (some (incKey ctx bs st.canonlab)) := by
+    exact g.firstUnwind (level := level) (numcells := ctx.n) href hgsz
+      hfirstSize hfirstPerm hlabSize hlabPerm hsymm hloop hbound heq hsent
+      (by simp) hpass hstab hcur hatCur
+  have hreturn := (processnode_auto (level := level) (numcells := ctx.n)
+    (st := leaf) heq hsent (by simp) hpass).1
+  exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
+
 /-- A first-path-agreeing leaf whose sentinel or automorphism guard fails
 falls through the ordinary leaf comparison and yields the same exact local
 prune outcome. -/
