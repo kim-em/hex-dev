@@ -32,6 +32,13 @@ coverage and the sweep continues.
 
 namespace Hex.GraphIso.Nauty
 
+/-- Public eliminator for injective labellings in downstream outcome
+modules, where the defining predicate is intentionally opaque. -/
+theorem LabInj.eq {lab : Array Nat} {nn i j : Nat} (h : LabInj lab nn)
+    (hi : i < nn) (hj : j < nn) (heq : lab[i]! = lab[j]!) : i = j := by
+  unfold LabInj at h
+  exact h i j hi hj heq
+
 /-- A checked generator maps one labelling pointwise onto another. -/
 @[expose] def LabelCarrier (ctx : Ctx) (ref cur : Array Nat)
     (store : Array (Array Nat)) : Prop :=
