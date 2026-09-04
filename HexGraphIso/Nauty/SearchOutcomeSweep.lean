@@ -459,9 +459,26 @@ theorem longprune {G : Colored n k} {ctx : Ctx}
   exact h.cover.longprune hgsz h.frozenLabSize h.frozenLabOk
     h.frozenPtnSize h.frozenEnd h.values h.cell h.range h.fuelBound haut
 
-/-- The short-prune filter preserves the full mutable sweep invariant
-once the one-shot protocol identifies its newest workspace pair as valid
-at the frozen parent frame. -/
+/-- The short-prune filter may read the newest pair from a descendant
+state; validity at the frozen parent frame is the only fact needed to
+preserve the mutable sweep invariant. -/
+theorem shortpruneWith {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (hgsz : ctx.g.size = ctx.n)
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
+      PairOk ctx.g rsPtn rsLab level ctx.n fix mcr) :
+    LoopInv G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn
+      tc len (Nauty.shortprune tcell out) cursor base st best trail := by
+  apply h.restrict (fun _ hm => shortprune_subset hm)
+  exact h.cover.shortprune hgsz h.frozenLabSize h.frozenLabOk
+    h.frozenPtnSize h.frozenEnd h.values h.cell h.range h.fuelBound hlast
+
+/-- The common case reads the newest pair from the current loop state. -/
 theorem shortprune {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
@@ -473,10 +490,41 @@ theorem shortprune {G : Colored n k} {ctx : Ctx}
     (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
       PairOk ctx.g rsPtn rsLab level ctx.n fix mcr) :
     LoopInv G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn
-      tc len (Nauty.shortprune tcell st) cursor base st best trail := by
-  apply h.restrict (fun _ hm => shortprune_subset hm)
-  exact h.cover.shortprune hgsz h.frozenLabSize h.frozenLabOk
-    h.frozenPtnSize h.frozenEnd h.values h.cell h.range h.fuelBound hlast
+      tc len (Nauty.shortprune tcell st) cursor base st best trail :=
+  h.shortpruneWith hgsz hlast
+
+/-- A child result carrying a live request supplies exactly the local
+newest-pair premise required to filter its receiving parent sweep. -/
+theorem shortpruneChild {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell offset fixedpts
+      : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st childSt child : SearchSt}
+    {best childBest : Option Key} {trail eventTrail : FrameTrail}
+    {value : Int}
+    (hgsz : ctx.g.size = ctx.n)
+    (hpathCodes : level = codes.length)
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (hchild : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      childSt child (numcells + 1) best childBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail value)
+    (hstay : ¬ value < Int.ofNat level)
+    (hshort : child.needshortprune = true) :
+    LoopInv G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn
+      tc len (Nauty.shortprune tcell
+        { child with fixedpts := fixedpts, needshortprune := false })
+      cursor base st best trail := by
+  apply h.shortpruneWith hgsz
+  intro fix mcr hback
+  apply ShortSource.atReceiver hpathCodes h hpath hchild.node.exit
+    hchild.node.event hchild.node.preserved (hchild.node.short hshort) hstay
+  simpa only using hback
 
 /-- The mutable child selected for a frozen offset has exactly that
 offset's specification key. -/
