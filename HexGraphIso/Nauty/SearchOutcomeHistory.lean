@@ -350,6 +350,107 @@ theorem canonStab {ctx : Ctx} {current : Nat} {st : SearchSt}
       CellStab entry.frame.rsPtn target entry.frame.rsLab gamma := by
   exact h.canonStabTo htrail hcanonSize (Nat.le_refl _) hbelow hmap
 
+/-! # Concrete leaf admissions -/
+
+/-- A successful code-one admission extends the inherited ancestor
+stabilization and returns exactly to the first-reference GCA. -/
+theorem processnodeFirstStab {G : Colored n k} {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (h : RefTrail ctx level st trail)
+    (htrail : TrailOk ctx level st trail) (hrefs : LeafRefsOk G st)
+    (hprev : ReturnStab trail (Int.ofNat level - 1) st)
+    (hbelow : st.gcaFirst < level)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx
+      (firstScatter ctx.n st.firstlab st.lab) = true) :
+    ReturnStab trail (Nauty.processnode ctx level numcells st).1
+      (Nauty.processnode ctx level numcells st).2 := by
+  subst n
+  have hreturn :=
+    (processnode_auto (st := st) heq hsent hnc hpass).1
+  rw [hreturn]
+  let gamma := (List.range ctx.n).foldl
+    (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+    (Array.replicate ctx.n 0)
+  have hfirstOk := labOk_of_reach hrefs.firstSize hrefs.firstReach
+  have hinj := labInj_of_reach hrefs.firstSize hn0 hrefs.firstReach
+  have hmap : ∀ i, i < ctx.n →
+      gamma[st.firstlab[i]!]! = st.lab[i]! := by
+    intro i hi
+    apply foldl_scatter_getElem
+      (fun a b ha hb hab => hinj.eq_of_getElem! ha hb hab)
+      (fun j hj => by
+        rw [Array.size_replicate]
+        exact hfirstOk j (by rw [hrefs.firstSize]; omega))
+      (Nat.le_refl _) hi
+  have hpush : (Nauty.processnode ctx level numcells st).2.genTrace =
+      st.genTrace.push gamma := by
+    exact processnode_genTrace_first heq hsent hnc
+      (by simpa only [firstScatter] using hpass)
+  have hreturnBound : Int.ofNat st.gcaFirst ≤ Int.ofNat level - 1 := by
+    apply Int.le_sub_one_iff.mpr
+    exact Int.ofNat_lt.mpr hbelow
+  apply h.firstPushStab htrail hrefs.firstSize hbelow
+    (hprev.lower hreturnBound) hpush hmap
+
+/-- A code-two admission stabilizes either advertised return: the direct
+canonical return uses the full canonical history, while the special orbit
+return uses `gcaFirst ≤ gcaCanon`. -/
+theorem processnodeTiedStab {G : Colored n k} {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (h : RefTrail ctx level st trail)
+    (htrail : TrailOk ctx level st trail) (hrefs : LeafRefsOk G st)
+    (horder : st.gcaFirst ≤ st.gcaCanon)
+    (hprev : ReturnStab trail (Int.ofNat level - 1) st)
+    (hcanonBelow : st.gcaCanon < level)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    ReturnStab trail (Nauty.processnode ctx level numcells st).1
+      (Nauty.processnode ctx level numcells st).2 := by
+  subst n
+  let gamma := (List.range ctx.n).foldl
+    (fun w i => w.set! st.canonlab[i]! st.lab[i]!)
+    (Array.replicate ctx.n 0)
+  have hcanonOk := labOk_of_reach hrefs.canonSize hrefs.canonReach
+  have hinj := labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach
+  have hmap : ∀ i, i < ctx.n →
+      gamma[st.canonlab[i]!]! = st.lab[i]! := by
+    intro i hi
+    apply foldl_scatter_getElem
+      (fun a b ha hb hab => hinj.eq_of_getElem! ha hb hab)
+      (fun j hj => by
+        rw [Array.size_replicate]
+        exact hcanonOk j (by rw [hrefs.canonSize]; omega))
+      (Nat.le_refl _) hi
+  have hpush : (Nauty.processnode ctx level numcells st).2.genTrace =
+      st.genTrace.push gamma := by
+    exact processnode_genTrace_canon hef hnc hcc hge htie
+  rcases (processnode_rowTie hef hnc hcc hge htie).1 with
+    hfirst | hcanon
+  · rw [hfirst]
+    have hreturnBound :
+        Int.ofNat st.gcaFirst ≤ Int.ofNat level - 1 := by
+      have hi := Int.ofNat_lt.mpr
+        (Nat.lt_of_le_of_lt horder hcanonBelow)
+      exact Int.le_sub_one_iff.mpr hi
+    apply h.canonPushStabTo htrail hrefs.canonSize horder
+      (Nat.lt_of_le_of_lt horder hcanonBelow)
+      (hprev.lower hreturnBound) hpush hmap
+  · rw [hcanon]
+    have hreturnBound :
+        Int.ofNat st.gcaCanon ≤ Int.ofNat level - 1 := by
+      have hi := Int.ofNat_lt.mpr hcanonBelow
+      exact Int.le_sub_one_iff.mpr hi
+    apply h.canonPushStabTo htrail hrefs.canonSize (Nat.le_refl _)
+      hcanonBelow (hprev.lower hreturnBound) hpush hmap
+
 end RefTrail
 
 end Hex.GraphIso.Nauty

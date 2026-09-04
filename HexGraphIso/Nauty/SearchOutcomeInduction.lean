@@ -22,6 +22,13 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- Elimination form of `LabInj`, exported so downstream outcome modules
+need not unfold its intentionally opaque definition. -/
+theorem LabInj.eq_of_getElem! {lab : Array Nat} {n i j : Nat}
+    (h : LabInj lab n) (hi : i < n) (hj : j < n)
+    (heq : lab[i]! = lab[j]!) : i = j := by
+  exact h i j hi hj heq
+
 /-- Both leaf references installed after the first descent are reached
 permutation labellings. -/
 structure LeafRefsOk (G : Colored n k) (st : SearchSt) : Prop where
