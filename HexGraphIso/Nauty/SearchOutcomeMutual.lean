@@ -289,6 +289,130 @@ theorem refine {ctx : Ctx} {level active numcells : Nat} {st : SearchSt}
 
 end LocalAutos
 
+/-- A root-stabilizing checked automorphism that fixes every vertex on the
+current individualized path stabilizes the current partition.  Keeping the
+root frame explicit lets the existing root autos ledger supply the same
+witness at every pruning site. -/
+@[expose] def PathStab (ctx : Ctx) (rootPtn rootLab : Array Nat)
+    (level : Nat) (st : SearchSt) : Prop :=
+  ∀ gamma, checkAutom ctx.g gamma ctx.n = true →
+    CellStab rootPtn 1 rootLab gamma →
+    (∀ u, u < ctx.n → elem st.fixedpts u = true → gamma[u]! = u) →
+    CellStab st.ptn level st.lab gamma
+
+namespace PathStab
+
+/-- A frame is its own path-stabilization seed. -/
+theorem same {ctx : Ctx} {st : SearchSt} :
+    PathStab ctx st.ptn st.lab 1 st := by
+  intro gamma _ hstab _
+  exact hstab
+
+/-- Reordering the current labelling within unchanged cells preserves path
+stabilization. -/
+theorem ofCellsPerm {ctx : Ctx} {rootPtn rootLab : Array Nat}
+    {level : Nat} {st out : SearchSt}
+    (h : PathStab ctx rootPtn rootLab level st)
+    (hfixed : out.fixedpts = st.fixedpts) (hptn : out.ptn = st.ptn)
+    (hperm : cellsPerm st.ptn level st.lab out.lab)
+    (hpsize : st.ptn.size = ctx.n) (hsize : st.lab.size = ctx.n)
+    (hsize' : out.lab.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    PathStab ctx rootPtn rootLab level out := by
+  intro gamma hcheck hroot hfix
+  rw [hfixed] at hfix
+  rw [hptn]
+  exact LocalAutos.reindexStab (h gamma hcheck hroot hfix) hperm
+    hpsize hsize hsize' hend
+
+/-- A parent-level search effect preserves path stabilization when it
+restores the parent's fixed-point set. -/
+theorem ofSearchOut {G : Colored n k} {ctx : Ctx}
+    {rootPtn rootLab : Array Nat} {level numcells : Nat}
+    {st out : SearchSt}
+    (hn : ctx.n = n)
+    (h : PathStab ctx rootPtn rootLab level st)
+    (hfixed : out.fixedpts = st.fixedpts)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOk G level numcells out)
+    (heffect : SearchOut G level level st out)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    PathStab ctx rootPtn rootLab level out := by
+  subst n
+  exact h.ofCellsPerm hfixed (heffect.ptnEq hok hout) heffect.perm
+    hok.ptnSize hok.labSize hout.labSize hend
+
+/-- Equitable refinement preserves path stabilization. -/
+theorem refine {ctx : Ctx} {rootPtn rootLab : Array Nat}
+    {level active numcells : Nat} {st : SearchSt}
+    (h : PathStab ctx rootPtn rootLab level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hsize : st.lab.size = ctx.n) (hlab : LabOk st.lab ctx.n)
+    (hpsize : st.ptn.size = ctx.n) (hactive : active < 2 ^ ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hstarts : ∀ v : Nat, elem active v = true →
+      v = 0 ∨ st.ptn[v - 1]! ≤ level) :
+    PathStab ctx rootPtn rootLab level
+      { st with
+        lab := (Nauty.refine ctx level st.lab st.ptn active numcells).lab
+        ptn := (Nauty.refine ctx level st.lab st.ptn active numcells).ptn
+        active := (Nauty.refine ctx level st.lab st.ptn active numcells).active } := by
+  intro gamma hcheck hroot hfix
+  exact cellStab_refine (n := ctx.n) rfl
+    (h gamma hcheck hroot hfix) hgsz hcheck hsize hlab hpsize hactive
+    hend hstarts
+
+/-- Individualization extends path stabilization because an automorphism
+fixing the enlarged path fixes the selected target vertex. -/
+theorem breakout {ctx : Ctx} {rootPtn rootLab : Array Nat}
+    {level tc len o : Nat} {st : SearchSt}
+    (h : PathStab ctx rootPtn rootLab level st)
+    (hcell : IsCell st.ptn level tc len)
+    (hrange : tc + len ≤ st.ptn.size)
+    (hsize : st.lab.size = st.ptn.size) (hlab : LabOk st.lab ctx.n)
+    (ho : o < len) (hlen : 2 ≤ len)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, st.ptn[q]! ≠ level + 1) :
+    PathStab ctx rootPtn rootLab (level + 1)
+      { st with
+        lab := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1
+        ptn := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1
+        active := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + o]! } := by
+  intro gamma hcheck hroot hfix
+  have hparent : ∀ u, u < ctx.n → elem st.fixedpts u = true →
+      gamma[u]! = u := by
+    intro u hu hm
+    apply hfix u hu
+    rw [elem_insert, hm]
+    rfl
+  have hselected : gamma[st.lab[tc + o]!]! = st.lab[tc + o]! := by
+    apply hfix _ (hlab _ (by rw [hsize]; omega))
+    rw [elem_insert]
+    simp
+  exact cellStab_breakout (h gamma hcheck hroot hparent) hcell hrange
+    hsize ho hlen hend hvals hselected
+
+/-- The root autos ledger and path stabilization reconstruct the
+conditional ledger consumed by the two pruning filters. -/
+theorem toLocal {ctx : Ctx} {rootPtn rootLab : Array Nat}
+    {level : Nat} {st : SearchSt}
+    (h : PathStab ctx rootPtn rootLab level st)
+    (hroot : AutosOk ctx.g rootPtn rootLab 1 ctx.n st.autos) :
+    LocalAutos ctx level st := by
+  intro p hp hfix v hv hmcr
+  obtain ⟨gamma, hcheck, hfixes, hstab, hlt⟩ :=
+    hroot p hp v hv hmcr
+  refine ⟨gamma, hcheck, hfixes, ?_, hlt⟩
+  apply h gamma hcheck hstab
+  intro u hu hmem
+  exact hfixes u hu (elem_of_and_eq hfix hmem)
+
+end PathStab
+
 /-- Reference history, ordered live guides, and stabilization of every
 ancestor frame to which the current node may return. -/
 structure Live (ctx : Ctx) (level : Nat) (st : SearchSt)
