@@ -890,19 +890,50 @@ structure SearchOut (G : Colored n k) (B lev : Nat)
   low : ∀ q : Nat, st.ptn[q]! ≤ B ∨ st'.ptn[q]! ≤ B →
     st'.ptn[q]! = st.ptn[q]!
   perm : cellsPerm st.ptn lev st.lab st'.lab
+  firstStore : st'.firstlab = st.firstlab ∨
+    (st'.firstlab.size = st.lab.size ∧
+      cellsPerm st.ptn lev st.lab st'.firstlab)
+  canonStore : st'.canonlab = st.canonlab ∨
+    (st'.canonlab.size = st.lab.size ∧
+      cellsPerm st.ptn lev st.lab st'.canonlab)
   canon : st'.canonlab = st.canonlab ∨
     (st'.canonlab.size = n ∧ CellsReach G st'.canonlab)
 
 theorem SearchOut.refl (G : Colored n k) (B lev : Nat)
     {st : SearchSt} (hreach : CellsReach G st.lab) :
     SearchOut G B lev st st :=
-  ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _, Or.inl rfl⟩
+  ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _,
+    Or.inl rfl, Or.inl rfl, Or.inl rfl⟩
 
 /-- A quartet call cannot move the entry of a singleton cell. -/
 theorem SearchOut.atSingleton {G : Colored n k} {B lev : Nat}
     {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1) : st'.lab[a]! = st.lab[a]! :=
   (cellsPerm_singleton h.perm hc).symm
+
+/-- A stored first leaf keeps the entry of a singleton cell, provided the
+incoming stored leaf already has that entry. -/
+theorem SearchOut.firstAtSingleton {G : Colored n k} {B lev : Nat}
+    {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
+    (hc : IsCell st.ptn lev a 1)
+    (hold : st.firstlab[a]! = st.lab[a]!) :
+    st'.firstlab[a]! = st.lab[a]! := by
+  rcases h.firstStore with hs | hs
+  · rw [hs]
+    exact hold
+  · exact (cellsPerm_singleton hs.2 hc).symm
+
+/-- A stored canonical leaf keeps the entry of a singleton cell, provided
+the incoming stored leaf already has that entry. -/
+theorem SearchOut.canonAtSingleton {G : Colored n k} {B lev : Nat}
+    {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
+    (hc : IsCell st.ptn lev a 1)
+    (hold : st.canonlab[a]! = st.lab[a]!) :
+    st'.canonlab[a]! = st.lab[a]! := by
+  rcases h.canonStore with hs | hs
+  · rw [hs]
+    exact hold
+  · exact (cellsPerm_singleton hs.2 hc).symm
 
 /-- The exact-preservation clause fixes the boundary count. -/
 theorem bcount_eq_of_low {ptn ptn' : Array Nat} {lev : Nat}
@@ -958,7 +989,7 @@ theorem SearchOut.trans {G : Colored n k} {B : Nat}
     {st1 st2 st3 : SearchSt} (h12 : SearchOut G B B st1 st2)
     (h23 : SearchOut G B B st2 st3) : SearchOut G B B st1 st3 := by
   refine ⟨h23.labSize.trans h12.labSize,
-    h23.ptnSize.trans h12.ptnSize, h23.reach, ?_, ?_, ?_⟩
+    h23.ptnSize.trans h12.ptnSize, h23.reach, ?_, ?_, ?_, ?_, ?_⟩
   · intro q hq
     rcases hq with h1 | h1
     · rw [h23.low q (Or.inl (by rw [h12.low q (Or.inl h1)]; exact h1)),
@@ -969,6 +1000,22 @@ theorem SearchOut.trans {G : Colored n k} {B : Nat}
   · refine cellsPerm_trans h12.perm ?_
     intro a len hc
     exact h23.perm a len (isCell_of_low h12.low hc)
+  · rcases h23.firstStore with h | h
+    · rw [h]
+      exact h12.firstStore
+    · right
+      refine ⟨h.1.trans h12.labSize, ?_⟩
+      refine cellsPerm_trans h12.perm ?_
+      intro a len hc
+      exact h.2 a len (isCell_of_low h12.low hc)
+  · rcases h23.canonStore with h | h
+    · rw [h]
+      exact h12.canonStore
+    · right
+      refine ⟨h.1.trans h12.labSize, ?_⟩
+      refine cellsPerm_trans h12.perm ?_
+      intro a len hc
+      exact h.2 a len (isCell_of_low h12.low hc)
   · rcases h23.canon with h | h
     · rw [h]
       exact h12.canon
@@ -979,7 +1026,8 @@ theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
     {st st' : SearchSt} (h : SearchOut G B lev st st')
     (hB : B' ≤ B) : SearchOut G B' lev st st' :=
   ⟨h.labSize, h.ptnSize, h.reach,
-    fun q hq => h.low q (by omega), h.perm, h.canon⟩
+    fun q hq => h.low q (by omega), h.perm, h.firstStore, h.canonStore,
+    h.canon⟩
 
 /-! # Quartet step helpers -/
 
@@ -1116,6 +1164,7 @@ theorem breakout_child_out {G : Colored n k}
     (hl : stC.lab =
       (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
     (hp : stC.ptn = st.ptn.set! tc (level + 1))
+    (hf : stC.firstlab = st.firstlab)
     (hc : stC.canonlab = st.canonlab) :
     SearchOut G level level st stD := by
   have htcopen : st.ptn[tc]! > level :=
@@ -1134,7 +1183,25 @@ theorem breakout_child_out {G : Colored n k}
           (by rw [hok.ptnSize]; omega)] at h
         omega
     · rw [Array.getElem!_set!_ne _ _ _ _ hne]
-  refine ⟨?_, ?_, hCout.reach, ?_, ?_, ?_⟩
+  have hperm1 : cellsPerm st.ptn level st.lab stC.lab := by
+    rw [hl]
+    exact breakout_cellsPerm hcell
+      (by rw [hok.ptnSize]; exact hrange)
+      (by rw [hok.labSize, hok.ptnSize]) ho
+  have liftPerm : ∀ {lab : Array Nat}, lab.size = stC.lab.size →
+      cellsPerm stC.ptn (level + 1) stC.lab lab →
+        cellsPerm st.ptn level stC.lab lab := by
+    intro lab hsize hperm
+    refine cellsPerm_coarsen (ptnF := stC.ptn) (levF := level + 1)
+      (by rw [hCok.ptnSize, hok.ptnSize])
+      (by rw [hCok.labSize, hCok.ptnSize]) ?_ hperm
+      (searchOk_end hn0 hCok (by omega))
+      (searchOk_end hn0 hok h1) ?_
+    · rw [hsize, hCok.labSize, hCok.ptnSize]
+    · intro q hq
+      rw [hlowC q (Or.inl hq)]
+      omega
+  refine ⟨?_, ?_, hCout.reach, ?_, ?_, ?_, ?_, ?_⟩
   · rw [hCout.labSize, hl, breakout_lab_size]
   · rw [hCout.ptnSize, hp, Array.size_set!]
   · intro q hq
@@ -1146,22 +1213,17 @@ theorem breakout_child_out {G : Colored n k}
       exact hlowC q (Or.inr hq1)
   · -- the labelling moves only within cells: individualize, then the
     -- child's finer moves coarsen to this level
-    have hperm1 : cellsPerm st.ptn level st.lab stC.lab := by
-      rw [hl]
-      exact breakout_cellsPerm hcell
-        (by rw [hok.ptnSize]; exact hrange)
-        (by rw [hok.labSize, hok.ptnSize]) ho
-    have hperm2 : cellsPerm st.ptn level stC.lab stD.lab := by
-      refine cellsPerm_coarsen (ptnF := stC.ptn) (levF := level + 1)
-        (by rw [hCok.ptnSize, hok.ptnSize])
-        (by rw [hCok.labSize, hCok.ptnSize])
-        (by rw [hCout.labSize, hCok.labSize, hCok.ptnSize])
-        hCout.perm (searchOk_end hn0 hCok (by omega))
-        (searchOk_end hn0 hok h1) ?_
-      intro q hq
-      rw [hlowC q (Or.inl hq)]
-      omega
-    exact cellsPerm_trans hperm1 hperm2
+    exact cellsPerm_trans hperm1 (liftPerm hCout.labSize hCout.perm)
+  · rcases hCout.firstStore with h | h
+    · rw [h, hf]
+      exact Or.inl rfl
+    · exact Or.inr ⟨h.1.trans (by rw [hl, breakout_lab_size]),
+        cellsPerm_trans hperm1 (liftPerm h.1 h.2)⟩
+  · rcases hCout.canonStore with h | h
+    · rw [h, hc]
+      exact Or.inl rfl
+    · exact Or.inr ⟨h.1.trans (by rw [hl, breakout_lab_size]),
+        cellsPerm_trans hperm1 (liftPerm h.1 h.2)⟩
   · rcases hCout.canon with h | h
     · rw [h, hc]
       exact Or.inl rfl
@@ -1170,6 +1232,7 @@ theorem breakout_child_out {G : Colored n k}
 theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
     {st st' st'' : SearchSt} (h : SearchOut G B lev st st')
     (hl : st''.lab = st'.lab) (hp : st''.ptn = st'.ptn)
+    (hf : st''.firstlab = st'.firstlab)
     (hc : st''.canonlab = st'.canonlab) : SearchOut G B lev st st'' :=
   ⟨by rw [hl]; exact h.labSize, by rw [hp]; exact h.ptnSize,
     by rw [hl]; exact h.reach,
@@ -1177,6 +1240,8 @@ theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
       rw [hp]
       exact h.low q (by rw [hp] at hq; exact hq),
     by rw [hl]; exact h.perm,
+    by rw [hf]; exact h.firstStore,
+    by rw [hc]; exact h.canonStore,
     by rw [hc]; exact h.canon⟩
 
 theorem searchOut_id {G : Colored n k} (B lev : Nat)
@@ -1259,6 +1324,12 @@ theorem refine_loop_out {G : Colored n k} {ctx : Ctx}
       (refine ctx level st.lab st.ptn st.active numcells).lab)
     (hp : STL.ptn =
       (refine ctx level st.lab st.ptn st.active numcells).ptn)
+    (hfirst : STL.firstlab = st.firstlab ∨
+      (STL.firstlab.size = st.lab.size ∧
+        cellsPerm st.ptn level st.lab STL.firstlab))
+    (hcanonStore : STL.canonlab = st.canonlab ∨
+      (STL.canonlab.size = st.lab.size ∧
+        cellsPerm st.ptn level st.lab STL.canonlab))
     (hcanon : STL.canonlab = st.canonlab ∨
       (STL.canonlab.size = n ∧ CellsReach G STL.canonlab))
     (hXout : SearchOut G level level STL stX) :
@@ -1283,7 +1354,20 @@ theorem refine_loop_out {G : Colored n k} {ctx : Ctx}
       rw [hp, hRinv.ptnSize]
     rw [hsz, hfrz _ hend]
     exact hend
-  refine ⟨?_, ?_, hXout.reach, ?_, ?_, ?_⟩
+  have hpermR : cellsPerm st.ptn level st.lab STL.lab :=
+    hl ▸ hRinv.perm
+  have liftPerm : ∀ {lab : Array Nat}, lab.size = STL.lab.size →
+      cellsPerm STL.ptn level STL.lab lab →
+        cellsPerm st.ptn level STL.lab lab := by
+    intro lab hsize hperm
+    refine cellsPerm_coarsen (ptnF := STL.ptn) (levF := level)
+      (by rw [hp, hRinv.ptnSize]) ?_ ?_ hperm hendL hend ?_
+    · rw [hl, hRinv.labSize, hls, hp, hRinv.ptnSize]
+    · rw [hsize, hl, hRinv.labSize, hls, hp, hRinv.ptnSize]
+    · intro q hq
+      rw [hfrz q hq]
+      exact hq
+  refine ⟨?_, ?_, hXout.reach, ?_, ?_, ?_, ?_, ?_⟩
   · rw [hXout.labSize, hl, hRinv.labSize]
   · rw [hXout.ptnSize, hp, hRinv.ptnSize]
   · intro q hq
@@ -1298,15 +1382,17 @@ theorem refine_loop_out {G : Colored n k} {ctx : Ctx}
       · rw [he]
       · rw [he] at hq1
         omega
-  · refine cellsPerm_trans (hl ▸ hRinv.perm : cellsPerm st.ptn level
-      st.lab STL.lab) ?_
-    refine cellsPerm_coarsen (ptnF := STL.ptn) (levF := level)
-      (by rw [hp, hRinv.ptnSize]) ?_ ?_ hXout.perm hendL hend ?_
-    · rw [hl, hRinv.labSize, hls, hp, hRinv.ptnSize]
-    · rw [hXout.labSize, hl, hRinv.labSize, hls, hp, hRinv.ptnSize]
-    · intro q hq
-      rw [hfrz q hq]
-      exact hq
+  · exact cellsPerm_trans hpermR (liftPerm hXout.labSize hXout.perm)
+  · rcases hXout.firstStore with h | h
+    · rw [h]
+      exact hfirst
+    · exact Or.inr ⟨h.1.trans (by rw [hl, hRinv.labSize]),
+        cellsPerm_trans hpermR (liftPerm h.1 h.2)⟩
+  · rcases hXout.canonStore with h | h
+    · rw [h]
+      exact hcanonStore
+    · exact Or.inr ⟨h.1.trans (by rw [hl, hRinv.labSize]),
+        cellsPerm_trans hpermR (liftPerm h.1 h.2)⟩
   · rcases hXout.canon with h | h
     · rw [h]
       rcases hcanon with h2 | h2
