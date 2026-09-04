@@ -1225,26 +1225,27 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
 once the specification identifies that sweep's fixed bound with the node
 subtree. -/
 theorem NodeResult.complete_of_sweep {ctx : Ctx}
-    {tcLevel specFuel runFuel level numcells tail : Nat}
-    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {tcLevel specFuel runFuel level nodeNumcells loopNumcells tail : Nat}
+    {nodeCs loopCs : List Nat} {st out : SearchSt}
+    {best outBest : Option Key}
     {r : Int} {rsLab rsPtn : Array Nat} {tc tcell : Nat}
     {cursor : Option Nat}
-    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs st nodeNumcells =
       keysMax
-        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells 0)
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc loopNumcells 0)
         ((List.range tail).map fun o =>
-          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-            numcells (o + 1)))
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
     (hsound : LoopSound ctx
-      (nodeKey ctx tcLevel (specFuel + 1) level cs st numcells)
+      (nodeKey ctx tcLevel (specFuel + 1) level nodeCs st nodeNumcells)
       best outBest)
     (hinstalled : out.canonlevel ≠ 0) (hread : stInc ctx out = outBest)
-    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
-      (tail + 1) numcells tcell cursor outBest)
+    (hcover : SweepCover ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+      (tail + 1) loopNumcells tcell cursor outBest)
     (hempty : ∀ o, ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
     (hreturn : r = Int.ofNat level - 1) :
-    NodeResult ctx tcLevel (specFuel + 1) runFuel level cs st out
-      numcells best outBest r := by
+    NodeResult ctx tcLevel (specFuel + 1) runFuel level nodeCs st out
+      nodeNumcells best outBest r := by
   have hfull := hcover.exact_of_read hchildren hempty hsound
     hinstalled hread
   exact .complete (NodeSound.ofExact hfull) hreturn hinstalled hread hfull
@@ -1268,20 +1269,21 @@ theorem NodeResult.pruned_of_loop {ctx : Ctx}
 node.  The impossible completed and exhausted constructors are excluded by
 the loop's return option itself. -/
 theorem NodeResult.of_loop_some {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level : Nat}
+    {nodeCs loopCs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len nodeNumcells loopNumcells tcell : Nat}
     {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
     {best outBest : Option Key} {r : Int}
-    (hbound : bound = nodeKey ctx tcLevel specFuel level cs nodeSt numcells)
-    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
-      rsPtn tc len numcells tcell cursor bound loopSt out best outBest
+    (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt nodeNumcells)
+    (h : LoopResult ctx tcLevel loopSpecFuel runFuel loopFuel level loopCs rsLab
+      rsPtn tc len loopNumcells tcell cursor bound loopSt out best outBest
         (some r)) :
-    NodeResult ctx tcLevel specFuel runFuel level cs nodeSt out numcells
+    NodeResult ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs nodeSt out nodeNumcells
       best outBest r := by
   cases h with
   | complete returned => simp at returned
   | unwind sound target returned below payload =>
-      have hsound : NodeSound ctx tcLevel specFuel level cs nodeSt numcells
+      have hsound : NodeSound ctx tcLevel nodeSpecFuel level nodeCs nodeSt nodeNumcells
           best outBest := by
         constructor
         · intro b hb
@@ -1290,7 +1292,7 @@ theorem NodeResult.of_loop_some {ctx : Ctx}
         · exact sound.grows
       exact .unwind hsound target (Option.some.inj returned) below payload
   | pruned target returned below sound installed read full =>
-      have hsound : NodeSound ctx tcLevel specFuel level cs nodeSt numcells
+      have hsound : NodeSound ctx tcLevel nodeSpecFuel level nodeCs nodeSt nodeNumcells
           best outBest := by
         constructor
         · intro b hb
@@ -1298,7 +1300,7 @@ theorem NodeResult.of_loop_some {ctx : Ctx}
           exact sound.upper b hb
         · exact sound.grows
       have hfull : outBest = some (incMax best
-          (nodeKey ctx tcLevel specFuel level cs nodeSt numcells)) := by
+          (nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt nodeNumcells)) := by
         rwa [← hbound]
       exact .pruned hsound target (Option.some.inj returned) below installed
         read hfull
@@ -1308,24 +1310,25 @@ theorem NodeResult.of_loop_some {ctx : Ctx}
 completion.  Cursor exhaustion is ruled out by the same finite-range bound
 used by the executable root search. -/
 theorem NodeResult.of_loop_none {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level tail : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
+    {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
+    {nodeCs loopCs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len nodeNumcells loopNumcells tcell : Nat}
     {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
     {best outBest : Option Key}
-    (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level cs nodeSt numcells)
-    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs nodeSt numcells =
+    (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt nodeNumcells)
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt nodeNumcells =
       keysMax
-        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-          numcells 0)
+        (sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+          loopNumcells 0)
         ((List.range tail).map fun o =>
-          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-            numcells (o + 1)))
+          sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
+            loopNumcells (o + 1)))
     (hlen : len = tail + 1)
     (hfuel : ctx.n < cursorRank cursor + loopFuel)
-    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs
-      rsLab rsPtn tc len numcells tcell cursor bound loopSt out best outBest
+    (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level loopCs
+      rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out best outBest
         none) :
-    NodeResult ctx tcLevel (specFuel + 1) runFuel level cs nodeSt out numcells
+    NodeResult ctx tcLevel (specFuel + 1) nodeRunFuel level nodeCs nodeSt out nodeNumcells
       best outBest (Int.ofNat level - 1) := by
   cases h with
   | complete returned sound installed read finalSet finalCursor cover empty =>
