@@ -224,6 +224,18 @@ theorem canonSize {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   cases h with
   | intro _ _ _ event _ _ _ _ _ _ => exact event.leafRefs.canonSize
 
+/-- Every pair in a result workspace remains valid at the initial coloured
+partition. -/
+theorem autosOk {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel stem fs out best trail r) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n out.autos := by
+  cases h with
+  | intro _ _ _ event _ _ _ _ _ _ => exact event.autosOk
+
 /-- Every event output exposes stabilization through the smaller of its
 return target and live first-reference GCA.  Direct carrier returns need
 no stronger statement, while the orbit-return arm targets this GCA. -/

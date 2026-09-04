@@ -1330,6 +1330,41 @@ private theorem fmptnGo_mcr_mono {lab : Array Nat} {nn : Nat} :
     · rw [ite_eq_left rfl]
       exact fmptnGo_mcr_mono l _ _ _ (elem_insert_mono _ hx)
 
+/-- `fix` bits only accumulate through the outer mirror. -/
+private theorem fmptnGo_fix_mono {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr x : Nat),
+      elem fix x = true →
+      elem (fmptnGo lab nn l fix mcr).1 x = true
+  | [], _, _, _, hx => hx
+  | (c1, c2) :: l, fix, mcr, x, hx => by
+    rw [fmptnGo]
+    rcases hc : (c1 == c2) with _ | _
+    · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+      exact fmptnGo_fix_mono l _ _ _ hx
+    · rw [ite_eq_left rfl]
+      exact fmptnGo_fix_mono l _ _ _ (elem_insert_mono _ hx)
+
+/-- Every singleton cell of the list deposits its vertex in `fix`. -/
+private theorem fmptnGo_singleton {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr c : Nat),
+      (c, c) ∈ l →
+      elem (fmptnGo lab nn l fix mcr).1 lab[c]! = true
+  | [], _, _, _, hmem => absurd hmem (by simp)
+  | (c1, c2) :: l, fix, mcr, c, hmem => by
+    rw [fmptnGo]
+    rcases List.mem_cons.mp hmem with heq | htail
+    · have hc1 : c1 = c := (congrArg Prod.fst heq).symm
+      have hc2 : c2 = c := (congrArg Prod.snd heq).symm
+      subst c1
+      subst c2
+      simp only [beq_self_eq_true, ite_true]
+      exact fmptnGo_fix_mono l _ _ _ (elem_insert_self ..)
+    · rcases hc : (c1 == c2) with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+        exact fmptnGo_singleton l _ _ _ htail
+      · rw [ite_eq_left rfl]
+        exact fmptnGo_singleton l _ _ _ htail
+
 /-- `fix` bits of the outer mirror come from singleton cells. -/
 private theorem fmptnGo_fix {lab : Array Nat} {nn : Nat} :
     ∀ (l : List (Nat × Nat)) (fix mcr u : Nat),
@@ -1406,6 +1441,27 @@ theorem fmptn_fix {lab ptn : Array Nat} {level nn u : Nat}
   rcases fmptnGo_fix _ _ _ _ hu with h0 | h
   · exact absurd h0 (by simp [elem])
   · exact h
+
+/-- Every singleton-cell vertex is present in the `fix` component of the
+implicit pair. -/
+theorem fmptn_singleton {lab ptn : Array Nat} {level nn c : Nat}
+    (hcell : (c, c) ∈ cells ptn level nn) :
+    elem (fmptn lab ptn level nn).1 lab[c]! = true := by
+  rw [fmptn_eq_go]
+  exact fmptnGo_singleton _ 0 0 c hcell
+
+/-- A singleton cell remains a singleton when only the comparison level
+is raised. -/
+theorem isCell_one_mono {ptn : Array Nat} {level saved c : Nat}
+    (h : IsCell ptn level c 1) (hle : level ≤ saved) :
+    IsCell ptn saved c 1 := by
+  rcases h with ⟨hpos, hstart, hinterior, hend⟩
+  refine ⟨hpos, ?_, ?_, by omega⟩
+  · rcases hstart with hzero | hstart
+    · exact Or.inl hzero
+    · exact Or.inr (by omega)
+  · intro i hi hlt
+    omega
 
 /-- A vertex left out of an `fmptn` pair's `mcr` has a strictly
 smaller cellmate. -/

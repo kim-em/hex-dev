@@ -575,6 +575,27 @@ theorem autos {G : Colored n k} {ctx : Ctx}
     LocalAutos ctx level st :=
   hpath.stab.toLocal hrun.autosOk
 
+/-- A root-valid pair whose `fix` contains the individualized path is
+valid at the current search frame, even when that pair was admitted by a
+deeper result state rather than being present on entry. -/
+theorem pair {G : Colored n k} {ctx : Ctx}
+    {level : Nat} {st : SearchSt} {fix mcr : Nat}
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (hroot : PairOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n fix mcr)
+    (hcovers : ∀ v, v < ctx.n → elem st.fixedpts v = true →
+      elem fix v = true) :
+    PairOk ctx.g st.ptn st.lab level ctx.n fix mcr := by
+  intro v hv hmcr
+  obtain ⟨gamma, hcheck, hfixes, hstab, hlt⟩ := hroot v hv hmcr
+  refine ⟨gamma, hcheck, hfixes, ?_, hlt⟩
+  apply hpath.stab gamma hcheck hstab
+  intro u hu hfixed
+  exact hfixes u hu (hcovers u hu hfixed)
+
 end PathOk
 
 /-- Reference history, ordered live guides, and stabilization of every

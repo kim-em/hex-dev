@@ -239,6 +239,121 @@ theorem restrict {G : Colored n k} {ctx : Ctx}
     shortClear := h.shortClear
     fuelBound := h.fuelBound }
 
+/-- Every fixed vertex of the receiving parent lies in the `fix` set of
+an implicit pair frozen at a deeper cheap-cell boundary.  The result trail
+identifies the parent's frozen frame; its two closed singleton boundaries
+are unchanged in the deeper event partition. -/
+theorem fmptnFix {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell offset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hpathCodes : level = codes.length)
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (hevent : EventOut G ctx tcLevel codes fs out outBest eventTrail r)
+    (hpreserved : TrailExt (level + 1)
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail)
+    (hsaved : level ≤ out.noncheaplevel) :
+    ∀ v, v < ctx.n → elem st.fixedpts v = true →
+      elem (fmptn out.lab out.ptn out.noncheaplevel ctx.n).1 v = true := by
+  intro v hv hfixed
+  obtain ⟨q, hq, hqv, hsingle⟩ := hpath.fixed v hv hfixed
+  have hsingleFrozen : IsCell rsPtn level q 1 := by
+    rw [← h.ptnEq]
+    exact hsingle
+  have hparentLab : rsLab[q]! = st.lab[q]! :=
+    cellsPerm_singleton h.labPerm hsingleFrozen
+  let entry : TrailEntry :=
+    ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩
+  have hentry : eventTrail level = some entry := by
+    exact hpreserved.pushAt
+  cases hevent with
+  | intro current eventCodes bestCodes event depth stemEq past returned
+      stable history =>
+    have hcurrent : level < current := by
+      rw [hpathCodes]
+      exact past
+    have hreach := event.trailOk.reach level entry hcurrent hentry
+    change cellsPerm rsPtn level rsLab out.lab at hreach
+    have houtLab : out.lab[q]! = v := by
+      have heq := cellsPerm_singleton hreach hsingleFrozen
+      rw [← heq, hparentLab, hqv]
+    have hcellOut : IsCell out.ptn level q 1 := by
+      apply isCell_of_agree hsingleFrozen
+      intro x hxlo hxhi
+      apply event.trailOk.frozen level entry hcurrent hentry
+      change rsPtn[x]! ≤ level
+      rcases Nat.eq_zero_or_pos q with rfl | hqpos
+      · have hx : x = 0 := by omega
+        subst x
+        exact hsingleFrozen.2.2.2
+      · rcases hsingleFrozen.2.1 with hzero | hstart
+        · omega
+        · rcases Decidable.em (x = q - 1) with hx | hx
+          · rw [hx]
+            exact hstart
+          · have hxq : x = q := by omega
+            rw [hxq]
+            exact hsingleFrozen.2.2.2
+    have hcellSaved := isCell_one_mono hcellOut hsaved
+    have hend : out.ptn[out.ptn.size - 1]! ≤ out.noncheaplevel :=
+      Nat.le_trans event.cheap.rootEnd (by
+        exact Nat.succ_le_iff.mp event.cheap.positive)
+    have hmem : (q, q) ∈ cells out.ptn out.noncheaplevel ctx.n := by
+      have hmem' := isCell_mem_cells hcellSaved
+        (by
+          rw [event.cheap.ptnSize]
+          exact Nat.le_refl _)
+        hend hq
+      have heq : q + 1 - 1 = q := by omega
+      rw [heq] at hmem'
+      exact hmem'
+    have hbit := fmptn_singleton (lab := out.lab) hmem
+    rw [houtLab] at hbit
+    exact hbit
+
+/-- Root validity of the implicit pair and containment of the parent path
+localize that pair to the exact frozen frame consumed by `shortprune`. -/
+theorem fmptnPair {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell offset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hpathCodes : level = codes.length)
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hpath : PathOk ctx
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (hevent : EventOut G ctx tcLevel codes fs out outBest eventTrail r)
+    (hpreserved : TrailExt (level + 1)
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail)
+    (hsaved : level ≤ out.noncheaplevel)
+    (hroot : PairOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (fmptn out.lab out.ptn out.noncheaplevel ctx.n).1
+      (fmptn out.lab out.ptn out.noncheaplevel ctx.n).2) :
+    PairOk ctx.g rsPtn rsLab level ctx.n
+      (fmptn out.lab out.ptn out.noncheaplevel ctx.n).1
+      (fmptn out.lab out.ptn out.noncheaplevel ctx.n).2 := by
+  have hfix := h.fmptnFix hpathCodes hpath hevent hpreserved hsaved
+  have hpair := hpath.pair hroot hfix
+  rw [h.ptnEq] at hpair
+  have hstSize : st.lab.size = ctx.n := by
+    rw [h.nodeCount]
+    exact h.run.searchOk.labSize
+  exact LocalAutos.reindexPair hpair (cellsPerm_symm h.labPerm)
+    h.frozenPtnSize hstSize h.frozenLabSize h.frozenEnd
+
 /-- The long-prune filter preserves the full mutable sweep invariant.
 The root ledger supplies valid pairs at the current ordering, and the
 frozen-frame permutation transports their cell stabilization back to the
