@@ -673,10 +673,9 @@ theorem otherNode_leaf_firstAuto {ctx : Ctx}
       (otherLeafSt ctx level numcells st).gcaFirst
       (some (incKey ctx bs st.canonlab)))
     (href : g.ref = (otherLeafSt ctx level numcells st).firstlab)
-    (hstab : ∀ γ ∈ (processnode ctx level ctx.n
-      (otherLeafSt ctx level numcells st)).2.genTrace,
-      CellStab g.rsPtn (otherLeafSt ctx level numcells st).gcaFirst
-        g.rsLab γ)
+    (hcurReach : cellsPerm g.rsPtn
+      (otherLeafSt ctx level numcells st).gcaFirst g.rsLab
+      (otherLeafSt ctx level numcells st).lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : (otherLeafSt ctx level numcells st).lab[g.tc]! =
       g.rsLab[g.tc + oCur]!) :
@@ -734,7 +733,7 @@ theorem otherNode_leaf_firstAuto {ctx : Ctx}
       (some (incKey ctx bs st.canonlab)) := by
     exact g.firstUnwind (level := level) (numcells := ctx.n) href hgsz
       hfirstSize hfirstPerm hlabSize hlabPerm hsymm hloop hbound heq hsent
-      (by simp) hpass hstab hcur hatCur
+      (by simp) hpass hcurReach hcur hatCur
   have hreturn := (processnode_auto (level := level) (numcells := ctx.n)
     (st := leaf) heq hsent (by simp) hpass).1
   exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
@@ -783,10 +782,9 @@ theorem otherNode_leaf_rowTie {ctx : Ctx}
       (otherLeafSt ctx level numcells st).gcaCanon
       (some (incKey ctx bs st.canonlab)))
     (href : g.ref = (otherLeafSt ctx level numcells st).canonlab)
-    (hstab : ∀ γ ∈ (processnode ctx level ctx.n
-      (otherLeafSt ctx level numcells st)).2.genTrace,
-      CellStab g.rsPtn (otherLeafSt ctx level numcells st).gcaCanon
-        g.rsLab γ)
+    (hcurReach : cellsPerm g.rsPtn
+      (otherLeafSt ctx level numcells st).gcaCanon g.rsLab
+      (otherLeafSt ctx level numcells st).lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : (otherLeafSt ctx level numcells st).lab[g.tc]! =
       g.rsLab[g.tc + oCur]!)
@@ -842,7 +840,7 @@ theorem otherNode_leaf_rowTie {ctx : Ctx}
     rw [hnode, hkey, keyMax_eq_left (keyLe_refl _)]
   obtain ⟨target, hreturn, hbelow, hpayload⟩ := g.tiedUnwind href hgsz
     hcanonSize hcanonPerm hlabSize hlabPerm hbound hrows hef (by simp)
-    hcc hge htie hcanonBelow hfirstPos hfirstBelow hstab hcur hatCur
+    hcc hge htie hcanonBelow hfirstPos hfirstBelow hcurReach hcur hatCur
     hcoset horbit
   exact otherNode_leaf_unwind_of_event hnum hreturn hbelow hsound hpayload
 

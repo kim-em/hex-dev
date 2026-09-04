@@ -45,6 +45,23 @@ theorem LabInj.eq {lab : Array Nat} {nn i j : Nat} (h : LabInj lab nn)
   ∃ γ ∈ store, checkAutom ctx.g γ ctx.n = true ∧
     ∀ i, i < ctx.n → γ[ref[i]!]! = cur[i]!
 
+/-- A checked carrier whose witnessing generator stabilizes one ancestor
+frame. Direct generator unwinds need only this witness; requiring every
+historical generator to stabilize the frame is stronger and false away
+from the first-path loop that consumes an orbit closure. -/
+@[expose] def CellCarrier (ctx : Ctx) (ptn : Array Nat) (level : Nat)
+    (base ref cur : Array Nat) (store : Array (Array Nat)) : Prop :=
+  ∃ γ ∈ store, checkAutom ctx.g γ ctx.n = true ∧
+    (∀ i, i < ctx.n → γ[ref[i]!]! = cur[i]!) ∧
+    CellStab ptn level base γ
+
+theorem CellCarrier.toLabel {ctx : Ctx} {ptn : Array Nat} {level : Nat}
+    {base ref cur : Array Nat} {store : Array (Array Nat)}
+    (h : CellCarrier ctx ptn level base ref cur store) :
+    LabelCarrier ctx ref cur store := by
+  obtain ⟨γ, hmem, haut, hmap, _⟩ := h
+  exact ⟨γ, hmem, haut, hmap⟩
+
 /-- A checked carrier identifies the relabelled leaf rows of its two
 permutation labellings. -/
 theorem LabelCarrier.leafRows {ctx : Ctx} {ref cur : Array Nat}
@@ -198,6 +215,33 @@ cell. -/
 /-- A checked label carrier identifies the two children selected at an
 ancestor, once the two leaf labellings are known at that ancestor's
 individualized position. -/
+theorem sweepKey_of_cellCarrier {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) {ref cur : Array Nat}
+    {store : Array (Array Nat)} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells oRef oCur : Nat}
+    (hcarrier : CellCarrier ctx rsPtn level rsLab ref cur store)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (href : oRef < len) (hcur : oCur < len)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hatRef : ref[tc]! = rsLab[tc + oRef]!)
+    (hatCur : cur[tc]! = rsLab[tc + oCur]!) :
+    sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oCur =
+      sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oRef := by
+  obtain ⟨γ, _, haut, hmap, hstab⟩ := hcarrier
+  apply congrArg (prefixKey cs)
+  apply childKey_of_carried hn hgsz haut tcLevel specFuel level
+    hstab hs hok hsp hend hvals hic hrange hcur href hlf
+  have htc : tc < ctx.n := by
+    rw [hn]
+    omega
+  have hm := hmap tc htc
+  rwa [hatRef, hatCur] at hm
+
+/-- The store-wide stabilization form used by orbit-local callers. -/
 theorem sweepKey_of_carrier {ctx : Ctx} (hn : ctx.n = n)
     (hgsz : ctx.g.size = n) {ref cur : Array Nat}
     {store : Array (Array Nat)} (hcarrier : LabelCarrier ctx ref cur store)
@@ -215,14 +259,9 @@ theorem sweepKey_of_carrier {ctx : Ctx} (hn : ctx.n = n)
     sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oCur =
       sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oRef := by
   obtain ⟨γ, hγ, haut, hmap⟩ := hcarrier
-  apply congrArg (prefixKey cs)
-  apply childKey_of_carried hn hgsz haut tcLevel specFuel level
-    (hstab γ hγ) hs hok hsp hend hvals hic hrange hcur href hlf
-  have htc : tc < ctx.n := by
-    rw [hn]
-    omega
-  have hm := hmap tc htc
-  rwa [hatRef, hatCur] at hm
+  exact sweepKey_of_cellCarrier hn hgsz
+    ⟨γ, hγ, haut, hmap, hstab γ hγ⟩ hs hok hsp hend hvals hic
+      hrange href hcur hlf hatRef hatCur
 
 /-- The key of a non-discrete node is the maximum of the keys swept by
 its child loop.  The loop prefix contains the node's refinement code. -/
@@ -886,6 +925,30 @@ structure Anchor (ctx : Ctx) (tcLevel target : Nat)
 
 /-- Turn an already-covered reference child into the current child's
 unwind anchor using a checked carrier between their leaf labellings. -/
+@[expose] def Anchor.ofCellCarrier {ctx : Ctx} (hn : ctx.n = n)
+    (hgsz : ctx.g.size = n) {tcLevel level specFuel : Nat}
+    {codes : List Nat} {rsLab rsPtn ref cur : Array Nat}
+    {store : Array (Array Nat)} {tc len numcells oRef oCur : Nat}
+    {best : Option Key} (hpos : 1 ≤ level)
+    (hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells best oRef)
+    (hcarrier : CellCarrier ctx rsPtn level rsLab ref cur store)
+    (hs : rsLab.size = n) (hok : LabOk rsLab n)
+    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (href : oRef < len) (hcur : oCur < len)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hatRef : ref[tc]! = rsLab[tc + oRef]!)
+    (hatCur : cur[tc]! = rsLab[tc + oCur]!) :
+    Anchor ctx tcLevel level best := by
+  refine ⟨hpos, specFuel, codes, rsLab, rsPtn, tc, numcells, oCur, ?_⟩
+  apply hdone.ofEq
+  exact sweepKey_of_cellCarrier hn hgsz hcarrier hs hok hsp hend hvals
+    hic hrange href hcur hlf hatRef hatCur
+
+/-- Store-wide stabilization implies the witness-local form. -/
 @[expose] def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
     (hgsz : ctx.g.size = n) {tcLevel level specFuel : Nat}
     {codes : List Nat} {rsLab rsPtn ref cur : Array Nat}
@@ -998,6 +1061,8 @@ structure Guide (ctx : Ctx) (tcLevel target : Nat)
   offsetLt : offset < len
   fuelBound : target + 1 + specFuel ≤ ctx.n + 1
   atRef : ref[tc]! = rsLab[tc + offset]!
+  refSize : ref.size = ctx.n
+  refReach : cellsPerm rsPtn target rsLab ref
 
 /-- A guide remains usable after the incumbent grows.  Cell stabilization
 of the current generator store and the current child's ancestor position
@@ -1013,6 +1078,19 @@ are the only facts that must be supplied at the leaf event. -/
     Anchor ctx tcLevel target best' := by
   apply Anchor.ofCarrier rfl hgsz g.positive (g.done.mono hinc)
     hcarrier hstab g.labSize g.labOk g.ptnSize g.endClosed g.values
+    g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
+
+/-- A witness-local carrier is enough for a direct generator unwind. -/
+@[expose] def Guide.anchorCell {ctx : Ctx} {tcLevel target : Nat}
+    {best best' : Option Key} (g : Guide ctx tcLevel target best)
+    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows best best')
+    {cur : Array Nat} {store : Array (Array Nat)} {oCur : Nat}
+    (hcarrier : CellCarrier ctx g.rsPtn target g.rsLab g.ref cur store)
+    (hcur : oCur < g.len)
+    (hatCur : cur[g.tc]! = g.rsLab[g.tc + oCur]!) :
+    Anchor ctx tcLevel target best' := by
+  apply Anchor.ofCellCarrier rfl hgsz g.positive (g.done.mono hinc)
+    hcarrier g.labSize g.labOk g.ptnSize g.endClosed g.values
     g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
 
 /-- A successful code-one leaf admission, paired with its concrete
@@ -1034,8 +1112,7 @@ theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     (hsent : st.firstcode[level + 1]! = codeSentinel)
     (hnc : (numcells == ctx.n) = true)
     (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true)
-    (hstab : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
-      CellStab g.rsPtn st.gcaFirst g.rsLab γ)
+    (hcurReach : cellsPerm g.rsPtn st.gcaFirst g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
     Unwind ctx tcLevel st.gcaFirst
@@ -1046,10 +1123,19 @@ theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       (processnode ctx level numcells st).2.genTrace := by
     rw [href]
     exact hcarrier
+  obtain ⟨γ, hγ, haut, hmap⟩ := hcarrierG
+  have hrefReach : cellsPerm g.rsPtn st.gcaFirst g.rsLab st.firstlab := by
+    rw [← href]
+    exact g.refReach
+  have hcell : CellCarrier ctx g.rsPtn st.gcaFirst g.rsLab g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace :=
+    ⟨γ, hγ, haut, hmap,
+      cellStab_of_scatter g.ptnSize g.labSize hsz₁ g.endClosed
+        hrefReach hcurReach (by simpa only [href] using hmap)⟩
   have hinc : IncGrows best best := by
     intro b hb
     exact ⟨b, hb, keyLe_refl b⟩
-  have hanchor := g.anchor hgsz hinc hcarrierG hstab hcur hatCur
+  have hanchor := g.anchorCell hgsz hinc hcell hcur hatCur
   have hframes := processnode_frames ctx level numcells st
   rcases hframes with ⟨hlab, _, _, _, hfirst, _, _, _, _⟩
   apply Unwind.first hanchor
@@ -1074,8 +1160,7 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
-    (hstab : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
-      CellStab g.rsPtn st.gcaCanon g.rsLab γ)
+    (hcurReach : cellsPerm g.rsPtn st.gcaCanon g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
     Unwind ctx tcLevel st.gcaCanon
@@ -1086,10 +1171,19 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       (processnode ctx level numcells st).2.genTrace := by
     rw [href]
     exact hcarrier
+  obtain ⟨γ, hγ, haut, hmap⟩ := hcarrierG
+  have hrefReach : cellsPerm g.rsPtn st.gcaCanon g.rsLab st.canonlab := by
+    rw [← href]
+    exact g.refReach
+  have hcell : CellCarrier ctx g.rsPtn st.gcaCanon g.rsLab g.ref st.lab
+      (processnode ctx level numcells st).2.genTrace :=
+    ⟨γ, hγ, haut, hmap,
+      cellStab_of_scatter g.ptnSize g.labSize hsz₁ g.endClosed
+        hrefReach hcurReach (by simpa only [href] using hmap)⟩
   have hinc : IncGrows best best := by
     intro b hb
     exact ⟨b, hb, keyLe_refl b⟩
-  have hanchor := g.anchor hgsz hinc hcarrierG hstab hcur hatCur
+  have hanchor := g.anchorCell hgsz hinc hcell hcur hatCur
   obtain ⟨_, _, _, _, _, hcanon, _, _⟩ :=
     processnode_rowTie hef hnc hcc hge htie
   have hframes := processnode_frames ctx level numcells st
@@ -1117,8 +1211,7 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
     (hcanonBelow : st.gcaCanon < level)
     (hfirstPos : 1 ≤ st.gcaFirst) (hfirstBelow : st.gcaFirst < level)
-    (hstab : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
-      CellStab g.rsPtn st.gcaCanon g.rsLab γ)
+    (hcurReach : cellsPerm g.rsPtn st.gcaCanon g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!)
     (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
@@ -1132,7 +1225,7 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
       ⟨hfirst, hsmaller⟩
   · exact ⟨st.gcaCanon, hcanon, hcanonBelow,
       g.canonUnwind href hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows
-        hef hnc hcc hge htie hstab hcur hatCur⟩
+        hef hnc hcc hge htie hcurReach hcur hatCur⟩
   · exact ⟨st.gcaFirst, hfirst, hfirstBelow,
       .orbit ⟨hfirstPos, hcoset, hsmaller, horbit⟩⟩
 
