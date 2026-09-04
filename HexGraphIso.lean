@@ -68,6 +68,7 @@ public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.Equitable
 public import HexGraphIso.Nauty.EquitableStep
 public import HexGraphIso.Nauty.EquitableFix
+public import HexGraphIso.Nauty.TargetCell
 public import HexGraphIso.Ops
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
@@ -108,4 +109,3 @@ Everything under `Hex.GraphIso.Nauty` is the verified engine rather than
 the intended entry point: it is exported so that proofs can cite it, not
 because callers are expected to reach into it.
 -/
-
