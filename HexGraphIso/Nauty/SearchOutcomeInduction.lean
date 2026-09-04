@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.SearchOutcomeTrail
 public import HexGraphIso.Nauty.QuartetNode
+public import HexGraphIso.Nauty.TargetCell
 import all HexGraphIso.Nauty.Search
 import all HexGraphIso.Nauty.SmallCellTie
 
@@ -605,6 +606,91 @@ theorem NodeInv.refined {G : Colored n k} {ctx : Ctx}
       numcells + bcount r.ptn level ctx.n at hc
     omega
   exact ⟨hrit, heqt, hacc⟩
+
+/-- The unhinted executable target record of an internal node is exactly
+the specification target record, together with its nontrivial-cell
+geometry. -/
+theorem NodeInv.target {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hlevel : 1 ≤ level)
+    (h : NodeInv G ctx tcLevel level cs bs fs numcells st best trail)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells ≠ ctx.n) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    ∃ tc len,
+      maketargetcell ctx r.lab r.ptn level tcLevel (-1) =
+        (tc, worksetOf r.lab tc (tc + len - 1), len) ∧
+      specMaketargetcell ctx r.lab r.ptn level tcLevel =
+        (tc, worksetOf r.lab tc (tc + len - 1), len) ∧
+      IsCell r.ptn level tc len ∧ 2 ≤ len ∧
+      tc + len ≤ ctx.n := by
+  dsimp only
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  have href := h.refined hn hg hn0 hlevel
+  have htarget : maketargetcell ctx r.lab r.ptn level tcLevel (-1) =
+      specMaketargetcell ctx r.lab r.ptn level tcLevel := by
+    apply maketargetcell_eq_spec href.2.1 href.1.ok.labOk
+      href.1.ok.labSize href.1.ok.ptnSize href.1.ok.ptnEnd
+  have hlive : bcount r.ptn level ctx.n < ctx.n := by
+    have hb : r.numcells ≤ ctx.n := by
+      rw [← href.2.2]
+      exact bcount_le r.ptn level ctx.n
+    have hne : r.numcells ≠ ctx.n := by
+      simpa only [r] using hnum
+    calc
+      bcount r.ptn level ctx.n = r.numcells := href.2.2
+      _ < ctx.n := Nat.lt_of_le_of_ne hb hne
+  obtain ⟨tc, len, hmk, hcell, hlen, hrange⟩ :=
+    maketargetcell_open (lab := r.lab) (tcLevel := tcLevel)
+      (hint := (-1 : Int)) hlevel href.1.ok.ptnSize
+      href.1.ok.ptnEnd hlive
+  exact ⟨tc, len, hmk, htarget.symm.trans hmk,
+    hcell, hlen, hrange⟩
+
+/-- The target record supplied by `NodeInv.target` exposes the node key as
+the exact maximum swept by the executable child loop. -/
+theorem NodeInv.children {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len : Nat}
+    {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (_h : NodeInv G ctx tcLevel level cs bs fs numcells st best trail)
+    (hdisc : discreteAt
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level ctx.n = false)
+    (hspec : specMaketargetcell ctx
+      (refine ctx level st.lab st.ptn st.active numcells).lab
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level tcLevel =
+        (tc, worksetOf
+          (refine ctx level st.lab st.ptn st.active numcells).lab
+          tc (tc + len - 1), len))
+    (hlen : 2 ≤ len) :
+    nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab
+          (refine ctx level st.lab st.ptn st.active numcells).ptn tc
+          (refine ctx level st.lab st.ptn st.active numcells).numcells 0)
+        ((List.range (len - 1)).map fun o =>
+          sweepKey ctx tcLevel specFuel level
+            (cs ++ [(refine ctx level st.lab st.ptn st.active
+              numcells).longcode])
+            (refine ctx level st.lab st.ptn st.active numcells).lab
+            (refine ctx level st.lab st.ptn st.active numcells).ptn tc
+            (refine ctx level st.lab st.ptn st.active numcells).numcells
+            (o + 1)) := by
+  have hout := nodeKey_children (ctx := ctx) (tcLevel := tcLevel)
+    (fuel := specFuel) (level := level) (numcells := numcells)
+    (len := len - 1) (cs := cs) (st := st) hdisc (by
+      rw [hspec]
+      simp only
+      omega)
+  rw [hspec] at hout
+  exact hout
 
 /-- Individualization carries a stable loop state into a valid recursive
 node entry. The loop supplies the two facts that depend on its history:
