@@ -1219,6 +1219,215 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
       receiptTrail eventTrail r :=
   ⟨h.proof.prepend hfixed hpre, h.exit.prepend hpre, h.short⟩
 
+/-- Continue a first-path sweep after an ordinary non-guiding child. -/
+theorem nextOther {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 tv index : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st child recSt out : SearchSt}
+    {best mid outBest : Option Key} {value : Int}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hnext : nextElem tcell cursor = some tv)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hother : (tv == tv1) = false)
+    (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv } = (value, child))
+    (hstay : ¬(value < Int.ofNat level))
+    (hshort : child.needshortprune = false)
+    (hrecover : recSt = recover ctx.n inf level
+      { child with fixedpts := erase child.fixedpts tv })
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hpre : LoopSound ctx bound best mid)
+    (hloop : ∀ index',
+      firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
+        (nextElem tcell (some tv)) tcell index' recSt =
+          (r, outIndex, out))
+    (hrec : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes
+        fs rsLab rsPtn tc len numcells tcell (some tv) bound recSt out mid
+        outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest receiptTrail eventTrail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  subst recSt
+  simp only [hshort] at hloop hrec hfixed
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hother, Bool.false_eq_true, ite_false,
+    Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, Bool.false_eq_true, ite_false]
+  split <;> rw [hloop] <;>
+    exact (hrec.prepend hfixed hpre).step (nextElem_after hnext)
+
+/-- Continue a first-path sweep after its guiding child. -/
+theorem nextGuide {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 tv index : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st child recSt out : SearchSt}
+    {best mid outBest : Option Key} {value : Int} {outIndex : Nat}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hnext : nextElem tcell cursor = some tv)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hfirst : (tv == tv1) = true)
+    (hcall : firstPathNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv } = (value, child))
+    (hstay : ¬(value < Int.ofNat level))
+    (hshort : child.needshortprune = false)
+    (hrecover : recSt = recover ctx.n inf level
+      { { { child with fixedpts := erase child.fixedpts tv } with
+          gcaFirst := level } with stabvertex := tv1 })
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hpre : LoopSound ctx bound best mid)
+    (hloop : ∀ index',
+      firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
+        (nextElem tcell (some tv)) tcell index' recSt =
+          (r, outIndex, out))
+    (hrec : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes
+        fs rsLab rsPtn tc len numcells tcell (some tv) bound recSt out mid
+        outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest receiptTrail eventTrail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  subst recSt
+  simp only [hshort] at hloop hrec hfixed
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hfirst, Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, Bool.false_eq_true, ite_false]
+  split <;> rw [hloop] <;>
+    exact (hrec.prepend hfixed hpre).step (nextElem_after hnext)
+
+/-- Continue a non-guiding first-path sweep after consuming a short-prune
+request from its child. -/
+theorem nextOtherShort {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      filtered tv1 tv index : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st child recSt out : SearchSt}
+    {best mid outBest : Option Key} {value : Int} {outIndex : Nat}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hnext : nextElem tcell cursor = some tv)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hother : (tv == tv1) = false)
+    (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv } = (value, child))
+    (hstay : ¬(value < Int.ofNat level))
+    (hshort : child.needshortprune = true)
+    (hfiltered : filtered = shortprune tcell
+      { { child with fixedpts := erase child.fixedpts tv } with
+        needshortprune := false })
+    (hrecover : recSt = recover ctx.n inf level
+      { { child with fixedpts := erase child.fixedpts tv } with
+        needshortprune := false })
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hpre : LoopSound ctx bound best mid)
+    (hloop : ∀ index',
+      firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
+        (nextElem filtered (some tv)) filtered index' recSt =
+          (r, outIndex, out))
+    (hrec : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes
+        fs rsLab rsPtn tc len numcells filtered (some tv) bound recSt out mid
+        outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest receiptTrail eventTrail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  subst filtered
+  subst recSt
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hother, Bool.false_eq_true, ite_false,
+    Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, ite_true]
+  split <;> rw [hloop] <;>
+    exact ((hrec.prepend hfixed hpre).reindexSet).step
+      (nextElem_after hnext)
+
+/-- Continue the guiding first-path sweep after consuming its child's
+short-prune request. -/
+theorem nextGuideShort {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      filtered tv1 tv index : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {st child recSt out : SearchSt}
+    {best mid outBest : Option Key} {value : Int} {outIndex : Nat}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hnext : nextElem tcell cursor = some tv)
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hfirst : (tv == tv1) = true)
+    (hcall : firstPathNode ctx inf tcLevel runFuel (level + 1)
+      (numcells + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := insert st.fixedpts tv
+        cosetindex := tv } = (value, child))
+    (hstay : ¬(value < Int.ofNat level))
+    (hshort : child.needshortprune = true)
+    (hfiltered : filtered = shortprune tcell
+      { { { { child with fixedpts := erase child.fixedpts tv } with
+          gcaFirst := level } with stabvertex := tv1 } with
+        needshortprune := false })
+    (hrecover : recSt = recover ctx.n inf level
+      { { { { child with fixedpts := erase child.fixedpts tv } with
+          gcaFirst := level } with stabvertex := tv1 } with
+        needshortprune := false })
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hpre : LoopSound ctx bound best mid)
+    (hloop : ∀ index',
+      firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
+        (nextElem filtered (some tv)) filtered index' recSt =
+          (r, outIndex, out))
+    (hrec : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level stem codes
+        fs rsLab rsPtn tc len numcells filtered (some tv) bound recSt out mid
+        outBest receiptTrail eventTrail r) :
+    FirstLoopRun G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).2.2
+      best outBest receiptTrail eventTrail
+      (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 (some tv) tcell index st).1 := by
+  subst filtered
+  subst recSt
+  unfold firstChildLoop
+  simp only [hrep, ite_true, hfirst, Id.run_pure, apply_ite Id.run]
+  rw [hcall, ite_eq_right hstay]
+  simp only [hshort, ite_true]
+  split <;> rw [hloop] <;>
+    exact ((hrec.prepend hfixed hpre).reindexSet).step
+      (nextElem_after hnext)
+
 /-- Zero cursor fuel is retained as exhaustion for the first-path sweep. -/
 theorem zero {G : Colored n k} {ctx : Ctx}
     {inf tcLevel specFuel runFuel level numcells tc len tcell tv1 index : Nat}
