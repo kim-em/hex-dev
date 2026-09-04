@@ -124,4 +124,50 @@ theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
     have := congrArg List.length he
     simp [full] at this
 
+/-- A discrete node on the first descent returns an exact located receipt
+and the stable state installed by that leaf. -/
+theorem FirstInv.terminalReceipt {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel fuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = cs.length + 1)
+    (h : FirstInv G ctx level cs numcells st trail)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let full := cs ++ [rs.longcode]
+    let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
+    NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+        out.2 numcells none (some (pathLeafKey ctx full rs.lab)) out.1 ∧
+      RunInv G ctx tcLevel level full full full rs.numcells out.2
+        (some (pathLeafKey ctx full rs.lab)) trail := by
+  dsimp only
+  let rs := refine ctx level st.lab st.ptn st.active numcells
+  let full := cs ++ [rs.longcode]
+  let leaf := firstLeafSt ctx level numcells st
+  have hstate := firstPath_discrete_state ctx inf tcLevel fuel level
+    numcells st hnum
+  have hrun : RunInv G ctx tcLevel level full full full rs.numcells
+      (firstterminal level leaf) (some (pathLeafKey ctx full rs.lab))
+      trail := by
+    simpa only [rs, full, leaf] using h.terminal hn hn0 hlevel
+  have hdisc : discreteAt rs.ptn level ctx.n = true := by
+    rw [← refine_discrete_iff hn hn0 h.searchOk (by omega)]
+    exact hnum
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full rs.lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+  constructor
+  · rw [hstate]
+    apply NodeReceipt.complete
+    · apply NodeSound.ofExact
+      simp only [incMax, hnode, rs, full]
+    · rfl
+    · apply canonlevel_ne_zero_of_stInc
+      simpa only [leaf] using hrun.read
+    · simpa only [leaf] using hrun.read
+    · simp only [incMax, hnode, rs, full]
+  · rw [hstate]
+    exact hrun
+
 end Hex.GraphIso.Nauty
