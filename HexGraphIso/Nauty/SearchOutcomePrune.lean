@@ -27,6 +27,13 @@ shape or parks the boundary at the child. -/
 
 namespace CheapDesc
 
+/-- A boundary created at the current node has no strict descendant
+obligation yet. -/
+theorem same (ctx : Ctx) (level : Nat) (st : RefineSt) :
+    CheapDesc ctx level level st := by
+  intro h
+  omega
+
 /-- At an entered sibling sweep, a saved boundary at or above the current
 node supplies the small-cell subtree fact.  A strictly older boundary uses
 the inherited descent invariant; equality is exactly the case in which the
