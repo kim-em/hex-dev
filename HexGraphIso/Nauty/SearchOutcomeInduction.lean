@@ -99,7 +99,8 @@ will move the boundary before the next descent. -/
 structure CheapOk (ctx : Ctx) (rlab rptn : Array Nat) (level : Nat)
     (st : SearchSt) : Prop where
   positive : 0 < st.noncheaplevel
-  ptnSize : ctx.n ≤ st.ptn.size
+  labSize : st.lab.size = ctx.n
+  ptnSize : st.ptn.size = ctx.n
   rootEnd : st.ptn[st.ptn.size - 1]! ≤ 1
   pair : st.noncheaplevel < level →
     PairOk ctx.g rptn rlab 1 ctx.n
@@ -127,6 +128,8 @@ theorem CheapOk.ofFrames {ctx : Ctx} {rlab rptn : Array Nat}
   constructor
   · rw [hncl]
     exact h.positive
+  · rw [hlab]
+    exact h.labSize
   · rw [hptn]
     exact h.ptnSize
   · rw [hptn]
@@ -182,6 +185,8 @@ theorem CheapOk.recover {ctx : Ctx} {rlab rptn : Array Nat}
     split
     · omega
     · exact h.positive
+  · rw [recover_lab]
+    exact h.labSize
   · rw [recover_ptn_size]
     exact h.ptnSize
   · rw [recover_ptn_size, recover_ptn]
@@ -202,7 +207,7 @@ theorem CheapOk.recover {ctx : Ctx} {rlab rptn : Array Nat}
           st.noncheaplevel := by rw [hncl, ite_eq_right hc]
       rw [heq] at hlt ⊢
       have hpos := h.positive
-      rw [recover_fmptn h.ptnSize
+      rw [recover_fmptn (Nat.le_of_eq h.ptnSize.symm)
         (Nat.le_trans h.rootEnd (by omega : 1 ≤ st.noncheaplevel))
         (by omega : st.noncheaplevel ≤ level) hinf]
       exact h.pair (by omega)
@@ -216,6 +221,72 @@ theorem CheapOk.processnode {ctx : Ctx} {rlab rptn : Array Nat}
     processnode_frames ctx level numcells st
   exact h.ofFrames hlab hptn hncl
 
+/-- Installing the first leaf does not move the frozen pair's defining
+fields. -/
+theorem CheapOk.firstterminal {ctx : Ctx} {rlab rptn : Array Nat}
+    {level : Nat} {st : SearchSt}
+    (h : CheapOk ctx rlab rptn level st) :
+    CheapOk ctx rlab rptn level (Nauty.firstterminal level st) := by
+  apply h.ofFrames
+  · rw [Nauty.firstterminal]
+    simp only [Id.run_bind, Id.run_pure]
+  · rw [Nauty.firstterminal]
+    simp only [Id.run_bind, Id.run_pure]
+  · rw [Nauty.firstterminal]
+    simp only [Id.run_bind, Id.run_pure]
+
+/-- The comparison preparation step does not move the frozen pair's
+defining fields. -/
+theorem CheapOk.otherNodePrep {ctx : Ctx} {rlab rptn : Array Nat}
+    {level code : Nat} {st : SearchSt}
+    (h : CheapOk ctx rlab rptn level st) :
+    CheapOk ctx rlab rptn level (Nauty.otherNodePrep level code st) := by
+  obtain ⟨-, -, -, -, -, -, -, -, hncl, -, -, hlab, hptn⟩ :=
+    otherNodePrep_frames level code st
+  exact h.ofFrames hlab hptn hncl
+
+/-- Writing a boundary at or above the logical level suspends the pair
+obligation without changing the partition facts needed to revive it. -/
+theorem CheapOk.park {ctx : Ctx} {rlab rptn : Array Nat}
+    {old current boundary : Nat} {st : SearchSt}
+    (h : CheapOk ctx rlab rptn old st) (hpos : 0 < boundary)
+    (hcurrent : current ≤ boundary) :
+    CheapOk ctx rlab rptn current
+      { st with noncheaplevel := boundary } := by
+  refine ⟨hpos, h.labSize, h.ptnSize, h.rootEnd, ?_⟩
+  simp only
+  omega
+
+/-- A valid pair at the current boundary extends the invariant through
+the next logical level. -/
+theorem CheapOk.next {ctx : Ctx} {rlab rptn : Array Nat}
+    {level : Nat} {st : SearchSt}
+    (h : CheapOk ctx rlab rptn level st)
+    (hpair : st.noncheaplevel = level →
+      PairOk ctx.g rptn rlab 1 ctx.n
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
+        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2) :
+    CheapOk ctx rlab rptn (level + 1) st := by
+  refine ⟨h.positive, h.labSize, h.ptnSize, h.rootEnd, ?_⟩
+  intro hlt
+  rcases Decidable.em (st.noncheaplevel = level) with heq | hne
+  · exact hpair heq
+  · exact h.pair (by omega)
+
+/-- The initial search boundary is one, so its strict pair obligation is
+empty at the root. -/
+theorem CheapOk.root {G : Colored n k} {ctx : Ctx} {numcells : Nat}
+    {st : SearchSt} (hn : ctx.n = n) (hn0 : 0 < n)
+    (hok : SearchOk G 1 numcells st) (hncl : st.noncheaplevel = 1) :
+    CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) 1 st := by
+  refine ⟨by omega, ?_, ?_, searchOk_end hn0 hok (Nat.le_refl 1), ?_⟩
+  · rw [hok.labSize, hn]
+  · rw [hok.ptnSize, hn]
+  · intro hlt
+    rw [hncl] at hlt
+    omega
+
 /-! # Stable post-install state -/
 
 /-- The semantic state available after the first leaf has been installed.
@@ -224,7 +295,7 @@ The explicit `level` makes the package usable both at node entries and
 inside their child loops. At a node entry, `level = cs.length + 1`
 recovers `DomOk`; a loop instead carries the code path through its current
 node, so its path has length `level`. -/
-structure RunInv (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
+structure RunInv (G : Colored n k) (ctx : Ctx)
     (tcLevel level : Nat) (cs bs fs : List Nat) (numcells : Nat)
     (st : SearchSt) (best : Option Key) (trail : FrameTrail) : Prop where
   searchOk : SearchOk G level numcells st
@@ -235,7 +306,11 @@ structure RunInv (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
   stab : ∀ γ ∈ st.genTrace,
     CellStab st.ptn level st.lab γ
   genTraceOk : GenTraceOk ctx st
-  autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
+  autosOk : AutosOk ctx.g
+    (initPtn n (n + 2) (initialPartition G).2)
+    (initialPartition G).1 1 ctx.n st.autos
+  cheap : CheapOk ctx (initialPartition G).1
+    (initPtn n (n + 2) (initialPartition G).2) level st
   leafRefs : LeafRefsOk G st
   guides : GuideStore ctx tcLevel level st best trail
   nonpositive : st.compCanon ≤ 0
@@ -244,13 +319,15 @@ structure RunInv (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
 
 /-- At a node boundary the stable package supplies the existing `DomOk`
 record consumed by the leaf-event theorems. -/
-theorem RunInv.dom {G : Colored n k} {ctx : Ctx} {rlab rptn : Array Nat}
+theorem RunInv.dom {G : Colored n k} {ctx : Ctx}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
     {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (h : RunInv G ctx rlab rptn tcLevel level cs bs fs numcells st best
+    (h : RunInv G ctx tcLevel level cs bs fs numcells st best
       trail)
     (hpath : level = cs.length + 1) :
-    DomOk G ctx rlab rptn cs bs fs numcells st := by
+    DomOk G ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2)
+      cs bs fs numcells st := by
   subst level
   exact ⟨h.searchOk, h.codeInv, h.firstInv, h.canongInv, h.stab,
     h.genTraceOk, h.autosOk⟩
@@ -258,10 +335,10 @@ theorem RunInv.dom {G : Colored n k} {ctx : Ctx} {rlab rptn : Array Nat}
 /-- The semantic incumbent threaded by the induction agrees with the
 stable imperative state. -/
 theorem RunInv.read {G : Colored n k} {ctx : Ctx}
-    {rlab rptn : Array Nat} {tcLevel level numcells : Nat}
+    {tcLevel level numcells : Nat}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail : FrameTrail}
-    (h : RunInv G ctx rlab rptn tcLevel level cs bs fs numcells st best
+    (h : RunInv G ctx tcLevel level cs bs fs numcells st best
       trail) : stInc ctx st = best := by
   have hne : st.compCanon ≠ 1 := by
     intro heq
@@ -315,7 +392,7 @@ theorem SearchOk.firstterminal {G : Colored n k} {level numcells : Nat}
 post-install invariant. Both mutable stores are still empty at this point;
 all later store growth is handled by the ordinary node induction. -/
 theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
-    {rlab rptn : Array Nat} {tcLevel level numcells : Nat}
+    {tcLevel level numcells : Nat}
     {cs : List Nat} {st : SearchSt} {trail : FrameTrail}
     (hpath : level = cs.length) (hok : SearchOk G level numcells st)
     (hfirstSize : st.firstcode.size = n + 2)
@@ -326,8 +403,10 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     (hlt : ∀ c ∈ cs, c < codeSentinel)
     (hcanong : st.canong.size = ctx.n)
     (hgen : st.genTrace = #[]) (hautos : st.autos = #[])
+    (hcheap : CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) cs.length st)
     (hne : cs ≠ []) :
-    RunInv G ctx rlab rptn tcLevel level cs cs cs numcells
+    RunInv G ctx tcLevel level cs cs cs numcells
       (Nauty.firstterminal level st)
       (some (pathLeafKey ctx cs st.lab)) trail := by
   subst level
@@ -337,7 +416,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     firstterminal_codeInv hcanonSize hbound hcodes hlt,
     firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
     firstterminal_canongInv hcanong, ?_, ?_, ?_,
-    LeafRefsOk.firstterminal hok, ?_, ?_, hne, ?_⟩
+    hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, hne, ?_⟩
   · intro γ hγ
     rw [hstore.1, hgen] at hγ
     simp at hγ
@@ -425,7 +504,7 @@ The second comparison-machine case is the row-rejection reset: the
 mutable sign is negative while the retained proof is deliberately stated
 at sign zero, exactly as required by `recover_codeInv_reset`. -/
 structure RunEvent (G : Colored n k) (ctx : Ctx)
-    (rlab rptn : Array Nat) (tcLevel current : Nat)
+    (tcLevel current : Nat)
     (cs bs fs : List Nat) (st : SearchSt) (best : Option Key)
     (trail : FrameTrail) : Prop where
   machines :
@@ -436,7 +515,11 @@ structure RunEvent (G : Colored n k) (ctx : Ctx)
   firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
   genTraceOk : GenTraceOk ctx st
-  autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
+  autosOk : AutosOk ctx.g
+    (initPtn n (n + 2) (initialPartition G).2)
+    (initialPartition G).1 1 ctx.n st.autos
+  cheap : CheapOk ctx (initialPartition G).1
+    (initPtn n (n + 2) (initialPartition G).2) current st
   leafRefs : LeafRefsOk G st
   guides : GuideStore ctx tcLevel current st best trail
   bestCodes : bs ≠ []
@@ -444,14 +527,14 @@ structure RunEvent (G : Colored n k) (ctx : Ctx)
 
 /-- A stable state is already a valid event state. -/
 theorem RunInv.event {G : Colored n k} {ctx : Ctx}
-    {rlab rptn : Array Nat} {tcLevel level numcells : Nat}
+    {tcLevel level numcells : Nat}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail : FrameTrail}
-    (h : RunInv G ctx rlab rptn tcLevel level cs bs fs numcells st best
+    (h : RunInv G ctx tcLevel level cs bs fs numcells st best
       trail) :
-    RunEvent G ctx rlab rptn tcLevel level cs bs fs st best trail :=
+    RunEvent G ctx tcLevel level cs bs fs st best trail :=
   ⟨Or.inl ⟨h.nonpositive, h.codeInv⟩, h.firstInv, h.canongInv,
-    h.genTraceOk, h.autosOk, h.leafRefs, h.guides, h.bestCodes,
+    h.genTraceOk, h.autosOk, h.cheap, h.leafRefs, h.guides, h.bestCodes,
     h.incumbent⟩
 
 /-- A nonpositive comparison sign remains nonpositive when `recover`
@@ -470,16 +553,17 @@ invariant at the selected ancestor prefix. Search reachability and cell
 stabilization are supplied by the surrounding loop, whose frozen frame
 determines the recovered partition. -/
 theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
-    {rlab rptn : Array Nat} {tcLevel current level inf numcells : Nat}
+    {tcLevel current level inf numcells : Nat}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail : FrameTrail}
-    (h : RunEvent G ctx rlab rptn tcLevel current cs bs fs st best trail)
-    (hle : level ≤ current) (hpath : level ≤ cs.length)
+    (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
+    (hle : level ≤ current) (hlevel : 1 ≤ level) (hinf : level < inf)
+    (hpath : level ≤ cs.length)
     (hok : SearchOk G level numcells (Nauty.recover ctx.n inf level st))
     (hstab : ∀ γ ∈ (Nauty.recover ctx.n inf level st).genTrace,
       CellStab (Nauty.recover ctx.n inf level st).ptn level
         (Nauty.recover ctx.n inf level st).lab γ) :
-    RunInv G ctx rlab rptn tcLevel level (cs.take level) bs fs numcells
+    RunInv G ctx tcLevel level (cs.take level) bs fs numcells
       (Nauty.recover ctx.n inf level st) best trail := by
   have hm := recover_machines
     (nn := n) (N := ctx.n) (inf := inf) (cs := cs) (bs := bs)
@@ -491,7 +575,8 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     (fun hr => Int.le_of_lt hr.1)
   refine ⟨hok, hm.1, hm.2, canongInv_recover h.canongInv, hstab,
     genTraceOk_of_eq hstore.1 h.genTraceOk,
-    autosOk_of_eq hstore.2 h.autosOk, h.leafRefs.recover,
+    autosOk_of_eq hstore.2 h.autosOk,
+    h.cheap.recover hle hlevel hinf, h.leafRefs.recover,
     h.guides.recover hle, recover_nonpositive hnp, h.bestCodes, ?_⟩
   rw [hframes.1]
   exact h.incumbent
@@ -792,6 +877,32 @@ theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
       rw [renamingArray_get sigma hv, ← hpv, ← hσ]
       rw [hpv]
       exact hqlt
+
+/-- A guard-passing refined node supplies the pair needed to carry the
+cheap-boundary invariant into its children. -/
+theorem CheapOk.nextOfSubtree {ctx : Ctx} {G : Colored ctx.n k}
+    {level : Nat} {st : SearchSt} {r : RefineSt}
+    (h : CheapOk ctx (initialPartition G).1
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2) level st)
+    (hn0 : 0 < ctx.n) (hlevel : 1 ≤ level)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hS : SubtreeOk ctx level r) (hreach : CellsReach G r.lab)
+    (hinit : ∀ q : Nat,
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)[q]! ≤ 1 →
+        r.ptn[q]! ≤ 1)
+    (hlab : st.lab = r.lab) (hptn : st.ptn = r.ptn) :
+    CheapOk ctx (initialPartition G).1
+      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (level + 1) st := by
+  apply h.next
+  intro hncl
+  rw [hncl, hlab, hptn]
+  exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hgb hsymm hloop hS
+    hreach hinit
 
 /-- Admitting a checked scatter between reached labellings preserves the
 root automorphism ledger. -/
@@ -1131,5 +1242,27 @@ theorem AutosOk.processnode {ctx : Ctx} {G : Colored n k}
           exact Or.inr hpass
         · exact hprev.processnodeAuto hn hn0 hgb hsymm hloop hok hrefs
             heq hsent' hnc' hpass
+
+/-- The stable search invariant now discharges the last independent
+ledger premise of `processnode`: the runtime bound selects the frozen
+pair carried by `CheapOk`. -/
+theorem RunInv.processnodeAutos {ctx : Ctx} {G : Colored n k}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (h : RunInv G ctx tcLevel level cs bs fs numcells st best trail)
+    (hbound : st.noncheaplevel ≤ level) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  apply h.autosOk.processnode hn hn0 hgb hsymm hloop h.searchOk
+    h.leafRefs h.canongInv h.codeInv
+  intro hne
+  exact h.cheap.ready hbound hne
 
 end Hex.GraphIso.Nauty
