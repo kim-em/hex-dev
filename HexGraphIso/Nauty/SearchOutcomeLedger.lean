@@ -92,6 +92,59 @@ theorem checkAutom_renaming {ctx : Ctx} (sigma : Renaming ctx.n)
     rw [renamingArray_get sigma hvn, hrows.2.2 v hvn]
     exact image_congr _ fun w hw => (renamingArray_get sigma hw).symm
 
+/-- At a small-cell node, every two members of a non-singleton cell have
+equal semantic child subtrees.  This packages the geometric flip as the
+concrete checked, cell-stabilizing array expected by `childKey_of_carried`.
+-/
+theorem childKey_eq_of_subtree {ctx : Ctx} {st : RefineSt}
+    {tcLevel fuel level tc len numcells oU oV : Nat}
+    (hS : SubtreeOk ctx level st)
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (hoU : oU < len) (hoV : oV < len)
+    (hfuel : level + 1 + fuel ≤ ctx.n + 1) :
+    childKey ctx tcLevel fuel level st.lab st.ptn tc numcells oV =
+      childKey ctx tcLevel fuel level st.lab st.ptn tc numcells oU := by
+  rcases Decidable.em (oU = oV) with rfl | hUV
+  · rfl
+  have hmem : (tc, tc + len - 1) ∈ cells st.ptn level ctx.n :=
+    mem_cells_of_isCell (by rw [hS.it.ok.ptnSize]; exact Nat.le_refl _)
+      hS.it.ok.ptnEnd
+      hcell (by omega) (by rw [hS.it.ok.ptnSize]; exact hrange)
+  have hdiff : tc + len - 1 - tc = len - 1 := by omega
+  obtain ⟨sigma, hrows, hperm, hmap⟩ :=
+    flipData_of_subtreeOk (oU := oU) (oV := oV) hS hgsz hgb hsymm hloop hmem
+      (by omega) (by rw [hdiff]; omega) (by rw [hdiff]; omega) hUV
+  let gamma := renamingArray ctx.n sigma
+  have hstab : CellStab st.ptn level st.lab gamma := by
+    change cellsPerm st.ptn level st.lab
+      (st.lab.map fun w => gamma[w]!)
+    have hmapLab : st.lab.map (fun w => gamma[w]!) =
+        st.lab.map sigma.toFun :=
+      map_congr_of_labOk hS.it.ok.labOk fun w hw =>
+        renamingArray_get sigma hw
+    rw [hmapLab]
+    exact hperm.cells
+  apply childKey_of_carried rfl hgsz (checkAutom_renaming sigma hrows)
+    tcLevel fuel level hstab hS.it.ok.labSize hS.it.ok.labOk
+    hS.it.ok.ptnSize hS.it.ok.ptnEnd (fun q => by
+      rcases Decidable.em (q < ctx.n) with hq | hq
+      · exact hS.it.vals q hq
+      · left
+        rw [getElem!_oob (by rw [hS.it.ok.ptnSize]; omega)]
+        exact Nat.zero_le _)
+    hcell hrange
+    hoV hoU hfuel
+  have hidxU : tc + oU < st.lab.size := by
+    rw [hS.it.ok.labSize]
+    omega
+  rw [renamingArray_get sigma (hS.it.ok.labOk _ hidxU)]
+  exact hmap.symm
+
 /-- The implicit pair recorded at a small-cell node is valid at the root
 partition.  Its missing vertices are realized by the node's flip
 automorphisms, while singleton cells supply the fixed set. -/
