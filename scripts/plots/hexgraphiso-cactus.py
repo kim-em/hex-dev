@@ -48,7 +48,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 TACTIC_FILE = """import HexGraphIso
-open Hex.GraphIso
+open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
 example : {goal} := by graph_iso (maxNodes := 100000000) (maxCheckerSteps := 1000000000)
