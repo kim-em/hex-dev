@@ -23,30 +23,23 @@ record how a generator return carries its justification.
 
 The design point. A node that returns below `level - 1` abandoned
 part of its subtree, so it cannot claim the full absorption equation.
-Two architectures were available. The first proves, at the code-one
-leaf, that the leaf's own key does not improve the incumbent
-(`auto_keyMax`), which needs the leaf's path codes to equal the first
-path's, hence needs first-path geometry inside the domination
-argument. The second absorbs the abandonment *wholesale at the
-greatest common ancestor*: `processnode` returns `gcaFirst`, and the
-recorded generator carries the first path's child of that ancestor
-onto the current one, so `childKey_of_carried` equates the two child
-subtree keys and the abandoned one is dominated by a sibling the
-search already explored.
+The leaf and the abandoned suffix are discharged separately.  At a
+code-one leaf, the sentinel immediately above the current path proves
+that its codes equal the first path's codes, and the checked carrier
+proves that their rows agree; `auto_keyMax` therefore absorbs the leaf
+itself without a path-geometry invariant.  The remaining abandonment is
+absorbed *wholesale at the greatest common ancestor*: `processnode`
+returns `gcaFirst`, and the recorded generator carries the first path's
+child of that ancestor onto the current one, so `childKey_of_carried`
+equates the two child subtree keys and the abandoned one is dominated by
+a sibling the search already explored.
 
-The second is what this file states, because the carrier fact it
-needs is immediate. `processnode` builds its generator as
+The carrier fact is direct. `processnode` builds its generator as
 `workperm[firstlab[i]] := lab[i]`, so `γ` maps `firstlab` to `lab`
 pointwise by construction; the ancestor's target position is frozen
 from that level down, so the two entries at that position are exactly
-the two individualized vertices. No statement about codes, code
-lengths, or where the first path went discrete enters anywhere.
-
-`auto_keyMax` is therefore not applied by the induction under this
-architecture, and `cs = fs` is not among the quartet's obligations.
-Store validity is local as well: code 1 requires the first-path sentinel
-at the current depth and validates its scatter with `isautom` before
-admission.
+the two individualized vertices. Store validity is local as well: code
+one validates its scatter with `isautom` before admission.
 -/
 
 namespace Hex.GraphIso.Nauty
