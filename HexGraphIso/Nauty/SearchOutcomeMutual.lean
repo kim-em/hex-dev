@@ -226,6 +226,46 @@ theorem ofCellsPerm {ctx : Ctx} {level : Nat} {st out : SearchSt}
   rw [hptn]
   exact reindexPair hpair hperm hpsize hsize hsize' hend
 
+/-- The conditional local ledger descends through one
+individualization.  A pair applicable to the enlarged fixed set fixes the
+selected vertex, exactly the premise needed by `cellStab_breakout`. -/
+theorem breakout {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
+    (h : LocalAutos ctx level st)
+    (hcell : IsCell st.ptn level tc len)
+    (hrange : tc + len ≤ st.ptn.size) (hsize : st.lab.size = st.ptn.size)
+    (hlab : LabOk st.lab ctx.n)
+    (ho : o < len) (hlen : 2 ≤ len)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, st.ptn[q]! ≠ level + 1) :
+    LocalAutos ctx (level + 1)
+      { st with
+        lab := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1
+        ptn := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1
+        active := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + o]! } := by
+  intro p hp hfix
+  have hsub : ∀ v, elem st.fixedpts v = true →
+      elem (insert st.fixedpts st.lab[tc + o]!) v = true := by
+    intro v hv
+    rw [elem_insert, hv]
+    rfl
+  have hparent := fixTest_mono hsub hfix
+  have hpair := h p hp hparent
+  intro v hv hmcr
+  obtain ⟨gamma, hcheck, hfixes, hstab, hlt⟩ := hpair v hv hmcr
+  have hselected : elem p.1 st.lab[tc + o]! = true := by
+    apply elem_of_and_eq hfix
+    rw [elem_insert]
+    simp
+  have hselectedBound : st.lab[tc + o]! < ctx.n :=
+    hlab _ (by rw [hsize]; omega)
+  exact ⟨gamma, hcheck, hfixes,
+    cellStab_breakout hstab hcell hrange hsize ho hlen hend hvals
+      (hfixes _ hselectedBound hselected), hlt⟩
+
 end LocalAutos
 
 /-- Reference history, ordered live guides, and stabilization of every
