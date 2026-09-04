@@ -36,6 +36,9 @@ structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
     { lab := st.lab, ptn := st.ptn, active := st.active,
       numcells := numcells, hint := 0, maxpos := 0,
       longcode := numcells }
+  activeLt : st.active < 2 ^ ctx.n
+  activeStarts : ∀ v : Nat, elem st.active v = true →
+    v = 0 ∨ st.ptn[v - 1]! ≤ level
   trailOk : TrailOk ctx level st trail
   genEmpty : st.genTrace = #[]
   autosEmpty : st.autos = #[]
@@ -50,16 +53,82 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       FrameTrail.empty := by
   have hok := root_searchOk G hn0
-  refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_,
+  refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_, ?_, ?_,
     TrailOk.empty _ _ _, ?_, ?_, ?_, ?_⟩
   · exact CheapOk.root rfl hn0 hok (by simp [rootSt])
   · simpa only [rootSt] using certInv_initial G hn0
+  · simpa only [rootSt] using (initial_nodeOk G hn0).act
+  · simpa only [rootSt] using (initial_nodeOk G hn0).starts
   · simp [rootSt]
   · simp [rootSt]
   · simp [rootSt]
   · intro v hv
     change (Array.ofFn (n := n) fun i : Fin n => i.val)[v]! = v
     rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
+
+/-- Refining a first-descent node produces the well-formed equitable
+state from which either the first leaf or the next child is selected. -/
+theorem FirstInv.refined {G : Colored n k} {ctx : Ctx}
+    {level numcells : Nat} {cs : List Nat} {st : SearchSt}
+    {trail : FrameTrail}
+    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hlevel : 1 ≤ level)
+    (h : FirstInv G ctx level cs numcells st trail) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    IterOk ctx level r ∧ Equitable ctx level r.lab r.ptn ∧
+      bcount r.ptn level ctx.n = r.numcells := by
+  subst n
+  dsimp only
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  have hend := searchOk_end hn0 h.searchOk hlevel
+  have hls : st.lab.size = ctx.n := h.searchOk.labSize
+  have hps : st.ptn.size = ctx.n := h.searchOk.ptnSize
+  have hlab : LabOk st.lab ctx.n := by
+    exact labOk_of_reach h.searchOk.labSize h.searchOk.reach
+  have hinj : LabInj st.lab ctx.n := by
+    exact labInj_of_reach h.searchOk.labSize hn0 h.searchOk.reach
+  have hrst : StOk ctx.n level r := by
+    apply refine_stOk (ctx := ctx) rfl hls hlab hps h.activeLt hend
+  have hrreach : CellsReach G r.lab := by
+    apply refine_cellsReach rfl hn0 h.searchOk.reach h.searchOk.labSize
+      h.searchOk.ptnSize hend
+    intro q hq
+    exact Nat.le_trans (h.searchOk.init1 q hq) hlevel
+  have hrit : IterOk ctx level r := by
+    refine ⟨hrst, ?_, ?_, ?_⟩
+    · exact labInj_of_reach hrst.labSize hn0 hrreach
+    · intro q hq
+      rcases ptn_refine_vals ctx level st.lab st.ptn st.active
+        numcells q with he | he
+      · rw [he]
+        rcases h.searchOk.vals q hq with hq | hq
+        · exact Or.inl hq
+        · exact Or.inr hq
+      · rw [he]
+        exact Or.inl (Nat.le_refl level)
+    · have hb := h.searchOk.bc
+      have hbn := bcount_le st.ptn level ctx.n
+      omega
+  have heqt : Equitable ctx level r.lab r.ptn := by
+    apply refine_equitable hls hlab hps h.activeLt hend hinj h.activeStarts
+    · intro u v hu hv
+      rw [hg]
+      apply rowsOf_symm G
+      · exact hu
+      · exact hv
+    · have hcount := h.searchOk.count
+      exact hcount.symm
+    · exact h.cert
+  have hacc : bcount r.ptn level ctx.n = r.numcells := by
+    have hc := refine_bcount (ctx := ctx) (level := level)
+      (lab := st.lab) (ptn := st.ptn) (active := st.active)
+      (numcells := numcells) hps.symm (by rw [hls, hps]) hend
+    have hold := h.searchOk.count
+    change bcount r.ptn level ctx.n = r.numcells
+    change r.numcells + bcount st.ptn level ctx.n =
+      numcells + bcount r.ptn level ctx.n at hc
+    omega
+  exact ⟨hrit, heqt, hacc⟩
 
 /-- Reaching a discrete node installs the first leaf and enters the stable
 post-incumbent invariant. -/
