@@ -1267,6 +1267,35 @@ theorem ChildDone.ofExact {ctx : Ctx}
   rw [heq]
   exact keyLe_incMax_right best _
 
+/-- Exact completion of the selected child advances the mutable sweep
+cursor and preserves all earlier coverage. -/
+theorem SweepCover.advanceExact {ctx : Ctx}
+    {tcLevel specFuel level : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells tv tcell : Nat}
+    {cursor : Option Nat} {child : SearchSt} {best out : Option Key}
+    (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
+      numcells tcell cursor best)
+    (hnext : nextElem tcell cursor = some tv)
+    (hfull : out = some (incMax best
+      (nodeKey ctx tcLevel specFuel (level + 1) cs child
+        (numcells + 1))))
+    (hlab : child.lab =
+      (breakout rsLab rsPtn (level + 1) tc tv).1)
+    (hptn : child.ptn =
+      (breakout rsLab rsPtn (level + 1) tc tv).2.1)
+    (hactive : child.active =
+      (breakout rsLab rsPtn (level + 1) tc tv).2.2) :
+    SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
+      tcell (some tv) out := by
+  apply h.advance hnext
+  · intro o ho hotv
+    apply ChildDone.ofExact hfull
+    · simpa only [hotv] using hlab
+    · simpa only [hotv] using hptn
+    · simpa only [hotv] using hactive
+  · intro o hdone
+    exact hdone.mono (hfull ▸ IncGrows.incMax best _)
+
 theorem incMax_mono_right (inc : Option Key) {a b : Key}
     (h : keyLe a b) : keyLe (incMax inc a) (incMax inc b) := by
   rcases inc with _ | x
