@@ -1123,8 +1123,38 @@ theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
           numcells 0)
         ((List.range tail).map fun o =>
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
-            numcells (o + 1)))) :=
+          numcells (o + 1)))) :=
   hsound.exact hout (hcover.maxLe hempty hout)
+
+/-- An installed mutable incumbent always has a concrete key. -/
+theorem stInc_isSome {ctx : Ctx} {st : SearchSt}
+    (h : st.canonlevel ≠ 0) : ∃ b, stInc ctx st = some b := by
+  rw [stInc, ite_eq_right h]
+  exact ⟨_, rfl⟩
+
+/-- A completed covered sweep with a readable installed state has exactly
+folded its fixed child maximum into the incoming incumbent. -/
+theorem SweepCover.exact_of_read {ctx : Ctx}
+    {tcLevel specFuel level tail : Nat} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc numcells tcell : Nat}
+    {cursor : Option Nat} {bound : Key} {st : SearchSt}
+    {best out : Option Key}
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+        numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+          numcells (o + 1)))
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor out)
+    (hempty : ∀ o, ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
+    (hsound : LoopSound ctx bound best out)
+    (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = out) :
+    out = some (incMax best bound) := by
+  obtain ⟨b, hb⟩ := stInc_isSome hinstalled
+  have hout : out = some b := hread.symm.trans hb
+  rw [hbound]
+  exact hcover.exact hempty (hbound ▸ hsound) hout
 
 /-- The result of a node call, with logical and runtime fuel separated.
 
