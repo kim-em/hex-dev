@@ -832,6 +832,51 @@ inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
 @[expose] def IncGrows (best out : Option Key) : Prop :=
   ∀ b, best = some b → ∃ b', out = some b' ∧ keyLe b b'
 
+/-- A previously explored child together with the ancestor geometry needed
+to reuse it as a generator guide.  Unlike `gcaFirst` and `gcaCanon`, this
+keeps the reference labelling and the exact target-cell frame. -/
+structure Guide (ctx : Ctx) (tcLevel target : Nat)
+    (best : Option Key) where
+  positive : 1 ≤ target
+  specFuel : Nat
+  codes : List Nat
+  rsLab : Array Nat
+  rsPtn : Array Nat
+  ref : Array Nat
+  tc : Nat
+  len : Nat
+  numcells : Nat
+  offset : Nat
+  done : ChildDone ctx tcLevel specFuel target codes rsLab rsPtn tc
+    numcells best offset
+  labSize : rsLab.size = ctx.n
+  labOk : LabOk rsLab ctx.n
+  ptnSize : rsPtn.size = ctx.n
+  endClosed : rsPtn[rsPtn.size - 1]! ≤ target
+  values : ∀ q : Nat, rsPtn[q]! ≤ target ∨
+    rsPtn[q]! = ctx.n + 2
+  cell : IsCell rsPtn target tc len
+  range : tc + len ≤ ctx.n
+  offsetLt : offset < len
+  fuelBound : target + 1 + specFuel ≤ ctx.n + 1
+  atRef : ref[tc]! = rsLab[tc + offset]!
+
+/-- A guide remains usable after the incumbent grows.  Cell stabilization
+of the current generator store and the current child's ancestor position
+are the only facts that must be supplied at the leaf event. -/
+def Guide.anchor {ctx : Ctx} {tcLevel target : Nat}
+    {best best' : Option Key} (g : Guide ctx tcLevel target best)
+    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows best best')
+    {cur : Array Nat} {store : Array (Array Nat)} {oCur : Nat}
+    (hcarrier : LabelCarrier ctx g.ref cur store)
+    (hstab : ∀ γ ∈ store, CellStab g.rsPtn target g.rsLab γ)
+    (hcur : oCur < g.len)
+    (hatCur : cur[g.tc]! = g.rsLab[g.tc + oCur]!) :
+    Anchor ctx tcLevel target best' := by
+  apply Anchor.ofCarrier rfl hgsz g.positive (g.done.mono hinc)
+    hcarrier hstab g.labSize g.labOk g.ptnSize g.endClosed g.values
+    g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
+
 /-- Every installed output came from the incoming incumbent or this
 node's specification subtree, and the incoming incumbent was not lost. -/
 structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
