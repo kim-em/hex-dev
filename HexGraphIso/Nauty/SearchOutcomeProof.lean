@@ -215,6 +215,85 @@ theorem firstPath_discrete {ctx : Ctx} {nn inf tcLevel specFuel fuel
   · rwa [hnode]
   · rfl
 
+/-! # Off-path leaf incumbent -/
+
+/-- The maximum of two installed leaf keys still has a nonempty path. -/
+theorem incKey_max_nonempty {ctx : Ctx} {bs cs bs' : List Nat}
+    {canonlab canonlab' lab : Array Nat} (hbs : bs ≠ [])
+    (hcs : cs ≠ []) (hmax : incKey ctx bs' canonlab' =
+      keyMax (incKey ctx bs canonlab) (pathLeafKey ctx cs lab)) :
+    bs' ≠ [] := by
+  intro he
+  subst bs'
+  rcases keyMax_mem (incKey ctx bs canonlab)
+      (pathLeafKey ctx cs lab) with hk | hk
+  · rw [hk] at hmax
+    have hc := congrArg Key.codes hmax
+    simp only [incKey] at hc
+    have hl := congrArg List.length hc
+    simp only [List.length_append, List.length_singleton,
+      List.length_nil] at hl
+    exact hbs (List.length_eq_zero_iff.mp (by omega))
+  · rw [hk] at hmax
+    have hc := congrArg Key.codes hmax
+    simp only [incKey, pathLeafKey] at hc
+    have hl := congrArg List.length hc
+    simp only [List.length_append, List.length_singleton,
+      List.length_nil] at hl
+    exact hcs (List.length_eq_zero_iff.mp (by omega))
+
+/-- The faithful off-path leaf event can be read through `stInc` even in
+the row-rejection arm, where `compCanon` is deliberately reused as a row
+comparison result. -/
+theorem processnode_leaf_read {nn : Nat} {ctx : Ctx}
+    {cs bs : List Nat} {numcells : Nat} {st : SearchSt}
+    (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
+      st.eqlevCanon st.compCanon)
+    (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hcsn : cs.length ≤ nn) (hbs : bs ≠ []) (hcs : cs ≠ [])
+    (hef : ¬((st.eqlevFirst == cs.length) = true))
+    (hnc : (numcells == ctx.n) = true) :
+    ∃ bs' : List Nat,
+      stInc ctx (processnode ctx cs.length numcells st).2 =
+        some (keyMax (incKey ctx bs st.canonlab)
+          (pathLeafKey ctx cs st.lab)) ∧
+      CanongInv ctx (processnode ctx cs.length numcells st).2.canong
+        (processnode ctx cs.length numcells st).2.canonlab
+        (processnode ctx cs.length numcells st).2.samerows ∧
+      (((processnode ctx cs.length numcells st).2.compCanon ≤ 0 ∧
+        CodeCmpInv nn cs bs'
+          (processnode ctx cs.length numcells st).2.canoncode
+          (processnode ctx cs.length numcells st).2.canonlevel
+          (processnode ctx cs.length numcells st).2.eqlevCanon
+          (processnode ctx cs.length numcells st).2.compCanon) ∨
+        ((processnode ctx cs.length numcells st).2.compCanon < 0 ∧
+          CodeCmpInv nn cs bs'
+            (processnode ctx cs.length numcells st).2.canoncode
+            (processnode ctx cs.length numcells st).2.canonlevel
+            (processnode ctx cs.length numcells st).2.eqlevCanon 0)) ∧
+      ((processnode ctx cs.length numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∨
+        (processnode ctx cs.length numcells st).1 =
+          pruneReturn st.noncheaplevel st.allsamelevel
+            (Int.ofNat cs.length) ∨
+        (processnode ctx cs.length numcells st).1 =
+          Int.ofNat st.gcaFirst ∨
+        (processnode ctx cs.length numcells st).1 =
+          Int.ofNat st.gcaCanon) := by
+  obtain ⟨bs', hmax, hcanong, hcmp, hreturn⟩ :=
+    processnode_leaf hcinv hginv hcsn hef hnc
+  have hbs' := incKey_max_nonempty hbs hcs hmax
+  have hread : stInc ctx (processnode ctx cs.length numcells st).2 =
+      some (incKey ctx bs'
+        (processnode ctx cs.length numcells st).2.canonlab) := by
+    rcases hcmp with hcmp | hcmp
+    · rw [stInc_eq_ghost hcmp.2 (by omega)]
+      simp only [ghostInc, hbs', ↓reduceIte]
+    · rw [stInc_eq_ghost hcmp.2 (by omega)]
+      simp only [ghostInc, hbs', ↓reduceIte]
+  refine ⟨bs', ?_, hcanong, hcmp, hreturn⟩
+  rw [hread, hmax]
+
 /-- A first-path node with no runtime fuel reports exhaustion. -/
 theorem firstPath_zero (ctx : Ctx) (inf tcLevel specFuel level numcells : Nat)
     (cs : List Nat) (st : SearchSt) (best : Option Key) :
