@@ -27,6 +27,22 @@ shape or parks the boundary at the child. -/
 
 namespace CheapDesc
 
+/-- At an entered sibling sweep, a saved boundary at or above the current
+node supplies the small-cell subtree fact.  A strictly older boundary uses
+the inherited descent invariant; equality is exactly the case in which the
+current cheap-cell guard must have succeeded. -/
+theorem atLevel {ctx : Ctx} {level boundary : Nat} {st : RefineSt}
+    (h : CheapDesc ctx level boundary st)
+    (hit : IterOk ctx level st) (heq : Equitable ctx level st.lab st.ptn)
+    (hcount : bcount st.ptn level ctx.n = st.numcells)
+    (hle : boundary ≤ level)
+    (hguard : boundary = level → cheapautom st.ptn level ctx.n = true) :
+    SubtreeOk ctx level st := by
+  rcases Nat.lt_or_eq_of_le hle with hlt | heqBoundary
+  · exact h hlt
+  · exact subtreeOk_of_cheapautom hit heq hcount
+      (hguard heqBoundary)
+
 /-- The executable cheap-cell boundary update carries the small-cell
 subtree invariant into every individualized child. -/
 theorem child {ctx : Ctx} {level boundary tc len o : Nat}
