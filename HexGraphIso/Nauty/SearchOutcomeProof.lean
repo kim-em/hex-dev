@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.SearchOutcome
+public import HexGraphIso.Nauty.SearchReach
 import all HexGraphIso.Nauty.Search
 
 public section
@@ -276,6 +277,57 @@ theorem firstPath_discrete {ctx : Ctx} {nn inf tcLevel specFuel fuel
     omega
   · rwa [hnode]
   · rfl
+
+/-- The invariant-packaged first-path leaf rule: the search invariant
+supplies guard agreement and `DescentCodes` supplies the pre-incumbent
+code store. -/
+theorem firstPath_discrete_of_ok {G : Colored n k} {ctx : Ctx}
+    (hn : ctx.n = n) (hn0 : 0 < n) {inf tcLevel specFuel fuel
+      numcells : Nat} {cs : List Nat} {st : SearchSt}
+    (hok : SearchOk G (cs.length + 1) numcells st)
+    (hcodes : DescentCodes n cs st)
+    (hnum : (refine ctx (cs.length + 1) st.lab st.ptn st.active
+      numcells).numcells = ctx.n) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) (cs.length + 1) cs st
+      (firstPathNode ctx inf tcLevel (fuel + 1) (cs.length + 1)
+        numcells st).2 numcells none
+      (some (nodeKey ctx tcLevel (specFuel + 1) (cs.length + 1) cs st
+        numcells))
+      (firstPathNode ctx inf tcLevel (fuel + 1) (cs.length + 1)
+        numcells st).1 := by
+  apply firstPath_discrete (nn := n) (hlevel := rfl)
+    hcodes.firstSize hcodes.canonSize hcodes.bound hcodes.content
+    hcodes.lt hnum
+  exact (refine_discrete_iff hn hn0 hok (by omega)).mp hnum
+
+/-- The root outcome is closed outright when root refinement is already
+discrete. -/
+theorem root_result_of_discrete {G : Colored n k} (hn0 : 0 < n)
+    (hnum : (refine { n := n, g := rowsOf G } 1
+      (rootSt n (initialPartition G).1 (initialPartition G).2).lab
+      (rootSt n (initialPartition G).1 (initialPartition G).2).ptn
+      (rootSt n (initialPartition G).1 (initialPartition G).2).active
+      (initialPartition G).2.length).numcells = n) :
+    NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
+      (rootSt n (initialPartition G).1 (initialPartition G).2)
+      (rootOut n (rowsOf G) (initialPartition G).1
+        (initialPartition G).2)
+      (initialPartition G).2.length none
+      (some (nodeKey { n := n, g := rowsOf G } 100 n 1 []
+        (rootSt n (initialPartition G).1 (initialPartition G).2)
+        (initialPartition G).2.length))
+      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+        (initialPartition G).2.length
+        (rootSt n (initialPartition G).1 (initialPartition G).2)).1 := by
+  have h := firstPath_discrete_of_ok (G := G)
+    (ctx := { n := n, g := rowsOf G }) rfl hn0
+    (inf := n + 2) (tcLevel := 100) (specFuel := n - 1)
+    (fuel := n + 1) (cs := [])
+    (st := rootSt n (initialPartition G).1 (initialPartition G).2)
+    (root_searchOk G hn0)
+    (DescentCodes.root _ _ hn0) hnum
+  simpa only [List.length_nil, Nat.zero_add, Nat.sub_add_cancel
+    (by omega : 1 ≤ n), rootOut] using h
 
 /-! # Off-path leaf incumbent -/
 
