@@ -369,4 +369,69 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
   rw [hframes.1]
   exact h.incumbent
 
+/-! # Leaf admission without a path-index mismatch -/
+
+/-- Valid installed leaf references, a valid current search labelling, and
+the row store are the exact hypotheses needed to preserve the generator
+store through `processnode`. This avoids packaging the post-refinement
+state in `DomOk`, whose path index intentionally describes a node before
+its next refinement code is appended. -/
+theorem LeafRefsOk.processnodeGen {G : Colored n k} {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hgen : GenTraceOk ctx st) :
+    GenTraceOk ctx (processnode ctx level numcells st).2 := by
+  subst n
+  exact genTraceOk_processnode hgen hgb hsymm hloop
+    hrefs.firstSize
+    (labOk_of_reach hrefs.firstSize hrefs.firstReach)
+    (labInj_of_reach hrefs.firstSize hn0 hrefs.firstReach)
+    hok.labSize (labOk_of_reach hok.labSize hok.reach)
+    (labInj_of_reach hok.labSize hn0 hok.reach)
+    hrefs.canonSize
+    (labOk_of_reach hrefs.canonSize hrefs.canonReach)
+    (labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach)
+    (fun htie => rows_eq_of_testcanlab_tie hcanong htie)
+
+/-- The same correctly indexed leaf-state hypotheses identify any newly
+admitted generator as a checked carrier from the first or canonical leaf. -/
+theorem LeafRefsOk.processnodeCarrier {G : Colored n k} {ctx : Ctx}
+    {level numcells : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hcanong : CanongInv ctx st.canong st.canonlab st.samerows) :
+    (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
+      LabelCarrier ctx st.firstlab st.lab
+        (processnode ctx level numcells st).2.genTrace ∨
+      LabelCarrier ctx st.canonlab st.lab
+        (processnode ctx level numcells st).2.genTrace := by
+  subst n
+  rcases processnode_carrier hgb hsymm hloop hrefs.firstSize
+      (labOk_of_reach hrefs.firstSize hrefs.firstReach)
+      (labInj_of_reach hrefs.firstSize hn0 hrefs.firstReach)
+      hok.labSize (labOk_of_reach hok.labSize hok.reach)
+      (labInj_of_reach hok.labSize hn0 hok.reach)
+      hrefs.canonSize
+      (labOk_of_reach hrefs.canonSize hrefs.canonReach)
+      (labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach)
+      (fun htie => rows_eq_of_testcanlab_tie hcanong htie) with
+    hsame | ⟨γ, hpush, hcheck, hmap⟩
+  · exact Or.inl hsame
+  · have hmem : γ ∈ (processnode ctx level numcells st).2.genTrace := by
+      rw [hpush]
+      exact Array.mem_push.mpr (Or.inr rfl)
+    rcases hmap with hfirst | hcanon
+    · exact Or.inr (Or.inl ⟨γ, hmem, hcheck, hfirst⟩)
+    · exact Or.inr (Or.inr ⟨γ, hmem, hcheck, hcanon⟩)
+
 end Hex.GraphIso.Nauty
