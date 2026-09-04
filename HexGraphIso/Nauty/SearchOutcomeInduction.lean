@@ -1064,6 +1064,15 @@ theorem recover_needshortprune (n inf level : Nat) (st : SearchSt) :
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.needshortprune, ite_self]
 
+/-- Clearing the one-shot prune request commutes with parent recovery. -/
+theorem recover_clearShort (n inf level : Nat) (st : SearchSt) :
+    recover n inf level { st with needshortprune := false } =
+      { recover n inf level st with needshortprune := false } := by
+  rw [recover, recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  repeat' split
+  all_goals rfl
+
 /-- Recovering a parent frame preserves both installed leaf references. -/
 theorem LeafRefsOk.recover {G : Colored n k} {n inf level : Nat}
     {st : SearchSt} (h : LeafRefsOk G st) :
