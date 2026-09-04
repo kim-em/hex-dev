@@ -511,6 +511,20 @@ theorem processnode_installed {ctx : Ctx} {level numcells : Nat}
 
 /-! # Root-ledger entries -/
 
+/-- A scatter loop preserves its `n`-slot workspace size. -/
+theorem firstScatter_size (n : Nat) (lab₁ lab₂ : Array Nat) :
+    (firstScatter n lab₁ lab₂).size = n := by
+  have go : ∀ (l : List Nat) (base : Array Nat),
+      (l.foldl (fun w i => w.set! lab₁[i]! lab₂[i]!) base).size =
+        base.size := by
+    intro l
+    induction l with
+    | nil => intro; rfl
+    | cons i l ih =>
+        intro base
+        rw [List.foldl_cons, ih, Array.size_set!]
+  rw [firstScatter, go, Array.size_replicate]
+
 /-- A checked scatter between two reached labellings yields a valid
 explicit autos-ledger entry at the initial coloured partition. -/
 theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx}
@@ -710,5 +724,96 @@ theorem AutosOk.pushFmptn {ctx : Ctx} {G : Colored ctx.n k}
   apply autosOk_pushAuto hprev
   exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hgb hsymm hloop hS
     hreach hinit
+
+/-- A successful code-one admission preserves the root automorphism
+ledger. -/
+theorem AutosOk.processnodeAuto {ctx : Ctx} {G : Colored n k}
+    {level numcells : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx
+      (firstScatter ctx.n st.firstlab st.lab) = true) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  subst n
+  have hinj := labInj_of_reach hrefs.firstSize hn0 hrefs.firstReach
+  have hfirstOk := labOk_of_reach hrefs.firstSize hrefs.firstReach
+  have hsc : ∀ i, i < ctx.n →
+      (firstScatter ctx.n st.firstlab st.lab)[st.firstlab[i]!]! =
+        st.lab[i]! := by
+    intro i hi
+    apply firstScatter_get
+      (fun a b ha hb hab => hinj a b (by omega) (by omega) hab)
+      (fun j hj => hfirstOk j (by rw [hrefs.firstSize]; omega))
+    omega
+  have hca : checkAutom ctx.g
+      (firstScatter ctx.n st.firstlab st.lab) ctx.n = true := by
+    apply checkAutom_scatter_of_isautom
+      (firstScatter_size ctx.n st.firstlab st.lab)
+      hrefs.firstSize
+      (isPerm_of_cellsReach hrefs.firstSize hn0 hrefs.firstReach)
+      hok.labSize (isPerm_of_cellsReach hok.labSize hn0 hok.reach)
+      (fun i hi => hsc i (by omega)) hsymm hloop hgb hpass
+  rw [processnode_auto_autos heq hsent hnc hpass]
+  exact hprev.pushFmperm rfl hn0 hgb hrefs.firstSize hrefs.firstReach
+    hok.labSize hok.reach hsc hca
+
+/-- A successful code-two admission preserves the root automorphism
+ledger. -/
+theorem AutosOk.processnodeRowTie {ctx : Ctx} {G : Colored n k}
+    {level numcells : Nat} {st : SearchSt}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
+    (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hprev : AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n st.autos)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    AutosOk ctx.g
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 ctx.n
+      (processnode ctx level numcells st).2.autos := by
+  subst n
+  have hcanonOk := labOk_of_reach hrefs.canonSize hrefs.canonReach
+  have hinj := labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach
+  have hsc : ∀ i, i < ctx.n →
+      (canonScatter ctx.n st.canonlab st.lab)[st.canonlab[i]!]! =
+        st.lab[i]! := by
+    intro i hi
+    rw [canonScatter_eq_firstScatter]
+    apply firstScatter_get
+      (fun a b ha hb hab => hinj a b (by omega) (by omega) hab)
+      (fun j hj => hcanonOk j (by rw [hrefs.canonSize]; omega))
+    omega
+  have hca : checkAutom ctx.g
+      (canonScatter ctx.n st.canonlab st.lab) ctx.n = true := by
+    apply checkAutom_scatter_of_leafRows_eq
+      (by rw [canonScatter_eq_firstScatter]; exact
+        firstScatter_size ctx.n st.canonlab st.lab)
+      hrefs.canonSize
+      (isPerm_of_cellsReach hrefs.canonSize hn0 hrefs.canonReach)
+      hok.labSize (isPerm_of_cellsReach hok.labSize hn0 hok.reach)
+      (fun i hi => hsc i (by omega)) hgb
+      (rows_eq_of_testcanlab_tie hcanong htie)
+  rw [processnode_rowTie_autos hef hnc hcc hge htie]
+  exact hprev.pushFmperm rfl hn0 hgb hrefs.canonSize hrefs.canonReach
+    hok.labSize hok.reach hsc hca
 
 end Hex.GraphIso.Nauty
