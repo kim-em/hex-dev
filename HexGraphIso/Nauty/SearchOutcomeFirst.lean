@@ -474,6 +474,11 @@ theorem FirstInv.terminalReceipt {G : Colored n k} {ctx : Ctx}
       pathLeafKey ctx full rs.lab := by
     unfold nodeKey
     rw [specNode_discrete hdisc, prefixKey_leafKey]
+  have hread : stInc ctx (firstterminal level leaf) =
+      some (pathLeafKey ctx full rs.lab) := by
+    apply hrun.read
+    rw [(firstterminal_state level leaf).2.2.2.2]
+    omega
   constructor
   · rw [hstate]
     apply NodeReceipt.complete
@@ -481,8 +486,8 @@ theorem FirstInv.terminalReceipt {G : Colored n k} {ctx : Ctx}
       simp only [incMax, hnode, rs, full]
     · rfl
     · apply canonlevel_ne_zero_of_stInc
-      simpa only [leaf] using hrun.read
-    · simpa only [leaf] using hrun.read
+      simpa only [leaf] using hread
+    · simpa only [leaf] using hread
     · simp only [incMax, hnode, rs, full]
   · rw [hstate]
     exact hrun

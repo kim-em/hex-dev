@@ -429,7 +429,10 @@ theorem CheapOk.root {G : Colored n k} {ctx : Ctx} {numcells : Nat}
 The explicit `level` makes the package usable both at node entries and
 inside their child loops. At a node entry, `level = cs.length + 1`
 recovers `DomOk`; a loop instead carries the code path through its current
-node, so its path has length `level`. -/
+node, so its path has length `level`. The comparison sign is deliberately
+unrestricted: an internal node whose code first exceeds the incumbent can
+enter its child loop with sign one. Consumers that read the mutable
+incumbent or return an event supply the appropriate sign premise. -/
 structure RunInv (G : Colored n k) (ctx : Ctx)
     (tcLevel level : Nat) (cs bs fs : List Nat) (numcells : Nat)
     (st : SearchSt) (best : Option Key) (trail : FrameTrail) : Prop where
@@ -449,7 +452,6 @@ structure RunInv (G : Colored n k) (ctx : Ctx)
   trailOk : TrailOk ctx level st trail
   firstPositive : 0 < st.gcaFirst
   canonPositive : 0 < st.gcaCanon
-  nonpositive : st.compCanon ≤ 0
   bestCodes : bs ≠ []
   incumbent : best = some (incKey ctx bs st.canonlab)
 
@@ -477,12 +479,7 @@ theorem RunInv.read {G : Colored n k} {ctx : Ctx}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail : FrameTrail}
     (h : RunInv G ctx tcLevel level cs bs fs numcells st best
-      trail) : stInc ctx st = best := by
-  have hne : st.compCanon ≠ 1 := by
-    intro heq
-    have hnp := h.nonpositive
-    rw [heq] at hnp
-    omega
+      trail) (hne : st.compCanon ≠ 1) : stInc ctx st = best := by
   rw [stInc_eq_ghost h.codeInv hne, ghostInc]
   simp only [h.bestCodes, ↓reduceIte, h.incumbent]
 
@@ -678,7 +675,7 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     firstterminal_firstCodeInv hfirstSize hbound hcodes hlt,
     firstterminal_canongInv hcanong, ?_, ?_,
     hcheap.firstterminal, LeafRefsOk.firstterminal hok, ?_, ?_, ?_, ?_,
-    ?_, hne, ?_⟩
+    hne, ?_⟩
   · unfold GenTraceOk
     intro γ hγ
     rw [hstore.1, hgen] at hγ
@@ -698,8 +695,6 @@ theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx}
     exact hpositive
   · rw [hstate.2.2.2.1]
     exact hpositive
-  · rw [hstate.2.2.2.2]
-    exact Int.le_refl 0
   · rw [firstterminal_canonlab]
     rfl
 
@@ -822,9 +817,9 @@ theorem RunInv.event {G : Colored n k} {ctx : Ctx}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail : FrameTrail}
     (h : RunInv G ctx tcLevel level cs bs fs numcells st best
-      trail) :
+      trail) (hnp : st.compCanon ≤ 0) :
     RunEvent G ctx tcLevel level cs bs fs st best trail :=
-  ⟨Or.inl ⟨h.nonpositive, h.codeInv⟩, h.firstInv, h.canongInv,
+  ⟨Or.inl ⟨hnp, h.codeInv⟩, h.firstInv, h.canongInv,
     h.genTraceOk, h.autosOk, h.cheap, h.leafRefs, h.guides, h.trailOk,
     h.firstPositive, h.canonPositive, h.bestCodes, h.incumbent⟩
 
@@ -866,7 +861,7 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     autosOk_of_eq hstore.2 h.autosOk,
     h.cheap.recover hle hlevel hinf, h.leafRefs.recover,
     h.guides.recover hle, h.trailOk.recover hle, ?_, ?_,
-    recover_nonpositive hnp, h.bestCodes, ?_⟩
+    h.bestCodes, ?_⟩
   · rw [hframes.2.2.2.2.2.2.1]
     exact h.firstPositive
   · rw [recover_gcaCanon]
