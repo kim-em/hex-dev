@@ -1221,6 +1221,34 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
       (bounded : ∀ v, finalCursor = some v → v < ctx.n)
 
+/-- A readable completed child sweep constructs ordinary node completion
+once the specification identifies that sweep's fixed bound with the node
+subtree. -/
+theorem NodeResult.complete_of_sweep {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tail : Nat}
+    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {r : Int} {rsLab rsPtn : Array Nat} {tc tcell : Nat}
+    {cursor : Option Nat}
+    (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      keysMax
+        (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells 0)
+        ((List.range tail).map fun o =>
+          sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
+            numcells (o + 1)))
+    (hsound : LoopSound ctx
+      (nodeKey ctx tcLevel (specFuel + 1) level cs st numcells)
+      best outBest)
+    (hinstalled : out.canonlevel ≠ 0) (hread : stInc ctx out = outBest)
+    (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
+      (tail + 1) numcells tcell cursor outBest)
+    (hempty : ∀ o, ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
+    (hreturn : r = Int.ofNat level - 1) :
+    NodeResult ctx tcLevel (specFuel + 1) runFuel level cs st out
+      numcells best outBest r := by
+  have hfull := hcover.exact_of_read hchildren hempty hsound
+    hinstalled hread
+  exact .complete (NodeSound.ofExact hfull) hreturn hinstalled hread hfull
+
 /-- The entry set only describes where the call begins.  Every constructor
 records the final set, so the result can cross a filter exposed in the
 caller. -/
