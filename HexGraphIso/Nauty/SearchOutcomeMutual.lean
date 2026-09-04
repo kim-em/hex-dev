@@ -30,6 +30,13 @@ completed child's temporary fixed vertex restore its parent set exactly. -/
 
 namespace FixedCells
 
+/-- The initial search has no fixed vertices. -/
+theorem root {G : Colored n k} :
+    FixedCells { n := n, g := rowsOf G } 1
+      (rootSt n (initialPartition G).1 (initialPartition G).2) := by
+  intro v hv hm
+  simp [rootSt, elem] at hm
+
 /-- A vertex in a non-singleton target cell is not already fixed. -/
 theorem fresh {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
     (h : FixedCells ctx level st) (hok : LabOk st.lab ctx.n)
