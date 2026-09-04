@@ -78,6 +78,24 @@ theorem ofSearchOut {G : Colored n k} {ctx : Ctx} {level numcells : Nat}
     FixedCells ctx level out :=
   h.ofCellsPerm hfixed (heffect.ptnEq hok hout) heffect.perm
 
+/-- Refinement preserves every existing fixed singleton. -/
+theorem refine {ctx : Ctx} {level active numcells : Nat} {st : SearchSt}
+    (h : FixedCells ctx level st) (hsize : st.lab.size = ctx.n)
+    (hpsize : st.ptn.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    FixedCells ctx level
+      { st with
+        lab := (Nauty.refine ctx level st.lab st.ptn active numcells).lab
+        ptn := (Nauty.refine ctx level st.lab st.ptn active numcells).ptn
+        active := (Nauty.refine ctx level st.lab st.ptn active numcells).active } := by
+  intro v hv hm
+  obtain ⟨q, hq, hqv, hsingle⟩ := h v hv hm
+  refine ⟨q, hq, ?_, ?_⟩
+  · exact (refine_fixes_singleton (by rw [hpsize]; exact Nat.le_refl _)
+      (by rw [hsize, hpsize]) hend hsingle).trans hqv
+  · exact isCell_refine_one (by rw [hpsize])
+      (by rw [hsize, hpsize]) hend hsingle
+
 /-- Individualizing a fresh target vertex adds exactly one fixed
 singleton and preserves every older fixed singleton. -/
 theorem breakout {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
