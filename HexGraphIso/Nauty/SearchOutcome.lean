@@ -184,6 +184,15 @@ theorem cursorRank_step {cursor : Option Nat} {v : Nat}
     (h : After cursor v) : cursorRank cursor + 1 ≤ cursorRank (some v) := by
   cases cursor <;> simp only [After, cursorRank] at h ⊢ <;> omega
 
+/-- Consuming one cursor step preserves the strict remaining-fuel bound
+used to rule out loop exhaustion. -/
+theorem cursorFuel_step {cursor : Option Nat} {v fuel n : Nat}
+    (hnext : After cursor v)
+    (hfuel : n < cursorRank cursor + (fuel + 1)) :
+    n < cursorRank (some v) + fuel := by
+  have hstep := cursorRank_step hnext
+  omega
+
 /-- A bounded cursor has rank at most the vertex count. -/
 theorem cursorRank_le {cursor : Option Nat} {n : Nat}
     (h : ∀ v, cursor = some v → v < n) : cursorRank cursor ≤ n := by
