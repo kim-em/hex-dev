@@ -304,4 +304,49 @@ theorem SweepCover.orbitUnwind {ctx : Ctx}
   exact (h.grow hinc).orbitSkip hnext ho htv hgsz hbg hv hstab hs hinj
     hok hsp hend hvals hic hrange hlf payload.sound hne
 
+/-- Every located generator unwind addressed to this loop consumes the
+active child.  Direct carriers use their stored frame and offset; the
+special code-two arm uses its sound orbit pointer. -/
+theorem SweepCover.unwind {ctx : Ctx}
+    {tcLevel specFuel level tc len numcells tcell tv offset : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {before best : Option Key} {out : SearchSt}
+    {trail : FrameTrail} {payload : Unwind ctx tcLevel level out best}
+    (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell cursor before)
+    (hinc : IncGrows before best)
+    (hnext : nextElem tcell cursor = some tv)
+    (hloc : payload.Located trail)
+    (hframe : trail level = some
+      ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+    (ho : offset < len) (htv : rsLab[tc + offset]! = tv)
+    (hcoset : out.cosetindex = tv)
+    (hgsz : ctx.g.size = ctx.n)
+    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hv : ∀ γ ∈ out.genTrace.toList,
+      checkAutom ctx.g γ ctx.n = true)
+    (hstab : ∀ γ ∈ out.genTrace.toList,
+      CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1) :
+    SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) best := by
+  have hrange' : tc + len ≤ rsLab.size := by rwa [hs]
+  have hoff : tc + offset < rsLab.size := by omega
+  cases hloc with
+  | first anchor carrier located =>
+      exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
+        hrange' hoff
+  | canon anchor carrier located =>
+      exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
+        hrange' hoff
+  | orbit orbitPayload =>
+      exact h.orbitUnwind hinc hnext ho htv orbitPayload hcoset hgsz hbg
+        hv hstab hs hinj hok hsp hend hvals hic hrange hlf
+
 end Hex.GraphIso.Nauty
