@@ -18,6 +18,33 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+namespace EventOut
+
+/-- Expose any shorter ancestor prefix of an existing search event. -/
+theorem ancestor {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
+    {stem codes fs : List Nat} {out : SearchSt} {best : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (h : EventOut G ctx tcLevel codes fs out best trail r)
+    (hprefix : codes.take stem.length = stem)
+    (hshorter : stem.length < codes.length) :
+    EventOut G ctx tcLevel stem fs out best trail r := by
+  cases h with
+  | intro current deep bestCodes event depth codesEq past returned stable
+      history =>
+      apply EventOut.intro current deep bestCodes event depth
+      · calc
+          deep.take stem.length =
+              (deep.take codes.length).take stem.length := by
+                rw [List.take_take, Nat.min_eq_left
+                  (Nat.le_of_lt hshorter)]
+          _ = stem := by rw [codesEq, hprefix]
+      · omega
+      · exact returned
+      · exact stable
+      · exact history
+
+end EventOut
+
 namespace LoopInv
 
 /-- The mutable child selected for a frozen offset has exactly that
