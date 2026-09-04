@@ -18,6 +18,87 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+namespace LoopInv
+
+/-- The mutable child selected for a frozen offset has exactly that
+offset's specification key. -/
+theorem childKey {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell tv offset currentOffset
+      coset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hoffset : offset < len)
+    (hfrozen : rsLab[tc + offset]! = tv)
+    (hcurrentAt : st.lab[tc + currentOffset]! = tv) :
+    sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells
+        offset =
+      nodeKey ctx tcLevel specFuel (level + 1) codes
+        { st with
+          lab := (breakout st.lab st.ptn (level + 1) tc
+            st.lab[tc + currentOffset]!).1
+          ptn := (breakout st.lab st.ptn (level + 1) tc
+            st.lab[tc + currentOffset]!).2.1
+          active := (breakout st.lab st.ptn (level + 1) tc
+            st.lab[tc + currentOffset]!).2.2
+          fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+          cosetindex := coset }
+        (numcells + 1) := by
+  let child : SearchSt :=
+    { st with
+      lab := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).1
+      ptn := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).2.1
+      active := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).2.2
+      fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+      cosetindex := coset }
+  rw [← h.baseLab, ← h.basePtn]
+  apply SearchOut.breakoutKey h.nodeCount h.effect h.baseOk h.run.searchOk
+    h.nonempty h.positive
+  · rw [h.basePtn]
+    exact h.cell
+  · exact h.lenTwo
+  · rw [← h.nodeCount]
+    exact h.range
+  · exact hoffset
+  · change child.lab = (breakout st.lab st.ptn (level + 1) tc
+      base.lab[tc + offset]!).1
+    rw [h.baseLab, hfrozen, ← hcurrentAt]
+  · change child.ptn = (breakout st.lab st.ptn (level + 1) tc
+      base.lab[tc + offset]!).2.1
+    rw [h.baseLab, hfrozen, ← hcurrentAt]
+  · change child.active = (breakout st.lab st.ptn (level + 1) tc
+      base.lab[tc + offset]!).2.2
+    rw [h.baseLab, hfrozen, ← hcurrentAt]
+  · rfl
+  · simpa only [h.nodeCount] using h.fuelBound
+
+/-- Every original target-cell child key is below the fixed sweep bound. -/
+theorem keyLeBound {ctx : Ctx}
+    {tcLevel specFuel level tc len numcells tail offset : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {bound : Key}
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+        numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells (o + 1)))
+    (hlen : len = tail + 1) (hoffset : offset < len) :
+    keyLe (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells offset) bound := by
+  rw [hbound]
+  rcases offset with _ | offset
+  · exact keyLe_keysMax (Or.inl rfl)
+  · apply keyLe_keysMax
+    right
+    exact List.mem_map.mpr ⟨offset, List.mem_range.mpr (by omega), rfl⟩
+
+end LoopInv
+
 namespace OtherLoopRun
 
 /-- Zero cursor fuel is retained as exhaustion, never mistaken for a
