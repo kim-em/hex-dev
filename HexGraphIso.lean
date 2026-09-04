@@ -56,6 +56,7 @@ public import HexGraphIso.Nauty.SearchOutcomeTarget
 public import HexGraphIso.Nauty.SearchOutcomeLocated
 public import HexGraphIso.Nauty.SearchOutcomeProof
 public import HexGraphIso.Nauty.SearchOutcomeLocatedProof
+public import HexGraphIso.Nauty.SearchOutcomeInduction
 public import HexGraphIso.Nauty.RootEquitable
 public import HexGraphIso.Nauty.SearchReach
 public import HexGraphIso.Nauty.Translator
