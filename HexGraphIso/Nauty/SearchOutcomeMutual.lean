@@ -180,6 +180,52 @@ theorem empty {ctx : Ctx} {level : Nat} {st : SearchSt}
   rw [h] at hp
   simp at hp
 
+/-- Cell stabilization is independent of the ordering chosen inside each
+cell. -/
+theorem reindexStab {ptn lab lab' gamma : Array Nat} {level n : Nat}
+    (h : CellStab ptn level lab gamma)
+    (hperm : cellsPerm ptn level lab lab')
+    (hpsize : ptn.size = n) (hsize : lab.size = n)
+    (hsize' : lab'.size = n) (hend : ptn[ptn.size - 1]! ≤ level) :
+    CellStab ptn level lab' gamma := by
+  apply cellStab_of_scatter hpsize hsize' hsize hend
+      (cellsPerm_symm hperm)
+      (cellsPerm_trans (cellsPerm_symm hperm) h)
+  intro i hi
+  rw [getElem!_map_of_lt _ _ (by rw [hsize]; exact hi)]
+
+/-- A locally valid pair remains valid after reordering the frame within
+its cells. -/
+theorem reindexPair {ctx : Ctx} {ptn lab lab' : Array Nat}
+    {level fix mcr : Nat}
+    (h : PairOk ctx.g ptn lab level ctx.n fix mcr)
+    (hperm : cellsPerm ptn level lab lab')
+    (hpsize : ptn.size = ctx.n) (hsize : lab.size = ctx.n)
+    (hsize' : lab'.size = ctx.n)
+    (hend : ptn[ptn.size - 1]! ≤ level) :
+    PairOk ctx.g ptn lab' level ctx.n fix mcr := by
+  intro v hv hmcr
+  obtain ⟨gamma, hcheck, hfix, hstab, hlt⟩ := h v hv hmcr
+  exact ⟨gamma, hcheck, hfix,
+    reindexStab hstab hperm hpsize hsize hsize' hend, hlt⟩
+
+/-- Local ledger validity transports across unchanged partition cells and
+a within-cell labelling permutation. -/
+theorem ofCellsPerm {ctx : Ctx} {level : Nat} {st out : SearchSt}
+    (h : LocalAutos ctx level st) (hautos : out.autos = st.autos)
+    (hfixed : out.fixedpts = st.fixedpts) (hptn : out.ptn = st.ptn)
+    (hperm : cellsPerm st.ptn level st.lab out.lab)
+    (hpsize : st.ptn.size = ctx.n) (hsize : st.lab.size = ctx.n)
+    (hsize' : out.lab.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    LocalAutos ctx level out := by
+  intro p hp hfix
+  rw [hautos] at hp
+  rw [hfixed] at hfix
+  have hpair := h p hp hfix
+  rw [hptn]
+  exact reindexPair hpair hperm hpsize hsize hsize' hend
+
 end LocalAutos
 
 /-- Reference history, ordered live guides, and stabilization of every
