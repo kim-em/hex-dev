@@ -67,6 +67,49 @@ theorem ofCellsPerm {ctx : Ctx} {level : Nat} {st out : SearchSt}
   · rw [hptn]
     exact hsingle
 
+/-- Individualizing a fresh target vertex adds exactly one fixed
+singleton and preserves every older fixed singleton. -/
+theorem breakout {ctx : Ctx} {level tc len o : Nat} {st : SearchSt}
+    (h : FixedCells ctx level st) (hinj : LabInj st.lab ctx.n)
+    (hsize : st.lab.size = ctx.n)
+    (hpsize : st.ptn.size = ctx.n)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (ho : o < len) :
+    FixedCells ctx (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + o]! } := by
+  have hinjSize : LabInj st.lab st.lab.size := by
+    rw [hsize]
+    exact hinj
+  intro v hv hm
+  rw [elem_insert] at hm
+  rcases (Bool.or_eq_true _ _).mp hm with hold | hnew
+  · obtain ⟨q, hq, hqv, hsingle⟩ := h v hv hold
+    have hne : q ≠ tc := by
+      intro heq
+      subst q
+      rcases isCell_disj_or_eq hsingle hcell with heq | hleft | hright
+      · omega
+      · omega
+      · omega
+    have hout := singleton_outside_cell hsingle hcell hne ho
+    refine ⟨q, hq, ?_, ?_⟩
+    · exact (breakout_misses_singleton (ptn := st.ptn)
+        (level := level) hinjSize (by rw [hsize]; omega) hout).trans hqv
+    · rw [breakout_ptn]
+      exact isCell_set_miss hsingle hcell hlen
+  · have heq : st.lab[tc + o]! = v := beq_iff_eq.mp hnew
+    refine ⟨tc, by omega, ?_, ?_⟩
+    · rw [breakout_at_target hinjSize (by rw [hsize]; omega), heq]
+    · exact isCell_breakout_target (lab := st.lab)
+        (tv := st.lab[tc + o]!) (by rw [hpsize]; omega) hcell.2.1
+
 end FixedCells
 
 /-- Reference history, ordered live guides, and stabilization of every
