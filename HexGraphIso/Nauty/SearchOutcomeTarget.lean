@@ -103,6 +103,14 @@ theorem Guide.Located.push {ctx : Ctx} {tcLevel target level : Nat}
   exact ⟨old, by rw [FrameTrail.push_of_ne _ entry hne]; exact hold,
     hframe⟩
 
+/-- A guide for the newly pushed frame is located there immediately;
+the active descent offset need not be the guide's own explored offset. -/
+theorem Guide.Located.pushSelf {ctx : Ctx} {tcLevel level : Nat}
+    {best : Option Key} (trail : FrameTrail)
+    (g : Guide ctx tcLevel level best) (offset : Nat) :
+    g.Located (trail.push level ⟨g.frame, offset⟩) := by
+  exact ⟨⟨g.frame, offset⟩, FrameTrail.push_self _ _ _, rfl⟩
+
 /-- Location evidence follows a guide when a checked carrier turns it
 into an unwind anchor. -/
 theorem Guide.locateAnchor {ctx : Ctx} {tcLevel level : Nat}
