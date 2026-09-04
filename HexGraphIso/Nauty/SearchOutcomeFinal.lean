@@ -283,6 +283,20 @@ structure LoopProof (G : Colored n k) (ctx : Ctx)
     outBest receiptTrail eventTrail r
   fixed : out.fixedpts = st.fixedpts
 
+/-- An off-path loop additionally preserves the first-path coset cursor.
+The analogous claim is false for `firstChildLoop`, which installs the
+currently selected sibling before entering an off-path subtree. -/
+structure OtherLoopProof (G : Colored n k) (ctx : Ctx)
+    (tcLevel specFuel runFuel loopFuel level : Nat)
+    (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
+    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
+    (st out : SearchSt) (best outBest : Option Key)
+    (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
+  loop : LoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+    fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+    receiptTrail eventTrail r
+  coset : out.cosetindex = st.cosetindex
+
 /-- The first leaf remembers every child selected on the unique initial
 descent.  Unlike `RefTrail.first`, this history is deliberately independent
 of the mutable `gcaFirst` return control: outer first-path loops reset that
@@ -946,6 +960,71 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
 
 end LoopProof
 
+namespace OtherLoopProof
+
+theorem reindexSet {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell tcell' : Nat} {cursor : Option Nat}
+    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (h : OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r) :
+    OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+      fs rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.loop.reindexSet, h.coset⟩
+
+theorem step {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level tv : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (ha : After cursor tv)
+    (h : OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell (some tv) bound st out best
+      outBest receiptTrail eventTrail r) :
+    OtherLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest receiptTrail eventTrail r :=
+  ⟨h.loop.step ha, h.coset⟩
+
+theorem retrail {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {source dest eventTrail : FrameTrail} {r : Option Int}
+    (htrail : TrailExt level dest source)
+    (h : OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest source eventTrail r) :
+    OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+      fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      dest eventTrail r :=
+  ⟨h.loop.retrail htrail, h.coset⟩
+
+theorem prepend {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st recSt out : SearchSt} {best mid outBest : Option Key}
+    {receiptTrail eventTrail : FrameTrail} {r : Option Int}
+    (hfixed : recSt.fixedpts = st.fixedpts)
+    (hcoset : recSt.cosetindex = st.cosetindex)
+    (hpre : LoopSound ctx bound best mid)
+    (h : OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound recSt out mid
+      outBest receiptTrail eventTrail r) :
+    OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
+      fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      receiptTrail eventTrail r :=
+  ⟨h.loop.prepend hfixed hpre, h.coset.trans hcoset⟩
+
+end OtherLoopProof
+
 namespace FirstLoopProof
 
 /-- An early-returning first-path loop supplies its enclosing first-path
@@ -1385,5 +1464,61 @@ theorem otherDoneProof {G : Colored n k} {ctx : Ctx}
   case x_1 => omega
 
 end LoopInv
+
+namespace OtherLoopProof
+
+/-- The zero-fuel off-path loop preserves the coset cursor literally. -/
+theorem zero {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel level numcells tc len tcell tv1 : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tv? cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail)
+    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    OtherLoopProof G ctx tcLevel specFuel runFuel 0 level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell st).2
+      best best trail trail
+      (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
+        tcell st).1 := by
+  refine ⟨hinv.otherZero hpath hstem hpast hnp hlive hcursor, ?_⟩
+  unfold otherChildLoop
+  rfl
+
+/-- A positive-fuel loop with no next child likewise returns its state
+unchanged. -/
+theorem done {G : Colored n k} {ctx : Ctx}
+    {inf tcLevel specFuel runFuel loopFuel level numcells tc len tcell
+      tv1 : Nat}
+    {stem codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {bound : Key} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hpast : stem.length < level)
+    (hnext : nextElem tcell cursor = none)
+    (hnp : st.compCanon ≤ 0)
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : Live ctx level st trail) :
+    OtherLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell st).2
+      best best trail trail
+      (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
+        tc tv1 none tcell st).1 := by
+  refine ⟨hinv.otherDoneProof hpath hstem hpast hnext hnp hlive, ?_⟩
+  unfold otherChildLoop
+  rfl
+
+end OtherLoopProof
 
 end Hex.GraphIso.Nauty
