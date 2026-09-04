@@ -44,9 +44,10 @@ theorem otherNode_zero (ctx : Ctx) (inf tcLevel specFuel level numcells : Nat)
 theorem firstLoop_zero (ctx : Ctx)
     (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
-    (tv? : Option Nat) (tcell index : Nat) (st : SearchSt) :
+    (tv? : Option Nat) (tcell index : Nat) (bound : Key)
+    (st : SearchSt) :
     LoopResult ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn tc len
-      numcells tcell none st
+      numcells tcell none bound st
       (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell index st).2.2
       (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
@@ -58,9 +59,9 @@ theorem firstLoop_zero (ctx : Ctx)
 theorem otherLoop_zero (ctx : Ctx)
     (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
-    (tv? : Option Nat) (tcell : Nat) (st : SearchSt) :
+    (tv? : Option Nat) (tcell : Nat) (bound : Key) (st : SearchSt) :
     LoopResult ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn tc len
-      numcells tcell none st
+      numcells tcell none bound st
       (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
         tcell st).2
       (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
@@ -73,19 +74,20 @@ sweep rather than exhausting it. -/
 theorem firstLoop_done (ctx : Ctx)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
-    (tcell index : Nat) (cursor : Option Nat) (st : SearchSt)
+    (tcell index : Nat) (cursor : Option Nat) (bound : Key)
+    (st : SearchSt)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor st)
     (hnext : nextElem tcell cursor = none) :
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
-      rsPtn tc len numcells tcell cursor st
+      rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell index st).2.2
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell index st).1 := by
   rw [firstChildLoop]
   case x_1 => omega
-  exact .complete rfl (.refl ctx tcLevel specFuel level cs st numcells)
+  exact .complete rfl (.refl ctx bound st)
     hcover fun o ho =>
     no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
@@ -94,19 +96,19 @@ sweep rather than exhausting it. -/
 theorem otherLoop_done (ctx : Ctx)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
-    (cursor : Option Nat) (st : SearchSt)
+    (cursor : Option Nat) (bound : Key) (st : SearchSt)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor st)
     (hnext : nextElem tcell cursor = none) :
     LoopResult ctx tcLevel specFuel runFuel (loopFuel + 1) level cs rsLab
-      rsPtn tc len numcells tcell cursor st
+      rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell st).2
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
         tc tv1 none tcell st).1 := by
   rw [otherChildLoop]
   case x_1 => omega
-  exact .complete rfl (.refl ctx tcLevel specFuel level cs st numcells)
+  exact .complete rfl (.refl ctx bound st)
     hcover fun o ho =>
     no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 

@@ -634,9 +634,10 @@ structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
 /-- The state component common to both successful loop outcomes.  The
 loop may stop early, but every incumbent it installs is still bounded by
 the incoming incumbent and the whole parent subtree. -/
-structure LoopSound (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st out : SearchSt) (numcells : Nat) : Prop where
-  upper : NodeSound ctx tcLevel specFuel level cs st out numcells
+structure LoopSound (ctx : Ctx) (bound : Key)
+    (st out : SearchSt) : Prop where
+  upper : ∀ b, stInc ctx out = some b →
+    keyLe b (incMax (stInc ctx st) bound)
   grows : IncGrows ctx st out
 
 theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
@@ -652,11 +653,13 @@ theorem IncGrows.refl (ctx : Ctx) (st : SearchSt) :
   intro b hb
   exact ⟨b, hb, keyLe_refl b⟩
 
-theorem LoopSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st : SearchSt) (numcells : Nat) :
-    LoopSound ctx tcLevel specFuel level cs st st numcells :=
-  ⟨NodeSound.refl ctx tcLevel specFuel level cs st numcells,
-    IncGrows.refl ctx st⟩
+theorem LoopSound.refl (ctx : Ctx) (bound : Key) (st : SearchSt) :
+    LoopSound ctx bound st st := by
+  constructor
+  · intro b hb
+    rw [hb, incMax]
+    exact keyLe_iff.mpr (keyMax_not_lt_left _ _)
+  · exact IncGrows.refl ctx st
 
 /-- The result of a node call, with logical and runtime fuel separated.
 
@@ -682,14 +685,15 @@ completed empty remainder, so a general theorem cannot accidentally treat
 the `cfuel = 0` arm as coverage of every child. -/
 inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
-    (cursor : Option Nat) (st out : SearchSt) (r : Option Int) : Prop where
+    (cursor : Option Nat) (bound : Key) (st out : SearchSt)
+    (r : Option Int) : Prop where
   | complete
       (returned : r = none)
-      (sound : LoopSound ctx tcLevel specFuel level cs st out numcells)
+      (sound : LoopSound ctx bound st out)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells tcell cursor out)
       (empty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o)
-  | unwind (sound : LoopSound ctx tcLevel specFuel level cs st out numcells)
+  | unwind (sound : LoopSound ctx bound st out)
       (target : Nat) (returned : r = some (Int.ofNat target))
       (below : target < level) (payload : Unwind ctx tcLevel target out)
   | exhausted (empty : loopFuel = 0) (returned : r = none)
