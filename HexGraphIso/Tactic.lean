@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Ops
+public import HexGraphIso.Uncolored
 public import HexGraphIso.IsoLit
 public import HexGraphIso.NodeLit
 public import HexGraphIso.Separator
@@ -23,7 +24,11 @@ public section
 # The Mathlib-free `graph_iso` tactic
 
 `graph_iso` closes closed `Isomorphic G H` and `¬ Isomorphic G H` goals
-over executable `Colored n k` values. The three logical limits are
+over executable `Colored n k` values, and the uncoloured
+`Graph.Isomorphic G H` and `¬ Graph.Isomorphic G H` goals over
+`Graph n`. An uncoloured goal is coloured with the single colour zero
+and transported back through `Graph.isomorphic_singleColor_iff`, so
+both shapes run the same machinery. The three logical limits are
 optional, may appear in any order, and may appear at most once each:
 
 ```
@@ -240,6 +245,21 @@ meta def matchGoal? (target : Expr) : MetaM (Option (Bool × Expr × Expr × Exp
     let p ← whnfR p
     match_expr p with
     | Isomorphic n k G H => return some (true, n, k, G, H)
+    | _ => return none
+  | _ => return none
+
+/-- Match the uncoloured `Graph.Isomorphic G H` (returning
+`(false, n, G, H)`) or its negation (returning `true` first); `none`
+for other goals. -/
+meta def matchUncoloredGoal? (target : Expr) :
+    MetaM (Option (Bool × Expr × Expr × Expr)) := do
+  let t ← whnfR target
+  match_expr t with
+  | _root_.Hex.Graph.Isomorphic n G H => return some (false, n, G, H)
+  | Not p =>
+    let p ← whnfR p
+    match_expr p with
+    | _root_.Hex.Graph.Isomorphic n G H => return some (true, n, G, H)
     | _ => return none
   | _ => return none
 
@@ -548,11 +568,39 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
           throwError "graph_iso: internal final proof mismatch"
         return proof
 
+/-- Prove a `graph_iso` goal over executable uncoloured graphs: colour
+every vertex alike, hand the pair to `proveGraphIso`, and transport the
+conclusion back through `Graph.isomorphic_singleColor_iff`. Both
+directions of that equivalence are proof terms, so the uncoloured route
+costs the kernel nothing beyond the coloured obligation and the one
+`0 < n` decision. -/
+meta def proveGraphIsoUncolored (cfg : Config) (target : Expr)
+    (parsed : Bool × Expr × Expr × Expr) : MetaM Expr := do
+  let (negative, nE, GE, HE) := parsed
+  if (← instantiateMVars target).hasMVar then
+    throwError "graph_iso: the goal contains metavariables; both graphs \
+        must be closed terms"
+  let hpos ← kernelDecideProof (← mkAppM ``LT.lt #[mkNatLit 0, nE])
+  let GC ← mkAppM ``Hex.Graph.singleColor #[GE, hpos]
+  let HC ← mkAppM ``Hex.Graph.singleColor #[HE, hpos]
+  let corr ← mkAppM ``Hex.Graph.isomorphic_singleColor_iff #[GE, HE, hpos]
+  let coloured ← mkAppM ``Isomorphic #[GC, HC]
+  let proof ← if negative then do
+    let inner ← proveGraphIso cfg (← mkAppM ``Not #[coloured])
+      (true, nE, mkNatLit 1, GC, HC)
+    mkAppM ``mt #[← mkAppM ``Iff.mpr #[corr], inner]
+  else do
+    let inner ← proveGraphIso cfg coloured (false, nE, mkNatLit 1, GC, HC)
+    mkAppM ``Iff.mp #[corr, inner]
+  unless ← isDefEq (← inferType proof) target do
+    throwError "graph_iso: internal final proof mismatch"
+  return proof
+
 end Tactic
 
 open Lean Elab Lean.Elab.Tactic Meta in
 /-- Close a closed `Isomorphic` or `¬ Isomorphic` goal over executable
-coloured graphs.
+graphs, coloured (`Colored n k`) or uncoloured (`Graph n`).
 
 Three logical limits are optional, may appear in any order, and may appear
 at most once each:
@@ -568,8 +616,8 @@ syntax (name := graphIsoTac) "graph_iso" (" (" ident " := " num ")")* : tactic
 
 open Lean Elab Lean.Elab.Tactic Meta in
 /-- Elaborator for `graph_iso`: parse the optional limits, then dispatch to
-`proveGraphIso`, which tries the core `Colored` goal shapes and then each
-registered `Extension` in turn. -/
+`proveGraphIso` on the core `Colored` goal shapes, `proveGraphIsoUncolored`
+on the `Graph` shapes, and then each registered `Extension` in turn. -/
 @[tactic graphIsoTac] meta def evalGraphIsoTac : Tactic := fun stx => do
   let args := stx[1].getArgs
   let mut cfg : Tactic.Config := {}
@@ -592,6 +640,9 @@ registered `Extension` in turn. -/
       match ← Tactic.matchGoal? target with
       | some parsed => Tactic.proveGraphIso cfg target parsed
       | none =>
+      match ← Tactic.matchUncoloredGoal? target with
+      | some parsed => Tactic.proveGraphIsoUncolored cfg target parsed
+      | none =>
         let exts ← Tactic.extensions
         let mut result : Option Expr := none
         for ext in exts do
@@ -602,8 +653,8 @@ registered `Extension` in turn. -/
         | none =>
           if exts.isEmpty then
             throwError "graph_iso: the goal is not an `Isomorphic` or \
-                `¬ Isomorphic` proposition over executable coloured \
-                graphs:{indentExpr target}\
+                `¬ Isomorphic` proposition over executable graphs, \
+                coloured or not:{indentExpr target}\
                 \nFor `SimpleGraph` goals, import `HexGraphIsoMathlib`."
           else
             throwError "graph_iso: the goal is not a supported isomorphism \

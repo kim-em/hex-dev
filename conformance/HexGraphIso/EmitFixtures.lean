@@ -80,7 +80,7 @@ private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
   -- agrees with the certificate-checked tier on every emitted case
   unless (Hex.GraphIso.canonicalize? G).isSome do
     throw (IO.userError s!"emit: fast fallback observed on {case}")
-  unless res == canonicalizeChecked G do
+  unless res == Checked.canonicalize G do
     throw (IO.userError s!"emit: fast/checked disagreement on {case}")
   let r := Nauty.runColored G
   let mut sizes : Array Nat := .replicate k 0

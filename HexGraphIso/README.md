@@ -28,22 +28,21 @@ import HexGraphIso
 
 open Hex Hex.GraphIso
 
-def p3 : Colored 3 1 :=
-  { graph := Graph.ofEdges [(0, 1), (1, 2)]
-    coloring := Coloring.trivial 3 }
+def p3 : Graph 3 := Graph.ofEdges [(0, 1), (1, 2)]
+def p3' : Graph 3 := Graph.ofEdges [(0, 1), (0, 2)]
+def k3 : Graph 3 := Graph.ofEdges [(0, 1), (1, 2), (0, 2)]
 
-def p3' : Colored 3 1 :=
-  { graph := Graph.ofEdges [(0, 1), (0, 2)]
-    coloring := Coloring.trivial 3 }
+#eval Graph.Checked.isIso p3 p3'
 
-def k3 : Colored 3 1 :=
-  { graph := Graph.ofEdges [(0, 1), (1, 2), (0, 2)]
-    coloring := Coloring.trivial 3 }
+example : Graph.Isomorphic p3 p3' := by graph_iso
+example : ¬ Graph.Isomorphic p3 k3 := by graph_iso
 
-#eval isIsoChecked p3 p3'
+-- and the same on ordered colours, where an isomorphism preserves
+-- each colour index
+def p3c : Colored 3 1 := p3.singleColor
+def k3c : Colored 3 1 := k3.singleColor
 
-example : Isomorphic p3 p3' := by graph_iso
-example : ¬ Isomorphic p3 k3 := by graph_iso
+example : ¬ Isomorphic p3c k3c := by graph_iso
 ```
 
 # Functionality
@@ -53,12 +52,16 @@ example : ¬ Isomorphic p3 k3 := by graph_iso
   neighbour arrays, and relabelling. `Colored n k` adds an ordered,
   surjective colouring by `Fin k`; an isomorphism preserves each colour index
   and never permutes cells.
-- The public surface has two tiers. The short names `canonicalize`, `canon`,
+- The public surface has two tiers. The names `canonicalize`, `canon`,
   `label`, `findIso`, and `isIso` are the fast tier: the checked-label
-  transcription of the pinned nauty search. The `Checked` names
-  `canonicalizeChecked`, `canonChecked`, `labelChecked`, `findIsoChecked`,
-  and `isIsoChecked` are the certified tier, validated through the proven
+  transcription of the pinned nauty search. The same names under
+  `Checked` are the certified tier, validated through the proven
   certificate checker.
+- Every operation and every theorem is available uncoloured, on a bare
+  `Graph n`: `Graph.Isomorphic`, `Graph.canon`, `Graph.findIso`,
+  `Graph.Checked.isIso` and the rest. `Graph.singleColor` is the
+  one-cell view they read, and `Graph.isomorphic_singleColor_iff` the
+  equivalence they are transported along.
 - `findIso?`, `checkIso?`, and `canon?` are the resource-bounded certified
   operations. `SearchLimits` bounds the search (`maxNodes`, `maxCertNodes`)
   and `ReplayLimits` bounds kernel replay (`maxCheckerSteps`). Exhaustion
@@ -66,8 +69,9 @@ example : ¬ Isomorphic p3 k3 := by graph_iso
 - `CanonCert` and `checkCanon` certify a canonical form; `DiffCert` and
   `checkDiff` certify non-isomorphism. Both are replayed by the kernel.
 - `graph_iso` closes closed goals of the form `Isomorphic G H` and
-  `¬ Isomorphic G H`, accepting `(maxNodes := ...)`, `(maxCertNodes := ...)`,
-  and `(maxCheckerSteps := ...)` overrides.
+  `¬ Isomorphic G H`, coloured or uncoloured, accepting
+  `(maxNodes := ...)`, `(maxCertNodes := ...)`, and
+  `(maxCheckerSteps := ...)` overrides.
 - `Hex.GraphIso.Reference` is an independent exhaustive canonical form kept
   as a cross-check of the production pipeline.
 
@@ -80,16 +84,16 @@ checker and its proofs establish the result, so no theorem depends on the
 transcription being faithful to nauty.
 
 ```lean
-theorem iso_iff_canonChecked_eq (G : Colored n k) (H : Colored n k) :
-    Isomorphic G H ↔ canonChecked G = canonChecked H
+theorem Checked.iso_iff_canon_eq (G : Colored n k) (H : Colored n k) :
+    Isomorphic G H ↔ Checked.canon G = Checked.canon H
 
-theorem findIsoChecked_isSome_iff (G H : Colored n k) :
-    (findIsoChecked G H).isSome = true ↔ Isomorphic G H
+theorem Checked.findIso_isSome_iff (G H : Colored n k) :
+    (Checked.findIso G H).isSome = true ↔ Isomorphic G H
 
 theorem checkCanon_sound {limits : ReplayLimits} {G : Colored n k}
     {cert : CanonCert n k} {result : CanonResult n k}
     (h : checkCanon limits G cert = some result) :
-    result.form = canonChecked G ∧ G.relabel result.label = result.form
+    result.form = Checked.canon G ∧ G.relabel result.label = result.form
 ```
 
 The fast tier deliberately proves less: `relabel_label`, `findIso_sound`, and
@@ -97,7 +101,7 @@ The fast tier deliberately proves less: `relabel_label`, `findIso_sound`, and
 and invariance of the fast form under isomorphism are pinned by conformance
 rather than proved. Agreement of the two tiers is a theorem under the
 hypothesis that the certificate replay accepts
-(`canonicalize_eq_canonicalizeChecked`).
+(`canonicalize_eq_checked`).
 
 Compatibility with nauty is a conformance property, not a theorem: an oracle
 pins canonical labels, canonical bits, and visited-node counts against the

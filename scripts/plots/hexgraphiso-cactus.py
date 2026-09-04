@@ -48,7 +48,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 TACTIC_FILE = """import HexGraphIso
-open Hex.GraphIso
+open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
 example : {goal} := by graph_iso (maxNodes := 100000000) (maxCheckerSteps := 1000000000)
@@ -135,7 +135,7 @@ def main() -> int:
             [r["nauty_ns"] / 1e9 for r in sweep],
         "hex canonicalize (fast, conformance-pinned)":
             [r["fast_ns"] / 1e9 for r in sweep],
-        "hex canonicalizeChecked (validated certificate)":
+        "hex Checked.canonicalize (validated certificate)":
             [r["checked_ns"] / 1e9 for r in sweep],
     }, len(sweep))
     ax_cactus.set_title("canonical labelling: cactus over "
@@ -193,7 +193,7 @@ def main() -> int:
             [r["nauty_ns"] / 1e9 for r in pairs],
         "hex isIso (fast, conformance-pinned)":
             [r["fast_ns"] / 1e9 for r in pairs],
-        "hex isIsoChecked (validated certificate)":
+        "hex Checked.isIso (validated certificate)":
             [r["checked_ns"] / 1e9 for r in pairs],
         "graph_iso tactic (kernel-checked proof)": tactic_times,
     }, len(pairs))

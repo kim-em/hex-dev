@@ -39,16 +39,24 @@ literature, is specified in {ref "nauty-algorithm"}[The `nauty` canonical
 labelling algorithm]. The
 short names (`canonicalize`, `canon`, `label`, `isIso`) run that
 translation directly and are the fast surface for users who just want
-answers; the `Checked` surface (`canonicalizeChecked`, `canonChecked`,
-…) additionally validates every answer through a proven certificate
-checker and carries the theorems. Two coloured graphs are isomorphic
-exactly when their checked canonical forms are equal
-({name Hex.GraphIso.iso_iff_canonChecked_eq}`iso_iff_canonChecked_eq`),
+answers; the same names under `Checked` (`Checked.canonicalize`,
+`Checked.canon`, …) additionally validate every answer through a proven
+certificate checker and carry the theorems. Two coloured graphs are
+isomorphic exactly when their checked canonical forms are equal
+({name Hex.GraphIso.Checked.iso_iff_canon_eq}`Checked.iso_iff_canon_eq`),
 and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
 checked transporter, negative goals through a fully verified
 individualization-refinement decision.
+
+Colours are the general input, but a graph with no colours to speak of
+should not have to acquire one. The same operations and the same
+tactic are available on a bare {name Hex.Graph}`Graph`: `Graph.canon`,
+`Graph.findIso`, `Graph.Checked.isIso` and the rest read the one-cell
+view {name Hex.Graph.singleColor}`Graph.singleColor` and hand the
+conclusion back uncoloured, through the single equivalence
+{name Hex.Graph.isomorphic_singleColor_iff}`Graph.isomorphic_singleColor_iff`.
 
 The separate [`nauty-ffi`](https://github.com/leanprover/nauty-ffi) package is
 available for users who want direct access to the corresponding dense-nauty
@@ -58,6 +66,8 @@ dependency or part of the verified `HexGraphIso` library.
 {docstring Hex.GraphIso.Colored}
 
 {docstring Hex.GraphIso.canonicalize}
+
+{docstring Hex.Graph.Isomorphic}
 
 # The Petersen graph three ways
 %%%
@@ -76,18 +86,17 @@ unrelated at general parameters; that `G(5, 2)` and `K(5, 2)` are
 isomorphic is a coincidence special to these values, and proving it is
 the first example below. One explicit edge list shows the generalized
 Petersen numbering concretely, checked against the general
-construction.
+construction. Neither claim mentions colours, so both are stated on
+bare `Graph 10` values.
 
 ```lean
 open Hex Hex.GraphIso
 
 namespace HexGraphIsoChapterExample
 
-def petersen : Colored 10 1 :=
-  Families.plain (Families.gpetersen 5 2)
+def petersen : Graph 10 := Families.gpetersen 5 2
 
-def kneser52 : Colored 10 1 :=
-  Families.plain (Families.kneser 5 2)
+def kneser52 : Graph 10 := Families.kneser 5 2
 
 -- The generalized Petersen numbering, concretely.
 #guard Graph.ofEdges
@@ -96,19 +105,15 @@ def kneser52 : Colored 10 1 :=
      (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)] =
   Families.gpetersen 5 2
 
--- The two canonical searches find an explicit vertex
--- permutation between the presentations; `checkIso`
--- validates it.
-#guard
-  (((Nauty.canonicalize? petersen).bind fun rP =>
-    (Nauty.canonicalize? kneser52).map fun rK =>
-      checkIso petersen kneser52
-        ((rK.label.toPerm.inv).comp rP.label.toPerm))
-    == some true)
+-- The two canonical searches compose into an explicit
+-- vertex permutation between the presentations, and the
+-- certified decision agrees.
+#guard (Graph.findIso petersen kneser52).isSome
+#guard Graph.Checked.isIso petersen kneser52
 
 -- The tactic closes the positive goal through the
 -- kernel-replayed transporter check.
-example : Isomorphic petersen kneser52 := by graph_iso
+example : Graph.Isomorphic petersen kneser52 := by graph_iso
 ```
 
 The pentagonal prism, `Families.gpetersen 5 1`, is the interesting
@@ -120,10 +125,9 @@ re-refines, and refutes every branch; the kernel replays that run.
 {docstring Hex.GraphIso.Pairwise.search}
 
 ```lean
-def prism5 : Colored 10 1 :=
-  Families.plain (Families.gpetersen 5 1)
+def prism5 : Graph 10 := Families.gpetersen 5 1
 
-example : ¬ Isomorphic petersen prism5 := by graph_iso
+example : ¬ Graph.Isomorphic petersen prism5 := by graph_iso
 ```
 
 # Ordered colours constrain isomorphisms
@@ -137,7 +141,8 @@ vertices with colour zero is therefore a different constraint from
 marking a non-adjacent pair, although the cell sizes agree. Adjacency of
 the colour-zero pair is an invariant, and the tactic's negative proof is
 obtained from the general verified decision rather than a handwritten
-special-purpose lemma.
+special-purpose lemma. These claims do mention colours, so they are the
+ones stated on {name Hex.GraphIso.Colored}`Colored`.
 
 ```lean
 def markPair (a b : Fin 10) : Coloring 10 2 :=
@@ -145,9 +150,9 @@ def markPair (a b : Fin 10) : Coloring 10 2 :=
     if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2)
 
 -- 0-1 is an outer pentagon edge; 2-3 likewise; 0-2 is a non-edge.
-def edgeMarkA : Colored 10 2 := ⟨petersen.graph, markPair 0 1⟩
-def edgeMarkB : Colored 10 2 := ⟨petersen.graph, markPair 2 3⟩
-def nonedgeMark : Colored 10 2 := ⟨petersen.graph, markPair 0 2⟩
+def edgeMarkA : Colored 10 2 := ⟨petersen, markPair 0 1⟩
+def edgeMarkB : Colored 10 2 := ⟨petersen, markPair 2 3⟩
+def nonedgeMark : Colored 10 2 := ⟨petersen, markPair 0 2⟩
 
 example : Isomorphic edgeMarkA edgeMarkB := by graph_iso
 example : ¬ Isomorphic edgeMarkA nonedgeMark := by graph_iso
@@ -376,7 +381,7 @@ factor on four parametrised families from the benchmark corpus: grids,
 where refinement discretizes quickly; Paley graphs, refinement's hard
 case among the sparse families; and the dense Latin-square and Kneser
 graphs, where the factor is largest. The `fast` column is
-`canonicalize` and the `checked` column is `canonicalizeChecked`, which
+`canonicalize` and the `checked` column is `Checked.canonicalize`, which
 additionally validates every answer through the certificate checker.
 
 :::table (header := true)
@@ -459,7 +464,7 @@ literals at the use site.
 
 {docstring Hex.GraphIso.Mathlib.encode}
 
-{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canonChecked_eq}
+{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canon_eq}
 
 ```lean
 open Hex.GraphIso.Mathlib

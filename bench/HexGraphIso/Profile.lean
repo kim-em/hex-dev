@@ -44,7 +44,7 @@ private structure Inst (n : Nat) where
 
 private def mkInst {n : Nat} (name : String) (G : Hex.Graph n) (h : 0 < n) :
     Inst n :=
-  let g0 := Families.plain G h
+  let g0 := G.singleColor h
   { name, g0, g1 := g0.relabel (rot n h) }
 
 private def countAutom : CertNode → Nat
@@ -99,7 +99,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
           (match checkCanon inst.g1 c1 b1 (runColored inst.g1).canonlab with
             | some r => (rowsOf r.form).size | none => 0)
     | "canonchecked" => timeLoop iters fun i =>
-        (rowsOf (canonicalizeChecked (pick i)).form).size
+        (rowsOf (Checked.canonicalize (pick i)).form).size
     | "stats" => do
         let r := runColored inst.g0
         IO.println s!"  {inst.name} stats: nauty-nodes={r.numnodes} \

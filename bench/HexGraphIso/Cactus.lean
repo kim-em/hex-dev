@@ -10,7 +10,7 @@ import Hex.BenchOracle.Nauty
 /-!
 Per-instance timing sweep over the deterministic graph families for the
 hex-graph-iso cactus plots: the fast public `canonicalize`, the
-certificate-checked `canonicalizeChecked`, and the pinned nauty 2.9.3
+certificate-checked `Checked.canonicalize`, and the pinned nauty 2.9.3
 FFI comparator on the same instances.
 
 Emits one JSON line per instance:
@@ -40,7 +40,7 @@ private structure Inst where
 
 private def inst (family name : String) {n : Nat} (G : Graph n)
     (h : 0 < n) : Inst :=
-  { family, name, packed := ⟨n, Families.plain G h⟩ }
+  { family, name, packed := ⟨n, Graph.singleColor G h⟩ }
 
 /-- A cheap digest forcing full evaluation of a canonical result. -/
 private def digest {n k : Nat} (res : CanonResult n k) : Nat :=
@@ -88,7 +88,7 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
 private def runInst (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
   let fastNs ← timeMinNs fun _ => pure (digest (canonicalize G))
-  let checkedNs ← timeMinNs fun _ => pure (digest (canonicalizeChecked G))
+  let checkedNs ← timeMinNs fun _ => pure (digest (Checked.canonicalize G))
   let colors := List.replicate n 0
   let adj := adjStrings G
   let nautyNs ← timeMinNs fun _ => do
@@ -172,14 +172,14 @@ private def rotate {n : Nat} (G : Colored n 1) (h : 0 < n) : Colored n 1 :=
 
 private def posPair (family name : String) {n : Nat} (G : Graph n)
     (h : 0 < n) (exprA : String) : PairInst :=
-  let A := Families.plain G h
+  let A := Graph.singleColor G h
   { family, name, iso := true, exprA, exprB := rotExpr n,
     packed := ⟨n, A, rotate A h⟩ }
 
 private def negPair (family name : String) {n : Nat} (G H : Graph n)
     (h : 0 < n) (exprA exprB : String) : PairInst :=
   { family, name, iso := false, exprA, exprB,
-    packed := ⟨n, Families.plain G h, Families.plain H h⟩ }
+    packed := ⟨n, Graph.singleColor G h, Graph.singleColor H h⟩ }
 
 private def pairInstances : List PairInst := Id.run do
   let mut out : List PairInst := []
@@ -187,83 +187,83 @@ private def pairInstances : List PairInst := Id.run do
     if h : 0 < n then
       out := posPair "circulant-12" s!"pos-circulant{n}"
         (Families.circulant n [1, 2]) h
-        s!"Families.plain (Families.circulant {n} [1, 2])" :: out
+        s!"Graph.singleColor (Families.circulant {n} [1, 2])" :: out
   for a in [3, 4, 5] do
     if h : 0 < a * a then
       out := posPair "grid" s!"pos-grid{a}x{a}" (Families.grid a a) h
-        s!"Families.plain (Families.grid {a} {a})" :: out
+        s!"Graph.singleColor (Families.grid {a} {a})" :: out
   for d in [3, 4] do
     if h : 0 < 2 ^ d then
       out := posPair "hypercube" s!"pos-q{d}" (Families.hypercube d) h
-        s!"Families.plain (Families.hypercube {d})" :: out
+        s!"Graph.singleColor (Families.hypercube {d})" :: out
   if h : 0 < Families.choose 5 2 then
     out := posPair "kneser" "pos-kneser5-2" (Families.kneser 5 2) h
-      "Families.plain (Families.kneser 5 2)" :: out
+      "Graph.singleColor (Families.kneser 5 2)" :: out
   -- C(2m) versus two copies of C(m): 2-regular, never isomorphic
   for m in [3, 4, 5, 6, 7, 8] do
     if h : 0 < 2 * m then
       out := negPair "cycles" s!"neg-c{2*m}-vs-2c{m}"
         (Families.cycle (2 * m)) (Families.copies 2 (Families.cycle m)) h
-        s!"Families.plain (Families.cycle {2 * m})"
-        s!"Families.plain (Families.copies 2 (Families.cycle {m}))" :: out
+        s!"Graph.singleColor (Families.cycle {2 * m})"
+        s!"Graph.singleColor (Families.copies 2 (Families.cycle {m}))" :: out
   -- cubic non-isomorphic pair on ten vertices
   if h : 0 < (10 : Nat) then
     out := negPair "named" "neg-circulant10-2-5-vs-1-5"
       (Families.circulant 10 [2, 5]) (Families.circulant 10 [1, 5]) h
-      "Families.plain (Families.circulant 10 [2, 5])"
-      "Families.plain (Families.circulant 10 [1, 5])" :: out
+      "Graph.singleColor (Families.circulant 10 [2, 5])"
+      "Graph.singleColor (Families.circulant 10 [1, 5])" :: out
   -- 10-regular non-isomorphic pair on 21 vertices
   if h : 0 < Families.choose 7 2 then
     out := negPair "named" "neg-kneser72-vs-johnson72"
       (Families.kneser 7 2) (Families.johnson 7 2) h
-      "Families.plain (Families.kneser 7 2)"
-      "Families.plain (Families.johnson 7 2)" :: out
+      "Graph.singleColor (Families.kneser 7 2)"
+      "Graph.singleColor (Families.johnson 7 2)" :: out
   -- irregular negatives (added as a documented series break): distinct
   -- degree multisets at matched size, so the root refinement separates
   -- them and the tiered negative route's cheapest tier is exercised
   if h : 0 < 3 * 4 then
     out := negPair "irregular" "neg-grid3x4-vs-circulant12"
       (Families.grid 3 4) (Families.circulant 12 [1, 2]) h
-      "Families.plain (Families.grid 3 4)"
-      "Families.plain (Families.circulant 12 [1, 2])" :: out
+      "Graph.singleColor (Families.grid 3 4)"
+      "Graph.singleColor (Families.circulant 12 [1, 2])" :: out
   if h : 0 < 4 * 4 then
     out := negPair "irregular" "neg-grid4x4-vs-q4"
       (Families.grid 4 4) (Families.hypercube 4) h
-      "Families.plain (Families.grid 4 4)"
-      "Families.plain (Families.hypercube 4)" :: out
+      "Graph.singleColor (Families.grid 4 4)"
+      "Graph.singleColor (Families.hypercube 4)" :: out
   if h : 0 < 4 * 5 then
     out := negPair "irregular" "neg-grid4x5-vs-k8-12"
       (Families.grid 4 5) (Families.completeBipartite 8 12) h
-      "Families.plain (Families.grid 4 5)"
-      "Families.plain (Families.completeBipartite 8 12)" :: out
+      "Graph.singleColor (Families.grid 4 5)"
+      "Graph.singleColor (Families.completeBipartite 8 12)" :: out
   if h : 0 < 4 * 6 then
     out := negPair "irregular" "neg-grid4x6-vs-2grid3x4"
       (Families.grid 4 6) (Families.copies 2 (Families.grid 3 4)) h
-      "Families.plain (Families.grid 4 6)"
-      "Families.plain (Families.copies 2 (Families.grid 3 4))" :: out
+      "Graph.singleColor (Families.grid 4 6)"
+      "Graph.singleColor (Families.copies 2 (Families.grid 3 4))" :: out
   -- larger positives (corpus extension, series break 2)
   for n in [64, 128] do
     if h : 0 < n then
       out := posPair "circulant-12" s!"pos-circulant{n}"
         (Families.circulant n [1, 2]) h
-        s!"Families.plain (Families.circulant {n} [1, 2])" :: out
+        s!"Graph.singleColor (Families.circulant {n} [1, 2])" :: out
   for d in [5, 6] do
     if h : 0 < 2 ^ d then
       out := posPair "hypercube" s!"pos-q{d}" (Families.hypercube d) h
-        s!"Families.plain (Families.hypercube {d})" :: out
+        s!"Graph.singleColor (Families.hypercube {d})" :: out
   if h : 0 < Families.choose 10 2 then
     out := posPair "kneser" "pos-kneser10-2" (Families.kneser 10 2) h
-      "Families.plain (Families.kneser 10 2)" :: out
+      "Graph.singleColor (Families.kneser 10 2)" :: out
   if h : 0 < (61 : Nat) then
     out := posPair "paley" "pos-paley61" (Families.paley 61) h
-      "Families.plain (Families.paley 61)" :: out
+      "Graph.singleColor (Families.paley 61)" :: out
   -- strongly regular negative: same parameters (25, 12, 5, 6), never
   -- isomorphic — vertex partitions stay uniform until deep in the search
   if h : 0 < (25 : Nat) then
     out := negPair "srg" "neg-paley25-vs-latin5"
       (Families.paley 25) (Families.latinSquare 5) h
-      "Families.plain (Families.paley 25)"
-      "Families.plain (Families.latinSquare 5)" :: out
+      "Graph.singleColor (Families.paley 25)"
+      "Graph.singleColor (Families.latinSquare 5)" :: out
   -- same-degree regular negatives at scale: connected circulant versus
   -- two disjoint copies, both 4-regular, refinement-uniform at the root
   for m in [24, 48] do
@@ -271,8 +271,8 @@ private def pairInstances : List PairInst := Id.run do
       out := negPair "cycles-dense" s!"neg-circ{2*m}-vs-2circ{m}"
         (Families.circulant (2 * m) [1, 2])
         (Families.copies 2 (Families.circulant m [1, 2])) h
-        s!"Families.plain (Families.circulant {2 * m} [1, 2])"
-        s!"Families.plain (Families.copies 2 (Families.circulant {m} [1, 2]))"
+        s!"Graph.singleColor (Families.circulant {2 * m} [1, 2])"
+        s!"Graph.singleColor (Families.copies 2 (Families.circulant {m} [1, 2]))"
         :: out
   -- 30-regular vertex-transitive negative: the Paley graph on 61
   -- vertices against a circulant of equal degree whose connection set
@@ -284,8 +284,8 @@ private def pairInstances : List PairInst := Id.run do
       (Families.paley 61)
       (Families.circulant 61 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         13, 14, 15]) h
-      "Families.plain (Families.paley 61)"
-      ("Families.plain (Families.circulant 61 [1, 2, 3, 4, 5, 6, 7, " ++
+      "Graph.singleColor (Families.paley 61)"
+      ("Graph.singleColor (Families.circulant 61 [1, 2, 3, 4, 5, 6, 7, " ++
         "8, 9, 10, 11, 12, 13, 14, 15])") :: out
   return out.reverse
 
@@ -294,12 +294,12 @@ private def escape (s : String) : String :=
 
 private def runPair (p : PairInst) : IO Unit := do
   let ⟨n, A, B⟩ := p.packed
-  unless isIso A B == p.iso && isIsoChecked A B == p.iso do
+  unless isIso A B == p.iso && Checked.isIso A B == p.iso do
     throw <| IO.userError s!"pair {p.name}: polarity mismatch"
   let fastNs ← timeMinNs fun _ =>
     pure (if isIso A B then 1 else 0)
   let checkedNs ← timeMinNs fun _ =>
-    pure (if isIsoChecked A B then 1 else 0)
+    pure (if Checked.isIso A B then 1 else 0)
   let colors := List.replicate n 0
   let adjA := adjStrings A
   let adjB := adjStrings B
