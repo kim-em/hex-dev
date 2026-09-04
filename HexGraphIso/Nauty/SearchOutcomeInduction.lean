@@ -528,16 +528,95 @@ theorem RunPrep.run {G : Colored n k} {ctx : Ctx}
     h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
     h.bestCodes, h.incumbent⟩
 
-/-- Individualization carries a stable loop state into its recursive
-child. The loop supplies the two facts that depend on its history: the
-cheap-boundary state selected by the guard and the newly active guide
-store. All structural and ledger fields follow from the parent state. -/
+/-! # Node-entry refinement state -/
+
+/-- The extra certificate state needed exactly where a node is about to
+call `refine`.  `RunInv` is deliberately weaker because it also describes
+recovered parent-loop states, whose stale `active` field is never refined
+again. -/
+structure NodeInv (G : Colored n k) (ctx : Ctx)
+    (tcLevel level : Nat) (cs bs fs : List Nat) (numcells : Nat)
+    (st : SearchSt) (best : Option Key) (trail : FrameTrail) : Prop where
+  run : RunInv G ctx tcLevel level cs bs fs numcells st best trail
+  cert : CertInv ctx level
+    { lab := st.lab, ptn := st.ptn, active := st.active,
+      numcells := numcells, hint := 0, maxpos := 0,
+      longcode := numcells }
+  activeLt : st.active < 2 ^ ctx.n
+  activeStarts : ∀ v : Nat, elem st.active v = true →
+    v = 0 ∨ st.ptn[v - 1]! ≤ level
+
+/-- Refining a valid node entry produces the equitable frame used by its
+target-cell selection and child sweep. -/
+theorem NodeInv.refined {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {cs bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hlevel : 1 ≤ level)
+    (h : NodeInv G ctx tcLevel level cs bs fs numcells st best trail) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    IterOk ctx level r ∧ Equitable ctx level r.lab r.ptn ∧
+      bcount r.ptn level ctx.n = r.numcells := by
+  subst n
+  dsimp only
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  have hend := searchOk_end hn0 h.run.searchOk hlevel
+  have hls : st.lab.size = ctx.n := h.run.searchOk.labSize
+  have hps : st.ptn.size = ctx.n := h.run.searchOk.ptnSize
+  have hlab : LabOk st.lab ctx.n :=
+    labOk_of_reach h.run.searchOk.labSize h.run.searchOk.reach
+  have hinj : LabInj st.lab ctx.n :=
+    labInj_of_reach h.run.searchOk.labSize hn0 h.run.searchOk.reach
+  have hrst : StOk ctx.n level r := by
+    apply refine_stOk (ctx := ctx) rfl hls hlab hps h.activeLt hend
+  have hrreach : CellsReach G r.lab := by
+    apply refine_cellsReach rfl hn0 h.run.searchOk.reach
+      h.run.searchOk.labSize h.run.searchOk.ptnSize hend
+    intro q hq
+    exact Nat.le_trans (h.run.searchOk.init1 q hq) hlevel
+  have hrit : IterOk ctx level r := by
+    refine ⟨hrst, ?_, ?_, ?_⟩
+    · exact labInj_of_reach hrst.labSize hn0 hrreach
+    · intro q hq
+      rcases ptn_refine_vals ctx level st.lab st.ptn st.active
+        numcells q with he | he
+      · rw [he]
+        rcases h.run.searchOk.vals q hq with hq | hq
+        · exact Or.inl hq
+        · exact Or.inr hq
+      · rw [he]
+        exact Or.inl (Nat.le_refl level)
+    · have hb := h.run.searchOk.bc
+      have hbn := bcount_le st.ptn level ctx.n
+      omega
+  have heqt : Equitable ctx level r.lab r.ptn := by
+    apply refine_equitable hls hlab hps h.activeLt hend hinj h.activeStarts
+    · intro u v hu hv
+      rw [hg]
+      exact rowsOf_symm G u v hu hv
+    · exact h.run.searchOk.count.symm
+    · exact h.cert
+  have hacc : bcount r.ptn level ctx.n = r.numcells := by
+    have hc := refine_bcount (ctx := ctx) (level := level)
+      (lab := st.lab) (ptn := st.ptn) (active := st.active)
+      (numcells := numcells) hps.symm (by rw [hls, hps]) hend
+    have hold := h.run.searchOk.count
+    change r.numcells + bcount st.ptn level ctx.n =
+      numcells + bcount r.ptn level ctx.n at hc
+    omega
+  exact ⟨hrit, heqt, hacc⟩
+
+/-- Individualization carries a stable loop state into a valid recursive
+node entry. The loop supplies the two facts that depend on its history:
+the cheap-boundary state selected by the guard and the newly active guide
+store. Parent equitability seeds the child's refinement certificate. -/
 theorem RunInv.child {G : Colored n k} {ctx : Ctx}
     {tcLevel level numcells tc len o : Nat}
     {cs bs fs : List Nat} {st : SearchSt} {best : Option Key}
     {trail childTrail : FrameTrail}
     (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (h : RunInv G ctx tcLevel level cs bs fs numcells st best trail)
+    (heq : Equitable ctx level st.lab st.ptn)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
     (hrange : tc + len ≤ ctx.n) (ho : o < len)
     (hcheap : CheapOk ctx (initialPartition G).1
@@ -564,7 +643,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
         fixedpts := insert st.fixedpts st.lab[tc + o]!
         cosetindex := st.lab[tc + o]! }
       childTrail) :
-    RunInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
+    NodeInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
       { st with
         lab := (breakout st.lab st.ptn (level + 1) tc
           st.lab[tc + o]!).1
@@ -591,25 +670,61 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx}
     · exact breakout_ptn st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!
     · rfl
-  change RunInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
+  change NodeInv G ctx tcLevel (level + 1) cs bs fs (numcells + 1)
     child best childTrail
-  refine ⟨hok, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hguides, htrail,
-    ?_, ?_, ?_, ?_, h.bestCodes, ?_⟩
-  · exact h.codeInv
-  · exact h.firstInv
-  · exact h.canongInv
-  · exact h.genTraceOk
-  · exact h.autosOk
-  · apply hcheap.breakout hlevel hcell hlen hrange ho <;> rfl
-  · exact ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
-      h.leafRefs.canonSize, h.leafRefs.canonReach⟩
-  · exact h.firstPositive
-  · exact h.canonPositive
-  · change st.gcaFirst ≤ level + 1
-    exact Nat.le_trans h.firstBound (Nat.le_succ level)
-  · change st.gcaCanon ≤ level + 1
-    exact Nat.le_trans h.canonBound (Nat.le_succ level)
-  · exact h.incumbent
+  have hrun : RunInv G ctx tcLevel (level + 1) cs bs fs
+      (numcells + 1) child best childTrail := by
+    refine ⟨hok, h.codeInv, h.firstInv, h.canongInv, h.genTraceOk,
+      h.autosOk, ?_, ?_, hguides, htrail, h.firstPositive,
+      h.canonPositive, ?_, ?_, h.bestCodes, h.incumbent⟩
+    · apply hcheap.breakout hlevel hcell hlen hrange ho <;> rfl
+    · exact ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
+        h.leafRefs.canonSize, h.leafRefs.canonReach⟩
+    · change st.gcaFirst ≤ level + 1
+      exact Nat.le_trans h.firstBound (Nat.le_succ level)
+    · change st.gcaCanon ≤ level + 1
+      exact Nat.le_trans h.canonBound (Nat.le_succ level)
+  refine ⟨hrun, ?_, ?_, ?_⟩
+  · have hmem : (tc, tc + len - 1) ∈ cells st.ptn level ctx.n := by
+      apply isCell_mem_cells hcell
+      · exact Nat.le_of_eq h.searchOk.ptnSize.symm
+      · exact searchOk_end hn0 h.searchOk hlevel
+      · omega
+    have hcert := certInv_breakout (ctx := ctx) (level := level)
+      (lab := st.lab) (ptn := st.ptn) (tc := tc)
+      (e := tc + len - 1) (o := o) (numcells := numcells)
+      h.searchOk.labSize h.searchOk.ptnSize
+      (searchOk_end hn0 h.searchOk hlevel) (by
+        intro q hq
+        rcases h.searchOk.vals q hq with hq | hq
+        · exact Or.inl hq
+        · right
+          have hb := bcount_le st.ptn level ctx.n
+          have hc := h.searchOk.bc
+          omega)
+      (labInj_of_reach h.searchOk.labSize hn0 h.searchOk.reach)
+      hmem (by omega) (by omega) heq
+    change CertInv ctx (level + 1)
+      { lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1,
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1,
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2,
+        numcells := numcells + 1, hint := 0, maxpos := 0,
+        longcode := numcells + 1 }
+    rw [breakout_ptn]
+    exact hcert
+  · change (breakout st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).2.2 < 2 ^ ctx.n
+    exact singleActive_lt (by omega)
+  · change ∀ v : Nat,
+      elem (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).2.2 v = true →
+      v = 0 ∨ (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
+    rw [breakout_ptn]
+    exact split_starts h.searchOk.ptnSize hcell
 
 /-- Refinement followed by the off-path comparison step enters
 `RunPrep`.  Generator validity is global, while stabilization is proved
