@@ -160,4 +160,52 @@ theorem RunPrep.firstEvent {G : Colored n k} {ctx : Ctx}
       hprep.leafRefs hlive.stable hbelow heq hsent hnc hpass
   · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
 
+/-- A code-two row tie produces a verified event for either its canonical
+return or its special first-ancestor orbit return. -/
+theorem RunPrep.tiedEvent {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {stem codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (hn : ctx.n = n) (hn0 : 0 < n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length)
+    (hstem : codes.take stem.length = stem)
+    (hbound : st.noncheaplevel ≤ level)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
+    (hcanonBelow : st.gcaCanon < level)
+    (hprep : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail) :
+    ∃ bs',
+      EventOut G ctx tcLevel stem fs
+          (processnode ctx level numcells st).2
+          (some (incKey ctx bs'
+            (processnode ctx level numcells st).2.canonlab)) trail
+          (processnode ctx level numcells st).1 ∧
+        incKey ctx bs' (processnode ctx level numcells st).2.canonlab =
+          keyMax (incKey ctx bs st.canonlab)
+            (pathLeafKey ctx codes st.lab) := by
+  obtain ⟨bs', hevent, hmax, -⟩ := hprep.leaf hn hn0 hgb hsymm hloop
+    hlevel hpath hbound hef hnc
+  have hreturns := (processnode_rowTie hef hnc hcc hge htie).1
+  have hreturned : (processnode ctx level numcells st).1 ≤
+      Int.ofNat level := by
+    rcases hreturns with hfirst | hcanon
+    · rw [hfirst]
+      exact Int.ofNat_le.mpr
+        (Nat.le_trans hlive.order hprep.canonBound)
+    · rw [hcanon]
+      exact Int.ofNat_le.mpr hprep.canonBound
+  refine ⟨bs', ?_, hmax⟩
+  apply EventOut.intro level codes bs' hevent hpath hstem hreturned
+  · exact hlive.history.processnodeTiedStab hn hn0 hprep.trailOk
+      hprep.leafRefs hlive.order hlive.stable hcanonBelow hef hnc hcc hge
+      htie
+  · exact (hlive.processnode hprep.trailOk hprep.firstBound).1
+
 end Hex.GraphIso.Nauty
