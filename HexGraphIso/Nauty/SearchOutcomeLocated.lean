@@ -245,6 +245,20 @@ theorem NodeReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
   | exhausted empty returned unchanged bestUnchanged =>
       exact .exhausted empty returned unchanged bestUnchanged
 
+/-- A positive-fuel receipt always carries the node soundness shared by
+its non-exhausted outcomes. -/
+theorem NodeReceipt.sound {trail : FrameTrail} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    (h : NodeReceipt trail ctx tcLevel specFuel runFuel level cs st out
+      numcells best outBest r) (hfuel : runFuel ≠ 0) :
+    NodeSound ctx tcLevel specFuel level cs st numcells best outBest := by
+  cases h with
+  | complete sound => exact sound
+  | unwind sound => exact sound
+  | pruned sound => exact sound
+  | exhausted empty => exact (hfuel empty).elim
+
 /-- A loop outcome with every transported generator unwind located in
 the active frame trail. -/
 inductive LoopReceipt (trail : FrameTrail) (ctx : Ctx)
@@ -328,6 +342,51 @@ theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx}
       exact Or.inr ⟨payload, located⟩
   | pruned sound target returned below installed read full => exact Or.inl full
   | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
+
+/-- A completed or target-addressed child receipt advances its parent's
+coverage.  Exact children may use cell-permutation key equivalence;
+generator children use their location in the just-pushed parent frame. -/
+theorem SweepCover.receipt {ctx : Ctx}
+    {tcLevel specFuel runFuel level tc len numcells tcell tv offset : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {before best : Option Key}
+    {child out : SearchSt} {r : Int} {trail : FrameTrail}
+    (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell cursor before)
+    (hnext : nextElem tcell cursor = some tv)
+    (hchild : NodeReceipt
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      ctx tcLevel specFuel runFuel (level + 1) codes child out
+      (numcells + 1) before best r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level))
+    (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
+      sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
+        nodeKey ctx tcLevel specFuel (level + 1) codes child
+          (numcells + 1))
+    (ho : offset < len) (htv : rsLab[tc + offset]! = tv)
+    (hcoset : out.cosetindex = tv)
+    (hgsz : ctx.g.size = ctx.n)
+    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hv : ∀ γ ∈ out.genTrace.toList,
+      checkAutom ctx.g γ ctx.n = true)
+    (hstab : ∀ γ ∈ out.genTrace.toList,
+      CellStab rsPtn level rsLab γ)
+    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hend : rsPtn[rsPtn.size - 1]! ≤ level)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
+      rsPtn[q]! = ctx.n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+    (hlf : level + 1 + specFuel ≤ ctx.n + 1) :
+    SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
+      numcells tcell (some tv) best := by
+  have hsound := hchild.sound hfuel
+  rcases hchild.parentReturn hfuel hstay with hfull | ⟨payload, hloc⟩
+  · exact h.advanceKey hnext hfull heq
+  · exact h.unwind hsound.grows hnext hloc
+      (FrameTrail.push_self trail level _) ho htv hcoset hgsz hbg hv hstab
+      hs hinj hok hsp hend hvals hic hrange hlf
 
 /-- Updating the first-path return controls preserves the source
 location of a generator unwind. -/
