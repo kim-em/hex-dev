@@ -1,9 +1,13 @@
 # Verified search refinement: plan
 
 Standalone working plan for finishing the last open theorem of
-`HexGraphIso`. Written for a session with no prior context. Everything
-needed is here or reachable from the file references. All work described
-below is on `main`; there are no branches or pull requests to reconstruct.
+`HexGraphIso`. Written for a session with no prior context.
+
+**Work on the branch `graphiso-refinement-work` in `kim-em/hex-dev`.** It
+contains everything this plan describes, builds green (`lake build`, exit
+0), and is ahead of `main`: some of the material below has not merged yet
+and is only on that branch. Do not start from `main`, and do not wait on
+any pull request. Every file reference below resolves on that branch.
 
 ## The goal
 
