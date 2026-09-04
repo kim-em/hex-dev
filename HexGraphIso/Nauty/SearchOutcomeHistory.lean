@@ -160,6 +160,37 @@ theorem push {ctx : Ctx} {level : Nat} {st : SearchSt}
       apply hcanon
       omega
 
+/-- The concrete child state created by a verified sweep inherits both
+reference histories.  `FrameRefs` supplies the new parent-frame case;
+all older frames come directly from the incoming history. -/
+theorem LoopInv.childHistory {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level numcells tc len tcell coset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {trail : FrameTrail}
+    (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hhist : RefTrail ctx level st trail)
+    (offset currentOffset : Nat) :
+    RefTrail ctx (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+        cosetindex := coset }
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) := by
+  have hpushed := hhist.push h.run.firstBound h.run.canonBound
+    h.frozenLabSize
+    (fun heq => (h.refs.first heq).choose_spec.2.2.2)
+    (fun heq => (h.refs.canon heq).choose_spec.2.2.2)
+    (entry := ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+  apply hpushed.stateEq <;> rfl
+
 /-- A scatter from the first reference onto the current labelling
 stabilizes every active frame to which `gcaFirst` permits a return. -/
 theorem firstStab {ctx : Ctx} {current : Nat} {st : SearchSt}
