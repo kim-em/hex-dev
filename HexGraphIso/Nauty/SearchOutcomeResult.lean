@@ -278,6 +278,23 @@ theorem LoopOutcome.step {G : Colored n k} {ctx : Ctx}
       outBest receiptTrail eventTrail r :=
   ⟨h.receipt.step ha, h.event, h.preserved⟩
 
+/-- A coupled loop outcome can be rebased onto an entry trail that
+agrees below the loop level. -/
+theorem LoopOutcome.retrail {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel loopFuel level : Nat}
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
+    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {st out : SearchSt} {best outBest : Option Key}
+    {source dest eventTrail : FrameTrail} {r : Option Int}
+    (htrail : TrailExt level dest source)
+    (h : LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem
+      codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
+      outBest source eventTrail r) :
+    LoopOutcome G ctx tcLevel specFuel runFuel loopFuel level stem codes fs
+      rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
+      dest eventTrail r :=
+  ⟨h.receipt.retrail htrail, h.event, htrail.trans h.preserved⟩
+
 /-- First-path exit bookkeeping preserves a corrected node outcome. -/
 theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel level numcells size index : Nat}
