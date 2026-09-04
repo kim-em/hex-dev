@@ -26,6 +26,55 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
+/-- Charging target-cell statistics changes no logical search field. -/
+theorem RunPrep.setTctotal {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells value : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunPrep G ctx tcLevel level codes bs fs numcells st best trail) :
+    RunPrep G ctx tcLevel level codes bs fs numcells
+      { st with tctotal := value } best trail := by
+  let st' : SearchSt := { st with tctotal := value }
+  have hok : SearchOk G level numcells st' := by
+    refine ⟨h.searchOk.labSize, h.searchOk.ptnSize, h.searchOk.reach,
+      h.searchOk.init1, h.searchOk.vals, h.searchOk.count, h.searchOk.bc,
+      h.searchOk.canon⟩
+  have hrefs : LeafRefsOk G st' :=
+    ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
+      h.leafRefs.canonSize, h.leafRefs.canonReach⟩
+  refine ⟨hok, h.codeInv, h.firstInv, h.canongInv,
+    genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
+    autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
+    h.cheap.ofFrames rfl rfl rfl, hrefs,
+    h.guides.stateEq rfl rfl rfl rfl, h.trailOk.stateEq rfl rfl,
+    h.firstPositive, h.canonPositive, h.firstBound, h.canonBound,
+    h.bestCodes, h.incumbent⟩
+
+/-- Parking the cheap-automorphism boundary changes only the `CheapOk`
+component of the stable invariant. -/
+theorem RunInv.park {G : Colored n k} {ctx : Ctx}
+    {tcLevel level numcells : Nat} {codes bs fs : List Nat}
+    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    (h : RunInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hcheap : CheapOk ctx (initialPartition G).1
+      (initPtn n (n + 2) (initialPartition G).2) level
+      { st with noncheaplevel := level + 1 }) :
+    RunInv G ctx tcLevel level codes bs fs numcells
+      { st with noncheaplevel := level + 1 } best trail := by
+  let st' : SearchSt := { st with noncheaplevel := level + 1 }
+  have hok : SearchOk G level numcells st' := by
+    refine ⟨h.searchOk.labSize, h.searchOk.ptnSize, h.searchOk.reach,
+      h.searchOk.init1, h.searchOk.vals, h.searchOk.count, h.searchOk.bc,
+      h.searchOk.canon⟩
+  have hrefs : LeafRefsOk G st' :=
+    ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
+      h.leafRefs.canonSize, h.leafRefs.canonReach⟩
+  refine ⟨hok, h.codeInv, h.firstInv, h.canongInv,
+    genTraceOk_of_eq (st := st) (st' := st') rfl h.genTraceOk,
+    autosOk_of_eq (st := st) (st' := st') rfl h.autosOk,
+    hcheap, hrefs, h.guides.stateEq rfl rfl rfl rfl,
+    h.trailOk.stateEq rfl rfl, h.firstPositive, h.canonPositive,
+    h.firstBound, h.canonBound, h.bestCodes, h.incumbent⟩
+
 /-- First and canonical controls that point at the current loop level are
 backed by children already absorbed into the semantic incumbent. -/
 structure FrameRefs (ctx : Ctx) (tcLevel specFuel level : Nat)
