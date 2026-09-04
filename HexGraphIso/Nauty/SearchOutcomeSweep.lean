@@ -591,8 +591,8 @@ theorem keyLeBound {ctx : Ctx}
       (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
         numcells 0)
       ((List.range tail).map fun o =>
-        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
-          numcells (o + 1)))
+      sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+        numcells (o + 1)))
     (hlen : len = tail + 1) (hoffset : offset < len) :
     keyLe (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
       numcells offset) bound := by
@@ -602,6 +602,59 @@ theorem keyLeBound {ctx : Ctx}
   · apply keyLe_keysMax
     right
     exact List.mem_map.mpr ⟨offset, List.mem_range.mpr (by omega), rfl⟩
+
+/-- In a verified small-cell subtree, the fixed sibling-sweep bound is
+the key of any selected member.  This is the semantic step that lets a
+saved cheap-boundary return absorb every unvisited sibling. -/
+theorem boundEq {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel level tc len numcells tail offset : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat} {bound : Key}
+    {tcell : Nat} {cursor : Option Nat} {base st : SearchSt}
+    {best : Option Key} {trail : FrameTrail}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hsmall : SubtreeOk ctx level
+      { lab := rsLab, ptn := rsPtn, active := base.active,
+        numcells := numcells, hint := 0, maxpos := 0,
+        longcode := numcells })
+    (hgsz : ctx.g.size = ctx.n)
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
+      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hbound : bound = keysMax
+      (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+        numcells 0)
+      ((List.range tail).map fun o =>
+        sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+          numcells (o + 1)))
+    (hlen : len = tail + 1) (hoffset : offset < len) :
+    bound = sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells offset := by
+  let key := fun o => sweepKey ctx tcLevel specFuel level codes rsLab
+    rsPtn tc numcells o
+  have hkey : ∀ o, o < len → key o = key offset := by
+    intro o ho
+    apply congrArg (prefixKey codes)
+    exact childKey_eq_of_subtree (tcLevel := tcLevel)
+      (fuel := specFuel) (numcells := numcells) (oU := offset) (oV := o)
+      hsmall hgsz hgb hsymm hloop hinv.cell hinv.lenTwo hinv.range
+      hoffset ho hinv.fuelBound
+  rw [hbound]
+  apply keysMax_eq_of_le
+  · rw [show sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells 0 = key 0 by rfl, hkey 0 (by omega)]
+    exact keyLe_refl _
+  · intro y hy
+    obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hy
+    rw [show sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
+      numcells (o + 1) = key (o + 1) by rfl,
+      hkey (o + 1) (by rw [hlen]; have := List.mem_range.mp ho; omega)]
+    exact keyLe_refl _
+  · rcases offset with _ | offset
+    · exact Or.inl rfl
+    · right
+      exact List.mem_map.mpr ⟨offset, List.mem_range.mpr (by omega), rfl⟩
 
 end LoopInv
 
