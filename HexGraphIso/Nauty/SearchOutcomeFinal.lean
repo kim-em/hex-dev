@@ -298,6 +298,22 @@ structure FirstTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
       st.firstlab[entry.frame.tc]! =
         entry.frame.rsLab[entry.frame.tc + entry.offset]!
 
+/-- Before the enclosing first-path node returns, its canonical reference
+also remains inside every strictly older guiding child.  The current loop
+frame is excluded because later siblings may replace the canonical child
+there; `FrameRefs` owns that changing boundary. -/
+structure CanonTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
+    (trail : FrameTrail) : Prop where
+  reach : ∀ target entry, target < current →
+    trail target = some entry →
+    cellsPerm entry.frame.rsPtn target entry.frame.rsLab st.canonlab
+  picked : ∀ target entry, target < current →
+    trail target = some entry →
+    ∃ len, IsCell entry.frame.rsPtn target entry.frame.tc len ∧
+      entry.offset < len ∧
+      st.canonlab[entry.frame.tc]! =
+        entry.frame.rsLab[entry.frame.tc + entry.offset]!
+
 /-- A first-path node proof additionally retains the unconditional history
 of the first leaf through every active ancestor frame. -/
 structure FirstProof (G : Colored n k) (ctx : Ctx)
@@ -307,6 +323,7 @@ structure FirstProof (G : Colored n k) (ctx : Ctx)
   node : NodeProof G ctx tcLevel specFuel runFuel level cs fs st out
     numcells none outBest receiptTrail eventTrail r
   trail : FirstTrail ctx level out eventTrail
+  canonTrail : CanonTrail ctx level out eventTrail
   resumable : Int.ofNat level - 1 ≤ r → level - 1 ≤ out.gcaFirst
 
 /-- A first-path loop keeps the current frozen frame in the first leaf's
@@ -321,6 +338,7 @@ structure FirstLoopProof (G : Colored n k) (ctx : Ctx)
     fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
     receiptTrail eventTrail r
   trail : FirstTrail ctx (level + 1) out eventTrail
+  canonTrail : CanonTrail ctx level out eventTrail
   guideLevel : level ≤ out.gcaFirst
 
 namespace FirstTrail
@@ -357,9 +375,44 @@ theorem lower {ctx : Ctx} {current : Nat} {st : SearchSt}
 
 end FirstTrail
 
+namespace CanonTrail
+
+theorem retrail {ctx : Ctx} {current : Nat} {st out : SearchSt}
+    {source dest : FrameTrail}
+    (h : CanonTrail ctx current st source)
+    (hcanon : out.canonlab = st.canonlab)
+    (hext : TrailExt current source dest) :
+    CanonTrail ctx current out dest := by
+  constructor
+  · intro target entry htarget hentry
+    rw [hext target htarget] at hentry
+    rw [hcanon]
+    exact h.reach target entry htarget hentry
+  · intro target entry htarget hentry
+    rw [hext target htarget] at hentry
+    obtain ⟨len, hcell, hoff, hat⟩ :=
+      h.picked target entry htarget hentry
+    exact ⟨len, hcell, hoff, by simpa only [hcanon] using hat⟩
+
+theorem lower {ctx : Ctx} {current : Nat} {st : SearchSt}
+    {trail : FrameTrail} (h : CanonTrail ctx (current + 1) st trail) :
+    CanonTrail ctx current st trail := by
+  constructor
+  · intro target entry htarget hentry
+    exact h.reach target entry (by omega) hentry
+  · intro target entry htarget hentry
+    exact h.picked target entry (by omega) hentry
+
+end CanonTrail
+
 /-- First-path sweep cleanup changes only `allsamelevel`. -/
 theorem firstFinish_firstlab (level size index : Nat) (st : SearchSt) :
     (firstFinish level size index st).firstlab = st.firstlab := by
+  rw [firstFinish]
+  split <;> rfl
+
+theorem firstFinish_canonlab (level size index : Nat) (st : SearchSt) :
+    (firstFinish level size index st).canonlab = st.canonlab := by
   rw [firstFinish]
   split <;> rfl
 
@@ -550,6 +603,17 @@ theorem terminalFirstProof {G : Colored n k} {ctx : Ctx}
         hrun.trailOk.picked target entry htarget hentry
       refine ⟨len, hcell, hoff, ?_⟩
       rw [firstterminal_firstlab]
+      exact hat
+  · rw [hstate]
+    constructor
+    · intro target entry htarget hentry
+      rw [firstterminal_canonlab]
+      exact hrun.trailOk.reach target entry htarget hentry
+    · intro target entry htarget hentry
+      obtain ⟨len, hcell, hoff, -, -, hat⟩ :=
+        hrun.trailOk.picked target entry htarget hentry
+      refine ⟨len, hcell, hoff, ?_⟩
+      rw [firstterminal_canonlab]
       exact hat
   · intro _
     rw [hstate]
@@ -817,7 +881,7 @@ theorem toNodeSome {G : Colored n k} {ctx : Ctx}
     FirstProof G ctx tcLevel nodeSpecFuel nodeRunFuel level nodeCs fs nodeSt
       out nodeNumcells outBest receiptTrail eventTrail r :=
   ⟨⟨h.loop.outcome.toNodeSome hbound, h.loop.fixed.trans hfixed⟩,
-    h.trail.lower, fun _ =>
+    h.trail.lower, h.canonTrail, fun _ =>
       Nat.le_trans (Nat.sub_le level 1) h.guideLevel⟩
 
 /-- A fully exhausted first-path loop supplies its enclosing node once
@@ -849,7 +913,7 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx}
       (Int.ofNat level - 1) :=
   ⟨⟨h.loop.outcome.toNodeNone hbound hchildren hlen hfuel,
       h.loop.fixed.trans hfixed⟩,
-    h.trail.lower, fun _ =>
+    h.trail.lower, h.canonTrail, fun _ =>
       Nat.le_trans (Nat.sub_le level 1) h.guideLevel⟩
 
 theorem reindexSet {G : Colored n k} {ctx : Ctx}
@@ -864,7 +928,7 @@ theorem reindexSet {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell' cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.loop.reindexSet, h.trail, h.guideLevel⟩
+  ⟨h.loop.reindexSet, h.trail, h.canonTrail, h.guideLevel⟩
 
 theorem step {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level tv : Nat}
@@ -879,7 +943,7 @@ theorem step {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel (loopFuel + 1) level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
       outBest receiptTrail eventTrail r :=
-  ⟨h.loop.step ha, h.trail, h.guideLevel⟩
+  ⟨h.loop.step ha, h.trail, h.canonTrail, h.guideLevel⟩
 
 theorem retrail {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -894,7 +958,7 @@ theorem retrail {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       dest eventTrail r :=
-  ⟨h.loop.retrail htrail, h.trail, h.guideLevel⟩
+  ⟨h.loop.retrail htrail, h.trail, h.canonTrail, h.guideLevel⟩
 
 theorem prepend {G : Colored n k} {ctx : Ctx}
     {tcLevel specFuel runFuel loopFuel level : Nat}
@@ -910,7 +974,7 @@ theorem prepend {G : Colored n k} {ctx : Ctx}
     FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
       fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
       receiptTrail eventTrail r :=
-  ⟨h.loop.prepend hfixed hpre, h.trail, h.guideLevel⟩
+  ⟨h.loop.prepend hfixed hpre, h.trail, h.canonTrail, h.guideLevel⟩
 
 end FirstLoopProof
 
@@ -1013,6 +1077,8 @@ theorem firstFinish {G : Colored n k} {ctx : Ctx}
       receiptTrail eventTrail r :=
   ⟨h.node.firstFinish hfuel,
     h.trail.retrail (firstFinish_firstlab level size index out)
+      (TrailExt.refl level eventTrail),
+    h.canonTrail.retrail (firstFinish_canonlab level size index out)
       (TrailExt.refl level eventTrail),
     fun hr => by
       rw [Nauty.firstFinish]
