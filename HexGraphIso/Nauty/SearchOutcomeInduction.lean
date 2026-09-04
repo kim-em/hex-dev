@@ -1057,6 +1057,13 @@ theorem recover_gcaCanon (n inf level : Nat) (st : SearchSt) :
   repeat' split
   all_goals rfl
 
+/-- Parent recovery leaves the one-shot short-prune request unchanged. -/
+theorem recover_needshortprune (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).needshortprune = st.needshortprune := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.needshortprune, ite_self]
+
 /-- Recovering a parent frame preserves both installed leaf references. -/
 theorem LeafRefsOk.recover {G : Colored n k} {n inf level : Nat}
     {st : SearchSt} (h : LeafRefsOk G st) :

@@ -150,6 +150,37 @@ theorem NodeOutcome.parentReturn {G : Colored n k} {ctx : Ctx}
       exact Or.inl full
   | exhausted empty => exact (hfuel empty).elim
 
+/-- A positive-fuel child that does not unwind past its parent returns
+exactly to that parent level. -/
+theorem NodeOutcome.parentEq {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells : Nat} {cs fs : List Nat}
+    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    {receiptTrail eventTrail : FrameTrail}
+    (h : NodeOutcome G ctx tcLevel specFuel runFuel (level + 1) cs fs st
+      out numcells best outBest receiptTrail eventTrail r)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level)) :
+    r = Int.ofNat level := by
+  cases h.receipt with
+  | complete sound returned installed read full =>
+      calc
+        r = Int.ofNat (level + 1) - 1 := returned
+        _ = Int.ofNat level := by simp
+  | unwind sound target returned below payload located =>
+      have hnot : ¬(Int.ofNat target < Int.ofNat level) := by
+        rwa [returned] at hstay
+      have hle : level ≤ target := Int.ofNat_le.mp (Int.not_lt.mp hnot)
+      have heq : target = level := by omega
+      exact returned.trans (congrArg Int.ofNat heq)
+  | pruned sound target returned below installed read full =>
+      have hnot : ¬(target < Int.ofNat level) := by
+        rwa [returned] at hstay
+      have heq : target = Int.ofNat level := by
+        rw [show Int.ofNat (level + 1) = Int.ofNat level + 1 by simp]
+          at below
+        omega
+      exact returned.trans heq
+  | exhausted empty => exact (hfuel empty).elim
+
 /-- An off-path node additionally leaves the first-path guide unchanged.
 It also preserves live guide ordering; unlike a first-path node, it never
 raises `gcaFirst` while returning through its child loop.  These are the

@@ -358,6 +358,121 @@ theorem refs {G : Colored n k} {ctx : Ctx}
       · rw [hcanonLab]
         exact hperm
 
+/-- An ordinary off-path child return with no requested pruning rebuilds
+the complete invariant for the recursive tail of the same sweep. -/
+theorem next {G : Colored n k} {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells tc len tcell tv offset
+      currentOffset inf : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
+    {cursor : Option Nat} {base st out : SearchSt}
+    {best outBest : Option Key} {trail eventTrail : FrameTrail} {r : Int}
+    (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
+      rsLab rsPtn tc len tcell cursor base st best trail)
+    (hlive : OtherLive ctx level st trail)
+    (h : OtherOutcome G ctx tcLevel specFuel runFuel (level + 1) codes fs
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+      out (numcells + 1) best outBest
+      (trail.push level
+        ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+      eventTrail r)
+    (hout : SearchOut G level (level + 1)
+      { st with
+        lab := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).1
+        ptn := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.1
+        active := (breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + currentOffset]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+      out)
+    (hinf : inf = n + 2) (hpath : codes.length = level)
+    (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level))
+    (hnext : nextElem tcell cursor = some tv)
+    (hoffset : offset < len) (hcurrent : currentOffset < len)
+    (htv : rsLab[tc + offset]! = tv)
+    (hat : st.lab[tc + currentOffset]! = tv)
+    (heq : ∀ o, o < len → rsLab[tc + o]! = tv →
+      sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
+        nodeKey ctx tcLevel specFuel (level + 1) codes
+          { st with
+            lab := (breakout st.lab st.ptn (level + 1) tc
+              st.lab[tc + currentOffset]!).1
+            ptn := (breakout st.lab st.ptn (level + 1) tc
+              st.lab[tc + currentOffset]!).2.1
+            active := (breakout st.lab st.ptn (level + 1) tc
+              st.lab[tc + currentOffset]!).2.2
+            fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+          (numcells + 1))
+    (hshort : out.needshortprune = false) :
+    let cleaned : SearchSt :=
+      { out with fixedpts := erase out.fixedpts tv }
+    let recovered := Nauty.recover ctx.n inf level cleaned
+    ∃ bs',
+      LoopInv G ctx tcLevel specFuel level codes bs' fs numcells rsLab rsPtn
+          tc len tcell (some tv) base recovered outBest eventTrail ∧
+        OtherLive ctx level recovered eventTrail := by
+  dsimp only
+  let child : SearchSt :=
+    { st with
+      lab := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).1
+      ptn := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).2.1
+      active := (breakout st.lab st.ptn (level + 1) tc
+        st.lab[tc + currentOffset]!).2.2
+      fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+  let cleaned : SearchSt := { out with fixedpts := erase out.fixedpts tv }
+  let recovered := Nauty.recover ctx.n inf level cleaned
+  have hreturn : r = Int.ofNat level := h.node.parentEq hfuel hstay
+  have hfirst : child.gcaFirst < level := by
+    change st.gcaFirst < level
+    exact hlive.firstBelow
+  have hcoverage := h.cover hinv hfuel hstay hnext hoffset htv hfirst heq
+  have hrecovered := hinv.recoverChild hinf hcurrent hout
+  have heffect : SearchOut G level level base recovered := by
+    simpa only [cleaned, recovered, hat] using hrecovered.1
+  have hok : SearchOk G level numcells recovered := by
+    simpa only [cleaned, recovered, hat] using hrecovered.2
+  have hinfLevel : level < inf := by
+    rw [hinf]
+    have hle : level ≤ n := Nat.le_trans hinv.run.searchOk.bc
+      (bcount_le st.ptn level n)
+    omega
+  obtain ⟨bs', hrun, hlive'⟩ := h.recover hreturn hpath hinv.positive
+    hinfLevel hfirst hok
+  have hrefs := h.refs hinv hlive hcoverage hfuel hnext hoffset hcurrent
+    htv hat (inf := inf) (fixedpts := erase out.fixedpts tv)
+  have hshort' : recovered.needshortprune = false := by
+    unfold recovered cleaned
+    rw [recover_needshortprune, hshort]
+  refine ⟨bs', ?_, hlive'⟩
+  exact {
+    nodeCount := hinv.nodeCount
+    nonempty := hinv.nonempty
+    positive := hinv.positive
+    baseOk := hinv.baseOk
+    run := hrun
+    effect := heffect
+    baseLab := hinv.baseLab
+    basePtn := hinv.basePtn
+    equitable := hinv.equitable
+    cell := hinv.cell
+    lenTwo := hinv.lenTwo
+    range := hinv.range
+    values := hinv.values
+    members := hinv.members
+    cover := hcoverage
+    refs := hrefs
+    shortClear := hshort'
+    fuelBound := hinv.fuelBound }
+
 end OtherOutcome
 
 /-- The bookkeeping between an off-path node's refinement and its fresh
