@@ -210,6 +210,177 @@ theorem firstFinish {G : Colored n k} {ctx : Ctx}
 
 end NodeProof
 
+namespace PathOk
+
+/-- Reindex path facts across a state update that changes none of the
+fields they mention. -/
+theorem stateEq {ctx : Ctx} {rootPtn rootLab : Array Nat}
+    {level : Nat} {st out : SearchSt}
+    (h : PathOk ctx rootPtn rootLab level st)
+    (hlab : out.lab = st.lab) (hptn : out.ptn = st.ptn)
+    (hfixed : out.fixedpts = st.fixedpts) :
+    PathOk ctx rootPtn rootLab level out := by
+  constructor
+  · intro v hv hm
+    rw [hfixed] at hm
+    obtain ⟨q, hq, hqv, hc⟩ := h.fixed v hv hm
+    exact ⟨q, hq, by simpa only [hlab] using hqv,
+      by simpa only [hptn] using hc⟩
+  · intro gamma hcheck hroot hfix
+    rw [hfixed] at hfix
+    simpa only [hlab, hptn] using h.stab gamma hcheck hroot hfix
+
+/-- Individualization extends path facts from any well-formed equitable
+parent frame.  This is the pre-incumbent analogue of `PathOk.breakout`,
+which obtains the same premises from a `LoopInv`. -/
+theorem individualize {ctx : Ctx} {rootPtn rootLab : Array Nat}
+    {level tc len o : Nat} {st : SearchSt}
+    (h : PathOk ctx rootPtn rootLab level st)
+    (hinj : LabInj st.lab ctx.n) (hlab : LabOk st.lab ctx.n)
+    (hsize : st.lab.size = ctx.n) (hpsize : st.ptn.size = ctx.n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level)
+    (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
+    (hrange : tc + len ≤ ctx.n) (ho : o < len)
+    (hvals : ∀ q : Nat, st.ptn[q]! ≠ level + 1) :
+    PathOk ctx rootPtn rootLab (level + 1)
+      { st with
+        lab := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).1
+        ptn := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.1
+        active := (Nauty.breakout st.lab st.ptn (level + 1) tc
+          st.lab[tc + o]!).2.2
+        fixedpts := insert st.fixedpts st.lab[tc + o]! } := by
+  constructor
+  · exact h.fixed.breakout hinj hsize hpsize hcell hlen hrange ho
+  · exact h.stab.breakout hcell (by rw [hpsize]; exact hrange)
+      (hsize.trans hpsize.symm) hlab ho hlen hend hvals
+
+end PathOk
+
+namespace FirstInv
+
+/-- The executable first-child prefix preserves and extends the root path
+facts before the first incumbent exists. -/
+theorem childPath {G : Colored n k} {ctx : Ctx}
+    {rootPtn rootLab : Array Nat}
+    {specFuel level numcells tc len o : Nat} {cs : List Nat}
+    {st : SearchSt} {trail : FrameTrail}
+    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hpath : level = cs.length + 1) (hlt : level < n)
+    (h : FirstInv G ctx level cs numcells st trail)
+    (hp : PathOk ctx rootPtn rootLab level st)
+    (hcell : IsCell
+      (refine ctx level st.lab st.ptn st.active numcells).ptn
+      level tc len)
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n) (ho : o < len) :
+    let r := refine ctx level st.lab st.ptn st.active numcells
+    let full := cs ++ [r.longcode]
+    let pre0 : SearchSt := { st with
+      lab := r.lab
+      ptn := r.ptn
+      active := r.active
+      firstcode := st.firstcode.set! level r.longcode
+      firsttc := st.firsttc.set! level (Int.ofNat tc)
+      numnodes := st.numnodes + 1
+      tctotal := st.tctotal + len }
+    let pre := if pre0.noncheaplevel ≥ level ∧
+        ¬ cheapautom pre0.ptn level ctx.n then
+      { pre0 with noncheaplevel := level + 1 }
+    else pre0
+    let child : SearchSt := { pre with
+      lab := (Nauty.breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).1
+      ptn := (Nauty.breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.1
+      active := (Nauty.breakout pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.2
+      fixedpts := insert pre.fixedpts pre.lab[tc + o]!
+      cosetindex := pre.lab[tc + o]! }
+    PathOk ctx rootPtn rootLab (level + 1) child := by
+  subst n
+  dsimp only
+  let r := refine ctx level st.lab st.ptn st.active numcells
+  let refined : SearchSt := { st with
+    lab := r.lab, ptn := r.ptn, active := r.active }
+  let pre0 : SearchSt := { st with
+    lab := r.lab
+    ptn := r.ptn
+    active := r.active
+    firstcode := st.firstcode.set! level r.longcode
+    firsttc := st.firsttc.set! level (Int.ofNat tc)
+    numnodes := st.numnodes + 1
+    tctotal := st.tctotal + len }
+  let pre := if pre0.noncheaplevel ≥ level ∧
+      ¬ cheapautom pre0.ptn level ctx.n then
+    { pre0 with noncheaplevel := level + 1 }
+  else pre0
+  let child : SearchSt := { pre with
+    lab := (Nauty.breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).1
+    ptn := (Nauty.breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).2.1
+    active := (Nauty.breakout pre.lab pre.ptn (level + 1) tc
+      pre.lab[tc + o]!).2.2
+    fixedpts := insert pre.fixedpts pre.lab[tc + o]!
+    cosetindex := pre.lab[tc + o]! }
+  have hlevel : 1 ≤ level := by omega
+  have href := h.refined rfl hg hn0 hlevel
+  have hpRefined : PathOk ctx rootPtn rootLab level refined := by
+    exact hp.refine rfl hn0 hlevel (by rw [hg]; exact size_rowsOf G)
+      h.searchOk h.activeLt h.activeStarts
+  have hpreLab : pre.lab = r.lab := by unfold pre pre0; split <;> rfl
+  have hprePtn : pre.ptn = r.ptn := by unfold pre pre0; split <;> rfl
+  have hpreFixed : pre.fixedpts = st.fixedpts := by
+    unfold pre pre0
+    split <;> rfl
+  have hpPre : PathOk ctx rootPtn rootLab level pre := by
+    apply hpRefined.stateEq
+    · simpa only [refined] using hpreLab
+    · simpa only [refined] using hprePtn
+    · simpa only [refined] using hpreFixed
+  have hpreSize : pre.lab.size = ctx.n := by
+    rw [hpreLab]
+    exact href.1.ok.labSize
+  have hprePsize : pre.ptn.size = ctx.n := by
+    rw [hprePtn]
+    exact href.1.ok.ptnSize
+  have hpreLabOk : LabOk pre.lab ctx.n := by
+    rw [hpreLab]
+    exact href.1.ok.labOk
+  have hpreInj : LabInj pre.lab ctx.n := by
+    rw [hpreLab]
+    exact href.1.inj
+  have hpreEnd : pre.ptn[pre.ptn.size - 1]! ≤ level := by
+    rw [hprePtn]
+    exact href.1.ok.ptnEnd
+  have hpreCell : IsCell pre.ptn level tc len := by
+    rw [hprePtn]
+    exact hcell
+  have hvals : ∀ q : Nat, pre.ptn[q]! ≠ level + 1 := by
+    intro q heq
+    rw [hprePtn] at heq
+    change (refine ctx level st.lab st.ptn st.active
+      numcells).ptn[q]! = level + 1 at heq
+    rcases Decidable.em (q < ctx.n) with hq | hq
+    · rcases href.1.valsWeak q hq with hle | hgt <;> omega
+    · have hqsize : ¬q < (refine ctx level st.lab st.ptn st.active
+          numcells).ptn.size := by
+        rw [href.1.ok.ptnSize]
+        exact hq
+      rw [getElem!_neg
+        (refine ctx level st.lab st.ptn st.active numcells).ptn q hqsize]
+        at heq
+      simp at heq
+  have hpChild := hpPre.individualize hpreInj hpreLabOk hpreSize
+    hprePsize hpreEnd hpreCell hlen hrange ho hvals
+  apply hpChild.stateEq
+  · rfl
+  · rfl
+  · rfl
+
+end FirstInv
+
 namespace OtherProof
 
 theorem node {G : Colored n k} {ctx : Ctx}
