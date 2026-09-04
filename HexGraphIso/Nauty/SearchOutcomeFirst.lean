@@ -47,6 +47,7 @@ structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
   workspace : WorkspaceOk st
   canongSize : st.canong.size = ctx.n
   orbitId : ∀ v, v < ctx.n → st.orbits[v]! = v
+  shortClear : st.needshortprune = false
 
 /-- A nonempty root starts the first descent with empty stores, identity
 orbits, and no active ancestor frame. -/
@@ -57,7 +58,7 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
       FrameTrail.empty := by
   have hok := root_searchOk G hn0
   refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_, ?_, ?_,
-    TrailOk.empty _ _ _, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    TrailOk.empty _ _ _, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact CheapOk.root rfl hn0 hok (by simp [rootSt])
   · simpa only [rootSt] using certInv_initial G hn0
   · simpa only [rootSt] using (initial_nodeOk G hn0).act
@@ -71,6 +72,7 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
   · intro v hv
     change (Array.ofFn (n := n) fun i : Fin n => i.val)[v]! = v
     rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
+  · simp [rootSt]
 
 /-- Refining a first-descent node produces the well-formed equitable
 state from which either the first leaf or the next child is selected. -/
@@ -330,7 +332,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
           pre.lab[tc + o]!
     simpa only [hpreLab, hprePtn] using hpush
   refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, ?_, htrail, ?_, ?_, ?_,
-    ?_, ?_, ?_⟩
+    ?_, ?_, ?_, ?_⟩
   · apply h.codes.next
     · change child.firstcode =
         st.firstcode.set! (cs.length + 1) r.longcode
@@ -394,6 +396,9 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
   · intro v hv
     rw [show child.orbits = pre.orbits by rfl, hpreOrbits]
     exact h.orbitId v hv
+  · change pre.needshortprune = false
+    unfold pre pre0
+    split <;> exact h.shortClear
 
 /-- Reaching a discrete node installs the first leaf and enters the stable
 post-incumbent invariant. -/

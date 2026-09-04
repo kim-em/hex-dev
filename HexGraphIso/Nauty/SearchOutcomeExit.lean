@@ -90,6 +90,21 @@ theorem setFixed {G : Colored n k} {ctx : Ctx} {out : SearchSt}
   | implicit target returned below back root =>
       exact .implicit target returned below back root
 
+/-- The final first-path counter adjustment changes none of the fields
+used by a live short-prune source. -/
+theorem firstFinish {G : Colored n k} {ctx : Ctx} {out : SearchSt}
+    {trail : FrameTrail} {r : Int} {level size index : Nat}
+    (h : ShortSource G ctx out trail r) :
+    ShortSource G ctx (Nauty.firstFinish level size index out) trail r := by
+  rw [Nauty.firstFinish]
+  split
+  · cases h with
+    | explicit target fix mcr returned back valid =>
+        exact .explicit target fix mcr returned back valid
+    | implicit target returned below back root =>
+        exact .implicit target returned below back root
+  · exact h
+
 end ShortSource
 
 namespace NodeExit
@@ -116,6 +131,37 @@ theorem below {ctx : Ctx} {tcLevel specFuel runFuel level numcells : Nat}
   | exhausted returned state incumbent emptyFuel =>
       rw [returned]
       exact Int.natCast_pos.mpr hlevel
+
+/-- The final first-path counter adjustment preserves every corrected node
+exit, including the payload of a located unwind. -/
+theorem firstFinish {ctx : Ctx}
+    {tcLevel specFuel runFuel level numcells size index : Nat}
+    {codes : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {trail : FrameTrail} {r : Int}
+    (hfuel : runFuel ≠ 0)
+    (h : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
+      best outBest trail r) :
+    NodeExit ctx tcLevel specFuel runFuel level codes st
+      (Nauty.firstFinish level size index out) numcells best outBest trail
+      r := by
+  cases h with
+  | done returned exact => exact .done returned exact
+  | unwind target returned below sound payload located =>
+      exact .unwind target returned below sound payload.firstFinish
+        located.firstFinish
+  | frozen below exact freeze =>
+      apply NodeExit.frozen below exact
+      rw [Nauty.firstFinish]
+      split
+      · cases freeze with
+        | mk current cs bs codeInv depth stemEq installed incumbent floor =>
+            exact .mk current cs bs codeInv depth stemEq installed incumbent
+              floor
+      · exact freeze
+  | cheap boundary returned positive atOrAbove exact =>
+      exact .cheap boundary returned positive atOrAbove exact
+  | exhausted returned state incumbent emptyFuel =>
+      exact (hfuel emptyFuel).elim
 
 end NodeExit
 

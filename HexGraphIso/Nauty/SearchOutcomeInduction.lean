@@ -962,6 +962,15 @@ theorem firstterminal_state (level : Nat) (st : SearchSt) :
   simp only [Id.run_bind, Id.run_pure]
   simp
 
+/-- Neither first-leaf preparation nor installation raises a short-prune
+request. -/
+theorem firstterminal_short (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (firstterminal level (firstLeafSt ctx level numcells st)).needshortprune =
+      st.needshortprune := by
+  rw [firstterminal, firstLeafSt]
+  simp only [Id.run_bind, Id.run_pure]
+
 /-- Installing the first leaf preserves the search skeleton and records a
 reached canonical labelling. -/
 theorem SearchOk.firstterminal {G : Colored n k} {level numcells : Nat}
