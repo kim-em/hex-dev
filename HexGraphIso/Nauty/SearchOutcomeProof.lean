@@ -244,6 +244,63 @@ theorem otherNode_leaf_early (ctx : Ctx)
   rw [ite_eq_right (by omega), ite_eq_left hearly]
   rfl
 
+/-- The comparison-blind cleanup performed when a leaf event does not
+request an early unwind. -/
+@[expose] def leafFinish (ctx : Ctx) (level : Nat)
+    (st : SearchSt) : SearchSt :=
+  let st := if st.needshortprune then
+      { st with needshortprune := false }
+    else st
+  if ¬ cheapautom st.ptn level ctx.n then
+    { st with noncheaplevel := level + 1 }
+  else st
+
+/-- A discrete off-path leaf that does not unwind runs the empty child
+sweep and returns ordinary node completion. -/
+theorem otherNode_leaf_done_state (ctx : Ctx)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdone : ¬((processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)) :
+    otherNode ctx inf tcLevel (fuel + 1) level numcells st =
+      (Int.ofNat level - 1, leafFinish ctx level
+        (processnode ctx level ctx.n
+          (otherLeafSt ctx level numcells st)).2) := by
+  unfold otherLeafSt at hdone ⊢
+  rw [otherNode]
+  simp only [hnum]
+  rw [ite_eq_right (by omega), ite_eq_right hdone]
+  have hzsub : ∀ st' : SearchSt, shortprune 0 st' = 0 := by
+    intro st'
+    rw [shortprune]
+    rcases hb : st'.autos.back? with _ | pair
+    · rfl
+    · exact Nat.zero_and pair.2
+  generalize hPR : (processnode ctx level ctx.n
+    (otherNodePrep level (refine ctx level st.lab st.ptn st.active
+      numcells).longcode
+      { st with
+        lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+        ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+        active := (refine ctx level st.lab st.ptn st.active numcells).active
+        numnodes := st.numnodes + 1 })).2 = PR
+  rcases hshort : PR.needshortprune with _ | _
+  · simp only [hshort, Bool.false_eq_true, ite_false, leafFinish]
+    rcases hcheap : cheapautom PR.ptn level ctx.n with _ | _
+    · simp only [Bool.false_eq_true, not_false_eq_true,
+        ite_true, nextElem, Int.reduceToNat,
+        otherChildLoop, Id.run_pure]
+    · simp only [not_true_eq_false, ite_false, ite_true, nextElem,
+        Int.reduceToNat, otherChildLoop, Id.run_pure]
+  · simp only [hshort, ite_true, hzsub, leafFinish]
+    rcases hcheap : cheapautom PR.ptn level ctx.n with _ | _
+    · simp only [Bool.false_eq_true, not_false_eq_true,
+        ite_true, nextElem, Int.reduceToNat,
+        otherChildLoop, Id.run_pure]
+    · simp only [not_true_eq_false, ite_false, ite_true, nextElem,
+        Int.reduceToNat, otherChildLoop, Id.run_pure]
+
 /-- The maximum of two installed leaf keys still has a nonempty path. -/
 theorem incKey_max_nonempty {ctx : Ctx} {bs cs bs' : List Nat}
     {canonlab canonlab' lab : Array Nat} (hbs : bs ≠ [])
@@ -414,6 +471,97 @@ theorem otherNode_leaf_pruned {ctx : Ctx} {nn inf tcLevel specFuel fuel
   · exact hearly
   · exact canonlevel_ne_zero_of_stInc hread
   · simpa only [leaf] using hread
+  · rw [incMax, hnode]
+
+/-- Leaf cleanup changes no field used to read the incumbent. -/
+theorem stInc_leafFinish (ctx : Ctx) (level : Nat) (st : SearchSt) :
+    stInc ctx (leafFinish ctx level st) = stInc ctx st := by
+  rw [leafFinish]
+  split <;> split <;> rfl
+
+/-- The complementary off-path leaf case completes after its empty child
+sweep, retaining the exact leaf maximum installed by `processnode`. -/
+theorem otherNode_leaf_complete {ctx : Ctx} {nn inf tcLevel specFuel fuel
+    level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+    (hlevel : level = cs.length + 1) (hlevelN : level ≤ nn)
+    (hbs : bs ≠ [])
+    (hnum : (refine ctx level st.lab st.ptn st.active
+      numcells).numcells = ctx.n)
+    (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
+      numcells).ptn level ctx.n = true)
+    (hcinv : CodeCmpInv nn
+      (cs ++ [(refine ctx level st.lab st.ptn st.active
+        numcells).longcode]) bs
+      (otherLeafSt ctx level numcells st).canoncode
+      (otherLeafSt ctx level numcells st).canonlevel
+      (otherLeafSt ctx level numcells st).eqlevCanon
+      (otherLeafSt ctx level numcells st).compCanon)
+    (hginv : CanongInv ctx (otherLeafSt ctx level numcells st).canong
+      (otherLeafSt ctx level numcells st).canonlab
+      (otherLeafSt ctx level numcells st).samerows)
+    (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
+      true))
+    (hdone : ¬((processnode ctx level ctx.n
+      (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)) :
+    NodeResult ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
+      numcells (some (incKey ctx bs st.canonlab))
+      (some (keyMax (incKey ctx bs st.canonlab)
+        (pathLeafKey ctx
+          (cs ++ [(refine ctx level st.lab st.ptn st.active
+            numcells).longcode])
+          (refine ctx level st.lab st.ptn st.active numcells).lab)))
+      (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
+  rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st
+    hnum hdone]
+  let code := (refine ctx level st.lab st.ptn st.active numcells).longcode
+  let full := cs ++ [code]
+  let pre : SearchSt :=
+    { st with
+      lab := (refine ctx level st.lab st.ptn st.active numcells).lab
+      ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
+      active := (refine ctx level st.lab st.ptn st.active numcells).active
+      numnodes := st.numnodes + 1 }
+  let leaf := otherLeafSt ctx level numcells st
+  have hfullLen : full.length = level := by
+    simp only [full, List.length_append, List.length_singleton]
+    omega
+  have hfullNe : full ≠ [] := by
+    intro he
+    have hl := congrArg List.length he
+    simp only [full, List.length_append, List.length_singleton,
+      List.length_nil] at hl
+    omega
+  have hleaf := processnode_leaf_read (ctx := ctx) (nn := nn)
+    (cs := full) (bs := bs) (numcells := ctx.n) (st := leaf)
+    (by simpa only [full, code, leaf] using hcinv) hginv
+    (by rw [hfullLen]; exact hlevelN) hbs hfullNe
+    (by simpa only [hfullLen, leaf] using hef) (by simp)
+  obtain ⟨_, hread, _, _, _⟩ := hleaf
+  have hframes := otherNodePrep_frames level code pre
+  rcases hframes with
+    ⟨hcanon, _, _, _, _, _, _, _, _, _, _, hlab, _⟩
+  have hleafCanon : leaf.canonlab = st.canonlab := by
+    change (otherNodePrep level code pre).canonlab = st.canonlab
+    rw [hcanon]
+  have hleafLab : leaf.lab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    change (otherNodePrep level code pre).lab = _
+    rw [hlab]
+  rw [hfullLen, hleafCanon, hleafLab] at hread
+  have hfinish := (stInc_leafFinish ctx level
+    (processnode ctx level ctx.n leaf).2).trans hread
+  have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
+      pathLeafKey ctx full
+        (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    unfold nodeKey
+    rw [specNode_discrete hdisc, prefixKey_leafKey]
+  apply NodeResult.complete
+  · apply NodeSound.ofExact
+    rw [incMax, hnode]
+  · rfl
+  · exact canonlevel_ne_zero_of_stInc hfinish
+  · simpa only [leaf] using hfinish
   · rw [incMax, hnode]
 
 /-- A first-path node with no runtime fuel reports exhaustion. -/
