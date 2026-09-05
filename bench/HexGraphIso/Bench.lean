@@ -49,6 +49,20 @@ comparator register as fixed benchmarks on committed circulant sizes:
 * `runCanonAgree16`: the agreement check joining the two comparator
   columns — `verify` fails if the public canonical bits ever diverge
   from pinned nauty's.
+* `runAutGens{12,16}`, `runAutOrbits{12,16}`: the automorphism
+  generator list and the vertex orbits, the cheap projections of the
+  automorphism surface — one traversal each.
+* `runAutOrder{12,16}`: the whole `autos` surface including the
+  orbit-stabilizer chain for the group order, which runs one further
+  traversal per base point; the gap against `runAutGens` is the price
+  of the order.
+* `runAutSound16`: the agreement check on the automorphism surface —
+  `verify` fails if any returned generator is not accepted by
+  `checkIso` against the graph itself, or if the orbit array is not
+  constant on the orbits it records. The comparison against pinned
+  nauty's own generator list, orbits and `grpsize` lives in
+  conformance (`scripts/oracle/graphiso_nauty.py`), which has the
+  external nauty to compare with.
 -/
 
 namespace Hex.GraphIsoBench
@@ -221,6 +235,46 @@ def runCertReplay12 : Unit → IO String := fun _ =>
     | none => return "certify-failed"
   | none => return ""
 
+private def runAutGensAt (m : Nat) (_ : Unit) : IO Nat :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return (Aut.gens G).length
+  | none => return 0
+
+private def runAutOrbitsAt (m : Nat) (_ : Unit) : IO Nat :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return Aut.numOrbits G
+  | none => return 0
+
+private def runAutOrderAt (m : Nat) (_ : Unit) : IO Nat :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return (autos G).order
+  | none => return 0
+
+def runAutGens12 : Unit → IO Nat := runAutGensAt 12
+def runAutGens16 : Unit → IO Nat := runAutGensAt 16
+def runAutOrbits12 : Unit → IO Nat := runAutOrbitsAt 12
+def runAutOrbits16 : Unit → IO Nat := runAutOrbitsAt 16
+def runAutOrder12 : Unit → IO Nat := runAutOrderAt 12
+def runAutOrder16 : Unit → IO Nat := runAutOrderAt 16
+
+/-- The automorphism-surface agreement check: `verify` fails if a
+returned generator is not an automorphism, or if the orbit array is
+not constant on the orbits it records. -/
+def runAutSound16 : Unit → IO Nat := fun _ => do
+  match graphOf { n := 16 } with
+  | some ⟨m, G⟩ =>
+    let a := autos G
+    for p in a.gens do
+      unless checkIso G G p do
+        throw (IO.userError "a reported generator is not an automorphism")
+    unless a.orbits.size == m do
+      throw (IO.userError "the orbit array has the wrong length")
+    for v in [0 : m] do
+      unless a.orbits[a.orbits[v]!]! == a.orbits[v]! do
+        throw (IO.userError "the orbit array is not a fixed point of itself")
+    return a.order
+  | none => return 0
+
 /-- The comparator agreement check: `verify` fails if the public
 canonical bits ever diverge from pinned nauty's. -/
 def runCanonAgree16 : Unit → IO String := fun _ => do
@@ -256,6 +310,13 @@ setup_fixed_benchmark runFindIso12 where hexComparisonConfig
 setup_fixed_benchmark runCertify12 where hexComparisonConfig
 setup_fixed_benchmark runCertReplay12 where hexComparisonConfig
 setup_fixed_benchmark runCanonAgree16 where externalComparisonConfig
+setup_fixed_benchmark runAutGens12 where hexComparisonConfig
+setup_fixed_benchmark runAutGens16 where hexComparisonConfig
+setup_fixed_benchmark runAutOrbits12 where hexComparisonConfig
+setup_fixed_benchmark runAutOrbits16 where hexComparisonConfig
+setup_fixed_benchmark runAutOrder12 where hexComparisonConfig
+setup_fixed_benchmark runAutOrder16 where hexComparisonConfig
+setup_fixed_benchmark runAutSound16 where hexComparisonConfig
 
 end Hex.GraphIsoBench
 

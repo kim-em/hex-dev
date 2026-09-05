@@ -22,6 +22,8 @@ The first release supports:
 - uncoloured graphs and ordered surjective vertex colours;
 - graphs whose source and target vertex types differ;
 - positive isomorphism goals and negative non-isomorphism goals;
+- automorphism generators, vertex orbits and the group order, decoded to
+  colour-preserving self-isomorphisms;
 - closed ground terms whose finite enumeration and adjacency decisions can be
   checked by kernel reduction.
 
@@ -148,6 +150,20 @@ The library also proves:
 - unequal ordered cell-size vectors imply coloured non-isomorphism;
 - equality of encoded canonical forms is independent of the chosen finite
   enumerations.
+
+The automorphism surface crosses the same encoding. `autos` decodes the
+generators the pinned search discovers into a list of `Colored.Iso G G`
+values, one per generator, each an automorphism by the Mathlib-free
+`Hex.GraphIso.autos_isIso` composed with the decoder; `sameOrbit_of_autos`
+turns two vertices sharing an orbit representative into a
+colour-preserving self-isomorphism carrying one to the other. `autOrder`
+and `autNumOrbits` report the group order and the orbit count. Those two
+are computed numbers rather than theorems, for the reason given in
+[the Mathlib-free SPEC](../../HexGraphIso/SPEC/hex-graph-iso.md#automorphism-generators):
+that the returned generators generate the whole automorphism group is
+not proved, so nothing here states that `autOrder` is the cardinality of
+the automorphism group of the `SimpleGraph`. That statement, and a tactic
+producing it, follow the generation theorem rather than preceding it.
 
 These are ordinary theorems, not classical choice definitions hidden behind
 an executable-looking name. The compiled algorithm remains the one in

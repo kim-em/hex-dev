@@ -177,6 +177,46 @@ theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
       map_color := fun v => ?_ })
   rfl
 
+/-! # Automorphisms -/
+
+/-- The automorphism generators the pinned search discovers, decoded as
+colour-preserving self-isomorphisms of the Mathlib graph. Each entry is
+an automorphism by `Hex.GraphIso.autos_isIso`, decoded by
+`isoOfIsIso`; whether the list generates the whole automorphism group
+is not proved, so this is a source of automorphisms rather than a
+presentation of the group. -/
+def autos (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
+    List (Colored.Iso G G) :=
+  (_root_.Hex.GraphIso.autos (encode e G)).gens.attach.map fun p =>
+    isoOfIsIso e e (_root_.Hex.GraphIso.autos_isIso p.property)
+
+/-- The order of the colour-preserving automorphism group, as the
+orbit-stabilizer chain of the pinned search computes it. Conformance
+pins it against nauty's `grpsize`; no theorem states it, because that
+would need the generators to generate the whole group. -/
+def autOrder (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
+    Nat :=
+  (_root_.Hex.GraphIso.autos (encode e G)).order
+
+/-- The number of vertex orbits the pinned search reports, under the
+same caveat as `autOrder`. -/
+def autNumOrbits (e : V ≃ Fin n) (G : Colored V k)
+    [DecidableRel G.graph.Adj] : Nat :=
+  (_root_.Hex.GraphIso.autos (encode e G)).numOrbits
+
+/-- Vertices the reported orbit array puts together are carried onto
+each other by a colour-preserving automorphism. -/
+theorem sameOrbit_of_autos (e : V ≃ Fin n) (G : Colored V k)
+    [DecidableRel G.graph.Adj] (v w : V)
+    (h : (_root_.Hex.GraphIso.autos (encode e G)).orbits[(e v).val]! =
+      (_root_.Hex.GraphIso.autos (encode e G)).orbits[(e w).val]!) :
+    ∃ f : Colored.Iso G G, f.graphIso v = w := by
+  rcases (_root_.Hex.GraphIso.autos_sameOrbit (encode e G) (e v) (e w) h).elim
+    with ⟨p, hp, hpv⟩
+  refine ⟨isoOfIsIso e e hp, ?_⟩
+  show e.symm (p.get (e v)) = w
+  rw [hpv, Equiv.symm_apply_apply]
+
 /-! # Cardinality and cell-size obstructions -/
 
 /-- Unequal vertex cardinalities forbid any graph isomorphism. -/

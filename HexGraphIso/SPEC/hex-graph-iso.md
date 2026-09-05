@@ -38,15 +38,18 @@ The first release includes:
 - a budgeted canonical-form operation;
 - a Boolean isomorphism decision and one isomorphism when one exists;
 - positive and negative certificate checking;
+- the automorphism generators the pinned traversal discovers, with the
+  vertex orbits, the orbit count and the group order;
 - the Mathlib-free `graph_iso` tactic for closed executable graphs;
 - exact compatibility with the pinned dense nauty configuration below.
 
 The first release does not include directed graphs, loops, parallel edges,
-sparse-nauty compatibility, Traces, user vertex invariants, or a public
-permutation-group implementation. It may discover automorphisms internally
-for pruning, but it makes no claim that the discovered automorphisms generate
-the complete automorphism group. Complete generators, stabilizer chains, and
-explicit isomorphism cosets are later work.
+sparse-nauty compatibility, Traces, user vertex invariants, or a general
+permutation-group implementation. Every returned generator is proved to be
+an automorphism, and the orbit array is proved sound, but the release makes
+no claim that the returned generators generate the complete automorphism
+group; see [Automorphism generators](#automorphism-generators). Stabilizer
+chains and explicit isomorphism cosets are later work.
 
 Worst-case canonical labelling remains exponential or factorial. No API in
 this library claims a polynomial bound for arbitrary graphs.
@@ -273,6 +276,97 @@ theorem none_sound (search : SearchLimits)
 end FindIso
 ```
 
+## Automorphism generators
+
+The search discovers automorphisms as it runs: the generator trace
+drives its own automorphism pruning and is recorded unconditionally.
+That list is a supported output.
+
+```lean
+structure AutResult (n : Nat) where
+  gens : List (Perm n)
+  orbits : Array Nat
+  numOrbits : Nat
+  order : Nat
+
+def autos (G : Colored n k) : AutResult n
+```
+
+`gens` is the traversal's own generator list in discovery order: the
+`workperm` the pinned search records at each code-1 and code-2 leaf,
+rebuilt as a `Perm n` and kept only after `checkIso` accepts it.
+Because the transcription replays nauty's traversal exactly, the list
+is deterministic and conformance-pinnable, not merely the group it
+generates. `orbits` is the vertex-orbit array `orbjoin` builds from
+those generators, which is the array nauty reports; every entry is the
+representative of its orbit, and `numOrbits` counts the
+representatives. `order` is the order of the automorphism group,
+computed by the orbit-stabilizer chain: individualize a vertex of a
+non-singleton orbit, whose stabilizer is the colour-preserving
+automorphism group of the individualized colouring, recurse on that,
+and multiply the orbit lengths.
+
+The four fields are also available on their own, in the `Aut`
+namespace: `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order`,
+with `Aut.trace` the unchecked recorded list they start from. A caller
+who wants only the generators takes `Aut.gens`, which runs one
+traversal; `autos` computes `order` as well, and that runs one further
+traversal per base point.
+
+The relation the orbit array reports:
+
+```lean
+def SameOrbit (G : Colored n k) (u v : Fin n) : Prop :=
+  Exists fun p => And (IsIso G G p) (p u = v)
+```
+
+The required theorems:
+
+```lean
+theorem autos_isIso (G : Colored n k) (p : Perm n) :
+    p ∈ (autos G).gens -> IsIso G G p
+
+theorem size_autos_orbits (G : Colored n k) :
+    (autos G).orbits.size = n
+
+theorem autos_orbits_lt (G : Colored n k) (v : Nat) :
+    v < n -> (autos G).orbits[v]! < n
+
+theorem autos_sameOrbit (G : Colored n k) (u v : Fin n) :
+    (autos G).orbits[u]! = (autos G).orbits[v]! -> SameOrbit G u v
+```
+
+Membership belongs to the checker, not to the producer. `autom?`
+rebuilds each recorded array as a permutation of `Fin n` and runs the
+same `checkIso` the isomorphism surface uses, against the graph and
+itself, so a producer defect can only lose a generator and never admit
+a non-automorphism. Orbit soundness descends from the search's own
+orbit bookkeeping (`Nauty.orbjoin_orbConn`): every parent pointer is
+justified by a forward word over the checked generators, and a word of
+automorphisms composes to an automorphism.
+
+Generation is a further contract, and it is not yet proved. The
+intended statement is that the returned set generates the whole
+automorphism group, so that no automorphism lies outside the group it
+generates, distinct orbit representatives really are distinct orbits,
+and `order` really is the order of the automorphism group rather than
+of a subgroup. That direction is a counting argument: a verified
+orbit-stabilizer chain for the returned set establishes the exact
+order of the group it generates, and the matching count of the full
+automorphism group comes from the search's leaf and orbit accounting,
+so membership gives a subgroup and equal cardinality gives equality.
+Until that argument is in place, `numOrbits` and `order` stand exactly
+where the search counters stand: conformance-pinned observables, which
+the external nauty oracle compares exactly on every automorphism
+fixture and which no Lean theorem states.
+
+A tactic for automorphism goals waits on the same argument. Proving a
+given permutation is an automorphism needs nothing beyond `checkIso`,
+but a stated group-order fact, and its Mathlib counterpart about the
+order of the automorphism group of a `SimpleGraph`, is exactly the
+statement generation supplies, so the goal forms are settled here and
+the tactic follows the theorem.
+
 ## The uncoloured surface
 
 Colours are the general input, but most callers hold a bare `Graph n`.
@@ -289,6 +383,20 @@ def Graph.IsIso (G H : Graph n) (p : Perm n) : Prop :=
 def Graph.Isomorphic (G H : Graph n) : Prop :=
   Exists fun p => Graph.IsIso G H p
 ```
+
+The automorphism surface is mirrored too, with the same guarantees
+transported along the one-cell correspondence:
+
+```lean
+def Graph.SameOrbit (G : Graph n) (u v : Fin n) : Prop :=
+  Exists fun p => And (Graph.IsIso G G p) (p u = v)
+
+def Graph.autos (G : Graph n) (h : 0 < n) : AutResult n
+```
+
+with `Graph.autos_isIso`, `Graph.size_autos_orbits`,
+`Graph.autos_orbits_lt` and `Graph.autos_sameOrbit` the uncoloured
+readings of the four coloured theorems.
 
 `n = 0` forces `k = 0`, so `Graph.singleColor` and every operation
 below take `0 < n`. The hypothesis is an auto-parameter discharged by
@@ -751,6 +859,21 @@ isomorphic to either edge-marked colouring. This is the manual's compact
 illustration that ordered colours constrain isomorphisms and are not merely
 refinement hints.
 
+The chapter also works the automorphism surface on the two examples it
+already has. On the Petersen graph it evaluates `Graph.autos` and reports
+the generator list, the single vertex orbit, and the group order 120,
+reusing the family generators the chapter defines rather than introducing
+a new graph, and it checks one returned generator against
+`Graph.autos_isIso` so the reader sees the theorem and not only the
+number. On the Latin-square encoding it evaluates `autos` on the coloured
+incidence graph, where the automorphism group is the isotopy group of the
+square, so the generators are the row, column and symbol permutations of
+the isotopy the reader has already met; the chapter says which is which
+and reports the group order. Both examples state, where the number is
+used, that the orbit count and the group order are conformance-pinned
+against nauty rather than theorems, per
+[Automorphism generators](#automorphism-generators).
+
 All constructors used by the chapter are ordinary Lean definitions in the
 chapter or public graph operations. The example is compiled with the manual,
 records explicit logical limits, and does not depend on an external nauty
@@ -862,7 +985,27 @@ on every input. Content, in order:
    automorphisms, orbit pruning, short-prune), each with one or two
    sentences on the idea, and the statement that every one preserves
    the selected form and label, so none is part of the specification.
-7. Scope. The function specified is dense nauty 2.9.3 under the pinned
+7. The automorphism output. This is a second output of the same
+   traversal and is specified to the same level of output-relevant
+   detail as the canonical form. Which automorphisms are emitted: at a
+   leaf whose refinement codes agree with the first leaf's along the
+   whole path, the permutation carrying the first leaf's labelling
+   onto this one, when it is an automorphism; and at a leaf tying the
+   best-so-far leaf, the permutation carrying the best labelling onto
+   this one. In what order: discovery order along the traversal, which
+   the pruning rules of item 6 determine, so the list is a function of
+   the input and not only of the group. How the orbits are derived:
+   one union-find array over the vertices, initialized to the identity
+   and joined with each emitted permutation in turn, with every entry
+   compressed to its orbit representative at the end of each join; the
+   orbit count is the number of vertices that represent themselves.
+   How the group order is derived: the orbit-stabilizer chain, whose
+   stabilizers are read off the same traversal run on the colouring
+   that individualizes one vertex of a non-singleton orbit. The
+   difference between the emitted list and the recorded list, that
+   nauty suppresses a tie-leaf automorphism which does not grow the
+   orbit partition, is stated here because it is output-relevant.
+8. Scope. The function specified is dense nauty 2.9.3 under the pinned
    option block, restated or summarized inline (a manual chapter
    cannot assume the reader has this SPEC). Sparse nauty and Traces
    compute different canonical forms, so "nauty's canonical form"
@@ -898,6 +1041,9 @@ The anchor declarations, by part-one concept (all in the
 | production entry point | `canonicalize?`, public `canonicalize` |
 | canonical-form theorems | `specCanon_iso`, `specCanon_invariant`, `iso_iff_specCanon_eq` |
 | checked results equal the spec | `checkCanon_form` |
+| recorded automorphisms | `SearchSt.genTrace`, `processnode`, `orbjoin` |
+| automorphism output | `Aut.trace`, `autom?`, public `autos` |
+| orbit soundness | `OrbConn`, `orbjoin_orbConn`, `Aut.orbSound` |
 
 If a listed declaration is renamed or refactored, the chapter follows
 the code. The table above records the anchors at the time of writing,
@@ -1003,6 +1149,30 @@ computes and compares:
 - ordered colour-cell sizes;
 - the canonical upper-triangle adjacency bits;
 - every entry of `canonlab`.
+
+A second record kind, `graphisoautos`, pins the automorphism surface. It
+carries the original graph and colour vector, the recorded generator list,
+the generator count the transcribed search reports, the orbit array, the
+orbit count and the group order. The shim collects nauty's own generators
+through `options.userautomproc`, so the comparison is against the
+traversal's emissions rather than a recomputation, and it also reports
+nauty's `orbits`, `stats.numorbits` and `stats.grpsize`. The oracle
+compares:
+
+- the orbit array, entry by entry;
+- the orbit count;
+- the group order, as `grpsize1 * 10 ^ grpsize2`;
+- the generator count, against the number of generators nauty emitted;
+- nauty's generator list, which must appear in the recorded list as an
+  ordered subsequence.
+
+The subsequence relation rather than equality is what the two emission
+rules permit. nauty emits a generator at every code-1 leaf and at every
+code-2 leaf that grows the orbit partition, while the recorded trace
+takes both kinds unconditionally, so the trace can carry an
+orbit-redundant code-2 automorphism nauty discards. Both lists come from
+one traversal, so nauty's is always the subsequence of the trace at the
+emitting events, and the generator count pins how many those are.
 
 The driver must not canonicalize Hex's answer before comparing it with nauty.
 Doing so would test only isomorphism of the outputs and could conceal a wrong
@@ -1114,6 +1284,16 @@ The Mathlib-free benchmark driver registers:
 - the unpruned implementation and every retained pruning stage on common
   inputs;
 - public `canonicalize`, `findIso`, and `isIso`;
+- the automorphism surface: the generator list and the vertex orbits,
+  which cost one traversal, and the whole `autos` result including the
+  orbit-stabilizer chain for the group order, which costs one further
+  traversal per base point, so the gap between the two registrations is
+  the price of the order;
+- an automorphism agreement check, which fails whenever a returned
+  generator is not accepted by `checkIso` against the graph itself or
+  the orbit array is not constant on the orbits it records; the
+  comparison against pinned nauty's own generators, orbits and
+  `grpsize` lives in conformance, which has the external nauty;
 - dense conversion, one complete refinement, relabelling, canonical graph
   comparison, certificate generation, and certificate replay;
 - the pinned nauty comparator through a benchmark-only in-process FFI

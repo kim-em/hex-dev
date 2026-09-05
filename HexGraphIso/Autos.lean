@@ -136,23 +136,36 @@ discovery order. -/
 @[expose] def trace (G : Colored n k) : List (Array Nat) :=
   (Nauty.runColoredTraced G).autos.toList
 
+/-- The recorded automorphisms that pass the check, each paired with
+the raw array it came from. One traversal, consulted once: the two
+projections below are the generator list and the arrays nauty's orbit
+bookkeeping is stated on. -/
+@[expose] def checked (G : Colored n k) : List (Array Nat × Perm n) :=
+  (trace G).filterMap fun γ => (autom? G γ).map fun p => (γ, p)
+
 /-- The generators: the recorded traversal automorphisms that pass the
 check, in discovery order. -/
 @[expose] def gens (G : Colored n k) : List (Perm n) :=
-  (trace G).filterMap (autom? G)
+  (checked G).map (·.2)
 
-/-- The raw arrays behind `gens`, kept because nauty's orbit
-bookkeeping is stated on them. -/
+/-- The raw arrays behind `gens`. -/
 @[expose] def raw (G : Colored n k) : List (Array Nat) :=
-  (trace G).filter fun γ => (autom? G γ).isSome
+  (checked G).map (·.1)
 
 theorem exists_perm_of_mem_raw {G : Colored n k} {γ : Array Nat}
     (h : γ ∈ raw G) :
     ∃ p, IsIso G G p ∧ ∀ i : Fin n, (p.get i).val = γ[i.val]! := by
-  rw [raw, List.mem_filter] at h
-  rcases hp : autom? G γ with _ | p
-  · rw [hp] at h; simp at h
-  · exact ⟨p, autom?_isIso hp, fun i => autom?_val_get hp i⟩
+  rw [raw, List.mem_map] at h
+  rcases h with ⟨⟨δ, p⟩, hmem, rfl⟩
+  rw [checked, List.mem_filterMap] at hmem
+  rcases hmem with ⟨δ', -, hδ⟩
+  rcases hp : autom? G δ' with _ | q
+  · rw [hp] at hδ; simp at hδ
+  · rw [hp, Option.map_some] at hδ
+    injection hδ with hδ
+    rw [Prod.ext_iff] at hδ
+    obtain ⟨rfl, rfl⟩ := hδ
+    exact ⟨q, autom?_isIso hp, fun i => autom?_val_get hp i⟩
 
 theorem lt_of_mem_raw {G : Colored n k} {γ : Array Nat} (h : γ ∈ raw G)
     (v : Nat) (hv : v < n) : γ[v]! < n := by
@@ -169,20 +182,33 @@ theorem inj_of_mem_raw {G : Colored n k} {γ : Array Nat} (h : γ ∈ raw G) :
 
 /-! # The orbit array -/
 
-/-- nauty's vertex orbits: `orbjoin` folded over the checked
-generators, the same computation the search performs on them. Every
-entry is the representative of its orbit. -/
-@[expose] def orbits (G : Colored n k) : Array Nat :=
-  (raw G).foldl (fun o γ => (Nauty.orbjoin o γ n).1)
+/-- `orbjoin` folded over a generator list: the same computation the
+search performs on the generators it admits. -/
+@[expose] def orbitsOf (n : Nat) (l : List (Array Nat)) : Array Nat :=
+  l.foldl (fun o γ => (Nauty.orbjoin o γ n).1)
     (Array.ofFn (n := n) fun i => i.val)
 
-/-- The number of orbits: the vertices that represent themselves. -/
+/-- nauty's vertex orbits. Every entry is the representative of its
+orbit. -/
+@[expose] def orbits (G : Colored n k) : Array Nat :=
+  orbitsOf n (raw G)
+
+/-- The number of orbits recorded by an orbit array: the vertices that
+represent themselves. -/
+@[expose] def countRoots (orb : Array Nat) (n : Nat) : Nat :=
+  ((List.range n).filter fun v => orb[v]! == v).length
+
+/-- The size of the orbit of `v` recorded by an orbit array. -/
+@[expose] def sizeAt (orb : Array Nat) (n v : Nat) : Nat :=
+  ((List.range n).filter fun u => orb[u]! == orb[v]!).length
+
+/-- The number of orbits. -/
 @[expose] def numOrbits (G : Colored n k) : Nat :=
-  ((List.range n).filter fun v => (orbits G)[v]! == v).length
+  countRoots (orbits G) n
 
 /-- The size of the orbit of `v`. -/
 @[expose] def orbitSize (G : Colored n k) (v : Nat) : Nat :=
-  ((List.range n).filter fun u => (orbits G)[u]! == (orbits G)[v]!).length
+  sizeAt (orbits G) n v
 
 private theorem orbSound_foldl {gens : List (Array Nat)}
     (hb : ∀ γ ∈ gens, ∀ v, v < n → γ[v]! < n)
@@ -266,11 +292,12 @@ def orderAux (fuel : Nat) {n k : Nat} (G : Colored n k) : Nat :=
   match fuel with
   | 0 => 1
   | fuel + 1 =>
-    match (List.finRange n).find? fun v => decide (1 < orbitSize G v.val) with
+    let orb := orbits G
+    match (List.finRange n).find? fun v => decide (1 < sizeAt orb n v.val) with
     | none => 1
     | some v =>
       match indiv? G v with
-      | some G' => orbitSize G v.val * orderAux fuel G'
+      | some G' => sizeAt orb n v.val * orderAux fuel G'
       | none => 1
 termination_by fuel
 
@@ -299,18 +326,44 @@ structure AutResult (n : Nat) where
 vertex orbits, the orbit count and the group order. Every returned
 permutation is an automorphism (`autos_isIso`); vertices sharing an
 orbit representative are in one orbit (`autos_sameOrbit`). -/
-@[expose] def autos (G : Colored n k) : AutResult n where
-  gens := Aut.gens G
-  orbits := Aut.orbits G
-  numOrbits := Aut.numOrbits G
-  order := Aut.order G
+@[expose] def autos (G : Colored n k) : AutResult n :=
+  let checked := Aut.checked G
+  let orbits := Aut.orbitsOf n (checked.map (·.1))
+  { gens := checked.map (·.2)
+    orbits := orbits
+    numOrbits := Aut.countRoots orbits n
+    order := Aut.order G }
+
+/-- The generator field is the generator list. The four projections
+are also available on their own, and a caller who wants only the
+generators should take `Aut.gens`: `autos` computes the group order
+too, and that runs one search per base point. -/
+theorem gens_autos (G : Colored n k) : (autos G).gens = Aut.gens G := rfl
+
+/-- The orbit field is the orbit array. -/
+theorem orbits_autos (G : Colored n k) : (autos G).orbits = Aut.orbits G := rfl
+
+/-- The orbit-count field is the orbit count. -/
+theorem numOrbits_autos (G : Colored n k) :
+    (autos G).numOrbits = Aut.numOrbits G := rfl
+
+/-- The order field is the group order. -/
+theorem order_autos (G : Colored n k) : (autos G).order = Aut.order G := rfl
 
 /-- Membership: every returned generator is an automorphism. -/
 theorem autos_isIso {G : Colored n k} {p : Perm n}
     (h : p ∈ (autos G).gens) : IsIso G G p := by
-  rw [autos, Aut.gens, List.mem_filterMap] at h
-  rcases h with ⟨γ, -, hγ⟩
-  exact autom?_isIso hγ
+  rw [gens_autos, Aut.gens, List.mem_map] at h
+  rcases h with ⟨⟨γ, q⟩, hmem, rfl⟩
+  rw [Aut.checked, List.mem_filterMap] at hmem
+  rcases hmem with ⟨δ, -, hδ⟩
+  rcases hp : autom? G δ with _ | r
+  · rw [hp] at hδ; simp at hδ
+  · rw [hp, Option.map_some] at hδ
+    injection hδ with hδ
+    rw [Prod.ext_iff] at hδ
+    obtain ⟨rfl, rfl⟩ := hδ
+    exact autom?_isIso hp
 
 /-- A returned generator carries `G` onto itself. -/
 theorem autos_isomorphic {G : Colored n k} {p : Perm n}
