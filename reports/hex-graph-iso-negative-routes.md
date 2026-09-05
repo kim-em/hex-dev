@@ -91,8 +91,21 @@ route approached a meaningful win.
 
 Certificate production was available for every negative pair under the stated
 limits. This campaign therefore did not exercise the fallback by natural
-exhaustion; the existing `maxCertNodes := 0` tactic regression continues to pin
-that behavior directly.
+exhaustion, and no pair in it reaches the fallback under the tactic's ordinary
+limits.
+
+The `maxCertNodes := 0` regressions do not pin the fallback either, contrary to
+what a reading of their names suggests: `sepRootG p3 k3` is `true`, so the
+coloured one closes at the root separator, and `sepDiffG` holds for
+Petersen/prism, so the uncoloured one closes at the two-code separator. Both
+separator legs are charged against `maxNodes` (four nodes for the root
+separator, `2 * (n + 1)` for the two-code separator), so a budget in
+`[4, 2 * (n + 1))` withdraws the two-code separator while still funding the
+pairwise decision. `HexGraphIso/TacticTests.lean` now pins the fallback that
+way, on the cubic Petersen/prism pair that the root separator does not take:
+`(maxCertNodes := 0) (maxNodes := 21)` closes through `Pairwise.decideIso?` in
+12 nodes, and `(maxNodes := 11)` reports pairwise exhaustion rather than
+closing the goal.
 
 ## Realized kernel cost
 
@@ -113,30 +126,31 @@ times slower.
 
 For full end-to-end context, the prescribed cactus retiming compares the
 pre-change `hexgraphiso-tactic-152d306db788-chungus2.json` with the post-change
-`hexgraphiso-tactic-822aaa497e13-chungus2.json`. The cycle ladder at
+`hexgraphiso-tactic-2d405af1cd87-chungus2.json`. The cycle ladder at
 `n = 6, 8, 10, 12, 14, 16` changed from 0.262, 0.503, 0.863, 1.392, 2.043, and
-3.019 seconds to 0.263, 0.496, 0.866, 1.549, 1.962, and 2.876 seconds. The
-cubic circulant pair changed from 0.690 to 0.652 s, and Kneser/Johnson from
-8.268 to 7.879 s. Across the 13 ordinary completed negative cases the
-per-case change scattered from -14% to +56% with a median of -0.2%, against a
-median of +0.4% over the twelve positive cases, whose route this change does
-not touch. The largest single move, +56% on grid3x4/circulant12, is a
-root-separator case whose code path is unchanged, so the scatter is run-to-run
-noise on a shared host rather than a shift attributable to removing the race.
-The long circ48/2circ24 sample exceeded the 120-second tactic frontier in both
-runs, as did the 61- and 96-vertex hard negatives. The scheduled CFI
-fresh-module median remains 33.899 s.
+3.019 seconds to 0.263, 0.503, 0.847, 1.307, 1.891, and 2.765 seconds. The
+cubic circulant pair changed from 0.690 to 0.702 s, and Kneser/Johnson from
+8.268 to 10.725 s.
+
+The per-case scatter over the 13 ordinary completed negative cases runs from
+-8% to +140%, with a median of +1.7%. That scatter carries no signal about
+this change, and the 18 positive cases are the control that shows why:
+their route is untouched here, and their median move is +2.5%, larger than the
+negative median. Both sets were retimed as single runs on a shared host with
+other builds in flight. The long circ48/2circ24 sample exceeded the 120-second
+tactic frontier in both runs, as did the 61- and 96-vertex hard negatives. The
+scheduled CFI fresh-module median remains 33.899 s.
 
 These end-to-end figures include tactic elaboration as well as kernel checking
 and are not substituted for the forced-route type-check measurements above.
 They refresh the committed tactic timing artifact and cactus figures. They do
 not require edits to the manual's Performance table, which reports
 canonicalization rather than tactic replay. The manual's separate approximate
-ten-vertex negative range of 0.7 to 0.9 seconds sits at the edge of the
-refreshed 0.652 and 0.866 s cases at that size; the ten-vertex cubic circulant
-pair has been measured at 0.617, 0.652, and 0.690 s across three consecutive
-single runs, so this is the resolution of a single retiming and not an
-isolated timing change that requires revising the manual's claim.
+ten-vertex negative range of 0.7 to 0.9 seconds covers the refreshed 0.702 and
+0.847 s cases at that size. The ten-vertex cubic circulant pair has now been
+measured at 0.617, 0.652, 0.690, and 0.702 s across four consecutive single
+runs, which is the resolution this retiming can offer; there is no isolated
+timing change here that requires revising the manual's claim.
 
 ## Decision
 
