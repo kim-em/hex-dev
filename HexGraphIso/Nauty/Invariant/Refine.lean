@@ -18,26 +18,26 @@ the clause's induction consumes.
 -/
 
 /-!
-Transcription labelling invariants for the verified search refinement
-programme: label well-formedness and the `labelColorSorted` residual
-of `certifyCanon?_isSome`.
+Labelling invariants of the transcribed search: label
+well-formedness and the `labelColorSorted` residual of
+`certifyCanon?_isSome`.
 
 The single simulation-relation clause on the imperative search state
 is that the labelling stays cell-content-reachable from the initial
 labelling relative to the initial partition: `CellsReach G lab` below.
 `breakout` individualizes a vertex to the front of its cell and
 `refine` splits cells into finer cells, and both are permutations
-within the initial colour classes, so every leaf the search reaches
-— in particular `canonlab` — satisfies it. From that one clause the
+within the initial colour classes, so every leaf the search reaches,
+`canonlab` in particular, satisfies it. From that one clause the
 two transcription-side residuals follow immediately through the
 existing achievement lemmas: `achieved_perm_range` turns it into
 permutation-ness (`canonlab` is a bijection of `Fin n`) and
 `achieved_position_colors` turns it into `labelColorSorted`.
 
-These lemmas prove those two reductions in full; the quartet
-induction establishing the clause for the transcribed `canonlab`
-lives in `Invariant/Reach` (`canonlab_cellsReach`), the shared B2
-simulation clause of the layer-three programme.
+These lemmas prove those two reductions in full. The quartet
+induction that establishes the clause for the transcribed `canonlab`
+is `canonlab_cellsReach` in `Invariant/Reach`, and the rest of the
+correctness argument shares that clause.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -105,12 +105,12 @@ theorem labelColorSorted_of_cellsReach {G : Colored n k}
 
 /-! # Operation-level preservation lemmas
 
-The two labelling-mutating search operations — `refine` and
-`breakout` — permute labels only within cells of the current partition,
-which refines the initial partition, so both preserve `CellsReach`.
-These are the reusable substrate the quartet induction assembles: each
-takes the threaded fact that the initial cell boundaries persist in the
-current partition (`hcoarse`) and preserves the clause. -/
+The two labelling-mutating search operations, `refine` and `breakout`,
+permute labels only within cells of the current partition, which
+refines the initial partition, so both preserve `CellsReach`. The
+quartet induction composes these two lemmas: each takes the threaded
+fact that the initial cell boundaries persist in the current partition
+(`hcoarse`) and preserves the clause. -/
 
 /-- `refine` preserves `CellsReach`: it reorders labels within cells of
 its own (finer) partition, and the initial boundaries persist, so
@@ -1048,8 +1048,9 @@ theorem bcount_initPtn {n k : Nat} (G : Colored n k) :
 /-! # The quartet invariants
 
 The per-node invariant (`SearchOk`) and per-call effect (`SearchOut`)
-of the transcribed search, with their composition toolkit. The
-quartet induction itself consumes these downstream. -/
+of the transcribed search, with the lemmas that compose them.
+`Invariant/Reach` and `Invariant/Domination` use these in the
+induction over the four search functions. -/
 
 variable {n k : Nat}
 

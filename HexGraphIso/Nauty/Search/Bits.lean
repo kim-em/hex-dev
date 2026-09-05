@@ -17,20 +17,22 @@ public section
 /-!
 Vertex-set primitives for the nauty-compatible search.
 
-The word layer under the packed vertex sets of `VSet`: the least set
-bit (`lowBit`, nauty's `FIRSTBITNZ`), the population count
-(`popCount`, nauty's `POPCOUNT`), and the byte-chunked walk that lists
-the set bits of a word, each with a per-bit specification the kernel can
-replay, a byte-table implementation the compiled code runs, and the
-`csimp` equality between them. A word here is a natural number; the
-implementations are only ever applied to 63-bit limbs, where every
-operation is a scalar one.
+The word-level operations beneath the packed vertex sets of `VSet`:
+the least set bit (`lowBit`, nauty's `FIRSTBITNZ`), the population
+count (`popCount`, nauty's `POPCOUNT`), and the byte-chunked walk that
+lists the set bits of a word (`toListGo`, which uses `toListByte` on
+each byte). Each comes with a per-bit specification the kernel can
+replay, a byte-table implementation the compiled code runs
+(`lowBitFast` and `popCountFast`, whose loops are `lowBitGo` and
+`popCountGo`), and the `csimp` equality between them. A word here is a
+natural number. The implementations are only ever applied to 63-bit
+limbs, where every operation is a scalar one.
 -/
 
 namespace Hex.GraphIso.Nauty
 
-/-- The index of the least set bit. Returns `0` for the empty set; callers
-guard on nonemptiness. Structurally recursive on an always-sufficient
+/-- The index of the least set bit, or `0` for the empty set (callers
+guard on nonemptiness). Structurally recursive on an always-sufficient
 fuel so the kernel can replay it. -/
 @[expose] def lowBit (s : Nat) : Nat :=
   go (s + 1) s
@@ -286,8 +288,8 @@ decreasing_by omega
   toListByteGo b base cnt 0 acc
 
 /-- The byte-chunked `toList` walk: one big-number shift per byte,
-early exit once the remainder is empty. Accumulates reversed; one
-final reverse restores ascending order. -/
+with an early exit once the remainder is empty. It accumulates in
+reverse, and one final reverse restores ascending order. -/
 @[expose] def toListGo (base cnt s : Nat) (acc : List Nat) : List Nat :=
   if cnt = 0 ∨ s = 0 then acc
   else toListGo (base + 8) (cnt - 8) (s >>> 8)
@@ -375,8 +377,8 @@ theorem toListGo_eq (base cnt s : Nat) (acc : List Nat) :
 
 /-! # Word-level lemmas
 
-Bit facts about a single word that the packed vertex-set layer
-(`VSet`) builds its membership lemmas from. -/
+Bit facts about a single word, from which the packed vertex sets of
+`VSet` build their membership lemmas. -/
 
 /-- The number of set bits below `n`. -/
 @[expose] def bitCount (n s : Nat) : Nat :=
@@ -527,8 +529,8 @@ theorem testBit_ne_at_lowBit_xor {a b : Nat} (hab : a ≠ b) :
 
 The kernel-facing replay (`HexGraphIso.Kernel.CheckKey`) keeps every
 vertex set as one `Nat`, because the kernel's GMP-backed `Nat`
-arithmetic is its cheapest reduction path. These are that layer's set
-operations. `VSet.toNat` relates each to its packed runtime
+arithmetic is its cheapest reduction path. These are the set
+operations it uses. `VSet.toNat` relates each to its packed runtime
 counterpart. Insertion and deletion are guarded by the vertex bound
 exactly as the packed operations are, so the correspondences are
 unconditional. -/

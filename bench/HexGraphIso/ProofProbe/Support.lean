@@ -8,12 +8,11 @@ import HexGraphIso
 import HexGraphIso.TestGraphs
 
 /-!
-Shared inputs for the `graph_iso` fresh-module probes
-(SPEC/hex-graph-iso § Benchmarks, "the tactic has fresh-module
-probes"). Each probe case imports this module and nothing else beyond
-it, so a fresh build of one probe measures reification, compiled
-search, literal elaboration, and kernel replay for exactly one goal
-against the `Baseline` module's matched import cost.
+Shared inputs for the `graph_iso` fresh-module probes. Each probe case
+imports this module and nothing else beyond it, so a fresh build of one
+probe measures reification, compiled search, literal elaboration and
+kernel replay for exactly one goal, against the `Baseline` module's
+matched import cost.
 
 The random instances are the recorded corpus pair of
 `HexGraphIso.TestGraphs`, shared with the `graph_iso` regression
@@ -31,8 +30,8 @@ even-parity subsets of its three edge ports) and an `a`/`b` port pair
 per incident base edge; ports join middle vertices containing them,
 `a`–`a` and `b`–`b` across each base edge, and the twist crosses
 exactly one base edge. The two graphs agree on every refinement
-invariant and differ globally, the classical hard negative for
-individualization-refinement.
+invariant and are not isomorphic. This is the classical hard negative
+instance for individualization-refinement.
 -/
 
 namespace Hex.GraphIso.ProofProbe
@@ -44,6 +43,8 @@ tests -/
 
 export Hex.GraphIso.TestGraphs (g12 g12relabelled g12b)
 
+/-- The Petersen graph on `Fin 10`, one-cell coloured: an outer
+pentagon, an inner pentagram, and the five spokes. -/
 def petersen : Colored 10 1 :=
   { graph := Graph.ofEdges
       [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
@@ -51,12 +52,19 @@ def petersen : Colored 10 1 :=
        (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
     coloring := Coloring.trivial 10 }
 
+/-- The two-colouring of `Fin 10` giving vertices `a` and `b` colour
+`0` and every other vertex colour `1`. -/
 def markPair (a b : Fin 10) : Coloring 10 2 :=
   (Coloring.ofVector? (Hex.Vector.ofFn' fun i =>
     if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2)
 
+/-- The Petersen graph with one adjacent pair marked colour `0`. -/
 def edgeMarkA : Colored 10 2 := ⟨petersen.graph, markPair 0 1⟩
+/-- The Petersen graph with a different adjacent pair marked colour
+`0`, isomorphic to `edgeMarkA` as a coloured graph. -/
 def edgeMarkB : Colored 10 2 := ⟨petersen.graph, markPair 2 3⟩
+/-- The Petersen graph with a non-adjacent pair marked colour `0`,
+which no colour-preserving isomorphism carries to `edgeMarkA`. -/
 def nonedgeMark : Colored 10 2 := ⟨petersen.graph, markPair 0 2⟩
 
 /-! # The CFI pair over `K4`
@@ -113,6 +121,8 @@ def cfiAdjCore (twist : Bool) (x y : Nat) : Bool := Id.run do
   if twist && lo == 0 && hi == 1 then return !sameKind
   return sameKind
 
+/-- The CFI graph over `K4` on 40 vertices, one-cell coloured, twisted
+or untwisted. -/
 def cfi (twist : Bool) : Colored 40 1 :=
   { graph := Graph.ofAdj
       (fun i j => if i == j then false else

@@ -21,8 +21,8 @@ at the call nor unwraps one from the conclusion.
 `Graph.singleColor` is the one-cell view, and
 `Graph.isomorphic_singleColor_iff` identifies the two notions of
 isomorphism through it. Every theorem here is transported along that
-equivalence rather than reproved, so the uncoloured surface makes
-exactly the promises the coloured one does, completeness and canonical
+equivalence rather than reproved, so the uncoloured operations state
+exactly what the coloured ones state, completeness and canonical
 invariance included.
 -/
 

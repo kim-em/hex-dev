@@ -378,7 +378,7 @@ theorem childKey_of_orbPruned {ctx : Ctx n}
         segN_cons, segN_zero, hheadO',
         getElem!_map_of_lt σ.toFun _ (by rw [hbsz]; omega), hheadO,
         hσvO]
-    · -- the remainder cells the.erase two vertices and transport
+    · -- the remainder cells erase two vertices and transport
       rw [show tc + (L + 1) - (tc + 1) = L by omega, htailO',
         segN_map_of_le _ _ _ _ (by rw [hbsz]; omega), htailO]
       have hCstab := hstabSeg tc (L + 1) hic hrange
@@ -485,8 +485,8 @@ other touch points.
 Symmetry of `WordConn` is where the group theory lives: the chase
 loops inside `orbjoin` link roots found from both ends of a
 generator edge, so the pointer being justified can point against the
-direction of the discovered word. Forward words still suffice —
-a bounded injective array has finite order pointwise
+direction of the discovered word. Forward words still suffice,
+because a bounded injective array has finite order pointwise
 (`exists_applyWord_replicate_self`, by pigeonhole on the trajectory),
 so the inverse of a generator is one of its forward powers
 (`wordConn_symm`). No inverse arrays are ever materialized, matching

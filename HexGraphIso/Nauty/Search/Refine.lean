@@ -15,21 +15,31 @@ public import HexGraphIso.Nauty.Search.VSet
 public section
 
 /-!
-Partition-level routines of the nauty-compatible search, transcribed from
-the pinned nauty 2.9.3 sources (`naugraph.c`, `nautil.c`); those files are
-the normative reference for every behavioural detail here, including the
-splitter processing order, the refinement-code arithmetic, the two-pointer
-cell partition, the stable counting redistribution, and the target-cell
-rules.
+Partition-level routines of the nauty-compatible search, transcribed
+from the pinned nauty 2.9.3 sources (`naugraph.c`, `nautil.c`). Those
+files are the normative reference for every behavioural detail here,
+including the splitter processing order, the refinement-code
+arithmetic, the two-pointer cell partition, the stable counting
+redistribution, and the target-cell rules.
 
-The partition nest is nauty's `(lab, ptn)` pair: `lab` lists the vertices,
-and position `i` ends a cell of the partition at level `l` exactly when
-`ptn[i] ≤ l`. `NAUTY_INFINITY` is modelled by any value exceeding every
-level in use; only comparisons with levels are observable.
+The partition nest is nauty's `(lab, ptn)` pair: `lab` lists the
+vertices, and position `i` ends a cell of the partition at level `l`
+exactly when `ptn[i] ≤ l`. `NAUTY_INFINITY` is modelled by any value
+exceeding every level in use. Only comparisons with levels are
+observable.
 
-Deviations that provably preserve every observable result are noted where
-they occur (bucket-window initialization and the stable counting sort in
-`refineStep`, both local scratch in nauty).
+`refine` drives one splitting pass per active cell: `refineLoop`
+repeats `refineStep` until the active set is empty or every cell is a
+singleton, and `refineStep` dispatches to `refineTrivial` for a
+singleton splitter and `refineNontrivial` otherwise. `targetcell`
+chooses the cell to individualize. Down to depth `tcLevel` it uses
+`bestcell`, which counts, in `bestcellRows` and `bestcellRow`, how many
+other nonsingleton cells each nonsingleton cell is nontrivially joined
+to.
+
+Deviations that provably preserve every observable result are noted
+where they occur (bucket-window initialization and the stable counting
+sort in `refineStep`, both local scratch in nauty).
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -76,7 +86,13 @@ where
       else
         []
 
-/-- Working state of one `refine` call on `n` vertices. -/
+/-- Working state of one `refine` call on `n` vertices. `lab` and
+`ptn` are the partition nest and `active` the positions of the cells
+still to be used as splitters, all three nauty's arrays of those names.
+`numcells` counts the cells. `hint` is the position `pickSplit` tries
+first on the next iteration. `maxpos` is the position of the largest
+fragment of the last nontrivial split, which is the one left out of the
+active set. `longcode` is the accumulated refinement code. -/
 structure RefineSt (n : Nat) where
   lab : Array Nat
   ptn : Array Nat
@@ -333,12 +349,13 @@ Touches no labelling data. -/
 
 `nontrivialCellFast` computes the same `RefineSt` as `nontrivialCell`
 through one counts pass, a multiplicity bucket array, a bucket-driven
-window scan, and a stable single-pass placement — O(cell + window)
-with no intermediate lists, where the specification's `multOf`-driven
-scan and `segmentOf` redistribution are O(cell x window) with list
-construction throughout. The equality `nontrivialCell_eq_fast` below
-is `@[csimp]`, so every compiled call site runs the counting sort;
-the specification spellings above stay the proof surface. -/
+window scan, and a stable single-pass placement. That costs
+O(cell + window) and builds no intermediate lists, where the
+specification's `multOf`-driven scan and `segmentOf` redistribution
+cost O(cell x window) and build lists throughout. The equality
+`nontrivialCell_eq_fast` below is `@[csimp]`, so every compiled call
+site runs the counting sort. The definitions above are the ones the
+proofs are stated against. -/
 
 /-- The counts pass: per-member neighbour counts into the splitter
 set, the members themselves, and the count extrema, in one walk. -/
@@ -493,14 +510,14 @@ theorem ntcScan_eq_windowScan (level cell1 cell2 bmin : Nat)
         ntcScan_eq_windowScan level cell1 cell2 bmin bucket counts
           fuel (j + 1) c1 maxcell st hrest]
 
-/-! # The counting-sort activation
+/-! # The counting sort computes the specification
 
 The bucket-array counting sort `nontrivialCellFast` equals the
-specification `nontrivialCell`; the proof lives here, upstream of the
-`refine` drivers, so the concluding `@[csimp]` rewrites their compiled
-call sites. The segment write-back lemmas sit first: they are stated
-against `writeSegment` alone, and `CellPermLoop`'s `segN` lemmas
-consume them downstream. -/
+specification `nontrivialCell`. The proof sits upstream of the `refine`
+drivers, so the concluding `@[csimp]` rewrites their compiled call
+sites. The segment write-back lemmas come first: they are stated
+against `writeSegment` alone, and `CellPermLoop`'s `segN` lemmas use
+them downstream. -/
 
 theorem writeSegment_outside :
     ∀ (seg : List Nat) (lab : Array Nat) (lo q : Nat),
@@ -924,7 +941,7 @@ private theorem grpAt_getElem! {β : Type} [Inhabited β] (w : Nat)
       simp only [Nat.add_zero]
       rw [hrec]; congr 1; omega
 
-/-! # Bridging `baseOff`/`placed` to list `countP` forms -/
+/-! # `baseOff` and `placed` as list `countP` forms -/
 
 /-- Counting a predicate over a prefix of positions equals counting it
 over the prefix list. -/
@@ -1041,9 +1058,9 @@ private theorem grouped_getElem! {β : Type} [Inhabited β] (cs : List Nat)
 /-- The placement crux: the element `segmentOf` produces at
 `baseOff v + placed o v` (the counting-sort target slot for the
 `o`-th member, whose count value offset is `v`) is exactly the member
-`lab[cell1 + o]` the stable walk writes there. This is piece (a) of the
-`nontrivialCell = nontrivialCellFast` activation: it identifies the
-scatter destination with the specification's grouped output. -/
+`lab[cell1 + o]` the stable walk writes there. This is the first half
+of `nontrivialCell = nontrivialCellFast`: it identifies the scatter
+destination with the specification's grouped output. -/
 private theorem segmentOf_getElem!_placement (lab counts : Array Nat)
     (cell1 bmin W o : Nat)
     (hcv : countValues counts.toList = (List.range W).map (bmin + ·))
@@ -1139,10 +1156,10 @@ theorem ntcPass_concrete_members (ctx : Ctx n) (lab : Array Nat)
 /-! # The placement against `writeSegment ∘ segmentOf`
 
 `ntcPlace` walks the members in cell order, writing each at its
-group's running position. Its stability equals the specification's
-`writeSegment ∘ segmentOf` under the base-position invariant: after a
-length-`o` prefix, group `v`'s cursor sits at `base v` plus the number
-of already-placed value-`v` members. -/
+group's running position. It produces the same array as the
+specification's `writeSegment ∘ segmentOf`, under the base-position
+invariant: after a length-`o` prefix, group `v`'s cursor sits at
+`base v` plus the number of already-placed value-`v` members. -/
 
 /-- The absolute destination of the `o`-th member under the base
 positions `base`: its group base plus the number of already-placed
@@ -1153,8 +1170,8 @@ private def dest (counts : Array Nat) (bmin : Nat) (base : Nat → Nat)
 
 /-- The scatter characterization: when the cursor array holds each
 group's base plus its placed count, `ntcPlace` writes member `o` at
-`dest o` for each `o` in the walked window, in order — a fold of
-independent `set!`s. -/
+`dest o` for each `o` in the walked window, in order. The result is a
+fold of independent `set!`s. -/
 private theorem ntcPlace_eq_fold (counts members : Array Nat) (bmin : Nat)
     (base : Nat → Nat) :
     ∀ (fuel o0 : Nat) (lab starts : Array Nat),
@@ -1353,7 +1370,7 @@ private theorem destOff_inj (counts : Array Nat) (bmin : Nat)
       (placed_lt_mult counts bmin o' (counts[o']! - bmin) ho' (by simp))
 
 /-- A `Nodup` list of naturals, all below `N`, of length `N`, contains
-every `k < N` — the pigeonhole surjectivity. -/
+every `k < N`, by pigeonhole. -/
 private theorem nodup_range_full (N : Nat) (l : List Nat) (hnd : l.Nodup)
     (hlen : l.length = N) (hlt : ∀ x ∈ l, x < N) :
     ∀ k, k < N → k ∈ l := by
@@ -1874,8 +1891,8 @@ where
     (workset : VSet n) (v2 : Nat) : List Nat → Array Nat → Array Nat
   | [], bucket => bucket
   | v1 :: rest, bucket =>
-    -- nauty tests `workset & gp ≠ 0` and `workset & ~gp ≠ 0`; the second
-    -- says `workset` is not contained in the row.
+    -- nauty tests `workset & gp ≠ 0` and `workset & ~gp ≠ 0`. The second
+    -- of those says `workset` is not contained in the row.
     if ¬ workset.interIsEmpty ctx.g[lab[startArr[v1]!]!]! ∧
         ¬ workset.subset ctx.g[lab[startArr[v1]!]!]! then
       bestcellRow ctx lab startArr workset v2 rest
@@ -1901,9 +1918,9 @@ where
     else
       argmaxLoop bucket rest v1 v2
 
-/-- nauty's `bestcell`: the first cell nontrivially joined to the greatest
-number of other nonsingleton cells, as a `lab` position; `n` when every
-cell is a singleton. -/
+/-- nauty's `bestcell`: the first cell nontrivially joined to the
+greatest number of other nonsingleton cells, as a `lab` position. The
+result is `n` when every cell is a singleton. -/
 @[expose] def bestcell (ctx : Ctx n) (lab ptn : Array Nat) (level : Nat) : Nat :=
   let starts := ((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map (·.1)
   let nnt := starts.length
@@ -1915,7 +1932,10 @@ cell is a singleton. -/
       (List.range' 1 (nnt - 1)) (Array.replicate nnt 0)
     startArr[argmaxLoop bucket (List.range' 1 (nnt - 1)) 0 bucket[0]!]!
 
-/-- nauty's `targetcell` for the pinned undirected configuration. -/
+/-- nauty's `targetcell` for the pinned undirected configuration: keep
+the hinted position when it still starts a nonsingleton cell of the
+partition at `level`, otherwise take `bestcell` while
+`level ≤ tcLevel` and the first nonsingleton cell deeper than that. -/
 @[expose] def targetcell (ctx : Ctx n) (lab ptn : Array Nat) (level tcLevel : Nat)
     (hint : Int) : Nat :=
   if hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧

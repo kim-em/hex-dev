@@ -128,8 +128,8 @@ permutation convention). -/
   (findIso G H).isSome
 
 /-- Soundness of the search: any permutation it returns really is an
-isomorphism. This is the theorem to reach for after a successful
-`findIso`; it says nothing about the `none` case, for which see
+isomorphism. This is the theorem to use after a successful `findIso`.
+It says nothing about the `none` case, for which see
 `findIso_isSome_iff`. -/
 theorem findIso_sound {G H : Colored n k} {p : Perm n}
     (h : findIso G H = some p) : IsIso G H p := by

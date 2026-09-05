@@ -28,8 +28,8 @@ production pipeline behind `canon` and `label`), with the coloured
 graph built through the public checked constructors.
 The search-node count comes from the transcribed search
 (`Nauty.runColored`). The oracle recomputes all of them with the pinned
-external nauty, so the campaign pins the public surface, not only the
-transcription.
+external nauty, so the fixture pins the public operations, not only the
+transcribed search.
 
 `--engine` emits the same cases with the label, canonical bits and node
 count read off `Cases.engine` instead, so the oracle pins that search

@@ -82,10 +82,9 @@ namespace Tactic
 open Lean Elab Lean.Elab.Tactic Meta
 
 /-- `set_option trace.graph_iso true` reports the route each call closes
-through — `relabel`, `witness`, `root` or `certs` — and, for the
-certificate route, the record counts the kernel replays; the
-kernel-cost harness (`scripts/bench/graphiso_kernel_cost.py`) reads
-these lines. -/
+through (`relabel`, `witness`, `root` or `certs`) and, for the
+certificate route, the number of records the kernel replays. The script
+`scripts/bench/graphiso_kernel_cost.py` reads these lines. -/
 meta initialize registerTraceClass `graph_iso
 
 /-- The logical limits of one `graph_iso` call. -/
@@ -194,8 +193,8 @@ meta def permExpr (n : Nat) (p : Array Nat) : MetaM Expr := do
 /-- Build `of_decide_eq_true (Eq.refl true) : p` without reducing
 `decide p` in the elaborator: the kernel performs the one decisive
 evaluation when it checks the ascribed `Eq.refl`. `mkDecideProof`
-would evaluate twice — once at elaboration, once at kernel check —
-which doubles the cost of every replay obligation. -/
+evaluates twice, once at elaboration and once at kernel checking, which
+doubles the cost of every replay. -/
 meta def kernelDecideProof (p : Expr) : MetaM Expr := do
   let inst ← synthInstance (← mkAppM ``Decidable #[p])
   let decideApp := mkApp2 (mkConst ``Decidable.decide) p inst
@@ -217,26 +216,28 @@ meta def boolListLit (bs : List Bool) : MetaM Expr :=
     mkConst (if bb then ``Bool.true else ``Bool.false))
 
 /-- The expression `e.graph.adjMatrix.data.toList` for a coloured
-graph expression `e`: the tying side of a flat-literal equality. -/
+graph expression `e`: the left-hand side of the flat-literal
+equality. -/
 meta def matrixListSide (e : Expr) : MetaM Expr := do
   mkAppM ``Vector.toList #[← mkAppM ``Matrix.data
     #[← mkAppM ``Graph.adjMatrix #[← mkAppM ``Colored.graph #[e]]]]
 
 /-- The expression `Kernel.packRows n e.graph.adjMatrix.data.toList`:
-the tying side of the packed-rows equality the negative routes
+the left-hand side of the packed-rows equality the negative routes
 replay. -/
 meta def matrixPackedSide (n : Nat) (e : Expr) : MetaM Expr := do
   mkAppM ``Kernel.packRows #[mkNatLit n, ← matrixListSide e]
 
 /-- The packed rows of a runtime graph, row `v` at bits
-`[n * v, n * (v + 1))`: the literal side of the packed-rows equality. -/
+`[n * v, n * (v + 1))`: the right-hand side of the packed-rows
+equality. -/
 meta def rawPackedRows (r : Raw) : Nat :=
   (List.range r.n).foldr (fun v acc => r.rows[v]!.toNat + (acc <<< r.n)) 0
 
 /-- One side of a negative goal: the graph expression, its runtime
-image, the packed-rows literal, and the tie of the graph's adjacency to
-that literal. Both negative routes replay against these, so each side
-is evaluated and tied once per call. -/
+image, the packed-rows literal, and the proof that the graph's
+adjacency packs to that literal. Both negative routes replay against
+these, so each side is evaluated once per call. -/
 meta structure Side where
   /-- The coloured graph expression. -/
   expr : Expr
@@ -247,8 +248,8 @@ meta structure Side where
   /-- The packed-rows literal. -/
   lit : Expr
 
-/-- Evaluate a coloured graph expression and tie it to its packed-rows
-literal, one sequential kernel evaluation of the graph's adjacency. -/
+/-- Evaluate a coloured graph expression and prove its packed rows equal
+to a literal, in one kernel evaluation of the graph's adjacency. -/
 meta def mkSide (e : Expr) : MetaM Side := do
   let r ← evalColored e
   let lit := mkNatLit (rawPackedRows r)
@@ -271,7 +272,8 @@ meta def keyExpr (K : Kernel.Key) : Expr :=
   mkApp2 (mkConst ``Kernel.Key.mk) (toExpr K.codes) (toExpr K.rows)
 
 /-- Match `Isomorphic G H` (returning `(false, n, k, G, H)`) or
-`¬ Isomorphic G H` (returning `true` first); `none` for other goals. -/
+`¬ Isomorphic G H` (returning `true` first). Other goals give
+`none`. -/
 meta def matchGoal? (target : Expr) : MetaM (Option (Bool × Expr × Expr × Expr × Expr)) := do
   let t ← whnfR target
   match_expr t with
@@ -284,8 +286,8 @@ meta def matchGoal? (target : Expr) : MetaM (Option (Bool × Expr × Expr × Exp
   | _ => return none
 
 /-- Match the uncoloured `Graph.Isomorphic G H` (returning
-`(false, n, G, H)`) or its negation (returning `true` first); `none`
-for other goals. -/
+`(false, n, G, H)`) or its negation (returning `true` first). Other
+goals give `none`. -/
 meta def matchUncoloredGoal? (target : Expr) :
     MetaM (Option (Bool × Expr × Expr × Expr)) := do
   let t ← whnfR target
@@ -326,10 +328,10 @@ private meta def countAutom : Nauty.CertNode → Nat
   | .autom _ _ => 1
   | .node cs => cs.foldl (fun a c => a + countAutom c) 0
 
-/-- The root-separator leg of the negative path: when the root
-refinement codes already differ — the typical case for irregular pairs
-— the kernel obligation is a single refinement per graph, so the leg
-always runs. -/
+/-- The root-separator leg of the negative path. When the two root
+refinement codes already differ (the typical case for irregular pairs)
+the kernel evaluates one refinement per graph, so this leg is tried
+first on every negative goal. -/
 meta def proveNotIsoRoot? (G H : Side) : MetaM (Option Expr) := do
   unless (← evalBoolCore (← mkAppM ``Kernel.rootSeparates #[G.expr, H.expr])) do
     return none
@@ -339,18 +341,18 @@ meta def proveNotIsoRoot? (G H : Side) : MetaM (Option Expr) := do
   trace[graph_iso] "route=root n={G.raw.n}"
   return some (← mkAppM ``Kernel.not_isomorphic_of_rootCode #[G.tie, H.tie, hs])
 
-/-- The certificate leg of the negative path: budgeted certificate
-production on both sides compiled, the key comparison compiled, and the
-kernel replaying only two Boolean `Kernel.checkKey` certificates plus
-`checkDiffL`. Returns the limit that ran out when the route is
-unavailable; throws when the keys agree, because the goal is then
-unprovable. -/
+/-- The certificate leg of the negative path. Compiled code produces one
+budgeted certificate per side and compares the two canonical keys. The
+kernel then replays two Boolean `Kernel.checkKey` calls and one
+`checkDiffL` call. When a limit runs out the result names that limit.
+When the two keys agree this throws, because the goal is then not
+provable. -/
 meta def proveNotIsoCerts (cfg : Config) (G H : Side) :
     MetaM (Except MessageData Expr) := do
-  -- deliberately the VALIDATED bounded producer: the ~10ms compiled
-  -- validation guarantees every emitted kernel obligation replays
-  -- successfully — a bad candidate must fall back here, not surface as
-  -- a kernel rejection at module finalization
+  -- The validating bounded producer: its compiled validation pass
+  -- guarantees that every certificate it emits replays successfully, so
+  -- a candidate that fails is rejected here rather than by the kernel at
+  -- module finalization.
   let bounded (e : Expr) :
       MetaM (Option (Nauty.CertNode × Kernel.Key)) := do
     evalCertCore (← mkAppM ``Kernel.certifyKey?
@@ -392,11 +394,10 @@ meta def proveNotIsoCerts (cfg : Config) (G H : Side) :
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
 graphs: the root separator first, then certificate replay. The
-certificate obligations replay only because their whole closure is
-exposed to the module-finalization kernel; the regression ladder in
-`HexGraphIso.ModuleBoundaryTests` pins that closure. Shared by the core
-negative branch and downstream extensions (the Mathlib layer calls it
-on the encodings). -/
+certificates replay only because every declaration they reach is
+exposed across module boundaries, which `HexGraphIso.ModuleBoundaryTests`
+checks. Both the `Colored` negative branch and downstream extensions use
+this: `HexGraphIsoMathlib` calls it on the encoded graphs. -/
 meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
   let G ← mkSide GE
   let H ← mkSide HE
@@ -409,11 +410,11 @@ meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
       throwError "graph_iso: every negative route is exhausted: the root \
           refinement codes agree, and {reason}"
 
-/-- The witness leg of the positive path: tie each side's adjacency,
-colouring and the transporter to literals, and check the transporter on
-those literals. Returns the permutation expression and the proof of
-`IsIso G H p`, which the core branch wraps as `Isomorphic` and
-downstream extensions decode. -/
+/-- The witness leg of the positive path: prove each side's adjacency,
+its colouring and the transporter equal to literals, then check the
+transporter on those literals. Returns the permutation expression and
+the proof of `IsIso G H p`. The `Colored` branch wraps that proof as
+`Isomorphic`, and downstream extensions decode it. -/
 meta def proveIsIso (cfg : Config) (n : Nat) (GE HE : Expr) (a b : Raw)
     (p : Array Nat) (nodes : Nat) : MetaM (Expr × Expr) := do
   if checkCost n > cfg.maxKernelSteps then
@@ -553,7 +554,7 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
 every vertex alike, hand the pair to `proveGraphIso`, and transport the
 conclusion back through `Graph.isomorphic_singleColor_iff`. Both
 directions of that equivalence are proof terms, so the uncoloured route
-costs the kernel nothing beyond the coloured obligation and the one
+costs the kernel nothing beyond the coloured goal's replay and the one
 `0 < n` decision. -/
 meta def proveGraphIsoUncolored (cfg : Config) (target : Expr)
     (parsed : Bool × Expr × Expr × Expr) : MetaM Expr := do

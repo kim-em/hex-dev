@@ -11,7 +11,8 @@ public import HexGraphIso.Nauty.Cert.Cert
 public section
 
 /-!
-Transitive coverage for a mutable child sweep.
+Transitive coverage for a child loop whose target set changes as it
+runs.
 
 The nauty loops shrink their target set while they run.  A child removed
 by an orbit or stored-automorphism filter need not repeat an already
@@ -26,7 +27,7 @@ namespace Hex.GraphIso.Nauty
 /-- Every member of `all` is either covered already or has the same key as
 a no-larger member of `live`.  The decreasing rank lets successive
 automorphism filters compose even when a new carrier lands outside the
-already-filtered set. -/
+set the previous filter left. -/
 @[expose] def ChildCover (key : Nat → Key n) (rank : Nat → Nat)
     (all done live : Nat → Prop) : Prop :=
   ∀ x, all x → done x ∨
@@ -39,7 +40,7 @@ theorem ChildCover.init (key : Nat → Key n) (rank : Nat → Nat)
   intro x hx
   exact Or.inr ⟨x, hx, rfl, Nat.le_refl _⟩
 
-/-- One sweep step composes coverage transitively. -/
+/-- One filtering step composes coverage transitively. -/
 theorem ChildCover.step {key : Nat → Key n} {rank : Nat → Nat}
     {all done live done' live' : Nat → Prop}
     (h : ChildCover key rank all done live)
@@ -73,9 +74,9 @@ theorem ChildCover.filter {key : Nat → Key n} {rank : Nat → Nat}
     ChildCover key rank all done live' :=
   h.step (fun x hx => Or.inr (hs x hx)) (fun _ hx => hx)
 
-/-- Resolving one filtered survivor may revisit the old coverage relation.
-Strict rank descent at every newly removed live vertex makes this process
-well founded. -/
+/-- Resolving one filtered survivor may appeal to the coverage relation
+of the previous live set. Strict rank descent at every newly removed
+live vertex makes that recursion well founded. -/
 theorem ChildCover.resolve {key : Nat → Key n} {rank : Nat → Nat}
     {all done live live' : Nat → Prop}
     (h : ChildCover key rank all done live)
@@ -98,7 +99,7 @@ theorem ChildCover.resolve {key : Nat → Key n} {rank : Nat → Nat}
   termination_by x => rank x
 
 /-- A descending filter preserves ranked coverage even when a carrier
-lands outside the old live set. -/
+lands outside the live set it started from. -/
 theorem ChildCover.filterDesc {key : Nat → Key n} {rank : Nat → Nat}
     {all done live live' : Nat → Prop}
     (h : ChildCover key rank all done live)
@@ -136,11 +137,11 @@ theorem ChildCover.bound {key : Nat → Key n} {rank : Nat → Nat}
   intro x hx
   exact hle x (h.finish hempty x hx)
 
-/-- Coverage transfers a common upper bound when both absorbed children
-and the surviving live representatives lie below it.  This is the form
-used by a frozen comparison unwind: the existing ledger handles the
-visited prefix, while the frozen code verdict handles the abandoned
-suffix. -/
+/-- Coverage transfers a common upper bound when both the absorbed
+children and the surviving live representatives lie below it.  This is
+the form a frozen comparison unwind uses: the ledger already covers the
+visited prefix, and the frozen code verdict covers the siblings the
+unwind skips. -/
 theorem ChildCover.boundLive {key : Nat → Key n} {rank : Nat → Nat}
     {all done live : Nat → Prop} {b : Key n}
     (h : ChildCover key rank all done live)

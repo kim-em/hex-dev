@@ -26,8 +26,8 @@ colour vector, which keeps fixture comparison kernel-reducible.
 
 `CanonResult` pairs a canonical form with the label producing it, and
 `ColorSorted` says the colour classes are contiguous in vertex order, the
-shape every canonical form has. Both are stated here because the whole
-canonicalization stack above builds on them.
+shape every canonical form has. Both are stated here because every module
+that computes a canonical form uses them.
 -/
 
 namespace Hex.GraphIso
@@ -40,8 +40,10 @@ structure Coloring (n k : Nat) where
   /-- Every colour is used. -/
   onto : Function.Surjective cells.get
 
-/-- `Vector.get` agrees with element access; core states no lemmas about
-`Vector.get`, so the `onto` field is used through this bridge. -/
+/-- `Vector.get` agrees with element access. The Lean standard library
+states its `Vector` lemmas about `getElem` rather than about
+`Vector.get`, so uses of the `onto` field rewrite with this equation
+first. -/
 theorem _root_.Hex.Vector.get_eq_getElem {α : Type u} {m : Nat} (v : Vector α m) (i : Fin m) :
     v.get i = v[i] := rfl
 
@@ -77,13 +79,13 @@ theorem isSome_ofVector? (v : Vector (Fin k) n) :
 
 /-- The constant zero colouring: the one-cell colouring of a nonempty vertex
 set. -/
--- The size side conditions here and below try `decide` before `omega`.
--- At a literal size `decide` closes the goal with a self-contained term,
--- whereas `omega` lifts an auxiliary theorem into the ambient namespace;
--- at a command that has no enclosing declaration (a `#guard` or `#eval`,
--- as in the manual chapters) that theorem is named in the root namespace
--- and two modules that produce one cannot both be imported. `omega`
--- remains the fallback, and is what runs at a symbolic size.
+-- The size side conditions here and below try `decide` before `omega`. At a
+-- literal size `decide` closes the goal with a self-contained term, whereas
+-- `omega` lifts an auxiliary theorem into the ambient namespace. At a command
+-- with no enclosing declaration (a `#guard` or `#eval`, as in the manual
+-- chapters) that namespace is the root one, and two modules that each produce
+-- such a theorem cannot both be imported. `omega` stays as the fallback, and
+-- is what runs at a symbolic size.
 @[expose] def trivial (n : Nat) (h : 0 < n := by first | decide | omega) :
     Coloring n 1 where
   cells := Hex.Vector.ofFn' fun _ => 0

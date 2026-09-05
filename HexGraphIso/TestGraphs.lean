@@ -17,7 +17,8 @@ regression tests and the fresh-module probes: the graph of the first
 SplitMix64 corpus seed, its image under the recorded Fisher-Yates
 relabelling, and the graph of the second seed. The masks and the
 relabelling are kept literal so a kernel replay does not evaluate the
-`UInt64` stream; the `#guard`s tie them back to the generators.
+`UInt64` stream. The `#guard`s check the literals against the
+generators.
 -/
 
 namespace Hex.GraphIso.TestGraphs

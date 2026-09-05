@@ -16,11 +16,11 @@ The root separator: the head code of the specification key, computed
 by a single refinement of the initial partition and no tree search.
 Isomorphic graphs have equal specification keys, so a difference in
 that one code refutes isomorphism at the cost of one refinement per
-graph, far below a certificate replay.
+graph, far below the cost of a certificate replay.
 
 `Kernel.rootCode` runs the refinement over the packed state of
-`HexGraphIso.Kernel.CheckKey` on the rows tied as one packed number;
-`Kernel.rootCode_eq` identifies it with the head of
+`HexGraphIso.Kernel.CheckKey`, on the adjacency rows packed as one
+number. `Kernel.rootCode_eq` identifies it with the head of
 `Nauty.canonSpecKey` through the list and `Array` layers, and
 `Kernel.not_isomorphic_of_rootCode` is the theorem the tactic applies.
 -/
@@ -66,7 +66,7 @@ private theorem rootCodeL_eq (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
 namespace Kernel
 
 /-- The specification key's head code of a coloured graph whose
-adjacency rows are tied as the one packed number `rows`: a single
+adjacency rows are packed as the one number `rows`: a single
 refinement of the initial partition. -/
 @[expose] def rootCode (G : Colored n k) (rows : Nat) : Nat :=
   (refineP (initCtx n rows) 1 (initLabP G) (initPtnP G)
@@ -92,7 +92,7 @@ theorem rootCode_eq (G : Colored n k) (hn : 2 ≤ n) :
   rw [rootCode_eq_L G _ hn, canonSpecKey, ← rowsOfFlat_eq_rowsOf G,
     ← toNat_rowsOfFlat, rootCodeL_eq, rootCodeA_eq _ _ _ _ hn]
 
-/-- The compiled-side root-code test: whether the root route fires on
+/-- The compiled-side root-code test: whether the root route separates
 this pair. Evaluated at elaboration time over the `Array` rows, so the
 route decision costs one refinement per graph and no kernel work. -/
 def rootSeparates (G H : Colored n k) : Bool :=
@@ -100,13 +100,13 @@ def rootSeparates (G H : Colored n k) : Bool :=
   !Nat.beq (rootCodeA n (rowsOf G) (initialPartition G).1 (initialPartition G).2)
     (rootCodeA n (rowsOf H) (initialPartition H).1 (initialPartition H).2)
 
-/-- The root codes of two coloured graphs disagree: the negative
-route's cheapest kernel obligation, one refinement per graph. -/
+/-- The root codes of two coloured graphs disagree: the cheapest
+kernel check of the negative route, one refinement per graph. -/
 @[expose] def rootDiff (G H : Colored n k) (NA NB : Nat) : Bool :=
   decide (2 ≤ n) && !Nat.beq (rootCode G NA) (rootCode H NB)
 
-/-- Tying equalities plus a root-code disagreement prove
-non-isomorphism. -/
+/-- Equalities identifying each graph's packed rows, plus a root-code
+disagreement, prove non-isomorphism. -/
 theorem not_isomorphic_of_rootCode {G H : Colored n k} {NA NB : Nat}
     (hA : packRows n G.graph.adjMatrix.data.toList = NA)
     (hB : packRows n H.graph.adjMatrix.data.toList = NB)

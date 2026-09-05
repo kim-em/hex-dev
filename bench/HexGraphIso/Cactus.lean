@@ -20,9 +20,9 @@ Emits one JSON line per instance:
 ```
 
 Timing is the minimum of several repetitions after one warmup call.
-The driver is for local and scheduled sweeps
-(`scripts/plots/hexgraphiso-cactus.py` renders the plots); it is not
-part of merge CI.
+The driver runs in local and scheduled sweeps, not in merge CI.
+`scripts/plots/hexgraphiso-cactus.py` renders the plots from its
+output.
 
 The `engine` mode times the two canonical searches against each other
 on the same materialized instances, emitting
@@ -88,8 +88,8 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
     let t1 ← IO.monoNanosNow
     if best == 0 || t1 - t0 < best then
       best := t1 - t0
-  -- scaling self-check: a doubled batch must cost about double, or the
-  -- measurement is an artifact (hoisting, memoization) — warn loudly
+  -- scaling self-check: a doubled batch must cost about double. If it
+  -- does not, the measurement is an artifact (hoisting, memoization).
   if effReps > 1 && best > 20000 then
     let t0 ← IO.monoNanosNow
     blackBox (← act ())
@@ -101,9 +101,10 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
         (1x best {best}ns, 2x batch {two}ns) — measurement suspect"
   return best
 
-/-- The second canonical search the `engine` mode times against the
-literal port. It is `Nauty.runColored` until the structured search
-exists; substituting that search is this definition. -/
+/-- The search the `engine` mode times against the literal port. It
+calls `Nauty.runColored`, so as it stands both columns time the same
+search. Point this definition at another search to compare that one
+instead. -/
 private def engine {n k : Nat} (G : Colored n k) : Nauty.RunResult n :=
   Nauty.runColored G
 
@@ -190,9 +191,9 @@ private def instances : List Inst := Id.run do
 
 /-! # Pair problems
 
-Isomorphism decisions for the proof-obligation cactus: each problem is
-a pair with a known polarity. The `exprA`/`exprB` fields are the Lean
-source of the two sides, consumed by the tactic harness in
+Isomorphism decisions for the cactus over `graph_iso` proofs: each
+problem is a pair with a known polarity. The `exprA`/`exprB` fields
+are the Lean source of the two sides, consumed by the tactic harness in
 `scripts/plots/hexgraphiso-cactus.py` to generate `graph_iso` proof
 files, so the compiled and tactic tiers run the same problems.
 Polarity is revalidated at runtime before timing. -/
@@ -261,9 +262,9 @@ private def pairInstances : List PairInst := Id.run do
       (Families.kneser 7 2) (Families.johnson 7 2) h
       "Graph.singleColor (Families.kneser 7 2)"
       "Graph.singleColor (Families.johnson 7 2)" :: out
-  -- irregular negatives (added as a documented series break): distinct
-  -- degree multisets at matched size, so the root refinement separates
-  -- them and the tiered negative route's cheapest tier is exercised
+  -- irregular negatives, distinct degree multisets at matched size: the
+  -- root refinement separates them, so the cheapest tier of the negative
+  -- route runs. Sweeps without them are over a smaller corpus.
   if h : 0 < 3 * 4 then
     out := negPair "irregular" "neg-grid3x4-vs-circulant12"
       (Families.grid 3 4) (Families.circulant 12 [1, 2]) h
@@ -284,7 +285,7 @@ private def pairInstances : List PairInst := Id.run do
       (Families.grid 4 6) (Families.copies 2 (Families.grid 3 4)) h
       "Graph.singleColor (Families.grid 4 6)"
       "Graph.singleColor (Families.copies 2 (Families.grid 3 4))" :: out
-  -- larger positives (corpus extension, series break 2)
+  -- larger positives: sweeps without them are over a smaller corpus
   for n in [64, 128] do
     if h : 0 < n then
       out := posPair "circulant-12" s!"pos-circulant{n}"
@@ -300,8 +301,8 @@ private def pairInstances : List PairInst := Id.run do
   if h : 0 < (61 : Nat) then
     out := posPair "paley" "pos-paley61" (Families.paley 61) h
       "Graph.singleColor (Families.paley 61)" :: out
-  -- strongly regular negative: same parameters (25, 12, 5, 6), never
-  -- isomorphic — vertex partitions stay uniform until deep in the search
+  -- strongly regular negative: the same parameters (25, 12, 5, 6) and
+  -- not isomorphic, so the partitions stay uniform deep into the search
   if h : 0 < (25 : Nat) then
     out := negPair "srg" "neg-paley25-vs-latin5"
       (Families.paley 25) (Families.latinSquare 5) h

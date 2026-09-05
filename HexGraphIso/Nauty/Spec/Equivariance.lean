@@ -11,15 +11,23 @@ public import HexGraphIso.Nauty.Search.Refine
 public section
 
 /-!
-Equivariance of the ported nauty refinement.
+How the refinement transforms under a relabelling of the vertices.
 
 A `Renaming` of the vertices carries the graph rows to their images and
-the labelling to its composition, and leaves every position-level datum —
-`ptn`, `active`, cell boundaries, counts, and refinement codes —
+the labelling to its composition. Every position-level datum (`ptn`,
+`active`, cell boundaries, counts, and refinement codes) is left
 literally unchanged. This file proves that invariant through each
-explicit recursion of `Nauty.Refine`, culminating in `refine_map`: the
-whole refinement commutes with a renaming. This is stage 1 of the
-certificate plan in the library README.
+explicit recursion of `Nauty.Search.Refine`, culminating in
+`refine_map`: the whole refinement commutes with a renaming.
+
+The later sections carry the same statement through the remaining
+constructions the specification is built from: target-cell selection
+(`bestcell_map`, `targetcell_map`, `maketargetcell_map`),
+individualization (`breakout_map`), and the leaf adjacency rows
+(`leafRows_map`). On the renamed graph with the transported labelling,
+each of these produces the transported result, so a relabelling of the
+input vertices leaves the search tree and the keys at its leaves
+unchanged.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -1006,7 +1014,7 @@ theorem refineLoop_map (σ : Renaming n) {ctx ctx' : Ctx n}
 /-- nauty's `refine` commutes with a vertex renaming: on the renamed
 graph with the transported labelling it produces the transported state,
 with identical partition, active set, cell structure, and refinement
-code. This is the core of stage 1 of the certificate plan. -/
+code. -/
 theorem refine_map (σ : Renaming n) {ctx ctx' : Ctx n}
     (hg : RowsMap σ ctx.g ctx'.g)
     (level : Nat) (lab ptn : Array Nat) (active : VSet n) (numcells : Nat)

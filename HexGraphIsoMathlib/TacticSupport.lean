@@ -12,11 +12,11 @@ public section
 
 /-!
 Object-language support for the `graph_iso` extension to `SimpleGraph`
-goals: the one-cell colouring of an uncoloured graph, the checked
-kernel-facing entry points for each supported goal shape, and the
-empty-graph and cardinality special cases. The tactic emits applications
-of these theorems on literal data; every decisive check is performed by
-the kernel through the shared core routes of `HexGraphIso.Tactic`.
+goals: the one-cell colouring of an uncoloured graph, the entry points
+for each supported goal shape, and the empty-graph and cardinality
+special cases. The tactic emits applications of these theorems to
+literal data. The decisive check is always performed by the kernel, on
+the same routes the Mathlib-free `HexGraphIso.Tactic` uses.
 -/
 
 namespace Hex.GraphIso.Mathlib
@@ -25,11 +25,11 @@ universe u v
 
 variable {V : Type u} {W : Type v} [Fintype V] [Fintype W] {k n : Nat}
 
-/-- The enumeration equivalence induced by a literal duplicate-free
-complete element list: vertex `v` maps to its list position. Both
-directions are structural list operations, so ground instances
-kernel-reduce; the tactic obtains the list by reducing
-`Finset.univ.val` and certifies the three side conditions by `decide`. -/
+/-- The enumeration equivalence induced by a duplicate-free list of all
+the vertices: `v` maps to its position in the list. Both directions are
+structural list operations, so a ground instance reduces in the kernel.
+The tactic obtains the list by reducing `Finset.univ.val`, and proves
+the three side conditions by `decide`. -/
 @[expose] def listEquiv [DecidableEq V] (l : List V)
     (hlen : l.length = Fintype.card V) (hnodup : l.Nodup)
     (hcompl : ∀ v : V, v ∈ l) : V ≃ Fin (Fintype.card V) where
@@ -38,8 +38,9 @@ kernel-reduce; the tactic obtains the list by reducing
   left_inv v := List.getElem_idxOf (List.idxOf_lt_length_of_mem (hcompl v))
   right_inv _i := Fin.ext (hnodup.idxOf_getElem _ _)
 
-/-- The one-cell colouring of an uncoloured graph over a nonempty vertex
-type; the executable encoding of `G ≃g H` goals. -/
+/-- The colouring of an uncoloured graph over a nonempty vertex type
+that gives every vertex colour `0`. A `G ≃g H` goal is encoded through
+this colouring, since a one-cell colouring constrains nothing. -/
 @[expose] def onecell (G : SimpleGraph V) (h : 0 < Fintype.card V) :
     Colored V 1 where
   graph := G
@@ -66,7 +67,8 @@ theorem onecell_isomorphic_iff {G : SimpleGraph V} {H : SimpleGraph W}
 
 /-! # Positive entry points -/
 
-/-- A kernel-checked transporter yields a coloured isomorphism. -/
+/-- The coloured isomorphism a kernel-checked transporter of the
+encodings yields. -/
 def coloredIsoOfIsIso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     {G : Colored V k} {H : Colored W k}
     [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj]
@@ -74,7 +76,8 @@ def coloredIsoOfIsIso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     Colored.Iso G H :=
   isoOfIsIso eV eW h
 
-/-- A kernel-checked transporter yields a graph isomorphism. -/
+/-- The graph isomorphism a kernel-checked transporter of the
+one-cell encodings yields. -/
 def graphIsoOfIsIso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     {G : SimpleGraph V} {H : SimpleGraph W}
     [DecidableRel G.Adj] [DecidableRel H.Adj]
@@ -101,9 +104,10 @@ def coloredIsoOfCardZero (G : Colored V k) (H : Colored W k)
 
 /-! # Negative entry points -/
 
-/-- Non-isomorphism of the encodings refutes coloured isomorphism:
-the route-agnostic form, taking whatever negative proof the tactic's
-shared engine produced. -/
+/-- Non-isomorphism of the encodings refutes coloured isomorphism. The
+hypothesis is stated about `Hex.GraphIso.Isomorphic`, so it accepts a
+negative proof from either the root-separator route or the
+certificate-replay route. -/
 theorem not_isomorphic_of_not_encode_iso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     {G : Colored V k} {H : Colored W k}
     [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj]

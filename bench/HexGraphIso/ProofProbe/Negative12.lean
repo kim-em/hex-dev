@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 import HexGraphIso.ProofProbe.Support
 
-/-! The negative pair from the two recorded `G(12, 1/2)` seeds (SPEC
-release case 2). -/
+/-! The negative pair from the two recorded `G(12, 1/2)` seeds. -/
 
 set_option maxRecDepth 400000
 

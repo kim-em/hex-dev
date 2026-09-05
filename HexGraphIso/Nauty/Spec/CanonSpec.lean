@@ -17,28 +17,30 @@ The nauty-semantic canonical form as a total specification: the maximal
 leaf key of the unpruned individualization-refinement tree.
 
 A leaf key is the chain of refinement codes ending with the sentinel,
-followed by the leaf's `g^lab` adjacency rows; keys compare
-lexicographically, codes numerically and rows in nauty's row order.
-The production search's canonical leaf realizes this maximum:
+followed by the leaf's `g^lab` adjacency rows. Keys compare
+lexicographically, codes numerically and rows in nauty's row order. The
+canonical leaf of the production search is the leaf of greatest key.
+The specification states three ingredients differently from the
+transcribed search, without changing which leaf is greatest.
 
-- a node whose chain is dominated (`compCanon < 0`) can never supply the
+- A node whose chain is dominated (`compCanon < 0`) can never supply the
   canonical leaf, and those are exactly the nodes where nauty's
-  history-dependent `firsttc` hint applies, so the specification's
-  target-cell rule is hint-free; its nontrivial-join test reads the
-  cell's neighbour-count multiset (`joinTest`), which agrees with
-  nauty's first-vertex test on every equitable partition while being
-  invariant under renamings and within-cell reordering — the
+  history-dependent `firsttc` hint applies. The specification's
+  target-cell rule is therefore hint-free. Its nontrivial-join test
+  reads the cell's neighbour-count multiset (`joinTest`), which agrees
+  with nauty's first-vertex test on every equitable partition and is
+  invariant under renamings and under reordering within a cell. The
   certificate checker verifies agreement with the recorded target cell
-  on each replayed node;
-- the sentinel exceeds every real (cleaned) refinement code, which
+  on each replayed node.
+- The sentinel exceeds every real (cleaned) refinement code, which
   reproduces nauty's preference for shallower leaves on equal prefixes
-  (`level < canonlevel` forcing `compCanon = 1`);
-- children may be enumerated in any order under a maximum; the
+  (`level < canonlevel` forcing `compCanon = 1`).
+- Children may be enumerated in any order under a maximum. The
   specification enumerates the target cell by position, which makes
   renaming-equivariance pointwise.
 
 The branch guard is structural discreteness of the partition rather than
-nauty's `numcells` counter; the two agree on every reachable state, and
+nauty's `numcells` counter. The two agree on every reachable state, and
 the certificate checker replays concrete refinements where discreteness
 is directly decidable.
 -/
@@ -66,7 +68,8 @@ deriving Inhabited
     | .lt => .lt
     | .gt => .gt
 
-/-- Key n order: level codes first, then rows in nauty's row order. -/
+/-- The order on keys: level codes first, then rows in nauty's row
+order. -/
 @[expose] def keyCmp (k1 k2 : Key n) : Ordering :=
   match listCmp compare k1.codes k2.codes with
   | .eq => listCmp VSet.rowCmp k1.rows k2.rows
@@ -1291,7 +1294,7 @@ theorem specNode_perm {ctx : Ctx n} (tcLevel : Nat) :
               exact this
             rw [htL, htR]
             exact hTperm.erase v
-          · -- untouched old cells transfer through the parent
+          · -- cells other than the target transfer from the parent
             intro x len hx hd
             have hLs : segN (breakout.go v ((refine ctx level lab ptn
                 active numcells).lab.size + 1)
@@ -1533,7 +1536,7 @@ trips the guard the partition is discrete (the guard-exit hypothesis of
 only the active set and the code accumulator. The runs agree on `lab`,
 `ptn`, `hint` and `maxpos`, their cell counts differ by exactly `δ`,
 and their active sets agree whenever the exit partition is not
-discrete; only `longcode` and `numcells` carry the seed. -/
+discrete. Only `longcode` and `numcells` carry the seed. -/
 
 /-- Refine states equal up to a `numcells` shift of `δ` and the
 `longcode` accumulator. -/
@@ -1869,9 +1872,9 @@ theorem refineLoop_seed {ctx : Ctx n} {level δ : Nat} :
 /-- Seed-independence of `refine`: two runs whose `numcells` seeds
 differ by `δ` produce the same `lab`, `ptn`, `hint` and `maxpos`, cell
 counts differing by exactly `δ`, and the same active set whenever the
-exit partition is not discrete; only `longcode` and `numcells` carry
+exit partition is not discrete. Only `longcode` and `numcells` carry
 the seed. The hypothesis rules out a guard exit on a non-discrete
-partition; it holds whenever the larger seed is at most the true cell
+partition. It holds whenever the larger seed is at most the true cell
 count of `(ptn, level)`, in particular for the counts the search
 maintains. -/
 theorem refine_seed {ctx : Ctx n} {level : Nat} {lab ptn : Array Nat}

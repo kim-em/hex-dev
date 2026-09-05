@@ -21,13 +21,13 @@ fixture corpus, `eachAutos` its automorphism-record part and
 driver runs the same cases in the same sequence.
 
 `Runner` is the search a record is read off. `canonAnswer` reads the
-label and canonical upper-triangle bits off the public `canonicalize`
-and the node and generator counts off `Nauty.runColored`;
+label and canonical upper-triangle bits off the public `canonicalize`,
+and the node and generator counts off `Nauty.runColored`.
 `engineAnswer` reads all of them off `engine`, the second search the
-drivers compare against.
-`engine` is `Nauty.runColoredTraced` until the structured search exists,
-so the twin compares the literal port with itself and the emitters'
-`--engine` mode emits the same records as their default mode.
+drivers compare against. As it stands `engine` calls
+`Nauty.runColoredTraced`, so the twin compares the literal port with
+itself and the emitters' `--engine` mode emits the same records as
+their default mode.
 -/
 
 namespace Hex.GraphIsoCases
@@ -41,10 +41,15 @@ private def lib : String := "HexGraphIso"
 /-- One corpus case: a coloured graph as the emitted record describes
 it. Colours are one per vertex, edges are unordered pairs. -/
 structure Case where
+  /-- The case identifier carried by the emitted record. -/
   name : String
+  /-- The number of vertices. -/
   n : Nat
+  /-- The number of colours. -/
   k : Nat
+  /-- The colour of each vertex. -/
   colors : Array Nat
+  /-- The edges, as unordered vertex pairs. -/
   edges : List (Nat × Nat)
 
 /-- The vertex pairs `(i, j)`, `i < j`, in lexicographic order. -/
@@ -86,10 +91,10 @@ private def triRows {n : Nat} (rows : Array (VSet n)) : String :=
 
 /-! # Searches -/
 
-/-- The second search the twin runner and the `--engine` emitter modes
-measure against the literal port. It is `Nauty.runColoredTraced` until
-the structured search exists; substituting that search is this
-definition. -/
+/-- The search the twin runner and the `--engine` emitter modes measure
+against the literal port. It calls `Nauty.runColoredTraced`, so as it
+stands both sides run the same search. Point this definition at another
+search to compare that one instead. -/
 def engine {n k : Nat} (G : Colored n k) : TraceRun n :=
   runColoredTraced G
 
@@ -97,9 +102,13 @@ def engine {n k : Nat} (G : Colored n k) : TraceRun n :=
 the canonical upper-triangle adjacency bits, the visited-node count and
 the number of accepted generators. -/
 structure Answer where
+  /-- The canonical label, as the image of each vertex. -/
   label : List Nat
+  /-- The canonical upper-triangle adjacency bits. -/
   tri : String
+  /-- The number of search-tree nodes visited. -/
   numnodes : Nat
+  /-- The number of accepted automorphism generators. -/
   numgens : Nat
 
 /-- A search a fixture record is read off; `none` when the search
@@ -440,8 +449,8 @@ def eachCampaign (act : Case → IO Unit) : IO Unit := do
   act (graphCase "campaign/multipartite" (Families.completeMultipartite [3, 4, 5]))
   act (graphCase "campaign/copies5c5" (Families.copies 5 (Families.cycle 5)))
   act (graphCase "campaign/circulant17" (Families.circulant 17 [1, 2, 4, 8]))
-  -- large hard instances matching the extended cactus corpus (series
-  -- break 2): the campaign is where nauty cross-checks these sizes
+  -- large hard instances matching the extended cactus corpus: the
+  -- campaign is where nauty cross-checks these sizes
   act (graphCase "campaign/paley61" (Families.paley 61))
   act (graphCase "campaign/paley113" (Families.paley 113))
   act (graphCase "campaign/hypercube7" (Families.hypercube 7))

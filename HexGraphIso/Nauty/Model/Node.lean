@@ -11,17 +11,19 @@ public import HexGraphIso.Nauty.Cert.Cert
 public section
 
 /-!
-The code-pruned step of the abstract evaluator ladder. `searchNode`
-threads an incumbent best key and skips any subtree whose refinement
-code falls below the incumbent's code at its depth, exactly as the
-transcription prunes on `code < canoncode[level]`. `searchNode_eq`
-proves the pruned recursion computes the pairwise maximum of the
-incumbent and the unpruned subtree key with no side conditions, so
-`searchCanon_eq` and `searchCanon_key` present the root call as a
-verified pruned evaluator of `canonSpec` and of `canonSpecKey`.
+The first of three verified pruned evaluators of the declarative
+canonical key, each adding one of the transcribed search's prunes.
+This one adds the code prune. `searchNode` threads an incumbent best
+key and skips any subtree whose refinement code falls below the
+incumbent's code at its depth, exactly as the transcribed search
+prunes on `code < canoncode[level]`. `searchNode_eq` proves the pruned
+recursion computes the pairwise maximum of the incumbent and the
+unpruned subtree key, with no side conditions, so `searchCanon_eq` and
+`searchCanon_key` present the root call as a verified pruned evaluator
+of `canonSpec` and of `canonSpecKey`.
+
 Nothing on the theorem path for `canonSpecKey = tracedKey` uses these
-declarations. They are kept as a source of lemmas about pruning in the
-abstract.
+declarations. They are kept as a source of lemmas about pruning.
 -/
 
 namespace Hex.GraphIso.Nauty

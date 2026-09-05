@@ -26,7 +26,7 @@ the specification's `leafRows`:
   `testcanlab` returns the trichotomy of the lexicographic `VSet.rowCmp`
   comparison of `leafRows ctx lab` against the stored rows, and its
   second component is a leading-agreement count;
-- `leafEvent_faithful`: the packaged per-leaf clause — the comparison
+- `leafEvent_faithful`: the packaged per-leaf clause. The comparison
   outcome is `listCmp VSet.rowCmp (leafRows ctx lab) (leafRows ctx
   canonlab)`, and the out-state store satisfies the invariant both at
   `n` against the incumbent and at the returned prefix length against
@@ -36,9 +36,9 @@ the specification's `leafRows`:
 - `keyCmp_codes_eq`: on equal code lists the key comparison is the
   row comparison, connecting the trichotomy to `keyCmp` on leaf keys.
 
-`CanongInv` is stated as an explicit hypothesis; its propagation
-across the non-leaf events of the search is the simulation
-induction's obligation.
+`CanongInv` is stated as an explicit hypothesis. The simulation
+induction proves that it propagates across the non-leaf events of the
+search.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -428,7 +428,7 @@ leaf, `processnode` updates the store and compares. Under the store
 invariant, the comparison outcome is the model row comparison of the
 two leaf keys, and the updated store satisfies the invariant both at
 `n` against the incumbent and at the returned prefix length against
-the fresh leaf — re-establishing `CanongInv` whichever way the leaf
+the fresh leaf, so `CanongInv` holds again whichever way the leaf
 resolves. -/
 theorem leafEvent_faithful {ctx : Ctx n} {canong : Array (VSet n)} {canonlab lab : Array Nat}
     {samerows : Nat}

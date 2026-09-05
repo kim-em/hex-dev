@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import HexGraphIso.ProofProbe.Support
 
-/-! The negative ordered-colour pair at `n = 10` (SPEC release case 3,
-negative half): an adjacent marked pair against a non-adjacent one.
+/-! The negative ordered-colour pair at `n = 10`: an adjacent marked
+pair against a non-adjacent one.
 -/
 
 set_option maxRecDepth 100000

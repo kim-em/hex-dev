@@ -13,24 +13,23 @@ import all HexGraphIso.Nauty.Invariant.Orbits
 public section
 
 /-!
-The orbit closure is complete (SPEC § Verified search refinement).
+Completeness of the orbit closure.
 
 A loop's fold runs over the children it visited, while a node's key
 is the maximum over the whole subtree. The two agree once every child
-is dominated by the maximum over the visited ones. Supplying that
-domination for the children `firstChildLoop` drops is the loop step's
-real content.
+is dominated by the maximum over the visited ones. The loop step
+therefore has to supply that domination for the children
+`firstChildLoop` drops.
 
 The justification of a dropped child is `childKey_of_orbPruned`, whose
 hypothesis is the model's `orbPruned`, phrased through the executable
 forward closure `orbitClose` at fuel `nn`. The transcription's test is
 a single pointer read, and `orbConn_of_ptr` turns that into
-`WordConn gens v orbits[v]!`. Between the two sits a gap `Invariant/Orbits`
-deliberately left open: it proved the closure *sound*, which is all
-store validity needed, and recorded that completeness "is not needed
-for soundness, only if B2 wants to show the model prunes at least as
-much as the transcription". The domination step is exactly that
-direction, so this file closes the gap.
+`WordConn gens v orbits[v]!`. `Invariant/Orbits` proves `orbitClose`
+sound, which is what store validity needs. This module proves it
+complete: every `WordConn`-connected vertex is in the closure. That is
+the direction the domination argument needs, since it says the model
+prunes at least as much as the transcription does.
 
 The word a `WordConn` supplies can be longer than `nn`, so fuel `nn`
 is not justified by running the word. It is justified by saturation:

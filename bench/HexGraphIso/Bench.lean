@@ -11,10 +11,10 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-graph-iso`.
 
-This first slice measures the polynomially modelled building blocks and
-the exponentially modelled declarative canonical key on deterministic
-family inputs; input construction is hoisted into `prep` so each model
-tracks the timed operation.
+The scientific registrations measure the polynomially modelled building
+blocks and the exponentially modelled declarative canonical key on
+deterministic family inputs. Input construction happens in `prep`, so
+each declared model describes the timed operation alone.
 
 Scientific registrations:
 
@@ -36,28 +36,27 @@ backed by it, the certificate pipeline, and the pinned nauty
 comparator register as fixed benchmarks on committed circulant sizes:
 
 * `runHexCanon{8,12,16}` versus `runNautyCanon{8,12,16}`: the public
-  `canon` (the transcription surface; before the API flip this
-  series measured the certificate-checked pipeline — series break
-  noted) against the pinned nauty 2.9.3 comparator (in-process FFI
+  `canon` against the pinned nauty 2.9.3 comparator (in-process FFI
   against the vendored source, via `Hex.BenchOracle.Nauty`), joined
-  on the canonical upper-triangle bits.
+  on the canonical upper-triangle bits. Under these names `canon`
+  measured the certificate-checked pipeline before it became the
+  transcribed search, so the recorded series is not comparable across
+  that change.
 * `runIsIso12`, `runFindIso12`: the public isomorphism decisions.
 * `runCertify12`, `runCertReplay12`: unbounded certificate generation
   and the generation-plus-replay pipeline (`Nauty.certifyKey?` and
-  `Nauty.certifyCanon?`), the certificate route the `graph_iso`
-  tactic replays; the limit-gated public wrappers are covered by
-  conformance.
+  `Nauty.certifyCanon?`), which is the certificate route the
+  `graph_iso` tactic replays. The public wrappers that enforce the
+  record limits are covered by conformance instead.
 * `runCanonAgree16`: the agreement check joining the two comparator
-  columns — `verify` fails if the public canonical bits ever diverge
+  columns. `verify` fails if the public canonical bits ever diverge
   from pinned nauty's.
 * `runAutGens{12,16}`, `runAutOrbits{12,16}`: the automorphism
-  generator list and the vertex orbits, the cheap projections of the
-  automorphism surface, one traversal each.
-* `runAutOrder{12,16}`: the whole `autos` surface including the
-  orbit-stabilizer chain for the group order, which runs one further
-  traversal per base point; the gap against `runAutGens` is the price
-  of the order.
-* `runAutSound16`: the agreement check on the automorphism surface.
+  generator list and the vertex orbits, one traversal each.
+* `runAutOrder{12,16}`: all of `autos`, including the orbit-stabilizer
+  chain for the group order, which runs one further traversal per base
+  point. The gap against `runAutGens` is what the order costs.
+* `runAutSound16`: the agreement check on `autos`.
   `verify` fails if any returned generator is not accepted by
   `checkIso` against the graph itself, or if the orbit array is not
   constant on the orbits it records. The comparison against pinned
@@ -72,11 +71,12 @@ open Hex.GraphIso
 
 /-- Flattened benchmark input: a deterministic coloured circulant. -/
 structure GraphInput where
+  /-- The number of vertices. -/
   n : Nat
   deriving Repr, BEq, Hashable
 
-/-- The benchmark family: the circulant on `{1, 2}` offsets with the
-one-cell colouring, plus a fallback for `n = 0`. -/
+/-- The input of one benchmark point: the circulant on `{1, 2}` offsets
+at `n` vertices, with the one-cell colouring. -/
 def prepGraph (n : Nat) : GraphInput :=
   { n := n }
 
@@ -200,11 +200,17 @@ private def runNautyCanonAt (m : Nat) (_ : Unit) : IO String := do
     return result.tri
   | none => return ""
 
+/-- The public `canon` on the 8-vertex circulant. -/
 def runHexCanon8 : Unit → IO String := runHexCanonAt 8
+/-- Pinned nauty on the 8-vertex circulant. -/
 def runNautyCanon8 : Unit → IO String := runNautyCanonAt 8
+/-- The public `canon` on the 12-vertex circulant. -/
 def runHexCanon12 : Unit → IO String := runHexCanonAt 12
+/-- Pinned nauty on the 12-vertex circulant. -/
 def runNautyCanon12 : Unit → IO String := runNautyCanonAt 12
+/-- The public `canon` on the 16-vertex circulant. -/
 def runHexCanon16 : Unit → IO String := runHexCanonAt 16
+/-- Pinned nauty on the 16-vertex circulant. -/
 def runNautyCanon16 : Unit → IO String := runNautyCanonAt 16
 
 /-- The unpruned specification key at the largest feasible size, as a
@@ -215,21 +221,25 @@ def runSpecKey6 : Unit → IO Nat := fun _ =>
     return (Nauty.canonSpecKey G).codes.foldl (· + ·) 0
   | none => return 0
 
+/-- The `isIso` decision on the 12-vertex circulant against itself. -/
 def runIsIso12 : Unit → IO Bool := fun _ =>
   match graphOf { n := 12 } with
   | some ⟨_, G⟩ => return isIso G G
   | none => return false
 
+/-- The `findIso` search on the 12-vertex circulant against itself. -/
 def runFindIso12 : Unit → IO Bool := fun _ =>
   match graphOf { n := 12 } with
   | some ⟨_, G⟩ => return (findIso G G).isSome
   | none => return false
 
+/-- Unbounded certificate generation on the 12-vertex circulant. -/
 def runCertify12 : Unit → IO Bool := fun _ =>
   match graphOf { n := 12 } with
   | some ⟨_, G⟩ => return (Nauty.certifyKey? G).isSome
   | none => return false
 
+/-- Certificate generation and replay on the 12-vertex circulant. -/
 def runCertReplay12 : Unit → IO String := fun _ =>
   match graphOf { n := 12 } with
   | some ⟨_, G⟩ =>
@@ -253,14 +263,20 @@ private def runAutOrderAt (m : Nat) (_ : Unit) : IO Nat :=
   | some ⟨_, G⟩ => return (autos G).order
   | none => return 0
 
+/-- The automorphism generators of the 12-vertex circulant. -/
 def runAutGens12 : Unit → IO Nat := runAutGensAt 12
+/-- The automorphism generators of the 16-vertex circulant. -/
 def runAutGens16 : Unit → IO Nat := runAutGensAt 16
+/-- The vertex orbits of the 12-vertex circulant. -/
 def runAutOrbits12 : Unit → IO Nat := runAutOrbitsAt 12
+/-- The vertex orbits of the 16-vertex circulant. -/
 def runAutOrbits16 : Unit → IO Nat := runAutOrbitsAt 16
+/-- The automorphism group order of the 12-vertex circulant. -/
 def runAutOrder12 : Unit → IO Nat := runAutOrderAt 12
+/-- The automorphism group order of the 16-vertex circulant. -/
 def runAutOrder16 : Unit → IO Nat := runAutOrderAt 16
 
-/-- The automorphism-surface agreement check: `verify` fails if a
+/-- The agreement check on `autos` at `n = 16`: `verify` fails if a
 returned generator is not an automorphism, or if the orbit array is
 not constant on the orbits it records. -/
 def runAutSound16 : Unit → IO Nat := fun _ => do

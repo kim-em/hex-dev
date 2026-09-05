@@ -16,7 +16,7 @@ The quartet induction: every state the transcribed search
 (`firstPathNode`/`firstChildLoop`/`otherNode`/`otherChildLoop`)
 reaches keeps its labelling cell-content-reachable from the initial
 labelling (`CellsReach`), its initial boundaries intact, and its
-`numcells` accurate — so the search's `canonlab` output is reached
+`numcells` accurate. The search's `canonlab` output is therefore reached
 (`canonlab_cellsReach`), which discharges the transcription-side
 residuals of `certifyCanon?_isSome`
 (`labelColorSorted_canonlab`, `canonlab_perm_range`).
@@ -1870,8 +1870,8 @@ theorem canonlab_size {k : Nat} (G : Colored n k) :
 
 /-- The transcribed search's canonical labelling is reached: it
 fills every cell of the initial partition with that cell's own
-vertices. The B2 simulation clause of the verified search refinement
-programme, discharging the transcription-side residuals of
+vertices. This is the simulation clause the rest of the correctness
+argument shares, and it supplies the transcription-side residuals of
 `certifyCanon?_isSome`. -/
 theorem canonlab_cellsReach {k : Nat} (G : Colored n k) :
     CellsReach G (runColored G).canonlab := by

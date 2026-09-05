@@ -20,8 +20,8 @@ the domination induction threads.
 -/
 
 /-!
-Store validity for the admitted automorphisms (SPEC § Verified search
-refinement, the replay hypothesis's store-validity clause).
+Store validity for the admitted automorphisms, which is what the
+replay hypothesis needs of `genTrace`.
 
 The traced run's `genTrace` feeds the certificate producer: every
 `.autom` record carries one of its entries, and the replay's
@@ -45,9 +45,9 @@ every row.
 The code-1 arm's other guard, `gcaFirst ≥ noncheaplevel` with no
 `isautom` scan, admits on the strength of `cheapautom`: an equitable
 partition whose nontrivial cells are small enough forces every leaf
-below to realize an automorphism. That argument needs a theory of
-equitable partitions the development does not yet have; the theorems
-here are stated so that arm can slot in beside them once proven.
+below to realize an automorphism. `SmallCell/Transitive` proves that
+arm (`checkAutom_scatter_of_descPaths`), from the two same-target
+descents below the greatest common ancestor.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -235,9 +235,9 @@ theorem checkAutom_scatter_of_leafRows_eq {ctx : Ctx n}
 
 `processnode` is the only search step that grows `genTrace`. The
 lemmas below characterize the grown entry: the scatter loops become
-folds, and the event lemma ties each push to its admission guard, in
-the shape the run-level threading consumes together with the
-per-admission theorems above.
+folds, and the event lemma records which guard admitted each push.
+The run-level induction consumes them together with the per-admission
+theorems above.
 -/
 
 private theorem id_run_eq {α : Type} (x : Id α) : x.run = x := rfl

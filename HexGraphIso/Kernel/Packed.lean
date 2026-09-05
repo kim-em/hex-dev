@@ -13,8 +13,8 @@ public import HexGraphIso.Kernel.IsoLit
 public section
 
 /-!
-Kernel-priced primitives for the certificate replay, and the packed
-rows the replay reads.
+Primitives written for cheap kernel reduction, used by the certificate
+replay, and the packed rows the replay reads.
 
 The kernel has no support for `Array` and reduces `List` access by
 walking the spine, so every indexed read of the replay's labelling
@@ -22,25 +22,25 @@ and partition state costs the index. It does have GMP-accelerated
 `Nat` arithmetic and bit operations, each one reduction step whatever
 the operand size. This file packs a list of small naturals into one
 `Nat` of fixed-width fields, so that a read is a shift and a mask and
-a write is a handful of arithmetic steps, and states the
-correspondence `Rep` between a packed number and the list it encodes
-that the replay clones in `HexGraphIso.Kernel.CheckKey` thread through
-their equalities.
+a write is a handful of arithmetic steps. It also states `Rep`, the
+correspondence between a packed number and the list it encodes, which
+the packed definitions in `HexGraphIso.Kernel.CheckKey` carry through
+their equalities with the list ones.
 
 Every definition here that the kernel evaluates is spelled with the
 raw `Nat.add`, `Nat.beq`, `Nat.land`, ... functions the kernel
 accelerates and with `cond` on their `Bool` results, so no typeclass
 instance or `Decidable` wrapper stands between the term and the
-accelerated step; the `if`/`==`/`&&&` spellings unfold to these by
+accelerated step. The `if`/`==`/`&&&` spellings unfold to these by
 `rfl`, which is how the proofs connect the two. The same treatment
 gives `popCountK` and `lowBitK`, byte-table forms of the per-bit
-recursions that the kernel otherwise pays one step per bit for.
+recursions the kernel otherwise pays one step per bit for.
 
-`Kernel.packRows` reads the tied flat adjacency literal into one
-packed number with field width `n`, row `v` in bits
-`[n * v, n * (v + 1))`; `flatRows` and `rowsOfFlat` are the list and
-packed-set readings of the same rows that the soundness proofs go
-through.
+`Kernel.packRows` reads the flat adjacency literal into one packed
+number with field width `n`, row `v` in bits
+`[n * v, n * (v + 1))`. `flatRows` and `rowsOfFlat` are the list and
+packed-set readings of the same rows, and the soundness proofs go
+through them.
 -/
 namespace Hex.GraphIso.Nauty
 
@@ -115,12 +115,12 @@ theorem cond_beq_true {α : Type} (a : Bool) (x y : α) :
 
 /-! # The loop driver
 
-Structural recursion on a `Nat` fuel unfolds through `Nat.brecOn` at
-about four times the cost of a bare `Nat.rec` step, and `List.range`
-costs the kernel some twenty microseconds per element it builds.
-`iterUp` is the ascending counted loop as one `Nat.rec` step per
-iteration; the range-driven folds and maps of the replay go through
-it and its two derived forms. -/
+Structural recursion on a `Nat` fuel unfolds through `Nat.brecOn`,
+which costs several reduction steps per iteration, and a loop written
+over `List.range` makes the kernel build that list first. `iterUp` is
+the ascending counted loop as one `Nat.rec` step per iteration. The
+range-driven folds and maps of the replay go through it and its two
+derived forms, `mapRange` and `allRange`. -/
 
 /-- The compiled form of `iterUp`. -/
 def iterUpImpl {α : Type} (k : Nat) (f : Nat → α → α) (a : α) : α :=
@@ -245,11 +245,11 @@ theorem cleanupK_eq (l : Nat) : cleanupK l = cleanup l := rfl
 
 /-! # Byte-table `popCount` and `lowBit`
 
-The per-bit recursions cost the kernel about forty reduction steps
-per bit (each iteration a `Nat` decision, a modulus, a division, an
-addition, all through their instances). One byte per iteration, the
-byte's answer read from a 256-entry table packed four bits per entry
-into one literal, is one shift and one mask per byte. -/
+The per-bit recursions cost the kernel a fixed number of `Nat`
+operations per bit: a decision, a modulus, a division and an addition,
+each through its instance. Taking one byte per iteration and reading
+the byte's answer from a 256-entry table packed four bits per entry
+into one literal costs one shift and one mask per byte. -/
 
 /-- `popCount` of every byte, four bits per entry. -/
 @[expose] def popCountTable : Nat :=
@@ -682,7 +682,7 @@ theorem flatRows_small (nn : Nat) (flat : List Bool) :
 /-! # Rows packed from the flat literal
 
 `flatRows` rebuilds each row by probing its segment position by
-position, a spine walk per bit; `rowOfSegK` reads the segment once. -/
+position, a spine walk per bit. `rowOfSegK` reads the segment once. -/
 
 /-- The bit set of a row segment whose head sits at position `j`. -/
 @[expose] def rowOfSegK : List Bool → Nat → Nat

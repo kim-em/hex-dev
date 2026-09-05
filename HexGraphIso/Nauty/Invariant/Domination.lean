@@ -23,13 +23,13 @@ public section
 The domination layer: the key-level reading of the search state's
 incumbent, and the per-arm key verdicts of the leaf event. Together
 with the comparison machines of `Invariant/Codes` and the row clause
-of `Invariant/Leaves`, these are the dischargers the maximality induction
-applies at each `processnode` arm to conclude that the traced key
-dominates every visited leaf — the `canonSpecKey G = tracedKey G`
+of `Invariant/Leaves`, these are what the maximality induction applies
+at each `processnode` arm to conclude that the traced key dominates
+every visited leaf, which is the `canonSpecKey G = tracedKey G`
 equality the replay spine consumes.
 
 The incumbent's key is `⟨bs ++ [codeSentinel], leafRows ctx canonlab⟩`
-for the ghost code list `bs` tracked by `CodeCmpInv`; a leaf of the
+for the ghost code list `bs` tracked by `CodeCmpInv`. A leaf of the
 current path has key `⟨cs ++ [codeSentinel], leafRows ctx lab⟩`. The
 verdict lemmas translate the imperative comparison state into
 `keyCmp` on those keys:
@@ -39,92 +39,85 @@ verdict lemmas translate the imperative comparison state into
   `codeInv_keyCmp_gt` at `ext := [codeSentinel]`).
 - `compCanon = 0` with the path shorter than the incumbent: the leaf
   ends in the sentinel where the incumbent still has a real code, so
-  the leaf compares above (`tied_short_keyCmp_gt`) — the short-leaf
-  install (`level < canonlevel → code 3`) is correct.
+  the leaf compares above (`tied_short_keyCmp_gt`). That is why the
+  short-leaf install (`level < canonlevel → code 3`) is correct.
 - `compCanon = 0` at the incumbent's depth: the code lists are equal
   outright and the rows decide (`tied_full_keyCmp`), which is the
   `testcanlab` outcome by `leafEvent_faithful`.
 
-The event layer is complete: `processnode_leaf` (the off-first-path
-leaf), `processnode_leafFirst` (the first-path-agreeing leaf failing
-the admission gate, via the gate-failure reduction
-`processnode_gateFail_eq`), `processnode_auto` with `auto_keyMax`
-(the gate-passing leaf: comparison state untouched, the sentinel guard
-supplies exact path depth, and the mandatory `isautom` scan validates the
-admitted scatter), `recover_machines` with the
-`recover_frames`/`otherNodePrep_frames` threading, and the
+The leaf event is covered arm by arm: `processnode_leaf` (the
+off-first-path leaf), `processnode_leafFirst` (the first-path-agreeing
+leaf failing the admission test, through the reduction
+`processnode_gateFail_eq`), `processnode_auto` with `auto_keyMax` (the
+leaf passing the admission test: the comparison state is untouched,
+the sentinel guard supplies exact path depth, and the mandatory
+`isautom` scan validates the admitted scatter), `recover_machines`
+with the `recover_frames`/`otherNodePrep_frames` threading, and the
 `firstterminal_*` seeds for all four threads.
 
-The induction's statement layer is now also in place: the `DomOk`
-record (see its section comment for the two design decisions —
-incumbent-maximality is a conclusion shape in the `searchNode_eq`
-style, and unwinding-correctness is a loop obligation, not a stored
-clause), the path-prefix key algebra (`prefixKey` with its
-`keyMax`/`keysMax` distribution laws), the two `specNode` arm
-isolations (`specNode_discrete`, `specNode_internal` with
-`specChild`), and the leaf-guard agreement
-(`discreteAt_iff_bcount`, aligning the imperative `numcells == n`
-dispatch with the specification's `discreteAt` through
-`SearchOk.count`).
+The statement layer of the induction is the `DomOk` record (its
+section comment gives the two decisions its shape encodes), the
+path-prefix key algebra (`prefixKey` with its `keyMax`/`keysMax`
+distribution laws), the two `specNode` arm isolations
+(`specNode_discrete`, and `specNode_internal` with `specChild`), and
+the leaf-guard agreement `discreteAt_iff_bcount`, which aligns the
+imperative `numcells == n` dispatch with the specification's
+`discreteAt` through `SearchOk.count`.
 
-The return-protocol layer is now proven, and it fixes the
-induction's architecture per unwind mode:
+A dominated sibling is absorbed in a different place in each of the
+two unwind modes.
 
-- **Frozen unwinds absorb locally.** After a code-4 leaf with the
+- A frozen unwind absorbs locally. After a code-4 leaf with the
   machine frozen downward, `pruneReturn`'s `eqlevCanon` and
   `allsamelevel - 1` forms never return below the recorded
-  divergence, so every abandoned loop's truncated path still
-  contains it: `frozen_take_keyLe` dominates each abandoned
-  sibling's whole subtree, loop by loop, on the way up. In this
-  mode every quartet theorem still concludes the full `keyMax`
-  equation.
-- **Generator returns absorb wholesale at the gca loop.** After a
-  code-1/code-2 admission, intermediate loops conclude nothing
-  locally; the quartet theorems hand up the payload (the admitted
+  divergence, so the truncated path of every loop left behind still
+  contains that divergence: `frozen_take_keyLe` dominates each such
+  sibling's whole subtree, loop by loop, on the way up. In this mode
+  every quartet theorem concludes the full `keyMax` equation.
+- A generator return absorbs wholesale at the gca loop. After a
+  code-1 or code-2 admission, the intermediate loops conclude nothing
+  locally. The quartet theorems hand up the payload: the admitted
   scatter, its carry between the guiding sibling's and the current
-  child's individualized vertices, its cell stabilization at the
-  gca node), and the loop at the returned gca level identifies the
-  whole current child subtree with the guiding sibling's via
-  `childKey_of_carried`, whose key its own fold already
-  absorbed. The conclusion shape is therefore a disjunction: normal
-  exit or frozen unwind with the full equation, generator unwind
-  with the payload.
-- The in-loop orbit skips (`st.orbits[tv]! == tv` failing)
-  discharge by `orbConn_of_ptr` + `wordConn_symm` +
-  `cellStab_of_scatter` + `childKey_of_carried` at the loop's own
-  node.
+  child's individualized vertices, and its cell stabilization at the
+  gca node. The loop at the returned gca level identifies the whole
+  current child subtree with the guiding sibling's via
+  `childKey_of_carried`, whose key its own fold has already absorbed.
+  The conclusion is therefore a disjunction: normal exit or frozen
+  unwind with the full equation, generator unwind with the payload.
+- The in-loop orbit skips (`st.orbits[tv]! == tv` failing) follow from
+  `orbConn_of_ptr`, `wordConn_symm`, `cellStab_of_scatter` and
+  `childKey_of_carried` at the loop's own node.
 
-The three obligations this file once listed as external are all
-supplied now. The cheapautom subtree theorem is
-`descPath_leafRows_all` and its `leafRows_eq_of_descPaths` corollary;
-store-validity arm 2 is `genTraceOk_processnode` and
-`processnode_checkAutom`; the `(fix, mcr)` ledger is `Invariant/Autos`,
-whose `longprune_carried`/`shortprune_carried` meet
-`childKey_of_carried`'s hypotheses exactly. `DomOk` therefore carries
-both ledgers (`genTraceOk`, `autosOk`), both ride the internal steps
-by frame (`otherNodePrep_store`, `recover_store`,
-`firstterminal_store`, transported by `genTraceOk_of_eq` and
-`autosOk_of_eq`), and the admission event preserves store validity
-under the record outright. The only remaining row premise is the
-code-2 tie, which is local and proven by
-`rows_eq_of_testcanlab_tie`. Code 1 does not require a descent
-geometry invariant: `processnode` checks the first-path sentinel at
-`level + 1` and scans the scatter with `isautom` before admission.
-`firstCodeInv_eq_of_live` therefore supplies equal path codes, while
-`processnode_checkAutom` validates the generator directly.
+Three supporting facts come from the rest of this layer. The
+cheapautom subtree fact is `descPath_leafRows_all` with its
+`leafRows_eq_of_descPaths` corollary. Store validity across the leaf
+event is `genTraceOk_processnode` and `processnode_checkAutom`. The
+`(fix, mcr)` ledger is `Invariant/Autos`, whose `longprune_carried`
+and `shortprune_carried` meet `childKey_of_carried`'s hypotheses
+exactly. `DomOk` carries both ledgers (`genTraceOk`, `autosOk`), both
+ride the internal steps by frame (`otherNodePrep_store`,
+`recover_store`, `firstterminal_store`, transported by
+`genTraceOk_of_eq` and `autosOk_of_eq`), and the admission event
+preserves store validity under the record. The one row premise the
+event needs is the code-2 tie, which is local and proved by
+`rows_eq_of_testcanlab_tie`. Code 1 needs no descent geometry
+invariant: `processnode` checks the first-path sentinel at
+`level + 1` and scans the scatter with `isautom` before admission, so
+`firstCodeInv_eq_of_live` supplies equal path codes and
+`processnode_checkAutom` validates the generator.
 
-The mutual quartet induction follows the
+The mutual induction over the four search functions follows the
 `canonlab_cellsReach` skeleton (whose composite helpers
-`recover_out`/`processnode_searchOk`/`canonlab_or_of` are public)
-and threads `DomOk`, discharges leaf arms by `processnode_leaf`/
-`processnode_leafFirst`/`processnode_auto` + `auto_keyMax` through
-`specNode_discrete`/`prefixKey_leafKey`, internal arms by
-`specNode_internal` (the `keysMax` fold literally matching the
-loop), machines by `otherNodePrep_codeInv`/`recover_machines` and
-the frames, dispatch by `discreteAt_iff_bcount`, and unwinds by
-the mode analysis above. At the root, `specNode_achieved` closes
-the achieved direction and the induction the domination direction,
-giving `canonSpecKey G = tracedKey G`.
+`recover_out`/`processnode_searchOk`/`canonlab_or_of` are public) and
+threads `DomOk`. It discharges leaf arms by `processnode_leaf`,
+`processnode_leafFirst` and `processnode_auto` + `auto_keyMax`
+through `specNode_discrete`/`prefixKey_leafKey`, internal arms by
+`specNode_internal` (whose `keysMax` fold matches the loop
+literally), machines by `otherNodePrep_codeInv`/`recover_machines`
+and the frames, dispatch by `discreteAt_iff_bcount`, and unwinds by
+the two modes above. At the root, `specNode_achieved` gives the
+achieved direction and the induction the domination direction, so
+`canonSpecKey G = tracedKey G`.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -683,11 +676,11 @@ theorem processnode_rowTie {ctx : Ctx n} {level numcells : Nat}
 /-- The full leaf event off the first path: at a discrete node,
 `processnode` leaves the incumbent at the key maximum of the entry
 incumbent and the current leaf, re-establishes the store invariant,
-and hands back a comparison machine for the unwind — intact when the
-comparison stayed frozen or re-seeded by an install, or in the
-reset form when a row rejection repurposed `compCanon`
-(`recover_codeInv_reset` consumes it). The return level is one of
-the four unwind forms. -/
+and hands back a comparison machine for the unwind. That machine is
+intact when the comparison stayed frozen or was re-seeded by an
+install, and in the reset form when a row rejection repurposed
+`compCanon` (`recover_codeInv_reset` consumes it). The return level is
+one of the four unwind forms. -/
 theorem processnode_leaf {nn : Nat} {ctx : Ctx n} {cs bs : List Nat}
     {numcells : Nat} {st : SearchSt n}
     (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
@@ -877,10 +870,10 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx n} {cs bs : List Nat}
 /-! # The unwind carries both machines -/
 
 /-- One `recover` step after a node event: the comparison machine
-survives the unwind in whichever mode the event left it — live with
-`compCanon ≤ 0`, or the reset mode a row rejection leaves behind —
-and the first-path machine is clamped. The induction applies this at
-every return to a child loop. -/
+survives the unwind in whichever mode the event left it (live with
+`compCanon ≤ 0`, or the reset mode a row rejection leaves behind), and
+the first-path machine is clamped. The induction applies this at every
+return to a child loop. -/
 theorem recover_machines {nn inf : Nat} {cs bs fs : List Nat}
     {st : SearchSt n} {lvl : Nat}
     (hc : (st.compCanon ≤ 0 ∧
@@ -902,7 +895,7 @@ theorem recover_machines {nn inf : Nat} {cs bs fs : List Nat}
   · exact recover_codeInv hinv hle hlvl
   · exact recover_codeInv_reset hinv hlvl
 
-/-! # The first-path-agreeing leaf: the code-`1` gate -/
+/-! # The first-path-agreeing leaf: the code-`1` admission test -/
 
 /-- nauty's `workperm` at a first-path-agreeing leaf: the scatter of
 the current leaf's labelling over the first leaf's. -/
@@ -994,7 +987,7 @@ private theorem pushAuto_maxlevel (st : SearchSt n) (p : VSet n × VSet n) :
   rw [pushAuto]; split <;> rfl
 
 /-- The code-`1` arm: a first-path-agreeing leaf passing the
-admission gate records a generator and unwinds to `gcaFirst` with
+admission test records a generator and unwinds to `gcaFirst` with
 the whole comparison state untouched. -/
 theorem processnode_auto {ctx : Ctx n} {level numcells : Nat}
     {st : SearchSt n}
@@ -1383,10 +1376,10 @@ theorem processnode_rowTie_autos {ctx : Ctx n} {level numcells : Nat}
   all_goals by_cases hcap : st.autos.size = st.wsCap
   all_goals simp [hm, hcap, pushAuto, id_run_eq]
 
-/-- A first-path-agreeing leaf failing the admission gate behaves,
+/-- A first-path-agreeing leaf failing the admission test behaves,
 in the return level and the whole comparison state, exactly as the
-same state entered off the first path: the gate's only effect is the
-skipped generator. -/
+same state entered off the first path. The only effect of the test is
+the skipped generator. -/
 theorem processnode_gateFail_eq {ctx : Ctx n} {level numcells : Nat}
     {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
@@ -1447,7 +1440,7 @@ theorem processnode_gateFail_eq {ctx : Ctx n} {level numcells : Nat}
        | exact Or.inr (Or.inr rfl)
        | omega)
 
-/-- Failing the first-path admission gate has the same autos-ledger
+/-- Failing the first-path admission test has the same autos-ledger
 effect as entering the ordinary off-path comparison arm. -/
 theorem processnode_gateFail_autos {ctx : Ctx n} {level numcells : Nat}
     {st : SearchSt n}
@@ -1522,8 +1515,8 @@ theorem processnode_gateFail_autos {ctx : Ctx n} {level numcells : Nat}
     | exact congrArg (fun p => st.autos.set! (st.wsCap - 1) p) hfm
 
 /-- The leaf event at a first-path-agreeing leaf that fails the
-admission gate: identical to `processnode_leaf`, by the gate-failure
-reduction. -/
+admission test: identical to `processnode_leaf`, by the reduction
+`processnode_gateFail_eq`. -/
 theorem processnode_leafFirst {nn : Nat} {ctx : Ctx n}
     {cs bs : List Nat} {numcells : Nat} {st : SearchSt n}
     (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
@@ -2084,28 +2077,28 @@ theorem discreteAt_iff_bcount {ptn : Array Nat} {level nn : Nat}
 /-! # The `DomOk` record
 
 The per-node entry invariant of the maximality induction, at a node
-about to refine at `level = cs.length + 1`. Two deliberate design
-decisions, so the next sitting does not re-litigate them:
+about to refine at `level = cs.length + 1`. Two facts about its
+shape:
 
-- **Incumbent-maximality is a conclusion shape, not a record
-  clause.** Following `searchNode_eq`'s `incMax` contract, each
-  quartet theorem concludes
+- **Incumbent-maximality is a conclusion, not a record clause.**
+  Following `searchNode_eq`'s `incMax` contract, each quartet theorem
+  concludes
   `incKey ctx bs' out.canonlab =
     keyMax (incKey ctx bs st.canonlab) (prefixKey cs (specNode …))`
-  rather than storing a fold over visited leaves in the record; the
-  `keysMax` algebra composes the per-child equations across the
-  sweep, and pruned children contribute through the verdict lemmas
+  rather than storing a fold over visited leaves in the record. The
+  `keysMax` algebra composes the per-child equations across the child
+  loop, and pruned children contribute through the verdict lemmas
   (`frozen_lt_keyCmp`, `auto_keyMax`, `childKey_of_orbPruned`).
 
-- **Unwinding-correctness is a loop obligation, not a record
-  clause.** The orbit consultation in `firstChildLoop` is justified
+- **Unwinding-correctness is proved at the loop, not stored in the
+  record.** The orbit consultation in `firstChildLoop` is justified
   by the `stab` clause held at the loop's own node: a loop that
-  continues (return level ≥ its level) received only generators
-  whose carrier leaves lie inside its subtree, so
+  continues (return level at least its own level) received only
+  generators whose carrier leaves lie inside its subtree, so
   `cellStab_of_scatter` re-establishes `stab` for the newly admitted
-  generators; an early unwind exits the loop and discharges nothing.
-  The gca return levels enter through `processnode_leaf`'s return
-  disjunction, not through a stored clause. -/
+  generators. An early unwind exits the loop and proves nothing
+  there. The gca return levels enter through `processnode_leaf`'s
+  return disjunction, not through a stored clause. -/
 
 variable {n k : Nat}
 
@@ -2155,18 +2148,18 @@ theorem autosOk_of_eq {g : Array (VSet n)} {rptn rlab : Array Nat}
     AutosOk g rptn rlab 1 st'.autos := by
   rw [h]; exact hok
 
-/-! # The leaf event's row obligations
+/-! # The row equalities the leaf event needs
 
-`processnode_checkAutom` and `genTraceOk_processnode` leave two row
-equalities to the induction. The row-tie one is local: a `testcanlab`
-tie against the updated store is exactly equality of the two leaf-row
-lists, by the store invariant the node already carries. The first-path
-one is the cheapautom descent and is discharged at the use site from
-the run's `gcaFirst`/`firsttc` bookkeeping. -/
+`processnode_checkAutom` and `genTraceOk_processnode` each leave a row
+equality for the induction to supply. The row-tie one is local: a
+`testcanlab` tie against the updated store is exactly equality of the
+two leaf-row lists, by the store invariant the node already carries.
+The first-path one is the cheapautom descent, proved at the use site
+from the run's `gcaFirst`/`firsttc` bookkeeping. -/
 
 /-- A `testcanlab` tie against the updated store says the leaf's rows
-are the incumbent's: this is the `harm3` obligation of
-`genTraceOk_processnode`, discharged from `DomOk.canongInv`. -/
+are the incumbent's: this is the `harm3` hypothesis of
+`genTraceOk_processnode`, supplied from `DomOk.canongInv`. -/
 theorem rows_eq_of_testcanlab_tie {ctx : Ctx n} {st : SearchSt n}
     (hinv : CanongInv ctx st.canong st.canonlab st.samerows)
     (h : (testcanlab ctx
@@ -2185,9 +2178,9 @@ theorem rows_eq_of_testcanlab_tie {ctx : Ctx n} {st : SearchSt n}
 
 /-! # Labelling facts of a reached state
 
-The row obligations and the scatter exits are stated over `LabOk`
-and `LabInj`; a reached labelling supplies both, so the induction
-never carries them separately from `SearchOk`. -/
+The row equalities and the scatter exits are stated over `LabOk` and
+`LabInj`. A reached labelling supplies both, so the induction never
+carries them separately from `SearchOk`. -/
 
 /-- A reached labelling lands in the vertex range. -/
 theorem labOk_of_reach {G : Colored n k} {lab : Array Nat}
@@ -2212,24 +2205,25 @@ theorem labInj_of_reach {G : Colored n k} {lab : Array Nat}
 
 /-! # The admission event under the node invariant
 
-Packaging the remaining row obligation with the labelling facts of a
-reached state: at a node carrying `DomOk`, `processnode` preserves store
-validity outright. The two
-`reached` hypotheses are what the induction knows from having passed
-`firstterminal`, where both the first leaf and the incumbent are
-installed from a reached labelling. -/
+The remaining row equality packaged with the labelling facts of a
+reached state: at a node carrying `DomOk`, `processnode` preserves
+store validity outright. The two `reached` hypotheses are what the
+induction knows from having passed `firstterminal`, where both the
+first leaf and the incumbent are installed from a reached
+labelling. -/
 
 /-! # Absorption of dominated sibling suffixes
 
-An early unwind abandons the remaining siblings of every loop
-strictly between the return level and the leaf. When the leaf event
-left the comparison machine frozen downward, the recorded divergence
-sits at level `eqlevCanon + 1`, and the `pruneReturn` forms that
-fire in that mode (`eqlevCanon` itself, or `allsamelevel - 1` above
-it) never return below the divergence; every abandoned loop's path
-prefix therefore still contains the divergence, so the whole subtree
-of every abandoned sibling compares below the incumbent and the key
-maximum absorbs the suffix locally, loop by loop. -/
+An early unwind leaves the remaining siblings of every loop strictly
+between the return level and the leaf unvisited. Suppose the leaf
+event left the comparison machine frozen downward. The recorded
+divergence sits at level `eqlevCanon + 1`, and the `pruneReturn`
+forms that fire in that mode (`eqlevCanon` itself, or
+`allsamelevel - 1` above it) never return below the divergence. The
+path prefix of every skipped loop therefore still contains the
+divergence, so the whole subtree of every skipped sibling compares
+below the incumbent, and the key maximum absorbs the suffix locally,
+loop by loop. -/
 
 private theorem getElem!_take'' {l : List Nat} {m i : Nat}
     (him : i < m) (hil : i < l.length) : (l.take m)[i]! = l[i]! := by
@@ -2337,10 +2331,10 @@ explored child subtree is absorbed at once: the admitted scatter is a
 checked automorphism that stabilizes the loop's cells and carries the
 guiding sibling's individualized vertex onto the current child's, so
 the two children's subtree keys are equal, and the guiding sibling's
-key is already folded into the incumbent. The abandoned intermediate
-loops below need no local justification in this mode; the return
-level being the gca is exactly what lets their whole enclosing child
-subtree be absorbed here. -/
+key is already folded into the incumbent. The intermediate loops
+below need no local justification in this mode. The return level being
+the gca is exactly what lets their whole enclosing child subtree be
+absorbed here. -/
 
 /-- A checked automorphism stabilizing the refined node's cells and
 carrying one target-cell vertex onto another identifies the two

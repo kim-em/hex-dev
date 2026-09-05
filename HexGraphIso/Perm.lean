@@ -311,7 +311,7 @@ complete. -/
 
 /-- A canonical-labelling result array in nauty's `canonlab` convention:
 `l[i]` is the old vertex placed at new position `i`. The underlying data is
-the same duplicate-free complete vertex array as `Perm`; the wrapper marks
+the same duplicate-free complete vertex array as `Perm`. The wrapper marks
 the direction. -/
 structure Label (n : Nat) where
   /-- The underlying bijection sending each new position to the old vertex

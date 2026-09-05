@@ -15,7 +15,7 @@ and for nauty by least squares, and prints the exponents with the ratio
 ``--check MARGIN`` exits non-zero when, on any family with at least
 ``--min-sizes`` sizes, the hex exponent exceeds nauty's by more than
 ``MARGIN``: the required check that keeps the per-node factor from
-growing with ``n`` again. Families with fewer sizes are reported but not
+growing with ``n``. Families with fewer sizes are reported but not
 checked, and the check fails if no family qualifies. It is a growth
 check, not a constant-factor check: a slowdown that is uniform in ``n``
 is the per-library bench's business.

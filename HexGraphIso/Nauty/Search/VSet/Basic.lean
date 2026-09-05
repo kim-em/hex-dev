@@ -24,15 +24,15 @@ word operations. This module is the same shape on Lean's small natural
 numbers: a `VSet n` is an array of `⌈n/63⌉` limbs, each below `2^63`
 so that it is an unboxed scalar at runtime, with vertex `v` at bit
 `v % 63` of limb `v / 63`. Bits at or above `n` are always clear.
-Every operation is a loop over the limbs; the binary operations
+Every operation is a loop over the limbs. The binary operations
 allocate their result array, and `insert` and `erase` update in place
-when the set is uniquely referenced. Vertex `0` sits at the least significant bit, so the
-least vertex of a set is the lowest set bit of its first nonzero limb,
-and `rowCmp` reads the least differing vertex from the lowest set bit
-of the first differing limb of the symmetric difference. (nauty puts
-vertex `0` at the most significant bit so that unsigned word comparison
-is the row order; only the direction inside a word differs, and the
-observable order is the same.)
+when the set is uniquely referenced. Vertex `0` sits at the least
+significant bit, so the least vertex of a set is the lowest set bit of
+its first nonzero limb, and `rowCmp` reads the least differing vertex
+from the lowest set bit of the first differing limb of the symmetric
+difference. (nauty puts vertex `0` at the most significant bit so that
+unsigned word comparison is the row order. Only the direction inside a
+word differs, and the observable order is the same.)
 
 The interface is membership-based: `mem` is the specification lens,
 `ext` identifies sets with the same members, and every operation has a
@@ -106,7 +106,7 @@ theorem limbs_ext {s t : VSet n} (h : s.limbs = t.limbs) : s = t := by
   cases h
   rfl
 
-/-- Equality compares the limb arrays; `Hex.instDecidableEqArray` keeps
+/-- Equality compares the limb arrays. `Hex.instDecidableEqArray` keeps
 the comparison kernel-reducible across the module boundary. -/
 instance : DecidableEq (VSet n) := fun s t =>
   if h : s.limbs = t.limbs then isTrue (limbs_ext h)
@@ -132,7 +132,7 @@ theorem ext_iff {s t : VSet n} : s = t ↔ ∀ v, s.mem v = t.mem v :=
 
 /-- A limb array is well formed for `n` vertices when it has `limbCount n`
 limbs, every limb is a 63-bit word, and no bit at or above `n` is set.
-The runtime never checks this; each operation preserves it by proof. -/
+The runtime never checks this. Each operation preserves it by proof. -/
 structure Wf (n : Nat) (limbs : Array Nat) : Prop where
   size_eq : limbs.size = limbCount n
   bounded : ∀ i : Nat, limbs[i]! < 2 ^ 63
@@ -323,8 +323,8 @@ theorem mem_erase (s : VSet n) (v w : Nat) :
 /-! # Limbwise binary operations -/
 
 /-- The limbwise combination of two packed sets. `Hex.Array.zipWith'`
-reduces in the kernel where core `Array.zipWith` stalls, and compiles to
-the core loop. -/
+reduces in the kernel where Lean's own `Array.zipWith` stalls, and
+compiles to the same loop. -/
 @[expose] def zipLimbs (op : Nat → Nat → Nat) (s t : VSet n) : Array Nat :=
   Hex.Array.zipWith' op s.limbs t.limbs
 
@@ -717,8 +717,8 @@ theorem subset_iff_inter {s t : VSet n} : s.subset t = true ↔ s.inter t = s :=
     let x := s.limbs[i]!
     if x != 0 then some (63 * i + lowBit x) else firstFrom s fuel (i + 1)
 
-/-- The least member; `0` for the empty set (callers guard on
-nonemptiness). nauty's `FIRSTBITNZ` over the words. -/
+/-- The least member, or `0` for the empty set (callers guard on
+nonemptiness). This is nauty's `FIRSTBITNZ` over the words. -/
 @[expose] def minElem (s : VSet n) : Nat :=
   (firstFrom s s.limbs.size 0).getD 0
 
@@ -1040,8 +1040,8 @@ where
       if a == b then go fuel (i + 1)
       else if a.testBit (lowBit (a ^^^ b)) then .gt else .lt
 
-/-- The outcome of the limb scan from `i` with `fuel` limbs: equal
-prefixes give `.eq`; otherwise the first differing limb decides by its
+/-- The outcome of the limb scan from `i` with `fuel` limbs. Equal
+prefixes give `.eq`. Otherwise the first differing limb decides, by its
 least differing bit. -/
 theorem rowCmp_go_eq_of {s t : VSet n} :
     ∀ (fuel i : Nat), (∀ k, k < fuel → s.limbs[i + k]! = t.limbs[i + k]!) →

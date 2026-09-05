@@ -17,17 +17,18 @@ theorems.
 For `e : V ≃ Fin n`, the executable graph has an edge between `e v` and
 `e w` exactly when the Mathlib graph has an edge between `v` and `w`,
 and the executable colour of `e v` is the original colour of `v`. The
-two directions of `encode_iso_iff` explicitly conjugate the executable
-permutation by the chosen equivalences; no enumeration is treated as
-canonical, and a different choice changes neither the isomorphism
-verdict nor `colored_iso_iff_canon_eq`.
+two directions of `encode_iso_iff` conjugate the executable permutation
+by the chosen equivalences. No enumeration is treated as canonical:
+both `encode_iso_iff` and `colored_iso_iff_canon_eq` hold for every
+choice of `e`.
 -/
 
 namespace Hex.GraphIso
 
 variable {n : Nat}
 
-/-- The equivalence of `Fin n` performed by a forward permutation. -/
+/-- The equivalence of `Fin n` given by a forward permutation: `p.get`
+one way, `p.inv.get` the other. -/
 @[expose] def Perm.toEquiv (p : Perm n) : Fin n ≃ Fin n where
   toFun := p.get
   invFun := p.inv.get
@@ -37,7 +38,8 @@ variable {n : Nat}
 @[simp] theorem Perm.toEquiv_apply (p : Perm n) (i : Fin n) :
     p.toEquiv i = p.get i := rfl
 
-/-- The forward permutation performing an equivalence of `Fin n`. -/
+/-- The forward permutation with the same action as an equivalence of
+`Fin n`. -/
 @[expose] def Perm.ofEquiv (e : Fin n ≃ Fin n) : Perm n :=
   Perm.ofFn e (fun _ _ h => e.injective h)
     (fun i => ⟨e.symm i, e.apply_symm_apply i⟩)
@@ -115,8 +117,8 @@ omit [Fintype V] [Fintype W] in
 variable {G : Colored V k} {H : Colored W k}
   [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj]
 
-/-- A checked executable transporter decodes to a colour-preserving
-Mathlib isomorphism. -/
+/-- Decode a checked executable transporter into a colour-preserving
+isomorphism of the Mathlib graphs. -/
 def isoOfIsIso (eV : V ≃ Fin n) (eW : W ≃ Fin n) {p : Hex.GraphIso.Perm n}
     (h : IsIso (encode eV G) (encode eW H) p) : Colored.Iso G H where
   graphIso :=
@@ -160,8 +162,10 @@ theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     rcases h.elim with ⟨p, hp⟩
     exact Colored.Isomorphic.intro (isoOfIsIso eV eW hp)
 
-/-- The principal Mathlib-facing biconditional: two coloured graphs are
-isomorphic exactly when their encodings have equal canonical forms. -/
+/-- Two coloured Mathlib graphs are isomorphic exactly when their
+encodings have equal canonical forms. The right-hand side is a decidable
+equality of executable values, so this reduces a Mathlib isomorphism
+question to running the canonical labelling. -/
 theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H ↔
       canon (encode eV G) = canon (encode eW H) :=
@@ -169,29 +173,28 @@ theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
 
 /-! # Automorphisms -/
 
-/-- The automorphism generators the pinned search discovers, decoded as
-colour-preserving self-isomorphisms of the Mathlib graph. Each entry is
-an automorphism by `Hex.GraphIso.autos_isIso`, decoded by
-`isoOfIsIso`; whether the list generates the whole automorphism group
-is not proved, so this is a source of automorphisms rather than a
+/-- The automorphism generators found by `Hex.GraphIso.Aut.gens` on the
+encoding, decoded as colour-preserving self-isomorphisms of the Mathlib
+graph. Each entry is an automorphism, by `Hex.GraphIso.Aut.gens_isIso`
+and `isoOfIsIso`. That the list generates the whole automorphism group
+is not proved, so this is a supply of automorphisms and not a
 presentation of the group. -/
 def autos (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     List (Colored.Iso G G) :=
   (Aut.gens (encode e G)).attach.map fun p =>
     isoOfIsIso e e (Aut.gens_isIso p.property)
 
-/-- The orbit-stabilizer product the pinned search computes, which is
-the order of the colour-preserving automorphism group when the recorded
-orbits are the true ones. Conformance pins it against nauty's
-`grpsize`; no theorem states it, because that would need the generators
-to generate the whole group, and without that it is only a lower
-bound. -/
+/-- The orbit-stabilizer product computed by `Hex.GraphIso.Aut.order` on
+the encoding. It is the order of the colour-preserving automorphism
+group when the discovered generators generate that group. No theorem
+states this, and without completeness of the generators the value is
+only a lower bound. Conformance compares it with nauty's `grpsize`. -/
 def autOrder (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     Nat :=
   Aut.order (encode e G)
 
-/-- The number of vertex orbits the pinned search reports, under the
-same caveat as `autOrder`. -/
+/-- The number of vertex orbits reported by `Hex.GraphIso.Aut.numOrbits`
+on the encoding, under the same caveat as `autOrder`. -/
 def autNumOrbits (e : V ≃ Fin n) (G : Colored V k)
     [DecidableRel G.graph.Adj] : Nat :=
   Aut.numOrbits (encode e G)

@@ -15,36 +15,34 @@ public section
 /-!
 Automorphism generators, vertex orbits and the group order.
 
-The pinned nauty traversal discovers automorphisms as it runs: each
-one is a `workperm` recorded at a code-1 or code-2 leaf, in discovery
-order, and the same permutations drive the search's own orbit pruning.
-`Aut.trace` is that list, transcribed; because the transcription
-replays nauty's traversal exactly, the list is deterministic and
-conformance-pinnable, not merely the group it generates.
+The nauty traversal discovers automorphisms as it runs: each one is a
+`workperm` recorded at a code-1 or code-2 leaf, in discovery order, and
+the search prunes with the same permutations. `Aut.trace` is that list,
+transcribed. The transcription replays nauty's traversal exactly, so
+the list itself is determined, not just the group it generates, and
+conformance compares it against nauty entry by entry.
 
-Nothing from the search is believed. Each raw array passes through
-`autom?`, which rebuilds it as a `Perm n` and runs the same
-`checkIso` the isomorphism surface uses, so `autos_isIso` reads the
-membership guarantee straight off the check rather than off the
-producer. This is the library's usual producer/checker split, with
-`checkIso` as the sole trusted step.
+No permutation from the search is trusted as given. Each raw array
+passes through `autom?`, which rebuilds it as a `Perm n` and runs the
+same `checkIso` the isomorphism operations use, so `autos_isIso` reads
+the membership guarantee off the check rather than off the search. The
+search is the producer and `checkIso` is the only trusted step.
 
-The orbit array replays nauty's `orbjoin` over the checked
-generators, which is exactly what the search does with them, so it is
-the array nauty reports. `sameOrbit_of_orbits_eq` is its guarantee:
-vertices sharing an orbit representative really are carried onto each
-other by an automorphism. The converse, that the generators generate
-the whole group so that distinct representatives really are distinct
-orbits, is the counting argument, and is not yet proved here.
+The orbit array replays nauty's `orbjoin` over the checked generators,
+which is what the search itself does with them, so it is the array
+nauty reports. `sameOrbit_of_orbits_eq` is its guarantee: vertices
+sharing an orbit representative really are carried onto each other by
+an automorphism. The converse, that the generators generate the whole
+group so that distinct representatives are distinct orbits, needs a
+counting argument and is not proved here.
 
 `Aut.order` is the orbit-stabilizer chain: individualize a vertex of
 a non-singleton orbit, recurse on the stabilizer (the search on the
 individualized colouring computes it, since a vertex alone in its
 cell is fixed by every colour-preserving automorphism), and multiply
 the orbit lengths. It is the order of the automorphism group exactly
-when each level's orbit array is the true orbit partition, and a
-lower bound otherwise; it is pinned against nauty's `grpsize` by
-conformance.
+when each level's orbit array is the true orbit partition, and a lower
+bound otherwise. Conformance compares it against nauty's `grpsize`.
 -/
 
 namespace Hex.GraphIso
@@ -101,7 +99,7 @@ theorem Perm.val_get_of_ofNatArray? {a : Array Nat} {p : Perm n}
 
 /-- Accept one raw generator array from the traversal: rebuild it as a
 permutation of `Fin n` and check that it is an automorphism. This is
-the only place a generator is believed, and it believes only
+the only step that admits a generator, and the admission test is
 `checkIso`. -/
 @[expose] def autom? (G : Colored n k) (γ : Array Nat) : Option (Perm n) :=
   match Perm.ofNatArray? n γ with
@@ -182,8 +180,8 @@ theorem inj_of_mem_raw {G : Colored n k} {γ : Array Nat} (h : γ ∈ raw G) :
   exact congrArg Fin.val (p.get_inj (Fin.ext hab))
 
 /-- Every checked generator is an automorphism. This is the membership
-guarantee on the cheap projection; `autos_isIso` is the same fact on the
-packaged result. -/
+guarantee stated on `Aut.gens`. `autos_isIso` is the same fact on the
+packaged `AutResult`. -/
 theorem gens_isIso {G : Colored n k} {p : Perm n} (h : p ∈ gens G) :
     IsIso G G p := by
   rw [gens, List.mem_map] at h
@@ -312,7 +310,7 @@ for a second traversal.
 
 `fuel = n` is enough. Each step individualizes a vertex of a
 non-singleton orbit, so that vertex and every vertex individualized
-before it are singletons in the next level's orbit array; the number of
+before it are singletons in the next level's orbit array. The number of
 vertices in non-singleton orbits therefore drops by at least one per
 step and never passes through one, so at most `n - 1` steps precede the
 call that finds no non-singleton orbit. The `indiv?` failure arm cannot
@@ -336,10 +334,10 @@ termination_by fuel
 /-- The orbit-stabilizer product for `G`: the order of its automorphism
 group exactly when each level's orbit array is the true orbit
 partition. Without that, each computed orbit is contained in the true
-one, so the product is a lower bound; it is not the order of the group
+one, so the product is a lower bound. It is not the order of the group
 generated by the reported generators either, since the stabilizer
 factors come from separate runs rather than from that list. Conformance
-pins it against nauty's `grpsize`. -/
+compares it against nauty's `grpsize`. -/
 @[expose] def order (G : Colored n k) : Nat := orderAux n G (orbits G)
 
 end Aut
@@ -364,10 +362,10 @@ structure AutResult (n : Nat) where
 /-- Generators of the automorphism group of a coloured graph, with the
 vertex orbits, the orbit count and the orbit-stabilizer product for the
 group order. Every returned permutation is an automorphism
-(`autos_isIso`); vertices sharing an orbit representative are in one
-orbit (`autos_sameOrbit`). The order and the orbit count are the
-reported numbers rather than theorems, for the reason `Aut.order`
-gives. Computing the order runs one traversal per base point, so a
+(`autos_isIso`). Vertices sharing an orbit representative are in one
+orbit (`autos_sameOrbit`). The order and the orbit count are reported
+numbers rather than theorems, for the reason `Aut.order` gives.
+Computing the order runs one traversal per base point, so a
 caller who wants only the generators or the orbits should take
 `Aut.gens` or `Aut.orbits`. -/
 @[expose] def autos (G : Colored n k) : AutResult n :=
