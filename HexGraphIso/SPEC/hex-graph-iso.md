@@ -1158,7 +1158,10 @@ computes and compares:
 - every entry of `canonlab`.
 
 A second record kind, `graphisoautos`, pins the automorphism surface. It
-carries the original graph and colour vector, the recorded generator list,
+carries every field of a `graphiso` record, so a consumer reading the
+whole stream for canonical forms needs no knowledge of the second kind
+and the canonical comparisons above run on it too, and it adds the
+recorded generator list,
 the generator count the transcribed search reports, the orbit array, the
 orbit count and the group order. The shim collects nauty's own generators
 through `options.userautomproc`, so the comparison is against the

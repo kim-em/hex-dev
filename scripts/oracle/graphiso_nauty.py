@@ -13,7 +13,10 @@ comparison. The visited-node counter is also compared, so the fixture
 pins how much of the tree the two programs walked and not only the
 answer they reached.
 
-``graphisoautos`` records pin the automorphism surface. The shim
+``graphisoautos`` records pin the automorphism surface. They carry every
+field of a ``graphiso`` record as well, so a consumer reading the whole
+stream for canonical forms needs no knowledge of the second kind, and
+the canonical checks above run on them too. The shim
 collects nauty's own generator list through ``options.userautomproc``,
 so the comparison is against the traversal's emissions rather than a
 recomputation. nauty emits a generator at every code-1 leaf and at
@@ -251,9 +254,10 @@ def main() -> int:
     autos = 0
     for record in records:
         line = next(it) if record["n"] >= 1 else None
-        if record["kind"] == "graphiso":
-            _check(record, line)
-        else:
+        # an automorphism record carries the canonical fields too, so
+        # both checks run on it
+        _check(record, line)
+        if record["kind"] == "graphisoautos":
             assert line is not None
             _check_autos(record, _parse(line))
             autos += 1

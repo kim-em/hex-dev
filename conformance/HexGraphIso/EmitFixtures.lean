@@ -90,21 +90,33 @@ private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
     (sizes.toList.map Int.ofNat)
     r.numnodes
 
-/-- Emit one automorphism-group record: the generator list, orbits,
-orbit count, generator count and group order the public `autos`
-surface reports. -/
+/-- Emit one automorphism-group record: the canonical answer a
+`graphiso` record carries, so the stream stays readable end to end by a
+consumer that only knows canonical forms, together with the generator
+list, orbits, orbit count, generator count and group order the public
+`autos` surface reports. -/
 private def emitAutoCase (case : String) (n k : Nat) (colors : Array Nat)
     (edges : List (Nat × Nat)) : IO Unit := do
   let some G := coloredOf? n k colors edges
     | throw (IO.userError s!"emit: case {case} rejected by the builders")
+  let res := canonicalize G
+  let r := Nauty.runColored G
   let a := autos G
+  let mut sizes : Array Nat := .replicate k 0
+  for v in [0 : n] do
+    let c := colors[v]!
+    sizes := sizes.set! c (sizes[c]! + 1)
   emitGraphIsoAutosFixture lib case n k
     (colors.toList.map Int.ofNat)
     (edges.map fun (p, q) =>
       (Int.ofNat (Nat.min p q), Int.ofNat (Nat.max p q)))
+    ((List.finRange n).map fun i => Int.ofNat (res.label.get i).val)
+    (triBits res.form)
+    (sizes.toList.map Int.ofNat)
+    r.numnodes
     (a.gens.map fun p =>
       (List.finRange n).map fun i => Int.ofNat (p.get i).val)
-    (Nauty.runColored G).numgenerators
+    r.numgenerators
     (a.orbits.toList.map Int.ofNat)
     a.numOrbits
     a.order
