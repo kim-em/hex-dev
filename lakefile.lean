@@ -816,6 +816,8 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
+    ++ #[`HexGraphIso.Cases].map Glob.one
+
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
       `HexInterval.SearchConformance,
@@ -1069,6 +1071,12 @@ lean_exe hexgraphiso_emit_fixtures where
 lean_exe hexgraphiso_emit_campaign where
   srcDir := "conformance"
   root := `HexGraphIso.EmitCampaign
+
+-- Twin conformance for the second canonical search: runs both searches
+-- over the fixture and campaign corpora and compares the traversals.
+lean_exe hexgraphiso_engine_twin where
+  srcDir := "conformance"
+  root := `HexGraphIso.EngineTwin
 
 lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"

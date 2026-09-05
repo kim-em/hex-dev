@@ -23,6 +23,16 @@ Timing is the minimum of several repetitions after one warmup call.
 The driver is for local and scheduled sweeps
 (`scripts/plots/hexgraphiso-cactus.py` renders the plots); it is not
 part of merge CI.
+
+The `engine` mode times the two canonical searches against each other
+on the same materialized instances, emitting
+
+```
+{"family": "...", "name": "...", "n": N, "lit_ns": ..., "eng_ns": ...,
+ "nauty_ns": ..., "nodes": ..., "eng_nodes": ...}
+```
+
+which `scripts/bench/graphiso_engine_compare.py` reads.
 -/
 
 namespace Hex.GraphIsoCactus
@@ -91,6 +101,17 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
         (1x best {best}ns, 2x batch {two}ns) — measurement suspect"
   return best
 
+/-- The second canonical search the `engine` mode times against the
+literal port. It is `Nauty.runColored` until the structured search
+exists; substituting that search is this definition. -/
+private def engine {n k : Nat} (G : Colored n k) : Nauty.RunResult n :=
+  Nauty.runColored G
+
+/-- A cheap digest forcing full evaluation of a search result. -/
+private def runDigest {n : Nat} (r : Nauty.RunResult n) : Nat :=
+  r.canong.foldl (fun a row => a + row.card) 0 +
+    r.canonlab.foldl (· + ·) 0 + r.numnodes
+
 private def runInst (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
   let fastNs ← timeMinNs fun _ => pure (digest (canonicalize G))
@@ -103,6 +124,24 @@ private def runInst (i : Inst) : IO Unit := do
   IO.println <| "{\"family\": \"" ++ i.family ++ "\", \"name\": \"" ++
     i.name ++ s!"\", \"n\": {n}, \"fast_ns\": {fastNs}" ++
     s!", \"nauty_ns\": {nautyNs}, \"nodes\": {nodes}}" ++ ""
+  (← IO.getStdout).flush
+
+/-- One instance of the `engine` mode: the two searches and the nauty
+comparator on the same materialized instance, with both node counts. -/
+private def runEngine (i : Inst) : IO Unit := do
+  let ⟨n, G⟩ := i.packed
+  let litNs ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
+  let engNs ← timeMinNs fun _ => pure (runDigest (engine G))
+  let colors := List.replicate n 0
+  let adj := adjStrings G
+  let nautyNs ← timeMinNs fun _ => do
+    let r ← Hex.BenchOracle.Nauty.canon n 1 colors adj
+    pure (r.lab.foldl (· + ·) 0)
+  IO.println <| "{\"family\": \"" ++ i.family ++ "\", \"name\": \"" ++
+    i.name ++ s!"\", \"n\": {n}, \"lit_ns\": {litNs}" ++
+    s!", \"eng_ns\": {engNs}, \"nauty_ns\": {nautyNs}" ++
+    s!", \"nodes\": {(Nauty.runColored G).numnodes}" ++
+    s!", \"eng_nodes\": {(engine G).numnodes}}"
   (← IO.getStdout).flush
 
 private def instances : List Inst := Id.run do
@@ -320,6 +359,7 @@ private def runPair (p : PairInst) : IO Unit := do
 def main (args : List String) : IO Unit := do
   match args with
   | ["pairs"] => for p in pairInstances do runPair p
+  | ["engine"] => for i in instances do runEngine i
   | _ => for i in instances do runInst i
 
 end Hex.GraphIsoCactus
