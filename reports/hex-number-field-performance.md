@@ -40,7 +40,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | `runMergeRootListLadder` | parametric | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
 | `runQAdjoinRootsLadder` | fixed | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree 6 | 20 s ceiling |
 | `runAlgebraicRootsLadder` | fixed | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | 15 s ceiling |
-| advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, and `AlgebraicPoly.Common` primitives | 500 ms default; 750 ms for measured slower routes, zero grace |
+| advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, `AlgebraicPoly.Common` primitives, the integer-polynomial root set `ZPoly.algebraicRoots` on `X⁴ - 10X² + 1`, and the reality test | 500 ms default; 750 ms for measured slower routes, zero grace |
 | `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of the profiled repeated degree-6 component over `ℚ(√2)` | 1 s, 1.1 s, and 30 s whole-child ceilings, zero grace |
 
 The 76 fixed registrations comprise 51 internal API, phase, and fixed-problem
@@ -302,6 +302,9 @@ and adds only a constant-time projection.
 | `OfNat.ofNat` | `runAlgebraicConstructors` | same linear constructor route |
 | `Pow.pow Nat` | `runAlgebraicNatPow` | fixed exponent 7 |
 | `Pow.pow Int` | `runAlgebraicIntPow` | fixed exponent -5, including inverse |
+| `ZPoly.algebraicRoots?` / `ZPoly.algebraicRoots` | `runAlgebraicRootsZ` | fixed quartic `X⁴ - 10X² + 1`: one isolation, four exactifications, and the reality-first sort; 750 ms zero-grace |
+| `AlgebraicNumber.isReal` / `AlgebraicRoot.isReal` / `DyadicSquare.meetsRealAxis` | `runIsReal` | grouped constant-time comparison anchor |
+| `AlgebraicNumber.rootLe`, `approx`, `Repr` | `runAlgebraicRootsZ` and `runQAdjoinApprox` | the sort runs inside the roots case; `approx` is the registered fixed-field approximation on the stored representative; display carries no contract |
 | rational `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
 | natural `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
 | integer `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |

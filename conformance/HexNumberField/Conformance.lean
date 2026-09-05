@@ -21,7 +21,9 @@ Covered operations:
 - canonical `AlgebraicNumber` arithmetic through its public instances;
 - canonical rational construction, casts, scalar action, and powers;
 - semantic equality of lazy values represented by different polynomials;
-- checked and total fixed-field and algebraic-coefficient root APIs.
+- checked and total fixed-field and algebraic-coefficient root APIs;
+- `ZPoly.algebraicRoots?`/`algebraicRoots`, the reality test `isReal`, the
+  output order `rootLe`, `approx`, and the `Repr` display.
 
 Covered properties and edge cases:
 - `sqrt(2)^2 = 2`, `sqrt(2) * sqrt(2)^-1 = 1`, and `0^-1 = 0`;
@@ -31,7 +33,11 @@ Covered properties and edge cases:
 - exactification through an enclosing polynomial with an irrelevant factor;
 - equal values with different nonminimal polynomials and a conjugate-embedding
   impostor that must compare unequal;
-- zero, constant, linear, and repeated-root polynomial conventions.
+- zero, constant, linear, and repeated-root polynomial conventions;
+- `algebraicRoots` on `X^2 - 2` (order `-sqrt(2), sqrt(2)`), on
+  `(X^2 - 2)^2 (X + 3)` (multiplicity dropped, `-3` first), on `X^3 - 2` (the
+  real root first, then the conjugate pair), and on the zero, constant, and
+  `X` polynomials; `isReal` on a real root, a nonreal root, and zero.
 -/
 
 namespace Hex.NumberFieldConformance
@@ -473,5 +479,64 @@ private def algebraicRepeated? : Option AlgebraicPoly := do
             (total[0]?).map (fun root => root.multiplicity) = some 2
       | _, _ => false
   | none => false
+
+
+/-! # Roots of integer polynomials -/
+
+-- `X^2 - 2`: two real roots, `-sqrt(2)` before `sqrt(2)`, both canonical, and
+-- the total wrapper agrees with the checked form.
+#guard
+  let p : ZPoly := #p[-2, 0, 1]
+  match ZPoly.algebraicRoots? p with
+  | some roots =>
+      roots.size = 2 && ZPoly.algebraicRoots p == roots &&
+        roots.all (fun a => a.p = p && a.isReal) &&
+        (roots[0]?).map (fun a => decide ((a.approx 24).re < 0)) = some true &&
+        (roots[1]?).map (fun a => decide ((a.approx 24).re > 0)) = some true &&
+        (roots[0]?).map (fun a => a == -roots[1]!) = some true
+  | none => false
+
+-- `(X^2 - 2)^2 (X + 3)`: multiplicity is dropped, the rational root `-3`
+-- comes first because it is the smallest real root, and the two surds keep
+-- their canonical minimal polynomial.
+#guard
+  let p : ZPoly := #p[-2, 0, 1] * #p[-2, 0, 1] * #p[3, 1]
+  let roots := ZPoly.algebraicRoots p
+  roots.size = 3 &&
+    (roots[0]?).map (fun a => a == AlgebraicNumber.ofRat (-3)) = some true &&
+    (roots[1]?).map (fun a => a.p = #p[-2, 0, 1] && a.isReal) = some true &&
+    (roots[2]?).map (fun a => a.p = #p[-2, 0, 1] && a.isReal) = some true
+
+-- `X^3 - 2`: the real cube root first, then the conjugate pair, which is
+-- nonreal, and the three roots sum to zero.
+#guard
+  let p : ZPoly := #p[-2, 0, 0, 1]
+  let roots := ZPoly.algebraicRoots p
+  roots.size = 3 &&
+    (roots[0]?).map (fun a => a.isReal) = some true &&
+    (roots[1]?).map (fun a => !a.isReal) = some true &&
+    (roots[2]?).map (fun a => !a.isReal) = some true &&
+    roots.all (fun a => a.p = p) &&
+    (roots.foldl (· + ·) 0 == 0)
+
+-- The zero polynomial, a nonzero constant, and `X` take their stated
+-- branches: no roots, no roots, and the canonical zero (which is real).
+#guard
+  ZPoly.algebraicRoots? (0 : ZPoly) == some #[] &&
+    ZPoly.algebraicRoots? (#p[7] : ZPoly) == some #[] &&
+    (match ZPoly.algebraicRoots? (#p[0, 1] : ZPoly) with
+      | some roots => roots.size = 1 &&
+          (roots[0]?).map (fun a => a == 0 && a.isReal) = some true
+      | none => false)
+
+-- `sqrt(2) + sqrt(3)` through the public entry point has the expected
+-- minimal polynomial, its inverse is `sqrt(3) - sqrt(2)`, and the display
+-- names the polynomial and twelve decimals.
+#guard
+  let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+  let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
+  (s2 + s3).p = #p[1, 0, -10, 0, 1] && (s2 + s3)⁻¹ == s3 - s2 &&
+    (repr s2).pretty == "root of X^2 - 2 near 1.414213562373" &&
+    (repr (s2 + s3)).pretty == "root of X^4 - 10*X^2 + 1 near 3.146264369941"
 
 end Hex.NumberFieldConformance

@@ -589,6 +589,31 @@ setup_fixed_benchmark runAlgebraicIntPow where {
   apiFixedConfig with expectedHash := some 0x9feb9fb408e711ea
 }
 
+/-- Every root of `X⁴ - 10X² + 1` (the minimal polynomial of `√2 + √3`) as a
+canonical algebraic number: one isolation of the squarefree quartic, four
+exactifications, and the reality-first sort. -/
+initialize rootsInputRef : IO.Ref (Array Int) ← IO.mkRef #[1, 0, -10, 0, 1]
+
+def runAlgebraicRootsZ : Unit → IO UInt64 := fun _ => do
+  let roots := ZPoly.algebraicRoots (DensePoly.ofCoeffs (← rootsInputRef.get))
+  return roots.foldl (fun checksum a => mixHash checksum (algebraicChecksum a))
+    (hash roots.size)
+
+/-- The reality test on both canonical inputs: two dyadic comparisons. -/
+def runIsReal : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← getCanonicalPair
+  return mixHash (hash a.isReal) (hash b.isReal)
+
+/- `ZPoly.algebraicRoots` composes the registered isolation and exactification
+routes on a fixed quartic; the whole public call is one advertised API case.
+`isReal` is a constant-time comparison grouped as a correctness anchor. -/
+setup_fixed_benchmark runAlgebraicRootsZ where {
+  apiFixedConfig with maxSecondsPerCall := 0.75, expectedHash := some 0x7d49297b09f35f3c
+}
+setup_fixed_benchmark runIsReal where {
+  apiFixedConfig with expectedHash := some 0x14c9f5d720a252cb
+}
+
 initialize zeroRepRef : IO.Ref (Option (RefinedIsolation ZPoly.X)) ←
   IO.mkRef (some AlgebraicNumber.zeroRep)
 
