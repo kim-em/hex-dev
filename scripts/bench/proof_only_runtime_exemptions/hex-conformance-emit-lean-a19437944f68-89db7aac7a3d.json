@@ -1,0 +1,6 @@
+{
+ "path": "Hex/Conformance/Emit.lean",
+ "baseline_blob": "a19437944f68af77594b2c623cdf6c2935f67e16",
+ "current_blob": "89db7aac7a3d3a7462bcf9f9a690ef2eb7714470",
+ "reason": "Adds emitGraphIsoAutosFixture, a new fixture-record writer for the HexGraphIso automorphism surface. The change is purely additive: no existing declaration is touched, and the sole caller is conformance/HexGraphIso/EmitFixtures.lean, which no factorization benchmark links."
+}
