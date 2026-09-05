@@ -1,0 +1,7 @@
+{
+ "fingerprint": "1e41767e7a03",
+ "host": "chungus2",
+ "date": "2026-09-05T07:33:07Z",
+ "describe": "ff66359523a0",
+ "label": "issue-9978-pairwise-fallback-test; canonicalization leg measured here, tactic leg carried over from 04f38e84f6e2 (see reports/hex-graph-iso-negative-routes.md)"
+}

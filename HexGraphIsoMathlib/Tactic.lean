@@ -35,9 +35,9 @@ The reifier encodes both graphs along `Fintype.equivFin` and reuses the
 Mathlib-free machinery: positive goals emit a literal transporter and
 close through the kernel-replayed `checkIso?` and the decoding
 theorems; negative goals go through the shared negative engine (which
-selects by measured cost between certificate replay and the verified
-pairwise decision, with the pairwise replay as fallback) and decode
-through the `not_encode_iso` bridge theorems;
+takes certificate replay whenever it is available and retains the
+verified pairwise decision as the exhaustion fallback) and decode through
+the `not_encode_iso` bridge theorems;
 unequal cardinalities close immediately through `Fintype.card_congr`
 obstructions, and empty vertex types through the explicit empty
 isomorphism. The same three logical limits are accepted and are not

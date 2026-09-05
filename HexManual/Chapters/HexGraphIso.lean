@@ -46,8 +46,9 @@ canonical forms are equal
 and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
-checked transporter, negative goals through a fully verified
-individualization-refinement decision.
+checked transporter, negative goals through a checked canonical-key
+certificate when available and a fully verified
+individualization-refinement decision as the exhaustion fallback.
 
 Colours are the general input, but a graph with no colours to speak of
 should not have to acquire one. The same operations and the same
@@ -118,8 +119,9 @@ example : Graph.Isomorphic petersen kneser52 := by graph_iso
 The pentagonal prism, `Families.gpetersen 5 1`, is the interesting
 negative companion: like the Petersen graph it has ten vertices, every
 one of degree three, so degree refinement alone does not settle the
-question. The verified pairwise decision individualizes a vertex,
-re-refines, and refutes every branch; the kernel replays that run.
+question. The fully verified pairwise decision can individualize a
+vertex, re-refine, and refute every branch; the tactic normally closes
+this case by replaying the smaller canonical-key certificates instead.
 
 {docstring Hex.GraphIso.Pairwise.search}
 
@@ -139,7 +141,7 @@ and may not permute the cells. Marking an adjacent pair of Petersen
 vertices with colour zero is therefore a different constraint from
 marking a non-adjacent pair, although the cell sizes agree. Adjacency of
 the colour-zero pair is an invariant, and the tactic's negative proof is
-obtained from the general verified decision rather than a handwritten
+obtained from its general checked separator rather than a handwritten
 special-purpose lemma. These claims do mention colours, so they are the
 ones stated on {name Hex.GraphIso.Colored}`Colored`.
 

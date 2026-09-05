@@ -40,18 +40,14 @@ elaboration time as untrusted code and produces a literal forward
 permutation; the goal closes through `checkIsoLit` and
 `isomorphic_of_checkIsoLit`, which check the permutation against
 list-literal adjacency data, so the kernel performs the decisive replay
-without unfolding the executable representation. For
-a negative goal, the tactic selects between two kernel routes by
-measured cost: certificate replay (two Boolean `checkKey` checks plus
-`checkDiff` through `Nauty.not_isomorphic_of_checkKeys`, cost
-proportional to the pruned certificates the compiled search produces)
-and the fully verified pairwise decision `Pairwise.decideIso?`
-(replayed through `Pairwise.decideIso?_not_isomorphic`, cost
-proportional to the nodes its search visits). The pairwise decision is
-offered a node budget equivalent to the certificate replay's cost and
-wins exactly when refinement refutes the pair almost immediately; the
-full-budget pairwise replay is the fallback and exhaustion-semantics
-anchor when certificate production is unavailable. Search exhaustion
+without unfolding the executable representation. For a negative goal,
+the tactic first tries the constant-depth root separator, then takes
+certificate replay whenever the compiled search can produce two
+certificates within the configured record and replay budgets. If
+certificate production is unavailable, it tries the two-code separator
+and finally the fully verified pairwise decision `Pairwise.decideIso?`.
+The full-budget pairwise replay is the fallback and
+exhaustion-semantics anchor for the `maxCertNodes` cap. Search exhaustion
 never closes a negative goal, and every failure leaves the goal
 unchanged and reports the phase and logical limit that failed. No path
 uses `native_decide` and no axiom is introduced.
@@ -300,13 +296,11 @@ private meta def countAutom : Nauty.CertNode → Nat
 /-- The certificate leg of the negative path: node-budgeted certificate
 production on both sides compiled, the key comparison compiled, and the
 kernel replaying only two Boolean `checkKey` certificates plus
-`checkDiff`. Returns the proof together with the total certificate
-record count (the route-selection budget), or `none` when the route is
-unavailable (production exhausted, validation failed, or the replay
-charge exceeds the limits); throws when the keys agree, because the
-goal is then unprovable. -/
+`checkDiff`. Returns `none` when the route is unavailable (production
+exhausted, validation failed, or the replay charge exceeds the limits);
+throws when the keys agree, because the goal is then unprovable. -/
 meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
-    MetaM (Option (Expr × Nat)) := do
+    MetaM (Option Expr) := do
   -- deliberately the VALIDATED bounded producer: the ~10ms compiled
   -- validation guarantees every emitted kernel obligation replays
   -- successfully — a bad candidate must fall back here, not surface as
@@ -351,7 +345,7 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
   let proof ← mkAppM ``not_isomorphic_of_checkKeysL
     #[hA, hB, hG, hH, hd]
-  return some (proof, certG.size + certH.size)
+  return some proof
 
 /-- The pairwise leg: compiled `decideIso?` under `maxNodes` nodes,
 kernel-replaying the same bounded run on refutation. `none` on search
@@ -425,15 +419,11 @@ meta def proveNotIsoSep? (cfg : Config) (GE HE : Expr) :
   return some (← mkAppM ``not_isomorphic_of_sepDiffLit #[hA, hB, hs])
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
-graphs. Route selection compares measured units: one pairwise node
-kernel-replays for roughly four certificate records (it refines both
-graphs and compares them), so after producing both certificates the
-tactic first offers the pairwise decision a node budget of a quarter
-of the total record count — pairs the refinement refutes almost
-immediately close through the small pairwise replay, and pairs needing
-genuine search close through the two certificate replays. The
-full-budget pairwise decision remains the fallback and
-exhaustion-semantics anchor when certificate production is unavailable.
+graphs. After the root separator, the tactic takes the certificate proof
+whenever certificate production and replay fit their configured budgets.
+If that route is unavailable, the two-code separator and then the
+full-budget pairwise decision provide the fallbacks; the latter is the
+exhaustion-semantics anchor for the certificate-record cap.
 The certificate obligations replay only because their whole closure is
 exposed to the module-finalization kernel; the regression ladder in
 `HexGraphIso.ModuleBoundaryTests` pins that closure. Shared by the
@@ -443,11 +433,7 @@ meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
   match ← proveNotIsoRoot? cfg GE HE with
   | some proof => return proof
   | none => match ← proveNotIsoCerts? cfg GE HE with
-  | some (proof, records) =>
-    match ← proveNotIsoPairwise? (min (records / 4) cfg.maxNodes)
-        cfg.maxCertNodes GE HE with
-    | some pairProof => return pairProof
-    | none => return proof
+  | some proof => return proof
   | none =>
     match ← proveNotIsoSep? cfg GE HE with
     | some proof => return proof
