@@ -1468,7 +1468,7 @@ theorem yun_product
           (Norm.rawPolynomial levels
             (Factor.rawPoly levels entry.1)).rootMultiplicity z).sum := by
         congr 1
-        simp only [polys, List.map_map, Function.comp_apply]
+        simp only [polys, List.map_map]
         apply List.map_congr_left
         intro entry hentry
         exact rootMultiplicity_pow_complex _

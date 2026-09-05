@@ -546,7 +546,7 @@ private theorem crossCount_negateRow (M : Matrix Int n m)
     simp only [Matrix.getElem_pair_eq_nested]
     rw [Matrix.getElem_rowScale, ite_eq_left rfl, Int.neg_mul, Int.one_mul]
     by_cases hlt : pivotCol.val < col.val
-    · by_cases hz : M[pivotRow][col] = 0 <;> simp [hlt, hz]
+    · by_cases hz : M[pivotRow][col] = 0 <;> simp [hlt]
     · simp [hlt]
 
 private theorem measure_negateRow (M : Matrix Int n m)
@@ -1271,7 +1271,7 @@ private theorem Prefix.appendPivot {s : Result α n m} (h : Prefix s)
       exact hd
     · have hieq : i = s.diag.length := by omega
       subst i
-      simp [List.getElem_append, pivotRow, pivotCol, p]
+      simp
   · intro row col hsmall hne
     simp only [List.length_append, List.length_singleton] at hsmall
     by_cases hrow : row.val < s.diag.length
@@ -1565,32 +1565,32 @@ private theorem reduceFuel_same (ops : Accumulator α n m)
       · rw [ite_eq_right hp, ite_eq_right hp]
         cases hc : findColumn? matrix pivotRow pivotCol with
         | some row =>
-            simp only [hc]
+            simp only []
             exact ih (clearColumn_same ops ops' ⟨rfl, rfl⟩ pivotRow row pivotCol)
         | none =>
-            simp only [hc]
+            simp only []
             cases hr : findRow? matrix pivotRow pivotCol with
             | some col =>
-                simp only [hr]
+                simp only []
                 exact ih (clearRow_same ops ops' ⟨rfl, rfl⟩ pivotRow pivotCol col)
             | none =>
-                simp only [hr]
+                simp only []
                 by_cases hn : matrix[(pivotRow, pivotCol)] < 0
                 · rw [ite_eq_left hn, ite_eq_left hn]
                   cases hb : findBad? (Matrix.rowScale matrix pivotRow (-1))
                       pivotRow pivotCol
                       (Matrix.rowScale matrix pivotRow (-1))[(pivotRow, pivotCol)] with
-                  | none => simp only [hb]; exact ⟨rfl, rfl⟩
+                  | none => simp only []; exact ⟨rfl, rfl⟩
                   | some q =>
-                      simp only [hb]
+                      simp only []
                       exact ih (repair_same ops ops' ⟨rfl, rfl⟩
                         pivotRow q.1 pivotCol q.2)
                 · rw [ite_eq_right hn, ite_eq_right hn]
                   cases hb : findBad? matrix pivotRow pivotCol
                       matrix[(pivotRow, pivotCol)] with
-                  | none => simp only [hb]; exact ⟨rfl, rfl⟩
+                  | none => simp only []; exact ⟨rfl, rfl⟩
                   | some q =>
-                      simp only [hb]
+                      simp only []
                       exact ih (repair_same ops ops' ⟨rfl, rfl⟩
                         pivotRow q.1 pivotCol q.2)
 
@@ -1618,9 +1618,9 @@ private theorem runFuel_same (ops : Accumulator α n m)
         by_cases hm : diag.length < m
         · rw [dite_eq_left hm, dite_eq_left hm]
           cases hp : findPivot? matrix diag.length with
-          | none => simp only [hp]; exact ⟨rfl, rfl⟩
+          | none => simp only []; exact ⟨rfl, rfl⟩
           | some q =>
-              simp only [hp]
+              simp only []
               let pivotRow : Fin n := ⟨diag.length, hn⟩
               let pivotCol : Fin m := ⟨diag.length, hm⟩
               have hmoved := swapCols_same ops ops'

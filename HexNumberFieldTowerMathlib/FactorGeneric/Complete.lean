@@ -220,11 +220,11 @@ private theorem ratListLess_iff : ∀ a b : List Rat,
   induction a with
   | nil =>
       intro b
-      cases b <;> simp [Factor.ratListLess, List.lt_iff_lex_lt]
+      cases b <;> simp [Factor.ratListLess]
   | cons a as ih =>
       intro b
       cases b with
-      | nil => simp [Factor.ratListLess, List.lt_iff_lex_lt]
+      | nil => simp [Factor.ratListLess]
       | cons b bs =>
           by_cases hab : a < b
           · rw [Factor.ratListLess, ite_eq_left hab]
@@ -530,11 +530,10 @@ private theorem insertFactor_prod {M : Type*} [CommMonoid M]
   | nil => simp [Factor.insertFactor]
   | cons head tail ih =>
       by_cases hfactorHead : Factor.factorLess factor.1 head.1 = true
-      · simp [Factor.insertFactor, hfactorHead, mul_assoc, mul_comm,
-          mul_left_comm]
+      · simp [Factor.insertFactor, hfactorHead, mul_comm]
       · by_cases hheadFactor : Factor.factorLess head.1 factor.1 = true
         · simp [Factor.insertFactor, hfactorHead, hheadFactor, ih,
-            mul_assoc, mul_comm, mul_left_comm]
+            mul_comm, mul_left_comm]
         · have heq : head.1 = factor.1 :=
             factor_eq_of_not_less hheadFactor hfactorHead
           have hirrefl :
@@ -543,7 +542,7 @@ private theorem insertFactor_prod {M : Type*} [CommMonoid M]
             exact (lt_irrefl _ ((factorLess_iff factor.1 factor.1).mp
               hless))
           simp [Factor.insertFactor, heq, hirrefl,
-            pow_add, mul_assoc, mul_comm, mul_left_comm]
+            pow_add, mul_assoc, mul_comm]
 
 private theorem foldl_insertFactor_prod {M : Type*} [CommMonoid M]
     (value : Array (Array Rat) → M)
@@ -697,7 +696,7 @@ private theorem labeled_prod_pow {A M : Type*} [CommMonoid M]
   induction items with
   | nil => simp
   | cons item items ih =>
-      simp only [List.map_cons, List.prod_cons, ih, Prod.fst, Prod.snd]
+      simp only [List.map_cons, List.prod_cons, ih]
       exact (_root_.mul_pow (value item) (List.map value items).prod n).symm
 
 private theorem factorFold_sound
@@ -1444,7 +1443,7 @@ private theorem relation_eq_rawPoly (level : Level) (lower : List Level)
       have hi : i < level.degree := by simpa [hvalid.1.2] using hi₂
       have hidefining : i < level.defining.size := by
         simpa [hvalid.1.2] using hi
-      simp [Array.getD, hi, hidefining]
+      simp [Array.getD, hidefining]
   rw [hbase]
   have hone : Arithmetic.Coeff.ofData lower
       (Arithmetic.fixedCoeffs (levelsDim lower) #[1]) =

@@ -104,12 +104,12 @@ private theorem Raw.Mul.Candidate.lower_min (left right : Raw.Mul.Candidate)
     by_cases less : leftValue < rightValue
     · have realLess := toReal_lt less
       cases leftAttained <;> cases rightAttained <;>
-        simp [Raw.Mul.minUnchecked, less, LowerBounds, le_ne_iff_lt] at bound ⊢ <;>
+        simp [less, le_ne_iff_lt] at bound ⊢ <;>
         rcases bound with bound | bound <;> linarith
     · by_cases equal : leftValue = rightValue
       · subst rightValue
         cases leftAttained <;> cases rightAttained <;>
-          simp [Raw.Mul.minUnchecked, less, LowerBounds, le_ne_iff_lt] at bound ⊢ <;>
+          simp [less, le_ne_iff_lt] at bound ⊢ <;>
           aesop <;> linarith
       · have realNotLess : ¬toReal leftValue < toReal rightValue := by
           simpa only [toReal_lt_iff] using less
@@ -119,7 +119,7 @@ private theorem Raw.Mul.Candidate.lower_min (left right : Raw.Mul.Candidate)
         have realGreater : toReal rightValue < toReal leftValue :=
           lt_of_le_of_ne (le_of_not_gt realNotLess) (Ne.symm realNotEqual)
         cases leftAttained <;> cases rightAttained <;>
-          simp [Raw.Mul.minUnchecked, less, equal, LowerBounds, le_ne_iff_lt] at bound ⊢ <;>
+          simp [less, equal, le_ne_iff_lt] at bound ⊢ <;>
           rcases bound with bound | bound <;> linarith
 
 private theorem Raw.Mul.Candidate.upper_max (left right : Raw.Mul.Candidate)
@@ -131,12 +131,12 @@ private theorem Raw.Mul.Candidate.upper_max (left right : Raw.Mul.Candidate)
     by_cases less : leftValue < rightValue
     · have realLess := toReal_lt less
       cases leftAttained <;> cases rightAttained <;>
-        simp [Raw.Mul.maxUnchecked, less, UpperBounds, le_ne_iff_lt] at bound ⊢ <;>
+        simp [less, le_ne_iff_lt] at bound ⊢ <;>
         rcases bound with bound | bound <;> linarith
     · by_cases equal : leftValue = rightValue
       · subst rightValue
         cases leftAttained <;> cases rightAttained <;>
-          simp [Raw.Mul.maxUnchecked, less, UpperBounds, le_ne_iff_lt] at bound ⊢ <;>
+          simp [less, le_ne_iff_lt] at bound ⊢ <;>
           aesop <;> linarith
       · have realNotLess : ¬toReal leftValue < toReal rightValue := by
           simpa only [toReal_lt_iff] using less
@@ -146,7 +146,7 @@ private theorem Raw.Mul.Candidate.upper_max (left right : Raw.Mul.Candidate)
         have realGreater : toReal rightValue < toReal leftValue :=
           lt_of_le_of_ne (le_of_not_gt realNotLess) (Ne.symm realNotEqual)
         cases leftAttained <;> cases rightAttained <;>
-          simp [Raw.Mul.maxUnchecked, less, equal, UpperBounds, le_ne_iff_lt] at bound ⊢ <;>
+          simp [less, equal, le_ne_iff_lt] at bound ⊢ <;>
           rcases bound with bound | bound <;> linarith
 
 private theorem Raw.Mul.Candidate.lower_minimum (first : Raw.Mul.Candidate)
@@ -190,10 +190,10 @@ private theorem Raw.Mul.Candidate.lowerCut_contains
     (bound : candidate.LowerBounds x) :
     (Raw.Mul.lowerCut candidate).Contains x := by
   cases candidate <;>
-    simp [Raw.Mul.lowerCut, Lower.Contains, LowerBounds, le_ne_iff_lt] at bound ⊢
+    simp [Raw.Mul.lowerCut, Lower.Contains, LowerBounds] at bound ⊢
   next value attained =>
     cases attained <;>
-      simp [Raw.Mul.lowerCut, Lower.Contains, LowerBounds, le_ne_iff_lt] at bound ⊢ <;>
+      simp [le_ne_iff_lt] at bound ⊢ <;>
       exact bound
 
 private theorem Raw.Mul.Candidate.upperCut_contains
@@ -201,10 +201,10 @@ private theorem Raw.Mul.Candidate.upperCut_contains
     (bound : candidate.UpperBounds x) :
     (Raw.Mul.upperCut candidate).Contains x := by
   cases candidate <;>
-    simp [Raw.Mul.upperCut, Upper.Contains, UpperBounds, le_ne_iff_lt] at bound ⊢
+    simp [Raw.Mul.upperCut, Upper.Contains, UpperBounds] at bound ⊢
   next value attained =>
     cases attained <;>
-      simp [Raw.Mul.upperCut, Upper.Contains, UpperBounds, le_ne_iff_lt] at bound ⊢ <;>
+      simp [le_ne_iff_lt] at bound ⊢ <;>
       exact bound
 
 private theorem Raw.Mul.result_mem {candidates : List Raw.Mul.Candidate} {x : ℝ}
@@ -244,10 +244,10 @@ private theorem Raw.Mul.lowerAllowsZeroUnchecked_of_mem
       all_goals
         by_cases less : toReal value < 0
         · simp [Raw.Mul.lowerAllowsZeroUnchecked, Raw.Mul.signUnchecked,
-            ← toReal_lt_iff, ← toReal_inj, less]
+            ← toReal_lt_iff, less]
         · by_cases equal : toReal value = 0
           · simp [Raw.Mul.lowerAllowsZeroUnchecked, Raw.Mul.signUnchecked,
-              ← toReal_lt_iff, ← toReal_inj, less, equal] <;> linarith
+              ← toReal_lt_iff, ← toReal_inj, equal] <;> linarith
           · exfalso
             have : 0 < toReal value := lt_of_le_of_ne (le_of_not_gt less) (Ne.symm equal)
             linarith
@@ -266,7 +266,7 @@ private theorem Raw.Mul.upperAllowsZeroUnchecked_of_mem
           linarith
         · by_cases equal : toReal value = 0
           · simp [Raw.Mul.upperAllowsZeroUnchecked, Raw.Mul.signUnchecked,
-              ← toReal_lt_iff, ← toReal_inj, less, equal] <;> linarith
+              ← toReal_lt_iff, ← toReal_inj, equal] <;> linarith
           · simp [Raw.Mul.upperAllowsZeroUnchecked, Raw.Mul.signUnchecked,
               ← toReal_lt_iff, ← toReal_inj, less, equal]
 
@@ -883,13 +883,13 @@ private theorem Raw.Mul.corner_bounds
     · have containsZero := Raw.Mul.containsZeroUnchecked_of_mem
         leftLower leftUpper leftMember xZero
       refine ⟨⟨.finite 0 true, ?_, ?_⟩, ⟨.finite 0 true, ?_, ?_⟩⟩
-      all_goals simp [Raw.Mul.HasBounds, Raw.Mul.candidatesUnchecked,
+      all_goals simp [Raw.Mul.candidatesUnchecked,
         Raw.Mul.withZeroUnchecked, containsZero, productZero,
         Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
     · have containsZero := Raw.Mul.containsZeroUnchecked_of_mem
         rightLower rightUpper rightMember yZero
       refine ⟨⟨.finite 0 true, ?_, ?_⟩, ⟨.finite 0 true, ?_, ?_⟩⟩
-      all_goals simp [Raw.Mul.HasBounds, Raw.Mul.candidatesUnchecked,
+      all_goals simp [Raw.Mul.candidatesUnchecked,
         Raw.Mul.withZeroUnchecked, containsZero, productZero,
         Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
   have xNonzero : x ≠ 0 := fun equal => productZero (by simp [equal])

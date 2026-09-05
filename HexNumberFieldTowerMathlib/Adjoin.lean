@@ -229,7 +229,7 @@ private theorem ratListLess_self : ∀ values : List Rat,
     Factor.ratListLess values values = false
   | [] => by simp [Factor.ratListLess]
   | value :: values => by
-      simp [Factor.ratListLess, lt_irrefl value, ratListLess_self values]
+      simp [Factor.ratListLess, ratListLess_self values]
 
 private theorem factorLess_self (f : Array (Array Rat)) :
     Factor.factorLess f f = false := by
@@ -333,8 +333,8 @@ private theorem selectFold_no_match (T : NumberTower)
       rw [List.foldlM_cons]
       have hmultHead := hmult entry (by simp)
       have hfalseHead := hfalse entry (by simp)
-      simp only [hmultHead, ↓reduceIte, hfalseHead, Option.bind_some,
-        Bool.false_eq_true, ↓reduceIte]
+      simp only [hmultHead, ↓reduceIte, hfalseHead,
+        ↓reduceIte]
       apply selectFold_no_match T candidate items state
       · intro other hother
         exact hmult other (by simp [hother])
@@ -361,7 +361,7 @@ private theorem selectFold_unique (T : NumberTower)
       have hmultHead := hmult entry (by simp)
       rcases List.nodup_cons.mp hnodup with ⟨hheadFresh, htailNodup⟩
       rcases List.mem_cons.mp hchosen with rfl | hchosenTail
-      · simp only [hmultHead, ↓reduceIte, htrue, Option.bind_some,
+      · simp only [hmultHead, ↓reduceIte, htrue,
           ↓reduceIte]
         apply selectFold_no_match T candidate items (state.push chosen.1)
         · intro other hother
@@ -376,8 +376,8 @@ private theorem selectFold_unique (T : NumberTower)
           subst entry
           exact hheadFresh hchosenTail
         have hfalseHead := hfalse entry (by simp) hentryNe
-        simp only [hmultHead, ↓reduceIte, hfalseHead, Option.bind_some,
-          Bool.false_eq_true, ↓reduceIte]
+        simp only [hmultHead, ↓reduceIte, hfalseHead,
+          ↓reduceIte]
         apply selectFold_unique T candidate chosen items state htailNodup
           hchosenTail
         · intro other hother
@@ -862,7 +862,7 @@ theorem adjoin?_isSome (T : NumberTower) (candidate : AlgebraicRoot) :
     exact hchosenIrreducible.natDegree_pos
   by_cases hdegreeOne : chosen.1.degree?.getD 0 = 1
   · unfold adjoin?
-    simp [hfactorization, hselected, Nat.ne_of_gt hdegree, hdegreeOne]
+    simp [hfactorization, hselected, hdegreeOne]
   · have hdegreeGt : 1 < chosen.1.degree?.getD 0 := by omega
     obtain ⟨tower, htower⟩ := Option.isSome_iff_exists.mp
       (extend_factor_isSome T candidate chosen.1 hchosenSound.1
