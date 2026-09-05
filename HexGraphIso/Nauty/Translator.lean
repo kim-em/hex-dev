@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.CertAutom
-public import HexGraphIso.Nauty.PopCount
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.CanonForm
 
@@ -41,28 +40,28 @@ theorem charge_of_budget_none {st : AutState}
     (h : st.budget = none) : st.charge = st := by
   rw [AutState.charge, h]
 
-theorem admit_budget (ctx : Ctx) (st : AutState) (γ : Array Nat) :
+theorem admit_budget (ctx : Ctx n) (st : AutState) (γ : Array Nat) :
     (st.admit ctx γ).budget = st.budget := by
   rw [AutState.admit]
   simp only [Id.run, pure]
   repeat' split
   all_goals rfl
 
-theorem admit_exhausted (ctx : Ctx) (st : AutState) (γ : Array Nat) :
+theorem admit_exhausted (ctx : Ctx n) (st : AutState) (γ : Array Nat) :
     (st.admit ctx γ).exhausted = st.exhausted := by
   rw [AutState.admit]
   simp only [Id.run, pure]
   repeat' split
   all_goals rfl
 
-theorem harvest_budget (ctx : Ctx) (st : AutState) (lab : Array Nat) :
+theorem harvest_budget (ctx : Ctx n) (st : AutState) (lab : Array Nat) :
     (st.harvest ctx lab).budget = st.budget := by
   rw [AutState.harvest]
   simp only [Id.run, pure]
   repeat' split
   all_goals simp only [admit_budget]
 
-theorem harvest_exhausted (ctx : Ctx) (st : AutState)
+theorem harvest_exhausted (ctx : Ctx n) (st : AutState)
     (lab : Array Nat) :
     (st.harvest ctx lab).exhausted = st.exhausted := by
   rw [AutState.harvest]
@@ -77,9 +76,9 @@ theorem foldl_preserves {α σ : Type} (P : σ → Prop) (g : σ → α → σ)
   | [], _, hs => hs
   | a :: t, s, hs => foldl_preserves P g h t (g s a) (h s a hs)
 
-theorem certifyNodeAutom_budget (ctx : Ctx) (tcLevel : Nat) :
+theorem certifyNodeAutom_budget (ctx : Ctx n) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (bcodes : List Nat) (st : AutState),
+      (active : VSet n) (numcells : Nat) (bcodes : List Nat) (st : AutState),
       st.budget = none →
       (certifyNodeAutom ctx tcLevel fuel level lab ptn active numcells
         bcodes st).2.budget = none ∧
@@ -116,20 +115,20 @@ theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
     (produceCand G none).isSome := by
   have hfold := foldl_preserves
     (fun st : AutState => st.budget = none ∧ st.exhausted = false)
-    (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+    (fun st γ => st.admit { g := rowsOf G } γ)
     (fun st γ hst => ⟨(admit_budget ..).trans hst.1,
       (admit_exhausted ..).trans hst.2⟩)
     (runColoredTraced G).autos.toList
     (AutState.init n none) ⟨rfl, rfl⟩
   rw [Array.foldl_toList] at hfold
-  have hcert := certifyNodeAutom_budget { n := n, g := rowsOf G } 100
+  have hcert := certifyNodeAutom_budget { g := rowsOf G } 100
     n 1 (initialPartition G).1
     (initPtn n (n + 2) (initialPartition G).2)
-    (initActive (initialPartition G).2)
+    (initActive n (initialPartition G).2)
     (initialPartition G).2.length
     ((runColoredTraced G).bestCodes ++ [codeSentinel])
     { (runColoredTraced G).autos.foldl
-        (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+        (fun st γ => st.admit { g := rowsOf G } γ)
         (AutState.init n none) with
       refLeaf := some (runColoredTraced G).result.canonlab }
     hfold.1
@@ -137,7 +136,7 @@ theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
   rw [ite_eq_right (by simp)]
   rw [hcert.2]
   have hex : ({ (runColoredTraced G).autos.foldl
-      (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+      (fun st γ => st.admit { g := rowsOf G } γ)
       (AutState.init n none) with
     refLeaf := some (runColoredTraced G).result.canonlab } :
       AutState).exhausted = false := hfold.2
@@ -150,24 +149,18 @@ The eventual `checkAutom_of_isautom` bridge is stated graph-agnostically
 over a row array with symmetry, looplessness, and per-row bounds; these
 lemmas discharge those hypotheses for `rowsOf G`. -/
 
-theorem rowsOf_bounded {k : Nat} (G : Colored n k) :
-    ∀ v, v < n → (rowsOf G)[v]! < 2 ^ n := by
-  intro v hv
-  rw [getElem!_rowsOf G hv]
-  exact rowOf_lt G v
-
 theorem rowsOf_symm {k : Nat} (G : Colored n k) :
     ∀ i j, i < n → j < n →
-      ((rowsOf G)[i]!).testBit j = ((rowsOf G)[j]!).testBit i := by
+      ((rowsOf G)[i]!).mem j = ((rowsOf G)[j]!).mem i := by
   intro i j hi hj
   rw [getElem!_rowsOf G hi, getElem!_rowsOf G hj,
-    testBit_rowOf_lt G hi hj, testBit_rowOf_lt G hj hi,
+    mem_rowOf_lt G hi hj, mem_rowOf_lt G hj hi,
     G.graph.adj_symm ⟨i, hi⟩ ⟨j, hj⟩]
 
 theorem rowsOf_loopless {k : Nat} (G : Colored n k) :
-    ∀ i, i < n → ((rowsOf G)[i]!).testBit i = false := by
+    ∀ i, i < n → ((rowsOf G)[i]!).mem i = false := by
   intro i hi
-  rw [getElem!_rowsOf G hi, testBit_rowOf_lt G hi hi,
+  rw [getElem!_rowsOf G hi, mem_rowOf_lt G hi hi,
     G.graph.adj_self ⟨i, hi⟩]
 
 /-! # Layer two, foundation: `checkAutom` closure under composition -/
@@ -182,45 +175,36 @@ theorem composePerm_size (f π : Array Nat) (nn : Nat) :
   rw [composePerm, Array.size_map, Array.size_range]
 
 /-- `image` composes when the inner map stays in range. -/
-theorem image_comp (σ τ : Nat → Nat) (s : Nat)
+theorem image_comp (σ τ : Nat → Nat) (s : VSet n)
     (hτ : ∀ v, v < n → τ v < n) :
-    image (fun w => σ (τ w)) n s = image σ n (image τ n s) := by
-  refine Nat.eq_of_testBit_eq fun w => ?_
-  rw [testBit_image, testBit_image]
-  rcases hL : (List.range n).any fun v =>
-      s.testBit v && σ (τ v) == w with _ | _
-  · rcases hR : (List.range n).any fun u =>
-        (image τ n s).testBit u && σ u == w with _ | _
-    · rfl
-    · exfalso
-      obtain ⟨u, hu, hcond⟩ := List.any_eq_true.mp hR
-      simp only [Bool.and_eq_true, beq_iff_eq] at hcond
-      rw [testBit_image] at hcond
-      obtain ⟨v, hv, hvc⟩ := List.any_eq_true.mp hcond.1
-      simp only [Bool.and_eq_true, beq_iff_eq] at hvc
-      have : (List.range n).any (fun v =>
-          s.testBit v && σ (τ v) == w) = true :=
-        List.any_eq_true.mpr ⟨v, hv, by
-          simp only [Bool.and_eq_true, beq_iff_eq]
-          exact ⟨hvc.1, by rw [hvc.2]; exact hcond.2⟩⟩
-      rw [hL] at this
-      exact Bool.noConfusion this
-  · obtain ⟨v, hv, hcond⟩ := List.any_eq_true.mp hL
-    simp only [Bool.and_eq_true, beq_iff_eq] at hcond
-    refine (List.any_eq_true.mpr ⟨τ v, ?_, ?_⟩).symm
-    · exact List.mem_range.mpr (hτ v (List.mem_range.mp hv))
-    · simp only [Bool.and_eq_true, beq_iff_eq]
-      refine ⟨?_, hcond.2⟩
-      rw [testBit_image]
-      exact List.any_eq_true.mpr ⟨v, hv, by
-        simp only [Bool.and_eq_true, beq_iff_eq]
-        exact ⟨hcond.1, trivial⟩⟩
+    s.image (fun w => σ (τ w)) = (s.image τ).image σ := by
+  refine VSet.ext fun w => ?_
+  rw [VSet.mem_image, VSet.mem_image, Bool.eq_iff_iff, List.any_eq_true, List.any_eq_true]
+  constructor
+  · rintro ⟨v, hv, hc⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hc
+    refine ⟨τ v, List.mem_range.mpr (hτ v (List.mem_range.mp hv)), ?_⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    refine ⟨⟨?_, hc.1.2⟩, hc.2⟩
+    rw [VSet.mem_image, List.any_eq_true]
+    refine ⟨v, hv, ?_⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    exact ⟨⟨hc.1.1, rfl⟩, hτ v (List.mem_range.mp hv)⟩
+  · rintro ⟨u, hu, hc⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hc
+    obtain ⟨⟨hmem, hσ⟩, hlt⟩ := hc
+    rw [VSet.mem_image, List.any_eq_true] at hmem
+    obtain ⟨v, hv, hvc⟩ := hmem
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hvc
+    refine ⟨v, hv, ?_⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    exact ⟨⟨hvc.1.1, by rw [hvc.1.2]; exact hσ⟩, by rw [hvc.1.2]; exact hlt⟩
 
 /-- `checkAutom` is closed under the producer's witness
 composition. -/
-theorem checkAutom_compose {g f π : Array Nat}
-    (hf : checkAutom g f n = true) (hπ : checkAutom g π n = true) :
-    checkAutom g (composePerm f π n) n = true := by
+theorem checkAutom_compose {g : Array (VSet n)} {f π : Array Nat}
+    (hf : checkAutom g f = true) (hπ : checkAutom g π = true) :
+    checkAutom g (composePerm f π n) = true := by
   rw [checkAutom] at hf hπ ⊢
   simp only [Bool.and_eq_true] at hf hπ
   obtain ⟨⟨⟨hfs, hfb⟩, hfp⟩, hfr⟩ := hf
@@ -254,31 +238,26 @@ theorem checkAutom_compose {g f π : Array Nat}
     simp only [beq_iff_eq] at hfr' hπr' ⊢
     rw [hχ v hvn, hfr', hπr',
       ← image_comp (fun w => f[w]!) (fun w => π[w]!) _ hπb']
-    exact (image_congr _ fun w hw => (hχ w hw).symm) ▸ rfl
+    exact image_congr _ fun w hw => (hχ w hw).symm
 
-/-- The identity image of a bounded set is itself. -/
-theorem image_id_of_lt {s : Nat} (hs : s < 2 ^ n) :
-    image (fun w => w) n s = s := by
-  refine Nat.eq_of_testBit_eq fun w => ?_
-  rw [testBit_image]
-  rcases hw : s.testBit w with _ | _
-  · rcases hL : (List.range n).any fun v =>
-        s.testBit v && v == w with _ | _
-    · rfl
-    · obtain ⟨v, _, hc⟩ := List.any_eq_true.mp hL
-      simp only [Bool.and_eq_true, beq_iff_eq] at hc
-      rw [hc.2] at hc
-      exact absurd hc.1 (by rw [hw]; exact Bool.false_ne_true)
-  · exact List.any_eq_true.mpr ⟨w,
-      List.mem_range.mpr (lt_of_testBit_of_lt hs hw), by
-        simp only [Bool.and_eq_true, beq_iff_eq]
-        exact ⟨hw, trivial⟩⟩
+/-- The identity image of a set is itself. -/
+theorem image_id (s : VSet n) : s.image (fun w => w) = s := by
+  refine VSet.ext fun w => ?_
+  rw [VSet.mem_image, Bool.eq_iff_iff, List.any_eq_true]
+  constructor
+  · rintro ⟨v, _, hc⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq] at hc
+    rw [← hc.1.2]
+    exact hc.1.1
+  · intro hw
+    refine ⟨w, List.mem_range.mpr (VSet.mem_lt hw), ?_⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    exact ⟨⟨hw, rfl⟩, VSet.mem_lt hw⟩
 
 /-- `checkAutom` is closed under inversion, for bounded row sets. -/
-theorem checkAutom_invPerm {g γ : Array Nat}
-    (hb : ∀ v, v < n → g[v]! < 2 ^ n)
-    (hγ : checkAutom g γ n = true) :
-    checkAutom g (invPerm γ) n = true := by
+theorem checkAutom_invPerm {g : Array (VSet n)} {γ : Array Nat}
+    (hγ : checkAutom g γ = true) :
+    checkAutom g (invPerm γ) = true := by
   rw [checkAutom] at hγ ⊢
   simp only [Bool.and_eq_true] at hγ
   obtain ⟨⟨⟨hsize, hbound⟩, hperm⟩, hrows⟩ := hγ
@@ -338,16 +317,15 @@ theorem checkAutom_invPerm {g γ : Array Nat}
     rw [hδu, ← hvu, hrv,
       ← image_comp (fun w => (invPerm γ)[w]!) (fun w => γ[w]!) _
         hbound']
-    have : image (fun w => (invPerm γ)[γ[w]!]!) n g[v]! =
-        image (fun w => w) n g[v]! :=
+    have : g[v]!.image (fun w => (invPerm γ)[γ[w]!]!) =
+        g[v]!.image (fun w => w) :=
       image_congr _ fun w hw => hδγ w hw
-    rw [this, image_id_of_lt (hb v hvn)]
+    rw [this, image_id]
 
 /-- The identity array is a checked automorphism of any graph with
 bounded rows: the base case of witness composition. -/
-theorem checkAutom_range {g : Array Nat}
-    (hb : ∀ v, v < n → g[v]! < 2 ^ n) :
-    checkAutom g (Array.range n) n = true := by
+theorem checkAutom_range {g : Array (VSet n)} :
+    checkAutom g (Array.range n) = true := by
   rw [checkAutom]
   have hget : ∀ v, v < n → (Array.range n)[v]! = v := fun v hv => by
     rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_range]
@@ -365,10 +343,10 @@ theorem checkAutom_range {g : Array Nat}
   · refine List.all_eq_true.mpr fun v hv => ?_
     have hvn := List.mem_range.mp hv
     simp only [beq_iff_eq]
-    have : image (fun w => (Array.range n)[w]!) n g[v]! =
-        image (fun w => w) n g[v]! :=
+    have : g[v]!.image (fun w => (Array.range n)[w]!) =
+        g[v]!.image (fun w => w) :=
       image_congr _ fun w hw => hget w hw
-    rw [hget v hvn, this, image_id_of_lt (hb v hvn)]
+    rw [hget v hvn, this, image_id _]
 
 /-!
 # Inventory: the remaining layer-two and layer-three obligations
@@ -389,7 +367,7 @@ toolkit), the validated-store invariant (`GensOk.admit`,
   `GensOk.foldl_admit`, `hγ` in `GensOk.admit`): each candidate that
   passes the admission filter (`isautom`) must be a permutation of
   `[0, n)`, phrased as the `checkAutom`-conjunct spelling
-  `((List.range ctx.n).map fun v => γ[v]!).isPerm (List.range ctx.n)`.
+  `((List.range n).map fun v => γ[v]!).isPerm (List.range n)`.
 
 **The conditional spine (layer two, part c).** The issue's
 unconditional claim is unsound: `certifyNodeAutom` emits
@@ -481,10 +459,11 @@ private theorem forIn_scan_fst_eq_none {α : Type} (L : List α)
       simp only [List.mem_cons, forall_eq_or_imp]
       exact iff_of_false (by simp) (by simp [h])
 
-/-- Membership in `toList s n`. -/
-private theorem mem_toList {s n pos : Nat} :
-    pos ∈ toList s n ↔ pos < n ∧ s.testBit pos = true := by
-  rw [toList, List.mem_filter, List.mem_range]
+/-- Membership in `s.toList`. -/
+private theorem mem_toList {s : VSet n} {pos : Nat} :
+    pos ∈ s.toList ↔ pos < n ∧ s.mem pos = true :=
+  ⟨fun h => ⟨VSet.mem_lt (VSet.mem_toList.mp h), VSet.mem_toList.mp h⟩,
+    fun h => VSet.mem_toList.mpr h.2⟩
 
 /-- `[:n]` unfolds to a `forIn` over `List.range n`. -/
 private theorem forIn_range_eq {β : Type} (n : Nat) (init : β)
@@ -509,13 +488,13 @@ private theorem id_run_scan (F : Id (Option Bool × Unit)) :
 matcher so it is syntactically identical to the `do`-desugaring
 (restating it with `match` syntax would mint a fresh matcher the
 unifier rejects). -/
-private def isautomOuter (ctx : Ctx) (γ : Array Nat) (i : Nat)
+private def isautomOuter (ctx : Ctx n) (γ : Array Nat) (i : Nat)
     (__s : Option Bool × Unit) : Id (ForInStep (Option Bool × Unit)) :=
   have row := ctx.g[i]!
   do
-  let __s ← forIn (toList row ctx.n) (none, ()) fun pos __s =>
+  let __s ← forIn row.toList (none, ()) fun pos __s =>
       if pos > i then
-        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+        if ¬ctx.g[γ[i]!]!.mem γ[pos]! = true then
           pure (ForInStep.done (some false, ()))
         else pure (ForInStep.yield (none, ()))
       else pure (ForInStep.yield (none, ()))
@@ -524,33 +503,33 @@ private def isautomOuter (ctx : Ctx) (γ : Array Nat) (i : Nat)
     (fun r => pure (ForInStep.done (some r, ()))) fun _ =>
     pure (ForInStep.yield (none, ()))
 
-private theorem isautom_eq_scan (ctx : Ctx) (γ : Array Nat) :
+private theorem isautom_eq_scan (ctx : Ctx n) (γ : Array Nat) :
     isautom ctx γ =
       Break.runK.match_1 (fun _ => Bool)
-        (forIn (List.range ctx.n) (none, ())
+        (forIn (List.range n) (none, ())
           (isautomOuter ctx γ) : Id (Option Bool × Unit)).fst
         (fun r => r) (fun _ => true) := by
   rw [isautom, forIn_range_eq]
   rfl
 
 /-- The per-vertex pass condition of `isautom`'s outer loop. -/
-private def isautomPass (ctx : Ctx) (γ : Array Nat) (i : Nat) : Prop :=
-  ∀ pos ∈ toList ctx.g[i]! ctx.n,
-    pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true
+private def isautomPass (ctx : Ctx n) (γ : Array Nat) (i : Nat) : Prop :=
+  ∀ pos ∈ ctx.g[i]!.toList,
+    pos > i → ctx.g[γ[i]!]!.mem γ[pos]! = true
 
-private instance (ctx : Ctx) (γ : Array Nat) (i : Nat) :
+private instance (ctx : Ctx n) (γ : Array Nat) (i : Nat) :
     Decidable (isautomPass ctx γ i) :=
   inferInstanceAs (Decidable (∀ pos ∈ _, _ → _ = true))
 
-private theorem isautomInner_gate (ctx : Ctx) (γ : Array Nat)
+private theorem isautomInner_gate (ctx : Ctx n) (γ : Array Nat)
     (i pos : Nat) :
     IsGate
       (fun __s => if pos > i then
-        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+        if ¬ctx.g[γ[i]!]!.mem γ[pos]! = true then
           pure (ForInStep.done (some false, ()))
         else pure (ForInStep.yield (none, ()))
       else pure (ForInStep.yield (none, ())))
-      (pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true) := by
+      (pos > i → ctx.g[γ[i]!]!.mem γ[pos]! = true) := by
   constructor
   · intro hp
     by_cases hgt : pos > i
@@ -560,47 +539,47 @@ private theorem isautomInner_gate (ctx : Ctx) (γ : Array Nat)
     rcases Decidable.not_imp_iff_and_not.mp hp with ⟨hgt, hne⟩
     rw [if_pos hgt, if_pos (by simpa using hne)]
 
-private theorem isautomOuter_gate (ctx : Ctx) (γ : Array Nat) (i : Nat) :
+private theorem isautomOuter_gate (ctx : Ctx n) (γ : Array Nat) (i : Nat) :
     IsGate (isautomOuter ctx γ i) (isautomPass ctx γ i) := by
-  have hcases := forIn_scan_fst_cases (toList ctx.g[i]! ctx.n)
+  have hcases := forIn_scan_fst_cases (ctx.g[i]!.toList)
     (fun pos __s => if pos > i then
-        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+        if ¬ctx.g[γ[i]!]!.mem γ[pos]! = true then
           pure (ForInStep.done (some false, ()))
         else pure (ForInStep.yield (none, ()))
       else pure (ForInStep.yield (none, ())))
-    (fun pos => pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true)
+    (fun pos => pos > i → ctx.g[γ[i]!]!.mem γ[pos]! = true)
     (fun pos => isautomInner_gate ctx γ i pos)
-  have hiff := forIn_scan_fst_eq_none (toList ctx.g[i]! ctx.n)
+  have hiff := forIn_scan_fst_eq_none (ctx.g[i]!.toList)
     (fun pos __s => if pos > i then
-        if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+        if ¬ctx.g[γ[i]!]!.mem γ[pos]! = true then
           pure (ForInStep.done (some false, ()))
         else pure (ForInStep.yield (none, ()))
       else pure (ForInStep.yield (none, ())))
-    (fun pos => pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true)
+    (fun pos => pos > i → ctx.g[γ[i]!]!.mem γ[pos]! = true)
     (fun pos => isautomInner_gate ctx γ i pos)
   constructor
   · intro hp
     show (do
-      let __s ← forIn (toList ctx.g[i]! ctx.n) (none, ()) _
+      let __s ← forIn (ctx.g[i]!.toList) (none, ()) _
       have __r : Option Bool × Unit := __s
       Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit)))
         __r.fst (fun r => pure (ForInStep.done (some r, ()))) fun _ =>
         pure (ForInStep.yield (none, ())) : Id _) = _
-    have hnone : (forIn (toList ctx.g[i]! ctx.n) (none, ())
+    have hnone : (forIn (ctx.g[i]!.toList) (none, ())
         (fun pos __s => if pos > i then
-          if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+          if ¬ctx.g[γ[i]!]!.mem γ[pos]! = true then
             pure (ForInStep.done (some false, ()))
           else pure (ForInStep.yield (none, ()))
         else pure (ForInStep.yield (none, ()))) :
         Id (Option Bool × Unit)).fst = none := hiff.mpr hp
     show Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit)))
-      (forIn (toList ctx.g[i]! ctx.n) (none, ()) _ :
+      (forIn (ctx.g[i]!.toList) (none, ()) _ :
         Id (Option Bool × Unit)).fst _ _ = _
     rw [hnone]
   · intro hp
-    have hsome : (forIn (toList ctx.g[i]! ctx.n) (none, ())
+    have hsome : (forIn (ctx.g[i]!.toList) (none, ())
         (fun pos __s => if pos > i then
-          if ¬elem ctx.g[γ[i]!]! γ[pos]! = true then
+          if ¬ctx.g[γ[i]!]!.mem γ[pos]! = true then
             pure (ForInStep.done (some false, ()))
           else pure (ForInStep.yield (none, ()))
         else pure (ForInStep.yield (none, ()))) :
@@ -609,22 +588,22 @@ private theorem isautomOuter_gate (ctx : Ctx) (γ : Array Nat) (i : Nat) :
       · exact absurd (hiff.mp h) hp
       · exact h
     show Break.runK.match_1 (fun _ => Id (ForInStep (Option Bool × Unit)))
-      (forIn (toList ctx.g[i]! ctx.n) (none, ()) _ :
+      (forIn (ctx.g[i]!.toList) (none, ()) _ :
         Id (Option Bool × Unit)).fst _ _ = _
     rw [hsome]
 
 /-- `isautom` returns `true` exactly when every edge maps to an edge
 under `γ`: the loop's specification, consumable with the `rowsOf`
 dischargers. -/
-theorem isautom_iff (ctx : Ctx) (γ : Array Nat) :
+theorem isautom_iff (ctx : Ctx n) (γ : Array Nat) :
     isautom ctx γ = true ↔
-      ∀ i < ctx.n, ∀ pos ∈ toList ctx.g[i]! ctx.n,
-        pos > i → elem ctx.g[γ[i]!]! γ[pos]! = true := by
+      ∀ i < n, ∀ pos ∈ ctx.g[i]!.toList,
+        pos > i → ctx.g[γ[i]!]!.mem γ[pos]! = true := by
   rw [isautom_eq_scan]
-  have hcases := forIn_scan_fst_cases (List.range ctx.n)
+  have hcases := forIn_scan_fst_cases (List.range n)
     (isautomOuter ctx γ) (isautomPass ctx γ)
     (isautomOuter_gate ctx γ)
-  have hiff := forIn_scan_fst_eq_none (List.range ctx.n)
+  have hiff := forIn_scan_fst_eq_none (List.range n)
     (isautomOuter ctx γ) (isautomPass ctx γ)
     (isautomOuter_gate ctx γ)
   constructor
@@ -636,7 +615,7 @@ theorem isautom_iff (ctx : Ctx) (γ : Array Nat) :
     · rw [hf] at h
       exact absurd h (by simp)
   · intro h
-    have hnone : (forIn (List.range ctx.n) (none, ())
+    have hnone : (forIn (List.range n) (none, ())
         (isautomOuter ctx γ) : Id (Option Bool × Unit)).fst = none :=
       hiff.mpr fun i hi => h i (List.mem_range.mp hi)
     rw [hnone]
@@ -704,102 +683,88 @@ array. The row hypotheses are discharged for `rowsOf G` by
 `rowsOf_symm`, `rowsOf_loopless`, and `rowsOf_bounded`; the
 permutation hypothesis is the transcription obligation
 (`isPerm_of_trace`), proven separately. -/
-theorem checkAutom_of_isautom {ctx : Ctx} {γ : Array Nat}
-    (hsz : γ.size = ctx.n)
-    (hperm : (((List.range ctx.n).map fun v => γ[v]!).isPerm
-      (List.range ctx.n)) = true)
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem checkAutom_of_isautom {ctx : Ctx n} {γ : Array Nat}
+    (hsz : γ.size = n)
+    (hperm : (((List.range n).map fun v => γ[v]!).isPerm
+      (List.range n)) = true)
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (haut : isautom ctx γ = true) :
-    checkAutom ctx.g γ ctx.n = true := by
-  have hbound : ∀ v, v < ctx.n → γ[v]! < ctx.n := by
+    checkAutom ctx.g γ = true := by
+  have hbound : ∀ v, v < n → γ[v]! < n := by
     intro v hv
-    have hmem : γ[v]! ∈ (List.range ctx.n).map fun v => γ[v]! :=
+    have hmem : γ[v]! ∈ (List.range n).map fun v => γ[v]! :=
       List.mem_map.mpr ⟨v, List.mem_range.mpr hv, rfl⟩
     exact List.mem_range.mp
       ((List.isPerm_iff.mp hperm).mem_iff.mp hmem)
-  have hnodup : (((List.range ctx.n).map fun v => γ[v]!)).Nodup :=
+  have hnodup : (((List.range n).map fun v => γ[v]!)).Nodup :=
     ((List.isPerm_iff.mp hperm).symm.nodup List.nodup_range)
-  have hinj : ∀ a b, a < ctx.n → b < ctx.n → γ[a]! = γ[b]! → a = b := by
+  have hinj : ∀ a b, a < n → b < n → γ[a]! = γ[b]! → a = b := by
     intro a b ha hb' hab
-    have hga : ((List.range ctx.n).map fun v => γ[v]!)[a]! = γ[a]! := by
+    have hga : ((List.range n).map fun v => γ[v]!)[a]! = γ[a]! := by
       rw [getElem!_pos _ _ (by simpa using ha), List.getElem_map,
         List.getElem_range]
-    have hgb : ((List.range ctx.n).map fun v => γ[v]!)[b]! = γ[b]! := by
+    have hgb : ((List.range n).map fun v => γ[v]!)[b]! = γ[b]! := by
       rw [getElem!_pos _ _ (by simpa using hb'), List.getElem_map,
         List.getElem_range]
     exact (List.Nodup.getElem!_inj (by simpa using ha)
       (by simpa using hb') hnodup).mp (by rw [hga, hgb]; exact hab)
-  have hσ : ∀ w, w < ctx.n →
-      (renamingOfArray γ ctx.n hbound hinj) w = γ[w]! := by
+  have hσ : ∀ w, w < n →
+      (renamingOfArray γ n hbound hinj) w = γ[w]! := by
     intro w hw
-    show (if w < ctx.n then γ[w]! else w) = γ[w]!
+    show (if w < n then γ[w]! else w) = γ[w]!
     rw [ite_eq_left hw]
-  have himg : ∀ s, image (fun w => γ[w]!) ctx.n s =
-      image (renamingOfArray γ ctx.n hbound hinj) ctx.n s :=
+  have himg : ∀ s : VSet n, s.image (fun w => γ[w]!) =
+      s.image (renamingOfArray γ n hbound hinj) :=
     fun s => image_congr s fun v hv => (hσ v hv).symm
   have hia := (isautom_iff ctx γ).mp haut
-  have hedge : ∀ i pos, i < ctx.n → pos < ctx.n →
-      (ctx.g[i]!).testBit pos = true →
-      (ctx.g[γ[i]!]!).testBit γ[pos]! = true := by
+  have hedge : ∀ i pos, i < n → pos < n →
+      (ctx.g[i]!).mem pos = true →
+      (ctx.g[γ[i]!]!).mem γ[pos]! = true := by
     intro i pos hi hpos hbit
     rcases Nat.lt_trichotomy i pos with hlt | heq | hgt
     · exact hia i hi pos (mem_toList.mpr ⟨hpos, hbit⟩) hlt
     · subst heq
       rw [hloop i hi] at hbit
       exact Bool.noConfusion hbit
-    · have hbit' : (ctx.g[pos]!).testBit i = true := by
+    · have hbit' : (ctx.g[pos]!).mem i = true := by
         rw [← hsymm i pos hi hpos]
         exact hbit
       have h2 := hia pos hpos i (mem_toList.mpr ⟨hi, hbit'⟩) hgt
       rw [hsymm (γ[i]!) (γ[pos]!) (hbound i hi) (hbound pos hpos)]
       exact h2
-  have hsub : ∀ v, v < ctx.n →
-      image (fun w => γ[w]!) ctx.n ctx.g[v]! &&& ctx.g[γ[v]!]! =
-        image (fun w => γ[w]!) ctx.n ctx.g[v]! := by
+  have hsub : ∀ v, v < n →
+      (ctx.g[v]!.image (fun w => γ[w]!)).subset ctx.g[γ[v]!]! = true := by
     intro v hv
-    refine submask_of_testBit fun w hw => ?_
-    rw [testBit_image] at hw
-    obtain ⟨u, hu, hc⟩ := List.any_eq_true.mp hw
-    simp only [Bool.and_eq_true, beq_iff_eq] at hc
-    rw [← hc.2]
-    exact hedge v u hv (List.mem_range.mp hu) hc.1
-  have hbc_img : ∀ s, bitCount ctx.n
-      (image (fun w => γ[w]!) ctx.n s) = bitCount ctx.n s := by
+    refine VSet.subset_iff.mpr fun w hw => ?_
+    rw [VSet.mem_image, List.any_eq_true] at hw
+    obtain ⟨u, hu, hc⟩ := hw
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq] at hc
+    rw [← hc.1.2]
+    exact hedge v u hv (List.mem_range.mp hu) hc.1.1
+  have hbc_img : ∀ s : VSet n, (s.image (fun w => γ[w]!)).card = s.card := by
     intro s
-    rw [himg, bitCount_image]
-  have hbc_le : ∀ v, v < ctx.n →
-      bitCount ctx.n ctx.g[v]! ≤ bitCount ctx.n ctx.g[γ[v]!]! := by
+    rw [himg, VSet.card_image]
+  have hbc_le : ∀ v, v < n → ctx.g[v]!.card ≤ ctx.g[γ[v]!]!.card := by
     intro v hv
     rw [← hbc_img ctx.g[v]!]
-    exact bitCount_le_of_submask (hsub v hv) ctx.n
-  have hsum : (((List.range ctx.n).map fun v =>
-      bitCount ctx.n ctx.g[γ[v]!]!)).sum =
-      (((List.range ctx.n).map fun v =>
-        bitCount ctx.n ctx.g[v]!)).sum := by
-    have hp : ((List.range ctx.n).map fun v =>
-        bitCount ctx.n ctx.g[γ[v]!]!).Perm
-        ((List.range ctx.n).map fun v => bitCount ctx.n ctx.g[v]!) := by
-      have hpm := (List.isPerm_iff.mp hperm).map
-        fun u => bitCount ctx.n ctx.g[u]!
+    exact VSet.card_le_of_subset (hsub v hv)
+  have hsum : (((List.range n).map fun v => ctx.g[γ[v]!]!.card)).sum =
+      (((List.range n).map fun v => ctx.g[v]!.card)).sum := by
+    have hp : ((List.range n).map fun v => ctx.g[γ[v]!]!.card).Perm
+        ((List.range n).map fun v => ctx.g[v]!.card) := by
+      have hpm := (List.isPerm_iff.mp hperm).map fun u => ctx.g[u]!.card
       rw [List.map_map] at hpm
       exact hpm
     exact sum_perm hp
-  have heq_bc := map_eq_of_le_of_sum_le (List.range ctx.n)
+  have heq_bc := map_eq_of_le_of_sum_le (List.range n)
     (fun v hv => hbc_le v (List.mem_range.mp hv)) (Nat.le_of_eq hsum)
-  have hrow : ∀ v, v < ctx.n →
-      image (fun w => γ[w]!) ctx.n ctx.g[v]! = ctx.g[γ[v]!]! := by
+  have hrow : ∀ v, v < n →
+      ctx.g[v]!.image (fun w => γ[w]!) = ctx.g[γ[v]!]! := by
     intro v hv
-    have himglt : image (fun w => γ[w]!) ctx.n ctx.g[v]! < 2 ^ ctx.n := by
-      rw [himg]
-      exact image_lt (renamingOfArray γ ctx.n hbound hinj) ctx.g[v]!
-    refine eq_of_submask_of_popCount_eq (hsub v hv) ?_ himglt
-      (hb _ (hbound v hv))
-    rw [popCount_eq_bitCount ctx.n _ himglt,
-      popCount_eq_bitCount ctx.n _ (hb _ (hbound v hv)),
-      hbc_img ctx.g[v]!]
+    refine VSet.eq_of_subset_of_card_eq (hsub v hv) ?_
+    rw [hbc_img ctx.g[v]!]
     exact heq_bc v (List.mem_range.mpr hv)
   rw [checkAutom]
   simp only [Bool.and_eq_true]
@@ -821,33 +786,31 @@ hypothesis on the admitted candidate. -/
 
 /-- The store invariant: every stored generator pair passes
 `checkAutom` in both components. -/
-def GensOk (ctx : Ctx) (st : AutState) : Prop :=
-  ∀ p ∈ st.gens, checkAutom ctx.g p.1 ctx.n = true ∧
-    checkAutom ctx.g p.2 ctx.n = true
+def GensOk (ctx : Ctx n) (st : AutState) : Prop :=
+  ∀ p ∈ st.gens, checkAutom ctx.g p.1 = true ∧
+    checkAutom ctx.g p.2 = true
 
 /-- Admission preserves the store invariant: the filter re-verifies
 size, bounds, and `isautom`, so with the candidate's permutation
 side (hypothesis `hγ`) the counting bridge validates the stored
 pair. -/
-theorem GensOk.admit {ctx : Ctx} {st : AutState} {γ : Array Nat}
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem GensOk.admit {ctx : Ctx n} {st : AutState} {γ : Array Nat}
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (hγ : isautom ctx γ = true →
-      (((List.range ctx.n).map fun v => γ[v]!).isPerm
-        (List.range ctx.n)) = true)
+      (((List.range n).map fun v => γ[v]!).isPerm
+        (List.range n)) = true)
     (hst : GensOk ctx st) : GensOk ctx (st.admit ctx γ) := by
-  have hpair : ((γ.size == ctx.n &&
-        (List.range ctx.n).all fun v => decide (γ[v]! < ctx.n)) &&
+  have hpair : ((γ.size == n &&
+        (List.range n).all fun v => decide (γ[v]! < n)) &&
         isautom ctx γ) = true →
-      checkAutom ctx.g γ ctx.n = true ∧
-        checkAutom ctx.g (invPerm γ) ctx.n = true := by
+      checkAutom ctx.g γ = true ∧
+        checkAutom ctx.g (invPerm γ) = true := by
     intro hc
     simp only [Bool.and_eq_true, beq_iff_eq] at hc
-    have hA := checkAutom_of_isautom hc.1.1 (hγ hc.2) hsymm hloop hb
-      hc.2
-    exact ⟨hA, checkAutom_invPerm hb hA⟩
+    have hA := checkAutom_of_isautom hc.1.1 (hγ hc.2) hsymm hloop hc.2
+    exact ⟨hA, checkAutom_invPerm hA⟩
   rw [AutState.admit]
   simp only [Id.run, pure]
   repeat' split
@@ -878,7 +841,7 @@ theorem foldl_preserves_mem {α σ : Type} (P : σ → Prop) (g : σ → α → 
       (g s a) (h s a (List.mem_cons_self ..) hs)
 
 /-- The fresh store is trivially valid. -/
-theorem GensOk.init (ctx : Ctx) (nn : Nat) (budget : Option Nat) :
+theorem GensOk.init (ctx : Ctx n) (nn : Nat) (budget : Option Nat) :
     GensOk ctx (AutState.init nn budget) := by
   intro p hp
   simp [AutState.init] at hp
@@ -887,19 +850,18 @@ theorem GensOk.init (ctx : Ctx) (nn : Nat) (budget : Option Nat) :
 fold over candidates that are permutations whenever they pass the
 admission filter (the `isPerm_of_trace` obligation, hypothesis
 `hautos`) stores only `checkAutom`-valid generator pairs. -/
-theorem GensOk.foldl_admit {ctx : Ctx} {st : AutState}
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem GensOk.foldl_admit {ctx : Ctx n} {st : AutState}
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     {autos : List (Array Nat)}
     (hautos : ∀ γ ∈ autos, isautom ctx γ = true →
-      (((List.range ctx.n).map fun v => γ[v]!).isPerm
-        (List.range ctx.n)) = true)
+      (((List.range n).map fun v => γ[v]!).isPerm
+        (List.range n)) = true)
     (hst : GensOk ctx st) :
     GensOk ctx (autos.foldl (fun st γ => st.admit ctx γ) st) :=
   foldl_preserves_mem (GensOk ctx) (fun st γ => st.admit ctx γ) autos
-    (fun _ γ hγ hs => GensOk.admit hsymm hloop hb (hautos γ hγ) hs)
+    (fun _ γ hγ hs => GensOk.admit hsymm hloop (hautos γ hγ) hs)
     st hst
 
 /-! # Layer two, part b: witness validity
@@ -936,12 +898,12 @@ private theorem forIn_id_inv {α β : Type} {P : β → Prop}
 
 /-- The outer loop body of `witness?`, spelled with the named core
 matchers so it is definitionally identical to the `do`-desugaring. -/
-private def witnessOuter (ctx : Ctx) (rsLab : Array Nat) (tc o : Nat)
+private def witnessOuter (ctx : Ctx n) (rsLab : Array Nat) (tc o : Nat)
     (usable : Array (Array Nat × Array Nat)) (_x : Nat)
     (__s : Option (Option (Nat × Array Nat)) ×
-      Array (Nat × Array Nat) × Nat × Nat) :
+      Array (Nat × Array Nat) × VSet n × Nat) :
     Id (ForInStep (Option (Option (Nat × Array Nat)) ×
-      Array (Nat × Array Nat) × Nat × Nat)) :=
+      Array (Nat × Array Nat) × VSet n × Nat)) :=
   have __s := __s.snd
   have queue := __s.fst
   have __s := __s.snd
@@ -950,7 +912,7 @@ private def witnessOuter (ctx : Ctx) (rsLab : Array Nat) (tc o : Nat)
   if head < queue.size then
     witness?.match_5
       (fun _ => Id (ForInStep (Option (Option (Nat × Array Nat)) ×
-        Array (Nat × Array Nat) × Nat × Nat)))
+        Array (Nat × Array Nat) × VSet n × Nat)))
       queue[head]! fun u π =>
       have head := head + 1
       have hit := none
@@ -965,7 +927,7 @@ private def witnessOuter (ctx : Ctx) (rsLab : Array Nat) (tc o : Nat)
       have hit : Option Nat := __s
       witness?.match_1
           (fun _ => Id (ForInStep (Option (Option (Nat × Array Nat)) ×
-            Array (Nat × Array Nat) × Nat × Nat)))
+            Array (Nat × Array Nat) × VSet n × Nat)))
           hit (fun o' => pure (ForInStep.done
             (some (some (o', π)), queue, seen, head))) fun _ => do
           let __s ←
@@ -973,40 +935,40 @@ private def witnessOuter (ctx : Ctx) (rsLab : Array Nat) (tc o : Nat)
                 have queue := __s.fst
                 have seen := __s.snd
                 witness?.match_3
-                  (fun _ => Id (ForInStep (Array (Nat × Array Nat) × Nat)))
+                  (fun _ => Id (ForInStep (Array (Nat × Array Nat) × VSet n)))
                   x fun γ γi => do
                   let __s ←
                     forIn [γ, γi] (queue, seen) fun f __s =>
                         have queue := __s.fst
                         have seen := __s.snd
                         have w := f[u]!
-                        if elem seen w = true then
+                        if seen.mem w = true then
                           pure (ForInStep.yield (queue, seen))
                         else
-                          have seen := insert seen w
-                          have queue := queue.push (w, composePerm f π ctx.n)
+                          have seen := seen.insert w
+                          have queue := queue.push (w, composePerm f π n)
                           pure (ForInStep.yield (queue, seen))
                   have queue : Array (Nat × Array Nat) := __s.fst
-                  have seen : Nat := __s.snd
+                  have seen : VSet n := __s.snd
                   pure (ForInStep.yield (queue, seen))
           have queue : Array (Nat × Array Nat) := __s.fst
-          have seen : Nat := __s.snd
+          have seen : VSet n := __s.snd
           pure (ForInStep.yield (none, queue, seen, head))
   else pure (ForInStep.yield (none, queue, seen, head))
 
-private theorem witness?_eq (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
+private theorem witness?_eq (ctx : Ctx n) (rsLab : Array Nat) (tc : Nat)
     (usable : Array (Array Nat × Array Nat)) (o : Nat) :
     witness? ctx rsLab tc usable o =
       if (o == 0 || usable.isEmpty) = true then none
       else
         Break.runK.match_1 (fun _ => Id (Option (Nat × Array Nat)))
-          (forIn [0:ctx.n]
+          (forIn [0:n]
             ((none : Option (Option (Nat × Array Nat))),
-              #[(rsLab[tc + o]!, Array.range ctx.n)],
-              insert 0 rsLab[tc + o]!, (0 : Nat))
+              #[(rsLab[tc + o]!, Array.range n)],
+              VSet.empty.insert rsLab[tc + o]!, (0 : Nat))
             (witnessOuter ctx rsLab tc o usable) :
               Id (Option (Option (Nat × Array Nat)) ×
-                Array (Nat × Array Nat) × Nat × Nat)).fst
+                Array (Nat × Array Nat) × VSet n × Nat)).fst
           (fun r => pure r) (fun _ => pure none) := by
   rw [witness?]
   rfl
@@ -1016,19 +978,19 @@ private theorem id_bind_eq {α β : Type} (x : Id α) (f : α → Id β) :
 
 /-- The witness-queue invariant: every queued composition, and any
 returned witness, passes `checkAutom`. -/
-private def WitnessInv (ctx : Ctx)
+private def WitnessInv (ctx : Ctx n)
     (s : Option (Option (Nat × Array Nat)) ×
-      Array (Nat × Array Nat) × Nat × Nat) : Prop :=
-  (∀ q ∈ s.2.1, checkAutom ctx.g q.2 ctx.n = true) ∧
-  (∀ a b, s.1 = some (some (a, b)) → checkAutom ctx.g b ctx.n = true)
+      Array (Nat × Array Nat) × VSet n × Nat) : Prop :=
+  (∀ q ∈ s.2.1, checkAutom ctx.g q.2 = true) ∧
+  (∀ a b, s.1 = some (some (a, b)) → checkAutom ctx.g b = true)
 
-private theorem witnessOuter_inv {ctx : Ctx} {rsLab : Array Nat}
+private theorem witnessOuter_inv {ctx : Ctx n} {rsLab : Array Nat}
     {tc o : Nat} {usable : Array (Array Nat × Array Nat)}
-    (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 ctx.n = true ∧
-      checkAutom ctx.g p.2 ctx.n = true)
+    (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 = true ∧
+      checkAutom ctx.g p.2 = true)
     (x : Nat)
     (s : Option (Option (Nat × Array Nat)) ×
-      Array (Nat × Array Nat) × Nat × Nat)
+      Array (Nat × Array Nat) × VSet n × Nat)
     (hs : WitnessInv ctx s) :
     WitnessInv ctx
       (stepState (witnessOuter ctx rsLab tc o usable x s)) := by
@@ -1037,7 +999,7 @@ private theorem witnessOuter_inv {ctx : Ctx} {rsLab : Array Nat}
   split
   case isFalse => exact ⟨hs.1, fun a b h => nomatch h⟩
   case isTrue hlt =>
-    have hπ : checkAutom ctx.g (s.2.1[s.2.2.2]!).2 ctx.n = true := by
+    have hπ : checkAutom ctx.g (s.2.1[s.2.2.2]!).2 = true := by
       have hq : s.2.1[s.2.2.2]! ∈ s.2.1 := by
         rw [getElem!_pos s.2.1 s.2.2.2 hlt]
         exact Array.getElem_mem hlt
@@ -1053,16 +1015,16 @@ private theorem witnessOuter_inv {ctx : Ctx} {rsLab : Array Nat}
     · refine ⟨?_, fun a b h => nomatch h⟩
       rw [← Array.forIn_toList]
       refine forIn_id_inv
-        (P := fun qs : Array (Nat × Array Nat) × Nat =>
-          ∀ q ∈ qs.1, checkAutom ctx.g q.2 ctx.n = true)
+        (P := fun qs : Array (Nat × Array Nat) × VSet n =>
+          ∀ q ∈ qs.1, checkAutom ctx.g q.2 = true)
         usable.toList ?_ (s.2.1, s.2.2.1) hs.1
       intro p hp qs hqs
       refine forIn_id_inv
-        (P := fun qs : Array (Nat × Array Nat) × Nat =>
-          ∀ q ∈ qs.1, checkAutom ctx.g q.2 ctx.n = true)
+        (P := fun qs : Array (Nat × Array Nat) × VSet n =>
+          ∀ q ∈ qs.1, checkAutom ctx.g q.2 = true)
         [p.1, p.2] ?_ qs hqs
       intro f hf qs2 hqs2
-      have hf' : checkAutom ctx.g f ctx.n = true := by
+      have hf' : checkAutom ctx.g f = true := by
         have hp' := hu p (Array.mem_toList_iff.mp hp)
         rcases List.mem_cons.mp hf with rfl | hf2
         · exact hp'.1
@@ -1080,14 +1042,13 @@ private theorem witnessOuter_inv {ctx : Ctx} {rsLab : Array Nat}
 `checkAutom`-valid generator pairs, every witness `witness?` returns
 passes `checkAutom` — the breadth-first queue holds only the identity
 and `checkAutom`-closed compositions. -/
-theorem witness?_checkAutom {ctx : Ctx} {rsLab : Array Nat}
+theorem witness?_checkAutom {ctx : Ctx n} {rsLab : Array Nat}
     {tc o : Nat} {usable : Array (Array Nat × Array Nat)}
     {o' : Nat} {π : Array Nat}
-    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 ctx.n = true ∧
-      checkAutom ctx.g p.2 ctx.n = true)
+    (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 = true ∧
+      checkAutom ctx.g p.2 = true)
     (hw : witness? ctx rsLab tc usable o = some (o', π)) :
-    checkAutom ctx.g π ctx.n = true := by
+    checkAutom ctx.g π = true := by
   rw [witness?_eq] at hw
   by_cases h0 : (o == 0 || usable.isEmpty) = true
   · rw [ite_eq_left h0] at hw
@@ -1095,26 +1056,26 @@ theorem witness?_checkAutom {ctx : Ctx} {rsLab : Array Nat}
   · rw [ite_eq_right h0, forIn_range_eq] at hw
     have hinit : WitnessInv ctx
         ((none : Option (Option (Nat × Array Nat))),
-          #[(rsLab[tc + o]!, Array.range ctx.n)],
-          insert 0 rsLab[tc + o]!, (0 : Nat)) := by
+          #[(rsLab[tc + o]!, Array.range n)],
+          VSet.empty.insert rsLab[tc + o]!, (0 : Nat)) := by
       constructor
       · intro q hq
-        have hq' : q = (rsLab[tc + o]!, Array.range ctx.n) := by
+        have hq' : q = (rsLab[tc + o]!, Array.range n) := by
           simpa using hq
         rw [hq']
-        exact checkAutom_range hb
+        exact checkAutom_range
       · intro a b h
         exact nomatch h
     have hinv := forIn_id_inv (f := witnessOuter ctx rsLab tc o usable)
-      (List.range ctx.n)
+      (List.range n)
       (fun x _ s hs => witnessOuter_inv hu x s hs) _ hinit
-    rcases hfst : (forIn (List.range ctx.n)
+    rcases hfst : (forIn (List.range n)
         ((none : Option (Option (Nat × Array Nat))),
-          #[(rsLab[tc + o]!, Array.range ctx.n)],
-          insert 0 rsLab[tc + o]!, (0 : Nat))
+          #[(rsLab[tc + o]!, Array.range n)],
+          VSet.empty.insert rsLab[tc + o]!, (0 : Nat))
         (witnessOuter ctx rsLab tc o usable) :
           Id (Option (Option (Nat × Array Nat)) ×
-            Array (Nat × Array Nat) × Nat × Nat)).fst with _ | r
+            Array (Nat × Array Nat) × VSet n × Nat)).fst with _ | r
     · rw [hfst] at hw
       have hcon : (none : Option (Nat × Array Nat)) = some (o', π) := hw
       exact nomatch hcon
