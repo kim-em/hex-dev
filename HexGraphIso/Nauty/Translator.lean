@@ -26,7 +26,7 @@ closed under the producer's witness composition, so every witness
 composed from individually-valid generators is itself valid.
 
 The programme is complete: `certifyCanon?_isSome` is proved in
-`SearchOutcomeCertify.lean`. It did not take the route this file's
+`Correct/Certify.lean`. It did not take the route this file's
 statements anticipated, and the section following the closure toolkit
 records where each layer-two obligation actually landed.
 -/
@@ -352,7 +352,7 @@ theorem checkAutom_range {g : Array (VSet n)} :
 /-!
 # Where the layer-two obligations landed
 
-`certifyCanon?_isSome` is proved (`SearchOutcomeCertify.lean`), by a
+`certifyCanon?_isSome` is proved (`Correct/Certify.lean`), by a
 route that uses some of what this file states and replaces the rest.
 
 * `checkAutom_of_isautom`, the counting bridge below, is live. It
@@ -617,7 +617,7 @@ layers one and two it needed the rows equality (definitional from
 `produceCand`'s key), `colorSortedCheck` of the transcription's
 output labelling, and layer three, the maximality of the traced key.
 Layer three is `canonSpecKey_eq_tracedKey` and the assembly is
-`certifyCanon?_isSome`, both in `SearchOutcomeCertify.lean`.
+`certifyCanon?_isSome`, both in `Correct/Certify.lean`.
 -/
 
 /-! # Layer two, part b: `checkAutom` from the admission filter
