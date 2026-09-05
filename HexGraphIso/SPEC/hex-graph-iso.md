@@ -568,22 +568,30 @@ layers, each independently useful:
    one and two; it survives as a separate obligation only for a
    search-based producer.
 
-The layers are design constraints as well as proof obligations, and
-each forces sharing that removes duplicated code:
+The proof as landed relates the executable recursion to the
+declarative one directly rather than through a shared parameterized
+recursion: the two node statements (`FirstTotal`, `OtherTotal`) are
+proved together by induction on the executable recursion fuel, the
+root instance identifies the specification key with the traced key
+(`canonSpecKey_eq_tracedKey`), and the certificate replay is then
+shown to accept. The producer and the checker share their per-node
+component checks (child-cell, automorphism and cell-permutation
+validation) but remain two recursions related by replay theorems.
+The design constraints the layers impose, which any restructuring of
+the pipeline must keep:
 
-- Layer two is discharged by construction: one per-node acceptance
-  predicate, evaluated by the producer at emission and by the checker
-  at replay, so their agreement is congruence on a shared definition
-  rather than a proof maintained against two parallel spellings.
-  Emission may evaluate only the conjuncts that admission does not
-  already imply (it skips the generator-automorphism conjunct, which
-  holds by closure over admitted generators); the layer-two proof
-  then composes the shared predicate with that admission invariant.
-- Layer three uses a single tree recursion parameterized by a pruning
-  policy, which the declarative form instantiates with the empty
-  policy and the production walk with the real one; the refinement
-  theorem quantifies over policies instead of relating two unrelated
-  recursions.
+- Layer two wants one per-node acceptance predicate, evaluated by the
+  producer at emission and by the checker at replay, so their
+  agreement is congruence on a shared definition rather than a proof
+  maintained against two parallel spellings. Emission may evaluate
+  only the conjuncts that admission does not already imply (today it
+  skips the generator-automorphism conjunct, which holds by closure
+  over admitted generators).
+- Layer three favours a single tree recursion parameterized by a
+  pruning policy, which the declarative form instantiates with the
+  empty policy and the production walk with the real one, so that the
+  refinement theorem quantifies over policies instead of relating two
+  unrelated recursions.
 - The replay-monotonicity property inside layer two is what makes
   single-pass certificate emission sound; in a trace-driven
   translator it justifies the collapse of dominated subtrees before

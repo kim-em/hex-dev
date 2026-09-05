@@ -28,10 +28,13 @@ import json
 import math
 from pathlib import Path
 
+# ``checked_ns`` is the certificate replay the public surface ran before
+# the two tiers collapsed; sweeps recorded since omit it, and a tier
+# absent from either sweep is left out of the comparison.
 TIERS = [
     ("nauty_ns", "nauty 2.9.3 (C)"),
-    ("fast_ns", "hex fast tier"),
-    ("checked_ns", "hex checked tier"),
+    ("fast_ns", "hex canonicalize"),
+    ("checked_ns", "hex certificate replay (pre-collapse)"),
 ]
 
 
@@ -50,6 +53,8 @@ def sibling(path: Path, kind: str) -> Path | None:
 
 def cactus(ax, rows: list[dict], key: str, label: str, color, solid: bool):
     times = sorted(r[key] / 1e9 for r in rows if key in r)
+    if not times:
+        return
     ax.plot(range(1, len(times) + 1), times,
             linestyle="-" if solid else "--",
             alpha=1.0 if solid else 0.45,
