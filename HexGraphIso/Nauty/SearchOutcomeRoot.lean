@@ -82,7 +82,7 @@ theorem keyEq_of_firstTotal (G : Colored n k) (hn0 : 0 < n)
       FrameTrail.empty rfl rfl rfl hn0 (Nat.le_refl 1) rfl (by omega)
       (by omega) (Nat.le_refl 1)
       (CheapDesc.same { n := n, g := rowsOf G } 1 _)
-      (FirstInv.root hn0) PathOk.root
+      (orbSound_orbConn_init _) (FirstInv.root hn0) PathOk.root
   exact keyEq_of_firstRun (Nat.pos_iff_ne_zero.mp hn0) hrun
 
 private theorem label_ofArray?_isSome {lab : Array Nat}

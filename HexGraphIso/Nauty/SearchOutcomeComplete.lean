@@ -34,7 +34,7 @@ structure FirstKeep (ctx : Ctx) (level : Nat) (st out : SearchSt)
     (fs : List Nat) (outBest : Option Key) : Prop where
   dom : ∀ b, outBest = some b → keyLe (pathLeafKey ctx fs out.firstlab) b
   orbits : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
-  coset : out.cosetindex < ctx.n
+  coset : st.cosetindex < ctx.n → out.cosetindex < ctx.n
   boundary : out.noncheaplevel < level → out.noncheaplevel = st.noncheaplevel
   guide : level ≤ out.gcaFirst
 
@@ -76,6 +76,7 @@ Off-path nodes are never the root, so the level is at least two. -/
     st.noncheaplevel ≤ level →
     CheapDesc ctx level st.noncheaplevel
       (refine ctx level st.lab st.ptn st.active numcells) →
+    OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n →
     FirstInv G ctx level codes numcells st trail →
     PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 level st →
@@ -106,7 +107,7 @@ theorem OtherTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
 descent. -/
 theorem FirstTotal.zero (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
     FirstTotal G ctx inf tcLevel 0 := by
-  intro specFuel level numcells codes st trail hn _ _ _ _ _ _ hfuel _ _
+  intro specFuel level numcells codes st trail hn _ _ _ _ _ _ hfuel _ _ _
     hfirst _
   have hle : level ≤ n := hfirst.searchOk.levelLe
   omega
