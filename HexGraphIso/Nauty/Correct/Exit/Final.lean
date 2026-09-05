@@ -12,13 +12,19 @@ import all HexGraphIso.Nauty.Search.Search
 public section
 
 /-!
-The final corrected mutual induction for the transcribed search.
+The mutual induction for the transcribed search, coupled to its frame
+equations.
 
 The semantic outcomes distinguish completed subtrees, located unwinds,
-comparison prunes, and exhausted runtime fuel.  This file couples those
+comparison prunes, and exhausted runtime fuel.  This module couples those
 outcomes to the one extra executable frame fact needed by the induction:
 every recursive node call restores the fixed-point bitset with which it
-was entered.
+was entered.  It also records the two unconditional leaf histories
+`FirstTrail` and `CanonTrail` and the frozen comparison verdict
+`FrozenOut`.
+
+This module builds on `Correct.RunInv.Coset`.  `Correct.Exit.Classify`
+classifies the exits of the node and loop proofs defined here.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -26,9 +32,9 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- At a loop boundary, an implicit small-cell pair is available even
-when `noncheaplevel` is exactly the loop level.  `CheapOk` deliberately
-omits this equality case at general node entries; the loop guards restore
-it before beginning a sibling sweep. -/
+when `noncheaplevel` is exactly the loop level.  `CheapOk` omits this
+equality case at general node entries.  The loop guards restore it before
+beginning a sibling sweep. -/
 @[expose] def BoundaryOk (G : Colored n k) (ctx : Ctx n)
     (level : Nat) (st : SearchSt n) : Prop :=
   st.noncheaplevel = level →
@@ -40,7 +46,7 @@ it before beginning a sibling sweep. -/
 
 namespace BoundaryOk
 
-/-- Parking strictly past a loop makes its equality obligation vacuous. -/
+/-- Parking strictly past a loop makes its equality case vacuous. -/
 theorem parked {G : Colored n k} {ctx : Ctx n} {level : Nat}
     {st : SearchSt n} :
     BoundaryOk G ctx level { st with noncheaplevel := level + 1 } := by
@@ -294,8 +300,8 @@ structure OtherLoopProof (G : Colored n k) (ctx : Ctx n)
   coset : out.cosetindex = st.cosetindex
 
 /-- The first leaf remembers every child selected on the unique initial
-descent.  Unlike `RefTrail.first`, this history is deliberately independent
-of the mutable `gcaFirst` return control: outer first-path loops reset that
+descent.  Unlike `RefTrail.first`, this history is independent of the
+mutable `gcaFirst` return control: outer first-path loops reset that
 control while the leaf remains a descendant of all their frozen frames. -/
 structure FirstTrail (ctx : Ctx n) (current : Nat) (st : SearchSt n)
     (trail : FrameTrail) : Prop where
@@ -312,7 +318,7 @@ structure FirstTrail (ctx : Ctx n) (current : Nat) (st : SearchSt n)
 /-- Before the enclosing first-path node returns, its canonical reference
 also remains inside every strictly older guiding child.  The current loop
 frame is excluded because later siblings may replace the canonical child
-there; `FrameRefs` owns that changing boundary. -/
+there.  `FrameRefs` states what holds at that changing boundary. -/
 structure CanonTrail (ctx : Ctx n) (current : Nat) (st : SearchSt n)
     (trail : FrameTrail) : Prop where
   reach : ∀ target entry, target < current →
@@ -425,10 +431,10 @@ theorem exactLoop {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
 
 end FrozenOut
 
-/-- What a first-path node may export.  A locally absorbed/pruned node
-exports its exact maximum; a genuine generator unwind directly names the
-first or canonical reference child.  The orbit-pointer arm is resolved by
-`firstChildLoop` and is intentionally absent. -/
+/-- What a first-path node may export.  A locally absorbed or pruned node
+exports its exact maximum, and a genuine generator unwind directly names
+the first or canonical reference child.  The orbit-pointer arm is resolved
+by `firstChildLoop` and does not appear here. -/
 inductive NodeEscape (ctx : Ctx n) (tcLevel specFuel level : Nat)
     (cs : List Nat) (st out : SearchSt n) (numcells : Nat)
     (best outBest : Option (Key n)) (trail : FrameTrail) (r : Int) : Prop where
@@ -444,8 +450,8 @@ inductive NodeEscape (ctx : Ctx n) (tcLevel specFuel level : Nat)
       (located : anchor.Located trail)
 
 /-- The corresponding first-path loop exit.  Fuel-exhausted intermediate
-tails may still return `none`; sufficient outer cursor fuel later rules
-that arm out. -/
+tails may still return `none`, and sufficient outer cursor fuel rules that
+arm out. -/
 inductive LoopEscape (ctx : Ctx n) (tcLevel level : Nat) (bound : Key n)
     (out : SearchSt n) (best outBest : Option (Key n)) (trail : FrameTrail)
     (r : Option Int) : Prop where
@@ -1563,7 +1569,7 @@ theorem recoverRefs {G : Colored n k} {ctx : Ctx n}
 
 /-- Cleanup, first-control installation, and recovery change neither leaf
 reference.  The first trail therefore keeps the current frozen frame,
-while the canonical trail can be lowered to the older frames owned by the
+while the canonical trail can be lowered to the shallower frames of the
 enclosing first-path node. -/
 theorem recoverTrails {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells tv1 inf : Nat} {fixedpts : VSet n}

@@ -12,6 +12,16 @@ public section
 
 /-!
 Preservation rules for the active-frame reach ledger.
+
+Refinement, leaf processing, reopening an ancestor, and individualization
+each preserve reach from every active ancestor frame and leave the closed
+boundaries of those frames untouched.  Descending into a sweep child
+extends both guide ledgers, and a leaf admission at a reached active
+child yields a located unwind payload and a located node receipt.
+
+This module builds on the located guides of `Correct.Unwind.Located`.
+`Correct.State.Induction` uses these preservation rules wherever the
+search induction crosses a state update.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -533,9 +543,9 @@ canonical leaf. -/
     refSize := hrefSize
     refReach := hrefReach }
 
-/-- Descending into a sweep child extends both guide ledgers. A guide
+/-- Descending into a sweep child extends both guide ledgers.  A guide
 whose control is the current level is supplied by an already-covered
-child of that sweep; older guides are transported automatically. -/
+child of that sweep.  Guides at shallower levels transport unchanged. -/
 theorem GuideStore.pushSweep {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len activeOffset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}

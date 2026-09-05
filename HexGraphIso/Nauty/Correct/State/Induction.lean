@@ -17,6 +17,18 @@ public section
 
 /-!
 Semantic state carried by the outcome-indexed search induction.
+
+`RunInv` is the state available once the first leaf has been installed,
+`RunPrep` the state after refinement and the off-path comparison step,
+and `NodeInv` the extra certificate state a node holds when it is about
+to call `refine`.  Around them sit the cheap-automorphism ledger
+boundary, the first-leaf phase transition out of the pre-incumbent
+descent, the framing rules for `recover`, and the leaf-admission
+hypotheses that preserve the generator store through `processnode`.
+
+This module builds on the frame preservation rules of
+`Correct.Unwind.Trail`.  `Correct.State.Ledger` and every later module
+state their hypotheses in terms of the records defined here.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -24,7 +36,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- Elimination form of `LabInj`, exported so downstream outcome modules
-need not unfold its intentionally opaque definition. -/
+need not unfold its opaque definition. -/
 theorem LabInj.eq_of_getElem! {lab : Array Nat} {n i j : Nat}
     (h : LabInj lab n) (hi : i < n) (hj : j < n)
     (heq : lab[i]! = lab[j]!) : i = j := by
@@ -102,9 +114,9 @@ theorem SearchOut.leafRefs {G : Colored n k} {B level numcells : Nat}
 
 /-- The implicit automorphism pair remains valid while search stays
 strictly below the level at which that pair was frozen.  At the frozen
-level itself the implication is deliberately dormant: `processnode` does
-not insert an implicit pair there, and a failed cheap-automorphism guard
-will move the boundary before the next descent. -/
+level itself the implication is dormant: `processnode` does not insert an
+implicit pair there, and a failed cheap-automorphism guard will move the
+boundary before the next descent. -/
 structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
     (st : SearchSt n) : Prop where
   positive : 0 < st.noncheaplevel
@@ -177,7 +189,7 @@ theorem recover_fmptn {st : SearchSt n} {inf level saved : Nat}
   exact cellsPerm_refl _ _ _
 
 /-- Recovery either parks the boundary just below the next child, where
-the strict obligation is dormant, or retains an older frozen pair. -/
+the strict pair condition is dormant, or retains an older frozen pair. -/
 theorem CheapOk.recover {ctx : Ctx n} {rlab rptn : Array Nat}
     {current level inf : Nat} {st : SearchSt n}
     (h : CheapOk ctx rlab rptn current st) (hle : level ≤ current)
@@ -255,7 +267,7 @@ theorem CheapOk.otherNodePrep {ctx : Ctx n} {rlab rptn : Array Nat}
   exact h.ofFrames hlab hptn hncl
 
 /-- Writing a boundary at or above the logical level suspends the pair
-obligation without changing the partition facts needed to revive it. -/
+condition without changing the partition facts needed to revive it. -/
 theorem CheapOk.park {ctx : Ctx n} {rlab rptn : Array Nat}
     {old current boundary : Nat} {st : SearchSt n}
     (h : CheapOk ctx rlab rptn old st) (hpos : 0 < boundary)
@@ -416,7 +428,7 @@ theorem CheapOk.breakout {ctx : Ctx n} {rlab rptn : Array Nat}
     rw [hlab, hptn, hncl, ← hfm]
     exact h.pair hlt
 
-/-- The initial search boundary is one, so its strict pair obligation is
+/-- The initial search boundary is one, so its strict pair condition is
 empty at the root. -/
 theorem CheapOk.root {G : Colored n k} {ctx : Ctx n} {numcells : Nat}
     {st : SearchSt n} (hn0 : 0 < n)
@@ -436,11 +448,11 @@ theorem CheapOk.root {G : Colored n k} {ctx : Ctx n} {numcells : Nat}
 /-- The semantic state available after the first leaf has been installed.
 
 The explicit `level` makes the package usable both at node entries and
-inside their child loops. At a node entry, `level = cs.length + 1`
-recovers `DomOk`; a loop instead carries the code path through its current
-node, so its path has length `level`. The comparison sign is deliberately
+inside their child loops.  At a node entry, `level = cs.length + 1`
+recovers `DomOk`.  A loop instead carries the code path through its
+current node, so its path has length `level`.  The comparison sign is
 unrestricted: an internal node whose code first exceeds the incumbent can
-enter its child loop with sign one. Consumers that read the mutable
+enter its child loop with sign one.  Consumers that read the mutable
 incumbent or return an event supply the appropriate sign premise. -/
 structure RunInv (G : Colored n k) (ctx : Ctx n)
     (tcLevel level : Nat) (cs bs fs : List Nat) (numcells : Nat)
@@ -562,9 +574,8 @@ theorem Equitable.ofCellsPerm {ctx : Ctx n} {level : Nat}
   exact (splitDone_iff_constOn.mp (heq cd hcd de hde)).perm hcdPerm.symm
 
 /-- The extra certificate state needed exactly where a node is about to
-call `refine`.  `RunInv` is deliberately weaker because it also describes
-recovered parent-loop states, whose stale `active` field is never refined
-again. -/
+call `refine`.  `RunInv` is weaker because it also describes recovered
+parent-loop states, whose stale `active` field is never refined again. -/
 structure NodeInv (G : Colored n k) (ctx : Ctx n)
     (tcLevel level : Nat) (cs bs fs : List Nat) (numcells : Nat)
     (st : SearchSt n) (best : Option (Key n)) (trail : FrameTrail) : Prop where
@@ -993,8 +1004,8 @@ theorem SearchOk.firstterminal {G : Colored n k} {level numcells : Nat}
     exact Or.inr ⟨h.labSize, h.reach⟩
 
 /-- The first leaf changes the pre-incumbent descent into the stable
-post-install invariant. Both mutable stores are still empty at this point;
-all later store growth is handled by the ordinary node induction. -/
+post-install invariant.  Both mutable stores are still empty at this
+point.  The ordinary node induction handles all later store growth. -/
 theorem RunInv.firstterminal {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat}
     {cs : List Nat} {st : SearchSt n} {trail : FrameTrail}
@@ -1157,8 +1168,8 @@ theorem GuideStore.processnode {ctx : Ctx n} {tcLevel level : Nat}
 
 /-- State returned by a node event before its caller applies `recover`.
 The second comparison-machine case is the row-rejection reset: the
-mutable sign is negative while the retained proof is deliberately stated
-at sign zero, exactly as required by `recover_codeInv_reset`. -/
+mutable sign is negative while the retained proof is stated at sign zero,
+exactly as required by `recover_codeInv_reset`. -/
 structure RunEvent (G : Colored n k) (ctx : Ctx n)
     (tcLevel current : Nat)
     (cs bs fs : List Nat) (st : SearchSt n) (best : Option (Key n))
@@ -1260,9 +1271,9 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx n}
 
 /-- Valid installed leaf references, a valid current search labelling, and
 the row store are the exact hypotheses needed to preserve the generator
-store through `processnode`. This avoids packaging the post-refinement
-state in `DomOk`, whose path index intentionally describes a node before
-its next refinement code is appended. -/
+store through `processnode`.  This avoids packaging the post-refinement
+state in `DomOk`, whose path index describes a node before its next
+refinement code is appended. -/
 theorem LeafRefsOk.processnodeGen {G : Colored n k} {ctx : Ctx n}
     {level numcells : Nat} {st : SearchSt n}
     (hn0 : 0 < n)

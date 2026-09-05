@@ -15,6 +15,9 @@ public section
 The first-path sibling sweep, part two: the hypotheses carried through the
 sweep after its guiding child has been absorbed, and their transport across
 an off-path child that stays at the loop level.
+
+This module builds on `Correct.FirstPath.Loop`.  `Correct.FirstPath.Sweep`
+runs the cursor-fuel induction over `FirstSweepHyp`.
 -/
 
 namespace Hex.GraphIso.Nauty

@@ -18,8 +18,12 @@ One off-path sibling sweep and the off-path leaves it reaches.
 The sweep is total by induction on its cursor fuel, assuming totality of
 every off-path child at the current recursion fuel.  The leaves split
 into those that never enter the first-path admission test, those admitted
-by it, and those it rejects; the last are transported from the twin state
-whose first-path agreement depth is zero.
+by it, and those it rejects.  The rejected leaves are transported from the
+twin state whose first-path agreement depth is zero.
+
+This module builds on `Correct.Sweep.Node`.  `Correct.OffPath.Node` uses
+the sweep induction proved here, and `Correct.FirstPath.Loop` reuses its
+leaf runs on the first path.
 -/
 
 /-!
@@ -739,12 +743,12 @@ end Hex.GraphIso.Nauty
 
 /-!
 Packaged runs for the off-path leaves that do not enter the first-path
-admission gate.
+admission test.
 
 The comparison arms of `processnode` at a discrete off-path leaf are the
 frozen-downward prune, the row tie, and the install or rejection of the
-leaf against the incumbent.  The first two already have corrected runs;
-the install and rejection arms return to the saved cheap-cell boundary and
+leaf against the incumbent.  The first two already have packaged runs.
+The install and rejection arms return to the saved cheap-cell boundary and
 are classified here as cheap exits.  The admitted first-path-agreeing leaf
 is packaged as well, with the nonpositive comparison it needs derived from
 domination of the first leaf by the incumbent.
@@ -1072,7 +1076,7 @@ theorem OtherRun.leafKeep {G : Colored n k} {ctx : Ctx n}
   · intro _
     rw [processnode_noncheaplevel', hf9]
 
-/-- Every off-path leaf outside the first-path admission gate is a
+/-- Every off-path leaf outside the first-path admission test is a
 packaged run that keeps its node's carried facts. -/
 theorem NodeInv.leafOther {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
@@ -1196,7 +1200,7 @@ theorem NodeInv.leafOther {G : Colored n k} {ctx : Ctx n}
     exact ⟨outBest, hrun, hrun.leafKeep hnum hearly hsound⟩
 
 /-- The admitted first-path-agreeing leaf is a packaged run that keeps its
-node's carried facts; domination of the first leaf rules out a comparison
+node's carried facts.  Domination of the first leaf rules out a comparison
 above the incumbent. -/
 theorem NodeInv.leafFirstOther {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
@@ -1268,14 +1272,14 @@ theorem NodeInv.leafFirstOther {G : Colored n k} {ctx : Ctx n}
 end Hex.GraphIso.Nauty
 
 /-!
-Off-path leaves whose first-path admission gate fails.
+Off-path leaves that fail the first-path admission test.
 
 A leaf whose codes agree with the first path through its own level, but
 whose stored first code is not the sentinel or whose first-leaf
 relabelling is not an automorphism, runs the ordinary comparison arm of
-`processnode`.  The corrected leaf lemmas are stated for leaves off the
-first path, so this file transports their conclusions from the twin state
-whose first-path agreement depth is zero: the two runs differ only in the
+`processnode`.  The leaf lemmas are stated for leaves off the first path,
+so this section transports their conclusions from the twin state whose
+first-path agreement depth is zero: the two runs differ only in the
 initial workspace permutation, which the canonical scatter overwrites, and
 in the recorded agreement depth itself.
 -/
@@ -1313,11 +1317,11 @@ private theorem firstScatter_fold (n : Nat) (flab lab : Array Nat) :
     (List.range n).foldl (fun w i => w.set! flab[i]! lab[i]!)
       (Array.replicate n 0) = firstScatter n flab lab := rfl
 
-/-! # The comparison arm at a gate-failing leaf -/
+/-! # The comparison arm at a leaf that fails admission -/
 
 set_option maxHeartbeats 4000000 in
-/-- Failing the admission gate runs exactly the comparison arm of the
-twin state with agreement depth zero; only the recorded depth differs. -/
+/-- Failing the admission test runs exactly the comparison arm of the
+twin state with agreement depth zero.  Only the recorded depth differs. -/
 theorem processnode_gateFail_state {ctx : Ctx n} {level numcells : Nat}
     {st : SearchSt n}
     (hcanonSize : st.canonlab.size = n)
@@ -1432,8 +1436,8 @@ theorem leafFinish_setEqlev (level e : Nat) (st : SearchSt n) :
   dsimp only
   split <;> split <;> rfl
 
-/-- A gate-failing off-path leaf runs as its twin with the recorded
-agreement depth restored. -/
+/-- An off-path leaf that fails admission runs as its twin with the
+recorded agreement depth restored. -/
 theorem otherNode_gateFail_state (ctx : Ctx n)
     (inf tcLevel fuel level numcells : Nat) (st : SearchSt n)
     (hlevel : 2 ≤ level)
@@ -1600,7 +1604,7 @@ theorem NodeSound.setEqlev {ctx : Ctx n} {tcLevel specFuel level numcells : Nat}
   have := h.upper b hb
   rwa [hkey] at this
 
-/-- The corrected exit classification transports from the twin. -/
+/-- The exit classification transports from the twin. -/
 theorem NodeExit.setEqlev {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells e : Nat} {codes : List Nat}
     {st out : SearchSt n} {best outBest : Option (Key n)} {trail : FrameTrail}
@@ -1627,10 +1631,10 @@ theorem NodeExit.setEqlev {ctx : Ctx n}
   | exhausted returned state incumbent emptyFuel =>
       exact (hfuel emptyFuel).elim
 
-/-! # The gate-failing leaf -/
+/-! # The leaf that fails admission -/
 
 set_option maxHeartbeats 800000 in
-/-- The corrected off-path result of a gate-failing leaf follows from the
+/-- The off-path result of a leaf that fails admission follows from the
 result of its twin.  The event package is rebuilt directly from the leaf
 comparison, because the twin's event only records agreement depth zero. -/
 theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx n}

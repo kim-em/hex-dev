@@ -14,18 +14,23 @@ import all HexGraphIso.Nauty.Invariant.Orbits
 public section
 
 /-!
-Assembly of the corrected search induction, and the facts carried
-alongside it that no other package records.
+Assembly of the search induction, and the facts carried alongside it that
+no other package records.
 
 `FirstRun` pairs the established first-path package with the explicit
-exit classification that justifies every abandoned sweep.  Beside it:
-leaf events keep the orbit array sound, small-cell subtree facts survive
-a within-cell relabelling, guide relations compose across a refinement,
-and a frozen comparison bounds every key below the current path.
+exit classification that justifies every abandoned sweep.  The remaining
+sections record four independent facts: leaf events keep the orbit array
+sound, small-cell subtree facts survive a within-cell relabelling, guide
+relations compose across a refinement, and a frozen comparison bounds
+every key below the current path.
+
+This module builds on `Correct.Sweep.Base` and `Correct.Exit.Classify`.
+`Correct.Sweep.Node` and the first-path modules consume `FirstRun` and
+these carried facts.
 -/
 
 /-!
-Assembly of the corrected search induction.
+Assembly of the search induction.
 
 The first descent needs more result-side history than an ordinary node.
 `FirstRun` keeps the established first-path package while pairing it with
@@ -36,8 +41,8 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- A first-path result with both its reference histories and the corrected
-reason for its return. -/
+/-- A first-path result with both its reference histories and the reason
+for its return. -/
 structure FirstRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel level : Nat) (codes fs : List Nat)
     (st out : SearchSt n) (numcells : Nat) (outBest : Option (Key n))
@@ -52,7 +57,7 @@ structure FirstRun (G : Colored n k) (ctx : Ctx n)
 namespace FirstRun
 
 /-- The final first-path counter adjustment preserves the complete
-corrected first-node result. -/
+first-node result. -/
 theorem firstFinish {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells size index : Nat}
     {codes fs : List Nat} {st out : SearchSt n} {outBest : Option (Key n)}
@@ -134,7 +139,7 @@ end FirstLoopRun
 
 namespace FirstInv
 
-/-- The first discrete leaf is an ordinary exact return in the corrected
+/-- The first discrete leaf is an ordinary exact return in the exit
 classification. -/
 theorem terminalRun {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
@@ -179,8 +184,8 @@ theorem terminalRun {G : Colored n k} {ctx : Ctx n}
 
 end FirstInv
 
-/-- The corrected first-path root result proves equality between the
-unpruned specification key and the key installed by the transcription. -/
+/-- The first-path root result proves equality between the unpruned
+specification key and the key installed by the transcription. -/
 theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
     {fs : List Nat} {best : Option (Key n)}
     (hroot : FirstRun G { g := rowsOf G } 100 n (n + 2) 1 [] fs
@@ -228,11 +233,11 @@ theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
 end Hex.GraphIso.Nauty
 
 /-!
-Facts carried alongside the corrected search induction that no existing
-package records: leaf events keep the orbit array sound, small-cell
-subtree facts survive a within-cell relabelling, guide relations compose
-across a refinement, and a frozen comparison bounds every key below the
-current path.
+Facts carried alongside the search induction that no other package
+records: leaf events keep the orbit array sound, small-cell subtree facts
+survive a within-cell relabelling, guide relations compose across a
+refinement, and a frozen comparison bounds every key below the current
+path.
 -/
 
 namespace Hex.GraphIso.Nauty

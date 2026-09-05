@@ -15,6 +15,17 @@ public section
 /-!
 Root-ledger preservation and leaf admission for the outcome-indexed search
 induction.
+
+Every branch of `processnode` preserves the root automorphism ledger and
+the bounded pair workspace: checked scatters between reached labellings,
+the scan-free pair recorded at a small-cell node, the code-one and
+code-two generator admissions, and the shared comparison-prune tail.  The
+leaf lemmas then turn a prepared state into an event state whose
+incumbent is the maximum of the incoming incumbent and the new leaf.
+
+This module builds on the state records of `Correct.State.Induction`.
+`Correct.Frames` and the node modules that follow it use these results at
+every leaf event.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -642,9 +653,9 @@ theorem AutosOk.processnodeOff {ctx : Ctx n} {G : Colored n k}
         rw [processnode_upInstall_autos hef hnc' hcc]
         exact hprune
 
-/-- A failed first-path generator gate reduces to the ordinary off-path
-ledger proof once canonical-labelling validity discharges the reused
-workspace overwrite. -/
+/-- A failed first-path generator admission test reduces to the ordinary
+off-path ledger proof once canonical-labelling validity discharges the
+reused workspace overwrite. -/
 theorem AutosOk.processnodeGateFail {ctx : Ctx n} {G : Colored n k}
     {level numcells : Nat} {cs bs : List Nat} {st : SearchSt n}
     (hn0 : 0 < n)
@@ -753,9 +764,9 @@ theorem AutosOk.processnode {ctx : Ctx n} {G : Colored n k}
         · exact hprev.processnodeAuto hn0 hsymm hloop hok hrefs
             heq hsent' hnc' hpass
 
-/-- The stable search invariant now discharges the last independent
-ledger premise of `processnode`: the runtime bound selects the frozen
-pair carried by `CheapOk`. -/
+/-- The stable search invariant discharges the one ledger premise of
+`processnode` that no other hypothesis supplies: the runtime bound
+selects the frozen pair carried by `CheapOk`. -/
 theorem RunInv.processnodeAutos {ctx : Ctx n} {G : Colored n k}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
     {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
@@ -775,7 +786,7 @@ theorem RunInv.processnodeAutos {ctx : Ctx n} {G : Colored n k}
   exact h.cheap.ready hbound hne
 
 /-- The prepared state also discharges the root-ledger premise of a leaf
-event; unlike `RunInv`, it permits the positive comparison sign produced
+event.  Unlike `RunInv`, it permits the positive comparison sign produced
 by the immediately preceding code comparison. -/
 theorem RunPrep.processnodeAutos {ctx : Ctx n} {G : Colored n k}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
@@ -796,7 +807,7 @@ theorem RunPrep.processnodeAutos {ctx : Ctx n} {G : Colored n k}
   exact h.cheap.ready hbound hne
 
 /-- An ordinary off-first-path discrete leaf turns the prepared state
-into an event state whose incumbent is exactly the maximum of the old
+into an event state whose incumbent is exactly the maximum of the incoming
 incumbent and that leaf.  The return disjunction is retained for the
 node outcome split. -/
 theorem RunPrep.leaf {ctx : Ctx n} {G : Colored n k}

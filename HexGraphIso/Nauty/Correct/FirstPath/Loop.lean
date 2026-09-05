@@ -17,9 +17,13 @@ iteration of `firstChildLoop`, the packaged sweep result `FirstSweepRun`,
 and the constructors for early exits and for continuing after a child.
 
 `FirstSweepRun` keeps the first leaf's history only below the loop level.
-The library's `FirstLoopRun` additionally pins the frame entry at the loop
-level to the guiding child, which an off-path child's event trail
-contradicts, so that package is not used here.
+`FirstLoopRun` additionally fixes the frame entry at the loop level to the
+guiding child.  An off-path child's event trail contradicts that, so this
+sweep carries `FirstSweepRun` instead.
+
+This module builds on `Correct.OffPath.Loop`.  `Correct.FirstPath.Hyp`
+carries the hypotheses of these iteration lemmas through the rest of the
+sweep.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -171,8 +175,8 @@ theorem firstChildLoop_stayGuide (ctx : Ctx n)
 /-! # The sweep package -/
 
 /-- A first-path sibling sweep result: the established loop proof, the
-corrected exit classification, the one-shot short-prune provenance, and
-the first-leaf and canonical histories strictly below the loop level. -/
+exit classification, the one-shot short-prune provenance, and the
+first-leaf and canonical histories strictly below the loop level. -/
 structure FirstSweepRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)

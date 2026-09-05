@@ -15,10 +15,13 @@ public section
 The cursor-fuel induction that finishes the first-path sibling sweep,
 and the first-path node step of the totality induction.
 
-The guiding child is absorbed first and the sweep converted back to its
-enclosing node; the node's discrete arm installs the first leaf and its
-internal arm runs the sweep, each carrying the facts the enclosing sweep
-needs.
+The guiding child is absorbed first, and the sweep is then converted back
+to its enclosing node.  The node's discrete arm installs the first leaf
+and its internal arm runs the sweep, each carrying the facts the enclosing
+sweep needs.
+
+This module builds on `Correct.FirstPath.Hyp`.  `Correct.Certify` uses
+`FirstTotal.succ` as the first-path half of the totality induction.
 -/
 
 /-!

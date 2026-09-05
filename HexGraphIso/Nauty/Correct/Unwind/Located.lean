@@ -19,15 +19,15 @@ the executable state does not retain the frozen labelling of those
 ancestors.  `GuideStore` strengthens `Guides` by locating every live
 guide in the explicit active-frame trail, and the operational lemmas
 compose the resulting receipts across a refinement.
+
+This module combines the active-frame trail of `Correct.Unwind.Target`
+with the leaf and node base cases of `Correct.Base`.
+`Correct.Unwind.Trail` and `Correct.Frames` consume `GuideStore` and the
+located node and loop receipts defined here.
 -/
 
 /-!
-Frame-aware generator guides for the search induction.
-
-The scalar `gcaFirst` and `gcaCanon` controls name ancestor levels, but
-the executable state does not retain the frozen labelling of those
-ancestors.  `GuideStore` strengthens `Guides` by locating every live
-guide in the explicit active-frame trail used to consume an unwind.
+The located guide ledgers and the receipts that carry them.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -90,8 +90,8 @@ theorem GuideStore.root {n : Nat} (g : Array (VSet n)) (lab : Array Nat)
 /-- Descending through a newly recorded parent child preserves every
 older guide and installs any guide whose control points at the parent.
 
-The two last premises isolate the only new obligations: a control equal
-to `level` must be backed by a guide in the newly extended trail. -/
+The two last premises state the only new requirement: a control equal to
+`level` must be backed by a guide in the newly extended trail. -/
 theorem GuideStore.push {ctx : Ctx n} {tcLevel level : Nat}
     {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st best trail)
@@ -206,9 +206,10 @@ theorem SweepCover.advanceKey {ctx : Ctx n}
     exact hdone.mono (hfull ▸ IncGrows.incMax best _)
 
 /-- A node outcome whose generator unwind, when present, is tied to the
-active frame trail.  The constructors mirror `NodeResult`; keeping the
-location in the unwind constructor prevents a caller from forgetting the
-only evidence that lets the receiving loop consume that return. -/
+active frame trail.  The constructors match those of `NodeResult`.
+Keeping the location in the unwind constructor prevents a caller from
+forgetting the only evidence that lets the receiving loop consume that
+return. -/
 inductive NodeReceipt (trail : FrameTrail) (ctx : Ctx n)
     (tcLevel specFuel runFuel level : Nat) (cs : List Nat)
     (st out : SearchSt n) (numcells : Nat) (best outBest : Option (Key n))
@@ -355,9 +356,9 @@ theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx n}
   | exhausted empty returned unchanged bestUnchanged => exact (hfuel empty).elim
 
 /-- A resolved child receipt advances its parent's coverage.  Exact
-children may use cell-permutation key equivalence; generator children use
-their location in the just-pushed parent frame, with stabilization required
-only by an orbit-pointer unwind. -/
+children may use cell-permutation key equivalence.  Generator children
+use their location in the just-pushed parent frame, and only an
+orbit-pointer unwind requires stabilization. -/
 theorem SweepCover.receipt {ctx : Ctx n}
     {tcLevel specFuel runFuel level tc len numcells : Nat} {tcell : VSet n} {tv offset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
@@ -818,8 +819,8 @@ theorem split_starts {ptn : Array Nat} {level tc len : Nat}
       omega
 
 /-- Individualizing the same frozen vertex after a recovered within-cell
-permutation produces the same specification child key. This is the bridge
-from `SearchOut.breakoutPerm` to the exact key premise consumed by
+permutation produces the same specification child key.  This carries
+`SearchOut.breakoutPerm` to the exact key premise consumed by
 `SweepCover.receipt`. -/
 theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx n}
     {level numcells tc len o specFuel tcLevel : Nat}

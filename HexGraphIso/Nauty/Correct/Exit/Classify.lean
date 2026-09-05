@@ -15,12 +15,16 @@ public section
 Comparison-prune producers and the classification of why a node
 returned early.
 
-Local exactness and the reason for an early return are deliberately
-separate: a comparison-frozen or cheap-cell child may be exact at its own
-node while still causing its parent loop to skip a suffix.
+Local exactness and the reason for an early return are separate: a
+comparison-frozen or cheap-cell child may be exact at its own node while
+still causing its parent loop to skip a suffix.
+
+This module builds on `Correct.Exit.Final`.  `Correct.Sweep.Base` and
+`Correct.Sweep.Carry` carry `NodeRun`, `LoopRun`, and the exit types
+defined here through the sibling-sweep induction.
 -/
 
-/-! Comparison-prune producers for the corrected search outcomes. -/
+/-! Comparison-prune producers for the search outcomes. -/
 
 namespace Hex.GraphIso.Nauty
 
@@ -36,17 +40,17 @@ shape or parks the boundary at the child. -/
 
 namespace CheapDesc
 
-/-- A boundary created at the current node has no strict descendant
-obligation yet. -/
+/-- A boundary created at the current node imposes no condition on its
+strict descendants yet. -/
 theorem same (ctx : Ctx n) (level : Nat) (st : RefineSt n) :
     CheapDesc ctx level level st := by
   intro h
   omega
 
 /-- At an entered sibling sweep, a saved boundary at or above the current
-node supplies the small-cell subtree fact.  A strictly older boundary uses
-the inherited descent invariant; equality is exactly the case in which the
-current cheap-cell guard must have succeeded. -/
+node supplies the small-cell subtree fact.  A strictly shallower boundary
+uses the inherited descent invariant.  Equality is exactly the case in
+which the current cheap-cell guard must have succeeded. -/
 theorem atLevel {ctx : Ctx n} {level boundary : Nat} {st : RefineSt n}
     (h : CheapDesc ctx level boundary st)
     (hit : IterOk ctx level st) (heq : Equitable ctx level st.lab st.ptn)
@@ -217,12 +221,12 @@ end RunPrep
 end Hex.GraphIso.Nauty
 
 /-!
-Return classifications for the corrected mutual search induction.
+Return classifications for the mutual search induction.
 
-Local exactness and the reason for an early return are deliberately
-separate.  A comparison-frozen or cheap-cell child may be exact at its own
-node while still causing its parent loop to skip a suffix; the extra
-payload is what justifies that skipped suffix.
+Local exactness and the reason for an early return are separate.  A
+comparison-frozen or cheap-cell child may be exact at its own node while
+still causing its parent loop to skip a suffix.  The extra payload is what
+justifies that skipped suffix.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -298,9 +302,9 @@ theorem trans {level : Nat} {a b c : SearchSt n}
 
 end GuideRel
 
-/-- Result of one node call.  `done` is the ordinary one-level return;
+/-- Result of one node call.  `done` is the ordinary one-level return.
 `frozen` and `cheap` retain the distinct witnesses needed when the return
-crosses more than one loop; `unwind` is reserved for stored generators. -/
+crosses more than one loop, and `unwind` carries a stored generator. -/
 inductive NodeExit (ctx : Ctx n) (tcLevel specFuel runFuel level : Nat)
     (codes : List Nat) (st out : SearchSt n) (numcells : Nat)
     (best outBest : Option (Key n)) (trail : FrameTrail) (r : Int) : Prop where
@@ -410,8 +414,8 @@ theorem below {ctx : Ctx n} {tcLevel specFuel runFuel level numcells : Nat}
       rw [returned]
       exact Int.natCast_pos.mpr hlevel
 
-/-- The final first-path counter adjustment preserves every corrected node
-exit, including the payload of a located unwind. -/
+/-- The final first-path counter adjustment preserves every node exit,
+including the payload of a located unwind. -/
 theorem firstFinish {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells size index : Nat}
     {codes : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
@@ -481,7 +485,7 @@ inductive LoopExit (ctx : Ctx n) (tcLevel specFuel runFuel loopFuel level : Nat)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
       (bounded : ∀ v, finalCursor = some v → v < n)
 
-/-- Concrete node result paired with the corrected return classification.
+/-- Concrete node result paired with its return classification.
 The event and trail clauses are independent of the semantic maximum and
 remain reusable from the established leaf machinery. -/
 structure NodeRun (G : Colored n k) (ctx : Ctx n)
@@ -511,9 +515,9 @@ structure OtherRun (G : Colored n k) (ctx : Ctx n)
       (level ≤ out.gcaCanon ∧ cellsPerm st.ptn level st.lab out.canonlab)
   coset : out.cosetindex = st.cosetindex
 
-/-- A sibling-loop proof paired with its corrected exit reason.  The
-established proof retains coverage, event, and recovery facts; `exit`
-separately records why an unfinished suffix is nevertheless absorbed. -/
+/-- A sibling-loop proof paired with its exit reason.  The established
+proof retains coverage, event, and recovery facts.  `exit` separately
+records why an unfinished suffix is nevertheless absorbed. -/
 structure LoopRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
@@ -546,7 +550,7 @@ structure OtherLoopRun (G : Colored n k) (ctx : Ctx n)
     r = some value ∧ ShortSource G ctx out eventTrail value
 
 /-- The first-path sibling sweep retains both reference histories in its
-established proof and the corrected reason for abandoning any suffix. -/
+established proof, together with the reason for abandoning any suffix. -/
 structure FirstLoopRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
@@ -564,11 +568,10 @@ structure FirstLoopRun (G : Colored n k) (ctx : Ctx n)
 
 namespace NodeRun
 
-/-- A corrected node run can be viewed through the older local outcome
-interface.  This conversion is safe at one node: both early exit variants
-already carry exactness for that node.  What is deliberately not recovered
-is the old loop rule that treated such an exit as coverage of every later
-sibling. -/
+/-- A node run can be viewed through the local outcome interface.  The
+conversion holds at a single node, where both early exit variants already
+carry exactness.  It says nothing about the enclosing loop: an early exit
+is not coverage of the later siblings. -/
 theorem toOutcome {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
     {st out : SearchSt n} {best outBest : Option (Key n)}
@@ -605,7 +608,7 @@ theorem toOutcome {G : Colored n k} {ctx : Ctx n}
   exact ⟨hreceipt, h.event, h.preserved⟩
 
 /-- Restore the established result interface used by the invariant
-transport lemmas after the corrected exit has been classified. -/
+transport lemmas after the exit has been classified. -/
 theorem toProof {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
     {st out : SearchSt n} {best outBest : Option (Key n)}
@@ -882,9 +885,9 @@ end RunPrep
 
 namespace NodeInv
 
-/-- A negative, non-generator discrete leaf produces the corrected exit:
-ordinary comparison pruning retains its frozen prefix, while the only
-remaining return is the explicit cheap-cell jump. -/
+/-- A negative, non-generator discrete leaf produces its exit
+classification: ordinary comparison pruning retains its frozen prefix, and
+the other return is the explicit cheap-cell jump. -/
 theorem negativeLeaf {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
     {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}

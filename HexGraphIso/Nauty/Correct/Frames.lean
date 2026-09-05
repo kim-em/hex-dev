@@ -19,6 +19,10 @@ The two frame invariants of the search induction.
 installs the first leaf and the comparison, leaf and guide ledgers exist.
 `LoopInv` freezes the refined frame used by the specification and relates
 every later state of a mutable child sweep to it by vertex membership.
+
+This module builds on `Correct.State.Ledger` and the located guides of
+`Correct.Unwind.Located`.  `Correct.RunInv.History` and every node module
+after it carry one of these two frame invariants.
 -/
 
 /-!
@@ -663,7 +667,7 @@ theorem SearchOut.recoverOk {G : Colored n k}
     · exact hle
 
 /-- Invariant of one imperative child loop.  `base` is the refined state
-whose labelling and partition were frozen for `specNode`; `st` is the
+whose labelling and partition were frozen for `specNode`.  `st` is the
 current recovered state after zero or more children and pruning steps. -/
 structure LoopInv (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel level : Nat) (codes bs fs : List Nat)
@@ -892,9 +896,9 @@ theorem nextOffsets {G : Colored n k} {ctx : Ctx n}
     hatCurrent⟩
 
 /-- Every vertex returned by a verified sibling sweep lies in the graph
-vertex range.  This is the cursor bound threaded by the fuel induction;
-it is intentionally derived from the frozen target-cell membership rather
-than from the mutable bitset alone. -/
+vertex range.  This is the cursor bound used by the fuel induction, and
+it is derived from the frozen target-cell membership rather than from the
+mutable bitset alone. -/
 theorem nextLt {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len : Nat} {tcell : VSet n} {tv : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
