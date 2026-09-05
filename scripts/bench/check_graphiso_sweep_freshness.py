@@ -19,6 +19,14 @@ re-measuring is the cheap answer rather than writing an exemption; a
 change to a shared helper that measurably shifts these curves shows up in
 the per-library benchmarks first. It is declared, with the shared
 mechanism, in ``scripts/bench/sweep_freshness.py``.
+
+The family declares no exemption channel, so any difference has to be
+re-measured, with one exception the check verifies for itself: a ``.lean``
+path whose two blobs are equal once their comments are removed
+(``lean_comment_only``). Prose under the library tree is edited often
+enough, and cannot move a curve, that making every docstring cost a sweep
+would either stop the prose being written or make regeneration routine
+enough to stop meaning anything.
 """
 
 from __future__ import annotations
@@ -65,7 +73,8 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
 
 def main() -> int:
     found, errors = observations()
-    verdict = freshness.assess(FAMILY, found)
+    verdict = freshness.assess(FAMILY, found,
+                               allow=freshness.lean_comment_only)
     errors.extend(verdict.errors)
     errors.extend(freshness.missing_figures(FAMILY))
 

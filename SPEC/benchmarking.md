@@ -1236,7 +1236,16 @@ enforced figure family uses one mechanism, declared in
   blobs makes an exemption expire as soon as the file changes again, and
   one file per exemption means concurrent pull requests never collide on
   a shared list. A family opts in by declaring a directory; a family that
-  declares none has no way to pass except by re-measuring.
+  declares none has no way to pass except by re-measuring or by a checked
+  rule.
+- **Checked rules.** A family may also declare a rule that decides a
+  difference from the two blobs themselves, which is what separates one
+  from an exemption: an exemption is a claim a reviewer has to weigh,
+  a rule is a fact the check establishes. `lean_comment_only` is the
+  only one: a `.lean` path whose two versions are equal once their
+  comments are removed. Comments are all it removes, whitespace included,
+  because Lean indentation carries meaning, so it errs towards asking for
+  a sweep it does not need over missing one it does.
 
 Key on content, not on the measuring commit. A commit key has to stay
 resolvable forever, which holds for data recorded on `main` by a
@@ -1253,6 +1262,13 @@ proof-only edits are absorbed. Every other family re-measures: the
 comparator curves see three to six adapter files plus the corpus and the
 sweep driver, where every edit is aimed at the measurement itself, and
 hex-graph-iso names four paths and regenerates in minutes.
+
+hex-graph-iso does take the `lean_comment_only` rule, because its
+relevant set is a Lean library whose docstrings are revised far more
+often than its code. Charging a sweep for prose would either suppress
+the prose or make regeneration routine enough to stop carrying meaning,
+and the rule gives up nothing, since it reads both blobs rather than
+trusting a claim about them.
 
 That is also why the sweep driver does not fingerprint its own run: it is
 a relevant path for all six factorization systems, so editing it would
