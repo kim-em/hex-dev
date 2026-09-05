@@ -115,52 +115,6 @@ private theorem countP_pos_extract {p : Nat → Bool} :
       obtain ⟨w, hw, hpw⟩ := countP_pos_extract t (by omega)
       exact ⟨w, List.mem_cons_of_mem _ hw, hpw⟩
 
-private theorem countP_le_one_unique {p : Nat → Bool} :
-    ∀ (l : List Nat), l.countP p ≤ 1 →
-      ∀ w ∈ l, p w = true → ∀ w' ∈ l, p w' = true → w = w'
-  | a :: t, h, w, hw, hpw, w', hw', hpw' => by
-    rw [List.countP_cons] at h
-    rcases Decidable.em (p a = true) with hpa | hpa
-    · rw [ite_eq_left hpa] at h
-      have ht0 : t.countP p = 0 := by omega
-      have hnt : ∀ x ∈ t, ¬ p x = true := by
-        intro x hx hpx
-        have : 0 < t.countP p := by
-          have := countP_zero_none t ht0 x hx
-          exact absurd hpx this
-        omega
-      have hwa : w = a := by
-        rcases List.mem_cons.mp hw with rfl | hmem
-        · rfl
-        · exact absurd hpw (hnt w hmem)
-      have hwa' : w' = a := by
-        rcases List.mem_cons.mp hw' with rfl | hmem
-        · rfl
-        · exact absurd hpw' (hnt w' hmem)
-      rw [hwa, hwa']
-    · rw [ite_eq_right hpa] at h
-      have hwt : w ∈ t := by
-        rcases List.mem_cons.mp hw with rfl | hmem
-        · exact absurd hpw hpa
-        · exact hmem
-      have hwt' : w' ∈ t := by
-        rcases List.mem_cons.mp hw' with rfl | hmem
-        · exact absurd hpw' hpa
-        · exact hmem
-      exact countP_le_one_unique t h w hwt hpw w' hwt' hpw'
-where
-  countP_zero_none : ∀ (l : List Nat), l.countP p = 0 →
-      ∀ x ∈ l, ¬ p x = true
-    | a :: t, h0, x, hx => by
-      rw [List.countP_cons] at h0
-      rcases Decidable.em (p a = true) with hpa | hpa
-      · rw [ite_eq_left hpa] at h0
-        omega
-      · rcases List.mem_cons.mp hx with rfl | hmem
-        · exact fun hpx => hpa hpx
-        · rw [ite_eq_right hpa] at h0
-          exact countP_zero_none t h0 x hmem
-
 /-- A permutation of `range k` from `k` distinct bounded values. -/
 theorem range_perm_of_distinct {l : List Nat} {k : Nat}
     (hlen : l.length = k) (hnd : l.Nodup)

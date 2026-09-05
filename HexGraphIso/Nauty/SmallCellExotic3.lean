@@ -834,18 +834,6 @@ chosen members are either on the same side, where the pair again sees
 no difference, or on opposite sides, where the pair travels with the
 flip. -/
 
-private theorem sum_range_succ₄ (f : Nat → Nat) (m : Nat) :
-    ((List.range (m + 1)).map f).sum =
-      ((List.range m).map f).sum + f m := by
-  rw [List.range_succ, List.map_append, List.sum_append]
-  simp
-
-private theorem sum_range_two₄ (f : Nat → Nat) :
-    ((List.range 2).map f).sum = f 0 + f 1 := by
-  rw [show (2 : Nat) = 1 + 1 from rfl, sum_range_succ₄,
-    show (1 : Nat) = 0 + 1 from rfl, sum_range_succ₄]
-  simp
-
 /-- Two distinct offsets below four leave two more. -/
 private theorem other_two {p q : Nat} (hp : p ≤ 3) (hq : q ≤ 3)
     (hpq : p ≠ q) :
@@ -928,7 +916,7 @@ theorem fourPair_flip_data
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! := by
     intro o ho
     have h := count_into_cell (ctx := ctx) (u := st.lab[tc + o]!) hpsz hend hinj hP
-    rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two₄] at h
+    rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two] at h
     exact h
   -- the reverse counts into the four-cell
   have hrev : ∀ q, q ≤ 1 →
@@ -1294,7 +1282,7 @@ theorem pairFour_flip_data
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! := by
     intro o ho
     have h := count_into_cell (ctx := ctx) (u := st.lab[tc + o]!) hpsz hend hinj hP
-    rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two₄] at h
+    rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two] at h
     exact h
   have hrev : ∀ q, q ≤ 1 →
       (worksetOf n st.lab tc (tc + 3)).cardInter
@@ -1477,80 +1465,6 @@ triples, and each has its flip data above. -/
 
 section Shape
 
-private theorem exc_ge_one {q : Nat × Nat} :
-    ∀ (l : List (Nat × Nat)), q ∈ l →
-      (l.map fun p => p.2 - p.1).sum ≥ q.2 - q.1
-  | [], hq => absurd hq (by simp)
-  | a :: l, hq => by
-    rw [List.map_cons, List.sum_cons]
-    rcases List.mem_cons.mp hq with rfl | hmem
-    · omega
-    · have := exc_ge_one l hmem
-      omega
-
-private theorem exc_ge_two {q q' : Nat × Nat} :
-    ∀ (l : List (Nat × Nat)), q ∈ l → q' ∈ l → q ≠ q' →
-      (l.map fun p => p.2 - p.1).sum ≥ (q.2 - q.1) + (q'.2 - q'.1)
-  | [], hq, _, _ => absurd hq (by simp)
-  | a :: l, hq, hq', hne => by
-    rw [List.map_cons, List.sum_cons]
-    rcases List.mem_cons.mp hq with rfl | hmem
-    · have hq'l : q' ∈ l := by
-        rcases List.mem_cons.mp hq' with rfl | h
-        · exact absurd rfl hne
-        · exact h
-      have := exc_ge_one l hq'l
-      omega
-    · rcases List.mem_cons.mp hq' with rfl | hmem'
-      · have := exc_ge_one l hmem
-        omega
-      · have := exc_ge_two l hmem hmem' hne
-        omega
-
-private theorem exc_ge_three {q q' q'' : Nat × Nat} :
-    ∀ (l : List (Nat × Nat)), q ∈ l → q' ∈ l → q'' ∈ l →
-      q ≠ q' → q ≠ q'' → q' ≠ q'' →
-      (l.map fun p => p.2 - p.1).sum ≥
-        (q.2 - q.1) + (q'.2 - q'.1) + (q''.2 - q''.1)
-  | [], hq, _, _, _, _, _ => absurd hq (by simp)
-  | a :: l, hq, hq', hq'', hne, hne', hne'' => by
-    rw [List.map_cons, List.sum_cons]
-    rcases List.mem_cons.mp hq with rfl | hmem
-    · have h1 : q' ∈ l := by
-        rcases List.mem_cons.mp hq' with rfl | h
-        · exact absurd rfl hne
-        · exact h
-      have h2 : q'' ∈ l := by
-        rcases List.mem_cons.mp hq'' with rfl | h
-        · exact absurd rfl hne'
-        · exact h
-      have := exc_ge_two l h1 h2 hne''
-      omega
-    · rcases List.mem_cons.mp hq' with rfl | hmem'
-      · have h2 : q'' ∈ l := by
-          rcases List.mem_cons.mp hq'' with rfl | h
-          · exact absurd rfl hne''
-          · exact h
-        have := exc_ge_two l hmem h2 hne'
-        omega
-      · rcases List.mem_cons.mp hq'' with rfl | hmem''
-        · have := exc_ge_two l hmem hmem' hne
-          omega
-        · have := exc_ge_three l hmem hmem' hmem'' hne hne' hne''
-          omega
-
-private theorem sizes_split :
-    ∀ (l : List (Nat × Nat)), (∀ p ∈ l, p.1 ≤ p.2) →
-      (l.map fun p => p.2 + 1 - p.1).sum =
-        (l.map fun p => p.2 - p.1).sum + l.length
-  | [], _ => rfl
-  | a :: l, hwf => by
-    rw [List.map_cons, List.sum_cons, List.map_cons, List.sum_cons,
-      List.length_cons,
-      sizes_split l fun p hp => hwf p (List.mem_cons_of_mem _ hp)]
-    have := hwf a List.mem_cons_self
-    omega
-
 /-- The cells' excesses sum to the defect. -/
 theorem exc_sum_eq_defect {ptn : Array Nat} {level nn : Nat}
     (hps : ptn.size = nn) (hend : ptn[ptn.size - 1]! ≤ level) :
@@ -1564,7 +1478,7 @@ theorem exc_sum_eq_defect {ptn : Array Nat} {level nn : Nat}
     have h := cells_go_sizes_sum hps hend nn 0 (by omega)
     rw [show nn - 0 = nn by omega] at h
     exact h
-  have hsplit := sizes_split (cells ptn level nn) hwf
+  have hsplit := sum_sizes_split (cells ptn level nn) hwf
   omega
 
 end Shape

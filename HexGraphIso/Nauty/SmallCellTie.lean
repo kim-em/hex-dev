@@ -134,33 +134,6 @@ theorem subtreeOk_of_cheapautom {r : RefineSt n} {level : Nat}
 
 /-! # Permutation labellings -/
 
-private theorem countP_range_one {p : Nat → Bool} {n i₀ : Nat}
-    (hi₀ : i₀ < n) (hp : p i₀ = true)
-    (huniq : ∀ j, j < n → p j = true → j = i₀) :
-    (List.range n).countP p = 1 := by
-  induction n with
-  | zero => omega
-  | succ m ih =>
-    rw [List.range_succ, List.countP_append]
-    rcases Decidable.em (i₀ = m) with heq | hne
-    · have h0 : (List.range m).countP p = 0 :=
-        List.countP_eq_zero.mpr fun a ha hpa => by
-          have han := List.mem_range.mp ha
-          have := huniq a (by omega) hpa
-          omega
-      have hpm : p m = true := heq ▸ hp
-      rw [h0, List.countP_cons, List.countP_nil, hpm]
-      simp
-    · have him : i₀ < m := by omega
-      have h1 : (List.range m).countP p = 1 :=
-        ih him (fun j hj hpj => huniq j (by omega) hpj)
-      have h0 : ([m].countP p) = 0 :=
-        List.countP_eq_zero.mpr fun a ha hpa => by
-          have ham : a = m := by simpa using ha
-          have := huniq a (by omega) hpa
-          omega
-      omega
-
 private theorem toList_eq_map_range {lab : Array Nat} {n : Nat}
     (hsz : lab.size = n) :
     ((List.range n).map fun i => lab[i]!) = lab.toList := by

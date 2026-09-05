@@ -34,19 +34,6 @@ namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
 
-private theorem sum_range_succ' (f : Nat → Nat) (m : Nat) :
-    ((List.range (m + 1)).map f).sum =
-      ((List.range m).map f).sum + f m := by
-  rw [List.range_succ, List.map_append, List.sum_append]
-  simp
-
-private theorem sum_range_three' (f : Nat → Nat) :
-    ((List.range 3).map f).sum = f 0 + f 1 + f 2 := by
-  rw [show (3 : Nat) = 2 + 1 from rfl, sum_range_succ',
-    show (2 : Nat) = 1 + 1 from rfl, sum_range_succ',
-    show (1 : Nat) = 0 + 1 from rfl, sum_range_succ']
-  simp
-
 section TwoTriple
 
 variable {st : RefineSt n} {level tc d2 oU oV : Nat}
@@ -525,7 +512,7 @@ theorem twoTriple_flip_data
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 2]! := by
     intro o ho
     have h := count_into_cell (ctx := ctx) (u := st.lab[tc + o]!) hpsz hend hinj hT2
-    rw [show d2 + 2 + 1 - d2 = 3 by omega, sum_range_three'] at h
+    rw [show d2 + 2 + 1 - d2 = 3 by omega, sum_range_three] at h
     exact h
   -- the reverse rows: counts of the other triple's members into the
   -- target
@@ -537,7 +524,7 @@ theorem twoTriple_flip_data
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 2]! := by
     intro q hq
     have h := count_into_cell (ctx := ctx) (u := st.lab[d2 + q]!) hpsz hend hinj hT1
-    rw [show tc + 2 + 1 - tc = 3 by omega, sum_range_three'] at h
+    rw [show tc + 2 + 1 - tc = 3 by omega, sum_range_three] at h
     exact h
   have hBc : ∀ o o', o ≤ 2 → o' ≤ 2 →
       bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +

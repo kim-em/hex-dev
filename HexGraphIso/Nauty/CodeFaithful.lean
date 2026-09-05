@@ -85,14 +85,6 @@ theorem bcode_lt {bs : List Nat} {i : Nat}
 
 /-! # List access helpers -/
 
-private theorem getElem!_append_left' {xs ys : List Nat} {i : Nat}
-    (h : i < xs.length) : (xs ++ ys)[i]! = xs[i]! := by
-  have hxy : i < (xs ++ ys).length := by
-    rw [List.length_append]
-    omega
-  rw [getElem!_pos (xs ++ ys) i hxy, getElem!_pos xs i h,
-    List.getElem_append_left h]
-
 private theorem getElem!_take' {l : List Nat} {m i : Nat}
     (him : i < m) (hil : i < l.length) : (l.take m)[i]! = l[i]! := by
   have hti : i < (l.take m).length := by
@@ -107,7 +99,7 @@ theorem getElem!_append_sentinel {bs : List Nat} {i : Nat}
     (h : i ≤ bs.length) :
     (bs ++ [codeSentinel])[i]! = bcode bs (i + 1) := by
   rcases Nat.lt_or_ge i bs.length with hlt | hge
-  · rw [getElem!_append_left' hlt, bcode,
+  · rw [getElem!_append_left hlt, bcode,
       ite_eq_left (by omega : i + 1 - 1 < bs.length)]
     show bs[i]! = bs[i + 1 - 1]!
     rfl
@@ -228,11 +220,11 @@ theorem codeInv_listCmp_lt {nn : Nat} {cs bs : List Nat}
       (by rw [List.length_append]; omega)
       (by rw [List.length_append]; simp; omega)
       (fun i hi => ?_) ?_
-    · rw [getElem!_append_left' (by omega),
+    · rw [getElem!_append_left (by omega),
         getElem!_append_sentinel (by omega)]
       have hp := hpre (i + 1) (by omega) (by omega)
       simpa using hp
-    · rw [getElem!_append_left' (by omega),
+    · rw [getElem!_append_left (by omega),
         getElem!_append_sentinel (by omega),
         (by omega : j - 1 + 1 = j)]
       exact hlt
@@ -253,11 +245,11 @@ theorem codeInv_listCmp_gt {nn : Nat} {cs bs : List Nat}
       (by rw [List.length_append]; omega)
       (by rw [List.length_append]; simp; omega)
       (fun i hi => ?_) ?_
-    · rw [getElem!_append_left' (by omega),
+    · rw [getElem!_append_left (by omega),
         getElem!_append_sentinel (by omega)]
       have hp := hpre (i + 1) (by omega) (by omega)
       simpa using hp
-    · rw [getElem!_append_left' (xs := cs) (ys := ext) (by omega),
+    · rw [getElem!_append_left (as := cs) (bs := ext) (by omega),
         getElem!_append_sentinel (by omega),
         (by omega : j - 1 + 1 = j)]
       exact hgt
@@ -422,7 +414,7 @@ theorem otherNodePrep_codeInv {nn : Nat} {cs bs : List Nat}
     rfl
   have hkeep : ∀ i, 1 ≤ i → i ≤ cs.length →
       (cs ++ [code])[i - 1]! = cs[i - 1]! :=
-    fun i h1 h2 => getElem!_append_left' (by omega)
+    fun i h1 h2 => getElem!_append_left (by omega)
   rw [otherNodePrep_canonlevel, otherNodePrep_compCanon,
     otherNodePrep_eqlevCanon, otherNodePrep_canoncode]
   rcases hinv.tri with ⟨hcc, hec, hLm, hmatch⟩ |
@@ -1003,10 +995,10 @@ theorem firstCodeInv_listCmp_gt_of_lt {nn : Nat} {cs fs : List Nat}
     (by rw [List.length_append]; simp)
     (by rw [List.length_append]; simp; omega)
     (fun i hi => ?_) ?_
-  · rw [getElem!_append_left' hi, getElem!_append_left' (by omega)]
+  · rw [getElem!_append_left hi, getElem!_append_left (by omega)]
     simpa using hinv.agree (i + 1) (by omega) (by omega)
   · rw [getElem!_append_sentinel (Nat.le_refl _),
-      bcode_sentinel (by omega), getElem!_append_left' hlt,
+      bcode_sentinel (by omega), getElem!_append_left hlt,
       getElem!_pos fs cs.length (by omega)]
     exact hinv.flt _ (List.getElem_mem _)
 
@@ -1074,7 +1066,7 @@ theorem otherNodePrep_firstCodeInv {nn : Nat} {cs fs : List Nat}
     rfl
   have hkeep : ∀ i, 1 ≤ i → i ≤ cs.length →
       (cs ++ [code])[i - 1]! = cs[i - 1]! :=
-    fun i h1 h2 => getElem!_append_left' (by omega)
+    fun i h1 h2 => getElem!_append_left (by omega)
   rw [otherNodePrep_firstcode, otherNodePrep_eqlevFirst]
   rcases Decidable.em ((st.eqlevFirst == cs.length + 1 - 1) = true ∧
       (code == st.firstcode[cs.length + 1]!) = true) with hc | hc

@@ -200,46 +200,6 @@ theorem bitCnt_inj {r r' : VSet n} {v v' : Nat} :
   rcases h : r.mem v with _ | _ <;>
     rcases h' : r'.mem v' with _ | _ <;> simp
 
-private theorem sum_range_succ (f : Nat → Nat) (m : Nat) :
-    ((List.range (m + 1)).map f).sum = ((List.range m).map f).sum + f m := by
-  rw [List.range_succ, List.map_append, List.sum_append]
-  simp
-
-private theorem sum_range_const (c : Nat) :
-    ∀ m, ((List.range m).map fun _ => c).sum = m * c
-  | 0 => by simp
-  | m + 1 => by
-    rw [sum_range_succ, sum_range_const c m, Nat.succ_mul]
-
-private theorem sum_range_le (f : Nat → Nat) :
-    ∀ m, (∀ o, o < m → f o ≤ 1) → ((List.range m).map f).sum ≤ m
-  | 0, _ => by simp
-  | m + 1, hf => by
-    rw [sum_range_succ]
-    have h1 := sum_range_le f m fun o ho => hf o (by omega)
-    have h2 := hf m (by omega)
-    omega
-
-private theorem sum_range_eq_zero {f : Nat → Nat} :
-    ∀ m, ((List.range m).map f).sum = 0 → ∀ o, o < m → f o = 0
-  | m + 1, hs, o, ho => by
-    rw [sum_range_succ] at hs
-    rcases Decidable.em (o = m) with rfl | hne
-    · omega
-    · exact sum_range_eq_zero m (by omega) o (by omega)
-
-private theorem sum_range_eq_len {f : Nat → Nat} :
-    ∀ m, (∀ o, o < m → f o ≤ 1) → ((List.range m).map f).sum = m →
-      ∀ o, o < m → f o = 1
-  | m + 1, hf, hs, o, ho => by
-    rw [sum_range_succ] at hs
-    have h1 := sum_range_le f m fun o ho => hf o (by omega)
-    have h2 := hf m (by omega)
-    rcases Decidable.em (o = m) with rfl | hne
-    · omega
-    · exact sum_range_eq_len m (fun o ho => hf o (by omega)) (by omega)
-        o (by omega)
-
 /-- The count into a window's splitter set expands into the sum of the
 adjacency bits at the window's members. -/
 theorem cardInter_workset {lab : Array Nat} (r : VSet n) :
@@ -277,12 +237,6 @@ theorem cardInter_workset {lab : Array Nat} (r : VSet n) :
     rw [hidx, bitCnt]
 
 /-! # Small cells in an equitable partition -/
-
-private theorem sum_range_two (f : Nat → Nat) :
-    ((List.range 2).map f).sum = f 0 + f 1 := by
-  rw [show (2 : Nat) = 1 + 1 from rfl, sum_range_succ,
-    show (1 : Nat) = 0 + 1 from rfl, sum_range_succ]
-  simp
 
 /-- Adjacency-bit counts are symmetric between vertices. -/
 theorem bitCnt_symm

@@ -802,13 +802,17 @@ private theorem baseOff_eq_sum (counts : Array Nat) (bmin : Nat) :
 
 /-! # Reusable list-indexing lemmas for the placement crux -/
 
-private theorem getElem!_append_left' {α : Type} [Inhabited α]
+/-- Reading an append below the left operand's length
+reads the left operand. -/
+theorem getElem!_append_left {α : Type} [Inhabited α]
     {as bs : List α} {i : Nat} (h : i < as.length) :
     (as ++ bs)[i]! = as[i]! := by
   rw [getElem!_pos (as ++ bs) i (by rw [List.length_append]; omega),
     getElem!_pos as i h, List.getElem_append_left h]
 
-private theorem getElem!_append_right' {α : Type} [Inhabited α]
+/-- Reading an append at or above the left operand's
+length reads the right operand. -/
+theorem getElem!_append_right {α : Type} [Inhabited α]
     {as bs : List α} {i : Nat} (h : as.length ≤ i)
     (hi : i - as.length < bs.length) :
     (as ++ bs)[i]! = bs[i - as.length]! := by
@@ -851,7 +855,7 @@ private theorem flatMap_getElem!_block {α β : Type} [Inhabited α]
   | x :: xs, 0, r, _, hr => by
     simp only [List.take_zero, List.flatMap_nil, List.length_nil,
       Nat.zero_add, List.getElem!_cons_zero] at hr ⊢
-    rw [List.flatMap_cons, getElem!_append_left' hr]
+    rw [List.flatMap_cons, getElem!_append_left hr]
   | x :: xs, k + 1, r, hk, hr => by
     rw [List.getElem!_cons_succ] at hr
     have hk' : k < xs.length := by
@@ -868,7 +872,7 @@ private theorem flatMap_getElem!_block {α β : Type} [Inhabited α]
         ≥ (g x).length := by omega
     have hsub : (g x).length + ((List.take k xs).flatMap g).length + r
         - (g x).length = ((List.take k xs).flatMap g).length + r := by omega
-    rw [getElem!_append_right' hge (by rw [hsub]; exact hbound), hsub, hrec]
+    rw [getElem!_append_right hge (by rw [hsub]; exact hbound), hsub, hrec]
 
 /-- The value-`w` group of a zipped list from start index `s`, decoded
 by `dec` over the absolute positions: the segment `segmentOf` builds

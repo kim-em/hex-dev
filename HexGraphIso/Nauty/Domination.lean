@@ -145,14 +145,6 @@ stamped, and the stored best leaf's rows. -/
     (lab : Array Nat) : Key n :=
   ⟨cs ++ [codeSentinel], leafRows ctx lab⟩
 
-private theorem getElem!_append_left {xs ys : List Nat} {i : Nat}
-    (h : i < xs.length) : (xs ++ ys)[i]! = xs[i]! := by
-  have hxy : i < (xs ++ ys).length := by
-    rw [List.length_append]
-    omega
-  rw [getElem!_pos (xs ++ ys) i hxy, getElem!_pos xs i h,
-    List.getElem_append_left h]
-
 /-! # The tied verdicts -/
 
 /-- Under full agreement the path is never deeper than the
@@ -2271,13 +2263,13 @@ theorem codeInv_take_listCmp_lt {nn : Nat} {cs bs : List Nat}
     (by rw [List.length_append]; simp; omega)
     (fun i hi => ?_) ?_
   · rw [getElem!_append_left
-        (xs := cs.take M) (by rw [List.length_take]; omega),
+        (as := cs.take M) (by rw [List.length_take]; omega),
       getElem!_append_sentinel (by omega),
       getElem!_take'' (by omega) (by omega)]
     have hp := hpre (i + 1) (by omega) (by omega)
     simpa using hp
   · rw [getElem!_append_left
-        (xs := cs.take M) (by rw [List.length_take]; omega),
+        (as := cs.take M) (by rw [List.length_take]; omega),
       getElem!_append_sentinel (by omega),
       getElem!_take'' (by omega) (by omega),
       (by omega : j - 1 + 1 = j)]
