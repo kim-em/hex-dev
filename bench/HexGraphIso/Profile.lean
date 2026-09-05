@@ -12,9 +12,10 @@ Stage-decomposition profiler for the canonicalization pipeline:
 data-dependent loop and prints nanoseconds per iteration, for the
 paley61, kneser72, and circulant64 instances.
 
-Stages: `run` (transcribed search), `trace` (the traced search the
-certificate producer consumes), `produce` (trace plus certificate
-translation), `ckey` (one trusted `checkKey`
+Stages: `run` (transcribed search), `erun` (the second search, on the
+same instances, for the side-by-side profile), `trace` (the traced
+search the certificate producer consumes), `produce` (trace plus
+certificate translation), `ckey` (one trusted `checkKey`
 replay), `ccanon` (one `checkCanon`), `canon` (the public
 canonicalization), `stats` (work counters, no timing). No argument
 runs every stage.
@@ -46,6 +47,12 @@ private def mkInst {n : Nat} (name : String) (G : Hex.Graph n) (h : 0 < n) :
   let g0 := G.singleColor h
   { name, g0, g1 := g0.relabel (rot n h) }
 
+/-- The second canonical search the `erun` stage times against `run`.
+It is `runColored` until the structured search exists; substituting
+that search is this definition. -/
+private def engine {n k : Nat} (G : Colored n k) : RunResult n :=
+  runColored G
+
 private def countAutom : CertNode → Nat
   | .leaf | .codePrune => 0
   | .autom _ _ => 1
@@ -62,7 +69,7 @@ private def timeLoop (iters : Nat) (act : Nat → Nat) : IO Nat := do
   return (t1 - t0) / iters
 
 private def stageIters : String → Nat
-  | "run" => 2000
+  | "run" | "erun" => 2000
   | "ckey" | "ccanon" => 200
   | "trace" | "produce" => 60
   | _ => 40
@@ -78,6 +85,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
   let (c1, b1) := certs inst.g1
   let ns ← match stage with
     | "run" => timeLoop iters fun i => (runColored (pick i)).numnodes
+    | "erun" => timeLoop iters fun i => (engine (pick i)).numnodes
     | "trace" => timeLoop iters fun i =>
         let tr := runColoredTraced (pick i)
         tr.result.numnodes + tr.autos.size
@@ -109,7 +117,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
     IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters)"
 
 private def stages : List String :=
-  ["run", "trace", "produce", "ckey", "ccanon", "canon", "stats"]
+  ["run", "erun", "trace", "produce", "ckey", "ccanon", "canon", "stats"]
 
 def main (args : List String) : IO Unit := do
   let todo := match args with

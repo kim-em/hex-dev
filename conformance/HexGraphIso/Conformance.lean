@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso
+import HexGraphIso.Cases
 
 /-!
 Core conformance for `HexGraphIso`.
@@ -24,7 +24,7 @@ Core conformance for `HexGraphIso`.
   `findIso`, `findIso?`, `checkIso?`, `canon?`, `canonicalize`,
   `canon`, `label`, `Reference.canon`, `Nauty.runColored`,
   `Nauty.canonicalize?`, `Nauty.certifyCanon?`, `autos`,
-  `Graph.autos`.
+  `Graph.autos`, `Nauty.runColoredTraced`, `Cases.engine`.
 - **Covered properties:** builder rejection and duplicate collapse;
   permutation inverse and composition laws; `relabel G (label G) =
   canon G` evaluated on committed inputs; canonical-form invariance
@@ -326,6 +326,29 @@ private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
 #guard (Graph.autos (Families.completeMultipartite [1, 1, 1, 1])).order == 24
 #guard (Graph.autos (Families.hypercube 3)).order == 48
 #guard (Graph.autos (Families.path 5)).numOrbits == 3
+
+/-! # The second search
+
+`Cases.engine` is the search `hexgraphiso_engine_twin` compares with the
+literal port over the whole fixture corpus and the campaign. These
+checks pin the same agreement on the named cases: the canonical label
+and rows, the visited-node count, the accepted automorphisms in
+discovery order, and the best path's refinement codes. -/
+
+private def twinAgrees {n k : Nat} (G : Colored n k) : Bool :=
+  let a := Nauty.runColoredTraced G
+  let b := Hex.GraphIsoCases.engine G
+  a.result.canonlab == b.result.canonlab &&
+    a.result.canong == b.result.canong &&
+    a.result.numnodes == b.result.numnodes &&
+    a.autos == b.autos &&
+    a.bestCodes == b.bestCodes
+
+#guard twinAgrees p3
+#guard twinAgrees c4
+#guard twinAgrees petersen
+#guard twinAgrees kneser52
+#guard twinAgrees prism5
 
 /-! # The empty graph -/
 
