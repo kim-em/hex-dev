@@ -31,19 +31,19 @@ bitset as the length-indexed window representation used by sweep
 coverage. -/
 theorem worksetOf_eq_windowSet (lab : Array Nat) (tc len : Nat)
     (hlen : 1 ≤ len) :
-    worksetOf lab tc (tc + len - 1) = windowSet lab tc len := by
-  unfold worksetOf windowSet segN
+    worksetOf n lab tc (tc + len - 1) = windowSet lab tc len := by
+  unfold worksetOf n windowSet segN
   rw [show tc + len - 1 + 1 - tc = len by omega]
   rw [List.foldl_map]
 
 /-- Charging target-cell statistics changes no logical search field. -/
-theorem RunPrep.setTctotal {G : Colored n k} {ctx : Ctx}
+theorem RunPrep.setTctotal {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells value : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunPrep G ctx tcLevel level codes bs fs numcells st best trail) :
     RunPrep G ctx tcLevel level codes bs fs numcells
       { st with tctotal := value } best trail := by
-  let st' : SearchSt := { st with tctotal := value }
+  let st' : SearchSt n := { st with tctotal := value }
   have hok : SearchOk G level numcells st' := by
     refine ⟨h.searchOk.labSize, h.searchOk.ptnSize, h.searchOk.reach,
       h.searchOk.init1, h.searchOk.vals, h.searchOk.count, h.searchOk.bc,
@@ -61,16 +61,16 @@ theorem RunPrep.setTctotal {G : Colored n k} {ctx : Ctx}
 
 /-- Parking the cheap-automorphism boundary changes only the `CheapOk`
 component of the stable invariant. -/
-theorem RunInv.park {G : Colored n k} {ctx : Ctx}
+theorem RunInv.park {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hcheap : CheapOk ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2) level
       { st with noncheaplevel := level + 1 }) :
     RunInv G ctx tcLevel level codes bs fs numcells
       { st with noncheaplevel := level + 1 } best trail := by
-  let st' : SearchSt := { st with noncheaplevel := level + 1 }
+  let st' : SearchSt n := { st with noncheaplevel := level + 1 }
   have hok : SearchOk G level numcells st' := by
     refine ⟨h.searchOk.labSize, h.searchOk.ptnSize, h.searchOk.reach,
       h.searchOk.init1, h.searchOk.vals, h.searchOk.count, h.searchOk.bc,
@@ -88,9 +88,9 @@ theorem RunInv.park {G : Colored n k} {ctx : Ctx}
 
 /-- First and canonical controls that point at the current loop level are
 backed by children already absorbed into the semantic incumbent. -/
-structure FrameRefs (ctx : Ctx) (tcLevel specFuel level : Nat)
+structure FrameRefs (ctx : Ctx n) (tcLevel specFuel level : Nat)
     (codes : List Nat) (rsLab rsPtn : Array Nat)
-    (tc len numcells : Nat) (st : SearchSt) (best : Option Key) : Prop where
+    (tc len numcells : Nat) (st : SearchSt n) (best : Option (Key n)) : Prop where
   first : st.gcaFirst = level →
     ∃ o, o < len ∧
       ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
@@ -105,9 +105,9 @@ structure FrameRefs (ctx : Ctx) (tcLevel specFuel level : Nat)
       cellsPerm rsPtn level rsLab st.canonlab
 
 /-- Frame references survive an incumbent increase. -/
-theorem FrameRefs.grow {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem FrameRefs.grow {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len numcells : Nat} {st : SearchSt} {best best' : Option Key}
+    {tc len numcells : Nat} {st : SearchSt n} {best best' : Option (Key n)}
     (h : FrameRefs ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells st best)
     (hinc : IncGrows best best') :
@@ -123,24 +123,23 @@ theorem FrameRefs.grow {ctx : Ctx} {tcLevel specFuel level : Nat}
 
 /-- Recovering a state related to a valid loop entry restores the full
 parent invariant as well as the composable parent-level effect. -/
-theorem SearchOut.recoverOk {G : Colored n k} {ctx : Ctx}
-    {level numcells inf : Nat} {base out : SearchSt}
-    (hn : ctx.n = n) (hinf : inf = n + 2)
+theorem SearchOut.recoverOk {G : Colored n k} {ctx : Ctx n}
+    {level numcells inf : Nat} {base out : SearchSt n}
+    (hinf : inf = n + 2)
     (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base)
     (hout : SearchOut G level level base out) :
-    SearchOut G level level base (Nauty.recover ctx.n inf level out) ∧
-      SearchOk G level numcells (Nauty.recover ctx.n inf level out) := by
+    SearchOut G level level base (Nauty.recover n inf level out) ∧
+      SearchOk G level numcells (Nauty.recover n inf level out) := by
   subst inf
   have hrec : SearchOut G level level out
-      (Nauty.recover ctx.n (n + 2) level out) := by
-    rw [hn]
+      (Nauty.recover n (n + 2) level out) := by
     have hle : level ≤ n := Nat.le_trans hok.bc
       (bcount_le base.ptn level n)
     exact recover_out (by omega) hout.reach
   have heffect := hout.trans hrec
   refine ⟨heffect, searchOk_of_out hok hlevel heffect ?_⟩
   intro q hq
-  rw [hn, recover_ptn]
+  rw [recover_ptn]
   rcases Decidable.em (q < n ∧ out.ptn[q]! > level) with hc | hc
   · rw [ite_eq_left hc]
     exact Or.inr rfl
@@ -153,12 +152,11 @@ theorem SearchOut.recoverOk {G : Colored n k} {ctx : Ctx}
 /-- Invariant of one imperative child loop.  `base` is the refined state
 whose labelling and partition were frozen for `specNode`; `st` is the
 current recovered state after zero or more children and pruning steps. -/
-structure LoopInv (G : Colored n k) (ctx : Ctx)
+structure LoopInv (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel level : Nat) (codes bs fs : List Nat)
-    (numcells : Nat) (rsLab rsPtn : Array Nat) (tc len tcell : Nat)
-    (cursor : Option Nat) (base st : SearchSt) (best : Option Key)
+    (numcells : Nat) (rsLab rsPtn : Array Nat) (tc len : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (base st : SearchSt n) (best : Option (Key n))
     (trail : FrameTrail) : Prop where
-  nodeCount : ctx.n = n
   nonempty : 0 < n
   positive : 1 ≤ level
   baseOk : SearchOk G level numcells base
@@ -169,35 +167,35 @@ structure LoopInv (G : Colored n k) (ctx : Ctx)
   equitable : Equitable ctx level rsLab rsPtn
   cell : IsCell rsPtn level tc len
   lenTwo : 2 ≤ len
-  range : tc + len ≤ ctx.n
-  values : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2
-  members : ∀ v, elem tcell v = true → v ∈ segN rsLab tc len
+  range : tc + len ≤ n
+  values : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2
+  members : ∀ v, tcell.mem v = true → v ∈ segN rsLab tc len
   cover : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
     numcells tcell cursor best
   refs : FrameRefs ctx tcLevel specFuel level codes rsLab rsPtn tc len
     numcells st best
   shortClear : st.needshortprune = false
-  fuelBound : level + 1 + specFuel ≤ ctx.n + 1
+  fuelBound : level + 1 + specFuel ≤ n + 1
 
 namespace LoopInv
 
 /-- A fresh sweep freezes the current equitable target-cell frame.  The
 strict guide bounds make current-level frame references vacuous before
 the first child is explored. -/
-theorem start {G : Colored n k} {ctx : Ctx}
+theorem start {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (h : RunInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hfirst : st.gcaFirst < level) (hcanon : st.gcaCanon < level)
     (heq : Equitable ctx level st.lab st.ptn)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
-    (hrange : tc + len ≤ ctx.n)
+    (hrange : tc + len ≤ n)
     (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
-      st.ptn[q]! = ctx.n + 2)
+      st.ptn[q]! = n + 2)
     (hshort : st.needshortprune = false)
-    (hfuel : level + 1 + specFuel ≤ ctx.n + 1) :
+    (hfuel : level + 1 + specFuel ≤ n + 1) :
     LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       st.lab st.ptn tc len (windowSet st.lab tc len) none st st best
       trail := by
@@ -213,41 +211,41 @@ theorem start {G : Colored n k} {ctx : Ctx}
     · intro he
       exact (Nat.ne_of_lt hcanon he).elim
 
-theorem frozenLabSize {G : Colored n k} {ctx : Ctx}
+theorem frozenLabSize {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
-    rsLab.size = ctx.n := by
+    rsLab.size = n := by
   rw [← h.baseLab, h.baseOk.labSize, ← h.nodeCount]
 
-theorem frozenPtnSize {G : Colored n k} {ctx : Ctx}
+theorem frozenPtnSize {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
-    rsPtn.size = ctx.n := by
+    rsPtn.size = n := by
   rw [← h.basePtn, h.baseOk.ptnSize, ← h.nodeCount]
 
-theorem frozenLabOk {G : Colored n k} {ctx : Ctx}
+theorem frozenLabOk {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
-    LabOk rsLab ctx.n := by
+    LabOk rsLab n := by
   rw [← h.baseLab, h.nodeCount]
   exact labOk_of_reach h.baseOk.labSize h.baseOk.reach
 
-theorem frozenEnd {G : Colored n k} {ctx : Ctx}
+theorem frozenEnd {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
@@ -255,21 +253,21 @@ theorem frozenEnd {G : Colored n k} {ctx : Ctx}
   rw [← h.basePtn]
   exact searchOk_end h.nonempty h.baseOk h.positive
 
-theorem frozenVals {G : Colored n k} {ctx : Ctx}
+theorem frozenVals {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
-    ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2 := by
+    ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2 := by
   exact h.values
 
 /-- The current recovered partition is exactly the frozen partition. -/
-theorem ptnEq {G : Colored n k} {ctx : Ctx}
+theorem ptnEq {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
@@ -278,10 +276,10 @@ theorem ptnEq {G : Colored n k} {ctx : Ctx}
   exact h.effect.ptnEq h.baseOk h.run.searchOk
 
 /-- Recovery may reorder a cell, but cannot change its vertex set. -/
-theorem labPerm {G : Colored n k} {ctx : Ctx}
+theorem labPerm {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
@@ -289,10 +287,10 @@ theorem labPerm {G : Colored n k} {ctx : Ctx}
   rw [← h.basePtn, ← h.baseLab]
   exact h.effect.perm
 
-theorem currentEquitable {G : Colored n k} {ctx : Ctx}
+theorem currentEquitable {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
@@ -300,10 +298,10 @@ theorem currentEquitable {G : Colored n k} {ctx : Ctx}
   rw [h.ptnEq]
   exact h.equitable.ofCellsPerm h.labPerm h.frozenPtnSize h.frozenEnd
 
-theorem currentCell {G : Colored n k} {ctx : Ctx}
+theorem currentCell {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail) :
@@ -313,32 +311,32 @@ theorem currentCell {G : Colored n k} {ctx : Ctx}
 
 /-- A recursive child effect, followed by temporary fixed-point cleanup
 and `recover`, composes back into the frozen parent frame. -/
-theorem recoverChild {G : Colored n k} {ctx : Ctx}
+theorem recoverChild {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell currentOffset inf : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st out : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (hinv : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail)
     (hinf : inf = n + 2) (hcurrent : currentOffset < len)
     (hout : SearchOut G level (level + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc
+        lab := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + currentOffset]!).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc
+        ptn := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + currentOffset]!).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc
+        active := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + currentOffset]!).2.2
-        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]! }
+        fixedpts := st.fixedpts.insert st.lab[tc + currentOffset]! }
       out) :
-    let cleaned : SearchSt :=
-      { out with fixedpts := erase out.fixedpts st.lab[tc + currentOffset]! }
-    let recovered := Nauty.recover ctx.n inf level cleaned
+    let cleaned : SearchSt n :=
+      { out with fixedpts := out.fixedpts.erase st.lab[tc + currentOffset]! }
+    let recovered := Nauty.recover n inf level cleaned
     SearchOut G level level base recovered ∧
       SearchOk G level numcells recovered := by
   dsimp only
-  let cleaned : SearchSt :=
-    { out with fixedpts := erase out.fixedpts st.lab[tc + currentOffset]! }
+  let cleaned : SearchSt n :=
+    { out with fixedpts := out.fixedpts.erase st.lab[tc + currentOffset]! }
   have hchild : SearchOut G level level st out := by
     apply breakout_child_out hinv.nonempty hinv.run.searchOk hinv.positive
       hinv.currentCell hinv.lenTwo
@@ -358,17 +356,17 @@ theorem recoverChild {G : Colored n k} {ctx : Ctx}
 
 /-- A vertex selected from the mutable bitset has both its frozen
 specification offset and its current executable offset. -/
-theorem nextOffsets {G : Colored n k} {ctx : Ctx}
+theorem nextOffsets {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell tv : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail)
     (hnext : nextElem tcell cursor = some tv) :
     ∃ offset currentOffset, offset < len ∧ currentOffset < len ∧
       rsLab[tc + offset]! = tv ∧ st.lab[tc + currentOffset]! = tv := by
-  have hmemBit : elem tcell tv = true := by
+  have hmemBit : tcell.mem tv = true := by
     simpa only [elem] using nextElem_mem hnext
   have hmemFrozen := h.members tv hmemBit
   obtain ⟨offset, hoffset, hatFrozen⟩ := mem_segN_iff.mp hmemFrozen
@@ -383,15 +381,15 @@ theorem nextOffsets {G : Colored n k} {ctx : Ctx}
 vertex range.  This is the cursor bound threaded by the fuel induction;
 it is intentionally derived from the frozen target-cell membership rather
 than from the mutable bitset alone. -/
-theorem nextLt {G : Colored n k} {ctx : Ctx}
+theorem nextLt {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell tv : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail)
     (hnext : nextElem tcell cursor = some tv) :
-    tv < ctx.n := by
+    tv < n := by
   obtain ⟨offset, _, hoffset, _, hatFrozen, _⟩ := h.nextOffsets hnext
   rw [← hatFrozen]
   apply h.frozenLabOk (tc + offset)
@@ -400,10 +398,10 @@ theorem nextLt {G : Colored n k} {ctx : Ctx}
 
 /-- The next mutable-loop selection enters a valid recursive node while
 recording the corresponding frozen specification offset in the trail. -/
-theorem child {G : Colored n k} {ctx : Ctx}
+theorem child {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len tcell tv coset : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail)
@@ -414,34 +412,34 @@ theorem child {G : Colored n k} {ctx : Ctx}
       rsLab[tc + offset]! = tv ∧ st.lab[tc + currentOffset]! = tv ∧
       NodeInv G ctx tcLevel (level + 1) codes bs fs (numcells + 1)
         { st with
-          lab := (breakout st.lab st.ptn (level + 1) tc
+          lab := (breakout n st.lab st.ptn (level + 1) tc
             st.lab[tc + currentOffset]!).1
-          ptn := (breakout st.lab st.ptn (level + 1) tc
+          ptn := (breakout n st.lab st.ptn (level + 1) tc
             st.lab[tc + currentOffset]!).2.1
-          active := (breakout st.lab st.ptn (level + 1) tc
+          active := (breakout n st.lab st.ptn (level + 1) tc
             st.lab[tc + currentOffset]!).2.2
-          fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+          fixedpts := st.fixedpts.insert st.lab[tc + currentOffset]!
           cosetindex := coset }
         best
         (trail.push level
           ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) := by
   obtain ⟨offset, currentOffset, hoffset, hcurrent, hatFrozen,
       hatCurrent⟩ := h.nextOffsets hnext
-  let child : SearchSt := { st with
-    lab := (breakout st.lab st.ptn (level + 1) tc
+  let child : SearchSt n := { st with
+    lab := (breakout n st.lab st.ptn (level + 1) tc
       st.lab[tc + currentOffset]!).1
-    ptn := (breakout st.lab st.ptn (level + 1) tc
+    ptn := (breakout n st.lab st.ptn (level + 1) tc
       st.lab[tc + currentOffset]!).2.1
-    active := (breakout st.lab st.ptn (level + 1) tc
+    active := (breakout n st.lab st.ptn (level + 1) tc
       st.lab[tc + currentOffset]!).2.2
-    fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+    fixedpts := st.fixedpts.insert st.lab[tc + currentOffset]!
     cosetindex := coset }
   let childTrail := trail.push level
     ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩
-  have hfirstSize : st.firstlab.size = ctx.n := by
+  have hfirstSize : st.firstlab.size = n := by
     rw [h.nodeCount]
     exact h.run.leafRefs.firstSize
-  have hcanonSize : st.canonlab.size = ctx.n := by
+  have hcanonSize : st.canonlab.size = n := by
     rw [h.nodeCount]
     exact h.run.leafRefs.canonSize
   have hguides : GuideStore ctx tcLevel (level + 1) child best
@@ -452,10 +450,10 @@ theorem child {G : Colored n k} {ctx : Ctx}
         h.fuelBound hfirstSize hcanonSize
         h.refs.first h.refs.canon)
     all_goals rfl
-  have hls : st.lab.size = ctx.n := by
+  have hls : st.lab.size = n := by
     rw [h.nodeCount]
     exact h.run.searchOk.labSize
-  have hps : st.ptn.size = ctx.n := by
+  have hps : st.ptn.size = n := by
     rw [h.nodeCount]
     exact h.run.searchOk.ptnSize
   have hinj : LabInj st.lab st.lab.size := by
@@ -484,23 +482,23 @@ the executable refinement, comparison, target-accounting, and cheap-rule
 bookkeeping.  The returned target is simultaneously the executable and
 specification target, so the accompanying equality exposes the whole
 node key as this sweep's bound. -/
-theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
+theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (h : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells ≠ ctx.n)
+      numcells).numcells ≠ n)
     (hnonneg : (otherLeafSt ctx level numcells st).compCanon ≥ 0)
-    (hfuel : level + 1 + specFuel ≤ ctx.n + 1) :
+    (hfuel : level + 1 + specFuel ≤ n + 1) :
     let r := refine ctx level st.lab st.ptn st.active numcells
     let full := codes ++ [r.longcode]
     let pre := otherLeafSt ctx level numcells st
     ∃ tc len,
-      let tcell := worksetOf r.lab tc (tc + len - 1)
-      let base : SearchSt := { pre with tctotal := pre.tctotal + len }
-      let start := if cheapautom base.ptn level ctx.n then base
+      let tcell := worksetOf n r.lab tc (tc + len - 1)
+      let base : SearchSt n := { pre with tctotal := pre.tctotal + len }
+      let start := if cheapautom base.ptn level n then base
         else { base with noncheaplevel := level + 1 }
       maketargetcell ctx r.lab r.ptn level tcLevel (-1) =
           (tc, tcell, len) ∧
@@ -522,11 +520,11 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
   obtain ⟨tc, len, hmk, hspec, hcell, hlen, hrange⟩ :=
     h.target hn hg hn0 hlevel hnum
   refine ⟨tc, len, ?_⟩
-  let tcell := worksetOf r.lab tc (tc + len - 1)
-  let base : SearchSt := { pre with tctotal := pre.tctotal + len }
-  let start := if cheapautom base.ptn level ctx.n then base
+  let tcell := worksetOf n r.lab tc (tc + len - 1)
+  let base : SearchSt n := { pre with tctotal := pre.tctotal + len }
+  let start := if cheapautom base.ptn level n then base
     else { base with noncheaplevel := level + 1 }
-  have hdisc : discreteAt r.ptn level ctx.n = false := by
+  have hdisc : discreteAt r.ptn level n = false := by
     rw [← Bool.not_eq_true, ← refine_discrete_iff hn hn0
       h.run.searchOk hlevel]
     exact hnum
@@ -551,7 +549,7 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
       exact hnum (beq_iff_eq.mp heq)
   have hrun : RunInv G ctx tcLevel level full bs fs r.numcells start
       best trail := by
-    rcases hc : cheapautom base.ptn level ctx.n with _ | _
+    rcases hc : cheapautom base.ptn level n with _ | _
     · have hp : CheapOk ctx (initialPartition G).1
           (initPtn n (n + 2) (initialPartition G).2) level
           { base with noncheaplevel := level + 1 } :=
@@ -612,9 +610,9 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
             active := r.active
             numnodes := st.numnodes + 1 }).2.2.2.2.2.2.2.2.2.2.2.2
   have hvals : ∀ q : Nat, r.ptn[q]! ≤ level ∨
-      r.ptn[q]! = ctx.n + 2 := by
+      r.ptn[q]! = n + 2 := by
     intro q
-    rcases Nat.lt_or_ge q ctx.n with hq | hq
+    rcases Nat.lt_or_ge q n with hq | hq
     · exact href.1.vals q hq
     · left
       rw [getElem!_neg _ _ (by rw [href.1.ok.ptnSize]; omega)]
@@ -633,10 +631,10 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
 set_option maxHeartbeats 800000 in
 /-- The nonnegative internal branch with a failed cheap-automorphism test
 parks the boundary before entering its child loop. -/
-theorem otherNode_park_state (ctx : Ctx)
-    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+theorem otherNode_park_state (ctx : Ctx n)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt n)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (hnonneg : let r := refine ctx level st.lab st.ptn st.active numcells
       let pre := otherNodePrep level r.longcode { st with
         lab := r.lab, ptn := r.ptn, active := r.active
@@ -656,7 +654,7 @@ theorem otherNode_park_state (ctx : Ctx)
       let mt := maketargetcell ctx pre.lab pre.ptn level tcLevel (-1)
       let base := { pre with tctotal := pre.tctotal + mt.2.2 }
       cheapautom (processnode ctx level r.numcells base).2.ptn
-        level ctx.n = false) :
+        level n = false) :
     let r := refine ctx level st.lab st.ptn st.active numcells
     let pre := otherNodePrep level r.longcode { st with
       lab := r.lab, ptn := r.ptn, active := r.active
@@ -665,7 +663,7 @@ theorem otherNode_park_state (ctx : Ctx)
     let base := { pre with tctotal := pre.tctotal + mt.2.2 }
     let pr := processnode ctx level r.numcells base
     let parked := { pr.2 with noncheaplevel := level + 1 }
-    let L := otherChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
+    let L := otherChildLoop ctx inf tcLevel fuel (n + 1) level
       r.numcells mt.1 ((nextElem mt.2.1 none).getD 0)
       (nextElem mt.2.1 none) mt.2.1 parked
     otherNode ctx inf tcLevel (fuel + 1) level numcells st =
@@ -685,7 +683,7 @@ theorem otherNode_park_state (ctx : Ctx)
         numnodes := st.numnodes + 1 }).compCanon < 0)),
     hshort, Bool.false_eq_true, ite_false, hcheap, Bool.not_false,
     ite_true, Int.ofNat_eq_natCast, Int.toNat_natCast]
-  generalize hL : (otherChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+  generalize hL : (otherChildLoop ctx inf tcLevel fuel (n + 1)
     level _ _ _ _ _ _) = L
   rcases L with ⟨r, out⟩
   cases r <;> simp only [Id.run_pure, apply_ite Id.run] <;> rfl
