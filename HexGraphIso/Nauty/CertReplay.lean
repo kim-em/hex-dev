@@ -44,7 +44,7 @@ private theorem charge_none' {st : AutState} (h : st.budget = none) :
     st.charge = st := by
   rw [AutState.charge, h]
 
-private theorem admit_budget' (ctx : Ctx) (st : AutState)
+private theorem admit_budget' (ctx : Ctx n) (st : AutState)
     (γ : Array Nat) : (st.admit ctx γ).budget = st.budget := by
   rw [AutState.admit]
   set_option linter.unusedSimpArgs false in
@@ -52,7 +52,7 @@ private theorem admit_budget' (ctx : Ctx) (st : AutState)
   repeat' split
   all_goals rfl
 
-private theorem admit_exhausted' (ctx : Ctx) (st : AutState)
+private theorem admit_exhausted' (ctx : Ctx n) (st : AutState)
     (γ : Array Nat) : (st.admit ctx γ).exhausted = st.exhausted := by
   rw [AutState.admit]
   set_option linter.unusedSimpArgs false in
@@ -60,7 +60,7 @@ private theorem admit_exhausted' (ctx : Ctx) (st : AutState)
   repeat' split
   all_goals rfl
 
-private theorem harvest_budget' (ctx : Ctx) (st : AutState)
+private theorem harvest_budget' (ctx : Ctx n) (st : AutState)
     (lab : Array Nat) : (st.harvest ctx lab).budget = st.budget := by
   rw [AutState.harvest]
   set_option linter.unusedSimpArgs false in
@@ -69,7 +69,7 @@ private theorem harvest_budget' (ctx : Ctx) (st : AutState)
   all_goals try simp only [admit_budget']
   all_goals rfl
 
-private theorem harvest_exhausted' (ctx : Ctx) (st : AutState)
+private theorem harvest_exhausted' (ctx : Ctx n) (st : AutState)
     (lab : Array Nat) :
     (st.harvest ctx lab).exhausted = st.exhausted := by
   rw [AutState.harvest]
@@ -86,9 +86,9 @@ private theorem foldl_pres' {α β : Type} (f : β → α → β)
   | [], _, hb, _ => hb
   | a :: l, b, hb, hstep => foldl_pres' f P l (f b a) (hstep b a hb) hstep
 
-private theorem certifyNodeAutom_nobudget' (ctx : Ctx) (tcLevel : Nat) :
+private theorem certifyNodeAutom_nobudget' (ctx : Ctx n) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (bcodes : List Nat) (st : AutState),
+      (active : VSet n) (numcells : Nat) (bcodes : List Nat) (st : AutState),
       st.budget = none → st.exhausted = false →
       (certifyNodeAutom ctx tcLevel fuel level lab ptn active numcells
           bcodes st).2.budget = none ∧
@@ -128,17 +128,17 @@ private theorem certifyNodeAutom_nobudget' (ctx : Ctx) (tcLevel : Nat) :
             exact certifyNodeAutom_nobudget' ctx tcLevel fuel _ _ _
               _ _ _ _ hacc.1 hacc.2
 
-/-! # Key-order helpers -/
+/-! # Key n-order helpers -/
 
 /-- A key with a nonempty code list exceeds any key with an empty
 one. -/
-theorem keyCmp_codes_nil_gt {c : Nat} {cs r br : List Nat} :
+theorem keyCmp_codes_nil_gt {c : Nat} {cs : List Nat} {r br : List (VSet n)} :
     keyCmp ⟨c :: cs, r⟩ ⟨[], br⟩ = .gt := by
   rw [keyCmp]
   simp only [listCmp]
 
 /-- The maximum of strictly dominated keys is strictly dominated. -/
-theorem keysMax_lt {b k : Key} {l : List Key}
+theorem keysMax_lt {b k : Key n} {l : List (Key n)}
     (hk : keyCmp k b = .lt) (hl : ∀ y ∈ l, keyCmp y b = .lt) :
     keyCmp (keysMax k l) b = .lt := by
   induction l generalizing k with
@@ -247,9 +247,9 @@ theorem depth_le_of_mem {cs : List CertNode} {c : CertNode}
     · exact Nat.le_trans (ih hc) (Nat.le_max_right ..)
 
 /-- The walk emits trees no deeper than its fuel allows. -/
-theorem certifyNodeAutom_depth (ctx : Ctx) (tcLevel : Nat) :
+theorem certifyNodeAutom_depth (ctx : Ctx n) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (bcodes : List Nat) (st : AutState),
+      (active : VSet n) (numcells : Nat) (bcodes : List Nat) (st : AutState),
       CertNode.depth (certifyNodeAutom ctx tcLevel fuel level lab ptn
         active numcells bcodes st).1 ≤ fuel + 1
   | 0, _, _, _, _, _, _, _ => Nat.le_refl 1
@@ -415,10 +415,10 @@ end
 
 /-- A certificate whose records all pass `checkAutom` has every
 record's generator in its own validated store. -/
-theorem automsOk_validGammas {g : Array Nat} {nn : Nat}
+theorem automsOk_validGammas {nn : Nat} {g : Array (VSet nn)}
     {cert : CertNode} (hd : CertNode.depth cert ≤ nn + 2)
-    (hv : AutomsOk (fun γ => checkAutom g γ nn = true) cert) :
-    AutomsOk (fun γ => containsGamma (validGammas g nn cert) γ = true)
+    (hv : AutomsOk (fun γ => checkAutom g γ = true) cert) :
+    AutomsOk (fun γ => containsGamma (validGammas g cert) γ = true)
       cert := by
   have hcov := certGammas_covers (nn + 2) cert [] hd
   refine automsOk_mono (fun γ hγ => ?_) cert
@@ -428,8 +428,8 @@ theorem automsOk_validGammas {g : Array Nat} {nn : Nat}
 
 /-! # The walk never emits a bare `.autom` at a node position -/
 
-private theorem certifyNodeAutom_ne_autom (ctx : Ctx) (tcLevel : Nat) :
-    ∀ (fuel level : Nat) (lab ptn : Array Nat) (active numcells : Nat)
+private theorem certifyNodeAutom_ne_autom (ctx : Ctx n) (tcLevel : Nat) :
+    ∀ (fuel level : Nat) (lab ptn : Array Nat) (active : VSet n) (numcells : Nat)
       (bcodes : List Nat) (st : AutState) (o' : Nat) (γ : Array Nat),
       (certifyNodeAutom ctx tcLevel fuel level lab ptn active numcells
         bcodes st).1 ≠ .autom o' γ
@@ -452,8 +452,8 @@ private theorem certifyNodeAutom_ne_autom (ctx : Ctx) (tcLevel : Nat) :
             exact fun h => nomatch h
 
 /-- The child-sweep equation for a non-`.autom` head. -/
-private theorem checkChildren_cons_of_ne_autom {ctx : Ctx}
-    (tcLevel : Nat) (brows : List Nat) (vgens : List (Array Nat))
+private theorem checkChildren_cons_of_ne_autom {ctx : Ctx n}
+    (tcLevel : Nat) (brows : List (VSet n)) (vgens : List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
     (brest : List Nat) {c : CertNode}
     (hne : ∀ (o' : Nat) (γ : Array Nat), c ≠ .autom o' γ)
@@ -461,9 +461,9 @@ private theorem checkChildren_cons_of_ne_autom {ctx : Ctx}
     checkChildren ctx tcLevel brows vgens fuel level rsLab rsPtn tc
         numcells brest (c :: rest) o =
       match checkNode ctx tcLevel brows vgens fuel (level + 1)
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
         (numcells + 1) c brest with
       | none => none
       | some a =>
@@ -485,10 +485,10 @@ fold (an `.autom` record that passed the emission checks, or a
 recursive walk result), and `hnode` is the node-level replay theorem
 at the children's fuel, supplied by the induction. -/
 
-private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
+private theorem sweep_replays {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {vgens : List (Array Nat)}
-    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ ctx.n = true)
-    (tcLevel : Nat) (brows : List Nat) (fuel level : Nat)
+    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ = true)
+    (tcLevel : Nat) (brows : List (VSet n)) (fuel level : Nat)
     (rsLab rsPtn : Array Nat) (tc lenT numcells : Nat)
     (brest : List Nat)
     (hs : rsLab.size = n) (hok : LabOk rsLab n)
@@ -501,7 +501,7 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
     (hkeyle : ∀ i, i < lenT →
       keyLe (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells
         i) ⟨brest, brows⟩)
-    (hnode : ∀ (lab' ptn' : Array Nat) (active' numcells' : Nat)
+    (hnode : ∀ (lab' ptn' : Array Nat) (active' : VSet n) (numcells' : Nat)
       (st' : AutState),
       st'.budget = none → st'.exhausted = false →
       NodeOk n (level + 1) lab' ptn' active' →
@@ -530,16 +530,16 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
         st'.budget = none ∧ st'.exhausted = false ∧
         ((∃ o' γ, c = .autom o' γ ∧ o' < o ∧
           checkCellsPerm
-            (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-            (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
-            ((breakout rsLab rsPtn (level + 1) tc
+            (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+            (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
+            ((breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o]!).1.map fun w => γ[w]!)
-            (level + 1) ctx.n = true) ∨
+            (level + 1) n = true) ∨
          (∃ stz, stz.budget = none ∧ stz.exhausted = false ∧
            c = (certifyNodeAutom ctx tcLevel fuel (level + 1)
-             (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-             (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-             (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+             (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+             (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+             (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
              (numcells + 1) brest stz).1))) :
     ∀ (len o : Nat) (kids0 : List CertNode) (stx : AutState)
       (cch0 : Option (Nat × Array (Array Nat × Array Nat)))
@@ -570,7 +570,7 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
     obtain ⟨c, st', cch', hf, hb', he', hdis⟩ :=
       hstep kids0 stx cch0 o (by omega) hbz hez
     rw [List.range'_succ, List.foldl_cons, hf] at hfold
-    obtain ⟨kidsNew', hkF, hkL, hrest⟩ := sweep_replays hn hgsz hv
+    obtain ⟨kidsNew', hkF, hkL, hrest⟩ := sweep_replays hgsz hv
       tcLevel brows fuel level rsLab rsPtn tc lenT numcells brest hs
       hok hsp hend hvals hic hrange hlf hlfl hbcc hkeyle hnode f
       hstep len (o + 1) (c :: kids0) st' cch' kidsF stF cchF
@@ -590,11 +590,11 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
       rw [checkChildren]
       have hcond : (decide (o' < o) && containsGamma vgens γ &&
           checkCellsPerm
-            (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-            (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
-            ((breakout rsLab rsPtn (level + 1) tc
+            (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+            (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
+            ((breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o]!).1.map fun w => γ[w]!)
-            (level + 1) ctx.n) = true := by
+            (level + 1) n) = true := by
         rw [hcont, hcp]
         simp [ho'o]
       rw [hcond]
@@ -603,25 +603,24 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
       simp only [Bool.false_or] at hfa
       -- the pruned child's key repeats the earlier sibling's
       have hAut := hv γ (containsGamma_mem hcont)
-      rw [hn] at hAut hcp
       obtain ⟨σ, hσeq, hσrows⟩ := checkAutom_sound hgsz hAut
       have hoLen : o < lenT := by omega
       have ho'Len : o' < lenT := by omega
       have hokc := childNodeOk hs hok hsp hend hvals hic hrange hoLen
       have hokc' := childNodeOk hs hok hsp hend hvals hic hrange
         ho'Len
-      have hmapeq : ((breakout rsLab rsPtn (level + 1) tc
+      have hmapeq : ((breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o]!).1.map fun w => γ[w]!) =
-          (breakout rsLab rsPtn (level + 1) tc
+          (breakout n rsLab rsPtn (level + 1) tc
             rsLab[tc + o]!).1.map σ.toFun :=
         map_congr_of_labOk hokc.labOk (fun w hw => (hσeq w hw).symm)
       rw [hmapeq] at hcp
       have hcpc := checkCellsPerm_sound
-        (ptn := (breakout rsLab rsPtn (level + 1) tc
+        (ptn := (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o]!).2.1)
-        (lab₁ := (breakout rsLab rsPtn (level + 1) tc
+        (lab₁ := (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o']!).1)
-        (lab₂' := (breakout rsLab rsPtn (level + 1) tc
+        (lab₂' := (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o]!).1.map σ.toFun) (level := level + 1)
         hokc.ptnSize hokc'.labSize
         (by rw [Array.size_map]; exact hokc.labSize)
@@ -630,17 +629,17 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
           numcells o =
           childKey ctx tcLevel fuel level rsLab rsPtn tc numcells
             o' :=
-        specNode_autom hn hσrows tcLevel fuel (level + 1)
-          (lab₁ := (breakout rsLab rsPtn (level + 1) tc
+        specNode_autom hσrows tcLevel fuel (level + 1)
+          (lab₁ := (breakout n rsLab rsPtn (level + 1) tc
             rsLab[tc + o']!).1)
-          (lab₂ := (breakout rsLab rsPtn (level + 1) tc
+          (lab₂ := (breakout n rsLab rsPtn (level + 1) tc
             rsLab[tc + o]!).1)
-          (ptn := (breakout rsLab rsPtn (level + 1) tc
+          (ptn := (breakout n rsLab rsPtn (level + 1) tc
             rsLab[tc + o]!).2.1)
-          (active := (breakout rsLab rsPtn (level + 1) tc
+          (active := (breakout n rsLab rsPtn (level + 1) tc
             rsLab[tc + o]!).2.2)
           (numcells := numcells + 1) hcpc hokc'.labSize hokc.labSize
-          hokc'.labOk hokc.labOk hokc.ptnSize hokc.act hokc.ptnEnd
+          hokc'.labOk hokc.labOk hokc.ptnSize hokc.ptnEnd
           hokc.starts hokc.vals (by omega)
       intro i hi1 hi2
       rcases Nat.eq_or_lt_of_le hi1 with rfl | hgt
@@ -656,9 +655,9 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
       have hoLen : o < lenT := by omega
       have hokc := childNodeOk hs hok hsp hend hvals hic hrange hoLen
       have hchild := hnode
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
         (numcells + 1) stz hbz2 hez2 hokc hlf (by omega)
         (by exact hbcc) (hkeyle o hoLen) (by rw [← hc]; exact hgl1)
       obtain ⟨a0, hcn, hstr0⟩ := hchild
@@ -668,9 +667,9 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
         intro o2 γ2 h
         rw [hc] at h
         exact certifyNodeAutom_ne_autom ctx tcLevel fuel (level + 1)
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
           (numcells + 1) brest stz o2 γ2 h
       rw [checkChildren_cons_of_ne_autom tcLevel brows vgens fuel
         level rsLab rsPtn tc numcells brest hne]
@@ -694,11 +693,11 @@ private theorem sweep_replays {ctx : Ctx} (hn : ctx.n = n)
 /-- A dominated walk's certificate replays: `checkNode` accepts it,
 and a `some false` verdict forces the subtree strictly below the
 claimed suffix. -/
-theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
+theorem certifyNode_replays {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {vgens : List (Array Nat)}
-    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ ctx.n = true)
-    (tcLevel : Nat) (brows : List Nat) :
-    ∀ (fuel level : Nat) (lab ptn : Array Nat) (active numcells : Nat)
+    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ = true)
+    (tcLevel : Nat) (brows : List (VSet n)) :
+    ∀ (fuel level : Nat) (lab ptn : Array Nat) (active : VSet n) (numcells : Nat)
       (bcodes : List Nat) (st : AutState),
       st.budget = none → st.exhausted = false →
       NodeOk n level lab ptn active →
@@ -747,9 +746,9 @@ theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
     dsimp only at hcw
     rw [charge_none' hb,
       ite_eq_right (by rw [he]; exact Bool.false_ne_true)] at hcw
-    have hstR := refine_stOk (ctx := ctx) hn (level := level)
+    have hstR := refine_stOk (ctx := ctx) (active := active) (level := level)
       (numcells := numcells) hok.labSize hok.labOk hok.ptnSize
-      hok.act hok.ptnEnd
+      hok.ptnEnd
     have hRvals : ∀ q : Nat,
         (refine ctx level lab ptn active numcells).ptn[q]! ≤ level ∨
           (refine ctx level lab ptn active numcells).ptn[q]! =
@@ -829,12 +828,11 @@ theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
         · exact absurd hkc hdom'
       · -- non-discrete: the walk emitted a node
         next hdisc =>
-        obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts
-          hn (tcLevel := tcLevel)
+        obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts (ctx := ctx) (tcLevel := tcLevel)
           (refine ctx level lab ptn active numcells).lab
           hstR.ptnSize hstR.ptnEnd (by
             rcases hd2 : discreteAt (refine ctx level lab ptn active
-                numcells).ptn level ctx.n with _ | _
+                numcells).ptn level n with _ | _
             · rfl
             · exact absurd hd2 hdisc)
         have hM1 : (specMaketargetcell ctx
@@ -944,7 +942,7 @@ theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
         rw [AutomsOk] at hgs
         -- run the sweep
         rw [List.range_eq_range'] at hfold
-        obtain ⟨kidsNew, hkF, hkL, hccl⟩ := sweep_replays hn hgsz hv
+        obtain ⟨kidsNew, hkF, hkL, hccl⟩ := sweep_replays hgsz hv
           tcLevel brows fuel level
           (refine ctx level lab ptn active numcells).lab
           (refine ctx level lab ptn active numcells).ptn p.1
@@ -954,7 +952,7 @@ theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
           hicp (by omega) (by omega) (by omega) hbcChild hkeyle
           (fun lab' ptn' active' numcells' st' hb' he' hok' hlf'
             hlfl' hbc' hdom' hgs' =>
-            certifyNode_replays hn hgsz hv tcLevel brows fuel
+            certifyNode_replays hgsz hv tcLevel brows fuel
               (level + 1) lab' ptn' active' numcells' brest st' hb'
               he' hok' hlf' hlfl' hbc' hdom' hgs') _
           (by
@@ -1059,17 +1057,17 @@ theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
 
 /-- The traced key of the candidate producer, as `produceCand`
 claims it. -/
-@[expose] def tracedKey (G : Colored n k) : Key :=
+@[expose] def tracedKey (G : Colored n k) : Key n :=
   ⟨(runColoredTraced G).bestCodes ++ [codeSentinel],
-    leafRows { n := n, g := rowsOf G }
+    leafRows { g := rowsOf G }
       (runColoredTraced G).result.canonlab⟩
 
 /-- The produced certificate replays: under domination (the traced
 key is the spec key) and store validity (every record's generator is
 a checked automorphism), `checkKey` accepts the produced pair. -/
 theorem produceCand_checkKey {G : Colored n k} {cert : CertNode}
-    {B : Key} (hp : produceCand G none = some (cert, B))
-    (hval : AutomsOk (fun γ => checkAutom (rowsOf G) γ n = true)
+    {B : Key n} (hp : produceCand G none = some (cert, B))
+    (hval : AutomsOk (fun γ => checkAutom (rowsOf G) γ = true)
       cert)
     (hdom : canonSpecKey G = B) :
     checkKey G cert B = true := by
@@ -1094,10 +1092,10 @@ theorem produceCand_checkKey {G : Colored n k} {cert : CertNode}
     injection hp' with hcert hBeq
     -- the producer's threaded state has no budget and never exhausts
     have hst1 : ((runColoredTraced G).autos.foldl
-        (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+        (fun st γ => st.admit { g := rowsOf G } γ)
         (AutState.init n none)).budget = none ∧
         ((runColoredTraced G).autos.foldl
-        (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+        (fun st γ => st.admit { g := rowsOf G } γ)
         (AutState.init n none)).exhausted = false := by
       rw [← Array.foldl_toList]
       refine foldl_pres' _
@@ -1114,19 +1112,19 @@ theorem produceCand_checkKey {G : Colored n k} {cert : CertNode}
       rw [hok.ptnSize] at hend
       exact hend
     have hspecroot : canonSpecKey G =
-        specNode { n := n, g := rowsOf G } 100 n 1
+        specNode { g := rowsOf G } 100 n 1
           (initialPartition G).1
           (initPtn n (n + 2) (initialPartition G).2)
-          (initActive (initialPartition G).2)
+          (initActive n (initialPartition G).2)
           (initialPartition G).2.length := by
       rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
-    have hdom' : keyLe (specNode { n := n, g := rowsOf G } 100 n 1
+    have hdom' : keyLe (specNode { g := rowsOf G } 100 n 1
         (initialPartition G).1
         (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
+        (initActive n (initialPartition G).2)
         (initialPartition G).2.length)
         ⟨(runColoredTraced G).bestCodes ++ [codeSentinel],
-          leafRows { n := n, g := rowsOf G }
+          leafRows { g := rowsOf G }
             (runColoredTraced G).result.canonlab⟩ :=
       keyLe_of_eq (hspecroot.symm.trans hdom)
     have hdepth : CertNode.depth cert ≤ n + 2 := by
@@ -1134,21 +1132,21 @@ theorem produceCand_checkKey {G : Colored n k} {cert : CertNode}
       exact Nat.le_trans
         (certifyNodeAutom_depth _ _ _ _ _ _ _ _ _ _) (by omega)
     have hgsC : AutomsOk (fun γ =>
-        containsGamma (validGammas (rowsOf G) n cert) γ = true)
+        containsGamma (validGammas (rowsOf G) cert) γ = true)
         cert := automsOk_validGammas hdepth hval
     obtain ⟨a, hcheck, hstrict⟩ := certifyNode_replays
-      (n := n) (ctx := { n := n, g := rowsOf G }) rfl
+      (n := n) (ctx := { g := rowsOf G })
       (size_rowsOf G)
       (fun γ hγ => validGammas_sound hγ) 100
-      (leafRows { n := n, g := rowsOf G }
+      (leafRows { g := rowsOf G }
         (runColoredTraced G).result.canonlab) n 1
       (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length
       ((runColoredTraced G).bestCodes ++ [codeSentinel])
       { ((runColoredTraced G).autos.foldl
-          (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+          (fun st γ => st.admit { g := rowsOf G } γ)
           (AutState.init n none)) with
         refLeaf := some (runColoredTraced G).result.canonlab }
       hst1.1 hst1.2 hok (by omega) (by omega) hbc1 hdom'
@@ -1172,7 +1170,7 @@ automorphism). -/
 theorem certifyCanon?_isSome_of_dominated (G : Colored n k)
     (hdom : canonSpecKey G = tracedKey G)
     (hval : ∀ cert B, produceCand G none = some (cert, B) →
-      AutomsOk (fun γ => checkAutom (rowsOf G) γ n = true) cert) :
+      AutomsOk (fun γ => checkAutom (rowsOf G) γ = true) cert) :
     (certifyCanon? G).isSome :=
   certifyCanon?_isSome_of_checkKey G fun cert B hp =>
     produceCand_checkKey hp (hval cert B hp)

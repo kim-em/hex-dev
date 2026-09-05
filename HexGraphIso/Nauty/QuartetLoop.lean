@@ -65,14 +65,14 @@ private theorem foldl_bits_covers {β : Type} {f : Nat → β → Nat}
 private theorem inner_grows {nn : Nat} {s : Nat} {γ : Array Nat}
     {a y : Nat} (hy : a.testBit y = true) :
     ((List.range nn).foldl
-      (fun acc w => if s.testBit w then insert acc γ[w]! else acc)
+      (fun acc w => if s.testBit w then acc.insert γ[w]! else acc)
       a).testBit y = true := by
   refine foldl_invariant (P := fun acc => acc.testBit y = true)
     (List.range nn) a hy ?_
   intro acc' w _ hacc'
   rcases hw : s.testBit w with _ | _
   · rw [ite_eq_right (by simp [hw])]; exact hacc'
-  · rw [ite_eq_left (by simp [hw]), testBit_insert, hacc']; rfl
+  · rw [ite_eq_left (by simp [hw]), VSet.mem_insert, hacc']; rfl
 
 /-- One closure round only adds bits. -/
 theorem orbitStepSet_grows {nn : Nat} {gens : List (Array Nat)}
@@ -97,8 +97,8 @@ theorem orbitStepSet_step {nn : Nat} {gens : List (Array Nat)}
     (List.mem_range.mpr hu)
   · rcases hw : s.testBit w with _ | _
     · rw [ite_eq_right (by simp [hw])]; exact hy
-    · rw [ite_eq_left (by simp [hw]), testBit_insert, hy]; rfl
-  · rw [ite_eq_left (by simp [hs]), testBit_insert]
+    · rw [ite_eq_left (by simp [hw]), VSet.mem_insert, hy]; rfl
+  · rw [ite_eq_left (by simp [hs]), VSet.mem_insert]
     simp
 
 /-- A round keeps the set inside the bound, given bounded
@@ -116,7 +116,7 @@ theorem orbitStepSet_lt {nn : Nat} {gens : List (Array Nat)}
   · rw [ite_eq_right (by simp [hsw])]; exact hacc'
   · rw [ite_eq_left (by simp [hsw])]
     refine lt_two_pow_of_bits fun i hi => ?_
-    rw [testBit_insert]
+    rw [VSet.mem_insert]
     have h1 : acc'.testBit i = false :=
       Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hacc'
         (Nat.pow_le_pow_right (by omega) hi))
@@ -347,12 +347,12 @@ theorem orbitClose_of_wordConn {nn : Nat} {gens : List (Array Nat)}
   obtain ⟨w, hw, happ⟩ := h
   have hins : insert 0 v < 2 ^ nn := by
     refine lt_two_pow_of_bits fun i hi => ?_
-    rw [testBit_insert, Nat.zero_testBit]
+    rw [VSet.mem_insert, Nat.zero_testBit]
     have : v ≠ i := by omega
     simp [this]
   have hv0 : (orbitClose nn gens nn (insert 0 v)).testBit v = true := by
     refine orbitClose_grows nn _ v ?_
-    rw [testBit_insert, Nat.zero_testBit]
+    rw [VSet.mem_insert, Nat.zero_testBit]
     simp
   have := orbitClose_nn_word hb hins w hw v hv0
   rwa [happ] at this
@@ -385,10 +385,10 @@ The word composes to a single checked, cell-stabilizing automorphism
 carrying one member onto the other, and `childKey_of_carried`
 transports the subtree key. No ordering of the two offsets is
 involved. -/
-theorem childKey_of_wordConn {ctx : Ctx} (hn : ctx.n = n)
+theorem childKey_of_wordConn {ctx : Ctx n}
     (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
     {gens : List (Array Nat)}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -411,10 +411,10 @@ theorem childKey_of_wordConn {ctx : Ctx} (hn : ctx.n = n)
 /-- The same, with the connection in the other direction. Forward
 words suffice because a checked automorphism's inverse is one of its
 own forward powers, which is what `wordConn_symm` records. -/
-theorem childKey_of_wordConn' {ctx : Ctx} (hn : ctx.n = n)
+theorem childKey_of_wordConn' {ctx : Ctx n}
     (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
     {gens : List (Array Nat)}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -465,10 +465,10 @@ private theorem orbConn_ptrIter {gens : List (Array Nat)}
 /-- **A skipped child repeats the key of its orbit pointer's target.**
 This is the domination fact for one step of the transcription's orbit
 test. -/
-theorem childKey_of_orbitPtr {ctx : Ctx} (hn : ctx.n = n)
+theorem childKey_of_orbitPtr {ctx : Ctx n}
     (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
     {gens : List (Array Nat)} {orbits : Array Nat}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -491,10 +491,10 @@ theorem childKey_of_orbitPtr {ctx : Ctx} (hn : ctx.n = n)
 chase.** The chase is what reaches an orbit representative, which is
 the offset the loop actually explored, so this is the form the
 domination step applies. -/
-theorem childKey_of_ptrIter {ctx : Ctx} (hn : ctx.n = n)
+theorem childKey_of_ptrIter {ctx : Ctx n}
     (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
     {gens : List (Array Nat)} {orbits : Array Nat}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' k : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
