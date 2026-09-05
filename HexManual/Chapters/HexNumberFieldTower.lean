@@ -137,7 +137,7 @@ has dimension four and the four roots square to `2` or `3`:
 def biquadratic : Poly rat :=
   liftZPoly rat #p[6, 0, -5, 0, 1]
 
-/-- The finite root list of a splitting; the zero polynomial has none. -/
+/-- The finite root list; empty for the zero polynomial. -/
 def finiteRoots {T : NumberTower} : Roots T → Array (Elem T × Nat)
   | .finite rs => rs
   | .all => #[]
