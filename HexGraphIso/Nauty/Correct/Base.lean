@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchOutcome
+public import HexGraphIso.Nauty.Correct.Outcome
 public import HexGraphIso.Nauty.SearchReach
 import all HexGraphIso.Nauty.Search
 
