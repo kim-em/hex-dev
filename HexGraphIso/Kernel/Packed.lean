@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Bits
-public import HexGraphIso.Nauty.VSet
+public import HexGraphIso.Nauty.Search.Bits
+public import HexGraphIso.Nauty.Search.VSet
 public import HexGraphIso.Kernel.IsoLit
 
 public section

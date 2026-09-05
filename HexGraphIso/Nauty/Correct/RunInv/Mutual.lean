@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.RunInv.History
-import all HexGraphIso.Nauty.Search
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

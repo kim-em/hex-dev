@@ -7,9 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Model.Autom
-public import HexGraphIso.Nauty.Translator
-public import HexGraphIso.Nauty.Achieved
-public import HexGraphIso.Nauty.SpecIso
+public import HexGraphIso.Nauty.Cert.Translator
+public import HexGraphIso.Nauty.Spec.Achieved
+public import HexGraphIso.Nauty.Spec.SpecIso
 
 public section
 

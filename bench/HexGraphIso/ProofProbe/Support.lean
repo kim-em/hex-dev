@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGraphIso
+import HexGraphIso.TestGraphs
 
 /-!
 Shared inputs for the `graph_iso` fresh-module probes
@@ -14,12 +15,11 @@ it, so a fresh build of one probe measures reification, compiled
 search, literal elaboration, and kernel replay for exactly one goal
 against the `Baseline` module's matched import cost.
 
-The random instances are the recorded corpus pairs of
-`HexGraphIso.TacticTests`: the `G(12, 1/2)` graph of the first
-SplitMix64 corpus seed, its image under the recorded Fisher-Yates
-relabelling, and the `G(12, 1/2)` graph of the second seed. The
-literals are tied back to the generators by `#guard` here, once, so
-the probe cases replay literals rather than the `UInt64` stream.
+The random instances are the recorded corpus pair of
+`HexGraphIso.TestGraphs`, shared with the `graph_iso` regression
+tests: the `G(12, 1/2)` graph of the first SplitMix64 corpus seed, its
+image under the recorded Fisher-Yates relabelling, and the
+`G(12, 1/2)` graph of the second seed.
 
 The coloured pair is the Petersen graph with an adjacent, respectively
 non-adjacent, vertex pair marked with colour zero, at `n = 10`.
@@ -39,54 +39,10 @@ namespace Hex.GraphIso.ProofProbe
 
 open Hex Hex.GraphIso
 
-/-- Lexicographic pair index of `(i, j)`, `i < j`, over 12 vertices. -/
-def pairIdx (i j : Nat) : Nat :=
-  i * 12 - i * (i + 1) / 2 + (j - i - 1)
+/-! # The recorded corpus pair, shared with the `graph_iso` regression
+tests -/
 
-/-- The recorded pair bitmask of `Random.gnpMask ⟨Random.seed1⟩ 12`. -/
-def mask12 : Nat := 48283412393242304007
-
-/-- The recorded Fisher-Yates relabelling drawn from the continuation
-of the first seed's stream. -/
-def perm12 : Array Nat := #[11, 10, 1, 7, 3, 5, 4, 2, 9, 6, 8, 0]
-
-/-- The recorded pair bitmask of `Random.gnpMask ⟨Random.seed2⟩ 12`. -/
-def mask12b : Nat := 61032603037995048816
-
-#guard mask12 == (Random.gnpMask ⟨Random.seed1⟩ 12).1
-#guard perm12 ==
-  (Random.shuffle (Random.gnpMask ⟨Random.seed1⟩ 12).2
-    (.ofFn (n := 12) (·.val))).1
-#guard mask12b == (Random.gnpMask ⟨Random.seed2⟩ 12).1
-
-def g12 : Colored 12 1 :=
-  { graph := Graph.ofAdj
-      (fun i j => if i == j then false else
-        mask12.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val)))
-      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
-        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
-      (fun i => by simp)
-    coloring := Coloring.trivial 12 }
-
-def g12relabelled : Colored 12 1 :=
-  { graph := Graph.ofAdj
-      (fun i j => if i == j then false else
-        mask12.testBit (pairIdx
-          (Nat.min perm12[i.val]! perm12[j.val]!)
-          (Nat.max perm12[i.val]! perm12[j.val]!)))
-      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
-        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
-      (fun i => by simp)
-    coloring := Coloring.trivial 12 }
-
-def g12b : Colored 12 1 :=
-  { graph := Graph.ofAdj
-      (fun i j => if i == j then false else
-        mask12b.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val)))
-      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
-        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
-      (fun i => by simp)
-    coloring := Coloring.trivial 12 }
+export Hex.GraphIso.TestGraphs (g12 g12relabelled g12b)
 
 def petersen : Colored 10 1 :=
   { graph := Graph.ofEdges

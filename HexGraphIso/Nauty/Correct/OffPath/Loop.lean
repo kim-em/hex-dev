@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Sweep.Node
-import all HexGraphIso.Nauty.Search
-import all HexGraphIso.Nauty.Domination
+import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Invariant.Domination
 
 public section
 

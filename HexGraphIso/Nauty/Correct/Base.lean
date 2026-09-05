@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Outcome
-public import HexGraphIso.Nauty.SearchReach
-import all HexGraphIso.Nauty.Search
+public import HexGraphIso.Nauty.Invariant.Reach
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -70,7 +70,7 @@ theorem DescentCodes.next {nn : Nat} {cs : List Nat} {st st' : SearchSt n}
         rw [h.firstSize]
         omega)]
       have hi : cs.length + 1 - 1 = cs.length := by omega
-      rw [hi, getElem!_append_right'' (Nat.le_refl _) (by simp)]
+      rw [hi, getElem!_append_right (Nat.le_refl _) (by simp)]
       simp only [Nat.sub_self]
       rfl
     · rw [hfirst, Array.getElem!_set!_ne _ _ _ _
@@ -78,7 +78,7 @@ theorem DescentCodes.next {nn : Nat} {cs : List Nat} {st st' : SearchSt n}
       have hics : i ≤ cs.length := by
         simp only [List.length_append, List.length_singleton] at hlast
         omega
-      rw [getElem!_append_left'' (by omega)]
+      rw [getElem!_append_left (by omega)]
       exact h.content i hi hics
   · intro c hc
     rw [List.mem_append] at hc
@@ -190,7 +190,7 @@ theorem firstLeafSt_codes {ctx : Ctx n} {nn level numcells : Nat}
       omega)]
     have hi1 : i - 1 = cs.length := by omega
     rw [hi1]
-    rw [getElem!_append_right'' (Nat.le_refl _) (by
+    rw [getElem!_append_right (Nat.le_refl _) (by
       simp only [List.length_singleton]
       omega)]
     simp only [Nat.sub_self]
@@ -203,7 +203,7 @@ theorem firstLeafSt_codes {ctx : Ctx n} {nn level numcells : Nat}
     have hics : i ≤ cs.length := by
       rw [hlen] at hbound
       omega
-    rw [getElem!_append_left'' (by omega)]
+    rw [getElem!_append_left (by omega)]
     exact hcodes i hi hics
 
 /-- A discrete first-path node installs the exact specification leaf and

@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Correct.State.Ledger
 public import HexGraphIso.Nauty.Correct.Unwind.Located
-public import HexGraphIso.Nauty.RootEquitable
+public import HexGraphIso.Nauty.Equitable.Root
 
 public section
 

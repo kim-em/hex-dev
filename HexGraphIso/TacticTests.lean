@@ -8,8 +8,10 @@ module
 
 public import HexGraphIso.Tactic
 public import HexGraphIso.Random
+public import HexGraphIso.TestGraphs
 public meta import HexGraphIso.Tactic
 public meta import HexGraphIso.Random
+public meta import HexGraphIso.TestGraphs
 
 /-!
 Regression tests for the Mathlib-free `graph_iso` tactic: positive and
@@ -20,7 +22,7 @@ asserts its message and leaves the goal unchanged.
 
 namespace Hex.GraphIso.TacticTests
 
-open Hex Hex.GraphIso
+open Hex Hex.GraphIso Hex.GraphIso.TestGraphs
 
 def p3 : Colored 3 1 :=
   { graph := Graph.ofEdges [(0, 1), (1, 2)]
@@ -158,65 +160,13 @@ example : Isomorphic edgeMarkA edgeMarkB := by graph_iso
 example : ¬ Isomorphic edgeMarkA nonedgeMark := by graph_iso
 
 /-!
-The positive random `n = 12` pair related by a recorded relabelling: the
-`G(12, 1/2)` graph of the first corpus seed against its image under the
-Fisher-Yates relabelling drawn from the continuation of the same stream.
+The recorded random `n = 12` corpus pair of `HexGraphIso.TestGraphs`:
+the `G(12, 1/2)` graph of the first seed against its image under the
+recorded Fisher-Yates relabelling, and against the graph of the second
+seed.
 -/
 
-def pairIdx (i j : Nat) : Nat :=
-  -- lexicographic pair index of `(i, j)`, `i < j`, over 12 vertices
-  i * 12 - i * (i + 1) / 2 + (j - i - 1)
-
-/-- The recorded pair bitmask of `Random.gnpMask ⟨Random.seed1⟩ 12`, kept
-literal so the kernel replay does not evaluate the UInt64 stream; the
-`#guard` below ties it to the generator. -/
-def mask12 : Nat := 48283412393242304007
-
-/-- The recorded Fisher-Yates relabelling drawn from the continuation of
-the same stream. -/
-def perm12 : Array Nat := #[11, 10, 1, 7, 3, 5, 4, 2, 9, 6, 8, 0]
-
-#guard mask12 == (Random.gnpMask ⟨Random.seed1⟩ 12).1
-#guard perm12 ==
-  (Random.shuffle (Random.gnpMask ⟨Random.seed1⟩ 12).2
-    (.ofFn (n := 12) (·.val))).1
-
-def g12 : Colored 12 1 :=
-  { graph := Graph.ofAdj
-      (fun i j => if i == j then false else
-        mask12.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val)))
-      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
-        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
-      (fun i => by simp)
-    coloring := Coloring.trivial 12 }
-
-def g12relabelled : Colored 12 1 :=
-  { graph := Graph.ofAdj
-      (fun i j => if i == j then false else
-        mask12.testBit (pairIdx
-          (Nat.min perm12[i.val]! perm12[j.val]!)
-          (Nat.max perm12[i.val]! perm12[j.val]!)))
-      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
-        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
-      (fun i => by simp)
-    coloring := Coloring.trivial 12 }
-
 example : Isomorphic g12 g12relabelled := by graph_iso
-
-/-- The recorded pair bitmask of the second corpus seed, giving the
-negative pair from the two recorded `G(12, 1/2)` seeds. -/
-def mask12b : Nat := 61032603037995048816
-
-#guard mask12b == (Random.gnpMask ⟨Random.seed2⟩ 12).1
-
-def g12b : Colored 12 1 :=
-  { graph := Graph.ofAdj
-      (fun i j => if i == j then false else
-        mask12b.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val)))
-      (fun i j => by rcases Decidable.em (i = j) with h | h <;>
-        simp [h, Nat.min_comm, Nat.max_comm, BEq.comm])
-      (fun i => by simp)
-    coloring := Coloring.trivial 12 }
 
 set_option maxRecDepth 400000 in
 example : ¬ Isomorphic g12 g12b := by graph_iso

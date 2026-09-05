@@ -8,8 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Correct.Sweep.Base
 public import HexGraphIso.Nauty.Correct.Exit.Classify
-import all HexGraphIso.Nauty.Search
-import all HexGraphIso.Nauty.OrbJoin
+import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Invariant.Orbits
 
 public section
 

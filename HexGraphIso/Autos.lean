@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Ops
-public import HexGraphIso.Nauty.OrbJoin
-import all HexGraphIso.Nauty.OrbJoin
+public import HexGraphIso.Nauty.Invariant.Orbits
+import all HexGraphIso.Nauty.Invariant.Orbits
 
 public section
 

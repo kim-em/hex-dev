@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.State.Induction
-import all HexGraphIso.Nauty.Search
-import all HexGraphIso.Nauty.SmallCellTie
+import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.SmallCell.Transitive
 
 public section
 
