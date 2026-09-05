@@ -116,6 +116,15 @@ packages that ship native code. In particular:
 A skeleton that omits these targets can elaborate yet fail at executable link
 time, so a standalone `lake build` is required before the first real publish.
 
+The `lean_lib` build settings themselves are not part of the skeleton to
+maintain: this monorepo's `lakefile.lean` decides how a library is built, and
+the sync carries that decision across. It writes `precompileModules` into the
+mirror's `lean_lib` when the monorepo sets it, so a skeleton may omit it.
+`extraDepTargets` and `moreLinkArgs` name the mirror's own `extern_lib` targets
+and system libraries, so those the skeleton must still declare; the sync
+validates them against the monorepo and refuses to publish a library that has
+lost one.
+
 ## Baseline and first publish
 
 Do not add placeholder entries to `scripts/release/synced.json`. An absent

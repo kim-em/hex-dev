@@ -223,6 +223,20 @@ anything, to publish a library whose sources import `Batteries` or
 inside the monorepo those imports always resolve, in a mirror they resolve
 only through its own `require`s.
 
+How a library is *built* is decided by this monorepo's `lakefile.lean` and
+carried across the same way. The sync reads the `lean_lib <lib>` block here and
+writes `precompileModules` into the mirror's own `lean_lib` when the mirror has
+lost it: without it Lake never builds the module dynlib that carries the
+library's `@[extern]` symbols, so the mirror compiles while any downstream
+package that evaluates the library during elaboration fails to find the native
+implementation. `extraDepTargets` and `moreLinkArgs` are validated rather than
+written, since they name `extern_lib` targets defined only in the mirror's own
+skeleton and, in `HexLLL`'s case, take the form of a platform conditional that
+no `lakefile.toml` can express; a mirror missing one stops the publication.
+Deriving all of this from the lakefile rather than restating it in
+`released.yml` is deliberate: a hand-maintained copy of a build decision is one
+that can disagree with the build.
+
 ### Publishing a new library: widen a token first
 
 The sync authenticates with the `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2`

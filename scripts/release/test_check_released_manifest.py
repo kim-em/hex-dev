@@ -13,6 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.release.check_released_manifest import (
+    check_build_settings,
     check_ci_workflows,
     check_library_only,
     check_phase_admission,
@@ -34,6 +35,25 @@ class LibraryOnlyTests(unittest.TestCase):
                     check_library_only(
                         {"repo": "leanprover/hex-example", field: value}
                     )
+
+
+class BuildSettingTests(unittest.TestCase):
+    """The mirror's build settings are derived from lakefile.lean, not declared."""
+
+    def test_a_released_library_is_accepted(self) -> None:
+        check_build_settings({"repo": "leanprover/hex-lll", "lib": "HexLLL"})
+
+    def test_a_declared_precompile_flag_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "drop the key"):
+            check_build_settings({
+                "repo": "leanprover/hex-lll",
+                "lib": "HexLLL",
+                "precompile_modules": True,
+            })
+
+    def test_a_library_absent_from_the_lakefile_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "declares no lean_lib HexGone"):
+            check_build_settings({"repo": "leanprover/hex-gone", "lib": "HexGone"})
 
 
 class Phase7AdmissionTests(unittest.TestCase):
