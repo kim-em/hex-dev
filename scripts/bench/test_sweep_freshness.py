@@ -97,12 +97,41 @@ class Assess(unittest.TestCase):
             "current_blob": current, "reason": "runtime-neutral"}))
 
     def test_a_matching_fingerprint_is_fresh(self):
-        digest = freshness.fingerprint(self.CURRENT)
+        digest = self.record(self.CURRENT)
         verdict = freshness.assess(
             self.family, [freshness.Observation(digest, "data.jsonl")],
             listing=self.CURRENT)
         self.assertTrue(verdict.fresh)
         self.assertEqual(verdict.matched.label, "data.jsonl")
+
+    def test_a_match_without_a_manifest_is_rejected(self):
+        digest = freshness.fingerprint(self.CURRENT)
+        verdict = freshness.assess(
+            self.family, [freshness.Observation(digest, "data.jsonl")],
+            listing=self.CURRENT)
+        self.assertFalse(verdict.fresh)
+        self.assertIn("committed no manifest", verdict.errors[0])
+
+    def test_a_match_whose_manifest_is_not_the_current_listing_is_rejected(self):
+        # A truncated fingerprint could in principle be claimed by a
+        # listing that is not the one recorded, so compare the bytes.
+        digest = self.record(self.CURRENT)
+        freshness.manifest_path(self.family, digest).write_text(self.BASELINE)
+        verdict = freshness.assess(
+            self.family, [freshness.Observation(digest, "data.jsonl")],
+            listing=self.CURRENT)
+        self.assertFalse(verdict.fresh)
+        self.assertIn("not the current listing", verdict.errors[0])
+
+    def test_a_mode_change_is_a_difference(self):
+        digest = self.record(self.CURRENT)
+        chmodded = self.CURRENT.replace("100644 " + "b" * 40,
+                                        "100755 " + "b" * 40)
+        verdict = freshness.assess(
+            self.family, [freshness.Observation(digest, "data.jsonl")],
+            listing=chmodded)
+        self.assertFalse(verdict.fresh)
+        self.assertIn("mode 100644 -> 100755", verdict.errors[0])
 
     def test_a_moved_fingerprint_without_a_manifest_is_stale(self):
         verdict = freshness.assess(
@@ -172,6 +201,15 @@ class Assess(unittest.TestCase):
             freshness.Observation("f" * 12, "unrecorded.jsonl", 2)],
             listing=self.CURRENT)
         self.assertEqual(verdict.baseline.label, "recorded.jsonl")
+
+
+class Quoting(unittest.TestCase):
+    def test_a_c_quoted_name_matches_under_its_plain_name(self):
+        family = freshness.Family(name="q", include=("Lib/",))
+        self.assertTrue(family.matches(r'"Lib/od\td.lean"'))
+
+    def test_a_plain_name_is_left_alone(self):
+        self.assertEqual(freshness.unquote("Lib/A.lean"), "Lib/A.lean")
 
 
 class Exemptions(unittest.TestCase):
@@ -280,10 +318,9 @@ class CommandLine(unittest.TestCase):
             result.stdout.strip(),
             freshness.fingerprint(freshness.index_listing(freshness.GRAPHISO)))
 
-    def test_paths_prints_the_staging_pathspec(self):
-        result = self.run_cli("--paths", "hexgraphiso-cactus")
-        self.assertEqual(result.stdout.split(),
-                         freshness.GRAPHISO.staging_pathspec())
+    def test_an_unknown_mode_is_rejected(self):
+        self.assertEqual(
+            self.run_cli("--paths", "hexgraphiso-cactus").returncode, 2)
 
     def test_an_unknown_family_is_rejected(self):
         self.assertEqual(self.run_cli("--fingerprint", "nope").returncode, 2)

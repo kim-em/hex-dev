@@ -20,8 +20,7 @@ cd "$root"
 # in scripts/bench/sweep_freshness.py, and both the staging pathspec and
 # the fingerprint come from there.
 freshness=scripts/bench/sweep_freshness.py
-# shellcheck disable=SC2046  # a pathspec list, deliberately word-split
-git add -- $(python3 "$freshness" --paths hexgraphiso-cactus)
+python3 "$freshness" --stage hexgraphiso-cactus
 fp=$(python3 "$freshness" --record hexgraphiso-cactus)
 host=$(hostname -s)
 

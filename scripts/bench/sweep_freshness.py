@@ -29,10 +29,13 @@ both the baseline and the current blob, so they expire automatically when
 the file changes again, and they live one-per-file so that concurrent
 pull requests never collide on a shared list.
 
-The pay-off is that a broad relevant set (factorization spans HexBasic
-through HexPolyZ, and re-measuring needs a dedicated-hardware session)
-stays enforceable, while a tight one (hex-graph-iso, minutes to
-regenerate) simply re-measures and rarely writes an exemption at all.
+The pay-off is that a broad relevant set (the Hex factor service spans
+HexBasic through HexPolyZ, and re-measuring needs a dedicated-hardware
+session) stays enforceable, while a tight one re-measures instead. So a
+family opts into the exemption channel only when its relevant set is
+broad enough to need one: today that is Hex's own factorization curve,
+and not the comparator curves or the hex-graph-iso figures, which fail
+until they are re-measured.
 """
 
 from __future__ import annotations
@@ -67,9 +70,10 @@ def git(*args: str) -> str:
 class Family:
     """The source a plot family's measurements depend on, and where they live.
 
-    ``include`` and ``exclude`` entries are exact paths, directory
-    prefixes ending in ``/``, or a prefix with one ``*`` standing for the
-    file name, as in ``HexArith/*.lean``. Keep both sets as tight as
+    An ``include`` or ``exclude`` entry is either a plain path, which
+    matches that path and everything under it exactly as a git pathspec
+    does, or a directory followed by one ``*`` glob standing for the file
+    name below it, as in ``HexArith/*.lean``. Keep both sets as tight as
     honesty allows: everything listed here forces a re-measurement (or an
     exemption) when it changes, and everything omitted is a claim that it
     cannot move the curves.
@@ -83,6 +87,7 @@ class Family:
     regenerate: str = ""
 
     def matches(self, path: str) -> bool:
+        path = unquote(path)
         return (any(_entry_matches(entry, path) for entry in self.include)
                 and not any(_entry_matches(entry, path)
                             for entry in self.exclude))
@@ -92,10 +97,15 @@ class Family:
 
         Deliberately coarse: `git ls-tree` rejects exclude magic, so both
         the index and the tree listing filter with `matches` instead, and
-        the pathspec only has to avoid walking the whole repository.
+        the pathspec only has to avoid walking the whole repository. A
+        glob entry contributes the directory it globs inside, which is a
+        superset of it however the glob is written.
         """
-        return sorted(
-            {entry.partition("*")[0] for entry in self.include} - {""})
+        coarse = set()
+        for entry in self.include:
+            head, star, _tail = entry.partition("*")
+            coarse.add(head.rpartition("/")[0] + "/" if star else head)
+        return sorted(coarse - {"", "/"})
 
     def staging_pathspec(self) -> list[str]:
         """The exact pathspec, for staging the relevant source before a sweep.
@@ -104,6 +114,21 @@ class Family:
         family never stages documentation the author had not staged.
         """
         return list(self.include) + [f":!{entry}" for entry in self.exclude]
+
+
+def unquote(path: str) -> str:
+    """The plain name of a path git C-quoted because of a control character.
+
+    `core.quotePath=false` already prints non-ASCII names plainly, but a
+    name containing a tab, newline, quote or backslash is still quoted.
+    Matching the quoted form against a family declaration would silently
+    drop such a file out of the relevant set, so undo the quoting for the
+    comparison while the listing keeps git's bytes.
+    """
+    if len(path) > 1 and path.startswith('"') and path.endswith('"'):
+        return path[1:-1].encode(
+            "latin-1", "backslashreplace").decode("unicode_escape")
+    return path
 
 
 def _entry_matches(entry: str, path: str) -> bool:
@@ -154,14 +179,14 @@ def fingerprint(listing: str) -> str:
         listing.encode()).hexdigest()[:FINGERPRINT_DIGITS]
 
 
-def parse_listing(listing: str) -> dict[str, str]:
-    """Map each listed path to its blob id."""
-    blobs = {}
+def parse_listing(listing: str) -> dict[str, tuple[str, str]]:
+    """Map each listed path to the (mode, blob) the listing records for it."""
+    entries = {}
     for line in listing.splitlines():
         meta, _, path = line.partition("\t")
-        _mode, blob, _stage = meta.split()
-        blobs[path] = blob
-    return blobs
+        mode, blob, _stage = meta.split()
+        entries[path] = (mode, blob)
+    return entries
 
 
 def manifest_path(family: Family, digest: str) -> Path:
@@ -194,20 +219,40 @@ class Observation:
 
 @dataclass(frozen=True)
 class Difference:
+    """One path whose recorded entry moved between two listings."""
+
     path: str
     baseline: str | None
     current: str | None
+    baseline_mode: str | None = None
+    current_mode: str | None = None
 
     def render(self) -> str:
+        if self.baseline == self.current:
+            # Same content, different file mode: an executable bit or a
+            # symlink, which changes how the file is used, not its bytes.
+            return (f"{self.path} (mode {self.baseline_mode or 'absent'}"
+                    f" -> {self.current_mode or 'absent'})")
         return (f"{self.path} ({(self.baseline or 'absent')[:12]}"
                 f" -> {(self.current or 'absent')[:12]})")
 
 
 def differences(baseline: str, current: str) -> list[Difference]:
+    """Every path whose mode or blob differs between two listings.
+
+    Mode matters as much as content: the fingerprint hashes it, so
+    ignoring it would let a chmod move the fingerprint with nothing left
+    for the check to name.
+    """
     before, after = parse_listing(baseline), parse_listing(current)
-    return [Difference(path, before.get(path), after.get(path))
-            for path in sorted(set(before) | set(after))
-            if before.get(path) != after.get(path)]
+    found = []
+    for path in sorted(set(before) | set(after)):
+        was, now = before.get(path), after.get(path)
+        if was != now:
+            found.append(Difference(
+                path, was[1] if was else None, now[1] if now else None,
+                was[0] if was else None, now[0] if now else None))
+    return found
 
 
 def load_exemptions(directory: Path | None) -> set[tuple[str, str, str]]:
@@ -276,9 +321,20 @@ def assess(family: Family, observations: list[Observation],
     verdict = Verdict(fingerprint=digest)
 
     for observation in observations:
-        if observation.fingerprint == digest:
-            verdict.matched = observation
-            return verdict
+        if observation.fingerprint != digest:
+            continue
+        verdict.matched = observation
+        recorded = manifest_path(family, digest)
+        if not recorded.exists():
+            verdict.errors.append(
+                f"{observation.label} claims the current source "
+                f"(fingerprint {digest}) but committed no manifest; record "
+                f"it with sweep_freshness.py --record {family.name}")
+        elif recorded.read_text() != listing:
+            verdict.errors.append(
+                f"the manifest for {digest} is not the current listing, so "
+                f"{observation.label} does not describe this source")
+        return verdict
 
     with_manifest = [
         observation for observation in sorted(
@@ -339,7 +395,6 @@ GRAPHISO = Family(
         "scripts/plots/hexgraphiso-cactus.py",
     ),
     exclude=("HexGraphIso/SPEC", "HexGraphIso/README.md"),
-    exemptions=ROOT / "scripts" / "bench" / "graphiso_runtime_exemptions",
     figures=(
         "hexgraphiso-canon-cactus.svg",
         "hexgraphiso-pairs-cactus.svg",
@@ -398,11 +453,20 @@ FACTOR_SYSTEMS = (
 
 
 def factor_family(system: str) -> Family:
-    """The source one comparator system's factorization curve depends on."""
+    """The source one comparator system's factorization curve depends on.
+
+    Only Hex's own curve carries an exemption channel. Its relevant set is
+    the whole factor service call graph, where proof-only edits land
+    constantly; a comparator's is three to six adapter files plus the
+    corpus and the sweep driver, and every edit there is a deliberate one
+    aimed at the measurement itself. Widening the channel to the
+    comparators would let a single exemption advance five records that
+    only dedicated hardware can re-measure.
+    """
     return Family(
         name=f"hexbz-factor-{system}",
         include=FACTOR_COMMON + FACTOR_SYSTEM_PATHS[system],
-        exemptions=FACTOR_EXEMPTIONS,
+        exemptions=FACTOR_EXEMPTIONS if system == "hex-factor" else None,
         regenerate=(
             "scripts/bench/factor_sweep.py on the benchmarking host"),
     )
@@ -413,11 +477,14 @@ FAMILIES = {GRAPHISO.name: GRAPHISO} | {
     for system in FACTOR_SYSTEMS}
 
 
+MODES = ("--fingerprint", "--record", "--stage")
+
+
 def main(argv: list[str]) -> int:
-    """Print or record a family's fingerprint; regeneration scripts use this."""
-    usage = ("usage: sweep_freshness.py (--fingerprint | --record | --paths)"
+    """Print, record or stage a family's source; regeneration scripts use this."""
+    usage = (f"usage: sweep_freshness.py ({' | '.join(MODES)})"
              " <family> [--ref REF]")
-    if len(argv) < 2 or argv[0] not in ("--fingerprint", "--record", "--paths"):
+    if len(argv) < 2 or argv[0] not in MODES:
         print(usage, file=sys.stderr)
         return 2
     mode, name, *rest = argv
@@ -426,8 +493,11 @@ def main(argv: list[str]) -> int:
         print(f"unknown family {name}; known: {', '.join(sorted(FAMILIES))}",
               file=sys.stderr)
         return 2
-    if mode == "--paths":
-        print(" ".join(family.staging_pathspec()))
+    if mode == "--stage":
+        # Staged here rather than by the caller: a pathspec interpolated
+        # into a shell command line is glob-expanded and word-split before
+        # git sees it, which silently narrows what gets staged.
+        git("add", "--", *family.staging_pathspec())
         return 0
     if rest and (len(rest) != 2 or rest[0] != "--ref"):
         print(usage, file=sys.stderr)

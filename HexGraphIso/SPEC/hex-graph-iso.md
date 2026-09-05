@@ -1141,9 +1141,9 @@ regeneration). `scripts/bench/check_graphiso_sweep_freshness.py` is
 the required check: it fails whenever the implementation, the graph
 substrate, the sweep driver, or the plot script differs from what any
 committed sweep measured. The relevant set is deliberately tight and
-regeneration takes minutes, so the answer here is to re-measure rather
-than to write a runtime-neutral exemption. Both the fingerprinting and
-the exemption machinery are shared with the other published figure
+regeneration takes minutes, so this family declares no exemption
+directory at all: re-measuring is the only way past the check. The
+fingerprinting mechanism is shared with the other published figure
 families; see [SPEC/benchmarking.md](../../SPEC/benchmarking.md)
 §Figure freshness.
 

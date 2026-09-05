@@ -55,10 +55,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-
-from scripts.bench import sweep_freshness  # noqa: E402
-
 CORPUS_PATH = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 ORACLE = ROOT / "scripts" / "oracle"
 HEX_SERVICE = ROOT / ".lake" / "build" / "bin" / "hexbz_factor_service"
@@ -468,25 +464,6 @@ def env_block(exe_name: str) -> dict:
     }
 
 
-def record_source_fingerprints(systems: list[str]) -> dict[str, str]:
-    """Fingerprint each measured system's source and commit its manifest.
-
-    This is what keeps the published figures honest after a squash merge:
-    the freshness check compares the current source listing against the
-    manifest recorded here, not against the commit this ran at.
-
-    The fingerprint reads the index, so stage (or commit) the source
-    before sweeping; a measurement from a dirty tree is rejected by the
-    check anyway, on `env.git_dirty`.
-    """
-    fingerprints = {}
-    for system in systems:
-        if system in sweep_freshness.FACTOR_SYSTEMS:
-            fingerprints[system] = sweep_freshness.record(
-                sweep_freshness.factor_family(system))
-    return fingerprints
-
-
 def load_corpus(path: Path, family=None, limit=None, combined_only=False):
     instances = []
     for line in path.read_text().splitlines():
@@ -570,8 +547,7 @@ def main():
         rec["factor_degrees"] = rec.pop("_degrees", None)
 
     report = {
-        "env": env_block("factor_sweep") | {
-            "source_fingerprints": record_source_fingerprints(requested)},
+        "env": env_block("factor_sweep"),
         "config": {
             "cutoff_seconds": args.cutoff,
             "repeats_policy": "median-of-5 when first call < 1s, else single call",

@@ -108,8 +108,9 @@ polynomial factorization comparison:
   cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
   BZ, and Isabelle LLL. A relevant implementation, adapter, harness, corpus,
   toolchain, or dependency change since a system's recorded source fingerprint
-  makes that system stale, and the PR must refresh its measurement or record a
-  runtime-neutral exemption for the paths that moved. `scripts/bench/
+  makes that system stale, and the PR must refresh its measurement; only Hex's
+  own curve can instead record a runtime-neutral exemption for the paths that
+  moved. `scripts/bench/
   check_graphiso_sweep_freshness.py` applies the same mechanism to the
   hex-graph-iso cactus figures; both are built from
   `scripts/bench/sweep_freshness.py`, whose unit tests run in the same step.

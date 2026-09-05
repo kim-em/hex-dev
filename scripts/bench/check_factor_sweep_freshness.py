@@ -151,6 +151,49 @@ def observation(system: str, timestamp, path: Path, report) -> (
         fingerprint=digest, label=path.name, timestamp=timestamp)
 
 
+def record(report_path: Path, ref: str | None) -> int:
+    """Stamp a freshly measured sweep with the source it measured.
+
+    The sweep driver deliberately does not do this itself: it is a shared
+    relevant path for all six systems, so editing it would mark every
+    comparator record stale, and the comparators have no exemption
+    channel. Run this straight after a sweep instead.
+
+    The listing is read from the commit the sweep recorded, which is the
+    source it actually measured, and falls back to the index when the
+    report has no resolvable commit.
+    """
+    report = json.loads(report_path.read_text())
+    systems = [system for system in report.get("config", {}).get("systems", [])
+               if system in SYSTEMS]
+    if not systems:
+        print(f"{report_path.name}: no measured system to fingerprint",
+              file=sys.stderr)
+        return 1
+    if ref is None:
+        commit = report.get("env", {}).get("git_commit")
+        if commit and freshness.git(
+                "cat-file", "-t", f"{commit}^{{commit}}").strip() == "commit":
+            ref = commit
+    fingerprints = {}
+    for system in systems:
+        family = freshness.factor_family(system)
+        listing = (freshness.tree_listing(family, ref) if ref
+                   else freshness.index_listing(family))
+        fingerprints[system] = freshness.record(family, listing)
+    env = report.setdefault("env", {})
+    env["source_fingerprints"] = dict(sorted(
+        ((env.get("source_fingerprints") or {}) | fingerprints).items()))
+    report_path.write_text(json.dumps(report, indent=2) + "\n")
+    source = f"commit {ref[:12]}" if ref else "the index"
+    print(f"{report_path.name}: recorded {len(fingerprints)} fingerprint(s) "
+          f"from {source}")
+    for system, digest in sorted(fingerprints.items()):
+        print(f"  {system} {digest} "
+              f"({freshness.factor_family(system).name}-{digest}.manifest)")
+    return 0
+
+
 def main() -> int:
     corpus_sha = hashlib.sha256(CORPUS.read_bytes()).hexdigest()
     corpus_names = {
@@ -233,5 +276,19 @@ def main() -> int:
     return 0
 
 
+def cli(argv: list[str]) -> int:
+    if argv and argv[0] == "--record":
+        if len(argv) not in (2, 4) or (len(argv) == 4 and argv[2] != "--ref"):
+            print("usage: check_factor_sweep_freshness.py "
+                  "--record <sweep.json> [--ref REF]", file=sys.stderr)
+            return 2
+        return record(Path(argv[1]), argv[3] if len(argv) == 4 else None)
+    if argv:
+        print("usage: check_factor_sweep_freshness.py "
+              "[--record <sweep.json> [--ref REF]]", file=sys.stderr)
+        return 2
+    return main()
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(cli(sys.argv[1:]))

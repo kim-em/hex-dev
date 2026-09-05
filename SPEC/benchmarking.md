@@ -1235,7 +1235,8 @@ enforced figure family uses one mechanism, declared in
   `baseline_blob`, `current_blob` and a reviewable `reason`. Naming both
   blobs makes an exemption expire as soon as the file changes again, and
   one file per exemption means concurrent pull requests never collide on
-  a shared list.
+  a shared list. A family opts in by declaring a directory; a family that
+  declares none has no way to pass except by re-measuring.
 
 Key on content, not on the measuring commit. A commit key has to stay
 resolvable forever, which holds for data recorded on `main` by a
@@ -1245,11 +1246,28 @@ does any rebase. Content survives both.
 
 Exemptions exist because content keying alone cannot absorb a
 runtime-neutral edit -- a docstring moves the fingerprint exactly as a
-hot-loop rewrite does. Whether a family needs them follows from its
-relevant set. Factorization spans HexBasic through HexPolyZ and
-re-measuring needs a dedicated-hardware session, so proof-only edits are
-absorbed; hex-graph-iso names four paths and regenerates in minutes, so
-it re-measures instead.
+hot-loop rewrite does. Whether a family gets them follows from its
+relevant set. Hex's own factorization curve spans HexBasic through
+HexPolyZ and re-measuring needs a dedicated-hardware session, so
+proof-only edits are absorbed. Every other family re-measures: the
+comparator curves see three to six adapter files plus the corpus and the
+sweep driver, where every edit is aimed at the measurement itself, and
+hex-graph-iso names four paths and regenerates in minutes.
+
+That is also why the sweep driver does not fingerprint its own run: it is
+a relevant path for all six factorization systems, so editing it would
+mark every comparator record stale. A sweep is stamped afterwards, by the
+guard that defines what a valid observation is:
+
+```sh
+python3 scripts/bench/check_factor_sweep_freshness.py \
+  --record reports/bench-results/<sweep>.json
+```
+
+which writes each measured system's manifest and records its fingerprint
+in the report. `scripts/bench/graphiso_cactus_sweep.sh` does the
+equivalent inline, staging the relevant paths and recording the manifest
+before it measures.
 
 The comparator figures outside these two families (LLL, Hermite, Smith
 and the rest) are refreshed by the scheduled performance workflow and
