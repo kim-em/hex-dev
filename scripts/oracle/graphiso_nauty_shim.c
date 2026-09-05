@@ -29,6 +29,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "nauty.h"
 
 static int *genbuf = NULL;
@@ -61,6 +62,7 @@ int main(void) {
     statsblk stats;
     int n, k;
     char row[4100];
+    const int rowcap = (int)sizeof(row) - 1;
 
     options.getcanon = TRUE;
     options.digraph = FALSE;
@@ -77,6 +79,10 @@ int main(void) {
 
     while (scanf("%d %d", &n, &k) == 2) {
         if (n < 1) break;
+        if (n > rowcap) {
+            fprintf(stderr, "shim: n = %d exceeds the row buffer\n", n);
+            return 4;
+        }
         int m = SETWORDSNEEDED(n);
         nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);
         DYNALLOC2(graph, g, g_sz, m, n, "malloc");
@@ -85,11 +91,17 @@ int main(void) {
         DYNALLOC1(int, ptn, ptn_sz, n, "malloc");
         DYNALLOC1(int, orbits, orbits_sz, n, "malloc");
         int *col = malloc(n * sizeof(int));
+        if (!col) { fprintf(stderr, "shim: out of memory\n"); return 3; }
         for (int i = 0; i < n; i++)
             if (scanf("%d", &col[i]) != 1) return 2;
         EMPTYGRAPH(g, m, n);
         for (int i = 0; i < n; i++) {
-            if (scanf("%s", row) != 1) return 2;
+            if (scanf("%4099s", row) != 1) return 2;
+            if ((int)strlen(row) != n) {
+                fprintf(stderr, "shim: adjacency row of length %zu for "
+                                "n = %d\n", strlen(row), n);
+                return 5;
+            }
             for (int j = 0; j < n; j++)
                 if (row[j] == '1' && i < j) { ADDONEEDGE(g, i, j, m); }
         }

@@ -313,10 +313,12 @@ individualized colourings, not from that list.
 
 The four fields are also available on their own, in the `Aut`
 namespace: `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order`,
-with `Aut.trace` the unchecked recorded list they start from. A caller
-who wants only the generators takes `Aut.gens`, which runs one
+with `Aut.trace` the unchecked recorded list they start from, and
+`Aut.gens_isIso` the membership theorem stated directly on `Aut.gens`.
+A caller who wants only the generators takes `Aut.gens`, which runs one
 traversal; `autos` computes `order` as well, and that runs one further
-traversal per base point.
+traversal per base point. The Mathlib wrappers take the projection they
+need for the same reason.
 
 The relation the orbit array reports:
 

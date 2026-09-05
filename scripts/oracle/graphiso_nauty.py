@@ -9,8 +9,9 @@ archive, hash-recorded in that directory's README and version-controlled
 here). The oracle independently computes and compares the ordered
 colour-cell sizes, the canonical upper-triangle adjacency bits, and every
 entry of ``canonlab``; the Lean answer is never canonicalized before
-comparison. The visited-node counter is also compared, pinning the whole
-search traversal rather than only its result.
+comparison. The visited-node counter is also compared, so the fixture
+pins how much of the tree the two programs walked and not only the
+answer they reached.
 
 ``graphisoautos`` records pin the automorphism surface. The shim
 collects nauty's own generator list through ``options.userautomproc``,
@@ -23,8 +24,10 @@ entries; when the two lists are the same length, which is every case on
 the current corpus, they must agree entry by entry. The recorded list
 itself is pinned by the committed fixture, so a change in the traversal
 shows up as a fixture diff even where the subsequence relation would
-tolerate it. The orbit array, the orbit count and the group order
-(``stats.grpsize1 * 10 ** stats.grpsize2``) are compared exactly.
+tolerate it. The orbit array, the orbit count and the group order are
+compared exactly; the order comparison refuses a case whose order has
+reached ``10 ** 10``, where nauty's ``grpsize1`` is no longer an exact
+integer.
 
 The compiled shim binary is cached in ``HEX_NAUTY_CACHE`` or
 ``~/.cache/hex-nauty``, keyed by the SHA-256 of the shim source together
@@ -148,18 +151,26 @@ def _check_autos(record: dict, answer: dict) -> None:
             f"{case}: numOrbits {record['numOrbits']} != nauty "
             f"{answer['norbits']}"
         )
-    if answer["grpsize2"] == 0:
-        order = int(round(answer["grpsize1"]))
-        if order != record["order"]:
-            raise OracleMismatch(
-                f"{case}: order {record['order']} != nauty {order}"
-            )
-    else:
-        order = answer["grpsize1"] * 10.0 ** answer["grpsize2"]
-        if abs(order - record["order"]) > 1e-9 * order:
-            raise OracleMismatch(
-                f"{case}: order {record['order']} != nauty {order}"
-            )
+    # nauty carries the group order as grpsize1 * 10 ** grpsize2, and
+    # normalizes out of the double only once the product reaches 1e10
+    # (nauty.h MULTIPLY). Below that the double is an exact integer and
+    # the comparison is exact; above it the mantissa has been divided and
+    # no integer can be recovered, so refuse rather than compare with a
+    # tolerance that would accept a wrong order. Every corpus case is
+    # well below the threshold; a case that is not has to be reconsidered
+    # here rather than silently weakened.
+    if answer["grpsize2"] != 0:
+        raise OracleMismatch(
+            f"{case}: nauty reports the group order as "
+            f"{answer['grpsize1']} * 10 ** {answer['grpsize2']}, past the "
+            f"range where it is an exact integer; the automorphism corpus "
+            f"must stay below 10 ** 10"
+        )
+    order = int(round(answer["grpsize1"]))
+    if order != record["order"]:
+        raise OracleMismatch(
+            f"{case}: order {record['order']} != nauty {order}"
+        )
     if len(answer["gens"]) != record["numGenerators"]:
         raise OracleMismatch(
             f"{case}: numGenerators {record['numGenerators']} != nauty "

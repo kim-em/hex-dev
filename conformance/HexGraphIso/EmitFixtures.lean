@@ -102,7 +102,8 @@ private def emitAutoCase (case : String) (n k : Nat) (colors : Array Nat)
     (colors.toList.map Int.ofNat)
     (edges.map fun (p, q) =>
       (Int.ofNat (Nat.min p q), Int.ofNat (Nat.max p q)))
-    ((Aut.trace G).map fun γ => γ.toList.map Int.ofNat)
+    (a.gens.map fun p =>
+      (List.finRange n).map fun i => Int.ofNat (p.get i).val)
     (Nauty.runColored G).numgenerators
     (a.orbits.toList.map Int.ofNat)
     a.numOrbits

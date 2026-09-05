@@ -410,11 +410,13 @@ the whole traversal again on that colouring. A colour-preserving
 automorphism of the new colouring is exactly an automorphism of the old
 one fixing the chosen vertex, so the new run computes the stabilizer.
 The order is the length of the chosen orbit times the order of the
-stabilizer, and the recursion stops when every orbit is a single
-vertex, where the group is trivial. The chain therefore costs one
+stabilizer, and the recursion stops when every reported orbit is a
+single vertex, where the product is one. The chain therefore costs one
 traversal per level. As with the orbits, the number this produces is
-the true order of the automorphism group when every level's orbit
-array is the true orbit partition, and a lower bound otherwise.
+the true order of the automorphism group when every level's reported
+orbit array is the true orbit partition, and a lower bound otherwise:
+where it is not, a discrete reported orbit array need not mean a
+trivial group.
 
 One difference between the reported list and the list of automorphisms
 the program finds is output-relevant enough to state. At a tie leaf of

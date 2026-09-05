@@ -187,32 +187,33 @@ is not proved, so this is a source of automorphisms rather than a
 presentation of the group. -/
 def autos (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     List (Colored.Iso G G) :=
-  (_root_.Hex.GraphIso.autos (encode e G)).gens.attach.map fun p =>
-    isoOfIsIso e e (_root_.Hex.GraphIso.autos_isIso p.property)
+  (Aut.gens (encode e G)).attach.map fun p =>
+    isoOfIsIso e e (Aut.gens_isIso p.property)
 
-/-- The order of the colour-preserving automorphism group, as the
-orbit-stabilizer chain of the pinned search computes it. Conformance
-pins it against nauty's `grpsize`; no theorem states it, because that
-would need the generators to generate the whole group, and without
-that it is only a lower bound. -/
+/-- The orbit-stabilizer product the pinned search computes, which is
+the order of the colour-preserving automorphism group when the recorded
+orbits are the true ones. Conformance pins it against nauty's
+`grpsize`; no theorem states it, because that would need the generators
+to generate the whole group, and without that it is only a lower
+bound. -/
 def autOrder (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     Nat :=
-  (_root_.Hex.GraphIso.autos (encode e G)).order
+  Aut.order (encode e G)
 
 /-- The number of vertex orbits the pinned search reports, under the
 same caveat as `autOrder`. -/
 def autNumOrbits (e : V ≃ Fin n) (G : Colored V k)
     [DecidableRel G.graph.Adj] : Nat :=
-  (_root_.Hex.GraphIso.autos (encode e G)).numOrbits
+  Aut.numOrbits (encode e G)
 
 /-- Vertices the reported orbit array puts together are carried onto
 each other by a colour-preserving automorphism. -/
 theorem sameOrbit_of_autos (e : V ≃ Fin n) (G : Colored V k)
     [DecidableRel G.graph.Adj] (v w : V)
-    (h : (_root_.Hex.GraphIso.autos (encode e G)).orbits[(e v).val]! =
-      (_root_.Hex.GraphIso.autos (encode e G)).orbits[(e w).val]!) :
+    (h : (Aut.orbits (encode e G))[(e v).val]! =
+      (Aut.orbits (encode e G))[(e w).val]!) :
     ∃ f : Colored.Iso G G, f.graphIso v = w := by
-  rcases (_root_.Hex.GraphIso.autos_sameOrbit (encode e G) (e v) (e w) h).elim
+  rcases (Aut.sameOrbit_of_orbits_eq (encode e G) (e v) (e w) h).elim
     with ⟨p, hp, hpv⟩
   refine ⟨isoOfIsIso e e hp, ?_⟩
   show e.symm (p.get (e v)) = w
