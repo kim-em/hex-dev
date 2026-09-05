@@ -236,6 +236,13 @@ theorem mem_insert_of_lt (s : VSet n) {v : Nat} (hv : v < n) (w : Nat) :
     (s.insert v).mem w = (s.mem w || v == w) := by
   rw [mem_insert, show decide (v < n) = true by simp [hv], Bool.and_true]
 
+theorem mem_insert_self (s : VSet n) {v : Nat} (hv : v < n) : (s.insert v).mem v = true := by
+  rw [mem_insert_of_lt s hv, beq_self_eq_true, Bool.or_true]
+
+theorem mem_insert_mono (s : VSet n) {u : Nat} (w : Nat) (h : s.mem u = true) :
+    (s.insert w).mem u = true := by
+  rw [mem_insert, h, Bool.true_or]
+
 theorem insert_of_ge (s : VSet n) {v : Nat} (hv : n ≤ v) : s.insert v = s := by
   rw [insert, dite_eq_right (by omega)]
 
@@ -1963,6 +1970,87 @@ theorem toNat_lt (s : VSet n) : s.toNat < 2 ^ n := by
 
 theorem toNat_inj {s t : VSet n} (h : s.toNat = t.toNat) : s = t :=
   ext fun v => by rw [← testBit_toNat, ← testBit_toNat, h]
+
+/-! # Cardinality under insert and erase -/
+
+theorem countBelow_succ (s : VSet n) (k : Nat) :
+    s.countBelow (k + 1) = s.countBelow k + (if s.mem k then 1 else 0) := by
+  rw [countBelow, countBelow, List.range_succ, List.countP_append, List.countP_cons,
+    List.countP_nil]
+  rcases h : s.mem k with _ | _ <;> simp
+
+theorem countBelow_congr {s t : VSet n} {k : Nat}
+    (h : ∀ i, i < k → s.mem i = t.mem i) : s.countBelow k = t.countBelow k := by
+  induction k with
+  | zero => rfl
+  | succ m ih =>
+    rw [countBelow_succ, countBelow_succ, ih fun i hi => h i (by omega), h m (by omega)]
+
+theorem countBelow_le (s : VSet n) (k : Nat) : s.countBelow k ≤ k := by
+  rw [countBelow]
+  exact Nat.le_trans List.countP_le_length (Nat.le_of_eq List.length_range)
+
+/-- A set has at most `n` members. -/
+theorem card_le (s : VSet n) : s.card ≤ n := by
+  rw [card_eq_countBelow]
+  exact countBelow_le s n
+
+theorem countBelow_insert_le (s : VSet n) (v k : Nat) :
+    (s.insert v).countBelow k ≤ s.countBelow k + 1 := by
+  induction k with
+  | zero => simp [countBelow]
+  | succ m ih =>
+    rw [countBelow_succ, countBelow_succ, mem_insert]
+    rcases hv : (v == m) with _ | _
+    · rcases h : s.mem m with _ | _ <;> simp <;> omega
+    · have hvm : v = m := by simpa using hv
+      rw [countBelow_congr (t := s) fun i hi => by
+        rw [mem_insert, show (v == i) = false from by simp [show v ≠ i from by omega],
+          Bool.false_and, Bool.or_false]]
+      rcases h : s.mem m with _ | _ <;> rcases hd : decide (v < n) with _ | _ <;> simp <;>
+        omega
+
+/-- Inserting adds at most one member. -/
+theorem card_insert_le (s : VSet n) (v : Nat) : (s.insert v).card ≤ s.card + 1 := by
+  rw [card_eq_countBelow, card_eq_countBelow]
+  exact countBelow_insert_le s v n
+
+theorem countBelow_erase_of_mem {s : VSet n} {v : Nat} (h : s.mem v = true) :
+    ∀ k, v < k → (s.erase v).countBelow k + 1 = s.countBelow k
+  | 0, hv => absurd hv (by omega)
+  | m + 1, hv => by
+    rcases Decidable.em (v = m) with heq | hne
+    · rw [countBelow_succ, countBelow_succ, mem_erase,
+        show (v == m) = true from by simp [heq], Bool.not_true, Bool.and_false,
+        countBelow_congr (t := s) fun i hi => by
+          rw [mem_erase, show (v == i) = false from by simp [show v ≠ i from by omega],
+            Bool.not_false, Bool.and_true],
+        show s.mem m = true from heq ▸ h]
+      simp
+    · rw [countBelow_succ, countBelow_succ, mem_erase,
+        show (v == m) = false from by simp [hne], Bool.not_false, Bool.and_true]
+      have := countBelow_erase_of_mem h m (by omega)
+      omega
+
+/-- Erasing a member removes exactly one. -/
+theorem card_erase_of_mem {s : VSet n} {v : Nat} (h : s.mem v = true) :
+    (s.erase v).card + 1 = s.card := by
+  rw [card_eq_countBelow, card_eq_countBelow]
+  exact countBelow_erase_of_mem h n (mem_lt h)
+
+/-- Erasing never adds members. -/
+theorem card_erase_le (s : VSet n) (v : Nat) : (s.erase v).card ≤ s.card :=
+  card_le_of_subset (subset_iff.mpr fun w hw => by
+    rw [mem_erase] at hw
+    exact ((Bool.and_eq_true _ _).mp hw).1)
+
+/-- Inserting a member changes nothing. -/
+theorem insert_of_mem {s : VSet n} {v : Nat} (h : s.mem v = true) : s.insert v = s :=
+  ext fun w => by
+    rw [mem_insert]
+    rcases Decidable.em (v = w) with rfl | hne
+    · rw [h, Bool.true_or]
+    · rw [show (v == w) = false from by simp [hne], Bool.false_and, Bool.or_false]
 
 instance : Repr (VSet n) := ⟨fun s _ => repr s.toNat⟩
 

@@ -22,105 +22,8 @@ bookkeeping of one refinement step, consumed by
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
-
-/-! # Active-set bookkeeping
-
-The preservation proof tracks the active bitset through a splitting
-pass: membership under `insert`/`erase`, the splitter's membership
-from `pickSplit`, and the bit-count bookkeeping the fuel potential
-consumes. -/
-
-theorem elem_insert (w v u : Nat) :
-    elem (insert w v) u = (elem w u || v == u) := by
-  rw [elem, elem, testBit_insert]
-
-theorem elem_erase (w v u : Nat) :
-    elem (erase w v) u = (elem w u && !(v == u)) := by
-  rw [elem, elem, testBit_erase]
-
-theorem insert_of_elem {w v : Nat} (h : elem w v = true) :
-    insert w v = w := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [testBit_insert]
-  rcases Decidable.em (v = i) with rfl | hne
-  · rw [elem] at h
-    simp [h]
-  · simp [show (v == i) = false from by simp [hne]]
-
-private theorem bitCount_succ (n s : Nat) :
-    bitCount (n + 1) s = bitCount n s + (if s.testBit n then 1 else 0) := by
-  rw [bitCount, bitCount, List.range_succ, List.countP_append,
-    List.countP_cons, List.countP_nil]
-  rcases h : s.testBit n with _ | _ <;> simp
-
-private theorem bitCount_congr {n a b : Nat}
-    (h : ∀ i, i < n → a.testBit i = b.testBit i) :
-    bitCount n a = bitCount n b := by
-  induction n with
-  | zero => rfl
-  | succ m ih =>
-    rw [bitCount_succ, bitCount_succ, ih fun i hi => h i (by omega),
-      h m (by omega)]
-
-theorem bitCount_insert_le (n w v : Nat) :
-    bitCount n (insert w v) ≤ bitCount n w + 1 := by
-  induction n with
-  | zero => rw [bitCount, bitCount]; simp
-  | succ m ih =>
-    rw [bitCount_succ, bitCount_succ, testBit_insert]
-    rcases hv : (v == m) with _ | _
-    · rcases h : w.testBit m with _ | _ <;>
-        simp only [Bool.or_false, Bool.false_eq_true, ite_true,
-          ite_false] <;>
-        omega
-    · have hvm : v = m := by simpa using hv
-      rw [bitCount_congr (n := m) (b := w) fun i hi => by
-        rw [testBit_insert,
-          show (v == i) = false from by simp [show v ≠ i from by omega],
-          Bool.or_false]]
-      rcases h : w.testBit m with _ | _ <;>
-        simp only [Bool.or_true, Bool.false_eq_true, ite_true,
-          ite_false] <;>
-        omega
-
-theorem bitCount_erase_of_elem {n w v : Nat} (hv : v < n)
-    (h : elem w v = true) :
-    bitCount n (erase w v) + 1 = bitCount n w := by
-  rw [elem] at h
-  induction n with
-  | zero => omega
-  | succ m ih =>
-    rcases Decidable.em (v = m) with heq | hne
-    · rw [bitCount_succ, bitCount_succ, testBit_erase,
-        show (v == m) = true from by simp [heq], Bool.not_true,
-        Bool.and_false,
-        bitCount_congr (n := m) (b := w) fun i hi => by
-          rw [testBit_erase,
-            show (v == i) = false from by simp [show v ≠ i from by omega],
-            Bool.not_false, Bool.and_true],
-        show w.testBit m = true from heq ▸ h]
-      simp
-    · rw [bitCount_succ, bitCount_succ, testBit_erase,
-        show (v == m) = false from by simp [hne], Bool.not_false,
-        Bool.and_true]
-      have := ih (by omega)
-      omega
-
-theorem bitCount_erase_le (n w v : Nat) :
-    bitCount n (erase w v) ≤ bitCount n w := by
-  rcases hb : elem w v with _ | _
-  · rw [erase, show w.testBit v = false from hb]
-    simp
-  · rcases Nat.lt_or_ge v n with hv | hv
-    · have := bitCount_erase_of_elem hv hb
-      omega
-    · rw [bitCount_congr (b := w) fun i hi => by
-        rw [testBit_erase,
-          show (v == i) = false from by simp [show v ≠ i from by omega],
-          Bool.not_false, Bool.and_true]]
-      exact Nat.le_refl _
 
 /-! # Splitter-set stability across a pass
 
@@ -129,15 +32,15 @@ splitter set survives as a bitset. -/
 
 theorem worksetOf_congr_perm {lab lab' : Array Nat} {lo hi : Nat}
     (hp : (segN lab lo (hi + 1 - lo)).Perm (segN lab' lo (hi + 1 - lo))) :
-    worksetOf lab lo hi = worksetOf lab' lo hi := by
-  refine Nat.eq_of_testBit_eq fun v => ?_
-  show elem (worksetOf lab lo hi) v = elem (worksetOf lab' lo hi) v
-  rcases hm : elem (worksetOf lab' lo hi) v with _ | _
-  · rcases hm2 : elem (worksetOf lab lo hi) v with _ | _
+    worksetOf n lab lo hi = worksetOf n lab' lo hi := by
+  refine VSet.ext fun v => ?_
+  rcases hm : (worksetOf n lab' lo hi).mem v with _ | _
+  · rcases hm2 : (worksetOf n lab lo hi).mem v with _ | _
     · rfl
-    · exact absurd (elem_worksetOf.mpr (hp.mem_iff.mp
-        (elem_worksetOf.mp hm2))) (by simp [hm])
-  · exact elem_worksetOf.mpr (hp.mem_iff.mpr (elem_worksetOf.mp hm))
+    · obtain ⟨hv, hseg⟩ := mem_worksetOf_iff.mp hm2
+      exact absurd (mem_worksetOf_iff.mpr ⟨hv, hp.mem_iff.mp hseg⟩) (by simp [hm])
+  · obtain ⟨hv, hseg⟩ := mem_worksetOf_iff.mp hm
+    exact mem_worksetOf_iff.mpr ⟨hv, hp.mem_iff.mpr hseg⟩
 
 /-- Pointwise-permuted images have permuted concatenations. -/
 private theorem flatMap_perm {α : Type} {f g : α → List Nat} :
@@ -288,33 +191,33 @@ theorem segments_disjoint_of_labInj {lab : Array Nat}
 
 /-! # The active union as a membership test -/
 
-private theorem testBit_activeUnion_fold {level : Nat} {st : RefineSt} :
-    ∀ (l : List (Nat × Nat)) (A : Nat) (v : Nat),
-      (l.foldl (fun A p => if elem st.active p.1 then
-          A ||| worksetOf st.lab p.1 p.2 else A) A).testBit v =
-        (A.testBit v || l.any fun p =>
-          elem st.active p.1 && (worksetOf st.lab p.1 p.2).testBit v)
+private theorem mem_activeUnion_fold {level : Nat} {st : RefineSt n} :
+    ∀ (l : List (Nat × Nat)) (A : VSet n) (v : Nat),
+      (l.foldl (fun A p => if st.active.mem p.1 then
+          A.union (worksetOf n st.lab p.1 p.2) else A) A).mem v =
+        (A.mem v || l.any fun p =>
+          st.active.mem p.1 && (worksetOf n st.lab p.1 p.2).mem v)
   | [], A, v => by simp
   | x :: l, A, v => by
     rw [List.foldl_cons, List.any_cons]
-    rcases hP : elem st.active x.1 with _ | _
+    rcases hP : st.active.mem x.1 with _ | _
     · rw [ite_eq_right (by simp),
-        testBit_activeUnion_fold (level := level) l A v]
+        mem_activeUnion_fold (level := level) l A v]
       simp
     · rw [ite_eq_left (by simp),
-        testBit_activeUnion_fold (level := level) l _ v, Nat.testBit_or]
+        mem_activeUnion_fold (level := level) l _ v, VSet.mem_union]
       simp [Bool.or_assoc]
 
 /-- Membership in the active union: some active cell's splitter set
 holds the vertex. -/
-theorem elem_activeUnion {level : Nat} {st : RefineSt} {v : Nat} :
-    elem (activeUnion ctx level st) v = true ↔
-      ∃ p ∈ cells st.ptn level ctx.n, elem st.active p.1 = true ∧
-        elem (worksetOf st.lab p.1 p.2) v = true := by
-  rw [activeUnion, elem,
-    testBit_activeUnion_fold (level := level) (cells st.ptn level ctx.n)
-      0 v,
-    Nat.zero_testBit, Bool.false_or, List.any_eq_true]
+theorem elem_activeUnion {level : Nat} {st : RefineSt n} {v : Nat} :
+    (activeUnion ctx level st).mem v = true ↔
+      ∃ p ∈ cells st.ptn level n, st.active.mem p.1 = true ∧
+        (worksetOf n st.lab p.1 p.2).mem v = true := by
+  rw [activeUnion,
+    mem_activeUnion_fold (level := level) (cells st.ptn level n)
+      VSet.empty v,
+    VSet.mem_empty, Bool.false_or, List.any_eq_true]
   constructor
   · rintro ⟨p, hp, hpp⟩
     rw [Bool.and_eq_true] at hpp
@@ -323,13 +226,13 @@ theorem elem_activeUnion {level : Nat} {st : RefineSt} {v : Nat} :
     exact ⟨p, hp, by rw [h1, Bool.true_and]; exact h2⟩
 
 /-- An active cell's splitter set lies inside the active union. -/
-theorem workset_submask_activeUnion {level : Nat} {st : RefineSt}
-    {p : Nat × Nat} (hp : p ∈ cells st.ptn level ctx.n)
-    (ha : elem st.active p.1 = true) :
-    worksetOf st.lab p.1 p.2 &&& activeUnion ctx level st =
-      worksetOf st.lab p.1 p.2 :=
-  submask_of_testBit fun _ hi =>
-    elem_activeUnion.mpr ⟨p, hp, ha, hi⟩
+theorem workset_submask_activeUnion {level : Nat} {st : RefineSt n}
+    {p : Nat × Nat} (hp : p ∈ cells st.ptn level n)
+    (ha : st.active.mem p.1 = true) :
+    (worksetOf n st.lab p.1 p.2).inter (activeUnion ctx level st) =
+      worksetOf n st.lab p.1 p.2 :=
+  VSet.subset_iff_inter.mp (VSet.subset_iff.mpr fun _ hi =>
+    elem_activeUnion.mpr ⟨p, hp, ha, hi⟩)
 
 theorem pairwise_rel_of_mem {α : Type} {R : α → α → Prop} :
     ∀ {l : List α}, l.Pairwise R →
@@ -346,15 +249,16 @@ theorem pairwise_rel_of_mem {α : Type} {R : α → α → Prop} :
 
 /-- Distinct cells of an injective labelling have disjoint splitter
 sets. -/
-theorem worksetOf_cells_disjoint {level : Nat} {st : RefineSt}
-    (hinj : LabInj st.lab ctx.n) (hps : st.ptn.size = ctx.n)
+theorem worksetOf_cells_disjoint {level : Nat} {st : RefineSt n}
+    (hinj : LabInj st.lab n) (hps : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
-    {p q : Nat × Nat} (hp : p ∈ cells st.ptn level ctx.n)
-    (hq : q ∈ cells st.ptn level ctx.n) (hne : p ≠ q) :
-    worksetOf st.lab p.1 p.2 &&& worksetOf st.lab q.1 q.2 = 0 := by
-  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
-    rw [← hps]
-    exact hend
+    {p q : Nat × Nat} (hp : p ∈ cells st.ptn level n)
+    (hq : q ∈ cells st.ptn level n) (hne : p ≠ q) :
+    (worksetOf n st.lab p.1 p.2).inter (worksetOf n st.lab q.1 q.2) = VSet.empty := by
+  have hendn : st.ptn[n - 1]! ≤ level := by
+    have h := hend
+    rw [hps] at h
+    exact h
   have hpb := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn p hp
   have hqb := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn q hq
   have hple := cells_le p hp
@@ -364,49 +268,47 @@ theorem worksetOf_cells_disjoint {level : Nat} {st : RefineSt}
   · exact worksetOf_disjoint fun v hv hv' =>
       segments_disjoint_of_labInj hinj (by omega : p.1 + (p.2 + 1 - p.1) ≤ q.1)
         (by omega) v hv hv'
-  · have h := worksetOf_disjoint (lab := st.lab) (lab' := st.lab)
+  · have h := worksetOf_disjoint (n := n) (lab := st.lab) (lab' := st.lab)
       (lo := q.1) (hi := q.2) (lo' := p.1) (hi' := p.2)
       fun v hv hv' => segments_disjoint_of_labInj hinj
         (by omega : q.1 + (q.2 + 1 - q.1) ≤ p.1) (by omega) v hv hv'
-    calc worksetOf st.lab p.1 p.2 &&& worksetOf st.lab q.1 q.2
-        = worksetOf st.lab q.1 q.2 &&& worksetOf st.lab p.1 p.2 :=
-          Nat.and_comm ..
-      _ = 0 := h
+    rw [VSet.inter_comm]
+    exact h
 
 /-- An inactive cell's splitter set misses the active union. -/
-theorem inactive_and_activeUnion {level : Nat} {st : RefineSt}
-    (hinj : LabInj st.lab ctx.n) (hps : st.ptn.size = ctx.n)
+theorem inactive_and_activeUnion {level : Nat} {st : RefineSt n}
+    (hinj : LabInj st.lab n) (hps : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
-    {p : Nat × Nat} (hp : p ∈ cells st.ptn level ctx.n)
-    (ha : elem st.active p.1 = false) :
-    worksetOf st.lab p.1 p.2 &&& activeUnion ctx level st = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.zero_testBit]
-  rcases h1 : (worksetOf st.lab p.1 p.2).testBit i with _ | _
+    {p : Nat × Nat} (hp : p ∈ cells st.ptn level n)
+    (ha : st.active.mem p.1 = false) :
+    (worksetOf n st.lab p.1 p.2).inter (activeUnion ctx level st) = VSet.empty := by
+  refine VSet.ext fun i => ?_
+  rw [VSet.mem_inter, VSet.mem_empty]
+  rcases h1 : (worksetOf n st.lab p.1 p.2).mem i with _ | _
   · rfl
-  · rcases h2 : (activeUnion ctx level st).testBit i with _ | _
+  · rcases h2 : (activeUnion ctx level st).mem i with _ | _
     · rfl
     · obtain ⟨q, hq, hqa, hqi⟩ := elem_activeUnion.mp h2
       have hne : p ≠ q := fun he => by
         rw [he, hqa] at ha
         cases ha
       have := worksetOf_cells_disjoint hinj hps hend hp hq hne
-      have h3 := congrArg (fun x => x.testBit i) this
-      simp only [Nat.testBit_and, Nat.zero_testBit] at h3
-      rw [h1, show (worksetOf st.lab q.1 q.2).testBit i = true from hqi]
+      have h3 := congrArg (fun x => x.mem i) this
+      simp only [VSet.mem_inter, VSet.mem_empty] at h3
+      rw [h1, show (worksetOf n st.lab q.1 q.2).mem i = true from hqi]
         at h3
       cases h3
 
 /-! # The trivial pass: active-set effect per processed cell -/
 
 private theorem trivialSplit_active_eq (level cell1 cell2 : Nat)
-    (c1 c2 : Int) (st : RefineSt) :
+    (c1 c2 : Int) (st : RefineSt n) :
     (trivialSplit level cell1 cell2 c1 c2 st).active =
       if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
-        if elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat then
-          insert st.active c1.toNat
+        if st.active.mem cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat then
+          st.active.insert c1.toNat
         else
-          insert st.active cell1
+          st.active.insert cell1
       else
         st.active := by
   rw [trivialSplit]
@@ -414,7 +316,7 @@ private theorem trivialSplit_active_eq (level cell1 cell2 : Nat)
     hA | hA
   · rw [ite_eq_left hA, ite_eq_left hA]
     rcases Decidable.em
-        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+        (st.active.mem cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
       hB | hB
     · rw [ite_eq_left hB, ite_eq_left hB]
       rcases (c1.toNat == cell2) with _ | _ <;> rfl
@@ -423,7 +325,7 @@ private theorem trivialSplit_active_eq (level cell1 cell2 : Nat)
   · rw [ite_eq_right hA, ite_eq_right hA]
 
 private theorem trivialSplit_numcells_eq (level cell1 cell2 : Nat)
-    (c1 c2 : Int) (st : RefineSt) :
+    (c1 c2 : Int) (st : RefineSt n) :
     (trivialSplit level cell1 cell2 c1 c2 st).numcells =
       if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
         st.numcells + 1
@@ -434,7 +336,7 @@ private theorem trivialSplit_numcells_eq (level cell1 cell2 : Nat)
     hA | hA
   · rw [ite_eq_left hA, ite_eq_left hA]
     rcases Decidable.em
-        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+        (st.active.mem cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
       hB | hB
     · rw [ite_eq_left hB]
       rcases (c1.toNat == cell2) with _ | _ <;> rfl
@@ -443,14 +345,14 @@ private theorem trivialSplit_numcells_eq (level cell1 cell2 : Nat)
   · rw [ite_eq_right hA, ite_eq_right hA]
 
 private theorem trivialSplit_maxpos_eq (level cell1 cell2 : Nat)
-    (c1 c2 : Int) (st : RefineSt) :
+    (c1 c2 : Int) (st : RefineSt n) :
     (trivialSplit level cell1 cell2 c1 c2 st).maxpos = st.maxpos := by
   rw [trivialSplit]
   rcases Decidable.em (c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2) with
     hA | hA
   · rw [ite_eq_left hA]
     rcases Decidable.em
-        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+        (st.active.mem cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
       hB | hB
     · rw [ite_eq_left hB]
       rcases (c1.toNat == cell2) with _ | _ <;> rfl
@@ -462,7 +364,7 @@ private theorem trivialSplit_maxpos_eq (level cell1 cell2 : Nat)
 `maxpos` untouched, and either nothing changes or exactly one junction
 boundary is written together with one activation, the activated
 position being the junction successor whenever the cell was active. -/
-theorem trivialCell_state {level gRow cell1 cell2 : Nat} {st : RefineSt}
+theorem trivialCell_state {level cell1 cell2 : Nat} {gRow : VSet n} {st : RefineSt n}
     (h12 : cell1 ≤ cell2) (hsz : cell2 < st.lab.size) :
     (trivialCell level gRow cell1 cell2 st).maxpos = st.maxpos ∧
     (((trivialCell level gRow cell1 cell2 st).ptn = st.ptn ∧
@@ -471,11 +373,11 @@ theorem trivialCell_state {level gRow cell1 cell2 : Nat} {st : RefineSt}
      (∃ j x, cell1 ≤ j ∧ j < cell2 ∧
        (trivialCell level gRow cell1 cell2 st).ptn = st.ptn.set! j level ∧
        (trivialCell level gRow cell1 cell2 st).active =
-         insert st.active x ∧
+         st.active.insert x ∧
        (trivialCell level gRow cell1 cell2 st).numcells =
          st.numcells + 1 ∧
        (x = cell1 ∨ x = j + 1) ∧
-       (elem st.active cell1 = true → x = j + 1))) := by
+       (st.active.mem cell1 = true → x = j + 1))) := by
   rcases Decidable.em (cell1 = cell2) with rfl | hne
   · have heq : trivialCell level gRow cell1 cell1 st = st := by
       rw [trivialCell]
@@ -507,12 +409,12 @@ theorem trivialCell_state {level gRow cell1 cell2 : Nat} {st : RefineSt}
             omega])
       (by omega)
     obtain ⟨cnt, hcnt⟩ : ∃ c,
-        (segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) =
+        (segN st.lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·) =
           c := ⟨_, rfl⟩
     have hcntle : cnt ≤ cell2 + 1 - cell1 := by
       have := List.countP_le_length
         (l := segN st.lab cell1 (cell2 + 1 - cell1))
-        (p := (elem gRow ·))
+        (p := (gRow.mem ·))
       rw [segN_length, hcnt] at this
       exact this
     have htn : (Int.ofNat cell1).toNat = cell1 := rfl
@@ -542,7 +444,7 @@ theorem trivialCell_state {level gRow cell1 cell2 : Nat} {st : RefineSt}
         omega
       rw [htn2, htn3]
       refine Or.inr ?_
-      rcases Decidable.em (elem st.active cell1 = true ∨
+      rcases Decidable.em (st.active.mem cell1 = true ∨
           cell1 + cnt - 1 - cell1 ≥ cell2 - (cell1 + cnt)) with hB | hB
       · exact ⟨cell1 + cnt - 1, cell1 + cnt, by omega, by omega, rfl,
           by rw [ite_eq_left hB], rfl, Or.inr (by omega),
@@ -562,43 +464,44 @@ theorem trivialCell_state {level gRow cell1 cell2 : Nat} {st : RefineSt}
 `maxpos` kept, partition and active bits outside the windows kept,
 the potential ledger balanced, and per window either nothing or one
 junction with one activation. -/
-theorem refineTrivial_go_state {level gRow nb : Nat} :
-    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+theorem refineTrivial_go_state {level : Nat} {gRow : VSet n} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt n),
       (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.lab.size) →
       cs.Pairwise (fun p q => p.2 < q.1) →
       st.ptn.size = st.lab.size →
+      st.lab.size = n →
       (refineTrivial.go level gRow cs st).maxpos = st.maxpos ∧
       (∀ u, (∀ p ∈ cs, u < p.1 ∨ p.2 < u) →
-        elem (refineTrivial.go level gRow cs st).active u =
-          elem st.active u) ∧
+        (refineTrivial.go level gRow cs st).active.mem u =
+          st.active.mem u) ∧
       (∀ q, (∀ p ∈ cs, q < p.1 ∨ p.2 < q) →
         (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
-      bitCount nb (refineTrivial.go level gRow cs st).active +
+      (refineTrivial.go level gRow cs st).active.card +
           2 * st.numcells ≤
-        bitCount nb st.active +
+        st.active.card +
           2 * (refineTrivial.go level gRow cs st).numcells ∧
       st.numcells ≤ (refineTrivial.go level gRow cs st).numcells ∧
       (∀ p ∈ cs,
         ((∀ q, p.1 ≤ q → q ≤ p.2 →
             (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
          (∀ u, p.1 ≤ u → u ≤ p.2 →
-            elem (refineTrivial.go level gRow cs st).active u =
-              elem st.active u)) ∨
+            (refineTrivial.go level gRow cs st).active.mem u =
+              st.active.mem u)) ∨
         (∃ j x, p.1 ≤ j ∧ j < p.2 ∧
           (refineTrivial.go level gRow cs st).ptn[j]! = level ∧
           (∀ q, p.1 ≤ q → q ≤ p.2 → q ≠ j →
             (refineTrivial.go level gRow cs st).ptn[q]! = st.ptn[q]!) ∧
           (x = p.1 ∨ x = j + 1) ∧
-          (elem st.active p.1 = true → x = j + 1) ∧
-          elem (refineTrivial.go level gRow cs st).active x = true ∧
+          (st.active.mem p.1 = true → x = j + 1) ∧
+          (refineTrivial.go level gRow cs st).active.mem x = true ∧
           (∀ u, p.1 ≤ u → u ≤ p.2 → u ≠ x →
-            elem (refineTrivial.go level gRow cs st).active u =
-              elem st.active u)))
-  | [], st, _, _, _ => by
+            (refineTrivial.go level gRow cs st).active.mem u =
+              st.active.mem u)))
+  | [], st, _, _, _, _ => by
     rw [refineTrivial.go]
     exact ⟨rfl, fun _ _ => rfl, fun _ _ => rfl, by omega, Nat.le_refl _,
       fun p hp => absurd hp (by simp)⟩
-  | (c1, c2) :: rest, st, hw, hpw, hlp => by
+  | (c1, c2) :: rest, st, hw, hpw, hlp, hls => by
     rw [refineTrivial.go]
     obtain ⟨h12, hsz⟩ := hw (c1, c2) (List.mem_cons_self ..)
     dsimp only at h12 hsz
@@ -615,24 +518,25 @@ theorem refineTrivial_go_state {level gRow nb : Nat} :
       · rw [he, Array.size_set!]
     have hhead := (List.pairwise_cons.mp hpw).1
     obtain ⟨ih1, ih2, ih3, ih4, ih5, ih6⟩ :=
-      refineTrivial_go_state (nb := nb) rest
+      refineTrivial_go_state rest
         (trivialCell level gRow c1 c2 st)
         (fun p hp => by
           obtain ⟨hp1, hp2⟩ := hw p (List.mem_cons_of_mem _ hp)
           exact ⟨hp1, by rw [hsize]; exact hp2⟩)
         (List.pairwise_cons.mp hpw).2
         (by rw [hps1, hsize]; exact hlp)
+        (by rw [hsize]; exact hls)
     have houtA : ∀ u, u < c1 ∨ c2 < u →
-        elem (trivialCell level gRow c1 c2 st).active u =
-          elem st.active u := by
+        (trivialCell level gRow c1 c2 st).active.mem u =
+          st.active.mem u := by
       intro u hu
       rcases hdisj with ⟨_, he, _⟩ | ⟨j, x, hj1, hj2, _, he, _, hx, _⟩
       · rw [he]
-      · rw [he, elem_insert,
+      · rw [he, VSet.mem_insert,
           show (x == u) = false from by
             simp only [beq_eq_false_iff_ne]
             rcases hx with rfl | rfl <;> omega,
-          Bool.or_false]
+          Bool.false_and, Bool.or_false]
     have houtP : ∀ q, q < c1 ∨ c2 < q →
         (trivialCell level gRow c1 c2 st).ptn[q]! = st.ptn[q]! := by
       intro q hq
@@ -649,9 +553,9 @@ theorem refineTrivial_go_state {level gRow nb : Nat} :
         simp only at this
         omega)
     have hkeepA : ∀ u, u ≤ c2 →
-        elem (refineTrivial.go level gRow rest
-          (trivialCell level gRow c1 c2 st)).active u =
-          elem (trivialCell level gRow c1 c2 st).active u := by
+        (refineTrivial.go level gRow rest
+          (trivialCell level gRow c1 c2 st)).active.mem u =
+          (trivialCell level gRow c1 c2 st).active.mem u := by
       intro u hu
       exact ih2 u fun pr hpr => Or.inl (by
         have := hhead pr hpr
@@ -668,15 +572,15 @@ theorem refineTrivial_go_state {level gRow nb : Nat} :
         houtP q (by
           have := hq (c1, c2) (List.mem_cons_self ..)
           simpa using this)]
-    · have hcell : bitCount nb (trivialCell level gRow c1 c2 st).active +
+    · have hcell : (trivialCell level gRow c1 c2 st).active.card +
           2 * st.numcells ≤
-            bitCount nb st.active +
+            st.active.card +
               2 * (trivialCell level gRow c1 c2 st).numcells := by
         rcases hdisj with ⟨_, he, hn⟩ | ⟨j, x, _, _, _, he, hn, _⟩
         · rw [he, hn]
           exact Nat.le_refl _
-        · rw [he, hn]
-          have := bitCount_insert_le nb st.active x
+        · rw [he]
+          have := VSet.card_insert_le st.active x
           omega
       omega
     · have : st.numcells ≤
@@ -704,15 +608,14 @@ theorem refineTrivial_go_state {level gRow nb : Nat} :
           · intro q hq1 hq2 hqj
             rw [hkeepP q hq2, heP,
               Array.getElem!_set!_ne _ _ _ _ (by omega)]
-          · rw [hkeepA x (by rcases hx with rfl | rfl <;> omega), heA,
-              elem_insert]
-            simp
+          · rw [hkeepA x (by rcases hx with rfl | rfl <;> omega), heA]
+            exact VSet.mem_insert_self _ (by rcases hx with rfl | rfl <;> omega)
           · intro u hu1 hu2 hux
-            rw [hkeepA u hu2, heA, elem_insert,
+            rw [hkeepA u hu2, heA, VSet.mem_insert,
               show (x == u) = false from by
                 simp only [beq_eq_false_iff_ne]
                 omega,
-              Bool.or_false]
+              Bool.false_and, Bool.or_false]
       · have hout1 : c2 < p.1 := by
           have := hhead p hmem
           simpa using this
@@ -736,7 +639,7 @@ theorem refineTrivial_go_state {level gRow nb : Nat} :
 /-! # The nontrivial pass: active-set effect of the window scan -/
 
 private theorem windowStep_maxpos (level cell1 cell2 v c1 c2 : Nat)
-    (maxcell : Int) (st : RefineSt) :
+    (maxcell : Int) (st : RefineSt n) :
     (windowStep level cell1 cell2 v c1 c2 maxcell st).maxpos =
       if Int.ofNat (c2 - c1) > maxcell then c1 else st.maxpos := by
   rw [windowStep]
@@ -753,27 +656,27 @@ grows, every new bit sits just after a boundary, every boundary the
 scan writes gets its successor activated (the successor of the last
 write being pending exactly while mass remains), the potential ledger
 balances, and the running largest-fragment position stays justified. -/
-theorem windowScan_active_state {level cell1 cell2 nb : Nat}
-    {counts : List Nat} :
-    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+theorem windowScan_active_state {level cell1 cell2 : Nat}
+    {counts : List Nat} (hc2 : cell2 < n) :
+    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt n),
       cell1 ≤ c1 →
       c1 + (vs.map (multOf counts)).sum = cell2 + 1 →
       (c1 = cell1 ∨ st.ptn[c1 - 1]! ≤ level ∨ c1 = cell2 + 1) →
       cell2 < st.ptn.size →
       (∀ u, u ≤ cell1 ∨ cell2 < u →
-        elem (windowScan level cell1 cell2 counts vs c1 maxcell
-          st).active u = elem st.active u) ∧
-      (∀ u, elem st.active u = true →
-        elem (windowScan level cell1 cell2 counts vs c1 maxcell
-          st).active u = true) ∧
+        (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active.mem u = st.active.mem u) ∧
+      (∀ u, st.active.mem u = true →
+        (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active.mem u = true) ∧
       (∀ q : Nat, st.ptn[q]! ≤ level →
         (windowScan level cell1 cell2 counts vs c1 maxcell
           st).ptn[q]! ≤ level) ∧
       (∀ q : Nat, q < c1 →
         (windowScan level cell1 cell2 counts vs c1 maxcell
           st).ptn[q]! = st.ptn[q]!) ∧
-      (∀ u, elem (windowScan level cell1 cell2 counts vs c1 maxcell
-          st).active u = true → elem st.active u = true ∨
+      (∀ u, (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active.mem u = true → st.active.mem u = true ∨
         (cell1 < u ∧ u ≤ cell2 ∧
           (windowScan level cell1 cell2 counts vs c1 maxcell
             st).ptn[u - 1]! ≤ level)) ∧
@@ -781,19 +684,19 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
         (windowScan level cell1 cell2 counts vs c1 maxcell
           st).ptn[u - 1]! ≤ level →
         st.ptn[u - 1]! ≤ level ∨
-          elem (windowScan level cell1 cell2 counts vs c1 maxcell
-            st).active u = true) ∧
+          (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).active.mem u = true) ∧
       (0 < (vs.map (multOf counts)).sum → c1 = cell1 ∨
-        elem (windowScan level cell1 cell2 counts vs c1 maxcell
-          st).active c1 = true) ∧
-      (bitCount nb (windowScan level cell1 cell2 counts vs c1 maxcell
-          st).active + 2 * st.numcells ≤
-        bitCount nb st.active + 2 * (windowScan level cell1 cell2
+        (windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active.mem c1 = true) ∧
+      ((windowScan level cell1 cell2 counts vs c1 maxcell
+          st).active.card + 2 * st.numcells ≤
+        st.active.card + 2 * (windowScan level cell1 cell2
           counts vs c1 maxcell st).numcells) ∧
       st.numcells ≤ (windowScan level cell1 cell2 counts vs c1 maxcell
         st).numcells ∧
       ((maxcell < 0 ∨ (cell1 ≤ st.maxpos ∧ st.maxpos ≤ cell2 ∧
-          (st.maxpos = cell1 ∨ elem st.active st.maxpos = true))) →
+          (st.maxpos = cell1 ∨ st.active.mem st.maxpos = true))) →
         (0 < (vs.map (multOf counts)).sum ∨ 0 ≤ maxcell) →
         (cell1 ≤ (windowScan level cell1 cell2 counts vs c1 maxcell
             st).maxpos ∧
@@ -801,8 +704,8 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
             st).maxpos ≤ cell2 ∧
          ((windowScan level cell1 cell2 counts vs c1 maxcell
             st).maxpos = cell1 ∨
-          elem (windowScan level cell1 cell2 counts vs c1 maxcell
-            st).active (windowScan level cell1 cell2 counts vs c1
+          (windowScan level cell1 cell2 counts vs c1 maxcell
+            st).active.mem (windowScan level cell1 cell2 counts vs c1
               maxcell st).maxpos = true)))
   | [], c1, maxcell, st, hcw, htot, hbnd, hsz => by
     rw [windowScan]
@@ -846,7 +749,7 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
         · rw [ite_eq_right h]
       obtain ⟨ih1, ih2, ih3, ihH, ih4, ih5, ih6, ih7, ih8, ih9⟩ :=
         windowScan_active_state (level := level) (cell1 := cell1)
-          (cell2 := cell2) (nb := nb) (counts := counts) vs (c1 + m)
+          (cell2 := cell2) (counts := counts) hc2 vs (c1 + m)
           (if Int.ofNat m > maxcell then Int.ofNat m else maxcell) w
           (by omega)
           (by rw [hsum, hmv] at htot; omega)
@@ -859,24 +762,24 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
             · refine Or.inr (Or.inr (by omega)))
           (by rw [hwps]; exact hsz)
       have houtA : ∀ u, u ≤ cell1 ∨ cell2 < u →
-          elem w.active u = elem st.active u := by
+          w.active.mem u = st.active.mem u := by
         intro u hu
         rw [hae]
         rcases Decidable.em (c1 = cell1) with h | h
         · rw [ite_eq_right (by simp [h])]
-        · rw [ite_eq_left (by simp [h]), elem_insert,
+        · rw [ite_eq_left (by simp [h]), VSet.mem_insert,
             show (c1 == u) = false from by
               simp only [beq_eq_false_iff_ne]
               omega,
-            Bool.or_false]
-      have hmonoA : ∀ u, elem st.active u = true →
-          elem w.active u = true := by
+            Bool.false_and, Bool.or_false]
+      have hmonoA : ∀ u, st.active.mem u = true →
+          w.active.mem u = true := by
         intro u hu
         rw [hae]
         rcases Decidable.em (c1 = cell1) with h | h
         · rw [ite_eq_right (by simp [h])]
           exact hu
-        · rw [ite_eq_left (by simp [h]), elem_insert, hu, Bool.true_or]
+        · rw [ite_eq_left (by simp [h]), VSet.mem_insert, hu, Bool.true_or]
       have hpersist : ∀ q : Nat, st.ptn[q]! ≤ level →
           w.ptn[q]! ≤ level := by
         intro q hq
@@ -910,9 +813,10 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
           rcases Decidable.em (c1 = cell1) with hc | hc
           · rw [ite_eq_right (by simp [hc])] at h
             exact Or.inl h
-          · rw [ite_eq_left (by simp [hc]), elem_insert] at h
-            rcases hb2 : elem st.active u with _ | _
-            · rw [hb2, Bool.false_or, beq_iff_eq] at h
+          · rw [ite_eq_left (by simp [hc]), VSet.mem_insert] at h
+            rcases hb2 : st.active.mem u with _ | _
+            · rw [hb2, Bool.false_or, Bool.and_eq_true, beq_iff_eq] at h
+              obtain ⟨h, _⟩ := h
               subst h
               refine Or.inr ⟨by omega, by omega, ?_⟩
               rcases hbnd with hb | hb | hb
@@ -955,16 +859,16 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
         rcases Decidable.em (c1 = cell1) with hc | hc
         · exact Or.inl hc
         · refine Or.inr (ih2 c1 ?_)
-          rw [hae, ite_eq_left (by simp [hc]), elem_insert]
-          simp
-      · have hstep : bitCount nb w.active + 2 * st.numcells ≤
-            bitCount nb st.active + 2 * w.numcells := by
+          rw [hae, ite_eq_left (by simp [hc])]
+          exact VSet.mem_insert_self _ (by omega)
+      · have hstep : w.active.card + 2 * st.numcells ≤
+            st.active.card + 2 * w.numcells := by
           rw [hae, hne]
           rcases Decidable.em (c1 = cell1) with hc | hc
           · rw [ite_eq_right (by simp [hc]), ite_eq_left hc]
             exact Nat.le_refl _
           · rw [ite_eq_left (by simp [hc]), ite_eq_right hc]
-            have := bitCount_insert_le nb st.active c1
+            have := VSet.card_insert_le st.active c1
             omega
         omega
       · have hstep : st.numcells ≤ w.numcells := by
@@ -993,8 +897,8 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
           rcases Decidable.em (c1 = cell1) with hc | hc
           · exact Or.inl hc
           · refine Or.inr ?_
-            rw [hae, ite_eq_left (by simp [hc]), elem_insert]
-            simp
+            rw [hae, ite_eq_left (by simp [hc])]
+            exact VSet.mem_insert_self _ (by omega)
         · rw [ite_eq_right h]
           have hmge : ¬((m : Int) > maxcell) := by
             rw [show Int.ofNat (c1 + m - c1) = (m : Int) from by
@@ -1021,7 +925,7 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
         omega
       obtain ⟨ih1, ih2, ih3, ihH, ih4, ih5, ih6, ih7, ih8, ih9⟩ :=
         windowScan_active_state (level := level) (cell1 := cell1)
-          (cell2 := cell2) (nb := nb) (counts := counts) vs c1 maxcell
+          (cell2 := cell2) (counts := counts) hc2 vs c1 maxcell
           st hcw (by rw [← hsum0]; exact htot) hbnd hsz
       refine ⟨ih1, ih2, ih3, ihH, ih4, ih5, ?_, ih7, ih8, ?_⟩
       · intro hf
@@ -1034,19 +938,19 @@ theorem windowScan_active_state {level cell1 cell2 nb : Nat}
           exact Or.inl hf
         · exact Or.inr hf
 
-private theorem nontrivialFix_active (cell1 : Nat) (st : RefineSt) :
+private theorem nontrivialFix_active (cell1 : Nat) (st : RefineSt n) :
     (nontrivialFix cell1 st).active =
-      if elem st.active cell1 = true then st.active
-      else erase (insert st.active cell1) st.maxpos := by
+      if st.active.mem cell1 = true then st.active
+      else (st.active.insert cell1).erase st.maxpos := by
   rw [nontrivialFix]
-  rcases h : elem st.active cell1 with _ | _
+  rcases h : st.active.mem cell1 with _ | _
   · rw [ite_eq_left (by simp), ite_eq_right (by simp)]
   · rw [ite_eq_right (by simp), ite_eq_left (by simp)]
 
-private theorem nontrivialFix_numcells (cell1 : Nat) (st : RefineSt) :
+private theorem nontrivialFix_numcells (cell1 : Nat) (st : RefineSt n) :
     (nontrivialFix cell1 st).numcells = st.numcells := by
   rw [nontrivialFix]
-  rcases h : elem st.active cell1 with _ | _
+  rcases h : st.active.mem cell1 with _ | _
   · rw [ite_eq_left (by simp)]
   · rw [ite_eq_right (by simp)]
 
@@ -1055,36 +959,36 @@ active bits and boundaries outside the window untouched, the
 potential ledger balanced, and the two activation clauses — an active
 cell activates every fragment start, an inactive one every fragment
 start but one. -/
-theorem nontrivialCell_outcome {ctx : Ctx}
-    {level workset cell1 cell2 nb : Nat} {st : RefineSt}
-    (h12 : cell1 ≤ cell2) (hsz : cell2 < st.ptn.size) (hnb : cell2 < nb)
+theorem nontrivialCell_outcome {ctx : Ctx n}
+    {level cell1 cell2 : Nat} {workset : VSet n} {st : RefineSt n}
+    (h12 : cell1 ≤ cell2) (hsz : cell2 < st.ptn.size) (hnb : cell2 < n)
     (hopen : ∀ q, cell1 ≤ q → q < cell2 → st.ptn[q]! > level) :
     (∀ u, u < cell1 ∨ cell2 < u →
-      elem (nontrivialCell ctx level workset cell1 cell2 st).active u =
-        elem st.active u) ∧
+      (nontrivialCell ctx level workset cell1 cell2 st).active.mem u =
+        st.active.mem u) ∧
     (∀ q : Nat, q < cell1 ∨ cell2 ≤ q →
       (nontrivialCell ctx level workset cell1 cell2 st).ptn[q]! =
         st.ptn[q]!) ∧
     (nontrivialCell ctx level workset cell1 cell2 st).ptn.size =
       st.ptn.size ∧
-    (bitCount nb (nontrivialCell ctx level workset cell1 cell2
-        st).active + 2 * st.numcells ≤
-      bitCount nb st.active +
+    ((nontrivialCell ctx level workset cell1 cell2
+        st).active.card + 2 * st.numcells ≤
+      st.active.card +
         2 * (nontrivialCell ctx level workset cell1 cell2 st).numcells) ∧
     st.numcells ≤
       (nontrivialCell ctx level workset cell1 cell2 st).numcells ∧
-    (elem st.active cell1 = true →
+    (st.active.mem cell1 = true →
       ∀ u, cell1 ≤ u → u ≤ cell2 →
         (u = cell1 ∨ (nontrivialCell ctx level workset cell1 cell2
           st).ptn[u - 1]! ≤ level) →
-        elem (nontrivialCell ctx level workset cell1 cell2
-          st).active u = true) ∧
-    (elem st.active cell1 = false →
+        (nontrivialCell ctx level workset cell1 cell2
+          st).active.mem u = true) ∧
+    (st.active.mem cell1 = false →
       ∃ w, ∀ u, cell1 ≤ u → u ≤ cell2 →
         (u = cell1 ∨ (nontrivialCell ctx level workset cell1 cell2
           st).ptn[u - 1]! ≤ level) → u ≠ w →
-        elem (nontrivialCell ctx level workset cell1 cell2
-          st).active u = true) := by
+        (nontrivialCell ctx level workset cell1 cell2
+          st).active.mem u = true) := by
   rcases Decidable.em (cell1 = cell2) with heq | hne
   · have he : nontrivialCell ctx level workset cell1 cell2 st = st := by
       rw [nontrivialCell, ite_eq_left (by simp [heq])]
@@ -1145,26 +1049,26 @@ theorem nontrivialCell_outcome {ctx : Ctx}
         omega
       obtain ⟨sc1, sc2, sc3, scH, sc4, sc5, sc6, sc7, sc8, sc9⟩ :=
         windowScan_active_state (level := level) (cell1 := cell1)
-          (cell2 := cell2) (nb := nb)
-          (counts := countsOf ctx st.lab workset cell1 cell2)
+          (cell2 := cell2)
+          (counts := countsOf ctx st.lab workset cell1 cell2) hnb
           (countValues (countsOf ctx st.lab workset cell1 cell2))
           cell1 (-1) st (Nat.le_refl _) htotS (Or.inl rfl) hsz
       obtain ⟨_, _, scF, scS, _⟩ :=
-        windowScan_payload (level := level) (nn := nb) hnb
+        windowScan_payload (level := level) (nn := n) hnb
           (countValues (countsOf ctx st.lab workset cell1 cell2))
           cell1 (-1) st (Nat.le_refl _) htotS hsz
           (fun p hp1 hp2 => hopen p hp1 hp2)
       rw [hS] at sc1 sc2 sc3 scH sc4 sc5 sc6 sc7 sc8 sc9 scF scS
       have hmp := sc9 (Or.inl (by omega)) (Or.inl hfired)
-      have hcell1A : elem S.active cell1 = elem st.active cell1 :=
+      have hcell1A : S.active.mem cell1 = st.active.mem cell1 :=
         sc1 cell1 (Or.inl (Nat.le_refl _))
       have hax : (nontrivialFix cell1 { S with
           lab := writeSegment S.lab cell1 (segmentOf S.lab cell1
             (countsOf ctx st.lab workset cell1 cell2)
             (countValues (countsOf ctx st.lab workset cell1
               cell2))) }).active =
-          if elem S.active cell1 = true then S.active
-          else erase (insert S.active cell1) S.maxpos := by
+          if S.active.mem cell1 = true then S.active
+          else (S.active.insert cell1).erase S.maxpos := by
         rw [nontrivialFix_active]
       have hpx : (nontrivialFix cell1 { S with
           lab := writeSegment S.lab cell1 (segmentOf S.lab cell1
@@ -1181,13 +1085,13 @@ theorem nontrivialCell_outcome {ctx : Ctx}
       rw [hS, hax, hpx, hnx]
       refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       · intro u hu
-        rcases hb : elem st.active cell1 with _ | _
-        · rw [ite_eq_right (by simp [hcell1A, hb]), elem_erase,
-            elem_insert,
+        rcases hb : st.active.mem cell1 with _ | _
+        · rw [ite_eq_right (by simp [hcell1A, hb]), VSet.mem_erase,
+            VSet.mem_insert,
             show (cell1 == u) = false from by
               simp only [beq_eq_false_iff_ne]
               omega,
-            Bool.or_false,
+            Bool.false_and, Bool.or_false,
             show (S.maxpos == u) = false from by
               simp only [beq_eq_false_iff_ne]
               omega,
@@ -1198,16 +1102,15 @@ theorem nontrivialCell_outcome {ctx : Ctx}
       · intro q hq
         exact scF q (by omega)
       · exact scS
-      · rcases hb : elem st.active cell1 with _ | _
+      · rcases hb : st.active.mem cell1 with _ | _
         · rw [ite_eq_right (by simp [hcell1A, hb])]
-          have h1 := bitCount_insert_le nb S.active cell1
-          have h2 : elem (insert S.active cell1) S.maxpos = true := by
+          have h1 := VSet.card_insert_le S.active cell1
+          have h2 : (S.active.insert cell1).mem S.maxpos = true := by
             rcases hmp.2.2 with hm | hm
-            · rw [hm, elem_insert]
-              simp
-            · rw [elem_insert, hm, Bool.true_or]
-          have h3 := bitCount_erase_of_elem
-            (show S.maxpos < nb from by omega) h2
+            · rw [hm]
+              exact VSet.mem_insert_self _ (by omega)
+            · exact VSet.mem_insert_mono _ _ hm
+          have h3 := VSet.card_erase_of_mem h2
           omega
         · rw [ite_eq_left (by rw [hcell1A, hb])]
           exact sc7
@@ -1228,15 +1131,16 @@ theorem nontrivialCell_outcome {ctx : Ctx}
           · exact h
       · intro hact
         refine ⟨S.maxpos, fun u hu1 hu2 hu3 hne2 => ?_⟩
-        rw [ite_eq_right (by simp [hcell1A, hact]), elem_erase,
+        rw [ite_eq_right (by simp [hcell1A, hact]), VSet.mem_erase,
           show (S.maxpos == u) = false from by
             simp only [beq_eq_false_iff_ne]
             omega,
-          Bool.not_false, Bool.and_true, elem_insert]
+          Bool.not_false, Bool.and_true, VSet.mem_insert]
+        have hlt : cell1 < n := by omega
         rcases hu3 with rfl | hb
-        · simp
+        · simp [hlt]
         · rcases Decidable.em (u = cell1) with rfl | hne3
-          · simp
+          · simp [hlt]
           · rcases sc5 u (by omega) hu2 hb with h | h
             · exact absurd h (by
                 have := hopen (u - 1) (by omega) (by omega)
@@ -1244,38 +1148,38 @@ theorem nontrivialCell_outcome {ctx : Ctx}
             · rw [h, Bool.true_or]
 
 /-- The nontrivial pass over a window list, the bookkeeping half. -/
-theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
-    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
-      (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.ptn.size ∧ p.2 < nb) →
+theorem refineNontrivial_go_state {ctx : Ctx n} {level : Nat} {workset : VSet n} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt n),
+      (∀ p ∈ cs, p.1 ≤ p.2 ∧ p.2 < st.ptn.size ∧ p.2 < n) →
       cs.Pairwise (fun p q => p.2 < q.1) →
       (∀ p ∈ cs, ∀ q, p.1 ≤ q → q < p.2 → st.ptn[q]! > level) →
       (∀ u, (∀ p ∈ cs, u < p.1 ∨ p.2 < u) →
-        elem (refineNontrivial.go ctx level workset cs st).active u =
-          elem st.active u) ∧
+        (refineNontrivial.go ctx level workset cs st).active.mem u =
+          st.active.mem u) ∧
       (∀ q : Nat, (∀ p ∈ cs, q < p.1 ∨ p.2 ≤ q) →
         (refineNontrivial.go ctx level workset cs st).ptn[q]! =
           st.ptn[q]!) ∧
       (refineNontrivial.go ctx level workset cs st).ptn.size =
         st.ptn.size ∧
-      (bitCount nb (refineNontrivial.go ctx level workset cs
-          st).active + 2 * st.numcells ≤
-        bitCount nb st.active +
+      ((refineNontrivial.go ctx level workset cs
+          st).active.card + 2 * st.numcells ≤
+        st.active.card +
           2 * (refineNontrivial.go ctx level workset cs st).numcells) ∧
       st.numcells ≤
         (refineNontrivial.go ctx level workset cs st).numcells ∧
       (∀ p ∈ cs,
-        (elem st.active p.1 = true →
+        (st.active.mem p.1 = true →
           ∀ u, p.1 ≤ u → u ≤ p.2 →
             (u = p.1 ∨ (refineNontrivial.go ctx level workset cs
               st).ptn[u - 1]! ≤ level) →
-            elem (refineNontrivial.go ctx level workset cs
-              st).active u = true) ∧
-        (elem st.active p.1 = false →
+            (refineNontrivial.go ctx level workset cs
+              st).active.mem u = true) ∧
+        (st.active.mem p.1 = false →
           ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
             (u = p.1 ∨ (refineNontrivial.go ctx level workset cs
               st).ptn[u - 1]! ≤ level) → u ≠ w →
-            elem (refineNontrivial.go ctx level workset cs
-              st).active u = true))
+            (refineNontrivial.go ctx level workset cs
+              st).active.mem u = true))
   | [], st, _, _, _ => by
     rw [refineNontrivial.go]
     exact ⟨fun _ _ => rfl, fun _ _ => rfl, rfl, by omega, Nat.le_refl _,
@@ -1286,11 +1190,11 @@ theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
     dsimp only at h12 hsz hnb
     obtain ⟨o1, o2, oS, o3, o4, o5, o6⟩ :=
       nontrivialCell_outcome (ctx := ctx) (level := level)
-        (workset := workset) (nb := nb) (st := st) h12 hsz hnb
+        (workset := workset) (st := st) h12 hsz hnb
         (fun q hq1 hq2 => hop (c1, c2) (List.mem_cons_self ..) q hq1 hq2)
     have hhead := (List.pairwise_cons.mp hpw).1
     obtain ⟨ih1, ih2, ih3, ih4, ih5, ih6⟩ :=
-      refineNontrivial_go_state (nb := nb) rest
+      refineNontrivial_go_state rest
         (nontrivialCell ctx level workset c1 c2 st)
         (fun p hp => by
           obtain ⟨hp1, hp2, hp3⟩ := hw p (List.mem_cons_of_mem _ hp)
@@ -1312,10 +1216,10 @@ theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
         simp only at this
         omega)
     have hkeepA : ∀ u, u ≤ c2 →
-        elem (refineNontrivial.go ctx level workset rest
-          (nontrivialCell ctx level workset c1 c2 st)).active u =
-          elem (nontrivialCell ctx level workset c1 c2
-            st).active u := by
+        (refineNontrivial.go ctx level workset rest
+          (nontrivialCell ctx level workset c1 c2 st)).active.mem u =
+          (nontrivialCell ctx level workset c1 c2
+            st).active.mem u := by
       intro u hu
       exact ih1 u fun pr hpr => Or.inl (by
         have := hhead pr hpr
@@ -1359,8 +1263,8 @@ theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
           have := hhead p hmem
           simpa using this
         obtain ⟨hA, hI⟩ := ih6 p hmem
-        have hacteq : elem (nontrivialCell ctx level workset c1 c2
-            st).active p.1 = elem st.active p.1 :=
+        have hacteq : (nontrivialCell ctx level workset c1 c2
+            st).active.mem p.1 = st.active.mem p.1 :=
           o1 p.1 (Or.inr (by omega))
         constructor
         · intro hact u hu1 hu2 hu3
@@ -1368,50 +1272,51 @@ theorem refineNontrivial_go_state {ctx : Ctx} {level workset nb : Nat} :
         · intro hact
           exact hI (by rw [hacteq]; exact hact)
 
-private theorem trivial_state_of_fields {ctx : Ctx}
-    {level split1 nb : Nat} {st R : RefineSt}
-    (hRa : R.active = erase st.active split1) (hRp : R.ptn = st.ptn)
+private theorem trivial_state_of_fields {ctx : Ctx n}
+    {level split1 : Nat} {st R : RefineSt n}
+    (hRa : R.active = st.active.erase split1) (hRp : R.ptn = st.ptn)
     (hRl : R.lab = st.lab) (hRn : R.numcells = st.numcells)
-    (hok : StOk ctx.n level st) (hnb : ctx.n ≤ nb)
-    (hmem : elem st.active split1 = true) (hs1 : split1 < ctx.n) :
-    (bitCount nb (refineTrivial ctx level split1 R).active +
+    (hok : StOk n level st)
+    (hmem : st.active.mem split1 = true) (hs1 : split1 < n) :
+    ((refineTrivial ctx level split1 R).active.card +
         2 * st.numcells + 1 ≤
-      bitCount nb st.active +
+      st.active.card +
         2 * (refineTrivial ctx level split1 R).numcells) ∧
     st.numcells ≤ (refineTrivial ctx level split1 R).numcells ∧
-    (∀ p ∈ cells st.ptn level ctx.n,
-      (elem st.active p.1 = true → p.1 ≠ split1 →
+    (∀ p ∈ cells st.ptn level n,
+      (st.active.mem p.1 = true → p.1 ≠ split1 →
         ∀ u, p.1 ≤ u → u ≤ p.2 →
           (u = p.1 ∨ (refineTrivial ctx level split1
             R).ptn[u - 1]! ≤ level) →
-          elem (refineTrivial ctx level split1 R).active u = true) ∧
-      ((elem st.active p.1 = false ∨ p.1 = split1) →
+          (refineTrivial ctx level split1 R).active.mem u = true) ∧
+      ((st.active.mem p.1 = false ∨ p.1 = split1) →
         ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
           (u = p.1 ∨ (refineTrivial ctx level split1
             R).ptn[u - 1]! ≤ level) → u ≠ w →
-          elem (refineTrivial ctx level split1 R).active u = true)) := by
+          (refineTrivial ctx level split1 R).active.mem u = true)) := by
   have hps := hok.ptnSize
   have hls := hok.labSize
   have hend := hok.ptnEnd
-  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
-    rw [← hps]
-    exact hend
+  have hendn : st.ptn[n - 1]! ≤ level := by
+    have h := hend
+    rw [hps] at h
+    exact h
   have hcbd := cells_end_lt_of_end (ptn := st.ptn) (level := level)
     (Nat.le_of_eq hps.symm) hend hendn
-  have hopenc : ∀ p ∈ cells st.ptn level ctx.n,
+  have hopenc : ∀ p ∈ cells st.ptn level n,
       ∀ q, p.1 ≤ q → q < p.2 → st.ptn[q]! > level := by
     intro p hp q hq1 hq2
     exact (cells_isCell (Nat.le_of_eq hps.symm) hend p hp).2.2.1 q hq1
       (by
         have := cells_le p hp
         omega)
-  have herase : bitCount nb (erase st.active split1) + 1 =
-      bitCount nb st.active :=
-    bitCount_erase_of_elem (by omega) hmem
+  have herase : (st.active.erase split1).card + 1 =
+      st.active.card :=
+    VSet.card_erase_of_mem hmem
   have hactconv : ∀ a : Nat, a ≠ split1 →
-      elem (erase st.active split1) a = elem st.active a := by
+      (st.active.erase split1).mem a = st.active.mem a := by
     intro a ha
-    rw [elem_erase,
+    rw [VSet.mem_erase,
       show (split1 == a) = false from by
         simp only [beq_eq_false_iff_ne]
         omega,
@@ -1419,13 +1324,14 @@ private theorem trivial_state_of_fields {ctx : Ctx}
   rw [refineTrivial, hRp]
   obtain ⟨g1, g2, g3, g4, g5, g6⟩ :=
     refineTrivial_go_state (level := level)
-      (gRow := ctx.g[R.lab[split1]!]!) (nb := nb)
-      (cells st.ptn level ctx.n) R
+      (gRow := ctx.g[R.lab[split1]!]!)
+      (cells st.ptn level n) R
       (fun p hp => ⟨cells_le p hp, by
         rw [hRl, hls]
         exact hcbd p hp⟩)
       cells_pairwise
       (by rw [hRp, hRl]; omega)
+      (by rw [hRl]; exact hls)
   rw [hRa] at g2 g4 g6
   rw [hRn] at g4 g5
   refine ⟨by omega, g5, ?_⟩
@@ -1451,7 +1357,7 @@ private theorem trivial_state_of_fields {ctx : Ctx}
       exact absurd hb (by
         have := hopen (u - 1) (by omega) (by omega)
         omega)
-  · have himp' : elem st.active p.1 = true → p.1 ≠ split1 →
+  · have himp' : st.active.mem p.1 = true → p.1 ≠ split1 →
         x = j + 1 := by
       intro hact hne
       exact himp (by rw [hactconv p.1 hne]; exact hact)
@@ -1493,65 +1399,66 @@ private theorem trivial_state_of_fields {ctx : Ctx}
             have := hopen (u - 1) (by omega) (by omega)
             omega)
 
-private theorem nontrivial_state_of_fields {ctx : Ctx}
-    {level split1 split2 nb : Nat} {st R : RefineSt}
-    (hRa : R.active = erase st.active split1) (hRp : R.ptn = st.ptn)
+private theorem nontrivial_state_of_fields {ctx : Ctx n}
+    {level split1 split2 : Nat} {st R : RefineSt n}
+    (hRa : R.active = st.active.erase split1) (hRp : R.ptn = st.ptn)
     (_hRl : R.lab = st.lab) (hRn : R.numcells = st.numcells)
-    (hok : StOk ctx.n level st) (hnb : ctx.n ≤ nb)
-    (hmem : elem st.active split1 = true) (hs1 : split1 < ctx.n) :
-    (bitCount nb (refineNontrivial ctx level split1 split2 R).active +
+    (hok : StOk n level st)
+    (hmem : st.active.mem split1 = true) (hs1 : split1 < n) :
+    ((refineNontrivial ctx level split1 split2 R).active.card +
         2 * st.numcells + 1 ≤
-      bitCount nb st.active +
+      st.active.card +
         2 * (refineNontrivial ctx level split1 split2 R).numcells) ∧
     st.numcells ≤
       (refineNontrivial ctx level split1 split2 R).numcells ∧
-    (∀ p ∈ cells st.ptn level ctx.n,
-      (elem st.active p.1 = true → p.1 ≠ split1 →
+    (∀ p ∈ cells st.ptn level n,
+      (st.active.mem p.1 = true → p.1 ≠ split1 →
         ∀ u, p.1 ≤ u → u ≤ p.2 →
           (u = p.1 ∨ (refineNontrivial ctx level split1 split2
             R).ptn[u - 1]! ≤ level) →
-          elem (refineNontrivial ctx level split1 split2
-            R).active u = true) ∧
-      ((elem st.active p.1 = false ∨ p.1 = split1) →
+          (refineNontrivial ctx level split1 split2
+            R).active.mem u = true) ∧
+      ((st.active.mem p.1 = false ∨ p.1 = split1) →
         ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
           (u = p.1 ∨ (refineNontrivial ctx level split1 split2
             R).ptn[u - 1]! ≤ level) → u ≠ w →
-          elem (refineNontrivial ctx level split1 split2
-            R).active u = true)) := by
+          (refineNontrivial ctx level split1 split2
+            R).active.mem u = true)) := by
   have hps := hok.ptnSize
   have hend := hok.ptnEnd
-  have hendn : st.ptn[ctx.n - 1]! ≤ level := by
-    rw [← hps]
-    exact hend
+  have hendn : st.ptn[n - 1]! ≤ level := by
+    have h := hend
+    rw [hps] at h
+    exact h
   have hcbd := cells_end_lt_of_end (ptn := st.ptn) (level := level)
     (Nat.le_of_eq hps.symm) hend hendn
-  have hopenc : ∀ p ∈ cells st.ptn level ctx.n,
+  have hopenc : ∀ p ∈ cells st.ptn level n,
       ∀ q, p.1 ≤ q → q < p.2 → st.ptn[q]! > level := by
     intro p hp q hq1 hq2
     exact (cells_isCell (Nat.le_of_eq hps.symm) hend p hp).2.2.1 q hq1
       (by
         have := cells_le p hp
         omega)
-  have herase : bitCount nb (erase st.active split1) + 1 =
-      bitCount nb st.active :=
-    bitCount_erase_of_elem (by omega) hmem
+  have herase : (st.active.erase split1).card + 1 =
+      st.active.card :=
+    VSet.card_erase_of_mem hmem
   have hactconv : ∀ a : Nat, a ≠ split1 →
-      elem (erase st.active split1) a = elem st.active a := by
+      (st.active.erase split1).mem a = st.active.mem a := by
     intro a ha
-    rw [elem_erase,
+    rw [VSet.mem_erase,
       show (split1 == a) = false from by
         simp only [beq_eq_false_iff_ne]
         omega,
       Bool.not_false, Bool.and_true]
-  have hactsp : elem (erase st.active split1) split1 = false := by
-    rw [elem_erase]
+  have hactsp : (st.active.erase split1).mem split1 = false := by
+    rw [VSet.mem_erase]
     simp
   rw [refineNontrivial]
   dsimp only
-  obtain ⟨R2, hR2⟩ : ∃ R2 : RefineSt, ({ R with
+  obtain ⟨R2, hR2⟩ : ∃ R2 : RefineSt n, ({ R with
       longcode := mash R.longcode (split2 - split1 + 1) } :
-        RefineSt) = R2 := ⟨_, rfl⟩
-  have hR2a : R2.active = erase st.active split1 := by
+        RefineSt n) = R2 := ⟨_, rfl⟩
+  have hR2a : R2.active = st.active.erase split1 := by
     rw [← hR2]
     exact hRa
   have hR2p : R2.ptn = st.ptn := by
@@ -1563,8 +1470,8 @@ private theorem nontrivial_state_of_fields {ctx : Ctx}
   rw [hR2, hRp]
   obtain ⟨_, _, _, g4, g5, g6⟩ :=
     refineNontrivial_go_state (ctx := ctx) (level := level)
-      (workset := worksetOf R.lab split1 split2) (nb := nb)
-      (cells R.ptn level ctx.n) R2
+      (workset := worksetOf n R.lab split1 split2)
+      (cells R.ptn level n) R2
       (fun p hp => by
         rw [hRp] at hp
         refine ⟨cells_le p hp, ?_, ?_⟩
@@ -1601,33 +1508,33 @@ private theorem nontrivial_state_of_fields {ctx : Ctx}
 strictly, and per old cell an active non-splitter cell activates every
 fragment start while any other cell leaves at most one start
 inactive. -/
-theorem refineStep_state {ctx : Ctx} {level split1 nb : Nat}
-    {st : RefineSt} (hok : StOk ctx.n level st)
-    (hnb : ctx.n ≤ nb) (hmem : elem st.active split1 = true)
-    (hs1 : split1 < ctx.n) :
-    (bitCount nb (refineStep ctx level split1 st).active +
+theorem refineStep_state {ctx : Ctx n} {level split1 : Nat}
+    {st : RefineSt n} (hok : StOk n level st)
+    (hmem : st.active.mem split1 = true)
+    (hs1 : split1 < n) :
+    ((refineStep ctx level split1 st).active.card +
         2 * st.numcells + 1 ≤
-      bitCount nb st.active +
+      st.active.card +
         2 * (refineStep ctx level split1 st).numcells) ∧
     st.numcells ≤ (refineStep ctx level split1 st).numcells ∧
-    (∀ p ∈ cells st.ptn level ctx.n,
-      (elem st.active p.1 = true → p.1 ≠ split1 →
+    (∀ p ∈ cells st.ptn level n,
+      (st.active.mem p.1 = true → p.1 ≠ split1 →
         ∀ u, p.1 ≤ u → u ≤ p.2 →
           (u = p.1 ∨ (refineStep ctx level split1
             st).ptn[u - 1]! ≤ level) →
-          elem (refineStep ctx level split1 st).active u = true) ∧
-      ((elem st.active p.1 = false ∨ p.1 = split1) →
+          (refineStep ctx level split1 st).active.mem u = true) ∧
+      ((st.active.mem p.1 = false ∨ p.1 = split1) →
         ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
           (u = p.1 ∨ (refineStep ctx level split1
             st).ptn[u - 1]! ≤ level) → u ≠ w →
-          elem (refineStep ctx level split1 st).active u = true)) := by
+          (refineStep ctx level split1 st).active.mem u = true)) := by
   rw [refineStep]
   dsimp only
   split
-  · exact trivial_state_of_fields (st := st) rfl rfl rfl rfl hok hnb
+  · exact trivial_state_of_fields (st := st) rfl rfl rfl rfl hok
       hmem hs1
   · exact nontrivial_state_of_fields (st := st) rfl rfl rfl rfl hok
-      hnb hmem hs1
+      hmem hs1
 
 end Hex.GraphIso.Nauty
 
