@@ -143,6 +143,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "factor",
         "divisorfn",
         "graphiso",
+        "graphisoautos",
         "order",
         "cyclotomic",
     }
@@ -403,6 +404,61 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(f"graphiso.cellSizes must be k positive sizes summing to n: {record!r}")
         if not _is_nat(record.get("numnodes")):
             raise FixtureError(f"graphiso.numnodes must be Nat: {record!r}")
+    elif kind == "graphisoautos":
+        n = record.get("n")
+        k = record.get("k")
+        if not _is_nat(n) or not _is_nat(k):
+            raise FixtureError(f"graphisoautos.n/k must be Nat: {record!r}")
+        colors = record.get("colors")
+        if not isinstance(colors, list) or len(colors) != n or not all(
+            isinstance(c, int) and 0 <= c < max(k, 1) for c in colors
+        ):
+            raise FixtureError(
+                f"graphisoautos.colors must be n colours below k: {record!r}"
+            )
+        edges = record.get("edges")
+        if not isinstance(edges, list) or not all(
+            isinstance(e, list) and len(e) == 2
+            and all(isinstance(x, int) and 0 <= x < n for x in e)
+            and e[0] < e[1]
+            for e in edges
+        ):
+            raise FixtureError(
+                f"graphisoautos.edges must be i<j pairs below n: {record!r}"
+            )
+        gens = record.get("gens")
+        if not isinstance(gens, list) or not all(
+            isinstance(g, list) and sorted(g) == list(range(n)) for g in gens
+        ):
+            raise FixtureError(
+                f"graphisoautos.gens must be permutations of 0..n-1: {record!r}"
+            )
+        orbits = record.get("orbits")
+        if not isinstance(orbits, list) or len(orbits) != n or not all(
+            isinstance(x, int) and 0 <= x < max(n, 1) for x in orbits
+        ):
+            raise FixtureError(
+                f"graphisoautos.orbits must be n representatives: {record!r}"
+            )
+        numOrbits = record.get("numOrbits")
+        if not _is_nat(numOrbits) or numOrbits > n:
+            raise FixtureError(
+                f"graphisoautos.numOrbits must be a Nat at most n: {record!r}"
+            )
+        if numOrbits != sum(1 for v in range(n) if orbits[v] == v):
+            raise FixtureError(
+                f"graphisoautos.numOrbits must count the orbit "
+                f"representatives: {record!r}"
+            )
+        if not _is_nat(record.get("numGenerators")):
+            raise FixtureError(
+                f"graphisoautos.numGenerators must be Nat: {record!r}"
+            )
+        order = record.get("order")
+        if not _is_nat(order) or order < 1:
+            raise FixtureError(
+                f"graphisoautos.order must be a positive Nat: {record!r}"
+            )
     elif kind == "matrix":
         rows = record.get("rows")
         if not isinstance(rows, list) or not all(

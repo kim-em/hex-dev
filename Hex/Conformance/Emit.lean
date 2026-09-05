@@ -247,6 +247,30 @@ def emitGraphIsoFixture (lib case : String) (n k : Nat)
     ("numnodes",  jsonInt (Int.ofNat numnodes))
   ]
 
+/-- Emit a `graphisoautos` fixture record: the automorphism generators
+the pinned traversal records, in discovery order, with the vertex
+orbits, the orbit count, the generator count the transcribed search
+reports and the group order. -/
+def emitGraphIsoAutosFixture (lib case : String) (n k : Nat)
+    (colors : List Int) (edges : List (Int × Int))
+    (gens : List (List Int)) (numGenerators : Nat) (orbits : List Int)
+    (numOrbits : Nat) (order : Nat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",          jsonString "graphisoautos"),
+    ("schema",        jsonInt 1),
+    ("lib",           jsonString lib),
+    ("case",          jsonString case),
+    ("n",             jsonInt (Int.ofNat n)),
+    ("k",             jsonInt (Int.ofNat k)),
+    ("colors",        jsonIntList colors),
+    ("edges",         jsonIntMatrix (edges.map fun (a, b) => [a, b])),
+    ("gens",          jsonIntMatrix gens),
+    ("numGenerators", jsonInt (Int.ofNat numGenerators)),
+    ("orbits",        jsonIntList orbits),
+    ("numOrbits",     jsonInt (Int.ofNat numOrbits)),
+    ("order",         jsonInt (Int.ofNat order))
+  ]
+
 /-- Emit a `matrix` fixture record. -/
 def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := do
   emitLine <| jsonObject [

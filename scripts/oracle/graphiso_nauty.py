@@ -12,6 +12,16 @@ entry of ``canonlab``; the Lean answer is never canonicalized before
 comparison. The visited-node counter is also compared, pinning the whole
 search traversal rather than only its result.
 
+``graphisoautos`` records pin the automorphism surface. The shim
+collects nauty's own generator list through ``options.userautomproc``,
+so the comparison is against the traversal's emissions rather than a
+recomputation. nauty emits a generator at every code-1 leaf and at
+every code-2 leaf that grows the orbit partition; the Lean trace
+records both kinds unconditionally, so nauty's list must appear in the
+Lean list as an ordered subsequence, of exactly ``numGenerators``
+entries. The orbit array, the orbit count and the group order
+(``stats.grpsize1 * 10 ** stats.grpsize2``) are compared exactly.
+
 The compiled shim binary is cached in ``HEX_NAUTY_CACHE`` or
 ``~/.cache/hex-nauty``, keyed by the SHA-256 of the shim source together
 with every vendored file it links, so a stale or foreign binary is never
@@ -88,6 +98,79 @@ def _shim_input(record: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _parse(line: str) -> dict:
+    """Split one shim answer into its labelled sections."""
+    head, rest = line.split(" | tri ")
+    tri, rest = rest.split(" | nodes ")
+    nodes, rest = rest.split(" | gens ")
+    gens, rest = rest.split(" | orbits ")
+    orbits, rest = rest.split(" | norbits ")
+    norbits, grp = rest.split(" | grp ")
+    gen_fields = gens.split()
+    ngens = int(gen_fields[0])
+    flat = [int(x) for x in gen_fields[1:]]
+    n = len(head.split()) - 1
+    if ngens * n != len(flat):
+        raise OracleMismatch(
+            f"shim emitted {len(flat)} generator entries for {ngens} "
+            f"generators on {n} vertices"
+        )
+    g1, g2 = grp.split()
+    return {
+        "lab": [int(x) for x in head.split()[1:]],
+        "tri": tri.strip(),
+        "nodes": int(nodes),
+        "gens": [flat[t * n:(t + 1) * n] for t in range(ngens)],
+        "orbits": [int(x) for x in orbits.split()],
+        "norbits": int(norbits),
+        "grpsize1": float(g1),
+        "grpsize2": int(g2),
+    }
+
+
+def _is_subsequence(small: list, big: list) -> bool:
+    it = iter(big)
+    return all(any(x == y for y in it) for x in small)
+
+
+def _check_autos(record: dict, answer: dict) -> None:
+    case = record["case"]
+    if answer["orbits"] != record["orbits"]:
+        raise OracleMismatch(
+            f"{case}: orbits {record['orbits']} != nauty {answer['orbits']}"
+        )
+    if answer["norbits"] != record["numOrbits"]:
+        raise OracleMismatch(
+            f"{case}: numOrbits {record['numOrbits']} != nauty "
+            f"{answer['norbits']}"
+        )
+    if answer["grpsize2"] == 0:
+        order = int(round(answer["grpsize1"]))
+        if order != record["order"]:
+            raise OracleMismatch(
+                f"{case}: order {record['order']} != nauty {order}"
+            )
+    else:
+        order = answer["grpsize1"] * 10.0 ** answer["grpsize2"]
+        if abs(order - record["order"]) > 1e-9 * order:
+            raise OracleMismatch(
+                f"{case}: order {record['order']} != nauty {order}"
+            )
+    if len(answer["gens"]) != record["numGenerators"]:
+        raise OracleMismatch(
+            f"{case}: numGenerators {record['numGenerators']} != nauty "
+            f"{len(answer['gens'])}"
+        )
+    if not _is_subsequence(answer["gens"], record["gens"]):
+        raise OracleMismatch(
+            f"{case}: nauty generators {answer['gens']} are not a "
+            f"subsequence of the recorded trace {record['gens']}"
+        )
+    for gen in record["gens"]:
+        if sorted(gen) != list(range(record["n"])):
+            raise OracleMismatch(f"{case}: {gen} is not a permutation")
+
+
 def _check(record: dict, shim_line: str | None) -> None:
     n = record["n"]
     k = record["k"]
@@ -105,11 +188,10 @@ def _check(record: dict, shim_line: str | None) -> None:
             raise OracleMismatch(f"{case}: nonempty answer for the empty graph")
         return
     assert shim_line is not None
-    head, tri_part = shim_line.split(" | tri ")
-    tri, nodes_part = tri_part.split(" | nodes ")
-    lab = [int(x) for x in head.split()[1:]]
-    tri = tri.strip()
-    nodes = int(nodes_part)
+    answer = _parse(shim_line)
+    lab = answer["lab"]
+    tri = answer["tri"]
+    nodes = answer["nodes"]
     if lab != record["canonLab"]:
         raise OracleMismatch(f"{case}: canonLab {record['canonLab']} != nauty {lab}")
     if tri != record["canonTri"]:
@@ -120,7 +202,8 @@ def _check(record: dict, shim_line: str | None) -> None:
 
 def main() -> int:
     shim = _build_shim()
-    records = [r for r in read_fixtures() if r["kind"] == "graphiso"]
+    records = [r for r in read_fixtures()
+               if r["kind"] in ("graphiso", "graphisoautos")]
     if not records:
         print("graphiso oracle: no graphiso records on stdin", file=sys.stderr)
         return 1
@@ -137,11 +220,18 @@ def main() -> int:
         )
     it = iter(lines)
     checked = 0
+    autos = 0
     for record in records:
         line = next(it) if record["n"] >= 1 else None
-        _check(record, line)
+        if record["kind"] == "graphiso":
+            _check(record, line)
+        else:
+            assert line is not None
+            _check_autos(record, _parse(line))
+            autos += 1
         checked += 1
-    print(f"graphiso oracle: {checked} cases checked against nauty 2.9.3")
+    print(f"graphiso oracle: {checked} cases checked against nauty 2.9.3 "
+          f"({autos} automorphism-group cases)")
     return 0
 
 
