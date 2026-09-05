@@ -188,9 +188,9 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
       by_cases ht : target < r
       · rw [dite_eq_left ht, dite_eq_left ht]
         cases hf : findNonzero? matrix target with
-        | none => simp only [hf]; exact ⟨rfl, rfl⟩
+        | none => simp only []; exact ⟨rfl, rfl⟩
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := swap_same ops ops'
               (⟨rfl, rfl⟩ : Same
@@ -358,7 +358,7 @@ private theorem carry_allDvd {a z : Nat} {xs : List Nat}
 private theorem pass_allDvd {xs : List Nat} {z : Nat}
     (h : AllDvd xs z) : AllDvd (pass xs) z := by
   cases xs with
-  | nil => simpa [pass, AllDvd]
+  | nil => simp [pass, AllDvd]
   | cons a xs =>
       apply carry_allDvd
       · exact h a (by simp)
@@ -547,14 +547,14 @@ private theorem vectorPassFuel_toList (fuel index : Nat) (v : Vector Nat r)
             have hkj : k ≠ index + 1 := by omega
             have hik : index ≠ k := Ne.symm hki
             have hjk : index + 1 ≠ k := Ne.symm hkj
-            simp [List.getElem_append, hkpre, w, vectorStep, i, j,
-              Vector.getElem_set, hki, hkj, hik, hjk, hir, hi, hmin]
+            simp [hkpre, w, vectorStep, i, j,
+              hik, hjk, hmin]
           · have hkeq : k = index := by simp at hk hk'; omega
             subst k
-            simp [List.getElem_append, w, vectorStep, i, j,
-              Vector.getElem_set, hir, hi, hmin]
+            simp [w, vectorStep, i, j,
+              hmin]
       have hget : w[index + 1] = Nat.lcm v[index] v[index + 1] := by
-        simp [w, vectorStep, i, j, Vector.getElem_set, hir, hi]
+        simp [w, vectorStep, i, j]
       have hdrop : w.toList.drop (index + 1 + 1) =
           v.toList.drop (index + 1 + 1) := by
         apply List.ext_getElem
@@ -564,8 +564,8 @@ private theorem vectorPassFuel_toList (fuel index : Nat) (v : Vector Nat r)
           have hkj : index + 1 + 1 + k ≠ index + 1 := by omega
           have hik : index ≠ index + 1 + 1 + k := Ne.symm hki
           have hjk : index + 1 ≠ index + 1 + 1 + k := Ne.symm hkj
-          simp [w, vectorStep, i, j, Vector.getElem_set, hir, hi,
-            hki, hkj, hik, hjk]
+          simp [w, vectorStep, i, j,
+            hik, hjk]
       rw [htake, hget, hdrop]
       have hsplit : v.toList.drop (index + 1) =
           v[index + 1] :: v.toList.drop (index + 1 + 1) := by
@@ -868,10 +868,10 @@ private theorem pairArray_eq (values : Array Int) (hsize : values.size = r)
     by_cases hb : values[j.val]'(by omega) = 0
     · simp only [hb, ite_eq_left]
     · simp [hb]
-  · simp only [ha, ite_eq_right]
+  · simp only [ha]
     by_cases hb : values[j.val]'(by omega) = 0
     · simp [hb]
-    · simp only [hb, ite_eq_right]
+    · simp only [hb]
       by_cases hab : values[i.val]'(by omega) = values[j.val]'(by omega)
       · simp [hab]
       · simp [hab]
@@ -1139,9 +1139,9 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
       by_cases ht : target < r
       · rw [dite_eq_left ht, dite_eq_left ht]
         cases hf : findNonzero? values target with
-        | none => simp only [hf]; exact ⟨rfl⟩
+        | none => simp only []; exact ⟨rfl⟩
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := swap_same ops ops'
               (⟨rfl⟩ : Same

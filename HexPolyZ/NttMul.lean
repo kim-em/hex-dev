@@ -250,10 +250,10 @@ theorem mulNttCrt?_eq (left right result : ZPoly)
                   have hcandidate (j : Fin n) :
                       candidate[j] = (left * right).coeff j.val := by
                     change reference.toArray[j.val]'(by
-                      simpa [hreferenceSize] using j.isLt) = _
+                      simp [hreferenceSize]) = _
                     rw [List.getElem_toArray]
                     rw [List.getElem_eq_getD (h := by
-                      simpa [hreferenceSize] using j.isLt)
+                      simp [hreferenceSize])
                         (Zero.zero : Int)]
                     exact getD_reference n j.val left right
                   have hmoduli : plan.moduli = selection.moduli :=

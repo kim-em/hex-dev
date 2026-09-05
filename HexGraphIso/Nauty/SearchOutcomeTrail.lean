@@ -293,7 +293,7 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
         have hopen := hcell.2.2.1 tc (Nat.le_refl tc) (by omega)
         exact (Nat.not_lt_of_ge hq' hopen).elim
       rw [hptn, Array.getElem!_set!_ne _ _ _ _ hne]
-      simpa only [pushed, sweepFrame]
+      simp only [pushed, sweepFrame]
   · intro target entry hlt hentry
     rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
     · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry
@@ -441,7 +441,7 @@ theorem TrailOk.pushFrame {ctx : Ctx}
         have hopen := hcell.2.2.1 tc (Nat.le_refl tc) (by omega)
         omega
       rw [hptn, Array.getElem!_set!_ne _ _ _ _ hne, hptnEq]
-      simpa only [pushed, sweepFrame]
+      simp only [pushed, sweepFrame]
   · intro target entry hlt hentry
     rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
     · rw [FrameTrail.push_of_ne _ pushed (Nat.ne_of_lt hold)] at hentry

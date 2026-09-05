@@ -203,9 +203,9 @@ theorem refineTrivialFast_go_eq (ctx : Ctx) (level gRow : Nat)
   | fuel + 1, c1, st => by
     rw [refineTrivialFast.go, cells.go]
     rcases Decidable.em (c1 < ctx.n) with h | h
-    · rw [if_pos h, if_pos h, refineTrivial.go]
+    · rw [ite_eq_left h, ite_eq_left h, refineTrivial.go]
       exact refineTrivialFast_go_eq ctx level gRow ptn0 fuel _ _
-    · rw [if_neg h, if_neg h, refineTrivial.go]
+    · rw [ite_eq_right h, ite_eq_right h, refineTrivial.go]
 
 @[csimp] theorem refineTrivial_eq_fast :
     @refineTrivial = @refineTrivialFast := by
@@ -477,14 +477,14 @@ theorem ntcScan_eq_windowScan (level cell1 cell2 bmin : Nat)
         omega
     rw [hmap, ← h0]
     by_cases hm : bucket[j]! > 0
-    · rw [if_pos hm, if_pos hm,
+    · rw [ite_eq_left hm, ite_eq_left hm,
         ntcScan_eq_windowScan level cell1 cell2 bmin bucket counts
           fuel (j + 1) (c1 + bucket[j]!)
           (if Int.ofNat bucket[j]! > maxcell then Int.ofNat bucket[j]!
             else maxcell)
           (windowStep level cell1 cell2 (bmin + j) c1 (c1 + bucket[j]!)
             maxcell st) hrest]
-    · rw [if_neg hm, if_neg hm,
+    · rw [ite_eq_right hm, ite_eq_right hm,
         ntcScan_eq_windowScan level cell1 cell2 bmin bucket counts
           fuel (j + 1) c1 maxcell st hrest]
 
@@ -585,11 +585,11 @@ theorem ntcBucket_spec (counts : Array Nat) (bmin : Nat) :
     rw [ntcBucket_spec counts bmin fuel (i + 1) _ hsz' hrange' v hv']
     rw [List.range'_succ, List.countP_cons]
     by_cases hveq : (counts[i]! - bmin == v) = true
-    · rw [if_pos hveq]
+    · rw [ite_eq_left hveq]
       have hvv : counts[i]! - bmin = v := by simp only [beq_iff_eq] at hveq; exact hveq
       rw [hvv, Array.getElem!_set!_self _ _ _ (by rw [← hvv]; exact hib)]
       omega
-    · rw [if_neg hveq]
+    · rw [ite_eq_right hveq]
       rw [Array.getElem!_set!_ne _ _ _ _ (by
         intro h; exact hveq (by simp [h]))]
       omega
@@ -742,7 +742,7 @@ private theorem placed_lt_mult (counts : Array Nat) (bmin o v : Nat)
     (ho : o < counts.size) (hv : counts[o]! - bmin == v) :
     placed counts bmin o v < placed counts bmin counts.size v := by
   have h1 : placed counts bmin (o + 1) v = placed counts bmin o v + 1 := by
-    rw [placed_succ, if_pos hv]
+    rw [placed_succ, ite_eq_left hv]
   have h2 : placed counts bmin (o + 1) v ≤ placed counts bmin counts.size v :=
     placed_mono counts bmin v (by omega)
   omega
@@ -908,9 +908,9 @@ private theorem grpAt_getElem! {β : Type} [Inhabited β] (w : Nat)
     rw [grpAt, List.zipIdx_cons, List.take_succ_cons, List.countP_cons]
     by_cases hx : (x == w) = true
     · rw [List.filter_cons_of_pos (by simpa using hx), List.map_cons,
-        if_pos hx, List.getElem!_cons_succ, hrec]
+        ite_eq_left hx, List.getElem!_cons_succ, hrec]
       congr 1; omega
-    · rw [List.filter_cons_of_neg (by simpa using hx), if_neg hx]
+    · rw [List.filter_cons_of_neg (by simpa using hx), ite_eq_right hx]
       simp only [Nat.add_zero]
       rw [hrec]; congr 1; omega
 
@@ -1103,7 +1103,7 @@ theorem ntcPass_concrete_counts (ctx : Ctx) (lab : Array Nat)
   have hempty : (Array.mkEmpty (cell2 + 1 - cell1) : Array Nat).toList = [] :=
     Array.toList_eq_nil_iff.mpr rfl
   rw [ntcPass_spec]
-  simp only [Array.toList_append, List.toList_toArray, Array.toList_push,
+  simp only [Array.toList_append, Array.toList_push,
     hempty, List.nil_append, List.singleton_append]
   rw [countsOf]
   exact cons_shift_map_eq
@@ -1122,7 +1122,7 @@ theorem ntcPass_concrete_members (ctx : Ctx) (lab : Array Nat)
   have hempty : (Array.mkEmpty (cell2 + 1 - cell1) : Array Nat).toList = [] :=
     Array.toList_eq_nil_iff.mpr rfl
   rw [ntcPass_spec]
-  simp only [Array.toList_append, List.toList_toArray, Array.toList_push,
+  simp only [Array.toList_append, Array.toList_push,
     hempty, List.nil_append, List.singleton_append]
   exact cons_shift_map_eq (fun o => lab[o]!) cell1 cell2 h
 
@@ -1176,10 +1176,10 @@ private theorem ntcPlace_eq_fold (counts members : Array Nat) (bmin : Nat)
       by_cases hwv : w = counts[o0]! - bmin
       · subst hwv
         rw [Array.getElem!_set!_self _ _ _ hw, hpos, placed_succ,
-          if_pos (by simp)]
+          ite_eq_left (by simp)]
         omega
       · rw [Array.getElem!_set!_ne _ _ _ _ (fun h => hwv h.symm), hinv w hw,
-          placed_succ, if_neg (by simpa using fun h => hwv h.symm)]
+          placed_succ, ite_eq_right (by simpa using fun h => hwv h.symm)]
         omega
     have hbound' : ∀ o, o0 + 1 ≤ o → o < (o0 + 1) + fuel →
         counts[o]! - bmin < (starts.set! (counts[o0]! - bmin)
@@ -1322,7 +1322,7 @@ private theorem destOff_inj (counts : Array Nat) (bmin : Nat)
       rcases Nat.lt_or_ge o o' with h | h
       · have h1 : placed counts bmin (o + 1) (counts[o']! - bmin) =
             placed counts bmin o (counts[o']! - bmin) + 1 := by
-          rw [placed_succ, if_pos (by rw [← hv]; simp)]
+          rw [placed_succ, ite_eq_left (by rw [← hv]; simp)]
         have h2 : placed counts bmin (o + 1) (counts[o']! - bmin) ≤
             placed counts bmin o' (counts[o']! - bmin) :=
           placed_mono counts bmin _ (by omega)
@@ -1330,7 +1330,7 @@ private theorem destOff_inj (counts : Array Nat) (bmin : Nat)
       · have hlt : o' < o := by omega
         have h1 : placed counts bmin (o' + 1) (counts[o']! - bmin) =
             placed counts bmin o' (counts[o']! - bmin) + 1 := by
-          rw [placed_succ, if_pos (by simp)]
+          rw [placed_succ, ite_eq_left (by simp)]
         have h2 : placed counts bmin (o' + 1) (counts[o']! - bmin) ≤
             placed counts bmin o (counts[o']! - bmin) :=
           placed_mono counts bmin _ (by omega)
@@ -1635,17 +1635,17 @@ fast path in place of the O(cell x window) `multOf` scan and
   funext ctx level workset cell1 cell2 st
   rw [nontrivialCell, nontrivialCellFast]
   rcases Decidable.em ((cell1 == cell2) = true) with h12 | h12
-  · rw [if_pos h12, if_pos h12]
-  · rw [if_neg h12, if_neg h12]
+  · rw [ite_eq_left h12, ite_eq_left h12]
+  · rw [ite_eq_right h12, ite_eq_right h12]
     rcases Decidable.em (cell2 < cell1) with h21 | h21
     · -- empty window: the specification's extrema collapse to 0
-      rw [if_pos h21]
+      rw [ite_eq_left h21]
       have hempty : countsOf ctx st.lab workset cell1 cell2 = [] := by
         rw [countsOf, show cell2 + 1 - cell1 = 0 from by omega,
           List.range_zero, List.map_nil]
       rw [hempty]
       simp
-    · rw [if_neg h21]
+    · rw [ite_eq_right h21]
       have hle : cell1 ≤ cell2 := by omega
       dsimp only
       generalize hr : ntcPass ctx st.lab workset cell1 (cell2 - cell1) 1
@@ -1674,8 +1674,8 @@ fast path in place of the O(cell x window) `multOf` scan and
         exact h
       rw [← hbminE, ← hbmaxE]
       rcases Decidable.em ((bmin == bmax) = true) with heq | heq
-      · rw [if_pos heq, if_pos heq]
-      · rw [if_neg heq, if_neg heq]
+      · rw [ite_eq_left heq, ite_eq_left heq]
+      · rw [ite_eq_right heq, ite_eq_right heq]
         have hmemL : ∀ q, q < counts.size →
             counts[q]! ∈ countsOf ctx st.lab workset cell1 cell2 := by
           intro q hq
@@ -1795,9 +1795,9 @@ theorem refineNontrivialFast_go_eq (ctx : Ctx) (level workset : Nat)
   | fuel + 1, c1, st => by
     rw [refineNontrivialFast.go, cells.go]
     rcases Decidable.em (c1 < ctx.n) with h | h
-    · rw [if_pos h, if_pos h, refineNontrivial.go]
+    · rw [ite_eq_left h, ite_eq_left h, refineNontrivial.go]
       exact refineNontrivialFast_go_eq ctx level workset ptn0 fuel _ _
-    · rw [if_neg h, if_neg h, refineNontrivial.go]
+    · rw [ite_eq_right h, ite_eq_right h, refineNontrivial.go]
 
 @[csimp] theorem refineNontrivial_eq_fast :
     @refineNontrivial = @refineNontrivialFast := by

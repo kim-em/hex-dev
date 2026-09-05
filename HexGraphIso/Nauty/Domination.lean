@@ -1141,8 +1141,8 @@ theorem pruneAutos_back {ctx : Ctx} {level : Nat} {st : SearchSt}
     (pruneAutos ctx level st).back? =
       some (fmptn st.lab st.ptn st.noncheaplevel ctx.n) := by
   unfold pruneAutos
-  rw [if_neg hne]
-  exact pushAuto_back hworkspace.1 hworkspace.2
+  rw [ite_eq_right hne]
+  exact pushAuto_back hworkspace.1
 
 /-- The frozen-downward fast arm has exactly the shared prune-tail ledger
 effect. -/
@@ -1366,7 +1366,7 @@ theorem processnode_rowTie_short {ctx : Ctx} {level numcells : Nat}
   repeat' split at hshort ⊢
   all_goals simp_all
   intro hcount hptr
-  rw [if_neg hcount] at hshort
+  rw [ite_eq_right hcount] at hshort
   omega
 
 /-- The code-two arm leaves the canonical guide untouched. -/

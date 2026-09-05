@@ -519,7 +519,7 @@ private theorem diagMatrix_swap (v : Vector Int r) (i j : Fin r) :
   by_cases hri : row = i <;> by_cases hrj : row = j <;>
     by_cases hci : col = i <;> by_cases hcj : col = j
   all_goals simp_all [Fin.ext_iff]
-  all_goals split <;> simp_all <;> omega
+  all_goals split <;> simp_all; omega
 
 private theorem diagMatrix_negate (v : Vector Int r) (i : Fin r) :
     Matrix.rowScale (diagMatrix v r r) i (-1) =
@@ -586,9 +586,9 @@ private theorem Diagonal.Compact.normalizeFuel_agrees
       · rw [dite_eq_left ht, dite_eq_left ht]
         rw [h.matrix, Diagonal.findNonzero?_diag]
         cases hf : Diagonal.Compact.findNonzero? compact.values target with
-        | none => simp only [hf]; exact h
+        | none => simp only []; exact h
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := swap_agrees ops h pivot found
             have hpivot :
@@ -643,9 +643,9 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
               apply Classical.byContradiction
               intro hn
               exact hfind ⟨Nat.le_of_not_gt hi, hn⟩
-            simpa [hz]
+            simp [hz]
       | some found =>
-          simp only [hf]
+          simp only []
           let pivot : Fin r := ⟨target, ht⟩
           have hfound := List.find?_some hf
           simp only [Bool.and_eq_true, decide_eq_true_eq] at hfound
@@ -673,10 +673,10 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
             have hnext : Diagonal.Compact.NonnegTo next (target + 1) := by
               intro i hi
               by_cases hip : i.val = pivot.val
-              · simp [next, Vector.getElem_set, hip]
+              · simp [next, hip]
                 omega
               · have hip' : pivot.val ≠ i.val := Ne.symm hip
-                simp [next, Vector.getElem_set, hip, hip']
+                simp [next, hip']
                 exact hmoved i (by simp [pivot] at hip; omega)
             have hout := ih (target + 1) next hnext (by omega)
             simpa only [moved, pivot, p, ite_eq_left hneg, next] using hout
@@ -729,9 +729,9 @@ private theorem Diagonal.Compact.quotient_lcm (a b : Int)
   let l := Nat.lcm a.natAbs b.natAbs
   let g' := Int.ofNat g
   have ha_cast : Int.ofNat a.natAbs = a := by
-    simpa [Int.natAbs_of_nonneg ha] using Int.ofNat_toNat ha
+    simp [Int.natAbs_of_nonneg ha]
   have hb_cast : Int.ofNat b.natAbs = b := by
-    simpa [Int.natAbs_of_nonneg hb] using Int.ofNat_toNat hb
+    simp [Int.natAbs_of_nonneg hb]
   have hga : g' ∣ a := by
     dsimp only [g, g']
     rw [← ha_cast]
@@ -762,7 +762,7 @@ private theorem Diagonal.Compact.quotient_lcm (a b : Int)
 
 private theorem Diagonal.Compact.cast_natAbs (x : Int) (hx : 0 ≤ x) :
     Int.ofNat x.natAbs = x := by
-  simpa [Int.natAbs_of_nonneg hx] using Int.ofNat_toNat hx
+  simp [Int.natAbs_of_nonneg hx]
 
 set_option maxHeartbeats 800000 in
 private theorem Diagonal.Compact.pairStep_model
@@ -796,16 +796,15 @@ private theorem Diagonal.Compact.pairStep_model
       intro k hk
       by_cases hki : k = i.val
       · subst k
-        simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hai, hai', hbj, hbj',
-          Vector.getElem_set, hne, hij, hji]
+        simp [Diagonal.Bubble.vectorStep, hai', hbj',
+          hji]
       · by_cases hkj : k = j.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hai, hai', hbj, hbj',
-            Vector.getElem_set, hne, hij, hji]
+          simp [Diagonal.Bubble.vectorStep, hai', hbj']
         · have hik : i.val ≠ k := Ne.symm hki
           have hjk : j.val ≠ k := Ne.symm hkj
-          simp [Diagonal.Bubble.vectorStep, Vector.getElem_set, hki, hkj,
-            hik, hjk, hij, hji, hcastNat k hk]
+          simp [Diagonal.Bubble.vectorStep,
+            hik, hjk]
           exact (hcastNat k hk).symm
 
     · rw [ite_eq_right hb0]
@@ -813,19 +812,18 @@ private theorem Diagonal.Compact.pairStep_model
       intro k hk
       by_cases hki : k = i.val
       · subst k
-        simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, a, b, hai, hai',
-          ha0, hb0, Vector.getElem_set, Vector.getElem_swap, hne,
-          hij, hji, cast_natAbs b hb]
+        simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, hai',
+          hne,
+          hji]
         exact (hcastNat j.val j.isLt).symm
       · by_cases hkj : k = j.val
         · subst k
-          simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, a, b, hai, hai',
-            ha0, hb0, Vector.getElem_set, Vector.getElem_swap, hne, hij, hji]
+          simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, hai',
+            hne]
         · have hik : i.val ≠ k := Ne.symm hki
           have hjk : j.val ≠ k := Ne.symm hkj
           simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep,
-            Vector.getElem_set, Vector.getElem_swap, hki, hkj, hik, hjk, hne,
-            hij, hji, hcastNat k hk]
+            hki, hkj, hik, hjk, hne]
           exact (hcastNat k hk).symm
   · rw [ite_eq_right ha0]
     by_cases hb0 : b = 0
@@ -836,17 +834,16 @@ private theorem Diagonal.Compact.pairStep_model
       intro k hk
       by_cases hki : k = i.val
       · subst k
-        simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hbj, hbj',
-          Vector.getElem_set, hij, hji, cast_natAbs a ha]
+        simp [Diagonal.Bubble.vectorStep, hbj',
+          hji]
         exact (hcastNat i.val i.isLt).symm
       · by_cases hkj : k = j.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hbj, hbj',
-            Vector.getElem_set, hne, hij, hji]
+          simp [Diagonal.Bubble.vectorStep, hbj']
         · have hik : i.val ≠ k := Ne.symm hki
           have hjk : j.val ≠ k := Ne.symm hkj
-          simp [Diagonal.Bubble.vectorStep, Vector.getElem_set, hki, hkj,
-            hik, hjk, hij, hji, hcastNat k hk]
+          simp [Diagonal.Bubble.vectorStep,
+            hik, hjk]
           exact (hcastNat k hk).symm
     · rw [ite_eq_right hb0]
       by_cases hab : a = b
@@ -857,21 +854,19 @@ private theorem Diagonal.Compact.pairStep_model
         intro k hk
         by_cases hki : k = i.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
-            Vector.getElem_set, hne, hij, hji, hcastNat i.val i.isLt]
+          simp [Diagonal.Bubble.vectorStep,
+            hji]
           rw [habv, Nat.gcd_self]
           exact (hcastNat j.val j.isLt).symm
         · by_cases hkj : k = j.val
           · subst k
-            simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
-              Vector.getElem_set, hne, hij, hji, hcastNat j.val j.isLt]
+            simp [Diagonal.Bubble.vectorStep]
             rw [habv, Nat.lcm_self]
             exact (hcastNat j.val j.isLt).symm
           · have hik : i.val ≠ k := Ne.symm hki
             have hjk : j.val ≠ k := Ne.symm hkj
-            simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
-              Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
-              hcastNat k hk]
+            simp [Diagonal.Bubble.vectorStep,
+              hik, hjk]
             exact (hcastNat k hk).symm
       · rw [ite_eq_right hab]
         rcases he : HexArith.Int.extGcd a b with ⟨g, u, v⟩
@@ -891,18 +886,16 @@ private theorem Diagonal.Compact.pairStep_model
         intro k hk
         by_cases hki : k = i.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, he, hg,
-            Vector.getElem_set, hne, hij, hji]
+          simp [Diagonal.Bubble.vectorStep, a, b, hg,
+            hji]
         · by_cases hkj : k = j.val
           · subst k
-            simp [Diagonal.Bubble.vectorStep, a, b, he, hg, hl, hl', hlNat,
-              Vector.getElem_set, hne, hij, hji]
+            simp [Diagonal.Bubble.vectorStep, a, b, hg]
             exact hlNat
           · have hik : i.val ≠ k := Ne.symm hki
             have hjk : j.val ≠ k := Ne.symm hkj
-            simp [Diagonal.Bubble.vectorStep, a, b, he,
-              Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
-              hcastNat k hk]
+            simp [Diagonal.Bubble.vectorStep,
+              hik, hjk]
             exact (hcastNat k hk).symm
 
 private theorem Diagonal.Compact.pairStep_nonneg
@@ -1052,7 +1045,7 @@ private theorem Diagonal.Compact.takeWhile_abs (xs : List Int)
       · subst a
         simp [Diagonal.Bubble.nonzeros]
       · rw [List.takeWhile_cons, ite_eq_left (by simpa)]
-        rw [List.map_cons, Diagonal.Bubble.nonzeros, ite_eq_right (by simpa [ha0])]
+        rw [List.map_cons, Diagonal.Bubble.nonzeros, ite_eq_right (by simp [ha0])]
         simp only [List.map_cons, List.cons.injEq]
         exact ⟨(cast_natAbs a ha).symm, ih (by
           intro x hx
@@ -1124,10 +1117,10 @@ private theorem Diagonal.Compact.diagMatrix_split
     · rw [dite_eq_left ⟨rfl, i.isLt⟩, dite_eq_left ⟨rfl, hi⟩]
       change values.toList[i.val] = xs.toArray[i.val]
       rw [List.getElem_toArray]
-      simp [hsplit, List.getElem_append, hi]
+      simp [hsplit, hi]
     · have hv : values.toList[i.val] = 0 := by
         simp [hsplit, List.getElem_append, hi]
-      simp only [Fin.getElem_fin, hi, and_self, dite_eq_right, i.isLt, dite_eq_left]
+      simp only [Fin.getElem_fin, hi, and_self, i.isLt, dite_eq_left]
       rw [Vector.getElem_toList] at hv
       exact hv
   · simp [hij]
@@ -1401,7 +1394,7 @@ private theorem Diagonal.normalizeFuel_transforms (A : Matrix Int r r)
         cases hf : Diagonal.findNonzero? s.matrix target with
         | none => exact h
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := Diagonal.swap_transforms A h pivot found
             split
@@ -1554,7 +1547,7 @@ private theorem Diagonal.normalizeFuel_inverses (fuel target : Nat)
         cases hf : Diagonal.findNonzero? s.matrix target with
         | none => exact h
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := Diagonal.swap_inverses h pivot found
             split
@@ -1713,7 +1706,7 @@ theorem invariantFactors_cast_eq_data (A : Matrix Int n m) :
   have hd := (Smith.run_same (Smith.formAccumulator n m)
     (Smith.transformAccumulator n m) A).diag
   apply Vector.toArray_injective
-  simp only [Vector.toArray_cast, Smith.Result.diagVector]
+  simp only [Smith.Result.diagVector]
   exact congrArg List.toArray hd
 
 /-- The full-data left transform has the recorded right inverse. -/

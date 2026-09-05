@@ -548,6 +548,7 @@ theorem degree_pos_of_rawPolynomial_root
   rw [natDegree_rawPolynomial hvalid hinjective hinv] at hnatDegree
   exact hnatDegree
 
+omit hvalid hinjective hinv in
 /-- Entries already accumulated survive the rest of the Yun loop: the
 accumulator only grows. -/
 theorem mem_yunAux_of_mem
@@ -729,7 +730,7 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
             hcomponentNe hroot
         rw [ite_eq_left hdegree]
         refine ⟨(Factor.polyCoords component, k), ?_, ?_, heq⟩
-        · apply mem_yunAux_of_mem hvalid hinjective hinv
+        · apply mem_yunAux_of_mem
           simp [component, shared]
         · rw [rawPoly_polyCoords]
           exact hroot
@@ -744,6 +745,7 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
         · exact ih shared nextRepeated (k + 1) _ hnextInvariant
             hnextIndex hnextFuel
 
+omit hvalid hinjective hinv in
 /-- The Yun loop only emits nonconstant components with positive
 multiplicity labels. -/
 theorem yunAux_positive
@@ -1025,6 +1027,7 @@ theorem yun_rootMultiplicity_le_one
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
     entry hentry
 
+omit hvalid hinjective hinv in
 /-- Every emitted tower Yun component has positive degree and positive stored
 multiplicity. -/
 theorem yun_positive
@@ -1035,10 +1038,11 @@ theorem yun_positive
   simp only [Factor.yunRaw] at hcomponent
   split at hcomponent
   · simp at hcomponent
-  · exact yunAux_positive hvalid hinjective hinv _ _ 1
+  · exact yunAux_positive _ _ 1
       ((Factor.rawPoly levels f).size + 1) #[] Nat.one_pos
       (by simp) component hcomponent
 
+omit hvalid hinjective hinv in
 /-- Yun emits components in strictly increasing multiplicity order. -/
 theorem yun_multiplicities
     (f : Array (Array Rat)) :
@@ -1074,7 +1078,7 @@ theorem yun_squarefree
   let P := Norm.rawPolynomial levels
     (Factor.rawPoly levels component.1)
   have hcomponentDegree :=
-    (yun_positive hvalid hinjective hinv f component hcomponent).1
+    (yun_positive f component hcomponent).1
   have hPNe : P ≠ 0 := by
     intro hzero
     have hnatDegree : P.natDegree = 0 := by simp [hzero]
@@ -1304,7 +1308,7 @@ theorem yunMultiplicity_sum
         intro tail htail
         exact hcomponents tail (by simp [htail])
       have hentryDegree :=
-        (yun_positive hvalid hinjective hinv f entry hentryMem).1
+        (yun_positive f entry hentryMem).1
       have hentryNe : Norm.rawPolynomial levels
           (Factor.rawPoly levels entry.1) ≠ 0 := by
         intro hzero
@@ -1350,7 +1354,7 @@ theorem yunMultiplicity_sum
           · simp [htailZero]
           · have htailEntry := htailMem tail htail
             have htailDegree :=
-              (yun_positive hvalid hinjective hinv f tail htailEntry).1
+              (yun_positive f tail htailEntry).1
             have htailNe : Norm.rawPolynomial levels
                 (Factor.rawPoly levels tail.1) ≠ 0 := by
               intro hzeroPoly
@@ -1455,7 +1459,7 @@ theorem yun_product
       normalized.rootMultiplicity z := by
     have hsum := yunMultiplicity_sum hvalid hinjective hinv f hdegree z
       components (by intro entry hentry; exact hentry)
-      (yun_multiplicities hvalid hinjective hinv f) (by
+      (yun_multiplicities f) (by
         intro hroot
         obtain ⟨entry, hentry, hentryRoot, _⟩ :=
           yun_complete hvalid hinjective hinv f hdegree z hroot
@@ -1468,7 +1472,7 @@ theorem yun_product
           (Norm.rawPolynomial levels
             (Factor.rawPoly levels entry.1)).rootMultiplicity z).sum := by
         congr 1
-        simp only [polys, List.map_map, Function.comp_apply]
+        simp only [polys, List.map_map]
         apply List.map_congr_left
         intro entry hentry
         exact rootMultiplicity_pow_complex _
@@ -1518,7 +1522,7 @@ theorem checkYun_yunRaw
     have hmultiplicities :
         Factor.yunMultiplicitiesIncrease components := by
       simp only [Factor.yunMultiplicitiesIncrease, decide_eq_true_eq]
-      exact yun_multiplicities hvalid hinjective hinv f
+      exact yun_multiplicities f
     have hpositiveMonic : components.all (fun component =>
         0 < component.2 &&
           let factor := Factor.rawPoly levels component.1
@@ -1529,7 +1533,7 @@ theorem checkYun_yunRaw
           (Factor.yunRaw levels f).toList := by
         apply Array.mem_toList_iff.mpr
         simpa only [components] using hcomponent
-      have hpositive := yun_positive hvalid hinjective hinv f component
+      have hpositive := yun_positive f component
         hcomponent'
       have hmonic := yun_monic hvalid hinjective hinv f component hcomponent'
       simp only [Bool.and_eq_true, decide_eq_true_eq]
@@ -1558,7 +1562,7 @@ theorem checkYun_yunRaw
                 hitems other (by simp [hother])) hpairwise.2
       exact pairwiseCoprime components.toList (by
         intro entry hentry
-        exact hentry) (yun_multiplicities hvalid hinjective hinv f)
+        exact hentry) (yun_multiplicities f)
     have hsquarefree : components.all (fun component =>
         Norm.isSquarefree levels component.1) := by
       rw [Array.all_eq_true_iff_forall_mem]

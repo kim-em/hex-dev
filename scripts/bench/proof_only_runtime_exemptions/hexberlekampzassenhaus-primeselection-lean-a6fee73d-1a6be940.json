@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+ "baseline_blob": "a6fee73d273564dc868986dd0bf70a2728ad66ef",
+ "current_blob": "1a6be94092cc3fbec21a3042eeb607aade42bd8e",
+ "reason": "Replaces two `<;>` with `;` where the preceding tactic leaves a single goal. Inside proofs only; no executable definition changes."
+}

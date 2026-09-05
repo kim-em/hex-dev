@@ -213,7 +213,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
           exact this
         rw [hcall] at hrunChild hkeepChild
         dsimp only at hrunChild hkeepChild
-        have heq0 := hh.inv.childKeyAll hoffset' hatFrozen' hcurrent' hat'
+        have heq0 := hh.inv.childKeyAll hoffset' hatFrozen' hat'
         have heq : ∀ o, o < len → rsLab[tc + o]! = tv →
             sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
               numcells o =
@@ -594,21 +594,21 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       else st.noncheaplevel := by
     by_cases hc : st.noncheaplevel ≥ level ∧
       ¬ cheapautom r.ptn level ctx.n = true
-    · simp only [pre, pre0, if_pos hc]
-    · simp only [pre, pre0, if_neg hc]
+    · simp only [pre, pre0, ite_eq_left hc]
+    · simp only [pre, pre0, ite_eq_right hc]
   have hpreNcl : pre.noncheaplevel = st.noncheaplevel ∨
       (pre.noncheaplevel = level + 1 ∧
         cheapautom r.ptn level ctx.n = false ∧ st.noncheaplevel ≥ level) := by
     rw [hpreNclEq]
     by_cases hc : st.noncheaplevel ≥ level ∧
       ¬ cheapautom r.ptn level ctx.n = true
-    · rw [if_pos hc]
+    · rw [ite_eq_left hc]
       right
       refine ⟨rfl, ?_, hc.1⟩
       rcases hc' : cheapautom r.ptn level ctx.n with _ | _
       · rfl
       · exact absurd hc' hc.2
-    · rw [if_neg hc]
+    · rw [ite_eq_right hc]
       left
       rfl
   have hpreParkWeak : cheapautom r.ptn level ctx.n = false →
@@ -617,9 +617,9 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     rw [hpreNclEq] at heq
     by_cases hc' : st.noncheaplevel ≥ level ∧
       ¬ cheapautom r.ptn level ctx.n = true
-    · rw [if_pos hc'] at heq
+    · rw [ite_eq_left hc'] at heq
       omega
-    · rw [if_neg hc'] at heq
+    · rw [ite_eq_right hc'] at heq
       exact hc' ⟨by omega, by simp [hc]⟩
   have hpreBnd : pre.noncheaplevel ≤ level + 1 := by
     rcases hpreNcl with h | h <;> omega
@@ -694,7 +694,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     exact h
   have hpathChild : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 (level + 1) child := by
-    have h := hfirst.childPath (specFuel := specFuel) hn hg hn0 hpath hlt
+    have h := hfirst.childPath hn hg hn0 hpath hlt
       hpathOk hcell hlen2 hrange ho
     dsimp only at h
     rw [show pre.lab[tc + o]! = tv1 from hat] at h
