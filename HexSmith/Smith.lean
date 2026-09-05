@@ -179,7 +179,7 @@ theorem findPivot?_none {M : Matrix Int n m} {start : Nat}
       best ≠ none → xs.foldl (choosePivot M) best ≠ none := by
     intro xs
     induction xs with
-    | nil => simpa
+    | nil => simp
     | cons x xs ih =>
         intro best hbest
         simp only [List.foldl_cons]

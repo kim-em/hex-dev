@@ -36,7 +36,7 @@ private theorem charge_none {st : AutState} (h : st.budget = none) :
 private theorem admit_budget (ctx : Ctx) (st : AutState)
     (γ : Array Nat) : (st.admit ctx γ).budget = st.budget := by
   rw [AutState.admit]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  simp only [Id.run_pure, apply_ite Id.run]
   repeat' split
   all_goals rfl
 
@@ -44,7 +44,7 @@ private theorem admit_budget (ctx : Ctx) (st : AutState)
 private theorem admit_exhausted (ctx : Ctx) (st : AutState)
     (γ : Array Nat) : (st.admit ctx γ).exhausted = st.exhausted := by
   rw [AutState.admit]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  simp only [Id.run_pure, apply_ite Id.run]
   repeat' split
   all_goals rfl
 
@@ -52,7 +52,7 @@ private theorem admit_exhausted (ctx : Ctx) (st : AutState)
 private theorem harvest_budget (ctx : Ctx) (st : AutState)
     (lab : Array Nat) : (st.harvest ctx lab).budget = st.budget := by
   rw [AutState.harvest]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  simp only []
   repeat' split
   all_goals try simp only [admit_budget]
   all_goals rfl
@@ -62,7 +62,7 @@ private theorem harvest_exhausted (ctx : Ctx) (st : AutState)
     (lab : Array Nat) :
     (st.harvest ctx lab).exhausted = st.exhausted := by
   rw [AutState.harvest]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  simp only []
   repeat' split
   all_goals try simp only [admit_exhausted]
   all_goals rfl
@@ -73,7 +73,7 @@ private theorem foldl_pres {α β : Type} (f : β → α → β)
     (P : β → Prop) :
     ∀ (l : List α) (b : β), P b → (∀ b a, P b → P (f b a)) →
       P (l.foldl f b)
-  | [], b, hb, _ => hb
+  | [], _, hb, _ => hb
   | a :: l, b, hb, hstep => foldl_pres f P l (f b a) (hstep b a hb) hstep
 
 /-- With no budget, the certificate pass never exhausts and keeps no
@@ -91,7 +91,7 @@ private theorem certifyNodeAutom_nobudget (ctx : Ctx) (tcLevel : Nat) :
     rw [certifyNodeAutom.eq_def]
     dsimp only
     rw [charge_none hb]
-    rw [if_neg (by rw [he]; exact Bool.false_ne_true)]
+    rw [ite_eq_right (by rw [he]; exact Bool.false_ne_true)]
     match bcodes with
     | [] => exact ⟨hb, he⟩
     | bc :: brest =>
@@ -128,7 +128,7 @@ theorem produceCand_none_isSome (G : Colored n k) :
     (produceCand G none).isSome := by
   rw [produceCand]
   dsimp only
-  rw [if_neg (by simp [Option.any])]
+  rw [ite_eq_right (by simp [Option.any])]
   have hst1 : ((runColoredTraced G).autos.foldl
       (fun st γ => st.admit { n := n, g := rowsOf G } γ)
       (AutState.init n none)).budget = none ∧

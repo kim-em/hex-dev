@@ -995,8 +995,7 @@ theorem eval_liftCoefficient (level : Level) (lower : List Level)
   let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let lifted := liftCoefficient level lower a
   have hsize : lifted.size ≤ level.degree := by
-    exact (DensePoly.size_ofCoeffs_le _).trans (by simp [lifted,
-      liftCoefficient])
+    exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
   have hdegree : (HexPolyMathlib.toPolynomial lifted).natDegree <
       level.degree := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
@@ -1069,7 +1068,6 @@ theorem eval_shiftBase (lower : List Level)
     LevelSemantics.denote_rat lower hvalid]
   rw [hone]
   rw [Polynomial.monomial_one_one_eq_X]
-  push_cast
   ring
 
 /-- Specializing the shifted bivariate input at a conjugate gives ordinary
@@ -1139,12 +1137,12 @@ theorem eval_shiftedOuter (level : Level) (lower : List Level)
     induction items with
     | nil =>
         intro state
-        simp [hzero]
+        simp
     | cons a items ih =>
         intro state
         simp only [List.foldl_cons, List.foldr_cons]
         rw [ih]
-        simp only [Prod.fst, Prod.snd]
+        simp only []
         rw [hadd, hmul, hmul, hlift, hbase]
         simp only [
           Polynomial.add_comp, Polynomial.C_comp,
@@ -1264,7 +1262,7 @@ theorem outerEval_defining (level : Level) (lower : List Level)
         omega)]
     exact LevelSemantics.denseEval_relation level lower hvalid
   rw [Polynomial.eval_map]
-  simpa [hrelation]
+  simp [hrelation]
 
 /-- Rebuilding a raw dense polynomial from its flattened coordinate arrays is
 the identity: `Factor.polyCoords` is a section of `Factor.rawPoly`. -/

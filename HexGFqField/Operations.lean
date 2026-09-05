@@ -846,8 +846,7 @@ theorem mul_inv_cancel
             rw [hinv]
     _ = GFqRing.reduceMod f
             (GFqRing.repr x.toQuotient * GFqRing.reduceMod f (invPoly x.toQuotient)) := by
-            simpa using GFqRing.repr_mul x.toQuotient
-              (GFqRing.ofPoly f hf (invPoly x.toQuotient))
+            simp
     _ = GFqRing.reduceMod f (GFqRing.repr x.toQuotient * invPoly x.toQuotient) :=
         hmulReduce
     _ = GFqRing.reduceMod f 1 := hreduced

@@ -871,7 +871,7 @@ private theorem adjoin_dim_le {T : NumberTower} (candidate : AlgebraicRoot)
   by_cases hdegreeZero : selected.degree?.getD 0 = 0
   · simp [hdegreeZero] at h
   by_cases hdegreeOne : selected.degree?.getD 0 = 1
-  · simp only [hdegreeZero, hdegreeOne, one_ne_zero, ↓reduceIte,
+  · simp only [hdegreeOne, one_ne_zero, ↓reduceIte,
       Option.some.injEq] at h
     subst E
     exact Nat.le_refl T.dim
@@ -1051,7 +1051,7 @@ private theorem mem_roots_of_isRoot {T : NumberTower} {f : Poly T}
         exact Polynomial.leadingCoeff_ne_zero.mpr hf
       have hproduct := (mul_eq_zero.mp hmappedRoot).resolve_left hlead
       rw [Polynomial.eval_list_prod, List.prod_eq_zero_iff] at hproduct
-      simp only [List.map_map, Function.comp_apply] at hproduct
+      simp only [List.map_map] at hproduct
       obtain ⟨entry, hentry, hentryZero⟩ := List.mem_map.mp hproduct
       have hpositive := hS.2.2.2.1
       rw [hroots] at hpositive
@@ -1238,7 +1238,7 @@ private theorem linearSplitting_sound {T : NumberTower} {f : Poly T}
   refine ⟨identity_preserves T, hreconstruct, ?_,
     linearRoots_positive r hlinear,
     linearRoots_nodup r hsound hlinear, ?_, ?_⟩
-  · simp [S, hf]
+  · simp [hf]
   · intro entry hentry
     change entry ∈ roots.toList at hentry
     change Polynomial.eval (T.toComplex entry.1)
@@ -1416,9 +1416,9 @@ private theorem zeroSplitting_sound (T : NumberTower) :
   refine ⟨identity_preserves T, ?_, ?_, trivial, trivial, ?_, ?_⟩
   · change 0 = mapPoly id (0 : Poly T)
     exact (mapPoly_id T 0).symm
-  · simp [S, toPolynomial_zero]
+  · simp [toPolynomial_zero]
   · intro entry hentry
-    exact (by simpa [S, Roots.Contains] using hentry)
+    exact (by simp [Roots.Contains] at hentry)
   · intro a
     change Splitting.GeneratedBy S a
     exact Splitting.GeneratedBy.base (S := S) a
@@ -1448,13 +1448,13 @@ private theorem constantSplitting_sound {T : NumberTower} {f : Poly T}
       mapPoly_id, hpoly]
     simp
   refine ⟨identity_preserves T, hreconstruct, ?_, ?_, ?_, ?_, ?_⟩
-  · simp [S, hf]
+  · simp [hf]
   · change (Roots.finite (#[] : Array (Elem T × Nat))).Positive
     rintro ⟨a, b⟩ hentry
     simp at hentry
-  · simp [S, Roots.NoDuplicates]
+  · simp [Roots.NoDuplicates]
   · intro entry hentry
-    exact (by simpa [S, Roots.Contains] using hentry)
+    exact (by simp [Roots.Contains] at hentry)
   · intro a
     change Splitting.GeneratedBy S a
     exact Splitting.GeneratedBy.base (S := S) a

@@ -119,7 +119,7 @@ private theorem replicatePush_getD (n i : Nat) :
       simp [heq]
 
 private theorem unitCoords_fixed (full short index : Nat)
-    (hshort : short ≤ full) (hindex : index < short) :
+    (_hshort : short ≤ full) (hindex : index < short) :
     unitCoords full index =
       Arithmetic.fixedCoeffs full (unitCoords short index) := by
   apply Array.ext
@@ -146,7 +146,7 @@ private theorem unit_generator (level : Level) (lower : List Level)
       Arithmetic.fixedCoeffs (levelsDim (level :: lower))
         ((Array.replicate (levelsDim lower) 0).push 1) := by
     apply Array.ext
-    · simp [unitCoords, Arithmetic.fixedCoeffs, hindex]
+    · simp [unitCoords, Arithmetic.fixedCoeffs]
     · intro i hiLeft hiRight
       have hif : i < levelsDim (level :: lower) := by simpa using hiLeft
       rw [unitCoords_getElem _ _ _ hif,
@@ -237,7 +237,7 @@ private theorem generatorsAux?_sound (T : NumberTower)
       obtain ⟨hdimension, hgenerators⟩ :=
         ih (newer ++ [level]) hlowerLevels hlowerState
       constructor
-      · simpa [levelsDim, hdimension, Nat.mul_comm]
+      · simp [levelsDim, hdimension, Nat.mul_comm]
       · intro generator hgenerator
         simp only [Array.toList_push, List.mem_append,
           List.mem_singleton] at hgenerator
@@ -440,7 +440,7 @@ private theorem toQAdjoin_complex (a : AlgebraicNumber) :
       (DensePoly.ofList ([0, 1] : List Rat)) = Polynomial.X := by
     ext n
     rw [HexPolyMathlib.coeff_toPolynomial, DensePoly.coeff_ofList]
-    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X] <;> rfl
+    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X]; rfl
   rw [hpoly, Polynomial.eval₂_X]
   rfl
 
@@ -810,8 +810,8 @@ private theorem recoverPair?_isSome (theta alpha gamma : AlgebraicNumber)
   have htrace := tracePair?_isSome theta alpha gamma htheta halpha
   unfold recoverPair?
   cases hfast : recoverPairFast? theta alpha gamma shift with
-  | none => simp [hfast, htrace]
-  | some coordinates => simp [hfast]
+  | none => simp [htrace]
+  | some coordinates => simp
 
 private theorem recoverPair?_sound (theta alpha gamma : AlgebraicNumber)
     (shift : Int)
@@ -918,7 +918,7 @@ private theorem searchRecovered?_isSome (theta alpha : AlgebraicNumber)
   unfold searchRecovered?
   cases hfast : searchRecoveredAux theta alpha target 0
       (flattenShiftCount target) with
-  | some recovered => simp [hfast]
+  | some recovered => simp
   | none =>
       obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
         (AlgebraicPoly.Common.extendShift?_isSome theta alpha)
@@ -935,7 +935,7 @@ private theorem searchRecovered?_isSome (theta alpha : AlgebraicNumber)
       obtain ⟨coordinates, hcoordinates⟩ := Option.isSome_iff_exists.mp
         (recoverPair?_isSome theta alpha shifted.value shifted.shift
           htheta halpha)
-      simp [hfast, hshifted, hcoordinates]
+      simp [hshifted, hcoordinates]
 
 private theorem candidateFold_matches (T : NumberTower)
     (generators : List (Generator T)) (current out : Candidate T)
@@ -1107,7 +1107,7 @@ private theorem candidate?_isSome (T : NumberTower)
     (candidate? T generators).isSome := by
   unfold candidate?
   cases hfirst : generators[0]? with
-  | none => simp [hfirst]
+  | none => simp
   | some first =>
       simpa only using candidateFold_isSome T (generators.toList.drop 1)
         { dimension := first.degree
@@ -1404,7 +1404,7 @@ private theorem blockIndex_iff (index exponent width offset : Nat)
     simp [Nat.add_comm, Nat.mul_comm]
 
 private theorem block_unitCoords (degree width index exponent : Nat)
-    (hwidth : 0 < width) (hindex : index < degree * width)
+    (hwidth : 0 < width) (_hindex : index < degree * width)
     (hexponent : exponent < degree) :
     Arithmetic.block (unitCoords (degree * width) index) exponent width =
       if exponent = index / width then unitCoords width (index % width)
@@ -1432,7 +1432,7 @@ private theorem block_unitCoords (degree width index exponent : Nat)
       by_cases hsame : index % width = offset
       · have hposition := (blockIndex_iff index exponent width offset
           hwidth hoffset).mpr ⟨heq.symm, hsame⟩
-        simp [hglobal, hposition, hsame, Nat.mod_eq_of_lt hoffset]
+        simp [hglobal, hposition, Nat.mod_eq_of_lt hoffset]
       · have hposition : index ≠ exponent * width + offset := by
           intro hposition
           exact hsame ((blockIndex_iff index exponent width offset
@@ -1441,7 +1441,7 @@ private theorem block_unitCoords (degree width index exponent : Nat)
     · simp only [ite_eq_right heq] at hright ⊢
       simp only [Arithmetic.fixedCoeffs, Vector.getElem_toArray,
         Vector.getElem_ofFn, Array.getD, Array.size_empty,
-        Nat.not_lt_zero, ↓reduceIte]
+        Nat.not_lt_zero]
       simp only [hglobal, true_and]
       have hne : index ≠ exponent * width + offset := by
         intro hsame
@@ -1563,7 +1563,7 @@ private theorem extendBasis_values {p : ZPoly} {x : SimpleRoot p}
           · simp
           · intro i hleft hright
             simp [Function.comp_def, QAdjoin.map_mul, hpower]
-        · simpa [QAdjoin.map_mul, hpower, hgenerator]
+        · simp [QAdjoin.map_mul, hpower, hgenerator]
   exact hfold entries (#[], 1) (#[], 1)
     (by simp) (QAdjoin.map_one rep hrep)
 
@@ -1736,8 +1736,8 @@ private theorem basisImages_complex (T : NumberTower)
   have hget := congrArg (fun values : Array ℂ => values.getD index 0) hvalues'
   have hlevelSize : (levelBasis T.levels.toList).toArray.size = T.dim := by
     simp [dim]
-  simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map,
-    Array.getElem?_eq_getElem, Array.size_map, himages, hindex, ↓reduceIte,
+  simp only [Array.getD_eq_getD_getElem?,
+    Array.getElem?_eq_getElem, Array.size_map, himages, hindex,
     hlevelSize, Option.getD_some] at hget
   change QAdjoin.toComplex (images.getD index 0) candidate.root.rep
     candidate.root.rep_mk = _
@@ -1881,10 +1881,10 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
       rw [Flatten.unitCoords_getD]
       by_cases hij : i = j
       · subst j
-        simp [Pi.single_apply]
+        simp
       · have hji : j ≠ i := Ne.symm hij
         have hval : i.val ≠ j.val := fun h => hij (Fin.ext h)
-        simp [Pi.single_apply, hij, hji, hval, j.isLt]
+        simp [hji, hval, j.isLt]
     let towerMap : Elem T →ₗ[Rat] ℂ :=
       { toFun := T.toComplex
         map_add' := map_add T

@@ -111,7 +111,7 @@ private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
     getElem_castIntMatrix, getElem_castIntMatrix, getElem_castIntMatrix]
   by_cases hrj : r = j
   · simp [hrj]
-  · by_cases hri : r = i <;> simp [hrj, hri] <;> split <;> rfl
+  · by_cases hri : r = i <;> simp [hrj, hri]; split <;> rfl
 
 /-- The integer Gram-Schmidt basis is invariant under adding an integer
 multiple of an earlier row to a later row. -/

@@ -1051,7 +1051,7 @@ libraries:
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -1066,7 +1066,7 @@ libraries:
         - name: exactification-selection
           description: A fixed factorization-lazy root of (X^8 - 2)(X + 3), pinned to the nonlinear factor, so exactification selects among multiple candidates and performs canonical re-isolation.
         - name: exactification-certification
-          description: Fixed mode-3 certification checks at the top archived degree rung: X^8 - 2 inside (X^8 - 2)(X + 3), pinned to the nonlinear factor, separately exercising exactFactor? and public canonicalRep? under operation-specific absolute child budgets. The former degree sweep is retained only as diagnostic evidence because the executable isolation phase dominates and has no supported tight model.
+          description: "Fixed mode-3 certification checks at the top archived degree rung: X^8 - 2 inside (X^8 - 2)(X + 3), pinned to the nonlinear factor, separately exercising exactFactor? and public canonicalRep? under operation-specific absolute child budgets. The former degree sweep is retained only as diagnostic evidence because the executable isolation phase dominates and has no supported tight model."
         - name: exactification-factorization
           description: Fixed mode-3 end-to-end exactification of the first root of the six-factor product over X^2 - p for p in {2,3,5,7,11,13}, the top completed rung of the archived factor-count sweep, under a 200 ms absolute child budget. The former sweep remains diagnostic evidence; inclusive profiling shows isolation, not BHKS-covered factorization, controls this family.
         - name: fixed-field-roots
@@ -1082,7 +1082,7 @@ libraries:
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -1091,13 +1091,13 @@ libraries:
           rationale: "PARI is a mature optimized C library whose nffactor runs over nfinit's absolute integral-basis presentation with maximal-order machinery, a structurally different pipeline from Hex's relative one-level Trager norms, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the factor? fixed registrations on shared Selmer trinomial inputs over Q(sqrt(2)), joined on the sorted factor degree/multiplicity multiset hash. Tower element arithmetic, adjoining, splitting, and flattening have no comparable PARI unit surface; the per-library SPEC declares those absences."
       input_families:
         - name: tower-coordinate-arithmetic
-          description: Bounded-height dense coordinates with passing mode-1 addition, subtraction, negation, scalar action, and multiplication; checked Q(3^(1/m), sqrt(2)) diagnostics retain the unresolved inversion and division model failures.
+          description: Bounded-height dense coordinates with passing mode-1 addition, subtraction, negation, scalar action, multiplication, and recursive inversion on the normalized monic chain in the checked family Q(3^(1/m), sqrt(2)); division is a canonical mode-3 case at that family's top rung because the inverse's height crosses a limb boundary inside the measured range.
         - name: trager-factorization
           description: Canonical mode-3 factorization and checked replay of the degree-24 Selmer trinomial X^24 - X - 1 over Q(sqrt(2)), plus a mode-3 height-two recursive-relative factorization; the retry case is a branch/hash anchor, while smaller rungs and PARI pairs are diagnostic or comparator evidence.
         - name: adjoin-extend
           description: Mode-1 linear checked-presentation construction plus canonical mode-3 fourth-root and identity adjoining after explicit degree-schedule diagnostics.
         - name: split-flatten
-          description: Canonical mode-3 quartic splitting and two-level flattening, passing mode-1 full-basis fromPrimitive, an unresolved dense single-call toPrimitive diagnostic whose primitive-coordinate height invalidates the quadratic wall model, and correctness/attribution anchors for recovery and certification components.
+          description: Canonical mode-3 quartic splitting and two-level flattening, passing mode-1 full-basis fromPrimitive, a canonical mode-3 dense single-call toPrimitive at the tallest-image rung whose fixture is affordable (its primitive-image heights are input-determined, so no wall model in the dimension exists), and correctness/attribution anchors for recovery and certification components.
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true

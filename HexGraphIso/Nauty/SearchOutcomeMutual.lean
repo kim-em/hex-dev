@@ -759,7 +759,7 @@ theorem rowTieBack {G : Colored n k} {ctx : Ctx}
     (processnode ctx level numcells st).2.autos.back? = some
       (fmperm (canonScatter ctx.n st.canonlab st.lab) ctx.n) := by
   rw [processnode_rowTie_autos hef hnc hcc hge htie]
-  exact pushAuto_back h.workspace.1 h.workspace.2
+  exact pushAuto_back h.workspace.1
 
 end RunPrep
 

@@ -30,7 +30,7 @@ namespace HexBerlekampZassenhausMathlib
 
 namespace IntReductionMod
 
-open Polynomial
+open _root_.Polynomial
 
 variable {p : ℕ}
 /-! # Rational repeated-part transport

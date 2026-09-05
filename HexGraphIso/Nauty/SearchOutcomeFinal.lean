@@ -922,7 +922,7 @@ theorem terminalFirstProof {G : Colored n k} {ctx : Ctx}
 facts before the first incumbent exists. -/
 theorem childPath {G : Colored n k} {ctx : Ctx}
     {rootPtn rootLab : Array Nat}
-    {specFuel level numcells tc len o : Nat} {cs : List Nat}
+    {level numcells tc len o : Nat} {cs : List Nat}
     {st : SearchSt} {trail : FrameTrail}
     (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hpath : level = cs.length + 1) (hlt : level < n)
@@ -933,7 +933,6 @@ theorem childPath {G : Colored n k} {ctx : Ctx}
       level tc len)
     (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n) (ho : o < len) :
     let r := refine ctx level st.lab st.ptn st.active numcells
-    let full := cs ++ [r.longcode]
     let pre0 : SearchSt := { st with
       lab := r.lab
       ptn := r.ptn

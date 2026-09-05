@@ -604,9 +604,9 @@ private theorem rowOfFast_go_lt {G : Colored n k} (iv : Fin n) :
     have hp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by
       rw [Nat.pow_succ]; omega
     rcases Decidable.em (G.graph.adj iv ⟨j, h⟩ = true) with ha | ha
-    · simp only [ha, if_true]
+    · simp only [ha, ite_true]
       omega
-    · rw [if_neg ha]
+    · rw [ite_eq_right ha]
       omega
 
 /-- The adjacency bit of `go`'s accumulator, by position. -/
@@ -627,27 +627,27 @@ private theorem testBit_rowOfFast_go {G : Colored n k} (iv : Fin n) :
       rw [Nat.pow_succ]; omega
     simp only [Nat.mul_zero, Nat.zero_add]
     rcases Decidable.em (G.graph.adj iv ⟨j, h⟩ = true) with ha | ha
-    · rw [if_pos ha, Nat.one_mul]
+    · rw [ite_eq_left ha, Nat.one_mul]
       rcases Nat.lt_trichotomy t j with hlt | heq | hgt
-      · rw [Nat.testBit_two_pow_add_gt hlt, hih, dif_pos hlt,
-          dif_pos (by omega : t < j + 1)]
+      · rw [Nat.testBit_two_pow_add_gt hlt, hih, dite_eq_left hlt,
+          dite_eq_left (by omega : t < j + 1)]
       · subst heq
         rw [Nat.testBit_two_pow_add_eq,
-          Nat.testBit_lt_two_pow hz, dif_pos (Nat.lt_succ_self t),
+          Nat.testBit_lt_two_pow hz, dite_eq_left (Nat.lt_succ_self t),
           ha]
         rfl
       · have h2 : 2 ^ (j + 1) ≤ 2 ^ t :=
           Nat.pow_le_pow_right (by omega) hgt
         rw [Nat.testBit_lt_two_pow (by omega :
             2 ^ j + rowOfFast.go G iv j (Nat.le_of_succ_le h) 0 <
-              2 ^ t), dif_neg (by omega)]
-    · rw [if_neg ha, Nat.zero_mul, Nat.zero_add, hih]
+              2 ^ t), dite_eq_right (by omega)]
+    · rw [ite_eq_right ha, Nat.zero_mul, Nat.zero_add, hih]
       simp only [Bool.not_eq_true] at ha
       rcases Nat.lt_trichotomy t j with hlt | heq | hgt
-      · rw [dif_pos hlt, dif_pos (by omega : t < j + 1)]
+      · rw [dite_eq_left hlt, dite_eq_left (by omega : t < j + 1)]
       · subst heq
-        rw [dif_neg (by omega), dif_pos (Nat.lt_succ_self t), ha]
-      · rw [dif_neg (by omega), dif_neg (by omega)]
+        rw [dite_eq_right (by omega), dite_eq_left (Nat.lt_succ_self t), ha]
+      · rw [dite_eq_right (by omega), dite_eq_right (by omega)]
 
 /-- The adjacency bit of the `rowOf` fold, by position. -/
 private theorem testBit_rowOf_foldl {G : Colored n k} {i : Nat} :
@@ -664,30 +664,30 @@ private theorem testBit_rowOf_foldl {G : Colored n k} {i : Nat} :
   | j :: rest, row0, t => by
     rw [List.foldl_cons, testBit_rowOf_foldl rest, List.contains_cons]
     rcases Decidable.em (i < n ∧ j < n) with hij | hij
-    · rw [dif_pos hij]
+    · rw [dite_eq_left hij]
       rcases Decidable.em (G.graph.adj ⟨i, hij.1⟩ ⟨j, hij.2⟩ = true)
         with ha | ha
-      · rw [if_pos ha, testBit_insert]
+      · rw [ite_eq_left ha, testBit_insert]
         rcases Decidable.em (j = t) with heq | hne
         · subst heq
-          rw [dif_pos hij, ha]
+          rw [dite_eq_left hij, ha]
           simp
         · rw [beq_eq_false_iff_ne.mpr hne,
             beq_eq_false_iff_ne.mpr (Ne.symm hne)]
-          simp [Bool.or_assoc]
-      · rw [if_neg ha]
+          simp
+      · rw [ite_eq_right ha]
         rcases Decidable.em (j = t) with heq | hne
         · subst heq
-          rw [dif_pos hij]
+          rw [dite_eq_left hij]
           simp only [Bool.not_eq_true] at ha
           rw [ha]
           simp
         · rw [beq_eq_false_iff_ne.mpr (Ne.symm hne)]
           simp
-    · rw [dif_neg hij]
+    · rw [dite_eq_right hij]
       rcases Decidable.em (j = t) with heq | hne
       · subst heq
-        rw [dif_neg hij]
+        rw [dite_eq_right hij]
         simp
       · rw [beq_eq_false_iff_ne.mpr (Ne.symm hne)]
         simp
@@ -698,20 +698,20 @@ private theorem testBit_rowOf_foldl {G : Colored n k} {i : Nat} :
   intro t
   rw [rowOf, testBit_rowOf_foldl, rowOfFast]
   rcases Decidable.em (i < n) with hi | hi
-  · rw [dif_pos hi, testBit_rowOfFast_go]
+  · rw [dite_eq_left hi, testBit_rowOfFast_go]
     rcases Decidable.em (t < n) with htn | htn
     · have hc : (List.range n).contains t = true := by
         simp [htn]
-      rw [hc, dif_pos (⟨hi, htn⟩ : i < n ∧ t < n), dif_pos htn]
+      rw [hc, dite_eq_left (⟨hi, htn⟩ : i < n ∧ t < n), dite_eq_left htn]
       simp
     · have hc : (List.range n).contains t = false := by
         simp
         omega
-      rw [hc, dif_neg htn,
-        dif_neg (fun h : i < n ∧ t < n => htn h.2)]
+      rw [hc, dite_eq_right htn,
+        dite_eq_right (fun h : i < n ∧ t < n => htn h.2)]
       simp
-  · rw [dif_neg hi,
-      dif_neg (fun h : i < n ∧ t < n => hi h.1)]
+  · rw [dite_eq_right hi,
+      dite_eq_right (fun h : i < n ∧ t < n => hi h.1)]
     simp [Nat.zero_testBit]
 
 /-- The adjacency rows of a coloured graph. -/

@@ -334,7 +334,7 @@ theorem shifted_dvd_norm (level : Level) (lower : List Level)
     intro hzero
     have hcoeff := congrArg
       (fun p : DensePoly (Arithmetic.Coeff lower) => p.coeff 0) hzero
-    simpa using hcoeff
+    simp at hcoeff
   have hmPos : 0 < m := by
     rw [← hMdegree]
     exact lt_of_lt_of_le (Nat.zero_lt_of_lt hvalid.1.1)
@@ -498,7 +498,7 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
     · exact hconjugateNe xr hconj
     · have hcoeff := congrArg (fun q : Polynomial ℂ => q.coeff 1)
           hlinear.2
-      simpa using hcoeff
+      simp at hcoeff
   have hproductNe : (M.roots.map G.eval).prod ≠ 0 := by
     apply Multiset.prod_ne_zero
     intro hzero
@@ -1063,8 +1063,7 @@ theorem findSquarefreeShift_isSome_of_injective
     let q : DensePoly (Arithmetic.Coeff (level :: lower)) :=
       Factor.rawPoly (level :: lower) f
     have hqSize : q.size ≤ f.size := by
-      exact (DensePoly.size_ofCoeffs_le _).trans (by simp [q,
-        Factor.rawPoly])
+      exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
     change (HexPolyMathlib.toPolynomial q).natDegree ≤ f.size - 1
     rw [HexPolyMathlib.natDegree_toPolynomial]
     by_cases hqZero : q.size = 0
@@ -1096,8 +1095,7 @@ theorem findSquarefreeShift_isSome_of_injective
     (fun z : RootPair => (z.2 : ℂ))
     (fun z : RootPair => (z.1 : ℂ))
     (level.degree * (f.size - 1)) hpairCardLe (by
-      intro a b hab hslope
-      intro hintercept
+      intro a b hab hslope hintercept
       apply hab
       rcases a with ⟨aRoot, aInner⟩
       rcases b with ⟨bRoot, bInner⟩
@@ -1175,7 +1173,7 @@ theorem findSquarefreeShift_isSome_of_injective
     rcases Polynomial.comp_eq_zero_iff.mp hzero with hconj | hlinear
     · exact (hconjugateSeparable xr).ne_zero hconj
     · have hcoeff := congrArg (fun q : Polynomial ℂ => q.coeff 1) hlinear.2
-      simpa using hcoeff
+      simp at hcoeff
   have hproductNe : (M.roots.map G.eval).prod ≠ 0 := by
     apply Multiset.prod_ne_zero
     intro hzero

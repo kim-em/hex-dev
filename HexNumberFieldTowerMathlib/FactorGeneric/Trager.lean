@@ -355,7 +355,7 @@ theorem rawPoly_shiftTop_zero (level : Level) (lower : List Level)
     rawPoly_polyCoords]
   have hzero : Arithmetic.Coeff.ofData (level :: lower) #[(0 : Rat)] = 0 :=
     ofData_zero_eq_zero (level :: lower) hvalid hinjectiveTop
-  simp [hzero, Polynomial.taylor_zero]
+  simp [hzero]
 
 /-- The zero shift leaves the represented polynomial unchanged. -/
 theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
@@ -390,7 +390,7 @@ theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
       #[((0 : Int) : Rat)] = 0 := by
     simpa using ofData_zero_eq_zero (level :: lower) hvalid hinjectiveTop
   rw [hzero]
-  simp [Polynomial.taylor_zero]
+  simp
 
 /-- The lower-field polynomial produced by one unshifted Trager elimination. -/
 def tragerNorm (level : Level) (lower : List Level)
@@ -645,9 +645,9 @@ theorem monic_eq_self (levels : List Level)
     (R := Arithmetic.Coeff levels)).injective
   exact Polynomial.eq_of_monic_of_associated
     (toPolynomial_monic_monic levels hvalid hinjective hinv f
-      (fun hzero => by simpa [hzero] using hf))
+      (fun hzero => by simp [hzero] at hf))
     hf (toPolynomial_monic_associated levels hvalid hinjective hinv f
-      (fun hzero => by simpa [hzero] using hf))
+      (fun hzero => by simp [hzero] at hf))
 
 /-- Core counting argument for gcd recovery: a product of two nonunits cannot
 simultaneously divide a squarefree polynomial and a power of one irreducible,
@@ -722,7 +722,7 @@ theorem recoveredCommon_irreducible (level : Level)
   have hcommonNe : common ≠ 0 := by
     intro hzero
     rw [hzero] at hdegree
-    simpa using hdegree
+    simp at hdegree
   have hgNe : g ≠ 0 := by
     intro hzero
     apply hcommonNe
@@ -790,12 +790,10 @@ theorem recoveredCommon_irreducible (level : Level)
     rfl
   have hadDegree : 0 < ad.degree?.getD 0 := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
-    change 0 < (HexPolyMathlib.toPolynomial ad).natDegree
     rw [show HexPolyMathlib.toPolynomial ad = a by simp [ad]]
     exact Nat.pos_of_ne_zero haNatDegree
   have hbdDegree : 0 < bd.degree?.getD 0 := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
-    change 0 < (HexPolyMathlib.toPolynomial bd).natDegree
     rw [show HexPolyMathlib.toPolynomial bd = b by simp [bd]]
     exact Nat.pos_of_ne_zero hbNatDegree
   have hnormAUnit : ¬ IsUnit (HexPolyMathlib.toPolynomial
@@ -983,7 +981,7 @@ theorem array_degree_pos_of_raw_degree_pos (levels : List Level)
     rw [DensePoly.degree?_eq_some_of_pos_size p (Nat.pos_of_ne_zero hpSize),
       Option.getD_some]
   have hpSizeLe : p.size ≤ f.size := by
-    exact (DensePoly.size_ofCoeffs_le _).trans (by simp [p, Factor.rawPoly])
+    exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
   rw [hpDegree] at hdegree
   omega
 

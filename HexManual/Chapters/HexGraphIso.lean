@@ -148,9 +148,11 @@ ones stated on {name Hex.GraphIso.Colored}`Colored`.
 ```lean
 def markPair (a b : Fin 10) : Coloring 10 2 :=
   (Coloring.ofVector? (Hex.Vector.ofFn' fun i =>
-    if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2)
+    if i = a ∨ i = b then 0 else 1)).getD
+      (Coloring.mod 10 2)
 
--- 0-1 is an outer pentagon edge; 2-3 likewise; 0-2 is a non-edge.
+-- 0-1 is an outer pentagon edge; 2-3 likewise;
+-- 0-2 is a non-edge.
 def edgeMarkA : Colored 10 2 := ⟨petersen, markPair 0 1⟩
 def edgeMarkB : Colored 10 2 := ⟨petersen, markPair 2 3⟩
 def nonedgeMark : Colored 10 2 := ⟨petersen, markPair 0 2⟩
@@ -386,7 +388,7 @@ graphs, where the factor is largest. The `hex` column is
 `canonicalize`, which carries the theorems of this chapter as it
 stands: no certificate is produced or replayed on that path.
 
-:::table (header := true)
+:::table +header
 * * graph
   * vertices
   * nauty (ms)

@@ -580,7 +580,7 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx}
   have hpreShort : pre.needshortprune = st.needshortprune := by
     dsimp only [pre, otherLeafSt, r]
     rw [otherNodePrep]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    simp only [Id.run_pure, apply_ite Id.run,
       apply_ite SearchSt.needshortprune, ite_self]
   have hstartFirst : start.gcaFirst = st.gcaFirst := by
     unfold start base
@@ -683,8 +683,8 @@ theorem otherNode_park_state (ctx : Ctx)
         ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
         active := (refine ctx level st.lab st.ptn st.active numcells).active
         numnodes := st.numnodes + 1 }).compCanon < 0)),
-    hshort, Bool.false_eq_true, ite_false, hcheap, Bool.not_false,
-    ite_true, Int.ofNat_eq_natCast, Int.toNat_natCast]
+    hshort, Bool.false_eq_true, ite_false, hcheap,
+    Int.ofNat_eq_natCast, Int.toNat_natCast]
   generalize hL : (otherChildLoop ctx inf tcLevel fuel (ctx.n + 1)
     level _ _ _ _ _ _) = L
   rcases L with ⟨r, out⟩

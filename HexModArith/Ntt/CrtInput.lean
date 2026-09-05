@@ -167,7 +167,7 @@ private def runPrimes? (n : Nat) (left right : Array Int) :
                       residue[j] % (prime.modulus : Int) := by
                   intro j
                   have hjcoeff : j.val < coefficients.size := by
-                    simpa [hsize] using j.isLt
+                    simp [hsize]
                   have hjreference : j.val < reference.length := by
                     rw [hreferenceSize]
                     exact j.isLt
