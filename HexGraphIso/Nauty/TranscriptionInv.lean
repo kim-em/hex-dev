@@ -13,8 +13,8 @@ public section
 
 /-!
 Transcription labelling invariants for the verified search refinement
-programme (layer-two bridge `isPerm_of_trace` and the
-`colorSortedCheck` residual of `certifyCanon?_isSome`).
+programme: label well-formedness and the `colorSortedCheck` residual
+of `certifyCanon?_isSome`.
 
 The single simulation-relation clause on the imperative search state
 is that the labelling stays cell-content-reachable from the initial
@@ -25,8 +25,7 @@ within the initial colour classes, so every leaf the search reaches
 — in particular `canonlab` — satisfies it. From that one clause the
 two transcription-side residuals follow immediately through the
 existing achievement lemmas: `achieved_perm_range` turns it into
-permutation-ness (`canonlab` is a bijection of `Fin n`, the label
-well-formedness `isPerm_of_trace` consumes) and
+permutation-ness (`canonlab` is a bijection of `Fin n`) and
 `achieved_position_colors` turns it into `colorSortedCheck`.
 
 This file proves those two reductions in full; the quartet induction
@@ -53,8 +52,8 @@ theorem cellsReach_initial (G : Colored n k) :
   intro a len _
   exact List.Perm.refl _
 
-/-- A reached labelling of full size is a permutation of `[0, n)`: the
-permutation-ness `isPerm_of_trace` needs for label well-formedness. -/
+/-- A reached labelling of full size is a permutation of `[0, n)`:
+label well-formedness. -/
 theorem isPerm_of_cellsReach {G : Colored n k} {lab : Array Nat}
     (hsz : lab.size = n) (hn0 : 0 < n) (h : CellsReach G lab) :
     lab.toList.Perm (List.range n) :=

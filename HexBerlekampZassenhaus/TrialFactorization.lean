@@ -463,10 +463,10 @@ private theorem mem_trialDivisionCandidatesOfDegree {B d : Nat} {p : ZPoly}
       (DensePoly.ofCoeffs coeffs.toArray).degree?.getD 0 = d ∧
         0 < DensePoly.leadingCoeff (DensePoly.ofCoeffs coeffs.toArray) ∧
         shouldRecordPolynomialFactor (DensePoly.ofCoeffs coeffs.toArray) = true
-  · rw [if_pos hcheck] at heq
+  · rw [ite_eq_left hcheck] at heq
     cases heq
     exact hcheck
-  · rw [if_neg hcheck] at heq
+  · rw [ite_eq_right hcheck] at heq
     contradiction
 
 /-- Each candidate emitted by `trialDivisionCandidatesUpTo B maxDeg` has
@@ -580,7 +580,7 @@ private theorem mem_trialDivisionCandidatesOfDegree_of_bounded
           0 < DensePoly.leadingCoeff (DensePoly.ofCoeffs p.toArray) ∧
           shouldRecordPolynomialFactor (DensePoly.ofCoeffs p.toArray) = true := by
       simpa [hp] using And.intro hdeg (And.intro hlc hrecord)
-    rw [if_pos hcheck]
+    rw [ite_eq_left hcheck]
     simp [hp]
 
 /-- Bounded positive-leading recorded polynomials with degree in
@@ -1037,12 +1037,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
       (if peel.2 = 1 then split.1 ++ peel.1
         else (split.1 ++ peel.1).push peel.2) = core
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one]
+  · rw [ite_eq_left hres_one]
     rw [hres_one, ZPoly.one_mul_zpoly] at hpeel_prod
     rw [ZPoly.polyProduct_append, hpeel_prod,
         DensePoly.mul_comm_poly (S := Int)]
     exact hsplit_prod
-  · rw [if_neg hres_one]
+  · rw [ite_eq_right hres_one]
     rw [polyProduct_push, ZPoly.polyProduct_append,
         DensePoly.mul_assoc_poly (S := Int),
         DensePoly.mul_comm_poly (S := Int) (Array.polyProduct peel.1) peel.2,
@@ -1122,7 +1122,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
     obtain ⟨_, hlc, _⟩ := mem_trialDivisionCandidatesUpTo hc
     unfold normalizeFactorSign
     have hnot_neg : ¬ DensePoly.leadingCoeff c < 0 := by omega
-    rw [if_neg hnot_neg]
+    rw [ite_eq_right hnot_neg]
   have hcand_pos :
       ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
@@ -1139,12 +1139,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
     normalizeFactorSign factor = factor
   intro factor hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one] at hmem
+  · rw [ite_eq_left hres_one] at hmem
     rw [Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hlin | hpeel
     · exact hsplit_norm factor hlin
     · exact hpeel_norm factor hpeel
-  · rw [if_neg hres_one] at hmem
+  · rw [ite_eq_right hres_one] at hmem
     rw [Array.toList_push, Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hpref | hres
     · rcases List.mem_append.mp hpref with hlin | hpeel
@@ -1156,7 +1156,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
       rw [hfactor_eq]
       unfold normalizeFactorSign
       have hnot_neg : ¬ DensePoly.leadingCoeff peel.2 < 0 := by omega
-      rw [if_neg hnot_neg]
+      rw [ite_eq_right hnot_neg]
 
 /-- Each factor emitted by the standalone integer trial-division algorithm
 satisfies `shouldRecordPolynomialFactor`, provided `core` has positive
@@ -1244,12 +1244,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
     shouldRecordPolynomialFactor factor = true
   intro factor hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one] at hmem
+  · rw [ite_eq_left hres_one] at hmem
     rw [Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hlin | hpeel
     · exact hsplit_record factor hlin
     · exact hpeel_record factor hpeel
-  · rw [if_neg hres_one] at hmem
+  · rw [ite_eq_right hres_one] at hmem
     rw [Array.toList_push, Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hpref | hres
     · rcases List.mem_append.mp hpref with hlin | hpeel
@@ -2288,11 +2288,11 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
       (if peel.2 = 1 then split.1 ++ peel.1
         else (split.1 ++ peel.1).push peel.2).toList at hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one, Array.toList_append, List.mem_append] at hmem
+  · rw [ite_eq_left hres_one, Array.toList_append, List.mem_append] at hmem
     rcases hmem with h1 | h2
     · exact hsplit_deg factor h1
     · exact hpeel_deg factor h2
-  · rw [if_neg hres_one, Array.toList_push, Array.toList_append] at hmem
+  · rw [ite_eq_right hres_one, Array.toList_push, Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hpref | hres
     · rcases List.mem_append.mp hpref with h1 | h2
       · exact hsplit_deg factor h1

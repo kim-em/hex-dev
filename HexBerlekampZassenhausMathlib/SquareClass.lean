@@ -273,7 +273,7 @@ theorem sqrtSet_nil : sqrtSet [] = ∅ := by simp [sqrtSet]
 theorem sqrtSet_cons (d : ℤ) (ds : List ℤ) :
     sqrtSet (d :: ds) = {x : ℂ | x ^ 2 = (d : ℂ)} ∪ sqrtSet ds := by
   ext x
-  simp only [sqrtSet, Set.mem_setOf_eq, Set.mem_union, List.mem_cons]
+  simp only [sqrtSet, Set.mem_ofPred_eq, Set.mem_union, List.mem_cons]
   constructor
   · rintro ⟨e, he | he, hx⟩
     · exact Or.inl (by rw [hx, he])

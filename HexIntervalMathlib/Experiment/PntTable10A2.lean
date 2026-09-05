@@ -233,7 +233,7 @@ private theorem bandRatio (b stop : Nat) :
   | zero => simp [PntBKLNWExp.bandPowerSum]
   | succ stop ih =>
       by_cases h : 4 ≤ stop + 1
-      · rw [sum_Icc_succ_top h, PntBKLNWExp.bandPowerSum, if_pos h, ih]
+      · rw [sum_Icc_succ_top h, PntBKLNWExp.bandPowerSum, ite_eq_left h, ih]
         rw [div_pow]
         push_cast
         field_simp

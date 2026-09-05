@@ -295,7 +295,7 @@ private theorem columnSumMatrixWithSuffix_nil
   change (columnSumMatrixWithSuffix source coeff [])[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
   rw [getElem_columnSumMatrixWithSuffix, getElem_columnSumMatrix,
-    dif_neg (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
+    dite_eq_right (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
   simp [getElem_pair_eq_nested]
 
 private theorem columnSumMatrixWithSuffix_eq
@@ -308,7 +308,7 @@ private theorem columnSumMatrixWithSuffix_eq
   simp only [getElem_rows]
   change (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnTupleMatrix source (fun j => chosen[j.val]'(by omega)))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [getElem_columnSumMatrixWithSuffix, dif_pos (by omega : n - chosen.length ≤ c),
+  rw [getElem_columnSumMatrixWithSuffix, dite_eq_left (by omega : n - chosen.length ≤ c),
     getElem_columnTupleMatrix]
   simp [hfull]
 
@@ -334,7 +334,7 @@ private theorem setCol_columnSumMatrixWithSuffix_extend
   by_cases hkd : (⟨k, hk2⟩ : Fin n) = (⟨n - chosen.length - 1, by omega⟩ : Fin n)
   · have hkeq : k = n - chosen.length - 1 := by
       have := congrArg Fin.val hkd; simpa using this
-    rw [if_pos hkd, dif_pos (show n - (c :: chosen).length ≤ k by rw [hccons_len]; omega)]
+    rw [ite_eq_left hkd, dite_eq_left (show n - (c :: chosen).length ≤ k by rw [hccons_len]; omega)]
     have hsub0 : k - (n - (c :: chosen).length) = 0 := by rw [hccons_len]; omega
     have hgetval : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
         have : k < n := hk2; rw [hccons_len]; omega) = c := by
@@ -345,12 +345,12 @@ private theorem setCol_columnSumMatrixWithSuffix_extend
       rw [h1]
       rfl
     exact congrArg (fun x : Fin m => source[(⟨r, hr⟩ : Fin n)][x]) hgetval.symm
-  · rw [if_neg hkd]
+  · rw [ite_eq_right hkd]
     have hkne : k ≠ n - chosen.length - 1 := fun h => hkd (Fin.ext h)
     by_cases hkge : n - chosen.length ≤ k
-    · rw [dif_pos hkge]
+    · rw [dite_eq_left hkge]
       have hkge' : n - (c :: chosen).length ≤ k := by rw [hccons_len]; omega
-      rw [dif_pos hkge']
+      rw [dite_eq_left hkge']
       have hidx_eq : k - (n - (c :: chosen).length) = (k - (n - chosen.length)) + 1 := by
         rw [hccons_len]; omega
       have hgetval : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
@@ -364,9 +364,9 @@ private theorem setCol_columnSumMatrixWithSuffix_extend
         rw [h1]
         rfl
       exact congrArg (fun x : Fin m => source[(⟨r, hr⟩ : Fin n)][x]) hgetval.symm
-    · rw [dif_neg hkge]
+    · rw [dite_eq_right hkge]
       have hkge' : ¬ n - (c :: chosen).length ≤ k := by rw [hccons_len]; omega
-      rw [dif_neg hkge']
+      rw [dite_eq_right hkge']
 
 /-- One-step expansion of the suffix-partial matrix: peel off the rightmost sum
 column as a sum over `Fin m`. -/
@@ -391,9 +391,9 @@ private theorem det_columnSumMatrixWithSuffix_expand
       (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
     rw [getElem_setCol, getElem_columnSumMatrixWithSuffix]
     by_cases hcd : (⟨c, hc⟩ : Fin n) = dst
-    · rw [if_pos hcd, hcd]
-      rw [dif_neg (show ¬ n - chosen.length ≤ dst.val by simp [dst]; omega)]
-    · rw [if_neg hcd]
+    · rw [ite_eq_left hcd, hcd]
+      rw [dite_eq_right (show ¬ n - chosen.length ≤ dst.val by simp [dst]; omega)]
+    · rw [ite_eq_right hcd]
   have hsum := det_setCol_sum_list
       (columnSumMatrixWithSuffix source coeff chosen) dst
       (List.finRange m) (fun k => coeff[dst][k]) (fun k r => source[r][k])

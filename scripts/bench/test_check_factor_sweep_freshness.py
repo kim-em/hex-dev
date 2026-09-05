@@ -3,10 +3,7 @@
 
 from __future__ import annotations
 
-import json
-import tempfile
 import unittest
-import unittest.mock
 from pathlib import Path
 
 from scripts.bench import check_factor_sweep_freshness as guard
@@ -95,47 +92,35 @@ class LakefileAffectsRuntime(unittest.TestCase):
         self.assertTrue(guard.lakefile_texts_differ(BASE, after))
 
 
-class SourcePaths(unittest.TestCase):
-    def test_prime_table_is_factorization_input(self):
-        self.assertTrue(guard.source_path("hex-factor", "HexPrimality/Table.lean"))
+class Observations(unittest.TestCase):
+    """Binding a committed report to the source fingerprint it was taken at."""
 
-    def test_sieve_proofs_are_not_factorization_input(self):
-        self.assertFalse(guard.source_path("hex-factor", "HexPrimality/Sieve.lean"))
+    REPORT = {"env": {"source_fingerprints": {"hex-factor": "abcdef123456"}}}
+
+    def test_reads_the_fingerprint_this_system_recorded(self):
+        found = guard.observation(
+            "hex-factor", 7, Path("sweep.json"), self.REPORT)
+        self.assertEqual(found.fingerprint, "abcdef123456")
+        self.assertEqual(found.label, "sweep.json")
+        self.assertEqual(found.timestamp, 7)
+
+    def test_a_system_the_report_did_not_fingerprint_has_no_observation(self):
+        self.assertIsNone(
+            guard.observation("flint", 7, Path("sweep.json"), self.REPORT))
+
+    def test_a_pre_migration_report_has_no_observation(self):
+        self.assertIsNone(
+            guard.observation("hex-factor", 7, Path("old.json"), {"env": {}}))
 
 
-class Exemptions(unittest.TestCase):
-    ENTRY = {
-        "path": "lakefile.lean",
-        "baseline_blob": "a" * 40,
-        "current_blob": "b" * 40,
-        "reason": "registers a build-only target",
-    }
+class LakefileTransitions(unittest.TestCase):
+    def test_an_added_or_removed_lakefile_is_a_runtime_change(self):
+        self.assertFalse(guard.build_only_lakefile_edit(
+            guard.freshness.Difference("lakefile.lean", None, "a" * 40)))
 
-    def test_reads_one_entry_per_file(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / "one.json").write_text(json.dumps(self.ENTRY))
-            other = dict(self.ENTRY, current_blob="c" * 40)
-            (root / "two.json").write_text(json.dumps(other))
-            with unittest.mock.patch.object(
-                    guard, "PROOF_ONLY_EXEMPTIONS", root):
-                loaded = guard.load_proof_only_exemptions()
-        self.assertEqual(len(loaded), 2)
-        self.assertIn(("lakefile.lean", "a" * 40, "b" * 40), loaded)
-
-    def test_missing_field_is_rejected(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            incomplete = {k: v for k, v in self.ENTRY.items() if k != "reason"}
-            (root / "bad.json").write_text(json.dumps(incomplete))
-            with unittest.mock.patch.object(
-                    guard, "PROOF_ONLY_EXEMPTIONS", root):
-                with self.assertRaises(SystemExit):
-                    guard.load_proof_only_exemptions()
-
-    def test_committed_entries_all_parse(self):
-        loaded = guard.load_proof_only_exemptions()
-        self.assertGreater(len(loaded), 0)
+    def test_another_path_is_not_a_lakefile_transition(self):
+        self.assertFalse(guard.build_only_lakefile_edit(
+            guard.freshness.Difference("HexPoly/Dense.lean", "a" * 40, "b" * 40)))
 
 
 if __name__ == "__main__":

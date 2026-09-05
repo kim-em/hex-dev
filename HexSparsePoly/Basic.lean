@@ -156,7 +156,7 @@ theorem coeffList_eq_zero {l : List (Nat × R)} {e : Nat}
   | nil => rfl
   | cons a as ih =>
       have ha : a.1 ≠ e := h a (List.mem_cons_self ..)
-      simp only [coeffList, if_neg ha]
+      simp only [coeffList, ite_eq_right ha]
       exact ih fun t ht => h t (List.mem_cons_of_mem _ ht)
 
 omit [DecidableEq R] in
@@ -170,11 +170,11 @@ theorem coeffList_eq_of_mem {l : List (Nat × R)} {t : Nat × R} {e : Nat}
   | cons a as ih =>
       rw [List.pairwise_cons] at hs
       cases ht with
-      | head => simp only [coeffList, if_pos he]
+      | head => simp only [coeffList, ite_eq_left he]
       | tail _ hmem =>
           have hlt : a.1 < t.1 := hs.1 t hmem
           have hne : a.1 ≠ e := by omega
-          simp only [coeffList, if_neg hne]
+          simp only [coeffList, ite_eq_right hne]
           exact ih hs.2 hmem
 
 omit [DecidableEq R] in
@@ -194,11 +194,11 @@ theorem coeffSearch_eq_coeffList (ts : Array (Nat × R)) (e : Nat)
       obtain ⟨_, hval⟩ := Array.getElem?_eq_some_iff.mp heq
       subst hval
       by_cases h1 : (ts[(lo + hi) / 2]).1 = e
-      · rw [if_pos h1]
+      · rw [ite_eq_left h1]
         refine (coeffList_eq_of_mem hs ?_ h1).symm
         exact List.mem_iff_getElem.mpr
           ⟨(lo + hi) / 2, by simpa using hmid, by simp⟩
-      · rw [if_neg h1]
+      · rw [ite_eq_right h1]
         have hidx : ∀ i j, (hij : i < j) → (hj : j < ts.size) →
             (ts[i]'(by omega)).1 < ts[j].1 := by
           intro i j hij hj
@@ -206,7 +206,7 @@ theorem coeffSearch_eq_coeffList (ts : Array (Nat × R)) (e : Nat)
             (by simpa using by omega) (by simpa using hj) hij
           simpa using this
         by_cases h2 : (ts[(lo + hi) / 2]).1 < e
-        · rw [if_pos h2]
+        · rw [ite_eq_left h2]
           refine coeffSearch_eq_coeffList ts e hs _ _ hhi ?_
           intro i hisz hie
           obtain ⟨-, hupper⟩ := hrange i hisz hie
@@ -217,7 +217,7 @@ theorem coeffSearch_eq_coeffList (ts : Array (Nat × R)) (e : Nat)
           · subst heq'
             exact absurd hie h1
           · omega
-        · rw [if_neg h2]
+        · rw [ite_eq_right h2]
           refine coeffSearch_eq_coeffList ts e hs _ _ (by omega) ?_
           intro i hisz hie
           obtain ⟨hlower, -⟩ := hrange i hisz hie
@@ -383,7 +383,7 @@ theorem coeffList_ext {l₁ l₂ : List (Nat × R)}
               exact hnz₂ b (List.mem_cons_self ..) hb.symm
           have hcoeff : a.2 = b.2 := by
             have ha := h a.1
-            simp only [coeffList, if_pos hexp.symm] at ha
+            simp only [coeffList, ite_eq_left hexp.symm] at ha
             exact ha
           have htail : as = bs := by
             refine ih (List.pairwise_cons.mp hs₁).2
@@ -399,7 +399,7 @@ theorem coeffList_ext {l₁ l₂ : List (Nat × R)}
                 intro hc
                 exact heq (by omega)
               have he := h e
-              simp only [coeffList, if_neg hna, if_neg hnb] at he
+              simp only [coeffList, ite_eq_right hna, ite_eq_right hnb] at he
               exact he
           rw [Prod.ext hexp hcoeff, htail]
 
@@ -590,24 +590,24 @@ theorem coeffList_addTermList [Add R] {l : List (Nat × R)}
         have hcoeff_e : coeffList (a :: as) e = 0 :=
           coeffList_eq_zero_of_lt_head (List.pairwise_cons.mpr hs) hlt
         by_cases hc : c = 0
-        · simp only [addTermList, if_pos hlt, if_pos hc]
+        · simp only [addTermList, ite_eq_left hlt, ite_eq_left hc]
           by_cases hf : f = e
           · subst hf
-            rw [if_pos rfl, hcoeff_e, addCoeff]
+            rw [ite_eq_left rfl, hcoeff_e, addCoeff]
             simp [hc]
-          · rw [if_neg hf]
-        · simp only [addTermList, if_pos hlt, if_neg hc]
+          · rw [ite_eq_right hf]
+        · simp only [addTermList, ite_eq_left hlt, ite_eq_right hc]
           by_cases hf : f = e
           · subst hf
-            rw [if_pos rfl, hcoeff_e, addCoeff]
+            rw [ite_eq_left rfl, hcoeff_e, addCoeff]
             simp only [coeffList]
             simp [hc]
-          · rw [if_neg hf]
+          · rw [ite_eq_right hf]
             simp only [coeffList]
-            rw [if_neg (fun h : e = f => hf h.symm)]
+            rw [ite_eq_right (fun h : e = f => hf h.symm)]
       · -- the head is the target: combine or delete.
         have hcoeff_e : coeffList (a :: as) e = a.2 := by
-          simp only [coeffList, if_pos heq.symm]
+          simp only [coeffList, ite_eq_left heq.symm]
         have htail_e : coeffList as e = 0 := by
           have := coeffList_tail_eq_zero
             (a := a) (as := as) (List.pairwise_cons.mpr hs)
@@ -615,37 +615,37 @@ theorem coeffList_addTermList [Add R] {l : List (Nat × R)}
           exact this
         have hnotlt : ¬ e < a.1 := by omega
         by_cases hsum : a.2 + c = 0
-        · simp only [addTermList, if_neg hnotlt, if_pos heq.symm, if_pos hsum]
+        · simp only [addTermList, ite_eq_right hnotlt, ite_eq_left heq.symm, ite_eq_left hsum]
           by_cases hf : f = e
           · subst hf
-            rw [if_pos rfl, hcoeff_e, addCoeff, if_neg hnza, if_pos hsum,
+            rw [ite_eq_left rfl, hcoeff_e, addCoeff, ite_eq_right hnza, ite_eq_left hsum,
               htail_e]
-          · rw [if_neg hf]
+          · rw [ite_eq_right hf]
             simp only [coeffList]
-            rw [if_neg (fun h : a.1 = f => hf (by omega))]
-        · simp only [addTermList, if_neg hnotlt, if_pos heq.symm, if_neg hsum]
+            rw [ite_eq_right (fun h : a.1 = f => hf (by omega))]
+        · simp only [addTermList, ite_eq_right hnotlt, ite_eq_left heq.symm, ite_eq_right hsum]
           by_cases hf : f = e
           · subst hf
-            rw [if_pos rfl, hcoeff_e, addCoeff, if_neg hnza, if_neg hsum]
-            simp only [coeffList, if_pos heq.symm]
-          · rw [if_neg hf]
+            rw [ite_eq_left rfl, hcoeff_e, addCoeff, ite_eq_right hnza, ite_eq_right hsum]
+            simp only [coeffList, ite_eq_left heq.symm]
+          · rw [ite_eq_right hf]
             simp only [coeffList]
-            rw [if_neg (fun h : a.1 = f => hf (by omega)),
-              if_neg (fun h : a.1 = f => hf (by omega))]
+            rw [ite_eq_right (fun h : a.1 = f => hf (by omega)),
+              ite_eq_right (fun h : a.1 = f => hf (by omega))]
       · -- the head sits below the target: recurse into the tail.
         have hnotlt : ¬ e < a.1 := by omega
         have hne : ¬ a.1 = e := by omega
-        simp only [addTermList, if_neg hnotlt, if_neg hne]
+        simp only [addTermList, ite_eq_right hnotlt, ite_eq_right hne]
         by_cases hf : f = e
         · subst hf
-          rw [if_pos rfl]
-          simp only [coeffList, if_neg hne]
-          rw [ih hs.2 hnztail, if_pos rfl]
-        · rw [if_neg hf]
+          rw [ite_eq_left rfl]
+          simp only [coeffList, ite_eq_right hne]
+          rw [ih hs.2 hnztail, ite_eq_left rfl]
+        · rw [ite_eq_right hf]
           simp only [coeffList]
           by_cases haf : a.1 = f
-          · rw [if_pos haf, if_pos haf]
-          · rw [if_neg haf, if_neg haf, ih hs.2 hnztail, if_neg hf]
+          · rw [ite_eq_left haf, ite_eq_left haf]
+          · rw [ite_eq_right haf, ite_eq_right haf, ih hs.2 hnztail, ite_eq_right hf]
 
 /-- Coefficient description of {name}`addTerm`: {name}`addCoeff` at the
 target exponent, unchanged elsewhere. -/
@@ -699,7 +699,7 @@ theorem lowerBound_spec (ts : Array (Nat × R)) (e : Nat)
       obtain ⟨_, hval⟩ := Array.getElem?_eq_some_iff.mp heq
       subst hval
       by_cases h1 : (ts[(lo + hi) / 2]).1 < e
-      · rw [if_pos h1]
+      · rw [ite_eq_left h1]
         have := lowerBound_spec ts e hs ((lo + hi) / 2 + 1) hi
           (by omega) hhi ?_ habove
         · exact ⟨by omega, this.2.1, this.2.2.1, this.2.2.2⟩
@@ -710,7 +710,7 @@ theorem lowerBound_spec (ts : Array (Nat × R)) (e : Nat)
           · subst h'
             exact h1
           · omega
-      · rw [if_neg h1]
+      · rw [ite_eq_right h1]
         have := lowerBound_spec ts e hs lo ((lo + hi) / 2)
           (by omega) (by omega) hbelow ?_
         · exact ⟨this.1, by omega, this.2.2.1, this.2.2.2⟩
@@ -778,39 +778,39 @@ theorem addTermList_splice [Add R] {l : List (Nat × R)} {e : Nat}
           simp only [List.getElem?_cons_zero]
           by_cases heq : a.1 = e
           · have hnotlt : ¬ e < a.1 := by omega
-            simp only [addTermList, if_neg hnotlt, if_pos heq]
+            simp only [addTermList, ite_eq_right hnotlt, ite_eq_left heq]
             rw [heq]
             simp
           · have hlt : e < a.1 := by omega
-            simp only [addTermList, if_pos hlt, if_neg heq]
+            simp only [addTermList, ite_eq_left hlt, ite_eq_right heq]
             by_cases hc : c = 0
-            · rw [if_pos hc, if_pos hc]
-            · rw [if_neg hc, if_neg hc]
+            · rw [ite_eq_left hc, ite_eq_left hc]
+            · rw [ite_eq_right hc, ite_eq_right hc]
               rfl
       | succ q =>
           have ha : a.1 < e := hbelow 0 (by simp) (Nat.succ_pos _)
           have hnotlt : ¬ e < a.1 := by omega
           have hne : ¬ a.1 = e := by omega
-          simp only [addTermList, if_neg hnotlt, if_neg hne,
+          simp only [addTermList, ite_eq_right hnotlt, ite_eq_right hne,
             List.getElem?_cons_succ]
           rw [ih (p := q) ?_ ?_]
           · cases has : as[q]? with
             | some t =>
                 simp only
                 by_cases hte : t.1 = e
-                · rw [if_pos hte, if_pos hte]
+                · rw [ite_eq_left hte, ite_eq_left hte]
                   by_cases hsum : t.2 + c = 0
-                  · rw [if_pos hsum, if_pos hsum, List.eraseIdx_cons_succ]
-                  · rw [if_neg hsum, if_neg hsum, List.set_cons_succ]
-                · rw [if_neg hte, if_neg hte]
+                  · rw [ite_eq_left hsum, ite_eq_left hsum, List.eraseIdx_cons_succ]
+                  · rw [ite_eq_right hsum, ite_eq_right hsum, List.set_cons_succ]
+                · rw [ite_eq_right hte, ite_eq_right hte]
                   by_cases hc : c = 0
-                  · rw [if_pos hc, if_pos hc]
-                  · rw [if_neg hc, if_neg hc, List.insertIdx_succ_cons]
+                  · rw [ite_eq_left hc, ite_eq_left hc]
+                  · rw [ite_eq_right hc, ite_eq_right hc, List.insertIdx_succ_cons]
             | none =>
                 simp only
                 by_cases hc : c = 0
-                · rw [if_pos hc, if_pos hc]
-                · rw [if_neg hc, if_neg hc, List.cons_append]
+                · rw [ite_eq_left hc, ite_eq_left hc]
+                · rw [ite_eq_right hc, ite_eq_right hc, List.cons_append]
           · intro i h hip
             have := hbelow (i + 1) (by simpa using by omega) (by omega)
             simpa using this
@@ -859,21 +859,21 @@ theorem addTermArray_eq [Add R] {ts : Array (Nat × R)}
       rw [Array.getElem?_toList, hp]
     simp only [hp']
     by_cases hte : t.1 = e
-    · rw [if_pos hte, if_pos hte]
+    · rw [ite_eq_left hte, ite_eq_left hte]
       by_cases hsum : t.2 + c = 0
-      · rw [if_pos hsum, if_pos hsum, Array.toList_eraseIdx]
-      · rw [if_neg hsum, if_neg hsum, Array.toList_set]
-    · rw [if_neg hte, if_neg hte]
+      · rw [ite_eq_left hsum, ite_eq_left hsum, Array.toList_eraseIdx]
+      · rw [ite_eq_right hsum, ite_eq_right hsum, Array.toList_set]
+    · rw [ite_eq_right hte, ite_eq_right hte]
       by_cases hc : c = 0
-      · rw [if_pos hc, if_pos hc]
-      · rw [if_neg hc, if_neg hc, Array.toList_insertIdx]
+      · rw [ite_eq_left hc, ite_eq_left hc]
+      · rw [ite_eq_right hc, ite_eq_right hc, Array.toList_insertIdx]
   · rename_i hp
     have hp' : ts.toList[lowerBound ts e 0 ts.size]? = none := by
       rw [Array.getElem?_toList, hp]
     simp only [hp']
     by_cases hc : c = 0
-    · rw [if_pos hc, if_pos hc]
-    · rw [if_neg hc, if_neg hc, Array.toList_push]
+    · rw [ite_eq_left hc, ite_eq_left hc]
+    · rw [ite_eq_right hc, ite_eq_right hc, Array.toList_push]
 
 /-- Runtime implementation of {name}`addTerm`: binary search and one
 in-place array splice (value-equal to {name}`addTerm` by
@@ -928,9 +928,9 @@ theorem coeff_foldl_addTerm [Add R] (l : List (Nat × R))
       rw [ih]
       by_cases hte : t.1 = e
       · rw [List.filter_cons_of_pos (by simpa using hte),
-          List.foldl_cons, coeff_addTerm, if_pos hte.symm, hte]
+          List.foldl_cons, coeff_addTerm, ite_eq_left hte.symm, hte]
       · rw [List.filter_cons_of_neg (by simpa using hte),
-          coeff_addTerm, if_neg (fun h : e = t.1 => hte h.symm)]
+          coeff_addTerm, ite_eq_right (fun h : e = t.1 => hte h.symm)]
 
 /-- Coefficient description of {name}`ofTerms`, with no algebra assumed. -/
 theorem coeff_ofTerms_addCoeff [Add R] (ts : Array (Nat × R)) (e : Nat) :
@@ -950,11 +950,11 @@ theorem addCoeff_eq_add [Add R] (hzero : ∀ c : R, 0 + c = c) (d c : R) :
   · subst hd
     by_cases hc : c = 0
     · subst hc
-      rw [if_pos rfl, if_pos rfl, hzero]
-    · rw [if_pos rfl, if_neg hc, hzero]
+      rw [ite_eq_left rfl, ite_eq_left rfl, hzero]
+    · rw [ite_eq_left rfl, ite_eq_right hc, hzero]
   · by_cases hs : d + c = 0
-    · rw [if_neg hd, if_pos hs, hs]
-    · rw [if_neg hd, if_neg hs]
+    · rw [ite_eq_right hd, ite_eq_left hs, hs]
+    · rw [ite_eq_right hd, ite_eq_right hs]
 
 /-- The coefficient of `ofTerms ts` at `e` is the sum, in input order, of
 the coefficients of the terms of `ts` at `e`. The `hzero` hypothesis is
@@ -1002,7 +1002,7 @@ theorem combineRun_canonical [Add R] {l : List (Nat × R)} {e : Nat}
       rw [List.pairwise_cons] at hs
       have hts : ∀ u ∈ ts, t.1 ≤ u.1 := hs.1
       by_cases hte : t.1 = e
-      · simp only [combineRun, if_pos hte]
+      · simp only [combineRun, ite_eq_left hte]
         exact ih hs.2 fun u hu => Nat.le_trans (hte ▸ hts u hu) (Nat.le_refl _)
       · have hlt : e < t.1 := by
           have := hge t (List.mem_cons_self ..)
@@ -1010,9 +1010,9 @@ theorem combineRun_canonical [Add R] {l : List (Nat × R)} {e : Nat}
         obtain ⟨hpw, hnz, hge'⟩ := ih (e := t.1) (acc := addCoeff 0 t.2)
           hs.2 hts
         by_cases hacc : acc = 0
-        · simp only [combineRun, if_neg hte, if_pos hacc]
+        · simp only [combineRun, ite_eq_right hte, ite_eq_left hacc]
           exact ⟨hpw, hnz, fun u hu => by have := hge' u hu; omega⟩
-        · simp only [combineRun, if_neg hte, if_neg hacc]
+        · simp only [combineRun, ite_eq_right hte, ite_eq_right hacc]
           refine ⟨List.pairwise_cons.mpr ⟨?_, hpw⟩, ?_, ?_⟩
           · intro u hu
             have := hge' u hu
@@ -1054,13 +1054,13 @@ theorem coeffList_combineRun [Add R] {l : List (Nat × R)} {e : Nat}
       have hts : ∀ u ∈ ts, t.1 ≤ u.1 := hs.1
       by_cases hte : t.1 = e
       · rw [show combineRun e acc (t :: ts) = combineRun e (addCoeff acc t.2) ts
-          from by rw [combineRun, if_pos hte]]
+          from by rw [combineRun, ite_eq_left hte]]
         rw [ih hs.2 (fun u hu => hte ▸ hts u hu)]
         by_cases hf : f = e
         · subst hf
-          rw [if_pos rfl, if_pos rfl,
+          rw [ite_eq_left rfl, ite_eq_left rfl,
             List.filter_cons_of_pos (by simpa using hte), List.foldl_cons]
-        · rw [if_neg hf, if_neg hf,
+        · rw [ite_eq_right hf, ite_eq_right hf,
             List.filter_cons_of_neg (by simpa using fun h : t.1 = f => hf (by omega))]
       · have hlt : e < t.1 := by
           have := hge t (List.mem_cons_self ..)
@@ -1075,36 +1075,36 @@ theorem coeffList_combineRun [Add R] {l : List (Nat × R)} {e : Nat}
         by_cases hacc : acc = 0
         · rw [show combineRun e acc (t :: ts) =
               combineRun t.1 (addCoeff 0 t.2) ts
-            from by rw [combineRun, if_neg hte, if_pos hacc]]
+            from by rw [combineRun, ite_eq_right hte, ite_eq_left hacc]]
           rw [ihspec]
           by_cases hf1 : f = t.1
           · subst hf1
-            rw [if_pos rfl, if_neg (by omega),
+            rw [ite_eq_left rfl, ite_eq_right (by omega),
               List.filter_cons_of_pos (by simp), List.foldl_cons]
-          · rw [if_neg hf1]
+          · rw [ite_eq_right hf1]
             by_cases hfe : f = e
             · subst hfe
-              rw [if_pos rfl,
+              rw [ite_eq_left rfl,
                 List.filter_cons_of_neg (by simpa using fun h : t.1 = f => hf1 h.symm),
                 hfilter_e, hacc]
-            · rw [if_neg hfe,
+            · rw [ite_eq_right hfe,
                 List.filter_cons_of_neg (by simpa using fun h : t.1 = f => hf1 h.symm)]
         · rw [show combineRun e acc (t :: ts) =
               (e, acc) :: combineRun t.1 (addCoeff 0 t.2) ts
-            from by rw [combineRun, if_neg hte, if_neg hacc]]
+            from by rw [combineRun, ite_eq_right hte, ite_eq_right hacc]]
           simp only [coeffList]
           by_cases hfe : f = e
           · subst hfe
-            rw [if_pos rfl, if_pos rfl,
+            rw [ite_eq_left rfl, ite_eq_left rfl,
               List.filter_cons_of_neg (by simpa using fun h : t.1 = f => by omega),
               hfilter_e]
             rfl
-          · rw [if_neg (fun h : e = f => hfe h.symm), if_neg hfe, ihspec]
+          · rw [ite_eq_right (fun h : e = f => hfe h.symm), ite_eq_right hfe, ihspec]
             by_cases hf1 : f = t.1
             · subst hf1
-              rw [if_pos rfl, List.filter_cons_of_pos (by simp),
+              rw [ite_eq_left rfl, List.filter_cons_of_pos (by simp),
                 List.foldl_cons]
-            · rw [if_neg hf1,
+            · rw [ite_eq_right hf1,
                 List.filter_cons_of_neg (by simpa using fun h : t.1 = f => hf1 h.symm)]
 
 /-- Coefficient description of {name}`combineSorted` on a `≤`-sorted
@@ -1122,8 +1122,8 @@ theorem coeffList_combineSorted [Add R] {l : List (Nat × R)}
         coeffList_combineRun hs.2 hs.1]
       by_cases hf : f = t.1
       · subst hf
-        rw [if_pos rfl, List.filter_cons_of_pos (by simp), List.foldl_cons]
-      · rw [if_neg hf,
+        rw [ite_eq_left rfl, List.filter_cons_of_pos (by simp), List.foldl_cons]
+      · rw [ite_eq_right hf,
           List.filter_cons_of_neg (by simpa using fun h : t.1 = f => hf h.symm)]
 
 omit [Zero R] [DecidableEq R] in
@@ -1274,16 +1274,16 @@ elsewhere, even when `c = 0`. -/
     (monomial e c).coeff f = if f = e then c else 0 := by
   unfold monomial
   by_cases hc : c = 0
-  · rw [dif_pos hc]
+  · rw [dite_eq_left hc]
     by_cases hf : f = e
-    · rw [if_pos hf, coeff_zero, hc]
-    · rw [if_neg hf, coeff_zero]
-  · rw [dif_neg hc]
+    · rw [ite_eq_left hf, coeff_zero, hc]
+    · rw [ite_eq_right hf, coeff_zero]
+  · rw [dite_eq_right hc]
     show coeffList [(e, c)] f = _
     simp only [coeffList]
     by_cases hf : f = e
-    · rw [if_pos (hf ▸ rfl), if_pos hf]
-    · rw [if_neg (fun h : e = f => hf h.symm), if_neg hf]
+    · rw [ite_eq_left (hf ▸ rfl), ite_eq_left hf]
+    · rw [ite_eq_right (fun h : e = f => hf h.symm), ite_eq_right hf]
 
 /-- A constant stores its value at exponent `0`. -/
 @[simp, grind =] theorem coeff_C (c : R) (f : Nat) :

@@ -100,7 +100,7 @@ private theorem subsetSplits_zip_filterMap_partition :
           rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
           by_cases hb : b = true
           · subst hb
-            simp only [if_true]
+            simp only [ite_true]
             exact Hex.subsetSplits_cons_left_mem (ih bs hmask)
           · have hb' : b = false := by cases b <;> simp_all
             subst hb'
@@ -154,7 +154,7 @@ private theorem subsetSplitsWithFirst_zip_filterMap_partition
       ((x :: xs).zip (true :: bs)).filterMap (fun p => if p.2 then none else some p.1)) ∈
       Hex.subsetSplitsWithFirst (x :: xs) := by
   rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
-  simp only [if_true]
+  simp only [ite_true]
   exact Hex.subsetSplitsWithFirst_mem_cons (subsetSplits_zip_filterMap_partition xs bs h)
 
 /-- Converse at the `subsetSplitsWithFirst` surface: every split comes from a
@@ -569,7 +569,7 @@ private theorem List.nodup_filter_mem_toFinset_zip_filterMap_selected
                 have ha_xs : a ∈ xs := (List.of_mem_zip hp_mem).1
                 cases b' with
                 | true =>
-                    simp only [if_true, Option.some.injEq] at hp_eq
+                    simp only [ite_true, Option.some.injEq] at hp_eq
                     rw [← hp_eq] at hx_notin
                     exact hx_notin ha_xs
                 | false => simp at hp_eq
@@ -630,7 +630,7 @@ private theorem List.nodup_filter_not_mem_toFinset_zip_filterMap_rest
                 have ha_xs : a ∈ xs := (List.of_mem_zip hp_mem).1
                 cases b' with
                 | true =>
-                    simp only [if_true, Option.some.injEq] at hp_eq
+                    simp only [ite_true, Option.some.injEq] at hp_eq
                     rw [← hp_eq] at hx_notin
                     exact hx_notin ha_xs
                 | false => simp at hp_eq
@@ -703,7 +703,7 @@ theorem liftedSubsetSelectedList_eq_mask_partition_of_matches
     obtain ⟨⟨a, b⟩, hp_mem, hp_eq⟩ := hx
     have ha_ys : a ∈ ys := (List.of_mem_zip hp_mem).1
     cases b with
-    | true => simp only [if_true, Option.some.injEq] at hp_eq; rw [← hp_eq]; exact ha_ys
+    | true => simp only [ite_true, Option.some.injEq] at hp_eq; rw [← hp_eq]; exact ha_ys
     | false => simp at hp_eq
   -- T ⊆ J.
   have hTJ : T ⊆ J := by

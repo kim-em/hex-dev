@@ -355,7 +355,7 @@ private theorem liftToZ_mulCoeffTerm_congr
   unfold FpPoly.mulCoeffTerm DensePoly.mulCoeffStep
   by_cases hni : n < i
   · have hneq : i + (n - i) ≠ n := by omega
-    rw [if_pos hni, if_neg hneq]
+    rw [ite_eq_left hni, ite_eq_right hneq]
     change (Int.ofNat (ZMod64.zero : ZMod64 p).toNat - 0) % (p : Int) = 0
     rw [ZMod64.toNat_zero]
     simp
@@ -912,10 +912,10 @@ private theorem mulCoeffStep_scale_left_int
       c * DensePoly.mulCoeffStep f g n i acc j := by
   unfold DensePoly.mulCoeffStep
   by_cases hij : i + j = n
-  · rw [if_pos hij, if_pos hij]
+  · rw [ite_eq_left hij, ite_eq_left hij]
     rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
     grind
-  · rw [if_neg hij, if_neg hij]
+  · rw [ite_eq_right hij, ite_eq_right hij]
 
 /-- Scaling the left factor by `c` factors that constant out of a
 `DensePoly.mulCoeffStep` fold over any index list. -/

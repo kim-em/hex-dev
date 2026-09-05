@@ -115,7 +115,7 @@ theorem rowReduce_rank_eq_n_of_rightInverse [Lean.Grind.Field R] [DecidableEq R]
       rw [Vector.get_eq_getElem, Vector.getElem_zero]
     have hu : (Vector.unit R i).get i = 1 := by
       unfold Vector.unit
-      rw [Vector.get_ofFn, if_pos rfl]
+      rw [Vector.get_ofFn, ite_eq_left rfl]
       rfl
     have huRow : (Matrix.row (Matrix.identity (R := R) n) i).get i = 1 := by
       rw [Matrix.row_identity]
@@ -189,7 +189,7 @@ theorem rowReduce_takeRows_echelon_eq_identity [Lean.Grind.Field R] [DecidableEq
   have hpj : D.pivotCols.get jj = j := hpivot j
   by_cases hijv : i.val = j.val
   · have hij : i = j := Fin.ext hijv
-    rw [if_pos hij]
+    rw [ite_eq_left hij]
     have hone := E.pivot_one ii
     have hcol : D.pivotCols.get ii = j := hpi.trans hij
     change (rowReduce M).pivotCols.get ii = j at hcol
@@ -203,7 +203,7 @@ theorem rowReduce_takeRows_echelon_eq_identity [Lean.Grind.Field R] [DecidableEq
     change (Matrix.row (rowReduce M).echelon iN).get j = 1
     exact hentry.symm.trans hone
   · have hij : i ≠ j := fun h => hijv (congrArg Fin.val h)
-    rw [if_neg hij]
+    rw [ite_eq_right hij]
     cases Nat.lt_or_gt_of_ne hijv with
     | inl hijv =>
         rw [← hpj]
@@ -248,9 +248,9 @@ theorem rowReduce_rank_le_of_eq_mul [Lean.Grind.Field R] [DecidableEq R]
         simp only [P, Matrix.getElem_takeRows]
         by_cases hij : i = j
         · subst j
-          rw [if_pos rfl]
+          rw [ite_eq_left rfl]
           simpa [P, Matrix.IsEchelonForm.pivotRow] using E.pivot_one i
-        · rw [if_neg hij]
+        · rw [ite_eq_right hij]
           cases Nat.lt_or_gt_of_ne (fun h => hij (Fin.ext h)) with
           | inl hijv =>
               simpa [Matrix.IsEchelonForm.pivotRow] using
@@ -328,7 +328,7 @@ private theorem pad_identity_mul [Lean.Grind.Field R] [DecidableEq R]
       change (Matrix.pad (Matrix.identity (R := R) k) n k)[i][tt] =
         (Matrix.identity (R := R) k)[ii][tt]
       rw [Matrix.getElem_pad,
-        dif_pos (⟨hi, tt.isLt⟩ : i.val < k ∧ tt.val < k),
+        dite_eq_left (⟨hi, tt.isLt⟩ : i.val < k ∧ tt.val < k),
         Matrix.getElem_pair_eq_nested]
     calc
       (Matrix.pad (Matrix.identity (R := R) k) n k * P)[i][j] =
@@ -336,14 +336,14 @@ private theorem pad_identity_mul [Lean.Grind.Field R] [DecidableEq R]
         rw [Matrix.getElem_mul, Matrix.getElem_mul, hrow]
       _ = P[ii][j] := by rw [Matrix.identity_mul]
       _ = (Matrix.pad P n m)[i][j] := by
-        rw [Matrix.getElem_pad, dif_pos (⟨hi, j.isLt⟩ : i.val < k ∧ j.val < m),
+        rw [Matrix.getElem_pad, dite_eq_left (⟨hi, j.isLt⟩ : i.val < k ∧ j.val < m),
           Matrix.getElem_pair_eq_nested]
   · have hrow : Matrix.row (Matrix.pad (Matrix.identity (R := R) k) n k) i = 0 := by
       ext t ht
       let tt : Fin k := ⟨t, ht⟩
       change (Matrix.pad (Matrix.identity (R := R) k) n k)[i][tt] =
         (0 : Vector R k)[tt]
-      rw [Matrix.getElem_pad, dif_neg (by simp [hi])]
+      rw [Matrix.getElem_pad, dite_eq_right (by simp [hi])]
       change (0 : R) = (0 : Vector R k)[tt.val]
       rw [Vector.getElem_zero]
     have hz := Matrix.row_mul_eq_zero
@@ -352,7 +352,7 @@ private theorem pad_identity_mul [Lean.Grind.Field R] [DecidableEq R]
     change (Matrix.pad (Matrix.identity (R := R) k) n k * P)[i][j] =
       (0 : Vector R m)[j.val] at hentry
     rw [Vector.getElem_zero] at hentry
-    rw [Matrix.getElem_pad, dif_neg (by simp [hi])]
+    rw [Matrix.getElem_pad, dite_eq_right (by simp [hi])]
     exact hentry
 
 /-- The computed rank supplies an explicit factorization through that many
@@ -374,9 +374,9 @@ theorem rowReduce_rank_factorization [Lean.Grind.Field R] [DecidableEq R]
     intro i j
     rw [Matrix.getElem_pad]
     by_cases hi : i.val < d
-    · rw [dif_pos (⟨hi, j.isLt⟩ : i.val < d ∧ j.val < m),
+    · rw [dite_eq_left (⟨hi, j.isLt⟩ : i.val < d ∧ j.val < m),
         Matrix.getElem_pair_eq_nested, Matrix.getElem_takeRows]
-    · rw [dif_neg (by simp [hi])]
+    · rw [dite_eq_right (by simp [hi])]
       have hrow := E.toIsEchelonForm.zero_row i (Nat.le_of_not_gt hi)
       have hentry := congrArg (fun v : Vector R m => v[j]) hrow
       change D.echelon[i][j] = (0 : Vector R m)[j.val] at hentry

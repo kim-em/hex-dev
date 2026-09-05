@@ -45,10 +45,10 @@ theorem leadingCoeff_normalizePrimitiveSign_nonneg (p : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (normalizePrimitiveSign p) := by
   unfold normalizePrimitiveSign
   by_cases hlead : DensePoly.leadingCoeff p < 0
-  · rw [if_pos hlead]
+  · rw [ite_eq_left hlead]
     rw [leadingCoeff_scale_of_nonzero (-1 : Int) p (by decide)]
     omega
-  · rw [if_neg hlead]
+  · rw [ite_eq_right hlead]
     omega
 
 /-- A nonzero integer polynomial has nonzero leading coefficient. -/
@@ -64,7 +64,7 @@ private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p �
     normalizePrimitiveSign p ≠ 0 := by
   unfold normalizePrimitiveSign
   by_cases hlead : DensePoly.leadingCoeff p < 0
-  · rw [if_pos hlead]
+  · rw [ite_eq_left hlead]
     intro hzero
     have hsize : p.size = 0 := by
       have hscaled_size : (DensePoly.scale (-1 : Int) p).size = p.size :=
@@ -76,7 +76,7 @@ private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p �
     intro n
     rw [DensePoly.coeff_zero]
     exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
-  · rw [if_neg hlead]
+  · rw [ite_eq_right hlead]
     exact hp
 
 /-- Normalizing the primitive sign of a nonzero polynomial makes the leading
@@ -96,7 +96,7 @@ private theorem normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg
     (p : ZPoly) (h : 0 ≤ DensePoly.leadingCoeff p) :
     normalizePrimitiveSign p = p := by
   unfold normalizePrimitiveSign
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
 
 /-- The rational primitive part has nonnegative integer leading coefficient. -/
 theorem leadingCoeff_ratPolyPrimitivePart_nonneg (p : DensePoly Rat) :
@@ -159,10 +159,10 @@ private theorem normalizePrimitiveSign_primitivePart_primitive (f : ZPoly)
     rw [hpart_zero, normalizePrimitiveSign_zero]
     simp [content, DensePoly.content_zero]
   by_cases hlead : DensePoly.leadingCoeff (primitivePart f) < 0
-  · rw [normalizePrimitiveSign, if_pos hlead, Primitive, content,
+  · rw [normalizePrimitiveSign, ite_eq_left hlead, Primitive, content,
       DensePoly.content_scale_neg_one]
     simpa [Primitive, content] using primitivePart_primitive f hcontent_ne
-  · rw [normalizePrimitiveSign, if_neg hlead]
+  · rw [normalizePrimitiveSign, ite_eq_right hlead]
     exact primitivePart_primitive f hcontent_ne
 
 /-- Sign normalization preserves a primitive integer polynomial. -/
@@ -170,10 +170,10 @@ theorem primitive_normalizePrimitiveSign {p : ZPoly} (hp : Primitive p) :
     Primitive (normalizePrimitiveSign p) := by
   unfold normalizePrimitiveSign
   by_cases hlead : DensePoly.leadingCoeff p < 0
-  · rw [if_pos hlead, Primitive, content,
+  · rw [ite_eq_left hlead, Primitive, content,
       DensePoly.content_scale_neg_one]
     simpa [Primitive, content] using hp
-  · rw [if_neg hlead]
+  · rw [ite_eq_right hlead]
     exact hp
 
 /-- Sign normalization preserves the stored coefficient count. -/
@@ -435,7 +435,7 @@ theorem reflectRat_mul (p q : DensePoly Rat) :
     unfold DensePoly.diagonalMulCoeffTerm
     by_cases hni : n < i
     · simp [hni, sign]
-    · rw [if_neg hni, if_neg hni, coeff_reflectRat, coeff_reflectRat]
+    · rw [ite_eq_right hni, ite_eq_right hni, coeff_reflectRat, coeff_reflectRat]
       have hpow : (-1 : Rat) ^ i * (-1 : Rat) ^ (n - i) = sign := by
         rw [← Lean.Grind.Semiring.pow_add]
         congr 1
@@ -529,12 +529,12 @@ private theorem toRatPoly_normalizePrimitiveSign_rational_associate (p : ZPoly) 
     ∃ unit : Rat, toRatPoly p = DensePoly.scale unit (toRatPoly (normalizePrimitiveSign p)) := by
   by_cases hlead : DensePoly.leadingCoeff p < 0
   · refine ⟨-1, ?_⟩
-    rw [normalizePrimitiveSign, if_pos hlead]
+    rw [normalizePrimitiveSign, ite_eq_left hlead]
     have h := rat_scale_toRatPoly_neg_int (1 : Rat) p
     rw [rat_scale_one] at h
     simpa using h
   · refine ⟨1, ?_⟩
-    rw [normalizePrimitiveSign, if_neg hlead]
+    rw [normalizePrimitiveSign, ite_eq_right hlead]
     exact (rat_scale_one (toRatPoly p)).symm
 
 /-- Folding a step that discards each element leaves the initial accumulator `init` unchanged. -/
@@ -594,11 +594,11 @@ private theorem rat_scale_mulCoeffStep (u v : Rat) (p q : DensePoly Rat)
       (u * v) * DensePoly.mulCoeffStep p q n i a j := by
   unfold DensePoly.mulCoeffStep
   by_cases hij : i + j = n
-  · rw [if_pos hij, if_pos hij]
+  · rw [ite_eq_left hij, ite_eq_left hij]
     rw [DensePoly.coeff_scale (R := Rat) u p i (Rat.mul_zero u),
       DensePoly.coeff_scale (R := Rat) v q j (Rat.mul_zero v)]
     grind
-  · rw [if_neg hij, if_neg hij]
+  · rw [ite_eq_right hij, ite_eq_right hij]
 
 /-- `rat_scale_mulCoeffStep_fold`: the `u * v` factor pulls out through the
 inner `mulCoeffStep` fold that accumulates one output coefficient. -/
@@ -745,7 +745,7 @@ private theorem rat_divMod_spec (p q : DensePoly Rat) :
       change (0 : DensePoly Rat) * q + p = p
       rw [DensePoly.zero_mul, DensePoly.zero_add]
     · unfold DensePoly.divMod
-      rw [if_neg hlt]
+      rw [ite_eq_right hlt]
       exact DensePoly.divModArray_reconstruction p q
         (fun coeff : Rat => coeff / q.leadingCoeff) hcancel
 
@@ -760,7 +760,7 @@ private theorem rat_divMod_spec_of_not_isZero (p q : DensePoly Rat)
   by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
   · simp [hlt]
     rw [DensePoly.zero_mul, DensePoly.zero_add]
-  · rw [if_neg hlt]
+  · rw [ite_eq_right hlt]
     exact DensePoly.divModArray_reconstruction p q
       (fun coeff => coeff / q.leadingCoeff)
       (fun a => rat_div_mul_cancel_of_ne a q.leadingCoeff

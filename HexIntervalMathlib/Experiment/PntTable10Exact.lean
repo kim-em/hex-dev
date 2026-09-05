@@ -68,7 +68,7 @@ theorem exactBound_le_of_majorant (k : Nat) (a1 a2 epsilon A1 A2 E b b' T : Real
         A2 * y ^ k * Real.exp (-(2 * y / 3)) + E * y ^ k ≤ T) :
     exactBound k a1 a2 epsilon b b' ≤ T := by
   let interval : Set Real := Set.Icc (Real.exp b) (Real.exp b')
-  haveI : Nonempty interval :=
+  have : Nonempty interval :=
     ⟨Real.exp b, by
       change Real.exp b ∈ Set.Icc (Real.exp b) (Real.exp b')
       exact ⟨le_rfl, Real.exp_le_exp.mpr hbb'⟩⟩

@@ -131,8 +131,8 @@ theorem filter_split_mem_subsetsOfSizeWithComplement
   | cons x xs ih =>
       cases hx : P x with
       | false =>
-          simp only [List.filter_cons, hx, Bool.false_eq_true, if_false,
-            Bool.not_false, if_true]
+          simp only [List.filter_cons, hx, Bool.false_eq_true, ite_false,
+            Bool.not_false, ite_true]
           cases hlen : (xs.filter P).length with
           | zero =>
               have hfilter : xs.filter P = [] :=
@@ -158,8 +158,8 @@ theorem filter_split_mem_subsetsOfSizeWithComplement
               exact Or.inr ⟨(xs.filter P, xs.filter fun x => !P x), by
                 simpa [hlen] using ih, rfl⟩
       | true =>
-          simp only [List.filter_cons, hx, if_true, Bool.not_true,
-            Bool.false_eq_true, if_false, List.length_cons,
+          simp only [List.filter_cons, hx, ite_true, Bool.not_true,
+            Bool.false_eq_true, ite_false, List.length_cons,
             Hex.subsetsOfSizeWithComplement, List.mem_append, List.mem_map]
           exact Or.inl
             ⟨(xs.filter P, xs.filter fun x => !P x), ih, rfl⟩

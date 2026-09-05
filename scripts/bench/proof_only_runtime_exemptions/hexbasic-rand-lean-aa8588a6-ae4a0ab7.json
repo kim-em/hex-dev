@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Rand.lean",
+ "baseline_blob": "aa8588a6a6a6db3e4393346d885e1f81ccd2aaff",
+ "current_blob": "ae4a0ab74c3f7e4bdb6f05d56502803f5e037610",
+ "reason": "Renames the conditional-reduction lemmas Lean 4.34 deprecates (if_pos, if_neg, dif_pos, dif_neg, if_true, if_false) to their successors ite_eq_left, ite_eq_right, dite_eq_left, dite_eq_right, ite_true, ite_false. The successors have identical statements and argument structure, and every edit is inside a proof; no definition and no factorization-service runtime path changes."
+}

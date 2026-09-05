@@ -56,8 +56,8 @@ theorem coeff_fpPolyToPolynomial (f : Hex.FpPoly p) (n : Nat) :
   rw [Finset.sum_ite_eq' (Finset.range f.size) n
     (fun i => HexModArithMathlib.ZMod64.toZMod (f.coeff i))]
   by_cases hn : n ∈ Finset.range f.size
-  · rw [if_pos hn]
-  · rw [if_neg hn, Hex.DensePoly.coeff_eq_zero_of_size_le f
+  · rw [ite_eq_left hn]
+  · rw [ite_eq_right hn, Hex.DensePoly.coeff_eq_zero_of_size_le f
       (Nat.le_of_not_lt (Finset.mem_range.not.mp hn))]
     exact HexModArithMathlib.ZMod64.toZMod_zero.symm
 
@@ -82,9 +82,9 @@ private theorem toZMod_diagonalMulCoeffTerm (f g : Hex.FpPoly p) (n i : Nat) :
         HexModArithMathlib.ZMod64.toZMod (g.coeff (n - i)) := by
   unfold Hex.DensePoly.diagonalMulCoeffTerm
   by_cases hni : n < i
-  · simp only [if_pos hni]
+  · simp only [ite_eq_left hni]
     exact HexModArithMathlib.ZMod64.toZMod_zero
-  · simp only [if_neg hni, HexModArithMathlib.ZMod64.toZMod_mul]
+  · simp only [ite_eq_right hni, HexModArithMathlib.ZMod64.toZMod_mul]
 
 /-- The executable schoolbook multiplication coefficient, transported to
 `ZMod p`, is the truncated convolution sum over the support of `f`. -/
@@ -122,7 +122,7 @@ private theorem sum_ite_diagonal_eq_range_succ (f g : Hex.FpPoly p) (n : Nat) :
     simp only [hF]
     by_cases hni : n < i
     · simp [hni]
-    · simp only [hni, if_false, hterm]
+    · simp only [hni, ite_false, hterm]
       rw [Hex.DensePoly.coeff_eq_zero_of_size_le f hi]
       rw [show HexModArithMathlib.ZMod64.toZMod (Zero.zero : Hex.ZMod64 p) = 0 from
         HexModArithMathlib.ZMod64.toZMod_zero, zero_mul]
@@ -167,9 +167,9 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
     rw [polynomialToFpPoly, Hex.DensePoly.coeff_ofList,
       HexPolyMathlib.list_getD_map_range_zero]
     by_cases hn : n < (fpPolyToPolynomial f).natDegree + 1
-    · simp only [if_pos hn, coeff_fpPolyToPolynomial,
+    · simp only [ite_eq_left hn, coeff_fpPolyToPolynomial,
         HexModArithMathlib.ZMod64.equiv_symm_apply, HexModArithMathlib.ZMod64.ofZMod_toZMod]
-    · rw [if_neg hn]
+    · rw [ite_eq_right hn]
       have hcoeff : (fpPolyToPolynomial f).coeff n = 0 :=
         Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)
       rw [coeff_fpPolyToPolynomial f n] at hcoeff
@@ -185,9 +185,9 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
     rw [coeff_fpPolyToPolynomial, polynomialToFpPoly, Hex.DensePoly.coeff_ofList,
       HexPolyMathlib.list_getD_map_range_zero]
     by_cases hn : n < P.natDegree + 1
-    · simp only [if_pos hn, HexModArithMathlib.ZMod64.equiv_symm_apply,
+    · simp only [ite_eq_left hn, HexModArithMathlib.ZMod64.equiv_symm_apply,
         HexModArithMathlib.ZMod64.toZMod_ofZMod]
-    · rw [if_neg hn, Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]
+    · rw [ite_eq_right hn, Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]
       exact HexModArithMathlib.ZMod64.toZMod_zero
   map_mul' := by
     intro f g
@@ -392,8 +392,8 @@ theorem toMathlibPolynomial_C (c : Hex.ZMod64 p) :
   intro n
   rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_C]
   by_cases hn : n = 0
-  · subst hn; rw [if_pos rfl, if_pos rfl]
-  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
+  · subst hn; rw [ite_eq_left rfl, ite_eq_left rfl]
+  · rw [ite_eq_right hn, ite_eq_right hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
 
 /-- An executable monomial transports to the corresponding Mathlib monomial. -/
 @[simp, grind =]
@@ -425,8 +425,9 @@ theorem toMathlibPolynomial_X :
   intro n
   rw [coeff_toMathlibPolynomial, Hex.FpPoly.coeff_X, Polynomial.coeff_X]
   by_cases hn : n = 1
-  · subst hn; rw [if_pos rfl, if_pos rfl, HexModArithMathlib.ZMod64.toZMod_one]
-  · rw [if_neg hn, if_neg (show ¬ (1 = n) by omega), HexModArithMathlib.ZMod64.toZMod_zero]
+  · subst hn; rw [ite_eq_left rfl, ite_eq_left rfl, HexModArithMathlib.ZMod64.toZMod_one]
+  · rw [ite_eq_right hn, ite_eq_right (show ¬ (1 = n) by omega),
+      HexModArithMathlib.ZMod64.toZMod_zero]
 
 /-- Divisibility transports along the finite-field polynomial map. -/
 theorem toMathlibPolynomial_dvd {f g : Hex.FpPoly p} (h : f ∣ g) :

@@ -33,11 +33,11 @@ private theorem relation_sum_of_mem_rootSet (level : Level)
     (∑ j ∈ Finset.range level.degree,
         LevelSemantics.denote lower (level.defining.getD j #[]) * x ^ j) +
       x ^ level.degree = 0 := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjective hinv
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjective hinv
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   change x ∈ (HexPolyMathlib.toPolynomial
     (Arithmetic.Coeff.relation level lower)).rootSet ℂ → _
   intro hx
@@ -113,10 +113,10 @@ theorem oneLevel_resultant (level : Level) (lower : List Level)
         (rawOuter lower (shiftedOuter level lower f c))
         (m := (definingOuter level lower).degree?.getD 0)
         (n := (shiftedOuter level lower f c).degree?.getD 0) := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hlower hinjective hinv
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
-  letI : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
     (HexPolyMathlib.equiv
       (R := Arithmetic.Coeff lower)).toMulEquiv.isDomain
         (Polynomial (Arithmetic.Coeff lower))
@@ -170,14 +170,14 @@ theorem oneLevel_shift_zero (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   let shifted := Factor.shiftTop level lower f c
@@ -309,12 +309,12 @@ theorem shifted_dvd_norm (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
-  letI : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
     (HexPolyMathlib.equiv
       (R := Arithmetic.Coeff lower)).toMulEquiv.isDomain
         (Polynomial (Arithmetic.Coeff lower))
@@ -385,14 +385,14 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   have hpDegree : p.natDegree = level.degree := by
@@ -545,14 +545,14 @@ theorem oneLevel_mul (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   let M := rawOuter lower (definingOuter level lower)
@@ -698,17 +698,17 @@ theorem oneLevel_lift (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let lifted := HexPolyMathlib.ofPolynomial
     ((HexPolyMathlib.toPolynomial q).map
       (lowerHom level lower hvalid hinjectiveTop))
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   let M := rawOuter lower (definingOuter level lower)
@@ -980,16 +980,16 @@ theorem findSquarefreeShift_isSome_of_injective
     hinjectiveTop.tail level lower hvalid.1.1
   let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
     hinjectiveLower
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : CharZero (Arithmetic.Coeff lower) :=
+  let : CharZero (Arithmetic.Coeff lower) :=
     { cast_injective := fun m n h => by
         apply CharZero.cast_injective (R := ℂ)
         simpa only [map_natCast] using congrArg ι h }
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   have hpIrreducible : Irreducible p := by
@@ -1013,7 +1013,7 @@ theorem findSquarefreeShift_isSome_of_injective
       (IsAlgClosed.splits _), hpDegree]
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let P := HexPolyMathlib.toPolynomial
     (Factor.rawPoly (level :: lower) f)

@@ -277,11 +277,11 @@ theorem positiveAssociate_primitive (p : ZPoly)
     simp at hpos
   have hdegree : p.degree?.getD 0 ≠ 0 := Nat.ne_of_gt checked.pos_degree
   have hirred := checked.is_true
-  rw [ZPoly.isIrreducible, if_neg hpne, if_neg hdegree] at hirred
+  rw [ZPoly.isIrreducible, ite_eq_right hpne, ite_eq_right hdegree] at hirred
   simp only [Bool.and_eq_true, decide_eq_true_eq] at hirred
   have hscalar : (ZPoly.factorize p).scalar.natAbs = 1 := by
     exact hirred.1.1
-  rw [factorize_scalar, if_neg hpne] at hscalar
+  rw [factorize_scalar, ite_eq_right hpne] at hscalar
   have hcontentAbs : (ZPoly.content p).natAbs = 1 := by
     by_cases hlead : p.leadingCoeff < 0
     · simpa [hlead] using hscalar

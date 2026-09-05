@@ -615,7 +615,7 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
   letI := ZMod64.primeModulusOfPrime c.prime
   intro hzero
   unfold berlekampFactorsModP
-  rw [dif_pos hzero]
+  rw [dite_eq_left hzero]
 
 /-- Reduce an integer coefficient to its canonical natural-number residue modulo `p` for the modular Horner evaluator. -/
 private def intCoeffModNat (z : Int) (p : Nat) : Nat :=

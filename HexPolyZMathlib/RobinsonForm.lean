@@ -400,7 +400,7 @@ theorem mahlerMeasure_le_circleAverage_norm (p : ℂ[X]) :
       0 < ‖p.eval (circleMap 0 1 θ)‖ := by
     rw [ae_restrict_iff' measurableSet_uIoc]
     refine Set.Finite.measure_zero ?_ _
-    simp only [norm_pos_iff, ne_eq, compl_setOf, Classical.not_imp, Decidable.not_not]
+    simp only [norm_pos_iff, ne_eq, compl_ofPred, Classical.not_imp, Decidable.not_not]
     refine Finite.of_finite_image (f := circleMap 0 1) (p.roots.finite_toSet.subset ?_) ?_
     · rintro z ⟨θ, ⟨_, heval⟩, rfl⟩
       exact (mem_roots hp).mpr heval

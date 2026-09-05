@@ -124,7 +124,7 @@ theorem cauchyBound_le_two_pow (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0) :
     _ ≤ (Q : ℝ) := hratio
     _ ≤ (2 : ℝ) ^ Hex.ceilLog2 Q := hQ
     _ = (2 : ℝ) ^ Hex.cauchyExp p := by
-      simp only [Hex.cauchyExp, L, M, Q, if_neg (Nat.ne_of_gt hL)]
+      simp only [Hex.cauchyExp, L, M, Q, ite_eq_right (Nat.ne_of_gt hL)]
 
 /-- Every root of the complex cast lies in the closed square stored in the
 executable initial component. -/

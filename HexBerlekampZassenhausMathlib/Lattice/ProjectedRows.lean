@@ -370,8 +370,8 @@ theorem vecMul_first_of_blockForm
     intro j _
     rw [hentry]
     unfold Hex.bhksLatticeEntry
-    rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-      dif_pos (by simp only [Fin.val_castAdd]; exact i.isLt), zero_mul]
+    rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+      dite_eq_left (by simp only [Fin.val_castAdd]; exact i.isLt), zero_mul]
   rw [hsnd, add_zero]
   rw [Finset.sum_eq_single i]
   · rw [hentry]
@@ -380,9 +380,9 @@ theorem vecMul_first_of_blockForm
   · intro i' _ hne
     rw [hentry]
     unfold Hex.bhksLatticeEntry
-    rw [dif_pos (by simp only [Fin.val_castAdd]; exact i'.isLt),
-      dif_pos (by simp only [Fin.val_castAdd]; exact i.isLt),
-      if_neg (by
+    rw [dite_eq_left (by simp only [Fin.val_castAdd]; exact i'.isLt),
+      dite_eq_left (by simp only [Fin.val_castAdd]; exact i.isLt),
+      ite_eq_right (by
         intro hval
         exact hne (Fin.ext hval))]
     exact zero_mul _
@@ -417,8 +417,8 @@ theorem vecMul_tail_of_blockForm
     intro i _
     rw [hentry]
     unfold Hex.bhksLatticeEntry
-    rw [dif_pos (by simp only [Fin.val_castAdd]; exact i.isLt),
-      dif_neg (by simp only [Fin.val_natAdd]; omega)]
+    rw [dite_eq_left (by simp only [Fin.val_castAdd]; exact i.isLt),
+      dite_eq_right (by simp only [Fin.val_natAdd]; omega)]
     simp only [Fin.val_castAdd, Fin.val_natAdd, Nat.add_sub_cancel_left]
     ring
   have hsnd : (∑ j' : Fin L.coeffWidth,
@@ -435,10 +435,10 @@ theorem vecMul_tail_of_blockForm
     · intro j' _ hne
       rw [hentry]
       unfold Hex.bhksLatticeEntry
-      rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-        dif_neg (by simp only [Fin.val_natAdd]; omega)]
+      rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+        dite_eq_right (by simp only [Fin.val_natAdd]; omega)]
       simp only [Fin.val_natAdd, Nat.add_sub_cancel_left]
-      rw [if_neg (by
+      rw [ite_eq_right (by
         intro hval
         exact hne (Fin.ext hval.symm))]
       exact zero_mul _
@@ -734,8 +734,8 @@ private theorem foldl_cut_ge_of_bound {N : Nat} (g : Fin N → Bool) (bound : Na
       intro init hinit hbnd
       apply ih
       · by_cases hga : g a
-        · simp only [hga, if_true]; exact hbnd a (by simp)
-        · simp only [hga, Bool.false_eq_true, if_false]; exact hinit
+        · simp only [hga, ite_true]; exact hbnd a (by simp)
+        · simp only [hga, Bool.false_eq_true, ite_false]; exact hinit
       · intro i hi; exact hbnd i (List.mem_cons_of_mem a hi)
 
 /-- The cut fold over a strictly increasing index list reaches at least
@@ -779,7 +779,7 @@ private theorem exists_cut_of_lt_foldl {N : Nat} (g : Fin N → Bool) (j : Nat) 
       · by_cases hga : g a = true
         · right
           refine ⟨a, by simp, ?_, hga⟩
-          simp only [hga, if_true] at hstep
+          simp only [hga, ite_true] at hstep
           omega
         · left
           have hgaf : g a = false := Bool.eq_false_of_not_eq_true hga
@@ -835,7 +835,7 @@ theorem bhksWithinGramSchmidtCut_eq_true_of_le
         (dets.get ⟨i.val, by omega⟩ : ℚ)) ≤ (Hex.bhksCutRadiusSq4 L : ℚ)) :
     Hex.bhksWithinGramSchmidtCut L dets i = true := by
   unfold Hex.bhksWithinGramSchmidtCut
-  rw [if_neg hne]
+  rw [ite_eq_right hne]
   exact decide_eq_true hle
 
 /-- A successful executable cut test exposes its determinant-ratio
@@ -850,7 +850,7 @@ theorem bhksWithinGramSchmidtCut_le_of_eq_true
   unfold Hex.bhksWithinGramSchmidtCut at hpass
   by_cases hzero : dets.get ⟨i.val, by omega⟩ = 0
   · simp [hzero] at hpass
-  · rw [if_neg hzero] at hpass
+  · rw [ite_eq_right hzero] at hpass
     exact of_decide_eq_true hpass
 
 /-- Every row in the retained prefix has a certified norm bound.  A retained

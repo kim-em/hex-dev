@@ -39,7 +39,7 @@ theorem rawPolynomial_monic_associated
     (hf : Norm.rawPolynomial levels f ≠ 0) :
     Associated (Norm.rawPolynomial levels (Norm.monic f))
       (Norm.rawPolynomial levels f) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let ι := LevelSemantics.coeffHom levels hvalid hinjective hinv
   have hfSource : HexPolyMathlib.toPolynomial f ≠ 0 := by
@@ -101,7 +101,7 @@ theorem monicGcd_dvd
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     Norm.monic (DensePoly.gcd f g) ∣ f ∧
       Norm.monic (DensePoly.gcd f g) ∣ g := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let raw := HexPolyMathlib.toPolynomial (DensePoly.gcd f g)
   let normalized := EuclideanDomain.gcd
@@ -139,7 +139,7 @@ theorem rawPolynomial_monicGcd_ne_zero
     (f g : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0) :
     Norm.rawPolynomial levels (Norm.monic (DensePoly.gcd f g)) ≠ 0 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hfSource : HexPolyMathlib.toPolynomial f ≠ 0 := by
     intro hzero
@@ -185,7 +185,7 @@ theorem rootMultiplicity_monicGcd
       (Norm.monic (DensePoly.gcd f g))).rootMultiplicity z =
       min ((Norm.rawPolynomial levels f).rootMultiplicity z)
         ((Norm.rawPolynomial levels g).rootMultiplicity z) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let sourceGcd := EuclideanDomain.gcd
     (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)
@@ -257,7 +257,7 @@ theorem rawPolynomial_div_mul
     Norm.rawPolynomial levels (dividend / divisor) *
         Norm.rawPolynomial levels divisor =
       Norm.rawPolynomial levels dividend := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hmod : dividend % divisor = 0 :=
     DensePoly.mod_eq_zero_of_dvd dividend divisor hdivisor
@@ -284,7 +284,7 @@ theorem rawPolynomial_div_ne_zero
     (hdivisor : divisor ∣ dividend)
     (hdividend : Norm.rawPolynomial levels dividend ≠ 0) :
     Norm.rawPolynomial levels (dividend / divisor) ≠ 0 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   intro hquotient
   have hreconstruct := rawPolynomial_div_mul hvalid hinjective hinv
@@ -303,7 +303,7 @@ theorem rootMultiplicity_monicDiv
       (Norm.monic (dividend / divisor))).rootMultiplicity z =
       (Norm.rawPolynomial levels dividend).rootMultiplicity z -
         (Norm.rawPolynomial levels divisor).rootMultiplicity z := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hquotient := rawPolynomial_div_ne_zero hvalid hinjective hinv
     dividend divisor hdivisor hdividend
@@ -325,7 +325,7 @@ theorem rawPolynomial_monicDiv_ne_zero
     (hdivisor : divisor ∣ dividend)
     (hdividend : Norm.rawPolynomial levels dividend ≠ 0) :
     Norm.rawPolynomial levels (Norm.monic (dividend / divisor)) ≠ 0 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hquotient := rawPolynomial_div_ne_zero hvalid hinjective hinv
     dividend divisor hdivisor hdividend
@@ -354,7 +354,7 @@ theorem YunInvariant.step (z : ℂ) (r k : Nat)
     let shared := Norm.monic (DensePoly.gcd w repeated)
     let nextRepeated := Norm.monic (repeated / shared)
     YunInvariant z r (k + 1) shared nextRepeated := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let shared := Norm.monic (DensePoly.gcd w repeated)
   let nextRepeated := Norm.monic (repeated / shared)
@@ -401,7 +401,7 @@ theorem YunInvariant.component (z : ℂ) (r k : Nat)
     let component := Norm.monic (w / shared)
     (Norm.rawPolynomial levels component).rootMultiplicity z =
       if k = r then 1 else 0 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let shared := Norm.monic (DensePoly.gcd w repeated)
   let component := Norm.monic (w / shared)
@@ -440,7 +440,7 @@ theorem YunInvariant.init
     YunInvariant z
       ((Norm.rawPolynomial levels f).rootMultiplicity z) 1
       distinct repeated := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let normalized := Norm.monic f
   let repeated := Norm.monic
@@ -510,7 +510,7 @@ re-elaborating the coefficient-field construction at every induction step. -/
 theorem natDegree_rawPolynomial
     (f : DensePoly (Arithmetic.Coeff levels)) :
     (Norm.rawPolynomial levels f).natDegree = f.degree?.getD 0 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   rw [← Norm.rawPolynomialHom_apply levels hvalid hinjective hinv]
   change ((HexPolyMathlib.toPolynomial f).map
@@ -528,7 +528,7 @@ theorem rawPolynomial_eq_map
     Norm.rawPolynomial levels f =
       (HexPolyMathlib.toPolynomial f).map
         (LevelSemantics.coeffHom levels hvalid hinjective hinv) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   rw [← Norm.rawPolynomialHom_apply levels hvalid hinjective hinv]
   rfl
@@ -540,7 +540,7 @@ theorem degree_pos_of_rawPolynomial_root
     (hf : Norm.rawPolynomial levels f ≠ 0) {z : ℂ}
     (hroot : (Norm.rawPolynomial levels f).IsRoot z) :
     0 < f.degree?.getD 0 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hdegree := Polynomial.degree_pos_of_root hf hroot
   have hnatDegree : 0 < (Norm.rawPolynomial levels f).natDegree :=
@@ -581,7 +581,7 @@ theorem yunAux_sound (z : ℂ) (r : Nat)
     ∀ entry ∈ (Factor.yunAux levels w repeated k fuel out).toList,
       (Norm.rawPolynomial levels
         (Factor.rawPoly levels entry.1)).IsRoot z → entry.2 = r := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction fuel generalizing w repeated k out with
   | zero => simpa [Factor.yunAux] using hOut
@@ -643,7 +643,7 @@ theorem yunAux_rootMultiplicity_le_one (z : ℂ) (r : Nat)
     ∀ entry ∈ (Factor.yunAux levels w repeated k fuel out).toList,
       (Norm.rawPolynomial levels
         (Factor.rawPoly levels entry.1)).rootMultiplicity z ≤ 1 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction fuel generalizing w repeated k out with
   | zero => simpa [Factor.yunAux] using hOut
@@ -684,7 +684,7 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
     ∃ entry ∈ (Factor.yunAux levels w repeated k fuel out).toList,
       (Norm.rawPolynomial levels
         (Factor.rawPoly levels entry.1)).IsRoot z ∧ entry.2 = r := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction fuel generalizing w repeated k out with
   | zero => omega
@@ -693,13 +693,13 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
         intro hone
         have hmultiplicity := invariant.w_multiplicity
         rw [hone, Norm.rawPolynomial_one levels hvalid hinjective hinv,
-          if_pos hindex] at hmultiplicity
+          ite_eq_left hindex] at hmultiplicity
         have honeMultiplicity :
             Polynomial.rootMultiplicity z (1 : Polynomial ℂ) = 0 := by
           simpa only [Polynomial.C_1] using
             Polynomial.rootMultiplicity_C (1 : ℂ) z
         omega
-      rw [Factor.yunAux, if_neg hnotOne]
+      rw [Factor.yunAux, ite_eq_right hnotOne]
       dsimp only
       let shared := Norm.monic (DensePoly.gcd w repeated)
       let component := Norm.monic (w / shared)
@@ -727,7 +727,7 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
         have hdegree : 0 < component.degree?.getD 0 :=
           degree_pos_of_rawPolynomial_root hvalid hinjective hinv component
             hcomponentNe hroot
-        rw [if_pos hdegree]
+        rw [ite_eq_left hdegree]
         refine ⟨(Factor.polyCoords component, k), ?_, ?_, heq⟩
         · apply mem_yunAux_of_mem hvalid hinjective hinv
           simp [component, shared]
@@ -854,7 +854,7 @@ theorem yunAux_monic
     ∀ entry ∈
       (Factor.yunAux levels w repeated multiplicity fuel out).toList,
       (Factor.rawPoly levels entry.1).leadingCoeff = 1 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction fuel generalizing w repeated multiplicity out with
   | zero => simpa [Factor.yunAux] using hOut
@@ -912,7 +912,7 @@ theorem yun_sound
       (Factor.rawPoly levels entry.1)).IsRoot z) :
     entry.2 = (Norm.rawPolynomial levels
       (Factor.rawPoly levels f)).rootMultiplicity z := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   have hdegreeP : 0 < p.degree?.getD 0 := hdegree
@@ -932,7 +932,7 @@ theorem yun_sound
       distinct repeated :=
     YunInvariant.init hvalid hinjective hinv p hpNe hnatDegree z
   unfold Factor.yunRaw at hentry
-  rw [if_neg (by omega : p.degree?.getD 0 ≠ 0)] at hentry
+  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)] at hentry
   exact yunAux_sound hvalid hinjective hinv z
     ((Norm.rawPolynomial levels p).rootMultiplicity z)
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
@@ -951,7 +951,7 @@ theorem yun_complete
         (Factor.rawPoly levels entry.1)).IsRoot z ∧
       entry.2 = (Norm.rawPolynomial levels
         (Factor.rawPoly levels f)).rootMultiplicity z := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   have hdegreeP : 0 < p.degree?.getD 0 := hdegree
@@ -990,7 +990,7 @@ theorem yun_complete
   have hcomplete := yunAux_complete hvalid hinjective hinv z r
     distinct repeated 1 (p.size + 1) #[] invariant hindex hfuel
   unfold Factor.yunRaw
-  rw [if_neg (by omega : p.degree?.getD 0 ≠ 0)]
+  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)]
   exact hcomplete
 
 /-- Every emitted Yun component has only simple roots over `ℂ`. -/
@@ -1001,7 +1001,7 @@ theorem yun_rootMultiplicity_le_one
     (hentry : entry ∈ (Factor.yunRaw levels f).toList) (z : ℂ) :
     (Norm.rawPolynomial levels
       (Factor.rawPoly levels entry.1)).rootMultiplicity z ≤ 1 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   have hdegreeP : 0 < p.degree?.getD 0 := hdegree
@@ -1020,7 +1020,7 @@ theorem yun_rootMultiplicity_le_one
   have invariant : YunInvariant z r 1 distinct repeated :=
     YunInvariant.init hvalid hinjective hinv p hpNe hnatDegree z
   unfold Factor.yunRaw at hentry
-  rw [if_neg (by omega : p.degree?.getD 0 ≠ 0)] at hentry
+  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)] at hentry
   exact yunAux_rootMultiplicity_le_one hvalid hinjective hinv z r
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
     entry hentry
@@ -1069,7 +1069,7 @@ theorem yun_squarefree
     (component : Array (Array Rat) × Nat)
     (hcomponent : component ∈ (Factor.yunRaw levels f).toList) :
     Norm.isSquarefree levels component.1 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let P := Norm.rawPolynomial levels
     (Factor.rawPoly levels component.1)
@@ -1104,7 +1104,7 @@ theorem yun_coprime
     (hmultiplicity : a.2 < b.2) :
     (DensePoly.gcd (Factor.rawPoly levels a.1)
       (Factor.rawPoly levels b.1)).size ≤ 1 := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let pa := Factor.rawPoly levels a.1
   let pb := Factor.rawPoly levels b.1
@@ -1198,7 +1198,7 @@ theorem rawPolynomial_polyPow
     (f : DensePoly (Arithmetic.Coeff levels)) (n : Nat) :
     Norm.rawPolynomial levels (Factor.polyPow f n) =
       Norm.rawPolynomial levels f ^ n := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction n using Nat.strong_induction_on with
   | h n ih =>
@@ -1206,18 +1206,18 @@ theorem rawPolynomial_polyPow
       · subst n
         simp [Factor.polyPow, Norm.rawPolynomial_one levels hvalid
           hinjective hinv]
-      · rw [Factor.polyPow, if_neg hn]
+      · rw [Factor.polyPow, ite_eq_right hn]
         have hhalf : n / 2 < n :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by omega)
         dsimp only
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven,
+        · rw [ite_eq_left heven,
             Norm.rawPolynomial_mul levels hvalid hinjective hinv,
             ih (n / 2) hhalf]
           rw [← pow_add]
           congr 1
           omega
-        · rw [if_neg heven,
+        · rw [ite_eq_right heven,
             Norm.rawPolynomial_mul levels hvalid hinjective hinv,
             Norm.rawPolynomial_mul levels hvalid hinjective hinv,
             ih (n / 2) hhalf]
@@ -1238,7 +1238,7 @@ theorem rawPolynomial_yunFold
         Norm.rawPolynomial levels
           (Factor.rawPoly levels component.1) ^ component.2).prod *
         Norm.rawPolynomial levels acc := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction components generalizing acc with
   | nil => simp
@@ -1271,7 +1271,7 @@ theorem yunMultiplicity_sum
         (Factor.rawPoly levels entry.1)).rootMultiplicity z).sum =
       (Norm.rawPolynomial levels
         (Factor.rawPoly levels f)).rootMultiplicity z := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let input := Norm.rawPolynomial levels (Factor.rawPoly levels f)
   have hinputNe : input ≠ 0 := by
@@ -1379,7 +1379,7 @@ theorem yun_rawPolynomial_monic
     (hentry : entry ∈ (Factor.yunRaw levels f).toList) :
     (Norm.rawPolynomial levels
       (Factor.rawPoly levels entry.1)).Monic := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hsource : (HexPolyMathlib.toPolynomial
       (Factor.rawPoly levels entry.1)).Monic := by
@@ -1396,7 +1396,7 @@ theorem yun_product
     (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) :
     Factor.yunProduct levels (Factor.yunRaw levels f) =
       Factor.polyCoords (Norm.monic (Factor.rawPoly levels f)) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   let components := (Factor.yunRaw levels f).toList
@@ -1507,7 +1507,7 @@ certificate check. -/
 theorem checkYun_yunRaw
     (f : Array (Array Rat)) :
     Factor.checkYun levels f (Factor.yunRaw levels f) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   by_cases hdegreeZero : p.degree?.getD 0 = 0
@@ -1572,7 +1572,7 @@ theorem checkYun_yunRaw
     have hproduct : Factor.yunProduct levels components =
         Factor.polyCoords (Norm.monic p) :=
       yun_product hvalid hinjective hinv f hdegree
-    simp only [Factor.checkYun, p, hdegreeZero, if_false,
+    simp only [Factor.checkYun, p, hdegreeZero, ite_false,
       Bool.and_eq_true]
     exact ⟨⟨⟨⟨hmultiplicities, hpositiveMonic⟩, hcoprime⟩,
       hsquarefree⟩, decide_eq_true hproduct⟩

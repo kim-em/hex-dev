@@ -106,11 +106,11 @@ private theorem coeff_packedGF2FpPoly (lower : UInt64) (n i : Nat) :
   rw [hsz]
   by_cases hin : i = n
   · simp [hin]
-  · rw [if_neg hin, List.getElem?_toArray, List.getElem?_map, if_neg hin]
+  · rw [ite_eq_right hin, List.getElem?_toArray, List.getElem?_map, ite_eq_right hin]
     by_cases hlt : i < n
-    · rw [List.getElem?_range hlt, if_pos hlt]
+    · rw [List.getElem?_range hlt, ite_eq_left hlt]
       simp
-    · rw [List.getElem?_eq_none (by simp; omega), if_neg hlt]
+    · rw [List.getElem?_eq_none (by simp; omega), ite_eq_right hlt]
       rfl
 
 /-- The packed `GF2n` modulus, transported to `FpPoly 2`, is the Conway
@@ -130,13 +130,13 @@ theorem modulusFpPoly_eq_conway :
     coeff_packedGF2FpPoly]
   by_cases hin : i = n
   · subst hin; simp
-  · rw [if_neg hin]
+  · rw [ite_eq_right hin]
     by_cases hlt : i < n
-    · simp only [hin, decide_false, Bool.false_bne, if_pos hlt]
+    · simp only [hin, decide_false, Bool.false_bne, ite_eq_left hlt]
       by_cases hb : (h.lower >>> i.toUInt64 &&& 1) = 0
-      · rw [if_pos hb, (bit_and_one_eq_zero_iff h.lower (by omega)).mp hb]
+      · rw [ite_eq_left hb, (bit_and_one_eq_zero_iff h.lower (by omega)).mp hb]
         simp
-      · rw [if_neg hb]
+      · rw [ite_eq_right hb]
         have hc : (Hex.GF2Poly.ofUInt64 h.lower).coeff i = true := by
           by_contra hcf
           exact hb ((bit_and_one_eq_zero_iff h.lower (by omega)).mpr (by simpa using hcf))

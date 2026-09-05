@@ -163,10 +163,10 @@ theorem factorTrialFactorsWithBound_polyProduct
       Array.polyProduct (factorTrialFactorsWithBound f B) = f := by
   unfold factorTrialFactorsWithBound
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · simp only [hdeg, if_true]
+  · simp only [hdeg, ite_true]
     exact reassemblePolynomialFactors_product_eq_input f
       #[(normalizeForFactor f).squareFreeCore] (by simp [Array.polyProduct])
-  · simp only [hdeg, if_false]
+  · simp only [hdeg, ite_false]
     cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
     | some coreFactors =>
         exact reassemblePolynomialFactors_product_eq_input f coreFactors
@@ -215,10 +215,10 @@ private theorem primitive_of_signedContentScalar_mul_eq
     rw [h1]
     have hnat : (signedContentScalar f).natAbs = (ZPoly.content f).natAbs := by
       unfold signedContentScalar
-      rw [if_neg hf]
+      rw [ite_eq_right hf]
       by_cases hl : DensePoly.leadingCoeff f < 0
-      · rw [if_pos hl, Int.natAbs_neg]
-      · rw [if_neg hl]
+      · rw [ite_eq_left hl, Int.natAbs_neg]
+      · rw [ite_eq_right hl]
     rw [hnat]
     exact Int.natAbs_of_nonneg hnonneg
   have key : ZPoly.content f = ZPoly.content f * ZPoly.content P := by
@@ -255,7 +255,7 @@ private theorem factorTrialWithBound_product_of_constant
     (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
     Factorization.product (factorTrialWithBound f B) = f := by
   unfold factorTrialWithBound factorTrialFactorsWithBound
-  rw [if_pos hbranch]
+  rw [ite_eq_left hbranch]
   have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
   rw [hcore_one]
   apply factorizationOfFactors_product_of_filtered_product
@@ -283,7 +283,7 @@ private theorem factorTrialWithBound_product_of_quadratic
     Factorization.product (factorTrialWithBound f B) = f := by
   apply factorTrialWithBound_product_of_all_recorded_normalized
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
       coreFactors ?_ factor hmem
@@ -291,7 +291,7 @@ private theorem factorTrialWithBound_product_of_quadratic
     exact quadraticIntegerRootFactors?_normalizeFactorSign
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
       coreFactors ?_ factor hmem
@@ -307,7 +307,7 @@ private theorem factorTrialWithBound_product_of_trial
     Factorization.product (factorTrialWithBound f B) = f := by
   apply factorTrialWithBound_product_of_all_recorded_normalized
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
       (exhaustiveIntegerTrialCoreFactorsWithBound
@@ -318,7 +318,7 @@ private theorem factorTrialWithBound_product_of_trial
       (normalizeForFactor f).squareFreeCore B
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
       (exhaustiveIntegerTrialCoreFactorsWithBound
@@ -408,9 +408,9 @@ theorem factorize_product (f : ZPoly) :
             by_cases hlarge : proposalEligible
                 (normalizeForFactor f).squareFreeCore
                 modular.data.factorsModP.size
-            · simp only [if_pos hlarge]
+            · simp only [ite_eq_left hlarge]
               by_cases hcore : (normalizeForFactor f).squareFreeCore = f
-              · simp only [dif_pos hcore]
+              · simp only [dite_eq_left hcore]
                 generalize hproposal :
                     proposeFactorization f hcore modular = proposal
                 cases hresult : proposal.1 with
@@ -420,9 +420,9 @@ theorem factorize_product (f : ZPoly) :
                 | some result =>
                     simp only
                     exact result.product
-              · simp only [dif_neg hcore]
+              · simp only [dite_eq_right hcore]
                 exact hlattice run.trace modular
-            · simp only [if_neg hlarge]
+            · simp only [ite_eq_right hlarge]
               exact hlattice run.trace modular
   exact hproduct
 
@@ -464,7 +464,7 @@ theorem factorize_entries_primitive_of_ne_zero
     rw [List.toList_toArray, hentry_eq]
     unfold filteredNormalizedFactors
     rw [List.mem_filterMap]
-    exact ⟨raw, hraw_mem, by simp only [hrecord, if_true]⟩
+    exact ⟨raw, hraw_mem, by simp only [hrecord, ite_true]⟩
   exact hmem_filtered entry.1 hentry_in
 
 /-- Every recorded entry of a nonzero default factorization has positive
@@ -545,7 +545,7 @@ one factor of multiplicity one. -/
 theorem ZPoly.isIrreducible_X : ZPoly.isIrreducible ZPoly.X = true := by
   have hx0 : ZPoly.X ≠ (0 : ZPoly) := by decide
   have hxdeg : ZPoly.X.degree?.getD 0 ≠ 0 := by decide
-  rw [ZPoly.isIrreducible, if_neg hx0, if_neg hxdeg]
+  rw [ZPoly.isIrreducible, ite_eq_right hx0, ite_eq_right hxdeg]
   dsimp only
   let φ := ZPoly.factorize ZPoly.X
   have hscalar : φ.scalar = 1 := by

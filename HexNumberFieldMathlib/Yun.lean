@@ -732,9 +732,9 @@ private theorem yunAux_complete [ZPoly.CheckedIrreducible p]
           simpa only [Polynomial.C_1] using
             Polynomial.rootMultiplicity_C (1 : K) z
         simp only [toPolynomialMap, HexPolyMathlib.toPolynomial_one,
-          Polynomial.map_one, if_pos hindex] at hmultiplicity
+          Polynomial.map_one, ite_eq_left hindex] at hmultiplicity
         omega
-      rw [yunAux, if_neg hnotOne]
+      rw [yunAux, ite_eq_right hnotOne]
       dsimp only
       let shared := monic (DensePoly.gcd w repeated)
       let component := monic (w / shared)
@@ -758,7 +758,7 @@ private theorem yunAux_complete [ZPoly.CheckedIrreducible p]
           (Polynomial.rootMultiplicity_pos hcomponentNe).mp hpositive
         have hdegree : 0 < component.degree?.getD 0 :=
           degree_pos_of_map_root embedding component hcomponentNe hroot
-        rw [if_pos hdegree]
+        rw [ite_eq_left hdegree]
         refine ⟨(component, k), ?_, hroot, heq⟩
         apply mem_yunAux_of_mem
         simp [component, shared]
@@ -796,7 +796,7 @@ theorem yun_sound [ZPoly.CheckedIrreducible p]
       distinct repeated :=
     YunInvariant.init embedding f hf hnatDegree z
   unfold yun at hentry
-  rw [if_neg (by omega)] at hentry
+  rw [ite_eq_right (by omega)] at hentry
   exact yunAux_sound embedding z
     ((toPolynomialMap embedding f).rootMultiplicity z)
     distinct repeated 1 (f.size + 1) #[] invariant (by simp)
@@ -844,7 +844,7 @@ theorem yun_complete [ZPoly.CheckedIrreducible p]
   have hcomplete := yunAux_complete embedding z r distinct repeated 1
     (f.size + 1) #[] invariant hindex hfuel
   unfold yun
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   exact hcomplete
 
 end Hex.QAdjoin.Roots

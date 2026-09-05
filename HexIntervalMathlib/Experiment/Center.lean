@@ -846,7 +846,7 @@ theorem checkFacts_sound {limit : EndpointLimit} {program : Program}
           simp [checkFacts, hcost] at hcheck
       | some cost =>
           by_cases hbudget : cost ≤ remainingSteps
-          · simp only [checkFacts, hcost, hbudget, if_true, Bool.and_eq_true] at hcheck
+          · simp only [checkFacts, hcost, hbudget, ite_true, Bool.and_eq_true] at hcheck
             have hfact : fact.row.Holds valuation :=
               Fact.sound hcheck.1 hprogram hsources hedges hprior
             have hprior' : RowsHold valuation (fact.row :: priorRev) := by
@@ -905,7 +905,7 @@ theorem sound {certificate : Certificate} {endpointLimit : EndpointLimit}
       simp [hcost] at hresult
   | some resultCost =>
       by_cases hbudget : resultCost ≤ structureLimit.maxLookupSteps
-      · simp only [hcost, hbudget, if_true, Bool.and_eq_true, beq_iff_eq] at hresult
+      · simp only [hcost, hbudget, ite_true, Bool.and_eq_true, beq_iff_eq] at hresult
         have hfacts : FactsHold valuation certificate.facts :=
           checkFacts_sound hresult.1 hprogram hsources hedges (by simp [RowsHold])
         cases hfactLookup : certificate.facts[certificate.result]? with
