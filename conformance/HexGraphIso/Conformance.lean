@@ -21,7 +21,7 @@ Core conformance for `HexGraphIso`.
   `Graph.relabel`,
   `Perm.ofVector?`/`inv`/`comp`, `Label` round trips,
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
-  `findIso`, `findIso?`, `checkIso?`, `canon?`, `canonicalize`,
+  `findIso`, `checkIso?`, `canonicalize`,
   `canon`, `label`, `Reference.canon`, `Nauty.runColored`,
   `Nauty.canonicalize?`, `Nauty.certifyCanon?`, `autos`,
   `Graph.autos`, `Nauty.runColoredTraced`, `Cases.engine`.
@@ -124,31 +124,15 @@ private def rot3 : Perm 3 :=
 -- invariance under a committed relabelling
 #guard canon (p3.relabel rot3.toLabel) == canon p3
 
-/-! # Bounded operations: exhaustion is `none`, never `false` -/
+/-! # Bounded replay: exhaustion is `none`, never `false` -/
 
-#guard (findIso? { maxNodes := 0, maxCertNodes := 0 } p3 p3').isNone
--- `findIso?` charges both canonicalizations: one worst case is not enough
-#guard (findIso? { maxNodes := searchCost 3 } p3 p3').isNone
 #guard (checkIso? { maxCheckerSteps := 0 } p3 p3' (Perm.id 3)).isNone
-#guard (canon? { maxNodes := 0, maxCertNodes := 0 } {} p3).isNone
--- every limit is consulted: certificate-record and replay-step exhaustion
-#guard (canon? { maxCertNodes := 0 } {} p3).isNone
-#guard (canon? {} { maxCheckerSteps := 0 } p3).isNone
-#guard (certify? { maxCertNodes := 0 } p3).isNone
-#guard
-  match certify? {} p3 with
-  | some cert => (checkCanon { maxCheckerSteps := 0 } p3 cert).isNone
-  | none => false
-#guard (findIso? {} p3 p3') == some (findIso p3 p3')
 #guard
   match checkIso? {} p3 p3 (Perm.id 3) with
   | some b => b
   | none => false
--- within limits the bounded pipeline reproduces the total operation
-#guard
-  match canon? {} {} c4 with
-  | some res => res.form == canon c4 && (c4.relabel res.label == res.form)
-  | none => false
+-- within the replay limit the bounded check agrees with `checkIso`
+#guard checkIso? {} p3 p3' (Perm.id 3) == some (checkIso p3 p3' (Perm.id 3))
 
 /-! # Reference and nauty-compatible agreement
 
@@ -240,10 +224,11 @@ where go : List Nauty.CertNode → Bool
   match Nauty.certifyCanon? petersen with
   | some r => r.form == canon petersen
   | none => false
--- the node-budgeted producer exhausts at zero and agrees within budget
-#guard (Nauty.certifyKeyBounded? 0 petersen).isNone
+-- the node budget exhausts at zero and agrees with the unbounded run
+-- within budget
+#guard (Nauty.certifyKey? petersen (some 0)).isNone
 #guard
-  match Nauty.certifyKeyBounded? 1000000 petersen,
+  match Nauty.certifyKey? petersen (some 1000000),
       Nauty.certifyKey? petersen with
   | some (_, B1), some (_, B2) => Nauty.keyCmp B1 B2 == .eq
   | _, _ => false
@@ -283,7 +268,7 @@ where go : List Nauty.CertNode → Bool
 -- the verified pairwise decision agrees with the nauty search on a
 -- structured pair: C6 versus two triangles
 #guard
-  Pairwise.decideIso? {}
+  Pairwise.decideIso? 100000
     (Graph.singleColor (Families.cycle 6))
     (Graph.singleColor (Families.copies 2 (Families.cycle 3))) ==
     some false

@@ -547,17 +547,17 @@ theorem colorCells_compat {φ : Perm n} (hiso : IsIso G H φ) :
 
 /-! # The bounded decision -/
 
-theorem decideIso?_isomorphic {limits : SearchLimits}
-    (h : decideIso? limits G H = some true) : Isomorphic G H := by
+theorem decideIso?_isomorphic {maxNodes : Nat}
+    (h : decideIso? maxNodes G H = some true) : Isomorphic G H := by
   unfold decideIso? at h
-  exact search_true limits.maxNodes h
+  exact search_true maxNodes h
 
-theorem decideIso?_not_isomorphic {limits : SearchLimits}
-    (h : decideIso? limits G H = some false) : ¬ Isomorphic G H := by
+theorem decideIso?_not_isomorphic {maxNodes : Nat}
+    (h : decideIso? maxNodes G H = some false) : ¬ Isomorphic G H := by
   intro hiso
   rcases hiso.elim with ⟨φ, hφ⟩
   unfold decideIso? at h
-  exact search_false hφ limits.maxNodes h (colorCells G, colorCells H)
+  exact search_false hφ maxNodes h (colorCells G, colorCells H)
     (List.mem_singleton.mpr rfl) (colorCells_compat hφ) (colorCells_covers G)
 
 end Hex.GraphIso.Pairwise

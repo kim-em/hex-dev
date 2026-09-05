@@ -58,16 +58,6 @@ uses `native_decide` and no axiom is introduced.
 
 namespace Hex.GraphIso
 
-/-- Soundness of the replay-bounded isomorphism check: a permutation that
-replays successfully within the limits is an isomorphism. This is the
-API-level consequence of `checkIso?` for callers who hold a candidate
-permutation; the tactic itself takes the list-literal route through
-`isomorphic_of_checkIsoLit`. -/
-theorem isomorphic_of_checkIso? {n k : Nat} {G H : Colored n k}
-    {replay : ReplayLimits} {p : Perm n}
-    (h : checkIso? replay G H p = some true) : Isomorphic G H :=
-  Isomorphic.intro p ((checkIso?_some h).mp rfl)
-
 /-- The non-dependent runtime image of a coloured graph, so elaboration-time
 meta code can evaluate closed `Colored n k` terms without knowing `n` and
 `k` at compile time. -/
@@ -377,11 +367,9 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
 /-- The pairwise leg: compiled `decideIso?` under `maxNodes` nodes,
 kernel-replaying the same bounded run on refutation. `none` on search
 exhaustion; throws on an isomorphic pair. -/
-meta def proveNotIsoPairwise? (maxNodes maxCertNodes : Nat)
+meta def proveNotIsoPairwise? (maxNodes : Nat)
     (GE HE : Expr) : MetaM (Option Expr) := do
-  let limitsE ← mkAppM ``SearchLimits.mk
-    #[mkNatLit maxNodes, mkNatLit maxCertNodes]
-  let decTerm ← mkAppM ``Pairwise.decideIso? #[limitsE, GE, HE]
+  let decTerm ← mkAppM ``Pairwise.decideIso? #[mkNatLit maxNodes, GE, HE]
   match ← evalOptBoolCore decTerm with
   | none => return none
   | some true =>
@@ -460,7 +448,7 @@ meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
     match ← proveNotIsoSep? cfg GE HE with
     | some proof => return proof
     | none =>
-    match ← proveNotIsoPairwise? cfg.maxNodes cfg.maxCertNodes GE HE with
+    match ← proveNotIsoPairwise? cfg.maxNodes GE HE with
     | some proof => return proof
     | none =>
       throwError "graph_iso: search exhausted: the pairwise decision ran \

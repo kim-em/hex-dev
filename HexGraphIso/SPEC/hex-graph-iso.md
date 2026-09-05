@@ -226,55 +226,25 @@ The biconditional compares canonical coloured graphs. It does not compare
 labels: those arrays refer to different input vertex names and generally
 differ for isomorphic inputs.
 
-The resource-bounded surface separates search limits from replay
-limits:
+The replay-bounded permutation check charges its work against a single
+limit structure:
 
 ```lean
-structure SearchLimits where
-  maxNodes : Nat := 100000
-  maxCertNodes : Nat := 100000
-
 structure ReplayLimits where
   maxCheckerSteps : Nat := 5000000
 
-def findIso? (search : SearchLimits) (G H : Colored n k) :
-    Option (Option (Perm n))
-
 def checkIso? (replay : ReplayLimits) (G H : Colored n k)
     (p : Perm n) : Option Bool
-
-def canon? (search : SearchLimits) (replay : ReplayLimits)
-    (G : Colored n k) : Option (CanonResult n k)
 ```
 
-`maxNodes` counts every refined partition visited, including the root.
-`maxCertNodes` counts every proof-rule record emitted. Replay work charges one
-step for each proof-rule record, vertex or permutation entry inspected, and
-dense adjacency word inspected. All counters use checked `Nat` arithmetic.
-An implementation may account conservatively — refuse up front by charging an
-upper bound on a counter, or charge whole-certificate record counts — provided
-accepted work never exceeds the declared budget; exhaustion may therefore be
-reported for inputs an exact counter would have admitted.
-For `findIso?`, outer `none` means exhaustion, `some none` is a completed
-non-isomorphism result, and `some (some p)` is a found transporter. For the
-other bounded operations, exhaustion also returns `none`. Exhaustion is not
-evidence of non-isomorphism.
-
-The required theorems of the bounded search:
-
-```lean
-namespace FindIso
-
-theorem some_sound (search : SearchLimits)
-    (G H : Colored n k) (p : Perm n) :
-    findIso? search G H = some (some p) -> IsIso G H p
-
-theorem none_sound (search : SearchLimits)
-    (G H : Colored n k) :
-    findIso? search G H = some none -> Not (Isomorphic G H)
-
-end FindIso
-```
+Replay work charges one step for each proof-rule record, vertex or
+permutation entry inspected, and dense adjacency word inspected. All
+counters use checked `Nat` arithmetic. An implementation may account
+conservatively (refuse up front by charging an upper bound on a
+counter, or charge whole-certificate record counts) provided accepted
+work never exceeds the declared budget. Exhaustion may therefore be
+reported for inputs an exact counter would have admitted. Exhaustion
+returns `none` and is not evidence of non-isomorphism.
 
 ## Automorphism generators
 
@@ -551,7 +521,7 @@ certificate design follows Banković, Drecun, and Marić's
 [proof system for graph (non)-isomorphism verification](https://arxiv.org/abs/2112.14303),
 adapted to the exact ordered-colour and nauty-selection rules in this SPEC.
 
-`CanonCert` is plain data. It records enough information to replay:
+`Nauty.CertNode` is plain data. It records enough information to replay:
 
 - the initial ordered partition;
 - each deterministic refinement and its code;
@@ -566,29 +536,26 @@ and comparisons from the original graph. Cached counts and hashes in a
 certificate are hints only and are recomputed before use.
 
 ```lean
-def certify? (limits : SearchLimits) (G : Colored n k) : Option CanonCert
+def Nauty.certifyKey? (G : Colored n k) (budget : Option Nat := none) :
+    Option (Nauty.CertNode × Nauty.Key n)
 
-def checkCanon (limits : ReplayLimits) (G : Colored n k)
-    (cert : CanonCert) : Option (CanonResult n k)
+def Nauty.checkCanon (G : Colored n k) (cert : Nauty.CertNode)
+    (B : Nauty.Key n) (lab : Array Nat) : Option (CanonResult n k)
 
-theorem checkCanon_sound
-    (h : checkCanon limits G cert = some result) :
-    result.form = canon G ∧ relabel G result.label = result.form
-
-theorem canon?_eq_some
-    (h : canon? search replay G = some result) :
-    result.form = canon G ∧ relabel G result.label = result.form
+theorem Nauty.checkCanon_sound
+    (h : Nauty.checkCanon G cert B lab = some res) :
+    Nauty.canonSpecKey G = B ∧ res.form = relabel G res.label ∧
+      Isomorphic G res.form ∧ B.rows = Nauty.leafRows { g := rowsOf G } lab
 ```
 
-The producer/checker agreement theorem states that a successful in-Lean
-producer result is accepted when its replay limit is at least the work count
-reported by the producer. The tactic nevertheless treats compiled producer
-output as untrusted and calls `checkCanon` before emitting anything.
+`certifyKey?` is the producer: it takes an optional node budget and
+returns `none` on exhaustion. The tactic treats compiled producer output
+as untrusted and calls the checker before emitting anything.
 
-For a negative decision, `DiffCert` names the first differing field in the
-canonical encodings. `checkDiff` verifies the two encodings agree before that
-position and differ there. The proof is exactly the composition of two
-`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canon_eq`.
+For a negative decision, `Nauty.checkDiff` verifies that two replayed
+canonical keys differ. The proof is exactly the composition of two
+`Nauty.checkCanon_sound` applications, `checkDiff`, and
+`iso_iff_canon_eq`.
 
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
@@ -780,11 +747,11 @@ Each of `maxNodes`, `maxCertNodes`, and `maxCheckerSteps` is optional, may
 appear in any order, and may appear at most once. Bare `graph_iso` uses all
 three defaults.
 
-For a positive goal, compiled `findIso?` search returns a literal forward
-permutation under `maxNodes`. The tactic emits that permutation and closes the
-goal through replay-bounded `checkIso?` and its soundness theorem. It need not
-compute complete canonical certificates. Search or replay exhaustion leaves
-the goal unchanged.
+For a positive goal, the compiled `findIso` search returns a literal
+forward permutation under `maxNodes`. The tactic emits that permutation
+and closes the goal through replay-bounded `checkIso?` and its
+soundness theorem. It need not compute complete canonical certificates.
+Search or replay exhaustion leaves the goal unchanged.
 
 For a negative goal, the tactic first tries the root separator. If that
 does not distinguish the graphs, the compiled search produces a
@@ -1428,7 +1395,7 @@ The first release requires all of the following:
 1. No `sorry`, axiom, or `native_decide` occurs in the library or tactic
    correctness path.
 2. The reference and production biconditional theorems are complete.
-3. `canon?_eq_some` and `checkCanon_sound` have the conclusions stated above.
+3. `Nauty.checkCanon_sound` has the conclusion stated above.
 4. Every implemented prune has an answer-and-label preservation proof.
 5. The exhaustive merge fixture and extended `n = 6` campaign agree exactly
    with nauty 2.9.3. The fixture leg runs in merge CI; the campaign leg is

@@ -1393,31 +1393,6 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key n}
 
 /-! # The untrusted producer -/
 
-/-- Build the certificate tree for the final best key. Untrusted. -/
-@[expose] def certifyNode (ctx : Ctx n) (tcLevel : Nat) :
-    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → List Nat →
-      CertNode
-  | 0, _, _, _, _, _, _ => .codePrune
-  | fuel + 1, level, lab, ptn, active, numcells, bcodes =>
-    match bcodes with
-    | [] => .codePrune
-    | bc :: brest =>
-      let rs := refine ctx level lab ptn active numcells
-      match compare rs.longcode bc with
-      | .lt => .codePrune
-      | .gt => .codePrune
-      | .eq =>
-        if discreteAt rs.ptn level n then
-          .leaf
-        else
-          let tcr := specMaketargetcell ctx rs.lab rs.ptn level
-            tcLevel
-          .node ((List.range tcr.2.2).map fun o =>
-            let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
-              rs.lab[tcr.1 + o]!
-            certifyNode ctx tcLevel fuel (level + 1) br.1 br.2.1
-              br.2.2 (rs.numcells + 1) brest)
-
 /-- Validate a candidate certificate and key through the trusted
 `checkKey` replay, independently of the producer that built them. -/
 def validateKey? (G : Colored n k) (cand : CertNode) (Bc : Key n) :

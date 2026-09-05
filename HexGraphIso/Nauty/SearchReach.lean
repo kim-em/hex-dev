@@ -1806,9 +1806,9 @@ private theorem run_canonlab {k : Nat} (G : Colored n k) (hn0 : 0 < n) :
           canonlab := .replicate n 0
           canong := .replicate n .empty
           numorbits := n }).2.canonlab := by
-  have h0 : runColored G = run n (rowsOf G) (initialPartition G).1
-      (initialPartition G).2 := rfl
-  rw [h0, run]
+  have h0 : runColored G = (runTraced n (rowsOf G) (initialPartition G).1
+      (initialPartition G).2).result := rfl
+  rw [h0, runTraced]
   simp only [Id.run_bind, Id.run_pure]
   rw [ite_eq_right (by
     intro h
@@ -1856,9 +1856,9 @@ theorem canonlab_size {k : Nat} (G : Colored n k) :
     (runColored G).canonlab.size = n := by
   rcases Nat.eq_zero_or_pos n with hn0 | hn0
   · subst hn0
-    have h0 : runColored G = run 0 (rowsOf G) (initialPartition G).1
-        (initialPartition G).2 := rfl
-    rw [h0, run]
+    have h0 : runColored G = (runTraced 0 (rowsOf G) (initialPartition G).1
+        (initialPartition G).2).result := rfl
+    rw [h0, runTraced]
     simp only [Id.run_bind, Id.run_pure]
     rw [ite_eq_left (by simp)]
     rfl

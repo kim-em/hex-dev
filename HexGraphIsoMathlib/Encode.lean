@@ -167,16 +167,6 @@ theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
       canon (encode eV G) = canon (encode eW H) :=
   (encode_iso_iff eV eW).trans (iso_iff_canon_eq ..)
 
-/-- Equality of encoded canonical forms is independent of the chosen
-finite enumerations. -/
-theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
-    canon (encode eV G) = canon (encode eV' G) := by
-  refine canon_invariant ?_
-  refine (encode_iso_iff eV eV').mp (Colored.Isomorphic.intro
-    { graphIso := (SimpleGraph.Iso.refl : G.graph ≃g G.graph)
-      map_color := fun v => ?_ })
-  rfl
-
 /-! # Automorphisms -/
 
 /-- The automorphism generators the pinned search discovers, decoded as

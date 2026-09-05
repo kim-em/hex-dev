@@ -11,7 +11,7 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Refine
-public import HexGraphIso.Canon
+public import HexGraphIso.Limits
 
 public section
 
@@ -451,49 +451,6 @@ end. -/
   (cellEnds.foldl (fun (p : VSet n × Nat) e => (p.1.insert p.2, e + 1))
     (.empty, 0)).1
 
-/-- Run the pinned dense-nauty canonical search on `n` vertices with
-adjacency rows `g` and the initial ordered partition `(lab0, cellEnds)`;
-`cellEnds` lists, in order, the last position of each colour cell. -/
-def run (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat) (cellEnds : List Nat) :
-    RunResult n := Id.run do
-  if n == 0 then
-    return {
-      canonlab := #[]
-      canong := #[]
-      numnodes := 1
-      numorbits := 0
-      numgenerators := 0
-      numbadleaves := 0
-      maxlevel := 1
-      tctotal := 0
-      canupdates := 1 }
-  let inf := n + 2
-  let ctx : Ctx n := { g }
-  let st : SearchSt n :=
-    { lab := lab0
-      ptn := initPtn n inf cellEnds
-      active := initActive n cellEnds
-      orbits := .ofFn (n := n) fun i => i.val
-      firstcode := .replicate (n + 2) 0
-      canoncode := .replicate (n + 2) 0
-      firsttc := .replicate (n + 2) (-1)
-      firstlab := .replicate n 0
-      canonlab := .replicate n 0
-      canong := .replicate n .empty
-      numorbits := n }
-  let (_, st) := firstPathNode ctx inf 100 (n + 2) 1 cellEnds.length st
-  let canong := updatecan ctx st.canong st.canonlab st.samerows
-  return {
-    canonlab := st.canonlab
-    canong := canong
-    numnodes := st.numnodes
-    numorbits := st.numorbits
-    numgenerators := st.numgenerators
-    numbadleaves := st.numbadleaves
-    maxlevel := st.maxlevel
-    tctotal := st.tctotal
-    canupdates := st.canupdates }
-
 /-- A traced run: the transcribed search result together with every
 accepted automorphism, in discovery order, and the best path's
 refinement codes — the trace the certificate translator consumes.
@@ -508,9 +465,10 @@ structure TraceRun (n : Nat) where
   without the sentinel. -/
   bestCodes : List Nat
 
-/-- `run`, additionally returning the trace: the identical traversal
-on the identical state, also reading off the recorded generators and
-the best path's codes. -/
+/-- Run the pinned dense-nauty canonical search on `n` vertices with
+adjacency rows `g` and the initial ordered partition `(lab0, cellEnds)`,
+returning the trace alongside the result; `cellEnds` lists, in order,
+the last position of each colour cell. -/
 def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : TraceRun n := Id.run do
   if n == 0 then
@@ -558,6 +516,12 @@ def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     bestCodes := (List.range' 1 st.canonlevel).map
       fun i => st.canoncode[i]! }
 
+/-- The canonical search result: the traced run with its trace
+discarded. -/
+def run (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) : RunResult n :=
+  (runTraced n g lab0 cellEnds).result
+
 variable {k : Nat}
 
 /-- The adjacency row of one vertex of a coloured graph. -/
@@ -598,16 +562,15 @@ cell end positions of a coloured graph. -/
     ([], 0)).1
   (lab.toArray, ends.reverse)
 
-/-- Run the nauty-compatible search on a coloured graph. -/
-def runColored (G : Colored n k) : RunResult n :=
-  let (lab0, cellEnds) := initialPartition G
-  run n (rowsOf G) lab0 cellEnds
-
 /-- Run the nauty-compatible search on a coloured graph, returning
 the trace for the certificate producer. -/
 def runColoredTraced (G : Colored n k) : TraceRun n :=
   let (lab0, cellEnds) := initialPartition G
   runTraced n (rowsOf G) lab0 cellEnds
+
+/-- Run the nauty-compatible search on a coloured graph. -/
+def runColored (G : Colored n k) : RunResult n :=
+  (runColoredTraced G).result
 
 /-- The nauty-compatible canonical result: the checked label from
 `canonlab` and the relabelled coloured graph. `none` only if the raw

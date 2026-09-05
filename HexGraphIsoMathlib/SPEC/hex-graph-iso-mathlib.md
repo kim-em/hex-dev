@@ -67,9 +67,9 @@ and renumber the used colours explicitly, or use a checked helper returning
 reorders colours because that would change the canonical labelling
 convention.
 
-For uncoloured graphs, `Colored.singleColor` returns
-`Sigma fun k => Colored V k`. It uses `k = 0` for an empty vertex type and
-`k = 1` otherwise. Its result is independent of any ordering of the vertices.
+For uncoloured graphs over a nonempty vertex type, `onecell` returns the
+one-cell `Colored V 1`. Its result is independent of any ordering of the
+vertices.
 
 ## Finite encoding
 
@@ -265,7 +265,7 @@ For equal vertex cardinalities, the tactic:
 
 1. reifies the two graphs and proves the two adjacency correspondences;
 2. reifies and proves colour correspondences when colours are present;
-3. runs the compiled, bounded `findIso?` search;
+3. runs the compiled `findIso` search;
 4. checks the returned literal permutation with the Mathlib-free, bounded
    `checkIso?`;
 5. conjugates the permutation by the two finite enumerations;
