@@ -11,16 +11,15 @@ public import HexGraphIso.Nauty.Spec.SpecCanon
 public section
 
 /-!
-The achieved leaf: the spec key's rows are the leaf rows of a
-labelling reachable from the initial state, which fills each cell of
-every ancestor partition with the same vertices. This is the content
-of `specCanon_iso`: the total canonical form is isomorphic to its
-input.
+The achieved leaf: the rows of `canonSpecKey` are the leaf rows of a
+labelling reachable from the initial state, one that fills each cell of
+every ancestor partition with the same vertices. That is the content of
+`specCanon_iso`: the canonical form is isomorphic to its input.
 
-The engine is multiset preservation: every labelling write in `refine`
-and `breakout` reorders one region confined to a cell of the current
-partition, and partitions only gain boundaries, so contents of the
-original cells never change.
+The proof rests on multiset preservation. Every labelling write in
+`refine` and `breakout` reorders one region confined to a cell of the
+current partition, and partitions only gain boundaries, so the contents
+of the original cells never change.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -700,7 +699,7 @@ theorem bcount_pos_of_boundary {ptn : Array Nat} {level nn q : Nat}
 
 /-! # The achieved leaf -/
 
-/-- The spec key's rows are the leaf rows of a labelling that fills
+/-- The key of a node has the leaf rows of a labelling that fills
 every cell of this node's partition with the same vertices. -/
 theorem specNode_achieved {ctx : Ctx n}
     (tcLevel : Nat) :
@@ -826,7 +825,7 @@ theorem specNode_achieved {ctx : Ctx n}
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.2
         ((refine ctx level lab ptn active numcells).numcells + 1) hchildOk (by omega) hbcChild
       refine ⟨llab, hlsz, ?_, ?_⟩
-      · -- chain the three reorder stages
+      · -- chain the three reorderings
         have htv : (refine ctx level lab ptn active numcells).lab[p.1 + o]! ∈
             segN (refine ctx level lab ptn active numcells).lab p.1 (p.2 + 1 - p.1) := by
           rw [segN]

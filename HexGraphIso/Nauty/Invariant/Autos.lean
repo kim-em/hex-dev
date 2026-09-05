@@ -14,8 +14,8 @@ import all HexGraphIso.Nauty.Search.Search
 public section
 
 /-!
-The autos-store ledger (SPEC § Verified search refinement, the
-target-cell pruning clause of the domination obligation).
+The `(fix, mcr)` ledger of the autos workspace, and the target-cell
+pruning it justifies.
 
 `shortprune` and `longprune` filter the sibling iteration through the
 `(fix, mcr)` pairs of the bounded autos workspace. This file gives the
@@ -34,7 +34,7 @@ shape the maximality induction consumes.
   The induction maintains `AutosOk` anchored at the root partition
   (where it is unconditional) and moves single pairs down the path
   with `pairOk_descend` exactly when the pair's `fix` covers the
-  vertex being individualized — for the pairs a filter actually
+  vertex being individualized. For the pairs a filter actually
   applies, `fix` contains every base vertex, so the descent is always
   available where it is needed.
 * **Filter soundness.** `pruned_carried` is the well-founded descent:
@@ -274,7 +274,7 @@ theorem pairOk_descend {ctx : Ctx n}
 
 /-! # Filter soundness: the well-founded descent -/
 
-/-- The descent core, abstract in the surviving set `R`: whenever a
+/-- The descent, stated for an arbitrary surviving set `R`: whenever a
 dropped vertex is strictly carried down by some ledger realizer, every
 cell vertex is carried by a composite realizer onto a survivor. -/
 theorem pruned_carried {g : Array (VSet n)} {ptn lab : Array Nat} {level tc len : Nat}
@@ -465,9 +465,10 @@ theorem longprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
   exact ⟨p.1, p.2, haut p hpmem htest, hmcr,
     fun w _ hw => mem_of_subset htest hw⟩
 
-/-- `shortprune` soundness: with the ledger reading of the most recent
-pair and its fix test (the `needshortprune` protocol's obligation),
-every vertex of the target cell is carried onto a survivor. -/
+/-- `shortprune` soundness: given the ledger reading of the most recent
+pair and its fix test (which is what the `needshortprune` protocol
+requires), every vertex of the target cell is carried onto a
+survivor. -/
 theorem shortprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
     {level tc len : Nat} {st : SearchSt n}
     (hok : LabOk lab n) (hs : lab.size = n) (hsp : ptn.size = n)

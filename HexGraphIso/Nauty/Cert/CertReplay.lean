@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Cert.Cert
 public section
 
 /-!
-The conditional replay spine: the certificate emitted by the
+The conditional replay theorem: the certificate emitted by the
 trace-driven producer replays through the trusted checker. The
 theorem is conditional on the two facts the producer cannot certify
 about itself: domination (the claimed key bounds this subtree's spec
@@ -24,17 +24,17 @@ a rejection verdict (`some false`) forces the subtree strictly below
 the claim, so at the root a dominated-and-achieved key replays to
 `some true`, which is `checkKey`.
 
-The domination hypothesis is semantic and walk-independent: it is
-instantiated at the root by the layer-three theorem that the traced
-key is `canonSpecKey`. Store validity is instantiated by the traced
-generator-validity results. The final assembly is
+The domination hypothesis is semantic and does not depend on the
+walk. At the root it is supplied by `canonSpecKey_eq_tracedKey`,
+which states that the traced key is `canonSpecKey`. Store validity is
+supplied by the traced generator-validity results. The final assembly is
 `produceCand_checkKey` at the end of this file, whose shape matches
 the hypothesis of `certifyCanon?_isSome_of_checkKey`.
 -/
 
 namespace Hex.GraphIso.Nauty
 
-/-! # Budget plumbing
+/-! # Budget lemmas
 
 With no node budget, charging is free and the walk never exhausts.
 These mirror the private lemmas of `CertTotal`. -/
@@ -450,7 +450,7 @@ private theorem certifyNodeAutom_ne_autom (ctx : Ctx n) (tcLevel : Nat) :
           · dsimp only
             exact fun h => nomatch h
 
-/-- The child-sweep equation for a non-`.autom` head. -/
+/-- The child-fold equation for a non-`.autom` head. -/
 private theorem checkChildren_cons_of_ne_autom {ctx : Ctx n}
     (tcLevel : Nat) (brows : List (VSet n)) (vgens : List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
@@ -476,7 +476,7 @@ private theorem checkChildren_cons_of_ne_autom {ctx : Ctx n}
   · exact absurd rfl (hne o2 γ2)
   · rw [checkChildren] <;> first | rfl | (intro o' γ h; exact nomatch h)
 
-/-! # The replay sweep
+/-! # The induction over the child fold
 
 The checker accepts the children a dominated walk emits. The fold
 body is abstract: `hstep` characterizes one step of the walk's child
@@ -939,7 +939,7 @@ theorem certifyNode_replays {ctx : Ctx n}
         injection hcw with h1 h2
         subst h1
         rw [AutomsOk] at hgs
-        -- run the sweep
+        -- apply the child-fold induction
         rw [List.range_eq_range'] at hfold
         obtain ⟨kidsNew, hkF, hkL, hccl⟩ := sweep_replays hgsz hv
           tcLevel brows fuel level
@@ -1162,10 +1162,9 @@ theorem produceCand_checkKey {G : Colored n k} {cert : CertNode}
     rw [hcert] at hcheck
     exact ha ▸ hcheck
 
-/-- The two remaining layer-three clauses close `certifyCanon?`
-totality: domination (the traced key is the spec key) and store
-validity (every produced record's generator is a checked
-automorphism). -/
+/-- Two hypotheses suffice for `certifyCanon?` totality: domination
+(the traced key is the spec key) and store validity (every produced
+record's generator is a checked automorphism). -/
 theorem certifyCanon?_isSome_of_dominated (G : Colored n k)
     (hdom : canonSpecKey G = tracedKey G)
     (hval : ∀ cert B, produceCand G none = some (cert, B) →

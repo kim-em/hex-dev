@@ -13,11 +13,13 @@ public import HexGraphIso.Nauty.Search.Search
 public section
 
 /-!
-The `CanonResult`-level certificate wrapper: a checked canonical key
-together with the labelling that achieves it, packaged as the
-relabelled canonical form. `checkCanon` validates the certificate
-replay, the labelling's rows against the claimed key, and builds the
-form; its soundness ties the form to `canonSpecKey`.
+The `CanonResult`-level certificate: a checked canonical key together
+with the labelling that achieves it, packaged as the relabelled
+canonical form. `checkCanon` replays the certificate, checks the
+labelling's leaf rows against the claimed key, and builds the form.
+Its soundness theorem states that the claimed key is `canonSpecKey`
+and that the form is a relabelling of the input, hence isomorphic
+to it.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -54,8 +56,9 @@ rows must be the key's rows. Returns the canonical form and label. -/
     else
       none
 
-/-- A successful `checkCanon` pins the spec key, exhibits the form as
-a relabelling, and keeps the form in the isomorphism class. -/
+/-- A successful `checkCanon` identifies the claimed key with the
+spec key, exhibits the form as a relabelling, and shows the form
+isomorphic to the input. -/
 theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
@@ -83,9 +86,9 @@ theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key n}
 /-- Produce a checked `CanonResult`: run the untrusted key search and
 validate its candidate together with the transcribed search's
 canonical labelling in ONE trusted `checkCanon` replay (which contains
-the `checkKey` certificate replay — validating through `certifyKey?`
+the `checkKey` certificate replay: validating through `certifyKey?`
 first would replay the certificate twice). The transcription supplies
-nauty's exact label tie-breaking; every ingredient stays untrusted
+nauty's exact label tie-breaking. Every ingredient stays untrusted
 until the single replay accepts. -/
 @[expose] def certifyCanon? (G : Colored n k) :
     Option (CanonResult n k) :=
@@ -155,9 +158,9 @@ theorem not_isomorphic_of_certs {G H : Colored n k}
     (checkCanon_sound hH).1 (checkDiff_sound hd)
 
 /-- Two replayed key certificates with differing keys prove
-non-isomorphism: the Boolean form of `not_isomorphic_of_certs`, whose
-kernel obligation is two `checkKey` replays and one key comparison,
-with no achieving labelling required. -/
+non-isomorphism: the Boolean form of `not_isomorphic_of_certs`. The
+kernel computes two `checkKey` replays and one key comparison, with
+no achieving labelling required. -/
 theorem not_isomorphic_of_checkKeys {G H : Colored n k}
     {certG certH : CertNode} {BG BH : Key n}
     (hG : checkKey G certG BG = true)
@@ -339,8 +342,8 @@ theorem rowsOf_relabel_eq_leafRows {G : Colored n k} {l : Label n}
 
 /-! # Determinism facts for checked forms -/
 
-/-- Everything a successful `checkCanon` establishes, with the label's
-entries pinned to the claimed array. -/
+/-- Everything a successful `checkCanon` establishes, with the
+label's entries equal to those of the claimed array. -/
 theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :

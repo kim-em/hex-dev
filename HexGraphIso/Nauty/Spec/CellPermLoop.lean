@@ -14,7 +14,7 @@ public section
 Refinement as a function of cell contents, part two: the
 nontrivial-splitter window scan, the pass and loop assembly, and
 level transfer. Builds on the cell primitives and the trivial
-splitter of `Nauty.CellPerm`.
+splitter of `Nauty.Spec.CellPerm`.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -609,7 +609,7 @@ theorem nontrivialCell_perm {ctx : Ctx n} {level cell1 cell2 : Nat} {workset : V
       rw [hSEGlen']
       have := h.labSize
       omega)
-  -- the two written labellings are cell-equivalent for the old partition
+  -- the two written labellings are cell-equivalent for the input partition
   have hLout : ∀ a len, IsCell st.ptn level a len →
       a + len ≤ cell1 ∨ cell2 + 1 ≤ a →
       (segN (writeSegment st.lab cell1

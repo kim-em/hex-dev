@@ -12,9 +12,9 @@ public import HexGraphIso.Nauty.Invariant.Refine
 public section
 
 /-!
-The stabilization invariant of the verified search refinement: the
-generators the search admits fix the cells of their admitting nodes
-setwise, and cell stabilization survives descent.
+The stabilization invariant of the search: the generators it admits
+fix the cells of their admitting nodes setwise, and cell
+stabilization survives descent.
 
 `childKey_of_orbPruned` consumes `CellStab` at the node performing an
 orbit prune. This file supplies it from the run facts the simulation
@@ -23,8 +23,8 @@ induction carries, in three layers:
 * **Reach transfer.** `cellsPerm` from an ancestor node's state is the
   node-relative generalization of `CellsReach`, and the two
   labelling-mutating operations preserve it (`refine_reachAt`,
-  `breakout_reachAt`); the root-relative lemmas in
-  `Invariant/Refine` are the instance at the initial partition.
+  `breakout_reachAt`). The root-relative lemmas in `Invariant/Refine`
+  are the instance at the initial partition.
 * **Scatter stabilization.** A generator is admitted as a scatter
   carrying one leaf labelling onto another. Both labellings are
   reachable from any common ancestor, and a scatter joining two

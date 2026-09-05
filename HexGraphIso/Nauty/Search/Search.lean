@@ -16,20 +16,40 @@ public import HexGraphIso.Limits
 public section
 
 /-!
-The nauty-compatible canonical search, transcribed from `nauty.c` of the
-pinned nauty 2.9.3 release with the pinned dense options: `getcanon = 1`,
-undirected, caller partition, `tc_level = 100`, no vertex invariant, no
-Schreier machinery, and no user callbacks. `nauty.c` is normative for
-every detail: the first-path bookkeeping, the level-code and canonical
-comparisons, the five-way leaf classification, automorphism recording with
-its 500-entry workspace overwrite rule, orbit and short/long pruning, and
-the return-level unwinding protocol.
+The canonical search of nauty 2.9.3 dense basic mode, transcribed from
+`nauty.c` with the pinned dense options: `getcanon = 1`, undirected,
+caller partition, `tc_level = 100`, no vertex invariant, no Schreier
+machinery, and no user callbacks. `nauty.c` is normative for every
+detail: the first-path bookkeeping, the level-code and canonical
+comparisons, the five-way leaf classification, automorphism recording
+with its 500-entry workspace overwrite rule, orbit and short/long
+pruning, and the return-level unwinding protocol.
 
-This module is the executable production stage. Its agreement with the
-external nauty binary is established by conformance testing, and its
-agreement with the proven reference implementation on the isomorphism
-verdict is checked there as well; the certificate layer replays its output
-before anything is trusted in a proof.
+The search tree is walked by four mutually recursive functions.
+`firstPathNode` is nauty's `firstpathnode` and `firstChildLoop` is its
+loop over the target cell: together they descend the leftmost path and
+install its leaf as both the first leaf and the initial best-so-far
+leaf. `otherNode` is nauty's `othernode` and `otherChildLoop` is its
+loop over the target cell: together they visit every node off that
+path. Each of the four returns the level the search is to unwind to,
+and each takes a fuel argument in place of the unbounded C recursion.
+
+One `SearchSt` record carries what nauty keeps in file-scope variables
+for the duration of a `nauty()` call: the partition `(lab, ptn)` with
+its active cells and the individualized vertices, the first leaf and
+the best-so-far leaf with their labellings, adjacency rows and
+refinement codes, the level counters saying how far the current node
+still agrees with each of those two leaves, the orbit array, the
+bounded workspace of automorphism `(fix, mcr)` pairs that
+`shortprune` and `longprune` read, and the counters nauty returns in
+its `statsblk`. `runTraced` builds the initial state, calls
+`firstPathNode` at level 1, and reads the canonical labelling and rows
+out of the final state.
+
+Conformance testing establishes agreement with the external nauty
+binary, and agreement with the proven reference implementation on the
+isomorphism verdict. `HexGraphIso.Kernel.CheckKey` replays this
+module's output before a proof depends on it.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -37,16 +57,58 @@ namespace Hex.GraphIso.Nauty
 /-- The sentinel code above every real refinement code: nauty's `077777`. -/
 @[expose] def codeSentinel : Nat := 0o77777
 
-/-- Search state: nauty's globals for one `nauty()` invocation on `n`
-vertices. -/
+/-- Search state: what nauty keeps in file-scope variables for the
+duration of one `nauty()` call on `n` vertices. Every field is named
+for the nauty global or `statsblk` member it mirrors, except `wsCap`
+and `genTrace`.
+
+`lab` and `ptn` are the partition nest: position `i` ends a cell at
+level `l` exactly when `ptn[i] ≤ l`. `active` holds the positions of
+the cells still to be used as splitters by `refine`. `fixedpts` holds
+the vertices individualized on the path from the root to this node.
+
+`firstlab` and `canonlab` are the labellings of the first leaf and of
+the best-so-far leaf. `firstcode` and `canoncode` hold the refinement
+code of their ancestor at each level, terminated by `codeSentinel`.
+`firsttc` holds the target-cell position chosen at each level of the
+first path, or `-1` where there is none. `canong` holds the adjacency
+rows of the best-so-far leaf, correct in its first `samerows` rows,
+and `canonlevel` is that leaf's level.
+
+`eqlevFirst` (`eqlev_first`) and `eqlevCanon` (`eqlev_canon`) are the
+deepest levels to which this node's codes agree with the first leaf's
+and with the best-so-far leaf's. `compCanon` (`comp_canon`) is `-1`,
+`0` or `1` as this node's code at level `eqlevCanon + 1` is less than,
+equal to, or greater than the best-so-far leaf's. `gcaFirst`
+(`gca_first`) and `gcaCanon` (`gca_canon`) are the levels of the
+greatest common ancestors of this node with those two leaves, and
+`cosetindex` and `stabvertex` are the vertices individualized there.
+
+`orbits` sends each vertex to the least vertex of its orbit under the
+automorphisms found so far. `noncheaplevel` is one past the level of
+the deepest ancestor for which `cheapautom` is false. `allsamelevel`
+is the level of the least ancestor of the first leaf all of whose
+descendant leaves are known to be equivalent. `needshortprune` records
+that the parent's target cell is to be pruned by `shortprune` on
+return.
+
+`numnodes`, `numorbits`, `numgenerators`, `numbadleaves`, `maxlevel`,
+`tctotal` and `canupdates` are the members of nauty's `statsblk`: the
+nodes visited, the orbits, the generators reported, the leaves that
+were neither an automorphism nor an improvement, the greatest depth
+reached, the total size of the target cells chosen, and the number of
+times the best-so-far leaf was replaced. -/
 structure SearchSt (n : Nat) where
   lab : Array Nat
   ptn : Array Nat
   active : VSet n
   orbits : Array Nat
   fixedpts : VSet n := .empty
-  /-- Stored `(fix, mcr)` pairs of discovered automorphisms; nauty's
-  workspace, whose last slot is overwritten once `wsCap` pairs exist. -/
+  /-- nauty's automorphism workspace: stored `(fix, mcr)` pairs of
+  discovered automorphisms, read by `shortprune` and `longprune`. Once
+  `wsCap` pairs are present the last slot is overwritten instead of a
+  new one being added. `wsCap` is 500, the number of pairs that fit in
+  the `2 * 500 * m` setwords `densenauty` supplies. -/
   autos : Array (VSet n × VSet n) := #[]
   wsCap : Nat := 500
   firstcode : Array Nat
@@ -74,10 +136,9 @@ structure SearchSt (n : Nat) where
   numgenerators : Nat := 0
   numbadleaves : Nat := 0
   maxlevel : Nat := 1
-  /-- Every accepted automorphism is also kept in full (`genTrace`,
-  discovery order) for the trace-driven certificate producer, in
-  addition to the bounded `(fix, mcr)` workspace pairs; the
-  production `run` discards it. -/
+  /-- No nauty counterpart: every accepted automorphism kept in full,
+  in discovery order, for the certificate producer, alongside the
+  bounded `(fix, mcr)` pairs of `autos`. `run` discards it. -/
   genTrace : Array (Array Nat) := #[]
 deriving Inhabited
 
@@ -233,7 +294,7 @@ def longprune (tcell fixedpts : VSet n)
 
 /-- nauty's `shortprune`: intersect the target cell with the `mcr` set of
 the most recently stored automorphism. The store is never empty when this
-is called; an empty store leaves the cell unchanged. -/
+is called. An empty store leaves the cell unchanged. -/
 def shortprune (tcell : VSet n) (st : SearchSt n) : VSet n :=
   match st.autos.back? with
   | some (_, mcr) => tcell.inter mcr
@@ -328,8 +389,7 @@ termination_by (fuel, 1, cfuel)
 
 /-- The comparison bookkeeping of nauty's `othernode` between the
 refinement and the target-cell choice: the first-path level-code
-comparison and the best-so-far level-code comparison, exactly as the
-corresponding `othernode` lines perform them. -/
+comparison and the best-so-far level-code comparison. -/
 def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt n) :
     SearchSt n := Id.run do
   let mut st := st
@@ -395,7 +455,10 @@ level to return to. -/
     | none => return (Int.ofNat level - 1, st)
 termination_by (fuel, 0, 0)
 
-/-- The child loop of `othernode`. -/
+/-- The child loop of `othernode`: individualize each surviving
+target-cell vertex in ascending order, applying `shortprune` after any
+child that asks for it and `longprune` after the first. Returns
+`some rtn` for an early unwind. -/
 @[expose] def otherChildLoop (ctx : Ctx n) (inf tcLevel : Nat) (fuel cfuel : Nat)
     (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet n)
     (st0 : SearchSt n) : Option Int × SearchSt n :=
@@ -427,8 +490,15 @@ termination_by (fuel, 1, cfuel)
 
 end
 
-/-- The result of a canonical search on `n` vertices: nauty's `canonlab`
-and the rows of `canong`, with the observable statistics. -/
+/-- The result of a canonical search on `n` vertices: the canonical
+labelling `canonlab` and the adjacency rows `canong` under it, together
+with the statistics nauty reports in its `statsblk`. Those are the
+nodes visited (`numnodes`), the orbits and generators of the
+automorphism group (`numorbits`, `numgenerators`), the leaves that were
+neither an automorphism nor an improvement (`numbadleaves`), the
+greatest depth reached (`maxlevel`), the total size of the target cells
+chosen (`tctotal`), and the number of times the best-so-far leaf was
+replaced (`canupdates`). -/
 structure RunResult (n : Nat) where
   canonlab : Array Nat
   canong : Array (VSet n)
@@ -451,13 +521,12 @@ end. -/
   (cellEnds.foldl (fun (p : VSet n × Nat) e => (p.1.insert p.2, e + 1))
     (.empty, 0)).1
 
-/-- A traced run: the transcribed search result together with every
-accepted automorphism, in discovery order, and the best path's
-refinement codes — the trace the certificate translator consumes.
-The search's `canoncode` chain and the certificate checker use the
-same code coordinates (each child call is seeded with the parent's
-recomputed cell count), so the codes are read off the final state
-directly. -/
+/-- A traced run: the search result, every accepted automorphism in
+discovery order, and the best path's refinement codes. This is the
+trace the certificate producer reads. The search's `canoncode` array
+and the certificate checker use the same code coordinates (each child
+call is seeded with the parent's recomputed cell count), so the codes
+are read off the final state directly. -/
 structure TraceRun (n : Nat) where
   result : RunResult n
   autos : Array (Array Nat)
@@ -467,7 +536,7 @@ structure TraceRun (n : Nat) where
 
 /-- Run the pinned dense-nauty canonical search on `n` vertices with
 adjacency rows `g` and the initial ordered partition `(lab0, cellEnds)`,
-returning the trace alongside the result; `cellEnds` lists, in order,
+returning the trace alongside the result. `cellEnds` lists, in order,
 the last position of each colour cell. -/
 def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : TraceRun n := Id.run do

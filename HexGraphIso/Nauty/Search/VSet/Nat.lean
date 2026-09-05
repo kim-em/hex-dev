@@ -82,7 +82,7 @@ theorem toNat_inj {s t : VSet n} (h : s.toNat = t.toNat) : s = t :=
 `toNat` reads the packed limbs as one bitset, the representation the
 kernel-facing replay (`HexGraphIso.Kernel.CheckKey`) computes with.
 Each packed operation corresponds to its `Nat` counterpart in
-`HexGraphIso.Nauty.Search.Bits`; `ofNat` reads a bitset back. -/
+`HexGraphIso.Nauty.Search.Bits`. `ofNat` reads a bitset back. -/
 
 theorem toNat_empty : (empty : VSet n).toNat = 0 :=
   Nat.eq_of_testBit_eq fun v => by rw [testBit_toNat, mem_empty, Nat.zero_testBit]

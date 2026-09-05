@@ -11,30 +11,31 @@ public import HexGraphIso.Nauty.Model.Node
 public section
 
 /-!
-The automorphism-pruned step of the abstract evaluator ladder.
-`searchNodeA` extends the code-pruned branch-and-bound of `searchNode`
-with the generator skip the transcription performs and the certificate
-replays as `.autom` records: a child position is dropped when a stored
-generator carries its labelling, cell by cell, onto an earlier
-sibling's. For a store of checked automorphisms (`checkAutom`), the
-skipped subtree's key equals the earlier sibling's by `specNode_autom`,
-so the prune is lossless. `searchNodeA_eq` shows the doubly-pruned
-recursion still computes `incMax inc (specNode ...)`, and
-`searchCanonA_key` packages the root call as a verified pruned
-evaluator of `canonSpecKey`. The store is a per-call parameter used at
-every node of the subtree; growth of the store mid-sweep is `Model/Store`.
+The second of three verified pruned evaluators of the declarative
+canonical key. `searchNodeA` extends the code-pruned branch-and-bound
+of `searchNode` with the generator prune: a child position is dropped
+when a stored generator maps that child's labelling, cell by cell, to
+an earlier sibling's. This is the skip the transcribed search performs
+and the certificate replays as `.autom` records. For a store of
+checked automorphisms (`checkAutom`), the skipped subtree's key equals
+the earlier sibling's by `specNode_autom`, so the prune is lossless.
+`searchNodeA_eq` shows the doubly-pruned recursion still computes
+`incMax inc (specNode ...)`, and `searchCanonA_key` presents the root
+call as a verified pruned evaluator of `canonSpecKey`. The store here
+is a single parameter, fixed for the whole call. `searchNodeG` is the
+version whose store grows as generators are found.
+
 Nothing on the theorem path for `canonSpecKey = tracedKey` uses these
-declarations. They are kept as a source of lemmas about pruning in the
-abstract.
+declarations. They are kept as a source of lemmas about pruning.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- Pairwise generator skip for child `o` of a sweep: some stored
-generator carries this child's labelling to an earlier sibling's,
-cell by cell — the executable mirror of the `.autom` replay
+/-- Pairwise generator skip for child `o` at a node: some stored
+generator maps this child's labelling, cell by cell, to an earlier
+sibling's. This is the executable form of the `.autom` replay
 condition. -/
 @[expose] def autPruned (nn : Nat) (gens : List (Array Nat))
     (rsLab rsPtn : Array Nat) (level tc o : Nat) : Bool :=
@@ -75,8 +76,9 @@ child sweep skipping generator-pruned positions. -/
 
 /-- Branch-and-bound with both prunes: the incumbent's code prunes a
 subtree exactly as in `searchNode`, and stored generators prune
-sibling positions inside each sweep. Untrusted as an evaluator; the
-theorem `searchNodeA_eq` verifies it against `specNode`. -/
+sibling positions among the children of a node. It is not trusted as
+an evaluator. The theorem `searchNodeA_eq` verifies it against
+`specNode`. -/
 @[expose] def searchNodeA (ctx : Ctx n) (tcLevel : Nat)
     (gens : List (Array Nat)) :
     Nat → Nat → Array Nat → Array Nat → VSet n → Nat → Option (Key n) → Key n

@@ -12,28 +12,28 @@ public import HexGraphIso.Kernel.Packed
 public section
 
 /-!
-The negative route's kernel obligation, `Kernel.checkKey`.
+`Kernel.checkKey`, the proposition the negative route asks the kernel to reduce.
 
-The trusted `Nauty.checkKey` walks `Array` labelling and partition
-state, and every kernel access pays the core `getElem!`/`set!` bounds
+The trusted `Nauty.checkKey` reads `Array` labelling and partition state
+by index, and every kernel access pays the `getElem!`/`set!` bounds
 machinery on top of a spine walk. `Kernel.checkKey` replays the same
 certificate over `lab` and `ptn` packed into fixed-width fields of one
-`Nat` and the adjacency rows packed with width `n`, with every
-arithmetic step spelled as the raw kernel-accelerated function, so a
-read is a shift and a mask, a write a handful of arithmetic steps, and
-a refinement pass linear in the kernel.
+`Nat` and the adjacency rows packed with width `n`, every arithmetic
+step spelled as the raw kernel-accelerated function. A read is then a
+shift and a mask, a write a handful of arithmetic steps, and a
+refinement pass linear in the kernel.
 
-The equality with `Nauty.checkKey` is threaded through two internal
-layers, neither of which the kernel evaluates: the replay's call tree
-over `List Nat` state, and the same tree over the rows rebuilt from the
-tied flat literal. The packed clones are proven equal to the list ones
-under the correspondence `Rep` between a packed number and the list it
-encodes, threaded through the state by `RepSt`; the list ones are
-proven equal to the `Array` originals by the unconditional
-`Array`/`List` correspondences. `Kernel.checkKey_eq` composes the
-chain, and `Kernel.not_isomorphic_of_checkKeys` is the theorem the
-tactic applies. The compiled search and the `Array` definitions the
-soundness proofs mention are untouched.
+The equality with `Nauty.checkKey` goes through two internal layers,
+neither of which the kernel evaluates: the replay's call tree over
+`List Nat` state, and the same tree over the rows rebuilt from the flat
+adjacency literal. Each packed definition is proven equal to its list
+counterpart under `Rep`, the correspondence between a packed number and
+the list it encodes, carried through the refinement state by `RepSt`.
+Each list definition is proven equal to its `Array` original by the
+`Array`/`List` correspondences. `Kernel.checkKey_eq` composes the chain,
+and `Kernel.not_isomorphic_of_checkKeys` is the theorem the tactic
+applies. The compiled search and the soundness proofs stay on the
+`Array` definitions.
 -/
 
 namespace Hex.GraphIso.Kernel
@@ -130,9 +130,9 @@ structure RefineStL where
 
 /-! # The refine tower over list state
 
-Each clone mirrors its original body exactly, with `atD` for reads and
-`List.set` for writes; the equalities are structural inductions over
-the same recursions, rewriting through the access correspondences. -/
+Each definition mirrors its `Array` original body for body, with `atD`
+for reads and `List.set` for writes, and each equality is a structural
+induction rewritten through the access correspondences above. -/
 
 def cellEndGoL (ptn : List Nat) (level : Nat) :
     Nat → Nat → Nat
@@ -912,8 +912,8 @@ theorem leafRowsL_eq (ctx : Ctx n) (lab : Array Nat) :
 
 /-! # Literal keys
 
-The kernel replay compares keys whose rows are bitsets: `Kernel.Key` is
-the literal the tactic emits, `Key.toL` its reading of a packed key, and
+The kernel replay compares keys whose rows are bitsets. `Kernel.Key` is
+the literal the tactic emits, `Key.toL` reads a `Nauty.Key` as one, and
 `keyCmpL` mirrors `keyCmp` through `NatSet.rowCmp`. -/
 
 /-- The literal reading of a packed key. -/
@@ -1245,7 +1245,7 @@ theorem checkNodeL_eq (ctx : Ctx n) (tcLevel : Nat) (brows : List (VSet n))
         · rfl
   termination_by structural fuel => fuel
 
-/-! # The negative kernel obligation over list state -/
+/-! # The replay over `lab`, `ptn` and the rows packed into `Nat` fields -/
 /-! # Packed context and state -/
 
 /-- The replay context over packed rows: `w`/`m` are the field width
@@ -2787,7 +2787,7 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   termination_by structural fuel => fuel
 
 
-/-! # The negative kernel obligation over packed state -/
+/-! The packed replay agrees with the list replay: `checkNodeP_eq`. -/
 end Hex.GraphIso.Nauty
 namespace Hex.GraphIso
 
@@ -2795,12 +2795,12 @@ open Nauty
 
 variable {n k : Nat}
 
-/-! # The negative kernel obligation
+/-! # What the kernel evaluates
 
-The obligation is stated over the rows tied as one packed number and
-proven equal to `Nauty.checkKey` through two internal layers: the rows
-rebuilt from the tied flat literal (`checkKeyFlat`), and the whole
-replay over list state (`checkKeyLit`). -/
+`Kernel.checkKey` is stated over the adjacency rows packed as one number
+and proven equal to `Nauty.checkKey` through two internal layers: the
+rows rebuilt from the flat adjacency literal (`checkKeyFlat`), and the
+whole replay over list state (`checkKeyLit`). -/
 
 /-- `Nauty.checkKey` with the adjacency rows rebuilt from a flat
 literal instead of forcing `rowsOf`. -/
@@ -2823,8 +2823,8 @@ private theorem checkKeyFlat_eq (G : Colored n k) (cert : Nauty.CertNode)
   rw [checkKeyFlat, Nauty.checkKey, rowsOfFlat_eq_rowsOf]
 
 /-- `checkKeyFlat` with list state end to end: the rows are rebuilt
-once from the tied flat literal as bitsets and the whole replay walks
-bare lists. -/
+once from the flat adjacency literal as bitsets, and the whole replay
+runs on bare lists. -/
 private def checkKeyLit (G : Colored n k) (flat : List Bool)
     (cert : CertNode) (K : Kernel.Key) : Bool :=
   K.rows.all (fun r => r < 2 ^ n) &&
@@ -2918,10 +2918,10 @@ theorem initRep (G : Colored n k) (flat : List Bool) (hn0 : 0 < n) :
 
 namespace Kernel
 
-/-- The negative route's kernel obligation: the certificate replayed
-over packed state, with the rows packed once from the tied adjacency
-matrix (`Kernel.packRows`) and the labelling and partition packed with
-the field width `initW n`. -/
+/-- The proposition the tactic's negative route reduces in the kernel:
+the certificate replayed over packed state, with the rows packed once
+from the adjacency matrix (`Kernel.packRows`) and the labelling and
+partition packed with the field width `initW n`. -/
 @[expose] def checkKey (G : Colored n k) (rows : Nat)
     (cert : CertNode) (K : Key) : Bool :=
   K.rows.all (fun r => r < 2 ^ n) &&
@@ -2947,7 +2947,7 @@ private theorem checkKey_eq_lit (G : Colored n k) (flat : List Bool)
     rw [checkNodeP_eq hctx 100 K.rows (containsGammaP_eq hctx cert) n 1
       (by show 1 + n ≤ n + 1; omega) hlab hptn]
 
-/-- The kernel obligation is the trusted `Nauty.checkKey`, for a
+/-- `Kernel.checkKey` agrees with the trusted `Nauty.checkKey`, for a
 literal key whose rows are bitsets over `n` vertices. -/
 theorem checkKey_eq (G : Colored n k) (cert : CertNode) (K : Key)
     (h : ∀ r ∈ K.rows, r < 2 ^ n) :
@@ -2960,9 +2960,9 @@ theorem checkKey_eq (G : Colored n k) (cert : CertNode) (K : Key)
 def certifyKey? (budget : Nat) (G : Colored n k) : Option (CertNode × Key) :=
   (Nauty.certifyKey? G (some budget)).map fun p => (p.1, p.2.toL)
 
-/-- Tying equalities plus two packed-state key certificates with
-differing keys prove non-isomorphism: the kernel evaluates each graph
-once into its packed rows and replays one certificate per side. -/
+/-- Equalities identifying each graph's packed rows, plus two key
+certificates with differing keys, prove non-isomorphism: one kernel
+evaluation of the rows per graph, then one certificate replay per side. -/
 theorem not_isomorphic_of_checkKeys {G H : Colored n k}
     {certG certH : CertNode} {BG BH : Key} {NA NB : Nat}
     (hA : packRows n G.graph.adjMatrix.data.toList = NA)

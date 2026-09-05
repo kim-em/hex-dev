@@ -14,20 +14,21 @@ public import HexGraphIso.Nauty.Spec.SpecIso
 public section
 
 /-!
-The growing-store step of the abstract evaluator ladder. Where
-`searchNodeA` prunes against a fixed generator store, `searchNodeG`
-threads the store through the recursion, so a generator admitted at a
-leaf prunes later siblings of every sweep on the path back up,
-including later siblings of the sweep that discovered it, as the
-transcription's store does. Admission is abstract: an oracle `adm`
-proposes generators from each discrete leaf's labelling and the
-incumbent, and every theorem holds for any oracle whose proposals pass
-`checkAutom`. `searchNodeG_eq` shows the recursion still computes
-`incMax inc (specNode ...)` and that store validity is an invariant,
-and `searchCanonG_key` packages the root call as a verified evaluator
-of `canonSpecKey`. Nothing on the theorem path for
-`canonSpecKey = tracedKey` uses these declarations. They are kept as a
-source of lemmas about pruning in the abstract.
+The third of three verified pruned evaluators of the declarative
+canonical key. Where `searchNodeA` prunes against a fixed generator
+store, `searchNodeG` threads the store through the recursion, so a
+generator admitted at a leaf prunes later siblings at every node on
+the path back up, including later siblings of the node that discovered
+it. That is what the transcribed search's store does. Admission is
+left open: an oracle `adm` proposes generators from each discrete
+leaf's labelling and the incumbent, and every theorem holds for any
+oracle whose proposals pass `checkAutom`. `searchNodeG_eq` shows the
+recursion still computes `incMax inc (specNode ...)` and that store
+validity is an invariant, and `searchCanonG_key` presents the root
+call as a verified evaluator of `canonSpecKey`.
+
+Nothing on the theorem path for `canonSpecKey = tracedKey` uses these
+declarations. They are kept as a source of lemmas about pruning.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -52,9 +53,9 @@ theorem validStore_append {ctx : Ctx n} {S T : List (Array Nat)}
 mutual
 
 /-- The child sweep with a growing store: each unpruned child is
-searched with the store as it stands, and the store it returns —
-possibly grown at leaves below — is what later siblings are pruned
-against. -/
+searched with the store as it stands, and the store that child
+returns, possibly grown at leaves below it, is what later siblings are
+pruned against. -/
 @[expose] def sweepG (ctx : Ctx n) (tcLevel : Nat)
     (adm : Array Nat → Option (Key n) → List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat)
@@ -71,9 +72,9 @@ against. -/
       sweepG ctx tcLevel adm fuel level rsLab rsPtn tc numcells os r
   termination_by os _ => (fuel, 1, os.length)
 
-/-- One node step at a refined state: at a discrete leaf the oracle's
-proposals join the store; at a live node the first child absorbs the
-incumbent and the sweep threads the store across the rest. -/
+/-- One node step at a refined state. At a discrete leaf the oracle's
+proposals join the store. At a live node the first child absorbs the
+incumbent and `sweepG` threads the store across the rest. -/
 @[expose] def stepG (ctx : Ctx n) (tcLevel : Nat)
     (adm : Array Nat → Option (Key n) → List (Array Nat))
     (fuel level : Nat) (rs : RefineSt n) (tail0 : Option (Key n))

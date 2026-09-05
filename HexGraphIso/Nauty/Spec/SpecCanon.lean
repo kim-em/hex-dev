@@ -11,10 +11,11 @@ public import HexGraphIso.Nauty.Cert.CanonForm
 public section
 
 /-!
-The nauty-semantic canonical form as a total function of the spec key:
-adjacency is read off the key's rows, and the colouring lists each
-colour class contiguously in colour order. Checked certificate results
-coincide with this form, which anchors the stage-4 public switch.
+The nauty-semantic canonical form as a total function of the canonical
+key: adjacency is read off the key's rows, and the colouring lists each
+colour class contiguously in colour order. Every result the certificate
+checker accepts is equal to this form (`checkCanon_form`), and
+isomorphic coloured graphs have the same form (`specCanon_invariant`).
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -167,7 +168,10 @@ are symmetric and loopless, this is the identity. -/
           exact hidx)]
         exact hval }
 
-/-- The total nauty-semantic canonical form. -/
+/-- The nauty-semantic canonical form of a coloured graph: the coloured
+graph determined by the rows of `canonSpecKey G`, with the colour
+classes laid out contiguously in colour order. It is defined for every
+input, with no certificate needed. -/
 @[expose] def specCanon (G : Colored n k) : Colored n k :=
   formOfKey G (canonSpecKey G).rows
 
@@ -269,7 +273,7 @@ theorem checkCanon_form_eq_formOfKey {G : Colored n k}
     rw [hkv, hkv] at h1
     exact Fin.eq_of_val_eq h1
 
-/-- A checked canonical form is the total spec form. -/
+/-- A checked canonical form is `specCanon` of the input. -/
 theorem checkCanon_form {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
@@ -277,7 +281,8 @@ theorem checkCanon_form {G : Colored n k} {cert : CertNode} {B : Key n}
   rw [checkCanon_form_eq_formOfKey h, specCanon,
     (checkCanon_sound h).1]
 
-/-- The spec form is an isomorphism invariant. -/
+/-- `specCanon` is an isomorphism invariant: isomorphic coloured graphs
+have the same canonical form. -/
 theorem specCanon_invariant {G H : Colored n k}
     (hiso : Isomorphic G H) : specCanon G = specCanon H := by
   rw [specCanon, specCanon, canonSpecKey_eq_of_isomorphic hiso]

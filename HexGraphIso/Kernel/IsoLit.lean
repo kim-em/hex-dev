@@ -13,19 +13,19 @@ public section
 
 /-!
 The positive route's kernel checker. `graph_iso` proves `Isomorphic G H`
-by tying each side to a literal, one sequential kernel evaluation per
-graph, and validating the transporter entirely on those literals.
-`Kernel.checkIso` walks row-chunked literal lists with bare-`Nat`-match
-accessors, so the kernel pays a short list walk per probe instead of a
-flat `Array` index into the adjacency matrix, whose walk length grows
-with the flat index.
+by reducing each side to a list literal, one kernel evaluation per
+graph, then validating the transporter entirely on those literals.
+`Kernel.checkIso` reads row-chunked literal lists through bare `Nat`
+matches, so the kernel walks one short row per probe instead of
+indexing the flat adjacency matrix, whose spine walk grows with the
+flat index.
 -/
 
 namespace Hex.GraphIso
 
 variable {n k : Nat}
 
-/-- Literal list access priced for kernel reduction: one bare match
+/-- Indexed list access built for cheap kernel reduction: one bare match
 per step, no bounds proofs, no `Array` wrapper. -/
 @[expose] def atD {α : Type} : List α → Nat → α → α
   | [], _, d => d
@@ -93,8 +93,8 @@ namespace Kernel
 
 /-- Validate a forward transporter on literal data: `flatA`/`flatB`
 are the flat adjacency lists, `cellsA`/`cellsB` the colour values,
-and `pl` the transporter images, all tied back to the graphs by the
-hypotheses of `Kernel.isIso_of_checkIso`. -/
+and `pl` the transporter images, each identified with the graph it
+comes from by a hypothesis of `Kernel.isIso_of_checkIso`. -/
 @[expose] def checkIso (n : Nat) (flatA flatB : List Bool)
     (cellsA cellsB pl : List Nat) : Bool :=
   let rowsA := chunkRows n n flatA
@@ -107,10 +107,10 @@ hypotheses of `Kernel.isIso_of_checkIso`. -/
     (List.range n).all fun j =>
       atD rB (atD pl j 0) false == atD rA j false
 
-/-- Tying equalities plus a literal transporter check prove that the
-permutation transports: the kernel evaluates each graph once —
-sequentially, into its literal — and the rest of the replay runs on
-literals. -/
+/-- Equalities identifying the graph data with the literals, plus a
+literal transporter check, prove that the permutation transports. The
+kernel evaluates each graph once, into its literal, and the rest of the
+check runs on literals. -/
 theorem isIso_of_checkIso {G H : Colored n k} {p : Perm n}
     {LA LB : List Bool} {CA CB PL : List Nat}
     (hA : G.graph.adjMatrix.data.toList = LA)
@@ -148,8 +148,8 @@ theorem isIso_of_checkIso {G H : Colored n k} {p : Perm n}
     rw [hPL i, hPL j, hflat, hflat] at h
     exact h
 
-/-- Tying equalities plus a literal transporter check prove
-isomorphism. -/
+/-- Equalities identifying the graph data with the literals, plus a
+literal transporter check, prove isomorphism. -/
 theorem isomorphic_of_checkIso {G H : Colored n k} {p : Perm n}
     {LA LB : List Bool} {CA CB PL : List Nat}
     (hA : G.graph.adjMatrix.data.toList = LA)

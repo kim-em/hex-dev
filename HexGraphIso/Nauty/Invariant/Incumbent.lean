@@ -59,9 +59,9 @@ degenerate reading therefore *outranks every reachable leaf key*, and
 that the final incumbent is the degenerate one, which is false as soon
 as the search installs anything.
 
-`CanonSpec` already carries the fix: `incMax : Option (Key n) → Key n →
-Key n` with `none` as the bottom.  The semantic induction threads that
-option explicitly.  It can
+`CanonSpec` is stated with an option for exactly this reason:
+`incMax : Option (Key n) → Key n → Key n`, with `none` as the bottom.
+The semantic induction threads that option explicitly. The option can
 be read back from the imperative state only outside the temporary
 upward-comparison window, where `canoncode` contains path codes rather
 than the installed incumbent's codes. -/
@@ -182,9 +182,9 @@ target position being a *singleton cell* from the individualization
 onwards. Both steps of that transport are proved below, over one
 operation each: `refine` fixes a singleton cell's position, and a
 `breakout` elsewhere misses it, because two maximal runs are equal or
-disjoint. What is not proved here is the run-level statement that
-chains them, since the descent is the mutual recursion itself; see the
-note after `breakout_misses_singleton`. -/
+disjoint. The run-level statement that composes them is not proved
+here, because the descent is the mutual recursion itself. See the note
+after `breakout_misses_singleton`. -/
 
 /-- Individualizing offset `o` puts that offset's vertex at the target
 position. -/
@@ -248,9 +248,9 @@ theorem breakout_misses_singleton {lab ptn : Array Nat}
   · rw [ite_eq_left h]
   · rw [ite_eq_right (by omega), ite_eq_right (by omega), ite_eq_right (by omega)]
 
-/-! What remains for the position facts is a run-level frame: that one
-call of a quartet function preserves `lab[q]` at every position that is
-a singleton cell on entry. Its proof is an induction over the same
+/-! The position facts also need a run-level frame: one call of a
+quartet function preserves `lab[q]` at every position that is a
+singleton cell on entry. Its proof is an induction over the same
 mutual recursion as the absorption equation, discharging `refine` by
 `refine_fixes_singleton`, each deeper `breakout` by
 `singleton_outside_cell` and `breakout_misses_singleton`, and the
@@ -262,16 +262,15 @@ recursion. -/
 
 /-! # The root assembly
 
-The corrected statement reaches the programme's target. The root call
-of `firstPathNode` starts from a state with `canonlevel = 0`, so its
-incoming incumbent is `none` and `incMax` discards it; what comes out
-is therefore the node key of the root, which is `canonSpec` by
-definition, and the state's own incumbent reading is `tracedKey` by
-definition. `certifyCanon?_isSome_of_dominated` then closes.
+The root call of `firstPathNode` starts from a state with
+`canonlevel = 0`, so its incoming incumbent is `none` and `incMax`
+discards it. What comes out is therefore the node key of the root,
+which is `canonSpec` by definition, and the state's own incumbent
+reading is `tracedKey` by definition.
+`certifyCanon?_isSome_of_dominated` then gives the conclusion.
 
-The quartet's root instance is the hypothesis here, and it is the only
-thing these theorems assume: the induction that supplies it is the
-remaining work. -/
+The root instance of the quartet's absorption equation is a hypothesis
+of these theorems, and it is the only thing they assume. -/
 
 /-- The root state `runTraced` starts from. -/
 @[expose] def rootSt (n : Nat) (lab0 : Array Nat)
@@ -336,7 +335,7 @@ end Hex.GraphIso.Nauty
 
 
 /-!
-The node steps of the quartet (SPEC § Verified search refinement).
+The node steps of the quartet.
 
 A node's own work, either side of its child loop, never touches the
 incumbent: it refines, records its refinement code and target cell,

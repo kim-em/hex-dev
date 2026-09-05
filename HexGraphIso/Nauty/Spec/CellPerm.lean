@@ -14,18 +14,19 @@ public section
 /-!
 Refinement as a function of cell contents.
 
-nauty's canonical form is well defined on a coloured graph because the
-refinement machinery depends on an ordered partition only through the
-multiset of vertices in each cell: two labellings whose cells hold the
-same vertices in any order refine to the same positions and codes with
-cell-wise permuted labellings. This file builds that invariance, cell
-processor by cell processor, mirroring `Nauty.Equivariance`.
+nauty's canonical form is well defined on a coloured graph because
+refinement depends on an ordered partition only through the multiset of
+vertices in each cell: two labellings whose cells hold the same vertices
+in any order refine to the same positions and the same codes, with
+cell-wise permuted labellings. This file proves that invariance one
+splitting function at a time, in the same order as
+`Nauty.Spec.Equivariance`.
 
 `segN lab lo len` reads the labelling segment of `len` positions from
-`lo` as a list; cell contents are compared with `List.Perm`. The crux
-is `splitCellLoop_spec`: the two-pointer partition's final pointers are
-determined by the adjacency count of the cell's multiset, and its two
-output segments are permutations of the adjacency filters.
+`lo` as a list, and cell contents are compared with `List.Perm`. The
+main step is `splitCellLoop_spec`: the two-pointer partition's final
+pointers are determined by the adjacency count of the cell's multiset,
+and its two output segments are permutations of the adjacency filters.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -109,7 +110,7 @@ theorem splitCellLoop_spec {gRow : VSet n} :
         c1 (c2 - 1) h1
         (by rw [Array.size_set!, Array.size_set!]; omega)
         (by omega) (by omega)
-      -- the original segment is the swapped one plus its old head
+      -- the starting segment is the swapped one plus its former head
       have hS2 : (segN lab c1.toNat (k + 1)).Perm
           (lab[c1.toNat]! ::
             segN ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
@@ -347,7 +348,7 @@ theorem cellsPerm_set! {ptn : Array Nat} {level : Nat}
   rcases Nat.lt_or_ge c a with hca | hca
   · -- the block lies right of the written boundary
     rcases Decidable.em (a = c + 1) with heq | hne
-    · -- right half: show the block ends exactly at the old cell end
+    · -- right half: show the block ends exactly at the original cell end
       have hebound : a + len - 1 = A + lenA - 1 := by
         rcases Nat.lt_trichotomy (a + len - 1) (A + lenA - 1) with
           hlt | heq | hgt
@@ -365,7 +366,7 @@ theorem cellsPerm_set! {ptn : Array Nat} {level : Nat}
       have hleneq : len = A + lenA - (c + 1) := by omega
       rw [heq, hleneq]
       exact hR
-    · -- disjoint block right of the old cell
+    · -- disjoint block right of the original cell
       have haright : A + lenA ≤ a := by
         rcases Nat.lt_or_ge a (A + lenA) with hlt | hge
         · exfalso
@@ -511,7 +512,7 @@ theorem isCell_disjoint_or_eq {ptn : Array Nat} {level a len a' len' : Nat}
   rcases Nat.lt_or_ge (a + len - 1) a' with hlt' | hge'
   · exact Or.inr (Or.inl (by omega))
   right; right
-  -- the runs overlap; first the starts agree
+  -- the runs overlap, so first the starts agree
   have hstarts : a = a' := by
     rcases Nat.lt_trichotomy a a' with hlt | heq | hgt
     · exfalso
@@ -610,7 +611,7 @@ theorem trivialCell_perm {level cell1 cell2 : Nat} {gRow : VSet n} {st st' : Ref
     rw [hp1', hp2', trivialSplit_setLab _ _ _ _ _ st', h.eq_setLab,
       trivialSplit_setLab _ _ _ _ _ st]
   rw [e1, e2]
-  -- disjoint old cells are untouched by both runs
+  -- cells disjoint from the split are untouched by both runs
   have houtP : ∀ a len, IsCell st.ptn level a len →
       a + len ≤ cell1 ∨ cell1 + (cell2 + 1 - cell1) ≤ a →
       (segN (splitCellLoop gRow (cell2 - cell1 + 2) st.lab

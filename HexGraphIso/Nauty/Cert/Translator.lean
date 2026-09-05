@@ -13,29 +13,28 @@ public import HexGraphIso.Nauty.Cert.CanonForm
 public section
 
 /-!
-Layers one and two of the verified search refinement
-(SPEC § Verified search refinement): properties of the trace-driven
-certificate translator.
+Properties of the trace-driven certificate translator.
 
-Layer one is total production: `produceCand G none` always returns a
-candidate, because an absent budget cannot exhaust — `charge` is the
-identity, and no other producer step touches the budget fields.
+`produceCand G none` always returns a candidate. With an absent node
+budget `charge` is the identity, and no other producer step touches
+the budget fields, so nothing in the walk can exhaust it.
 
-Layer two's foundation is automorphism closure: `checkAutom` is
-closed under the producer's witness composition, so every witness
-composed from individually-valid generators is itself valid.
+`checkAutom_of_isautom` states that the admission filter's `isautom`
+implies the replay's `checkAutom` for a permutation of a symmetric,
+loopless, per-row-bounded row array. `rowsOf_symm`, `rowsOf_loopless`
+and `rowsOf_bounded` discharge those row hypotheses for `rowsOf G`.
 
-The programme is complete: `certifyCanon?_isSome` is proved in
-`Correct/Certify.lean`. It did not take the route this file's
-statements anticipated, and the section following the closure toolkit
-records where each layer-two obligation actually landed.
+`checkAutom` is closed under the producer's witness composition and
+under inversion, and it holds of the identity array. Every witness
+composed from individually valid generators is therefore itself
+valid.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
-/-! # Layer one: total production under an absent budget -/
+/-! # Total production under an absent budget -/
 
 theorem charge_of_budget_none {st : AutState}
     (h : st.budget = none) : st.charge = st := by
@@ -110,8 +109,8 @@ theorem certifyNodeAutom_budget (ctx : Ctx n) (tcLevel : Nat) :
             (certifyNodeAutom_budget ctx tcLevel fuel
               _ _ _ _ _ _ _ hs.1).2.trans hs.2⟩
 
-/-- Layer one: the trace-driven producer is total under an absent
-budget — nothing in the walk can exhaust it. -/
+/-- The trace-driven producer always returns a candidate under an
+absent budget: nothing in the walk can exhaust it. -/
 theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
     (produceCand G none).isSome := by
   have hfold := foldl_preserves
@@ -144,10 +143,10 @@ theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
   rw [hex]
   rfl
 
-/-! # Graph facts for `rowsOf`: dischargers for the row-set hypotheses
+/-! # Graph facts for `rowsOf`
 
-`checkAutom_of_isautom` below is stated graph-agnostically over a row
-array with symmetry, looplessness, and per-row bounds; these lemmas
+`checkAutom_of_isautom` below is stated over an arbitrary row array
+with symmetry, looplessness, and per-row bounds. The lemmas here
 discharge those hypotheses for `rowsOf G`. -/
 
 theorem rowsOf_symm {k : Nat} (G : Colored n k) :
@@ -164,7 +163,7 @@ theorem rowsOf_loopless {k : Nat} (G : Colored n k) :
   rw [getElem!_rowsOf G hi, mem_rowOf_lt G hi hi,
     G.graph.adj_self ⟨i, hi⟩]
 
-/-! # Layer two, foundation: `checkAutom` closure under composition -/
+/-! # `checkAutom` closure under composition -/
 
 theorem composePerm_getElem! (f π : Array Nat) {nn v : Nat}
     (hv : v < nn) : (composePerm f π nn)[v]! = f[π[v]!]! := by
@@ -350,53 +349,49 @@ theorem checkAutom_range {g : Array (VSet n)} :
     rw [hget v hvn, this, image_id _]
 
 /-!
-# Where the layer-two obligations landed
+# Where these results are used
 
-`certifyCanon?_isSome` is proved (`Correct/Certify.lean`), by a
-route that uses some of what this file states and replaces the rest.
+`checkAutom_of_isautom` below converts the admission filter's
+`isautom` into the replay's `checkAutom`. It consumes `isautom_iff`,
+the `rowsOf` lemmas above and the `PopCount` comparison lemmas.
+It is applied in `Invariant/Store`, where `scatter_isPerm` supplies
+its permutation hypothesis: both admission sites in `processnode`
+push a scatter of one discrete leaf labelling over another, which is
+a permutation by construction.
 
-* `checkAutom_of_isautom`, the counting bridge below, is live. It
-  consumes `isautom_iff`, the `rowsOf` dischargers above and the
-  `PopCount` comparison toolkit, and it is applied in
-  `Invariant/Store`, where `scatter_isPerm` supplies its permutation
-  hypothesis: both admission sites in `processnode` push a scatter of
-  one discrete leaf labelling over another, which is a permutation by
-  construction. The general obligation an earlier reading of layer
-  two posed here, over every `γ` in `(runColoredTraced G).autos` and
-  every `composeOnto` the certify walk harvests, turned out not to be
-  needed by anything.
-* The validated-store invariant (`GensOk.admit`, `GensOk.init`,
-  `GensOk.foldl_admit`) and witness validity (`witness?_checkAutom`)
-  state store validity as an invariant of the search-side generator
-  store. The landed proof does not use them: `CertStore.lean` proves
-  `certifyNodeAutom_automsOk` structurally over the emitted
-  certificate, because the producer checks each witness immediately
-  before emitting an automorphism prune, so
-  `certifyCanon?_isSome_of_keyEq` carries no store hypothesis.
-* The replay spine is `certifyNode_replays` and
-  `certifyCanon?_isSome_of_dominated` (`CertReplay.lean`), and its
-  domination hypothesis is discharged by `canonSpecKey_eq_tracedKey`,
-  which is layer three. Domination is not removable: `certifyNodeAutom`
-  emits `.codePrune` on the `.gt` comparison, which the replay
-  rejects, and a `.leaf` whose key exceeds the claimed suffix fails
-  `keyCmp`, so an unconditional spine would have been unsound.
-
-The closure toolkit above is the part of this file with consumers
-outside it: `checkAutom_compose` and `checkAutom_range` are used by
+`checkAutom_compose` and `checkAutom_range` above are used by
 `Invariant/Autos` and `Invariant/Orbits`.
+
+`GensOk.admit`, `GensOk.init`, `GensOk.foldl_admit` and
+`witness?_checkAutom` state validity of the search-side generator
+store: every stored generator pair passes `checkAutom`, as does every
+witness `witness?` composes from such a store. Nothing outside this
+file uses them. `CertStore.lean` instead proves
+`certifyNodeAutom_automsOk` structurally over the emitted
+certificate, because the producer checks each witness immediately
+before emitting an automorphism prune, which is why
+`certifyCanon?_isSome_of_keyEq` carries no hypothesis about the
+generator store.
+
+`certifyNode_replays` and `certifyCanon?_isSome_of_dominated`
+(`CertReplay.lean`) replay the produced certificate under a
+domination hypothesis, which `canonSpecKey_eq_tracedKey` discharges.
+The hypothesis is not removable: `certifyNodeAutom` emits a
+`.codePrune` on a `.gt` comparison, which the replay rejects, and a
+`.leaf` whose key exceeds the claimed suffix fails `keyCmp`.
 
 ## The guarded-scan `forIn` technique
 
 `isautom` is a nested `forIn` over `[0, n)` with an early
-`return false`, a loop shape with no other reasoning precedent in the
-tree. The reusable technique is a "guarded scan" whose state is
-`Option Bool × Unit`: it yields `(none, ())` while every element
-passes and is done with `(some false, ())` on the first failure, so
-the result flag is `none` exactly when every element passes
-(`forIn_scan_fst_cases`, `forIn_scan_fst_eq_none`), with
-`forIn_range_eq` and `id_run_scan` reducing the `[0, n)` range and the
-outer `Id` do-block. `isautom_iff` below is what it buys, and the
-counting bridge consumes that.
+`return false`. The reasoning technique for that loop shape is a
+"guarded scan" whose state is `Option Bool × Unit`: it yields
+`(none, ())` while every element passes and is done with
+`(some false, ())` on the first failure, so the result flag is `none`
+exactly when every element passes (`forIn_scan_fst_cases`,
+`forIn_scan_fst_eq_none`), with `forIn_range_eq` and `id_run_scan`
+reducing the `[0, n)` range and the outer `Id` do-block. The
+specification this yields is `isautom_iff` below, which
+`checkAutom_of_isautom` consumes.
 
 ### Guarded-scan technique
 
@@ -475,10 +470,10 @@ private theorem id_run_scan (F : Id (Option Bool × Unit)) :
 
 /-! ### The `isautom` specification -/
 
-/-- The outer loop body of `isautom`, spelled with the named core
-matcher so it is syntactically identical to the `do`-desugaring
-(restating it with `match` syntax would mint a fresh matcher the
-unifier rejects). -/
+/-- The outer loop body of `isautom`, spelled with the generated
+matcher `Break.runK.match_1` so it is syntactically identical to the
+`do`-desugaring (restating it with `match` syntax would generate a
+fresh matcher the unifier rejects). -/
 private def isautomOuter (ctx : Ctx n) (γ : Array Nat) (i : Nat)
     (__s : Option Bool × Unit) : Id (ForInStep (Option Bool × Unit)) :=
   have row := ctx.g[i]!
@@ -612,15 +607,15 @@ theorem isautom_iff (ctx : Ctx n) (γ : Array Nat) :
     rw [hnone]
 
 /-!
-**The residual gap to `certifyCanon?` totality is closed.** Beyond
-layers one and two it needed the rows equality (definitional from
+`certifyCanon?_isSome` in `Correct/Certify.lean` is the statement
+that certified canonicalization always succeeds. Besides the results
+above it rests on the rows equality (definitional from
 `produceCand`'s key), `labelColorSorted` of the transcription's
-output labelling, and layer three, the maximality of the traced key.
-Layer three is `canonSpecKey_eq_tracedKey` and the assembly is
-`certifyCanon?_isSome`, both in `Correct/Certify.lean`.
+output labelling, and the maximality of the traced key,
+`canonSpecKey_eq_tracedKey`.
 -/
 
-/-! # Layer two, part b: `checkAutom` from the admission filter
+/-! # `checkAutom` from the admission filter
 
 `AutState.admit` verifies candidates with `isautom` (upper-triangle
 edge preservation) rather than the replay's `checkAutom` (per-row
@@ -663,13 +658,12 @@ private theorem map_eq_of_le_of_sum_le {f g : Nat → Nat} :
     · exact map_eq_of_le_of_sum_le l
         (fun y hy => hle y (List.mem_cons_of_mem a hy)) (by omega) x hx'
 
-/-- Layer two, part b, the counting bridge: for a permutation of
-`[0, n)`, the admission filter's `isautom` implies the replay's
-`checkAutom`, over any symmetric, loopless, per-row-bounded row
-array. The row hypotheses are discharged for `rowsOf G` by
-`rowsOf_symm`, `rowsOf_loopless`, and `rowsOf_bounded`; the
-permutation hypothesis is supplied at the use site in
-`Invariant/Store` by `scatter_isPerm`. -/
+/-- The counting argument: for a permutation of `[0, n)`, the
+admission filter's `isautom` implies the replay's `checkAutom`, over
+any symmetric, loopless, per-row-bounded row array. `rowsOf_symm`,
+`rowsOf_loopless` and `rowsOf_bounded` discharge the row hypotheses
+for `rowsOf G`. `scatter_isPerm` supplies the permutation hypothesis
+at the use site in `Invariant/Store`. -/
 theorem checkAutom_of_isautom {ctx : Ctx n} {γ : Array Nat}
     (hsz : γ.size = n)
     (hperm : (((List.range n).map fun v => γ[v]!).isPerm
@@ -762,18 +756,18 @@ theorem checkAutom_of_isautom {ctx : Ctx n} {γ : Array Nat}
     simp only [beq_iff_eq]
     exact (hrow v (List.mem_range.mp hv)).symm
 
-/-! # Layer two, part b: the validated-store invariant
+/-! # The validated-store invariant
 
 Every generator pair the producer stores passes `checkAutom`: the
-stored generator via the admission filter's `isautom` plus the
-counting bridge, the stored inverse via `checkAutom_invPerm`. The
-permutation side of each candidate enters as a hypothesis on the
+stored generator via the admission filter's `isautom` plus
+`checkAutom_of_isautom`, the stored inverse via `checkAutom_invPerm`.
+The permutation side of each candidate enters as a hypothesis on the
 admitted candidate.
 
-The landed totality proof does not go through this invariant.
-`CertStore.lean` establishes store validity structurally over the
-emitted certificate instead; what follows states the search-side
-invariant. -/
+This states validity of the search-side generator store.
+`CertStore.lean` establishes validity of the emitted certificate's
+records structurally instead, and that is what
+`certifyCanon?_isSome_of_keyEq` uses. -/
 
 /-- The store invariant: every stored generator pair passes
 `checkAutom` in both components. -/
@@ -783,7 +777,7 @@ def GensOk (ctx : Ctx n) (st : AutState) : Prop :=
 
 /-- Admission preserves the store invariant: the filter re-verifies
 size, bounds, and `isautom`, so with the candidate's permutation
-side (hypothesis `hγ`) the counting bridge validates the stored
+side (hypothesis `hγ`) `checkAutom_of_isautom` validates the stored
 pair. -/
 theorem GensOk.admit {ctx : Ctx n} {st : AutState} {γ : Array Nat}
     (hsymm : ∀ i j, i < n → j < n →
@@ -837,10 +831,9 @@ theorem GensOk.init (ctx : Ctx n) (nn : Nat) (budget : Option Nat) :
   intro p hp
   simp [AutState.init] at hp
 
-/-- Layer two, part b, the validated-store invariant: an admission
-fold over candidates that are permutations whenever they pass the
-admission filter (hypothesis `hautos`) stores only
-`checkAutom`-valid generator pairs. -/
+/-- An admission fold over candidates that are permutations
+whenever they pass the admission filter (hypothesis `hautos`) stores
+only `checkAutom`-valid generator pairs. -/
 theorem GensOk.foldl_admit {ctx : Ctx n} {st : AutState}
     (hsymm : ∀ i j, i < n → j < n →
       (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
@@ -855,13 +848,13 @@ theorem GensOk.foldl_admit {ctx : Ctx n} {st : AutState}
     (fun _ γ hγ hs => GensOk.admit hsymm hloop (hautos γ hγ) hs)
     st hst
 
-/-! # Layer two, part b: witness validity
+/-! # Witness validity
 
 `witness?` composes filtered generators breadth-first from the
-identity; over a store of `checkAutom`-valid pairs every composed
-witness is `checkAutom`-valid, by a queue invariant over the closure
-toolkit (`checkAutom_range`, `checkAutom_compose`). The loop body is
-restated with the named core matchers (`witness?.match_*`), the same
+identity. Over a store of `checkAutom`-valid pairs every composed
+witness is `checkAutom`-valid, by a queue invariant that uses
+`checkAutom_range` and `checkAutom_compose`. The loop body is
+restated with the generated matchers (`witness?.match_*`), the same
 technique as `isautomOuter` above. -/
 
 /-- The state a `ForInStep` carries, whichever constructor. -/
@@ -887,7 +880,7 @@ private theorem forIn_id_inv {α β : Type} {P : β → Prop}
       exact forIn_id_inv as
         (fun a' ha' => h a' (List.mem_cons_of_mem a ha')) b' hstep
 
-/-- The outer loop body of `witness?`, spelled with the named core
+/-- The outer loop body of `witness?`, spelled with the generated
 matchers so it is definitionally identical to the `do`-desugaring. -/
 private def witnessOuter (rsLab : Array Nat) (tc o : Nat)
     (usable : Array (Array Nat × Array Nat)) (_x : Nat)
@@ -1029,10 +1022,10 @@ private theorem witnessOuter_inv {ctx : Ctx n} {rsLab : Array Nat}
         · exact hqs2 q hmem
         · exact checkAutom_compose hf' hπ
 
-/-- Layer two, part b, witness validity: over a store of
-`checkAutom`-valid generator pairs, every witness `witness?` returns
-passes `checkAutom` — the breadth-first queue holds only the identity
-and `checkAutom`-closed compositions. -/
+/-- Over a store of `checkAutom`-valid generator pairs, every
+witness `witness?` returns passes `checkAutom`. The breadth-first
+queue holds only the identity and `checkAutom`-closed
+compositions. -/
 theorem witness?_checkAutom {ctx : Ctx n} {rsLab : Array Nat}
     {tc o : Nat} {usable : Array (Array Nat × Array Nat)}
     {o' : Nat} {π : Array Nat}

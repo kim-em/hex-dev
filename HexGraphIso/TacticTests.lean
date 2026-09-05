@@ -14,10 +14,10 @@ public meta import HexGraphIso.Random
 public meta import HexGraphIso.TestGraphs
 
 /-!
-Regression tests for the Mathlib-free `graph_iso` tactic: positive and
-negative goals, coloured and uncoloured goals, the limit syntax, and
-the promised diagnostics. The kernel replays every closing proof; every failure case
-asserts its message and leaves the goal unchanged.
+Tests for the Mathlib-free `graph_iso` tactic: positive and negative
+goals, coloured and uncoloured goals, the limit syntax, and the
+diagnostic messages. The kernel replays every closing proof. Each
+failure case asserts its message and leaves the goal unchanged.
 -/
 
 namespace Hex.GraphIso.TacticTests
@@ -42,8 +42,8 @@ example : Isomorphic p3 p3' := by
   graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
 example : Isomorphic p3 p3' := by
   graph_iso (maxKernelSteps := 10000000) (maxCertRecords := 200000)
--- a zero certificate budget must still close the goal; this pair is
--- irregular, so the root separator takes it before the certificate leg
+-- A zero certificate budget must still close the goal. This pair is
+-- irregular, so the root separator closes it before the certificate leg.
 example : ¬ Isomorphic p3 k3 := by graph_iso (maxCertRecords := 0)
 
 /-- error: graph_iso: the graphs are not isomorphic; the positive goal is not provable -/
@@ -83,7 +83,7 @@ def kneser52G : Graph 10 :=
      (3, 4), (3, 5), (3, 7), (4, 9), (5, 8), (6, 7)]
 
 /-- The pentagonal prism: also cubic on ten vertices, so degree
-refinement alone cannot separate it from the Petersen graph; the
+refinement alone cannot separate it from the Petersen graph. The
 negative goal replays the two canonical-key certificates in the
 kernel. -/
 def prism5G : Graph 10 :=
@@ -105,7 +105,7 @@ example : ¬ Isomorphic petersen prism5 := by graph_iso
 
 /-!
 This pair is cubic, so the root refinement codes agree and only the
-certificate leg is left; withdrawing its record budget leaves every
+certificate leg is left. Withdrawing its record budget leaves every
 negative route exhausted, and the message names the limit that ran out.
 -/
 

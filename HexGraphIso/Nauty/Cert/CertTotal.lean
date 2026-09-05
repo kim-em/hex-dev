@@ -16,13 +16,12 @@ public section
 
 /-!
 Totality of the trace-driven candidate producer, and the reduction of
-`certifyCanon?` totality to the certificate replay: with no node
-budget the producer never exhausts, its key is read off the traced
-run, and every conjunct of `checkCanon` except the `checkKey` replay
-is discharged by the landed transcription-side results. What remains
-of `(certifyCanon? G).isSome` after this file is exactly the layer-
-three obligation: the replay accepts the produced certificate against
-the traced key.
+`certifyCanon?` totality to the certificate replay. With no node
+budget the producer never exhausts, and its key is read off the
+traced run. The transcription-side results discharge every conjunct
+of `checkCanon` except the `checkKey` replay. What remains to prove
+for `(certifyCanon? G).isSome` is that the replay accepts the
+produced certificate against the traced key.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -222,10 +221,9 @@ private theorem label_ofArray?_isSome {lab : Array Nat}
 
 /-- The reduction of `certifyCanon?` totality to the certificate
 replay: if the produced certificate replays against the traced key,
-every other conjunct of the single trusted validation is discharged
-by the landed transcription-side results, so the certified
-canonicalization succeeds. The hypothesis is exactly the layer-three
-obligation of the verified search refinement programme. -/
+the transcription-side results discharge every other conjunct of the
+single trusted validation, so the certified canonicalization
+succeeds. -/
 theorem certifyCanon?_isSome_of_checkKey (G : Colored n k)
     (h : ∀ cert B, produceCand G none = some (cert, B) →
       checkKey G cert B = true) :

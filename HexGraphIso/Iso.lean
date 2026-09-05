@@ -17,9 +17,10 @@ Isomorphism of coloured graphs.
 transports `G` onto `H`, preserving each ordered colour index. `checkIso`
 is the executable Boolean checker, sound and complete for `IsIso`.
 
-The section ends with the two bridges between isomorphism and relabelling:
-every labelling produces an isomorphic graph, and every isomorphism arises
-from a labelling. These carry the reference canonical-form proofs.
+The last section relates isomorphism to relabelling: every labelling
+produces an isomorphic graph, and every isomorphism arises from a
+labelling. The canonical-form proofs are stated through these two
+theorems.
 -/
 
 namespace Hex.GraphIso
@@ -48,7 +49,7 @@ theorem checkIso_iff (G H : Colored n k) (p : Perm n) :
     forall_const]
   exact Iff.rfl
 
-/-- Introduce `IsIso` from its two clauses; the definition is not
+/-- Introduce `IsIso` from its two clauses. The definition is not
 exposed across module boundaries, so consumers use this. -/
 theorem IsIso.mk {G H : Colored n k} {p : Perm n}
     (hc : ∀ i, H.coloring.cells[p.get i] = G.coloring.cells[i])

@@ -25,16 +25,17 @@ respects that node's ordered partition and every coarser ancestor
 partition, so a single global store plus a per-node cell-respect
 filter (`respectsMasks`) makes deep discoveries reusable higher up. The
 per-node orbit walk (`witness?`) composes filtered generators by
-breadth-first search inside the target cell; this under-approximates
-the true partition stabilizer (products of individually non-respecting
-generators may respect the partition) and is a heuristic, not a group
-computation.
+breadth-first search inside the target cell. This under-approximates
+the true partition stabilizer, because products of individually
+non-respecting generators may respect the partition. It is a
+heuristic, not a group computation.
 
 Skipping invariant: a child offset is pruned only against a strictly
 earlier offset, so every pruned subtree's key equals the key of an
 earlier offset that was either explored or pruned against a yet
-earlier one; the chain strictly decreases and terminates at an
-explored representative already folded into the running maximum.
+earlier one. The chain of offsets strictly decreases, so it
+terminates at an explored representative already folded into the
+running maximum.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -104,7 +105,7 @@ preferring generators that merge orbits. -/
     return st
   if st.gens.any (fun p => p.1 == γ) then
     return st
-  -- untrusted fast filter (nauty's edge-wise test); the trusted
+  -- untrusted fast filter (nauty's edge-wise test). The trusted
   -- checkAutom runs only when a record is emitted
   unless γ.size == n &&
       ((List.range n).all fun v => γ[v]! < n) &&
@@ -160,7 +161,7 @@ trusted automorphism check, the earlier-offset requirement, and the
 replay's cell-transport check.  Rechecking the witness here makes
 certificate-store validity local to the producer: a malformed cached
 generator or composition can only turn this prune into an ordinary
-descent, rather than poison the whole candidate certificate. -/
+descent, rather than invalidate the whole candidate certificate. -/
 @[expose] def childCellsOk (ctx : Ctx n) (rsLab rsPtn : Array Nat) (level tc : Nat)
     (o o' : Nat) (γ : Array Nat) : Bool :=
   checkAutom ctx.g γ && decide (o' < o) &&
@@ -271,13 +272,14 @@ revalidates everything. -/
               ([], st, none)
             (.node children.reverse, st')
 
-/-- Trace-driven candidate production, per the SPEC: the transcribed
-search runs once with tracing on, and the certificate pass translates
-its trace — the harvested generators, the achieving labelling, and
-its recorded code chain (checker-valid, because spec and search share
-one code coordinate system) — into a certificate against that key.
-No second search runs; the node budget bounds the traced walk. Purely
-a candidate producer — nothing here is trusted. -/
+/-- Trace-driven candidate production: the transcribed search runs
+once with tracing on, and the certificate pass translates its trace
+into a certificate against the traced key. The trace supplies the
+harvested generators, the achieving labelling, and the recorded code
+chain, which the checker accepts because the specification and the
+search share one code coordinate system. No second search runs. The
+node budget bounds the traced walk. This produces a candidate only.
+Nothing here is trusted. -/
 @[expose] def produceCand (G : Colored n k) (budget : Option Nat) :
     Option (CertNode × Key n) :=
   let ctx : Ctx n := { g := rowsOf G }

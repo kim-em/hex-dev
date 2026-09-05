@@ -17,8 +17,9 @@ Code-comparison faithfulness: the transcription's lazily threaded
 level-code comparison (`compCanon` / `eqlevCanon` / `canoncode`)
 implements lexicographic comparison of the current path's refinement
 codes against the incumbent leaf's code list. This is the code-side
-counterpart of `Invariant/Leaves`, and the per-event clause suite the
-domination induction threads through the search quartet.
+counterpart of `Invariant/Leaves`. It supplies one clause per search
+event, and the domination induction threads those clauses through the
+four search functions.
 
 The discipline being captured, with `cs` the codes of the current
 path (one per level, `1`-indexed) and `bs` the incumbent's codes
@@ -28,8 +29,8 @@ path (one per level, `1`-indexed) and `bs` the incumbent's codes
   through the whole path, and `eqlevCanon` records the path length;
 - `compCanon = -1` means the codes diverged downward at some level
   `j`, `eqlevCanon` is frozen at `j - 1`, and no comparison deeper
-  than `j` is ever consulted — lexicographically the whole subtree
-  is smaller;
+  than `j` is ever consulted, because lexicographically the whole
+  subtree is smaller;
 - `compCanon = 1` means the codes diverged upward at `j`; from `j`
   on, `othernode` overwrites `canoncode` with the path's own codes,
   so that when the path reaches a leaf and is installed the stored
@@ -41,7 +42,7 @@ contents; the events are `otherNodePrep` (one comparison step),
 one and the reset form used after a leaf whose `compCanon` was
 repurposed for the row comparison), `firstterminal` (the seed), and
 the pure incumbent installation (`install_codeInv`, the code-`3`
-core). `codeInv_keyCmp_lt`/`gt` are the payoff: a frozen comparison
+arm). `codeInv_keyCmp_lt`/`gt` are the payoff: a frozen comparison
 decides the key order of every leaf below the node against the
 incumbent, whatever the deeper codes and rows are.
 -/
@@ -830,10 +831,11 @@ theorem firstterminal_codeInv {nn : Nat} {cs : List Nat}
   · intro h
     cases h
 
-/-- Installing the current path as the new incumbent (the code-`3`
-core): after a non-downward comparison, the store already holds the
-path's codes, so recording the path as incumbent with the sentinel
-stamped re-seeds the invariant at full agreement. -/
+/-- Installing the current path as the new incumbent (the pure part
+of the code-`3` arm): after a non-downward comparison, the store
+already holds the path's codes, so recording the path as incumbent
+with the sentinel stamped re-seeds the invariant at full
+agreement. -/
 theorem install_codeInv {nn : Nat} {cs bs : List Nat}
     {canoncode : Array Nat} {canonlevel : Nat}
     {eqlevCanon compCanon : Int}
@@ -888,7 +890,7 @@ an off-path leaf a candidate automorphism (`processnode` code `1`),
 so the domination induction needs the same faithfulness clause: the
 recorded depth really is a code-prefix agreement with the first
 leaf's codes. Unlike the incumbent thread there is no overwrite
-window — `firstcode` is written only on the first path — and no
+window (`firstcode` is written only on the first path) and no
 trichotomy, only an agreement depth that steps forward on a match at
 the next level (`otherNodePrep`), is clamped by `recover` and the
 target-cell demotion in `othernode`, and is seeded at the first leaf
@@ -980,11 +982,11 @@ theorem firstCodeInv_len_of_sentinel {nn : Nat} {cs fs : List Nat}
   exact Nat.lt_irrefl _
     (hc ▸ hinv.flt _ (List.getElem_mem (by omega)))
 
-/-- The sentinel hypothesis above is load-bearing rather than a proof
-convenience. At a live gate whose path is strictly shorter than the
-first path, the current leaf's key strictly exceeds the first leaf's,
-because the sentinel outranks every real code, so the code-`1` skip
-would discard a candidate standing above the incumbent. -/
+/-- The sentinel hypothesis above cannot be dropped. Where the
+first-path comparison is still live and the path is strictly shorter
+than the first path, the current leaf's key strictly exceeds the first
+leaf's, because the sentinel outranks every real code, so the code-`1`
+skip would discard a candidate above the incumbent. -/
 theorem firstCodeInv_listCmp_gt_of_lt {nn : Nat} {cs fs : List Nat}
     {firstcode : Array Nat}
     (hinv : FirstCodeInv nn cs fs firstcode cs.length)
@@ -1002,9 +1004,10 @@ theorem firstCodeInv_listCmp_gt_of_lt {nn : Nat} {cs fs : List Nat}
       getElem!_pos fs cs.length (by omega)]
     exact hinv.flt _ (List.getElem_mem _)
 
-/-- The code-`1` leaf case in the form the induction applies: at a
-live gate, with the first-path store showing the sentinel just above
-the current level, the two code paths are equal outright. -/
+/-- The code-`1` leaf case in the form the induction applies: where
+the first-path comparison is still live and the first-path store shows
+the sentinel just above the current level, the two code paths are
+equal outright. -/
 theorem firstCodeInv_eq_of_live {nn : Nat} {cs fs : List Nat}
     {firstcode : Array Nat}
     (hinv : FirstCodeInv nn cs fs firstcode cs.length)

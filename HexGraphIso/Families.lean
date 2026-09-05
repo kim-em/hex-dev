@@ -11,16 +11,16 @@ public import HexGraphIso.Colored
 public section
 
 /-!
-Deterministic graph families for the conformance and benchmark corpus,
-per HexGraphIso/SPEC/hex-graph-iso.md § Reproducible generators. Each
-generator documents its mathematical definition and its stable
-vertex-numbering rule; none uses randomness. This module carries the
-first slice — paths, cycles, circulants, generalized Petersen graphs,
-complete multipartite graphs, repeated components, grids, hypercubes,
-Johnson, Kneser, triangular, Paley, and cyclic Latin-square graphs —
-with the remaining incidence-geometry families (Hadamard matrices,
-projective planes) and the CFI, Miyazaki, and multipede instances to
-follow in the staged corpus.
+Deterministic graph families for the conformance and benchmark corpus.
+These are the reproducible generators the `hex-graph-iso` SPEC
+describes. Each one documents its mathematical definition and its
+stable vertex-numbering rule, and none uses randomness.
+
+The families defined here are paths, cycles, circulants, generalized
+Petersen graphs, complete multipartite graphs, complete bipartite
+graphs, disjoint copies of a graph, grids, hypercubes, Johnson graphs,
+Kneser graphs, triangular graphs, the Latin-square graph of the cyclic
+Latin square, and Paley graphs.
 -/
 
 namespace Hex.GraphIso.Families
@@ -31,7 +31,7 @@ open Hex
 @[expose] def path (n : Nat) : Graph n :=
   Graph.ofRel fun i j => j.val == i.val + 1
 
-/-- The cycle on `n` vertices in their natural order; for `n ≤ 2` this
+/-- The cycle on `n` vertices in their natural order. For `n ≤ 2` this
 degenerates to the path. -/
 @[expose] def cycle (n : Nat) : Graph n :=
   Graph.ofRel fun i j => j.val == (i.val + 1) % n
@@ -136,9 +136,10 @@ in colexicographic order, adjacent when the subsets are disjoint. -/
 `(r, c) ↦ (r + c) mod m`: vertices are the `m²` cells numbered
 `r * m + c`, adjacent when they share a row, a column, or a symbol.
 For `m ≥ 2` this is strongly regular with parameters
-`(m², 3(m−1), m, 6)`; at `m = 5` it shares its parameters
-`(25, 12, 5, 6)` with the Paley graph on 25 vertices while remaining
-non-isomorphic to it, the classic strongly regular negative pair. -/
+`(m², 3(m−1), m, 6)`. At `m = 5` its parameters `(25, 12, 5, 6)` are
+those of the Paley graph on 25 vertices, but the two graphs are not
+isomorphic. That is the standard example of two non-isomorphic
+strongly regular graphs with the same parameters. -/
 @[expose] def latinSquare (m : Nat) : Graph (m * m) :=
   Graph.ofRel fun i j =>
     (i.val != j.val) &&

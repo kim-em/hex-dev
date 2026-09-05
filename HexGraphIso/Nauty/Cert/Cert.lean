@@ -445,12 +445,12 @@ fails, otherwise `some achieved` where `achieved` records whether this
 subtree attains the claimed best. Success certifies that every leaf
 key of the subtree is `≤` the claimed suffix.
 
-One structural recursion (fuel-first, the child sweep an inline fold
+One structural recursion (fuel-first, the child fold written inline
 with `none` absorbing, the per-node `refine`/`breakout` results bound
-once with `let` for shared reduction), so certificate obligations
-reduce in any module's kernel. The `checkChildren` spelling of the
-child sweep below is the proof-layer view; `checkNode_children_eq`
-connects them. -/
+once with `let` for shared reduction), so goals about certificates
+reduce in any module's kernel. `checkChildren` below spells the same
+child fold as a separate recursion, and `checkNode_children_eq`
+relates the two. -/
 @[expose] def checkNode (ctx : Ctx n) (tcLevel : Nat)
     (brows : List (VSet n)) (vgens : List (Array Nat)) :
     Nat → Nat → Array Nat → Array Nat → VSet n → Nat → CertNode →
@@ -524,7 +524,7 @@ connects them. -/
               none
   termination_by structural fuel => fuel
 
-/-- The child sweep of `checkNode` as its own recursion over the child
+/-- The child fold of `checkNode` as its own recursion over the child
 list, from offset `o` on: the spelling the soundness induction
 consumes. -/
 @[expose] def checkChildren (ctx : Ctx n) (tcLevel : Nat)
