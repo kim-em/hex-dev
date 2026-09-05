@@ -143,9 +143,11 @@ Each library has up to three conformance-tree modules:
 - `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
   the `core` profile, specified above. Every Mathlib-free library at
   `done_through ≥ 2` has one. A Mathlib-importing library has one when it owns
-  an executable runtime contract; a layer explicitly classified by
-  `correspondence_only: true` must not (see §Banned anti-patterns and
-  [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
+  an executable runtime contract. A layer with `correspondence_only: true`
+  must not have one (see
+  [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)). A
+  layer with `complexity_layer: true` also must not have one (see §Banned
+  anti-patterns).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence
   campaigns, fast-vs-fast agreement over deterministic input streams,
@@ -336,6 +338,12 @@ MUST NOT appear in any `Conformance.lean`:
   correspondence-only bridge and may have a dedicated conformance target when
   its library SPEC defines that runtime contract and CI reachability.
 
+- **Conformance files in complexity layers.** A library with
+  `complexity_layer: true` contains operation-count definitions and proofs but
+  owns no executable operation. It has no conformance source, fixture stream,
+  or oracle. Its metadata names the computational conformance owners whose
+  tests cover the analysed operations.
+
 ## `#eval` vs `#eval!`
 
 `#eval e` errors when `e` transitively depends on any `sorry`,
@@ -442,6 +450,11 @@ A Mathlib-importing library that owns a runtime of its own, an
 executable reifier, certificate checker, or tactic, does have a `core`
 profile, exercising that runtime against the contract its library SPEC
 states rather than restating bridge theorems.
+
+A library with `complexity_layer: true` likewise has no conformance profile
+or external oracle. Its proofs concern workers owned by the computational
+libraries named in its metadata, and those owners retain the conformance
+fixtures.
 
 ## Profile sizes
 

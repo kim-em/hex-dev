@@ -228,6 +228,33 @@ and normalization behaviour differ, and gcd or division of sparse inputs
 usually becomes dense. Keep explicit conversions until several real consumers
 show which operations a common interface must support.
 
+### Fast multiplication in characteristic two, follow-ups
+
+The generic radix-3 algorithm and its triadic semantics are specified in
+[hex-poly-fast](../HexPolyFast/SPEC/hex-poly-fast.md). The packed
+characteristic-two implementation is specified in
+[hex-gf2](../HexGF2/SPEC/hex-gf2.md). Its generic coefficient-operation bound
+is specified in
+[hex-poly-fast-cslib](Libraries/hex-poly-fast-cslib.md). Those SPECs leave the
+following separate projects:
+
+- Specify and compare additive FFT multiplication, including Cantor and
+  Gao-Mateer variants, for `F_2[x]` and `F_(2^k)[x]`.
+- Specify the wrapped-product splitting reconstruction from §3.3 of Brent,
+  Gaudry, Thomé, and Zimmermann. It may reduce the performance discontinuities
+  caused by padding to an admissible schedule.
+- Instantiate the generic radix-3 plan for `F_(2^k)[x]` in the hex-gfq
+  libraries. The existing word-prime radix-2 NTT does not apply directly to
+  those coefficient fields.
+- Give integer Schönhage-Strassen multiplication its own motivation and SPEC.
+  Current large integer products use GMP through Lean's runtime.
+- Specify a possible hex-gf2-cslib library for packed word-operation bounds.
+  The generic coefficient count cannot express that one word XOR processes
+  64 coefficients or that a base product uses CLMUL.
+- Apply the `-cslib` pattern to another library only after identifying a
+  concrete theorem that justifies the dependency. Turing-machine complexity
+  is not planned.
+
 ### Positive-characteristic multivariate squarefree decomposition
 
 Amend `hex-mv-gcd` with squarefree decomposition over perfect fields of
