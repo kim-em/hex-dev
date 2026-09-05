@@ -28,7 +28,7 @@ structure ReplayLimits where
   /-- The largest number of checker steps performed before exhaustion. One
   step is charged for each proof-rule record, vertex or permutation entry
   inspected, and dense adjacency word inspected. -/
-  maxCheckerSteps : Nat := 5000000
+  maxKernelSteps : Nat := 5000000
 deriving DecidableEq
 
 /-- The step charge of one permutation check: each vertex colour and each
@@ -39,7 +39,7 @@ vertex pair inspected. -/
 /-- Bounded isomorphism check. `none` is replay exhaustion. -/
 @[expose] def checkIso? (replay : ReplayLimits) (G H : Colored n k)
     (p : Perm n) : Option Bool :=
-  if checkCost n ≤ replay.maxCheckerSteps then some (checkIso G H p) else none
+  if checkCost n ≤ replay.maxKernelSteps then some (checkIso G H p) else none
 
 theorem checkIso?_some {replay : ReplayLimits} {G H : Colored n k}
     {p : Perm n} {b : Bool} (h : checkIso? replay G H p = some b) :

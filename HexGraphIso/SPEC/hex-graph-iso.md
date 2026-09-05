@@ -231,7 +231,7 @@ limit structure:
 
 ```lean
 structure ReplayLimits where
-  maxCheckerSteps : Nat := 5000000
+  maxKernelSteps : Nat := 5000000
 
 def checkIso? (replay : ReplayLimits) (G H : Colored n k)
     (p : Perm n) : Option Bool
@@ -719,7 +719,7 @@ example : Not (Graph.Isomorphic G H) := by
   graph_iso
 
 example : Isomorphic G H := by
-  graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
 ```
 
 An uncoloured goal is coloured with the single colour zero and its
@@ -729,39 +729,47 @@ equivalence are proof terms, so the uncoloured route adds nothing to
 the kernel obligation beyond one decision of `0 < n`.
 
 The configuration syntax is the parenthesized named syntax shown above.
-Each of `maxNodes`, `maxCertNodes`, and `maxCheckerSteps` is optional, may
-appear in any order, and may appear at most once. Bare `graph_iso` uses all
-three defaults.
+Each of `maxSearchNodes`, `maxCertRecords`, and `maxKernelSteps` is
+optional and may appear in any order. Bare `graph_iso` uses all three
+defaults.
 
-For a positive goal, the compiled `findIso` search returns a literal
-forward permutation under `maxNodes`. The tactic emits that permutation
-and closes the goal through replay-bounded `checkIso?` and its
-soundness theorem. It need not compute complete canonical certificates.
-Search or replay exhaustion leaves the goal unchanged.
+The four routes are `relabel`, `witness`, `root` and `certs`, and
+`set_option trace.graph_iso true` names the one each call took.
 
-For a negative goal, the tactic first tries the root separator. If that
-does not distinguish the graphs, the compiled search produces a
-canonical-key certificate for each graph and the tactic uses that route
-whenever both certificates fit the configured budgets. The kernel
-replays the two Boolean certificate checks and their key comparison,
-closing the goal through `not_isomorphic_of_checkKeysP` (`checkKeyP`
-twice plus `checkDiff`, with no achieving labelling reified). `checkKeyP`
-(`HexGraphIso/NodePacked.lean`) is the replay over kernel-priced
+A positive goal takes the `relabel` route when the right-hand graph is
+syntactically a relabelling of the left-hand one, closing through
+`isomorphic_relabel` with no kernel evaluation and no search. Otherwise
+it takes the `witness` route: the compiled `findIso` search returns a
+literal forward permutation under `maxSearchNodes`, and the tactic ties
+each side's adjacency, colouring and the permutation to list literals
+and closes the goal through `Kernel.checkIso` and
+`Kernel.isIso_of_checkIso`. Search or replay exhaustion leaves the goal
+unchanged.
+
+A negative goal takes the `root` route when the two root refinement
+codes already differ: the kernel obligation is `Kernel.rootDiff`, one
+refinement per graph, and soundness is
+`Kernel.not_isomorphic_of_rootCode`, which reads the code off the head
+of the specification key. Otherwise it takes the `certs` route: the
+compiled search produces a canonical-key certificate for each graph and
+the tactic uses that route whenever both certificates fit the
+configured budgets. The kernel replays the two Boolean certificate
+checks and their key comparison, closing the goal through
+`Kernel.not_isomorphic_of_checkKeys` (`Kernel.checkKey` twice plus
+`checkDiff`, with no achieving labelling reified). `Kernel.checkKey`
+(`HexGraphIso/Kernel/CheckKey.lean`) is the replay over kernel-priced
 state: the labelling, the partition and the adjacency rows are
 fixed-width fields packed into one `Nat` each, every step is spelled
 with the `Nat` functions the kernel accelerates, and counted loops
 run through one `Nat.rec` step per iteration; it is proven equal to
-`checkKey`, so the soundness theorems keep mentioning the `Array`
+`Nauty.checkKey`, so the soundness theorems keep mentioning the `Array`
 definitions the compiled search runs. The adjacency of each graph is
-tied to one packed literal (`packRowsK`), one sequential kernel
-evaluation of the graph's definition per side. When certificate
-production fails or a certificate exceeds the configured budgets, the
-tactic tries the two-code separator and then replays the full-budget
-verified individualization-refinement decision
-(`decideIso?_not_isomorphic`). That final pairwise route anchors the
-exhaustion semantics: `none` never proves non-isomorphism. The two
-separator legs (`sepRootLitP`, `sepDiffLitP`) replay the same packed
-refinement. No result relies on compiler trust. All routes share an
+tied to one packed literal (`Kernel.packRows`), one sequential kernel
+evaluation of the graph's definition per side, shared by both negative
+routes. When certificate production fails or a certificate exceeds the
+configured budgets the tactic reports the limit that ran out and leaves
+the goal unchanged: exhaustion never proves non-isomorphism.
+No result relies on compiler trust. All routes share an
 irreducible kernel cost evaluating the goal's graph definitions
 themselves, so family-style definitions with expensive adjacency set a
 floor no route can undercut. The certificate obligations replay only
