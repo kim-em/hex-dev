@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.IsoLit
 public import HexGraphIso.NodeLit
+public import HexGraphIso.NodePacked
 public import HexGraphIso.Separator
 public import HexGraph.Basic
 public meta import Lean
@@ -173,6 +174,13 @@ example : Hex.GraphIso.checkKeyFlat probeGraph
     = true := by kdecide
 
 example : Hex.GraphIso.checkKeyLit probeGraph
+    probeGraph.graph.adjMatrix.data.toList probeCert probeKey
+    = true := by kdecide
+
+-- the packed-state obligation the tactic emits: pins the kernel
+-- closure of the packed replay (pget/pset, the byte-table popCount,
+-- the raw bit-set operations) end to end
+example : Hex.GraphIso.checkKeyP probeGraph
     probeGraph.graph.adjMatrix.data.toList probeCert probeKey
     = true := by kdecide
 

@@ -62,11 +62,9 @@ structure CtxRep (ctx : CtxP) (ctxL : CtxL) : Prop where
   m : ctx.m = 2 ^ ctx.w - 1
   rm : ctx.rm = 2 ^ ctx.n - 1
   g : Rep ctx.n ctx.n ctx.g ctxL.g
-  /-- Positions, vertices and the initial partition's infinity `n + 2`
-  fit a field. -/
+  /-- Positions, vertices, the initial partition's infinity `n + 2`, and
+  every level the replay's fuel of `n` reaches fit a field. -/
   nlt : ctx.n + 2 < 2 ^ ctx.w
-  /-- Every level the replay's fuel of `100` reaches fits a field. -/
-  levels : 101 < 2 ^ ctx.w
 
 /-- Read a packed position or vertex vector. -/
 @[expose] def lget (ctx : CtxP) (a i : Nat) : Nat := pget ctx.w ctx.m a i
@@ -1347,7 +1345,7 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     (tcLevel : Nat) (brows : List Nat) {vgensP : List Nat}
     {vgens : List (Array Nat)}
     (hcont : ∀ γ, containsGammaP ctx vgensP γ = containsGamma vgens γ) :
-    ∀ (fuel level : Nat), level + fuel ≤ 101 →
+    ∀ (fuel level : Nat), level + fuel ≤ ctx.n + 1 →
       ∀ {labP : Nat} {lab : List Nat}, Rep ctx.w ctx.n labP lab →
       ∀ {ptnP : Nat} {ptn : List Nat}, Rep ctx.w ctx.n ptnP ptn →
       ∀ (active numcells : Nat) (cert : CertNode) (bcodes : List Nat),
@@ -1358,8 +1356,8 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   | 0, _, _, _, _, _, _, _, _, _, _, _, _ => rfl
   | fuel + 1, level, hlev, labP, lab, hl, ptnP, ptn, hp, active, numcells, cert,
       bcodes => by
-    have hlev1 : level < 2 ^ ctx.w := by have := h.levels; omega
-    have hlev2 : level + 1 < 2 ^ ctx.w := by have := h.levels; omega
+    have hlev1 : level < 2 ^ ctx.w := by have := h.nlt; omega
+    have hlev2 : level + 1 < 2 ^ ctx.w := by have := h.nlt; omega
     have hrs := refineP_eq h hlev1 hl hp active numcells
     cases bcodes with
     | nil => rfl
@@ -1546,4 +1544,122 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
           simp only [hcode, hblt, hbeq, Bool.cond_false, hcmp]
   termination_by structural fuel => fuel
 
+
+/-! # The negative kernel obligation over packed state -/
+
 end Hex.GraphIso.Nauty
+
+namespace Hex.GraphIso
+
+open Nauty
+
+variable {n k : Nat}
+
+theorem mem_toList_lt {a : Array Nat} {b : Nat}
+    (h : ∀ i, i < a.size → a[i]! < b) : ∀ x, x ∈ a.toList → x < b := by
+  intro x hx
+  rw [List.mem_iff_getElem] at hx
+  obtain ⟨i, hi, rfl⟩ := hx
+  rw [Array.length_toList] at hi
+  have := h i hi
+  rw [getBang_eq_atD, atD_eq_getElem _ i (by simpa using hi)] at this
+  exact this
+
+theorem size_flatRows (nn : Nat) (flat : List Bool) : (flatRows nn flat).size = nn := by
+  rw [flatRows, List.size_toArray, List.length_map, chunkRows_length]
+
+theorem flatRows_small (nn : Nat) (flat : List Bool) :
+    ∀ r, r ∈ (flatRows nn flat).toList → r < 2 ^ nn := by
+  intro r hr
+  rw [flatRows, List.toList_toArray, List.mem_map] at hr
+  obtain ⟨seg, _, rfl⟩ := hr
+  have hfold : ∀ (l : List Nat) (acc : Nat), (∀ j, j ∈ l → j < nn) → acc < 2 ^ nn →
+      l.foldl (fun row j => if atD seg j false then Nauty.insert row j else row) acc <
+        2 ^ nn := by
+    intro l
+    induction l with
+    | nil => intro acc _ h; simpa using h
+    | cons j rest ih =>
+      intro acc hl hacc
+      rw [List.foldl_cons]
+      refine ih _ (fun x hx => hl x (List.mem_cons_of_mem _ hx)) ?_
+      split
+      · rw [Nauty.insert, Nat.one_shiftLeft]
+        exact Nat.or_lt_two_pow hacc
+          (Nat.pow_lt_pow_right (by decide) (hl j (List.mem_cons_self ..)))
+      · exact hacc
+  exact hfold _ 0 (fun j hj => List.mem_range.mp hj) (Nat.two_pow_pos nn)
+
+/-- `checkKeyLit` with packed state end to end: the rows packed once
+from the tied flat literal, the labelling and partition packed with
+the field width `w` sized for positions, the initial partition's
+infinity `n + 2`, and every level the replay fuel of `n` reaches. The
+negative route's kernel obligation. -/
+@[expose] def checkKeyP (G : Colored n k) (flat : List Bool)
+    (cert : CertNode) (B : Key) : Bool :=
+  if n == 0 then
+    B.codes == [] && B.rows == []
+  else
+    let w := Nat.log2 (n + 2) + 1
+    let ctx : CtxP := ⟨n, w, 2 ^ w - 1, pack n (flatRows n flat).toList, 2 ^ n - 1⟩
+    checkNodeP ctx 100 B.rows (validGammasP ctx cert) n 1
+      (pack w (initialPartition G).1.toList)
+      (pack w (initPtn n (n + 2) (initialPartition G).2).toList)
+      (initActive (initialPartition G).2)
+      (initialPartition G).2.length cert B.codes = some true
+
+theorem checkKeyP_eq (G : Colored n k) (flat : List Bool)
+    (cert : CertNode) (B : Key) :
+    checkKeyP G flat cert B = checkKeyLit G flat cert B := by
+  rw [checkKeyP, checkKeyLit]
+  rcases Decidable.em (n = 0) with hn | hn
+  · rw [ite_eq_left (by simpa using hn), ite_eq_left (by simpa using hn)]
+  · rw [ite_eq_right (by simpa using hn), ite_eq_right (by simpa using hn)]
+    dsimp only
+    have hn0 : 0 < n := Nat.pos_of_ne_zero hn
+    have hok := initial_nodeOk G hn0
+    have hw : n + 2 < 2 ^ (Nat.log2 (n + 2) + 1) := Nat.lt_log2_self
+    have hctx : CtxRep
+        ⟨n, Nat.log2 (n + 2) + 1, 2 ^ (Nat.log2 (n + 2) + 1) - 1,
+          pack n (flatRows n flat).toList, 2 ^ n - 1⟩
+        (Ctx.toL ⟨n, flatRows n flat⟩) :=
+      { n := rfl
+        m := rfl
+        rm := rfl
+        g := ⟨by show (flatRows n flat).toList.length = n
+                 rw [Array.length_toList, size_flatRows],
+          flatRows_small n flat, rfl⟩
+        nlt := by show n + 2 < 2 ^ (Nat.log2 (n + 2) + 1); exact hw }
+    have hlab : Rep (Nat.log2 (n + 2) + 1) n
+        (pack (Nat.log2 (n + 2) + 1) (initialPartition G).1.toList)
+        (initialPartition G).1.toList :=
+      ⟨by rw [Array.length_toList, hok.labSize],
+        fun x hx => Nat.lt_trans (mem_toList_lt hok.labOk x hx) (by omega), rfl⟩
+    have hptn : Rep (Nat.log2 (n + 2) + 1) n
+        (pack (Nat.log2 (n + 2) + 1)
+          (initPtn n (n + 2) (initialPartition G).2).toList)
+        (initPtn n (n + 2) (initialPartition G).2).toList :=
+      ⟨by rw [Array.length_toList, hok.ptnSize], fun x hx => ?_, rfl⟩
+    · rw [checkNodeP_eq hctx 100 B.rows (containsGammaP_eq hctx cert) n 1
+        (by show 1 + n ≤ n + 1; omega) hlab hptn]
+    · rw [List.mem_iff_getElem] at hx
+      obtain ⟨q, hq, rfl⟩ := hx
+      have hv := hok.vals q
+      rw [getBang_eq_atD, atD_eq_getElem _ q hq] at hv
+      omega
+
+/-- Tying equalities plus two packed-state key certificates with
+differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysL`
+with the replay over packed state. -/
+theorem not_isomorphic_of_checkKeysP {G H : Colored n k}
+    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
+    {LA LB : List Bool}
+    (hA : G.graph.adjMatrix.data.toList = LA)
+    (hB : H.graph.adjMatrix.data.toList = LB)
+    (hG : checkKeyP G LA certG BG = true)
+    (hH : checkKeyP H LB certH BH = true)
+    (hd : Nauty.checkDiff BG BH = true) : ¬Isomorphic G H := by
+  rw [checkKeyP_eq] at hG hH
+  exact not_isomorphic_of_checkKeysL hA hB hG hH hd
+
+end Hex.GraphIso
