@@ -17,10 +17,15 @@ public section
 Totality of the certified canonicalization.
 
 The root instance of first-path totality identifies the unpruned
-specification key with the key the transcription installs; the
-certificate check then succeeds, `certifyCanon` is the resulting total
+specification key with the key the transcription installs.  The
+certificate check then succeeds.  `certifyCanon` is the resulting total
 certificate-checked canonical form, and `searchResult?` is total because
 it agrees with it.
+
+This module builds on `Correct.OffPath.Node` and `Correct.FirstPath.Sweep`,
+whose two totality steps it combines.  It is the last module of
+`HexGraphIso.Nauty.Correct`, and `HexGraphIso.Ops` exposes `certifyCanon`
+from here.
 -/
 
 /-!
@@ -36,9 +41,9 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- The corrected first-path root result proves equality between the
-unpruned specification key and the key installed by the transcription,
-whatever event trail the run reports. -/
+/-- The first-path root result proves equality between the unpruned
+specification key and the key installed by the transcription, whatever
+event trail the run reports. -/
 theorem keyEq_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
     {fs : List Nat} {best : Option (Key n)} {eventTrail : FrameTrail}
     (hroot : FirstRun G { g := rowsOf G } 100 n (n + 2) 1 [] fs
@@ -160,10 +165,10 @@ theorem certifyCanon?_isSome_zero (G : Colored 0 k) :
 end Hex.GraphIso.Nauty
 
 /-!
-Totality of the certified canonicalization.
+The certified canonical form.
 
 The two node statements are proved together by induction on the
-executable recursion fuel; the root instance identifies the specification
+executable recursion fuel.  The root instance identifies the specification
 key with the traced key, and the certificate check then succeeds.
 `certifyCanon` is the resulting total, certificate-checked canonical
 form, and the transcription `searchResult?` is total because it agrees

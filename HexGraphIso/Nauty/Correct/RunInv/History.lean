@@ -20,6 +20,12 @@ active frame, which the mutable `gcaFirst` and `gcaCanon` controls do not
 say by themselves.  `EventOut` existentially carries the full comparison
 path a returned state reached, exposing only the prefix its caller
 needs.
+
+This module builds on the frame invariants of `Correct.Frames` and the
+return-stabilization predicate of `Correct.Unwind.Target`.
+`Correct.RunInv.Mutual` states the live hypotheses of the mutual
+induction in terms of `RefTrail`, `EventOut`, and the node and loop
+outcomes defined here.
 -/
 
 /-!
@@ -28,9 +34,9 @@ Reference-leaf history along the active search trail.
 The mutable controls `gcaFirst` and `gcaCanon` say how far a leaf
 reference may be used during an unwind.  They do not by themselves record
 that the referenced leaf descends from every intervening active frame.
-`RefTrail` supplies exactly that missing path history.  It is deliberately
-separate from `RunInv`: the first leaf seeds it only after the initial
-descent has finished.
+`RefTrail` supplies exactly that missing path history.  It is separate
+from `RunInv`: the first leaf seeds it only after the initial descent has
+finished.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -96,7 +102,7 @@ theorem otherLeaf_noncheaplevel (ctx : Ctx n) (level numcells : Nat)
   simpa only [otherLeafSt, rs, base] using
     (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.1
 
-/-- The empty trail has no reference-history obligations. -/
+/-- The empty trail imposes no reference history. -/
 theorem empty (ctx : Ctx n) (current : Nat) (st : SearchSt n) :
     RefTrail ctx current st FrameTrail.empty := by
   constructor
@@ -190,7 +196,7 @@ theorem otherLeaf_order {ctx : Ctx n} {level numcells : Nat}
 
 /-- Recovering an ancestor preserves both reference histories.  The
 canonical control may be clamped to the recovered level, which only
-weakens its reach obligation. -/
+weakens the reach it asserts. -/
 theorem recover {ctx : Ctx n} {current level inf : Nat} {st : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx current st trail)
     (hle : level ≤ current) :
@@ -320,8 +326,8 @@ theorem push {ctx : Ctx n} {level : Nat} {st : SearchSt n}
       omega
 
 /-- The concrete child state created by a verified sweep inherits both
-reference histories.  `FrameRefs` supplies the new parent-frame case;
-all older frames come directly from the incoming history. -/
+reference histories.  `FrameRefs` supplies the new parent-frame case.
+All shallower frames come directly from the incoming history. -/
 theorem LoopInv.childHistory {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len : Nat} {tcell : VSet n} {coset : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
@@ -373,8 +379,8 @@ theorem firstStab {ctx : Ctx n} {current : Nat} {st : SearchSt n}
     (h.first target entry hlt hnat hentry)
     (htrail.reach target entry hlt hentry) hmap
 
-/-- Appending a first-reference scatter preserves the complete
-return-stabilization obligation at `gcaFirst`. -/
+/-- Appending a first-reference scatter preserves complete return
+stabilization at `gcaFirst`. -/
 theorem firstPushStab {ctx : Ctx n} {current : Nat} {st out : SearchSt n}
     {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
@@ -415,9 +421,8 @@ theorem canonStabTo {ctx : Ctx n} {current limit : Nat} {st : SearchSt n}
     (h.canon target entry hlt hnat hentry)
     (htrail.reach target entry hlt hentry) hmap
 
-/-- Appending a canonical-reference scatter preserves the complete
-return-stabilization obligation through any resumable bound below its
-GCA. -/
+/-- Appending a canonical-reference scatter preserves complete return
+stabilization through any resumable bound below its GCA. -/
 theorem canonPushStabTo {ctx : Ctx n} {current limit : Nat}
     {st out : SearchSt n} {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
@@ -565,7 +570,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- A recursive result state with a faithful comparison path and every
-ancestor stabilization obligation enabled by its returned level. -/
+ancestor stabilization enabled by its returned level. -/
 inductive EventOut (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat)
     (stem fs : List Nat) (out : SearchSt n) (best : Option (Key n))
     (trail : FrameTrail) (r : Int) : Prop where
@@ -582,8 +587,8 @@ inductive EventOut (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat)
 namespace RunEvent
 
 /-- Every event state reads back the semantic incumbent recorded by its
-comparison machine.  The row-rejection arm uses its deliberately reset
-zero-sign machine. -/
+comparison machine.  The row-rejection arm uses its reset zero-sign
+machine. -/
 theorem read {G : Colored n k} {ctx : Ctx n}
     {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt n}
     {best : Option (Key n)} {trail : FrameTrail}
@@ -907,7 +912,7 @@ end EventOut
 end Hex.GraphIso.Nauty
 
 /-!
-Corrected node outcomes coupled to their result-side invariants.
+Node outcomes coupled to their result-side invariants.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -1000,8 +1005,8 @@ structure NodeOutcome (G : Colored n k) (ctx : Ctx n)
   event : EventOut G ctx tcLevel cs fs out outBest eventTrail r
   preserved : TrailExt level receiptTrail eventTrail
 
-/-- Forgetting the concrete result invariant recovers the corrected
-semantic node result consumed by the root reduction. -/
+/-- Forgetting the concrete result invariant recovers the semantic node
+result consumed by the root reduction. -/
 theorem NodeOutcome.toResult {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {cs fs : List Nat}
     {st out : SearchSt n} {best outBest : Option (Key n)}
@@ -1078,7 +1083,7 @@ theorem NodeOutcome.parentEq {G : Colored n k} {ctx : Ctx n}
   | exhausted empty => exact (hfuel empty).elim
 
 /-- An off-path node additionally leaves the first-path guide unchanged.
-It also preserves live guide ordering; unlike a first-path node, it never
+It also preserves live guide ordering.  Unlike a first-path node, it never
 raises `gcaFirst` while returning through its child loop.  These are the
 facts its parent needs before recovering a completed child. -/
 structure OtherOutcome (G : Colored n k) (ctx : Ctx n)
@@ -1101,8 +1106,8 @@ sweep completes its parent node one level up. -/
   | none => Int.ofNat level - 1
 
 /-- A loop receipt coupled to the concrete result invariant ultimately
-returned by its parent node.  `stem` is the parent node's entry prefix;
-the loop's own `codes` include that node's refinement code. -/
+returned by its parent node.  `stem` is the parent node's entry prefix.
+The loop's own `codes` include that node's refinement code. -/
 structure LoopOutcome (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
@@ -1229,7 +1234,7 @@ theorem LoopOutcome.retrail {G : Colored n k} {ctx : Ctx n}
       dest eventTrail r :=
   ⟨h.receipt.retrail htrail, h.event, htrail.trans h.preserved⟩
 
-/-- First-path exit bookkeeping preserves a corrected node outcome. -/
+/-- First-path exit bookkeeping preserves a node outcome. -/
 theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells size index : Nat}
     {cs fs : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
@@ -1248,9 +1253,9 @@ theorem NodeOutcome.firstFinish {G : Colored n k} {ctx : Ctx n}
     · exact h.event
   · exact h.preserved
 
-/-- The first discrete leaf closes the corrected result package.  Its
-generator store is still empty, so every return-frame stabilization
-obligation is vacuous. -/
+/-- The first discrete leaf closes the result package.  Its generator
+store is still empty, so every return-frame stabilization holds
+vacuously. -/
 theorem FirstInv.terminalOutcome {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
     {cs : List Nat} {st : SearchSt n} {trail : FrameTrail}

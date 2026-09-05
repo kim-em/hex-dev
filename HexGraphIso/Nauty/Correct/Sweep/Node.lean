@@ -20,6 +20,11 @@ The logical fuel in `nodeKey`, the node recursion fuel and a sibling
 loop's cursor fuel are kept distinct, and the strict node-fuel bound
 makes the executable zero-fuel branch unreachable at every well-formed
 node.
+
+This module builds on `Correct.Sweep.Carry`.  `Correct.OffPath.Loop`
+runs one sibling sweep with these per-child transport lemmas, and
+`Correct.OffPath.Node` proves the off-path step of the totality
+induction stated here.
 -/
 
 /-!
@@ -29,7 +34,8 @@ When the refined code is already below the incumbent's, `othernode`
 either prunes at once (the first-path agreement is broken) or descends
 through the first path's own target cell looking for automorphisms.  The
 subtree is dominated in both cases, so its exact maximum is the unchanged
-incumbent; what remains is the executable state bookkeeping.
+incumbent.  These lemmas record the accompanying executable state
+bookkeeping.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -990,9 +996,9 @@ end Hex.GraphIso.Nauty
 Fuel-separated totality statements for the transcribed search.
 
 The logical fuel in `nodeKey`, the node recursion fuel, and a sibling
-loop's cursor fuel are deliberately kept distinct.  The strict node-fuel
-bound is preserved by descent and makes the executable zero-fuel branch
-unreachable at every well-formed node.
+loop's cursor fuel are kept distinct.  The strict node-fuel bound is
+preserved by descent and makes the executable zero-fuel branch unreachable
+at every well-formed node.
 
 Beyond the packaged run, each node statement carries the facts the
 enclosing loops thread through it: the saved cheap-cell boundary, the

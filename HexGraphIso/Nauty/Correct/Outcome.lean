@@ -16,7 +16,7 @@ import HexGraphIso.Nauty.Invariant.Closure
 public section
 
 /-!
-Outcome types for the verified search refinement.
+Outcome types for the search correctness proof.
 
 The return integer alone does not distinguish a completed sweep, a
 generator unwind, a comparison prune, and exhausted loop fuel.  In
@@ -28,12 +28,17 @@ A generator or comparison unwind carries the ancestor child it has already
 shown to be bounded by the incumbent.  Intermediate calls merely transport
 that anchor.  At its indexed target loop, the anchor becomes ordinary child
 coverage and the sweep continues.
+
+This is the first module of `HexGraphIso.Nauty.Correct`.  `Correct.Base`
+and `Correct.Unwind.Target` build on the types defined here, and every
+later module of the correctness proof states its results in terms of
+them.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 /-- Public eliminator for injective labellings in downstream outcome
-modules, where the defining predicate is intentionally opaque. -/
+modules, where the defining predicate is opaque. -/
 theorem LabInj.eq {lab : Array Nat} {nn i j : Nat} (h : LabInj lab nn)
     (hi : i < nn) (hj : j < nn) (heq : lab[i]! = lab[j]!) : i = j := by
   unfold LabInj at h
@@ -46,8 +51,8 @@ theorem LabInj.eq {lab : Array Nat} {nn i j : Nat} (h : LabInj lab nn)
     ∀ i, i < n → γ[ref[i]!]! = cur[i]!
 
 /-- A checked carrier whose witnessing generator stabilizes one ancestor
-frame. Direct generator unwinds need only this witness; requiring every
-historical generator to stabilize the frame is stronger and false away
+frame.  Direct generator unwinds need only this witness.  Requiring every
+recorded generator to stabilize the frame is stronger, and it fails away
 from the first-path loop that consumes an orbit closure. -/
 @[expose] def CellCarrier (ctx : Ctx n) (ptn : Array Nat) (level : Nat)
     (base ref cur : Array Nat) (store : Array (Array Nat)) : Prop :=
@@ -440,7 +445,7 @@ theorem ChildDone.ofEq {ctx : Ctx n} {tcLevel specFuel level : Nat}
 /-- A filter preserves sweep coverage when every old live child is either
 absorbed or carried to a key-equivalent new survivor, and filtering adds no
 vertices.  A carried survivor before the cursor is discharged through
-`past`; it need not remain in the live suffix. -/
+`past`.  It need not remain in the live suffix. -/
 theorem SweepCover.filter {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
     {tcell tcell' : VSet n} {cursor : Option Nat} {best : Option (Key n)}
@@ -479,7 +484,7 @@ theorem after_or_not (cursor : Option Nat) (v : Nat) :
 
 /-- A filter's natural preservation rule: every old live child is carried
 to a key-equivalent member of the filtered set.  The member may lie before
-the cursor; `past` converts that case to completed coverage. -/
+the cursor, and `past` converts that case to completed coverage. -/
 theorem SweepCover.filterCarried {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
@@ -747,7 +752,7 @@ theorem nextElem_le {s : VSet n} {v w : Nat} {cursor : Option Nat}
 
 /-- Advancing to the least remaining vertex preserves sweep coverage once
 that vertex's child is absorbed.  The `hcur` premise identifies every
-offset carrying the chosen vertex; callers normally discharge it from
+offset carrying the chosen vertex.  Callers normally discharge it from
 labelling injectivity. -/
 theorem SweepCover.advance {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells tv : Nat}
@@ -818,7 +823,7 @@ theorem SweepCover.done_of_smaller {ctx : Ctx n}
     omega
 
 /-- The non-root arm of the first-path orbit test is a covered skip.  Orbit
-soundness supplies a smaller word-connected pointer target; cell
+soundness supplies a smaller word-connected pointer target.  Cell
 stabilization keeps that target in the sibling cell, and ranked coverage
 shows it was already absorbed. -/
 theorem SweepCover.orbitSkip {ctx : Ctx n}
@@ -975,11 +980,11 @@ structure OrbitUnwind (ctx : Ctx n) (target : Nat) (out : SearchSt n) : Prop whe
   smaller : out.orbits[out.cosetindex]! < out.cosetindex
   sound : OrbSound (OrbConn out.genTrace.toList n) out.orbits n
 
-/-- Why a generator return is sound.  Code one and the ordinary code-two
-return retain their different reference labellings.  Code two's special
-`gcaFirst` return retains the sound orbit pointer that selected an earlier
-child. Non-generator pruning instead returns a locally complete maximum and
-therefore has its own result constructor. -/
+/-- The evidence carried by a generator unwind.  Code one and the
+ordinary code-two return retain their different reference labellings.
+Code two's special `gcaFirst` return retains the sound orbit pointer that
+selected an earlier child.  Non-generator pruning instead returns a
+locally complete maximum and therefore has its own result constructor. -/
 inductive Unwind (ctx : Ctx n) (tcLevel target : Nat)
     (out : SearchSt n) (best : Option (Key n)) where
   | first (anchor : Anchor ctx tcLevel target best)
@@ -1232,9 +1237,9 @@ theorem Guide.tiedUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
   { g with done := g.done.mono hinc }
 
 /-- The first and canonical generator guides that are live strictly above
-the current node.  A guide at the current level is deliberately not
-required: leaf installation temporarily sets a gca to the leaf level, and
-the parent loop replaces it with a concrete explored-child guide. -/
+the current node.  A guide at the current level is not required: leaf
+installation temporarily sets a gca to the leaf level, and the parent
+loop replaces it with a concrete explored-child guide. -/
 structure Guides (ctx : Ctx n) (tcLevel level : Nat) (st : SearchSt n)
     (best : Option (Key n)) : Prop where
   first : 0 < st.gcaFirst → st.gcaFirst < level →
@@ -1282,7 +1287,7 @@ theorem IncGrows.refl (best : Option (Key n)) : IncGrows best best := by
   intro b hb
   exact ⟨b, hb, keyLe_refl b⟩
 
-/-- Folding one key into an incumbent preserves the old incumbent. -/
+/-- Folding one key into an incumbent preserves the incoming incumbent. -/
 theorem IncGrows.incMax (best : Option (Key n)) (K : Key n) :
     IncGrows best (some (incMax best K)) := by
   intro b hb

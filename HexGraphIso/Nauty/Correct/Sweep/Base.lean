@@ -11,7 +11,16 @@ public import HexGraphIso.Nauty.Correct.Exit.Classify
 public section
 
 /-!
-Base cases and transport for the corrected sibling-sweep induction.
+Base cases and transport for the sibling-sweep induction.
+
+Zero cursor fuel is retained as exhaustion, a positive-fuel loop with no
+next vertex has covered its fixed target cell, and the composition lemmas
+prepend one resolved child to a recursively proved tail.  Between them sit
+the two executable filters: `longprune` uses the root ledger, and
+`shortprune` uses the newest pair carried by the returning child.
+
+This module builds on `Correct.Exit.Classify`.  `Correct.Sweep.Carry` and
+`Correct.Sweep.Node` compose these steps into whole sibling sweeps.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -279,8 +288,8 @@ theorem restrict {G : Colored n k} {ctx : Ctx n}
 
 /-- Every fixed vertex of the receiving parent lies in the `fix` set of
 an implicit pair frozen at a deeper cheap-cell boundary.  The result trail
-identifies the parent's frozen frame; its two closed singleton boundaries
-are unchanged in the deeper event partition. -/
+identifies the parent's frozen frame, whose two closed singleton
+boundaries are unchanged in the deeper event partition. -/
 theorem fmptnFix {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len : Nat} {tcell : VSet n} {offset : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
@@ -395,7 +404,7 @@ namespace ShortSource
 
 /-- A live short-prune source that reaches a receiving loop without a
 lower return is valid in that loop's frozen frame.  The child exit bound
-identifies the recorded target with the receiver; explicit pairs then use
+identifies the recorded target with the receiver.  Explicit pairs then use
 their stored frame, while implicit pairs are localized from the root. -/
 theorem atReceiver {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells tc len : Nat} {tcell : VSet n} {offset : Nat}
@@ -495,7 +504,7 @@ theorem longprune {G : Colored n k} {ctx : Ctx n}
     h.frozenPtnSize h.frozenEnd h.values h.cell h.range h.fuelBound haut
 
 /-- The short-prune filter may read the newest pair from a descendant
-state; validity at the frozen parent frame is the only fact needed to
+state.  Validity at the frozen parent frame is the only fact needed to
 preserve the mutable sweep invariant. -/
 theorem shortpruneWith {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len : Nat} {tcell : VSet n}
@@ -1115,8 +1124,8 @@ theorem childCheap {G : Colored n k} {ctx : Ctx n}
     apply hchild.node.short
     simpa only [cleaned, value] using hshort
 
-/-- Package an already established frozen early return as a corrected
-off-path loop result. -/
+/-- Package an already established frozen early return as an off-path
+loop result. -/
 theorem frozen {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel runFuel loopFuel level numcells tc len tv tv1 : Nat} {tcell : VSet n}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
@@ -1157,8 +1166,8 @@ theorem frozen {G : Colored n k} {ctx : Ctx n}
   · intro hshort
     exact ⟨value, rfl, hsource hshort⟩
 
-/-- Package an already established cheap-cell jump as a corrected
-off-path loop result. -/
+/-- Package an already established cheap-cell jump as an off-path loop
+result. -/
 theorem cheap {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel runFuel loopFuel level numcells tc len tv tv1 boundary : Nat} {tcell : VSet n}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}

@@ -14,8 +14,12 @@ public section
 /-!
 `cosetindex` is a first-path loop cursor.  The first-path loop overwrites
 it when it chooses a new sibling, but the whole `otherNode` subtree below
-that sibling leaves it unchanged.  These equations isolate that executable
-fact; orbit-return coverage may use the cursor only on the off-path side.
+that sibling leaves it unchanged.  These equations state that executable
+fact.  Orbit-return coverage may use the cursor only on the off-path
+side.
+
+This module builds on `Correct.RunInv.Mutual`.  `Correct.Exit.Final` uses
+these equations when an orbit return crosses an off-path subtree.
 -/
 
 namespace Hex.GraphIso.Nauty

@@ -19,6 +19,11 @@ These lemmas keep node fuel and child-loop fuel visibly separate.  In
 particular, loop-fuel exhaustion is represented by `LoopResult.exhausted`,
 whereas reaching the end cursor with positive fuel is a genuine completed
 sweep.
+
+The lemmas here are stated against the outcome types of
+`Correct.Outcome`.  `Correct.Unwind.Located` and the node and loop
+modules that follow it use them wherever the induction reaches a leaf, a
+zero-fuel call, or an empty child sweep.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -468,8 +473,8 @@ theorem incKey_max_nonempty {ctx : Ctx n} {bs cs bs' : List Nat}
     exact hcs (List.length_eq_zero_iff.mp (by omega))
 
 /-- The faithful off-path leaf event can be read through `stInc` even in
-the row-rejection arm, where `compCanon` is deliberately reused as a row
-comparison result. -/
+the row-rejection arm, where `compCanon` holds a row comparison result
+rather than a canonical one. -/
 theorem processnode_leaf_read {nn : Nat} {ctx : Ctx n}
     {cs bs : List Nat} {numcells : Nat} {st : SearchSt n}
     (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
@@ -947,8 +952,8 @@ theorem otherNode_leaf_firstFail {ctx : Ctx n}
 
 /-- An early non-first-path leaf return has already absorbed its whole
 (singleton) specification subtree.  Its signed comparison return is a
-local prune outcome; generator returns can subsequently be strengthened to
-`unwind` by the carrier/guide layer. -/
+local prune outcome.  The carrier and guide lemmas strengthen a generator
+return to `unwind`. -/
 theorem otherNode_leaf_pruned {ctx : Ctx n} {nn inf tcLevel specFuel fuel
     level numcells : Nat} {cs bs : List Nat} {st : SearchSt n}
     (hlevel : level = cs.length + 1) (hlevelN : level ≤ nn)

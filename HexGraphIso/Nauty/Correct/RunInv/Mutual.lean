@@ -12,11 +12,17 @@ import all HexGraphIso.Nauty.Search.Search
 public section
 
 /-!
-The live hypotheses shared by the corrected mutual search induction.
+The live hypotheses shared by the mutual search induction.
 
-These clauses deliberately describe a state at which search may continue.
-GCA ordering is not a result-side invariant: the first-child loop raises
-`gcaFirst` before an early unwind, so a returned state need not satisfy it.
+These clauses describe a state at which search may continue.  Ordering of
+the two GCA controls is one of them: it holds on entry to a node and
+throughout its child loops.  A first-child loop raises `gcaFirst` before
+an early unwind, so a returned state carries instead the result-side
+package of `Correct.RunInv.History`.
+
+This module builds on `Correct.RunInv.History`.  `Correct.RunInv.Coset`
+and the node and loop modules after it carry `Live`, `OtherLive`, and
+`FirstLive`.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -442,9 +448,9 @@ theorem firstFinish_fixedpts (level size index : Nat) (st : SearchSt n) :
   rw [firstFinish]
   split <;> rfl
 
-/-- The two path facts threaded only by the corrected mutual induction:
-fixed vertices are singleton cells, and root-valid automorphisms fixing
-them stabilize the current cells. -/
+/-- The two path facts carried by the mutual induction: fixed vertices are
+singleton cells, and root-valid automorphisms fixing them stabilize the
+current cells. -/
 structure PathOk (ctx : Ctx n) (rootPtn rootLab : Array Nat)
     (level : Nat) (st : SearchSt n) : Prop where
   fixed : FixedCells level st
@@ -744,16 +750,16 @@ theorem rowTieBack {G : Colored n k} {ctx : Ctx n}
 end RunPrep
 
 /-- The live state of an off-path sweep.  `gcaFirst` stays strictly above
-the divergence ancestor, so a child push introduces no new stabilization
-obligation at the current frame. -/
+the divergence ancestor, so a child push requires no new stabilization at
+the current frame. -/
 structure OtherLive (ctx : Ctx n) (level : Nat) (st : SearchSt n)
     (trail : FrameTrail) : Prop extends Live ctx level st trail where
   firstBelow : st.gcaFirst < level
 
 /-- The live state of a first-path sweep.  Once generators exist, the
 guiding child has already been absorbed, and every recorded generator
-stabilizes this frozen frame; before that point the store is empty and the
-same clause is vacuous. -/
+stabilizes this frozen frame.  Before that point the store is empty and
+the same clause holds vacuously. -/
 structure FirstLive (ctx : Ctx n) (level : Nat) (st : SearchSt n)
     (trail : FrameTrail) (rsLab rsPtn : Array Nat) : Prop
     extends Live ctx level st trail where
@@ -843,7 +849,8 @@ theorem cover {G : Colored n k} {ctx : Ctx n}
 
 /-- After recovery, the first guide remains strictly older and the
 canonical guide names either an earlier covered child or the child just
-absorbed.  Thus both current-frame reference obligations are restored. -/
+absorbed.  Both current-frame reference conditions therefore hold
+again. -/
 theorem refs {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells tc len tv offset currentOffset inf : Nat} {tcell fixedpts : VSet n}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}

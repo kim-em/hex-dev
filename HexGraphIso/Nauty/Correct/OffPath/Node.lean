@@ -17,19 +17,23 @@ the totality induction.
 
 Such a node either exits at once, sweeps the specification's target cell,
 or, when the path is frozen below the incumbent but still agrees with the
-first path, sweeps the first path's hinted target cell; the hinted sweep
+first path, sweeps the first path's hinted target cell.  The hinted sweep
 does not compute the node key, so its loop bound is converted through the
 common incumbent that dominates both.
+
+This module builds on `Correct.OffPath.Loop`.  `Correct.Certify` uses
+`OtherTotal.succ` as the off-path half of the totality induction.
 -/
 
 /-!
 Totality of one off-path internal node, assembled from the totality of
 its sibling sweep.
 
-An off-path internal node either exits at once (the frozen gate and the
-hinted target-cell mismatch), sweeps the specification's target cell, or,
-when the path is frozen below the incumbent but still agrees with the
-first path, sweeps the first path's hinted target cell.  The hinted sweep
+An off-path internal node either exits at once (the broken first-path
+agreement and the hinted target-cell mismatch), sweeps the
+specification's target cell, or, when the path is frozen below the
+incumbent but still agrees with the first path, sweeps the first path's
+hinted target cell.  The hinted sweep
 does not compute the node key, so its loop bound is converted through the
 common incumbent that dominates both.
 -/

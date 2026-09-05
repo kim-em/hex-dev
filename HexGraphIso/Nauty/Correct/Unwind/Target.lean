@@ -16,17 +16,21 @@ on the way there.
 
 A direct unwind names the frozen child-loop frame it targets by an
 explicit anchor, since the executable state does not retain a parent
-loop's refined labelling; an orbit unwind resolves through the receiving
+loop's refined labelling.  An orbit unwind resolves through the receiving
 loop's evolving coverage instead.  `ReturnStab` states generator
 stabilization at the executable return level.
+
+This module uses the outcome types of `Correct.Outcome`.
+`Correct.Unwind.Located` and `Correct.RunInv.History` consume the
+active-frame trail and the return-stabilization predicate defined here.
 -/
 
 /-!
 Consumption rules for search unwinds at their target child loop.
 
 The executable state does not retain a parent loop's refined labelling:
-`recover` reopens the partition but deliberately leaves the descendant
-labelling in `SearchSt n`.  A direct unwind therefore needs an explicit
+`recover` reopens the partition but leaves the descendant labelling in
+`SearchSt n`.  A direct unwind therefore needs an explicit
 relation between its stored anchor and the frozen loop frame.  Orbit
 unwinds instead resolve through the receiving loop's evolving coverage.
 -/
@@ -147,8 +151,8 @@ theorem Guide.Located.push {ctx : Ctx n} {tcLevel target level : Nat}
   exact ⟨old, by rw [FrameTrail.push_of_ne _ entry hne]; exact hold,
     hframe⟩
 
-/-- A guide for the newly pushed frame is located there immediately;
-the active descent offset need not be the guide's own explored offset. -/
+/-- A guide for the newly pushed frame is located there immediately.  The
+active descent offset need not be the guide's own explored offset. -/
 theorem Guide.Located.pushSelf {ctx : Ctx n} {tcLevel level : Nat}
     {best : Option (Key n)} (trail : FrameTrail)
     (g : Guide ctx tcLevel level best) (offset : Nat) :
@@ -437,7 +441,7 @@ theorem SweepCover.orbitUnwind {ctx : Ctx n}
     hok hsp hend hvals hic hrange hlf payload.sound hne
 
 /-- Every located generator unwind addressed to this loop consumes the
-active child.  Direct carriers use their stored frame and offset; the
+active child.  Direct carriers use their stored frame and offset.  The
 special code-two arm uses its sound orbit pointer. -/
 theorem SweepCover.unwind {ctx : Ctx n}
     {tcLevel specFuel level tc len numcells : Nat} {tcell : VSet n} {tv offset : Nat}
@@ -490,7 +494,7 @@ A generator present after a recursive call need not stabilize every
 intermediate node crossed by an early unwind.  It must stabilize precisely
 the active ancestor frames at or below the returned level.  This is the
 form needed both when a first-path loop continues and when an orbit unwind
-lands at its target frame.
+reaches its target frame.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -505,8 +509,8 @@ level permits the caller to resume. -/
 
 namespace ReturnStab
 
-/-- Lowering the advertised return level weakens the stabilization
-obligation. -/
+/-- Lowering the advertised return level requires stabilization of fewer
+frames. -/
 theorem lower {trail : FrameTrail} {r r' : Int} {st : SearchSt n}
     (h : ReturnStab trail r st) (hle : r' ≤ r) :
     ReturnStab trail r' st := by
@@ -560,7 +564,7 @@ theorem setAllsame {trail : FrameTrail} {r : Int} {st : SearchSt n}
   exact h
 
 /-- Recovering a parent changes no recorded generator, so it preserves
-every return-indexed stabilization obligation. -/
+return stabilization at every level. -/
 theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt n}
     (h : ReturnStab trail r st) (inf level : Nat) :
     ReturnStab trail r (Nauty.recover n inf level st) := by
@@ -569,9 +573,9 @@ theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt n}
   have hstore := recover_store n inf level st
   rwa [hstore.1] at hγ
 
-/-- Appending one generator preserves return stabilization when the old
-store already satisfies it and the new generator stabilizes every
-resumable frame. -/
+/-- Appending one generator preserves return stabilization when the
+existing store already satisfies it and the new generator stabilizes
+every resumable frame. -/
 theorem pushGen {trail : FrameTrail} {r : Int} {st out : SearchSt n}
     {gamma : Array Nat} (h : ReturnStab trail r st)
     (hpush : out.genTrace = st.genTrace.push gamma)
@@ -587,8 +591,9 @@ theorem pushGen {trail : FrameTrail} {r : Int} {st out : SearchSt n}
     subst delta
     exact hnew level entry hlevel hentry
 
-/-- Pushing a child frame preserves all older return obligations.  The
-new frame is required only when the return reaches it. -/
+/-- Pushing a child frame preserves return stabilization at every
+shallower frame.  The new frame is required only when the return reaches
+it. -/
 theorem push {trail : FrameTrail} {r : Int} {st : SearchSt n}
     {level : Nat} {entry : TrailEntry}
     (h : ReturnStab trail r st)
