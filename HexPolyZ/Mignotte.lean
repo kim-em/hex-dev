@@ -443,7 +443,7 @@ theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
     simp
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
     unfold floorSqrt
-    rw [if_neg hn]
+    rw [ite_eq_right hn]
     exact sqrtAux_full_fuel_sq_le n hn_pos
 
 /-- Base case of `ceilSqrt`: since `floorSqrt 0 = 0` is a perfect square,
@@ -464,7 +464,7 @@ theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
     have hfloor : floorSqrt n = sqrtAux n (2 * n.log2 + 1) n := by
       unfold floorSqrt
-      rw [if_neg hn]
+      rw [ite_eq_right hn]
     have hinit : n ≤ (n + 1) ^ 2 := by
       simp [Nat.pow_two]
       grind
@@ -473,9 +473,9 @@ theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
       exact sqrtAux_upper_succ n (2 * n.log2 + 1) n hn_pos hinit
     unfold ceilSqrt
     by_cases hsq : floorSqrt n * floorSqrt n = n
-    · rw [if_pos hsq, Nat.pow_two]
+    · rw [ite_eq_left hsq, Nat.pow_two]
       omega
-    · rw [if_neg hsq]
+    · rw [ite_eq_right hsq]
       exact hub
 
 /-- Restates `coeffNormSq f` as the explicit `foldl` summing `(f.coeff i).natAbs ^ 2`
@@ -499,13 +499,13 @@ theorem coeffL2NormBound_sq_le_two_mul_coeffNormSq (f : ZPoly) :
     dsimp [r]
     exact floorSqrt_sq_le (coeffNormSq f)
   by_cases hsq : r * r = coeffNormSq f
-  · rw [if_pos hsq]
+  · rw [ite_eq_left hsq]
     rw [Nat.pow_two]
     have hsq_floor :
         floorSqrt (coeffNormSq f) * floorSqrt (coeffNormSq f) = coeffNormSq f := by
       simpa [r] using hsq
     omega
-  · rw [if_neg hsq]
+  · rw [ite_eq_right hsq]
     rw [Nat.pow_two]
     have hr_lt : r * r < coeffNormSq f := Nat.lt_of_le_of_ne hr_sq hsq
     have hsucc_le : r * r + 1 ≤ coeffNormSq f := by omega

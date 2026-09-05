@@ -693,13 +693,13 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
         intro hone
         have hmultiplicity := invariant.w_multiplicity
         rw [hone, Norm.rawPolynomial_one levels hvalid hinjective hinv,
-          if_pos hindex] at hmultiplicity
+          ite_eq_left hindex] at hmultiplicity
         have honeMultiplicity :
             Polynomial.rootMultiplicity z (1 : Polynomial ℂ) = 0 := by
           simpa only [Polynomial.C_1] using
             Polynomial.rootMultiplicity_C (1 : ℂ) z
         omega
-      rw [Factor.yunAux, if_neg hnotOne]
+      rw [Factor.yunAux, ite_eq_right hnotOne]
       dsimp only
       let shared := Norm.monic (DensePoly.gcd w repeated)
       let component := Norm.monic (w / shared)
@@ -727,7 +727,7 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
         have hdegree : 0 < component.degree?.getD 0 :=
           degree_pos_of_rawPolynomial_root hvalid hinjective hinv component
             hcomponentNe hroot
-        rw [if_pos hdegree]
+        rw [ite_eq_left hdegree]
         refine ⟨(Factor.polyCoords component, k), ?_, ?_, heq⟩
         · apply mem_yunAux_of_mem hvalid hinjective hinv
           simp [component, shared]
@@ -932,7 +932,7 @@ theorem yun_sound
       distinct repeated :=
     YunInvariant.init hvalid hinjective hinv p hpNe hnatDegree z
   unfold Factor.yunRaw at hentry
-  rw [if_neg (by omega : p.degree?.getD 0 ≠ 0)] at hentry
+  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)] at hentry
   exact yunAux_sound hvalid hinjective hinv z
     ((Norm.rawPolynomial levels p).rootMultiplicity z)
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
@@ -990,7 +990,7 @@ theorem yun_complete
   have hcomplete := yunAux_complete hvalid hinjective hinv z r
     distinct repeated 1 (p.size + 1) #[] invariant hindex hfuel
   unfold Factor.yunRaw
-  rw [if_neg (by omega : p.degree?.getD 0 ≠ 0)]
+  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)]
   exact hcomplete
 
 /-- Every emitted Yun component has only simple roots over `ℂ`. -/
@@ -1020,7 +1020,7 @@ theorem yun_rootMultiplicity_le_one
   have invariant : YunInvariant z r 1 distinct repeated :=
     YunInvariant.init hvalid hinjective hinv p hpNe hnatDegree z
   unfold Factor.yunRaw at hentry
-  rw [if_neg (by omega : p.degree?.getD 0 ≠ 0)] at hentry
+  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)] at hentry
   exact yunAux_rootMultiplicity_le_one hvalid hinjective hinv z r
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
     entry hentry
@@ -1206,18 +1206,18 @@ theorem rawPolynomial_polyPow
       · subst n
         simp [Factor.polyPow, Norm.rawPolynomial_one levels hvalid
           hinjective hinv]
-      · rw [Factor.polyPow, if_neg hn]
+      · rw [Factor.polyPow, ite_eq_right hn]
         have hhalf : n / 2 < n :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by omega)
         dsimp only
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven,
+        · rw [ite_eq_left heven,
             Norm.rawPolynomial_mul levels hvalid hinjective hinv,
             ih (n / 2) hhalf]
           rw [← pow_add]
           congr 1
           omega
-        · rw [if_neg heven,
+        · rw [ite_eq_right heven,
             Norm.rawPolynomial_mul levels hvalid hinjective hinv,
             Norm.rawPolynomial_mul levels hvalid hinjective hinv,
             ih (n / 2) hhalf]
@@ -1572,7 +1572,7 @@ theorem checkYun_yunRaw
     have hproduct : Factor.yunProduct levels components =
         Factor.polyCoords (Norm.monic p) :=
       yun_product hvalid hinjective hinv f hdegree
-    simp only [Factor.checkYun, p, hdegreeZero, if_false,
+    simp only [Factor.checkYun, p, hdegreeZero, ite_false,
       Bool.and_eq_true]
     exact ⟨⟨⟨⟨hmultiplicities, hpositiveMonic⟩, hcoprime⟩,
       hsquarefree⟩, decide_eq_true hproduct⟩

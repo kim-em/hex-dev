@@ -546,7 +546,7 @@ private theorem normalizedXGCD_gcd_eq_one_of_common_dvd_one
     have hcoeff : (DensePoly.C (1 : ZMod64 p) : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 := by
       rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl, hh]
     rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
-    simp only [if_true] at hcoeff
+    simp only [_root_.ite_true] at hcoeff
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hcoeff
   have hr_dvd_one : DensePoly.gcd (ZPoly.modP p g) (ZPoly.modP p h) ∣ (1 : FpPoly p) :=
     hcommon _ (DensePoly.gcd_dvd_left _ _) (DensePoly.gcd_dvd_right _ _)

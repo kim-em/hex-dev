@@ -911,20 +911,20 @@ theorem bhksIndicatorCandidate?_reduceModPow_eq_of_monic
         (Hex.centeredModNat z m) % (Int.ofNat m) = z % (Int.ofNat m) := by
     intro z m hm
     unfold Hex.centeredModNat
-    rw [if_neg hm]
+    rw [ite_eq_right hm]
     set r := z % (Int.ofNat m) with hr_def
     have hrmod : r % (Int.ofNat m) = r := by
       rw [hr_def, Int.emod_emod_of_dvd _ (dvd_refl _)]
     by_cases hc1 : 2 * r.natAbs ≤ m
-    · rw [if_pos hc1]; exact hrmod
-    · rw [if_neg hc1]
+    · rw [ite_eq_left hc1]; exact hrmod
+    · rw [ite_eq_right hc1]
       by_cases hc2 : r < 0
-      · rw [if_pos hc2]
+      · rw [ite_eq_left hc2]
         have hrwadd : (r + Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
           rw [show r + Int.ofNat m = r + 1 * Int.ofNat m by ring,
             Int.add_mul_emod_self_right]
         rw [hrwadd, hrmod]
-      · rw [if_neg hc2]
+      · rw [ite_eq_right hc2]
         have hrwsub : (r - Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
           rw [show r - Int.ofNat m = r + (-1) * Int.ofNat m by ring,
             Int.add_mul_emod_self_right]
@@ -1264,9 +1264,9 @@ private theorem size_normalizeFactorSign_eq (f : Hex.ZPoly) :
     (Hex.normalizeFactorSign f).size = f.size := by
   unfold Hex.normalizeFactorSign
   by_cases hneg : Hex.DensePoly.leadingCoeff f < 0
-  · rw [if_pos hneg]
+  · rw [ite_eq_left hneg]
     exact Hex.ZPoly.scale_size_of_ne_zero (-1 : Int) f (by decide)
-  · rw [if_neg hneg]
+  · rw [ite_eq_right hneg]
 
 /-- `Hex.ZPoly.primitivePart` preserves stored size on nonzero inputs.
 

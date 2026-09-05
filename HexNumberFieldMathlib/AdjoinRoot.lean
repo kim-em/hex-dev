@@ -327,7 +327,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
   by_cases ha : a.isZero = true
   · have hazero : a = 0 := (isZero_iff a).mp ha
     change toComplex (QAdjoin.inv a) rep h = _
-    rw [QAdjoin.inv, if_pos ha, map_zero, hazero, map_zero, inv_zero]
+    rw [QAdjoin.inv, ite_eq_left ha, map_zero, hazero, map_zero, inv_zero]
   · have haFalse : a.isZero = false := by
       cases hzero : a.isZero <;> simp_all
     let m := ZPoly.toRatPoly p
@@ -396,8 +396,8 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       rw [map_zero]
       exact hzero
     change toComplex (QAdjoin.inv a) rep h = _
-    simp only [QAdjoin.inv, haFalse, Bool.false_eq_true, if_false]
-    rw [hs, if_pos rfl, if_neg hlc0]
+    simp only [QAdjoin.inv, haFalse, Bool.false_eq_true, ite_false]
+    rw [hs, ite_eq_left rfl, ite_eq_right hlc0]
     change
       (HexPolyMathlib.toPolynomial
         (reduceCoeffs p
@@ -437,12 +437,12 @@ theorem map_natPow (a : QAdjoin p x) (n : Nat)
             Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
           rw [natPow]
           by_cases heven : (n + 1) % 2 = 0
-          · rw [if_pos heven, map_mul, ih ((n + 1) / 2) hlt,
+          · rw [ite_eq_left heven, map_mul, ih ((n + 1) / 2) hlt,
               ← pow_add]
             have hdecomp := Nat.mod_add_div (n + 1) 2
             congr 1
             omega
-          · rw [if_neg heven, map_mul, map_mul,
+          · rw [ite_eq_right heven, map_mul, map_mul,
               ih ((n + 1) / 2) hlt, ← pow_add, ← pow_succ]
             have hdecomp := Nat.mod_add_div (n + 1) 2
             have hmod := Nat.mod_two_eq_zero_or_one (n + 1)

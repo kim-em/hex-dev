@@ -75,9 +75,9 @@ private theorem sign_map (j : Nat) :
       sign (R := Hex.Fraction R) j := by
   unfold sign
   by_cases h : j % 2 = 0
-  · rw [if_pos h, if_pos h]
+  · rw [ite_eq_left h, ite_eq_left h]
     exact Hex.Fraction.ofCoeff_one
-  · rw [if_neg h, if_neg h, Hex.Fraction.ofCoeff_sub]
+  · rw [ite_eq_right h, ite_eq_right h, Hex.Fraction.ofCoeff_sub]
     change Hex.Fraction.ofCoeff (Zero.zero : R) -
         Hex.Fraction.ofCoeff (One.one : R) =
       (Zero.zero : Hex.Fraction R) - (One.one : Hex.Fraction R)
@@ -158,10 +158,10 @@ theorem coeffInt_add {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
     coeffInt (p + q) t = coeffInt p t + coeffInt q t := by
   by_cases ht : t < 0
   · unfold coeffInt
-    rw [if_pos ht, if_pos ht, if_pos ht]
+    rw [ite_eq_left ht, ite_eq_left ht, ite_eq_left ht]
     grind
   · unfold coeffInt
-    rw [if_neg ht, if_neg ht, if_neg ht, coeff_add_semiring]
+    rw [ite_eq_right ht, ite_eq_right ht, ite_eq_right ht, coeff_add_semiring]
 
 /-- Default formal degree: zero and nonzero constants both have degree zero. -/
 @[expose]
@@ -244,7 +244,7 @@ theorem coeffInt_map (p : DensePoly R) (i : Int) :
       Hex.Fraction.ofCoeff (coeffInt p i) := by
   unfold coeffInt
   by_cases h : i < 0
-  · rw [if_pos h, if_pos h]
+  · rw [ite_eq_left h, ite_eq_left h]
     exact Hex.Fraction.ofCoeff_zero.symm
   · simp [h, DensePoly.Fraction.coeff_map]
 
@@ -289,8 +289,8 @@ theorem poly_map (J : Nat) (f g : DensePoly R) :
   intro l
   simp only [coeff_poly, DensePoly.Fraction.coeff_map]
   by_cases h : l < J + 1
-  · rw [if_pos h, if_pos h, coeffMinor_map]
-  · rw [if_neg h, if_neg h]
+  · rw [ite_eq_left h, ite_eq_left h, coeffMinor_map]
+  · rw [ite_eq_right h, ite_eq_right h]
     exact Hex.Fraction.ofCoeff_zero.symm
 
 /-- Coefficients of mapped generalized subresultants lie in the coefficient

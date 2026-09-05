@@ -271,7 +271,7 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
     simp at hdegree
   unfold componentRoots?
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   have hisolateSome := HexRootsMathlib.isolate_isSome eliminant hsimple
     heliminant (separationDepth eliminant : Int) .nkThenPellet
   cases hisolate : isolate eliminant hsimple
@@ -283,7 +283,7 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined eliminant hsimple
+          rw [dite_eq_left (HexRootsMathlib.isolate_refined eliminant hsimple
             (separationDepth eliminant : Int) .nkThenPellet
             hisolate iso hiso)]
           rfl)
@@ -1241,7 +1241,7 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
         List.getElem?_map, List.getElem?_range hj]
       simp only [Option.map_some, Option.getD_some]
       by_cases hij : i = 0 && j = 0
-      · rw [if_pos hij, if_pos hij]
+      · rw [ite_eq_left hij, ite_eq_left hij]
         change Polynomial.eval₂ (Int.castRingHom ℂ) s
             (HexPolyMathlib.toPolynomial
               (DensePoly.ofCoeffs
@@ -1258,7 +1258,7 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
           | 0 => simp [Array.getD]
           | 1 => simp [Array.getD]
           | k + 2 =>
-              rw [if_neg (by omega), if_neg (by omega)]
+              rw [ite_eq_right (by omega), ite_eq_right (by omega)]
               rw [Array.getD_eq_getD_getElem?,
                 Array.getElem?_eq_none (by simp), Option.getD_none, add_zero]
               rfl
@@ -1266,7 +1266,7 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
         simp only [Int.coe_castRingHom]
         push_cast
         ring
-      · rw [if_neg hij, if_neg hij]
+      · rw [ite_eq_right hij, ite_eq_right hij]
         change Polynomial.eval₂ (Int.castRingHom ℂ) s
             (HexPolyMathlib.toPolynomial
               (DensePoly.C (-clearRat den ((f.coeff i).coeffs.coeff j)))) = _
@@ -1288,11 +1288,11 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
     simp only [sub_mul, Finset.sum_sub_distrib]
     congr 1
     rcases Nat.eq_zero_or_pos i with rfl | hipos
-    · rw [if_pos rfl]
+    · rw [ite_eq_left rfl]
       rw [Finset.sum_eq_single 0 (fun b _ hb => by simp [hb])
         (fun h0 => absurd (Finset.mem_range.mpr hd) h0)]
       simp
-    · rw [if_neg (by omega)]
+    · rw [ite_eq_right (by omega)]
       apply Finset.sum_eq_zero
       intro j _
       simp [hipos.ne']
@@ -1630,8 +1630,8 @@ theorem size_pos_of_core_degree [ZPoly.CheckedIrreducible p]
     unfold DensePoly.resultant
     rw [hliftZero]
     simp only [Bool.false_eq_true, ↓reduceIte]
-    rw [if_pos (show DensePoly.isZero (0 : DensePoly ZPoly) = true from rfl),
-      if_neg (by omega)]
+    rw [ite_eq_left (show DensePoly.isZero (0 : DensePoly ZPoly) = true from rfl),
+      ite_eq_right (by omega)]
   rw [hnorm] at hdegree
   have hcore : (ZPoly.squareFreeCore 0).degree?.getD 0 = 0 := by decide
   omega
@@ -1873,7 +1873,7 @@ theorem roots?_isSome [ZPoly.CheckedIrreducible p]
       intro out component hcomponent
       obtain ⟨hdegree, hMultiplicity⟩ :=
         Roots.yun_positive f component hcomponent
-      rw [dif_pos hMultiplicity]
+      rw [dite_eq_left hMultiplicity]
       obtain ⟨found, hfound⟩ := Option.isSome_iff_exists.mp
         (Roots.componentRoots?_total_of_degree component.1 component.2
           hMultiplicity rep h hdegree)

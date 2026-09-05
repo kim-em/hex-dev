@@ -58,7 +58,7 @@ private theorem coeff_expand_even (p : ℂ[X]) (k : Nat) :
 
 private theorem coeff_expand_even_odd (p : ℂ[X]) (k : Nat) :
     (expand ℂ 2 (graeffeEvenPart p)).coeff (2 * k + 1) = 0 := by
-  rw [coeff_expand (by omega), if_neg]
+  rw [coeff_expand (by omega), ite_eq_right]
   omega
 
 private theorem coeff_expand_odd (p : ℂ[X]) (k : Nat) :
@@ -73,7 +73,7 @@ private theorem coeff_expand_odd (p : ℂ[X]) (k : Nat) :
 
 private theorem coeff_expand_odd_odd (p : ℂ[X]) (k : Nat) :
     (expand ℂ 2 (graeffeOddPart p)).coeff (2 * k + 1) = 0 := by
-  rw [coeff_expand (by omega), if_neg]
+  rw [coeff_expand (by omega), ite_eq_right]
   omega
 
 /-- Recombining the contracted even and odd parts recovers the polynomial. -/
@@ -210,9 +210,9 @@ theorem rootsInDisc_graeffePoly {p : ℂ[X]} (hp : p ≠ 0) (r : ℝ) (hr : 0 �
       congr 1
       simp only [Metric.mem_ball, dist_zero_right, norm_pow]
       by_cases hz : ‖z‖ < r
-      · rw [if_pos hz, if_pos]
+      · rw [ite_eq_left hz, ite_eq_left]
         nlinarith [norm_nonneg z]
-      · rw [if_neg hz, if_neg]
+      · rw [ite_eq_right hz, ite_eq_right]
         nlinarith [norm_nonneg z]
 
 /-! # Coefficient-ball arithmetic -/
@@ -747,7 +747,7 @@ theorem graeffe_enclosePoly {cs : Array Hex.CoeffBall} {q : ℂ[X]}
     · have he := graeffeEven_encloses h bits k
       have ho := graeffeOdd_encloses h bits (k - 1)
       have hs := CoeffBall.sub_encloses he ho bits
-      rw [if_neg hk0]
+      rw [ite_eq_right hk0]
       have hx : (X * graeffeOddPart q ^ 2).coeff k =
           (graeffeOddPart q ^ 2).coeff (k - 1) := by
         let n := k - 1
@@ -810,11 +810,11 @@ private theorem softPelletFold (cs : Array Hex.CoeffBall) (k : Nat)
       simp only [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
       constructor
       · by_cases hnk : n = k
-        · rw [if_pos hnk, ih.1, Finset.sum_range_succ]
-          simp only [hnk, if_pos, add_zero]
-        · rw [if_neg hnk, Dyadic.toReal_add, Dyadic.toReal_mul, ih.1, ih.2,
+        · rw [ite_eq_left hnk, ih.1, Finset.sum_range_succ]
+          simp only [hnk, ite_eq_left, add_zero]
+        · rw [ite_eq_right hnk, Dyadic.toReal_add, Dyadic.toReal_mul, ih.1, ih.2,
             Finset.sum_range_succ]
-          simp only [hnk, if_false]
+          simp only [hnk, ite_false]
       · rw [Dyadic.toReal_mul, ih.2, pow_succ]
 
 /-- A successful soft comparison names a stored coefficient. -/
@@ -823,7 +823,7 @@ theorem softPelletAt_size {cs : Array Hex.CoeffBall} {k : ℕ}
     k < cs.size := by
   unfold Hex.softPelletAt at h
   by_contra hk
-  rw [if_neg (by omega)] at h
+  rw [ite_eq_right (by omega)] at h
   contradiction
 
 /-- A successful three-radius comparison names a stored coefficient. -/
@@ -865,7 +865,7 @@ theorem softPelletAt_bound {cs : Array Hex.CoeffBall} {k : ℕ}
         Dyadic.toReal rlo ^ k := by
   have hk := softPelletAt_size h
   unfold Hex.softPelletAt at h
-  rw [if_pos hk] at h
+  rw [ite_eq_left hk] at h
   let result := (List.range cs.size).foldl
       (fun acc i =>
         let acc' := if i = k then acc.1

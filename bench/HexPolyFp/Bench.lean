@@ -212,7 +212,7 @@ theorem monicModulusFive_monic (degree : Nat) : DensePoly.Monic (monicModulusFiv
   by_cases h : (1 : ZMod64 5) = 0
   · exact False.elim (one_ne_zero_five h)
   · have h' : ¬ ((1 : ZMod64 5) = Zero.zero) := h
-    simp only [dif_neg h']
+    simp only [dite_eq_right h']
     simp [Array.getElem_push] <;> rfl
 
 /-- Deterministic monic modulus of degree `degree` over the large benchmark prime. -/

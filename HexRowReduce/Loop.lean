@@ -251,9 +251,9 @@ private theorem rowReduceLoop_shape :
       intro col state h
       unfold rowReduceLoop
       by_cases hRow : state.row < n
-      · rw [dif_pos hRow]
+      · rw [dite_eq_left hRow]
         by_cases hCol : col < m
-        · rw [dif_pos hCol]
+        · rw [dite_eq_left hCol]
           cases hpivot : findPivot? state.echelon ⟨col, hCol⟩ state.row with
           | none =>
               simpa [hpivot, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
@@ -279,9 +279,9 @@ private theorem rowReduceLoop_shape :
               simpa [hpivot, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm, nextState, colFin, target,
                 swappedEchelon, swappedTransform, pivotVal, scaledEchelon, scaledTransform,
                 eliminated] using ih (col + 1) nextState hnext
-        · rw [dif_neg hCol]
+        · rw [dite_eq_right hCol]
           exact h.mono_col (by omega)
-      · rw [dif_neg hRow]
+      · rw [dite_eq_right hRow]
         exact h.mono_col (by omega)
 
 omit [DecidableEq R] in
@@ -334,9 +334,9 @@ private theorem rowReduceLoop_canonical :
       intro col state hshape hcanon
       unfold rowReduceLoop
       by_cases hRow : state.row < n
-      · rw [dif_pos hRow]
+      · rw [dite_eq_left hRow]
         by_cases hCol : col < m
-        · rw [dif_pos hCol]
+        · rw [dite_eq_left hCol]
           cases hpivot : findPivot? state.echelon ⟨col, hCol⟩ state.row with
           | none =>
               simpa [hpivot] using
@@ -372,9 +372,9 @@ private theorem rowReduceLoop_canonical :
                 swappedTransform, pivotVal, scaledEchelon, scaledTransform,
                 eliminated] using
                 ih (col + 1) nextState hnext_shape hnext_canon
-        · rw [dif_neg hCol]
+        · rw [dite_eq_right hCol]
           exact hcanon
-      · rw [dif_neg hRow]
+      · rw [dite_eq_right hRow]
         exact hcanon
 
 /-- `rowReduce_final_canonical`: the matrix produced by the full `rowReduceLoop` run over
@@ -402,11 +402,11 @@ private theorem rowSwap_zero_column_preserve {M : Matrix R n m}
   intro r hr
   rw [getElem_rowSwap]
   by_cases hrj : r = j
-  · subst r; rw [if_pos rfl]; exact h i hi
-  · rw [if_neg hrj]
+  · subst r; rw [ite_eq_left rfl]; exact h i hi
+  · rw [ite_eq_right hrj]
     by_cases hri : r = i
-    · subst r; rw [if_pos rfl]; exact h j hj
-    · rw [if_neg hri]; exact h r hr
+    · subst r; rw [ite_eq_left rfl]; exact h j hj
+    · rw [ite_eq_right hri]; exact h r hr
 
 omit [DecidableEq R] in
 /-- Scaling row `i` by `c` preserves any zero-column property on rows from
@@ -420,9 +420,9 @@ private theorem rowScale_zero_column_preserve {M : Matrix R n m}
   rw [getElem_rowScale]
   by_cases hri : r = i
   · subst r
-    rw [if_pos rfl, h i hr]
+    rw [ite_eq_left rfl, h i hr]
     grind
-  · rw [if_neg hri]; exact h r hr
+  · rw [ite_eq_right hri]; exact h r hr
 
 /-- Folding `eliminateColumn`'s step function over any list preserves every
 row's entry at column `k`, provided the pivot row is zero at column `k`. -/
@@ -455,11 +455,11 @@ private theorem eliminateColumn_foldl_other_column
         exact hs
       rw [ih _ r hstep_pivot]
       by_cases hxp : x = pivotRow
-      · rw [dif_pos hxp]
-      · rw [dif_neg hxp]
+      · rw [dite_eq_left hxp]
+      · rw [dite_eq_right hxp]
         by_cases hcoeff : -s.1[x][col] = 0
-        · rw [if_pos hcoeff]
-        · rw [if_neg hcoeff]
+        · rw [ite_eq_left hcoeff]
+        · rw [ite_eq_right hcoeff]
           by_cases hrx : r = x
           · subst r
             rw [rowAdd_get_dst, hs]
@@ -536,9 +536,9 @@ private theorem rowReduceLoop_no_pivot_zero :
       intro col state h
       unfold rowReduceLoop
       by_cases hRow : state.row < n
-      · rw [dif_pos hRow]
+      · rw [dite_eq_left hRow]
         by_cases hCol : col < m
-        · rw [dif_pos hCol]
+        · rw [dite_eq_left hCol]
           cases hpivot : findPivot? state.echelon ⟨col, hCol⟩ state.row with
           | none =>
               have hnext : RowReduceNoPivotZero (R := R) (n := n) (m := m) (col + 1) state := by
@@ -614,9 +614,9 @@ private theorem rowReduceLoop_no_pivot_zero :
                 pivotVal, scaledEchelon, scaledTransform, eliminated, nextState,
                 Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
                 ih (col + 1) nextState hnext
-        · rw [dif_neg hCol]
+        · rw [dite_eq_right hCol]
           exact h.widen_col_at_m (by omega)
-      · rw [dif_neg hRow]
+      · rw [dite_eq_right hRow]
         exact h.widen_col_at_n (by omega)
 
 /-- `rowReduce_final_no_pivot_zero`: the matrix produced by the full `rowReduceLoop` run
@@ -754,9 +754,9 @@ private theorem rowReduceLoop_transform_preserve (M : Matrix R n m) :
       intro state h
       unfold rowReduceLoop
       by_cases hRow : state.row < n
-      · rw [dif_pos hRow]
+      · rw [dite_eq_left hRow]
         by_cases hCol : col < m
-        · rw [dif_pos hCol]
+        · rw [dite_eq_left hCol]
           let colFin : Fin m := ⟨col, hCol⟩
           cases hp : findPivot? state.echelon colFin state.row with
           | none =>
@@ -786,9 +786,9 @@ private theorem rowReduceLoop_transform_preserve (M : Matrix R n m) :
               simpa [colFin, hp, target, swappedEchelon, swappedTransform, pivotVal,
                 scaledEchelon, scaledTransform, eliminated]
                 using hnext
-        · rw [dif_neg hCol]
+        · rw [dite_eq_right hCol]
           exact h
-      · rw [dif_neg hRow]
+      · rw [dite_eq_right hRow]
         exact h
 
 /-- Reduced row echelon form data computed by Gauss-Jordan elimination. -/

@@ -67,10 +67,10 @@ theorem integral_logDeriv_eq_rootCount {p : ℂ[X]} (hp : p ≠ 0)
           fun b hb => hnone b (Multiset.mem_cons_of_mem hb)
         rw [Multiset.map_cons, Multiset.sum_cons, Multiset.countP_cons, ih htail]
         by_cases hin : a ∈ ball c R
-        · rw [if_pos hin, integral_subInv_inside hin]
+        · rw [ite_eq_left hin, integral_subInv_inside hin]
           push_cast
           ring
-        · rw [if_neg hin, integral_subInv_outside_of_not_mem hR ha hin]
+        · rw [ite_eq_right hin, integral_subInv_outside_of_not_mem hR ha hin]
           simp
   simpa only [rootsInDisc] using hsum p.roots hroot
 

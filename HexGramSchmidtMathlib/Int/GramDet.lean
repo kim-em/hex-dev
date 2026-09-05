@@ -715,7 +715,7 @@ private theorem progressMatrix_succ_eq_colReplace
   -- Case split on Fin k equality.
   by_cases hjs : (⟨j, hj⟩ : Fin k) = (⟨s, hs⟩ : Fin k)
   · -- Column s case.
-    rw [if_pos hjs]
+    rw [ite_eq_left hjs]
     -- Get j = s from the Fin equality, then substitute hj with hs.
     have hjs_val : j = s := congrArg Fin.val hjs
     -- Replace [⟨j, hj⟩] with [⟨s, hs⟩] in the LHS by the Fin equality.
@@ -822,7 +822,7 @@ private theorem progressMatrix_succ_eq_colReplace
     -- Now use hfold_match to conclude.
     grind
   · -- j ≠ s case.
-    rw [if_neg hjs]
+    rw [ite_eq_right hjs]
     have hjs_ne : j ≠ s := fun h => hjs (Fin.ext h)
     by_cases hjlt : j < s
     · -- j < s: both versions use basis-row dot.

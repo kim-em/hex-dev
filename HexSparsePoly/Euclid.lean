@@ -97,7 +97,7 @@ theorem mulMonomial_divMonomial {C : Type u} [Lean.Grind.CommRing C]
     intro f
     rw [coeff_mulMonomial, coeff_ofCanonicalList]
     by_cases hef : e ≤ f
-    · rw [if_pos hef]
+    · rw [ite_eq_left hef]
       have happly := coeffList_mapTerms_apply (g := fun x => x - e)
         (f := fun _ c => c) (l := s.terms.toList) (e := f)
         s.pairwise_toList
@@ -111,7 +111,7 @@ theorem mulMonomial_divMonomial {C : Type u} [Lean.Grind.CommRing C]
         grind
       rw [hone]
       rfl
-    · rw [if_neg hef]
+    · rw [ite_eq_right hef]
       have hzero : s.coeff f = 0 :=
         coeffList_eq_zero fun u hu huf => by
           have := hall u hu
@@ -252,16 +252,16 @@ theorem divExactMonic?_eq_some {s t q : SparsePoly S} (ht : t.Monic) :
   constructor
   · intro h
     by_cases hr : (divModMonic s t ht).2 = 0
-    · rw [if_pos hr, Option.some.injEq] at h
+    · rw [ite_eq_left hr, Option.some.injEq] at h
       have hspec := divModMonic_spec s t ht
       rw [hr, add_zero, h] at hspec
       exact hspec.symm
-    · rw [if_neg hr] at h
+    · rw [ite_eq_right hr] at h
       cases h
   · intro hs
     have hdvd : t ∣ s := ⟨q, by rw [hs, mul_comm]⟩
     have hr := divModMonic_snd_eq_zero_of_dvd ht hdvd
-    rw [if_pos hr, Option.some.injEq]
+    rw [ite_eq_left hr, Option.some.injEq]
     have hspec := divModMonic_spec s t ht
     rw [hr, add_zero] at hspec
     have hqt : (divModMonic s t ht).1 * t = q * t := by rw [hspec, hs]
@@ -294,10 +294,10 @@ theorem divExactMonic?_isSome {s t : SparsePoly S} (ht : t.Monic) :
       refine ⟨(divModMonic s t ht).1, ?_⟩
       rw [mul_comm]
       exact hspec.symm
-    · rw [if_neg hr] at h
+    · rw [ite_eq_right hr] at h
       cases h
   · intro hdvd
-    rw [if_pos (divModMonic_snd_eq_zero_of_dvd ht hdvd)]
+    rw [ite_eq_left (divModMonic_snd_eq_zero_of_dvd ht hdvd)]
     rfl
 
 end Laws

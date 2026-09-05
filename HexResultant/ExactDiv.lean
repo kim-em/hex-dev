@@ -96,16 +96,16 @@ theorem powNat_eq_pow {S : Type u} [Lean.Grind.Semiring S]
       by_cases hn : n = 0
       · subst n
         simp [Lean.Grind.Semiring.pow_zero]
-      · rw [if_neg hn]
+      · rw [ite_eq_right hn]
         have hlt : n / 2 < n :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by decide : 1 < 2)
         rw [ih (n / 2) hlt (x * x)]
         have hdiv := Nat.mod_add_div n 2
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul]
+        · rw [ite_eq_left heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul]
           congr 1
           omega
-        · rw [if_neg heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul,
+        · rw [ite_eq_right heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul,
             ← Lean.Grind.Semiring.pow_succ]
           congr 1
           have hmod := Nat.mod_lt n (by decide : 0 < 2)
@@ -190,8 +190,8 @@ theorem divScalar_eq_divScalarImpl [Zero R] [DecidableEq R] [Div R]
     (p : DensePoly R) (b : R) : divScalar p b = divScalarImpl p b := by
   unfold divScalar divScalarImpl ofList
   by_cases hb : b = 0
-  · rw [if_pos hb, if_pos hb]
-  · rw [if_neg hb, if_neg hb]
+  · rw [ite_eq_left hb, ite_eq_left hb]
+  · rw [ite_eq_right hb, ite_eq_right hb]
     congr 1
     show ((p.toArray.toList).map (fun a => a / b)).toArray = _
     rw [← Array.toList_map, Array.toArray_toList]
@@ -202,7 +202,7 @@ theorem size_divScalarImpl_le [Zero R] [DecidableEq R] [Div R]
   unfold divScalarImpl
   by_cases hb : b = 0
   · simp [hb]
-  · rw [if_neg hb]
+  · rw [ite_eq_right hb]
     exact Nat.le_trans (size_ofCoeffs_le _) (by simp)
 
 /-- Register the array pass as the compiled scalar-division implementation. -/
@@ -230,7 +230,7 @@ theorem coeff_divScalar [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
     [ExactDivLaws R] (p : DensePoly R) {b : R} (hb : b ≠ 0) (n : Nat) :
     (divScalar p b).coeff n = p.coeff n / b := by
   unfold divScalar
-  rw [if_neg hb, coeff_ofList]
+  rw [ite_eq_right hb, coeff_ofList]
   have hzero : (0 : R) / b = 0 := by
     simpa [Lean.Grind.Semiring.zero_mul] using
       (ExactDivLaws.mul_div_cancel_right (0 : R) b hb)

@@ -53,7 +53,7 @@ theorem ofNormalized?_isSome
           (xs := isolations) (f := DyadicRootIsolation.toRefined?)
           (fun iso hiso => by
             unfold DyadicRootIsolation.toRefined?
-            rw [dif_pos (HexRootsMathlib.isolate_refined p squarefree
+            rw [dite_eq_left (HexRootsMathlib.isolate_refined p squarefree
               (separationDepth p : Int) .nkThenPellet hrun iso hiso)]
             rfl)
         cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
@@ -170,8 +170,8 @@ theorem exactFactor?_isSome (a : AlgebraicRoot) (q : ZPoly)
     (hroot : (HexRootsMathlib.toPolyℂ q).IsRoot a.toComplex) :
     (a.exactFactor? q).isSome := by
   unfold AlgebraicRoot.exactFactor?
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hirred,
-    dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hirred,
+    dite_eq_left hsimple]
   have hqne : q ≠ 0 := by
     intro hq
     rw [hq] at hdegree
@@ -185,7 +185,7 @@ theorem exactFactor?_isSome (a : AlgebraicRoot) (q : ZPoly)
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined q hsimple
+          rw [dite_eq_left (HexRootsMathlib.isolate_refined q hsimple
             (separationDepth q : Int) .nkThenPellet hrun iso hiso)]
           rfl)
       cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
@@ -610,7 +610,7 @@ private theorem relationAt?_isSome_of_linear [ZPoly.CheckedIrreducible p]
       ⟨coeffs, hcoords⟩
   unfold relationAt?
   dsimp only
-  rw [dif_pos hk]
+  rw [dite_eq_left hk]
   cases hspan : Matrix.spanCoeffs previous target with
   | none => exact (hnotnone hspan).elim
   | some found => simp
@@ -901,7 +901,7 @@ private theorem minpoly?_certificates [ZPoly.CheckedIrreducible p]
   have hrelation' := hrelation
   unfold relationAt? at hrelation
   dsimp only at hrelation
-  rw [dif_pos (by omega : i + 1 ≤ p.degree?.getD 0)] at hrelation
+  rw [dite_eq_left (by omega : i + 1 ≤ p.degree?.getD 0)] at hrelation
   obtain ⟨coeffs, _hspan, rfl⟩ := Option.map_eq_some_iff.mp hrelation
   have hrelationNe : relationPoly coeffs ≠ 0 := by
     intro hzero
@@ -1225,8 +1225,8 @@ theorem toAlgebraicNumber?_isSome [ZPoly.CheckedIrreducible p]
         minpoly?_certificates a hq
       unfold QAdjoin.toAlgebraicNumber?
       simp only [hq, Option.bind_eq_bind, Option.bind_some]
-      rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree,
-        dif_pos hirred, dif_pos hsimple]
+      rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree,
+        dite_eq_left hirred, dite_eq_left hsimple]
       have hqne : q ≠ 0 := by
         intro hzero
         rw [hzero] at hdegree
@@ -1240,7 +1240,7 @@ theorem toAlgebraicNumber?_isSome [ZPoly.CheckedIrreducible p]
             (xs := isolations) (f := DyadicRootIsolation.toRefined?)
             (fun iso hiso => by
               unfold DyadicRootIsolation.toRefined?
-              rw [dif_pos (HexRootsMathlib.isolate_refined q hsimple
+              rw [dite_eq_left (HexRootsMathlib.isolate_refined q hsimple
                 (separationDepth q : Int) .nkThenPellet hrun iso hiso)]
               rfl)
           cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with

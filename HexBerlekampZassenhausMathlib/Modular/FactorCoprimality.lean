@@ -194,7 +194,7 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
         | succ k =>
             have hcoeff_zero : rawGcd.coeff (k + 1) = (0 : Hex.ZMod64 p) :=
               Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
-            rw [hcoeff_zero, if_neg (Nat.succ_ne_zero k)]
+            rw [hcoeff_zero, ite_eq_right (Nat.succ_ne_zero k)]
             exact hzero_mul
       rw [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
       exact ⟨hgcd _ _ hmodP_L hmodP_R, ihL hL_dvd_X, ihR hR_dvd_X⟩

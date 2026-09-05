@@ -1565,7 +1565,7 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
   rw [show (DensePoly.ofCoeffs arr).degree? =
         if _h : (DensePoly.ofCoeffs arr).size = 0 then none
         else some ((DensePoly.ofCoeffs arr).size - 1) from rfl]
-  rw [dif_neg (by omega : (DensePoly.ofCoeffs arr).size ≠ 0)]
+  rw [dite_eq_right (by omega : (DensePoly.ofCoeffs arr).size ≠ 0)]
   simp only [Option.getD_some]
   omega
 

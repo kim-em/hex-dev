@@ -83,14 +83,14 @@ private theorem det_eq_zero_of_zero_row (M : Matrix Int n n) (i : Fin n)
     rw [Matrix.getElem_rowScale]
     by_cases hri : r = i
     · subst r
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have hentry := congrArg (fun row : Vector Int n => row[c.val]'c.isLt) hi
       have hzero : M[i][c] = 0 := by
         change M[i][c.val]'c.isLt = 0
         simpa only [Vector.getElem_zero] using hentry
       rw [hzero]
       omega
-    · rw [if_neg hri]
+    · rw [ite_eq_right hri]
   have hdet := det_rowScale M i 0
   rw [hscale] at hdet
   simpa using hdet
@@ -243,7 +243,7 @@ private theorem solveStep_complete {A : Matrix Int n m}
       omega
     refine ⟨(residual, coeffs), ?_, hmem, hpivots, hrecord⟩
     unfold solveStep
-    rw [dif_pos hr]
+    rw [dite_eq_left hr]
     simp only [Matrix.getElem_pair_eq_nested]
     change (if p = 0 then none else
       if state.1[col] % p = 0 then
@@ -251,7 +251,7 @@ private theorem solveStep_complete {A : Matrix Int n m}
           (Vector.ofFn fun j => state.1.get j - state.1[col] / p * D.echelon[row][j],
             state.2 + (state.1[col] / p) • Vector.unit Int row)
       else none) = some (residual, coeffs)
-    rw [if_neg hpne, if_pos hmod]
+    rw [ite_eq_right hpne, ite_eq_left hmod]
     congr 2
     · apply Vector.ext
       intro j hj
@@ -259,7 +259,7 @@ private theorem solveStep_complete {A : Matrix Int n m}
     · exact congrArg (fun b => state.2 + b • Vector.unit Int row) hdiv
   · refine ⟨state, ?_, hinv.1, ?_, hinv.2.2⟩
     · unfold solveStep
-      rw [dif_neg hr]
+      rw [dite_eq_right hr]
     · intro q hq
       exact hinv.2.1 q (by omega)
 
@@ -272,7 +272,7 @@ private theorem solveLoop_complete {A : Matrix Int n m}
         some (0, coeffs) ∧ vecMul coeffs D.echelon = v := by
   unfold solveLoop
   by_cases hend : row = n
-  · rw [dif_pos hend]
+  · rw [dite_eq_left hend]
     subst row
     have hzero : state.1 = 0 := h.eq_zero_of_pivots hinv.1 (by
       intro q
@@ -290,7 +290,7 @@ private theorem solveLoop_complete {A : Matrix Int n m}
       have hentry := congrArg (fun w : Vector Int m => w[j]) hrecord
       simp only [Vector.getElem_add, Vector.getElem_zero] at hentry
       omega
-  · rw [dif_neg hend]
+  · rw [dite_eq_right hend]
     have hlt : row < n := by omega
     rcases solveStep_complete h v state ⟨row, hlt⟩ hinv with
       ⟨next, hstep, hnext⟩
@@ -540,7 +540,7 @@ private theorem form_mul_basis (A : Matrix Int n m) :
       have hq : (Matrix.row Q i)[kk] = 0 := by
         rw [Matrix.getElem_row]
         simp only [Q, Matrix.getElem_ofFn]
-        rw [if_neg]
+        rw [ite_eq_right]
         omega
       have hz : (0 : Vector Int (hnfRank A))[kk.val] = 0 :=
         Vector.getElem_zero kk.val kk.isLt
@@ -613,7 +613,7 @@ theorem latticeCoeffs_complete {A : Matrix Int n m} {v : Vector Int m} :
   dsimp only
   rw [hsolve]
   dsimp only
-  rw [if_pos hc]
+  rw [ite_eq_left hc]
   rfl
 
 /-- The executable lattice predicate is equivalent to integer row-lattice
@@ -863,13 +863,13 @@ theorem kernelBasis_independent {A : Matrix Int n m}
 theorem latticeIndex_eq_prod_pivots (A : Matrix Int n m) (h : hnfRank A = m) :
     latticeIndex A = (pivots A).foldl (· * ·) 1 := by
   change (Hermite.checkedRun (Hermite.formAccumulator n) A).pivots.length = m at h
-  simp only [latticeIndex, pivots, hnfRank, h, if_pos]
+  simp only [latticeIndex, pivots, hnfRank, h, ite_eq_left]
 
 /-- A non-full-rank row lattice has infinite index, represented by zero. -/
 theorem latticeIndex_eq_zero (A : Matrix Int n m) (h : hnfRank A ≠ m) :
     latticeIndex A = 0 := by
   unfold latticeIndex
-  rw [if_neg]
+  rw [ite_eq_right]
   intro heq
   apply h
   simpa only [hnfRank] using heq
@@ -1003,7 +1003,7 @@ theorem latticeIndex_eq_det (A : Matrix Int n n) :
         omega
     have hidx : latticeIndex A = 0 := by
       unfold latticeIndex
-      rw [if_neg]
+      rw [ite_eq_right]
       intro heq
       apply hfull
       simpa only [hnfRank] using heq

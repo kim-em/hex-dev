@@ -466,16 +466,16 @@ private theorem toPolynomial_rawPow (levels : List Level)
       by_cases hn : n = 0
       · subst n
         simp [Factor.polyPow]
-      · rw [Factor.polyPow, if_neg hn]
+      · rw [Factor.polyPow, ite_eq_right hn]
         have hhalf : n / 2 < n := Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by omega)
         dsimp only
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven, HexPolyMathlib.toPolynomial_mul,
+        · rw [ite_eq_left heven, HexPolyMathlib.toPolynomial_mul,
             ih (n / 2) hhalf]
           rw [← pow_add]
           congr 1
           omega
-        · rw [if_neg heven, HexPolyMathlib.toPolynomial_mul,
+        · rw [ite_eq_right heven, HexPolyMathlib.toPolynomial_mul,
             HexPolyMathlib.toPolynomial_mul, ih (n / 2) hhalf]
           rw [← pow_add, ← pow_succ]
           congr 1

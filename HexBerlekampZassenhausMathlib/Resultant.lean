@@ -969,12 +969,12 @@ private lemma prod_threshold {R : Type*} [CommRing R] (C : R) {n d : Nat}
     intro i _
     have := i.is_lt
     simp only [Fin.val_cast, Fin.val_castAdd]
-    exact if_neg (by omega)
+    exact ite_eq_right (by omega)
   have h2 : (∏ i : Fin d,
       (fun x : Fin ((n - d) + d) => if n - d ≤ ((Fin.cast hn x : Fin n) : ℕ) then C else (1 : R))
         (Fin.natAdd (n - d) i)) = C ^ d := by
     rw [Finset.prod_congr rfl (fun i _ => by
-      simp only [Fin.val_cast, Fin.val_natAdd]; exact if_pos (by omega))]
+      simp only [Fin.val_cast, Fin.val_natAdd]; exact ite_eq_left (by omega))]
     exact Fin.prod_const d C
   rw [h1, h2, one_mul]
 
@@ -1020,11 +1020,11 @@ theorem colReduceTransform_blockTriangular {R : Type*} [CommRing R] (a b : Polyn
   induction j using Fin.addCases with
   | left j₁ =>
       simp only [Fin.addCases_left]
-      exact if_neg (fun h => by simp [h] at hlt)
+      exact ite_eq_right (fun h => by simp [h] at hlt)
   | right j₂ =>
       simp only [Fin.addCases_right, Fin.val_natAdd] at hlt ⊢
       by_cases hpiv : n - d ≤ (j₂ : ℕ)
-      · simp only [hpiv, if_true]
+      · simp only [hpiv, ite_true]
         induction i using Fin.addCases with
         | left i₁ =>
             simp only [Fin.val_castAdd] at hlt
@@ -1037,14 +1037,14 @@ theorem colReduceTransform_blockTriangular {R : Type*} [CommRing R] (a b : Polyn
             split_ifs with h
             · exact Polynomial.coeff_eq_zero_of_natDegree_lt hbz
             · rfl
-      · simp only [hpiv, if_false]
-        exact if_neg (fun h => by simp [h] at hlt)
+      · simp only [hpiv, ite_false]
+        exact ite_eq_right (fun h => by simp [h] at hlt)
 
 /-- The determinant of `colReduceTransform` is `(b.coeff (n - d)) ^ d`. -/
 theorem colReduceTransform_det {R : Type*} [CommRing R] (a b : Polynomial R)
     {m n d : Nat} (hd : d ≤ n) (hb : b.natDegree + d ≤ n) :
     (colReduceTransform a b m n d).det = (b.coeff (n - d)) ^ d := by
-  rw [Matrix.det_of_upperTriangular (colReduceTransform_blockTriangular a b hd hb),
+  rw [Matrix.det_of_isUpperTriangular (colReduceTransform_blockTriangular a b hd hb),
     Fin.prod_univ_add]
   have hleft : (∏ i₁ : Fin m,
       colReduceTransform a b m n d (i₁.castAdd n) (i₁.castAdd n)) = 1 := by
@@ -1058,8 +1058,8 @@ theorem colReduceTransform_det {R : Type*} [CommRing R] (a b : Polynomial R)
     intro i₂ _
     rw [colReduceTransform, Matrix.of_apply, Fin.addCases_right]
     by_cases hpiv : n - d ≤ (i₂ : ℕ)
-    · simp only [hpiv, if_true, Fin.addCases_right]
-      rw [Polynomial.coeff_mul_X_pow', if_pos (by omega)]
+    · simp only [hpiv, ite_true, Fin.addCases_right]
+      rw [Polynomial.coeff_mul_X_pow', ite_eq_left (by omega)]
       congr 1
       omega
     · simp [hpiv]
@@ -1077,7 +1077,7 @@ theorem colReduceTransform_pivot_col {R : Type*} [CommRing R] (a b : Polynomial 
           (⟨-a * Polynomial.X ^ t, hl⟩, ⟨b * Polynomial.X ^ t, hr⟩) := by
   funext k
   rw [colReduceTransform, Matrix.of_apply, Fin.addCases_right]
-  rw [if_pos (Nat.le_add_right (n - d) t)]
+  rw [ite_eq_left (Nat.le_add_right (n - d) t)]
   have hexp : n - d + t - (n - d) = t := by omega
   rw [hexp]
   induction k using Fin.addCases with
@@ -1502,15 +1502,15 @@ theorem cldColReduceTransform_det {R : Type*} [CommRing R] (q : Polynomial R)
             rw [finSumFinEquiv_symm_apply_castAdd, Matrix.fromBlocks_apply₁₁, hTLL,
               Matrix.of_apply]
             by_cases hpiv : d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d
-            · simp only [if_pos hpiv, Fin.addCases_left]
-            · simp only [if_neg hpiv, Fin.ext_iff, Fin.val_castAdd]
+            · simp only [ite_eq_left hpiv, Fin.addCases_left]
+            · simp only [ite_eq_right hpiv, Fin.ext_iff, Fin.val_castAdd]
         | right i₂ =>
             rw [finSumFinEquiv_symm_apply_natAdd, Matrix.fromBlocks_apply₂₁, hTRL,
               Matrix.of_apply]
             by_cases hpiv : d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d
-            · simp only [if_pos hpiv, Fin.addCases_right]
-            · simp only [if_neg hpiv]
-              refine if_neg (fun h => ?_)
+            · simp only [ite_eq_left hpiv, Fin.addCases_right]
+            · simp only [ite_eq_right hpiv]
+              refine ite_eq_right (fun h => ?_)
               have := j₁.is_lt
               simp only [Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd] at h
               omega
@@ -1521,7 +1521,7 @@ theorem cldColReduceTransform_det {R : Type*} [CommRing R] (q : Polynomial R)
         | left i₁ =>
             rw [finSumFinEquiv_symm_apply_castAdd, Matrix.fromBlocks_apply₁₂,
               Matrix.zero_apply]
-            refine if_neg (fun h => ?_)
+            refine ite_eq_right (fun h => ?_)
             have := i₁.is_lt
             simp only [Fin.ext_iff, Fin.val_castAdd, Fin.val_natAdd] at h
             omega
@@ -1536,19 +1536,19 @@ theorem cldColReduceTransform_det {R : Type*} [CommRing R] (q : Polynomial R)
     simp only [id_eq, Fin.lt_def] at hlt
     rw [hTLL, Matrix.of_apply]
     by_cases hpiv : d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d
-    · rw [if_pos hpiv, Polynomial.coeff_mul_X_pow']
+    · rw [ite_eq_left hpiv, Polynomial.coeff_mul_X_pow']
       split_ifs with hk
       · apply Polynomial.coeff_eq_zero_of_natDegree_lt
         rw [hq_deg]; omega
       · rfl
-    · rw [if_neg hpiv]
-      exact if_neg (fun h => by rw [h] at hlt; exact lt_irrefl _ hlt)
-  rw [Matrix.det_of_upperTriangular htri]
+    · rw [ite_eq_right hpiv]
+      exact ite_eq_right (fun h => by rw [h] at hlt; exact lt_irrefl _ hlt)
+  rw [Matrix.det_of_isUpperTriangular htri]
   apply Finset.prod_eq_one
   intro i₁ _
   rw [hTLL, Matrix.of_apply]
   by_cases hpiv : d ≤ (i₁ : ℕ) ∧ (i₁ : ℕ) < 2 * d
-  · rw [if_pos hpiv, Polynomial.coeff_mul_X_pow', if_pos (Nat.sub_le _ _)]
+  · rw [ite_eq_left hpiv, Polynomial.coeff_mul_X_pow', ite_eq_left (Nat.sub_le _ _)]
     have hidx : (i₁ : ℕ) - ((i₁ : ℕ) - d) = d := by omega
     rw [hidx, ← hq_deg]
     exact hq_monic.coeff_natDegree
@@ -1567,7 +1567,7 @@ theorem cldColReduceTransform_pivot_col {R : Type*} [CommRing R] (q : Polynomial
            ⟨-Polynomial.derivative q * Polynomial.X ^ t, hr⟩) := by
   funext k
   rw [cldColReduceTransform, Matrix.of_apply, Fin.addCases_left]
-  rw [if_pos ⟨Nat.le_add_right d t, show d + t < 2 * d by omega⟩]
+  rw [ite_eq_left ⟨Nat.le_add_right d t, show d + t < 2 * d by omega⟩]
   have hexp : d + t - d = t := by omega
   rw [hexp]
   induction k using Fin.addCases with

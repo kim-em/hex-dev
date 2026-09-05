@@ -315,7 +315,7 @@ theorem checkIrreducibleCert_sound
           simp only [Hex.PrimeFactorData.checkCertAtFactor, Bool.and_eq_true] at hp
           obtain ⟨_, hif⟩ := hp
           have hmonic' : Hex.DensePoly.leadingCoeff primeData.factorPolys[i] = 1 := hmonic
-          rw [dif_pos hmonic'] at hif
+          rw [dite_eq_left hmonic'] at hif
           exact hif
         have hrabin :=
           Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest

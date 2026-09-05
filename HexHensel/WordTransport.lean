@@ -121,8 +121,8 @@ theorem intModNat_one {M : Nat} (hM : 0 < M) : ZPoly.intModNat 1 M = 1 % M := by
     DensePoly.coeff_C, DensePoly.coeff_C]
   rcases Nat.eq_zero_or_pos j with hj | hj
   · subst hj
-    rw [if_pos rfl, if_pos rfl, WordMod.toNat_one, intModNat_one ctx.p_pos, Nat.mod_mod]
-  · rw [if_neg (Nat.ne_of_gt hj), if_neg (Nat.ne_of_gt hj),
+    rw [ite_eq_left rfl, ite_eq_left rfl, WordMod.toNat_one, intModNat_one ctx.p_pos, Nat.mod_mod]
+  · rw [ite_eq_right (Nat.ne_of_gt hj), ite_eq_right (Nat.ne_of_gt hj),
       show (Zero.zero : WordMod ctx) = 0 from rfl, WordMod.toNat_zero,
       show (Zero.zero : Int) = 0 from rfl, ZPoly.intModNat]
     simp
@@ -153,9 +153,9 @@ theorem mulCoeffStep_ge (p q : DensePoly R) (n i : Nat) (acc : R) (j : Nat) (hj 
     mulCoeffStep p q n i acc j = acc := by
   unfold mulCoeffStep
   by_cases h : i + j = n
-  · rw [if_pos h, coeff_eq_zero_of_size_le q hj, show (Zero.zero : R) = 0 from rfl,
+  · rw [ite_eq_left h, coeff_eq_zero_of_size_le q hj, show (Zero.zero : R) = 0 from rfl,
       Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
 
 /-- Extending the inner fold past `q.size` changes nothing. -/
 theorem mulCoeffStep_inner_extend (p q : DensePoly R) (n i : Nat) (acc : R) (t : Nat)
@@ -180,9 +180,9 @@ theorem mulCoeffStep_inner_all_zero (p q : DensePoly R) (n i : Nat) (acc : R) (h
       rw [show mulCoeffStep p q n i acc j = acc from by
         unfold mulCoeffStep
         by_cases h : i + j = n
-        · rw [if_pos h, coeff_eq_zero_of_size_le p hi, show (Zero.zero : R) = 0 from rfl,
+        · rw [ite_eq_left h, coeff_eq_zero_of_size_le p hi, show (Zero.zero : R) = 0 from rfl,
             Lean.Grind.Semiring.zero_mul, Lean.Grind.Semiring.add_zero]
-        · rw [if_neg h], ih]
+        · rw [ite_eq_right h], ih]
 
 /-- Extending the outer fold past `p.size` changes nothing. -/
 theorem mulCoeffStep_outer_extend (p q : DensePoly R) (n : Nat) (acc : R) (s : Nat)
@@ -283,9 +283,9 @@ private theorem Res_inner_fold (x y : ZPoly) (n i : Nat) (L : List Nat) :
       apply ih
       unfold mulCoeffStep
       by_cases hc : i + a = n
-      · rw [if_pos hc, if_pos hc]
+      · rw [ite_eq_left hc, ite_eq_left hc]
         exact Res_add ctx h (Res_mul ctx (Res_coeff_toWP ctx x i) (Res_coeff_toWP ctx y a))
-      · rw [if_neg hc, if_neg hc]; exact h
+      · rw [ite_eq_right hc, ite_eq_right hc]; exact h
 
 private theorem Res_outer_fold (x y : ZPoly) (n t : Nat) (L : List Nat) :
     ∀ (w : WordMod ctx) (z : Int), Res ctx w z →
@@ -374,7 +374,7 @@ theorem toWP_degree_eq_of_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 
 theorem toWP_degree_le (z : ZPoly) : (toWP ctx z).degree?.getD 0 ≤ z.degree?.getD 0 := by
   have hs := size_toWP_le ctx z
   rcases Nat.eq_zero_or_pos (toWP ctx z).size with h0 | h0
-  · rw [DensePoly.degree?, dif_pos h0]; simp
+  · rw [DensePoly.degree?, dite_eq_left h0]; simp
   · rw [DensePoly.degree?_eq_some_of_pos_size _ h0, Option.getD_some]
     rcases Nat.eq_zero_or_pos z.size with hz0 | hz0
     · omega

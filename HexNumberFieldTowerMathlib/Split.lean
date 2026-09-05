@@ -367,7 +367,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
       (factorEliminant T f) hcoreSize hnot z hcoreRoot
   unfold factorRoot?
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   have hisolateSome := HexRootsMathlib.isolate_isSome
     (factorEliminant T f) hsimple hcoreNe
     (separationDepth (factorEliminant T f) : Int) .nkThenPellet
@@ -380,7 +380,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined
+          rw [dite_eq_left (HexRootsMathlib.isolate_refined
             (factorEliminant T f) hsimple
             (separationDepth (factorEliminant T f) : Int)
             .nkThenPellet hisolate iso hiso)]

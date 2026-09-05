@@ -535,9 +535,9 @@ private theorem toPrimitiveFold_complex {T : NumberTower}
   | cons i indices ih =>
       simp only [List.foldl_cons, List.map_cons, List.sum_cons]
       by_cases hzero : (coeffs a).getD i 0 = 0
-      · rw [if_pos hzero]
+      · rw [ite_eq_left hzero]
         simpa [hzero] using ih initial
-      · rw [if_neg hzero, ih, QAdjoin.map_add, QAdjoin.map_smul]
+      · rw [ite_eq_right hzero, ih, QAdjoin.map_add, QAdjoin.map_smul]
         ring
 
 private theorem toPrimitiveWith_complex {T : NumberTower}
@@ -1427,7 +1427,7 @@ private theorem block_unitCoords (degree width index exponent : Nat)
       Vector.getElem_ofFn]
     rw [unitCoords_getD]
     by_cases heq : exponent = index / width
-    · simp only [if_pos heq] at hright ⊢
+    · simp only [ite_eq_left heq] at hright ⊢
       rw [unitCoords_getElem width (index % width) offset hoffset]
       by_cases hsame : index % width = offset
       · have hposition := (blockIndex_iff index exponent width offset
@@ -1438,7 +1438,7 @@ private theorem block_unitCoords (degree width index exponent : Nat)
           exact hsame ((blockIndex_iff index exponent width offset
             hwidth hoffset).mp hposition).2
         simp [hglobal, hposition, hsame]
-    · simp only [if_neg heq] at hright ⊢
+    · simp only [ite_eq_right heq] at hright ⊢
       simp only [Arithmetic.fixedCoeffs, Vector.getElem_toArray,
         Vector.getElem_ofFn, Array.getD, Array.size_empty,
         Nat.not_lt_zero, ↓reduceIte]
@@ -1513,7 +1513,7 @@ private theorem levelBasis_get (levels : List Level) (hvalid : LevelsValid level
             exponent width) * level.root.toComplex ^ exponent = 0
         rw [block_unitCoords level.degree width index exponent hwidth
           (by simpa [width, levelsDim] using hindex) hexponent']
-        rw [if_neg hne]
+        rw [ite_eq_right hne]
         change LevelSemantics.denote lower
           (Arithmetic.fixedCoeffs (levelsDim lower) #[]) *
             level.root.toComplex ^ exponent = 0

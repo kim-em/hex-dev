@@ -105,9 +105,9 @@ private theorem heuLoop_checks (f h : ZPoly) (base remainingBits : Nat)
   unfold heuLoop at hcert
   dsimp only at hcert
   by_cases hcost : projectedBits f h base > remainingBits
-  · rw [if_pos hcost] at hcert
+  · rw [ite_eq_left hcost] at hcert
     contradiction
-  · rw [if_neg hcost] at hcert
+  · rw [ite_eq_right hcost] at hcert
     generalize hcand : checkedCandidate? f h
         (heuCandidateAt f h base hbase) = candidate? at hcert
     cases candidate? with

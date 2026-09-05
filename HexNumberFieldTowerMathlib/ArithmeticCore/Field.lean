@@ -53,7 +53,7 @@ private theorem eq_C_leadingCoeff_of_size_one {R : Type*} [Zero R]
   · subst n
     rw [DensePoly.leadingCoeff_eq_coeff_last f (by omega), hsize]
     rfl
-  · rw [if_neg hn]
+  · rw [ite_eq_right hn]
     exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
 
 /-- The first prescribed coefficient range of a dense polynomial, exposed as
@@ -855,7 +855,7 @@ theorem denote_invCoords (levels : List Level) (hvalid : LevelsValid levels)
         rw [show (Arithmetic.fixedCoeffs
             (level.degree * levelsDim lower) a).all (fun q => q = 0) = true by
           simpa [zeroTest] using hzero]
-        simp only [if_true]
+        simp only [ite_true]
         rw [hrep, denote_zero, hdenote]
         simp
       · have ha : denote (level :: lower) a ≠ 0 := by
@@ -875,8 +875,8 @@ theorem denote_invCoords (levels : List Level) (hvalid : LevelsValid levels)
         rw [show (Arithmetic.fixedCoeffs
             (level.degree * levelsDim lower) a).all (fun q => q = 0) = false by
           exact Bool.eq_false_of_not_eq_true hzero]
-        simp only [Bool.false_eq_true, if_false]
-        rw [if_pos hgcdSize, if_neg hcNe]
+        simp only [Bool.false_eq_true, ite_false]
+        rw [ite_eq_left hgcdSize, ite_eq_right hcNe]
         exact denote_xgcd_inverse level lower hvalid hinjective
           hlowerInjective hlowerInv a ha
 

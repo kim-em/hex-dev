@@ -282,7 +282,7 @@ theorem exists_factor_of_modPIndex
           @monicModPImage primeData.p primeData.bounds
               (@Hex.ZPoly.modP primeData.p primeData.bounds g) = 0 := by
         unfold monicModPImage
-        rw [if_pos hzero]
+        rw [ite_eq_left hzero]
       rw [hmonic_zero]
       have hz : HexBerlekampMathlib.toMathlibPolynomial
           (0 : Hex.FpPoly primeData.p) = 0 := by

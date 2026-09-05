@@ -881,7 +881,7 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_normalize
     rw [HexPolyMathlib.leadingCoeff_toPolynomial]
     unfold Hex.normalizeForFactor
     exact Hex.ZPoly.leadingCoeff_repeatedPart_nonneg _
-  rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, if_pos hlc_nonneg,
+  rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, ite_eq_left hlc_nonneg,
     Units.val_one, Polynomial.C_1, mul_one]
 
 /-! # Squarefree transport for the primitive square-free part
@@ -1015,7 +1015,7 @@ theorem isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat
     rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_C]
     by_cases hn : n = 0
     · simp [hn]
-    · rw [if_neg hn]
+    · rw [ite_eq_right hn]
       exact Hex.DensePoly.coeff_eq_zero_of_size_le G (by
         cases n with
         | zero => exact absurd rfl hn
@@ -1325,7 +1325,7 @@ theorem Polynomial.gcd_derivative_associated_divRadical_of_charZero
               have hsep : (q : Polynomial K).Separable :=
                 PerfectField.separable_of_irreducible hq.irreducible
               have hcop : IsCoprime q (Polynomial.derivative q) := hsep
-              exact hq.not_unit (hcop.isUnit_of_dvd' dvd_rfl hq_dvd_deriv)
+              exact hq.not_isUnit (hcop.isUnit_of_dvd' dvd_rfl hq_dvd_deriv)
           have hm_le_k : m ≤ k := Nat.lt_succ_iff.mp hm_lt
           exact hm_assoc.dvd.trans (pow_dvd_pow q hm_le_k)
         exact associated_of_dvd_dvd hg_dvd_qk hqk_dvd_g

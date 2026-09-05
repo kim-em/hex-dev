@@ -123,7 +123,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
       (if peel.2 = 1 then split.1 ++ peel.1 else (split.1 ++ peel.1).push peel.2).toList
     at hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one] at hmem
+  · rw [ite_eq_left hres_one] at hmem
     rw [Array.toList_append, List.mem_append] at hmem
     rcases hmem with hsplit_mem | hpeel_mem
     · exact splitIntegerRootFactorsAux_factor_irreducible
@@ -131,7 +131,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
         (factors := split.1) (residual := split.2) rfl hsplit_mem
     · exact trialDivisionPeel_factor_irreducible hcore_ne hcore_prim hcore_sq
         hsplit2_dvd_core hsplit2_pos hbound rfl hpeel_mem
-  · rw [if_neg hres_one] at hmem
+  · rw [ite_eq_right hres_one] at hmem
     rw [Array.toList_push, List.mem_append] at hmem
     rcases hmem with hpref_mem | hres_mem
     · rw [Array.toList_append, List.mem_append] at hpref_mem
@@ -245,7 +245,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
     ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hsplit_norm :
@@ -255,14 +255,14 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
           split.1 split.2 rfl
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact hsplit_norm
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           intro factor hmem
           rw [Array.toList_push] at hmem
@@ -322,7 +322,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
     ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hsplit_record :
@@ -332,14 +332,14 @@ theorem quadraticIntegerRootFactors?_shouldRecord
           split.1 split.2 rfl
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact hsplit_record
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           intro factor hmem
           rw [Array.toList_push] at hmem
@@ -410,21 +410,21 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
     ZPoly.Irreducible factor := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact splitIntegerRootFactorsAux_factor_irreducible
           (target := core) (roots := roots) (fuel := roots.length)
           (factors := split.1) (residual := split.2) rfl hmem
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push] at hmem
           simp only [List.mem_append, List.mem_singleton] at hmem
@@ -465,23 +465,23 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
     ZPoly.Irreducible factor := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
       · -- split.2 = 1: factor = 1 from hres. But hmem : factor ∈ split.1.toList,
         -- and every element of split.1 is irreducible.
-        rw [if_pos hres_one] at hquad
+        rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact splitIntegerRootFactorsAux_factor_irreducible
           (target := core) (roots := roots) (fuel := roots.length)
           (factors := split.1) (residual := split.2) rfl hmem
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           have hsplit_prod :
               split.2 * Array.polyProduct split.1 = core := by
@@ -704,7 +704,7 @@ theorem quadraticIntegerRootFactors?_product
     Array.polyProduct factors = core := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hsplit_prod :
@@ -713,18 +713,18 @@ theorem quadraticIntegerRootFactors?_product
         splitIntegerRootFactorsAux_product core roots roots.length split.1 split.2 rfl
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         simpa [hres_one, ZPoly.one_mul_zpoly] using hsplit_prod
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [polyProduct_push, DensePoly.mul_comm_poly (S := Int)]
           exact hsplit_prod
-        · rw [if_neg hres_deg] at hquad
+        · rw [ite_eq_right hres_deg] at hquad
           contradiction
   · simp [hdeg] at hquad
 
@@ -770,7 +770,7 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
     factor.size = 2 := by
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     obtain ⟨rs, _hsub, hshape⟩ :=
@@ -785,14 +785,14 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
       exact linearFactorForRoot_size_eq_two r
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact hsplit_size factor hmem
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push] at hmem
           rcases List.mem_append.mp hmem with hsplit_mem | hres_mem
@@ -1099,7 +1099,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
   have _ := hcore_primitive
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     have hroots_nodup : roots.Nodup := integerRootCandidates_nodup core
@@ -1114,14 +1114,14 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
       exact hrs_nodup.imp (fun hne => linearFactorForRoot_not_associated_of_ne hne)
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact hLL
-      · rw [if_neg hres_one] at hquad
+      · rw [ite_eq_right hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push]
           -- Residual leading-coefficient invariants.

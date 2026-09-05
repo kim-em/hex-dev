@@ -124,7 +124,7 @@ private theorem roots_eq_fixed (f : AlgebraicPoly)
   letI : ZPoly.CheckedIrreducible common.generator.p :=
     common.generator.checked
   have halgebraic := roots?_eq_roots f
-  rw [AlgebraicPoly.roots?, if_neg (by simp [hf])] at halgebraic
+  rw [AlgebraicPoly.roots?, ite_eq_right (by simp [hf])] at halgebraic
   obtain ⟨common', hcommon', hrun⟩ :=
     Option.bind_eq_some_iff.mp halgebraic
   have hcommonEq : common' = common :=
@@ -138,7 +138,7 @@ private theorem roots_eq_fixed (f : AlgebraicPoly)
 private theorem roots_eq_all_of_isZero (f : AlgebraicPoly)
     (hf : f.isZero = true) : f.roots = .all := by
   have hrun := roots?_eq_roots f
-  rw [AlgebraicPoly.roots?, if_pos hf] at hrun
+  rw [AlgebraicPoly.roots?, ite_eq_left hf] at hrun
   exact (Option.some.inj hrun).symm
 
 /-- The algebraic-coefficient driver returns `.all` exactly for the zero

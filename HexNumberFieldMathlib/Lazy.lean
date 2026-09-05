@@ -132,8 +132,8 @@ private theorem ZPoly.coeff_mulSubstitute (q : ZPoly) (j : Nat) :
   rw [DensePoly.coeff_ofList,
     HexPolyMathlib.list_getD_map_range_zero]
   split <;> rename_i h
-  · rw [if_pos (by omega)]
-  · rw [if_neg (by omega)]
+  · rw [ite_eq_left (by omega)]
+  · rw [ite_eq_right (by omega)]
     rfl
 
 private theorem evalZPoly_X (t : ℂ) : evalZPoly t ZPoly.X = t := by
@@ -158,7 +158,7 @@ private theorem ZPoly.map_mulSubstitute (q : ZPoly) (t : ℂ) :
   rw [← Polynomial.lcoeff_apply, map_sum]
   simp only [Polynomial.lcoeff_apply]
   by_cases hj : j ≤ q.degree?.getD 0
-  · rw [if_pos hj, evalZPoly_monomial]
+  · rw [ite_eq_left hj, evalZPoly_monomial]
     rw [Finset.sum_eq_single j]
     · simp
     · intro b hb hbj
@@ -166,7 +166,7 @@ private theorem ZPoly.map_mulSubstitute (q : ZPoly) (t : ℂ) :
         ((q.coeff (q.degree?.getD 0 - b) : ℂ) *
           t ^ (q.degree?.getD 0 - b)) hbj.symm
     · simp [hj]
-  · rw [if_neg hj, map_zero]
+  · rw [ite_eq_right hj, map_zero]
     symm
     exact Finset.sum_eq_zero
       (s := Finset.range (q.degree?.getD 0 + 1)) fun b hb =>
@@ -220,7 +220,7 @@ private theorem ZPoly.natDegree_map_mulSubstitute (q : ZPoly) (hq : q ≠ 0)
       DensePoly.monomial (q.degree?.getD 0)
         (q.coeff (q.degree?.getD 0)) := by
     dsimp only [g]
-    rw [ZPoly.coeff_mulSubstitute, if_pos (Nat.zero_le _), Nat.sub_zero]
+    rw [ZPoly.coeff_mulSubstitute, ite_eq_left (Nat.zero_le _), Nat.sub_zero]
   have hgcoeff0ne : g.coeff 0 ≠ 0 := by
     rw [hgcoeff0]
     exact DensePoly.monomial_ne_zero_of_ne_zero hqtop
@@ -238,13 +238,13 @@ private theorem ZPoly.natDegree_map_mulSubstitute (q : ZPoly) (hq : q ≠ 0)
     intro hzero
     apply hgLast
     dsimp only [g]
-    rw [ZPoly.coeff_mulSubstitute, if_pos hdle, hzero]
+    rw [ZPoly.coeff_mulSubstitute, ite_eq_left hdle, hzero]
     simp
   apply Polynomial.natDegree_map_of_leadingCoeff_ne_zero
   rw [HexPolyMathlib.leadingCoeff_toPolynomial,
     DensePoly.leadingCoeff_eq_coeff_last g hgpos]
   dsimp only [g]
-  rw [ZPoly.coeff_mulSubstitute, if_pos hdle, evalZPoly_monomial]
+  rw [ZPoly.coeff_mulSubstitute, ite_eq_left hdle, evalZPoly_monomial]
   have htPow :
       t ^ (q.degree?.getD 0 - (g.size - 1)) ≠ 0 :=
     _root_.pow_ne_zero _ ht
@@ -287,7 +287,7 @@ private theorem toPolynomial_ofList_eq_X_pow_dropWhile (l : List Int) :
         obtain ⟨k, hk⟩ := ih
         refine ⟨k + 1, ?_⟩
         rw [toPolynomial_ofList_zero_cons, hk]
-        simp only [List.dropWhile_cons, beq_self_eq_true, if_true]
+        simp only [List.dropWhile_cons, beq_self_eq_true, ite_true]
         rw [pow_succ]
         ring
       · refine ⟨0, ?_⟩
@@ -334,10 +334,10 @@ private theorem ZPoly.coeff_reciprocal (p : ZPoly) (j : Nat) :
   unfold ZPoly.reciprocal
   rw [DensePoly.coeff_ofCoeffs, Array.getD_eq_getD_getElem?]
   by_cases hj : j < p.size
-  · rw [if_pos hj, Array.getElem?_reverse (by simpa using hj)]
+  · rw [ite_eq_left hj, Array.getElem?_reverse (by simpa using hj)]
     rw [← Array.getD_eq_getD_getElem?, DensePoly.toArray_getD]
     rw [DensePoly.toArray_size]
-  · rw [if_neg hj, Array.getElem?_eq_none (by simpa using
+  · rw [ite_eq_right hj, Array.getElem?_eq_none (by simpa using
       (Nat.le_of_not_gt hj))]
     rfl
 
@@ -354,8 +354,8 @@ private theorem ZPoly.toPolynomial_reciprocal (p : ZPoly) (hp : p ≠ 0) :
   rw [HexPolyMathlib.coeff_toPolynomial, ZPoly.coeff_reciprocal,
     Polynomial.coeff_reverse, hdegree, HexPolyMathlib.coeff_toPolynomial]
   by_cases hj : j < p.size
-  · rw [if_pos hj, Polynomial.revAt_le (by omega)]
-  · rw [if_neg hj, Polynomial.revAt_eq_self_of_lt (by omega)]
+  · rw [ite_eq_left hj, Polynomial.revAt_le (by omega)]
+  · rw [ite_eq_right hj, Polynomial.revAt_eq_self_of_lt (by omega)]
     exact (DensePoly.coeff_eq_zero_of_size_le p
       (Nat.le_of_not_gt hj)).symm
 
@@ -386,7 +386,7 @@ private theorem ZPoly.reciprocal_ne_zero {p : ZPoly} (hp : p ≠ 0) :
   have hlast := DensePoly.coeff_last_ne_zero_of_pos_size p hpos
   intro hzero
   have hcoeff := congrArg (fun q : ZPoly => q.coeff 0) hzero
-  rw [ZPoly.coeff_reciprocal, if_pos hpos, Nat.sub_zero] at hcoeff
+  rw [ZPoly.coeff_reciprocal, ite_eq_left hpos, Nat.sub_zero] at hcoeff
   simp at hcoeff
   exact hlast hcoeff
 
@@ -984,7 +984,7 @@ theorem AlgebraicRoot.ofEliminant?_isSome
       (ZPoly.squareFreeCore raw) hsize hn z hpRoot
   unfold AlgebraicRoot.ofEliminant?
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   rw [hballAt]
   have hisolateSome := HexRootsMathlib.isolate_isSome
     (ZPoly.squareFreeCore raw) hsimple hpne
@@ -998,7 +998,7 @@ theorem AlgebraicRoot.ofEliminant?_isSome
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined
+          rw [dite_eq_left (HexRootsMathlib.isolate_refined
             (ZPoly.squareFreeCore raw) hsimple
             (separationDepth (ZPoly.squareFreeCore raw) : Int)
             .nkThenPellet hisolate iso hiso)]

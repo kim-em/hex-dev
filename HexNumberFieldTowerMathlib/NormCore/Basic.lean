@@ -295,7 +295,7 @@ theorem topGenerator_evalAt (level : Level) (lower : List Level)
       have := hvalid.1.1
       omega
     unfold Factor.topGenerator
-    rw [if_neg hdegree]
+    rw [ite_eq_right hdegree]
     change LevelSemantics.evalAt level lower x
         (Arithmetic.fixedCoeffs (level.degree * levelsDim lower)
           ((Array.replicate (levelsDim lower) 0).push 1)) = x
@@ -571,7 +571,7 @@ theorem conjugatePolynomial_eq_map (level : Level) (lower : List Level)
     have hright : (f.map
         (Arithmetic.Coeff.ofData (level :: lower))).getD n 0 =
           Arithmetic.Coeff.ofData (level :: lower) f[n] := by
-      rw [Array.getD, dif_pos hnmap]
+      rw [Array.getD, dite_eq_left hnmap]
       simp
     rw [hleft]
     calc
@@ -591,7 +591,7 @@ theorem conjugatePolynomial_eq_map (level : Level) (lower : List Level)
       simp [Array.getD, hn]
     have hright : (f.map
         (Arithmetic.Coeff.ofData (level :: lower))).getD n 0 = 0 := by
-      rw [Array.getD, dif_neg hnmap]
+      rw [Array.getD, dite_eq_right hnmap]
     rw [hleft]
     calc
       LevelSemantics.evalAt level lower x #[] =

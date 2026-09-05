@@ -115,8 +115,8 @@ theorem getElem_rowScale [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
       if r = i then c * M[i][k] else M[r][k] := by
   rw [rowScale, getElem_modifyEntries]
   by_cases h : r = i
-  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
-  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
+  · rw [ite_eq_left (congrArg Fin.val h), ite_eq_left h, h]
+  · rw [ite_eq_right (fun hv => h (Fin.ext hv)), ite_eq_right h]
 
 /-- Row `i` of `rowScale M i c` is the pointwise scalar multiple of row `i`. -/
 @[simp, grind =] theorem row_rowScale_self [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
@@ -157,9 +157,9 @@ theorem getElem_rowAdd [Mul R] [Add R]
       if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
   rw [rowAdd, getElem_modifyEntries]
   by_cases h : r = dst
-  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
+  · rw [ite_eq_left (congrArg Fin.val h), ite_eq_left h, h]
     rw [show (getRow M src)[k] = M[src][k] from rfl]
-  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
+  · rw [ite_eq_right (fun hv => h (Fin.ext hv)), ite_eq_right h]
 
 /-- Source-row entries are unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
 theorem getElem_rowAdd_src_of_ne [Mul R] [Add R]
@@ -209,7 +209,7 @@ theorem rowScale_eq_set [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
   · subst h
     rw [setRow_get_self]
     simp [Vector.getElem_ofFn]
-  · rw [if_neg h, setRow_row_ne M i r _ h]
+  · rw [ite_eq_right h, setRow_row_ne M i r _ h]
 
 /-- `rowAdd` as a single `set` of the combined row. The executable definition
 goes through `Vector.modify` for in-place update; this is the value-level
@@ -224,7 +224,7 @@ theorem rowAdd_eq_set [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : 
   · subst h
     rw [setRow_get_self]
     simp [Vector.getElem_ofFn]
-  · rw [if_neg h, setRow_row_ne M dst r _ h]
+  · rw [ite_eq_right h, setRow_row_ne M dst r _ h]
 
 /-- Column `k` of `rowSwap M i j` is column `k` of `M` with entries `i` and `j`
 exchanged. -/
@@ -298,8 +298,8 @@ theorem getElem_colAdd [Mul R] [Add R]
       if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
   rw [colAdd, getElem_modifyCol]
   by_cases hj : j = dst
-  · rw [if_pos hj, if_pos hj, hj, getElem_col]
-  · rw [if_neg hj, if_neg hj]
+  · rw [ite_eq_left hj, ite_eq_left hj, hj, getElem_col]
+  · rw [ite_eq_right hj, ite_eq_right hj]
 
 /-- Transposing a column addition is the corresponding row addition on the
 transpose. -/
@@ -311,8 +311,8 @@ theorem transpose_colAdd [Mul R] [Add R] (M : Matrix R n m)
   rw [getElem_transpose, getElem_colAdd, getElem_rowAdd]
   simp only [getElem_transpose]
   by_cases hi : i = dst
-  · rw [if_pos hi, if_pos hi, hi]
-  · rw [if_neg hi, if_neg hi]
+  · rw [ite_eq_left hi, ite_eq_left hi, hi]
+  · rw [ite_eq_right hi, ite_eq_right hi]
 
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + M[i][src] * c`, any other column is
@@ -323,8 +323,8 @@ theorem getElem_colAddRight [Mul R] [Add R]
       if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
   rw [colAddRight, getElem_modifyCol]
   by_cases hj : j = dst
-  · rw [if_pos hj, if_pos hj, hj, getElem_col]
-  · rw [if_neg hj, if_neg hj]
+  · rw [ite_eq_left hj, ite_eq_left hj, hj, getElem_col]
+  · rw [ite_eq_right hj, ite_eq_right hj]
 
 /-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/
 @[simp, grind =] theorem col_colAdd_dst [Mul R] [Add R]
@@ -448,11 +448,11 @@ any other column is unchanged. -/
       if c = j then M[r][i] else if c = i then M[r][j] else M[r][c] := by
   rw [colSwap, getElem_setCol]
   by_cases hcj : c = j
-  · rw [if_pos hcj, if_pos hcj, getElem_col]
-  · rw [if_neg hcj, if_neg hcj, getElem_setCol]
+  · rw [ite_eq_left hcj, ite_eq_left hcj, getElem_col]
+  · rw [ite_eq_right hcj, ite_eq_right hcj, getElem_setCol]
     by_cases hci : c = i
-    · rw [if_pos hci, if_pos hci, getElem_col]
-    · rw [if_neg hci, if_neg hci]
+    · rw [ite_eq_left hci, ite_eq_left hci, getElem_col]
+    · rw [ite_eq_right hci, ite_eq_right hci]
 
 /-- Column `i` of `colSwap M i j` is the original column `j`. -/
 @[simp, grind =] theorem col_colSwap_left (M : Matrix R n m) (i j : Fin m) :

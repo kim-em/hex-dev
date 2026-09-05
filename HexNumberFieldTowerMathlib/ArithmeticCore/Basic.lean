@@ -1048,7 +1048,7 @@ theorem denote_mul (levels : List Level) (hvalid : LevelsValid levels)
       have hmul : ∀ u v, denote lower (Arithmetic.mulCoords lower u v) =
           denote lower u * denote lower v := fun u v => ih hlower u v
       simp only [Arithmetic.mulCoords]
-      rw [if_neg (Nat.ne_of_gt hdegree)]
+      rw [ite_eq_right (Nat.ne_of_gt hdegree)]
       rw [denote_flatten]
       change evalUpTo lower level.root.toComplex level.degree
           (Arithmetic.reduce level.degree (levelsDim lower) level.defining
@@ -1083,7 +1083,7 @@ theorem evalAt_mul (level : Level) (lower : List Level)
         denote lower u * denote lower v :=
     denote_mul lower hvalid.2.2
   simp only [Arithmetic.mulCoords]
-  rw [if_neg (Nat.ne_of_gt hdegree)]
+  rw [ite_eq_right (Nat.ne_of_gt hdegree)]
   rw [evalAt_flatten]
   change evalUpTo lower x level.degree
       (Arithmetic.reduce level.degree (levelsDim lower) level.defining

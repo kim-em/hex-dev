@@ -494,7 +494,7 @@ theorem tryDirectSplit_trueSupport
           (Hex.directSelectedFactors d selected) =
         factor := hcand
   rw [hpre]
-  simp only [if_true]
+  simp only [ite_true]
   rw [hcand_prepared, hrecord, hquot]
   rfl
 

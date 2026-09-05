@@ -61,7 +61,7 @@ theorem count_one_of_check {replay : SturmReplay} {cert : IsolationCert}
     replay.count cert.intervals[i] = 1 := by
   have hmem : i.val ∈ List.range cert.intervals.size := List.mem_range.mpr i.isLt
   have hcount := (List.all_eq_true.mp h) i.val hmem
-  simp only [i.isLt, dif_pos] at hcount
+  simp only [i.isLt, dite_eq_left] at hcount
   exact of_decide_eq_true hcount
 
 /-- Each adjacent interval pair accepted by the order walk is separated in the
@@ -72,7 +72,7 @@ theorem adjacent_of_check {cert : IsolationCert} (h : cert.checkOrder = true)
       (cert.intervals[i + 1]'hi).lower := by
   have hmem : i ∈ List.range (cert.intervals.size - 1) := List.mem_range.mpr (by omega)
   have hstep := (List.all_eq_true.mp h) i hmem
-  simp only [hi, dif_pos] at hstep
+  simp only [hi, dite_eq_left] at hstep
   exact of_decide_eq_true hstep
 
 /-- Derive non-strict dyadic order from strict dyadic order. -/

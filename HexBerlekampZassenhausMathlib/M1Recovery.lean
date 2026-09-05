@@ -694,7 +694,7 @@ theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : Hex.ZPoly)
     (h : 0 ≤ Hex.DensePoly.leadingCoeff g) :
     Hex.normalizeFactorSign g = g := by
   unfold Hex.normalizeFactorSign
-  rw [if_neg (by omega : ¬ Hex.DensePoly.leadingCoeff g < 0)]
+  rw [ite_eq_right (by omega : ¬ Hex.DensePoly.leadingCoeff g < 0)]
 
 
 /--

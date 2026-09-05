@@ -247,7 +247,7 @@ theorem constantEntails :
   have output : valuation (node 2) = Real.pi := by
     simpa [piModel, piInstruction] using related
   change Contains piFact (valuation (node 2))
-  simp only [Contains, piFact, openInterval, rat, ratValue, if_true]
+  simp only [Contains, piFact, openInterval, rat, ratValue, ite_true]
   rw [output]
   norm_num
   exact Hex.IntervalMathlib.Experiment.SinTen.MachinReplay.pi_bounds
@@ -276,7 +276,7 @@ theorem reductionEntails :
     change Contains piFact (valuation (node 2)) at this
     simpa [Contains, piFact, openInterval, rat, ratValue] using this
   change Contains residualFact (valuation (node 3))
-  simp only [Contains, residualFact, openInterval, rat, ratValue, if_true]
+  simp only [Contains, residualFact, openInterval, rat, ratValue, ite_true]
   rw [residualValue, sourceValue]
   constructor <;> linarith
 
@@ -298,7 +298,7 @@ theorem localEntails :
     change Contains residualFact (valuation (node 3)) at this
     simpa [Contains, residualFact, openInterval, rat, ratValue] using this
   change Contains positiveFact (valuation (node 4))
-  simp only [Contains, positiveFact, rat, ratValue, if_true]
+  simp only [Contains, positiveFact, rat, ratValue, ite_true]
   rw [output]
   norm_num
   exact ⟨Real.sin_pos_of_pos_of_lt_pi (by linarith)
@@ -324,7 +324,7 @@ theorem negationEntails :
     change Contains positiveFact (valuation (node 4)) at this
     simpa [Contains, positiveFact, rat, ratValue] using this
   change Contains negativeFact (valuation (node 5))
-  simp only [Contains, negativeFact, rat, ratValue, if_true]
+  simp only [Contains, negativeFact, rat, ratValue, ite_true]
   rw [output]
   norm_num
   exact ⟨positive.2, positive.1⟩

@@ -109,7 +109,7 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
         ← DensePoly.isZero_eq_true_iff]
       exact hrawZero
     rw [hpZero]
-    simp only [if_true]
+    simp only [ite_true]
     have hraw : raw = 0 :=
       (DensePoly.size_eq_zero_iff raw).mp
         ((DensePoly.isZero_eq_true_iff raw).mp hrawZero)
@@ -124,7 +124,7 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
           hzero, ← DensePoly.size_eq_zero_iff]
         exact hpSize
     rw [hpZero]
-    simp only [Bool.false_eq_true, if_false]
+    simp only [Bool.false_eq_true, ite_false]
     change (HexPolyMathlib.toPolynomial
         (DensePoly.scale raw.leadingCoeff⁻¹ raw)).map
           LevelSemantics.coeffRatEquiv.toRingHom =
@@ -266,7 +266,7 @@ theorem factorSquarefree_product (levels : List Level)
                 LevelSemantics.coeffRatEquiv.toRingHom
                 LevelSemantics.coeffRatEquiv.injective
               rw [polynomial_map_list_prod, hmappedList,
-                map_monic_rawPoly_nil, if_neg hinputZero]
+                map_monic_rawPoly_nil, ite_eq_right hinputZero]
               have hpoly := congrArg HexPolyMathlib.toPolynomial hproduct
               rw [← Array.foldl_toList,
                 ratFactorFoldl] at hpoly
@@ -1008,9 +1008,9 @@ theorem factorRat_isSome (input : DensePoly Rat)
   have hgcd := gcd_derivative_size_le_one_of_separable p hpSeparable
   have hproduct := factorRat_product p hpNe hpMonic
   dsimp only at hproduct
-  simp only [Factor.factorRat?, hinputZero, Bool.false_eq_true, if_false]
+  simp only [Factor.factorRat?, hinputZero, Bool.false_eq_true, ite_false]
   rw [show DensePoly.scale input.leadingCoeff⁻¹ input = p from rfl]
-  simp only [hpZero, hgcd, if_pos]
+  simp only [hpZero, hgcd, ite_eq_left]
   rw [hproduct]
   simp
 

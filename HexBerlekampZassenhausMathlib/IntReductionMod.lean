@@ -197,7 +197,7 @@ theorem reassembly_complete
       by_contra hlt
       have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
       unfold Hex.normalizeFactorSign at hq_norm
-      rw [if_pos hlt'] at hq_norm
+      rw [ite_eq_left hlt'] at hq_norm
       apply hq_ne
       apply Hex.DensePoly.ext_coeff
       intro n
@@ -320,7 +320,7 @@ theorem factorTrialFactorsWithBound_factor_irreducible
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   simp only [Hex.factorTrialFactorsWithBound] at hmem
   by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · rw [if_pos hdeg] at hmem
+  · rw [ite_eq_left hdeg] at hmem
     have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
     rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
         _ _ raw hcomplete hmem with hx | hcore
@@ -332,7 +332,7 @@ theorem factorTrialFactorsWithBound_factor_irreducible
         rw [hraw_core, Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg]
       rw [hraw_one, Hex.normalizeFactorSign_one, Hex.shouldRecordPolynomialFactor_one] at hrec
       exact absurd hrec (by decide)
-  · rw [if_neg hdeg] at hmem
+  · rw [ite_eq_right hdeg] at hmem
     cases hquad :
         Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
     | some coreFactors =>

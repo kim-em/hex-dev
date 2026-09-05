@@ -589,7 +589,7 @@ theorem toPolynomial_monic_associated (levels : List Level)
     exact Nat.pos_of_ne_zero fun hsize =>
       hf ((DensePoly.size_eq_zero_iff f).mp hsize)
   rw [Norm.monic, hzero]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   rw [HexPolyMathlib.toPolynomial_scale]
   exact associated_unit_mul_left _ _
     (Polynomial.isUnit_C.mpr
@@ -621,7 +621,7 @@ theorem toPolynomial_monic_monic (levels : List Level)
       (R := Arithmetic.Coeff levels)).injective
     simpa using h
   rw [Norm.monic, hzero]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   rw [HexPolyMathlib.toPolynomial_scale, mul_comm]
   simpa only [HexPolyMathlib.leadingCoeff_toPolynomial] using
     Polynomial.monic_mul_leadingCoeff_inv hpolyNe
@@ -1101,11 +1101,11 @@ theorem mem_foldl_push_if {α β : Type*}
       simp only [List.foldl_cons] at hx
       rcases ih _ x hx with hxinit | ⟨source, hsource, hpass, rfl⟩
       · by_cases hitem : p item
-        · rw [if_pos hitem] at hxinit
+        · rw [ite_eq_left hitem] at hxinit
           rcases Array.mem_push.mp hxinit with hxold | rfl
           · exact Or.inl hxold
           · exact Or.inr ⟨item, by simp, hitem, rfl⟩
-        · rw [if_neg hitem] at hxinit
+        · rw [ite_eq_right hitem] at hxinit
           exact Or.inl hxinit
       · exact Or.inr ⟨source, List.mem_cons_of_mem item hsource,
           hpass, rfl⟩
@@ -1127,9 +1127,9 @@ theorem foldl_push_if_toList {α β : Type*}
       intro init
       simp only [List.foldl_cons]
       by_cases hitem : p item
-      · rw [if_pos hitem, ih]
+      · rw [ite_eq_left hitem, ih]
         simp [hitem]
-      · rw [if_neg hitem, ih]
+      · rw [ite_eq_right hitem, ih]
         simp [hitem]
 
 /-- Dropping unit contributions preserves the product up to a unit: if
