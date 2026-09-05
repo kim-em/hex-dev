@@ -142,7 +142,7 @@ private theorem map_rawPoly (T : NumberTower) (f : Poly T) :
         (coeffEquiv T).toRingHom = HexPolyMathlib.toPolynomial f := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   apply Polynomial.ext
   intro n
@@ -187,7 +187,7 @@ theorem rawPolynomial_rawPoly (T : NumberTower) (f : Poly T) :
       T.toPolynomial f := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   rw [Norm.rawPolynomial_eq_map T.levels.toList T.valid hinjective hinv,
     toPolynomial_eq_map, ← map_rawPoly T f, Polynomial.map_map]
@@ -205,7 +205,7 @@ theorem polyCoords_rawPoly (T : NumberTower) (f : Poly T) :
       f.toArray.map coeffs := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   let q := Factor.rawPoly T.levels.toList (f.toArray.map coeffs)
   have hmap : (HexPolyMathlib.toPolynomial q).map
@@ -280,7 +280,7 @@ private theorem toPolynomial_of_polyCoords (T : NumberTower)
       (HexPolyMathlib.toPolynomial p).map (coeffEquiv T).toRingHom := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   dsimp only
   apply Polynomial.ext
@@ -319,7 +319,7 @@ private theorem publicCoords_of_canonical (T : NumberTower)
       factor := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   let p := Factor.rawPoly T.levels.toList factor
   let g : Poly T := DensePoly.ofCoeffs (factor.map (ofCoeffs T))
@@ -459,23 +459,23 @@ private theorem toPolynomial_rawPow (levels : List Level)
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     HexPolyMathlib.toPolynomial (Factor.polyPow f n) =
       HexPolyMathlib.toPolynomial f ^ n := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction n using Nat.strong_induction_on with
   | h n ih =>
       by_cases hn : n = 0
       · subst n
         simp [Factor.polyPow]
-      · rw [Factor.polyPow, if_neg hn]
+      · rw [Factor.polyPow, ite_eq_right hn]
         have hhalf : n / 2 < n := Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by omega)
         dsimp only
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven, HexPolyMathlib.toPolynomial_mul,
+        · rw [ite_eq_left heven, HexPolyMathlib.toPolynomial_mul,
             ih (n / 2) hhalf]
           rw [← pow_add]
           congr 1
           omega
-        · rw [if_neg heven, HexPolyMathlib.toPolynomial_mul,
+        · rw [ite_eq_right heven, HexPolyMathlib.toPolynomial_mul,
             HexPolyMathlib.toPolynomial_mul, ih (n / 2) hhalf]
           rw [← pow_add, ← pow_succ]
           congr 1
@@ -558,7 +558,7 @@ private theorem map_factorFold (T : NumberTower)
           product * Factorization.polyPow factor.1 factor.2) publicInit) := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   dsimp only
   induction factors generalizing rawInit publicInit with
@@ -583,7 +583,7 @@ theorem isIrreducible_iff (T : NumberTower) (f : Poly T) :
         f.leadingCoeff = 1 ∧ PolynomialIrreducible T f := by
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   let raw := Factor.rawPoly T.levels.toList (f.toArray.map coeffs)
   have hmap : (HexPolyMathlib.toPolynomial raw).map
@@ -648,7 +648,7 @@ theorem factor?_sound (T : NumberTower) (f : Poly T)
   simp only [checkFactorization, Factor.check, Bool.and_eq_true] at hcheck
   let hinjective := coeffDenote_injective T
   let hinv := LevelSemantics.coeffDenote_inv T.levels.toList T.valid hinjective
-  letI : Field (Arithmetic.Coeff T.levels.toList) :=
+  let : Field (Arithmetic.Coeff T.levels.toList) :=
     Norm.coeffFieldPoly T.levels.toList T.valid hinjective hinv
   have hscalar : coeffEquiv T
       (Arithmetic.Coeff.ofData T.levels.toList (coeffs r.scalar)) =

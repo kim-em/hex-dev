@@ -777,7 +777,7 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
       · subst hk
         simp only [↓reduceDIte, linearNSmul_zero]
         exact (ext (repr_add_zero acc)).symm
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide : 1 < 2)
         cases Nat.mod_two_eq_zero_or_one k with
@@ -788,7 +788,7 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
             have hnot : ¬k % 2 = 1 := by omega
             have hdiv : 2 * (k / 2) / 2 = k / 2 :=
               Nat.mul_div_right (k / 2) (by decide : 0 < 2)
-            rw [if_neg hnot]
+            rw [ite_eq_right hnot]
             calc
               nsmul.go acc (add base base) (k / 2)
                   = add acc (linearNSmul (add base base) (k / 2)) := by
@@ -799,7 +799,7 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
             have hk_eq : k = 2 * (k / 2) + 1 := by
               have h := Nat.mod_add_div k 2
               omega
-            rw [if_pos hmod1]
+            rw [ite_eq_left hmod1]
             calc
               nsmul.go (add acc base) (add base base) (k / 2)
                   = add (add acc base) (linearNSmul (add base base) (k / 2)) := by
@@ -1015,7 +1015,7 @@ private theorem pow_go_eq_acc_mul_linearPow
       rw [pow.go.eq_def]
       by_cases hk : k = 0
       · simp [hk, linearPow_mul_one_raw]
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide : 1 < 2)
         cases Nat.mod_two_eq_zero_or_one k with
@@ -1026,7 +1026,7 @@ private theorem pow_go_eq_acc_mul_linearPow
             have hnot : ¬k % 2 = 1 := by omega
             have hdiv : 2 * (k / 2) / 2 = k / 2 :=
               Nat.mul_div_right (k / 2) (by decide : 0 < 2)
-            rw [if_neg hnot]
+            rw [ite_eq_right hnot]
             calc
               pow.go acc (mul base base) (k / 2)
                   = mul acc (linearPow (mul base base) (k / 2)) := by
@@ -1037,7 +1037,7 @@ private theorem pow_go_eq_acc_mul_linearPow
             have hk_eq : k = 2 * (k / 2) + 1 := by
               have h := Nat.mod_add_div k 2
               omega
-            rw [if_pos hmod1]
+            rw [ite_eq_left hmod1]
             calc
               pow.go (mul acc base) (mul base base) (k / 2)
                   = mul (mul acc base) (linearPow (mul base base) (k / 2)) := by

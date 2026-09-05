@@ -339,10 +339,10 @@ theorem checkCertAtFactor_of_linear
   rcases hcheck with ⟨hmeta, htail⟩
   refine ⟨hmeta, ?_⟩
   by_cases hmonic : factor.leadingCoeff = 1
-  · rw [dif_pos hmonic] at htail ⊢
+  · rw [dite_eq_left hmonic] at htail ⊢
     exact Berlekamp.checkIrreducibilityCertificate_of_linearIncremental
       factor _ cert htail
-  · rw [dif_neg hmonic] at htail
+  · rw [dite_eq_right hmonic] at htail
     simp at htail
 
 /-- `checkFactorCertsLinear` implies `checkFactorCerts` once the block's prime

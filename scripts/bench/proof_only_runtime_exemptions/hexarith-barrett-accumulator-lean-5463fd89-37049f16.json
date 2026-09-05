@@ -1,0 +1,6 @@
+{
+ "path": "HexArith/Barrett/Accumulator.lean",
+ "baseline_blob": "5463fd8910ec9aeba98c8c583854f0493dc7c37a",
+ "current_blob": "37049f16fd4de8d71e4fea95acf0da85bdf420ce",
+ "reason": "Renames the conditional-reduction lemmas Lean 4.34 deprecates (if_pos, if_neg, dif_pos, dif_neg, if_true, if_false) to their successors ite_eq_left, ite_eq_right, dite_eq_left, dite_eq_right, ite_true, ite_false. The successors have identical statements and argument structure, and every edit is inside a proof; no definition and no factorization-service runtime path changes."
+}

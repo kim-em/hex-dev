@@ -103,14 +103,14 @@ theorem witness_iff (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     coeffs, c1, normSq, invPrec, inverse, residual, y,
     z1, z2Sum, z2, radius, halfRadiusSq]
   by_cases hsize : 2 ≤ (Hex.TaylorShift.compute p s.center).coeffs.size
-  · rw [if_pos hsize]
+  · rw [ite_eq_left hsize]
     simp only [Bool.and_eq_true, decide_eq_true_eq]
     constructor
     · rintro ⟨⟨h0, h1⟩, h2⟩
       exact ⟨hsize, h0, h1, h2⟩
     · rintro ⟨_, h0, h1, h2⟩
       exact ⟨⟨h0, h1⟩, h2⟩
-  · rw [if_neg hsize]
+  · rw [ite_eq_right hsize]
     simp [hsize]
 
 /-- Casting the fold accumulator gives its mathematical partial sum and the
@@ -306,7 +306,7 @@ theorem deriv_sub_center (p : Hex.ZPoly) (s : Hex.DyadicSquare)
   rw [shifted_coeff]
   by_cases hk2 : 2 ≤ k
   · have hk1 : 0 < k - 1 := by omega
-    rw [if_pos hk2, zero_pow (Nat.ne_of_gt hk1)]
+    rw [ite_eq_left hk2, zero_pow (Nat.ne_of_gt hk1)]
     simp only [mul_zero, sub_zero]
     ring
   · have hk0 : k = 0 ∨ k = 1 := by omega

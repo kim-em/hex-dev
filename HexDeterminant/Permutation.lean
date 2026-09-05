@@ -116,7 +116,7 @@ private theorem rowSwap_get_finTranspose {R : Type u} {n m : Nat}
   · by_cases hri : r = i
     · subst r
       simp [finTranspose, hrj]
-    · rw [if_neg hrj, if_neg hri]
+    · rw [ite_eq_right hrj, ite_eq_right hri]
       exact congrArg (fun row => M[row][k]) (finTranspose_of_ne i j r hri hrj).symm
 
 /-- The `r`-th entry of `transposePermutationValues perm i j` is

@@ -468,14 +468,14 @@ private theorem bhksRecoveryCoreWithBound_unfold
   rw [bhksRecoveryCoreWithBound, bhksRecoveryThreshold_eq, bhksRecoveryLoop]
   simp only [hrec]
   by_cases hf : k < bhksRecoveryFloor core
-  · rw [if_pos hf]
+  · rw [ite_eq_left hf]
     have hfloor : ¬ k ≥ bhksRecoveryFloor core := Nat.not_le.mpr hf
     cases bhksRecoverClassified core (ZPoly.directLiftData core k primeData) <;>
-      simp only [hfloor, if_false]
-  · rw [if_neg hf]
+      simp only [hfloor, ite_false]
+  · rw [ite_eq_right hf]
     have hfloor : k ≥ bhksRecoveryFloor core := Nat.le_of_not_lt hf
     cases bhksRecoverClassified core (ZPoly.directLiftData core k primeData) <;>
-      simp only [hfloor, if_true]
+      simp only [hfloor, ite_true]
 
 /-- Finite list of Hensel precisions inspected by the fast BHKS recovery loop. -/
 def henselPrecisionSchedule (B : Nat) : Nat → Nat → List Nat
@@ -544,15 +544,15 @@ private theorem henselPrecisionSchedule_mem_cap
         rw [henselPrecisionSchedule]
         simp only [List.mem_cons]
         right
-        rw [if_neg (by omega : ¬ k ≥ B)]
+        rw [ite_eq_right (by omega : ¬ k ≥ B)]
         unfold nextHenselPrecision
         have hpow : k * 2 ^ (fuel + 1) = 2 * k * 2 ^ fuel := by
           rw [Nat.pow_succ', ← Nat.mul_assoc, Nat.mul_comm k 2]
         by_cases h2 : 2 * k < B
-        · rw [if_pos h2]
+        · rw [ite_eq_left h2]
           refine ih (2 * k) (by omega) (by omega) ?_
           omega
-        · rw [if_neg h2]
+        · rw [ite_eq_right h2]
           refine ih B (by omega) (Nat.le_refl _) ?_
           have hge1 : 1 ≤ 2 ^ fuel := Nat.one_le_two_pow
           calc B = B * 1 := (Nat.mul_one B).symm
@@ -765,7 +765,7 @@ theorem bhksRecoveryCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_re
           · subst target
             rw [bhksRecover?] at hrecover
             simp [hclass, BhksRecoveryResult.toOption] at hrecover
-            simp only [ge_iff_le, hfloor, if_true]
+            simp only [ge_iff_le, hfloor, ite_true]
             exact congrArg some hrecover
           · have hstart_mem :
                 start ∈ henselPrecisionSchedule B start (fuel + 1) := by

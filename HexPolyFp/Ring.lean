@@ -113,7 +113,7 @@ theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
         show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
         Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
     exact absurd htoNat (by omega)
-  rw [dif_neg h1]
+  rw [dite_eq_right h1]
   change (((0 : ZMod64 p) * x + 1) * x + 0 = x)
   rw [zmod_zero_mul, zmod_zero_add, zmod_one_mul, zmod_add_zero]
 
@@ -1457,13 +1457,13 @@ private theorem fold_add_single_range
           intro i hi
           have hi' : i < n + 1 := List.mem_range.mp hi
           have hne : i ≠ n + 1 := by omega
-          rw [if_neg hne]
-        rw [hzero, if_pos rfl]
+          rw [ite_eq_right hne]
+        rw [hzero, ite_eq_left rfl]
         exact zmod_zero_add a
       · have ht' : t < n + 1 := by omega
         rw [ih ht']
         have hne : n + 1 ≠ t := by omega
-        rw [if_neg hne]
+        rw [ite_eq_right hne]
         exact zmod_add_zero a
 
 /-- Multiplying `f` by the scaled monomial `c · Xⁱ` shifts each coefficient up
@@ -1490,7 +1490,7 @@ theorem coeff_mul_shift_scale_one
             unfold mulCoeffTerm
             by_cases hnj : n < j
             · have hne : j ≠ n - i := by omega
-              rw [if_pos hnj, if_neg hne]
+              rw [ite_eq_left hnj, ite_eq_right hne]
             · simp [hnj, -DensePoly.coeff_shift]
               have hzero : c * (0 : ZMod64 p) = 0 := by grind
               rw [DensePoly.coeff_shift_scale i c (1 : FpPoly p) (n - j) hzero]
@@ -1502,19 +1502,19 @@ theorem coeff_mul_shift_scale_one
                     rw [Nat.sub_sub_self hin]
                     omega
                   exact hnot hlt
-                rw [if_neg hne]
+                rw [ite_eq_right hne]
                 simp [hlt]
                 exact zmod_mul_zero (f.coeff j)
               · by_cases hji : j = n - i
                 · subst j
-                  rw [if_pos rfl]
+                  rw [ite_eq_left rfl]
                   simp [hlt]
                   rw [coeff_one]
                   have hsub : n - (n - i) - i = 0 := by
                     rw [Nat.sub_sub_self hin]
                     simp
                   simp [hsub]
-                · rw [if_neg hji]
+                · rw [ite_eq_right hji]
                   simp [hlt]
                   rw [coeff_one]
                   have hsub : n - j - i ≠ 0 := by omega
@@ -1522,7 +1522,7 @@ theorem coeff_mul_shift_scale_one
       _ = f.coeff (n - i) * c := by
             exact fold_add_single_range n (n - i) (f.coeff (n - i) * c) (by omega)
       _ = if i ≤ n then f.coeff (n - i) * c else 0 := by
-            rw [if_pos hin]
+            rw [ite_eq_left hin]
   · have hzero :
         (List.range (n + 1)).foldl
             (fun acc j =>
@@ -1540,7 +1540,7 @@ theorem coeff_mul_shift_scale_one
         have hlt : n - j < i := by omega
         simp [hlt]
         exact zmod_mul_zero (f.coeff j)
-    rw [hzero, if_neg hin]
+    rw [hzero, ite_eq_right hin]
 
 /-- Expands the degree-`n` coefficient of `(f * g) * h` into a left-associated
 triple fold: the outer sum over `i` pairs the `i`-th coefficient of `f * g`

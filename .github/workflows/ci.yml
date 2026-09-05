@@ -94,8 +94,10 @@ jobs:
           python3 -m pip install --user \
             python-flint gmpy2 cypari2 conway-polynomials sympy matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
-      - name: Verify factorization measurements and figures are current
+      - name: Verify performance measurements and figures are current
         run: |
+          python3 -m unittest scripts/bench/test_sweep_freshness.py
+          python3 -m unittest scripts/bench/test_check_factor_sweep_freshness.py
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
           python3 scripts/bench/check_graphiso_sweep_freshness.py

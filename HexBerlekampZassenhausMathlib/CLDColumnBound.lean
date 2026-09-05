@@ -544,7 +544,7 @@ theorem cldQuotientMod_congr_mul_derivative
       (g * Hex.cldQuotientMod input g p k)
       (input * Hex.DensePoly.derivative g) (p ^ k) := by
   have hpk_pos : 0 < p ^ k := by omega
-  haveI : Fact (1 < p ^ k) := ⟨hk⟩
+  have : Fact (1 < p ^ k) := ⟨hk⟩
   -- Executable quotient / remainder of the monic division underlying `cldQuotientMod`.
   set num : Hex.ZPoly :=
     Hex.ZPoly.reduceModPow (input * Hex.DensePoly.derivative g) p k with hnum
@@ -724,13 +724,13 @@ private theorem C_dvd_toPolynomial_sub_of_congr
 theorem two_mul_natAbs_centeredModNat_le (z : Int) (m : Nat) (hm : 0 < m) :
     2 * (Hex.centeredModNat z m).natAbs ≤ m := by
   unfold Hex.centeredModNat
-  rw [if_neg hm.ne']
+  rw [ite_eq_right hm.ne']
   have h1 : 0 ≤ z % (m : Int) := Int.emod_nonneg z (by exact_mod_cast hm.ne')
   have h2 : z % (m : Int) < (m : Int) := Int.emod_lt_of_pos z (by exact_mod_cast hm)
   simp only [Int.ofNat_eq_natCast]
   by_cases hc : 2 * (z % (m : Int)).natAbs ≤ m
-  · rw [if_pos hc]; exact hc
-  · rw [if_neg hc, if_neg (by omega : ¬ z % (m : Int) < 0)]
+  · rw [ite_eq_left hc]; exact hc
+  · rw [ite_eq_right hc, ite_eq_right (by omega : ¬ z % (m : Int) < 0)]
     omega
 
 /-- The high-bit cut residue `Psi^a_b` lands in the centred range modulo `p^b`. -/
@@ -1415,7 +1415,7 @@ theorem periodAdjustedRowCoeffs_castAdd (L : Hex.BhksLatticeBasis)
   unfold periodAdjustedRowCoeffs
   simp only [Fin.getElem_fin, Vector.getElem_ofFn]
   rw [
-    dif_pos (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
+    dite_eq_left (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
   congr 1
 
 /-- The tail entries of the selection coefficients are the negated period
@@ -1426,7 +1426,7 @@ theorem periodAdjustedRowCoeffs_natAdd (L : Hex.BhksLatticeBasis)
   unfold periodAdjustedRowCoeffs
   simp only [Fin.getElem_fin, Vector.getElem_ofFn]
   rw [
-    dif_neg (by simp only [Fin.val_natAdd]; omega)]
+    dite_eq_right (by simp only [Fin.val_natAdd]; omega)]
   congr 2
   apply Fin.ext
   simp only [Fin.val_natAdd]
@@ -1474,8 +1474,8 @@ theorem periodAdjustedVector_project_of_blockForm
     intro j _
     rw [hentry]
     unfold Hex.bhksLatticeEntry
-    rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-      dif_pos (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+    rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+      dite_eq_left (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
           Fin (L.factorCount + L.coeffWidth)).val < L.factorCount from i.isLt),
       zero_mul]
   rw [hsnd, add_zero]
@@ -1488,17 +1488,17 @@ theorem periodAdjustedVector_project_of_blockForm
     intro i'
     rw [hentry, periodAdjustedRowCoeffs_castAdd]
     unfold Hex.bhksLatticeEntry
-    rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
-      dif_pos (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+    rw [dite_eq_left (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+      dite_eq_left (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
           Fin (L.factorCount + L.coeffWidth)).val < L.factorCount from i.isLt)]
     by_cases h : i' = i
     · subst h; simp
-    · rw [if_neg h,
-        if_neg (by simp only [Fin.val_castAdd]; exact fun hv => h (Fin.ext hv))]
+    · rw [ite_eq_right h,
+        ite_eq_right (by simp only [Fin.val_castAdd]; exact fun hv => h (Fin.ext hv))]
   rw [Finset.sum_congr rfl (fun i' _ => hfst i'), Finset.sum_eq_single i]
-  · rw [if_pos rfl, one_mul]
+  · rw [ite_eq_left rfl, one_mul]
   · intro i' _ hne
-    rw [if_neg hne, zero_mul]
+    rw [ite_eq_right hne, zero_mul]
   · intro h
     exact absurd (Finset.mem_univ i) h
 
@@ -1540,8 +1540,8 @@ theorem periodAdjustedVector_coeff_of_blockForm
         ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩
         = (L.cldRows.getD i'.val #[]).getD j.val 0 := by
       unfold Hex.bhksLatticeEntry
-      rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
-        dif_neg (by
+      rw [dite_eq_left (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+        dite_eq_right (by
           show ¬ (⟨L.factorCount + j.val,
             Nat.add_lt_add_left j.isLt L.factorCount⟩ :
             Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
@@ -1562,8 +1562,8 @@ theorem periodAdjustedVector_coeff_of_blockForm
           ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩
           = Int.ofNat (L.p ^ (L.precision - L.cutThresholds.getD j.val 0)) := by
         unfold Hex.bhksLatticeEntry
-        rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-          dif_neg (by
+        rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+          dite_eq_right (by
             show ¬ (⟨L.factorCount + j.val,
               Nat.add_lt_add_left j.isLt L.factorCount⟩ :
               Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
@@ -1576,14 +1576,14 @@ theorem periodAdjustedVector_coeff_of_blockForm
           L.cutThresholds L.cldRows (Fin.natAdd L.factorCount j')
           ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ = 0 := by
         unfold Hex.bhksLatticeEntry
-        rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-          dif_neg (by
+        rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+          dite_eq_right (by
             show ¬ (⟨L.factorCount + j.val,
               Nat.add_lt_add_left j.isLt L.factorCount⟩ :
               Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
             simp only []; omega)]
         simp only [Fin.val_natAdd, Nat.add_sub_cancel_left]
-        rw [if_neg (by
+        rw [ite_eq_right (by
           intro hcontra
           exact hne (Fin.ext hcontra.symm))]
       rw [hoff, zero_mul]
@@ -1736,7 +1736,7 @@ def recoveredShortVector
     · rw [Finset.sum_filter]
       refine Finset.sum_congr rfl (fun i _ => ?_)
       by_cases hi : i ∈ S
-      · rw [indicatorVector_apply_mem S hi, one_mul, if_pos hi]
+      · rw [indicatorVector_apply_mem S hi, one_mul, ite_eq_left hi]
         have hLcld : (L.cldRows.getD i.val #[]).getD j.val 0
             = (Hex.cldCoeffs D.f D.p D.a (L.liftedFactors.getD i.val 1)).getD j.val 0 := by
           congr 1
@@ -1745,7 +1745,7 @@ def recoveredShortVector
           simp [Array.getD, hsz]
         rw [hLcld,
           Hex.cldCoeffs_getD_of_lt D.f D.p D.a (L.liftedFactors.getD i.val 1) j.val hjlt]
-      · rw [indicatorVector_apply_not_mem S hi, zero_mul, if_neg hi]
+      · rw [indicatorVector_apply_not_mem S hi, zero_mul, ite_eq_right hi]
     · rw [Int.ofNat_eq_natCast, Nat.cast_pow]
       ring
   refine

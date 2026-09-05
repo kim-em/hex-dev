@@ -167,7 +167,7 @@ private theorem compHorner_eq_raw [Lean.Grind.CommRing R]
   simp only [Nat.min_self, Agree.mulUpTo_full]
   apply ext
   intro i hi
-  rw [coeff_ofFn _ i hi, if_pos hi]
+  rw [coeff_ofFn _ i hi, ite_eq_left hi]
 
 private theorem hornerFold [Lean.Grind.CommRing R]
     (a b : TSeries R n) (k : Nat) (z : TSeries R n) :
@@ -203,7 +203,7 @@ private theorem evalBlock_agree [Lean.Grind.CommRing R]
       (blockSum p s a b q) := by
   intro i hi him
   unfold evalBlock blockSum
-  rw [coeff_ofFn _ i hi, if_pos him,
+  rw [coeff_ofFn _ i hi, ite_eq_left him,
     coeff_foldl_add (List.range s)
       (fun j => if q * s + j < p then C (a.coeff (q * s + j)) * b ^ j else 0)
       0 i hi, coeff_zero]
@@ -331,11 +331,11 @@ private theorem foldIndicatorRange [Lean.Grind.CommRing R]
         (List.range p).foldl (fun acc k => acc + f k) 0 := by
     apply List.foldl_add_congr
     intro k hk
-    rw [if_pos (List.mem_range.mp hk)]
+    rw [ite_eq_left (List.mem_range.mp hk)]
   rw [hfirst, List.foldl_map]
   apply List.foldl_add_eq_self
   intro k hk
-  rw [if_neg]
+  rw [ite_eq_right]
   have hk' := List.mem_range.mp hk
   omega
 
@@ -553,7 +553,7 @@ theorem comp_eq_horner [Lean.Grind.CommRing R] (a b : TSeries R n)
   apply ext
   intro i hi
   unfold comp
-  rw [coeff_compUpTo_horner n a b h i hi, if_pos hi]
+  rw [coeff_compUpTo_horner n a b h i hi, ite_eq_left hi]
 
 /-- Bounded composition agrees with full composition below its bound. -/
 theorem coeff_compUpTo [Lean.Grind.CommRing R] (m : Nat)
@@ -619,8 +619,8 @@ theorem comp_X_left [Lean.Grind.CommRing R] (b : TSeries R n)
             rw [coeff_X k (List.mem_range.mp hk)]
             by_cases hk1 : k = 1
             · subst k
-              rw [if_pos rfl, C_one, hpow, one_mul, if_pos rfl]
-            · rw [if_neg hk1, C_zero, zero_mul, if_neg hk1]
+              rw [ite_eq_left rfl, C_one, hpow, one_mul, ite_eq_left rfl]
+            · rw [ite_eq_right hk1, C_zero, zero_mul, ite_eq_right hk1]
       _ = 0 + b :=
         List.foldl_add_single _ _ _ _ (List.mem_range.mpr hn) List.nodup_range
       _ = b := by grind
@@ -807,11 +807,11 @@ theorem comp_zero_right [Lean.Grind.CommRing R] (a : TSeries R n) :
             intro k hk
             by_cases hk0 : k = 0
             · subst k
-              rw [if_pos rfl, pow_zero, mul_one]
+              rw [ite_eq_left rfl, pow_zero, mul_one]
             · cases k with
               | zero => contradiction
               | succ k =>
-                  rw [if_neg (by omega), pow_succ, mul_zero, mul_zero]
+                  rw [ite_eq_right (by omega), pow_succ, mul_zero, mul_zero]
       _ = 0 + C (a.coeff 0) :=
         List.foldl_add_single _ _ _ _ (List.mem_range.mpr hn) List.nodup_range
       _ = C (a.coeff 0) := by grind
@@ -852,16 +852,16 @@ theorem coeff_comp_zero [Lean.Grind.CommRing R] (a b : TSeries R n)
             rw [coeff_C_mul _ _ 0 hn]
             by_cases hk0 : k = 0
             · subst k
-              rw [pow_zero, coeff_one 0 hn, if_pos rfl]
+              rw [pow_zero, coeff_one 0 hn, ite_eq_left rfl]
               grind
             · have hbzero := pow_vanish b h k 0 hn (by omega)
-              rw [hbzero, if_neg hk0]
+              rw [hbzero, ite_eq_right hk0]
               grind
       _ = 0 + a.coeff 0 :=
         List.foldl_add_single _ _ _ _ (List.mem_range.mpr hn) List.nodup_range
       _ = a.coeff 0 := by grind
   · unfold coeff
-    rw [dif_neg hn, dif_neg hn]
+    rw [dite_eq_right hn, dite_eq_right hn]
 
 /-- Substitution is associative when both inner series have zero constant
 coefficient. -/
@@ -911,7 +911,7 @@ theorem compUpTo [Lean.Grind.CommRing R] (p : Nat)
     (a b : TSeries R n) (h : b.coeff 0 = 0) :
     Agree p (Hex.TSeries.compUpTo p a b) (comp a b) := by
   intro i hi hip
-  rw [coeff_compUpTo p a b h i hi, if_pos hip]
+  rw [coeff_compUpTo p a b h i hi, ite_eq_left hip]
 
 end Agree
 

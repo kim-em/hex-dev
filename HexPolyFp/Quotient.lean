@@ -1038,10 +1038,10 @@ theorem eval_monomial (n : Nat) (c : ZMod64 p)
           (DensePoly.C (0 : ZMod64 p)) *
         β ^ n
     unfold DensePoly.monomial
-    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl), eval_zero, reduce_C_zero, zero_mul]
+    rw [dite_eq_left (show (0 : ZMod64 p) = Zero.zero from rfl), eval_zero, reduce_C_zero, zero_mul]
   · unfold eval DensePoly.toList DensePoly.toArray DensePoly.monomial
     have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
-    rw [dif_neg hc0]
+    rw [dite_eq_right hc0]
     simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
       List.reverse_cons, List.reverse_nil, List.nil_append, List.singleton_append,
       List.foldl_cons]
@@ -1528,7 +1528,7 @@ private theorem fpPoly_one_ne_zero :
   have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hone
   change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
   rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
-  simp only [if_true] at hcoeff
+  simp only [ite_true] at hcoeff
   exact zmod64_one_ne_zero hcoeff
 
 /-- The quotient is nontrivial: `1` and `0` are distinct quotient elements

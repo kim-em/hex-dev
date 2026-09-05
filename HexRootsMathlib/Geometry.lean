@@ -259,7 +259,7 @@ theorem closedSquare_eq_supClosedBall (s : Hex.DyadicSquare) :
 
 /-- The centre belongs to its closed square. -/
 theorem center_mem_closedSquare (s : Hex.DyadicSquare) : center s ∈ closedSquare s := by
-  rw [closedSquare, supClosedBall, Set.mem_setOf_eq, supDist, sub_self, supNorm]
+  rw [closedSquare, supClosedBall, Set.mem_ofPred_eq, supDist, sub_self, supNorm]
   simp only [Complex.zero_re, abs_zero, Complex.zero_im, max_self]
   rw [halfWidth_eq]
   exact (zpow_pos (by norm_num) _).le
@@ -270,7 +270,7 @@ theorem mem_closedSquare_iff_re_im (s : Hex.DyadicSquare) (z : ℂ) :
     z ∈ closedSquare s ↔
       |z.re - Dyadic.toReal s.re| ≤ halfWidth s ∧
       |z.im - Dyadic.toReal s.im| ≤ halfWidth s := by
-  rw [closedSquare, supClosedBall, Set.mem_setOf_eq, supDist, supNorm,
+  rw [closedSquare, supClosedBall, Set.mem_ofPred_eq, supDist, supNorm,
     max_le_iff]
   simp [center, Hex.DyadicSquare.center]
 
@@ -690,7 +690,7 @@ theorem closedSquare_subset_encSquare {squares : Array Hex.DyadicSquare}
 theorem closedSquare_subset_closedDisc (s : Hex.DyadicSquare) :
     closedSquare s ⊆ closedDisc s := by
   intro z hz
-  rw [closedSquare, supClosedBall, Set.mem_setOf_eq] at hz
+  rw [closedSquare, supClosedBall, Set.mem_ofPred_eq] at hz
   rw [closedDisc, Metric.mem_closedBall, Complex.dist_eq]
   calc
     ‖z - center s‖ ≤ √2 * supNorm (z - center s) :=

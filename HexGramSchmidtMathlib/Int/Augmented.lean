@@ -64,7 +64,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
         (Matrix.setCol _ _ _)[pp][cc]
     rw [Matrix.getElem_setCol, castIntDetMatrix_get]
     by_cases hc_eq : cc = (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
-    · rw [if_pos hc_eq]
+    · rw [ite_eq_left hc_eq]
       have hc_val : cc.val = j := congrArg Fin.val hc_eq
       have hsc :
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj)[pp][cc] =
@@ -74,7 +74,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
         simp [GramSchmidt.scaledCoeffMatrix, getRow_ofFn,
           GramSchmidt.liftFinLE, hc_val]
       rw [hsc, ← dot_castIntRow_eq_cast_dot]
-    · rw [if_neg hc_eq, castIntDetMatrix_get]
+    · rw [ite_eq_right hc_eq, castIntDetMatrix_get]
       have hc_ne : cc.val ≠ j := fun h => hc_eq (Fin.ext h)
       have hsc :
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj)[pp][cc] =
@@ -299,7 +299,7 @@ theorem augmentedGram_trailing_row
   unfold augmentedGram
   rw [Matrix.getElem_ofFn]
   have hn : ¬ (Fin.last n).val < n := by show ¬ n < n; omega
-  rw [dif_neg hn]
+  rw [dite_eq_right hn]
 
 /-- Substitution helper: matrix entries agree when Fin indices are equal.
 Used to reindex matrix-entry equalities across propositionally-equal Fin

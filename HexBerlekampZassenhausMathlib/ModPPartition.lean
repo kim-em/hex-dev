@@ -47,9 +47,9 @@ private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
       HexBerlekampMathlib.toMathlibPolynomial
         (Hex.monicModularImage
           (@Hex.ZPoly.modP primeData.p primeData.bounds core)) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hprime : Hex.Nat.Prime primeData.p := hval.prime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hp : 1 < primeData.p := by have := hprime.two_le; omega
   -- Descend the bundle's `ℤ` congruence to an `FpPoly` product equality;
@@ -81,7 +81,7 @@ private lemma univ_val_map_modPFactor_eq_factorsModP_map
         HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) =
       ((primeData.factorsModP.toList : Multiset _).map
         HexBerlekampMathlib.toMathlibPolynomial) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   unfold modPFactor
   rw [Finset.val_univ_fin]
   rw [show (primeData.factorsModP.toList : List _) =
@@ -144,9 +144,9 @@ theorem exists_factor_of_modPIndex
         HexBerlekampMathlib.toMathlibPolynomial
           (monicModPImage (Hex.ZPoly.modP primeData.p g)) := by
   classical
-  letI := primeData.bounds
+  let := primeData.bounds
   have hprime : Hex.Nat.Prime primeData.p := hval.prime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime.two_le, ?_⟩
@@ -154,7 +154,7 @@ theorem exists_factor_of_modPIndex
     rcases hprime.right m hmdvd with h | h
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
     hval.good
   have hcore_modP_iszero :
@@ -162,7 +162,7 @@ theorem exists_factor_of_modPIndex
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI := hfield
+  let := hfield
   set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
       fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
       with hf_def
@@ -282,7 +282,7 @@ theorem exists_factor_of_modPIndex
           @monicModPImage primeData.p primeData.bounds
               (@Hex.ZPoly.modP primeData.p primeData.bounds g) = 0 := by
         unfold monicModPImage
-        rw [if_pos hzero]
+        rw [ite_eq_left hzero]
       rw [hmonic_zero]
       have hz : HexBerlekampMathlib.toMathlibPolynomial
           (0 : Hex.FpPoly primeData.p) = 0 := by
@@ -318,9 +318,9 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
   classical
-  letI := primeData.bounds
+  let := primeData.bounds
   have hprime : Hex.Nat.Prime primeData.p := hval.prime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime.two_le, ?_⟩
@@ -328,7 +328,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     rcases hprime.right m hmdvd with h | h
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
     hval.good
   have hzero : (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
@@ -336,7 +336,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
   have hnodup : primeData.factorsModP.toList.Nodup := hval.nodup
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI := hfield
+  let := hfield
   -- Set up abbreviations.
   set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
       fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
@@ -497,7 +497,7 @@ theorem existsUnique_modPFactorSubset_of_modPFactorization
     (hval : ModPFactorization core primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   -- `core ≠ 0` from `isGoodPrime` (which forces `(modP p core).isZero = false`).
   have hcore_ne : core ≠ 0 := by
     intro hcore_zero
@@ -561,7 +561,7 @@ theorem core_ne_zero_of_modPFactorization
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization core primeData) :
     core ≠ 0 := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   intro hcore_zero
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
     hval.good
@@ -584,7 +584,7 @@ theorem toMathlibPolynomial_modPFactor_injective_of_modPFactorization
     letI := primeData.bounds
     Function.Injective (fun i : ModPFactorIndex primeData =>
       HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hnodup : primeData.factorsModP.toList.Nodup := hval.nodup
   have hinjPoly : Function.Injective
       (HexBerlekampMathlib.toMathlibPolynomial : Hex.FpPoly primeData.p → _) :=
@@ -601,7 +601,7 @@ theorem toMathlibPolynomial_modPFactor_monic_of_modPFactorization
     letI := primeData.bounds
     ∀ i : ModPFactorIndex primeData,
       (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)).Monic := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hmonic := hval.monic
   intro i
   exact HexBerlekampMathlib.toMathlibPolynomial_monic _ (hmonic _ (Array.getElem_mem _))
@@ -623,7 +623,7 @@ theorem modPFactor_index_cover
       g ∣ core ∧
       i ∈ S ∧
       RepresentsIntegerFactorModP primeData g S := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hcore_ne : core ≠ 0 := core_ne_zero_of_modPFactorization core primeData hval
   obtain ⟨g, hirr, hdvd, hfi_dvd⟩ :=
     exists_factor_of_modPIndex core hcore_ne hcore_pos primeData hval i

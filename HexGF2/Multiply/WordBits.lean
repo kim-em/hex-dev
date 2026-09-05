@@ -496,7 +496,7 @@ private theorem words_monomial_getElem!_active (k : Nat) :
       ((1 : UInt64) <<< (k % 64).toUInt64) := by
   rw [words_monomial, Array.getElem!_eq_getD]
   unfold Array.getD
-  rw [dif_pos (by simp)]
+  rw [dite_eq_left (by simp)]
   change ((Array.replicate (k / 64) (0 : UInt64)).push
     ((1 : UInt64) <<< (k % 64).toUInt64))[k / 64] =
       ((1 : UInt64) <<< (k % 64).toUInt64)
@@ -508,7 +508,7 @@ private theorem words_monomial_getElem!_zero_lt {j k : Nat} (hj : j < k / 64) :
     (monomial k).words[j]! = 0 := by
   rw [words_monomial, Array.getElem!_eq_getD]
   unfold Array.getD
-  rw [dif_pos]
+  rw [dite_eq_left]
   · simp [Array.getElem_push, hj]
   · simp
     omega

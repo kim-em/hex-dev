@@ -234,7 +234,7 @@ private theorem sqrtOfRoot_eq [Lean.Grind.CommRing R]
   intro i hi
   unfold sqrtOfRoot sqrtUpTo
   simp only [Nat.min_self]
-  rw [coeff_ofFn _ i hi, if_pos hi, coeff_mulUpTo n _ _ i hi, if_pos hi]
+  rw [coeff_ofFn _ i hi, ite_eq_left hi, coeff_mulUpTo n _ _ i hi, ite_eq_left hi]
 
 /-- Bounded square-root lifting agrees with the full lift throughout the
 requested prefix. -/
@@ -257,7 +257,7 @@ theorem sqrtUpTo_agree [Lean.Grind.CommRing R]
   intro i hi him
   have hiq : i < q := by dsimp only [q]; omega
   unfold sqrtUpTo
-  rw [coeff_ofFn _ i hi, if_pos him]
+  rw [coeff_ofFn _ i hi, ite_eq_left him]
   rw [sqrtOfRoot_eq]
   exact hmul i hi hiq
 

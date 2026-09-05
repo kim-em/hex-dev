@@ -1072,7 +1072,7 @@ private theorem bareissDesnanotIndex_succ_lt (k : Nat) (s : Fin (k + 1))
   have hzero : s.succ.val ≠ 0 := Nat.succ_ne_zero _
   have hne_last : s.succ.val ≠ k + 1 := by
     show s.val + 1 ≠ k + 1; omega
-  rw [dif_neg hzero, dif_neg hne_last]
+  rw [dite_eq_right hzero, dite_eq_right hne_last]
   ext
   show s.succ.val - 1 = s.val
   simp
@@ -1086,7 +1086,7 @@ private theorem bareissDesnanotIndex_succ_top (k : Nat) (s : Fin (k + 1))
   have hzero : s.succ.val ≠ 0 := Nat.succ_ne_zero _
   have hlast : s.succ.val = k + 1 := by
     show s.val + 1 = k + 1; omega
-  rw [dif_neg hzero, dif_pos hlast]
+  rw [dite_eq_right hzero, dite_eq_left hlast]
 
 private theorem bareissDesnanotIndex_castSucc_zero (k : Nat) (s : Fin (k + 1))
     (hs : s.val = 0) :
@@ -1095,7 +1095,7 @@ private theorem bareissDesnanotIndex_castSucc_zero (k : Nat) (s : Fin (k + 1))
         else if hlast : s.castSucc.val = k + 1 then Fin.last (k + 1)
         else ⟨s.castSucc.val - 1, by omega⟩) = _
   have hzero' : s.castSucc.val = 0 := hs
-  rw [dif_pos hzero']
+  rw [dite_eq_left hzero']
 
 private theorem bareissDesnanotIndex_castSucc_pos (k : Nat) (s : Fin (k + 1))
     (hs : 0 < s.val) :
@@ -1107,7 +1107,7 @@ private theorem bareissDesnanotIndex_castSucc_pos (k : Nat) (s : Fin (k + 1))
   have hne_zero : s.castSucc.val ≠ 0 := by rw [hcv]; exact Nat.ne_of_gt hs
   have hne_last : s.castSucc.val ≠ k + 1 := by
     rw [hcv]; exact Nat.ne_of_lt (by have := s.isLt; omega)
-  rw [dif_neg hne_zero, dif_neg hne_last]
+  rw [dite_eq_right hne_zero, dite_eq_right hne_last]
   ext
   show s.castSucc.val - 1 = s.val - 1
   rw [hcv]
@@ -1317,14 +1317,14 @@ private theorem fin_n_cyclicShift_eq_castSucc_index (k : Nat) (hk : k < n)
       rw [hr0]; exact bareissCyclicShift_apply_zero k
     have hge : ¬ (bareissCyclicShift k r).val < k := by
       rw [hbs]; show ¬ k < k; exact Nat.lt_irrefl _
-    rw [if_pos hr, dif_neg hge]
+    rw [ite_eq_left hr, dite_eq_right hge]
   · have hpos : 0 < r.val := Nat.pos_of_ne_zero hr
     have hbs : bareissCyclicShift k r = (⟨r.val - 1, by omega⟩ : Fin (k + 1)) :=
       bareissCyclicShift_apply_of_pos k r hpos
     have hbs_val : (bareissCyclicShift k r).val = r.val - 1 := by rw [hbs]
     have hlt : (bareissCyclicShift k r).val < k := by
       rw [hbs_val]; have := r.isLt; omega
-    rw [if_neg hr, dif_pos hlt]
+    rw [ite_eq_right hr, dite_eq_left hlt]
     apply Fin.ext
     show r.val - 1 = (bareissCyclicShift k r).val
     rw [hbs_val]

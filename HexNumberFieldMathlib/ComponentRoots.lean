@@ -103,7 +103,7 @@ private theorem rootLe_iff (a b : RootCount) :
       intro heq
       exact hp (rootPolynomial_eq_of_coefficients_eq a b heq)
     unfold rootKey
-    rw [rootLe, if_pos (by simpa using hp), intListLe_iff,
+    rw [rootLe, ite_eq_left (by simpa using hp), intListLe_iff,
       Prod.Lex.toLex_le_toLex]
     constructor
     · intro hle
@@ -702,7 +702,7 @@ private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
       simp
   | cons component components ih =>
       have hcomponent := hall component (by simp)
-      rw [List.foldlM_cons, dif_pos hcomponent.2] at hrun
+      rw [List.foldlM_cons, dite_eq_left hcomponent.2] at hrun
       cases hfound : componentRoots? component.1 component.2 hcomponent.2 rep h with
       | none => simp [hfound] at hrun
       | some found =>
@@ -778,7 +778,7 @@ private theorem componentFold_nodup [ZPoly.CheckedIrreducible p]
     (hrun := hrun)
   intro roots component next hcomponent hstep hroots
   have hpositive := (hall component hcomponent).2
-  rw [dif_pos hpositive] at hstep
+  rw [dite_eq_left hpositive] at hstep
   cases hfound : componentRoots? component.1 component.2 hpositive rep h with
   | none => simp [hfound] at hstep
   | some found =>
@@ -820,7 +820,7 @@ private theorem componentFold_value [ZPoly.CheckedIrreducible p]
     (hrun := hrun)
   intro roots component next hcomponent hstep hroots
   have hpositive := (yun_positive f component hcomponent).2
-  rw [dif_pos hpositive] at hstep
+  rw [dite_eq_left hpositive] at hstep
   cases hfound : componentRoots? component.1 component.2 hpositive rep h with
   | none => simp [hfound] at hstep
   | some found =>
@@ -952,8 +952,8 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
     · have heq := roots?_eq_roots f rep h
       have hfFalse : f.isZero = false := by
         cases hvalue : f.isZero <;> simp_all
-      rw [QAdjoin.roots?, if_neg (by simpa using hfFalse),
-        if_pos hdegree] at heq
+      rw [QAdjoin.roots?, ite_eq_right (by simpa using hfFalse),
+        ite_eq_left hdegree] at heq
       have hroots : QAdjoin.roots f rep h = .finite #[] :=
         (Option.some.inj heq).symm
       constructor
@@ -972,8 +972,8 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
       have heq := roots?_eq_roots f rep h
       have hfFalse : f.isZero = false := by
         cases hvalue : f.isZero <;> simp_all
-      rw [QAdjoin.roots?, if_neg (by simpa using hfFalse),
-        if_neg hdegree] at heq
+      rw [QAdjoin.roots?, ite_eq_right (by simpa using hfFalse),
+        ite_eq_right hdegree] at heq
       cases hfold : (Roots.yun f).foldlM
           (fun out component =>
             if hm : 0 < component.2 then do
@@ -1121,8 +1121,8 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
         have heq := roots?_eq_roots f rep h
         have hfFalse : f.isZero = false := by
           cases hvalueZero : f.isZero <;> simp_all
-        rw [QAdjoin.roots?, if_neg (by simpa using hfFalse),
-          if_neg hdegree] at heq
+        rw [QAdjoin.roots?, ite_eq_right (by simpa using hfFalse),
+          ite_eq_right hdegree] at heq
         cases hfold : (Roots.yun f).foldlM
             (fun out component =>
               if hm : 0 < component.2 then do

@@ -315,7 +315,7 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
         · refine ⟨.zero, ?_, ?_⟩
           · have hhas' : common.hasRoot isolations.intervals[↑i] = true := by
               simpa using hhas
-            simp only [signWith?, if_pos hdegree]
+            simp only [signWith?, ite_eq_left hdegree]
             rw [hfind']
             change rootSign? p common isolations i = some .zero
             unfold rootSign?
@@ -342,7 +342,7 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
           have hnonzero : evalSign p (isolations.openPoint i.castSucc) ≠ .zero :=
             evalSign_ne_zero p _ hnotroot
           refine ⟨evalSign p (isolations.openPoint i.castSucc), ?_, ?_⟩
-          · simp only [signWith?, if_pos hdegree]
+          · simp only [signWith?, ite_eq_left hdegree]
             rw [hfind']
             change rootSign? p common isolations i =
               some (evalSign p (isolations.openPoint i.castSucc))

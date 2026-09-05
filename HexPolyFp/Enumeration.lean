@@ -244,7 +244,7 @@ theorem of_first_coeffs_eq_of_degree_getD_lt {f : FpPoly p} {d : Nat}
   · simp [hn]
   · have hsize_le : f.size ≤ d := size_le_of_degree_getD_lt hdeg
     have hn_size : f.size ≤ n := Nat.le_trans hsize_le (Nat.le_of_not_gt hn)
-    rw [if_neg hn]
+    rw [ite_eq_right hn]
     exact (DensePoly.coeff_eq_zero_of_size_le f hn_size).symm
 
 /-- Every polynomial with degree below `d` appears in the bounded-degree list. -/

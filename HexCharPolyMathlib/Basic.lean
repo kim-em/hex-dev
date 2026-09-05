@@ -404,7 +404,7 @@ private theorem toeplitz_add_two {k : Nat} (t : Vector R (k + 2))
           apply Finset.sum_congr rfl
           intro l hl
           by_cases hle : l.val ≤ j.val + 2
-          · simp only [if_pos hle, f]
+          · simp only [ite_eq_left hle, f]
             rw [← Array.getElem_eq_getD (xs := t.toArray) (i := j.val + 2 - l.val)
               (h := by simp; omega) (fallback := (0 : R)),
               ← Array.getElem_eq_getD (xs := v.toArray) (i := l.val)
@@ -563,7 +563,7 @@ private theorem coeff_charpoly_border_one {k : Nat}
       simp only [Fintype.card_fin] at hB
       dsimp only [M] at hM
       rw [htrace] at hM
-      simp only [Nat.succ_ne_zero, if_false, Nat.succ_sub_one]
+      simp only [Nat.succ_ne_zero, ite_false, Nat.succ_sub_one]
       rw [show k + 1 - 1 = k by omega] at hB
       rw [show 1 + (k + 1) - 1 = k + 1 by omega] at hM
       rw [hB] at hM
@@ -662,7 +662,7 @@ private theorem berkowitzStep_correct {n k : Nat} (A : Hex.Matrix R n n)
           have hBtop : B.charpoly.coeff (k + 1) = 1 := by
             simpa using charpoly_coeff_card B
           rw [hBtop, mul_one, one_mul, hchar, coeff_charpoly_border_one]
-          simp only [Nat.succ_ne_zero, if_false, Nat.succ_sub_one]
+          simp only [Nat.succ_ne_zero, ite_false, Nat.succ_sub_one]
           dsimp only [M, a, r, c, B]
           have hone : (1 : Fin (k + 2)).val = 1 := rfl
           rw [hone, Nat.succ_sub_one]
@@ -730,9 +730,9 @@ private theorem berkowitzStep_correct {n k : Nat} (A : Hex.Matrix R n n)
         Hex.Matrix.getElem_berkowitzColumn_zero]
       dsimp only [a]
       by_cases hlast : j.val + 2 < k + 1
-      · rw [dif_pos hlast, hvTwo hlast, if_neg (by omega)]
+      · rw [dite_eq_left hlast, hvTwo hlast, ite_eq_right (by omega)]
         ring
-      · rw [dif_neg hlast, if_pos (by omega)]
+      · rw [dite_eq_right hlast, ite_eq_left (by omega)]
         ring
 
 private theorem berkowitzAux_correct {n : Nat} (A : Hex.Matrix R n n)
@@ -790,12 +790,12 @@ theorem equiv_charPoly {n : Nat} (A : Hex.Matrix R n n) :
       simpa using (show n + 1 ≤ k by omega)
     rw [hhex]
     by_cases hR : Nontrivial R
-    · letI : Nontrivial R := hR
+    · let : Nontrivial R := hR
       symm
       apply Polynomial.coeff_eq_zero_of_natDegree_lt
       rw [Matrix.charpoly_natDegree_eq_dim]
       simpa only [Fintype.card_fin] using Nat.lt_of_not_ge hk
-    · haveI : Subsingleton R := not_nontrivial_iff_subsingleton.mp hR
+    · have : Subsingleton R := not_nontrivial_iff_subsingleton.mp hR
       exact Subsingleton.elim _ _
 
 end HexCharPolyMathlib

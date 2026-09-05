@@ -102,7 +102,7 @@ theorem block_one (count width index : Nat) (hindex : index < count) :
       rcases i with _ | i
       · simp [block, fixedCoeffs, Array.getD, Nat.ne_of_gt htotal]
       · simp [block, fixedCoeffs, Array.getD]
-  · simp only [if_neg hindex0]
+  · simp only [ite_eq_right hindex0]
     apply Array.ext
     · simp [block, fixedCoeffs]
     · intro i hi₁ hi₂

@@ -182,11 +182,11 @@ theorem ModPFactorization.factorCount_le_degree_of_product
         (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ))
         target data.p) :
     data.factorsModP.size ≤ target.degree?.getD 0 := by
-  letI := data.bounds
+  let := data.bounds
   have hp : 1 < data.p := h.prime.one_lt
-  haveI : Fact (_root_.Nat.Prime data.p) :=
+  have : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime h.prime⟩
-  haveI : Nontrivial (ZMod data.p) := inferInstance
+  have : Nontrivial (ZMod data.p) := inferInstance
   let t : Multiset (Polynomial ℤ) :=
     (data.factorsModP.toList : Multiset (Hex.FpPoly data.p)).map
       (fun g => HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g))

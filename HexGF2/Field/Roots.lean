@@ -805,7 +805,7 @@ theorem pow_go_eq_acc_mul_linearPow (acc base : GF2nPoly f hirr) (k : Nat) :
       by_cases hk : k = 0
       · subst hk
         simp [linearPow_zero, mul_one]
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide : 1 < 2)
         cases Nat.mod_two_eq_zero_or_one k with
@@ -814,14 +814,14 @@ theorem pow_go_eq_acc_mul_linearPow (acc base : GF2nPoly f hirr) (k : Nat) :
               have h := Nat.mod_add_div k 2
               omega
             have hnot : ¬k % 2 = 1 := by omega
-            rw [if_neg hnot, ih (k / 2) hlt acc (base * base), linearPow_double]
+            rw [ite_eq_right hnot, ih (k / 2) hlt acc (base * base), linearPow_double]
             congr 2
             omega
         | inr hmod1 =>
             have hk_eq : k = 2 * (k / 2) + 1 := by
               have h := Nat.mod_add_div k 2
               omega
-            rw [if_pos hmod1, ih (k / 2) hlt (acc * base) (base * base)]
+            rw [ite_eq_left hmod1, ih (k / 2) hlt (acc * base) (base * base)]
             calc acc * base * linearPow (base * base) (k / 2)
                 = acc * (base * linearPow (base * base) (k / 2)) := by rw [mul_assoc]
               _ = acc * linearPow base (2 * (k / 2) + 1) := by
@@ -908,7 +908,7 @@ private theorem evalCoeffList_frobeniusFixedCoeffList_of_pos
         rw [Nat.pow_succ]
         have hpos : 0 < 2 ^ k := Nat.pow_pos (by decide : 0 < 2)
         omega
-  rw [frobeniusFixedCoeffList, if_neg hk_ne]
+  rw [frobeniusFixedCoeffList, ite_eq_right hk_ne]
   simp only [evalCoeffList_cons]
   rw [zero_add, evalCoeffList_replicate_zero_append_one,
     Internal.frobeniusIter_eq_linearPow_two_pow]
@@ -949,7 +949,7 @@ private theorem coeffListTopNonzero_frobeniusFixedCoeffList_of_pos
       (frobeniusFixedCoeffList (f := f) (hirr := hirr) k) := by
   have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
   refine ⟨1, ?_, one_ne_zero (f := f) (hirr := hirr) hf_pos⟩
-  rw [frobeniusFixedCoeffList, if_neg hk_ne]
+  rw [frobeniusFixedCoeffList, ite_eq_right hk_ne]
   change
     (((0 : GF2nPoly f hirr) :: 1 ::
         List.replicate (2 ^ k - 2) (0 : GF2nPoly f hirr)) ++ [1]).getLast? =
@@ -1000,7 +1000,7 @@ theorem frobeniusIter_fixed_elements_length_le_two_pow
           have hpos : 0 < 2 ^ k := Nat.pow_pos (by decide : 0 < 2)
           omega
     dsimp [cs]
-    rw [frobeniusFixedCoeffList, if_neg hk_ne]
+    rw [frobeniusFixedCoeffList, ite_eq_right hk_ne]
     simp
     omega
   have hfilter :

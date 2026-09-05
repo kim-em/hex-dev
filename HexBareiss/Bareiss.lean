@@ -211,8 +211,8 @@ theorem findPivotAux_eq_zero_of_none [Zero R] [DecidableEq R]
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp only [findPivotAux, hlt, dif_pos] at hfind
-              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp only [findPivotAux, hlt, dite_eq_left] at hfind
+              rw [ite_eq_right (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
               simp at hfind
           have hiFin : i = (⟨start, hlt⟩ : Fin n) := Fin.ext hi
           rw [hiFin]
@@ -222,14 +222,14 @@ theorem findPivotAux_eq_zero_of_none [Zero R] [DecidableEq R]
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp only [findPivotAux, hlt, dif_pos] at hfind
-              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp only [findPivotAux, hlt, dite_eq_left] at hfind
+              rw [ite_eq_right (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
               simp at hfind
           have hnext : findPivotAux M col (start + 1) fuel = none := by
             have hentryNat : M[start][col.val] = 0 := by
               simpa using hentry
-            simp only [findPivotAux, hlt, dif_pos] at hfind
-            rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)] at hfind
+            simp only [findPivotAux, hlt, dite_eq_left] at hfind
+            rw [ite_eq_left (by simpa [getRow, Fin.getElem_fin] using hentry)] at hfind
             exact hfind
           have hstart' : start + 1 ≤ i.val := by omega
           have hfuel' : i.val < start + 1 + fuel := by omega
@@ -265,8 +265,8 @@ theorem findPivotAux_eq_none_of_zero [Zero R] [DecidableEq R]
           hzero ⟨start, hstart⟩ (Nat.le_refl _)
             (show (⟨start, hstart⟩ : Fin n).val < start + (fuel + 1) by
               simp)
-        simp only [findPivotAux, hstart, dif_pos]
-        rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)]
+        simp only [findPivotAux, hstart, dite_eq_left]
+        rw [ite_eq_left (by simpa [getRow, Fin.getElem_fin] using hentry)]
         apply ih
         intro i hle hlt
         exact hzero i (by omega) (by omega)
@@ -304,11 +304,11 @@ theorem findPivotAux_some_ne_zero [Zero R] [DecidableEq R]
   | succ fuel ih =>
       by_cases hlt : start < n
       · by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
-        · simp only [findPivotAux, hlt, dif_pos] at hfind
-          rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+        · simp only [findPivotAux, hlt, dite_eq_left] at hfind
+          rw [ite_eq_left (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
           exact ih (start + 1) hfind
-        · simp only [findPivotAux, hlt, dif_pos] at hfind
-          rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+        · simp only [findPivotAux, hlt, dite_eq_left] at hfind
+          rw [ite_eq_right (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
           simp only [Option.some.injEq] at hfind
           subst hfind
           exact hzero
@@ -401,9 +401,9 @@ private theorem stepImplFold_ne [Zero R] [Sub R] [Mul R] (quot : R → R → R)
     intro A hne
     rw [List.foldl_cons, ih _ (fun t ht => hne t (List.mem_cons_of_mem _ ht))]
     by_cases hx : k < x.val
-    · rw [if_pos hx, Matrix.getElem_modifyEntries,
-        if_neg (fun hv => hne x List.mem_cons_self ((Fin.ext hv).symm))]
-    · rw [if_neg hx]
+    · rw [ite_eq_left hx, Matrix.getElem_modifyEntries,
+        ite_eq_right (fun hv => hne x List.mem_cons_self ((Fin.ext hv).symm))]
+    · rw [ite_eq_right hx]
 
 /-- The `stepMatrixWithImpl` fold updates every member row from its original
 entries. -/
@@ -435,8 +435,8 @@ private theorem stepImplFold_mem [Zero R] [Sub R] [Mul R] (quot : R → R → R)
     · rw [stepImplFold_ne quot k hk pivot prevPivot pivotRow r c xs _
         (fun t ht heq => (List.nodup_cons.mp hnd).1 (heq ▸ ht))]
       by_cases hx : k < r.val
-      · rw [if_pos hx, if_pos hx, Matrix.getElem_modifyEntries, if_pos rfl]
-      · rw [if_neg hx, if_neg hx]
+      · rw [ite_eq_left hx, ite_eq_left hx, Matrix.getElem_modifyEntries, ite_eq_left rfl]
+      · rw [ite_eq_right hx, ite_eq_right hx]
     · have hxr : x ≠ r := fun heq => (List.nodup_cons.mp hnd).1 (heq ▸ hr')
       have hrowr : ∀ cc : Fin n,
           (if k < x.val then
@@ -448,9 +448,9 @@ private theorem stepImplFold_mem [Zero R] [Sub R] [Mul R] (quot : R → R → R)
           else A)[r][cc] = A[r][cc] := by
         intro cc
         by_cases hx : k < x.val
-        · rw [if_pos hx, Matrix.getElem_modifyEntries,
-            if_neg (fun hv => hxr (Fin.ext hv.symm))]
-        · rw [if_neg hx]
+        · rw [ite_eq_left hx, Matrix.getElem_modifyEntries,
+            ite_eq_right (fun hv => hxr (Fin.ext hv.symm))]
+        · rw [ite_eq_right hx]
       rw [ih (List.nodup_cons.mp hnd).2 _ r hr']
       rw [show (if k < x.val then
             A.modifyEntries x.val fun j y =>
@@ -483,7 +483,7 @@ private theorem stepMatrixImpl_eq_ofFn [Zero R] [Sub R] [Mul R]
   rw [Matrix.getElem_ofFn]
   unfold stepMatrixWithImpl
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [dite_eq_left hk]
     show (Fin.foldl n _ M)[i][j] = _
     rw [Fin.foldl_eq_finRange_foldl,
       stepImplFold_mem quot k hk pivot prevPivot (Matrix.getRow M ⟨k, hk⟩) j
@@ -491,7 +491,7 @@ private theorem stepMatrixImpl_eq_ofFn [Zero R] [Sub R] [Mul R]
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow]
     rw [show (Matrix.getRow M ⟨k, hk⟩)[j] = (Matrix.getRow M ⟨k, hk⟩)[j.val] from rfl]
     grind
-  · rw [dif_neg hk]
+  · rw [dite_eq_right hk]
     have hik : ¬ k < i.val := fun h => hk (Nat.lt_trans h i.isLt)
     simp only [Matrix.getElem_pair_eq_nested]
     grind
@@ -515,15 +515,15 @@ theorem stepMatrixWith_eq_ofFn [Zero R] [Sub R] [Mul R] (quot : R → R → R)
   rw [Matrix.getElem_ofFn]
   unfold stepMatrixWith
   by_cases hk : k < n
-  · rw [dif_pos hk, Matrix.getElem_mapRowsIdx]
+  · rw [dite_eq_left hk, Matrix.getElem_mapRowsIdx]
     by_cases hi : k < i.val
-    · simp only [hi, if_pos, Vector.getElem_finFoldl_modify, Matrix.getElem_pair_eq_nested,
+    · simp only [hi, ite_eq_left, Vector.getElem_finFoldl_modify, Matrix.getElem_pair_eq_nested,
         Matrix.getElem_eq_getRow, Matrix.getRow, Fin.getElem_fin]
       grind
     · simp only [hi, Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow,
         Matrix.getRow, Fin.getElem_fin]
       grind
-  · rw [dif_neg hk]
+  · rw [dite_eq_right hk]
     have hik : ¬ k < i.val := fun h => hk (Nat.lt_trans h i.isLt)
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow, Matrix.getRow,
       Fin.getElem_fin]
@@ -872,7 +872,7 @@ private theorem getEntry_swapRowsArray_matrixToRows [Zero R] (M : Matrix R n n)
       calc
         getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) rowB.val j.val =
             getEntry (matrixToRows M) rowA.val j.val := by
-              simp only [swapRowsArray, hsame, if_false, getEntry,
+              simp only [swapRowsArray, hsame, ite_false, getEntry,
                 Array.set!_eq_setIfInBounds]
               exact congrArg (fun row : Array R => row.getD j.val 0)
                 (array_getD_setIfInBounds_same
@@ -891,7 +891,7 @@ private theorem getEntry_swapRowsArray_matrixToRows [Zero R] (M : Matrix R n n)
         calc
           getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) rowA.val j.val =
               getEntry (matrixToRows M) rowB.val j.val := by
-                simp only [swapRowsArray, hsame, if_false, getEntry,
+                simp only [swapRowsArray, hsame, ite_false, getEntry,
                   Array.set!_eq_setIfInBounds]
                 exact congrArg (fun row : Array R => row.getD j.val 0)
                   ((array_getD_setIfInBounds_ne
@@ -914,7 +914,7 @@ private theorem getEntry_swapRowsArray_matrixToRows [Zero R] (M : Matrix R n n)
         calc
           getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) i.val j.val =
               getEntry (matrixToRows M) i.val j.val := by
-                simp only [swapRowsArray, hsame, if_false, getEntry,
+                simp only [swapRowsArray, hsame, ite_false, getEntry,
                   Array.set!_eq_setIfInBounds]
                 exact congrArg (fun row : Array R => row.getD j.val 0)
                   ((array_getD_setIfInBounds_ne

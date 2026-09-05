@@ -565,7 +565,7 @@ private theorem scoutBetterPattern_mem
       | succ fuel =>
           simp only [scoutBetterPattern] at h
           by_cases hpays : scoutPays core inc candidate.m (fuel + 1) = true
-          · rw [if_pos hpays] at h
+          · rw [ite_eq_left hpays] at h
             cases hpat :
                 probeDegreePattern? core.poly candidate inc.degrees.size with
             | none =>
@@ -577,11 +577,11 @@ private theorem scoutBetterPattern_mem
                 rw [hpat] at h
                 simp only at h
                 by_cases hcomplete : pattern.complete = true
-                · rw [if_pos hcomplete] at h
+                · rw [ite_eq_left hcomplete] at h
                   by_cases hbetter :
                       scoreBetter inc.score
                         (directDegreeScore core candidate.m pattern.separated) = true
-                  · rw [if_pos hbetter] at h
+                  · rw [ite_eq_left hbetter] at h
                     rcases ih fuel
                         ⟨candidate.m, pattern.separated,
                           directDegreeScore core candidate.m pattern.separated⟩
@@ -592,15 +592,15 @@ private theorem scoutBetterPattern_mem
                         rw [hc]
                         exact List.mem_cons_self)
                     · exact Or.inr (List.mem_cons_of_mem candidate hm)
-                  · rw [if_neg hbetter] at h
+                  · rw [ite_eq_right hbetter] at h
                     rcases ih fuel inc best scouted h with hb | hm
                     · exact Or.inl hb
                     · exact Or.inr (List.mem_cons_of_mem candidate hm)
-                · rw [if_neg hcomplete] at h
+                · rw [ite_eq_right hcomplete] at h
                   rcases ih fuel inc best scouted h with hb | hm
                   · exact Or.inl hb
                   · exact Or.inr (List.mem_cons_of_mem candidate hm)
-          · rw [if_neg hpays] at h
+          · rw [ite_eq_right hpays] at h
             exact Or.inl ⟨scouted, h, rfl⟩
 
 private theorem planOfScout_probes_mem

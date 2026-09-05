@@ -148,7 +148,7 @@ private theorem normalizeForFactor_reassembles_signedContentScalar
       exact Int.mul_pos hcontent_pos hA_pos
     have hf_not_neg : ¬ DensePoly.leadingCoeff f < 0 := by omega
     unfold signedContentScalar
-    rw [if_neg hf, if_neg hf_not_neg, hε, Int.mul_one]
+    rw [ite_eq_right hf, ite_eq_right hf_not_neg, hε, Int.mul_one]
   · -- ε = -1
     have hcontent_neg : ZPoly.content f * (-1 : Int) < 0 := by
       have hrw : ZPoly.content f * (-1 : Int) = -(ZPoly.content f) := by
@@ -158,7 +158,7 @@ private theorem normalizeForFactor_reassembles_signedContentScalar
       rw [h_f_leading, hε]
       exact Int.mul_neg_of_neg_of_pos hcontent_neg hA_pos
     unfold signedContentScalar
-    rw [if_neg hf, if_pos hf_neg, hε, Int.mul_neg_one]
+    rw [ite_eq_right hf, ite_eq_left hf_neg, hε, Int.mul_neg_one]
 
 private theorem shift_mul_left_zpoly (k : Nat) (a b : ZPoly) :
     DensePoly.shift k (a * b) = DensePoly.shift k a * b := by
@@ -577,7 +577,7 @@ theorem recombinationSearchModAux_isSome_of_step
     (recombinationSearchModAux target modulus localFactors (fuel + 1)).isSome = true := by
   obtain ⟨restFactors, hrest⟩ := Option.isSome_iff_exists.mp hsearch_rest
   unfold recombinationSearchModAux
-  rw [if_neg htarget_ne_one]
+  rw [ite_eq_right htarget_ne_one]
   refine firstSome_isSome_of_mem (y := candidate :: restFactors) hsplit ?_
   show (let candidate' := normalizeFactorSign <|
             ZPoly.primitivePart <|
@@ -594,7 +594,7 @@ theorem recombinationSearchModAux_isSome_of_step
             ZPoly.primitivePart <|
               centeredLiftPoly (Array.polyProduct selected.toArray) modulus) = candidate
         from hcandidate_def.symm]
-  rw [if_pos hrecord]
+  rw [ite_eq_left hrecord]
   simp only [hquot, hrest]
 
 /-- Companion to `recombinationSearchModAux_isSome_of_step` at the
@@ -660,7 +660,7 @@ theorem recombinationSearchModAux_eq_some_of_step_of_prefix_none
     recombinationSearchModAux target modulus localFactors (fuel + 1) =
       some (candidate :: restFactors) := by
   unfold recombinationSearchModAux
-  rw [if_neg htarget_ne_one, hsplits]
+  rw [ite_eq_right htarget_ne_one, hsplits]
   refine firstSome_eq_some_of_append pre suffix (selected, rest) _ _ hprefix ?_
   show (let candidate' :=
           normalizeFactorSign <|
@@ -678,7 +678,7 @@ theorem recombinationSearchModAux_eq_some_of_step_of_prefix_none
             ZPoly.primitivePart <|
               centeredLiftPoly (Array.polyProduct selected.toArray) modulus) = candidate
         from hcandidate_def.symm]
-  rw [if_pos hrecord]
+  rw [ite_eq_left hrecord]
   simp only [hquot, hsearch_rest]
 
 /--
@@ -743,7 +743,7 @@ private theorem bhksRecoverClassified_success_product
   rw [bhksRecoverClassified] at hrecover
   by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
       (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
-  · rw [dif_pos hrows] at hrecover
+  · rw [dite_eq_left hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
           (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
@@ -751,7 +751,7 @@ private theorem bhksRecoverClassified_success_product
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) = true
     · simp [hdeg] at hrecover
-    · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
+    · simp only [hdeg, Bool.false_eq_true, ite_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
@@ -760,11 +760,11 @@ private theorem bhksRecoverClassified_success_product
       | some cands =>
           simp only [hcand] at hrecover
           by_cases hprod : Array.polyProduct cands == f
-          · simp only [hprod, if_true] at hrecover
+          · simp only [hprod, ite_true] at hrecover
             cases hrecover
             simpa [beq_iff_eq] using hprod
           · simp [hprod] at hrecover
-  · rw [dif_neg hrows] at hrecover
+  · rw [dite_eq_right hrows] at hrecover
     simp at hrecover
 
 private theorem bhksRecoverClassified_success_all_of_candidates
@@ -780,23 +780,23 @@ private theorem bhksRecoverClassified_success_all_of_candidates
   rw [bhksRecoverClassified] at hrecover
   by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
       (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
-  · rw [dif_pos hrows] at hrecover
+  · rw [dite_eq_left hrows] at hrecover
     let projected :=
       bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
-    · simp only [projected, indicators, hdeg, Bool.false_eq_true, if_false] at hrecover
+    · simp only [projected, indicators, hdeg, Bool.false_eq_true, ite_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d indicators with
       | none => simp [projected, indicators, hcand] at hrecover
       | some cands =>
           simp only [projected, indicators, hcand] at hrecover
           by_cases hprod : Array.polyProduct cands == f
-          · simp only [hprod, if_true] at hrecover
+          · simp only [hprod, ite_true] at hrecover
             cases hrecover
             exact hall hcand
           · simp [hprod] at hrecover
-  · rw [dif_neg hrows] at hrecover
+  · rw [dite_eq_right hrows] at hrecover
     simp at hrecover
 
 private theorem bhksRecoverClassified_success_normalizeFactorSign
@@ -827,23 +827,23 @@ private theorem bhksRecoverClassified_success_dvd
   rw [bhksRecoverClassified] at hrecover
   by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
       (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
-  · rw [dif_pos hrows] at hrecover
+  · rw [dite_eq_left hrows] at hrecover
     let projected :=
       bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
-    · simp only [projected, indicators, hdeg, Bool.false_eq_true, if_false] at hrecover
+    · simp only [projected, indicators, hdeg, Bool.false_eq_true, ite_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d indicators with
       | none => simp [projected, indicators, hcand] at hrecover
       | some cands =>
           simp only [projected, indicators, hcand] at hrecover
           by_cases hprod : Array.polyProduct cands == f
-          · simp only [hprod, if_true] at hrecover
+          · simp only [hprod, ite_true] at hrecover
             cases hrecover
             exact bhksIndicatorCandidates?_dvd hcand
           · simp [hprod] at hrecover
-  · rw [dif_neg hrows] at hrecover
+  · rw [dite_eq_right hrows] at hrecover
     simp at hrecover
 
 /-- A successful BHKS recovery call preserves the polynomial product: when
@@ -933,7 +933,7 @@ private theorem bhksRecoverClassified_success_indicatorCandidates
   rw [bhksRecoverClassified] at hrecover
   by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
       (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
-  · rw [dif_pos hrows] at hrecover
+  · rw [dite_eq_left hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
           (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
@@ -941,7 +941,7 @@ private theorem bhksRecoverClassified_success_indicatorCandidates
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) = true
     · simp [hdeg] at hrecover
-    · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
+    · simp only [hdeg, Bool.false_eq_true, ite_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
@@ -950,11 +950,11 @@ private theorem bhksRecoverClassified_success_indicatorCandidates
       | some cands =>
           simp only [hcand] at hrecover
           by_cases hprod : Array.polyProduct cands == f
-          · simp only [hprod, if_true] at hrecover
+          · simp only [hprod, ite_true] at hrecover
             cases hrecover
             exact ⟨hrows, hcand, by simpa using hdeg⟩
           · simp [hprod] at hrecover
-  · rw [dif_neg hrows] at hrecover
+  · rw [dite_eq_right hrows] at hrecover
     simp at hrecover
 
 /-- A successful fast-recombination loop is witnessed by a concrete precision

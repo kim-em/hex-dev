@@ -82,7 +82,7 @@ composition. -/
     DensePoly.compose (FpPoly.X : FpPoly p) q = q := by
   unfold DensePoly.compose DensePoly.toList DensePoly.toArray FpPoly.X DensePoly.monomial
   have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := one_ne_zero_of_prime
-  rw [dif_neg h1]
+  rw [dite_eq_right h1]
   show ((0 : FpPoly p) * q + DensePoly.C (1 : ZMod64 p)) * q +
       DensePoly.C (Zero.zero : ZMod64 p) = q
   have hstep1 : ((0 : FpPoly p) * q + DensePoly.C (1 : ZMod64 p)) = (1 : FpPoly p) := by
@@ -250,7 +250,7 @@ private theorem monomial_one_toList_eq
   show ((DensePoly.monomial k (1 : ZMod64 p) : FpPoly p).coeffs.toList :
     List (ZMod64 p)) = _
   unfold DensePoly.monomial
-  rw [dif_neg h1]
+  rw [dite_eq_right h1]
   show ((Array.replicate k (Zero.zero : ZMod64 p)).push (1 : ZMod64 p)).toList =
     List.replicate k (Zero.zero : ZMod64 p) ++ [(1 : ZMod64 p)]
   rw [Array.toList_push, Array.toList_replicate]
@@ -295,7 +295,7 @@ private theorem monomial_toList_eq (k : Nat) {c : ZMod64 p}
       List.replicate k (Zero.zero : ZMod64 p) ++ [c] := by
   show ((DensePoly.monomial k c : FpPoly p).coeffs.toList : List (ZMod64 p)) = _
   unfold DensePoly.monomial
-  rw [dif_neg hc]
+  rw [dite_eq_right hc]
   show ((Array.replicate k (Zero.zero : ZMod64 p)).push c).toList =
     List.replicate k (Zero.zero : ZMod64 p) ++ [c]
   rw [Array.toList_push, Array.toList_replicate]
@@ -313,7 +313,7 @@ theorem compose_monomial [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat)
   · subst hc
     have hzero : (DensePoly.monomial k (Zero.zero : ZMod64 p) : FpPoly p) = 0 := by
       unfold DensePoly.monomial
-      rw [dif_pos rfl]
+      rw [dite_eq_left rfl]
     have hCz : (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
     rw [hzero, compose_zero, hCz, FpPoly.zero_mul]
   · rw [compose_eq_powerSum, monomial_toList_eq k hc,
@@ -632,7 +632,7 @@ private theorem composeScalarCoeffList_trim
       unfold DensePoly.trimTrailingZerosList
       by_cases htrim :
           DensePoly.trimTrailingZerosList cs = [] ∧ c = (Zero.zero : ZMod64 p)
-      · rw [if_pos htrim]
+      · rw [ite_eq_left htrim]
         have htail : DensePoly.trimTrailingZerosList cs = [] := htrim.1
         have hc : c = (Zero.zero : ZMod64 p) := htrim.2
         have hih := composeScalarCoeffList_trim q cs
@@ -654,7 +654,7 @@ private theorem composeScalarCoeffList_trim
         rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from
           fp_C_zero]
         rw [FpPoly.mul_zero, FpPoly.zero_add]
-      · rw [if_neg htrim]
+      · rw [ite_eq_right htrim]
         simp only [DensePoly.composeScalarCoeffList]
         rw [composeScalarCoeffList_trim q cs]
 
@@ -949,7 +949,7 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
       simp only [composeCoeffPowerSumUpTo]
       rw [DensePoly.coeff_zero]
       have hneg : ¬ (base ≤ k ∧ k < base + 0) := by intro ⟨_, h⟩; omega
-      rw [if_neg hneg]
+      rw [ite_eq_right hneg]
       rfl
   | n + 1, base, k => by
       simp only [composeCoeffPowerSumUpTo]
@@ -970,31 +970,31 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
       have hzz_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero := by
         grind
       by_cases hk_base : k = base
-      · rw [if_pos hk_base]
+      · rw [ite_eq_left hk_base]
         have hneg' : ¬ (base + 1 ≤ k ∧ k < base + 1 + n) := by
           intro ⟨h, _⟩; omega
-        rw [if_neg hneg']
+        rw [ite_eq_right hneg']
         have hpos : base ≤ k ∧ k < base + (n + 1) := by
           refine ⟨?_, ?_⟩ <;> omega
-        rw [if_pos hpos]
+        rw [ite_eq_left hpos]
         have hmul_one : coeff base * (1 : ZMod64 p) = coeff k := by
           rw [hk_base]; grind
         rw [hmul_one]
         show coeff k + (Zero.zero : ZMod64 p) = coeff k
         rw [hzz]; grind
-      · rw [if_neg hk_base]
+      · rw [ite_eq_right hk_base]
         rw [hmul_zero]
         by_cases hkb : base ≤ k
         · have hk1 : base + 1 ≤ k := by omega
           by_cases hcond : k < base + (n + 1)
           · have hcond' : k < base + 1 + n := by omega
-            rw [if_pos ⟨hk1, hcond'⟩, if_pos ⟨hkb, hcond⟩]
+            rw [ite_eq_left ⟨hk1, hcond'⟩, ite_eq_left ⟨hkb, hcond⟩]
             rw [hzz]; grind
-          · rw [if_neg (fun ⟨_, h⟩ => hcond (by omega))]
-            rw [if_neg (fun ⟨_, h⟩ => hcond h)]
+          · rw [ite_eq_right (fun ⟨_, h⟩ => hcond (by omega))]
+            rw [ite_eq_right (fun ⟨_, h⟩ => hcond h)]
             exact hzz_add
         · have hk1 : ¬ (base + 1 ≤ k) := by omega
-          rw [if_neg (fun ⟨h, _⟩ => hk1 h), if_neg (fun ⟨h, _⟩ => hkb h)]
+          rw [ite_eq_right (fun ⟨h, _⟩ => hk1 h), ite_eq_right (fun ⟨h, _⟩ => hkb h)]
           exact hzz_add
 
 private theorem composeCoeffPowerSumUpTo_self_X_eq_self
@@ -1006,7 +1006,7 @@ private theorem composeCoeffPowerSumUpTo_self_X_eq_self
   by_cases hk : k < w.size
   · simp [hk]
   · have hk' : w.size ≤ k := Nat.le_of_not_gt hk
-    rw [if_neg (by intro ⟨_, h⟩; omega : ¬ (0 ≤ k ∧ k < 0 + w.size))]
+    rw [ite_eq_right (by intro ⟨_, h⟩; omega : ¬ (0 ≤ k ∧ k < 0 + w.size))]
     exact (DensePoly.coeff_eq_zero_of_size_le w hk').symm
 
 /-- Substituting the polynomial indeterminate into `w` returns `w`.
