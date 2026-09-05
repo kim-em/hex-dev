@@ -19,7 +19,7 @@ labelling (`CellsReach`), its initial boundaries intact, and its
 `numcells` accurate — so the search's `canonlab` output is reached
 (`canonlab_cellsReach`), which discharges the transcription-side
 residuals of `certifyCanon?_isSome`
-(`colorSortedCheck_canonlab`, `canonlab_perm_range`).
+(`labelColorSorted_canonlab`, `canonlab_perm_range`).
 
 The state-operation lemmas unfold the non-exposed search definitions,
 so they live here behind `import all` and stay private; only the
@@ -1897,9 +1897,9 @@ theorem canonlab_cellsReach {k : Nat} (G : Colored n k) :
 /-- The transcribed search's canonical labelling passes the colour
 monotonicity check: one of the two transcription-side residuals of
 `certifyCanon?_isSome`. -/
-theorem colorSortedCheck_canonlab {k : Nat} (G : Colored n k) :
-    colorSortedCheck G (runColored G).canonlab = true :=
-  colorSortedCheck_of_cellsReach (canonlab_size G)
+theorem labelColorSorted_canonlab {k : Nat} (G : Colored n k) :
+    labelColorSorted G (runColored G).canonlab = true :=
+  labelColorSorted_of_cellsReach (canonlab_size G)
     (canonlab_cellsReach G)
 
 /-- The transcribed search's canonical labelling is a permutation of

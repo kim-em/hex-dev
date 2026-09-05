@@ -614,7 +614,7 @@ theorem isautom_iff (ctx : Ctx n) (γ : Array Nat) :
 /-!
 **The residual gap to `certifyCanon?` totality is closed.** Beyond
 layers one and two it needed the rows equality (definitional from
-`produceCand`'s key), `colorSortedCheck` of the transcription's
+`produceCand`'s key), `labelColorSorted` of the transcription's
 output labelling, and layer three, the maximality of the traced key.
 Layer three is `canonSpecKey_eq_tracedKey` and the assembly is
 `certifyCanon?_isSome`, both in `Correct/Certify.lean`.

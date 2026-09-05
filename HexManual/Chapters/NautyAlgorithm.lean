@@ -623,13 +623,13 @@ reuses the rows already known to be equal.
 {docstring Hex.GraphIso.Nauty.updatecan}
 
 The transcribed search is exposed as
-{name Hex.GraphIso.Nauty.canonicalize?}`Hex.GraphIso.Nauty.canonicalize?`.
+{name Hex.GraphIso.Nauty.searchResult?}`Hex.GraphIso.Nauty.searchResult?`.
 The public entry point is
 {name Hex.GraphIso.canonicalize}`Hex.GraphIso.canonicalize`; the
 {ref "hex-graph-iso"}[HexGraphIso chapter] describes the public
 surface and the theorems it carries.
 
-{docstring Hex.GraphIso.Nauty.canonicalize?}
+{docstring Hex.GraphIso.Nauty.searchResult?}
 
 {docstring Hex.GraphIso.canonicalize}
 

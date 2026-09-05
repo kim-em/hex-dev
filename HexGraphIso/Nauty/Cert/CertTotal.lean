@@ -247,7 +247,7 @@ theorem certifyCanon?_isSome_of_checkKey (G : Colored n k)
       · refine beq_iff_eq.mpr ?_
         rw [leafRows]
         rfl
-      · exact colorSortedCheck_canonlab G
+      · exact labelColorSorted_canonlab G
   · rw [ite_eq_right (by simp; omega)]
     have hps := produceCand_none_isSome G
     rcases hp : produceCand G none with _ | ⟨cert, B⟩
@@ -263,7 +263,7 @@ theorem certifyCanon?_isSome_of_checkKey (G : Colored n k)
       rw [ite_eq_left ?_]
       · rfl
       · refine (Bool.and_eq_true _ _).mpr ⟨(Bool.and_eq_true _ _).mpr
-          ⟨hkey, ?_⟩, colorSortedCheck_canonlab G⟩
+          ⟨hkey, ?_⟩, labelColorSorted_canonlab G⟩
         refine beq_iff_eq.mpr ?_
         rw [hB]
         dsimp only

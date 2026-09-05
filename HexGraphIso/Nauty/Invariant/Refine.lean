@@ -19,7 +19,7 @@ the clause's induction consumes.
 
 /-!
 Transcription labelling invariants for the verified search refinement
-programme: label well-formedness and the `colorSortedCheck` residual
+programme: label well-formedness and the `labelColorSorted` residual
 of `certifyCanon?_isSome`.
 
 The single simulation-relation clause on the imperative search state
@@ -32,7 +32,7 @@ within the initial colour classes, so every leaf the search reaches
 two transcription-side residuals follow immediately through the
 existing achievement lemmas: `achieved_perm_range` turns it into
 permutation-ness (`canonlab` is a bijection of `Fin n`) and
-`achieved_position_colors` turns it into `colorSortedCheck`.
+`achieved_position_colors` turns it into `labelColorSorted`.
 
 These lemmas prove those two reductions in full; the quartet
 induction establishing the clause for the transcribed `canonlab`
@@ -70,16 +70,16 @@ theorem cellsReach_lt {G : Colored n k} {lab : Array Nat}
     (h : CellsReach G lab) (i : Nat) (hi : i < n) : lab[i]! < n :=
   (achieved_position_colors (G := G) (llab := lab) h i hi).choose
 
-/-- A reached labelling passes `colorSortedCheck`: the transcription
+/-- A reached labelling passes `labelColorSorted`: the transcription
 output's colours are nondecreasing, the `certifyCanon?_isSome`
 residual. The colour at each position matches `sortedColorSeq`
 (`achieved_position_colors`), which is sorted
 (`pairwise_sortedColorSeq`). -/
-theorem colorSortedCheck_of_cellsReach {G : Colored n k}
+theorem labelColorSorted_of_cellsReach {G : Colored n k}
     {lab : Array Nat} (hsz : lab.size = n) (h : CellsReach G lab) :
-    colorSortedCheck G lab = true := by
+    labelColorSorted G lab = true := by
   have hcols := achieved_position_colors (G := G) (llab := lab) h
-  rw [colorSortedCheck, List.all_eq_true]
+  rw [labelColorSorted, List.all_eq_true]
   intro i hi
   have hin := List.mem_range.mp hi
   refine (Bool.or_eq_true_iff).mpr ?_

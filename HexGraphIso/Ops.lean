@@ -13,7 +13,7 @@ public section
 /-!
 Public canonical-form operations: the checked-label transcription of
 nauty's search, total because the certificate replay accepts its
-answer on every input (`Nauty.canonicalize?_isSome`). Every theorem
+answer on every input (`Nauty.searchResult?_isSome`). Every theorem
 stated here descends from the Lean-proved `specCanon` equivalence
 through that agreement.
 
@@ -33,7 +33,7 @@ nauty search. Total; worst-case cost is factorial. Its answer is the
 one the certificate replay validates (`canonicalize_eq_certifyCanon`),
 which is how every theorem below reaches it. -/
 @[expose] def canonicalize (G : Colored n k) : CanonResult n k :=
-  (Nauty.canonicalize? G).get (Nauty.canonicalize?_isSome G)
+  (Nauty.searchResult? G).get (Nauty.searchResult?_isSome G)
 
 /-- The canonical form of a coloured graph. -/
 @[expose] def canon (G : Colored n k) : Colored n k :=
@@ -47,7 +47,7 @@ which is how every theorem below reaches it. -/
 theorem canonicalize_eq_certifyCanon (G : Colored n k) :
     canonicalize G = Nauty.certifyCanon G := by
   rw [canonicalize]
-  simp only [Nauty.canonicalize?_eq, Option.get_some]
+  simp only [Nauty.searchResult?_eq, Option.get_some]
 
 /-- The canonical form is the declarative specification form. -/
 theorem canon_eq_specCanon (G : Colored n k) :
