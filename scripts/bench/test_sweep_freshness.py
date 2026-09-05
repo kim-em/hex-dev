@@ -333,7 +333,8 @@ class Families(unittest.TestCase):
             "bench/HexGraphIso/Cactus.lean",
             "scripts/plots/hexgraphiso-cactus.py",
             ":!HexGraphIso/SPEC", ":!HexGraphIso/README.md",
-            ":!HexGraphIso/TacticTests.lean")
+            ":!HexGraphIso/TacticTests.lean",
+            ":!HexGraphIso/ModuleBoundaryTests.lean")
         self.assertEqual(freshness.index_listing(freshness.GRAPHISO), raw)
 
     def test_factorization_source_is_lean_under_the_service_libraries(self):
@@ -474,17 +475,20 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
                             f"{path} is excluded but does not exist")
 
     def test_an_imported_test_module_is_not_excluded(self):
-        """The boundary ladders stay in, and this records why.
+        """A boundary ladder its umbrella imports stays in, and this records why.
 
-        `ModuleBoundaryTests.lean` is a test by name, but each one is
-        publicly imported by its library umbrella, so it is inside the
-        closure the figures measure and its edits must force a sweep.
+        `HexBasic/ModuleBoundaryTests.lean` is a test by name, but the
+        `HexBasic` umbrella publicly imports it, so it is inside the closure
+        the factorization figures measure and its edits must force a sweep.
+        `HexGraphIso/ModuleBoundaryTests.lean` is built only by the
+        `HexReleaseTests` target, so it is outside the graph-iso closure and
+        excluded.
         """
         graphiso = import_closure(self.GRAPHISO_ROOTS)
-        self.assertIn("HexGraphIso/ModuleBoundaryTests.lean", graphiso)
-        self.assertNotIn("HexGraphIso/ModuleBoundaryTests.lean",
-                         freshness.GRAPHISO_TESTS)
-        self.assertTrue(freshness.GRAPHISO.matches(
+        self.assertNotIn("HexGraphIso/ModuleBoundaryTests.lean", graphiso)
+        self.assertIn("HexGraphIso/ModuleBoundaryTests.lean",
+                      freshness.GRAPHISO_TESTS)
+        self.assertFalse(freshness.GRAPHISO.matches(
             "HexGraphIso/ModuleBoundaryTests.lean"))
 
         factor = import_closure(self.FACTOR_ROOTS)

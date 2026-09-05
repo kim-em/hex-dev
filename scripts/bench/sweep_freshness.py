@@ -470,14 +470,19 @@ def missing_figures(family: Family) -> list[str]:
 # Neither can a test module that no measured artifact imports: the compiled
 # sweep driver never links it, and the retimed tactic file never elaborates
 # against it, so adding a case to one cannot move a curve. The criterion is
-# import reachability, not the file name. `ModuleBoundaryTests.lean` is
-# deliberately absent from both lists below even though it is a test, because
-# its library umbrella publicly imports it and it is therefore inside the
-# closure the figures measure. `test_sweep_freshness.py` checks both halves of
-# that against the repository's real import graph, so a later import that
-# pulls one of these into a measured closure fails there rather than silently
-# freezing a stale figure.
-GRAPHISO_TESTS = ("HexGraphIso/TacticTests.lean",)
+# import reachability, not the file name. `HexBasic/ModuleBoundaryTests.lean`
+# is deliberately absent from the factor list even though it is a test,
+# because its library umbrella publicly imports it and it is therefore inside
+# the closure the figures measure; `HexGraphIso/ModuleBoundaryTests.lean` is
+# built only by the `HexReleaseTests` target and is excluded.
+# `test_sweep_freshness.py` checks both halves of that against the
+# repository's real import graph, so a later import that pulls one of these
+# into a measured closure fails there rather than silently freezing a stale
+# figure.
+GRAPHISO_TESTS = (
+    "HexGraphIso/TacticTests.lean",
+    "HexGraphIso/ModuleBoundaryTests.lean",
+)
 
 FACTOR_TESTS = (
     "HexBerlekamp/FactorTacticTests.lean",
