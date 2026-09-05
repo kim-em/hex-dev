@@ -185,9 +185,9 @@ private def specFormAgrees {n k : Nat} (G : Colored n k) : Bool :=
 #guard specFormAgrees path4
 #guard specFormAgrees (Graph.singleColor (Families.cycle 6))
 
--- the public canonical form now carries nauty's canonical rows: the
--- certificate-checked `canon` and the transcribed search agree on the
--- adjacency rows of the canonical representative
+-- the public canonical form carries nauty's canonical rows: `canon`
+-- and the transcribed search agree on the adjacency rows of the
+-- canonical representative
 private def canonRowsAgree {n k : Nat} (G : Colored n k) : Bool :=
   Nauty.rowsOf (canon G) == (Nauty.runColored G).canong
 
@@ -244,8 +244,8 @@ where go : List Nauty.CertNode → Bool
   | c :: cs => hasAutom c || go cs
 
 -- pruning is live on a symmetric example: the validated certificate
--- carries `.autom` records and stays near nauty's visited-node count
--- (18 records at the time of pinning; the bound is deliberately loose)
+-- carries `.autom` records and stays near nauty's visited-node count.
+-- The bound of 36 is loose: the Petersen certificate has 18 records.
 #guard
   match Nauty.certifyKey? petersen with
   | some (cert, _) => hasAutom cert && cert.size ≤ 36

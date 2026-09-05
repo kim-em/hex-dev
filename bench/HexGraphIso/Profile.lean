@@ -20,14 +20,16 @@ replay), `ccanon` (one `checkCanon`), `canon` (the public
 canonicalization), `stats` (work counters, no timing). No argument
 runs every stage.
 
-Methodology notes (hard-won):
-- Never measure with `lake env lean` `#eval`: the interpreter is
-  25-30× slower than compiled code, uniformly.
+Methodology:
+- Never measure with `lake env lean` `#eval`. The interpreter is more
+  than an order of magnitude slower than compiled code, so interpreted
+  times say nothing about the compiled pipeline.
 - Loop bodies take data-dependent inputs (two relabelled variants
-  indexed by the running accumulator) so the compiler cannot hoist the
-  pure call; per-iteration times must replicate across iteration
-  counts (checked by the `--check` flag of the cactus sweep, and by
-  running a stage at two counts here).
+  indexed by the running accumulator) so that the compiler cannot hoist
+  the pure call out of the loop. A per-iteration time is only
+  meaningful if it repeats across iteration counts: check it with the
+  `--check` flag of the cactus sweep, or by running a stage at two
+  counts here.
 -/
 
 open Hex.GraphIso Hex.GraphIso.Nauty
@@ -47,9 +49,10 @@ private def mkInst {n : Nat} (name : String) (G : Hex.Graph n) (h : 0 < n) :
   let g0 := G.singleColor h
   { name, g0, g1 := g0.relabel (rot n h) }
 
-/-- The second canonical search the `erun` stage times against `run`.
-It is `runColored` until the structured search exists; substituting
-that search is this definition. -/
+/-- The search the `erun` stage times against `run`. It calls
+`runColored`, so as it stands the two stages time the same search.
+Point this definition at another search to profile that one beside the
+transcribed port. -/
 private def engine {n k : Nat} (G : Colored n k) : RunResult n :=
   runColored G
 

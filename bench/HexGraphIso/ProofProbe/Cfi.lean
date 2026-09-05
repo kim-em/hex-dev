@@ -6,10 +6,10 @@ Authors: Kim Morrison
 
 import HexGraphIso.ProofProbe.Support
 
-/-! The scheduled negative CFI pair (SPEC release case 4): the
-Cai-Fürer-Immerman construction over `K4`, untwisted against twisted,
-at `n = 40`, under separately recorded larger limits. Scheduled-only:
-this module is not part of the merge-CI probe build.
+/-! The negative CFI pair: the Cai-Fürer-Immerman construction over
+`K4`, untwisted against twisted, at `n = 40`, under larger limits than
+the other probes need. This module runs on the scheduled profile only,
+not in the merge-CI probe build.
 -/
 
 set_option maxRecDepth 4000000

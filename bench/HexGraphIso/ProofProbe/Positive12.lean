@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexGraphIso.ProofProbe.Support
 
 /-! The positive random `n = 12` pair related by the recorded
-relabelling (SPEC release case 1). -/
+relabelling. -/
 
 open Hex.GraphIso Hex.GraphIso.ProofProbe in
 example : Isomorphic g12 g12relabelled := by graph_iso
