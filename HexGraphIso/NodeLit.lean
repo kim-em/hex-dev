@@ -47,19 +47,35 @@ theorem setBang_toList (a : Array Nat) (i v : Nat) :
     (a.set! i v).toList = a.toList.set i v := by
   simp [Array.set!]
 
+/-- A packed row read as a bitset is the list read of the bitset rows;
+out of range both sides are empty. -/
+theorem getBang_toNat_eq_atD (g : Array (VSet n)) (i : Nat) :
+    (g[i]!).toNat = atD (g.toList.map VSet.toNat) i 0 := by
+  rw [atD_eq_getD, List.getD_eq_getElem?_getD, List.getElem?_map]
+  rcases Nat.lt_or_ge i g.size with h | h
+  · rw [getElem!_pos g i h, List.getElem?_eq_getElem (by simpa using h)]
+    simp
+  · rw [getElem!_neg g i (by omega), List.getElem?_eq_none (by simpa using h)]
+    exact VSet.toNat_empty
+
 /-! # The list-state context and refine state -/
 
-/-- `Ctx` with the adjacency rows as a bare list. -/
+/-- `Ctx` with the adjacency rows as a bare list of single-`Nat`
+bitsets. -/
 structure CtxL where
   /-- The number of vertices. -/
   n : Nat
-  /-- Row `v` is the neighbour set of vertex `v`. -/
+  /-- Row `v` is the neighbour set of vertex `v`, as a bitset. -/
   g : List Nat
 
 /-- The list view of a context. -/
-@[expose] def Ctx.toL (ctx : Ctx) : CtxL := ⟨ctx.n, ctx.g.toList⟩
+@[expose] def Ctx.toL (ctx : Ctx n) : CtxL := ⟨n, ctx.g.toList.map VSet.toNat⟩
 
-/-- `RefineSt` with list labelling and partition. -/
+@[simp] theorem toL_n (ctx : Ctx n) : ctx.toL.n = n := rfl
+@[simp] theorem toL_g (ctx : Ctx n) : ctx.toL.g = ctx.g.toList.map VSet.toNat := rfl
+
+/-- `RefineSt` with list labelling and partition and a bitset active
+set. -/
 structure RefineStL where
   lab : List Nat
   ptn : List Nat
@@ -70,18 +86,18 @@ structure RefineStL where
   longcode : Nat
 
 /-- The list view of a refine state. -/
-@[expose] def RefineSt.toL (st : RefineSt) : RefineStL :=
-  ⟨st.lab.toList, st.ptn.toList, st.active, st.numcells, st.hint,
+@[expose] def RefineSt.toL (st : RefineSt n) : RefineStL :=
+  ⟨st.lab.toList, st.ptn.toList, st.active.toNat, st.numcells, st.hint,
     st.maxpos, st.longcode⟩
 
-@[simp] theorem toL_lab (st : RefineSt) : st.toL.lab = st.lab.toList := rfl
-@[simp] theorem toL_ptn (st : RefineSt) : st.toL.ptn = st.ptn.toList := rfl
-@[simp] theorem toL_active (st : RefineSt) : st.toL.active = st.active := rfl
-@[simp] theorem toL_numcells (st : RefineSt) :
+@[simp] theorem toL_lab (st : RefineSt n) : st.toL.lab = st.lab.toList := rfl
+@[simp] theorem toL_ptn (st : RefineSt n) : st.toL.ptn = st.ptn.toList := rfl
+@[simp] theorem toL_active (st : RefineSt n) : st.toL.active = st.active.toNat := rfl
+@[simp] theorem toL_numcells (st : RefineSt n) :
     st.toL.numcells = st.numcells := rfl
-@[simp] theorem toL_hint (st : RefineSt) : st.toL.hint = st.hint := rfl
-@[simp] theorem toL_maxpos (st : RefineSt) : st.toL.maxpos = st.maxpos := rfl
-@[simp] theorem toL_longcode (st : RefineSt) :
+@[simp] theorem toL_hint (st : RefineSt n) : st.toL.hint = st.hint := rfl
+@[simp] theorem toL_maxpos (st : RefineSt n) : st.toL.maxpos = st.maxpos := rfl
+@[simp] theorem toL_longcode (st : RefineSt n) :
     st.toL.longcode = st.longcode := rfl
 
 /-! # The refine tower over list state
@@ -144,7 +160,7 @@ theorem cellsL_eq (ptn : Array Nat) (level nn : Nat) :
   | 0, lab, c1, c2 => (lab, c1, c2)
   | fuel + 1, lab, c1, c2 =>
     if c1 ≤ c2 then
-      if elem gRow (atD lab c1.toNat 0) then
+      if gRow.testBit (atD lab c1.toNat 0) then
         splitCellLoopL gRow fuel lab (c1 + 1) c2
       else
         splitCellLoopL gRow fuel
@@ -154,73 +170,73 @@ theorem cellsL_eq (ptn : Array Nat) (level nn : Nat) :
     else
       (lab, c1, c2)
 
-theorem splitCellLoopL_eq (gRow : Nat) :
+theorem splitCellLoopL_eq (gRow : VSet n) :
     ∀ (fuel : Nat) (lab : Array Nat) (c1 c2 : Int),
-      splitCellLoopL gRow fuel lab.toList c1 c2 =
+      splitCellLoopL gRow.toNat fuel lab.toList c1 c2 =
         ((splitCellLoop gRow fuel lab c1 c2).1.toList,
           (splitCellLoop gRow fuel lab c1 c2).2)
   | 0, _, _, _ => rfl
   | fuel + 1, lab, c1, c2 => by
     rw [splitCellLoopL, splitCellLoop]
-    simp only [← getBang_eq_atD, ← setBang_toList]
+    simp only [← getBang_eq_atD, ← setBang_toList, VSet.testBit_toNat]
     split
     · split
       · rw [splitCellLoopL_eq gRow fuel]
       · rw [splitCellLoopL_eq gRow fuel]
     · rfl
 
-@[expose] def trivialSplitL (level cell1 cell2 : Nat) (c1 c2 : Int)
+@[expose] def trivialSplitL (nn level cell1 cell2 : Nat) (c1 c2 : Int)
     (st : RefineStL) : RefineStL :=
   if c2 ≥ Int.ofNat cell1 ∧ c1 ≤ Int.ofNat cell2 then
-    if elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat then
+    if st.active.testBit cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat then
       if c1.toNat == cell2 then
         { st with
           ptn := st.ptn.set c2.toNat level
           longcode := mash st.longcode c2.toNat
           numcells := st.numcells + 1
-          active := insert st.active c1.toNat
+          active := insertL nn st.active c1.toNat
           hint := c1.toNat }
       else
         { st with
           ptn := st.ptn.set c2.toNat level
           longcode := mash st.longcode c2.toNat
           numcells := st.numcells + 1
-          active := insert st.active c1.toNat }
+          active := insertL nn st.active c1.toNat }
     else
       if c2.toNat == cell1 then
         { st with
           ptn := st.ptn.set c2.toNat level
           longcode := mash st.longcode c2.toNat
           numcells := st.numcells + 1
-          active := insert st.active cell1
+          active := insertL nn st.active cell1
           hint := cell1 }
       else
         { st with
           ptn := st.ptn.set c2.toNat level
           longcode := mash st.longcode c2.toNat
           numcells := st.numcells + 1
-          active := insert st.active cell1 }
+          active := insertL nn st.active cell1 }
   else
     st
 
 theorem trivialSplitL_eq (level cell1 cell2 : Nat) (c1 c2 : Int)
-    (st : RefineSt) :
-    trivialSplitL level cell1 cell2 c1 c2 st.toL =
+    (st : RefineSt n) :
+    trivialSplitL n level cell1 cell2 c1 c2 st.toL =
       (trivialSplit level cell1 cell2 c1 c2 st).toL := by
-  simp only [trivialSplitL, trivialSplit, toL_active]
+  simp only [trivialSplitL, trivialSplit, toL_active, VSet.testBit_toNat]
   repeat' split
-  all_goals simp_all [RefineSt.toL, setBang_toList]
+  all_goals simp_all [RefineSt.toL, setBang_toList, VSet.toNat_insert]
   all_goals repeat' split
   all_goals try simp_all
   all_goals exfalso
   all_goals omega
 
-@[expose] def trivialCellL (level : Nat) (gRow : Nat)
+@[expose] def trivialCellL (nn level : Nat) (gRow : Nat)
     (cell1 cell2 : Nat) (st : RefineStL) : RefineStL :=
   if cell1 == cell2 then
     st
   else
-    trivialSplitL level cell1 cell2
+    trivialSplitL nn level cell1 cell2
       (splitCellLoopL gRow (cell2 - cell1 + 2) st.lab
         (Int.ofNat cell1) (Int.ofNat cell2)).2.1
       (splitCellLoopL gRow (cell2 - cell1 + 2) st.lab
@@ -229,9 +245,9 @@ theorem trivialSplitL_eq (level cell1 cell2 : Nat) (c1 c2 : Int)
         lab := (splitCellLoopL gRow (cell2 - cell1 + 2) st.lab
           (Int.ofNat cell1) (Int.ofNat cell2)).1 }
 
-theorem trivialCellL_eq (level : Nat) (gRow : Nat)
-    (cell1 cell2 : Nat) (st : RefineSt) :
-    trivialCellL level gRow cell1 cell2 st.toL =
+theorem trivialCellL_eq (level : Nat) (gRow : VSet n)
+    (cell1 cell2 : Nat) (st : RefineSt n) :
+    trivialCellL n level gRow.toNat cell1 cell2 st.toL =
       (trivialCell level gRow cell1 cell2 st).toL := by
   rw [trivialCellL, trivialCell]
   split
@@ -243,62 +259,62 @@ theorem trivialCellL_eq (level : Nat) (gRow : Nat)
           (Int.ofNat cell1) (Int.ofNat cell2)).1.toList } : RefineStL) =
         ({ st with
           lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
-            (Int.ofNat cell1) (Int.ofNat cell2)).1 } : RefineSt).toL := rfl
+            (Int.ofNat cell1) (Int.ofNat cell2)).1 } : RefineSt n).toL := rfl
     rw [this, trivialSplitL_eq]
 
-@[expose] def refineTrivialGoL (level : Nat) (gRow : Nat) :
+@[expose] def refineTrivialGoL (nn level : Nat) (gRow : Nat) :
     List (Nat × Nat) → RefineStL → RefineStL
   | [], st => st
   | (cell1, cell2) :: rest, st =>
-    refineTrivialGoL level gRow rest (trivialCellL level gRow cell1 cell2 st)
+    refineTrivialGoL nn level gRow rest (trivialCellL nn level gRow cell1 cell2 st)
 
 @[expose] def refineTrivialL (ctx : CtxL) (level split1 : Nat)
     (st : RefineStL) : RefineStL :=
-  refineTrivialGoL level (atD ctx.g (atD st.lab split1 0) 0)
+  refineTrivialGoL ctx.n level (atD ctx.g (atD st.lab split1 0) 0)
     (cellsL st.ptn level ctx.n) st
 
-theorem refineTrivialGoL_eq (level : Nat) (gRow : Nat) :
-    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
-      refineTrivialGoL level gRow cs st.toL =
+theorem refineTrivialGoL_eq (level : Nat) (gRow : VSet n) :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt n),
+      refineTrivialGoL n level gRow.toNat cs st.toL =
         (refineTrivial.go level gRow cs st).toL
   | [], _ => rfl
   | (cell1, cell2) :: rest, st => by
     rw [refineTrivialGoL, refineTrivial.go, trivialCellL_eq,
       refineTrivialGoL_eq level gRow rest]
 
-theorem refineTrivialL_eq (ctx : Ctx) (level split1 : Nat)
-    (st : RefineSt) :
+theorem refineTrivialL_eq (ctx : Ctx n) (level split1 : Nat)
+    (st : RefineSt n) :
     refineTrivialL ctx.toL level split1 st.toL =
       (refineTrivial ctx level split1 st).toL := by
-  rw [refineTrivialL, refineTrivial,
-    show ctx.toL.g = ctx.g.toList from rfl,
-    show ctx.toL.n = ctx.n from rfl,
+  rw [refineTrivialL, refineTrivial, toL_g, toL_n,
     show st.toL.lab = st.lab.toList from rfl,
     show st.toL.ptn = st.ptn.toList from rfl,
-    ← getBang_eq_atD, ← getBang_eq_atD, cellsL_eq, refineTrivialGoL_eq]
+    ← getBang_toNat_eq_atD, ← getBang_eq_atD, cellsL_eq, refineTrivialGoL_eq]
 
-@[expose] def worksetOfL (lab : List Nat) (lo hi : Nat) : Nat :=
-  (List.range (hi + 1 - lo)).foldl (fun w o => insert w (atD lab (lo + o) 0)) 0
+@[expose] def worksetOfL (nn : Nat) (lab : List Nat) (lo hi : Nat) : Nat :=
+  (List.range (hi + 1 - lo)).foldl (fun w o => insertL nn w (atD lab (lo + o) 0)) 0
 
 theorem worksetOfL_eq (lab : Array Nat) (lo hi : Nat) :
-    worksetOfL lab.toList lo hi = worksetOf lab lo hi := by
-  simp only [worksetOfL, worksetOf, getBang_eq_atD]
+    worksetOfL n lab.toList lo hi = (worksetOf n lab lo hi).toNat := by
+  rw [worksetOfL, worksetOf]
+  simpa only [VSet.toNat_empty, getBang_eq_atD] using
+    (VSet.toNat_foldl_insert (fun o => lab[lo + o]!) (List.range (hi + 1 - lo))
+      VSet.empty).symm
 
 @[expose] def countsOfL (ctx : CtxL) (lab : List Nat)
     (workset cell1 cell2 : Nat) : List Nat :=
   (List.range (cell2 + 1 - cell1)).map fun o =>
     popCount (workset &&& atD ctx.g (atD lab (cell1 + o) 0) 0)
 
-theorem countsOfL_eq (ctx : Ctx) (lab : Array Nat)
-    (workset cell1 cell2 : Nat) :
-    countsOfL ctx.toL lab.toList workset cell1 cell2 =
+theorem countsOfL_eq (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) :
+    countsOfL ctx.toL lab.toList workset.toNat cell1 cell2 =
       countsOf ctx lab workset cell1 cell2 := by
   rw [countsOfL, countsOf]
   refine List.map_congr_left fun o _ => ?_
-  rw [show ctx.toL.g = ctx.g.toList from rfl, ← getBang_eq_atD,
-    ← getBang_eq_atD]
+  rw [toL_g, ← getBang_toNat_eq_atD, ← getBang_eq_atD, VSet.cardInter_eq_popCount]
 
-@[expose] def windowStepL (level cell1 cell2 v c1 c2 : Nat)
+@[expose] def windowStepL (nn level cell1 cell2 v c1 c2 : Nat)
     (maxcell : Int) (st : RefineStL) : RefineStL :=
   let st := { st with longcode := mash st.longcode (v + c1) }
   let st :=
@@ -306,7 +322,7 @@ theorem countsOfL_eq (ctx : Ctx) (lab : Array Nat)
   let st :=
     if c1 != cell1 then
       let st := { st with
-        active := insert st.active c1
+        active := insertL nn st.active c1
         numcells := st.numcells + 1 }
       if c2 - c1 == 1 then { st with hint := c1 } else st
     else
@@ -315,30 +331,30 @@ theorem countsOfL_eq (ctx : Ctx) (lab : Array Nat)
   else st
 
 theorem windowStepL_eq (level cell1 cell2 v c1 c2 : Nat)
-    (maxcell : Int) (st : RefineSt) :
-    windowStepL level cell1 cell2 v c1 c2 maxcell st.toL =
+    (maxcell : Int) (st : RefineSt n) :
+    windowStepL n level cell1 cell2 v c1 c2 maxcell st.toL =
       (windowStep level cell1 cell2 v c1 c2 maxcell st).toL := by
   simp only [windowStepL, windowStep, toL_active, toL_numcells,
     toL_longcode, toL_maxpos, toL_hint, toL_ptn]
   repeat' split
-  all_goals simp [RefineSt.toL, setBang_toList]
+  all_goals simp [RefineSt.toL, setBang_toList, VSet.toNat_insert]
 
-@[expose] def windowScanL (level cell1 cell2 : Nat) (counts : List Nat) :
+@[expose] def windowScanL (nn level cell1 cell2 : Nat) (counts : List Nat) :
     List Nat → Nat → Int → RefineStL → RefineStL
   | [], _, _, st => st
   | v :: vs, c1, maxcell, st =>
     if multOf counts v > 0 then
-      windowScanL level cell1 cell2 counts vs (c1 + multOf counts v)
+      windowScanL nn level cell1 cell2 counts vs (c1 + multOf counts v)
         (if Int.ofNat (multOf counts v) > maxcell then
           Int.ofNat (multOf counts v)
         else maxcell)
-        (windowStepL level cell1 cell2 v c1 (c1 + multOf counts v) maxcell st)
+        (windowStepL nn level cell1 cell2 v c1 (c1 + multOf counts v) maxcell st)
     else
-      windowScanL level cell1 cell2 counts vs c1 maxcell st
+      windowScanL nn level cell1 cell2 counts vs c1 maxcell st
 
 theorem windowScanL_eq (level cell1 cell2 : Nat) (counts : List Nat) :
-    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
-      windowScanL level cell1 cell2 counts vs c1 maxcell st.toL =
+    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt n),
+      windowScanL n level cell1 cell2 counts vs c1 maxcell st.toL =
         (windowScan level cell1 cell2 counts vs c1 maxcell st).toL
   | [], _, _, _ => rfl
   | v :: vs, c1, maxcell, st => by
@@ -373,17 +389,17 @@ theorem writeSegmentL_eq :
     rw [writeSegmentL, writeSegment, ← setBang_toList,
       writeSegmentL_eq rest]
 
-@[expose] def nontrivialFixL (cell1 : Nat) (st : RefineStL) : RefineStL :=
-  if ¬ elem st.active cell1 then
-    { st with active := erase (insert st.active cell1) st.maxpos }
+@[expose] def nontrivialFixL (nn cell1 : Nat) (st : RefineStL) : RefineStL :=
+  if ¬ st.active.testBit cell1 = true then
+    { st with active := eraseL nn (insertL nn st.active cell1) st.maxpos }
   else
     st
 
-theorem nontrivialFixL_eq (cell1 : Nat) (st : RefineSt) :
-    nontrivialFixL cell1 st.toL = (nontrivialFix cell1 st).toL := by
-  simp only [nontrivialFixL, nontrivialFix, toL_active, toL_maxpos]
+theorem nontrivialFixL_eq (cell1 : Nat) (st : RefineSt n) :
+    nontrivialFixL n cell1 st.toL = (nontrivialFix cell1 st).toL := by
+  simp only [nontrivialFixL, nontrivialFix, toL_active, toL_maxpos, VSet.testBit_toNat]
   repeat' split
-  all_goals simp_all [RefineSt.toL]
+  all_goals simp_all [RefineSt.toL, VSet.toNat_insert, VSet.toNat_erase]
 
 @[expose] def nontrivialCellL (ctx : CtxL) (level : Nat)
     (workset cell1 cell2 : Nat) (st : RefineStL) : RefineStL :=
@@ -398,29 +414,29 @@ theorem nontrivialFixL_eq (cell1 : Nat) (st : RefineSt) :
         ((countsOfL ctx st.lab workset cell1 cell2).foldl Nat.min
           ((countsOfL ctx st.lab workset cell1 cell2).headD 0) + cell1) }
   else
-    nontrivialFixL cell1
-      { windowScanL level cell1 cell2
+    nontrivialFixL ctx.n cell1
+      { windowScanL ctx.n level cell1 cell2
           (countsOfL ctx st.lab workset cell1 cell2)
           (countValues (countsOfL ctx st.lab workset cell1 cell2))
           cell1 (-1) st with
         lab := writeSegmentL
-            (windowScanL level cell1 cell2
+            (windowScanL ctx.n level cell1 cell2
               (countsOfL ctx st.lab workset cell1 cell2)
               (countValues (countsOfL ctx st.lab workset cell1 cell2))
               cell1 (-1) st).lab cell1
             (segmentOfL
-              (windowScanL level cell1 cell2
+              (windowScanL ctx.n level cell1 cell2
                 (countsOfL ctx st.lab workset cell1 cell2)
                 (countValues (countsOfL ctx st.lab workset cell1 cell2))
                 cell1 (-1) st).lab cell1
               (countsOfL ctx st.lab workset cell1 cell2)
               (countValues (countsOfL ctx st.lab workset cell1 cell2))) }
 
-theorem nontrivialCellL_eq (ctx : Ctx) (level : Nat)
-    (workset cell1 cell2 : Nat) (st : RefineSt) :
-    nontrivialCellL ctx.toL level workset cell1 cell2 st.toL =
+theorem nontrivialCellL_eq (ctx : Ctx n) (level : Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (st : RefineSt n) :
+    nontrivialCellL ctx.toL level workset.toNat cell1 cell2 st.toL =
       (nontrivialCell ctx level workset cell1 cell2 st).toL := by
-  rw [nontrivialCellL, nontrivialCell, toL_lab, countsOfL_eq]
+  rw [nontrivialCellL, nontrivialCell, toL_lab, countsOfL_eq, toL_n]
   split
   · rfl
   · split
@@ -468,7 +484,7 @@ theorem nontrivialCellL_eq (ctx : Ctx) (level : Nat)
                   cell1 (-1) st).lab cell1
                 (countsOf ctx st.lab workset cell1 cell2)
                 (countValues (countsOf ctx st.lab workset cell1 cell2)))
-            } : RefineSt).toL := rfl
+            } : RefineSt n).toL := rfl
       rw [hrec, nontrivialFixL_eq]
 
 @[expose] def refineNontrivialGoL (ctx : CtxL) (level : Nat)
@@ -480,32 +496,32 @@ theorem nontrivialCellL_eq (ctx : Ctx) (level : Nat)
 
 @[expose] def refineNontrivialL (ctx : CtxL) (level split1 split2 : Nat)
     (st : RefineStL) : RefineStL :=
-  let workset := worksetOfL st.lab split1 split2
+  let workset := worksetOfL ctx.n st.lab split1 split2
   let st := { st with longcode := mash st.longcode (split2 - split1 + 1) }
   refineNontrivialGoL ctx level workset (cellsL st.ptn level ctx.n) st
 
-theorem refineNontrivialGoL_eq (ctx : Ctx) (level : Nat)
-    (workset : Nat) :
-    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
-      refineNontrivialGoL ctx.toL level workset cs st.toL =
+theorem refineNontrivialGoL_eq (ctx : Ctx n) (level : Nat)
+    (workset : VSet n) :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt n),
+      refineNontrivialGoL ctx.toL level workset.toNat cs st.toL =
         (refineNontrivial.go ctx level workset cs st).toL
   | [], _ => rfl
   | (cell1, cell2) :: rest, st => by
     rw [refineNontrivialGoL, refineNontrivial.go, nontrivialCellL_eq,
       refineNontrivialGoL_eq ctx level workset rest]
 
-theorem refineNontrivialL_eq (ctx : Ctx) (level split1 split2 : Nat)
-    (st : RefineSt) :
+theorem refineNontrivialL_eq (ctx : Ctx n) (level split1 split2 : Nat)
+    (st : RefineSt n) :
     refineNontrivialL ctx.toL level split1 split2 st.toL =
       (refineNontrivial ctx level split1 split2 st).toL := by
-  rw [refineNontrivialL, refineNontrivial, toL_lab, toL_ptn,
-    worksetOfL_eq, show ctx.toL.n = ctx.n from rfl, cellsL_eq]
+  rw [refineNontrivialL, refineNontrivial, toL_lab, toL_ptn, toL_n,
+    worksetOfL_eq, cellsL_eq]
   exact refineNontrivialGoL_eq ctx level _ _
     { st with longcode := mash st.longcode (split2 - split1 + 1) }
 
 @[expose] def refineStepL (ctx : CtxL) (level split1 : Nat)
     (st : RefineStL) : RefineStL :=
-  let st := { st with active := erase st.active split1 }
+  let st := { st with active := eraseL ctx.n st.active split1 }
   let split2 := cellEndL st.ptn level split1
   let st := { st with longcode := mash st.longcode (split1 + split2) }
   if split1 == split2 then
@@ -513,43 +529,60 @@ theorem refineNontrivialL_eq (ctx : Ctx) (level split1 split2 : Nat)
   else
     refineNontrivialL ctx level split1 split2 st
 
-theorem refineStepL_eq (ctx : Ctx) (level split1 : Nat)
-    (st : RefineSt) :
+theorem refineStepL_eq (ctx : Ctx n) (level split1 : Nat)
+    (st : RefineSt n) :
     refineStepL ctx.toL level split1 st.toL =
       (refineStep ctx level split1 st).toL := by
   simp only [refineStepL, refineStep, toL_lab, toL_ptn, toL_active,
-    toL_numcells, toL_hint, toL_maxpos, toL_longcode, cellEndL_eq]
+    toL_numcells, toL_hint, toL_maxpos, toL_longcode, toL_n, cellEndL_eq,
+    ← VSet.toNat_erase]
   split
   · exact refineTrivialL_eq ctx level split1
       { st with
-        active := erase st.active split1
+        active := st.active.erase split1
         longcode := mash st.longcode (split1 + cellEnd st.ptn level split1) }
   · exact refineNontrivialL_eq ctx level split1
       (cellEnd st.ptn level split1)
       { st with
-        active := erase st.active split1
+        active := st.active.erase split1
         longcode := mash st.longcode (split1 + cellEnd st.ptn level split1) }
+
+/-- `pickSplit` over a bitset active set. -/
+@[expose] def pickSplitL (active hint : Nat) : Option Nat :=
+  if active.testBit hint then
+    some hint
+  else
+    match nextElemL active (some hint) with
+    | some v => some v
+    | none => nextElemL active none
+
+theorem pickSplitL_eq (active : VSet n) (hint : Nat) :
+    pickSplitL active.toNat hint = pickSplit active hint := by
+  rw [pickSplitL, pickSplit, VSet.testBit_toNat,
+    ← VSet.nextElem_eq_nextElemL (s := active) (pos := some hint),
+    ← VSet.nextElem_eq_nextElemL (s := active) (pos := none)]
+  rfl
 
 @[expose] def refineLoopL (ctx : CtxL) (level : Nat) :
     Nat → RefineStL → RefineStL
   | 0, st => st
   | fuel + 1, st =>
     if st.numcells < ctx.n then
-      match pickSplit st.active st.hint with
+      match pickSplitL st.active st.hint with
       | some split1 =>
         refineLoopL ctx level fuel (refineStepL ctx level split1 st)
       | none => st
     else
       st
 
-theorem refineLoopL_eq (ctx : Ctx) (level : Nat) :
-    ∀ (fuel : Nat) (st : RefineSt),
+theorem refineLoopL_eq (ctx : Ctx n) (level : Nat) :
+    ∀ (fuel : Nat) (st : RefineSt n),
       refineLoopL ctx.toL level fuel st.toL =
         (refineLoop ctx level fuel st).toL
   | 0, _ => rfl
   | fuel + 1, st => by
     rw [refineLoopL, refineLoop, toL_numcells, toL_active, toL_hint,
-      show ctx.toL.n = ctx.n from rfl]
+      toL_n, pickSplitL_eq]
     split
     · rcases hps : pickSplit st.active st.hint with _ | split1
       · simp only [hps]
@@ -564,12 +597,12 @@ theorem refineLoopL_eq (ctx : Ctx) (level : Nat) :
   let st := refineLoopL ctx level (4 * ctx.n + 8) st
   { st with longcode := cleanup (mash st.longcode st.numcells) }
 
-theorem refineL_eq (ctx : Ctx) (level : Nat) (lab ptn : Array Nat)
-    (active : Nat) (numcells : Nat) :
-    refineL ctx.toL level lab.toList ptn.toList active numcells =
+theorem refineL_eq (ctx : Ctx n) (level : Nat) (lab ptn : Array Nat)
+    (active : VSet n) (numcells : Nat) :
+    refineL ctx.toL level lab.toList ptn.toList active.toNat numcells =
       (refine ctx level lab ptn active numcells).toL := by
-  simp only [refineL, refine, show ctx.toL.n = ctx.n from rfl]
-  have h := refineLoopL_eq ctx level (4 * ctx.n + 8)
+  simp only [refineL, refine, toL_n]
+  have h := refineLoopL_eq ctx level (4 * n + 8)
     { lab := lab
       ptn := ptn
       active := active
@@ -596,11 +629,11 @@ theorem discreteAtL_eq (ptn : Array Nat) (level nn : Nat) :
     (countsOfL ctx lab wset c1 c2).any
       (fun c => decide (c < popCount wset))
 
-theorem joinTestL_eq (ctx : Ctx) (lab : Array Nat)
-    (wset c1 c2 : Nat) :
-    joinTestL ctx.toL lab.toList wset c1 c2 =
+theorem joinTestL_eq (ctx : Ctx n) (lab : Array Nat)
+    (wset : VSet n) (c1 c2 : Nat) :
+    joinTestL ctx.toL lab.toList wset.toNat c1 c2 =
       joinTest ctx lab wset c1 c2 := by
-  rw [joinTestL, joinTest, countsOfL_eq]
+  rw [joinTestL, joinTest, countsOfL_eq, VSet.card_eq_popCount]
 
 @[expose] def specBestcellRowL (ctx : CtxL) (lab ptn : List Nat)
     (level : Nat) (startArr : List Nat) (workset v2 : Nat) :
@@ -614,11 +647,11 @@ theorem joinTestL_eq (ctx : Ctx) (lab : Array Nat)
     else
       specBestcellRowL ctx lab ptn level startArr workset v2 rest bucket
 
-theorem specBestcellRowL_eq (ctx : Ctx) (lab ptn : Array Nat)
-    (level : Nat) (startArr : Array Nat) (workset v2 : Nat) :
+theorem specBestcellRowL_eq (ctx : Ctx n) (lab ptn : Array Nat)
+    (level : Nat) (startArr : Array Nat) (workset : VSet n) (v2 : Nat) :
     ∀ (vs : List Nat) (bucket : Array Nat),
       specBestcellRowL ctx.toL lab.toList ptn.toList level
-        startArr.toList workset v2 vs bucket.toList =
+        startArr.toList workset.toNat v2 vs bucket.toList =
         (specBestcellRow ctx lab ptn level startArr workset v2 vs
           bucket).toList
   | [], _ => rfl
@@ -637,11 +670,11 @@ theorem specBestcellRowL_eq (ctx : Ctx) (lab ptn : Array Nat)
   | v2 :: rest, bucket =>
     specBestcellRowsL ctx lab ptn level startArr rest
       (specBestcellRowL ctx lab ptn level startArr
-        (worksetOfL lab (atD startArr v2 0)
+        (worksetOfL ctx.n lab (atD startArr v2 0)
           (cellEndL ptn level (atD startArr v2 0)))
         v2 (List.range v2) bucket)
 
-theorem specBestcellRowsL_eq (ctx : Ctx) (lab ptn : Array Nat)
+theorem specBestcellRowsL_eq (ctx : Ctx n) (lab ptn : Array Nat)
     (level : Nat) (startArr : Array Nat) :
     ∀ (vs : List Nat) (bucket : Array Nat),
       specBestcellRowsL ctx.toL lab.toList ptn.toList level
@@ -650,7 +683,7 @@ theorem specBestcellRowsL_eq (ctx : Ctx) (lab ptn : Array Nat)
   | [], _ => rfl
   | v2 :: rest, bucket => by
     rw [specBestcellRowsL, specBestcellRows]
-    simp only [← getBang_eq_atD, cellEndL_eq, worksetOfL_eq,
+    simp only [← getBang_eq_atD, cellEndL_eq, toL_n, worksetOfL_eq,
       specBestcellRowL_eq, specBestcellRowsL_eq ctx lab ptn level startArr rest]
 
 @[expose] def argmaxLoopL (bucket : List Nat) : List Nat → Nat → Nat → Nat
@@ -685,16 +718,16 @@ theorem argmaxLoopL_eq (bucket : Array Nat) :
     atD starts
       (argmaxLoopL bucket (List.range' 1 (nnt - 1)) 0 (atD bucket 0 0)) 0
 
-theorem specBestcellL_eq (ctx : Ctx) (lab ptn : Array Nat)
+theorem specBestcellL_eq (ctx : Ctx n) (lab ptn : Array Nat)
     (level : Nat) :
     specBestcellL ctx.toL lab.toList ptn.toList level =
       specBestcell ctx lab ptn level := by
-  rw [specBestcellL, specBestcell, show ctx.toL.n = ctx.n from rfl,
+  rw [specBestcellL, specBestcell, toL_n,
     cellsL_eq]
   simp only []
   split
   · rfl
-  · generalize ((cells ptn level ctx.n).filter
+  · generalize ((cells ptn level n).filter
       fun (c1, c2) => c1 ≠ c2).map (·.1) = starts
     have hrows := specBestcellRowsL_eq ctx lab ptn level starts.toArray
       (List.range' 1 (starts.length - 1))
@@ -725,11 +758,11 @@ theorem specBestcellL_eq (ctx : Ctx) (lab ptn : Array Nat)
     | some (c1, _) => c1
     | none => 0
 
-theorem specTargetcellL_eq (ctx : Ctx) (lab ptn : Array Nat)
+theorem specTargetcellL_eq (ctx : Ctx n) (lab ptn : Array Nat)
     (level tcLevel : Nat) :
     specTargetcellL ctx.toL lab.toList ptn.toList level tcLevel =
       specTargetcell ctx lab ptn level tcLevel := by
-  rw [specTargetcellL, specTargetcell, show ctx.toL.n = ctx.n from rfl,
+  rw [specTargetcellL, specTargetcell, toL_n,
     cellsL_eq]
   split
   · rw [specBestcellL_eq]
@@ -739,14 +772,16 @@ theorem specTargetcellL_eq (ctx : Ctx) (lab ptn : Array Nat)
     (level tcLevel : Nat) : Nat × Nat × Nat :=
   let i := specTargetcellL ctx lab ptn level tcLevel
   let j := cellEndL ptn level (i + 1)
-  (i, worksetOfL lab i j, j - i + 1)
+  (i, worksetOfL ctx.n lab i j, j - i + 1)
 
-theorem specMaketargetcellL_eq (ctx : Ctx) (lab ptn : Array Nat)
+theorem specMaketargetcellL_eq (ctx : Ctx n) (lab ptn : Array Nat)
     (level tcLevel : Nat) :
     specMaketargetcellL ctx.toL lab.toList ptn.toList level tcLevel =
-      specMaketargetcell ctx lab ptn level tcLevel := by
+      ((specMaketargetcell ctx lab ptn level tcLevel).1,
+        (specMaketargetcell ctx lab ptn level tcLevel).2.1.toNat,
+        (specMaketargetcell ctx lab ptn level tcLevel).2.2) := by
   rw [specMaketargetcellL, specMaketargetcell]
-  simp only [specTargetcellL_eq, cellEndL_eq, worksetOfL_eq]
+  simp only [specTargetcellL_eq, cellEndL_eq, toL_n, worksetOfL_eq]
 
 @[expose] def breakoutGoL (tv : Nat) : Nat → List Nat → Nat → Nat → List Nat
   | 0, lab, _, _ => lab
@@ -755,10 +790,10 @@ theorem specMaketargetcellL_eq (ctx : Ctx) (lab ptn : Array Nat)
     let lab := lab.set i prev
     if next == tv then lab else breakoutGoL tv fuel lab (i + 1) next
 
-@[expose] def breakoutL (lab ptn : List Nat) (level tc tv : Nat) :
+@[expose] def breakoutL (nn : Nat) (lab ptn : List Nat) (level tc tv : Nat) :
     List Nat × List Nat × Nat :=
   let lab := breakoutGoL tv (lab.length + 1) lab tc tv
-  (lab, ptn.set tc level, insert 0 tc)
+  (lab, ptn.set tc level, insertL nn 0 tc)
 
 theorem breakoutGoL_eq (tv : Nat) :
     ∀ (fuel : Nat) (lab : Array Nat) (i prev : Nat),
@@ -773,12 +808,13 @@ theorem breakoutGoL_eq (tv : Nat) :
     · rw [breakoutGoL_eq tv fuel]
 
 theorem breakoutL_eq (lab ptn : Array Nat) (level tc tv : Nat) :
-    breakoutL lab.toList ptn.toList level tc tv =
-      ((breakout lab ptn level tc tv).1.toList,
-        (breakout lab ptn level tc tv).2.1.toList,
-        (breakout lab ptn level tc tv).2.2) := by
+    breakoutL n lab.toList ptn.toList level tc tv =
+      ((breakout n lab ptn level tc tv).1.toList,
+        (breakout n lab ptn level tc tv).2.1.toList,
+        (breakout n lab ptn level tc tv).2.2.toNat) := by
   rw [breakoutL, breakout]
-  simp only [Array.length_toList, breakoutGoL_eq, ← setBang_toList]
+  simp only [Array.length_toList, breakoutGoL_eq, ← setBang_toList,
+    VSet.toNat_insert, VSet.toNat_empty]
 
 @[expose] def segNL (lab : List Nat) (lo len : Nat) : List Nat :=
   (List.range len).map fun o => atD lab (lo + o) 0
@@ -827,25 +863,112 @@ theorem invPermL_eq (lab : Array Nat) :
     (Array.toList_replicate ..).symm
   rw [h, invPermGoL_eq]
 
-@[expose] def permsetL (s : Nat) (perm : List Nat) (n : Nat) : Nat :=
-  (List.range n).foldl
-    (fun acc v => if s.testBit v then insert acc (atD perm v 0) else acc) 0
+@[expose] def permsetL (s : Nat) (perm : List Nat) (nn : Nat) : Nat :=
+  imageL nn (fun v => atD perm v 0) s
 
-theorem permsetL_eq (s : Nat) (perm : Array Nat) (n : Nat) :
-    permsetL s perm.toList n = permset s perm n := by
-  rw [permsetL, permset]
+theorem permsetL_eq (s : VSet n) (perm : Array Nat) :
+    permsetL s.toNat perm.toList n = (s.permset perm).toNat := by
+  rw [permsetL, VSet.permset, VSet.toNat_image]
   simp only [getBang_eq_atD]
 
 @[expose] def leafRowsL (ctx : CtxL) (lab : List Nat) : List Nat :=
   (List.range ctx.n).map fun i =>
     permsetL (atD ctx.g (atD lab i 0) 0) (invPermL lab) ctx.n
 
-theorem leafRowsL_eq (ctx : Ctx) (lab : Array Nat) :
-    leafRowsL ctx.toL lab.toList = leafRows ctx lab := by
-  rw [leafRowsL, leafRows, show ctx.toL.n = ctx.n from rfl,
-    show ctx.toL.g = ctx.g.toList from rfl]
+theorem leafRowsL_eq (ctx : Ctx n) (lab : Array Nat) :
+    leafRowsL ctx.toL lab.toList = (leafRows ctx lab).map VSet.toNat := by
+  rw [leafRowsL, leafRows, toL_n, toL_g, List.map_map]
   refine List.map_congr_left fun i _ => ?_
-  rw [invPermL_eq, permsetL_eq, ← getBang_eq_atD, ← getBang_eq_atD]
+  show permsetL _ _ _ = (_ : VSet n).toNat
+  rw [invPermL_eq, ← getBang_toNat_eq_atD, ← getBang_eq_atD, permsetL_eq]
+
+/-! # Literal keys
+
+The kernel replay compares keys whose rows are bitsets: `KeyL` is the
+literal the tactic emits, `Key.toL` its reading of a packed key, and
+`keyCmpL` mirrors `keyCmp` through `rowCmpL`. -/
+
+/-- A canonical key with bitset rows. -/
+structure KeyL where
+  /-- The refinement codes along the path, ending with the sentinel. -/
+  codes : List Nat
+  /-- The leaf's `g^lab` rows, as bitsets, in nauty's row order. -/
+  rows : List Nat
+deriving Inhabited, Repr, DecidableEq
+
+/-- The literal reading of a packed key. -/
+@[expose] def Key.toL (B : Key n) : KeyL := ⟨B.codes, B.rows.map VSet.toNat⟩
+
+/-- The packed key of a literal whose rows are bitsets over `n`
+vertices. -/
+@[expose] def KeyL.toKey (n : Nat) (K : KeyL) : Key n :=
+  ⟨K.codes, K.rows.map VSet.ofNat⟩
+
+theorem KeyL.toL_toKey {K : KeyL} (h : ∀ r ∈ K.rows, r < 2 ^ n) :
+    (K.toKey n).toL = K := by
+  rcases K with ⟨codes, rows⟩
+  simp only [KeyL.toKey, Key.toL, List.map_map, KeyL.mk.injEq, true_and]
+  exact (List.map_congr_left fun r hr => VSet.toNat_ofNat (h r hr)).trans (List.map_id _)
+
+@[expose] def keyCmpL (k1 k2 : KeyL) : Ordering :=
+  match listCmp compare k1.codes k2.codes with
+  | .eq => listCmp rowCmpL k1.rows k2.rows
+  | .lt => .lt
+  | .gt => .gt
+
+theorem listCmp_map {α β : Type} (cmp : β → β → Ordering) (f : α → β) :
+    ∀ (l1 l2 : List α),
+      listCmp cmp (l1.map f) (l2.map f) = listCmp (fun a b => cmp (f a) (f b)) l1 l2
+  | [], [] => rfl
+  | [], _ :: _ => rfl
+  | _ :: _, [] => rfl
+  | a :: as, b :: bs => by
+    rw [List.map_cons, List.map_cons, listCmp, listCmp, listCmp_map cmp f as bs]
+
+theorem keyCmpL_eq (codes1 codes2 : List Nat) (rows1 rows2 : List (VSet n)) :
+    keyCmpL ⟨codes1, rows1.map VSet.toNat⟩ ⟨codes2, rows2.map VSet.toNat⟩ =
+      keyCmp ⟨codes1, rows1⟩ ⟨codes2, rows2⟩ := by
+  simp only [keyCmpL, keyCmp, listCmp_map, ← VSet.rowCmp_eq_rowCmpL]
+  rfl
+
+theorem keyCmpL_toL (k1 k2 : Key n) : keyCmpL k1.toL k2.toL = keyCmp k1 k2 :=
+  keyCmpL_eq k1.codes k2.codes k1.rows k2.rows
+
+/-- `checkDiff` on literal keys. -/
+@[expose] def checkDiffL (K1 K2 : KeyL) : Bool :=
+  keyCmpL K1 K2 != Ordering.eq
+
+theorem checkDiffL_toL (k1 k2 : Key n) : checkDiffL k1.toL k2.toL = checkDiff k1 k2 := by
+  rw [checkDiffL, checkDiff, keyCmpL_toL]
+
+/-! # Checked automorphisms over bitset rows -/
+
+/-- `checkAutom` with bitset rows. -/
+@[expose] def checkAutomL (g : List Nat) (nn : Nat) (γ : Array Nat) : Bool :=
+  γ.size == nn &&
+  ((List.range nn).all fun v => γ[v]! < nn) &&
+  (((List.range nn).map fun v => γ[v]!).isPerm (List.range nn)) &&
+  ((List.range nn).all fun v =>
+    atD g γ[v]! 0 == imageL nn (fun w => γ[w]!) (atD g v 0))
+
+theorem checkAutomL_eq (g : Array (VSet n)) (γ : Array Nat) :
+    checkAutomL (g.toList.map VSet.toNat) n γ = checkAutom g γ := by
+  rw [checkAutomL, checkAutom]
+  congr 1
+  refine congrArg _ (funext fun v => ?_)
+  rw [← getBang_toNat_eq_atD, ← getBang_toNat_eq_atD, ← VSet.toNat_image, Bool.eq_iff_iff,
+    beq_iff_eq, beq_iff_eq]
+  exact ⟨fun h => VSet.toNat_inj h, fun h => by rw [h]⟩
+
+/-- `validGammas` with bitset rows. -/
+@[expose] def validGammasL (g : List Nat) (nn : Nat) (cert : CertNode) :
+    List (Array Nat) :=
+  (certGammas (nn + 2) cert []).filter fun γ => checkAutomL g nn γ
+
+theorem validGammasL_eq (g : Array (VSet n)) (cert : CertNode) :
+    validGammasL (g.toList.map VSet.toNat) n cert = validGammas g cert := by
+  rw [validGammasL, validGammas]
+  exact List.filter_congr fun γ _ => checkAutomL_eq g γ
 
 /-! # The certificate replay over list state -/
 
@@ -872,7 +995,7 @@ theorem leafRowsL_eq (ctx : Ctx) (lab : Array Nat) :
         | .lt => some false
         | .eq =>
           if discreteAtL rs.ptn level ctx.n then
-            match keyCmp
+            match keyCmpL
               ⟨[rs.longcode, codeSentinel], leafRowsL ctx rs.lab⟩
               ⟨bc :: brest, brows⟩ with
             | .gt => none
@@ -896,7 +1019,7 @@ theorem leafRowsL_eq (ctx : Ctx) (lab : Array Nat) :
                   match acc with
                   | none => none
                   | some a =>
-                    let br := breakoutL rs.lab rs.ptn (level + 1) tcr.1
+                    let br := breakoutL ctx.n rs.lab rs.ptn (level + 1) tcr.1
                       (atD rs.lab (tcr.1 + co.2) 0)
                     match
                       match co.1 with
@@ -904,7 +1027,7 @@ theorem leafRowsL_eq (ctx : Ctx) (lab : Array Nat) :
                         if o' < co.2 &&
                             containsGamma vgens γ &&
                             checkCellsPermL br.2.1
-                              (breakoutL rs.lab rs.ptn (level + 1)
+                              (breakoutL ctx.n rs.lab rs.ptn (level + 1)
                                 tcr.1 (atD rs.lab (tcr.1 + o') 0)).1
                               (br.1.map fun w => atD γ.toList w 0)
                               (level + 1) ctx.n then
@@ -922,12 +1045,12 @@ theorem leafRowsL_eq (ctx : Ctx) (lab : Array Nat) :
               none
   termination_by structural fuel => fuel
 
-theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
+theorem checkNodeL_eq (ctx : Ctx n) (tcLevel : Nat) (brows : List (VSet n))
     (vgens : List (Array Nat)) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (cert : CertNode) (bcodes : List Nat),
-      checkNodeL ctx.toL tcLevel brows vgens fuel level lab.toList
-        ptn.toList active numcells cert bcodes =
+      (active : VSet n) (numcells : Nat) (cert : CertNode) (bcodes : List Nat),
+      checkNodeL ctx.toL tcLevel (brows.map VSet.toNat) vgens fuel level lab.toList
+        ptn.toList active.toNat numcells cert bcodes =
         checkNode ctx tcLevel brows vgens fuel level lab ptn active
           numcells cert bcodes
   | 0, _, _, _, _, _, _, _ => rfl
@@ -939,24 +1062,24 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
       | autom o' γ => rfl
       | codePrune =>
         show (if compare (refineL ctx.toL level lab.toList ptn.toList
-            active numcells).longcode bc = .lt then some false
+            active.toNat numcells).longcode bc = .lt then some false
           else none) = _
         rw [refineL_eq]
         rfl
       | leaf =>
         show (match compare (refineL ctx.toL level lab.toList
-            ptn.toList active numcells).longcode bc with
+            ptn.toList active.toNat numcells).longcode bc with
           | .gt => none
           | .lt => some false
           | .eq =>
             if discreteAtL (refineL ctx.toL level lab.toList
-                ptn.toList active numcells).ptn level ctx.toL.n then
-              match keyCmp
-                ⟨[(refineL ctx.toL level lab.toList ptn.toList active
+                ptn.toList active.toNat numcells).ptn level ctx.toL.n then
+              match keyCmpL
+                ⟨[(refineL ctx.toL level lab.toList ptn.toList active.toNat
                     numcells).longcode, codeSentinel],
                   leafRowsL ctx.toL (refineL ctx.toL level lab.toList
-                    ptn.toList active numcells).lab⟩
-                ⟨bc :: brest, brows⟩ with
+                    ptn.toList active.toNat numcells).lab⟩
+                ⟨bc :: brest, brows.map VSet.toNat⟩ with
               | .gt => none
               | .eq => some true
               | .lt => some false
@@ -970,18 +1093,18 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
           | .eq =>
             if discreteAtL (refine ctx level lab ptn active
                 numcells).ptn.toList level ctx.toL.n then
-              match keyCmp
+              match keyCmpL
                 ⟨[(refine ctx level lab ptn active
                     numcells).longcode, codeSentinel],
                   leafRowsL ctx.toL (refine ctx level lab ptn active
                     numcells).lab.toList⟩
-                ⟨bc :: brest, brows⟩ with
+                ⟨bc :: brest, brows.map VSet.toNat⟩ with
               | .gt => none
               | .eq => some true
               | .lt => some false
             else
               none) = _
-        rw [discreteAtL_eq, leafRowsL_eq, show ctx.toL.n = ctx.n from rfl]
+        rw [discreteAtL_eq, leafRowsL_eq, toL_n, keyCmpL_eq]
         rfl
       | node children =>
         have hih := checkNodeL_eq ctx tcLevel brows vgens fuel
@@ -998,30 +1121,30 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
                       if o' < co.2 &&
                           containsGamma vgens γ &&
                           checkCellsPermL
-                            (breakoutL rsLab.toList rsPtn.toList
+                            (breakoutL n rsLab.toList rsPtn.toList
                               (level + 1) tc
                               (atD rsLab.toList (tc + co.2) 0)).2.1
-                            (breakoutL rsLab.toList rsPtn.toList
+                            (breakoutL n rsLab.toList rsPtn.toList
                               (level + 1) tc
                               (atD rsLab.toList (tc + o') 0)).1
-                            ((breakoutL rsLab.toList rsPtn.toList
+                            ((breakoutL n rsLab.toList rsPtn.toList
                               (level + 1) tc
                               (atD rsLab.toList (tc + co.2) 0)).1.map
                               fun w => atD γ.toList w 0)
-                            (level + 1) ctx.n then
+                            (level + 1) n then
                         some false
                       else
                         none
                     | _ =>
-                      checkNodeL ctx.toL tcLevel brows vgens fuel
+                      checkNodeL ctx.toL tcLevel (brows.map VSet.toNat) vgens fuel
                         (level + 1)
-                        (breakoutL rsLab.toList rsPtn.toList
+                        (breakoutL n rsLab.toList rsPtn.toList
                           (level + 1) tc
                           (atD rsLab.toList (tc + co.2) 0)).1
-                        (breakoutL rsLab.toList rsPtn.toList
+                        (breakoutL n rsLab.toList rsPtn.toList
                           (level + 1) tc
                           (atD rsLab.toList (tc + co.2) 0)).2.1
-                        (breakoutL rsLab.toList rsPtn.toList
+                        (breakoutL n rsLab.toList rsPtn.toList
                           (level + 1) tc
                           (atD rsLab.toList (tc + co.2) 0)).2.2
                         (m + 1) co.1 brest
@@ -1039,25 +1162,25 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
                       if o' < co.2 &&
                           containsGamma vgens γ &&
                           checkCellsPerm
-                            (breakout rsLab rsPtn (level + 1) tc
+                            (breakout n rsLab rsPtn (level + 1) tc
                               rsLab[tc + co.2]!).2.1
-                            (breakout rsLab rsPtn (level + 1) tc
+                            (breakout n rsLab rsPtn (level + 1) tc
                               rsLab[tc + o']!).1
                             (Hex.Array.map' (fun w => γ[w]!)
-                              (breakout rsLab rsPtn (level + 1) tc
+                              (breakout n rsLab rsPtn (level + 1) tc
                                 rsLab[tc + co.2]!).1)
-                            (level + 1) ctx.n then
+                            (level + 1) n then
                         some false
                       else
                         none
                     | _ =>
                       checkNode ctx tcLevel brows vgens fuel
                         (level + 1)
-                        (breakout rsLab rsPtn (level + 1) tc
+                        (breakout n rsLab rsPtn (level + 1) tc
                           rsLab[tc + co.2]!).1
-                        (breakout rsLab rsPtn (level + 1) tc
+                        (breakout n rsLab rsPtn (level + 1) tc
                           rsLab[tc + co.2]!).2.1
-                        (breakout rsLab rsPtn (level + 1) tc
+                        (breakout n rsLab rsPtn (level + 1) tc
                           rsLab[tc + co.2]!).2.2
                         (m + 1) co.1 brest
                   with
@@ -1077,16 +1200,16 @@ theorem checkNodeL_eq (ctx : Ctx) (tcLevel : Nat) (brows : List Nat)
               rcases c with _ | _ | ⟨o', γ⟩ | ch <;>
                 simp only [breakoutL_eq, ← getBang_eq_atD, hih,
                   Hex.Array.map'_eq_map, ← Array.toList_map,
-                  checkCellsPermL_eq, show ctx.toL.n = ctx.n from rfl]
+                  checkCellsPermL_eq, toL_n]
         rw [checkNodeL, checkNode]
         simp only [refineL_eq, toL_lab, toL_ptn, toL_longcode,
           discreteAtL_eq, specMaketargetcellL_eq,
-          show ctx.toL.n = ctx.n from rfl]
+          toL_n]
         rcases compare (refine ctx level lab ptn active
           numcells).longcode bc with _ | _ | _
         · rfl
         · rcases hd : discreteAt (refine ctx level lab ptn active
-            numcells).ptn level ctx.n with _ | _
+            numcells).ptn level n with _ | _
           · simp only [hd, Bool.false_eq_true, ite_false]
             rcases Decidable.em (children.length =
                 (specMaketargetcell ctx (refine ctx level lab ptn
@@ -1118,43 +1241,70 @@ open Nauty
 variable {n k : Nat}
 
 /-- `checkKeyFlat` with list state end to end: the rows are rebuilt
-once from the tied flat literal and the whole replay walks bare
-lists. The negative route's kernel obligation. -/
+once from the tied flat literal as bitsets and the whole replay walks
+bare lists. The negative route's kernel obligation, over a literal key
+whose rows must be bitsets over `n` vertices. -/
 @[expose] def checkKeyLit (G : Colored n k) (flat : List Bool)
-    (cert : CertNode) (B : Key) : Bool :=
+    (cert : CertNode) (K : KeyL) : Bool :=
+  K.rows.all (fun r => r < 2 ^ n) &&
   if n == 0 then
-    B.codes == [] && B.rows == []
+    K.codes == [] && K.rows == []
   else
-    checkNodeL (Ctx.toL ⟨n, flatRows n flat⟩) 100 B.rows
-      (validGammas (flatRows n flat) n cert) n 1
+    checkNodeL ⟨n, (flatRows n flat).toList⟩ 100 K.rows
+      (validGammasL (flatRows n flat).toList n cert) n 1
       (initialPartition G).1.toList
       (initPtn n (n + 2) (initialPartition G).2).toList
-      (initActive (initialPartition G).2)
-      (initialPartition G).2.length cert B.codes = some true
+      (initActive n (initialPartition G).2).toNat
+      (initialPartition G).2.length cert K.codes = some true
+
+/-- The kernel's literal context is the list view of the packed one. -/
+theorem ctxL_flatRows (flat : List Bool) :
+    (⟨n, (flatRows n flat).toList⟩ : CtxL) = Ctx.toL { g := rowsOfFlat n flat } := by
+  rw [Ctx.toL, toNat_rowsOfFlat]
 
 theorem checkKeyLit_eq (G : Colored n k) (flat : List Bool)
-    (cert : CertNode) (B : Key) :
-    checkKeyLit G flat cert B = checkKeyFlat G flat cert B := by
-  rw [checkKeyLit, checkKeyFlat,
-    checkNodeL_eq ⟨n, flatRows n flat⟩ 100 B.rows
-      (validGammas (flatRows n flat) n cert) n 1
-      (initialPartition G).1
-      (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
-      (initialPartition G).2.length cert B.codes]
+    (cert : CertNode) (K : KeyL) (h : ∀ r ∈ K.rows, r < 2 ^ n) :
+    checkKeyLit G flat cert K = checkKeyFlat G flat cert (K.toKey n) := by
+  have hall : K.rows.all (fun r => r < 2 ^ n) = true :=
+    List.all_eq_true.mpr fun r hr => decide_eq_true (h r hr)
+  rw [checkKeyLit, hall, Bool.true_and, checkKeyFlat]
+  have hrows : K.rows = ((K.toKey n).rows).map VSet.toNat :=
+    (congrArg KeyL.rows (KeyL.toL_toKey h)).symm
+  rcases Decidable.em (n = 0) with hn | hn
+  · simp only [hn, beq_self_eq_true, ite_true]
+    subst hn
+    rw [hrows]
+    rcases (K.toKey 0).rows with _ | ⟨r, rs⟩
+    · rfl
+    · simp
+  · simp only [show (n == 0) = false by simpa using hn, Bool.false_eq_true, ite_false]
+    rw [ctxL_flatRows, hrows, ← toNat_rowsOfFlat, validGammasL_eq]
+    simp only [checkNodeL_eq]
+    rfl
+
+/-- The tactic-facing certificate producer: `certifyKeyBounded?` with
+its key read as a literal. -/
+def certifyKeyLit? (budget : Nat) (G : Colored n k) : Option (CertNode × KeyL) :=
+  (certifyKeyBounded? budget G).map fun p => (p.1, p.2.toL)
 
 /-- Tying equalities plus two list-state key certificates with
 differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysFlat`
 with the replay over bare lists. -/
 theorem not_isomorphic_of_checkKeysL {G H : Colored n k}
-    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
+    {certG certH : Nauty.CertNode} {KG KH : KeyL}
     {LA LB : List Bool}
     (hA : G.graph.adjMatrix.data.toList = LA)
     (hB : H.graph.adjMatrix.data.toList = LB)
-    (hG : checkKeyLit G LA certG BG = true)
-    (hH : checkKeyLit H LB certH BH = true)
-    (hd : Nauty.checkDiff BG BH = true) : ¬Isomorphic G H := by
-  rw [checkKeyLit_eq] at hG hH
+    (hG : checkKeyLit G LA certG KG = true)
+    (hH : checkKeyLit H LB certH KH = true)
+    (hd : checkDiffL KG KH = true) : ¬Isomorphic G H := by
+  have hbG : ∀ r ∈ KG.rows, r < 2 ^ n := fun r hr =>
+    of_decide_eq_true (List.all_eq_true.mp ((Bool.and_eq_true _ _).mp hG).1 r hr)
+  have hbH : ∀ r ∈ KH.rows, r < 2 ^ n := fun r hr =>
+    of_decide_eq_true (List.all_eq_true.mp ((Bool.and_eq_true _ _).mp hH).1 r hr)
+  rw [checkKeyLit_eq _ _ _ _ hbG] at hG
+  rw [checkKeyLit_eq _ _ _ _ hbH] at hH
+  rw [← KeyL.toL_toKey (n := n) hbG, ← KeyL.toL_toKey (n := n) hbH, checkDiffL_toL] at hd
   exact not_isomorphic_of_checkKeysFlat hA hB hG hH hd
 
 end Hex.GraphIso

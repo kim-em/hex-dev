@@ -524,4 +524,50 @@ theorem testBit_ne_at_lowBit_xor {a b : Nat} (hab : a ≠ b) :
   rw [he] at hx
   simp at hx
 
+/-! # Bitset operations on a single `Nat`
+
+The kernel-facing literal replay (`HexGraphIso.NodeLit`) keeps every
+vertex set as one `Nat`, because the kernel's GMP-backed `Nat`
+arithmetic is its cheapest reduction path. These are that layer's set
+operations; `VSet.toNat` relates each to its packed runtime
+counterpart. Insertion and deletion are guarded by the vertex bound
+exactly as the packed operations are, so the correspondences are
+unconditional. -/
+
+/-- Insertion, a no-op outside the vertex range. -/
+@[expose] def insertL (n s v : Nat) : Nat :=
+  if v < n then s ||| (1 <<< v) else s
+
+/-- Deletion, a no-op outside the vertex range. -/
+@[expose] def eraseL (n s v : Nat) : Nat :=
+  if v < n ∧ s.testBit v = true then s ^^^ (1 <<< v) else s
+
+/-- The least element strictly after the cursor (`none` starts from the
+least element): nauty's `nextelement`. -/
+@[expose] def nextElemL (s : Nat) (pos : Option Nat) : Option Nat :=
+  let s' :=
+    match pos with
+    | none => s
+    | some p => (s >>> (p + 1)) <<< (p + 1)
+  if s' = 0 then none else some (lowBit s')
+
+/-- nauty's row order: the least differing vertex decides, and the row
+holding it is the greater. -/
+@[expose] def rowCmpL (a b : Nat) : Ordering :=
+  if a = b then .eq
+  else if a.testBit (lowBit (a ^^^ b)) then .gt
+  else .lt
+
+/-- The image of a bitset under a vertex map. -/
+@[expose] def imageL (n : Nat) (σ : Nat → Nat) (s : Nat) : Nat :=
+  (List.range n).foldl (fun t v => if s.testBit v then insertL n t (σ v) else t) 0
+
+theorem testBit_shiftUp (x a w : Nat) :
+    ((x >>> a) <<< a).testBit w = (decide (a ≤ w) && x.testBit w) := by
+  rw [Nat.testBit_shiftLeft, Nat.testBit_shiftRight]
+  rcases Decidable.em (a ≤ w) with h | h
+  · rw [show a + (w - a) = w by omega, decide_eq_true h]
+  · rw [decide_eq_false h]
+    simp only [Bool.false_and]
+
 end Hex.GraphIso.Nauty
