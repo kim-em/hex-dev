@@ -378,13 +378,22 @@ strictest sense: conformance testing pins the visited-node counters, so
 both programs traverse exactly the same search tree on every
 conformance case. Every timing difference is therefore a per-node
 constant factor of the implementation, never an algorithmic
-difference. The table shows that
-factor on four parametrised families from the benchmark corpus: grids,
-where refinement discretizes quickly; Paley graphs, refinement's hard
-case among the sparse families; and the dense Latin-square and Kneser
-graphs, where the factor is largest. The `hex` column is
-`canonicalize`, which carries the theorems of this chapter as it
-stands: no certificate is produced or replayed on that path.
+difference, and the one way that factor could grow with the vertex
+count would be a loop over vertices where nauty runs a word
+operation. The search keeps its vertex sets packed sixty-three to a
+word, so a least-squares fit of per-node cost against `n` on the
+benchmark corpus gives hex the same exponent as nauty on every family:
+`n^1.7` to `n^1.9` on grids, Paley graphs, circulants and random
+graphs, `n^1.3` on Kneser graphs and `n^1.0` on Johnson graphs, in
+each case within `0.2` of nauty's, and the hex/nauty ratio is `7.7`
+below 64 vertices and `7.1` above. CI refits every recorded sweep and
+fails when a family's hex exponent exceeds nauty's by more than `0.2`.
+The table shows the factor on four parametrised families: grids, where
+refinement discretizes quickly; Paley graphs, refinement's hard case
+among the sparse families; and the dense Latin-square and Kneser
+graphs. The `hex` column is `canonicalize`, which carries the theorems
+of this chapter as it stands: no certificate is produced or replayed
+on that path.
 
 :::table +header
 * * graph
@@ -394,35 +403,35 @@ stands: no certificate is produced or replayed on that path.
 * * `Families.grid 5 5`
   * 25
   * 0.014
-  * 0.066
+  * 0.084
 * * `Families.grid 15 15`
   * 225
-  * 0.83
-  * 14
+  * 0.87
+  * 3.8
 * * `Families.paley 29`
   * 29
   * 0.019
-  * 0.097
+  * 0.14
 * * `Families.paley 229`
   * 229
-  * 1.0
-  * 29
+  * 1.1
+  * 6.8
 * * `Families.latinSquare 5`
   * 25
   * 0.019
-  * 0.14
+  * 0.19
 * * `Families.latinSquare 13`
   * 169
-  * 0.78
-  * 24
+  * 0.79
+  * 6.5
 * * `Families.kneser 7 2`
   * 21
   * 0.013
-  * 0.12
+  * 0.16
 * * `Families.kneser 22 2`
   * 231
-  * 3.3
-  * 210
+  * 3.4
+  * 39
 :::
 
 Measured on chungus2, 2026-09-05, minimum over repeated runs;

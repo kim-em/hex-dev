@@ -409,12 +409,16 @@ tag := "nauty-algorithm-lean"
 %%%
 
 The Lean implementation follows part one section by section. A graph is
-stored as one natural number per vertex, used as a bitset: bit `v` of
-row `u` is set exactly when `u` and `v` are adjacent. The row
-comparison of part one is implemented directly on these bitsets. It is
-not the numerical order on the natural numbers: in the numerical order
-the largest vertex would be the most significant, while in the
-comparison of part one the smallest vertex is the most significant.
+stored as one vertex set per vertex, {name Hex.GraphIso.Nauty.VSet}`VSet`:
+row `u` contains `v` exactly when `u` and `v` are adjacent. A vertex set
+is packed sixty-three vertices to a word, as nauty packs its `setword`
+arrays, so every set operation of the search costs one machine operation
+per word rather than one per vertex; the specification the theorems
+mention is the natural-number bitset `VSet.toNat` recovers from it. The
+row comparison of part one is implemented directly on these sets. It is
+not the numerical order on the bitsets: in the numerical order the
+largest vertex would be the most significant, while in the comparison of
+part one the smallest vertex is the most significant.
 
 ## Refinement
 
