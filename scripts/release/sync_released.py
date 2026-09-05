@@ -794,7 +794,8 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
 
 def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                      dep_owner: dict[str, str],
-                     pins: dict[str, dict[str, str]]) -> list[str]:
+                     pins: dict[str, dict[str, str]],
+                     catalog: dict[str, dict[str, str]] | None = None) -> list[str]:
     """Pin the synced SHAs in every lake-manifest.json, so Lake's lockfile points
     at the new revisions, not a stale checkout: Lake trusts the manifest, and a
     lockfile left alone keeps resolving the upstream commit it was written
@@ -830,9 +831,116 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                         pkg["inputRev"] = synced[dep]
                     changed += 1
                     notes.append(f"  manifest {dep} -> {synced[dep][:12]} ({mf.relative_to(clone)})")
+        if mf == clone / "lake-manifest.json":
+            changed += _synthesize_manifest_packages(
+                entry, clone, doc, synced, dep_owner, catalog, notes)
         if changed:
             mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
+
+
+def _manifest_catalog() -> dict[str, dict[str, str]]:
+    """Short name -> library name and Lake file format, from released.yml."""
+    manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+    return {e["repo"].split("/")[-1]: {"lib": e.get("lib", ""),
+                                       "lakefile": e.get("lakefile", "toml")}
+            for e in manifest["repos"]}
+
+
+def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
+                                  synced: dict[str, str],
+                                  dep_owner: dict[str, str],
+                                  catalog: dict[str, dict[str, str]] | None,
+                                  notes: list[str]) -> int:
+    """Add lockfile entries for pinned published dependencies the mirror's
+    manifest has never seen.
+
+    A mirror's `lake-manifest.json` is written by `lake update` in that mirror
+    and only ever rewritten here, so a dependency that enters the published
+    closure later (a library split out upstream, or a companion that gains a
+    requirement) is absent from it, and Lake refuses to build: "dependency X
+    of Y not in manifest". The sync knows every published dependency's exact
+    revision, owner and Lake file format, which is all a lockfile entry holds,
+    so it appends the missing entries itself. A pin the mirror's own Lake file
+    requires directly is recorded as such; every other pin is inherited from
+    a dependency. Entries already present are left to the rewrite above.
+    """
+    pins = entry.get("pins") or []
+    if not pins:
+        return 0
+    if catalog is None:
+        catalog = _manifest_catalog()
+    packages = doc.setdefault("packages", [])
+    present = {pkg.get("name") for pkg in packages}
+    lake_text = ""
+    for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
+        if lf.parent == clone:
+            lake_text = lf.read_text(encoding="utf-8")
+    added = 0
+    for dep in pins:
+        spec = catalog.get(dep)
+        if spec is None or not spec["lib"] or dep not in synced:
+            continue
+        if spec["lib"] in present:
+            continue
+        owner = dep_owner.get(dep, "leanprover")
+        url = f"https://github.com/{owner}/{dep}.git"
+        packages.append({
+            "url": url,
+            "type": "git",
+            "subDir": None,
+            "scope": "",
+            "rev": synced[dep],
+            "name": spec["lib"],
+            "manifestFile": "lake-manifest.json",
+            "inputRev": synced[dep],
+            "inherited": f"{dep}.git" not in lake_text,
+            "configFile": f"lakefile.{spec['lakefile']}",
+        })
+        present.add(spec["lib"])
+        added += 1
+        notes.append(f"  manifest + {dep} ({spec['lib']}) -> {synced[dep][:12]} "
+                     "(lake-manifest.json)")
+    return added
+
+
+def validate_external_imports(entry: dict, clone: Path) -> None:
+    """Require the mirror's Lake file to provide every non-Hex import root.
+
+    Inside the monorepo every library can import Batteries or Mathlib because
+    the root Lake file requires both; a mirror only has what its own Lake file
+    requires. Scan the synced library sources for `Batteries` and `Mathlib`
+    import roots and fail before anything is pushed when the mirror requires
+    neither the package nor Mathlib (which brings Batteries with it).
+    """
+    if entry.get("pins_only"):
+        return
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    text = lakefile.read_text(encoding="utf-8") if lakefile.is_file() else ""
+    provided: set[str] = set()
+    if re.search(r'(?i)mathlib4?\.git|name\s*=\s*"mathlib"|require\s+mathlib\b', text):
+        provided.update({"Mathlib", "Batteries"})
+    if re.search(r'(?i)batteries\.git|name\s*=\s*"batteries"|require\s+batteries\b', text):
+        provided.add("Batteries")
+    roots: dict[str, str] = {}
+    pattern = re.compile(
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib)\b",
+        re.M)
+    for src, dest_rel, is_dir in managed_paths(entry):
+        dest = clone / dest_rel
+        files = list(dest.rglob("*.lean")) if is_dir else (
+            [dest] if dest.suffix == ".lean" else [])
+        for lean in files:
+            if not lean.is_file():
+                continue
+            for root in pattern.findall(lean.read_text(encoding="utf-8")):
+                roots.setdefault(root, str(lean.relative_to(clone)))
+    missing = {root: where for root, where in roots.items() if root not in provided}
+    if missing:
+        raise RuntimeError(
+            f"released repository {entry['repo']} imports "
+            + ", ".join(f"{root} ({where})" for root, where in sorted(missing.items()))
+            + f" but {lakefile.name} requires no package providing it")
 
 
 def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
@@ -862,6 +970,7 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         validate_ci_helpers(entry, clone)
         for line in apply_paths(entry, clone):
             print(line)
+        validate_external_imports(entry, clone)
         if not entry.get("pins_only"):
             for line in rewrite_doc_verso(clone):
                 print(line)

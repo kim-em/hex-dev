@@ -331,6 +331,89 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(package["rev"], self.mathlib["rev"])
         self.assertEqual(package["inputRev"], self.mathlib["inputRev"])
 
+    def test_manifest_gains_entries_for_unseen_pins(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[require]]\n'
+            'name = "HexPoly"\n'
+            'git = "https://github.com/leanprover/hex-poly.git"\n'
+            'rev = "0000000"\n',
+            encoding="utf-8",
+        )
+        manifest = {"version": "1.2.0", "packages": [{
+            "name": "HexPoly",
+            "url": "https://github.com/leanprover/hex-poly.git",
+            "rev": "0000000",
+            "inputRev": "0000000",
+        }]}
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        synced = {"hex-basic": "a" * 40, "hex-poly": "b" * 40,
+                  "hex-arith": "c" * 40}
+        catalog = {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
+                   "hex-poly": {"lib": "HexPoly", "lakefile": "toml"},
+                   "hex-arith": {"lib": "HexArith", "lakefile": "lean"}}
+        notes = sync_released.rewrite_manifest(
+            {"pins": ["hex-basic", "hex-arith", "hex-poly"]}, self.repo,
+            synced, {}, self.pins, catalog)
+        packages = {pkg["name"]: pkg
+                    for pkg in json.loads(path.read_text())["packages"]}
+        self.assertEqual(set(packages), {"HexPoly", "HexBasic", "HexArith"})
+        self.assertEqual(packages["HexPoly"]["rev"], "b" * 40)
+        basic = packages["HexBasic"]
+        self.assertEqual(basic["url"], "https://github.com/leanprover/hex-basic.git")
+        self.assertEqual(basic["rev"], "a" * 40)
+        self.assertEqual(basic["inputRev"], "a" * 40)
+        self.assertTrue(basic["inherited"])
+        self.assertEqual(basic["configFile"], "lakefile.toml")
+        self.assertEqual(packages["HexArith"]["configFile"], "lakefile.lean")
+        self.assertTrue(any("manifest + hex-basic" in note for note in notes))
+        # A second pass finds everything present and adds nothing.
+        again = sync_released.rewrite_manifest(
+            {"pins": ["hex-basic", "hex-arith", "hex-poly"]}, self.repo,
+            synced, {}, self.pins, catalog)
+        self.assertFalse(any("manifest +" in note for note in again))
+
+    def test_manifest_records_direct_pins_as_not_inherited(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[require]]\n'
+            'name = "HexBasic"\n'
+            'git = "https://github.com/leanprover/hex-basic.git"\n'
+            'rev = "0000000"\n',
+            encoding="utf-8",
+        )
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps({"version": "1.2.0", "packages": []}),
+                        encoding="utf-8")
+        sync_released.rewrite_manifest(
+            {"pins": ["hex-basic"]}, self.repo, {"hex-basic": "a" * 40}, {},
+            self.pins, {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
+        package = json.loads(path.read_text())["packages"][0]
+        self.assertFalse(package["inherited"])
+
+    def _external_import_entry(self, lakefile: str, source: str) -> dict:
+        lib = self.repo / "HexProbe"
+        lib.mkdir(exist_ok=True)
+        (lib / "Basic.lean").write_text(source, encoding="utf-8")
+        (self.repo / "lakefile.toml").write_text(lakefile, encoding="utf-8")
+        return {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                "lakefile": "toml", "readme": False}
+
+    def test_batteries_import_without_provider_fails_closed(self) -> None:
+        entry = self._external_import_entry(
+            '[[require]]\nname = "HexBasic"\n'
+            'git = "https://github.com/leanprover/hex-basic.git"\nrev = "0"\n',
+            "module\n\npublic import HexBasic\nimport Batteries.Data.Vector\n")
+        with self.assertRaisesRegex(RuntimeError, "imports Batteries"):
+            sync_released.validate_external_imports(entry, self.repo)
+
+    def test_mathlib_requirement_provides_batteries(self) -> None:
+        entry = self._external_import_entry(
+            '[[require]]\nname = "mathlib"\n'
+            'git = "https://github.com/leanprover-community/mathlib4.git"\n'
+            'rev = "0"\n',
+            "import Mathlib.Tactic\nimport Batteries.Data.Vector\n")
+        sync_released.validate_external_imports(entry, self.repo)
+
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()
         with self.assertRaisesRegex(RuntimeError, "no root lean-toolchain"):
