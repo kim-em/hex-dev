@@ -24,9 +24,9 @@ variable {n k : Nat}
 
 /-- A first-path result with both its reference histories and the corrected
 reason for its return. -/
-structure FirstRun (G : Colored n k) (ctx : Ctx)
+structure FirstRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel level : Nat) (codes fs : List Nat)
-    (st out : SearchSt) (numcells : Nat) (outBest : Option Key)
+    (st out : SearchSt n) (numcells : Nat) (outBest : Option (Key n))
     (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
   proof : FirstProof G ctx tcLevel specFuel runFuel level codes fs st out
     numcells outBest receiptTrail eventTrail r
@@ -39,9 +39,9 @@ namespace FirstRun
 
 /-- The final first-path counter adjustment preserves the complete
 corrected first-node result. -/
-theorem firstFinish {G : Colored n k} {ctx : Ctx}
+theorem firstFinish {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells size index : Nat}
-    {codes fs : List Nat} {st out : SearchSt} {outBest : Option Key}
+    {codes fs : List Nat} {st out : SearchSt n} {outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Int}
     (hfuel : runFuel ≠ 0)
     (h : FirstRun G ctx tcLevel specFuel runFuel level codes fs st out
@@ -60,13 +60,13 @@ end FirstRun
 namespace FirstLoopRun
 
 /-- An early integer-valued first-path sweep becomes its enclosing node. -/
-theorem toNodeSome {G : Colored n k} {ctx : Ctx}
+theorem toNodeSome {G : Colored n k} {ctx : Ctx n}
     {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level
       : Nat}
     {nodeCodes loopCodes fs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {outBest : Option Key} {receiptTrail eventTrail : FrameTrail} {r : Int}
+    {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {outBest : Option (Key n)} {receiptTrail eventTrail : FrameTrail} {r : Int}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
       nodeSt nodeNumcells)
     (hprefix : loopCodes.take nodeCodes.length = nodeCodes)
@@ -85,12 +85,12 @@ theorem toNodeSome {G : Colored n k} {ctx : Ctx}
 
 /-- A sufficiently fuelled `none` sweep is genuine completion and becomes
 the enclosing first-path node's ordinary return. -/
-theorem toNodeNone {G : Colored n k} {ctx : Ctx}
+theorem toNodeNone {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
     {nodeCodes loopCodes fs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {outBest : Option Key} {receiptTrail eventTrail : FrameTrail}
+    {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {outBest : Option (Key n)} {receiptTrail eventTrail : FrameTrail}
     (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCodes
       nodeSt nodeNumcells)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCodes nodeSt
@@ -102,7 +102,7 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx}
           sweepKey ctx tcLevel specFuel level loopCodes rsLab rsPtn tc
             loopNumcells (o + 1)))
     (hlen : len = tail + 1)
-    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfuel : n < cursorRank cursor + loopFuel)
     (hfixed : loopSt.fixedpts = nodeSt.fixedpts)
     (h : FirstLoopRun G ctx tcLevel specFuel runFuel loopFuel level
       nodeCodes loopCodes fs rsLab rsPtn tc len loopNumcells tcell cursor
@@ -122,13 +122,13 @@ namespace FirstInv
 
 /-- The first discrete leaf is an ordinary exact return in the corrected
 classification. -/
-theorem terminalRun {G : Colored n k} {ctx : Ctx}
+theorem terminalRun {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes : List Nat} {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = codes.length + 1)
+    {codes : List Nat} {st : SearchSt n} {trail : FrameTrail}
+    (hn0 : 0 < n) (hlevel : level = codes.length + 1)
     (h : FirstInv G ctx level codes numcells st trail)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n) :
+      numcells).numcells = n) :
     let rs := refine ctx level st.lab st.ptn st.active numcells
     let full := codes ++ [rs.longcode]
     let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
@@ -144,11 +144,11 @@ theorem terminalRun {G : Colored n k} {ctx : Ctx}
       (some (pathLeafKey ctx full rs.lab)) trail trail out.1 := by
     simpa only [rs, full, out] using
       h.terminalFirstProof (inf := inf) (tcLevel := tcLevel)
-        (specFuel := specFuel) (fuel := fuel) hn hn0 hlevel hnum
+        (specFuel := specFuel) (fuel := fuel) hn0 hlevel hnum
   have hstate := firstPath_discrete_state ctx inf tcLevel fuel level
     numcells st hnum
-  have hdisc : discreteAt rs.ptn level ctx.n = true := by
-    rw [← refine_discrete_iff hn hn0 h.searchOk (by omega)]
+  have hdisc : discreteAt rs.ptn level n = true := by
+    rw [← refine_discrete_iff hn0 h.searchOk (by omega)]
     exact hnum
   have hnode : nodeKey ctx tcLevel (specFuel + 1) level codes st
       numcells = pathLeafKey ctx full rs.lab := by
@@ -168,13 +168,13 @@ end FirstInv
 /-- The corrected first-path root result proves equality between the
 unpruned specification key and the key installed by the transcription. -/
 theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
-    {fs : List Nat} {best : Option Key}
-    (hroot : FirstRun G { n := n, g := rowsOf G } 100 n (n + 2) 1 [] fs
+    {fs : List Nat} {best : Option (Key n)}
+    (hroot : FirstRun G { g := rowsOf G } 100 n (n + 2) 1 [] fs
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length best FrameTrail.empty FrameTrail.empty
-      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+      (firstPathNode { g := rowsOf G } (n + 2) 100 (n + 2) 1
         (initialPartition G).2.length
         (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
     canonSpecKey G = tracedKey G := by

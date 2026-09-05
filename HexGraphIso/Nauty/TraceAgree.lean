@@ -24,7 +24,7 @@ the untraced run).
 namespace Hex.GraphIso.Nauty
 
 /-- The traced run's result is the production run's result. -/
-theorem runTraced_result (n : Nat) (g lab0 : Array Nat)
+theorem runTraced_result (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) :
     (runTraced n g lab0 cellEnds).result = run n g lab0 cellEnds := by
   rw [runTraced, run]

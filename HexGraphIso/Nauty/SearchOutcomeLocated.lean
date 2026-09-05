@@ -23,8 +23,8 @@ namespace Hex.GraphIso.Nauty
 
 /-- Live first-path and canonical guides, each tied to its active
 ancestor frame. -/
-structure GuideStore (ctx : Ctx) (tcLevel level : Nat) (st : SearchSt)
-    (best : Option Key) (trail : FrameTrail) : Prop where
+structure GuideStore (ctx : Ctx n) (tcLevel level : Nat) (st : SearchSt n)
+    (best : Option (Key n)) (trail : FrameTrail) : Prop where
   first : 0 < st.gcaFirst → st.gcaFirst < level →
     ∃ g : Guide ctx tcLevel st.gcaFirst best,
       g.ref = st.firstlab ∧ g.Located trail
@@ -34,8 +34,8 @@ structure GuideStore (ctx : Ctx) (tcLevel level : Nat) (st : SearchSt)
 
 /-- Forgetting frame locations recovers the guide invariant used by the
 leaf-event lemmas. -/
-theorem GuideStore.toGuides {ctx : Ctx} {tcLevel level : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem GuideStore.toGuides {ctx : Ctx n} {tcLevel level : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st best trail) :
     Guides ctx tcLevel level st best := by
   constructor
@@ -48,15 +48,15 @@ theorem GuideStore.toGuides {ctx : Ctx} {tcLevel level : Nat}
 
 /-- Growing a guide's incumbent changes neither its frame nor its
 location in the active trail. -/
-theorem Guide.Located.mono {ctx : Ctx} {tcLevel level : Nat}
-    {before best : Option Key} {trail : FrameTrail}
+theorem Guide.Located.mono {ctx : Ctx n} {tcLevel level : Nat}
+    {before best : Option (Key n)} {trail : FrameTrail}
     (g : Guide ctx tcLevel level before) (hloc : g.Located trail)
     (hinc : IncGrows before best) : (g.mono hinc).Located trail := by
   simpa only [Guide.Located, Guide.frame, Guide.mono] using hloc
 
 /-- Both located guide ledgers survive an incumbent increase. -/
-theorem GuideStore.grow {ctx : Ctx} {tcLevel level : Nat}
-    {st : SearchSt} {before best : Option Key} {trail : FrameTrail}
+theorem GuideStore.grow {ctx : Ctx n} {tcLevel level : Nat}
+    {st : SearchSt n} {before best : Option (Key n)} {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st before trail)
     (hinc : IncGrows before best) :
     GuideStore ctx tcLevel level st best trail := by
@@ -69,10 +69,10 @@ theorem GuideStore.grow {ctx : Ctx} {tcLevel level : Nat}
     exact ⟨g.mono hinc, href, Guide.Located.mono g hloc hinc⟩
 
 /-- The root has no live guide, independently of the empty trail. -/
-theorem GuideStore.root {n : Nat} (g lab : Array Nat)
-    (cellEnds : List Nat) (tcLevel : Nat) (best : Option Key)
+theorem GuideStore.root {n : Nat} (g : Array (VSet n)) (lab : Array Nat)
+    (cellEnds : List Nat) (tcLevel : Nat) (best : Option (Key n))
     (trail : FrameTrail) :
-    GuideStore { n := n, g := g } tcLevel 1
+    GuideStore { g := g } tcLevel 1
       (rootSt n lab cellEnds) best trail := by
   constructor <;> intro hp _ <;> simp [rootSt] at hp
 
@@ -81,8 +81,8 @@ older guide and installs any guide whose control points at the parent.
 
 The two last premises isolate the only new obligations: a control equal
 to `level` must be backed by a guide in the newly extended trail. -/
-theorem GuideStore.push {ctx : Ctx} {tcLevel level : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem GuideStore.push {ctx : Ctx n} {tcLevel level : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st best trail)
     (entry : TrailEntry)
     (hfirst : st.gcaFirst = level → 0 < st.gcaFirst →
@@ -107,8 +107,8 @@ theorem GuideStore.push {ctx : Ctx} {tcLevel level : Nat}
 
 /-- Reindex a located guide invariant across state fields that do not
 change either guide control or reference labelling. -/
-theorem GuideStore.stateEq {ctx : Ctx} {tcLevel level : Nat}
-    {st st' : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem GuideStore.stateEq {ctx : Ctx n} {tcLevel level : Nat}
+    {st st' : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st best trail)
     (hfirst : st'.gcaFirst = st.gcaFirst)
     (hfirstlab : st'.firstlab = st.firstlab)
@@ -127,17 +127,17 @@ theorem GuideStore.stateEq {ctx : Ctx} {tcLevel level : Nat}
 
 /-- Cell-equivalent node labellings with the same partition and active
 set have the same specification key. -/
-theorem nodeKey_perm {ctx : Ctx} (hn : ctx.n = n)
+theorem nodeKey_perm {ctx : Ctx n}
     (tcLevel fuel level : Nat) (cs : List Nat)
-    (st st' : SearchSt) (numcells : Nat)
+    (st st' : SearchSt n) (numcells : Nat)
     (hcp : cellsPerm st.ptn level st.lab st'.lab)
     (hls : st'.lab.size = st.lab.size)
     (hsl : st.lab.size = n)
     (hlab : LabOk st.lab n) (hlab' : LabOk st'.lab n)
     (hptn : st'.ptn = st.ptn) (hactive : st'.active = st.active)
-    (hsp : st.ptn.size = n) (hact : st.active < 2 ^ n)
+    (hsp : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
-    (hstarts : ∀ v : Nat, elem st.active v = true →
+    (hstarts : ∀ v : Nat, st.active.mem v = true →
       v = 0 ∨ st.ptn[v - 1]! ≤ level)
     (hvals : ∀ q : Nat, st.ptn[q]! ≤ level ∨
       st.ptn[q]! = n + 2)
@@ -147,16 +147,16 @@ theorem nodeKey_perm {ctx : Ctx} (hn : ctx.n = n)
   unfold nodeKey
   apply congrArg (prefixKey cs)
   rw [hptn, hactive]
-  exact specNode_perm hn tcLevel fuel level st.lab st'.lab st.ptn
-    st.active numcells hcp hls hsl hlab hlab' hsp hact hend hstarts
+  exact specNode_perm tcLevel fuel level st.lab st'.lab st.ptn
+    st.active numcells hcp hls hsl hlab hlab' hsp hend hstarts
     hvals hlf
 
 /-- Exact completion of a key-equivalent executable child covers the
 corresponding frozen specification child. -/
-theorem ChildDone.ofKeyEq {ctx : Ctx}
+theorem ChildDone.ofKeyEq {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
-    {child : SearchSt} {best out : Option Key}
+    {child : SearchSt n} {best out : Option (Key n)}
     (hfull : out = some (incMax best
       (nodeKey ctx tcLevel specFuel (level + 1) cs child
         (numcells + 1))))
@@ -172,13 +172,13 @@ theorem ChildDone.ofKeyEq {ctx : Ctx}
   exact keyLe_incMax_right best _
 
 /-- A key-equivalent completed child advances the mutable sweep. -/
-theorem SweepCover.advanceKey {ctx : Ctx}
+theorem SweepCover.advanceKey {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tv tcell : Nat}
-    {cursor : Option Nat} {child : SearchSt} {best out : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len numcells tv : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {child : SearchSt n} {best out : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hfull : out = some (incMax best
       (nodeKey ctx tcLevel specFuel (level + 1) cs child
         (numcells + 1))))
@@ -198,9 +198,9 @@ theorem SweepCover.advanceKey {ctx : Ctx}
 active frame trail.  The constructors mirror `NodeResult`; keeping the
 location in the unwind constructor prevents a caller from forgetting the
 only evidence that lets the receiving loop consume that return. -/
-inductive NodeReceipt (trail : FrameTrail) (ctx : Ctx)
+inductive NodeReceipt (trail : FrameTrail) (ctx : Ctx n)
     (tcLevel specFuel runFuel level : Nat) (cs : List Nat)
-    (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
+    (st out : SearchSt n) (numcells : Nat) (best outBest : Option (Key n))
     (r : Int) : Prop where
   | complete (sound : NodeSound ctx tcLevel specFuel level cs st numcells
       best outBest)
@@ -228,9 +228,9 @@ inductive NodeReceipt (trail : FrameTrail) (ctx : Ctx)
 
 /-- Forgetting a node receipt's frame location recovers its ordinary
 semantic result. -/
-theorem NodeReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
+theorem NodeReceipt.toResult {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    {st out : SearchSt n} {best outBest : Option (Key n)} {r : Int}
     (h : NodeReceipt trail ctx tcLevel specFuel runFuel level cs st out
       numcells best outBest r) :
     NodeResult ctx tcLevel specFuel runFuel level cs st out numcells best
@@ -247,9 +247,9 @@ theorem NodeReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
 
 /-- A positive-fuel receipt always carries the node soundness shared by
 its non-exhausted outcomes. -/
-theorem NodeReceipt.sound {trail : FrameTrail} {ctx : Ctx}
+theorem NodeReceipt.sound {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    {st out : SearchSt n} {best outBest : Option (Key n)} {r : Int}
     (h : NodeReceipt trail ctx tcLevel specFuel runFuel level cs st out
       numcells best outBest r) (hfuel : runFuel ≠ 0) :
     NodeSound ctx tcLevel specFuel level cs st numcells best outBest := by
@@ -261,17 +261,17 @@ theorem NodeReceipt.sound {trail : FrameTrail} {ctx : Ctx}
 
 /-- A loop outcome with every transported generator unwind located in
 the active frame trail. -/
-inductive LoopReceipt (trail : FrameTrail) (ctx : Ctx)
+inductive LoopReceipt (trail : FrameTrail) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat) (cs : List Nat)
-    (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
-    (cursor : Option Nat) (bound : Key) (st out : SearchSt)
-    (best outBest : Option Key) (r : Option Int) : Prop where
+    (rsLab rsPtn : Array Nat) (tc len numcells : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st out : SearchSt n)
+    (best outBest : Option (Key n)) (r : Option Int) : Prop where
   | complete
       (returned : r = none)
       (sound : LoopSound ctx bound best outBest)
       (installed : out.canonlevel ≠ 0)
       (read : stInc ctx out = outBest)
-      (finalSet : Nat) (finalCursor : Option Nat)
+      (finalSet : VSet n) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells finalSet finalCursor outBest)
       (empty : ∀ o, ¬ ChildLive rsLab tc len finalSet finalCursor o)
@@ -289,18 +289,18 @@ inductive LoopReceipt (trail : FrameTrail) (ctx : Ctx)
   | exhausted
       (returned : r = none)
       (sound : LoopSound ctx bound best outBest)
-      (finalSet : Nat) (finalCursor : Option Nat)
+      (finalSet : VSet n) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells finalSet finalCursor outBest)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
-      (bounded : ∀ v, finalCursor = some v → v < ctx.n)
+      (bounded : ∀ v, finalCursor = some v → v < n)
 
 /-- Forgetting a loop receipt's frame location recovers its ordinary
 semantic result. -/
-theorem LoopReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level tc len numcells tcell : Nat}
+theorem LoopReceipt.toResult {trail : FrameTrail} {ctx : Ctx n}
+    {tcLevel specFuel runFuel loopFuel level tc len numcells : Nat} {tcell : VSet n}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
-    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {bound : Key n} {st out : SearchSt n} {best outBest : Option (Key n)}
     {r : Option Int}
     (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
       rsLab rsPtn tc len numcells tcell cursor bound st out best outBest r) :
@@ -320,9 +320,9 @@ theorem LoopReceipt.toResult {trail : FrameTrail} {ctx : Ctx}
 
 /-- At a parent boundary, a located child receipt either supplies the
 exact child maximum or a located unwind addressed to that parent. -/
-theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx}
+theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    {st out : SearchSt n} {best outBest : Option (Key n)} {r : Int}
     (h : NodeReceipt trail ctx tcLevel specFuel runFuel (level + 1) cs st
       out numcells best outBest r)
     (hfuel : runFuel ≠ 0) (hstay : ¬(r < Int.ofNat level)) :
@@ -347,14 +347,14 @@ theorem NodeReceipt.parentReturn {trail : FrameTrail} {ctx : Ctx}
 children may use cell-permutation key equivalence; generator children use
 their location in the just-pushed parent frame, with stabilization required
 only by an orbit-pointer unwind. -/
-theorem SweepCover.receipt {ctx : Ctx}
-    {tcLevel specFuel runFuel level tc len numcells tcell tv offset : Nat}
+theorem SweepCover.receipt {ctx : Ctx n}
+    {tcLevel specFuel runFuel level tc len numcells : Nat} {tcell : VSet n} {tv offset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {before best : Option Key}
-    {child out : SearchSt} {r : Int} {trail : FrameTrail}
+    {cursor : Option Nat} {before best : Option (Key n)}
+    {child out : SearchSt n} {r : Int} {trail : FrameTrail}
     (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell cursor before)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hchild : NodeReceipt
       (trail.push level
         ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
@@ -376,24 +376,23 @@ theorem SweepCover.receipt {ctx : Ctx}
           (numcells + 1))
     (ho : offset < len) (htv : rsLab[tc + offset]! = tv)
     (hcoset : out.cosetindex = tv)
-    (hgsz : ctx.g.size = ctx.n)
-    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
     (hv : ∀ γ ∈ out.genTrace.toList,
-      checkAutom ctx.g γ ctx.n = true)
-    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+      checkAutom ctx.g γ = true)
+    (hs : rsLab.size = n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1) :
+      rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1) :
     SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell (some tv) best := by
   have hsound := hchild.sound hfuel
   rcases hreturn with hfull | ⟨payload, hloc, hstab⟩
   · exact h.advanceKey hnext hfull heq
   · exact h.unwind hsound.grows hnext hloc
-      (FrameTrail.push_self trail level _) ho htv hcoset hgsz hbg hv
+      (FrameTrail.push_self trail level _) ho htv hcoset hgsz hv
       hstab
       hs hinj hok hsp hend hvals hic hrange hlf
 
@@ -401,23 +400,23 @@ theorem SweepCover.receipt {ctx : Ctx}
 its parent: that arm returns to `gcaFirst`, which is strictly below this
 loop.  The two direct carrier arms therefore advance coverage without a
 `cosetindex` premise. -/
-theorem SweepCover.offPathUnwind {ctx : Ctx}
-    {tcLevel specFuel level tc len numcells tcell tv offset : Nat}
+theorem SweepCover.offPathUnwind {ctx : Ctx n}
+    {tcLevel specFuel level tc len numcells : Nat} {tcell : VSet n} {tv offset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {before best : Option Key} {out : SearchSt}
+    {cursor : Option Nat} {before best : Option (Key n)} {out : SearchSt n}
     {trail : FrameTrail} {payload : Unwind ctx tcLevel level out best}
     (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell cursor before)
     (hinc : IncGrows before best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hloc : payload.Located trail)
     (hframe : trail level = some
       ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
     (hoffset : offset < len)
     (htv : rsLab[tc + offset]! = tv)
     (hfirst : out.gcaFirst < level)
-    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
-    (hrange : tc + len ≤ ctx.n) :
+    (hs : rsLab.size = n) (hinj : LabInj rsLab rsLab.size)
+    (hrange : tc + len ≤ n) :
     SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell (some tv) best := by
   have hrange' : tc + len ≤ rsLab.size := by rwa [hs]
@@ -438,15 +437,15 @@ theorem SweepCover.offPathUnwind {ctx : Ctx}
 
 /-- Updating the first-path return controls preserves the source
 location of a generator unwind. -/
-theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx}
-    {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
+theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx n}
+    {tcLevel target : Nat} {out : SearchSt n} {best : Option (Key n)}
     {payload : Unwind ctx tcLevel target out best}
     (h : payload.Located trail) (gcaFirst stabvertex : Nat)
     (hbound : target ≤ gcaFirst) :
     ∃ payload' : Unwind ctx tcLevel target
         { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best,
       payload'.Located trail := by
-  let out' : SearchSt :=
+  let out' : SearchSt n :=
     { out with gcaFirst := gcaFirst, stabvertex := stabvertex }
   change ∃ payload' : Unwind ctx tcLevel target out' best,
     payload'.Located trail
@@ -474,14 +473,14 @@ theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx}
 
 /-- Removing a loop's temporary fixed vertex preserves the source
 location of a generator unwind. -/
-theorem Unwind.Located.setFixed {trail : FrameTrail} {ctx : Ctx}
-    {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
+theorem Unwind.Located.setFixed {trail : FrameTrail} {ctx : Ctx n}
+    {tcLevel target : Nat} {out : SearchSt n} {best : Option (Key n)}
     {payload : Unwind ctx tcLevel target out best}
-    (h : payload.Located trail) (fixedpts : Nat) :
+    (h : payload.Located trail) (fixedpts : VSet n) :
     ∃ payload' : Unwind ctx tcLevel target
         { out with fixedpts := fixedpts } best,
       payload'.Located trail := by
-  let out' : SearchSt := { out with fixedpts := fixedpts }
+  let out' : SearchSt n := { out with fixedpts := fixedpts }
   change ∃ payload' : Unwind ctx tcLevel target out' best,
     payload'.Located trail
   cases h with
@@ -508,12 +507,12 @@ theorem Unwind.Located.setFixed {trail : FrameTrail} {ctx : Ctx}
 
 /-- A located child unwind strictly past its parent lifts through the
 parent loop's fixed-vertex cleanup. -/
-theorem LoopReceipt.ofChildUnwind {trail : FrameTrail} {ctx : Ctx}
+theorem LoopReceipt.ofChildUnwind {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel childFuel childRunFuel parentFuel loopFuel level : Nat}
     {childCs loopCs : List Nat} {childNumcells loopNumcells : Nat}
-    {childSt loopSt out : SearchSt} {best outBest : Option Key}
-    {target fixedpts : Nat} {rsLab rsPtn : Array Nat}
-    {tc len tcell : Nat} {cursor : Option Nat} {bound : Key}
+    {childSt loopSt out : SearchSt n} {best outBest : Option (Key n)}
+    {target : Nat} {fixedpts : VSet n} {rsLab rsPtn : Array Nat}
+    {tc len : Nat} {tcell : VSet n} {cursor : Option Nat} {bound : Key n}
     (hsound : NodeSound ctx tcLevel childFuel (level + 1) childCs childSt
       childNumcells best outBest)
     (hkey : keyLe
@@ -536,12 +535,12 @@ theorem LoopReceipt.ofChildUnwind {trail : FrameTrail} {ctx : Ctx}
 
 /-- A located loop return carrying an integer lifts directly through its
 parent node. -/
-theorem NodeReceipt.ofLoopSome {trail : FrameTrail} {ctx : Ctx}
+theorem NodeReceipt.ofLoopSome {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level : Nat}
     {nodeCs loopCs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key} {r : Int}
+    {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {best outBest : Option (Key n)} {r : Int}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt
       nodeNumcells)
     (h : LoopReceipt trail ctx tcLevel loopSpecFuel runFuel loopFuel level
@@ -579,12 +578,12 @@ theorem NodeReceipt.ofLoopSome {trail : FrameTrail} {ctx : Ctx}
 
 /-- A located completed loop with enough cursor fuel lifts to node
 completion. -/
-theorem NodeReceipt.ofLoopNone {trail : FrameTrail} {ctx : Ctx}
+theorem NodeReceipt.ofLoopNone {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
     {nodeCs loopCs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key}
+    {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {best outBest : Option (Key n)}
     (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs
       nodeSt nodeNumcells)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
@@ -596,7 +595,7 @@ theorem NodeReceipt.ofLoopNone {trail : FrameTrail} {ctx : Ctx}
           sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
             loopNumcells (o + 1)))
     (hlen : len = tail + 1)
-    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfuel : n < cursorRank cursor + loopFuel)
     (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
       loopCs rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out
       best outBest none) :
@@ -611,15 +610,15 @@ theorem NodeReceipt.ofLoopNone {trail : FrameTrail} {ctx : Ctx}
   | unwind sound target returned below payload located => cases returned
   | pruned target returned below sound installed read full => cases returned
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
-      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
+      exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
 
 /-- Prepending a sound child fragment preserves the location carried by
 every recursive loop outcome. -/
-theorem LoopReceipt.prefix {trail : FrameTrail} {ctx : Ctx}
+theorem LoopReceipt.prefix {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {st recSt out : SearchSt}
-    {best mid outBest : Option Key} {r : Option Int}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st recSt out : SearchSt n}
+    {best mid outBest : Option (Key n)} {r : Option Int}
     (hpre : LoopSound ctx bound best mid)
     (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
       rsLab rsPtn tc len numcells tcell cursor bound recSt out mid outBest r) :
@@ -640,11 +639,11 @@ theorem LoopReceipt.prefix {trail : FrameTrail} {ctx : Ctx}
         progress bounded
 
 /-- Reindex the entry set of a located loop result. -/
-theorem LoopReceipt.reindexSet {trail : FrameTrail} {ctx : Ctx}
+theorem LoopReceipt.reindexSet {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell tcell' : Nat}
-    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
-    {best outBest : Option Key} {r : Option Int}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell tcell' : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st out : SearchSt n}
+    {best outBest : Option (Key n)} {r : Option Int}
     (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
       rsLab rsPtn tc len numcells tcell cursor bound st out best outBest r) :
     LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs rsLab
@@ -662,11 +661,11 @@ theorem LoopReceipt.reindexSet {trail : FrameTrail} {ctx : Ctx}
         bounded
 
 /-- One successful cursor step preserves located recursive outcomes. -/
-theorem LoopReceipt.step {trail : FrameTrail} {ctx : Ctx}
+theorem LoopReceipt.step {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level tv : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
-    {best outBest : Option Key} {r : Option Int}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st out : SearchSt n}
+    {best outBest : Option (Key n)} {r : Option Int}
     (ha : After cursor tv)
     (h : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
       rsLab rsPtn tc len numcells tcell (some tv) bound st out best outBest r) :

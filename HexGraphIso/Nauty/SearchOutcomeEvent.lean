@@ -26,8 +26,8 @@ variable {n k : Nat}
 
 /-- A recursive result state with a faithful comparison path and every
 ancestor stabilization obligation enabled by its returned level. -/
-inductive EventOut (G : Colored n k) (ctx : Ctx) (tcLevel : Nat)
-    (stem fs : List Nat) (out : SearchSt) (best : Option Key)
+inductive EventOut (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat)
+    (stem fs : List Nat) (out : SearchSt n) (best : Option (Key n))
     (trail : FrameTrail) (r : Int) : Prop where
   | intro (current : Nat) (codes bestCodes : List Nat)
       (event : RunEvent G ctx tcLevel current codes bestCodes fs out best
@@ -44,9 +44,9 @@ namespace RunEvent
 /-- Every event state reads back the semantic incumbent recorded by its
 comparison machine.  The row-rejection arm uses its deliberately reset
 zero-sign machine. -/
-theorem read {G : Colored n k} {ctx : Ctx}
-    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt}
-    {best : Option Key} {trail : FrameTrail}
+theorem read {G : Colored n k} {ctx : Ctx n}
+    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt n}
+    {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail) :
     stInc ctx st = best := by
   have hread : stInc ctx st = ghostInc ctx bs st.canonlab := by
@@ -59,14 +59,14 @@ theorem read {G : Colored n k} {ctx : Ctx}
 
 /-- Fixed-point bookkeeping changes none of an event state's logical
 fields. -/
-theorem setFixed {G : Colored n k} {ctx : Ctx}
-    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt}
-    {best : Option Key} {trail : FrameTrail}
+theorem setFixed {G : Colored n k} {ctx : Ctx n}
+    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt n}
+    {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
-    (fixedpts : Nat) :
+    (fixedpts : VSet n) :
     RunEvent G ctx tcLevel current cs bs fs
       { st with fixedpts := fixedpts } best trail := by
-  let st' : SearchSt := { st with fixedpts := fixedpts }
+  let st' : SearchSt n := { st with fixedpts := fixedpts }
   have hrefs : LeafRefsOk G st' :=
     ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
       h.leafRefs.canonSize, h.leafRefs.canonReach⟩
@@ -81,13 +81,13 @@ theorem setFixed {G : Colored n k} {ctx : Ctx}
 
 /-- Clearing the one-shot short-prune flag changes none of an event
 state's logical fields. -/
-theorem clearShort {G : Colored n k} {ctx : Ctx}
-    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt}
-    {best : Option Key} {trail : FrameTrail}
+theorem clearShort {G : Colored n k} {ctx : Ctx n}
+    {tcLevel current : Nat} {cs bs fs : List Nat} {st : SearchSt n}
+    {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail) :
     RunEvent G ctx tcLevel current cs bs fs
       { st with needshortprune := false } best trail := by
-  let st' : SearchSt := { st with needshortprune := false }
+  let st' : SearchSt n := { st with needshortprune := false }
   have hrefs : LeafRefsOk G st' :=
     ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
       h.leafRefs.canonSize, h.leafRefs.canonReach⟩
@@ -102,13 +102,13 @@ theorem clearShort {G : Colored n k} {ctx : Ctx}
 
 /-- Updating the first-path agreement counter changes none of an event
 state's logical fields. -/
-theorem setAllsame {G : Colored n k} {ctx : Ctx}
+theorem setAllsame {G : Colored n k} {ctx : Ctx n}
     {tcLevel current allsamelevel : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail) :
     RunEvent G ctx tcLevel current cs bs fs
       { st with allsamelevel := allsamelevel } best trail := by
-  let st' : SearchSt := { st with allsamelevel := allsamelevel }
+  let st' : SearchSt n := { st with allsamelevel := allsamelevel }
   have hrefs : LeafRefsOk G st' :=
     ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
       h.leafRefs.canonSize, h.leafRefs.canonReach⟩
@@ -122,9 +122,9 @@ theorem setAllsame {G : Colored n k} {ctx : Ctx}
 
 /-- Installing the first-path return controls preserves an event state
 once the caller supplies the new guide and numeric bounds. -/
-theorem setFirst {G : Colored n k} {ctx : Ctx}
+theorem setFirst {G : Colored n k} {ctx : Ctx n}
     {tcLevel current gcaFirst stabvertex : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
     (hguides : GuideStore ctx tcLevel current
       { st with gcaFirst := gcaFirst, stabvertex := stabvertex }
@@ -133,7 +133,7 @@ theorem setFirst {G : Colored n k} {ctx : Ctx}
     RunEvent G ctx tcLevel current cs bs fs
       { st with gcaFirst := gcaFirst, stabvertex := stabvertex }
       best trail := by
-  let st' : SearchSt :=
+  let st' : SearchSt n :=
     { st with gcaFirst := gcaFirst, stabvertex := stabvertex }
   have hrefs : LeafRefsOk G st' :=
     ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
@@ -148,14 +148,14 @@ theorem setFirst {G : Colored n k} {ctx : Ctx}
 
 /-- Parking the cheap-automorphism boundary above the current event level
 preserves the event invariant. -/
-theorem park {G : Colored n k} {ctx : Ctx}
+theorem park {G : Colored n k} {ctx : Ctx n}
     {tcLevel current boundary : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel current cs bs fs st best trail)
     (hpos : 0 < boundary) (hcurrent : current ≤ boundary) :
     RunEvent G ctx tcLevel current cs bs fs
       { st with noncheaplevel := boundary } best trail := by
-  let st' : SearchSt := { st with noncheaplevel := boundary }
+  let st' : SearchSt n := { st with noncheaplevel := boundary }
   have hrefs : LeafRefsOk G st' :=
     ⟨h.leafRefs.firstSize, h.leafRefs.firstReach,
       h.leafRefs.canonSize, h.leafRefs.canonReach⟩
@@ -169,9 +169,9 @@ theorem park {G : Colored n k} {ctx : Ctx}
 
 /-- The comparison-blind cleanup after an empty leaf sweep preserves an
 event state. -/
-theorem leafFinish {G : Colored n k} {ctx : Ctx}
+theorem leafFinish {G : Colored n k} {ctx : Ctx n}
     {tcLevel level : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel level cs bs fs st best trail) :
     RunEvent G ctx tcLevel level cs bs fs
       (Nauty.leafFinish ctx level st) best trail := by
@@ -191,7 +191,7 @@ end RunEvent
 namespace ReturnStab
 
 /-- Leaf cleanup leaves the recorded-generator store unchanged. -/
-theorem leafFinish {ctx : Ctx} {level : Nat} {st : SearchSt}
+theorem leafFinish {ctx : Ctx n} {level : Nat} {st : SearchSt n}
     {trail : FrameTrail} {r : Int} (h : ReturnStab trail r st) :
     ReturnStab trail r (Nauty.leafFinish ctx level st) := by
   apply h.ofGenTraceEq
@@ -207,8 +207,8 @@ end ReturnStab
 namespace EventOut
 
 /-- A packaged event reads back its semantic incumbent. -/
-theorem read {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem read {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     stInc ctx out = best := by
@@ -216,8 +216,8 @@ theorem read {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
   | intro _ _ _ event _ _ _ _ _ _ => exact event.read
 
 /-- Every event output retains a full-size canonical reference. -/
-theorem canonSize {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem canonSize {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     out.canonlab.size = n := by
@@ -226,21 +226,21 @@ theorem canonSize {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
 
 /-- Every pair in a result workspace remains valid at the initial coloured
 partition. -/
-theorem autosOk {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem autosOk {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n out.autos := by
+      (initialPartition G).1 1 out.autos := by
   cases h with
   | intro _ _ _ event _ _ _ _ _ _ => exact event.autosOk
 
 /-- Every event output exposes stabilization through the smaller of its
 return target and live first-reference GCA.  Direct carrier returns need
 no stronger statement, while the orbit-return arm targets this GCA. -/
-theorem returnStab {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem returnStab {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     ReturnStab trail (min r (Int.ofNat out.gcaFirst)) out := by
@@ -249,22 +249,22 @@ theorem returnStab {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
 
 /-- Recovering an event that returned exactly to `level` produces the
 stable parent-loop state and retains its generator stabilization. -/
-theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem recoverRun {G : Colored n k} {ctx : Ctx n} {tcLevel level inf numcells : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r)
     (hreturn : r = Int.ofNat level) (hstem : stem.length = level)
     (hlevel : 1 ≤ level) (hinf : level < inf)
     (hfirst : out.gcaFirst ≤ level)
     (hok : SearchOk G level numcells
-      (Nauty.recover ctx.n inf level out)) :
+      (Nauty.recover n inf level out)) :
     ∃ bs,
       RunInv G ctx tcLevel level stem bs fs numcells
-          (Nauty.recover ctx.n inf level out) best trail ∧
+          (Nauty.recover n inf level out) best trail ∧
         ReturnStab trail
-          (Int.ofNat (Nauty.recover ctx.n inf level out).gcaFirst)
-          (Nauty.recover ctx.n inf level out) ∧
-        RefTrail ctx level (Nauty.recover ctx.n inf level out) trail := by
+          (Int.ofNat (Nauty.recover n inf level out).gcaFirst)
+          (Nauty.recover n inf level out) ∧
+        RefTrail ctx level (Nauty.recover n inf level out) trail := by
   cases h with
   | intro current codes bestCodes event depth stemEq past returned stable
       history =>
@@ -276,23 +276,23 @@ theorem recoverRun {G : Colored n k} {ctx : Ctx} {tcLevel level inf numcells : N
         rw [← hstem]
         exact stemEq
       rw [htake] at hrun
-      have hfirstEq : (Nauty.recover ctx.n inf level out).gcaFirst =
+      have hfirstEq : (Nauty.recover n inf level out).gcaFirst =
           out.gcaFirst :=
-        (recover_frames ctx.n inf level out).2.2.2.2.2.2.1
+        (recover_frames n inf level out).2.2.2.2.2.2.1
       have hfirst' : Int.ofNat out.gcaFirst ≤ Int.ofNat level :=
         Int.ofNat_le.mpr hfirst
       have hmin : min (Int.ofNat level) (Int.ofNat out.gcaFirst) =
           Int.ofNat out.gcaFirst := by omega
       rw [hmin] at stable
       rw [hfirstEq]
-      exact ⟨bestCodes, hrun, stable.recover ctx.n inf level,
+      exact ⟨bestCodes, hrun, stable.recover inf level,
         history.recover hle⟩
 
 /-- A stable state with a nonpositive comparison sign is an event output
 at its own code depth. -/
-theorem ofRun {G : Colored n k} {ctx : Ctx}
+theorem ofRun {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {stem codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail} {r : Int}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail} {r : Int}
     (h : RunInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hdepth : level = codes.length)
     (hstem : codes.take stem.length = stem)
@@ -305,8 +305,8 @@ theorem ofRun {G : Colored n k} {ctx : Ctx}
     hstable hhistory
 
 /-- Weakening the returned level preserves an event output. -/
-theorem lower {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem lower {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r r' : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r)
     (hle : r' ≤ r) :
@@ -320,11 +320,11 @@ theorem lower {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
         (Int.le_trans hle returned) (stable.lower hmin) history
 
 /-- Fixed-point cleanup preserves the full result-side package. -/
-theorem setFixed {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem setFixed {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r)
-    (fixedpts : Nat) :
+    (fixedpts : VSet n) :
     EventOut G ctx tcLevel stem fs { out with fixedpts := fixedpts }
       best trail r := by
   cases h with
@@ -335,8 +335,8 @@ theorem setFixed {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
         (history.stateEq rfl rfl rfl rfl)
 
 /-- Clearing the short-prune request preserves the full result package. -/
-theorem clearShort {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem clearShort {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     EventOut G ctx tcLevel stem fs
@@ -349,8 +349,8 @@ theorem clearShort {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
 
 /-- Updating the first-path agreement counter preserves the full result
 package. -/
-theorem setAllsame {G : Colored n k} {ctx : Ctx} {tcLevel allsamelevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem setAllsame {G : Colored n k} {ctx : Ctx n} {tcLevel allsamelevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     EventOut G ctx tcLevel stem fs

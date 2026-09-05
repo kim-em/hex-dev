@@ -25,8 +25,8 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- State carried by the unique descent before the first leaf exists. -/
-structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
-    (cs : List Nat) (numcells : Nat) (st : SearchSt)
+structure FirstInv (G : Colored n k) (ctx : Ctx n) (level : Nat)
+    (cs : List Nat) (numcells : Nat) (st : SearchSt n)
     (trail : FrameTrail) : Prop where
   searchOk : SearchOk G level numcells st
   codes : DescentCodes n cs st
@@ -36,32 +36,30 @@ structure FirstInv (G : Colored n k) (ctx : Ctx) (level : Nat)
     { lab := st.lab, ptn := st.ptn, active := st.active,
       numcells := numcells, hint := 0, maxpos := 0,
       longcode := numcells }
-  activeLt : st.active < 2 ^ ctx.n
-  activeStarts : ∀ v : Nat, elem st.active v = true →
+  activeStarts : ∀ v : Nat, st.active.mem v = true →
     v = 0 ∨ st.ptn[v - 1]! ≤ level
   trailOk : TrailOk ctx level st trail
   frameSize : ∀ target entry, target < level →
-    trail target = some entry → entry.frame.rsLab.size = ctx.n
+    trail target = some entry → entry.frame.rsLab.size = n
   genEmpty : st.genTrace = #[]
   autosEmpty : st.autos = #[]
   workspace : WorkspaceOk st
-  canongSize : st.canong.size = ctx.n
-  orbitId : ∀ v, v < ctx.n → st.orbits[v]! = v
+  canongSize : st.canong.size = n
+  orbitId : ∀ v, v < n → st.orbits[v]! = v
   shortClear : st.needshortprune = false
 
 /-- A nonempty root starts the first descent with empty stores, identity
 orbits, and no active ancestor frame. -/
 theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
-    FirstInv G { n := n, g := rowsOf G } 1 []
+    FirstInv G { g := rowsOf G } 1 []
       (initialPartition G).2.length
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       FrameTrail.empty := by
   have hok := root_searchOk G hn0
-  refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_, ?_, ?_,
+  refine ⟨hok, DescentCodes.root _ _ hn0, ?_, ?_, ?_,
     TrailOk.empty _ _ _, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · exact CheapOk.root rfl hn0 hok (by simp [rootSt])
+  · exact CheapOk.root hn0 hok (by simp [rootSt])
   · simpa only [rootSt] using certInv_initial G hn0
-  · simpa only [rootSt] using (initial_nodeOk G hn0).act
   · simpa only [rootSt] using (initial_nodeOk G hn0).starts
   · intro target entry _ hentry
     simp [FrameTrail.empty] at hentry
@@ -76,29 +74,28 @@ theorem FirstInv.root {G : Colored n k} (hn0 : 0 < n) :
 
 /-- Refining a first-descent node produces the well-formed equitable
 state from which either the first leaf or the next child is selected. -/
-theorem FirstInv.refined {G : Colored n k} {ctx : Ctx}
-    {level numcells : Nat} {cs : List Nat} {st : SearchSt}
+theorem FirstInv.refined {G : Colored n k} {ctx : Ctx n}
+    {level numcells : Nat} {cs : List Nat} {st : SearchSt n}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 1 ≤ level)
     (h : FirstInv G ctx level cs numcells st trail) :
     let r := refine ctx level st.lab st.ptn st.active numcells
     IterOk ctx level r ∧ Equitable ctx level r.lab r.ptn ∧
-      bcount r.ptn level ctx.n = r.numcells := by
-  subst n
+      bcount r.ptn level n = r.numcells := by
   dsimp only
   let r := refine ctx level st.lab st.ptn st.active numcells
   have hend := searchOk_end hn0 h.searchOk hlevel
-  have hls : st.lab.size = ctx.n := h.searchOk.labSize
-  have hps : st.ptn.size = ctx.n := h.searchOk.ptnSize
-  have hlab : LabOk st.lab ctx.n := by
+  have hls : st.lab.size = n := h.searchOk.labSize
+  have hps : st.ptn.size = n := h.searchOk.ptnSize
+  have hlab : LabOk st.lab n := by
     exact labOk_of_reach h.searchOk.labSize h.searchOk.reach
-  have hinj : LabInj st.lab ctx.n := by
+  have hinj : LabInj st.lab n := by
     exact labInj_of_reach h.searchOk.labSize hn0 h.searchOk.reach
-  have hrst : StOk ctx.n level r := by
-    apply refine_stOk (ctx := ctx) rfl hls hlab hps h.activeLt hend
+  have hrst : StOk n level r := by
+    apply refine_stOk (ctx := ctx) hls hlab hps hend
   have hrreach : CellsReach G r.lab := by
-    apply refine_cellsReach rfl hn0 h.searchOk.reach h.searchOk.labSize
+    apply refine_cellsReach hn0 h.searchOk.reach h.searchOk.labSize
       h.searchOk.ptnSize hend
     intro q hq
     exact Nat.le_trans (h.searchOk.init1 q hq) hlevel
@@ -115,10 +112,10 @@ theorem FirstInv.refined {G : Colored n k} {ctx : Ctx}
       · rw [he]
         exact Or.inl (Nat.le_refl level)
     · have hb := h.searchOk.bc
-      have hbn := bcount_le st.ptn level ctx.n
+      have hbn := bcount_le st.ptn level n
       omega
   have heqt : Equitable ctx level r.lab r.ptn := by
-    apply refine_equitable hls hlab hps h.activeLt hend hinj h.activeStarts
+    apply refine_equitable hls hlab hps hend hinj h.activeStarts
     · intro u v hu hv
       rw [hg]
       apply rowsOf_symm G
@@ -127,32 +124,32 @@ theorem FirstInv.refined {G : Colored n k} {ctx : Ctx}
     · have hcount := h.searchOk.count
       exact hcount.symm
     · exact h.cert
-  have hacc : bcount r.ptn level ctx.n = r.numcells := by
+  have hacc : bcount r.ptn level n = r.numcells := by
     have hc := refine_bcount (ctx := ctx) (level := level)
       (lab := st.lab) (ptn := st.ptn) (active := st.active)
       (numcells := numcells) hps.symm (by rw [hls, hps]) hend
     have hold := h.searchOk.count
-    change bcount r.ptn level ctx.n = r.numcells
-    change r.numcells + bcount st.ptn level ctx.n =
-      numcells + bcount r.ptn level ctx.n at hc
+    change bcount r.ptn level n = r.numcells
+    change r.numcells + bcount st.ptn level n =
+      numcells + bcount r.ptn level n at hc
     omega
   exact ⟨hrit, heqt, hacc⟩
 
 /-- The selected target-cell child preserves the pre-incumbent invariant
 and records its exact parent sweep position in the active trail. -/
-theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
+theorem FirstInv.child {G : Colored n k} {ctx : Ctx n}
     {specFuel level numcells tc len o : Nat} {cs : List Nat}
-    {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    {st : SearchSt n} {trail : FrameTrail}
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hpath : level = cs.length + 1) (hlt : level < n)
     (h : FirstInv G ctx level cs numcells st trail)
     (hcell : IsCell
       (refine ctx level st.lab st.ptn st.active numcells).ptn
       level tc len)
-    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n) (ho : o < len) :
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ n) (ho : o < len) :
     let r := refine ctx level st.lab st.ptn st.active numcells
     let full := cs ++ [r.longcode]
-    let pre0 : SearchSt := { st with
+    let pre0 : SearchSt n := { st with
       lab := r.lab
       ptn := r.ptn
       active := r.active
@@ -161,26 +158,25 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
       numnodes := st.numnodes + 1
       tctotal := st.tctotal + len }
     let pre := if pre0.noncheaplevel ≥ level ∧
-        ¬ cheapautom pre0.ptn level ctx.n then
+        ¬ cheapautom pre0.ptn level n then
       { pre0 with noncheaplevel := level + 1 }
     else pre0
-    let child : SearchSt := { pre with
-      lab := (breakout pre.lab pre.ptn (level + 1) tc
+    let child : SearchSt n := { pre with
+      lab := (breakout n pre.lab pre.ptn (level + 1) tc
         pre.lab[tc + o]!).1
-      ptn := (breakout pre.lab pre.ptn (level + 1) tc
+      ptn := (breakout n pre.lab pre.ptn (level + 1) tc
         pre.lab[tc + o]!).2.1
-      active := (breakout pre.lab pre.ptn (level + 1) tc
+      active := (breakout n pre.lab pre.ptn (level + 1) tc
         pre.lab[tc + o]!).2.2
-      fixedpts := insert pre.fixedpts pre.lab[tc + o]!
+      fixedpts := pre.fixedpts.insert pre.lab[tc + o]!
       cosetindex := pre.lab[tc + o]! }
     FirstInv G ctx (level + 1) full (r.numcells + 1) child
       (trail.push level
         ⟨sweepFrame specFuel full r.lab r.ptn tc r.numcells, o⟩) := by
-  subst n
   dsimp only
   let r := refine ctx level st.lab st.ptn st.active numcells
   let full := cs ++ [r.longcode]
-  let pre0 : SearchSt := { st with
+  let pre0 : SearchSt n := { st with
     lab := r.lab
     ptn := r.ptn
     active := r.active
@@ -189,20 +185,20 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
     numnodes := st.numnodes + 1
     tctotal := st.tctotal + len }
   let pre := if pre0.noncheaplevel ≥ level ∧
-      ¬ cheapautom pre0.ptn level ctx.n then
+      ¬ cheapautom pre0.ptn level n then
     { pre0 with noncheaplevel := level + 1 }
   else pre0
-  let child : SearchSt := { pre with
-    lab := (breakout pre.lab pre.ptn (level + 1) tc
+  let child : SearchSt n := { pre with
+    lab := (breakout n pre.lab pre.ptn (level + 1) tc
       pre.lab[tc + o]!).1
-    ptn := (breakout pre.lab pre.ptn (level + 1) tc
+    ptn := (breakout n pre.lab pre.ptn (level + 1) tc
       pre.lab[tc + o]!).2.1
-    active := (breakout pre.lab pre.ptn (level + 1) tc
+    active := (breakout n pre.lab pre.ptn (level + 1) tc
       pre.lab[tc + o]!).2.2
-    fixedpts := insert pre.fixedpts pre.lab[tc + o]!
+    fixedpts := pre.fixedpts.insert pre.lab[tc + o]!
     cosetindex := pre.lab[tc + o]! }
   have hlevel : 1 ≤ level := by omega
-  have href := h.refined rfl hg hn0 hlevel
+  have href := h.refined hg hn0 hlevel
   have hend := searchOk_end hn0 h.searchOk hlevel
   have hpreLab : pre.lab = r.lab := by unfold pre; split <;> rfl
   have hprePtn : pre.ptn = r.ptn := by unfold pre; split <;> rfl
@@ -228,7 +224,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
     unfold pre
     split <;> rfl
   have hokPre : SearchOk G level r.numcells pre := by
-    apply refine_searchOk rfl hn0 h.searchOk hlevel
+    apply refine_searchOk hn0 h.searchOk hlevel
     · simp only [pre, pre0]
       split <;> rfl
     · simp only [pre, pre0]
@@ -240,49 +236,47 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
   have hokChild : SearchOk G (level + 1) (r.numcells + 1) child := by
     apply breakout_searchOk hn0 hokPre hlevel hcellPre hlen hrange ho
     · rfl
-    · exact breakout_ptn pre.lab pre.ptn (level + 1) tc
+    · exact breakout_ptn (n := n) pre.lab pre.ptn (level + 1) tc
         pre.lab[tc + o]!
     · rfl
   have hcheap0 : CheapOk ctx (initialPartition G).1
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2) level pre0 := by
+      (initPtn n (n + 2) (initialPartition G).2) level pre0 := by
     apply h.cheap.refine hlevel <;> rfl
   have hcheapPre : CheapOk ctx (initialPartition G).1
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initPtn n (n + 2) (initialPartition G).2)
       (level + 1) pre := by
     rcases Decidable.em (pre0.noncheaplevel ≥ level ∧
-        ¬ cheapautom pre0.ptn level ctx.n) with hguard | hguard
+        ¬ cheapautom pre0.ptn level n) with hguard | hguard
     · have hpre : pre = { pre0 with noncheaplevel := level + 1 } := by
         unfold pre
         rw [ite_eq_left hguard]
       rw [hpre]
       exact hcheap0.park (by omega) (by omega)
     · have hnext : CheapOk ctx (initialPartition G).1
-          (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+          (initPtn n (n + 2) (initialPartition G).2)
           (level + 1) pre0 := by
         apply hcheap0.next
         intro heq
         have heq' : st.noncheaplevel = level := by simpa [pre0] using heq
         have hguard' : ¬(st.noncheaplevel ≥ level ∧
-            ¬ cheapautom r.ptn level ctx.n) := by
+            ¬ cheapautom r.ptn level n) := by
           simpa [pre0] using hguard
-        have hca : cheapautom r.ptn level ctx.n = true := by
-          rcases hca0 : cheapautom r.ptn level ctx.n with _ | _
+        have hca : cheapautom r.ptn level n = true := by
+          rcases hca0 : cheapautom r.ptn level n with _ | _
           · exfalso
             exact hguard' ⟨by omega, by simp [hca0]⟩
           · rfl
         have hS : SubtreeOk ctx level r :=
           subtreeOk_of_cheapautom href.1 href.2.1 href.2.2 hca
         have hpair : PairOk ctx.g
-            (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-            (initialPartition G).1 1 ctx.n
-            (fmptn r.lab r.ptn level ctx.n).1
-            (fmptn r.lab r.ptn level ctx.n).2 := by
+            (initPtn n (n + 2) (initialPartition G).2)
+            (initialPartition G).1 1
+            (fmptn r.lab r.ptn level n).1
+            (fmptn r.lab r.ptn level n).2 := by
           apply pairOk_fmptn_of_subtree (ctx := ctx) (G := G)
             (r := r) hn0 hlevel
           · rw [hg]
             exact size_rowsOf G
-          · rw [hg]
-            exact rowsOf_bounded G
           · rw [hg]
             exact rowsOf_symm G
           · rw [hg]
@@ -300,7 +294,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
       rw [hpre]
       exact hnext
   have hcheapChild : CheapOk ctx (initialPartition G).1
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initPtn n (n + 2) (initialPartition G).2)
       (level + 1) child := by
     apply hcheapPre.breakout hlevel hcellPre hlen hrange ho <;> rfl
   have htrail : TrailOk ctx (level + 1) child
@@ -328,10 +322,10 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
       · exact hrange
       · exact ho
       · rfl
-      · exact breakout_ptn pre.lab pre.ptn (level + 1) tc
+      · exact breakout_ptn (n := n) pre.lab pre.ptn (level + 1) tc
           pre.lab[tc + o]!
     simpa only [hpreLab, hprePtn] using hpush
-  refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, ?_, htrail, ?_, ?_, ?_,
+  refine ⟨hokChild, ?_, hcheapChild, ?_, ?_, htrail, ?_, ?_, ?_,
     ?_, ?_, ?_, ?_⟩
   · apply h.codes.next
     · change child.firstcode =
@@ -343,7 +337,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
     · rw [show child.canoncode = pre.canoncode by rfl, hpreCanon]
     · omega
     · exact refine_longcode_lt ctx level st.lab st.ptn st.active numcells
-  · have hmem : (tc, tc + len - 1) ∈ cells r.ptn level ctx.n := by
+  · have hmem : (tc, tc + len - 1) ∈ cells r.ptn level n := by
       apply isCell_mem_cells hcell
       · exact Nat.le_of_eq href.1.ok.ptnSize.symm
       · exact href.1.ok.ptnEnd
@@ -354,26 +348,23 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
       href.1.ok.labSize href.1.ok.ptnSize href.1.ok.ptnEnd
       href.1.valsWeak href.1.inj hmem (by omega) (by omega) href.2.1
     change CertInv ctx (level + 1)
-      { lab := (breakout pre.lab pre.ptn (level + 1) tc
+      { lab := (breakout n pre.lab pre.ptn (level + 1) tc
           pre.lab[tc + o]!).1,
-        ptn := (breakout pre.lab pre.ptn (level + 1) tc
+        ptn := (breakout n pre.lab pre.ptn (level + 1) tc
           pre.lab[tc + o]!).2.1,
-        active := (breakout pre.lab pre.ptn (level + 1) tc
+        active := (breakout n pre.lab pre.ptn (level + 1) tc
           pre.lab[tc + o]!).2.2,
         numcells := r.numcells + 1, hint := 0, maxpos := 0,
         longcode := r.numcells + 1 }
     rw [hpreLab, hprePtn, breakout_ptn]
     exact hcert
-  · change (breakout pre.lab pre.ptn (level + 1) tc
-      pre.lab[tc + o]!).2.2 < 2 ^ ctx.n
-    exact singleActive_lt (by omega)
   · change ∀ v : Nat,
-      elem (breakout pre.lab pre.ptn (level + 1) tc
-        pre.lab[tc + o]!).2.2 v = true →
-      v = 0 ∨ (breakout pre.lab pre.ptn (level + 1) tc
+      (breakout n pre.lab pre.ptn (level + 1) tc
+        pre.lab[tc + o]!).2.2.mem v = true →
+      v = 0 ∨ (breakout n pre.lab pre.ptn (level + 1) tc
         pre.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
     rw [breakout_ptn]
-    exact split_starts hokPre.ptnSize hcellPre
+    exact split_starts hokPre.ptnSize hcellPre (by omega)
   · intro target entry hlt hentry
     rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | rfl
     · rw [FrameTrail.push_of_ne _ _ (Nat.ne_of_lt hold)] at hentry
@@ -402,10 +393,10 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx}
 
 /-- Reaching a discrete node installs the first leaf and enters the stable
 post-incumbent invariant. -/
-theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
-    {tcLevel level numcells : Nat} {cs : List Nat} {st : SearchSt}
+theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx n}
+    {tcLevel level numcells : Nat} {cs : List Nat} {st : SearchSt n}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = cs.length + 1)
+    (hn0 : 0 < n) (hlevel : level = cs.length + 1)
     (h : FirstInv G ctx level cs numcells st trail) :
     let rs := refine ctx level st.lab st.ptn st.active numcells
     let full := cs ++ [rs.longcode]
@@ -418,7 +409,7 @@ theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
   let full := cs ++ [rs.longcode]
   have hlevelOne : 1 ≤ level := by omega
   have hok : SearchOk G level rs.numcells leaf := by
-    apply refine_searchOk hn hn0 h.searchOk hlevelOne
+    apply refine_searchOk hn0 h.searchOk hlevelOne
     · rfl
     · rfl
     · exact Or.inl rfl
@@ -448,8 +439,8 @@ theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
     apply h.cheap.refine hlevelOne <;> rfl
   have htrail : TrailOk ctx level leaf trail := by
     apply h.trailOk.refine
-    · rw [h.searchOk.labSize, ← hn]
-    · rw [h.searchOk.ptnSize, ← hn]
+    · rw [h.searchOk.labSize]
+    · rw [h.searchOk.ptnSize]
     · exact searchOk_end hn0 h.searchOk hlevelOne
     · rfl
     · rfl
@@ -472,13 +463,13 @@ theorem FirstInv.terminal {G : Colored n k} {ctx : Ctx}
 
 /-- A discrete node on the first descent returns an exact located receipt
 and the stable state installed by that leaf. -/
-theorem FirstInv.terminalReceipt {G : Colored n k} {ctx : Ctx}
+theorem FirstInv.terminalReceipt {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {cs : List Nat} {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : level = cs.length + 1)
+    {cs : List Nat} {st : SearchSt n} {trail : FrameTrail}
+    (hn0 : 0 < n) (hlevel : level = cs.length + 1)
     (h : FirstInv G ctx level cs numcells st trail)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n) :
+      numcells).numcells = n) :
     let rs := refine ctx level st.lab st.ptn st.active numcells
     let full := cs ++ [rs.longcode]
     let out := firstPathNode ctx inf tcLevel (fuel + 1) level numcells st
@@ -495,9 +486,9 @@ theorem FirstInv.terminalReceipt {G : Colored n k} {ctx : Ctx}
   have hrun : RunInv G ctx tcLevel level full full full rs.numcells
       (firstterminal level leaf) (some (pathLeafKey ctx full rs.lab))
       trail := by
-    simpa only [rs, full, leaf] using h.terminal hn hn0 hlevel
-  have hdisc : discreteAt rs.ptn level ctx.n = true := by
-    rw [← refine_discrete_iff hn hn0 h.searchOk (by omega)]
+    simpa only [rs, full, leaf] using h.terminal hn0 hlevel
+  have hdisc : discreteAt rs.ptn level n = true := by
+    rw [← refine_discrete_iff hn0 h.searchOk (by omega)]
     exact hnum
   have hnode : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
       pathLeafKey ctx full rs.lab := by

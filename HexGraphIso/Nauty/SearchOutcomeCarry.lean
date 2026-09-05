@@ -27,59 +27,59 @@ variable {n k : Nat}
 
 /-! # Frame equations -/
 
-theorem pushAuto_firstlab (st : SearchSt) (pair : Nat × Nat) :
+theorem pushAuto_firstlab (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).firstlab = st.firstlab := by
   rw [pushAuto]
   split <;> rfl
 
-theorem pushAuto_orbits' (st : SearchSt) (pair : Nat × Nat) :
+theorem pushAuto_orbits' (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).orbits = st.orbits := by
   rw [pushAuto]
   split <;> rfl
 
-theorem pushAuto_genTrace' (st : SearchSt) (pair : Nat × Nat) :
+theorem pushAuto_genTrace' (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).genTrace = st.genTrace := by
   rw [pushAuto]
   split <;> rfl
 
-theorem recover_firstlab (n inf level : Nat) (st : SearchSt) :
+theorem recover_firstlab (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).firstlab = st.firstlab :=
   (recover_frames n inf level st).2.2.2.2.1
 
-theorem recover_orbits (n inf level : Nat) (st : SearchSt) :
+theorem recover_orbits (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).orbits = st.orbits :=
   (recover_frames n inf level st).2.2.2.2.2.2.2.2.1
 
-theorem recover_genTrace (n inf level : Nat) (st : SearchSt) :
+theorem recover_genTrace (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).genTrace = st.genTrace :=
   (recover_store n inf level st).1
 
-theorem recover_noncheaplevel (n inf level : Nat) (st : SearchSt) :
+theorem recover_noncheaplevel (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).noncheaplevel =
       if level < st.noncheaplevel then level + 1 else st.noncheaplevel := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.noncheaplevel, ite_self]
 
-theorem otherNodePrep_firstlab' (level code : Nat) (st : SearchSt) :
+theorem otherNodePrep_firstlab' (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).firstlab = st.firstlab :=
   (otherNodePrep_frames level code st).2.2.2.2.1
 
-theorem otherNodePrep_orbits' (level code : Nat) (st : SearchSt) :
+theorem otherNodePrep_orbits' (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).orbits = st.orbits :=
   (otherNodePrep_frames level code st).2.2.2.2.2.2.2.2.2.2.1
 
-theorem otherNodePrep_genTrace' (level code : Nat) (st : SearchSt) :
+theorem otherNodePrep_genTrace' (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).genTrace = st.genTrace :=
   (otherNodePrep_store level code st).1
 
-theorem processnode_firstlab' (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem processnode_firstlab' (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (processnode ctx level numcells st).2.firstlab = st.firstlab :=
   (processnode_frames ctx level numcells st).2.2.2.2.1
 
-theorem processnode_noncheaplevel' (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem processnode_noncheaplevel' (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (processnode ctx level numcells st).2.noncheaplevel = st.noncheaplevel :=
   (processnode_frames ctx level numcells st).2.2.2.2.2.2.2.1
 
@@ -87,10 +87,10 @@ theorem processnode_noncheaplevel' (ctx : Ctx) (level numcells : Nat)
 
 /-- The generator store paired with the orbit array, kept opaque while
 the leaf event is unfolded. -/
-@[expose] def genOrb (st : SearchSt) : Array (Array Nat) × Array Nat :=
+@[expose] def genOrb (st : SearchSt n) : Array (Array Nat) × Array Nat :=
   (st.genTrace, st.orbits)
 
-private theorem pushAuto_genOrb (st : SearchSt) (pair : Nat × Nat) :
+private theorem pushAuto_genOrb (st : SearchSt n) (pair : VSet n × VSet n) :
     genOrb (pushAuto st pair) = genOrb st := by
   rw [pushAuto]
   split <;> rfl
@@ -118,14 +118,14 @@ private theorem forIn_scatter_eq (lab₁ lab₂ : Array Nat) :
 
 /-- `processnode` either leaves both the generator store and the orbit
 array alone, or appends one generator and joins the orbits by it. -/
-theorem processnode_genOrb (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem processnode_genOrb (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     genOrb (processnode ctx level numcells st).2 = genOrb st ∨
     ∃ γ, genOrb (processnode ctx level numcells st).2 =
-      (st.genTrace.push γ, (orbjoin st.orbits γ ctx.n).1) := by
+      (st.genTrace.push γ, (orbjoin st.orbits γ n).1) := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => genOrb x.2),
+    apply_ite (fun x : Int × SearchSt n => genOrb x.2),
     pushAuto_genOrb]
   simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq]
   simp only [genOrb, pushAuto_genTrace', pushAuto_orbits', ite_self]
@@ -135,14 +135,14 @@ theorem processnode_genOrb (ctx : Ctx) (level numcells : Nat)
     left
     rfl
   rw [ite_eq_right h1]
-  rcases Decidable.em ((numcells == ctx.n) = true) with h2 | h2
+  rcases Decidable.em ((numcells == n) = true) with h2 | h2
   · rw [ite_eq_left h2]
     rcases Decidable.em (((st.eqlevFirst == level) &&
         (st.firstcode[level + 1]! == codeSentinel)) = true) with h3 | h3
     · rw [ite_eq_left h3]
-      rcases Decidable.em (isautom ctx ((List.range ctx.n).foldl
+      rcases Decidable.em (isautom ctx ((List.range n).foldl
             (fun r i => r.set! st.firstlab[i]! st.lab[i]!)
-            (Array.replicate ctx.n 0)) = true) with h4 | h4
+            (Array.replicate n 0)) = true) with h4 | h4
       · rw [ite_eq_left h4, ite_eq_right (by decide)]
         right
         exact ⟨_, rfl⟩
@@ -191,22 +191,22 @@ theorem processnode_genOrb (ctx : Ctx) (level numcells : Nat)
     rfl
 
 /-- Every checked generator list keeps the orbit relation symmetric. -/
-theorem orbConn_symm_of_check {ctx : Ctx} {gens : List (Array Nat)}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ ctx.n = true) :
-    ∀ a b, OrbConn gens ctx.n a b → OrbConn gens ctx.n b a :=
+theorem orbConn_symm_of_check {ctx : Ctx n} {gens : List (Array Nat)}
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true) :
+    ∀ a b, OrbConn gens n a b → OrbConn gens n b a :=
   orbConn_symm (fun γ hγ v hv' => checkAutom_bound (hv γ hγ) v hv')
     (fun γ hγ => checkAutom_inj (hv γ hγ))
 
 /-- The orbit array stays sound across a leaf event whose appended
 generator, if any, is checked. -/
-theorem processnode_orbSound {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hsound : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n)
+theorem processnode_orbSound {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hsound : OrbSound (OrbConn st.genTrace.toList n) st.orbits n)
     (hcheck : ∀ γ ∈ (processnode ctx level numcells st).2.genTrace,
-      checkAutom ctx.g γ ctx.n = true) :
+      checkAutom ctx.g γ = true) :
     OrbSound
-      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
-      (processnode ctx level numcells st).2.orbits ctx.n := by
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList n)
+      (processnode ctx level numcells st).2.orbits n := by
   rcases processnode_genOrb ctx level numcells st with hsame | ⟨γ, hpush⟩
   · have hgen : (processnode ctx level numcells st).2.genTrace =
         st.genTrace := congrArg Prod.fst hsame
@@ -217,7 +217,7 @@ theorem processnode_orbSound {ctx : Ctx} {level numcells : Nat}
   · have hgen : (processnode ctx level numcells st).2.genTrace =
         st.genTrace.push γ := congrArg Prod.fst hpush
     have horb : (processnode ctx level numcells st).2.orbits =
-        (orbjoin st.orbits γ ctx.n).1 := congrArg Prod.snd hpush
+        (orbjoin st.orbits γ n).1 := congrArg Prod.snd hpush
     rw [hgen, horb]
     rw [hgen] at hcheck
     have hsub : ∀ δ ∈ st.genTrace.toList,
@@ -226,7 +226,7 @@ theorem processnode_orbSound {ctx : Ctx} {level numcells : Nat}
       rw [Array.mem_toList_iff] at hδ ⊢
       exact Array.mem_push.mpr (Or.inl hδ)
     have hcheck' : ∀ δ ∈ (st.genTrace.push γ).toList,
-        checkAutom ctx.g δ ctx.n = true := by
+        checkAutom ctx.g δ = true := by
       intro δ hδ
       exact hcheck δ (Array.mem_toList_iff.mp hδ)
     have hγ : γ ∈ (st.genTrace.push γ).toList := by
@@ -244,27 +244,26 @@ theorem processnode_orbSound {ctx : Ctx} {level numcells : Nat}
 
 /-- The small-cell subtree facts depend on the labelling only through
 its cell contents. -/
-theorem SubtreeOk.ofCellsPerm {ctx : Ctx} {level : Nat} {r : RefineSt}
+theorem SubtreeOk.ofCellsPerm {ctx : Ctx n} {level : Nat} {r : RefineSt n}
     {lab' : Array Nat} (h : SubtreeOk ctx level r)
     (hperm : cellsPerm r.ptn level r.lab lab')
-    (hsz : lab'.size = ctx.n) (hok : LabOk lab' ctx.n)
-    (hinj : LabInj lab' ctx.n) :
+    (hsz : lab'.size = n) (hok : LabOk lab' n)
+    (hinj : LabInj lab' n) :
     SubtreeOk ctx level { r with lab := lab' } := by
-  refine ⟨⟨⟨hsz, hok, h.it.ok.ptnSize, h.it.ok.activeLt, h.it.ok.ptnEnd⟩,
+  refine ⟨⟨⟨hsz, hok, h.it.ok.ptnSize, h.it.ok.ptnEnd⟩,
     hinj, h.it.vals, h.it.lvl⟩, ?_, h.acc, h.shape⟩
   exact h.eqt.ofCellsPerm hperm h.it.ok.ptnSize h.it.ok.ptnEnd
 
 /-- The subtree facts ignore the refinement bookkeeping fields. -/
-theorem SubtreeOk.ofFrames {ctx : Ctx} {level : Nat} {r r' : RefineSt}
+theorem SubtreeOk.ofFrames {ctx : Ctx n} {level : Nat} {r r' : RefineSt n}
     (h : SubtreeOk ctx level r) (hlab : r'.lab = r.lab)
-    (hptn : r'.ptn = r.ptn) (hactive : r'.active = r.active)
+    (hptn : r'.ptn = r.ptn)
     (hcells : r'.numcells = r.numcells) :
     SubtreeOk ctx level r' := by
-  refine ⟨⟨⟨?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, h.it.lvl⟩, ?_, ?_, ?_⟩
+  refine ⟨⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_, h.it.lvl⟩, ?_, ?_, ?_⟩
   · rw [hlab]; exact h.it.ok.labSize
   · rw [hlab]; exact h.it.ok.labOk
   · rw [hptn]; exact h.it.ok.ptnSize
-  · rw [hactive]; exact h.it.ok.activeLt
   · rw [hptn]; exact h.it.ok.ptnEnd
   · rw [hlab]; exact h.it.inj
   · rw [hptn]; exact h.it.vals
@@ -280,7 +279,7 @@ namespace GuideRel
 frame of the first leg's endpoint.  Refinement only closes more cell
 boundaries, so a within-cell permutation of the refined frame is one of
 the coarser frame. -/
-theorem transRefine {level : Nat} {a b c : SearchSt}
+theorem transRefine {level : Nat} {a b c : SearchSt n}
     (hab : GuideRel level a b) (hbc : GuideRel level b c)
     (hsz : a.ptn.size = b.ptn.size) (hlb : b.lab.size = b.ptn.size)
     (hlc : c.canonlab.size = b.ptn.size)
@@ -306,8 +305,8 @@ end GuideRel
 /-! # Result-side facts -/
 
 /-- Every packaged event leaves the comparison sign nonpositive. -/
-theorem EventOut.nonpositive {G : Colored n k} {ctx : Ctx} {tcLevel : Nat}
-    {stem fs : List Nat} {out : SearchSt} {best : Option Key}
+theorem EventOut.nonpositive {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {stem fs : List Nat} {out : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : EventOut G ctx tcLevel stem fs out best trail r) :
     out.compCanon ≤ 0 := by
@@ -329,11 +328,11 @@ theorem CodeCmpInv.neg_eq {nn : Nat} {cs bs : List Nat}
 
 /-- With the machine frozen downward, every key below the current path is
 dominated by the incumbent. -/
-theorem CodeCmpInv.frozenBound {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
+theorem CodeCmpInv.frozenBound {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon compCanon : Int}
     {canonlab : Array Nat}
     (h : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon compCanon)
-    (hneg : compCanon < 0) (K : Key) :
+    (hneg : compCanon < 0) (K : Key n) :
     keyLe (prefixKey cs K) (incKey ctx bs canonlab) := by
   have hcc := h.neg_eq hneg
   subst hcc
@@ -341,16 +340,16 @@ theorem CodeCmpInv.frozenBound {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
 
 /-- A frozen node's exact maximum is the unchanged incumbent: every child
 key is dominated. -/
-theorem incMax_of_frozen {ctx : Ctx} {bs : List Nat} {canonlab : Array Nat}
-    {K : Key} (hle : keyLe K (incKey ctx bs canonlab)) :
+theorem incMax_of_frozen {ctx : Ctx n} {bs : List Nat} {canonlab : Array Nat}
+    {K : Key n} (hle : keyLe K (incKey ctx bs canonlab)) :
     incMax (some (incKey ctx bs canonlab)) K = incKey ctx bs canonlab := by
   rw [incMax]
   exact keyMax_eq_left hle
 
 /-- Every off-path run only improves the incumbent. -/
-theorem OtherRun.grows {G : Colored n k} {ctx : Ctx}
+theorem OtherRun.grows {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Int}
     (h : OtherRun G ctx tcLevel specFuel runFuel level codes fs st out
       numcells best outBest receiptTrail eventTrail r)

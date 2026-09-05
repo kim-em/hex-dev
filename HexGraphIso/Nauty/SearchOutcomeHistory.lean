@@ -27,10 +27,10 @@ namespace Hex.GraphIso.Nauty
 /-- Every active frozen frame has the expected labelling size, and each
 installed leaf reference reaches all active frames no deeper than its
 current greatest-common-ancestor control. -/
-structure RefTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
+structure RefTrail (ctx : Ctx n) (current : Nat) (st : SearchSt n)
     (trail : FrameTrail) : Prop where
   frameSize : ∀ target entry, target < current →
-    trail target = some entry → entry.frame.rsLab.size = ctx.n
+    trail target = some entry → entry.frame.rsLab.size = n
   first : ∀ target entry, target < current →
     target ≤ st.gcaFirst → trail target = some entry →
     cellsPerm entry.frame.rsPtn target entry.frame.rsLab st.firstlab
@@ -41,11 +41,11 @@ structure RefTrail (ctx : Ctx) (current : Nat) (st : SearchSt)
 namespace RefTrail
 
 /-- The off-path comparison step leaves the first GCA control unchanged. -/
-theorem otherLeaf_gcaFirst (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem otherLeaf_gcaFirst (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (otherLeafSt ctx level numcells st).gcaFirst = st.gcaFirst := by
   let rs := refine ctx level st.lab st.ptn st.active numcells
-  let base : SearchSt :=
+  let base : SearchSt n :=
     { st with
       lab := rs.lab
       ptn := rs.ptn
@@ -56,11 +56,11 @@ theorem otherLeaf_gcaFirst (ctx : Ctx) (level numcells : Nat)
 
 /-- The off-path comparison step leaves the canonical GCA control
 unchanged. -/
-theorem otherLeaf_gcaCanon (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem otherLeaf_gcaCanon (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (otherLeafSt ctx level numcells st).gcaCanon = st.gcaCanon := by
   let rs := refine ctx level st.lab st.ptn st.active numcells
-  let base : SearchSt :=
+  let base : SearchSt n :=
     { st with
       lab := rs.lab
       ptn := rs.ptn
@@ -71,12 +71,12 @@ theorem otherLeaf_gcaCanon (ctx : Ctx) (level numcells : Nat)
 
 /-- The off-path comparison step leaves the cheap-automorphism boundary
 unchanged. -/
-theorem otherLeaf_noncheaplevel (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem otherLeaf_noncheaplevel (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (otherLeafSt ctx level numcells st).noncheaplevel =
       st.noncheaplevel := by
   let rs := refine ctx level st.lab st.ptn st.active numcells
-  let base : SearchSt :=
+  let base : SearchSt n :=
     { st with
       lab := rs.lab
       ptn := rs.ptn
@@ -86,7 +86,7 @@ theorem otherLeaf_noncheaplevel (ctx : Ctx) (level numcells : Nat)
     (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.1
 
 /-- The empty trail has no reference-history obligations. -/
-theorem empty (ctx : Ctx) (current : Nat) (st : SearchSt) :
+theorem empty (ctx : Ctx n) (current : Nat) (st : SearchSt n) :
     RefTrail ctx current st FrameTrail.empty := by
   constructor
   · intro target entry _ hentry
@@ -98,10 +98,10 @@ theorem empty (ctx : Ctx) (current : Nat) (st : SearchSt) :
 
 /-- Installing the first leaf seeds both reference histories from the
 current descent, while retaining the accumulated frozen-frame sizes. -/
-theorem firstterminal {ctx : Ctx} {level : Nat} {st : SearchSt}
+theorem firstterminal {ctx : Ctx n} {level : Nat} {st : SearchSt n}
     {trail : FrameTrail} (htrail : TrailOk ctx level st trail)
     (hsize : ∀ target entry, target < level →
-      trail target = some entry → entry.frame.rsLab.size = ctx.n) :
+      trail target = some entry → entry.frame.rsLab.size = n) :
     RefTrail ctx level (Nauty.firstterminal level st) trail := by
   constructor
   · exact hsize
@@ -114,10 +114,10 @@ theorem firstterminal {ctx : Ctx} {level : Nat} {st : SearchSt}
 
 /-- When both installed references are the current labelling, the active
 trail itself supplies their complete history. -/
-theorem ofCurrent {ctx : Ctx} {current : Nat} {st : SearchSt}
+theorem ofCurrent {ctx : Ctx n} {current : Nat} {st : SearchSt n}
     {trail : FrameTrail} (htrail : TrailOk ctx current st trail)
     (hsize : ∀ target entry, target < current →
-      trail target = some entry → entry.frame.rsLab.size = ctx.n)
+      trail target = some entry → entry.frame.rsLab.size = n)
     (hfirst : st.firstlab = st.lab) (hcanon : st.canonlab = st.lab) :
     RefTrail ctx current st trail := by
   constructor
@@ -131,7 +131,7 @@ theorem ofCurrent {ctx : Ctx} {current : Nat} {st : SearchSt}
 
 /-- Reference history depends only on the two references and their GCA
 controls. -/
-theorem stateEq {ctx : Ctx} {current : Nat} {st st' : SearchSt}
+theorem stateEq {ctx : Ctx n} {current : Nat} {st st' : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx current st trail)
     (hfirstGca : st'.gcaFirst = st.gcaFirst)
     (hfirst : st'.firstlab = st.firstlab)
@@ -151,11 +151,11 @@ theorem stateEq {ctx : Ctx} {current : Nat} {st st' : SearchSt}
 
 /-- Refinement and the off-path comparison step retain both reference
 histories. -/
-theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
+theorem otherLeaf {ctx : Ctx n} {level numcells : Nat} {st : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx level st trail) :
     RefTrail ctx level (otherLeafSt ctx level numcells st) trail := by
   let rs := refine ctx level st.lab st.ptn st.active numcells
-  let base : SearchSt :=
+  let base : SearchSt n :=
     { st with
       lab := rs.lab
       ptn := rs.ptn
@@ -170,8 +170,8 @@ theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
 
 /-- The off-path comparison step preserves the ordering of the two GCA
 controls while search remains active. -/
-theorem otherLeaf_order {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (h : st.gcaFirst ≤ st.gcaCanon) :
+theorem otherLeaf_order {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (h : st.gcaFirst ≤ st.gcaCanon) :
     (otherLeafSt ctx level numcells st).gcaFirst ≤
       (otherLeafSt ctx level numcells st).gcaCanon := by
   rw [otherLeaf_gcaFirst, otherLeaf_gcaCanon]
@@ -180,12 +180,12 @@ theorem otherLeaf_order {ctx : Ctx} {level numcells : Nat}
 /-- Recovering an ancestor preserves both reference histories.  The
 canonical control may be clamped to the recovered level, which only
 weakens its reach obligation. -/
-theorem recover {ctx : Ctx} {current level inf : Nat} {st : SearchSt}
+theorem recover {ctx : Ctx n} {current level inf : Nat} {st : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx current st trail)
     (hle : level ≤ current) :
-    RefTrail ctx level (Nauty.recover ctx.n inf level st) trail := by
+    RefTrail ctx level (Nauty.recover n inf level st) trail := by
   obtain ⟨hcanon, -, -, -, hfirst, -, hgcaFirst, -, -, -⟩ :=
-    recover_frames ctx.n inf level st
+    recover_frames n inf level st
   constructor
   · intro target entry hlt hentry
     exact h.frameSize target entry (Nat.lt_of_lt_of_le hlt hle) hentry
@@ -204,7 +204,7 @@ theorem recover {ctx : Ctx} {current level inf : Nat} {st : SearchSt}
 /-- A leaf event retains the first history.  It either retains the
 canonical history as well or installs the current reached labelling as
 the new canonical reference. -/
-theorem processnode {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
+theorem processnode {ctx : Ctx n} {level numcells : Nat} {st : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx level st trail)
     (htrail : TrailOk ctx level st trail) :
     RefTrail ctx level (Nauty.processnode ctx level numcells st).2
@@ -228,8 +228,8 @@ theorem processnode {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
 /-- `processnode` preserves the ordering of the first and canonical GCA
 controls.  Installing a new canonical leaf parks its control at the
 current level, above the bounded first control. -/
-theorem processnode_order {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (horder : st.gcaFirst ≤ st.gcaCanon)
+theorem processnode_order {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (horder : st.gcaFirst ≤ st.gcaCanon)
     (hfirstBound : st.gcaFirst ≤ level) :
     (Nauty.processnode ctx level numcells st).2.gcaFirst ≤
       (Nauty.processnode ctx level numcells st).2.gcaCanon := by
@@ -243,7 +243,7 @@ theorem processnode_order {ctx : Ctx} {level numcells : Nat}
 
 /-- Leaf cleanup changes neither installed reference nor its GCA
 control. -/
-theorem leafFinish {ctx : Ctx} {level current : Nat} {st : SearchSt}
+theorem leafFinish {ctx : Ctx n} {level current : Nat} {st : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx current st trail) :
     RefTrail ctx current (Nauty.leafFinish ctx level st) trail := by
   unfold Nauty.leafFinish
@@ -255,12 +255,12 @@ theorem leafFinish {ctx : Ctx} {level current : Nat} {st : SearchSt}
 
 /-- Recovery preserves GCA ordering provided the first control is no
 deeper than the receiving frame. -/
-theorem recover_order {ctx : Ctx} {level inf : Nat} {st : SearchSt}
+theorem recover_order {ctx : Ctx n} {level inf : Nat} {st : SearchSt n}
     (horder : st.gcaFirst ≤ st.gcaCanon)
     (hfirstBound : st.gcaFirst ≤ level) :
-    (Nauty.recover ctx.n inf level st).gcaFirst ≤
-      (Nauty.recover ctx.n inf level st).gcaCanon := by
-  have hfirst := (recover_frames ctx.n inf level st).2.2.2.2.2.2.1
+    (Nauty.recover n inf level st).gcaFirst ≤
+      (Nauty.recover n inf level st).gcaCanon := by
+  have hfirst := (recover_frames n inf level st).2.2.2.2.2.2.1
   rw [hfirst, recover_gcaCanon]
   split
   · exact hfirstBound
@@ -269,12 +269,12 @@ theorem recover_order {ctx : Ctx} {level inf : Nat} {st : SearchSt}
 /-- Pushing a child frame extends reference history.  At the new frame,
 the loop's two reference receipts discharge the cases whose GCA control
 is exactly the parent level. -/
-theorem push {ctx : Ctx} {level : Nat} {st : SearchSt}
+theorem push {ctx : Ctx n} {level : Nat} {st : SearchSt n}
     {trail : FrameTrail} {entry : TrailEntry}
     (h : RefTrail ctx level st trail)
     (hfirstBound : st.gcaFirst ≤ level)
     (hcanonBound : st.gcaCanon ≤ level)
-    (hsize : entry.frame.rsLab.size = ctx.n)
+    (hsize : entry.frame.rsLab.size = n)
     (hfirst : st.gcaFirst = level →
       cellsPerm entry.frame.rsPtn level entry.frame.rsLab st.firstlab)
     (hcanon : st.gcaCanon = level →
@@ -311,10 +311,10 @@ theorem push {ctx : Ctx} {level : Nat} {st : SearchSt}
 /-- The concrete child state created by a verified sweep inherits both
 reference histories.  `FrameRefs` supplies the new parent-frame case;
 all older frames come directly from the incoming history. -/
-theorem LoopInv.childHistory {G : Colored n k} {ctx : Ctx}
-    {tcLevel specFuel level numcells tc len tcell coset : Nat}
+theorem LoopInv.childHistory {G : Colored n k} {ctx : Ctx n}
+    {tcLevel specFuel level numcells tc len : Nat} {tcell : VSet n} {coset : Nat}
     {codes bs fs : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {base st : SearchSt} {best : Option Key}
+    {cursor : Option Nat} {base st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : LoopInv G ctx tcLevel specFuel level codes bs fs numcells
       rsLab rsPtn tc len tcell cursor base st best trail)
@@ -322,13 +322,13 @@ theorem LoopInv.childHistory {G : Colored n k} {ctx : Ctx}
     (offset currentOffset : Nat) :
     RefTrail ctx (level + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc
+        lab := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + currentOffset]!).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc
+        ptn := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + currentOffset]!).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc
+        active := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + currentOffset]!).2.2
-        fixedpts := insert st.fixedpts st.lab[tc + currentOffset]!
+        fixedpts := st.fixedpts.insert st.lab[tc + currentOffset]!
         cosetindex := coset }
       (trail.push level
         ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩) := by
@@ -341,13 +341,13 @@ theorem LoopInv.childHistory {G : Colored n k} {ctx : Ctx}
 
 /-- A scatter from the first reference onto the current labelling
 stabilizes every active frame to which `gcaFirst` permits a return. -/
-theorem firstStab {ctx : Ctx} {current : Nat} {st : SearchSt}
+theorem firstStab {ctx : Ctx n} {current : Nat} {st : SearchSt n}
     {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
     (htrail : TrailOk ctx current st trail)
-    (hfirstSize : st.firstlab.size = ctx.n)
+    (hfirstSize : st.firstlab.size = n)
     (hbelow : st.gcaFirst < current)
-    (hmap : ∀ i, i < ctx.n →
+    (hmap : ∀ i, i < n →
       gamma[st.firstlab[i]!]! = st.lab[i]!) :
     ∀ target entry, Int.ofNat target ≤ Int.ofNat st.gcaFirst →
       trail target = some entry →
@@ -364,15 +364,15 @@ theorem firstStab {ctx : Ctx} {current : Nat} {st : SearchSt}
 
 /-- Appending a first-reference scatter preserves the complete
 return-stabilization obligation at `gcaFirst`. -/
-theorem firstPushStab {ctx : Ctx} {current : Nat} {st out : SearchSt}
+theorem firstPushStab {ctx : Ctx n} {current : Nat} {st out : SearchSt n}
     {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
     (htrail : TrailOk ctx current st trail)
-    (hfirstSize : st.firstlab.size = ctx.n)
+    (hfirstSize : st.firstlab.size = n)
     (hbelow : st.gcaFirst < current)
     (hprev : ReturnStab trail (Int.ofNat st.gcaFirst) st)
     (hpush : out.genTrace = st.genTrace.push gamma)
-    (hmap : ∀ i, i < ctx.n →
+    (hmap : ∀ i, i < n →
       gamma[st.firstlab[i]!]! = st.lab[i]!) :
     ReturnStab trail (Int.ofNat st.gcaFirst) out := by
   exact hprev.pushGen hpush
@@ -382,13 +382,13 @@ theorem firstPushStab {ctx : Ctx} {current : Nat} {st out : SearchSt}
 stabilizes every active frame through any bound no deeper than
 `gcaCanon`.  The smaller bound is needed by code two's orbit return to
 `gcaFirst`. -/
-theorem canonStabTo {ctx : Ctx} {current limit : Nat} {st : SearchSt}
+theorem canonStabTo {ctx : Ctx n} {current limit : Nat} {st : SearchSt n}
     {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
     (htrail : TrailOk ctx current st trail)
-    (hcanonSize : st.canonlab.size = ctx.n)
+    (hcanonSize : st.canonlab.size = n)
     (hle : limit ≤ st.gcaCanon) (hbelow : limit < current)
-    (hmap : ∀ i, i < ctx.n →
+    (hmap : ∀ i, i < n →
       gamma[st.canonlab[i]!]! = st.lab[i]!) :
     ∀ target entry, Int.ofNat target ≤ Int.ofNat limit →
       trail target = some entry →
@@ -407,28 +407,28 @@ theorem canonStabTo {ctx : Ctx} {current limit : Nat} {st : SearchSt}
 /-- Appending a canonical-reference scatter preserves the complete
 return-stabilization obligation through any resumable bound below its
 GCA. -/
-theorem canonPushStabTo {ctx : Ctx} {current limit : Nat}
-    {st out : SearchSt} {trail : FrameTrail} {gamma : Array Nat}
+theorem canonPushStabTo {ctx : Ctx n} {current limit : Nat}
+    {st out : SearchSt n} {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
     (htrail : TrailOk ctx current st trail)
-    (hcanonSize : st.canonlab.size = ctx.n)
+    (hcanonSize : st.canonlab.size = n)
     (hle : limit ≤ st.gcaCanon) (hbelow : limit < current)
     (hprev : ReturnStab trail (Int.ofNat limit) st)
     (hpush : out.genTrace = st.genTrace.push gamma)
-    (hmap : ∀ i, i < ctx.n →
+    (hmap : ∀ i, i < n →
       gamma[st.canonlab[i]!]! = st.lab[i]!) :
     ReturnStab trail (Int.ofNat limit) out := by
   exact hprev.pushGen hpush
     (h.canonStabTo htrail hcanonSize hle hbelow hmap)
 
 /-- The exact canonical-GCA instance of `canonStabTo`. -/
-theorem canonStab {ctx : Ctx} {current : Nat} {st : SearchSt}
+theorem canonStab {ctx : Ctx n} {current : Nat} {st : SearchSt n}
     {trail : FrameTrail} {gamma : Array Nat}
     (h : RefTrail ctx current st trail)
     (htrail : TrailOk ctx current st trail)
-    (hcanonSize : st.canonlab.size = ctx.n)
+    (hcanonSize : st.canonlab.size = n)
     (hbelow : st.gcaCanon < current)
-    (hmap : ∀ i, i < ctx.n →
+    (hmap : ∀ i, i < n →
       gamma[st.canonlab[i]!]! = st.lab[i]!) :
     ∀ target entry, Int.ofNat target ≤ Int.ofNat st.gcaCanon →
       trail target = some entry →
@@ -439,30 +439,29 @@ theorem canonStab {ctx : Ctx} {current : Nat} {st : SearchSt}
 
 /-- A successful code-one admission extends the inherited ancestor
 stabilization and returns exactly to the first-reference GCA. -/
-theorem processnodeFirstStab {G : Colored n k} {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
+theorem processnodeFirstStab {G : Colored n k} {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n} {trail : FrameTrail}
+    (hn0 : 0 < n)
     (h : RefTrail ctx level st trail)
     (htrail : TrailOk ctx level st trail) (hrefs : LeafRefsOk G st)
     (hprev : ReturnStab trail (Int.ofNat st.gcaFirst) st)
     (hbelow : st.gcaFirst < level)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hpass : isautom ctx
-      (firstScatter ctx.n st.firstlab st.lab) = true) :
+      (firstScatter n st.firstlab st.lab) = true) :
     ReturnStab trail (Nauty.processnode ctx level numcells st).1
       (Nauty.processnode ctx level numcells st).2 := by
-  subst n
   have hreturn :=
     (processnode_auto (st := st) heq hsent hnc hpass).1
   rw [hreturn]
-  let gamma := (List.range ctx.n).foldl
+  let gamma := (List.range n).foldl
     (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-    (Array.replicate ctx.n 0)
+    (Array.replicate n 0)
   have hfirstOk := labOk_of_reach hrefs.firstSize hrefs.firstReach
   have hinj := labInj_of_reach hrefs.firstSize hn0 hrefs.firstReach
-  have hmap : ∀ i, i < ctx.n →
+  have hmap : ∀ i, i < n →
       gamma[st.firstlab[i]!]! = st.lab[i]! := by
     intro i hi
     apply foldl_scatter_getElem
@@ -481,28 +480,27 @@ theorem processnodeFirstStab {G : Colored n k} {ctx : Ctx}
 /-- A code-two admission stabilizes either advertised return: the direct
 canonical return uses the full canonical history, while the special orbit
 return uses `gcaFirst ≤ gcaCanon`. -/
-theorem processnodeTiedStab {G : Colored n k} {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
+theorem processnodeTiedStab {G : Colored n k} {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n} {trail : FrameTrail}
+    (hn0 : 0 < n)
     (h : RefTrail ctx level st trail)
     (htrail : TrailOk ctx level st trail) (hrefs : LeafRefsOk G st)
     (horder : st.gcaFirst ≤ st.gcaCanon)
     (hprev : ReturnStab trail (Int.ofNat st.gcaFirst) st)
     (hcanonBelow : st.gcaCanon < level)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
     ReturnStab trail (Int.ofNat st.gcaFirst)
       (Nauty.processnode ctx level numcells st).2 := by
-  subst n
-  let gamma := (List.range ctx.n).foldl
+  let gamma := (List.range n).foldl
     (fun w i => w.set! st.canonlab[i]! st.lab[i]!)
-    (Array.replicate ctx.n 0)
+    (Array.replicate n 0)
   have hcanonOk := labOk_of_reach hrefs.canonSize hrefs.canonReach
   have hinj := labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach
-  have hmap : ∀ i, i < ctx.n →
+  have hmap : ∀ i, i < n →
       gamma[st.canonlab[i]!]! = st.lab[i]! := by
     intro i hi
     apply foldl_scatter_getElem
@@ -523,11 +521,11 @@ namespace ReturnStab
 
 /-- Refinement and the off-path comparison step leave the generator
 store unchanged. -/
-theorem otherLeaf {ctx : Ctx} {level numcells : Nat} {st : SearchSt}
+theorem otherLeaf {ctx : Ctx n} {level numcells : Nat} {st : SearchSt n}
     {trail : FrameTrail} {r : Int} (h : ReturnStab trail r st) :
     ReturnStab trail r (otherLeafSt ctx level numcells st) := by
   let rs := refine ctx level st.lab st.ptn st.active numcells
-  let base : SearchSt :=
+  let base : SearchSt n :=
     { st with
       lab := rs.lab
       ptn := rs.ptn

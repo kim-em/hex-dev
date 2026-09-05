@@ -196,7 +196,7 @@ end WorkspaceOk
 
 /-- Recording a valid pair keeps the ledger, in both the push and the
 cap-slot overwrite branch. -/
-theorem autosOk_pushAuto {g : Array (VSet n)} {ptn lab : Array Nat} {level nn : Nat}
+theorem autosOk_pushAuto {g : Array (VSet n)} {ptn lab : Array Nat} {level : Nat}
     {st : SearchSt n} {pair : VSet n × VSet n}
     (hok : AutosOk g ptn lab level st.autos)
     (hp : PairOk g ptn lab level pair.1 pair.2) :

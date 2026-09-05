@@ -626,7 +626,7 @@ theorem SweepCover.shortprune {ctx : Ctx n}
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
     (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
     (hlf : level + 1 + specFuel ≤ n + 1)
-    (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
+    (hlast : ∀ fix mcr : VSet n, out.autos.back? = some (fix, mcr) →
       PairOk ctx.g rsPtn rsLab level fix mcr) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       (shortprune tcell out) cursor best := by

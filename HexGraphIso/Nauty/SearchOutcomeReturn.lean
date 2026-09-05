@@ -25,7 +25,7 @@ namespace Hex.GraphIso.Nauty
 /-- Every recorded generator stabilizes each active frame that the return
 level permits the caller to resume. -/
 @[expose] def ReturnStab (trail : FrameTrail) (r : Int)
-    (st : SearchSt) : Prop :=
+    (st : SearchSt n) : Prop :=
   ∀ level entry, Int.ofNat level ≤ r → trail level = some entry →
     ∀ γ ∈ st.genTrace.toList,
       CellStab entry.frame.rsPtn level entry.frame.rsLab γ
@@ -34,21 +34,21 @@ namespace ReturnStab
 
 /-- Lowering the advertised return level weakens the stabilization
 obligation. -/
-theorem lower {trail : FrameTrail} {r r' : Int} {st : SearchSt}
+theorem lower {trail : FrameTrail} {r r' : Int} {st : SearchSt n}
     (h : ReturnStab trail r st) (hle : r' ≤ r) :
     ReturnStab trail r' st := by
   intro level entry hlevel hentry γ hγ
   exact h level entry (Int.le_trans hlevel hle) hentry γ hγ
 
 /-- A state with no recorded generators satisfies every return frame. -/
-theorem empty {trail : FrameTrail} {r : Int} {st : SearchSt}
+theorem empty {trail : FrameTrail} {r : Int} {st : SearchSt n}
     (h : st.genTrace = #[]) : ReturnStab trail r st := by
   intro level entry hlevel hentry γ hγ
   rw [h] at hγ
   simp at hγ
 
 /-- Return stabilization depends only on the recorded-generator store. -/
-theorem ofGenTraceEq {trail : FrameTrail} {r : Int} {st out : SearchSt}
+theorem ofGenTraceEq {trail : FrameTrail} {r : Int} {st out : SearchSt n}
     (h : ReturnStab trail r st) (heq : out.genTrace = st.genTrace) :
     ReturnStab trail r out := by
   intro level entry hlevel hentry γ hγ
@@ -56,15 +56,15 @@ theorem ofGenTraceEq {trail : FrameTrail} {r : Int} {st out : SearchSt}
   rwa [heq] at hγ
 
 /-- Fixed-point bookkeeping does not affect return stabilization. -/
-theorem setFixed {trail : FrameTrail} {r : Int} {st : SearchSt}
-    (h : ReturnStab trail r st) (fixedpts : Nat) :
+theorem setFixed {trail : FrameTrail} {r : Int} {st : SearchSt n}
+    (h : ReturnStab trail r st) (fixedpts : VSet n) :
     ReturnStab trail r { st with fixedpts := fixedpts } := by
   unfold ReturnStab at h ⊢
   exact h
 
 /-- First-path return bookkeeping does not affect the generator store or
 the ancestor frames it stabilizes. -/
-theorem setFirst {trail : FrameTrail} {r : Int} {st : SearchSt}
+theorem setFirst {trail : FrameTrail} {r : Int} {st : SearchSt n}
     (h : ReturnStab trail r st) (gcaFirst stabvertex : Nat) :
     ReturnStab trail r
       { st with gcaFirst := gcaFirst, stabvertex := stabvertex } := by
@@ -72,7 +72,7 @@ theorem setFirst {trail : FrameTrail} {r : Int} {st : SearchSt}
   exact h
 
 /-- Clearing the one-shot short-prune flag does not affect stabilization. -/
-theorem clearShort {trail : FrameTrail} {r : Int} {st : SearchSt}
+theorem clearShort {trail : FrameTrail} {r : Int} {st : SearchSt n}
     (h : ReturnStab trail r st) :
     ReturnStab trail r { st with needshortprune := false } := by
   unfold ReturnStab at h ⊢
@@ -80,7 +80,7 @@ theorem clearShort {trail : FrameTrail} {r : Int} {st : SearchSt}
 
 /-- Updating the first-path agreement counter does not affect generator
 stabilization. -/
-theorem setAllsame {trail : FrameTrail} {r : Int} {st : SearchSt}
+theorem setAllsame {trail : FrameTrail} {r : Int} {st : SearchSt n}
     (h : ReturnStab trail r st) (allsamelevel : Nat) :
     ReturnStab trail r { st with allsamelevel := allsamelevel } := by
   unfold ReturnStab at h ⊢
@@ -88,8 +88,8 @@ theorem setAllsame {trail : FrameTrail} {r : Int} {st : SearchSt}
 
 /-- Recovering a parent changes no recorded generator, so it preserves
 every return-indexed stabilization obligation. -/
-theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt}
-    (h : ReturnStab trail r st) (n inf level : Nat) :
+theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt n}
+    (h : ReturnStab trail r st) (inf level : Nat) :
     ReturnStab trail r (Nauty.recover n inf level st) := by
   intro target entry htarget hentry γ hγ
   apply h target entry htarget hentry γ
@@ -99,7 +99,7 @@ theorem recover {trail : FrameTrail} {r : Int} {st : SearchSt}
 /-- Appending one generator preserves return stabilization when the old
 store already satisfies it and the new generator stabilizes every
 resumable frame. -/
-theorem pushGen {trail : FrameTrail} {r : Int} {st out : SearchSt}
+theorem pushGen {trail : FrameTrail} {r : Int} {st out : SearchSt n}
     {gamma : Array Nat} (h : ReturnStab trail r st)
     (hpush : out.genTrace = st.genTrace.push gamma)
     (hnew : ∀ level entry, Int.ofNat level ≤ r →
@@ -116,7 +116,7 @@ theorem pushGen {trail : FrameTrail} {r : Int} {st out : SearchSt}
 
 /-- Pushing a child frame preserves all older return obligations.  The
 new frame is required only when the return reaches it. -/
-theorem push {trail : FrameTrail} {r : Int} {st : SearchSt}
+theorem push {trail : FrameTrail} {r : Int} {st : SearchSt n}
     {level : Nat} {entry : TrailEntry}
     (h : ReturnStab trail r st)
     (hnew : Int.ofNat level ≤ r → ∀ γ ∈ st.genTrace.toList,
@@ -135,8 +135,8 @@ theorem push {trail : FrameTrail} {r : Int} {st : SearchSt}
 /-- At the exact target of a located unwind, return stabilization supplies
 the store-wide premise needed by the orbit constructor.  Direct carrier
 unwinds are frame-stable without a store-wide premise. -/
-theorem frameStable {trail : FrameTrail} {ctx : Ctx}
-    {tcLevel target : Nat} {out : SearchSt} {best : Option Key}
+theorem frameStable {trail : FrameTrail} {ctx : Ctx n}
+    {tcLevel target : Nat} {out : SearchSt n} {best : Option (Key n)}
     {payload : Unwind ctx tcLevel target out best} {entry : TrailEntry}
     (hret : ReturnStab trail
       (min (Int.ofNat target) (Int.ofNat out.gcaFirst)) out)

@@ -27,11 +27,11 @@ set_option maxHeartbeats 3200000 in
 /-- Totality of the first-path sweep after its guiding child, at every
 cursor fuel exceeding the remaining cursor range, given totality of every
 off-path child. -/
-theorem firstTail {G : Colored n k} {ctx : Ctx}
+theorem firstTail {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel runFuel level numcells tc len tv1 tail e : Nat}
-    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat} {base : SearchSt}
-    {bound : Key}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hinf : inf = n + 2)
+    {stem codes fs : List Nat} {rsLab rsPtn : Array Nat} {base : SearchSt n}
+    {bound : Key n}
+    (hg : ctx.g = rowsOf G) (hinf : inf = n + 2)
     (hn0 : 0 < n)
     (ih : OtherTotal G ctx inf tcLevel runFuel)
     (hrun : n + 2 < level + 1 + runFuel)
@@ -44,22 +44,22 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
         sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
           numcells (o + 1)))
     (hlen : len = tail + 1) :
-    ∀ (loopFuel : Nat) (cursor : Option Nat) (tcell : Nat) (st : SearchSt)
-      (best : Option Key) (trail : FrameTrail) (bs : List Nat) (index : Nat),
+    ∀ (loopFuel : Nat) (cursor : Option Nat) (tcell : VSet n) (st : SearchSt n)
+      (best : Option (Key n)) (trail : FrameTrail) (bs : List Nat) (index : Nat),
       FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells rsLab
         rsPtn tc len tcell cursor e tv1 base st best trail →
-      ctx.n < cursorRank cursor + loopFuel →
+      n < cursorRank cursor + loopFuel →
       ∃ outBest eventTrail,
         FirstSweepRun G ctx tcLevel specFuel runFuel loopFuel level stem codes
             fs rsLab rsPtn tc len numcells tcell cursor bound st
             (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-              tv1 (nextElem tcell cursor) tcell index st).2.2
+              tv1 (tcell.nextElem cursor) tcell index st).2.2
             best outBest trail eventTrail
             (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-              tv1 (nextElem tcell cursor) tcell index st).1 ∧
+              tv1 (tcell.nextElem cursor) tcell index st).1 ∧
           FirstSweepKeep ctx level e fs st
             (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-              tv1 (nextElem tcell cursor) tcell index st).2.2
+              tv1 (tcell.nextElem cursor) tcell index st).2.2
             outBest := by
   intro loopFuel
   induction loopFuel with
@@ -70,31 +70,27 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
       omega
   | succ loopFuel ihLoop =>
     intro cursor tcell st best trail bs index hh hfuel
-    have hgsz : ctx.g.size = ctx.n := by
-      rw [hg, hn]
+    have hgsz : ctx.g.size = n := by
+      rw [hg]
       exact size_rowsOf G
-    have hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n := by
-      rw [hg, hn]
-      exact rowsOf_bounded G
-    have hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-        (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u := by
-      rw [hg, hn]
+    have hsymm : ∀ u v, u < n → v < n →
+        (ctx.g[u]!).mem v = (ctx.g[v]!).mem u := by
+      rw [hg]
       exact rowsOf_symm G
-    have hloopless : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false := by
-      rw [hg, hn]
+    have hloopless : ∀ v, v < n → (ctx.g[v]!).mem v = false := by
+      rw [hg]
       exact rowsOf_loopless G
-    have hlevelLt : level < ctx.n := hh.inv.levelLt
+    have hlevelLt : level < n := hh.inv.levelLt
     have hfuelNe : runFuel ≠ 0 := by
       intro h0
       rw [h0] at hrun
-      rw [hn] at hlevelLt
       omega
     have hcodesLen : codes.length = level := hpath.symm
     have hshorter : stem.length < codes.length := by
       rw [← hpath]
       exact hpast
     have hguideLe : level ≤ st.gcaFirst := Nat.le_of_eq hh.guide.symm
-    rcases hnext : nextElem tcell cursor with _ | tv
+    rcases hnext : tcell.nextElem cursor with _ | tv
     · -- the sweep is finished
       have hsame : (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1)
           level numcells tc tv1 none tcell index st).2.2 = st := by
@@ -108,7 +104,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
       · rw [hsame]
         exact ⟨hh.firstDom, rfl, hh.orbits, hh.coset, hh.keep⟩
     · -- one more vertex
-      have htvLt : tv < ctx.n := hh.inv.nextLt hnext
+      have htvLt : tv < n := hh.inv.nextLt hnext
       have hafter : tv1 < tv := by
         obtain ⟨v, hv, hle⟩ := hh.after
         have ha := nextElem_after hnext
@@ -120,7 +116,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
         omega
       obtain ⟨offset, currentOffset, hoffset, hcurrent, hatFrozen, hat⟩ :=
         hh.inv.nextOffsets hnext
-      have hfuelRec : ctx.n < cursorRank (some tv) + loopFuel :=
+      have hfuelRec : n < cursorRank (some tv) + loopFuel :=
         cursorFuel_step (nextElem_after hnext) hfuel
       rcases horb : (st.orbits[tv]! == tv) with _ | _
       · -- an orbit skip
@@ -128,7 +124,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
           rw [← hh.inv.baseLab, hh.inv.baseOk.labSize]
           exact labInj_of_reach hh.inv.baseOk.labSize hh.inv.nonempty
             hh.inv.baseOk.reach
-        have hcover := hh.inv.cover.orbitSkip hnext hoffset hatFrozen hgsz hgb
+        have hcover := hh.inv.cover.orbitSkip hnext hoffset hatFrozen hgsz
           (fun γ hγ => hh.inv.run.genTraceOk.check hγ) hh.live.frameStab
           hh.inv.frozenLabSize hinj hh.inv.frozenLabOk hh.inv.frozenPtnSize
           hh.inv.frozenEnd hh.inv.frozenVals hh.inv.cell hh.inv.range
@@ -143,7 +139,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
             ⟨tv, rfl, Nat.le_of_lt hafter⟩,
             fun v hv => by cases hv; exact htvLt, hh.sign, hh.guide,
             hh.firstTrail, hh.canonTrail, hh.orbits, hh.coset, hh.firstDom,
-            hh.desc, hh.bnd, hh.park, hh.keep, hh.baseActive⟩
+            hh.desc, hh.bnd, hh.park, hh.keep⟩
         have hstate := firstChildLoop_skip ctx inf tcLevel runFuel loopFuel
           level numcells tc tv1 tv tcell index st horb
         obtain ⟨outBest, eventTrail, hrunTail, hkeepTail⟩ :=
@@ -161,27 +157,24 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
             hat', hnodeChild⟩ :=
           hh.inv.child (coset := tv) hnext hcheapOk
         rw [hat'] at hnodeChild
-        have hlabOk : LabOk st.lab ctx.n := by
-          rw [hn]
+        have hlabOk : LabOk st.lab n := by
           exact labOk_of_reach hh.inv.run.searchOk.labSize
             hh.inv.run.searchOk.reach
-        have hinj : LabInj st.lab ctx.n := by
-          rw [hn]
+        have hinj : LabInj st.lab n := by
           exact labInj_of_reach hh.inv.run.searchOk.labSize hh.inv.nonempty
             hh.inv.run.searchOk.reach
-        have hsz : st.lab.size = ctx.n := by
-          rw [hn]
+        have hsz : st.lab.size = n := by
           exact hh.inv.run.searchOk.labSize
-        have hfresh : elem st.fixedpts tv = false := by
+        have hfresh : st.fixedpts.mem tv = false := by
           rw [← hat]
           exact hh.path.fixed.fresh hlabOk hinj hsz hh.inv.currentCell
             hh.inv.lenTwo hh.inv.range hcurrent
-        let child : SearchSt :=
+        let child : SearchSt n :=
           { st with
-            lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-            ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-            active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-            fixedpts := insert st.fixedpts tv
+            lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+            ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+            active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+            fixedpts := st.fixedpts.insert tv
             cosetindex := tv }
         let childTrail := trail.push level
           ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset'⟩
@@ -199,14 +192,14 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
           exact this.stateEq rfl rfl rfl
         obtain ⟨childBest, eventTrail, hrunChild, hkeepChild⟩ :=
           ih specFuel (level + 1) (numcells + 1) codes bs fs child best
-            childTrail hn hg hinf hn0 (by omega) (by omega) (by omega)
+            childTrail hg hinf hn0 (by omega) (by omega) (by omega)
             (by omega) hh.bnd hdescChild hnodeChild hliveChild hpathChild
             hh.orbits htvLt hh.firstDom
         obtain ⟨value, out, hcall⟩ : ∃ value out,
             otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
               child = (value, out) := ⟨_, _, rfl⟩
         have hout : SearchOut G level (level + 1) child out := by
-          have := otherNode_ok G ctx hn inf hinf tcLevel hn0 runFuel
+          have := otherNode_ok G ctx inf hinf tcLevel hn0 runFuel
             (level + 1) (numcells + 1) child hnodeChild.run.searchOk
             (by omega) (by omega)
           rw [Nat.add_sub_cancel, hcall] at this
@@ -250,7 +243,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
           exact keyLe_trans (hh.firstDom b0 hb0) hle
         by_cases hstay : value < Int.ofNat level
         · -- early exit
-          obtain ⟨htrail, hcanon⟩ := hh.childTrails hn hcurrent hat
+          obtain ⟨htrail, hcanon⟩ := hh.childTrails hcurrent hat
             (r := value) hrunChild hfirstlabChild
           have hstate := firstChildLoop_earlyOther ctx inf tcLevel runFuel
             loopFuel level numcells tc tv1 tv tcell index st value out horb
@@ -260,7 +253,7 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
                 numcells tc tv1 (some tv) tcell index st).2.2 childBest := by
             rw [hstate]
             refine ⟨hdomChild, hfirstlabChild, hkeepChild.orbits, ?_, ?_⟩
-            · change out.cosetindex < ctx.n
+            · change out.cosetindex < n
               rw [hcosetChild]
               exact htvLt
             · intro hlt
@@ -299,11 +292,11 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
               rw [saved] at h1
               omega
             have hsmall := hh.inv.subtreeAtWeak hh.desc hh.park hle
-              hh.baseActive
+             
             have hboundEq : bound = nodeKey ctx tcLevel specFuel (level + 1)
                 codes child (numcells + 1) := by
               rw [← heq offset' hoffset' hatFrozen']
-              exact hh.inv.boundEq hsmall hgsz hgb hsymm hloopless hbound
+              exact hh.inv.boundEq hsmall hgsz hsymm hloopless hbound
                 hlen hoffset'
             rw [returned] at hcall hrunChild
             exact FirstSweepRun.childCheap hstem hshorter horb hother hcall
@@ -311,15 +304,15 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
               hcanon hguideLe
           · exact (hfuelNe emptyFuel).elim
         · -- the child stays at the loop level
-          let cleaned : SearchSt :=
-            { out with fixedpts := erase out.fixedpts tv }
+          let cleaned : SearchSt n :=
+            { out with fixedpts := out.fixedpts.erase tv }
           let cleared := clearShortIf out.needshortprune cleaned
-          let recSt := recover ctx.n inf level cleared
+          let recSt := recover n inf level cleared
           let tcell' := if out.needshortprune then shortprune tcell cleared
             else tcell
           have hshortRec : cleared.needshortprune = false :=
             clearShortIf_self cleaned
-          obtain ⟨bs', hhRec⟩ := hh.next hn hg hinf hcodesLen hfuelNe hnext
+          obtain ⟨bs', hhRec⟩ := hh.next hg hinf hcodesLen hfuelNe hnext
             hoffset' hcurrent' hatFrozen' hat' hrunChild hkeepChild hstay hout
             out.needshortprune hshortRec
           have hinvRec : LoopInv G ctx tcLevel specFuel level codes bs' fs
@@ -328,9 +321,9 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
             rcases hshortC : out.needshortprune with _ | _
             · simpa only [tcell', recSt, cleared, cleaned, hshortC,
                 Bool.false_eq_true, ite_false] using hhRec.inv
-            · have hlast : ∀ fix mcr,
+            · have hlast : ∀ fix mcr : VSet n,
                   cleared.autos.back? = some (fix, mcr) →
-                    PairOk ctx.g rsPtn rsLab level ctx.n fix mcr := by
+                    PairOk ctx.g rsPtn rsLab level fix mcr := by
                 intro fix mcr hback
                 apply LoopInv.ShortSource.atReceiver hpath hh.inv hh.path
                   hrunChild.node.exit hrunChild.node.event
@@ -346,10 +339,10 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
               (if (recSt.orbits[tv]! == tv1) = true then index + 1 else index)
               hhRec' hfuelRec
           have hfixedRec : recSt.fixedpts = st.fixedpts := by
-            change (recover ctx.n inf level cleared).fixedpts = st.fixedpts
+            change (recover n inf level cleared).fixedpts = st.fixedpts
             rw [recover_clearShortIf, (clearShortIf_fields _ _).1,
               recover_fixedpts]
-            change erase out.fixedpts tv = st.fixedpts
+            change out.fixedpts.erase tv = st.fixedpts
             rw [hrunChild.node.fixed, erase_insert_of_miss hfresh]
           have hpre : LoopSound ctx bound best childBest :=
             LoopSound.ofNode hsoundChild hkeyLe
@@ -364,14 +357,14 @@ theorem firstTail {G : Colored n k} {ctx : Ctx}
             refine ⟨hkeepTail.dom, ?_, hkeepTail.orbits, hkeepTail.coset,
               hkeepTail.boundary⟩
             rw [hkeepTail.firstlab]
-            change (recover ctx.n inf level cleared).firstlab = st.firstlab
+            change (recover n inf level cleared).firstlab = st.firstlab
             rw [recover_firstlab, (clearShortIf_fields _ _).2.2.2.2.2.1]
             exact hfirstlabChild
 
 /-- A node exit depends on its receipt trail only at its unwind target. -/
-theorem NodeExit.retrail {ctx : Ctx}
+theorem NodeExit.retrail {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes : List Nat}
-    {st out : SearchSt} {best outBest : Option Key}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {source dest : FrameTrail} {r : Int}
     (htrail : ∀ target, target < level → source target = dest target)
     (h : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
@@ -393,30 +386,29 @@ theorem NodeExit.retrail {ctx : Ctx}
 
 /-- What the whole first-path sweep establishes for its enclosing node,
 relative to the node entry boundary `e`. -/
-structure FirstSweepOut (ctx : Ctx) (level e : Nat) (fs : List Nat)
-    (out : SearchSt) (outBest : Option Key) : Prop where
+structure FirstSweepOut (ctx : Ctx n) (level e : Nat) (fs : List Nat)
+    (out : SearchSt n) (outBest : Option (Key n)) : Prop where
   dom : ∀ b, outBest = some b → keyLe (pathLeafKey ctx fs out.firstlab) b
-  orbits : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
-  coset : out.cosetindex < ctx.n
+  orbits : OrbSound (OrbConn out.genTrace.toList n) out.orbits n
+  coset : out.cosetindex < n
   boundary : out.noncheaplevel < level → out.noncheaplevel = e
 
 /-- The sweep bound is every child's key once the frozen frame is a
 verified small-cell subtree. -/
-theorem boundEq_of_subtree {ctx : Ctx}
-    {tcLevel specFuel level tc len numcells tail offset active : Nat}
-    {codes : List Nat} {rsLab rsPtn : Array Nat} {bound : Key}
+theorem boundEq_of_subtree {ctx : Ctx n}
+    {tcLevel specFuel level tc len numcells tail offset : Nat} {active : VSet n}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {bound : Key n}
     (hsmall : SubtreeOk ctx level
       { lab := rsLab, ptn := rsPtn, active := active,
         numcells := numcells, hint := 0, maxpos := 0,
         longcode := numcells })
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hcell : IsCell rsPtn level tc len) (hlen2 : 2 ≤ len)
-    (hrange : tc + len ≤ ctx.n)
-    (hfuel : level + 1 + specFuel ≤ ctx.n + 1)
+    (hrange : tc + len ≤ n)
+    (hfuel : level + 1 + specFuel ≤ n + 1)
     (hbound : bound = keysMax
       (sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
         numcells 0)
@@ -433,7 +425,7 @@ theorem boundEq_of_subtree {ctx : Ctx}
     apply congrArg (prefixKey codes)
     exact childKey_eq_of_subtree (tcLevel := tcLevel)
       (fuel := specFuel) (numcells := numcells) (oU := offset) (oV := o)
-      hsmall hgsz hgb hsymm hloop hcell hlen2 hrange hoffset ho hfuel
+      hsmall hgsz hsymm hloop hcell hlen2 hrange hoffset ho hfuel
   rw [hbound]
   apply keysMax_eq_of_le
   · rw [show sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc
@@ -455,10 +447,10 @@ set_option maxHeartbeats 6400000 in
 the first descent, from the parked refined state at cursor `none`, given
 totality of the guiding child through `FirstTotal` and of every later
 sibling through `OtherTotal`. -/
-theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
+theorem firstLoopTotal {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel runFuel level numcells tc len tail : Nat}
-    {cs : List Nat} {st : SearchSt} {trail : FrameTrail} {bound : Key}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hinf : inf = n + 2)
+    {cs : List Nat} {st : SearchSt n} {trail : FrameTrail} {bound : Key n}
+    (hg : ctx.g = rowsOf G) (hinf : inf = n + 2)
     (hn0 : 0 < n)
     (ih : OtherTotal G ctx inf tcLevel runFuel)
     (ihFirst : FirstTotal G ctx inf tcLevel runFuel)
@@ -471,10 +463,10 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     (hcheap : st.noncheaplevel ≤ level)
     (hdesc : CheapDesc ctx level st.noncheaplevel
       (refine ctx level st.lab st.ptn st.active numcells))
-    (horb : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n)
+    (horb : OrbSound (OrbConn st.genTrace.toList n) st.orbits n)
     (hcell : IsCell (refine ctx level st.lab st.ptn st.active numcells).ptn
       level tc len)
-    (hlen2 : 2 ≤ len) (hrange : tc + len ≤ ctx.n)
+    (hlen2 : 2 ≤ len) (hrange : tc + len ≤ n)
     (hbound : bound = keysMax
       (sweepKey ctx tcLevel specFuel level
         (cs ++ [(refine ctx level st.lab st.ptn st.active numcells).longcode])
@@ -492,7 +484,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     (hlen : len = tail + 1) :
     let r := refine ctx level st.lab st.ptn st.active numcells
     let full := cs ++ [r.longcode]
-    let pre0 : SearchSt := { st with
+    let pre0 : SearchSt n := { st with
       lab := r.lab
       ptn := r.ptn
       active := r.active
@@ -501,37 +493,34 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       numnodes := st.numnodes + 1
       tctotal := st.tctotal + len }
     let pre := if pre0.noncheaplevel ≥ level ∧
-        ¬ cheapautom pre0.ptn level ctx.n then
+        ¬ cheapautom pre0.ptn level n then
       { pre0 with noncheaplevel := level + 1 }
     else pre0
-    let tcell := windowSet r.lab tc len
-    let tv1 := (nextElem tcell none).getD 0
+    let tcell := windowSet n r.lab tc len
+    let tv1 := (tcell.nextElem none).getD 0
     ∃ fs outBest eventTrail,
-      FirstSweepRun G ctx tcLevel specFuel runFuel (ctx.n + 1) level cs full
+      FirstSweepRun G ctx tcLevel specFuel runFuel (n + 1) level cs full
           fs r.lab r.ptn tc len r.numcells tcell none bound pre
-          (firstChildLoop ctx inf tcLevel runFuel (ctx.n + 1) level
-            r.numcells tc tv1 (nextElem tcell none) tcell 0 pre).2.2
+          (firstChildLoop ctx inf tcLevel runFuel (n + 1) level
+            r.numcells tc tv1 (tcell.nextElem none) tcell 0 pre).2.2
           none outBest trail eventTrail
-          (firstChildLoop ctx inf tcLevel runFuel (ctx.n + 1) level
-            r.numcells tc tv1 (nextElem tcell none) tcell 0 pre).1 ∧
+          (firstChildLoop ctx inf tcLevel runFuel (n + 1) level
+            r.numcells tc tv1 (tcell.nextElem none) tcell 0 pre).1 ∧
         FirstSweepOut ctx level st.noncheaplevel fs
-          (firstChildLoop ctx inf tcLevel runFuel (ctx.n + 1) level
-            r.numcells tc tv1 (nextElem tcell none) tcell 0 pre).2.2
+          (firstChildLoop ctx inf tcLevel runFuel (n + 1) level
+            r.numcells tc tv1 (tcell.nextElem none) tcell 0 pre).2.2
           outBest := by
   intro r full pre0 pre tcell tv1
-  obtain ⟨hit, heqt, hcount⟩ := hfirst.refined hn hg hn0 hlevel
-  have hgsz : ctx.g.size = ctx.n := by
-    rw [hg, hn]
+  obtain ⟨hit, heqt, hcount⟩ := hfirst.refined hg hn0 hlevel
+  have hgsz : ctx.g.size = n := by
+    rw [hg]
     exact size_rowsOf G
-  have hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n := by
-    rw [hg, hn]
-    exact rowsOf_bounded G
-  have hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u := by
-    rw [hg, hn]
+  have hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u := by
+    rw [hg]
     exact rowsOf_symm G
-  have hloopless : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false := by
-    rw [hg, hn]
+  have hloopless : ∀ v, v < n → (ctx.g[v]!).mem v = false := by
+    rw [hg]
     exact rowsOf_loopless G
   have hfuelNe : runFuel ≠ 0 := by
     intro h0
@@ -546,17 +535,16 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
   have hshorter : cs.length < full.length := by
     rw [hfull]
     exact hpast
-  have hfuel : level + 1 + specFuel ≤ ctx.n + 1 := by
-    rw [hn]
+  have hfuel : level + 1 + specFuel ≤ n + 1 := by
     omega
-  have hls : r.lab.size = ctx.n := hit.ok.labSize
-  have hlabOk : LabOk r.lab ctx.n := hit.ok.labOk
-  have hps : r.ptn.size = ctx.n := hit.ok.ptnSize
+  have hls : r.lab.size = n := hit.ok.labSize
+  have hlabOk : LabOk r.lab n := hit.ok.labOk
+  have hps : r.ptn.size = n := hit.ok.ptnSize
   have hend : r.ptn[r.ptn.size - 1]! ≤ level := hit.ok.ptnEnd
-  have hinj : LabInj r.lab ctx.n := hit.inj
-  have hvals : ∀ q : Nat, r.ptn[q]! ≤ level ∨ r.ptn[q]! = ctx.n + 2 := by
+  have hinj : LabInj r.lab n := hit.inj
+  have hvals : ∀ q : Nat, r.ptn[q]! ≤ level ∨ r.ptn[q]! = n + 2 := by
     intro q
-    rcases Nat.lt_or_ge q ctx.n with hq | hq
+    rcases Nat.lt_or_ge q n with hq | hq
     · exact hit.vals q hq
     · left
       rw [getElem!_neg _ _ (by rw [hps]; omega)]
@@ -590,33 +578,33 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     simp only [pre]
     split <;> exact hfirst.shortClear
   have hpreNclEq : pre.noncheaplevel = if st.noncheaplevel ≥ level ∧
-      ¬ cheapautom r.ptn level ctx.n = true then level + 1
+      ¬ cheapautom r.ptn level n = true then level + 1
       else st.noncheaplevel := by
     by_cases hc : st.noncheaplevel ≥ level ∧
-      ¬ cheapautom r.ptn level ctx.n = true
+      ¬ cheapautom r.ptn level n = true
     · simp only [pre, pre0, if_pos hc]
     · simp only [pre, pre0, if_neg hc]
   have hpreNcl : pre.noncheaplevel = st.noncheaplevel ∨
       (pre.noncheaplevel = level + 1 ∧
-        cheapautom r.ptn level ctx.n = false ∧ st.noncheaplevel ≥ level) := by
+        cheapautom r.ptn level n = false ∧ st.noncheaplevel ≥ level) := by
     rw [hpreNclEq]
     by_cases hc : st.noncheaplevel ≥ level ∧
-      ¬ cheapautom r.ptn level ctx.n = true
+      ¬ cheapautom r.ptn level n = true
     · rw [if_pos hc]
       right
       refine ⟨rfl, ?_, hc.1⟩
-      rcases hc' : cheapautom r.ptn level ctx.n with _ | _
+      rcases hc' : cheapautom r.ptn level n with _ | _
       · rfl
       · exact absurd hc' hc.2
     · rw [if_neg hc]
       left
       rfl
-  have hpreParkWeak : cheapautom r.ptn level ctx.n = false →
+  have hpreParkWeak : cheapautom r.ptn level n = false →
       pre.noncheaplevel ≠ level := by
     intro hc heq
     rw [hpreNclEq] at heq
     by_cases hc' : st.noncheaplevel ≥ level ∧
-      ¬ cheapautom r.ptn level ctx.n = true
+      ¬ cheapautom r.ptn level n = true
     · rw [if_pos hc'] at heq
       omega
     · rw [if_neg hc'] at heq
@@ -630,27 +618,26 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     · exact h
     · omega
   have hpreOk : SearchOk G level r.numcells pre :=
-    refine_searchOk hn hn0 hfirst.searchOk hlevel hpreLab hprePtn
+    refine_searchOk hn0 hfirst.searchOk hlevel hpreLab hprePtn
       (Or.inl hpreCanonlab)
   have hpathPre : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 level pre :=
-    (hpathOk.refine hn hn0 hlevel hgsz hfirst.searchOk hfirst.activeLt
+    (hpathOk.refine hn0 hlevel hgsz hfirst.searchOk
       hfirst.activeStarts).stateEq hpreLab hprePtn hpreFixed
   have hcellPre : IsCell pre.ptn level tc len := by
     rw [hprePtn]
     exact hcell
-  have horbPre : OrbSound (OrbConn pre.genTrace.toList ctx.n) pre.orbits
-      ctx.n := by
+  have horbPre : OrbSound (OrbConn pre.genTrace.toList n) pre.orbits
+      n := by
     rw [hpreGen, hpreOrbits]
     exact horb
   -- the guiding vertex
   obtain ⟨v, hv⟩ := nextElem_windowSet_some (lab := r.lab) (tc := tc)
-    (len := len) (by omega)
-  have hnext : nextElem tcell none = some tv1 := by
+    (len := len) (by omega) (hlabOk _ (by rw [hit.ok.labSize]; omega))
+  have hnext : tcell.nextElem none = some tv1 := by
     simp only [tv1, tcell, hv, Option.getD_some]
   have hmem : tv1 ∈ segN r.lab tc len := by
-    apply elem_windowSet.mp
-    exact nextElem_mem hnext
+    exact (mem_windowSet.mp (VSet.nextElem_mem hnext)).2
   obtain ⟨o, ho, hato⟩ : ∃ o, o < len ∧ r.lab[tc + o]! = tv1 := by
     simp only [segN, List.mem_map, List.mem_range] at hmem
     obtain ⟨o, ho, h⟩ := hmem
@@ -658,14 +645,14 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
   have hat : pre.lab[tc + o]! = tv1 := by
     rw [hpreLab]
     exact hato
-  have htvLt : tv1 < ctx.n := by
+  have htvLt : tv1 < n := by
     rw [← hato]
     exact hlabOk _ (by omega)
   have hrep : (pre.orbits[tv1]! == tv1) = true := by
     rw [hpreOrbits, hfirst.orbitId tv1 htvLt]
     simp
   have hfirstTv : (tv1 == tv1) = true := by simp
-  have hfresh : elem pre.fixedpts tv1 = false := by
+  have hfresh : pre.fixedpts.mem tv1 = false := by
     rw [← hat]
     apply hpathPre.fixed.fresh
     · rw [hpreLab]; exact hlabOk
@@ -676,25 +663,25 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     · exact hrange
     · exact ho
   -- the guiding child
-  let child : SearchSt :=
+  let child : SearchSt n :=
     { pre with
-      lab := (breakout pre.lab pre.ptn (level + 1) tc tv1).1
-      ptn := (breakout pre.lab pre.ptn (level + 1) tc tv1).2.1
-      active := (breakout pre.lab pre.ptn (level + 1) tc tv1).2.2
-      fixedpts := insert pre.fixedpts tv1
+      lab := (breakout n pre.lab pre.ptn (level + 1) tc tv1).1
+      ptn := (breakout n pre.lab pre.ptn (level + 1) tc tv1).2.1
+      active := (breakout n pre.lab pre.ptn (level + 1) tc tv1).2.2
+      fixedpts := pre.fixedpts.insert tv1
       cosetindex := tv1 }
   let childTrail := trail.push level
     ⟨sweepFrame specFuel full r.lab r.ptn tc r.numcells, o⟩
   have hfirstChild : FirstInv G ctx (level + 1) full (r.numcells + 1) child
       childTrail := by
-    have h := hfirst.child (specFuel := specFuel) hn hg hn0 hpath hlt hcell
+    have h := hfirst.child (specFuel := specFuel) hg hn0 hpath hlt hcell
       hlen2 hrange ho
     dsimp only at h
     rw [show pre.lab[tc + o]! = tv1 from hat] at h
     exact h
   have hpathChild : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 (level + 1) child := by
-    have h := hfirst.childPath (specFuel := specFuel) hn hg hn0 hpath hlt
+    have h := hfirst.childPath (specFuel := specFuel) hg hn0 hpath hlt
       hpathOk hcell hlen2 hrange ho
     dsimp only at h
     rw [show pre.lab[tc + o]! = tv1 from hat] at h
@@ -703,21 +690,21 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
   have hdescChild : CheapDesc ctx (level + 1) child.noncheaplevel
       (refine ctx (level + 1) child.lab child.ptn child.active
         (r.numcells + 1)) := by
-    have hlvl : level < ctx.n := by rw [hn]; exact hlt
+    have hlvl : level < n := hlt
     have h := hdesc.child hit heqt hcount hsymm hlvl hcell hlen2 hrange ho
     dsimp only at h
     rw [hato] at h
     change CheapDesc ctx (level + 1) _
-      (refine ctx (level + 1) (breakout r.lab r.ptn (level + 1) tc tv1).1
-        (r.ptn.set! tc (level + 1)) (insert 0 tc) (r.numcells + 1)) at h
+      (refine ctx (level + 1) (breakout n r.lab r.ptn (level + 1) tc tv1).1
+        (r.ptn.set! tc (level + 1)) (VSet.empty.insert tc) (r.numcells + 1)) at h
     change CheapDesc ctx (level + 1) pre.noncheaplevel
-      (refine ctx (level + 1) (breakout pre.lab pre.ptn (level + 1) tc tv1).1
-        (breakout pre.lab pre.ptn (level + 1) tc tv1).2.1
-        (breakout pre.lab pre.ptn (level + 1) tc tv1).2.2 (r.numcells + 1))
+      (refine ctx (level + 1) (breakout n pre.lab pre.ptn (level + 1) tc tv1).1
+        (breakout n pre.lab pre.ptn (level + 1) tc tv1).2.1
+        (breakout n pre.lab pre.ptn (level + 1) tc tv1).2.2 (r.numcells + 1))
     rw [breakout_ptn, hpreLab, hprePtn, hpreNclEq]
     exact h
   obtain ⟨fs, outBest, eventTrail, hrunG, hkeepG⟩ :=
-    ihFirst specFuel (level + 1) (r.numcells + 1) full child childTrail hn
+    ihFirst specFuel (level + 1) (r.numcells + 1) full child childTrail
       hg hinf hn0 (by omega) (by rw [hfull]) (by omega) (by omega)
       (by rw [hchildNcl]; exact hpreBnd) hdescChild horbPre hfirstChild
       hpathChild
@@ -725,7 +712,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       firstPathNode ctx inf tcLevel runFuel (level + 1) (r.numcells + 1)
         child = (value, out) := ⟨_, _, rfl⟩
   have hout : SearchOut G level (level + 1) child out := by
-    have := (firstPathNode_ok G ctx hn inf hinf tcLevel hn0 runFuel
+    have := (firstPathNode_ok G ctx inf hinf tcLevel hn0 runFuel
       (level + 1) (r.numcells + 1) child hfirstChild.searchOk (by omega)
       (by omega)).1
     rw [Nat.add_sub_cancel, hcall] at this
@@ -749,11 +736,11 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
         (by omega) (by omega) (hato'.trans hato.symm)
       omega
     subst hoo
-    have h := SearchOut.breakoutKey (codes := full) (specFuel := specFuel)
-      (tcLevel := tcLevel) hn (SearchOut.refl G level level hpreOk.reach)
-      hpreOk hpreOk hn0 hlevel hcellPre hlen2 (by rw [← hn]; exact hrange) ho
+    have h := SearchOut.breakoutKey (ctx := ctx) (codes := full) (specFuel := specFuel)
+      (tcLevel := tcLevel) (SearchOut.refl G level level hpreOk.reach)
+      hpreOk hpreOk hn0 hlevel hcellPre hlen2 hrange ho
       (child := child) (by rw [hat]) (by rw [hat]) (by rw [hat]) rfl
-      (by rw [hn] at hfuel; exact hfuel)
+      hfuel
     rw [hpreLab, hprePtn] at h
     exact h
   have hkeyG : keyLe (nodeKey ctx tcLevel specFuel (level + 1) full child
@@ -770,13 +757,13 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
     intro hfullKey
     apply ChildDone.ofExact hfullKey
     · rw [hato]
-      change (breakout pre.lab pre.ptn (level + 1) tc tv1).1 = _
+      change (breakout n pre.lab pre.ptn (level + 1) tc tv1).1 = _
       rw [hpreLab, hprePtn]
     · rw [hato]
-      change (breakout pre.lab pre.ptn (level + 1) tc tv1).2.1 = _
+      change (breakout n pre.lab pre.ptn (level + 1) tc tv1).2.1 = _
       rw [hpreLab, hprePtn]
     · rw [hato]
-      change (breakout pre.lab pre.ptn (level + 1) tc tv1).2.2 = _
+      change (breakout n pre.lab pre.ptn (level + 1) tc tv1).2.2 = _
       rw [hpreLab, hprePtn]
   have hcoverOf : outBest = some (incMax none
       (nodeKey ctx tcLevel specFuel (level + 1) full child
@@ -785,11 +772,12 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
         r.numcells tcell (some tv1) outBest := by
     intro hfullKey
     exact (sweepCover_init ctx tcLevel specFuel level full r.lab r.ptn tc len
-      r.numcells none).advanceKey hnext hfullKey hkeyEq
-  have horbOut : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits
-      ctx.n :=
+      r.numcells none (fun o ho => hlabOk _ (by rw [hit.ok.labSize]; omega))).advanceKey
+      hnext hfullKey hkeyEq
+  have horbOut : OrbSound (OrbConn out.genTrace.toList n) out.orbits
+      n :=
     hkeepG.orbits
-  have hcosetOut : out.cosetindex < ctx.n := hkeepG.coset htvLt
+  have hcosetOut : out.cosetindex < n := hkeepG.coset htvLt
   have hboundaryG : out.noncheaplevel < level + 1 →
       out.noncheaplevel = pre.noncheaplevel := hkeepG.boundary
   have hext : TrailExt level trail eventTrail :=
@@ -801,11 +789,11 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
   refine ⟨fs, ?_⟩
   by_cases hstay : value < Int.ofNat level
   · -- the guiding child exits below the loop
-    have hstate := firstChildLoop_earlyGuide ctx inf tcLevel runFuel ctx.n
+    have hstate := firstChildLoop_earlyGuide ctx inf tcLevel runFuel n
       level r.numcells tc tv1 tv1 tcell 0 pre value out hrep hfirstTv hcall
       hstay
     have hkeepOut : FirstSweepOut ctx level st.noncheaplevel fs
-        (firstChildLoop ctx inf tcLevel runFuel (ctx.n + 1) level r.numcells
+        (firstChildLoop ctx inf tcLevel runFuel (n + 1) level r.numcells
           tc tv1 (some tv1) tcell 0 pre).2.2 outBest := by
       rw [hstate]
       refine ⟨hkeepG.dom, horbOut, hcosetOut, ?_⟩
@@ -831,7 +819,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
         rw [returned] at hstay
         exact Int.ofNat_lt.mp hstay
       rcases control with h | h <;> omega
-    · exact FirstSweepRun.guideFrozen hn hfull.symm hstem hshorter hrep hfirstTv
+    · exact FirstSweepRun.guideFrozen hfull.symm hstem hshorter hrep hfirstTv
         hcall hrunG hgca hstay freeze exact hkeyG hbound hlen (hcoverOf exact)
         (hdoneOf exact) hfresh hlevel hls hlabOk hps hend hvals hcell hrange
         ho hfuel
@@ -850,10 +838,10 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
             numcells := r.numcells, hint := 0, maxpos := 0,
             longcode := r.numcells } := by
         rw [hpreActive]
-        refine SubtreeOk.ofFrames (r := r) ?_ rfl rfl rfl rfl
+        refine SubtreeOk.ofFrames (r := r) ?_ rfl rfl rfl
         apply hdesc.atLevel hit heqt hcount hstLe
         intro heq
-        rcases hc : cheapautom r.ptn level ctx.n with _ | _
+        rcases hc : cheapautom r.ptn level n with _ | _
         · exfalso
           have := hpreParkWeak hc
           rcases hpreNcl with h | h <;> omega
@@ -861,10 +849,10 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       have hboundEq : bound = nodeKey ctx tcLevel specFuel (level + 1) full
           child (r.numcells + 1) := by
         rw [← hkeyEq o ho hato]
-        exact boundEq_of_subtree hsmall hgsz hgb hsymm hloopless hcell hlen2
+        exact boundEq_of_subtree hsmall hgsz hsymm hloopless hcell hlen2
           hrange hfuel hbound hlen ho
       rw [returned] at hcall hrunG
-      exact FirstSweepRun.guideCheap hn hfull.symm hstem hshorter hrep hfirstTv
+      exact FirstSweepRun.guideCheap hfull.symm hstem hshorter hrep hfirstTv
         hcall hrunG hgca positive hbelowNat saved hboundEq exact
         (hdoneOf exact) hfresh hlevel hls hlabOk hps hend hvals hcell hrange
         ho hfuel
@@ -892,25 +880,25 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       · exact (hfuelNe emptyFuel).elim
     have hdone := hdoneOf hfullKey
     have hcover := hcoverOf hfullKey
-    let marked : SearchSt := { out with gcaFirst := level, stabvertex := tv1 }
-    let cleaned : SearchSt :=
+    let marked : SearchSt n := { out with gcaFirst := level, stabvertex := tv1 }
+    let cleaned : SearchSt n :=
       { out with
         gcaFirst := level
         stabvertex := tv1
-        fixedpts := erase out.fixedpts tv1 }
+        fixedpts := out.fixedpts.erase tv1 }
     let cleared := clearShortIf cleaned.needshortprune cleaned
-    let recSt := recover ctx.n inf level cleared
+    let recSt := recover n inf level cleared
     let tcell' := if cleaned.needshortprune then shortprune tcell cleared
       else tcell
     obtain ⟨hfix, hcos, hcomp, hgen, horbC, hfl, hncl, hgf, hgc, hcl, -⟩ :=
       clearShortIf_fields cleaned.needshortprune cleaned
     have hmark : EventOut G ctx tcLevel full fs marked outBest eventTrail
         value :=
-      hrunG.proof.setFirstEvent hn hfull hreturn hdone hlevel hls hlabOk hps
+      hrunG.proof.setFirstEvent hfull hreturn hdone hlevel hls hlabOk hps
         hend hvals hcell hrange ho hfuel
     have hev : EventOut G ctx tcLevel full fs cleared outBest eventTrail
         value := by
-      have h := hmark.setFixed (erase out.fixedpts tv1)
+      have h := hmark.setFixed (out.fixedpts.erase tv1)
       rcases hc : cleaned.needshortprune with _ | _
       · simpa only [cleared, hc, clearShortIf, Bool.false_eq_true, ite_false]
           using h
@@ -923,9 +911,9 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       omega
     have hbaseOut : SearchOut G level level pre out := by
       apply breakout_child_out (stC := child) hn0 hpreOk hlevel hcellPre hlen2
-        (by rw [← hn]; exact hrange) ho hout
+        hrange ho hout
       · rw [hat]
-      · exact breakout_ptn pre.lab pre.ptn (level + 1) tc tv1
+      · exact breakout_ptn (n := n) pre.lab pre.ptn (level + 1) tc tv1
       · rfl
       · rfl
     have hbaseCleared : SearchOut G level level pre cleared := by
@@ -934,23 +922,23 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       · exact clearShortIf_ptn _ _
       · rw [hfl]
       · rw [hcl]
-    have hrecOk := hbaseCleared.recoverOk hn hinf hlevel hpreOk
+    have hrecOk := hbaseCleared.recoverOk (ctx := ctx) hinf hlevel hpreOk
     obtain ⟨bs, hrunRec, hstable, hhistory⟩ := hev.recoverRun hreturn hfull
       hlevel hinfLevel hfirstLe hrecOk.2
-    have hframes := recover_frames ctx.n inf level cleared
+    have hframes := recover_frames n inf level cleared
     have hgfRec : recSt.gcaFirst = level := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         hframes.2.2.2.2.2.2.1, hgf]
     have hgcRec : level ≤ recSt.gcaCanon := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         recover_gcaCanon, hgc]
       change level ≤ if level < out.gcaCanon then level else out.gcaCanon
       split <;> omega
     have hfirstlabRec : recSt.firstlab = out.firstlab := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         hframes.2.2.2.2.1, hfl]
     have hcanonlabRec : recSt.canonlab = out.canonlab := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         hframes.1, hcl]
     have hlive : FirstLive ctx level recSt eventTrail r.lab r.ptn := by
       refine ⟨⟨hhistory, ?_, hstable⟩, ?_⟩
@@ -961,51 +949,50 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
           ⟨sweepFrame specFuel full r.lab r.ptn tc r.numcells, o⟩
           (by rw [hgfRec]; exact Int.le_refl _) hentry γ hγ
     obtain ⟨htrailRec, hcanonRec⟩ := hrunG.proof.recoverTrails
-      (inf := inf) (fixedpts := erase out.fixedpts tv1) (tv1 := tv1)
+      (inf := inf) (fixedpts := out.fixedpts.erase tv1) (tv1 := tv1)
     have hrecEqPlain : recSt = clearShortIf cleaned.needshortprune
-        (recover ctx.n inf level cleaned) :=
-      recover_clearShortIf ctx.n inf level cleaned.needshortprune cleaned
+        (recover n inf level cleaned) :=
+      recover_clearShortIf n inf level cleaned.needshortprune cleaned
     have hfirstTrail : FirstTrail ctx level recSt eventTrail := by
       refine htrailRec.lower.retrail ?_ (TrailExt.refl _ _)
-      rw [hfirstlabRec, (recover_frames ctx.n inf level _).2.2.2.2.1]
+      rw [hfirstlabRec, (recover_frames n inf level _).2.2.2.2.1]
     have hcanonTrail : CanonTrail ctx level recSt eventTrail := by
       refine hcanonRec.retrail ?_ (TrailExt.refl _ _)
-      rw [hcanonlabRec, (recover_frames ctx.n inf level _).1]
+      rw [hcanonlabRec, (recover_frames n inf level _).1]
     have hrefs : FrameRefs ctx tcLevel specFuel level full r.lab r.ptn tc len
         r.numcells recSt outBest := by
       have h := hrunG.proof.recoverRefs (inf := inf)
-        (fixedpts := erase out.fixedpts tv1) (tv1 := tv1) hdone ho
+        (fixedpts := out.fixedpts.erase tv1) (tv1 := tv1) hdone ho
       rw [hrecEqPlain]
       rcases hc : cleaned.needshortprune with _ | _
       · simpa only [clearShortIf, Bool.false_eq_true, ite_false] using h
       · simp only [clearShortIf, ite_true]
         exact ⟨h.first, h.canon⟩
     have hshortRec : recSt.needshortprune = false := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         recover_needshortprune]
       exact clearShortIf_self cleaned
     have hfixedRec : recSt.fixedpts = pre.fixedpts := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         recover_clearShortIf, (clearShortIf_fields _ _).1, recover_fixedpts]
-      change erase out.fixedpts tv1 = pre.fixedpts
+      change out.fixedpts.erase tv1 = pre.fixedpts
       rw [hrunG.proof.node.fixed]
       exact erase_insert_of_miss hfresh
     have hpathRec : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
         (initialPartition G).1 level recSt :=
-      PathOk.ofSearchOut hn hn0 hlevel hpathPre hfixedRec hpreOk hrecOk.2
+      PathOk.ofSearchOut hn0 hlevel hpathPre hfixedRec hpreOk hrecOk.2
         hrecOk.1
     have hnclRec : recSt.noncheaplevel = if level < out.noncheaplevel
         then level + 1 else out.noncheaplevel := by
-      rw [show recSt = recover ctx.n inf level cleared from rfl,
+      rw [show recSt = recover n inf level cleared from rfl,
         recover_noncheaplevel, hncl]
     have hhRec : FirstSweepHyp G ctx tcLevel specFuel level full bs fs
         r.numcells r.lab r.ptn tc len tcell (some tv1) st.noncheaplevel tv1
         pre recSt outBest eventTrail := by
       refine ⟨?_, hlive, hpathRec, ⟨tv1, rfl, Nat.le_refl _⟩,
         fun v hv => by cases hv; exact htvLt, ?_, hgfRec, hfirstTrail,
-        hcanonTrail, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+        hcanonTrail, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       · exact {
-          nodeCount := hn
           nonempty := hn0
           positive := hlevel
           baseOk := hpreOk
@@ -1018,7 +1005,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
           lenTwo := hlen2
           range := hrange
           values := hvals
-          members := fun v hv => elem_windowSet.mp hv
+          members := fun v hv => (mem_windowSet.mp hv).2
           cover := hcover
           refs := hrefs
           shortClear := hshortRec
@@ -1026,10 +1013,10 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
       · apply recover_nonpositive
         rw [hcomp]
         exact hmark.nonpositive
-      · rw [show recSt = recover ctx.n inf level cleared from rfl,
+      · rw [show recSt = recover n inf level cleared from rfl,
           recover_orbits, recover_genTrace, horbC, hgen]
         exact horbOut
-      · rw [show recSt = recover ctx.n inf level cleared from rfl,
+      · rw [show recSt = recover n inf level cleared from rfl,
           recover_coset, hcos]
         exact hcosetOut
       · intro b hb
@@ -1045,8 +1032,8 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
           rw [hboundaryG (by omega)] at hlt'
           have hst := hpreKeep hlt'
           rw [hst] at hlt'
-          refine SubtreeOk.ofFrames ((hdesc hlt').setActive ?_) rfl rfl rfl rfl
-          exact Nat.two_pow_pos ctx.n
+          exact SubtreeOk.ofFrames ((hdesc hlt').setActive (a := VSet.empty))
+            rfl rfl rfl
       · rw [hnclRec]
         rcases Decidable.em (level < out.noncheaplevel) with hc | hc
         · exact Nat.le_of_eq (ite_eq_left hc)
@@ -1069,17 +1056,15 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
         · rw [ite_eq_right hc] at hlt' ⊢
           rw [hboundaryG (by omega)] at hlt' ⊢
           exact hpreKeep hlt'
-      · rw [hpreActive]
-        exact hit.ok.activeLt
     have hinvRec : LoopInv G ctx tcLevel specFuel level full bs fs
         r.numcells r.lab r.ptn tc len tcell' (some tv1) pre recSt outBest
         eventTrail := by
       rcases hc : cleaned.needshortprune with _ | _
       · simpa only [tcell', recSt, cleared, hc, Bool.false_eq_true,
           ite_false] using hhRec.inv
-      · have hlast : ∀ fix mcr,
+      · have hlast : ∀ fix mcr : VSet n,
             cleared.autos.back? = some (fix, mcr) →
-              PairOk ctx.g r.ptn r.lab level ctx.n fix mcr := by
+              PairOk ctx.g r.ptn r.lab level fix mcr := by
           intro fix mcr hback
           have hrBelow : value < Int.ofNat (level + 1) :=
             hrunG.exit.below (by omega)
@@ -1099,15 +1084,15 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx}
         simpa only [tcell', recSt, cleared, hc, ite_true] using
           hhRec.inv.shortpruneWith hgsz hlast
     have hhRec' := hhRec.filter hinvRec
-    have hfuelRec : ctx.n < cursorRank (some tv1) + ctx.n := by
+    have hfuelRec : n < cursorRank (some tv1) + n := by
       simp only [cursorRank]
       omega
     obtain ⟨outBest', eventTrail', hrunTail, hkeepTail⟩ :=
-      firstTail hn hg hinf hn0 ih hrun hspec hfull.symm hstem hpast hbound
-        hlen ctx.n (some tv1) tcell' recSt outBest eventTrail bs
+      firstTail hg hinf hn0 ih hrun hspec hfull.symm hstem hpast hbound
+        hlen n (some tv1) tcell' recSt outBest eventTrail bs
         (if (recSt.orbits[tv1]! == tv1) = true then 0 + 1 else 0) hhRec'
         hfuelRec
-    have hstate := firstChildLoop_stayGuide ctx inf tcLevel runFuel ctx.n
+    have hstate := firstChildLoop_stayGuide ctx inf tcLevel runFuel n
       level r.numcells tc tv1 tv1 tcell 0 pre value out hrep hfirstTv hcall
       hstay
     dsimp only at hstate
@@ -1126,11 +1111,11 @@ namespace FirstSweepRun
 /-- The escape classification of a sweep result.  Below-loop unwinds are
 direct, since the first-path controls keep every orbit pointer at or above
 the loop level. -/
-theorem escape {G : Colored n k} {ctx : Ctx}
+theorem escape {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level : Nat}
     {stem codes fs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len numcells tcell : Nat} {cursor : Option Nat} {bound : Key}
-    {st out : SearchSt} {best outBest : Option Key}
+    {tc len numcells : Nat} {tcell : VSet n} {cursor : Option Nat} {bound : Key n}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Option Int}
     (h : FirstSweepRun G ctx tcLevel specFuel runFuel loopFuel level stem
       codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
@@ -1160,13 +1145,13 @@ theorem escape {G : Colored n k} {ctx : Ctx}
   · exact .pending returned
 
 /-- An early integer-valued sweep becomes its enclosing first-path node. -/
-theorem toNodeSome {G : Colored n k} {ctx : Ctx}
+theorem toNodeSome {G : Colored n k} {ctx : Ctx n}
     {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level
       : Nat}
     {nodeCodes loopCodes fs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {outBest : Option Key} {receiptTrail eventTrail : FrameTrail} {r : Int}
+    {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {outBest : Option (Key n)} {receiptTrail eventTrail : FrameTrail} {r : Int}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
       nodeSt nodeNumcells)
     (hprefix : loopCodes.take nodeCodes.length = nodeCodes)
@@ -1198,12 +1183,12 @@ theorem toNodeSome {G : Colored n k} {ctx : Ctx}
 
 /-- A sufficiently fuelled `none` sweep is genuine completion and becomes
 the enclosing first-path node's ordinary return. -/
-theorem toNodeNone {G : Colored n k} {ctx : Ctx}
+theorem toNodeNone {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
     {nodeCodes loopCodes fs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {outBest : Option Key} {receiptTrail eventTrail : FrameTrail}
+    {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {outBest : Option (Key n)} {receiptTrail eventTrail : FrameTrail}
     (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCodes
       nodeSt nodeNumcells)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCodes nodeSt
@@ -1215,7 +1200,7 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx}
           sweepKey ctx tcLevel specFuel level loopCodes rsLab rsPtn tc
             loopNumcells (o + 1)))
     (hlen : len = tail + 1)
-    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfuel : n < cursorRank cursor + loopFuel)
     (hfixed : loopSt.fixedpts = nodeSt.fixedpts)
     (h : FirstSweepRun G ctx tcLevel specFuel runFuel loopFuel level
       nodeCodes loopCodes fs rsLab rsPtn tc len loopNumcells tcell cursor
@@ -1235,7 +1220,7 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx}
         cases returned
     | exhausted returned sound finalSet finalCursor cover progress
         bounded =>
-        exact (LoopResult.exhaustion_false hfuel progress bounded).elim
+        exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
   have hescape : NodeEscape ctx tcLevel (specFuel + 1) level nodeCodes
       nodeSt out nodeNumcells none outBest receiptTrail
       (Int.ofNat level - 1) := by
