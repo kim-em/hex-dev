@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexGFqRing.Operations
 import HexPolyFast.Division
+import HexPolyFp.NttMul
 import HexPolyFp.PrimeField
 import LeanBench
 

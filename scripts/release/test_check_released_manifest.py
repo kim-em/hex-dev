@@ -17,6 +17,7 @@ from scripts.release.check_released_manifest import (
     check_library_only,
     check_phase_admission,
     parse_sync_baseline,
+    published_import_closure_violations,
     published_repositories,
 )
 
@@ -206,3 +207,68 @@ class MathlibOnlyRowTests(unittest.TestCase):
             "| A tactic | n/a | [HexTac](https://github.com/leanprover/hex-tac) |",
             table,
         )
+
+class PublishedImportClosureTests(unittest.TestCase):
+    """A released umbrella may reach only published libraries."""
+
+    def _write(self, root: Path, module: str, imports: list[str]) -> None:
+        path = root / Path(*module.split(".")).with_suffix(".lean")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = ["module", ""] + [f"public import {name}" for name in imports]
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    def test_umbrella_reaching_unpublished_library_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write(root, "HexBasic", [])
+            self._write(root, "HexFoo", ["HexBasic", "HexFoo.Kernel"])
+            self._write(root, "HexFoo.Kernel", ["HexPhantom.Fast"])
+            self._write(root, "HexPhantom.Fast", [])
+            entries = [
+                {"repo": "leanprover/hex-basic", "lib": "HexBasic", "pins": []},
+                {"repo": "leanprover/hex-foo", "lib": "HexFoo", "pins": ["hex-basic"]},
+            ]
+            violations = published_import_closure_violations(entries, root)
+            self.assertEqual(
+                violations,
+                [
+                    "leanprover/hex-foo: HexFoo.Kernel imports HexPhantom.Fast, "
+                    "whose library HexPhantom is not in released.yml"
+                ],
+            )
+
+    def test_extra_paths_root_and_test_kit_are_allowed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write(root, "HexBasic", [])
+            self._write(root, "HexGraph", ["HexBasic"])
+            self._write(root, "HexFoo", ["HexBasic", "HexGraph", "Hex.BenchKit"])
+            self._write(root, "HexFoo.Tests", ["HexFoo"])
+            entries = [
+                {"repo": "leanprover/hex-basic", "lib": "HexBasic", "pins": []},
+                {
+                    "repo": "leanprover/hex-foo",
+                    "lib": "HexFoo",
+                    "pins": ["hex-basic"],
+                    "test_modules": ["HexFoo.Tests"],
+                    "extra_paths": [{"src": "HexGraph", "dest": "HexGraph"}],
+                },
+            ]
+            self.assertEqual(published_import_closure_violations(entries, root), [])
+
+    def test_pinned_upstream_extra_root_is_allowed_downstream(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write(root, "HexGraph", [])
+            self._write(root, "HexFoo", ["HexGraph"])
+            self._write(root, "HexFooMathlib", ["HexFoo", "HexGraph.Basic"])
+            entries = [
+                {
+                    "repo": "leanprover/hex-foo",
+                    "lib": "HexFoo",
+                    "pins": [],
+                    "extra_paths": [{"src": "HexGraph", "dest": "HexGraph"}],
+                },
+                {"repo": "leanprover/hex-foo-mathlib", "lib": "HexFooMathlib", "pins": ["hex-foo"]},
+            ]
+            self.assertEqual(published_import_closure_violations(entries, root), [])

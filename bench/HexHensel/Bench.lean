@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import Hex.BenchOracle.Flint
 import HexPolyFast.Tree
+import HexPolyZ.NttMul
 import HexHensel.Multifactor
 import HexHensel.Quadratic
 import HexHensel.QuadraticMultifactor

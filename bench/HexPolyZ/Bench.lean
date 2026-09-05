@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexPolyZ
+import HexPolyZ.KroneckerMulti
+import HexPolyZ.NttMul
 import LeanBench
 
 /-!
