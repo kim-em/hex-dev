@@ -248,6 +248,66 @@ class Exemptions(unittest.TestCase):
         self.assertGreater(len(loaded), 0)
 
 
+class LeanComments(unittest.TestCase):
+    def strip(self, text: str) -> str:
+        return freshness.strip_lean_comments(text)
+
+    def test_line_and_block_comments_go(self):
+        self.assertEqual(self.strip("x -- gone\ny"), "x  \ny")
+        self.assertEqual(self.strip("/-- doc -/\nx"), " \nx")
+        self.assertEqual(self.strip("/-! mod\nprose -/\nx"), " \nx")
+
+    def test_block_comments_nest(self):
+        self.assertEqual(self.strip("/- a /- b -/ c -/x"), " x")
+
+    def test_string_literals_are_not_comments(self):
+        self.assertEqual(self.strip('s := "a -- b"'), 's := "a -- b"')
+        self.assertEqual(self.strip('s := "/- x -/"'), 's := "/- x -/"')
+        self.assertEqual(self.strip(r's := "\" -- in"'), r's := "\" -- in"')
+
+    def test_code_and_indentation_survive(self):
+        self.assertNotEqual(self.strip("theorem a := 1"),
+                            self.strip("theorem a := 2"))
+        self.assertNotEqual(self.strip("theorem a"), self.strip("  theorem a"))
+
+
+class LeanCommentOnly(unittest.TestCase):
+    def difference(self, before: str, after: str, **kwargs):
+        blobs = {"a" * 40: before, "b" * 40: after}
+        difference = freshness.Difference(
+            kwargs.pop("path", "Lib/A.lean"), "a" * 40, "b" * 40,
+            kwargs.pop("baseline_mode", "100644"),
+            kwargs.pop("current_mode", "100644"))
+        with unittest.mock.patch.object(
+                freshness, "blob_text", blobs.__getitem__):
+            return freshness.lean_comment_only(difference)
+
+    def test_a_reworded_docstring_is_allowed(self):
+        self.assertTrue(self.difference("/-- before -/\ndef a := 1",
+                                        "/-- after -/\ndef a := 1"))
+
+    def test_a_changed_declaration_is_not(self):
+        self.assertFalse(self.difference("/-- d -/\ndef a := 1",
+                                         "/-- d -/\ndef a := 2"))
+
+    def test_a_changed_indentation_is_not(self):
+        self.assertFalse(self.difference("def a :=\n 1", "def a :=\n   1"))
+
+    def test_only_lean_paths_qualify(self):
+        self.assertFalse(self.difference("# a\nx = 1", "# b\nx = 1",
+                                         path="scripts/plots/p.py"))
+
+    def test_a_mode_change_is_not_comment_only(self):
+        self.assertFalse(self.difference("/-- a -/", "/-- b -/",
+                                         current_mode="100755"))
+
+    def test_an_added_or_removed_path_is_not_comment_only(self):
+        self.assertFalse(freshness.lean_comment_only(
+            freshness.Difference("Lib/A.lean", None, "b" * 40)))
+        self.assertFalse(freshness.lean_comment_only(
+            freshness.Difference("Lib/A.lean", "a" * 40, None)))
+
+
 class Families(unittest.TestCase):
     """The declarations themselves, checked against the repository."""
 

@@ -36,6 +36,14 @@ family opts into the exemption channel only when its relevant set is
 broad enough to need one: today that is Hex's own factorization curve,
 and not the comparator curves or the hex-graph-iso figures, which fail
 until they are re-measured.
+
+A family may also pass ``assess`` an ``allow`` rule, which differs from
+an exemption in what it costs to trust. An exemption is an assertion a
+reviewer has to weigh; a rule decides from the two blobs themselves.
+``lean_comment_only`` is the one such rule today: it reads both versions
+of a ``.lean`` path and accepts the difference when they are equal with
+their comments removed. Editing a docstring therefore does not force a
+sweep, and no file records a claim that could go stale.
 """
 
 from __future__ import annotations
@@ -280,6 +288,76 @@ def load_exemptions(directory: Path | None) -> set[tuple[str, str, str]]:
         exemptions.add((
             entry["path"], entry["baseline_blob"], entry["current_blob"]))
     return exemptions
+
+
+def blob_text(blob: str) -> str:
+    """The contents of a blob, as text."""
+    return git("cat-file", "blob", blob)
+
+
+def strip_lean_comments(text: str) -> str:
+    """`text` with every Lean comment replaced by a single space.
+
+    Handles line comments and nested block comments; the doc forms need
+    no special case, since ``/--`` and ``/-!`` open with ``/-``. String
+    literals are stepped over, so a ``--`` inside one survives. Nothing
+    outside a comment is ever removed.
+    """
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        if text[i] == '"':
+            out.append(text[i])
+            i += 1
+            while i < n:
+                if text[i] == "\\" and i + 1 < n:
+                    out.append(text[i:i + 2])
+                    i += 2
+                    continue
+                out.append(text[i])
+                i += 1
+                if text[i - 1] == '"':
+                    break
+            continue
+        if text.startswith("/-", i):
+            depth, i = 1, i + 2
+            while i < n and depth:
+                if text.startswith("/-", i):
+                    depth, i = depth + 1, i + 2
+                elif text.startswith("-/", i):
+                    depth, i = depth - 1, i + 2
+                else:
+                    i += 1
+            out.append(" ")
+            continue
+        if text.startswith("--", i):
+            while i < n and text[i] != "\n":
+                i += 1
+            out.append(" ")
+            continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
+def lean_comment_only(difference: Difference) -> bool:
+    """Whether a `.lean` path's two blobs differ only inside comments.
+
+    Checked rather than asserted: both blobs are read and compared with
+    their comments removed, so this cannot outlive the transition it
+    describes the way a written exemption could. Everything a comment
+    does not cover still counts, whitespace included, because Lean
+    indentation carries meaning; the rule therefore errs towards asking
+    for a sweep it does not need over missing one it does.
+    """
+    if not difference.path.endswith(".lean"):
+        return False
+    if difference.baseline is None or difference.current is None:
+        return False
+    if difference.baseline_mode != difference.current_mode:
+        return False
+    return (strip_lean_comments(blob_text(difference.baseline))
+            == strip_lean_comments(blob_text(difference.current)))
 
 
 @dataclass

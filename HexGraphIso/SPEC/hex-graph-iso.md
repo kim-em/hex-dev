@@ -1142,7 +1142,11 @@ the required check: it fails whenever the implementation, the graph
 substrate, the sweep driver, or the plot script differs from what any
 committed sweep measured. The relevant set is deliberately tight and
 regeneration takes minutes, so this family declares no exemption
-directory at all: re-measuring is the only way past the check. The
+directory at all: re-measuring is the only way past the check, with the
+one exception that the check establishes for itself rather than taking
+on trust, a `.lean` path whose two versions are equal once their
+comments are removed. Editing a docstring under `HexGraphIso/` therefore
+costs no sweep, while any change to code or to indentation does. The
 fingerprinting mechanism is shared with the other published figure
 families; see [SPEC/benchmarking.md](../../SPEC/benchmarking.md)
 §Figure freshness.
