@@ -53,7 +53,7 @@ threading `processnode`'s admission event.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # The imperative step is `childSt` -/
 
@@ -61,26 +61,26 @@ variable {ctx : Ctx}
 parent, then the child node's `refine` on the returned labelling,
 split partition, and singleton active set — is `childSt` of the
 parent's post-refine state. -/
-theorem childSt_eq_search_step (r : RefineSt) (level tc tv : Nat) :
+theorem childSt_eq_search_step (r : RefineSt n) (level tc tv : Nat) :
     refine ctx (level + 1)
-      (breakout r.lab r.ptn (level + 1) tc tv).1
-      (breakout r.lab r.ptn (level + 1) tc tv).2.1
-      (breakout r.lab r.ptn (level + 1) tc tv).2.2
+      (breakout n r.lab r.ptn (level + 1) tc tv).1
+      (breakout n r.lab r.ptn (level + 1) tc tv).2.1
+      (breakout n r.lab r.ptn (level + 1) tc tv).2.2
       (r.numcells + 1) =
     childSt ctx level r tc tv := rfl
 
 /-- A surviving target-cell vertex is a window member: any vertex of
 the cell set `maketargetcell` returns sits at some offset of the
 target cell, in the shape a `DescPath` step consumes. -/
-theorem maketargetcell_mem {r : RefineSt} {level tcLevel : Nat}
-    {hint : Int} {tcPos cellSet size tv : Nat}
-    (hn1 : 1 ≤ level) (hsz : r.ptn.size = ctx.n)
+theorem maketargetcell_mem {r : RefineSt n} {level tcLevel : Nat}
+    {hint : Int} {tcPos size tv : Nat} {cellSet : VSet n}
+    (hn1 : 1 ≤ level) (hsz : r.ptn.size = n)
     (hend : r.ptn[r.ptn.size - 1]! ≤ level)
-    (hlive : bcount r.ptn level ctx.n < ctx.n)
+    (hlive : bcount r.ptn level n < n)
     (hmk : maketargetcell ctx r.lab r.ptn level tcLevel hint =
       (tcPos, cellSet, size))
-    (htv : elem cellSet tv = true) :
-    ∃ e o, (tcPos, e) ∈ cells r.ptn level ctx.n ∧ tcPos < e ∧
+    (htv : cellSet.mem tv = true) :
+    ∃ e o, (tcPos, e) ∈ cells r.ptn level n ∧ tcPos < e ∧
       o ≤ e - tcPos ∧ r.lab[tcPos + o]! = tv := by
   obtain ⟨tc, len, hmk', hic, hlen2, hbd⟩ :=
     maketargetcell_open (lab := r.lab) (tcLevel := tcLevel)
@@ -92,7 +92,7 @@ theorem maketargetcell_mem {r : RefineSt} {level tcLevel : Nat}
   subst h2
   subst h3
   have hmem : tv ∈ segN r.lab tcPos (tcPos + size - 1 + 1 - tcPos) :=
-    elem_worksetOf.mp htv
+    (mem_worksetOf_iff.mp htv).2
   obtain ⟨o, ho, hov⟩ := mem_segN_iff.mp hmem
   refine ⟨tcPos + size - 1, o,
     mem_cells_of_isCell (by omega) hend hic (by omega) (by omega),
@@ -106,10 +106,10 @@ explicitly surfaced exotic arm: a cell of size four or five, or two
 triples, conformance-reachable per the probe, discharged by the
 defect-four flip analogues. -/
 theorem cheapautom_shape_or_exotic {ptn : Array Nat} {level : Nat}
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hch : cheapautom ptn level ctx.n = true) :
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hch : cheapautom ptn level n = true) :
     SmallShape ctx level ptn ∨
-      ctx.n - (cells ptn level ctx.n).length ≤ 4 := by
+      n - (cells ptn level n).length ≤ 4 := by
   rcases (cheapautom_iff hps hend).mp hch with hb1 | hb4
   · refine Or.inl fun q hq => ?_
     rcases cells_shape_of_defect_le hps hend hb1 q hq with
@@ -123,11 +123,11 @@ theorem cheapautom_shape_or_exotic {ptn : Array Nat} {level : Nat}
 branches are exactly the invariant's two shapes, so nothing is left
 over: a defect-four node keeps its own shape rather than being forced
 into the first-branch one, which it need not have. -/
-theorem subtreeOk_of_cheapautom {r : RefineSt} {level : Nat}
+theorem subtreeOk_of_cheapautom {r : RefineSt n} {level : Nat}
     (hIt : IterOk ctx level r)
     (heqt : Equitable ctx level r.lab r.ptn)
-    (hacc : bcount r.ptn level ctx.n = r.numcells)
-    (hch : cheapautom r.ptn level ctx.n = true) :
+    (hacc : bcount r.ptn level n = r.numcells)
+    (hch : cheapautom r.ptn level n = true) :
     SubtreeOk ctx level r :=
   ⟨hIt, heqt, hacc,
     cheapautom_shape_or_exotic hIt.ok.ptnSize hIt.ok.ptnEnd hch⟩
@@ -208,49 +208,47 @@ bookkeeping (`gcaFirst`, `eqlevFirst`, `firsttc`) supplies the two
 descents with the same target path; this theorem turns them into the
 rows equality the admission exits consume. -/
 theorem leafRows_eq_of_descPaths
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    {r : RefineSt} {level : Nat} (hS : SubtreeOk ctx level r)
-    {p₁ p₂ : List (Nat × Nat)} {level₁ level₂ : Nat} {U V : RefineSt}
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    {r : RefineSt n} {level : Nat} (hS : SubtreeOk ctx level r)
+    {p₁ p₂ : List (Nat × Nat)} {level₁ level₂ : Nat} {U V : RefineSt n}
     (hU : DescPath ctx level r p₁ level₁ U)
     (hV : DescPath ctx level r p₂ level₂ V)
     (htcs : p₂.map Prod.fst = p₁.map Prod.fst)
-    (hUd : ∀ q, q < ctx.n → U.ptn[q]! ≤ level₁)
-    (hVd : ∀ q, q < ctx.n → V.ptn[q]! ≤ level₂) :
+    (hUd : ∀ q, q < n → U.ptn[q]! ≤ level₁)
+    (hVd : ∀ q, q < n → V.ptn[q]! ≤ level₂) :
     leafRows ctx V.lab = leafRows ctx U.lab :=
-  (descPath_leafRows_all hgsz hgb hsymm hloop (p₁.map Prod.fst)
+  (descPath_leafRows_all hgsz hsymm hloop (p₁.map Prod.fst)
     hS hU rfl hUd hV htcs hVd).2
 
 /-- The code-1 gate admission is a checked automorphism: the scatter
 of the second descent's leaf labelling over the first's passes
 `checkAutom`, with no `isautom` scan. -/
 theorem checkAutom_scatter_of_descPaths
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    {r : RefineSt} {level : Nat} (hS : SubtreeOk ctx level r)
-    {p₁ p₂ : List (Nat × Nat)} {level₁ level₂ : Nat} {U V : RefineSt}
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    {r : RefineSt n} {level : Nat} (hS : SubtreeOk ctx level r)
+    {p₁ p₂ : List (Nat × Nat)} {level₁ level₂ : Nat} {U V : RefineSt n}
     (hU : DescPath ctx level r p₁ level₁ U)
     (hV : DescPath ctx level r p₂ level₂ V)
     (htcs : p₂.map Prod.fst = p₁.map Prod.fst)
-    (hUd : ∀ q, q < ctx.n → U.ptn[q]! ≤ level₁)
-    (hVd : ∀ q, q < ctx.n → V.ptn[q]! ≤ level₂)
-    {γ : Array Nat} (hγsz : γ.size = ctx.n)
-    (hsc : ∀ i, i < ctx.n → γ[U.lab[i]!]! = V.lab[i]!) :
-    checkAutom ctx.g γ ctx.n = true := by
+    (hUd : ∀ q, q < n → U.ptn[q]! ≤ level₁)
+    (hVd : ∀ q, q < n → V.ptn[q]! ≤ level₂)
+    {γ : Array Nat} (hγsz : γ.size = n)
+    (hsc : ∀ i, i < n → γ[U.lab[i]!]! = V.lab[i]!) :
+    checkAutom ctx.g γ = true := by
   have hUok := descends_iterOk hU.descends hS.it
   have hVok := descends_iterOk hV.descends hS.it
   exact checkAutom_scatter_of_leafRows_eq hγsz hUok.ok.labSize
     (labInj_perm_range hUok.ok.labSize hUok.ok.labOk hUok.inj)
     hVok.ok.labSize
     (labInj_perm_range hVok.ok.labSize hVok.ok.labOk hVok.inj)
-    hsc hgb
-    (leafRows_eq_of_descPaths hgsz hgb hsymm hloop hS hU hV htcs
+    hsc
+    (leafRows_eq_of_descPaths hgsz hsymm hloop hS hU hV htcs
       hUd hVd).symm
 
 /-! # Store validity, assembled per admission event -/
@@ -258,31 +256,30 @@ theorem checkAutom_scatter_of_descPaths
 /-- If `processnode` records a generator, the same generator is both
 checked and identified as the scatter from the first or incumbent leaf
 onto the current leaf. -/
-theorem processnode_carrier {level numcells : Nat} {st : SearchSt}
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hok₁ : LabOk st.firstlab ctx.n) (hinj₁ : LabInj st.firstlab ctx.n)
-    (hszL : st.lab.size = ctx.n)
-    (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
-    (hsz₂ : st.canonlab.size = ctx.n)
-    (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
+theorem processnode_carrier {level numcells : Nat} {st : SearchSt n}
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hsz₁ : st.firstlab.size = n)
+    (hok₁ : LabOk st.firstlab n) (hinj₁ : LabInj st.firstlab n)
+    (hszL : st.lab.size = n)
+    (hokL : LabOk st.lab n) (hinjL : LabInj st.lab n)
+    (hsz₂ : st.canonlab.size = n)
+    (hok₂ : LabOk st.canonlab n) (hinj₂ : LabInj st.canonlab n)
     (harm3 : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
         0 → leafRows ctx st.canonlab = leafRows ctx st.lab) :
     (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
     ∃ γ, (processnode ctx level numcells st).2.genTrace =
-        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true ∧
-      ((∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]!) ∨
-       (∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]!)) := by
+        st.genTrace.push γ ∧ checkAutom ctx.g γ = true ∧
+      ((∀ i, i < n → γ[st.firstlab[i]!]! = st.lab[i]!) ∨
+       (∀ i, i < n → γ[st.canonlab[i]!]! = st.lab[i]!)) := by
   have hp₁ := labInj_perm_range hsz₁ hok₁ hinj₁
   have hpL := labInj_perm_range hszL hokL hinjL
   have hp₂ := labInj_perm_range hsz₂ hok₂ hinj₂
-  have hb₁ : ∀ i, i < ctx.n → st.firstlab[i]! < ctx.n :=
+  have hb₁ : ∀ i, i < n → st.firstlab[i]! < n :=
     fun i hi => hok₁ i (by omega)
-  have hb₂ : ∀ i, i < ctx.n → st.canonlab[i]! < ctx.n :=
+  have hb₂ : ∀ i, i < n → st.canonlab[i]! < n :=
     fun i hi => hok₂ i (by omega)
   rcases processnode_genTrace (level := level) (numcells := numcells)
       (fun a b ha hb he => hinj₁ a b ha hb he)
@@ -292,10 +289,10 @@ theorem processnode_carrier {level numcells : Nat} {st : SearchSt}
   · rcases harm with ⟨hsc, -, haut⟩ | ⟨hsc, -, -, htceq⟩
     · refine Or.inr ⟨γ, hpush, ?_, Or.inl hsc⟩
       exact checkAutom_scatter_of_isautom hγsz hsz₁ hp₁ hszL hpL
-        hsc hsymm hloop hgb haut
+        hsc hsymm hloop haut
     · exact Or.inr ⟨γ, hpush,
         checkAutom_scatter_of_leafRows_eq hγsz hsz₂ hp₂ hszL hpL
-          hsc hgb (harm3 htceq), Or.inr hsc⟩
+          hsc (harm3 htceq), Or.inr hsc⟩
 
 /-- Every generator `processnode` admits passes `checkAutom`, given
 the run-level facts per arm: permutation facts for the three
@@ -304,25 +301,24 @@ labellings (the run invariant carries them); the code-1 arm's mandatory
 incumbent-store account: `updatecan_inv` completes `canong` to the
 incumbent's leaf rows and `testcanlab_fst` reads the tie as row
 equality). -/
-theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hok₁ : LabOk st.firstlab ctx.n) (hinj₁ : LabInj st.firstlab ctx.n)
-    (hszL : st.lab.size = ctx.n)
-    (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
-    (hsz₂ : st.canonlab.size = ctx.n)
-    (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
+theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt n}
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hsz₁ : st.firstlab.size = n)
+    (hok₁ : LabOk st.firstlab n) (hinj₁ : LabInj st.firstlab n)
+    (hszL : st.lab.size = n)
+    (hokL : LabOk st.lab n) (hinjL : LabInj st.lab n)
+    (hsz₂ : st.canonlab.size = n)
+    (hok₂ : LabOk st.canonlab n) (hinj₂ : LabInj st.canonlab n)
     (harm3 : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
         0 →
       leafRows ctx st.canonlab = leafRows ctx st.lab) :
     (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
     ∃ γ, (processnode ctx level numcells st).2.genTrace =
-        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true := by
-  rcases processnode_carrier hgb hsymm hloop hsz₁ hok₁ hinj₁ hszL
+        st.genTrace.push γ ∧ checkAutom ctx.g γ = true := by
+  rcases processnode_carrier hsymm hloop hsz₁ hok₁ hinj₁ hszL
       hokL hinjL hsz₂ hok₂ hinj₂ harm3 with
     h | ⟨γ, hpush, hcheck, -⟩
   · exact Or.inl h
@@ -334,36 +330,35 @@ theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
 This is the store-validity invariant, in the form the domination
 induction threads: `processnode` is the only primitive that writes
 `genTrace`, so every other event preserves it by its frame. -/
-def GenTraceOk (ctx : Ctx) (st : SearchSt) : Prop :=
-  ∀ γ ∈ st.genTrace, checkAutom ctx.g γ ctx.n = true
+def GenTraceOk (ctx : Ctx n) (st : SearchSt n) : Prop :=
+  ∀ γ ∈ st.genTrace, checkAutom ctx.g γ = true
 
 /-- Read one checked-generator fact from the run-side store invariant. -/
-theorem GenTraceOk.check {ctx : Ctx} {st : SearchSt}
+theorem GenTraceOk.check {ctx : Ctx n} {st : SearchSt n}
     (h : GenTraceOk ctx st) {γ : Array Nat} (η : γ ∈ st.genTrace.toList) :
-    checkAutom ctx.g γ ctx.n = true :=
+    checkAutom ctx.g γ = true :=
   h γ (Array.mem_toList_iff.mp η)
 
 /-- The invariant survives the admission event. The only row clause is
 the incumbent tie behind the `testcanlab` arm; code 1 is scanned. -/
-theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt}
+theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt n}
     (hprev : GenTraceOk ctx st)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hok₁ : LabOk st.firstlab ctx.n) (hinj₁ : LabInj st.firstlab ctx.n)
-    (hszL : st.lab.size = ctx.n)
-    (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
-    (hsz₂ : st.canonlab.size = ctx.n)
-    (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hsz₁ : st.firstlab.size = n)
+    (hok₁ : LabOk st.firstlab n) (hinj₁ : LabInj st.firstlab n)
+    (hszL : st.lab.size = n)
+    (hokL : LabOk st.lab n) (hinjL : LabInj st.lab n)
+    (hsz₂ : st.canonlab.size = n)
+    (hok₂ : LabOk st.canonlab n) (hinj₂ : LabInj st.canonlab n)
     (harm3 : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
         0 →
       leafRows ctx st.canonlab = leafRows ctx st.lab) :
     GenTraceOk ctx (processnode ctx level numcells st).2 := by
   intro γ hγ
-  rcases processnode_checkAutom hgb hsymm hloop hsz₁ hok₁ hinj₁ hszL
+  rcases processnode_checkAutom hsymm hloop hsz₁ hok₁ hinj₁ hszL
       hokL hinjL hsz₂ hok₂ hinj₂ harm3 with heq | ⟨δ, hpush, hδ⟩
   · rw [heq] at hγ
     exact hprev γ hγ
