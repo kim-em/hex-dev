@@ -177,6 +177,48 @@ theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
       map_color := fun v => ?_ })
   rfl
 
+/-! # Automorphisms -/
+
+/-- The automorphism generators the pinned search discovers, decoded as
+colour-preserving self-isomorphisms of the Mathlib graph. Each entry is
+an automorphism by `Hex.GraphIso.autos_isIso`, decoded by
+`isoOfIsIso`; whether the list generates the whole automorphism group
+is not proved, so this is a source of automorphisms rather than a
+presentation of the group. -/
+def autos (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
+    List (Colored.Iso G G) :=
+  (Aut.gens (encode e G)).attach.map fun p =>
+    isoOfIsIso e e (Aut.gens_isIso p.property)
+
+/-- The orbit-stabilizer product the pinned search computes, which is
+the order of the colour-preserving automorphism group when the recorded
+orbits are the true ones. Conformance pins it against nauty's
+`grpsize`; no theorem states it, because that would need the generators
+to generate the whole group, and without that it is only a lower
+bound. -/
+def autOrder (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
+    Nat :=
+  Aut.order (encode e G)
+
+/-- The number of vertex orbits the pinned search reports, under the
+same caveat as `autOrder`. -/
+def autNumOrbits (e : V ≃ Fin n) (G : Colored V k)
+    [DecidableRel G.graph.Adj] : Nat :=
+  Aut.numOrbits (encode e G)
+
+/-- Vertices the reported orbit array puts together are carried onto
+each other by a colour-preserving automorphism. -/
+theorem sameOrbit_of_autos (e : V ≃ Fin n) (G : Colored V k)
+    [DecidableRel G.graph.Adj] (v w : V)
+    (h : (Aut.orbits (encode e G))[(e v).val]! =
+      (Aut.orbits (encode e G))[(e w).val]!) :
+    ∃ f : Colored.Iso G G, f.graphIso v = w := by
+  rcases (Aut.sameOrbit_of_orbits_eq (encode e G) (e v) (e w) h).elim
+    with ⟨p, hp, hpv⟩
+  refine ⟨isoOfIsIso e e hp, ?_⟩
+  show e.symm (p.get (e v)) = w
+  rw [hpv, Equiv.symm_apply_apply]
+
 /-! # Cardinality and cell-size obstructions -/
 
 /-- Unequal vertex cardinalities forbid any graph isomorphism. -/

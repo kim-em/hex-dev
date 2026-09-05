@@ -106,6 +106,7 @@ public import HexGraphIso.Nauty.EquitableStep
 public import HexGraphIso.Nauty.EquitableFix
 public import HexGraphIso.Nauty.TargetCell
 public import HexGraphIso.Ops
+public import HexGraphIso.Autos
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
@@ -125,12 +126,14 @@ The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon` and
 isomorphism, and `iso_iff_canon_eq` is the biconditional the whole
 library exists to prove. `certify?`, `checkCanon` and `canon?` are the
 bounded produce-then-replay pipeline for proof terms, and `checkDiff` its
-negative counterpart. `Families` supplies the named deterministic graphs
+negative counterpart. `autos` reports the automorphism generators the search discovers, with
+the vertex orbits, the orbit count and the group order.
+`Families` supplies the named deterministic graphs
 and `Random` the reproducible pseudo-random ones.
 
 The whole surface is mirrored on bare graphs. `Hex.Graph.Isomorphic` is
-isomorphism of `Graph n`, `Graph.canon`, `Graph.findIso` and `Graph.isIso`
-are the operations, and `Graph.isomorphic_singleColor_iff` is the
+isomorphism of `Graph n`, `Graph.canon`, `Graph.findIso`, `Graph.isIso` and
+`Graph.autos` are the operations, and `Graph.isomorphic_singleColor_iff` is the
 equivalence through `Graph.singleColor` along which every uncoloured
 theorem is transported.
 

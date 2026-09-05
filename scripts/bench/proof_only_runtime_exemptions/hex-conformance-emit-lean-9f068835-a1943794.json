@@ -1,6 +1,0 @@
-{
- "path": "Hex/Conformance/Emit.lean",
- "baseline_blob": "9f068835df18320ea932eff4d6e151c02d62f8d1",
- "current_blob": "a19437944f68af77594b2c623cdf6c2935f67e16",
- "reason": "Adds the emitGraphIsoFixture record emitter for the hex-graph-iso conformance stream. Existing emitters are byte-for-byte unchanged and the factorization service does not link conformance emitters, so its measured runtime is unchanged."
-}

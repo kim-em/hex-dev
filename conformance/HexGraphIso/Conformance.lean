@@ -23,14 +23,18 @@ Core conformance for `HexGraphIso`.
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
   `findIso`, `findIso?`, `checkIso?`, `canon?`, `canonicalize`,
   `canon`, `label`, `Reference.canon`, `Nauty.runColored`,
-  `Nauty.canonicalize?`, `Nauty.certifyCanon?`.
+  `Nauty.canonicalize?`, `Nauty.certifyCanon?`, `autos`,
+  `Graph.autos`.
 - **Covered properties:** builder rejection and duplicate collapse;
   permutation inverse and composition laws; `relabel G (label G) =
   canon G` evaluated on committed inputs; canonical-form invariance
   under committed relabellings; colour-cell contiguity of canonical
   forms; verdict agreement between the reference implementation and the
   nauty-compatible search; found transporters accepted by `checkIso`;
-  exhaustion returning `none`, never `false`.
+  exhaustion returning `none`, never `false`; every returned
+  automorphism generator accepted by `checkIso` against the graph
+  itself, the orbit array constant on each orbit, and the group order
+  of named examples.
 - **Covered edge cases:** the empty graph (`n = 0`, `k = 0`), a single
   vertex, discrete and one-cell colourings, complete and empty graphs,
   duplicate and reversed edges in the builder, out-of-range and loop
@@ -284,6 +288,45 @@ where go : List Nauty.CertNode → Bool
     (Graph.singleColor (Families.copies 2 (Families.cycle 3))) ==
     some false
 
+/-! # Automorphisms -/
+
+/-- Every returned generator passes the isomorphism check against the
+graph itself, and the orbit array is a fixed point of itself (every
+entry is already a representative). -/
+private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
+  ((autos G).gens.all fun p => checkIso G G p) &&
+    (autos G).orbits.size == n &&
+    ((List.range n).all fun v =>
+      (autos G).orbits[(autos G).orbits[v]!]! == (autos G).orbits[v]!)
+
+#guard autosWellFormed p3
+#guard autosWellFormed k3
+#guard autosWellFormed c4
+#guard autosWellFormed petersen
+#guard autosWellFormed kneser52
+#guard autosWellFormed prism5
+
+-- the Petersen graph: one vertex orbit, automorphism group of order 120
+#guard (autos petersen).numOrbits == 1
+#guard (autos petersen).order == 120
+#guard (autos petersen).gens.length == 4
+-- an isomorphic presentation has the same group order
+#guard (autos kneser52).order == 120
+-- the pentagonal prism is not the Petersen graph and its group is smaller
+#guard (autos prism5).order == 20
+-- the path on three vertices: one reflection, two orbits
+#guard (autos p3).order == 2
+#guard (autos p3).numOrbits == 2
+-- the triangle: the full symmetric group on three points
+#guard (autos k3).order == 6
+#guard (autos k3).numOrbits == 1
+-- the uncoloured surface reports the same data through `singleColor`
+#guard (Graph.autos (Families.gpetersen 5 2)).order == 120
+#guard (Graph.autos (Families.cycle 7)).order == 14
+#guard (Graph.autos (Families.completeMultipartite [1, 1, 1, 1])).order == 24
+#guard (Graph.autos (Families.hypercube 3)).order == 48
+#guard (Graph.autos (Families.path 5)).numOrbits == 3
+
 /-! # The empty graph -/
 
 private def empty0 : Colored 0 0 :=
@@ -294,5 +337,8 @@ private def empty0 : Colored 0 0 :=
 #guard canon empty0 == empty0
 #guard (Nauty.certifyCanon? empty0).isSome
 #guard (Nauty.canonicalize? empty0).isSome
+#guard (autos empty0).gens.isEmpty
+#guard (autos empty0).numOrbits == 0
+#guard (autos empty0).order == 1
 
 end Hex.GraphIso.Conformance

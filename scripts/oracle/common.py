@@ -143,6 +143,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "factor",
         "divisorfn",
         "graphiso",
+        "graphisoautos",
         "order",
         "cyclotomic",
     }
@@ -342,6 +343,47 @@ def _validate_mv_poly_list(polys: Any, arity: int, context: str) -> None:
         _validate_mv_terms(terms, arity, f"{context}[{index}]")
 
 
+def _validate_graphiso_core(record: dict[str, Any]) -> None:
+    """The fields a canonical-labelling fixture record carries.
+
+    Shared by ``graphiso`` and ``graphisoautos``: the latter is the
+    former plus the automorphism fields, so a consumer reading the whole
+    stream for canonical forms needs no knowledge of the second kind.
+    """
+    n = record.get("n")
+    k = record.get("k")
+    if not _is_nat(n) or not _is_nat(k):
+        raise FixtureError(f"graphiso.n/k must be Nat: {record!r}")
+    colors = record.get("colors")
+    if not isinstance(colors, list) or len(colors) != n or not all(
+        isinstance(c, int) and 0 <= c < max(k, 1) for c in colors
+    ):
+        raise FixtureError(f"graphiso.colors must be n colours below k: {record!r}")
+    edges = record.get("edges")
+    if not isinstance(edges, list) or not all(
+        isinstance(e, list) and len(e) == 2
+        and all(isinstance(x, int) and 0 <= x < n for x in e)
+        and e[0] < e[1]
+        for e in edges
+    ):
+        raise FixtureError(f"graphiso.edges must be i<j pairs below n: {record!r}")
+    lab = record.get("canonLab")
+    if not isinstance(lab, list) or len(lab) != n or sorted(lab) != list(range(n)):
+        raise FixtureError(f"graphiso.canonLab must be a permutation of 0..n-1: {record!r}")
+    tri = record.get("canonTri")
+    if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
+        c not in "01" for c in tri
+    ):
+        raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
+    sizes = record.get("cellSizes")
+    if not isinstance(sizes, list) or len(sizes) != k or sum(sizes) != n or not all(
+        isinstance(s, int) and s > 0 for s in sizes
+    ):
+        raise FixtureError(f"graphiso.cellSizes must be k positive sizes summing to n: {record!r}")
+    if not _is_nat(record.get("numnodes")):
+        raise FixtureError(f"graphiso.numnodes must be Nat: {record!r}")
+
+
 def _validate_fixture(record: dict[str, Any]) -> None:
     kind = record.get("kind")
     if kind not in VALID_FIXTURE_KINDS and kind != "result":
@@ -371,38 +413,46 @@ def _validate_fixture(record: dict[str, Any]) -> None:
                 f"poly.modFactorDegrees requires modFactorPrime: {record!r}"
             )
     elif kind == "graphiso":
-        n = record.get("n")
-        k = record.get("k")
-        if not _is_nat(n) or not _is_nat(k):
-            raise FixtureError(f"graphiso.n/k must be Nat: {record!r}")
-        colors = record.get("colors")
-        if not isinstance(colors, list) or len(colors) != n or not all(
-            isinstance(c, int) and 0 <= c < max(k, 1) for c in colors
+        _validate_graphiso_core(record)
+    elif kind == "graphisoautos":
+        # a superset of a `graphiso` record: the canonical fields are
+        # validated by the same rules, so a consumer that only knows
+        # canonical forms can read the whole stream
+        _validate_graphiso_core(record)
+        n = record["n"]
+        gens = record.get("gens")
+        if not isinstance(gens, list) or not all(
+            isinstance(g, list) and sorted(g) == list(range(n)) for g in gens
         ):
-            raise FixtureError(f"graphiso.colors must be n colours below k: {record!r}")
-        edges = record.get("edges")
-        if not isinstance(edges, list) or not all(
-            isinstance(e, list) and len(e) == 2
-            and all(isinstance(x, int) and 0 <= x < n for x in e)
-            and e[0] < e[1]
-            for e in edges
+            raise FixtureError(
+                f"graphisoautos.gens must be permutations of 0..n-1: {record!r}"
+            )
+        orbits = record.get("orbits")
+        if not isinstance(orbits, list) or len(orbits) != n or not all(
+            isinstance(x, int) and 0 <= x < max(n, 1) for x in orbits
         ):
-            raise FixtureError(f"graphiso.edges must be i<j pairs below n: {record!r}")
-        lab = record.get("canonLab")
-        if not isinstance(lab, list) or len(lab) != n or sorted(lab) != list(range(n)):
-            raise FixtureError(f"graphiso.canonLab must be a permutation of 0..n-1: {record!r}")
-        tri = record.get("canonTri")
-        if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
-            c not in "01" for c in tri
-        ):
-            raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
-        sizes = record.get("cellSizes")
-        if not isinstance(sizes, list) or len(sizes) != k or sum(sizes) != n or not all(
-            isinstance(s, int) and s > 0 for s in sizes
-        ):
-            raise FixtureError(f"graphiso.cellSizes must be k positive sizes summing to n: {record!r}")
-        if not _is_nat(record.get("numnodes")):
-            raise FixtureError(f"graphiso.numnodes must be Nat: {record!r}")
+            raise FixtureError(
+                f"graphisoautos.orbits must be n representatives: {record!r}"
+            )
+        numOrbits = record.get("numOrbits")
+        if not _is_nat(numOrbits) or numOrbits > n:
+            raise FixtureError(
+                f"graphisoautos.numOrbits must be a Nat at most n: {record!r}"
+            )
+        if numOrbits != sum(1 for v in range(n) if orbits[v] == v):
+            raise FixtureError(
+                f"graphisoautos.numOrbits must count the orbit "
+                f"representatives: {record!r}"
+            )
+        if not _is_nat(record.get("numGenerators")):
+            raise FixtureError(
+                f"graphisoautos.numGenerators must be Nat: {record!r}"
+            )
+        order = record.get("order")
+        if not _is_nat(order) or order < 1:
+            raise FixtureError(
+                f"graphisoautos.order must be a positive Nat: {record!r}"
+            )
     elif kind == "matrix":
         rows = record.get("rows")
         if not isinstance(rows, list) or not all(

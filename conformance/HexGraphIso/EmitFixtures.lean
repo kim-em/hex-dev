@@ -90,6 +90,37 @@ private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
     (sizes.toList.map Int.ofNat)
     r.numnodes
 
+/-- Emit one automorphism-group record: the canonical answer a
+`graphiso` record carries, so the stream stays readable end to end by a
+consumer that only knows canonical forms, together with the generator
+list, orbits, orbit count, generator count and group order the public
+`autos` surface reports. -/
+private def emitAutoCase (case : String) (n k : Nat) (colors : Array Nat)
+    (edges : List (Nat × Nat)) : IO Unit := do
+  let some G := coloredOf? n k colors edges
+    | throw (IO.userError s!"emit: case {case} rejected by the builders")
+  let res := canonicalize G
+  let r := Nauty.runColored G
+  let a := autos G
+  let mut sizes : Array Nat := .replicate k 0
+  for v in [0 : n] do
+    let c := colors[v]!
+    sizes := sizes.set! c (sizes[c]! + 1)
+  emitGraphIsoAutosFixture lib case n k
+    (colors.toList.map Int.ofNat)
+    (edges.map fun (p, q) =>
+      (Int.ofNat (Nat.min p q), Int.ofNat (Nat.max p q)))
+    ((List.finRange n).map fun i => Int.ofNat (res.label.get i).val)
+    (triBits res.form)
+    (sizes.toList.map Int.ofNat)
+    r.numnodes
+    (a.gens.map fun p =>
+      (List.finRange n).map fun i => Int.ofNat (p.get i).val)
+    r.numgenerators
+    (a.orbits.toList.map Int.ofNat)
+    a.numOrbits
+    a.order
+
 /-- All base-`k` colour vectors of length `n`, vertex `0` most
 significant, in ascending numeral order. -/
 private def colorVectors (k : Nat) : Nat → List (List Nat)
@@ -159,6 +190,41 @@ private def paley13 : List (Nat × Nat) := Id.run do
 
 private def complete (n : Nat) : List (Nat × Nat) := pairList n
 
+/-- The Latin-square graph `L₃(m)` of the cyclic square
+`(r, c) ↦ (r + c) mod m`: the `m²` cells numbered `r * m + c`, adjacent
+when they share a row, a column or a symbol. -/
+private def latinSquareEdges (m : Nat) : List (Nat × Nat) := Id.run do
+  let mut out := []
+  for a in [0 : m * m] do
+    for b in [a + 1 : m * m] do
+      if a / m == b / m || a % m == b % m ||
+          (a / m + a % m) % m == (b / m + b % m) % m then
+        out := (a, b) :: out
+  return out.reverse
+
+/-- The incidence graph of the cyclic Latin square of order `q`, in the
+four-colour encoding of the nauty introduction: one vertex per row
+(`0 .. q-1`), column (`q .. 2q-1`), symbol (`2q .. 3q-1`) and position
+(`3q + i * q + j`), with each position joined to its row, its column
+and the symbol written there. Its colour-preserving automorphism group
+is the isotopy group of the square. -/
+private def latinIncidenceEdges (q : Nat) : List (Nat × Nat) := Id.run do
+  let mut out := []
+  for i in [0 : q] do
+    for j in [0 : q] do
+      let p := 3 * q + i * q + j
+      out := (2 * q + ((i + j) % q), p) :: (q + j, p) :: (i, p) :: out
+  return out.reverse.map fun (a, b) => (Nat.min a b, Nat.max a b)
+
+/-- The four-colour vector of `latinIncidenceEdges`. -/
+private def latinIncidenceColors (q : Nat) : Array Nat := Id.run do
+  let mut c : Array Nat := #[]
+  for _ in [0 : q] do c := c.push 0
+  for _ in [0 : q] do c := c.push 1
+  for _ in [0 : q] do c := c.push 2
+  for _ in [0 : q * q] do c := c.push 3
+  return c
+
 /-- Apply a vertex permutation to an edge list, renormalizing to `i < j`
 pairs in lexicographic order. -/
 private def relabelEdges (perm : Array Nat) (edges : List (Nat × Nat)) :
@@ -219,6 +285,45 @@ def main : IO Unit := do
   emitCase "rand/g12-seed2" 12 1 (.replicate 12 0) (edgesOfMask 12 mask12b)
   let (col10, _) := Random.ontoColoring h1 10 2
   emitCase "rand/petersen-col2-seed2" 10 2 col10 petersen
+  -- automorphism-group records: every labelled uncoloured graph on at
+  -- most four vertices, every graph and ordered-surjective-partition
+  -- pair on at most three, and the named and pseudo-random examples
+  for n in [1 : 5] do
+    let pcount := n * (n - 1) / 2
+    for mask in [0 : 2 ^ pcount] do
+      emitAutoCase s!"a/u/n{n}/m{mask}" n 1 (.replicate n 0) (edgesOfMask n mask)
+  for n in [1 : 4] do
+    let pcount := n * (n - 1) / 2
+    for mask in [0 : 2 ^ pcount] do
+      let edges := edgesOfMask n mask
+      for k in [1 : n + 1] do
+        for v in colorVectors k n do
+          if isOnto k v then
+            let digits := String.join (v.map toString)
+            emitAutoCase s!"a/c/n{n}/m{mask}/k{k}/{digits}" n k v.toArray edges
+  emitAutoCase "a/named/petersen" 10 1 (.replicate 10 0) petersen
+  emitAutoCase "a/named/kneser52" 10 1 (.replicate 10 0) kneser52
+  emitAutoCase "a/named/prism5" 10 1 (.replicate 10 0) prism5
+  emitAutoCase "a/named/q3" 8 1 (.replicate 8 0) (hypercube 3)
+  emitAutoCase "a/named/q4" 16 1 (.replicate 16 0) (hypercube 4)
+  emitAutoCase "a/named/k33" 6 1 (.replicate 6 0) (completeBipartite 3 3)
+  emitAutoCase "a/named/triangles4" 12 1 (.replicate 12 0) (triangles 4)
+  emitAutoCase "a/named/paley13" 13 1 (.replicate 13 0) paley13
+  emitAutoCase "a/named/empty8" 8 1 (.replicate 8 0) []
+  emitAutoCase "a/named/complete8" 8 1 (.replicate 8 0) (complete 8)
+  emitAutoCase "a/named/latin-l3-4" 16 1 (.replicate 16 0) (latinSquareEdges 4)
+  emitAutoCase "a/named/latin-incidence3" 18 4
+    (latinIncidenceColors 3) (latinIncidenceEdges 3)
+  emitAutoCase "a/named/latin-incidence4" 28 4
+    (latinIncidenceColors 4) (latinIncidenceEdges 4)
+  emitAutoCase "a/named/q4-parity2" 16 2
+    (.ofFn (n := 16) fun i => (Nauty.popCount i.val) % 2) (hypercube 4)
+  emitAutoCase "a/rand/petersen-relabel-seed1" 10 1 (.replicate 10 0)
+    (relabelEdges perm10 petersen)
+  emitAutoCase "a/rand/g12-seed1" 12 1 (.replicate 12 0) (edgesOfMask 12 mask12a)
+  emitAutoCase "a/rand/g12-col3-seed1" 12 3 col12 (edgesOfMask 12 mask12a)
+  emitAutoCase "a/rand/g12-seed2" 12 1 (.replicate 12 0) (edgesOfMask 12 mask12b)
+  emitAutoCase "a/rand/petersen-col2-seed2" 10 2 col10 petersen
 
 end Hex.GraphIsoEmit
 

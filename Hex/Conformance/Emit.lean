@@ -247,6 +247,37 @@ def emitGraphIsoFixture (lib case : String) (n k : Nat)
     ("numnodes",  jsonInt (Int.ofNat numnodes))
   ]
 
+/-- Emit a `graphisoautos` fixture record: every field of a `graphiso`
+record, so that a consumer reading the whole stream for canonical forms
+needs no knowledge of this kind, plus the automorphism generators the
+pinned traversal records in discovery order, the vertex orbits, the
+orbit count, the generator count the transcribed search reports and the
+group order. -/
+def emitGraphIsoAutosFixture (lib case : String) (n k : Nat)
+    (colors : List Int) (edges : List (Int × Int)) (canonLab : List Int)
+    (canonTri : String) (cellSizes : List Int) (numnodes : Nat)
+    (gens : List (List Int)) (numGenerators : Nat) (orbits : List Int)
+    (numOrbits : Nat) (order : Nat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",          jsonString "graphisoautos"),
+    ("schema",        jsonInt 1),
+    ("lib",           jsonString lib),
+    ("case",          jsonString case),
+    ("n",             jsonInt (Int.ofNat n)),
+    ("k",             jsonInt (Int.ofNat k)),
+    ("colors",        jsonIntList colors),
+    ("edges",         jsonIntMatrix (edges.map fun (a, b) => [a, b])),
+    ("canonLab",      jsonIntList canonLab),
+    ("canonTri",      jsonString canonTri),
+    ("cellSizes",     jsonIntList cellSizes),
+    ("numnodes",      jsonInt (Int.ofNat numnodes)),
+    ("gens",          jsonIntMatrix gens),
+    ("numGenerators", jsonInt (Int.ofNat numGenerators)),
+    ("orbits",        jsonIntList orbits),
+    ("numOrbits",     jsonInt (Int.ofNat numOrbits)),
+    ("order",         jsonInt (Int.ofNat order))
+  ]
+
 /-- Emit a `matrix` fixture record. -/
 def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := do
   emitLine <| jsonObject [

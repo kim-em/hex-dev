@@ -60,6 +60,14 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   `Graph.isIso` and the rest. `Graph.singleColor` is the one-cell view
   they read, and `Graph.isomorphic_singleColor_iff` the equivalence
   they are transported along.
+- `autos` reports the automorphism generators the pinned traversal
+  discovers, in discovery order, with the vertex orbits, the orbit
+  count and the group order; `Graph.autos` is the uncoloured mirror.
+  Every returned generator is proved to be an automorphism
+  (`autos_isIso`) and vertices sharing an orbit representative are
+  proved to lie in one orbit (`autos_sameOrbit`). That the generators
+  generate the whole group is not yet proved, so the orbit count and
+  the group order are conformance-pinned rather than theorems.
 - `findIso?`, `checkIso?`, and `canon?` are the resource-bounded
   certificate operations. `SearchLimits` bounds the search (`maxNodes`, `maxCertNodes`)
   and `ReplayLimits` bounds kernel replay (`maxCheckerSteps`). Exhaustion

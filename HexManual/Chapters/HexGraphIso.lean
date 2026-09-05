@@ -164,6 +164,69 @@ example : ¬ Isomorphic edgeMarkB nonedgeMark := by graph_iso
 end HexGraphIsoChapterExample
 ```
 
+# The automorphism group
+%%%
+tag := "hex-graph-iso-automorphisms"
+%%%
+
+The canonical search discovers automorphisms as it goes: whenever a leaf
+of the search tree carries the same refinement codes as an earlier one,
+the permutation carrying the earlier labelling onto it is a candidate
+automorphism, and the search prunes with the ones that check out. Those
+generators are an output in their own right.
+{name Hex.GraphIso.autos}`autos` returns them, in the order the traversal
+discovered them, together with the vertex orbits, the number of orbits
+and the order of the group. The uncoloured mirror is
+{name Hex.Graph.autos}`Graph.autos`.
+
+{docstring Hex.GraphIso.autos}
+
+The Petersen graph is the natural first example. Its automorphism group
+is the symmetric group on the underlying five-element set, of order
+`120`, and it is vertex-transitive, so there is a single orbit. The
+generators below are the four the traversal records; the graph is the
+same {name Hex.GraphIso.Families.gpetersen}`Families.gpetersen` `5 2`
+used above.
+
+```lean
+namespace HexGraphIsoAutomorphismExample
+
+open HexGraphIsoChapterExample
+
+#guard (Graph.autos petersen).order = 120
+#guard (Graph.autos petersen).numOrbits = 1
+#guard (Graph.autos petersen).orbits = #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+#guard ((Graph.autos petersen).gens.map
+  fun p => (List.finRange 10).map fun i => (p.get i).val) =
+    [[0, 1, 2, 7, 5, 4, 6, 3, 9, 8],
+     [0, 1, 6, 8, 5, 4, 2, 9, 3, 7],
+     [0, 4, 3, 2, 1, 5, 9, 8, 7, 6],
+     [1, 0, 4, 3, 2, 6, 5, 9, 8, 7]]
+```
+
+The list is data, but membership is a theorem: every permutation
+`autos` returns really is an automorphism, and the proof runs the same
+check the isomorphism surface runs.
+
+```lean
+example (p : Perm 10) (h : p ∈ (Graph.autos petersen).gens) :
+    Graph.IsIso petersen petersen p :=
+  Graph.autos_isIso h
+
+end HexGraphIsoAutomorphismExample
+```
+
+The orbit array carries a theorem too. Two vertices with the same entry
+are carried onto each other by an automorphism
+({name Hex.Graph.autos_sameOrbit}`Graph.autos_sameOrbit`). The converse,
+that different entries mean different orbits, is what it would mean for
+the returned generators to generate the whole automorphism group, and
+that is not proved here; the orbit count and the group order are pinned
+exactly against nauty by conformance instead. So `numOrbits = 1` and
+`order = 120` are measured facts about this run of the algorithm, in the
+same standing as its visited-node count, while `Graph.autos_isIso` and
+`Graph.autos_sameOrbit` are theorems.
+
 # Latin-square isotopy as graph isomorphism
 %%%
 tag := "hex-graph-iso-latin-square"
@@ -369,6 +432,58 @@ example : Isotopic nautySquare cyclicSquare := by
 
 end LatinSquareExample
 ```
+
+The same encoding turns the automorphism surface into a statement about
+one square rather than a pair. A colour-preserving automorphism of the
+incidence graph is an isotopy of the square onto itself, so the group
+`autos` reports is the isotopy group. Spelling the encoding out on
+`Colored 18 4` rather than reusing the `Vertex` type above keeps this
+example Mathlib-free: vertices `0, 1, 2` are the rows, `3, 4, 5` the
+columns, `6, 7, 8` the symbols, and `9 + 3 * i + j` the position
+`(i, j)`, each joined to its row, its column and the symbol
+`(i + j) % 3` written there.
+
+```lean
+namespace LatinAutomorphismExample
+
+def incidenceEdges : List (Nat × Nat) :=
+  (List.range 3).flatMap fun i => (List.range 3).flatMap fun j =>
+    [(i, 9 + 3 * i + j), (3 + j, 9 + 3 * i + j),
+     (6 + (i + j) % 3, 9 + 3 * i + j)]
+
+def incidence : Colored 18 4 where
+  graph := (Graph.ofEdges? 18 incidenceEdges).getD (Graph.empty 18)
+  coloring := (Coloring.ofVector? (Hex.Vector.ofFn' fun v =>
+      if v.val < 3 then 0 else if v.val < 6 then 1
+      else if v.val < 9 then 2 else 3)).getD (Coloring.mod 18 4)
+
+-- the cyclic square of order three: eighteen isotopies, and four
+-- orbits, one on each of the rows, the columns, the symbols and the
+-- positions
+#guard (autos incidence).order = 18
+#guard (autos incidence).numOrbits = 4
+#guard (autos incidence).orbits =
+  #[0, 0, 0, 3, 3, 3, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+
+example (p : Perm 18) (h : p ∈ (autos incidence).gens) :
+    IsIso incidence incidence p :=
+  autos_isIso h
+
+end LatinAutomorphismExample
+```
+
+An isotopy is recovered from a generator by reading its action on the
+three colour classes: the restriction to `0, 1, 2` is the row
+permutation, the restriction to `3, 4, 5` the column permutation, and
+the restriction to `6, 7, 8` the symbol permutation. The position class
+is determined by the other three, which is why the group order counts
+isotopies and not vertex permutations. The eighteen agree with a direct
+count: an isotopy of the cyclic square is a triple `(α, β, γ)` with
+`α i + β j = γ (i + j)`, forcing `α i = a i + p`, `β j = a j + q` and
+`γ k = a k + p + q` for a unit `a` and residues `p, q`, so there are
+`2 * 3 * 3 = 18` of them. Each colour class is one orbit, since the
+translations already act transitively on rows, on columns and on
+symbols.
 
 # Performance
 %%%
