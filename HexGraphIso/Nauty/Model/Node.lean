@@ -11,14 +11,17 @@ public import HexGraphIso.Nauty.Cert
 public section
 
 /-!
-Verification of the pruned branch-and-bound search: `searchNode`
+The code-pruned step of the abstract evaluator ladder. `searchNode`
 threads an incumbent best key and skips any subtree whose refinement
 code falls below the incumbent's code at its depth, exactly as the
 transcription prunes on `code < canoncode[level]`. `searchNode_eq`
 proves the pruned recursion computes the pairwise maximum of the
-incumbent and the unpruned subtree key, with no side conditions, so
-the root call is a verified pruned evaluator of `canonSpec`
-(`searchCanon_eq`) and of `canonSpecKey` (`searchCanon_key`).
+incumbent and the unpruned subtree key with no side conditions, so
+`searchCanon_eq` and `searchCanon_key` present the root call as a
+verified pruned evaluator of `canonSpec` and of `canonSpecKey`.
+Nothing on the theorem path for `canonSpecKey = tracedKey` uses these
+declarations. They are kept as a source of lemmas about pruning in the
+abstract.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -50,16 +53,6 @@ theorem keyMax_bot_right (b : Key n) : keyMax b ⟨[], []⟩ = b := by
   · next h =>
     exact absurd (keyCmp_gt_iff_lt.mpr h) (keyCmp_bot_ne_gt b)
   · rfl
-
-theorem keyMax_eq_left {b y : Key n} (h : keyLe y b) : keyMax b y = b := by
-  rw [keyMax]
-  split
-  · next hlt => exact absurd (keyCmp_gt_iff_lt.mpr hlt) h
-  · rfl
-
-theorem keyMax_eq_right {b y : Key n} (h : keyCmp b y = .lt) :
-    keyMax b y = y := by
-  rw [keyMax, ite_eq_left h]
 
 theorem keyMax_assoc (x y z : Key n) :
     keyMax (keyMax x y) z = keyMax x (keyMax y z) := by
@@ -95,24 +88,47 @@ theorem keyCmp_lt_of_nil {b y : Key n} (hb : b.codes = [])
   · exact absurd hyc hy
   · simp [listCmp]
 
-/-- Prefixing a common code commutes with the key maximum. -/
-theorem keyMax_cons (c : Nat) (cs cs' : List Nat) (r r' : List (VSet n)) :
-    keyMax ⟨c :: cs, r⟩ ⟨c :: cs', r'⟩ =
-      ⟨c :: (keyMax ⟨cs, r⟩ ⟨cs', r'⟩).codes,
-        (keyMax ⟨cs, r⟩ ⟨cs', r'⟩).rows⟩ := by
-  rw [keyMax, keyMax, keyCmp_cons_eq]
-  split
-  · rfl
-  · rfl
+/-! # The pruned search -/
 
-/-! # The incumbent maximum -/
-
-/-- The contract of one pruned search node: the incumbent absorbed
-into the subtree's best key, an absent incumbent contributing
-nothing. -/
-@[expose] def incMax : Option (Key n) → Key n → Key n
-  | none, y => y
-  | some b, y => keyMax b y
+/-- Branch-and-bound maximum of the incumbent and this subtree's keys,
+expressed at this node's depth. The incumbent prunes children whose
+refinement code falls below its code here. Untrusted: results are
+validated by `checkKey`. -/
+@[expose] def searchNode (ctx : Ctx n) (tcLevel : Nat) :
+    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → Option (Key n) → Key n
+  | 0, _, _, _, _, _, inc => inc.getD ⟨[], []⟩
+  | fuel + 1, level, lab, ptn, active, numcells, inc =>
+    let rs := refine ctx level lab ptn active numcells
+    let step : Option (Key n) → Key n := fun tail0 =>
+      if discreteAt rs.ptn level n then
+        let leafTail : Key n := ⟨[codeSentinel], leafRows ctx rs.lab⟩
+        match tail0 with
+        | none => ⟨rs.longcode :: leafTail.codes, leafTail.rows⟩
+        | some t =>
+          let t' := keyMax t leafTail
+          ⟨rs.longcode :: t'.codes, t'.rows⟩
+      else
+        let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
+        let t := (List.range tcr.2.2).foldl
+          (fun (acc : Option (Key n)) o =>
+            let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
+              rs.lab[tcr.1 + o]!
+            some (searchNode ctx tcLevel fuel (level + 1) br.1
+              br.2.1 br.2.2 (rs.numcells + 1) acc))
+          tail0
+        match t with
+        | none => ⟨[], []⟩
+        | some t => ⟨rs.longcode :: t.codes, t.rows⟩
+    match inc with
+    | none => step none
+    | some b =>
+      match b.codes with
+      | [] => step none
+      | bc :: brest =>
+        match compare rs.longcode bc with
+        | .lt => b
+        | .gt => step none
+        | .eq => step (some ⟨brest, b.rows⟩)
 
 /-! # The pruned search computes the incumbent maximum -/
 

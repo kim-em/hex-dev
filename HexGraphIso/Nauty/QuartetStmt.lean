@@ -14,7 +14,7 @@ public section
 
 /-!
 Per-node facts about the search state: the incumbent read off the
-state, the generator a code-one leaf scatters, the positions a call
+state, the generator a code-one leaf records, the positions a call
 leaves fixed, and the root.
 
 `nodeKey` is a node's subtree key under its path codes. `stInc` reads
@@ -53,9 +53,9 @@ degenerate reading therefore *outranks every reachable leaf key*, and
 that the final incumbent is the degenerate one, which is false as soon
 as the search installs anything.
 
-`SearchModel` already carries the fix: `incMax : Option (Key n) → Key n →
-Key n` with `none` as the bottom, which is what `searchNode_eq` folds
-with.  The semantic induction threads that option explicitly.  It can
+`CanonSpec` already carries the fix: `incMax : Option (Key n) → Key n →
+Key n` with `none` as the bottom.  The semantic induction threads that
+option explicitly.  It can
 be read back from the imperative state only outside the temporary
 upward-comparison window, where `canoncode` contains path codes rather
 than the installed incumbent's codes. -/
@@ -108,6 +108,17 @@ theorem stInc_eq_ghost {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
   rw [stInc, ghostInc, bestCodesOf_eq hinv hne, hinv.blen]
   cases bs <;> simp [incKey]
 
+/-! # The scatter a code-one admission records
+
+`processnode` builds its generator by `workperm[firstlab[i]] := lab[i]`
+over `i < n`, so the permutation maps `firstlab` to `lab` pointwise.
+`firstScatter_get` reads that fold back one entry at a time, on the two
+`foldl` lemmas below.
+
+`StoreValid` has the same fact as a private lemma
+(`foldl_scatter_getElem`) and consumes exactly this shape in
+`scatter_isPerm`'s `hsc` hypothesis. -/
+
 private theorem foldl_size {lab₁ lab₂ : Array Nat} :
     ∀ (l : List Nat) (base : Array Nat),
       (l.foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base).size
@@ -153,6 +164,24 @@ theorem firstScatter_get {flab lab : Array Nat} {nn : Nat}
     (fun i hi => by rw [Array.size_replicate]; exact hlt i hi)
     (Nat.le_refl nn) hj
 
+/-! # The position facts: the step
+
+`payloadAbsorbs_of_positions` takes the two position facts as
+hypotheses because they are the descent's bookkeeping. Their base case
+is local and is proved here: individualizing offset `o` puts that
+offset's vertex at the target position.
+
+The transport of this from the child down to the leaf rests on the
+target position being a *singleton cell* from the individualization
+onwards. Both steps of that transport are proved below, over one
+operation each: `refine` fixes a singleton cell's position, and a
+`breakout` elsewhere misses it, because two maximal runs are equal or
+disjoint. What is not proved here is the run-level statement that
+chains them, since the descent is the mutual recursion itself; see the
+note after `breakout_misses_singleton`. -/
+
+/-- Individualizing offset `o` puts that offset's vertex at the target
+position. -/
 theorem breakout_at_target {lab ptn : Array Nat} {level tc o : Nat}
     (hinj : LabInj lab lab.size) (hto : tc + o < lab.size) :
     (breakout n lab ptn (level + 1) tc lab[tc + o]!).1[tc]! =
@@ -225,6 +254,20 @@ does not touch. It is stated as part of that induction rather than
 before it because a node's effect on `lab` is only defined through the
 recursion. -/
 
+/-! # The root assembly
+
+The corrected statement reaches the programme's target. The root call
+of `firstPathNode` starts from a state with `canonlevel = 0`, so its
+incoming incumbent is `none` and `incMax` discards it; what comes out
+is therefore the node key of the root, which is `canonSpec` by
+definition, and the state's own incumbent reading is `tracedKey` by
+definition. `certifyCanon?_isSome_of_dominated` then closes.
+
+The quartet's root instance is the hypothesis here, and it is the only
+thing these theorems assume: the induction that supplies it is the
+remaining work. -/
+
+/-- The root state `runTraced` starts from. -/
 @[expose] def rootSt (n : Nat) (lab0 : Array Nat)
     (cellEnds : List Nat) : SearchSt n :=
   { lab := lab0, ptn := initPtn n (n + 2) cellEnds,

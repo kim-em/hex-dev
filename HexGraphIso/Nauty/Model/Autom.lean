@@ -6,29 +6,26 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SearchModel
+public import HexGraphIso.Nauty.Model.Node
 
 public section
 
 /-!
-The automorphism-pruned model search: `searchNodeA` extends the
-code-pruned branch-and-bound of `searchNode` with the generator skip
-the transcription performs and the certificate replays as `.autom`
-records — a child position is dropped when a stored generator carries
-its labelling, cell by cell, onto an earlier sibling's. For a store
-of checked automorphisms (`checkAutom`), the skipped subtree's key
-equals the earlier sibling's by `specNode_autom`, so the prune is
-lossless: `searchNodeA_eq` shows the doubly-pruned recursion still
-computes `incMax inc (specNode …)`, and `searchCanonA_key` packages
-the root call as a verified pruned evaluator of `canonSpecKey`.
-
-The store is a per-call parameter used at every node of the subtree.
-Mid-sweep growth — a generator discovered under one child pruning a
-later sibling of the same sweep, as the transcription's store does —
-threads store state through the fold accumulator alongside the
-incumbent; that refinement belongs with the orbit-partition (`fmptn`)
-discipline, which additionally prunes every later member of a known
-orbit rather than testing generators pairwise.
+The automorphism-pruned step of the abstract evaluator ladder.
+`searchNodeA` extends the code-pruned branch-and-bound of `searchNode`
+with the generator skip the transcription performs and the certificate
+replays as `.autom` records: a child position is dropped when a stored
+generator carries its labelling, cell by cell, onto an earlier
+sibling's. For a store of checked automorphisms (`checkAutom`), the
+skipped subtree's key equals the earlier sibling's by `specNode_autom`,
+so the prune is lossless. `searchNodeA_eq` shows the doubly-pruned
+recursion still computes `incMax inc (specNode ...)`, and
+`searchCanonA_key` packages the root call as a verified pruned
+evaluator of `canonSpecKey`. The store is a per-call parameter used at
+every node of the subtree; growth of the store mid-sweep is `Model/Store`.
+Nothing on the theorem path for `canonSpecKey = tracedKey` uses these
+declarations. They are kept as a source of lemmas about pruning in the
+abstract.
 -/
 
 namespace Hex.GraphIso.Nauty

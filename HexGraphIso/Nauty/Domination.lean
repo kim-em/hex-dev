@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.CodeFaithful
 public import HexGraphIso.Nauty.LeafFaithful
-public import HexGraphIso.Nauty.SearchModel
+public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.SearchInv
 public import HexGraphIso.Nauty.Stabilize
 public import HexGraphIso.Nauty.AutosLedger
@@ -76,8 +76,8 @@ induction's architecture per unwind mode:
   divergence, so every abandoned loop's truncated path still
   contains it: `frozen_take_keyLe` dominates each abandoned
   sibling's whole subtree, loop by loop, on the way up. In this
-  mode every quartet
-  theorem still concludes the full `keyMax` equation.
+  mode every quartet theorem still concludes the full `keyMax`
+  equation.
 - **Generator returns absorb wholesale at the gca loop.** After a
   code-1/code-2 admission, intermediate loops conclude nothing
   locally; the quartet theorems hand up the payload (the admitted
@@ -105,8 +105,9 @@ both ledgers (`genTraceOk`, `autosOk`), both ride the internal steps
 by frame (`otherNodePrep_store`, `recover_store`,
 `firstterminal_store`, transported by `genTraceOk_of_eq` and
 `autosOk_of_eq`), and the admission event preserves store validity
-under the record outright. The only remaining row premise is the code-2 tie, which is local and
-proven by `rows_eq_of_testcanlab_tie`. Code 1 does not require a descent
+under the record outright. The only remaining row premise is the
+code-2 tie, which is local and proven by
+`rows_eq_of_testcanlab_tie`. Code 1 does not require a descent
 geometry invariant: `processnode` checks the first-path sentinel at
 `level + 1` and scans the scatter with `isautom` before admission.
 `firstCodeInv_eq_of_live` therefore supplies equal path codes, while
@@ -355,6 +356,8 @@ theorem pruneReturn_nonneg {noncheaplevel allsamelevel : Nat}
   split <;> dsimp only <;> split <;>
     simp only [Int.ofNat_eq_natCast] at * <;> omega
 
+/-- The frozen-downward fast arm: the comparison state is untouched
+and the shared prune tail decides the unwind level. -/
 theorem processnode_fast {ctx : Ctx n} {level numcells : Nat}
     {st : SearchSt n}
     (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
@@ -1872,6 +1875,8 @@ private theorem ftF_firstcode (level : Nat) (st : SearchSt n) :
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
+/-- `firstterminal` seeds the first-path machine: the just-installed
+first leaf agrees with itself at full depth. -/
 theorem firstterminal_firstCodeInv {nn : Nat} {cs : List Nat}
     {st : SearchSt n}
     (hsize : st.firstcode.size = nn + 2)
@@ -1927,6 +1932,7 @@ end Seed
 
 theorem prefixKey_nil (kk : Key n) : prefixKey [] kk = kk := rfl
 
+/-- Prefixing by common path codes commutes with the key maximum. -/
 theorem prefixKey_keyMax :
     ∀ (cs : List Nat) (k1 k2 : Key n),
       prefixKey cs (keyMax k1 k2) =
@@ -2185,6 +2191,13 @@ theorem rows_eq_of_testcanlab_tie {ctx : Ctx n} {st : SearchSt n}
     · rw [hcc] at h; exact absurd h (by decide)
   exact ((listCmp_eq_iff (fun _ _ => VSet.rowCmp_eq_iff) _ _).mp hc).symm
 
+/-! # Labelling facts of a reached state
+
+The row obligations and the scatter exits are stated over `LabOk`
+and `LabInj`; a reached labelling supplies both, so the induction
+never carries them separately from `SearchOk`. -/
+
+/-- A reached labelling lands in the vertex range. -/
 theorem labOk_of_reach {G : Colored n k} {lab : Array Nat}
     (hsz : lab.size = n) (h : CellsReach G lab) : LabOk lab n := by
   intro i hi
@@ -2214,6 +2227,18 @@ validity outright. The two
 `firstterminal`, where both the first leaf and the incumbent are
 installed from a reached labelling. -/
 
+/-! # Absorption of dominated sibling suffixes
+
+An early unwind abandons the remaining siblings of every loop
+strictly between the return level and the leaf. When the leaf event
+left the comparison machine frozen downward, the recorded divergence
+sits at level `eqlevCanon + 1`, and the `pruneReturn` forms that
+fire in that mode (`eqlevCanon` itself, or `allsamelevel - 1` above
+it) never return below the divergence; every abandoned loop's path
+prefix therefore still contains the divergence, so the whole subtree
+of every abandoned sibling compares below the incumbent and the key
+maximum absorbs the suffix locally, loop by loop. -/
+
 private theorem getElem!_take'' {l : List Nat} {m i : Nat}
     (him : i < m) (hil : i < l.length) : (l.take m)[i]! = l[i]! := by
   have hti : i < (l.take m).length := by
@@ -2222,6 +2247,10 @@ private theorem getElem!_take'' {l : List Nat} {m i : Nat}
   rw [getElem!_pos (l.take m) i hti, getElem!_pos l i hil,
     List.getElem_take]
 
+/-- The frozen divergence survives truncation: with the divergence
+recorded at level `eqlevCanon + 1`, the path prefix down to any level
+at or beyond it still compares below the incumbent, whatever comes
+after. -/
 theorem codeInv_take_listCmp_lt {nn : Nat} {cs bs : List Nat}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
@@ -2308,6 +2337,22 @@ theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
 
 /-! # One child against its node's subtree key -/
 
+/-! # The generator-return transport
+
+At the loop where a generator return lands (`gcaFirst` for a code-1
+admission, `gcaCanon` for a code-2 admission), the whole partially
+explored child subtree is absorbed at once: the admitted scatter is a
+checked automorphism that stabilizes the loop's cells and carries the
+guiding sibling's individualized vertex onto the current child's, so
+the two children's subtree keys are equal, and the guiding sibling's
+key is already folded into the incumbent. The abandoned intermediate
+loops below need no local justification in this mode; the return
+level being the gca is exactly what lets their whole enclosing child
+subtree be absorbed here. -/
+
+/-- A checked automorphism stabilizing the refined node's cells and
+carrying one target-cell vertex onto another identifies the two
+children's subtree keys. -/
 theorem childKey_of_carried {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {γ : Array Nat}
     (hAut : checkAutom ctx.g γ = true)
