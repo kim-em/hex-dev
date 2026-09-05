@@ -133,7 +133,9 @@ def main() -> int:
     parser.add_argument("--check", action="store_true",
                         help="fail on a family or instance outside the bounds")
     parser.add_argument("--max-mean", type=float, default=1.00,
-                        help="largest accepted per-family geometric mean eng/lit")
+                        help="largest accepted per-family geometric mean eng/lit; "
+                             "the spike's criterion is 1.00 within the noise of "
+                             "the run, so pass the allowance the run warrants")
     parser.add_argument("--max-instance", type=float, default=1.05,
                         help="largest accepted single-instance eng/lit")
     parser.add_argument("--max-exponent", type=float, default=0.02,
@@ -154,10 +156,10 @@ def main() -> int:
             if row["over_lit"] > args.max_mean:
                 failures.append(
                     f"{row['family']}: geometric mean eng/lit "
-                    f"{row['over_lit']:.2f} exceeds {args.max_mean}")
+                    f"{row['over_lit']:.3f} exceeds {args.max_mean}")
             if row["worst"] > args.max_instance:
                 failures.append(
-                    f"{row['worst_name']}: eng/lit {row['worst']:.2f} exceeds "
+                    f"{row['worst_name']}: eng/lit {row['worst']:.3f} exceeds "
                     f"{args.max_instance}")
             diff = row["eng_exp"] - row["lit_exp"]
             if diff > args.max_exponent:
