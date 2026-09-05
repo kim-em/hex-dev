@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Refine
-public import HexGraphIso.Nauty.Image
 public import HexGraphIso.Nauty.Equivariance
 
 public section
@@ -69,24 +68,24 @@ theorem segN_congr {lab lab' : Array Nat} {lo len : Nat}
 adjacency count of the cell multiset, positions outside the cell are
 untouched, and the two output segments are permutations of the
 adjacency filters. -/
-theorem splitCellLoop_spec {gRow : Nat} :
+theorem splitCellLoop_spec {gRow : VSet n} :
     ∀ (k fuel : Nat) (lab : Array Nat) (c1 c2 : Int),
       0 ≤ c1 → c2 < (lab.size : Int) → c2 + 1 - c1 = (k : Int) →
       k + 1 ≤ fuel →
       (splitCellLoop gRow fuel lab c1 c2).2.1 =
-          c1 + ((segN lab c1.toNat k).countP (elem gRow ·) : Int) ∧
+          c1 + ((segN lab c1.toNat k).countP (gRow.mem ·) : Int) ∧
         (splitCellLoop gRow fuel lab c1 c2).2.2 =
-          c1 + ((segN lab c1.toNat k).countP (elem gRow ·) : Int) - 1 ∧
+          c1 + ((segN lab c1.toNat k).countP (gRow.mem ·) : Int) - 1 ∧
         (splitCellLoop gRow fuel lab c1 c2).1.size = lab.size ∧
         (∀ j : Nat, ((j : Int) < c1 ∨ c2 < (j : Int)) →
           (splitCellLoop gRow fuel lab c1 c2).1[j]! = lab[j]!) ∧
         ((segN (splitCellLoop gRow fuel lab c1 c2).1 c1.toNat
-            ((segN lab c1.toNat k).countP (elem gRow ·))).Perm
-          ((segN lab c1.toNat k).filter (elem gRow ·))) ∧
+            ((segN lab c1.toNat k).countP (gRow.mem ·))).Perm
+          ((segN lab c1.toNat k).filter (gRow.mem ·))) ∧
         ((segN (splitCellLoop gRow fuel lab c1 c2).1
-            (c1.toNat + (segN lab c1.toNat k).countP (elem gRow ·))
-            (k - (segN lab c1.toNat k).countP (elem gRow ·))).Perm
-          ((segN lab c1.toNat k).filter fun v => !(elem gRow v)))
+            (c1.toNat + (segN lab c1.toNat k).countP (gRow.mem ·))
+            (k - (segN lab c1.toNat k).countP (gRow.mem ·))).Perm
+          ((segN lab c1.toNat k).filter fun v => !(gRow.mem v)))
   | 0, fuel, lab, c1, c2, h1, h2, hk, hf => by
     rcases fuel with _ | f
     · omega
@@ -101,7 +100,7 @@ theorem splitCellLoop_spec {gRow : Nat} :
     have hc2s : c2.toNat < lab.size := by omega
     have hS : segN lab c1.toNat (k + 1) =
         lab[c1.toNat]! :: segN lab (c1.toNat + 1) k := segN_cons lab _ k
-    rcases hadj : elem gRow lab[c1.toNat]! with _ | _
+    rcases hadj : gRow.mem lab[c1.toNat]! with _ | _
     · -- non-adjacent head: swap the ends, recurse on `[c1, c2 - 1]`
       simp only [Bool.false_eq_true, ite_false]
       obtain ⟨hp1, hp2, hsz, hout, hleft, hright⟩ :=
@@ -141,32 +140,32 @@ theorem splitCellLoop_spec {gRow : Nat} :
               Nat.add_sub_cancel]
           rw [hlhs, hrhs]
           exact List.Perm.cons _ (List.perm_append_singleton _ _)
-      have hcnt : (segN lab c1.toNat (k + 1)).countP (elem gRow ·) =
+      have hcnt : (segN lab c1.toNat (k + 1)).countP (gRow.mem ·) =
           (segN ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
-            lab[c1.toNat]!) c1.toNat k).countP (elem gRow ·) := by
+            lab[c1.toNat]!) c1.toNat k).countP (gRow.mem ·) := by
         rw [hS2.countP_eq, List.countP_cons]
         simp [hadj]
-      have hcle := List.countP_le_length (p := (elem gRow ·))
+      have hcle := List.countP_le_length (p := (gRow.mem ·))
         (l := segN ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
           lab[c1.toNat]!) c1.toNat k)
       rw [segN_length] at hcle
       have hto1 : (c1 + ((segN ((lab.set! c1.toNat lab[c2.toNat]!).set!
-          c2.toNat lab[c1.toNat]!) c1.toNat k).countP (elem gRow ·) :
+          c2.toNat lab[c1.toNat]!) c1.toNat k).countP (gRow.mem ·) :
             Int)) = c1 + ((segN lab c1.toNat (k + 1)).countP
-              (elem gRow ·) : Int) := by
+              (gRow.mem ·) : Int) := by
         rw [hcnt]
-      have hfe : ((segN lab c1.toNat (k + 1)).filter (elem gRow ·)).Perm
+      have hfe : ((segN lab c1.toNat (k + 1)).filter (gRow.mem ·)).Perm
           ((segN ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
-            lab[c1.toNat]!) c1.toNat k).filter (elem gRow ·)) := by
-        have h := hS2.filter (elem gRow ·)
+            lab[c1.toNat]!) c1.toNat k).filter (gRow.mem ·)) := by
+        have h := hS2.filter (gRow.mem ·)
         rw [List.filter_cons_of_neg (by simp [hadj])] at h
         exact h
       have hfn : ((segN lab c1.toNat (k + 1)).filter
-          fun v => !(elem gRow v)).Perm
+          fun v => !(gRow.mem v)).Perm
           (lab[c1.toNat]! :: ((segN ((lab.set! c1.toNat
             lab[c2.toNat]!).set! c2.toNat lab[c1.toNat]!) c1.toNat
-              k).filter fun v => !(elem gRow v))) := by
-        have h := hS2.filter (fun v => !(elem gRow v))
+              k).filter fun v => !(gRow.mem v))) := by
+        have h := hS2.filter (fun v => !(gRow.mem v))
         rw [List.filter_cons_of_pos (by simp [hadj])] at h
         exact h
       refine ⟨by rw [hcnt]; exact hp1, by rw [hcnt]; exact hp2,
@@ -179,15 +178,15 @@ theorem splitCellLoop_spec {gRow : Nat} :
         exact hleft.trans hfe.symm
       · rw [hcnt,
           show k + 1 - (segN ((lab.set! c1.toNat lab[c2.toNat]!).set!
-            c2.toNat lab[c1.toNat]!) c1.toNat k).countP (elem gRow ·) =
+            c2.toNat lab[c1.toNat]!) c1.toNat k).countP (gRow.mem ·) =
             (k - (segN ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
-              lab[c1.toNat]!) c1.toNat k).countP (elem gRow ·)) + 1
+              lab[c1.toNat]!) c1.toNat k).countP (gRow.mem ·)) + 1
             by omega,
           segN_concat,
           show c1.toNat + (segN ((lab.set! c1.toNat lab[c2.toNat]!).set!
-            c2.toNat lab[c1.toNat]!) c1.toNat k).countP (elem gRow ·) +
+            c2.toNat lab[c1.toNat]!) c1.toNat k).countP (gRow.mem ·) +
             (k - (segN ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
-              lab[c1.toNat]!) c1.toNat k).countP (elem gRow ·)) =
+              lab[c1.toNat]!) c1.toNat k).countP (gRow.mem ·)) =
             c2.toNat by omega]
         have hlast : (splitCellLoop gRow f
             ((lab.set! c1.toNat lab[c2.toNat]!).set! c2.toNat
@@ -206,8 +205,8 @@ theorem splitCellLoop_spec {gRow : Nat} :
           h2 (by omega) (by omega)
       have hto : (c1 + 1).toNat = c1.toNat + 1 := by omega
       rw [hto] at hp1 hp2 hleft hright
-      have hcnt : (segN lab c1.toNat (k + 1)).countP (elem gRow ·) =
-          (segN lab (c1.toNat + 1) k).countP (elem gRow ·) + 1 := by
+      have hcnt : (segN lab c1.toNat (k + 1)).countP (gRow.mem ·) =
+          (segN lab (c1.toNat + 1) k).countP (gRow.mem ·) + 1 := by
         rw [hS, List.countP_cons]
         simp [hadj]
       refine ⟨by rw [hcnt]; rw [hp1]; push_cast; omega,
@@ -220,11 +219,11 @@ theorem splitCellLoop_spec {gRow : Nat} :
         exact List.Perm.cons _ hleft
       · rw [hcnt, hS, List.filter_cons_of_neg (by simp [hadj]),
           show c1.toNat + ((segN lab (c1.toNat + 1) k).countP
-            (elem gRow ·) + 1) = c1.toNat + 1 + (segN lab
-              (c1.toNat + 1) k).countP (elem gRow ·) by omega,
+            (gRow.mem ·) + 1) = c1.toNat + 1 + (segN lab
+              (c1.toNat + 1) k).countP (gRow.mem ·) by omega,
           show k + 1 - ((segN lab (c1.toNat + 1) k).countP
-            (elem gRow ·) + 1) = k - (segN lab (c1.toNat + 1) k).countP
-              (elem gRow ·) by omega]
+            (gRow.mem ·) + 1) = k - (segN lab (c1.toNat + 1) k).countP
+              (gRow.mem ·) by omega]
         exact hright
 
 /-! # Cells as local runs -/
@@ -459,7 +458,7 @@ theorem segN_append (lab : Array Nat) (lo m p : Nat) :
 
 /-- Equal position-level fields with cell-multiset-equal labellings,
 relative to the state's own partition. -/
-structure StPerm (level : Nat) (st st' : RefineSt) : Prop where
+structure StPerm (level : Nat) (st st' : RefineSt n) : Prop where
   ptn : st'.ptn = st.ptn
   active : st'.active = st.active
   numcells : st'.numcells = st.numcells
@@ -471,7 +470,7 @@ structure StPerm (level : Nat) (st st' : RefineSt) : Prop where
 
 /-- A cell-equivalent state is its partner with the labelling swapped
 out. -/
-theorem StPerm.eq_setLab {level : Nat} {st st' : RefineSt}
+theorem StPerm.eq_setLab {level : Nat} {st st' : RefineSt n}
     (h : StPerm level st st') : st' = { st with lab := st'.lab } := by
   obtain ⟨hp, ha, hn, hh, hm, hc, _, _⟩ := h
   cases st
@@ -482,7 +481,7 @@ theorem StPerm.eq_setLab {level : Nat} {st st' : RefineSt}
 /-- The split bookkeeping never reads the labelling, so it commutes with
 swapping the labelling out. -/
 theorem trivialSplit_setLab (level cell1 cell2 : Nat) (c1 c2 : Int)
-    (st : RefineSt) (X : Array Nat) :
+    (st : RefineSt n) (X : Array Nat) :
     trivialSplit level cell1 cell2 c1 c2 { st with lab := X } =
       { trivialSplit level cell1 cell2 c1 c2 st with lab := X } := by
   rw [trivialSplit, trivialSplit]
@@ -491,7 +490,7 @@ theorem trivialSplit_setLab (level cell1 cell2 : Nat) (c1 c2 : Int)
     hA | hA
   · simp only [ite_eq_left hA]
     rcases Decidable.em
-        (elem st.active cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
+        (st.active.mem cell1 ∨ c2.toNat - cell1 ≥ cell2 - c1.toNat) with
       hB | hB
     · simp only [ite_eq_left hB]
       rcases hC : (c1.toNat == cell2) with _ | _ <;>
@@ -546,7 +545,7 @@ theorem isCell_disjoint_or_eq {ptn : Array Nat} {level a len a' len' : Nat}
 /-- One trivial-splitter cell preserves cell-contents equivalence: the
 positional results agree and the labellings stay cell-equivalent for
 the result's partition. -/
-theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
+theorem trivialCell_perm {level cell1 cell2 : Nat} {gRow : VSet n} {st st' : RefineSt n}
     (h : StPerm level st st')
     (hcell : IsCell st.ptn level cell1 (cell2 + 1 - cell1))
     (hc12 : cell1 ≤ cell2) (h2 : cell2 < st.lab.size)
@@ -580,19 +579,19 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
       (segN st'.lab cell1 (cell2 + 1 - cell1)) :=
     h.cells cell1 _ hcell
   have hcq : (segN st'.lab cell1 (cell2 + 1 - cell1)).countP
-      (elem gRow ·) = (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-        (elem gRow ·) := (hseg.countP_eq _).symm
+      (gRow.mem ·) = (segN st.lab cell1 (cell2 + 1 - cell1)).countP
+        (gRow.mem ·) := (hseg.countP_eq _).symm
   rw [hcq] at hp1' hp2' hleft1' hright1'
-  have hcle := List.countP_le_length (p := (elem gRow ·))
+  have hcle := List.countP_le_length (p := (gRow.mem ·))
     (l := segN st.lab cell1 (cell2 + 1 - cell1))
   rw [segN_length] at hcle
   -- both runs feed identical pointers to the split bookkeeping
   have e1 : trivialCell level gRow cell1 cell2 st =
       { trivialSplit level cell1 cell2
           ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-            cell1)).countP (elem gRow ·) : Int))
+            cell1)).countP (gRow.mem ·) : Int))
           ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-            cell1)).countP (elem gRow ·) : Int) - 1) st with
+            cell1)).countP (gRow.mem ·) : Int) - 1) st with
         lab := (splitCellLoop gRow (cell2 - cell1 + 2) st.lab
           (cell1 : Int) (cell2 : Int)).1 } := by
     rw [trivialCell, ite_eq_right (by rw [hc]; simp)]
@@ -601,9 +600,9 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
   have e2 : trivialCell level gRow cell1 cell2 st' =
       { trivialSplit level cell1 cell2
           ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-            cell1)).countP (elem gRow ·) : Int))
+            cell1)).countP (gRow.mem ·) : Int))
           ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-            cell1)).countP (elem gRow ·) : Int) - 1) st with
+            cell1)).countP (gRow.mem ·) : Int) - 1) st with
         lab := (splitCellLoop gRow (cell2 - cell1 + 2) st'.lab
           (cell1 : Int) (cell2 : Int)).1 } := by
     rw [trivialCell, ite_eq_right (by rw [hc]; simp)]
@@ -638,17 +637,17 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
           (cell2 + 1 - cell1)) := by
     have hsplitL := segN_append (splitCellLoop gRow (cell2 - cell1 + 2)
       st.lab (cell1 : Int) (cell2 : Int)).1 cell1
-      ((segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·))
+      ((segN st.lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·))
       ((cell2 + 1 - cell1) - (segN st.lab cell1 (cell2 + 1 -
-        cell1)).countP (elem gRow ·))
+        cell1)).countP (gRow.mem ·))
     have hsplitR := segN_append (splitCellLoop gRow (cell2 - cell1 + 2)
       st'.lab (cell1 : Int) (cell2 : Int)).1 cell1
-      ((segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·))
+      ((segN st.lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·))
       ((cell2 + 1 - cell1) - (segN st.lab cell1 (cell2 + 1 -
-        cell1)).countP (elem gRow ·))
+        cell1)).countP (gRow.mem ·))
     rw [show (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-        (elem gRow ·) + ((cell2 + 1 - cell1) - (segN st.lab cell1
-          (cell2 + 1 - cell1)).countP (elem gRow ·)) =
+        (gRow.mem ·) + ((cell2 + 1 - cell1) - (segN st.lab cell1
+          (cell2 + 1 - cell1)).countP (gRow.mem ·)) =
         cell2 + 1 - cell1 by omega] at hsplitL hsplitR
     rw [hsplitL, hsplitR]
     have hA1 := (hleft1.append hright1).trans (List.filter_append_perm _ _)
@@ -656,33 +655,33 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
     exact hA1.trans (hseg.trans hA2.symm)
   -- classify the result partition by the split guard
   rcases Decidable.em (((cell1 : Int) + ((segN st.lab cell1 (cell2 +
-      1 - cell1)).countP (elem gRow ·) : Int) - 1) ≥ Int.ofNat cell1 ∧
+      1 - cell1)).countP (gRow.mem ·) : Int) - 1) ≥ Int.ofNat cell1 ∧
       ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-        cell1)).countP (elem gRow ·) : Int)) ≤ Int.ofNat cell2) with
+        cell1)).countP (gRow.mem ·) : Int)) ≤ Int.ofNat cell2) with
     hg | hg
   · -- proper split: one boundary written strictly inside the cell
     have hcnt1 : 1 ≤ (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-        (elem gRow ·) := by
+        (gRow.mem ·) := by
       have h1 := hg.1
       simp only [Int.ofNat_eq_natCast] at h1
       omega
     have hcnt2 : (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-        (elem gRow ·) ≤ cell2 - cell1 := by
+        (gRow.mem ·) ≤ cell2 - cell1 := by
       have h1 := hg.2
       simp only [Int.ofNat_eq_natCast] at h1
       omega
     have hptn : (trivialSplit level cell1 cell2
         ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-          cell1)).countP (elem gRow ·) : Int))
+          cell1)).countP (gRow.mem ·) : Int))
         ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-          cell1)).countP (elem gRow ·) : Int) - 1) st).ptn =
+          cell1)).countP (gRow.mem ·) : Int) - 1) st).ptn =
         st.ptn.set! (cell1 + (segN st.lab cell1 (cell2 + 1 -
-          cell1)).countP (elem gRow ·) - 1) level := by
+          cell1)).countP (gRow.mem ·) - 1) level := by
       rw [trivialSplit, ite_eq_left hg,
         show (((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-          cell1)).countP (elem gRow ·) : Int) - 1)).toNat =
+          cell1)).countP (gRow.mem ·) : Int) - 1)).toNat =
           cell1 + (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-            (elem gRow ·) - 1 by omega]
+            (gRow.mem ·) - 1 by omega]
       split
       · split <;> rfl
       · split <;> rfl
@@ -693,31 +692,31 @@ theorem trivialCell_perm {level gRow cell1 cell2 : Nat} {st st' : RefineSt}
       refine cellsPerm_set! hcell (by omega) (by omega) (by omega)
         ?_ ?_ houtP
       · rw [show cell1 + (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-          (elem gRow ·) - 1 + 1 - cell1 =
-          (segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·)
+          (gRow.mem ·) - 1 + 1 - cell1 =
+          (segN st.lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·)
           by omega]
         exact hleft1.trans ((hseg.filter _).trans hleft1'.symm)
       · rw [show cell1 + (segN st.lab cell1 (cell2 + 1 - cell1)).countP
-            (elem gRow ·) - 1 + 1 = cell1 + (segN st.lab cell1 (cell2 +
-              1 - cell1)).countP (elem gRow ·) by omega,
+            (gRow.mem ·) - 1 + 1 = cell1 + (segN st.lab cell1 (cell2 +
+              1 - cell1)).countP (gRow.mem ·) by omega,
           show cell1 + (cell2 + 1 - cell1) - (cell1 + (segN st.lab cell1
-            (cell2 + 1 - cell1)).countP (elem gRow ·)) =
+            (cell2 + 1 - cell1)).countP (gRow.mem ·)) =
             (cell2 + 1 - cell1) - (segN st.lab cell1 (cell2 + 1 -
-              cell1)).countP (elem gRow ·) by omega]
+              cell1)).countP (gRow.mem ·) by omega]
         exact hright1.trans ((hseg.filter _).trans hright1'.symm)
     · intro q hq
       dsimp only
       rw [hptn, Array.getElem!_set!_ne _ _ _ _ (by omega : cell1 +
-        (segN st.lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) -
+        (segN st.lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·) -
           1 ≠ q)]
     · dsimp only
       rw [hptn, Array.size_set!]
   · -- degenerate split: the partition is unchanged
     have hptn : (trivialSplit level cell1 cell2
         ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-          cell1)).countP (elem gRow ·) : Int))
+          cell1)).countP (gRow.mem ·) : Int))
         ((cell1 : Int) + ((segN st.lab cell1 (cell2 + 1 -
-          cell1)).countP (elem gRow ·) : Int) - 1) st).ptn =
+          cell1)).countP (gRow.mem ·) : Int) - 1) st).ptn =
         st.ptn := by
       rw [trivialSplit, ite_eq_right hg]
     refine ⟨⟨rfl, rfl, rfl, rfl, rfl, rfl,
@@ -791,8 +790,8 @@ theorem isCell_of_agree {ptn ptn' : Array Nat} {level a len : Nat}
   · rw [hagree (a + len - 1) (by omega) (by omega)]
     exact he
 
-theorem refineTrivial_go_perm {level gRow : Nat} :
-    ∀ (cs : List (Nat × Nat)) (st st' : RefineSt), StPerm level st st' →
+theorem refineTrivial_go_perm {level : Nat} {gRow : VSet n} :
+    ∀ (cs : List (Nat × Nat)) (st st' : RefineSt n), StPerm level st st' →
       st.ptn.size = st.lab.size →
       (∀ p ∈ cs, IsCell st.ptn level p.1 (p.2 + 1 - p.1) ∧
         p.2 < st.lab.size) →
@@ -824,9 +823,9 @@ theorem refineTrivial_go_perm {level gRow : Nat} :
     exact ⟨hrec, by rw [hrsz, hlsz], by rw [hrpsz, hpsz]⟩
 
 /-- The trivial-splitter pass preserves cell-contents equivalence. -/
-theorem refineTrivial_perm {ctx : Ctx} {level split1 : Nat}
-    {st st' : RefineSt} (h : StPerm level st st')
-    (hsz : st.ptn.size = st.lab.size) (hnn : ctx.n ≤ st.ptn.size)
+theorem refineTrivial_perm {ctx : Ctx n} {level split1 : Nat}
+    {st st' : RefineSt n} (h : StPerm level st st')
+    (hsz : st.ptn.size = st.lab.size) (hnn : n ≤ st.ptn.size)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
     (hsplit : IsCell st.ptn level split1 1) :
     StPerm level (refineTrivial ctx level split1 st)
@@ -836,7 +835,7 @@ theorem refineTrivial_perm {ctx : Ctx} {level split1 : Nat}
   rw [refineTrivial, refineTrivial, h.ptn,
     show st'.lab[split1]! = st.lab[split1]! from
       (cellsPerm_singleton h.cells hsplit).symm]
-  exact refineTrivial_go_perm (cells st.ptn level ctx.n) st st' h hsz
+  exact refineTrivial_go_perm (cells st.ptn level n) st st' h hsz
     (fun p hp => ⟨cells_isCell hnn hend p hp,
       by
         have := cells_bound hnn hend p hp
@@ -898,42 +897,35 @@ theorem cellsPerm_of_region {ptn ptn' : Array Nat} {level : Nat}
 
 /-! # Nontrivial-splitter ingredients -/
 
-theorem testBit_foldl_insert (lab : Array Nat) (lo : Nat) (v : Nat) :
-    ∀ (l : List Nat) (w : Nat),
-      ((l.foldl (fun w o => insert w lab[lo + o]!) w).testBit v) =
-        (w.testBit v || l.any fun o => lab[lo + o]! == v)
-  | [], w => by simp
-  | o :: l, w => by
-    rw [List.foldl_cons, List.any_cons,
-      testBit_foldl_insert lab lo v l (insert w lab[lo + o]!),
-      testBit_insert]
-    simp [Bool.or_assoc]
-
 /-- The splitter set holds exactly the segment's members. -/
-theorem testBit_worksetOf (lab : Array Nat) (lo hi v : Nat) :
-    (worksetOf lab lo hi).testBit v =
-      (segN lab lo (hi + 1 - lo)).any (· == v) := by
-  rw [worksetOf, testBit_foldl_insert, segN, List.any_map,
-    Nat.zero_testBit, Bool.false_or]
-  congr 1
+theorem mem_worksetOf (lab : Array Nat) (lo hi v : Nat) :
+    (worksetOf n lab lo hi).mem v =
+      (decide (v < n) && (segN lab lo (hi + 1 - lo)).any (· == v)) := by
+  rw [worksetOf, segN, ← List.foldl_map, VSet.mem_foldl_insert, VSet.mem_empty,
+    Bool.false_or, Bool.and_comm, List.contains_eq_any_beq]
+  congr 2
+  funext x
+  exact Bool.eq_iff_iff.mpr ⟨fun h => by rw [beq_iff_eq] at h ⊢; exact h.symm,
+    fun h => by rw [beq_iff_eq] at h ⊢; exact h.symm⟩
 
 /-- Cell-equivalent segments give the same splitter set. -/
 theorem worksetOf_perm {lab lab' : Array Nat} {lo hi : Nat}
     (h : (segN lab lo (hi + 1 - lo)).Perm (segN lab' lo (hi + 1 - lo))) :
-    worksetOf lab lo hi = worksetOf lab' lo hi := by
-  refine Nat.eq_of_testBit_eq fun v => ?_
-  rw [testBit_worksetOf, testBit_worksetOf, Bool.eq_iff_iff,
-    List.any_eq_true, List.any_eq_true]
+    worksetOf n lab lo hi = worksetOf n lab' lo hi := by
+  refine VSet.ext fun v => ?_
+  rw [mem_worksetOf, mem_worksetOf]
+  congr 1
+  rw [Bool.eq_iff_iff, List.any_eq_true, List.any_eq_true]
   exact ⟨fun ⟨x, hx, hp⟩ => ⟨x, h.mem_iff.mp hx, hp⟩,
     fun ⟨x, hx, hp⟩ => ⟨x, h.mem_iff.mpr hx, hp⟩⟩
 
 /-- The neighbour counts are the segment mapped through the per-vertex
 count. -/
-theorem countsOf_eq_map (ctx : Ctx) (lab : Array Nat)
-    (workset cell1 cell2 : Nat) :
+theorem countsOf_eq_map (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) :
     countsOf ctx lab workset cell1 cell2 =
       (segN lab cell1 (cell2 + 1 - cell1)).map
-        fun v => popCount (workset &&& ctx.g[v]!) := by
+        fun v => workset.cardInter ctx.g[v]! := by
   rw [countsOf, segN, List.map_map]
   exact List.map_congr_left fun o _ => rfl
 
