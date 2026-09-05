@@ -373,76 +373,65 @@ tag := "hex-graph-iso-performance"
 
 The Lean implementation runs the same algorithm as nauty in the
 strictest sense: conformance testing pins the visited-node counters, so
-both programs traverse exactly the same search tree on every input.
-Every timing difference is therefore a per-node constant factor of the
-implementation, never an algorithmic difference. The table shows that
+both programs traverse exactly the same search tree on every
+conformance case. Every timing difference is therefore a per-node
+constant factor of the implementation, never an algorithmic
+difference. The table shows that
 factor on four parametrised families from the benchmark corpus: grids,
 where refinement discretizes quickly; Paley graphs, refinement's hard
 case among the sparse families; and the dense Latin-square and Kneser
-graphs, where the factor is largest. The `fast` column is
-`canonicalize` and the `checked` column adds the certificate replay
-(`Nauty.certifyCanon?`), which the public surface no longer runs; a
-fresh sweep refreshes this table.
+graphs, where the factor is largest. The `hex` column is
+`canonicalize`, which carries the theorems of this chapter as it
+stands: no certificate is produced or replayed on that path.
 
 :::table (header := true)
 * * graph
   * vertices
   * nauty (ms)
-  * fast (ms)
-  * checked (ms)
+  * hex (ms)
 * * `Families.grid 5 5`
   * 25
   * 0.014
   * 0.066
-  * 0.25
 * * `Families.grid 15 15`
   * 225
   * 0.83
   * 14
-  * 38
 * * `Families.paley 29`
   * 29
   * 0.019
   * 0.097
-  * 0.88
 * * `Families.paley 229`
   * 229
-  * 1.1
+  * 1.0
   * 29
-  * 180
 * * `Families.latinSquare 5`
   * 25
   * 0.019
   * 0.14
-  * 0.80
 * * `Families.latinSquare 13`
   * 169
-  * 0.77
-  * 25
-  * 100
+  * 0.78
+  * 24
 * * `Families.kneser 7 2`
   * 21
-  * 0.014
+  * 0.013
   * 0.12
-  * 0.70
 * * `Families.kneser 22 2`
   * 231
-  * 3.4
+  * 3.3
   * 210
-  * 1000
 :::
 
-Measured on chungus2, 2026-09-03, minimum over repeated runs;
-regenerate with `scripts/bench/graphiso_cactus_sweep.sh`. On the
-ten-vertex examples of this chapter, the kernel-checked `graph_iso`
-proof costs roughly 20 to 30 milliseconds on a positive goal and 0.3
-to 1 seconds on a negative one. The gap between the `fast` and
-`checked` columns is the current price of certificate validation; the
-verified search refinement programme in the SPEC is expected to remove
-it, at which point the checked guarantees attach to the fast path
-itself and the `checked` column disappears. For breadth across the
-whole benchmark corpus, see the cactus plots in `reports/figures/` in
-the repository.
+Measured on chungus2, 2026-09-05, minimum over repeated runs;
+regenerate with `scripts/bench/graphiso_cactus_sweep.sh`. On
+ten-vertex pairs like the examples of this chapter, the kernel-checked
+`graph_iso` proof costs roughly 20 milliseconds on a positive goal and
+0.7 to 0.9 seconds on a negative one. That price is separate from the
+table and does not shrink with it: a kernel proof still replays a
+certificate inside the kernel, whereas `canonicalize` runs no replay
+at all. For breadth across the whole benchmark corpus, see the cactus
+plots in `reports/figures/` in the repository.
 
 # The Mathlib correspondence
 %%%
