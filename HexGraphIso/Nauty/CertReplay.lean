@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.CertTotal
-public import HexGraphIso.Nauty.Complete
 import all HexGraphIso.Nauty.CertAutom
 import all HexGraphIso.Nauty.Cert
 

@@ -21,8 +21,7 @@ the code-1 arm of the store-validity obligation).
 
 The first guard branch (`defect ≤ nontrivial + 1`) forces every cell
 of the partition to be a singleton, a pair, or one triple, and any two
-size-three cells to coincide (the sharpened form of
-`hOdd_of_defect_le`'s counting argument). On that shape this file
+size-three cells to coincide. On that shape this file
 proves the triple analogues of the pair flip theory:
 
 * `triple_const`: the triple's members have identical bits at every

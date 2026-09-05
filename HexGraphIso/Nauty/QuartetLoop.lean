@@ -15,11 +15,11 @@ public section
 /-!
 The orbit closure is complete (SPEC § Verified search refinement).
 
-`LoopConcl.full` folds only the children the loop visited, while
-`NodeConcl.full` claims the whole subtree, and `node_absorbs_of_loop`
-bridges the two given that every child is dominated by the maximum
-over the visited ones. Supplying that domination for the children
-`firstChildLoop` drops is the loop step's real content.
+A loop's fold runs over the children it visited, while a node's key
+is the maximum over the whole subtree. The two agree once every child
+is dominated by the maximum over the visited ones. Supplying that
+domination for the children `firstChildLoop` drops is the loop step's
+real content.
 
 The justification of a dropped child is `childKey_of_orbPruned`, whose
 hypothesis is the model's `orbPruned`, phrased through the executable

@@ -100,6 +100,12 @@ theorem keyCmp_cons_eq (c : Nat) (cs cs' : List Nat)
     simp
   simp only [listCmp, hcc]
 
+theorem keyLe_cons_tail {c : Nat} {cs brest : List Nat} {r br : List (VSet n)}
+    (h : keyLe ⟨c :: cs, r⟩ ⟨c :: brest, br⟩) :
+    keyLe ⟨cs, r⟩ ⟨brest, br⟩ := by
+  rw [keyLe, ← keyCmp_cons_eq c]
+  exact h
+
 /-! # Every spec key starts with the node's refinement code -/
 
 theorem specNode_codes_head (ctx : Ctx n) (tcLevel fuel level : Nat)

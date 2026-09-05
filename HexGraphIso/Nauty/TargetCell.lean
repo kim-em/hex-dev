@@ -261,24 +261,6 @@ theorem targetcell_eq_spec {ctx : Ctx n} {lab ptn : Array Nat}
   rintro ⟨h, -⟩
   omega
 
-/-- A hint agrees with the specification whenever it names exactly the
-specification's target cell; arbitrary admissible hints need not do so. -/
-theorem targetcell_eq_spec_of_hint {ctx : Ctx n} {lab ptn : Array Nat}
-    {level tcLevel : Nat} (heq : Equitable ctx level lab ptn)
-    (hlab : LabOk lab n) (hlsz : lab.size = n)
-    (hpsz : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hint : Int)
-    (hhint : hint.toNat = specTargetcell ctx lab ptn level tcLevel) :
-    targetcell ctx lab ptn level tcLevel hint =
-      specTargetcell ctx lab ptn level tcLevel := by
-  rw [targetcell]
-  split
-  · exact hhint
-  · rw [specTargetcell]
-    split
-    · exact bestcell_eq_spec heq hlab hlsz hpsz hend
-    · rfl
-
 /-- The complete unhinted target-cell record agrees with the specification
 on an equitable partition. -/
 theorem maketargetcell_eq_spec {ctx : Ctx n}
@@ -290,32 +272,5 @@ theorem maketargetcell_eq_spec {ctx : Ctx n}
       specMaketargetcell ctx lab ptn level tcLevel := by
   rw [maketargetcell, specMaketargetcell,
     targetcell_eq_spec heq hlab hlsz hpsz hend]
-
-/-- An inadmissible hint gives the specification's complete target-cell
-record. In particular, this covers every negative stored hint. -/
-theorem maketargetcell_eq_spec_of_inadmissible {ctx : Ctx n}
-    {lab ptn : Array Nat} {level tcLevel : Nat}
-    (heq : Equitable ctx level lab ptn) (hlab : LabOk lab n)
-    (hlsz : lab.size = n) (hpsz : ptn.size = n)
-    (hend : ptn[ptn.size - 1]! ≤ level) (hint : Int)
-    (hbad : ¬ (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
-      (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level))) :
-    maketargetcell ctx lab ptn level tcLevel hint =
-      specMaketargetcell ctx lab ptn level tcLevel := by
-  rw [maketargetcell, specMaketargetcell,
-    targetcell_eq_spec_of_inadmissible heq hlab hlsz hpsz hend hint hbad]
-
-/-- A matching hint also gives the specification's complete target-cell
-record. -/
-theorem maketargetcell_eq_spec_of_hint {ctx : Ctx n}
-    {lab ptn : Array Nat} {level tcLevel : Nat}
-    (heq : Equitable ctx level lab ptn) (hlab : LabOk lab n)
-    (hlsz : lab.size = n) (hpsz : ptn.size = n)
-    (hend : ptn[ptn.size - 1]! ≤ level) (hint : Int)
-    (hhint : hint.toNat = specTargetcell ctx lab ptn level tcLevel) :
-    maketargetcell ctx lab ptn level tcLevel hint =
-      specMaketargetcell ctx lab ptn level tcLevel := by
-  rw [maketargetcell, specMaketargetcell,
-    targetcell_eq_spec_of_hint heq hlab hlsz hpsz hend hint hhint]
 
 end Hex.GraphIso.Nauty
