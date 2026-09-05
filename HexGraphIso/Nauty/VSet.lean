@@ -1728,6 +1728,12 @@ theorem card_image (σ : Renaming n) (s : VSet n) : (s.image σ).card = s.card :
 
 /-! # Identities of the empty set -/
 
+@[simp] theorem card_empty : (empty : VSet n).card = 0 := by
+  rw [card_eq_countBelow, countBelow, List.countP_eq_zero]
+  intro v _
+  rw [mem_empty]
+  exact Bool.false_ne_true
+
 @[simp] theorem inter_empty (s : VSet n) : s.inter empty = empty :=
   ext fun w => by rw [mem_inter, mem_empty, Bool.and_false]
 
