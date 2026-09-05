@@ -26,6 +26,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -172,8 +173,9 @@ def record(report_path: Path, ref: str | None) -> int:
         return 1
     if ref is None:
         commit = report.get("env", {}).get("git_commit")
-        if commit and freshness.git(
-                "cat-file", "-t", f"{commit}^{{commit}}").strip() == "commit":
+        if commit and subprocess.run(
+                ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+                cwd=ROOT, capture_output=True).returncode == 0:
             ref = commit
     fingerprints = {}
     for system in systems:
