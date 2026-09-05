@@ -312,7 +312,7 @@ each negative corpus pair with the Lean profiler and divides the kernel's
 type-checking time by the certificate record count (both sides summed). The
 two records below are `hexgraphiso-kernel-7e28eb7ddb6c-chungus2.json` (the
 list-state replay, before this work) and
-`hexgraphiso-kernel-993d575b06ab-chungus2.json` (the packed replay), both on
+`hexgraphiso-kernel-81c4253bab3a-chungus2.json` (the packed replay), both on
 this host with a load average near 5.
 
 | pair | n | route | records | kernel s, before | kernel s, after |

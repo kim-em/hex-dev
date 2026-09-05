@@ -36,14 +36,13 @@ Usage:
 ``--pairs`` defaults to the newest committed pairs record under
 ``reports/bench-results/``. The output lands under
 ``reports/bench-results/hexgraphiso-kernel-<fingerprint>-<host>.json``
-unless ``--out`` says otherwise; the fingerprint is the sweep's (the
-``git ls-files -s`` hash over the graph-iso source), so a record is
-attributable to the source it measured.
+unless ``--out`` says otherwise; the fingerprint is the cactus sweep's
+(``sweep_freshness.py``'s content fingerprint of the graph-iso source),
+so a record is attributable to the source it measured.
 """
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import os
@@ -59,13 +58,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 RESULTS = REPO_ROOT / "reports" / "bench-results"
 
-# Keep identical to scripts/bench/graphiso_cactus_sweep.sh and
-# scripts/bench/check_graphiso_sweep_freshness.py.
-RELEVANT = [
-    "HexGraphIso/", "HexGraph/", "bench/HexGraphIso/Cactus.lean",
-    "scripts/plots/hexgraphiso-cactus.py", ":!HexGraphIso/SPEC",
-    ":!HexGraphIso/README.md",
-]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sweep_freshness as freshness  # noqa: E402
+
+# The measured source is the cactus sweep's family, so a kernel record
+# and a sweep record at the same fingerprint describe the same code.
+RELEVANT = list(freshness.GRAPHISO.include)
 
 TACTIC_FILE = """import HexGraphIso
 set_option trace.graph_iso true
@@ -129,10 +127,7 @@ def _newest_pairs() -> Path:
 
 
 def _fingerprint() -> str:
-    out = subprocess.run(["git", "ls-files", "-s", "--", *RELEVANT],
-                         cwd=REPO_ROOT, capture_output=True, text=True,
-                         check=True).stdout
-    return hashlib.sha256(out.encode()).hexdigest()[:12]
+    return freshness.fingerprint(freshness.index_listing(freshness.GRAPHISO))
 
 
 def _run_lean(source: str, timeout: float) -> tuple[str, float, bool, int]:
