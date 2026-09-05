@@ -116,7 +116,7 @@ theorem lowBit_mod_pow :
         have : s % 2 ^ (k + 1) < 2 := by omega
         omega
       rw [lowBit_eq s, lowBit_eq (s % 2 ^ (k + 1))]
-      simp only [hs, h, he, h2, ite_false, if_neg (by omega : ¬(0 = 1))]
+      simp only [hs, h, he, h2, ite_false, ite_eq_right (by omega : ¬(0 = 1))]
       rw [hdiv, lowBit_mod_pow k hm]
 
 /-- `lowBit` steps over all-zero low bits. -/
@@ -136,7 +136,7 @@ theorem lowBit_shift_pow :
       rw [← Nat.mod_mul_right_div_self s 2 (2 ^ k), h', Nat.zero_div]
     have hhalf : s / 2 ≠ 0 := by omega
     rw [lowBit_eq s]
-    simp only [hs, h2, ite_false, if_neg (by omega : ¬(0 = 1))]
+    simp only [hs, h2, ite_false, ite_eq_right (by omega : ¬(0 = 1))]
     rw [lowBit_shift_pow k hhalf hdvd, Nat.div_div_eq_div_mul, ← hp]
     omega
 
@@ -155,12 +155,12 @@ theorem lowBitGo_eq (s shift : Nat) :
       rw [Nat.shiftRight_eq_div_pow, h256]
     have hsplit : lowBit s = 8 + lowBit (s / 256) := by
       rw [lowBit_shift_pow 8 hs (by rw [h256]; exact hb), h256]
-    rw [lowBitGo, if_neg hs, if_pos hb, ih, h8, if_neg hge, if_neg hs,
+    rw [lowBitGo, ite_eq_right hs, ite_eq_left hb, ih, h8, ite_eq_right hge, ite_eq_right hs,
       hsplit]
     omega
   | case3 s shift hs hb =>
     have h256 : (2 : Nat) ^ 8 = 256 := by rfl
-    rw [lowBitGo, if_neg hs, if_neg hb, if_neg hs,
+    rw [lowBitGo, ite_eq_right hs, ite_eq_right hb, ite_eq_right hs,
       lbByte_get (Nat.mod_lt s (by omega))]
     have := lowBit_mod_pow 8 (s := s) (by rw [h256]; exact hb)
     rw [h256] at this
@@ -264,7 +264,7 @@ theorem popCountGo_eq (s acc : Nat) :
   induction s, acc using popCountGo.induct with
   | case1 acc => rw [popCountGo]; simp
   | case2 s acc hs ih =>
-    rw [popCountGo, if_neg hs, ih, pcByte_get (Nat.mod_lt s (by omega))]
+    rw [popCountGo, ite_eq_right hs, ih, pcByte_get (Nat.mod_lt s (by omega))]
     have := popCount_split s
     omega
 
@@ -335,16 +335,16 @@ theorem toListByteGo_eq (b base cnt : Nat) :
       (((List.range' k (min 8 cnt - k)).filter b.testBit).map
         (base + ·)).reverse ++ acc) ?_ ?_
   · intro k acc h
-    rw [toListByteGo, if_pos h, (by omega : min 8 cnt - k = 0)]
+    rw [toListByteGo, ite_eq_left h, (by omega : min 8 cnt - k = 0)]
     simp [List.range']
   · intro k acc h ih
-    rw [toListByteGo, if_neg h,
+    rw [toListByteGo, ite_eq_right h,
       (by omega : min 8 cnt - k = (min 8 cnt - (k + 1)) + 1),
       List.range'_succ]
     rcases htb : b.testBit k with _ | _
     · simp only [htb] at ih ⊢
-      rw [dif_neg (by simp : ¬(false = true))] at ih
-      rw [if_neg (by simp : ¬(false = true)), ih]
+      rw [dite_eq_right (by simp : ¬(false = true))] at ih
+      rw [ite_eq_right (by simp : ¬(false = true)), ih]
       simp [htb]
     · simp only [htb, reduceDIte, reduceIte] at ih ⊢
       rw [ih]
@@ -356,13 +356,13 @@ theorem toListGo_eq (base cnt s : Nat) (acc : List Nat) :
         (base + ·)).reverse ++ acc := by
   induction base, cnt, s, acc using toListGo.induct with
   | case1 base cnt s acc h =>
-    rw [toListGo, if_pos h]
+    rw [toListGo, ite_eq_left h]
     rcases h with rfl | rfl
     · simp
     · simp [Nat.zero_testBit]
   | case2 base cnt s acc h ih =>
     have hc : cnt ≠ 0 := fun hz => h (Or.inl hz)
-    rw [toListGo, if_neg h, ih, toListByte, toListByteGo_eq,
+    rw [toListGo, ite_eq_right h, ih, toListByte, toListByteGo_eq,
       Nat.sub_zero]
     rcases Decidable.em (cnt ≤ 8) with h8 | h8
     · have hz : cnt - 8 = 0 := by omega
@@ -411,7 +411,7 @@ theorem toListGo_eq (base cnt s : Nat) (acc : List Nat) :
     intro l
     induction l with
     | nil => rfl
-    | cons x xs ih => simp [ih, Nat.zero_add]
+    | cons x xs ih => simp [Nat.zero_add]
   rw [hid]
 
 /-- nauty's row order: rows are compared as packed setwords with vertex `0`

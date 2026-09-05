@@ -738,7 +738,7 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
   have hfirstNe : leaf.eqlevFirst ≠ level := by
     intro heq
     apply hef
-    simpa only [leaf, heq, beq_self_eq_true]
+    simp only [leaf, heq, beq_self_eq_true]
   have hmode := hprep.pruneMode hn hfull hstem hfirstNe hneg
   have hexit : NodeExit ctx tcLevel (specFuel + 1) (fuel + 1) level
       codes st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2

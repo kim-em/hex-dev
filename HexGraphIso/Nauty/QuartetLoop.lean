@@ -71,8 +71,8 @@ private theorem inner_grows {nn : Nat} {s : Nat} {γ : Array Nat}
     (List.range nn) a hy ?_
   intro acc' w _ hacc'
   rcases hw : s.testBit w with _ | _
-  · rw [ite_eq_right (by simp [hw])]; exact hacc'
-  · rw [ite_eq_left (by simp [hw]), testBit_insert, hacc']; rfl
+  · rw [ite_eq_right (by simp)]; exact hacc'
+  · rw [ite_eq_left (by simp), testBit_insert, hacc']; rfl
 
 /-- One closure round only adds bits. -/
 theorem orbitStepSet_grows {nn : Nat} {gens : List (Array Nat)}
@@ -96,8 +96,8 @@ theorem orbitStepSet_step {nn : Nat} {gens : List (Array Nat)}
     (fun a' w y hy => ?_) (fun a' => ?_) (List.range nn) a
     (List.mem_range.mpr hu)
   · rcases hw : s.testBit w with _ | _
-    · rw [ite_eq_right (by simp [hw])]; exact hy
-    · rw [ite_eq_left (by simp [hw]), testBit_insert, hy]; rfl
+    · rw [ite_eq_right (by simp)]; exact hy
+    · rw [ite_eq_left (by simp), testBit_insert, hy]; rfl
   · rw [ite_eq_left (by simp [hs]), testBit_insert]
     simp
 
@@ -113,8 +113,8 @@ theorem orbitStepSet_lt {nn : Nat} {gens : List (Array Nat)}
     (List.range nn) acc hacc ?_
   intro acc' w hw hacc'
   rcases hsw : s.testBit w with _ | _
-  · rw [ite_eq_right (by simp [hsw])]; exact hacc'
-  · rw [ite_eq_left (by simp [hsw])]
+  · rw [ite_eq_right (by simp)]; exact hacc'
+  · rw [ite_eq_left (by simp)]
     refine lt_two_pow_of_bits fun i hi => ?_
     rw [testBit_insert]
     have h1 : acc'.testBit i = false :=
