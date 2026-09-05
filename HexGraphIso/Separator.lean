@@ -141,7 +141,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
   rcases hdisc : discreteAt
       (refine ctx level lab ptn active numcells).ptn level ctx.n
     with _ | _
-  · simp only [hdisc, Bool.false_eq_true, ite_false]
+  · simp only [Bool.false_eq_true, ite_false]
     obtain ⟨mt, hmt⟩ : ∃ mt, (specMaketargetcell ctx
         (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn level
@@ -223,7 +223,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
     dsimp only
     simp only [List.head?_cons, List.tail_cons, hrestMax]
     rfl
-  · simp only [hdisc, ite_true]
+  · simp only [ite_true]
     rfl
 
 /-- The first two codes of the spec key of a graph presentation:
