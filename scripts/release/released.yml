@@ -489,7 +489,7 @@ repos:
   - repo: leanprover/hex-graph-iso
     component: Graph canonical labelling
     lib: HexGraphIso
-    test_modules: [HexGraphIso.TacticTests]
+    test_modules: [HexGraphIso.TacticTests, HexGraphIso.ModuleBoundaryTests]
     umbrella: true
     spec: hex-graph-iso
     extra_paths:

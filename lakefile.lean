@@ -887,6 +887,7 @@ lean_lib HexReleaseTests where
     `HexMvPoly.KernelTests,
     `HexSparsePoly.KernelTests,
     `HexGraphIso.TacticTests,
+    `HexGraphIso.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
