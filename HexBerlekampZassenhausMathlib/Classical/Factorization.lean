@@ -660,7 +660,7 @@ theorem factorDirectCoreOfPlan_factored
       omega
     rw [hk, pow_zero] at hrecover
     omega
-  letI := modular.data.bounds
+  let := modular.data.bounds
   have hadm :
       Hex.leadingCoeffAdmissible core.poly modular.data.p :=
     Hex.isGoodPrime_leadingCoeffAdmissible core.poly modular.data.p

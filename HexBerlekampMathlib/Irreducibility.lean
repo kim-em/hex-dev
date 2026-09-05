@@ -210,7 +210,7 @@ theorem irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
   have : Module.Finite (ZMod p) (AdjoinRoot g) :=
     (AdjoinRoot.powerBasis hg_ne_zero).finite
   have : Finite (AdjoinRoot g) := Module.finite_of_finite (ZMod p)
-  letI : Fintype (AdjoinRoot g) := Fintype.ofFinite _
+  let : Fintype (AdjoinRoot g) := Fintype.ofFinite _
   have hcard : Fintype.card (AdjoinRoot g) = p ^ g.natDegree := by
     rw [← Nat.card_eq_fintype_card,
         ← FiniteField.pow_finrank_eq_natCard p (AdjoinRoot g),

@@ -42,7 +42,7 @@ theorem abs_det_le_row_l2norm_prod
   let o := b.toBasis.orientation
   let rows : Fin N → EuclideanSpace ℝ (Fin N) :=
     fun i => WithLp.toLp 2 (fun j => (A i j : ℝ))
-  haveI : Fact (Module.finrank ℝ (EuclideanSpace ℝ (Fin N)) = N) := ⟨by simp⟩
+  have : Fact (Module.finrank ℝ (EuclideanSpace ℝ (Fin N)) = N) := ⟨by simp⟩
   have hvol : |o.volumeForm rows| ≤ ∏ i : Fin N, ‖rows i‖ :=
     o.abs_volumeForm_apply_le rows
   have hrob : |o.volumeForm rows| = |b.toBasis.det rows| :=
@@ -1382,7 +1382,7 @@ theorem pow_dvd_resultant_of_map_dvd_left_coprime
   by_cases hdg : d ≤ g.natDegree
   · exact pow_dvd_resultant_of_map_dvd hq_monic hq_deg hf_ne hf_lc_coprime hdf hdg
       hf_dvd hg_dvd
-  · letI : Fact (1 < p ^ k) := ⟨hmod⟩
+  · let : Fact (1 < p ^ k) := ⟨hmod⟩
     let φ := Int.castRingHom (ZMod (p ^ k))
     have hgmap : g.map φ = 0 := by
       by_contra hgmap_ne

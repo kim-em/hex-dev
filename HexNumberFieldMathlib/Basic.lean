@@ -77,7 +77,7 @@ rational minimal polynomial. -/
 theorem p_eq_minpoly (a : AlgebraicNumber) :
     (a.p.leadingCoeff : Rat)⁻¹ • HexPolyZMathlib.toPolyℚ a.p =
       minpoly Rat a.toComplex := by
-  letI : ZPoly.CheckedIrreducible a.p := a.checked
+  let : ZPoly.CheckedIrreducible a.p := a.checked
   have hroot :
       Polynomial.aeval a.toComplex (HexPolyZMathlib.toPolyℚ a.p) = 0 := by
     rw [Polynomial.aeval_def, Polynomial.eval₂_eq_eval_map]
@@ -388,7 +388,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
   constructor
   · rintro ⟨hp, hmeet⟩
     let brep : RefinedIsolation a.p := b.rep.castPoly hp
-    letI : ZPoly.CheckedIrreducible a.p := a.checked
+    let : ZPoly.CheckedIrreducible a.p := a.checked
     have hinter : Intersects a.rep brep := by
       change a.rep.1.square.discsMeet brep.1.square = true
       rw [show brep.1.square = b.rep.1.square by
@@ -404,7 +404,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
     have hp := AlgebraicNumber.eq_polynomial hroot
     refine ⟨hp, ?_⟩
     let brep : RefinedIsolation a.p := b.rep.castPoly hp
-    letI : ZPoly.CheckedIrreducible a.p := a.checked
+    let : ZPoly.CheckedIrreducible a.p := a.checked
     have hroot' : a.rep.root = brep.root := by
       rw [show brep.root = b.rep.root by
         exact RefinedIsolation.castPoly_root hp b.rep]

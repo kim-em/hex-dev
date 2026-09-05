@@ -118,7 +118,7 @@ theorem irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
       (Int.castRingHom (ZMod p)) f.leadingCoeff ≠ 0)
     (hirr : Irreducible (f.map (Int.castRingHom (ZMod p)))) :
     Irreducible f := by
-  haveI : IsDomain (ZMod p) := inferInstance
+  have : IsDomain (ZMod p) := inferInstance
   set φ : ℤ →+* ZMod p := Int.castRingHom (ZMod p) with hφ_def
   refine ⟨?_, ?_⟩
   · intro hunit
@@ -268,7 +268,7 @@ theorem Hex_ZPoly_Irreducible_of_primeChoice_fModP
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p
           primeData.bounds primeData.fModP)) :
     Hex.ZPoly.Irreducible core := by
-  letI := primeData.bounds
+  let := primeData.bounds
   refine Hex_ZPoly_Irreducible_of_irreducible_modP
     (p := primeData.p) (core := core) hprim hlc_map_ne ?_
   simpa [hfModP_eq] using hirr_fModP
@@ -301,7 +301,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p
           primeData.bounds primeData.fModP)) :
     Hex.ZPoly.Irreducible core := by
-  haveI : Fact (Nat.Prime primeData.p) := ⟨hprime⟩
+  have : Fact (Nat.Prime primeData.p) := ⟨hprime⟩
   exact Hex_ZPoly_Irreducible_of_primeChoice_fModP
     (primeData := primeData)
     (core := core)
@@ -529,20 +529,20 @@ theorem irreducible_of_smallMod_form
           (@Hex.monicModularImage primeData.p primeData.bounds
             (@Hex.ZPoly.modP primeData.p primeData.bounds core)))) = true) :
     Hex.ZPoly.Irreducible core := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hprime : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime_hex.two_le, ?_⟩
     intro m hmlt hmdvd
     rcases hprime_hex.right m hmdvd with h | h
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
-  letI : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  let : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
   have hformCopy := hform
   obtain ⟨_, hzero, hfactors_eq⟩ := hformCopy
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime_hex
-  letI := hfield
+  let := hfield
   -- Translate factorsModP.size ≤ 1 into bfact.factors.length ≤ 1.
   have hfactors_len_le :
       (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
@@ -664,7 +664,7 @@ theorem irreducible_of_smallMod
       (Int.castRingHom (ZMod primeData.p))
         (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0) :
     Hex.ZPoly.Irreducible core := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hsquareFree : Hex.squareFreeModP core primeData.p :=
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
   have hsquareFree_modP :
@@ -681,7 +681,7 @@ theorem irreducible_of_smallMod
     rcases hprime_hex.right m hmdvd with h | h
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   have hsquareFree_monic :
       Hex.gcdIsUnit
         (Hex.DensePoly.gcd
@@ -715,7 +715,7 @@ theorem squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime
       (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
         (@monicModPImage primeData.p primeData.bounds
           (@Hex.ZPoly.modP primeData.p primeData.bounds core))) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hsquareFree : Hex.squareFreeModP core primeData.p :=
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
   have hsquareFree_modP :
@@ -732,7 +732,7 @@ theorem squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime
     rcases hprime_hex.right m hmdvd with h | h
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   have hsquareFree_monic :
       Hex.gcdIsUnit
         (Hex.DensePoly.gcd
@@ -1160,7 +1160,7 @@ theorem choosePrimeData?_leadingCoeff_castRingHom_ne_zero
     (hselected : Hex.choosePrimeData? f = some primeData) :
     (Int.castRingHom (ZMod primeData.p))
         (HexPolyZMathlib.toPolynomial f).leadingCoeff ≠ 0 := by
-  letI := primeData.bounds
+  let := primeData.bounds
   exact
     leadingCoeff_castRingHom_ne_zero_of_isGoodPrime f
       (Hex.choosePrimeData?_isGoodPrime f primeData hselected)
@@ -1220,7 +1220,7 @@ the result without needing coprimality of `x` and `y`.
 private lemma dvd_gcd_mul_gcd_of_dvd_mul {α : Type*} [EuclideanDomain α]
     [DecidableEq α] {g x y : α} (h : g ∣ x * y) :
     g ∣ EuclideanDomain.gcd g x * EuclideanDomain.gcd g y := by
-  letI : GCDMonoid α := EuclideanDomain.gcdMonoid α
+  let : GCDMonoid α := EuclideanDomain.gcdMonoid α
   show g ∣ gcd g x * gcd g y
   have h1 : g ∣ gcd g x * y := dvd_gcd_mul_of_dvd_mul h
   rw [mul_comm] at h1

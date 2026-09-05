@@ -38,7 +38,7 @@ def toZMod (a : Hex.WordMod ctx) : ZMod m.toNat := (a.toNat : ZMod m.toNat)
 
 /-- The canonical representative of a transferred class is the residue's value. -/
 @[simp] theorem val_toZMod (a : Hex.WordMod ctx) : (toZMod a).val = a.toNat := by
-  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  have : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
   rw [toZMod, ZMod.val_natCast, Nat.mod_eq_of_lt a.toNat_lt]
 
 /-- `toZMod` is injective: its `ZMod` value is the residue, which pins the word. -/
@@ -55,24 +55,24 @@ theorem toZMod_injective : Function.Injective (toZMod (ctx := ctx)) := by
     _ = b.val.toNat := Hex.WordMod.toNat_mul_word b
 
 @[simp] theorem toZMod_zero : toZMod (0 : Hex.WordMod ctx) = 0 := by
-  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  have : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
   apply ZMod.val_injective
   rw [val_toZMod, ZMod.val_zero, Hex.WordMod.toNat_zero]
 
 @[simp] theorem toZMod_add (a b : Hex.WordMod ctx) :
     toZMod (a + b) = toZMod a + toZMod b := by
-  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  have : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
   apply ZMod.val_injective
   rw [ZMod.val_add, val_toZMod, val_toZMod, val_toZMod, Hex.WordMod.toNat_add]
 
 @[simp] theorem toZMod_mul (a b : Hex.WordMod ctx) :
     toZMod (a * b) = toZMod a * toZMod b := by
-  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  have : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
   apply ZMod.val_injective
   rw [ZMod.val_mul, val_toZMod, val_toZMod, val_toZMod, Hex.WordMod.toNat_mul]
 
 @[simp] theorem toZMod_one : toZMod (1 : Hex.WordMod ctx) = 1 := by
-  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  have : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
   apply ZMod.val_injective
   rw [val_toZMod, Hex.WordMod.toNat_one, ZMod.val_one_eq_one_mod]
 
@@ -106,7 +106,7 @@ ring structure back through the injective `toZMod`. -/
 
 @[simp] theorem toZMod_natCast (n : Nat) :
     toZMod ((n : Hex.WordMod ctx)) = (n : ZMod m.toNat) := by
-  haveI : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
+  have : NeZero m.toNat := ⟨Nat.ne_of_gt ctx.p_pos⟩
   show toZMod (Hex.WordMod.ofNat n) = _
   rw [toZMod, Hex.WordMod.toNat_ofNat, ZMod.natCast_mod]
 

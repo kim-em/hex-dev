@@ -119,7 +119,7 @@ theorem isCoprime_toMathlibPolynomial_of_normalizeMonic_gcd_eq_one
     [Fact (Nat.Prime p)] {a b : Hex.FpPoly p}
     (h : (Hex.FpPoly.normalizeMonic (Hex.DensePoly.gcd a b)).2 = 1) :
     IsCoprime (toMathlibPolynomial a) (toMathlibPolynomial b) := by
-  haveI : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  have : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
   obtain ⟨u, hu⟩ := isUnit_toMathlibPolynomial_of_normalizeMonic_eq_one h
   have hbez : (Hex.DensePoly.xgcd a b).left * a + (Hex.DensePoly.xgcd a b).right * b
       = Hex.DensePoly.gcd a b :=

@@ -313,7 +313,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     rw [ZPoly.coeff_reduceModPow, hmtoNat, hmeq, Int.ofNat_eq_natCast]
     exact ⟨Int.natCast_nonneg _, by exact_mod_cast intModNat_lt _ (p ^ a) (by omega)⟩
   · -- the cast equality: both quotients are `numerator /ₘ divisor` in `ZMod (p^a)[X]`
-    haveI : Fact (1 < (UInt64.ofNat mval).toNat) := ⟨by rw [hmtoNat]; exact hm1⟩
+    have : Fact (1 < (UInt64.ofNat mval).toNat) := ⟨by rw [hmtoNat]; exact hm1⟩
     have hmpa : (UInt64.ofNat mval).toNat = p ^ a := by rw [hmtoNat]; exact hmeq
     have hpapos : 0 < (UInt64.ofNat mval).toNat := by rw [hmtoNat]; omega
     -- `g` is monic in the various images

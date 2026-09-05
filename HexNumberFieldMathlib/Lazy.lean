@@ -395,7 +395,7 @@ private theorem ZPoly.reciprocal_isRoot {p : ZPoly} {z : ℂ}
     (hroot : (HexRootsMathlib.toPolyℂ p).IsRoot z) :
     (HexRootsMathlib.toPolyℂ p.reciprocal).IsRoot z⁻¹ := by
   rw [ZPoly.toPolyℂ_reciprocal p hp]
-  letI : Invertible z := invertibleOfNonzero hz
+  let : Invertible z := invertibleOfNonzero hz
   change ((HexRootsMathlib.toPolyℂ p).reverse).eval z⁻¹ = 0
   change (HexRootsMathlib.toPolyℂ p).eval z = 0 at hroot
   have hreverse :=

@@ -329,8 +329,8 @@ theorem directSupport_nonempty_of_represents
     (hnorm : Hex.normalizeFactorSign factor = factor)
     (hrep : RepresentsIntegerFactorModP data factor S) :
     S.Nonempty := by
-  letI := data.bounds
-  letI : Hex.ZMod64.PrimeModulus data.p :=
+  let := data.bounds
+  let : Hex.ZMod64.PrimeModulus data.p :=
     Hex.ZMod64.primeModulusOfPrime hval.prime
   by_contra hempty
   rw [Finset.not_nonempty_iff_eq_empty] at hempty

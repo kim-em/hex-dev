@@ -178,7 +178,7 @@ presentation. -/
 theorem toComplex_injective [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     Function.Injective (fun a : QAdjoin p x => toComplex a rep h) := by
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   intro a b hab
   apply toAdjoinRoot_bijective.1
@@ -543,7 +543,7 @@ noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
 /-- A checked rational presentation has characteristic zero. -/
 noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
     [ZPoly.CheckedIrreducible p] : CharZero (QAdjoin p x) := by
-  letI : Field (QAdjoin p x) := field p x
+  let : Field (QAdjoin p x) := field p x
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
   constructor
@@ -585,7 +585,7 @@ theorem toAdjoinRoot_zero [ZPoly.CheckedIrreducible p] :
     toAdjoinRoot (0 : QAdjoin p x) = 0 := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   apply (rootHom rep).injective
   rw [rootHom_toAdjoinRoot, (rootHom rep).map_zero]
@@ -596,7 +596,7 @@ theorem toAdjoinRoot_one [ZPoly.CheckedIrreducible p] :
     toAdjoinRoot (1 : QAdjoin p x) = 1 := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   apply (rootHom rep).injective
   rw [rootHom_toAdjoinRoot, (rootHom rep).map_one]
@@ -608,7 +608,7 @@ theorem toAdjoinRoot_add [ZPoly.CheckedIrreducible p]
     toAdjoinRoot (a + b) = toAdjoinRoot a + toAdjoinRoot b := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   apply (rootHom rep).injective
   rw [rootHom_toAdjoinRoot, (rootHom rep).map_add,
@@ -621,7 +621,7 @@ theorem toAdjoinRoot_mul [ZPoly.CheckedIrreducible p]
     toAdjoinRoot (a * b) = toAdjoinRoot a * toAdjoinRoot b := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   apply (rootHom rep).injective
   rw [rootHom_toAdjoinRoot, (rootHom rep).map_mul,
@@ -635,7 +635,7 @@ theorem toAdjoinRoot_smul [ZPoly.CheckedIrreducible p]
     toAdjoinRoot (q • a) = q • toAdjoinRoot a := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   apply (rootHom rep).injective
   rw [rootHom_toAdjoinRoot]

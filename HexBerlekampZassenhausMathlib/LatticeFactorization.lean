@@ -42,7 +42,7 @@ theorem irreducible_of_directSingleton
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hsmall : data.factorsModP.size ≤ 1) :
     Hex.ZPoly.Irreducible core := by
-  letI := data.bounds
+  let := data.bounds
   have hadm :
       Hex.leadingCoeffAdmissible core data.p :=
     Hex.isGoodPrime_leadingCoeffAdmissible core data.p

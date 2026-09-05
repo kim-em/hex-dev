@@ -702,7 +702,7 @@ private theorem conjugateEmbedding_apply [ZPoly.CheckedIrreducible p]
 private theorem conjugateEmbedding_injective [ZPoly.CheckedIrreducible p]
     (y : ℂ) (hy : (HexRootsMathlib.toPolyℂ p).eval y = 0) :
     Function.Injective (conjugateEmbedding (x := x) y hy) := by
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   exact (AdjoinRoot.lift (algebraMap Rat ℂ) y
     (definingPolynomial_isRoot hy)).injective.comp
@@ -904,7 +904,7 @@ theorem normEliminant_ne_zero [ZPoly.CheckedIrreducible p]
     simp at hdegree
   have hPne : P ≠ 0 := by
     exact HexRootsMathlib.toPolyℂ_ne_zero p hpSize
-  letI : Fintype (P.rootSet ℂ) :=
+  let : Fintype (P.rootSet ℂ) :=
     (Polynomial.rootSet_finite P ℂ).fintype
   let H (y : P.rootSet ℂ) : Polynomial ℂ :=
     Q.map (conjugateEmbedding y.1 (by
