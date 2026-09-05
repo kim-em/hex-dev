@@ -86,7 +86,7 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     have hib : i < base := List.mem_range.mp hi
     unfold diagonalMulCoeffTerm
     have hid : i ≤ k + q.size - 2 - t := by omega
-    rw [_root_.ite_eq_right (by omega)]
+    rw [ite_eq_right (by omega)]
     have hqi : q.size ≤ k + q.size - 2 - t - i := by
       dsimp [base] at hib
       omega
@@ -106,12 +106,12 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     intro j hj
     have hjs : j < q.size := List.mem_range.mp hj
     unfold diagonalMulCoeffTerm
-    rw [_root_.ite_eq_right (by
+    rw [ite_eq_right (by
       dsimp [base]
       omega), coeff_reversePrefix]
     by_cases hjt : j ≤ t
-    · rw [_root_.ite_eq_left (by
-        dsimp [base]; omega), _root_.ite_eq_left ⟨hjs, hjt⟩]
+    · rw [ite_eq_left (by
+        dsimp [base]; omega), ite_eq_left ⟨hjs, hjt⟩]
       have hidx₁ : k + q.size - 2 - t - (base + j) = q.size - 1 - j := by
         dsimp [base]
         omega
@@ -120,8 +120,8 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
         omega
       rw [hidx₁, hidx₂]
       grind
-    · rw [_root_.ite_eq_right (by
-        dsimp [base]; omega), _root_.ite_eq_right (by omega)]
+    · rw [ite_eq_right (by
+        dsimp [base]; omega), ite_eq_right (by omega)]
       exact Lean.Grind.Semiring.zero_mul _
   rw [hleft]
   have hright :
@@ -139,8 +139,8 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
       omega
     rw [coeff_reverseSeries q n j (by omega)]
     by_cases hjs : j < q.size
-    · rw [_root_.ite_eq_left hjs, _root_.ite_eq_left ⟨hjs, hjt⟩]
-    · rw [_root_.ite_eq_right hjs, _root_.ite_eq_right (by omega)]
+    · rw [ite_eq_left hjs, ite_eq_left ⟨hjs, hjt⟩]
+    · rw [ite_eq_right hjs, ite_eq_right (by omega)]
       exact Lean.Grind.Semiring.zero_mul _
   rw [hright]
   let f := fun j =>
@@ -151,12 +151,12 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     (by
       intro i hi _
       dsimp [f]
-      rw [_root_.ite_eq_right (by omega)])
+      rw [ite_eq_right (by omega)])
   have htext := foldRangeExtend f (t + 1) bound (Nat.le_max_right _ _)
     (by
       intro i hi _
       dsimp [f]
-      rw [_root_.ite_eq_right (by omega)])
+      rw [ite_eq_right (by omega)])
   dsimp [f] at hqext htext
   exact hqext.symm.trans htext
 

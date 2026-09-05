@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import Init.Grind.Ring.Basic
 public import Init.Data.List.Lemmas
 public import HexPoly.Operations
@@ -70,7 +69,7 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
         exact ih _
   rw [hfold (List.range (n + 1)) 0]
   by_cases hshift : shift ≤ n
-  · rw [HexPoly.ite_eq_right (by omega : ¬n < shift)]
+  · rw [ite_eq_right (by omega : ¬n < shift)]
     have hsimp : ∀ i,
         (if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) =
           if i = shift then q.coeff (n - shift) else 0 := by
@@ -91,8 +90,8 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
           simp only [List.foldl_cons]
           rw [hsimp i]
           exact ih _
-    rw [hfold2 (List.range (n + 1)) 0, fold_single_index, HexPoly.ite_eq_left (by omega : shift < n + 1)]
-  · rw [HexPoly.ite_eq_left (by omega : n < shift)]
+    rw [hfold2 (List.range (n + 1)) 0, fold_single_index, ite_eq_left (by omega : shift < n + 1)]
+  · rw [ite_eq_left (by omega : n < shift)]
     have hzero_fold : ∀ (xs : List Nat) (acc : S),
         xs.foldl (fun acc i =>
             acc + if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) acc = acc := by
@@ -228,14 +227,14 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
           exact ih _
     rw [hfold2 (List.range (n + 1)) 0, fold_single_index]
     have hshift_lt : shift < n + 1 := by omega
-    rw [HexPoly.ite_eq_left hshift_lt]
+    rw [ite_eq_left hshift_lt]
     by_cases hsize : n - shift < q.size
-    · rw [HexPoly.ite_eq_left ⟨hshift, hsize⟩]
+    · rw [ite_eq_left ⟨hshift, hsize⟩]
     · have hand : ¬ (shift ≤ n ∧ n - shift < q.size) := fun ⟨_, h⟩ => hsize h
-      rw [HexPoly.ite_eq_right hand]
+      rw [ite_eq_right hand]
       have hq0 : q.getD (n - shift) (Zero.zero : S) = (0 : S) := by
         unfold Array.getD
-        rw [HexPoly.dite_eq_right (Nat.not_lt.mpr (Nat.le_of_not_lt hsize))]
+        rw [dite_eq_right (Nat.not_lt.mpr (Nat.le_of_not_lt hsize))]
         rfl
       rw [hq0]
       grind
@@ -259,7 +258,7 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
           exact ih _
     rw [hzero_fold (List.range (n + 1)) 0]
     have hand : ¬ (shift ≤ n ∧ n - shift < q.size) := fun ⟨h, _⟩ => hshift h
-    rw [HexPoly.ite_eq_right hand]
+    rw [ite_eq_right hand]
     grind
 
 /-- Left absorption for polynomial multiplication: `0 * p = 0`. A `grind`
@@ -853,7 +852,7 @@ theorem divModArray_reconstruction {S : Type _}
   by_cases hqzero : q.isZero
   · simp [hqzero]
     rw [zero_mul, zero_add]
-  · rw [HexPoly.ite_eq_right hqzero]
+  · rw [ite_eq_right hqzero]
     have hqpos : 0 < q.size := by
       have hcoeffs : q.coeffs.size ≠ 0 := by
         simpa [isZero, Array.isEmpty_iff_size_eq_zero] using hqzero
@@ -878,7 +877,7 @@ theorem divModArray_reconstruction {S : Type _}
       unfold toArray Array.getD
       have hle : p.coeffs.size ≤ i := by
         simpa [size] using (by omega : p.size ≤ i)
-      rw [HexPoly.dite_eq_right (Nat.not_lt.mpr hle)]
+      rw [dite_eq_right (Nat.not_lt.mpr hle)]
     have hzero_quot : ∀ i, i < p.size →
         (Array.replicate (p.size - (q.size - 1)) (Zero.zero : S)).getD i
           (Zero.zero : S) = (Zero.zero : S) := by
@@ -977,13 +976,13 @@ theorem coeff_mul_top {S : Type _}
   rw [coeff_mul, mulCoeffSum_eq_diagonal, foldl_add_general_eq_at_predecessor _ p.size hp]
   · unfold diagonalMulCoeffTerm
     have hno : ¬ p.size - 1 + (q.size - 1) < p.size - 1 := by omega
-    rw [HexPoly.ite_eq_right hno]
+    rw [ite_eq_right hno]
     have hsub : p.size - 1 + (q.size - 1) - (p.size - 1) = q.size - 1 := by omega
     rw [hsub]
   · intro i hi
     unfold diagonalMulCoeffTerm
     have hno : ¬ p.size - 1 + (q.size - 1) < i := by omega
-    rw [HexPoly.ite_eq_right hno]
+    rw [ite_eq_right hno]
     have hsub : q.size ≤ p.size - 1 + (q.size - 1) - i := by omega
     rw [coeff_eq_zero_of_size_le q hsub]
     show p.coeff i * (Zero.zero : S) = 0
@@ -1007,7 +1006,7 @@ private theorem coeff_mul_above_top_general {S : Type _}
   by_cases hlt : i < k
   · simp [hlt]
   · have hsub_ge : q.size ≤ i - k := by omega
-    rw [HexPoly.ite_eq_right hlt, coeff_eq_zero_of_size_le q hsub_ge]
+    rw [ite_eq_right hlt, coeff_eq_zero_of_size_le q hsub_ge]
     show p.coeff k * (Zero.zero : S) = 0
     have hzero_eq : (Zero.zero : S) = 0 := rfl
     rw [hzero_eq]
@@ -1135,7 +1134,7 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
       rw [hofq_coeff]
       unfold Array.getD
       have hnot : ¬ i < q.size := by omega
-      exact HexPoly.dite_eq_right hnot
+      exact dite_eq_right hnot
     · by_cases hge : qDegree + 1 ≤ (ofCoeffs q : DensePoly S).size
       · exact hge
       · exfalso
@@ -1357,9 +1356,9 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
               rw [coeff_sub m (monomial shift coeff) i hzero_sub, coeff_monomial]
               by_cases hi_eq : i = shift
               · subst i
-                rw [HexPoly.ite_eq_left rfl, hcoeff_eq, hshift_eq_size]
+                rw [ite_eq_left rfl, hcoeff_eq, hshift_eq_size]
                 grind
-              · rw [HexPoly.ite_eq_right hi_eq]
+              · rw [ite_eq_right hi_eq]
                 have hi_gt : shift < i := by omega
                 have hi_ge_size : m.size ≤ i := by
                   have hsize_lt : m.size - 1 < i := by
@@ -1568,7 +1567,7 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
   unfold divMod
   by_cases hdeg_short : p.degree?.getD 0 < q.degree?.getD 0
   · -- Short circuit: must show qq = 0 and p = 0.
-    rw [HexPoly.ite_eq_left hdeg_short]
+    rw [ite_eq_left hdeg_short]
     have hp_size_lt_q : p.size < q.size := by
       unfold degree? at hdeg_short
       have hq_ne : q.size ≠ 0 := by omega
@@ -1590,10 +1589,10 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
         omega
     have hp_zero : p = 0 := by rw [← hmul, hqq_zero, zero_mul]
     rw [hp_zero, hqq_zero]
-  · rw [HexPoly.ite_eq_right hdeg_short]
+  · rw [ite_eq_right hdeg_short]
     -- Apply the array-level lemma via divModArray.
     unfold divModArray
-    rw [HexPoly.ite_eq_right (by simp [hq_isZero])]
+    rw [ite_eq_right (by simp [hq_isZero])]
     -- Bookkeeping to feed divModArrayAux_eq_of_polynomial_mul.
     let qDeg := q.size - 1
     let scaleLead : S → S := fun coeff => coeff / q.leadingCoeff
@@ -1654,7 +1653,7 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
           omega
       unfold toArray Array.getD
       have hcoeffs_le : p.coeffs.size ≤ i := by change p.size ≤ i; exact hp_le_i
-      rw [HexPoly.dite_eq_right (Nat.not_lt.mpr hcoeffs_le)]
+      rw [dite_eq_right (Nat.not_lt.mpr hcoeffs_le)]
     have hm_size_le : qq.size ≤ qq.size := Nat.le_refl _
     have h_inv : (ofCoeffs p.toArray : DensePoly S) = qq * ofCoeffs q.toArray := by
       rw [ofCoeffs_toArray p, ofCoeffs_toArray q]

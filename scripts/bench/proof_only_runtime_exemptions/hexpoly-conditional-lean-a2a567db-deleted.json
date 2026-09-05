@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Conditional.lean",
+ "baseline_blob": "a2a567db59005c2be9c3ccfc5e2ae092183a3613",
+ "current_blob": null,
+ "reason": "Deletes the `HexPoly.Conditional` shim, whose six theorems restated Lean core's `ite_eq_left`, `ite_eq_right`, `dite_eq_left`, `dite_eq_right`, `ite_true` and `ite_false` under `HexPoly` names for the 4.33/4.34 transition. Lean 4.34 owns those names, every use site now refers to core directly, and the module declared no definition, so nothing executable is removed."
+}

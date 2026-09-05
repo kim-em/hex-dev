@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 public import Std
 
 public section

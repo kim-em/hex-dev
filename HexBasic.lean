@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexBasic.ArrayDecEq
-public import HexBasic.Conditional
 public import HexBasic.ExactDiv
 public import HexBasic.ExtTreeMap
 public import HexBasic.Fold
@@ -28,8 +27,7 @@ reproduced here so the library remains Mathlib-free. It provides reusable
 the `Batteries` list lemmas reproduced in `HexBasic.ListShim`, the
 `Vector.modify` update helper, and
 kernel-reducible `Array`/`Vector` equality (`HexBasic.ArrayDecEq`) and
-`ofFn` (`HexBasic.OfFn`), plus conditional reduction lemmas with names stable
-across supported Lean versions (`HexBasic.Conditional`).
+`ofFn` (`HexBasic.OfFn`).
 
 It also holds the shared exact-division contract (`HexBasic.ExactDiv`): the
 total `exactDiv` wrapper with deterministic division by zero, the

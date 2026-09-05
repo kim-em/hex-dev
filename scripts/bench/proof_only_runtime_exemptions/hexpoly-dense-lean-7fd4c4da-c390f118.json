@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Dense.lean",
+ "baseline_blob": "7fd4c4da15f387692247ac934f8ca653c09d69dc",
+ "current_blob": "c390f118456648c81ce5fce146eac46ba3e18710",
+ "reason": "Drops the now-unnecessary `HexPoly.Conditional` import and rewrites the qualified `Hex.ite_eq_*`/`HexPoly.ite_eq_*` shim references to Lean core's lemmas of the same names. Import list and proof terms only; no definition body changes."
+}

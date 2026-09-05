@@ -271,10 +271,10 @@ def ofMvPolynomial [CommSemiring R] [DecidableEq R]
         simp only [List.foldl_cons]
         by_cases hdq : d = q
         · subst d
-          rw [_root_.ite_eq_left (by simp), ih hds]
+          rw [ite_eq_left (by simp), ih hds]
           simp [hd]
         · have hqd : q ≠ d := Ne.symm hdq
-          rw [_root_.ite_eq_right (by simp [hdq]), ih hds]
+          rw [ite_eq_right (by simp [hdq]), ih hds]
           simp [hqd]
   rw [fold_pick (monoEquiv m) (fun d => MvPolynomial.coeff d p)
     p.support.toList p.support.nodup_toList]
@@ -349,7 +349,7 @@ variable [BEq R] [LawfulBEq R]
   · have h' : monoEquiv (Mono.unit i) ≠ monoEquiv m := by
       intro heq
       exact h (monoEquiv.injective heq).symm
-    rw [_root_.ite_eq_right h, _root_.ite_eq_right h']
+    rw [ite_eq_right h, ite_eq_right h']
 
 /-- Forward conversion preserves the multiplicative identity. -/
 @[simp] theorem toMvPolynomial_one [CommSemiring R] [DecidableEq R] :

@@ -41,14 +41,14 @@ coefficient. -/
 theorem coeff_reverseSeries_of_lt (f : DensePoly R) (n i : Nat)
     (hi : i < n) (hf : i < f.size) :
     (reverseSeries f n).coeff i = f.coeff (f.size - 1 - i) := by
-  rw [coeff_reverseSeries f n i hi, _root_.ite_eq_left hf]
+  rw [coeff_reverseSeries f n i hi, ite_eq_left hf]
 
 /-- Outside the polynomial support, reversal is zero rather than the constant
 coefficient selected by saturated Nat subtraction. -/
 theorem coeff_reverseSeries_of_size_le (f : DensePoly R) (n i : Nat)
     (hi : i < n) (hf : f.size ≤ i) :
     (reverseSeries f n).coeff i = 0 := by
-  rw [coeff_reverseSeries f n i hi, _root_.ite_eq_right (Nat.not_lt.mpr hf)]
+  rw [coeff_reverseSeries f n i hi, ite_eq_right (Nat.not_lt.mpr hf)]
 
 /-- Convert all represented coefficients of a truncated series to a normalized
 dense polynomial. -/
@@ -72,7 +72,7 @@ returns the original coefficient. -/
 theorem coeff_polyOfSeries_of_lt {n : Nat} (a : TSeries R n) (i : Nat)
     (hi : i < n) :
     (polyOfSeries a).coeff i = a.coeff i := by
-  rw [coeff_polyOfSeries, _root_.ite_eq_left hi]
+  rw [coeff_polyOfSeries, ite_eq_left hi]
 
 /-- Converting a reversed polynomial prefix back to a polynomial exposes the
 same guarded reversal coefficient law. -/

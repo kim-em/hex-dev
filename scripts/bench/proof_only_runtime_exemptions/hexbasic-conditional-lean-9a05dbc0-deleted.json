@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Conditional.lean",
+ "baseline_blob": "9a05dbc008fe5dc93f9f158faaa8709ba808fa88",
+ "current_blob": null,
+ "reason": "Deletes the `HexBasic.Conditional` shim, whose six theorems restated Lean core's `ite_eq_left`, `ite_eq_right`, `dite_eq_left`, `dite_eq_right`, `ite_true` and `ite_false` under `Hex` names for the 4.33/4.34 transition. Lean 4.34 owns those names, every use site now refers to core directly, and the module declared no definition, so nothing executable is removed."
+}

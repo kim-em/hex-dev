@@ -191,8 +191,8 @@ theorem foldl_monomials_eq (p : DensePoly R) :
   intro k
   rw [coeff_foldl_monomials]
   by_cases hk : k < p.size
-  · rw [HexPoly.ite_eq_left hk]
-  · rw [HexPoly.ite_eq_right hk, coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hk)]
+  · rw [ite_eq_left hk]
+  · rw [ite_eq_right hk, coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hk)]
     rfl
 
 private theorem cyclicModulus_dvd_fold_sub (n N : Nat) (hn : 0 < n)
@@ -375,7 +375,7 @@ private theorem negacyclicResidue_step (n i : Nat) (hn : 0 < n)
     have hpar' : ((i - n) / n) % 2 = 0 := by simpa [j] using hpar
     have hmod' : (i - n) % n = i % n := by simpa [j] using hmod
     unfold negacyclicResidue
-    rw [HexPoly.ite_eq_right (by omega), HexPoly.ite_eq_left hpar', hmod']
+    rw [ite_eq_right (by omega), ite_eq_left hpar', hmod']
     exact monomial_neg (i % n) c
   · have hipar : (i / n) % 2 = 0 := by
       rw [hdiv, Nat.add_mod]
@@ -383,7 +383,7 @@ private theorem negacyclicResidue_step (n i : Nat) (hn : 0 < n)
     have hpar' : ((i - n) / n) % 2 = 1 := by simpa [j] using hpar
     have hmod' : (i - n) % n = i % n := by simpa [j] using hmod
     unfold negacyclicResidue
-    rw [HexPoly.ite_eq_left hipar, HexPoly.ite_eq_right (by omega), hmod']
+    rw [ite_eq_left hipar, ite_eq_right (by omega), hmod']
     exact monomial_neg_neg (i % n) c
 
 /-- A monomial and its signed exponent reduction are congruent modulo

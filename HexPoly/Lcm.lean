@@ -46,7 +46,7 @@ theorem size_monicize (p : DensePoly F) : (monicize p).size = p.size := by
       rw [← Bool.not_eq_true]
       intro h
       exact hp ((size_eq_zero_iff p).mp ((isZero_eq_true_iff p).mp h))
-    rw [monicize, HexPoly.ite_eq_right (by simp [hisZero])]
+    rw [monicize, ite_eq_right (by simp [hisZero])]
     apply Nat.le_antisymm
     · rw [scale_eq_scaleImpl]
       exact size_scaleImpl_le _ _
@@ -80,7 +80,7 @@ theorem monicize_monic {p : DensePoly F} (hp : p ≠ 0) : (monicize p).Monic := 
     exact hp ((size_eq_zero_iff p).mp ((isZero_eq_true_iff p).mp h))
   rw [monic_iff_leadingCoeff_eq_one,
     leadingCoeff_eq_coeff_last _ (by rw [size_monicize]; exact hpPos),
-    size_monicize, monicize, HexPoly.ite_eq_right (by simp [hisZero]),
+    size_monicize, monicize, ite_eq_right (by simp [hisZero]),
     coeff_scale_semiring, ← leadingCoeff_eq_coeff_last p hpPos]
   exact Lean.Grind.Field.inv_mul_cancel
     (leadingCoeff_ne_zero_of_pos_size p hpPos)
@@ -204,7 +204,7 @@ theorem monicize_dvd_of_dvd {g p : DensePoly F} (hg : g ≠ 0)
     _ = scale g.leadingCoeff⁻¹ g * scale g.leadingCoeff r := by
       rw [scale_mul]
     _ = monicize g * scale g.leadingCoeff r := by
-      rw [monicize, HexPoly.ite_eq_right (by
+      rw [monicize, ite_eq_right (by
         intro h
         rw [h] at hisZero
         cases hisZero)]
@@ -375,7 +375,7 @@ private theorem dvd_monicize_of_dvd {p r : DensePoly F} (hr : r ≠ 0)
     · exact False.elim (hr ((size_eq_zero_iff r).mp (Nat.eq_zero_of_not_pos h)))
   have hisZero : r.isZero = false := (isZero_eq_false_iff r).2 hrPos
   refine ⟨scale r.leadingCoeff⁻¹ q, ?_⟩
-  rw [monicize, HexPoly.ite_eq_right (by simp [hisZero]), hq, mul_scale]
+  rw [monicize, ite_eq_right (by simp [hisZero]), hq, mul_scale]
 
 private theorem monicize_eq_self_of_monic {p : DensePoly F} (hp : p.Monic) :
     monicize p = p := by
@@ -388,7 +388,7 @@ private theorem monicize_eq_self_of_monic {p : DensePoly F} (hp : p.Monic) :
     · exact h
     · exact False.elim (hpNe ((size_eq_zero_iff p).mp (Nat.eq_zero_of_not_pos h)))
   have hisZero : p.isZero = false := (isZero_eq_false_iff p).2 hpPos
-  rw [monicize, HexPoly.ite_eq_right (by simp [hisZero]), hp, Lean.Grind.Field.inv_one,
+  rw [monicize, ite_eq_right (by simp [hisZero]), hp, Lean.Grind.Field.inv_one,
     scale_one_poly]
 
 @[simp, grind =]
@@ -521,7 +521,7 @@ private theorem lcm_nonzero_spec (p q : DensePoly F) (hp : p ≠ 0) (hq : q ≠ 
     change scale u (x.left * p + x.right * q) = common
     rw [xgcd_bezout_field p q, xgcd_gcd_eq_gcd]
     change scale g.leadingCoeff⁻¹ g = monicize g
-    rw [monicize, HexPoly.ite_eq_right (by simp [hgZero])]
+    rw [monicize, ite_eq_right (by simp [hgZero])]
   have hrawResult : raw = left * q := by
     rw [show raw = p * right by rfl, hpFactor, hqFactor]
     exact (mul_assoc_poly common left right).trans

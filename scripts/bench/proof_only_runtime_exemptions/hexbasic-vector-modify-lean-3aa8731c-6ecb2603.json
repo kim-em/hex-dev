@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Vector/Modify.lean",
+ "baseline_blob": "3aa8731c5ae4aebf7e78d4bbeb3c002002c029b8",
+ "current_blob": "6ecb260329bf11be59dbd1a1c502532ab2102bea",
+ "reason": "Drops the now-unnecessary `HexBasic.Conditional` import and rewrites the qualified `Hex.ite_eq_*`/`HexPoly.ite_eq_*` shim references to Lean core's lemmas of the same names. Import list and proof terms only; no definition body changes."
+}

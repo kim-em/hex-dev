@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/ExtTreeMap.lean",
+ "baseline_blob": "9ce7098cfe9d5aaf05a3ba8e878918072fbe357c",
+ "current_blob": "11d2d37c19c04011947fa7dacf3fc04c8cd954a7",
+ "reason": "Drops the now-unnecessary `HexBasic.Conditional` import and rewrites the qualified `Hex.ite_eq_*`/`HexPoly.ite_eq_*` shim references to Lean core's lemmas of the same names. Import list and proof terms only; no definition body changes."
+}

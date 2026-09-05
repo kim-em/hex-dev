@@ -533,7 +533,7 @@ theorem softRefinementCandidate?_sound {p : ZPoly} {s : DyadicSquare}
   unfold softRefinementCandidate? TaylorShift.softRefinementCandidate? at h
   by_cases hprec : s.prec < 32
   · have hs : softSeededCandidate? p s ks 64 = some k := by
-      rw [_root_.ite_eq_left hprec] at h
+      rw [ite_eq_left hprec] at h
       change softSeededCandidate? p s ks 64 = some k at h
       exact h
     have hsound := softSeededCandidate?_sound hs

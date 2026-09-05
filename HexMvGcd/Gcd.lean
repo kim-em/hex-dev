@@ -1070,7 +1070,7 @@ instance instLawfulGcdOpsMvPoly [IsMonomialOrder cmp]
       exact ⟨q, hq.trans (MvPoly.mul_comm a q)⟩
   · intro hone
     have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hone
-    rw [coeff_one, coeff_zero, Hex.ite_eq_left rfl] at hcoeff
+    rw [coeff_one, coeff_zero, ite_eq_left rfl] at hcoeff
     exact LawfulGcdOps.one_ne_zero hcoeff
   · intro a b hab
     exact GcdDomainLaws.no_zero_div a b hab
