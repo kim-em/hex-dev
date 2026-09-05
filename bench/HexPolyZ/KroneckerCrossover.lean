@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexPolyZ
+import HexPolyZ.KroneckerMulti
+import HexPolyZ.NttMul
 
 /-!
 Kernel microbenchmark for the integer dense polynomial product: schoolbook
