@@ -35,11 +35,11 @@ private theorem oneLevel_isRoot (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   have hdvd := shifted_dvd_norm level lower hvalid hinjectiveTop f 0
   have hdvdComplex := Polynomial.map_dvd
     (LevelSemantics.coeffHom (level :: lower) hvalid hinjectiveTop hinvTop)
@@ -80,7 +80,7 @@ private theorem basePolynomial (f : Array (Array Rat)) :
     rawPolynomial [] (Factor.rawPoly [] f) =
       (HexPolyMathlib.toPolynomial (Factor.toRatPoly f)).map
         (algebraMap Rat ℂ) := by
-  letI : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
+  let : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
   have hvalidNil : LevelsValid [] := by exact trivial
   have hhom :
       (algebraMap Rat ℂ).comp LevelSemantics.coeffRatEquiv.toRingHom =
@@ -117,7 +117,7 @@ theorem iterated_isRoot_toRat (T : NumberTower) (f : Poly T) (z : ℂ)
 
 private theorem toRatPoly_ne_zero (f : Array (Array Rat))
     (hf : Factor.rawPoly [] f ≠ 0) : Factor.toRatPoly f ≠ 0 := by
-  letI : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
+  let : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
   intro hzero
   have hmap := LevelSemantics.map_rawPoly_nil f
   rw [hzero, HexPolyMathlib.toPolynomial_zero] at hmap

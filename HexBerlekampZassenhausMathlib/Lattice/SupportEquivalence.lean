@@ -70,7 +70,7 @@ theorem mem_trueSupportSpanInt_of_constant_on_partition
       ∀ S ∈ trueSupports, ∀ i ∈ S, ∀ j ∈ S, v i = v j) :
     v ∈ trueSupportSpanInt trueSupports := by
   classical
-  letI : Fintype trueSupports := (Set.toFinite trueSupports).fintype
+  let : Fintype trueSupports := (Set.toFinite trueSupports).fintype
   let rep : trueSupports → Fin r :=
     fun S => (hne S.1 S.2).choose
   have hrep (S : trueSupports) : rep S ∈ S.1 :=
@@ -159,7 +159,7 @@ theorem exists_adjustedVector
       ∀ x : Fin (L.factorCount + L.coeffWidth),
         w[x].natAbs ≤ V + V * U + trueSupports.ncard * U := by
   classical
-  letI : Fintype trueSupports := (Set.toFinite trueSupports).fintype
+  let : Fintype trueSupports := (Set.toFinite trueSupports).fintype
   let e : Fin L.factorCount → ℤ :=
     fun i => v[Fin.castAdd L.coeffWidth i]
   obtain ⟨S₀, hS₀, i₀, hi₀, k₀, hk₀, hik⟩ :=

@@ -408,7 +408,7 @@ theorem leadingCoeffAdmissible_of_gcd_pow
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (p ^ k)) = 1) :
     Hex.leadingCoeffAdmissible core p := by
-  letI : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
+  let : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
   have hs_inv :
       (Hex.ZPoly.leadingCoeffInverse core p k *
           Hex.DensePoly.leadingCoeff core) %
@@ -475,7 +475,7 @@ theorem monicModularImage_modP_eq_modP_monicTarget
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1) :
     Hex.monicModularImage (Hex.ZPoly.modP p core) =
       Hex.ZPoly.modP p (Hex.ZPoly.monicTarget core p k) := by
-  haveI : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
+  have : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
   have hadm : Hex.leadingCoeffAdmissible core p :=
     leadingCoeffAdmissible_of_gcd_pow core p k hprime hpk hk hgcd
   have hsize : 0 < (Hex.ZPoly.modP p core).size := by

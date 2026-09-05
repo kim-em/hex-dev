@@ -402,7 +402,7 @@ theorem exact?_isSome (a : AlgebraicRoot) :
     (Hex.ZPoly.isIrreducible_iff
       entry.1).mpr hirredProp
   let checked : ZPoly.CheckedIrreducible entry.1 := ⟨hirred, hdegree⟩
-  letI : ZPoly.CheckedIrreducible entry.1 := checked
+  let : ZPoly.CheckedIrreducible entry.1 := checked
   have hentryNe : entry.1 ≠ 0 := by
     intro hq
     rw [hq] at hdegree
@@ -622,9 +622,9 @@ private theorem minpoly_relation [ZPoly.CheckedIrreducible p]
     0 < d ∧ d ≤ p.degree?.getD 0 ∧
       (a.relationAt? a.krylovOrbit d).isSome := by
   let b : AdjoinRoot (definingPolynomial p) := toAdjoinRoot a
-  letI : Module.Free Rat (AdjoinRoot (definingPolynomial p)) :=
+  let : Module.Free Rat (AdjoinRoot (definingPolynomial p)) :=
     (definingPolynomial_monic p).free_adjoinRoot
-  letI : Module.Finite Rat (AdjoinRoot (definingPolynomial p)) :=
+  let : Module.Finite Rat (AdjoinRoot (definingPolynomial p)) :=
     (definingPolynomial_monic p).finite_adjoinRoot
   have hbint : IsIntegral Rat b := IsIntegral.of_finite Rat b
   let m : Polynomial Rat := minpoly Rat b
@@ -845,9 +845,9 @@ private theorem minpoly?_natDegree [ZPoly.CheckedIrreducible p]
     (HexPolyZMathlib.toPolyℚ q).natDegree = (minpoly Rat b).natDegree := by
   let b : AdjoinRoot (definingPolynomial p) := toAdjoinRoot a
   let d := (minpoly Rat b).natDegree
-  letI : Module.Free Rat (AdjoinRoot (definingPolynomial p)) :=
+  let : Module.Free Rat (AdjoinRoot (definingPolynomial p)) :=
     (definingPolynomial_monic p).free_adjoinRoot
-  letI : Module.Finite Rat (AdjoinRoot (definingPolynomial p)) :=
+  let : Module.Finite Rat (AdjoinRoot (definingPolynomial p)) :=
     (definingPolynomial_monic p).finite_adjoinRoot
   have hbint : IsIntegral Rat b := IsIntegral.of_finite Rat b
   unfold minpoly? at hq
@@ -932,9 +932,9 @@ private theorem minpoly?_certificates [ZPoly.CheckedIrreducible p]
     ZPoly.ratPolyPrimitivePart_primitive (relationPoly coeffs) hcontentNe
   let q := ZPoly.ratPolyPrimitivePart (relationPoly coeffs)
   let b : AdjoinRoot (definingPolynomial p) := toAdjoinRoot a
-  letI : Module.Free Rat (AdjoinRoot (definingPolynomial p)) :=
+  let : Module.Free Rat (AdjoinRoot (definingPolynomial p)) :=
     (definingPolynomial_monic p).free_adjoinRoot
-  letI : Module.Finite Rat (AdjoinRoot (definingPolynomial p)) :=
+  let : Module.Finite Rat (AdjoinRoot (definingPolynomial p)) :=
     (definingPolynomial_monic p).finite_adjoinRoot
   have hbint : IsIntegral Rat b := IsIntegral.of_finite Rat b
   let E := adjoinRootAlgEquiv (p := p) (x := x)
@@ -978,7 +978,7 @@ private theorem minpoly?_certificates [ZPoly.CheckedIrreducible p]
       hirredProp
   let checked : ZPoly.CheckedIrreducible q := ⟨hirred, by
     simpa [q] using hdegree⟩
-  letI : ZPoly.CheckedIrreducible q := checked
+  let : ZPoly.CheckedIrreducible q := checked
   have hsimple : HasOnlySimpleRoots q :=
     (HexRootsMathlib.hasOnlySimpleRoots_iff_separable q (by simpa [q] using hqne)).mpr
       (ZPoly.CheckedIrreducible.separable q)

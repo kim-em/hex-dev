@@ -118,7 +118,7 @@ theorem henselLiftData_liftedFactors_size_eq
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
     (Hex.henselLiftData core B primeData).liftedFactors.size =
       primeData.factorsModP.size := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   show (Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
         (primeData.factorsModP.map Hex.FpPoly.liftToZ)).size
       = primeData.factorsModP.size
@@ -162,7 +162,7 @@ theorem henselLiftData_liftedFactor_monic
     ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
       Hex.DensePoly.Monic
         (Hex.henselLiftData core B primeData).liftedFactors[i] := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   intro i
   exact Hex.ZPoly.multifactorLiftQuadratic_each_monic
     primeData.p B core
@@ -207,7 +207,7 @@ theorem henselLiftData_liftedFactor_monic_of_choosePrimeData
     ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
       Hex.DensePoly.Monic
         (Hex.henselLiftData core B primeData).liftedFactors[i] := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hinv :
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
         primeData.p B core
@@ -254,7 +254,7 @@ theorem henselLiftData_liftedFactor_injective
     (hfactorsModP_nodup : primeData.factorsModP.toList.Nodup) :
     Function.Injective
       (liftedFactor (Hex.henselLiftData core B primeData)) := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   -- The lifted-factor array equals the multifactor output by definition of
   -- `Hex.henselLiftData`. We name a local abbreviation for the multifactor output
   -- to thread index reasoning through both views.

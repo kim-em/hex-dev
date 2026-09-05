@@ -80,7 +80,7 @@ theorem henselLiftData_liftedFactor_injective_of_choosePrimeData
     (hfactorsModP_nodup : primeData.factorsModP.toList.Nodup) :
     Function.Injective
       (liftedFactor (Hex.henselLiftData core B primeData)) := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hinv :
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
         primeData.p B core
@@ -140,8 +140,8 @@ theorem henselLiftData_liftedFactor_natDegree_pos
     ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
       0 < (HexPolyZMathlib.toPolynomial
             (liftedFactor (Hex.henselLiftData core B primeData) i)).natDegree := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  haveI : Fact (1 < primeData.p) := ⟨hp⟩
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have : Fact (1 < primeData.p) := ⟨hp⟩
   intro i
   change 0 < (HexPolyZMathlib.toPolynomial
     (Hex.henselLiftData core B primeData).liftedFactors[i]).natDegree
@@ -310,7 +310,7 @@ theorem henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData
     ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
       0 < (HexPolyZMathlib.toPolynomial
             (liftedFactor (Hex.henselLiftData core B primeData) i)).natDegree := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hinv :
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
         primeData.p B core
@@ -404,7 +404,7 @@ theorem henselLiftData_liftedSubset_product_congr_mod_base
             (henselLiftData_liftedFactors_size_eq core B primeData) S))
         (Hex.FpPoly.liftToZ (modPFactorProduct primeData S))
         primeData.p := by
-  letI := primeData.bounds
+  let := primeData.bounds
   intro S
   let d := Hex.henselLiftData core B primeData
   let hsize := henselLiftData_liftedFactors_size_eq core B primeData
@@ -537,7 +537,7 @@ private theorem toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomia
         (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S))).map
           (Int.castRingHom (ZMod primeData.p)) =
       HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   intro d hsize
   have hcongr :=
     henselLiftData_liftedSubset_product_congr_mod_base core B primeData
@@ -560,7 +560,7 @@ private theorem modPFactor_ne_of_ne
     {i j : ModPFactorIndex primeData} (hij : i ≠ j) :
     letI := primeData.bounds
     modPFactor primeData i ≠ modPFactor primeData j := by
-  letI := primeData.bounds
+  let := primeData.bounds
   intro h
   apply hij
   have hi_list : i.val < primeData.factorsModP.toList.length := by
@@ -606,8 +606,8 @@ private theorem isCoprime_toMathlibPolynomial_modPFactor_of_ne
     IsCoprime
       (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i))
       (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j)) := by
-  letI := primeData.bounds
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  let := primeData.bounds
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   have hi_monic_fp : Hex.DensePoly.Monic (modPFactor primeData i) :=
     hfactors_monic _ (Array.getElem_mem _)
   have hj_monic_fp : Hex.DensePoly.Monic (modPFactor primeData j) :=
@@ -688,9 +688,9 @@ theorem henselLiftData_liftedSubset_complement_isCoprime_mod_p
           (liftedFactorProduct d ((Finset.univ : LiftedFactorSubset d) \
             liftedSubsetOfModPSubset primeData d hsize S))).map
         (Int.castRingHom (ZMod primeData.p))) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   intro d hsize
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   -- Rewrite both lifted products via the modP identification with `toMathlibPolynomial`
   -- of `modPFactorProduct`. The complement requires the
   -- `liftedSubsetOfModPSubset_compl_eq` rewrite first.
@@ -820,7 +820,7 @@ theorem henselLiftData_liftedFactorProduct_univ_congr_core
         (Finset.univ : Finset
           (LiftedFactorIndex (Hex.henselLiftData core B primeData))))
       core (primeData.p ^ B) := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   rw [liftedFactorProduct_univ_eq_polyProduct_liftedFactors]
   change Hex.ZPoly.congr
     (Array.polyProduct
@@ -858,7 +858,7 @@ theorem henselLiftData_liftedFactorProduct_subset_complement_congr_core
         liftedFactorProduct (Hex.henselLiftData core B primeData)
           (Finset.univ \ S))
       core (primeData.p ^ B) := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hfull :=
     henselLiftData_liftedFactorProduct_univ_congr_core core B primeData
       hprime_invariant hp hB

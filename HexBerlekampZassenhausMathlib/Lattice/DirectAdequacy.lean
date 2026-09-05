@@ -201,7 +201,7 @@ theorem directLiftedFactor_core_congr
               (Hex.ZPoly.directLiftData core B data)) \ {i})))
       ((Hex.ZPoly.directLiftData core B data).p ^
         (Hex.ZPoly.directLiftData core B data).k) := by
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   have hp_eq : d.p = data.p := by
     simp [d, Hex.ZPoly.directLiftData]
@@ -276,7 +276,7 @@ theorem directLiftedFactors_isCoprime
             ((Hex.ZPoly.directLiftData core B data).p ^
               (Hex.ZPoly.directLiftData core B data).k)))) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
   let target := Hex.ZPoly.monicTarget core data.p k
   let d := Hex.ZPoly.directLiftData core B data
@@ -330,7 +330,7 @@ theorem directLiftedFactors_isCoprime
         ((HexPolyZMathlib.toPolynomial (liftedFactor d j)).map
           (Int.castRingHom (ZMod data.p))) :=
     hcomp.of_isCoprime_of_dvd_right hjdvd
-  haveI : Fact (_root_.Nat.Prime data.p) :=
+  have : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hval.prime⟩
   have hpow := HexHenselMathlib.coprime_mod_p_lifts
     (HexPolyZMathlib.toPolynomial (liftedFactor d i))
@@ -359,7 +359,7 @@ theorem directLiftedFactor_map_irreducible
       ((HexPolyZMathlib.toPolynomial
         (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
           (Int.castRingHom (ZMod data.p))) := by
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
@@ -418,7 +418,7 @@ theorem directLiftedFactor_natDegree_le_core
       ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1)).natDegree ≤
         (HexPolyZMathlib.toPolynomial core).natDegree := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let q := HexPolyZMathlib.toPolynomial (liftedFactor d i)
   let h := liftedFactorProduct d
@@ -470,7 +470,7 @@ theorem directLiftedFactor_natDegree_le_core
       rwa [HexPolyMathlib.natDegree_toPolynomial]
     rw [hzero, Polynomial.natDegree_zero] at hcore_degree_map
     omega
-  haveI : Fact (_root_.Nat.Prime data.p) :=
+  have : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hval.prime⟩
   have hq_monic : q.Monic :=
     HexHenselMathlib.toPolynomial_monic_of_dense_monic _
@@ -524,7 +524,7 @@ theorem directLiftedFactor_isCoprime_cldQuotient
               ((Hex.ZPoly.directLiftData core B data).p ^
                 (Hex.ZPoly.directLiftData core B data).k)))) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let q := HexPolyZMathlib.toPolynomial (liftedFactor d i)
   let complement :=
@@ -574,7 +574,7 @@ theorem directLiftedFactor_isCoprime_cldQuotient
   have hp : _root_.Nat.Prime d.p := by
     rw [hp_eq]
     exact natPrime_of_hexNatPrime hval.prime
-  letI : Fact (_root_.Nat.Prime d.p) := ⟨hp⟩
+  let : Fact (_root_.Nat.Prime d.p) := ⟨hp⟩
   have hirr :=
     directLiftedFactor_map_irreducible_at_liftPrime
       core B data hval facts i
@@ -781,7 +781,7 @@ theorem directAdequacy
     (hB_floor : Hex.bhksRecoveryFloor core ≤ B)
     (_hB_ne : B ≠ 0) :
     DirectAdequacy core B data := by
-  letI := data.bounds
+  let := data.bounds
   have hcore_ne : core ≠ 0 :=
     zpoly_ne_zero_of_pos_lc hcore_lc_pos
   have hcore_size : 0 < core.size :=
@@ -1011,7 +1011,7 @@ theorem directCutProjection
           (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)
       (directTrueSupports core B data) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let A := directAdequacy core B data hcore_lc_pos hcore_pos
     hcore_prim hcore_sqfree hval hB_floor hB_ne
@@ -1116,7 +1116,7 @@ theorem directProjectedSpan_eq
             (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows) =
       BHKS.trueSupportSpanInt (directTrueSupports core B data) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   have hcore_ne : core ≠ 0 :=
     zpoly_ne_zero_of_pos_lc hcore_lc_pos

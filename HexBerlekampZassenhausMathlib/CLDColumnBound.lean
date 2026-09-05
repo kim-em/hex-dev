@@ -544,7 +544,7 @@ theorem cldQuotientMod_congr_mul_derivative
       (g * Hex.cldQuotientMod input g p k)
       (input * Hex.DensePoly.derivative g) (p ^ k) := by
   have hpk_pos : 0 < p ^ k := by omega
-  haveI : Fact (1 < p ^ k) := ⟨hk⟩
+  have : Fact (1 < p ^ k) := ⟨hk⟩
   -- Executable quotient / remainder of the monic division underlying `cldQuotientMod`.
   set num : Hex.ZPoly :=
     Hex.ZPoly.reduceModPow (input * Hex.DensePoly.derivative g) p k with hnum

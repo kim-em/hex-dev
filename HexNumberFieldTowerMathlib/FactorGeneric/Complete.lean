@@ -42,13 +42,13 @@ theorem factorSquarefree_isSome :
         Subsingleton.elim _ _
       subst hvalid
       subst hinjective
-      letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+      let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil
       let ι := LevelSemantics.coeffHom [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil
-      letI : CharZero (Arithmetic.Coeff []) :=
+      let : CharZero (Arithmetic.Coeff []) :=
         { cast_injective := by
             intro m n hmn
             apply Nat.cast_injective (R := ℂ)
@@ -69,9 +69,9 @@ theorem factorSquarefree_isSome :
         hinjectiveLower
       let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
         hinjectiveTop
-      letI : Field (Arithmetic.Coeff lower) :=
+      let : Field (Arithmetic.Coeff lower) :=
         Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-      letI : Field (Arithmetic.Coeff (level :: lower)) :=
+      let : Field (Arithmetic.Coeff (level :: lower)) :=
         Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
       have harrayDegree : 0 < f.size - 1 :=
         array_degree_pos_of_raw_degree_pos (level :: lower) f hdegree
@@ -577,7 +577,7 @@ private theorem factorRat_mem_monic (input : DensePoly Rat)
     ∀ factor ∈ factors,
       (HexPolyMathlib.toPolynomial
         (Factor.rawPoly [] factor)).Monic := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   intro factor hfactor
@@ -636,7 +636,7 @@ private theorem factorSquarefree_mem_monic
       (HexPolyMathlib.toPolynomial
         (Factor.rawPoly levels factor)).Monic := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   intro factor hfactor
@@ -737,7 +737,7 @@ private theorem factorFold_sound
             HexPolyMathlib.toPolynomial
               (Factor.rawPoly levels component.1) ^ component.2).prod := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   intro hstate
@@ -842,7 +842,7 @@ theorem factorRaw_isSome (levels : List Level)
     (f : Array (Array Rat)) :
     (Factor.factorRaw? levels f).isSome := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let components := Factor.yunRaw levels f
   have hcheck : Factor.checkYun levels f components :=
@@ -899,7 +899,7 @@ theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
     Factor.isIrreducible [] f ↔
       (Factor.rawPoly [] f).leadingCoeff = 1 ∧
         Irreducible (HexPolyMathlib.toPolynomial (Factor.rawPoly [] f)) := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   constructor
@@ -924,7 +924,7 @@ theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
       apply (Norm.isSquarefree_iff [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil f).mpr
-      letI : CharZero (Arithmetic.Coeff []) :=
+      let : CharZero (Arithmetic.Coeff []) :=
         { cast_injective := by
             intro m n hmn
             apply Nat.cast_injective (R := ℂ)
@@ -1030,7 +1030,7 @@ theorem isIrreducible_iff_of_injective (levels : List Level)
         Irreducible (HexPolyMathlib.toPolynomial
           (Factor.rawPoly levels f)) := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   cases levels with
   | nil =>
@@ -1075,7 +1075,7 @@ theorem isIrreducible_iff_of_injective (levels : List Level)
           exact Nat.pos_of_ne_zero hnatDegree
         let ι := LevelSemantics.coeffHom (level :: lower) hvalid
           hinjective hinv
-        letI : CharZero (Arithmetic.Coeff (level :: lower)) :=
+        let : CharZero (Arithmetic.Coeff (level :: lower)) :=
           { cast_injective := by
               intro m n hmn
               apply Nat.cast_injective (R := ℂ)
@@ -1166,7 +1166,7 @@ private theorem toPolynomial_polyPow (levels : List Level)
     HexPolyMathlib.toPolynomial (Factor.polyPow f n) =
       HexPolyMathlib.toPolynomial f ^ n := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction n using Nat.strong_induction_on with
   | h n ih =>
@@ -1206,7 +1206,7 @@ private theorem toPolynomial_factorFold (levels : List Level)
           HexPolyMathlib.toPolynomial
             (Factor.rawPoly levels entry.1) ^ entry.2).prod := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   induction entries generalizing acc with
@@ -1228,7 +1228,7 @@ private theorem leadingCoeff_mul_monic (levels : List Level)
         HexPolyMathlib.toPolynomial (Norm.monic p) =
       HexPolyMathlib.toPolynomial p := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   rw [Norm.monic]
@@ -1259,7 +1259,7 @@ private theorem C_leadingCoeff_eq_of_degreeZero (levels : List Level)
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     DensePoly.C p.leadingCoeff = p := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   apply (HexPolyMathlib.equiv
@@ -1292,7 +1292,7 @@ theorem factorRaw_check (levels : List Level)
     (hresult : Factor.factorRaw? levels f = some raw) :
     Factor.check levels f raw.scalar raw.factors = true := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   have hresult' := hresult
@@ -1467,7 +1467,7 @@ theorem denoteInjective_of_valid : ∀ (levels : List Level),
       have hinjectiveLower := ih hvalid.2.2
       let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
         hinjectiveLower
-      letI : Field (Arithmetic.Coeff lower) :=
+      let : Field (Arithmetic.Coeff lower) :=
         Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
       have hrelation : Irreducible (HexPolyMathlib.toPolynomial
           (Arithmetic.Coeff.relation level lower)) := by

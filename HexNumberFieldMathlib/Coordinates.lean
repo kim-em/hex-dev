@@ -116,7 +116,7 @@ theorem degree_dvd_of_mem (gamma a : AlgebraicNumber)
     degree a ∣ degree gamma := by
   let K : IntermediateField Rat ℂ := Rat⟮gamma.toComplex⟯
   let aK : K := ⟨a.toComplex, ha⟩
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.adjoin.finiteDimensional (isIntegral_toComplex gamma)
   have hmin : minpoly Rat aK = minpoly Rat a.toComplex :=
     (minpoly.algHom_eq K.val K.val.injective aK).symm
@@ -142,7 +142,7 @@ theorem trace?_sound (gamma a : AlgebraicNumber)
   let K : IntermediateField Rat ℂ := Rat⟮gamma.toComplex⟯
   let aK : K := ⟨a.toComplex, ha⟩
   change t = Algebra.trace Rat K aK
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.adjoin.finiteDimensional (isIntegral_toComplex gamma)
   have hmin : minpoly Rat aK = minpoly Rat a.toComplex :=
     (minpoly.algHom_eq K.val K.val.injective aK).symm
@@ -178,7 +178,7 @@ private theorem traceGram_det_ne_zero (gamma : AlgebraicNumber)
       (Matrix.ofFn fun i : Fin (degree gamma) =>
         fun j : Fin (degree gamma) => powerTraces[i.val + j.val]!))) ≠ 0 := by
   let K : IntermediateField Rat ℂ := Rat⟮gamma.toComplex⟯
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.adjoin.finiteDimensional (isIntegral_toComplex gamma)
   let pb := IntermediateField.adjoin.powerBasis (isIntegral_toComplex gamma)
   have hpbdim : pb.dim = degree gamma := by
@@ -317,7 +317,7 @@ private theorem basisCoeffs_solve (gamma a : AlgebraicNumber)
               i.val⟩ : Rat⟮gamma.toComplex⟯) =
         (⟨a.toComplex, ha⟩ : Rat⟮gamma.toComplex⟯) := by
   let K : IntermediateField Rat ℂ := Rat⟮gamma.toComplex⟯
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.adjoin.finiteDimensional (isIntegral_toComplex gamma)
   let pb := IntermediateField.adjoin.powerBasis (isIntegral_toComplex gamma)
   have hpbdim : pb.dim = degree gamma := by
@@ -595,7 +595,7 @@ theorem coordinates?_isSome (gamma a : AlgebraicNumber)
     let coordinate : QAdjoin gamma.p gamma.x :=
       QAdjoin.reduce gamma.p gamma.x
         (DensePoly.ofCoeffs coeffs.toArray)
-    letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+    let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
     obtain ⟨recovered, hrecovered⟩ := Option.isSome_iff_exists.mp
       (QAdjoin.toAlgebraicNumber?_isSome coordinate gamma.rep
         gamma.rep_mk)
@@ -620,7 +620,7 @@ theorem coordinates?_sound (gamma a : AlgebraicNumber)
     (powers : Array AlgebraicNumber) {coordinate : QAdjoin gamma.p gamma.x}
     (h : coordinates? gamma a powers = some coordinate) :
     QAdjoin.toComplex coordinate gamma.rep gamma.rep_mk = a.toComplex := by
-  letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+  let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
   unfold coordinates? at h
   split at h
   next hzero =>

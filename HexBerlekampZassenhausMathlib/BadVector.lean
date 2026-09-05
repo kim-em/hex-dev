@@ -741,8 +741,8 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldCombination
           (Int.castRingHom (ZMod (p ^ a)))) :
     ((v[Fin.castAdd (f.degree?.getD 0) i₀] : ℤ) : ZMod (p ^ a)) = 0 := by
   classical
-  letI : Fact (1 < p ^ a) := ⟨hk⟩
-  haveI : Nontrivial (ZMod (p ^ a)) := inferInstance
+  let : Fact (1 < p ^ a) := ⟨hk⟩
+  have : Nontrivial (ZMod (p ^ a)) := inferInstance
   let φ := Int.castRingHom (ZMod (p ^ a))
   let q₀ := (HexPolyZMathlib.toPolynomial
     (liftedFactors.getD i₀.val 1)).map φ
@@ -893,7 +893,7 @@ theorem isCoprime_cldQuotientMod
         (Hex.cldQuotientMod f q p a)).map
           (Int.castRingHom (ZMod (p ^ a)))) := by
   classical
-  letI : Fact (1 < p ^ a) := ⟨hk⟩
+  let : Fact (1 < p ^ a) := ⟨hk⟩
   let φ := Int.castRingHom (ZMod (p ^ a))
   let Q := (HexPolyZMathlib.toPolynomial q).map φ
   let H := (HexPolyZMathlib.toPolynomial h).map φ

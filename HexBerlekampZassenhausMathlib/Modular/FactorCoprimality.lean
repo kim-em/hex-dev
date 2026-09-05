@@ -236,11 +236,11 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     letI := primeData.bounds
     Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
       primeData.factorsModP.toList := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   -- The modular image is square-free under `isGoodPrime`.
   have hsf_common :
@@ -361,11 +361,11 @@ theorem factorsModP_monic_of_factorsModPBerlekampForm
     (hform : Hex.factorsModPBerlekampForm core primeData) :
     letI := primeData.bounds
     ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hmonicImage_monic :
       Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
@@ -589,7 +589,7 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
           (modPFactor primeData i)) := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hmonicImage_pos :
       0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).degree?.getD 0 :=
     monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
@@ -597,7 +597,7 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by
     refine _root_.Nat.prime_def_lt.mpr ⟨hprime.two_le, ?_⟩
@@ -605,7 +605,7 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     rcases hprime.right m hmdvd with h | h
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
   have hsf_common :
       ∀ d : Hex.FpPoly primeData.p,
         d ∣ Hex.ZPoly.modP primeData.p core →
@@ -652,7 +652,7 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
       Hex.DensePoly.Monic
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
     Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
-  letI := hfield
+  let := hfield
   have hraw_irr :
       ∀ g ∈ (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
@@ -752,7 +752,7 @@ theorem factors_irreducible_of_choosePrimeData_of_some
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
           (modPFactor primeData i)) := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hform : Hex.factorsModPBerlekampForm core primeData := by
     obtain ⟨hzero, hfactors_eq⟩ :=
       Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected

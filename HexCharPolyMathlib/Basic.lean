@@ -790,12 +790,12 @@ theorem equiv_charPoly {n : Nat} (A : Hex.Matrix R n n) :
       simpa using (show n + 1 ≤ k by omega)
     rw [hhex]
     by_cases hR : Nontrivial R
-    · letI : Nontrivial R := hR
+    · let : Nontrivial R := hR
       symm
       apply Polynomial.coeff_eq_zero_of_natDegree_lt
       rw [Matrix.charpoly_natDegree_eq_dim]
       simpa only [Fintype.card_fin] using Nat.lt_of_not_ge hk
-    · haveI : Subsingleton R := not_nontrivial_iff_subsingleton.mp hR
+    · have : Subsingleton R := not_nontrivial_iff_subsingleton.mp hR
       exact Subsingleton.elim _ _
 
 end HexCharPolyMathlib

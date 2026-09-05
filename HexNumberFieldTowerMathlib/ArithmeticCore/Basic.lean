@@ -1389,7 +1389,7 @@ theorem denseMap_eq_denseEval (lower : List Level) (x : ℂ)
       coeffField lower hvalid hinjective hinv
     denseMap lower x hvalid hinjective hinv f =
       denseEval lower x degree f := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffField lower hvalid hinjective hinv
   rw [denseMap,
     Polynomial.eval₂_eq_sum_range'
@@ -1409,7 +1409,7 @@ theorem denseMap_mul (lower : List Level) (x : ℂ)
     denseMap lower x hvalid hinjective hinv (f * g) =
       denseMap lower x hvalid hinjective hinv f *
         denseMap lower x hvalid hinjective hinv g := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffField lower hvalid hinjective hinv
   simp [denseMap, HexPolyMathlib.toPolynomial_mul, Polynomial.eval₂_mul]
 
@@ -1424,7 +1424,7 @@ theorem denseMap_add (lower : List Level) (x : ℂ)
     denseMap lower x hvalid hinjective hinv (f + g) =
       denseMap lower x hvalid hinjective hinv f +
         denseMap lower x hvalid hinjective hinv g := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffField lower hvalid hinjective hinv
   simp [denseMap, HexPolyMathlib.toPolynomial_add, Polynomial.eval₂_add]
 
@@ -1439,7 +1439,7 @@ theorem denseMap_scale (lower : List Level) (x : ℂ)
       coeffField lower hvalid hinjective hinv
     denseMap lower x hvalid hinjective hinv (DensePoly.scale c f) =
       coeffDenote lower c * denseMap lower x hvalid hinjective hinv f := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffField lower hvalid hinjective hinv
   simp [denseMap, HexPolyMathlib.toPolynomial_scale, Polynomial.eval₂_mul,
     coeffHom]
@@ -1454,7 +1454,7 @@ theorem denseMap_C (lower : List Level) (x : ℂ)
       coeffField lower hvalid hinjective hinv
     denseMap lower x hvalid hinjective hinv (DensePoly.C c) =
       coeffDenote lower c := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffField lower hvalid hinjective hinv
   simp [denseMap, coeffHom]
 

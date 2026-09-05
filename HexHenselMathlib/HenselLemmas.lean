@@ -250,7 +250,7 @@ theorem quadraticHenselStep_bezout_correct
       Polynomial.map_mul, Polynomial.map_add, Polynomial.map_one, hone] using hmap
   · have hm_eq : m = 1 := by omega
     subst m
-    haveI : Subsingleton (ZMod (1 * 1)) := ZMod.subsingleton_iff.mpr (by norm_num)
+    have : Subsingleton (ZMod (1 * 1)) := ZMod.subsingleton_iff.mpr (by norm_num)
     apply Polynomial.ext
     intro n
     exact Subsingleton.elim _ _
@@ -333,7 +333,7 @@ theorem hensel_unique (f g h g' h' : Polynomial ℤ) (p : ℕ) (k : ℕ)
   simp only at hprod hprod' hg1 hcop ⊢
   induction k with
   | zero =>
-    haveI : Subsingleton (ZMod (p ^ 0)) := ZMod.subsingleton_iff.mpr (by simp)
+    have : Subsingleton (ZMod (p ^ 0)) := ZMod.subsingleton_iff.mpr (by simp)
     refine ⟨?_, ?_⟩ <;>
     · apply Polynomial.ext; intro n
       exact Subsingleton.elim _ _

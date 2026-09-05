@@ -154,7 +154,7 @@ theorem directLiftFacts
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1) :
     DirectLiftFacts core B data := by
-  letI := data.bounds
+  let := data.bounds
   set k := Hex.precisionForCoeffBound B data.p with hk
   set target := Hex.ZPoly.monicTarget core data.p k with htarget
   have hp : 1 < data.p := hval.prime.one_lt
