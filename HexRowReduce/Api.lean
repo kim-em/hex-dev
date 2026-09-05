@@ -8,7 +8,6 @@ module
 
 public import HexRowReduce.Nullspace
 public import HexMatrix.Submatrix
-import Batteries.Data.Vector.Lemmas
 import HexMatrix.Pad
 import all HexRowReduce.Nullspace
 
@@ -112,11 +111,10 @@ theorem rowReduce_rank_eq_n_of_rightInverse [Lean.Grind.Field R] [DecidableEq R]
         (Matrix.row (Matrix.identity (R := R) n) i).get i :=
       congrArg (fun v : Vector R n => v.get i) hrowIdentity
     have hz : (0 : Vector R n).get i = 0 := by
-      rw [Vector.get_eq_getElem, Vector.getElem_zero]
+      simp [Vector.get]
     have hu : (Vector.unit R i).get i = 1 := by
-      unfold Vector.unit
-      rw [Vector.get_ofFn, ite_eq_left rfl]
-      rfl
+      simp only [Vector.unit, Vector.get, Vector.toArray_ofFn, Array.getElem_ofFn]
+      exact ite_eq_left (Fin.ext rfl)
     have huRow : (Matrix.row (Matrix.identity (R := R) n) i).get i = 1 := by
       rw [Matrix.row_identity]
       exact hu
