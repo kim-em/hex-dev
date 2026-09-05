@@ -129,12 +129,12 @@ The principal Mathlib theorem states the coloured biconditional directly:
 theorem colored_iso_iff_canon_eq
     (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H <->
-      Hex.GraphIso.Checked.canon (encode eV G) =
-      Hex.GraphIso.Checked.canon (encode eW H)
+      Hex.GraphIso.canon (encode eV G) =
+      Hex.GraphIso.canon (encode eW H)
 ```
 
 It is proved by `encode_iso_iff` and the Mathlib-free
-`Hex.GraphIso.Checked.iso_iff_canon_eq`. The uncoloured theorem specializes this
+`Hex.GraphIso.iso_iff_canon_eq`. The uncoloured theorem specializes this
 statement to the one-cell colouring.
 
 The library also proves:

@@ -21,10 +21,9 @@ Core conformance for `HexGraphIso`.
   `Graph.relabel`,
   `Perm.ofVector?`/`inv`/`comp`, `Label` round trips,
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
-  `Checked.isIso`, `findIso`, `findIso?`, `checkIso?`, `canon?`,
-  `canonicalize` (fast), `Checked.canonicalize`, `canon`,
-  `Checked.canon`, `label`, `Reference.canon`, `Nauty.runColored`,
-  `Nauty.canonicalize?`.
+  `findIso`, `findIso?`, `checkIso?`, `canon?`, `canonicalize`,
+  `canon`, `label`, `Reference.canon`, `Nauty.runColored`,
+  `Nauty.canonicalize?`, `Nauty.certifyCanon?`.
 - **Covered properties:** builder rejection and duplicate collapse;
   permutation inverse and composition laws; `relabel G (label G) =
   canon G` evaluated on committed inputs; canonical-form invariance
@@ -111,14 +110,10 @@ private def rot3 : Perm 3 :=
 -- relabelling by the canonical label produces the canonical form
 #guard p3.relabel (label p3) == canon p3
 #guard c4.relabel (label c4) == canon c4
--- the fast surface agrees with the certificate-checked surface, and
--- the fast path never falls back (canonicalize? answers)
-#guard canonicalize p3 == Checked.canonicalize p3
-#guard canonicalize c4 == Checked.canonicalize c4
-#guard canon k3 == Checked.canon k3
-#guard (canonicalize? p3).isSome
-#guard isIso p3 p3' == Checked.isIso p3 p3'
-#guard isIso p3 k3 == Checked.isIso p3 k3
+-- the public surface agrees with the certificate replay's answer
+#guard some (canonicalize p3) == Nauty.certifyCanon? p3
+#guard some (canonicalize c4) == Nauty.certifyCanon? c4
+#guard (Nauty.certifyCanon? k3).map (·.form) == some (canon k3)
 -- canonical forms have contiguous colour cells
 #guard decide (ColorSorted (canon p3))
 #guard decide (ColorSorted (canon c4))

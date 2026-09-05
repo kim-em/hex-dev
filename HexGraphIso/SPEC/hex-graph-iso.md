@@ -160,71 +160,71 @@ structure CanonResult (n k : Nat) where
   label : Label n
 ```
 
-The public surface has two tiers. The names in `Hex.GraphIso` are the
-FAST tier: the checked-label transcription of the pinned nauty search,
-for users who want answers at transcription speed. The same names
-under `Hex.GraphIso.Checked` are the CERTIFIED tier: the same answer
-validated through the proven certificate checker, carrying the theorem
-surface. The two tiers share one vocabulary, so the certified twin of
-any fast operation is that operation's name under `Checked`.
+The public surface is one tier. The names in `Hex.GraphIso` are the
+checked-label transcription of the pinned nauty search, run directly
+with no certificate replay on the answer path, and they carry the
+whole theorem surface.
 
 ```lean
--- fast tier: conformance-pinned, structural theorems only
 def canonicalize (G : Colored n k) : CanonResult n k
-def canonicalize? (G : Colored n k) : Option (CanonResult n k)
 def canon (G : Colored n k) : Colored n k := (canonicalize G).form
 def label (G : Colored n k) : Label n := (canonicalize G).label
 def findIso (G H : Colored n k) : Option (Perm n)
 def isIso (G H : Colored n k) : Bool
-
--- certified tier: every theorem below is about these
-def Checked.canonicalize (G : Colored n k) : CanonResult n k
-def Checked.canon (G : Colored n k) : Colored n k
-def Checked.label (G : Colored n k) : Label n
-def Checked.findIso (G H : Colored n k) : Option (Perm n)
-def Checked.isIso (G H : Colored n k) : Bool
 ```
 
-Both tiers are total; termination follows from the strictly increasing
-number of singleton cells along each individualization path and finite
-branching, and worst-case running time can still be factorial. The
-fast `canonicalize` is the transcription with fallback to
-`Checked.canonicalize` on the transcription's malformed-label case,
-which conformance shows does not occur; `canonicalize?` observes the
-transcription alone (`none` exactly when `canonicalize` would fall
-back), and conformance asserts zero fallbacks on every committed case
-and the campaign. Agreement of the two tiers is a theorem under the
-hypothesis that the certificate replay accepts, which conformance
-pins on every committed case and campaign case; discharging the
-hypothesis universally is the refinement programme of
-[Verified search refinement](#verified-search-refinement). Provers
-use the certified tier.
+`canonicalize` is total: termination follows from the strictly
+increasing number of singleton cells along each individualization
+path and finite branching, and worst-case running time can still be
+factorial. The theorems reach it through the certificate checker
+without running it: the proven replay accepts the transcription's own
+answer on every input (`Nauty.certifyCanon?_isSome`, the theorem of
+[Verified search refinement](#verified-search-refinement)), the
+transcription is `Option`-valued only in its executable spelling and
+answers on every input (`Nauty.canonicalize?_isSome`), and
+`canonicalize` is that answer with no fallback match
+(`canonicalize_eq_certifyCanon`). The declarative canonical form
+`Nauty.specCanon` is the anchor: `canon_eq_specCanon` identifies the
+public form with it, and every statement below is the corresponding
+`specCanon` theorem transported along that identity.
 
-The fast tier still carries its structurally provable statements — the
-form is the relabelling by the label, and a found transporter is a
-genuine isomorphism:
+The required API theorems:
 
 ```lean
 theorem relabel_label (G : Colored n k) :
     relabel G (label G) = canon G
 
+theorem canon_iso (G : Colored n k) :
+    Isomorphic G (canon G)
+
+theorem canon_invariant {G H : Colored n k} :
+    Isomorphic G H -> canon G = canon H
+
+theorem iso_iff_canon_eq (G H : Colored n k) :
+    Isomorphic G H <-> canon G = canon H
+
 theorem findIso_sound (G H : Colored n k) (p : Perm n) :
     findIso G H = some p -> IsIso G H p
 
+theorem findIso_isSome_iff (G H : Colored n k) :
+    (findIso G H).isSome = true <-> Isomorphic G H
+
+theorem isIso_eq_true_iff (G H : Colored n k) :
+    isIso G H = true <-> Isomorphic G H
+
+theorem isIso_eq_false_iff (G H : Colored n k) :
+    isIso G H = false <-> Not (Isomorphic G H)
+
 theorem isomorphic_of_isIso (G H : Colored n k) :
     isIso G H = true -> Isomorphic G H
-
-theorem canonicalize_eq_checked (G : Colored n k)
-    (h : (Nauty.certifyCanon? G).isSome) :
-    canonicalize G = Checked.canonicalize G
 ```
 
-What the fast tier deliberately does NOT provide is completeness and
-canonical invariance: a `false`/`none` fast answer and the equality of
-fast forms under isomorphism are conformance-pinned only.
+The biconditional compares canonical coloured graphs. It does not compare
+labels: those arrays refer to different input vertex names and generally
+differ for isomorphic inputs.
 
 The resource-bounded surface separates search limits from replay
-limits and belongs to the certified tier:
+limits:
 
 ```lean
 structure SearchLimits where
@@ -257,24 +257,9 @@ non-isomorphism result, and `some (some p)` is a found transporter. For the
 other bounded operations, exhaustion also returns `none`. Exhaustion is not
 evidence of non-isomorphism.
 
-The required API theorems of the certified tier include:
+The required theorems of the bounded search:
 
 ```lean
-theorem Checked.relabel_label (G : Colored n k) :
-    relabel G (Checked.label G) = Checked.canon G
-
-theorem Checked.canon_iso (G : Colored n k) :
-    Isomorphic G (Checked.canon G)
-
-theorem Checked.canon_invariant {G H : Colored n k} :
-    Isomorphic G H -> Checked.canon G = Checked.canon H
-
-theorem Checked.iso_iff_canon_eq (G H : Colored n k) :
-    Isomorphic G H <-> Checked.canon G = Checked.canon H
-
-theorem Checked.findIso_isSome_iff (G H : Colored n k) :
-    (Checked.findIso G H).isSome = true <-> Isomorphic G H
-
 namespace FindIso
 
 theorem some_sound (search : SearchLimits)
@@ -286,24 +271,14 @@ theorem none_sound (search : SearchLimits)
     findIso? search G H = some none -> Not (Isomorphic G H)
 
 end FindIso
-
-theorem Checked.isIso_eq_true_iff (G H : Colored n k) :
-    Checked.isIso G H = true <-> Isomorphic G H
-
-theorem Checked.isIso_eq_false_iff (G H : Colored n k) :
-    Checked.isIso G H = false <-> Not (Isomorphic G H)
 ```
-
-The biconditional compares canonical coloured graphs. It does not compare
-labels: those arrays refer to different input vertex names and generally
-differ for isomorphic inputs.
 
 ## The uncoloured surface
 
 Colours are the general input, but most callers hold a bare `Graph n`.
 The library therefore states isomorphism directly on `Graph n` and
-mirrors both tiers there, so an uncoloured caller neither builds a
-`Colored n 1` at the call nor unwraps one from the conclusion.
+mirrors the whole surface there, so an uncoloured caller neither builds
+a `Colored n 1` at the call nor unwraps one from the conclusion.
 
 ```lean
 def Graph.singleColor (G : Graph n) (h : 0 < n) : Colored n 1
@@ -342,17 +317,10 @@ reproved, so the uncoloured operations make exactly the promises their
 coloured originals make.
 
 ```lean
--- fast tier
 def Graph.canon (G : Graph n) (h : 0 < n) : Graph n
 def Graph.label (G : Graph n) (h : 0 < n) : Label n
 def Graph.findIso (G H : Graph n) (h : 0 < n) : Option (Perm n)
 def Graph.isIso (G H : Graph n) (h : 0 < n) : Bool
-
--- certified tier
-def Graph.Checked.canon (G : Graph n) (h : 0 < n) : Graph n
-def Graph.Checked.label (G : Graph n) (h : 0 < n) : Label n
-def Graph.Checked.findIso (G H : Graph n) (h : 0 < n) : Option (Perm n)
-def Graph.Checked.isIso (G H : Graph n) (h : 0 < n) : Bool
 ```
 
 The canonical form is the underlying graph of the coloured canonical
@@ -363,37 +331,29 @@ theorems mirror the coloured ones:
 theorem Graph.relabel_label (G : Graph n) (h : 0 < n) :
     G.relabel (Graph.label G h).get = Graph.canon G h
 
+theorem Graph.canon_iso (G : Graph n) (h : 0 < n) :
+    Graph.Isomorphic G (Graph.canon G h)
+
+theorem Graph.iso_iff_canon_eq (G H : Graph n) (h : 0 < n) :
+    Graph.Isomorphic G H <-> Graph.canon G h = Graph.canon H h
+
+theorem Graph.canon_invariant :
+    Graph.Isomorphic G H -> Graph.canon G h = Graph.canon H h
+
 theorem Graph.findIso_sound :
     Graph.findIso G H h = some p -> Graph.IsIso G H p
 
+theorem Graph.findIso_isSome_iff (G H : Graph n) (h : 0 < n) :
+    (Graph.findIso G H h).isSome = true <-> Graph.Isomorphic G H
+
+theorem Graph.isIso_eq_true_iff (G H : Graph n) (h : 0 < n) :
+    Graph.isIso G H h = true <-> Graph.Isomorphic G H
+
+theorem Graph.isIso_eq_false_iff (G H : Graph n) (h : 0 < n) :
+    Graph.isIso G H h = false <-> Not (Graph.Isomorphic G H)
+
 theorem Graph.isomorphic_of_isIso :
     Graph.isIso G H h = true -> Graph.Isomorphic G H
-
-theorem Graph.Checked.relabel_label (G : Graph n) (h : 0 < n) :
-    G.relabel (Graph.Checked.label G h).get = Graph.Checked.canon G h
-
-theorem Graph.Checked.canon_iso (G : Graph n) (h : 0 < n) :
-    Graph.Isomorphic G (Graph.Checked.canon G h)
-
-theorem Graph.Checked.iso_iff_canon_eq (G H : Graph n) (h : 0 < n) :
-    Graph.Isomorphic G H <->
-      Graph.Checked.canon G h = Graph.Checked.canon H h
-
-theorem Graph.Checked.canon_invariant :
-    Graph.Isomorphic G H ->
-      Graph.Checked.canon G h = Graph.Checked.canon H h
-
-theorem Graph.Checked.findIso_sound :
-    Graph.Checked.findIso G H h = some p -> Graph.IsIso G H p
-
-theorem Graph.Checked.findIso_isSome_iff (G H : Graph n) (h : 0 < n) :
-    (Graph.Checked.findIso G H h).isSome = true <-> Graph.Isomorphic G H
-
-theorem Graph.Checked.isIso_eq_true_iff (G H : Graph n) (h : 0 < n) :
-    Graph.Checked.isIso G H h = true <-> Graph.Isomorphic G H
-
-theorem Graph.Checked.isIso_eq_false_iff (G H : Graph n) (h : 0 < n) :
-    Graph.Checked.isIso G H h = false <-> Not (Graph.Isomorphic G H)
 ```
 
 `Isomorphic.graph` and `IsIso.graph` forget the colours of a coloured
@@ -417,19 +377,16 @@ order. The order compares cell sizes first and then upper-triangle adjacency
 bits in row-major order.
 
 This definition has its own proofs of the relabelling, isomorphism, and
-biconditional theorems (the analogues of `Checked.relabel_label`,
-`Checked.canon_iso`, and `Checked.iso_iff_canon_eq`). It is suitable for
-exhaustive small tests and for checking
-later implementations. It is not used as a production fallback and is not
-required to return nauty's label or canonical form.
+biconditional theorems (the analogues of `relabel_label`, `canon_iso`,
+and `iso_iff_canon_eq`). It is suitable for exhaustive small tests and
+for checking later implementations. It is not used as a production
+fallback and is not required to return nauty's label or canonical form.
 
-The public `Checked.canon` is backed by the certificate-checked
-nauty-semantic canonicalization: an untrusted branch-and-bound producer
-whose output is validated by the proven certificate replay, with a
-provably total exhaustive fallback. The fast `canon` is the checked-label
-transcription of the same search. Development namespaces (`Reference`,
-`Nauty`) remain available as the cross-check and the transcription
-layer.
+The public `canon` is the checked-label transcription of the nauty
+search; its theorems come from the certificate replay, which is proven
+to accept the transcription's answer on every input. Development
+namespaces (`Reference`, `Nauty`) remain available as the cross-check
+and the transcription layer.
 
 ## nauty-compatible individualization and refinement
 
@@ -516,7 +473,7 @@ output as untrusted and calls `checkCanon` before emitting anything.
 For a negative decision, `DiffCert` names the first differing field in the
 canonical encodings. `checkDiff` verifies the two encodings agree before that
 position and differ there. The proof is exactly the composition of two
-`checkCanon_sound` applications, `checkDiff`, and `Checked.iso_iff_canon_eq`.
+`checkCanon_sound` applications, `checkDiff`, and `iso_iff_canon_eq`.
 
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
@@ -538,7 +495,7 @@ Requirements on the implementation:
 
 - Recording must not alter the transcription's observable traversal
   (the conformance-pinned node counts, forms, and labels).
-- Users of the fast tier who request no certificate must not pay for
+- Users of `canonicalize` who request no certificate must not pay for
   tracing; the traced walk is a separate entry point or an opt-in of
   the certificate pipeline.
 - The certificates emitted remain subject to the same replay, the
@@ -569,22 +526,16 @@ layers one and two, since the producer's walk *is* the transcription's.
 
 ## Verified search refinement
 
-Unconditional agreement of the two public tiers is a refinement
-theorem: the pruned production search refines the declarative
-canonical form. This section records the decomposition. It is a
-release requirement: the first release waits on it, and release
-condition 4 below is discharged by completing it.
+The pruned production search refines the declarative canonical form:
+this is the theorem behind the one-tier public surface, and it is a
+release requirement (release condition 4 below is discharged by it).
+It is proved. This section records the decomposition and what the
+theorem buys.
 
-The proven starting point is the conditional agreement theorem of the
-fast tier, `canonicalize_eq_checked` above. Both tiers
-construct their `CanonResult` from the same transcribed search output
-by the same checked construction, so the certified tier's per-run
-validation covers the fast answer whenever the single trusted replay
-accepts. Unconditional agreement therefore reduces to one
-proposition, totality of the certificate pipeline:
+The statement is totality of the certificate pipeline:
 
 ```lean
-theorem certifyCanon?_isSome (G : Colored n k) :
+theorem Nauty.certifyCanon?_isSome (G : Colored n k) :
     (Nauty.certifyCanon? G).isSome
 ```
 
@@ -620,57 +571,58 @@ layers, each independently useful:
 The layers are design constraints as well as proof obligations, and
 each forces sharing that removes duplicated code:
 
-- Layer two should be discharged by construction: one per-node
-  acceptance predicate, evaluated by the producer at emission and by
-  the checker at replay, so their agreement is congruence on a shared
-  definition rather than a proof maintained against two parallel
-  spellings. Emission may evaluate only the conjuncts that admission
-  does not already imply (today it skips the generator-automorphism
-  conjunct, which holds by closure over admitted generators); the
-  layer-two proof then composes the shared predicate with that
-  admission invariant.
-- Layer three favours a single tree recursion parameterized by a
-  pruning policy, which the declarative form instantiates with the
-  empty policy and the production walk with the real one; the
-  refinement theorem then quantifies over policies instead of
-  relating two unrelated recursions.
+- Layer two is discharged by construction: one per-node acceptance
+  predicate, evaluated by the producer at emission and by the checker
+  at replay, so their agreement is congruence on a shared definition
+  rather than a proof maintained against two parallel spellings.
+  Emission may evaluate only the conjuncts that admission does not
+  already imply (it skips the generator-automorphism conjunct, which
+  holds by closure over admitted generators); the layer-two proof
+  then composes the shared predicate with that admission invariant.
+- Layer three uses a single tree recursion parameterized by a pruning
+  policy, which the declarative form instantiates with the empty
+  policy and the production walk with the real one; the refinement
+  theorem quantifies over policies instead of relating two unrelated
+  recursions.
 - The replay-monotonicity property inside layer two is what makes
   single-pass certificate emission sound; in a trace-driven
   translator it justifies the collapse of dominated subtrees before
   emission.
-- Once the declarative form and these proofs carry the correctness
-  story, the `Reference` implementation's cross-check role reduces to
-  conformance testing on small cases.
+- With the declarative form and these proofs carrying the
+  correctness story, the `Reference` implementation's cross-check
+  role reduces to conformance testing on small cases.
 
-Label-level agreement is available only along the totality route. The
-checker
-pins a labelling's rows, not the labelling itself, and in the
-exhaustive fallback branch of `Checked.canonicalize` the selected
-label may be a different member of the automorphism coset with
-different tie-breaking, so agreement cannot be proven through that
-branch; the fallback must instead be proven unreachable, which is
-exactly `certifyCanon?_isSome`.
+Label-level agreement is available only along this route. The checker
+pins a labelling's rows, not the labelling itself, so an exhaustive
+fallback that selects some other member of the automorphism coset
+could not be identified with the transcription's label; the fallback
+has to be proven unreachable, which is exactly the theorem.
 
-The payoff is a total, non-`Option` surface. With
-`certifyCanon?_isSome` in hand the pipeline gains
+The payoff is a total, non-`Option` surface with no fallback arm
+anywhere:
 
 ```lean
-def certifyCanon (G : Colored n k) : CanonResult n k :=
-  (Nauty.certifyCanon? G).get (certifyCanon?_isSome G)
+def Nauty.certifyCanon (G : Colored n k) : CanonResult n k :=
+  (Nauty.certifyCanon? G).get (Nauty.certifyCanon?_isSome G)
+
+theorem Nauty.canonicalize?_isSome (G : Colored n k) :
+    (Nauty.canonicalize? G).isSome
+
+def canonicalize (G : Colored n k) : CanonResult n k :=
+  (Nauty.canonicalize? G).get (Nauty.canonicalize?_isSome G)
+
+theorem canonicalize_eq_certifyCanon (G : Colored n k) :
+    canonicalize G = Nauty.certifyCanon G
 ```
 
-and every fallback arm becomes provably dead: `Checked.canonicalize`
-drops its exhaustive fallback in favour of `certifyCanon`, totality
-transports to the transcription through
-`canonicalize?_eq_of_certifyCanon`, and the fast `canonicalize`
-becomes `(canonicalize? G).get` under that proof with no fallback
-match. Unconditional agreement `canonicalize G = Checked.canonicalize G`
-then holds on every input and the whole `Checked` theorem surface
-transports to the short names. At that point the two-tier split has
-no remaining justification and the public surface collapses to the
-short names; certificates and the replay checker remain as the proof
-layer behind the collapsed surface and for the `graph_iso` tactic,
-whose kernel obligations must stay certificate-sized.
+Totality transports from the certificate pipeline to the transcription
+through `Nauty.canonicalize?_eq_of_certifyCanon`, and the theorem
+surface of [Public operations](#public-operations) is the certificate
+checker's theorem surface transported along
+`canonicalize_eq_certifyCanon`. No certificate is produced or replayed
+on the answer path; certificates and the replay checker remain as the
+proof layer for the `graph_iso` tactic, whose kernel obligations must
+stay certificate-sized.
 
 ## The Mathlib-free `graph_iso` tactic
 
@@ -1202,7 +1154,7 @@ tactic curve, which is the honest frontier of that tier. nauty
 cross-checks for the new sizes run in the streamed campaign, not the
 committed fixture set, keeping merge-CI oracle time unchanged.
 Every pull request that improves the measured performance of any
-layer (fast, checked, or tactic) posts a before/after comparison as a
+layer (canonical labelling or tactic) posts a before/after comparison as a
 pull-request comment: `scripts/plots/hexgraphiso-before-after.py`
 renders the overlay figure and prints the per-layer markdown delta
 table from two recorded sweeps, the figure is committed under

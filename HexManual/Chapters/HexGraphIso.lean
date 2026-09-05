@@ -37,13 +37,12 @@ identical, and prove our theorems about the Lean translation.) The exact
 algorithm, including the output-relevant choices absent from the published
 literature, is specified in {ref "nauty-algorithm"}[The `nauty` canonical
 labelling algorithm]. The
-short names (`canonicalize`, `canon`, `label`, `isIso`) run that
-translation directly and are the fast surface for users who just want
-answers; the same names under `Checked` (`Checked.canonicalize`,
-`Checked.canon`, …) additionally validate every answer through a proven
-certificate checker and carry the theorems. Two coloured graphs are
-isomorphic exactly when their checked canonical forms are equal
-({name Hex.GraphIso.Checked.iso_iff_canon_eq}`Checked.iso_iff_canon_eq`),
+public names (`canonicalize`, `canon`, `label`, `isIso`) run that
+translation directly, and the theorems reach them because a proven
+certificate checker is shown to accept the translation's answer on
+every input. Two coloured graphs are isomorphic exactly when their
+canonical forms are equal
+({name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq`),
 and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
@@ -53,7 +52,7 @@ individualization-refinement decision.
 Colours are the general input, but a graph with no colours to speak of
 should not have to acquire one. The same operations and the same
 tactic are available on a bare {name Hex.Graph}`Graph`: `Graph.canon`,
-`Graph.findIso`, `Graph.Checked.isIso` and the rest read the one-cell
+`Graph.findIso`, `Graph.isIso` and the rest read the one-cell
 view {name Hex.Graph.singleColor}`Graph.singleColor` and hand the
 conclusion back uncoloured, through the single equivalence
 {name Hex.Graph.isomorphic_singleColor_iff}`Graph.isomorphic_singleColor_iff`.
@@ -107,9 +106,9 @@ def kneser52 : Graph 10 := Families.kneser 5 2
 
 -- The two canonical searches compose into an explicit
 -- vertex permutation between the presentations, and the
--- certified decision agrees.
+-- decision agrees.
 #guard (Graph.findIso petersen kneser52).isSome
-#guard Graph.Checked.isIso petersen kneser52
+#guard Graph.isIso petersen kneser52
 
 -- The tactic closes the positive goal through the
 -- kernel-replayed transporter check.
@@ -381,8 +380,9 @@ factor on four parametrised families from the benchmark corpus: grids,
 where refinement discretizes quickly; Paley graphs, refinement's hard
 case among the sparse families; and the dense Latin-square and Kneser
 graphs, where the factor is largest. The `fast` column is
-`canonicalize` and the `checked` column is `Checked.canonicalize`, which
-additionally validates every answer through the certificate checker.
+`canonicalize` and the `checked` column adds the certificate replay
+(`Nauty.certifyCanon?`), which the public surface no longer runs; a
+fresh sweep refreshes this table.
 
 :::table (header := true)
 * * graph

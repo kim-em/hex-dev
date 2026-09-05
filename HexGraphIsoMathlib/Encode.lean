@@ -164,14 +164,14 @@ theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
 isomorphic exactly when their encodings have equal canonical forms. -/
 theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H ↔
-      Checked.canon (encode eV G) = Checked.canon (encode eW H) :=
-  (encode_iso_iff eV eW).trans (Checked.iso_iff_canon_eq ..)
+      canon (encode eV G) = canon (encode eW H) :=
+  (encode_iso_iff eV eW).trans (iso_iff_canon_eq ..)
 
 /-- Equality of encoded canonical forms is independent of the chosen
 finite enumerations. -/
 theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
-    Checked.canon (encode eV G) = Checked.canon (encode eV' G) := by
-  refine Checked.canon_invariant ?_
+    canon (encode eV G) = canon (encode eV' G) := by
+  refine canon_invariant ?_
   refine (encode_iso_iff eV eV').mp (Colored.Isomorphic.intro
     { graphIso := (SimpleGraph.Iso.refl : G.graph ≃g G.graph)
       map_color := fun v => ?_ })

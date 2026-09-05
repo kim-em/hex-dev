@@ -9,15 +9,14 @@ import Hex.BenchOracle.Nauty
 
 /-!
 Per-instance timing sweep over the deterministic graph families for the
-hex-graph-iso cactus plots: the fast public `canonicalize`, the
-certificate-checked `Checked.canonicalize`, and the pinned nauty 2.9.3
-FFI comparator on the same instances.
+hex-graph-iso cactus plots: the public `canonicalize` and the pinned
+nauty 2.9.3 FFI comparator on the same instances.
 
 Emits one JSON line per instance:
 
 ```
 {"family": "...", "name": "...", "n": N, "fast_ns": ...,
- "checked_ns": ..., "nauty_ns": ..., "nodes": ...}
+ "nauty_ns": ..., "nodes": ...}
 ```
 
 Timing is the minimum of several repetitions after one warmup call.
@@ -88,7 +87,6 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
 private def runInst (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
   let fastNs ← timeMinNs fun _ => pure (digest (canonicalize G))
-  let checkedNs ← timeMinNs fun _ => pure (digest (Checked.canonicalize G))
   let colors := List.replicate n 0
   let adj := adjStrings G
   let nautyNs ← timeMinNs fun _ => do
@@ -97,7 +95,6 @@ private def runInst (i : Inst) : IO Unit := do
   let nodes := (Nauty.runColored G).numnodes
   IO.println <| "{\"family\": \"" ++ i.family ++ "\", \"name\": \"" ++
     i.name ++ s!"\", \"n\": {n}, \"fast_ns\": {fastNs}" ++
-    s!", \"checked_ns\": {checkedNs}" ++
     s!", \"nauty_ns\": {nautyNs}, \"nodes\": {nodes}}" ++ ""
   (← IO.getStdout).flush
 
@@ -294,12 +291,10 @@ private def escape (s : String) : String :=
 
 private def runPair (p : PairInst) : IO Unit := do
   let ⟨n, A, B⟩ := p.packed
-  unless isIso A B == p.iso && Checked.isIso A B == p.iso do
+  unless isIso A B == p.iso do
     throw <| IO.userError s!"pair {p.name}: polarity mismatch"
   let fastNs ← timeMinNs fun _ =>
     pure (if isIso A B then 1 else 0)
-  let checkedNs ← timeMinNs fun _ =>
-    pure (if Checked.isIso A B then 1 else 0)
   let colors := List.replicate n 0
   let adjA := adjStrings A
   let adjB := adjStrings B
@@ -309,7 +304,7 @@ private def runPair (p : PairInst) : IO Unit := do
     pure (if ra.tri == rb.tri then 1 else 0)
   IO.println <| "{\"family\": \"" ++ p.family ++ "\", \"name\": \"" ++
     p.name ++ s!"\", \"n\": {n}, \"iso\": {p.iso}" ++
-    s!", \"fast_ns\": {fastNs}, \"checked_ns\": {checkedNs}" ++
+    s!", \"fast_ns\": {fastNs}" ++
     s!", \"nauty_ns\": {nautyNs}" ++
     ", \"exprA\": \"" ++ escape p.exprA ++
     "\", \"exprB\": \"" ++ escape p.exprB ++ "\"}"

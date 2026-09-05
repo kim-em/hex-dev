@@ -18,6 +18,9 @@ Totality of the certified canonicalization.
 The two node statements are proved together by induction on the
 executable recursion fuel; the root instance identifies the specification
 key with the traced key, and the certificate check then succeeds.
+`certifyCanon` is the resulting total, certificate-checked canonical
+form, and the transcription `canonicalize?` is total because it agrees
+with it.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -48,5 +51,45 @@ theorem certifyCanon?_isSome (G : Colored n k) : (certifyCanon? G).isSome := by
   · subst hn0
     exact certifyCanon?_isSome_zero G
   · exact certifyCanon?_isSome_of_keyEq G (canonSpecKey_eq_tracedKey G hn0)
+
+/-! # Total certificate-checked canonicalization -/
+
+/-- Certificate-checked canonicalization: the transcribed search's
+answer, accepted through the single trusted `checkCanon` replay, which
+always succeeds. -/
+@[expose] def certifyCanon (G : Colored n k) : CanonResult n k :=
+  (certifyCanon? G).get (certifyCanon?_isSome G)
+
+theorem certifyCanon?_eq (G : Colored n k) :
+    certifyCanon? G = some (certifyCanon G) :=
+  (Option.some_get (certifyCanon?_isSome G)).symm
+
+theorem certifyCanon_form (G : Colored n k) :
+    (certifyCanon G).form = specCanon G := by
+  have h := certifyCanon?_eq G
+  rw [certifyCanon?] at h
+  split at h
+  · cases h
+  · exact checkCanon_form h
+
+theorem certifyCanon_relabel (G : Colored n k) :
+    G.relabel (certifyCanon G).label = (certifyCanon G).form := by
+  have h := certifyCanon?_eq G
+  rw [certifyCanon?] at h
+  split at h
+  · cases h
+  · exact (checkCanon_sound h).2.1.symm
+
+/-- The transcription agrees with the certificate-checked answer on
+every input. -/
+theorem canonicalize?_eq (G : Colored n k) :
+    canonicalize? G = some (certifyCanon G) :=
+  canonicalize?_eq_of_certifyCanon (certifyCanon?_eq G)
+
+/-- The transcription always answers. -/
+theorem canonicalize?_isSome (G : Colored n k) :
+    (canonicalize? G).isSome := by
+  rw [canonicalize?_eq]
+  rfl
 
 end Hex.GraphIso.Nauty
