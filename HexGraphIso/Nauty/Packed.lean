@@ -268,6 +268,80 @@ theorem nextElemK_eq (s : Nat) (pos : Option Nat) :
   cases pos <;> simp only [cond_beq, lowBitK_eq, shiftLeft_eq, shiftRight_eq,
     add_eq]
 
+/-! # The loop driver
+
+Structural recursion on a `Nat` fuel unfolds through `Nat.brecOn` at
+about four times the cost of a bare `Nat.rec` step, and `List.range`
+costs the kernel some twenty microseconds per element it builds.
+`iterUp` is the ascending counted loop as one `Nat.rec` step per
+iteration; the range-driven folds and maps of the replay go through
+it and its two derived forms. -/
+
+/-- The compiled form of `iterUp`. -/
+def iterUpImpl {α : Type} (k : Nat) (f : Nat → α → α) (a : α) : α :=
+  go k 0 a
+where
+  go : Nat → Nat → α → α
+    | 0, _, a => a
+    | j + 1, i, a => go j (i + 1) (f i a)
+
+/-- `iterUp k f a = f (k - 1) (… (f 0 a))`, one `Nat.rec` step per
+iteration. -/
+@[expose, implemented_by iterUpImpl] def iterUp {α : Type} (k : Nat)
+    (f : Nat → α → α) (a : α) : α :=
+  Nat.rec (motive := fun _ => α → α) (fun a => a)
+    (fun i ih a => ih (f (Nat.sub (Nat.sub k 1) i) a)) k a
+
+theorem iterUp_go {α : Type} (k : Nat) (f : Nat → α → α) :
+    ∀ (j : Nat) (a : α), j ≤ k →
+      Nat.rec (motive := fun _ => α → α) (fun a => a)
+        (fun i ih a => ih (f (Nat.sub (Nat.sub k 1) i) a)) j a =
+      (List.range' (k - j) j).foldl (fun a i => f i a) a
+  | 0, _, _ => rfl
+  | j + 1, a, h => by
+    show Nat.rec (motive := fun _ => α → α) (fun a => a)
+        (fun i ih a => ih (f (Nat.sub (Nat.sub k 1) i) a)) j
+        (f (Nat.sub (Nat.sub k 1) j) a) = _
+    rw [iterUp_go k f j _ (by omega), List.range'_succ, List.foldl_cons]
+    have h1 : Nat.sub (Nat.sub k 1) j = k - (j + 1) := by simp only [sub_eq]; omega
+    have h2 : k - j = k - (j + 1) + 1 := by omega
+    rw [h1, h2]
+
+theorem iterUp_eq_foldl {α : Type} (k : Nat) (f : Nat → α → α) (a : α) :
+    iterUp k f a = (List.range k).foldl (fun a i => f i a) a := by
+  rw [iterUp, iterUp_go k f k a (Nat.le_refl k), Nat.sub_self, List.range_eq_range']
+
+/-- `(List.range k).map f`, built by the loop driver. -/
+@[expose] def mapRange {α : Type} (k : Nat) (f : Nat → α) : List α :=
+  (iterUp k (fun o acc => f o :: acc) []).reverse
+
+theorem mapRange_eq {α : Type} (k : Nat) (f : Nat → α) :
+    mapRange k f = (List.range k).map f := by
+  rw [mapRange, iterUp_eq_foldl]
+  have hfold : ∀ (l : List Nat) (acc : List α),
+      l.foldl (fun acc o => f o :: acc) acc = (l.map f).reverse ++ acc := by
+    intro l
+    induction l with
+    | nil => intro acc; simp
+    | cons x xs ih => intro acc; simp [ih]
+  rw [hfold]
+  simp
+
+/-- `(List.range k).all p`, by the loop driver. -/
+@[expose] def allRange (k : Nat) (p : Nat → Bool) : Bool :=
+  iterUp k (fun v b => b && p v) true
+
+theorem allRange_eq (k : Nat) (p : Nat → Bool) :
+    allRange k p = (List.range k).all p := by
+  rw [allRange, iterUp_eq_foldl]
+  have hfold : ∀ (l : List Nat) (b : Bool),
+      l.foldl (fun b v => b && p v) b = (b && l.all p) := by
+    intro l
+    induction l with
+    | nil => intro b; simp
+    | cons x xs ih => intro b; rw [List.foldl_cons, ih, List.all_cons, Bool.and_assoc]
+  rw [hfold, Bool.true_and]
+
 /-! # Packed vectors
 
 A list of naturals below `2 ^ w` is one number whose field `i` holds

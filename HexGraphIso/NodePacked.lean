@@ -173,12 +173,12 @@ theorem multOfK_eq (counts : List Nat) (v : Nat) :
 /-- `countValues`, raw. -/
 @[expose] def countValuesK (counts : List Nat) : List Nat :=
   let lo := counts.foldl minK (counts.headD 0)
-  (List.range (Nat.sub (Nat.add (counts.foldl maxK (counts.headD 0)) 1) lo)).map
+  mapRange (Nat.sub (Nat.add (counts.foldl maxK (counts.headD 0)) 1) lo)
     (Nat.add lo ·)
 
 theorem countValuesK_eq (counts : List Nat) :
     countValuesK counts = countValues counts := by
-  rw [countValuesK, countValues]
+  rw [countValuesK, countValues, mapRange_eq]
   simp only [add_eq, sub_eq]
   have hmax : maxK = Nat.max := funext fun a => funext fun b => maxK_eq a b
   have hmin : minK = Nat.min := funext fun a => funext fun b => minK_eq a b
@@ -467,18 +467,18 @@ theorem refineTrivialP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   exact refineTrivialGoP_eq h hlev _ _ hst
 
 @[expose] def worksetOfP (ctx : CtxP) (lab lo hi : Nat) : Nat :=
-  (List.range (Nat.sub (Nat.add hi 1) lo)).foldl
-    (fun w o => insertK w (lget ctx lab (Nat.add lo o))) 0
+  iterUp (Nat.sub (Nat.add hi 1) lo)
+    (fun o w => insertK w (lget ctx lab (Nat.add lo o))) 0
 
 theorem worksetOfP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) (lo hi : Nat) :
     worksetOfP ctx labP lo hi = worksetOfL lab lo hi := by
-  rw [worksetOfP, worksetOfL]
+  rw [worksetOfP, worksetOfL, iterUp_eq_foldl]
   simp only [insertK_eq, lget_eq h hl, add_eq, sub_eq]
 
 @[expose] def countsOfP (ctx : CtxP) (lab workset cell1 cell2 : Nat) :
     List Nat :=
-  (List.range (Nat.sub (Nat.add cell2 1) cell1)).map fun o =>
+  mapRange (Nat.sub (Nat.add cell2 1) cell1) fun o =>
     popCountK (Nat.land workset (rowP ctx (lget ctx lab (Nat.add cell1 o))))
 
 theorem countsOfP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
@@ -486,7 +486,7 @@ theorem countsOfP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     (workset cell1 cell2 : Nat) :
     countsOfP ctx labP workset cell1 cell2 =
       countsOfL ctxL lab workset cell1 cell2 := by
-  rw [countsOfP, countsOfL]
+  rw [countsOfP, countsOfL, mapRange_eq]
   simp only [popCountK_eq, land_eq, rowP_eq h, lget_eq h hl, add_eq, sub_eq]
 
 /-- `windowStep` with `maxcell1 = maxcell + 1`, so nauty's `-1` seed
@@ -1047,23 +1047,23 @@ theorem breakoutP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   exact breakoutGoP_rep h tv _ hl tc tv htv
 
 @[expose] def segNP (ctx : CtxP) (lab lo len : Nat) : List Nat :=
-  (List.range len).map fun o => lget ctx lab (Nat.add lo o)
+  mapRange len fun o => lget ctx lab (Nat.add lo o)
 
 theorem segNP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) (lo len : Nat) :
     segNP ctx labP lo len = segNL lab lo len := by
-  rw [segNP, segNL]
+  rw [segNP, segNL, mapRange_eq]
   simp only [lget_eq h hl, add_eq]
 
 /-- The packed image of a packed labelling under a packed permutation. -/
 @[expose] def mapGammaP (ctx : CtxP) (γP lab : Nat) : Nat :=
-  pack ctx.w ((List.range ctx.n).map fun i => lget ctx γP (lget ctx lab i))
+  pack ctx.w (mapRange ctx.n fun i => lget ctx γP (lget ctx lab i))
 
 theorem mapGammaP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {γP : Nat} {γl : List Nat} (hg : Rep ctx.w ctx.n γP γl)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
     Rep ctx.w ctx.n (mapGammaP ctx γP labP) (lab.map fun v => atD γl v 0) := by
-  rw [mapGammaP]
+  rw [mapGammaP, mapRange_eq]
   have hs : Small ctx.w ((List.range ctx.n).map fun i => lget ctx γP (lget ctx labP i)) := by
     unfold Small
     intro x hx
@@ -1093,41 +1093,43 @@ theorem checkCellsPermP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   rw [checkCellsPermP, checkCellsPermL, cellsP_eq h hp]
   simp only [isPermK_eq, segNP_eq h h1, segNP_eq h h2, add_eq, sub_eq]
 
-@[expose] def invPermGoP (ctx : CtxP) (lab : Nat) : List Nat → Nat → Nat
-  | [], inv => inv
-  | i :: rest, inv => invPermGoP ctx lab rest (lset ctx inv (lget ctx lab i) i)
+theorem invPermGoL_eq_foldl (lab : List Nat) : ∀ (idx inv : List Nat),
+    invPermGoL lab idx inv = idx.foldl (fun inv i => inv.set (atD lab i 0) i) inv
+  | [], _ => rfl
+  | i :: rest, inv => by
+    rw [invPermGoL, List.foldl_cons, invPermGoL_eq_foldl lab rest]
 
-theorem invPermGoP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+theorem invPermFold_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
     ∀ (idx : List Nat), (∀ i, i ∈ idx → i < 2 ^ ctx.w) →
       ∀ {invP : Nat} {inv : List Nat}, Rep ctx.w ctx.n invP inv →
-      Rep ctx.w ctx.n (invPermGoP ctx labP idx invP) (invPermGoL lab idx inv)
+      Rep ctx.w ctx.n (idx.foldl (fun inv i => lset ctx inv (lget ctx labP i) i) invP)
+        (idx.foldl (fun inv i => inv.set (atD lab i 0) i) inv)
   | [], _, _, _, hi => hi
   | i :: rest, hidx, _, _, hi => by
-    rw [invPermGoP, invPermGoL, lget_eq h hl]
-    exact invPermGoP_rep h hl rest (fun j hj => hidx j (List.mem_cons_of_mem _ hj))
+    rw [List.foldl_cons, List.foldl_cons, lget_eq h hl]
+    exact invPermFold_rep h hl rest (fun j hj => hidx j (List.mem_cons_of_mem _ hj))
       (lset_rep h hi _ (hidx i (List.mem_cons_self ..)))
 
 @[expose] def invPermP (ctx : CtxP) (lab : Nat) : Nat :=
-  invPermGoP ctx lab (List.range ctx.n) 0
+  iterUp ctx.n (fun i inv => lset ctx inv (lget ctx lab i) i) 0
 
 theorem invPermP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
     Rep ctx.w ctx.n (invPermP ctx labP) (invPermL lab) := by
-  rw [invPermP, invPermL, hl.len]
-  refine invPermGoP_rep h hl _ (fun i hi => ?_) (Rep.replicate ctx.w ctx.n)
+  rw [invPermP, invPermL, hl.len, iterUp_eq_foldl, invPermGoL_eq_foldl]
+  refine invPermFold_rep h hl _ (fun i hi => ?_) (Rep.replicate ctx.w ctx.n)
   have := List.mem_range.mp hi
   have := h.nlt
   omega
 
 @[expose] def permsetP (ctx : CtxP) (s perm : Nat) : Nat :=
-  (List.range ctx.n).foldl
-    (fun acc v => cond (elemK s v) (insertK acc (lget ctx perm v)) acc) 0
+  iterUp ctx.n (fun v acc => cond (elemK s v) (insertK acc (lget ctx perm v)) acc) 0
 
 theorem permsetP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {permP : Nat} {perm : List Nat} (hp : Rep ctx.w ctx.n permP perm) (s : Nat) :
     permsetP ctx s permP = permsetL s perm ctxL.n := by
-  rw [permsetP, permsetL, h.n]
+  rw [permsetP, permsetL, h.n, iterUp_eq_foldl]
   congr 1
   funext acc v
   rw [elemK_eq, cond_beq_true, insertK_eq, lget_eq h hp]
@@ -1135,21 +1137,21 @@ theorem permsetP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
 
 @[expose] def leafRowsP (ctx : CtxP) (lab : Nat) : List Nat :=
   let inv := invPermP ctx lab
-  (List.range ctx.n).map fun i => permsetP ctx (rowP ctx (lget ctx lab i)) inv
+  mapRange ctx.n fun i => permsetP ctx (rowP ctx (lget ctx lab i)) inv
 
 theorem leafRowsP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
     leafRowsP ctx labP = leafRowsL ctxL lab := by
-  rw [leafRowsP, leafRowsL]
+  rw [leafRowsP, leafRowsL, mapRange_eq]
   simp only [permsetP_eq h (invPermP_rep h hl), rowP_eq h, lget_eq h hl, h.n]
 
 /-! # Automorphism validation over packed state -/
 
 @[expose] def imageP (σ : Nat → Nat) (n s : Nat) : Nat :=
-  (List.range n).foldl (fun t v => cond (elemK s v) (insertK t (σ v)) t) 0
+  iterUp n (fun v t => cond (elemK s v) (insertK t (σ v)) t) 0
 
 theorem imageP_eq (σ : Nat → Nat) (n s : Nat) : imageP σ n s = image σ n s := by
-  rw [imageP, image]
+  rw [imageP, image, iterUp_eq_foldl]
   congr 1
   funext t v
   rw [elemK_eq, cond_beq_true, insertK_eq]
@@ -1173,7 +1175,7 @@ theorem gammaOkP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   gammaOkP ctx γl &&
     (let γP := pack ctx.w γl
     isPermK γl (List.range ctx.n) &&
-      (List.range ctx.n).all fun v =>
+      allRange ctx.n fun v =>
         Nat.beq (rowP ctx (lget ctx γP v))
           (imageP (fun w => lget ctx γP w) ctx.n (rowP ctx v)))
 
@@ -1223,8 +1225,8 @@ theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
       exact this
     rw [checkAutomP, checkAutom, Bool.eq_iff_iff]
     simp only [hok, Bool.true_and, Bool.and_eq_true, hget, hrow, isPermK_eq,
-      imageP_eq, h.n, Ctx.toL, map_getBang_range hsize, beq_iff_eq, Nat.beq_eq,
-      List.all_eq_true, decide_eq_true_eq]
+      imageP_eq, allRange_eq, h.n, Ctx.toL, map_getBang_range hsize, beq_iff_eq,
+      Nat.beq_eq, List.all_eq_true, decide_eq_true_eq]
     constructor
     · rintro ⟨hperm, himgs⟩
       exact ⟨⟨⟨hsize, hbound⟩, hperm⟩, himgs⟩
