@@ -53,8 +53,11 @@ FINGERPRINT_DIGITS = 12
 
 
 def git(*args: str) -> str:
+    # `core.quotePath=false` so a non-ASCII path is listed under the name
+    # the family declarations match against, rather than as an escape.
     result = subprocess.run(
-        ["git", *args], cwd=ROOT, text=True, capture_output=True, check=False)
+        ["git", "-c", "core.quotePath=false", *args],
+        cwd=ROOT, text=True, capture_output=True, check=False)
     if result.returncode:
         raise SystemExit(result.stderr.strip() or f"git {' '.join(args)} failed")
     return result.stdout
@@ -91,7 +94,8 @@ class Family:
         the index and the tree listing filter with `matches` instead, and
         the pathspec only has to avoid walking the whole repository.
         """
-        return sorted({entry.partition("*")[0] for entry in self.include})
+        return sorted(
+            {entry.partition("*")[0] for entry in self.include} - {""})
 
     def staging_pathspec(self) -> list[str]:
         """The exact pathspec, for staging the relevant source before a sweep.
@@ -114,19 +118,32 @@ def _entry_matches(entry: str, path: str) -> bool:
 def index_listing(family: Family) -> str:
     """The family's listing as the index has it, i.e. what a sweep measures."""
     raw = git("ls-files", "-s", "--", *family.pathspec())
-    return "".join(
-        line + "\n" for line in raw.splitlines()
-        if family.matches(line.partition("\t")[2]))
+    kept = []
+    for line in raw.splitlines():
+        meta, _, path = line.partition("\t")
+        _mode, _blob, stage = meta.split()
+        if stage != "0":
+            raise SystemExit(
+                f"{path} is unmerged in the index; resolve the conflict "
+                f"before fingerprinting {family.name}")
+        if family.matches(path):
+            kept.append(line + "\n")
+    return "".join(kept)
 
 
 def tree_listing(family: Family, ref: str) -> str:
-    """The family's listing at a commit, in the same format as the index one."""
+    """The family's listing at a commit, in the same format as the index one.
+
+    Gitlinks count as entries just as `git ls-files -s` reports them, so
+    that a submodule under a family path cannot make the two listings of
+    the same content disagree.
+    """
     raw = git("ls-tree", "-r", ref, "--", *family.pathspec())
     rows = []
     for line in raw.splitlines():
         meta, _, path = line.partition("\t")
         mode, kind, blob = meta.split()
-        if kind == "blob" and family.matches(path):
+        if kind in ("blob", "commit") and family.matches(path):
             rows.append((path, mode, blob))
     rows.sort(key=lambda row: row[0].encode())
     return "".join(f"{mode} {blob} 0\t{path}\n" for path, mode, blob in rows)
@@ -278,6 +295,15 @@ def assess(family: Family, observations: list[Observation],
     verdict.baseline = with_manifest[0]
     baseline = manifest_path(
         family, verdict.baseline.fingerprint).read_text()
+    if fingerprint(baseline) != verdict.baseline.fingerprint:
+        # The manifest is the whole evidence that the baseline listing is
+        # the one that was measured. A manifest that does not hash to the
+        # fingerprint it is filed under proves nothing.
+        verdict.errors.append(
+            f"manifest for {verdict.baseline.fingerprint} does not hash to "
+            f"its own fingerprint; it no longer records what "
+            f"{verdict.baseline.label} measured")
+        return verdict
     exemptions = load_exemptions(family.exemptions)
     unexplained = []
     for difference in differences(baseline, listing):

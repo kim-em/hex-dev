@@ -156,6 +156,15 @@ class Assess(unittest.TestCase):
             listing=self.CURRENT)
         self.assertEqual(verdict.baseline.label, "recent.jsonl")
 
+    def test_a_manifest_that_does_not_hash_to_its_name_is_rejected(self):
+        digest = self.record(self.BASELINE)
+        freshness.manifest_path(self.family, digest).write_text(self.CURRENT)
+        verdict = freshness.assess(
+            self.family, [freshness.Observation(digest, "data.jsonl")],
+            listing=self.CURRENT)
+        self.assertFalse(verdict.fresh)
+        self.assertIn("does not hash to its own fingerprint", verdict.errors[0])
+
     def test_an_observation_without_a_manifest_is_not_a_baseline(self):
         recorded = self.record(self.BASELINE)
         verdict = freshness.assess(self.family, [
