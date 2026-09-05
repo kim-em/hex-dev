@@ -623,10 +623,10 @@ private theorem foldl_union_from {act W : Nat} {lab : Array Nat} :
   | q :: l, A, h => by
     rw [List.foldl_cons]
     rcases hq : elem act q.1 with _ | _
-    · rw [ite_eq_right (by simp [hq])]
+    · rw [ite_eq_right (by simp)]
       exact foldl_union_from l A
         fun p hp => h p (List.mem_cons_of_mem _ hp)
-    · rw [ite_eq_left (by simp [hq]), h q List.mem_cons_self hq,
+    · rw [ite_eq_left (by simp), h q List.mem_cons_self hq,
         or_self_right]
       exact foldl_union_from l A
         fun p hp => h p (List.mem_cons_of_mem _ hp)
@@ -641,7 +641,7 @@ private theorem foldl_union_single {act W : Nat} {lab : Array Nat} :
   | q :: l, A, h, ⟨p, hp, hpa⟩ => by
     rw [List.foldl_cons]
     rcases hq : elem act q.1 with _ | _
-    · rw [ite_eq_right (by simp [hq])]
+    · rw [ite_eq_right (by simp)]
       have hpl : p ∈ l := by
         rcases List.mem_cons.mp hp with rfl | hmem
         · rw [hq] at hpa
@@ -649,7 +649,7 @@ private theorem foldl_union_single {act W : Nat} {lab : Array Nat} :
         · exact hmem
       exact foldl_union_single l A
         (fun p hp2 => h p (List.mem_cons_of_mem _ hp2)) ⟨p, hpl, hpa⟩
-    · rw [ite_eq_left (by simp [hq]), h q List.mem_cons_self hq]
+    · rw [ite_eq_left (by simp), h q List.mem_cons_self hq]
       exact foldl_union_from l A
         fun p hp2 => h p (List.mem_cons_of_mem _ hp2)
 

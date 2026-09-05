@@ -178,9 +178,9 @@ theorem LoopInv.childDescWeak {G : Colored n k} {ctx : Ctx}
     rcases hc : cheapautom rsPtn level ctx.n with _ | _
     · have := hpark hc
       rcases Decidable.em (st.noncheaplevel ≥ level) with hge | hge
-      · rw [if_pos ⟨hge, by simp⟩]
+      · rw [ite_eq_left ⟨hge, by simp⟩]
         omega
-      · rw [if_neg (fun h => hge h.1)]
+      · rw [ite_eq_right (fun h => hge h.1)]
     · simp
   rw [hboundary] at hchild
   have hcurLab : cur.lab[tc + currentOffset]! = tv := hat

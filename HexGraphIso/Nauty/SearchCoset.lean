@@ -38,7 +38,7 @@ theorem processnode_coset (ctx : Ctx) (level numcells : Nat)
 theorem otherNodePrep_coset (level code : Nat) (st : SearchSt) :
     (otherNodePrep level code st).cosetindex = st.cosetindex := by
   rw [otherNodePrep]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+  simp only [Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.cosetindex, ite_self]
 
 /-- Parent-frame recovery never changes the first-path coset cursor. -/

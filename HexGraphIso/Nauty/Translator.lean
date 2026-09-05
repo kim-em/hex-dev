@@ -554,11 +554,11 @@ private theorem isautomInner_gate (ctx : Ctx) (γ : Array Nat)
   constructor
   · intro hp
     by_cases hgt : pos > i
-    · rw [if_pos hgt, if_neg (by simpa using hp hgt)]
-    · rw [if_neg hgt]
+    · rw [ite_eq_left hgt, ite_eq_right (by simpa using hp hgt)]
+    · rw [ite_eq_right hgt]
   · intro hp
     rcases Decidable.not_imp_iff_and_not.mp hp with ⟨hgt, hne⟩
-    rw [if_pos hgt, if_pos (by simpa using hne)]
+    rw [ite_eq_left hgt, ite_eq_left (by simpa using hne)]
 
 private theorem isautomOuter_gate (ctx : Ctx) (γ : Array Nat) (i : Nat) :
     IsGate (isautomOuter ctx γ i) (isautomPass ctx γ i) := by

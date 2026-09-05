@@ -287,8 +287,8 @@ theorem limbsToNat_eq_limbsVal (arr : Array Nat) :
   | cons l ls ih =>
     rw [List.foldr_cons, ih, limbsVal]
     rcases hz : limbsVal ls == 0 with _ | _
-    · simp only [hz, Bool.false_eq_true, ite_false]
-    · simp only [hz, ite_true]
+    · simp only [Bool.false_eq_true, ite_false]
+    · simp only [ite_true]
       rw [show limbsVal ls = 0 from by simpa using hz,
         Nat.zero_shiftLeft]
       simp
@@ -453,11 +453,11 @@ theorem imageGo_spec (σ : Nat → Nat) {s limbCount : Nat}
     rw [show List.range' v (fuel + 1) =
       v :: List.range' (v + 1) fuel from rfl, List.foldl_cons]
     rcases hsb : s.testBit v with _ | _
-    · simp only [hsb, Bool.false_eq_true, ite_false]
+    · simp only [Bool.false_eq_true, ite_false]
       exact ih (v + 1) arr spill (by omega) hsize hb
-    · simp only [hsb, ite_true]
+    · simp only [ite_true]
       rcases Decidable.em (σ v < limbCount * 63) with hlt | hge
-      · rw [if_pos hlt]
+      · rw [ite_eq_left hlt]
         have hsize' : (arr.set! (σ v / 63) (arr[σ v / 63]! |||
             (1 <<< (σ v % 63)))).size = limbCount := by
           rw [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
@@ -478,7 +478,7 @@ theorem imageGo_spec (σ : Nat → Nat) {s limbCount : Nat}
         rw [limbsVal_set_insert hb (by omega)]
         rw [insert, insert, Nat.or_assoc, Nat.or_comm (1 <<< (σ v)) spill,
           ← Nat.or_assoc]
-      · rw [if_neg hge]
+      · rw [ite_eq_right hge]
         rw [ih (v + 1) arr (insert spill (σ v)) (by omega) hsize hb]
         rw [insert, insert, Nat.or_assoc]
 

@@ -173,13 +173,13 @@ theorem push {st : SearchSt} {pair : Nat × Nat} (h : WorkspaceOk st) :
     split <;> exact hcap
   · unfold pushAuto
     rcases hfull : (st.autos.size == st.wsCap) with _ | _
-    · simp only [hfull, Bool.false_eq_true, ite_false, Array.size_push]
+    · simp only [Bool.false_eq_true, ite_false, Array.size_push]
       have hne : st.autos.size ≠ st.wsCap := by
         intro heq
         rw [beq_iff_eq.mpr heq] at hfull
         cases hfull
       omega
-    · simp only [hfull, ite_true, Array.size_set!]
+    · simp only [ite_true, Array.size_set!]
       exact hsize
 
 /-- `pushAuto` does not change the configured workspace capacity. -/
@@ -213,8 +213,7 @@ theorem recoverCap (n inf level : Nat) (st : SearchSt) :
 theorem firstCap (level : Nat) (st : SearchSt) :
     (firstterminal level st).wsCap = st.wsCap := by
   rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite SearchSt.wsCap, ite_self]
+  simp only [Id.run_bind, Id.run_pure]
 
 end WorkspaceOk
 
@@ -245,9 +244,9 @@ theorem pushAuto_back {st : SearchSt} {pair : Nat × Nat}
     (pushAuto st pair).autos.back? = some pair := by
   unfold pushAuto
   rcases hfull : (st.autos.size == st.wsCap) with _ | _
-  · simp only [Bool.false_eq_true, hfull, ite_false, Array.back?_push]
+  · simp only [Bool.false_eq_true, ite_false, Array.back?_push]
   · have heq : st.autos.size = st.wsCap := beq_iff_eq.mp hfull
-    simp only [hfull, ite_true, Array.back?_eq_getElem?, Array.size_set!]
+    simp only [ite_true, Array.back?_eq_getElem?, Array.size_set!]
     rw [heq, Array.set!_eq_setIfInBounds,
       Array.getElem?_setIfInBounds_self_of_lt]
     omega
@@ -380,8 +379,8 @@ private theorem elem_foldl_prune :
   | p :: l, t, fixedpts, v => by
     rw [List.foldl_cons, elem_foldl_prune l, List.all_cons]
     rcases htest : (fixedpts &&& p.1 == fixedpts) with _ | _
-    · simp [htest]
-    · simp [htest, elem_and, Bool.and_assoc]
+    · simp
+    · simp [elem_and, Bool.and_assoc]
 
 /-- Membership after `longprune`: the cell bit survives exactly when
 every fix-passing pair's `mcr` keeps it. -/
