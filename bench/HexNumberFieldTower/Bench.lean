@@ -712,7 +712,7 @@ setup_fixed_benchmark runCoordinateMaps where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runToPrimitiveLadder` is a failed mode-1
+/- Expected-hash anchor only. `runToPrimitiveDense` is the mode-3
 diagnostic; neither registration discharges performance coverage for the
 public closure. -/
 setup_fixed_benchmark runToPrimitive where {
@@ -1003,9 +1003,6 @@ def runTowerMulLadder (input : ElemInput) : UInt64 :=
 def runTowerInvLadder (input : ElemInput) : UInt64 :=
   elemChecksum input.a⁻¹
 
-def runTowerDivLadder (input : ElemInput) : UInt64 :=
-  elemChecksum (input.a / input.b)
-
 /- Cost model. Negation maps rational negation over the `D = n` dense
 coordinate array, wraps the exactly sized result without copying it, and hashes
 every result coordinate. The one-level presentation changes only untimed
@@ -1116,20 +1113,47 @@ setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model. Division performs the recursive inversion above followed by
-one `O(D²)` tower multiplication. The `n² log n` inversion term dominates on
-the same bounded-height `ℚ(3^(1/n), √2)` family; both operations consume the
-already checked height-two fixture outside the timed region. -/
-setup_benchmark runTowerDivLadder n => n * n * (Nat.log2 (n + 2) + 1)
-  with prep := prepRecursiveElemInput
-  where {
-    paramFloor := 2
-    paramCeiling := 12
-    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
-    maxSecondsPerCall := 30.0
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1.0
-  }
+initialize recursiveDivRef : IO.Ref (Option ElemInput) ← IO.mkRef none
+
+/-- The top completed rung of the recursive family, `ℚ(3^(1/12), √2)` of
+dimension 24, prepared once outside the timed region. -/
+private def getRecursiveDivInput : IO ElemInput := do
+  match ← recursiveDivRef.get with
+  | some input => pure input
+  | none =>
+      let input := prepRecursiveElemInput 12
+      recursiveDivRef.set (some input)
+      pure input
+
+/-- One public division of two dense bounded-height elements at the top
+completed rung of the recursive family. -/
+def runTowerDivRecursive : Unit → IO UInt64 := fun _ => do
+  let input ← getRecursiveDivInput
+  return elemChecksum (input.a / input.b)
+
+/- Mode 3. Division is the recursive inversion above followed by one top-level
+product by the inverse. The untimed replay (`tower-div-chain-stats`) charges
+that product at 9% to 20% of the division's limb work, so inversion is the
+dominant phase and division reuses its `n² log n` model from source. On the
+repaired monic chain the inversion ladder passes that model (β = −0.010),
+while the division ladder on the same `2, 3, 4, 6, 8, 12` schedule remains
+inconclusive at β = +0.191: the inverse's coordinate height crosses from two
+to three 64-bit limbs between `n = 8` and `n = 12` (123 and 211 bits in the
+replay), and the product by the inverse pays that step in full where the
+logarithmic limb proxy does not. The same schedule failed before the repair
+at β = +0.748, and at +0.594 in the opposite tower order. Asymptotic
+regression detection is therefore given up for division: the recursive
+inversion ladder carries the parametric evidence for its dominant phase, and
+this canonical dimension-24 quotient of two dense bounded-height elements is
+the hard input. Its diagnostic run measured an 8.794 ms per-call and 281 ms
+auto-tuned batch median; the 3 s zero-grace whole-child budget covers the
+fixture, the auto-tune probes and each measured batch with a 10.7× batch
+margin, chosen before the official export. -/
+setup_fixed_benchmark runTowerDivRecursive where {
+  repeats := 3, maxSecondsPerCall := 3.0, killGraceMs := 0,
+  expectedHash := some 0x2b5bb13bf40898,
+  warmupFirstIter := true, minTotalSeconds := 0.2
+}
 
 /-! # Untimed inversion-chain replay
 
@@ -1603,28 +1627,51 @@ def prepMapLadderInput (n : Nat) : MapLadderInput :=
       ⟨tower, flatten? tower, ofCoeffs tower (ladderCoords tower.dim 3)⟩
   | none => panic! "prepMapLadderInput: tower fixture failed"
 
-def runToPrimitiveLadder (input : MapLadderInput) : UInt64 :=
-  match input.result with
-  | some result => qAdjoinChecksum (result.toPrimitive input.dense)
-  | none => 0
+initialize denseMapRef : IO.Ref (Option MapLadderInput) ← IO.mkRef none
 
-/- Cost model. Fixture construction prepares the flattening and one bounded-
-height element with all `D = 2n` tower coordinates nonzero. The timed public
-`toPrimitive` call therefore performs `D` rational scalar actions and
-additions on degree-`D` primitive coordinates, hence `Θ(D²) = Θ(n²)`
-rational operations. `qAdjoinChecksum` then structurally walks the
-`D`-coordinate result, contributing only lower-order `Θ(D)` work. The
-registration is retained as a binding failed diagnostic: the prepared input
-height is bounded, but the flattening's primitive-basis images are not, and
-their exact-rational bit cost makes the wall-time verdict slower than this
-rational-operation model. -/
-setup_benchmark runToPrimitiveLadder n => n * n
-  with prep := prepMapLadderInput
-  where {
-    paramSchedule := .custom #[2, 3, 4, 5, 6, 9]
-    maxSecondsPerCall := 300.0, targetInnerNanos := 100000000,
-    signalFloorMultiplier := 1.0
-  }
+/-- The canonical dense forward-map input: the flattening of `ℚ(√2, 3^(1/5))`
+(dimension 10) and one bounded-height element with all ten coordinates
+nonzero, prepared once per child outside the timed region. -/
+private def getDenseMapInput : IO MapLadderInput := do
+  match ← denseMapRef.get with
+  | some input => pure input
+  | none =>
+      let input := prepMapLadderInput 5
+      denseMapRef.set (some input)
+      pure input
+
+/-- One public dense `toPrimitive` call on the canonical dimension-ten
+flattening, plus its linear structural result hash. -/
+def runToPrimitiveDense : Unit → IO UInt64 := fun _ => do
+  let input ← getDenseMapInput
+  match input.result with
+  | some result => return qAdjoinChecksum (result.toPrimitive input.dense)
+  | none => return 0
+
+/- Mode 3. One dense `toPrimitive` call performs `D` rational scalar actions
+and additions on degree-`D` primitive coordinates, `Θ(D²)` rational
+operations, but its bit cost is set by the flattening's primitive-basis
+images, not by the prepared input. The untimed `tower-to-primitive-stats`
+replay records those image heights on the attempted dense schedule
+`n = 2, 3, 4, 5, 6, 9` (`D = 2n`): 4, 12, 11, 33, 25 and 112 numerator bits
+(19, 62, 82, 182, 195 and 1226 total limbs), which are set by the
+primitive-element shift the flattening accepted and are not monotone in `n`.
+The preregistered quadratic wall model was rejected twice on that schedule
+(β = +1.023 and +0.996), and the earlier unit-vector family was a sparse best
+case; no one-parameter wall model of `n` alone is reachable because the
+images are an input-determined quantity. Asymptotic regression detection is
+therefore given up for this operation. The canonical input is the `n = 5`
+rung: it has the tallest images of any rung whose flattening fixture is
+affordable inside each child (1.8 s; the `n = 6` and `n = 9` fixtures cost
+6.8 s and 68 s). Its diagnostic run measured a 45.368 µs per-call and
+743 ms auto-tuned batch median with about 3.4 s per child including the
+fixture and auto-tune probes; the 10 s zero-grace whole-child budget covers
+that with a 13× batch margin, chosen before the official export. -/
+setup_fixed_benchmark runToPrimitiveDense where {
+  repeats := 3, maxSecondsPerCall := 10.0, killGraceMs := 0,
+  expectedHash := some 0xd449089bb3c5725d,
+  warmupFirstIter := true, minTotalSeconds := 0.5
+}
 
 def runFromPrimitiveLadder (input : MapLadderInput) : UInt64 :=
   match input.result with
@@ -1648,6 +1695,42 @@ setup_benchmark runFromPrimitiveLadder n => n * n * n * n
     signalFloorMultiplier := 1.0
   }
 
+/-- Untimed diagnostics for the dense `toPrimitive` family: for every rung of
+its schedule, the fixture cost of `flatten?`, the coordinate heights of the
+primitive-basis images (recovered as the forward map of each unit vector),
+and the height of one dense image. The dense forward map performs `D`
+scalar actions and additions on these images, so their heights, not the
+prepared input's, set its bit cost. -/
+@[noinline] private def forceMapLadderInput (n : Nat) : IO MapLadderInput :=
+  pure (prepMapLadderInput n)
+
+@[noinline] private def forceToPrimitive {T : NumberTower} (result : Flattening T)
+    (a : Elem T) : IO (QAdjoin result.root.p result.root.x) :=
+  pure (result.toPrimitive a)
+
+private def printToPrimitiveStats : IO Unit := do
+  IO.println "n,dim,flatten_prelude_ms,image_num_max,image_den_max,image_limbs_total,dense_num_max,dense_den_max,dense_call_ns"
+  for n in #[2, 3, 4, 5, 6, 9] do
+    let t0 ← IO.monoMsNow
+    let input ← forceMapLadderInput n
+    let dim := input.tower.dim
+    let t1 ← IO.monoMsNow
+    match input.result with
+    | some result =>
+        let images := (List.range dim).map fun i =>
+          result.toPrimitive (ofCoeffs input.tower (Flatten.unitCoords dim i))
+        let bits := images.foldl (init := ({ numMax := 0, denMax := 0, total := 0, limbs := 0 } : RatArrayBits))
+          fun acc image =>
+            let b := ratArrayBits image.coeffs.coeffs
+            { numMax := max acc.numMax b.numMax, denMax := max acc.denMax b.denMax,
+              total := acc.total + b.total, limbs := acc.limbs + b.limbs }
+        let c0 ← IO.monoNanosNow
+        let dense ← forceToPrimitive result input.dense
+        let c1 ← IO.monoNanosNow
+        let denseBits := ratArrayBits dense.coeffs.coeffs
+        IO.println s!"{n},{dim},{t1 - t0},{bits.numMax},{bits.denMax},{bits.limbs},{denseBits.numMax},{denseBits.denMax},{c1 - c0}"
+    | none => IO.println s!"{n},{dim},{t1 - t0},flatten-failed"
+
 end Hex.NumberTowerBench
 
 def main (args : List String) : IO UInt32 := do
@@ -1657,5 +1740,8 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["tower-div-chain-stats"] =>
       Hex.NumberTowerBench.printTowerDivChainSteps
+      return 0
+  | ["tower-to-primitive-stats"] =>
+      Hex.NumberTowerBench.printToPrimitiveStats
       return 0
   | _ => LeanBench.Cli.dispatch args
