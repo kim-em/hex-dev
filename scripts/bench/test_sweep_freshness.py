@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import tempfile
 import unittest
@@ -321,15 +322,18 @@ class LeanCommentOnly(unittest.TestCase):
 class Families(unittest.TestCase):
     """The declarations themselves, checked against the repository."""
 
-    def test_graphiso_listing_matches_its_historical_pathspec(self):
-        # Every committed hex-graph-iso fingerprint was recorded by this
-        # exact pathspec. A refactor that changes the listing by one byte
-        # invalidates all of them, so pin it.
+    def test_graphiso_listing_matches_its_pathspec(self):
+        # Fingerprints are only comparable across observations recorded by
+        # the same pathspec, so a refactor that changes the listing by one
+        # byte invalidates every committed one. Pin it. Widening or
+        # narrowing the set is a deliberate act that costs one
+        # re-measurement, as excluding the unimported test modules did.
         raw = freshness.git(
             "ls-files", "-s", "--", "HexGraphIso/", "HexGraph/",
             "bench/HexGraphIso/Cactus.lean",
             "scripts/plots/hexgraphiso-cactus.py",
-            ":!HexGraphIso/SPEC", ":!HexGraphIso/README.md")
+            ":!HexGraphIso/SPEC", ":!HexGraphIso/README.md",
+            ":!HexGraphIso/TacticTests.lean")
         self.assertEqual(freshness.index_listing(freshness.GRAPHISO), raw)
 
     def test_factorization_source_is_lean_under_the_service_libraries(self):
@@ -407,6 +411,98 @@ class CommandLine(unittest.TestCase):
     def test_a_malformed_argument_list_is_rejected(self):
         self.assertEqual(self.run_cli(
             "--fingerprint", "hexgraphiso-cactus", "--oops").returncode, 2)
+
+
+IMPORT = re.compile(
+    r"^\s*(?:public\s+|private\s+|meta\s+)*import\s+([A-Za-z_][\w.]*)",
+    re.MULTILINE)
+
+
+def import_closure(roots: tuple[str, ...]) -> set[str]:
+    """Every in-repository Lean module reachable from `roots` by import.
+
+    Modules that resolve outside the repository (Lean core, Mathlib) have no
+    file here and drop out, which is what we want: the question is only which
+    of *our* sources a measured artifact is built from.
+    """
+    seen: set[str] = set()
+    stack = list(roots)
+    while stack:
+        path = stack.pop()
+        if path in seen:
+            continue
+        source = freshness.ROOT / path
+        if not source.exists():
+            continue
+        seen.add(path)
+        stack.extend(f"{module.replace('.', '/')}.lean"
+                     for module in IMPORT.findall(
+                         source.read_text(encoding="utf-8")))
+    return seen
+
+
+class ExcludedTestsAreUnreachable(unittest.TestCase):
+    """The exclusion of a test module is a reachability claim, so check it.
+
+    `sweep_freshness` leaves some test modules out of the relevant sets on
+    the grounds that no measured artifact imports them. That is a fact about
+    the repository, and it can stop being true: adding one import to a
+    library umbrella would put a test module back inside a measured closure
+    while the exclusion silently kept its edits from forcing a sweep. These
+    tests fail at that moment instead.
+    """
+
+    # The cactus figures come from the compiled sweep driver, and their
+    # tactic leg re-elaborates a file whose only import is the umbrella.
+    GRAPHISO_ROOTS = ("bench/HexGraphIso/Cactus.lean", "HexGraphIso.lean")
+    # The factorization curves come from the bench service binary.
+    FACTOR_ROOTS = ("bench/HexBench/FactorService.lean",)
+
+    def test_excluded_graphiso_tests_are_outside_the_measured_closure(self):
+        closure = import_closure(self.GRAPHISO_ROOTS)
+        for path in freshness.GRAPHISO_TESTS:
+            self.assertNotIn(path, closure)
+
+    def test_excluded_factor_tests_are_outside_the_measured_closure(self):
+        closure = import_closure(self.FACTOR_ROOTS)
+        for path in freshness.FACTOR_TESTS:
+            self.assertNotIn(path, closure)
+
+    def test_every_excluded_test_module_exists(self):
+        for path in freshness.GRAPHISO_TESTS + freshness.FACTOR_TESTS:
+            self.assertTrue((freshness.ROOT / path).exists(),
+                            f"{path} is excluded but does not exist")
+
+    def test_an_imported_test_module_is_not_excluded(self):
+        """The boundary ladders stay in, and this records why.
+
+        `ModuleBoundaryTests.lean` is a test by name, but each one is
+        publicly imported by its library umbrella, so it is inside the
+        closure the figures measure and its edits must force a sweep.
+        """
+        graphiso = import_closure(self.GRAPHISO_ROOTS)
+        self.assertIn("HexGraphIso/ModuleBoundaryTests.lean", graphiso)
+        self.assertNotIn("HexGraphIso/ModuleBoundaryTests.lean",
+                         freshness.GRAPHISO_TESTS)
+        self.assertTrue(freshness.GRAPHISO.matches(
+            "HexGraphIso/ModuleBoundaryTests.lean"))
+
+        factor = import_closure(self.FACTOR_ROOTS)
+        self.assertIn("HexBasic/ModuleBoundaryTests.lean", factor)
+        self.assertTrue(freshness.factor_family("hex-factor").matches(
+            "HexBasic/ModuleBoundaryTests.lean"))
+
+    def test_the_relevant_set_drops_the_excluded_tests(self):
+        self.assertFalse(
+            freshness.GRAPHISO.matches("HexGraphIso/TacticTests.lean"))
+        hex_factor = freshness.factor_family("hex-factor")
+        self.assertFalse(hex_factor.matches(
+            "HexBerlekampZassenhaus/FactorTacticTests.lean"))
+        self.assertTrue(hex_factor.matches(
+            "HexBerlekampZassenhaus/PrimeSelection.lean"))
+
+    def test_a_comparator_declares_no_test_exclusions(self):
+        self.assertEqual(freshness.factor_family("flint").exclude, ())
 
 
 if __name__ == "__main__":

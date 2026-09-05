@@ -466,6 +466,24 @@ def missing_figures(family: Family) -> list[str]:
 
 # Documentation under a library tree cannot affect measured performance, so
 # SPECs and READMEs are excluded: a doc-only change must not force a sweep.
+
+# Neither can a test module that no measured artifact imports: the compiled
+# sweep driver never links it, and the retimed tactic file never elaborates
+# against it, so adding a case to one cannot move a curve. The criterion is
+# import reachability, not the file name. `ModuleBoundaryTests.lean` is
+# deliberately absent from both lists below even though it is a test, because
+# its library umbrella publicly imports it and it is therefore inside the
+# closure the figures measure. `test_sweep_freshness.py` checks both halves of
+# that against the repository's real import graph, so a later import that
+# pulls one of these into a measured closure fails there rather than silently
+# freezing a stale figure.
+GRAPHISO_TESTS = ("HexGraphIso/TacticTests.lean",)
+
+FACTOR_TESTS = (
+    "HexBerlekamp/FactorTacticTests.lean",
+    "HexBerlekampZassenhaus/FactorTacticTests.lean",
+)
+
 GRAPHISO = Family(
     name="hexgraphiso-cactus",
     include=(
@@ -474,7 +492,7 @@ GRAPHISO = Family(
         "bench/HexGraphIso/Cactus.lean",
         "scripts/plots/hexgraphiso-cactus.py",
     ),
-    exclude=("HexGraphIso/SPEC", "HexGraphIso/README.md"),
+    exclude=("HexGraphIso/SPEC", "HexGraphIso/README.md") + GRAPHISO_TESTS,
     figures=(
         "hexgraphiso-canon-cactus.svg",
         "hexgraphiso-pairs-cactus.svg",
@@ -546,6 +564,9 @@ def factor_family(system: str) -> Family:
     return Family(
         name=f"hexbz-factor-{system}",
         include=FACTOR_COMMON + FACTOR_SYSTEM_PATHS[system],
+        # Only Hex's own set spans Lean libraries, so only it has test
+        # modules to leave out; a comparator's adapter files have none.
+        exclude=FACTOR_TESTS if system == "hex-factor" else (),
         exemptions=FACTOR_EXEMPTIONS if system == "hex-factor" else None,
         regenerate=(
             "scripts/bench/factor_sweep.py on the benchmarking host"),
