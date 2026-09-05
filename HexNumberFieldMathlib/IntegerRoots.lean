@@ -64,9 +64,9 @@ private theorem algebraicRoots?_eq_of_pos (p : ZPoly)
                 hsimple rep).exact?).bind fun roots =>
             some (roots.toList.mergeSort AlgebraicNumber.rootLe).toArray := by
   unfold ZPoly.algebraicRoots?
-  rw [if_neg h0]
+  rw [ite_eq_right h0]
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdeg, dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdeg, dite_eq_left hsimple]
   rfl
 
 /-- The certificate hypotheses of the positive-degree branch all hold. -/
@@ -89,7 +89,7 @@ private theorem squareFreeCore_hypotheses (p : ZPoly)
 theorem algebraicRoots?_isSome (p : ZPoly) : (ZPoly.algebraicRoots? p).isSome := by
   by_cases h0 : p.degree?.getD 0 = 0
   · unfold ZPoly.algebraicRoots?
-    rw [if_pos h0]
+    rw [ite_eq_left h0]
     rfl
   · obtain ⟨hprim, hpos, hdeg, hsimple⟩ := squareFreeCore_hypotheses p h0
     have hpne : p ≠ 0 := by
@@ -105,7 +105,7 @@ theorem algebraicRoots?_isSome (p : ZPoly) : (ZPoly.algebraicRoots? p).isSome :=
     have hmapSome := array_mapM_isSome (xs := isolations)
       (f := DyadicRootIsolation.toRefined?) (fun iso hiso => by
         unfold DyadicRootIsolation.toRefined?
-        rw [dif_pos (isolate_refined (ZPoly.squareFreeCore p) hsimple
+        rw [dite_eq_left (isolate_refined (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
           iso hiso)]
         rfl)
@@ -154,7 +154,7 @@ theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
   · have hroots : ZPoly.algebraicRoots p = #[] := by
       have h := algebraicRoots?_eq p
       unfold ZPoly.algebraicRoots? at h
-      rw [if_pos h0] at h
+      rw [ite_eq_left h0] at h
       exact (Option.some.inj h).symm
     have hsize : p.size ≠ 0 := by
       intro hsize
@@ -175,7 +175,7 @@ theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
     have hmapSome := array_mapM_isSome (xs := isolations)
       (f := DyadicRootIsolation.toRefined?) (fun iso hiso => by
         unfold DyadicRootIsolation.toRefined?
-        rw [dif_pos (isolate_refined (ZPoly.squareFreeCore p) hsimple
+        rw [dite_eq_left (isolate_refined (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
           iso hiso)]
         rfl)
@@ -210,7 +210,7 @@ theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
         (AlgebraicRoot.ofRefined (ZPoly.squareFreeCore p) hprim hpos hdeg hsimple
           refined[i]) h
     rw [hout]
-    simp only [List.toList_toArray, List.mem_mergeSort]
+    simp only [List.mem_mergeSort]
     constructor
     · rintro ⟨a, ha, rfl⟩
       obtain ⟨i, hi, hai⟩ := List.mem_iff_getElem.mp ha
@@ -244,7 +244,7 @@ theorem algebraicRoots_nodup (p : ZPoly) :
   · have hroots : ZPoly.algebraicRoots p = #[] := by
       have h := algebraicRoots?_eq p
       unfold ZPoly.algebraicRoots? at h
-      rw [if_pos h0] at h
+      rw [ite_eq_left h0] at h
       exact (Option.some.inj h).symm
     simp [hroots]
   · obtain ⟨hprim, hpos, hdeg, hsimple⟩ := squareFreeCore_hypotheses p h0
@@ -262,7 +262,7 @@ theorem algebraicRoots_nodup (p : ZPoly) :
     have hmapSome := array_mapM_isSome (xs := isolations)
       (f := DyadicRootIsolation.toRefined?) (fun iso hiso => by
         unfold DyadicRootIsolation.toRefined?
-        rw [dif_pos (isolate_refined (ZPoly.squareFreeCore p) hsimple
+        rw [dite_eq_left (isolate_refined (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
           iso hiso)]
         rfl)
@@ -300,8 +300,8 @@ theorem algebraicRoots_nodup (p : ZPoly) :
     rw [hout, List.toList_toArray, (List.mergeSort_perm _ _).nodup_iff,
       List.nodup_iff_injective_get]
     intro i j hij
-    have hi : i.1 < roots.size := by simpa using i.2
-    have hj : j.1 < roots.size := by simpa using j.2
+    have hi : i.1 < roots.size := by simp
+    have hj : j.1 < roots.size := by simp
     by_contra hne
     have hne' : i.1 ≠ j.1 := fun h => hne (Fin.ext h)
     have hroot := isolate_roots_ne (ZPoly.squareFreeCore p) hsimple
@@ -330,7 +330,7 @@ theorem toQAdjoin_toComplex (a : AlgebraicNumber) :
     ext n
     rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_X]
     simp only [DensePoly.coeff_ofList]
-    rcases n with _ | _ | n <;> simp [List.getD] <;> rfl
+    rcases n with _ | _ | n <;> simp [List.getD]; rfl
   rw [hX, Polynomial.eval₂_X]
   rfl
 

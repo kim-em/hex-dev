@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.NttMul
+public import HexPolyFp.PackedMul
 
 public section
 
@@ -64,8 +64,8 @@ def powModMonicFastAux
   | n + 1, base, acc =>
       let acc' :=
         if (n + 1) % 2 = 0 then acc
-        else modByMonic f (mulFast acc base) hmonic
-      let base' := modByMonic f (mulFast base base) hmonic
+        else modByMonic f (mulPackedFast acc base) hmonic
+      let base' := modByMonic f (mulPackedFast base base) hmonic
       powModMonicFastAux f hmonic ((n + 1) / 2) base' acc'
 termination_by n => n
 decreasing_by
@@ -82,11 +82,11 @@ private theorem powModMonicFastAux_eq
       rw [powModMonicFastAux.eq_def, powModMonicAux.eq_def]
   | case2 n base acc acc' base' ih =>
       rw [powModMonicFastAux.eq_def, powModMonicAux.eq_def]
-      simp only [mulFast_eq]
+      simp only [mulPackedFast_eq]
       exact ih
 
 /-- Compiled modular-power dispatcher.  Tiny moduli retain the reference loop;
-larger moduli use `mulFast` while retaining ordinary monic reduction. -/
+larger moduli use `mulPackedFast` while retaining ordinary monic reduction. -/
 @[inline] def powModMonicImpl (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
     FpPoly p :=
   if f.size < powFastCutoff then

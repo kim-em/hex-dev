@@ -52,8 +52,8 @@ theorem low_eq_self_of_size_le {len : Nat} {p : DensePoly F}
   intro i
   rw [coeff_low]
   by_cases hi : i < len
-  · rw [_root_.ite_eq_left hi]
-  · rw [_root_.ite_eq_right hi]
+  · rw [ite_eq_left hi]
+  · rw [ite_eq_right hi]
     exact (coeff_eq_zero_of_size_le p (by omega)).symm
 
 private theorem low_one_eq_C (p : DensePoly F) :
@@ -63,16 +63,16 @@ private theorem low_one_eq_C (p : DensePoly F) :
   rw [coeff_low, coeff_C]
   by_cases hi : i = 0
   · subst i
-    simp only [Nat.zero_lt_one, _root_.ite_true]
+    simp only [Nat.zero_lt_one, ite_true]
   · have hnot : ¬i < 1 := by omega
-    simp only [hi, hnot, _root_.ite_false]
+    simp only [hi, hnot, ite_false]
     rfl
 
 private theorem coeff_zero_mul (p q : DensePoly F) :
     (p * q).coeff 0 = p.coeff 0 * q.coeff 0 := by
   have h := coeff_low_mul_low 1 p q 0 (by omega)
   rw [low_one_eq_C, low_one_eq_C, C_mul_C, coeff_C] at h
-  simpa only [_root_.ite_true] using h.symm
+  simpa only [ite_true] using h.symm
 
 private theorem eq_shift_high_of_coeff_zero (len : Nat) (p : DensePoly F)
     (hcoeff : ∀ i, i < len → p.coeff i = 0) :
@@ -82,8 +82,8 @@ private theorem eq_shift_high_of_coeff_zero (len : Nat) (p : DensePoly F)
     intro i
     rw [coeff_low, coeff_zero]
     by_cases hi : i < len
-    · rw [_root_.ite_eq_left hi, hcoeff i hi]
-    · rw [_root_.ite_eq_right hi]
+    · rw [ite_eq_left hi, hcoeff i hi]
+    · rw [ite_eq_right hi]
   have hsplit := low_add_shift_high len p
   rw [hlow, zero_add] at hsplit
   exact hsplit.symm
@@ -154,7 +154,7 @@ def padeHomogeneous (plan : MulPlan F) {k : Nat} (s : TSeries F k)
         (result.matrix.a10 * modulus).coeff i = 0 := by
       dsimp [modulus]
       rw [mul_comm_poly, monomial_one_mul_poly_eq_shift, coeff_shift,
-        _root_.ite_eq_left hi]
+        ite_eq_left hi]
       rfl
     have hsecond := congrArg Prod.snd hspec.1
     rw [GcdStep.apply_snd] at hsecond
@@ -279,7 +279,7 @@ private theorem homogeneous_unit (plan : MulPlan F) {k : Nat}
     · rw [hfactor]
       dsimp [modulus]
       rw [monomial_one_mul_poly_eq_shift, coeff_shift,
-        _root_.ite_eq_left hi]
+        ite_eq_left hi]
       rfl
     · rw [coeff_sub_ring,
         coeff_eq_zero_of_size_le (candidate.q * result.second) (by omega),
@@ -314,10 +314,10 @@ private theorem homogeneous_unit (plan : MulPlan F) {k : Nat}
     grind
   rcases hdet with hdet | hdet
   · rw [hdet, coeff_ofNat] at hdetZero
-    simp only [_root_.ite_true] at hdetZero
+    simp only [ite_true] at hdetZero
     exact Lean.Grind.Field.zero_ne_one hdetZero.symm
   · rw [hdet, coeff_neg_ring, coeff_ofNat] at hdetZero
-    simp only [_root_.ite_true] at hdetZero
+    simp only [ite_true] at hdetZero
     grind
 
 def PadeApproximant.normalize {k : Nat} {s : TSeries F k} {m n : Nat}

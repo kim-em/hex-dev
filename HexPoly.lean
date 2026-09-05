@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import HexPoly.Dense
 public import HexPoly.Euclid
 public import HexPoly.Lcm

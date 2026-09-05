@@ -74,7 +74,7 @@ zero elsewhere. -/
   rw [← insertVar_removeVar i m, ofUnivariate_coeff, DensePoly.coeff_C,
     insertVar_removeVar]
   by_cases hdegree : Mono.degreeOf i m = 0
-  · rw [Hex.ite_eq_left hdegree, coeff_one]
+  · rw [ite_eq_left hdegree, coeff_one]
     have hzero : insertVar i 0 (Mono.zero : Mono n) = Mono.zero := by
       apply Vector.ext
       intro j hj
@@ -92,7 +92,7 @@ zero elsewhere. -/
           _ = Mono.zero := hzero
     rw [coeff_one]
     simp only [hm]
-  · rw [Hex.ite_eq_right hdegree]
+  · rw [ite_eq_right hdegree]
     have hm : m ≠ Mono.zero := by
       intro h
       subst m
@@ -100,7 +100,7 @@ zero elsewhere. -/
         unfold Mono.degreeOf
         exact Mono.getElem_zero i)
     change coeff (removeVar i m) (0 : MvPoly n R cmp') = coeff m 1
-    rw [coeff_zero, coeff_one, Hex.ite_eq_right hm]
+    rw [coeff_zero, coeff_one, ite_eq_right hm]
 
 /-- Constant embedding preserves addition. -/
 theorem constIn_add (i : Fin (n + 1)) (a b : MvPoly n R cmp') :
@@ -113,7 +113,7 @@ theorem constIn_add (i : Fin (n + 1)) (a b : MvPoly n R cmp') :
     ofUnivariate_coeff, ofUnivariate_coeff, DensePoly.coeff_C,
     DensePoly.coeff_C, DensePoly.coeff_C]
   by_cases hdegree : Mono.degreeOf i m = 0
-  · simp only [hdegree, Hex.ite_eq_left, coeff_add]
+  · simp only [hdegree, ite_eq_left, coeff_add]
   · simp only [hdegree]
     change coeff (removeVar i m) (0 : MvPoly n R cmp') =
       coeff (removeVar i m) (0 : MvPoly n R cmp') +
@@ -204,7 +204,7 @@ theorem coeff_constIn_term (i : Fin (n + 1))
     coeff m (constIn (cmp := cmp) i cmp' c) =
       if Mono.degreeOf i m = 0 then coeff (removeVar i m) c else 0 := by
   by_cases hdegree : Mono.degreeOf i m = 0
-  · rw [Hex.ite_eq_left hdegree]
+  · rw [ite_eq_left hdegree]
     calc
       coeff m (constIn (cmp := cmp) i cmp' c) =
           coeff (insertVar i (Mono.degreeOf i m) (removeVar i m))
@@ -213,8 +213,8 @@ theorem coeff_constIn_term (i : Fin (n + 1))
       _ = coeff (removeVar i m) c := by
         unfold constIn
         rw [ofUnivariate_coeff, DensePoly.coeff_C, hdegree,
-          Hex.ite_eq_left rfl]
-  · rw [Hex.ite_eq_right hdegree]
+          ite_eq_left rfl]
+  · rw [ite_eq_right hdegree]
     calc
       coeff m (constIn (cmp := cmp) i cmp' c) =
           coeff (insertVar i (Mono.degreeOf i m) (removeVar i m))
@@ -223,7 +223,7 @@ theorem coeff_constIn_term (i : Fin (n + 1))
       _ = 0 := by
         unfold constIn
         rw [ofUnivariate_coeff, DensePoly.coeff_C,
-          Hex.ite_eq_right hdegree]
+          ite_eq_right hdegree]
         change coeff (removeVar i m) (0 : MvPoly n R cmp') = 0
         rw [coeff_zero]
 
@@ -304,7 +304,7 @@ theorem coeff_constIn_mul (i : Fin (n + 1))
       by_cases hdegree : Mono.degreeOf i ab.1 = 0
       · simp [hdegree]
       · unfold fullTerm
-        rw [coeff_constIn_term, Hex.ite_eq_right hdegree]
+        rw [coeff_constIn_term, ite_eq_right hdegree]
         rw [Lean.Grind.Semiring.zero_mul,
           Lean.Grind.AddCommMonoid.add_zero]
         simp [hdegree]
@@ -318,7 +318,7 @@ theorem coeff_constIn_mul (i : Fin (n + 1))
       apply List.foldl_congr
       intro acc ab _
       unfold fullTerm lowerTerm
-      rw [coeff_constIn_term, degreeOf_insertVar, Hex.ite_eq_left rfl,
+      rw [coeff_constIn_term, degreeOf_insertVar, ite_eq_left rfl,
         removeVar_insertVar,
         ← toUnivariate_coeff (cmp' := cmp') i p e ab.2]
 
@@ -355,12 +355,12 @@ theorem constIn_dvd (i : Fin (n + 1)) (d : MvPoly n R cmp')
   rw [DensePoly.coeff_ofCoeffs]
   by_cases he : e < view.size
   · rw [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn,
-      Hex.dite_eq_left he]
+      dite_eq_left he]
     simp only [Option.getD_some]
     rw [hqs]
     exact Lean.Grind.CommSemiring.mul_comm _ _
   · rw [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn,
-      Hex.dite_eq_right he]
+      dite_eq_right he]
     simp only [Option.getD_none]
     rw [DensePoly.coeff_eq_zero_of_size_le view (Nat.le_of_not_gt he)]
     change (0 : MvPoly n R cmp') = d * 0
@@ -428,13 +428,13 @@ theorem constIn_mul (i : Fin (n + 1)) (a b : MvPoly n R cmp') :
     · have hz : coeff ab.1
           (ofUnivariate (cmp := cmp) i cmp' (DensePoly.C a)) = 0 := by
         rw [← insertVar_removeVar i ab.1, ofUnivariate_coeff,
-          DensePoly.coeff_C, Hex.ite_eq_right hleft]
+          DensePoly.coeff_C, ite_eq_right hleft]
         exact coeff_zero _
       rw [hz, Lean.Grind.Semiring.zero_mul]
     · have hz : coeff ab.2
           (ofUnivariate (cmp := cmp) i cmp' (DensePoly.C b)) = 0 := by
         rw [← insertVar_removeVar i ab.2, ofUnivariate_coeff,
-          DensePoly.coeff_C, Hex.ite_eq_right hright]
+          DensePoly.coeff_C, ite_eq_right hright]
         exact coeff_zero _
       rw [hz, Lean.Grind.Semiring.mul_zero]
 

@@ -178,6 +178,76 @@ def release_executables() -> dict[str, str]:
     return out
 
 
+PUBLISHED_IMPORT_RE = re.compile(
+    r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(?:all\s+)?([A-Za-z0-9_.]+)\s*$"
+)
+
+
+def published_import_closure_violations(
+    entries: list[dict], repo_root: Path = REPO_ROOT
+) -> list[str]:
+    """Imports that would leave a released mirror unbuildable.
+
+    A mirror ships its library and pins only published repositories, so every
+    module reachable from a released umbrella (or from its `test_modules`,
+    `build_modules` and `extra_paths` roots) may import only published
+    libraries, the roots its own entry carries through `extra_paths`, and the
+    shared `Hex` test kit. `libraries.yml` cannot see this drift: its `deps`
+    already name the unpublished library, and the pin rule keeps only the
+    published subset. Returns one message per offending import.
+    """
+    published = {entry["lib"] for entry in entries if entry.get("lib")}
+    extra_roots: dict[str, set[str]] = {}
+    for entry in entries:
+        roots: set[str] = set()
+        for extra in entry.get("extra_paths") or []:
+            source = extra.get("src", "") if isinstance(extra, dict) else ""
+            roots.add(Path(source).name.removesuffix(".lean"))
+        extra_roots[entry.get("repo", "")] = roots
+    short_by_repo = {entry.get("repo", ""): entry.get("repo", "").split("/", 1)[-1] for entry in entries}
+    extra_roots_by_short = {short_by_repo[repo]: roots for repo, roots in extra_roots.items()}
+    violations: list[str] = []
+    for entry in entries:
+        lib = entry.get("lib")
+        if not lib:
+            continue
+        # A pinned upstream's extra roots are published with that upstream.
+        pinned_roots: set[str] = set()
+        for pin in entry.get("pins") or []:
+            pinned_roots |= extra_roots_by_short.get(pin, set())
+        allowed = published | extra_roots.get(entry["repo"], set()) | pinned_roots | {"Hex"}
+        stack = [lib] + list(entry.get("test_modules") or []) + list(
+            entry.get("build_modules") or []
+        )
+        for root in extra_roots.get(entry["repo"], set()):
+            stack.append(root)
+        seen: set[str] = set()
+        while stack:
+            module = stack.pop()
+            if module in seen:
+                continue
+            seen.add(module)
+            path = repo_root / Path(*module.split(".")).with_suffix(".lean")
+            if not path.is_file():
+                continue
+            for line in path.read_text(encoding="utf-8").splitlines():
+                match = PUBLISHED_IMPORT_RE.match(line.split("--", 1)[0].rstrip())
+                if not match:
+                    continue
+                imported = match.group(1)
+                top = imported.split(".", 1)[0]
+                if not top.startswith("Hex"):
+                    continue
+                if top not in allowed:
+                    violations.append(
+                        f"{entry['repo']}: {module} imports {imported}, "
+                        f"whose library {top} is not in released.yml"
+                    )
+                    continue
+                stack.append(imported)
+    return sorted(set(violations))
+
+
 def check_ci_workflows(entries: list[dict]) -> None:
     """Require one complete, cache-safe managed workflow per released repo."""
     workflows = released_ci_workflows()
@@ -597,9 +667,17 @@ def main() -> int:
                 f"missing={sorted(expected - actual)}, extra={sorted(actual - expected)}"
             )
 
+    drift = published_import_closure_violations(entries)
+    if drift:
+        fail(
+            "released umbrellas import unpublished libraries, so the next sync "
+            "would publish unbuildable mirrors:\n  " + "\n  ".join(drift)
+        )
+
     print(
         f"release manifest: {len(entries) - 1} split repositories + "
-        f"1 aggregate; paths, CI, pins, test targets, and topological constraints valid"
+        f"1 aggregate; paths, CI, pins, import closure, test targets, and "
+        f"topological constraints valid"
     )
     return 0
 

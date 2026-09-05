@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 public import HexMvPoly.Operations
 
 @[expose] public section
@@ -80,7 +79,7 @@ theorem coeff_ofNat [Lean.Grind.CommRing R] [DecidableEq R] (k : Nat)
   | 0 =>
       change coeff m (0 : MvPoly n R cmp) = if m = Mono.zero then (0 : R) else 0
       rw [coeff_zero]
-      by_cases hm : m = Mono.zero <;> simp only [hm, Hex.ite_true, Hex.ite_false]
+      by_cases hm : m = Mono.zero <;> simp only [hm, ite_true, ite_false]
   | 1 =>
       change coeff m (1 : MvPoly n R cmp) = if m = Mono.zero then (1 : R) else 0
       exact coeff_one m
@@ -98,7 +97,7 @@ theorem coeff_natCast [Lean.Grind.CommRing R] [DecidableEq R] (k : Nat)
   | 0 =>
       change coeff m (0 : MvPoly n R cmp) = _
       rw [coeff_zero, Lean.Grind.Semiring.natCast_zero]
-      by_cases hm : m = Mono.zero <;> simp only [hm, Hex.ite_true, Hex.ite_false]
+      by_cases hm : m = Mono.zero <;> simp only [hm, ite_true, ite_false]
   | 1 =>
       change coeff m (1 : MvPoly n R cmp) = _
       rw [coeff_one, Lean.Grind.Semiring.natCast_one]
@@ -158,8 +157,8 @@ theorem ofNat_succ [Lean.Grind.CommRing R] [DecidableEq R] (k : Nat) :
   intro m
   rw [coeff_add, coeff_ofNat, coeff_ofNat, coeff_one]
   by_cases hm : m = Mono.zero
-  · simpa only [hm, Hex.ite_true] using (Lean.Grind.Semiring.ofNat_succ (α := R) k)
-  · simp only [hm, Hex.ite_false]
+  · simpa only [hm, ite_true] using (Lean.Grind.Semiring.ofNat_succ (α := R) k)
+  · simp only [hm, ite_false]
     grind
 
 /-- Numerals agree with the canonical map from the natural numbers. -/
@@ -169,8 +168,8 @@ theorem ofNat_eq_natCast [Lean.Grind.CommRing R] [DecidableEq R] (k : Nat) :
   intro m
   rw [coeff_ofNat, coeff_natCast]
   by_cases hm : m = Mono.zero
-  · simpa only [hm, Hex.ite_true] using (Lean.Grind.Semiring.ofNat_eq_natCast (α := R) k)
-  · simp only [hm, Hex.ite_false]
+  · simpa only [hm, ite_true] using (Lean.Grind.Semiring.ofNat_eq_natCast (α := R) k)
+  · simp only [hm, ite_false]
 
 /-- Multivariate polynomials over a lightweight commutative ring form a
 lightweight semiring. -/
