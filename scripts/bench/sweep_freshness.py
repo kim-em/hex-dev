@@ -429,7 +429,10 @@ def main(argv: list[str]) -> int:
     if mode == "--paths":
         print(" ".join(family.staging_pathspec()))
         return 0
-    ref = rest[1] if len(rest) == 2 and rest[0] == "--ref" else None
+    if rest and (len(rest) != 2 or rest[0] != "--ref"):
+        print(usage, file=sys.stderr)
+        return 2
+    ref = rest[1] if rest else None
     listing = tree_listing(family, ref) if ref else index_listing(family)
     if mode == "--record":
         print(record(family, listing))

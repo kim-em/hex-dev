@@ -288,6 +288,19 @@ class CommandLine(unittest.TestCase):
     def test_an_unknown_family_is_rejected(self):
         self.assertEqual(self.run_cli("--fingerprint", "nope").returncode, 2)
 
+    def test_a_ref_selects_the_listing_at_that_commit(self):
+        result = self.run_cli(
+            "--fingerprint", "hexgraphiso-cactus", "--ref", "HEAD")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout.strip(),
+            freshness.fingerprint(
+                freshness.tree_listing(freshness.GRAPHISO, "HEAD")))
+
+    def test_a_malformed_argument_list_is_rejected(self):
+        self.assertEqual(self.run_cli(
+            "--fingerprint", "hexgraphiso-cactus", "--oops").returncode, 2)
+
 
 if __name__ == "__main__":
     unittest.main()
