@@ -25,87 +25,83 @@ namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
 
-/-! # Submask algebra and cell uniqueness for the certificate -/
+/-! # Containment algebra and cell uniqueness for the certificate
 
-private theorem sub_or_xor {a b : Nat} (h : a &&& b = a) :
-    a ||| (b ^^^ a) = b := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_or, Nat.testBit_xor]
-  rcases hb : b.testBit i with _ | _
-  · rcases ha : a.testBit i with _ | _
+Containment of `a` in `b` is written `a.inter b = a`, the form the
+certificate invariant uses for `V.inter (activeUnion …) = V`. -/
+
+private theorem mem_of_inter_eq {a b : VSet n} (h : a.inter b = a) {i : Nat}
+    (ha : a.mem i = true) : b.mem i = true :=
+  VSet.subset_iff.mp (VSet.subset_iff_inter.mpr h) i ha
+
+private theorem inter_eq_of_mem {a b : VSet n}
+    (h : ∀ i, a.mem i = true → b.mem i = true) : a.inter b = a :=
+  VSet.subset_iff_inter.mp (VSet.subset_iff.mpr h)
+
+private theorem mem_inter_empty {a b : VSet n} (h : a.inter b = VSet.empty)
+    {i : Nat} (ha : a.mem i = true) : b.mem i = false := by
+  have := congrArg (fun s => s.mem i) h
+  simp only [VSet.mem_inter, VSet.mem_empty, ha, Bool.true_and] at this
+  exact this
+
+private theorem inter_empty_of_mem {a b : VSet n}
+    (h : ∀ i, a.mem i = true → b.mem i = false) : a.inter b = VSet.empty :=
+  VSet.ext fun i => by
+    rw [VSet.mem_inter, VSet.mem_empty]
+    rcases ha : a.mem i with _ | _
     · rfl
-    · rw [testBit_of_submask h ha] at hb
-      cases hb
-  · rcases ha : a.testBit i with _ | _ <;> rfl
+    · rw [h i ha]
+      rfl
 
-private theorem xor_and_self {a b : Nat} (h : a &&& b = a) :
-    (b ^^^ a) &&& a = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.testBit_xor, Nat.zero_testBit]
-  rcases ha : a.testBit i with _ | _
-  · simp
-  · rw [testBit_of_submask h ha]
-    simp
+private theorem sub_or_xor {a b : VSet n} (h : a.inter b = a) :
+    a.union (b.xor a) = b :=
+  VSet.ext fun i => by
+    rw [VSet.mem_union, VSet.mem_xor]
+    rcases ha : a.mem i with _ | _
+    · cases b.mem i <;> rfl
+    · rw [mem_of_inter_eq h ha]
+      rfl
 
-private theorem xor_submask {a b : Nat} (h : a &&& b = a) :
-    (b ^^^ a) &&& b = b ^^^ a := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.testBit_xor]
-  rcases hb : b.testBit i with _ | _
-  · rcases ha : a.testBit i with _ | _
+private theorem xor_and_self {a b : VSet n} (h : a.inter b = a) :
+    (b.xor a).inter a = VSet.empty :=
+  inter_empty_of_mem fun i hi => by
+    rw [VSet.mem_xor] at hi
+    rcases ha : a.mem i with _ | _
     · rfl
-    · rw [testBit_of_submask h ha] at hb
-      cases hb
-  · rcases ha : a.testBit i with _ | _ <;> rfl
+    · rw [mem_of_inter_eq h ha, ha] at hi
+      cases hi
 
-private theorem and_zero_of_submask {a b c : Nat} (hab : a &&& b = a)
-    (hbc : b &&& c = 0) : a &&& c = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.zero_testBit]
-  rcases ha : a.testBit i with _ | _
-  · rfl
-  · have hb := testBit_of_submask hab ha
-    have := congrArg (fun x => x.testBit i) hbc
-    simp only [Nat.testBit_and, Nat.zero_testBit] at this
-    rw [hb, Bool.true_and] at this
-    rw [this]
-    rfl
+private theorem xor_submask {a b : VSet n} (h : a.inter b = a) :
+    (b.xor a).inter b = b.xor a :=
+  inter_eq_of_mem fun i hi => by
+    rw [VSet.mem_xor] at hi
+    rcases hb : b.mem i with _ | _
+    · rcases ha : a.mem i with _ | _
+      · rw [ha, hb] at hi
+        cases hi
+      · rw [mem_of_inter_eq h ha] at hb
+        cases hb
+    · rfl
 
-private theorem submask_or {a b c : Nat} (h : a &&& c = a) :
-    a &&& (b ||| c) = a := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.testBit_or]
-  rcases ha : a.testBit i with _ | _
-  · rfl
-  · rw [testBit_of_submask h ha, Bool.or_true]
-    rfl
+private theorem submask_or {a b c : VSet n} (h : a.inter c = a) :
+    a.inter (b.union c) = a :=
+  inter_eq_of_mem fun i hi => by
+    rw [VSet.mem_union, mem_of_inter_eq h hi, Bool.or_true]
 
-private theorem or_submask_of {a b c : Nat} (ha : a &&& c = a)
-    (hb : b &&& c = b) : (a ||| b) &&& c = a ||| b :=
-  submask_of_testBit fun i hi => by
-    rw [Nat.testBit_or] at hi
-    rcases h1 : a.testBit i with _ | _
+private theorem or_submask_of {a b c : VSet n} (ha : a.inter c = a)
+    (hb : b.inter c = b) : (a.union b).inter c = a.union b :=
+  inter_eq_of_mem fun i hi => by
+    rw [VSet.mem_union] at hi
+    rcases h1 : a.mem i with _ | _
     · rw [h1, Bool.false_or] at hi
-      exact testBit_of_submask hb hi
-    · exact testBit_of_submask ha h1
+      exact mem_of_inter_eq hb hi
+    · exact mem_of_inter_eq ha h1
 
-private theorem and_or_zero {a b c : Nat} (hab : a &&& b = 0)
-    (hac : a &&& c = 0) : a &&& (b ||| c) = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.testBit_or, Nat.zero_testBit]
-  have h1 := congrArg (fun x => x.testBit i) hab
-  have h2 := congrArg (fun x => x.testBit i) hac
-  simp only [Nat.testBit_and, Nat.zero_testBit] at h1 h2
-  rcases ha : a.testBit i with _ | _
-  · rfl
-  · rw [ha, Bool.true_and] at h1 h2
-    rw [h1, h2]
+private theorem and_or_zero {a b c : VSet n} (hab : a.inter b = VSet.empty)
+    (hac : a.inter c = VSet.empty) : a.inter (b.union c) = VSet.empty :=
+  inter_empty_of_mem fun i hi => by
+    rw [VSet.mem_union, mem_inter_empty hab hi, mem_inter_empty hac hi]
     rfl
-
-private theorem and_comm_zero {a b : Nat} (h : a &&& b = 0) :
-    b &&& a = 0 := by
-  rw [Nat.and_comm]
-  exact h
 
 /-- Two maximal runs of the same partition are equal or disjoint. -/
 theorem isCell_disj_or_eq {ptn : Array Nat} {level a la b lb : Nat}
@@ -151,122 +147,53 @@ theorem isCell_disj_or_eq {ptn : Array Nat} {level a la b lb : Nat}
           omega
       exact ⟨rfl, hlen⟩
 
-/-- A nested window's splitter set is a submask of the enclosing
-one. -/
+/-- A nested window's splitter set lies inside the enclosing one. -/
 private theorem worksetOf_nested {lab : Array Nat} {a b a' b' : Nat}
     (h1 : a ≤ a') (h2 : b' ≤ b) (h3 : a' ≤ b') :
-    worksetOf n lab a' b' &&& worksetOf n lab a b =
+    (worksetOf n lab a' b').inter (worksetOf n lab a b) =
       worksetOf n lab a' b' := by
-  refine submask_of_testBit fun v hv => ?_
-  have hm := elem_worksetOf.mp hv
-  refine elem_worksetOf.mpr ?_
+  refine inter_eq_of_mem fun v hv => ?_
+  obtain ⟨hvn, hm⟩ := mem_worksetOf_iff.mp hv
+  refine mem_worksetOf_iff.mpr ⟨hvn, ?_⟩
   obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hm
   exact mem_segN_iff.mpr ⟨a' - a + o, by omega, by
     rw [show a + (a' - a + o) = a' + o from by omega]⟩
 
-private theorem submask_trans {x y z : Nat} (h1 : x &&& y = x)
-    (h2 : y &&& z = y) : x &&& z = x :=
-  submask_of_testBit fun _ hi =>
-    testBit_of_submask h2 (testBit_of_submask h1 hi)
+private theorem submask_trans {x y z : VSet n} (h1 : x.inter y = x)
+    (h2 : y.inter z = y) : x.inter z = x :=
+  inter_eq_of_mem fun _ hi =>
+    mem_of_inter_eq h2 (mem_of_inter_eq h1 hi)
 
-private theorem zero_of_and_submask {a u v : Nat} (h1 : a &&& u = 0)
-    (h2 : v &&& u = v) : a &&& v = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.zero_testBit]
-  rcases ha : a.testBit i with _ | _
-  · rfl
-  · rcases hv : v.testBit i with _ | _
+private theorem zero_of_and_submask {a u v : VSet n} (h1 : a.inter u = VSet.empty)
+    (h2 : v.inter u = v) : a.inter v = VSet.empty :=
+  inter_empty_of_mem fun i ha => by
+    rcases hv : v.mem i with _ | _
     · rfl
-    · have hu := testBit_of_submask h2 hv
-      have := congrArg (fun x => x.testBit i) h1
-      simp only [Nat.testBit_and, Nat.zero_testBit, ha, hu] at this
-      cases this
+    · have hu := mem_of_inter_eq h2 hv
+      rw [mem_inter_empty h1 ha] at hu
+      cases hu
 
-private theorem submask_xor_of {x a b : Nat} (hxb : x &&& b = x)
-    (hxa : x &&& a = 0) : x &&& (b ^^^ a) = x :=
-  submask_of_testBit fun i hi => by
-    rw [Nat.testBit_xor, testBit_of_submask hxb hi,
-      show a.testBit i = false from by
-        have := congrArg (fun x => x.testBit i) hxa
-        simp only [Nat.testBit_and, Nat.zero_testBit, hi,
-          Bool.true_and] at this
-        exact this]
+private theorem submask_xor_of {x a b : VSet n} (hxb : x.inter b = x)
+    (hxa : x.inter a = VSet.empty) : x.inter (b.xor a) = x :=
+  inter_eq_of_mem fun i hi => by
+    rw [VSet.mem_xor, mem_of_inter_eq hxb hi, mem_inter_empty hxa hi]
     rfl
 
-private theorem submask_or_left {a b c : Nat} (h : a &&& b = a) :
-    a &&& (b ||| c) = a :=
-  submask_of_testBit fun _ hi => by
-    rw [Nat.testBit_or, testBit_of_submask h hi, Bool.true_or]
+private theorem submask_or_left {a b c : VSet n} (h : a.inter b = a) :
+    a.inter (b.union c) = a :=
+  inter_eq_of_mem fun _ hi => by
+    rw [VSet.mem_union, mem_of_inter_eq h hi, Bool.true_or]
 
-private theorem lt_of_submask {a b n : Nat} (h : a &&& b = a)
-    (hb : b < 2 ^ n) : a < 2 ^ n := by
-  refine lt_two_pow_of_bits fun i hi => ?_
-  rcases ha : a.testBit i with _ | _
-  · rfl
-  · have := testBit_of_submask h ha
-    rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hb
-      (Nat.pow_le_pow_right (by omega) hi))] at this
-    cases this
+private theorem sub_and_zero {x e d : VSet n} (h1 : x.inter e = x)
+    (h2 : e.inter d = VSet.empty) : x.inter d = VSet.empty :=
+  inter_empty_of_mem fun i hx => mem_inter_empty h2 (mem_of_inter_eq h1 hx)
 
-private theorem or_lt_two_pow {a b n : Nat} (ha : a < 2 ^ n)
-    (hb : b < 2 ^ n) : a ||| b < 2 ^ n := by
-  refine lt_two_pow_of_bits fun i hi => ?_
-  rw [Nat.testBit_or,
-    Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le ha
-      (Nat.pow_le_pow_right (by omega) hi)),
-    Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hb
-      (Nat.pow_le_pow_right (by omega) hi))]
-  rfl
-
-private theorem activeUnion_lt {level : Nat} {st : RefineSt n}
-    (hlab : LabOk st.lab n) (hps : st.ptn.size = n)
-    (hls : st.lab.size = n)
-    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
-    activeUnion ctx level st < 2 ^ n := by
-  refine lt_two_pow_of_bits fun i hi => ?_
-  rcases hb : (activeUnion ctx level st).testBit i with _ | _
-  · rfl
-  · exfalso
-    obtain ⟨p, hp, _, hw⟩ := elem_activeUnion.mp hb
-    have hendn : st.ptn[n - 1]! ≤ level := by
-      rw [← hps]
-      exact hend
-    have hbd := cells_end_lt_of_end (Nat.le_of_eq hps.symm) hend hendn
-      p hp
-    have hlt := worksetOf_lt (n := n) (lab := st.lab) hlab
-      (lo := p.1) (hi := p.2) (by omega)
-    have h2 := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hlt
-      (Nat.pow_le_pow_right (by omega) hi))
-    have h3 : (worksetOf n st.lab p.1 p.2).testBit i = true := hw
-    rw [h3] at h2
-    cases h2
-
-private theorem sub_and_zero {x e d : Nat} (h1 : x &&& e = x)
-    (h2 : e &&& d = 0) : x &&& d = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [Nat.testBit_and, Nat.zero_testBit]
-  rcases hx : x.testBit i with _ | _
-  · rfl
-  · have he := testBit_of_submask h1 hx
-    have := congrArg (fun z => z.testBit i) h2
-    simp only [Nat.testBit_and, Nat.zero_testBit, he,
-      Bool.true_and] at this
-    rw [this]
-    rfl
-
-private theorem sub_or_cancel {x a b : Nat}
-    (h1 : x &&& (a ||| b) = x) (h2 : x &&& b = 0) : x &&& a = x :=
-  submask_of_testBit fun i hi => by
-    have hor := testBit_of_submask h1 hi
-    rw [Nat.testBit_or] at hor
-    rcases hb : b.testBit i with _ | _
-    · rw [hb, Bool.or_false] at hor
-      exact hor
-    · exfalso
-      have := congrArg (fun z => z.testBit i) h2
-      simp only [Nat.testBit_and, Nat.zero_testBit, hi, hb,
-        Bool.true_and] at this
-      cases this
+private theorem sub_or_cancel {x a b : VSet n}
+    (h1 : x.inter (a.union b) = x) (h2 : x.inter b = VSet.empty) : x.inter a = x :=
+  inter_eq_of_mem fun i hi => by
+    have hor := mem_of_inter_eq h1 hi
+    rw [VSet.mem_union, mem_inter_empty h2 hi, Bool.or_false] at hor
+    exact hor
 
 /-! # The certificate invariant survives one refinement step -/
 
@@ -274,7 +201,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
     {st : RefineSt n} (hok : StOk n level st)
     (hinj : LabInj st.lab n) (hstarts : StartsOk level st)
     (hsymm : ∀ u w, u < n → w < n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
     (hmem : st.active.mem split1 = true) (hs1 : split1 < n)
     (hinv : CertInv ctx level st) :
     CertInv ctx level (refineStep ctx level split1 st) := by
@@ -282,10 +209,11 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
   have hls := hok.labSize
   have hend := hok.ptnEnd
   have hendn : st.ptn[n - 1]! ≤ level := by
-    rw [← hps]
-    exact hend
+    have h := hend
+    rw [hps] at h
+    exact h
   have hrok : StOk n level (refineStep ctx level split1 st) :=
-    refineStep_stOk rfl hok
+    refineStep_stOk hok
   have hRI : RefInv level st.lab st.ptn
       (refineStep ctx level split1 st) :=
     refInv_refineStep ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
@@ -302,8 +230,9 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
   have hrps := hrok.ptnSize
   have hrend := hrok.ptnEnd
   have hrendn : r.ptn[n - 1]! ≤ level := by
-    rw [← hrps]
-    exact hrend
+    have h := hrend
+    rw [hrps] at h
+    exact h
   have hrinj : LabInj r.lab n :=
     labInj_of_perm
       (cellsPerm_segN_perm hperm (Nat.le_of_eq hps.symm) hend
@@ -318,12 +247,12 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
     (Nat.le_of_eq hrps.symm) hrend hrendn
   have hdisjOld : ∀ p ∈ cells st.ptn level n,
       ∀ q ∈ cells st.ptn level n, p ≠ q →
-      worksetOf n st.lab p.1 p.2 &&& worksetOf n st.lab q.1 q.2 = 0 :=
+      (worksetOf n st.lab p.1 p.2).inter (worksetOf n st.lab q.1 q.2) = VSet.empty :=
     fun p hp q hq hne =>
       worksetOf_cells_disjoint (st := st) hinj hps hend hp hq hne
   have hdisjNew : ∀ p ∈ cells r.ptn level n,
       ∀ q ∈ cells r.ptn level n, p ≠ q →
-      worksetOf n r.lab p.1 p.2 &&& worksetOf n r.lab q.1 q.2 = 0 :=
+      (worksetOf n r.lab p.1 p.2).inter (worksetOf n r.lab q.1 q.2) = VSet.empty :=
     fun p hp q hq hne =>
       worksetOf_cells_disjoint (st := r) hrinj hrps hrend hp hq hne
   have hstartuniq : ∀ p ∈ cells st.ptn level n,
@@ -410,12 +339,14 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
     rcases (hIsCellNew f hf).2.1 with h0 | hbd
     · exact Or.inl (by omega)
     · exact Or.inr hbd
-  have hmemW : ∀ (D : Nat × Nat) (pos : Nat) (v : Nat), D.1 ≤ pos →
+  have hmemW : ∀ (D : Nat × Nat) (pos : Nat) (v : Nat), pos < n → D.1 ≤ pos →
       pos ≤ D.2 → r.lab[pos]! = v →
       (worksetOf n r.lab D.1 D.2).mem v = true := by
-    intro D pos v h1 h2 hv
-    exact elem_worksetOf.mpr (mem_segN_iff.mpr ⟨pos - D.1, by omega,
-      by rw [show D.1 + (pos - D.1) = pos from by omega]; exact hv⟩)
+    intro D pos v hpos h1 h2 hv
+    refine mem_worksetOf_iff.mpr ⟨?_, mem_segN_iff.mpr ⟨pos - D.1, by omega,
+      by rw [show D.1 + (pos - D.1) = pos from by omega]; exact hv⟩⟩
+    rw [← hv]
+    exact hrok.labOk pos (by rw [hrok.labSize]; exact hpos)
   have hcoverB : ∀ D ∈ cells st.ptn level n,
       (st.active.mem D.1 = false ∨ D.1 = split1) →
       ∀ p' ∈ cells r.ptn level n, r.active.mem p'.1 = false →
@@ -434,7 +365,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
           (hstartfact p' hp' D hD hDp1) h
         rw [hpin] at this
         cases this
-    obtain ⟨o, ho, hvo⟩ := mem_segN_iff.mp (elem_worksetOf.mp hv)
+    obtain ⟨o, ho, hvo⟩ := mem_segN_iff.mp (mem_worksetOf_iff.mp hv).2
     have hDle := cells_le D hD
     have hDbd := hcbd D hD
     obtain ⟨f, hf, hf1, hf2⟩ := cells_cover (ptn := r.ptn)
@@ -453,7 +384,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
     rw [hED] at hE1 hE2
     rcases Decidable.em (f = p') with rfl | hfp
     · exfalso
-      have := hmemW f (D.1 + o) v hf1 hf2 hvo
+      have := hmemW f (D.1 + o) v (by omega) hf1 hf2 hvo
       rw [hvp] at this
       cases this
     · have hfw : f.1 ≠ w := by
@@ -467,14 +398,14 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         · exact Or.inl (by omega)
         · exact Or.inr h
       exact elem_activeUnion.mpr ⟨f, hf, hfact,
-        hmemW f (D.1 + o) v hf1 hf2 hvo⟩
+        hmemW f (D.1 + o) v (by omega) hf1 hf2 hvo⟩
   have hcoverA : ∀ A ∈ cells st.ptn level n,
       st.active.mem A.1 = true → A.1 ≠ split1 →
-      worksetOf n r.lab A.1 A.2 &&& activeUnion ctx level r =
+      (worksetOf n r.lab A.1 A.2).inter (activeUnion ctx level r) =
         worksetOf n r.lab A.1 A.2 := by
     intro A hA hact hne
-    refine submask_of_testBit fun v hv => ?_
-    obtain ⟨o, ho, hvo⟩ := mem_segN_iff.mp (elem_worksetOf.mp hv)
+    refine inter_eq_of_mem fun v hv => ?_
+    obtain ⟨o, ho, hvo⟩ := mem_segN_iff.mp (mem_worksetOf_iff.mp hv).2
     have hAle := cells_le A hA
     have hAbd := hcbd A hA
     obtain ⟨f, hf, hf1, hf2⟩ := cells_cover (ptn := r.ptn)
@@ -499,7 +430,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
       · exact Or.inl (by omega)
       · exact Or.inr h
     exact elem_activeUnion.mpr ⟨f, hf, hfact,
-      hmemW f (A.1 + o) v hf1 hf2 hvo⟩
+      hmemW f (A.1 + o) v (by omega) hf1 hf2 hvo⟩
   have htrans : ∀ C ∈ cells st.ptn level n,
       ∀ c' ∈ cells r.ptn level n, C.1 ≤ c'.1 → c'.2 ≤ C.2 →
       ∀ x ∈ segN r.lab c'.1 (c'.2 + 1 - c'.1),
@@ -524,31 +455,22 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
   rcases Decidable.em (Dp.1 = split1) with hDS | hDS
   · -- the parent is the splitter's cell
     have hDpS : Dp = S := hstartuniq Dp hDpm S hSm (by omega)
-    have hsub : worksetOf n r.lab p'.1 p'.2 &&&
-        worksetOf n r.lab Dp.1 Dp.2 = worksetOf n r.lab p'.1 p'.2 :=
+    have hsub : (worksetOf n r.lab p'.1 p'.2).inter
+        (worksetOf n r.lab Dp.1 Dp.2) = worksetOf n r.lab p'.1 p'.2 :=
       worksetOf_nested hDp1 hDp2 (by omega)
-    refine ⟨worksetOf n r.lab Dp.1 Dp.2 ^^^ worksetOf n r.lab p'.1 p'.2,
+    refine ⟨(worksetOf n r.lab Dp.1 Dp.2).xor (worksetOf n r.lab p'.1 p'.2),
       ?_, ?_, ?_⟩
-    · refine submask_of_testBit fun v hv => ?_
-      have hvD := testBit_of_submask (xor_submask hsub) hv
-      have hvp : (worksetOf n r.lab p'.1 p'.2).mem v = false := by
-        rcases hb : (worksetOf n r.lab p'.1 p'.2).mem v with _ | _
-        · rfl
-        · exfalso
-          have h0 := xor_and_self hsub
-          have := congrArg (fun x => x.testBit v) h0
-          simp only [Nat.testBit_and, Nat.zero_testBit] at this
-          rw [hv] at this
-          have hb' : (worksetOf n r.lab p'.1 p'.2).testBit v = true := hb
-          rw [hb'] at this
-          cases this
+    · refine inter_eq_of_mem fun v hv => ?_
+      have hvD := mem_of_inter_eq (xor_submask hsub) hv
+      have hvp : (worksetOf n r.lab p'.1 p'.2).mem v = false :=
+        mem_inter_empty (xor_and_self hsub) hv
       exact hcoverB Dp hDpm (Or.inr hDS) p' hp' hpin hDp1 hDp2 v
         hvD hvp
     · intro f hf
       obtain ⟨E, hE, hE1, hE2⟩ := hparent f hf
       rcases Decidable.em (f = p') with rfl | hfp
       · refine Or.inl ?_
-        rw [Nat.and_comm]
+        rw [VSet.inter_comm]
         exact xor_and_self hsub
       · rcases Decidable.em (E = Dp) with rfl | hED
         · refine Or.inr ?_
@@ -557,32 +479,23 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
               omega))
             (hdisjNew f hf p' hp' hfp)
         · refine Or.inl ?_
-          have h1 : worksetOf n r.lab f.1 f.2 &&&
-              worksetOf n r.lab E.1 E.2 = worksetOf n r.lab f.1 f.2 :=
+          have h1 : (worksetOf n r.lab f.1 f.2).inter
+              (worksetOf n r.lab E.1 E.2) = worksetOf n r.lab f.1 f.2 :=
             worksetOf_nested hE1 hE2 (by
               have := cells_le f hf
               omega)
-          have h2 : worksetOf n r.lab E.1 E.2 &&&
-              worksetOf n r.lab Dp.1 Dp.2 = 0 := by
+          have h2 : (worksetOf n r.lab E.1 E.2).inter
+              (worksetOf n r.lab Dp.1 Dp.2) = VSet.empty := by
             rw [hws E hE, hws Dp hDpm]
             exact hdisjOld E hE Dp hDpm (by
               intro he
               exact hED (by rw [he]))
-          have h3 : worksetOf n r.lab f.1 f.2 &&&
-              worksetOf n r.lab Dp.1 Dp.2 = 0 := by
-            refine Nat.eq_of_testBit_eq fun i => ?_
-            rw [Nat.testBit_and, Nat.zero_testBit]
-            rcases hbf : (worksetOf n r.lab f.1 f.2).testBit i with _ | _
-            · rfl
-            · have hbE := testBit_of_submask h1 hbf
-              have := congrArg (fun x => x.testBit i) h2
-              simp only [Nat.testBit_and, Nat.zero_testBit, hbE,
-                Bool.true_and] at this
-              rw [this]
-              rfl
+          have h3 : (worksetOf n r.lab f.1 f.2).inter
+              (worksetOf n r.lab Dp.1 Dp.2) = VSet.empty :=
+            sub_and_zero h1 h2
           exact zero_of_and_submask h3 (xor_submask hsub)
-    · have hor : worksetOf n r.lab p'.1 p'.2 |||
-          (worksetOf n r.lab Dp.1 Dp.2 ^^^ worksetOf n r.lab p'.1 p'.2) =
+    · have hor : (worksetOf n r.lab p'.1 p'.2).union
+          ((worksetOf n r.lab Dp.1 Dp.2).xor (worksetOf n r.lab p'.1 p'.2)) =
           worksetOf n r.lab Dp.1 Dp.2 := sub_or_xor hsub
       rw [hor, hws Dp hDpm, hDpS]
       exact hccC
@@ -597,17 +510,17 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         cases this
     obtain ⟨V, hVau, hSat, hConst⟩ := hinv Dp hDpm hDpact C hCm
     have hWD := hws Dp hDpm
-    have hp'sub : worksetOf n r.lab p'.1 p'.2 &&&
-        worksetOf n r.lab Dp.1 Dp.2 = worksetOf n r.lab p'.1 p'.2 :=
+    have hp'sub : (worksetOf n r.lab p'.1 p'.2).inter
+        (worksetOf n r.lab Dp.1 Dp.2) = worksetOf n r.lab p'.1 p'.2 :=
       worksetOf_nested hDp1 hDp2 (by omega)
-    have hp'subOld : worksetOf n r.lab p'.1 p'.2 &&&
-        worksetOf n st.lab Dp.1 Dp.2 = worksetOf n r.lab p'.1 p'.2 := by
+    have hp'subOld : (worksetOf n r.lab p'.1 p'.2).inter
+        (worksetOf n st.lab Dp.1 Dp.2) = worksetOf n r.lab p'.1 p'.2 := by
       rw [← hWD]
       exact hp'sub
-    have hWDau : worksetOf n st.lab Dp.1 Dp.2 &&&
-        activeUnion ctx level st = 0 :=
+    have hWDau : (worksetOf n st.lab Dp.1 Dp.2).inter
+        (activeUnion ctx level st) = VSet.empty :=
       inactive_and_activeUnion (st := st) hinj hps hend hDpm hDpact
-    have hWDV : worksetOf n st.lab Dp.1 Dp.2 &&& V = 0 :=
+    have hWDV : (worksetOf n st.lab Dp.1 Dp.2).inter (V) = VSet.empty :=
       zero_of_and_submask hWDau hVau
     have hSDp : S ≠ Dp := by
       intro he
@@ -615,54 +528,39 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
       exact hDS hS1
     have hDpS : Dp ≠ S := fun he => hSDp he.symm
     obtain ⟨V0, hV0V, hV0S, hV0deco⟩ : ∃ V0,
-        (V0 &&& V = V0) ∧
-        (V0 &&& worksetOf n st.lab S.1 S.2 = 0) ∧
-        (V = V0 ∨ V0 ||| worksetOf n st.lab S.1 S.2 = V) := by
+        (V0.inter (V) = V0) ∧
+        (V0.inter (worksetOf n st.lab S.1 S.2) = VSet.empty) ∧
+        (V = V0 ∨ V0.union (worksetOf n st.lab S.1 S.2) = V) := by
       rcases hSat S hSm with h0 | hsub2
-      · exact ⟨V, submask_of_testBit fun _ h => h, by
-          rw [Nat.and_comm]
+      · exact ⟨V, inter_eq_of_mem fun _ h => h, by
+          rw [VSet.inter_comm]
           exact h0, Or.inl rfl⟩
-      · refine ⟨V ^^^ worksetOf n st.lab S.1 S.2, xor_submask hsub2,
+      · refine ⟨V.xor (worksetOf n st.lab S.1 S.2), xor_submask hsub2,
           xor_and_self hsub2, Or.inr ?_⟩
-        rw [Nat.or_comm]
+        rw [VSet.union_comm]
         exact sub_or_xor hsub2
-    have hp'V0 : worksetOf n r.lab p'.1 p'.2 &&& V0 = 0 :=
+    have hp'V0 : (worksetOf n r.lab p'.1 p'.2).inter (V0) = VSet.empty :=
       zero_of_and_submask (sub_and_zero hp'subOld hWDV) hV0V
-    refine ⟨(worksetOf n r.lab Dp.1 Dp.2 ^^^ worksetOf n r.lab p'.1 p'.2)
-      ||| V0, ?_, ?_, ?_⟩
+    refine ⟨((worksetOf n r.lab Dp.1 Dp.2).xor (worksetOf n r.lab p'.1 p'.2)).union (V0), ?_, ?_, ?_⟩
     · refine or_submask_of ?_ ?_
-      · refine submask_of_testBit fun v hv => ?_
-        have hvD := testBit_of_submask (xor_submask hp'sub) hv
-        have hvp : (worksetOf n r.lab p'.1 p'.2).mem v = false := by
-          rcases hb : (worksetOf n r.lab p'.1 p'.2).mem v with _ | _
-          · rfl
-          · exfalso
-            have h0 := xor_and_self hp'sub
-            have := congrArg (fun z => z.testBit v) h0
-            simp only [Nat.testBit_and, Nat.zero_testBit] at this
-            rw [hv] at this
-            have hb' : (worksetOf n r.lab p'.1 p'.2).testBit v =
-              true := hb
-            rw [hb'] at this
-            cases this
+      · refine inter_eq_of_mem fun v hv => ?_
+        have hvD := mem_of_inter_eq (xor_submask hp'sub) hv
+        have hvp : (worksetOf n r.lab p'.1 p'.2).mem v = false :=
+          mem_inter_empty (xor_and_self hp'sub) hv
         exact hcoverB Dp hDpm (Or.inl hDpact) p' hp' hpin hDp1 hDp2 v
           hvD hvp
-      · refine submask_of_testBit fun v hv => ?_
+      · refine inter_eq_of_mem fun v hv => ?_
         have hvau : (activeUnion ctx level st).mem v = true :=
-          testBit_of_submask hVau (testBit_of_submask hV0V hv)
+          mem_of_inter_eq hVau (mem_of_inter_eq hV0V hv)
         obtain ⟨A, hA, hAact, hAv⟩ := elem_activeUnion.mp hvau
         rcases Decidable.em (A.1 = split1) with he | hne
         · exfalso
           have hAS : A = S := hstartuniq A hA S hSm (by omega)
           rw [hAS] at hAv
-          have := congrArg (fun z => z.testBit v) hV0S
-          simp only [Nat.testBit_and, Nat.zero_testBit, hv,
-            Bool.true_and] at this
-          have hAv' : (worksetOf n st.lab S.1 S.2).testBit v =
-            true := hAv
-          rw [hAv'] at this
+          have := mem_inter_empty hV0S hv
+          rw [hAv] at this
           cases this
-        · refine testBit_of_submask (hcoverA A hA hAact hne) ?_
+        · refine mem_of_inter_eq (hcoverA A hA hAact hne) ?_
           rw [hws A hA]
           exact hAv
     · intro f hf
@@ -671,20 +569,20 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
       rcases Decidable.em (f = p') with rfl | hfp
       · refine Or.inl ?_
         refine and_or_zero ?_ hp'V0
-        rw [Nat.and_comm]
+        rw [VSet.inter_comm]
         exact xor_and_self hp'sub
       · rcases Decidable.em (E = Dp) with rfl | hEDp
         · refine Or.inr ?_
           exact submask_or_left (submask_xor_of
             (worksetOf_nested hE1 hE2 (by omega))
             (hdisjNew f hf p' hp' hfp))
-        · have hfE : worksetOf n r.lab f.1 f.2 &&&
-              worksetOf n st.lab E.1 E.2 = worksetOf n r.lab f.1 f.2 := by
+        · have hfE : (worksetOf n r.lab f.1 f.2).inter
+              (worksetOf n st.lab E.1 E.2) = worksetOf n r.lab f.1 f.2 := by
             rw [← hws E hE]
             exact worksetOf_nested hE1 hE2 (by omega)
-          have hfXP : worksetOf n r.lab f.1 f.2 &&&
-              (worksetOf n r.lab Dp.1 Dp.2 ^^^
-                worksetOf n r.lab p'.1 p'.2) = 0 := by
+          have hfXP : (worksetOf n r.lab f.1 f.2).inter
+              ((worksetOf n r.lab Dp.1 Dp.2).xor
+                (worksetOf n r.lab p'.1 p'.2)) = VSet.empty := by
             refine zero_of_and_submask ?_ (xor_submask hp'sub)
             rw [hWD]
             exact sub_and_zero hfE (hdisjOld E hE Dp hDpm hEDp)
@@ -692,14 +590,14 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
           · refine Or.inl ?_
             refine and_or_zero hfXP ?_
             refine sub_and_zero hfE ?_
-            rw [Nat.and_comm]
+            rw [VSet.inter_comm]
             exact hV0S
           · rcases hSat E hE with h0 | hsub2
             · refine Or.inl ?_
               refine and_or_zero hfXP ?_
               exact zero_of_and_submask (sub_and_zero hfE h0) hV0V
             · refine Or.inr ?_
-              have hEV0 : worksetOf n st.lab E.1 E.2 &&& V0 =
+              have hEV0 : (worksetOf n st.lab E.1 E.2).inter (V0) =
                   worksetOf n st.lab E.1 E.2 := by
                 rcases hV0deco with hdec | hdec
                 · rw [← hdec]
@@ -710,45 +608,34 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
                     exact hsub2
                   · exact hdisjOld E hE S hSm hES
               exact submask_or (submask_trans hfE hEV0)
-    · have hb1 : worksetOf n st.lab Dp.1 Dp.2 < 2 ^ n :=
-        worksetOf_lt (n := n) hok.labOk (by
-          have := hcbd Dp hDpm
-          omega)
-      have hb2 : V0 < 2 ^ n :=
-        lt_of_submask hV0V (lt_of_submask hVau
-          (activeUnion_lt (st := st) hok.labOk hps hls hend))
-      have hb3 : worksetOf n st.lab S.1 S.2 < 2 ^ n :=
-        worksetOf_lt (n := n) hok.labOk (by
-          have := hcbd S hSm
-          omega)
-      have hConstC' : ConstOn ctx (worksetOf n st.lab Dp.1 Dp.2 ||| V)
+    · have hConstC' : ConstOn ctx ((worksetOf n st.lab Dp.1 Dp.2).union (V))
           (segN r.lab c'.1 (c'.2 + 1 - c'.1)) :=
         hConst.mono (htrans C hCm c' hc' hC1 hC2)
-      have hgoal : ConstOn ctx (worksetOf n st.lab Dp.1 Dp.2 ||| V0)
+      have hgoal : ConstOn ctx ((worksetOf n st.lab Dp.1 Dp.2).union (V0))
           (segN r.lab c'.1 (c'.2 + 1 - c'.1)) := by
         rcases hV0deco with hdec | hdec
         · rw [← hdec]
           exact hConstC'
-        · have hd : (worksetOf n st.lab Dp.1 Dp.2 ||| V0) &&&
-              worksetOf n st.lab S.1 S.2 = 0 := by
-            rw [Nat.and_comm]
+        · have hd : ((worksetOf n st.lab Dp.1 Dp.2).union (V0)).inter
+              (worksetOf n st.lab S.1 S.2) = VSet.empty := by
+            rw [VSet.inter_comm]
             refine and_or_zero ?_ ?_
-            · rw [Nat.and_comm]
+            · rw [VSet.inter_comm]
               exact hdisjOld Dp hDpm S hSm hDpS
-            · rw [Nat.and_comm]
+            · rw [VSet.inter_comm]
               exact hV0S
-          refine ConstOn.of_or (n := n) hd
-            (or_lt_two_pow hb1 hb2) hb3 ?_ hccC
-          have hre : worksetOf n st.lab Dp.1 Dp.2 ||| V0 |||
-              worksetOf n st.lab S.1 S.2 =
-              worksetOf n st.lab Dp.1 Dp.2 ||| V := by
-            rw [Nat.or_assoc, hdec]
+          refine ConstOn.of_or hd ?_ hccC
+          have hre : ((worksetOf n st.lab Dp.1 Dp.2).union V0).union
+              (worksetOf n st.lab S.1 S.2) =
+              (worksetOf n st.lab Dp.1 Dp.2).union (V) := by
+            rw [VSet.union_assoc, hdec]
           rw [hre]
           exact hConstC'
-      have hor : worksetOf n r.lab p'.1 p'.2 |||
-          ((worksetOf n r.lab Dp.1 Dp.2 ^^^ worksetOf n r.lab p'.1 p'.2)
-            ||| V0) = worksetOf n st.lab Dp.1 Dp.2 ||| V0 := by
-        rw [← Nat.or_assoc, sub_or_xor hp'sub, hWD]
+      have hor : (worksetOf n r.lab p'.1 p'.2).union
+          (((worksetOf n r.lab Dp.1 Dp.2).xor
+            (worksetOf n r.lab p'.1 p'.2)).union V0) =
+          (worksetOf n st.lab Dp.1 Dp.2).union V0 := by
+        rw [← VSet.union_assoc, sub_or_xor hp'sub, hWD]
       rw [hor]
       exact hgoal
 
@@ -761,8 +648,9 @@ private theorem labInj_refineStep {ctx : Ctx n} {level split1 : Nat}
   have hps := hok.ptnSize
   have hend := hok.ptnEnd
   have hendn : st.ptn[n - 1]! ≤ level := by
-    rw [← hps]
-    exact hend
+    have h := hend
+    rw [hps] at h
+    exact h
   have hRI : RefInv level st.lab st.ptn
       (refineStep ctx level split1 st) :=
     refInv_refineStep ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
@@ -771,46 +659,40 @@ private theorem labInj_refineStep {ctx : Ctx n} {level split1 : Nat}
     (cellsPerm_segN_perm hRI.perm (Nat.le_of_eq hps.symm) hend
       hendn).symm hinj
 
-private theorem bitCount_le_bound (n s : Nat) : bitCount n s ≤ n := by
-  rw [bitCount]
-  have := List.countP_le_length (l := List.range n) (p := s.testBit)
-  rw [List.length_range] at this
-  exact this
-
 /-- The refinement loop leaves the invariants intact and, given fuel
 above the potential, exits only discrete or with an exhausted active
 set. -/
 theorem refineLoop_certInv {ctx : Ctx n} {level : Nat}
     (hsymm : ∀ u w, u < n → w < n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u) :
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u) :
     ∀ (fuel : Nat) (st : RefineSt n), StOk n level st →
       LabInj st.lab n → StartsOk level st →
       CertInv ctx level st →
-      bitCount n st.active + 2 * n ≤ fuel + 2 * st.numcells →
+      st.active.card + 2 * n ≤ fuel + 2 * st.numcells →
       CertInv ctx level (refineLoop ctx level fuel st) ∧
       (¬ (refineLoop ctx level fuel st).numcells < n ∨
-        (refineLoop ctx level fuel st).active = 0)
+        (refineLoop ctx level fuel st).active = VSet.empty)
   | 0, st, hok, hinj, hstarts, hinv, hpot => by
     rw [refineLoop]
     refine ⟨hinv, Or.inl ?_⟩
-    have := bitCount_le_bound n st.active
+    have := VSet.card_le st.active
     omega
   | fuel + 1, st, hok, hinj, hstarts, hinv, hpot => by
     rw [refineLoop]
     rcases Decidable.em (st.numcells < n) with hlt | hlt
     · rw [ite_eq_left hlt]
       rcases hps : pickSplit st.active st.hint with _ | split1
-      · exact ⟨hinv, Or.inr (active_eq_zero_of_pickSplit_none hps)⟩
+      · exact ⟨hinv, Or.inr (active_eq_empty_of_pickSplit_none hps)⟩
       · have hmem := pickSplit_mem hps
         have hs1 : split1 < n :=
-          pickSplit_lt (n := n) hok.activeLt hps
+          pickSplit_lt hps
         obtain ⟨hp1, hp2, _⟩ :=
-          refineStep_state (st := st) hok hmem hs1
+          refineStep_state (ctx := ctx) (st := st) hok hmem hs1
         exact refineLoop_certInv hsymm fuel
           (refineStep ctx level split1 st)
-          (refineStep_stOk rfl hok)
+          (refineStep_stOk hok)
           (labInj_refineStep hok hinj)
-          (refineStep_starts hok rfl hstarts)
+          (refineStep_starts hok hstarts)
           (certInv_refineStep hok hinj hstarts hsymm hmem hs1 hinv)
           (by omega)
     · rw [ite_eq_right hlt]
@@ -825,13 +707,13 @@ final partition is equitable. -/
 theorem refine_equitable {ctx : Ctx n} {level : Nat}
     {lab ptn : Array Nat} {active : VSet n} {numcells : Nat}
     (hls : lab.size = n) (hlab : LabOk lab n)
-    (hps : ptn.size = n) (halt : active < 2 ^ n)
+    (hps : ptn.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hinj : LabInj lab n)
     (hstarts : ∀ v : Nat, active.mem v = true →
       v = 0 ∨ ptn[v - 1]! ≤ level)
     (hsymm : ∀ u w, u < n → w < n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
     (hacc : bcount ptn level n = numcells)
     (hinv : CertInv ctx level
       { lab := lab, ptn := ptn, active := active,
@@ -842,11 +724,11 @@ theorem refine_equitable {ctx : Ctx n} {level : Nat}
       (refine ctx level lab ptn active numcells).ptn := by
   rw [refine]
   obtain ⟨st0, hst0⟩ : ∃ st0 : RefineSt n,
-      RefineSt n.mk lab ptn active numcells 0 0 numcells = st0 :=
+      RefineSt.mk lab ptn active numcells 0 0 numcells = st0 :=
     ⟨_, rfl⟩
   have hok0 : StOk n level st0 := by
     rw [← hst0]
-    exact ⟨hls, hlab, hps, halt, by
+    exact ⟨hls, hlab, hps, by
       show ptn[ptn.size - 1]! ≤ level
       exact hend⟩
   have hinj0 : LabInj st0.lab n := by
@@ -858,9 +740,9 @@ theorem refine_equitable {ctx : Ctx n} {level : Nat}
   have hinv0 : CertInv ctx level st0 := by
     rw [← hst0]
     exact hinv
-  have hpot : bitCount n st0.active + 2 * n ≤
+  have hpot : st0.active.card + 2 * n ≤
       (4 * n + 8) + 2 * st0.numcells := by
-    have := bitCount_le_bound n st0.active
+    have := VSet.card_le st0.active
     omega
   obtain ⟨hinvR, hexit⟩ := refineLoop_certInv hsymm (4 * n + 8)
     st0 hok0 hinj0 hstarts0 hinv0 hpot

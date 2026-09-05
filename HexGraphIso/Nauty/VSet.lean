@@ -1794,6 +1794,12 @@ theorem mem_singleton (u v : Nat) :
 theorem inter_comm (s t : VSet n) : s.inter t = t.inter s :=
   ext fun w => by rw [mem_inter, mem_inter, Bool.and_comm]
 
+theorem union_comm (s t : VSet n) : s.union t = t.union s :=
+  ext fun w => by rw [mem_union, mem_union, Bool.or_comm]
+
+theorem union_assoc (s t u : VSet n) : (s.union t).union u = s.union (t.union u) :=
+  ext fun w => by rw [mem_union, mem_union, mem_union, mem_union, Bool.or_assoc]
+
 theorem cardInter_comm (s t : VSet n) : s.cardInter t = t.cardInter s := by
   rw [cardInter_eq, cardInter_eq, inter_comm]
 
