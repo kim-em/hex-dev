@@ -1590,6 +1590,108 @@ theorem flatRows_small (nn : Nat) (flat : List Bool) :
       · exact hacc
   exact hfold _ 0 (fun j hj => List.mem_range.mp hj) (Nat.two_pow_pos nn)
 
+/-! # Rows packed from the flat literal
+
+`flatRows` rebuilds each row by probing its segment position by
+position, a spine walk per bit; `rowOfSegK` reads the segment once. -/
+
+/-- The bit set of a row segment whose head sits at position `j`. -/
+@[expose] def rowOfSegK : List Bool → Nat → Nat
+  | [], _ => 0
+  | b :: rest, j =>
+    cond b (insertK (rowOfSegK rest (Nat.add j 1)) j) (rowOfSegK rest (Nat.add j 1))
+
+theorem atD_of_length_le {α : Type} : ∀ (l : List α) (i : Nat) (d : α),
+    l.length ≤ i → atD l i d = d
+  | [], _, _, _ => by rw [atD]
+  | _ :: l, i + 1, d, h => by
+    rw [atD]
+    exact atD_of_length_le l i d (by simpa using h)
+
+theorem testBit_rowOfSegK : ∀ (seg : List Bool) (j i : Nat),
+    (rowOfSegK seg j).testBit i = (decide (j ≤ i) && atD seg (i - j) false)
+  | [], j, i => by
+    rw [rowOfSegK, Nat.zero_testBit, atD_of_length_le _ _ _ (Nat.zero_le _)]
+    simp
+  | b :: rest, j, i => by
+    rw [rowOfSegK, add_eq]
+    have ih := testBit_rowOfSegK rest (j + 1) i
+    rcases b with _ | _
+    · rw [Bool.cond_false, ih]
+      rcases Nat.lt_trichotomy i j with h | rfl | h
+      · simp [Nat.not_le.mpr h, show ¬ j + 1 ≤ i by omega]
+      · simp [Nat.sub_self, atD, Nat.not_succ_le_self]
+      · have hsub : i - j = (i - (j + 1)) + 1 := by omega
+        rw [hsub, atD]
+        simp [show j ≤ i by omega, show j + 1 ≤ i by omega]
+    · rw [Bool.cond_true, insertK_eq, Nauty.insert, Nat.one_shiftLeft, Nat.testBit_or,
+        Nat.testBit_two_pow, ih]
+      rcases Nat.lt_trichotomy i j with h | rfl | h
+      · simp [Nat.not_le.mpr h, show ¬ j + 1 ≤ i by omega, Nat.ne_of_gt h]
+      · simp [Nat.sub_self, atD]
+      · have hsub : i - j = (i - (j + 1)) + 1 := by omega
+        rw [hsub, atD]
+        simp [show j ≤ i by omega, show j + 1 ≤ i by omega, Nat.ne_of_lt h]
+
+theorem testBit_rowFold (seg : List Bool) : ∀ (len a acc i : Nat),
+    ((List.range' a len).foldl
+      (fun row j => if atD seg j false then Nauty.insert row j else row) acc).testBit i =
+      (acc.testBit i || (decide (a ≤ i ∧ i < a + len) && atD seg i false))
+  | 0, a, acc, i => by
+    simp only [List.range'_zero, List.foldl_nil, Nat.add_zero]
+    have : ¬ (a ≤ i ∧ i < a) := by omega
+    simp [this]
+  | len + 1, a, acc, i => by
+    rw [List.range'_succ, List.foldl_cons, testBit_rowFold seg len (a + 1) _ i]
+    have hrange : decide (a + 1 ≤ i ∧ i < a + 1 + len) =
+        (decide (a ≤ i ∧ i < a + (len + 1)) && decide (i ≠ a)) := by
+      rw [Bool.eq_iff_iff]
+      simp only [Bool.and_eq_true, decide_eq_true_eq, ne_eq]
+      omega
+    rcases hs : atD seg a false with _ | _
+    · rw [ite_eq_right (by simp [hs]), hrange]
+      rcases Decidable.em (i = a) with rfl | hne
+      · simp [hs]
+      · simp [hne]
+    · rw [ite_eq_left (by simp [hs]), Nauty.insert, Nat.one_shiftLeft, Nat.testBit_or,
+        Nat.testBit_two_pow, hrange]
+      rcases Decidable.em (i = a) with rfl | hne
+      · simp [hs]
+      · simp [hne, Ne.symm hne]
+
+theorem rowOfSegK_eq (nn : Nat) (seg : List Bool) (hlen : seg.length ≤ nn) :
+    rowOfSegK seg 0 =
+      (List.range nn).foldl
+        (fun row j => if atD seg j false then Nauty.insert row j else row) 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [testBit_rowOfSegK, List.range_eq_range', testBit_rowFold, Nat.zero_testBit,
+    Nat.sub_zero]
+  rcases Decidable.em (i < nn) with hi | hi
+  · simp [hi]
+  · rw [atD_of_length_le _ _ _ (by omega)]
+    simp
+
+theorem chunkRows_length_le (m : Nat) : ∀ (r : Nat) (l : List Bool) (seg : List Bool),
+    seg ∈ chunkRows r m l → seg.length ≤ m
+  | 0, _, _, h => absurd h List.not_mem_nil
+  | r + 1, l, seg, h => by
+    rw [chunkRows, List.mem_cons] at h
+    rcases h with rfl | h
+    · exact List.length_take_le ..
+    · exact chunkRows_length_le m r _ seg h
+
+/-- The rows packed with width `n`, read off the flat literal one
+segment at a time. -/
+@[expose] def packRowsK (nn : Nat) (flat : List Bool) : Nat :=
+  pack nn ((chunkRows nn nn flat).map fun seg => rowOfSegK seg 0)
+
+theorem packRowsK_eq (nn : Nat) (flat : List Bool) :
+    packRowsK nn flat = pack nn (flatRows nn flat).toList := by
+  rw [packRowsK, flatRows, List.toList_toArray]
+  congr 1
+  exact List.map_congr_left fun seg hseg =>
+    rowOfSegK_eq nn seg (chunkRows_length_le nn nn flat seg hseg)
+
 /-- `checkKeyLit` with packed state end to end: the rows packed once
 from the tied flat literal, the labelling and partition packed with
 the field width `w` sized for positions, the initial partition's
@@ -1601,7 +1703,7 @@ negative route's kernel obligation. -/
     B.codes == [] && B.rows == []
   else
     let w := Nat.log2 (n + 2) + 1
-    let ctx : CtxP := ⟨n, w, 2 ^ w - 1, pack n (flatRows n flat).toList, 2 ^ n - 1⟩
+    let ctx : CtxP := ⟨n, w, 2 ^ w - 1, packRowsK n flat, 2 ^ n - 1⟩
     checkNodeP ctx 100 B.rows (validGammasP ctx cert) n 1
       (pack w (initialPartition G).1.toList)
       (pack w (initPtn n (n + 2) (initialPartition G).2).toList)
@@ -1616,6 +1718,7 @@ theorem checkKeyP_eq (G : Colored n k) (flat : List Bool)
   · rw [ite_eq_left (by simpa using hn), ite_eq_left (by simpa using hn)]
   · rw [ite_eq_right (by simpa using hn), ite_eq_right (by simpa using hn)]
     dsimp only
+    rw [packRowsK_eq]
     have hn0 : 0 < n := Nat.pos_of_ne_zero hn
     have hok := initial_nodeOk G hn0
     have hw : n + 2 < 2 ^ (Nat.log2 (n + 2) + 1) := Nat.lt_log2_self
