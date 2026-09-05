@@ -443,8 +443,8 @@ theorem orbConn_mono {gens gens' : List (Array Nat)}
 
 /-- Injectivity on `[0, n)` extracted from a checked automorphism's
 permutation conjunct. -/
-theorem checkAutom_inj {g γ : Array Nat}
-    (h : checkAutom g γ n = true) :
+theorem checkAutom_inj {g : Array (VSet n)} {γ : Array Nat}
+    (h : checkAutom g γ = true) :
     ∀ a b, a < n → b < n → γ[a]! = γ[b]! → a = b := by
   rw [checkAutom] at h
   simp only [Bool.and_eq_true] at h
