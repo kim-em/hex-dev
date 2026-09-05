@@ -2,16 +2,41 @@
 
 `scripts/release/released.yml` is the authoritative publication graph for the
 split repositories and the `leanprover/hex` aggregate. The sync workflow
-clones each repository's `main`, overwrites its managed paths and CI workflow
-from this monorepo, copies the release toolchain, synchronizes external
-dependency locks, rewrites every published Hex revision, and pushes the result.
-It does not create repositories or author the remaining Lake skeleton.
+clones each repository's `main`, deletes everything the entry does not allow,
+overwrites its managed paths and CI workflow from this monorepo, copies the
+release toolchain, synchronizes external dependency locks, rewrites every
+published Hex revision, and pushes the result. It does not create repositories
+or author the remaining Lake skeleton.
 
 A released repository carries the library and nothing else: Lean source, the
 umbrella module, its SPEC and its README. Benchmarks, conformance drivers,
 fixtures and oracles are development instruments for the whole graph, so they
 live in this monorepo and run in its CI; each mirror's workflow builds what it
 publishes.
+
+That is enforced by construction, not by remembering. `allowed_paths` in
+`sync_released.py` computes what a mirror may hold — the entry's managed paths
+plus the skeleton below — and `prune_unmanaged` deletes everything else, so a
+newly admitted entry inherits the policy with no cleanup list of its own. The
+`pins_only` aggregate is exempt from the sweep: it manages no source, and its
+umbrella module, lakefile, `docs/` site and the workflow that publishes it live
+only in the released repository, where nothing here could tell them from an
+accident. It still loses `.claude/`, which no released repository has any use
+for and which is therefore deleted by name from every entry.
+
+The skeleton the sweep keeps is `lakefile.toml` or `lakefile.lean`,
+`lake-manifest.json`, `lean-toolchain`, `LICENSE`, `.gitignore`, `AGENTS.md`
+and `README.md`. Under `.github/` only the managed `workflows/ci.yml` survives,
+so a mirror cannot accumulate a second workflow beside its build-only one. A
+mirror carries no `reports/` tree and no `.claude/` notes: bench results,
+performance write-ups and agent orientation belong to the whole graph and stay
+here. The one exception is a figure a manifest entry names in its `figures:`
+list, which arrives as a managed file under `reports/figures/`.
+
+A mirror-local file outside all of that — `hex-test-kit`'s fixed
+`HexTestKit.lean` umbrella is the only one — needs a `keep_paths` entry in the
+manifest. That escape hatch can only preserve, so forgetting it shows up as a
+deletion in the dry run rather than as an over-published mirror.
 
 The manifest is checked locally by:
 
@@ -89,8 +114,9 @@ Source, the umbrella module, README, SPEC, and `.github/workflows/ci.yml` are
 managed by the sync. Do not duplicate or hand-edit those files in a released
 mirror. Add a new repository's complete workflow to
 `scripts/release/released-ci.yml`; the manifest checker rejects missing and
-extra workflow entries, and rejects an entry that asks to publish benchmarks,
-conformance drivers, fixtures or oracles.
+extra workflow entries, rejects an entry that asks to publish benchmarks,
+conformance drivers, fixtures or oracles, and rejects a `keep_paths` entry
+naming any tree no mirror publishes.
 
 `require`s list direct dependencies only; Lake resolves the rest transitively.
 The longer `pins` list in `released.yml` is deliberate: the sync rewrites the

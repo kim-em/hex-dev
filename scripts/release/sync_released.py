@@ -3,7 +3,9 @@
 
 For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
-  2. overwrites its *managed* paths and centrally owned CI workflow,
+  2. removes everything outside the entry's managed paths and the unmanaged
+     skeleton, then overwrites its *managed* paths and centrally owned CI
+     workflow,
   3. for managed-source repos, enables native Verso docstrings and carries the
      `lean_lib` build settings this monorepo's lakefile gives the library,
   4. copies the stable Lean toolchain and exact external dependency pins,
@@ -219,21 +221,137 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     return out
 
 
-def removal_paths(entry: dict) -> list[Path]:
-    """Return validated released-repo paths explicitly scheduled for deletion."""
+# The Lake and repository skeleton a mirror owns and the sync deliberately does
+# not author: the root Lake project files, the repository's licence, ignore
+# rules and agent notes. `.git` and `.lake` are named so no walk can reach into
+# them. `.github/` is deliberately absent: only the managed
+# `.github/workflows/ci.yml` survives, so a mirror cannot accumulate a second
+# workflow beside the build-only one published from `released-ci.yml`.
+SKELETON = (
+    ".git",
+    ".gitignore",
+    ".lake",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md",
+    "lake-manifest.json",
+    "lakefile.lean",
+    "lakefile.toml",
+    "lean-toolchain",
+)
+
+# The one path under `.github/` a mirror keeps, written by `apply_ci_workflow`
+# rather than by the managed-path copy.
+MANAGED_WORKFLOW = Path(".github") / "workflows" / "ci.yml"
+
+# Removed from every released repository, the `pins_only` aggregate included.
+# The aggregate is otherwise exempt from the sweep, because its umbrella module,
+# lakefile, `docs/` site and the workflow that publishes it live only there and
+# nothing here can tell them from an accident. Agent notes are the one thing no
+# released repository has any use for, so they are named rather than swept.
+NEVER_PUBLISHED = (".claude",)
+
+
+def keep_paths(entry: dict) -> list[Path]:
+    """Return validated mirror-local paths the sweep must leave alone.
+
+    The escape hatch for a file a mirror owns that is neither managed nor part
+    of the common skeleton, such as `hex-test-kit`'s fixed `HexTestKit.lean`
+    umbrella. It can only preserve, never delete, so a forgotten entry shows up
+    as a deletion in the dry run and a broken mirror build rather than as a
+    silently over-published repository.
+    """
     paths: list[Path] = []
-    for raw in entry.get("remove_paths") or []:
+    for raw in entry.get("keep_paths") or []:
         if not isinstance(raw, str):
-            raise ValueError("remove_paths entries must be strings")
+            raise ValueError("keep_paths entries must be strings")
         path = Path(raw)
         if path.is_absolute() or not path.parts or any(
             part in {".", ".."} for part in path.parts
         ):
-            raise ValueError(f"unsafe remove_paths entry: {raw!r}")
+            raise ValueError(f"unsafe keep_paths entry: {raw!r}")
         paths.append(path)
     if len(paths) != len(set(paths)):
-        raise ValueError("remove_paths contains duplicate entries")
+        raise ValueError("keep_paths contains duplicate entries")
     return paths
+
+
+def allowed_paths(entry: dict) -> tuple[set[Path], set[Path]]:
+    """Everything one mirror may contain, as (subtrees, files).
+
+    A path is allowed when it is one of these, or lies under one of the
+    subtrees. Computing the allowance from the entry, rather than enumerating
+    the leftovers to delete, is what makes "a mirror ships the library and
+    nothing else" a property of the tooling: a new entry inherits the whole
+    policy, and an entry can only widen its mirror by declaring the widening
+    here. `reports/` is not allowed wholesale: a mirror publishes exactly the
+    figures its manifest entry names, which arrive as managed files under it.
+    """
+    subtrees = {Path(name) for name in SKELETON}
+    subtrees.update(keep_paths(entry))
+    files = {MANAGED_WORKFLOW}
+    for _src, dest_rel, is_dir in managed_paths(entry):
+        (subtrees if is_dir else files).add(dest_rel)
+    return subtrees, files
+
+
+def prune_unmanaged(entry: dict, clone: Path) -> list[str]:
+    """Delete everything in a released clone outside `allowed_paths`.
+
+    Benchmarks, conformance drivers, fixtures, oracles and the sidecar Lake
+    projects that carried them are development instruments for the whole graph;
+    they live in this monorepo and never reach a mirror. So do the bench-result
+    ledgers and performance write-ups under `reports/`, the agent notes under
+    `.claude/`, and any workflow beside the managed build-only one. The sweep
+    enforces that by construction instead of by a per-entry list of things to
+    forget.
+
+    A `pins_only` aggregate is exempt from the sweep, since its umbrella module,
+    lakefile and documentation site live only in the released repository, but it
+    still loses everything in `NEVER_PUBLISHED`.
+    """
+    notes: list[str] = []
+    for name in NEVER_PUBLISHED:
+        target = clone / name
+        if target.is_symlink() or target.is_file():
+            target.unlink()
+        elif target.is_dir():
+            shutil.rmtree(target)
+        else:
+            continue
+        notes.append(f"  remove {name}")
+    if entry.get("pins_only"):
+        return notes
+    subtrees, files = allowed_paths(entry)
+    ancestors = {
+        parent
+        for path in subtrees | files
+        for parent in path.parents
+        if parent != Path(".")
+    }
+
+    def sweep(directory: Path) -> None:
+        for child in sorted(directory.iterdir()):
+            relative = child.relative_to(clone)
+            if relative in subtrees or relative in files:
+                continue
+            if (
+                relative in ancestors
+                and child.is_dir()
+                and not child.is_symlink()
+            ):
+                sweep(child)
+                continue
+            if child.is_symlink() or child.is_file():
+                child.unlink()
+            elif child.is_dir():
+                shutil.rmtree(child)
+            else:
+                continue
+            notes.append(f"  remove {relative}")
+
+    sweep(clone)
+    return notes
 
 
 def apply_paths(entry: dict, clone: Path) -> list[str]:
@@ -245,27 +363,10 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
         (clone / "README.md").write_text(rendered, encoding="utf-8")
         notes.append(f"  {template} + released.yml -> README.md (generated)")
     notes.append(apply_ci_workflow(entry, clone))
+    notes.extend(prune_unmanaged(entry, clone))
     if entry.get("pins_only"):
         return notes
     lib = entry["lib"]
-    clone_root = clone.resolve()
-    for dest_rel in removal_paths(entry):
-        dest = clone / dest_rel
-        resolved_parent = dest.parent.resolve()
-        if (
-            resolved_parent != clone_root
-            and clone_root not in resolved_parent.parents
-        ):
-            raise ValueError(
-                f"unsafe remove_paths destination escapes clone: {dest_rel}"
-            )
-        if dest.is_symlink() or dest.is_file():
-            dest.unlink()
-        elif dest.is_dir():
-            shutil.rmtree(dest)
-        else:
-            continue
-        notes.append(f"  remove {dest_rel}")
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel
         if not src.exists():

@@ -183,22 +183,40 @@ rewrites the lockfile but deliberately leaves that skeleton intact. The
 mirrors' CI workflows are managed centrally in
 `scripts/release/released-ci.yml` and published by the same guarded sync.
 
+"Nothing else" is computed, not listed. `allowed_paths` in `sync_released.py`
+derives what each mirror may contain from its manifest entry — the managed
+paths, the managed `.github/workflows/ci.yml`, and the skeleton the sync does
+not author — and `prune_unmanaged` deletes the rest of the clone before
+anything is copied in, so a library admitted to the manifest inherits the
+policy without a cleanup list of its own. Nothing else under `.github/`
+survives, so a mirror cannot accumulate a second workflow beside its build-only
+one, and a mirror carries neither a `reports/` tree nor `.claude/` notes beyond
+the figures its entry names. The `pins_only` aggregate is exempt, since its
+umbrella module, lakefile and documentation tree live only in the released
+repository. `keep_paths` is the
+escape hatch for a mirror-local file outside both sets; one entry uses it, for
+`hex-test-kit`'s fixed `HexTestKit.lean` umbrella. Because it can only
+preserve, a forgotten entry appears as a deletion in the dry run instead of as
+an over-published mirror, which is the failure mode a per-entry deletion list
+had backwards.
+
 ### The publish mechanism
 
 Five pieces, under `scripts/release/` and `.github/workflows/`:
 
-- `released.yml` — a per-repo manifest: which paths to copy, which obsolete
-  paths to delete, and which upstream repos to pin, in dependency order.
+- `released.yml` — a per-repo manifest: which paths to copy, which mirror-local
+  paths to keep, and which upstream repos to pin, in dependency order.
 - `released-ci.yml` — the complete per-repository mirror workflows. Each is one
   ubuntu job that builds the published library and its regression target;
   repository-specific build commands remain explicit while cache setup and
   policy are uniform. The explicit cache covers the library build plus
   published Hex dependency builds, while excluding the separately fetched
   Mathlib cache.
-- `sync_released.py` — the driver. For each repo it clones `main`,
-  overwrites the managed paths from this tree, rewrites the cross-repo
-  Lake revisions, and commits to `main`. `--dry-run` prints the planned
-  changes without pushing; run it first.
+- `sync_released.py` — the driver. For each repo it clones `main`, deletes
+  everything outside the entry's allowance, overwrites the managed paths from
+  this tree, rewrites the cross-repo Lake revisions, and commits to `main`.
+  `--dry-run` prints the planned changes, one line per deletion, without
+  pushing; run it first.
 - `synced.json` — the baseline seed (see below).
 - `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
   default). One dispatch drives the whole publish.
