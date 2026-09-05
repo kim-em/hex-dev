@@ -476,9 +476,9 @@ theorem relation_irreducible_of_injective (level : Level)
   rw [hpEq]
   exact minpoly.irreducible hintegral
 
-/-- For a nonzero input, the executable one-sided extended gcd with the
-defining relation returns a nonzero constant gcd. -/
-theorem xgcdLeft_size_one (level : Level) (lower : List Level)
+/-- For a nonzero input, the executable monic one-sided extended gcd with
+the defining relation returns a nonzero constant gcd. -/
+theorem xgcdLeftMonic_size_one (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjective : DenoteInjective (level :: lower))
     (hlowerInjective : DenoteInjective lower)
@@ -487,13 +487,13 @@ theorem xgcdLeft_size_one (level : Level) (lower : List Level)
     (a : Array Rat) (ha : denote (level :: lower) a ≠ 0) :
     letI : Field (Arithmetic.Coeff lower) :=
       coeffField lower hvalid.2.2 hlowerInjective hinv
-    (DensePoly.xgcdLeft (Arithmetic.Coeff.value level lower a)
+    (DensePoly.xgcdLeftMonic (Arithmetic.Coeff.value level lower a)
       (Arithmetic.Coeff.relation level lower)).gcd.size = 1 := by
   let : Field (Arithmetic.Coeff lower) :=
     coeffField lower hvalid.2.2 hlowerInjective hinv
   let value := Arithmetic.Coeff.value level lower a
   let relation := Arithmetic.Coeff.relation level lower
-  let result := DensePoly.xgcdLeft value relation
+  let result := DensePoly.xgcdLeftMonic value relation
   let gcd := result.gcd
   change gcd.size = 1
   have hvalueDegree : value.degree?.getD 0 < level.degree :=
@@ -522,14 +522,10 @@ theorem xgcdLeft_size_one (level : Level) (lower : List Level)
     change relation.size = level.degree + 1 at hsize
     rw [hzero, DensePoly.size_zero] at hsize
     omega
-  have hgcdDvdValue : gcd ∣ value := by
-    change result.gcd ∣ value
-    rw [DensePoly.xgcdLeft_gcd_eq_xgcd, DensePoly.xgcd_gcd_eq_gcd]
-    exact DensePoly.gcd_dvd_left value relation
-  have hgcdDvdRelation : gcd ∣ relation := by
-    change result.gcd ∣ relation
-    rw [DensePoly.xgcdLeft_gcd_eq_xgcd, DensePoly.xgcd_gcd_eq_gcd]
-    exact DensePoly.gcd_dvd_right value relation
+  have hgcdDvdValue : gcd ∣ value :=
+    (DensePoly.xgcdLeftMonic_dvd value relation).1
+  have hgcdDvdRelation : gcd ∣ relation :=
+    (DensePoly.xgcdLeftMonic_dvd value relation).2
   have hgcdNe : gcd ≠ 0 := by
     intro hzero
     rcases hgcdDvdValue with ⟨q, hq⟩
@@ -609,8 +605,8 @@ theorem xgcdLeft_size_one (level : Level) (lower : List Level)
     Option.getD_some] at hgcdDegreeZero
   omega
 
-/-- The normalized extended-gcd coefficient used by executable inversion
-denotes the reciprocal of a nonzero top-level coordinate array. -/
+/-- The normalized monic extended-gcd coefficient used by executable
+inversion denotes the reciprocal of a nonzero top-level coordinate array. -/
 theorem denote_xgcd_inverse (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjective : DenoteInjective (level :: lower))
@@ -622,7 +618,7 @@ theorem denote_xgcd_inverse (level : Level) (lower : List Level)
       coeffField lower hvalid.2.2 hlowerInjective hinv
     let value := Arithmetic.Coeff.value level lower a
     let relation := Arithmetic.Coeff.relation level lower
-    let result := DensePoly.xgcdLeft value relation
+    let result := DensePoly.xgcdLeftMonic value relation
     let c := result.gcd.leadingCoeff
     let normalized := DensePoly.scale c⁻¹ result.left % relation
     denote (level :: lower)
@@ -634,7 +630,7 @@ theorem denote_xgcd_inverse (level : Level) (lower : List Level)
     coeffField lower hvalid.2.2 hlowerInjective hinv
   let value := Arithmetic.Coeff.value level lower a
   let relation := Arithmetic.Coeff.relation level lower
-  let result := DensePoly.xgcdLeft value relation
+  let result := DensePoly.xgcdLeftMonic value relation
   let c := result.gcd.leadingCoeff
   let scaled := DensePoly.scale c⁻¹ result.left
   change denote (level :: lower)
@@ -656,21 +652,15 @@ theorem denote_xgcd_inverse (level : Level) (lower : List Level)
       hlowerInjective hinv (level.degree + 1) relation (by omega)]
     exact denseEval_relation level lower hvalid
   have hgcdSize : result.gcd.size = 1 := by
-    exact xgcdLeft_size_one level lower hvalid hinjective hlowerInjective
-      hinv a ha
+    exact xgcdLeftMonic_size_one level lower hvalid hinjective
+      hlowerInjective hinv a ha
   have hcNe : c ≠ 0 := by
     exact DensePoly.leadingCoeff_ne_zero_of_pos_size result.gcd
       (by rw [hgcdSize]; exact Nat.zero_lt_one)
   have hgcdC : result.gcd = DensePoly.C c :=
     eq_C_leadingCoeff_of_size_one result.gcd hgcdSize
-  have hbezout :
-      result.left * value +
-          (DensePoly.xgcd value relation).right * relation = result.gcd := by
-    have h := DensePoly.xgcd_bezout value relation
-    dsimp only at h
-    rw [← DensePoly.xgcdLeft_left_eq_xgcd value relation,
-      ← DensePoly.xgcdLeft_gcd_eq_xgcd value relation] at h
-    exact h
+  obtain ⟨t, hbezout⟩ := DensePoly.xgcdLeftMonic_bezout value relation
+  change result.left * value + t * relation = result.gcd at hbezout
   have hmapBezout := congrArg
     (denseMap lower level.root.toComplex hvalid.2.2 hlowerInjective hinv)
     hbezout
@@ -863,11 +853,11 @@ theorem denote_invCoords (levels : List Level) (hvalid : LevelsValid levels)
           apply hzero
           simpa [zeroTest, levelsDim] using
             (fixed_all_zero_iff (level :: lower) hinjective a).mpr hdenote
-        have hgcdSize := xgcdLeft_size_one level lower hvalid hinjective
-          hlowerInjective hlowerInv a ha
+        have hgcdSize := xgcdLeftMonic_size_one level lower hvalid
+          hinjective hlowerInjective hlowerInv a ha
         let value := Arithmetic.Coeff.value level lower a
         let relation := Arithmetic.Coeff.relation level lower
-        let result := DensePoly.xgcdLeft value relation
+        let result := DensePoly.xgcdLeftMonic value relation
         have hcNe : result.gcd.leadingCoeff ≠ 0 := by
           exact DensePoly.leadingCoeff_ne_zero_of_pos_size result.gcd
             (by rw [hgcdSize]; exact Nat.zero_lt_one)

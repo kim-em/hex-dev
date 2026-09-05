@@ -5,17 +5,19 @@ advertises is Mathlib-free executable computation, so all of its Phase-4
 evidence is ordinary LeanBench evidence and none of it is fresh-module proof
 evidence (`PLAN/Phase4.md` §Evidence tracks). This snapshot records that
 evidence as measured on the reference host; `libraries.yml` records the
-library's phase. Three surfaces still lack an admissible ordered
-mode, so the library remains at Phase 3.
+library's phase. Every advertised operation has an admissible ordered mode:
+eight parametric registrations pass their source-derived models and nine
+canonical cases carry zero-grace mode-3 ceilings.
 
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberFieldTower/Bench.lean`.
-It registers ten controlled parametric targets and 39 fixed targets (49 total).
-Seven parametric models supply admissible mode-1 evidence. Inversion, division,
-and the dense single-call `toPrimitive` registration remain executable
-diagnostics without an admissible mode. Seven composite surfaces have
-independently justified mode-3 registrations.
+It registers eight controlled parametric targets and 41 fixed targets (49 total).
+Eight parametric models supply admissible mode-1 evidence, including recursive
+inversion on the normalized monic extended-gcd chain. Nine surfaces have
+independently justified mode-3 registrations: the seven composite surfaces
+below, division at the top rung of the recursive family, and the dense
+single-call `toPrimitive` map.
 
 | target | controlled timed operation | mode-1 model |
 |---|---|---|
@@ -23,18 +25,20 @@ independently justified mode-3 registrations.
 | `runTowerAddLadder`, `runTowerSubLadder`, `runTowerSMulLadder` | coordinatewise work in `ℚ(√2, 3^(1/n))`, dimension `D = 2n` | `n` |
 | `runTowerNegLadder` | one public negation and structural result hash over `D = n` dense coordinates | `n` |
 | `runTowerMulLadder` | schoolbook convolution and recursive reduction | `n²` |
+| `runTowerInvLadder` | recursive inversion in `ℚ(3^(1/n), √2)`: the monic top-level extended gcd whose coefficient work recurses into the degree-`n` lower field | `n² log n` |
 | `runFromPrimitiveLadder` | apply `fromPrimitive` to all `D` primitive basis vectors | `n⁴` |
 
 One `fromPrimitive` Horner evaluation performs `D` tower operations of
 `Θ(D²)` each, hence `Θ(D³)` per vector and `Θ(D⁴)` for the full basis. A dense
-`toPrimitive` call has an `O(D²)` rational-operation bound. The replacement
-registration prepares a bounded-height element with all `D` coordinates
-nonzero, then times one public call and its lower-order linear structural hash.
-Its preregistered quadratic wall model is nevertheless inconclusive because
-the flattening's primitive-basis images have dimension-dependent rational
-height; it remains a binding diagnostic rather than mode-1 evidence.
+`toPrimitive` call has an `O(D²)` rational-operation bound, but its bit cost is
+set by the flattening's primitive-basis images rather than by the prepared
+input, so it is a mode-3 surface below. Recursive inversion's `n² log n` model
+is the `Θ(n²)` coordinate work of the constant number of lower-field inversions
+and products that the monic top-level chain performs, with the logarithmic
+factor as the limb-growth proxy; the untimed `tower-inv-chain-stats` replay
+records that count and the operand heights at every rung.
 
-The following seven registrations are mode-3 performance evidence. Their
+The following nine registrations are mode-3 performance evidence.
 ceilings bound the inclusive child—startup, prepared/cached fixture, discarded
 warmup, auto-tuned batch, and measured calls—not merely an internal timer.
 
@@ -47,11 +51,13 @@ warmup, auto-tuned batch, and measured calls—not merely an internal timer.
 | `runTowerFactorLadder` | `X^24 - X - 1` over `ℚ(√2)` | 2 s |
 | `runSplit` | `(X² - 2)(X² - 3)`, producing two genuine extensions | 1 s |
 | `runFlatten` | the dimension-four tower `ℚ(√2, √3)` | 1 s |
+| `runTowerDivRecursive` | divide two dense bounded-height elements of `ℚ(3^(1/12), √2)`, dimension 24 | 3 s |
+| `runToPrimitiveDense` | one dense `toPrimitive` call on the flattening of `ℚ(√2, 3^(1/5))`, dimension 10 | 10 s |
 
 All other fixed registrations are deliberately narrower evidence.
 `runOfQAdjoin`, `runToPrimitive`, and the fixed arithmetic cases are
 expected-hash anchors; in particular, the cheap dimension-four `runNeg` and
-`runDiv` cases do not replace their parametric performance registrations.
+`runDiv` cases do not replace the negation ladder or the canonical division case.
 `runFactorRetry` forces a real bad first shift and is a branch/hash anchor.
 `runOneLevelNorm`, `runShiftSearch`,
 `runFactorRat`, `runCheckFactorization`, `runBasisImages`,
@@ -69,7 +75,10 @@ presentations with bounded-height coordinates. Inversion and division use the
 height-two family `ℚ(3^(1/n), √2)`: the varying lower presentation is built
 directly, then the fixed quadratic top level is admitted through `adjoin?`.
 This keeps certification outside the timed body while forcing top-level xgcd
-to recurse into the degree-`n` lower field. Dense coordinate numerators cycle modulo 11 and
+to recurse into the degree-`n` lower field. That top-level gcd is the monic
+chain `DensePoly.xgcdLeftMonic`: every remainder is normalized before it
+divides, so each recursive lower-field inversion acts on a bounded operand.
+Dense coordinate numerators cycle modulo 11 and
 denominators modulo 6, so every common denominator divides 60: dimension
 varies while coefficient height stays bounded. This replaces the former
 index-dependent denominators, whose least common multiple had growing bit
@@ -93,10 +102,10 @@ recursive case confirm both control-flow paths.
 
 Coordinatewise add/subtract/scalar multiplication use `n = 1, 2, 3, 4, 6`;
 multiplication extends through `8, 12`. Negation uses dimensions
-`128, 160, 192, 256, 320, 384, 448`, and the failed recursive
-inversion/division family uses `2, 3, 4, 6, 8, 12`.
+`128, 160, 192, 256, 320, 384, 448`, and the recursive inversion family uses
+`2, 3, 4, 6, 8, 12`.
 Presentation construction uses `2, 3, 4, 6, 8, 12, 16, 24`, and the
-dense `toPrimitive` and full-basis `fromPrimitive` closures use
+full-basis `fromPrimitive` closure uses
 `2, 3, 4, 5, 6, 9`. Every parametric rung except negation uses a warm
 child-side batch auto-tuned to 100 ms and five
 independent outer trials. Negation uses a five-second target and trial-major
@@ -151,10 +160,23 @@ taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runFromPrimitiveLadder \
   --outer-trials 5 --export-file <mode1.json>
 
-taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
+taskset -c 16 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runTowerInvLadder \
   Hex.NumberTowerBench.runTowerDivLadder \
-  --outer-trials 5 --export-file <unresolved-diagnostics.json>
+  --outer-trials 5 \
+  --export-file reports/bench-results/hex-number-field-tower-recursive-arithmetic-800bd23da-chungus2-cpu16.json
+
+taskset -c 3 .lake/build/bin/hexnumberfieldtower_bench run \
+  Hex.NumberTowerBench.runTowerDivRecursive \
+  Hex.NumberTowerBench.runToPrimitiveDense \
+  --export-file reports/bench-results/hex-number-field-tower-mode3-division-dense-map-900e3aad8-chungus2-cpu3.json
+
+.lake/build/bin/hexnumberfieldtower_bench tower-inv-chain-stats \
+  > reports/bench-results/hex-number-field-tower-inv-chain.csv
+.lake/build/bin/hexnumberfieldtower_bench tower-div-chain-stats \
+  > reports/bench-results/hex-number-field-tower-div-chain.csv
+.lake/build/bin/hexnumberfieldtower_bench tower-to-primitive-stats \
+  > reports/bench-results/hex-number-field-tower-to-primitive-images.csv
 
 taskset -c 16 .lake/build/bin/hexnumberfieldtower_bench run \
   Hex.NumberTowerBench.runToPrimitiveLadder \
@@ -190,25 +212,23 @@ taskset -c 19 .lake/build/bin/hexnumberfieldtower_bench run \
 | `runTowerNegLadder` | 128, 160, 192, 256, 320, 384, 448 | **consistent** | +0.038 | 14.229–15.239 | 11.42% | negation mode-1 |
 | `runTowerMulLadder` | 1, 2, 3, 4, 6, 8, 12 | **consistent** | +0.096 | 3,866.98–4,394.58 | 3.96% | original mode-1 |
 | `runFromPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | **consistent** | −0.026 | 8,393.62–8,775.98 | 11.89% | original mode-1 |
-| `runToPrimitiveLadder` | 2, 3, 4, 5, 6, 9 | **inconclusive** | +0.996 | 1,067.20–3,785.42 | 67.57% | dense forward-map diagnostic |
+| `runTowerInvLadder` | 2, 3, 4, 6, 8, 12 | **consistent** | −0.010 | 9,048.37–12,199.10 | 1.96% | repaired inversion mode-1 |
 
-The first seven rows use their source-derived models with LeanBench's
-default slope tolerance. No intercept was added and no tolerance was widened
-after measurement. The last row uses the quadratic model committed before its
-official run. Its per-call medians rise from 6.902 µs at `n = 2` to
-306.619 µs at `n = 9`; the +0.996 residual is about one empirical power above the
-quadratic model over this schedule. It is reported only as the failed-model
-residual, not adopted as a replacement exponent. Several rungs have substantial
-between-trial spread, but the independently collected CPU-1 export gives the
-same failed-model residual (+1.023); the conclusion does not depend on choosing
-a replacement exponent from either noisy run.
+All eight rows use their source-derived models with LeanBench's default
+slope tolerance. No intercept was added and no tolerance was widened after
+measurement. The inversion row is the repaired monic chain measured on five
+independent trials at clean commit `800bd23da`; before the repair the same
+registration, family and schedule gave β = +0.522, retained in the pre-repair
+diagnostic export. The dense `toPrimitive` ladder that this table used to
+carry (β = +0.996 and +1.023 on two clean runs) is no longer a registration;
+its exports remain the recorded diagnostic behind the mode-3 case below.
 
 ### Ordered-mode assessment
 
 Before selecting absolute budgets, executable diagnostics attempted the
 natural degree/factor-count parameter for every composite surface:
 
-Negation no longer belongs in the unresolved table. The implementation maps
+Negation is not in the table below. The implementation maps
 `Rat.neg` over all `D` coordinates, wraps the proof-known exact-width array
 without normalizing or copying it, then hashes all `D` result coordinates. The
 schedule begins above the 1,024-byte mimalloc fast-small boundary at D=125 and
@@ -231,9 +251,9 @@ then was the official export collected.
 
 | surface | attempted schedule and observed result | ordered-rule conclusion |
 |---|---|---|
-| inversion | the reordered checked height-two family `ℚ(3^(1/n), √2)` completes through `n = 12` but gives β = +0.522 against `n² log n` | removing relative-factorization fixture growth does not repair the timed model: mode 4 |
-| division | the same genuine-recursion family completes through `n = 12` but gives β = +0.748 against `n² log n`; the earlier tower order gave +0.594 | stable contrary evidence on two certified families: mode 4 |
-| dense `toPrimitive` | one prepared all-nonzero input at each `D = 2n` rung rejects the preregistered quadratic model with β = +0.996 | `QAdjoin.add` and `QAdjoin.smul` perform the expected `Θ(D²)` rational operations, but the primitive-basis image heights vary with dimension and exact-rational normalization adds an unmodelled bit-cost term: mode 4 |
+| inversion | the checked height-two family `ℚ(3^(1/n), √2)` gave β = +0.522 against `n² log n` while the top-level chain was the unnormalized `xgcdLeft`; the untimed replay attributes the excess to repeated lower-field inversions on height-amplified operands | implementation defect, repaired: the chain now normalizes every remainder (`xgcdLeftMonic`), every value and hash is unchanged, and the unchanged preregistered model passes at β = −0.010: mode 1 |
+| division | the same family gave β = +0.748 (and +0.594 in the opposite tower order) before the repair and β = +0.191 after it; the replay charges the product by the inverse at 9% to 20% of the limb work, and the inverse's coordinate height crosses from two to three 64-bit limbs between `n = 8` and `n = 12` (123 and 211 bits) | inversion is the dominant phase and carries the parametric evidence; no one-parameter wall model tracks the limb step on this range: mode 3 at the top completed rung |
+| dense `toPrimitive` | one prepared all-nonzero input at each `D = 2n` rung rejects the preregistered quadratic model with β = +0.996 and +1.023; the untimed image replay records primitive-image heights of 4, 12, 11, 33, 25 and 112 numerator bits on the schedule, set by the accepted primitive-element shift and not monotone in `n` | `QAdjoin.add` and `QAdjoin.smul` perform the expected `Θ(D²)` rational operations on an input-determined height, so no wall model in `n` alone is reachable: mode 3 at the tallest-image rung whose fixture is affordable |
 | adjoin | degrees 2, 3, 4, 6, 8: 13.7 ms, 35.5 ms, 98.1 ms, 804.5 ms, 4.71 s; degree 12 hit 30 s | isolation, factor selection, and validation change dominance |
 | identity adjoin | degrees 2, 3, 4: 18.0 ms, 2.37 s, 1.68 s; degree 6 hit 30 s | branch-sensitive recovery is nonmonotone |
 | recursive relative factorization | Selmer degrees 2, 3, 4, 6 over a height-two tower take 7.598, 12.320, 18.591, and 46.578 ms, giving β = +0.636 against the attempted linear model | the recursive level changes the gcd/resultant/replay mixture |
@@ -243,12 +263,10 @@ then was the official export collected.
 | flatten | top degrees 1, 2, 3, 4: 0.96 ms, 21.0 ms, 107.7 ms, 460.4 ms | eliminant/isolation/recovery phases change dominance |
 
 The diagnostics are retained executable measurements, not informal timing
-notes. The first three rows cannot advance past mode 4: their cheap fixed
-dimension-four anchors are neither canonical hard inputs nor meaningful
-operation-specific ceilings. The remaining seven composite surfaces have no
-tight independently justified mode-1 model and no published bound covering
-their inclusive dominant isolation/gcd/replay mixture; their canonical
-mode-3 budgets are therefore the next ordered choice.
+notes. The first row is mode 1 after its implementation repair. The next two
+rows and the seven composite surfaces have no tight independently justified
+mode-1 model and no published bound covering their inclusive dominant phases;
+their canonical mode-3 budgets are therefore the next ordered choice.
 
 | target | per-call median | median auto-tuned batch | ceiling | result |
 |---|---:|---:|---:|---|
@@ -259,15 +277,17 @@ mode-3 budgets are therefore the next ordered choice.
 | `runTowerFactorLadder` | 249.758 ms | 249.758 ms | 2 s | hash match, under ceiling |
 | `runSplit` | 68.203 ms | 272.813 ms | 1 s | hash match, under ceiling |
 | `runFlatten` | 20.819 ms | 333.110 ms | 1 s | hash match, under ceiling |
+| `runTowerDivRecursive` | 8.737 ms | 279.575 ms | 3 s | hash match, under ceiling |
+| `runToPrimitiveDense` | 45.139 µs | 739.567 ms | 10 s | hash match, under ceiling |
 
-These seven ceilings were chosen from the completed diagnostic schedule and the
-canonical input before the final five-repeat export; the export directly
+These nine ceilings were chosen from the completed diagnostic schedule and the
+canonical input before the official export (five repeats for the seven composite cases, three for the two arithmetic cases, whose fixtures cost about 0.3 s and 1.8 s inside each child); the export directly
 checks the inclusive whole-child ceilings with zero grace. The ceiling applies
 to the whole child, while the batch column shows the actual auto-tuned work
 performed in each measured repeat; the small per-call medians are not presented
 as the available budget headroom. In table order the whole-child ceiling to
 measured-batch margins are 9.63×, 3.46×, 7.89×, 8.02×, 8.01×, 3.67×,
-and 3.00×. The in-process `verify` command checks benchmark bodies and hashes,
+3.00×, 10.73×, and 13.52×. The in-process `verify` command checks benchmark bodies and hashes,
 not these process-level deadlines; the inclusive ceilings are enforced by the
 recorded `run` export protocol.
 
@@ -408,8 +428,8 @@ x86-64 6.12.100, AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean
 4.34.0-rc2, and LeanBench 0.1.0. Every fixture is deterministic and no runtime
 oracle participates in any profiled route. Multiplication retains its earlier
 timed-region-filtered capture from binary `d9fc6d73f`; its algorithm code is
-unchanged. Recursive inversion was refreshed from clean binary `8ea8d6819`
-on the reordered genuine-recursion family. Dense `toPrimitive` was refreshed
+unchanged. Recursive inversion was refreshed from clean commit `fda376fa0` on
+the normalized monic chain. Dense `toPrimitive` was refreshed
 from clean pre-rebase commit `6a4911dbb` (now `1c7dc9c1a`) after its quadratic
 model failed. Negation was captured from clean pre-rebase binary `86d54d9fa`.
 Its negation registration and executable negation path match rebased commit
@@ -429,7 +449,7 @@ scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
   Hex.NumberTowerBench.runTowerNegLadder    448 5000000000
 scripts/profile/run_profile.sh .lake/build/bin/hexnumberfieldtower_bench \
-  Hex.NumberTowerBench.runToPrimitiveLadder  9 5000000000
+  Hex.NumberTowerBench.runToPrimitiveLadder  9 5000000000   # the dense diagnostic ladder, since replaced by runToPrimitiveDense
 samply record --save-only --no-open --rate 999 --unstable-presymbolicate \
   -o /tmp/hex-profile-runTowerFactorMode3-5d4cb88a-fixedraw.json.gz -- \
   .lake/build/bin/hexnumberfieldtower_bench _child \
@@ -463,7 +483,7 @@ declared scope of fixed-family profile coverage.
 | family | case | retained / rejected | calibration residual | leaf cost | classified |
 |---|---|---:|---:|---|---:|
 | `tower-coordinate-arithmetic` | `runTowerMulLadder` n=12 | 4,957 / 237,605 | 0.700 ms | allocation 39.72%, Lean runtime 31.07%, GMP 23.56%, own code 4.80% | 99.15% |
-| `tower-coordinate-arithmetic` | `runTowerInvLadder` n=12 | 4,257 / 66 | 0.509 ms | GMP 58.73%, Lean runtime 20.74%, allocation 19.83%, own code 0.61% | 99.91% |
+| `tower-coordinate-arithmetic` | `runTowerInvLadder` n=12 | 3,585 / 67 | 0.888 ms | GMP 40.25%, allocation 38.08%, Lean runtime 19.89%, own code 1.65% | 99.86% |
 | `tower-coordinate-arithmetic` | `runTowerNegLadder` D=448 | 3,661 / 120,654 | 0.746 ms | Lean runtime 56.76%, own code 25.62%, allocation 17.54%, other 0.08% | 99.92% |
 | `split-flatten` | `runToPrimitiveLadder` n=9 | 3,651 / 124,055 | 0.870 ms | GMP 44.67%, allocation 38.84%, Lean runtime 15.09%, own code 0.60% | 99.21% |
 | `trager-factorization` | `runTowerFactorLadder` degree 24 (raw fixed capture) | 16,325 / n.a. | n.a. | GMP 74.54%, Lean runtime 15.34%, allocation 9.21%, own code 0.78% | 99.87% |
@@ -486,14 +506,17 @@ registered target, 99.92% in `Hex.NumberTower.mul` →
 the recursive top-down `Arithmetic.reduce`/`reduceCoeffs` (58.34%/56.93%,
 overlapping inclusive shares). That is exactly the derivation at the
 registration site: mixed-radix convolution plus reduction by each monic
-defining polynomial. Recursive inversion at dimension 24: 91.59% in
-`Hex.NumberTower.inv`/`Arithmetic.invCoords`, dominated by the extended
-gcd `Hex.DensePoly.xgcdLeftAux` (85.46%) whose inner work is polynomial
-division (`DensePoly.divMod` 63.61%) and tower multiplication
-(`mulCoords` 57.58%, with add/sub at 30.73%/23.96%). The capture verifies that
-the reordered family measures the intended recursive exact-field Euclidean
-chain. Both phases named by the SPEC's arithmetic
-section are the measured cost; nothing is unattributed.
+defining polynomial. Recursive inversion at dimension 24: 97.82% in
+`Hex.NumberTower.inv`/`Arithmetic.invCoords`, dominated by the monic extended
+gcd `Hex.DensePoly.xgcdLeftMonicAux` (94.34%) whose inner work is lower-field
+multiplication (`Arithmetic.mulCoords` 86.42%, splitting into `convolve`
+54.84% and `reduce` 21.62%, with `addCoords` at 29.18%) and polynomial
+division (`DensePoly.divMod` 24.41%). The capture verifies that the normalized
+chain spends its time in the constant number of lower-field products and
+inversions the untimed replay counts, and that polynomial division, which
+carried 63.61% of the unnormalized chain, is no longer the dominant phase.
+Both phases named by the SPEC's arithmetic section are the measured cost;
+nothing is unattributed.
 
 Negation at dimension 448 retains 98.93% of samples in the registered public
 target. Overlapping inclusive shares are 59.14% in the exact generated helper
@@ -590,7 +613,7 @@ captures.
 | [dense forward-map export](bench-results/hex-number-field-tower-dense-to-primitive-85f9c303-chungus2-cpu16.json) | clean pre-rebase `85f9c303f` (now `27033e761`); five trials at every `n = 2, 3, 4, 5, 6, 9` rung | CPU 16, selected idle with sibling 64 | `b54946d132c1ff1d29895cbe77661b4d244dc5792716152b2c9cb664517f120b` |
 | [corroborating dense export](bench-results/hex-number-field-tower-dense-to-primitive-5f4bab2f-chungus2-cpu1.json) | clean pre-rebase preregistration commit `5f4bab2fc` (now `7d0624a33`); same inconclusive verdict and β = +1.023 | CPU 1; no paired idle-core sample | `4e6bdf834eb2e98ead56ac84f46da08eacd78c51ecd60ecf947af67b66df36f0` |
 | [dense forward-map profile](bench-results/hex-number-field-tower-dense-to-primitive-profile-6a4911db-chungus2.json) | clean pre-rebase `6a4911dbb` (now `1c7dc9c1a`); timed-region-filtered dimension-18 dense public map | unpinned shape capture | `5dadec1dfefc811addb7e7ae242f88d81ab3880f91a19570356e4e92402cd7f9` |
-| [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
+| [recursive arithmetic diagnostics](bench-results/hex-number-field-tower-phase4-recursive-arithmetic-8af75849-chungus2-cpu19.json) | clean pre-rebase `8af758494` (now `a965ee906`); checked reordered height-two family on the unnormalized chain; pre-repair diagnostic | CPU 19 | `90a52359c542a1708acb68d845daf9be5bea1ca7ce7dfaf9b467309b94024efd` |
 | [negation and recursive-factor diagnostics](bench-results/hex-number-field-tower-phase4-final-mode-diagnostics-959489aa-chungus2-cpu19.json) | clean pre-rebase `959489aa2` (same patch now `eeb360ef8`); final ordered-mode attempts | CPU 19 | `1bdfb6b3f0f65808c8a1e6f2cf5698420ebb54931cdfcb1b449afc13e56dcf03` |
 | [division and forward-map diagnostics](bench-results/hex-number-field-tower-phase4-final-div-map-diagnostics-dd5ef519-chungus2-cpu19.json) | clean pre-rebase `dd5ef5197` (same patch now `cb6583d3a`); final ordered-mode attempts, with its sparse `runToPrimitiveLadder` block superseded by the dense export | CPU 19 | `d965dfde3919c9eaab2f15d505b4cca43b8d0d38b95e1130db5d93901590f52a` |
 | [negation calibration](bench-results/hex-number-field-tower-opus-calibration-605abcb5-chungus2-cpu19.json) | clean pre-rebase `605abcb5` (same branch state now `2ed1aba5d`); registered linear diagnostic, β = −0.162 | CPU 19 | `360bcf931e5171183ae25ddba16d6ff3edbb820bab5d40fd4c0de1908919f5a8` |
@@ -602,7 +625,13 @@ captures.
 | [component anchors](bench-results/hex-number-field-tower-phase4-fixed-3f23d642-chungus2-cpu13.json) | clean `3f23d6425`; hash/attribution only | CPU 13 | `1927e8268c5ac22a1df0e987db5dff878e7ccdcc448252d21b6ee6240689f156` |
 | [PARI pairs](bench-results/hex-number-field-tower-phase4-comparators-3f23d642-chungus2-cpu13.json) | clean `322f53b15`; identical comparator sources | CPU 13 | `5c60e35f20265683fff0eb01f397e3355957fcd0737f0ca21e7781a0b30f0a3f` |
 | [coordinate profile summaries](bench-results/hex-number-field-tower-profile-summaries-d9fc6d73-chungus2.json) | archived clean `d9fc6d73f` multiplication binary; captured multiplication source matches current `8ea8d6819` | unpinned shape capture | `31767bff125621d07391e151bc613a3a1c8ee7b74300a81fd7029af2198b505c` |
-| [refreshed recursive-inversion profile](bench-results/hex-number-field-tower-recursive-inversion-profile-8ea8d681-chungus2.json) | clean `8ea8d6819`; timed-region-filtered reordered family at dimension 24 | CPU 19 | `91e67ce7b3764578fec8d2bcf7011f1ec489399871937c04442e3a4e222bbe43` |
+| [pre-repair recursive-inversion profile](bench-results/hex-number-field-tower-recursive-inversion-profile-8ea8d681-chungus2.json) | clean `8ea8d6819`; timed-region-filtered reordered family at dimension 24 | CPU 19 | `91e67ce7b3764578fec8d2bcf7011f1ec489399871937c04442e3a4e222bbe43` |
+| [repaired inversion export](bench-results/hex-number-field-tower-recursive-arithmetic-800bd23da-chungus2-cpu16.json) | clean `800bd23da`; five trials of the inversion ladder on the monic chain (β = −0.010) and the division ladder diagnostic (β = +0.191) | CPU 16; three-second `/proc/stat` postflight 0.33% busy | `7996b6f0f4e69336a0ea21d1e0e5c949defb51dd53b03f80546a06f306f75a9f` |
+| [normalized-chain inversion profile](bench-results/hex-number-field-tower-recursive-inversion-profile-fda376fa0-chungus2.json) | clean `fda376fa0`; timed-region-filtered monic chain at dimension 24, 3,585 retained samples | unpinned shape capture | `39b2fbf8c4143f307056d0d7a1db0f68f972cddf21f5d314fabf270ae5c36165` |
+| [mode-3 division and dense-map export](bench-results/hex-number-field-tower-mode3-division-dense-map-900e3aad8-chungus2-cpu3.json) | clean `900e3aad8`; three repeats of each canonical case under its ceiling | CPU 3, selected idle; three-second preflight 2.33% and postflight 1.33% busy | `ccc168aa1b8f71d810199550a4e03ea7e64e4f9be8a9c5760830a728ed1fb152` |
+| [inversion chain replay](bench-results/hex-number-field-tower-inv-chain.csv) | clean `800bd23da`; untimed per-step counts and heights of the monic top-level chain on every rung | not a timing | `2bac8d4fb4f1ca041607637355b5970d6c26922dcf0f404d8116b26d31d71951` |
+| [division chain replay](bench-results/hex-number-field-tower-div-chain.csv) | clean `fda376fa0`; untimed divisor-inversion and product-by-inverse limb work per rung | not a timing | `20c7c01a2d6cbc86fca01f42c3c038411c324adec5d4055385e8c00ee036b45f` |
+| [dense map image replay](bench-results/hex-number-field-tower-to-primitive-images.csv) | clean `2850b5321`; untimed primitive-image heights and fixture cost per rung of the dense schedule | not a timing | `d9074d9964c51eab8424477eadcf6e771fe6903a146abdb8476d24e4a0d09311` |
 | [negation mode-1 export](bench-results/hex-number-field-tower-negation-linear-86d54d9fa-chungus2-cpu3.json) | clean pre-rebase `86d54d9fa`; its negation registration and executable path match rebased `7db1a55be`, while the unrelated dense-`toPrimitive` registration differs; five trial-major repeats | CPU 3 | `c9c71a5cb9a54b82c4a9b88cf2ccc03f6f0f304639afb05085899aa256552edc` |
 | [negation core telemetry](bench-results/hex-number-field-tower-negation-telemetry-86d54d9fa-chungus2-cpu3.json) | continuous core/sibling trace filtered to 481 timed regions; ratio 0.001888 | CPU 3 and SMT sibling 51 | `6e8a3b36ce08a77f73cb5eb0fab18614c48ab7608270808b6a1a7c28c3e9eb45` |
 | [rejected negation export](bench-results/hex-number-field-tower-negation-linear-rejected-86d54d9fa-chungus2-cpu3.json) | first of at most two unchanged attempts; timing verdict passed but interference grade rejected the run | CPU 3 | `b1d8a568aec107fa57359d07610229bbcc1e38c22a76b147aa2ab4be8f0c324a` |
@@ -610,12 +639,13 @@ captures.
 | [negation allocation counts](bench-results/hex-number-field-tower-negation-allocation-counts-86d54d9fa.json) | five repeated small-allocation counts at dimensions 128 and 256 plus an empty-body control | unpinned count diagnostic | `2c3c386e854dddf50ef021ce53cb908985400595f7c51ebae936ebbff38b0f85` |
 | [negation inclusive profile](bench-results/hex-number-field-tower-negation-profile-86d54d9fa-chungus2.json) | clean pre-rebase `86d54d9fa`; negation sources match rebased `7db1a55be`; timed-region-filtered dimension-448 public negation and hash | unpinned shape capture | `b69714a5a9e9dce3562ba0137c73e3e8ef30a7718c4caf595ff33bffc17493e0` |
 
-The evidence added here comprises the single-root bounded-height fixtures,
-seven passing mode-1 surfaces, seven independently budgeted mode-3 surfaces,
-three binding mode-4 diagnostics, explicit retry and recursive-relative branch
+The evidence comprises the single-root bounded-height fixtures, eight passing
+mode-1 surfaces, nine independently budgeted mode-3 surfaces, the untimed
+chain and image replays that attribute the repaired inversion and the two
+mode-3 arithmetic surfaces, explicit retry and recursive-relative branch
 exercise, and an inclusive canonical factor profile. The component, protocol,
-hash, and comparator exports retain only their stated roles. The unresolved
-surfaces prevent a Phase-4 exit.
+hash, and comparator exports retain only their stated roles. No advertised
+surface lacks an admissible mode.
 
 Toolchain: Lean 4.34.0-rc2, LeanBench 0.1.0, samply 0.13.1, PARI 2.17.2,
 and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
@@ -625,9 +655,12 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 - `lake build HexNumberFieldTower HexNumberFieldTower.Conformance
   hexnumberfieldtower_emit_fixtures`: pass.
-- `lake exe hexnumberfieldtower_bench list`: 10 parametric plus 39 fixed
+- `lake exe hexnumberfieldtower_bench list`: 8 parametric plus 41 fixed
   registrations.
-- `lake exe hexnumberfieldtower_bench verify`: all 49 registrations pass.
+- `lake exe hexnumberfieldtower_bench verify`: the 43 Lean registrations
+  pass on the reference checkout; the six `runPariNfFactor*` comparator
+  registrations need cypari2, which that checkout does not have, and their
+  sources are unchanged.
 - Emitted Tower fixtures match the committed JSONL byte for byte; the PARI
   oracle checks 9 cases with 0 failures.
 - `python3 scripts/check_phase4.py`: pass.
@@ -635,20 +668,4 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 ## Concerns
 
-These unresolved surfaces are tracked by #9665 and its focused follow-ups,
-including #9945; #9815 is the original ordered-mode audit parent.
-
-- Recursive inversion rejects `n² log n` with β = +0.522 on a checked
-  height-two family whose fixture completes at every rung through `n = 12`.
-- Division rejects the same independently derived model with β = +0.748 on
-  that family, corroborating the earlier +0.594 failure in the opposite tower
-  order. No independently derived executable bit-cost model accounting for
-  exact-rational coefficient growth is currently recorded for either
-  operation.
-- Dense `toPrimitive` rejects its preregistered quadratic wall model with
-  β = +0.996. The implementation performs the expected quadratic count of
-  primitive-coordinate scalar/add operations, but their exact-rational
-  coefficients do not have bounded bit height across the family; the profile
-  attributes 44.67% of leaf cost to GMP and 95.73% inclusively to
-  `Flatten.toPrimitiveWith`. No replacement exponent has been selected from
-  the timings.
+None.
