@@ -672,8 +672,9 @@ free to change.
   in the shared sub-project.
 
 The public `HexRCF` umbrella imports only the supported implementation and
-proof API. The `*Tests.lean` regression modules above are compiled through the
-separate `HexRCFTests` Lake target and are not re-exported to consumers.
+proof API. The `*Tests.lean` regression modules above are compiled through a
+separate non-public test target (`HexRCFTests` in the published repository,
+`HexReleaseTests` in hex-dev) and are not re-exported to consumers.
 
 ## Phase-4 evidence tracks
 
@@ -862,16 +863,14 @@ therefore `no-comparable-surface-in-named-comparator` rather than assigned a
 fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
 but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
 
-This contract and the pure-module extraction did not by themselves advance the
-phase marker. `HexRCF.done_through` could advance from `3` to `4` only after
-every dependency, including HexRealRootsMathlib, completed Phase 4 and both
-evidence tracks had their required structural wiring and scientific artifacts.
-The committed HexRCF Phase-4 headline report records satisfaction of those
-gates and licenses the current marker value `4`.
+`HexRCF.done_through` is `7`. Its Phase-4 record required every dependency,
+including HexRealRootsMathlib, to complete Phase 4 and both evidence tracks
+to have their structural wiring and scientific artifacts; the committed
+HexRCF Phase-4 headline report records that.
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md):
+Per [SPEC/testing.md](../../SPEC/testing.md):
 
 - *core* (Lean-only):
   - The five example sentences above, as `example … := by rcf`.
@@ -894,7 +893,7 @@ Per [SPEC/testing.md](../testing.md):
   sentences over random small-coefficient
   polynomials from a deterministic seed, serialised with expected
   verdicts. `scripts/oracle/rcf_flint.py` uses python-flint as required
-  by [testing.md](../testing.md). It independently forms and
+  by [testing.md](../../SPEC/testing.md). It independently forms and
   squarefrees the atom product. Following
   `scripts/oracle/realroots_flint.py`, its exact tier extracts rational
   roots from `fmpz_poly.factor()` and compares them with `Fraction`;
@@ -915,12 +914,12 @@ Per [SPEC/testing.md](../testing.md):
   case. They cover every comparison and Boolean form, true and false
   quantifiers, constants, no-root cases, shared and endpoint roots,
   close roots, and equal/reversed intervals. CI cases stay around
-  degrees 8–12; the degree-50 stress case remains local. Phase-3
-  wiring adds the `hex-rcf` assignment to `SPEC/testing.md` and one
-  tuple to `scripts/ci/run_oracles.sh`, the repository's oracle registry;
-  it advances `HexRCF.done_through` in `libraries.yml` but adds no unsupported
-  manifest block, job, matrix, workflow, or dependency beyond the existing
-  python-flint install.
+  degrees 8–12; the degree-50 stress case remains local. The `hex-rcf`
+  oracle assignment is recorded in `SPEC/testing.md` and as one tuple in
+  `scripts/ci/run_oracles.sh`, the repository's oracle registry, in hex-dev;
+  the published repository carries neither the oracle nor the fixtures, and
+  nothing adds a manifest block, job, matrix, workflow, or dependency beyond
+  the existing python-flint install.
 - *local*: Mignotte-cluster atoms and degree-50 sentences exercise the
   pipeline where the isolation layer is under stress. Run
   `lake exe hexrcf_emit_fixtures local > /tmp/hexrcf-local.jsonl` and feed

@@ -467,7 +467,7 @@ re-refine from a stored coarse representative. See
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md), fixtures are tiered into
+Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
 `core` / `ci` / `local`.
 
 - *core* (Lean-only, runs on every push):

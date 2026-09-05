@@ -171,7 +171,7 @@ compare refined isolations with `sameRoot`.
 The nonconstant-gcd fallback can factor twice and is not a fast arithmetic
 primitive. The gcd guard prevents repeated factorization for coprime
 enclosing polynomials during cross-component root merging without changing
-the v1 semantics. It is a discriminator, not a constant-time operation:
+the semantics. It is a discriminator, not a constant-time operation:
 computing a rational gcd between two high-degree enclosing polynomials can
 itself incur coefficient growth.
 
@@ -604,7 +604,7 @@ computations and therefore use the compiled Phase-4 evidence track; the
 library owns no elaboration, tactic, emitted-proof, or kernel-checking surface.
 Grouped constant-time accessors and total wrappers remain on that same track.
 The performance report's
-[current inventory](../../reports/hex-number-field-performance.md#track-assignment-re-audit)
+[current inventory](https://github.com/kim-em/hex-dev/blob/main/reports/hex-number-field-performance.md#track-assignment-re-audit)
 records the measurements implementing this assignment.
 
 - Fixed-field arithmetic has the existing dense-polynomial costs; a compiled
@@ -644,7 +644,7 @@ records the measurements implementing this assignment.
   These project-internal canonical inputs come from the shared `n = 6` rung of
   the former schedules. Full timing runs check the ceilings; merge-gating
   smoke verification checks the result hashes. The measured reference timings
-  live in the [performance report](../../reports/hex-number-field-performance.md).
+  live in the [performance report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-number-field-performance.md).
   None of the registrations makes a one-parameter scaling claim.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
   selection. Root APIs add Yun decomposition, one norm eliminant, and one

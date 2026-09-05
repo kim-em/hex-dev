@@ -310,7 +310,7 @@ private def positiveQuadratic : Sentence :=
 #guard Hex.RCF.decide positiveQuadratic == some true
 ```
 
-Bounded sentences use Lean's core {name}`Dyadic` endpoints and the half-open
+Bounded sentences use Lean's built-in {name}`Dyadic` endpoints and the half-open
 interval `(a, b]`. This sentence represents
 `∀ x ∈ Set.Ioc (0 : ℝ) 1, x ≥ 0`:
 

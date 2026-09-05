@@ -29,11 +29,20 @@ import HexNumberField
 
 open Hex
 
-def a : AlgebraicNumber := AlgebraicNumber.ofRat (3/2)
+-- The roots of an integer polynomial, real roots first in
+-- increasing order: index 1 of `X² - 2` is `+√2`.
+def sqrt2 : AlgebraicNumber :=
+  (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+def sqrt3 : AlgebraicNumber :=
+  (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
-#guard a + a == AlgebraicNumber.ofRat 3
-#guard a * a⁻¹ == 1
-#guard (0 : AlgebraicNumber)⁻¹ == 0
+-- Arithmetic is exact and equality is decidable; `p` is the
+-- minimal polynomial.
+#guard (sqrt2 + sqrt3).p = #p[1, 0, -10, 0, 1]
+#guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
+
+#eval sqrt2 + sqrt3
+-- root of X^4 - 10*X^2 + 1 near 3.146264369941
 ```
 
 # Functionality
@@ -52,9 +61,12 @@ Three complementary exact representations:
   normalized irreducible minimal polynomial, with rational construction,
   casts, powers, and Boolean equality that compares represented values.
 
-`Hex.AlgebraicPoly` supplies polynomials with algebraic coefficients and
-semantic trailing-zero normalization, with root APIs (`roots?`) for both
-fixed-field and algebraic-coefficient polynomials.
+`Hex.ZPoly.algebraicRoots` turns an integer polynomial into its distinct
+complex roots as canonical algebraic numbers, real roots first in increasing
+order, with `isReal`, a dyadic `approx`, and a `Repr` that prints the minimal
+polynomial and twelve decimals. `Hex.AlgebraicPoly` supplies polynomials with
+algebraic coefficients and semantic trailing-zero normalization, with root
+APIs (`roots?`) for both fixed-field and algebraic-coefficient polynomials.
 
 # Verification
 

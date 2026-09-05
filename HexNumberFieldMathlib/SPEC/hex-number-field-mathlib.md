@@ -292,7 +292,7 @@ The proof follows the executable stages:
 4. The internal common-field construction preserves every canonical coefficient,
    reducing `AlgebraicPoly.roots` to the fixed-field theorem.
 
-## Required new developments
+## Developments
 
 1. Canonical primitive-positive integer representatives of rational minimal
    polynomials and canonicity of `AlgebraicNumber`.
@@ -307,8 +307,10 @@ The proof follows the executable stages:
 7. Yun multiplicity transfer, norm candidate completeness, and embedding
    filtering for both root APIs.
 
-Items 1 through 4 do not depend on tower support. Items 5 and 7 require the
-staged resultant theorems specified by `hex-resultant-mathlib`.
+Items 1 through 4 do not depend on tower support. Items 5 and 7 rest on the
+resultant correspondence of `hex-resultant-mathlib`
+(`resultant_eq_zero_iff_common_root` and
+`resultant_eq_leadingCoeff_mul_prod_roots`).
 
 ## File organisation
 
