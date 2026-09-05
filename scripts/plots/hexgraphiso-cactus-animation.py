@@ -21,9 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RESULTS = ROOT / "reports" / "bench-results"
 
-# ``checked_ns`` is the certificate replay the public surface ran before
-# the two tiers collapsed; sweeps recorded since omit it, and the frame
-# then omits the series.
+# ``checked_ns`` is the certificate replay, recorded while it was a
+# separate tier from ``fast_ns``. Sweeps taken after the two became one
+# omit it, and the frame then draws no such series.
 TIERS = [
     ("nauty_ns", "nauty 2.9.3 (C)", "#555555"),
     ("fast_ns", "hex canonicalize", "#1f77b4"),

@@ -24,8 +24,8 @@ before and after a change is one number.
 
 ``--floor`` additionally times the shared floor of every negative
 route: the kernel evaluation of each graph's adjacency into its packed
-rows (the tie ``Kernel.packRows n G.graph.adjMatrix.data.toList = N`` the
-tactic emits), as one ``of_decide_eq_true`` obligation per side.
+rows (the equation ``Kernel.packRows n G.graph.adjMatrix.data.toList =
+N`` the tactic emits), as one ``of_decide_eq_true`` proof per side.
 
 Usage:
 

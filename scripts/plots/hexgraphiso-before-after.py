@@ -28,9 +28,9 @@ import json
 import math
 from pathlib import Path
 
-# ``checked_ns`` is the certificate replay the public surface ran before
-# the two tiers collapsed; sweeps recorded since omit it, and a tier
-# absent from either sweep is left out of the comparison.
+# ``checked_ns`` is the certificate replay, recorded while it was a
+# separate tier from ``fast_ns``. Sweeps taken after the two became one
+# omit it, and a tier absent from either sweep is left out here.
 TIERS = [
     ("nauty_ns", "nauty 2.9.3 (C)"),
     ("fast_ns", "hex canonicalize"),
