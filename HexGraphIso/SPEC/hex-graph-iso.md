@@ -24,8 +24,8 @@ The two requirements share one refinement-code coordinate system: the
 specification's tree, the certificate checker, and the transcribed search
 all seed a child node's refinement code with the parent's recomputed cell
 count, exactly as nauty does. The declarative characterization behind
-requirement 1 — the canonical key is the maximum leaf key of the unpruned
-tree — does not depend on that seeding choice; sharing it makes the
+requirement 1 (the canonical key is the maximum leaf key of the unpruned
+tree) does not depend on that seeding choice. Sharing it makes the
 search's recorded codes directly comparable with the checker's.
 
 ## Scope
@@ -35,8 +35,8 @@ The first release includes:
 - finite simple undirected graphs on `Fin n`;
 - an ordered, nonempty list of colour cells;
 - a total canonical-form operation and the label producing that form;
-- a budgeted canonical-form operation;
 - a Boolean isomorphism decision and one isomorphism when one exists;
+- a replay-bounded check of a proposed isomorphism;
 - positive and negative certificate checking;
 - the automorphism generators the pinned traversal discovers, with the
   vertex orbits, the orbit count and the group order;
@@ -452,11 +452,11 @@ the nauty compatibility target are stated on the coloured surface only;
 nothing about the uncoloured names needs separate pinning.
 
 The public `canon` is the checked-label transcription of the nauty
-search; its theorems come from the certificate replay, which is proven
+search. Its theorems come from the certificate replay, which is proved
 to accept the transcription's answer on every input. The `Nauty`
-namespace holds both the transcription layer and the declarative
-`canonSpecKey`, which is the executable cross-check at factorially
-feasible sizes.
+namespace holds that transcription and the declarative `canonSpecKey`
+alongside it, and `canonSpecKey` is also the executable cross-check at
+factorially feasible sizes.
 
 ## nauty-compatible individualization and refinement
 
@@ -498,6 +498,22 @@ The first release keeps `schreier = false`, matching the pinned defaults. A
 later complete automorphism-group API may add a permutation-group dependency,
 but it must not silently change `canon` or `label`.
 
+One known divergence from the pinned source remains, and it is to be
+removed rather than adopted. At a discrete node whose refinement codes
+agree with the first leaf's along the whole path, `nauty.c:934-940`
+admits the code-1 automorphism when
+`gca_first >= noncheaplevel || isautom(..)`, skipping the `isautom` scan
+inside a subtree the cheap guard has already cleared. The Lean search
+(`Nauty.processnode` in `HexGraphIso/Nauty/Search/Search.lean`) instead
+requires the refinement code at the next level to be `codeSentinel`, and
+always runs `isautom`. The two tests admit the same leaves except on a
+collision of the fifteen-bit refinement code, which neither the committed
+fixture corpus nor the campaign exercises, so no conformance run
+distinguishes them. The Lean search pays one `isautom` scan per code-1
+leaf inside a cheap subtree for the difference. Restoring nauty's test
+needs the all-leaves theorem for a cheap subtree, which is proved
+(`Nauty.descPath_leafRows_all`).
+
 ## Canonical certificates
 
 The negative tactic cannot prove non-isomorphism by checking a proposed
@@ -533,71 +549,45 @@ theorem Nauty.checkCanon_sound
       Isomorphic G res.form ∧ B.rows = Nauty.leafRows { g := rowsOf G } lab
 ```
 
-`certifyKey?` is the producer: it takes an optional node budget and
-returns `none` on exhaustion. The tactic treats compiled producer output
-as untrusted and calls the checker before emitting anything.
+`Nauty.certifyKey?` is the producer. It takes an optional node budget and
+returns `none` on exhaustion. It does not search: the transcribed search
+already makes every decision a certificate records, so the producer
+records the walk's decisions and translates that record, and its cost is
+one traversal rather than two. Everything the producer does is untrusted.
+A wrong record can only make the checker reject, never make it accept a
+wrong answer, and the tactic calls the checker before emitting anything.
 
-For a negative decision, `Nauty.checkDiff` verifies that two replayed
-canonical keys differ. The proof is exactly the composition of two
-`Nauty.checkCanon_sound` applications, `checkDiff`, and
-`iso_iff_canon_eq`.
+`Nauty.checkCanon` is the single trusted replay. Its soundness theorem
+identifies the certified key with `Nauty.canonSpecKey`, so nothing
+downstream of it mentions the search. For a negative decision,
+`Nauty.checkDiff` reports that two replayed canonical keys differ, and
+the proof composes two `Nauty.checkCanon_sound` applications,
+`Nauty.checkDiff`, and `iso_iff_canon_eq`.
+
+The `graph_iso` tactic replays in the kernel rather than through the
+`Array` definitions the compiled search runs, so each obligation has a
+kernel-priced clone with an equality theorem back to the trusted one:
+
+| declaration | obligation | soundness |
+| --- | --- | --- |
+| `Kernel.checkIso` | a literal permutation is an isomorphism | `Kernel.isIso_of_checkIso` |
+| `Kernel.checkKey` (= `Nauty.checkKey` by `Kernel.checkKey_eq`) | a certificate replays to a claimed key | `Kernel.not_isomorphic_of_checkKeys` |
+| `Kernel.rootCode` (= the head of `Nauty.canonSpecKey` by `Kernel.rootCode_eq`) | the two root refinement codes | `Kernel.not_isomorphic_of_rootCode` |
+
+`Kernel.packRows` ties a graph's adjacency to one packed `Nat` literal,
+which both negative obligations read, so a tactic call evaluates each
+graph's definition once.
 
 Certificate size and checker work are proportional to the justified search
 tree. The SPEC makes no promise that negative certificates are short on every
 input.
 
-### Trace-driven production
-
-The producer must not search. The transcribed search already makes
-every decision a certificate records (splits, refinement codes,
-target cells, discovered automorphisms, prune events) and discards
-them, so the certificate pipeline is required to have the
-transcription append its decisions to a trace and produce the
-certificate by translating that trace, instead of re-running a pruned
-search of its own. The trace is untrusted exactly as the producer is:
-the checker recomputes everything from the graph, and a wrong trace
-can only make validation fail, never accept a wrong answer.
-
-Requirements on the implementation:
-
-- Recording must not alter the transcription's observable traversal
-  (the conformance-pinned node counts, forms, and labels).
-- Users of `canonicalize` who request no certificate must not pay for
-  tracing; the traced walk is a separate entry point or an opt-in of
-  the certificate pipeline.
-- The certificates emitted remain subject to the same replay, the
-  same size accounting, and the same conformance size guards as
-  search-produced ones. The bounded producer bounds the traced walk
-  under the same node budget.
-- Adoption must not regress the certificate pipeline on the
-  benchmark instances: the stage profiler and the certificate-size
-  guards are the acceptance checks.
-
-The regression requirement is expected to hold by construction, and
-an implementation failing it indicates a translation defect rather
-than a cost inherent to the design: the translator reads the complete
-trace before emitting anything, so the final key, the full harvested
-generator set, and the whole tree shape are in hand at every emission
-decision, and the translator can emit certificates equivalent to
-search-produced ones. (Online emission during the walk lacks exactly
-this information and inflates certificates; a trace-driven translator
-is offline by construction.) Production cost then drops by the whole
-duplicate search, tracing adds a constant per visited node to the
-certificate path only, and replay cost is unchanged.
-
-Trace-driven production composes with
-[Verified search refinement](#verified-search-refinement): with a
-trace-driven producer, layer four of that programme (the
-transcription selects the same leaf as the producer) collapses into
-layers one and two, since the producer's walk *is* the transcription's.
-
 ## Verified search refinement
 
-The pruned production search refines the declarative canonical form:
-this is the theorem behind the one-tier public surface, and it is a
+The pruned production search refines the declarative canonical form.
+This is the theorem behind the one-tier public surface, and it is a
 release requirement (release condition 4 below is discharged by it).
-It is proved. This section records the decomposition and what the
-theorem buys.
+It is proved. This section records how the proof is organized.
 
 The statement is totality of the certificate pipeline:
 
@@ -606,76 +596,35 @@ theorem Nauty.certifyCanon?_isSome (G : Colored n k) :
     (Nauty.certifyCanon? G).isSome
 ```
 
-where `Nauty.certifyCanon?` is the unbudgeted producer followed by
-the single `checkCanon` replay of the transcription's labelling. The
-proposition decomposes into one totality lemma and three refinement
-layers, each independently useful:
+where `Nauty.certifyCanon?` is the unbudgeted producer followed by the
+single `Nauty.checkCanon` replay of the transcription's labelling. Its
+content is the equality of the declarative key with the key the
+transcription installs:
 
-1. **Producer totality.** The unbudgeted producer always returns a
-   candidate: with no node budget the two-pass walk cannot exhaust.
-   Structural induction over the search tree.
-2. **The producer refines the checker.** Every certificate the
-   producer emits replays successfully. The second pass evaluates the
-   checker's own acceptance conditions against the final key before
-   emitting each record, so the obligation is that the producer's
-   state invariants justify those evaluations: admitted generators
-   are automorphisms, the witness search returns genuine group
-   elements, and the orbit and cell-mask bookkeeping is consistent.
-3. **The pruned search refines the unpruned tree.** The first pass's
-   selected key equals `canonSpecKey`, the maximum over the unpruned
-   individualization-refinement tree: automorphism and orbit pruning
-   discard only subtrees whose leaves are dominated. This layer
-   formalizes the classical soundness arguments (Hartke and
-   Radcliffe) and is the largest.
-4. **The transcription refines the producer.** The transcribed search
-   selects the same leaf as the producer, including the exact
-   tie-breaking. Under the required
-   [trace-driven production](#trace-driven-production) the producer's
-   walk *is* the transcription's, so this layer collapses into layers
-   one and two; it survives as a separate obligation only for a
-   search-based producer.
+```lean
+theorem Nauty.canonSpecKey_eq_tracedKey (G : Colored n k) (hn0 : 0 < n) :
+    Nauty.canonSpecKey G = Nauty.tracedKey G
+```
 
-The proof as landed relates the executable recursion to the
-declarative one directly rather than through a shared parameterized
-recursion: the two node statements (`FirstTotal`, `OtherTotal`) are
-proved together by induction on the executable recursion fuel, the
-root instance identifies the specification key with the traced key
-(`canonSpecKey_eq_tracedKey`), and the certificate replay is then
-shown to accept. The producer and the checker share their per-node
-component checks (child-cell, automorphism and cell-permutation
-validation) but remain two recursions related by replay theorems.
-The design constraints the layers impose, which any restructuring of
-the pipeline must keep:
+`Nauty.tracedKey` reads the selected key off `Nauty.runColoredTraced`,
+and `Nauty.canonSpecKey` is the maximum leaf key of the unpruned
+individualization-refinement tree, so the equality says exactly that
+the prunings discard only dominated subtrees.
 
-- Layer two wants one per-node acceptance predicate, evaluated by the
-  producer at emission and by the checker at replay, so their
-  agreement is congruence on a shared definition rather than a proof
-  maintained against two parallel spellings. Emission may evaluate
-  only the conjuncts that admission does not already imply (today it
-  skips the generator-automorphism conjunct, which holds by closure
-  over admitted generators).
-- Layer three favours a single tree recursion parameterized by a
-  pruning policy, which the declarative form instantiates with the
-  empty policy and the production walk with the real one, so that the
-  refinement theorem quantifies over policies instead of relating two
-  unrelated recursions.
-- The replay-monotonicity property inside layer two is what makes
-  single-pass certificate emission sound; in a trace-driven
-  translator it justifies the collapse of dominated subtrees before
-  emission.
-- With the declarative form and these proofs carrying the
-  correctness story, the cross-check role of a second canonical form
-  reduces to conformance testing on small cases, which `canonSpecKey`
-  covers.
+The `Nauty` namespace is organized by the part each concept plays:
 
-Label-level agreement is available only along this route. The checker
-pins a labelling's rows, not the labelling itself, so an exhaustive
-fallback that selects some other member of the automorphism coset
-could not be identified with the transcription's label; the fallback
-has to be proven unreachable, which is exactly the theorem.
+| directory | content |
+| --- | --- |
+| `Nauty/Search/` | the executable transcription: packed vertex sets (`VSet`), `refine`, `processnode`, and the four mutually recursive functions `firstPathNode`, `firstChildLoop`, `otherNode` and `otherChildLoop`. This is the hot path and the only part a caller's run touches. |
+| `Nauty/Spec/` | the declarative canonical form `canonSpecKey` and `specCanon`, its invariance under isomorphism (`specCanon_invariant`, `iso_iff_specCanon_eq`) and its achievement by a reachable labelling (`specCanon_iso`), with the equivariance and cell-permutation theory both proofs use. |
+| `Nauty/Cert/` | the certificate data, the trusted `checkCanon` replay with `checkCanon_sound`, the untrusted trace-driven producer, and the replay spine proving the producer's certificate is accepted whenever the claimed key dominates the subtree and every recorded generator is a checked automorphism. |
+| `Nauty/Correct/` | the induction proving `canonSpecKey_eq_tracedKey`. It runs over the executable recursion's fuel, with the first-path and off-path node statements proved together, and it carries the unwinding and sweep-coverage bookkeeping the imperative return codes need. |
+| `Nauty/Invariant/` | the per-event facts about the search state the induction applies at each arm: refinement-code comparison, leaf faithfulness, domination, orbit soundness, generator-store validity, cell reachability, and target-cell agreement. |
+| `Nauty/Equitable/` | `refine` returns a partition equitable with respect to the exhausted active set. |
+| `Nauty/SmallCell/` | the `cheapautom` theory: for an equitable partition passing nauty's cheap guard, the cell stabilizer in the automorphism group acts transitively on every cell (`stabilizer_transitive`), and every leaf of the subtree below such a node realizes an automorphism with the first leaf (`descPath_leafRows_all`). |
+| `Nauty/Model/` | an abstract pruned evaluator of `canonSpecKey`, proved to compute the pairwise maximum of an incumbent and an unpruned subtree key. No declaration on the theorem path uses it. It is kept as a source of lemmas about pruning stated without the imperative state. |
 
-The payoff is a total, non-`Option` surface with no fallback arm
-anywhere:
+The public surface is then total with no fallback arm anywhere:
 
 ```lean
 def Nauty.certifyCanon (G : Colored n k) : CanonResult n k :=
@@ -689,16 +638,31 @@ def canonicalize (G : Colored n k) : CanonResult n k :=
 
 theorem canonicalize_eq_certifyCanon (G : Colored n k) :
     canonicalize G = Nauty.certifyCanon G
+
+theorem canon_eq_specCanon (G : Colored n k) :
+    canon G = Nauty.specCanon G
 ```
 
 Totality transports from the certificate pipeline to the transcription
 through `Nauty.searchResult?_eq_of_certifyCanon`, and the theorem
-surface of [Public operations](#public-operations) is the certificate
-checker's theorem surface transported along
-`canonicalize_eq_certifyCanon`. No certificate is produced or replayed
-on the answer path; certificates and the replay checker remain as the
-proof layer for the `graph_iso` tactic, whose kernel obligations must
-stay certificate-sized.
+surface of [Public operations](#public-operations) is the declarative
+form's theorem surface transported along `canon_eq_specCanon`. No
+certificate is produced or replayed on the answer path. Certificates
+and the replay checker remain as the proof layer for the `graph_iso`
+tactic, whose kernel obligations must stay certificate-sized.
+
+Label-level agreement is available only along this route. The checker
+pins a labelling's rows, not the labelling itself, so an exhaustive
+fallback that selects some other member of the automorphism coset
+could not be identified with the transcription's label. The fallback
+has to be proven unreachable, which is exactly the theorem.
+
+No theorem in this library depends on the transcription being faithful
+to nauty. `canonSpecKey` is a Lean definition, every statement above is
+about it, and replacing the transcription with any other search that
+computes the same key would leave all of them true. Faithfulness to
+nauty 2.9.3 is requirement 2 at the top of this SPEC, and it is
+established by conformance testing alone.
 
 ## The Mathlib-free `graph_iso` tactic
 
@@ -854,192 +818,19 @@ claims through `SimpleGraph`. Its requirements are stated in
 `HexManual/Chapters/NautyAlgorithm.lean` is a standalone manual chapter
 titled "The `nauty` canonical labelling algorithm". It appears in the
 table of contents directly after the `HexGraphIso` chapter, and the
-`HexGraphIso` introduction links to it. Its subject is the exact
-function this library computes: the canonical form and label returned
-by dense nauty 2.9.3 under the pinned configuration of the
-[compatibility target](#nauty-compatibility-target).
-
-### Purpose
-
-No published document specifies that function. The chapter opens by
-saying so, and by placing the three closest documents:
-
-- McKay's original paper (*Practical graph isomorphism*, 1981) gives
-  pseudocode detailed enough to reimplement, but it describes the
-  algorithm as of 1981, and later releases changed output-relevant
-  details.
-- Hartke and Radcliffe (*McKay's canonical graph labeling algorithm*,
-  2009) explain the ideas: the search tree, refinement, and why pruning
-  is sound. They deliberately omit the code-level choices that decide
-  which leaf wins.
-- McKay and Piperno (*Practical graph isomorphism, II*, 2014) and the
-  user's guide describe a framework parameterized over the refinement
-  function, the target-cell rule, and the node invariant. Every
-  instantiation yields a canonical form. None of these documents pins
-  the one `densenauty` returns.
-
-For exact output the C source is the only specification, and it
-interleaves the choices that determine the answer with pruning and
-storage reuse that provably do not. The chapter's central observation
-is that the two can be separated. The canonical form is characterized
-declaratively as the maximal leaf key of the unpruned
-individualization-refinement tree, and every pruning rule carries a
-Lean proof that it preserves the selected form and label. A complete
-specification therefore only has to describe the unpruned tree and the
-key order.
-
-The chapter states its epistemic status explicitly, mirroring the two
-correctness requirements at the top of this SPEC: agreement between
-the chapter's description and the Lean implementation is enforced by
-theorems and by the Verso build, while agreement between the Lean
-implementation and nauty 2.9.3 is an empirical claim established by
-conformance testing, not a theorem.
-
-### Part one: the algorithm in natural language
-
-The first part uses no Lean identifiers and no code blocks. Its
-audience is a mathematician or computer scientist who knows basic
-graph theory but knows nothing about this algorithm, Lean, or nauty.
-Every term is defined before its first use: no vocabulary from the
-implementation (splitter, hint, code chain, active cell, dominated)
-may appear before the sentence that defines it, and every word keeps
-its ordinary meaning, per [SPEC/writing-style.md](../../SPEC/writing-style.md).
-The introduction previews the chapter in plain words only. The
-quality bar: a careful reader could reimplement the function from
-part one alone, and the reimplementation would agree with nauty 2.9.3
-on every input. Content, in order:
-
-1. The problem. Finite simple undirected graphs with ordered vertex
-   colours, what a canonical form is (a function invariant under
-   isomorphism whose output is isomorphic to its input), why
-   isomorphism testing reduces to it, and why infinitely many valid
-   canonical forms exist. This chapter describes one particular
-   choice.
-2. Ordered partitions and equitable refinement. Cells in a fixed
-   order, the initial ordered partition (colour classes in colour
-   order, each listing its vertices by increasing original vertex),
-   refinement of a cell by neighbour counts into another cell,
-   the equitable fixed point, and the fact that refinement is
-   isomorphism-equivariant. One worked example on a small graph
-   (roughly five to seven vertices) showing an inequitable partition
-   refined to its equitable fixed point, with the intermediate splits
-   displayed.
-3. The individualization-refinement tree. When the equitable partition
-   is not discrete, choose a target cell, branch on each of its
-   vertices by splitting the chosen vertex into a singleton, and
-   refine again. Leaves are discrete partitions, and a discrete
-   partition is a labelling of the graph.
-4. The leaf key and the selection rule. Each node records a
-   refinement code, an integer digest of the refinement trace. A
-   leaf's key is its chain of codes, then a sentinel value, then the
-   adjacency rows of the relabelled graph. Keys compare
-   lexicographically, and the canonical labelling is the leaf with the
-   maximal key. The sentinel exceeds every real code, which is why a
-   shallower leaf beats a deeper one with an equal code prefix.
-5. The code-level choices. This is the content absent from the
-   literature, and each item must be described precisely enough to
-   reimplement: the refinement-code accumulator arithmetic (nauty's
-   `MASH`), the order in which pending splitter cells are processed,
-   the stable redistribution of a split cell by neighbour count, the
-   separate single-vertex-splitter split (including the resulting
-   fragment order), which fragments of a split cell become pending and
-   which one is exempt (with the tie rules, which differ between the
-   two splits), exactly when a new singleton fragment becomes the
-   preferred next splitter, the target-cell rule (nauty's `bestcell`
-   under the pinned `tc_level = 100`), and the row order used when
-   comparing relabelled adjacency matrices.
-6. Pruning, briefly. The prunings the production search performs
-   (first-path and best-path code comparison, discovered
-   automorphisms, orbit pruning, short-prune), each with one or two
-   sentences on the idea, and the statement that every one preserves
-   the selected form and label, so none is part of the specification.
-7. The automorphism output. This is a second output of the same
-   traversal and is specified to the same level of output-relevant
-   detail as the canonical form. Which automorphisms are emitted: at a
-   leaf whose refinement codes agree with the first leaf's along the
-   whole path, the permutation carrying the first leaf's labelling
-   onto this one, when it is an automorphism; and at a leaf tying the
-   best-so-far leaf, the permutation carrying the best labelling onto
-   this one. In what order: discovery order along the traversal, which
-   the pruning rules of item 6 determine, so the list is a function of
-   the input and not only of the group. How the orbits are derived:
-   one union-find array over the vertices, initialized to the identity
-   and joined with each emitted permutation in turn, with every entry
-   compressed to its orbit representative at the end of each join; the
-   orbit count is the number of vertices that represent themselves.
-   How the group order is derived: the orbit-stabilizer chain, whose
-   stabilizers are read off the same traversal run on the colouring
-   that individualizes one vertex of a non-singleton orbit. The
-   difference between the emitted list and the recorded list, that
-   nauty suppresses a tie-leaf automorphism which does not grow the
-   orbit partition, is stated here because it is output-relevant.
-8. Scope. The function specified is dense nauty 2.9.3 under the pinned
-   option block, restated or summarized inline (a manual chapter
-   cannot assume the reader has this SPEC). Sparse nauty and Traces
-   compute different canonical forms, so "nauty's canonical form"
-   without those qualifiers does not name a single function.
-
-### Part two: the Lean implementation
-
-The second part revisits part one's concepts in the same order and
-attaches each to the Lean declarations, quoted through Verso so the
-prose cannot drift from the code. Requirements:
-
-- Every declaration named in prose uses the `{name}` role, and the
-  load-bearing definitions are included with `{docstring}`, per
-  [SPEC/writing-style.md](../../SPEC/writing-style.md). A rename or a
-  docstring change then fails `lake build HexManual`.
-- No hand-copied signatures or restated definition bodies. Where part
-  two needs to show a definition, it quotes the declaration.
-- The worked refinement example from part one is repeated as an
-  evaluated Lean example (`#eval` with checked output), so the hand
-  trace in part one is machine-checked against the implementation.
-
-The anchor declarations, by part-one concept (all in the
-`Hex.GraphIso.Nauty` namespace unless stated otherwise):
-
-| concept | declarations |
-| --- | --- |
-| refinement-code accumulator | `mash` |
-| equitable refinement | `refine`, `refineStep` |
-| target cell | `targetcell`, `bestcell` |
-| leaf key and order | `Key`, `keyCmp`, `codeSentinel` |
-| declarative canonical form | `canonSpecKey`, `specCanon` |
-| production leaf comparison | `testcanlab`, `updatecan` |
-| production entry point | `searchResult?`, public `canonicalize` |
-| canonical-form theorems | `specCanon_iso`, `specCanon_invariant`, `iso_iff_specCanon_eq` |
-| checked results equal the spec | `checkCanon_form` |
-| recorded automorphisms | `SearchSt.genTrace`, `processnode`, `orbjoin` |
-| automorphism output | `Aut.trace`, `autom?`, public `autos` |
-| orbit soundness | `OrbConn`, `orbjoin_orbConn`, `Aut.orbSound` |
-
-If a listed declaration is renamed or refactored, the chapter follows
-the code. The table above records the anchors at the time of writing,
-and the `{name}` roles are what keep the chapter honest.
-
-### Exclusions
-
-- No pruning internals beyond item 6 of part one. The preservation
-  theorems are cited, and the implementation is the reference.
-- No certificate or replay material beyond a cross-reference to the
-  `HexGraphIso` chapter, whose subject it is.
-- No claim, anywhere, that agreement with nauty is a theorem.
-- No process narrative, per
-  [SPEC/writing-style.md](../../SPEC/writing-style.md) and the project style
-  rules. The chapter describes the algorithm as it stands.
-
-### Citations
-
-The chapter cites, with full bibliographic data:
-
-- Brendan D. McKay, *Practical graph isomorphism*, Congressus
-  Numerantium 30 (1981), 45-87.
-- Stephen G. Hartke and A. J. Radcliffe, *McKay's canonical graph
-  labeling algorithm*, in Communicating Mathematics, Contemporary
-  Mathematics 479, AMS (2009), 99-111.
-- Brendan D. McKay and Adolfo Piperno, *Practical graph isomorphism,
-  II*, Journal of Symbolic Computation 60 (2014), 94-112.
-- The nauty and Traces User's Guide, version 2.9.3.
+`HexGraphIso` introduction links to it. Its subject is the function
+this library computes: the canonical form and label returned by dense
+nauty 2.9.3 under the pinned configuration of the
+[compatibility target](#nauty-compatibility-target). No published
+document specifies that function, so the chapter states it, first in
+natural language with no Lean identifiers and then against the Lean
+declarations, quoted through Verso's `{name}` and `{docstring}` roles
+so a rename or a docstring change fails `lake build HexManual`. It
+also states its own epistemic status, mirroring the two correctness
+requirements at the top of this SPEC: the chapter agrees with the Lean
+implementation by theorem and by the Verso build, and the Lean
+implementation agrees with nauty 2.9.3 by conformance testing, not by
+theorem.
 
 ## nauty compatibility target
 
@@ -1174,14 +965,35 @@ count, what was compared, runtime, and outcome. A campaign re-run replaces
 that report in place. Conformance runs in the existing single Ubuntu job. It
 does not add a job, matrix, or workflow.
 
+The emitters and the twin runner read one shared corpus,
+`conformance/HexGraphIso/Cases.lean`, so every driver runs the same
+cases in the same order. `conformance/HexGraphIso/EmitFixtures.lean`
+writes the committed fixture, `conformance/HexGraphIso/EmitCampaign.lean`
+streams the campaign, and both take an `--engine` mode that reads each
+record off the second canonical search instead of the transcription, so
+the external nauty oracle pins either search on the same cases.
+`conformance/HexGraphIso/EngineTwin.lean` builds the executable
+`hexgraphiso_engine_twin`, which runs both searches on every fixture,
+automorphism and campaign case and compares the whole traversal rather
+than only its answer: the label, the canonical graph, the seven run
+statistics, the accepted automorphisms in discovery order, and the best
+path's refinement codes. The first disagreement is printed with the
+differing fields and the case, and the run exits non-zero. Until the
+structured search exists the second search is the transcription itself,
+so the twin and the `--engine` modes compare it with itself.
+
 Property checks independent of nauty include:
 
 - `relabel G (label G) = canon G`;
 - invariance under deterministic random relabelling;
 - colour preservation and contiguity;
-- agreement with `Nauty.canonSpecKey` on the isomorphism verdict at
-  factorially feasible sizes;
-- agreement among all retained implementation stages on their common domain;
+- agreement with the declarative canonical form at factorially feasible
+  sizes: `Nauty.specCanon G = canon G` and the isomorphism verdict read
+  off `Nauty.canonSpecKey`, which is the only cross-check of the public
+  answer this library still carries;
+- agreement between the transcription and the second canonical search on
+  every case of the fixture corpus and the campaign, through the twin
+  runner above;
 - rejection of a changed edge, colour, permutation entry, refinement record,
   automorphism, prune record, leaf comparison, or difference position in a
   certificate;
@@ -1256,9 +1068,8 @@ rungs.
 
 The Mathlib-free benchmark driver registers:
 
-- `Nauty.canonSpecKey` on factorially feasible sizes;
-- the unpruned implementation and every retained pruning stage on common
-  inputs;
+- `Nauty.canonSpecKey`, the unpruned declarative key, on factorially
+  feasible sizes;
 - public `canonicalize`, `findIso`, and `isIso`;
 - the automorphism surface: the generator list and the vertex orbits,
   which cost one traversal, and the whole `autos` result including the
@@ -1275,7 +1086,7 @@ The Mathlib-free benchmark driver registers:
 - the pinned nauty comparator through a benchmark-only in-process FFI
   binding (`Hex.BenchOracle.Nauty` over
   `Hex/BenchOracle/ffi/nauty_canon.c`), statically linked against the
-  vendored nauty 2.9.3 source in `vendor/nauty-2.9.3` — the FFI
+  vendored nauty 2.9.3 source in `vendor/nauty-2.9.3`, following the FFI
   pattern of
   [benchmarking.md](../../SPEC/benchmarking.md#external-comparators). The
   vendored source and the comparator are development-monorepo tooling
@@ -1339,6 +1150,26 @@ bench's business. The vertex sets of the search are packed sixty-three
 vertices to a word (`Nauty.VSet`), so every set operation is a loop
 over `⌈n/63⌉` limbs, the same shape as nauty's `setword` loops.
 
+The `engine` mode of `hexgraphiso_cactus` times the two canonical
+searches against each other on the same materialized instance and
+records `lit_ns`, `eng_ns`, `nauty_ns`, `nodes` and `eng_nodes` for
+every instance of the sweep corpus.
+`scripts/bench/graphiso_engine_compare.py` reads that run and prints,
+per family, the geometric mean of `eng_ns/lit_ns` and of
+`eng_ns/nauty_ns` together with each search's per-node cost exponent,
+so a constant-factor difference and a difference that grows with `n`
+are reported apart. Two searches with the same traversal visit the
+same nodes, so any instance whose `eng_nodes` differs from its `nodes`
+fails the run whatever the timings say. This is how a replacement
+search is measured before any proof about it is written.
+`bench/HexGraphIso/Profile.lean` times the same pair as its `run` and
+`erun` stages on the paley61, kneser72 and circulant64 instances, next
+to the certificate stages, and
+`scripts/bench/graphiso_perf_side_by_side.sh` attributes the samples of
+one `perf record` of `hexgraphiso_cactus` to compiled Lean search code,
+instance construction, bignum arithmetic, the Lean runtime and the
+vendored nauty.
+
 Recorded sweeps accumulate: each regeneration adds its data,
 tactic-timing snapshot, and a `.meta.json` (fingerprint, host, date,
 label) under `reports/bench-results/` without removing predecessors.
@@ -1389,16 +1220,20 @@ The first release requires all of the following:
 
 1. No `sorry`, axiom, or `native_decide` occurs in the library or tactic
    correctness path.
-2. The reference and production biconditional theorems are complete.
+2. The declarative biconditional `Nauty.iso_iff_specCanon_eq` and the
+   public biconditional `iso_iff_canon_eq` are both complete.
 3. `Nauty.checkCanon_sound` has the conclusion stated above.
-4. Every implemented prune has an answer-and-label preservation proof.
+4. The pruned search is proved to compute the declarative canonical key
+   (`Nauty.canonSpecKey_eq_tracedKey`), so every prune it performs
+   preserves the selected form and the selected label.
 5. The exhaustive merge fixture and extended `n = 6` campaign agree exactly
-   with nauty 2.9.3. The fixture leg runs in merge CI; the campaign leg is
+   with nauty 2.9.3. The fixture leg runs in merge CI. The campaign leg is
    recorded in
    [reports/hex-graph-iso-campaign.md](../../reports/hex-graph-iso-campaign.md).
 6. The non-toy positive and negative tactic cases replay through the kernel.
-7. The benchmark driver reports every implementation stage and the nauty
-   comparator without importing Mathlib.
+7. The benchmark driver reports the declarative key, the public
+   operations, the automorphism surface, the certificate stages and the
+   nauty comparator without importing Mathlib.
 
 Complete automorphism generators are not a release condition. If later work
 adds them, checking that each permutation is an automorphism is only

@@ -103,28 +103,37 @@ public section
 library: nauty's individualization-and-refinement algorithm, run in Lean
 and proved to compute the declarative canonical form `Nauty.specCanon`.
 
-The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon` and
-`label` are the canonical labelling, `findIso` and `isIso` decide
+The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon`
+and `label` are the canonical labelling, `findIso` and `isIso` decide
 isomorphism, and `iso_iff_canon_eq` is the biconditional the whole
-library exists to prove. `Nauty.certifyKey?` and `Nauty.checkCanon` are
-the produce-then-replay pipeline for proof terms, and `Nauty.checkDiff`
-its negative counterpart. `autos` reports the automorphism generators
-the search discovers, with the vertex orbits, the orbit count and the
-group order.
-`Families` supplies the named deterministic graphs
-and `Random` the reproducible pseudo-random ones.
+library exists to prove. `autos` reports the automorphism generators the
+search discovers, with the vertex orbits, the orbit count and the group
+order, and `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order` are
+those four on their own. `Families` supplies the named deterministic
+graphs and `Random` the reproducible pseudo-random ones.
 
 The whole surface is mirrored on bare graphs. `Hex.Graph.Isomorphic` is
-isomorphism of `Graph n`, `Graph.canon`, `Graph.findIso`, `Graph.isIso` and
-`Graph.autos` are the operations, and `Graph.isomorphic_singleColor_iff` is the
-equivalence through `Graph.singleColor` along which every uncoloured
-theorem is transported.
+isomorphism of `Graph n`, `Graph.canon`, `Graph.findIso`, `Graph.isIso`
+and `Graph.autos` are the operations, and
+`Graph.isomorphic_singleColor_iff` is the equivalence through
+`Graph.singleColor` along which every uncoloured theorem is transported.
 
-The `graph_iso` tactic closes closed `Isomorphic` and `¬ Isomorphic` goals,
-coloured or uncoloured, with a kernel-checked proof; importing
-`HexGraphIsoMathlib` extends the same tactic to Mathlib `SimpleGraph` goals.
+The `graph_iso` tactic closes closed `Isomorphic` and `¬ Isomorphic`
+goals, coloured or uncoloured, with a kernel-checked proof. Importing
+`HexGraphIsoMathlib` extends the same tactic to Mathlib `SimpleGraph`
+goals.
 
-Everything under `Hex.GraphIso.Nauty` is the verified engine rather than
-the intended entry point: it is exported so that proofs can cite it, not
-because callers are expected to reach into it.
+`Hex.GraphIso.Nauty` is the verified search and its proof, organized by
+concept: `Search` is the executable transcription, `Spec` the
+declarative canonical form, `Cert` the certificates and the trusted
+`checkCanon` replay, `Correct` the induction identifying the two, and
+`Invariant`, `Equitable`, `SmallCell` and `Model` the supporting
+theories. It is exported so proofs can cite it, not because callers are
+expected to reach into it.
+
+`Hex.GraphIso.Kernel` holds the obligations `graph_iso` hands to the
+kernel: `Kernel.checkIso` for a transporter, `Kernel.checkKey` for a
+certificate replay and `Kernel.rootCode` for a root refinement code,
+each spelled over packed `Nat` state and proved equal to the `Array`
+definition the compiled search runs.
 -/

@@ -68,28 +68,40 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   proved to lie in one orbit (`autos_sameOrbit`). That the generators
   generate the whole group is not yet proved, so the orbit count and
   the group order are conformance-pinned rather than theorems.
-- `checkIso?` is the replay-bounded permutation check; `ReplayLimits`
-  bounds kernel replay (`maxKernelSteps`) and exhaustion returns
+- `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order` are the four
+  fields on their own, for a caller who wants one of them and not the
+  traversals the others cost.
+- `checkIso?` is the replay-bounded permutation check. `ReplayLimits`
+  bounds kernel replay by `maxKernelSteps`, and exhaustion returns
   `none`, never evidence of non-isomorphism.
 - `Nauty.certifyKey?` produces a canonical-key certificate and
-  `Nauty.checkCanon` replays it against the graph; `Nauty.checkDiff`
-  certifies non-isomorphism from two replayed keys. Both replays run in
-  the kernel.
+  `Nauty.checkCanon` replays it against the graph. `Nauty.checkDiff`
+  reports that two replayed keys differ, which is what refutes
+  isomorphism.
 - `graph_iso` closes closed goals of the form `Isomorphic G H` and
-  `¬ Isomorphic G H`, coloured or uncoloured, accepting
-  `(maxSearchNodes := ...)`, `(maxCertRecords := ...)`, and
-  `(maxKernelSteps := ...)` overrides.
+  `¬ Isomorphic G H`, coloured or uncoloured. A positive goal closes by
+  the relabel shortcut when one graph is syntactically a relabelling of
+  the other, and otherwise by a literal transporter the kernel checks
+  through `Kernel.checkIso`. A negative goal closes by the root
+  refinement codes when they already differ (`Kernel.rootCode`), and
+  otherwise by replaying one canonical-key certificate per graph
+  (`Kernel.checkKey`). `set_option trace.graph_iso true` names the route
+  a call took. The limits `(maxSearchNodes := ...)`,
+  `(maxCertRecords := ...)` and `(maxKernelSteps := ...)` may be given
+  in any order and default to `100000`, `100000` and `5000000`.
 
 # Verification
 
 The public surface carries the full theorem surface: canonical forms are
 isomorphism-invariant and isomorphism is exactly equality of canonical
-forms. The search is proved to refine the declarative canonical form:
-the certificate checker accepts the search's own answer on every input
-(`Nauty.certifyCanon?_isSome`), so the theorems about the checker
-transport to `canonicalize` without any certificate being produced or
-replayed on the answer path. No theorem depends on the transcription
-being faithful to nauty.
+forms. The anchor is the declarative canonical form `Nauty.specCanon`,
+the maximum leaf key of the unpruned individualization-refinement tree,
+and `canon_eq_specCanon` identifies the public form with it. The pruned
+search is proved to compute that key
+(`Nauty.canonSpecKey_eq_tracedKey`), so the certificate checker accepts
+the search's own answer on every input (`Nauty.certifyCanon?_isSome`)
+and no certificate is produced or replayed on the answer path. No
+theorem depends on the search being faithful to nauty.
 
 ```lean
 theorem iso_iff_canon_eq (G : Colored n k) (H : Colored n k) :
