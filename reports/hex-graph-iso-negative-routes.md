@@ -13,10 +13,11 @@ certificate exhaustion.
 This change does not alter the selected kernel route for any measured case: 52
 use the root separator and 14 use certificates. It removes the small compiled
 pairwise probe that formerly preceded each selected certificate, while leaving
-the resulting proof term unchanged. The refreshed end-to-end measurements
-below record the new snapshot, but their single-run shifts do not isolate the
-cost of that probe. The manual's canonicalization table is unaffected, and its
-approximate ten-vertex tactic cost remains accurate.
+the resulting proof term unchanged, so the saving is elaboration-side and
+small by construction. The end-to-end figures below are refreshed but cannot
+resolve it: the tactic leg varies by up to a factor of two between sessions on
+this host with the executable unchanged. The manual's canonicalization table
+is unaffected, and its approximate ten-vertex tactic cost remains accurate.
 
 ## Method
 
@@ -124,33 +125,53 @@ comparison. It also shows that the closest cost-unit margin does not conceal a
 wall-clock pairwise win: on Kneser/Johnson, pairwise replay was more than six
 times slower.
 
-For full end-to-end context, the prescribed cactus retiming compares the
-pre-change `hexgraphiso-tactic-152d306db788-chungus2.json` with the post-change
-`hexgraphiso-tactic-2d405af1cd87-chungus2.json`. The cycle ladder at
-`n = 6, 8, 10, 12, 14, 16` changed from 0.262, 0.503, 0.863, 1.392, 2.043, and
-3.019 seconds to 0.263, 0.503, 0.847, 1.307, 1.891, and 2.765 seconds. The
-cubic circulant pair changed from 0.690 to 0.702 s, and Kneser/Johnson from
-8.268 to 10.725 s.
+For full end-to-end context, the prescribed cactus sweep was regenerated at
+fingerprint `a0e9971b1710`. Its canonicalization leg is a compiled driver that
+reports a minimum over repetitions, and it reproduces: against
+`hexgraphiso-cactus-152d306db788-chungus2.jsonl` the 98 shared rows move by a
+median of -0.5%, with the 10th and 90th percentiles at -1.5% and +0.9%.
 
-The per-case scatter over the 13 ordinary completed negative cases runs from
--8% to +140%, with a median of +1.7%. That scatter carries no signal about
-this change, and the 18 positive cases are the control that shows why:
-their route is untouched here, and their median move is +2.5%, larger than the
-negative median. Both sets were retimed as single runs on a shared host with
-other builds in flight. The long circ48/2circ24 sample exceeded the 120-second
-tactic frontier in both runs, as did the 61- and 96-vertex hard negatives. The
-scheduled CFI fresh-module median remains 33.899 s.
+The tactic leg does not reproduce on this host, and no comparison should be
+read off it. It is one `lake env lean` elaboration per case, and the machine is
+shared with other build sessions. Over six sessions within two hours, on code
+whose executable definitions never changed, `neg-c6-vs-2c3` gave 0.263, 0.263,
+0.265 and 0.543 s; `neg-c10-vs-2c5` gave 0.847, 0.866, 0.878 and 1.546 s; and
+`neg-c14-vs-2c7` gave 1.891, 1.962, 3.562 and, in consecutive repetitions
+within one session, 1.891, 2.152 and 3.383 s. Taking a minimum over
+repetitions removes spikes but not a sustained background load, and the system
+load average tracks the effect only loosely: the 3.562 s minimum-of-three for
+`neg-c14-vs-2c7` was recorded at load 11 and the 0.543 s `neg-c6-vs-2c3` at
+load 4. The committed
+`hexgraphiso-tactic-a0e9971b1710-chungus2.json` is therefore the measurement
+taken in the quietest observed window, whose cycle ladder at
+`n = 6, 8, 10, 12, 14, 16` reads 0.263, 0.503, 0.847, 1.307, 1.891 and 2.765
+seconds against the pre-change 0.262, 0.503, 0.863, 1.392, 2.043 and 3.019.
+Those two sets agree to within 9% at every rung, which is the most that can be
+claimed: it is consistent with this change costing nothing, and it does not by
+itself establish that.
+
+The tactic leg was measured at fingerprint `2d405af1cd87`, which differs from
+`a0e9971b1710` only in `HexGraphIso/TacticTests.lean` and in the comment-only
+edits to `HexGraphIso/Nauty/Translator.lean` and
+`HexGraphIso/Nauty/TranscriptionInv.lean`. No executable definition differs, so
+the timings describe the code the figures are published against.
+
+The load-bearing evidence for the decision is the forced-route comparison
+above, not these figures: both routes were profiled in the same session on the
+same pair, so the ratio survives whatever the host was doing. The long
+circ48/2circ24 sample sits at the 120-second tactic frontier and lands on
+either side of it between sessions, as do the 61- and 96-vertex hard negatives.
+The scheduled CFI fresh-module median remains 33.899 s.
 
 These end-to-end figures include tactic elaboration as well as kernel checking
 and are not substituted for the forced-route type-check measurements above.
-They refresh the committed tactic timing artifact and cactus figures. They do
-not require edits to the manual's Performance table, which reports
-canonicalization rather than tactic replay. The manual's separate approximate
-ten-vertex negative range of 0.7 to 0.9 seconds covers the refreshed 0.702 and
-0.847 s cases at that size. The ten-vertex cubic circulant pair has now been
-measured at 0.617, 0.652, 0.690, and 0.702 s across four consecutive single
-runs, which is the resolution this retiming can offer; there is no isolated
-timing change here that requires revising the manual's claim.
+They do not require edits to the manual's Performance table, which reports
+canonicalization rather than tactic replay, and whose measurements come from
+the reproducing compiled leg. The manual's separate approximate ten-vertex
+negative range of 0.7 to 0.9 seconds covers the 0.847 s cycle pair; the
+ten-vertex cubic circulant pair has been measured at 0.652, 0.690, 0.702 and
+0.721 s across sessions, straddling the lower end of that range by less than
+the host's own spread.
 
 ## Decision
 
