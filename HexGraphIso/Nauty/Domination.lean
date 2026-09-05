@@ -138,13 +138,13 @@ set_option linter.unusedSimpArgs false
 
 /-- The incumbent's key: the ghost code list with the sentinel
 stamped, and the stored best leaf's rows. -/
-@[expose] def incKey (ctx : Ctx) (bs : List Nat)
-    (canonlab : Array Nat) : Key :=
+@[expose] def incKey (ctx : Ctx n) (bs : List Nat)
+    (canonlab : Array Nat) : Key n :=
   ⟨bs ++ [codeSentinel], leafRows ctx canonlab⟩
 
 /-- A leaf key of the current path. -/
-@[expose] def pathLeafKey (ctx : Ctx) (cs : List Nat)
-    (lab : Array Nat) : Key :=
+@[expose] def pathLeafKey (ctx : Ctx n) (cs : List Nat)
+    (lab : Array Nat) : Key n :=
   ⟨cs ++ [codeSentinel], leafRows ctx lab⟩
 
 private theorem getElem!_append_left {xs ys : List Nat} {i : Nat}
@@ -174,7 +174,7 @@ above it: the leaf's sentinel meets a real incumbent code. -/
 theorem tied_short_keyCmp_gt {nn : Nat} {cs bs : List Nat}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon 0)
-    (hshort : cs.length < bs.length) (r1 r2 : List Nat) :
+    (hshort : cs.length < bs.length) (r1 r2 : List (VSet n)) :
     keyCmp ⟨cs ++ [codeSentinel], r1⟩ ⟨bs ++ [codeSentinel], r2⟩ =
       .gt := by
   rcases hinv.tri with ⟨-, -, -, hmatch⟩ | ⟨j, -, -, -, -, -, hcase⟩
@@ -204,13 +204,13 @@ to the rows. -/
 theorem tied_full_keyCmp {nn : Nat} {cs bs : List Nat}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon 0)
-    (hlen : cs.length = bs.length) (r1 r2 : List Nat) :
+    (hlen : cs.length = bs.length) (r1 r2 : List (VSet n)) :
     keyCmp ⟨cs ++ [codeSentinel], r1⟩ ⟨bs ++ [codeSentinel], r2⟩ =
-      listCmp rowCmp r1 r2 := by
+      listCmp VSet.rowCmp r1 r2 := by
   rw [codeInv_eq_of_tied hinv hlen, keyCmp_codes_eq]
 
 /-- The downward-frozen verdict at a leaf, in incumbent-key form. -/
-theorem frozen_lt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
+theorem frozen_lt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
     {lab canonlab : Array Nat}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon
@@ -220,7 +220,7 @@ theorem frozen_lt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
   codeInv_keyCmp_lt hinv [codeSentinel] _ _
 
 /-- The upward-frozen verdict at a leaf, in incumbent-key form. -/
-theorem frozen_gt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
+theorem frozen_gt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
     {lab canonlab : Array Nat}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon 1) :
@@ -230,59 +230,59 @@ theorem frozen_gt_keyCmp {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
 
 /-! # `processnode` arm characterizations -/
 
-private theorem pushAuto_lab (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_lab (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).lab = st.lab := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_ptn (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_ptn (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).ptn = st.ptn := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_compCanon (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_compCanon (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).compCanon = st.compCanon := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_eqlevCanon (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_eqlevCanon (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).eqlevCanon = st.eqlevCanon := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_canoncode (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_canoncode (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).canoncode = st.canoncode := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_canonlevel (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_canonlevel (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).canonlevel = st.canonlevel := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_canonlab (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_canonlab (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).canonlab = st.canonlab := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_canong (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_canong (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).canong = st.canong := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_samerows (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_samerows (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).samerows = st.samerows := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_eqlevFirst (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_eqlevFirst (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).eqlevFirst = st.eqlevFirst := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_gcaFirst (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_gcaFirst (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).gcaFirst = st.gcaFirst := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_noncheaplevel (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_noncheaplevel (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).noncheaplevel = st.noncheaplevel := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_allsamelevel (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_allsamelevel (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).allsamelevel = st.allsamelevel := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_needshortprune (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_needshortprune (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).needshortprune = st.needshortprune := by
   rw [pushAuto]; split <;> rfl
 
@@ -360,10 +360,10 @@ theorem pruneReturn_nonneg {noncheaplevel allsamelevel : Nat}
 
 /-- The pass arm: an internal node with no frozen-downward fast exit
 leaves the comparison state alone and returns its own level. -/
-theorem processnode_pass {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_pass {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0))
-    (hnc : ¬((numcells == ctx.n) = true)) :
+    (hnc : ¬((numcells == n) = true)) :
     (processnode ctx level numcells st).1 = Int.ofNat level ∧
     (processnode ctx level numcells st).2.compCanon = st.compCanon ∧
     (processnode ctx level numcells st).2.eqlevCanon = st.eqlevCanon ∧
@@ -374,13 +374,13 @@ theorem processnode_pass {ctx : Ctx} {level numcells : Nat}
     (processnode ctx level numcells st).2.samerows = st.samerows := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc]
 
 /-- The frozen-downward fast arm: the comparison state is untouched
 and the shared prune tail decides the unwind level. -/
-theorem processnode_fast {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_fast {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).1 =
       pruneReturn st.noncheaplevel st.allsamelevel st.eqlevCanon ∧
@@ -394,13 +394,13 @@ theorem processnode_fast {ctx : Ctx} {level numcells : Nat}
   obtain ⟨hg1, hg2⟩ := hg
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg1, hg2, Int.not_lt.mpr, Int.lt_iff_add_one_le]
 
 /-- The frozen-downward arm raises a short-prune request exactly when it
 admits an implicit pair and does not return to the first-path guide. -/
-theorem processnode_fast_short {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_fast_short {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).2.needshortprune =
       if level ≠ st.noncheaplevel ∧
@@ -412,7 +412,7 @@ theorem processnode_fast_short {ctx : Ctx} {level numcells : Nat}
   obtain ⟨hg1, hg2⟩ := hg
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.needshortprune),
+    apply_ite (fun x : Int × SearchSt n => x.2.needshortprune),
     pushAuto_needshortprune, pushAuto_noncheaplevel,
     pushAuto_allsamelevel, pushAuto_eqlevCanon, pushAuto_gcaFirst, ite_self]
   simp [pruneReturn, hg1, hg2, Int.not_lt.mpr,
@@ -421,8 +421,8 @@ theorem processnode_fast_short {ctx : Ctx} {level numcells : Nat}
 
 /-- A fresh short-prune request in the frozen-downward arm proves that
 the implicit pair was actually admitted below the saved boundary. -/
-theorem processnode_fast_short_ne {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_fast_short_ne {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0)
     (hclear : st.needshortprune = false)
     (hshort : (processnode ctx level numcells st).2.needshortprune = true) :
@@ -432,10 +432,10 @@ theorem processnode_fast_short_ne {ctx : Ctx} {level numcells : Nat}
 
 /-- The short-leaf install: a code-tied leaf strictly above the
 incumbent's depth installs itself with no row comparison. -/
-theorem processnode_shortInstall {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_shortInstall {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0)
     (hlt : level < st.canonlevel) :
     (processnode ctx level numcells st).1 =
@@ -453,15 +453,15 @@ theorem processnode_shortInstall {ctx : Ctx} {level numcells : Nat}
   have hlt' : (level < st.canonlevel) := hlt
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc, hef, hcc, hlt', Int.lt_iff_add_one_le]
 
 /-- The upward-frozen install: a leaf reached with `compCanon = 1`
 installs itself directly. -/
-theorem processnode_upInstall {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_upInstall {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 1) :
     (processnode ctx level numcells st).1 =
       pruneReturn st.noncheaplevel st.allsamelevel (Int.ofNat level) ∧
@@ -479,15 +479,15 @@ theorem processnode_upInstall {ctx : Ctx} {level numcells : Nat}
   have hgt : (0 : Int) < st.compCanon := by rw [hcc]; omega
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc, hef, hcc, hne0, hgt, Int.lt_iff_add_one_le]
 
 /-- The row-decided install: a code-tied leaf at the incumbent's
 depth whose rows compare above installs itself. -/
-theorem processnode_rowInstall {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowInstall {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (hgt : (0 : Int) < (testcanlab ctx
@@ -512,16 +512,16 @@ theorem processnode_rowInstall {ctx : Ctx} {level numcells : Nat}
     omega
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc, hef, hcc, hge, hne0, hgt, Int.lt_iff_add_one_le]
 
 /-- The row-decided rejection: a code-tied leaf at the incumbent's
 depth whose rows compare below is discarded, freezing the downward
 comparison. -/
-theorem processnode_rowReject {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowReject {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (hlt : (testcanlab ctx
@@ -537,7 +537,7 @@ theorem processnode_rowReject {ctx : Ctx} {level numcells : Nat}
     (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
     (processnode ctx level numcells st).2.canong =
       updatecan ctx st.canong st.canonlab st.samerows ∧
-    (processnode ctx level numcells st).2.samerows = ctx.n := by
+    (processnode ctx level numcells st).2.samerows = n := by
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     rw [hcc]; exact fun h => absurd h.2 (by omega)
   have hne0 : ¬((testcanlab ctx
@@ -548,109 +548,109 @@ theorem processnode_rowReject {ctx : Ctx} {level numcells : Nat}
     omega
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc, hef, hcc, hge, hne0, hngt]
 
 /-! # Comparison-blind frames of `processnode` -/
 
-private theorem pushAuto_gcaCanon (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_gcaCanon (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).gcaCanon = st.gcaCanon := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_firstcode (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_firstcode (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).firstcode = st.firstcode := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_firstlab (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_firstlab (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).firstlab = st.firstlab := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_firsttc (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_firsttc (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).firsttc = st.firsttc := by
   rw [pushAuto]; split <;> rfl
 
-private theorem processnode_lab (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+private theorem processnode_lab (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (processnode ctx level numcells st).2.lab = st.lab := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.lab), pushAuto_lab,
+    apply_ite (fun x : Int × SearchSt n => x.2.lab), pushAuto_lab,
     ite_self]
 
-private theorem processnode_ptn (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+private theorem processnode_ptn (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (processnode ctx level numcells st).2.ptn = st.ptn := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.ptn), pushAuto_ptn,
+    apply_ite (fun x : Int × SearchSt n => x.2.ptn), pushAuto_ptn,
     ite_self]
 
-private theorem processnode_eqlevFirst (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_eqlevFirst (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.eqlevFirst =
       st.eqlevFirst := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.eqlevFirst),
+    apply_ite (fun x : Int × SearchSt n => x.2.eqlevFirst),
     pushAuto_eqlevFirst, ite_self]
 
-private theorem processnode_firstcode (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_firstcode (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.firstcode =
       st.firstcode := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.firstcode),
+    apply_ite (fun x : Int × SearchSt n => x.2.firstcode),
     pushAuto_firstcode, ite_self]
 
-private theorem processnode_firstlab (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_firstlab (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.firstlab =
       st.firstlab := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.firstlab),
+    apply_ite (fun x : Int × SearchSt n => x.2.firstlab),
     pushAuto_firstlab, ite_self]
 
-private theorem processnode_firsttc (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_firsttc (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.firsttc = st.firsttc := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.firsttc),
+    apply_ite (fun x : Int × SearchSt n => x.2.firsttc),
     pushAuto_firsttc, ite_self]
 
-private theorem processnode_gcaFirst (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_gcaFirst (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.gcaFirst = st.gcaFirst := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.gcaFirst),
+    apply_ite (fun x : Int × SearchSt n => x.2.gcaFirst),
     pushAuto_gcaFirst, ite_self]
 
-private theorem processnode_noncheaplevel (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_noncheaplevel (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.noncheaplevel =
       st.noncheaplevel := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.noncheaplevel),
+    apply_ite (fun x : Int × SearchSt n => x.2.noncheaplevel),
     pushAuto_noncheaplevel, ite_self]
 
-private theorem processnode_allsamelevel (ctx : Ctx)
-    (level numcells : Nat) (st : SearchSt) :
+private theorem processnode_allsamelevel (ctx : Ctx n)
+    (level numcells : Nat) (st : SearchSt n) :
     (processnode ctx level numcells st).2.allsamelevel =
       st.allsamelevel := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.allsamelevel),
+    apply_ite (fun x : Int × SearchSt n => x.2.allsamelevel),
     pushAuto_allsamelevel, ite_self]
 
 /-- The fields `processnode` never writes: the labelling pair, the
 first-path data, and the level bookkeeping consumed by the child
 loops. -/
-theorem processnode_frames (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem processnode_frames (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (processnode ctx level numcells st).2.lab = st.lab ∧
     (processnode ctx level numcells st).2.ptn = st.ptn ∧
     (processnode ctx level numcells st).2.eqlevFirst = st.eqlevFirst ∧
@@ -676,10 +676,10 @@ theorem processnode_frames (ctx : Ctx) (level numcells : Nat)
 rows equal the incumbent's is an automorphism candidate (nauty's code
 `2`); the incumbent survives unchanged and the unwind returns to one
 of the guiding ancestors. -/
-theorem processnode_rowTie {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowTie {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
@@ -693,12 +693,12 @@ theorem processnode_rowTie {ctx : Ctx} {level numcells : Nat}
     (processnode ctx level numcells st).2.canonlab = st.canonlab ∧
     (processnode ctx level numcells st).2.canong =
       updatecan ctx st.canong st.canonlab st.samerows ∧
-    (processnode ctx level numcells st).2.samerows = ctx.n := by
+    (processnode ctx level numcells st).2.samerows = n := by
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     rw [hcc]; exact fun h => absurd h.2 (by omega)
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     simp [pruneReturn, hg, hnc, hef, hcc, hge, htie, pushAuto_gcaCanon,
       pushAuto_gcaFirst]
     repeat' split
@@ -717,14 +717,14 @@ comparison stayed frozen or re-seeded by an install, or in the
 reset form when a row rejection repurposed `compCanon`
 (`recover_codeInv_reset` consumes it). The return level is one of
 the four unwind forms. -/
-theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
-    {numcells : Nat} {st : SearchSt}
+theorem processnode_leaf {nn : Nat} {ctx : Ctx n} {cs bs : List Nat}
+    {numcells : Nat} {st : SearchSt n}
     (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcsn : cs.length ≤ nn)
     (hef : ¬((st.eqlevFirst == cs.length) = true))
-    (hnc : (numcells == ctx.n) = true) :
+    (hnc : (numcells == n) = true) :
     ∃ bs' : List Nat,
       incKey ctx bs'
           (processnode ctx cs.length numcells st).2.canonlab =
@@ -786,7 +786,7 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
         leafEvent_faithful (lab := st.lab) hginv
       have hfull := tied_full_keyCmp hcinv0 hlen
         (leafRows ctx st.lab) (leafRows ctx st.canonlab)
-      rcases hlc : listCmp rowCmp (leafRows ctx st.lab)
+      rcases hlc : listCmp VSet.rowCmp (leafRows ctx st.lab)
         (leafRows ctx st.canonlab) with _ | _ | _
       · -- rows below: the rejection
         have hltc : (testcanlab ctx
@@ -821,12 +821,12 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
           processnode_rowTie hef hnc hcc hge htie
         rw [hlc] at hfull
         have hpi : (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ :
-            Key) = ⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ :=
+            Key n) = ⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ :=
           keyCmp_eq_iff.mp hfull
         refine ⟨bs, ?_, ?_, ?_, ?_⟩
         · simp only [incKey, pathLeafKey]
           rw [hlab2, hpi, keyMax_eq_left (show keyLe
-            (⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ : Key)
+            (⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ : Key n)
             ⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ from by
               show keyCmp _ _ ≠ .gt
               rw [keyCmp_eq_iff.mpr rfl]
@@ -870,11 +870,11 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
       refine ⟨bs, ?_, ?_, ?_, Or.inl hr⟩
       · simp only [incKey, pathLeafKey]
         rw [hlab2, keyMax_eq_left (show keyLe
-          (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ : Key)
+          (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ : Key n)
           ⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ from by
             show keyCmp _ _ ≠ .gt
             rw [show keyCmp
-              (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ : Key)
+              (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ : Key n)
               ⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ =
                 .lt from frozen_lt_keyCmp hminv]
             decide)]
@@ -893,7 +893,7 @@ theorem processnode_leaf {nn : Nat} {ctx : Ctx} {cs bs : List Nat}
       · simp only [incKey, pathLeafKey]
         rw [hlab2, keyMax_eq_right (keyCmp_gt_iff_lt.mp
           (show keyCmp
-            (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ : Key)
+            (⟨cs ++ [codeSentinel], leafRows ctx st.lab⟩ : Key n)
             ⟨bs ++ [codeSentinel], leafRows ctx st.canonlab⟩ = .gt
             from frozen_gt_keyCmp hminv))]
       · rw [hg2, hlab2, hs2]
@@ -910,8 +910,8 @@ survives the unwind in whichever mode the event left it — live with
 `compCanon ≤ 0`, or the reset mode a row rejection leaves behind —
 and the first-path machine is clamped. The induction applies this at
 every return to a child loop. -/
-theorem recover_machines {nn N inf : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {lvl : Nat}
+theorem recover_machines {nn inf : Nat} {cs bs fs : List Nat}
+    {st : SearchSt n} {lvl : Nat}
     (hc : (st.compCanon ≤ 0 ∧
         CodeCmpInv nn cs bs st.canoncode st.canonlevel st.eqlevCanon
           st.compCanon) ∨
@@ -919,13 +919,13 @@ theorem recover_machines {nn N inf : Nat} {cs bs fs : List Nat}
     (hf : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
     (hlvl : lvl ≤ cs.length) :
     CodeCmpInv nn (cs.take lvl) bs
-        (recover N inf lvl st).canoncode
-        (recover N inf lvl st).canonlevel
-        (recover N inf lvl st).eqlevCanon
-        (recover N inf lvl st).compCanon ∧
+        (recover n inf lvl st).canoncode
+        (recover n inf lvl st).canonlevel
+        (recover n inf lvl st).eqlevCanon
+        (recover n inf lvl st).compCanon ∧
       FirstCodeInv nn (cs.take lvl) fs
-        (recover N inf lvl st).firstcode
-        (recover N inf lvl st).eqlevFirst := by
+        (recover n inf lvl st).firstcode
+        (recover n inf lvl st).eqlevFirst := by
   refine ⟨?_, recover_firstCodeInv hf hlvl⟩
   rcases hc with ⟨hle, hinv⟩ | hinv
   · exact recover_codeInv hinv hle hlvl
@@ -1006,31 +1006,31 @@ theorem scatter_eq_of_full {lab₁ lab₂ base base' : Array Nat} {nn : Nat}
 
 private theorem id_run_eq {α : Type} (x : Id α) : Id.run x = x := rfl
 
-private theorem pushAuto_orbits (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_orbits (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).orbits = st.orbits := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_numorbits (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_numorbits (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).numorbits = st.numorbits := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_cosetindex (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_cosetindex (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).cosetindex = st.cosetindex := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_maxlevel (st : SearchSt) (p : Nat × Nat) :
+private theorem pushAuto_maxlevel (st : SearchSt n) (p : VSet n × VSet n) :
     (pushAuto st p).maxlevel = st.maxlevel := by
   rw [pushAuto]; split <;> rfl
 
 /-- The code-`1` arm: a first-path-agreeing leaf passing the
 admission gate records a generator and unwinds to `gcaFirst` with
 the whole comparison state untouched. -/
-theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_auto {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     (processnode ctx level numcells st).1 =
       Int.ofNat st.gcaFirst ∧
     (processnode ctx level numcells st).2.compCanon = st.compCanon ∧
@@ -1045,36 +1045,36 @@ theorem processnode_auto {ctx : Ctx} {level numcells : Nat}
     exact h.1 (beq_iff_eq.mp heq)
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, ite_self]
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
     simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
 /-- A successful code-one admission does not change the canonical GCA
 control. -/
-theorem processnode_auto_gcaCanon {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_auto_gcaCanon {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     (processnode ctx level numcells st).2.gcaCanon = st.gcaCanon := by
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     intro h
     exact h.1 (beq_iff_eq.mp heq)
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.gcaCanon),
+    apply_ite (fun x : Int × SearchSt n => x.2.gcaCanon),
     pushAuto_gcaCanon, ite_self]
   rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
   simp [pruneReturn, hg, hnc, heq, hsent, hpass, id_run_eq]
 
 /-- A code-one admission does not create a short-prune request. -/
-theorem processnode_auto_short {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_auto_short {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     (processnode ctx level numcells st).2.needshortprune =
       st.needshortprune := by
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
@@ -1082,28 +1082,28 @@ theorem processnode_auto_short {ctx : Ctx} {level numcells : Nat}
     exact h.1 (beq_iff_eq.mp heq)
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.needshortprune),
+    apply_ite (fun x : Int × SearchSt n => x.2.needshortprune),
     pushAuto_needshortprune, ite_self]
   rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
   simp [hg, hnc, heq, hsent, hpass, id_run_eq]
 
 /-- The code-one arm stores the same first-to-current scatter that it
 appends to the generator trace. -/
-theorem processnode_auto_autos {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_auto_autos {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     (processnode ctx level numcells st).2.autos =
       (pushAuto st
-        (fmperm (firstScatter ctx.n st.firstlab st.lab) ctx.n)).autos := by
+        (fmperm (firstScatter n st.firstlab st.lab) n)).autos := by
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     intro h
     exact h.1 (beq_iff_eq.mp heq)
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
   simp [hg, hnc, heq, hsent, hpass, id_run_eq]
   by_cases hm : st.maxlevel < level
@@ -1128,31 +1128,31 @@ theorem canonScatter_eq_firstScatter (n : Nat)
   exact id_run_eq _
 
 /-- The bounded-ledger effect of the shared code-three/code-four tail. -/
-@[expose] def pruneAutos (ctx : Ctx) (level : Nat)
-    (st : SearchSt) : Array (Nat × Nat) :=
+@[expose] def pruneAutos (ctx : Ctx n) (level : Nat)
+    (st : SearchSt n) : Array (VSet n × VSet n) :=
   if level = st.noncheaplevel then st.autos
   else (pushAuto st
-    (fmptn st.lab st.ptn st.noncheaplevel ctx.n)).autos
+    (fmptn st.lab st.ptn st.noncheaplevel n)).autos
 
 /-- Whenever the shared tail admits its implicit pair, bounded workspace
 capacity makes that pair the exact newest entry read by `shortprune`. -/
-theorem pruneAutos_back {ctx : Ctx} {level : Nat} {st : SearchSt}
+theorem pruneAutos_back {ctx : Ctx n} {level : Nat} {st : SearchSt n}
     (hworkspace : WorkspaceOk st) (hne : level ≠ st.noncheaplevel) :
     (pruneAutos ctx level st).back? =
-      some (fmptn st.lab st.ptn st.noncheaplevel ctx.n) := by
+      some (fmptn st.lab st.ptn st.noncheaplevel n) := by
   unfold pruneAutos
   rw [if_neg hne]
   exact pushAuto_back hworkspace.1 hworkspace.2
 
 /-- The frozen-downward fast arm has exactly the shared prune-tail ledger
 effect. -/
-theorem processnode_fast_autos {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+theorem processnode_fast_autos {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).2.autos =
       pruneAutos ctx level st := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   rw [ite_eq_left hg]
   by_cases hm : st.maxlevel < level
   all_goals by_cases hncl : level = st.noncheaplevel
@@ -1161,10 +1161,10 @@ theorem processnode_fast_autos {ctx : Ctx} {level numcells : Nat}
 
 /-- The short-leaf install has exactly the shared prune-tail ledger
 effect. -/
-theorem processnode_shortInstall_autos {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
+theorem processnode_shortInstall_autos {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hlt : level < st.canonlevel) :
     (processnode ctx level numcells st).2.autos =
       pruneAutos ctx level st := by
@@ -1184,7 +1184,7 @@ theorem processnode_shortInstall_autos {ctx : Ctx}
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   rw [ite_eq_right hg]
   rw [ite_eq_left hnc, ite_eq_right hgate]
   by_cases hm : st.maxlevel < level
@@ -1195,10 +1195,10 @@ theorem processnode_shortInstall_autos {ctx : Ctx}
 
 /-- The upward-frozen install has exactly the shared prune-tail ledger
 effect. -/
-theorem processnode_upInstall_autos {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
+theorem processnode_upInstall_autos {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 1) :
+    (hnc : (numcells == n) = true) (hcc : st.compCanon = 1) :
     (processnode ctx level numcells st).2.autos =
       pruneAutos ctx level st := by
   have hef' : st.eqlevFirst ≠ level := fun he =>
@@ -1215,7 +1215,7 @@ theorem processnode_upInstall_autos {ctx : Ctx}
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   rw [ite_eq_right hg]
   rw [ite_eq_left hnc, ite_eq_right hgate]
   by_cases hm : st.maxlevel < level
@@ -1226,10 +1226,10 @@ theorem processnode_upInstall_autos {ctx : Ctx}
 
 /-- A row-decided install has exactly the shared prune-tail ledger
 effect. -/
-theorem processnode_rowInstall_autos {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
+theorem processnode_rowInstall_autos {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hnc : (numcells == n) = true) (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (hgt : (0 : Int) < (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1) :
@@ -1252,7 +1252,7 @@ theorem processnode_rowInstall_autos {ctx : Ctx}
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   rw [ite_eq_right hg]
   rw [ite_eq_left hnc, ite_eq_right hgate]
   by_cases hm : st.maxlevel < level
@@ -1263,10 +1263,10 @@ theorem processnode_rowInstall_autos {ctx : Ctx}
 
 /-- A row-decided rejection has exactly the shared prune-tail ledger
 effect. -/
-theorem processnode_rowReject_autos {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
+theorem processnode_rowReject_autos {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hnc : (numcells == n) = true) (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (hlt : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 < 0) :
@@ -1292,7 +1292,7 @@ theorem processnode_rowReject_autos {ctx : Ctx}
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   rw [ite_eq_right hg]
   rw [ite_eq_left hnc, ite_eq_right hgate]
   by_cases hm : st.maxlevel < level
@@ -1304,10 +1304,10 @@ theorem processnode_rowReject_autos {ctx : Ctx}
 /-- A row-tied code-two return either uses the canonical ancestor, or its
 special first-ancestor return is backed by a strictly smaller orbit
 pointer in the output state. -/
-theorem processnode_rowTie_orbit {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowTie_orbit {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
@@ -1321,8 +1321,8 @@ theorem processnode_rowTie_orbit {ctx : Ctx} {level numcells : Nat}
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.1),
-    apply_ite (fun x : Int × SearchSt => x.2),
+    apply_ite (fun x : Int × SearchSt n => x.1),
+    apply_ite (fun x : Int × SearchSt n => x.2),
     apply_ite SearchSt.orbits, apply_ite SearchSt.cosetindex,
     pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex,
     pushAuto_gcaCanon, pushAuto_gcaFirst, ite_self]
@@ -1338,10 +1338,10 @@ theorem processnode_rowTie_orbit {ctx : Ctx} {level numcells : Nat}
 /-- A fresh short-prune request from the code-two arm accompanies the
 canonical-guide return; the special first-guide orbit return never raises
 the flag. -/
-theorem processnode_rowTie_short {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowTie_short {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
@@ -1354,8 +1354,8 @@ theorem processnode_rowTie_short {ctx : Ctx} {level numcells : Nat}
     omega
   rw [processnode] at hshort ⊢
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.1),
-    apply_ite (fun x : Int × SearchSt => x.2),
+    apply_ite (fun x : Int × SearchSt n => x.1),
+    apply_ite (fun x : Int × SearchSt n => x.2),
     apply_ite SearchSt.needshortprune,
     apply_ite SearchSt.orbits, apply_ite SearchSt.cosetindex,
     pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex,
@@ -1370,10 +1370,10 @@ theorem processnode_rowTie_short {ctx : Ctx} {level numcells : Nat}
   omega
 
 /-- The code-two arm leaves the canonical guide untouched. -/
-theorem processnode_rowTie_gcaCanon {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowTie_gcaCanon {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
@@ -1384,29 +1384,29 @@ theorem processnode_rowTie_gcaCanon {ctx : Ctx} {level numcells : Nat}
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.gcaCanon),
+    apply_ite (fun x : Int × SearchSt n => x.2.gcaCanon),
     pushAuto_gcaCanon, ite_self]
   rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
   simp [hg, hnc, hef, hcc, hge, htie, id_run_eq]
 
 /-- The code-two arm stores the same incumbent-to-current scatter that
 it appends to the generator trace. -/
-theorem processnode_rowTie_autos {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_rowTie_autos {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
     (processnode ctx level numcells st).2.autos =
       (pushAuto st
-        (fmperm (canonScatter ctx.n st.canonlab st.lab) ctx.n)).autos := by
+        (fmperm (canonScatter n st.canonlab st.lab) n)).autos := by
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     rw [hcc]
     omega
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   simp [canonScatter, hg, hnc, hef, hcc, hge, htie, id_run_eq]
   by_cases hm : st.maxlevel < level
   all_goals by_cases hcap : st.autos.size = st.wsCap
@@ -1416,12 +1416,12 @@ theorem processnode_rowTie_autos {ctx : Ctx} {level numcells : Nat}
 in the return level and the whole comparison state, exactly as the
 same state entered off the first path: the gate's only effect is the
 skipped generator. -/
-theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_gateFail_eq {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+      isautom ctx (firstScatter n st.firstlab st.lab) = false) :
     ((processnode ctx level numcells st).1 =
         (processnode ctx level numcells
           { st with eqlevFirst := level + 1 }).1 ∨
@@ -1456,7 +1456,7 @@ theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
   rcases hfail with hfail | hfail <;>
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
   · rw [processnode, processnode]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt => x.1), apply_ite (fun x : Int × SearchSt => x.2), apply_ite (fun st : SearchSt => st.lab), apply_ite (fun st : SearchSt => st.ptn), apply_ite (fun st : SearchSt => st.compCanon), apply_ite (fun st : SearchSt => st.eqlevCanon), apply_ite (fun st : SearchSt => st.canoncode), apply_ite (fun st : SearchSt => st.canonlevel), apply_ite (fun st : SearchSt => st.canonlab), apply_ite (fun st : SearchSt => st.canong), apply_ite (fun st : SearchSt => st.samerows), apply_ite (fun st : SearchSt => st.eqlevFirst), apply_ite (fun st : SearchSt => st.gcaFirst), apply_ite (fun st : SearchSt => st.noncheaplevel), apply_ite (fun st : SearchSt => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex, pushAuto_maxlevel, pushAuto_gcaCanon, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite (fun x : Int × SearchSt n => x.1), apply_ite (fun x : Int × SearchSt n => x.2), apply_ite (fun st : SearchSt n => st.lab), apply_ite (fun st : SearchSt n => st.ptn), apply_ite (fun st : SearchSt n => st.compCanon), apply_ite (fun st : SearchSt n => st.eqlevCanon), apply_ite (fun st : SearchSt n => st.canoncode), apply_ite (fun st : SearchSt n => st.canonlevel), apply_ite (fun st : SearchSt n => st.canonlab), apply_ite (fun st : SearchSt n => st.canong), apply_ite (fun st : SearchSt n => st.samerows), apply_ite (fun st : SearchSt n => st.eqlevFirst), apply_ite (fun st : SearchSt n => st.gcaFirst), apply_ite (fun st : SearchSt n => st.noncheaplevel), apply_ite (fun st : SearchSt n => st.allsamelevel), pushAuto_lab, pushAuto_ptn, pushAuto_compCanon, pushAuto_eqlevCanon, pushAuto_canoncode, pushAuto_canonlevel, pushAuto_canonlab, pushAuto_canong, pushAuto_samerows, pushAuto_eqlevFirst, pushAuto_gcaFirst, pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex, pushAuto_maxlevel, pushAuto_gcaCanon, ite_self]
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold]
     simp [pruneReturn, hg, hnc, heq, hfail, id_run_eq,
       pushAuto_orbits, pushAuto_numorbits, pushAuto_cosetindex]
@@ -1478,58 +1478,58 @@ theorem processnode_gateFail_eq {ctx : Ctx} {level numcells : Nat}
 
 /-- Failing the first-path admission gate has the same autos-ledger
 effect as entering the ordinary off-path comparison arm. -/
-theorem processnode_gateFail_autos {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hcanonSize : st.canonlab.size = ctx.n)
-    (hcanonOk : LabOk st.canonlab ctx.n)
-    (hcanonInj : LabInj st.canonlab ctx.n)
+theorem processnode_gateFail_autos {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hcanonSize : st.canonlab.size = n)
+    (hcanonOk : LabOk st.canonlab n)
+    (hcanonInj : LabInj st.canonlab n)
     (heq : (st.eqlevFirst == level) = true)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+      isautom ctx (firstScatter n st.firstlab st.lab) = false) :
     (processnode ctx level numcells st).2.autos =
       (processnode ctx level numcells
         { st with eqlevFirst := level + 1 }).2.autos := by
   have hwork :
-      (List.range ctx.n).foldl
+      (List.range n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (firstScatter ctx.n st.firstlab st.lab) =
-        (List.range ctx.n).foldl
+          (firstScatter n st.firstlab st.lab) =
+        (List.range n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (Array.replicate ctx.n 0) :=
+          (Array.replicate n 0) :=
     scatter_eq_of_full (firstScatter_size ..) (Array.size_replicate ..)
       hcanonSize hcanonOk hcanonInj
   have hwork' :
-      (List.range' 0 ctx.n).foldl
+      (List.range' 0 n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (firstScatter ctx.n st.firstlab st.lab) =
-        (List.range' 0 ctx.n).foldl
+          (firstScatter n st.firstlab st.lab) =
+        (List.range' 0 n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (Array.replicate ctx.n 0) := by
+          (Array.replicate n 0) := by
     simpa [List.range_eq_range'] using hwork
   have hworkPure :
-      (pure ((List.range' 0 ctx.n).foldl
+      (pure ((List.range' 0 n).foldl
         (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-        (firstScatter ctx.n st.firstlab st.lab)) : Id (Array Nat)) =
-      pure ((List.range' 0 ctx.n).foldl
+        (firstScatter n st.firstlab st.lab)) : Id (Array Nat)) =
+      pure ((List.range' 0 n).foldl
         (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-        (Array.replicate ctx.n 0)) := by
+        (Array.replicate n 0)) := by
     rw [hwork']
   have hfm :
-      fmperm (pure ((List.range' 0 ctx.n).foldl
+      fmperm (pure ((List.range' 0 n).foldl
         (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-        (firstScatter ctx.n st.firstlab st.lab)) : Id (Array Nat)) ctx.n =
-      fmperm (pure ((List.range' 0 ctx.n).foldl
+        (firstScatter n st.firstlab st.lab)) : Id (Array Nat)) n =
+      fmperm (pure ((List.range' 0 n).foldl
         (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-        (Array.replicate ctx.n 0)) : Id (Array Nat)) ctx.n :=
-    congrArg (fun w => fmperm w ctx.n) hworkPure
+        (Array.replicate n 0)) : Id (Array Nat)) n :=
+    congrArg (fun w => fmperm w n) hworkPure
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     intro h
     exact h.1 (beq_iff_eq.mp heq)
   rcases hfail with hfail | hfail <;>
     rw [processnode, processnode] <;>
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-      apply_ite (fun x : Int × SearchSt => x.2.autos)] <;>
+      apply_ite (fun x : Int × SearchSt n => x.2.autos)] <;>
     rw [forIn_range_eq3, forIn_scatter_eq, firstScatter_fold] <;>
     simp [hg, hnc, heq, hfail, id_run_eq]
   all_goals by_cases hcc : st.compCanon = 0
@@ -1553,16 +1553,16 @@ theorem processnode_gateFail_autos {ctx : Ctx} {level numcells : Nat}
 /-- The leaf event at a first-path-agreeing leaf that fails the
 admission gate: identical to `processnode_leaf`, by the gate-failure
 reduction. -/
-theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
-    {cs bs : List Nat} {numcells : Nat} {st : SearchSt}
+theorem processnode_leafFirst {nn : Nat} {ctx : Ctx n}
+    {cs bs : List Nat} {numcells : Nat} {st : SearchSt n}
     (hcinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hginv : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcsn : cs.length ≤ nn)
     (heq : (st.eqlevFirst == cs.length) = true)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hfail : st.firstcode[cs.length + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+      isautom ctx (firstScatter n st.firstlab st.lab) = false) :
     ∃ bs' : List Nat,
       incKey ctx bs'
           (processnode ctx cs.length numcells st).2.canonlab =
@@ -1617,7 +1617,7 @@ theorem processnode_leafFirst {nn : Nat} {ctx : Ctx}
 with the first path outright and the rows transported by the
 admitted automorphism, the leaf's key is the first leaf's key, and
 an incumbent dominating the first leaf absorbs it. -/
-theorem auto_keyMax {ctx : Ctx} {cs fs bs : List Nat}
+theorem auto_keyMax {ctx : Ctx n} {cs fs bs : List Nat}
     {lab firstlab canonlab : Array Nat}
     (hcs : cs = fs)
     (hrows : leafRows ctx lab = leafRows ctx firstlab)
@@ -1635,67 +1635,67 @@ theorem auto_keyMax {ctx : Ctx} {cs fs bs : List Nat}
 
 section Frames
 
-private theorem prepF_canonlab (level code : Nat) (st : SearchSt) :
+private theorem prepF_canonlab (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).canonlab = st.canonlab := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canonlab, ite_self]
-private theorem prepF_canong (level code : Nat) (st : SearchSt) :
+private theorem prepF_canong (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).canong = st.canong := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canong, ite_self]
-private theorem prepF_samerows (level code : Nat) (st : SearchSt) :
+private theorem prepF_samerows (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).samerows = st.samerows := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.samerows, ite_self]
-private theorem prepF_canonlevel (level code : Nat) (st : SearchSt) :
+private theorem prepF_canonlevel (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).canonlevel = st.canonlevel := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canonlevel, ite_self]
-private theorem prepF_firstlab (level code : Nat) (st : SearchSt) :
+private theorem prepF_firstlab (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).firstlab = st.firstlab := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.firstlab, ite_self]
-private theorem prepF_firsttc (level code : Nat) (st : SearchSt) :
+private theorem prepF_firsttc (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).firsttc = st.firsttc := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.firsttc, ite_self]
-private theorem prepF_gcaFirst (level code : Nat) (st : SearchSt) :
+private theorem prepF_gcaFirst (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).gcaFirst = st.gcaFirst := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.gcaFirst, ite_self]
-private theorem prepF_gcaCanon (level code : Nat) (st : SearchSt) :
+private theorem prepF_gcaCanon (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).gcaCanon = st.gcaCanon := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.gcaCanon, ite_self]
-private theorem prepF_noncheaplevel (level code : Nat) (st : SearchSt) :
+private theorem prepF_noncheaplevel (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).noncheaplevel = st.noncheaplevel := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.noncheaplevel, ite_self]
-private theorem prepF_allsamelevel (level code : Nat) (st : SearchSt) :
+private theorem prepF_allsamelevel (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).allsamelevel = st.allsamelevel := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.allsamelevel, ite_self]
-private theorem prepF_orbits (level code : Nat) (st : SearchSt) :
+private theorem prepF_orbits (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).orbits = st.orbits := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.orbits, ite_self]
-private theorem prepF_lab (level code : Nat) (st : SearchSt) :
+private theorem prepF_lab (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).lab = st.lab := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.lab, ite_self]
-private theorem prepF_ptn (level code : Nat) (st : SearchSt) :
+private theorem prepF_ptn (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).ptn = st.ptn := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
@@ -1703,7 +1703,7 @@ private theorem prepF_ptn (level code : Nat) (st : SearchSt) :
 
 /-- The fields `otherNodePrep` never writes: everything the store
 invariant, the first-path data, and the unwind bookkeeping read. -/
-theorem otherNodePrep_frames (level code : Nat) (st : SearchSt) :
+theorem otherNodePrep_frames (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).canonlab = st.canonlab ∧
     (otherNodePrep level code st).canong = st.canong ∧
     (otherNodePrep level code st).samerows = st.samerows ∧
@@ -1731,52 +1731,52 @@ theorem otherNodePrep_frames (level code : Nat) (st : SearchSt) :
     prepF_lab level code st,
     prepF_ptn level code st⟩
 
-private theorem recF_canonlab (n inf level : Nat) (st : SearchSt) :
+private theorem recF_canonlab (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).canonlab = st.canonlab := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canonlab, ite_self]
-private theorem recF_canong (n inf level : Nat) (st : SearchSt) :
+private theorem recF_canong (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).canong = st.canong := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canong, ite_self]
-private theorem recF_samerows (n inf level : Nat) (st : SearchSt) :
+private theorem recF_samerows (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).samerows = st.samerows := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.samerows, ite_self]
-private theorem recF_canonlevel (n inf level : Nat) (st : SearchSt) :
+private theorem recF_canonlevel (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).canonlevel = st.canonlevel := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canonlevel, ite_self]
-private theorem recF_firstlab (n inf level : Nat) (st : SearchSt) :
+private theorem recF_firstlab (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).firstlab = st.firstlab := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.firstlab, ite_self]
-private theorem recF_firsttc (n inf level : Nat) (st : SearchSt) :
+private theorem recF_firsttc (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).firsttc = st.firsttc := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.firsttc, ite_self]
-private theorem recF_gcaFirst (n inf level : Nat) (st : SearchSt) :
+private theorem recF_gcaFirst (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).gcaFirst = st.gcaFirst := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.gcaFirst, ite_self]
-private theorem recF_allsamelevel (n inf level : Nat) (st : SearchSt) :
+private theorem recF_allsamelevel (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).allsamelevel = st.allsamelevel := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.allsamelevel, ite_self]
-private theorem recF_orbits (n inf level : Nat) (st : SearchSt) :
+private theorem recF_orbits (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).orbits = st.orbits := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.orbits, ite_self]
-private theorem recF_lab (n inf level : Nat) (st : SearchSt) :
+private theorem recF_lab (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).lab = st.lab := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
@@ -1784,7 +1784,7 @@ private theorem recF_lab (n inf level : Nat) (st : SearchSt) :
 
 /-- The fields `recover` never writes: the store invariant's data,
 the first-path arrays, and the unwind targets. -/
-theorem recover_frames (n inf level : Nat) (st : SearchSt) :
+theorem recover_frames (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).canonlab = st.canonlab ∧
     (recover n inf level st).canong = st.canong ∧
     (recover n inf level st).samerows = st.samerows ∧
@@ -1807,8 +1807,8 @@ theorem recover_frames (n inf level : Nat) (st : SearchSt) :
     recF_lab n inf level st⟩
 
 /-- `CanongInv` passes through `otherNodePrep` untouched. -/
-theorem canongInv_otherNodePrep {ctx : Ctx} {level code : Nat}
-    {st : SearchSt}
+theorem canongInv_otherNodePrep {ctx : Ctx n} {level code : Nat}
+    {st : SearchSt n}
     (h : CanongInv ctx st.canong st.canonlab st.samerows) :
     CanongInv ctx (otherNodePrep level code st).canong
       (otherNodePrep level code st).canonlab
@@ -1817,8 +1817,8 @@ theorem canongInv_otherNodePrep {ctx : Ctx} {level code : Nat}
   exact h
 
 /-- `CanongInv` passes through `recover` untouched. -/
-theorem canongInv_recover {ctx : Ctx} {n inf level : Nat}
-    {st : SearchSt}
+theorem canongInv_recover {ctx : Ctx n} {inf level : Nat}
+    {st : SearchSt n}
     (h : CanongInv ctx st.canong st.canonlab st.samerows) :
     CanongInv ctx (recover n inf level st).canong
       (recover n inf level st).canonlab
@@ -1826,25 +1826,25 @@ theorem canongInv_recover {ctx : Ctx} {n inf level : Nat}
   rw [recF_canong, recF_canonlab, recF_samerows]
   exact h
 
-private theorem prepF_genTrace (level code : Nat) (st : SearchSt) :
+private theorem prepF_genTrace (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).genTrace = st.genTrace := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.genTrace, ite_self]
 
-private theorem prepF_autos (level code : Nat) (st : SearchSt) :
+private theorem prepF_autos (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).autos = st.autos := by
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.autos, ite_self]
 
-private theorem recF_genTrace (n inf level : Nat) (st : SearchSt) :
+private theorem recF_genTrace (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).genTrace = st.genTrace := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.genTrace, ite_self]
 
-private theorem recF_autos (n inf level : Nat) (st : SearchSt) :
+private theorem recF_autos (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).autos = st.autos := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
@@ -1854,12 +1854,12 @@ private theorem recF_autos (n inf level : Nat) (st : SearchSt) :
 the bounded autos workspace pass through `otherNodePrep` and
 `recover` untouched, so both ledger clauses ride the unwind and the
 comparison step by frame. -/
-theorem otherNodePrep_store (level code : Nat) (st : SearchSt) :
+theorem otherNodePrep_store (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).genTrace = st.genTrace ∧
     (otherNodePrep level code st).autos = st.autos :=
   ⟨prepF_genTrace level code st, prepF_autos level code st⟩
 
-theorem recover_store (n inf level : Nat) (st : SearchSt) :
+theorem recover_store (n inf level : Nat) (st : SearchSt n) :
     (recover n inf level st).genTrace = st.genTrace ∧
     (recover n inf level st).autos = st.autos :=
   ⟨recF_genTrace n inf level st, recF_autos n inf level st⟩
@@ -1870,53 +1870,53 @@ end Frames
 
 section Seed
 
-private theorem ftF_firstlab (level : Nat) (st : SearchSt) :
+private theorem ftF_firstlab (level : Nat) (st : SearchSt n) :
     (firstterminal level st).firstlab = st.lab := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_canonlab (level : Nat) (st : SearchSt) :
+private theorem ftF_canonlab (level : Nat) (st : SearchSt n) :
     (firstterminal level st).canonlab = st.lab := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_canong (level : Nat) (st : SearchSt) :
+private theorem ftF_canong (level : Nat) (st : SearchSt n) :
     (firstterminal level st).canong = st.canong := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_samerows (level : Nat) (st : SearchSt) :
+private theorem ftF_samerows (level : Nat) (st : SearchSt n) :
     (firstterminal level st).samerows = 0 := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_eqlevFirst (level : Nat) (st : SearchSt) :
+private theorem ftF_eqlevFirst (level : Nat) (st : SearchSt n) :
     (firstterminal level st).eqlevFirst = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_gcaFirst (level : Nat) (st : SearchSt) :
+private theorem ftF_gcaFirst (level : Nat) (st : SearchSt n) :
     (firstterminal level st).gcaFirst = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_gcaCanon (level : Nat) (st : SearchSt) :
+private theorem ftF_gcaCanon (level : Nat) (st : SearchSt n) :
     (firstterminal level st).gcaCanon = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_allsamelevel (level : Nat) (st : SearchSt) :
+private theorem ftF_allsamelevel (level : Nat) (st : SearchSt n) :
     (firstterminal level st).allsamelevel = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_firstcode (level : Nat) (st : SearchSt) :
+private theorem ftF_firstcode (level : Nat) (st : SearchSt n) :
     (firstterminal level st).firstcode =
       st.firstcode.set! (level + 1) codeSentinel := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_lab (level : Nat) (st : SearchSt) :
+private theorem ftF_lab (level : Nat) (st : SearchSt n) :
     (firstterminal level st).lab = st.lab := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
@@ -1924,7 +1924,7 @@ private theorem ftF_lab (level : Nat) (st : SearchSt) :
 /-- `firstterminal` seeds the first-path machine: the just-installed
 first leaf agrees with itself at full depth. -/
 theorem firstterminal_firstCodeInv {nn : Nat} {cs : List Nat}
-    {st : SearchSt}
+    {st : SearchSt n}
     (hsize : st.firstcode.size = nn + 2)
     (hLnn : cs.length ≤ nn)
     (hfc : ∀ i, 1 ≤ i → i ≤ cs.length →
@@ -1943,8 +1943,8 @@ theorem firstterminal_firstCodeInv {nn : Nat} {cs : List Nat}
 
 /-- `firstterminal` seeds the store invariant: the installed
 `canonlab` with `samerows = 0` is vacuously consistent. -/
-theorem firstterminal_canongInv {ctx : Ctx} {level : Nat}
-    {st : SearchSt} (hg : st.canong.size = ctx.n) :
+theorem firstterminal_canongInv {ctx : Ctx n} {level : Nat}
+    {st : SearchSt n} (hg : st.canong.size = n) :
     CanongInv ctx (firstterminal level st).canong
       (firstterminal level st).canonlab
       (firstterminal level st).samerows := by
@@ -1954,8 +1954,8 @@ theorem firstterminal_canongInv {ctx : Ctx} {level : Nat}
 /-- `firstterminal` seeds the domination clause: the incumbent is
 exactly the first leaf, so the first leaf's key is dominated
 reflexively. -/
-theorem firstterminal_firstKeyLe {ctx : Ctx} {cs : List Nat}
-    {st : SearchSt} :
+theorem firstterminal_firstKeyLe {ctx : Ctx n} {cs : List Nat}
+    {st : SearchSt n} :
     keyLe
       (pathLeafKey ctx cs (firstterminal cs.length st).firstlab)
       (incKey ctx cs (firstterminal cs.length st).canonlab) := by
@@ -1964,19 +1964,19 @@ theorem firstterminal_firstKeyLe {ctx : Ctx} {cs : List Nat}
   rw [pathLeafKey, incKey, keyCmp_eq_iff.mpr rfl]
   decide
 
-private theorem ftF_genTrace (level : Nat) (st : SearchSt) :
+private theorem ftF_genTrace (level : Nat) (st : SearchSt n) :
     (firstterminal level st).genTrace = st.genTrace := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_autos (level : Nat) (st : SearchSt) :
+private theorem ftF_autos (level : Nat) (st : SearchSt n) :
     (firstterminal level st).autos = st.autos := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
 /-- `firstterminal` installs the first leaf without touching either
 store, so both ledger clauses are carried across the seed. -/
-theorem firstterminal_store (level : Nat) (st : SearchSt) :
+theorem firstterminal_store (level : Nat) (st : SearchSt n) :
     (firstterminal level st).genTrace = st.genTrace ∧
     (firstterminal level st).autos = st.autos :=
   ⟨ftF_genTrace level st, ftF_autos level st⟩
@@ -1986,25 +1986,25 @@ end Seed
 /-! # The subtree key under a path prefix -/
 
 /-- The absolute key of a spec subtree below the path codes `cs`. -/
-@[expose] def prefixKey (cs : List Nat) (kk : Key) : Key :=
+@[expose] def prefixKey (cs : List Nat) (kk : Key n) : Key n :=
   ⟨cs ++ kk.codes, kk.rows⟩
 
-theorem prefixKey_nil (kk : Key) : prefixKey [] kk = kk := rfl
+theorem prefixKey_nil (kk : Key n) : prefixKey [] kk = kk := rfl
 
-theorem prefixKey_append (cs ds : List Nat) (kk : Key) :
+theorem prefixKey_append (cs ds : List Nat) (kk : Key n) :
     prefixKey (cs ++ ds) kk = prefixKey cs (prefixKey ds kk) := by
   rw [prefixKey, prefixKey, prefixKey, List.append_assoc]
 
 /-- Prefixing by common path codes commutes with the key maximum. -/
 theorem prefixKey_keyMax :
-    ∀ (cs : List Nat) (k1 k2 : Key),
+    ∀ (cs : List Nat) (k1 k2 : Key n),
       prefixKey cs (keyMax k1 k2) =
         keyMax (prefixKey cs k1) (prefixKey cs k2)
   | [], k1, k2 => by
     rw [prefixKey_nil, prefixKey_nil, prefixKey_nil]
   | c :: cs, k1, k2 => by
     show (⟨c :: (cs ++ (keyMax k1 k2).codes),
-        (keyMax k1 k2).rows⟩ : Key) =
+        (keyMax k1 k2).rows⟩ : Key n) =
       keyMax ⟨c :: (cs ++ k1.codes), k1.rows⟩
         ⟨c :: (cs ++ k2.codes), k2.rows⟩
     rw [keyMax_cons]
@@ -2014,7 +2014,7 @@ theorem prefixKey_keyMax :
 
 /-- A spec leaf's key under the path prefix is the path leaf key of
 the extended path. -/
-theorem prefixKey_leafKey (ctx : Ctx) (cs : List Nat) (code : Nat)
+theorem prefixKey_leafKey (ctx : Ctx n) (cs : List Nat) (code : Nat)
     (r : Array Nat) :
     prefixKey cs ⟨[code, codeSentinel], leafRows ctx r⟩ =
       pathLeafKey ctx (cs ++ [code]) r := by
@@ -2023,10 +2023,10 @@ theorem prefixKey_leafKey (ctx : Ctx) (cs : List Nat) (code : Nat)
 
 /-- The discrete arm of `specNode`, isolated: at a node whose
 refinement is discrete, the subtree key is the leaf key. -/
-theorem specNode_discrete {ctx : Ctx} {tcLevel fuel level : Nat}
-    {lab ptn : Array Nat} {active numcells : Nat}
+theorem specNode_discrete {ctx : Ctx n} {tcLevel fuel level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat}
     (hdisc : discreteAt (refine ctx level lab ptn active
-      numcells).ptn level ctx.n = true) :
+      numcells).ptn level n = true) :
     specNode ctx tcLevel (fuel + 1) level lab ptn active numcells =
       ⟨[(refine ctx level lab ptn active numcells).longcode,
           codeSentinel],
@@ -2036,7 +2036,7 @@ theorem specNode_discrete {ctx : Ctx} {tcLevel fuel level : Nat}
   simp only [hdisc, ite_true]
 
 /-- Prefixing a common code moves it into the path. -/
-theorem prefixKey_cons (cs : List Nat) (code : Nat) (K : Key) :
+theorem prefixKey_cons (cs : List Nat) (code : Nat) (K : Key n) :
     prefixKey cs ⟨code :: K.codes, K.rows⟩ =
       prefixKey (cs ++ [code]) K := by
   rw [prefixKey, prefixKey, List.append_assoc]
@@ -2044,7 +2044,7 @@ theorem prefixKey_cons (cs : List Nat) (code : Nat) (K : Key) :
 
 /-- Prefixing distributes over the seeded list maximum. -/
 theorem prefixKey_keysMax :
-    ∀ (l : List Key) (b : Key) (cs : List Nat),
+    ∀ (l : List (Key n)) (b : Key n) (cs : List Nat),
       prefixKey cs (keysMax b l) =
         keysMax (prefixKey cs b) (l.map (prefixKey cs))
   | [], b, cs => by rw [keysMax, List.map_nil, keysMax]
@@ -2054,11 +2054,11 @@ theorem prefixKey_keysMax :
 
 /-- One child key of a spec node: the subtree below individualizing
 the `o`-th target-cell vertex of the refined state. -/
-@[expose] def specChild (ctx : Ctx) (tcLevel fuel level : Nat)
-    (lab ptn : Array Nat) (active numcells : Nat) (o : Nat) : Key :=
+@[expose] def specChild (ctx : Ctx n) (tcLevel fuel level : Nat)
+    (lab ptn : Array Nat) (active : VSet n) (numcells : Nat) (o : Nat) : Key n :=
   let rs := refine ctx level lab ptn active numcells
   let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-  let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+  let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
     rs.lab[tcr.1 + o]!
   specNode ctx tcLevel fuel (level + 1) br.1 br.2.1 br.2.2
     (rs.numcells + 1)
@@ -2066,11 +2066,11 @@ the `o`-th target-cell vertex of the refined state. -/
 /-- The internal arm of `specNode`, isolated: at a non-discrete node
 the subtree key under the path prefix is the maximum of the
 children's keys under the path extended by the node's own code. -/
-theorem specNode_internal {ctx : Ctx} {tcLevel fuel level : Nat}
-    {lab ptn : Array Nat} {active numcells : Nat} {len : Nat}
+theorem specNode_internal {ctx : Ctx n} {tcLevel fuel level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat} {len : Nat}
     (cs : List Nat)
     (hdisc : discreteAt (refine ctx level lab ptn active
-      numcells).ptn level ctx.n = false)
+      numcells).ptn level n = false)
     (hlen : (specMaketargetcell ctx
         (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn level
@@ -2193,8 +2193,8 @@ ledger of `AutosLedger`, anchored at the root partition `rptn`/`rlab`
 where it is unconditional; the `shortprune`/`longprune` arms move a
 single pair down the path with `pairOk_descend` at the point of
 use. -/
-structure DomOk (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
-    (cs bs fs : List Nat) (numcells : Nat) (st : SearchSt) : Prop where
+structure DomOk (G : Colored n k) (ctx : Ctx n) (rlab rptn : Array Nat)
+    (cs bs fs : List Nat) (numcells : Nat) (st : SearchSt n) : Prop where
   searchOk : SearchOk G (cs.length + 1) numcells st
   codeInv : CodeCmpInv n cs bs st.canoncode st.canonlevel
     st.eqlevCanon st.compCanon
@@ -2203,7 +2203,7 @@ structure DomOk (G : Colored n k) (ctx : Ctx) (rlab rptn : Array Nat)
   stab : ∀ γ ∈ st.genTrace,
     CellStab st.ptn (cs.length + 1) st.lab γ
   genTraceOk : GenTraceOk ctx st
-  autosOk : AutosOk ctx.g rptn rlab 1 ctx.n st.autos
+  autosOk : AutosOk ctx.g rptn rlab 1 st.autos
 
 /-! # The ledgers ride the internal steps
 
@@ -2213,17 +2213,17 @@ are the transport forms the induction applies at the unwind and the
 comparison step. -/
 
 /-- Store validity crosses a frame-preserving step. -/
-theorem genTraceOk_of_eq {ctx : Ctx} {st st' : SearchSt}
+theorem genTraceOk_of_eq {ctx : Ctx n} {st st' : SearchSt n}
     (h : st'.genTrace = st.genTrace) (hok : GenTraceOk ctx st) :
     GenTraceOk ctx st' := by
   intro γ hγ
   exact hok γ (by rwa [h] at hγ)
 
 /-- The `(fix, mcr)` ledger crosses a frame-preserving step. -/
-theorem autosOk_of_eq {g rptn rlab : Array Nat} {nn : Nat}
-    {st st' : SearchSt} (h : st'.autos = st.autos)
-    (hok : AutosOk g rptn rlab 1 nn st.autos) :
-    AutosOk g rptn rlab 1 nn st'.autos := by
+theorem autosOk_of_eq {g : Array (VSet n)} {rptn rlab : Array Nat}
+    {st st' : SearchSt n} (h : st'.autos = st.autos)
+    (hok : AutosOk g rptn rlab 1 st.autos) :
+    AutosOk g rptn rlab 1 st'.autos := by
   rw [h]; exact hok
 
 /-! # The leaf event's row obligations
@@ -2238,51 +2238,50 @@ the run's `gcaFirst`/`firsttc` bookkeeping. -/
 /-- A `testcanlab` tie against the updated store says the leaf's rows
 are the incumbent's: this is the `harm3` obligation of
 `genTraceOk_processnode`, discharged from `DomOk.canongInv`. -/
-theorem rows_eq_of_testcanlab_tie {ctx : Ctx} {st : SearchSt}
+theorem rows_eq_of_testcanlab_tie {ctx : Ctx n} {st : SearchSt n}
     (hinv : CanongInv ctx st.canong st.canonlab st.samerows)
     (h : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1
         = 0) :
     leafRows ctx st.canonlab = leafRows ctx st.lab := by
   rw [testcanlab_fst, rows_of_canongInv (updatecan_inv hinv)] at h
-  have hc : listCmp rowCmp (leafRows ctx st.lab)
+  have hc : listCmp VSet.rowCmp (leafRows ctx st.lab)
       (leafRows ctx st.canonlab) = .eq := by
-    rcases hcc : listCmp rowCmp (leafRows ctx st.lab)
+    rcases hcc : listCmp VSet.rowCmp (leafRows ctx st.lab)
         (leafRows ctx st.canonlab) with _ | _ | _
     · rw [hcc] at h; exact absurd h (by decide)
     · rfl
     · rw [hcc] at h; exact absurd h (by decide)
-  exact ((listCmp_eq_iff (fun _ _ => rowCmp_eq_iff) _ _).mp hc).symm
+  exact ((listCmp_eq_iff (fun _ _ => VSet.rowCmp_eq_iff) _ _).mp hc).symm
 
 /-- Geometric bookkeeping relating a current leaf to the first leaf below
 their greatest common ancestor. This remains useful independently of the
 search admission rule, although code 1 now validates its scatter directly. -/
-def FirstDescOk (ctx : Ctx) (st : SearchSt) : Prop :=
+def FirstDescOk (ctx : Ctx n) (st : SearchSt n) : Prop :=
   st.noncheaplevel ≤ st.gcaFirst →
-    ∃ (r U V : RefineSt) (p₁ p₂ : List (Nat × Nat)) (l₁ l₂ : Nat),
+    ∃ (r U V : RefineSt n) (p₁ p₂ : List (Nat × Nat)) (l₁ l₂ : Nat),
       SubtreeOk ctx st.gcaFirst r ∧
       DescPath ctx st.gcaFirst r p₁ l₁ U ∧
       DescPath ctx st.gcaFirst r p₂ l₂ V ∧
       p₂.map Prod.fst = p₁.map Prod.fst ∧
-      (∀ q, q < ctx.n → U.ptn[q]! ≤ l₁) ∧
-      (∀ q, q < ctx.n → V.ptn[q]! ≤ l₂) ∧
+      (∀ q, q < n → U.ptn[q]! ≤ l₁) ∧
+      (∀ q, q < n → V.ptn[q]! ≤ l₂) ∧
       U.lab = st.lab ∧ V.lab = st.firstlab
 
 /-- Under the descent bookkeeping, a live cheap-cell gate identifies the
 current leaf's rows with the first leaf's rows. -/
-theorem rows_eq_of_firstDescOk {ctx : Ctx} {st : SearchSt}
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+theorem rows_eq_of_firstDescOk {ctx : Ctx n} {st : SearchSt n}
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hdesc : FirstDescOk ctx st)
     (hgate : st.noncheaplevel ≤ st.gcaFirst) :
     leafRows ctx st.firstlab = leafRows ctx st.lab := by
   obtain ⟨r, U, V, p₁, p₂, l₁, l₂, hS, hU, hV, htcs, hUd, hVd,
     hUl, hVl⟩ := hdesc hgate
   rw [← hUl, ← hVl]
-  exact leafRows_eq_of_descPaths hgsz hgb hsymm hloop hS hU hV htcs
+  exact leafRows_eq_of_descPaths hgsz hsymm hloop hS hU hV htcs
     hUd hVd
 
 /-! # Discreteness gives the node invariant
@@ -2313,10 +2312,10 @@ theorem bcount_of_discrete {ptn : Array Nat} {level nn : Nat}
   exact decide_eq_true (hdisc q (List.mem_range.mp hq))
 
 /-- Singleton cells are the first-branch shape. -/
-theorem smallShape_of_discrete {ctx : Ctx} {ptn : Array Nat}
-    {level : Nat} (hnn : ctx.n ≤ ptn.size)
+theorem smallShape_of_discrete {ctx : Ctx n} {ptn : Array Nat}
+    {level : Nat} (hnn : n ≤ ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level)
-    (hdisc : ∀ q, q < ctx.n → ptn[q]! ≤ level) :
+    (hdisc : ∀ q, q < n → ptn[q]! ≤ level) :
     SmallShape ctx level ptn := by
   intro q hq
   exact Or.inl (by
@@ -2324,10 +2323,10 @@ theorem smallShape_of_discrete {ctx : Ctx} {ptn : Array Nat}
 
 /-- The node invariant at a discrete node: only the iteration
 invariant and the cell count are owed. -/
-theorem subtreeOk_of_discrete {ctx : Ctx} {level : Nat} {r : RefineSt}
+theorem subtreeOk_of_discrete {ctx : Ctx n} {level : Nat} {r : RefineSt n}
     (hIt : IterOk ctx level r)
-    (hdisc : ∀ q, q < ctx.n → r.ptn[q]! ≤ level)
-    (hnc : r.numcells = ctx.n) :
+    (hdisc : ∀ q, q < n → r.ptn[q]! ≤ level)
+    (hnc : r.numcells = n) :
     SubtreeOk ctx level r := by
   have hpsz := hIt.ok.ptnSize
   refine ⟨hIt, ?_, ?_, Or.inl ?_⟩
@@ -2345,10 +2344,10 @@ the unwind carries it whenever the gate it leaves behind is dead. -/
 
 /-- `firstterminal` seeds the descent bookkeeping: the leaf it
 installs is both descents, taken from the node by the empty path. -/
-theorem firstterminal_firstDescOk {ctx : Ctx} {level : Nat}
-    {st : SearchSt} {r : RefineSt}
+theorem firstterminal_firstDescOk {ctx : Ctx n} {level : Nat}
+    {st : SearchSt n} {r : RefineSt n}
     (hS : SubtreeOk ctx level r)
-    (hdisc : ∀ q, q < ctx.n → r.ptn[q]! ≤ level)
+    (hdisc : ∀ q, q < n → r.ptn[q]! ≤ level)
     (hlab : r.lab = st.lab) :
     FirstDescOk ctx (firstterminal level st) := by
   intro _
@@ -2358,7 +2357,7 @@ theorem firstterminal_firstDescOk {ctx : Ctx} {level : Nat}
 
 /-- The descent bookkeeping crosses a step that moves neither
 labelling nor the gate. -/
-theorem firstDescOk_of_eq {ctx : Ctx} {st st' : SearchSt}
+theorem firstDescOk_of_eq {ctx : Ctx n} {st st' : SearchSt n}
     (hlab : st'.lab = st.lab) (hfl : st'.firstlab = st.firstlab)
     (hgca : st'.gcaFirst = st.gcaFirst)
     (hncl : st'.noncheaplevel = st.noncheaplevel)
@@ -2370,15 +2369,15 @@ theorem firstDescOk_of_eq {ctx : Ctx} {st st' : SearchSt}
 
 /-- The comparison step writes only the incumbent machine, so the
 descent bookkeeping crosses it by frame. -/
-theorem otherNodePrep_firstDescOk {ctx : Ctx} {level code : Nat}
-    {st : SearchSt} (h : FirstDescOk ctx st) :
+theorem otherNodePrep_firstDescOk {ctx : Ctx n} {level code : Nat}
+    {st : SearchSt n} (h : FirstDescOk ctx st) :
     FirstDescOk ctx (otherNodePrep level code st) :=
   firstDescOk_of_eq (prepF_lab level code st)
     (prepF_firstlab level code st) (prepF_gcaFirst level code st)
     (prepF_noncheaplevel level code st) h
 
 private theorem recF_noncheaplevel (n inf level : Nat)
-    (st : SearchSt) :
+    (st : SearchSt n) :
     (recover n inf level st).noncheaplevel =
       if level < st.noncheaplevel then level + 1
       else st.noncheaplevel := by
@@ -2392,8 +2391,8 @@ found it: returning to a level at or above the gca pushes
 `noncheaplevel` past the gca, and returning where the gate level is
 already at or below the return level does not move it. The side
 condition is the unwind protocol's own bookkeeping. -/
-theorem recover_firstDescOk {ctx : Ctx} {n inf level : Nat}
-    {st : SearchSt} (h : FirstDescOk ctx st)
+theorem recover_firstDescOk {ctx : Ctx n} {inf level : Nat}
+    {st : SearchSt n} (h : FirstDescOk ctx st)
     (hlvl : st.gcaFirst ≤ level ∨ st.noncheaplevel ≤ level) :
     FirstDescOk ctx (recover n inf level st) := by
   intro hgate
@@ -2403,8 +2402,8 @@ theorem recover_firstDescOk {ctx : Ctx} {n inf level : Nat}
   rcases hlvl with hle | hle <;> split at hgate <;> omega
 
 /-- A recorded descent advances the level by its path length. -/
-theorem descPath_level {ctx : Ctx} {level level' : Nat}
-    {r U : RefineSt} {p : List (Nat × Nat)}
+theorem descPath_level {ctx : Ctx n} {level level' : Nat}
+    {r U : RefineSt n} {p : List (Nat × Nat)}
     (h : DescPath ctx level r p level' U) :
     level' = level + p.length := by
   induction h with
@@ -2422,11 +2421,11 @@ rather than carried as a field of `DomOk`: as a field it would be
 false at every interior node the search passes with the gate open,
 and the events above establish only that nothing between the seed and
 the gate disturbs it. -/
-theorem firstDescOk_depth {ctx : Ctx} {st : SearchSt}
+theorem firstDescOk_depth {ctx : Ctx n} {st : SearchSt n}
     (h : FirstDescOk ctx st) (hgate : st.noncheaplevel ≤ st.gcaFirst) :
-    ∃ (U V : RefineSt) (l : Nat),
-      (∀ q, q < ctx.n → U.ptn[q]! ≤ l) ∧
-      (∀ q, q < ctx.n → V.ptn[q]! ≤ l) ∧
+    ∃ (U V : RefineSt n) (l : Nat),
+      (∀ q, q < n → U.ptn[q]! ≤ l) ∧
+      (∀ q, q < n → V.ptn[q]! ≤ l) ∧
       U.lab = st.lab ∧ V.lab = st.firstlab := by
   obtain ⟨r, U, V, p₁, p₂, l₁, l₂, hS, hU, hV, htcs, hUd, hVd,
     hUl, hVl⟩ := h hgate
@@ -2478,20 +2477,18 @@ installed from a reached labelling. -/
 /-- Store validity survives the admission event under the node invariant:
 the code-2 row tie comes from the record's canonical-row invariant, while
 code 1 is validated by its mandatory scan. -/
-theorem genTraceOk_processnode_of_domOk {G : Colored n k} {ctx : Ctx}
+theorem genTraceOk_processnode_of_domOk {G : Colored n k} {ctx : Ctx n}
     {rlab rptn : Array Nat} {cs bs fs : List Nat}
-    {numcells level nc : Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {numcells level nc : Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
     (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
     (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
     GenTraceOk ctx (processnode ctx level nc st).2 := by
-  subst hn
-  exact genTraceOk_processnode hdom.genTraceOk hgb hsymm hloop
+  exact genTraceOk_processnode hdom.genTraceOk hsymm hloop
     hfsz (labOk_of_reach hfsz hfre) (labInj_of_reach hfsz hn0 hfre)
     hdom.searchOk.labSize
     (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
@@ -2501,22 +2498,20 @@ theorem genTraceOk_processnode_of_domOk {G : Colored n k} {ctx : Ctx}
 
 /-- The same packaging for the scatter itself: the generator the
 admission records is a checked automorphism. -/
-theorem processnode_checkAutom_of_domOk {G : Colored n k} {ctx : Ctx}
+theorem processnode_checkAutom_of_domOk {G : Colored n k} {ctx : Ctx n}
     {rlab rptn : Array Nat} {cs bs fs : List Nat}
-    {numcells level nc : Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {numcells level nc : Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
     (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
     (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
     (processnode ctx level nc st).2.genTrace = st.genTrace ∨
     ∃ γ, (processnode ctx level nc st).2.genTrace =
-        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true := by
-  subst hn
-  exact processnode_checkAutom hgb hsymm hloop
+        st.genTrace.push γ ∧ checkAutom ctx.g γ = true := by
+  exact processnode_checkAutom hsymm hloop
     hfsz (labOk_of_reach hfsz hfre) (labInj_of_reach hfsz hn0 hfre)
     hdom.searchOk.labSize
     (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
@@ -2545,7 +2540,7 @@ private theorem getElem!_take'' {l : List Nat} {m i : Nat}
     List.getElem_take]
 
 /-- A seeded maximum over dominated keys is the seed. -/
-theorem keysMax_absorb {b : Key} {l : List Key}
+theorem keysMax_absorb {b : Key n} {l : List (Key n)}
     (h : ∀ y ∈ l, keyLe y b) : keysMax b l = b :=
   keysMax_eq_of_le (keyLe_refl b) h (Or.inl rfl)
 
@@ -2589,17 +2584,17 @@ theorem codeInv_take_listCmp_lt {nn : Nat} {cs bs : List Nat}
 truncated path is dominated once the machine froze downward at or
 above the truncation level. -/
 theorem frozen_take_keyCmp_lt {nn : Nat} {cs bs : List Nat}
-    {ctx : Ctx} {canoncode : Array Nat} {canonlevel : Nat}
+    {ctx : Ctx n} {canoncode : Array Nat} {canonlevel : Nat}
     {eqlevCanon : Int} {canonlab : Array Nat}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
     {M : Nat} (hM : eqlevCanon.toNat < M) (hMcs : M ≤ cs.length)
-    (K : Key) :
+    (K : Key n) :
     keyCmp (prefixKey (cs.take M) K) (incKey ctx bs canonlab) =
       .lt := by
   rw [prefixKey, incKey, keyCmp]
   show (match listCmp compare (cs.take M ++ K.codes)
       (bs ++ [codeSentinel]) with
-    | .eq => listCmp rowCmp K.rows (leafRows ctx canonlab)
+    | .eq => listCmp VSet.rowCmp K.rows (leafRows ctx canonlab)
     | .lt => .lt
     | .gt => .gt) = .lt
   rw [codeInv_take_listCmp_lt hinv hM hMcs K.codes]
@@ -2607,11 +2602,11 @@ theorem frozen_take_keyCmp_lt {nn : Nat} {cs bs : List Nat}
 /-- `frozen_take_keyCmp_lt` in the `keyLe` form the absorption
 consumes. -/
 theorem frozen_take_keyLe {nn : Nat} {cs bs : List Nat}
-    {ctx : Ctx} {canoncode : Array Nat} {canonlevel : Nat}
+    {ctx : Ctx n} {canoncode : Array Nat} {canonlevel : Nat}
     {eqlevCanon : Int} {canonlab : Array Nat}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
     {M : Nat} (hM : eqlevCanon.toNat < M) (hMcs : M ≤ cs.length)
-    (K : Key) :
+    (K : Key n) :
     keyLe (prefixKey (cs.take M) K) (incKey ctx bs canonlab) := by
   show keyCmp _ _ ≠ .gt
   rw [frozen_take_keyCmp_lt hinv hM hMcs K]
@@ -2620,11 +2615,11 @@ theorem frozen_take_keyLe {nn : Nat} {cs bs : List Nat}
 
 /-- The whole-path instance: with the machine frozen downward, every
 subtree below the current path is dominated. -/
-theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
+theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon : Int}
     {canonlab : Array Nat}
     (hinv : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon (-1))
-    (K : Key) :
+    (K : Key n) :
     keyLe (prefixKey cs K) (incKey ctx bs canonlab) := by
   have hM : eqlevCanon.toNat < cs.length := by
     rcases hinv.tri with ⟨hcc, -⟩ |
@@ -2643,11 +2638,11 @@ theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
 /-- A child's subtree key is dominated by its node's: the chain step
 of the generator-return absorption, walked from a skipped sibling up
 to the child of the loop that continues. -/
-theorem specChild_le_specNode {ctx : Ctx} {tcLevel fuel level : Nat}
-    {lab ptn : Array Nat} {active numcells : Nat} {len : Nat}
+theorem specChild_le_specNode {ctx : Ctx n} {tcLevel fuel level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat} {len : Nat}
     (cs : List Nat)
     (hdisc : discreteAt (refine ctx level lab ptn active
-      numcells).ptn level ctx.n = false)
+      numcells).ptn level n = false)
     (hlen : (specMaketargetcell ctx
         (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn level
@@ -2683,9 +2678,9 @@ subtree be absorbed here. -/
 /-- A checked automorphism stabilizing the refined node's cells and
 carrying one target-cell vertex onto another identifies the two
 children's subtree keys. -/
-theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
+theorem childKey_of_carried {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {γ : Array Nat}
-    (hAut : checkAutom ctx.g γ ctx.n = true)
+    (hAut : checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : CellStab rsPtn level rsLab γ)
@@ -2700,7 +2695,6 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
   rcases Decidable.em (o = o') with rfl | hne
   · rfl
-  rw [hn] at hAut
   obtain ⟨σ, hσeq, hσrows⟩ := checkAutom_sound hgsz hAut
   have hvO : rsLab[tc + o]! < n := hok _ (by omega)
   have hvO' : rsLab[tc + o']! < n := hok _ (by omega)
@@ -2708,12 +2702,12 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
     rw [hσeq _ hvO']
     exact hcarry
   obtain ⟨L, rfl⟩ : ∃ L, lenT = L + 1 := ⟨lenT - 1, by omega⟩
-  have hbsz : (breakout rsLab rsPtn (level + 1) tc
+  have hbsz : (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o']!).1.size = n := by
     show (breakout.go rsLab[tc + o']! (rsLab.size + 1) rsLab tc
       rsLab[tc + o']!).size = n
     rw [breakout_go_size, hs]
-  have hsegO : segN (breakout rsLab rsPtn (level + 1) tc
+  have hsegO : segN (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o]!).1 tc (L + 1) =
       rsLab[tc + o]! ::
         (segN rsLab tc (L + 1)).erase rsLab[tc + o]! := by
@@ -2722,7 +2716,7 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
     exact breakout_go_seg (rsLab.size + 1) (L + 1) rsLab tc
       rsLab[tc + o]! ⟨tc + o, by omega, by omega, by omega, rfl⟩
       (by omega) (by omega)
-  have hsegO' : segN (breakout rsLab rsPtn (level + 1) tc
+  have hsegO' : segN (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o']!).1 tc (L + 1) =
       rsLab[tc + o']! ::
         (segN rsLab tc (L + 1)).erase rsLab[tc + o']! := by
@@ -2755,8 +2749,8 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
     have h := hend
     rwa [hsp] at h
   have hcp : cellsPerm (rsPtn.set! tc (level + 1)) (level + 1)
-      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-      ((breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1.map
+      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+      ((breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1.map
         σ.toFun) := by
     refine cellsPerm_set! hicS (by omega) (Nat.le_refl tc)
       (by omega) ?_ ?_ ?_
@@ -2783,7 +2777,7 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
       exact ((List.perm_cons_erase hvoC).symm.trans
         (hCstab.trans h5)).cons_inv
     · intro a l hicA hdisj
-      have hlabOeq : segN (breakout rsLab rsPtn (level + 1) tc
+      have hlabOeq : segN (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o]!).1 a l = segN rsLab a l := by
         refine segN_congr fun q hq => ?_
         show (breakout.go rsLab[tc + o]! (rsLab.size + 1) rsLab tc
@@ -2792,7 +2786,7 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
         · exact breakout_go_outside _ _ _ _ _ (by omega)
         · exact breakout_go_outside_right _ (L + 1) _ _ _
             ⟨tc + o, by omega, by omega, by omega, rfl⟩ _ (by omega)
-      have hlabO'eq : segN (breakout rsLab rsPtn (level + 1) tc
+      have hlabO'eq : segN (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o']!).1 a l = segN rsLab a l := by
         refine segN_congr fun q hq => ?_
         show (breakout.go rsLab[tc + o']! (rsLab.size + 1) rsLab tc
@@ -2826,19 +2820,19 @@ theorem childKey_of_carried {ctx : Ctx} (hn : ctx.n = n)
         subst hl1
         rw [hlabOeq, segN_cons, segN_zero, segN_cons, segN_zero,
           getElem!_neg rsLab a (by omega),
-          getElem!_neg ((breakout rsLab rsPtn (level + 1) tc
+          getElem!_neg ((breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o']!).1.map σ.toFun) a
             (by rw [Array.size_map, hbsz]; omega)]
   have hokc := childNodeOk hs hok hsp hend hvals hic hrange ho
   have hokc' := childNodeOk hs hok hsp hend hvals hic hrange ho'
-  exact (specNode_autom hn hσrows tcLevel fuel (level + 1)
-    (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
-    (lab₂ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
-    (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).2.1)
-    (active := (breakout rsLab rsPtn (level + 1) tc
+  exact (specNode_autom hσrows tcLevel fuel (level + 1)
+    (lab₁ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+    (lab₂ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
+    (ptn := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).2.1)
+    (active := (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o']!).2.2)
     (numcells := numcells + 1) hcp hokc.labSize hokc'.labSize
-    hokc.labOk hokc'.labOk hokc'.ptnSize hokc'.act hokc'.ptnEnd
+    hokc.labOk hokc'.labOk hokc'.ptnSize hokc'.ptnEnd
     hokc'.starts hokc'.vals (by omega)).symm
 
 end Hex.GraphIso.Nauty
