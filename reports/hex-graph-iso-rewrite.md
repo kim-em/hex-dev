@@ -142,7 +142,7 @@ separator halves of `Separator`/`SeparatorPacked`, `NodeLit`/`NodePacked`/
 | `Nauty/Complete.lean` | `keyLe_cons_tail` to `Cert` |
 | `Nauty/TargetCell.lean` outside the closure of `maketargetcell_eq_spec` (:284) | closure to `Invariant/TargetCell` |
 | `Nauty/QuartetStmt.lean:171-591` (`dominated_of_root` :566, `certifyCanon?_isSome_of_root` :580) | `nodeKey` :50, `stInc` :82, `stInc_eq_ghost` :115 to `Invariant/Incumbent` |
-| `Nauty/SearchOutcome.lean:1884-1931` (`dominated_of_result`, `certifyCanon?_isSome_of_result`) | none |
+| `Nauty/Correct/Outcome.lean` (`dominated_of_result`, `certifyCanon?_isSome_of_result`) | none |
 | `Nauty/Domination.lean`: the 97 declarations outside the closure of the live names, including `FirstDescOk` (2260-2425) | live set to `Invariant/Domination` |
 | `SmallCellBranch.lean` `hOdd_of_defect_le` | none. The all-leaves theorem `descPath_leafRows_all` (`SmallCellAll.lean:95`) and its chain are dead in the literal-port proof only because that port always runs `isautom`; the spike restores nauty's admission test and Phase B consumes them. Keep, reorganized. |
 | `Ops.lean:182-338`, `Canon.lean` `SearchLimits`/`searchCost`, `Tactic.lean:61-69` | none |
@@ -206,8 +206,8 @@ list stays but is registered by an attribute rather than a hardcoded name.
 
 - Module docstrings rewritten to content only. Worst offenders:
   `Domination`, `Translator`, `Tactic`, `SmallCell*`, `CanonForm`,
-  `NodeLit`, `NodePacked`, `IsoLit`, `Equitable`, `SearchOutcomeExit`,
-  `SearchOutcomeMutual`; 71 files match the narration patterns
+  `NodeLit`, `NodePacked`, `IsoLit`, `Equitable`, `Correct/Exit`,
+  `Correct/RunInv`; 71 files match the narration patterns
   (`obligation`, `sweep`, `B2`, `landed`, `the old`, `the fix`, `probe
   showed`, embedded numbered plans, "SPEC § Verified search refinement").
   Written once, for the final modules, after the moves.
@@ -416,7 +416,7 @@ so the two designs converge:
 
 ### B2. cheapautom rewrite (independent of B1)
 
-The live consumer is `pairOk_fmptn_of_subtree` (`SearchOutcomeLedger.lean:219`),
+The live consumer is `pairOk_fmptn_of_subtree` (`Correct/State.lean`),
 which needs: for an equitable partition with `cheapautom`, the cell
 stabilizer in `Aut(G)` acts transitively on every cell
 (`stabilizer_transitive`, signature kept), plus the all-leaves theorem for
@@ -453,7 +453,7 @@ name, keeping the correspondence table). Net about 20k lines fewer, plus
 5.5k from B2.
 
 Risks in order: the cheap-return witness (code equality across a cheap
-subtree; confirm the reusable statement early from `SearchOutcomePrune`
+subtree; confirm the reusable statement early from `Correct/Exit`
 and `SmallCellTie`); typeclass specialisation of the mutual recursion
 (mitigated by direct-then-refactor); `Exit.fuel` unreachability (small,
 the level-versus-fuel bound); reach re-proof (mechanical).
