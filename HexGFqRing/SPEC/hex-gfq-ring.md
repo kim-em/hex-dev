@@ -64,12 +64,15 @@ supports a field structure; that extension belongs to hex-gfq-field.
 
 ## Fast-arithmetic adoption
 
-The quotient multiplication operation now calls `FpPoly.mulFast`; its
+The quotient multiplication operation calls `FpPoly.mulPackedFast`; the
 coefficient-owner dispatcher retains schoolbook multiplication below 16
-coefficients and selects packed or NTT-backed multiplication above the measured
-boundaries. Square-and-multiply exponentiation inherits that choice. Canonical
-representatives and every `reduceMod` theorem are unchanged because
-`FpPoly.mulFast_eq` identifies the selected product with `DensePoly.mul`.
+coefficients and selects the packed lazy-reduction kernel above that measured
+boundary. (The NTT-backed tail of `FpPoly.mulFast` depends on unpublished
+libraries and only engages above 8192 coefficients, far beyond every degree
+measured here; the published consumers switch to it when hex-poly-fast is
+released, https://github.com/kim-em/hex-dev/issues/10001.) Square-and-multiply exponentiation inherits that choice.
+Canonical representatives and every `reduceMod` theorem are unchanged because
+`FpPoly.mulPackedFast_eq` identifies the selected product with `DensePoly.mul`.
 
 Three warm outer trials on `chungus2`, Lean `4.34.0-rc2`, over `F_65537` give
 these representative medians; all result hashes agree:

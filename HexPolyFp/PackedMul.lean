@@ -210,5 +210,30 @@ theorem mulPacked_eq (a b : FpPoly p) : mulPacked a b = a * b := by
     ← convolveFold_eq a b k]
   exact convGetD_mod a b k
 
+/-- Shorter-size threshold below which generic schoolbook multiplication beats
+the packed lazy-reduction setup.  The forced `F_257` and `F_65537` ladders both
+cross between 8 and 16 coefficients per operand. -/
+@[expose] def packedCutoff : Nat := 16
+
+/-- Total finite-field multiplication for the published consumers: generic
+schoolbook multiplication below `packedCutoff` coefficients in the shorter
+operand, the packed lazy-reduction kernel above it.  This is the `mulFast`
+dispatcher without its auxiliary-prime NTT and Karatsuba tail, which lives in
+`HexPolyFp.NttMul` and depends on libraries that are not yet published; every
+measured consumer size sits below that tail's 8192-coefficient crossover. -/
+def mulPackedFast (left right : FpPoly p) : FpPoly p :=
+  if min left.size right.size < packedCutoff then
+    left * right
+  else
+    mulPacked left right
+
+/-- The published dispatcher agrees with schoolbook multiplication. -/
+theorem mulPackedFast_eq (left right : FpPoly p) :
+    mulPackedFast left right = left * right := by
+  unfold mulPackedFast
+  split
+  · rfl
+  · exact mulPacked_eq left right
+
 end FpPoly
 end Hex
