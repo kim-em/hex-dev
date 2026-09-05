@@ -70,6 +70,11 @@ theorem cond_ble {α : Type} (a b : Nat) (x y : α) :
   · simp [h, Nat.ble_eq]
   · simp [h, Nat.ble_eq]
 
+theorem beq_eq_beq (a b : Nat) : Nat.beq a b = (a == b) := by
+  rcases hb : Nat.beq a b with _ | _
+  · exact (beq_eq_false_iff_ne.mpr (Nat.ne_of_beq_eq_false hb)).symm
+  · exact (beq_iff_eq.mpr (Nat.eq_of_beq_eq_true hb)).symm
+
 theorem cond_beq_true {α : Type} (a : Bool) (x y : α) :
     cond a x y = if a = true then x else y := by
   cases a <;> rfl
@@ -262,7 +267,7 @@ beyond `len` is the identity, matching `List.set`. -/
     a
 
 /-- Every entry below `2 ^ w`. -/
-def Small (w : Nat) (l : List Nat) : Prop := ∀ x, x ∈ l → x < 2 ^ w
+@[expose] def Small (w : Nat) (l : List Nat) : Prop := ∀ x, x ∈ l → x < 2 ^ w
 
 theorem pack_cons (w x : Nat) (l : List Nat) :
     pack w (x :: l) = x + 2 ^ w * pack w l := by
