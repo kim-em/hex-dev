@@ -904,6 +904,87 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
     return added
 
 
+def _hex_import_roots(entry: dict, clone: Path) -> set[str]:
+    """Hex library roots the synced sources import directly."""
+    pattern = re.compile(
+        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Hex[A-Za-z0-9]*)",
+        re.M)
+    roots: set[str] = set()
+    for src, dest_rel, is_dir in managed_paths(entry):
+        dest = clone / dest_rel
+        files = list(dest.rglob("*.lean")) if is_dir else (
+            [dest] if dest.suffix == ".lean" else [])
+        for lean in files:
+            if lean.is_file():
+                roots.update(pattern.findall(lean.read_text(encoding="utf-8")))
+    roots.discard(entry.get("lib", ""))
+    return roots
+
+
+def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
+                     dep_owner: dict[str, str],
+                     catalog: dict[str, dict[str, str]] | None = None) -> list[str]:
+    """Require directly every published library the sources import directly.
+
+    Inside the monorepo one root Lake file requires everything, so a library
+    may import an upstream that its own mirror's Lake file has never
+    required, and the mirror only builds while some other dependency happens
+    to pull that upstream in. Once the upstream is split out (hex-arith from
+    hex-bareiss) or a dependency stops requiring it, the mirror fails with
+    "unknown module prefix". A direct require for each direct import is
+    always correct and never redundant enough to matter, so the sync appends
+    the missing ones at the synced revision: a `[[require]]` block before the
+    first target in `lakefile.toml`, or a `require ... from git` after the
+    last one in `lakefile.lean`.
+    """
+    notes: list[str] = []
+    pins = entry.get("pins") or []
+    if entry.get("pins_only") or not pins:
+        return notes
+    if catalog is None:
+        catalog = _manifest_catalog()
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    if not lakefile.is_file():
+        return notes
+    text = lakefile.read_text(encoding="utf-8")
+    roots = _hex_import_roots(entry, clone)
+    additions: list[tuple[str, str, str]] = []
+    for dep in pins:
+        spec = catalog.get(dep)
+        if spec is None or not spec["lib"] or spec["lib"] not in roots:
+            continue
+        if f"{dep}.git" in text or dep not in synced:
+            continue
+        owner = dep_owner.get(dep, "leanprover")
+        additions.append((dep, spec["lib"], f"https://github.com/{owner}/{dep}.git"))
+    if not additions:
+        return notes
+    if entry["lakefile"] == "toml":
+        block = "".join(
+            f'[[require]]\nname = "{lib}"\ngit = "{url}"\nrev = "{synced[dep]}"\n\n'
+            for dep, lib, url in additions)
+        anchor = re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
+        if anchor:
+            text = text[:anchor.start()] + block + text[anchor.start():]
+        else:
+            text = text.rstrip("\n") + "\n\n" + block
+    else:
+        block = "".join(
+            f'\nrequire {lib} from git\n  "{url}" @ "{synced[dep]}"\n'
+            for dep, lib, url in additions)
+        requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
+        if requires:
+            end = requires[-1].end()
+        else:
+            package = re.search(r"(?ms)^package\b.*?(?=^\S|\Z)", text)
+            end = package.end() if package else len(text)
+        text = text[:end] + block + text[end:]
+    lakefile.write_text(text, encoding="utf-8")
+    for dep, lib, _url in additions:
+        notes.append(f"  require + {dep} ({lib}) -> {synced[dep][:12]} ({lakefile.name})")
+    return notes
+
+
 def validate_external_imports(entry: dict, clone: Path) -> None:
     """Require the mirror's Lake file to provide every non-Hex import root.
 
@@ -977,6 +1058,8 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         for line in rewrite_toolchains(clone):
             print(line)
         for line in rewrite_external_pins(clone, pins):
+            print(line)
+        for line in rewrite_requires(entry, clone, synced, dep_owner):
             print(line)
         for line in rewrite_pins(entry, clone, synced, dep_owner):
             print(line)

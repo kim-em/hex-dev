@@ -213,11 +213,15 @@ the old revision. A published dependency that the mirror's lockfile has
 never seen (a library split out upstream, or a companion that gained a
 requirement) is appended as a new lockfile entry at its synced revision,
 since Lake otherwise refuses to build with "dependency X of Y not in
-manifest". The sync also refuses, before pushing anything, to publish a
-library whose sources import `Batteries` or `Mathlib` when the mirror's
-Lake file requires no package providing them: inside the monorepo those
-imports always resolve, in a mirror they resolve only through its own
-`require`s.
+manifest". A published library that the sources import directly but the
+mirror's Lake file never required is added as a direct `require` at its
+synced revision, since otherwise the mirror builds only while some other
+dependency happens to pull that library in (hex-bareiss lost `HexArith`
+this way when it was split out). The sync also refuses, before pushing
+anything, to publish a library whose sources import `Batteries` or
+`Mathlib` when the mirror's Lake file requires no package providing them:
+inside the monorepo those imports always resolve, in a mirror they resolve
+only through its own `require`s.
 
 ### Publishing a new library: widen a token first
 

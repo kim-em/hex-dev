@@ -414,6 +414,62 @@ class SyncReleasedTests(unittest.TestCase):
             "import Mathlib.Tactic\nimport Batteries.Data.Vector\n")
         sync_released.validate_external_imports(entry, self.repo)
 
+    def test_direct_imports_gain_direct_requires_in_toml(self) -> None:
+        lib = self.repo / "HexProbe"
+        lib.mkdir()
+        (lib / "Basic.lean").write_text(
+            "module\n\npublic import HexArith.Basic\nimport HexMatrix\n"
+            "import HexProbe.Other\n", encoding="utf-8")
+        (self.repo / "lakefile.toml").write_text(
+            'name = "hex-probe"\n\n[[require]]\nname = "HexMatrix"\n'
+            'git = "https://github.com/leanprover/hex-matrix.git"\nrev = "0"\n\n'
+            '[[lean_lib]]\nname = "HexProbe"\n', encoding="utf-8")
+        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                 "lakefile": "toml", "readme": False,
+                 "pins": ["hex-basic", "hex-arith", "hex-matrix"]}
+        synced = {"hex-basic": "a" * 40, "hex-arith": "b" * 40,
+                  "hex-matrix": "c" * 40}
+        catalog = {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
+                   "hex-arith": {"lib": "HexArith", "lakefile": "lean"},
+                   "hex-matrix": {"lib": "HexMatrix", "lakefile": "toml"}}
+        notes = sync_released.rewrite_requires(
+            entry, self.repo, synced, {}, catalog)
+        text = (self.repo / "lakefile.toml").read_text()
+        self.assertEqual(notes, [
+            f'  require + hex-arith (HexArith) -> {"b" * 12} (lakefile.toml)'])
+        self.assertNotIn("hex-basic.git", text)
+        block = ('[[require]]\nname = "HexArith"\n'
+                 'git = "https://github.com/leanprover/hex-arith.git"\n'
+                 f'rev = "{"b" * 40}"\n\n[[lean_lib]]')
+        self.assertIn(block, text)
+        self.assertEqual(text.count("[[require]]"), 2)
+        self.assertEqual(
+            sync_released.rewrite_requires(entry, self.repo, synced, {}, catalog),
+            [])
+
+    def test_direct_imports_gain_direct_requires_in_lean(self) -> None:
+        lib = self.repo / "HexProbe"
+        lib.mkdir()
+        (lib / "Basic.lean").write_text(
+            "import HexBasic.Core\n", encoding="utf-8")
+        (self.repo / "lakefile.lean").write_text(
+            "import Lake\n\nopen Lake DSL\n\npackage «hex-probe» where\n"
+            "  leanOptions := #[]\n\nrequire HexArith from git\n"
+            '  "https://github.com/leanprover/hex-arith.git" @ "0"\n\n'
+            "@[default_target]\nlean_lib HexProbe\n", encoding="utf-8")
+        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
+                 "lakefile": "lean", "readme": False,
+                 "pins": ["hex-basic", "hex-arith"]}
+        sync_released.rewrite_requires(
+            entry, self.repo, {"hex-basic": "a" * 40, "hex-arith": "b" * 40}, {},
+            {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
+             "hex-arith": {"lib": "HexArith", "lakefile": "lean"}})
+        text = (self.repo / "lakefile.lean").read_text()
+        self.assertIn(
+            '@ "0"\n\nrequire HexBasic from git\n'
+            f'  "https://github.com/leanprover/hex-basic.git" @ "{"a" * 40}"\n\n'
+            "@[default_target]", text)
+
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()
         with self.assertRaisesRegex(RuntimeError, "no root lean-toolchain"):
