@@ -1131,6 +1131,206 @@ setup_benchmark runTowerDivLadder n => n * n * (Nat.log2 (n + 2) + 1)
     signalFloorMultiplier := 1.0
   }
 
+/-! # Untimed inversion-chain replay
+
+`tower-inv-chain-stats` replays the top-level monic extended gcd that
+`Arithmetic.invCoords` runs on the `runTowerInvLadder` fixture, outside any
+timed region, and prints one CSV row per gcd step and rung. Every lower-field
+inversion the chain performs is itself replayed as the ℚ-level monic chain it
+is, with the same operation-count and limb-width accounting the HexNumberField
+bench uses for `qadjoin-inv-chain-stats`; lower-field products are charged
+`n * (limbs a + limbs b)` for the `n²` coordinate products of a degree-`n`
+schoolbook multiplication under the same linear-width proxy. The counts
+validate the source derivation of the registered model; they are never fitted
+to timings. -/
+
+private def natBitLength (n : Nat) : Nat :=
+  if n = 0 then 0 else n.log2 + 1
+
+private structure RatArrayBits where
+  numMax : Nat
+  denMax : Nat
+  total : Nat
+  limbs : Nat
+
+private def ratArrayBits (coords : Array Rat) : RatArrayBits :=
+  coords.foldl (init := { numMax := 0, denMax := 0, total := 0, limbs := 0 })
+    fun stats q =>
+      let numBits := natBitLength q.num.natAbs
+      let denBits := natBitLength q.den
+      { numMax := max stats.numMax numBits
+        denMax := max stats.denMax denBits
+        total := stats.total + numBits + denBits
+        limbs := stats.limbs + (numBits + 63) / 64 + (denBits + 63) / 64 }
+
+private def ratPolyBits (p : DensePoly Rat) : RatArrayBits :=
+  ratArrayBits p.coeffs
+
+/-- Linear-width proxy for one ℚ-level monic chain step, as in the
+HexNumberField bench: scalar slots touched by normalization, long division,
+the one-sided Bezout product, and subtraction, each charged at the operand's
+limb width. -/
+private def ratChainLimbWork (r₀ s₀ r₁ s₁ : DensePoly Rat) :
+    Nat → Nat → Nat
+  | 0, acc => acc
+  | fuel + 1, acc =>
+      if r₁.isZero then acc
+      else
+        let c := 1 / r₁.leadingCoeff
+        let r₁' := DensePoly.scale c r₁
+        let s₁' := DensePoly.scale c s₁
+        let qr := DensePoly.divMod r₀ r₁'
+        let product := qr.1 * s₁'
+        let nextS := s₀ - product
+        let cLimbs := (natBitLength c.num.natAbs + 63) / 64 +
+          (natBitLength c.den + 63) / 64
+        let normalize := (ratPolyBits r₁).limbs + r₁.size * cLimbs +
+          (ratPolyBits s₁).limbs + s₁.size * cLimbs
+        let division := r₁'.size * (ratPolyBits qr.1).limbs +
+          (if r₀.size < r₁'.size then 0
+           else (r₀.size - r₁'.size + 1) * (ratPolyBits r₁').limbs) +
+          (ratPolyBits qr.2).limbs
+        let bezout := s₁'.size * (ratPolyBits qr.1).limbs +
+          qr.1.size * (ratPolyBits s₁').limbs
+        let subtraction := (ratPolyBits s₀).limbs + (ratPolyBits product).limbs +
+          (ratPolyBits nextS).limbs
+        ratChainLimbWork r₁' s₁' qr.2 nextS fuel
+          (acc + normalize + division + bezout + subtraction)
+
+/-- Replay one lower-field inversion as its ℚ-level monic chain. The lower
+tower must be a single level over `ℚ`; deeper towers are not on the registered
+family. -/
+private def lowerInversionLimbWork (lower : List Level) (x : Array Rat) : Nat :=
+  match lower with
+  | [level] =>
+      let value : DensePoly Rat := DensePoly.ofCoeffs x
+      let relation : DensePoly Rat := DensePoly.ofCoeffs <|
+        ((List.range level.degree).map fun i =>
+          (level.defining.getD i #[]).getD 0 0).toArray.push 1
+      ratChainLimbWork value 1 relation 0 (value.size + relation.size + 1) 0
+  | _ => 0
+
+private structure TowerInvStep where
+  index : Nat
+  dividendDegree : Nat
+  divisorDegree : Nat
+  nextRemainderDegree : Nat
+  nextRemainderZero : Bool
+  lcNumMax : Nat
+  lcDenMax : Nat
+  divisorNumMax : Nat
+  divisorDenMax : Nat
+  cofactorNumMax : Nat
+  cofactorDenMax : Nat
+  lowerInversions : Nat
+  lowerProducts : Nat
+  lowerInvLimbWork : Nat
+  lowerProdLimbWork : Nat
+
+open Hex.NumberTower.Arithmetic in
+/-- Bits over all coordinates of a lower-field polynomial. -/
+private def lowerPolyBits (lower : List Level) (p : DensePoly (Coeff lower)) :
+    RatArrayBits :=
+  ratArrayBits (p.coeffs.foldl (fun acc c => acc ++ c.data) #[])
+
+open Hex.NumberTower.Arithmetic in
+/-- Charge for one lower-field product of coefficients `a` and `b`: the
+`n²` coordinate products of the degree-`n` schoolbook multiplication, each at
+its operands' limb widths. -/
+private def lowerProductLimbWork (lower : List Level) (a b : Coeff lower) : Nat :=
+  levelsDim lower * ((ratArrayBits a.data).limbs + (ratArrayBits b.data).limbs)
+
+open Hex.NumberTower.Arithmetic in
+/-- Charge for a lower-field product of two polynomials over the lower field,
+coefficient pair by coefficient pair. -/
+private def lowerPolyProductLimbWork (lower : List Level)
+    (p q : DensePoly (Coeff lower)) : Nat :=
+  p.coeffs.foldl (init := 0) fun acc a =>
+    q.coeffs.foldl (init := acc) fun acc b => acc + lowerProductLimbWork lower a b
+
+open Hex.NumberTower.Arithmetic in
+/-- Replay `xgcdLeftMonicAux` on the top level of a height-two tower, one
+step per row. -/
+private def towerInvChainStepsAux (lower : List Level)
+    (r₀ s₀ r₁ s₁ : DensePoly (Coeff lower)) :
+    Nat → Nat → Array TowerInvStep → Array TowerInvStep
+  | 0, _, steps => steps
+  | fuel + 1, index, steps =>
+      if r₁.isZero then steps
+      else
+        let lc := r₁.leadingCoeff
+        let c := 1 / lc
+        let r₁' := DensePoly.scale c r₁
+        let s₁' := DensePoly.scale c s₁
+        let qr := DensePoly.divMod r₀ r₁'
+        let product := qr.1 * s₁'
+        let nextS := s₀ - product
+        let lcBits := ratArrayBits lc.data
+        let divisorBits := lowerPolyBits lower r₁'
+        let cofactorBits := lowerPolyBits lower s₁'
+        -- The normalizing inversion of the leading coefficient, plus one
+        -- inversion of the monic divisor's unit leading coefficient for every
+        -- quotient coefficient `divMod` produces.
+        let quotientCoeffs :=
+          if r₀.size < r₁'.size then 0 else r₀.size - r₁'.size + 1
+        let lowerInversions := 1 + quotientCoeffs
+        let unitInvWork := lowerInversionLimbWork lower
+          (Coeff.ofData lower #[1]).data
+        let lowerInvLimbWork := lowerInversionLimbWork lower lc.data +
+          quotientCoeffs * unitInvWork
+        -- Lower products: scaling both tracked polynomials by `c`, the
+        -- quotient coefficients (`coeff * 1⁻¹`), the `term * divisor`
+        -- products inside long division, and the Bezout product.
+        let scaleWork :=
+          r₁.coeffs.foldl (init := 0) fun acc a => acc + lowerProductLimbWork lower a c
+        let scaleCofactorWork :=
+          s₁.coeffs.foldl (init := 0) fun acc a => acc + lowerProductLimbWork lower a c
+        let quotientUnitWork :=
+          qr.1.coeffs.foldl (init := 0) fun acc a =>
+            acc + lowerProductLimbWork lower a (Coeff.ofData lower #[1])
+        let divisionWork := lowerPolyProductLimbWork lower qr.1 r₁'
+        let bezoutWork := lowerPolyProductLimbWork lower qr.1 s₁'
+        let lowerProducts := r₁.size + s₁.size + qr.1.size +
+          qr.1.size * r₁'.size + qr.1.size * s₁'.size
+        let step : TowerInvStep :=
+          { index := index
+            dividendDegree := r₀.degree?.getD 0
+            divisorDegree := r₁'.degree?.getD 0
+            nextRemainderDegree := qr.2.degree?.getD 0
+            nextRemainderZero := qr.2.isZero
+            lcNumMax := lcBits.numMax
+            lcDenMax := lcBits.denMax
+            divisorNumMax := divisorBits.numMax
+            divisorDenMax := divisorBits.denMax
+            cofactorNumMax := cofactorBits.numMax
+            cofactorDenMax := cofactorBits.denMax
+            lowerInversions := lowerInversions
+            lowerProducts := lowerProducts
+            lowerInvLimbWork := lowerInvLimbWork
+            lowerProdLimbWork := scaleWork + scaleCofactorWork + quotientUnitWork +
+              divisionWork + bezoutWork }
+        towerInvChainStepsAux lower r₁' s₁' qr.2 nextS fuel (index + 1) (steps.push step)
+
+open Hex.NumberTower.Arithmetic in
+private def towerInvChainSteps (input : ElemInput) : Array TowerInvStep :=
+  match input.tower.levels.toList with
+  | level :: lower =>
+      let value := Coeff.value level lower (coeffs input.a)
+      let relation := Coeff.relation level lower
+      towerInvChainStepsAux lower value 1 relation 0
+        (value.size + relation.size + 1) 0 #[]
+  | [] => #[]
+
+private def printTowerInvChainSteps : IO Unit := do
+  IO.println "n,lower_dim,step,dividend_degree,divisor_degree,next_remainder_degree,next_remainder_zero,lc_num_max,lc_den_max,divisor_num_max,divisor_den_max,cofactor_num_max,cofactor_den_max,lower_inversions,lower_products,lower_inv_limb_work,lower_prod_limb_work,limb_work"
+  for n in #[2, 3, 4, 6, 8, 12] do
+    let input := prepRecursiveElemInput n
+    let lowerDim := match input.tower.levels.toList with
+      | _ :: lower => Hex.NumberTower.levelsDim lower
+      | [] => 1
+    for step in towerInvChainSteps input do
+      IO.println s!"{n},{lowerDim},{step.index},{step.dividendDegree},{step.divisorDegree},{step.nextRemainderDegree},{step.nextRemainderZero},{step.lcNumMax},{step.lcDenMax},{step.divisorNumMax},{step.divisorDenMax},{step.cofactorNumMax},{step.cofactorDenMax},{step.lowerInversions},{step.lowerProducts},{step.lowerInvLimbWork},{step.lowerProdLimbWork},{step.lowerInvLimbWork + step.lowerProdLimbWork}"
+
 /-! # Trager factorization ladder -/
 
 /-- Ascending rational coefficients of the Selmer trinomial `X^m - X - 1`
@@ -1418,5 +1618,9 @@ setup_benchmark runFromPrimitiveLadder n => n * n * n * n
 
 end Hex.NumberTowerBench
 
-def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+def main (args : List String) : IO UInt32 := do
+  match args with
+  | ["tower-inv-chain-stats"] =>
+      Hex.NumberTowerBench.printTowerInvChainSteps
+      return 0
+  | _ => LeanBench.Cli.dispatch args
