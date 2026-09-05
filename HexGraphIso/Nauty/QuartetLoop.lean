@@ -45,207 +45,153 @@ namespace Hex.GraphIso.Nauty
 
 /-! # One round -/
 
-/-- A fold whose steps only add bits, and one of whose steps adds a
-particular bit regardless of the accumulator, sets that bit. -/
-private theorem foldl_bits_covers {β : Type} {f : Nat → β → Nat}
+/-- A fold whose steps only add members, and one of whose steps adds a
+particular member regardless of the accumulator, has that member. -/
+private theorem foldl_mem_covers {nn : Nat} {β : Type} {f : VSet nn → β → VSet nn}
     {x : Nat} {b₀ : β}
-    (hmono : ∀ a b y, a.testBit y = true → (f a b).testBit y = true)
-    (hadd : ∀ a, (f a b₀).testBit x = true) :
-    ∀ (l : List β) (init : Nat), b₀ ∈ l →
-      (l.foldl f init).testBit x = true
+    (hmono : ∀ a b y, a.mem y = true → (f a b).mem y = true)
+    (hadd : ∀ a, (f a b₀).mem x = true) :
+    ∀ (l : List β) (init : VSet nn), b₀ ∈ l →
+      (l.foldl f init).mem x = true
   | [], _, hb => absurd hb List.not_mem_nil
   | b :: l, init, hb => by
     rw [List.foldl_cons]
     rcases List.mem_cons.mp hb with rfl | hb'
-    · exact foldl_invariant (P := fun a => a.testBit x = true) l _
+    · exact foldl_invariant (P := fun a => a.mem x = true) l _
         (hadd init) (fun a b _ ha => hmono a b x ha)
-    · exact foldl_bits_covers hmono hadd l _ hb'
+    · exact foldl_mem_covers hmono hadd l _ hb'
 
-/-- The inner round over one generator only adds bits. -/
-private theorem inner_grows {nn : Nat} {s : Nat} {γ : Array Nat}
-    {a y : Nat} (hy : a.testBit y = true) :
+/-- The inner round over one generator only adds members. -/
+private theorem inner_grows {nn : Nat} {s : VSet nn} {γ : Array Nat}
+    {a : VSet nn} {y : Nat} (hy : a.mem y = true) :
     ((List.range nn).foldl
-      (fun acc w => if s.testBit w then insert acc γ[w]! else acc)
-      a).testBit y = true := by
-  refine foldl_invariant (P := fun acc => acc.testBit y = true)
+      (fun acc w => if s.mem w then acc.insert γ[w]! else acc)
+      a).mem y = true := by
+  refine foldl_invariant (P := fun acc => acc.mem y = true)
     (List.range nn) a hy ?_
   intro acc' w _ hacc'
-  rcases hw : s.testBit w with _ | _
-  · rw [ite_eq_right (by simp)]; exact hacc'
-  · rw [ite_eq_left (by simp), testBit_insert, hacc']; rfl
+  rcases hw : s.mem w with _ | _
+  · rw [ite_eq_right (by simp [])]; exact hacc'
+  · rw [ite_eq_left (by simp [])]
+    exact VSet.mem_insert_mono _ _ hacc'
 
-/-- One closure round only adds bits. -/
+/-- One closure round only adds members. -/
 theorem orbitStepSet_grows {nn : Nat} {gens : List (Array Nat)}
-    {s x : Nat} (hx : s.testBit x = true) :
-    (orbitStepSet nn gens s).testBit x = true := by
+    {s : VSet nn} {x : Nat} (hx : s.mem x = true) :
+    (orbitStepSet nn gens s).mem x = true := by
   rw [orbitStepSet]
-  refine foldl_invariant (P := fun acc => acc.testBit x = true)
+  refine foldl_invariant (P := fun acc => acc.mem x = true)
     gens s hx ?_
   intro acc γ _ hacc
   exact inner_grows hacc
 
 /-- One closure round applies every generator to every member. -/
 theorem orbitStepSet_step {nn : Nat} {gens : List (Array Nat)}
-    {s u : Nat} {γ : Array Nat} (hγ : γ ∈ gens) (hu : u < nn)
-    (hs : s.testBit u = true) :
-    (orbitStepSet nn gens s).testBit γ[u]! = true := by
+    {s : VSet nn} {u : Nat} {γ : Array Nat} (hγ : γ ∈ gens) (hu : u < nn)
+    (hγu : γ[u]! < nn) (hs : s.mem u = true) :
+    (orbitStepSet nn gens s).mem γ[u]! = true := by
   rw [orbitStepSet]
-  refine foldl_bits_covers (b₀ := γ)
+  refine foldl_mem_covers (b₀ := γ)
     (fun a b y hy => inner_grows hy) (fun a => ?_) gens s hγ
-  refine foldl_bits_covers (b₀ := u)
+  refine foldl_mem_covers (b₀ := u)
     (fun a' w y hy => ?_) (fun a' => ?_) (List.range nn) a
     (List.mem_range.mpr hu)
-  · rcases hw : s.testBit w with _ | _
-    · rw [ite_eq_right (by simp)]; exact hy
-    · rw [ite_eq_left (by simp), testBit_insert, hy]; rfl
-  · rw [ite_eq_left (by simp [hs]), testBit_insert]
-    simp
-
-/-- A round keeps the set inside the bound, given bounded
-generators. -/
-theorem orbitStepSet_lt {nn : Nat} {gens : List (Array Nat)}
-    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {s : Nat}
-    (hs : s < 2 ^ nn) : orbitStepSet nn gens s < 2 ^ nn := by
-  rw [orbitStepSet]
-  refine foldl_invariant (P := fun acc => acc < 2 ^ nn) gens s hs ?_
-  intro acc γ hγ hacc
-  refine foldl_invariant (P := fun acc => acc < 2 ^ nn)
-    (List.range nn) acc hacc ?_
-  intro acc' w hw hacc'
-  rcases hsw : s.testBit w with _ | _
-  · rw [ite_eq_right (by simp)]; exact hacc'
-  · rw [ite_eq_left (by simp)]
-    refine lt_two_pow_of_bits fun i hi => ?_
-    rw [testBit_insert]
-    have h1 : acc'.testBit i = false :=
-      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hacc'
-        (Nat.pow_le_pow_right (by omega) hi))
-    have h2 : γ[w]! ≠ i := by
-      have := hb γ hγ w (List.mem_range.mp hw)
-      omega
-    simp [h1, h2]
+  · rcases hw : s.mem w with _ | _
+    · rw [ite_eq_right (by simp [])]; exact hy
+    · rw [ite_eq_left (by simp [])]
+      exact VSet.mem_insert_mono _ _ hy
+  · rw [ite_eq_left (by simp [hs])]
+    exact VSet.mem_insert_self _ hγu
 
 /-! # Rounds compose -/
 
-/-- The closure only adds bits. -/
+/-- The closure only adds members. -/
 theorem orbitClose_grows {nn : Nat} {gens : List (Array Nat)} :
-    ∀ (fuel s x : Nat), s.testBit x = true →
-      (orbitClose nn gens fuel s).testBit x = true
+    ∀ (fuel : Nat) (s : VSet nn) (x : Nat), s.mem x = true →
+      (orbitClose nn gens fuel s).mem x = true
   | 0, _, _, hx => hx
   | fuel + 1, s, x, hx => by
     rw [orbitClose]
     exact orbitClose_grows fuel _ x (orbitStepSet_grows hx)
 
-/-- The closure stays inside the bound. -/
-theorem orbitClose_lt {nn : Nat} {gens : List (Array Nat)}
-    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) :
-    ∀ (fuel s : Nat), s < 2 ^ nn → orbitClose nn gens fuel s < 2 ^ nn
-  | 0, _, hs => hs
-  | fuel + 1, s, hs => by
-    rw [orbitClose]
-    exact orbitClose_lt hb fuel _ (orbitStepSet_lt hb hs)
-
-/-- A round at the end is a round at the front: the closure's rounds
-commute with the closure itself. This is what makes the fuel a simple
-counter rather than something to be threaded through the set. -/
+/-- Rounds peel off the far end as well as the near end. -/
 theorem orbitClose_succ {nn : Nat} {gens : List (Array Nat)} :
-    ∀ (fuel s : Nat), orbitClose nn gens (fuel + 1) s =
+    ∀ (fuel : Nat) (s : VSet nn), orbitClose nn gens (fuel + 1) s =
       orbitStepSet nn gens (orbitClose nn gens fuel s)
   | 0, _ => rfl
   | fuel + 1, s => by
     rw [orbitClose, orbitClose_succ fuel (orbitStepSet nn gens s),
       orbitClose]
 
-/-- The closure is monotone in its fuel. -/
+/-- More fuel never loses a member. -/
 theorem orbitClose_mono_fuel {nn : Nat} {gens : List (Array Nat)}
-    {s : Nat} : ∀ {f f' : Nat}, f ≤ f' → ∀ {x : Nat},
-      (orbitClose nn gens f s).testBit x = true →
-      (orbitClose nn gens f' s).testBit x = true := by
-  intro f f' hf
+    {f f' : Nat} (hle : f ≤ f') {s : VSet nn} {x : Nat} :
+      (orbitClose nn gens f s).mem x = true →
+      (orbitClose nn gens f' s).mem x = true := by
+  intro hx
   induction f' with
-  | zero => intro x hx; rwa [Nat.le_zero.mp hf] at hx
-  | succ p ih =>
-    intro x hx
-    rcases Nat.lt_or_ge f (p + 1) with hlt | hge
+  | zero =>
+    have : f = 0 := by omega
+    subst this
+    exact hx
+  | succ k ih =>
+    rcases Nat.eq_or_lt_of_le hle with heq | hlt
+    · subst heq; exact hx
     · rw [orbitClose_succ]
-      exact orbitStepSet_grows (ih (Nat.le_of_lt_succ hlt) hx)
-    · rwa [Nat.le_antisymm hf hge] at hx
+      exact orbitStepSet_grows (ih (Nat.le_of_lt_succ hlt))
 
-/-- Fuel equal to a word's length runs that word. -/
+/-- A word of length `w.length` is absorbed in `w.length` rounds. -/
 theorem orbitClose_applyWord {nn : Nat} {gens : List (Array Nat)}
     (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) :
     ∀ (w : List (Array Nat)), (∀ γ ∈ w, γ ∈ gens) →
-      ∀ (s u : Nat), s.testBit u = true → u < nn →
-        (orbitClose nn gens w.length s).testBit (applyWord w u) = true
+      ∀ (s : VSet nn) (u : Nat), s.mem u = true → u < nn →
+        (orbitClose nn gens w.length s).mem (applyWord w u) = true
   | [], _, _, _, hs, _ => hs
   | γ :: w, hw, s, u, hs, hu => by
     have hγ : γ ∈ gens := hw γ (List.mem_cons_self ..)
-    have hstep : (orbitStepSet nn gens s).testBit γ[u]! = true :=
-      orbitStepSet_step hγ hu hs
+    have hstep : (orbitStepSet nn gens s).mem γ[u]! = true :=
+      orbitStepSet_step hγ hu (hb γ hγ u hu) hs
     have := orbitClose_applyWord hb w
       (fun δ hδ => hw δ (List.mem_cons_of_mem _ hδ))
       (orbitStepSet nn gens s) γ[u]! hstep (hb γ hγ u hu)
-    rw [show applyWord (γ :: w) u = applyWord w γ[u]! from rfl]
     rw [show (γ :: w).length = w.length + 1 from rfl, orbitClose]
     exact this
 
 /-! # Saturation
 
-The chain of rounds is increasing and lives below the bound, so its
-population is non-decreasing and capped by `nn`. A round that does not
-increase the population is a fixed point, by
-`eq_of_submask_of_popCount_eq`, and a fixed point stays fixed. -/
+The rounds form a chain of subsets of `[0, nn)`, so the member count
+is non-decreasing and capped by `nn`. A round that does not increase
+the count is a fixed point, by `VSet.eq_of_subset_of_card_eq`, and a
+fixed point stays fixed. -/
 
-/-- The population of a bounded set is at most the bound. -/
-private theorem popCount_le_bound {nn s : Nat} (hs : s < 2 ^ nn) :
-    popCount s ≤ nn := by
-  rw [popCount_eq_bitCount nn s hs, bitCount]
-  exact Nat.le_trans List.countP_le_length
-    (Nat.le_of_eq (List.length_range ..))
-
-/-- A round that does not add to the population is a fixed point. -/
-private theorem stepSet_fixed_of_popCount_eq {nn : Nat}
-    {gens : List (Array Nat)}
-    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {s : Nat}
-    (hs : s < 2 ^ nn)
-    (heq : popCount s = popCount (orbitStepSet nn gens s)) :
+/-- A round that does not add to the count is a fixed point. -/
+private theorem stepSet_fixed_of_card_eq {nn : Nat}
+    {gens : List (Array Nat)} {s : VSet nn}
+    (heq : s.card = (orbitStepSet nn gens s).card) :
     orbitStepSet nn gens s = s :=
-  (eq_of_submask_of_popCount_eq
-    (submask_of_testBit fun _ hi => orbitStepSet_grows hi)
-    heq hs (orbitStepSet_lt hb hs)).symm
-
-/-- Once a round fixes the set, every later round does. -/
-private theorem orbitClose_of_fixed {nn : Nat} {gens : List (Array Nat)}
-    {s : Nat} (hfix : orbitStepSet nn gens s = s) :
-    ∀ (fuel : Nat), orbitClose nn gens fuel s = s
-  | 0 => rfl
-  | fuel + 1 => by rw [orbitClose, hfix, orbitClose_of_fixed hfix fuel]
+  (VSet.eq_of_subset_of_card_eq
+    (VSet.subset_iff.mpr fun _ hi => orbitStepSet_grows hi) heq).symm
 
 /-- A round over the empty set changes nothing: every guard reads the
 starting set, which has no members. -/
-private theorem orbitStepSet_zero {nn : Nat} {gens : List (Array Nat)} :
-    orbitStepSet nn gens 0 = 0 := by
+private theorem orbitStepSet_empty {nn : Nat} {gens : List (Array Nat)} :
+    orbitStepSet nn gens (VSet.empty : VSet nn) = VSet.empty := by
   rw [orbitStepSet]
-  refine foldl_invariant (P := fun acc => acc = 0) gens 0 rfl ?_
+  refine foldl_invariant (P := fun acc => acc = VSet.empty) gens _ rfl ?_
   intro acc γ _ hacc
-  refine foldl_invariant (P := fun acc => acc = 0) (List.range nn)
+  refine foldl_invariant (P := fun acc => acc = VSet.empty) (List.range nn)
     acc hacc ?_
   intro acc' w _ hacc'
-  rw [ite_eq_right (by simp [Nat.zero_testBit])]
+  rw [ite_eq_right (by simp)]
   exact hacc'
 
 /-- **The closure saturates within `nn` rounds.** After `nn` rounds a
 further round adds nothing. -/
 theorem orbitStepSet_orbitClose_nn {nn : Nat} {gens : List (Array Nat)}
-    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {s : Nat}
-    (hs : s < 2 ^ nn) :
+    {s : VSet nn} :
     orbitStepSet nn gens (orbitClose nn gens nn s) =
       orbitClose nn gens nn s := by
-  rcases Nat.eq_zero_or_pos nn with rfl | hnpos
-  · have hs0 : s = 0 := by simp at hs; omega
-    rw [show orbitClose 0 gens 0 s = s from rfl, hs0,
-      orbitStepSet_zero]
-  -- Either some round below `nn` is a fixed point, or the population
+  -- Either some round below `nn` is a fixed point, or the count
   -- strictly increases at every one of `nn` rounds.
   rcases Decidable.em (∃ i, i < nn ∧
       orbitStepSet nn gens (orbitClose nn gens i s) =
@@ -263,30 +209,26 @@ theorem orbitStepSet_orbitClose_nn {nn : Nat} {gens : List (Array Nat)}
       have := hstay (nn - i)
       rwa [Nat.add_sub_cancel' (Nat.le_of_lt hi)] at this
     rw [hnn, hf]
-  · exfalso
-    have hne : ∀ i, i < nn →
+  · have hne : ∀ i, i < nn →
         orbitStepSet nn gens (orbitClose nn gens i s) ≠
           orbitClose nn gens i s := fun i hi h => hnofix ⟨i, hi, h⟩
     have hgrow : ∀ i, i < nn →
-        popCount (orbitClose nn gens i s) <
-          popCount (orbitClose nn gens (i + 1) s) := by
+        (orbitClose nn gens i s).card <
+          (orbitClose nn gens (i + 1) s).card := by
       intro i hi
-      have hsub : orbitClose nn gens i s &&&
-          orbitClose nn gens (i + 1) s = orbitClose nn gens i s :=
-        submask_of_testBit fun _ hj =>
-          orbitClose_mono_fuel (Nat.le_succ i) hj
-      have hle := popCount_le_of_submask hsub
-        (orbitClose_lt hb i s hs) (orbitClose_lt hb (i + 1) s hs)
-      rcases Nat.lt_or_ge (popCount (orbitClose nn gens i s))
-        (popCount (orbitClose nn gens (i + 1) s)) with h | h
+      have hle : (orbitClose nn gens i s).card ≤
+          (orbitClose nn gens (i + 1) s).card :=
+        VSet.card_le_of_subset (VSet.subset_iff.mpr
+          fun _ hj => orbitClose_mono_fuel (Nat.le_succ i) hj)
+      rcases Nat.lt_or_ge (orbitClose nn gens i s).card
+        (orbitClose nn gens (i + 1) s).card with h | h
       · exact h
       · refine absurd ?_ (hne i hi)
-        refine stepSet_fixed_of_popCount_eq hb
-          (orbitClose_lt hb i s hs) ?_
+        refine stepSet_fixed_of_card_eq ?_
         rw [← orbitClose_succ]
         omega
     have hchain : ∀ i, i ≤ nn →
-        popCount s + i ≤ popCount (orbitClose nn gens i s) := by
+        s.card + i ≤ (orbitClose nn gens i s).card := by
       intro i
       induction i with
       | zero => intro _; exact Nat.le_of_eq rfl
@@ -296,20 +238,19 @@ theorem orbitStepSet_orbitClose_nn {nn : Nat} {gens : List (Array Nat)}
         have h2 := hgrow p (Nat.lt_of_succ_le hp)
         omega
     have hbig := hchain nn (Nat.le_refl nn)
-    have hcap := popCount_le_bound (orbitClose_lt hb nn s hs)
-    have hzero : popCount s = 0 := by omega
-    have hs0 : s = 0 := eq_zero_of_popCount_zero hs hzero
-    refine hne 0 ?_ ?_
-    · rcases Nat.eq_zero_or_pos nn with rfl | hpos
-      · rw [popCount_eq_bitCount 0 s hs, bitCount] at hzero
-        simp at hs
-        omega
-      · exact hpos
-    · show orbitStepSet nn gens (orbitClose nn gens 0 s) =
+    have hcap := VSet.card_le (orbitClose nn gens nn s)
+    have hzero : s.card = 0 := by omega
+    have hs0 : s = VSet.empty := VSet.eq_empty_of_card_eq_zero hzero
+    rcases Nat.eq_zero_or_pos nn with hnz | hpos
+    · subst hnz
+      rw [show orbitClose 0 gens 0 s = s from rfl, hs0,
+        orbitStepSet_empty]
+    · exfalso
+      refine hne 0 hpos ?_
+      show orbitStepSet nn gens (orbitClose nn gens 0 s) =
         orbitClose nn gens 0 s
       rw [show orbitClose nn gens 0 s = s from rfl, hs0,
-        orbitStepSet_zero]
-
+        orbitStepSet_empty]
 
 /-! # Completeness
 
@@ -320,21 +261,19 @@ transcription's pointer test into the model's `orbPruned`. -/
 
 /-- The saturated set absorbs a whole word from any of its members. -/
 private theorem orbitClose_nn_word {nn : Nat} {gens : List (Array Nat)}
-    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {s : Nat}
-    (hs : s < 2 ^ nn) :
+    (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {s : VSet nn} :
     ∀ (w : List (Array Nat)), (∀ γ ∈ w, γ ∈ gens) →
-      ∀ (x : Nat), (orbitClose nn gens nn s).testBit x = true →
-        (orbitClose nn gens nn s).testBit (applyWord w x) = true
+      ∀ (x : Nat), (orbitClose nn gens nn s).mem x = true →
+        (orbitClose nn gens nn s).mem (applyWord w x) = true
   | [], _, _, hx => hx
   | γ :: w, hw, x, hx => by
     have hγ : γ ∈ gens := hw γ (List.mem_cons_self ..)
-    have hxn : x < nn :=
-      lt_of_testBit_of_lt (orbitClose_lt hb nn s hs) hx
-    have hstep : (orbitClose nn gens nn s).testBit γ[x]! = true := by
+    have hxn : x < nn := VSet.mem_lt hx
+    have hstep : (orbitClose nn gens nn s).mem γ[x]! = true := by
       have := orbitStepSet_step (nn := nn) (gens := gens)
-        (s := orbitClose nn gens nn s) hγ hxn hx
-      rwa [orbitStepSet_orbitClose_nn hb hs] at this
-    exact orbitClose_nn_word hb hs w
+        (s := orbitClose nn gens nn s) hγ hxn (hb γ hγ x hxn) hx
+      rwa [orbitStepSet_orbitClose_nn] at this
+    exact orbitClose_nn_word hb w
       (fun δ hδ => hw δ (List.mem_cons_of_mem _ hδ)) γ[x]! hstep
 
 /-- **The orbit closure is complete.** Anything a forward word reaches
@@ -343,18 +282,12 @@ of `orbitClose_sound`, and the direction the domination step needs. -/
 theorem orbitClose_of_wordConn {nn : Nat} {gens : List (Array Nat)}
     (hb : ∀ γ ∈ gens, ∀ v, v < nn → γ[v]! < nn) {v u : Nat}
     (hv : v < nn) (h : WordConn gens v u) :
-    (orbitClose nn gens nn (insert 0 v)).testBit u = true := by
+    (orbitClose nn gens nn ((VSet.empty : VSet nn).insert v)).mem u = true := by
   obtain ⟨w, hw, happ⟩ := h
-  have hins : insert 0 v < 2 ^ nn := by
-    refine lt_two_pow_of_bits fun i hi => ?_
-    rw [testBit_insert, Nat.zero_testBit]
-    have : v ≠ i := by omega
-    simp [this]
-  have hv0 : (orbitClose nn gens nn (insert 0 v)).testBit v = true := by
-    refine orbitClose_grows nn _ v ?_
-    rw [testBit_insert, Nat.zero_testBit]
-    simp
-  have := orbitClose_nn_word hb hins w hw v hv0
+  have hv0 : (orbitClose nn gens nn ((VSet.empty : VSet nn).insert v)).mem v =
+      true :=
+    orbitClose_grows nn _ v (VSet.mem_insert_self _ hv)
+  have := orbitClose_nn_word hb w hw v hv0
   rwa [happ] at this
 
 /-- **The transcription's orbit test implies the model's prune.** An
@@ -385,10 +318,10 @@ The word composes to a single checked, cell-stabilizing automorphism
 carrying one member onto the other, and `childKey_of_carried`
 transports the subtree key. No ordering of the two offsets is
 involved. -/
-theorem childKey_of_wordConn {ctx : Ctx} (hn : ctx.n = n)
-    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+theorem childKey_of_wordConn {ctx : Ctx n}
+    (hgsz : ctx.g.size = n)
     {gens : List (Array Nat)}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -403,18 +336,18 @@ theorem childKey_of_wordConn {ctx : Ctx} (hn : ctx.n = n)
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
   obtain ⟨w, hw, happ⟩ := hconn
   obtain ⟨hAutC, hstabC, hpointC⟩ :=
-    wordPerm_spec hbg hok hsp hs hend hv hstab w hw
-  refine childKey_of_carried hn hgsz (by rwa [hn]) tcLevel fuel level
+    wordPerm_spec hok hsp hs hend hv hstab w hw
+  refine childKey_of_carried hgsz hAutC tcLevel fuel level
     hstabC hs hok hsp hend hvals hic hrange ho ho' hlf ?_
   rw [hpointC _ (hok _ (by omega)), happ]
 
 /-- The same, with the connection in the other direction. Forward
 words suffice because a checked automorphism's inverse is one of its
 own forward powers, which is what `wordConn_symm` records. -/
-theorem childKey_of_wordConn' {ctx : Ctx} (hn : ctx.n = n)
-    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+theorem childKey_of_wordConn' {ctx : Ctx n}
+    (hgsz : ctx.g.size = n)
     {gens : List (Array Nat)}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -427,7 +360,7 @@ theorem childKey_of_wordConn' {ctx : Ctx} (hn : ctx.n = n)
     (hconn : WordConn gens rsLab[tc + o]! rsLab[tc + o']!) :
     childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o =
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
-  refine childKey_of_wordConn hn hgsz hbg hv tcLevel fuel level hstab
+  refine childKey_of_wordConn hgsz hv tcLevel fuel level hstab
     hs hok hsp hend hvals hic hrange ho ho' hlf ?_
   have hbnd : ∀ γ ∈ gens, ∀ v, v < n → γ[v]! < n := fun γ hγ v hv' =>
     checkAutom_bound (hv γ hγ) v hv'
@@ -465,10 +398,10 @@ private theorem orbConn_ptrIter {gens : List (Array Nat)}
 /-- **A skipped child repeats the key of its orbit pointer's target.**
 This is the domination fact for one step of the transcription's orbit
 test. -/
-theorem childKey_of_orbitPtr {ctx : Ctx} (hn : ctx.n = n)
-    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+theorem childKey_of_orbitPtr {ctx : Ctx n}
+    (hgsz : ctx.g.size = n)
     {gens : List (Array Nat)} {orbits : Array Nat}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -484,17 +417,17 @@ theorem childKey_of_orbitPtr {ctx : Ctx} (hn : ctx.n = n)
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' := by
   obtain ⟨-, hconn⟩ := orbConn_of_ptr hsound (hok (tc + o) (by omega))
   rw [hptr] at hconn
-  exact childKey_of_wordConn' hn hgsz hbg hv tcLevel fuel level hstab
+  exact childKey_of_wordConn' hgsz hv tcLevel fuel level hstab
     hs hok hsp hend hvals hic hrange ho ho' hlf hconn
 
 /-- **A skipped child repeats the key at the end of its pointer
 chase.** The chase is what reaches an orbit representative, which is
 the offset the loop actually explored, so this is the form the
 domination step applies. -/
-theorem childKey_of_ptrIter {ctx : Ctx} (hn : ctx.n = n)
-    (hgsz : ctx.g.size = n) (hbg : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+theorem childKey_of_ptrIter {ctx : Ctx n}
+    (hgsz : ctx.g.size = n)
     {gens : List (Array Nat)} {orbits : Array Nat}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o o' k : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -514,7 +447,7 @@ theorem childKey_of_ptrIter {ctx : Ctx} (hn : ctx.n = n)
       γ[a]! = γ[b]! → a = b := fun γ hγ => checkAutom_inj (hv γ hγ)
   obtain ⟨-, hconn⟩ := orbConn_ptrIter hsound k _ (hok (tc + o) (by omega))
   rw [hptr] at hconn
-  exact childKey_of_wordConn' hn hgsz hbg hv tcLevel fuel level hstab
+  exact childKey_of_wordConn' hgsz hv tcLevel fuel level hstab
     hs hok hsp hend hvals hic hrange ho ho' hlf hconn
 
 end Hex.GraphIso.Nauty

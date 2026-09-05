@@ -12,7 +12,7 @@ Local/scheduled tooling, not merge CI. Two plots:
   proof). Pair definitions come from
   ``lake exe hexgraphiso_cactus pairs`` (single source of truth); this
   script generates one Lean file per pair from the emitted
-  ``exprA``/``exprB`` and times ``lake env lean -Dprofiler=true``,
+  ``exprA``/``exprB`` and times ``lake lean <file> -- -Dprofiler=true``,
   charging every profiler category except import, initialization, and
   parsing, so the tactic tier includes elaboration, compiled search,
   and the decisive kernel replay but not the fixed import cost.
@@ -73,8 +73,11 @@ def _tactic_seconds(record: dict, timeout: float) -> float | None:
         handle.write(source)
         path = Path(handle.name)
     try:
+        # `lake lean` loads the library's precompiled modules, as a
+        # downstream `lake build` does; `lake env lean` would interpret
+        # the compiled search instead.
         proc = subprocess.run(
-            ["lake", "env", "lean", "-Dprofiler=true", str(path)],
+            ["lake", "lean", str(path), "--", "-Dprofiler=true"],
             cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return None

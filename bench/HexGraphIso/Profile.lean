@@ -72,7 +72,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
   let pick (i : Nat) : Colored n 1 := if i % 2 == 0 then inst.g0 else inst.g1
   let iters := stageIters stage
   -- pre-produce fixed certificates for the replay stages
-  let certs (G : Colored n 1) : CertNode × Key :=
+  let certs (G : Colored n 1) : CertNode × Key n :=
     (certifyKey? G).getD (.leaf, ⟨[], []⟩)
   let (c0, b0) := certs inst.g0
   let (c1, b1) := certs inst.g1

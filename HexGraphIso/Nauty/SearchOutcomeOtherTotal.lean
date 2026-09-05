@@ -23,19 +23,19 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- An off-path leaf at any executable fuel is total. -/
-theorem NodeInv.leafTotal {G : Colored n k} {ctx : Ctx}
+theorem NodeInv.leafTotal {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 2 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active numcells).numcells =
-      ctx.n)
+      n)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail)
-    (hsound : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n)
-    (hcoset : st.cosetindex < ctx.n)
+    (hsound : OrbSound (OrbConn st.genTrace.toList n) st.orbits n)
+    (hcoset : st.cosetindex < n)
     (hdom : ∀ b, best = some b → keyLe (pathLeafKey ctx fs st.firstlab) b) :
     ∃ outBest,
       OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
@@ -47,25 +47,25 @@ theorem NodeInv.leafTotal {G : Colored n k} {ctx : Ctx}
   have hlevel1 : 1 ≤ level := by omega
   rcases heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level)
     with _ | _
-  · exact hnode.leafOther hn hg hn0 hlevel1 hpath hcheap hnum
+  · exact hnode.leafOther hg hn0 hlevel1 hpath hcheap hnum
       (by rw [heq]; decide) hlive hsound hcoset
   · by_cases hadmit :
       (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
           codeSentinel ∧
-        isautom ctx (firstScatter ctx.n
+        isautom ctx (firstScatter n
           (otherLeafSt ctx level numcells st).firstlab
           (otherLeafSt ctx level numcells st).lab) = true
-    · exact ⟨best, hnode.leafFirstOther hn hg hn0 hlevel1 hpath hnum heq
+    · exact ⟨best, hnode.leafFirstOther hg hn0 hlevel1 hpath hnum heq
         hadmit.1 hadmit.2 hlive hsound hdom⟩
     · have hfail : (otherLeafSt ctx level numcells st).firstcode[level + 1]! ≠
           codeSentinel ∨
-          isautom ctx (firstScatter ctx.n
+          isautom ctx (firstScatter n
             (otherLeafSt ctx level numcells st).firstlab
             (otherLeafSt ctx level numcells st).lab) = false := by
         by_cases hs : (otherLeafSt ctx level numcells st).firstcode[level + 1]!
             = codeSentinel
         · right
-          rcases hp : isautom ctx (firstScatter ctx.n
+          rcases hp : isautom ctx (firstScatter n
             (otherLeafSt ctx level numcells st).firstlab
             (otherLeafSt ctx level numcells st).lab) with _ | _
           · rfl
@@ -80,30 +80,30 @@ theorem NodeInv.leafTotal {G : Colored n k} {ctx : Ctx}
         simp only [beq_iff_eq]
         omega
       obtain ⟨outBest, hrun', hkeep'⟩ :=
-        NodeInv.leafOther (st := { st with eqlevFirst := 0 }) hn hg hn0 hlevel1
+        NodeInv.leafOther (st := { st with eqlevFirst := 0 }) hg hn0 hlevel1
           hpath hcheap hnum hef' hnode' hlive' hsound hcoset
-      exact ⟨outBest, OtherRun.ofGateFail hn hg hn0 hlevel hpath hcheap hnum
+      exact ⟨outBest, OtherRun.ofGateFail hg hn0 hlevel hpath hcheap hnum
         heq hfail hnode hlive hrun' hkeep'⟩
 
 /-- Every off-path node at the next executable fuel is total once every
 node at the current fuel is. -/
-theorem OtherTotal.succ (G : Colored n k) (ctx : Ctx)
+theorem OtherTotal.succ (G : Colored n k) (ctx : Ctx n)
     (inf tcLevel runFuel : Nat) (ih : OtherTotal G ctx inf tcLevel runFuel) :
     OtherTotal G ctx inf tcLevel (runFuel + 1) := by
-  intro specFuel level numcells codes bs fs st best trail hn hg hinf hn0
+  intro specFuel level numcells codes bs fs st best trail hg hinf hn0
     hlevel hpath hspec hfuel hcheap hdesc hnode hlive hpathOk horb hcoset hdom
   have hle : level ≤ n := hnode.run.searchOk.levelLe
   rcases Nat.lt_or_ge (refine ctx level st.lab st.ptn st.active
-    numcells).numcells ctx.n with hnum | hnum
-  · exact hnode.internalOther hn hg hinf hn0 ih hlevel hpath hspec hfuel
+    numcells).numcells n with hnum | hnum
+  · exact hnode.internalOther hg hinf hn0 ih hlevel hpath hspec hfuel
       hcheap hdesc hlive hpathOk horb hcoset hdom hnum
   · have hnum' : (refine ctx level st.lab st.ptn st.active
-        numcells).numcells = ctx.n := by
+        numcells).numcells = n := by
       apply Nat.le_antisymm _ hnum
-      rw [← (hnode.refined hn hg hn0 (by omega)).2.2]
+      rw [← (hnode.refined hg hn0 (by omega)).2.2]
       exact bcount_le _ _ _
     obtain ⟨sf, rfl⟩ : ∃ sf, specFuel = sf + 1 := ⟨specFuel - 1, by omega⟩
-    obtain ⟨outBest, hrun, hkeep⟩ := hnode.leafTotal hn hg hn0 hlevel hpath
+    obtain ⟨outBest, hrun, hkeep⟩ := hnode.leafTotal hg hn0 hlevel hpath
       hcheap hnum' hlive horb hcoset hdom
     exact ⟨outBest, trail, hrun, hkeep⟩
 

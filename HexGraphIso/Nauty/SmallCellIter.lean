@@ -43,7 +43,7 @@ analogues.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # Window effect of individualization
 
@@ -56,7 +56,7 @@ theorem breakout_segN_target {lab ptn : Array Nat}
     {level tc len tv : Nat}
     (hw : ∃ k, tc ≤ k ∧ k < tc + len ∧ k < lab.size ∧ lab[k]! = tv)
     (hsz : tc + len ≤ lab.size) :
-    segN (breakout lab ptn level tc tv).1 tc len =
+    segN (breakout n lab ptn level tc tv).1 tc len =
       tv :: (segN lab tc len).erase tv := by
   show segN (breakout.go tv (lab.size + 1) lab tc tv) tc len = _
   exact breakout_go_seg (lab.size + 1) len lab tc tv hw (by omega) hsz
@@ -66,8 +66,8 @@ theorem breakout_getElem!_front {lab ptn : Array Nat}
     {level tc len tv : Nat}
     (hw : ∃ k, tc ≤ k ∧ k < tc + len ∧ k < lab.size ∧ lab[k]! = tv)
     (hlen : 0 < len) (hsz : tc + len ≤ lab.size) :
-    (breakout lab ptn level tc tv).1[tc]! = tv := by
-  have h := breakout_segN_target (ptn := ptn) (level := level) hw hsz
+    (breakout n lab ptn level tc tv).1[tc]! = tv := by
+  have h := breakout_segN_target (n := n) (ptn := ptn) (level := level) hw hsz
   rw [show len = (len - 1) + 1 by omega, segN_cons] at h
   injection h
 
@@ -77,9 +77,9 @@ theorem breakout_segN_rest {lab ptn : Array Nat}
     {level tc len tv : Nat}
     (hw : ∃ k, tc ≤ k ∧ k < tc + len ∧ k < lab.size ∧ lab[k]! = tv)
     (hlen : 0 < len) (hsz : tc + len ≤ lab.size) :
-    segN (breakout lab ptn level tc tv).1 (tc + 1) (len - 1) =
+    segN (breakout n lab ptn level tc tv).1 (tc + 1) (len - 1) =
       (segN lab tc len).erase tv := by
-  have h := breakout_segN_target (ptn := ptn) (level := level) hw hsz
+  have h := breakout_segN_target (n := n) (ptn := ptn) (level := level) hw hsz
   rw [show len = (len - 1) + 1 by omega, segN_cons] at h
   injection h with h1 h2
   rw [show (len - 1) + 1 = len by omega] at h2
@@ -90,7 +90,7 @@ theorem breakout_segN_outside {lab ptn : Array Nat}
     {level tc len tv a alen : Nat}
     (hw : ∃ k, tc ≤ k ∧ k < tc + len ∧ k < lab.size ∧ lab[k]! = tv)
     (hout : a + alen ≤ tc ∨ tc + len ≤ a) :
-    segN (breakout lab ptn level tc tv).1 a alen = segN lab a alen := by
+    segN (breakout n lab ptn level tc tv).1 a alen = segN lab a alen := by
   refine segN_congr fun o ho => ?_
   show (breakout.go tv (lab.size + 1) lab tc tv)[a + o]! = lab[a + o]!
   rcases hout with h | h
@@ -136,22 +136,22 @@ untouched cells by the parent equivalence. -/
 
 /-- Individualizing corresponding vertices preserves the renamed cell
 equivalence on the split partition. -/
-theorem breakout_cellsPerm_map {σ : Renaming ctx.n}
+theorem breakout_cellsPerm_map {σ : Renaming n}
     {labV labU ptn : Array Nat} {level tc e oV oU : Nat}
-    (hpsz : ptn.size = ctx.n)
-    (hVsz : labV.size = ctx.n) (hUsz : labU.size = ctx.n)
+    (hpsz : ptn.size = n)
+    (hVsz : labV.size = n) (hUsz : labU.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
-    (hvals : ∀ q, q < ctx.n → ptn[q]! ≤ level ∨ level + 1 < ptn[q]!)
+    (hvals : ∀ q, q < n → ptn[q]! ≤ level ∨ level + 1 < ptn[q]!)
     (hcp : cellsPerm ptn level labV (labU.map σ.toFun))
-    (hcell : (tc, e) ∈ cells ptn level ctx.n) (hne : tc < e)
+    (hcell : (tc, e) ∈ cells ptn level n) (hne : tc < e)
     (hoV : oV ≤ e - tc) (hoU : oU ≤ e - tc)
     (hvv : labV[tc + oV]! = σ.toFun labU[tc + oU]!) :
     cellsPerm (ptn.set! tc (level + 1)) (level + 1)
-      (breakout labV ptn (level + 1) tc labV[tc + oV]!).1
-      (((breakout labU ptn (level + 1) tc
+      (breakout n labV ptn (level + 1) tc labV[tc + oV]!).1
+      (((breakout n labU ptn (level + 1) tc
         labU[tc + oU]!).1).map σ.toFun) := by
   intro a len hIs
-  have hen : e < ctx.n := target_end_lt hpsz hend hcell
+  have hen : e < n := target_end_lt hpsz hend hcell
   have hlenT : 0 < e + 1 - tc := by omega
   have hwV : ∃ k, tc ≤ k ∧ k < tc + (e + 1 - tc) ∧ k < labV.size ∧
       labV[k]! = labV[tc + oV]! :=
@@ -159,13 +159,13 @@ theorem breakout_cellsPerm_map {σ : Renaming ctx.n}
   have hwU : ∃ k, tc ≤ k ∧ k < tc + (e + 1 - tc) ∧ k < labU.size ∧
       labU[k]! = labU[tc + oU]! :=
     ⟨tc + oU, by omega, by omega, by omega, rfl⟩
-  have hVbsz : (breakout labV ptn (level + 1) tc
-      labV[tc + oV]!).1.size = ctx.n := by
+  have hVbsz : (breakout n labV ptn (level + 1) tc
+      labV[tc + oV]!).1.size = n := by
     rw [breakout_lab_size, hVsz]
-  have hUbsz : (breakout labU ptn (level + 1) tc
-      labU[tc + oU]!).1.size = ctx.n := by
+  have hUbsz : (breakout n labU ptn (level + 1) tc
+      labU[tc + oU]!).1.size = n := by
     rw [breakout_lab_size, hUsz]
-  have hsz' : (ptn.set! tc (level + 1)).size = ctx.n := by
+  have hsz' : (ptn.set! tc (level + 1)).size = n := by
     rw [Array.size_set!, hpsz]
   have hend' : (ptn.set! tc (level + 1))[(ptn.set! tc
       (level + 1)).size - 1]! ≤ level + 1 := by
@@ -178,12 +178,12 @@ theorem breakout_cellsPerm_map {σ : Renaming ctx.n}
   have hcellIs : IsCell ptn level tc (e + 1 - tc) := by
     have h := cells_isCell (by omega) hend _ hcell
     exact h
-  rcases Decidable.em (a < ctx.n) with han | han
-  · have hcross : a + len ≤ ctx.n := by
+  rcases Decidable.em (a < n) with han | han
+  · have hcross : a + len ≤ n := by
       have := isCell_no_cross hend' hIs (by omega)
       omega
     have hmem : (a, a + len - 1) ∈
-        cells (ptn.set! tc (level + 1)) (level + 1) ctx.n :=
+        cells (ptn.set! tc (level + 1)) (level + 1) n :=
       mem_cells_of_isCell (by omega) hend' hIs han (by omega)
     have hpos := hIs.1
     rcases child_cells_cases hpsz hend hvals hcell hne hmem with
@@ -205,7 +205,7 @@ theorem breakout_cellsPerm_map {σ : Renaming ctx.n}
       rw [hlen2,
         show e - tc = (e + 1 - tc) - 1 by omega,
         breakout_segN_rest hwV hlenT (by omega)]
-      have hmapseg : segN ((breakout labU ptn (level + 1) tc
+      have hmapseg : segN ((breakout n labU ptn (level + 1) tc
           labU[tc + oU]!).1.map σ.toFun) (tc + 1) (e + 1 - tc - 1) =
           ((segN labU tc (e + 1 - tc)).erase labU[tc + oU]!).map
             σ.toFun := by
@@ -247,7 +247,7 @@ theorem breakout_cellsPerm_map {σ : Renaming ctx.n}
         rw [show a + len - 1 + 1 - a = len by omega] at h
         exact h
       rw [breakout_segN_outside hwV hout']
-      have hmapseg : segN ((breakout labU ptn (level + 1) tc
+      have hmapseg : segN ((breakout n labU ptn (level + 1) tc
           labU[tc + oU]!).1.map σ.toFun) a len =
           segN (labU.map σ.toFun) a len := by
         rw [segN_map (by rw [hUbsz]; omega),
@@ -258,11 +258,11 @@ theorem breakout_cellsPerm_map {σ : Renaming ctx.n}
   · -- beyond the bound: phantom singletons
     have hlen1 : len = 1 := isCell_oob hIs (by omega)
     rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero]
-    rw [getElem!_oob (by omega : (breakout labV ptn (level + 1) tc
+    rw [getElem!_oob (by omega : (breakout n labV ptn (level + 1) tc
         labV[tc + oV]!).1.size ≤ a)]
     rw [getElem!_oob (by
       rw [Array.size_map]
-      omega : ((breakout labU ptn (level + 1) tc
+      omega : ((breakout n labU ptn (level + 1) tc
         labU[tc + oU]!).1.map σ.toFun).size ≤ a)]
 
 /-! # Renamed and permuted labelling facts -/
@@ -300,24 +300,24 @@ theorem labOk_of_perm {lab lab' : Array Nat} {nn : Nat}
 /-! # The subtree step and its node invariant -/
 
 /-- One individualize-and-refine step of the search subtree. -/
-@[expose] def childSt (ctx : Ctx) (level : Nat) (st : RefineSt)
-    (tc tv : Nat) : RefineSt :=
-  refine ctx (level + 1) (breakout st.lab st.ptn (level + 1) tc tv).1
-    (st.ptn.set! tc (level + 1)) (insert 0 tc) (st.numcells + 1)
+@[expose] def childSt (ctx : Ctx n) (level : Nat) (st : RefineSt n)
+    (tc tv : Nat) : RefineSt n :=
+  refine ctx (level + 1) (breakout n st.lab st.ptn (level + 1) tc tv).1
+    (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc) (st.numcells + 1)
 
 /-- The facts carried at every node of the subtree: state
 well-formedness, an injective labelling, and the partition-value
 dichotomy (closed at the level or the open marker). -/
-structure IterOk (ctx : Ctx) (level : Nat) (st : RefineSt) : Prop where
-  ok : StOk ctx.n level st
-  inj : LabInj st.lab ctx.n
-  vals : ∀ q, q < ctx.n → st.ptn[q]! ≤ level ∨ st.ptn[q]! = ctx.n + 2
-  lvl : level ≤ ctx.n
+structure IterOk (ctx : Ctx n) (level : Nat) (st : RefineSt n) : Prop where
+  ok : StOk n level st
+  inj : LabInj st.lab n
+  vals : ∀ q, q < n → st.ptn[q]! ≤ level ∨ st.ptn[q]! = n + 2
+  lvl : level ≤ n
 
 /-- The weak value dichotomy the classification lemmas consume. -/
-theorem IterOk.valsWeak {st : RefineSt} {level : Nat}
+theorem IterOk.valsWeak {st : RefineSt n} {level : Nat}
     (h : IterOk ctx level st) :
-    ∀ q, q < ctx.n → st.ptn[q]! ≤ level ∨ level + 1 < st.ptn[q]! := by
+    ∀ q, q < n → st.ptn[q]! ≤ level ∨ level + 1 < st.ptn[q]! := by
   intro q hq
   rcases h.vals q hq with h1 | h1
   · exact Or.inl h1
@@ -337,22 +337,18 @@ private theorem setTc_end {ptn : Array Nat} {level tc : Nat}
   · rw [Array.getElem!_set!_ne _ _ _ _ hx]
     omega
 
-/-- The singleton active set is bounded. -/
-private theorem insert_tc_lt {n tc : Nat} (htc : tc < n) :
-    insert 0 tc < 2 ^ n := by
-  rw [insert, Nat.zero_or, Nat.shiftLeft_eq, Nat.one_mul]
-  exact Nat.pow_lt_pow_right (by omega) htc
-
 /-- The singleton active position is a cell start of the split
 partition. -/
 private theorem setTc_starts {ptn : Array Nat} {level tc e : Nat}
-    (hpsz : ptn.size = ctx.n)
+    (hpsz : ptn.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
-    (hcell : (tc, e) ∈ cells ptn level ctx.n) :
-    ∀ v : Nat, elem (insert 0 tc) v = true →
+    (hcell : (tc, e) ∈ cells ptn level n) :
+    ∀ v : Nat, ((VSet.empty : VSet n).insert tc).mem v = true →
       v = 0 ∨ (ptn.set! tc (level + 1))[v - 1]! ≤ level + 1 := by
   intro v hv
-  rw [elem_single] at hv
+  have hen := target_end_lt hpsz hend hcell
+  have hle := cells_le _ hcell
+  rw [mem_single (by omega)] at hv
   have hvtc : v = tc := of_decide_eq_true hv
   subst hvtc
   obtain ⟨-, hstart, -⟩ := (mem_cells_iff (by omega) hend).mp hcell
@@ -365,54 +361,54 @@ private theorem setTc_starts {ptn : Array Nat} {level tc e : Nat}
       omega
 
 /-- The node invariant survives one subtree step. -/
-theorem iterOk_child {st : RefineSt} {level tc e o : Nat}
-    (h : IterOk ctx level st) (hlvl : level < ctx.n)
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+theorem iterOk_child {st : RefineSt n} {level tc e o : Nat}
+    (h : IterOk ctx level st) (hlvl : level < n)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
     (ho : o ≤ e - tc) :
     IterOk ctx (level + 1) (childSt ctx level st tc st.lab[tc + o]!) := by
   have hpsz := h.ok.ptnSize
   have hlsz := h.ok.labSize
   have hend := h.ok.ptnEnd
-  have hen : e < ctx.n := target_end_lt hpsz hend hcell
+  have hen : e < n := target_end_lt hpsz hend hcell
   have hinj' : LabInj st.lab st.lab.size := by
     rw [hlsz]
     exact h.inj
   have hto : tc + o < st.lab.size := by rw [hlsz]; omega
-  have hbsz : (breakout st.lab st.ptn (level + 1) tc
-      st.lab[tc + o]!).1.size = ctx.n := by
+  have hbsz : (breakout n st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).1.size = n := by
     rw [breakout_lab_size, hlsz]
-  have hbOk : LabOk (breakout st.lab st.ptn (level + 1) tc
-      st.lab[tc + o]!).1 ctx.n := labOk_breakout hinj' hto h.ok.labOk
-  have hbinj : LabInj (breakout st.lab st.ptn (level + 1) tc
-      st.lab[tc + o]!).1 ctx.n := by
-    have hb := labInj_breakout (ptn := st.ptn) (level := level)
+  have hbOk : LabOk (breakout n st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).1 n := labOk_breakout hinj' hto h.ok.labOk
+  have hbinj : LabInj (breakout n st.lab st.ptn (level + 1) tc
+      st.lab[tc + o]!).1 n := by
+    have hb := labInj_breakout (n := n) (ptn := st.ptn) (level := level)
       (tc := tc) (o := o) hinj' hto
     rw [hlsz] at hb
     exact hb
-  have hsz' : (st.ptn.set! tc (level + 1)).size = ctx.n := by
+  have hsz' : (st.ptn.set! tc (level + 1)).size = n := by
     rw [Array.size_set!, hpsz]
   have hend' := setTc_end (level := level) (tc := tc) hend (by omega)
-  have hact := insert_tc_lt (n := ctx.n) (tc := tc) (by omega)
-  have hok : StOk ctx.n (level + 1)
+  have hok : StOk n (level + 1)
       (childSt ctx level st tc st.lab[tc + o]!) :=
-    refine_stOk rfl hbsz hbOk hsz' hact hend'
+    refine_stOk (ctx := ctx) (active := VSet.empty.insert tc) hbsz hbOk hsz' hend'
   refine ⟨hok, ?_, ?_, by omega⟩
   · have hRI := refine_refInv (ctx := ctx) (level := level + 1)
-      (lab := (breakout st.lab st.ptn (level + 1) tc
+      (lab := (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).1)
       (ptn := st.ptn.set! tc (level + 1))
-      (active := insert 0 tc) (numcells := st.numcells + 1)
+      (active := VSet.empty.insert tc) (numcells := st.numcells + 1)
       (by omega) (by rw [hbsz, hsz']) hend'
-    have hendn' : (st.ptn.set! tc (level + 1))[ctx.n - 1]! ≤
+    have hendn' : (st.ptn.set! tc (level + 1))[n - 1]! ≤
         level + 1 := by
-      rw [← hsz']
-      exact hend'
+      have h := hend'
+      rw [hsz'] at h
+      exact h
     exact labInj_of_perm
       (cellsPerm_segN_perm hRI.perm (by omega) hend' hendn').symm hbinj
   · intro q hq
     rcases ptn_refine_vals ctx (level + 1)
-      (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-      (st.ptn.set! tc (level + 1)) (insert 0 tc)
+      (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+      (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
       (st.numcells + 1) q with hold | hnew
     · rw [childSt] at *
       rw [hold]
@@ -429,35 +425,34 @@ theorem iterOk_child {st : RefineSt} {level tc e o : Nat}
 
 /-- The node invariant transports across the renamed cell
 equivalence. -/
-theorem iterOk_of_stPerm {σ : Renaming ctx.n} {V U : RefineSt}
+theorem iterOk_of_stPerm {σ : Renaming n} {V U : RefineSt n}
     {level : Nat} (hU : IterOk ctx level U)
     (hsp : StPerm level V (mapSt σ U)) : IterOk ctx level V := by
   have hptn : U.ptn = V.ptn := hsp.ptn
   have hlszm : (U.lab.map σ.toFun).size = V.lab.size := hsp.labSize
-  have hlsz : V.lab.size = ctx.n := by
+  have hlsz : V.lab.size = n := by
     rw [← hlszm, Array.size_map]
     exact hU.ok.labSize
   have hUlsz := hU.ok.labSize
-  have hpszV : V.ptn.size = ctx.n := by
+  have hpszV : V.ptn.size = n := by
     rw [← hptn]
     exact hU.ok.ptnSize
   have hendV : V.ptn[V.ptn.size - 1]! ≤ level := by
     rw [← hptn]
     exact hU.ok.ptnEnd
-  have hendn : V.ptn[ctx.n - 1]! ≤ level := by
-    rw [← hpszV]
-    exact hendV
+  have hendn : V.ptn[n - 1]! ≤ level := by
+    have h := hendV
+    rw [hpszV] at h
+    exact h
   have hcells : cellsPerm V.ptn level V.lab (U.lab.map σ.toFun) :=
     hsp.cells
-  have hw : (segN V.lab 0 ctx.n).Perm
-      (segN (U.lab.map σ.toFun) 0 ctx.n) :=
+  have hw : (segN V.lab 0 n).Perm
+      (segN (U.lab.map σ.toFun) 0 n) :=
     cellsPerm_segN_perm hcells (by omega) hendV hendn
   have hactV : V.active = U.active := (hsp.active).symm
-  refine ⟨⟨hlsz, ?_, hpszV, ?_, hendV⟩, ?_, ?_, hU.lvl⟩
+  refine ⟨⟨hlsz, ?_, hpszV, hendV⟩, ?_, ?_, hU.lvl⟩
   · exact labOk_of_perm hw (labOk_map σ hU.ok.labOk)
       (by rw [Array.size_map, hUlsz]) hlsz
-  · rw [hactV]
-    exact hU.ok.activeLt
   · exact labInj_of_perm hw (labInj_map σ hU.inj hUlsz)
   · intro q hq
     rw [← hptn]
@@ -467,12 +462,12 @@ theorem iterOk_of_stPerm {σ : Renaming ctx.n} {V U : RefineSt}
 
 /-- Cell equivalence up to a row-preserving renaming survives
 individualizing corresponding vertices and refining. -/
-theorem stPerm_child {σ : Renaming ctx.n} {V U : RefineSt}
+theorem stPerm_child {σ : Renaming n} {V U : RefineSt n}
     {level tc e oV oU : Nat}
     (hg : RowsMap σ ctx.g ctx.g)
     (hsp : StPerm level V (mapSt σ U))
     (hU : IterOk ctx level U)
-    (hcell : (tc, e) ∈ cells U.ptn level ctx.n) (hne : tc < e)
+    (hcell : (tc, e) ∈ cells U.ptn level n) (hne : tc < e)
     (hoV : oV ≤ e - tc) (hoU : oU ≤ e - tc)
     (hvv : V.lab[tc + oV]! = σ.toFun U.lab[tc + oU]!) :
     StPerm (level + 1) (childSt ctx level V tc V.lab[tc + oV]!)
@@ -484,10 +479,10 @@ theorem stPerm_child {σ : Renaming ctx.n} {V U : RefineSt}
   have hVsz := hV.ok.labSize
   have hUsz := hU.ok.labSize
   have hendV := hV.ok.ptnEnd
-  have hcellV : (tc, e) ∈ cells V.ptn level ctx.n := by
+  have hcellV : (tc, e) ∈ cells V.ptn level n := by
     rw [← hptn]
     exact hcell
-  have hen : e < ctx.n := target_end_lt hpszV hendV hcellV
+  have hen : e < n := target_end_lt hpszV hendV hcellV
   have hbcp := breakout_cellsPerm_map (σ := σ) (ptn := V.ptn)
     hpszV hVsz hUsz hendV hV.valsWeak hsp.cells hcellV hne hoV hoU hvv
   have hUinj' : LabInj U.lab U.lab.size := by
@@ -496,39 +491,38 @@ theorem stPerm_child {σ : Renaming ctx.n} {V U : RefineSt}
   have hVinj' : LabInj V.lab V.lab.size := by
     rw [hVsz]
     exact hV.inj
-  have hVbsz : (breakout V.lab V.ptn (level + 1) tc
-      V.lab[tc + oV]!).1.size = ctx.n := by
+  have hVbsz : (breakout n V.lab V.ptn (level + 1) tc
+      V.lab[tc + oV]!).1.size = n := by
     rw [breakout_lab_size, hVsz]
-  have hUbsz : (breakout U.lab V.ptn (level + 1) tc
-      U.lab[tc + oU]!).1.size = ctx.n := by
+  have hUbsz : (breakout n U.lab V.ptn (level + 1) tc
+      U.lab[tc + oU]!).1.size = n := by
     rw [breakout_lab_size, hUsz]
-  have hVbOk : LabOk (breakout V.lab V.ptn (level + 1) tc
-      V.lab[tc + oV]!).1 ctx.n :=
+  have hVbOk : LabOk (breakout n V.lab V.ptn (level + 1) tc
+      V.lab[tc + oV]!).1 n :=
     labOk_breakout hVinj' (by rw [hVsz]; omega) hV.ok.labOk
-  have hUbOk : LabOk (breakout U.lab V.ptn (level + 1) tc
-      U.lab[tc + oU]!).1 ctx.n :=
+  have hUbOk : LabOk (breakout n U.lab V.ptn (level + 1) tc
+      U.lab[tc + oU]!).1 n :=
     labOk_breakout hUinj' (by rw [hUsz]; omega) hU.ok.labOk
-  have hsz' : (V.ptn.set! tc (level + 1)).size = ctx.n := by
+  have hsz' : (V.ptn.set! tc (level + 1)).size = n := by
     rw [Array.size_set!, hpszV]
   have hend' := setTc_end (level := level) (tc := tc) hendV
     (by omega)
-  have hact := insert_tc_lt (n := ctx.n) (tc := tc) (by omega)
-  have hstarts := setTc_starts (ctx := ctx) hpszV hendV hcellV
-  have h1 := refine_perm (n := ctx.n) rfl hbcp
-    (by rw [Array.size_map, hUbsz, hVbsz]) hVbsz hVbOk hsz' hact
+  have hstarts := setTc_starts hpszV hendV hcellV
+  have h1 := refine_perm (ctx := ctx) hbcp
+    (by rw [Array.size_map, hUbsz, hVbsz]) hVbsz hVbOk hsz'
     hend' hstarts (numcells := V.numcells + 1)
-  have h2 := refine_map σ rfl rfl hg (level + 1)
-    (breakout U.lab V.ptn (level + 1) tc U.lab[tc + oU]!).1
-    (V.ptn.set! tc (level + 1)) (insert 0 tc) (V.numcells + 1)
-    hUbsz hUbOk hsz' hact hend'
+  have h2 := refine_map σ hg (level + 1)
+    (breakout n U.lab V.ptn (level + 1) tc U.lab[tc + oU]!).1
+    (V.ptn.set! tc (level + 1)) (VSet.empty.insert tc) (V.numcells + 1)
+    hUbsz hUbOk hsz' hend'
   rw [h2] at h1
   show StPerm (level + 1)
     (refine ctx (level + 1)
-      (breakout V.lab V.ptn (level + 1) tc V.lab[tc + oV]!).1
-      (V.ptn.set! tc (level + 1)) (insert 0 tc) (V.numcells + 1))
+      (breakout n V.lab V.ptn (level + 1) tc V.lab[tc + oV]!).1
+      (V.ptn.set! tc (level + 1)) (VSet.empty.insert tc) (V.numcells + 1))
     (mapSt σ (refine ctx (level + 1)
-      (breakout U.lab U.ptn (level + 1) tc U.lab[tc + oU]!).1
-      (U.ptn.set! tc (level + 1)) (insert 0 tc) (U.numcells + 1)))
+      (breakout n U.lab U.ptn (level + 1) tc U.lab[tc + oU]!).1
+      (U.ptn.set! tc (level + 1)) (VSet.empty.insert tc) (U.numcells + 1)))
   rw [hptn, hnum]
   exact h1
 
@@ -536,19 +530,19 @@ theorem stPerm_child {σ : Renaming ctx.n} {V U : RefineSt}
 
 /-- A descent: a sequence of individualize-and-refine steps, each at a
 nontrivial cell of the current partition. -/
-inductive Descends (ctx : Ctx) :
-    Nat → RefineSt → Nat → RefineSt → Prop where
-  | refl (level : Nat) (st : RefineSt) : Descends ctx level st level st
-  | step {level level' : Nat} {st st' : RefineSt} (tc e o : Nat)
-      (hlvl : level < ctx.n)
-      (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+inductive Descends (ctx : Ctx n) :
+    Nat → RefineSt n → Nat → RefineSt n → Prop where
+  | refl (level : Nat) (st : RefineSt n) : Descends ctx level st level st
+  | step {level level' : Nat} {st st' : RefineSt n} (tc e o : Nat)
+      (hlvl : level < n)
+      (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
       (ho : o ≤ e - tc)
       (htail : Descends ctx (level + 1)
         (childSt ctx level st tc st.lab[tc + o]!) level' st') :
       Descends ctx level st level' st'
 
 /-- The node invariant holds along every descent. -/
-theorem descends_iterOk {level level' : Nat} {st st' : RefineSt}
+theorem descends_iterOk {level level' : Nat} {st st' : RefineSt n}
     (h : Descends ctx level st level' st')
     (hok : IterOk ctx level st) : IterOk ctx level' st' := by
   induction h with
@@ -559,9 +553,9 @@ theorem descends_iterOk {level level' : Nat} {st st' : RefineSt}
 /-- The bisimulation: a descent below one state mirrors below any
 state whose labelling is cell-equivalent up to a row-preserving
 renaming, ending in the transported relation. -/
-theorem descends_transport {σ : Renaming ctx.n}
+theorem descends_transport {σ : Renaming n}
     (hg : RowsMap σ ctx.g ctx.g) :
-    ∀ {level level' : Nat} {U U' V : RefineSt},
+    ∀ {level level' : Nat} {U U' V : RefineSt n},
       Descends ctx level U level' U' → IterOk ctx level U →
       StPerm level V (mapSt σ U) →
       ∃ V', Descends ctx level V level' V' ∧
@@ -573,10 +567,10 @@ theorem descends_transport {σ : Renaming ctx.n}
     have hptn : U.ptn = V.ptn := hsp.ptn
     have hpszV := hV.ok.ptnSize
     have hendV := hV.ok.ptnEnd
-    have hcellV : (tc, e) ∈ cells V.ptn level ctx.n := by
+    have hcellV : (tc, e) ∈ cells V.ptn level n := by
       rw [← hptn]
       exact hcell
-    have hen : e < ctx.n := target_end_lt hpszV hendV hcellV
+    have hen : e < n := target_end_lt hpszV hendV hcellV
     have hcellIsV : IsCell V.ptn level tc (e + 1 - tc) :=
       cells_isCell (by omega) hendV _ hcellV
     have hmemU : σ.toFun U.lab[tc + o]! ∈
@@ -598,12 +592,12 @@ theorem descends_transport {σ : Renaming ctx.n}
 /-- The leaf collapse: a descent to a discrete state below one side
 mirrors below the other with equal leaf rows — the renaming is
 absorbed at the leaf. -/
-theorem descends_leafRows {σ : Renaming ctx.n}
+theorem descends_leafRows {σ : Renaming n}
     (hg : RowsMap σ ctx.g ctx.g)
-    {level level' : Nat} {U U' V : RefineSt}
+    {level level' : Nat} {U U' V : RefineSt n}
     (h : Descends ctx level U level' U')
     (hU : IterOk ctx level U) (hsp : StPerm level V (mapSt σ U))
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
     ∃ V', Descends ctx level V level' V' ∧
       leafRows ctx V'.lab = leafRows ctx U'.lab := by
   obtain ⟨V', hdesc, hspL⟩ := descends_transport hg h hU hsp
@@ -621,7 +615,7 @@ theorem descends_leafRows {σ : Renaming ctx.n}
   have hlabeq' : U'.lab.map σ.toFun = V'.lab := hlabeq
   have hlr : leafRows ctx V'.lab = leafRows ctx U'.lab := by
     rw [← hlabeq']
-    exact leafRows_map σ rfl rfl hg hU'.ok.labOk hU'.ok.labSize
+    exact leafRows_map σ hg hU'.ok.labOk hU'.ok.labSize
   exact ⟨V', hdesc, hlr⟩
 
 /-! # The single-deviation theorem
@@ -633,27 +627,27 @@ with equal leaf rows. -/
 /-- A deviation at a pair target: descents below the two children
 reach leaves with the same rows. -/
 theorem deviation_leafRows {S : Nat → Prop} {f : Nat → Nat}
-    {st : RefineSt} {level tc level' : Nat} {U' : RefineSt}
-    (hIt : IterOk ctx level st) (hgsz : ctx.g.size = ctx.n)
-    (hlvl : level < ctx.n)
-    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
-    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
-    (hrows : ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]!)
-    (hcell : (tc, tc + 1) ∈ cells st.ptn level ctx.n)
+    {st : RefineSt n} {level tc level' : Nat} {U' : RefineSt n}
+    (hIt : IterOk ctx level st) (hgsz : ctx.g.size = n)
+    (hlvl : level < n)
+    (hfb : ∀ v, v < n → f v < n)
+    (hinvol : ∀ v, v < n → f (f v) = v)
+    (hrows : ∀ v, v < n → ctx.g[f v]! = (ctx.g[v]!).image f)
+    (hcell : (tc, tc + 1) ∈ cells st.ptn level n)
     (hStc : S tc)
-    (hSpair : ∀ p ∈ cells st.ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
-    (hSswap : ∀ p ∈ cells st.ptn level ctx.n, S p.1 →
+    (hSpair : ∀ p ∈ cells st.ptn level n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells st.ptn level n, S p.1 →
       f st.lab[p.1]! = st.lab[p.1 + 1]! ∧
         f st.lab[p.1 + 1]! = st.lab[p.1]!)
-    (hSfix : ∀ p ∈ cells st.ptn level ctx.n, ¬ S p.1 →
+    (hSfix : ∀ p ∈ cells st.ptn level n, ¬ S p.1 →
       ∀ o, o < p.2 + 1 - p.1 → f st.lab[p.1 + o]! = st.lab[p.1 + o]!)
     (hdesc : Descends ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + 0]!) level' U')
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
     ∃ V', Descends ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + 1]!) level' V' ∧
       leafRows ctx V'.lab = leafRows ctx U'.lab := by
-  have hg : RowsMap (renamingOfFlip f ctx.n hfb hinvol) ctx.g ctx.g :=
+  have hg : RowsMap (renamingOfFlip f n hfb hinvol) ctx.g ctx.g :=
     rowsMap_of_flip_rows hgsz hfb hinvol hrows
   have hstep := branch_step (S := S) hgsz hIt.ok.ptnSize
     hIt.ok.labSize hIt.ok.ptnEnd hIt.valsWeak hIt.ok.labOk hIt.inj
@@ -664,7 +658,7 @@ theorem deviation_leafRows {S : Nat → Prop} {f : Nat → Nat}
     iterOk_child hIt hlvl hcell (by omega) (by omega)
   have hstep' : StPerm (level + 1)
       (childSt ctx level st tc st.lab[tc + 1]!)
-      (mapSt (renamingOfFlip f ctx.n hfb hinvol)
+      (mapSt (renamingOfFlip f n hfb hinvol)
         (childSt ctx level st tc st.lab[tc + 0]!)) := hstep
   exact descends_leafRows hg hdesc hU0 hstep' hdisc
 

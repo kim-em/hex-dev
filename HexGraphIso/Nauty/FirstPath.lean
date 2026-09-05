@@ -35,7 +35,7 @@ the current path still agrees with the first path.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # A descent is a function of its target-and-offset path -/
 
@@ -45,8 +45,8 @@ recorded target cell and offset, so the path determines the descent
 outright; no hypothesis about the graph, the partition or the codes is
 needed. -/
 theorem descPath_det :
-    ∀ {level : Nat} {st : RefineSt} {path : List (Nat × Nat)}
-      {l₁ l₂ : Nat} {st₁ st₂ : RefineSt},
+    ∀ {level : Nat} {st : RefineSt n} {path : List (Nat × Nat)}
+      {l₁ l₂ : Nat} {st₁ st₂ : RefineSt n},
       DescPath ctx level st path l₁ st₁ →
       DescPath ctx level st path l₂ st₂ →
       l₁ = l₂ ∧ st₁ = st₂
@@ -55,15 +55,15 @@ theorem descPath_det :
       descPath_det h₁ h₂
 
 /-- The level a descent ends at is a function of its path. -/
-theorem descPath_det_level {level : Nat} {st : RefineSt}
-    {path : List (Nat × Nat)} {l₁ l₂ : Nat} {st₁ st₂ : RefineSt}
+theorem descPath_det_level {level : Nat} {st : RefineSt n}
+    {path : List (Nat × Nat)} {l₁ l₂ : Nat} {st₁ st₂ : RefineSt n}
     (h₁ : DescPath ctx level st path l₁ st₁)
     (h₂ : DescPath ctx level st path l₂ st₂) : l₁ = l₂ :=
   (descPath_det h₁ h₂).1
 
 /-- The state a descent ends at is a function of its path. -/
-theorem descPath_det_state {level : Nat} {st : RefineSt}
-    {path : List (Nat × Nat)} {l₁ l₂ : Nat} {st₁ st₂ : RefineSt}
+theorem descPath_det_state {level : Nat} {st : RefineSt n}
+    {path : List (Nat × Nat)} {l₁ l₂ : Nat} {st₁ st₂ : RefineSt n}
     (h₁ : DescPath ctx level st path l₁ st₁)
     (h₂ : DescPath ctx level st path l₂ st₂) : st₁ = st₂ :=
   (descPath_det h₁ h₂).2
@@ -72,8 +72,8 @@ theorem descPath_det_state {level : Nat} {st : RefineSt}
 the form the `FirstDescOk` derivation applies: a descent transported
 across the gca's child relation and the first path itself are the same
 descent once their paths agree, so their labellings agree. -/
-theorem descPath_det_lab {level : Nat} {st : RefineSt}
-    {path : List (Nat × Nat)} {l₁ l₂ : Nat} {st₁ st₂ : RefineSt}
+theorem descPath_det_lab {level : Nat} {st : RefineSt n}
+    {path : List (Nat × Nat)} {l₁ l₂ : Nat} {st₁ st₂ : RefineSt n}
     (h₁ : DescPath ctx level st path l₁ st₁)
     (h₂ : DescPath ctx level st path l₂ st₂) : st₁.lab = st₂.lab := by
   rw [descPath_det_state h₁ h₂]
@@ -94,13 +94,13 @@ exactly "the first path went discrete at the current leaf's depth",
 which is a fact about where two descents stop, not about an array
 cell. -/
 
-theorem firstterminal_firstcode (level : Nat) (st : SearchSt) :
+theorem firstterminal_firstcode (level : Nat) (st : SearchSt n) :
     (firstterminal level st).firstcode =
       st.firstcode.set! (level + 1) codeSentinel := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-theorem firstterminal_firsttc (level : Nat) (st : SearchSt) :
+theorem firstterminal_firsttc (level : Nat) (st : SearchSt n) :
     (firstterminal level st).firsttc =
       st.firsttc.set! (level + 1) (-1) := by
   rw [firstterminal]
@@ -109,14 +109,14 @@ theorem firstterminal_firsttc (level : Nat) (st : SearchSt) :
 /-- The first path's depth is recorded by the sentinel: at the level
 where `firstterminal` fires, the next `firstcode` entry is the
 sentinel. -/
-theorem firstterminal_sentinel {level : Nat} {st : SearchSt}
+theorem firstterminal_sentinel {level : Nat} {st : SearchSt n}
     (h : level + 1 < st.firstcode.size) :
     (firstterminal level st).firstcode[level + 1]! = codeSentinel := by
   rw [firstterminal_firstcode, Array.getElem!_set!_self _ _ _ h]
 
 /-- The first path's target-cell record is `-1` just past its last
 level, matching the discreteness that stopped it. -/
-theorem firstterminal_firsttc_neg {level : Nat} {st : SearchSt}
+theorem firstterminal_firsttc_neg {level : Nat} {st : SearchSt n}
     (h : level + 1 < st.firsttc.size) :
     (firstterminal level st).firsttc[level + 1]! = -1 := by
   rw [firstterminal_firsttc, Array.getElem!_set!_self _ _ _ h]

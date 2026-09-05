@@ -32,9 +32,9 @@ variable {n k : Nat}
 /-! # The key order: `≤` and bounds -/
 
 /-- `k1 ≤ k2` in the leaf-key order. -/
-@[expose] def keyLe (k1 k2 : Key) : Prop := keyCmp k1 k2 ≠ .gt
+@[expose] def keyLe (k1 k2 : Key n) : Prop := keyCmp k1 k2 ≠ .gt
 
-theorem keyLe_iff {a b : Key} : keyLe a b ↔ keyCmp b a ≠ .lt := by
+theorem keyLe_iff {a b : Key n} : keyLe a b ↔ keyCmp b a ≠ .lt := by
   rw [keyLe]
   constructor
   · intro h hlt
@@ -42,35 +42,35 @@ theorem keyLe_iff {a b : Key} : keyLe a b ↔ keyCmp b a ≠ .lt := by
   · intro h hgt
     exact h (keyCmp_gt_iff_lt.mp hgt)
 
-theorem keyLe_refl (x : Key) : keyLe x x := by
+theorem keyLe_refl (x : Key n) : keyLe x x := by
   rw [keyLe, keyCmp_self]
   intro h
   cases h
 
-theorem keyLe_of_eq {a b : Key} (h : a = b) : keyLe a b := by
+theorem keyLe_of_eq {a b : Key n} (h : a = b) : keyLe a b := by
   rw [h]
   exact keyLe_refl b
 
-theorem keyLe_trans {a b c : Key} (h1 : keyLe a b) (h2 : keyLe b c) :
+theorem keyLe_trans {a b c : Key n} (h1 : keyLe a b) (h2 : keyLe b c) :
     keyLe a c :=
   keyLe_iff.mpr (keyCmp_ge_trans (keyLe_iff.mp h2) (keyLe_iff.mp h1))
 
-theorem keyLe_antisym {a b : Key} (h1 : keyLe a b) (h2 : keyLe b a) :
+theorem keyLe_antisym {a b : Key n} (h1 : keyLe a b) (h2 : keyLe b a) :
     a = b :=
   keyCmp_antisym (keyLe_iff.mp h2) (keyLe_iff.mp h1)
 
-theorem keysMax_le {b k : Key} {l : List Key} (hk : keyLe k b)
+theorem keysMax_le {b k : Key n} {l : List (Key n)} (hk : keyLe k b)
     (hl : ∀ y ∈ l, keyLe y b) : keyLe (keysMax k l) b := by
   rcases keysMax_mem l k with h | h
   · rw [h]
     exact hk
   · exact hl _ h
 
-theorem keyLe_keysMax {y k : Key} {l : List Key}
+theorem keyLe_keysMax {y k : Key n} {l : List (Key n)}
     (hy : y = k ∨ y ∈ l) : keyLe y (keysMax k l) :=
   keyLe_iff.mpr (keysMax_ge l k y hy)
 
-theorem keysMax_eq_of_le {b k : Key} {l : List Key}
+theorem keysMax_eq_of_le {b k : Key n} {l : List (Key n)}
     (hk : keyLe k b) (hl : ∀ y ∈ l, keyLe y b)
     (hb : b = k ∨ b ∈ l) : keysMax k l = b :=
   keyLe_antisym (keysMax_le hk hl) (keyLe_keysMax hb)
@@ -78,21 +78,21 @@ theorem keysMax_eq_of_le {b k : Key} {l : List Key}
 /-! # First-difference comparisons of code lists -/
 
 theorem keyCmp_cons_lt {c c' : Nat} (h : c < c') (cs cs' : List Nat)
-    (r r' : List Nat) :
+    (r r' : List (VSet n)) :
     keyCmp ⟨c :: cs, r⟩ ⟨c' :: cs', r'⟩ = .lt := by
   rw [keyCmp]
   have hcc : compare c c' = .lt := Nat.compare_eq_lt.mpr h
   simp only [listCmp, hcc]
 
 theorem keyCmp_cons_gt {c c' : Nat} (h : c' < c) (cs cs' : List Nat)
-    (r r' : List Nat) :
+    (r r' : List (VSet n)) :
     keyCmp ⟨c :: cs, r⟩ ⟨c' :: cs', r'⟩ = .gt := by
   rw [keyCmp]
   have hcc : compare c c' = .gt := Nat.compare_eq_gt.mpr h
   simp only [listCmp, hcc]
 
 theorem keyCmp_cons_eq (c : Nat) (cs cs' : List Nat)
-    (r r' : List Nat) :
+    (r r' : List (VSet n)) :
     keyCmp ⟨c :: cs, r⟩ ⟨c :: cs', r'⟩ =
       keyCmp ⟨cs, r⟩ ⟨cs', r'⟩ := by
   rw [keyCmp, keyCmp]
@@ -102,14 +102,14 @@ theorem keyCmp_cons_eq (c : Nat) (cs cs' : List Nat)
 
 /-! # Every spec key starts with the node's refinement code -/
 
-theorem specNode_codes_head (ctx : Ctx) (tcLevel fuel level : Nat)
-    (lab ptn : Array Nat) (active numcells : Nat) :
+theorem specNode_codes_head (ctx : Ctx n) (tcLevel fuel level : Nat)
+    (lab ptn : Array Nat) (active : VSet n) (numcells : Nat) :
     ∃ rest, (specNode ctx tcLevel (fuel + 1) level lab ptn active
       numcells).codes =
       (refine ctx level lab ptn active numcells).longcode :: rest := by
   rw [specNode]
   rcases hdisc : discreteAt (refine ctx level lab ptn active
-      numcells).ptn level ctx.n with _ | _
+      numcells).ptn level n with _ | _
   · simp only [Bool.false_eq_true, ite_false]
     obtain ⟨m, hm⟩ : ∃ m, (specMaketargetcell ctx
         (refine ctx level lab ptn active numcells).lab
@@ -133,30 +133,30 @@ theorem specNode_codes_head (ctx : Ctx) (tcLevel fuel level : Nat)
 
 /-- If `γ` fixes the adjacency rows and carries the cells of `lab₂` to
 the cells of `lab₁`, the two subtrees produce the same key. -/
-theorem specNode_autom {ctx : Ctx} (hn : ctx.n = n) {γ : Renaming n}
+theorem specNode_autom {ctx : Ctx n} {γ : Renaming n}
     (hg : RowsMap γ ctx.g ctx.g) (tcLevel fuel level : Nat)
-    {lab₁ lab₂ ptn : Array Nat} {active numcells : Nat}
+    {lab₁ lab₂ ptn : Array Nat} {active : VSet n} {numcells : Nat}
     (hcp : cellsPerm ptn level lab₁ (lab₂.map γ.toFun))
     (hs1 : lab₁.size = n) (hs2 : lab₂.size = n)
     (hok1 : LabOk lab₁ n) (hok2 : LabOk lab₂ n)
-    (hsp : ptn.size = n) (hact : active < 2 ^ n)
+    (hsp : ptn.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
-    (hstarts : ∀ v : Nat, elem active v = true →
+    (hstarts : ∀ v : Nat, active.mem v = true →
       v = 0 ∨ ptn[v - 1]! ≤ level)
     (hvals : ∀ q : Nat, ptn[q]! ≤ level ∨ ptn[q]! = n + 2)
     (hlf : level + fuel ≤ n + 1) :
     specNode ctx tcLevel fuel level lab₂ ptn active numcells =
       specNode ctx tcLevel fuel level lab₁ ptn active numcells := by
-  have h1 := specNode_map γ (ctx := ctx) (ctx' := ctx) hn hn hg
-    tcLevel fuel level lab₂ ptn active numcells hs2 hok2 hsp hact hend
+  have h1 := specNode_map γ (ctx := ctx) (ctx' := ctx) hg
+    tcLevel fuel level lab₂ ptn active numcells hs2 hok2 hsp hend
   have hokm : LabOk (lab₂.map γ.toFun) n := by
     intro i hi
     rw [Array.size_map] at hi
     rw [getElem!_map_of_lt _ _ hi]
     exact (γ.maps _).mp (hok2 i hi)
-  have h2 := specNode_perm hn tcLevel fuel level lab₁
+  have h2 := specNode_perm (ctx := ctx) tcLevel fuel level lab₁
     (lab₂.map γ.toFun) ptn active numcells hcp
-    (by rw [Array.size_map]; omega) hs1 hok1 hokm hsp hact hend
+    (by rw [Array.size_map]; omega) hs1 hok1 hokm hsp hend
     hstarts hvals hlf
   exact h1.symm.trans h2.symm
 
@@ -221,15 +221,13 @@ theorem cellsPerm_of_forall_cells {ptn lab₁ lab₂' : Array Nat}
 
 /-! # Checked automorphisms -/
 
-theorem image_congr {f f' : Nat → Nat} (s : Nat)
+theorem image_congr {f f' : Nat → Nat} (s : VSet n)
     (h : ∀ v, v < n → f v = f' v) :
-    image f n s = image f' n s := by
-  rw [image, image]
-  have hgen : ∀ (l : List Nat) (t : Nat), (∀ v ∈ l, f v = f' v) →
-      l.foldl (fun t v => if s.testBit v then insert t (f v) else t)
-        t =
-      l.foldl (fun t v => if s.testBit v then insert t (f' v) else t)
-        t := by
+    s.image f = s.image f' := by
+  rw [VSet.image, VSet.image]
+  have hgen : ∀ (l : List Nat) (t : VSet n), (∀ v ∈ l, f v = f' v) →
+      l.foldl (fun t v => if s.mem v then t.insert (f v) else t) t =
+      l.foldl (fun t v => if s.mem v then t.insert (f' v) else t) t := by
     intro l
     induction l with
     | nil => intro t _; rfl
@@ -238,16 +236,16 @@ theorem image_congr {f f' : Nat → Nat} (s : Nat)
       rw [List.foldl_cons, List.foldl_cons,
         hl v (List.mem_cons.mpr (Or.inl rfl))]
       exact ih _ fun w hw => hl w (List.mem_cons.mpr (Or.inr hw))
-  exact hgen _ 0 fun v hv => h v (List.mem_range.mp hv)
+  exact hgen _ .empty fun v hv => h v (List.mem_range.mp hv)
 
 /-- Executable check that `γ` names an automorphism of the rows `g`:
 a permutation of `[0, n)` whose induced row transport fixes `g`. -/
-@[expose] def checkAutom (g γ : Array Nat) (n : Nat) : Bool :=
+@[expose] def checkAutom (g : Array (VSet n)) (γ : Array Nat) : Bool :=
   γ.size == n &&
   ((List.range n).all fun v => γ[v]! < n) &&
   (((List.range n).map fun v => γ[v]!).isPerm (List.range n)) &&
   ((List.range n).all fun v =>
-    g[γ[v]!]! == image (fun w => γ[w]!) n g[v]!)
+    g[γ[v]!]! == g[v]!.image (fun w => γ[w]!))
 
 /-- The renaming named by a checked automorphism array. -/
 @[expose] def renamingOfArray (γ : Array Nat) (n : Nat)
@@ -272,8 +270,8 @@ a permutation of `[0, n)` whose induced row transport fixes `g`. -/
       exact ⟨fun _ => hbound v h, fun _ => h⟩
     · rw [ite_eq_right h]
 
-theorem checkAutom_sound {g γ : Array Nat} (hg : g.size = n)
-    (h : checkAutom g γ n = true) :
+theorem checkAutom_sound {g : Array (VSet n)} {γ : Array Nat} (hg : g.size = n)
+    (h : checkAutom g γ = true) :
     ∃ σ : Renaming n, (∀ v, v < n → σ v = γ[v]!) ∧ RowsMap σ g g := by
   rw [checkAutom] at h
   simp only [Bool.and_eq_true] at h
@@ -299,7 +297,7 @@ theorem checkAutom_sound {g γ : Array Nat} (hg : g.size = n)
   · show (if v < n then γ[v]! else v) = γ[v]!
     rw [ite_eq_left hv]
   · have hrv := List.all_eq_true.mp hrows v (List.mem_range.mpr hv)
-    have hrv' : g[γ[v]!]! = image (fun w => γ[w]!) n g[v]! := by
+    have hrv' : g[γ[v]!]! = g[v]!.image (fun w => γ[w]!) := by
       simpa using hrv
     have hσv : renamingOfArray γ n hbound' hinj v = γ[v]! := by
       show (if v < n then γ[v]! else v) = γ[v]!
@@ -403,13 +401,13 @@ bounded by the tree depth. -/
 /-- Validate each distinct automorphism of a certificate once: the
 replay then looks records up in this list instead of re-validating
 the same generator at every `.autom` record. -/
-@[expose] def validGammas (g : Array Nat) (nn : Nat)
-    (cert : CertNode) : List (Array Nat) :=
-  (certGammas (nn + 2) cert []).filter fun γ => checkAutom g γ nn
+@[expose] def validGammas (g : Array (VSet n)) (cert : CertNode) :
+    List (Array Nat) :=
+  (certGammas (n + 2) cert []).filter fun γ => checkAutom g γ
 
-theorem validGammas_sound {g : Array Nat} {nn : Nat}
+theorem validGammas_sound {g : Array (VSet n)}
     {cert : CertNode} {γ : Array Nat}
-    (h : γ ∈ validGammas g nn cert) : checkAutom g γ nn = true :=
+    (h : γ ∈ validGammas g cert) : checkAutom g γ = true :=
   (List.mem_filter.mp h).2
 
 /-- Replay one node of the certificate. `⟨bcodes, brows⟩` is the
@@ -424,9 +422,9 @@ once with `let` for shared reduction), so certificate obligations
 reduce in any module's kernel. The `checkChildren` spelling of the
 child sweep below is the proof-layer view; `checkNode_children_eq`
 connects them. -/
-@[expose] def checkNode (ctx : Ctx) (tcLevel : Nat)
-    (brows : List Nat) (vgens : List (Array Nat)) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → CertNode →
+@[expose] def checkNode (ctx : Ctx n) (tcLevel : Nat)
+    (brows : List (VSet n)) (vgens : List (Array Nat)) :
+    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → CertNode →
       List Nat → Option Bool
   | 0, _, _, _, _, _, _, _ => none
   | fuel + 1, level, lab, ptn, active, numcells, cert, bcodes =>
@@ -446,7 +444,7 @@ connects them. -/
         | .gt => none
         | .lt => some false
         | .eq =>
-          if discreteAt rs.ptn level ctx.n then
+          if discreteAt rs.ptn level n then
             match keyCmp
               ⟨[rs.longcode, codeSentinel], leafRows ctx rs.lab⟩
               ⟨bc :: brest, brows⟩ with
@@ -460,7 +458,7 @@ connects them. -/
         | .gt => none
         | .lt => some false
         | .eq =>
-          if discreteAt rs.ptn level ctx.n then
+          if discreteAt rs.ptn level n then
             none
           else
             let tcr := specMaketargetcell ctx rs.lab rs.ptn level
@@ -471,7 +469,7 @@ connects them. -/
                   match acc with
                   | none => none
                   | some a =>
-                    let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+                    let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
                       rs.lab[tcr.1 + co.2]!
                     match
                       match co.1 with
@@ -479,10 +477,10 @@ connects them. -/
                         if o' < co.2 &&
                             containsGamma vgens γ &&
                             checkCellsPerm br.2.1
-                              (breakout rs.lab rs.ptn (level + 1)
+                              (breakout n rs.lab rs.ptn (level + 1)
                                 tcr.1 rs.lab[tcr.1 + o']!).1
                               (Hex.Array.map' (fun w => γ[w]!) br.1)
-                              (level + 1) ctx.n then
+                              (level + 1) n then
                           some false
                         else
                           none
@@ -500,8 +498,8 @@ connects them. -/
 /-- The child sweep of `checkNode` as its own recursion over the child
 list, from offset `o` on: the spelling the soundness induction
 consumes. -/
-@[expose] def checkChildren (ctx : Ctx) (tcLevel : Nat)
-    (brows : List Nat) (vgens : List (Array Nat))
+@[expose] def checkChildren (ctx : Ctx n) (tcLevel : Nat)
+    (brows : List (VSet n)) (vgens : List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat)
     (tc numcells : Nat) (brest : List Nat) :
     List CertNode → Nat → Option Bool
@@ -513,21 +511,21 @@ consumes. -/
         if o' < o &&
             containsGamma vgens γ &&
             checkCellsPerm
-              (breakout rsLab rsPtn (level + 1) tc
+              (breakout n rsLab rsPtn (level + 1) tc
                 rsLab[tc + o]!).2.1
-              (breakout rsLab rsPtn (level + 1) tc
+              (breakout n rsLab rsPtn (level + 1) tc
                 rsLab[tc + o']!).1
-              ((breakout rsLab rsPtn (level + 1) tc
+              ((breakout n rsLab rsPtn (level + 1) tc
                 rsLab[tc + o]!).1.map fun w => γ[w]!)
-              (level + 1) ctx.n then
+              (level + 1) n then
           some false
         else
           none
       | _ =>
         checkNode ctx tcLevel brows vgens fuel (level + 1)
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
           (numcells + 1) c brest
     with
     | none => none
@@ -539,8 +537,8 @@ consumes. -/
 
 /-- The inline child fold of `checkNode` agrees with the
 `checkChildren` spelling. -/
-theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
-    (brows : List Nat) (vgens : List (Array Nat))
+theorem checkNode_children_eq (ctx : Ctx n) (tcLevel : Nat)
+    (brows : List (VSet n)) (vgens : List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat)
     (tc numcells : Nat) (brest : List Nat) :
     ∀ (certs : List CertNode) (o : Nat) (a : Bool),
@@ -555,24 +553,24 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
                 if o' < co.2 &&
                     containsGamma vgens γ &&
                     checkCellsPerm
-                      (breakout rsLab rsPtn (level + 1) tc
+                      (breakout n rsLab rsPtn (level + 1) tc
                         rsLab[tc + co.2]!).2.1
-                      (breakout rsLab rsPtn (level + 1) tc
+                      (breakout n rsLab rsPtn (level + 1) tc
                         rsLab[tc + o']!).1
                       (Hex.Array.map' (fun w => γ[w]!)
-                        (breakout rsLab rsPtn (level + 1) tc
+                        (breakout n rsLab rsPtn (level + 1) tc
                           rsLab[tc + co.2]!).1)
-                      (level + 1) ctx.n then
+                      (level + 1) n then
                   some false
                 else
                   none
               | _ =>
                 checkNode ctx tcLevel brows vgens fuel (level + 1)
-                  (breakout rsLab rsPtn (level + 1) tc
+                  (breakout n rsLab rsPtn (level + 1) tc
                     rsLab[tc + co.2]!).1
-                  (breakout rsLab rsPtn (level + 1) tc
+                  (breakout n rsLab rsPtn (level + 1) tc
                     rsLab[tc + co.2]!).2.1
-                  (breakout rsLab rsPtn (level + 1) tc
+                  (breakout n rsLab rsPtn (level + 1) tc
                     rsLab[tc + co.2]!).2.2
                   (numcells + 1) co.1 brest
             with
@@ -599,24 +597,24 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
                   if o' < co.2 &&
                       containsGamma vgens γ &&
                       checkCellsPerm
-                        (breakout rsLab rsPtn (level + 1) tc
+                        (breakout n rsLab rsPtn (level + 1) tc
                           rsLab[tc + co.2]!).2.1
-                        (breakout rsLab rsPtn (level + 1) tc
+                        (breakout n rsLab rsPtn (level + 1) tc
                           rsLab[tc + o']!).1
                         (Hex.Array.map' (fun w => γ[w]!)
-                          (breakout rsLab rsPtn (level + 1) tc
+                          (breakout n rsLab rsPtn (level + 1) tc
                             rsLab[tc + co.2]!).1)
-                        (level + 1) ctx.n then
+                        (level + 1) n then
                     some false
                   else
                     none
                 | _ =>
                   checkNode ctx tcLevel brows vgens fuel (level + 1)
-                    (breakout rsLab rsPtn (level + 1) tc
+                    (breakout n rsLab rsPtn (level + 1) tc
                       rsLab[tc + co.2]!).1
-                    (breakout rsLab rsPtn (level + 1) tc
+                    (breakout n rsLab rsPtn (level + 1) tc
                       rsLab[tc + co.2]!).2.1
-                    (breakout rsLab rsPtn (level + 1) tc
+                    (breakout n rsLab rsPtn (level + 1) tc
                       rsLab[tc + co.2]!).2.2
                     (numcells + 1) co.1 brest
               with
@@ -637,13 +635,13 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
       cases hc : (o' < o &&
           containsGamma vgens γ &&
           checkCellsPerm
-            (breakout rsLab rsPtn (level + 1) tc
+            (breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o]!).2.1
-            (breakout rsLab rsPtn (level + 1) tc
+            (breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o']!).1
-            ((breakout rsLab rsPtn (level + 1) tc
+            ((breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o]!).1.map fun w => γ[w]!)
-            (level + 1) ctx.n : Bool) with
+            (level + 1) n : Bool) with
       | false =>
         simp only [Bool.false_eq_true, ite_false]
         exact hnone (rest.zipIdx (o + 1))
@@ -661,9 +659,9 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
         try (intro o2 g2 h2; exact CertNode.noConfusion h2)
       simp only []
       generalize checkNode ctx tcLevel brows vgens fuel (level + 1)
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
         (numcells + 1) CertNode.leaf brest = cres
       cases cres with
       | none => exact hnone (rest.zipIdx (o + 1))
@@ -680,9 +678,9 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
         try (intro o2 g2 h2; exact CertNode.noConfusion h2)
       simp only []
       generalize checkNode ctx tcLevel brows vgens fuel (level + 1)
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
         (numcells + 1) CertNode.codePrune brest = cres
       cases cres with
       | none => exact hnone (rest.zipIdx (o + 1))
@@ -699,9 +697,9 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
         try (intro o2 g2 h2; exact CertNode.noConfusion h2)
       simp only []
       generalize checkNode ctx tcLevel brows vgens fuel (level + 1)
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
         (numcells + 1) (CertNode.node children) brest = cres
       cases cres with
       | none => exact hnone (rest.zipIdx (o + 1))
@@ -715,33 +713,32 @@ theorem checkNode_children_eq (ctx : Ctx) (tcLevel : Nat)
         | some a3 => simp [Bool.or_assoc]
 
 /-- Replay a whole certificate against the claimed best key `B`. -/
-@[expose] def checkKey (G : Colored n k) (cert : CertNode) (B : Key) :
+@[expose] def checkKey (G : Colored n k) (cert : CertNode) (B : Key n) :
     Bool :=
   if n == 0 then
     B.codes == [] && B.rows == []
   else
-    checkNode { n := n, g := rowsOf G } 100 B.rows
-      (validGammas (rowsOf G) n cert) n 1
+    checkNode { g := rowsOf G } 100 B.rows
+      (validGammas (rowsOf G) cert) n 1
       (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length cert B.codes = some true
 
 /-! # Node invariants for the soundness induction -/
 
 /-- The well-formedness facts carried down the replayed tree. -/
 structure NodeOk (n level : Nat) (lab ptn : Array Nat)
-    (active : Nat) : Prop where
+    (active : VSet n) : Prop where
   labSize : lab.size = n
   labOk : LabOk lab n
   ptnSize : ptn.size = n
-  act : active < 2 ^ n
   ptnEnd : ptn[ptn.size - 1]! ≤ level
-  starts : ∀ v : Nat, elem active v = true →
+  starts : ∀ v : Nat, active.mem v = true →
     v = 0 ∨ ptn[v - 1]! ≤ level
   vals : ∀ q : Nat, ptn[q]! ≤ level ∨ ptn[q]! = n + 2
 
-theorem key_eta (b : Key) : (⟨b.codes, b.rows⟩ : Key) = b := rfl
+theorem key_eta (b : Key n) : (⟨b.codes, b.rows⟩ : Key n) = b := rfl
 
 theorem map_congr_of_labOk {f f' : Nat → Nat} {lab : Array Nat}
     (hok : LabOk lab n) (h : ∀ w, w < n → f w = f' w) :
@@ -757,10 +754,10 @@ theorem map_congr_of_labOk {f f' : Nat → Nat} {lab : Array Nat}
   exact h1
 
 /-- The target cell of a live (non-discrete) replayed state. -/
-theorem targetcell_facts {ctx : Ctx} (hn : ctx.n = n)
+theorem targetcell_facts {ctx : Ctx n}
     {level tcLevel : Nat} (rsLab : Array Nat) {rsPtn : Array Nat}
     (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
-    (hdisc : discreteAt rsPtn level ctx.n = false) :
+    (hdisc : discreteAt rsPtn level n = false) :
     ∃ p : Nat × Nat,
       specTargetcell ctx rsLab rsPtn level tcLevel = p.1 ∧
       p.1 < p.2 ∧ p.2 < n ∧
@@ -773,7 +770,7 @@ theorem targetcell_facts {ctx : Ctx} (hn : ctx.n = n)
       rcases hdisc with ⟨q, hqm, hq⟩
       exact ⟨q, hqm, by simpa using hq⟩)
   have hple := cells_le p hpm
-  have hpb := cells_bound (nn := ctx.n) (by omega) hend p hpm
+  have hpb := cells_bound (nn := n) (by omega) hend p hpm
   have hicp := cells_isCell (ptn := rsPtn) (by omega) hend p hpm
   have hp12 : p.1 < p.2 := by omega
   have hce : cellEnd rsPtn level (p.1 + 1) = p.2 := by
@@ -791,15 +788,14 @@ theorem childNodeOk {level tc lenT o : Nat} {rsLab rsPtn : Array Nat}
     (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
     (ho : o < lenT) :
     NodeOk n (level + 1)
-      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-      (rsPtn.set! tc (level + 1)) (insert 0 tc) := by
+      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+      (rsPtn.set! tc (level + 1)) (VSet.empty.insert tc) := by
   have hn0 : 0 < n := by omega
   have htvlt : rsLab[tc + o]! < n := hok _ (by omega)
   have hbo := breakout_ok (lab := rsLab) (ptn := rsPtn)
     (level := level + 1) (tc := tc) (tv := rsLab[tc + o]!)
     hok hn0 htvlt
-  refine ⟨hbo.1.trans hs, hbo.2, by rw [Array.size_set!]; exact hsp,
-    insert_lt (Nat.two_pow_pos n) (by omega), ?_, ?_, ?_⟩
+  refine ⟨hbo.1.trans hs, hbo.2, by rw [Array.size_set!]; exact hsp, ?_, ?_, ?_⟩
   · rw [Array.size_set!]
     rcases getElem!_set!_cases rsPtn tc (level + 1)
       (rsPtn.size - 1) with he | he
@@ -808,10 +804,9 @@ theorem childNodeOk {level tc lenT o : Nat} {rsLab rsPtn : Array Nat}
     · rw [he]
       exact Nat.le_refl _
   · intro w hw
-    have hb : Nat.testBit (insert 0 tc) w = true := hw
-    rw [testBit_insert, Nat.zero_testBit] at hb
-    simp only [Bool.false_or] at hb
-    have hwp : tc = w := by simpa using hb
+    rw [VSet.mem_insert, VSet.mem_empty, Bool.false_or, Bool.and_eq_true, beq_iff_eq,
+      decide_eq_true_eq] at hw
+    obtain ⟨hwp, _⟩ := hw
     subst hwp
     rcases Nat.eq_zero_or_pos tc with h0 | hpos
     · exact Or.inl h0
@@ -832,19 +827,19 @@ theorem childNodeOk {level tc lenT o : Nat} {rsLab rsPtn : Array Nat}
 /-! # Soundness of the replay -/
 
 /-- The spec key of the `i`-th child of a replayed node. -/
-@[reducible, expose] def childKey (ctx : Ctx) (tcLevel fuel level : Nat)
-    (rsLab rsPtn : Array Nat) (tc numcells i : Nat) : Key :=
+@[reducible, expose] def childKey (ctx : Ctx n) (tcLevel fuel level : Nat)
+    (rsLab rsPtn : Array Nat) (tc numcells i : Nat) : Key n :=
   specNode ctx tcLevel fuel (level + 1)
-    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).1
-    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).2.1
-    (breakout rsLab rsPtn (level + 1) tc rsLab[tc + i]!).2.2
+    (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + i]!).1
+    (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + i]!).2.1
+    (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + i]!).2.2
     (numcells + 1)
 
 /-- A subtree whose refinement code falls below the best code at its
 depth is dominated. -/
-theorem specNode_keyLe_of_code_lt {ctx : Ctx} {level : Nat}
-    {lab ptn : Array Nat} {active numcells : Nat}
-    (tcLevel fuel : Nat) {bc : Nat} (brest brows : List Nat)
+theorem specNode_keyLe_of_code_lt {ctx : Ctx n} {level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat}
+    (tcLevel fuel : Nat) {bc : Nat} (brest : List Nat) (brows : List (VSet n))
     (hlt : (refine ctx level lab ptn active numcells).longcode < bc) :
     keyLe (specNode ctx tcLevel (fuel + 1) level lab ptn active
       numcells) ⟨bc :: brest, brows⟩ := by
@@ -861,7 +856,7 @@ theorem specNode_keyLe_of_code_lt {ctx : Ctx} {level : Nat}
   intro hx
   exact Ordering.noConfusion hx
 
-theorem step_assemble {key : Nat → Key} {Bt : Key} {o m : Nat}
+theorem step_assemble {key : Nat → Key n} {Bt : Key n} {o m : Nat}
     {achieved a a' : Bool} (hach : achieved = (a || a'))
     (hk : keyLe (key o) Bt) (hka : a = true → key o = Bt)
     (hall : ∀ i, o + 1 ≤ i → i < o + 1 + m → keyLe (key i) Bt)
@@ -884,12 +879,12 @@ theorem step_assemble {key : Nat → Key} {Bt : Key} {o m : Nat}
 
 mutual
 
-theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
+theorem checkNode_sound {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {vgens : List (Array Nat)}
-    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ ctx.n = true)
-    (tcLevel : Nat) (brows : List Nat)
+    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ = true)
+    (tcLevel : Nat) (brows : List (VSet n))
     (fuel level : Nat) (lab ptn : Array Nat)
-    (active numcells : Nat) (cert : CertNode) (bcodes : List Nat)
+    (active : VSet n) (numcells : Nat) (cert : CertNode) (bcodes : List Nat)
     (achieved : Bool)
     (h : checkNode ctx tcLevel brows vgens fuel level lab ptn active
       numcells cert bcodes = some achieved)
@@ -984,13 +979,13 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
         simp only [] at h
         split at h
         · next hlenc =>
-          have hdiscf : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n = false := by
-            rcases hd2 : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n with _ | _
+          have hdiscf : discreteAt (refine ctx level lab ptn active numcells).ptn level n = false := by
+            rcases hd2 : discreteAt (refine ctx level lab ptn active numcells).ptn level n with _ | _
             · rfl
             · exact absurd hd2 hdisc
-          have hstR := refine_stOk (ctx := ctx) hn (level := level)
+          have hstR := refine_stOk (ctx := ctx) (active := active) (level := level)
             (numcells := numcells) hok.labSize hok.labOk hok.ptnSize
-            hok.act hok.ptnEnd
+            hok.ptnEnd
           have hRvals : ∀ q : Nat,
               (refine ctx level lab ptn active numcells).ptn[q]! ≤ level ∨ (refine ctx level lab ptn active numcells).ptn[q]! = n + 2 := by
             intro q
@@ -1001,7 +996,7 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
             · rw [he]
               exact Or.inl (Nat.le_refl level)
           obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts
-            hn (tcLevel := tcLevel) (refine ctx level lab ptn active numcells).lab hstR.ptnSize hstR.ptnEnd
+            (ctx := ctx) (tcLevel := tcLevel) (refine ctx level lab ptn active numcells).lab hstR.ptnSize hstR.ptnEnd
             hdiscf
           have hM1 : (specMaketargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level
               tcLevel).1 = p.1 := hptc
@@ -1027,7 +1022,7 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
             · rw [hx] at h
               simp only [Bool.false_or] at h
               exact h
-          have hchild := checkChildren_sound hn hgsz hv tcLevel brows
+          have hchild := checkChildren_sound hgsz hv tcLevel brows
             fuel level (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn p.1 (p.2 + 1 - p.1) (refine ctx level lab ptn active numcells).numcells
             brest children 0 achieved hcc hstR.labSize hstR.labOk
             hstR.ptnSize hstR.ptnEnd hRvals hicp (by omega)
@@ -1076,10 +1071,10 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
           · intro hx
             obtain ⟨i, hi0, hilen, hik⟩ := hchild.2 hx
             have him : i < m + 1 := by omega
-            have hb : (⟨brest, brows⟩ : Key) = childKey ctx tcLevel fuel level
+            have hb : (⟨brest, brows⟩ : Key n) = childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells 0 ∨
-                (⟨brest, brows⟩ : Key) ∈ (List.range m).map fun j =>
+                (⟨brest, brows⟩ : Key n) ∈ (List.range m).map fun j =>
                   childKey ctx tcLevel fuel level
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn p.1 (refine ctx level lab ptn active numcells).numcells (j + 1) := by
@@ -1093,10 +1088,10 @@ theorem checkNode_sound {ctx : Ctx} (hn : ctx.n = n)
             rw [hspec, hlc, hkm]
         · cases h
 
-theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
+theorem checkChildren_sound {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {vgens : List (Array Nat)}
-    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ ctx.n = true)
-    (tcLevel : Nat) (brows : List Nat)
+    (hv : ∀ γ ∈ vgens, checkAutom ctx.g γ = true)
+    (tcLevel : Nat) (brows : List (VSet n))
     (fuel level : Nat) (rsLab rsPtn : Array Nat)
     (tc lenT numcells : Nat) (brest : List Nat)
     (certs : List CertNode) (o : Nat) (achieved : Bool)
@@ -1135,7 +1130,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
         · cases h
         · next a' heq' =>
           injection h with h'
-          have hthis := checkNode_sound hn hgsz hv tcLevel brows fuel
+          have hthis := checkNode_sound hgsz hv tcLevel brows fuel
             (level + 1) _ _ _ _ _ _ a heq
             (childNodeOk hs hok hsp hend hvals hic hrange
               (by
@@ -1143,7 +1138,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                 simp only [List.length_cons] at hl2
                 omega))
             (by omega)
-          have hrest := checkChildren_sound hn hgsz hv tcLevel brows
+          have hrest := checkChildren_sound hgsz hv tcLevel brows
             fuel level rsLab rsPtn tc lenT numcells brest rest
             (o + 1) a' heq' hs hok hsp hend hvals hic hrange
             (by simp only [List.length_cons] at hlen; omega) hlf
@@ -1166,7 +1161,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
         · cases h
         · next a' heq' =>
           injection h with h'
-          have hthis := checkNode_sound hn hgsz hv tcLevel brows fuel
+          have hthis := checkNode_sound hgsz hv tcLevel brows fuel
             (level + 1) _ _ _ _ _ _ a heq
             (childNodeOk hs hok hsp hend hvals hic hrange
               (by
@@ -1174,7 +1169,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                 simp only [List.length_cons] at hl2
                 omega))
             (by omega)
-          have hrest := checkChildren_sound hn hgsz hv tcLevel brows
+          have hrest := checkChildren_sound hgsz hv tcLevel brows
             fuel level rsLab rsPtn tc lenT numcells brest rest
             (o + 1) a' heq' hs hok hsp hend hvals hic hrange
             (by simp only [List.length_cons] at hlen; omega) hlf
@@ -1208,7 +1203,6 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                 at hcond
               obtain ⟨⟨ho'o, hCont⟩, hCells⟩ := hcond
               have hAut := hv γ (containsGamma_mem hCont)
-              rw [hn] at hAut hCells
               obtain ⟨σ, hσeq, hσrows⟩ := checkAutom_sound hgsz hAut
               have hoLen : o < lenT := by
                 have hl2 := hlen
@@ -1219,14 +1213,14 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                 hrange hoLen
               have hokc' := childNodeOk hs hok hsp hend hvals hic
                 hrange ho'Len
-              have hmapeq : ((breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map fun w => γ[w]!) =
-                  (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map σ.toFun :=
+              have hmapeq : ((breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map fun w => γ[w]!) =
+                  (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map σ.toFun :=
                 map_congr_of_labOk hokc.labOk
                   (fun w hw => (hσeq w hw).symm)
               rw [hmapeq] at hCells
               have hcp := checkCellsPerm_sound
-                (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1) (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
-                (lab₂' := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map σ.toFun) (level := level + 1)
+                (ptn := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1) (lab₁ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
+                (lab₂' := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map σ.toFun) (level := level + 1)
                 hokc.ptnSize hokc'.labSize
                 (by rw [Array.size_map]; exact hokc.labSize)
                 hokc.ptnEnd hCells
@@ -1234,12 +1228,12 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                   rsPtn tc numcells o =
                   childKey ctx tcLevel fuel level rsLab rsPtn tc
                     numcells o' :=
-                specNode_autom hn hσrows tcLevel fuel (level + 1)
-                  (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1) (lab₂ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
-                  (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1) (active := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2)
+                specNode_autom hσrows tcLevel fuel (level + 1)
+                  (lab₁ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1) (lab₂ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+                  (ptn := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1) (active := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2)
                   (numcells := numcells + 1) hcp hokc'.labSize
                   hokc.labSize hokc'.labOk hokc.labOk hokc.ptnSize
-                  hokc.act hokc.ptnEnd hokc.starts hokc.vals
+                  hokc.ptnEnd hokc.starts hokc.vals
                   (by omega)
               refine ⟨?_, ?_⟩
               · rw [hkeyeq]
@@ -1248,7 +1242,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                 intro hx
                 exact Bool.noConfusion hx
             · cases heq
-          have hrest := checkChildren_sound hn hgsz hv tcLevel brows
+          have hrest := checkChildren_sound hgsz hv tcLevel brows
             fuel level rsLab rsPtn tc lenT numcells brest rest
             (o + 1) a' heq' hs hok hsp hend hvals hic hrange
             (by simp only [List.length_cons] at hlen; omega) hlf
@@ -1270,7 +1264,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
         · cases h
         · next a' heq' =>
           injection h with h'
-          have hthis := checkNode_sound hn hgsz hv tcLevel brows fuel
+          have hthis := checkNode_sound hgsz hv tcLevel brows fuel
             (level + 1) _ _ _ _ _ _ a heq
             (childNodeOk hs hok hsp hend hvals hic hrange
               (by
@@ -1278,7 +1272,7 @@ theorem checkChildren_sound {ctx : Ctx} (hn : ctx.n = n)
                 simp only [List.length_cons] at hl2
                 omega))
             (by omega)
-          have hrest := checkChildren_sound hn hgsz hv tcLevel brows
+          have hrest := checkChildren_sound hgsz hv tcLevel brows
             fuel level rsLab rsPtn tc lenT numcells brest rest
             (o + 1) a' heq' hs hok hsp hend hvals hic hrange
             (by simp only [List.length_cons] at hlen; omega) hlf
@@ -1301,7 +1295,7 @@ end
 theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
     NodeOk n 1 (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2) := by
+      (initActive n (initialPartition G).2) := by
   have hEnds := initialPartition_snd_eq G
   have htotG := totalOf_classes G
   have hboundEnds : ∀ e ∈ (initialPartition G).2, e < n := by
@@ -1315,18 +1309,13 @@ theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
     rw [htotG] at this
     simpa using this
   refine ⟨size_initialPartition G, labOk_initialPartition G,
-    size_initPtn n (n + 2) (initialPartition G).2, ?_, ?_, ?_, ?_⟩
-  · rw [initActive]
-    refine foldl_active_lt _ _ (Nat.two_pow_pos n) hn0 hboundEnds ?_
-    rw [hEnds]
-    exact endsOf_pairwise _ 0
+    size_initPtn n (n + 2) (initialPartition G).2, ?_, ?_, ?_⟩
   · rw [size_initPtn, getElem!_initPtn, ite_eq_left ⟨hmemlast, by omega⟩]
     omega
   · intro v hv
     rw [initActive] at hv
-    rcases elem_foldl_active _ _ _ hv with h1 | h1 | h1
-    · rw [show elem ((0, 0) : Nat × Nat).1 v = Nat.testBit 0 v
-        from rfl, Nat.zero_testBit] at h1
+    rcases mem_foldl_active _ _ _ hv with h1 | h1 | h1
+    · rw [VSet.mem_empty] at h1
       cases h1
     · exact Or.inl h1
     · rcases h1 with ⟨e, he, rfl⟩
@@ -1351,7 +1340,7 @@ theorem initial_nodeOk (G : Colored n k) (hn0 : 0 < n) :
 
 /-- A successful certificate replay pins the nauty-semantic canonical
 key. -/
-theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
+theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key n}
     (h : checkKey G cert B = true) : canonSpecKey G = B := by
   rw [checkKey] at h
   rcases Nat.eq_zero_or_pos n with rfl | hn0
@@ -1363,11 +1352,11 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
     rw [h.1, h.2]
   · rw [ite_eq_right (by simp; omega)] at h
     have heq := of_decide_eq_true h
-    have hnode := checkNode_sound (ctx := { n := n, g := rowsOf G })
-      rfl (size_rowsOf G) (fun γ hγ => validGammas_sound hγ)
+    have hnode := checkNode_sound (ctx := { g := rowsOf G })
+      (size_rowsOf G) (fun γ hγ => validGammas_sound hγ)
       100 B.rows n 1 (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length cert B.codes true heq
       (initial_nodeOk G hn0) (by show 1 + n ≤ n + 1; omega)
     rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
@@ -1379,14 +1368,14 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key}
 expressed at this node's depth. The incumbent prunes children whose
 refinement code falls below its code here. Untrusted: results are
 validated by `checkKey`. -/
-@[expose] def searchNode (ctx : Ctx) (tcLevel : Nat) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → Option Key → Key
+@[expose] def searchNode (ctx : Ctx n) (tcLevel : Nat) :
+    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → Option (Key n) → Key n
   | 0, _, _, _, _, _, inc => inc.getD ⟨[], []⟩
   | fuel + 1, level, lab, ptn, active, numcells, inc =>
     let rs := refine ctx level lab ptn active numcells
-    let step : Option Key → Key := fun tail0 =>
-      if discreteAt rs.ptn level ctx.n then
-        let leafTail : Key := ⟨[codeSentinel], leafRows ctx rs.lab⟩
+    let step : Option (Key n) → Key n := fun tail0 =>
+      if discreteAt rs.ptn level n then
+        let leafTail : Key n := ⟨[codeSentinel], leafRows ctx rs.lab⟩
         match tail0 with
         | none => ⟨rs.longcode :: leafTail.codes, leafTail.rows⟩
         | some t =>
@@ -1395,8 +1384,8 @@ validated by `checkKey`. -/
       else
         let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
         let t := (List.range tcr.2.2).foldl
-          (fun (acc : Option Key) o =>
-            let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+          (fun (acc : Option (Key n)) o =>
+            let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
               rs.lab[tcr.1 + o]!
             some (searchNode ctx tcLevel fuel (level + 1) br.1
               br.2.1 br.2.2 (rs.numcells + 1) acc))
@@ -1416,8 +1405,8 @@ validated by `checkKey`. -/
         | .eq => step (some ⟨brest, b.rows⟩)
 
 /-- Build the certificate tree for the final best key. Untrusted. -/
-@[expose] def certifyNode (ctx : Ctx) (tcLevel : Nat) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
+@[expose] def certifyNode (ctx : Ctx n) (tcLevel : Nat) :
+    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → List Nat →
       CertNode
   | 0, _, _, _, _, _, _ => .codePrune
   | fuel + 1, level, lab, ptn, active, numcells, bcodes =>
@@ -1429,26 +1418,26 @@ validated by `checkKey`. -/
       | .lt => .codePrune
       | .gt => .codePrune
       | .eq =>
-        if discreteAt rs.ptn level ctx.n then
+        if discreteAt rs.ptn level n then
           .leaf
         else
           let tcr := specMaketargetcell ctx rs.lab rs.ptn level
             tcLevel
           .node ((List.range tcr.2.2).map fun o =>
-            let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+            let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
               rs.lab[tcr.1 + o]!
             certifyNode ctx tcLevel fuel (level + 1) br.1 br.2.1
               br.2.2 (rs.numcells + 1) brest)
 
 /-- Validate a candidate certificate and key through the trusted
 `checkKey` replay, independently of the producer that built them. -/
-def validateKey? (G : Colored n k) (cand : CertNode) (Bc : Key) :
-    Option (CertNode × Key) :=
+def validateKey? (G : Colored n k) (cand : CertNode) (Bc : Key n) :
+    Option (CertNode × Key n) :=
   if checkKey G cand Bc then some (cand, Bc) else none
 
 /-- Whatever passes validation carries the spec key. -/
 theorem validateKey?_sound {G : Colored n k} {cand : CertNode}
-    {Bc : Key} {cert : CertNode} {B : Key}
+    {Bc : Key n} {cert : CertNode} {B : Key n}
     (h : validateKey? G cand Bc = some (cert, B)) :
     canonSpecKey G = B := by
   rw [validateKey?] at h

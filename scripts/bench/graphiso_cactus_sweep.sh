@@ -3,7 +3,8 @@
 #
 # Runs the compiled sweep and pairs drivers, stores the data under
 # reports/bench-results/ keyed by the source fingerprint and host, and
-# re-renders the figures (re-timing the tactic leg). Run from the repo
+# re-renders the figures (re-timing the tactic leg) and the per-node
+# cost fit (scripts/bench/graphiso_pernode_fit.py). Run from the repo
 # root after any change to hex-graph-iso implementation source, and
 # commit the data, the manifest and the figures together with that
 # change; scripts/bench/check_graphiso_sweep_freshness.py is the required
@@ -33,6 +34,8 @@ python3 scripts/plots/hexgraphiso-cactus.py \
   --sweep "$sweep" --pairs "$pairs" --retime
 cp reports/figures/hexgraphiso-tactic-times.json \
   "reports/bench-results/hexgraphiso-tactic-$fp-$host.json"
+python3 scripts/bench/graphiso_pernode_fit.py --sweep "$sweep" \
+  --out "reports/bench-results/hexgraphiso-pernode-$fp-$host.md"
 cat > "reports/bench-results/hexgraphiso-cactus-$fp-$host.meta.json" <<META
 {
  "fingerprint": "$fp",
@@ -42,6 +45,6 @@ cat > "reports/bench-results/hexgraphiso-cactus-$fp-$host.meta.json" <<META
  "label": "$label"
 }
 META
-echo "recorded $sweep, $pairs, tactic times, meta,"
+echo "recorded $sweep, $pairs, tactic times, per-node fit, meta,"
 echo "reports/bench-results/hexgraphiso-cactus-$fp.manifest"
 echo "and reports/figures/hexgraphiso-*.svg"

@@ -75,7 +75,7 @@ def graphOf (input : GraphInput) : Option ((n : Nat) × Colored n 1) :=
 /-- Benchmark target: dense bitset-row conversion. -/
 def runDenseConvert (input : GraphInput) : Nat :=
   match graphOf input with
-  | some ⟨_, G⟩ => (Nauty.rowsOf G).foldl (· + ·) 0
+  | some ⟨_, G⟩ => (Nauty.rowsOf G).foldl (fun a r => a + r.card) 0
   | none => 0
 
 /- Cost model: the conversion reads one adjacency bit for each of the
@@ -93,11 +93,11 @@ partition. -/
 def runRefine (input : GraphInput) : Nat :=
   match graphOf input with
   | some ⟨n, G⟩ =>
-    let ctx : Nauty.Ctx := { n := n, g := Nauty.rowsOf G }
+    let ctx : Nauty.Ctx n := { g := Nauty.rowsOf G }
     let (lab0, ends) := Nauty.initialPartition G
     let st := Nauty.refine ctx 1 lab0
       ((Array.replicate n (n + 2)).set! (n - 1) 0)
-      (Nauty.insert 0 0) ends.length
+      (Nauty.VSet.empty.insert 0) ends.length
     st.numcells + st.longcode
   | none => 0
 

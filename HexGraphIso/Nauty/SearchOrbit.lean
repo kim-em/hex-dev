@@ -37,7 +37,7 @@ to a checked automorphism (`wordPerm_spec`, on `checkAutom_range` and
 finite set generate a group under composition alone) that still fixes
 every cell of the node's partition setwise (`CellStab`, closed under
 composition by `cellStab_comp`), and such a composite carries one
-breakout labelling to the other cell by cell (`cellsPerm_set!` on the
+breakout n labelling to the other cell by cell (`cellsPerm_set!` on the
 split partition), so `specNode_autom` transports the key.
 
 The cell-stabilization hypothesis is per node: it holds for the
@@ -54,10 +54,10 @@ variable {n k : Nat}
 
 /-- Every stored generator passes the executable automorphism check
 against the context's rows. -/
-@[expose] def ValidStore (ctx : Ctx) (S : List (Array Nat)) : Prop :=
-  ∀ γ ∈ S, checkAutom ctx.g γ ctx.n = true
+@[expose] def ValidStore (ctx : Ctx n) (S : List (Array Nat)) : Prop :=
+  ∀ γ ∈ S, checkAutom ctx.g γ = true
 
-theorem validStore_append {ctx : Ctx} {S T : List (Array Nat)}
+theorem validStore_append {ctx : Ctx n} {S T : List (Array Nat)}
     (hS : ValidStore ctx S) (hT : ValidStore ctx T) :
     ValidStore ctx (S ++ T) := by
   intro γ hγ
@@ -73,17 +73,17 @@ mutual
 searched with the store as it stands, and the store it returns —
 possibly grown at leaves below — is what later siblings are pruned
 against. -/
-@[expose] def sweepG (ctx : Ctx) (tcLevel : Nat)
-    (adm : Array Nat → Option Key → List (Array Nat))
+@[expose] def sweepG (ctx : Ctx n) (tcLevel : Nat)
+    (adm : Array Nat → Option (Key n) → List (Array Nat))
     (fuel level : Nat) (rsLab rsPtn : Array Nat)
     (tc numcells : Nat) :
-    List Nat → Key × List (Array Nat) → Key × List (Array Nat)
+    List Nat → Key n × List (Array Nat) → Key n × List (Array Nat)
   | [], acc => acc
   | o :: os, acc =>
-    if autPruned ctx.n acc.2 rsLab rsPtn level tc o then
+    if autPruned n acc.2 rsLab rsPtn level tc o then
       sweepG ctx tcLevel adm fuel level rsLab rsPtn tc numcells os acc
     else
-      let br := breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!
+      let br := breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!
       let r := searchNodeG ctx tcLevel adm fuel (level + 1) br.1
         br.2.1 br.2.2 (numcells + 1) (some acc.1) acc.2
       sweepG ctx tcLevel adm fuel level rsLab rsPtn tc numcells os r
@@ -92,16 +92,16 @@ against. -/
 /-- One node step at a refined state: at a discrete leaf the oracle's
 proposals join the store; at a live node the first child absorbs the
 incumbent and the sweep threads the store across the rest. -/
-@[expose] def stepG (ctx : Ctx) (tcLevel : Nat)
-    (adm : Array Nat → Option Key → List (Array Nat))
-    (fuel level : Nat) (rs : RefineSt) (tail0 : Option Key)
-    (S : List (Array Nat)) : Key × List (Array Nat) :=
-  if discreteAt rs.ptn level ctx.n then
+@[expose] def stepG (ctx : Ctx n) (tcLevel : Nat)
+    (adm : Array Nat → Option (Key n) → List (Array Nat))
+    (fuel level : Nat) (rs : RefineSt n) (tail0 : Option (Key n))
+    (S : List (Array Nat)) : Key n × List (Array Nat) :=
+  if discreteAt rs.ptn level n then
     let t' := incMax tail0 ⟨[codeSentinel], leafRows ctx rs.lab⟩
     (⟨rs.longcode :: t'.codes, t'.rows⟩, S ++ adm rs.lab tail0)
   else
     let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-    let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+    let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
       rs.lab[tcr.1 + 0]!
     let r0 := searchNodeG ctx tcLevel adm fuel (level + 1) br.1
       br.2.1 br.2.2 (rs.numcells + 1) tail0 S
@@ -112,10 +112,10 @@ incumbent and the sweep threads the store across the rest. -/
 
 /-- Branch-and-bound with code prune, generator prune, and a store
 that grows at leaves and travels forward through the search order. -/
-@[expose] def searchNodeG (ctx : Ctx) (tcLevel : Nat)
-    (adm : Array Nat → Option Key → List (Array Nat)) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → Option Key →
-      List (Array Nat) → Key × List (Array Nat)
+@[expose] def searchNodeG (ctx : Ctx n) (tcLevel : Nat)
+    (adm : Array Nat → Option (Key n) → List (Array Nat)) :
+    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → Option (Key n) →
+      List (Array Nat) → Key n × List (Array Nat)
   | 0, _, _, _, _, _, inc, S => (inc.getD ⟨[], []⟩, S)
   | fuel + 1, level, lab, ptn, active, numcells, none, S =>
     stepG ctx tcLevel adm fuel level
@@ -134,15 +134,15 @@ that grows at leaves and travels forward through the search order. -/
 
 end
 
-/-! # Key-maximum bookkeeping for the interleaved sweep -/
+/-! # Key n-maximum bookkeeping for the interleaved sweep -/
 
-theorem keysMax_concat (k y : Key) : ∀ (l : List Key),
+theorem keysMax_concat (k y : Key n) : ∀ (l : List (Key n)),
     keysMax k (l ++ [y]) = keyMax (keysMax k l) y
   | [] => rfl
   | c :: l => by
     rw [List.cons_append, keysMax, keysMax, keysMax_concat]
 
-theorem incMax_keyMax (tail0 : Option Key) (m y : Key) :
+theorem incMax_keyMax (tail0 : Option (Key n)) (m y : Key n) :
     keyMax (incMax tail0 m) y = incMax tail0 (keyMax m y) := by
   rcases tail0 with _ | b
   · rfl
@@ -150,7 +150,7 @@ theorem incMax_keyMax (tail0 : Option Key) (m y : Key) :
 
 /-- The maximum over child positions `0..j` collapses to the maximum
 over `0..j-1` when position `j`'s key repeats an earlier one. -/
-theorem keysMax_range'_covered {key : Nat → Key} {j : Nat}
+theorem keysMax_range'_covered {key : Nat → Key n} {j : Nat}
     (hj : 1 ≤ j) (hcov : ∃ o', o' < j ∧ key o' = key j) :
     keysMax (key 0) ((List.range' 1 j).map key) =
       keysMax (key 0) ((List.range' 1 (j - 1)).map key) := by
@@ -179,7 +179,7 @@ theorem map_range'_one {α : Type} (f : Nat → α) (m : Nat) :
 
 /-- Extending the maximum over `0..j-1` by position `j`'s key gives
 the maximum over `0..j`. -/
-theorem keysMax_range'_snoc {key : Nat → Key} {j : Nat} (hj : 1 ≤ j) :
+theorem keysMax_range'_snoc {key : Nat → Key n} {j : Nat} (hj : 1 ≤ j) :
     keyMax (keysMax (key 0) ((List.range' 1 (j - 1)).map key))
         (key j) =
       keysMax (key 0) ((List.range' 1 j).map key) := by
@@ -199,12 +199,12 @@ mutual
 sweep maximum: pruned positions are covered by earlier keys via the
 store valid at the moment of the test, and the store stays valid as
 it grows through the children. -/
-theorem sweepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
-    {adm : Array Nat → Option Key → List (Array Nat)}
+theorem sweepG_eq {ctx : Ctx n} (hgsz : ctx.g.size = n)
+    {adm : Array Nat → Option (Key n) → List (Array Nat)}
     (hadm : ∀ lab inc, ValidStore ctx (adm lab inc)) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (rsLab rsPtn : Array Nat)
-      (tc m numcells : Nat) (tail0 : Option Key) (c j : Nat)
-      (acc : Key × List (Array Nat)),
+      (tc m numcells : Nat) (tail0 : Option (Key n)) (c j : Nat)
+      (acc : Key n × List (Array Nat)),
       rsLab.size = n → LabOk rsLab n → rsPtn.size = n →
       rsPtn[rsPtn.size - 1]! ≤ level →
       (∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2) →
@@ -235,19 +235,19 @@ theorem sweepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
       acc => by
     intro hs hok hsp hend hvals hic hrange hlf hjc hj hS ht
     rw [List.range'_succ, sweepG]
-    rcases hpr : autPruned ctx.n acc.2 rsLab rsPtn level tc j
+    rcases hpr : autPruned n acc.2 rsLab rsPtn level tc j
       with _ | _
     · -- unpruned: search the child with the current store
       simp only [Bool.false_eq_true, ite_false]
       have hokc := childNodeOk hs hok hsp hend hvals hic hrange
         (show j < m + 1 by omega)
-      obtain ⟨hr1, hr2⟩ := searchNodeG_eq hn hgsz hadm tcLevel fuel
+      obtain ⟨hr1, hr2⟩ := searchNodeG_eq hgsz hadm tcLevel fuel
         (level + 1)
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + j]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + j]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + j]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + j]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + j]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + j]!).2.2
         (numcells + 1) (some acc.1) acc.2 hokc (by omega) hS
-      refine sweepG_eq hn hgsz hadm tcLevel fuel level rsLab rsPtn tc
+      refine sweepG_eq hgsz hadm tcLevel fuel level rsLab rsPtn tc
         m numcells tail0 c (j + 1) _ hs hok hsp hend hvals hic
         hrange hlf (by omega) (by omega) hr2 ?_
       rw [hr1]
@@ -257,10 +257,10 @@ theorem sweepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
         Nat.add_sub_cancel]
     · -- pruned: the skipped key repeats an earlier sibling's
       simp only [ite_true]
-      have hcov := childKey_of_autPruned (numcells := numcells) hn
+      have hcov := childKey_of_autPruned (numcells := numcells)
         hgsz hS tcLevel fuel level hs hok hsp hend hvals hic hrange
         (show j < m + 1 by omega) (by omega) hpr
-      refine sweepG_eq hn hgsz hadm tcLevel fuel level rsLab rsPtn tc
+      refine sweepG_eq hgsz hadm tcLevel fuel level rsLab rsPtn tc
         m numcells tail0 c (j + 1) acc hs hok hsp hend hvals hic
         hrange hlf (by omega) (by omega) hS ?_
       rw [ht, Nat.add_sub_cancel, keysMax_range'_covered hj hcov]
@@ -268,11 +268,11 @@ theorem sweepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
 
 /-- One growing-store step at a refined state computes the incumbent
 maximum against the unpruned node key. -/
-theorem stepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
-    {adm : Array Nat → Option Key → List (Array Nat)}
+theorem stepG_eq {ctx : Ctx n} (hgsz : ctx.g.size = n)
+    {adm : Array Nat → Option (Key n) → List (Array Nat)}
     (hadm : ∀ lab inc, ValidStore ctx (adm lab inc)) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (tail0 : Option Key)
+      (active : VSet n) (numcells : Nat) (tail0 : Option (Key n))
       (S : List (Array Nat)),
       NodeOk n level lab ptn active → level + (fuel + 1) ≤ n + 1 →
       ValidStore ctx S →
@@ -280,7 +280,7 @@ theorem stepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
           (refine ctx level lab ptn active numcells) tail0 S).1 =
         incMax (tail0.map fun t =>
             (⟨(refine ctx level lab ptn active numcells).longcode ::
-              t.codes, t.rows⟩ : Key))
+              t.codes, t.rows⟩ : Key n))
           (specNode ctx tcLevel (fuel + 1) level lab ptn active
             numcells) ∧
       ValidStore ctx (stepG ctx tcLevel adm fuel level
@@ -288,12 +288,12 @@ theorem stepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
   | fuel, level, lab, ptn, active, numcells, tail0, S => by
     intro hok hlf hS
     rcases hdisc : discreteAt
-        (refine ctx level lab ptn active numcells).ptn level ctx.n
+        (refine ctx level lab ptn active numcells).ptn level n
       with _ | _
     · -- live node: first child, then the threaded sweep
-      have hstR := refine_stOk (ctx := ctx) hn (level := level)
+      have hstR := refine_stOk (ctx := ctx) (active := active) (level := level)
         (numcells := numcells) hok.labSize hok.labOk hok.ptnSize
-        hok.act hok.ptnEnd
+        hok.ptnEnd
       have hRvals : ∀ q : Nat,
           (refine ctx level lab ptn active numcells).ptn[q]! ≤ level ∨
           (refine ctx level lab ptn active numcells).ptn[q]! =
@@ -305,7 +305,7 @@ theorem stepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
           exact hok.vals q
         · rw [he]
           exact Or.inl (Nat.le_refl level)
-      obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts hn
+      obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts (ctx := ctx)
         (tcLevel := tcLevel)
         (refine ctx level lab ptn active numcells).lab hstR.ptnSize
         hstR.ptnEnd hdisc
@@ -338,37 +338,37 @@ theorem stepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
       have hokc0 := childNodeOk hstR.labSize hstR.labOk hstR.ptnSize
         hstR.ptnEnd hRvals hicp (by omega)
         (show 0 < m + 1 by omega)
-      obtain ⟨h01, h02⟩ := searchNodeG_eq hn hgsz hadm tcLevel fuel
+      obtain ⟨h01, h02⟩ := searchNodeG_eq hgsz hadm tcLevel fuel
         (level + 1)
-        (breakout (refine ctx level lab ptn active numcells).lab
+        (breakout n (refine ctx level lab ptn active numcells).lab
           (refine ctx level lab ptn active numcells).ptn (level + 1)
           p.1 (refine ctx level lab ptn active
             numcells).lab[p.1 + 0]!).1
-        (breakout (refine ctx level lab ptn active numcells).lab
+        (breakout n (refine ctx level lab ptn active numcells).lab
           (refine ctx level lab ptn active numcells).ptn (level + 1)
           p.1 (refine ctx level lab ptn active
             numcells).lab[p.1 + 0]!).2.1
-        (breakout (refine ctx level lab ptn active numcells).lab
+        (breakout n (refine ctx level lab ptn active numcells).lab
           (refine ctx level lab ptn active numcells).ptn (level + 1)
           p.1 (refine ctx level lab ptn active
             numcells).lab[p.1 + 0]!).2.2
         ((refine ctx level lab ptn active numcells).numcells + 1)
         tail0 S hokc0 (by omega) hS
-      obtain ⟨hs1, hs2⟩ := sweepG_eq hn hgsz hadm tcLevel fuel level
+      obtain ⟨hs1, hs2⟩ := sweepG_eq hgsz hadm tcLevel fuel level
         (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn p.1 m
         (refine ctx level lab ptn active numcells).numcells tail0
         m 1
         (searchNodeG ctx tcLevel adm fuel (level + 1)
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             p.1 (refine ctx level lab ptn active
               numcells).lab[p.1 + 0]!).1
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             p.1 (refine ctx level lab ptn active
               numcells).lab[p.1 + 0]!).2.1
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             p.1 (refine ctx level lab ptn active
               numcells).lab[p.1 + 0]!).2.2
@@ -427,12 +427,12 @@ theorem stepG_eq {ctx : Ctx} (hn : ctx.n = n) (hgsz : ctx.g.size = n)
 of the incumbent and the unpruned subtree key, and returns a valid
 store, for any valid initial store and any oracle proposing only
 checked automorphisms. -/
-theorem searchNodeG_eq {ctx : Ctx} (hn : ctx.n = n)
+theorem searchNodeG_eq {ctx : Ctx n}
     (hgsz : ctx.g.size = n)
-    {adm : Array Nat → Option Key → List (Array Nat)}
+    {adm : Array Nat → Option (Key n) → List (Array Nat)}
     (hadm : ∀ lab inc, ValidStore ctx (adm lab inc)) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (inc : Option Key)
+      (active : VSet n) (numcells : Nat) (inc : Option (Key n))
       (S : List (Array Nat)),
       NodeOk n level lab ptn active → level + fuel ≤ n + 1 →
       ValidStore ctx S →
@@ -455,7 +455,7 @@ theorem searchNodeG_eq {ctx : Ctx} (hn : ctx.n = n)
   | fuel + 1, level, lab, ptn, active, numcells, none, S => by
     intro hok hlf hS
     rw [searchNodeG]
-    obtain ⟨h1, h2⟩ := stepG_eq hn hgsz hadm tcLevel fuel level lab
+    obtain ⟨h1, h2⟩ := stepG_eq hgsz hadm tcLevel fuel level lab
       ptn active numcells none S hok hlf hS
     exact ⟨h1, h2⟩
   | fuel + 1, level, lab, ptn, active, numcells,
@@ -463,7 +463,7 @@ theorem searchNodeG_eq {ctx : Ctx} (hn : ctx.n = n)
     intro hok hlf hS
     rw [searchNodeG]
     simp only []
-    obtain ⟨h1, h2⟩ := stepG_eq hn hgsz hadm tcLevel fuel level lab
+    obtain ⟨h1, h2⟩ := stepG_eq hgsz hadm tcLevel fuel level lab
       ptn active numcells none S hok hlf hS
     refine ⟨?_, h2⟩
     rw [h1]
@@ -493,7 +493,7 @@ theorem searchNodeG_eq {ctx : Ctx} (hn : ctx.n = n)
       rw [searchNodeG]
       simp only []
       simp only [hcmp]
-      obtain ⟨h1, h2⟩ := stepG_eq hn hgsz hadm tcLevel fuel level lab
+      obtain ⟨h1, h2⟩ := stepG_eq hgsz hadm tcLevel fuel level lab
         ptn active numcells (some ⟨brest, brows⟩) S hok hlf hS
       refine ⟨?_, h2⟩
       rw [h1, incMax, ← hbc]
@@ -502,7 +502,7 @@ theorem searchNodeG_eq {ctx : Ctx} (hn : ctx.n = n)
       rw [searchNodeG]
       simp only []
       simp only [hcmp]
-      obtain ⟨h1, h2⟩ := stepG_eq hn hgsz hadm tcLevel fuel level lab
+      obtain ⟨h1, h2⟩ := stepG_eq hgsz hadm tcLevel fuel level lab
         ptn active numcells none S hok hlf hS
       refine ⟨?_, h2⟩
       rw [h1]
@@ -528,35 +528,35 @@ end
 generator prune, and a store seeded with `gens0` that grows at leaves
 by the oracle's proposals. -/
 @[expose] def searchCanonG (n : Nat)
-    (adm : Array Nat → Option Key → List (Array Nat))
-    (gens0 : List (Array Nat)) (g lab0 : Array Nat)
-    (cellEnds : List Nat) : Key :=
+    (adm : Array Nat → Option (Key n) → List (Array Nat))
+    (gens0 : List (Array Nat)) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) : Key n :=
   if n == 0 then
     ⟨[], []⟩
   else
-    (searchNodeG { n, g } 100 adm n 1 lab0
-      (initPtn n (n + 2) cellEnds) (initActive cellEnds)
+    (searchNodeG { g } 100 adm n 1 lab0
+      (initPtn n (n + 2) cellEnds) (initActive n cellEnds)
       cellEnds.length none gens0).1
 
 /-- For any valid seed store and any oracle proposing only checked
 automorphisms, the growing-store search computes the nauty-semantic
 canonical key. -/
 theorem searchCanonG_key (G : Colored n k)
-    {adm : Array Nat → Option Key → List (Array Nat)}
+    {adm : Array Nat → Option (Key n) → List (Array Nat)}
     (hadm : ∀ lab inc,
-      ValidStore { n := n, g := rowsOf G } (adm lab inc))
+      ValidStore { g := rowsOf G } (adm lab inc))
     {gens0 : List (Array Nat)}
-    (hv : ValidStore { n := n, g := rowsOf G } gens0) :
+    (hv : ValidStore { g := rowsOf G } gens0) :
     searchCanonG n adm gens0 (rowsOf G) (initialPartition G).1
       (initialPartition G).2 = canonSpecKey G := by
   rw [searchCanonG, canonSpecKey, canonSpec]
   rcases Nat.eq_zero_or_pos n with rfl | hn0
   · rw [ite_eq_left (by rfl), ite_eq_left (by rfl)]
   · rw [ite_eq_right (by simp; omega), ite_eq_right (by simp; omega)]
-    exact (searchNodeG_eq (ctx := { n := n, g := rowsOf G }) rfl
+    exact (searchNodeG_eq (ctx := { g := rowsOf G })
       (size_rowsOf G) hadm 100 n 1 (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length none gens0 (initial_nodeOk G hn0)
       (by show 1 + n ≤ n + 1; omega) hv).1
 
@@ -628,8 +628,8 @@ theorem cellStab_comp {ptn lab f π : Array Nat} {level : Nat}
 /-! # Words of generators and their composite -/
 
 /-- Bound extraction from a checked automorphism. -/
-theorem checkAutom_bound {g γ : Array Nat}
-    (h : checkAutom g γ n = true) : ∀ v, v < n → γ[v]! < n := by
+theorem checkAutom_bound {g : Array (VSet n)} {γ : Array Nat}
+    (h : checkAutom g γ = true) : ∀ v, v < n → γ[v]! < n := by
   rw [checkAutom] at h
   simp only [Bool.and_eq_true] at h
   obtain ⟨⟨⟨_, hbound⟩, _⟩, _⟩ := h
@@ -647,23 +647,23 @@ theorem checkAutom_bound {g γ : Array Nat}
 
 /-- A word of stored generators composes to a checked automorphism
 that still stabilizes the cells and acts as the word does. -/
-theorem wordPerm_spec {g ptn lab : Array Nat} {level : Nat}
-    (hb : ∀ v, v < n → g[v]! < 2 ^ n) (hok : LabOk lab n)
+theorem wordPerm_spec {g : Array (VSet n)} {ptn lab : Array Nat} {level : Nat}
+    (hok : LabOk lab n)
     (hsp : ptn.size = n) (hs : lab.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
     {S : List (Array Nat)}
-    (hv : ∀ γ ∈ S, checkAutom g γ n = true)
+    (hv : ∀ γ ∈ S, checkAutom g γ = true)
     (hstab : ∀ γ ∈ S, CellStab ptn level lab γ) :
     ∀ (w : List (Array Nat)), (∀ γ ∈ w, γ ∈ S) →
-      checkAutom g (wordPerm n w) n = true ∧
+      checkAutom g (wordPerm n w) = true ∧
       CellStab ptn level lab (wordPerm n w) ∧
       ∀ v, v < n → (wordPerm n w)[v]! = applyWord w v
   | [], _ =>
-    ⟨checkAutom_range hb, cellStab_range hok, fun v hv' => by
+    ⟨checkAutom_range, cellStab_range hok, fun v hv' => by
       rw [wordPerm, applyWord, List.foldl_nil,
         getElem!_pos _ _ (by simpa using hv'), Array.getElem_range]⟩
   | γ :: w, hmem => by
-    obtain ⟨h1, h2, h3⟩ := wordPerm_spec hb hok hsp hs hend hv hstab
+    obtain ⟨h1, h2, h3⟩ := wordPerm_spec hok hsp hs hend hv hstab
       w (fun γ' hγ' => hmem γ' (List.mem_cons_of_mem _ hγ'))
     have hγS := hmem γ (List.mem_cons_self ..)
     have hγA := hv γ hγS
@@ -688,46 +688,45 @@ theorem foldl_invariant {α β : Type} {P : α → Prop}
 
 /-- One round of forward generator images over a vertex set. -/
 @[expose] def orbitStepSet (nn : Nat) (gens : List (Array Nat))
-    (s : Nat) : Nat :=
+    (s : VSet nn) : VSet nn :=
   gens.foldl (fun acc γ =>
     (List.range nn).foldl (fun acc w =>
-      if s.testBit w then insert acc γ[w]! else acc) acc) s
+      if s.mem w then acc.insert γ[w]! else acc) acc) s
 
 /-- Iterated forward closure of a vertex set under the store. Any
 fuel is sound; `nn` rounds saturate. -/
 @[expose] def orbitClose (nn : Nat) (gens : List (Array Nat)) :
-    Nat → Nat → Nat
+    Nat → VSet nn → VSet nn
   | 0, s => s
   | fuel + 1, s => orbitClose nn gens fuel (orbitStepSet nn gens s)
 
 theorem orbitStepSet_sound {nn : Nat} {gens : List (Array Nat)}
-    {s : Nat} :
-    ∀ x, (orbitStepSet nn gens s).testBit x = true →
-      s.testBit x = true ∨
-        ∃ γ ∈ gens, ∃ u, s.testBit u = true ∧ γ[u]! = x := by
+    {s : VSet nn} :
+    ∀ x, (orbitStepSet nn gens s).mem x = true →
+      s.mem x = true ∨
+        ∃ γ ∈ gens, ∃ u, s.mem u = true ∧ γ[u]! = x := by
   refine foldl_invariant (P := fun acc => ∀ x,
-      acc.testBit x = true → s.testBit x = true ∨
-        ∃ γ ∈ gens, ∃ u, s.testBit u = true ∧ γ[u]! = x)
+      acc.mem x = true → s.mem x = true ∨
+        ∃ γ ∈ gens, ∃ u, s.mem u = true ∧ γ[u]! = x)
     gens s (fun x hx => Or.inl hx) ?_
   intro acc γ hγ hacc
   refine foldl_invariant (P := fun acc => ∀ x,
-      acc.testBit x = true → s.testBit x = true ∨
-        ∃ γ ∈ gens, ∃ u, s.testBit u = true ∧ γ[u]! = x)
+      acc.mem x = true → s.mem x = true ∨
+        ∃ γ ∈ gens, ∃ u, s.mem u = true ∧ γ[u]! = x)
     (List.range nn) acc hacc ?_
   intro a w hw ha x hx
   split at hx
   · next hcond =>
-    rw [testBit_insert] at hx
-    simp only [Bool.or_eq_true, beq_iff_eq] at hx
+    rw [VSet.mem_insert, Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq] at hx
     rcases hx with h | h
     · exact ha x h
-    · exact Or.inr ⟨γ, hγ, w, hcond, h⟩
+    · exact Or.inr ⟨γ, hγ, w, hcond, h.1⟩
   · exact ha x hx
 
 theorem orbitClose_sound {nn : Nat} {gens : List (Array Nat)} :
-    ∀ (fuel s x : Nat),
-      (orbitClose nn gens fuel s).testBit x = true →
-      ∃ u w, s.testBit u = true ∧ (∀ γ ∈ w, γ ∈ gens) ∧
+    ∀ (fuel : Nat) (s : VSet nn) (x : Nat),
+      (orbitClose nn gens fuel s).mem x = true →
+      ∃ u w, s.mem u = true ∧ (∀ γ ∈ w, γ ∈ gens) ∧
         applyWord w u = x
   | 0, s, x, hx => ⟨x, [], hx, by simp, rfl⟩
   | fuel + 1, s, x, hx => by
@@ -788,18 +787,18 @@ store. No single carrying generator is exhibited. -/
 @[expose] def orbPruned (nn : Nat) (gens : List (Array Nat))
     (rsLab : Array Nat) (tc o : Nat) : Bool :=
   (List.range o).any fun o' =>
-    (orbitClose nn gens nn (insert 0 rsLab[tc + o]!)).testBit
+    (orbitClose nn gens nn (VSet.empty.insert rsLab[tc + o]!)).mem
       rsLab[tc + o']!
 
 /-- An orbit-pruned position's key repeats an earlier sibling's: the
 orbit path composes to a checked, cell-stabilizing automorphism
-carrying one breakout labelling to the other, and `specNode_autom`
+carrying one breakout n labelling to the other, and `specNode_autom`
 transports the subtree key. This is the justification of the
 `fmptn` discipline at one node. -/
-theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
-    (hgsz : ctx.g.size = n) (hb : ∀ v, v < n → ctx.g[v]! < 2 ^ n)
+theorem childKey_of_orbPruned {ctx : Ctx n}
+    (hgsz : ctx.g.size = n)
     {gens : List (Array Nat)}
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ ctx.n = true)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (tcLevel fuel level : Nat) {rsLab rsPtn : Array Nat}
     {tc lenT numcells o : Nat}
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
@@ -808,25 +807,23 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
     (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
     (ho : o < lenT) (hlf : level + 1 + fuel ≤ n + 1)
-    (hpr : orbPruned ctx.n gens rsLab tc o = true) :
+    (hpr : orbPruned n gens rsLab tc o = true) :
     ∃ o', o' < o ∧
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' =
         childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o := by
-  rw [orbPruned, hn] at hpr
+  rw [orbPruned] at hpr
   obtain ⟨o', ho'm, hbit⟩ := List.any_eq_true.mp hpr
   have ho'o := List.mem_range.mp ho'm
   -- the orbit path composes to a carrying automorphism
   obtain ⟨u, wγ, hu, hwmem, happ⟩ := orbitClose_sound _ _ _ hbit
   have huv : u = rsLab[tc + o]! := by
-    rw [testBit_insert] at hu
-    simp only [Nat.zero_testBit, Bool.false_or, beq_iff_eq] at hu
-    exact hu.symm
+    rw [VSet.mem_insert, VSet.mem_empty, Bool.false_or, Bool.and_eq_true, beq_iff_eq] at hu
+    exact hu.1.symm
   rw [huv] at happ
-  have hv' : ∀ γ ∈ gens, checkAutom ctx.g γ n = true := by
+  have hv' : ∀ γ ∈ gens, checkAutom ctx.g γ = true := by
     intro γ hγ
-    have := hv γ hγ
-    rwa [hn] at this
-  obtain ⟨hAutC, hstabC, hpointC⟩ := wordPerm_spec hb hok hsp hs hend
+    exact hv γ hγ
+  obtain ⟨hAutC, hstabC, hpointC⟩ := wordPerm_spec hok hsp hs hend
     hv' hstab wγ hwmem
   have hvO : rsLab[tc + o]! < n := hok _ (by omega)
   have hvO' : rsLab[tc + o']! < n := hok _ (by omega)
@@ -834,13 +831,13 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
   have hσvO : σ.toFun rsLab[tc + o]! = rsLab[tc + o']! := by
     rw [hσeq _ hvO, hpointC _ hvO, happ]
   obtain ⟨L, rfl⟩ : ∃ L, lenT = L + 1 := ⟨lenT - 1, by omega⟩
-  -- breakout heads and tails on the target cell
-  have hbsz : (breakout rsLab rsPtn (level + 1) tc
+  -- breakout n heads and tails on the target cell
+  have hbsz : (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o]!).1.size = n := by
     show (breakout.go rsLab[tc + o]! (rsLab.size + 1) rsLab tc
       rsLab[tc + o]!).size = n
     rw [breakout_go_size, hs]
-  have hsegO : segN (breakout rsLab rsPtn (level + 1) tc
+  have hsegO : segN (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o]!).1 tc (L + 1) =
       rsLab[tc + o]! :: (segN rsLab tc (L + 1)).erase rsLab[tc + o]! := by
     show segN (breakout.go rsLab[tc + o]! (rsLab.size + 1) rsLab tc
@@ -848,7 +845,7 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
     exact breakout_go_seg (rsLab.size + 1) (L + 1) rsLab tc
       rsLab[tc + o]! ⟨tc + o, by omega, by omega, by omega, rfl⟩
       (by omega) (by omega)
-  have hsegO' : segN (breakout rsLab rsPtn (level + 1) tc
+  have hsegO' : segN (breakout n rsLab rsPtn (level + 1) tc
       rsLab[tc + o']!).1 tc (L + 1) =
       rsLab[tc + o']! ::
         (segN rsLab tc (L + 1)).erase rsLab[tc + o']! := by
@@ -884,8 +881,8 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
     have h := hend
     rwa [hsp] at h
   have hcp : cellsPerm (rsPtn.set! tc (level + 1)) (level + 1)
-      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
-      ((breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map
+      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
+      ((breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1.map
         σ.toFun) := by
     refine cellsPerm_set! hicS (by omega) (Nat.le_refl tc)
       (by omega) ?_ ?_ ?_
@@ -894,7 +891,7 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
         segN_cons, segN_zero, hheadO',
         getElem!_map_of_lt σ.toFun _ (by rw [hbsz]; omega), hheadO,
         hσvO]
-    · -- the remainder cells erase the two vertices and transport
+    · -- the remainder cells the.erase two vertices and transport
       rw [show tc + (L + 1) - (tc + 1) = L by omega, htailO',
         segN_map_of_le _ _ _ _ (by rw [hbsz]; omega), htailO]
       have hCstab := hstabSeg tc (L + 1) hic hrange
@@ -916,7 +913,7 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
         (hCstab.trans h5)).cons_inv
     · -- untouched cells: both breakouts restrict to `rsLab`
       intro a l hicA hdisj
-      have hlabO'eq : segN (breakout rsLab rsPtn (level + 1) tc
+      have hlabO'eq : segN (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o']!).1 a l = segN rsLab a l := by
         refine segN_congr fun q hq => ?_
         show (breakout.go rsLab[tc + o']! (rsLab.size + 1) rsLab tc
@@ -925,7 +922,7 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
         · exact breakout_go_outside _ _ _ _ _ (by omega)
         · exact breakout_go_outside_right _ (L + 1) _ _ _
             ⟨tc + o', by omega, by omega, by omega, rfl⟩ _ (by omega)
-      have hlabOeq : segN (breakout rsLab rsPtn (level + 1) tc
+      have hlabOeq : segN (breakout n rsLab rsPtn (level + 1) tc
           rsLab[tc + o]!).1 a l = segN rsLab a l := by
         refine segN_congr fun q hq => ?_
         show (breakout.go rsLab[tc + o]! (rsLab.size + 1) rsLab tc
@@ -961,7 +958,7 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
         subst hl1
         rw [hlabO'eq, segN_cons, segN_zero, segN_cons, segN_zero,
           getElem!_neg rsLab a (by omega),
-          getElem!_neg ((breakout rsLab rsPtn (level + 1) tc
+          getElem!_neg ((breakout n rsLab rsPtn (level + 1) tc
               rsLab[tc + o]!).1.map σ.toFun) a
             (by rw [Array.size_map, hbsz]; omega)]
   -- transport the subtree key along the composite automorphism
@@ -971,14 +968,14 @@ theorem childKey_of_orbPruned {ctx : Ctx} (hn : ctx.n = n)
   have hkeyeq : childKey ctx tcLevel fuel level rsLab rsPtn tc
       numcells o =
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o' :=
-    specNode_autom hn hσrows tcLevel fuel (level + 1)
-      (lab₁ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
-      (lab₂ := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
-      (ptn := (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1)
-      (active := (breakout rsLab rsPtn (level + 1) tc
+    specNode_autom hσrows tcLevel fuel (level + 1)
+      (lab₁ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1)
+      (lab₂ := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+      (ptn := (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1)
+      (active := (breakout n rsLab rsPtn (level + 1) tc
         rsLab[tc + o]!).2.2)
       (numcells := numcells + 1) hcp hokc'.labSize hokc.labSize
-      hokc'.labOk hokc.labOk hokc.ptnSize hokc.act hokc.ptnEnd
+      hokc'.labOk hokc.labOk hokc.ptnSize hokc.ptnEnd
       hokc.starts hokc.vals (by omega)
   exact ⟨o', ho'o, hkeyeq.symm⟩
 

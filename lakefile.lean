@@ -254,6 +254,7 @@ lean_lib HexMatrix where
 lean_lib HexGraph where
 
 lean_lib HexGraphIso where
+  precompileModules := true
 
 @[default_target]
 lean_lib HexGraphIsoMathlib where

@@ -146,7 +146,7 @@ theorem sum_multOf_countValues (counts : List Nat) :
 /-- Positions closed at `level` in the entry partition keep their
 exact values, and the boundary count stays in step with `numcells`. -/
 structure FreezeInv (level nn : Nat) (ptn0 : Array Nat) (nc0 : Nat)
-    (st : RefineSt) : Prop where
+    (st : RefineSt n) : Prop where
   ptnSize : st.ptn.size = ptn0.size
   labPtn : st.lab.size = st.ptn.size
   frozen : ∀ q : Nat, ptn0[q]! ≤ level → st.ptn[q]! = ptn0[q]!
@@ -156,7 +156,7 @@ structure FreezeInv (level nn : Nat) (ptn0 : Array Nat) (nc0 : Nat)
 /-- A step that touches neither the partition, the count, nor the
 labelling size preserves the invariant. -/
 theorem FreezeInv.same {level nn : Nat} {ptn0 : Array Nat} {nc0 : Nat}
-    {st st' : RefineSt} (h : FreezeInv level nn ptn0 nc0 st)
+    {st st' : RefineSt n} (h : FreezeInv level nn ptn0 nc0 st)
     (hp : st'.ptn = st.ptn) (hc : st'.numcells = st.numcells)
     (hl : st'.lab.size = st.lab.size) :
     FreezeInv level nn ptn0 nc0 st' :=
@@ -168,7 +168,7 @@ theorem FreezeInv.same {level nn : Nat} {ptn0 : Array Nat} {nc0 : Nat}
 /-- One paired write: `level` at an open in-range position together
 with one `numcells` increment. -/
 theorem FreezeInv.write {level nn : Nat} {ptn0 : Array Nat} {nc0 : Nat}
-    {st st' : RefineSt} {p : Nat} (h : FreezeInv level nn ptn0 nc0 st)
+    {st st' : RefineSt n} {p : Nat} (h : FreezeInv level nn ptn0 nc0 st)
     (hp : st'.ptn = st.ptn.set! p level)
     (hc : st'.numcells = st.numcells + 1)
     (hl : st'.lab.size = st.lab.size)
@@ -192,7 +192,7 @@ theorem FreezeInv.write {level nn : Nat} {ptn0 : Array Nat} {nc0 : Nat}
 /-! # The trivial-splitter pass -/
 
 theorem freezeInv_trivialSplit {level nn : Nat} {ptn0 : Array Nat}
-    {nc0 : Nat} {st : RefineSt} {cell1 cell2 : Nat} {c1 c2 : Int}
+    {nc0 : Nat} {st : RefineSt n} {cell1 cell2 : Nat} {c1 c2 : Int}
     (hinv : FreezeInv level nn ptn0 nc0 st)
     (hbounds : Int.ofNat cell1 ≤ c2 → c1 ≤ Int.ofNat cell2 →
       cell1 ≤ c2.toNat ∧ c2.toNat < cell2)
@@ -223,8 +223,8 @@ theorem freezeInv_trivialSplit {level nn : Nat} {ptn0 : Array Nat}
       · split <;> exact Array.getElem!_set!_ne _ _ _ _ hne
   · exact ⟨hinv, fun _ _ => rfl⟩
 
-theorem freezeInv_trivialCell {level nn gRow : Nat} {ptn0 : Array Nat}
-    {nc0 : Nat} {st : RefineSt} {cell1 cell2 : Nat}
+theorem freezeInv_trivialCell {level nn : Nat} {gRow : VSet n} {ptn0 : Array Nat}
+    {nc0 : Nat} {st : RefineSt n} {cell1 cell2 : Nat}
     (hinv : FreezeInv level nn ptn0 nc0 st)
     (hfresh : ∀ p, cell1 ≤ p → p < cell2 → st.ptn[p]! > level)
     (h12 : cell1 ≤ cell2) (hb : cell2 < nn)
@@ -264,7 +264,7 @@ theorem freezeInv_trivialCell {level nn gRow : Nat} {ptn0 : Array Nat}
 /-! # The nontrivial-splitter pass -/
 
 theorem nc_windowStep_eq (level cell1 cell2 v c1 c2 : Nat)
-    (maxcell : Int) (st : RefineSt) :
+    (maxcell : Int) (st : RefineSt n) :
     (windowStep level cell1 cell2 v c1 c2 maxcell st).numcells =
       if c1 = cell1 then st.numcells else st.numcells + 1 := by
   rw [windowStep]
@@ -283,7 +283,7 @@ the first counts one new cell, so over a whole cell the two
 balance. -/
 theorem windowScan_payload {level nn : Nat} {cell1 cell2 : Nat}
     {counts : List Nat} (hb : cell2 < nn) :
-    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt),
+    ∀ (vs : List Nat) (c1 : Nat) (maxcell : Int) (st : RefineSt n),
       cell1 ≤ c1 →
       c1 + (vs.map (multOf counts)).sum = cell2 + 1 →
       cell2 < st.ptn.size →
@@ -427,13 +427,13 @@ theorem windowScan_payload {level nn : Nat} {cell1 cell2 : Nat}
       rw [hsum, hz]
       simpa using ihcount
 
-theorem nc_nontrivialFix (cell1 : Nat) (st : RefineSt) :
+theorem nc_nontrivialFix (cell1 : Nat) (st : RefineSt n) :
     (nontrivialFix cell1 st).numcells = st.numcells := by
   rw [nontrivialFix]
   split <;> rfl
 
-theorem freezeInv_nontrivialCell {ctx : Ctx} {level nn workset : Nat}
-    {ptn0 : Array Nat} {nc0 : Nat} {st : RefineSt} {cell1 cell2 : Nat}
+theorem freezeInv_nontrivialCell {ctx : Ctx n} {level nn : Nat} {workset : VSet n}
+    {ptn0 : Array Nat} {nc0 : Nat} {st : RefineSt n} {cell1 cell2 : Nat}
     (hinv : FreezeInv level nn ptn0 nc0 st)
     (hfresh : ∀ p, cell1 ≤ p → p < cell2 → st.ptn[p]! > level)
     (h12 : cell1 ≤ cell2) (hb : cell2 < nn)
@@ -487,14 +487,14 @@ theorem freezeInv_nontrivialCell {ctx : Ctx} {level nn workset : Nat}
 
 /-- The remaining cells of a pass: ordered left to right, in range,
 with open interiors in the current state. -/
-def CellsFresh (level nn : Nat) (st : RefineSt) :
+def CellsFresh (level nn : Nat) (st : RefineSt n) :
     List (Nat × Nat) → Prop
   | [] => True
   | (a, b) :: rest => a ≤ b ∧ b < nn ∧
       (∀ p, a ≤ p → p < b → st.ptn[p]! > level) ∧
       (∀ p ∈ rest, b < p.1) ∧ CellsFresh level nn st rest
 
-theorem cellsFresh_congr {level nn b0 : Nat} {st st' : RefineSt}
+theorem cellsFresh_congr {level nn b0 : Nat} {st st' : RefineSt n}
     (hagree : ∀ q, b0 ≤ q → st'.ptn[q]! = st.ptn[q]!) :
     ∀ {cs : List (Nat × Nat)}, (∀ p ∈ cs, b0 ≤ p.1) →
       CellsFresh level nn st cs → CellsFresh level nn st' cs
@@ -523,7 +523,7 @@ theorem cells_go_ge {ptn : Array Nat} {level nn : Nat} :
         omega
     · exact absurd hp (by simp)
 
-theorem cellsFresh_cells {level nn : Nat} {st : RefineSt}
+theorem cellsFresh_cells {level nn : Nat} {st : RefineSt n}
     (hnn : st.ptn.size = nn)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
     ∀ (fuel c1 : Nat),
@@ -544,9 +544,9 @@ theorem cellsFresh_cells {level nn : Nat} {st : RefineSt}
         omega
     · trivial
 
-theorem freezeInv_refineTrivial_go {level nn gRow : Nat}
+theorem freezeInv_refineTrivial_go {level nn : Nat} {gRow : VSet n}
     {ptn0 : Array Nat} {nc0 : Nat} :
-    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt n),
       FreezeInv level nn ptn0 nc0 st →
       nn ≤ st.ptn.size →
       CellsFresh level nn st cs →
@@ -566,9 +566,9 @@ theorem freezeInv_refineTrivial_go {level nn gRow : Nat}
       have := hord p hp
       omega
 
-theorem freezeInv_refineNontrivial_go {ctx : Ctx}
-    {level nn workset : Nat} {ptn0 : Array Nat} {nc0 : Nat} :
-    ∀ (cs : List (Nat × Nat)) (st : RefineSt),
+theorem freezeInv_refineNontrivial_go {ctx : Ctx n}
+    {level nn : Nat} {workset : VSet n} {ptn0 : Array Nat} {nc0 : Nat} :
+    ∀ (cs : List (Nat × Nat)) (st : RefineSt n),
       FreezeInv level nn ptn0 nc0 st →
       nn ≤ st.ptn.size →
       CellsFresh level nn st cs →
@@ -589,17 +589,17 @@ theorem freezeInv_refineNontrivial_go {ctx : Ctx}
       have := hord p hp
       omega
 
-theorem freezeInv_refineStep {ctx : Ctx} {level split1 : Nat}
-    {ptn0 : Array Nat} {nc0 : Nat} {st : RefineSt}
-    (hinv : FreezeInv level ctx.n ptn0 nc0 st)
-    (hnn : ctx.n = ptn0.size)
+theorem freezeInv_refineStep {ctx : Ctx n} {level split1 : Nat}
+    {ptn0 : Array Nat} {nc0 : Nat} {st : RefineSt n}
+    (hinv : FreezeInv level n ptn0 nc0 st)
+    (hnn : n = ptn0.size)
     (hend0 : ptn0[ptn0.size - 1]! ≤ level) :
-    FreezeInv level ctx.n ptn0 nc0
+    FreezeInv level n ptn0 nc0
       (refineStep ctx level split1 st) := by
   have hendst : st.ptn[st.ptn.size - 1]! ≤ level := by
     rw [hinv.ptnSize, hinv.frozen (ptn0.size - 1) hend0]
     exact hend0
-  have hsz : st.ptn.size = ctx.n := by
+  have hsz : st.ptn.size = n := by
     rw [hinv.ptnSize, hnn]
   rw [refineStep]
   dsimp only
@@ -609,27 +609,27 @@ theorem freezeInv_refineStep {ctx : Ctx} {level split1 : Nat}
       (by dsimp only; omega) ?_
     rw [cells]
     exact cellsFresh_cells (st := { st with
-      active := erase st.active split1
+      active := st.active.erase split1
       longcode := mash st.longcode (split1 + cellEnd st.ptn level split1) })
-      hsz hendst ctx.n 0
+      hsz hendst n 0
   · rw [refineNontrivial]
     dsimp only
     refine freezeInv_refineNontrivial_go _ _ (hinv.same rfl rfl rfl)
       (by dsimp only; omega) ?_
     rw [cells]
     exact cellsFresh_cells (st := { st with
-      active := erase st.active split1
+      active := st.active.erase split1
       longcode := mash (mash st.longcode
         (split1 + cellEnd st.ptn level split1))
         (cellEnd st.ptn level split1 - split1 + 1) })
-      hsz hendst ctx.n 0
+      hsz hendst n 0
 
-theorem freezeInv_refineLoop {ctx : Ctx} {level : Nat}
+theorem freezeInv_refineLoop {ctx : Ctx n} {level : Nat}
     {ptn0 : Array Nat} {nc0 : Nat}
-    (hnn : ctx.n = ptn0.size) (hend0 : ptn0[ptn0.size - 1]! ≤ level) :
-    ∀ (fuel : Nat) (st : RefineSt),
-      FreezeInv level ctx.n ptn0 nc0 st →
-      FreezeInv level ctx.n ptn0 nc0 (refineLoop ctx level fuel st)
+    (hnn : n = ptn0.size) (hend0 : ptn0[ptn0.size - 1]! ≤ level) :
+    ∀ (fuel : Nat) (st : RefineSt n),
+      FreezeInv level n ptn0 nc0 st →
+      FreezeInv level n ptn0 nc0 (refineLoop ctx level fuel st)
   | 0, st, hinv => hinv
   | fuel + 1, st, hinv => by
     rw [refineLoop]
@@ -640,37 +640,37 @@ theorem freezeInv_refineLoop {ctx : Ctx} {level : Nat}
           (freezeInv_refineStep hinv hnn hend0)
     · exact hinv
 
-theorem refine_freezeInv {ctx : Ctx} {level : Nat}
-    {lab ptn : Array Nat} {active numcells : Nat}
-    (hnn : ctx.n = ptn.size) (hls : lab.size = ptn.size)
+theorem refine_freezeInv {ctx : Ctx n} {level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat}
+    (hnn : n = ptn.size) (hls : lab.size = ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level) :
-    FreezeInv level ctx.n ptn numcells
+    FreezeInv level n ptn numcells
       (refine ctx level lab ptn active numcells) := by
   rw [refine]
-  have h := freezeInv_refineLoop (ptn0 := ptn) (nc0 := numcells) hnn
-    hend (4 * ctx.n + 8)
+  have h := freezeInv_refineLoop (ctx := ctx) (ptn0 := ptn) (nc0 := numcells) hnn
+    hend (4 * n + 8)
     { lab, ptn, active, numcells, hint := 0, maxpos := 0,
       longcode := numcells }
     ⟨rfl, hls, fun _ _ => rfl, rfl⟩
   exact h.same rfl rfl rfl
 
 /-- `refine` keeps every closed position's exact value. -/
-theorem refine_frozen {ctx : Ctx} {level : Nat} {lab ptn : Array Nat}
-    {active numcells : Nat} (hnn : ctx.n = ptn.size)
+theorem refine_frozen {ctx : Ctx n} {level : Nat} {lab ptn : Array Nat}
+    {active : VSet n} {numcells : Nat} (hnn : n = ptn.size)
     (hls : lab.size = ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
     {q : Nat} (hq : ptn[q]! ≤ level) :
     (refine ctx level lab ptn active numcells).ptn[q]! = ptn[q]! :=
   (refine_freezeInv hnn hls hend).frozen q hq
 
 /-- `refine` keeps an accurate cell count accurate. -/
-theorem refine_bcount {ctx : Ctx} {level : Nat} {lab ptn : Array Nat}
-    {active numcells : Nat} (hnn : ctx.n = ptn.size)
+theorem refine_bcount {ctx : Ctx n} {level : Nat} {lab ptn : Array Nat}
+    {active : VSet n} {numcells : Nat} (hnn : n = ptn.size)
     (hls : lab.size = ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
     (refine ctx level lab ptn active numcells).numcells +
-        bcount ptn level ctx.n =
+        bcount ptn level n =
       numcells +
         bcount (refine ctx level lab ptn active numcells).ptn level
-          ctx.n :=
+          n :=
   (refine_freezeInv hnn hls hend).count
 
 /-! # Target-cell openness -/
@@ -710,11 +710,11 @@ theorem exists_nontrivial_cell_of_open {ptn : Array Nat}
 
 /-- The executable target cell of a live state is an in-range
 nontrivial cell start, whatever the hint. -/
-theorem targetcell_open {ctx : Ctx} {lab ptn : Array Nat}
+theorem targetcell_open {ctx : Ctx n} {lab ptn : Array Nat}
     {level tcLevel : Nat} {hint : Int} (_hn1 : 1 ≤ level)
-    (hsz : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hex : ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2) :
-    ∃ p ∈ cells ptn level ctx.n, p.1 ≠ p.2 ∧
+    (hsz : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hex : ∃ p ∈ cells ptn level n, p.1 ≠ p.2) :
+    ∃ p ∈ cells ptn level n, p.1 ≠ p.2 ∧
       targetcell ctx lab ptn level tcLevel hint = p.1 := by
   rcases Decidable.em (hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
       (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level)) with hg | hg
@@ -726,7 +726,7 @@ theorem targetcell_open {ctx : Ctx} {lab ptn : Array Nat}
       · rw [getElem!_neg _ _ (by omega)] at hopen
         exact absurd hopen (Nat.not_lt.mpr (Nat.zero_le level))
     obtain ⟨p, hpm, hp1, hp2⟩ := cells_cover (ptn := ptn)
-      (level := level) (nn := ctx.n) hint.toNat (by omega)
+      (level := level) (nn := n) hint.toNat (by omega)
     have hic := cells_isCell (by omega) hend p hpm
     have hstart' : hint.toNat = 0 ∨ ptn[hint.toNat - 1]! ≤ level := by
       rcases hstart with h0 | hb
@@ -765,21 +765,21 @@ theorem targetcell_open {ctx : Ctx} {lab ptn : Array Nat}
 
 /-- The executable `maketargetcell` of a live state: an open
 nontrivial cell with its exact extent and contents. -/
-theorem maketargetcell_open {ctx : Ctx} {lab ptn : Array Nat}
+theorem maketargetcell_open {ctx : Ctx n} {lab ptn : Array Nat}
     {level tcLevel : Nat} {hint : Int} (hn1 : 1 ≤ level)
-    (hsz : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hlive : bcount ptn level ctx.n < ctx.n) :
+    (hsz : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hlive : bcount ptn level n < n) :
     ∃ tc len,
       maketargetcell ctx lab ptn level tcLevel hint =
-        (tc, worksetOf lab tc (tc + len - 1), len) ∧
-      IsCell ptn level tc len ∧ 2 ≤ len ∧ tc + len ≤ ctx.n := by
+        (tc, worksetOf n lab tc (tc + len - 1), len) ∧
+      IsCell ptn level tc len ∧ 2 ≤ len ∧ tc + len ≤ n := by
   obtain ⟨q, hqn, hqopen⟩ := exists_open_of_bcount_lt hlive
   have hex := exists_nontrivial_cell_of_open (by omega) hend hqn
     hqopen
   obtain ⟨p, hpm, hpne, htc⟩ := targetcell_open (lab := lab)
     (tcLevel := tcLevel) (hint := hint) hn1 hsz hend hex
   have hple := cells_le p hpm
-  have hpb := cells_bound (nn := ctx.n) (by omega) hend p hpm
+  have hpb := cells_bound (nn := n) (by omega) hend p hpm
   have hic := cells_isCell (by omega) hend p hpm
   have hce : cellEnd ptn level (p.1 + 1) = p.2 := by
     have h0 := cellEnd_of_isCell hic (by omega) (by omega)
@@ -865,7 +865,7 @@ variable {n k : Nat}
 /-- The per-node invariant of the transcribed search at `level` with
 claimed cell count `numcells`. -/
 structure SearchOk (G : Colored n k) (level numcells : Nat)
-    (st : SearchSt) : Prop where
+    (st : SearchSt n) : Prop where
   labSize : st.lab.size = n
   ptnSize : st.ptn.size = n
   reach : CellsReach G st.lab
@@ -883,7 +883,7 @@ the partition preserved exactly wherever it is (or becomes) closed at
 `B`, the labelling permuted only within cells of the entry partition
 at `lev`, and `canonlab` kept or installed reached. -/
 structure SearchOut (G : Colored n k) (B lev : Nat)
-    (st st' : SearchSt) : Prop where
+    (st st' : SearchSt n) : Prop where
   labSize : st'.lab.size = st.lab.size
   ptnSize : st'.ptn.size = st.ptn.size
   reach : CellsReach G st'.lab
@@ -900,21 +900,21 @@ structure SearchOut (G : Colored n k) (B lev : Nat)
     (st'.canonlab.size = n ∧ CellsReach G st'.canonlab)
 
 theorem SearchOut.refl (G : Colored n k) (B lev : Nat)
-    {st : SearchSt} (hreach : CellsReach G st.lab) :
+    {st : SearchSt n} (hreach : CellsReach G st.lab) :
     SearchOut G B lev st st :=
   ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _,
     Or.inl rfl, Or.inl rfl, Or.inl rfl⟩
 
 /-- A quartet call cannot move the entry of a singleton cell. -/
 theorem SearchOut.atSingleton {G : Colored n k} {B lev : Nat}
-    {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
+    {st st' : SearchSt n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1) : st'.lab[a]! = st.lab[a]! :=
   (cellsPerm_singleton h.perm hc).symm
 
 /-- A stored first leaf keeps the entry of a singleton cell, provided the
 incoming stored leaf already has that entry. -/
 theorem SearchOut.firstAtSingleton {G : Colored n k} {B lev : Nat}
-    {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
+    {st st' : SearchSt n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1)
     (hold : st.firstlab[a]! = st.lab[a]!) :
     st'.firstlab[a]! = st.lab[a]! := by
@@ -926,7 +926,7 @@ theorem SearchOut.firstAtSingleton {G : Colored n k} {B lev : Nat}
 /-- A stored canonical leaf keeps the entry of a singleton cell, provided
 the incoming stored leaf already has that entry. -/
 theorem SearchOut.canonAtSingleton {G : Colored n k} {B lev : Nat}
-    {st st' : SearchSt} (h : SearchOut G B lev st st') {a : Nat}
+    {st st' : SearchSt n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1)
     (hold : st.canonlab[a]! = st.lab[a]!) :
     st'.canonlab[a]! = st.lab[a]! := by
@@ -1042,7 +1042,7 @@ theorem bcount_succ_of_vals {ptn : Array Nat} {lev nn : Nat}
 
 /-- Compose two call effects at matching bounds. -/
 theorem SearchOut.trans {G : Colored n k} {B : Nat}
-    {st1 st2 st3 : SearchSt} (h12 : SearchOut G B B st1 st2)
+    {st1 st2 st3 : SearchSt n} (h12 : SearchOut G B B st1 st2)
     (h23 : SearchOut G B B st2 st3) : SearchOut G B B st1 st3 := by
   refine ⟨h23.labSize.trans h12.labSize,
     h23.ptnSize.trans h12.ptnSize, h23.reach, ?_, ?_, ?_, ?_, ?_⟩
@@ -1079,7 +1079,7 @@ theorem SearchOut.trans {G : Colored n k} {B : Nat}
 
 /-- Weaken the preservation bound. -/
 theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
-    {st st' : SearchSt} (h : SearchOut G B lev st st')
+    {st st' : SearchSt n} (h : SearchOut G B lev st st')
     (hB : B' ≤ B) : SearchOut G B' lev st st' :=
   ⟨h.labSize, h.ptnSize, h.reach,
     fun q hq => h.low q (by omega), h.perm, h.firstStore, h.canonStore,
@@ -1087,10 +1087,10 @@ theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
 
 /-! # Quartet step helpers -/
 
-theorem elem_ne_zero {s v : Nat} (h : elem s v = true) :
-    s ≠ 0 := by
+theorem mem_ne_empty {s : VSet n} {v : Nat} (h : s.mem v = true) :
+    s ≠ VSet.empty := by
   rintro rfl
-  rw [elem, Nat.zero_testBit] at h
+  rw [VSet.mem_empty] at h
   cases h
 
 theorem mem_segN_iff {lab : Array Nat} {tc len v : Nat} :
@@ -1105,18 +1105,18 @@ theorem mem_segN_iff {lab : Array Nat} {tc len v : Nat} :
 
 theorem breakout_ptn (lab ptn : Array Nat)
     (lev tc tv : Nat) :
-    (breakout lab ptn lev tc tv).2.1 = ptn.set! tc lev := rfl
+    (breakout n lab ptn lev tc tv).2.1 = ptn.set! tc lev := rfl
 
 theorem breakout_lab_size (lab ptn : Array Nat)
     (lev tc tv : Nat) :
-    (breakout lab ptn lev tc tv).1.size = lab.size := by
+    (breakout n lab ptn lev tc tv).1.size = lab.size := by
   rw [breakout]
   exact breakout_go_size _ _ _ _
 
 /-- The end of the partition stays closed: position `n - 1` is an
 initial boundary. -/
 theorem searchOk_end {G : Colored n k}
-    {level numcells : Nat} {st : SearchSt} (hn0 : 0 < n)
+    {level numcells : Nat} {st : SearchSt n} (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (h1 : 1 ≤ level) :
     st.ptn[st.ptn.size - 1]! ≤ level := by
   have hinitEnd := (initial_nodeOk G hn0).ptnEnd
@@ -1129,7 +1129,7 @@ theorem searchOk_end {G : Colored n k}
 the closed positions, provided the final partition satisfies the
 level dichotomy (which `recover` restores unconditionally). -/
 theorem searchOk_of_out {G : Colored n k}
-    {level numcells : Nat} {st st' : SearchSt}
+    {level numcells : Nat} {st st' : SearchSt n}
     (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
     (hout : SearchOut G level level st st')
     (hvals : ∀ q : Nat, q < n →
@@ -1152,12 +1152,12 @@ theorem searchOk_of_out {G : Colored n k}
 /-- Individualizing a target-cell vertex yields the child invariant
 one level down with one more cell. -/
 theorem breakout_searchOk {G : Colored n k}
-    {level numcells tc len o : Nat} {st st' : SearchSt} (hn0 : 0 < n)
+    {level numcells tc len o : Nat} {st st' : SearchSt n} (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen2 : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len)
     (hl : st'.lab =
-      (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
+      (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
     (hp : st'.ptn = st.ptn.set! tc (level + 1))
     (hc : st'.canonlab = st.canonlab) :
     SearchOk G (level + 1) (numcells + 1) st' := by
@@ -1212,13 +1212,13 @@ theorem breakout_searchOk {G : Colored n k}
 /-- The effect of individualization followed by a child call, in the
 parent loop's frame. -/
 theorem breakout_child_out {G : Colored n k}
-    {level numcells tc len o : Nat} {st stC stD : SearchSt}
+    {level numcells tc len o : Nat} {st stC stD : SearchSt n}
     (hn0 : 0 < n) (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen2 : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len)
     (hCout : SearchOut G level (level + 1) stC stD)
     (hl : stC.lab =
-      (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
+      (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
     (hp : stC.ptn = st.ptn.set! tc (level + 1))
     (hf : stC.firstlab = st.firstlab)
     (hc : stC.canonlab = st.canonlab) :
@@ -1286,7 +1286,7 @@ theorem breakout_child_out {G : Colored n k}
     · exact Or.inr h
 
 theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
-    {st st' st'' : SearchSt} (h : SearchOut G B lev st st')
+    {st st' st'' : SearchSt n} (h : SearchOut G B lev st st')
     (hl : st''.lab = st'.lab) (hp : st''.ptn = st'.ptn)
     (hf : st''.firstlab = st'.firstlab)
     (hc : st''.canonlab = st'.canonlab) : SearchOut G B lev st st'' :=
@@ -1301,7 +1301,7 @@ theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
     by rw [hc]; exact h.canon⟩
 
 theorem searchOut_id {G : Colored n k} (B lev : Nat)
-    {stX : SearchSt} {labR : Array Nat} (hl : stX.lab = labR)
+    {stX : SearchSt n} {labR : Array Nat} (hl : stX.lab = labR)
     (hreach : CellsReach G labR) : SearchOut G B lev stX stX :=
   SearchOut.refl G B lev (by rw [hl]; exact hreach)
 
@@ -1315,9 +1315,9 @@ theorem match_option_or {α γ : Type} {P : γ → Prop}
 
 /-- The invariant after `refine`, for any state carrying the refined
 labelling and partition. -/
-theorem refine_searchOk {G : Colored n k} {ctx : Ctx}
-    (hn : ctx.n = n) (hn0 : 0 < n) {level numcells : Nat}
-    {st st2 : SearchSt} (hok : SearchOk G level numcells st)
+theorem refine_searchOk {G : Colored n k} {ctx : Ctx n}
+    (hn0 : 0 < n) {level numcells : Nat}
+    {st st2 : SearchSt n} (hok : SearchOk G level numcells st)
     (h1 : 1 ≤ level)
     (hl : st2.lab =
       (refine ctx level st.lab st.ptn st.active numcells).lab)
@@ -1329,11 +1329,11 @@ theorem refine_searchOk {G : Colored n k} {ctx : Ctx}
       (refine ctx level st.lab st.ptn st.active numcells).numcells
       st2 := by
   have hend := searchOk_end hn0 hok h1
-  have hnn : ctx.n ≤ st.ptn.size := by
-    rw [hok.ptnSize, hn]
+  have hnn : n ≤ st.ptn.size := by
+    rw [hok.ptnSize]
     exact Nat.le_refl n
-  have hnn' : ctx.n = st.ptn.size := by
-    rw [hok.ptnSize, hn]
+  have hnn' : n = st.ptn.size := by
+    rw [hok.ptnSize]
   have hls : st.lab.size = st.ptn.size := by
     rw [hok.labSize, hok.ptnSize]
   have hRinv := refine_refInv (ctx := ctx) (level := level)
@@ -1342,12 +1342,11 @@ theorem refine_searchOk {G : Colored n k} {ctx : Ctx}
   have hcount := refine_bcount (ctx := ctx) (level := level)
     (lab := st.lab) (ptn := st.ptn) (active := st.active)
     (numcells := numcells) hnn' hls hend
-  rw [hn] at hcount
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [hl, hRinv.labSize, hok.labSize]
   · rw [hp, hRinv.ptnSize, hok.ptnSize]
   · rw [hl]
-    exact refine_cellsReach hn hn0 hok.reach hok.labSize hok.ptnSize
+    exact refine_cellsReach (ctx := ctx) hn0 hok.reach hok.labSize hok.ptnSize
       hend (fun q hq => Nat.le_trans (hok.init1 q hq) h1)
   · intro q hq
     rw [hp, refine_frozen hnn' hls hend
@@ -1372,9 +1371,9 @@ theorem refine_searchOk {G : Colored n k} {ctx : Ctx}
     · exact Or.inr h
 
 /-- Compose the refine step with the rest of a node's work. -/
-theorem refine_loop_out {G : Colored n k} {ctx : Ctx}
-    (hn : ctx.n = n) (hn0 : 0 < n) {level numcells : Nat}
-    {st STL stX : SearchSt} (hok : SearchOk G level numcells st)
+theorem refine_loop_out {G : Colored n k} {ctx : Ctx n}
+    (hn0 : 0 < n) {level numcells : Nat}
+    {st STL stX : SearchSt n} (hok : SearchOk G level numcells st)
     (h1 : 1 ≤ level)
     (hl : STL.lab =
       (refine ctx level st.lab st.ptn st.active numcells).lab)
@@ -1391,11 +1390,11 @@ theorem refine_loop_out {G : Colored n k} {ctx : Ctx}
     (hXout : SearchOut G level level STL stX) :
     SearchOut G (level - 1) level st stX := by
   have hend := searchOk_end hn0 hok h1
-  have hnn : ctx.n ≤ st.ptn.size := by
-    rw [hok.ptnSize, hn]
+  have hnn : n ≤ st.ptn.size := by
+    rw [hok.ptnSize]
     exact Nat.le_refl n
-  have hnn' : ctx.n = st.ptn.size := by
-    rw [hok.ptnSize, hn]
+  have hnn' : n = st.ptn.size := by
+    rw [hok.ptnSize]
   have hls : st.lab.size = st.ptn.size := by
     rw [hok.labSize, hok.ptnSize]
   have hRinv := refine_refInv (ctx := ctx) (level := level)

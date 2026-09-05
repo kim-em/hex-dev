@@ -11,8 +11,8 @@ the recorded result of that run.
 | item | value |
 |---|---|
 | machine | `chungus2`, AMD EPYC 9455 (96 threads), Linux |
-| date | 2026-09-03 |
-| monorepo commit | `fa49bfd79bf352c3bd32ebe3dbfdd78a192c7b7d` |
+| date | 2026-09-05 |
+| monorepo commit | `425ea11b9` (branch `issue-9990`, packed vertex sets) |
 | Lean toolchain | `leanprover/lean4:v4.34.0-rc2` |
 | comparator | nauty 2.9.3, vendored in `vendor/nauty-2.9.3` |
 | C compiler | clang 22.1.8, `-O2` |
@@ -44,10 +44,8 @@ routes to the campaign instead of the committed fixture.
 ## What was compared
 
 The emitter records the public `canonicalize` answer, so the campaign pins the
-released surface. For each case the emitter additionally requires that
-`canonicalize?` returns `some` (the fast tier never falls back) and that the
-fast and certificate-checked tiers return equal results; either failure aborts
-the emission.
+released surface: the label, the canonical upper-triangle bits, and the
+visited-node count of the transcribed search.
 
 `scripts/oracle/graphiso_nauty.py` then rebuilds each original graph and
 colouring from the record, runs the pinned dense-nauty configuration through

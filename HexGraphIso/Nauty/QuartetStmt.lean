@@ -47,8 +47,8 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- The subtree key of a node, under its path codes. -/
-@[expose] def nodeKey (ctx : Ctx) (tcLevel fuel level : Nat)
-    (cs : List Nat) (st : SearchSt) (numcells : Nat) : Key :=
+@[expose] def nodeKey (ctx : Ctx n) (tcLevel fuel level : Nat)
+    (cs : List Nat) (st : SearchSt n) (numcells : Nat) : Key n :=
   prefixKey cs
     (specNode ctx tcLevel fuel level st.lab st.ptn st.active numcells)
 
@@ -66,32 +66,32 @@ degenerate reading therefore *outranks every reachable leaf key*, and
 that the final incumbent is the degenerate one, which is false as soon
 as the search installs anything.
 
-`SearchModel` already carries the fix: `incMax : Option Key → Key →
-Key` with `none` as the bottom, which is what `searchNode_eq` folds
+`SearchModel` already carries the fix: `incMax : Option (Key n) → Key n →
+Key n` with `none` as the bottom, which is what `searchNode_eq` folds
 with.  The semantic induction threads that option explicitly.  It can
 be read back from the imperative state only outside the temporary
 upward-comparison window, where `canoncode` contains path codes rather
 than the installed incumbent's codes. -/
 
 /-- The incumbent's code list, as `runTraced` reports it. -/
-@[expose] def bestCodesOf (st : SearchSt) : List Nat :=
+@[expose] def bestCodesOf (st : SearchSt n) : List Nat :=
   (List.range' 1 st.canonlevel).map fun i => st.canoncode[i]!
 
 /-- The incumbent a state carries, or `none` before the first
 install. -/
-@[expose] def stInc (ctx : Ctx) (st : SearchSt) : Option Key :=
+@[expose] def stInc (ctx : Ctx n) (st : SearchSt n) : Option (Key n) :=
   if st.canonlevel = 0 then none
   else some ⟨bestCodesOf st ++ [codeSentinel], leafRows ctx st.canonlab⟩
 
 /-- The semantic incumbent represented by the comparison machine's ghost
 code list. -/
-@[expose] def ghostInc (ctx : Ctx) (bs : List Nat)
-    (canonlab : Array Nat) : Option Key :=
+@[expose] def ghostInc (ctx : Ctx n) (bs : List Nat)
+    (canonlab : Array Nat) : Option (Key n) :=
   if bs = [] then none else some (incKey ctx bs canonlab)
 
 /-- Outside the upward overwrite window, `canoncode` contains exactly the
 ghost incumbent codes. -/
-theorem bestCodesOf_eq {nn : Nat} {cs bs : List Nat} {st : SearchSt}
+theorem bestCodesOf_eq {nn : Nat} {cs bs : List Nat} {st : SearchSt n}
     {compCanon : Int}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon compCanon)
@@ -112,8 +112,8 @@ theorem bestCodesOf_eq {nn : Nat} {cs bs : List Nat} {st : SearchSt}
 
 /-- At a stable comparison state, reading the mutable incumbent agrees
 with the semantic ghost incumbent. -/
-theorem stInc_eq_ghost {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
-    {st : SearchSt} {compCanon : Int}
+theorem stInc_eq_ghost {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
+    {st : SearchSt n} {compCanon : Int}
     (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
       st.eqlevCanon compCanon)
     (hne : compCanon ≠ 1) :
@@ -129,10 +129,10 @@ current one pointwise. The last clause is the whole content: at any
 position frozen at or above the return level, the two labellings hold
 the two paths' individualized vertices, so `γ` carries one child of
 the return level's node onto another. -/
-@[expose] def CarrierOut (ctx : Ctx) (out : SearchSt) : Prop :=
+@[expose] def CarrierOut (ctx : Ctx n) (out : SearchSt n) : Prop :=
   ∃ γ ∈ out.genTrace,
-    checkAutom ctx.g γ ctx.n = true ∧
-      ∀ i, i < ctx.n → γ[out.firstlab[i]!]! = out.lab[i]!
+    checkAutom ctx.g γ = true ∧
+      ∀ i, i < n → γ[out.firstlab[i]!]! = out.lab[i]!
 
 /-- What one node call establishes.
 
@@ -144,8 +144,8 @@ knows which case it is in can use the corresponding clause without a
 case split. `installed` records that a completed node leaves an
 incumbent, which is what makes the `full` equation's left side a
 `some`. -/
-structure NodeConcl (ctx : Ctx) (tcLevel fuel level : Nat)
-    (cs : List Nat) (st out : SearchSt) (numcells : Nat)
+structure NodeConcl (ctx : Ctx n) (tcLevel fuel level : Nat)
+    (cs : List Nat) (st out : SearchSt n) (numcells : Nat)
     (r : Int) : Prop where
   /-- Something is installed on the way out of a completed node. -/
   installed : r = Int.ofNat level - 1 → out.canonlevel ≠ 0
@@ -166,8 +166,8 @@ The loop folds the children from `tv1` onward into the incumbent.
 `explored` names the offsets it got through; on a `none` return that
 is all of them, and on a `some` return the loop stopped early and the
 payload travels on. -/
-structure LoopConcl (ctx : Ctx) (tcLevel fuel level : Nat)
-    (cs : List Nat) (st out : SearchSt)
+structure LoopConcl (ctx : Ctx n) (tcLevel fuel level : Nat)
+    (cs : List Nat) (st out : SearchSt n)
     (rsLab rsPtn : Array Nat) (tc numcells : Nat)
     (explored : List Nat) (r : Option Int) : Prop where
   /-- Completed with a nonempty sweep: something is installed. -/
@@ -248,9 +248,9 @@ At the ancestor the payload's generator carries the abandoned child
 onto an already-explored one, so `childKey_of_carried` equates their
 keys and the abandoned child contributes nothing new. This is stated
 as the shape the loop needs, not proved here. -/
-@[expose] def PayloadAbsorbs (ctx : Ctx) (tcLevel fuel level : Nat)
+@[expose] def PayloadAbsorbs (ctx : Ctx n) (tcLevel fuel level : Nat)
     (rsLab rsPtn : Array Nat) (tc numcells : Nat)
-    (oFirst oCur : Nat) (out : SearchSt) : Prop :=
+    (oFirst oCur : Nat) (out : SearchSt n) : Prop :=
   CarrierOut ctx out →
     childKey ctx tcLevel fuel level rsLab rsPtn tc numcells oCur =
       childKey ctx tcLevel fuel level rsLab rsPtn tc numcells oFirst
@@ -265,25 +265,25 @@ labellings hold there, namely the two paths' individualized vertices.
 The position facts are the induction's to supply: they are the
 descent's own bookkeeping, not a property of this node. Everything
 else here is the node's well-formedness. -/
-theorem payloadAbsorbs_of_positions {ctx : Ctx} (hn : ctx.n = n)
+theorem payloadAbsorbs_of_positions {ctx : Ctx n}
     (hgsz : ctx.g.size = n) (tcLevel fuel level : Nat)
     {rsLab rsPtn : Array Nat} {tc lenT numcells oFirst oCur : Nat}
-    {out : SearchSt}
-    (hstab : ∀ γ, checkAutom ctx.g γ ctx.n = true →
-      (∀ i, i < ctx.n → γ[out.firstlab[i]!]! = out.lab[i]!) →
+    {out : SearchSt n}
+    (hstab : ∀ γ, checkAutom ctx.g γ = true →
+      (∀ i, i < n → γ[out.firstlab[i]!]! = out.lab[i]!) →
       CellStab rsPtn level rsLab γ)
     (hs : rsLab.size = n) (hok : LabOk rsLab n)
     (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
     (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
     (hoC : oCur < lenT) (hoF : oFirst < lenT)
-    (hlf : level + 1 + fuel ≤ n + 1) (htc : tc < ctx.n)
+    (hlf : level + 1 + fuel ≤ n + 1) (htc : tc < n)
     (hfirst : out.firstlab[tc]! = rsLab[tc + oFirst]!)
     (hcur : out.lab[tc]! = rsLab[tc + oCur]!) :
     PayloadAbsorbs ctx tcLevel fuel level rsLab rsPtn tc numcells
       oFirst oCur out := by
   rintro ⟨γ, _, hAut, hmap⟩
-  refine childKey_of_carried hn hgsz hAut tcLevel fuel level
+  refine childKey_of_carried hgsz hAut tcLevel fuel level
     (hstab γ hAut hmap) hs hok hsp hend hvals hic hrange hoC hoF hlf ?_
   have h := hmap tc htc
   rwa [hfirst, hcur] at h
@@ -308,7 +308,7 @@ note after `breakout_misses_singleton`. -/
 position. -/
 theorem breakout_at_target {lab ptn : Array Nat} {level tc o : Nat}
     (hinj : LabInj lab lab.size) (hto : tc + o < lab.size) :
-    (breakout lab ptn (level + 1) tc lab[tc + o]!).1[tc]! =
+    (breakout n lab ptn (level + 1) tc lab[tc + o]!).1[tc]! =
       lab[tc + o]! := by
   rw [breakout_lab_at hinj hto tc, ite_eq_right (Nat.lt_irrefl tc),
     ite_eq_left rfl]
@@ -319,7 +319,7 @@ apply from the child onwards. -/
 theorem isCell_breakout_target {lab ptn : Array Nat}
     {level tc tv : Nat} (hlt : tc < ptn.size)
     (hstart : tc = 0 ∨ ptn[tc - 1]! ≤ level) :
-    IsCell (breakout lab ptn (level + 1) tc tv).2.1 (level + 1) tc 1 := by
+    IsCell (breakout n lab ptn (level + 1) tc tv).2.1 (level + 1) tc 1 := by
   refine ⟨Nat.one_pos, ?_, ?_, ?_⟩
   · rcases Nat.eq_zero_or_pos tc with rfl | hpos
     · exact Or.inl rfl
@@ -336,9 +336,9 @@ theorem isCell_breakout_target {lab ptn : Array Nat}
 
 /-- `refine` leaves a singleton cell's position exactly where it was:
 it permutes cell contents, and a singleton cell has only one. -/
-theorem refine_fixes_singleton {ctx : Ctx} {level : Nat}
-    {lab ptn : Array Nat} {active numcells a : Nat}
-    (hnn : ctx.n ≤ ptn.size) (hs : lab.size = ptn.size)
+theorem refine_fixes_singleton {ctx : Ctx n} {level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells a : Nat}
+    (hnn : n ≤ ptn.size) (hs : lab.size = ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level) (hc : IsCell ptn level a 1) :
     (refine ctx level lab ptn active numcells).lab[a]! = lab[a]! :=
   (cellsPerm_singleton (refine_refInv hnn hs hend).perm hc).symm
@@ -360,7 +360,7 @@ of the descent's position bookkeeping, one operation at a time. -/
 theorem breakout_misses_singleton {lab ptn : Array Nat}
     {level a tc o : Nat} (hinj : LabInj lab lab.size)
     (hto : tc + o < lab.size) (hout : a < tc ∨ tc + o < a) :
-    (breakout lab ptn (level + 1) tc lab[tc + o]!).1[a]! = lab[a]! := by
+    (breakout n lab ptn (level + 1) tc lab[tc + o]!).1[a]! = lab[a]! := by
   rw [breakout_lab_at hinj hto a]
   rcases hout with h | h
   · rw [ite_eq_left h]
@@ -396,7 +396,7 @@ key repeats one that survived, which is exactly the hypothesis of
 
 /-- A fold of `incMax` from a present incumbent is the seeded
 maximum. -/
-theorem foldl_incMax_some : ∀ (l : List Key) (k : Key),
+theorem foldl_incMax_some : ∀ (l : List (Key n)) (k : Key n),
     l.foldl (fun acc kk => some (incMax acc kk)) (some k) =
       some (keysMax k l)
   | [], _ => rfl
@@ -406,7 +406,7 @@ theorem foldl_incMax_some : ∀ (l : List Key) (k : Key),
 
 /-- A fold of `incMax` from no incumbent is the maximum seeded by the
 first key folded in. -/
-theorem foldl_incMax_none (k : Key) (l : List Key) :
+theorem foldl_incMax_none (k : Key n) (l : List (Key n)) :
     (k :: l).foldl (fun acc kk => some (incMax acc kk)) none =
       some (keysMax k l) := by
   rw [List.foldl_cons]
@@ -419,7 +419,7 @@ node, `l'` the ones the loop visited, and the hypothesis is that each
 child's key is bounded by the maximum over the visited ones, which the
 prune dischargers supply by exhibiting a visited child with an equal
 key. -/
-theorem keysMax_eq_of_dominated {l l' : List Key} {k : Key}
+theorem keysMax_eq_of_dominated {l l' : List (Key n)} {k : Key n}
     (hsub : ∀ x ∈ l', x ∈ l)
     (hdom : ∀ x ∈ l, keyLe x (keysMax k l')) :
     keysMax k l = keysMax k l' :=
@@ -431,7 +431,7 @@ theorem keysMax_eq_of_dominated {l l' : List Key} {k : Key}
 /-- The dominated-key hypothesis in the form the prune dischargers
 produce it: every child either survived or has the same key as one that
 did. -/
-theorem keysMax_eq_of_repeats {l l' : List Key} {k : Key}
+theorem keysMax_eq_of_repeats {l l' : List (Key n)} {k : Key n}
     (hsub : ∀ x ∈ l', x ∈ l)
     (hrep : ∀ x ∈ l, x ∈ l' ∨ ∃ y ∈ l', x = y) :
     keysMax k l = keysMax k l' :=
@@ -446,7 +446,7 @@ The node and the loop do not share a seed: the node's maximum is seeded
 at its first child, and the loop's fold is seeded at whichever child it
 visited first. Treating both seeds as ordinary members is what lets the
 two be compared. -/
-theorem keysMax_eq_of_dominated' {k k' : Key} {l l' : List Key}
+theorem keysMax_eq_of_dominated' {k k' : Key n} {l l' : List (Key n)}
     (hsub : ∀ x, (x = k' ∨ x ∈ l') → (x = k ∨ x ∈ l))
     (hdom : ∀ x, (x = k ∨ x ∈ l) → keyLe x (keysMax k' l')) :
     keysMax k l = keysMax k' l' :=
@@ -468,8 +468,8 @@ The incoming incumbent is handled uniformly, which is the point of
 carrying it as an `Option`: with nothing installed the fold's first
 child seeds the maximum, and with an incumbent present it is one more
 competitor. -/
-theorem node_absorbs_of_loop {inc : Option Key} {k0 e : Key}
-    {rest es : List Key}
+theorem node_absorbs_of_loop {inc : Option (Key n)} {k0 e : Key n}
+    {rest es : List (Key n)}
     (hsub : ∀ x, (x = e ∨ x ∈ es) → (x = k0 ∨ x ∈ rest))
     (hdom : ∀ x, (x = k0 ∨ x ∈ rest) → keyLe x (keysMax e es)) :
     (e :: es).foldl (fun acc kk => some (incMax acc kk)) inc =
@@ -496,27 +496,27 @@ remaining work. -/
 
 /-- The root state `runTraced` starts from. -/
 @[expose] def rootSt (n : Nat) (lab0 : Array Nat)
-    (cellEnds : List Nat) : SearchSt :=
+    (cellEnds : List Nat) : SearchSt n :=
   { lab := lab0, ptn := initPtn n (n + 2) cellEnds,
-    active := initActive cellEnds,
+    active := initActive n cellEnds,
     orbits := .ofFn (n := n) fun i => i.val,
     firstcode := .replicate (n + 2) 0,
     canoncode := .replicate (n + 2) 0,
     firsttc := .replicate (n + 2) (-1),
     firstlab := .replicate n 0,
     canonlab := .replicate n 0,
-    canong := .replicate n 0,
+    canong := .replicate n .empty,
     numorbits := n }
 
 /-- The state the root call returns. -/
-@[expose] def rootOut (n : Nat) (g lab0 : Array Nat)
-    (cellEnds : List Nat) : SearchSt :=
-  (firstPathNode { n, g } (n + 2) 100 (n + 2) 1 cellEnds.length
+@[expose] def rootOut (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) : SearchSt n :=
+  (firstPathNode { g } (n + 2) 100 (n + 2) 1 cellEnds.length
     (rootSt n lab0 cellEnds)).2
 
 /-- `runTraced`'s reported codes are the returned state's own
 reading. -/
-theorem bestCodes_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
+theorem bestCodes_runTraced {g : Array (VSet n)} {lab0 : Array Nat} {cellEnds : List Nat}
     (hn0 : n ≠ 0) :
     (runTraced n g lab0 cellEnds).bestCodes =
       bestCodesOf (rootOut n g lab0 cellEnds) := by
@@ -525,7 +525,7 @@ theorem bestCodes_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
   rfl
 
 /-- `runTraced`'s reported labelling is the returned state's. -/
-theorem canonlab_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
+theorem canonlab_runTraced {g : Array (VSet n)} {lab0 : Array Nat} {cellEnds : List Nat}
     (hn0 : n ≠ 0) :
     (runTraced n g lab0 cellEnds).result.canonlab =
       (rootOut n g lab0 cellEnds).canonlab := by
@@ -538,7 +538,7 @@ been installed. -/
 theorem stInc_final {G : Colored n k} (hn0 : n ≠ 0)
     (hinst : (rootOut n (rowsOf G) (initialPartition G).1
       (initialPartition G).2).canonlevel ≠ 0) :
-    stInc { n := n, g := rowsOf G }
+    stInc { g := rowsOf G }
         (rootOut n (rowsOf G) (initialPartition G).1
           (initialPartition G).2) =
       some (tracedKey G) := by
@@ -547,7 +547,7 @@ theorem stInc_final {G : Colored n k} (hn0 : n ≠ 0)
 
 /-- The root's node key is the specification's canonical key. -/
 theorem nodeKey_root {G : Colored n k} (hn0 : n ≠ 0) :
-    nodeKey { n := n, g := rowsOf G } 100 n 1 []
+    nodeKey { g := rowsOf G } 100 n 1 []
         (rootSt n (initialPartition G).1 (initialPartition G).2)
         (initialPartition G).2.length = canonSpecKey G := by
   rw [nodeKey, prefixKey_nil, canonSpecKey, canonSpec]
@@ -557,14 +557,14 @@ theorem nodeKey_root {G : Colored n k} (hn0 : n ≠ 0) :
 /-- The root's incoming incumbent is the bottom: nothing is installed
 before the search starts. -/
 theorem stInc_rootSt {G : Colored n k} :
-    stInc { n := n, g := rowsOf G }
+    stInc { g := rowsOf G }
       (rootSt n (initialPartition G).1 (initialPartition G).2) = none :=
   rfl
 
 /-- **The root assembly.** Given the quartet's conclusion at the root
 call, the traced key is the specification's key. -/
 theorem dominated_of_root {G : Colored n k} (hn0 : n ≠ 0) {r : Int}
-    (hroot : NodeConcl { n := n, g := rowsOf G } 100 n 1 []
+    (hroot : NodeConcl { g := rowsOf G } 100 n 1 []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
@@ -579,7 +579,7 @@ theorem dominated_of_root {G : Colored n k} (hn0 : n ≠ 0) {r : Int}
 /-- **The programme's target**, modulo the quartet at the root. -/
 theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
     {r : Int}
-    (hroot : NodeConcl { n := n, g := rowsOf G } 100 n 1 []
+    (hroot : NodeConcl { g := rowsOf G } 100 n 1 []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)

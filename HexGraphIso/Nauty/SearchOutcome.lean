@@ -40,22 +40,22 @@ theorem LabInj.eq {lab : Array Nat} {nn i j : Nat} (h : LabInj lab nn)
   exact h i j hi hj heq
 
 /-- A checked generator maps one labelling pointwise onto another. -/
-@[expose] def LabelCarrier (ctx : Ctx) (ref cur : Array Nat)
+@[expose] def LabelCarrier (ctx : Ctx n) (ref cur : Array Nat)
     (store : Array (Array Nat)) : Prop :=
-  ∃ γ ∈ store, checkAutom ctx.g γ ctx.n = true ∧
-    ∀ i, i < ctx.n → γ[ref[i]!]! = cur[i]!
+  ∃ γ ∈ store, checkAutom ctx.g γ = true ∧
+    ∀ i, i < n → γ[ref[i]!]! = cur[i]!
 
 /-- A checked carrier whose witnessing generator stabilizes one ancestor
 frame. Direct generator unwinds need only this witness; requiring every
 historical generator to stabilize the frame is stronger and false away
 from the first-path loop that consumes an orbit closure. -/
-@[expose] def CellCarrier (ctx : Ctx) (ptn : Array Nat) (level : Nat)
+@[expose] def CellCarrier (ctx : Ctx n) (ptn : Array Nat) (level : Nat)
     (base ref cur : Array Nat) (store : Array (Array Nat)) : Prop :=
-  ∃ γ ∈ store, checkAutom ctx.g γ ctx.n = true ∧
-    (∀ i, i < ctx.n → γ[ref[i]!]! = cur[i]!) ∧
+  ∃ γ ∈ store, checkAutom ctx.g γ = true ∧
+    (∀ i, i < n → γ[ref[i]!]! = cur[i]!) ∧
     CellStab ptn level base γ
 
-theorem CellCarrier.toLabel {ctx : Ctx} {ptn : Array Nat} {level : Nat}
+theorem CellCarrier.toLabel {ctx : Ctx n} {ptn : Array Nat} {level : Nat}
     {base ref cur : Array Nat} {store : Array (Array Nat)}
     (h : CellCarrier ctx ptn level base ref cur store) :
     LabelCarrier ctx ref cur store := by
@@ -64,12 +64,12 @@ theorem CellCarrier.toLabel {ctx : Ctx} {ptn : Array Nat} {level : Nat}
 
 /-- A checked carrier identifies the relabelled leaf rows of its two
 permutation labellings. -/
-theorem LabelCarrier.leafRows {ctx : Ctx} {ref cur : Array Nat}
+theorem LabelCarrier.leafRows {ctx : Ctx n} {ref cur : Array Nat}
     {store : Array (Array Nat)}
     (h : LabelCarrier ctx ref cur store)
-    (hgsz : ctx.g.size = ctx.n)
-    (hrefsz : ref.size = ctx.n) (hrefok : LabOk ref ctx.n)
-    (hcursz : cur.size = ctx.n) :
+    (hgsz : ctx.g.size = n)
+    (hrefsz : ref.size = n) (hrefok : LabOk ref n)
+    (hcursz : cur.size = n) :
     leafRows ctx cur = leafRows ctx ref := by
   obtain ⟨γ, _, hcheck, hmap⟩ := h
   obtain ⟨σ, hσ, hrows⟩ := checkAutom_sound hgsz hcheck
@@ -81,23 +81,22 @@ theorem LabelCarrier.leafRows {ctx : Ctx} {ref cur : Array Nat}
     have hm : γ[ref[i]]! = cur[i] := by
       simpa only [getElem!_pos ref i hrefi, getElem!_pos cur i hi] using
         hmap i (by omega)
-    have hb : ref[i] < ctx.n := by
+    have hb : ref[i] < n := by
       simpa only [getElem!_pos ref i hrefi] using hrefok i (by omega)
     have hs := hσ ref[i] hb
     exact hm.symm.trans hs.symm
   rw [hcur]
-  exact leafRows_map σ rfl rfl hrows hrefok hrefsz
+  exact leafRows_map σ hrows hrefok hrefsz
 
 /-- At a valid leaf event, either no generator is recorded or the output
 store contains a checked carrier from the first or incumbent leaf. -/
-theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
+theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx n}
     {rlab rptn : Array Nat} {cs bs fs : List Nat}
-    {numcells level nc : Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {numcells level nc : Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hdom : DomOk G ctx rlab rptn cs bs fs numcells st)
     (hfsz : st.firstlab.size = n) (hfre : CellsReach G st.firstlab)
     (hcsz : st.canonlab.size = n) (hcre : CellsReach G st.canonlab) :
@@ -106,8 +105,7 @@ theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
         (processnode ctx level nc st).2.genTrace ∨
       LabelCarrier ctx st.canonlab st.lab
         (processnode ctx level nc st).2.genTrace := by
-  subst hn
-  rcases processnode_carrier hgb hsymm hloop hfsz
+  rcases processnode_carrier hsymm hloop hfsz
       (labOk_of_reach hfsz hfre) (labInj_of_reach hfsz hn0 hfre)
       hdom.searchOk.labSize
       (labOk_of_reach hdom.searchOk.labSize hdom.searchOk.reach)
@@ -126,46 +124,44 @@ theorem processnode_labelCarrier {G : Colored n k} {ctx : Ctx}
 
 /-- The guarded code-one event yields the first-reference carrier directly,
 without routing through the event-wide carrier disjunction. -/
-theorem processnode_firstLabelCarrier {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem processnode_firstLabelCarrier {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
+    (hsz₁ : st.firstlab.size = n)
+    (hp₁ : st.firstlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     LabelCarrier ctx st.firstlab st.lab
       (processnode ctx level numcells st).2.genTrace := by
   obtain ⟨γ, hmem, hcheck, hmap⟩ := processnode_firstCarrier
-    hsz₁ hp₁ hsz₂ hp₂ hsymm hloop hbound heq hsent hnc
+    hsz₁ hp₁ hsz₂ hp₂ hsymm hloop heq hsent hnc
     (by simpa only [firstScatter] using hpass)
   exact ⟨γ, hmem, hcheck, hmap⟩
 
 /-- The guarded code-two event yields the incumbent-reference carrier
 directly, independently of its chosen return ancestor. -/
-theorem processnode_canonLabelCarrier {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem processnode_canonLabelCarrier {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
     LabelCarrier ctx st.canonlab st.lab
       (processnode ctx level numcells st).2.genTrace := by
   obtain ⟨γ, hmem, hcheck, hmap⟩ := processnode_canonCarrier
-    hsz₁ hp₁ hsz₂ hp₂ hbound hrows hef hnc hcc hge htie
+    hsz₁ hp₁ hsz₂ hp₂ hrows hef hnc hcc hge htie
   exact ⟨γ, hmem, hcheck, hmap⟩
 
 /-- Vertices strictly after the loop cursor. -/
@@ -206,25 +202,25 @@ theorem cursorRank_le {cursor : Option Nat} {n : Nat}
 /-- A loop cannot consume more fuel than the remaining bounded cursor
 range.  This is the contradiction used to rule out the exhaustion outcome
 of the executable root sweeps. -/
-theorem LoopResult.exhaustion_false {ctx : Ctx}
+theorem LoopResult.exhaustion_false
     {cursor finalCursor : Option Nat} {loopFuel : Nat}
-    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfuel : n < cursorRank cursor + loopFuel)
     (hprogress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
-    (hbounded : ∀ v, finalCursor = some v → v < ctx.n) : False := by
+    (hbounded : ∀ v, finalCursor = some v → v < n) : False := by
   have := cursorRank_le hbounded
   omega
 
 /-- The prefixed specification key of offset `o` in a refined target
 cell. -/
-@[expose] def sweepKey (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (tc numcells o : Nat) : Key :=
+@[expose] def sweepKey (ctx : Ctx n) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (tc numcells o : Nat) : Key n :=
   prefixKey cs
     (childKey ctx tcLevel specFuel level rsLab rsPtn tc numcells o)
 
 /-- A checked label carrier identifies the two children selected at an
 ancestor, once the two leaf labellings are known at that ancestor's
 individualized position. -/
-theorem sweepKey_of_cellCarrier {ctx : Ctx} (hn : ctx.n = n)
+theorem sweepKey_of_cellCarrier {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {ref cur : Array Nat}
     {store : Array (Array Nat)} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
@@ -242,16 +238,15 @@ theorem sweepKey_of_cellCarrier {ctx : Ctx} (hn : ctx.n = n)
       sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oRef := by
   obtain ⟨γ, _, haut, hmap, hstab⟩ := hcarrier
   apply congrArg (prefixKey cs)
-  apply childKey_of_carried hn hgsz haut tcLevel specFuel level
+  apply childKey_of_carried hgsz haut tcLevel specFuel level
     hstab hs hok hsp hend hvals hic hrange hcur href hlf
-  have htc : tc < ctx.n := by
-    rw [hn]
+  have htc : tc < n := by
     omega
   have hm := hmap tc htc
   rwa [hatRef, hatCur] at hm
 
 /-- The store-wide stabilization form used by orbit-local callers. -/
-theorem sweepKey_of_carrier {ctx : Ctx} (hn : ctx.n = n)
+theorem sweepKey_of_carrier {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {ref cur : Array Nat}
     {store : Array (Array Nat)} (hcarrier : LabelCarrier ctx ref cur store)
     {tcLevel specFuel level : Nat} {cs : List Nat}
@@ -268,16 +263,16 @@ theorem sweepKey_of_carrier {ctx : Ctx} (hn : ctx.n = n)
     sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oCur =
       sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells oRef := by
   obtain ⟨γ, hγ, haut, hmap⟩ := hcarrier
-  exact sweepKey_of_cellCarrier hn hgsz
+  exact sweepKey_of_cellCarrier hgsz
     ⟨γ, hγ, haut, hmap, hstab γ hγ⟩ hs hok hsp hend hvals hic
       hrange href hcur hlf hatRef hatCur
 
 /-- The key of a non-discrete node is the maximum of the keys swept by
 its child loop.  The loop prefix contains the node's refinement code. -/
-theorem nodeKey_children {ctx : Ctx} {tcLevel fuel level numcells len : Nat}
-    {cs : List Nat} {st : SearchSt}
+theorem nodeKey_children {ctx : Ctx n} {tcLevel fuel level numcells len : Nat}
+    {cs : List Nat} {st : SearchSt n}
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
-      numcells).ptn level ctx.n = false)
+      numcells).ptn level n = false)
     (hlen : (specMaketargetcell ctx
       (refine ctx level st.lab st.ptn st.active numcells).lab
       (refine ctx level st.lab st.ptn st.active numcells).ptn level
@@ -310,20 +305,20 @@ theorem nodeKey_children {ctx : Ctx} {tcLevel fuel level numcells len : Nat}
   rfl
 
 /-- Offset `o` has been absorbed by the semantic incumbent.  This is
-explicit rather than read from `SearchSt`: during an upward code
+explicit rather than read from `SearchSt n`: during an upward code
 comparison the executable overwrites `canoncode` before it installs the
 new leaf, so the state temporarily contains no faithful incumbent key. -/
-@[expose] def ChildDone (ctx : Ctx) (tcLevel specFuel level : Nat)
+@[expose] def ChildDone (ctx : Ctx n) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc numcells : Nat)
-    (best : Option Key) (o : Nat) : Prop :=
+    (best : Option (Key n)) (o : Nat) : Prop :=
   ∃ b, best = some b ∧
     keyLe (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
       numcells o) b
 
 /-- Offset `o` is still eligible after the loop cursor. -/
-@[expose] def ChildLive (rsLab : Array Nat) (tc len tcell : Nat)
+@[expose] def ChildLive (rsLab : Array Nat) (tc len : Nat) (tcell : VSet n)
     (cursor : Option Nat) (o : Nat) : Prop :=
-  o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+  o < len ∧ tcell.mem rsLab[tc + o]! = true ∧
     After cursor rsLab[tc + o]!
 
 /-- The evolving invariant of a mutable target-cell sweep.
@@ -332,29 +327,30 @@ new leaf, so the state temporarily contains no faithful incumbent key. -/
 `past` records the ordering fact needed when a pruning automorphism carries
 a live vertex backwards: every retained vertex at or before the cursor has
 already been absorbed. -/
-structure SweepCover (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
-    (cursor : Option Nat) (best : Option Key) : Prop where
+structure SweepCover (ctx : Ctx n) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (best : Option (Key n)) : Prop where
   cover : ChildCover
     (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells)
     (fun o => rsLab[tc + o]!)
     (fun o => o < len)
     (ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best)
     (ChildLive rsLab tc len tcell cursor)
-  past : ∀ o, o < len → elem tcell rsLab[tc + o]! = true →
+  past : ∀ o, o < len → tcell.mem rsLab[tc + o]! = true →
     ¬ After cursor rsLab[tc + o]! →
     ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best o
 
 /-- Before the first iteration, the whole target-cell window is live. -/
-theorem sweepCover_init (ctx : Ctx) (tcLevel specFuel level : Nat)
+theorem sweepCover_init (ctx : Ctx n) (tcLevel specFuel level : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells : Nat)
-    (best : Option Key) :
+    (best : Option (Key n)) (hok : ∀ o, o < len → rsLab[tc + o]! < n) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
-      (windowSet rsLab tc len) none best := by
+      (windowSet n rsLab tc len) none best := by
   constructor
   · intro o ho
     refine Or.inr ⟨o, ⟨ho, ?_, trivial⟩, rfl, Nat.le_refl _⟩
-    rw [elem_windowSet, segN]
+    refine mem_windowSet.mpr ⟨hok o ho, ?_⟩
+    rw [segN]
     exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩
   · intro o ho hm hpast
     exact absurd trivial hpast
@@ -362,10 +358,10 @@ theorem sweepCover_init (ctx : Ctx) (tcLevel specFuel level : Nat)
 /-- Coverage crosses an arbitrary loop step once old covered children stay
 covered and every old survivor is either covered or replaced by a
 key-equivalent new survivor. -/
-theorem SweepCover.step {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem SweepCover.step {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor cursor' : Option Nat}
-    {best best' : Option Key}
+    {tcell tcell' : VSet n} {cursor cursor' : Option Nat}
+    {best best' : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
@@ -384,7 +380,7 @@ theorem SweepCover.step {ctx : Ctx} {tcLevel specFuel level : Nat}
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells best o →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
         best' o)
-    (hpast : ∀ o, o < len → elem tcell' rsLab[tc + o]! = true →
+    (hpast : ∀ o, o < len → tcell'.mem rsLab[tc + o]! = true →
       ¬ After cursor' rsLab[tc + o]! →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
         best' o) :
@@ -393,9 +389,9 @@ theorem SweepCover.step {ctx : Ctx} {tcLevel specFuel level : Nat}
   exact ⟨ChildCover.step h.cover hs hd, hpast⟩
 
 /-- Previously covered children remain covered when the incumbent grows. -/
-theorem ChildDone.mono {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem ChildDone.mono {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
-    {best best' : Option Key}
+    {best best' : Option (Key n)}
     (h : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
       best o)
     (hinc : ∀ b, best = some b →
@@ -407,9 +403,9 @@ theorem ChildDone.mono {ctx : Ctx} {tcLevel specFuel level : Nat}
   exact ⟨b', hb', keyLe_trans hkb hbb'⟩
 
 /-- The evolving sweep remains valid when the semantic incumbent grows. -/
-theorem SweepCover.grow {ctx : Ctx} {tcLevel specFuel level : Nat}
-    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {best best' : Option Key}
+theorem SweepCover.grow {ctx : Ctx n} {tcLevel specFuel level : Nat}
+    {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best best' : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hinc : ∀ b, best = some b →
@@ -425,9 +421,9 @@ theorem SweepCover.grow {ctx : Ctx} {tcLevel specFuel level : Nat}
     exact (h.past o ho hm hpast).mono hinc
 
 /-- Coverage transfers across equality of two child keys. -/
-theorem ChildDone.ofEq {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem ChildDone.ofEq {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc numcells oRef oCur : Nat}
-    {best : Option Key}
+    {best : Option (Key n)}
     (h : ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
       best oRef)
     (heq : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
@@ -445,9 +441,9 @@ theorem ChildDone.ofEq {ctx : Ctx} {tcLevel specFuel level : Nat}
 absorbed or carried to a key-equivalent new survivor, and filtering adds no
 vertices.  A carried survivor before the cursor is discharged through
 `past`; it need not remain in the live suffix. -/
-theorem SweepCover.filter {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem SweepCover.filter {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
+    {tcell tcell' : VSet n} {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
@@ -462,7 +458,7 @@ theorem SweepCover.filter {ctx : Ctx} {tcLevel specFuel level : Nat}
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
               numcells j ∧
           rsLab[tc + j]! ≤ rsLab[tc + o]!)
-    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    (hsub : ∀ v, tcell'.mem v = true → tcell.mem v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell' cursor best := by
   refine ⟨ChildCover.step h.cover hs (fun _ hx => hx), ?_⟩
@@ -484,19 +480,19 @@ theorem after_or_not (cursor : Option Nat) (v : Nat) :
 /-- A filter's natural preservation rule: every old live child is carried
 to a key-equivalent member of the filtered set.  The member may lie before
 the cursor; `past` converts that case to completed coverage. -/
-theorem SweepCover.filterCarried {ctx : Ctx}
+theorem SweepCover.filterCarried {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
+    {tcell tcell' : VSet n} {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
-      ∃ j, j < len ∧ elem tcell' rsLab[tc + j]! = true ∧
+      ∃ j, j < len ∧ tcell'.mem rsLab[tc + j]! = true ∧
         sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
             numcells j ∧
         rsLab[tc + j]! ≤ rsLab[tc + o]!)
-    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    (hsub : ∀ v, tcell'.mem v = true → tcell.mem v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell' cursor best := by
   apply h.filter _ hsub
@@ -516,20 +512,20 @@ theorem SweepCover.filterCarried {ctx : Ctx}
 survives unchanged or is carried to a strictly smaller child of the full
 target cell.  Ranked coverage follows the latter through any earlier
 filters until it reaches an already-covered child or a new survivor. -/
-theorem SweepCover.filterDesc {ctx : Ctx}
+theorem SweepCover.filterDesc {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
+    {tcell tcell' : VSet n} {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hs : ∀ o, ChildLive rsLab tc len tcell cursor o →
-      elem tcell' rsLab[tc + o]! = true ∨
+      tcell'.mem rsLab[tc + o]! = true ∨
         ∃ j, j < len ∧
           sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells o =
             sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
               numcells j ∧
           rsLab[tc + j]! < rsLab[tc + o]!)
-    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    (hsub : ∀ v, tcell'.mem v = true → tcell.mem v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell' cursor best := by
   constructor
@@ -548,40 +544,43 @@ theorem SweepCover.filterDesc {ctx : Ctx}
 
 /-- Cell-stabilizing downward automorphism carriers discharge the abstract
 descending-filter rule. -/
-theorem SweepCover.filterAutom {ctx : Ctx}
+theorem SweepCover.filterAutom {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc len numcells : Nat}
-    {tcell tcell' : Nat} {cursor : Option Nat} {best : Option Key}
+    {tcell tcell' : VSet n} {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hgsz : ctx.g.size = n) (hs : rsLab.size = n)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
-    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1)
     (hdrop : ∀ o, ChildLive rsLab tc len tcell cursor o →
-      elem tcell' rsLab[tc + o]! = false →
-      ∃ γ, checkAutom ctx.g γ ctx.n = true ∧
+      tcell'.mem rsLab[tc + o]! = false →
+      ∃ γ, checkAutom ctx.g γ = true ∧
         CellStab rsPtn level rsLab γ ∧
         γ[rsLab[tc + o]!]! < rsLab[tc + o]!)
-    (hsub : ∀ v, elem tcell' v = true → elem tcell v = true) :
+    (hsub : ∀ v, tcell'.mem v = true → tcell.mem v = true) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell' cursor best := by
   apply h.filterDesc _ hsub
   intro o ho
-  rcases hm : elem tcell' rsLab[tc + o]! with _ | _
+  rcases hm : tcell'.mem rsLab[tc + o]! with _ | _
   · obtain ⟨γ, hγ, hstab, hlt⟩ := hdrop o ho hm
-    have hW : elem (windowSet rsLab tc len) γ[rsLab[tc + o]!]! = true :=
-      windowSet_carry hstab hic (by rw [hs]; exact hrange)
-        (elem_windowSet.mpr (List.mem_map.mpr
-          ⟨o, List.mem_range.mpr ho.1, rfl⟩))
-    obtain ⟨j, hj, hcarry⟩ := List.mem_map.mp (elem_windowSet.mp hW)
+    have hW : (windowSet n rsLab tc len).mem γ[rsLab[tc + o]!]! = true :=
+      windowSet_carry hstab hic (by rw [hs]; exact hrange) hok
+        (mem_windowSet.mpr ⟨hok _ (by have := ho.1; omega), by
+          rw [segN]
+          exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho.1, rfl⟩⟩)
+    have hW' := (mem_windowSet.mp hW).2
+    rw [segN] at hW'
+    obtain ⟨j, hj, hcarry⟩ := List.mem_map.mp hW'
     have hjlt : j < len := List.mem_range.mp hj
     have hkey : childKey ctx tcLevel specFuel level rsLab rsPtn tc
         numcells j = childKey ctx tcLevel specFuel level rsLab rsPtn tc
           numcells o :=
-      childKey_of_carried (n := ctx.n) (ctx := ctx) rfl hgsz hγ
+      childKey_of_carried (n := n) (ctx := ctx) hgsz hγ
         tcLevel specFuel level hstab hs hok hsp hend hvals hic hrange
         hjlt ho.1 hlf hcarry.symm
     exact Or.inr ⟨j, hjlt, by
@@ -590,60 +589,60 @@ theorem SweepCover.filterAutom {ctx : Ctx}
   · exact Or.inl rfl
 
 /-- `longprune` preserves the evolving sweep under the autos ledger. -/
-theorem SweepCover.longprune {ctx : Ctx}
-    {tcLevel specFuel level fixedpts : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {best : Option Key} {out : SearchSt}
+theorem SweepCover.longprune {ctx : Ctx n}
+    {tcLevel specFuel level : Nat} {fixedpts : VSet n} {cs : List Nat}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best : Option (Key n)} {out : SearchSt n}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hgsz : ctx.g.size = n) (hs : rsLab.size = n)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
-    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1)
     (haut : ∀ p ∈ out.autos.toList,
-      (fixedpts &&& p.1 == fixedpts) = true →
-      PairOk ctx.g rsPtn rsLab level ctx.n p.1 p.2) :
+      (fixedpts.subset p.1) = true →
+      PairOk ctx.g rsPtn rsLab level p.1 p.2) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       (longprune tcell fixedpts out.autos) cursor best := by
   apply h.filterAutom hgsz hs hok hsp hend hvals hic hrange hlf
   · intro o ho hm
-    change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+    change o < len ∧ tcell.mem rsLab[tc + o]! = true ∧
       After cursor rsLab[tc + o]! at ho
     exact longprune_drop (hok _ (by omega)) ho.2.1 hm haut
   · exact fun _ hm => longprune_subset hm
 
 /-- `shortprune` preserves the evolving sweep under the last-pair ledger. -/
-theorem SweepCover.shortprune {ctx : Ctx}
+theorem SweepCover.shortprune {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {best : Option Key} {out : SearchSt}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best : Option (Key n)} {out : SearchSt n}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hgsz : ctx.g.size = ctx.n) (hs : rsLab.size = ctx.n)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hgsz : ctx.g.size = n) (hs : rsLab.size = n)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
-    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
-    (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
-      PairOk ctx.g rsPtn rsLab level ctx.n fix mcr) :
+    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hlast : ∀ fix mcr : VSet n, out.autos.back? = some (fix, mcr) →
+      PairOk ctx.g rsPtn rsLab level fix mcr) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       (shortprune tcell out) cursor best := by
   apply h.filterAutom hgsz hs hok hsp hend hvals hic hrange hlf
   · intro o ho hm
-    change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+    change o < len ∧ tcell.mem rsLab[tc + o]! = true ∧
       After cursor rsLab[tc + o]! at ho
     exact shortprune_drop (hok _ (by omega)) ho.2.1 hm hlast
   · exact fun _ hm => shortprune_subset hm
 
 /-- At loop completion the evolving coverage invariant says that every
 offset in the original target cell has been absorbed. -/
-theorem SweepCover.finish {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem SweepCover.finish {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc len numcells tcell : Nat} {cursor : Option Nat}
-    {best : Option Key}
+    {tc len numcells : Nat} {tcell : VSet n} {cursor : Option Nat}
+    {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
     (hempty : ∀ o, ¬ ChildLive rsLab tc len tcell cursor o) :
@@ -653,13 +652,13 @@ theorem SweepCover.finish {ctx : Ctx} {tcLevel specFuel level : Nat}
 
 /-- Completed child coverage bounds the maximum over the whole original
 target cell, not merely the final filtered set. -/
-theorem SweepCover.maxLe {ctx : Ctx} {tcLevel specFuel level tail : Nat}
+theorem SweepCover.maxLe {ctx : Ctx n} {tcLevel specFuel level tail : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc numcells tcell : Nat} {cursor : Option Nat} {best : Option Key}
+    {tc numcells : Nat} {tcell : VSet n} {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
       (tail + 1) numcells tcell cursor best)
     (hempty : ∀ o, ¬ ChildLive rsLab tc (tail + 1) tcell cursor o)
-    {b : Key} (hout : best = some b) :
+    {b : Key n} (hout : best = some b) :
     keyLe
       (keysMax
         (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
@@ -681,10 +680,10 @@ theorem SweepCover.maxLe {ctx : Ctx} {tcLevel specFuel level tail : Nat}
 /-- A partially explored sweep has the same maximum bound when every
 remaining live representative is already dominated by the installed
 incumbent. -/
-theorem SweepCover.maxLeLive {ctx : Ctx}
+theorem SweepCover.maxLeLive {ctx : Ctx n}
     {tcLevel specFuel level tail : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc numcells tcell : Nat}
-    {cursor : Option Nat} {best : Option Key} {b : Key}
+    {rsLab rsPtn : Array Nat} {tc numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best : Option (Key n)} {b : Key n}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
       (tail + 1) numcells tcell cursor best)
     (hout : best = some b)
@@ -713,100 +712,49 @@ theorem SweepCover.maxLeLive {ctx : Ctx}
 
 /-- A `none` cursor result means that no set member remains after the
 cursor. -/
-theorem no_child_after {s : Nat} {cursor : Option Nat}
-    (hnext : nextElem s cursor = none) :
-    ∀ v, elem s v = true → After cursor v → False := by
+theorem no_child_after {s : VSet n} {cursor : Option Nat}
+    (hnext : s.nextElem cursor = none) :
+    ∀ v, s.mem v = true → After cursor v → False := by
   intro v hv ha
-  rw [nextElem.eq_def] at hnext
-  rcases cursor with _ | p
-  · dsimp only at hnext ha
-    split at hnext
-    · next hz =>
-      rw [hz, elem, Nat.zero_testBit] at hv
-      cases hv
-    · cases hnext
-  · dsimp only at hnext ha
-    change p < v at ha
-    split at hnext
-    · next hz =>
-      have hbit : (((s >>> (p + 1)) <<< (p + 1)).testBit v) = true := by
-        rw [Nat.testBit_shiftLeft]
-        rw [show decide (p + 1 ≤ v) = true by simp; omega]
-        rw [Nat.testBit_shiftRight]
-        rw [show p + 1 + (v - (p + 1)) = v by omega]
-        exact hv
-      rw [hz, Nat.zero_testBit] at hbit
-      cases hbit
-    · cases hnext
+  have h := VSet.nextElem_none hnext v ?_
+  · rw [hv] at h
+    cases h
+  · rcases cursor with _ | p
+    · exact Nat.zero_le _
+    · exact ha
 
 /-- A successful `nextElem` lies strictly after its cursor. -/
-theorem nextElem_after {s v : Nat} {cursor : Option Nat}
-    (hnext : nextElem s cursor = some v) : After cursor v := by
-  rw [nextElem.eq_def] at hnext
+theorem nextElem_after {s : VSet n} {v : Nat} {cursor : Option Nat}
+    (hnext : s.nextElem cursor = some v) : After cursor v := by
+  have h := (VSet.nextElem_eq_some_iff.mp hnext).2.1
   rcases cursor with _ | p
   · trivial
-  · change p < v
-    dsimp only at hnext
-    split at hnext
-    · cases hnext
-    · next hn =>
-      injection hnext with hv
-      subst v
-      have hbit := testBit_lowBit _ hn
-      rw [Nat.testBit_shiftLeft] at hbit
-      have hle : p + 1 ≤ lowBit ((s >>> (p + 1)) <<< (p + 1)) :=
-        of_decide_eq_true ((Bool.and_eq_true _ _).mp hbit).1
-      omega
+  · exact h
 
 /-- `nextElem` returns the least set member strictly after its cursor. -/
-theorem nextElem_le {s v w : Nat} {cursor : Option Nat}
-    (hnext : nextElem s cursor = some v)
-    (hw : elem s w = true) (ha : After cursor w) : v ≤ w := by
-  rw [nextElem.eq_def] at hnext
-  rcases cursor with _ | p
-  · dsimp only at hnext
-    split at hnext
-    · cases hnext
-    · next hn =>
-      injection hnext with hv
-      subst v
-      apply Nat.le_of_not_gt
-      intro hle
-      have hz := testBit_lt_lowBit s w hle
-      change s.testBit w = true at hw
-      rw [hz] at hw
-      cases hw
-  · dsimp only at hnext
-    change p < w at ha
-    split at hnext
-    · cases hnext
-    · next hn =>
-      injection hnext with hv
-      subst v
-      have hmasked :
-          (((s >>> (p + 1)) <<< (p + 1)).testBit w) = true := by
-        rw [Nat.testBit_shiftLeft]
-        rw [show decide (p + 1 ≤ w) = true by simp; omega]
-        rw [Nat.testBit_shiftRight]
-        rw [show p + 1 + (w - (p + 1)) = w by omega]
-        exact hw
-      apply Nat.le_of_not_gt
-      intro hle
-      have hz := testBit_lt_lowBit ((s >>> (p + 1)) <<< (p + 1)) w
-        hle
-      rw [hz] at hmasked
-      cases hmasked
+theorem nextElem_le {s : VSet n} {v w : Nat} {cursor : Option Nat}
+    (hnext : s.nextElem cursor = some v)
+    (hw : s.mem w = true) (ha : After cursor w) : v ≤ w := by
+  have h := (VSet.nextElem_eq_some_iff.mp hnext).2.2 w
+  apply Nat.le_of_not_gt
+  intro hlt
+  have hz := h ?_ hlt
+  · rw [hw] at hz
+    cases hz
+  · rcases cursor with _ | p
+    · exact Nat.zero_le _
+    · exact ha
 
 /-- Advancing to the least remaining vertex preserves sweep coverage once
 that vertex's child is absorbed.  The `hcur` premise identifies every
 offset carrying the chosen vertex; callers normally discharge it from
 labelling injectivity. -/
-theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
+theorem SweepCover.advance {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat} {tc len numcells tv : Nat}
-    {tcell : Nat} {cursor : Option Nat} {best best' : Option Key}
+    {tcell : VSet n} {cursor : Option Nat} {best best' : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hcur : ∀ o, o < len → rsLab[tc + o]! = tv →
       ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
         best' o)
@@ -818,7 +766,7 @@ theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
       tcell (some tv) best' := by
   refine SweepCover.step h ?_ hd ?_
   · intro o ho
-    change o < len ∧ elem tcell rsLab[tc + o]! = true ∧
+    change o < len ∧ tcell.mem rsLab[tc + o]! = true ∧
       After cursor rsLab[tc + o]! at ho
     rcases ho with ⟨ho, hm, ha⟩
     have hle := nextElem_le hnext hm ha
@@ -847,13 +795,13 @@ theorem SweepCover.advance {ctx : Ctx} {tcLevel specFuel level : Nat}
 is already covered when the loop is about to visit the least eligible
 vertex.  Any live witness supplied by ranked coverage would be both below
 and at least that least vertex, a contradiction. -/
-theorem SweepCover.done_of_smaller {ctx : Ctx}
+theorem SweepCover.done_of_smaller {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tv o j tcell : Nat}
-    {cursor : Option Nat} {best : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len numcells tv o j : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hj : j < len)
     (hkey : sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
         numcells o =
@@ -873,43 +821,46 @@ theorem SweepCover.done_of_smaller {ctx : Ctx}
 soundness supplies a smaller word-connected pointer target; cell
 stabilization keeps that target in the sibling cell, and ranked coverage
 shows it was already absorbed. -/
-theorem SweepCover.orbitSkip {ctx : Ctx}
+theorem SweepCover.orbitSkip {ctx : Ctx n}
     {tcLevel specFuel level tv o : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {best : Option Key} {out : SearchSt}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best : Option (Key n)} {out : SearchSt n}
     {gens : List (Array Nat)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = some tv) (ho : o < len)
+    (hnext : tcell.nextElem cursor = some tv) (ho : o < len)
     (htv : rsLab[tc + o]! = tv)
-    (hgsz : ctx.g.size = ctx.n)
-    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ ctx.n = true)
+    (hgsz : ctx.g.size = n)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
-    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hs : rsLab.size = n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
-    (hsound : OrbSound (OrbConn gens ctx.n) out.orbits ctx.n)
+      rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hsound : OrbSound (OrbConn gens n) out.orbits n)
     (hne : out.orbits[tv]! ≠ tv) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell (some tv) best := by
-  have hvn : tv < ctx.n := by rw [← htv]; exact hok _ (by omega)
+  have hvn : tv < n := by rw [← htv]; exact hok _ (by omega)
   obtain ⟨_, hconn⟩ := orbConn_of_ptr hsound hvn
   unfold WordConn at hconn
   obtain ⟨w, hw, happ⟩ := hconn
   obtain ⟨_, hwstab, hwpoint⟩ :=
-    wordPerm_spec hbg hok hsp hs hend hv hstab w hw
-  have hW : elem (windowSet rsLab tc len) out.orbits[tv]! = true := by
-    have := windowSet_carry hwstab hic (by rw [hs]; exact hrange)
-      (elem_windowSet.mpr (List.mem_map.mpr
-        ⟨o, List.mem_range.mpr ho, rfl⟩))
+    wordPerm_spec hok hsp hs hend hv hstab w hw
+  have hW : (windowSet n rsLab tc len).mem out.orbits[tv]! = true := by
+    have := windowSet_carry (u := rsLab[tc + o]!) hwstab hic
+      (by rw [hs]; exact hrange) hok
+      (mem_windowSet.mpr ⟨hok _ (by omega), by
+        rw [segN]
+        exact List.mem_map.mpr ⟨o, List.mem_range.mpr ho, rfl⟩⟩)
     rw [htv, hwpoint _ hvn, happ] at this
     exact this
-  obtain ⟨j, hj, hptr⟩ := List.mem_map.mp (elem_windowSet.mp hW)
+  have hW' := (mem_windowSet.mp hW).2
+  rw [segN] at hW'
+  obtain ⟨j, hj, hptr⟩ := List.mem_map.mp hW'
   have hjlt : j < len := List.mem_range.mp hj
   have hptr' : out.orbits[rsLab[tc + o]!]! = rsLab[tc + j]! := by
     rw [htv]
@@ -918,7 +869,7 @@ theorem SweepCover.orbitSkip {ctx : Ctx}
       numcells o =
         sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells j := by
     unfold sweepKey
-    rw [childKey_of_orbitPtr (n := ctx.n) (ctx := ctx) rfl hgsz hbg hv
+    rw [childKey_of_orbitPtr (n := n) (ctx := ctx) hgsz hv
       tcLevel specFuel level hstab hs hok hsp hend hvals hic hrange ho
       hjlt hlf hsound hptr']
   have hjrank : rsLab[tc + j]! < tv := by
@@ -936,13 +887,13 @@ theorem SweepCover.orbitSkip {ctx : Ctx}
 
 /-- The executable loop terminator discharges the live-set premise of
 `SweepCover.finish`. -/
-theorem SweepCover.finish_of_nextElem {ctx : Ctx}
+theorem SweepCover.finish_of_nextElem {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {best : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = none) :
+    (hnext : tcell.nextElem cursor = none) :
     ∀ o, o < len → ChildDone ctx tcLevel specFuel level cs rsLab rsPtn
       tc numcells best o := by
   apply h.finish
@@ -952,8 +903,8 @@ theorem SweepCover.finish_of_nextElem {ctx : Ctx}
 /-- A child at an ancestor has already been absorbed.  The arrays and
 offset are stored explicitly because neither `gcaFirst` nor `gcaCanon`
 retains this path history. -/
-structure Anchor (ctx : Ctx) (tcLevel target : Nat)
-    (best : Option Key) where
+structure Anchor (ctx : Ctx n) (tcLevel target : Nat)
+    (best : Option (Key n)) where
   positive : 1 ≤ target
   specFuel : Nat
   codes : List Nat
@@ -967,11 +918,11 @@ structure Anchor (ctx : Ctx) (tcLevel target : Nat)
 
 /-- Turn an already-covered reference child into the current child's
 unwind anchor using a checked carrier between their leaf labellings. -/
-@[expose] def Anchor.ofCellCarrier {ctx : Ctx} (hn : ctx.n = n)
+@[expose] def Anchor.ofCellCarrier {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {tcLevel level specFuel : Nat}
     {codes : List Nat} {rsLab rsPtn ref cur : Array Nat}
     {store : Array (Array Nat)} {tc len numcells oRef oCur : Nat}
-    {best : Option Key} (hpos : 1 ≤ level)
+    {best : Option (Key n)} (hpos : 1 ≤ level)
     (hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
       numcells best oRef)
     (hcarrier : CellCarrier ctx rsPtn level rsLab ref cur store)
@@ -987,15 +938,15 @@ unwind anchor using a checked carrier between their leaf labellings. -/
     Anchor ctx tcLevel level best := by
   refine ⟨hpos, specFuel, codes, rsLab, rsPtn, tc, numcells, oCur, ?_⟩
   apply hdone.ofEq
-  exact sweepKey_of_cellCarrier hn hgsz hcarrier hs hok hsp hend hvals
+  exact sweepKey_of_cellCarrier hgsz hcarrier hs hok hsp hend hvals
     hic hrange href hcur hlf hatRef hatCur
 
 /-- Store-wide stabilization implies the witness-local form. -/
-@[expose] def Anchor.ofCarrier {ctx : Ctx} (hn : ctx.n = n)
+@[expose] def Anchor.ofCarrier {ctx : Ctx n}
     (hgsz : ctx.g.size = n) {tcLevel level specFuel : Nat}
     {codes : List Nat} {rsLab rsPtn ref cur : Array Nat}
     {store : Array (Array Nat)} {tc len numcells oRef oCur : Nat}
-    {best : Option Key} (hpos : 1 ≤ level)
+    {best : Option (Key n)} (hpos : 1 ≤ level)
     (hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
       numcells best oRef)
     (hcarrier : LabelCarrier ctx ref cur store)
@@ -1011,26 +962,26 @@ unwind anchor using a checked carrier between their leaf labellings. -/
     Anchor ctx tcLevel level best := by
   refine ⟨hpos, specFuel, codes, rsLab, rsPtn, tc, numcells, oCur, ?_⟩
   apply hdone.ofEq
-  exact sweepKey_of_carrier hn hgsz hcarrier hstab hs hok hsp hend hvals
+  exact sweepKey_of_carrier hgsz hcarrier hstab hs hok hsp hend hvals
     hic hrange href hcur hlf hatRef hatCur
 
 /-- A code-two return to `gcaFirst` is justified by the updated orbit
 pointer rather than by the direct canonical carrier.  The receiving loop
 uses this sound pointer together with its own coverage frame. -/
-structure OrbitUnwind (ctx : Ctx) (target : Nat) (out : SearchSt) : Prop where
+structure OrbitUnwind (ctx : Ctx n) (target : Nat) (out : SearchSt n) : Prop where
   positive : 1 ≤ target
   bound : target ≤ out.gcaFirst
-  currentLt : out.cosetindex < ctx.n
+  currentLt : out.cosetindex < n
   smaller : out.orbits[out.cosetindex]! < out.cosetindex
-  sound : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
+  sound : OrbSound (OrbConn out.genTrace.toList n) out.orbits n
 
 /-- Why a generator return is sound.  Code one and the ordinary code-two
 return retain their different reference labellings.  Code two's special
 `gcaFirst` return retains the sound orbit pointer that selected an earlier
 child. Non-generator pruning instead returns a locally complete maximum and
 therefore has its own result constructor. -/
-inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
-    (out : SearchSt) (best : Option Key) where
+inductive Unwind (ctx : Ctx n) (tcLevel target : Nat)
+    (out : SearchSt n) (best : Option (Key n)) where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
   | canon (anchor : Anchor ctx tcLevel target best)
@@ -1039,8 +990,8 @@ inductive Unwind (ctx : Ctx) (tcLevel target : Nat)
 
 /-- Updating the first-path return controls changes none of the fields
 carried by a generator unwind. -/
-@[expose] def Unwind.setFirst {ctx : Ctx} {tcLevel target : Nat}
-    {out : SearchSt} {best : Option Key} (h : Unwind ctx tcLevel target out best)
+@[expose] def Unwind.setFirst {ctx : Ctx n} {tcLevel target : Nat}
+    {out : SearchSt n} {best : Option (Key n)} (h : Unwind ctx tcLevel target out best)
     (gcaFirst stabvertex : Nat) (hbound : target ≤ gcaFirst) :
     Unwind ctx tcLevel target
       { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best := by
@@ -1058,9 +1009,9 @@ carried by a generator unwind. -/
 
 /-- Removing a loop's temporary fixed vertex changes none of the fields
 carried by a generator unwind. -/
-@[expose] def Unwind.setFixed {ctx : Ctx} {tcLevel target : Nat}
-    {out : SearchSt} {best : Option Key} (h : Unwind ctx tcLevel target out best)
-    (fixedpts : Nat) :
+@[expose] def Unwind.setFixed {ctx : Ctx n} {tcLevel target : Nat}
+    {out : SearchSt n} {best : Option (Key n)} (h : Unwind ctx tcLevel target out best)
+    (fixedpts : VSet n) :
     Unwind ctx tcLevel target { out with fixedpts := fixedpts } best := by
   cases h with
   | first anchor carrier => exact .first anchor carrier
@@ -1075,14 +1026,14 @@ carried by a generator unwind. -/
       · exact payload.sound
 
 /-- A semantic incumbent can only improve across a search fragment. -/
-@[expose] def IncGrows (best out : Option Key) : Prop :=
+@[expose] def IncGrows (best out : Option (Key n)) : Prop :=
   ∀ b, best = some b → ∃ b', out = some b' ∧ keyLe b b'
 
 /-- A previously explored child together with the ancestor geometry needed
 to reuse it as a generator guide.  Unlike `gcaFirst` and `gcaCanon`, this
 keeps the reference labelling and the exact target-cell frame. -/
-structure Guide (ctx : Ctx) (tcLevel target : Nat)
-    (best : Option Key) where
+structure Guide (ctx : Ctx n) (tcLevel target : Nat)
+    (best : Option (Key n)) where
   positive : 1 ≤ target
   specFuel : Nat
   codes : List Nat
@@ -1095,75 +1046,74 @@ structure Guide (ctx : Ctx) (tcLevel target : Nat)
   offset : Nat
   done : ChildDone ctx tcLevel specFuel target codes rsLab rsPtn tc
     numcells best offset
-  labSize : rsLab.size = ctx.n
-  labOk : LabOk rsLab ctx.n
-  ptnSize : rsPtn.size = ctx.n
+  labSize : rsLab.size = n
+  labOk : LabOk rsLab n
+  ptnSize : rsPtn.size = n
   endClosed : rsPtn[rsPtn.size - 1]! ≤ target
   values : ∀ q : Nat, rsPtn[q]! ≤ target ∨
-    rsPtn[q]! = ctx.n + 2
+    rsPtn[q]! = n + 2
   cell : IsCell rsPtn target tc len
-  range : tc + len ≤ ctx.n
+  range : tc + len ≤ n
   offsetLt : offset < len
-  fuelBound : target + 1 + specFuel ≤ ctx.n + 1
+  fuelBound : target + 1 + specFuel ≤ n + 1
   atRef : ref[tc]! = rsLab[tc + offset]!
-  refSize : ref.size = ctx.n
+  refSize : ref.size = n
   refReach : cellsPerm rsPtn target rsLab ref
 
 /-- A guide remains usable after the incumbent grows.  Cell stabilization
 of the current generator store and the current child's ancestor position
 are the only facts that must be supplied at the leaf event. -/
-@[expose] def Guide.anchor {ctx : Ctx} {tcLevel target : Nat}
-    {best best' : Option Key} (g : Guide ctx tcLevel target best)
-    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows best best')
+@[expose] def Guide.anchor {ctx : Ctx n} {tcLevel target : Nat}
+    {best best' : Option (Key n)} (g : Guide ctx tcLevel target best)
+    (hgsz : ctx.g.size = n) (hinc : IncGrows best best')
     {cur : Array Nat} {store : Array (Array Nat)} {oCur : Nat}
     (hcarrier : LabelCarrier ctx g.ref cur store)
     (hstab : ∀ γ ∈ store, CellStab g.rsPtn target g.rsLab γ)
     (hcur : oCur < g.len)
     (hatCur : cur[g.tc]! = g.rsLab[g.tc + oCur]!) :
     Anchor ctx tcLevel target best' := by
-  apply Anchor.ofCarrier rfl hgsz g.positive (g.done.mono hinc)
+  apply Anchor.ofCarrier hgsz g.positive (g.done.mono hinc)
     hcarrier hstab g.labSize g.labOk g.ptnSize g.endClosed g.values
     g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
 
 /-- A witness-local carrier is enough for a direct generator unwind. -/
-@[expose] def Guide.anchorCell {ctx : Ctx} {tcLevel target : Nat}
-    {best best' : Option Key} (g : Guide ctx tcLevel target best)
-    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows best best')
+@[expose] def Guide.anchorCell {ctx : Ctx n} {tcLevel target : Nat}
+    {best best' : Option (Key n)} (g : Guide ctx tcLevel target best)
+    (hgsz : ctx.g.size = n) (hinc : IncGrows best best')
     {cur : Array Nat} {store : Array (Array Nat)} {oCur : Nat}
     (hcarrier : CellCarrier ctx g.rsPtn target g.rsLab g.ref cur store)
     (hcur : oCur < g.len)
     (hatCur : cur[g.tc]! = g.rsLab[g.tc + oCur]!) :
     Anchor ctx tcLevel target best' := by
-  apply Anchor.ofCellCarrier rfl hgsz g.positive (g.done.mono hinc)
+  apply Anchor.ofCellCarrier hgsz g.positive (g.done.mono hinc)
     hcarrier g.labSize g.labOk g.ptnSize g.endClosed g.values
     g.cell g.range g.offsetLt hcur g.fuelBound g.atRef hatCur
 
 /-- A successful code-one leaf admission, paired with its concrete
 first-path guide, produces the corresponding generator unwind payload. -/
-theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key}
+theorem Guide.firstUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)}
     (g : Guide ctx tcLevel st.gcaFirst best)
     (href : g.ref = st.firstlab)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.firstlab.size = n)
+    (hp₁ : st.firstlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true)
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true)
     (hcurReach : cellsPerm g.rsPtn st.gcaFirst g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!) :
     Nonempty (Unwind ctx tcLevel st.gcaFirst
       (processnode ctx level numcells st).2 best) := by
   have hcarrier := processnode_firstLabelCarrier hsz₁ hp₁ hsz₂ hp₂
-    hsymm hloop hbound heq hsent hnc hpass
+    hsymm hloop heq hsent hnc hpass
   have hcarrierG : LabelCarrier ctx g.ref st.lab
       (processnode ctx level numcells st).2.genTrace := by
     rw [href]
@@ -1189,19 +1139,18 @@ theorem Guide.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
 
 /-- A successful code-two leaf admission, paired with the selected
 canonical guide, produces the corresponding generator unwind payload. -/
-theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key}
+theorem Guide.canonUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)}
     (g : Guide ctx tcLevel st.gcaCanon best)
     (href : g.ref = st.canonlab)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
@@ -1211,7 +1160,7 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     Nonempty (Unwind ctx tcLevel st.gcaCanon
       (processnode ctx level numcells st).2 best) := by
   have hcarrier := processnode_canonLabelCarrier hsz₁ hp₁ hsz₂ hp₂
-    hbound hrows hef hnc hcc hge htie
+    hrows hef hnc hcc hge htie
   have hcarrierG : LabelCarrier ctx g.ref st.lab
       (processnode ctx level numcells st).2.genTrace := by
     rw [href]
@@ -1238,19 +1187,18 @@ theorem Guide.canonUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
 
 /-- A row-tied code-two event is either the direct canonical-guide unwind,
 or the special first-ancestor orbit unwind selected by a smaller pointer. -/
-theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key}
+theorem Guide.tiedUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)}
     (g : Guide ctx tcLevel st.gcaCanon best)
     (href : g.ref = st.canonlab)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
@@ -1259,10 +1207,10 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
     (hcurReach : cellsPerm g.rsPtn st.gcaCanon g.rsLab st.lab)
     {oCur : Nat} (hcur : oCur < g.len)
     (hatCur : st.lab[g.tc]! = g.rsLab[g.tc + oCur]!)
-    (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
+    (hcoset : (processnode ctx level numcells st).2.cosetindex < n)
     (horbit : OrbSound
-      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
-      (processnode ctx level numcells st).2.orbits ctx.n) :
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList n)
+      (processnode ctx level numcells st).2.orbits n) :
     ∃ target, (processnode ctx level numcells st).1 = Int.ofNat target ∧
       target < level ∧
       Nonempty (Unwind ctx tcLevel target
@@ -1270,7 +1218,7 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
   rcases processnode_rowTie_orbit hef hnc hcc hge htie with hcanon |
       ⟨hfirst, hsmaller⟩
   · exact ⟨st.gcaCanon, hcanon, hcanonBelow,
-      g.canonUnwind href hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows
+      g.canonUnwind href hgsz hsz₁ hp₁ hsz₂ hp₂ hrows
         hef hnc hcc hge htie hcurReach hcur hatCur⟩
   · exact ⟨st.gcaFirst, hfirst, hfirstBelow,
       ⟨.orbit ⟨hfirstPos, by
@@ -1278,8 +1226,8 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
         exact Nat.le_refl _, hcoset, hsmaller, horbit⟩⟩⟩
 
 /-- A guide's covered child remains covered when the incumbent grows. -/
-@[expose] def Guide.mono {ctx : Ctx} {tcLevel target : Nat}
-    {best best' : Option Key} (g : Guide ctx tcLevel target best)
+@[expose] def Guide.mono {ctx : Ctx n} {tcLevel target : Nat}
+    {best best' : Option (Key n)} (g : Guide ctx tcLevel target best)
     (hinc : IncGrows best best') : Guide ctx tcLevel target best' :=
   { g with done := g.done.mono hinc }
 
@@ -1287,16 +1235,16 @@ theorem Guide.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
 the current node.  A guide at the current level is deliberately not
 required: leaf installation temporarily sets a gca to the leaf level, and
 the parent loop replaces it with a concrete explored-child guide. -/
-structure Guides (ctx : Ctx) (tcLevel level : Nat) (st : SearchSt)
-    (best : Option Key) : Prop where
+structure Guides (ctx : Ctx n) (tcLevel level : Nat) (st : SearchSt n)
+    (best : Option (Key n)) : Prop where
   first : 0 < st.gcaFirst → st.gcaFirst < level →
     ∃ g : Guide ctx tcLevel st.gcaFirst best, g.ref = st.firstlab
   canon : 0 < st.gcaCanon → st.gcaCanon < level →
     ∃ g : Guide ctx tcLevel st.gcaCanon best, g.ref = st.canonlab
 
 /-- Both guide ledgers survive an incumbent increase. -/
-theorem Guides.grow {ctx : Ctx} {tcLevel level : Nat} {st : SearchSt}
-    {best best' : Option Key} (h : Guides ctx tcLevel level st best)
+theorem Guides.grow {ctx : Ctx n} {tcLevel level : Nat} {st : SearchSt n}
+    {best best' : Option (Key n)} (h : Guides ctx tcLevel level st best)
     (hinc : IncGrows best best') : Guides ctx tcLevel level st best' := by
   constructor
   · intro hp hlt
@@ -1307,16 +1255,16 @@ theorem Guides.grow {ctx : Ctx} {tcLevel level : Nat} {st : SearchSt}
     exact ⟨g.mono hinc, href⟩
 
 /-- The root has no live generator guide. -/
-theorem Guides.root {n : Nat} (g lab : Array Nat) (cellEnds : List Nat)
-    (tcLevel : Nat) (best : Option Key) :
-    Guides { n := n, g := g } tcLevel 1 (rootSt n lab cellEnds) best := by
+theorem Guides.root {n : Nat} (g : Array (VSet n)) (lab : Array Nat) (cellEnds : List Nat)
+    (tcLevel : Nat) (best : Option (Key n)) :
+    Guides { g := g } tcLevel 1 (rootSt n lab cellEnds) best := by
   constructor <;> intro hp _ <;> simp [rootSt] at hp
 
 /-- Every installed output came from the incoming incumbent or this
 node's specification subtree, and the incoming incumbent was not lost. -/
-structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st : SearchSt) (numcells : Nat)
-    (best out : Option Key) : Prop where
+structure NodeSound (ctx : Ctx n) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st : SearchSt n) (numcells : Nat)
+    (best out : Option (Key n)) : Prop where
   upper : ∀ b, out = some b →
     keyLe b (incMax best
       (nodeKey ctx tcLevel specFuel level cs st numcells))
@@ -1325,17 +1273,17 @@ structure NodeSound (ctx : Ctx) (tcLevel specFuel level : Nat)
 /-- The state component common to both successful loop outcomes.  The
 loop may stop early, but every incumbent it installs is still bounded by
 the incoming incumbent and the whole parent subtree. -/
-structure LoopSound (ctx : Ctx) (bound : Key)
-    (best out : Option Key) : Prop where
+structure LoopSound (ctx : Ctx n) (bound : Key n)
+    (best out : Option (Key n)) : Prop where
   upper : ∀ b, out = some b → keyLe b (incMax best bound)
   grows : IncGrows best out
 
-theorem IncGrows.refl (best : Option Key) : IncGrows best best := by
+theorem IncGrows.refl (best : Option (Key n)) : IncGrows best best := by
   intro b hb
   exact ⟨b, hb, keyLe_refl b⟩
 
 /-- Folding one key into an incumbent preserves the old incumbent. -/
-theorem IncGrows.incMax (best : Option Key) (K : Key) :
+theorem IncGrows.incMax (best : Option (Key n)) (K : Key n) :
     IncGrows best (some (incMax best K)) := by
   intro b hb
   rcases best with _ | a
@@ -1345,8 +1293,8 @@ theorem IncGrows.incMax (best : Option Key) (K : Key) :
     exact ⟨Nauty.incMax (some a) K, rfl,
       keyLe_iff.mpr (keyMax_not_lt_left a K)⟩
 
-theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
-    (cs : List Nat) (st : SearchSt) (numcells : Nat) (best : Option Key) :
+theorem NodeSound.refl (ctx : Ctx n) (tcLevel specFuel level : Nat)
+    (cs : List Nat) (st : SearchSt n) (numcells : Nat) (best : Option (Key n)) :
     NodeSound ctx tcLevel specFuel level cs st numcells best best := by
   constructor
   · intro b hb
@@ -1355,8 +1303,8 @@ theorem NodeSound.refl (ctx : Ctx) (tcLevel specFuel level : Nat)
   · exact IncGrows.refl best
 
 /-- An exact node maximum supplies both clauses of `NodeSound`. -/
-theorem NodeSound.ofExact {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
-    {cs : List Nat} {st : SearchSt} {best out : Option Key}
+theorem NodeSound.ofExact {ctx : Ctx n} {tcLevel specFuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt n} {best out : Option (Key n)}
     (h : out = some (incMax best
       (nodeKey ctx tcLevel specFuel level cs st numcells))) :
     NodeSound ctx tcLevel specFuel level cs st numcells best out := by
@@ -1369,7 +1317,7 @@ theorem NodeSound.ofExact {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
   · rw [h]
     exact IncGrows.incMax best _
 
-theorem LoopSound.refl (ctx : Ctx) (bound : Key) (best : Option Key) :
+theorem LoopSound.refl (ctx : Ctx n) (bound : Key n) (best : Option (Key n)) :
     LoopSound ctx bound best best := by
   constructor
   · intro b hb
@@ -1378,8 +1326,8 @@ theorem LoopSound.refl (ctx : Ctx) (bound : Key) (best : Option Key) :
   · exact IncGrows.refl best
 
 /-- An exact loop maximum supplies both clauses of `LoopSound`. -/
-theorem LoopSound.ofExact {ctx : Ctx} {bound : Key}
-    {best out : Option Key}
+theorem LoopSound.ofExact {ctx : Ctx n} {bound : Key n}
+    {best out : Option (Key n)}
     (h : out = some (incMax best bound)) :
     LoopSound ctx bound best out := by
   constructor
@@ -1391,13 +1339,13 @@ theorem LoopSound.ofExact {ctx : Ctx} {bound : Key}
   · rw [h]
     exact IncGrows.incMax best bound
 
-theorem keyMax_le_of_le {a b c : Key} (ha : keyLe a c)
+theorem keyMax_le_of_le {a b c : Key n} (ha : keyLe a c)
     (hb : keyLe b c) : keyLe (keyMax a b) c := by
   rcases keyMax_mem a b with h | h
   · rwa [h]
   · rwa [h]
 
-theorem keyLe_incMax_right (inc : Option Key) (b : Key) :
+theorem keyLe_incMax_right (inc : Option (Key n)) (b : Key n) :
     keyLe b (incMax inc b) := by
   rcases inc with _ | a
   · exact keyLe_refl b
@@ -1406,19 +1354,19 @@ theorem keyLe_incMax_right (inc : Option Key) (b : Key) :
 /-- An exactly completed child is covered in its parent sweep.  The three
 field equations identify the executable state after `breakout` with the
 specification child used by `sweepKey`. -/
-theorem ChildDone.ofExact {ctx : Ctx}
+theorem ChildDone.ofExact {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
     {rsLab rsPtn : Array Nat} {tc numcells o : Nat}
-    {child : SearchSt} {best out : Option Key}
+    {child : SearchSt n} {best out : Option (Key n)}
     (hfull : out = some (incMax best
       (nodeKey ctx tcLevel specFuel (level + 1) cs child
         (numcells + 1))))
     (hlab : child.lab =
-      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
+      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1)
     (hptn : child.ptn =
-      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1)
+      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1)
     (hactive : child.active =
-      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2) :
+      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2) :
     ChildDone ctx tcLevel specFuel level cs rsLab rsPtn tc numcells
       out o := by
   refine ⟨incMax best
@@ -1435,22 +1383,22 @@ theorem ChildDone.ofExact {ctx : Ctx}
 
 /-- Exact completion of the selected child advances the mutable sweep
 cursor and preserves all earlier coverage. -/
-theorem SweepCover.advanceExact {ctx : Ctx}
+theorem SweepCover.advanceExact {ctx : Ctx n}
     {tcLevel specFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tv tcell : Nat}
-    {cursor : Option Nat} {child : SearchSt} {best out : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len numcells tv : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {child : SearchSt n} {best out : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hfull : out = some (incMax best
       (nodeKey ctx tcLevel specFuel (level + 1) cs child
         (numcells + 1))))
     (hlab : child.lab =
-      (breakout rsLab rsPtn (level + 1) tc tv).1)
+      (breakout n rsLab rsPtn (level + 1) tc tv).1)
     (hptn : child.ptn =
-      (breakout rsLab rsPtn (level + 1) tc tv).2.1)
+      (breakout n rsLab rsPtn (level + 1) tc tv).2.1)
     (hactive : child.active =
-      (breakout rsLab rsPtn (level + 1) tc tv).2.2) :
+      (breakout n rsLab rsPtn (level + 1) tc tv).2.2) :
     SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
       tcell (some tv) out := by
   apply h.advance hnext
@@ -1462,7 +1410,7 @@ theorem SweepCover.advanceExact {ctx : Ctx}
   · intro o hdone
     exact hdone.mono (hfull ▸ IncGrows.incMax best _)
 
-theorem incMax_mono_right (inc : Option Key) {a b : Key}
+theorem incMax_mono_right (inc : Option (Key n)) {a b : Key n}
     (h : keyLe a b) : keyLe (incMax inc a) (incMax inc b) := by
   rcases inc with _ | x
   · exact h
@@ -1470,7 +1418,7 @@ theorem incMax_mono_right (inc : Option Key) {a b : Key}
     · exact keyLe_iff.mpr (keyMax_not_lt_left x b)
     · exact keyLe_trans h (keyLe_iff.mpr (keyMax_not_lt_right x b))
 
-theorem IncGrows.trans {best mid out : Option Key}
+theorem IncGrows.trans {best mid out : Option (Key n)}
     (h₁ : IncGrows best mid) (h₂ : IncGrows mid out) :
     IncGrows best out := by
   intro b hb
@@ -1479,9 +1427,9 @@ theorem IncGrows.trans {best mid out : Option Key}
   exact ⟨c, hc, keyLe_trans hbm hmc⟩
 
 /-- A sound child step is sound against any larger fixed loop bound. -/
-theorem LoopSound.ofNode {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
-    {cs : List Nat} {st : SearchSt} {bound : Key}
-    {best out : Option Key}
+theorem LoopSound.ofNode {ctx : Ctx n} {tcLevel specFuel level numcells : Nat}
+    {cs : List Nat} {st : SearchSt n} {bound : Key n}
+    {best out : Option (Key n)}
     (h : NodeSound ctx tcLevel specFuel level cs st numcells best out)
     (hle : keyLe (nodeKey ctx tcLevel specFuel level cs st numcells)
       bound) : LoopSound ctx bound best out := by
@@ -1492,8 +1440,8 @@ theorem LoopSound.ofNode {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
   · exact h.grows
 
 /-- Consecutive fragments with the same fixed bound compose. -/
-theorem LoopSound.trans {ctx : Ctx} {bound : Key}
-    {best mid out : Option Key} (h₁ : LoopSound ctx bound best mid)
+theorem LoopSound.trans {ctx : Ctx n} {bound : Key n}
+    {best mid out : Option (Key n)} (h₁ : LoopSound ctx bound best mid)
     (h₂ : LoopSound ctx bound mid out) : LoopSound ctx bound best out := by
   constructor
   · intro b hb
@@ -1510,8 +1458,8 @@ theorem LoopSound.trans {ctx : Ctx} {bound : Key}
 
 /-- Matching upper and lower bounds turn loop soundness into the exact
 incumbent equation required when a parent node completes. -/
-theorem LoopSound.exact {ctx : Ctx} {bound b : Key}
-    {best out : Option Key} (h : LoopSound ctx bound best out)
+theorem LoopSound.exact {ctx : Ctx n} {bound b : Key n}
+    {best out : Option (Key n)} (h : LoopSound ctx bound best out)
     (hout : out = some b) (hlower : keyLe bound b) :
     out = some (incMax best bound) := by
   have hupper := h.upper b hout
@@ -1530,10 +1478,10 @@ theorem LoopSound.exact {ctx : Ctx} {bound b : Key}
 
 /-- Loop soundness plus domination of every live suffix recovers the
 exact fixed bound without pretending that the executable loop completed. -/
-theorem SweepCover.exactLive {ctx : Ctx}
+theorem SweepCover.exactLive {ctx : Ctx n}
     {tcLevel specFuel level tail : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc numcells tcell : Nat}
-    {cursor : Option Nat} {bound b : Key} {best out : Option Key}
+    {rsLab rsPtn : Array Nat} {tc numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound b : Key n} {best out : Option (Key n)}
     (hbound : bound = keysMax
       (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc numcells 0)
       ((List.range tail).map fun o =>
@@ -1554,10 +1502,10 @@ theorem SweepCover.exactLive {ctx : Ctx}
 
 /-- A completed sweep whose fixed loop bound is the maximum of its
 original children recovers the exact final incumbent. -/
-theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
+theorem SweepCover.exact {ctx : Ctx n} {tcLevel specFuel level tail : Nat}
     {cs : List Nat} {rsLab rsPtn : Array Nat}
-    {tc numcells tcell : Nat} {cursor : Option Nat}
-    {best out : Option Key} {b : Key}
+    {tc numcells : Nat} {tcell : VSet n} {cursor : Option Nat}
+    {best out : Option (Key n)} {b : Key n}
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc
       (tail + 1) numcells tcell cursor out)
     (hempty : ∀ o,
@@ -1580,18 +1528,18 @@ theorem SweepCover.exact {ctx : Ctx} {tcLevel specFuel level tail : Nat}
   hsound.exact hout (hcover.maxLe hempty hout)
 
 /-- An installed mutable incumbent always has a concrete key. -/
-theorem stInc_isSome {ctx : Ctx} {st : SearchSt}
+theorem stInc_isSome {ctx : Ctx n} {st : SearchSt n}
     (h : st.canonlevel ≠ 0) : ∃ b, stInc ctx st = some b := by
   rw [stInc, ite_eq_right h]
   exact ⟨_, rfl⟩
 
 /-- A completed covered sweep with a readable installed state has exactly
 folded its fixed child maximum into the incoming incumbent. -/
-theorem SweepCover.exact_of_read {ctx : Ctx}
+theorem SweepCover.exact_of_read {ctx : Ctx n}
     {tcLevel specFuel level tail : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc numcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {st : SearchSt}
-    {best out : Option Key}
+    {rsLab rsPtn : Array Nat} {tc numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st : SearchSt n}
+    {best out : Option (Key n)}
     (hbound : bound = keysMax
       (sweepKey ctx tcLevel specFuel level cs rsLab rsPtn tc
         numcells 0)
@@ -1613,9 +1561,9 @@ theorem SweepCover.exact_of_read {ctx : Ctx}
 
 `complete` and `unwind` may have the same return integer.  The latter is
 therefore a constructor, not an inequality side condition. -/
-inductive NodeResult (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
-    (cs : List Nat) (st out : SearchSt) (numcells : Nat)
-    (best outBest : Option Key) (r : Int) : Prop where
+inductive NodeResult (ctx : Ctx n) (tcLevel specFuel runFuel level : Nat)
+    (cs : List Nat) (st out : SearchSt n) (numcells : Nat)
+    (best outBest : Option (Key n)) (r : Int) : Prop where
   | complete (sound : NodeSound ctx tcLevel specFuel level cs st numcells
       best outBest)
       (returned : r = Int.ofNat level - 1)
@@ -1642,9 +1590,9 @@ inductive NodeResult (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
 /-- When a child does not return past its parent, it either completed its
 whole subtree (including a local comparison prune), or its generator
 payload is addressed exactly to that parent. -/
-theorem NodeResult.parentReturn {ctx : Ctx}
+theorem NodeResult.parentReturn {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat}
-    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {cs : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
     {r : Int}
     (h : NodeResult ctx tcLevel specFuel runFuel (level + 1) cs st out
       numcells best outBest r)
@@ -1669,16 +1617,16 @@ theorem NodeResult.parentReturn {ctx : Ctx}
 /-- The result of a child-loop call.  Exhaustion is distinct from a
 completed empty remainder, so a general theorem cannot accidentally treat
 the `cfuel = 0` arm as coverage of every child. -/
-inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells tcell : Nat)
-    (cursor : Option Nat) (bound : Key) (st out : SearchSt)
-    (best outBest : Option Key) (r : Option Int) : Prop where
+inductive LoopResult (ctx : Ctx n) (tcLevel specFuel runFuel loopFuel level : Nat)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (tc len numcells : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st out : SearchSt n)
+    (best outBest : Option (Key n)) (r : Option Int) : Prop where
   | complete
       (returned : r = none)
       (sound : LoopSound ctx bound best outBest)
       (installed : out.canonlevel ≠ 0)
       (read : stInc ctx out = outBest)
-      (finalSet : Nat) (finalCursor : Option Nat)
+      (finalSet : VSet n) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells finalSet finalCursor outBest)
       (empty : ∀ o, ¬ ChildLive rsLab tc len finalSet finalCursor o)
@@ -1695,21 +1643,21 @@ inductive LoopResult (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | exhausted
       (returned : r = none)
       (sound : LoopSound ctx bound best outBest)
-      (finalSet : Nat) (finalCursor : Option Nat)
+      (finalSet : VSet n) (finalCursor : Option Nat)
       (cover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
         numcells finalSet finalCursor outBest)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
-      (bounded : ∀ v, finalCursor = some v → v < ctx.n)
+      (bounded : ∀ v, finalCursor = some v → v < n)
 
 /-- A child generator unwind strictly past its parent lifts through the
 parent loop's temporary fixed-vertex cleanup. -/
-theorem LoopResult.ofChildUnwind {ctx : Ctx}
+theorem LoopResult.ofChildUnwind {ctx : Ctx n}
     {tcLevel childFuel childRunFuel parentFuel loopFuel level : Nat}
     {childCs loopCs : List Nat} {childNumcells loopNumcells : Nat}
-    {childSt loopSt out : SearchSt} {best outBest : Option Key}
-    {target fixedpts : Nat}
-    {rsLab rsPtn : Array Nat} {tc len tcell : Nat}
-    {cursor : Option Nat} {bound : Key}
+    {childSt loopSt out : SearchSt n} {best outBest : Option (Key n)}
+    {target : Nat} {fixedpts : VSet n}
+    {rsLab rsPtn : Array Nat} {tc len : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n}
     (hsound : NodeSound ctx tcLevel childFuel (level + 1) childCs childSt
       childNumcells best outBest)
     (hkey : keyLe
@@ -1733,11 +1681,11 @@ theorem LoopResult.ofChildUnwind {ctx : Ctx}
 /-- A readable completed child sweep constructs ordinary node completion
 once the specification identifies that sweep's fixed bound with the node
 subtree. -/
-theorem NodeResult.complete_of_sweep {ctx : Ctx}
+theorem NodeResult.complete_of_sweep {ctx : Ctx n}
     {tcLevel specFuel runFuel level nodeNumcells loopNumcells tail : Nat}
-    {nodeCs loopCs : List Nat} {st out : SearchSt}
-    {best outBest : Option Key}
-    {r : Int} {rsLab rsPtn : Array Nat} {tc tcell : Nat}
+    {nodeCs loopCs : List Nat} {st out : SearchSt n}
+    {best outBest : Option (Key n)}
+    {r : Int} {rsLab rsPtn : Array Nat} {tc : Nat} {tcell : VSet n}
     {cursor : Option Nat}
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs st nodeNumcells =
       keysMax
@@ -1761,9 +1709,9 @@ theorem NodeResult.complete_of_sweep {ctx : Ctx}
 
 /-- A loop that has already absorbed its fixed child bound constructs the
 corresponding pruned node outcome when that bound is the node subtree. -/
-theorem NodeResult.pruned_of_loop {ctx : Ctx}
+theorem NodeResult.pruned_of_loop {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat}
-    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {cs : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
     {r target : Int}
     (hinstalled : out.canonlevel ≠ 0) (hread : stInc ctx out = outBest)
     (hfull : outBest = some (incMax best
@@ -1777,12 +1725,12 @@ theorem NodeResult.pruned_of_loop {ctx : Ctx}
 /-- A loop return carrying an integer lifts directly through its parent
 node.  The impossible completed and exhausted constructors are excluded by
 the loop's return option itself. -/
-theorem NodeResult.of_loop_some {ctx : Ctx}
+theorem NodeResult.of_loop_some {ctx : Ctx n}
     {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level : Nat}
     {nodeCs loopCs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key} {r : Int}
+    {rsLab rsPtn : Array Nat} {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {best outBest : Option (Key n)} {r : Int}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCs nodeSt nodeNumcells)
     (h : LoopResult ctx tcLevel loopSpecFuel runFuel loopFuel level loopCs rsLab
       rsPtn tc len loopNumcells tcell cursor bound loopSt out best outBest
@@ -1818,12 +1766,12 @@ theorem NodeResult.of_loop_some {ctx : Ctx}
 /-- A completed loop with enough ranked cursor fuel lifts to ordinary node
 completion.  Cursor exhaustion is ruled out by the same finite-range bound
 used by the executable root search. -/
-theorem NodeResult.of_loop_none {ctx : Ctx}
+theorem NodeResult.of_loop_none {ctx : Ctx n}
     {tcLevel specFuel nodeRunFuel runFuel loopFuel level tail : Nat}
     {nodeCs loopCs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len nodeNumcells loopNumcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {best outBest : Option (Key n)}
     (hbound : bound = nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt nodeNumcells)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt nodeNumcells =
       keysMax
@@ -1833,7 +1781,7 @@ theorem NodeResult.of_loop_none {ctx : Ctx}
           sweepKey ctx tcLevel specFuel level loopCs rsLab rsPtn tc
             loopNumcells (o + 1)))
     (hlen : len = tail + 1)
-    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfuel : n < cursorRank cursor + loopFuel)
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level loopCs
       rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out best outBest
         none) :
@@ -1853,11 +1801,11 @@ theorem NodeResult.of_loop_none {ctx : Ctx}
 /-- Prepending a sound child fragment transports every recursive loop
 outcome.  In the prune case, the recursive exact incumbent and the
 composed upper bound recover exactness relative to the original incumbent. -/
-theorem LoopResult.prefix {ctx : Ctx}
+theorem LoopResult.prefix {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {st recSt out : SearchSt}
-    {best mid outBest : Option Key} {r : Option Int}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st recSt out : SearchSt n}
+    {best mid outBest : Option (Key n)} {r : Option Int}
     (hpre : LoopSound ctx bound best mid)
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
       rsPtn tc len numcells tcell cursor bound recSt out mid outBest r) :
@@ -1880,11 +1828,11 @@ theorem LoopResult.prefix {ctx : Ctx}
 /-- The entry set only describes where the call begins.  Every constructor
 records the final set, so the result can cross a filter exposed in the
 caller. -/
-theorem LoopResult.reindexSet {ctx : Ctx}
+theorem LoopResult.reindexSet {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell tcell' : Nat}
-    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
-    {best outBest : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell tcell' : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st out : SearchSt n}
+    {best outBest : Option (Key n)}
     {r : Option Int}
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
       rsPtn tc len numcells tcell cursor bound st out best outBest r) :
@@ -1904,11 +1852,11 @@ theorem LoopResult.reindexSet {ctx : Ctx}
 /-- One successful cursor step transports every recursive loop outcome.
 For exhaustion, its rank certificate accounts for the fuel consumed by
 the exposed iteration. -/
-theorem LoopResult.step {ctx : Ctx}
+theorem LoopResult.step {ctx : Ctx n}
     {tcLevel specFuel runFuel loopFuel level tv : Nat} {cs : List Nat}
-    {rsLab rsPtn : Array Nat} {tc len numcells tcell : Nat}
-    {cursor : Option Nat} {bound : Key} {st out : SearchSt}
-    {best outBest : Option Key}
+    {rsLab rsPtn : Array Nat} {tc len numcells : Nat} {tcell : VSet n}
+    {cursor : Option Nat} {bound : Key n} {st out : SearchSt n}
+    {best outBest : Option (Key n)}
     {r : Option Int}
     (ha : After cursor tv)
     (h : LoopResult ctx tcLevel specFuel runFuel loopFuel level cs rsLab
@@ -1934,14 +1882,14 @@ prune has the same exact maximum as ordinary completion.  Exhaustion is
 impossible with the root runtime fuel, and every generator anchor has a
 positive target, so a generator unwind cannot leave level one. -/
 theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
-    {best : Option Key}
-    (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
+    {best : Option (Key n)}
+    (hroot : NodeResult { g := rowsOf G } 100 n (n + 2) 1 []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length
       none best
-      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+      (firstPathNode { g := rowsOf G } (n + 2) 100 (n + 2) 1
         (initialPartition G).2.length
         (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
     canonSpecKey G = tracedKey G := by
@@ -1967,14 +1915,14 @@ theorem dominated_of_result {n k : Nat} {G : Colored n k} (hn0 : n ≠ 0)
 /-- Certificate-checked canonicalization is total once the corrected root
 node outcome has been established. -/
 theorem certifyCanon?_isSome_of_result {n k : Nat} {G : Colored n k}
-    (hn0 : n ≠ 0) {best : Option Key}
-    (hroot : NodeResult { n := n, g := rowsOf G } 100 n (n + 2) 1 []
+    (hn0 : n ≠ 0) {best : Option (Key n)}
+    (hroot : NodeResult { g := rowsOf G } 100 n (n + 2) 1 []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length
       none best
-      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+      (firstPathNode { g := rowsOf G } (n + 2) 100 (n + 2) 1
         (initialPartition G).2.length
         (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
     (certifyCanon? G).isSome :=

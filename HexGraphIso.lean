@@ -13,9 +13,8 @@ public import HexGraphIso.Lex
 public import HexGraphIso.Reference
 public import HexGraphIso.Canon
 public import HexGraphIso.Nauty.Bits
+public import HexGraphIso.Nauty.VSet
 public import HexGraphIso.Nauty.Refine
-public import HexGraphIso.Nauty.Image
-public import HexGraphIso.Nauty.PopCount
 public import HexGraphIso.Nauty.Equivariance
 public import HexGraphIso.Nauty.Search
 public import HexGraphIso.Nauty.CanonSpec
@@ -24,6 +23,8 @@ public import HexGraphIso.Nauty.CellPermLoop
 public import HexGraphIso.Nauty.SpecIso
 public import HexGraphIso.IsoLit
 public import HexGraphIso.NodeLit
+public import HexGraphIso.NodePacked
+public import HexGraphIso.SeparatorPacked
 public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom

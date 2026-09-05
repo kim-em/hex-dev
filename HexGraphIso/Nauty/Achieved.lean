@@ -182,14 +182,14 @@ theorem cellsPerm_trans {ptn : Array Nat} {level : Nat}
 
 /-- The state facts carried through `refine` relative to its input. -/
 structure RefInv (level : Nat) (lab0 ptn0 : Array Nat)
-    (st : RefineSt) : Prop where
+    (st : RefineSt n) : Prop where
   labSize : st.lab.size = lab0.size
   ptnSize : st.ptn.size = ptn0.size
   grow : ∀ q : Nat, ptn0[q]! ≤ level → st.ptn[q]! ≤ level
   perm : cellsPerm ptn0 level lab0 st.lab
 
 theorem RefInv.init (level : Nat) (lab0 ptn0 : Array Nat)
-    (active numcells : Nat) :
+    (active : VSet n) (numcells : Nat) :
     RefInv level lab0 ptn0
       { lab := lab0, ptn := ptn0, active := active,
         numcells := numcells, hint := 0, maxpos := 0,
@@ -197,7 +197,7 @@ theorem RefInv.init (level : Nat) (lab0 ptn0 : Array Nat)
   ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
 
 theorem RefInv.step {level : Nat} {lab0 ptn0 : Array Nat}
-    {st st' : RefineSt} (h : RefInv level lab0 ptn0 st)
+    {st st' : RefineSt n} (h : RefInv level lab0 ptn0 st)
     (hls : st'.lab.size = st.lab.size)
     (hps : st'.ptn.size = st.ptn.size)
     (hpv : ∀ q : Nat, st'.ptn[q]! = st.ptn[q]! ∨ st'.ptn[q]! = level)
@@ -241,7 +241,7 @@ theorem subcell_of_grow {ptn0 ptnP : Array Nat} {level A lenA : Nat}
 
 /-! # The trivial-splitter pass preserves the invariant -/
 
-theorem splitCellLoop_region_perm {gRow : Nat} {lab : Array Nat}
+theorem splitCellLoop_region_perm {gRow : VSet n} {lab : Array Nat}
     {cell1 cell2 : Nat} (h12 : cell1 ≤ cell2)
     (hsz : cell2 < lab.size) :
     (segN (splitCellLoop gRow (cell2 - cell1 + 2) lab
@@ -265,15 +265,15 @@ theorem splitCellLoop_region_perm {gRow : Nat} {lab : Array Nat}
   have htn : (Int.ofNat cell1).toNat = cell1 := rfl
   rw [htn] at h5 h6
   have hcnt : (segN lab cell1 (cell2 + 1 - cell1)).countP
-      (elem gRow ·) ≤ cell2 + 1 - cell1 := by
+      (gRow.mem ·) ≤ cell2 + 1 - cell1 := by
     have := List.countP_le_length
-      (p := (elem gRow ·)) (l := segN lab cell1 (cell2 + 1 - cell1))
+      (p := (gRow.mem ·)) (l := segN lab cell1 (cell2 + 1 - cell1))
     rw [segN_length] at this
     exact this
   have hsplit : cell2 + 1 - cell1 =
-      (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·) +
+      (segN lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·) +
       ((cell2 + 1 - cell1) -
-        (segN lab cell1 (cell2 + 1 - cell1)).countP (elem gRow ·)) :=
+        (segN lab cell1 (cell2 + 1 - cell1)).countP (gRow.mem ·)) :=
     by omega
   rw [hsplit, segN_append]
   rw [← hsplit]
@@ -281,14 +281,14 @@ theorem splitCellLoop_region_perm {gRow : Nat} {lab : Array Nat}
   exact List.filter_append_perm _ _
 
 theorem trivialSplit_lab (level cell1 cell2 : Nat) (c1 c2 : Int)
-    (st : RefineSt) :
+    (st : RefineSt n) :
     (trivialSplit level cell1 cell2 c1 c2 st).lab = st.lab := by
   rw [trivialSplit]
   repeat' split
   all_goals rfl
 
 theorem trivialSplit_ptn (level cell1 cell2 : Nat) (c1 c2 : Int)
-    (st : RefineSt) :
+    (st : RefineSt n) :
     (trivialSplit level cell1 cell2 c1 c2 st).ptn = st.ptn ∨
       (trivialSplit level cell1 cell2 c1 c2 st).ptn =
         st.ptn.set! c2.toNat level := by
@@ -298,8 +298,8 @@ theorem trivialSplit_ptn (level cell1 cell2 : Nat) (c1 c2 : Int)
     | exact Or.inl rfl
     | exact Or.inr rfl
 
-theorem refInv_trivialCell {level gRow cell1 cell2 : Nat}
-    {lab0 ptn0 : Array Nat} {st : RefineSt}
+theorem refInv_trivialCell {level cell1 cell2 : Nat} {gRow : VSet n}
+    {lab0 ptn0 : Array Nat} {st : RefineSt n}
     (hinv : RefInv level lab0 ptn0 st)
     {c lenC : Nat} (hc : IsCell ptn0 level c lenC) (hcA : c ≤ cell1)
     (hAc : cell2 + 1 ≤ c + lenC) (h12 : cell1 ≤ cell2)
@@ -361,7 +361,7 @@ theorem refInv_trivialCell {level gRow cell1 cell2 : Nat}
         rcases getElem!_set!_cases
           ({ st with lab := (splitCellLoop gRow (cell2 - cell1 + 2)
               st.lab (Int.ofNat cell1) (Int.ofNat cell2)).1 } :
-            RefineSt).ptn
+            RefineSt n).ptn
           ((splitCellLoop gRow (cell2 - cell1 + 2) st.lab
             (Int.ofNat cell1) (Int.ofNat cell2)).2.2).toNat level q
           with hg | hg
@@ -380,8 +380,8 @@ theorem mem_countValues {counts : List Nat} {v : Nat}
   refine List.mem_map.mpr ⟨v - counts.foldl Nat.min
     (counts.headD 0), List.mem_range.mpr (by omega), by omega⟩
 
-theorem segmentOf_perm (ctx : Ctx) (lab : Array Nat)
-    (workset cell1 cell2 : Nat) (_hsz : cell2 < lab.size)
+theorem segmentOf_perm (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (_hsz : cell2 < lab.size)
     (_h12 : cell1 ≤ cell2) :
     (segmentOf lab cell1 (countsOf ctx lab workset cell1 cell2)
       (countValues (countsOf ctx lab workset cell1 cell2))).Perm
@@ -389,9 +389,9 @@ theorem segmentOf_perm (ctx : Ctx) (lab : Array Nat)
   rw [countsOf_eq_map]
   rw [segmentOf_eq_flatMap lab cell1
     (segN lab cell1 (cell2 + 1 - cell1))
-    (fun v => popCount (workset &&& ctx.g[v]!))
+    (fun v => workset.cardInter ctx.g[v]!)
     (countValues ((segN lab cell1 (cell2 + 1 - cell1)).map
-      fun v => popCount (workset &&& ctx.g[v]!)))
+      fun v => workset.cardInter ctx.g[v]!))
     (fun j hj => by
       rw [segN_length] at hj
       exact (segN_getElem! lab cell1 (cell2 + 1 - cell1) j hj).symm)]
@@ -399,26 +399,26 @@ theorem segmentOf_perm (ctx : Ctx) (lab : Array Nat)
   · rw [countValues]
     exact nodup_range_map_add _ _
   · intro x hx
-    have hmem : popCount (workset &&& ctx.g[x]!) ∈
+    have hmem : workset.cardInter ctx.g[x]! ∈
         (segN lab cell1 (cell2 + 1 - cell1)).map
-          fun v => popCount (workset &&& ctx.g[v]!) :=
+          fun v => workset.cardInter ctx.g[v]! :=
       List.mem_map_of_mem hx
     exact mem_countValues
       (foldl_min_le_mem _ _ _ hmem) (foldl_max_ge_mem _ _ _ hmem)
 
-theorem nontrivialFix_lab (cell1 : Nat) (st : RefineSt) :
+theorem nontrivialFix_lab (cell1 : Nat) (st : RefineSt n) :
     (nontrivialFix cell1 st).lab = st.lab := by
   rw [nontrivialFix]
   split <;> rfl
 
-theorem nontrivialFix_ptn (cell1 : Nat) (st : RefineSt) :
+theorem nontrivialFix_ptn (cell1 : Nat) (st : RefineSt n) :
     (nontrivialFix cell1 st).ptn = st.ptn := by
   rw [nontrivialFix]
   split <;> rfl
 
-theorem refInv_nontrivialCell {ctx : Ctx}
-    {level workset cell1 cell2 : Nat}
-    {lab0 ptn0 : Array Nat} {st : RefineSt}
+theorem refInv_nontrivialCell {ctx : Ctx n}
+    {level cell1 cell2 : Nat} {workset : VSet n}
+    {lab0 ptn0 : Array Nat} {st : RefineSt n}
     (hinv : RefInv level lab0 ptn0 st)
     {c lenC : Nat} (hc : IsCell ptn0 level c lenC)
     (hcA : c ≤ cell1) (hAc : cell2 + 1 ≤ c + lenC)
@@ -500,12 +500,12 @@ theorem refInv_nontrivialCell {ctx : Ctx}
 
 /-! # The passes, the loop, and `refine` -/
 
-theorem refInv_cells_facts {ctx : Ctx} {level : Nat}
-    {lab0 ptn0 : Array Nat} {st : RefineSt}
+theorem refInv_cells_facts {level : Nat}
+    {lab0 ptn0 : Array Nat} {st : RefineSt n}
     (hinv : RefInv level lab0 ptn0 st)
-    (hnn : ctx.n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
+    (hnn : n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
     (hend0 : ptn0[ptn0.size - 1]! ≤ level) :
-    ∀ p ∈ cells st.ptn level ctx.n, p.1 ≤ p.2 ∧ p.2 < lab0.size ∧
+    ∀ p ∈ cells st.ptn level n, p.1 ≤ p.2 ∧ p.2 < lab0.size ∧
       ∃ c lenC, IsCell ptn0 level c lenC ∧ c ≤ p.1 ∧
         p.2 + 1 ≤ c + lenC := by
   intro p hp
@@ -515,7 +515,7 @@ theorem refInv_cells_facts {ctx : Ctx} {level : Nat}
     rw [hinv.ptnSize]
     exact hinv.grow _ hend0
   have hple := cells_le p hp
-  have hpb := cells_bound (nn := ctx.n)
+  have hpb := cells_bound (nn := n)
     (by rw [hinv.ptnSize]; omega) hendSt p hp
   have hic := cells_isCell (ptn := st.ptn)
     (by rw [hinv.ptnSize]; omega) hendSt p hp
@@ -524,9 +524,9 @@ theorem refInv_cells_facts {ctx : Ctx} {level : Nat}
     (by omega) (by omega)
   exact ⟨hple, by omega, c, lenC, hcell, hc1, by omega⟩
 
-theorem refInv_refineTrivial_go {level gRow : Nat}
+theorem refInv_refineTrivial_go {level : Nat} {gRow : VSet n}
     {lab0 ptn0 : Array Nat} :
-    ∀ (l : List (Nat × Nat)) (st : RefineSt),
+    ∀ (l : List (Nat × Nat)) (st : RefineSt n),
       RefInv level lab0 ptn0 st →
       (∀ p ∈ l, p.1 ≤ p.2 ∧ p.2 < lab0.size ∧
         ∃ c lenC, IsCell ptn0 level c lenC ∧ c ≤ p.1 ∧
@@ -542,9 +542,9 @@ theorem refInv_refineTrivial_go {level gRow : Nat}
         (by rw [hinv.labSize]; exact hb2))
       (fun p hp => hl p (List.mem_cons.mpr (Or.inr hp)))
 
-theorem refInv_refineNontrivial_go {ctx : Ctx}
-    {level workset : Nat} {lab0 ptn0 : Array Nat} :
-    ∀ (l : List (Nat × Nat)) (st : RefineSt),
+theorem refInv_refineNontrivial_go {ctx : Ctx n}
+    {level : Nat} {workset : VSet n} {lab0 ptn0 : Array Nat} :
+    ∀ (l : List (Nat × Nat)) (st : RefineSt n),
       RefInv level lab0 ptn0 st →
       (∀ p ∈ l, p.1 ≤ p.2 ∧ p.2 < lab0.size ∧
         ∃ c lenC, IsCell ptn0 level c lenC ∧ c ≤ p.1 ∧
@@ -562,17 +562,17 @@ theorem refInv_refineNontrivial_go {ctx : Ctx}
       (fun p hp => hl p (List.mem_cons.mpr (Or.inr hp)))
 
 theorem refInv_record {level : Nat} {lab0 ptn0 : Array Nat}
-    {st st' : RefineSt} (hinv : RefInv level lab0 ptn0 st)
+    {st st' : RefineSt n} (hinv : RefInv level lab0 ptn0 st)
     (hl : st'.lab = st.lab) (hp : st'.ptn = st.ptn) :
     RefInv level lab0 ptn0 st' :=
   RefInv.step hinv (by rw [hl]) (by rw [hp])
     (fun q => by rw [hp]; exact Or.inl rfl)
     (by rw [hl]; exact cellsPerm_refl _ _ _)
 
-theorem refInv_refineStep {ctx : Ctx} {level split1 : Nat}
-    {lab0 ptn0 : Array Nat} {st : RefineSt}
+theorem refInv_refineStep {ctx : Ctx n} {level split1 : Nat}
+    {lab0 ptn0 : Array Nat} {st : RefineSt n}
     (hinv : RefInv level lab0 ptn0 st)
-    (hnn : ctx.n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
+    (hnn : n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
     (hend0 : ptn0[ptn0.size - 1]! ≤ level) :
     RefInv level lab0 ptn0 (refineStep ctx level split1 st) := by
   rw [refineStep]
@@ -584,11 +584,11 @@ theorem refInv_refineStep {ctx : Ctx} {level split1 : Nat}
     exact refInv_refineNontrivial_go _ _ (refInv_record hinv rfl rfl)
       (refInv_cells_facts (refInv_record hinv rfl rfl) hnn hs hend0)
 
-theorem refInv_refineLoop {ctx : Ctx} {level : Nat}
+theorem refInv_refineLoop {ctx : Ctx n} {level : Nat}
     {lab0 ptn0 : Array Nat}
-    (hnn : ctx.n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
+    (hnn : n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
     (hend0 : ptn0[ptn0.size - 1]! ≤ level) :
-    ∀ (fuel : Nat) (st : RefineSt), RefInv level lab0 ptn0 st →
+    ∀ (fuel : Nat) (st : RefineSt n), RefInv level lab0 ptn0 st →
       RefInv level lab0 ptn0 (refineLoop ctx level fuel st)
   | 0, st, hinv => hinv
   | fuel + 1, st, hinv => by
@@ -602,15 +602,15 @@ theorem refInv_refineLoop {ctx : Ctx} {level : Nat}
 
 /-- `refine` preserves labelling size and every input cell's contents,
 and only adds partition boundaries. -/
-theorem refine_refInv {ctx : Ctx} {level : Nat}
-    {lab ptn : Array Nat} {active numcells : Nat}
-    (hnn : ctx.n ≤ ptn.size) (hs : lab.size = ptn.size)
+theorem refine_refInv {ctx : Ctx n} {level : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat}
+    (hnn : n ≤ ptn.size) (hs : lab.size = ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level) :
     RefInv level lab ptn (refine ctx level lab ptn active
       numcells) := by
   rw [refine]
-  have h1 := refInv_refineLoop (lab0 := lab) (ptn0 := ptn) hnn hs
-    hend (4 * ctx.n + 8)
+  have h1 := refInv_refineLoop (ctx := ctx) (lab0 := lab) (ptn0 := ptn) hnn hs
+    hend (4 * n + 8)
     { lab := lab, ptn := ptn, active := active,
       numcells := numcells, hint := 0, maxpos := 0,
       longcode := numcells }
@@ -702,10 +702,10 @@ theorem bcount_pos_of_boundary {ptn : Array Nat} {level nn q : Nat}
 
 /-- The spec key's rows are the leaf rows of a labelling that fills
 every cell of this node's partition with the same vertices. -/
-theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
+theorem specNode_achieved {ctx : Ctx n}
     (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat),
+      (active : VSet n) (numcells : Nat),
       NodeOk n level lab ptn active →
       n + 1 ≤ level + fuel →
       level ≤ bcount ptn level n →
@@ -721,9 +721,9 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
     have hlevn : level ≤ n := by
       have := bcount_le ptn level n
       omega
-    have hstR := refine_stOk (ctx := ctx) hn (level := level)
+    have hstR := refine_stOk (ctx := ctx) (active := active) (level := level)
       (numcells := numcells) hok.labSize hok.labOk hok.ptnSize
-      hok.act hok.ptnEnd
+      hok.ptnEnd
     have hRvals : ∀ q : Nat,
         (refine ctx level lab ptn active numcells).ptn[q]! ≤ level ∨ (refine ctx level lab ptn active numcells).ptn[q]! = n + 2 := by
       intro q
@@ -737,9 +737,9 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
       (lab := lab) (ptn := ptn) (active := active)
       (numcells := numcells) (by rw [hok.ptnSize]; omega)
       (by rw [hok.labSize, hok.ptnSize]) hok.ptnEnd
-    rcases hdisc : discreteAt (refine ctx level lab ptn active numcells).ptn level ctx.n with _ | _
+    rcases hdisc : discreteAt (refine ctx level lab ptn active numcells).ptn level n with _ | _
     · -- non-discrete: recurse into the maximal child
-      obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts hn
+      obtain ⟨p, hptc, hp12, hpb, hicp, hce⟩ := targetcell_facts (ctx := ctx)
         (tcLevel := tcLevel) (refine ctx level lab ptn active numcells).lab hstR.ptnSize hstR.ptnEnd hdisc
       have hM1 : (specMaketargetcell ctx (refine ctx level lab ptn active numcells).lab (refine ctx level lab ptn active numcells).ptn level
           tcLevel).1 = p.1 := hptc
@@ -813,15 +813,15 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
           (hicp.2.2.1 p.1 (Nat.le_refl p.1) (by omega))
           (by omega) (by rw [hstR.ptnSize]; omega)
         omega
-      obtain ⟨llab, hlsz, hlperm, hlrows⟩ := specNode_achieved hn
+      obtain ⟨llab, hlsz, hlperm, hlrows⟩ := specNode_achieved (ctx := ctx)
         tcLevel fuel (level + 1)
-        (breakout (refine ctx level lab ptn active numcells).lab
+        (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1
-        (breakout (refine ctx level lab ptn active numcells).lab
+        (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.1
-        (breakout (refine ctx level lab ptn active numcells).lab
+        (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.2
         ((refine ctx level lab ptn active numcells).numcells + 1) hchildOk (by omega) hbcChild
@@ -853,13 +853,13 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
             have h2 := hstR.ptnSize
             omega)
         have hs2 : cellsPerm (refine ctx level lab ptn active numcells).ptn level (refine ctx level lab ptn active numcells).lab
-            (breakout (refine ctx level lab ptn active numcells).lab
+            (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 := by
           refine cellsPerm_of_confined (A := p.1)
             (lenA := p.2 + 1 - p.1) hicp (Nat.le_refl p.1)
             (Nat.le_refl _) ?_ ?_
-          · have hsg : segN (breakout (refine ctx level lab ptn active numcells).lab
+          · have hsg : segN (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 p.1 (p.2 + 1 - p.1) =
                 (refine ctx level lab ptn active numcells).lab[p.1 + o]! ::
@@ -875,7 +875,7 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
             · exact breakout_go_outside _ _ _ _ _ hq
             · exact breakout_go_outside_right _ (p.2 + 1 - p.1) _
                 _ _ hwit _ hq
-        have hs2' : cellsPerm ptn level (refine ctx level lab ptn active numcells).lab (breakout (refine ctx level lab ptn active numcells).lab
+        have hs2' : cellsPerm ptn level (refine ctx level lab ptn active numcells).lab (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 := by
           refine cellsPerm_coarsen (ptnF := (refine ctx level lab ptn active numcells).ptn)
@@ -890,10 +890,10 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
               have h2 := hstR.ptnSize
               omega))
           rw [hbo.1, hstR.labSize, hstR.ptnSize]
-        have hs3 : cellsPerm ptn level (breakout (refine ctx level lab ptn active numcells).lab
+        have hs3 : cellsPerm ptn level (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1 llab := by
-          refine cellsPerm_coarsen (ptnF := (breakout (refine ctx level lab ptn active numcells).lab
+          refine cellsPerm_coarsen (ptnF := (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).2.1)
             (levF := level + 1) ?_ ?_ ?_ hlperm hchildOk.ptnEnd
@@ -903,7 +903,7 @@ theorem specNode_achieved {ctx : Ctx} (hn : ctx.n = n)
             have h1 := hchildOk.ptnSize
             have h2 := hok.ptnSize
             omega
-          · show (breakout (refine ctx level lab ptn active numcells).lab
+          · show (breakout n (refine ctx level lab ptn active numcells).lab
         (refine ctx level lab ptn active numcells).ptn (level + 1) p.1
         (refine ctx level lab ptn active numcells).lab[p.1 + o]!).1.size =
               ((refine ctx level lab ptn active numcells).ptn.set! p.1 (level + 1)).size
@@ -1270,7 +1270,7 @@ theorem label_of_perm_range {llab : Array Nat} (hsz : llab.size = n)
 
 /-- A form with a key's rows and the sorted colours is the form of
 that key. -/
-theorem form_eq_formOfKey {G F : Colored n k} {rows : List Nat}
+theorem form_eq_formOfKey {G F : Colored n k} {rows : List (VSet n)}
     (hrows : rowsOf F = rows.toArray)
     (hcols : ∀ (i : Nat) (hi : i < n),
       (F.coloring.cells[i]'(by omega)).val =
@@ -1279,26 +1279,26 @@ theorem form_eq_formOfKey {G F : Colored n k} {rows : List Nat}
   refine Colored.ext ?_ ?_
   · intro i j
     have hadjL : F.graph.adj i j =
-        (rows[i.val]!).testBit j.val := by
+        (rows[i.val]!).mem j.val := by
       have h1 : F.graph.adj i j =
-          ((rowsOf F)[i.val]!).testBit j.val := by
-        rw [getElem!_rowsOf _ i.isLt, testBit_rowOf_lt _ i.isLt
+          ((rowsOf F)[i.val]!).mem j.val := by
+        rw [getElem!_rowsOf _ i.isLt, mem_rowOf_lt _ i.isLt
           j.isLt]
       rw [h1, hrows, List.getElem!_toArray]
     have hadjLs : F.graph.adj j i =
-        (rows[j.val]!).testBit i.val := by
+        (rows[j.val]!).mem i.val := by
       have h1 : F.graph.adj j i =
-          ((rowsOf F)[j.val]!).testBit i.val := by
-        rw [getElem!_rowsOf _ j.isLt, testBit_rowOf_lt _ j.isLt
+          ((rowsOf F)[j.val]!).mem i.val := by
+        rw [getElem!_rowsOf _ j.isLt, mem_rowOf_lt _ j.isLt
           i.isLt]
       rw [h1, hrows, List.getElem!_toArray]
-    have hsym : (rows[j.val]!).testBit i.val =
-        (rows[i.val]!).testBit j.val := by
+    have hsym : (rows[j.val]!).mem i.val =
+        (rows[i.val]!).mem j.val := by
       rw [← hadjL, ← hadjLs]
       exact (Hex.Graph.adj_symm _ i j).symm
     have hR : (formOfKey G rows).graph.adj i j =
-        ((rows[i.val]!).testBit j.val &&
-          (rows[j.val]!).testBit i.val && i.val != j.val) := by
+        ((rows[i.val]!).mem j.val &&
+          (rows[j.val]!).mem i.val && i.val != j.val) := by
       simp only [formOfKey, Hex.Graph.adj_ofAdj]
     rw [hadjL, hR, hsym]
     rcases Decidable.em (i.val = j.val) with he | he
@@ -1309,7 +1309,7 @@ theorem form_eq_formOfKey {G F : Colored n k} {rows : List Nat}
       simp
     · have hne : (i.val != j.val) = true := by simpa using he
       rw [hne]
-      rcases hb : (rows[i.val]!).testBit j.val with _ | _ <;> simp
+      rcases hb : (rows[i.val]!).mem j.val with _ | _ <;> simp
   · intro i
     refine Fin.eq_of_val_eq ?_
     have h1 := hcols i.val i.isLt
@@ -1335,14 +1335,14 @@ theorem specCanon_iso (G : Colored n k) :
       rw [size_initPtn] at h1
       exact h1
     obtain ⟨llab, hlsz, hlcp, hlrows⟩ := specNode_achieved
-      (ctx := { n := n, g := rowsOf G }) rfl 100 n 1
+      (ctx := { g := rowsOf G }) 100 n 1
       (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length hok
       (by show n + 1 ≤ 1 + n; omega) hbc
     have hkrows : (canonSpecKey G).rows =
-        leafRows { n := n, g := rowsOf G } llab := by
+        leafRows { g := rowsOf G } llab := by
       rw [canonSpecKey, canonSpec, ite_eq_right (by simp; omega)]
       exact hlrows
     obtain ⟨l, hag⟩ := label_of_perm_range hlsz

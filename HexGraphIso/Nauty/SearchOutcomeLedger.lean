@@ -25,35 +25,33 @@ variable {n k : Nat}
 
 /-- A checked scatter between two reached labellings yields a valid
 explicit autos-ledger entry at the initial coloured partition. -/
-theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx}
+theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx n}
     {lab₁ lab₂ γ : Array Nat}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hn0 : 0 < n)
     (hs₁ : lab₁.size = n) (hr₁ : CellsReach G lab₁)
-    (hs₂ : lab₂.size = n) (hr₂ : CellsReach G lab₂)
+    (hr₂ : CellsReach G lab₂)
     (hsc : ∀ i, i < n → γ[lab₁[i]!]! = lab₂[i]!)
-    (hca : checkAutom ctx.g γ ctx.n = true) :
+    (hca : checkAutom ctx.g γ = true) :
     PairOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
-      (fmperm γ ctx.n).1 (fmperm γ ctx.n).2 := by
-  subst hn
+      (initialPartition G).1 1
+      (fmperm γ n).1 (fmperm γ n).2 := by
   have hroot := initial_nodeOk G hn0
-  apply pairOk_fmperm hbg hroot.labOk hroot.labSize hroot.ptnSize
+  apply pairOk_fmperm hroot.labOk hroot.labSize hroot.ptnSize
     hroot.ptnEnd hca
   exact cellStab_of_scatter hroot.ptnSize hroot.labSize hs₁
     hroot.ptnEnd hr₁ hr₂ hsc
 
 /-- The finite array represented by a vertex renaming. -/
-@[expose] def renamingArray (n : Nat) (sigma : Renaming n) : Array Nat :=
+@[expose] def renamingArray (sigma : Renaming n) : Array Nat :=
   .ofFn fun i : Fin n => sigma i
 
 theorem renamingArray_size (sigma : Renaming n) :
-    (renamingArray n sigma).size = n := by
+    (renamingArray sigma).size = n := by
   simp [renamingArray]
 
 theorem renamingArray_get (sigma : Renaming n) {v : Nat} (hv : v < n) :
-    (renamingArray n sigma)[v]! = sigma v := by
+    (renamingArray sigma)[v]! = sigma v := by
   rw [getElem!_pos _ _ (by rw [renamingArray_size]; exact hv)]
   simp [renamingArray]
 
@@ -65,16 +63,16 @@ private theorem map_range_get (a : Array Nat) (hs : a.size = n) :
   simp
 
 /-- A row-preserving renaming passes the concrete automorphism checker. -/
-theorem checkAutom_renaming {ctx : Ctx} (sigma : Renaming ctx.n)
+theorem checkAutom_renaming {ctx : Ctx n} (sigma : Renaming n)
     (hrows : RowsMap sigma ctx.g ctx.g) :
-    checkAutom ctx.g (renamingArray ctx.n sigma) ctx.n = true := by
+    checkAutom ctx.g (renamingArray sigma) = true := by
   have hs := renamingArray_size sigma
-  have hok : LabOk (renamingArray ctx.n sigma) ctx.n := by
+  have hok : LabOk (renamingArray sigma) n := by
     intro i hi
     rw [hs] at hi
     rw [renamingArray_get sigma hi]
     exact (sigma.maps i).mp hi
-  have hinj : LabInj (renamingArray ctx.n sigma) ctx.n := by
+  have hinj : LabInj (renamingArray sigma) n := by
     intro i j hi hj heq
     rw [renamingArray_get sigma hi, renamingArray_get sigma hj] at heq
     exact sigma.inj _ _ heq
@@ -96,30 +94,29 @@ theorem checkAutom_renaming {ctx : Ctx} (sigma : Renaming ctx.n)
 equal semantic child subtrees.  This packages the geometric flip as the
 concrete checked, cell-stabilizing array expected by `childKey_of_carried`.
 -/
-theorem childKey_eq_of_subtree {ctx : Ctx} {st : RefineSt}
+theorem childKey_eq_of_subtree {ctx : Ctx n} {st : RefineSt n}
     {tcLevel fuel level tc len numcells oU oV : Nat}
     (hS : SubtreeOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
-    (hrange : tc + len ≤ ctx.n) (hoU : oU < len) (hoV : oV < len)
-    (hfuel : level + 1 + fuel ≤ ctx.n + 1) :
+    (hrange : tc + len ≤ n) (hoU : oU < len) (hoV : oV < len)
+    (hfuel : level + 1 + fuel ≤ n + 1) :
     childKey ctx tcLevel fuel level st.lab st.ptn tc numcells oV =
       childKey ctx tcLevel fuel level st.lab st.ptn tc numcells oU := by
   rcases Decidable.em (oU = oV) with rfl | hUV
   · rfl
-  have hmem : (tc, tc + len - 1) ∈ cells st.ptn level ctx.n :=
+  have hmem : (tc, tc + len - 1) ∈ cells st.ptn level n :=
     mem_cells_of_isCell (by rw [hS.it.ok.ptnSize]; exact Nat.le_refl _)
       hS.it.ok.ptnEnd
       hcell (by omega) (by rw [hS.it.ok.ptnSize]; exact hrange)
   have hdiff : tc + len - 1 - tc = len - 1 := by omega
   obtain ⟨sigma, hrows, hperm, hmap⟩ :=
-    flipData_of_subtreeOk (oU := oU) (oV := oV) hS hgsz hgb hsymm hloop hmem
+    flipData_of_subtreeOk (oU := oU) (oV := oV) hS hgsz hsymm hloop hmem
       (by omega) (by rw [hdiff]; omega) (by rw [hdiff]; omega) hUV
-  let gamma := renamingArray ctx.n sigma
+  let gamma := renamingArray sigma
   have hstab : CellStab st.ptn level st.lab gamma := by
     change cellsPerm st.ptn level st.lab
       (st.lab.map fun w => gamma[w]!)
@@ -129,10 +126,10 @@ theorem childKey_eq_of_subtree {ctx : Ctx} {st : RefineSt}
         renamingArray_get sigma hw
     rw [hmapLab]
     exact hperm.cells
-  apply childKey_of_carried rfl hgsz (checkAutom_renaming sigma hrows)
+  apply childKey_of_carried hgsz (checkAutom_renaming sigma hrows)
     tcLevel fuel level hstab hS.it.ok.labSize hS.it.ok.labOk
     hS.it.ok.ptnSize hS.it.ok.ptnEnd (fun q => by
-      rcases Decidable.em (q < ctx.n) with hq | hq
+      rcases Decidable.em (q < n) with hq | hq
       · exact hS.it.vals q hq
       · left
         rw [getElem!_oob (by rw [hS.it.ok.ptnSize]; omega)]
@@ -149,18 +146,17 @@ theorem childKey_eq_of_subtree {ctx : Ctx} {st : RefineSt}
 subtree below any chosen member of the specification target cell.  The
 target is non-singleton, and the flip theorem makes every entry in its
 finite maximum equal. -/
-theorem nodeKey_eq_child_of_subtree {ctx : Ctx} {st : SearchSt}
+theorem nodeKey_eq_child_of_subtree {ctx : Ctx n} {st : SearchSt n}
     {tcLevel fuel level numcells tc len o : Nat} {codes : List Nat}
     (hS : SubtreeOk ctx level
       (refine ctx level st.lab st.ptn st.active numcells))
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hdisc : discreteAt
       (refine ctx level st.lab st.ptn st.active numcells).ptn
-      level ctx.n = false)
+      level n = false)
     (hsize : (specMaketargetcell ctx
       (refine ctx level st.lab st.ptn st.active numcells).lab
       (refine ctx level st.lab st.ptn st.active numcells).ptn
@@ -172,8 +168,8 @@ theorem nodeKey_eq_child_of_subtree {ctx : Ctx} {st : SearchSt}
     (hcell : IsCell
       (refine ctx level st.lab st.ptn st.active numcells).ptn
       level tc len)
-    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n) (ho : o < len)
-    (hfuel : level + 1 + fuel ≤ ctx.n + 1) :
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ n) (ho : o < len)
+    (hfuel : level + 1 + fuel ≤ n + 1) :
     nodeKey ctx tcLevel (fuel + 1) level codes st numcells =
       sweepKey ctx tcLevel fuel level
         (codes ++ [(refine ctx level st.lab st.ptn st.active
@@ -189,7 +185,7 @@ theorem nodeKey_eq_child_of_subtree {ctx : Ctx} {st : SearchSt}
     intro j hj
     apply congrArg (prefixKey full)
     exact childKey_eq_of_subtree (tcLevel := tcLevel)
-      (numcells := r.numcells) (oU := o) (oV := j) hS hgsz hgb
+      (numcells := r.numcells) (oU := o) (oV := j) hS hgsz
       hsymm hloop hcell hlen hrange ho hj hfuel
   have hchildren : nodeKey ctx tcLevel (fuel + 1) level codes st numcells =
       keysMax (key 0) ((List.range (len - 1)).map fun j => key (j + 1)) := by
@@ -220,24 +216,23 @@ theorem nodeKey_eq_child_of_subtree {ctx : Ctx} {st : SearchSt}
 /-- The implicit pair recorded at a small-cell node is valid at the root
 partition.  Its missing vertices are realized by the node's flip
 automorphisms, while singleton cells supply the fixed set. -/
-theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
-    {level : Nat} {r : RefineSt}
-    (hn0 : 0 < ctx.n) (hlevel : 1 <= level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : forall v, v < ctx.n -> ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : forall u v, u < ctx.n -> v < ctx.n ->
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : forall v, v < ctx.n -> (ctx.g[v]!).testBit v = false)
+theorem pairOk_fmptn_of_subtree {ctx : Ctx n} {G : Colored n k}
+    {level : Nat} {r : RefineSt n}
+    (hn0 : 0 < n) (hlevel : 1 <= level)
+    (hgsz : ctx.g.size = n)
+    (hsymm : forall u v, u < n -> v < n ->
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : forall v, v < n -> (ctx.g[v]!).mem v = false)
     (hS : SubtreeOk ctx level r)
     (hreach : CellsReach G r.lab)
     (hinit : forall q : Nat,
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)[q]! <= 1 ->
+      (initPtn n (n + 2) (initialPartition G).2)[q]! <= 1 ->
         r.ptn[q]! <= 1) :
     PairOk ctx.g
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
-      (fmptn r.lab r.ptn level ctx.n).1
-      (fmptn r.lab r.ptn level ctx.n).2 := by
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1
+      (fmptn r.lab r.ptn level n).1
+      (fmptn r.lab r.ptn level n).2 := by
   have hroot := initial_nodeOk G hn0
   apply pairOk_fmptn
   · intro v hv
@@ -254,9 +249,9 @@ theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
       subst q
       omega
     obtain ⟨sigma, hrows, hperm, hmap⟩ :=
-      flipData_of_subtreeOk hS hgsz hgb hsymm hloop hcell
+      flipData_of_subtreeOk hS hgsz hsymm hloop hcell
         (by omega) (by omega) (by omega) hoff
-    let gamma := renamingArray ctx.n sigma
+    let gamma := renamingArray sigma
     refine ⟨gamma, checkAutom_renaming sigma hrows, ?_, ?_, ?_⟩
     · intro u hu hfix
       obtain ⟨c, hcellc, hcu⟩ := fmptn_fix hfix
@@ -276,10 +271,10 @@ theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
       rw [← hcu]
       exact heq.symm
     · have hrootperm : cellsPerm
-          (initPtn ctx.n (ctx.n + 2) (initialPartition G).2) 1
+          (initPtn n (n + 2) (initialPartition G).2) 1
           r.lab (mapSt sigma r).lab := by
         apply cellsPerm_coarsen
-            (ptnC := initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+            (ptnC := initPtn n (n + 2) (initialPartition G).2)
             (ptnF := r.ptn) (levC := 1) (levF := level)
         · rw [size_initPtn, hS.it.ok.ptnSize]
         · rw [hS.it.ok.labSize, hS.it.ok.ptnSize]
@@ -305,102 +300,97 @@ theorem pairOk_fmptn_of_subtree {ctx : Ctx} {G : Colored ctx.n k}
 
 /-- A guard-passing refined node supplies the pair needed to carry the
 cheap-boundary invariant into its children. -/
-theorem CheapOk.nextOfSubtree {ctx : Ctx} {G : Colored ctx.n k}
-    {level : Nat} {st : SearchSt} {r : RefineSt}
+theorem CheapOk.nextOfSubtree {ctx : Ctx n} {G : Colored n k}
+    {level : Nat} {st : SearchSt n} {r : RefineSt n}
     (h : CheapOk ctx (initialPartition G).1
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2) level st)
-    (hn0 : 0 < ctx.n) (hlevel : 1 ≤ level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+      (initPtn n (n + 2) (initialPartition G).2) level st)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hS : SubtreeOk ctx level r) (hreach : CellsReach G r.lab)
     (hinit : ∀ q : Nat,
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)[q]! ≤ 1 →
+      (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 →
         r.ptn[q]! ≤ 1)
     (hlab : st.lab = r.lab) (hptn : st.ptn = r.ptn) :
     CheapOk ctx (initialPartition G).1
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
+      (initPtn n (n + 2) (initialPartition G).2)
       (level + 1) st := by
   apply h.next
   intro hncl
   rw [hncl, hlab, hptn]
-  exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hgb hsymm hloop hS
+  exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hsymm hloop hS
     hreach hinit
 
 /-- Admitting a checked scatter between reached labellings preserves the
 root automorphism ledger. -/
-theorem AutosOk.pushFmperm {ctx : Ctx} {G : Colored n k}
-    {st : SearchSt} {lab₁ lab₂ gamma : Array Nat}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem AutosOk.pushFmperm {ctx : Ctx n} {G : Colored n k}
+    {st : SearchSt n} {lab₁ lab₂ gamma : Array Nat}
+    (hn0 : 0 < n)
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (hs₁ : lab₁.size = n) (hr₁ : CellsReach G lab₁)
-    (hs₂ : lab₂.size = n) (hr₂ : CellsReach G lab₂)
+    (hr₂ : CellsReach G lab₂)
     (hsc : ∀ i, i < n → gamma[lab₁[i]!]! = lab₂[i]!)
-    (hca : checkAutom ctx.g gamma ctx.n = true) :
+    (hca : checkAutom ctx.g gamma = true) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
-      (pushAuto st (fmperm gamma ctx.n)).autos := by
+      (initialPartition G).1 1
+      (pushAuto st (fmperm gamma n)).autos := by
   apply autosOk_pushAuto hprev
-  exact pairOk_fmperm_of_reach hn hn0 hgb hs₁ hr₁ hs₂ hr₂ hsc hca
+  exact pairOk_fmperm_of_reach hn0 hs₁ hr₁ hr₂ hsc hca
 
 /-- Recording the scan-free pair justified by a small-cell subtree
 preserves the root automorphism ledger. -/
-theorem AutosOk.pushFmptn {ctx : Ctx} {G : Colored ctx.n k}
-    {st : SearchSt} {level : Nat} {r : RefineSt}
-    (hn0 : 0 < ctx.n) (hlevel : 1 ≤ level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+theorem AutosOk.pushFmptn {ctx : Ctx n} {G : Colored n k}
+    {st : SearchSt n} {level : Nat} {r : RefineSt n}
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hprev : AutosOk ctx.g
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1 st.autos)
     (hS : SubtreeOk ctx level r) (hreach : CellsReach G r.lab)
     (hinit : ∀ q : Nat,
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)[q]! ≤ 1 →
+      (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 →
         r.ptn[q]! ≤ 1) :
     AutosOk ctx.g
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
-      (pushAuto st (fmptn r.lab r.ptn level ctx.n)).autos := by
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1
+      (pushAuto st (fmptn r.lab r.ptn level n)).autos := by
   apply autosOk_pushAuto hprev
-  exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hgb hsymm hloop hS
+  exact pairOk_fmptn_of_subtree hn0 hlevel hgsz hsymm hloop hS
     hreach hinit
 
 /-- A successful code-one admission preserves the root automorphism
 ledger. -/
-theorem AutosOk.processnodeAuto {ctx : Ctx} {G : Colored n k}
-    {level numcells : Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+theorem AutosOk.processnodeAuto {ctx : Ctx n} {G : Colored n k}
+    {level numcells : Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hpass : isautom ctx
-      (firstScatter ctx.n st.firstlab st.lab) = true) :
+      (firstScatter n st.firstlab st.lab) = true) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
-  subst n
   have hinj := labInj_of_reach hrefs.firstSize hn0 hrefs.firstReach
   have hfirstOk := labOk_of_reach hrefs.firstSize hrefs.firstReach
-  have hsc : ∀ i, i < ctx.n →
-      (firstScatter ctx.n st.firstlab st.lab)[st.firstlab[i]!]! =
+  have hsc : ∀ i, i < n →
+      (firstScatter n st.firstlab st.lab)[st.firstlab[i]!]! =
         st.lab[i]! := by
     intro i hi
     apply firstScatter_get
@@ -408,42 +398,40 @@ theorem AutosOk.processnodeAuto {ctx : Ctx} {G : Colored n k}
       (fun j hj => hfirstOk j (by rw [hrefs.firstSize]; omega))
     omega
   have hca : checkAutom ctx.g
-      (firstScatter ctx.n st.firstlab st.lab) ctx.n = true := by
+      (firstScatter n st.firstlab st.lab) = true := by
     apply checkAutom_scatter_of_isautom
-      (firstScatter_size ctx.n st.firstlab st.lab)
+      (firstScatter_size n st.firstlab st.lab)
       hrefs.firstSize
       (isPerm_of_cellsReach hrefs.firstSize hn0 hrefs.firstReach)
       hok.labSize (isPerm_of_cellsReach hok.labSize hn0 hok.reach)
-      (fun i hi => hsc i (by omega)) hsymm hloop hgb hpass
+      (fun i hi => hsc i (by omega)) hsymm hloop hpass
   rw [processnode_auto_autos heq hsent hnc hpass]
-  exact hprev.pushFmperm rfl hn0 hgb hrefs.firstSize hrefs.firstReach
-    hok.labSize hok.reach hsc hca
+  exact hprev.pushFmperm hn0 hrefs.firstSize hrefs.firstReach
+    hok.reach hsc hca
 
 /-- A successful code-two admission preserves the root automorphism
 ledger. -/
-theorem AutosOk.processnodeRowTie {ctx : Ctx} {G : Colored n k}
-    {level numcells : Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem AutosOk.processnodeRowTie {ctx : Ctx n} {G : Colored n k}
+    {level numcells : Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
     (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true) (hcc : st.compCanon = 0)
+    (hnc : (numcells == n) = true) (hcc : st.compCanon = 0)
     (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
-  subst n
   have hcanonOk := labOk_of_reach hrefs.canonSize hrefs.canonReach
   have hinj := labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach
-  have hsc : ∀ i, i < ctx.n →
-      (canonScatter ctx.n st.canonlab st.lab)[st.canonlab[i]!]! =
+  have hsc : ∀ i, i < n →
+      (canonScatter n st.canonlab st.lab)[st.canonlab[i]!]! =
         st.lab[i]! := by
     intro i hi
     rw [canonScatter_eq_firstScatter]
@@ -452,54 +440,54 @@ theorem AutosOk.processnodeRowTie {ctx : Ctx} {G : Colored n k}
       (fun j hj => hcanonOk j (by rw [hrefs.canonSize]; omega))
     omega
   have hca : checkAutom ctx.g
-      (canonScatter ctx.n st.canonlab st.lab) ctx.n = true := by
+      (canonScatter n st.canonlab st.lab) = true := by
     apply checkAutom_scatter_of_leafRows_eq
       (by rw [canonScatter_eq_firstScatter]; exact
-        firstScatter_size ctx.n st.canonlab st.lab)
+        firstScatter_size n st.canonlab st.lab)
       hrefs.canonSize
       (isPerm_of_cellsReach hrefs.canonSize hn0 hrefs.canonReach)
       hok.labSize (isPerm_of_cellsReach hok.labSize hn0 hok.reach)
-      (fun i hi => hsc i (by omega)) hgb
+      (fun i hi => hsc i (by omega))
       (rows_eq_of_testcanlab_tie hcanong htie)
   rw [processnode_rowTie_autos hef hnc hcc hge htie]
-  exact hprev.pushFmperm rfl hn0 hgb hrefs.canonSize hrefs.canonReach
-    hok.labSize hok.reach hsc hca
+  exact hprev.pushFmperm hn0 hrefs.canonSize hrefs.canonReach
+    hok.reach hsc hca
 
 /-- The shared code-three/code-four tail preserves the ledger whenever
 its optional implicit pair is valid. -/
-theorem AutosOk.pruneAutos {ctx : Ctx} {G : Colored n k}
-    {level : Nat} {st : SearchSt}
+theorem AutosOk.pruneAutos {ctx : Ctx n} {G : Colored n k}
+    {level : Nat} {st : SearchSt n}
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (hpair : level ≠ st.noncheaplevel →
       PairOk ctx.g
         (initPtn n (n + 2) (initialPartition G).2)
-        (initialPartition G).1 1 ctx.n
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2) :
+        (initialPartition G).1 1
+        (fmptn st.lab st.ptn st.noncheaplevel n).1
+        (fmptn st.lab st.ptn st.noncheaplevel n).2) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n (pruneAutos ctx level st) := by
+      (initialPartition G).1 1 (pruneAutos level st) := by
   unfold Hex.GraphIso.Nauty.pruneAutos
   split
   · exact hprev
   · exact autosOk_pushAuto hprev (hpair (by assumption))
 
-private theorem processnode_plain_autos {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt}
+private theorem processnode_plain_autos {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n}
     (hfast : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0))
-    (hnc : ¬((numcells == ctx.n) = true)) :
+    (hnc : ¬((numcells == n) = true)) :
     (processnode ctx level numcells st).2.autos = st.autos := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.autos)]
+    apply_ite (fun x : Int × SearchSt n => x.2.autos)]
   simp [hfast, hnc]
 
 /-- A leaf branch that leaves the pair array alone preserves its bounded
 workspace. -/
-private theorem WorkspaceOk.processSame {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt} (h : WorkspaceOk st)
+private theorem WorkspaceOk.processSame {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n} (h : WorkspaceOk st)
     (hautos : (processnode ctx level numcells st).2.autos = st.autos) :
     WorkspaceOk (processnode ctx level numcells st).2 := by
   apply h.ofFields
@@ -507,8 +495,8 @@ private theorem WorkspaceOk.processSame {ctx : Ctx}
   · exact hautos
 
 /-- A leaf branch that records one pair preserves its bounded workspace. -/
-private theorem WorkspaceOk.processPush {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt} {pair : Nat × Nat}
+private theorem WorkspaceOk.processPush {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n} {pair : VSet n × VSet n}
     (h : WorkspaceOk st)
     (hautos : (processnode ctx level numcells st).2.autos =
       (pushAuto st pair).autos) :
@@ -519,23 +507,23 @@ private theorem WorkspaceOk.processPush {ctx : Ctx}
 
 /-- A successful first-path generator admission preserves the bounded
 workspace. -/
-theorem WorkspaceOk.processAuto {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt} (h : WorkspaceOk st)
+theorem WorkspaceOk.processAuto {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n} (h : WorkspaceOk st)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hpass : isautom ctx
-      (firstScatter ctx.n st.firstlab st.lab) = true) :
+      (firstScatter n st.firstlab st.lab) = true) :
     WorkspaceOk (processnode ctx level numcells st).2 := by
   apply h.processPush
   exact processnode_auto_autos heq hsent hnc hpass
 
 /-- The optional pair admission in the shared prune tail stays within the
 configured workspace capacity. -/
-private theorem WorkspaceOk.processPrune {ctx : Ctx}
-    {level numcells : Nat} {st : SearchSt} (h : WorkspaceOk st)
+private theorem WorkspaceOk.processPrune {ctx : Ctx n}
+    {level numcells : Nat} {st : SearchSt n} (h : WorkspaceOk st)
     (hautos : (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st) :
+      pruneAutos level st) :
     WorkspaceOk (processnode ctx level numcells st).2 := by
   constructor
   · rw [WorkspaceOk.processCap]
@@ -545,12 +533,12 @@ private theorem WorkspaceOk.processPrune {ctx : Ctx}
     split
     · exact h.2
     · simpa only [WorkspaceOk.pushCap] using (WorkspaceOk.push
-        (pair := fmptn st.lab st.ptn st.noncheaplevel ctx.n) h).2
+        (pair := fmptn st.lab st.ptn st.noncheaplevel n) h).2
 
 /-- Off the first path, every comparison-machine leaf branch preserves
 the bounded workspace. -/
-theorem WorkspaceOk.processOff {ctx : Ctx} {n : Nat}
-    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
+theorem WorkspaceOk.processOff {ctx : Ctx n}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt n}
     (h : WorkspaceOk st)
     (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
@@ -559,10 +547,10 @@ theorem WorkspaceOk.processOff {ctx : Ctx} {n : Nat}
   have hef' : st.eqlevFirst ≠ level := fun he => hef (beq_iff_eq.mpr he)
   rcases hcode.tri with hzero | ⟨j, hj1, hjc, hjb, heqlev, hpre, hcase⟩
   · have hcc : st.compCanon = 0 := hzero.1
-    rcases hnc : (numcells == ctx.n) with _ | _
+    rcases hnc : (numcells == n) with _ | _
     · apply h.processSame
       exact processnode_plain_autos (by rw [hcc]; omega) (by simp [hnc])
-    · have hnc' : (numcells == ctx.n) = true := hnc
+    · have hnc' : (numcells == n) = true := hnc
       rcases Decidable.em (level < st.canonlevel) with hlt | hge
       · apply h.processPrune
         exact processnode_shortInstall_autos hef hnc' hcc hlt
@@ -580,7 +568,7 @@ theorem WorkspaceOk.processOff {ctx : Ctx} {n : Nat}
       apply h.processPrune
       exact processnode_fast_autos ⟨hef', by rw [hcc]; omega⟩
     · have hcc : st.compCanon = 1 := hup.1
-      rcases hnc : (numcells == ctx.n) with _ | _
+      rcases hnc : (numcells == n) with _ | _
       · apply h.processSame
         exact processnode_plain_autos (by rw [hcc]; omega) (by simp [hnc])
       · apply h.processPrune
@@ -588,10 +576,10 @@ theorem WorkspaceOk.processOff {ctx : Ctx} {n : Nat}
 
 /-- On a non-discrete node admitted to its child sweep, `processnode`
 performs no state update. -/
-theorem processnode_internal {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_internal {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hgate : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0))
-    (hnc : ¬((numcells == ctx.n) = true)) :
+    (hnc : ¬((numcells == n) = true)) :
     processnode ctx level numcells st = (Int.ofNat level, st) := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
@@ -599,37 +587,36 @@ theorem processnode_internal {ctx : Ctx} {level numcells : Nat}
 
 /-- Off the first path, `processnode` preserves the root ledger in every
 comparison-machine outcome. -/
-theorem AutosOk.processnodeOff {ctx : Ctx} {G : Colored n k}
-    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem AutosOk.processnodeOff {ctx : Ctx n} {G : Colored n k}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
     (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (hpair : level ≠ st.noncheaplevel →
       PairOk ctx.g
         (initPtn n (n + 2) (initialPartition G).2)
-        (initialPartition G).1 1 ctx.n
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2)
+        (initialPartition G).1 1
+        (fmptn st.lab st.ptn st.noncheaplevel n).1
+        (fmptn st.lab st.ptn st.noncheaplevel n).2)
     (hef : ¬((st.eqlevFirst == level) = true)) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
   have hef' : st.eqlevFirst ≠ level := fun he => hef (beq_iff_eq.mpr he)
   have hprune := hprev.pruneAutos hpair
   rcases hcode.tri with hzero | ⟨j, hj1, hjc, hjb, heqlev, hpre, hcase⟩
   · have hcc : st.compCanon = 0 := hzero.1
-    rcases hnc : (numcells == ctx.n) with _ | _
+    rcases hnc : (numcells == n) with _ | _
     · rw [processnode_plain_autos (by rw [hcc]; omega)
           (by simp [hnc])]
       exact hprev
-    · have hnc' : (numcells == ctx.n) = true := hnc
+    · have hnc' : (numcells == n) = true := hnc
       rcases Decidable.em (level < st.canonlevel) with hlt | hge
       · rw [processnode_shortInstall_autos hef hnc' hcc hlt]
         exact hprune
@@ -638,7 +625,7 @@ theorem AutosOk.processnodeOff {ctx : Ctx} {G : Colored n k}
         rcases Int.lt_trichotomy row 0 with hrow | hrow | hrow
         · rw [processnode_rowReject_autos hef hnc' hcc hge hrow]
           exact hprune
-        · exact hprev.processnodeRowTie hn hn0 hgb hok hrefs hcanong
+        · exact hprev.processnodeRowTie hn0 hok hrefs hcanong
             hef hnc' hcc hge hrow
         · rw [processnode_rowInstall_autos hef hnc' hcc hge hrow]
           exact hprune
@@ -647,49 +634,47 @@ theorem AutosOk.processnodeOff {ctx : Ctx} {G : Colored n k}
       rw [processnode_fast_autos ⟨hef', by rw [hcc]; omega⟩]
       exact hprune
     · have hcc : st.compCanon = 1 := hup.1
-      rcases hnc : (numcells == ctx.n) with _ | _
+      rcases hnc : (numcells == n) with _ | _
       · rw [processnode_plain_autos (by rw [hcc]; omega)
             (by simp [hnc])]
         exact hprev
-      · have hnc' : (numcells == ctx.n) = true := hnc
+      · have hnc' : (numcells == n) = true := hnc
         rw [processnode_upInstall_autos hef hnc' hcc]
         exact hprune
 
 /-- A failed first-path generator gate reduces to the ordinary off-path
 ledger proof once canonical-labelling validity discharges the reused
 workspace overwrite. -/
-theorem AutosOk.processnodeGateFail {ctx : Ctx} {G : Colored n k}
-    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem AutosOk.processnodeGateFail {ctx : Ctx n} {G : Colored n k}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
     (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (hpair : level ≠ st.noncheaplevel →
       PairOk ctx.g
         (initPtn n (n + 2) (initialPartition G).2)
-        (initialPartition G).1 1 ctx.n
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2)
+        (initialPartition G).1 1
+        (fmptn st.lab st.ptn st.noncheaplevel n).1
+        (fmptn st.lab st.ptn st.noncheaplevel n).2)
     (heq : (st.eqlevFirst == level) = true)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+      isautom ctx (firstScatter n st.firstlab st.lab) = false) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
-  subst n
   let off := { st with eqlevFirst := level + 1 }
   have hoff : AutosOk ctx.g
-      (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 1
       (processnode ctx level numcells off).2.autos := by
-    apply AutosOk.processnodeOff rfl hn0 hgb (st := off) (cs := cs)
+    apply AutosOk.processnodeOff hn0 (st := off) (cs := cs)
       (bs := bs)
     · exact ⟨hok.labSize, hok.ptnSize, hok.reach, hok.init1, hok.vals,
         hok.count, hok.bc, hok.canon⟩
@@ -697,19 +682,19 @@ theorem AutosOk.processnodeGateFail {ctx : Ctx} {G : Colored n k}
         hrefs.canonReach⟩
     · change CanongInv ctx st.canong st.canonlab st.samerows
       exact hcanong
-    · change CodeCmpInv ctx.n cs bs st.canoncode st.canonlevel
+    · change CodeCmpInv n cs bs st.canoncode st.canonlevel
         st.eqlevCanon st.compCanon
       exact hcode
     · change AutosOk ctx.g
-        (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-        (initialPartition G).1 1 ctx.n st.autos
+        (initPtn n (n + 2) (initialPartition G).2)
+        (initialPartition G).1 1 st.autos
       exact hprev
     · change level ≠ st.noncheaplevel →
         PairOk ctx.g
-          (initPtn ctx.n (ctx.n + 2) (initialPartition G).2)
-          (initialPartition G).1 1 ctx.n
-          (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
-          (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2
+          (initPtn n (n + 2) (initialPartition G).2)
+          (initialPartition G).1 1
+          (fmptn st.lab st.ptn st.noncheaplevel n).1
+          (fmptn st.lab st.ptn st.noncheaplevel n).2
       exact hpair
     · simp [off]
   rw [processnode_gateFail_autos hrefs.canonSize
@@ -720,73 +705,71 @@ theorem AutosOk.processnodeGateFail {ctx : Ctx} {G : Colored n k}
 
 /-- `processnode` preserves the root automorphism ledger in every leaf,
 internal, generator, and comparison-prune outcome. -/
-theorem AutosOk.processnode {ctx : Ctx} {G : Colored n k}
-    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+theorem AutosOk.processnode {ctx : Ctx n} {G : Colored n k}
+    {level numcells : Nat} {cs bs : List Nat} {st : SearchSt n}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
     (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
     (hcode : CodeCmpInv n cs bs st.canoncode st.canonlevel
       st.eqlevCanon st.compCanon)
     (hprev : AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n st.autos)
+      (initialPartition G).1 1 st.autos)
     (hpair : level ≠ st.noncheaplevel →
       PairOk ctx.g
         (initPtn n (n + 2) (initialPartition G).2)
-        (initialPartition G).1 1 ctx.n
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).1
-        (fmptn st.lab st.ptn st.noncheaplevel ctx.n).2) :
+        (initialPartition G).1 1
+        (fmptn st.lab st.ptn st.noncheaplevel n).1
+        (fmptn st.lab st.ptn st.noncheaplevel n).2) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
   rcases heq : (st.eqlevFirst == level) with _ | _
-  · exact hprev.processnodeOff hn hn0 hgb hok hrefs hcanong hcode
+  · exact hprev.processnodeOff hn0 hok hrefs hcanong hcode
       hpair (by
         intro htrue
         rw [heq] at htrue
         exact Bool.noConfusion htrue)
-  · rcases hnc : (numcells == ctx.n) with _ | _
+  · rcases hnc : (numcells == n) with _ | _
     · rw [processnode_plain_autos
         (by intro h; exact h.1 (beq_iff_eq.mp heq)) (by simp [hnc])]
       exact hprev
-    · have hnc' : (numcells == ctx.n) = true := hnc
+    · have hnc' : (numcells == n) = true := hnc
       rcases hsent : (st.firstcode[level + 1]! == codeSentinel) with _ | _
-      · apply hprev.processnodeGateFail hn hn0 hgb hok hrefs hcanong hcode
+      · apply hprev.processnodeGateFail hn0 hok hrefs hcanong hcode
           hpair heq hnc'
         exact Or.inl (by simpa only [beq_eq_false_iff_ne] using hsent)
       · have hsent' : st.firstcode[level + 1]! = codeSentinel :=
           beq_iff_eq.mp hsent
         rcases hpass : isautom ctx
-            (firstScatter ctx.n st.firstlab st.lab) with _ | _
-        · apply hprev.processnodeGateFail hn hn0 hgb hok hrefs hcanong
+            (firstScatter n st.firstlab st.lab) with _ | _
+        · apply hprev.processnodeGateFail hn0 hok hrefs hcanong
             hcode hpair heq hnc'
           exact Or.inr hpass
-        · exact hprev.processnodeAuto hn hn0 hgb hsymm hloop hok hrefs
+        · exact hprev.processnodeAuto hn0 hsymm hloop hok hrefs
             heq hsent' hnc' hpass
 
 /-- The stable search invariant now discharges the last independent
 ledger premise of `processnode`: the runtime bound selects the frozen
 pair carried by `CheapOk`. -/
-theorem RunInv.processnodeAutos {ctx : Ctx} {G : Colored n k}
+theorem RunInv.processnodeAutos {ctx : Ctx n} {G : Colored n k}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (h : RunInv G ctx tcLevel level cs bs fs numcells st best trail)
     (hbound : st.noncheaplevel ≤ level) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
-  apply h.autosOk.processnode hn hn0 hgb hsymm hloop h.searchOk
+  apply h.autosOk.processnode hn0 hsymm hloop h.searchOk
     h.leafRefs h.canongInv h.codeInv
   intro hne
   exact h.cheap.ready hbound hne
@@ -794,21 +777,20 @@ theorem RunInv.processnodeAutos {ctx : Ctx} {G : Colored n k}
 /-- The prepared state also discharges the root-ledger premise of a leaf
 event; unlike `RunInv`, it permits the positive comparison sign produced
 by the immediately preceding code comparison. -/
-theorem RunPrep.processnodeAutos {ctx : Ctx} {G : Colored n k}
+theorem RunPrep.processnodeAutos {ctx : Ctx n} {G : Colored n k}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail)
     (hbound : st.noncheaplevel ≤ level) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 ctx.n
+      (initialPartition G).1 1
       (processnode ctx level numcells st).2.autos := by
-  apply h.autosOk.processnode hn hn0 hgb hsymm hloop h.searchOk
+  apply h.autosOk.processnode hn0 hsymm hloop h.searchOk
     h.leafRefs h.canongInv h.codeInv
   intro hne
   exact h.cheap.ready hbound hne
@@ -817,18 +799,17 @@ theorem RunPrep.processnodeAutos {ctx : Ctx} {G : Colored n k}
 into an event state whose incumbent is exactly the maximum of the old
 incumbent and that leaf.  The return disjunction is retained for the
 node outcome split. -/
-theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
+theorem RunPrep.leaf {ctx : Ctx n} {G : Colored n k}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = cs.length)
     (hbound : st.noncheaplevel ≤ level)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail) :
     ∃ bs' : List Nat,
       RunEvent G ctx tcLevel level cs bs' fs
@@ -889,9 +870,9 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
     ?_, ?_, ?_, ?_, hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
     exact h.firstInv
-  · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
+  · exact h.leafRefs.processnodeGen hn0 hsymm hloop
       h.searchOk h.canongInv h.genTraceOk
-  · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
+  · exact h.processnodeAutos hn0 hsymm hloop hbound
   · exact h.workspace.processOff h.codeInv hef
   · rw [hgcaFirst]
     exact h.firstPositive
@@ -912,20 +893,19 @@ theorem RunPrep.leaf {ctx : Ctx} {G : Colored n k}
 
 /-- A first-path-agreeing leaf whose generator admission guard fails has
 the same exact event invariant as an ordinary compared leaf. -/
-theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
+theorem RunPrep.leafFirst {ctx : Ctx n} {G : Colored n k}
     {tcLevel level numcells : Nat} {cs bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = cs.length)
     (hbound : st.noncheaplevel ≤ level)
     (heq : (st.eqlevFirst == level) = true)
     (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false)
-    (hnc : (numcells == ctx.n) = true)
+      isautom ctx (firstScatter n st.firstlab st.lab) = false)
+    (hnc : (numcells == n) = true)
     (h : RunPrep G ctx tcLevel level cs bs fs numcells st best trail) :
     ∃ bs' : List Nat,
       RunEvent G ctx tcLevel level cs bs' fs
@@ -986,10 +966,10 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
     ?_, ?_, ?_, ?_, hbs', rfl⟩
   · rw [hfirstCode, heqFirst]
     exact h.firstInv
-  · exact h.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
+  · exact h.leafRefs.processnodeGen hn0 hsymm hloop
       h.searchOk h.canongInv h.genTraceOk
-  · exact h.processnodeAutos hn hn0 hgb hsymm hloop hbound
-  · let off : SearchSt := { st with eqlevFirst := cs.length + 1 }
+  · exact h.processnodeAutos hn0 hsymm hloop hbound
+  · let off : SearchSt n := { st with eqlevFirst := cs.length + 1 }
     have hoff : WorkspaceOk off := h.workspace.ofFields rfl rfl
     have hcodeOff : CodeCmpInv n cs bs off.canoncode off.canonlevel
         off.eqlevCanon off.compCanon := by
@@ -1000,14 +980,11 @@ theorem RunPrep.leafFirst {ctx : Ctx} {G : Colored n k}
       simp [off]
     apply hw.ofFields
     · rw [WorkspaceOk.processCap, WorkspaceOk.processCap]
-    · have hcanonSize : st.canonlab.size = ctx.n := by
-        rw [hn]
+    · have hcanonSize : st.canonlab.size = n := by
         exact h.leafRefs.canonSize
-      have hcanonOk : LabOk st.canonlab ctx.n := by
-        rw [hn]
+      have hcanonOk : LabOk st.canonlab n := by
         exact labOk_of_reach h.leafRefs.canonSize h.leafRefs.canonReach
-      have hcanonInj : LabInj st.canonlab ctx.n := by
-        rw [hn]
+      have hcanonInj : LabInj st.canonlab n := by
         exact labInj_of_reach h.leafRefs.canonSize hn0
           h.leafRefs.canonReach
       exact processnode_gateFail_autos hcanonSize

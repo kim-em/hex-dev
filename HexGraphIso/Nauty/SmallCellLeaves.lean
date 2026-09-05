@@ -50,7 +50,7 @@ the exotic layer where the defect-four analogues are proved.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # The cell count as a boundary count -/
 
@@ -128,10 +128,10 @@ theorem cells_length_eq_bcount {ptn : Array Nat} {level nn : Nat}
 
 /-- The first-branch shape: every cell is a singleton, a pair, or the
 unique triple. -/
-def SmallShape (ctx : Ctx) (level : Nat) (ptn : Array Nat) : Prop :=
-  ∀ q ∈ cells ptn level ctx.n, q.2 + 1 - q.1 ≤ 2 ∨
+def SmallShape (n : Nat) (level : Nat) (ptn : Array Nat) : Prop :=
+  ∀ q ∈ cells ptn level n, q.2 + 1 - q.1 ≤ 2 ∨
     (q.2 + 1 - q.1 = 3 ∧
-      ∀ q' ∈ cells ptn level ctx.n, q'.2 + 1 - q'.1 = 3 → q' = q)
+      ∀ q' ∈ cells ptn level n, q'.2 + 1 - q'.1 = 3 → q' = q)
 
 /-- The two shapes a passing `cheapautom` guard admits: the
 first-branch shape, or a defect of at most four. Both yield flip data
@@ -139,51 +139,52 @@ at every cell, and both descend through individualization, which is
 why the invariant carries the disjunction rather than either
 disjunct. A defect-four node need not have the first-branch shape:
 the four-vertex empty graph's root is a single cell of size four. -/
-def NodeShape (ctx : Ctx) (level : Nat) (ptn : Array Nat) : Prop :=
-  SmallShape ctx level ptn ∨
-    ctx.n - (cells ptn level ctx.n).length ≤ 4
+def NodeShape (n : Nat) (level : Nat) (ptn : Array Nat) : Prop :=
+  SmallShape n level ptn ∨
+    n - (cells ptn level n).length ≤ 4
 
 /-- The facts every deviation below a cheapautom node consumes,
 carried at each node of the subtree. -/
-structure SubtreeOk (ctx : Ctx) (level : Nat) (st : RefineSt) :
+structure SubtreeOk (ctx : Ctx n) (level : Nat) (st : RefineSt n) :
     Prop where
   it : IterOk ctx level st
   eqt : Equitable ctx level st.lab st.ptn
-  acc : bcount st.ptn level ctx.n = st.numcells
-  shape : NodeShape ctx level st.ptn
+  acc : bcount st.ptn level n = st.numcells
+  shape : NodeShape n level st.ptn
 
 /-- Every cell of the child partition sits inside a cell of the split
 partition: refinement only adds boundaries. -/
-theorem childSt_cell_parent {st : RefineSt} {level tc e o : Nat}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+theorem childSt_cell_parent {st : RefineSt n} {level tc e o : Nat}
+    (hIt : IterOk ctx level st) (hlvl : level < n)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
     (ho : o ≤ e - tc) :
     ∀ f ∈ cells (childSt ctx level st tc st.lab[tc + o]!).ptn
-        (level + 1) ctx.n,
-      ∃ q ∈ cells (st.ptn.set! tc (level + 1)) (level + 1) ctx.n,
+        (level + 1) n,
+      ∃ q ∈ cells (st.ptn.set! tc (level + 1)) (level + 1) n,
         q.1 ≤ f.1 ∧ f.2 ≤ q.2 := by
   intro f hf
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
-  have hen : e < ctx.n := target_end_lt hpsz hend hcell
+  have hen : e < n := target_end_lt hpsz hend hcell
   have hIt' := iterOk_child hIt hlvl hcell hne ho
   have hcpsz := hIt'.ok.ptnSize
   have hcend := hIt'.ok.ptnEnd
-  have hssz : (st.ptn.set! tc (level + 1)).size = ctx.n := by
+  have hssz : (st.ptn.set! tc (level + 1)).size = n := by
     rw [Array.size_set!, hpsz]
   have hsend : (st.ptn.set! tc (level + 1))[(st.ptn.set! tc
       (level + 1)).size - 1]! ≤ level + 1 := by
     rw [hssz]
-    rcases Decidable.em (tc = ctx.n - 1) with rfl | hx
-    · rw [← hpsz, Array.getElem!_set!_self _ _ _ (by omega)]
+    rcases Decidable.em (tc = n - 1) with rfl | hx
+    · rw [Array.getElem!_set!_self _ _ _ (by omega)]
       omega
-    · rw [← hpsz, Array.getElem!_set!_ne _ _ _ _ (by rw [hpsz]; omega)]
-      have : st.ptn[ctx.n - 1]! ≤ level := by
-        rw [← hpsz]
-        exact hend
+    · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+      have : st.ptn[n - 1]! ≤ level := by
+        have h := hend
+        rw [hpsz] at h
+        exact h
       omega
-  have hbsz : (breakout st.lab st.ptn (level + 1) tc
+  have hbsz : (breakout n st.lab st.ptn (level + 1) tc
       st.lab[tc + o]!).1.size = (st.ptn.set! tc (level + 1)).size := by
     rw [breakout_lab_size, hlsz, hssz]
   have hfle := cells_le _ hf
@@ -214,11 +215,11 @@ theorem childSt_cell_parent {st : RefineSt} {level tc e o : Nat}
 /-- The first-branch shape descends to the child: sizes only shrink
 under containment, and a child triple fills the unique parent triple's
 window exactly. -/
-theorem smallShape_child {st : RefineSt} {level tc e o : Nat}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
-    (ho : o ≤ e - tc) (hsmall : SmallShape ctx level st.ptn) :
-    SmallShape ctx (level + 1)
+theorem smallShape_child {st : RefineSt n} {level tc e o : Nat}
+    (hIt : IterOk ctx level st) (hlvl : level < n)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
+    (ho : o ≤ e - tc) (hsmall : SmallShape n level st.ptn) :
+    SmallShape n (level + 1)
       (childSt ctx level st tc st.lab[tc + o]!).ptn := by
   have hpsz := hIt.ok.ptnSize
   have hend := hIt.ok.ptnEnd
@@ -227,9 +228,9 @@ theorem smallShape_child {st : RefineSt} {level tc e o : Nat}
   have hcpsz := hIt'.ok.ptnSize
   -- the coordinates a child triple is forced to occupy
   have htri : ∀ f ∈ cells (childSt ctx level st tc
-      st.lab[tc + o]!).ptn (level + 1) ctx.n,
+      st.lab[tc + o]!).ptn (level + 1) n,
       f.2 + 1 - f.1 = 3 →
-      ∃ T ∈ cells st.ptn level ctx.n, T.2 + 1 - T.1 = 3 ∧
+      ∃ T ∈ cells st.ptn level n, T.2 + 1 - T.1 = 3 ∧
         f.1 = T.1 ∧ f.2 = T.2 := by
     intro f hf hf3
     obtain ⟨q, hq, hq1, hq2⟩ :=
@@ -290,11 +291,11 @@ theorem smallShape_child {st : RefineSt} {level tc e o : Nat}
 and a defect of at most four because individualization splits a cell
 while the vertex count stays fixed, so the cell count strictly
 grows. -/
-theorem nodeShape_child {st : RefineSt} {level tc e o : Nat}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
-    (ho : o ≤ e - tc) (hsh : NodeShape ctx level st.ptn) :
-    NodeShape ctx (level + 1)
+theorem nodeShape_child {st : RefineSt n} {level tc e o : Nat}
+    (hIt : IterOk ctx level st) (hlvl : level < n)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
+    (ho : o ≤ e - tc) (hsh : NodeShape n level st.ptn) :
+    NodeShape n (level + 1)
       (childSt ctx level st tc st.lab[tc + o]!).ptn := by
   rcases hsh with hsmall | hdef
   · exact Or.inl (smallShape_child hIt hlvl hcell hne ho hsmall)
@@ -305,29 +306,30 @@ theorem nodeShape_child {st : RefineSt} {level tc e o : Nat}
   have hIt' := iterOk_child hIt hlvl hcell hne ho
   have hcpsz := hIt'.ok.ptnSize
   have hcend := hIt'.ok.ptnEnd
-  have hen : e < ctx.n := target_end_lt hpsz hend hcell
+  have hen : e < n := target_end_lt hpsz hend hcell
   have hle : tc ≤ e := cells_le _ hcell
   have htcopen : st.ptn[tc]! > level :=
     target_open hpsz hend hcell tc (Nat.le_refl _) hne
-  have hssz : (st.ptn.set! tc (level + 1)).size = ctx.n := by
+  have hssz : (st.ptn.set! tc (level + 1)).size = n := by
     rw [Array.size_set!, hpsz]
   have hsend : (st.ptn.set! tc (level + 1))[(st.ptn.set! tc
       (level + 1)).size - 1]! ≤ level + 1 := by
     rw [hssz]
-    rcases Decidable.em (tc = ctx.n - 1) with rfl | hx
-    · rw [← hpsz, Array.getElem!_set!_self _ _ _ (by omega)]
+    rcases Decidable.em (tc = n - 1) with rfl | hx
+    · rw [Array.getElem!_set!_self _ _ _ (by omega)]
       omega
-    · rw [← hpsz, Array.getElem!_set!_ne _ _ _ _ (by rw [hpsz]; omega)]
-      have : st.ptn[ctx.n - 1]! ≤ level := by
-        rw [← hpsz]
-        exact hend
+    · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+      have : st.ptn[n - 1]! ≤ level := by
+        have h := hend
+        rw [hpsz] at h
+        exact h
       omega
-  have hbsz : (breakout st.lab st.ptn (level + 1) tc
+  have hbsz : (breakout n st.lab st.ptn (level + 1) tc
       st.lab[tc + o]!).1.size = (st.ptn.set! tc (level + 1)).size := by
     rw [breakout_lab_size, hlsz, hssz]
   have hsplit := bcount_breakout_eq (ptn := st.ptn) (level := level)
-    (tc := tc) hIt.valsWeak htcopen (by omega) ctx.n (Nat.le_refl _)
-  rw [ite_eq_left (by omega : tc < ctx.n)] at hsplit
+    (tc := tc) hIt.valsWeak htcopen (by omega) n (Nat.le_refl _)
+  rw [ite_eq_left (by omega : tc < n)] at hsplit
   -- refinement never reopens a closed position
   have hb : ∀ q : Nat, (st.ptn.set! tc (level + 1))[q]! ≤ level + 1 →
       (childSt ctx level st tc st.lab[tc + o]!).ptn[q]! ≤ level + 1 := by
@@ -335,36 +337,36 @@ theorem nodeShape_child {st : RefineSt} {level tc e o : Nat}
     show (refine ctx (level + 1) _ _ _ _).ptn[q]! ≤ level + 1
     rw [refine_frozen (by rw [hssz]) hbsz hsend hq]
     exact hq
-  have hmono : bcount (st.ptn.set! tc (level + 1)) (level + 1) ctx.n ≤
+  have hmono : bcount (st.ptn.set! tc (level + 1)) (level + 1) n ≤
       bcount (childSt ctx level st tc st.lab[tc + o]!).ptn
-        (level + 1) ctx.n := bcount_mono hb
+        (level + 1) n := bcount_mono hb
   rw [cells_length_eq_bcount hcpsz hcend]
   rw [cells_length_eq_bcount hpsz hend] at hdef
   omega
 
 /-- The node invariant descends through one subtree step. -/
-theorem subtreeOk_child {st : RefineSt} {level tc e o : Nat}
-    (h : SubtreeOk ctx level st) (hlvl : level < ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+theorem subtreeOk_child {st : RefineSt n} {level tc e o : Nat}
+    (h : SubtreeOk ctx level st) (hlvl : level < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
     (ho : o ≤ e - tc) :
     SubtreeOk ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + o]!) := by
   have hpsz := h.it.ok.ptnSize
   have hlsz := h.it.ok.labSize
   have hend := h.it.ok.ptnEnd
-  have hen : e < ctx.n := target_end_lt hpsz hend hcell
+  have hen : e < n := target_end_lt hpsz hend hcell
   refine ⟨iterOk_child h.it hlvl hcell hne ho, ?_, ?_,
     nodeShape_child h.it hlvl hcell hne ho h.shape⟩
   · show Equitable ctx (level + 1)
       (refine ctx (level + 1)
-        (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (st.ptn.set! tc (level + 1)) (insert 0 tc)
+        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+        (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
         (st.numcells + 1)).lab
       (refine ctx (level + 1)
-        (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (st.ptn.set! tc (level + 1)) (insert 0 tc)
+        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+        (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
         (st.numcells + 1)).ptn
     exact equitable_breakout hlsz hpsz hend h.it.valsWeak
       h.it.ok.labOk h.it.inj hsymm h.eqt hcell hne ho h.acc
@@ -372,42 +374,42 @@ theorem subtreeOk_child {st : RefineSt} {level tc e o : Nat}
     have htcopen : st.ptn[tc]! > level :=
       target_open hpsz hend hcell tc (Nat.le_refl _) hne
     have hsplit := bcount_breakout_eq (ptn := st.ptn) (level := level)
-      (tc := tc) h.it.valsWeak htcopen (by omega) ctx.n
+      (tc := tc) h.it.valsWeak htcopen (by omega) n
       (Nat.le_refl _)
-    have hssz : (st.ptn.set! tc (level + 1)).size = ctx.n := by
+    have hssz : (st.ptn.set! tc (level + 1)).size = n := by
       rw [Array.size_set!, hpsz]
     have hsend : (st.ptn.set! tc (level + 1))[(st.ptn.set! tc
         (level + 1)).size - 1]! ≤ level + 1 := by
       rw [hssz]
-      rcases Decidable.em (tc = ctx.n - 1) with rfl | hx
-      · rw [← hpsz, Array.getElem!_set!_self _ _ _ (by omega)]
+      rcases Decidable.em (tc = n - 1) with rfl | hx
+      · rw [Array.getElem!_set!_self _ _ _ (by omega)]
         omega
-      · rw [← hpsz,
-          Array.getElem!_set!_ne _ _ _ _ (by rw [hpsz]; omega)]
-        have : st.ptn[ctx.n - 1]! ≤ level := by
-          rw [← hpsz]
-          exact hend
+      · rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+        have : st.ptn[n - 1]! ≤ level := by
+          have h := hend
+          rw [hpsz] at h
+          exact h
         omega
-    have hbsz : (breakout st.lab st.ptn (level + 1) tc
+    have hbsz : (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).1.size =
         (st.ptn.set! tc (level + 1)).size := by
       rw [breakout_lab_size, hlsz, hssz]
     have hrb := refine_bcount (ctx := ctx) (level := level + 1)
-      (lab := (breakout st.lab st.ptn (level + 1) tc
+      (lab := (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).1)
       (ptn := st.ptn.set! tc (level + 1))
-      (active := insert 0 tc) (numcells := st.numcells + 1)
+      (active := VSet.empty.insert tc) (numcells := st.numcells + 1)
       (by rw [hssz]) hbsz hsend
     have hacc := h.acc
     show bcount (refine ctx (level + 1)
-        (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (st.ptn.set! tc (level + 1)) (insert 0 tc)
-        (st.numcells + 1)).ptn (level + 1) ctx.n =
+        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+        (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
+        (st.numcells + 1)).ptn (level + 1) n =
       (refine ctx (level + 1)
-        (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (st.ptn.set! tc (level + 1)) (insert 0 tc)
+        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+        (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
         (st.numcells + 1)).numcells
-    rw [show (if tc < ctx.n then 1 else 0) = 1 from
+    rw [show (if tc < n then 1 else 0) = 1 from
       ite_eq_left (by omega)] at hsplit
     omega
 
@@ -422,21 +424,21 @@ each step's target cell), which is what lets the induction recurse on
 the transported descent. -/
 
 /-- A descent recording its target-and-offset path. -/
-inductive DescPath (ctx : Ctx) :
-    Nat → RefineSt → List (Nat × Nat) → Nat → RefineSt → Prop where
-  | refl (level : Nat) (st : RefineSt) :
+inductive DescPath (ctx : Ctx n) :
+    Nat → RefineSt n → List (Nat × Nat) → Nat → RefineSt n → Prop where
+  | refl (level : Nat) (st : RefineSt n) :
       DescPath ctx level st [] level st
-  | step {level level' : Nat} {st st' : RefineSt}
+  | step {level level' : Nat} {st st' : RefineSt n}
       {path : List (Nat × Nat)} (tc e o : Nat)
-      (hlvl : level < ctx.n)
-      (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+      (hlvl : level < n)
+      (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
       (ho : o ≤ e - tc)
       (htail : DescPath ctx (level + 1)
         (childSt ctx level st tc st.lab[tc + o]!) path level' st') :
       DescPath ctx level st ((tc, o) :: path) level' st'
 
 /-- Forgetting the path gives a plain descent. -/
-theorem DescPath.descends {level level' : Nat} {st st' : RefineSt}
+theorem DescPath.descends {level level' : Nat} {st st' : RefineSt n}
     {p : List (Nat × Nat)}
     (h : DescPath ctx level st p level' st') :
     Descends ctx level st level' st' := by
@@ -446,7 +448,7 @@ theorem DescPath.descends {level level' : Nat} {st st' : RefineSt}
     exact .step tc e o hlvl hcell hne ho ih
 
 /-- An empty path is the trivial descent. -/
-theorem descPath_nil {level level' : Nat} {st st' : RefineSt}
+theorem descPath_nil {level level' : Nat} {st st' : RefineSt n}
     (h : DescPath ctx level st [] level' st') :
     level' = level ∧ st' = st := by
   cases h
@@ -455,9 +457,9 @@ theorem descPath_nil {level level' : Nat} {st st' : RefineSt}
 /-- The path-preserving bisimulation: a descent below one state
 mirrors below any renamed-equivalent state along the same target
 cells. -/
-theorem descPath_transport {σ : Renaming ctx.n}
+theorem descPath_transport {σ : Renaming n}
     (hg : RowsMap σ ctx.g ctx.g) :
-    ∀ {level level' : Nat} {p : List (Nat × Nat)} {U U' V : RefineSt},
+    ∀ {level level' : Nat} {p : List (Nat × Nat)} {U U' V : RefineSt n},
       DescPath ctx level U p level' U' → IterOk ctx level U →
       StPerm level V (mapSt σ U) →
       ∃ V' q, DescPath ctx level V q level' V' ∧
@@ -470,10 +472,10 @@ theorem descPath_transport {σ : Renaming ctx.n}
     have hptn : U.ptn = V.ptn := hsp.ptn
     have hpszV := hV.ok.ptnSize
     have hendV := hV.ok.ptnEnd
-    have hcellV : (tc, e) ∈ cells V.ptn level ctx.n := by
+    have hcellV : (tc, e) ∈ cells V.ptn level n := by
       rw [← hptn]
       exact hcell
-    have hen : e < ctx.n := target_end_lt hpszV hendV hcellV
+    have hen : e < n := target_end_lt hpszV hendV hcellV
     have hcellIsV : IsCell V.ptn level tc (e + 1 - tc) :=
       cells_isCell (by omega) hendV _ hcellV
     have hmemU : σ.toFun U.lab[tc + o]! ∈
@@ -497,12 +499,12 @@ theorem descPath_transport {σ : Renaming ctx.n}
 /-- The path-preserving leaf collapse: a descent to a discrete state
 mirrors along the same target cells with equal leaf rows and the same
 final partition. -/
-theorem descPath_leafRows {σ : Renaming ctx.n}
+theorem descPath_leafRows {σ : Renaming n}
     (hg : RowsMap σ ctx.g ctx.g)
-    {level level' : Nat} {p : List (Nat × Nat)} {U U' V : RefineSt}
+    {level level' : Nat} {p : List (Nat × Nat)} {U U' V : RefineSt n}
     (h : DescPath ctx level U p level' U')
     (hU : IterOk ctx level U) (hsp : StPerm level V (mapSt σ U))
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
     ∃ V' q, DescPath ctx level V q level' V' ∧
       q.map Prod.fst = p.map Prod.fst ∧
       leafRows ctx V'.lab = leafRows ctx U'.lab ∧
@@ -522,25 +524,25 @@ theorem descPath_leafRows {σ : Renaming ctx.n}
   have hlabeq' : U'.lab.map σ.toFun = V'.lab := hlabeq
   have hlr : leafRows ctx V'.lab = leafRows ctx U'.lab := by
     rw [← hlabeq']
-    exact leafRows_map σ rfl rfl hg hU'.ok.labOk hU'.ok.labSize
+    exact leafRows_map σ hg hU'.ok.labOk hU'.ok.labSize
   exact ⟨V', q, hdesc, hq, hlr, hptn.symm⟩
 
 /-- The path-preserving single-deviation door: a self-symmetry of the
 node carrying one child's individualized vertex to another's mirrors
 any discrete descent below the first child along the same target
 cells. -/
-theorem descPath_deviation_self {σ : Renaming ctx.n} {st : RefineSt}
-    {level tc e oU oV level' : Nat} {U' : RefineSt}
+theorem descPath_deviation_self {σ : Renaming n} {st : RefineSt n}
+    {level tc e oU oV level' : Nat} {U' : RefineSt n}
     {p : List (Nat × Nat)}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+    (hIt : IterOk ctx level st) (hlvl : level < n)
     (hg : RowsMap σ ctx.g ctx.g)
     (hsp : StPerm level st (mapSt σ st))
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
     (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
     (hvv : st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]!)
     (hdesc : DescPath ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + oU]!) p level' U')
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
     ∃ V' q, DescPath ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + oV]!) q level' V' ∧
       q.map Prod.fst = p.map Prod.fst ∧

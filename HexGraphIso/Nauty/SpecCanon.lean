@@ -110,11 +110,11 @@ colours list `G`'s classes contiguously. Arbitrary row bits are
 normalized into a simple graph: an edge needs the bit in both
 directions and the diagonal is dropped; on genuine keys, whose rows
 are symmetric and loopless, this is the identity. -/
-@[expose] def formOfKey (G : Colored n k) (rows : List Nat) :
+@[expose] def formOfKey (G : Colored n k) (rows : List (VSet n)) :
     Colored n k where
   graph := Hex.Graph.ofAdj
-    (fun i j => rows[i.val]!.testBit j.val &&
-      rows[j.val]!.testBit i.val && i.val != j.val)
+    (fun i j => rows[i.val]!.mem j.val &&
+      rows[j.val]!.mem i.val && i.val != j.val)
     (fun i j => by
       have hb : (i.val != j.val) = (j.val != i.val) := by
         rcases Decidable.em (i.val = j.val) with he | he
@@ -124,8 +124,8 @@ are symmetric and loopless, this is the identity. -/
             simpa using Ne.symm he
           rw [h1, h2]
       rw [hb]
-      rcases h1 : rows[i.val]!.testBit j.val with _ | _ <;>
-        rcases h2 : rows[j.val]!.testBit i.val with _ | _ <;>
+      rcases h1 : rows[i.val]!.mem j.val with _ | _ <;>
+        rcases h2 : rows[j.val]!.mem i.val with _ | _ <;>
         simp [*])
     (fun i => by simp)
   coloring :=
@@ -171,7 +171,7 @@ are symmetric and loopless, this is the identity. -/
 @[expose] def specCanon (G : Colored n k) : Colored n k :=
   formOfKey G (canonSpecKey G).rows
 
-theorem colorList_formOfKey (G : Colored n k) (rows : List Nat) :
+theorem colorList_formOfKey (G : Colored n k) (rows : List (VSet n)) :
     colorList (formOfKey G rows) = sortedColorSeq G := by
   rw [colorList]
   have hlen := length_sortedColorSeq G
@@ -187,33 +187,33 @@ theorem colorList_formOfKey (G : Colored n k) (rows : List Nat) :
 
 /-- A checked canonical form is the form of its key. -/
 theorem checkCanon_form_eq_formOfKey {G : Colored n k}
-    {cert : CertNode} {B : Key} {lab : Array Nat}
+    {cert : CertNode} {B : Key n} {lab : Array Nat}
     {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
     res.form = formOfKey G B.rows := by
   refine Colored.ext ?_ ?_
   · intro i j
     have hadjL : res.form.graph.adj i j =
-        (B.rows[i.val]!).testBit j.val := by
+        (B.rows[i.val]!).mem j.val := by
       have h1 : res.form.graph.adj i j =
-          ((rowsOf res.form)[i.val]!).testBit j.val := by
-        rw [getElem!_rowsOf _ i.isLt, testBit_rowOf_lt _ i.isLt
+          ((rowsOf res.form)[i.val]!).mem j.val := by
+        rw [getElem!_rowsOf _ i.isLt, mem_rowOf_lt _ i.isLt
           j.isLt]
       rw [h1, checkCanon_rows h, List.getElem!_toArray]
     have hadjLs : res.form.graph.adj j i =
-        (B.rows[j.val]!).testBit i.val := by
+        (B.rows[j.val]!).mem i.val := by
       have h1 : res.form.graph.adj j i =
-          ((rowsOf res.form)[j.val]!).testBit i.val := by
-        rw [getElem!_rowsOf _ j.isLt, testBit_rowOf_lt _ j.isLt
+          ((rowsOf res.form)[j.val]!).mem i.val := by
+        rw [getElem!_rowsOf _ j.isLt, mem_rowOf_lt _ j.isLt
           i.isLt]
       rw [h1, checkCanon_rows h, List.getElem!_toArray]
-    have hsym : (B.rows[j.val]!).testBit i.val =
-        (B.rows[i.val]!).testBit j.val := by
+    have hsym : (B.rows[j.val]!).mem i.val =
+        (B.rows[i.val]!).mem j.val := by
       rw [← hadjL, ← hadjLs]
       exact (Hex.Graph.adj_symm _ i j).symm
     have hR : (formOfKey G B.rows).graph.adj i j =
-        ((B.rows[i.val]!).testBit j.val &&
-          (B.rows[j.val]!).testBit i.val && i.val != j.val) := by
+        ((B.rows[i.val]!).mem j.val &&
+          (B.rows[j.val]!).mem i.val && i.val != j.val) := by
       simp only [formOfKey, Hex.Graph.adj_ofAdj]
     rw [hadjL, hR, hsym]
     rcases Decidable.em (i.val = j.val) with he | he
@@ -225,7 +225,7 @@ theorem checkCanon_form_eq_formOfKey {G : Colored n k}
       simp
     · have hne : (i.val != j.val) = true := by simpa using he
       rw [hne]
-      rcases hb : (B.rows[i.val]!).testBit j.val with _ | _ <;> simp
+      rcases hb : (B.rows[i.val]!).mem j.val with _ | _ <;> simp
   · intro i
     have hcl : colorList res.form = colorList (formOfKey G B.rows) := by
       rw [colorList_formOfKey]
@@ -270,7 +270,7 @@ theorem checkCanon_form_eq_formOfKey {G : Colored n k}
     exact Fin.eq_of_val_eq h1
 
 /-- A checked canonical form is the total spec form. -/
-theorem checkCanon_form {G : Colored n k} {cert : CertNode} {B : Key}
+theorem checkCanon_form {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
     res.form = specCanon G := by

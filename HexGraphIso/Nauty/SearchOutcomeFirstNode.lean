@@ -23,7 +23,7 @@ variable {n k : Nat}
 
 /-- Installing the first leaf leaves the orbit ledger, the coset cursor
 and the cheap-cell boundary alone. -/
-theorem firstterminal_ledger (level : Nat) (st : SearchSt) :
+theorem firstterminal_ledger (level : Nat) (st : SearchSt n) :
     (firstterminal level st).orbits = st.orbits ∧
     (firstterminal level st).cosetindex = st.cosetindex ∧
     (firstterminal level st).noncheaplevel = st.noncheaplevel := by
@@ -32,14 +32,14 @@ theorem firstterminal_ledger (level : Nat) (st : SearchSt) :
   simp
 
 /-- The discrete first-path arm is total and carries the sweep facts. -/
-theorem FirstInv.leafTotal {G : Colored n k} {ctx : Ctx}
+theorem FirstInv.leafTotal {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes : List Nat} {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n) (hpath : level = codes.length + 1)
+    {codes : List Nat} {st : SearchSt n} {trail : FrameTrail}
+    (hn0 : 0 < n) (hpath : level = codes.length + 1)
     (h : FirstInv G ctx level codes numcells st trail)
-    (hsound : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n)
+    (hsound : OrbSound (OrbConn st.genTrace.toList n) st.orbits n)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n) :
+      numcells).numcells = n) :
     ∃ fs outBest eventTrail,
       FirstRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
           (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2
@@ -49,7 +49,7 @@ theorem FirstInv.leafTotal {G : Colored n k} {ctx : Ctx}
           (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2 fs
           outBest := by
   have hrun := h.terminalRun (inf := inf) (tcLevel := tcLevel)
-    (specFuel := specFuel) (fuel := fuel) hn hn0 hpath hnum
+    (specFuel := specFuel) (fuel := fuel) hn0 hpath hnum
   dsimp only at hrun
   refine ⟨_, _, trail, hrun, ?_⟩
   rw [firstPath_discrete_state ctx inf tcLevel fuel level numcells st hnum]
@@ -73,7 +73,7 @@ theorem FirstInv.leafTotal {G : Colored n k} {ctx : Ctx}
     exact Nat.le_refl _
 
 /-- The final first-path counter adjustment leaves the sweep facts alone. -/
-theorem firstFinish_ledger (level size index : Nat) (st : SearchSt) :
+theorem firstFinish_ledger (level size index : Nat) (st : SearchSt n) :
     (firstFinish level size index st).orbits = st.orbits ∧
     (firstFinish level size index st).genTrace = st.genTrace ∧
     (firstFinish level size index st).cosetindex = st.cosetindex ∧
@@ -84,10 +84,10 @@ theorem firstFinish_ledger (level size index : Nat) (st : SearchSt) :
 
 /-- The internal first-path arm is total once every node at the current
 fuel is. -/
-theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
+theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel runFuel level numcells : Nat}
-    {codes : List Nat} {st : SearchSt} {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hinf : inf = n + 2)
+    {codes : List Nat} {st : SearchSt n} {trail : FrameTrail}
+    (hg : ctx.g = rowsOf G) (hinf : inf = n + 2)
     (hn0 : 0 < n)
     (ih : OtherTotal G ctx inf tcLevel runFuel)
     (ihFirst : FirstTotal G ctx inf tcLevel runFuel)
@@ -97,12 +97,12 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
     (hcheap : st.noncheaplevel ≤ level)
     (hdesc : CheapDesc ctx level st.noncheaplevel
       (refine ctx level st.lab st.ptn st.active numcells))
-    (horb : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n)
+    (horb : OrbSound (OrbConn st.genTrace.toList n) st.orbits n)
     (hfirst : FirstInv G ctx level codes numcells st trail)
     (hpathOk : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 level st)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells ≠ ctx.n) :
+      numcells).numcells ≠ n) :
     ∃ fs outBest eventTrail,
       FirstRun G ctx tcLevel (specFuel + 1) (runFuel + 1) level codes fs st
           (firstPathNode ctx inf tcLevel (runFuel + 1) level numcells st).2
@@ -111,17 +111,17 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
         FirstKeep ctx level st
           (firstPathNode ctx inf tcLevel (runFuel + 1) level numcells st).2
           fs outBest := by
-  have href := hfirst.refined hn hg hn0 hlevel
+  have href := hfirst.refined hg hn0 hlevel
   have hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
-      numcells).ptn level ctx.n = false := by
-    rw [← Bool.not_eq_true, ← refine_discrete_iff hn hn0 hfirst.searchOk
+      numcells).ptn level n = false := by
+    rw [← Bool.not_eq_true, ← refine_discrete_iff hn0 hfirst.searchOk
       hlevel]
     exact hnum
   have hpsz := href.1.ok.ptnSize
   have hend := href.1.ok.ptnEnd
   have hcount := href.2.2
   have hbc : bcount (refine ctx level st.lab st.ptn st.active numcells).ptn
-      level ctx.n < ctx.n := by
+      level n < n := by
     rw [hcount]
     exact Nat.lt_of_le_of_ne (hcount ▸ bcount_le _ _ _) hnum
   obtain ⟨tc, len, hmk, hcell, hlen2, hrange⟩ :=
@@ -138,18 +138,17 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
   rw [hmk] at hchildren
   dsimp only at hchildren
   have hlt : level < n := by
-    have hok := refine_searchOk hn hn0 hfirst.searchOk hlevel
+    have hok := refine_searchOk hn0 hfirst.searchOk hlevel
       (st2 := firstLeafSt ctx level numcells st) rfl rfl (Or.inl rfl)
     have hle := hok.bc
     have hptn : (firstLeafSt ctx level numcells st).ptn =
       (refine ctx level st.lab st.ptn st.active numcells).ptn := rfl
-    rw [hptn, ← hn] at hle
-    rw [← hn]
+    rw [hptn] at hle
     omega
   have hL := firstLoopTotal (tail := len - 1) (level := level)
     (specFuel := specFuel) (runFuel := runFuel) (cs := codes) (st := st)
     (numcells := numcells) (tc := tc) (len := len) (inf := inf)
-    (tcLevel := tcLevel) (trail := trail) hn hg hinf hn0 ih ihFirst
+    (tcLevel := tcLevel) (trail := trail) hg hinf hn0 ih ihFirst
     (by omega) (by omega) hlevel hpath hlt hfirst hpathOk hcheap hdesc horb
     hcell hlen2 hrange rfl (by omega)
   dsimp only at hL
@@ -162,13 +161,13 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
   have hprefix : (codes ++ [(refine ctx level st.lab st.ptn st.active
       numcells).longcode]).take codes.length = codes := by
     simp only [List.take_left']
-  generalize hL : firstChildLoop ctx inf tcLevel runFuel (ctx.n + 1) level
+  generalize hL : firstChildLoop ctx inf tcLevel runFuel (n + 1) level
     (refine ctx level st.lab st.ptn st.active numcells).numcells tc
-    ((nextElem (windowSet (refine ctx level st.lab st.ptn st.active
-      numcells).lab tc len) none).getD 0)
-    (nextElem (windowSet (refine ctx level st.lab st.ptn st.active
-      numcells).lab tc len) none)
-    (windowSet (refine ctx level st.lab st.ptn st.active numcells).lab tc
+    (((windowSet n (refine ctx level st.lab st.ptn st.active
+      numcells).lab tc len).nextElem none).getD 0)
+    ((windowSet n (refine ctx level st.lab st.ptn st.active
+      numcells).lab tc len).nextElem none)
+    (windowSet n (refine ctx level st.lab st.ptn st.active numcells).lab tc
       len) 0 _ = L at hrunL hout ⊢
   rcases L with ⟨rr, index, out⟩
   cases rr with
@@ -178,7 +177,7 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
       · exact (hrunL.toNodeNone (nodeRunFuel := runFuel + 1)
           (tail := len - 1) hchildren.symm hchildren
           (show len = len - 1 + 1 by omega)
-          (show ctx.n < cursorRank none + (ctx.n + 1) by
+          (show n < cursorRank none + (n + 1) by
             simp only [cursorRank]; omega)
           (by split <;> rfl)).firstFinish (show runFuel + 1 ≠ 0 by omega)
       · obtain ⟨h1, h2, h3, h4, h5⟩ := firstFinish_ledger level len index out
@@ -205,18 +204,18 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx}
 
 /-- Every first-path node at the next executable fuel is total once every
 node at the current fuel is. -/
-theorem FirstTotal.succ (G : Colored n k) (ctx : Ctx)
+theorem FirstTotal.succ (G : Colored n k) (ctx : Ctx n)
     (inf tcLevel runFuel : Nat) (ih : OtherTotal G ctx inf tcLevel runFuel)
     (ihFirst : FirstTotal G ctx inf tcLevel runFuel) :
     FirstTotal G ctx inf tcLevel (runFuel + 1) := by
-  intro specFuel level numcells codes st trail hn hg hinf hn0 hlevel hpath
+  intro specFuel level numcells codes st trail hg hinf hn0 hlevel hpath
     hspec hfuel hcheap hdesc horb hfirst hpathOk
   have hle : level ≤ n := hfirst.searchOk.levelLe
   obtain ⟨sf, rfl⟩ : ∃ sf, specFuel = sf + 1 := ⟨specFuel - 1, by omega⟩
   by_cases hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n
-  · exact hfirst.leafTotal hn hn0 hpath horb hnum
-  · exact hfirst.internalTotal hn hg hinf hn0 ih ihFirst hlevel hpath hspec
+      numcells).numcells = n
+  · exact hfirst.leafTotal hn0 hpath horb hnum
+  · exact hfirst.internalTotal hg hinf hn0 ih ihFirst hlevel hpath hspec
       hfuel hcheap hdesc horb hpathOk hnum
 
 end Hex.GraphIso.Nauty

@@ -35,7 +35,7 @@ lives in `SmallCellLeaves`.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # Flip data from the node shape -/
 
@@ -43,16 +43,15 @@ variable {ctx : Ctx}
 first-branch shape names a pair or triple target; a defect of at most
 four bounds every cell at five positions and hands the target to the
 exotic analogues. -/
-theorem flipData_of_subtreeOk {st : RefineSt} {level tc te oU oV : Nat}
+theorem flipData_of_subtreeOk {st : RefineSt n} {level tc te oU oV : Nat}
     (hS : SubtreeOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hcell : (tc, te) ∈ cells st.ptn level ctx.n) (hne : tc < te)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hcell : (tc, te) ∈ cells st.ptn level n) (hne : tc < te)
     (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hone : oU ≠ oV) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
   rcases hS.shape with hsmall | hdef
@@ -61,7 +60,7 @@ theorem flipData_of_subtreeOk {st : RefineSt} {level tc te oU oV : Nat}
       have hsz2' : te + 1 - tc ≤ 2 := hsz2
       have he : te = tc + 1 := by omega
       subst he
-      have hOdd : ∀ q ∈ cells st.ptn level ctx.n,
+      have hOdd : ∀ q ∈ cells st.ptn level n,
           q.2 ≠ q.1 + 1 → (q.2 + 1 - q.1) % 2 = 1 := by
         intro q hq hqne
         have hqle := cells_le _ hq
@@ -69,22 +68,22 @@ theorem flipData_of_subtreeOk {st : RefineSt} {level tc te oU oV : Nat}
         · have h1 : q.2 + 1 - q.1 = 1 := by omega
           omega
         · omega
-      exact pair_flip_data hS.it hgsz hgb hsymm hloop hS.eqt
+      exact pair_flip_data hS.it hgsz hsymm hloop hS.eqt
         hcell hOdd (by omega) (by omega) hone
     · -- the triple target
       have hsz3' : te + 1 - tc = 3 := hsz3
       have he : te = tc + 2 := by omega
       subst he
-      have hsmall' : ∀ q ∈ cells st.ptn level ctx.n,
+      have hsmall' : ∀ q ∈ cells st.ptn level n,
           q ≠ (tc, tc + 2) → q.2 + 1 - q.1 ≤ 2 := by
         intro q hq hqne
         rcases hsmall _ hq with h2 | ⟨h3, -⟩
         · exact h2
         · exact absurd (huniq q hq h3) hqne
-      exact triple_flip_data hS.it hgsz hgb hsymm hloop hS.eqt
+      exact triple_flip_data hS.it hgsz hsymm hloop hS.eqt
         hcell hsmall' (by omega) (by omega) hone
   · -- the exotic shapes
-    exact defect4_flip_data hS.it hgsz hgb hsymm hloop hS.eqt hdef
+    exact defect4_flip_data hS.it hgsz hsymm hloop hS.eqt hdef
       hcell hoU hoV hone
 
 /-! # All leaves below a cheapautom node have equal rows -/
@@ -94,21 +93,20 @@ same target cells have equal leaf rows: equal choices recurse, and a
 differing choice is one pair or triple deviation glued to the
 transported deeper path. -/
 theorem descPath_leafRows_all
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (tcs : List Nat) :
-    ∀ {level : Nat} {st : RefineSt} {p₁ p₂ : List (Nat × Nat)}
-      {level₁ level₂ : Nat} {U V : RefineSt},
+    ∀ {level : Nat} {st : RefineSt n} {p₁ p₂ : List (Nat × Nat)}
+      {level₁ level₂ : Nat} {U V : RefineSt n},
       SubtreeOk ctx level st →
       DescPath ctx level st p₁ level₁ U →
       p₁.map Prod.fst = tcs →
-      (∀ q, q < ctx.n → U.ptn[q]! ≤ level₁) →
+      (∀ q, q < n → U.ptn[q]! ≤ level₁) →
       DescPath ctx level st p₂ level₂ V →
       p₂.map Prod.fst = tcs →
-      (∀ q, q < ctx.n → V.ptn[q]! ≤ level₂) →
+      (∀ q, q < n → V.ptn[q]! ≤ level₂) →
       level₂ = level₁ ∧ leafRows ctx V.lab = leafRows ctx U.lab := by
   induction tcs with
   | nil =>
@@ -161,13 +159,13 @@ theorem descPath_leafRows_all
       exact ih (subtreeOk_child hS hlvl hsymm hcell₁ hne₁ ho₁)
         htail₁ ht₁ hUd htail₂ ht₂ hVd
     · -- a deviation at this level, by the target's size
-      have hflip := flipData_of_subtreeOk hS hgsz hgb hsymm hloop
+      have hflip := flipData_of_subtreeOk hS hgsz hsymm hloop
         hcell₁ hne₁ ho₁ ho₂ (fun h => hval (by rw [h]))
       obtain ⟨σ, hgm, hspσ, hvv⟩ := hflip
       obtain ⟨W, qW, hdescW, hqW, hlrW, hptnW⟩ :=
         descPath_deviation_self hS.it hlvl hgm hspσ hcell₁ hne₁
           ho₁ ho₂ hvv htail₁ hUd
-      have hWd : ∀ q, q < ctx.n → W.ptn[q]! ≤ level₁ := by
+      have hWd : ∀ q, q < n → W.ptn[q]! ≤ level₁ := by
         intro q hq
         rw [hptnW]
         exact hUd q hq

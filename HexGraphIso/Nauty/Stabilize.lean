@@ -51,10 +51,10 @@ theorem cellsPerm_symm {ptn : Array Nat} {level : Nat}
 permutes labels within cells of its own finer partition, and the
 ancestor's boundaries persist, so cell-content equivalence coarsens and
 composes. The node-relative form of `refine_cellsReach`. -/
-theorem refine_reachAt {ctx : Ctx} {ptnN labN : Array Nat} {levN : Nat}
-    {lab ptn : Array Nat} {level active numcells : Nat}
+theorem refine_reachAt {ctx : Ctx n} {ptnN labN : Array Nat} {levN : Nat}
+    {lab ptn : Array Nat} {level : Nat} {active : VSet n} {numcells : Nat}
     (hreach : cellsPerm ptnN levN labN lab)
-    (hnn : ctx.n ≤ ptn.size) (hszN : ptnN.size = ptn.size)
+    (hnn : n ≤ ptn.size) (hszN : ptnN.size = ptn.size)
     (hlsz : lab.size = ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hendN : ptnN[ptnN.size - 1]! ≤ levN)
@@ -81,9 +81,9 @@ theorem breakout_reachAt {ptnN labN : Array Nat} {levN : Nat}
     (hendN : ptnN[ptnN.size - 1]! ≤ levN)
     (hcoarse : ∀ q : Nat, ptnN[q]! ≤ levN → ptn[q]! ≤ level) :
     cellsPerm ptnN levN labN
-      (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
-  have hstep := breakout_cellsPerm hcell hsize hlsz ho
-  have hbsz : (breakout lab ptn (level + 1) tc
+      (breakout n lab ptn (level + 1) tc lab[tc + o]!).1 := by
+  have hstep := breakout_cellsPerm (n := n) hcell hsize hlsz ho
+  have hbsz : (breakout n lab ptn (level + 1) tc
       lab[tc + o]!).1.size = ptn.size := by
     rw [breakout]
     rw [breakout_go_size, hlsz]
@@ -138,29 +138,29 @@ cell contents (`refine_perm`) and commutes with the automorphism's
 renaming (`refine_map`), and the two transports meet at the refined
 state. The descent-propagation clause of the stabilization
 invariant. -/
-theorem cellStab_refine {ctx : Ctx} (hn : ctx.n = n) {level : Nat}
-    {lab ptn γ : Array Nat} {active numcells : Nat}
+theorem cellStab_refine {ctx : Ctx n} {level : Nat}
+    {lab ptn γ : Array Nat} {active : VSet n} {numcells : Nat}
     (hstab : CellStab ptn level lab γ)
-    (hgsz : ctx.g.size = n) (hca : checkAutom ctx.g γ n = true)
+    (hgsz : ctx.g.size = n) (hca : checkAutom ctx.g γ = true)
     (hsl : lab.size = n) (hlab : LabOk lab n) (hsp : ptn.size = n)
-    (hact : active < 2 ^ n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hstarts : ∀ v : Nat, elem active v = true →
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hstarts : ∀ v : Nat, active.mem v = true →
       v = 0 ∨ ptn[v - 1]! ≤ level) :
     CellStab (refine ctx level lab ptn active numcells).ptn level
       (refine ctx level lab ptn active numcells).lab γ := by
   obtain ⟨σ, hσ, hrows⟩ := checkAutom_sound hgsz hca
   have hmapeq : lab.map σ.toFun = lab.map fun w => γ[w]! :=
     map_congr_of_labOk hlab fun w hw => hσ w hw
-  have hperm := refine_perm hn (lab' := lab.map fun w => γ[w]!)
+  have hperm := refine_perm (ctx := ctx) (lab' := lab.map fun w => γ[w]!)
     (active := active) (numcells := numcells) hstab
-    (by rw [Array.size_map]) hsl hlab hsp hact hend hstarts
-  have hmap := refine_map σ hn hn hrows level lab ptn active numcells
-    hsl hlab hsp hact hend
+    (by rw [Array.size_map]) hsl hlab hsp hend hstarts
+  have hmap := refine_map σ hrows level lab ptn active numcells
+    hsl hlab hsp hend
   rw [hmapeq] at hmap
   rw [hmap] at hperm
   have hcells := hperm.cells
-  have hout := refine_stOk hn (active := active)
-    (numcells := numcells) hsl hlab hsp hact hend
+  have hout := refine_stOk (ctx := ctx) (active := active)
+    (numcells := numcells) hsl hlab hsp hend
   show cellsPerm (refine ctx level lab ptn active numcells).ptn level
     (refine ctx level lab ptn active numcells).lab
     ((refine ctx level lab ptn active numcells).lab.map fun w => γ[w]!)
@@ -263,8 +263,8 @@ theorem cellStab_breakout {ptn lab γ : Array Nat}
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, ptn[q]! ≠ level + 1)
     (hfix : γ[lab[tc + o]!]! = lab[tc + o]!) :
-    CellStab (breakout lab ptn (level + 1) tc lab[tc + o]!).2.1
-      (level + 1) (breakout lab ptn (level + 1) tc lab[tc + o]!).1
+    CellStab (breakout n lab ptn (level + 1) tc lab[tc + o]!).2.1
+      (level + 1) (breakout n lab ptn (level + 1) tc lab[tc + o]!).1
       γ := by
   have hsz : tc + len ≤ lab.size := by rw [hlsz]; exact hsize
   have hwit : ∃ kL, tc ≤ kL ∧ kL < tc + len ∧ kL < lab.size ∧

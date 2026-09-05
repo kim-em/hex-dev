@@ -30,7 +30,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- Overwrite the first-path agreement depth. -/
-@[expose] def SearchSt.setEqlev (e : Nat) (st : SearchSt) : SearchSt :=
+@[expose] def SearchSt.setEqlev (e : Nat) (st : SearchSt n) : SearchSt n :=
   { st with eqlevFirst := e }
 
 private theorem id_run_eq {α : Type} (x : Id α) : x.run = x := rfl
@@ -63,43 +63,43 @@ private theorem firstScatter_fold (n : Nat) (flab lab : Array Nat) :
 set_option maxHeartbeats 4000000 in
 /-- Failing the admission gate runs exactly the comparison arm of the
 twin state with agreement depth zero; only the recorded depth differs. -/
-theorem processnode_gateFail_state {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hcanonSize : st.canonlab.size = ctx.n)
-    (hcanonOk : LabOk st.canonlab ctx.n)
-    (hcanonInj : LabInj st.canonlab ctx.n)
+theorem processnode_gateFail_state {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hcanonSize : st.canonlab.size = n)
+    (hcanonOk : LabOk st.canonlab n)
+    (hcanonInj : LabInj st.canonlab n)
     (hlevel : 1 ≤ level)
     (heq : (st.eqlevFirst == level) = true)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+      isautom ctx (firstScatter n st.firstlab st.lab) = false) :
     processnode ctx level numcells st =
       Prod.map id (SearchSt.setEqlev st.eqlevFirst)
         (processnode ctx level numcells { st with eqlevFirst := 0 }) := by
   have hwork :
-      (List.range ctx.n).foldl
+      (List.range n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (firstScatter ctx.n st.firstlab st.lab) =
-        (List.range ctx.n).foldl
+          (firstScatter n st.firstlab st.lab) =
+        (List.range n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (Array.replicate ctx.n 0) :=
+          (Array.replicate n 0) :=
     scatter_eq_of_full (firstScatter_size ..) (Array.size_replicate ..)
       hcanonSize hcanonOk hcanonInj
   have hwork' :
-      (List.range' 0 ctx.n).foldl
+      (List.range' 0 n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (firstScatter ctx.n st.firstlab st.lab) =
-        (List.range' 0 ctx.n).foldl
+          (firstScatter n st.firstlab st.lab) =
+        (List.range' 0 n).foldl
           (fun r i => r.set! st.canonlab[i]! st.lab[i]!)
-          (Array.replicate ctx.n 0) := by
+          (Array.replicate n 0) := by
     simpa [List.range_eq_range'] using hwork
   have hwork2 :
-      (List.range' 0 ctx.n).foldl
+      (List.range' 0 n).foldl
           (fun r i => r.setIfInBounds st.canonlab[i]! st.lab[i]!)
-          (firstScatter ctx.n st.firstlab st.lab) =
-        (List.range' 0 ctx.n).foldl
+          (firstScatter n st.firstlab st.lab) =
+        (List.range' 0 n).foldl
           (fun r i => r.setIfInBounds st.canonlab[i]! st.lab[i]!)
-          (Array.replicate ctx.n 0) := by
+          (Array.replicate n 0) := by
     simpa only [Array.set!_eq_setIfInBounds] using hwork'
   have hg : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
     intro h
@@ -134,16 +134,16 @@ theorem processnode_gateFail_state {ctx : Ctx} {level numcells : Nat}
        | simp only [hwork2])
 
 /-- The paired form of `processnode_gateFail_state`. -/
-theorem processnode_gateFail_pair {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hcanonSize : st.canonlab.size = ctx.n)
-    (hcanonOk : LabOk st.canonlab ctx.n)
-    (hcanonInj : LabInj st.canonlab ctx.n)
+theorem processnode_gateFail_pair {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hcanonSize : st.canonlab.size = n)
+    (hcanonOk : LabOk st.canonlab n)
+    (hcanonInj : LabInj st.canonlab n)
     (hlevel : 1 ≤ level)
     (heq : (st.eqlevFirst == level) = true)
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hfail : st.firstcode[level + 1]! ≠ codeSentinel ∨
-      isautom ctx (firstScatter ctx.n st.firstlab st.lab) = false) :
+      isautom ctx (firstScatter n st.firstlab st.lab) = false) :
     processnode ctx level numcells st =
       ((processnode ctx level numcells { st with eqlevFirst := 0 }).1,
         { (processnode ctx level numcells { st with eqlevFirst := 0 }).2 with
@@ -156,8 +156,8 @@ theorem processnode_gateFail_pair {ctx : Ctx} {level numcells : Nat}
 
 /-- Below the root, node preparation never raises a zero agreement depth,
 so the twin leaf state is the leaf state with its depth overwritten. -/
-theorem otherLeafSt_setEqlev (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) (hlevel : 2 ≤ level) :
+theorem otherLeafSt_setEqlev (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) (hlevel : 2 ≤ level) :
     otherLeafSt ctx level numcells { st with eqlevFirst := 0 } =
       { otherLeafSt ctx level numcells st with eqlevFirst := 0 } := by
   have hne : ((0 : Nat) == level - 1) = false := by
@@ -170,27 +170,27 @@ theorem otherLeafSt_setEqlev (ctx : Ctx) (level numcells : Nat)
   all_goals rfl
 
 /-- Leaf cleanup commutes with overwriting the agreement depth. -/
-theorem leafFinish_setEqlev (ctx : Ctx) (level e : Nat) (st : SearchSt) :
-    leafFinish ctx level { st with eqlevFirst := e } =
-      { leafFinish ctx level st with eqlevFirst := e } := by
+theorem leafFinish_setEqlev (level e : Nat) (st : SearchSt n) :
+    leafFinish level { st with eqlevFirst := e } =
+      { leafFinish level st with eqlevFirst := e } := by
   unfold leafFinish
   dsimp only
   split <;> split <;> rfl
 
 /-- A gate-failing off-path leaf runs as its twin with the recorded
 agreement depth restored. -/
-theorem otherNode_gateFail_state (ctx : Ctx)
-    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+theorem otherNode_gateFail_state (ctx : Ctx n)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt n)
     (hlevel : 2 ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
-    (hcanonSize : (otherLeafSt ctx level numcells st).canonlab.size = ctx.n)
-    (hcanonOk : LabOk (otherLeafSt ctx level numcells st).canonlab ctx.n)
-    (hcanonInj : LabInj (otherLeafSt ctx level numcells st).canonlab ctx.n)
+      numcells).numcells = n)
+    (hcanonSize : (otherLeafSt ctx level numcells st).canonlab.size = n)
+    (hcanonOk : LabOk (otherLeafSt ctx level numcells st).canonlab n)
+    (hcanonInj : LabInj (otherLeafSt ctx level numcells st).canonlab n)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) = true)
     (hfail : (otherLeafSt ctx level numcells st).firstcode[level + 1]! ≠
         codeSentinel ∨
-      isautom ctx (firstScatter ctx.n
+      isautom ctx (firstScatter n
         (otherLeafSt ctx level numcells st).firstlab
         (otherLeafSt ctx level numcells st).lab) = false) :
     otherNode ctx inf tcLevel (fuel + 1) level numcells st =
@@ -202,19 +202,19 @@ theorem otherNode_gateFail_state (ctx : Ctx)
   have hpre' : otherLeafSt ctx level numcells { st with eqlevFirst := 0 } =
       { pre with eqlevFirst := 0 } :=
     otherLeafSt_setEqlev ctx level numcells st hlevel
-  have hproc : processnode ctx level ctx.n pre =
+  have hproc : processnode ctx level n pre =
       Prod.map id (SearchSt.setEqlev pre.eqlevFirst)
-        (processnode ctx level ctx.n { pre with eqlevFirst := 0 }) :=
+        (processnode ctx level n { pre with eqlevFirst := 0 }) :=
     processnode_gateFail_state hcanonSize hcanonOk hcanonInj (by omega) heq
       (beq_self_eq_true _) hfail
   have hnum' : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n := hnum
-  have hret : (processnode ctx level ctx.n pre).1 =
-      (processnode ctx level ctx.n { pre with eqlevFirst := 0 }).1 := by
+      numcells).numcells = n := hnum
+  have hret : (processnode ctx level n pre).1 =
+      (processnode ctx level n { pre with eqlevFirst := 0 }).1 := by
     rw [hproc]
     rfl
-  by_cases hearly : (processnode ctx level ctx.n pre).1 < Int.ofNat level
-  · have hearly' : (processnode ctx level ctx.n
+  by_cases hearly : (processnode ctx level n pre).1 < Int.ofNat level
+  · have hearly' : (processnode ctx level n
         (otherLeafSt ctx level numcells { st with eqlevFirst := 0 })).1 <
           Int.ofNat level := by
       rw [hpre', ← hret]
@@ -223,7 +223,7 @@ theorem otherNode_gateFail_state (ctx : Ctx)
       hearly, otherNode_leaf_early ctx inf tcLevel fuel level numcells
       { st with eqlevFirst := 0 } hnum' hearly', hpre']
     exact hproc
-  · have hdone' : ¬ (processnode ctx level ctx.n
+  · have hdone' : ¬ (processnode ctx level n
         (otherLeafSt ctx level numcells { st with eqlevFirst := 0 })).1 <
           Int.ofNat level := by
       rw [hpre', ← hret]
@@ -231,9 +231,9 @@ theorem otherNode_gateFail_state (ctx : Ctx)
     rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st hnum
       hearly, otherNode_leaf_done_state ctx inf tcLevel fuel level numcells
       { st with eqlevFirst := 0 } hnum' hdone', hpre', hproc]
-    show (_, leafFinish ctx level
+    show (_, leafFinish level
         (SearchSt.setEqlev pre.eqlevFirst
-          (processnode ctx level ctx.n { pre with eqlevFirst := 0 }).2)) = _
+          (processnode ctx level n { pre with eqlevFirst := 0 }).2)) = _
     unfold SearchSt.setEqlev
     rw [leafFinish_setEqlev]
     rfl
@@ -242,14 +242,14 @@ theorem otherNode_gateFail_state (ctx : Ctx)
 
 /-- Lowering the first-path agreement depth preserves the stable
 invariant. -/
-theorem RunInv.setEqlevFirst {G : Colored n k} {ctx : Ctx}
+theorem RunInv.setEqlevFirst {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells e : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunInv G ctx tcLevel level codes bs fs numcells st best trail)
     (he : e ≤ st.eqlevFirst) :
     RunInv G ctx tcLevel level codes bs fs numcells
       { st with eqlevFirst := e } best trail := by
-  let st' : SearchSt := { st with eqlevFirst := e }
+  let st' : SearchSt n := { st with eqlevFirst := e }
   have hok : SearchOk G level numcells st' := by
     refine ⟨h.searchOk.labSize, h.searchOk.ptnSize, h.searchOk.reach,
       h.searchOk.init1, h.searchOk.vals, h.searchOk.count, h.searchOk.bc,
@@ -267,14 +267,14 @@ theorem RunInv.setEqlevFirst {G : Colored n k} {ctx : Ctx}
 
 /-- Lowering the first-path agreement depth preserves the node
 invariant. -/
-theorem NodeInv.setEqlevFirst {G : Colored n k} {ctx : Ctx}
+theorem NodeInv.setEqlevFirst {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells e : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (he : e ≤ st.eqlevFirst) :
     NodeInv G ctx tcLevel level codes bs fs numcells
       { st with eqlevFirst := e } best trail :=
-  ⟨h.run.setEqlevFirst he, h.cert, h.activeLt, h.activeStarts, h.firstBelow,
+  ⟨h.run.setEqlevFirst he, h.cert, h.activeStarts, h.firstBelow,
     h.canonBelow, h.shortClear⟩
 
 /-! # Transporting the run package back -/
@@ -282,8 +282,8 @@ theorem NodeInv.setEqlevFirst {G : Colored n k} {ctx : Ctx}
 namespace Unwind
 
 /-- Overwriting the agreement depth does not touch an unwind payload. -/
-@[expose] def setEqlev {ctx : Ctx} {tcLevel target : Nat} {out : SearchSt}
-    {best : Option Key} (e : Nat) :
+@[expose] def setEqlev {ctx : Ctx n} {tcLevel target : Nat} {out : SearchSt n}
+    {best : Option (Key n)} (e : Nat) :
     Unwind ctx tcLevel target out best →
       Unwind ctx tcLevel target { out with eqlevFirst := e } best
   | .first anchor carrier => .first anchor carrier
@@ -292,8 +292,8 @@ namespace Unwind
       payload.currentLt, payload.smaller, payload.sound⟩
 
 /-- Location evidence survives the transport. -/
-theorem Located.setEqlev {ctx : Ctx} {tcLevel target : Nat}
-    {out : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Located.setEqlev {ctx : Ctx n} {tcLevel target : Nat}
+    {out : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     {payload : Unwind ctx tcLevel target out best} (e : Nat)
     (h : payload.Located trail) : (payload.setEqlev e).Located trail := by
   cases h with
@@ -309,8 +309,8 @@ theorem Located.setEqlev {ctx : Ctx} {tcLevel target : Nat}
 end Unwind
 
 /-- A frozen comparison does not read the agreement depth. -/
-theorem FrozenOut.setEqlev {ctx : Ctx} {stem : List Nat} {out : SearchSt}
-    {best : Option Key} {r : Int} (h : FrozenOut ctx stem out best r)
+theorem FrozenOut.setEqlev {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
+    {best : Option (Key n)} {r : Int} (h : FrozenOut ctx stem out best r)
     (e : Nat) :
     FrozenOut ctx stem { out with eqlevFirst := e } best r := by
   rcases h with
@@ -320,7 +320,7 @@ theorem FrozenOut.setEqlev {ctx : Ctx} {stem : List Nat} {out : SearchSt}
     hfloor⟩
 
 /-- A short-prune source does not read the agreement depth. -/
-theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx} {out : SearchSt}
+theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     {trail : FrameTrail} {r : Int}
     (h : ShortSource G ctx out trail r) (e : Nat) :
     ShortSource G ctx { out with eqlevFirst := e } trail r := by
@@ -331,8 +331,8 @@ theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx} {out : SearchSt}
       exact .implicit target returned below back root
 
 /-- Semantic soundness only reads the frame of the entry state. -/
-theorem NodeSound.setEqlev {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
-    {codes : List Nat} {st : SearchSt} {best out : Option Key}
+theorem NodeSound.setEqlev {ctx : Ctx n} {tcLevel specFuel level numcells : Nat}
+    {codes : List Nat} {st : SearchSt n} {best out : Option (Key n)}
     (h : NodeSound ctx tcLevel specFuel level codes
       { st with eqlevFirst := 0 } numcells best out) :
     NodeSound ctx tcLevel specFuel level codes st numcells best out := by
@@ -346,9 +346,9 @@ theorem NodeSound.setEqlev {ctx : Ctx} {tcLevel specFuel level numcells : Nat}
   rwa [hkey] at this
 
 /-- The corrected exit classification transports from the twin. -/
-theorem NodeExit.setEqlev {ctx : Ctx}
+theorem NodeExit.setEqlev {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells e : Nat} {codes : List Nat}
-    {st out : SearchSt} {best outBest : Option Key} {trail : FrameTrail}
+    {st out : SearchSt n} {best outBest : Option (Key n)} {trail : FrameTrail}
     {r : Int} (hfuel : runFuel ≠ 0)
     (h : NodeExit ctx tcLevel specFuel runFuel level codes
       { st with eqlevFirst := 0 } out numcells best outBest trail r) :
@@ -378,19 +378,19 @@ set_option maxHeartbeats 800000 in
 /-- The corrected off-path result of a gate-failing leaf follows from the
 result of its twin.  The event package is rebuilt directly from the leaf
 comparison, because the twin's event only records agreement depth zero. -/
-theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx}
+theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 2 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) = true)
     (hfail : (otherLeafSt ctx level numcells st).firstcode[level + 1]! ≠
         codeSentinel ∨
-      isautom ctx (firstScatter ctx.n
+      isautom ctx (firstScatter n
         (otherLeafSt ctx level numcells st).firstlab
         (otherLeafSt ctx level numcells st).lab) = false)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
@@ -411,15 +411,12 @@ theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx}
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 ∧
       OtherKeep ctx level st
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 := by
-  have hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n := by
-    rw [hg, hn]
-    exact rowsOf_bounded G
-  have hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u := by
-    rw [hg, hn]
+  have hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u := by
+    rw [hg]
     exact rowsOf_symm G
-  have hloopless : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false := by
-    rw [hg, hn]
+  have hloopless : ∀ v, v < n → (ctx.g[v]!).mem v = false := by
+    rw [hg]
     exact rowsOf_loopless G
   let pre := otherLeafSt ctx level numcells st
   let full := codes ++
@@ -429,29 +426,26 @@ theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx}
     omega
   have hstem : full.take codes.length = codes := by
     simp only [full, List.take_left']
-  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n pre best
+  have hprep : RunPrep G ctx tcLevel level full bs fs n pre best
       trail := by
     simpa only [full, pre, hnum] using
-      hnode.run.otherLeaf hn hn0 (by omega) hpath
+      hnode.run.otherLeaf hn0 (by omega) hpath
   have hbound : pre.noncheaplevel ≤ level := by
     change (otherLeafSt ctx level numcells st).noncheaplevel ≤ level
     rw [RefTrail.otherLeaf_noncheaplevel]
     exact hcheap
-  have hcanonSize : pre.canonlab.size = ctx.n := by
-    rw [hn]
+  have hcanonSize : pre.canonlab.size = n := by
     exact hprep.leafRefs.canonSize
-  have hcanonOk : LabOk pre.canonlab ctx.n := by
-    rw [hn]
+  have hcanonOk : LabOk pre.canonlab n := by
     exact labOk_of_reach hprep.leafRefs.canonSize hprep.leafRefs.canonReach
-  have hcanonInj : LabInj pre.canonlab ctx.n := by
-    rw [hn]
+  have hcanonInj : LabInj pre.canonlab n := by
     exact labInj_of_reach hprep.leafRefs.canonSize hn0
       hprep.leafRefs.canonReach
   have hstate := otherNode_gateFail_state ctx inf tcLevel fuel level numcells
     st hlevel hnum hcanonSize hcanonOk hcanonInj heq hfail
-  obtain ⟨bs', hevent, hmax, hret⟩ := hprep.leafFirst hn hn0 hgb hsymm
+  obtain ⟨bs', hevent, hmax, hret⟩ := hprep.leafFirst hn0 hsymm
     hloopless (by omega) hfull hbound heq hfail (beq_self_eq_true _)
-  let P := processnode ctx level ctx.n pre
+  let P := processnode ctx level n pre
   let twin := otherNode ctx inf tcLevel (fuel + 1) level numcells
     { st with eqlevFirst := 0 }
   have hout : (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 =
@@ -485,7 +479,7 @@ theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx}
   -- the executable output in terms of the leaf comparison
   have hleaf : otherNode ctx inf tcLevel (fuel + 1) level numcells st = P ∨
       otherNode ctx inf tcLevel (fuel + 1) level numcells st =
-        (Int.ofNat level - 1, leafFinish ctx level P.2) := by
+        (Int.ofNat level - 1, leafFinish level P.2) := by
     by_cases hearly : P.1 < Int.ofNat level
     · exact Or.inl (otherNode_leaf_early ctx inf tcLevel fuel level numcells
         st hnum hearly)
@@ -523,14 +517,14 @@ theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx}
         (hlivePre.processnode hprep.trailOk hprep.firstBound).1
     · have hbest : outBest = some (incKey ctx bs' P.2.canonlab) := by
         rw [← hread', ← hstIncEq, hleaf]
-        show stInc ctx (leafFinish ctx level P.2) = _
+        show stInc ctx (leafFinish level P.2) = _
         rw [stInc_leafFinish]
         exact hevent.read
       rw [hleaf] at hstable ⊢
       rw [hbest]
       dsimp only at hstable ⊢
       exact EventOut.intro level full bs'
-        (hevent.leafFinish (ctx := ctx) (level := level)) hfull hstem
+        (hevent.leafFinish (level := level)) hfull hstem
         (by omega) (by simp only [Int.ofNat_eq_natCast]; omega) hstable
         ((hlivePre.processnode hprep.trailOk hprep.firstBound).1.leafFinish)
   refine ⟨?_, ?_⟩

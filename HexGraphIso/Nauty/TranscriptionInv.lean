@@ -109,8 +109,8 @@ current partition (`hcoarse`) and preserves the clause. -/
 /-- `refine` preserves `CellsReach`: it reorders labels within cells of
 its own (finer) partition, and the initial boundaries persist, so
 cell-content equivalence transfers to the initial partition. -/
-theorem refine_cellsReach {G : Colored n k} {ctx : Ctx} (hn : ctx.n = n)
-    (hn0 : 0 < n) {lab ptn : Array Nat} {level active numcells : Nat}
+theorem refine_cellsReach {G : Colored n k} {ctx : Ctx n}
+    (hn0 : 0 < n) {lab ptn : Array Nat} {level : Nat} {active : VSet n} {numcells : Nat}
     (hreach : CellsReach G lab) (hlsz : lab.size = n) (hpsz : ptn.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hcoarse : ∀ q : Nat,
@@ -119,7 +119,7 @@ theorem refine_cellsReach {G : Colored n k} {ctx : Ctx} (hn : ctx.n = n)
   have hok := initial_nodeOk G hn0
   have hRinv := refine_refInv (ctx := ctx) (level := level) (lab := lab)
     (ptn := ptn) (active := active) (numcells := numcells)
-    (Nat.le_of_eq (hn.trans hpsz.symm)) (by rw [hlsz, hpsz]) hend
+    (Nat.le_of_eq hpsz.symm) (by rw [hlsz, hpsz]) hend
   -- `refine` reorders `lab` within its own partition's cells
   have hstep : cellsPerm ptn level lab
       (refine ctx level lab ptn active numcells).lab := hRinv.perm
@@ -142,7 +142,7 @@ theorem breakout_cellsPerm {lab ptn : Array Nat} {level tc len o : Nat}
     (hcell : IsCell ptn level tc len) (hsize : tc + len ≤ ptn.size)
     (hlsz : lab.size = ptn.size) (ho : o < len) :
     cellsPerm ptn level lab
-      (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
+      (breakout n lab ptn (level + 1) tc lab[tc + o]!).1 := by
   have hsz : tc + len ≤ lab.size := by rw [hlsz]; exact hsize
   have htvmem : lab[tc + o]! ∈ segN lab tc len := by
     rw [segN]
@@ -150,7 +150,7 @@ theorem breakout_cellsPerm {lab ptn : Array Nat} {level tc len o : Nat}
   have hwit : ∃ kL, tc ≤ kL ∧ kL < tc + len ∧ kL < lab.size ∧
       lab[kL]! = lab[tc + o]! :=
     ⟨tc + o, by omega, by omega, by omega, rfl⟩
-  have hseg : segN (breakout lab ptn (level + 1) tc lab[tc + o]!).1
+  have hseg : segN (breakout n lab ptn (level + 1) tc lab[tc + o]!).1
       tc len = lab[tc + o]! :: (segN lab tc len).erase lab[tc + o]! := by
     show segN (breakout.go lab[tc + o]! (lab.size + 1) lab tc
       lab[tc + o]!) tc len = _
@@ -178,14 +178,14 @@ theorem breakout_cellsReach {G : Colored n k} {lab ptn : Array Nat}
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hcoarse : ∀ q : Nat,
       (initPtn n (n + 2) (initialPartition G).2)[q]! ≤ 1 → ptn[q]! ≤ level) :
-    CellsReach G (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
+    CellsReach G (breakout n lab ptn (level + 1) tc lab[tc + o]!).1 := by
   have hok := initial_nodeOk G hn0
-  have hstep := breakout_cellsPerm hcell hsize (by rw [hlsz, hpsz]) ho
-  have hbsz : (breakout lab ptn (level + 1) tc lab[tc + o]!).1.size = n := by
+  have hstep := breakout_cellsPerm (n := n) hcell hsize (by rw [hlsz, hpsz]) ho
+  have hbsz : (breakout n lab ptn (level + 1) tc lab[tc + o]!).1.size = n := by
     rw [breakout]
     rw [breakout_go_size, hlsz]
   have hcoar : cellsPerm (initPtn n (n + 2) (initialPartition G).2) 1
-      lab (breakout lab ptn (level + 1) tc lab[tc + o]!).1 := by
+      lab (breakout n lab ptn (level + 1) tc lab[tc + o]!).1 := by
     refine cellsPerm_coarsen (ptnF := ptn) (levF := level)
       (by rw [size_initPtn, hpsz]) (by rw [hlsz, hpsz])
       (by rw [hbsz, hpsz]) hstep hend ?_ hcoarse

@@ -17,8 +17,8 @@ Preservation rules for the active-frame reach ledger.
 namespace Hex.GraphIso.Nauty
 
 /-- Refinement preserves an existing singleton cell. -/
-theorem isCell_refine_one {ctx : Ctx} {level active numcells a : Nat}
-    {lab ptn : Array Nat} (hnn : ctx.n = ptn.size)
+theorem isCell_refine_one {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells a : Nat}
+    {lab ptn : Array Nat} (hnn : n = ptn.size)
     (hls : lab.size = ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
     (hc : IsCell ptn level a 1) :
     IsCell (Nauty.refine ctx level lab ptn active numcells).ptn
@@ -62,7 +62,7 @@ theorem isCell_set_miss {ptn : Array Nat} {level a tc len : Nat}
       omega)
 
 /-- Reindex frame reach across unchanged labelling and partition fields. -/
-theorem TrailOk.stateEq {ctx : Ctx} {level : Nat} {st st' : SearchSt}
+theorem TrailOk.stateEq {ctx : Ctx n} {level : Nat} {st st' : SearchSt n}
     {trail : FrameTrail} (h : TrailOk ctx level st trail)
     (hlab : st'.lab = st.lab) (hptn : st'.ptn = st.ptn) :
     TrailOk ctx level st' trail := by
@@ -83,10 +83,10 @@ theorem TrailOk.stateEq {ctx : Ctx} {level : Nat} {st st' : SearchSt}
 
 /-- Refinement preserves reach from every active ancestor and leaves all
 of their closed boundaries untouched. -/
-theorem TrailOk.refine {ctx : Ctx} {level active numcells : Nat}
-    {st out : SearchSt} {trail : FrameTrail}
+theorem TrailOk.refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat}
+    {st out : SearchSt n} {trail : FrameTrail}
     (h : TrailOk ctx level st trail)
-    (hls : st.lab.size = ctx.n) (hps : st.ptn.size = ctx.n)
+    (hls : st.lab.size = n) (hps : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
     (hlab : out.lab =
       (Nauty.refine ctx level st.lab st.ptn active numcells).lab)
@@ -138,8 +138,8 @@ theorem TrailOk.refine {ctx : Ctx} {level active numcells : Nat}
         (by rw [hls, hps]) hend hsingle).trans hat
 
 /-- Leaf processing changes neither the current labelling nor partition. -/
-theorem TrailOk.processnode {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} {trail : FrameTrail}
+theorem TrailOk.processnode {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} {trail : FrameTrail}
     (h : TrailOk ctx level st trail) :
     TrailOk ctx level (Nauty.processnode ctx level numcells st).2 trail := by
   obtain ⟨hlab, hptn, _, _, _, _, _, _, _⟩ :=
@@ -147,10 +147,10 @@ theorem TrailOk.processnode {ctx : Ctx} {level numcells : Nat}
   exact h.stateEq hlab hptn
 
 /-- Reopening to an ancestor preserves every older active frame. -/
-theorem TrailOk.recover {ctx : Ctx} {current level inf : Nat}
-    {st : SearchSt} {trail : FrameTrail}
+theorem TrailOk.recover {ctx : Ctx n} {current level inf : Nat}
+    {st : SearchSt n} {trail : FrameTrail}
     (h : TrailOk ctx current st trail) (hle : level ≤ current) :
-    TrailOk ctx level (Nauty.recover ctx.n inf level st) trail := by
+    TrailOk ctx level (Nauty.recover n inf level st) trail := by
   constructor
   · intro target entry hlt hentry
     rw [recover_lab]
@@ -172,7 +172,7 @@ theorem TrailOk.recover {ctx : Ctx} {current level inf : Nat}
     have hlt' := Nat.lt_of_lt_of_le hlt hle
     obtain ⟨len, hcell, hoff, hsplit, _, hat⟩ :=
       h.picked target entry hlt' hentry
-    have hsplit' : (Nauty.recover ctx.n inf level st).ptn[entry.frame.tc]! =
+    have hsplit' : (Nauty.recover n inf level st).ptn[entry.frame.tc]! =
         target + 1 := by
       rw [recover_ptn, ite_eq_right]
       · exact hsplit
@@ -194,7 +194,7 @@ theorem TrailOk.recover {ctx : Ctx} {current level inf : Nat}
             omega
       · intro i hi hbound
         omega
-      · change (Nauty.recover ctx.n inf level st).ptn[entry.frame.tc]! ≤
+      · change (Nauty.recover n inf level st).ptn[entry.frame.tc]! ≤
           level
         rw [hsplit']
         omega
@@ -203,17 +203,17 @@ theorem TrailOk.recover {ctx : Ctx} {current level inf : Nat}
 
 /-- Individualization extends the active trail with the selected parent
 child while preserving reach from every older frame. -/
-theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
-    {codes : List Nat} {st out : SearchSt} {trail : FrameTrail}
+theorem TrailOk.push {ctx : Ctx n} {level specFuel numcells tc len o : Nat}
+    {codes : List Nat} {st out : SearchSt n} {trail : FrameTrail}
     (h : TrailOk ctx level st trail)
-    (hls : st.lab.size = ctx.n) (hps : st.ptn.size = ctx.n)
+    (hls : st.lab.size = n) (hps : st.ptn.size = n)
     (hinj : LabInj st.lab st.lab.size)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
-    (hrange : tc + len ≤ ctx.n)
+    (hrange : tc + len ≤ n)
     (ho : o < len)
     (hlab : out.lab =
-      (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
+      (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1)
     (hptn : out.ptn = st.ptn.set! tc (level + 1)) :
     TrailOk ctx (level + 1) out
       (trail.push level
@@ -243,7 +243,7 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
       subst entry
       change cellsPerm st.ptn level st.lab out.lab
       rw [hlab]
-      exact breakout_cellsPerm hcell
+      exact breakout_cellsPerm (n := n) hcell
         (by rw [hps]; exact hrange) (by rw [hls, hps]) ho
   · intro target entry hlt hentry
     rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | hhere
@@ -332,7 +332,7 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
       · change IsCell out.ptn (level + 1) tc 1
         rw [hptn]
         simpa only [breakout_ptn] using
-          (isCell_breakout_target (lab := st.lab)
+          (isCell_breakout_target (n := n) (lab := st.lab)
             (tv := st.lab[tc + o]!) (by rw [hps]; omega) hcell.2.1)
       · change out.lab[tc]! = st.lab[tc + o]!
         rw [hlab]
@@ -340,25 +340,25 @@ theorem TrailOk.push {ctx : Ctx} {level specFuel numcells tc len o : Nat}
 
 /-- Individualizing a recovered parent records the frozen specification
 frame rather than the current within-cell permutation of that frame. -/
-theorem TrailOk.pushFrame {ctx : Ctx}
+theorem TrailOk.pushFrame {ctx : Ctx n}
     {level specFuel numcells tc len offset currentOffset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {st child : SearchSt} {trail : FrameTrail}
+    {st child : SearchSt n} {trail : FrameTrail}
     (h : TrailOk ctx level st trail)
-    (hls : st.lab.size = ctx.n) (hps : st.ptn.size = ctx.n)
+    (hls : st.lab.size = n) (hps : st.ptn.size = n)
     (hinj : LabInj st.lab st.lab.size)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
-    (hrsLab : rsLab.size = ctx.n) (hrsPtn : rsPtn.size = ctx.n)
+    (hrsLab : rsLab.size = n) (hrsPtn : rsPtn.size = n)
     (hrsEnd : rsPtn[rsPtn.size - 1]! ≤ level)
     (hperm : cellsPerm rsPtn level rsLab st.lab)
     (hptnEq : st.ptn = rsPtn)
     (hcell : IsCell rsPtn level tc len)
     (hcurrent : IsCell st.ptn level tc len)
-    (hlen : 2 ≤ len) (hrange : tc + len ≤ ctx.n)
+    (hlen : 2 ≤ len) (hrange : tc + len ≤ n)
     (hoffset : offset < len) (hcurrentOffset : currentOffset < len)
     (hat : st.lab[tc + currentOffset]! = rsLab[tc + offset]!)
     (hlab : child.lab =
-      (breakout st.lab st.ptn (level + 1) tc
+      (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + currentOffset]!).1)
     (hptn : child.ptn = st.ptn.set! tc (level + 1)) :
     TrailOk ctx (level + 1) child
@@ -480,7 +480,7 @@ theorem TrailOk.pushFrame {ctx : Ctx}
         omega
       · change IsCell child.ptn (level + 1) tc 1
         rw [hptn]
-        exact isCell_breakout_target (lab := st.lab)
+        exact isCell_breakout_target (n := n) (lab := st.lab)
           (tv := st.lab[tc + currentOffset]!)
           (by rw [hps]; omega) hcurrent.2.1
       · change child.lab[tc]! = rsLab[tc + offset]!
@@ -491,22 +491,22 @@ theorem TrailOk.pushFrame {ctx : Ctx}
 /-- Package one already-covered child of a frozen sweep as a generator
 guide. The reference labelling may be either the first leaf or the current
 canonical leaf. -/
-@[expose] def Guide.ofSweep {ctx : Ctx} {tcLevel specFuel level : Nat}
+@[expose] def Guide.ofSweep {ctx : Ctx n} {tcLevel specFuel level : Nat}
     {codes : List Nat} {rsLab rsPtn ref : Array Nat}
-    {tc len numcells offset : Nat} {best : Option Key}
+    {tc len numcells offset : Nat} {best : Option (Key n)}
     (hlevel : 1 ≤ level)
     (hdone : ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
       numcells best offset)
-    (hls : rsLab.size = ctx.n) (hlab : LabOk rsLab ctx.n)
-    (hps : rsPtn.size = ctx.n)
+    (hls : rsLab.size = n) (hlab : LabOk rsLab n)
+    (hps : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
+      rsPtn[q]! = n + 2)
+    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
     (hoff : offset < len)
-    (hfuel : level + 1 + specFuel ≤ ctx.n + 1)
+    (hfuel : level + 1 + specFuel ≤ n + 1)
     (hat : ref[tc]! = rsLab[tc + offset]!)
-    (hrefSize : ref.size = ctx.n)
+    (hrefSize : ref.size = n)
     (hrefReach : cellsPerm rsPtn level rsLab ref) :
     Guide ctx tcLevel level best :=
   { positive := hlevel
@@ -536,22 +536,22 @@ canonical leaf. -/
 /-- Descending into a sweep child extends both guide ledgers. A guide
 whose control is the current level is supplied by an already-covered
 child of that sweep; older guides are transported automatically. -/
-theorem GuideStore.pushSweep {ctx : Ctx}
+theorem GuideStore.pushSweep {ctx : Ctx n}
     {tcLevel specFuel level numcells tc len activeOffset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {st : SearchSt} {best : Option Key}
+    {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (h : GuideStore ctx tcLevel level st best trail)
     (hlevel : 1 ≤ level)
-    (hls : rsLab.size = ctx.n) (hlab : LabOk rsLab ctx.n)
-    (hps : rsPtn.size = ctx.n)
+    (hls : rsLab.size = n) (hlab : LabOk rsLab n)
+    (hps : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hfuel : level + 1 + specFuel ≤ ctx.n + 1)
-    (hfirstSize : st.firstlab.size = ctx.n)
-    (hcanonSize : st.canonlab.size = ctx.n)
+      rsPtn[q]! = n + 2)
+    (hcell : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hfuel : level + 1 + specFuel ≤ n + 1)
+    (hfirstSize : st.firstlab.size = n)
+    (hcanonSize : st.canonlab.size = n)
     (hfirst : st.gcaFirst = level →
       ∃ o, o < len ∧
         ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc
@@ -592,9 +592,9 @@ theorem GuideStore.pushSweep {ctx : Ctx}
 
 /-- Positive runtime fuel exposes the semantic soundness carried by every
 non-exhausted node result. -/
-theorem NodeResult.sound {ctx : Ctx}
+theorem NodeResult.sound {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {cs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key} {r : Int}
+    {st out : SearchSt n} {best outBest : Option (Key n)} {r : Int}
     (h : NodeResult ctx tcLevel specFuel runFuel level cs st out numcells
       best outBest r) (hfuel : runFuel ≠ 0) :
     NodeSound ctx tcLevel specFuel level cs st numcells best outBest := by
@@ -605,26 +605,26 @@ theorem NodeResult.sound {ctx : Ctx}
   | exhausted empty => exact (hfuel empty).elim
 
 /-- A located leaf-event unwind lifts directly through `otherNode`. -/
-theorem otherNode_leaf_receipt {ctx : Ctx}
+theorem otherNode_leaf_receipt {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells target : Nat}
-    {cs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {cs : List Nat} {st : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail}
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
-    (hreturn : (processnode ctx level ctx.n
+      numcells).numcells = n)
+    (hreturn : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 = Int.ofNat target)
     (hbelow : target < level)
     (hsound : NodeSound ctx tcLevel (specFuel + 1) level cs st numcells
       best outBest)
     (payload : Unwind ctx tcLevel target
-      (processnode ctx level ctx.n
+      (processnode ctx level n
         (otherLeafSt ctx level numcells st)).2 outBest)
     (hloc : payload.Located trail) :
     NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best outBest
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
-  have hearly : (processnode ctx level ctx.n
+  have hearly : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 < Int.ofNat level := by
     rw [hreturn]
     exact Int.ofNat_lt.mpr hbelow
@@ -634,31 +634,30 @@ theorem otherNode_leaf_receipt {ctx : Ctx}
 
 /-- A code-one admission at a reached active child has a located direct
 unwind payload. -/
-theorem Guide.firstLocated {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Guide.firstLocated {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (g : Guide ctx tcLevel st.gcaFirst best)
     (href : g.ref = st.firstlab) (hloc : g.Located trail)
     (htrail : TrailOk ctx level st trail) (hbelow : st.gcaFirst < level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.firstlab.size = n)
+    (hp₁ : st.firstlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     ∃ payload : Unwind ctx tcLevel st.gcaFirst
         (processnode ctx level numcells st).2 best,
       payload.Located trail := by
   obtain ⟨o, hentry, ho, hat⟩ := g.active hloc htrail hbelow
   have hreach := g.reachAt hloc htrail hbelow
   have hcarrier := processnode_firstLabelCarrier hsz₁ hp₁ hsz₂ hp₂
-    hsymm hloop hbound heq hsent hnc hpass
+    hsymm hloop heq hsent hnc hpass
   have hcarrierG : LabelCarrier ctx g.ref st.lab
       (processnode ctx level numcells st).2.genTrace := by
     rw [href]
@@ -689,20 +688,19 @@ theorem Guide.firstLocated {ctx : Ctx} {tcLevel level numcells : Nat}
 
 /-- A code-two admission at a reached active child has a located direct
 canonical unwind payload. -/
-theorem Guide.canonLocated {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Guide.canonLocated {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (g : Guide ctx tcLevel st.gcaCanon best)
     (href : g.ref = st.canonlab) (hloc : g.Located trail)
     (htrail : TrailOk ctx level st trail) (hbelow : st.gcaCanon < level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
@@ -712,7 +710,7 @@ theorem Guide.canonLocated {ctx : Ctx} {tcLevel level numcells : Nat}
   obtain ⟨o, hentry, ho, hat⟩ := g.active hloc htrail hbelow
   have hreach := g.reachAt hloc htrail hbelow
   have hcarrier := processnode_canonLabelCarrier hsz₁ hp₁ hsz₂ hp₂
-    hbound hrows hef hnc hcc hge htie
+    hrows hef hnc hcc hge htie
   have hcarrierG : LabelCarrier ctx g.ref st.lab
       (processnode ctx level numcells st).2.genTrace := by
     rw [href]
@@ -745,29 +743,28 @@ theorem Guide.canonLocated {ctx : Ctx} {tcLevel level numcells : Nat}
 /-- A row-tied code-two event carries location evidence in both return
 arms: the canonical arm uses its stored guide, while the first-ancestor
 arm is the loop-local orbit return. -/
-theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Guide.tiedLocated {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (g : Guide ctx tcLevel st.gcaCanon best)
     (href : g.ref = st.canonlab) (hloc : g.Located trail)
     (htrail : TrailOk ctx level st trail)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
     (hcanonBelow : st.gcaCanon < level)
     (hfirstPos : 1 ≤ st.gcaFirst) (hfirstBelow : st.gcaFirst < level)
-    (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
+    (hcoset : (processnode ctx level numcells st).2.cosetindex < n)
     (horbit : OrbSound
-      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
-      (processnode ctx level numcells st).2.orbits ctx.n) :
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList n)
+      (processnode ctx level numcells st).2.orbits n) :
     ∃ target,
       (processnode ctx level numcells st).1 = Int.ofNat target ∧
       target < level ∧
@@ -779,7 +776,7 @@ theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
   rcases processnode_rowTie_orbit hef hnc hcc hge htie with hcanon |
       ⟨hfirst, hsmaller⟩
   · obtain ⟨payload, hpayload⟩ := g.canonLocated href hloc htrail
-      hcanonBelow hgsz hsz₁ hp₁ hsz₂ hp₂ hbound hrows hef hnc hcc hge htie
+      hcanonBelow hgsz hsz₁ hp₁ hsz₂ hp₂ hrows hef hnc hcc hge htie
     exact ⟨st.gcaCanon, hcanon, hcanonBelow,
       Or.inr (processnode_rowTie_gcaCanon hef hnc hcc hge htie).symm,
       payload, hpayload⟩
@@ -796,55 +793,53 @@ theorem Guide.tiedLocated {ctx : Ctx} {tcLevel level numcells : Nat}
         exact Nat.le_refl _, hcoset, hsmaller, horbit⟩⟩
 
 /-- The located guide store discharges a code-one leaf return. -/
-theorem GuideStore.firstUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem GuideStore.firstUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (hstore : GuideStore ctx tcLevel level st best trail)
     (htrail : TrailOk ctx level st trail)
     (hfirstPos : 0 < st.gcaFirst) (hbelow : st.gcaFirst < level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.firstlab.size = n)
+    (hp₁ : st.firstlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx (firstScatter ctx.n st.firstlab st.lab) = true) :
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx (firstScatter n st.firstlab st.lab) = true) :
     ∃ payload : Unwind ctx tcLevel st.gcaFirst
         (processnode ctx level numcells st).2 best,
       payload.Located trail := by
   obtain ⟨g, href, hloc⟩ := hstore.first hfirstPos hbelow
   exact g.firstLocated href hloc htrail hbelow hgsz hsz₁ hp₁ hsz₂ hp₂
-    hsymm hloop hbound heq hsent hnc hpass
+    hsymm hloop heq hsent hnc hpass
 
 /-- The located guide store discharges either arm of a row-tied code-two
 leaf return. -/
-theorem GuideStore.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem GuideStore.tiedUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (hstore : GuideStore ctx tcLevel level st best trail)
     (htrail : TrailOk ctx level st trail)
     (hcanonPos : 0 < st.gcaCanon) (hcanonBelow : st.gcaCanon < level)
-    (hgsz : ctx.g.size = ctx.n)
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0)
     (hfirstPos : 1 ≤ st.gcaFirst) (hfirstBelow : st.gcaFirst < level)
-    (hcoset : (processnode ctx level numcells st).2.cosetindex < ctx.n)
+    (hcoset : (processnode ctx level numcells st).2.cosetindex < n)
     (horbit : OrbSound
-      (OrbConn (processnode ctx level numcells st).2.genTrace.toList ctx.n)
-      (processnode ctx level numcells st).2.orbits ctx.n) :
+      (OrbConn (processnode ctx level numcells st).2.genTrace.toList n)
+      (processnode ctx level numcells st).2.orbits n) :
     ∃ target,
       (processnode ctx level numcells st).1 = Int.ofNat target ∧
       target < level ∧
@@ -854,7 +849,7 @@ theorem GuideStore.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
           (processnode ctx level numcells st).2 best,
         payload.Located trail := by
   obtain ⟨g, href, hloc⟩ := hstore.canon hcanonPos hcanonBelow
-  exact g.tiedLocated href hloc htrail hgsz hsz₁ hp₁ hsz₂ hp₂ hbound
+  exact g.tiedLocated href hloc htrail hgsz hsz₁ hp₁ hsz₂ hp₂
     hrows hef hnc hcc hge htie hcanonBelow hfirstPos hfirstBelow hcoset
     horbit
 
@@ -863,34 +858,33 @@ theorem GuideStore.tiedUnwind {ctx : Ctx} {tcLevel level numcells : Nat}
 /-- A code-one leaf return is a located node receipt.  Its incumbent is
 unchanged, so its `NodeSound` component needs no comparison with the
 first leaf. -/
-theorem otherNode_leaf_firstReceipt {ctx : Ctx}
+theorem otherNode_leaf_firstReceipt {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {cs : List Nat} {st : SearchSt} {best : Option Key}
+    {cs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hstore : GuideStore ctx tcLevel level
       (otherLeafSt ctx level numcells st) best trail)
     (htrail : TrailOk ctx level (otherLeafSt ctx level numcells st) trail)
     (hfirstPos : 0 < (otherLeafSt ctx level numcells st).gcaFirst)
     (hbelow : (otherLeafSt ctx level numcells st).gcaFirst < level)
-    (hgsz : ctx.g.size = ctx.n)
+    (hgsz : ctx.g.size = n)
     (hfirstSize : (otherLeafSt ctx level numcells st).firstlab.size =
-      ctx.n)
+      n)
     (hfirstPerm : (otherLeafSt ctx level numcells st).firstlab.toList.Perm
-      (List.range ctx.n))
-    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = ctx.n)
+      (List.range n))
+    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = n)
     (hlabPerm : (otherLeafSt ctx level numcells st).lab.toList.Perm
-      (List.range ctx.n))
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+      (List.range n))
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) =
       true)
     (hsent : (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
       codeSentinel)
-    (hpass : isautom ctx (firstScatter ctx.n
+    (hpass : isautom ctx (firstScatter n
       (otherLeafSt ctx level numcells st).firstlab
       (otherLeafSt ctx level numcells st).lab) = true) :
     NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
@@ -898,10 +892,10 @@ theorem otherNode_leaf_firstReceipt {ctx : Ctx}
       numcells best best
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   let leaf := otherLeafSt ctx level numcells st
-  obtain ⟨payload, hloc⟩ := hstore.firstUnwind (numcells := ctx.n)
+  obtain ⟨payload, hloc⟩ := hstore.firstUnwind (numcells := n)
     htrail hfirstPos hbelow hgsz hfirstSize hfirstPerm hlabSize hlabPerm
-    hsymm hloop hbound heq hsent (by simp) hpass
-  have hreturn := (processnode_auto (level := level) (numcells := ctx.n)
+    hsymm hloop heq hsent (by simp) hpass
+  have hreturn := (processnode_auto (level := level) (numcells := n)
     (st := leaf) heq hsent (by simp) hpass).1
   exact otherNode_leaf_receipt hnum hreturn hbelow
     (NodeSound.refl ctx tcLevel (specFuel + 1) level cs st numcells best)
@@ -909,26 +903,25 @@ theorem otherNode_leaf_firstReceipt {ctx : Ctx}
 
 /-- A row-tied code-two leaf return is a located node receipt in both the
 canonical-guide and first-ancestor orbit arms. -/
-theorem otherNode_leaf_tiedReceipt {ctx : Ctx}
+theorem otherNode_leaf_tiedReceipt {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {cs : List Nat} {st : SearchSt} {best : Option Key}
+    {cs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hstore : GuideStore ctx tcLevel level
       (otherLeafSt ctx level numcells st) best trail)
     (htrail : TrailOk ctx level (otherLeafSt ctx level numcells st) trail)
     (hcanonPos : 0 < (otherLeafSt ctx level numcells st).gcaCanon)
     (hcanonBelow : (otherLeafSt ctx level numcells st).gcaCanon < level)
-    (hgsz : ctx.g.size = ctx.n)
+    (hgsz : ctx.g.size = n)
     (hcanonSize : (otherLeafSt ctx level numcells st).canonlab.size =
-      ctx.n)
+      n)
     (hcanonPerm : (otherLeafSt ctx level numcells st).canonlab.toList.Perm
-      (List.range ctx.n))
-    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = ctx.n)
+      (List.range n))
+    (hlabSize : (otherLeafSt ctx level numcells st).lab.size = n)
     (hlabPerm : (otherLeafSt ctx level numcells st).lab.toList.Perm
-      (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+      (List.range n))
     (hrows : leafRows ctx (otherLeafSt ctx level numcells st).canonlab =
       leafRows ctx (otherLeafSt ctx level numcells st).lab)
     (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
@@ -942,19 +935,19 @@ theorem otherNode_leaf_tiedReceipt {ctx : Ctx}
       (otherLeafSt ctx level numcells st).lab).1 = 0)
     (hfirstPos : 1 ≤ (otherLeafSt ctx level numcells st).gcaFirst)
     (hfirstBelow : (otherLeafSt ctx level numcells st).gcaFirst < level)
-    (hcoset : (processnode ctx level ctx.n
-      (otherLeafSt ctx level numcells st)).2.cosetindex < ctx.n)
-    (horbit : OrbSound (OrbConn (processnode ctx level ctx.n
-      (otherLeafSt ctx level numcells st)).2.genTrace.toList ctx.n)
-      (processnode ctx level ctx.n
-        (otherLeafSt ctx level numcells st)).2.orbits ctx.n) :
+    (hcoset : (processnode ctx level n
+      (otherLeafSt ctx level numcells st)).2.cosetindex < n)
+    (horbit : OrbSound (OrbConn (processnode ctx level n
+      (otherLeafSt ctx level numcells st)).2.genTrace.toList n)
+      (processnode ctx level n
+        (otherLeafSt ctx level numcells st)).2.orbits n) :
     NodeReceipt trail ctx tcLevel (specFuel + 1) (fuel + 1) level cs st
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best best
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   obtain ⟨target, hreturn, hbelow, -, payload, hloc⟩ :=
-    hstore.tiedUnwind (numcells := ctx.n) htrail hcanonPos hcanonBelow
-      hgsz hcanonSize hcanonPerm hlabSize hlabPerm hbound hrows hef (by simp)
+    hstore.tiedUnwind (numcells := n) htrail hcanonPos hcanonBelow
+      hgsz hcanonSize hcanonPerm hlabSize hlabPerm hrows hef (by simp)
       hcc hge htie hfirstPos hfirstBelow hcoset horbit
   exact otherNode_leaf_receipt hnum hreturn hbelow
     (NodeSound.refl ctx tcLevel (specFuel + 1) level cs st numcells best)

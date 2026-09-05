@@ -27,14 +27,14 @@ variable {n k : Nat}
 
 /-! # The key maximum is a semilattice operation -/
 
-theorem keyCmp_bot_ne_gt (b : Key) : keyCmp ⟨[], []⟩ b ≠ .gt := by
+theorem keyCmp_bot_ne_gt (b : Key n) : keyCmp ⟨[], []⟩ b ≠ .gt := by
   rw [keyCmp]
   rcases b with ⟨codes, rows⟩
   rcases codes with _ | ⟨c, cs⟩
   · rcases rows with _ | ⟨r, rs⟩ <;> simp [listCmp]
   · simp [listCmp]
 
-theorem keyMax_bot_left (b : Key) : keyMax ⟨[], []⟩ b = b := by
+theorem keyMax_bot_left (b : Key n) : keyMax ⟨[], []⟩ b = b := by
   rw [keyMax]
   split
   · rfl
@@ -44,24 +44,24 @@ theorem keyMax_bot_left (b : Key) : keyMax ⟨[], []⟩ b = b := by
     · exact keyCmp_eq_iff.mp hc
     · exact absurd hc (keyCmp_bot_ne_gt b)
 
-theorem keyMax_bot_right (b : Key) : keyMax b ⟨[], []⟩ = b := by
+theorem keyMax_bot_right (b : Key n) : keyMax b ⟨[], []⟩ = b := by
   rw [keyMax]
   split
   · next h =>
     exact absurd (keyCmp_gt_iff_lt.mpr h) (keyCmp_bot_ne_gt b)
   · rfl
 
-theorem keyMax_eq_left {b y : Key} (h : keyLe y b) : keyMax b y = b := by
+theorem keyMax_eq_left {b y : Key n} (h : keyLe y b) : keyMax b y = b := by
   rw [keyMax]
   split
   · next hlt => exact absurd (keyCmp_gt_iff_lt.mpr hlt) h
   · rfl
 
-theorem keyMax_eq_right {b y : Key} (h : keyCmp b y = .lt) :
+theorem keyMax_eq_right {b y : Key n} (h : keyCmp b y = .lt) :
     keyMax b y = y := by
   rw [keyMax, ite_eq_left h]
 
-theorem keyMax_assoc (x y z : Key) :
+theorem keyMax_assoc (x y z : Key n) :
     keyMax (keyMax x y) z = keyMax x (keyMax y z) := by
   refine keyCmp_antisym ?_ ?_
   · rcases keyMax_mem x (keyMax y z) with hm | hm <;> rw [hm]
@@ -79,7 +79,7 @@ theorem keyMax_assoc (x y z : Key) :
     · exact keyCmp_ge_trans (keyMax_not_lt_right x _)
         (keyMax_not_lt_right y z)
 
-theorem keysMax_keyMax : ∀ (l : List Key) (b c : Key),
+theorem keysMax_keyMax : ∀ (l : List (Key n)) (b c : Key n),
     keysMax (keyMax b c) l = keyMax b (keysMax c l)
   | [], _, _ => rfl
   | c' :: l, b, c => by
@@ -88,7 +88,7 @@ theorem keysMax_keyMax : ∀ (l : List Key) (b c : Key),
 
 /-! # First-code comparisons against a whole key -/
 
-theorem keyCmp_lt_of_nil {b y : Key} (hb : b.codes = [])
+theorem keyCmp_lt_of_nil {b y : Key n} (hb : b.codes = [])
     (hy : y.codes ≠ []) : keyCmp b y = .lt := by
   rw [keyCmp, hb]
   rcases hyc : y.codes with _ | ⟨c, cs⟩
@@ -96,7 +96,7 @@ theorem keyCmp_lt_of_nil {b y : Key} (hb : b.codes = [])
   · simp [listCmp]
 
 /-- Prefixing a common code commutes with the key maximum. -/
-theorem keyMax_cons (c : Nat) (cs cs' r r' : List Nat) :
+theorem keyMax_cons (c : Nat) (cs cs' : List Nat) (r r' : List (VSet n)) :
     keyMax ⟨c :: cs, r⟩ ⟨c :: cs', r'⟩ =
       ⟨c :: (keyMax ⟨cs, r⟩ ⟨cs', r'⟩).codes,
         (keyMax ⟨cs, r⟩ ⟨cs', r'⟩).rows⟩ := by
@@ -110,7 +110,7 @@ theorem keyMax_cons (c : Nat) (cs cs' r r' : List Nat) :
 /-- The contract of one pruned search node: the incumbent absorbed
 into the subtree's best key, an absent incumbent contributing
 nothing. -/
-@[expose] def incMax : Option Key → Key → Key
+@[expose] def incMax : Option (Key n) → Key n → Key n
   | none, y => y
   | some b, y => keyMax b y
 
@@ -121,9 +121,9 @@ mutual
 /-- The pruned branch-and-bound recursion computes exactly the
 maximum of the incumbent and the unpruned subtree key: the code
 prune is lossless. No side conditions. -/
-theorem searchNode_eq (ctx : Ctx) (tcLevel : Nat) :
+theorem searchNode_eq (ctx : Ctx n) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (inc : Option Key),
+      (active : VSet n) (numcells : Nat) (inc : Option (Key n)),
       searchNode ctx tcLevel fuel level lab ptn active numcells inc =
         incMax inc
           (specNode ctx tcLevel fuel level lab ptn active numcells)
@@ -137,7 +137,7 @@ theorem searchNode_eq (ctx : Ctx) (tcLevel : Nat) :
     rw [incMax, searchNode, specNode]
     simp only []
     rcases hdisc : discreteAt (refine ctx level lab ptn active
-        numcells).ptn level ctx.n with _ | _
+        numcells).ptn level n with _ | _
     · simp only [Bool.false_eq_true, ite_false]
       obtain ⟨m, hm⟩ : ∃ m, (specMaketargetcell ctx
           (refine ctx level lab ptn active numcells).lab
@@ -181,7 +181,7 @@ theorem searchNode_eq (ctx : Ctx) (tcLevel : Nat) :
       simp only []
       simp only [hcmp]
       rcases hdisc : discreteAt (refine ctx level lab ptn active
-          numcells).ptn level ctx.n with _ | _
+          numcells).ptn level n with _ | _
       · simp only [Bool.false_eq_true, ite_false]
         obtain ⟨m, hm⟩ : ∃ m, (specMaketargetcell ctx
             (refine ctx level lab ptn active numcells).lab
@@ -225,14 +225,14 @@ theorem searchNode_eq (ctx : Ctx) (tcLevel : Nat) :
 /-- The child sweep from a present accumulator: folding the pruned
 child searches computes the running key maximum over the unpruned
 child keys. -/
-theorem searchFold_eq (ctx : Ctx) (tcLevel fuel level : Nat)
+theorem searchFold_eq (ctx : Ctx n) (tcLevel fuel level : Nat)
     (rsLab rsPtn : Array Nat) (tc numcells : Nat) :
-    ∀ (os : List Nat) (t : Key),
-      os.foldl (fun (acc : Option Key) o =>
+    ∀ (os : List Nat) (t : Key n),
+      os.foldl (fun (acc : Option (Key n)) o =>
         some (searchNode ctx tcLevel fuel (level + 1)
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-          (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+          (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
           (numcells + 1) acc))
         (some t) =
       some (keysMax t (os.map
@@ -249,14 +249,14 @@ theorem searchFold_eq (ctx : Ctx) (tcLevel fuel level : Nat)
 /-- One unfolding of the child sweep from an arbitrary accumulator:
 the first child absorbs the incumbent, the rest fold from its
 result. -/
-theorem searchFold_cons (ctx : Ctx) (tcLevel fuel level : Nat)
+theorem searchFold_cons (ctx : Ctx n) (tcLevel fuel level : Nat)
     (rsLab rsPtn : Array Nat) (tc numcells o : Nat) (os : List Nat)
-    (tail0 : Option Key) :
-    (o :: os).foldl (fun (acc : Option Key) o =>
+    (tail0 : Option (Key n)) :
+    (o :: os).foldl (fun (acc : Option (Key n)) o =>
       some (searchNode ctx tcLevel fuel (level + 1)
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
-        (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.1
+        (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!).2.2
         (numcells + 1) acc))
       tail0 =
     some (incMax tail0 (keysMax
@@ -282,15 +282,15 @@ end
 
 /-- The pruned search from an empty incumbent: a verified pruned
 evaluator of the spec key. -/
-@[expose] def searchCanon (n : Nat) (g lab0 : Array Nat)
-    (cellEnds : List Nat) : Key :=
+@[expose] def searchCanon (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) : Key n :=
   if n == 0 then
     ⟨[], []⟩
   else
-    searchNode { n, g } 100 n 1 lab0 (initPtn n (n + 2) cellEnds)
-      (initActive cellEnds) cellEnds.length none
+    searchNode { g } 100 n 1 lab0 (initPtn n (n + 2) cellEnds)
+      (initActive n cellEnds) cellEnds.length none
 
-theorem searchCanon_eq (n : Nat) (g lab0 : Array Nat)
+theorem searchCanon_eq (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) :
     searchCanon n g lab0 cellEnds = canonSpec n g lab0 cellEnds := by
   rw [searchCanon, canonSpec]

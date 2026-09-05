@@ -27,48 +27,48 @@ variable {n k : Nat}
 
 /-! # Frame equations of the frozen-downward arm -/
 
-private theorem pushAuto_genTrace'' (st : SearchSt) (pair : Nat × Nat) :
+private theorem pushAuto_genTrace'' (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).genTrace = st.genTrace := by
   rw [pushAuto]
   split <;> rfl
 
-private theorem pushAuto_orbits'' (st : SearchSt) (pair : Nat × Nat) :
+private theorem pushAuto_orbits'' (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).orbits = st.orbits := by
   rw [pushAuto]
   split <;> rfl
 
-private theorem pushAuto_gcaCanon'' (st : SearchSt) (pair : Nat × Nat) :
+private theorem pushAuto_gcaCanon'' (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).gcaCanon = st.gcaCanon := by
   rw [pushAuto]
   split <;> rfl
 
 /-- The frozen-downward arm records no generator. -/
-theorem processnode_fast_genTrace {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+theorem processnode_fast_genTrace {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).2.genTrace = st.genTrace := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    apply_ite (fun x : Int × SearchSt n => x.2.genTrace),
     pushAuto_genTrace'', ite_self]
   rw [ite_eq_left hg]
 
 /-- The frozen-downward arm leaves the orbit array alone. -/
-theorem processnode_fast_orbits {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+theorem processnode_fast_orbits {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).2.orbits = st.orbits := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.orbits),
+    apply_ite (fun x : Int × SearchSt n => x.2.orbits),
     pushAuto_orbits'', ite_self]
   rw [ite_eq_left hg]
 
 /-- The frozen-downward arm leaves the canonical guide alone. -/
-theorem processnode_fast_gcaCanon {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
+theorem processnode_fast_gcaCanon {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).2.gcaCanon = st.gcaCanon := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.gcaCanon),
+    apply_ite (fun x : Int × SearchSt n => x.2.gcaCanon),
     pushAuto_gcaCanon'', ite_self]
   rw [ite_eq_left hg, ite_eq_right (by decide)]
 
@@ -76,7 +76,7 @@ theorem processnode_fast_gcaCanon {ctx : Ctx} {level numcells : Nat}
 
 /-- The prepared state of an off-path node: refinement followed by the
 comparison step, before any target selection. -/
-theorem otherLeafSt_eq (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
+theorem otherLeafSt_eq (ctx : Ctx n) (level numcells : Nat) (st : SearchSt n) :
     otherLeafSt ctx level numcells st =
       otherNodePrep level
         (refine ctx level st.lab st.ptn st.active numcells).longcode
@@ -88,10 +88,10 @@ theorem otherLeafSt_eq (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
 
 /-- With the first-path agreement broken under a negative comparison,
 an internal node prunes at once and returns the leaf event's result. -/
-theorem otherNode_gate_state (ctx : Ctx)
-    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+theorem otherNode_gate_state (ctx : Ctx n)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt n)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (hgate : (otherLeafSt ctx level numcells st).eqlevFirst ≠ level ∧
       (otherLeafSt ctx level numcells st).compCanon < 0)
     (hearly : (processnode ctx level
@@ -114,10 +114,10 @@ theorem otherNode_gate_state (ctx : Ctx)
 
 /-- A negative comparison whose hinted target disagrees with the first
 path demotes the agreement depth and prunes at once. -/
-theorem otherNode_hintFail_state (ctx : Ctx)
-    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+theorem otherNode_hintFail_state (ctx : Ctx n)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt n)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) = true)
     (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
     (hmis : Int.ofNat (maketargetcell ctx (otherLeafSt ctx level numcells st).lab
@@ -151,10 +151,10 @@ theorem otherNode_hintFail_state (ctx : Ctx)
 /-- A negative comparison whose hinted target agrees with the first path
 enters its child loop over that target cell with the comparison still
 frozen. -/
-theorem otherNode_hint_state (ctx : Ctx)
-    (inf tcLevel fuel level numcells : Nat) (st : SearchSt)
+theorem otherNode_hint_state (ctx : Ctx n)
+    (inf tcLevel fuel level numcells : Nat) (st : SearchSt n)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) = true)
     (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
     (hmatch : Int.ofNat (maketargetcell ctx
@@ -176,11 +176,11 @@ theorem otherNode_hint_state (ctx : Ctx)
     let base := { pre with tctotal := pre.tctotal + mt.2.2 }
     let pr := processnode ctx level
       (refine ctx level st.lab st.ptn st.active numcells).numcells base
-    let start := if ¬ cheapautom pr.2.ptn level ctx.n then
+    let start := if ¬ cheapautom pr.2.ptn level n then
       { pr.2 with noncheaplevel := level + 1 } else pr.2
-    let L := otherChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
+    let L := otherChildLoop ctx inf tcLevel fuel (n + 1) level
       (refine ctx level st.lab st.ptn st.active numcells).numcells mt.1
-      ((nextElem mt.2.1 none).getD 0) (nextElem mt.2.1 none) mt.2.1 start
+      ((mt.2.1.nextElem none).getD 0) (mt.2.1.nextElem none) mt.2.1 start
     otherNode ctx inf tcLevel (fuel + 1) level numcells st =
       if pr.1 < Int.ofNat level then pr
       else match L.1 with
@@ -225,10 +225,10 @@ theorem otherNode_hint_state (ctx : Ctx)
     ite_false, Int.toNat_natCast]
   generalize hpr : processnode ctx level
     (refine ctx level st.lab st.ptn st.active numcells).numcells _ = pr
-  rcases hc : cheapautom pr.2.ptn level ctx.n with _ | _ <;>
+  rcases hc : cheapautom pr.2.ptn level n with _ | _ <;>
     simp only [Bool.false_eq_true, not_false_eq_true, ite_true,
       not_true_eq_false, ite_false] <;>
-    generalize hL : (otherChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+    generalize hL : (otherChildLoop ctx inf tcLevel fuel (n + 1)
       level _ _ _ _ _ _) = L <;>
     rcases L with ⟨r, out⟩ <;>
     cases r <;> simp only [Id.run_pure, apply_ite Id.run] <;> rfl
@@ -238,21 +238,21 @@ theorem otherNode_hint_state (ctx : Ctx)
 /-- Off-path bookkeeping never rewrites the first leaf, keeps the orbit
 array sound, and lowers the saved cheap-cell boundary only to a value
 it already had on entry. -/
-structure OtherKeep (ctx : Ctx) (level : Nat) (st out : SearchSt) : Prop where
+structure OtherKeep (ctx : Ctx n) (level : Nat) (st out : SearchSt n) : Prop where
   firstlab : out.firstlab = st.firstlab
-  orbits : OrbSound (OrbConn out.genTrace.toList ctx.n) out.orbits ctx.n
+  orbits : OrbSound (OrbConn out.genTrace.toList n) out.orbits n
   boundary : out.noncheaplevel < level → out.noncheaplevel = st.noncheaplevel
 
 /-- Lowering the first-path agreement depth preserves the prepared
 state. -/
-theorem RunPrep.setEqlevFirst {G : Colored n k} {ctx : Ctx}
+theorem RunPrep.setEqlevFirst {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells e : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
     (he : e ≤ st.eqlevFirst) :
     RunPrep G ctx tcLevel level codes bs fs numcells
       { st with eqlevFirst := e } best trail := by
-  let st' : SearchSt := { st with eqlevFirst := e }
+  let st' : SearchSt n := { st with eqlevFirst := e }
   have hok : SearchOk G level numcells st' := by
     refine ⟨h.searchOk.labSize, h.searchOk.ptnSize, h.searchOk.reach,
       h.searchOk.init1, h.searchOk.vals, h.searchOk.count, h.searchOk.bc,
@@ -270,14 +270,13 @@ theorem RunPrep.setEqlevFirst {G : Colored n k} {ctx : Ctx}
 
 /-- The frozen-downward arm of `processnode`, at any cell count, yields
 the packaged event with the incumbent unchanged. -/
-theorem RunPrep.fastEvent {G : Colored n k} {ctx : Ctx}
+theorem RunPrep.fastEvent {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {stem codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hpath : level = codes.length)
     (hstem : codes.take stem.length = stem)
     (hpast : stem.length < level)
@@ -310,9 +309,9 @@ theorem RunPrep.fastEvent {G : Colored n k} {ctx : Ctx}
       exact hprep.firstInv
     · rw [hcanong, hcanonlab, hsamerows]
       exact hprep.canongInv
-    · exact hprep.leafRefs.processnodeGen hn hn0 hgb hsymm hloop
+    · exact hprep.leafRefs.processnodeGen hn0 hsymm hloop
         hprep.searchOk hprep.canongInv hprep.genTraceOk
-    · exact hprep.processnodeAutos hn hn0 hgb hsymm hloop hbound
+    · exact hprep.processnodeAutos hn0 hsymm hloop hbound
     · exact hprep.workspace.processOff hprep.codeInv hef
     · exact hprep.cheap.processnode
     · exact hprep.leafRefs.processnode hprep.searchOk
@@ -343,8 +342,8 @@ theorem RunPrep.fastEvent {G : Colored n k} {ctx : Ctx}
 
 /-- The return of the frozen-downward arm lies strictly below the node
 whenever the saved boundary does not exceed it. -/
-theorem processnode_fast_below {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0)
+theorem processnode_fast_below {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0)
     (hbound : st.noncheaplevel ≤ level) :
     (processnode ctx level numcells st).1 < Int.ofNat level := by
   rw [(processnode_fast (ctx := ctx) (numcells := numcells) hg).1]
@@ -358,8 +357,8 @@ theorem processnode_fast_below {ctx : Ctx} {level numcells : Nat}
 
 /-- With the comparison frozen downward at the refined code, every key
 of the node's specification subtree is dominated by the incumbent. -/
-theorem nodeKey_le_of_frozen {ctx : Ctx} {tcLevel specFuel level numcells
-    tail : Nat} {codes bs : List Nat} {st : SearchSt}
+theorem nodeKey_le_of_frozen {ctx : Ctx n} {tcLevel specFuel level numcells
+    tail : Nat} {codes bs : List Nat} {st : SearchSt n}
     {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon compCanon : Int}
     {canonlab : Array Nat}
     (hinv : CodeCmpInv n (codes ++
@@ -367,7 +366,7 @@ theorem nodeKey_le_of_frozen {ctx : Ctx} {tcLevel specFuel level numcells
       canoncode canonlevel eqlevCanon compCanon)
     (hneg : compCanon < 0)
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
-      numcells).ptn level ctx.n = false)
+      numcells).ptn level n = false)
     (hlen : (specMaketargetcell ctx
       (refine ctx level st.lab st.ptn st.active numcells).lab
       (refine ctx level st.lab st.ptn st.active numcells).ptn level
@@ -387,14 +386,14 @@ theorem nodeKey_le_of_frozen {ctx : Ctx} {tcLevel specFuel level numcells
 /-- An internal off-path node whose prepared state prunes at once through
 the frozen-downward arm: its exact maximum is the unchanged incumbent,
 and its return is either a frozen comparison or a cheap-cell jump. -/
-theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx}
+theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st pre : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st pre : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (hstate : otherNode ctx inf tcLevel (fuel + 1) level numcells st =
       processnode ctx level
         (refine ctx level st.lab st.ptn st.active numcells).numcells pre)
@@ -417,14 +416,13 @@ theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx}
     (horb : pre.orbits = st.orbits)
     (hncl : pre.noncheaplevel = st.noncheaplevel)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
-    (hsound : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n) :
+    (hsound : OrbSound (OrbConn st.genTrace.toList n) st.orbits n) :
     OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
         numcells best best trail trail
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 ∧
       OtherKeep ctx level st
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 := by
-  subst n
   let rs := refine ctx level st.lab st.ptn st.active numcells
   let full := codes ++ [rs.longcode]
   let pr := processnode ctx level rs.numcells pre
@@ -433,30 +431,27 @@ theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx}
     omega
   have hstem : full.take codes.length = codes := by
     simp only [full, List.take_left']
-  have hgsz : ctx.g.size = ctx.n := by
+  have hgsz : ctx.g.size = n := by
     rw [hg]
     exact size_rowsOf G
-  have hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n := by
-    rw [hg]
-    exact rowsOf_bounded G
-  have hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u := by
+  have hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u := by
     rw [hg]
     exact rowsOf_symm G
-  have hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false := by
+  have hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false := by
     rw [hg]
     exact rowsOf_loopless G
   have hframes := processnode_frames ctx level rs.numcells pre
   have hearly : pr.1 < Int.ofNat level :=
     processnode_fast_below hgate hbound
   have hne : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells ≠ ctx.n := Nat.ne_of_lt hnum
-  have hdisc : discreteAt rs.ptn level ctx.n = false := by
-    rw [← Bool.not_eq_true, ← refine_discrete_iff rfl hn0
+      numcells).numcells ≠ n := Nat.ne_of_lt hnum
+  have hdisc : discreteAt rs.ptn level n = false := by
+    rw [← Bool.not_eq_true, ← refine_discrete_iff hn0
       hnode.run.searchOk hlevel]
     exact hne
   obtain ⟨tc, len, -, hspec, -, hlen, -⟩ :=
-    hnode.target rfl hg hn0 hlevel hne
+    hnode.target hg hn0 hlevel hne
   have hkeyLe : keyLe (nodeKey ctx tcLevel (specFuel + 1) level codes st
       numcells) (incKey ctx bs pre.canonlab) := by
     apply nodeKey_le_of_frozen (tail := len - 1) hprep.codeInv hgate.2
@@ -468,7 +463,7 @@ theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx}
       (nodeKey ctx tcLevel (specFuel + 1) level codes st numcells)) := by
     rw [hprep.incumbent, incMax, keyMax_eq_left hkeyLe]
   have hevent : EventOut G ctx tcLevel codes fs pr.2 best trail pr.1 :=
-    hprep.fastEvent rfl hn0 hgb hsymm hloop hfull hstem (by omega) hbound
+    hprep.fastEvent hn0 hsymm hloop hfull hstem (by omega) hbound
       hgate hlive
   have hgenOut : pr.2.genTrace = pre.genTrace :=
     processnode_fast_genTrace hgate
@@ -481,7 +476,7 @@ theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx}
   have hexit : NodeExit ctx tcLevel (specFuel + 1) (fuel + 1) level codes st
       pr.2 numcells best best trail pr.1 := by
     have hfirstNe : pre.eqlevFirst ≠ level := hgate.1
-    rcases hprep.pruneMode rfl hfull hstem hfirstNe hgate.2 with
+    rcases hprep.pruneMode hfull hstem hfirstNe hgate.2 with
       hfreeze | hjump
     · exact NodeExit.frozen hearly hexact hfreeze
     · apply NodeExit.cheap pre.noncheaplevel hjump hprep.cheap.positive
@@ -507,8 +502,8 @@ theorem NodeInv.fastRun {G : Colored n k} {ctx : Ctx}
 
 /-- The prepared state of an off-path node keeps every field the
 immediate-prune packaging reads. -/
-theorem otherLeafSt_frames (ctx : Ctx) (level numcells : Nat)
-    (st : SearchSt) :
+theorem otherLeafSt_frames (ctx : Ctx n) (level numcells : Nat)
+    (st : SearchSt n) :
     (otherLeafSt ctx level numcells st).gcaFirst = st.gcaFirst ∧
     (otherLeafSt ctx level numcells st).gcaCanon = st.gcaCanon ∧
     (otherLeafSt ctx level numcells st).canonlab = st.canonlab ∧
@@ -532,20 +527,20 @@ theorem otherLeafSt_frames (ctx : Ctx) (level numcells : Nat)
   · rw [otherLeafSt_eq, otherNodePrep_orbits']
 
 /-- The broken-agreement negative branch of an internal node. -/
-theorem NodeInv.gateRun {G : Colored n k} {ctx : Ctx}
+theorem NodeInv.gateRun {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (hgate : (otherLeafSt ctx level numcells st).eqlevFirst ≠ level ∧
       (otherLeafSt ctx level numcells st).compCanon < 0)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail)
-    (hsound : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n) :
+    (hsound : OrbSound (OrbConn st.genTrace.toList n) st.orbits n) :
     OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
         numcells best best trail trail
@@ -554,27 +549,27 @@ theorem NodeInv.gateRun {G : Colored n k} {ctx : Ctx}
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2 := by
   obtain ⟨hf1, hf2, hf3, hf4, hf5, hf6, hf7, hf8, hf9, hf10⟩ :=
     otherLeafSt_frames ctx level numcells st
-  have hprep := hnode.run.otherLeaf hn hn0 hlevel hpath
+  have hprep := hnode.run.otherLeaf hn0 hlevel hpath
   have hbound : (otherLeafSt ctx level numcells st).noncheaplevel ≤ level := by
     rw [hf9]
     exact hcheap
   have hstate := otherNode_gate_state ctx inf tcLevel fuel level numcells st
     hnum hgate (processnode_fast_below hgate hbound)
-  exact hnode.fastRun hn hg hn0 hlevel hpath hnum hstate hprep
+  exact hnode.fastRun hg hn0 hlevel hpath hnum hstate hprep
     (hlive.otherLeaf (numcells := numcells)) hgate hbound
     (by rw [hf10, hnode.shortClear]) hf1 hf2 hf3 hf4 hf5 hf6 hf7 hf8 hf9
     hsound
 
 /-- The mismatched-hint negative branch of an internal node. -/
-theorem NodeInv.hintFailRun {G : Colored n k} {ctx : Ctx}
+theorem NodeInv.hintFailRun {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells < ctx.n)
+      numcells).numcells < n)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) = true)
     (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
     (hmis : Int.ofNat (maketargetcell ctx
@@ -584,7 +579,7 @@ theorem NodeInv.hintFailRun {G : Colored n k} {ctx : Ctx}
       (otherLeafSt ctx level numcells st).firsttc[level]!)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail)
-    (hsound : OrbSound (OrbConn st.genTrace.toList ctx.n) st.orbits ctx.n) :
+    (hsound : OrbSound (OrbConn st.genTrace.toList n) st.orbits n) :
     OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
         numcells best best trail trail
@@ -594,13 +589,13 @@ theorem NodeInv.hintFailRun {G : Colored n k} {ctx : Ctx}
   obtain ⟨hf1, hf2, hf3, hf4, hf5, hf6, hf7, hf8, hf9, hf10⟩ :=
     otherLeafSt_frames ctx level numcells st
   let pre0 := otherLeafSt ctx level numcells st
-  let pre : SearchSt :=
+  let pre : SearchSt n :=
     { pre0 with
       tctotal := pre0.tctotal +
         (maketargetcell ctx pre0.lab pre0.ptn level tcLevel
           pre0.firsttc[level]!).2.2
       eqlevFirst := level - 1 }
-  have hprep0 := hnode.run.otherLeaf hn hn0 hlevel hpath
+  have hprep0 := hnode.run.otherLeaf hn0 hlevel hpath
   have hprep : RunPrep G ctx tcLevel level
       (codes ++ [(refine ctx level st.lab st.ptn st.active
         numcells).longcode]) bs fs
@@ -626,7 +621,7 @@ theorem NodeInv.hintFailRun {G : Colored n k} {ctx : Ctx}
     (hlive.otherLeaf (numcells := numcells)).stateEq rfl rfl rfl rfl rfl
   have hstate := otherNode_hintFail_state ctx inf tcLevel fuel level numcells
     st hnum heq hneg hmis (processnode_fast_below hgate hbound)
-  exact hnode.fastRun hn hg hn0 hlevel hpath hnum hstate hprep hlive' hgate
+  exact hnode.fastRun hg hn0 hlevel hpath hnum hstate hprep hlive' hgate
     hbound (by change pre0.needshortprune = false; rw [hf10, hnode.shortClear])
     hf1 hf2 hf3 hf4 hf5 hf6 hf7 hf8 hf9 hsound
 
