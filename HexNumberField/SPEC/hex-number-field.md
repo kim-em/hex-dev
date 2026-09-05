@@ -428,6 +428,10 @@ by tower adjoining. No API performs unbounded refinement.
 ## Roots of integer polynomials
 
 ```lean
+def AlgebraicRoot.ofRefined (q : ZPoly) (prim : ZPoly.content q = 1)
+    (pos_lc : 0 < q.leadingCoeff) (pos_degree : 0 < q.degree?.getD 0)
+    (squarefree : HasOnlySimpleRoots q) (rep : RefinedIsolation q) :
+    AlgebraicRoot
 def ZPoly.algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber)
 def ZPoly.algebraicRoots  (p : ZPoly) : Array AlgebraicNumber
 
@@ -443,7 +447,8 @@ instance : Repr AlgebraicNumber
 `algebraicRoots p` is every distinct complex root of `p` in canonical form.
 It takes the squarefree primitive part of `p`, isolates all of its roots with
 the fixed default strategy at `separationDepth`, builds one lazy
-`AlgebraicRoot` per isolation, and exactifies each. Multiplicities are not
+`AlgebraicRoot` per isolation with `AlgebraicRoot.ofRefined`, and exactifies
+each. Multiplicities are not
 returned; `AlgebraicPoly.roots` on the cast polynomial supplies them. A
 constant, including zero, returns the empty array, and the correspondence
 theorem is stated for nonzero `p`, matching `Polynomial.roots 0 = 0`. `none`

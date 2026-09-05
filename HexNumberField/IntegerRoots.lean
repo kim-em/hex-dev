@@ -74,6 +74,25 @@ def approx (a : AlgebraicNumber) (prec : Int := 64) : DyadicComplexBall :=
 
 end AlgebraicNumber
 
+namespace AlgebraicRoot
+
+/-- The lazy root selected by one refined isolation of a normalized squarefree
+polynomial. -/
+@[expose]
+def ofRefined (q : ZPoly) (prim : ZPoly.content q = 1) (pos_lc : 0 < q.leadingCoeff)
+    (pos_degree : 0 < q.degree?.getD 0) (squarefree : HasOnlySimpleRoots q)
+    (rep : RefinedIsolation q) : AlgebraicRoot :=
+  { p := q
+    prim := prim
+    pos_lc := pos_lc
+    pos_degree := pos_degree
+    squarefree := squarefree
+    x := SimpleRoot.mk rep
+    rep := rep
+    rep_mk := rfl }
+
+end AlgebraicRoot
+
 namespace ZPoly
 
 /-- Every distinct complex root of `p` as a canonical algebraic number, or
@@ -91,14 +110,7 @@ def algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber) :=
             let isolations ← isolate q hsimple (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let roots ← refined.mapM fun rep =>
-              ({ p := q
-                 prim := hprim
-                 pos_lc := hpos
-                 pos_degree := hdeg
-                 squarefree := hsimple
-                 x := SimpleRoot.mk rep
-                 rep := rep
-                 rep_mk := rfl } : AlgebraicRoot).exact?
+              (AlgebraicRoot.ofRefined q hprim hpos hdeg hsimple rep).exact?
             some (roots.toList.mergeSort AlgebraicNumber.rootLe).toArray
           else
             none
