@@ -676,22 +676,43 @@ does not distinguish the graphs, the compiled search produces a
 canonical-key certificate for each graph and the tactic uses that route
 whenever both certificates fit the configured budgets. The kernel
 replays the two Boolean certificate checks and their key comparison,
-closing the goal through `not_isomorphic_of_checkKeys` (`checkKey`
-twice plus `checkDiff`, with no achieving labelling reified). When
-certificate production fails or a certificate exceeds the configured
-budgets, the tactic tries the two-code separator and then replays the
-full-budget verified individualization-refinement decision
+closing the goal through `not_isomorphic_of_checkKeysP` (`checkKeyP`
+twice plus `checkDiff`, with no achieving labelling reified). `checkKeyP`
+(`HexGraphIso/NodePacked.lean`) is the replay over kernel-priced
+state: the labelling, the partition and the adjacency rows are
+fixed-width fields packed into one `Nat` each, every step is spelled
+with the `Nat` functions the kernel accelerates, and counted loops
+run through one `Nat.rec` step per iteration; it is proven equal to
+`checkKey`, so the soundness theorems keep mentioning the `Array`
+definitions the compiled search runs. The adjacency of each graph is
+tied to one packed literal (`packRowsK`), one sequential kernel
+evaluation of the graph's definition per side. When certificate
+production fails or a certificate exceeds the configured budgets, the
+tactic tries the two-code separator and then replays the full-budget
+verified individualization-refinement decision
 (`decideIso?_not_isomorphic`). That final pairwise route anchors the
-exhaustion semantics: `none` never proves non-isomorphism. No result
-relies on compiler trust. All routes share an irreducible kernel cost
-evaluating the goal's graph definitions themselves, so family-style
-definitions with expensive adjacency set a floor no route can
-undercut. The certificate obligations replay only while their whole
-reduction closure stays exposed to the module-mode kernel; the
-regression ladder in `HexGraphIso/ModuleBoundaryTests.lean` pins that
-closure (it caught missing exposure on two refinement helpers and on
-core's `Array.map`, worked around per `HexBasic.OfFn` pending the
-upstream exposure fixes).
+exhaustion semantics: `none` never proves non-isomorphism. The two
+separator legs (`sepRootLitP`, `sepDiffLitP`) replay the same packed
+refinement. No result relies on compiler trust. All routes share an
+irreducible kernel cost evaluating the goal's graph definitions
+themselves, so family-style definitions with expensive adjacency set a
+floor no route can undercut. The certificate obligations replay only
+while their whole reduction closure stays exposed to the module-mode
+kernel; the regression ladder in
+`HexGraphIso/ModuleBoundaryTests.lean` pins that closure (it caught
+missing exposure on two refinement helpers and on core's `Array.map`,
+worked around per `HexBasic.OfFn` pending the upstream exposure fixes).
+
+The library builds with `precompileModules`, so the compiled search
+the tactic runs at elaboration time runs compiled rather than
+interpreted whenever the library's shared objects are loaded (a
+downstream `lake build`, or `lake lean` on a file; `lake env lean`
+interprets). The kernel cost of the negative routes is measured by
+`scripts/bench/graphiso_kernel_cost.py`, which reports type-checking
+time per certificate record and its exponent in the vertex count over
+the cactus corpus; its records live under `reports/bench-results/`
+as `hexgraphiso-kernel-*.json`, and every change to the replay is
+judged against them.
 
 Malformed data, a failed check, an open term, or any exhausted limit leaves
 the goal unchanged and reports which phase and logical limit failed. Search
