@@ -1188,17 +1188,59 @@ theorem rowCmp_gt_iff_lt {s t : VSet n} : s.rowCmp t = .gt ↔ t.rowCmp s = .lt 
 @[expose] def ofFn (f : Nat → Bool) : VSet n :=
   (List.range n).foldl (fun s v => if f v then s.insert v else s) empty
 
+/-- Membership after a guarded insertion fold. -/
+theorem mem_foldl_insert_if (f : Nat → Bool) :
+    ∀ (l : List Nat) (init : VSet n) (w : Nat),
+      (l.foldl (fun s v => if f v then s.insert v else s) init).mem w =
+        (init.mem w || (l.contains w && f w && decide (w < n)))
+  | [], init, w => by simp
+  | v :: l, init, w => by
+    rw [List.foldl_cons, mem_foldl_insert_if f l, List.contains_cons]
+    rcases Decidable.em (v = w) with rfl | hne
+    · rcases hf : f v with _ | _
+      · rw [ite_eq_right (by simp [hf])]
+        cases init.mem v <;> cases hc : l.contains v <;> simp [hf, hc]
+      · rw [ite_eq_left (by simp [hf]), mem_insert]
+        cases init.mem v <;> cases hc : l.contains v <;> cases hd : decide (v < n) <;>
+          simp [hf, hc, hd]
+    · have hbeq : (w == v) = false := by simp [Ne.symm hne]
+      have hbeq' : (v == w) = false := by simp [hne]
+      rcases hf : f v with _ | _
+      · rw [ite_eq_right (by simp [hf])]
+        simp [hbeq]
+      · rw [ite_eq_left (by simp [hf]), mem_insert]
+        simp [hbeq, hbeq']
+
 theorem mem_ofFn (f : Nat → Bool) (v : Nat) :
     (ofFn f : VSet n).mem v = (decide (v < n) && f v) := by
-  sorry
+  rw [ofFn, mem_foldl_insert_if, mem_empty, Bool.false_or]
+  rcases Decidable.em (v < n) with hv | hv
+  · have hc : (List.range n).contains v = true := by simp [hv]
+    rw [hc, decide_eq_true hv]
+    simp
+  · have hc : (List.range n).contains v = false := by simp [hv]
+    rw [hc, decide_eq_false hv]
+    simp
 
 /-- The set of the vertices of a list. -/
 @[expose] def ofList (l : List Nat) : VSet n :=
   l.foldl insert empty
 
+theorem mem_foldl_insert :
+    ∀ (l : List Nat) (init : VSet n) (w : Nat),
+      (l.foldl insert init).mem w = (init.mem w || (l.contains w && decide (w < n)))
+  | [], init, w => by simp
+  | v :: l, init, w => by
+    rw [List.foldl_cons, mem_foldl_insert l, List.contains_cons, mem_insert]
+    rcases Decidable.em (v = w) with rfl | hne
+    · simp only [beq_self_eq_true, Bool.true_or, Bool.true_and]
+      cases init.mem v <;> cases decide (v < n) <;> cases l.contains v <;> rfl
+    · rw [show (v == w) = false by simp [hne], show (w == v) = false by simp [Ne.symm hne]]
+      simp only [Bool.false_and, Bool.or_false, Bool.false_or]
+
 theorem mem_ofList (l : List Nat) (v : Nat) :
     (ofList l : VSet n).mem v = (decide (v < n) && l.contains v) := by
-  sorry
+  rw [ofList, mem_foldl_insert, mem_empty, Bool.false_or, Bool.and_comm]
 
 /-- One limb of `ofFn`: Horner accumulation over the limb's vertices,
 most significant first, so the accumulator stays a scalar throughout. -/
@@ -1212,9 +1254,129 @@ def ofFnLimbs (f : Nat → Bool) : Nat → Array Nat → Array Nat
   | 0, acc => acc
   | i + 1, acc => ofFnLimbs f i (acc.push (ofFnLimb (n := n) f (63 * acc.size) 63 0))
 
+/-- The bit of a vertex under the limb predicate: set exactly when the
+vertex exists and satisfies `f`. -/
+private def fnBit (f : Nat → Bool) (v : Nat) : Bool := decide (v < n) && f v
+
+private theorem ofFnLimb_shift (f : Nat → Bool) (base : Nat) :
+    ∀ (j acc : Nat), ofFnLimb (n := n) f base j acc =
+      acc * 2 ^ j + ofFnLimb (n := n) f base j 0
+  | 0, acc => by simp [ofFnLimb]
+  | j + 1, acc => by
+    rw [ofFnLimb, ofFnLimb, ofFnLimb_shift f base j (2 * acc + _),
+      ofFnLimb_shift f base j (2 * 0 + _)]
+    simp only [Nat.mul_zero, Nat.zero_add]
+    have h1 : 2 * acc * 2 ^ j = acc * 2 ^ (j + 1) := by
+      rw [Nat.pow_succ, Nat.mul_comm 2 acc, Nat.mul_assoc, Nat.mul_comm 2 (2 ^ j)]
+    rw [Nat.add_mul, h1]
+    omega
+
+private theorem ofFnLimb_lt (f : Nat → Bool) (base : Nat) :
+    ∀ j : Nat, ofFnLimb (n := n) f base j 0 < 2 ^ j
+  | 0 => Nat.zero_lt_one
+  | j + 1 => by
+    rw [ofFnLimb, ofFnLimb_shift f base j]
+    have := ofFnLimb_lt f base j
+    rw [Nat.pow_succ]
+    split <;> omega
+
+private theorem testBit_ofFnLimb (f : Nat → Bool) (base : Nat) :
+    ∀ (j t : Nat), (ofFnLimb (n := n) f base j 0).testBit t =
+      (decide (t < j) && fnBit (n := n) f (base + t))
+  | 0, t => by simp [ofFnLimb]
+  | j + 1, t => by
+    rw [ofFnLimb, ofFnLimb_shift f base j]
+    have hlt := ofFnLimb_lt (n := n) f base j
+    have hp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by rw [Nat.pow_succ]; omega
+    simp only [Nat.mul_zero, Nat.zero_add]
+    rcases Nat.lt_trichotomy t j with htj | htj | htj
+    · rw [decide_eq_true (by omega : t < j + 1)]
+      have := testBit_ofFnLimb f base j t
+      rw [decide_eq_true htj] at this
+      rw [← this]
+      split
+      · rw [Nat.one_mul, Nat.testBit_two_pow_add_gt htj]
+      · rw [Nat.zero_mul, Nat.zero_add]
+    · subst htj
+      rw [decide_eq_true (Nat.lt_succ_self t), Bool.true_and, fnBit]
+      split
+      · next h =>
+        rw [Nat.one_mul, Nat.testBit_two_pow_add_eq, Nat.testBit_lt_two_pow hlt,
+          decide_eq_true h.1, h.2]
+        rfl
+      · next h =>
+        rw [Nat.zero_mul, Nat.zero_add, Nat.testBit_lt_two_pow hlt]
+        rcases Decidable.em (base + t < n) with h1 | h1
+        · rw [decide_eq_true h1, Bool.true_and]
+          rcases hf : f (base + t) with _ | _
+          · rfl
+          · exact absurd ⟨h1, hf⟩ h
+        · rw [decide_eq_false h1]
+          rfl
+    · rw [decide_eq_false (by omega : ¬ t < j + 1), Bool.false_and]
+      have h2 : 2 ^ (j + 1) ≤ 2 ^ t := Nat.pow_le_pow_right (by omega) htj
+      split
+      · rw [Nat.one_mul]
+        exact Nat.testBit_lt_two_pow (by omega)
+      · rw [Nat.zero_mul, Nat.zero_add]
+        exact Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hlt
+          (Nat.pow_le_pow_right (by omega) (by omega)))
+
+private theorem ofFnLimbs_size (f : Nat → Bool) :
+    ∀ (fuel : Nat) (acc : Array Nat),
+      (ofFnLimbs (n := n) f fuel acc).size = acc.size + fuel
+  | 0, acc => by simp [ofFnLimbs]
+  | fuel + 1, acc => by
+    rw [ofFnLimbs, ofFnLimbs_size f fuel, Array.size_push]
+    omega
+
+private theorem getElem!_ofFnLimbs (f : Nat → Bool) :
+    ∀ (fuel : Nat) (acc : Array Nat) (i : Nat),
+      (ofFnLimbs (n := n) f fuel acc)[i]! =
+        if i < acc.size then acc[i]!
+        else if i < acc.size + fuel then ofFnLimb (n := n) f (63 * i) 63 0
+        else 0
+  | 0, acc, i => by
+    rw [ofFnLimbs]
+    rcases Nat.lt_or_ge i acc.size with h | h
+    · rw [ite_eq_left h]
+    · rw [ite_eq_right (by omega), ite_eq_right (by omega), getElem!_neg _ _ (by omega)]
+      rfl
+  | fuel + 1, acc, i => by
+    rw [ofFnLimbs, getElem!_ofFnLimbs f fuel, Array.size_push]
+    rcases Nat.lt_or_ge i acc.size with h | h
+    · rw [ite_eq_left (by omega : i < acc.size + 1), ite_eq_left h,
+        getElem!_pos _ i (by rw [Array.size_push]; omega), getElem!_pos acc i h,
+        Array.getElem_push_lt]
+    · rw [ite_eq_right (by omega : ¬ i < acc.size)]
+      rcases Decidable.em (i = acc.size) with rfl | hne
+      · rw [ite_eq_left (by omega : acc.size < acc.size + 1),
+          ite_eq_left (by omega : acc.size < acc.size + (fuel + 1)),
+          getElem!_pos _ _ (by rw [Array.size_push]; omega), Array.getElem_push_eq]
+      · rw [ite_eq_right (by omega : ¬ i < acc.size + 1)]
+        rcases Nat.lt_or_ge i (acc.size + (fuel + 1)) with h2 | h2
+        · rw [ite_eq_left (by omega : i < acc.size + 1 + fuel), ite_eq_left h2]
+        · rw [ite_eq_right (by omega : ¬ i < acc.size + 1 + fuel),
+            ite_eq_right (by omega : ¬ i < acc.size + (fuel + 1))]
+
+theorem mem_ofFnFast_limbs (f : Nat → Bool) (v : Nat) :
+    ((ofFnLimbs (n := n) f (limbCount n) #[])[v / 63]!).testBit (v % 63) =
+      (decide (v < n) && f v) := by
+  rw [getElem!_ofFnLimbs, Array.size_empty, ite_eq_right (by omega), Nat.zero_add]
+  rcases Nat.lt_or_ge (v / 63) (limbCount n) with hi | hi
+  · rw [ite_eq_left hi, testBit_ofFnLimb, decide_eq_true (Nat.mod_lt _ (by omega)),
+      Bool.true_and, fnBit, Nat.div_add_mod]
+  · rw [ite_eq_right (by omega), Nat.zero_testBit,
+      decide_eq_false (by rw [limbCount] at hi; omega), Bool.false_and]
+
 theorem wf_ofFnLimbs (f : Nat → Bool) :
     Wf n (ofFnLimbs (n := n) f (limbCount n) #[]) := by
-  sorry
+  refine ⟨by rw [ofFnLimbs_size, Array.size_empty, Nat.zero_add], fun i => ?_, fun v hv => ?_⟩
+  · rw [getElem!_ofFnLimbs, Array.size_empty, ite_eq_right (by omega), Nat.zero_add]
+    split
+    · exact ofFnLimb_lt f _ 63
+    · exact Nat.two_pow_pos 63
+  · rw [mem_ofFnFast_limbs, decide_eq_false (by omega), Bool.false_and]
 
 /-- `ofFn` built one limb at a time: allocation-free and without the
 `List.range` fold. -/
@@ -1222,7 +1384,9 @@ def ofFnFast (f : Nat → Bool) : VSet n :=
   ofLimbs (ofFnLimbs (n := n) f (limbCount n) #[]) (wf_ofFnLimbs f)
 
 @[csimp] theorem ofFn_eq_ofFnFast : @ofFn = @ofFnFast := by
-  sorry
+  funext n f
+  refine ext fun v => ?_
+  rw [mem_ofFn, ofFnFast, mem_ofLimbs, mem_ofFnFast_limbs]
 
 /-! # Images under vertex maps -/
 
@@ -1231,10 +1395,23 @@ range: nauty's `permset`. -/
 @[expose] def image (σ : Nat → Nat) (s : VSet n) : VSet n :=
   (List.range n).foldl (fun t v => if s.mem v then t.insert (σ v) else t) empty
 
+theorem mem_foldl_image (σ : Nat → Nat) (s : VSet n) :
+    ∀ (l : List Nat) (init : VSet n) (w : Nat),
+      (l.foldl (fun t v => if s.mem v then t.insert (σ v) else t) init).mem w =
+        (init.mem w || l.any fun v => s.mem v && σ v == w && decide (σ v < n))
+  | [], init, w => by simp
+  | v :: l, init, w => by
+    rw [List.foldl_cons, mem_foldl_image σ s l, List.any_cons]
+    rcases hm : s.mem v with _ | _
+    · simp only [Bool.false_eq_true, ite_false, Bool.false_and, Bool.false_or]
+    · simp only [ite_true, mem_insert, Bool.true_and]
+      cases init.mem w <;> cases hb : (σ v == w) <;> cases hd : decide (σ v < n) <;>
+        cases hl : l.any (fun v => s.mem v && σ v == w && decide (σ v < n)) <;> simp [hb, hd, hl]
+
 theorem mem_image (σ : Nat → Nat) (s : VSet n) (w : Nat) :
     (s.image σ).mem w =
       (List.range n).any fun v => s.mem v && σ v == w && decide (σ v < n) := by
-  sorry
+  rw [image, mem_foldl_image, mem_empty, Bool.false_or]
 
 /-- The set bits of one limb, by repeated lowest-bit extraction, each
 inserted through `σ`. -/
@@ -1256,8 +1433,110 @@ where
     | 0, _, acc => acc
     | fuel + 1, i, acc => go fuel (i + 1) (imageLimb σ (63 * i) 63 s.limbs[i]! acc)
 
+/-- Clearing the lowest set bit of a nonzero word. -/
+private theorem testBit_clear_lowBit {x : Nat} (hx : x ≠ 0) (j : Nat) :
+    (x ^^^ (1 <<< lowBit x)).testBit j = (x.testBit j && !(lowBit x == j)) := by
+  rw [Nat.testBit_xor, testBit_one_shift]
+  rcases Decidable.em (lowBit x = j) with rfl | hne
+  · rw [testBit_lowBit x hx]
+    simp
+  · rw [show (lowBit x == j) = false by simp [hne]]
+    simp
+
+/-- Membership after one limb's extraction walk: the fuel must cover the
+remaining bits, which it does because each step clears the lowest one. -/
+private theorem mem_imageLimb (σ : Nat → Nat) (base : Nat) :
+    ∀ (fuel x : Nat) (acc : VSet n) (w : Nat), x < 2 ^ 63 →
+      (∀ j, j < 63 - fuel → x.testBit j = false) →
+      (imageLimb σ base fuel x acc).mem w =
+        (acc.mem w || (List.range 63).any fun j =>
+          x.testBit j && σ (base + j) == w && decide (σ (base + j) < n))
+  | 0, x, acc, w, hx, hlow => by
+    have hz : x = 0 := by
+      refine Nat.eq_of_testBit_eq fun j => ?_
+      rw [Nat.zero_testBit]
+      rcases Nat.lt_or_ge j 63 with hj | hj
+      · exact hlow j (by omega)
+      · exact Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hx
+          (Nat.pow_le_pow_right (by omega) hj))
+    subst hz
+    rw [imageLimb]
+    simp
+  | fuel + 1, x, acc, w, hx, hlow => by
+    rw [imageLimb]
+    rcases Decidable.em (x = 0) with rfl | hne
+    · simp
+    · rw [ite_eq_right hne]
+      have hlt : lowBit x < 63 := lowBit_lt_of_lt hx hne
+      have hlow' : ∀ j, j < 63 - fuel → (x ^^^ (1 <<< lowBit x)).testBit j = false := by
+        intro j hj
+        rw [testBit_clear_lowBit hne]
+        rcases Nat.lt_trichotomy j (lowBit x) with h | h | h
+        · rw [testBit_lt_lowBit x j h]
+          rfl
+        · subst h
+          simp
+        · exfalso
+          have := hlow (lowBit x) (by omega)
+          rw [testBit_lowBit x hne] at this
+          cases this
+      have h1 : 1 <<< lowBit x < 2 ^ 63 := by
+        rw [Nat.one_shiftLeft]
+        exact Nat.pow_lt_pow_right (by omega) hlt
+      rw [mem_imageLimb σ base fuel _ _ w (Nat.xor_lt_two_pow hx h1) hlow', mem_insert]
+      rw [Bool.eq_iff_iff]
+      simp only [Bool.or_eq_true, List.any_eq_true, List.mem_range, Bool.and_eq_true,
+        beq_iff_eq, decide_eq_true_eq, testBit_clear_lowBit hne, Bool.not_eq_true']
+      constructor
+      · rintro ((h | ⟨h1, h2⟩) | ⟨j, hj, ⟨⟨hb, hne'⟩, hσ⟩, hlt'⟩)
+        · exact Or.inl h
+        · exact Or.inr ⟨lowBit x, hlt, ⟨testBit_lowBit x hne, h1⟩, h2⟩
+        · exact Or.inr ⟨j, hj, ⟨hb, hσ⟩, hlt'⟩
+      · rintro (h | ⟨j, hj, ⟨hb, hσ⟩, hlt'⟩)
+        · exact Or.inl (Or.inl h)
+        · rcases Decidable.em (lowBit x = j) with rfl | hne'
+          · exact Or.inl (Or.inr ⟨hσ, hlt'⟩)
+          · exact Or.inr ⟨j, hj, ⟨⟨hb, beq_eq_false_iff_ne.mpr hne'⟩, hσ⟩, hlt'⟩
+
+private theorem mem_imageFast_go (σ : Nat → Nat) (s : VSet n) :
+    ∀ (fuel i : Nat) (acc : VSet n) (w : Nat),
+      (imageFast.go σ s fuel i acc).mem w =
+        (acc.mem w || (List.range fuel).any fun k => (List.range 63).any fun j =>
+          (s.limbs[i + k]!).testBit j && σ (63 * (i + k) + j) == w &&
+            decide (σ (63 * (i + k) + j) < n))
+  | 0, _, acc, w => by simp [imageFast.go]
+  | fuel + 1, i, acc, w => by
+    have hr : List.range (fuel + 1) = 0 :: (List.range fuel).map Nat.succ :=
+      List.range_succ_eq_map
+    have hfun : (fun k => (List.range 63).any fun j =>
+          (s.limbs[i + 1 + k]!).testBit j && σ (63 * (i + 1 + k) + j) == w &&
+            decide (σ (63 * (i + 1 + k) + j) < n)) =
+        ((fun k => (List.range 63).any fun j =>
+          (s.limbs[i + k]!).testBit j && σ (63 * (i + k) + j) == w &&
+            decide (σ (63 * (i + k) + j) < n)) ∘ Nat.succ) := by
+      funext k
+      simp only [Function.comp, Nat.succ_eq_add_one]
+      rw [show i + (k + 1) = i + 1 + k by omega]
+    rw [imageFast.go, mem_imageFast_go σ s fuel (i + 1), hr, List.any_cons, List.any_map,
+      mem_imageLimb σ _ 63 _ acc w (s.bounded i) (fun j hj => by omega), hfun,
+      Bool.or_assoc]
+    simp only [Nat.add_zero]
+
 @[csimp] theorem image_eq_imageFast : @image = @imageFast := by
-  sorry
+  funext n σ s
+  refine ext fun w => ?_
+  rw [mem_image, imageFast, mem_imageFast_go, mem_empty, Bool.false_or, s.size_eq,
+    Bool.eq_iff_iff]
+  simp only [List.any_eq_true, List.mem_range, Bool.and_eq_true, beq_iff_eq,
+    decide_eq_true_eq, Nat.zero_add]
+  constructor
+  · rintro ⟨v, hv, ⟨hm, hσ⟩, hlt⟩
+    refine ⟨v / 63, lt_limbCount_mul hv, v % 63, Nat.mod_lt _ (by omega), ?_⟩
+    rw [Nat.div_add_mod]
+    exact ⟨⟨hm, hσ⟩, hlt⟩
+  · rintro ⟨k, hk, j, hj, ⟨⟨hb, hσ⟩, hlt⟩⟩
+    have hm : s.mem (63 * k + j) = true := by rw [← testBit_limb s k j hj]; exact hb
+    exact ⟨63 * k + j, mem_lt hm, ⟨hm, hσ⟩, hlt⟩
 
 /-- The image under a permutation array: nauty's `permset`. -/
 @[expose, inline] def permset (s : VSet n) (perm : Array Nat) : VSet n :=
@@ -1273,8 +1552,38 @@ arithmetic is fast and arrays are not. `toNat` is the boundary. -/
 @[expose] def toNat (s : VSet n) : Nat :=
   s.limbs.foldr (fun limb acc => (acc <<< 63) ||| limb) 0
 
+private theorem testBit_foldr_limbs :
+    ∀ (L : List Nat), (∀ x ∈ L, x < 2 ^ 63) → ∀ v : Nat,
+      (L.foldr (fun limb acc => (acc <<< 63) ||| limb) 0).testBit v =
+        (L.getD (v / 63) 0).testBit (v % 63)
+  | [], _, v => by simp [List.getD]
+  | l :: ls, hb, v => by
+    rw [List.foldr_cons, Nat.testBit_or, Nat.testBit_shiftLeft]
+    rcases Nat.lt_or_ge v 63 with hlt | hge
+    · rw [decide_eq_false (by omega), Bool.false_and, Bool.false_or, Nat.div_eq_of_lt hlt,
+        Nat.mod_eq_of_lt hlt]
+      simp [List.getD]
+    · rw [decide_eq_true hge, Bool.true_and,
+        Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le (hb l List.mem_cons_self)
+          (Nat.pow_le_pow_right (by omega) hge)), Bool.or_false,
+        testBit_foldr_limbs ls (fun x hx => hb x (List.mem_cons_of_mem _ hx)),
+        show (v - 63) / 63 = v / 63 - 1 by omega, show (v - 63) % 63 = v % 63 by omega]
+      obtain ⟨q, hq⟩ : ∃ q, v / 63 = q + 1 := ⟨v / 63 - 1, by omega⟩
+      rw [hq]
+      simp [List.getD]
+
 theorem testBit_toNat (s : VSet n) (v : Nat) : s.toNat.testBit v = s.mem v := by
-  sorry
+  rw [toNat, ← Array.foldr_toList, testBit_foldr_limbs _ (fun x hx => by
+    rw [List.mem_iff_getElem] at hx
+    obtain ⟨i, hi, rfl⟩ := hx
+    rw [Array.getElem_toList, ← getElem!_pos]
+    exact s.bounded i), mem_eq, List.getD_eq_getElem?_getD]
+  rcases Nat.lt_or_ge (v / 63) s.limbs.size with h | h
+  · rw [List.getElem?_eq_getElem (by simpa using h), Option.getD_some, Array.getElem_toList,
+      ← getElem!_pos]
+  · rw [List.getElem?_eq_none (by simpa using h), Option.getD_none,
+      getElem!_neg _ _ (by omega)]
+    rfl
 
 theorem toNat_lt (s : VSet n) : s.toNat < 2 ^ n := by
   refine lt_two_pow_of_bits fun v hv => ?_
