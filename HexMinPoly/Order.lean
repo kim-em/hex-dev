@@ -50,11 +50,11 @@ private theorem krylovVec_mem_of_monic_annihilator (A : Matrix F n n)
       rw [DensePoly.coeff_C]
       by_cases hi : i = 0
       · subst i
-        rw [_root_.ite_eq_left rfl]
+        rw [ite_eq_left rfl]
         have hlc := DensePoly.leadingCoeff_eq_coeff_last q (by omega)
         rw [hqSize] at hlc
         exact hlc.symm.trans hqMonic
-      · rw [_root_.ite_eq_right hi]
+      · rw [ite_eq_right hi]
         exact DensePoly.coeff_eq_zero_of_size_le q (by omega)
     have hv : v = 0 := by
       rw [hq] at hqEval
@@ -236,7 +236,7 @@ private theorem exists_monic_annihilator_le (A : Matrix F n n) (v : Vector F n) 
       cases hisZero
     change evalVec (DensePoly.monicize p) A v = 0
     unfold DensePoly.monicize
-    rw [HexPoly.ite_eq_right hnot, evalVec_scale_poly, hpEval]
+    rw [ite_eq_right hnot, evalVec_scale_poly, hpEval]
     ext i hi
     simp only [Vector.getElem_smul, Vector.getElem_zero]
     change p.leadingCoeff⁻¹ * (0 : F) = 0
@@ -321,7 +321,7 @@ def dependencyPoly {d : Nat} (c : Vector F d) : DensePoly F :=
 private theorem dependencyPoly_coeff_top {d : Nat} (c : Vector F d) :
     (dependencyPoly c).coeff d = 1 := by
   rw [dependencyPoly, DensePoly.coeff_sub_ring, DensePoly.coeff_monomial,
-    _root_.ite_eq_left rfl, DensePoly.coeff_ofList]
+    ite_eq_left rfl, DensePoly.coeff_ofList]
   have hout : ¬ d < c.toList.length := by simp [Vector.length_toList]
   simp [List.getD]
   change (1 : F) - (0 : F) = 1
@@ -340,7 +340,7 @@ private theorem dependencyPoly_size {d : Nat} (c : Vector F d) :
     have hz : (dependencyPoly c).coeff s = 0 := by
       change (DensePoly.monomial d 1 - DensePoly.ofList c.toList).coeff s = 0
       rw [DensePoly.coeff_sub_ring, DensePoly.coeff_monomial,
-        _root_.ite_eq_right (by omega), DensePoly.coeff_ofList]
+        ite_eq_right (by omega), DensePoly.coeff_ofList]
       have hout : ¬ s < c.toList.length := by
         simp [Vector.length_toList]
         omega
@@ -578,7 +578,7 @@ theorem vecMinPoly_dvd (A : Matrix F n n) (v : Vector F n) (p : DensePoly F) :
             cases hisZero
           change evalVec (DensePoly.monicize qr.2) A v = 0
           unfold DensePoly.monicize
-          rw [HexPoly.ite_eq_right hnot, evalVec_scale_poly, hremEval]
+          rw [ite_eq_right hnot, evalVec_scale_poly, hremEval]
           ext i hi
           simp only [Vector.getElem_smul, Vector.getElem_zero]
           change qr.2.leadingCoeff⁻¹ * (0 : F) = 0

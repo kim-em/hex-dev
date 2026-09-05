@@ -107,7 +107,7 @@ private theorem reduceUni_symCanonical (q : Nat) (hq : 0 < q)
     Int.ofNat_le.mpr hbound
   have hlower : -(q : Int) < 2 * x := by
     unfold x Modular.symMod
-    rw [Hex.ite_eq_right (Nat.ne_of_gt hq)]
+    rw [ite_eq_right (Nat.ne_of_gt hq)]
     simp only
     have hrem : 0 ≤ f.coeff k % (q : Int) :=
       Int.emod_nonneg _ (by omega)

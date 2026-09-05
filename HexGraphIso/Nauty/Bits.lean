@@ -10,7 +10,6 @@ Piperno, released under the Apache 2.0 license.
 
 module
 
-public import HexBasic.Conditional
 public import Std
 
 public section

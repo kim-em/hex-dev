@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Monic.lean",
+ "baseline_blob": "58769fb7b247f8469a55b2686e9cc40c3f92cfb5",
+ "current_blob": "213fb228b9e8117db1ca6d777f1e98f675ade554",
+ "reason": "Rewrites the qualified `HexPoly.ite_eq_*` shim references to Lean core's lemmas of the same names, now that the shim is gone. Inside proofs only; no definition body changes."
+}

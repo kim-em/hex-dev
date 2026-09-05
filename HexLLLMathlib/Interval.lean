@@ -484,55 +484,55 @@ private theorem prodBounds_le {S : Int} {a b : Ival} {x y : Rat}
     by_cases hB : 0 ≤ b.lo
     · have hB' : (0 : Rat) ≤ (b.lo : Rat) := by exact_mod_cast hB
       have hy : (0 : Rat) ≤ y * S := le_trans hB' hb1
-      rw [_root_.ite_eq_left hA, _root_.ite_eq_left hB]
+      rw [ite_eq_left hA, ite_eq_left hB]
       constructor <;> (push_cast; nlinarith)
-    · rw [_root_.ite_eq_left hA, _root_.ite_eq_right hB]
+    · rw [ite_eq_left hA, ite_eq_right hB]
       have hB' : (b.lo : Rat) < 0 := by exact_mod_cast not_le.mp hB
       by_cases hB2 : b.hi ≤ 0
       · have hB2' : (b.hi : Rat) ≤ 0 := by exact_mod_cast hB2
         have hy : y * S ≤ 0 := le_trans hb2 hB2'
-        rw [_root_.ite_eq_left hB2]
+        rw [ite_eq_left hB2]
         constructor <;> (push_cast; nlinarith)
       · have hB2' : (0 : Rat) < (b.hi : Rat) := by exact_mod_cast not_le.mp hB2
-        rw [_root_.ite_eq_right hB2]
+        rw [ite_eq_right hB2]
         constructor <;> (push_cast; nlinarith)
   · have hA' : (a.lo : Rat) < 0 := by exact_mod_cast not_le.mp hA
-    rw [_root_.ite_eq_right hA]
+    rw [ite_eq_right hA]
     by_cases hA2 : a.hi ≤ 0
     · have hA2' : (a.hi : Rat) ≤ 0 := by exact_mod_cast hA2
       have hx : x * S ≤ 0 := le_trans ha2 hA2'
-      rw [_root_.ite_eq_left hA2]
+      rw [ite_eq_left hA2]
       by_cases hB : 0 ≤ b.lo
       · have hB' : (0 : Rat) ≤ (b.lo : Rat) := by exact_mod_cast hB
         have hy : (0 : Rat) ≤ y * S := le_trans hB' hb1
-        rw [_root_.ite_eq_left hB]
+        rw [ite_eq_left hB]
         constructor <;> (push_cast; nlinarith)
-      · rw [_root_.ite_eq_right hB]
+      · rw [ite_eq_right hB]
         have hB' : (b.lo : Rat) < 0 := by exact_mod_cast not_le.mp hB
         by_cases hB2 : b.hi ≤ 0
         · have hB2' : (b.hi : Rat) ≤ 0 := by exact_mod_cast hB2
           have hy : y * S ≤ 0 := le_trans hb2 hB2'
-          rw [_root_.ite_eq_left hB2]
+          rw [ite_eq_left hB2]
           constructor <;> (push_cast; nlinarith)
         · have hB2' : (0 : Rat) < (b.hi : Rat) := by exact_mod_cast not_le.mp hB2
-          rw [_root_.ite_eq_right hB2]
+          rw [ite_eq_right hB2]
           constructor <;> (push_cast; nlinarith)
     · have hA2' : (0 : Rat) < (a.hi : Rat) := by exact_mod_cast not_le.mp hA2
-      rw [_root_.ite_eq_right hA2]
+      rw [ite_eq_right hA2]
       by_cases hB : 0 ≤ b.lo
       · have hB' : (0 : Rat) ≤ (b.lo : Rat) := by exact_mod_cast hB
         have hy : (0 : Rat) ≤ y * S := le_trans hB' hb1
-        rw [_root_.ite_eq_left hB]
+        rw [ite_eq_left hB]
         constructor <;> (push_cast; nlinarith)
-      · rw [_root_.ite_eq_right hB]
+      · rw [ite_eq_right hB]
         have hB' : (b.lo : Rat) < 0 := by exact_mod_cast not_le.mp hB
         by_cases hB2 : b.hi ≤ 0
         · have hB2' : (b.hi : Rat) ≤ 0 := by exact_mod_cast hB2
           have hy : y * S ≤ 0 := le_trans hb2 hB2'
-          rw [_root_.ite_eq_left hB2]
+          rw [ite_eq_left hB2]
           constructor <;> (push_cast; nlinarith)
         · have hB2' : (0 : Rat) < (b.hi : Rat) := by exact_mod_cast not_le.mp hB2
-          rw [_root_.ite_eq_right hB2]
+          rw [ite_eq_right hB2]
           -- both straddle zero: bound through the side picked by the sign
           -- of `x·S`
           constructor
@@ -825,7 +825,7 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
       set rowRes := IntervalGS.row S g[t]! s.1 s.2 t with hrowRes
       obtain ⟨hsz1, hsz2, hinvrows⟩ := hinv_t
       by_cases hpos : 0 < rowRes.2.lo
-      · rw [_root_.ite_eq_left hpos] at hres'
+      · rw [ite_eq_left hpos] at hres'
         have hres'' : res = (s.1.push rowRes.1, s.2.push rowRes.2) :=
           (Option.some.injEq _ _ ▸ hres').symm
         subst hres''
@@ -842,7 +842,7 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
           rw [getElem!_push_size_eq _ _ (by omega : j = s.2.size),
             getElem!_push_size_eq _ _ (by omega : j = s.1.size)]
           exact ⟨hpos, hrb, fun k hk => hrmu k hk⟩
-      · rw [_root_.ite_eq_right hpos] at hres'
+      · rw [ite_eq_right hpos] at hres'
         cases hres'
 
 /-! # Positivity of the Gram-determinant product -/

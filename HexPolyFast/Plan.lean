@@ -131,15 +131,15 @@ theorem schoolbookCoeff_eq_mulCoeffSum (a b : DensePoly R) (d : Nat) :
         rw [List.foldl_cons, List.foldl_cons]
         unfold diagonalMulCoeffTerm
         by_cases hdi : d < i
-        · rw [_root_.ite_eq_left hdi, _root_.ite_eq_left hdi]
+        · rw [ite_eq_left hdi, ite_eq_left hdi]
           change xs.foldl _ acc = xs.foldl _ (acc + 0)
           rw [Lean.Grind.Semiring.add_zero]
           exact ih acc
-        · rw [_root_.ite_eq_right hdi, _root_.ite_eq_right hdi]
+        · rw [ite_eq_right hdi, ite_eq_right hdi]
           by_cases hib : d - i < b.size
-          · rw [_root_.ite_eq_left hib]
+          · rw [ite_eq_left hib]
             exact ih _
-          · rw [_root_.ite_eq_right hib]
+          · rw [ite_eq_right hib]
             have hbzero : b.coeff (d - i) = 0 :=
               coeff_eq_zero_of_size_le b (Nat.le_of_not_gt hib)
             rw [hbzero, Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
@@ -192,7 +192,7 @@ theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
         rw [coeff_schoolbookSlice, coeff_ofList]
         by_cases hi : i < min len (a.size + b.size - 1 - lo)
         · have hil : i < len := Nat.lt_of_lt_of_le hi (Nat.min_le_left ..)
-          rw [_root_.ite_eq_left hil]
+          rw [ite_eq_left hil]
           rw [List.getD_eq_getElem?_getD]
           simp [hi]
           rw [schoolbookCoeff_eq_mulCoeffSum]
@@ -200,18 +200,18 @@ theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
         · rw [List.getD_eq_getElem?_getD]
           simp [hi]
           by_cases hil : i < len
-          · rw [_root_.ite_eq_left hil]
+          · rw [ite_eq_left hil]
             have hbound : (a * b).size ≤ lo + i :=
               Nat.le_trans hsupp (by omega)
             exact coeff_eq_zero_of_size_le (a * b) hbound
-          · rw [_root_.ite_eq_right hil]
+          · rw [ite_eq_right hil]
             rfl
       · apply ext_coeff
         intro i
         rw [coeff_schoolbookSlice, coeff_ofList]
         by_cases hi : i < min len (a.size + b.size - 1 - lo)
         · have hil : i < len := Nat.lt_of_lt_of_le hi (Nat.min_le_left ..)
-          rw [_root_.ite_eq_left hil]
+          rw [ite_eq_left hil]
           rw [List.getD_eq_getElem?_getD]
           simp [hi]
           rw [schoolbookCoeff_eq_mulCoeffSum]
@@ -219,11 +219,11 @@ theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
         · rw [List.getD_eq_getElem?_getD]
           simp [hi]
           by_cases hil : i < len
-          · rw [_root_.ite_eq_left hil]
+          · rw [ite_eq_left hil]
             have hbound : (a * b).size ≤ lo + i :=
               Nat.le_trans hsupp (by omega)
             exact coeff_eq_zero_of_size_le (a * b) hbound
-          · rw [_root_.ite_eq_right hil]
+          · rw [ite_eq_right hil]
             rfl
 
 /-- Compiled clipped schoolbook products use direct coefficient folds. -/

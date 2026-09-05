@@ -63,20 +63,20 @@ theorem low_add_shift_high (k : Nat) (p : DensePoly R) :
   have hz : (0 : R) + 0 = 0 := by grind
   rw [coeff_add _ _ _ hz, coeff_low, coeff_shift]
   by_cases hik : i < k
-  · rw [_root_.ite_eq_left hik, _root_.ite_eq_left hik]
+  · rw [ite_eq_left hik, ite_eq_left hik]
     change p.coeff i + (0 : R) = p.coeff i
     exact Lean.Grind.Semiring.add_zero _
   · have hki : k ≤ i := Nat.le_of_not_gt hik
-    rw [_root_.ite_eq_right hik, _root_.ite_eq_right hik]
+    rw [ite_eq_right hik, ite_eq_right hik]
     by_cases hip : i < p.size
     · have hh : i - k < p.size - k := by omega
-      rw [coeff_high, _root_.ite_eq_left hh]
+      rw [coeff_high, ite_eq_left hh]
       have hidx : k + (i - k) = i := by omega
       rw [hidx]
       grind
     · have hsize : p.size ≤ i := Nat.le_of_not_gt hip
       have hh : ¬ i - k < p.size - k := by omega
-      rw [coeff_high, _root_.ite_eq_right hh,
+      rw [coeff_high, ite_eq_right hh,
         coeff_eq_zero_of_size_le p hsize]
       exact hz
 
@@ -349,13 +349,13 @@ theorem ofCoeffs_low (k : Nat) (a : Array R) :
   rw [hzero]
   unfold low
   by_cases hik : i < k
-  · rw [_root_.ite_eq_left hik]
+  · rw [ite_eq_left hik]
     by_cases hia : i < a.size
     · have himin : i < min k a.size := by omega
       simp [Array.getD, himin, hia]
     · have himin : ¬i < min k a.size := by omega
       simp [Array.getD, himin, hia]
-  · rw [_root_.ite_eq_right hik]
+  · rw [ite_eq_right hik]
     have himin : ¬i < min k a.size := by omega
     simp [Array.getD, himin]
 
@@ -370,11 +370,11 @@ theorem ofCoeffs_high (k : Nat) (a : Array R) :
   unfold high
   have hsize : (ofCoeffs a : DensePoly R).size ≤ a.size := size_ofCoeffs_le a
   by_cases hip : i < (ofCoeffs a : DensePoly R).size - k
-  · rw [_root_.ite_eq_left hip]
+  · rw [ite_eq_left hip]
     have hiraw : i < a.size - k := by omega
     have hki : k + i < a.size := by omega
     simp [Array.getD, hiraw, hki]
-  · rw [_root_.ite_eq_right hip]
+  · rw [ite_eq_right hip]
     by_cases hiraw : i < a.size - k
     · have hbound : (ofCoeffs a : DensePoly R).size ≤ k + i := by omega
       have hz := coeff_eq_zero_of_size_le (ofCoeffs a : DensePoly R) hbound
@@ -420,12 +420,12 @@ private theorem fold_schoolbook_extend (a b : Array R) (d extra : Nat) (acc : R)
       have hazero' : a.getD ((ofCoeffs a : DensePoly R).size + extra) 0 = 0 := by
         simpa [hzero] using hazero
       by_cases hd : d < (ofCoeffs a : DensePoly R).size + extra
-      · rw [_root_.ite_eq_left hd]
-      · rw [_root_.ite_eq_right hd]
+      · rw [ite_eq_left hd]
+      · rw [ite_eq_right hd]
         by_cases hb : d - ((ofCoeffs a : DensePoly R).size + extra) < b.size
-        · rw [_root_.ite_eq_left hb, hazero', Lean.Grind.Semiring.zero_mul,
+        · rw [ite_eq_left hb, hazero', Lean.Grind.Semiring.zero_mul,
             Lean.Grind.Semiring.add_zero]
-        · rw [_root_.ite_eq_right hb]
+        · rw [ite_eq_right hb]
 
 /-- A raw diagonal fold represents the corresponding dense diagonal. -/
 theorem schoolbookCoeff_eq_dense (a b : Array R) (d : Nat) :
@@ -460,19 +460,19 @@ theorem schoolbookCoeff_eq_dense (a b : Array R) (d : Nat) :
         intro acc
         rw [List.foldl_cons, List.foldl_cons]
         by_cases hdi : d < i
-        · rw [_root_.ite_eq_left hdi, _root_.ite_eq_left hdi]
+        · rw [ite_eq_left hdi, ite_eq_left hdi]
           exact ih acc
-        · rw [_root_.ite_eq_right hdi, _root_.ite_eq_right hdi]
+        · rw [ite_eq_right hdi, ite_eq_right hdi]
           by_cases hq : d - i < (ofCoeffs b : DensePoly R).size
           · have hb : d - i < b.size := Nat.lt_of_lt_of_le hq hbsize
-            rw [_root_.ite_eq_left hq, _root_.ite_eq_left hb,
+            rw [ite_eq_left hq, ite_eq_left hb,
               coeff_ofCoeffs, coeff_ofCoeffs]
             have hzero : (Zero.zero : R) = 0 := rfl
             rw [hzero]
             exact ih _
-          · rw [_root_.ite_eq_right hq]
+          · rw [ite_eq_right hq]
             by_cases hb : d - i < b.size
-            · rw [_root_.ite_eq_left hb]
+            · rw [ite_eq_left hb]
               have hz := coeff_eq_zero_of_size_le (ofCoeffs b : DensePoly R)
                 (Nat.le_of_not_gt hq)
               rw [coeff_ofCoeffs] at hz
@@ -480,7 +480,7 @@ theorem schoolbookCoeff_eq_dense (a b : Array R) (d : Nat) :
               have hz' : b.getD (d - i) 0 = 0 := by simpa [hzero] using hz
               rw [hz', Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
               exact ih acc
-            · rw [_root_.ite_eq_right hb]
+            · rw [ite_eq_right hb]
               exact ih acc
   exact aux (List.range (ofCoeffs a : DensePoly R).size) 0
 
@@ -566,7 +566,7 @@ theorem coeff_ofCoeffs_schoolbookSlice (lo len : Nat) (a b : Array R) (i : Nat) 
     let used := min len (a.size + b.size - 1 - lo)
     by_cases hi : i < used
     · have hilen : i < len := Nat.lt_of_lt_of_le hi (Nat.min_le_left ..)
-      rw [_root_.ite_eq_left hilen]
+      rw [ite_eq_left hilen]
       simp [schoolbookSlice, ha0, hb0, used, Array.getD, hi,
         schoolbookCoeff_comm]
       rw [schoolbookCoeff_eq_dense, schoolbookCoeff_eq_mulCoeffSum]
@@ -575,7 +575,7 @@ theorem coeff_ofCoeffs_schoolbookSlice (lo len : Nat) (a b : Array R) (i : Nat) 
     · simp [schoolbookSlice, ha0, hb0, used, Array.getD, hi,
         schoolbookCoeff_comm]
       by_cases hilen : i < len
-      · rw [_root_.ite_eq_left hilen]
+      · rw [ite_eq_left hilen]
         have hraw : a.size + b.size - 1 ≤ lo + i := by
           dsimp [used] at hi
           omega
@@ -599,7 +599,7 @@ theorem coeff_ofCoeffs_schoolbookSlice (lo len : Nat) (a b : Array R) (i : Nat) 
           have hsub := Nat.sub_le_sub_right hsum 1
           exact (coeff_eq_zero_of_size_le _
             (Nat.le_trans hsupp (Nat.le_trans hsub hraw))).symm
-      · rw [_root_.ite_eq_right hilen]
+      · rw [ite_eq_right hilen]
         rfl
 
 /-- Raw one-allocation assembly represents the Karatsuba shifted sum. -/
@@ -1064,16 +1064,16 @@ private theorem clipped_ite_eq (p q : DensePoly R) (pBound qBound lo len i : Nat
         (p * q).coeff (lo + i) else 0) =
       if i < len then (p * q).coeff (lo + i) else 0 := by
   by_cases hilen : i < len
-  · rw [_root_.ite_eq_left hilen]
+  · rw [ite_eq_left hilen]
     by_cases hiused : i < min len (pBound + qBound - 1 - lo)
-    · rw [_root_.ite_eq_left hiused]
-    · rw [_root_.ite_eq_right hiused]
+    · rw [ite_eq_left hiused]
+    · rw [ite_eq_right hiused]
       symm
       apply coeff_mul_zero_of_bounds p q pBound qBound (lo + i) hp hq
       omega
-  · rw [_root_.ite_eq_right hilen]
+  · rw [ite_eq_right hilen]
     have hiused : ¬i < min len (pBound + qBound - 1 - lo) := by omega
-    rw [_root_.ite_eq_right hiused]
+    rw [ite_eq_right hiused]
 
 /-- Every fuelled interval recursion returns exactly the requested product
 coefficients. -/
@@ -1088,10 +1088,10 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
       let used := min len (a.size + b.size - 1 - lo)
       rw [← show used = min len (a.size + b.size - 1 - lo) from rfl]
       by_cases husedzero : used = 0
-      · rw [_root_.ite_eq_left husedzero]
+      · rw [ite_eq_left husedzero]
         simpa [used, husedzero] using
           clipped_ite_eq a b a.size b.size lo len i (by omega) (by omega)
-      rw [_root_.ite_eq_right husedzero]
+      rw [ite_eq_right husedzero]
       split
       · rw [coeff_schoolbookSlice]
         exact clipped_ite_eq a b a.size b.size lo len i (by omega) (by omega)
@@ -1132,7 +1132,7 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
           have he₀ : base₀ + (lo + i - base₀) = lo + i := by
             dsimp [base₀]
             omega
-          rw [_root_.ite_eq_left h₀, he₀]
+          rw [ite_eq_left h₀, he₀]
           by_cases hk : k ≤ lo + i
           · have h₁ : lo + i - k - base₁ < (hi - k) - base₁ := by
               dsimp [hi, base₁]
@@ -1152,8 +1152,8 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
             have he₂ : base₂ + (lo + i - k - base₂) = lo + i - k := by
               dsimp [base₂]
               omega
-            rw [_root_.ite_eq_left hk, _root_.ite_eq_left h₁,
-              _root_.ite_eq_left h₀', _root_.ite_eq_left h₂]
+            rw [ite_eq_left hk, ite_eq_left h₁,
+              ite_eq_left h₀', ite_eq_left h₂]
             by_cases h2k : 2 * k ≤ lo + i
             · have h₂' : lo + i - 2 * k - base₂ < (hi - k) - base₂ := by
                 dsimp [hi, base₂]
@@ -1162,15 +1162,15 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
                   lo + i - 2 * k := by
                 dsimp [base₂]
                 omega
-              rw [_root_.ite_eq_left h2k, _root_.ite_eq_left h₂', he₂']
-              rw [_root_.ite_eq_right (by omega), _root_.ite_eq_right (by omega)] at hc
+              rw [ite_eq_left h2k, ite_eq_left h₂', he₂']
+              rw [ite_eq_right (by omega), ite_eq_right (by omega)] at hc
               grind
-            · rw [_root_.ite_eq_right h2k]
-              rw [_root_.ite_eq_right (by omega), _root_.ite_eq_left (by omega)] at hc
+            · rw [ite_eq_right h2k]
+              rw [ite_eq_right (by omega), ite_eq_left (by omega)] at hc
               grind
           · have h2k : ¬2 * k ≤ lo + i := by omega
-            rw [_root_.ite_eq_right hk, _root_.ite_eq_right h2k]
-            rw [_root_.ite_eq_left (by omega), _root_.ite_eq_left (by omega)] at hc
+            rw [ite_eq_right hk, ite_eq_right h2k]
+            rw [ite_eq_left (by omega), ite_eq_left (by omega)] at hc
             grind
         · have hlen :
               (List.map
@@ -1214,7 +1214,7 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
       let used := min len (a.size + b.size - 1 - lo)
       rw [← show used = min len (a.size + b.size - 1 - lo) from rfl]
       by_cases husedzero : used = 0
-      · rw [_root_.ite_eq_left husedzero]
+      · rw [ite_eq_left husedzero]
         rw [coeff_ofCoeffs]
         have hs := clipped_ite_eq (ofCoeffs a : DensePoly R)
           (ofCoeffs b : DensePoly R) a.size b.size lo len i
@@ -1222,11 +1222,11 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
         have hiused : ¬i < min len (a.size + b.size - 1 - lo) := by
           rw [← show used = min len (a.size + b.size - 1 - lo) from rfl]
           omega
-        rw [_root_.ite_eq_right hiused] at hs
+        rw [ite_eq_right hiused] at hs
         have hzero : (Zero.zero : R) = 0 := rfl
         rw [hzero]
         exact hs
-      rw [_root_.ite_eq_right husedzero]
+      rw [ite_eq_right husedzero]
       split
       · rw [Karatsuba.Raw.coeff_ofCoeffs_schoolbookSlice]
         exact clipped_ite_eq (ofCoeffs a : DensePoly R) (ofCoeffs b : DensePoly R)
@@ -1236,7 +1236,7 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
         rw [← clipped_ite_eq (ofCoeffs a : DensePoly R) (ofCoeffs b : DensePoly R)
           a.size b.size lo len i (size_ofCoeffs_le a) (size_ofCoeffs_le b)]
         by_cases hil : i < used
-        · rw [_root_.ite_eq_left hil]
+        · rw [ite_eq_left hil]
           simp [Array.getD, hil]
           let k := (max a.size b.size + 1) / 2
           let ra₀ := Karatsuba.Raw.low k a
@@ -1311,7 +1311,7 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
           have he₀ : base₀ + (lo + i - base₀) = lo + i := by
             dsimp [base₀]
             omega
-          rw [_root_.ite_eq_left h₀, he₀]
+          rw [ite_eq_left h₀, he₀]
           by_cases hk : k ≤ lo + i
           · have h₁ : lo + i - k - base₁ < (hi - k) - base₁ := by
               dsimp [hi, base₁]
@@ -1331,8 +1331,8 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
             have he₂ : base₂ + (lo + i - k - base₂) = lo + i - k := by
               dsimp [base₂]
               omega
-            rw [_root_.ite_eq_left hk, _root_.ite_eq_left h₁,
-              _root_.ite_eq_left h₀', _root_.ite_eq_left h₂]
+            rw [ite_eq_left hk, ite_eq_left h₁,
+              ite_eq_left h₀', ite_eq_left h₂]
             by_cases h2k : 2 * k ≤ lo + i
             · have h₂' : lo + i - 2 * k - base₂ < (hi - k) - base₂ := by
                 dsimp [hi, base₂]
@@ -1341,17 +1341,17 @@ theorem Karatsuba.Raw.coeff_ofCoeffs_sliceAux (cutoff fuel lo len : Nat)
                   lo + i - 2 * k := by
                 dsimp [base₂]
                 omega
-              rw [_root_.ite_eq_left h2k, _root_.ite_eq_left h₂', he₂']
-              rw [_root_.ite_eq_right (by omega), _root_.ite_eq_right (by omega)] at hc
+              rw [ite_eq_left h2k, ite_eq_left h₂', he₂']
+              rw [ite_eq_right (by omega), ite_eq_right (by omega)] at hc
               grind
-            · rw [_root_.ite_eq_right h2k]
-              rw [_root_.ite_eq_right (by omega), _root_.ite_eq_left (by omega)] at hc
+            · rw [ite_eq_right h2k]
+              rw [ite_eq_right (by omega), ite_eq_left (by omega)] at hc
               grind
           · have h2k : ¬2 * k ≤ lo + i := by omega
-            rw [_root_.ite_eq_right hk, _root_.ite_eq_right h2k]
-            rw [_root_.ite_eq_left (by omega), _root_.ite_eq_left (by omega)] at hc
+            rw [ite_eq_right hk, ite_eq_right h2k]
+            rw [ite_eq_left (by omega), ite_eq_left (by omega)] at hc
             grind
-        · rw [_root_.ite_eq_right hil]
+        · rw [ite_eq_right hil]
           simp [Array.getD, used, hil]
           rfl
 

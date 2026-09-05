@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 import HexBasic.Fold
 public import HexMvPoly.Query
 
@@ -103,7 +102,7 @@ private theorem insertHornerTerm_perm (exponent : Nat)
       unfold insertHornerTerm
       by_cases heq : group.1 = exponent
       · simp [heq, groupTerms]
-      · rw [Hex.ite_eq_right heq]
+      · rw [ite_eq_right heq]
         change
           (group.2 ++ groupTerms (insertHornerTerm exponent term groups)).Perm
             (term :: (group.2 ++ groupTerms groups))
@@ -157,7 +156,7 @@ private theorem insertHornerGroupDesc_perm (group : HornerGroup n S)
       unfold insertHornerGroupDesc
       by_cases hlt : group'.1 < group.1
       · simp [hlt, groupTerms]
-      · rw [Hex.ite_eq_right hlt]
+      · rw [ite_eq_right hlt]
         change
           (group'.2 ++ groupTerms (insertHornerGroupDesc group groups)).Perm
             (group.2 ++ (group'.2 ++ groupTerms groups))
@@ -219,7 +218,7 @@ private theorem mem_insertHornerGroupDesc
       unfold insertHornerGroupDesc
       by_cases hlt : group'.1 < group.1
       · simp [hlt]
-      · rw [Hex.ite_eq_right hlt]
+      · rw [ite_eq_right hlt]
         simp only [List.mem_cons, ih]
         constructor
         · rintro (heq | heq | hmem)
@@ -243,7 +242,7 @@ private theorem insertHornerGroupDesc_desc (group : HornerGroup n S)
       rw [List.pairwise_cons] at hdesc
       unfold insertHornerGroupDesc
       by_cases hlt : group'.1 < group.1
-      · rw [Hex.ite_eq_left hlt, List.pairwise_cons]
+      · rw [ite_eq_left hlt, List.pairwise_cons]
         constructor
         · intro target htarget
           simp only [List.mem_cons] at htarget
@@ -251,7 +250,7 @@ private theorem insertHornerGroupDesc_desc (group : HornerGroup n S)
           · omega
           · exact Nat.le_trans (hdesc.1 target htarget) (Nat.le_of_lt hlt)
         · exact List.pairwise_cons.mpr hdesc
-      · rw [Hex.ite_eq_right hlt, List.pairwise_cons]
+      · rw [ite_eq_right hlt, List.pairwise_cons]
         constructor
         · intro target htarget
           rw [mem_insertHornerGroupDesc] at htarget
@@ -314,7 +313,7 @@ private theorem insertHornerTerm_at (k exponent : Nat)
         exact hgroups target (List.mem_cons_of_mem group htarget) candidate hcand
       unfold insertHornerTerm
       by_cases heq : group.1 = exponent
-      · rw [Hex.ite_eq_left heq]
+      · rw [ite_eq_left heq]
         intro target htarget candidate hcand
         simp only [List.mem_cons] at htarget
         rcases htarget with htarget | htarget
@@ -325,7 +324,7 @@ private theorem insertHornerTerm_at (k exponent : Nat)
             exact hterm.trans heq.symm
           · exact hgroups group (List.mem_cons_self ..) candidate hcand
         · exact hgroups target (List.mem_cons_of_mem group htarget) candidate hcand
-      · rw [Hex.ite_eq_right heq]
+      · rw [ite_eq_right heq]
         intro target htarget candidate hcand
         simp only [List.mem_cons] at htarget
         rcases htarget with htarget | htarget

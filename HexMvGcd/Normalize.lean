@@ -263,7 +263,7 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
               exact LawfulGcdOps.one_ne_zero hd.symm
             have hpC : p = C c := by
               apply termsList_inj
-              rw [hterms, termsList_C, Hex.ite_eq_right hcne]
+              rw [hterms, termsList_C, ite_eq_right hcne]
             refine ⟨C d, ?_⟩
             rw [hpC]
             change monomial Mono.zero c * monomial Mono.zero d = 1
@@ -276,14 +276,14 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
       subst p
       rw [zero_mul] at hpq
       have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hpq
-      rw [coeff_zero, coeff_one, Hex.ite_eq_left rfl] at hcoeff
+      rw [coeff_zero, coeff_one, ite_eq_left rfl] at hcoeff
       exact LawfulGcdOps.one_ne_zero hcoeff.symm
     have hqzero : q ≠ 0 := by
       intro hq
       subst q
       rw [mul_zero] at hpq
       have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hpq
-      rw [coeff_zero, coeff_one, Hex.ite_eq_left rfl] at hcoeff
+      rw [coeff_zero, coeff_one, ite_eq_left rfl] at hcoeff
       exact LawfulGcdOps.one_ne_zero hcoeff.symm
     cases hpLead : p.leadingTerm with
     | none => exact False.elim (hpzero ((leadingTerm_eq_none_iff p).mp hpLead))
@@ -314,10 +314,10 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
             have hmono : Mono.mul mp mq = Mono.zero := by
               by_cases hmono : Mono.mul mp mq = Mono.zero
               · exact hmono
-              · rw [Hex.ite_eq_right hmono] at hcoeff
+              · rw [ite_eq_right hmono] at hcoeff
                 exact False.elim (hcprod hcoeff.symm)
             have hcoeffUnit : cp * cq = 1 := by
-              rw [Hex.ite_eq_left hmono] at hcoeff
+              rw [ite_eq_left hmono] at hcoeff
               exact hcoeff.symm
             have hmp : mp = Mono.zero := eq_zero_of_mul_eq_zero hmono
             have hpC : p = C cp := by
@@ -328,7 +328,7 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
               · subst m
                 rw [← hmp, coeff_eq_of_leadingTerm hpLead]
                 simp
-              · rw [Hex.ite_eq_right hm]
+              · rw [ite_eq_right hm]
                 apply coeff_eq_zero_of_not_mem m p
                 intro hmem
                 have hle := le_leadingTerm hpLead m hmem
@@ -337,7 +337,7 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
             have hisUnit : GcdOps.isUnit cp = true :=
               (LawfulGcdOps.isUnit_iff cp).mpr ⟨cq, hcoeffUnit⟩
             rw [hpC]
-            rw [polyIsUnit, termsList_C, Hex.ite_eq_right hcp]
+            rw [polyIsUnit, termsList_C, ite_eq_right hcp]
             simp [hisUnit]
 
 /-- The chosen normalization multiplier is a polynomial unit. -/
@@ -438,7 +438,7 @@ theorem polyNormalize_unit [IsMonomialOrder cmp] [LawfulGcdOps R]
             exact LawfulGcdOps.one_ne_zero hd.symm
           have hpC : p = C c := by
             apply termsList_inj
-            rw [hterms, termsList_C, Hex.ite_eq_right hcne]
+            rw [hterms, termsList_C, ite_eq_right hcne]
           have hnorm : c * GcdOps.normUnit c = 1 := by
             exact LawfulGcdOps.normalize_unit c hc
           rw [hpC]

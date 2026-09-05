@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Fold.lean",
+ "baseline_blob": "526c6d59061d7c8dc71cfc58477784dc34080544",
+ "current_blob": "86c926c97ef4cc017d5e9854fdeb73490a07cce0",
+ "reason": "Drops the now-unnecessary `HexBasic.Conditional` import and rewrites the qualified `Hex.ite_eq_*`/`HexPoly.ite_eq_*` shim references to Lean core's lemmas of the same names. Import list and proof terms only; no definition body changes."
+}

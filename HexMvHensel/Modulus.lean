@@ -276,7 +276,7 @@ theorem boxCongr_truncate (i : Fin (n + 1)) (d : Fin n → Nat) (m : Nat)
     (p : MvPoly (n + 1) Int cmp) :
     BoxCongr i d m (truncate i d p) p := by
   intro u hu
-  rw [coeff_truncate, Hex.ite_eq_left hu, Int.sub_self, Int.zero_emod]
+  rw [coeff_truncate, ite_eq_left hu, Int.sub_self, Int.zero_emod]
 
 /-- Total-degree congruence through the sum of the side degrees implies box
 congruence.  The converse is false. -/
@@ -303,7 +303,7 @@ theorem reduceMod_symCanonical (m : Nat) (hm : 0 < m)
     Int.ofNat_le.mpr hbound
   have hlower : -(m : Int) < 2 * x := by
     unfold x Hex.Modular.symMod
-    rw [Hex.ite_eq_right (Nat.ne_of_gt hm)]
+    rw [ite_eq_right (Nat.ne_of_gt hm)]
     simp only
     have hrem : 0 ≤ MvPoly.coeff u p % (m : Int) :=
       Int.emod_nonneg _ (by omega)

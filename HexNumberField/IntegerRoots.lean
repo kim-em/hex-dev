@@ -145,7 +145,7 @@ def decimal (q : Rat) (digits : Nat) : String :=
   let whole := n / scale
   let frac := n % scale
   let fracDigits := toString frac
-  let padded := String.mk (List.replicate (digits - fracDigits.length) '0') ++ fracDigits
+  let padded := String.ofList (List.replicate (digits - fracDigits.length) '0') ++ fracDigits
   (if q.num < 0 && n ≠ 0 then "-" else "") ++ s!"{whole}.{padded}"
 
 /-- `p` written with descending powers of `X`. A display helper for the
