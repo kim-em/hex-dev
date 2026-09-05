@@ -138,7 +138,8 @@ def biquadratic : Poly rat :=
   liftZPoly rat #p[6, 0, -5, 0, 1]
 
 /-- The finite root list; empty for the zero polynomial. -/
-def finiteRoots {T : NumberTower} : Roots T → Array (Elem T × Nat)
+def finiteRoots {T : NumberTower} :
+    Roots T → Array (Elem T × Nat)
   | .finite rs => rs
   | .all => #[]
 
