@@ -11,6 +11,7 @@ public import HexGraphIso.Uncolored
 public import HexGraphIso.IsoLit
 public import HexGraphIso.NodeLit
 public import HexGraphIso.NodePacked
+public import HexGraphIso.SeparatorPacked
 public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
@@ -227,6 +228,24 @@ meta def matrixListSide (e : Expr) : MetaM Expr := do
   mkAppM ``Vector.toList #[← mkAppM ``Matrix.data
     #[← mkAppM ``Graph.adjMatrix #[← mkAppM ``Colored.graph #[e]]]]
 
+/-- The expression `packRowsK n e.graph.adjMatrix.data.toList`: the
+tying side of the packed-rows equality the negative routes replay. -/
+meta def matrixPackedSide (n : Nat) (e : Expr) : MetaM Expr := do
+  mkAppM ``packRowsK #[mkNatLit n, ← matrixListSide e]
+
+/-- The packed rows of a runtime graph, row `v` at bits
+`[n * v, n * (v + 1))`: the literal side of the packed-rows equality. -/
+meta def rawPackedRows (r : Raw) : Nat :=
+  (List.range r.n).foldr (fun v acc => r.rows[v]! + (acc <<< r.n)) 0
+
+/-- Tie a coloured graph expression to its packed rows literal, one
+sequential kernel evaluation of the graph's adjacency; returns the
+proof and the literal. -/
+meta def tiePackedRows (e : Expr) (r : Raw) : MetaM (Expr × Expr) := do
+  let lit := mkNatLit (rawPackedRows r)
+  let h ← kernelDecideProof (← mkAppM ``Eq #[← matrixPackedSide r.n e, lit])
+  return (h, lit)
+
 /-- Reify a certificate tree as a literal expression. -/
 meta partial def certNodeExpr : Nauty.CertNode → MetaM Expr
   | .leaf => return mkConst ``Nauty.CertNode.leaf
@@ -335,24 +354,20 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
       certH.size ≤ cfg.maxCertNodes &&
       steps ≤ cfg.maxCheckerSteps do
     return none
-  -- tie each side's flat matrix to a literal (one sequential kernel
-  -- evaluation per graph), so the replays run on rebuilt literal rows
-  -- instead of forcing `rowsOf` through per-probe flat-index walks
+  -- tie each side's adjacency to its packed rows literal (one
+  -- sequential kernel evaluation per graph), so the replays run on one
+  -- packed number instead of forcing `rowsOf` through per-probe walks
   let a ← evalColored GE
   let b ← evalColored HE
-  let LAe ← boolListLit (rawFlat a)
-  let LBe ← boolListLit (rawFlat b)
-  let hA ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
-  let hB ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
+  let (hA, NAe) ← tiePackedRows GE a
+  let (hB, NBe) ← tiePackedRows HE b
   let mkCheck (graphE litE : Expr) (cert : Nauty.CertNode)
       (B : Nauty.Key) : MetaM Expr := do
     let checkTerm ← mkAppM ``checkKeyP
       #[graphE, litE, ← certNodeExpr cert, keyExpr B]
     kernelDecideProof (← mkAppM ``Eq #[checkTerm, mkConst ``Bool.true])
-  let hG ← mkCheck GE LAe certG BG
-  let hH ← mkCheck HE LBe certH BH
+  let hG ← mkCheck GE NAe certG BG
+  let hH ← mkCheck HE NBe certH BH
   let diffTerm ← mkAppM ``Nauty.checkDiff #[keyExpr BG, keyExpr BH]
   let hd ← kernelDecideProof
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
@@ -397,17 +412,13 @@ meta def proveNotIsoRoot? (cfg : Config) (GE HE : Expr) :
     return none
   let a ← evalColored GE
   let b ← evalColored HE
-  let LAe ← boolListLit (rawFlat a)
-  let LBe ← boolListLit (rawFlat b)
-  let hA ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
-  let hB ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
-  let sepTerm ← mkAppM ``sepRootLit #[GE, HE, LAe, LBe]
+  let (hA, NAe) ← tiePackedRows GE a
+  let (hB, NBe) ← tiePackedRows HE b
+  let sepTerm ← mkAppM ``sepRootLitP #[GE, HE, NAe, NBe]
   let hs ← kernelDecideProof
     (← mkAppM ``Eq #[sepTerm, mkConst ``Bool.true])
   trace[graph_iso] "route=root n={a.n}"
-  return some (← mkAppM ``not_isomorphic_of_sepRootLit #[hA, hB, hs])
+  return some (← mkAppM ``not_isomorphic_of_sepRootLitP #[hA, hB, hs])
 
 /-- The two-code separator leg: kernel cost one refinement per graph
 plus one per root child, independent of certificate availability.
@@ -425,17 +436,13 @@ meta def proveNotIsoSep? (cfg : Config) (GE HE : Expr) :
   unless (← evalBoolCore (← mkAppM ``sepDiffG #[GE, HE])) do
     return none
   let b ← evalColored HE
-  let LAe ← boolListLit (rawFlat a)
-  let LBe ← boolListLit (rawFlat b)
-  let hA ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
-  let hB ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
-  let sepTerm ← mkAppM ``sepDiffLit #[GE, HE, LAe, LBe]
+  let (hA, NAe) ← tiePackedRows GE a
+  let (hB, NBe) ← tiePackedRows HE b
+  let sepTerm ← mkAppM ``sepDiffLitP #[GE, HE, NAe, NBe]
   let hs ← kernelDecideProof
     (← mkAppM ``Eq #[sepTerm, mkConst ``Bool.true])
   trace[graph_iso] "route=sep n={a.n}"
-  return some (← mkAppM ``not_isomorphic_of_sepDiffLit #[hA, hB, hs])
+  return some (← mkAppM ``not_isomorphic_of_sepDiffLitP #[hA, hB, hs])
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
 graphs. Route selection compares measured units: one pairwise node

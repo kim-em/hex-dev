@@ -1692,77 +1692,88 @@ theorem packRowsK_eq (nn : Nat) (flat : List Bool) :
   exact List.map_congr_left fun seg hseg =>
     rowOfSegK_eq nn seg (chunkRows_length_le nn nn flat seg hseg)
 
+/-- The field width of the packed replay on `n` vertices: positions,
+vertices, the initial partition's infinity `n + 2`, and every level
+the replay fuel of `n` reaches fit a field. -/
+@[expose] def initW (n : Nat) : Nat := Nat.log2 (n + 2) + 1
+
+/-- The packed context of the replay on `n` vertices with packed rows
+`rows`. -/
+@[expose] def initCtx (n rows : Nat) : CtxP :=
+  ⟨n, initW n, 2 ^ initW n - 1, rows, 2 ^ n - 1⟩
+
+/-- The initial packed labelling and partition of a coloured graph. -/
+@[expose] def initLabP (G : Colored n k) : Nat :=
+  pack (initW n) (initialPartition G).1.toList
+
+@[expose] def initPtnP (G : Colored n k) : Nat :=
+  pack (initW n) (initPtn n (n + 2) (initialPartition G).2).toList
+
+theorem initW_lt (n : Nat) : n + 2 < 2 ^ initW n := Nat.lt_log2_self
+
+/-- The correspondences of the initial packed state with the list state
+`checkKeyLit` replays. -/
+theorem initRep (G : Colored n k) (flat : List Bool) (hn0 : 0 < n) :
+    CtxRep (initCtx n (pack n (flatRows n flat).toList))
+        (Ctx.toL ⟨n, flatRows n flat⟩) ∧
+      Rep (initW n) n (initLabP G) (initialPartition G).1.toList ∧
+      Rep (initW n) n (initPtnP G)
+        (initPtn n (n + 2) (initialPartition G).2).toList := by
+  have hok := initial_nodeOk G hn0
+  have hw := initW_lt n
+  refine ⟨{ n := rfl, m := rfl, rm := rfl, g := ?_, nlt := hw }, ?_, ?_⟩
+  · refine ⟨?_, flatRows_small n flat, rfl⟩
+    show (flatRows n flat).toList.length = n
+    rw [Array.length_toList, size_flatRows]
+  · exact ⟨by rw [Array.length_toList, hok.labSize],
+      fun x hx => Nat.lt_trans (mem_toList_lt hok.labOk x hx) (by omega), rfl⟩
+  · refine ⟨by rw [Array.length_toList, hok.ptnSize], fun x hx => ?_, rfl⟩
+    rw [List.mem_iff_getElem] at hx
+    obtain ⟨q, hq, rfl⟩ := hx
+    have hv := hok.vals q
+    rw [getBang_eq_atD, atD_eq_getElem _ q hq] at hv
+    omega
+
 /-- `checkKeyLit` with packed state end to end: the rows packed once
-from the tied flat literal, the labelling and partition packed with
-the field width `w` sized for positions, the initial partition's
-infinity `n + 2`, and every level the replay fuel of `n` reaches. The
-negative route's kernel obligation. -/
-@[expose] def checkKeyP (G : Colored n k) (flat : List Bool)
+from the tied adjacency matrix (`packRowsK`), the labelling and
+partition packed with the field width `initW n`. The negative route's
+kernel obligation. -/
+@[expose] def checkKeyP (G : Colored n k) (rows : Nat)
     (cert : CertNode) (B : Key) : Bool :=
   if n == 0 then
     B.codes == [] && B.rows == []
   else
-    let w := Nat.log2 (n + 2) + 1
-    let ctx : CtxP := ⟨n, w, 2 ^ w - 1, packRowsK n flat, 2 ^ n - 1⟩
+    let ctx := initCtx n rows
     checkNodeP ctx 100 B.rows (validGammasP ctx cert) n 1
-      (pack w (initialPartition G).1.toList)
-      (pack w (initPtn n (n + 2) (initialPartition G).2).toList)
-      (initActive (initialPartition G).2)
+      (initLabP G) (initPtnP G) (initActive (initialPartition G).2)
       (initialPartition G).2.length cert B.codes = some true
 
 theorem checkKeyP_eq (G : Colored n k) (flat : List Bool)
     (cert : CertNode) (B : Key) :
-    checkKeyP G flat cert B = checkKeyLit G flat cert B := by
+    checkKeyP G (packRowsK n flat) cert B = checkKeyLit G flat cert B := by
   rw [checkKeyP, checkKeyLit]
   rcases Decidable.em (n = 0) with hn | hn
   · rw [ite_eq_left (by simpa using hn), ite_eq_left (by simpa using hn)]
   · rw [ite_eq_right (by simpa using hn), ite_eq_right (by simpa using hn)]
     dsimp only
     rw [packRowsK_eq]
-    have hn0 : 0 < n := Nat.pos_of_ne_zero hn
-    have hok := initial_nodeOk G hn0
-    have hw : n + 2 < 2 ^ (Nat.log2 (n + 2) + 1) := Nat.lt_log2_self
-    have hctx : CtxRep
-        ⟨n, Nat.log2 (n + 2) + 1, 2 ^ (Nat.log2 (n + 2) + 1) - 1,
-          pack n (flatRows n flat).toList, 2 ^ n - 1⟩
-        (Ctx.toL ⟨n, flatRows n flat⟩) :=
-      { n := rfl
-        m := rfl
-        rm := rfl
-        g := ⟨by show (flatRows n flat).toList.length = n
-                 rw [Array.length_toList, size_flatRows],
-          flatRows_small n flat, rfl⟩
-        nlt := by show n + 2 < 2 ^ (Nat.log2 (n + 2) + 1); exact hw }
-    have hlab : Rep (Nat.log2 (n + 2) + 1) n
-        (pack (Nat.log2 (n + 2) + 1) (initialPartition G).1.toList)
-        (initialPartition G).1.toList :=
-      ⟨by rw [Array.length_toList, hok.labSize],
-        fun x hx => Nat.lt_trans (mem_toList_lt hok.labOk x hx) (by omega), rfl⟩
-    have hptn : Rep (Nat.log2 (n + 2) + 1) n
-        (pack (Nat.log2 (n + 2) + 1)
-          (initPtn n (n + 2) (initialPartition G).2).toList)
-        (initPtn n (n + 2) (initialPartition G).2).toList :=
-      ⟨by rw [Array.length_toList, hok.ptnSize], fun x hx => ?_, rfl⟩
-    · rw [checkNodeP_eq hctx 100 B.rows (containsGammaP_eq hctx cert) n 1
-        (by show 1 + n ≤ n + 1; omega) hlab hptn]
-    · rw [List.mem_iff_getElem] at hx
-      obtain ⟨q, hq, rfl⟩ := hx
-      have hv := hok.vals q
-      rw [getBang_eq_atD, atD_eq_getElem _ q hq] at hv
-      omega
+    obtain ⟨hctx, hlab, hptn⟩ := initRep G flat (Nat.pos_of_ne_zero hn)
+    rw [checkNodeP_eq hctx 100 B.rows (containsGammaP_eq hctx cert) n 1
+      (by show 1 + n ≤ n + 1; omega) hlab hptn]
 
 /-- Tying equalities plus two packed-state key certificates with
 differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysL`
-with the replay over packed state. -/
+with the replay over packed state and the rows tied as one packed
+number. -/
 theorem not_isomorphic_of_checkKeysP {G H : Colored n k}
-    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
-    {LA LB : List Bool}
-    (hA : G.graph.adjMatrix.data.toList = LA)
-    (hB : H.graph.adjMatrix.data.toList = LB)
-    (hG : checkKeyP G LA certG BG = true)
-    (hH : checkKeyP H LB certH BH = true)
+    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key} {NA NB : Nat}
+    (hA : packRowsK n G.graph.adjMatrix.data.toList = NA)
+    (hB : packRowsK n H.graph.adjMatrix.data.toList = NB)
+    (hG : checkKeyP G NA certG BG = true)
+    (hH : checkKeyP H NB certH BH = true)
     (hd : Nauty.checkDiff BG BH = true) : ¬Isomorphic G H := by
+  subst hA hB
   rw [checkKeyP_eq] at hG hH
-  exact not_isomorphic_of_checkKeysL hA hB hG hH hd
+  exact not_isomorphic_of_checkKeysL rfl rfl hG hH hd
 
 end Hex.GraphIso
