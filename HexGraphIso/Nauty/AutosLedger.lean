@@ -343,7 +343,7 @@ theorem exists_all_false {α : Type} {f : α → Bool} :
       obtain ⟨y, hy, hfy⟩ := exists_all_false h
       exact ⟨y, List.mem_cons_of_mem _ hy, hfy⟩
 
-private theorem elem_foldl_prune :
+private theorem mem_foldl_prune :
     ∀ (l : List (VSet n × VSet n)) (t fixedpts : VSet n) (v : Nat),
       (l.foldl (fun acc p =>
           if fixedpts.subset p.1 then acc.inter p.2
@@ -352,7 +352,7 @@ private theorem elem_foldl_prune :
           !(fixedpts.subset p.1) || p.2.mem v)
   | [], t, _, v => by simp
   | p :: l, t, fixedpts, v => by
-    rw [List.foldl_cons, elem_foldl_prune l, List.all_cons]
+    rw [List.foldl_cons, mem_foldl_prune l, List.all_cons]
     rcases htest : (fixedpts.subset p.1) with _ | _
     · simp []
     · simp [VSet.mem_inter, Bool.and_assoc]
@@ -365,7 +365,7 @@ theorem mem_longprune (tcell fixedpts : VSet n) (v : Nat)
       (tcell.mem v && autos.toList.all fun p =>
         !(fixedpts.subset p.1) || p.2.mem v) := by
   rw [longprune, ← Array.foldl_toList]
-  exact elem_foldl_prune autos.toList tcell fixedpts v
+  exact mem_foldl_prune autos.toList tcell fixedpts v
 
 /-- If `longprune` removes a current member, one applicable ledger pair
 carries it strictly downward while stabilizing the node's cells. -/
@@ -764,7 +764,7 @@ private theorem iter_succ_right (perm : Array Nat) (a v : Nat) :
   rw [List.replicate_succ, List.replicate_zero, applyWord,
     List.foldl_cons, List.foldl_nil]
 
-private theorem elem_insert_elim {nn : Nat} {s : VSet nn} {w u : Nat}
+private theorem mem_insert_elim {nn : Nat} {s : VSet nn} {w u : Nat}
     (hu : (s.insert w).mem u = true) :
     u = w ∨ s.mem u = true := by
   rw [VSet.mem_insert] at hu
@@ -888,7 +888,7 @@ private theorem fmpermGo_spec {perm : Array Nat} {nn : Nat}
           exact ⟨j, by omega, hjne, hreach⟩)
         ?_ ?_
       · intro u hu
-        rcases elem_insert_elim hu with rfl | hold
+        rcases mem_insert_elim hu with rfl | hold
         · exact ⟨hilt, heq⟩
         · exact hfix u hold
       · intro v hv hmin
@@ -1336,7 +1336,7 @@ private theorem fmptnGo_fix {lab : Array Nat} {nn : Nat} :
       · exact Or.inr ⟨c, List.mem_cons_of_mem _ hcl, hceq⟩
     · rw [hc, ite_eq_left rfl] at hu
       rcases fmptnGo_fix l _ _ _ hu with hold | ⟨c, hcl, hceq⟩
-      · rcases elem_insert_elim hold with rfl | hfx
+      · rcases mem_insert_elim hold with rfl | hfx
         · have heq12 : c1 = c2 := (beq_iff_eq ..).mp hc
           subst heq12
           exact Or.inr ⟨c1, List.mem_cons_self .., rfl⟩

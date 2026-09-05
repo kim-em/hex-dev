@@ -210,7 +210,7 @@ private theorem mem_activeUnion_fold {level : Nat} {st : RefineSt n} :
 
 /-- Membership in the active union: some active cell's splitter set
 holds the vertex. -/
-theorem elem_activeUnion {level : Nat} {st : RefineSt n} {v : Nat} :
+theorem mem_activeUnion {level : Nat} {st : RefineSt n} {v : Nat} :
     (activeUnion level st).mem v = true ↔
       ∃ p ∈ cells st.ptn level n, st.active.mem p.1 = true ∧
         (worksetOf n st.lab p.1 p.2).mem v = true := by
@@ -232,7 +232,7 @@ theorem workset_submask_activeUnion {level : Nat} {st : RefineSt n}
     (worksetOf n st.lab p.1 p.2).inter (activeUnion level st) =
       worksetOf n st.lab p.1 p.2 :=
   VSet.subset_iff_inter.mp (VSet.subset_iff.mpr fun _ hi =>
-    elem_activeUnion.mpr ⟨p, hp, ha, hi⟩)
+    mem_activeUnion.mpr ⟨p, hp, ha, hi⟩)
 
 theorem pairwise_rel_of_mem {α : Type} {R : α → α → Prop} :
     ∀ {l : List α}, l.Pairwise R →
@@ -288,7 +288,7 @@ theorem inactive_and_activeUnion {level : Nat} {st : RefineSt n}
   · rfl
   · rcases h2 : (activeUnion level st).mem i with _ | _
     · rfl
-    · obtain ⟨q, hq, hqa, hqi⟩ := elem_activeUnion.mp h2
+    · obtain ⟨q, hq, hqa, hqi⟩ := mem_activeUnion.mp h2
       have hne : p ≠ q := fun he => by
         rw [he, hqa] at ha
         cases ha

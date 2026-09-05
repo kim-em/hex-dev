@@ -178,4 +178,39 @@ example : Hex.GraphIso.checkKeyLit probeGraph
     probeGraph.graph.adjMatrix.data.toList probeCert probeKey.toL
     = true := by kdecide
 
+
+/-! # Packed sets across limb boundaries
+
+`VSet 127` holds three 63-bit limbs; these probes put members in each
+limb and on both sides of the limb boundary at vertices `62` and `63`. -/
+
+private def bigA : VSet 127 := VSet.ofNat (2 ^ 126 + 2 ^ 63 + 2 ^ 62 + 1)
+private def bigB : VSet 127 := VSet.ofNat (2 ^ 63 + 2 ^ 5)
+
+set_option maxRecDepth 1000000 in
+example : bigA.toNat = 2 ^ 126 + 2 ^ 63 + 2 ^ 62 + 1 := by kdecide
+set_option maxRecDepth 1000000 in
+example : bigA.mem 62 = true ∧ bigA.mem 63 = true ∧ bigA.mem 64 = false := by kdecide
+set_option maxRecDepth 1000000 in
+example : (bigA.inter bigB).toNat = 2 ^ 63 := by kdecide
+set_option maxRecDepth 1000000 in
+example : (bigA.union bigB).card = 5 := by kdecide
+set_option maxRecDepth 1000000 in
+example : (bigA.xor bigB).toNat = 2 ^ 126 + 2 ^ 62 + 2 ^ 5 + 1 := by kdecide
+set_option maxRecDepth 1000000 in
+example : ((bigA.erase 63).insert 125).toNat = 2 ^ 126 + 2 ^ 125 + 2 ^ 62 + 1 := by kdecide
+set_option maxRecDepth 1000000 in
+example : bigA.nextElem (some 1) = some 62 ∧ bigA.nextElem (some 63) = some 126 := by kdecide
+set_option maxRecDepth 1000000 in
+example : bigA.toList = [0, 62, 63, 126] := by kdecide
+set_option maxRecDepth 1000000 in
+example : bigA.rowCmp bigB = .gt ∧ bigB.rowCmp bigA = .lt ∧ bigA.rowCmp bigA = .eq := by kdecide
+set_option maxRecDepth 1000000 in
+example : (bigA == VSet.ofNat (2 ^ 126 + 2 ^ 63 + 2 ^ 62 + 1)) = true ∧ (bigA == bigB) = false := by
+  kdecide
+set_option maxRecDepth 1000000 in
+example : ((VSet.ofNat (2 ^ 63) : VSet 64).mem 63 = true) ∧
+    ((VSet.ofNat (2 ^ 63) : VSet 64).card = 1) ∧
+    ((VSet.ofNat (2 ^ 63) : VSet 63).card = 0) := by kdecide
+
 end Hex.GraphIso.Nauty

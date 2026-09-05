@@ -10,9 +10,10 @@ paid an allocation and a bignum call. The search now keeps vertex sets as
 `Nauty.VSet`, an array of 63-bit limbs (`Array Nat` with every limb below
 `2^63`, so each limb stays an unboxed scalar and `&&&`, `|||`, `^^^`,
 `>>>` and `testBit` on it never leave the fast path), the same shape as
-nauty's `setword` arrays. Every set operation costs `⌈n/63⌉` word
-operations, and the `Nat` bitset survives only as the kernel-facing
-specification the checker consumes.
+nauty's `setword` arrays. Every set operation is a loop over the
+`⌈n/63⌉` limbs (the binary operations allocate one result array, which
+nauty's in-place C does not), and the `Nat` bitset survives only as the
+kernel-facing specification the checker consumes.
 
 Two instruments record the effect, both repeatable from the repository:
 
@@ -53,43 +54,48 @@ and is instance construction, not search. The remaining GMP samples are
 the `Nat` row conversion at the boundary with the kernel-facing checker,
 which is outside the search loop.
 
-The instance-builder share is a separate finding: the corpus's Kneser
-and Johnson graphs computed their binomial coefficients by the Pascal
-recurrence inside the lazy adjacency functions, which made
-`Families.choose` the largest symbol in both profiles. With the
-multiplicative formula the same binary profiles as follows.
+The instance-builder share is a separate finding, and it was
+asymmetric: `canonicalize` received the corpus's lazy adjacency
+functions and evaluated them inside its timed region, whereas nauty
+received adjacency strings built before its timer started, and the
+Kneser and Johnson generators computed their binomial coefficients by
+the Pascal recurrence on every adjacency query. The driver now
+materializes each instance's adjacency once and hands both columns a
+cheap lookup, and `Families.choose` is multiplicative; the binary then
+profiles as follows, with the search the largest compiled category.
 
-| category | after, multiplicative binomials |
+| category | after, adjacency materialized |
 |---|---|
-| hex-search | 29.2% |
-| hex-instances | 7.0% |
-| hex-other | 13.1% |
-| GMP+allocator | 17.6% |
+| hex-search | 30.0% |
+| hex-instances | 7.3% |
+| hex-other | 12.2% |
+| GMP+allocator | 17.9% |
 | Lean-runtime | 29.1% |
-| nauty-C | 3.2% |
+| nauty-C | 2.8% |
 
-The search is now the largest compiled category, and what remains of the
-bignum share is the `Nat` row conversion at the checker boundary plus the
-allocator traffic of the limb arrays themselves.
+What remains of the bignum share is the `Nat` row conversion at the
+checker boundary plus the allocator traffic of the limb arrays
+themselves; the instance share is the one-time construction at startup,
+outside every timed region.
 
 ## Per-node cost
 
 Fits of `cost per node ~ n^e` from the two sweeps, before
 (`hexgraphiso-cactus-04f38e84f6e2-chungus2.jsonl`, the last sweep on
-`main`) and after (`hexgraphiso-cactus-17852d9b9995-chungus2.jsonl`).
+`main`) and after (`hexgraphiso-cactus-5ec8574404ea-chungus2.jsonl`).
 `diff` is the hex exponent minus nauty's; the CI margin is `0.2`.
 
 | family | sizes | hex n^e before | hex n^e after | nauty n^e | diff before | diff after |
 |---|---|---|---|---|---|---|
 | circulant-12 | 17 | 2.15 | 1.74 | 1.84 | 0.32 | -0.10 |
-| circulant-1248 | 12 | 2.41 | 1.79 | 1.87 | 0.56 | -0.08 |
-| grid | 10 | 2.23 | 1.69 | 1.88 | 0.35 | -0.19 |
-| hypercube | 5 | 1.69 | 1.36 | 1.41 | 0.29 | -0.05 |
-| johnson | 10 | 1.66 | 0.99 | 1.05 | 0.61 | -0.06 |
-| kneser | 10 | 2.02 | 1.33 | 1.32 | 0.70 | 0.01 |
-| latin | 3 | 2.69 | 1.82 | 1.92 | 0.76 | -0.10 |
-| paley | 13 | 2.51 | 1.74 | 1.83 | 0.72 | -0.10 |
-| random | 18 | 2.57 | 1.88 | 1.91 | 0.68 | -0.03 |
+| circulant-1248 | 12 | 2.41 | 1.79 | 1.88 | 0.56 | -0.09 |
+| grid | 10 | 2.23 | 1.69 | 1.87 | 0.35 | -0.18 |
+| hypercube | 5 | 1.69 | 1.35 | 1.42 | 0.29 | -0.07 |
+| johnson | 10 | 1.66 | 0.99 | 1.06 | 0.61 | -0.07 |
+| kneser | 10 | 2.02 | 1.32 | 1.33 | 0.70 | -0.01 |
+| latin | 3 | 2.69 | 1.82 | 1.93 | 0.76 | -0.11 |
+| paley | 13 | 2.51 | 1.73 | 1.84 | 0.72 | -0.10 |
+| random | 18 | 2.57 | 1.88 | 1.91 | 0.68 | -0.04 |
 
 Before the change every family with at least five sizes failed the
 margin; after it every family passes, and the hex exponent is at or
@@ -98,19 +104,22 @@ per-instance wallclock ratios):
 
 | slice | X before | X after |
 |---|---|---|
-| n ≤ 64 | 5.67 | 7.72 |
-| n > 64 | 18.57 | 7.12 |
+| n ≤ 64 | 5.67 | 7.91 |
+| n > 64 | 18.57 | 7.20 |
 
 `X` is now flat in `n`, which is what "same algorithm, constant per-node
 factor" predicts. The two slices moved in opposite directions. Above 64
 vertices the packed sets remove the bignum path and the corpus
 canonicalizes 2.6 times faster (geometric mean over instances; Kneser
-22-2 goes from 209 ms to 39 ms, Paley 229 from 29 ms to 6.8 ms). Below
-64 vertices a `Nat` bitset was a single unboxed scalar and every set
+22-2 goes from 209 ms to 39 ms, Paley 229 from 29 ms to 6.9 ms).
+The materialized adjacency moves neither slice measurably: the sweep
+recorded with the lazy generators still inside the timed region gave
+the same exponents and `X` of 7.7 and 7.1. Up to
+63 vertices a `Nat` bitset was a single unboxed scalar and every set
 operation was one machine instruction, whereas a one-limb `VSet` is a
-heap-allocated array whose operations allocate their result, and the
-small instances run 0.74 times as fast as before (0.65 to 0.89 across
-the slice; grid 5×5 goes from 0.066 ms to 0.084 ms). That is the price
+heap-allocated array whose binary operations allocate their result, and
+the small instances run 0.73 times as fast as before (0.64 to 0.88
+across the slice; grid 5×5 goes from 0.066 ms to 0.086 ms). That is the price
 of one representation for every size, and it is the honest reading of
 the per-size table in the manual's Performance section. Whole-corpus
 `canonicalize` time falls from 0.87 s to 0.24 s.

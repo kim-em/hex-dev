@@ -37,9 +37,16 @@ private structure Inst where
   name : String
   packed : (n : Nat) × Colored n 1
 
+/-- A corpus instance with its adjacency materialized once, so that the
+timed region holds the dense conversion and the search, not the
+family's generator: nauty receives its adjacency as strings built
+before its timer starts, and this keeps the two columns symmetric. -/
 private def inst (family name : String) {n : Nat} (G : Graph n)
     (h : 0 < n) : Inst :=
-  { family, name, packed := ⟨n, Graph.singleColor G h⟩ }
+  let rows := Nauty.rowsOf (Graph.singleColor G h)
+  { family, name,
+    packed := ⟨n, Graph.singleColor
+      (Graph.ofRel fun i j => rows[i.val]!.mem j.val) h⟩ }
 
 /-- A cheap digest forcing full evaluation of a canonical result. -/
 private def digest {n k : Nat} (res : CanonResult n k) : Nat :=

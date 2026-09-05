@@ -14,9 +14,15 @@ and for nauty by least squares, and prints the exponents with the ratio
 
 ``--check MARGIN`` exits non-zero when, on any family with at least
 ``--min-sizes`` sizes, the hex exponent exceeds nauty's by more than
-``MARGIN``: the required check that keeps an elementwise loop from
-creeping back into the packed-word search. Families with fewer sizes are
-reported but not checked.
+``MARGIN``: the required check that keeps the per-node factor from
+growing with ``n`` again. Families with fewer sizes are reported but not
+checked, and the check fails if no family qualifies. It is a growth
+check, not a constant-factor check: a slowdown that is uniform in ``n``
+is the per-library bench's business.
+
+Without ``--sweep`` the script reads the sweep recorded for the current
+source fingerprint (the one ``check_graphiso_sweep_freshness.py``
+requires to exist), so CI never fits a sweep of some other source state.
 
 The fit needs no numpy: it is the closed-form two-parameter least-squares
 solution on the logarithms.
@@ -32,7 +38,11 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-RESULTS = ROOT / "reports" / "bench-results"
+sys.path.insert(0, str(ROOT))
+
+from scripts.bench import sweep_freshness as freshness  # noqa: E402
+
+RESULTS = freshness.RESULTS
 
 SPLIT = 64
 
@@ -58,7 +68,14 @@ def geometric_mean(values: list[float]) -> float:
 
 
 def load_sweep(path: Path) -> dict[str, list[dict]]:
+    """The timed records of one sweep by family, each sorted by ``n``.
+
+    Every record must carry positive ``fast_ns``, ``nauty_ns`` and
+    ``nodes``, and no family may record the same ``n`` twice: a duplicate
+    would reweight the fit, and a zero would break the logarithm.
+    """
     families: dict[str, list[dict]] = defaultdict(list)
+    seen: set[tuple[str, int]] = set()
     with path.open() as fh:
         for line in fh:
             line = line.strip()
@@ -67,19 +84,31 @@ def load_sweep(path: Path) -> dict[str, list[dict]]:
             record = json.loads(line)
             if "fast_ns" not in record or "nauty_ns" not in record:
                 continue
+            for field in ("fast_ns", "nauty_ns", "nodes"):
+                if not isinstance(record.get(field), int) or record[field] <= 0:
+                    sys.exit(f"{path.name}: {record.get('name')}: "
+                             f"{field} must be a positive integer")
+            key = (record["family"], record["n"])
+            if key in seen:
+                sys.exit(f"{path.name}: family {key[0]} records n = {key[1]} twice")
+            seen.add(key)
             families[record["family"]].append(record)
+    if not families:
+        sys.exit(f"{path.name}: no timed records")
     for rows in families.values():
         rows.sort(key=lambda r: r["n"])
     return families
 
 
-def latest_sweep() -> Path:
-    metas = sorted(RESULTS.glob("hexgraphiso-cactus-*.meta.json"),
-                   key=lambda p: json.loads(p.read_text())["date"])
-    if not metas:
-        sys.exit("no recorded sweep under reports/bench-results/")
-    name = metas[-1].name.replace(".meta.json", ".jsonl")
-    return metas[-1].with_name(name)
+def current_sweep() -> Path:
+    """The sweep recorded for the current source fingerprint."""
+    fingerprint = freshness.fingerprint(freshness.index_listing(freshness.GRAPHISO))
+    matches = sorted(RESULTS.glob(f"hexgraphiso-cactus-{fingerprint}-*.jsonl"))
+    if not matches:
+        sys.exit(f"no recorded sweep matches the current source "
+                 f"(fingerprint {fingerprint}); regenerate with "
+                 f"scripts/bench/graphiso_cactus_sweep.sh")
+    return matches[-1]
 
 
 def analyse(families: dict[str, list[dict]]) -> list[dict]:
@@ -135,7 +164,8 @@ def render(sweep: Path, table: list[dict], x_lo: float, x_hi: float) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--sweep", type=Path,
-                        help="sweep jsonl (default: the most recently recorded)")
+                        help="sweep jsonl (default: the one recorded for the "
+                             "current source fingerprint)")
     parser.add_argument("--check", type=float, metavar="MARGIN",
                         help="fail if any checked family's hex exponent exceeds "
                              "nauty's by more than MARGIN")
@@ -145,7 +175,7 @@ def main() -> int:
                         help="also write the table to this file")
     args = parser.parse_args()
 
-    sweep = args.sweep or latest_sweep()
+    sweep = args.sweep or current_sweep()
     families = load_sweep(sweep)
     table = analyse(families)
     x_lo, x_hi = overall(families)
@@ -157,13 +187,17 @@ def main() -> int:
     if args.check is None:
         return 0
     failures = []
+    checked = 0
     for row in table:
         if row["sizes"] < args.min_sizes:
             continue
+        checked += 1
         if row["hex_exp"] - row["nauty_exp"] > args.check:
             failures.append(
                 f"{row['family']}: hex n^{row['hex_exp']:.2f} exceeds nauty "
                 f"n^{row['nauty_exp']:.2f} by more than {args.check}")
+    if checked == 0:
+        failures.append(f"no family has {args.min_sizes} sizes; nothing was checked")
     if failures:
         print("\nper-node exponent check failed:")
         for failure in failures:

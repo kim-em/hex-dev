@@ -385,8 +385,8 @@ word, so a least-squares fit of per-node cost against `n` on the
 benchmark corpus gives hex the same exponent as nauty on every family:
 `n^1.7` to `n^1.9` on grids, Paley graphs, circulants and random
 graphs, `n^1.3` on Kneser graphs and `n^1.0` on Johnson graphs, in
-each case within `0.2` of nauty's, and the hex/nauty ratio is `7.7`
-below 64 vertices and `7.1` above. CI refits every recorded sweep and
+each case within `0.2` of nauty's, and the hex/nauty ratio is `7.9`
+below 64 vertices and `7.2` above. CI refits every recorded sweep and
 fails when a family's hex exponent exceeds nauty's by more than `0.2`.
 The table shows the factor on four parametrised families: grids, where
 refinement discretizes quickly; Paley graphs, refinement's hard case
@@ -403,11 +403,11 @@ on that path.
 * * `Families.grid 5 5`
   * 25
   * 0.014
-  * 0.084
+  * 0.086
 * * `Families.grid 15 15`
   * 225
-  * 0.87
-  * 3.8
+  * 0.86
+  * 3.9
 * * `Families.paley 29`
   * 29
   * 0.019
@@ -415,15 +415,15 @@ on that path.
 * * `Families.paley 229`
   * 229
   * 1.1
-  * 6.8
+  * 6.9
 * * `Families.latinSquare 5`
   * 25
   * 0.019
-  * 0.19
+  * 0.20
 * * `Families.latinSquare 13`
   * 169
-  * 0.79
-  * 6.5
+  * 0.78
+  * 6.6
 * * `Families.kneser 7 2`
   * 21
   * 0.013

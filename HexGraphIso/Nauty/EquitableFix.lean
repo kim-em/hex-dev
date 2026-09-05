@@ -397,7 +397,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         rcases hstartfact f hf D hD hE1 with h | h
         · exact Or.inl (by omega)
         · exact Or.inr h
-      exact elem_activeUnion.mpr ⟨f, hf, hfact,
+      exact mem_activeUnion.mpr ⟨f, hf, hfact,
         hmemW f (D.1 + o) v (by omega) hf1 hf2 hvo⟩
   have hcoverA : ∀ A ∈ cells st.ptn level n,
       st.active.mem A.1 = true → A.1 ≠ split1 →
@@ -429,7 +429,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
       rcases hstartfact f hf A hA hE1 with h | h
       · exact Or.inl (by omega)
       · exact Or.inr h
-    exact elem_activeUnion.mpr ⟨f, hf, hfact,
+    exact mem_activeUnion.mpr ⟨f, hf, hfact,
       hmemW f (A.1 + o) v (by omega) hf1 hf2 hvo⟩
   have htrans : ∀ C ∈ cells st.ptn level n,
       ∀ c' ∈ cells r.ptn level n, C.1 ≤ c'.1 → c'.2 ≤ C.2 →
@@ -552,7 +552,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
       · refine inter_eq_of_mem fun v hv => ?_
         have hvau : (activeUnion level st).mem v = true :=
           mem_of_inter_eq hVau (mem_of_inter_eq hV0V hv)
-        obtain ⟨A, hA, hAact, hAv⟩ := elem_activeUnion.mp hvau
+        obtain ⟨A, hA, hAact, hAv⟩ := mem_activeUnion.mp hvau
         rcases Decidable.em (A.1 = split1) with he | hne
         · exfalso
           have hAS : A = S := hstartuniq A hA S hSm (by omega)
