@@ -30,16 +30,20 @@ The parametric ladders carry the Phase-4 arithmetic evidence:
 
 * `runTower{Add,Sub,Neg,SMul,Mul}Ladder`: coordinate arithmetic at growing
   dimension with bounded coordinate height;
-* `runTower{Inv,Div}Ladder`: genuine recursive arithmetic in the height-two
-  family `Q(3^{1/m}, sqrt(2))`, with checked fixtures outside the timed body;
-* one dense `toPrimitive` application and the completed `fromPrimitive`
-  basis map.
+* `runTowerInvLadder`: genuine recursive inversion in the height-two family
+  `Q(3^{1/m}, sqrt(2))`, with checked fixtures outside the timed body;
+* the completed `fromPrimitive` basis map.
 
 Negation has source-derived linear evidence on a larger-dimension dense family
 after its exact-width result construction removed a redundant normalization
-copy. Inversion, division, and dense `toPrimitive` retain failed mode-1
-registrations as binding diagnostics. They have no admissible fixed substitute,
-so the library remains at Phase 3 while those cost models are unresolved.
+copy. Inversion passes its model on the normalized monic extended-gcd chain.
+Division (`runTowerDivRecursive`, the top rung of the recursive family) and
+one dense `toPrimitive` call (`runToPrimitiveDense`) are canonical mode-3
+cases: the inverse's coordinate height crosses a limb boundary inside the
+measured range, and the primitive images' heights are input-determined, so
+neither admits a one-parameter wall model. The untimed `tower-inv-chain-stats`,
+`tower-div-chain-stats`, and `tower-to-primitive-stats` subcommands record the
+operation counts and operand heights behind those conclusions.
 
 The degree-24 Selmer factor case is a mode-3 fixed registration because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,

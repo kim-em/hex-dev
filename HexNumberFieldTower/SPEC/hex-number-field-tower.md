@@ -344,6 +344,19 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   `O(D)` bounded-height rational operations. `ofQAdjoin` constructs and walks
   `O(D)` presentation data. Schoolbook multiplication and reduction cost
   `O(D²)` before later fast-arithmetic work.
+- Inversion runs the monic one-sided extended gcd of the top-level coordinate
+  polynomial against the defining relation over the lower field
+  (`DensePoly.xgcdLeftMonic`), recursing into lower-field inversion once per
+  normalization. Every remainder is made monic before it divides, so each
+  recursive inversion acts on a normalized operand; the unnormalized chain
+  re-ran lower-field inversions on height-amplified quotient coefficients.
+  On the registered height-two family `ℚ(3^(1/n), √2)` the chain performs a
+  constant number of lower-field inversions and products, each `O(n²)`
+  coordinate operations at growing limb widths; the registered family model
+  is `n² log n`, with the logarithmic factor as the limb-growth proxy, and
+  the conservative worst case is `O(D³ log D)` rational operations. Division
+  is inversion followed by one `O(D²)` product by the inverse, whose
+  coordinate height is that of the inverse.
 - A Trager step at `K(α)/K` tries at most
   `choose(deg(mα) * n, 2) + 1` one-level resultants, then recursively factors one
   accepted norm of degree at most `deg(mα) * n` over `K`. The base case performs
@@ -356,16 +369,15 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   One dense flattening `toPrimitive` application costs `O(D²)` rational
   operations; one `fromPrimitive` application costs `O(D³)` with the current
   Horner/tower-arithmetic path. Applying `fromPrimitive` to all `D` basis
-  vectors gives the registered `O(D⁴)` family. The dense `toPrimitive`
-  registration prepares one bounded-height, all-nonzero tower element and
-  times one public call plus its linear structural result hash. Its
-  preregistered quadratic wall model is inconclusive: the primitive-basis
-  images produced by flattening have dimension-dependent exact-rational
-  heights, so the `O(D²)` rational-operation count does not give a quadratic
-  bit-cost model for this family.
+  vectors gives the registered `O(D⁴)` family. One dense `toPrimitive` call
+  has bit cost set by the flattening's primitive-basis images, whose heights
+  are fixed by the accepted primitive-element shift rather than by the
+  dimension, so it has no one-parameter wall model in the dimension and is a
+  canonical mode-3 case below.
 
 The fixed canonical cases for adjoining, identity adjoining, one- and
-two-level factorization, checked replay, splitting, and flattening use
+two-level factorization, checked replay, splitting, flattening, division at
+the top rung of the recursive family, and one dense `toPrimitive` call use
 zero-grace whole-child ceilings derived from clean reference-host measurements
 plus stated margin. These budgets do not replace the contracts above; they are
 mode-3 regression ceilings for operations whose realised phase mixtures admit
@@ -379,13 +391,13 @@ does not copy or normalize the coordinate array. `Elem.mk` remains private;
 the checked constructor is exposed only as `Internal.ofCoeffs`, and requires a
 proof that the supplied array has exactly the tower dimension.
 
-Dense `toPrimitive`, inversion, and division have no admissible current mode.
-The forward-map optimization is valid, but the dense family rejects the
-preregistered quadratic wall model because primitive-coordinate height is not
-controlled. The fixed unit-basis registration and the dimension-four
-arithmetic registrations are hash anchors, not performance evidence. The
-headline report records the three binding diagnostics, and the library
-therefore remains at Phase 3.
+Inversion has mode-1 evidence on the recursive family. Division and dense
+`toPrimitive` are mode-3 surfaces: the inverse's coordinate height crosses a
+64-bit limb boundary inside the measured range, and the primitive images'
+heights are input-determined, so neither admits a one-parameter wall model;
+the headline report records the attempted schedules and their residuals. The
+fixed unit-basis registration and the dimension-four arithmetic
+registrations are hash anchors, not performance evidence.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
 input degree at most 4; the degree-24 factorization case is scientific
