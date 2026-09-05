@@ -152,7 +152,7 @@ representation. Its roots are lazy roots with multiplicities: the polynomial
 polynomial `X⁴ − 2`.
 
 ```lean
-/-- The finite root list; the zero polynomial has none listed. -/
+/-- The finite root list; empty for the zero polynomial. -/
 def finiteRoots : RootSet → Array RootCount
   | .finite rs => rs
   | .all => #[]
