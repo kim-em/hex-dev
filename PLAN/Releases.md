@@ -284,12 +284,15 @@ measured by a branch-only debug step on the sync workflow counting
 `hex-publishing` carries every repository in `released.yml` except the
 four listed under `hex-publishing-2` below: 43 of 50.
 
-`hex-publishing-2` carries 44 of 50:
+`hex-publishing-2` carries 49 of 50:
 
 - released: `hex-primality`, `hex-primality-mathlib`,
-  `hex-sparse-poly`, `hex-sparse-poly-mathlib`;
-- created for publication, not yet in `released.yml`:
-  `hex-resultant`, `hex-resultant-mathlib`, `hex-modular`,
+  `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
+  `hex-resultant-mathlib`, `hex-number-field`, `hex-number-field-mathlib`,
+  `hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`
+  (the last five widened for the number-field batch, pending
+  organization-owner approval);
+- created for publication, not yet in `released.yml`: `hex-modular`,
   `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
   `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
   `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
@@ -310,8 +313,8 @@ four listed under `hex-publishing-2` below: 43 of 50.
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-With `hex-publishing-2` at 44, the next widening beyond six more
-repositories needs a third token (`hex-publishing-3`, a new
+With `hex-publishing-2` at 49, any further widening beyond one more
+repository needs a third token (`hex-publishing-3`, a new
 `RELEASED_SYNC_PAT_3` secret, and one line in
 `.github/workflows/sync-released.yml` and `sync_released.py`'s token
 list). The sync's per-repository routing makes the split invisible to

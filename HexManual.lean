@@ -33,12 +33,15 @@ import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
+import HexManual.Chapters.HexRCF
+import HexManual.Chapters.HexResultant
+import HexManual.Chapters.HexNumberField
+import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
-import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyZGcd
 import HexManual.Chapters.HexMvGcd
 import HexManual.Chapters.HexMvHensel
@@ -46,9 +49,6 @@ import HexManual.Chapters.HexMvFactor
 import HexManual.Chapters.HexPolySmith
 import HexManual.Chapters.HexSmith
 import HexManual.Chapters.HexSparsePoly
-import HexManual.Chapters.HexRCF
-import HexManual.Chapters.HexNumberField
-import HexManual.Chapters.HexNumberFieldTower
 import HexManual.Chapters.HexMinPoly
 import HexManual.Chapters.HexGraphIso
 import HexManual.Chapters.NautyAlgorithm
@@ -111,6 +111,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexRealRoots}
 
+{include 0 HexManual.Chapters.HexRCF}
+
 {include 0 HexManual.Chapters.HexMatrix}
 
 {include 0 HexManual.Chapters.HexRowReduce}
@@ -129,6 +131,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBareiss}
 
+{include 0 HexManual.Chapters.HexResultant}
+
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
 {include 0 HexManual.Chapters.HexLLL}
@@ -136,6 +140,10 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexBerlekampZassenhaus}
 
 {include 0 HexManual.Chapters.FactorTactics}
+
+{include 0 HexManual.Chapters.HexNumberField}
+
+{include 0 HexManual.Chapters.HexNumberFieldTower}
 
 {include 0 HexManual.Chapters.HexGraphIso}
 
@@ -180,8 +188,6 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexCharPoly}
 
-{include 2 HexManual.Chapters.HexResultant}
-
 {include 2 HexManual.Chapters.HexPolyZGcd}
 
 {include 2 HexManual.Chapters.HexMvGcd}
@@ -193,12 +199,6 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexPolySmith}
 
 {include 2 HexManual.Chapters.HexSmith}
-
-{include 2 HexManual.Chapters.HexRCF}
-
-{include 2 HexManual.Chapters.HexNumberField}
-
-{include 2 HexManual.Chapters.HexNumberFieldTower}
 
 {include 2 HexManual.Chapters.HexMinPoly}
 

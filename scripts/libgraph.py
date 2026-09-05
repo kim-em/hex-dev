@@ -53,7 +53,6 @@ BUILD_ONLY_LIBS = {
     "HexFactorizationModules",
     "HexMvFactorizationTests",
     "HexReleaseTests",
-    "HexRCFTests",
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
     "HexSmithTests",

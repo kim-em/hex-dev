@@ -87,7 +87,6 @@ UMBRELLA_BUILD_TARGETS = {
     "HexFactorizationModules",
     "HexMvFactorizationTests",
     "HexReleaseTests",
-    "HexRCFTests",
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
     "HexSmithTests",
