@@ -101,19 +101,19 @@ structure AutState where
 duplicates, verify with the checker's own `checkAutom`, and store the
 inverse alongside. Admission past the cap overwrites the last slot,
 preferring generators that merge orbits. -/
-@[expose] def AutState.admit (ctx : Ctx) (st : AutState) (γ : Array Nat) :
+@[expose] def AutState.admit (ctx : Ctx n) (st : AutState) (γ : Array Nat) :
     AutState := Id.run do
-  if isIdentity γ ctx.n then
+  if isIdentity γ n then
     return st
   if st.gens.any (fun p => p.1 == γ) then
     return st
   -- untrusted fast filter (nauty's edge-wise test); the trusted
   -- checkAutom runs only when a record is emitted
-  unless γ.size == ctx.n &&
-      ((List.range ctx.n).all fun v => γ[v]! < ctx.n) &&
+  unless γ.size == n &&
+      ((List.range n).all fun v => γ[v]! < n) &&
       isautom ctx γ do
     return st
-  let (orbits, numorbits) := orbjoin st.orbits γ ctx.n
+  let (orbits, numorbits) := orbjoin st.orbits γ n
   let grew := numorbits < st.numorbits
   if st.gens.size < genCap then
     return { st with
@@ -132,7 +132,7 @@ preferring generators that merge orbits. -/
 /-- Harvest generators at a leaf: compose the leaf labelling against
 the pass's first leaf, the previous leaf, and the fixed reference
 leaf. -/
-@[expose] def AutState.harvest (ctx : Ctx) (st : AutState) (lab : Array Nat) :
+@[expose] def AutState.harvest (ctx : Ctx n) (st : AutState) (lab : Array Nat) :
     AutState := Id.run do
   let mut st := st
   match st.firstLeaf with
@@ -145,18 +145,18 @@ leaf. -/
   return { st with prevLeaf := some lab }
 
 /-- The vertex bitset of every cell of the node's ordered partition. -/
-@[expose] def cellMasks (ctx : Ctx) (rsLab rsPtn : Array Nat) (level : Nat) :
+@[expose] def cellMasks (ctx : Ctx n) (rsLab rsPtn : Array Nat) (level : Nat) :
     List Nat :=
-  (cells rsPtn level ctx.n).map fun p =>
+  (cells rsPtn level n).map fun p =>
     (List.range (p.2 + 1 - p.1)).foldl
-      (fun m o => insert m rsLab[p.1 + o]!) 0
+      (fun m o => m.insert rsLab[p.1 + o]!) 0
 
 /-- Does `γ` map every cell bitset onto itself? Since the cells
 partition the vertices and `γ` is a bijection, per-cell image equality
 is exactly setwise cell preservation. Untrusted fast filter. -/
-@[expose] def respectsMasks (ctx : Ctx) (masks : List Nat) (γ : Array Nat) :
+@[expose] def respectsMasks (ctx : Ctx n) (masks : List Nat) (γ : Array Nat) :
     Bool :=
-  masks.all fun m => image (fun w => γ[w]!) ctx.n m == m
+  masks.all fun m => image (fun w => γ[w]!) n m == m
 
 /-- The emission predicate for witness-composed automorphisms: the
 trusted automorphism check, the earlier-offset requirement, and the
@@ -164,14 +164,14 @@ replay's cell-transport check.  Rechecking the witness here makes
 certificate-store validity local to the producer: a malformed cached
 generator or composition can only turn this prune into an ordinary
 descent, rather than poison the whole candidate certificate. -/
-@[expose] def childCellsOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
+@[expose] def childCellsOk (ctx : Ctx n) (rsLab rsPtn : Array Nat) (level tc : Nat)
     (o o' : Nat) (γ : Array Nat) : Bool :=
-  checkAutom ctx.g γ ctx.n && decide (o' < o) &&
-  (let bo := breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!
+  checkAutom ctx.g γ n && decide (o' < o) &&
+  (let bo := breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!
    checkCellsPerm bo.2.1
-     (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
+     (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
      (bo.1.map fun w => γ[w]!)
-     (level + 1) ctx.n)
+     (level + 1) n)
 
 /-- Search for a witness pruning target-cell offset `o` onto an
 earlier offset: breadth-first search from `v = rsLab[tc + o]` over the
@@ -180,16 +180,16 @@ the path. The caller decides how to validate the returned witness:
 the key search may rely on the untrusted filters alone (a wrong skip
 is caught by the trusted replay), while certificate emission runs the
 literal checker predicate. -/
-@[expose] def witness? (ctx : Ctx) (rsLab : Array Nat) (tc : Nat)
+@[expose] def witness? (ctx : Ctx n) (rsLab : Array Nat) (tc : Nat)
     (usable : Array (Array Nat × Array Nat)) (o : Nat) :
     Option (Nat × Array Nat) := Id.run do
   if o == 0 || usable.isEmpty then
     return none
   let v := rsLab[tc + o]!
-  let mut queue : Array (Nat × Array Nat) := #[(v, Array.range ctx.n)]
+  let mut queue : Array (Nat × Array Nat) := #[(v, Array.range n)]
   let mut seen : Nat := insert 0 v
   let mut head := 0
-  for _ in [0 : ctx.n] do
+  for _ in [0 : n] do
     if head < queue.size then
       let (u, π) := queue[head]!
       head := head + 1
@@ -204,16 +204,16 @@ literal checker predicate. -/
       for (γ, γi) in usable do
         for f in [γ, γi] do
           let w := f[u]!
-          unless elem seen w do
-            seen := insert seen w
-            queue := queue.push (w, composePerm f π ctx.n)
+          unless seen.mem w do
+            seen := seen.insert w
+            queue := queue.push (w, composePerm f π n)
   return none
 
 /-- The per-node generator filter, cached against the admission
 generation: recompute only when generators were admitted since the
 cache was built (freezing at node entry would lose prunes from
 generators discovered under earlier children). -/
-@[expose] def usableGens (ctx : Ctx) (masks : List Nat) (st : AutState)
+@[expose] def usableGens (ctx : Ctx n) (masks : List Nat) (st : AutState)
     (cache : Option (Nat × Array (Array Nat × Array Nat))) :
     Nat × Array (Array Nat × Array Nat) :=
   match cache with
@@ -226,7 +226,7 @@ generators discovered under earlier children). -/
 `.autom` records for target-cell offsets reachable from an earlier
 offset through verified automorphisms. Untrusted; `checkKey`
 revalidates everything. -/
-@[expose] def certifyNodeAutom (ctx : Ctx) (tcLevel : Nat) :
+@[expose] def certifyNodeAutom (ctx : Ctx n) (tcLevel : Nat) :
     Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
       AutState → CertNode × AutState
   | 0, _, _, _, _, _, _, st => (.codePrune, st)
@@ -243,7 +243,7 @@ revalidates everything. -/
         | .lt => (.codePrune, st)
         | .gt => (.codePrune, st)
         | .eq =>
-          if discreteAt rs.ptn level ctx.n then
+          if discreteAt rs.ptn level n then
             (.leaf, st.harvest ctx rs.lab)
           else
             let tcr := specMaketargetcell ctx rs.lab rs.ptn level
@@ -257,7 +257,7 @@ revalidates everything. -/
                 let descend : Unit → List CertNode × AutState ×
                     Option (Nat × Array (Array Nat × Array Nat)) :=
                   fun _ =>
-                  let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+                  let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
                     rs.lab[tcr.1 + o]!
                   let (child, st') := certifyNodeAutom ctx tcLevel
                     fuel (level + 1) br.1 br.2.1 br.2.2
@@ -282,8 +282,8 @@ one code coordinate system) — into a certificate against that key.
 No second search runs; the node budget bounds the traced walk. Purely
 a candidate producer — nothing here is trusted. -/
 @[expose] def produceCand (G : Colored n k) (budget : Option Nat) :
-    Option (CertNode × Key) :=
-  let ctx : Ctx := { n := n, g := rowsOf G }
+    Option (CertNode × Key n) :=
+  let ctx : Ctx n := { n := n, g := rowsOf G }
   let tr := runColoredTraced G
   if budget.any fun b => decide (tr.result.numnodes > b) then
     none
@@ -291,7 +291,7 @@ a candidate producer — nothing here is trusted. -/
     let st1 := tr.autos.foldl (fun st γ => st.admit ctx γ)
       (AutState.init n budget)
     let st2 := { st1 with refLeaf := some tr.result.canonlab }
-    let B : Key := ⟨tr.bestCodes ++ [codeSentinel],
+    let B : Key n := ⟨tr.bestCodes ++ [codeSentinel],
       leafRows ctx tr.result.canonlab⟩
     let (cert, st3) := certifyNodeAutom ctx 100 n 1
       (initialPartition G).1
@@ -305,7 +305,7 @@ a candidate producer — nothing here is trusted. -/
 
 /-- The candidate pipeline plus trusted validation. -/
 def certifyKeyCore (G : Colored n k) (budget : Option Nat) :
-    Option (CertNode × Key) :=
+    Option (CertNode × Key n) :=
   if n == 0 then
     validateKey? G .leaf ⟨[], []⟩
   else
@@ -315,19 +315,19 @@ def certifyKeyCore (G : Colored n k) (budget : Option Nat) :
 branch-and-bound search finds the best key, the pruning certificate
 pass rebuilds the tree against it, and the trusted `checkKey` replay
 validates the pair. -/
-def certifyKey? (G : Colored n k) : Option (CertNode × Key) :=
+def certifyKey? (G : Colored n k) : Option (CertNode × Key n) :=
   certifyKeyCore G none
 
 /-- The node-budgeted variant for tactic use: `none` on budget
 exhaustion as well as on validation failure. -/
 def certifyKeyBounded? (budget : Nat) (G : Colored n k) :
-    Option (CertNode × Key) :=
+    Option (CertNode × Key n) :=
   certifyKeyCore G (some budget)
 
 /-- Every key a successful `certifyKeyCore` returns is the spec
 key. -/
 theorem certifyKeyCore_sound {G : Colored n k} {budget : Option Nat}
-    {cert : CertNode} {B : Key}
+    {cert : CertNode} {B : Key n}
     (h : certifyKeyCore G budget = some (cert, B)) :
     canonSpecKey G = B := by
   rw [certifyKeyCore] at h
@@ -341,7 +341,7 @@ theorem certifyKeyCore_sound {G : Colored n k} {budget : Option Nat}
 
 /-- Every key a successful `certifyKey?` returns is the spec key. -/
 theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
-    {B : Key} (h : certifyKey? G = some (cert, B)) :
+    {B : Key n} (h : certifyKey? G = some (cert, B)) :
     canonSpecKey G = B :=
   certifyKeyCore_sound h
 

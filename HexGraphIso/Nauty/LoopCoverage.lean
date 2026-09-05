@@ -27,20 +27,20 @@ namespace Hex.GraphIso.Nauty
 a no-larger member of `live`.  The decreasing rank lets successive
 automorphism filters compose even when a new carrier lands outside the
 already-filtered set. -/
-@[expose] def ChildCover (key : Nat → Key) (rank : Nat → Nat)
+@[expose] def ChildCover (key : Nat → Key n) (rank : Nat → Nat)
     (all done live : Nat → Prop) : Prop :=
   ∀ x, all x → done x ∨
     ∃ y, live y ∧ key x = key y ∧ rank y ≤ rank x
 
 /-- Initially every child can witness itself in the live set. -/
-theorem ChildCover.init (key : Nat → Key) (rank : Nat → Nat)
+theorem ChildCover.init (key : Nat → Key n) (rank : Nat → Nat)
     (all : Nat → Prop) :
     ChildCover key rank all (fun _ => False) all := by
   intro x hx
   exact Or.inr ⟨x, hx, rfl, Nat.le_refl _⟩
 
 /-- One sweep step composes coverage transitively. -/
-theorem ChildCover.step {key : Nat → Key} {rank : Nat → Nat}
+theorem ChildCover.step {key : Nat → Key n} {rank : Nat → Nat}
     {all done live done' live' : Nat → Prop}
     (h : ChildCover key rank all done live)
     (hs : ∀ x, live x →
@@ -56,7 +56,7 @@ theorem ChildCover.step {key : Nat → Key} {rank : Nat → Nat}
     · exact Or.inr ⟨z, hzl, hxy.trans hyz, Nat.le_trans hzr hyr⟩
 
 /-- Enlarging the covered set preserves coverage. -/
-theorem ChildCover.monoDone {key : Nat → Key} {rank : Nat → Nat}
+theorem ChildCover.monoDone {key : Nat → Key n} {rank : Nat → Nat}
     {all done live done' : Nat → Prop}
     (h : ChildCover key rank all done live)
     (hd : ∀ x, done x → done' x) :
@@ -65,7 +65,7 @@ theorem ChildCover.monoDone {key : Nat → Key} {rank : Nat → Nat}
 
 /-- Filtering the live set preserves coverage when every removed survivor
 repeats a no-larger survivor of the new set. -/
-theorem ChildCover.filter {key : Nat → Key} {rank : Nat → Nat}
+theorem ChildCover.filter {key : Nat → Key n} {rank : Nat → Nat}
     {all done live live' : Nat → Prop}
     (h : ChildCover key rank all done live)
     (hs : ∀ x, live x →
@@ -76,7 +76,7 @@ theorem ChildCover.filter {key : Nat → Key} {rank : Nat → Nat}
 /-- Resolving one filtered survivor may revisit the old coverage relation.
 Strict rank descent at every newly removed live vertex makes this process
 well founded. -/
-theorem ChildCover.resolve {key : Nat → Key} {rank : Nat → Nat}
+theorem ChildCover.resolve {key : Nat → Key n} {rank : Nat → Nat}
     {all done live live' : Nat → Prop}
     (h : ChildCover key rank all done live)
     (hdone : ∀ x y, key x = key y → done y → done x)
@@ -99,7 +99,7 @@ theorem ChildCover.resolve {key : Nat → Key} {rank : Nat → Nat}
 
 /-- A descending filter preserves ranked coverage even when a carrier
 lands outside the old live set. -/
-theorem ChildCover.filterDesc {key : Nat → Key} {rank : Nat → Nat}
+theorem ChildCover.filterDesc {key : Nat → Key n} {rank : Nat → Nat}
     {all done live live' : Nat → Prop}
     (h : ChildCover key rank all done live)
     (hdone : ∀ x y, key x = key y → done y → done x)
@@ -115,7 +115,7 @@ theorem ChildCover.filterDesc {key : Nat → Key} {rank : Nat → Nat}
     · exact Or.inr ⟨z, hzl, hxy.trans hyz, Nat.le_trans hzr hyr⟩
 
 /-- When no live survivor remains, every original child is covered. -/
-theorem ChildCover.finish {key : Nat → Key} {rank : Nat → Nat}
+theorem ChildCover.finish {key : Nat → Key n} {rank : Nat → Nat}
     {all done live : Nat → Prop}
     (h : ChildCover key rank all done live)
     (hempty : ∀ x, ¬ live x) :
@@ -127,8 +127,8 @@ theorem ChildCover.finish {key : Nat → Key} {rank : Nat → Nat}
 
 /-- Coverage transfers a common upper bound from covered children to all
 original children. -/
-theorem ChildCover.bound {key : Nat → Key} {rank : Nat → Nat}
-    {all done live : Nat → Prop} {b : Key}
+theorem ChildCover.bound {key : Nat → Key n} {rank : Nat → Nat}
+    {all done live : Nat → Prop} {b : Key n}
     (h : ChildCover key rank all done live)
     (hempty : ∀ x, ¬ live x)
     (hle : ∀ x, done x → keyLe (key x) b) :
@@ -141,8 +141,8 @@ and the surviving live representatives lie below it.  This is the form
 used by a frozen comparison unwind: the existing ledger handles the
 visited prefix, while the frozen code verdict handles the abandoned
 suffix. -/
-theorem ChildCover.boundLive {key : Nat → Key} {rank : Nat → Nat}
-    {all done live : Nat → Prop} {b : Key}
+theorem ChildCover.boundLive {key : Nat → Key n} {rank : Nat → Nat}
+    {all done live : Nat → Prop} {b : Key n}
     (h : ChildCover key rank all done live)
     (hdone : ∀ x, done x → keyLe (key x) b)
     (hlive : ∀ x, live x → keyLe (key x) b) :
