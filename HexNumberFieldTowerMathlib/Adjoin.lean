@@ -263,7 +263,7 @@ private theorem vanishing_factor_unique {T : NumberTower} {f : Poly T}
       (T.toPolynomial b.1) = 0) :
     a = b := by
   by_contra hab
-  letI : Std.Symm (fun x y : Poly T × Nat => x.1 ≠ y.1) :=
+  let : Std.Symm (fun x y : Poly T × Nat => x.1 ≠ y.1) :=
     ⟨fun _ _ h => h.symm⟩
   have hfactorNe : a.1 ≠ b.1 :=
     (factor_fsts_pairwise r hsound).forall ha hb hab

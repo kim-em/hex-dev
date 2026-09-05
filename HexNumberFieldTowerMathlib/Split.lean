@@ -35,11 +35,11 @@ private theorem oneLevel_isRoot (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   have hdvd := shifted_dvd_norm level lower hvalid hinjectiveTop f 0
   have hdvdComplex := Polynomial.map_dvd
     (LevelSemantics.coeffHom (level :: lower) hvalid hinjectiveTop hinvTop)
@@ -80,7 +80,7 @@ private theorem basePolynomial (f : Array (Array Rat)) :
     rawPolynomial [] (Factor.rawPoly [] f) =
       (HexPolyMathlib.toPolynomial (Factor.toRatPoly f)).map
         (algebraMap Rat ℂ) := by
-  letI : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
+  let : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
   have hvalidNil : LevelsValid [] := by exact trivial
   have hhom :
       (algebraMap Rat ℂ).comp LevelSemantics.coeffRatEquiv.toRingHom =
@@ -117,7 +117,7 @@ theorem iterated_isRoot_toRat (T : NumberTower) (f : Poly T) (z : ℂ)
 
 private theorem toRatPoly_ne_zero (f : Array (Array Rat))
     (hf : Factor.rawPoly [] f ≠ 0) : Factor.toRatPoly f ≠ 0 := by
-  letI : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
+  let : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
   intro hzero
   have hmap := LevelSemantics.map_rawPoly_nil f
   rw [hzero, HexPolyMathlib.toPolynomial_zero] at hmap
@@ -367,7 +367,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
       (factorEliminant T f) hcoreSize hnot z hcoreRoot
   unfold factorRoot?
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   have hisolateSome := HexRootsMathlib.isolate_isSome
     (factorEliminant T f) hsimple hcoreNe
     (separationDepth (factorEliminant T f) : Int) .nkThenPellet
@@ -380,7 +380,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined
+          rw [dite_eq_left (HexRootsMathlib.isolate_refined
             (factorEliminant T f) hsimple
             (separationDepth (factorEliminant T f) : Int)
             .nkThenPellet hisolate iso hiso)]

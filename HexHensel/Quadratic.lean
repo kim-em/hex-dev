@@ -548,7 +548,7 @@ private theorem monomial_zero_mod_base
   rw [DensePoly.coeff_monomial, DensePoly.coeff_zero]
   by_cases hi : i = k
   · simp [hi, hc]
-  · rw [if_neg hi]
+  · rw [ite_eq_right hi]
     change ((0 : Int) - 0) % (m : Int) = 0
     simp
 
@@ -1930,10 +1930,10 @@ def quadraticHenselStepBignumImpl
   funext m f g h s t
   unfold quadraticHenselStepBignum quadraticHenselStepBignumImpl
   by_cases hm : 0 < m
-  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm,
+  · simp only [ite_eq_left hm, mulModSquare_factorError_reduce m hm,
       addModSquare_addModSquare m hm, subModSquare_addModSquare m hm,
       subModSquare_subModSquare m hm]
-  · simp only [if_neg hm]
+  · simp only [ite_eq_right hm]
 
 /-- Guarded selection: the word-sized step when its guard holds, else the bignum step. -/
 def quadraticHenselStep
@@ -2011,9 +2011,9 @@ def quadraticHenselFactorsBignumImpl
   funext m f g h s t
   unfold quadraticHenselFactorsBignum quadraticHenselFactorsBignumImpl
   by_cases hm : 0 < m
-  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm,
+  · simp only [ite_eq_left hm, mulModSquare_factorError_reduce m hm,
       addModSquare_addModSquare m hm]
-  · simp only [if_neg hm]
+  · simp only [ite_eq_right hm]
 
 /-- Update only the two factors in one quadratic Hensel step. The result is
 byte-identical to the `g` and `h` fields of `quadraticHenselStep`, while the
@@ -2031,20 +2031,20 @@ private theorem quadraticHenselFactorsWord?_eq
       (quadraticHenselStepWord? m f g h s t).map fun r => (r.g, r.h) := by
   unfold quadraticHenselFactorsWord? quadraticHenselStepWord?
   by_cases h2 : m * m < UInt64.word
-  · simp only [dif_pos h2]
+  · simp only [dite_eq_left h2]
     by_cases hodd : (UInt64.ofNat (m * m)) % 2 = 1
-    · simp only [dif_pos hodd]
+    · simp only [dite_eq_left hodd]
       by_cases h1 : 1 < m * m
-      · simp only [dif_pos h1]
+      · simp only [dite_eq_left h1]
         by_cases hm : DensePoly.leadingCoeff g = 1
-        · simp only [dif_pos hm]
+        · simp only [dite_eq_left hm]
           by_cases hd : 0 < g.degree?.getD 0
-          · simp only [dif_pos hd, Option.map_some]
-          · simp only [dif_neg hd, Option.map_none]
-        · simp only [dif_neg hm, Option.map_none]
-      · simp only [dif_neg h1, Option.map_none]
-    · simp only [dif_neg hodd, Option.map_none]
-  · simp only [dif_neg h2, Option.map_none]
+          · simp only [dite_eq_left hd, Option.map_some]
+          · simp only [dite_eq_right hd, Option.map_none]
+        · simp only [dite_eq_right hm, Option.map_none]
+      · simp only [dite_eq_right h1, Option.map_none]
+    · simp only [dite_eq_right hodd, Option.map_none]
+  · simp only [dite_eq_right h2, Option.map_none]
 
 /-- The factor-only step agrees exactly with the factor fields of the full
 quadratic step. -/
@@ -2501,7 +2501,7 @@ private theorem toWP_divModMonicModSquare (m : Nat)
   have hqpos : 0 < q.size := by
     rcases Nat.eq_zero_or_pos q.size with h0 | h0
     · exfalso
-      rw [DensePoly.degree?, dif_pos h0] at hqd
+      rw [DensePoly.degree?, dite_eq_left h0] at hqd
       simp at hqd
     · exact h0
   have hm1' : 1 < (UInt64.ofNat (m * m)).toNat := by
@@ -2539,7 +2539,7 @@ private theorem toWP_divModMonicModSquare (m : Nat)
           (DensePoly.coeff_last_ne_zero_of_pos_size _ (by omega))
       · exact hge
     rcases Nat.eq_zero_or_pos (divModMonicModSquare p q m).2.size with h0 | h0
-    · rw [DensePoly.degree?, dif_pos h0, Option.getD_none,
+    · rw [DensePoly.degree?, dite_eq_left h0, Option.getD_none,
         DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some]
       omega
     · rw [DensePoly.degree?_eq_some_of_pos_size _ h0,
@@ -2558,7 +2558,7 @@ theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
   have hgpos : 0 < g.size := by
     rcases Nat.eq_zero_or_pos g.size with h0 | h0
     · exfalso
-      rw [DensePoly.degree?, dif_pos h0] at hd
+      rw [DensePoly.degree?, dite_eq_left h0] at hd
       simp at hd
     · exact h0
   have hg2 : 2 ≤ g.size := by
@@ -2567,7 +2567,8 @@ theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
     omega
   have hmbase : 1 < m := one_lt_of_mul m h1
   unfold quadraticHenselStepWord?
-  simp only [dif_pos h2, dif_pos hodd, dif_pos h1, dif_pos hmlc, dif_pos hd]
+  simp only [dite_eq_left h2, dite_eq_left hodd, dite_eq_left h1, dite_eq_left hmlc,
+    dite_eq_left hd]
   generalize hctx : _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd = ctx
   simp only [WordPoly.mul_eq, WordPoly.mulAdd_eq, WordPoly.add_eq, WordPoly.sub_eq]
   refine congrArg some ?_
@@ -2693,20 +2694,20 @@ theorem quadraticHenselStep_eq_bignum
   · have hnone : quadraticHenselStepWord? m f g h s t = none := by
       unfold quadraticHenselStepWord?
       by_cases a : m * m < UInt64.word
-      · rw [dif_pos a]
+      · rw [dite_eq_left a]
         by_cases b : (UInt64.ofNat (m * m)) % 2 = 1
-        · rw [dif_pos b]
+        · rw [dite_eq_left b]
           by_cases c : 1 < m * m
-          · rw [dif_pos c]
+          · rw [dite_eq_left c]
             by_cases d : DensePoly.leadingCoeff g = 1
-            · rw [dif_pos d]
+            · rw [dite_eq_left d]
               by_cases e : 0 < g.degree?.getD 0
               · exact absurd ⟨a, b, c, d, e⟩ hguard
-              · rw [dif_neg e]
-            · rw [dif_neg d]
-          · rw [dif_neg c]
-        · rw [dif_neg b]
-      · rw [dif_neg a]
+              · rw [dite_eq_right e]
+            · rw [dite_eq_right d]
+          · rw [dite_eq_right c]
+        · rw [dite_eq_right b]
+      · rw [dite_eq_right a]
     rw [hnone]
 
 /-! # Coefficient-range invariant of one quadratic step

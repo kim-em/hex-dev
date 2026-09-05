@@ -89,15 +89,15 @@ private theorem findPivotAux_some_ge (M : Matrix R n m) (col : Fin m) :
       unfold findPivotAux at h
       simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
-      · rw [dif_pos hstart] at h
+      · rw [dite_eq_left hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
-        · rw [if_pos hzero] at h
+        · rw [ite_eq_left hzero] at h
           exact Nat.le_of_succ_le (ih h)
-        · rw [if_neg hzero] at h
+        · rw [ite_eq_right hzero] at h
           injection h with hi
           subst hi
           exact Nat.le_refl _
-      · rw [dif_neg hstart] at h
+      · rw [dite_eq_right hstart] at h
         contradiction
 
 /-- The result of a successful pivot search is a nonzero entry. -/
@@ -114,15 +114,15 @@ private theorem findPivotAux_some_nonzero (M : Matrix R n m) (col : Fin m) :
       unfold findPivotAux at h
       simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
-      · rw [dif_pos hstart] at h
+      · rw [dite_eq_left hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
-        · rw [if_pos hzero] at h
+        · rw [ite_eq_left hzero] at h
           exact ih h
-        · rw [if_neg hzero] at h
+        · rw [ite_eq_right hzero] at h
           injection h with hi
           subst hi
           exact hzero
-      · rw [dif_neg hstart] at h
+      · rw [dite_eq_right hstart] at h
         contradiction
 
 /-- All rows below the pivot search start that precede the returned index are zero. -/
@@ -140,9 +140,9 @@ private theorem findPivotAux_some_above (M : Matrix R n m) (col : Fin m) :
       unfold findPivotAux at h
       simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
-      · rw [dif_pos hstart] at h
+      · rw [dite_eq_left hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
-        · rw [if_pos hzero] at h
+        · rw [ite_eq_left hzero] at h
           rcases Nat.lt_or_ge start (k.val + 1) with hgt | hle
           · -- start < k.val + 1, so start ≤ k.val and start < k.val + 1
             -- combined with hge gives start ≤ k.val
@@ -155,7 +155,7 @@ private theorem findPivotAux_some_above (M : Matrix R n m) (col : Fin m) :
               exact hzero
           · -- k.val + 1 ≤ start, contradicts hge
             omega
-        · rw [if_neg hzero] at h
+        · rw [ite_eq_right hzero] at h
           injection h with hi
           -- hi : ⟨start, hstart⟩ = i
           have hival : i.val = start := by
@@ -163,7 +163,7 @@ private theorem findPivotAux_some_above (M : Matrix R n m) (col : Fin m) :
             exact hi.symm
           exfalso
           omega
-      · rw [dif_neg hstart] at h
+      · rw [dite_eq_right hstart] at h
         contradiction
 
 /-- Failed pivot search means every searched row is zero in this column. -/
@@ -181,15 +181,15 @@ private theorem findPivotAux_none (M : Matrix R n m) (col : Fin m) :
       unfold findPivotAux at h
       simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
-      · rw [dif_pos hstart] at h
+      · rw [dite_eq_left hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
-        · rw [if_pos hzero] at h
+        · rw [ite_eq_left hzero] at h
           rcases Nat.lt_or_eq_of_le hge with hgt | heq
           · exact ih h k hgt (by omega)
           · have hk_eq : k = ⟨start, hstart⟩ := Fin.ext heq.symm
             rw [hk_eq]
             exact hzero
-        · rw [if_neg hzero] at h
+        · rw [ite_eq_right hzero] at h
           contradiction
       · exact absurd k.isLt (by omega)
 
@@ -225,14 +225,14 @@ omit [DecidableEq R] in
 private theorem rowAdd_get_dst (M : Matrix R n m) (src dst : Fin n) (c : R)
     (k : Fin m) :
     (rowAdd M src dst c)[dst][k] = M[dst][k] + c * M[src][k] := by
-  rw [getElem_rowAdd, if_pos rfl]
+  rw [getElem_rowAdd, ite_eq_left rfl]
 
 omit [DecidableEq R] in
 /-- Entry of `rowAdd M src dst c` at any row other than `dst`. -/
 private theorem rowAdd_get_other (M : Matrix R n m) (src dst : Fin n) (c : R)
     {r : Fin n} (hne : r ≠ dst) (k : Fin m) :
     (rowAdd M src dst c)[r][k] = M[r][k] := by
-  rw [getElem_rowAdd, if_neg hne]
+  rw [getElem_rowAdd, ite_eq_right hne]
 
 /-- One step of `eliminateColumn`'s fold preserves the entry at the pivot row. -/
 private theorem eliminateColumn_step_pivotRow_unchanged
@@ -245,11 +245,11 @@ private theorem eliminateColumn_step_pivotRow_unchanged
        else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[pivotRow][k]
       = s.1[pivotRow][k] := by
   by_cases hxp : x = pivotRow
-  · rw [dif_pos hxp]
-  · rw [dif_neg hxp]
+  · rw [dite_eq_left hxp]
+  · rw [dite_eq_right hxp]
     by_cases hcoeff : -s.1[x][col] = 0
-    · rw [if_pos hcoeff]
-    · rw [if_neg hcoeff]
+    · rw [ite_eq_left hcoeff]
+    · rw [ite_eq_right hcoeff]
       exact rowAdd_get_other s.1 pivotRow x _ (fun h => hxp h.symm) k
 
 /-- One step of `eliminateColumn`'s fold preserves the entry at any row other
@@ -264,11 +264,11 @@ private theorem eliminateColumn_step_other_unchanged
        else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[r][col]
       = s.1[r][col] := by
   by_cases hxp : x = pivotRow
-  · rw [dif_pos hxp]
-  · rw [dif_neg hxp]
+  · rw [dite_eq_left hxp]
+  · rw [dite_eq_right hxp]
     by_cases hcoeff : -s.1[x][col] = 0
-    · rw [if_pos hcoeff]
-    · rw [if_neg hcoeff]
+    · rw [ite_eq_left hcoeff]
+    · rw [ite_eq_right hcoeff]
       exact rowAdd_get_other s.1 pivotRow x _ hrx col
 
 /-- One step of `eliminateColumn`'s fold zeros the entry at row `x` (the row
@@ -283,11 +283,11 @@ private theorem eliminateColumn_step_zero_at_x
        if coeff = 0 then s
        else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[x][col]
       = 0 := by
-  rw [dif_neg hxp]
+  rw [dite_eq_right hxp]
   by_cases hcoeff : -s.1[x][col] = 0
-  · rw [if_pos hcoeff]
+  · rw [ite_eq_left hcoeff]
     grind
-  · rw [if_neg hcoeff]
+  · rw [ite_eq_right hcoeff]
     show (rowAdd s.1 pivotRow x (-s.1[x][col]))[x][col] = 0
     rw [rowAdd_get_dst s.1 pivotRow x (-s.1[x][col]) col, hpivot]
     grind
@@ -409,11 +409,11 @@ private theorem eliminateColumn_step_transform_preserve
             if coeff = 0 then s
             else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1 := by
   by_cases hx : x = pivotRow
-  · rw [dif_pos hx]; exact h
-  · rw [dif_neg hx]
+  · rw [dite_eq_left hx]; exact h
+  · rw [dite_eq_right hx]
     by_cases hcoeff : -s.1[x][col] = 0
-    · rw [if_pos hcoeff]; exact h
-    · rw [if_neg hcoeff]
+    · rw [ite_eq_left hcoeff]; exact h
+    · rw [ite_eq_right hcoeff]
       exact rowAdd_transform_mul_preserve pivotRow x (-s.1[x][col]) h
 
 /-- Folding `eliminateColumn`'s step function over any list preserves the
@@ -468,13 +468,13 @@ private theorem eliminateColumn_step_left_inverse_preserve
            if coeff = 0 then s
            else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 = (Matrix.identity (R := R) n) := by
   by_cases hx : x = pivotRow
-  · rw [dif_pos hx]
+  · rw [dite_eq_left hx]
     exact h
-  · rw [dif_neg hx]
+  · rw [dite_eq_right hx]
     by_cases hcoeff : -s.1[x][col] = 0
-    · rw [if_pos hcoeff]
+    · rw [ite_eq_left hcoeff]
       exact h
-    · rw [if_neg hcoeff]
+    · rw [ite_eq_right hcoeff]
       exact rowAdd_left_inverse_preserve s.2 (-s.1[x][col])
         (fun hpivotx => hx hpivotx.symm) h
 
@@ -491,13 +491,13 @@ private theorem eliminateColumn_step_right_inverse_preserve
          else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 *
         Tinv' = (Matrix.identity (R := R) n) := by
   by_cases hx : x = pivotRow
-  · rw [dif_pos hx]
+  · rw [dite_eq_left hx]
     exact h
-  · rw [dif_neg hx]
+  · rw [dite_eq_right hx]
     by_cases hcoeff : -s.1[x][col] = 0
-    · rw [if_pos hcoeff]
+    · rw [ite_eq_left hcoeff]
       exact h
-    · rw [if_neg hcoeff]
+    · rw [ite_eq_right hcoeff]
       exact rowAdd_right_inverse_preserve s.2 (-s.1[x][col])
         (fun hpivotx => hx hpivotx.symm) h
 
@@ -625,7 +625,7 @@ private theorem rowScale_preserve_canonical_column
     rw [getElem_rowScale]
     by_cases hrTarget : r = target
     · subst r
-      rw [if_pos rfl, hTarget]
+      rw [ite_eq_left rfl, hTarget]
       grind
     · simpa [hrTarget] using hzero r hr
 
@@ -643,14 +643,14 @@ private theorem rowAdd_preserve_canonical_column
   · rw [getElem_rowAdd]
     by_cases hrowDst : pivotRow = dst
     · subst dst
-      rw [if_pos rfl, hpivotRow, hSrc]
+      rw [ite_eq_left rfl, hpivotRow, hSrc]
       grind
     · simpa [hrowDst] using hpivotRow
   · intro r hr
     rw [getElem_rowAdd]
     by_cases hrDst : r = dst
     · subst dst
-      rw [if_pos rfl, hzero r hr, hSrc]
+      rw [ite_eq_left rfl, hzero r hr, hSrc]
       grind
     · simpa [hrDst] using hzero r hr
 
@@ -696,9 +696,9 @@ private theorem eliminateColumn_preserve_canonical_column
       simp only [List.foldl_cons]
       simp only [getElem_pair_eq_nested] at ih ⊢
       by_cases hx : x = newPivot
-      · simp only [dif_pos hx]; exact ih s hSrc hOld hzero
+      · simp only [dite_eq_left hx]; exact ih s hSrc hOld hzero
       · by_cases hcoeff : -s.1[x][newCol] = 0
-        · simp only [dif_neg hx, hcoeff, if_pos]; exact ih s hSrc hOld hzero
+        · simp only [dite_eq_right hx, hcoeff, ite_eq_left]; exact ih s hSrc hOld hzero
         · let next : Matrix R n m × Matrix R n n :=
             (rowAdd s.1 newPivot x (-s.1[x][newCol]), rowAdd s.2 newPivot x (-s.1[x][newCol]))
           have hcanon :
@@ -709,7 +709,8 @@ private theorem eliminateColumn_preserve_canonical_column
                 (-s.1[x][newCol]) hSrc hOld hzero
           have hSrcNext : next.1[newPivot][oldCol] = 0 :=
             hcanon.2 newPivot (fun h => hOldNew h.symm)
-          simp only [dif_neg hx, if_neg hcoeff]; exact ih next hSrcNext hcanon.1 hcanon.2
+          simp only [dite_eq_right hx, ite_eq_right hcoeff]
+          exact ih next hSrcNext hcanon.1 hcanon.2
 
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
 def rowReduceLoop (col fuel : Nat) (state : RowReduceState R n m) : RowReduceState R n m :=

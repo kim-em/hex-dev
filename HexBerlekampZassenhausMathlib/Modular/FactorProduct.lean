@@ -60,7 +60,7 @@ theorem henselLiftData_liftedFactor_modP_eq_modPFactor
         (liftedIndexOfModPIndex primeData (Hex.henselLiftData core B primeData)
           (henselLiftData_liftedFactors_size_eq core B primeData) i)) =
       modPFactor primeData i := by
-  letI := primeData.bounds
+  let := primeData.bounds
   set arr :=
     Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
       (primeData.factorsModP.map Hex.FpPoly.liftToZ) with harr_def
@@ -170,11 +170,11 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       letI := data.bounds
       Hex.isGoodPrime f data.p = true) :
     data.factorsModP.toList.Nodup := by
-  letI : Hex.ZMod64.Bounds data.p := data.bounds
+  let : Hex.ZMod64.Bounds data.p := data.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus data.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
+  let : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   -- Square-free precondition on the modular image, extracted from `isGoodPrime`.
   have hsf_common :
       ∀ d : Hex.FpPoly data.p,
@@ -395,9 +395,9 @@ theorem monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
     (hf_pos : 0 < f.degree?.getD 0) :
     letI := data.bounds
     0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0 := by
-  letI : Hex.ZMod64.Bounds data.p := data.bounds
+  let : Hex.ZMod64.Bounds data.p := data.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
-  letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
+  let : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   have hfsize_ge_two : 2 ≤ f.size := by
     unfold Hex.DensePoly.degree? at hf_pos
     by_cases hfs0 : f.size = 0
@@ -481,7 +481,7 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
     letI := data.bounds
     ∀ g ∈ data.factorsModP,
       0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree := by
-  letI : Hex.ZMod64.Bounds data.p := data.bounds
+  let : Hex.ZMod64.Bounds data.p := data.bounds
   -- Step A: 0 < (monicModularImage (modP data.p f)).degree?.getD 0
   have hmonicImage_pos :
       0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0 :=
@@ -489,7 +489,7 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus data.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
+  let : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   -- Step B: positivity for every entry in the Berlekamp factor list.
   have hFactorsPos :
       ∀ h ∈ (@Hex.Berlekamp.berlekampFactor data.p data.bounds
@@ -742,11 +742,11 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_p
       (Hex.FpPoly.liftToZ
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
       primeData.p := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   -- `monicModularImage (modP p core)` is monic.
   have hmonicImage_monic :
@@ -821,11 +821,11 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
     Hex.ZPoly.congr
       (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
       core primeData.p := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hp : 1 < primeData.p := by have := hprime.two_le; omega
   -- `monicModularImage (modP p core) = modP p core` (because `core` is monic).
@@ -864,7 +864,7 @@ theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hform : Hex.factorsModPBerlekampForm core primeData) :
     primeData.factorsModP.toList ≠ [] := by
-  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime

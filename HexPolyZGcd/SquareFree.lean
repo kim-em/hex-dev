@@ -41,13 +41,13 @@ private theorem scaleNormalize (p : ZPoly) :
       DensePoly.scale ε (normalizePrimitiveSign p) = p := by
   unfold normalizePrimitiveSign
   by_cases hnegative : p.leadingCoeff < 0
-  · rw [if_pos hnegative]
+  · rw [ite_eq_left hnegative]
     refine ⟨-1, Or.inr rfl, ?_⟩
     rw [DensePoly.scale_scale]
     have hunit : (-1 : Int) * -1 = 1 := by omega
     rw [hunit]
     exact scaleOne p
-  · rw [if_neg hnegative]
+  · rw [ite_eq_right hnegative]
     exact ⟨1, Or.inl rfl, scaleOne p⟩
 
 /-- Integer-gcd replacement for `primitiveSquareFreeDecomposition`'s rational
@@ -138,15 +138,15 @@ theorem sqfDecomp_repeatedPart (f : ZPoly)
     have hpTrue : p.isZero = true := by rw [hpZero]; rfl
     exact hpNot hpTrue
   unfold sqfDecomp
-  rw [if_neg (by simpa only [p] using hpNot)]
-  rw [if_neg (by
+  rw [ite_eq_right (by simpa only [p] using hpNot)]
+  rw [ite_eq_right (by
     intro hdTrue
     rw [hd] at hdTrue
     contradiction)]
   by_cases hsmall : p.size ≤ 8
-  · rw [if_pos hsmall]
+  · rw [ite_eq_left hsmall]
     exact (gcd_eq_rationalCandidate (Or.inl hpNe)).symm
-  · rw [if_neg hsmall]
+  · rw [ite_eq_right hsmall]
     exact (gcd_eq_cert p derivative).symm
 
 namespace Repeated
@@ -197,8 +197,8 @@ private theorem nondegenerate (f : ZPoly)
   rw [gcd_eq_rationalCandidate (Or.inl hpNe)]
   rw [rationalGcdCandidate_of_primitive hpPrimitive]
   unfold primitiveSquareFreeDecomposition
-  rw [if_neg (by simpa only [p] using hpNot)]
-  rw [if_neg (by simpa only [p] using hratNot)]
+  rw [ite_eq_right (by simpa only [p] using hpNot)]
+  rw [ite_eq_right (by simpa only [p] using hratNot)]
   rw [toRatPoly_derivative]
 
 /-- The repeated factors also agree in the derivative-zero branch. -/
@@ -222,7 +222,7 @@ private theorem eqReference (f : ZPoly)
       rw [hratDerivativeZero]
       rfl
     unfold sqfDecomp primitiveSquareFreeDecomposition
-    rw [if_neg hpNot, if_pos hd, if_neg hpNot, if_pos hratTrue]
+    rw [ite_eq_right hpNot, ite_eq_left hd, ite_eq_right hpNot, ite_eq_left hratTrue]
   · have hdFalse :
         (DensePoly.derivative (primitivePart f)).isZero = false := by
       cases hvalue : (DensePoly.derivative (primitivePart f)).isZero with
@@ -238,11 +238,11 @@ private theorem sqfDecomp_primitive (f : ZPoly) :
   let p := primitivePart f
   unfold sqfDecomp
   by_cases hp : p.isZero = true
-  · rw [if_pos (by simpa only [p] using hp)]
-  · rw [if_neg (by simpa only [p] using hp)]
+  · rw [ite_eq_left (by simpa only [p] using hp)]
+  · rw [ite_eq_right (by simpa only [p] using hp)]
     by_cases hd : (DensePoly.derivative p).isZero = true
-    · rw [if_pos (by simpa only [p] using hd)]
-    · rw [if_neg (by simpa only [p] using hd)]
+    · rw [ite_eq_left (by simpa only [p] using hd)]
+    · rw [ite_eq_right (by simpa only [p] using hd)]
       split <;> rfl
 
 /-- Scaling twice by `-1` is the identity on integer polynomials. -/
@@ -271,7 +271,7 @@ theorem sqfDecomp_reassembly_signed (f : ZPoly) :
   have hpDef : primitivePart f = p := rfl
   unfold sqfDecomp
   by_cases hp : p.isZero = true
-  · rw [if_pos (by simpa only [p] using hp)]
+  · rw [ite_eq_left (by simpa only [p] using hp)]
     have hpZero : p = 0 :=
       (DensePoly.size_eq_zero_iff p).mp
         ((DensePoly.isZero_eq_true_iff p).mp hp)
@@ -279,22 +279,22 @@ theorem sqfDecomp_reassembly_signed (f : ZPoly) :
     rw [DensePoly.zero_mul, DensePoly.scale_zero_right]
     change 0 = primitivePart f
     rw [hpDef, hpZero]
-  · rw [if_neg (by simpa only [p] using hp)]
+  · rw [ite_eq_right (by simpa only [p] using hp)]
     let derivative := DensePoly.derivative p
     by_cases hd : derivative.isZero = true
-    · rw [if_pos (by simpa only [derivative, p] using hd)]
+    · rw [ite_eq_left (by simpa only [derivative, p] using hd)]
       rcases scaleNormalize p with ⟨ε, hε, hscale⟩
       refine ⟨ε, hε, ?_⟩
       rw [DensePoly.mul_one_right_poly]
       exact hscale
-    · rw [if_neg (by simpa only [derivative, p] using hd)]
+    · rw [ite_eq_right (by simpa only [derivative, p] using hd)]
       have hpNe : p ≠ 0 := by
         intro hpZero
         apply hp
         rw [hpZero]
         rfl
       by_cases hsmall : p.size ≤ 8
-      · rw [if_pos (by simpa only [p] using hsmall)]
+      · rw [ite_eq_left (by simpa only [p] using hsmall)]
         let repeated := rationalGcdCandidate p derivative
         let quotient := (DensePoly.divMod p repeated).1
         rcases scaleNormalize quotient with ⟨ε, hε, hscale⟩
@@ -306,7 +306,7 @@ theorem sqfDecomp_reassembly_signed (f : ZPoly) :
         rw [DensePoly.scale_mul, hscale]
         rw [DensePoly.mul_comm_poly quotient repeated]
         exact hproduct
-      · rw [if_neg (by simpa only [p] using hsmall)]
+      · rw [ite_eq_right (by simpa only [p] using hsmall)]
         let cert := gcdCert p derivative
         rcases scaleNormalize cert.cofL with ⟨ε, hε, hscale⟩
         refine ⟨ε, hε, ?_⟩
@@ -330,7 +330,7 @@ theorem sqfDecomp_squareFreeCore (f : ZPoly)
     have hpTrue : (primitivePart f).isZero = true := by
       rw [hpZero]
       rfl
-    simp only [fast, sqfDecomp, hpTrue, if_pos]
+    simp only [fast, sqfDecomp, hpTrue, ite_eq_left]
   have hfNe : f ≠ 0 := by
     intro hfZero
     subst f

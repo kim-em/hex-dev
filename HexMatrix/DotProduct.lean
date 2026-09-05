@@ -76,7 +76,7 @@ private theorem foldl_extend_zero {R : Type u} [Lean.Grind.Ring R] (m d : Nat)
     apply List.foldl_add_congr
     intro i _
     have hi : i.val < m := i.isLt
-    rw [dif_pos hi, dif_pos hi]
+    rw [dite_eq_left hi, dite_eq_left hi]
     congr 1
   | succ d ih =>
     show (List.finRange ((m + d) + 1)).foldl
@@ -85,7 +85,7 @@ private theorem foldl_extend_zero {R : Type u} [Lean.Grind.Ring R] (m d : Nat)
             * (if h : i.val < m then G ⟨i.val, h⟩ else 0)) 0 = _
     rw [foldl_finRange_succ_last]
     have hlast : ¬ ((Fin.last (m + d)).val < m) := by simp [Fin.last]
-    rw [dif_neg hlast]
+    rw [dite_eq_right hlast]
     have hpre : (List.finRange (m + d)).foldl
         (fun acc i => acc
           + (if h : (Fin.castSucc i).val < m then F ⟨(Fin.castSucc i).val, h⟩ else 0)

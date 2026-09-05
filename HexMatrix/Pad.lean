@@ -56,7 +56,7 @@ theorem takeCols_takeRows_pad [OfNat R 0] (M : Matrix R n m) (n' m' : Nat)
   apply ext_getElem
   intro i j
   rw [getElem_takeCols, getElem_takeRows, getElem_pad,
-    dif_pos (⟨i.isLt, j.isLt⟩ : i.val < n ∧ j.val < m)]
+    dite_eq_left (⟨i.isLt, j.isLt⟩ : i.val < n ∧ j.val < m)]
   rw [getElem_pair_eq_nested]
 
 /-- An in-range row of a padded matrix is the source row followed by zeros. -/
@@ -70,8 +70,8 @@ theorem row_pad [OfNat R 0] (M : Matrix R n m) (n' m' : Nat) (I : Fin n') (hI : 
   show (pad M n' m')[I][(⟨t, ht⟩ : Fin m')] = _
   rw [getElem_pad]
   by_cases htm : t < m
-  · rw [dif_pos htm, dif_pos (⟨hI, htm⟩ : I.val < n ∧ (⟨t, ht⟩ : Fin m').val < m)]
-  · rw [dif_neg (by simp [htm]), dif_neg htm]
+  · rw [dite_eq_left htm, dite_eq_left (⟨hI, htm⟩ : I.val < n ∧ (⟨t, ht⟩ : Fin m').val < m)]
+  · rw [dite_eq_right (by simp [htm]), dite_eq_right htm]
 
 /-- An in-range column of a padded matrix is the source column followed by zeros. -/
 theorem col_pad [OfNat R 0] (M : Matrix R n m) (n' m' : Nat) (J : Fin m') (hJ : J.val < m) :
@@ -84,8 +84,8 @@ theorem col_pad [OfNat R 0] (M : Matrix R n m) (n' m' : Nat) (J : Fin m') (hJ : 
   show (col (pad M n' m') J)[(⟨t, ht⟩ : Fin n')] = _
   rw [getElem_col, getElem_pad]
   by_cases htn : t < n
-  · rw [dif_pos htn, dif_pos (⟨htn, hJ⟩ : (⟨t, ht⟩ : Fin n').val < n ∧ J.val < m)]
-  · rw [dif_neg htn, dif_neg (by simp [htn])]
+  · rw [dite_eq_left htn, dite_eq_left (⟨htn, hJ⟩ : (⟨t, ht⟩ : Fin n').val < n ∧ J.val < m)]
+  · rw [dite_eq_right htn, dite_eq_right (by simp [htn])]
 
 /-- **Padding lemma.** Zero-padding each operand to a common larger middle
 dimension and reading back the top-left `n × k` block of the product returns the

@@ -161,8 +161,8 @@ private theorem zero_squarefree : HasOnlySimpleRoots ZPoly.X := by
     by_cases hn : n = 1
     · subst n
       simp [ZPoly.X]
-    · rw [if_neg hn]
-      rw [ZPoly.X, DensePoly.coeff_monomial, if_neg hn]
+    · rw [ite_eq_right hn]
+      rw [ZPoly.X, DensePoly.coeff_monomial, ite_eq_right hn]
       change ((0 : Int) : Rat) = 0
       simp
   have hderiv : DensePoly.derivative (ZPoly.toRatPoly ZPoly.X) =
@@ -174,7 +174,7 @@ private theorem zero_squarefree : HasOnlySimpleRoots ZPoly.X := by
       DensePoly.coeff_monomial]
     by_cases hn : n = 0
     · simp [hn]
-    · rw [if_neg hn, if_neg (by omega : n + 1 ≠ 1)]
+    · rw [ite_eq_right hn, ite_eq_right (by omega : n + 1 ≠ 1)]
       change ((n + 1 : Nat) : Rat) * 0 = 0
       exact Rat.mul_zero _
   unfold HasOnlySimpleRoots ZPoly.SquareFreeRat

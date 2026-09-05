@@ -744,7 +744,7 @@ private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
   have hle : (1 : UInt64) ≤ ((1 : UInt64) <<< n.toUInt64) := by
     rw [UInt64.le_iff_toNat_le, hshift]
     exact Nat.one_le_two_pow
-  rw [if_pos hn64, UInt64.toNat_sub_of_le _ _ hle, hshift]
+  rw [ite_eq_left hn64, UInt64.toNat_sub_of_le _ _ hle, hshift]
   simp
 
 /-- Masking a word whose value is already `< 2 ^ n` with `lowerMask n` returns
@@ -803,7 +803,7 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     by_cases hin : i < n <;> simp [hin]
   · have hi64le : 64 ≤ i := Nat.le_of_not_gt hi64
     have hinFalse : ¬ i < n := by omega
-    rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, if_neg hinFalse]
+    rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, ite_eq_right hinFalse]
 
 /-- The packed single-word monic modulus has the advertised degree when
 `n < 64`. -/
@@ -905,9 +905,9 @@ theorem ofUInt64_packedReduceWord_eq_of_degree_lt
   intro i
   rw [coeff_ofUInt64_and_lowerMask low hn64]
   by_cases hin : i < n
-  · rw [if_pos hin]
+  · rw [ite_eq_left hin]
     exact congrArg (fun q : GF2Poly => q.coeff i) hlow
-  · rw [if_neg hin]
+  · rw [ite_eq_right hin]
     exact (coeff_eq_false_of_reduced_le (p := r) hred' (Nat.le_of_not_gt hin)).symm
 
 /-- Reducedness below `bound` (zero, or degree `< bound`) is preserved by

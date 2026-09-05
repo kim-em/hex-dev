@@ -464,7 +464,7 @@ theorem ordinary?_eq_of_some {p n : Nat} [Bounds p] [PrimeModulus p]
     obtain ⟨hnext, hleft, hright⟩ := hvalid
     have href := ordinary?_eq_reference plan left right hnext hleft hright
     unfold ordinary? at href
-    rw [if_pos ⟨hnext, hleft, hright⟩] at href
+    rw [ite_eq_left ⟨hnext, hleft, hright⟩] at href
     rw [href] at hresult
     exact (Option.some.inj hresult).symm
   next hinvalid => simp at hresult

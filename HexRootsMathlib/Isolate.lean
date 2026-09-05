@@ -106,7 +106,7 @@ theorem isolate_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
       ∀ (i : Nat) (hi : i < rs.size) (hj : i < atoms.size),
         rs[i] = .atom atoms[i] := by
   have hrun' := hrun
-  rw [Hex.isolate, dif_pos hdegree] at hrun'
+  rw [Hex.isolate, dite_eq_left hdegree] at hrun'
   let target := max atomPrec (Hex.separationDepth p : Int)
   cases hall : Hex.isolateAll? p target
       #[Hex.Component.cauchy p hdegree] strategy with
@@ -163,7 +163,7 @@ theorem isolate_nonpositive (p : Hex.ZPoly)
     (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
     p.size ≠ 0 ∧ atoms = #[] := by
   have hrun' := hrun
-  rw [Hex.isolate, dif_neg hdegree] at hrun'
+  rw [Hex.isolate, dite_eq_right hdegree] at hrun'
   by_cases hp : p.size = 0
   · simp [hp] at hrun'
   · have hatoms : atoms = #[] := by

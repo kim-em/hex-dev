@@ -82,7 +82,7 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
             (pthRoot loop.2) (multiplicity * p) fuel) := by
     have h := _hresidual
     simp only [squareFreeAuxRevResidualSatisfied] at h
-    rw [if_neg (by simp [hzero]), if_neg (by simp [hdf])] at h
+    rw [ite_eq_right (by simp [hzero]), ite_eq_right (by simp [hdf])] at h
     simpa [c, g, Nat.mul_one] using h
   have hloop_eq :
       (yunFactorsWithLevel c g multiplicity 1 fuel []).2 = contribution.2 := by
@@ -90,7 +90,7 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
       yunFactorsWithLevel_reconstruction_invariant c g multiplicity 1 fuel []
     simpa [contribution] using hrec.1
   simp only [squareFreeAuxRevContribution]
-  rw [if_neg (by simp [hzero]), if_neg (by simp [hdf])]
+  rw [ite_eq_right (by simp [hzero]), ite_eq_right (by simp [hdf])]
   by_cases hone : isOne contribution.2 = true
   · have hcontribution_eq_one : contribution.2 = 1 :=
       eq_one_of_isOne_true contribution.2 hone
@@ -222,7 +222,7 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
                     squareFreeAuxRevResidualSatisfied (pthRoot f) (multiplicity * p) fuel := by
                   have h := hresidual
                   simp only [squareFreeAuxRevResidualSatisfied] at h
-                  rw [if_neg (by simp [hzero]), if_pos hdf] at h
+                  rw [ite_eq_right (by simp [hzero]), ite_eq_left hdf] at h
                   exact h
                 exact ih (pthRoot f) (multiplicity * p)
                   hmultiplicity_root hroot_fuel hroot_zero hroot_reachable hroot_residual)
@@ -681,14 +681,14 @@ private theorem squareFreeAuxRev_factor_dvd_input
           cases h : g.isZero
           · rfl
           · exact False.elim (hzero h)
-        rw [if_neg (by simp [hzero_false])] at hb
+        rw [ite_eq_right (by simp [hzero_false])] at hb
         by_cases hdf : (DensePoly.derivative g).isZero = true
-        · rw [if_pos hdf] at hb
+        · rw [ite_eq_left hdf] at hb
           have hres_pth :
               squareFreeAuxRevResidualSatisfied (pthRoot g) (m * p) fuel := by
             have h := hresidual
             simp only [squareFreeAuxRevResidualSatisfied] at h
-            rw [if_neg (by simp [hzero_false]), if_pos hdf] at h
+            rw [ite_eq_right (by simp [hzero_false]), ite_eq_left hdf] at h
             exact h
           have hb_pth : b.factor ∣ pthRoot g :=
             ih (pthRoot g) (m * p) hres_pth b hb
@@ -699,7 +699,7 @@ private theorem squareFreeAuxRev_factor_dvd_input
             cases h : (DensePoly.derivative g).isZero
             · rfl
             · exact False.elim (hdf h)
-          rw [if_neg (by simp [hdf_false])] at hb
+          rw [ite_eq_right (by simp [hdf_false])] at hb
           let g_inner := monicGcd g (DensePoly.derivative g)
           let c_inner := g / g_inner
           let loop := yunFactorsWithLevel c_inner g_inner m 1 fuel []
@@ -710,7 +710,7 @@ private theorem squareFreeAuxRev_factor_dvd_input
                     (pthRoot loop.2) (m * p) fuel) := by
             have h := hresidual
             simp only [squareFreeAuxRevResidualSatisfied] at h
-            rw [if_neg (by simp [hzero_false]), if_neg (by simp [hdf_false])] at h
+            rw [ite_eq_right (by simp [hzero_false]), ite_eq_right (by simp [hdf_false])] at h
             exact h
           have hg_inner_dvd_g : g_inner ∣ g :=
             monicGcd_dvd_left hp g (DensePoly.derivative g)
@@ -874,7 +874,7 @@ private theorem squareFreeAuxRevResidualSatisfied_one
         rw [DensePoly.isZero_eq_true_iff]
         have h := DensePoly.size_derivative_le (1 : FpPoly p)
         omega
-      rw [if_neg (by simp [hone_ne]), if_pos hdf_one, pthRoot_one hp]
+      rw [ite_eq_right (by simp [hone_ne]), ite_eq_left hdf_one, pthRoot_one hp]
       exact ih (m * p)
 
 private theorem yunFactorsWithLevel_squareFreeAuxRev_tail_cross_coprime
@@ -998,7 +998,7 @@ private theorem squareFreeAuxRev_eq_nil_of_size_le_one
           omega
         have hdf : (DensePoly.derivative f).isZero = true :=
           derivative_isZero_true_of_size_one f hsize_one
-        simp only [hzero, Bool.false_eq_true, if_false, hdf, if_true]
+        simp only [hzero, Bool.false_eq_true, ite_false, hdf, ite_true]
         apply ih
         have h := pthRoot_size_of_derivative_zero hp f hzero_false hdf
         rw [hsize_one, Nat.sub_self, Nat.zero_div] at h
@@ -1079,8 +1079,8 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil_of_yun_invariant
                   squareFreeAuxRevResidualSatisfied f multiplicity (fuel + 1) :=
                 squareFreeAuxRevResidualSatisfied_of_size_lt hp f multiplicity (fuel + 1) hfuel
               simp only [squareFreeAuxRevResidualSatisfied] at hres_full
-              rw [if_neg (by simp [hzero_false]),
-                  if_neg (by simp [hdf_false])] at hres_full
+              rw [ite_eq_right (by simp [hzero_false]),
+                  ite_eq_right (by simp [hdf_false])] at hres_full
               refine ⟨?_, ?_⟩
               · simpa [c, g, Nat.mul_one] using hres_full.1
               · intro hone_false

@@ -142,16 +142,16 @@ private theorem liftExact_eq_impl_value
   induction k, acc using liftExact.induct (p := p) (f := f) with
   | case1 k acc hsmall =>
       rw [liftExact, liftExactImpl]
-      simp only [if_pos hsmall]
+      simp only [ite_eq_left hsmall]
   | case2 k acc hlarge half ih =>
       rw [liftExact, liftExactImpl]
-      simp only [if_neg hlarge]
+      simp only [ite_eq_right hlarge]
       have ih' : liftExact p f ((k + 1) / 2) acc = liftExactImpl p f ((k + 1) / 2) acc := ih
       rw [ih']
       by_cases heven : 2 * ((k + 1) / 2) = k
-      · simp only [if_pos heven]
+      · simp only [ite_eq_left heven]
         exact reduceLift_step_eq_of_even p k ((k + 1) / 2) f _ _ _ _ heven
-      · simp only [if_neg heven]
+      · simp only [ite_eq_right heven]
 
 /-- Proof-backed compiled implementation of the exact-exponent quadratic
 recursion. -/
@@ -213,7 +213,7 @@ def henselLiftFactorsImpl
   · rename_i hlarge
     dsimp only
     by_cases heven : 2 * ((k + 1) / 2) = k
-    · simp only [if_pos heven]
+    · simp only [ite_eq_left heven]
       have hmpos : 0 < p ^ ((k + 1) / 2) :=
         Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
       have hmm : p ^ ((k + 1) / 2) * p ^ ((k + 1) / 2) = p ^ k := by
@@ -226,7 +226,7 @@ def henselLiftFactorsImpl
       rw [hmm] at hfst hsnd
       rw [ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hfst,
         ZPoly.reduceModPow_eq_self_of_canonical _ p k hpk hsnd]
-    · simp only [if_neg heven]
+    · simp only [ite_eq_right heven]
 
 /-- The factor-only final step is byte-identical to projecting the full lift. -/
 theorem henselLiftFactors_eq
@@ -418,7 +418,7 @@ private theorem multifactorLiftQuadraticList_eq_impl_value
       cases canonical with
       | false => simp
       | true =>
-          simp only [if_true]
+          simp only [ite_true]
           rw [ZPoly.reduceModPow_eq_self_of_canonical f p k hpk (hcanonical rfl)]
   | case3 f g₀ g₁ rest =>
       rename_i ihL ihR
@@ -623,7 +623,7 @@ private theorem liftExact_invariant
       simpa using hinv
   | case2 k acc hlarge half ih =>
       rw [liftExact]
-      simp only [if_neg hlarge]
+      simp only [ite_eq_right hlarge]
       let prior := liftExact p f half acc
       let next := quadraticHenselStep (p ^ half) f
         prior.g prior.h prior.s prior.t
@@ -676,7 +676,7 @@ private theorem liftExact_factors_congr_mod_base
       exact reduceLift_factors_congr_mod_base p 1 acc (by omega)
   | case2 k acc hlarge half ih =>
       rw [liftExact]
-      simp only [if_neg hlarge]
+      simp only [ite_eq_right hlarge]
       let prior := liftExact p f half acc
       let next := quadraticHenselStep (p ^ half) f
         prior.g prior.h prior.s prior.t

@@ -476,9 +476,9 @@ private theorem cofactorSign_eq_neg_one_pow
       (-1 : R) ^ (row.val + col.val) := by
   unfold Hex.Matrix.cofactorSign
   by_cases h : (row.val + col.val) % 2 = 0
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     exact (Even.neg_one_pow (Nat.even_iff.mpr h)).symm
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     have hmod : (row.val + col.val) % 2 = 1 := by omega
     have hodd : Odd (row.val + col.val) := Nat.odd_iff.mpr hmod
     exact (Odd.neg_one_pow hodd).symm

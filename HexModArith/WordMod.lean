@@ -65,7 +65,7 @@ theorem toNat_addModWord (m a b : UInt64) (hm : m.toNat ≤ UInt64.word)
           rw [UInt64.le_iff_toNat_le, hs]; exact hge
         simp [this]
       · simp [hle]
-    rw [if_pos hcond, UInt64.toNat_subBorrow_fst]
+    rw [ite_eq_left hcond, UInt64.toNat_subBorrow_fst]
     simp only [Bool.toNat_false, Nat.add_zero]
     rw [hfst, hmod]
     rcases Nat.lt_or_ge (a.toNat + b.toNat) UInt64.word with hlt | hle
@@ -90,7 +90,7 @@ theorem toNat_addModWord (m a b : UInt64) (hm : m.toNat ≤ UInt64.word)
       have hc2 : ¬ m ≤ (UInt64.addCarry a b false).1 := by
         rw [UInt64.le_iff_toNat_le, hs]; omega
       simp [hc1, hc2]
-    rw [if_neg (by rw [hcond]; simp), hs, hmod]
+    rw [ite_eq_right (by rw [hcond]; simp), hs, hmod]
 
 /-- `addModWord` stays below `m`. -/
 theorem addModWord_lt (m a b : UInt64) (hm : 0 < m.toNat) (hmw : m.toNat ≤ UInt64.word)
@@ -114,7 +114,7 @@ theorem toNat_subModWord (m a b : UInt64) (hm : m.toNat ≤ UInt64.word)
   by_cases hlt : a.toNat < b.toNat
   · -- borrow: result wraps up by `m`
     have hcond : (UInt64.subBorrow a b false).2 = true := by rw [hsnd]; simp [hlt]
-    rw [if_pos hcond, UInt64.toNat_addCarry_fst]
+    rw [ite_eq_left hcond, UInt64.toNat_addCarry_fst]
     simp only [Bool.toNat_false, Nat.add_zero]
     rw [hfst]
     have hs : (UInt64.word + a.toNat - b.toNat) % UInt64.word
@@ -128,7 +128,7 @@ theorem toNat_subModWord (m a b : UInt64) (hm : m.toNat ≤ UInt64.word)
     rw [he, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
   · -- no borrow: plain difference
     have hcond : (UInt64.subBorrow a b false).2 = false := by rw [hsnd]; simp [hlt]
-    rw [if_neg (by rw [hcond]; simp), hfst]
+    rw [ite_eq_right (by rw [hcond]; simp), hfst]
     have hs : (UInt64.word + a.toNat - b.toNat) % UInt64.word = a.toNat - b.toNat := by
       have he : UInt64.word + a.toNat - b.toNat = UInt64.word + (a.toNat - b.toNat) := by omega
       rw [he, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
@@ -247,7 +247,7 @@ other divisors return `0` and are never exercised by monic `divMod`. -/
 
 instance : Div (WordMod ctx) := ⟨div⟩
 
-@[simp] theorem div_one (a : WordMod ctx) : a / 1 = a := if_pos rfl
+@[simp] theorem div_one (a : WordMod ctx) : a / 1 = a := ite_eq_left rfl
 
 @[simp] theorem toNat_zero : (0 : WordMod ctx).toNat = 0 := by
   show (ofNat (ctx := ctx) 0).toNat = 0

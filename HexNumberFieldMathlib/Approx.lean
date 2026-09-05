@@ -74,7 +74,7 @@ private theorem refineTo?_monotone {p : ZPoly} (rep : RefinedIsolation p)
             by_cases htarget :
                 max target (mahlerPrec p : Int) ≤ rep.1.square.prec
             · have hiso : rep.1 = iso' := by
-                rw [DyadicRootIsolation.refineTo?, if_pos htarget] at hraw
+                rw [DyadicRootIsolation.refineTo?, ite_eq_left htarget] at hraw
                 exact Option.some.inj hraw
               exact hiso ▸ le_rfl
             · exact (le_of_not_ge htarget).trans hready
@@ -1555,7 +1555,7 @@ theorem invBall_exists {p : ZPoly} (a : RefinedIsolation p)
   have hout : input.inv? target = some out := by
     unfold DyadicComplexBall.inv?
     dsimp only
-    rw [if_pos hsep]
+    rw [ite_eq_left hsep]
   refine ⟨out, by simpa only [input, target, G, C, D] using hout, ?_⟩
   have hqdistReal : (qdist : ℝ) =
       r / ((lower - r) * lower) := by

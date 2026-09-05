@@ -152,7 +152,7 @@ theorem isolate_nk_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         rs[i] = .atom atoms[i] ∧ Hex.nkWitness p atoms[i].square ∧
           atoms[i].witness.isNK = true := by
   have hrun' := hrun
-  rw [Hex.isolate, dif_pos hdegree] at hrun'
+  rw [Hex.isolate, dite_eq_left hdegree] at hrun'
   let target := max atomPrec (Hex.separationDepth p : Int)
   cases hall : Hex.isolateAll? p target
       #[Hex.Component.cauchy p hdegree] .nk with
@@ -246,7 +246,7 @@ theorem isolate_nk_covers_once_of_pos (p : Hex.ZPoly)
   have hzri : z ∈ Certified.region rs[i] := by simpa only [hir'] using hzr
   have hzsq : z ∈ DyadicSquare.closedSquare atoms[i].square := by
     rw [hri] at hzri
-    simpa only [Certified.region, DyadicRootIsolation.region, if_pos hkind]
+    simpa only [Certified.region, DyadicRootIsolation.region, ite_eq_left hkind]
       using hzri
   let fi : Fin atoms.size := ⟨i, by simpa [← hsize] using hi⟩
   refine ⟨fi, hzsq, ?_⟩
@@ -291,7 +291,7 @@ theorem isolate_nk_nonpositive (p : Hex.ZPoly)
     (hrun : Hex.isolate p h atomPrec .nk = some atoms) :
     p.size ≠ 0 ∧ atoms = #[] := by
   have hrun' := hrun
-  rw [Hex.isolate, dif_neg hdegree] at hrun'
+  rw [Hex.isolate, dite_eq_right hdegree] at hrun'
   by_cases hp : p.size = 0
   · simp [hp] at hrun'
   · have hatoms : atoms = #[] := by

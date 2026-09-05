@@ -153,7 +153,7 @@ private theorem foldl_det_product_no_scale {R : Type u}
       have hx : x ≠ i := by
         intro hxi
         exact hnot.1 hxi.symm
-      rw [if_neg hx]
+      rw [ite_eq_right hx]
       exact ih (z * f x) hnot.2
 
 /-- For a `Nodup` list `xs` containing `i`, scaling only the factor at `i` by `c`
@@ -173,7 +173,7 @@ private theorem foldl_det_product_single_scale {R : Type u}
       simp only [List.foldl_cons]
       by_cases hx : x = i
       · subst x
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         calc
           xs.foldl (fun acc x => acc * if x = i then c * f x else f x) (z * (c * f i)) =
               xs.foldl (fun acc x => acc * f x) (z * (c * f i)) := by
@@ -183,7 +183,7 @@ private theorem foldl_det_product_single_scale {R : Type u}
                 grind
           _ = c * xs.foldl (fun acc x => acc * f x) (z * f i) := by
                 exact foldl_det_product_mul_left xs c f (z * f i)
-      · rw [if_neg hx]
+      · rw [ite_eq_right hx]
         have hmemTail : i ∈ xs := by
           cases hmem with
           | inl hxi => exact False.elim (hx hxi.symm)
@@ -231,7 +231,7 @@ private theorem foldl_det_product_single_add {R : Type u}
       simp only [List.foldl_cons]
       by_cases hx : x = i
       · subst x
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hnot : i ∉ xs := hnodup.1
         calc
           xs.foldl (fun acc x => acc * if x = i then f x + c * g x else f x)
@@ -242,7 +242,7 @@ private theorem foldl_det_product_single_add {R : Type u}
               have hyi : y ≠ i := by
                 intro h
                 exact hnot (h ▸ hy)
-              rw [if_neg hyi]
+              rw [ite_eq_right hyi]
           _ = xs.foldl (fun acc x => acc * f x) (z * f i + c * (z * g i)) := by
               congr 1
               grind
@@ -266,7 +266,7 @@ private theorem foldl_det_product_single_add {R : Type u}
               exact (hagree y (List.mem_cons.mpr (Or.inr hy)) (by
                 intro h
                 exact hnot (h ▸ hy))).symm
-      · rw [if_neg hx]
+      · rw [ite_eq_right hx]
         have hmemTail : i ∈ xs := by
           cases hmem with
           | inl hxi => exact False.elim (hx hxi.symm)
@@ -343,7 +343,7 @@ private theorem detProduct_identity_zero {R : Type u}
     (List.mem_finRange i) (by
       change (Matrix.identity (R := R) n)[i][perm[i]] = 0
       rw [identity_get]
-      rw [if_neg hsymm])
+      rw [ite_eq_right hsymm])
 
 
 /-- `detProduct` of the identity matrix along `insertAt (Fin.last n) (v.map

@@ -95,7 +95,7 @@ private theorem invLower_positive (precision : Precision) (upper : Upper) {x : ‚
         intro equal
         subst value
         simp [toReal] at valuePositive
-      simp only [Raw.invLowerUnchecked, valueNonzero, if_false, Lower.Contains]
+      simp only [Raw.invLowerUnchecked, valueNonzero, ite_false, Lower.Contains]
       exact (roundedDown_le_inv value precision).trans
         ((inv_le_inv‚ÇÄ valuePositive positive).2
           (by cases strict <;> simp [Upper.Contains] at member ‚ä¢ <;> linarith))
@@ -114,7 +114,7 @@ private theorem invLower_negative (precision : Precision) (upper : Upper) {x : ‚
           exact shape
         have valueNegative : toReal value < 0 := by
           simpa only [toReal_zero] using toReal_lt valueNegativeDyadic
-        simp only [Raw.invLowerUnchecked, valueZero, if_false, Lower.Contains]
+        simp only [Raw.invLowerUnchecked, valueZero, ite_false, Lower.Contains]
         exact (roundedDown_le_inv value precision).trans
           ((inv_le_inv_of_neg valueNegative negative).2
             (by cases strict
@@ -135,7 +135,7 @@ private theorem invUpper_positive (precision : Precision) (lower : Lower) {x : ‚
             simp [Raw.strictlyPositive, valueZero] at shape
             exact shape
           simpa only [toReal_zero] using toReal_lt valuePositiveDyadic
-        simp only [Raw.invUpperUnchecked, valueZero, if_false, Upper.Contains]
+        simp only [Raw.invUpperUnchecked, valueZero, ite_false, Upper.Contains]
         exact ((inv_le_inv‚ÇÄ positive valuePositive).2
             (by cases strict
                 ¬∑ exact member
@@ -154,7 +154,7 @@ private theorem invUpper_negative (precision : Precision) (lower : Lower) {x : ‚
         intro equal
         subst value
         simp [toReal] at valueNegative
-      simp only [Raw.invUpperUnchecked, valueNonzero, if_false, Upper.Contains]
+      simp only [Raw.invUpperUnchecked, valueNonzero, ite_false, Upper.Contains]
       exact ((inv_le_inv_of_neg negative valueNegative).2
           (by cases strict
               ¬∑ exact member

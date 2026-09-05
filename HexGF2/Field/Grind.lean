@@ -31,11 +31,11 @@ variable {f : GF2Poly} {hirr : GF2Poly.Irreducible f}
     (natCast (k + 1) : GF2nPoly f hirr) = natCast k + 1 := by
   unfold natCast
   by_cases hk : k % 2 = 0
-  · rw [if_pos hk, if_neg (by omega)]
+  · rw [ite_eq_left hk, ite_eq_right (by omega)]
     show (one : GF2nPoly f hirr) = zero + 1
     rw [show (zero : GF2nPoly f hirr) = 0 from rfl, zero_add]
     rfl
-  · rw [if_neg hk, if_pos (by omega)]
+  · rw [ite_eq_right hk, ite_eq_left (by omega)]
     show (zero : GF2nPoly f hirr) = one + 1
     rw [show (one : GF2nPoly f hirr) = 1 from rfl,
       show (zero : GF2nPoly f hirr) = 0 from rfl, add_self]
@@ -47,10 +47,10 @@ depend only on parity. -/
   show nsmul k a = natCast k * a
   unfold nsmul natCast
   by_cases hk : k % 2 = 0
-  · rw [if_pos hk, if_pos hk]
+  · rw [ite_eq_left hk, ite_eq_left hk]
     show (0 : GF2nPoly f hirr) = 0 * a
     rw [zero_mul]
-  · rw [if_neg hk, if_neg hk]
+  · rw [ite_eq_right hk, ite_eq_right hk]
     show a = one * a
     rw [show (one : GF2nPoly f hirr) = 1 from rfl, one_mul]
 
@@ -104,8 +104,8 @@ characteristic two is trivial on both sides. -/
   unfold zsmul
   rw [Int.natAbs_neg]
   by_cases hk : i.natAbs % 2 = 0
-  · rw [if_pos hk]; exact (neg_eq_self 0).symm
-  · rw [if_neg hk]; exact (neg_eq_self a).symm
+  · rw [ite_eq_left hk]; exact (neg_eq_self 0).symm
+  · rw [ite_eq_right hk]; exact (neg_eq_self a).symm
 
 /-- Integer casts negate trivially, since negation is the identity. -/
 @[grind =] theorem intCast_neg (i : Int) :
@@ -227,13 +227,13 @@ theorem isCharPOfDegreePos (hdeg : 0 < f.degree) :
     · intro h
       by_cases hx : x % 2 = 0 <;> by_cases hy : y % 2 = 0
       · omega
-      · rw [if_pos hx, if_neg hy] at h; exact absurd h hne
-      · rw [if_neg hx, if_pos hy] at h; exact absurd h.symm hne
+      · rw [ite_eq_left hx, ite_eq_right hy] at h; exact absurd h hne
+      · rw [ite_eq_right hx, ite_eq_left hy] at h; exact absurd h.symm hne
       · omega
     · intro h
       by_cases hx : x % 2 = 0
-      · rw [if_pos hx, if_pos (by omega)]
-      · rw [if_neg hx, if_neg (by omega)]
+      · rw [ite_eq_left hx, ite_eq_left (by omega)]
+      · rw [ite_eq_right hx, ite_eq_right (by omega)]
 
 end GF2nPoly
 

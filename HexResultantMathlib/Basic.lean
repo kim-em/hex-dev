@@ -69,7 +69,7 @@ theorem eval_toPolynomial [CommSemiring R] [DecidableEq R]
   intro i hi
   have hil : i < p.size := Finset.mem_range.mp hi
   rw [← length_toList p] at hil
-  rw [dif_pos hil, List.get_eq_getElem,
+  rw [dite_eq_left hil, List.get_eq_getElem,
     List.getElem_eq_getD (l := p.toList) (i := i) (h := hil) (Zero.zero : R),
     toList_getD_eq_coeff]
   rfl

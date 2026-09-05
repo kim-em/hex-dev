@@ -412,7 +412,7 @@ theorem recoveredClassFactors_polyProduct
         rw [HexPolyMathlib.leadingCoeff_toPolynomial]
         exact le_of_lt R.certificate.leadingCoeff_pos
       rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq,
-        if_pos hlc, Units.val_one, Polynomial.C_1, mul_one]
+        ite_eq_left hlc, Units.val_one, Polynomial.C_1, mul_one]
     have heq :
         HexPolyZMathlib.toPolynomial R.certificate.factor = q := by
       rw [← hp_norm, ← hq_norm]
@@ -443,7 +443,7 @@ theorem recoveredClassFactors_polyProduct
       rw [HexPolyMathlib.leadingCoeff_toPolynomial]
       exact le_of_lt hcore_lc_pos
     rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq,
-      if_pos hlc, Units.val_one, Polynomial.C_1, mul_one]
+      ite_eq_left hlc, Units.val_one, Polynomial.C_1, mul_one]
   have hprod_norm :
       (UniqueFactorizationMonoid.normalizedFactors X).prod = X := by
     have h := UniqueFactorizationMonoid.prod_normalizedFactors_eq hX_ne
@@ -889,7 +889,7 @@ theorem bhksSingleAllOnesPartition_eq_true_of_span_eq
             (Hex.ZPoly.directLiftData core B data).k
             (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)
         (directTrueSupports core B data) hspan hcover hclasses_ne)
-  rw [Hex.bhksSingleAllOnesPartition, dif_pos hrows]
+  rw [Hex.bhksSingleAllOnesPartition, dite_eq_left hrows]
   change (!indicators.isEmpty && !projected.projectedRows.isEmpty &&
     indicators.size == 1 &&
       Hex.bhksIndicatorAllOnes projected.factorCount

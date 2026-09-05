@@ -179,11 +179,11 @@ theorem cofactorCols_mul (df dg J : Nat) (f g : DensePoly R)
       by_cases hj : j.val < dg - J
       · have hj' : ¬dg - J ≤ j.val := by omega
         simp only [cofactorUCols, cofactorVCols, cofactorRowCols,
-          if_pos hj, if_neg hj']
+          ite_eq_left hj, ite_eq_right hj']
         rw [mul_add_left_poly, add_assoc_poly, ih]
       · have hj' : dg - J ≤ j.val := by omega
         simp only [cofactorUCols, cofactorVCols, cofactorRowCols,
-          if_neg hj, if_pos hj']
+          ite_eq_right hj, ite_eq_left hj']
         rw [mul_add_left_poly]
         calc
           cofactorUCols df dg J f g js * f +
@@ -231,13 +231,13 @@ private theorem coeff_monomial_mul (e : Nat) (c : R) (p : DensePoly R)
   by_cases hle : l < e
   · have hneg : Int.ofNat l - Int.ofNat e < 0 :=
       Int.sub_neg_of_lt (Int.ofNat_lt.mpr hle)
-    rw [if_pos hle, if_pos hneg, Lean.Grind.Semiring.mul_zero]
+    rw [ite_eq_left hle, ite_eq_left hneg, Lean.Grind.Semiring.mul_zero]
     rfl
   · have hleInt : Int.ofNat e ≤ Int.ofNat l :=
       Int.ofNat_le.mpr (Nat.le_of_not_gt hle)
     have hnneg : ¬Int.ofNat l - Int.ofNat e < 0 :=
       Int.not_lt.mpr (Int.sub_nonneg_of_le hleInt)
-    rw [if_neg hle, if_neg hnneg]
+    rw [ite_eq_right hle, ite_eq_right hnneg]
     have hnat := Int.toNat_sub l e
     change (Int.ofNat l - Int.ofNat e).toNat = l - e at hnat
     rw [hnat]
@@ -275,12 +275,12 @@ private theorem coeff_blockCols (start count total : Nat) (p : DensePoly R)
       simp only [blockCols, List.foldr_cons]
       rw [coeff_add_semiring, ih]
       by_cases hj : start ≤ j.val ∧ j.val < start + count
-      · rw [if_pos hj, if_pos hj, coeff_monomial]
+      · rw [ite_eq_left hj, ite_eq_left hj, coeff_monomial]
         by_cases hk : k = count - 1 - (j.val - start)
-        · rw [if_pos hk, if_pos hk]
-        · rw [if_neg hk, if_neg hk]
+        · rw [ite_eq_left hk, ite_eq_left hk]
+        · rw [ite_eq_right hk, ite_eq_right hk]
           rfl
-      · rw [if_neg hj, if_neg hj, coeff_zero]
+      · rw [ite_eq_right hj, ite_eq_right hj, coeff_zero]
 
 /-- A full interval of reversed coefficient columns reconstructs the bounded
 polynomial. -/
@@ -316,13 +316,13 @@ theorem blockCols_finRange (start count total : Nat) (p : DensePoly R)
               by_cases hjq : j = ⟨start + (count - 1 - k), by omega⟩
               · subst j
                 simp only [reduceIte]
-                rw [if_pos (by omega), if_pos (by omega)]
+                rw [ite_eq_left (by omega), ite_eq_left (by omega)]
                 congr 1
                 omega
-              · rw [if_neg hjq]
+              · rw [ite_eq_right hjq]
                 by_cases hjblock : start ≤ j.val ∧ j.val < start + count
-                · rw [if_pos hjblock]
-                  rw [if_neg]
+                · rw [ite_eq_left hjblock]
+                  rw [ite_eq_right]
                   intro heq
                   apply hjq
                   apply Fin.ext
@@ -336,7 +336,7 @@ theorem blockCols_finRange (start count total : Nat) (p : DensePoly R)
                     _ = start + (j.val - start) := by
                       rw [Nat.sub_sub_self hdle]
                     _ = j.val := hsplit
-                · rw [if_neg hjblock]
+                · rw [ite_eq_right hjblock]
       _ = 0 + p.coeff k := by
         exact List.foldl_add_single (List.finRange total) 0 q
           (fun _ => p.coeff k) (List.mem_finRange q) (List.nodup_finRange total)
@@ -347,8 +347,8 @@ theorem blockCols_finRange (start count total : Nat) (p : DensePoly R)
       intro j _hj
       dsimp only [term]
       by_cases hjblock : start ≤ j.val ∧ j.val < start + count
-      · rw [if_pos hjblock, if_neg (by omega)]
-      · rw [if_neg hjblock]
+      · rw [ite_eq_left hjblock, ite_eq_right (by omega)]
+      · rw [ite_eq_right hjblock]
     rw [List.foldl_add_eq_self _ term 0 hterm, hpzero]
 
 /-- The two reconstructed coefficient blocks multiply to their per-column
@@ -367,8 +367,8 @@ theorem blockCols_mul (df dg J : Nat) (u v f g : DensePoly R)
       · have hleft : 0 ≤ j.val ∧ j.val < 0 + (dg - J) := by omega
         have hright : ¬(dg - J ≤ j.val ∧ j.val < dg - J + (df - J)) := by
           omega
-        simp only [blockCols, bezoutCols, if_pos hj, if_pos hleft,
-          if_neg hright]
+        simp only [blockCols, bezoutCols, ite_eq_left hj, ite_eq_left hleft,
+          ite_eq_right hright]
         rw [add_comm_poly (0 : DensePoly R), add_zero_poly]
         rw [mul_add_left_poly, add_assoc_poly, ih]
         simp only [Nat.sub_zero]
@@ -377,8 +377,8 @@ theorem blockCols_mul (df dg J : Nat) (u v f g : DensePoly R)
             j.val < dg - J + (df - J) := by
           have hjfin := j.isLt
           omega
-        simp only [blockCols, bezoutCols, if_neg hj, if_neg hleft,
-          if_pos hright]
+        simp only [blockCols, bezoutCols, ite_eq_right hj, ite_eq_right hleft,
+          ite_eq_left hright]
         rw [add_comm_poly (0 : DensePoly R)
           (blockCols 0 (dg - J) (df - J + (dg - J)) u js), add_zero_poly,
           mul_add_left_poly]
@@ -428,14 +428,14 @@ theorem coeff_bezoutCols (df dg J l : Nat) (u v f g : DensePoly R)
       unfold coeffMatrixAt bezoutVector
       simp only [Fin.getElem_fin, Vector.getElem_ofFn]
       by_cases hj : j.val < dg - J
-      · simp only [if_pos hj, if_pos True.intro, coeff_monomial_mul]
+      · simp only [ite_eq_left hj, ite_eq_left True.intro, coeff_monomial_mul]
         have hle : j.val ≤ dg - J - 1 := by omega
         have hcast : Int.ofNat (dg - J - 1 - j.val) =
             Int.ofNat (dg - J - 1) - Int.ofNat j.val :=
           Int.ofNat_sub hle
         rw [hcast]
         grind
-      · simp only [if_neg hj, if_pos True.intro, coeff_monomial_mul]
+      · simp only [ite_eq_right hj, ite_eq_left True.intro, coeff_monomial_mul]
         have hbound : j.val - (dg - J) ≤ df - J - 1 := by
           have hjfin := j.isLt
           omega
@@ -465,14 +465,14 @@ private theorem coeffMatrixAt_row_eq_last (df dg J ell : Nat)
   by_cases hi : i.val = (df - J) + (dg - J) - 1
   · have hieq : i = last := Fin.ext hi
     subst i
-    simp only [if_pos hi]
+    simp only [ite_eq_left hi]
     intro j
     rfl
-  · simp only [if_neg hi]
+  · simp only [ite_eq_right hi]
     intro j
     unfold coeffMatrixAt
     by_cases hj : j.val < dg - J
-    · simp only [if_pos hj, if_neg hi, if_pos True.intro]
+    · simp only [ite_eq_left hj, ite_eq_right hi, ite_eq_left True.intro]
       congr 2
       have hleft : 0 < dg - J := by omega
       have hibound : i.val ≤ df + (dg - J) - 1 := by
@@ -487,7 +487,7 @@ private theorem coeffMatrixAt_row_eq_last (df dg J ell : Nat)
           Int.ofNat df + Int.ofNat (dg - J - 1) := Int.natCast_add _ _
       rw [hsub, hsplit, hadd]
       grind
-    · simp only [if_neg hj, if_neg hi, if_pos True.intro]
+    · simp only [ite_eq_right hj, ite_eq_right hi, ite_eq_left True.intro]
       congr 2
       have hright : 0 < df - J := by
         have hiFin := j.isLt
@@ -591,7 +591,7 @@ theorem bounded_bezout_unique [Div R] [ExactDivLaws R]
       have hj := hkernel j
       unfold bezoutVector at hj
       simp only [Fin.getElem_fin, Vector.getElem_ofFn] at hj
-      rw [if_pos (by dsimp [j]; omega)] at hj
+      rw [ite_eq_left (by dsimp [j]; omega)] at hj
       have hle : k ≤ dg - J - 1 := by omega
       have hindex : dg - J - 1 - (dg - J - 1 - k) = k :=
         Nat.sub_sub_self hle
@@ -606,7 +606,7 @@ theorem bounded_bezout_unique [Div R] [ExactDivLaws R]
       have hj := hkernel j
       unfold bezoutVector at hj
       simp only [Fin.getElem_fin, Vector.getElem_ofFn] at hj
-      rw [if_neg (by dsimp [j]; omega)] at hj
+      rw [ite_eq_right (by dsimp [j]; omega)] at hj
       have hle : k ≤ df - J - 1 := by omega
       have hindex :
           df - J - 1 -
@@ -653,12 +653,12 @@ private theorem cofactorUCols_size_le (df dg J : Nat) (f g : DensePoly R)
   | cons j js ih =>
       simp only [cofactorUCols]
       by_cases hj : j.val < dg - J
-      · rw [if_pos hj, coeff_add_semiring, coeff_monomial, ih]
-        rw [if_neg (by omega)]
+      · rw [ite_eq_left hj, coeff_add_semiring, coeff_monomial, ih]
+        rw [ite_eq_right (by omega)]
         have hzero : (Zero.zero : R) = 0 := rfl
         rw [hzero]
         grind
-      · rw [if_neg hj]
+      · rw [ite_eq_right hj]
         exact ih
 
 /-- The `g`-side cofactor accumulates only monomials below `df - J`, so it
@@ -673,12 +673,12 @@ private theorem cofactorVCols_size_le (df dg J : Nat) (f g : DensePoly R)
   | cons j js ih =>
       simp only [cofactorVCols]
       by_cases hj : dg - J ≤ j.val
-      · rw [if_pos hj, coeff_add_semiring, coeff_monomial, ih]
-        rw [if_neg (by omega)]
+      · rw [ite_eq_left hj, coeff_add_semiring, coeff_monomial, ih]
+        rw [ite_eq_right (by omega)]
         have hzero : (Zero.zero : R) = 0 := rfl
         rw [hzero]
         grind
-      · rw [if_neg hj]
+      · rw [ite_eq_right hj]
         exact ih
 
 /-- Degree bound for the left determinantal cofactor block at explicit formal
@@ -718,7 +718,7 @@ theorem coeff_cofactorRowCols (df dg J l : Nat) (f g : DensePoly R)
       simp only [cofactorRowCols, cofactorScalarCols]
       rw [coeff_add_semiring, ih]
       by_cases hj : j.val < dg - J
-      · rw [if_pos hj, if_pos hj, coeff_monomial_mul]
+      · rw [ite_eq_left hj, ite_eq_left hj, coeff_monomial_mul]
         have hle : j.val ≤ dg - J - 1 := by omega
         have hcast : Int.ofNat (dg - J - 1 - j.val) =
             Int.ofNat (dg - J - 1) - Int.ofNat j.val :=
@@ -726,7 +726,7 @@ theorem coeff_cofactorRowCols (df dg J l : Nat) (f g : DensePoly R)
         rw [hcast]
         grind
       · have hj' : dg - J ≤ j.val := by omega
-        rw [if_neg hj, if_neg hj, coeff_monomial_mul]
+        rw [ite_eq_right hj, ite_eq_right hj, coeff_monomial_mul]
         have hbound : j.val - (dg - J) ≤ df - J - 1 := by
           have hjfin := j.isLt
           omega
@@ -758,10 +758,10 @@ theorem cofactorScalarCols_eq_laplace (df dg J l : Nat)
       rw [← columnCofactorAt_eq df dg J l f g j]
       unfold coeffMatrixAt
       by_cases hj : j.val < dg - J
-      · simp only [if_pos hj]
-        rw [if_pos True.intro]
-      · simp only [if_neg hj]
-        rw [if_pos True.intro]
+      · simp only [ite_eq_left hj]
+        rw [ite_eq_left True.intro]
+      · simp only [ite_eq_right hj]
+        rw [ite_eq_left True.intro]
 
 /-- At positive matrix dimension, the full scalar cofactor sum is the
 corresponding generalized coefficient minor. -/
@@ -805,7 +805,7 @@ private theorem coeffInt_eq_zero_of_size_le (p : DensePoly R) (k : Int)
       unfold coeffInt
       by_cases hneg : Int.ofNat n < 0
       · exact False.elim (Int.not_ofNat_neg n hneg)
-      rw [if_neg hneg]
+      rw [ite_eq_right hneg]
       apply coeff_eq_zero_of_size_le
       exact Int.ofNat_le.mp h
   | negSucc n =>
@@ -840,11 +840,11 @@ theorem coeffMinorAt_eq_zero_of_lt (df dg J l : Nat) (f g : DensePoly R)
       have hdst : dst.val = (df - J) + (dg - J) - 1 := by rfl
       unfold coeffMatrixAt
       by_cases hj : j.val < dg - J
-      · simp only [if_pos hj, if_neg hsrc, if_pos hdst]
+      · simp only [ite_eq_left hj, ite_eq_right hsrc, ite_eq_left hdst]
         congr 2
         dsimp [src, dst]
         omega
-      · simp only [if_neg hj, if_neg hsrc, if_pos hdst]
+      · simp only [ite_eq_right hj, ite_eq_right hsrc, ite_eq_left hdst]
         congr 2
         dsimp [src, dst]
         omega
@@ -853,7 +853,7 @@ theorem coeffMinorAt_eq_zero_of_lt (df dg J l : Nat) (f g : DensePoly R)
     intro j
     unfold coeffMatrixAt
     by_cases hj : j.val < dg - J
-    · simp only [if_pos hj, if_pos True.intro]
+    · simp only [ite_eq_left hj, ite_eq_left True.intro]
       apply coeffInt_eq_zero_of_size_le
       have hbase : dg - J - 1 ≤ l := by omega
       have hnat : f.size ≤ l - (dg - J - 1) + j.val := by omega
@@ -868,7 +868,7 @@ theorem coeffMinorAt_eq_zero_of_lt (df dg J l : Nat) (f g : DensePoly R)
               Int.ofNat l - Int.ofNat (dg - J - 1) :=
             Int.ofNat_sub hbase
           exact hadd.trans (congrArg (fun z => z + Int.ofNat j.val) hsub)
-    · simp only [if_neg hj, if_pos True.intro]
+    · simp only [ite_eq_right hj, ite_eq_left True.intro]
       apply coeffInt_eq_zero_of_size_le
       have hbase : df - J - 1 ≤ l := by omega
       have hnat : g.size ≤
@@ -904,9 +904,9 @@ theorem cofactor_bezout (J : Nat) (f g : DensePoly R)
   unfold cofactorU cofactorV
   rw [coeff_cofactorAt_mul df dg J l f g hcount, coeff_poly]
   by_cases hl : l < J + 1
-  · rw [if_pos hl]
+  · rw [ite_eq_left hl]
     rfl
-  · rw [if_neg hl]
+  · rw [ite_eq_right hl]
     apply coeffMinorAt_eq_zero_of_lt
     · exact hJ
     · exact hdg
@@ -941,7 +941,7 @@ theorem eq_scaled_cofactor [Div R] [ExactDivLaws R]
     omega
   have hminor : coeffMinorAt df dg J ell f g ≠ 0 := by
     have hc := coeff_last_ne_zero_of_pos_size (poly J f g) hrootPos
-    rw [coeff_poly, if_pos hell] at hc
+    rw [coeff_poly, ite_eq_left hell] at hc
     have hzero : (Zero.zero : R) = 0 := rfl
     change coeffMinorAt df dg J ell f g ≠ (Zero.zero : R)
     simpa only [df, dg, ell, coeffMinor] using hc

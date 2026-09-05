@@ -426,14 +426,14 @@ theorem searchDirectAux_factored
         state hrun
       simp only [Hex.searchDirectAux] at hrun
       by_cases hone : target = 1
-      · rw [if_pos hone] at hrun
+      · rw [ite_eq_left hone] at hrun
         cases hrun
         refine
           { product := by simpa using hone.symm
             irreducible := by simp
             normalized := by simp
             degreePos := by simp }
-      · rw [if_neg hone] at hrun
+      · rw [ite_eq_right hone] at hrun
         cases localFactors with
         | nil => simp at hrun
         | cons head tail =>
@@ -660,7 +660,7 @@ theorem factorDirectCoreOfPlan_factored
       omega
     rw [hk, pow_zero] at hrecover
     omega
-  letI := modular.data.bounds
+  let := modular.data.bounds
   have hadm :
       Hex.leadingCoeffAdmissible core.poly modular.data.p :=
     Hex.isGoodPrime_leadingCoeffAdmissible core.poly modular.data.p

@@ -130,7 +130,7 @@ private theorem form_mul_smithBasis (A : Matrix Int n m) :
       have hq : (Matrix.row Q i)[kk] = 0 := by
         rw [Matrix.getElem_row]
         simp only [Q, Matrix.getElem_ofFn]
-        rw [if_neg]
+        rw [ite_eq_right]
         omega
       have hz : (0 : Vector Int (snfRank A))[kk.val] = 0 :=
         Vector.getElem_zero kk.val kk.isLt
@@ -219,7 +219,7 @@ private theorem vecMul_diagMatrix (d : Vector Int r) (z : Vector Int n)
   rw [getElem_vecMul]
   unfold Vector.dotProduct
   by_cases hj : j.val < r
-  · rw [dif_pos hj]
+  · rw [dite_eq_left hj]
     let target : Fin n := ⟨j.val, Nat.lt_of_lt_of_le hj hrn⟩
     calc
       (List.finRange n).foldl
@@ -231,8 +231,8 @@ private theorem vecMul_diagMatrix (d : Vector Int r) (z : Vector Int n)
         rw [Matrix.getElem_col, Matrix.getElem_diagMatrix]
         by_cases hit : i = target
         · subst i
-          rw [dif_pos ⟨rfl, hj⟩, if_pos rfl]
-        · rw [if_neg hit]
+          rw [dite_eq_left ⟨rfl, hj⟩, ite_eq_left rfl]
+        · rw [ite_eq_right hit]
           split
           next hentry =>
             exfalso
@@ -245,7 +245,7 @@ private theorem vecMul_diagMatrix (d : Vector Int r) (z : Vector Int n)
           (fun _ => d[(⟨j.val, hj⟩ : Fin r)] * z[target])
           (List.mem_finRange target) (List.nodup_finRange n)]
         omega
-  · rw [dif_neg hj]
+  · rw [dite_eq_right hj]
     calc
       (List.finRange n).foldl
           (fun acc i => acc + (Matrix.col (diagMatrix d n m) j)[i] * z[i]) 0 =
@@ -277,12 +277,12 @@ theorem solvable_iff_dvd {A : Matrix Int n m} {S : SmithData n m}
       let col : Fin m := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hS.rank_le_m⟩
       have heq := congrArg (fun v : Vector Int m => v.get col) hz
       change (vecMul z (diagMatrix S.diag n m))[col] = transformed[col] at heq
-      rw [vecMul_diagMatrix S.diag z hS.rank_le_n col, dif_pos i.isLt] at heq
+      rw [vecMul_diagMatrix S.diag z hS.rank_le_n col, dite_eq_left i.isLt] at heq
       exact ⟨z[row], by simpa [row, col, transformed, Int.mul_comm] using heq.symm⟩
     · intro j hj
       have heq := congrArg (fun v : Vector Int m => v.get j) hz
       change (vecMul z (diagMatrix S.diag n m))[j] = transformed[j] at heq
-      rw [vecMul_diagMatrix S.diag z hS.rank_le_n j, dif_neg (by omega)] at heq
+      rw [vecMul_diagMatrix S.diag z hS.rank_le_n j, dite_eq_right (by omega)] at heq
       exact heq.symm
   · rintro ⟨hdvd, hzero⟩
     let z : Vector Int n := Vector.ofFn fun row =>
@@ -309,7 +309,7 @@ theorem solvable_iff_dvd {A : Matrix Int n m} {S : SmithData n m}
       have hzget : z.get row = HexArith.Int.exactDiv transformed[col] S.diag[i] := by
         change z[row.val] = HexArith.Int.exactDiv transformed[col] S.diag[i]
         simp only [z, Vector.getElem_ofFn]
-        rw [dif_pos hcol]
+        rw [dite_eq_left hcol]
       rw [hzget]
       rw [Int.mul_comm]
       exact hquot
@@ -532,7 +532,7 @@ theorem IsSNF.rank_eq_hnfRank {A : Matrix Int n m} {S : SmithData n m}
     intro hgt
     let k := D.rank + 1
     have hsmith := hS.detDivisor_eq k
-    rw [if_pos (by simp [k]; omega)] at hsmith
+    rw [ite_eq_left (by simp [k]; omega)] at hsmith
     have hzero := hH.detDivisor_succ_eq_zero
     rw [hnf_detDivisor_eq A k, hsmith] at hzero
     have hpos : 0 < (S.diag.take k).foldl (· * ·) 1 := by
@@ -545,7 +545,7 @@ theorem IsSNF.rank_eq_hnfRank {A : Matrix Int n m} {S : SmithData n m}
     intro hgt
     let k := S.rank + 1
     have hsmith := hS.detDivisor_eq k
-    rw [if_neg (by simp [k])] at hsmith
+    rw [ite_eq_right (by simp [k])] at hsmith
     have hnonzero := hH.detDivisor_ne_zero k (by simp [k]; omega)
     rw [hnf_detDivisor_eq A k, hsmith] at hnonzero
     exact hnonzero rfl
@@ -774,7 +774,7 @@ private theorem latticeIndex_eq_detDivisor (A : Matrix Int n m) :
       intro hm
       apply hrank
       exact Nat.le_antisymm (snfRank_le_m A) hm
-    rw [if_neg hnotle] at hS
+    rw [ite_eq_right hnotle] at hS
     rw [latticeIndex_eq_zero A hfull, hS]
 
 /-- The lattice index is the product of the Smith invariant factors in full
@@ -787,11 +787,11 @@ theorem latticeIndex_eq_invariantFactors (A : Matrix Int n m) :
   rw [latticeIndex_eq_detDivisor]
   have hS := (snfData_isSNF A).detDivisor_eq m
   by_cases hfull : snfRank A = m
-  · rw [if_pos hfull]
+  · rw [ite_eq_left hfull]
     have hrank : (snfData A).rank = m := by
       rw [← snfRank_eq_data]
       exact hfull
-    rw [if_pos (by omega)] at hS
+    rw [ite_eq_left (by omega)] at hS
     have htake : ((snfData A).diag.take m).toList =
         (snfData A).diag.toList := by
       simp only [Vector.toList_take]
@@ -810,13 +810,13 @@ theorem latticeIndex_eq_invariantFactors (A : Matrix Int n m) :
     rw [vector_foldl_toList (v := invariantFactors A)
       (f := fun acc d => acc * d.natAbs)]
     simpa only [List.foldl_map, Int.natAbs_one] using habs
-  · rw [if_neg hfull]
+  · rw [ite_eq_right hfull]
     have hnotle : ¬ m ≤ (snfData A).rank := by
       rw [← snfRank_eq_data]
       intro hm
       apply hfull
       exact Nat.le_antisymm (snfRank_le_m A) hm
-    rw [if_neg hnotle] at hS
+    rw [ite_eq_right hnotle] at hS
     exact hS
 
 end Hex.Matrix

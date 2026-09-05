@@ -957,7 +957,7 @@ theorem mul_mod_inverseCandidate_eq_one_of_irreducible
           DensePoly.coeff_eq_zero_of_size_le d (by omega)
         rw [hd_coeff]
         have hkne : k + 1 ≠ 0 := Nat.succ_ne_zero k
-        rw [if_neg hkne]
+        rw [ite_eq_right hkne]
         exact hzero_mul
   have hkey : L * a + R * g = (1 : FpPoly p) := by
     show DensePoly.scale dlc⁻¹ xres.left * a +

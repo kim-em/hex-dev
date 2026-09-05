@@ -61,7 +61,7 @@ theorem lt_two_pow_bitLen (n : Nat) : n < 2 ^ bitLen n := by
   unfold bitLen
   by_cases h : n = 0
   · simp [h]
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     exact Nat.lt_log2_self
 
 /-- The least `k` with `n ≤ 2 ^ k`. -/
@@ -442,9 +442,9 @@ theorem constPack_eq (b : Nat) (c : Int) :
   | _ len ih =>
       unfold constPack
       by_cases hlen : len = 0
-      · rw [if_pos hlen, hlen]
+      · rw [ite_eq_left hlen, hlen]
         rfl
-      · rw [if_neg hlen]
+      · rw [ite_eq_right hlen]
         have hh : len / 2 < len := by omega
         have hsucc : ∀ m, packSpec b (fun _ => c) (m + 1)
             = c + 2 ^ b * packSpec b (fun _ => c) m := fun _ => rfl
@@ -455,7 +455,7 @@ theorem constPack_eq (b : Nat) (c : Int) :
             have h := packSpec_add b (fun _ => c) (len / 2) (len / 2)
             rw [show len / 2 + len / 2 = len by omega] at h
             exact h
-          rw [if_pos hpar, ih _ hh, Int.shiftLeft_eq, hsplit]
+          rw [ite_eq_left hpar, ih _ hh, Int.shiftLeft_eq, hsplit]
           grind
         · have hsplit : packSpec b (fun _ => c) len
               = packSpec b (fun _ => c) (len / 2)
@@ -463,7 +463,7 @@ theorem constPack_eq (b : Nat) (c : Int) :
             have h := packSpec_add b (fun _ => c) (len / 2) (len / 2 + 1)
             rw [show len / 2 + (len / 2 + 1) = len by omega] at h
             exact h
-          rw [if_neg hpar, ih _ hh, Int.shiftLeft_eq, Int.shiftLeft_eq, hsplit, hsucc]
+          rw [ite_eq_right hpar, ih _ hh, Int.shiftLeft_eq, Int.shiftLeft_eq, hsplit, hsucc]
           grind
 
 /-! # Divide-and-conquer digit extraction -/
@@ -658,20 +658,20 @@ private theorem mul_eq_zero_of_isZero (p q : ZPoly) (h : p.isZero = true ∨ q.i
     p * q = 0 := by
   show DensePoly.mul p q = 0
   unfold DensePoly.mul
-  rcases h with h | h <;> rw [if_pos (by simp [h])]
+  rcases h with h | h <;> rw [ite_eq_left (by simp [h])]
 
 /-- The Kronecker kernel computes the schoolbook product, at every cutoff. -/
 theorem mulKroneckerAt_eq (sizeCutoff bitCutoff : Nat) (p q : ZPoly) :
     mulKroneckerAt sizeCutoff bitCutoff p q = p * q := by
   unfold mulKroneckerAt
   by_cases hz : p.isZero || q.isZero
-  · rw [if_pos hz]
+  · rw [ite_eq_left hz]
     exact (mul_eq_zero_of_isZero p q (by simpa using hz)).symm
-  rw [if_neg hz]
+  rw [ite_eq_right hz]
   by_cases hsmall : min p.size q.size < sizeCutoff
-  · rw [if_pos hsmall]
+  · rw [ite_eq_left hsmall]
     exact (DensePoly.mul_eq_mulImpl p q).symm
-  rw [if_neg hsmall]
+  rw [ite_eq_right hsmall]
   by_cases hnarrow : bitLen (max (maxAbs p) (maxAbs q)) < bitCutoff
   · simp only [hnarrow, ↓reduceIte]
     exact (DensePoly.mul_eq_mulImpl p q).symm

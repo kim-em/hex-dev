@@ -37,7 +37,7 @@ theorem pelletAt_of_bound {cs : Array Hex.GaussDyadic} {k : ℕ}
           Dyadic.toReal rlo ^ k) :
     Hex.pelletAt cs k rlo rhi = true := by
   unfold Hex.pelletAt
-  rw [if_pos hk]
+  rw [ite_eq_left hk]
   apply decide_eq_true
   apply Dyadic.toReal_lt_toReal_iff.mp
   let result := (List.range cs.size).foldl

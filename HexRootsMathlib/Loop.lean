@@ -220,7 +220,7 @@ theorem mem_next_of_hold {p : Hex.ZPoly} {target : Int}
     (hdisjoint : Hex.IsolationLoop.overlaps tried i r = false) :
     c ∈ Hex.IsolationLoop.next p target tried := by
   rw [Hex.IsolationLoop.next]
-  simp only [hdepth, if_true]
+  simp only [hdepth, ite_true]
   apply Array.mem_flatMap_of_mem (by simp [hi] : i ∈ Array.range tried.size)
   rw [Hex.IsolationLoop.step]
   have hgetD : tried.getD i (⟨#[], 0⟩, none) = (c, some r) := by
@@ -242,7 +242,7 @@ theorem mem_next_of_adopt {p : Hex.ZPoly} {target : Int}
     (hfiner : c.prec < r.toComponent.prec) :
     r.toComponent ∈ Hex.IsolationLoop.next p target tried := by
   rw [Hex.IsolationLoop.next]
-  simp only [hdepth, if_true]
+  simp only [hdepth, ite_true]
   apply Array.mem_flatMap_of_mem (by simp [hi] : i ∈ Array.range tried.size)
   rw [Hex.IsolationLoop.step]
   have hgetD : tried.getD i (⟨#[], 0⟩, none) = (c, some r) := by
