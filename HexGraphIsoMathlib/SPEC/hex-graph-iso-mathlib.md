@@ -265,9 +265,12 @@ For equal vertex cardinalities, the tactic:
 
 1. reifies the two graphs and proves the two adjacency correspondences;
 2. reifies and proves colour correspondences when colours are present;
-3. runs the compiled `findIso` search;
-4. checks the returned literal permutation with the Mathlib-free, bounded
-   `checkIso?`;
+3. runs the compiled `findIso` search under `maxSearchNodes`;
+4. hands the returned literal permutation to the same witness route the
+   Mathlib-free tactic uses, which ties each side's adjacency, colouring
+   and the permutation to list literals and closes through
+   `Kernel.checkIso` and `Kernel.isIso_of_checkIso` under
+   `maxKernelSteps`;
 5. conjugates the permutation by the two finite enumerations;
 6. constructs an explicit `SimpleGraph.Iso` or `Colored.Iso`;
 7. wraps it in `Nonempty` when required.
@@ -290,11 +293,10 @@ Otherwise the tactic:
 
 1. reifies both inputs with kernel-checked correspondence proofs;
 2. obtains executable non-isomorphism of the encodings from the shared
-   Mathlib-free negative engine, which takes the certificate route whenever
-   it is available and retains the verified pairwise decision as the
-   exhaustion fallback (per the core SPEC's tactic section);
-3. transports that result through the `not_encode_iso` bridge
-   theorems;
+   Mathlib-free negative routes, the root separator and then certificate
+   replay, described in
+   [hex-graph-iso.md § The Mathlib-free graph_iso tactic](../../HexGraphIso/SPEC/hex-graph-iso.md#the-mathlib-free-graph_iso-tactic);
+3. transports that result through the `not_encode_iso` theorems;
 4. constructs `IsEmpty` or the requested negated `Nonempty`
    proposition.
 
