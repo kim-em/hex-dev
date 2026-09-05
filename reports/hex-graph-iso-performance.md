@@ -313,25 +313,25 @@ type-checking time by the certificate record count (both sides summed). The
 two records below are `hexgraphiso-kernel-7e28eb7ddb6c-chungus2.json` (the
 list-state replay, before this work) and
 `hexgraphiso-kernel-81c4253bab3a-chungus2.json` (the packed replay), both on
-this host with a load average near 5.
+this host with a one-minute load average of 5 and of 4 respectively.
 
 | pair | n | route | records | kernel s, before | kernel s, after |
 |---|---:|---|---:|---:|---:|
-| `neg-c6-vs-2c3` | 6 | certs | 23 | 0.315 | 0.083 |
-| `neg-c10-vs-2c5` | 10 | certs | 33 | 0.912 | 0.282 |
-| `neg-c16-vs-2c8` | 16 | certs | 48 | 3.75 | 1.01 |
-| `neg-circulant10-2-5-vs-1-5` | 10 | certs | 26 | 0.892 | 0.204 |
-| `neg-kneser72-vs-johnson72` | 21 | certs | 83 | 9.00 | 1.77 |
-| `neg-grid4x4-vs-q4` | 16 | root | | 0.769 | 0.202 |
-| `neg-grid4x6-vs-2grid3x4` | 24 | root | | 6.17 | 2.21 |
-| `neg-paley25-vs-latin5` | 25 | root | | 2.98 | 1.29 |
-| `neg-circ48-vs-2circ24` | 48 | certs | 128 | timeout | 64.5 |
-| `neg-paley61-vs-circulant61` | 61 | certs | 156 | timeout | 54.3 |
+| `neg-c6-vs-2c3` | 6 | certs | 23 | 0.315 | 0.080 |
+| `neg-c10-vs-2c5` | 10 | certs | 33 | 0.912 | 0.240 |
+| `neg-c16-vs-2c8` | 16 | certs | 48 | 3.75 | 0.894 |
+| `neg-circulant10-2-5-vs-1-5` | 10 | certs | 26 | 0.892 | 0.197 |
+| `neg-kneser72-vs-johnson72` | 21 | certs | 83 | 9.00 | 1.56 |
+| `neg-grid4x4-vs-q4` | 16 | root | | 0.769 | 0.179 |
+| `neg-grid4x6-vs-2grid3x4` | 24 | root | | 6.17 | 2.10 |
+| `neg-paley25-vs-latin5` | 25 | root | | 2.98 | 1.14 |
+| `neg-circ48-vs-2circ24` | 48 | certs | 128 | timeout | 56.8 |
+| `neg-paley61-vs-circulant61` | 61 | certs | 156 | timeout | 57.3 |
 
 The per-record fit over the eight certificate-route pairs up to 21
-vertices moved from `0.50 * n^1.80` ms to `0.29 * n^1.47` ms. Over all ten
-certificate-route pairs the fit is `0.054 * n^2.18` ms: the 48- and
-61-vertex pairs pay 500 and 350 ms per record, because a refinement pass is
+vertices moved from `0.50 * n^1.80` ms to `0.24 * n^1.50` ms. Over all ten
+certificate-route pairs the fit is `0.047 * n^2.20` ms: the 48- and
+61-vertex pairs pay 440 and 370 ms per record, because a refinement pass is
 linear in `n` and a node needs up to a pass per cell. The 96-vertex pair
 remains out of budget: with `maxRecDepth` raised to 100000 (the default
 limit stops the kernel) its 248 records took 377 s of kernel time before
