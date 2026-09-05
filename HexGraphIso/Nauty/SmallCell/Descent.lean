@@ -16,11 +16,10 @@ import all HexGraphIso.Nauty.Equitable.Fix
 public section
 
 /-!
-The cheapautom subtree iteration (SPEC § Verified search refinement,
-the code-1 arm of the store-validity obligation).
+The bisimulation carrying the branch step down a cheapautom subtree.
 
 `HexGraphIso.Nauty.SmallCell.Branch` relates the two children of a pair
-target cell by the flip at a single level; this file carries the
+target cell by the flip at a single level. This file carries the
 relation down the subtree. The mechanism is a bisimulation: a state
 whose labelling is cell-equivalent to a renamed copy of another
 state's stays so after both individualize corresponding vertices and
@@ -31,14 +30,6 @@ renaming is absorbed by `leafRows_map` (`descends_leafRows`). Gluing
 theorem: any leaf reached below the second child of a pair target has
 the same leaf rows as the mirrored leaf below the first child
 (`deviation_leafRows`).
-
-Remaining on top of this file: the triple analogues (the unique
-triple's transpositions preserve rows, giving the branch step at
-triple targets), the all-leaves induction over the fixed target
-policy, the `noncheaplevel` event lemma, and the arm-2 assembly in
-`Invariant/Store` — plus the exotic defect-four configurations, which
-the probe showed are conformance-reachable and need their own flip
-analogues.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -590,7 +581,7 @@ theorem descends_transport {σ : Renaming n}
     exact ⟨V', .step tc e oV hlvl hcellV hne (by omega) hdesc, hspL⟩
 
 /-- The leaf collapse: a descent to a discrete state below one side
-mirrors below the other with equal leaf rows — the renaming is
+mirrors below the other with equal leaf rows. The renaming is
 absorbed at the leaf. -/
 theorem descends_leafRows {σ : Renaming n}
     (hg : RowsMap σ ctx.g ctx.g)

@@ -19,15 +19,20 @@ public section
 /-!
 `stabilizer_transitive`: for an equitable partition satisfying
 `cheapautom`, the cell stabilizer in the automorphism group acts
-transitively on every cell.
+transitively on every cell. This is what justifies the `(fix, mcr)`
+pair nauty reads off the partition at a `noncheaplevel` node
+(`pairOk_fmptn_of_subtree` in `Correct/State/Ledger`).
 
 A passing guard leaves the node in one of two shapes, and either one
 yields the flip data a deviation consumes. `stabilizer_transitive`
 reads a pair or triple target off the first-branch shape, and a target
 of any size at most five off a defect of at most four, where the exotic
-analogues apply. The all-leaves induction over a target-position path
-then recurses on equal choices and glues one deviation at a differing
-choice, and the imperative descents below apply it.
+analogues apply. The all-leaves theorem `descPath_leafRows_all` then
+states that every leaf below such a node realizes an automorphism with
+the first leaf: the induction over a target-position path recurses on
+equal choices and glues one deviation at a differing choice, and the
+imperative descents below apply it. That is what admits a code-1 exit
+with no `isautom` scan.
 
 This module sits above the exotic layer because that is where the
 defect-four flip data is proved. Everything else the induction needs
@@ -178,11 +183,10 @@ theorem descPath_leafRows_all
 end Hex.GraphIso.Nauty
 
 /-!
-The imperative tie and the code-1 assembly (SPEC § Verified search
-refinement, the code-1 arm of the store-validity obligation).
+The imperative tie and the code-1 assembly.
 
 The search's child loops perform `breakout` at the parent and then the
-child node's `refine`; that composite is exactly `childSt`
+child node's `refine`. That composite is exactly `childSt`
 (`childSt_eq_search_step`), and each surviving target-cell vertex is a
 window member of the target cell (`maketargetcell_mem`), so an
 imperative descent below a node is a `DescPath` step by step. Both
@@ -190,7 +194,7 @@ children of one imperative node use the same `maketargetcell` result,
 so the first-path leaf and a code-1-tested leaf below the greatest
 common ancestor are same-target descents, and
 `descPath_leafRows_all` gives them equal leaf rows
-(`leafRows_eq_of_descPaths`); the admitted scatter then passes
+(`leafRows_eq_of_descPaths`). The admitted scatter then passes
 `checkAutom` through `checkAutom_scatter_of_leafRows_eq`
 (`checkAutom_scatter_of_descPaths`).
 
@@ -200,15 +204,15 @@ branches of `cheapautom_iff` are exactly the two disjuncts of
 `NodeShape` (`cheapautom_shape_or_exotic`). The second branch, a
 defect of at most four with a cell of size four or five or with two
 triples, keeps its own shape rather than being forced into the first,
-which it need not have; `stabilizer_transitive` hands it to the
-defect-four flip analogues (`SmallCell/FourCell`).
+which it need not have. `stabilizer_transitive` proves that case
+from the defect-four flip analogues (`SmallCell/FourCell`).
 
-The run-level facts these theorems consume — the two descents from
-the ancestor with equal target paths, equitability and the boundary
-count at the ancestor, and the guard having held there — are exactly
-the bookkeeping the domination induction carries (`gcaFirst`,
-`eqlevFirst`, `firsttc`, `noncheaplevel`); it discharges them when
-threading `processnode`'s admission event.
+These theorems consume four run-level facts: the two descents from the
+ancestor with equal target paths, equitability at the ancestor, the
+boundary count at the ancestor, and the guard having held there. They
+are exactly the bookkeeping the domination induction carries
+(`gcaFirst`, `eqlevFirst`, `firsttc`, `noncheaplevel`), which
+discharges them at `processnode`'s admission event.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -217,10 +221,10 @@ variable {ctx : Ctx n}
 
 /-! # The imperative step is `childSt` -/
 
-/-- The composite the search's child loops perform — `breakout` at the
-parent, then the child node's `refine` on the returned labelling,
-split partition, and singleton active set — is `childSt` of the
-parent's post-refine state. -/
+/-- The search's child loops perform `breakout` at the parent and then
+the child node's `refine` on the returned labelling, split partition,
+and singleton active set. That composite is `childSt` of the parent's
+post-refine state. -/
 theorem childSt_eq_search_step (r : RefineSt n) (level tc tv : Nat) :
     refine ctx (level + 1)
       (breakout n r.lab r.ptn (level + 1) tc tv).1
@@ -261,10 +265,9 @@ theorem maketargetcell_mem {r : RefineSt n} {level tcLevel : Nat}
 /-! # The node shape from the guard -/
 
 /-- A passing guard gives the first-branch shape or the exotic
-defect-at-most-four configuration. The second disjunct is the
-explicitly surfaced exotic arm: a cell of size four or five, or two
-triples, conformance-reachable per the probe, discharged by the
-defect-four flip analogues. -/
+defect-at-most-four configuration: a cell of size four or five, or two
+triples. The defect-four flip analogues discharge the second
+disjunct. -/
 theorem cheapautom_shape_or_exotic {ptn : Array Nat} {level : Nat}
     (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
     (hch : cheapautom ptn level n = true) :
@@ -316,7 +319,7 @@ theorem leafRows_eq_of_descPaths
   (descPath_leafRows_all hgsz hsymm hloop (p₁.map Prod.fst)
     hS hU rfl hUd hV htcs hVd).2
 
-/-- The code-1 gate admission is a checked automorphism: the scatter
+/-- The code-1 admission is a checked automorphism: the scatter
 of the second descent's leaf labelling over the first's passes
 `checkAutom`, with no `isautom` scan. -/
 theorem checkAutom_scatter_of_descPaths

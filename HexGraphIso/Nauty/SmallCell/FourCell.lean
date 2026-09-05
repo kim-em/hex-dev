@@ -16,12 +16,11 @@ import all HexGraphIso.Nauty.Equitable.Fix
 public section
 
 /-!
-The four-cell-beside-a-pair configuration (SPEC § Verified search
-refinement, the code-1 arm of the store-validity obligation).
+The four-cell-beside-a-pair configuration.
 
 Under a defect-four cheapautom pass the last shape is a four-cell
 coexisting with a pair. The four-cell's members carry a constant count
-into the pair; a uniform count (`0` or `2`) leaves the pair fixed, and
+into the pair. A uniform count (`0` or `2`) leaves the pair fixed, and
 the matched count `1` splits the four-cell into the two pairs of
 neighbours of the pair's members, so a flip across that split has to
 carry the pair along. The triple swap `sw3` is the resulting map.

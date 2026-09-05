@@ -16,18 +16,17 @@ import all HexGraphIso.Nauty.Equitable.Fix
 public section
 
 /-!
-The two-triple configuration (SPEC § Verified search refinement, the
-code-1 arm of the store-validity obligation).
+The two-triple configuration.
 
 Under a defect-four cheapautom pass with two triple cells, the flip at
-either triple couples across to the other: the constant cross-counts
-between the triples are `0`, `1`, `2` or `3`; the uniform counts leave
-the other triple fixed and reduce to the bare transposition, and the
-matched counts pair each member with its unique minority partner, the
-transposition swapping the two partners along. Everything is forced by
-counting exactly as in the lone-cell file: the reverse counts make the
-two partners distinct, and both triples' internal structure is
-off-diagonally constant (`triple_internal`).
+one triple may have to move the other triple as well. The constant
+cross-count between the triples is `0`, `1`, `2` or `3`. The uniform
+counts leave the other triple fixed and reduce to the bare
+transposition, and the matched counts pair each member with its unique
+minority partner, the transposition swapping the two partners along.
+Everything is forced by counting exactly as in `SmallCell/Exotic`: the
+reverse counts make the two partners distinct, and both triples'
+internal structure is off-diagonally constant (`triple_internal`).
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -679,7 +678,7 @@ theorem twoTriple_flip_data
       omega
     refine twoTriple_sw2 hIt hgsz hsymm hloop hE hT1 hT2 hT12
       hsing hoU hoV hne hpu hpv hpuv ?_ ?_ ?_ ?_
-    · -- the third target member is blind to the partner pair
+    · -- the third target member has equal bits at the partner pair
       intro w hw hwu hwv
       have hwW : w = 3 - oU - oV := by omega
       constructor
@@ -691,7 +690,7 @@ theorem twoTriple_flip_data
         have hz1 := hpwz pu hpu (fun h => hpwu h.symm)
         have hz2 := hpwz pv hpv (fun h => hpwv h.symm)
         rw [bitCnt_eq_zero.mp hz1, bitCnt_eq_zero.mp hz2]
-    · -- the third partner is blind to the chosen pair
+    · -- the third partner has equal bits at the chosen pair
       intro w hw hwa hwb
       constructor
       · have hz1 := hpuz w hw hwa

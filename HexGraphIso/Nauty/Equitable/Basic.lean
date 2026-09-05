@@ -14,58 +14,52 @@ public import HexGraphIso.Nauty.Invariant.Refine
 public section
 
 /-!
-Equitable partitions (SPEC § Verified search refinement, the
-cheapautom clause of the store-validity obligation).
+Equitable partitions and the postconditions of the refinement passes.
 
-`refine` makes the partition at `level` equitable with respect to the
-exhausted active set. The manual chapter states this as prose; this
-file begins its formalization. The target theorem is: when
-`refineLoop` exits because `pickSplit` finds no active cell, the
-partition is `Equitable`. Discrete exits are covered separately by
-`equitable_of_singletons`.
+The partition at `level` is `Equitable` when every cell has constant
+neighbour counts into every cell's vertex set. This file defines that
+predicate and the predicates around it, and proves the postconditions
+of the two splitting passes `refine` runs. Discrete exits are covered
+by `equitable_of_singletons`.
 
-The intended loop invariant, recorded here for the follow-up work:
-for every cell `C` of the current partition and every cell `D` not in
-the active set, there is a set `U` of current cells with `D ∈ U` and
-every other member of `U` active, such that `C` has constant
-neighbour counts into the union of `U` (`SplitDone` on the union).
-At exit the certificate `U` collapses to `{D}`, giving equitability.
-The invariant survives a splitting pass because a pass leaves every
-current cell with constant counts into the captured splitter set
-(each processed cell is rearranged into constant-count groups, and a
-cell that does not split already had constant counts), and because
-`SplitDone` only strengthens under refinement of either cell. The
-fragment that the activation rule leaves inactive is covered by the
-certificate consisting of its active sibling fragments together with
-the parent's certificate, since counts into the parent are the sum of
-counts into the fragments. Exit by fuel is excluded by a potential
-argument: `popCount active + 2 * (n - numcells)` drops by at least
-one per pass, and starts at most `3 * n`, below the supplied
-`4 * n + 8`.
+The refinement loop's invariant: for every cell `C` of the current
+partition and every cell `D` not in the active set, there is a set `U`
+of current cells with `D ∈ U` and every other member of `U` active,
+such that `C` has constant neighbour counts into the union of `U`
+(`SplitDone` on the union). At exit the certificate `U` collapses to
+`{D}`, giving equitability. The invariant survives a splitting pass
+because a pass leaves every current cell with constant counts into the
+captured splitter set (each processed cell is rearranged into
+constant-count groups, and a cell that does not split already had
+constant counts), and because `SplitDone` only strengthens under
+refinement of either cell. The fragment that the activation rule
+leaves inactive is covered by the certificate consisting of its active
+sibling fragments together with the parent's certificate, since counts
+into the parent are the sum of counts into the fragments. Exit by fuel
+is excluded by a potential argument: `popCount active + 2 * (n -
+numcells)` drops by at least one per pass, and starts at most
+`3 * n`, below the supplied `4 * n + 8`.
 
-Proven: the predicate layer; the member-level `ConstOn` toolkit
+Proved here: the predicate layer; the member-level `ConstOn` toolkit
 (disjoint-union count additivity, union and difference transport,
 splitter-set disjointness and window splitting); both splitting
-passes' postconditions, culminating in `refineStep_cell_const`; the
-active-set bookkeeping of both passes (`refineTrivial_go_state`,
-`windowScan_active_state`, `nontrivialCell_outcome`,
-`refineNontrivial_go_state`) assembled into `refineStep_state` — the
-strict potential drop and the per-cell activation clauses (an active
-non-splitter cell activates every fragment start, any other cell
-leaves at most one start inactive); the certificate interface
-`CertInv`/`activeUnion`/`Saturated` with its collapse at exit; the
-injectivity and splitter-set structure (`LabInj` transport across the
-pass, `worksetOf_cells_disjoint`, `isCell_disj_or_eq`); the
-preservation theorem `certInv_refineStep`; and the fixpoint theorem
-`refine_equitable` — entering `refine` with an injective labelling,
-an active set of cell starts, an accurate cell count and the
-certificate invariant, the output partition is equitable. The
-certificate seed is vacuous at the root (every cell active) and is
-discharged at descent from the parent's equitability joined with the
-individualized singleton's splitter set.
+passes' postconditions, culminating in `refineStep_cell_const`; and
+the certificate interface `CertInv`/`activeUnion`/`Saturated` with its
+collapse at exit, where the certificate is a bitset constrained to lie
+under the active union and saturated cell by cell rather than a list
+of cells.
 
-Remaining for the cheapautom arm on top of this fixpoint: the
-small-cell subtree lemma and the arm-2 assembly in `Invariant/Store`.
+`Equitable/Step` proves the active-set and potential bookkeeping of one
+refinement step, together with the injectivity and splitter-set
+disjointness the certificate algebra rests on. `Equitable/Fix` proves
+the certificate invariant's preservation across a step and assembles
+the fixpoint theorem `refine_equitable`: entering `refine` with an
+injective labelling, an active set of cell starts, an accurate cell
+count and the certificate invariant, the output partition is
+equitable. The certificate seed is vacuous at the root, where every
+cell is active (`Equitable/Root`), and at descent it comes from the
+parent's equitability joined with the individualized singleton's
+splitter set (`SmallCell/Branch`).
 -/
 
 namespace Hex.GraphIso.Nauty

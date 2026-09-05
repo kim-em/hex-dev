@@ -11,14 +11,13 @@ public import HexGraphIso.Nauty.Equitable.Step
 public section
 
 /-!
-The equitability fixpoint theorem (SPEC § Verified search refinement,
-the cheapautom clause of the store-validity obligation).
+The equitability fixpoint theorem.
 
-`HexGraphIso.Nauty.Equitable.Basic` defines the predicates and proves the
-per-pass postconditions; this file proves the certificate invariant's
-preservation across a refinement step and assembles `refine_equitable`:
-when `refine` exits with its active set exhausted, the partition is
-equitable.
+`HexGraphIso.Nauty.Equitable.Basic` defines the predicates and proves
+the per-pass postconditions. This file proves the certificate
+invariant's preservation across a refinement step and assembles
+`refine_equitable`: when `refine` exits with its active set exhausted,
+the partition is equitable.
 -/
 
 namespace Hex.GraphIso.Nauty

@@ -13,8 +13,7 @@ import all HexGraphIso.Nauty.Equitable.Basic
 public section
 
 /-!
-The cheapautom small-cell theory (SPEC § Verified search refinement,
-the code-1 arm of the store-validity obligation).
+The cheapautom guard and the flip theorem at pair cells.
 
 `cheapautom` is nauty's cheap sufficient condition for every leaf of
 the subtree below a node to realize an automorphism with the first
@@ -34,27 +33,14 @@ builds the theory justifying it on top of `refine_equitable`:
   preserves the adjacency rows, so any array realizing it passes
   `checkAutom`.
 
-Remaining layers on top of this file, in dependency order. (1) The
-descent plumbing: re-establish `refine_equitable`'s entry hypotheses
-at each subtree node (the certificate seed at descent is designed in
-the equitability file's docstring; the labelling and count facts come
-from the landed search invariants). (2) The branch step: at a cheap
-equitable node whose target cell is a pair, the two children are
-related by the flip of the target pair's matching component — `S` is
-the `PairMatch`-reachability closure, `hSclosed` holds by
-construction, `hOdd` follows from `cheapautom_iff` and
-`cells_go_sizes_sum` in the all-pairs-and-one-triple branch, and the
-flip carries one child's refined labelling to the other's positionwise
-by refine equivariance. (3) Individualization inside non-pair cells
-and the exotic defect-four configurations (a four-cell, a five-cell,
-two triples), which `hOdd` excludes: triple analogues of `PairMatch`
-and the flip. (4) The composition down the subtree: the current
-leaf's `leafRows` equal the first leaf's by chaining branch steps, and
-the admitted scatter then passes `checkAutom` through the landed
-`checkAutom_scatter_of_leafRows_eq` — no per-flip `checkAutom` wrapper
-is needed, which is why this file exports rows preservation only.
-(5) The `noncheaplevel` bookkeeping event lemma (the three write
-sites) and the arm-2 assembly in `Invariant/Store`.
+`SmallCell/Branch` carries these results down the search subtree and
+`SmallCell/Transitive` assembles them into `stabilizer_transitive`.
+This file states rows preservation only, with no per-flip `checkAutom`
+wrapper: the admitted scatter passes `checkAutom` through
+`checkAutom_scatter_of_leafRows_eq`.
+
+The file ends with the cell-membership facts the descent
+classification consumes.
 -/
 
 namespace Hex.GraphIso.Nauty
