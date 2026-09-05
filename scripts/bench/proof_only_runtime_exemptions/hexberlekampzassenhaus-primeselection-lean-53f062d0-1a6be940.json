@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+ "baseline_blob": "53f062d0adf2cd9d53b427ed37fa3a155bffe4ad",
+ "current_blob": "1a6be94092cc3fbec21a3042eeb607aade42bd8e",
+ "reason": "Replaces two `<;>` with `;` where the preceding tactic leaves a single goal. Inside proofs only; no executable definition changes. Same edit as the a6fee73d -> 1a6be940 exemption, restated from the baseline the fast-kernel demotion sweep recorded."
+}

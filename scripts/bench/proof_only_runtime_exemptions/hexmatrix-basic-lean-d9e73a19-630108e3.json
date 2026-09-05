@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Basic.lean",
+ "baseline_blob": "d9e73a1912f20e777575abf25c03e6bfe00cc412",
+ "current_blob": "630108e30a374946cd1d908c50133f1a0d444a41",
+ "reason": "Drops two no-op `@[expose]` attributes from `GetElem` instances that are already exposed by default. No definition body changes. Same edit as the 76cf5715 -> 630108e3 exemption, restated from the baseline the fast-kernel demotion sweep recorded."
+}

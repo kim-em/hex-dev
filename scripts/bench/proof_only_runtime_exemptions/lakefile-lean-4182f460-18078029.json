@@ -1,6 +1,0 @@
-{
- "path": "lakefile.lean",
- "baseline_blob": "4182f460f5a07b6b5ad1a15b7f6c012b2e41efe4",
- "current_blob": "1807802982bdccabfc9730246efd9373cae38c59",
- "reason": "Adds the HexRCF test modules and HexNumberFieldTower.Embed to the release-test target and retires the monorepo-only HexRCFTests target; no library, executable, or factor-service target changes, so every measured operation is unchanged."
-}
