@@ -565,4 +565,19 @@ theorem xor_ne_zero_of_ne {a b : Nat} (hab : a ≠ b) : a ^^^ b ≠ 0 := by
   rcases ha : a.testBit i with _ | _ <;>
     rcases hb : b.testBit i with _ | _ <;> simp_all
 
+theorem testBit_eq_of_lt_lowBit_xor {a b i : Nat}
+    (hi : i < lowBit (a ^^^ b)) : a.testBit i = b.testBit i := by
+  have hx := testBit_lt_lowBit (a ^^^ b) i hi
+  rw [Nat.testBit_xor] at hx
+  rcases ha : a.testBit i with _ | _ <;>
+    rcases hb : b.testBit i with _ | _ <;> simp_all
+
+theorem testBit_ne_at_lowBit_xor {a b : Nat} (hab : a ≠ b) :
+    a.testBit (lowBit (a ^^^ b)) ≠ b.testBit (lowBit (a ^^^ b)) := by
+  have hx := testBit_lowBit _ (xor_ne_zero_of_ne hab)
+  rw [Nat.testBit_xor] at hx
+  intro he
+  rw [he] at hx
+  simp at hx
+
 end Hex.GraphIso.Nauty

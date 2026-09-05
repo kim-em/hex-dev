@@ -382,6 +382,90 @@ theorem mem_xor (s t : VSet n) (w : Nat) :
       getElem!_limbs_of_ge t _ hi]
     simp
 
+/-! # Limb-level views of membership -/
+
+theorem mem_eq (s : VSet n) (v : Nat) :
+    s.mem v = (s.limbs[v / 63]!).testBit (v % 63) := rfl
+
+theorem testBit_limb (s : VSet n) (i j : Nat) (hj : j < 63) :
+    (s.limbs[i]!).testBit j = s.mem (63 * i + j) := testBit_limb_eq_mem s i j hj
+
+theorem testBit_limb_of_ge (s : VSet n) (i j : Nat) (hj : 63 ≤ j) :
+    (s.limbs[i]!).testBit j = false :=
+  Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le (s.bounded i)
+    (Nat.pow_le_pow_right (by omega) hj))
+
+theorem limb_eq_of_mem {s t : VSet n} (i : Nat)
+    (h : ∀ j, j < 63 → s.mem (63 * i + j) = t.mem (63 * i + j)) :
+    s.limbs[i]! = t.limbs[i]! := by
+  refine Nat.eq_of_testBit_eq fun j => ?_
+  rcases Nat.lt_or_ge j 63 with hj | hj
+  · rw [testBit_limb s i j hj, testBit_limb t i j hj, h j hj]
+  · rw [testBit_limb_of_ge s i j hj, testBit_limb_of_ge t i j hj]
+
+theorem limb_eq_zero_iff (s : VSet n) (i : Nat) :
+    s.limbs[i]! = 0 ↔ ∀ j, j < 63 → s.mem (63 * i + j) = false := by
+  constructor
+  · intro h j hj
+    rw [← testBit_limb s i j hj, h, Nat.zero_testBit]
+  · intro h
+    refine Nat.eq_of_testBit_eq fun j => ?_
+    rw [Nat.zero_testBit]
+    rcases Nat.lt_or_ge j 63 with hj | hj
+    · rw [testBit_limb s i j hj, h j hj]
+    · exact testBit_limb_of_ge s i j hj
+
+theorem mem_of_ge_limbCount (s : VSet n) {v : Nat} (h : limbCount n ≤ v / 63) :
+    s.mem v = false := by
+  rw [mem_eq, getElem!_limbs_of_ge s _ h, Nat.zero_testBit]
+
+theorem limbs_toList_eq (s : VSet n) :
+    s.limbs.toList = (List.range (limbCount n)).map (fun i => s.limbs[i]!) := by
+  refine List.ext_getElem (by simp [s.size_eq]) fun i h1 h2 => ?_
+  rw [List.getElem_map, List.getElem_range, Array.getElem_toList,
+    getElem!_pos _ i (by simpa [Array.length_toList] using h1)]
+
+/-- The members of limb `i`, in order, as vertex numbers. -/
+def limbMembers (s : VSet n) (i : Nat) : List Nat :=
+  ((List.range 63).filter (s.limbs[i]!).testBit).map (63 * i + ·)
+
+theorem filter_range'_limb (s : VSet n) (i : Nat) :
+    (List.range' (63 * i) 63).filter s.mem = limbMembers s i := by
+  rw [limbMembers, List.range'_eq_map_range, List.filter_map]
+  congr 1
+  apply List.filter_congr
+  intro j hj
+  rw [List.mem_range] at hj
+  simp only [Function.comp]
+  rw [testBit_limb s i j hj]
+
+/-- The members below `63 * k`, as the concatenation of the limb blocks. -/
+theorem filter_range_blocks (s : VSet n) :
+    ∀ k : Nat, (List.range (63 * k)).filter s.mem =
+      (List.range k).flatMap (limbMembers s)
+  | 0 => by simp
+  | k + 1 => by
+    rw [List.range_succ, List.flatMap_append, ← filter_range_blocks s k,
+      List.flatMap_cons, List.flatMap_nil, List.append_nil,
+      ← filter_range'_limb, List.range_eq_range', List.range_eq_range',
+      show 63 * (k + 1) = 63 * k + 63 by omega, ← List.range'_append,
+      List.filter_append, Nat.zero_add, Nat.one_mul]
+
+theorem filter_range_eq_blocks (s : VSet n) :
+    (List.range n).filter s.mem =
+      (List.range (limbCount n)).flatMap (limbMembers s) := by
+  rw [← filter_range_blocks]
+  have hle : n ≤ 63 * limbCount n := by rw [limbCount]; omega
+  have hnil : (List.range' n (63 * limbCount n - n)).filter s.mem = [] := by
+    rw [List.filter_eq_nil_iff]
+    intro v hv
+    rw [List.mem_range'] at hv
+    simp only [Bool.not_eq_true]
+    exact mem_of_ge (by omega)
+  rw [show 63 * limbCount n = n + (63 * limbCount n - n) by omega,
+    List.range_eq_range', List.range_eq_range', ← List.range'_append,
+    List.filter_append, Nat.zero_add, Nat.one_mul, hnil, List.append_nil]
+
 /-! # Fused predicates and counts
 
 The refinement inner loops never materialize an intersection: they
@@ -431,25 +515,148 @@ where
 @[expose] def countBelow (s : VSet n) (k : Nat) : Nat :=
   (List.range k).countP s.mem
 
+private theorem foldl_add_popCount :
+    ∀ (l : List Nat) (acc : Nat),
+      l.foldl (fun a x => a + popCount x) acc = acc + (l.map popCount).sum
+  | [], acc => by simp
+  | x :: l, acc => by
+    rw [List.foldl_cons, foldl_add_popCount l, List.map_cons, List.sum_cons]
+    omega
+
+theorem card_eq_sum (s : VSet n) :
+    s.card = ((List.range (limbCount n)).map fun i => popCount s.limbs[i]!).sum := by
+  rw [card, ← Array.foldl_toList, foldl_add_popCount, Nat.zero_add, limbs_toList_eq,
+    List.map_map]
+  rfl
+
+theorem popCount_limb (s : VSet n) (i : Nat) :
+    popCount s.limbs[i]! = (limbMembers s i).length := by
+  rw [popCount_eq_bitCount 63 _ (s.bounded i), bitCount, limbMembers, List.length_map,
+    List.countP_eq_length_filter]
+
 theorem card_eq_countBelow (s : VSet n) : s.card = s.countBelow n := by
-  sorry
+  rw [countBelow, List.countP_eq_length_filter, filter_range_eq_blocks, card_eq_sum,
+    List.length_flatMap]
+  congr 1
+  apply List.map_congr_left
+  intro i _
+  exact popCount_limb s i
+
+private theorem foldLimbs_go_add (f : Nat → Nat → Nat) (s t : VSet n) :
+    ∀ (fuel i acc : Nat),
+      foldLimbs.go (fun a b acc => acc + f a b) s t fuel i acc =
+        acc + ((List.range fuel).map fun k => f s.limbs[i + k]! t.limbs[i + k]!).sum
+  | 0, _, acc => by simp [foldLimbs.go]
+  | fuel + 1, i, acc => by
+    have hr : List.range (fuel + 1) = 0 :: (List.range fuel).map Nat.succ :=
+      List.range_succ_eq_map
+    rw [foldLimbs.go, foldLimbs_go_add f s t fuel (i + 1), hr, List.map_cons,
+      List.sum_cons, List.map_map]
+    have : ((fun k => f s.limbs[i + k]! t.limbs[i + k]!) ∘ Nat.succ) =
+        fun k => f s.limbs[i + 1 + k]! t.limbs[i + 1 + k]! := by
+      funext k
+      simp only [Function.comp, Nat.succ_eq_add_one]
+      rw [show i + (k + 1) = i + 1 + k by omega]
+    rw [this]
+    simp only [Nat.add_zero]
+    omega
 
 theorem cardInter_eq (s t : VSet n) : s.cardInter t = (s.inter t).card := by
-  sorry
+  rw [cardInter, foldLimbs, foldLimbs_go_add, Nat.zero_add, s.size_eq, card_eq_sum]
+  congr 1
+  apply List.map_congr_left
+  intro i hi
+  rw [List.mem_range] at hi
+  rw [Nat.zero_add, inter, limbs_ofLimbs, getElem!_zipWith _ s t i hi]
+
+private theorem allLimbs_go_iff (p : Nat → Nat → Bool) (s t : VSet n) :
+    ∀ (fuel i : Nat),
+      allLimbs.go p s t fuel i = true ↔
+        ∀ k, k < fuel → p s.limbs[i + k]! t.limbs[i + k]! = true
+  | 0, _ => by simp [allLimbs.go]
+  | fuel + 1, i => by
+    rw [allLimbs.go, Bool.and_eq_true, allLimbs_go_iff p s t fuel (i + 1)]
+    constructor
+    · rintro ⟨h0, hrest⟩ k hk
+      cases k with
+      | zero => simpa using h0
+      | succ k =>
+        rw [show i + (k + 1) = i + 1 + k by omega]
+        exact hrest k (by omega)
+    · intro h
+      refine ⟨by simpa using h 0 (by omega), fun k hk => ?_⟩
+      rw [show i + 1 + k = i + (k + 1) by omega]
+      exact h (k + 1) (by omega)
+
+theorem allLimbs_iff (p : Nat → Nat → Bool) (s t : VSet n) :
+    allLimbs p s t = true ↔ ∀ i, i < limbCount n → p s.limbs[i]! t.limbs[i]! = true := by
+  rw [allLimbs, allLimbs_go_iff, s.size_eq]
+  simp only [Nat.zero_add]
 
 theorem isEmpty_iff {s : VSet n} : s.isEmpty = true ↔ s = empty := by
-  sorry
+  rw [isEmpty, Array.all_eq_true, eq_empty_iff]
+  constructor
+  · intro h v
+    rcases Nat.lt_or_ge (v / 63) (limbCount n) with hi | hi
+    · have := h (v / 63) (by rw [s.size_eq]; exact hi)
+      rw [← getElem!_pos] at this
+      rw [mem_eq, show s.limbs[v / 63]! = 0 by simpa using this, Nat.zero_testBit]
+    · exact mem_of_ge_limbCount s hi
+  · intro h i hi
+    rw [← getElem!_pos, beq_iff_eq, limb_eq_zero_iff]
+    intro j _
+    exact h _
 
 theorem interIsEmpty_eq (s t : VSet n) :
     s.interIsEmpty t = (s.inter t).isEmpty := by
-  sorry
+  rw [Bool.eq_iff_iff, interIsEmpty, allLimbs_iff, isEmpty, Array.all_eq_true]
+  constructor
+  · intro h i hi
+    rw [← getElem!_pos, inter, limbs_ofLimbs]
+    rw [inter, limbs_ofLimbs, size_zipWith_limbs] at hi
+    rw [getElem!_zipWith _ s t i hi]
+    exact h i hi
+  · intro h i hi
+    have := h i (by rw [inter, limbs_ofLimbs, size_zipWith_limbs]; exact hi)
+    rw [← getElem!_pos, inter, limbs_ofLimbs, getElem!_zipWith _ s t i hi] at this
+    exact this
 
 theorem subset_iff {s t : VSet n} :
     s.subset t = true ↔ ∀ v, s.mem v = true → t.mem v = true := by
-  sorry
+  rw [subset, allLimbs_iff]
+  constructor
+  · intro h v hv
+    have hi : v / 63 < limbCount n := lt_limbCount_mul (mem_lt hv)
+    have := h _ hi
+    rw [beq_iff_eq] at this
+    rw [mem_eq] at hv ⊢
+    have hb := congrArg (fun x => x.testBit (v % 63)) this
+    simp only [Nat.testBit_and, hv, Bool.true_and] at hb
+    exact hb
+  · intro h i _
+    rw [beq_iff_eq]
+    refine Nat.eq_of_testBit_eq fun j => ?_
+    rw [Nat.testBit_and]
+    rcases Nat.lt_or_ge j 63 with hj | hj
+    · rw [testBit_limb s i j hj, testBit_limb t i j hj]
+      rcases hm : s.mem (63 * i + j) with _ | _
+      · rfl
+      · simp [h _ hm]
+    · rw [testBit_limb_of_ge s i j hj]
+      rfl
 
 theorem subset_iff_inter {s t : VSet n} : s.subset t = true ↔ s.inter t = s := by
-  sorry
+  rw [subset_iff, ext_iff]
+  simp only [mem_inter]
+  constructor
+  · intro h v
+    rcases hm : s.mem v with _ | _
+    · rfl
+    · simp [h v hm]
+  · intro h v hv
+    have := h v
+    rw [hv] at this
+    simpa using this
 
 /-! # Least element and ascending iteration -/
 
@@ -472,51 +679,258 @@ starts from the least member. -/
   match pos with
   | none => firstFrom s s.limbs.size 0
   | some p =>
-    let q := p + 1
-    let i := q / 63
-    let k := q % 63
-    if i < s.limbs.size then
-      let x := (s.limbs[i]! >>> k) <<< k
-      if x != 0 then some (63 * i + lowBit x)
-      else firstFrom s (s.limbs.size - (i + 1)) (i + 1)
+    if (p + 1) / 63 < s.limbs.size then
+      if (s.limbs[(p + 1) / 63]! >>> ((p + 1) % 63)) <<< ((p + 1) % 63) != 0 then
+        some (63 * ((p + 1) / 63) +
+          lowBit ((s.limbs[(p + 1) / 63]! >>> ((p + 1) % 63)) <<< ((p + 1) % 63)))
+      else firstFrom s (s.limbs.size - ((p + 1) / 63 + 1)) ((p + 1) / 63 + 1)
     else none
 
+theorem lowBit_lt_of_lt {x k : Nat} (hx : x < 2 ^ k) (h0 : x ≠ 0) :
+    lowBit x < k := by
+  rcases Nat.lt_or_ge (lowBit x) k with h | h
+  · exact h
+  · have := testBit_lowBit x h0
+    rw [Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hx
+      (Nat.pow_le_pow_right (by omega) h))] at this
+    cases this
+
+/-- What a `firstFrom` hit is: a member at or after the start limb with
+no member in between. -/
+theorem firstFrom_some (s : VSet n) :
+    ∀ (fuel i v : Nat), firstFrom s fuel i = some v →
+      s.mem v = true ∧ 63 * i ≤ v ∧ ∀ w, 63 * i ≤ w → w < v → s.mem w = false
+  | 0, _, _, h => by cases h
+  | fuel + 1, i, v, h => by
+    rw [firstFrom] at h
+    split at h
+    · next hx =>
+      simp only [Option.some.injEq] at h
+      subst h
+      have hne : s.limbs[i]! ≠ 0 := by simpa using hx
+      have hlt : lowBit s.limbs[i]! < 63 := lowBit_lt_of_lt (s.bounded i) hne
+      refine ⟨?_, by omega, fun w hw1 hw2 => ?_⟩
+      · rw [← testBit_limb s i _ hlt]
+        exact testBit_lowBit _ hne
+      · rw [show w = 63 * i + (w - 63 * i) by omega, ← testBit_limb s i _ (by omega)]
+        exact testBit_lt_lowBit _ _ (by omega)
+    · next hx =>
+      have ih := firstFrom_some s fuel (i + 1) v h
+      refine ⟨ih.1, by omega, fun w hw1 hw2 => ?_⟩
+      rcases Nat.lt_or_ge w (63 * (i + 1)) with hw | hw
+      · have hz : s.limbs[i]! = 0 := by simpa using hx
+        rw [limb_eq_zero_iff] at hz
+        rw [show w = 63 * i + (w - 63 * i) by omega]
+        exact hz _ (by omega)
+      · exact ih.2.2 w hw hw2
+
+/-- A `firstFrom` miss: no member from the start limb to the fuel's end. -/
+theorem firstFrom_none (s : VSet n) :
+    ∀ (fuel i : Nat), firstFrom s fuel i = none →
+      ∀ w, 63 * i ≤ w → w < 63 * (i + fuel) → s.mem w = false
+  | 0, _, _, _, _, h2 => by omega
+  | fuel + 1, i, h, w, hw1, hw2 => by
+    rw [firstFrom] at h
+    split at h
+    · cases h
+    · next hx =>
+      rcases Nat.lt_or_ge w (63 * (i + 1)) with hw | hw
+      · have hz : s.limbs[i]! = 0 := by simpa using hx
+        rw [limb_eq_zero_iff] at hz
+        rw [show w = 63 * i + (w - 63 * i) by omega]
+        exact hz _ (by omega)
+      · exact firstFrom_none s fuel (i + 1) h w hw (by omega)
+
+theorem firstFrom_full_none {s : VSet n} (h : firstFrom s s.limbs.size 0 = none) :
+    s = empty := by
+  rw [eq_empty_iff]
+  intro w
+  rcases Nat.lt_or_ge w (63 * limbCount n) with hw | hw
+  · rw [s.size_eq] at h
+    exact firstFrom_none s _ 0 h w (by omega) (by omega)
+  · exact mem_of_ge (by rw [limbCount] at hw; omega)
+
 theorem mem_minElem {s : VSet n} (h : s ≠ empty) : s.mem s.minElem = true := by
-  sorry
+  rw [minElem]
+  rcases hf : firstFrom s s.limbs.size 0 with _ | v
+  · exact absurd (firstFrom_full_none hf) h
+  · exact (firstFrom_some s _ 0 v hf).1
 
 theorem not_mem_of_lt_minElem {s : VSet n} {v : Nat} (h : v < s.minElem) :
     s.mem v = false := by
-  sorry
+  rw [minElem] at h
+  rcases hf : firstFrom s s.limbs.size 0 with _ | u
+  · rw [hf] at h
+    simp at h
+  · rw [hf] at h
+    exact (firstFrom_some s _ 0 u hf).2.2 v (by omega) (by simpa using h)
 
 theorem minElem_eq_of {s : VSet n} {d : Nat} (hd : s.mem d = true)
     (hlow : ∀ i, i < d → s.mem i = false) : s.minElem = d := by
-  sorry
+  have hne : s ≠ empty := by
+    intro h
+    rw [h, mem_empty] at hd
+    cases hd
+  rcases Nat.lt_trichotomy s.minElem d with h | h | h
+  · have := hlow _ h
+    rw [mem_minElem hne] at this
+    cases this
+  · exact h
+  · have := not_mem_of_lt_minElem h
+    rw [hd] at this
+    cases this
 
 @[simp] theorem minElem_empty : (empty : VSet n).minElem = 0 := by
-  sorry
+  rw [minElem]
+  rcases hf : firstFrom (empty : VSet n) (empty : VSet n).limbs.size 0 with _ | v
+  · rfl
+  · have := (firstFrom_some _ _ 0 v hf).1
+    rw [mem_empty] at this
+    cases this
 
 /-- The lower bound of a `nextElem` scan. -/
 @[expose] def scanStart : Option Nat → Nat
   | none => 0
   | some p => p + 1
 
+/-- The bits of the masked limb `(x >>> k) <<< k`: those of `x` at or
+above `k`. -/
+private theorem testBit_mask_low (x k j : Nat) :
+    ((x >>> k) <<< k).testBit j = (decide (k ≤ j) && x.testBit j) := by
+  rw [Nat.testBit_shiftLeft]
+  rcases Decidable.em (k ≤ j) with h | h
+  · rw [Nat.testBit_shiftRight, show k + (j - k) = j by omega, decide_eq_true h,
+      Bool.true_and]
+  · simp [h]
+
+/-- The scan property: `v` is the least member at or after `a`. -/
+def IsNextFrom (s : VSet n) (a v : Nat) : Prop :=
+  s.mem v = true ∧ a ≤ v ∧ ∀ w, a ≤ w → w < v → s.mem w = false
+
+theorem IsNextFrom.unique {s : VSet n} {a v v' : Nat} (h : IsNextFrom s a v)
+    (h' : IsNextFrom s a v') : v = v' := by
+  rcases Nat.lt_trichotomy v v' with hlt | heq | hgt
+  · have := h'.2.2 v h.2.1 hlt
+    rw [h.1] at this
+    cases this
+  · exact heq
+  · have := h.2.2 v' h'.2.1 hgt
+    rw [h'.1] at this
+    cases this
+
+theorem nextElem_some {s : VSet n} {pos : Option Nat} {v : Nat}
+    (h : s.nextElem pos = some v) : IsNextFrom s (scanStart pos) v := by
+  rcases pos with _ | p
+  · rw [nextElem] at h
+    exact firstFrom_some s _ 0 v h
+  · rw [nextElem] at h
+    rw [scanStart]
+    split at h
+    · next hi =>
+      split at h
+      · next hx =>
+        generalize hxe : (s.limbs[(p + 1) / 63]! >>> ((p + 1) % 63)) <<< ((p + 1) % 63) = x
+          at h hx
+        simp only [Option.some.injEq] at h
+        subst h
+        have hne : x ≠ 0 := bne_iff_ne.mp hx
+        have hxbit : ∀ j, x.testBit j =
+            (decide ((p + 1) % 63 ≤ j) && (s.limbs[(p + 1) / 63]!).testBit j) := fun j => by
+          rw [← hxe, testBit_mask_low]
+        have hlt : lowBit x < 63 := by
+          refine lowBit_lt_of_lt ?_ hne
+          refine lt_two_pow_of_bits fun j hj => ?_
+          rw [hxbit, testBit_limb_of_ge s _ j hj, Bool.and_false]
+        have hbit := testBit_lowBit _ hne
+        rw [hxbit, Bool.and_eq_true, decide_eq_true_eq] at hbit
+        obtain ⟨hk, hb⟩ := hbit
+        refine ⟨?_, by omega, fun w hw1 hw2 => ?_⟩
+        · rw [← testBit_limb s _ _ hlt]
+          exact hb
+        · rw [mem_eq, show w / 63 = (p + 1) / 63 by omega]
+          have := testBit_lt_lowBit x (w % 63) (by omega)
+          rw [hxbit, Bool.and_eq_false_imp, decide_eq_true_eq] at this
+          exact this (by omega)
+      · next hx =>
+        have ih := firstFrom_some s _ _ v h
+        refine ⟨ih.1, by omega, fun w hw1 hw2 => ?_⟩
+        rcases Nat.lt_or_ge w (63 * ((p + 1) / 63 + 1)) with hw | hw
+        · have hz : (s.limbs[(p + 1) / 63]! >>> ((p + 1) % 63)) <<< ((p + 1) % 63) = 0 := by
+            simpa using hx
+          have hb := congrArg (fun y => y.testBit (w % 63)) hz
+          simp only [testBit_mask_low, Nat.zero_testBit, Bool.and_eq_false_imp,
+            decide_eq_true_eq] at hb
+          rw [mem_eq, show w / 63 = (p + 1) / 63 by omega]
+          exact hb (by omega)
+        · exact ih.2.2 w hw hw2
+    · cases h
+
+theorem nextElem_none {s : VSet n} {pos : Option Nat} (h : s.nextElem pos = none) :
+    ∀ w, scanStart pos ≤ w → s.mem w = false := by
+  intro w hw
+  rcases pos with _ | p
+  · rw [nextElem] at h
+    rw [scanStart] at hw
+    rcases Nat.lt_or_ge w (63 * limbCount n) with hw' | hw'
+    · rw [s.size_eq] at h
+      exact firstFrom_none s _ 0 h w (by omega) (by omega)
+    · exact mem_of_ge (by rw [limbCount] at hw'; omega)
+  · rw [nextElem] at h
+    rw [scanStart] at hw
+    split at h
+    · next hi =>
+      split at h
+      · cases h
+      · next hx =>
+        rcases Nat.lt_or_ge w (63 * ((p + 1) / 63 + 1)) with hw' | hw'
+        · have hz : (s.limbs[(p + 1) / 63]! >>> ((p + 1) % 63)) <<< ((p + 1) % 63) = 0 := by
+            simpa using hx
+          have hb := congrArg (fun y => y.testBit (w % 63)) hz
+          simp only [testBit_mask_low, Nat.zero_testBit, Bool.and_eq_false_imp,
+            decide_eq_true_eq] at hb
+          rw [mem_eq, show w / 63 = (p + 1) / 63 by omega]
+          exact hb (by omega)
+        · rcases Nat.lt_or_ge w (63 * limbCount n) with hw'' | hw''
+          · rw [s.size_eq] at h hi
+            exact firstFrom_none s _ _ h w hw' (by omega)
+          · exact mem_of_ge (by rw [limbCount] at hw''; omega)
+    · next hi =>
+      rw [s.size_eq] at hi
+      exact mem_of_ge_limbCount s (by omega)
+
 theorem nextElem_eq_some_iff {s : VSet n} {pos : Option Nat} {v : Nat} :
     s.nextElem pos = some v ↔
       s.mem v = true ∧ scanStart pos ≤ v ∧
         ∀ w, scanStart pos ≤ w → w < v → s.mem w = false := by
-  sorry
+  constructor
+  · exact nextElem_some
+  · intro hv
+    rcases h : s.nextElem pos with _ | u
+    · have := nextElem_none h v hv.2.1
+      rw [hv.1] at this
+      cases this
+    · rw [(nextElem_some h).unique hv]
 
 theorem nextElem_eq_none_iff {s : VSet n} {pos : Option Nat} :
     s.nextElem pos = none ↔ ∀ w, scanStart pos ≤ w → s.mem w = false := by
-  sorry
+  constructor
+  · exact nextElem_none
+  · intro hall
+    rcases h : s.nextElem pos with _ | u
+    · rfl
+    · have hu := nextElem_some h
+      have := hall u hu.2.1
+      rw [hu.1] at this
+      cases this
 
 theorem nextElem_mem {s : VSet n} {pos : Option Nat} {v : Nat}
     (h : s.nextElem pos = some v) : s.mem v = true :=
-  (nextElem_eq_some_iff.mp h).1
+  (nextElem_some h).1
 
 theorem nextElem_none_eq_minElem {s : VSet n} (h : s ≠ empty) :
     s.nextElem none = some s.minElem := by
-  sorry
+  rw [nextElem_eq_some_iff, scanStart]
+  exact ⟨mem_minElem h, Nat.zero_le _, fun w _ hw => not_mem_of_lt_minElem hw⟩
 
 /-! # Enumeration -/
 
@@ -528,8 +942,29 @@ where
     | 0, _, acc => acc
     | fuel + 1, i, acc => go fuel (i + 1) (toListGo (63 * i) 63 s.limbs[i]! acc)
 
+private theorem toList_go_eq (s : VSet n) :
+    ∀ (fuel i : Nat) (acc : List Nat),
+      toList.go s fuel i acc =
+        ((List.range fuel).flatMap fun k => limbMembers s (i + k)).reverse ++ acc
+  | 0, _, acc => by simp [toList.go]
+  | fuel + 1, i, acc => by
+    have hr : List.range (fuel + 1) = 0 :: (List.range fuel).map Nat.succ :=
+      List.range_succ_eq_map
+    have hshift : (List.range fuel).flatMap (fun k => limbMembers s (i + 1 + k)) =
+        (List.range fuel).flatMap ((fun k => limbMembers s (i + k)) ∘ Nat.succ) := by
+      congr 1
+      funext k
+      simp only [Function.comp, Nat.succ_eq_add_one]
+      rw [show i + (k + 1) = i + 1 + k by omega]
+    rw [toList.go, toList_go_eq s fuel (i + 1), toListGo_eq, hr,
+      List.flatMap_cons, List.flatMap_map, List.reverse_append, List.append_assoc,
+      Nat.add_zero, hshift, limbMembers]
+    rfl
+
 theorem toList_eq (s : VSet n) : s.toList = (List.range n).filter s.mem := by
-  sorry
+  rw [toList, toList_go_eq, List.append_nil, List.reverse_reverse, s.size_eq,
+    filter_range_eq_blocks]
+  simp only [Nat.zero_add]
 
 theorem mem_toList {s : VSet n} {v : Nat} : v ∈ s.toList ↔ s.mem v = true := by
   rw [toList_eq, List.mem_filter, List.mem_range]
@@ -555,18 +990,189 @@ where
       if a == b then go fuel (i + 1)
       else if a.testBit (lowBit (a ^^^ b)) then .gt else .lt
 
+/-- The outcome of the limb scan from `i` with `fuel` limbs: equal
+prefixes give `.eq`; otherwise the first differing limb decides by its
+least differing bit. -/
+theorem rowCmp_go_eq_of {s t : VSet n} :
+    ∀ (fuel i : Nat), (∀ k, k < fuel → s.limbs[i + k]! = t.limbs[i + k]!) →
+      rowCmp.go s t fuel i = .eq
+  | 0, _, _ => rfl
+  | fuel + 1, i, h => by
+    rw [rowCmp.go, show (s.limbs[i]! == t.limbs[i]!) = true by
+      simpa using h 0 (by omega)]
+    simp only [↓reduceIte]
+    exact rowCmp_go_eq_of fuel (i + 1) fun k hk => by
+      rw [show i + 1 + k = i + (k + 1) by omega]
+      exact h (k + 1) (by omega)
+
+theorem rowCmp_go_ne_of {s t : VSet n} :
+    ∀ (fuel i k : Nat), k < fuel → (∀ k', k' < k → s.limbs[i + k']! = t.limbs[i + k']!) →
+      s.limbs[i + k]! ≠ t.limbs[i + k]! →
+      rowCmp.go s t fuel i =
+        if (s.limbs[i + k]!).testBit (lowBit (s.limbs[i + k]! ^^^ t.limbs[i + k]!))
+        then .gt else .lt
+  | 0, _, _, hk, _, _ => by omega
+  | fuel + 1, i, k, hk, hpre, hne => by
+    rw [rowCmp.go]
+    cases k with
+    | zero =>
+      simp only [Nat.add_zero] at hne ⊢
+      rw [show (s.limbs[i]! == t.limbs[i]!) = false by simpa using hne]
+      simp only [Bool.false_eq_true, ite_false]
+    | succ k =>
+      rw [show (s.limbs[i]! == t.limbs[i]!) = true by
+        simpa using hpre 0 (by omega)]
+      simp only [↓reduceIte]
+      rw [rowCmp_go_ne_of fuel (i + 1) k (by omega)
+        (fun k' hk' => by
+          rw [show i + 1 + k' = i + (k' + 1) by omega]
+          exact hpre (k' + 1) (by omega))
+        (by rw [show i + 1 + k = i + (k + 1) by omega]; exact hne)]
+      rw [show i + 1 + k = i + (k + 1) by omega]
+
+/-- A differing limb has a least differing limb below it. -/
+private theorem exists_least_diff (s t : VSet n) :
+    ∀ k : Nat, s.limbs[k]! ≠ t.limbs[k]! →
+      ∃ m : Nat, m ≤ k ∧ s.limbs[m]! ≠ t.limbs[m]! ∧
+        ∀ k' : Nat, k' < m → s.limbs[k']! = t.limbs[k']!
+  | 0, h => ⟨0, Nat.le_refl 0, h, fun (k' : Nat) (h' : k' < 0) => absurd h' (Nat.not_lt_zero k')⟩
+  | k + 1, h => by
+    rcases Decidable.em (∀ k' : Nat, k' ≤ k → s.limbs[k']! = t.limbs[k']!) with hall | hnot
+    · exact ⟨k + 1, Nat.le_refl _, h, fun k' hk' => hall k' (by omega)⟩
+    · -- some earlier limb differs: recurse on the largest candidate
+      have : ∃ k', k' ≤ k ∧ s.limbs[k']! ≠ t.limbs[k']! := by
+        rcases Classical.not_forall.mp hnot with ⟨k', hk'⟩
+        exact ⟨k', Classical.byContradiction fun h1 => hk' fun h2 => absurd h2 h1,
+          fun heq => hk' fun _ => heq⟩
+      obtain ⟨k', hk', hne'⟩ := this
+      obtain ⟨m, hm, hmne, hpre⟩ := exists_least_diff s t k' hne'
+      exact ⟨m, by omega, hmne, hpre⟩
+
 theorem rowCmp_eq_iff {s t : VSet n} : s.rowCmp t = .eq ↔ s = t := by
-  sorry
+  constructor
+  · intro h
+    refine ext fun v => ?_
+    rcases Nat.lt_or_ge (v / 63) (limbCount n) with hi | hi
+    · refine Classical.byContradiction fun hne => ?_
+      have hkne : s.limbs[v / 63]! ≠ t.limbs[v / 63]! :=
+        fun heq => hne (by rw [mem_eq, mem_eq, heq])
+      obtain ⟨m, hm, hmne, hpre⟩ := exists_least_diff s t _ hkne
+      rw [rowCmp, s.size_eq, rowCmp_go_ne_of _ 0 m (by omega)
+        (fun k' hk' => by rw [Nat.zero_add]; exact hpre k' hk')
+        (by rw [Nat.zero_add]; exact hmne)] at h
+      split at h <;> cases h
+    · rw [mem_of_ge_limbCount s hi, mem_of_ge_limbCount t hi]
+  · rintro rfl
+    rw [rowCmp]
+    exact rowCmp_go_eq_of _ 0 fun _ _ => rfl
+
+private theorem rowCmp_ne_char {s t : VSet n} (hne : s ≠ t) :
+    ∃ d, s.mem d ≠ t.mem d ∧ (∀ i, i < d → s.mem i = t.mem i) ∧
+      s.rowCmp t = (if s.mem d then .gt else .lt) := by
+  have hex : ∃ k, k < limbCount n ∧ s.limbs[k]! ≠ t.limbs[k]! := by
+    refine Classical.byContradiction fun hall => hne ?_
+    refine limbs_ext (Array.ext (by rw [s.size_eq, t.size_eq]) fun i hi _ => ?_)
+    rw [← getElem!_pos, ← getElem!_pos]
+    refine Classical.byContradiction fun hne' => hall ⟨i, ?_, hne'⟩
+    rw [← s.size_eq]
+    exact hi
+  obtain ⟨k, hk, hkne⟩ := hex
+  obtain ⟨m, hmk, hmne, hpre⟩ := exists_least_diff s t k hkne
+  have hmlt : m < limbCount n := by omega
+  have hx : s.limbs[m]! ^^^ t.limbs[m]! ≠ 0 := xor_ne_zero_of_ne hmne
+  have hlt : lowBit (s.limbs[m]! ^^^ t.limbs[m]!) < 63 :=
+    lowBit_lt_of_lt (Nat.xor_lt_two_pow (s.bounded m) (t.bounded m)) hx
+  refine ⟨63 * m + lowBit (s.limbs[m]! ^^^ t.limbs[m]!), ?_, ?_, ?_⟩
+  · rw [← testBit_limb s m _ hlt, ← testBit_limb t m _ hlt]
+    exact testBit_ne_at_lowBit_xor hmne
+  · intro i hi
+    rcases Nat.lt_or_ge (i / 63) m with him | him
+    · rw [mem_eq, mem_eq, hpre _ him]
+    · have heq : i / 63 = m := by omega
+      rw [mem_eq, mem_eq, heq]
+      exact testBit_eq_of_lt_lowBit_xor (by omega)
+  · rw [rowCmp, s.size_eq, rowCmp_go_ne_of _ 0 m hmlt
+      (fun k' hk' => by rw [Nat.zero_add]; exact hpre k' hk')
+      (by rw [Nat.zero_add]; exact hmne), Nat.zero_add,
+      testBit_limb s m _ hlt]
 
 theorem rowCmp_gt_iff {s t : VSet n} :
     s.rowCmp t = .gt ↔ ∃ d, s.mem d = true ∧ t.mem d = false ∧
       ∀ i, i < d → s.mem i = t.mem i := by
-  sorry
+  constructor
+  · intro h
+    have hne : s ≠ t := fun heq => by
+      rw [rowCmp_eq_iff.mpr heq] at h
+      cases h
+    obtain ⟨d, hd, hpre, hcmp⟩ := rowCmp_ne_char hne
+    refine ⟨d, ?_, ?_, hpre⟩
+    · rcases hs : s.mem d with _ | _
+      · rw [hs] at hcmp
+        rw [hcmp] at h
+        cases h
+      · rfl
+    · rcases hs : s.mem d with _ | _
+      · rw [hs] at hcmp
+        rw [hcmp] at h
+        cases h
+      · rcases ht : t.mem d with _ | _
+        · rfl
+        · exact absurd (hs.trans ht.symm) hd
+  · rintro ⟨d, hs, ht, hpre⟩
+    have hne : s ≠ t := fun heq => by
+      rw [heq] at hs
+      rw [hs] at ht
+      cases ht
+    obtain ⟨d', hd', hpre', hcmp⟩ := rowCmp_ne_char hne
+    have hdd : d = d' := by
+      rcases Nat.lt_trichotomy d d' with hlt | heq | hgt
+      · have := hpre' d hlt
+        rw [hs, ht] at this
+        cases this
+      · exact heq
+      · exact absurd (hpre d' hgt) hd'
+    subst hdd
+    rw [hcmp, hs]
+    rfl
 
 theorem rowCmp_lt_iff {s t : VSet n} :
     s.rowCmp t = .lt ↔ ∃ d, s.mem d = false ∧ t.mem d = true ∧
       ∀ i, i < d → s.mem i = t.mem i := by
-  sorry
+  constructor
+  · intro h
+    have hne : s ≠ t := fun heq => by
+      rw [rowCmp_eq_iff.mpr heq] at h
+      cases h
+    obtain ⟨d, hd, hpre, hcmp⟩ := rowCmp_ne_char hne
+    refine ⟨d, ?_, ?_, hpre⟩
+    · rcases hs : s.mem d with _ | _
+      · rfl
+      · rw [hs] at hcmp
+        rw [hcmp] at h
+        cases h
+    · rcases hs : s.mem d with _ | _
+      · rcases ht : t.mem d with _ | _
+        · exact absurd (hs.trans ht.symm) hd
+        · rfl
+      · rw [hs] at hcmp
+        rw [hcmp] at h
+        cases h
+  · rintro ⟨d, hs, ht, hpre⟩
+    have hne : s ≠ t := fun heq => by
+      rw [heq] at hs
+      rw [hs] at ht
+      cases ht
+    obtain ⟨d', hd', hpre', hcmp⟩ := rowCmp_ne_char hne
+    have hdd : d = d' := by
+      rcases Nat.lt_trichotomy d d' with hlt | heq | hgt
+      · have := hpre' d hlt
+        rw [hs, ht] at this
+        cases this
+      · exact heq
+      · exact absurd (hpre d' hgt) hd'
+    subst hdd
+    rw [hcmp, hs]
+    rfl
 
 theorem rowCmp_gt_iff_lt {s t : VSet n} : s.rowCmp t = .gt ↔ t.rowCmp s = .lt := by
   rw [rowCmp_gt_iff, rowCmp_lt_iff]
