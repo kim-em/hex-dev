@@ -101,14 +101,24 @@ def load_sweep(path: Path) -> dict[str, list[dict]]:
 
 
 def current_sweep() -> Path:
-    """The sweep recorded for the current source fingerprint."""
-    fingerprint = freshness.fingerprint(freshness.index_listing(freshness.GRAPHISO))
-    matches = sorted(RESULTS.glob(f"hexgraphiso-cactus-{fingerprint}-*.jsonl"))
-    if not matches:
-        sys.exit(f"no recorded sweep matches the current source "
-                 f"(fingerprint {fingerprint}); regenerate with "
+    """The sweep covering the current source.
+
+    A sweep recorded at the current fingerprint wins. Otherwise the same
+    verdict as `check_graphiso_sweep_freshness.py` applies: when the
+    source differs from the newest recorded sweep only in paths the
+    freshness check exempts (a `.lean` file whose comments alone changed),
+    that sweep still measures this source and the fit reads it.
+    """
+    from scripts.bench import check_graphiso_sweep_freshness as check
+    found, errors = check.observations()
+    verdict = freshness.assess(freshness.GRAPHISO, found,
+                               allow=freshness.lean_comment_only)
+    covering = verdict.matched or (verdict.baseline if verdict.fresh else None)
+    if errors or covering is None:
+        sys.exit(f"no recorded sweep covers the current source "
+                 f"(fingerprint {verdict.fingerprint}); regenerate with "
                  f"scripts/bench/graphiso_cactus_sweep.sh")
-    return matches[-1]
+    return RESULTS / covering.label
 
 
 def analyse(families: dict[str, list[dict]]) -> list[dict]:
