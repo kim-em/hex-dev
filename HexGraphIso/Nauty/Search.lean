@@ -81,8 +81,10 @@ structure SearchSt (n : Nat) where
   genTrace : Array (Array Nat) := #[]
 deriving Inhabited
 
+variable {n : Nat}
+
 /-- Record an automorphism pair in the bounded workspace. -/
-def pushAuto {n : Nat} (st : SearchSt n) (pair : VSet n × VSet n) : SearchSt n :=
+def pushAuto (st : SearchSt n) (pair : VSet n × VSet n) : SearchSt n :=
   if st.autos.size == st.wsCap then
     { st with autos := st.autos.set! (st.wsCap - 1) pair }
   else
@@ -108,7 +110,7 @@ def recover (n inf : Nat) (level : Nat) (st : SearchSt n) : SearchSt n := Id.run
 
 /-- nauty's `firstterminal`: install the first leaf as both the first-path
 data and the initial best-so-far leaf. -/
-def firstterminal {n : Nat} (level : Nat) (st : SearchSt n) : SearchSt n := Id.run do
+def firstterminal (level : Nat) (st : SearchSt n) : SearchSt n := Id.run do
   let mut st := st
   st := { st with
     maxlevel := level
@@ -129,9 +131,9 @@ def firstterminal {n : Nat} (level : Nat) (st : SearchSt n) : SearchSt n := Id.r
 
 /-- nauty's `processnode`: classify a non-first-path node and act on it.
 Returns the level to return to. -/
-def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt ctx.n) :
-    Int × SearchSt ctx.n := Id.run do
-  let n := ctx.n
+def processnode (ctx : Ctx n) (level numcells : Nat) (st : SearchSt n) :
+    Int × SearchSt n := Id.run do
+  let n := n
   let mut st := st
   let mut code := 0
   let mut workperm : Array Nat := .replicate n 0
@@ -222,7 +224,7 @@ def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt ctx.n) :
 /-- nauty's `longprune`: intersect the target cell with the minimum-cell
 representatives of every stored automorphism fixing all currently fixed
 points. -/
-def longprune {n : Nat} (tcell fixedpts : VSet n)
+def longprune (tcell fixedpts : VSet n)
     (autos : Array (VSet n × VSet n)) : VSet n :=
   autos.foldl
     (fun tcell (fix, mcr) =>
@@ -232,7 +234,7 @@ def longprune {n : Nat} (tcell fixedpts : VSet n)
 /-- nauty's `shortprune`: intersect the target cell with the `mcr` set of
 the most recently stored automorphism. The store is never empty when this
 is called; an empty store leaves the cell unchanged. -/
-def shortprune {n : Nat} (tcell : VSet n) (st : SearchSt n) : VSet n :=
+def shortprune (tcell : VSet n) (st : SearchSt n) : VSet n :=
   match st.autos.back? with
   | some (_, mcr) => tcell.inter mcr
   | none => tcell
@@ -242,12 +244,11 @@ mutual
 
 /-- nauty's `firstpathnode`: produce a node on the leftmost path. Returns
 the level to return to. -/
-@[expose] def firstPathNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
-    (level numcells : Nat) (st : SearchSt ctx.n) : Int × SearchSt ctx.n :=
+@[expose] def firstPathNode (ctx : Ctx n) (inf tcLevel : Nat) (fuel : Nat)
+    (level numcells : Nat) (st : SearchSt n) : Int × SearchSt n :=
   match fuel with
   | 0 => (0, st)
   | fuel + 1 => Id.run do
-    let n := ctx.n
     let mut st := { st with numnodes := st.numnodes + 1 }
     let rs := refine ctx level st.lab st.ptn st.active numcells
     st := { st with lab := rs.lab, ptn := rs.ptn, active := rs.active }
@@ -255,7 +256,7 @@ the level to return to. -/
     let refcode := rs.longcode
     st := { st with firstcode := st.firstcode.set! level refcode }
     let mut tc : Int := -1
-    let mut tcell : VSet ctx.n := .empty
+    let mut tcell : VSet n := .empty
     let mut tcellsize : Nat := 0
     if numcells ≠ n then
       let (tcPos, cellSet, size) := maketargetcell ctx st.lab st.ptn level tcLevel (-1)
@@ -285,9 +286,9 @@ termination_by (fuel, 0, 0)
 /-- The child loop of `firstpathnode`: individualize each surviving
 target-cell vertex in ascending order, tracking the orbit index count.
 Returns `some rtn` for an early unwind. -/
-@[expose] def firstChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
-    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet ctx.n)
-    (index0 : Nat) (st0 : SearchSt ctx.n) : Option Int × Nat × SearchSt ctx.n :=
+@[expose] def firstChildLoop (ctx : Ctx n) (inf tcLevel : Nat) (fuel cfuel : Nat)
+    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet n)
+    (index0 : Nat) (st0 : SearchSt n) : Option Int × Nat × SearchSt n :=
   match cfuel, tv? with
   | 0, _ => (none, index0, st0)
   | _, none => (none, index0, st0)
@@ -296,7 +297,7 @@ Returns `some rtn` for an early unwind. -/
     let mut tcell := tcell0
     let mut index := index0
     if st.orbits[tv]! == tv then
-      let (lab, ptn, active) := breakout ctx.n st.lab st.ptn (level + 1) tc tv
+      let (lab, ptn, active) := breakout n st.lab st.ptn (level + 1) tc tv
       st := { st with
         lab := lab
         ptn := ptn
@@ -318,7 +319,7 @@ Returns `some rtn` for an early unwind. -/
       if st.needshortprune then
         st := { st with needshortprune := false }
         tcell := shortprune tcell st
-      st := recover ctx.n inf level st
+      st := recover n inf level st
     if st.orbits[tv]! == tv1 then
       index := index + 1
     return firstChildLoop ctx inf tcLevel fuel cfuel level numcells tc tv1
@@ -329,7 +330,7 @@ termination_by (fuel, 1, cfuel)
 refinement and the target-cell choice: the first-path level-code
 comparison and the best-so-far level-code comparison, exactly as the
 corresponding `othernode` lines perform them. -/
-def otherNodePrep {n : Nat} (level : Nat) (code : Nat) (st : SearchSt n) :
+def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt n) :
     SearchSt n := Id.run do
   let mut st := st
   if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]! then
@@ -347,12 +348,11 @@ def otherNodePrep {n : Nat} (level : Nat) (code : Nat) (st : SearchSt n) :
 
 /-- nauty's `othernode`: produce a node off the leftmost path. Returns the
 level to return to. -/
-@[expose] def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
-    (level numcells : Nat) (st : SearchSt ctx.n) : Int × SearchSt ctx.n :=
+@[expose] def otherNode (ctx : Ctx n) (inf tcLevel : Nat) (fuel : Nat)
+    (level numcells : Nat) (st : SearchSt n) : Int × SearchSt n :=
   match fuel with
   | 0 => (0, st)
   | fuel + 1 => Id.run do
-    let n := ctx.n
     let mut st := { st with numnodes := st.numnodes + 1 }
     let rs := refine ctx level st.lab st.ptn st.active numcells
     st := { st with lab := rs.lab, ptn := rs.ptn, active := rs.active }
@@ -360,7 +360,7 @@ level to return to. -/
     let code := rs.longcode
     st := otherNodePrep level code st
     let mut tc : Int := -1
-    let mut tcell : VSet ctx.n := .empty
+    let mut tcell : VSet n := .empty
     if numcells < n ∧ (st.eqlevFirst == level ∨ st.compCanon ≥ (0 : Int)) then
       if st.compCanon < (0 : Int) then
         let (tcPos, cellSet, size) :=
@@ -396,16 +396,16 @@ level to return to. -/
 termination_by (fuel, 0, 0)
 
 /-- The child loop of `othernode`. -/
-@[expose] def otherChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
-    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet ctx.n)
-    (st0 : SearchSt ctx.n) : Option Int × SearchSt ctx.n :=
+@[expose] def otherChildLoop (ctx : Ctx n) (inf tcLevel : Nat) (fuel cfuel : Nat)
+    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet n)
+    (st0 : SearchSt n) : Option Int × SearchSt n :=
   match cfuel, tv? with
   | 0, _ => (none, st0)
   | _, none => (none, st0)
   | cfuel + 1, some tv => Id.run do
     let mut st := st0
     let mut tcell := tcell0
-    let (lab, ptn, active) := breakout ctx.n st.lab st.ptn (level + 1) tc tv
+    let (lab, ptn, active) := breakout n st.lab st.ptn (level + 1) tc tv
     st := { st with
       lab := lab
       ptn := ptn
@@ -420,7 +420,7 @@ termination_by (fuel, 0, 0)
       tcell := shortprune tcell st
     if tv == tv1 then
       tcell := longprune tcell st.fixedpts st.autos
-    st := recover ctx.n inf level st
+    st := recover n inf level st
     return otherChildLoop ctx inf tcLevel fuel cfuel level numcells tc tv1
       (tcell.nextElem (some tv)) tcell st
 termination_by (fuel, 1, cfuel)
@@ -468,7 +468,7 @@ def run (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat) (cellEnds : List Nat) 
       tctotal := 0
       canupdates := 1 }
   let inf := n + 2
-  let ctx : Ctx := { n, g }
+  let ctx : Ctx n := { g }
   let st : SearchSt n :=
     { lab := lab0
       ptn := initPtn n inf cellEnds
@@ -528,7 +528,7 @@ def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
       autos := #[]
       bestCodes := [] }
   let inf := n + 2
-  let ctx : Ctx := { n, g }
+  let ctx : Ctx n := { g }
   let st : SearchSt n :=
     { lab := lab0
       ptn := initPtn n inf cellEnds
@@ -558,7 +558,7 @@ def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     bestCodes := (List.range' 1 st.canonlevel).map
       fun i => st.canoncode[i]! }
 
-variable {n k : Nat}
+variable {k : Nat}
 
 /-- The adjacency row of one vertex of a coloured graph. -/
 @[expose] def rowOf (G : Colored n k) (i : Nat) : VSet n :=

@@ -46,14 +46,12 @@ variable {n : Nat}
 @[expose, inline] def cleanup (l : Nat) : Nat :=
   l % 0o77777
 
-/-- The graph as adjacency rows, with the vertex count. -/
-structure Ctx where
-  /-- The number of vertices. -/
-  n : Nat
+/-- The graph on `n` vertices as adjacency rows. -/
+structure Ctx (n : Nat) where
   /-- Row `v` is the neighbour set of vertex `v`. -/
   g : Array (VSet n)
 
-instance : Inhabited Ctx := ⟨⟨0, #[]⟩⟩
+instance : Inhabited (Ctx n) := ⟨⟨#[]⟩⟩
 
 /-- The end position of the cell starting at `i` in the partition at
 `level`: the least `j ≥ i` with `ptn[j] ≤ level`. -/
@@ -172,11 +170,11 @@ partition by adjacency, then the split bookkeeping. -/
 /-- One splitting pass of `refine` for the trivial splitter cell
 `{lab[split1]}`. The splitter row is captured before any cell is
 processed, as in nauty. -/
-@[expose] def refineTrivial (ctx : Ctx) (level split1 : Nat)
-    (st : RefineSt ctx.n) : RefineSt ctx.n :=
-  go (ctx.g[st.lab[split1]!]!) (cells st.ptn level ctx.n) st
+@[expose] def refineTrivial (ctx : Ctx n) (level split1 : Nat)
+    (st : RefineSt n) : RefineSt n :=
+  go (ctx.g[st.lab[split1]!]!) (cells st.ptn level n) st
 where
-  go (gRow : VSet ctx.n) : List (Nat × Nat) → RefineSt ctx.n → RefineSt ctx.n
+  go (gRow : VSet n) : List (Nat × Nat) → RefineSt n → RefineSt n
     | [], st => st
     | (cell1, cell2) :: rest, st => go gRow rest (trivialCell level gRow cell1 cell2 st)
 
@@ -184,40 +182,40 @@ where
 snapshot of the partition (`ptn0`), taken before the pass writes, so
 no `(start, end)` pair list is materialized. Runtime form of
 `refineTrivial`. -/
-@[expose] def refineTrivialFast (ctx : Ctx) (level split1 : Nat)
-    (st : RefineSt ctx.n) : RefineSt ctx.n :=
-  go (ctx.g[st.lab[split1]!]!) st.ptn ctx.n 0 st
+@[expose] def refineTrivialFast (ctx : Ctx n) (level split1 : Nat)
+    (st : RefineSt n) : RefineSt n :=
+  go (ctx.g[st.lab[split1]!]!) st.ptn n 0 st
 where
-  go (gRow : VSet ctx.n) (ptn0 : Array Nat) :
-      Nat → Nat → RefineSt ctx.n → RefineSt ctx.n
+  go (gRow : VSet n) (ptn0 : Array Nat) :
+      Nat → Nat → RefineSt n → RefineSt n
     | 0, _, st => st
     | fuel + 1, c1, st =>
-      if c1 < ctx.n then
+      if c1 < n then
         let c2 := cellEnd ptn0 level c1
         go gRow ptn0 fuel (c2 + 1) (trivialCell level gRow c1 c2 st)
       else
         st
 
-theorem refineTrivialFast_go_eq (ctx : Ctx) (level : Nat) (gRow : VSet ctx.n)
+theorem refineTrivialFast_go_eq (ctx : Ctx n) (level : Nat) (gRow : VSet n)
     (ptn0 : Array Nat) :
-    ∀ (fuel c1 : Nat) (st : RefineSt ctx.n),
-      refineTrivialFast.go ctx level gRow ptn0 fuel c1 st =
-        refineTrivial.go ctx level gRow
-          (cells.go ptn0 level ctx.n fuel c1) st
+    ∀ (fuel c1 : Nat) (st : RefineSt n),
+      refineTrivialFast.go level gRow ptn0 fuel c1 st =
+        refineTrivial.go level gRow
+          (cells.go ptn0 level n fuel c1) st
   | 0, _, _ => by
     rw [refineTrivialFast.go, cells.go, refineTrivial.go]
   | fuel + 1, c1, st => by
     rw [refineTrivialFast.go, cells.go]
-    rcases Decidable.em (c1 < ctx.n) with h | h
+    rcases Decidable.em (c1 < n) with h | h
     · rw [if_pos h, if_pos h, refineTrivial.go]
       exact refineTrivialFast_go_eq ctx level gRow ptn0 fuel _ _
     · rw [if_neg h, if_neg h, refineTrivial.go]
 
 @[csimp] theorem refineTrivial_eq_fast :
     @refineTrivial = @refineTrivialFast := by
-  funext ctx level split1 st
+  funext n ctx level split1 st
   rw [refineTrivial, refineTrivialFast, cells]
-  exact (refineTrivialFast_go_eq ctx level _ st.ptn ctx.n 0 st).symm
+  exact (refineTrivialFast_go_eq ctx level _ st.ptn n 0 st).symm
 
 /-- The splitter cell's vertex set: the members of `lab[lo..hi]`. -/
 @[expose] def worksetOf (n : Nat) (lab : Array Nat) (lo hi : Nat) : VSet n :=
@@ -225,7 +223,7 @@ theorem refineTrivialFast_go_eq (ctx : Ctx) (level : Nat) (gRow : VSet ctx.n)
 
 /-- The neighbour counts of a cell's members into the splitter set, in
 cell order. -/
-@[expose] def countsOf (ctx : Ctx) (lab : Array Nat) (workset : VSet ctx.n)
+@[expose] def countsOf (ctx : Ctx n) (lab : Array Nat) (workset : VSet n)
     (cell1 cell2 : Nat) : List Nat :=
   (List.range (cell2 + 1 - cell1)).map fun o =>
     workset.cardInter ctx.g[lab[cell1 + o]!]!
@@ -300,8 +298,8 @@ Touches no labelling data. -/
     (counts.foldl Nat.min (counts.headD 0) + ·)
 
 /-- One cell's processing in the nontrivial-splitter pass. -/
-@[expose] def nontrivialCell (ctx : Ctx) (level : Nat) (workset : VSet ctx.n)
-    (cell1 cell2 : Nat) (st : RefineSt ctx.n) : RefineSt ctx.n :=
+@[expose] def nontrivialCell (ctx : Ctx n) (level : Nat) (workset : VSet n)
+    (cell1 cell2 : Nat) (st : RefineSt n) : RefineSt n :=
   if cell1 == cell2 then
     st
   else if (countsOf ctx st.lab workset cell1 cell2).foldl Nat.min
@@ -344,7 +342,7 @@ the specification spellings above stay the proof surface. -/
 
 /-- The counts pass: per-member neighbour counts into the splitter
 set, the members themselves, and the count extrema, in one walk. -/
-@[expose] def ntcPass (ctx : Ctx) (lab : Array Nat) (workset : VSet ctx.n)
+@[expose] def ntcPass (ctx : Ctx n) (lab : Array Nat) (workset : VSet n)
     (cell1 : Nat) : Nat → Nat → Array Nat → Array Nat → Nat → Nat →
       Array Nat × Array Nat × Nat × Nat
   | 0, _, counts, members, bmin, bmax => (counts, members, bmin, bmax)
@@ -396,9 +394,9 @@ written at its group's next position. -/
       (lab.set! pos members[o]!) (starts.set! v (pos + 1))
 
 /-- `nontrivialCell` as the bucket-array counting sort. -/
-@[expose] def nontrivialCellFast (ctx : Ctx) (level : Nat)
-    (workset : VSet ctx.n) (cell1 cell2 : Nat) (st : RefineSt ctx.n) :
-    RefineSt ctx.n :=
+@[expose] def nontrivialCellFast (ctx : Ctx n) (level : Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (st : RefineSt n) :
+    RefineSt n :=
   if cell1 == cell2 then
     st
   else if cell2 < cell1 then
@@ -536,7 +534,7 @@ private theorem getElem!_push_lt {α : Type} [Inhabited α] (a : Array α)
 
 /-- `ntcPass` appends the per-member counts and members over its fuel
 window and folds the extrema, leaving the accumulator prefixes intact. -/
-theorem ntcPass_spec (ctx : Ctx) (lab : Array Nat) (workset : VSet ctx.n)
+theorem ntcPass_spec (ctx : Ctx n) (lab : Array Nat) (workset : VSet n)
     (cell1 : Nat) :
     ∀ (fuel o : Nat) (counts members : Array Nat) (bmin bmax : Nat),
       ntcPass ctx lab workset cell1 fuel o counts members bmin bmax =
@@ -1099,8 +1097,8 @@ private theorem cons_shift_map_eq {β : Type} (f : Nat → β) (cell1 cell2 : Na
   omega
 
 /-- The concrete counts pass reconstructs `countsOf` as its count array. -/
-theorem ntcPass_concrete_counts (ctx : Ctx) (lab : Array Nat)
-    (workset : VSet ctx.n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
+theorem ntcPass_concrete_counts (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
     (ntcPass ctx lab workset cell1 (cell2 - cell1) 1
       ((Array.mkEmpty (cell2 + 1 - cell1)).push
         (workset.cardInter ctx.g[lab[cell1]!]!))
@@ -1118,8 +1116,8 @@ theorem ntcPass_concrete_counts (ctx : Ctx) (lab : Array Nat)
     (fun o => workset.cardInter ctx.g[lab[o]!]!) cell1 cell2 h
 
 /-- The concrete counts pass records the cell members in cell order. -/
-theorem ntcPass_concrete_members (ctx : Ctx) (lab : Array Nat)
-    (workset : VSet ctx.n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
+theorem ntcPass_concrete_members (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
     (ntcPass ctx lab workset cell1 (cell2 - cell1) 1
       ((Array.mkEmpty (cell2 + 1 - cell1)).push
         (workset.cardInter ctx.g[lab[cell1]!]!))
@@ -1591,8 +1589,8 @@ private theorem foldl_extremum_shift (op : Nat → Nat → Nat)
     hidem, List.foldl_map]
 
 /-- The concrete counts pass folds the specification's count minimum. -/
-theorem ntcPass_concrete_bmin (ctx : Ctx) (lab : Array Nat)
-    (workset : VSet ctx.n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
+theorem ntcPass_concrete_bmin (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
     (ntcPass ctx lab workset cell1 (cell2 - cell1) 1
       ((Array.mkEmpty (cell2 + 1 - cell1)).push
         (workset.cardInter ctx.g[lab[cell1]!]!))
@@ -1606,8 +1604,8 @@ theorem ntcPass_concrete_bmin (ctx : Ctx) (lab : Array Nat)
     (fun o => workset.cardInter ctx.g[lab[o]!]!) cell1 cell2 h
 
 /-- The concrete counts pass folds the specification's count maximum. -/
-theorem ntcPass_concrete_bmax (ctx : Ctx) (lab : Array Nat)
-    (workset : VSet ctx.n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
+theorem ntcPass_concrete_bmax (ctx : Ctx n) (lab : Array Nat)
+    (workset : VSet n) (cell1 cell2 : Nat) (h : cell1 ≤ cell2) :
     (ntcPass ctx lab workset cell1 (cell2 - cell1) 1
       ((Array.mkEmpty (cell2 + 1 - cell1)).push
         (workset.cardInter ctx.g[lab[cell1]!]!))
@@ -1640,7 +1638,7 @@ fast path in place of the O(cell x window) `multOf` scan and
 `segmentOf` redistribution. -/
 @[csimp] theorem nontrivialCell_eq_fast :
     @nontrivialCell = @nontrivialCellFast := by
-  funext ctx level workset cell1 cell2 st
+  funext n ctx level workset cell1 cell2 st
   rw [nontrivialCell, nontrivialCellFast]
   rcases Decidable.em ((cell1 == cell2) = true) with h12 | h12
   · rw [if_pos h12, if_pos h12]
@@ -1762,13 +1760,13 @@ nauty's `bucket` scratch is reproduced semantically: the multiplicity
 window over `[bmin, bmax]` and the stable counting redistribution give
 exactly the array contents nauty's incremental window zeroing and
 placement loop produce. -/
-@[expose] def refineNontrivial (ctx : Ctx) (level split1 split2 : Nat)
-    (st : RefineSt ctx.n) : RefineSt ctx.n :=
-  let workset := worksetOf ctx.n st.lab split1 split2
+@[expose] def refineNontrivial (ctx : Ctx n) (level split1 split2 : Nat)
+    (st : RefineSt n) : RefineSt n :=
+  let workset := worksetOf n st.lab split1 split2
   let st := { st with longcode := mash st.longcode (split2 - split1 + 1) }
-  go workset (cells st.ptn level ctx.n) st
+  go workset (cells st.ptn level n) st
 where
-  go (workset : VSet ctx.n) : List (Nat × Nat) → RefineSt ctx.n → RefineSt ctx.n
+  go (workset : VSet n) : List (Nat × Nat) → RefineSt n → RefineSt n
     | [], st => st
     | (cell1, cell2) :: rest, st =>
       go workset rest (nontrivialCell ctx level workset cell1 cell2 st)
@@ -1776,48 +1774,48 @@ where
 /-- `refineNontrivial` with the cell walk fused over a partition
 snapshot, mirroring `refineTrivialFast`. Runtime form of
 `refineNontrivial`. -/
-@[expose] def refineNontrivialFast (ctx : Ctx) (level split1 split2 : Nat)
-    (st : RefineSt ctx.n) : RefineSt ctx.n :=
-  let workset := worksetOf ctx.n st.lab split1 split2
+@[expose] def refineNontrivialFast (ctx : Ctx n) (level split1 split2 : Nat)
+    (st : RefineSt n) : RefineSt n :=
+  let workset := worksetOf n st.lab split1 split2
   let st := { st with longcode := mash st.longcode (split2 - split1 + 1) }
-  go workset st.ptn ctx.n 0 st
+  go workset st.ptn n 0 st
 where
-  go (workset : VSet ctx.n) (ptn0 : Array Nat) :
-      Nat → Nat → RefineSt ctx.n → RefineSt ctx.n
+  go (workset : VSet n) (ptn0 : Array Nat) :
+      Nat → Nat → RefineSt n → RefineSt n
     | 0, _, st => st
     | fuel + 1, c1, st =>
-      if c1 < ctx.n then
+      if c1 < n then
         let c2 := cellEnd ptn0 level c1
         go workset ptn0 fuel (c2 + 1)
           (nontrivialCell ctx level workset c1 c2 st)
       else
         st
 
-theorem refineNontrivialFast_go_eq (ctx : Ctx) (level : Nat)
-    (workset : VSet ctx.n) (ptn0 : Array Nat) :
-    ∀ (fuel c1 : Nat) (st : RefineSt ctx.n),
+theorem refineNontrivialFast_go_eq (ctx : Ctx n) (level : Nat)
+    (workset : VSet n) (ptn0 : Array Nat) :
+    ∀ (fuel c1 : Nat) (st : RefineSt n),
       refineNontrivialFast.go ctx level workset ptn0 fuel c1 st =
         refineNontrivial.go ctx level workset
-          (cells.go ptn0 level ctx.n fuel c1) st
+          (cells.go ptn0 level n fuel c1) st
   | 0, _, _ => by
     rw [refineNontrivialFast.go, cells.go, refineNontrivial.go]
   | fuel + 1, c1, st => by
     rw [refineNontrivialFast.go, cells.go]
-    rcases Decidable.em (c1 < ctx.n) with h | h
+    rcases Decidable.em (c1 < n) with h | h
     · rw [if_pos h, if_pos h, refineNontrivial.go]
       exact refineNontrivialFast_go_eq ctx level workset ptn0 fuel _ _
     · rw [if_neg h, if_neg h, refineNontrivial.go]
 
 @[csimp] theorem refineNontrivial_eq_fast :
     @refineNontrivial = @refineNontrivialFast := by
-  funext ctx level split1 split2 st
+  funext n ctx level split1 split2 st
   rw [refineNontrivial, refineNontrivialFast, cells]
-  exact (refineNontrivialFast_go_eq ctx level _ _ ctx.n 0 _).symm
+  exact (refineNontrivialFast_go_eq ctx level _ _ n 0 _).symm
 
 /-- One iteration of `refine`'s active-cell loop: remove the chosen
 splitter from the active set and perform its splitting pass. -/
-@[expose] def refineStep (ctx : Ctx) (level split1 : Nat) (st : RefineSt ctx.n) :
-    RefineSt ctx.n :=
+@[expose] def refineStep (ctx : Ctx n) (level split1 : Nat) (st : RefineSt n) :
+    RefineSt n :=
   let st := { st with active := st.active.erase split1 }
   let split2 := cellEnd st.ptn level split1
   let st := { st with longcode := mash st.longcode (split1 + split2) }
@@ -1826,11 +1824,11 @@ splitter from the active set and perform its splitting pass. -/
   else
     refineNontrivial ctx level split1 split2 st
 
-@[expose] def refineLoop (ctx : Ctx) (level : Nat) :
-    Nat → RefineSt ctx.n → RefineSt ctx.n
+@[expose] def refineLoop (ctx : Ctx n) (level : Nat) :
+    Nat → RefineSt n → RefineSt n
   | 0, st => st
   | fuel + 1, st =>
-    if st.numcells < ctx.n then
+    if st.numcells < n then
       match pickSplit st.active st.hint with
       | some split1 => refineLoop ctx level fuel (refineStep ctx level split1 st)
       | none => st
@@ -1840,11 +1838,11 @@ splitter from the active set and perform its splitting pass. -/
 /-- nauty's `refine`: make the partition at `level` equitable with respect
 to the active cells, producing the refinement code. With the pinned
 options (`invarproc = NULL`) this is also the whole of `doref`. -/
-@[expose] def refine (ctx : Ctx) (level : Nat) (lab ptn : Array Nat)
-    (active : VSet ctx.n) (numcells : Nat) : RefineSt ctx.n :=
-  let st : RefineSt ctx.n :=
+@[expose] def refine (ctx : Ctx n) (level : Nat) (lab ptn : Array Nat)
+    (active : VSet n) (numcells : Nat) : RefineSt n :=
+  let st : RefineSt n :=
     { lab, ptn, active, numcells, hint := 0, maxpos := 0, longcode := numcells }
-  let st := refineLoop ctx level (4 * ctx.n + 8) st
+  let st := refineLoop ctx level (4 * n + 8) st
   { st with longcode := cleanup (mash st.longcode st.numcells) }
 
 /-- nauty's `cheapautom`: a cheap sufficient condition for the partition
@@ -1868,8 +1866,8 @@ where
 
 /-- One `v2` round of `bestcell`'s joined-cell count: bump the counts of
 `v2` and each earlier nonsingleton cell nontrivially joined to it. -/
-@[expose] def bestcellRow (ctx : Ctx) (lab startArr : Array Nat)
-    (workset : VSet ctx.n) (v2 : Nat) : List Nat → Array Nat → Array Nat
+@[expose] def bestcellRow (ctx : Ctx n) (lab startArr : Array Nat)
+    (workset : VSet n) (v2 : Nat) : List Nat → Array Nat → Array Nat
   | [], bucket => bucket
   | v1 :: rest, bucket =>
     -- nauty tests `workset & gp ≠ 0` and `workset & ~gp ≠ 0`; the second
@@ -1881,13 +1879,13 @@ where
     else
       bestcellRow ctx lab startArr workset v2 rest bucket
 
-@[expose] def bestcellRows (ctx : Ctx) (lab ptn : Array Nat) (level : Nat)
+@[expose] def bestcellRows (ctx : Ctx n) (lab ptn : Array Nat) (level : Nat)
     (startArr : Array Nat) : List Nat → Array Nat → Array Nat
   | [], bucket => bucket
   | v2 :: rest, bucket =>
     bestcellRows ctx lab ptn level startArr rest
       (bestcellRow ctx lab startArr
-        (worksetOf ctx.n lab startArr[v2]! (cellEnd ptn level startArr[v2]!))
+        (worksetOf n lab startArr[v2]! (cellEnd ptn level startArr[v2]!))
         v2 (List.range v2) bucket)
 
 /-- The position of the greatest count, first maximum winning. -/
@@ -1902,11 +1900,11 @@ where
 /-- nauty's `bestcell`: the first cell nontrivially joined to the greatest
 number of other nonsingleton cells, as a `lab` position; `n` when every
 cell is a singleton. -/
-@[expose] def bestcell (ctx : Ctx) (lab ptn : Array Nat) (level : Nat) : Nat :=
-  let starts := ((cells ptn level ctx.n).filter fun (c1, c2) => c1 ≠ c2).map (·.1)
+@[expose] def bestcell (ctx : Ctx n) (lab ptn : Array Nat) (level : Nat) : Nat :=
+  let starts := ((cells ptn level n).filter fun (c1, c2) => c1 ≠ c2).map (·.1)
   let nnt := starts.length
   if nnt == 0 then
-    ctx.n
+    n
   else
     let startArr := starts.toArray
     let bucket := bestcellRows ctx lab ptn level startArr
@@ -1914,7 +1912,7 @@ cell is a singleton. -/
     startArr[argmaxLoop bucket (List.range' 1 (nnt - 1)) 0 bucket[0]!]!
 
 /-- nauty's `targetcell` for the pinned undirected configuration. -/
-@[expose] def targetcell (ctx : Ctx) (lab ptn : Array Nat) (level tcLevel : Nat)
+@[expose] def targetcell (ctx : Ctx n) (lab ptn : Array Nat) (level tcLevel : Nat)
     (hint : Int) : Nat :=
   if hint ≥ 0 ∧ ptn[hint.toNat]! > level ∧
       (hint == 0 ∨ ptn[hint.toNat - 1]! ≤ level) then
@@ -1922,18 +1920,18 @@ cell is a singleton. -/
   else if level ≤ tcLevel then
     bestcell ctx lab ptn level
   else
-    let i := (cells ptn level ctx.n).find? (fun (c1, c2) => c1 ≠ c2)
+    let i := (cells ptn level n).find? (fun (c1, c2) => c1 ≠ c2)
     match i with
     | some (c1, _) => c1
     | none => 0
 
 /-- nauty's `maketargetcell`: the chosen cell's position, contents, and
 size. -/
-@[expose] def maketargetcell (ctx : Ctx) (lab ptn : Array Nat) (level tcLevel : Nat)
-    (hint : Int) : Nat × VSet ctx.n × Nat :=
+@[expose] def maketargetcell (ctx : Ctx n) (lab ptn : Array Nat) (level tcLevel : Nat)
+    (hint : Int) : Nat × VSet n × Nat :=
   let i := targetcell ctx lab ptn level tcLevel hint
   let j := cellEnd ptn level (i + 1)
-  (i, worksetOf ctx.n lab i j, j - i + 1)
+  (i, worksetOf n lab i j, j - i + 1)
 
 /-- nauty's `breakout`: split `{tv}` off the front of the cell starting at
 `tc`, shifting the displaced vertices one place right, and make `tc` the
@@ -1952,8 +1950,8 @@ where
 
 /-- nauty's `isautom` for undirected graphs: `perm` maps edges to edges,
 checking each edge from its lesser endpoint. -/
-@[expose] def isautom (ctx : Ctx) (perm : Array Nat) : Bool := Id.run do
-  for i in [0 : ctx.n] do
+@[expose] def isautom (ctx : Ctx n) (perm : Array Nat) : Bool := Id.run do
+  for i in [0 : n] do
     let row := ctx.g[i]!
     for pos in row.toList do
       if pos > i then
@@ -1972,24 +1970,24 @@ where
 /-- nauty's `testcanlab`: compare `g^lab` with `canong` row by row in
 nauty's setword order. Returns the comparison and the number of leading
 equal rows. -/
-@[expose] def testcanlab (ctx : Ctx) (canong : Array (VSet ctx.n))
+@[expose] def testcanlab (ctx : Ctx n) (canong : Array (VSet n))
     (lab : Array Nat) : Int × Nat := Id.run do
   let w := invPerm lab
-  for i in [0 : ctx.n] do
+  for i in [0 : n] do
     let row := ctx.g[lab[i]!]!.permset w
     match row.rowCmp canong[i]! with
     | .lt => return (-1, i)
     | .gt => return (1, i)
     | .eq => pure ()
-  return (0, ctx.n)
+  return (0, n)
 
 /-- nauty's `updatecan`: overwrite rows `samerows..n-1` of `canong` with
 the corresponding rows of `g^lab`. -/
-@[expose] def updatecan (ctx : Ctx) (canong : Array (VSet ctx.n))
-    (lab : Array Nat) (samerows : Nat) : Array (VSet ctx.n) := Id.run do
+@[expose] def updatecan (ctx : Ctx n) (canong : Array (VSet n))
+    (lab : Array Nat) (samerows : Nat) : Array (VSet n) := Id.run do
   let w := invPerm lab
   let mut canong := canong
-  for i in [samerows : ctx.n] do
+  for i in [samerows : n] do
     canong := canong.set! i (ctx.g[lab[i]!]!.permset w)
   return canong
 
