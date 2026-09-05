@@ -349,8 +349,6 @@ theorem checkAutom_range {g : Array (VSet n)} :
       image_congr _ fun w hw => hget w hw
     rw [hget v hvn, this, image_id _]
 
-    rw [hget v hvn, this, image_id_of_lt (hb v hvn)]
-
 /-!
 # Where the layer-two obligations landed
 

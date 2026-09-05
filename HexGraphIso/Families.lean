@@ -90,12 +90,13 @@ numbered by their value, adjacent when they differ in one bit. -/
   Graph.ofRel fun i j =>
     (List.range d).any fun b => j.val == i.val ^^^ (1 <<< b)
 
-/-- The binomial coefficient, by the Pascal recurrence; `choose`
+/-- The binomial coefficient, by the multiplicative formula: the
+running product after `i` steps is `choose n i`, and multiplying it by
+`n - i` before dividing by `i + 1` keeps every division exact. `choose`
 lives in Mathlib and this library is Mathlib-free. -/
-@[expose] def choose : Nat → Nat → Nat
-  | _, 0 => 1
-  | 0, _ + 1 => 0
-  | n + 1, r + 1 => choose n r + choose n (r + 1)
+@[expose] def choose (n r : Nat) : Nat :=
+  if n < r then 0
+  else (List.range r).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
 
 /-- The `r`-element subset of `Fin m` with colexicographic rank `v`:
 the standard combinatorial number system, choosing the largest possible
