@@ -12,7 +12,7 @@ the recorded result of that run.
 |---|---|
 | machine | `chungus2`, AMD EPYC 9455 (96 threads), Linux |
 | date | 2026-09-05 |
-| monorepo commit | `2ebe64bd4` (branch `issue-9990`, packed vertex sets) |
+| monorepo commit | `425ea11b9` (branch `issue-9990`, packed vertex sets) |
 | Lean toolchain | `leanprover/lean4:v4.34.0-rc2` |
 | comparator | nauty 2.9.3, vendored in `vendor/nauty-2.9.3` |
 | C compiler | clang 22.1.8, `-O2` |

@@ -66,12 +66,12 @@ profiles as follows, with the search the largest compiled category.
 
 | category | after, adjacency materialized |
 |---|---|
-| hex-search | 30.0% |
-| hex-instances | 7.3% |
-| hex-other | 12.2% |
-| GMP+allocator | 17.9% |
+| hex-search | 29.4% |
+| hex-instances | 7.5% |
+| hex-other | 12.5% |
+| GMP+allocator | 18.0% |
 | Lean-runtime | 29.1% |
-| nauty-C | 2.8% |
+| nauty-C | 2.9% |
 
 What remains of the bignum share is the `Nat` row conversion at the
 checker boundary plus the allocator traffic of the limb arrays
@@ -81,21 +81,21 @@ outside every timed region.
 ## Per-node cost
 
 Fits of `cost per node ~ n^e` from the two sweeps, before
-(`hexgraphiso-cactus-04f38e84f6e2-chungus2.jsonl`, the last sweep on
-`main`) and after (`hexgraphiso-cactus-5ec8574404ea-chungus2.jsonl`).
+(`hexgraphiso-cactus-d78dade3633a-chungus2.jsonl`, the last sweep on
+`main`) and after (`hexgraphiso-cactus-ac1dfad4a453-chungus2.jsonl`).
 `diff` is the hex exponent minus nauty's; the CI margin is `0.2`.
 
 | family | sizes | hex n^e before | hex n^e after | nauty n^e | diff before | diff after |
 |---|---|---|---|---|---|---|
-| circulant-12 | 17 | 2.15 | 1.74 | 1.84 | 0.32 | -0.10 |
-| circulant-1248 | 12 | 2.41 | 1.79 | 1.88 | 0.56 | -0.09 |
-| grid | 10 | 2.23 | 1.69 | 1.87 | 0.35 | -0.18 |
-| hypercube | 5 | 1.69 | 1.35 | 1.42 | 0.29 | -0.07 |
-| johnson | 10 | 1.66 | 0.99 | 1.06 | 0.61 | -0.07 |
-| kneser | 10 | 2.02 | 1.32 | 1.33 | 0.70 | -0.01 |
-| latin | 3 | 2.69 | 1.82 | 1.93 | 0.76 | -0.11 |
-| paley | 13 | 2.51 | 1.73 | 1.84 | 0.72 | -0.10 |
-| random | 18 | 2.57 | 1.88 | 1.91 | 0.68 | -0.04 |
+| circulant-12 | 17 | 2.14 | 1.75 | 1.83 | 0.32 | -0.08 |
+| circulant-1248 | 12 | 2.41 | 1.80 | 1.88 | 0.54 | -0.08 |
+| grid | 10 | 2.23 | 1.69 | 1.87 | 0.38 | -0.18 |
+| hypercube | 5 | 1.70 | 1.36 | 1.41 | 0.29 | -0.05 |
+| johnson | 10 | 1.67 | 1.00 | 1.05 | 0.62 | -0.06 |
+| kneser | 10 | 2.02 | 1.32 | 1.33 | 0.69 | -0.00 |
+| latin | 3 | 2.68 | 1.83 | 1.92 | 0.78 | -0.09 |
+| paley | 13 | 2.51 | 1.73 | 1.84 | 0.69 | -0.10 |
+| random | 18 | 2.57 | 1.88 | 1.91 | 0.68 | -0.03 |
 
 Before the change every family with at least five sizes failed the
 margin; after it every family passes, and the hex exponent is at or
@@ -104,28 +104,30 @@ per-instance wallclock ratios):
 
 | slice | X before | X after |
 |---|---|---|
-| n ≤ 64 | 5.67 | 7.91 |
-| n > 64 | 18.57 | 7.20 |
+| n ≤ 64 | 5.75 | 7.67 |
+| n > 64 | 18.85 | 7.08 |
 
 `X` is now flat in `n`, which is what "same algorithm, constant per-node
 factor" predicts. The two slices moved in opposite directions. Above 64
 vertices the packed sets remove the bignum path and the corpus
 canonicalizes 2.6 times faster (geometric mean over instances; Kneser
-22-2 goes from 209 ms to 39 ms, Paley 229 from 29 ms to 6.9 ms).
+22-2 goes from 211 ms to 38 ms, Paley 229 from 29 ms to 6.7 ms).
 The materialized adjacency moves neither slice measurably: the sweep
 recorded with the lazy generators still inside the timed region gave
 the same exponents and `X` of 7.7 and 7.1. Up to
 63 vertices a `Nat` bitset was a single unboxed scalar and every set
 operation was one machine instruction, whereas a one-limb `VSet` is a
 heap-allocated array whose binary operations allocate their result, and
-the small instances run 0.73 times as fast as before (0.64 to 0.88
-across the slice; grid 5×5 goes from 0.066 ms to 0.086 ms). That is the price
+the small instances run 0.74 times as fast as before (0.66 to 0.91
+across the slice; grid 5×5 goes from 0.066 ms to 0.084 ms). That is the price
 of one representation for every size, and it is the honest reading of
 the per-size table in the manual's Performance section. Whole-corpus
 `canonicalize` time falls from 0.87 s to 0.24 s.
 
 The `checked_ns` column is absent from both sweeps: the certificate tier
 collapsed onto the fast surface before this change, so the comparison is
-of `canonicalize` alone. The tactic tier is unaffected: the kernel-facing
-checker keeps `Nat` rows, converted from the packed rows at the boundary
-by `VSet.toNat` with the correspondence proofs in `NodeLit.lean`.
+of `canonicalize` alone. The tactic tier is unchanged within noise (curve
+shift 1.03x): the kernel-facing checker keeps `Nat` rows, converted from
+the packed rows at the boundary by `VSet.toNat` with the correspondence
+proofs in `NodeLit.lean`, and its packed-state clone in `NodePacked.lean`
+is proven equal to that list tower.
