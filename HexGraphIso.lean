@@ -19,11 +19,10 @@ public import HexGraphIso.Nauty.CanonSpec
 public import HexGraphIso.Nauty.CellPerm
 public import HexGraphIso.Nauty.CellPermLoop
 public import HexGraphIso.Nauty.SpecIso
-public import HexGraphIso.IsoLit
-public import HexGraphIso.NodeLit
-public import HexGraphIso.NodePacked
-public import HexGraphIso.SeparatorPacked
-public import HexGraphIso.Separator
+public import HexGraphIso.Kernel.IsoLit
+public import HexGraphIso.Kernel.Packed
+public import HexGraphIso.Kernel.CheckKey
+public import HexGraphIso.Kernel.RootCode
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom
 public import HexGraphIso.Nauty.CanonForm

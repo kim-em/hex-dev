@@ -7,11 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert
-public import HexGraphIso.IsoLit
-public import HexGraphIso.NodeLit
-public import HexGraphIso.NodePacked
-public import HexGraphIso.SeparatorPacked
-public import HexGraphIso.Separator
+public import HexGraphIso.Kernel.IsoLit
+public import HexGraphIso.Kernel.Packed
+public import HexGraphIso.Kernel.CheckKey
+public import HexGraphIso.Kernel.RootCode
 public import HexGraph.Basic
 public meta import Lean
 
@@ -51,9 +50,6 @@ elab "kdecide" : tactic => do
   g.assign (mkApp3 (mkConst ``of_decide_eq_true) p inst h)
 
 end
-
--- sanity: the instrument itself works
-example : 2 + 2 = 4 := by kdecide
 
 private def rowsP : Array (VSet 10) :=
   (([50, 69, 138, 276, 521, 385, 770, 548, 104, 208] : List Nat).map VSet.ofNat).toArray
@@ -100,6 +96,11 @@ private def probeKey : Key 10 :=
   ⟨[128, 27412, 8, 53, 32767],
     ([14, 49, 577, 385, 322, 642, 148, 104, 536, 292] : List Nat).map VSet.ofNat⟩
 
+/-- The same key in the literal shape the tactic emits. -/
+private def probeKeyLit : Hex.GraphIso.Kernel.Key :=
+  ⟨[128, 27412, 8, 53, 32767],
+    [14, 49, 577, 385, 322, 642, 148, 104, 536, 292]⟩
+
 set_option maxRecDepth 1000000 in
 example : (refine { g := rowsOf probeGraph } 1
     (initialPartition probeGraph).1
@@ -108,8 +109,6 @@ example : (refine { g := rowsOf probeGraph } 1
     (initialPartition probeGraph).2.length).longcode = 128 := by kdecide
 
 -- residual-suspect isolation
-example : ((some true : Option Bool) = some true) := by kdecide
-example : (compare (5 : Nat) 3 = Ordering.gt) := by kdecide
 example : ([1,2,3].zipIdx 0 = [(1,0),(2,1),(3,2)]) := by kdecide
 example : (keyCmp probeKey probeKey = Ordering.eq) := by kdecide
 set_option maxRecDepth 1000000 in
@@ -160,45 +159,21 @@ example : checkNode { g := rowsP } 100 probeKey.rows
 set_option maxRecDepth 1000000 in
 example : checkKey probeGraph probeCert probeKey = true := by kdecide
 
-/-- The separator closure kernel-reduces: the self-comparison of the
-probe graph evaluates both separator codes and their disagreement
-test to `false`. -/
-example : Hex.GraphIso.sepDiffG probeGraph probeGraph = false := by
-  kdecide
+/-! # The obligations the tactic emits
 
-example : Hex.GraphIso.sepRootG probeGraph probeGraph = false := by
-  kdecide
+Both negative routes replay against the rows tied as one packed number,
+so these stages pin the kernel closure of `Kernel.packRows`, the packed
+replay (`pget`/`pset`, the byte-table `popCount`, the raw bit-set
+operations) and the root refinement end to end. -/
 
--- the negative tactic route's flat-literal obligation: pins the
--- kernel closure of flatRows/chunkRows/atD feeding checkNode
 set_option maxRecDepth 1000000 in
-example : Hex.GraphIso.checkKeyFlat probeGraph
-    probeGraph.graph.adjMatrix.data.toList probeCert probeKey
-    = true := by kdecide
+example : Hex.GraphIso.Kernel.checkKey probeGraph
+    (Hex.GraphIso.Kernel.packRows 10 probeGraph.graph.adjMatrix.data.toList)
+    probeCert probeKeyLit = true := by kdecide
 
-example : Hex.GraphIso.checkKeyLit probeGraph
-    probeGraph.graph.adjMatrix.data.toList probeCert probeKey.toL
-    = true := by kdecide
-
--- the packed-state obligations the tactic emits: pin the kernel
--- closure of the packed rows tie, the packed replay (pget/pset, the
--- byte-table popCount, the raw bit-set operations) and the packed
--- separators end to end
-example : Hex.GraphIso.checkKeyP probeGraph
-    (Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList)
-    probeCert probeKey.toL = true := by kdecide
-
-example : Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList =
-    Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList := by kdecide
-
-example : Hex.GraphIso.sepDiffLitP probeGraph probeGraph
-    (Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList)
-    (Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList) = false := by
-  kdecide
-
-example : Hex.GraphIso.sepRootLitP probeGraph probeGraph
-    (Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList)
-    (Hex.GraphIso.packRowsK 10 probeGraph.graph.adjMatrix.data.toList) = false := by
+example : Hex.GraphIso.Kernel.rootDiff probeGraph probeGraph
+    (Hex.GraphIso.Kernel.packRows 10 probeGraph.graph.adjMatrix.data.toList)
+    (Hex.GraphIso.Kernel.packRows 10 probeGraph.graph.adjMatrix.data.toList) = false := by
   kdecide
 
 

@@ -80,7 +80,7 @@ theorem toNat_inj {s t : VSet n} (h : s.toNat = t.toNat) : s = t :=
 /-! # The single-`Nat` view
 
 `toNat` reads the packed limbs as one bitset, the representation the
-kernel-facing literal replay (`HexGraphIso.NodeLit`) computes with.
+kernel-facing replay (`HexGraphIso.Kernel.CheckKey`) computes with.
 Each packed operation corresponds to its `Nat` counterpart in
 `HexGraphIso.Nauty.Bits`; `ofNat` reads a bitset back. -/
 

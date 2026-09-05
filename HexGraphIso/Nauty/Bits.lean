@@ -525,7 +525,7 @@ theorem testBit_ne_at_lowBit_xor {a b : Nat} (hab : a ≠ b) :
 
 /-! # Bitset operations on a single `Nat`
 
-The kernel-facing literal replay (`HexGraphIso.NodeLit`) keeps every
+The kernel-facing replay (`HexGraphIso.Kernel.CheckKey`) keeps every
 vertex set as one `Nat`, because the kernel's GMP-backed `Nat`
 arithmetic is its cheapest reduction path. These are that layer's set
 operations; `VSet.toNat` relates each to its packed runtime

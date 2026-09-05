@@ -7,12 +7,14 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Bits
-public import HexGraphIso.IsoLit
+public import HexGraphIso.Nauty.VSet
+public import HexGraphIso.Kernel.IsoLit
 
 public section
 
 /-!
-Kernel-priced primitives for the certificate replay.
+Kernel-priced primitives for the certificate replay, and the packed
+rows the replay reads.
 
 The kernel has no support for `Array` and reduces `List` access by
 walking the spine, so every indexed read of the replay's labelling
@@ -22,7 +24,7 @@ the operand size. This file packs a list of small naturals into one
 `Nat` of fixed-width fields, so that a read is a shift and a mask and
 a write is a handful of arithmetic steps, and states the
 correspondence `Rep` between a packed number and the list it encodes
-that the replay clones in `HexGraphIso.NodePacked` thread through
+that the replay clones in `HexGraphIso.Kernel.CheckKey` thread through
 their equalities.
 
 Every definition here that the kernel evaluates is spelled with the
@@ -33,8 +35,13 @@ accelerated step; the `if`/`==`/`&&&` spellings unfold to these by
 `rfl`, which is how the proofs connect the two. The same treatment
 gives `popCountK` and `lowBitK`, byte-table forms of the per-bit
 recursions that the kernel otherwise pays one step per bit for.
--/
 
+`Kernel.packRows` reads the tied flat adjacency literal into one
+packed number with field width `n`, row `v` in bits
+`[n * v, n * (v + 1))`; `flatRows` and `rowsOfFlat` are the list and
+packed-set readings of the same rows that the soundness proofs go
+through.
+-/
 namespace Hex.GraphIso.Nauty
 
 /-! # Raw operation spellings -/
@@ -595,3 +602,193 @@ theorem Rep.ofList {w : Nat} {l : List Nat} (h : Small w l) :
   eq := rfl
 
 end Hex.GraphIso.Nauty
+
+namespace Hex.GraphIso
+
+open Nauty
+
+variable {n k : Nat}
+
+/-- Adjacency rows rebuilt from the flat literal as single-`Nat`
+bitsets: the flat list is cut into rows once, and each row folds over
+its own short segment instead of probing the flat list. This is the
+row form the kernel replay computes with. -/
+@[expose] def flatRows (nn : Nat) (flat : List Bool) : Array Nat :=
+  ((chunkRows nn nn flat).map fun seg =>
+    (List.range nn).foldl
+      (fun row j => if atD seg j false then Nauty.insertL nn row j else row)
+      0).toArray
+
+/-- The same rows as packed vertex sets: the form the specification
+side consumes. -/
+@[expose] def rowsOfFlat (nn : Nat) (flat : List Bool) : Array (Nauty.VSet nn) :=
+  ((chunkRows nn nn flat).map fun seg =>
+    Nauty.VSet.ofFn fun j => atD seg j false).toArray
+
+theorem rowsOfFlat_eq_rowsOf (G : Colored n k) :
+    rowsOfFlat n G.graph.adjMatrix.data.toList = Nauty.rowsOf G := by
+  rw [rowsOfFlat, Nauty.rowsOf]
+  refine congrArg List.toArray (List.ext_getElem ?_ ?_)
+  · rw [List.length_map, chunkRows_length, List.length_map,
+      List.length_range]
+  · intro i h1 h2
+    rw [List.length_map, chunkRows_length] at h1
+    rw [List.getElem_map, List.getElem_map, List.getElem_range,
+      ← atD_eq_getElem _ i (by rw [chunkRows_length]; exact h1)]
+    refine Nauty.VSet.ext fun j => ?_
+    rw [Nauty.VSet.mem_ofFn, Nauty.mem_rowOf]
+    rcases Decidable.em (j < n) with hj | hj
+    · rw [decide_eq_true hj, Bool.true_and,
+        dite_eq_left (⟨h1, hj⟩ : i < n ∧ j < n),
+        atD_chunk_flat (by simp) h1 hj, Nat.mul_comm n i,
+        ← adj_eq_toList_flat G.graph ⟨i, h1⟩ ⟨j, hj⟩]
+    · rw [decide_eq_false hj, Bool.false_and,
+        dite_eq_right (fun h => hj h.2)]
+
+/-- The kernel's `Nat` rows are the packed rows read as bitsets. -/
+theorem toNat_rowsOfFlat (nn : Nat) (flat : List Bool) :
+    (rowsOfFlat nn flat).toList.map Nauty.VSet.toNat = (flatRows nn flat).toList := by
+  rw [rowsOfFlat, flatRows, List.toList_toArray, List.toList_toArray, List.map_map]
+  refine List.map_congr_left fun seg _ => ?_
+  exact Nauty.VSet.toNat_ofFn _
+
+theorem size_flatRows (nn : Nat) (flat : List Bool) : (flatRows nn flat).size = nn := by
+  rw [flatRows, List.size_toArray, List.length_map, chunkRows_length]
+
+theorem flatRows_small (nn : Nat) (flat : List Bool) :
+    ∀ r, r ∈ (flatRows nn flat).toList → r < 2 ^ nn := by
+  intro r hr
+  rw [flatRows, List.toList_toArray, List.mem_map] at hr
+  obtain ⟨seg, _, rfl⟩ := hr
+  have hfold : ∀ (l : List Nat) (acc : Nat), acc < 2 ^ nn →
+      l.foldl (fun row j => if atD seg j false then insertL nn row j else row) acc <
+        2 ^ nn := by
+    intro l
+    induction l with
+    | nil => intro acc h; simpa using h
+    | cons j rest ih =>
+      intro acc hacc
+      rw [List.foldl_cons]
+      refine ih _ ?_
+      split
+      · rw [insertL]
+        split
+        · rw [Nat.one_shiftLeft]
+          exact Nat.or_lt_two_pow hacc (Nat.pow_lt_pow_right (by decide) (by assumption))
+        · exact hacc
+      · exact hacc
+  exact hfold _ 0 (Nat.two_pow_pos nn)
+
+/-! # Rows packed from the flat literal
+
+`flatRows` rebuilds each row by probing its segment position by
+position, a spine walk per bit; `rowOfSegK` reads the segment once. -/
+
+/-- The bit set of a row segment whose head sits at position `j`. -/
+@[expose] def rowOfSegK : List Bool → Nat → Nat
+  | [], _ => 0
+  | b :: rest, j =>
+    cond b (Nat.lor (rowOfSegK rest (Nat.add j 1)) (Nat.shiftLeft 1 j))
+      (rowOfSegK rest (Nat.add j 1))
+
+theorem atD_of_length_le {α : Type} : ∀ (l : List α) (i : Nat) (d : α),
+    l.length ≤ i → atD l i d = d
+  | [], _, _, _ => by rw [atD]
+  | _ :: l, i + 1, d, h => by
+    rw [atD]
+    exact atD_of_length_le l i d (by simpa using h)
+
+theorem testBit_rowOfSegK : ∀ (seg : List Bool) (j i : Nat),
+    (rowOfSegK seg j).testBit i = (decide (j ≤ i) && atD seg (i - j) false)
+  | [], j, i => by
+    rw [rowOfSegK, Nat.zero_testBit, atD_of_length_le _ _ _ (Nat.zero_le _)]
+    simp
+  | b :: rest, j, i => by
+    rw [rowOfSegK, add_eq]
+    have ih := testBit_rowOfSegK rest (j + 1) i
+    rcases b with _ | _
+    · rw [Bool.cond_false, ih]
+      rcases Nat.lt_trichotomy i j with h | rfl | h
+      · simp [Nat.not_le.mpr h, show ¬ j + 1 ≤ i by omega]
+      · simp [Nat.sub_self, atD, Nat.not_succ_le_self]
+      · have hsub : i - j = (i - (j + 1)) + 1 := by omega
+        rw [hsub, atD]
+        simp [show j ≤ i by omega, show j + 1 ≤ i by omega]
+    · rw [Bool.cond_true, lor_eq, shiftLeft_eq, Nat.one_shiftLeft, Nat.testBit_or,
+        Nat.testBit_two_pow, ih]
+      rcases Nat.lt_trichotomy i j with h | rfl | h
+      · simp [Nat.not_le.mpr h, show ¬ j + 1 ≤ i by omega, Nat.ne_of_gt h]
+      · simp [Nat.sub_self, atD]
+      · have hsub : i - j = (i - (j + 1)) + 1 := by omega
+        rw [hsub, atD]
+        simp [show j ≤ i by omega, show j + 1 ≤ i by omega, Nat.ne_of_lt h]
+
+theorem testBit_rowFold (nn : Nat) (seg : List Bool) : ∀ (len a acc i : Nat), a + len ≤ nn →
+    ((List.range' a len).foldl
+      (fun row j => if atD seg j false then insertL nn row j else row) acc).testBit i =
+      (acc.testBit i || (decide (a ≤ i ∧ i < a + len) && atD seg i false))
+  | 0, a, acc, i, _ => by
+    simp only [List.range'_zero, List.foldl_nil, Nat.add_zero]
+    have : ¬ (a ≤ i ∧ i < a) := by omega
+    simp [this]
+  | len + 1, a, acc, i, hle => by
+    rw [List.range'_succ, List.foldl_cons, testBit_rowFold nn seg len (a + 1) _ i (by omega),
+      insertL, ite_eq_left (show a < nn by omega)]
+    have hrange : decide (a + 1 ≤ i ∧ i < a + 1 + len) =
+        (decide (a ≤ i ∧ i < a + (len + 1)) && decide (i ≠ a)) := by
+      rw [Bool.eq_iff_iff]
+      simp only [Bool.and_eq_true, decide_eq_true_eq, ne_eq]
+      omega
+    rcases hs : atD seg a false with _ | _
+    · rw [ite_eq_right (by simp), hrange]
+      rcases Decidable.em (i = a) with rfl | hne
+      · simp
+        intro h
+        rw [hs] at h
+        cases h
+      · simp [hne]
+    · rw [ite_eq_left (by simp), Nat.one_shiftLeft, Nat.testBit_or,
+        Nat.testBit_two_pow, hrange]
+      rcases Decidable.em (i = a) with rfl | hne
+      · simp
+        exact Or.inr hs
+      · simp [hne, Ne.symm hne]
+
+theorem rowOfSegK_eq (nn : Nat) (seg : List Bool) (hlen : seg.length ≤ nn) :
+    rowOfSegK seg 0 =
+      (List.range nn).foldl
+        (fun row j => if atD seg j false then insertL nn row j else row) 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [testBit_rowOfSegK, List.range_eq_range', testBit_rowFold nn seg nn 0 0 i (by omega),
+    Nat.zero_testBit, Nat.sub_zero]
+  rcases Decidable.em (i < nn) with hi | hi
+  · simp [hi]
+  · rw [atD_of_length_le _ _ _ (by omega)]
+    simp
+
+theorem chunkRows_length_le (m : Nat) : ∀ (r : Nat) (l : List Bool) (seg : List Bool),
+    seg ∈ chunkRows r m l → seg.length ≤ m
+  | 0, _, _, h => absurd h List.not_mem_nil
+  | r + 1, l, seg, h => by
+    rw [chunkRows, List.mem_cons] at h
+    rcases h with rfl | h
+    · exact List.length_take_le ..
+    · exact chunkRows_length_le m r _ seg h
+
+namespace Kernel
+
+/-- The rows packed with width `n`, read off the flat literal one
+segment at a time. -/
+@[expose] def packRows (nn : Nat) (flat : List Bool) : Nat :=
+  pack nn ((chunkRows nn nn flat).map fun seg => rowOfSegK seg 0)
+
+theorem packRows_eq (nn : Nat) (flat : List Bool) :
+    packRows nn flat = pack nn (flatRows nn flat).toList := by
+  rw [packRows, flatRows, List.toList_toArray]
+  congr 1
+  exact List.map_congr_left fun seg hseg =>
+    rowOfSegK_eq nn seg (chunkRows_length_le nn nn flat seg hseg)
+
+end Kernel
+
+end Hex.GraphIso
