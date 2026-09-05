@@ -159,6 +159,16 @@ class Assess(unittest.TestCase):
         self.assertTrue(verdict.fresh)
         self.assertEqual([d.path for d in verdict.exempted], ["Lib/B.lean"])
 
+    def test_a_deletion_is_exempted_by_a_null_current_blob(self):
+        digest = self.record(self.CURRENT)
+        self.exempt("Lib/B.lean", "b" * 40, None)
+        removed = listing(("Lib/A.lean", "a" * 40))
+        verdict = freshness.assess(
+            self.family, [freshness.Observation(digest, "data.jsonl")],
+            listing=removed)
+        self.assertTrue(verdict.fresh)
+        self.assertEqual([d.path for d in verdict.exempted], ["Lib/B.lean"])
+
     def test_an_exemption_expires_when_the_file_changes_again(self):
         digest = self.record(self.BASELINE)
         self.exempt("Lib/B.lean", "0" * 40, "b" * 40)

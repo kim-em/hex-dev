@@ -268,7 +268,9 @@ def load_exemptions(directory: Path | None) -> set[tuple[str, str, str]]:
 
     Both blob ids are required so an exemption expires automatically as
     soon as the file changes again. This is intentionally narrower than
-    exempting a path or trusting a commit-message marker.
+    exempting a path or trusting a commit-message marker. A null blob id
+    is the absent side of an addition or a deletion, so removing a file
+    that declared no executable definition is exemptible too.
 
     One file per exemption. A single shared list cannot be merged:
     entries are appended by whichever branches happen to be open, so

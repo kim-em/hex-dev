@@ -90,10 +90,10 @@ private theorem normalize_eq_sign (f : ZPoly) :
   · have hlc : f.leadingCoeff ≠ 0 :=
       ZPoly.leadingCoeff_ne_zero_of_ne_zero f hf
     by_cases hpos : 0 < f.leadingCoeff
-    · rw [Hex.ite_eq_left (Or.inr hpos), Hex.ite_eq_right (by omega)]
+    · rw [ite_eq_left (Or.inr hpos), ite_eq_right (by omega)]
       exact DensePoly.mul_one_right_poly f
     · have hneg : f.leadingCoeff < 0 := by omega
-      rw [Hex.ite_eq_right (by simp [hf, hpos]), Hex.ite_eq_left hneg]
+      rw [ite_eq_right (by simp [hf, hpos]), ite_eq_left hneg]
       rw [DensePoly.mul_comm_poly]
       exact ZPoly.C_mul_eq_scale (-1) f
 
@@ -119,8 +119,8 @@ private theorem normalize_mul_sign (f h : ZPoly) :
         · have hprodPos : 0 < (f * h).leadingCoeff := by
             rw [hmulLead]
             exact Int.mul_pos_of_neg_of_neg hfNeg hhNeg
-          rw [Hex.ite_eq_right (by omega), Hex.ite_eq_left hfNeg,
-            Hex.ite_eq_left hhNeg]
+          rw [ite_eq_right (by omega), ite_eq_left hfNeg,
+            ite_eq_left hhNeg]
           symm
           calc
             DensePoly.scale (-1) f * DensePoly.scale (-1) h =
@@ -139,23 +139,23 @@ private theorem normalize_mul_sign (f h : ZPoly) :
           have hprodNeg : (f * h).leadingCoeff < 0 := by
             rw [hmulLead]
             exact Int.mul_neg_of_neg_of_pos hfNeg hhPos
-          rw [Hex.ite_eq_left hprodNeg, Hex.ite_eq_left hfNeg,
-            Hex.ite_eq_right hhNeg]
+          rw [ite_eq_left hprodNeg, ite_eq_left hfNeg,
+            ite_eq_right hhNeg]
           exact DensePoly.scale_mul (-1) f h
       · have hfPos : 0 < f.leadingCoeff := by omega
         by_cases hhNeg : h.leadingCoeff < 0
         · have hprodNeg : (f * h).leadingCoeff < 0 := by
             rw [hmulLead]
             exact Int.mul_neg_of_pos_of_neg hfPos hhNeg
-          rw [Hex.ite_eq_left hprodNeg, Hex.ite_eq_right hfNeg,
-            Hex.ite_eq_left hhNeg]
+          rw [ite_eq_left hprodNeg, ite_eq_right hfNeg,
+            ite_eq_left hhNeg]
           exact DensePoly.mul_scale (-1) f h
         · have hhPos : 0 < h.leadingCoeff := by omega
           have hprodPos : 0 < (f * h).leadingCoeff := by
             rw [hmulLead]
             exact Int.mul_pos hfPos hhPos
-          rw [Hex.ite_eq_right (by omega), Hex.ite_eq_right hfNeg,
-            Hex.ite_eq_right hhNeg]
+          rw [ite_eq_right (by omega), ite_eq_right hfNeg,
+            ite_eq_right hhNeg]
 
 instance instLawfulGcdOpsZPoly : LawfulGcdOps ZPoly := by
   refine {
@@ -198,7 +198,7 @@ instance instLawfulGcdOpsZPoly : LawfulGcdOps ZPoly := by
     · rw [hzero]
       rfl
     · unfold ZPoly.normalizePrimitiveSign
-      rw [Hex.ite_eq_right (by omega)]
+      rw [ite_eq_right (by omega)]
   · intro a b hb
     change (ZPoly.divExact? (a * b) b).getD 0 = a
     have hdiv : ZPoly.divExact? (a * b) b = some a :=
@@ -235,7 +235,7 @@ instance instLawfulGcdOpsZPoly : LawfulGcdOps ZPoly := by
       have hlead : 0 < (DensePoly.scale (-1) a).leadingCoeff := by
         rw [ZPoly.leadingCoeff_scale_of_nonzero (-1) a (by decide)]
         omega
-      rw [Hex.ite_eq_right (by omega)]
+      rw [ite_eq_right (by omega)]
     · rfl
   · intro a ha
     change decide (a.size = 1 ∧ (a.coeff 0 = 1 ∨ a.coeff 0 = -1)) = true at ha

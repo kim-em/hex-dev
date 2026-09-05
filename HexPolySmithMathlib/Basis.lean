@@ -196,7 +196,7 @@ private theorem mapped_snf_row {F : Type u} [Field F] [DecidableEq F]
   let kk : Fin m := Fin.castLE (snfData_isSNF A).rank_le_m i
   rw [Finset.sum_eq_single kk]
   · rw [mappedDiag_apply]
-    rw [_root_.dite_eq_left (by exact ⟨rfl, i.isLt⟩)]
+    rw [dite_eq_left (by exact ⟨rfl, i.isLt⟩)]
     simp [kk, smithFamily, ambientBasis_apply,
       Pi.smul_apply]
   · intro b _ hb
@@ -206,7 +206,7 @@ private theorem mapped_snf_row {F : Type u} [Field F] [DecidableEq F]
       apply Fin.ext
       simpa [ii, kk] using heq.symm
     rw [mappedDiag_apply]
-    rw [_root_.dite_eq_right (by
+    rw [dite_eq_right (by
       intro h
       exact hne h.1)]
     simp

@@ -140,10 +140,10 @@ theorem coeff_mulCyclic (plan : MulPlan R) (n : Nat) (hn : 0 < n)
   have hzero : (Zero.zero : R) = 0 := rfl
   rw [hzero]
   by_cases hi : i < n
-  · rw [_root_.ite_eq_left hi]
-  · rw [_root_.ite_eq_right hi]
+  · rw [ite_eq_left hi]
+  · rw [ite_eq_right hi]
     unfold Array.getD
-    rw [HexPoly.dite_eq_right]
+    rw [dite_eq_right]
     simpa [size_cyclicCoeffs] using hi
 
 /-- Coefficient description of negacyclic folding. -/
@@ -158,10 +158,10 @@ theorem coeff_mulNegacyclic (plan : MulPlan R) (n : Nat) (hn : 0 < n)
   have hzero : (Zero.zero : R) = 0 := rfl
   rw [hzero]
   by_cases hi : i < n
-  · rw [_root_.ite_eq_left hi]
-  · rw [_root_.ite_eq_right hi]
+  · rw [ite_eq_left hi]
+  · rw [ite_eq_right hi]
     unfold Array.getD
-    rw [HexPoly.dite_eq_right]
+    rw [dite_eq_right]
     simpa [size_negacyclicCoeffs] using hi
 
 private theorem ofCoeffs_set_add (coeffs : Array R) (k : Nat) (c : R)
@@ -275,9 +275,9 @@ private theorem foldl_negacyclic_poly (n : Nat) (hn : 0 < n) (p : DensePoly R)
             ofCoeffs acc + negacyclicTerm n p i := by
         unfold addNegacyclicCoeff negacyclicTerm negacyclicResidue
         by_cases hparity : (i / n) % 2 = 0
-        · rw [HexPoly.ite_eq_left hparity, HexPoly.ite_eq_left hparity]
+        · rw [ite_eq_left hparity, ite_eq_left hparity]
           exact ofCoeffs_set_add acc (i % n) (p.coeff i) hk
-        · rw [HexPoly.ite_eq_right hparity, HexPoly.ite_eq_right hparity]
+        · rw [ite_eq_right hparity, ite_eq_right hparity]
           exact ofCoeffs_set_sub acc (i % n) (p.coeff i) hk
       rw [← hstep]
       apply ih

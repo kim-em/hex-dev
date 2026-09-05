@@ -424,12 +424,12 @@ theorem lllReducedCheck_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
   unfold Hex.lllReducedCheck at hcheck
   simp only [Hex.Internal.withRecordCheckerOutcome] at hcheck
   by_cases hwin : Hex.Internal.intervalWins b = true
-  · rw [_root_.ite_eq_left hwin] at hcheck
+  · rw [ite_eq_left hwin] at hcheck
     by_cases hint : Hex.lllReducedInterval b δ η = true
     · exact HexLLLMathlib.lllReducedInterval_sound b δ η hint
-    · rw [_root_.ite_eq_right (by simpa using hint)] at hcheck
+    · rw [ite_eq_right (by simpa using hint)] at hcheck
       exact lllReduced_sound b δ η hcheck
-  · rw [_root_.ite_eq_right (by simpa using hwin)] at hcheck
+  · rw [ite_eq_right (by simpa using hwin)] at hcheck
     exact lllReduced_sound b δ η hcheck
 
 /-- Soundness of the certified-selection checker `Hex.certCheck`: an accepted

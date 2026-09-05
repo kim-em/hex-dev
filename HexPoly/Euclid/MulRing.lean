@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import Init.Grind.Ring.Basic
 public import Init.Data.List.Lemmas
 public import HexPoly.Operations
@@ -393,9 +392,9 @@ theorem scale_mul {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
         have hterm : term (scale a p) m = a * term p m := by
           unfold term diagonalMulCoeffTerm
           by_cases hnm : n < m
-          · simp only [hnm, HexPoly.ite_true]
+          · simp only [hnm, ite_true]
             grind
-          · simp only [hnm, HexPoly.ite_false, coeff_scale_semiring]
+          · simp only [hnm, ite_false, coeff_scale_semiring]
             grind
         rw [hterm]
         grind
@@ -1294,28 +1293,28 @@ theorem monomial_mul_monomial {S : Type _}
     by_cases hni : n < i
     · have hcond : ¬ (i = m ∧ n = m + k) := by
         intro ⟨h1, h2⟩; omega
-      rw [HexPoly.ite_eq_left hni, HexPoly.ite_eq_right hcond]
+      rw [ite_eq_left hni, ite_eq_right hcond]
     · have hile : i ≤ n := Nat.le_of_not_gt hni
-      rw [HexPoly.ite_eq_right hni]
+      rw [ite_eq_right hni]
       by_cases him : i = m
       · subst i
-        rw [HexPoly.ite_eq_left rfl]
+        rw [ite_eq_left rfl]
         by_cases hnmk : n - m = k
         · have hn : n = m + k := by omega
-          rw [HexPoly.ite_eq_left hnmk]
+          rw [ite_eq_left hnmk]
           simp [hn]
         · have hn : n ≠ m + k := by omega
-          rw [HexPoly.ite_eq_right hnmk]
+          rw [ite_eq_right hnmk]
           have hcond : ¬ (m = m ∧ n = m + k) := fun ⟨_, h⟩ => hn h
-          rw [HexPoly.ite_eq_right hcond]
+          rw [ite_eq_right hcond]
           -- c * Zero.zero = 0.
           show c * (Zero.zero : S) = 0
           have : (Zero.zero : S) = 0 := rfl
           rw [this]
           grind
-      · rw [HexPoly.ite_eq_right him]
+      · rw [ite_eq_right him]
         have hcond : ¬ (i = m ∧ n = m + k) := fun ⟨h, _⟩ => him h
-        rw [HexPoly.ite_eq_right hcond]
+        rw [ite_eq_right hcond]
         -- Zero.zero * anything = 0.
         exact Lean.Grind.Semiring.zero_mul _
   have hfold : ∀ (xs : List Nat) (acc : S),
@@ -1349,7 +1348,7 @@ theorem monomial_mul_monomial {S : Type _}
           exact ih _
     rw [hfold2 (List.range (n + 1)) 0, fold_single_index]
     have hm_lt : m < n + 1 := by omega
-    rw [HexPoly.ite_eq_left hm_lt, HexPoly.ite_eq_left hnmk]
+    rw [ite_eq_left hm_lt, ite_eq_left hnmk]
   · have hzero_fold : ∀ (xs : List Nat) (acc : S),
         xs.foldl (fun acc i => acc + if i = m ∧ n = m + k then c * d else 0) acc = acc := by
       intro xs
@@ -1359,9 +1358,9 @@ theorem monomial_mul_monomial {S : Type _}
           intro acc
           simp only [List.foldl_cons]
           have hcond : ¬ (i = m ∧ n = m + k) := fun ⟨_, h⟩ => hnmk h
-          rw [HexPoly.ite_eq_right hcond, show acc + (0 : S) = acc by grind]
+          rw [ite_eq_right hcond, show acc + (0 : S) = acc by grind]
           exact ih _
-    rw [hzero_fold, HexPoly.ite_eq_right hnmk]
+    rw [hzero_fold, ite_eq_right hnmk]
     rfl
 
 end DensePoly
