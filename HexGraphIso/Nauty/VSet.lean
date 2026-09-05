@@ -1542,6 +1542,214 @@ private theorem mem_imageFast_go (σ : Nat → Nat) (s : VSet n) :
 @[expose, inline] def permset (s : VSet n) (perm : Array Nat) : VSet n :=
   s.image (perm[·]!)
 
+/-! # Images under renamings
+
+A renaming is an injective vertex map preserving the vertex range in
+both directions; images under renamings are the equivariance the
+search theory works with. -/
+
+/-- A vertex renaming: injective everywhere and range-preserving in both
+directions. -/
+structure Renaming (n : Nat) where
+  /-- The underlying vertex map. -/
+  toFun : Nat → Nat
+  /-- Global injectivity. -/
+  inj : ∀ a b, toFun a = toFun b → a = b
+  /-- The vertex range is preserved in both directions. -/
+  maps : ∀ v, v < n ↔ toFun v < n
+
+instance : CoeFun (Renaming n) (fun _ => Nat → Nat) := ⟨Renaming.toFun⟩
+
+@[simp] theorem image_empty (σ : Nat → Nat) : (empty : VSet n).image σ = empty := by
+  refine ext fun w => ?_
+  rw [mem_image, mem_empty, List.any_eq_false]
+  intro v _
+  simp
+
+/-- Membership transports along a renaming. -/
+theorem mem_image_apply (σ : Renaming n) (s : VSet n) {v : Nat} (hv : v < n) :
+    (s.image σ).mem (σ v) = s.mem v := by
+  rw [mem_image]
+  rcases hb : s.mem v with _ | _
+  · rw [List.any_eq_false]
+    intro u _
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    rintro ⟨⟨hbu, heq⟩, _⟩
+    have := σ.inj u v heq
+    subst this
+    rw [hb] at hbu
+    cases hbu
+  · rw [List.any_eq_true]
+    refine ⟨v, List.mem_range.mpr hv, ?_⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    exact ⟨⟨hb, rfl⟩, (σ.maps v).mp hv⟩
+
+/-- Images commute with insertion of a vertex. -/
+theorem image_insert (σ : Renaming n) (s : VSet n) {v : Nat} (hv : v < n) :
+    (s.insert v).image σ = (s.image σ).insert (σ v) := by
+  refine ext fun w => ?_
+  rw [mem_image, mem_insert, mem_image, Bool.eq_iff_iff, Bool.or_eq_true,
+    List.any_eq_true, List.any_eq_true]
+  constructor
+  · rintro ⟨u, hu, hb⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, mem_insert,
+      Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hb
+    rcases hb with ⟨⟨hbu | ⟨huv, _⟩, hw⟩, hlt⟩
+    · refine Or.inl ⟨u, hu, ?_⟩
+      rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+      exact ⟨⟨hbu, hw⟩, hlt⟩
+    · subst huv
+      right
+      rw [Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+      exact ⟨hw, hlt⟩
+  · rintro (⟨u, hu, hb⟩ | hw)
+    · rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hb
+      refine ⟨u, hu, ?_⟩
+      rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, mem_insert,
+        Bool.or_eq_true]
+      exact ⟨⟨Or.inl hb.1.1, hb.1.2⟩, hb.2⟩
+    · rw [Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hw
+      refine ⟨v, List.mem_range.mpr hv, ?_⟩
+      rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq,
+        mem_insert_of_lt s hv, Bool.or_eq_true, beq_self_eq_true]
+      exact ⟨⟨Or.inr rfl, hw.1⟩, hw.2⟩
+
+/-- Images commute with intersection, for a renaming. -/
+theorem image_inter (σ : Renaming n) (s t : VSet n) :
+    (s.inter t).image σ = (s.image σ).inter (t.image σ) := by
+  refine ext fun w => ?_
+  rw [mem_inter, mem_image, mem_image, mem_image, Bool.eq_iff_iff, List.any_eq_true,
+    Bool.and_eq_true, List.any_eq_true, List.any_eq_true]
+  constructor
+  · rintro ⟨v, hv, hb⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, mem_inter,
+      Bool.and_eq_true] at hb
+    refine ⟨⟨v, hv, ?_⟩, ⟨v, hv, ?_⟩⟩
+    · rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+      exact ⟨⟨hb.1.1.1, hb.1.2⟩, hb.2⟩
+    · rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+      exact ⟨⟨hb.1.1.2, hb.1.2⟩, hb.2⟩
+  · rintro ⟨⟨v, hv, hbv⟩, ⟨u, hu, hbu⟩⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hbv hbu
+    have huv : u = v := σ.inj u v (hbu.1.2.trans hbv.1.2.symm)
+    subst huv
+    refine ⟨u, hu, ?_⟩
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, mem_inter,
+      Bool.and_eq_true]
+    exact ⟨⟨⟨hbv.1.1, hbu.1.1⟩, hbv.1.2⟩, hbv.2⟩
+
+/-- Images under a renaming are injective. -/
+theorem image_inj (σ : Renaming n) {s t : VSet n} (h : s.image σ = t.image σ) : s = t := by
+  refine ext fun v => ?_
+  rcases Nat.lt_or_ge v n with hv | hv
+  · rw [← mem_image_apply σ s hv, ← mem_image_apply σ t hv, h]
+  · rw [mem_of_ge hv, mem_of_ge hv]
+
+theorem image_eq_empty_iff (σ : Renaming n) {s : VSet n} : s.image σ = empty ↔ s = empty :=
+  ⟨fun h => image_inj σ (by rw [h, image_empty]), fun h => by rw [h, image_empty]⟩
+
+/-- The member count is preserved by a renaming. -/
+theorem card_image (σ : Renaming n) (s : VSet n) : (s.image σ).card = s.card := by
+  rw [card_eq_countBelow, card_eq_countBelow, countBelow, countBelow,
+    List.countP_eq_length_filter, List.countP_eq_length_filter]
+  have hperm : List.Perm ((List.range n).filter (s.image σ).mem)
+      (((List.range n).filter s.mem).map σ) := by
+    refine (List.perm_ext_iff_of_nodup ?_ ?_).mpr ?_
+    · exact List.filter_sublist.nodup List.nodup_range
+    · refine List.pairwise_map.mpr ?_
+      refine (List.filter_sublist.nodup List.nodup_range).imp ?_
+      intro a b hne heq
+      exact hne (σ.inj a b heq)
+    · intro w
+      rw [List.mem_filter, List.mem_range, List.mem_map]
+      constructor
+      · rintro ⟨hw, hbit⟩
+        rw [mem_image, List.any_eq_true] at hbit
+        rcases hbit with ⟨v, hv, hb⟩
+        rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hb
+        refine ⟨v, ?_, hb.1.2⟩
+        rw [List.mem_filter, List.mem_range]
+        exact ⟨List.mem_range.mp hv, hb.1.1⟩
+      · rintro ⟨v, hv, rfl⟩
+        rw [List.mem_filter, List.mem_range] at hv
+        exact ⟨(σ.maps v).mp hv.1, by rw [mem_image_apply σ s hv.1]; exact hv.2⟩
+  rw [hperm.length_eq, List.length_map]
+
+/-! # Cardinality comparisons -/
+
+/-- `countP` is monotone under pointwise implication of the predicate
+on the list's elements. -/
+theorem countP_le_of_imp {α : Type _} {p q : α → Bool} :
+    ∀ {l : List α}, (∀ x ∈ l, p x = true → q x = true) →
+      l.countP p ≤ l.countP q
+  | [], _ => by simp
+  | x :: l, h => by
+    have hrec : l.countP p ≤ l.countP q :=
+      countP_le_of_imp fun y hy => h y (List.mem_cons_of_mem x hy)
+    rcases hp : p x with _ | _
+    · rw [List.countP_cons_of_neg (by simp [hp])]
+      exact Nat.le_trans hrec ((List.sublist_cons_self x l).countP_le)
+    · have hq : q x = true := h x (List.mem_cons_self ..) hp
+      rw [List.countP_cons_of_pos (by simp [hp]),
+        List.countP_cons_of_pos (by simp [hq])]
+      omega
+
+/-- Two `filter`s ordered by pointwise implication are equal when they
+have the same length. -/
+theorem filter_eq_of_imp_of_length_eq {α : Type _} {p q : α → Bool}
+    {l : List α} (himp : ∀ x ∈ l, p x = true → q x = true)
+    (hlen : (l.filter p).length = (l.filter q).length) :
+    l.filter p = l.filter q := by
+  have hsub : List.Sublist (l.filter p) (l.filter q) := by
+    clear hlen
+    induction l with
+    | nil => simp
+    | cons x l ih =>
+      rw [List.filter_cons, List.filter_cons]
+      have ih' := ih fun y hy => himp y (List.mem_cons_of_mem x hy)
+      rcases hp : p x with _ | _
+      · rcases hq : q x with _ | _
+        · simpa using ih'
+        · exact ih'.trans (List.sublist_cons_self _ _)
+      · have hq : q x = true := himp x (List.mem_cons_self ..) hp
+        simpa [hq] using ih'.cons_cons x
+  exact hsub.eq_of_length hlen
+
+/-- A subset has no more members. -/
+theorem card_le_of_subset {s t : VSet n} (h : s.subset t = true) : s.card ≤ t.card := by
+  rw [card_eq_countBelow, card_eq_countBelow, countBelow, countBelow]
+  exact countP_le_of_imp fun v _ hv => subset_iff.mp h v hv
+
+/-- A set with no members is empty. -/
+theorem eq_empty_of_card_eq_zero {s : VSet n} (h : s.card = 0) : s = empty := by
+  rw [eq_empty_iff]
+  intro v
+  rcases Nat.lt_or_ge v n with hv | hv
+  · rw [card_eq_countBelow, countBelow, List.countP_eq_zero] at h
+    simpa using h v (List.mem_range.mpr hv)
+  · exact mem_of_ge hv
+
+/-- A subset with the same member count is the whole set. -/
+theorem eq_of_subset_of_card_eq {s t : VSet n} (h : s.subset t = true)
+    (hcard : s.card = t.card) : s = t := by
+  have hlen : ((List.range n).filter s.mem).length = ((List.range n).filter t.mem).length := by
+    have := hcard
+    rw [card_eq_countBelow, card_eq_countBelow, countBelow, countBelow,
+      List.countP_eq_length_filter, List.countP_eq_length_filter] at this
+    exact this
+  have hfilter : (List.range n).filter s.mem = (List.range n).filter t.mem :=
+    filter_eq_of_imp_of_length_eq (fun v _ hv => subset_iff.mp h v hv) hlen
+  refine ext fun v => ?_
+  rcases Nat.lt_or_ge v n with hv | hv
+  · have hiff := congrArg (fun l => v ∈ l) hfilter
+    simp only [List.mem_filter, List.mem_range, hv, true_and, eq_iff_iff] at hiff
+    rcases hs : s.mem v with _ | _
+    · rcases ht : t.mem v with _ | _
+      · rfl
+      · exact absurd (hiff.mpr ht) (by simp [hs])
+    · exact (subset_iff.mp h v hs).symm
+  · rw [mem_of_ge hv, mem_of_ge hv]
+
 /-! # The `Nat` bitset view
 
 The certificate checker and the kernel work with adjacency rows as

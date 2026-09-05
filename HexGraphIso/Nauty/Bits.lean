@@ -18,14 +18,14 @@ public section
 /-!
 Vertex-set primitives for the nauty-compatible search.
 
-nauty stores a vertex set as packed setwords with vertex `0` at the most
-significant bit, so unsigned setword comparison is lexicographic in vertex
-order and `FIRSTBITNZ` returns the least vertex. This module models a
-vertex set as a `Nat` bitset with bit `v` for vertex `v` and provides the
-same observable operations: least-element extraction, ascending iteration
-(`nextElem`), population count, and the vertex-order row comparison used
-by `testcanlab`. The packed-word representation may replace this one later
-only with a proof that no observable result changes.
+The word layer under the packed vertex sets of `VSet`: the least set
+bit (`lowBit`, nauty's `FIRSTBITNZ`), the population count
+(`popCount`, nauty's `POPCOUNT`), and the byte-chunked walk that lists
+the set bits of a word, each with a per-bit specification the kernel can
+replay, a byte-table implementation the compiled code runs, and the
+`csimp` equality between them. A word here is a natural number; the
+implementations are only ever applied to 63-bit limbs, where every
+operation is a scalar one.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -273,32 +273,6 @@ theorem popCountGo_eq (s acc : Nat) :
   funext s
   rw [popCountFast, popCountGo_eq, Nat.zero_add]
 
-/-- Membership test. -/
-@[expose, inline] def elem (s v : Nat) : Bool :=
-  s.testBit v
-
-/-- Insertion. -/
-@[expose, inline] def insert (s v : Nat) : Nat :=
-  s ||| (1 <<< v)
-
-/-- Deletion. -/
-@[expose, inline] def erase (s v : Nat) : Nat :=
-  if s.testBit v then s ^^^ (1 <<< v) else s
-
-/-- The least element of `s` greater than `pos`, or `none`: nauty's
-`nextelement`, which iterates a set in ascending vertex order. `pos = none`
-starts from the least element. -/
-@[expose] def nextElem (s : Nat) (pos : Option Nat) : Option Nat :=
-  let s' :=
-    match pos with
-    | none => s
-    | some p => (s >>> (p + 1)) <<< (p + 1)
-  if s' = 0 then none else some (lowBit s')
-
-/-- All elements of `s` below `n` in ascending order. -/
-@[expose] def toList (s n : Nat) : List Nat :=
-  (List.range n).filter s.testBit
-
 /-- One byte of `toList`: prepend the set positions `base + k`,
 `k < min 8 cnt`, in ascending order (so the whole accumulator is
 descending and one final reverse restores order). -/
@@ -321,9 +295,6 @@ def toListGo (base cnt s : Nat) (acc : List Nat) : List Nat :=
     (toListByte (s % 256) base cnt acc)
 termination_by cnt
 decreasing_by omega
-
-def toListFast (s n : Nat) : List Nat :=
-  (toListGo 0 n s []).reverse
 
 theorem toListByteGo_eq (b base cnt : Nat) :
     ∀ (k : Nat) (acc : List Nat),
@@ -402,33 +373,6 @@ theorem toListGo_eq (base cnt s : Nat) (acc : List Nat) :
       rw [hmin, hr, List.filter_append, List.filter_map,
         List.map_append, List.map_map, List.reverse_append,
         List.append_assoc, ← List.range_eq_range', hmap, hpred, hbyte]
-
-@[csimp] theorem toList_eq_toListFast : @toList = @toListFast := by
-  funext s n
-  rw [toListFast, toListGo_eq, List.append_nil, List.reverse_reverse,
-    toList]
-  have hid : ∀ l : List Nat, l.map (0 + ·) = l := by
-    intro l
-    induction l with
-    | nil => rfl
-    | cons x xs ih => simp [ih, Nat.zero_add]
-  rw [hid]
-
-/-- nauty's row order: rows are compared as packed setwords with vertex `0`
-most significant, so the least differing vertex decides and the row
-containing it is greater. -/
-@[expose] def rowCmp (a b : Nat) : Ordering :=
-  if a = b then
-    .eq
-  else if a.testBit (lowBit (a ^^^ b)) then
-    .gt
-  else
-    .lt
-
-/-- The image of a vertex set under a vertex map: nauty's `permset`. -/
-@[expose] def permset (s : Nat) (perm : Array Nat) (n : Nat) : Nat :=
-  (List.range n).foldl
-    (fun acc v => if s.testBit v then insert acc perm[v]! else acc) 0
 
 /-! # Word-level lemmas
 
