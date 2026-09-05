@@ -18,8 +18,6 @@ public meta import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.CanonForm
 public meta import HexGraphIso.NodeLit
 public meta import Lean
-public import HexGraphIso.PairwiseSound
-public meta import HexGraphIso.PairwiseSound
 
 public section
 
@@ -46,14 +44,11 @@ list-literal adjacency data, so the kernel performs the decisive replay
 without unfolding the executable representation. For a negative goal,
 the tactic first tries the constant-depth root separator, then takes
 certificate replay whenever the compiled search can produce two
-certificates within the configured record and replay budgets. If
-certificate production is unavailable, it tries the two-code separator
-and finally the fully verified pairwise decision `Pairwise.decideIso?`.
-The full-budget pairwise replay is the fallback and
-exhaustion-semantics anchor for the `maxCertNodes` cap. Search exhaustion
-never closes a negative goal, and every failure leaves the goal
-unchanged and reports the phase and logical limit that failed. No path
-uses `native_decide` and no axiom is introduced.
+certificates within the configured record and replay budgets, and
+finally the two-code separator. Search exhaustion never closes a
+negative goal, and every failure leaves the goal unchanged and reports
+the phase and logical limit that failed. No path uses `native_decide`
+and no axiom is introduced.
 -/
 
 namespace Hex.GraphIso
@@ -283,12 +278,6 @@ private meta unsafe def evalNatUnsafe (e : Expr) : MetaM Nat :=
 @[implemented_by evalNatUnsafe]
 private meta opaque evalNatCore (e : Expr) : MetaM Nat
 
-private meta unsafe def evalOptBoolUnsafe (e : Expr) : MetaM (Option Bool) :=
-  evalExpr (Option Bool) (mkApp (mkConst ``Option [.zero]) (mkConst ``Bool)) e
-
-@[implemented_by evalOptBoolUnsafe]
-private meta opaque evalOptBoolCore (e : Expr) : MetaM (Option Bool)
-
 private meta unsafe def evalBoolUnsafe (e : Expr) : MetaM Bool :=
   evalExpr Bool (mkConst ``Bool) e
 
@@ -364,25 +353,6 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
       autom={countAutom certG + countAutom certH} steps={steps}"
   return some proof
 
-/-- The pairwise leg: compiled `decideIso?` under `maxNodes` nodes,
-kernel-replaying the same bounded run on refutation. `none` on search
-exhaustion; throws on an isomorphic pair. -/
-meta def proveNotIsoPairwise? (maxNodes : Nat)
-    (GE HE : Expr) : MetaM (Option Expr) := do
-  let decTerm ← mkAppM ``Pairwise.decideIso? #[mkNatLit maxNodes, GE, HE]
-  match ← evalOptBoolCore decTerm with
-  | none => return none
-  | some true =>
-      throwError "graph_iso: the graphs are isomorphic; the negative goal \
-          is not provable"
-  | some false =>
-      let someFalse ← mkAppOptM ``Option.some
-        #[mkConst ``Bool, mkConst ``Bool.false]
-      let eqType ← mkAppM ``Eq #[decTerm, someFalse]
-      let checked ← kernelDecideProof eqType
-      trace[graph_iso] "route=pairwise maxNodes={maxNodes}"
-      some <$> mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
-
 /-- The root-separator leg of the negative path: when the root
 refinement codes already differ (typical for irregular pairs), the
 kernel obligation is a single refinement per graph. Charged four
@@ -430,15 +400,13 @@ meta def proveNotIsoSep? (cfg : Config) (GE HE : Expr) :
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
 graphs. After the root separator, the tactic takes the certificate proof
-whenever certificate production and replay fit their configured budgets.
-If that route is unavailable, the two-code separator and then the
-full-budget pairwise decision provide the fallbacks; the latter is the
-exhaustion-semantics anchor for the certificate-record cap.
-The certificate obligations replay only because their whole closure is
-exposed to the module-finalization kernel; the regression ladder in
-`HexGraphIso.ModuleBoundaryTests` pins that closure. Shared by the
-core negative branch and downstream extensions (the Mathlib layer
-calls it on the encodings). -/
+whenever certificate production and replay fit their configured budgets,
+and the two-code separator rescues the pairs whose certificates are
+unavailable or over budget. The certificate obligations replay only
+because their whole closure is exposed to the module-finalization
+kernel; the regression ladder in `HexGraphIso.ModuleBoundaryTests` pins
+that closure. Shared by the core negative branch and downstream
+extensions (the Mathlib layer calls it on the encodings). -/
 meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
   match ← proveNotIsoRoot? cfg GE HE with
   | some proof => return proof
@@ -448,11 +416,11 @@ meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
     match ← proveNotIsoSep? cfg GE HE with
     | some proof => return proof
     | none =>
-    match ← proveNotIsoPairwise? cfg.maxNodes GE HE with
-    | some proof => return proof
-    | none =>
-      throwError "graph_iso: search exhausted: the pairwise decision ran \
-          out of nodes at maxNodes := {cfg.maxNodes}"
+      throwError "graph_iso: every negative route is exhausted: the root \
+          and two-code separators do not separate these graphs at \
+          maxNodes := {cfg.maxNodes}, and certificate replay is \
+          unavailable at maxCertNodes := {cfg.maxCertNodes} with \
+          maxCheckerSteps := {cfg.maxCheckerSteps}"
 
 /-- A `graph_iso` goal handler contributed by a downstream library.
 Importing a library that declares a `public meta def` of this type under

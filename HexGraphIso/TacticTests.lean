@@ -86,7 +86,8 @@ def kneser52G : Graph 10 :=
 
 /-- The pentagonal prism: also cubic on ten vertices, so degree
 refinement alone cannot separate it from the Petersen graph; the
-negative goal replays the verified pairwise decision in the kernel. -/
+negative goal replays the two canonical-key certificates in the
+kernel. -/
 def prism5G : Graph 10 :=
   Graph.ofEdges
     [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
@@ -105,23 +106,22 @@ set_option maxRecDepth 100000 in
 example : ¬ Isomorphic petersen prism5 := by graph_iso
 
 /-!
-The pairwise fallback is the exhaustion-semantics anchor, so it needs a
-goal that reaches it. Both separator legs are charged against `maxNodes`
-(four nodes for the root separator, `2 * (n + 1)` for the two-code
-separator), so a budget in `[4, 2 * (n + 1))` funds the pairwise
-decision while withdrawing the two-code separator. This pair is cubic,
-so the root separator does not take it either; with certificates off,
-only `Pairwise.decideIso?` is left. It refutes in 12 nodes.
+Both separator legs are charged against `maxNodes`: four nodes for the
+root separator, `2 * (n + 1)` for the two-code separator. This pair is
+cubic, so the root separator does not take it, and with certificates
+off the two-code separator is the only leg left. A budget of
+`2 * (n + 1) = 22` funds it and a budget of 21 withdraws it, leaving
+every negative route exhausted.
 -/
 
 set_option maxRecDepth 400000 in
 example : ¬ Isomorphic petersen prism5 := by
-  graph_iso (maxCertNodes := 0) (maxNodes := 21)
+  graph_iso (maxCertNodes := 0) (maxNodes := 22)
 
-/-- error: graph_iso: search exhausted: the pairwise decision ran out of nodes at maxNodes := 11 -/
+/-- error: graph_iso: every negative route is exhausted: the root and two-code separators do not separate these graphs at maxNodes := 21, and certificate replay is unavailable at maxCertNodes := 0 with maxCheckerSteps := 5000000 -/
 #guard_msgs in
 example : ¬ Isomorphic petersen prism5 := by
-  graph_iso (maxCertNodes := 0) (maxNodes := 11)
+  graph_iso (maxCertNodes := 0) (maxNodes := 21)
 
 /-!
 The same pair stated on bare `Graph 10` values: the tactic colours both

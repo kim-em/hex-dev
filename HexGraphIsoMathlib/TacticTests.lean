@@ -169,7 +169,7 @@ example : IsEmpty (c5a ≃g c5b) := by graph_iso
 #guard_msgs in
 example : Nonempty (c5a ≃g petersenDrawing) := by graph_iso
 
-/-- error: graph_iso: search exhausted: the pairwise decision ran out of nodes at maxNodes := 0 -/
+/-- error: graph_iso: every negative route is exhausted: the root and two-code separators do not separate these graphs at maxNodes := 0, and certificate replay is unavailable at maxCertNodes := 100000 with maxCheckerSteps := 5000000 -/
 #guard_msgs in
 example : IsEmpty (c5a ≃g p5) := by graph_iso (maxNodes := 0)
 
