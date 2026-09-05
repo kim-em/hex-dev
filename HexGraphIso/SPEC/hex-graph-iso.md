@@ -1132,14 +1132,20 @@ on dedicated hardware.
 
 The published cactus figures must stay current with the code. The
 per-instance sweep data lives under `reports/bench-results/` keyed by
-the commit it was measured at, the figures under `reports/figures/`
+a content fingerprint of the source it measured, alongside the
+manifest that fingerprint hashes; the figures under `reports/figures/`
 are rendered from it, and any change to hex-graph-iso implementation
 source must regenerate both in the same pull request
 (`scripts/bench/graphiso_cactus_sweep.sh` does the whole
 regeneration). `scripts/bench/check_graphiso_sweep_freshness.py` is
 the required check: it fails whenever the implementation, the graph
-substrate, the sweep driver, or the plot script differs from the
-recorded commit.
+substrate, the sweep driver, or the plot script differs from what any
+committed sweep measured. The relevant set is deliberately tight and
+regeneration takes minutes, so this family declares no exemption
+directory at all: re-measuring is the only way past the check. The
+fingerprinting mechanism is shared with the other published figure
+families; see [SPEC/benchmarking.md](../../SPEC/benchmarking.md)
+§Figure freshness.
 
 Recorded sweeps accumulate: each regeneration adds its data,
 tactic-timing snapshot, and a `.meta.json` (fingerprint, host, date,

@@ -641,7 +641,8 @@ every SMT sibling, sampled from `/proc/stat`.
 - `scripts/bench/factor_sweep.py` is deliberately *not* changed, because
   `scripts/bench/check_factor_sweep_freshness.py` treats it as a shared source
   path: editing it marks every system's committed record stale, including the
-  external comparator records that cannot be cheaply re-measured. Invoke it
+  external comparator records that cannot be cheaply re-measured, so each such
+  edit costs a runtime-neutral exemption. Invoke it
   through the helper instead:
 
   ```sh
@@ -1202,12 +1203,77 @@ traceable artefacts does not satisfy this requirement.
 
 For the published integer polynomial factorization comparison, the current
 snapshot additionally covers the complete committed corpus for Hex, FLINT,
-NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the clean source
-commit and corpus hash, performs factor-degree cross-checking, and retains
-timeouts as explicit rows. Relevant source changes require fresh measurements
-for the affected systems. All cactus and runtime-by-degree figures are then
+NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the corpus hash
+and a fingerprint of each system's relevant source, performs factor-degree
+cross-checking, and retains timeouts as explicit rows. Relevant source changes
+require fresh measurements for the affected systems, or a runtime-neutral
+exemption per §Figure freshness. All cactus and runtime-by-degree figures are then
 regenerated from the newest current-corpus measurement of each system; CI
 checks both freshness and byte-for-byte figure regeneration on every PR.
+
+### Figure freshness
+
+A published figure is a claim about the current code, so the data it is
+rendered from must keep describing the source that was measured. Every
+enforced figure family uses one mechanism, declared in
+`scripts/bench/sweep_freshness.py`:
+
+- **Relevant set.** The paths whose content the curves depend on, as
+  tight as honesty allows. Everything listed forces a re-measurement or
+  an exemption when it changes; everything omitted is a claim that it
+  cannot move the curves.
+- **Fingerprint.** The first twelve hex digits of the sha256 of the
+  `git ls-files -s` listing of that set. Data is keyed by it:
+  `reports/bench-results/<family>-<fp12>-<host>.<ext>`.
+- **Manifest.** The listing itself, committed verbatim next to the data
+  as `reports/bench-results/<family>-<fp12>.manifest`.
+- **Check.** Fresh when some committed measurement carries the current
+  fingerprint. Otherwise the current listing is diffed against the newest
+  manifest, path by path, and every differing path must carry an
+  exemption; the failure names the paths and their blob transitions.
+- **Exemptions.** One JSON file per exemption, with `path`,
+  `baseline_blob`, `current_blob` and a reviewable `reason`. Naming both
+  blobs makes an exemption expire as soon as the file changes again, and
+  one file per exemption means concurrent pull requests never collide on
+  a shared list. A family opts in by declaring a directory; a family that
+  declares none has no way to pass except by re-measuring.
+
+Key on content, not on the measuring commit. A commit key has to stay
+resolvable forever, which holds for data recorded on `main` by a
+scheduled run but fails for data regenerated inside the pull request that
+changes the code: the squash merge rewrites the measuring commit, and so
+does any rebase. Content survives both.
+
+Exemptions exist because content keying alone cannot absorb a
+runtime-neutral edit -- a docstring moves the fingerprint exactly as a
+hot-loop rewrite does. Whether a family gets them follows from its
+relevant set. Hex's own factorization curve spans HexBasic through
+HexPolyZ and re-measuring needs a dedicated-hardware session, so
+proof-only edits are absorbed. Every other family re-measures: the
+comparator curves see three to six adapter files plus the corpus and the
+sweep driver, where every edit is aimed at the measurement itself, and
+hex-graph-iso names four paths and regenerates in minutes.
+
+That is also why the sweep driver does not fingerprint its own run: it is
+a relevant path for all six factorization systems, so editing it would
+mark every comparator record stale. A sweep is stamped afterwards, by the
+guard that defines what a valid observation is:
+
+```sh
+python3 scripts/bench/check_factor_sweep_freshness.py \
+  --record reports/bench-results/<sweep>.json
+```
+
+which writes each measured system's manifest and records its fingerprint
+in the report. `scripts/bench/graphiso_cactus_sweep.sh` does the
+equivalent inline, staging the relevant paths and recording the manifest
+before it measures.
+
+The comparator figures outside these two families (LLL, Hermite, Smith
+and the rest) are refreshed by the scheduled performance workflow and
+carry no merge-CI freshness check. Adopting one is a per-family
+judgement: the mechanism is there, and the cost of adopting it is a
+manifest plus a regeneration script.
 
 The `reports/<lib>-performance.md` file is overwrite-on-rerun:
 when the report is regenerated against a newer build, the previous

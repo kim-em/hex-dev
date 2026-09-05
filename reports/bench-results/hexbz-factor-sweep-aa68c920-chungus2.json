@@ -13,7 +13,14 @@
     "git_commit": "aa68c920c01500e84f5b1a400de4e4083b92a0b2",
     "git_dirty": false,
     "timestamp_unix_ms": 1785587116204,
-    "timestamp_iso": "2026-08-01T12:25:16Z"
+    "timestamp_iso": "2026-08-01T12:25:16Z",
+    "source_fingerprints": {
+      "flint": "67b2d283ceaf",
+      "isabelle-bz": "48b3ecf13d4d",
+      "isabelle-lll": "a6435cf9c108",
+      "ntl": "f25077233c72",
+      "pari": "54d03bbcfe90"
+    }
   },
   "config": {
     "cutoff_seconds": 10.0,
