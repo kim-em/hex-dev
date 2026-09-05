@@ -49,6 +49,19 @@ theorem lt_limbCount_mul {n v : Nat} (h : v < n) : v / 63 < limbCount n := by
 theorem limbCount_pos {n : Nat} (h : 0 < n) : 0 < limbCount n := by
   rw [limbCount]; omega
 
+/-- A vertex renaming: injective everywhere and range-preserving in both
+directions. Images under renamings are the equivariance the search
+theory works with. -/
+structure Renaming (n : Nat) where
+  /-- The underlying vertex map. -/
+  toFun : Nat → Nat
+  /-- Global injectivity. -/
+  inj : ∀ a b, toFun a = toFun b → a = b
+  /-- The vertex range is preserved in both directions. -/
+  maps : ∀ v, v < n ↔ toFun v < n
+
+instance {n : Nat} : CoeFun (Renaming n) (fun _ => Nat → Nat) := ⟨Renaming.toFun⟩
+
 /-- A vertex set over `n` vertices: `limbCount n` limbs, each an unboxed
 63-bit word, with no vertex at or above `n`. -/
 structure VSet (n : Nat) where
@@ -1542,23 +1555,7 @@ private theorem mem_imageFast_go (σ : Nat → Nat) (s : VSet n) :
 @[expose, inline] def permset (s : VSet n) (perm : Array Nat) : VSet n :=
   s.image (perm[·]!)
 
-/-! # Images under renamings
-
-A renaming is an injective vertex map preserving the vertex range in
-both directions; images under renamings are the equivariance the
-search theory works with. -/
-
-/-- A vertex renaming: injective everywhere and range-preserving in both
-directions. -/
-structure Renaming (n : Nat) where
-  /-- The underlying vertex map. -/
-  toFun : Nat → Nat
-  /-- Global injectivity. -/
-  inj : ∀ a b, toFun a = toFun b → a = b
-  /-- The vertex range is preserved in both directions. -/
-  maps : ∀ v, v < n ↔ toFun v < n
-
-instance : CoeFun (Renaming n) (fun _ => Nat → Nat) := ⟨Renaming.toFun⟩
+/-! # Images under renamings -/
 
 @[simp] theorem image_empty (σ : Nat → Nat) : (empty : VSet n).image σ = empty := by
   refine ext fun w => ?_
@@ -1647,6 +1644,18 @@ theorem image_inj (σ : Renaming n) {s t : VSet n} (h : s.image σ = t.image σ)
 
 theorem image_eq_empty_iff (σ : Renaming n) {s : VSet n} : s.image σ = empty ↔ s = empty :=
   ⟨fun h => image_inj σ (by rw [h, image_empty]), fun h => by rw [h, image_empty]⟩
+
+/-- Emptiness of an intersection is preserved by a renaming. -/
+theorem interIsEmpty_image (σ : Renaming n) (s t : VSet n) :
+    (s.image σ).interIsEmpty (t.image σ) = s.interIsEmpty t := by
+  rw [interIsEmpty_eq, interIsEmpty_eq, ← image_inter, Bool.eq_iff_iff, isEmpty_iff,
+    isEmpty_iff, image_eq_empty_iff]
+
+/-- Containment is preserved by a renaming. -/
+theorem subset_image (σ : Renaming n) (s t : VSet n) :
+    (s.image σ).subset (t.image σ) = s.subset t := by
+  rw [Bool.eq_iff_iff, subset_iff_inter, subset_iff_inter, ← image_inter]
+  exact ⟨fun h => image_inj σ h, fun h => by rw [h]⟩
 
 /-- The member count is preserved by a renaming. -/
 theorem card_image (σ : Renaming n) (s : VSet n) : (s.image σ).card = s.card := by
