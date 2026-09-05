@@ -283,7 +283,7 @@ theorem payloadAbsorbs_of_positions {ctx : Ctx n}
     PayloadAbsorbs ctx tcLevel fuel level rsLab rsPtn tc numcells
       oFirst oCur out := by
   rintro ⟨γ, _, hAut, hmap⟩
-  refine childKey_of_carried hn hgsz hAut tcLevel fuel level
+  refine childKey_of_carried hgsz hAut tcLevel fuel level
     (hstab γ hAut hmap) hs hok hsp hend hvals hic hrange hoC hoF hlf ?_
   have h := hmap tc htc
   rwa [hfirst, hcur] at h
@@ -337,7 +337,7 @@ theorem isCell_breakout_target {lab ptn : Array Nat}
 /-- `refine` leaves a singleton cell's position exactly where it was:
 it permutes cell contents, and a singleton cell has only one. -/
 theorem refine_fixes_singleton {ctx : Ctx n} {level : Nat}
-    {lab ptn : Array Nat} {active numcells a : Nat}
+    {lab ptn : Array Nat} {active : VSet n} {numcells a : Nat}
     (hnn : n ≤ ptn.size) (hs : lab.size = ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level) (hc : IsCell ptn level a 1) :
     (refine ctx level lab ptn active numcells).lab[a]! = lab[a]! :=
@@ -505,7 +505,7 @@ remaining work. -/
     firsttc := .replicate (n + 2) (-1),
     firstlab := .replicate n 0,
     canonlab := .replicate n 0,
-    canong := .replicate n 0,
+    canong := .replicate n .empty,
     numorbits := n }
 
 /-- The state the root call returns. -/
@@ -516,7 +516,7 @@ remaining work. -/
 
 /-- `runTraced`'s reported codes are the returned state's own
 reading. -/
-theorem bestCodes_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
+theorem bestCodes_runTraced {g : Array (VSet n)} {lab0 : Array Nat} {cellEnds : List Nat}
     (hn0 : n ≠ 0) :
     (runTraced n g lab0 cellEnds).bestCodes =
       bestCodesOf (rootOut n g lab0 cellEnds) := by
@@ -525,7 +525,7 @@ theorem bestCodes_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
   rfl
 
 /-- `runTraced`'s reported labelling is the returned state's. -/
-theorem canonlab_runTraced {g lab0 : Array Nat} {cellEnds : List Nat}
+theorem canonlab_runTraced {g : Array (VSet n)} {lab0 : Array Nat} {cellEnds : List Nat}
     (hn0 : n ≠ 0) :
     (runTraced n g lab0 cellEnds).result.canonlab =
       (rootOut n g lab0 cellEnds).canonlab := by
