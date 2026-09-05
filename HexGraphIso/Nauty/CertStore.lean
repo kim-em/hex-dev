@@ -45,7 +45,7 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx n) (tcLevel : Nat) :
           · let P := fun γ => checkAutom ctx.g γ = true
             let rs := refine ctx level lab ptn active numcells
             let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-            let masks := cellMasks ctx rs.lab rs.ptn level
+            let masks := cellMasks n rs.lab rs.ptn level
             let step :
                 (List CertNode × AutState ×
                     Option (Nat × Array (Array Nat × Array Nat))) →
@@ -54,7 +54,7 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx n) (tcLevel : Nat) :
                     Option (Nat × Array (Array Nat × Array Nat)) :=
               fun acc o =>
                 let (kids, st, cache) := acc
-                let cache' := usableGens ctx masks st cache
+                let cache' := usableGens masks st cache
                 let descend : Unit → List CertNode × AutState ×
                     Option (Nat × Array (Array Nat × Array Nat)) :=
                   fun _ =>
@@ -64,7 +64,7 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx n) (tcLevel : Nat) :
                       (level + 1) br.1 br.2.1 br.2.2
                       (rs.numcells + 1) brest st
                     (child :: kids, st', some cache')
-                match witness? ctx rs.lab tcr.1 cache'.2 o with
+                match witness? n rs.lab tcr.1 cache'.2 o with
                 | some (o', γ) =>
                   if childCellsOk ctx rs.lab rs.ptn level tcr.1 o o'
                       γ then
@@ -77,7 +77,7 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx n) (tcLevel : Nat) :
                 ∀ c ∈ (step acc o).1, AutomsOk P c := by
               intro acc o hacc c hc
               rcases acc with ⟨kids, stx, cache⟩
-              let cache' := usableGens ctx masks stx cache
+              let cache' := usableGens masks stx cache
               let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
                 rs.lab[tcr.1 + o]!
               rcases hout : certifyNodeAutom ctx tcLevel fuel
@@ -89,7 +89,7 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx n) (tcLevel : Nat) :
                   (rs.numcells + 1) brest stx
                 rw [hout] at hr
                 exact hr
-              rcases hw : witness? ctx rs.lab tcr.1 cache'.2 o with
+              rcases hw : witness? n rs.lab tcr.1 cache'.2 o with
                 _ | ⟨o', γ⟩
               · simp only [step, cache', hw, br, hout] at hc
                 rcases List.mem_cons.mp hc with rfl | hc

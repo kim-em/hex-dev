@@ -71,8 +71,8 @@ private theorem inner_grows {nn : Nat} {s : VSet nn} {γ : Array Nat}
     (List.range nn) a hy ?_
   intro acc' w _ hacc'
   rcases hw : s.mem w with _ | _
-  · rw [ite_eq_right (by simp [hw])]; exact hacc'
-  · rw [ite_eq_left (by simp [hw])]
+  · rw [ite_eq_right (by simp [])]; exact hacc'
+  · rw [ite_eq_left (by simp [])]
     exact VSet.mem_insert_mono _ _ hacc'
 
 /-- One closure round only adds members. -/
@@ -97,8 +97,8 @@ theorem orbitStepSet_step {nn : Nat} {gens : List (Array Nat)}
     (fun a' w y hy => ?_) (fun a' => ?_) (List.range nn) a
     (List.mem_range.mpr hu)
   · rcases hw : s.mem w with _ | _
-    · rw [ite_eq_right (by simp [hw])]; exact hy
-    · rw [ite_eq_left (by simp [hw])]
+    · rw [ite_eq_right (by simp [])]; exact hy
+    · rw [ite_eq_left (by simp [])]
       exact VSet.mem_insert_mono _ _ hy
   · rw [ite_eq_left (by simp [hs])]
     exact VSet.mem_insert_self _ hγu

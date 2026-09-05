@@ -141,7 +141,7 @@ theorem processnode_plain_return {nn : Nat} {ctx : Ctx n} {level numcells : Nat}
     (processnode ctx level numcells st).1 =
         Int.ofNat st.noncheaplevel - 1 ∧
       (processnode ctx level numcells st).2.autos =
-        pruneAutos ctx level st := by
+        pruneAutos level st := by
   rcases hcinv.tri with ⟨hcc, heql, -⟩ | ⟨j, -, -, -, -, -, ⟨hcc, -⟩ | ⟨hcc, -⟩⟩
   · by_cases hcanon : level < st.canonlevel
     · refine ⟨?_, processnode_shortInstall_autos hef hnc hcc hcanon⟩

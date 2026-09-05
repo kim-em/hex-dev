@@ -108,7 +108,7 @@ defect-four flip analogues. -/
 theorem cheapautom_shape_or_exotic {ptn : Array Nat} {level : Nat}
     (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
     (hch : cheapautom ptn level n = true) :
-    SmallShape ctx level ptn ∨
+    SmallShape n level ptn ∨
       n - (cells ptn level n).length ≤ 4 := by
   rcases (cheapautom_iff hps hend).mp hch with hb1 | hb4
   · refine Or.inl fun q hq => ?_

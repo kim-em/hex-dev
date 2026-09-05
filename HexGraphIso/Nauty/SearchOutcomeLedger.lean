@@ -29,7 +29,7 @@ theorem pairOk_fmperm_of_reach {G : Colored n k} {ctx : Ctx n}
     {lab₁ lab₂ γ : Array Nat}
     (hn0 : 0 < n)
     (hs₁ : lab₁.size = n) (hr₁ : CellsReach G lab₁)
-    (hs₂ : lab₂.size = n) (hr₂ : CellsReach G lab₂)
+    (hr₂ : CellsReach G lab₂)
     (hsc : ∀ i, i < n → γ[lab₁[i]!]! = lab₂[i]!)
     (hca : checkAutom ctx.g γ = true) :
     PairOk ctx.g
@@ -332,7 +332,7 @@ theorem AutosOk.pushFmperm {ctx : Ctx n} {G : Colored n k}
       (initPtn n (n + 2) (initialPartition G).2)
       (initialPartition G).1 1 st.autos)
     (hs₁ : lab₁.size = n) (hr₁ : CellsReach G lab₁)
-    (hs₂ : lab₂.size = n) (hr₂ : CellsReach G lab₂)
+    (hr₂ : CellsReach G lab₂)
     (hsc : ∀ i, i < n → gamma[lab₁[i]!]! = lab₂[i]!)
     (hca : checkAutom ctx.g gamma = true) :
     AutosOk ctx.g
@@ -340,7 +340,7 @@ theorem AutosOk.pushFmperm {ctx : Ctx n} {G : Colored n k}
       (initialPartition G).1 1
       (pushAuto st (fmperm gamma n)).autos := by
   apply autosOk_pushAuto hprev
-  exact pairOk_fmperm_of_reach hn0 hs₁ hr₁ hs₂ hr₂ hsc hca
+  exact pairOk_fmperm_of_reach hn0 hs₁ hr₁ hr₂ hsc hca
 
 /-- Recording the scan-free pair justified by a small-cell subtree
 preserves the root automorphism ledger. -/
@@ -407,7 +407,7 @@ theorem AutosOk.processnodeAuto {ctx : Ctx n} {G : Colored n k}
       (fun i hi => hsc i (by omega)) hsymm hloop hpass
   rw [processnode_auto_autos heq hsent hnc hpass]
   exact hprev.pushFmperm hn0 hrefs.firstSize hrefs.firstReach
-    hok.labSize hok.reach hsc hca
+    hok.reach hsc hca
 
 /-- A successful code-two admission preserves the root automorphism
 ledger. -/
@@ -451,7 +451,7 @@ theorem AutosOk.processnodeRowTie {ctx : Ctx n} {G : Colored n k}
       (rows_eq_of_testcanlab_tie hcanong htie)
   rw [processnode_rowTie_autos hef hnc hcc hge htie]
   exact hprev.pushFmperm hn0 hrefs.canonSize hrefs.canonReach
-    hok.labSize hok.reach hsc hca
+    hok.reach hsc hca
 
 /-- The shared code-three/code-four tail preserves the ledger whenever
 its optional implicit pair is valid. -/
@@ -468,7 +468,7 @@ theorem AutosOk.pruneAutos {ctx : Ctx n} {G : Colored n k}
         (fmptn st.lab st.ptn st.noncheaplevel n).2) :
     AutosOk ctx.g
       (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 1 (pruneAutos ctx level st) := by
+      (initialPartition G).1 1 (pruneAutos level st) := by
   unfold Hex.GraphIso.Nauty.pruneAutos
   split
   · exact hprev
@@ -523,7 +523,7 @@ configured workspace capacity. -/
 private theorem WorkspaceOk.processPrune {ctx : Ctx n}
     {level numcells : Nat} {st : SearchSt n} (h : WorkspaceOk st)
     (hautos : (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st) :
+      pruneAutos level st) :
     WorkspaceOk (processnode ctx level numcells st).2 := by
   constructor
   · rw [WorkspaceOk.processCap]

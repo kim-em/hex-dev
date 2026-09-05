@@ -225,7 +225,7 @@ theorem trivialSplitL_eq (level cell1 cell2 : Nat) (c1 c2 : Int)
       (trivialSplit level cell1 cell2 c1 c2 st).toL := by
   simp only [trivialSplitL, trivialSplit, toL_active, VSet.testBit_toNat]
   repeat' split
-  all_goals simp_all [RefineSt.toL, setBang_toList, VSet.toNat_insert]
+  all_goals simp_all [RefineSt.toL, VSet.toNat_insert]
   all_goals repeat' split
   all_goals try simp_all
   all_goals exfalso
@@ -337,7 +337,7 @@ theorem windowStepL_eq (level cell1 cell2 v c1 c2 : Nat)
   simp only [windowStepL, windowStep, toL_active, toL_numcells,
     toL_longcode, toL_maxpos, toL_hint, toL_ptn]
   repeat' split
-  all_goals simp [RefineSt.toL, setBang_toList, VSet.toNat_insert]
+  all_goals simp [RefineSt.toL, VSet.toNat_insert]
 
 @[expose] def windowScanL (nn level cell1 cell2 : Nat) (counts : List Nat) :
     List Nat → Nat → Int → RefineStL → RefineStL
@@ -585,8 +585,8 @@ theorem refineLoopL_eq (ctx : Ctx n) (level : Nat) :
       toL_n, pickSplitL_eq]
     split
     · rcases hps : pickSplit st.active st.hint with _ | split1
-      · simp only [hps]
-      · simp only [hps, refineStepL_eq, refineLoopL_eq ctx level fuel]
+      · simp only []
+      · simp only [refineStepL_eq, refineLoopL_eq ctx level fuel]
     · rfl
 
 @[expose] def refineL (ctx : CtxL) (level : Nat) (lab ptn : List Nat)
@@ -1200,7 +1200,7 @@ theorem checkNodeL_eq (ctx : Ctx n) (tcLevel : Nat) (brows : List (VSet n))
               rcases c with _ | _ | ⟨o', γ⟩ | ch <;>
                 simp only [breakoutL_eq, ← getBang_eq_atD, hih,
                   Hex.Array.map'_eq_map, ← Array.toList_map,
-                  checkCellsPermL_eq, toL_n]
+                  checkCellsPermL_eq]
         rw [checkNodeL, checkNode]
         simp only [refineL_eq, toL_lab, toL_ptn, toL_longcode,
           discreteAtL_eq, specMaketargetcellL_eq,
@@ -1210,7 +1210,7 @@ theorem checkNodeL_eq (ctx : Ctx n) (tcLevel : Nat) (brows : List (VSet n))
         · rfl
         · rcases hd : discreteAt (refine ctx level lab ptn active
             numcells).ptn level n with _ | _
-          · simp only [hd, Bool.false_eq_true, ite_false]
+          · simp only [Bool.false_eq_true, ite_false]
             rcases Decidable.em (children.length =
                 (specMaketargetcell ctx (refine ctx level lab ptn
                   active numcells).lab (refine ctx level lab ptn
@@ -1226,7 +1226,7 @@ theorem checkNodeL_eq (ctx : Ctx n) (tcLevel : Nat) (brows : List (VSet n))
                 (refine ctx level lab ptn active numcells).numcells
                 (children.zipIdx 0) (some false)
             · simp [hl]
-          · simp only [hd, ite_true]
+          · simp only [ite_true]
         · rfl
   termination_by structural fuel => fuel
 

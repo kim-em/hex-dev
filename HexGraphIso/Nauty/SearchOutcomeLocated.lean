@@ -610,7 +610,7 @@ theorem NodeReceipt.ofLoopNone {trail : FrameTrail} {ctx : Ctx n}
   | unwind sound target returned below payload located => cases returned
   | pruned target returned below sound installed read full => cases returned
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
-      exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
 
 /-- Prepending a sound child fragment preserves the location carried by
 every recursive loop outcome. -/

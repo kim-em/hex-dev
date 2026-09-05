@@ -186,8 +186,8 @@ theorem otherLeafSt_fixedpts (ctx : Ctx n) (level numcells : Nat)
   unfold otherLeafSt
   exact otherNodePrep_fixedpts _ _ _
 
-theorem leafFinish_fixedpts (ctx : Ctx n) (level : Nat) (st : SearchSt n) :
-    (leafFinish ctx level st).fixedpts = st.fixedpts := by
+theorem leafFinish_fixedpts (level : Nat) (st : SearchSt n) :
+    (leafFinish level st).fixedpts = st.fixedpts := by
   rw [leafFinish]
   split <;> split <;> rfl
 
@@ -198,7 +198,7 @@ theorem erase_insert_of_miss {s : VSet n} {v : Nat} (h : s.mem v = false) :
   intro u
   rw [VSet.mem_erase, VSet.mem_insert]
   rcases Decidable.em (v = u) with rfl | hne
-  · simp only [beq_self_eq_true, Bool.not_true, Bool.or_true,
+  · simp only [beq_self_eq_true, Bool.not_true, 
       Bool.and_false]
     exact h.symm
   · have hb : (v == u) = false := by simp [hne]
@@ -241,7 +241,7 @@ theorem otherNode_leaf_done_fixedpts (ctx : Ctx n)
       st.fixedpts := by
   rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st
     hnum hdone]
-  exact (leafFinish_fixedpts ctx level _).trans
+  exact (leafFinish_fixedpts level _).trans
     ((processnode_fixedpts ctx level n _).trans
       (otherLeafSt_fixedpts ctx level numcells st))
 
@@ -752,7 +752,7 @@ theorem LoopInv.recoverPath {G : Colored n k} {ctx : Ctx n}
     · rfl
   have hclean : SearchOut G level level st cleaned :=
     hparent.congr rfl rfl rfl rfl
-  have hrec := hclean.recoverOk (ctx := ctx) hinf hinv.positive hok
+  have hrec := hclean.recoverOk hinf hinv.positive hok
   have hrecovered : recovered.fixedpts = st.fixedpts := by
     exact (recover_fixedpts n inf level cleaned).trans hcleaned
   exact ⟨hpath.ofSearchOut hinv.nonempty hinv.positive hrecovered
@@ -916,10 +916,10 @@ theorem terminalFirstProof {G : Colored n k} {ctx : Ctx n}
 facts before the first incumbent exists. -/
 theorem childPath {G : Colored n k} {ctx : Ctx n}
     {rootPtn rootLab : Array Nat}
-    {specFuel level numcells tc len o : Nat} {cs : List Nat}
+    {level numcells tc len o : Nat} {cs : List Nat}
     {st : SearchSt n} {trail : FrameTrail}
     (hg : ctx.g = rowsOf G) (hn0 : 0 < n)
-    (hpath : level = cs.length + 1) (hlt : level < n)
+    (hpath : level = cs.length + 1)
     (h : FirstInv G ctx level cs numcells st trail)
     (hp : PathOk ctx rootPtn rootLab level st)
     (hcell : IsCell
@@ -927,7 +927,6 @@ theorem childPath {G : Colored n k} {ctx : Ctx n}
       level tc len)
     (hlen : 2 ≤ len) (hrange : tc + len ≤ n) (ho : o < len) :
     let r := refine ctx level st.lab st.ptn st.active numcells
-    let full := cs ++ [r.longcode]
     let pre0 : SearchSt n := { st with
       lab := r.lab
       ptn := r.ptn
@@ -1151,7 +1150,7 @@ theorem ofLeafDone {G : Colored n k} {ctx : Ctx n}
     numcells st hnum hdone, ?_⟩
   rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st
     hnum hdone]
-  exact (leafFinish_coset ctx level _).trans
+  exact (leafFinish_coset level _).trans
     ((processnode_coset ctx level n _).trans
       (otherLeafSt_coset ctx level numcells st))
 
@@ -1368,7 +1367,7 @@ theorem toNodeNone {G : Colored n k} {ctx : Ctx n}
       | unwind sound target returned below payload located => cases returned
       | pruned target returned below sound installed read full => cases returned
       | exhausted returned sound finalSet finalCursor cover progress bounded =>
-          exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
+          exact (LoopResult.exhaustion_false hfuel progress bounded).elim
     have hescape : NodeEscape ctx tcLevel (specFuel + 1) level nodeCs
         nodeSt out nodeNumcells none outBest receiptTrail
         (Int.ofNat level - 1) := by

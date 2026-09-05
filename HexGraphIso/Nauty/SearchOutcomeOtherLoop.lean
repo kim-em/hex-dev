@@ -364,7 +364,7 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
         child
       have hcall : otherNode ctx inf tcLevel runFuel (level + 1)
           (numcells + 1) child = (res.1, res.2) := rfl
-      have heq := hh.inv.childKeyAll hoffset hatFrozen hcurrent hat
+      have heq := hh.inv.childKeyAll hoffset hatFrozen hat
       have hkeyLe : keyLe (nodeKey ctx tcLevel specFuel (level + 1) codes
           child (numcells + 1)) bound := by
         rw [← heq offset hoffset hatFrozen]
@@ -555,7 +555,7 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
               exact recover_nonpositive (by rw [hcomp]; exact hnp)
             · intro h
               cases h
-            · exact ((hguideChild.stateEq hgf hgc hcl).recover (ctx := ctx)
+            · exact ((hguideChild.stateEq hgf hgc hcl).recover
                 hh.baseCanon hliveRec.toLive.order)
             · rw [show recSt = recover n inf level cleared from rfl,
                 recover_orbits, recover_genTrace, horb, hgen]

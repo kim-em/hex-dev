@@ -79,7 +79,6 @@ theorem mem_windowSet {lab : Array Nat} {tc len u : Nat} :
 
 /-- Every window vertex is a vertex. -/
 theorem windowSet_lt {lab : Array Nat} {tc len u : Nat}
-    (hok : LabOk lab n) (hsz : tc + len ≤ lab.size)
     (hu : (windowSet n lab tc len).mem u = true) : u < n := by
   exact (mem_windowSet.mp hu).1
 
@@ -149,13 +148,13 @@ theorem push {st : SearchSt n} {pair : VSet n × VSet n} (h : WorkspaceOk st) :
     split <;> exact hcap
   · unfold pushAuto
     rcases hfull : (st.autos.size == st.wsCap) with _ | _
-    · simp only [hfull, Bool.false_eq_true, ite_false, Array.size_push]
+    · simp only [Bool.false_eq_true, ite_false, Array.size_push]
       have hne : st.autos.size ≠ st.wsCap := by
         intro heq
         rw [beq_iff_eq.mpr heq] at hfull
         cases hfull
       omega
-    · simp only [hfull, ite_true, Array.size_set!]
+    · simp only [ite_true, Array.size_set!]
       exact hsize
 
 /-- `pushAuto` does not change the configured workspace capacity. -/
@@ -189,8 +188,8 @@ theorem recoverCap (n inf level : Nat) (st : SearchSt n) :
 theorem firstCap (level : Nat) (st : SearchSt n) :
     (firstterminal level st).wsCap = st.wsCap := by
   rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite SearchSt.wsCap, ite_self]
+  simp only [Id.run_bind, Id.run_pure, 
+    ]
 
 end WorkspaceOk
 
@@ -217,13 +216,13 @@ theorem autosOk_pushAuto {g : Array (VSet n)} {ptn lab : Array Nat} {level : Nat
 /-- With a positive bounded workspace, `pushAuto` leaves the admitted
 pair in the slot read by `shortprune`, both before and at capacity. -/
 theorem pushAuto_back {st : SearchSt n} {pair : VSet n × VSet n}
-    (hcap : 0 < st.wsCap) (hsize : st.autos.size ≤ st.wsCap) :
+    (hcap : 0 < st.wsCap) :
     (pushAuto st pair).autos.back? = some pair := by
   unfold pushAuto
   rcases hfull : (st.autos.size == st.wsCap) with _ | _
-  · simp only [Bool.false_eq_true, hfull, ite_false, Array.back?_push]
+  · simp only [Bool.false_eq_true, ite_false, Array.back?_push]
   · have heq : st.autos.size = st.wsCap := beq_iff_eq.mp hfull
-    simp only [hfull, ite_true, Array.back?_eq_getElem?, Array.size_set!]
+    simp only [ite_true, Array.back?_eq_getElem?, Array.size_set!]
     rw [heq, Array.set!_eq_setIfInBounds,
       Array.getElem?_setIfInBounds_self_of_lt]
     omega
@@ -355,8 +354,8 @@ private theorem elem_foldl_prune :
   | p :: l, t, fixedpts, v => by
     rw [List.foldl_cons, elem_foldl_prune l, List.all_cons]
     rcases htest : (fixedpts.subset p.1) with _ | _
-    · simp [htest]
-    · simp [htest, VSet.mem_inter, Bool.and_assoc]
+    · simp []
+    · simp [VSet.mem_inter, Bool.and_assoc]
 
 /-- Membership after `longprune`: the cell bit survives exactly when
 every fix-passing pair's `mcr` keeps it. -/

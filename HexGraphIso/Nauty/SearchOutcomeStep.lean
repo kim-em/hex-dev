@@ -45,7 +45,6 @@ theorem LoopInv.childKeyAll {G : Colored n k} {ctx : Ctx n}
       rsLab rsPtn tc len tcell cursor base st best trail)
     (hoffset : offset < len)
     (hfrozen : rsLab[tc + offset]! = tv)
-    (hcurrent : currentOffset < len)
     (hcurrentAt : st.lab[tc + currentOffset]! = tv) :
     ∀ o, o < len → rsLab[tc + o]! = tv →
       sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =
@@ -184,7 +183,7 @@ theorem ofChild {G : Colored n k} {ctx : Ctx n}
 
 /-- Recovery to the sweep level keeps the guide relation once the
 sweep entry's canonical control is at most the sweep level. -/
-theorem recover {ctx : Ctx n} {level inf : Nat} {base out : SearchSt n}
+theorem recover {level inf : Nat} {base out : SearchSt n}
     (h : GuideRel level base out) (hbase : base.gcaCanon ≤ level)
     (horder : (Nauty.recover n inf level out).gcaFirst ≤
       (Nauty.recover n inf level out).gcaCanon) :

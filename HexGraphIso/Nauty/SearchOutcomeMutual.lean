@@ -25,7 +25,7 @@ namespace Hex.GraphIso.Nauty
 /-- Every vertex recorded as fixed occupies a singleton cell of the
 current partition.  This is the executable path fact that makes erasing a
 completed child's temporary fixed vertex restore its parent set exactly. -/
-@[expose] def FixedCells (ctx : Ctx n) (level : Nat) (st : SearchSt n) : Prop :=
+@[expose] def FixedCells (level : Nat) (st : SearchSt n) : Prop :=
   ∀ v, v < n → st.fixedpts.mem v = true →
     ∃ q, q < n ∧ st.lab[q]! = v ∧ IsCell st.ptn level q 1
 
@@ -33,14 +33,14 @@ namespace FixedCells
 
 /-- The initial search has no fixed vertices. -/
 theorem root {G : Colored n k} :
-    FixedCells { g := rowsOf G } 1
+    FixedCells 1
       (rootSt n (initialPartition G).1 (initialPartition G).2) := by
   intro v hv hm
   simp [rootSt] at hm
 
 /-- A vertex in a non-singleton target cell is not already fixed. -/
-theorem fresh {ctx : Ctx n} {level tc len o : Nat} {st : SearchSt n}
-    (h : FixedCells ctx level st) (hok : LabOk st.lab n)
+theorem fresh {level tc len o : Nat} {st : SearchSt n}
+    (h : FixedCells level st) (hok : LabOk st.lab n)
     (hinj : LabInj st.lab n) (hsize : st.lab.size = n)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len) :
@@ -61,11 +61,11 @@ theorem fresh {ctx : Ctx n} {level tc len o : Nat} {st : SearchSt n}
 
 /-- Reordering vertices within unchanged cells preserves fixed
 singletons. -/
-theorem ofCellsPerm {ctx : Ctx n} {level : Nat} {st out : SearchSt n}
-    (h : FixedCells ctx level st) (hfixed : out.fixedpts = st.fixedpts)
+theorem ofCellsPerm {level : Nat} {st out : SearchSt n}
+    (h : FixedCells level st) (hfixed : out.fixedpts = st.fixedpts)
     (hptn : out.ptn = st.ptn)
     (hperm : cellsPerm st.ptn level st.lab out.lab) :
-    FixedCells ctx level out := by
+    FixedCells level out := by
   intro v hv hm
   rw [hfixed] at hm
   obtain ⟨q, hq, hqv, hsingle⟩ := h v hv hm
@@ -77,21 +77,21 @@ theorem ofCellsPerm {ctx : Ctx n} {level : Nat} {st out : SearchSt n}
 
 /-- A parent-level search effect preserves fixed singletons when it
 preserves the fixed-point bitset. -/
-theorem ofSearchOut {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
-    {st out : SearchSt n} (h : FixedCells ctx level st)
+theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
+    {st out : SearchSt n} (h : FixedCells level st)
     (hfixed : out.fixedpts = st.fixedpts)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out)
     (heffect : SearchOut G level level st out) :
-    FixedCells ctx level out :=
+    FixedCells level out :=
   h.ofCellsPerm hfixed (heffect.ptnEq hok hout) heffect.perm
 
 /-- Refinement preserves every existing fixed singleton. -/
 theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {st : SearchSt n}
-    (h : FixedCells ctx level st) (hsize : st.lab.size = n)
+    (h : FixedCells level st) (hsize : st.lab.size = n)
     (hpsize : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
-    FixedCells ctx level
+    FixedCells level
       { st with
         lab := (Nauty.refine ctx level st.lab st.ptn active numcells).lab
         ptn := (Nauty.refine ctx level st.lab st.ptn active numcells).ptn
@@ -106,13 +106,13 @@ theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {s
 
 /-- Individualizing a fresh target vertex adds exactly one fixed
 singleton and preserves every older fixed singleton. -/
-theorem breakout {ctx : Ctx n} {level tc len o : Nat} {st : SearchSt n}
-    (h : FixedCells ctx level st) (hinj : LabInj st.lab n)
+theorem breakout {level tc len o : Nat} {st : SearchSt n}
+    (h : FixedCells level st) (hinj : LabInj st.lab n)
     (hsize : st.lab.size = n)
     (hpsize : st.ptn.size = n)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len) :
-    FixedCells ctx (level + 1)
+    FixedCells (level + 1)
       { st with
         lab := (breakout n st.lab st.ptn (level + 1) tc
           st.lab[tc + o]!).1
@@ -448,7 +448,7 @@ fixed vertices are singleton cells, and root-valid automorphisms fixing
 them stabilize the current cells. -/
 structure PathOk (ctx : Ctx n) (rootPtn rootLab : Array Nat)
     (level : Nat) (st : SearchSt n) : Prop where
-  fixed : FixedCells ctx level st
+  fixed : FixedCells level st
   stab : PathStab ctx rootPtn rootLab level st
 
 namespace PathOk
@@ -740,7 +740,7 @@ theorem rowTieBack {G : Colored n k} {ctx : Ctx n}
     (processnode ctx level numcells st).2.autos.back? = some
       (fmperm (canonScatter n st.canonlab st.lab) n) := by
   rw [processnode_rowTie_autos hef hnc hcc hge htie]
-  exact pushAuto_back h.workspace.1 h.workspace.2
+  exact pushAuto_back h.workspace.1
 
 end RunPrep
 
@@ -796,7 +796,7 @@ theorem recover {G : Colored n k} {ctx : Ctx n}
   constructor
   · constructor
     · exact hhistory
-    · exact RefTrail.recover_order (ctx := ctx) (by simpa only using h.order)
+    · exact RefTrail.recover_order (by simpa only using h.order)
         hfirstClean
     · exact hstable
   · rw [(recover_frames n inf level
@@ -1824,10 +1824,10 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx n}
       (nodeKey ctx tcLevel (specFuel + 1) level codes st numcells)) := by
     rw [hprep.incumbent, incMax, hnodeKey]
     exact congrArg some hmax
-  let final := leafFinish ctx level
+  let final := leafFinish level
     (processnode ctx level n leaf).2
   have hread : stInc ctx final = some outKey := by
-    change stInc ctx (leafFinish ctx level
+    change stInc ctx (leafFinish level
       (processnode ctx level n leaf).2) = some outKey
     rw [stInc_leafFinish]
     simpa only [outKey] using hevent.read
@@ -1836,7 +1836,7 @@ theorem NodeInv.plainLeafDone {G : Colored n k} {ctx : Ctx n}
     apply EventOut.intro level full bs' hevent.leafFinish hfull hstem
       (by omega)
     · omega
-    · have hs := ReturnStab.leafFinish (ctx := ctx) (level := level)
+    · have hs := ReturnStab.leafFinish (level := level)
         (hlive'.stable.ofGenTraceEq hgen)
       have hfirst : final.gcaFirst = leaf.gcaFirst := by
         unfold final Nauty.leafFinish

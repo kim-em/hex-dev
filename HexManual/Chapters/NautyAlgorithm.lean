@@ -444,25 +444,25 @@ private def pathSix : Colored 6 1 :=
       [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
     coloring := Coloring.trivial 6 }
 
-private def pathCtx : Ctx := { n := 6, g := rowsOf pathSix }
+private def pathCtx : Ctx 6 := { g := rowsOf pathSix }
 
-private def initialState : RefineSt :=
+private def initialState : RefineSt 6 :=
   { lab := #[0, 1, 2, 3, 4, 5]
     ptn := initPtn 6 8 [5]
-    active := initActive [5]
+    active := initActive 6 [5]
     numcells := 1
     hint := 0
     maxpos := 0
     longcode := 1 }
 
-private def blocks (st : RefineSt) : List (List Nat) :=
+private def blocks (st : RefineSt 6) : List (List Nat) :=
   (cells st.ptn 1 6).map fun (lo, hi) =>
     (List.range (hi + 1 - lo)).map fun i => st.lab[lo + i]!
 
-private def firstSplit : RefineSt :=
+private def firstSplit : RefineSt 6 :=
   refineStep pathCtx 1 0 initialState
 
-private def secondSplit : RefineSt :=
+private def secondSplit : RefineSt 6 :=
   refineStep pathCtx 1 firstSplit.hint firstSplit
 
 private def trace : List (List (List Nat)) :=
@@ -478,7 +478,7 @@ private def trace : List (List (List Nat)) :=
    [[0, 5], [2, 3], [1, 4]]]
 
 #guard (refine pathCtx 1 #[0, 1, 2, 3, 4, 5]
-    (initPtn 6 8 [5]) (initActive [5]) 1).longcode = 27540
+    (initPtn 6 8 [5]) (initActive 6 [5]) 1).longcode = 27540
 
 end NautyAlgorithmChapterExample
 ```

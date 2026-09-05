@@ -370,7 +370,7 @@ theorem otherNode_leaf_early (ctx : Ctx n)
 
 /-- The comparison-blind cleanup performed when a leaf event does not
 request an early unwind. -/
-@[expose] def leafFinish (ctx : Ctx n) (level : Nat)
+@[expose] def leafFinish (level : Nat)
     (st : SearchSt n) : SearchSt n :=
   let st := if st.needshortprune then
       { st with needshortprune := false }
@@ -380,8 +380,8 @@ request an early unwind. -/
   else st
 
 /-- Leaf cleanup always consumes a pending one-shot short-prune request. -/
-theorem leafFinish_short (ctx : Ctx n) (level : Nat) (st : SearchSt n) :
-    (leafFinish ctx level st).needshortprune = false := by
+theorem leafFinish_short (level : Nat) (st : SearchSt n) :
+    (leafFinish level st).needshortprune = false := by
   unfold leafFinish
   split <;> rename_i hshort
   · simp only
@@ -402,7 +402,7 @@ theorem otherNode_leaf_done_state (ctx : Ctx n)
     (hdone : ¬((processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)) :
     otherNode ctx inf tcLevel (fuel + 1) level numcells st =
-      (Int.ofNat level - 1, leafFinish ctx level
+      (Int.ofNat level - 1, leafFinish level
         (processnode ctx level n
           (otherLeafSt ctx level numcells st)).2) := by
   unfold otherLeafSt at hdone ⊢
@@ -432,14 +432,14 @@ theorem otherNode_leaf_done_state (ctx : Ctx n)
     · simp only [Bool.false_eq_true, not_false_eq_true,
         ite_true, hnone, Int.reduceToNat,
         otherChildLoop, Id.run_pure]
-    · simp only [not_true_eq_false, ite_false, ite_true, hnone,
+    · simp only [not_true_eq_false, ite_false, hnone,
         Int.reduceToNat, otherChildLoop, Id.run_pure]
   · simp only [hshort, ite_true, hzsub, leafFinish]
     rcases hcheap : cheapautom PR.ptn level n with _ | _
     · simp only [Bool.false_eq_true, not_false_eq_true,
         ite_true, hnone, Int.reduceToNat,
         otherChildLoop, Id.run_pure]
-    · simp only [not_true_eq_false, ite_false, ite_true, hnone,
+    · simp only [not_true_eq_false, ite_false, hnone,
         Int.reduceToNat, otherChildLoop, Id.run_pure]
 
 /-- The maximum of two installed leaf keys still has a nonempty path. -/
@@ -1034,7 +1034,7 @@ theorem otherNode_leaf_pruned {ctx : Ctx n} {nn inf tcLevel specFuel fuel
 
 /-- Leaf cleanup changes no field used to read the incumbent. -/
 theorem stInc_leafFinish (ctx : Ctx n) (level : Nat) (st : SearchSt n) :
-    stInc ctx (leafFinish ctx level st) = stInc ctx st := by
+    stInc ctx (leafFinish level st) = stInc ctx st := by
   rw [leafFinish]
   split <;> split <;> rfl
 

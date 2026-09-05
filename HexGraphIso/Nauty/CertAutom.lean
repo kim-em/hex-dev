@@ -145,7 +145,7 @@ leaf. -/
   return { st with prevLeaf := some lab }
 
 /-- The vertex bitset of every cell of the node's ordered partition. -/
-@[expose] def cellMasks (ctx : Ctx n) (rsLab rsPtn : Array Nat) (level : Nat) :
+@[expose] def cellMasks (n : Nat) (rsLab rsPtn : Array Nat) (level : Nat) :
     List (VSet n) :=
   (cells rsPtn level n).map fun p =>
     (List.range (p.2 + 1 - p.1)).foldl
@@ -154,7 +154,7 @@ leaf. -/
 /-- Does `γ` map every cell bitset onto itself? Since the cells
 partition the vertices and `γ` is a bijection, per-cell image equality
 is exactly setwise cell preservation. Untrusted fast filter. -/
-@[expose] def respectsMasks (ctx : Ctx n) (masks : List (VSet n)) (γ : Array Nat) :
+@[expose] def respectsMasks (masks : List (VSet n)) (γ : Array Nat) :
     Bool :=
   masks.all fun m => m.image (fun w => γ[w]!) == m
 
@@ -180,7 +180,7 @@ the path. The caller decides how to validate the returned witness:
 the key search may rely on the untrusted filters alone (a wrong skip
 is caught by the trusted replay), while certificate emission runs the
 literal checker predicate. -/
-@[expose] def witness? (ctx : Ctx n) (rsLab : Array Nat) (tc : Nat)
+@[expose] def witness? (n : Nat) (rsLab : Array Nat) (tc : Nat)
     (usable : Array (Array Nat × Array Nat)) (o : Nat) :
     Option (Nat × Array Nat) := Id.run do
   if o == 0 || usable.isEmpty then
@@ -213,14 +213,14 @@ literal checker predicate. -/
 generation: recompute only when generators were admitted since the
 cache was built (freezing at node entry would lose prunes from
 generators discovered under earlier children). -/
-@[expose] def usableGens (ctx : Ctx n) (masks : List (VSet n)) (st : AutState)
+@[expose] def usableGens (masks : List (VSet n)) (st : AutState)
     (cache : Option (Nat × Array (Array Nat × Array Nat))) :
     Nat × Array (Array Nat × Array Nat) :=
   match cache with
   | some (cachedGen, u) =>
     if cachedGen == st.gen then (cachedGen, u)
-    else (st.gen, st.gens.filter fun p => respectsMasks ctx masks p.1)
-  | none => (st.gen, st.gens.filter fun p => respectsMasks ctx masks p.1)
+    else (st.gen, st.gens.filter fun p => respectsMasks masks p.1)
+  | none => (st.gen, st.gens.filter fun p => respectsMasks masks p.1)
 
 /-- Build the certificate tree for the final best key, emitting
 `.autom` records for target-cell offsets reachable from an earlier
@@ -248,12 +248,12 @@ revalidates everything. -/
           else
             let tcr := specMaketargetcell ctx rs.lab rs.ptn level
               tcLevel
-            let masks := cellMasks ctx rs.lab rs.ptn level
+            let masks := cellMasks n rs.lab rs.ptn level
             let (children, st', _) := (List.range tcr.2.2).foldl
               (fun (acc : List CertNode × AutState ×
                   Option (Nat × Array (Array Nat × Array Nat))) o =>
                 let (kids, st, cache) := acc
-                let cache' := usableGens ctx masks st cache
+                let cache' := usableGens masks st cache
                 let descend : Unit → List CertNode × AutState ×
                     Option (Nat × Array (Array Nat × Array Nat)) :=
                   fun _ =>
@@ -263,7 +263,7 @@ revalidates everything. -/
                     fuel (level + 1) br.1 br.2.1 br.2.2
                     (rs.numcells + 1) brest st
                   (child :: kids, st', some cache')
-                match witness? ctx rs.lab tcr.1 cache'.2 o with
+                match witness? n rs.lab tcr.1 cache'.2 o with
                 | some (o', γ) =>
                   if childCellsOk ctx rs.lab rs.ptn level tcr.1 o o'
                       γ then

@@ -632,7 +632,7 @@ theorem toNodeNone {ctx : Ctx n}
   | frozen _ returned => cases returned
   | cheap _ returned => cases returned
   | exhausted _ finalCursor progress bounded =>
-      exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
 
 end LoopExit
 
@@ -663,7 +663,7 @@ theorem fastSource {G : Colored n k} {ctx : Ctx n}
     rw [Int.toNat_of_nonneg hnonneg]
     exact pruneReturn_lt
   · rw [processnode_fast_autos hg]
-    have hback := pruneAutos_back (ctx := ctx) h.workspace hne
+    have hback := pruneAutos_back h.workspace hne
     rw [(processnode_frames ctx level numcells st).1,
       (processnode_frames ctx level numcells st).2.1,
       (processnode_frames ctx level numcells st).2.2.2.2.2.2.2.1]
@@ -733,7 +733,7 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx n}
   have hfirstNe : leaf.eqlevFirst ≠ level := by
     intro heq
     apply hef
-    simpa only [leaf, heq, beq_self_eq_true]
+    simp only [leaf, heq, beq_self_eq_true]
   have hmode := hprep.pruneMode hfull hstem hfirstNe hneg
   have hexit : NodeExit ctx tcLevel (specFuel + 1) (fuel + 1) level
       codes st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
@@ -1096,7 +1096,7 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx n}
     (inf := inf) (specFuel := specFuel) (fuel := fuel) hn0 hsymm
     hloop hlevel hpath hcheap hnum hdisc hef hgen hdone hlive
   let leaf := otherLeafSt ctx level numcells st
-  let final := leafFinish ctx level (processnode ctx level n leaf).2
+  let final := leafFinish level (processnode ctx level n leaf).2
   have hout := otherNode_leaf_done_state ctx inf tcLevel fuel level
     numcells st hnum hdone
   have hfirstProc : (processnode ctx level n leaf).2.gcaFirst =

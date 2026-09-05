@@ -43,7 +43,7 @@ private def inst (family name : String) {n : Nat} (G : Graph n)
 
 /-- A cheap digest forcing full evaluation of a canonical result. -/
 private def digest {n k : Nat} (res : CanonResult n k) : Nat :=
-  (Nauty.rowsOf res.form).foldl (· + ·) 0 +
+  (Nauty.rowsOf res.form).foldl (fun a r => a + r.card) 0 +
     (List.finRange n).foldl (fun a i => a + (res.label.get i).val) 0
 
 private def adjStrings {n : Nat} (G : Colored n 1) : List String :=

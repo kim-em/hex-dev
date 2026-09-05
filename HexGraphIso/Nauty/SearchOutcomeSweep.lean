@@ -182,7 +182,7 @@ theorem nextClear {G : Colored n k} {ctx : Ctx n}
     constructor
     · constructor
       · exact hhistory
-      · exact RefTrail.recover_order (ctx := ctx) h.order hfirstClean
+      · exact RefTrail.recover_order h.order hfirstClean
       · exact hstable
     · rw [(recover_frames n inf level cleaned).2.2.2.2.2.2.1]
       exact hfirstOut

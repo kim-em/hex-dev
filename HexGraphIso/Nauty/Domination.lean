@@ -1128,7 +1128,7 @@ theorem canonScatter_eq_firstScatter (n : Nat)
   exact id_run_eq _
 
 /-- The bounded-ledger effect of the shared code-three/code-four tail. -/
-@[expose] def pruneAutos (ctx : Ctx n) (level : Nat)
+@[expose] def pruneAutos (level : Nat)
     (st : SearchSt n) : Array (VSet n × VSet n) :=
   if level = st.noncheaplevel then st.autos
   else (pushAuto st
@@ -1136,20 +1136,20 @@ theorem canonScatter_eq_firstScatter (n : Nat)
 
 /-- Whenever the shared tail admits its implicit pair, bounded workspace
 capacity makes that pair the exact newest entry read by `shortprune`. -/
-theorem pruneAutos_back {ctx : Ctx n} {level : Nat} {st : SearchSt n}
+theorem pruneAutos_back {level : Nat} {st : SearchSt n}
     (hworkspace : WorkspaceOk st) (hne : level ≠ st.noncheaplevel) :
-    (pruneAutos ctx level st).back? =
+    (pruneAutos level st).back? =
       some (fmptn st.lab st.ptn st.noncheaplevel n) := by
   unfold pruneAutos
-  rw [if_neg hne]
-  exact pushAuto_back hworkspace.1 hworkspace.2
+  rw [ite_eq_right hne]
+  exact pushAuto_back hworkspace.1
 
 /-- The frozen-downward fast arm has exactly the shared prune-tail ledger
 effect. -/
 theorem processnode_fast_autos {ctx : Ctx n} {level numcells : Nat}
     {st : SearchSt n} (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0) :
     (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st := by
+      pruneAutos level st := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite (fun x : Int × SearchSt n => x.2.autos)]
@@ -1167,7 +1167,7 @@ theorem processnode_shortInstall_autos {ctx : Ctx n}
     (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hlt : level < st.canonlevel) :
     (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st := by
+      pruneAutos level st := by
   have hef' : st.eqlevFirst ≠ level := fun he =>
     hef (beq_iff_eq.mpr he)
   have heqFalse : (st.eqlevFirst == level) = false := by
@@ -1200,7 +1200,7 @@ theorem processnode_upInstall_autos {ctx : Ctx n}
     (hef : ¬((st.eqlevFirst == level) = true))
     (hnc : (numcells == n) = true) (hcc : st.compCanon = 1) :
     (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st := by
+      pruneAutos level st := by
   have hef' : st.eqlevFirst ≠ level := fun he =>
     hef (beq_iff_eq.mpr he)
   have heqFalse : (st.eqlevFirst == level) = false := by
@@ -1234,7 +1234,7 @@ theorem processnode_rowInstall_autos {ctx : Ctx n}
     (hgt : (0 : Int) < (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1) :
     (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st := by
+      pruneAutos level st := by
   have hef' : st.eqlevFirst ≠ level := fun he =>
     hef (beq_iff_eq.mpr he)
   have heqFalse : (st.eqlevFirst == level) = false := by
@@ -1271,7 +1271,7 @@ theorem processnode_rowReject_autos {ctx : Ctx n}
     (hlt : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 < 0) :
     (processnode ctx level numcells st).2.autos =
-      pruneAutos ctx level st := by
+      pruneAutos level st := by
   have hef' : st.eqlevFirst ≠ level := fun he =>
     hef (beq_iff_eq.mpr he)
   have heqFalse : (st.eqlevFirst == level) = false := by
@@ -1366,7 +1366,7 @@ theorem processnode_rowTie_short {ctx : Ctx n} {level numcells : Nat}
   repeat' split at hshort ⊢
   all_goals simp_all
   intro hcount hptr
-  rw [if_neg hcount] at hshort
+  rw [ite_eq_right hcount] at hshort
   omega
 
 /-- The code-two arm leaves the canonical guide untouched. -/
@@ -2312,11 +2312,11 @@ theorem bcount_of_discrete {ptn : Array Nat} {level nn : Nat}
   exact decide_eq_true (hdisc q (List.mem_range.mp hq))
 
 /-- Singleton cells are the first-branch shape. -/
-theorem smallShape_of_discrete {ctx : Ctx n} {ptn : Array Nat}
+theorem smallShape_of_discrete {ptn : Array Nat}
     {level : Nat} (hnn : n ≤ ptn.size)
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hdisc : ∀ q, q < n → ptn[q]! ≤ level) :
-    SmallShape ctx level ptn := by
+    SmallShape n level ptn := by
   intro q hq
   exact Or.inl (by
     rw [cells_singleton_of_discrete hnn hend hdisc q hq]; omega)

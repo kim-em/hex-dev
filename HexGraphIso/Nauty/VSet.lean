@@ -107,7 +107,7 @@ theorem limbs_ext {s t : VSet n} (h : s.limbs = t.limbs) : s = t := by
 
 /-- Equality compares the limb arrays; `Hex.instDecidableEqArray` keeps
 the comparison kernel-reducible across the module boundary. -/
-@[expose] instance : DecidableEq (VSet n) := fun s t =>
+instance : DecidableEq (VSet n) := fun s t =>
   if h : s.limbs = t.limbs then isTrue (limbs_ext h)
   else isFalse fun heq => h (by rw [heq])
 
@@ -1262,17 +1262,17 @@ theorem mem_foldl_insert_if (f : Nat → Bool) :
     rw [List.foldl_cons, mem_foldl_insert_if f l, List.contains_cons]
     rcases Decidable.em (v = w) with rfl | hne
     · rcases hf : f v with _ | _
-      · rw [ite_eq_right (by simp [hf])]
-        cases init.mem v <;> cases hc : l.contains v <;> simp [hf, hc]
-      · rw [ite_eq_left (by simp [hf]), mem_insert]
+      · rw [ite_eq_right (by simp [])]
+        cases init.mem v <;> cases hc : l.contains v <;> simp []
+      · rw [ite_eq_left (by simp []), mem_insert]
         cases init.mem v <;> cases hc : l.contains v <;> cases hd : decide (v < n) <;>
-          simp [hf, hc, hd]
+          simp []
     · have hbeq : (w == v) = false := by simp [Ne.symm hne]
       have hbeq' : (v == w) = false := by simp [hne]
       rcases hf : f v with _ | _
-      · rw [ite_eq_right (by simp [hf])]
+      · rw [ite_eq_right (by simp [])]
         simp [hbeq]
-      · rw [ite_eq_left (by simp [hf]), mem_insert]
+      · rw [ite_eq_left (by simp []), mem_insert]
         simp [hbeq, hbeq']
 
 theorem mem_ofFn (f : Nat → Bool) (v : Nat) :
@@ -1470,7 +1470,7 @@ theorem mem_foldl_image (σ : Nat → Nat) (s : VSet n) :
     · simp only [Bool.false_eq_true, ite_false, Bool.false_and, Bool.false_or]
     · simp only [ite_true, mem_insert, Bool.true_and]
       cases init.mem w <;> cases hb : (σ v == w) <;> cases hd : decide (σ v < n) <;>
-        cases hl : l.any (fun v => s.mem v && σ v == w && decide (σ v < n)) <;> simp [hb, hd, hl]
+        cases hl : l.any (fun v => s.mem v && σ v == w && decide (σ v < n)) <;> simp []
 
 theorem mem_image (σ : Nat → Nat) (s : VSet n) (w : Nat) :
     (s.image σ).mem w =

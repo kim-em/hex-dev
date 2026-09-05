@@ -38,7 +38,7 @@ theorem processnode_coset (ctx : Ctx n) (level numcells : Nat)
 theorem otherNodePrep_coset (level code : Nat) (st : SearchSt n) :
     (otherNodePrep level code st).cosetindex = st.cosetindex := by
   rw [otherNodePrep]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+  simp only [Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.cosetindex, ite_self]
 
 /-- Parent-frame recovery never changes the first-path coset cursor. -/
@@ -49,8 +49,8 @@ theorem recover_coset (n inf level : Nat) (st : SearchSt n) :
     apply_ite SearchSt.cosetindex, ite_self]
 
 /-- Completed-leaf cleanup never changes the first-path coset cursor. -/
-theorem leafFinish_coset (ctx : Ctx n) (level : Nat) (st : SearchSt n) :
-    (leafFinish ctx level st).cosetindex = st.cosetindex := by
+theorem leafFinish_coset (level : Nat) (st : SearchSt n) :
+    (leafFinish level st).cosetindex = st.cosetindex := by
   rw [leafFinish]
   split <;> split <;> rfl
 

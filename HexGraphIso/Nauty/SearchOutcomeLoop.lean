@@ -123,7 +123,7 @@ theorem FrameRefs.grow {ctx : Ctx n} {tcLevel specFuel level : Nat}
 
 /-- Recovering a state related to a valid loop entry restores the full
 parent invariant as well as the composable parent-level effect. -/
-theorem SearchOut.recoverOk {G : Colored n k} {ctx : Ctx n}
+theorem SearchOut.recoverOk {G : Colored n k}
     {level numcells inf : Nat} {base out : SearchSt n}
     (hinf : inf = n + 2)
     (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base)
@@ -353,7 +353,7 @@ theorem recoverChild {G : Colored n k} {ctx : Ctx n}
     exact hchild.congr rfl rfl rfl rfl
   have hbase : SearchOut G level level base cleaned :=
     hinv.effect.trans hclean
-  simpa only [cleaned] using hbase.recoverOk (ctx := ctx) hinf
+  simpa only [cleaned] using hbase.recoverOk hinf
     hinv.positive hinv.baseOk
 
 /-- A vertex selected from the mutable bitset has both its frozen
@@ -575,7 +575,7 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx n}
   have hpreShort : pre.needshortprune = st.needshortprune := by
     dsimp only [pre, otherLeafSt, r]
     rw [otherNodePrep]
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    simp only [Id.run_pure, apply_ite Id.run,
       apply_ite SearchSt.needshortprune, ite_self]
   have hstartFirst : start.gcaFirst = st.gcaFirst := by
     unfold start base
@@ -678,8 +678,8 @@ theorem otherNode_park_state (ctx : Ctx n)
         ptn := (refine ctx level st.lab st.ptn st.active numcells).ptn
         active := (refine ctx level st.lab st.ptn st.active numcells).active
         numnodes := st.numnodes + 1 }).compCanon < 0)),
-    hshort, Bool.false_eq_true, ite_false, hcheap, Bool.not_false,
-    ite_true, Int.ofNat_eq_natCast, Int.toNat_natCast]
+    hshort, Bool.false_eq_true, ite_false, hcheap, 
+    Int.ofNat_eq_natCast, Int.toNat_natCast]
   generalize hL : (otherChildLoop ctx inf tcLevel fuel (n + 1)
     level _ _ _ _ _ _) = L
   rcases L with ⟨r, out⟩

@@ -211,7 +211,7 @@ private theorem mem_activeUnion_fold {level : Nat} {st : RefineSt n} :
 /-- Membership in the active union: some active cell's splitter set
 holds the vertex. -/
 theorem elem_activeUnion {level : Nat} {st : RefineSt n} {v : Nat} :
-    (activeUnion ctx level st).mem v = true ↔
+    (activeUnion level st).mem v = true ↔
       ∃ p ∈ cells st.ptn level n, st.active.mem p.1 = true ∧
         (worksetOf n st.lab p.1 p.2).mem v = true := by
   rw [activeUnion,
@@ -229,7 +229,7 @@ theorem elem_activeUnion {level : Nat} {st : RefineSt n} {v : Nat} :
 theorem workset_submask_activeUnion {level : Nat} {st : RefineSt n}
     {p : Nat × Nat} (hp : p ∈ cells st.ptn level n)
     (ha : st.active.mem p.1 = true) :
-    (worksetOf n st.lab p.1 p.2).inter (activeUnion ctx level st) =
+    (worksetOf n st.lab p.1 p.2).inter (activeUnion level st) =
       worksetOf n st.lab p.1 p.2 :=
   VSet.subset_iff_inter.mp (VSet.subset_iff.mpr fun _ hi =>
     elem_activeUnion.mpr ⟨p, hp, ha, hi⟩)
@@ -281,12 +281,12 @@ theorem inactive_and_activeUnion {level : Nat} {st : RefineSt n}
     (hend : st.ptn[st.ptn.size - 1]! ≤ level)
     {p : Nat × Nat} (hp : p ∈ cells st.ptn level n)
     (ha : st.active.mem p.1 = false) :
-    (worksetOf n st.lab p.1 p.2).inter (activeUnion ctx level st) = VSet.empty := by
+    (worksetOf n st.lab p.1 p.2).inter (activeUnion level st) = VSet.empty := by
   refine VSet.ext fun i => ?_
   rw [VSet.mem_inter, VSet.mem_empty]
   rcases h1 : (worksetOf n st.lab p.1 p.2).mem i with _ | _
   · rfl
-  · rcases h2 : (activeUnion ctx level st).mem i with _ | _
+  · rcases h2 : (activeUnion level st).mem i with _ | _
     · rfl
     · obtain ⟨q, hq, hqa, hqi⟩ := elem_activeUnion.mp h2
       have hne : p ≠ q := fun he => by
@@ -1277,7 +1277,7 @@ private theorem trivial_state_of_fields {ctx : Ctx n}
     (hRa : R.active = st.active.erase split1) (hRp : R.ptn = st.ptn)
     (hRl : R.lab = st.lab) (hRn : R.numcells = st.numcells)
     (hok : StOk n level st)
-    (hmem : st.active.mem split1 = true) (hs1 : split1 < n) :
+    (hmem : st.active.mem split1 = true) :
     ((refineTrivial ctx level split1 R).active.card +
         2 * st.numcells + 1 ≤
       st.active.card +
@@ -1404,7 +1404,7 @@ private theorem nontrivial_state_of_fields {ctx : Ctx n}
     (hRa : R.active = st.active.erase split1) (hRp : R.ptn = st.ptn)
     (_hRl : R.lab = st.lab) (hRn : R.numcells = st.numcells)
     (hok : StOk n level st)
-    (hmem : st.active.mem split1 = true) (hs1 : split1 < n) :
+    (hmem : st.active.mem split1 = true) :
     ((refineNontrivial ctx level split1 split2 R).active.card +
         2 * st.numcells + 1 ≤
       st.active.card +
@@ -1510,8 +1510,7 @@ fragment start while any other cell leaves at most one start
 inactive. -/
 theorem refineStep_state {ctx : Ctx n} {level split1 : Nat}
     {st : RefineSt n} (hok : StOk n level st)
-    (hmem : st.active.mem split1 = true)
-    (hs1 : split1 < n) :
+    (hmem : st.active.mem split1 = true) :
     ((refineStep ctx level split1 st).active.card +
         2 * st.numcells + 1 ≤
       st.active.card +
@@ -1532,9 +1531,9 @@ theorem refineStep_state {ctx : Ctx n} {level split1 : Nat}
   dsimp only
   split
   · exact trivial_state_of_fields (st := st) rfl rfl rfl rfl hok
-      hmem hs1
+      hmem
   · exact nontrivial_state_of_fields (st := st) rfl rfl rfl rfl hok
-      hmem hs1
+      hmem
 
 end Hex.GraphIso.Nauty
 

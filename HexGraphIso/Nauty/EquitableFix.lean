@@ -186,7 +186,7 @@ private theorem submask_or_left {a b c : VSet n} (h : a.inter b = a) :
 
 private theorem sub_and_zero {x e d : VSet n} (h1 : x.inter e = x)
     (h2 : e.inter d = VSet.empty) : x.inter d = VSet.empty :=
-  inter_empty_of_mem fun i hx => mem_inter_empty h2 (mem_of_inter_eq h1 hx)
+  inter_empty_of_mem fun _ hx => mem_inter_empty h2 (mem_of_inter_eq h1 hx)
 
 private theorem sub_or_cancel {x a b : VSet n}
     (h1 : x.inter (a.union b) = x) (h2 : x.inter b = VSet.empty) : x.inter a = x :=
@@ -222,7 +222,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
   rw [hr] at hrok hRI
   have hcc := refineStep_cell_const (st := st) hok hsymm hs1
   obtain ⟨_, _, hact3⟩ :=
-    refineStep_state (st := st) hok hmem hs1
+    refineStep_state (st := st) hok hmem
   rw [hr] at hcc hact3
   rw [hr]
   have hgrow := hRI.grow
@@ -353,7 +353,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         D.1 ≤ p'.1 → p'.2 ≤ D.2 →
       ∀ v, (worksetOf n r.lab D.1 D.2).mem v = true →
         (worksetOf n r.lab p'.1 p'.2).mem v = false →
-        (activeUnion ctx level r).mem v = true := by
+        (activeUnion level r).mem v = true := by
     intro D hD hcase p' hp' hpin hDp1 hDp2 v hv hvp
     obtain ⟨w, hw⟩ := (hact3 D hD).2 hcase
     have hp'le := cells_le p' hp'
@@ -401,7 +401,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         hmemW f (D.1 + o) v (by omega) hf1 hf2 hvo⟩
   have hcoverA : ∀ A ∈ cells st.ptn level n,
       st.active.mem A.1 = true → A.1 ≠ split1 →
-      (worksetOf n r.lab A.1 A.2).inter (activeUnion ctx level r) =
+      (worksetOf n r.lab A.1 A.2).inter (activeUnion level r) =
         worksetOf n r.lab A.1 A.2 := by
     intro A hA hact hne
     refine inter_eq_of_mem fun v hv => ?_
@@ -518,7 +518,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
       rw [← hWD]
       exact hp'sub
     have hWDau : (worksetOf n st.lab Dp.1 Dp.2).inter
-        (activeUnion ctx level st) = VSet.empty :=
+        (activeUnion level st) = VSet.empty :=
       inactive_and_activeUnion (st := st) hinj hps hend hDpm hDpact
     have hWDV : (worksetOf n st.lab Dp.1 Dp.2).inter (V) = VSet.empty :=
       zero_of_and_submask hWDau hVau
@@ -550,7 +550,7 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         exact hcoverB Dp hDpm (Or.inl hDpact) p' hp' hpin hDp1 hDp2 v
           hvD hvp
       · refine inter_eq_of_mem fun v hv => ?_
-        have hvau : (activeUnion ctx level st).mem v = true :=
+        have hvau : (activeUnion level st).mem v = true :=
           mem_of_inter_eq hVau (mem_of_inter_eq hV0V hv)
         obtain ⟨A, hA, hAact, hAv⟩ := elem_activeUnion.mp hvau
         rcases Decidable.em (A.1 = split1) with he | hne
@@ -687,7 +687,7 @@ theorem refineLoop_certInv {ctx : Ctx n} {level : Nat}
         have hs1 : split1 < n :=
           pickSplit_lt hps
         obtain ⟨hp1, hp2, _⟩ :=
-          refineStep_state (ctx := ctx) (st := st) hok hmem hs1
+          refineStep_state (ctx := ctx) (st := st) hok hmem
         exact refineLoop_certInv hsymm fuel
           (refineStep ctx level split1 st)
           (refineStep_stOk hok)

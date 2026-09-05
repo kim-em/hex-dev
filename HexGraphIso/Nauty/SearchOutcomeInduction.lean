@@ -838,7 +838,7 @@ theorem RunInv.child {G : Colored n k} {ctx : Ctx n}
       v = 0 ∨ (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
     rw [breakout_ptn]
-    exact split_starts h.searchOk.ptnSize hcell (by omega)
+    exact split_starts hcell (by omega)
   · change st.gcaFirst < level + 1
     exact Nat.lt_succ_of_le h.firstBound
   · change st.gcaCanon < level + 1
@@ -1244,9 +1244,9 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx n}
     exact h.firstPositive
   · rw [recover_gcaCanon]
     by_cases hc : level < st.gcaCanon
-    · rw [if_pos hc]
+    · rw [ite_eq_left hc]
       omega
-    · rw [if_neg hc]
+    · rw [ite_eq_right hc]
       exact h.canonPositive
   · rw [hframes.2.2.2.2.2.2.1]
     exact hfirst

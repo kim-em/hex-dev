@@ -624,10 +624,10 @@ private theorem foldl_union_from {act W : VSet n} {lab : Array Nat} :
   | q :: l, A, h => by
     rw [List.foldl_cons]
     rcases hq : act.mem q.1 with _ | _
-    · rw [ite_eq_right (by simp [hq])]
+    · rw [ite_eq_right (by simp [])]
       exact foldl_union_from l A
         fun p hp => h p (List.mem_cons_of_mem _ hp)
-    · rw [ite_eq_left (by simp [hq]), h q List.mem_cons_self hq,
+    · rw [ite_eq_left (by simp []), h q List.mem_cons_self hq,
         union_self_right]
       exact foldl_union_from l A
         fun p hp => h p (List.mem_cons_of_mem _ hp)
@@ -642,7 +642,7 @@ private theorem foldl_union_single {act W : VSet n} {lab : Array Nat} :
   | q :: l, A, h, ⟨p, hp, hpa⟩ => by
     rw [List.foldl_cons]
     rcases hq : act.mem q.1 with _ | _
-    · rw [ite_eq_right (by simp [hq])]
+    · rw [ite_eq_right (by simp [])]
       have hpl : p ∈ l := by
         rcases List.mem_cons.mp hp with rfl | hmem
         · rw [hq] at hpa
@@ -650,7 +650,7 @@ private theorem foldl_union_single {act W : VSet n} {lab : Array Nat} :
         · exact hmem
       exact foldl_union_single l A
         (fun p hp2 => h p (List.mem_cons_of_mem _ hp2)) ⟨p, hpl, hpa⟩
-    · rw [ite_eq_left (by simp [hq]), h q List.mem_cons_self hq]
+    · rw [ite_eq_left (by simp []), h q List.mem_cons_self hq]
       exact foldl_union_from l A
         fun p hp2 => h p (List.mem_cons_of_mem _ hp2)
 
@@ -665,10 +665,11 @@ variable (hlsz : lab.size = n) (hpsz : ptn.size = n)
 
 include hlsz hpsz hend hvals hinj hcell hne ho
 
+omit hlsz hinj ho in
 /-- The active union of the child entry state is the split-off
 singleton's vertex. -/
 theorem activeUnion_breakout :
-    activeUnion ctx (level + 1)
+    activeUnion (level + 1)
       { lab := (breakout n lab ptn (level + 1) tc lab[tc + o]!).1,
         ptn := ptn.set! tc (level + 1), active := VSet.empty.insert tc,
         numcells := numcells + 1, hint := 0, maxpos := 0,
@@ -696,7 +697,7 @@ theorem activeUnion_breakout :
 /-- The singleton's vertex saturates every child cell: it is the whole
 splitter set of the singleton and misses every other cell. -/
 theorem saturated_breakout :
-    Saturated ctx (level + 1)
+    Saturated (level + 1)
       { lab := (breakout n lab ptn (level + 1) tc lab[tc + o]!).1,
         ptn := ptn.set! tc (level + 1), active := VSet.empty.insert tc,
         numcells := numcells + 1, hint := 0, maxpos := 0,
@@ -762,6 +763,7 @@ theorem saturated_breakout :
       (by rw [hlsz]; omega) (hwv3.trans hwv2.symm)
     rcases hout with h | h <;> omega
 
+omit hvals in
 /-- Unchanged windows keep their member lists. -/
 private theorem segN_breakout_congr {a len : Nat}
     (hout : a + len ≤ tc ∨ tc + o < a) :
@@ -777,6 +779,7 @@ private theorem segN_breakout_congr {a len : Nat}
   · rw [ite_eq_right (by omega), ite_eq_right (by omega),
       ite_eq_right (by omega)]
 
+omit hvals in
 /-- Members of the rotated target window sit inside the parent target
 window. -/
 private theorem segN_breakout_target_sub {a len : Nat}
@@ -807,6 +810,7 @@ variable (hE : Equitable ctx level lab ptn)
 
 include hE
 
+omit hE in
 /-- A child cell's members are covered by a parent cell's constancy
 into any parent-cell splitter set. -/
 private theorem constOn_child {W : VSet n} {c : Nat × Nat}
@@ -819,10 +823,10 @@ private theorem constOn_child {W : VSet n} {c : Nat × Nat}
   rcases child_cells_cases hpsz hend hvals hcell hne hc with
     rfl | rfl | ⟨hcm, hne2⟩
   · exact (hW _ hcell).mono
-      (segN_breakout_target_sub hlsz hpsz hend hvals hinj hcell hne ho
+      (segN_breakout_target_sub hlsz hpsz hend hinj hcell hne ho
         (Nat.le_refl _) (by omega))
   · exact (hW _ hcell).mono
-      (segN_breakout_target_sub hlsz hpsz hend hvals hinj hcell hne ho
+      (segN_breakout_target_sub hlsz hpsz hend hinj hcell hne ho
         (by omega) (by omega))
   · obtain ⟨hq1, hq2, hqe⟩ := (mem_cells_iff (by omega) hend).mp hcm
     have hout : c.2 < tc ∨ e < c.1 := by
@@ -847,7 +851,7 @@ private theorem constOn_child {W : VSet n} {c : Nat × Nat}
     have hc12 : c.1 ≤ c.2 := by
       rw [hqe]
       exact cellEnd_ge
-    rw [segN_breakout_congr hlsz hpsz hend hvals hinj hcell hne ho (by
+    rw [segN_breakout_congr hlsz hpsz hend hinj hcell hne ho (by
       rcases hout with h | h
       · exact Or.inl (by omega)
       · exact Or.inr (by omega))]
@@ -870,7 +874,7 @@ theorem certInv_breakout :
     simp at hpin
   · refine ⟨worksetOf n (breakout n lab ptn (level + 1) tc
       lab[tc + o]!).1 tc tc, ?_, ?_, ?_⟩
-    · rw [activeUnion_breakout hlsz hpsz hend hvals hinj hcell hne ho]
+    · rw [activeUnion_breakout hpsz hend hvals hcell hne]
       exact VSet.inter_self _
     · exact saturated_breakout hlsz hpsz hend hvals hinj hcell hne ho
     · have hsplit : worksetOf n (breakout n lab ptn (level + 1) tc
@@ -890,7 +894,7 @@ theorem certInv_breakout :
             lab[tc + o]!).1 tc tc) = worksetOf n lab tc e := by
         rw [VSet.union_comm, ← hsplit, hfull]
       rw [hkey]
-      refine constOn_child hlsz hpsz hend hvals hinj hcell hne ho hE
+      refine constOn_child hlsz hpsz hend hvals hinj hcell hne ho
         hc ?_
       intro pc hpc
       rw [← splitDone_iff_constOn]
@@ -926,7 +930,7 @@ theorem certInv_breakout :
             · exact Or.inl h
             · exact Or.inr (by omega))
     rw [hWp]
-    refine constOn_child hlsz hpsz hend hvals hinj hcell hne ho hE
+    refine constOn_child hlsz hpsz hend hvals hinj hcell hne ho
       hc ?_
     intro pc hpc
     rw [← splitDone_iff_constOn]

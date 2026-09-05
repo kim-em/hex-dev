@@ -1621,13 +1621,13 @@ frees the preservation argument from fragment bookkeeping. When
 zero, and the invariant is exactly equitability. -/
 
 /-- The union of the active cells' splitter sets. -/
-@[expose] def activeUnion (ctx : Ctx n) (level : Nat) (st : RefineSt n) : VSet n :=
+@[expose] def activeUnion (level : Nat) (st : RefineSt n) : VSet n :=
   (cells st.ptn level n).foldl
     (fun A p =>
       if st.active.mem p.1 then A.union (worksetOf n st.lab p.1 p.2) else A) .empty
 
 /-- Every cell's splitter set lies inside `V` or misses it. -/
-@[expose] def Saturated (ctx : Ctx n) (level : Nat) (st : RefineSt n) (V : VSet n) : Prop :=
+@[expose] def Saturated (level : Nat) (st : RefineSt n) (V : VSet n) : Prop :=
   ∀ p ∈ cells st.ptn level n,
     (worksetOf n st.lab p.1 p.2).inter V = VSet.empty ∨
     (worksetOf n st.lab p.1 p.2).inter V = worksetOf n st.lab p.1 p.2
@@ -1636,8 +1636,8 @@ zero, and the invariant is exactly equitability. -/
 @[expose] def CertInv (ctx : Ctx n) (level : Nat) (st : RefineSt n) : Prop :=
   ∀ p ∈ cells st.ptn level n, st.active.mem p.1 = false →
   ∀ c ∈ cells st.ptn level n,
-  ∃ V : VSet n, V.inter (activeUnion ctx level st) = V ∧
-    Saturated ctx level st V ∧
+  ∃ V : VSet n, V.inter (activeUnion level st) = V ∧
+    Saturated level st V ∧
     ConstOn ctx ((worksetOf n st.lab p.1 p.2).union V)
       (segN st.lab c.1 (c.2 + 1 - c.1))
 
@@ -1657,8 +1657,8 @@ theorem active_eq_empty_of_pickSplit_none {active : VSet n} {hint : Nat}
     cases h
 
 /-- With no active cells the active union vanishes. -/
-theorem activeUnion_eq_empty {ctx : Ctx n} {level : Nat} {st : RefineSt n}
-    (h : st.active = VSet.empty) : activeUnion ctx level st = VSet.empty := by
+theorem activeUnion_eq_empty {level : Nat} {st : RefineSt n}
+    (h : st.active = VSet.empty) : activeUnion level st = VSet.empty := by
   rw [activeUnion]
   have hgen : ∀ (l : List (Nat × Nat)),
       l.foldl (fun A p =>

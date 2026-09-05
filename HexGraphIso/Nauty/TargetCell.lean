@@ -21,9 +21,7 @@ namespace Hex.GraphIso.Nauty
 /-- On an equitable pair of cells, nauty's representative test agrees with
 the specification's count-multiset test. -/
 theorem joinTest_iff_first {ctx : Ctx n} {lab ptn : Array Nat} {level : Nat}
-    (heq : Equitable ctx level lab ptn) (hlab : LabOk lab n)
-    (hlsz : lab.size = n) (hpsz : ptn.size = n)
-    (hend : ptn[ptn.size - 1]! ≤ level) {c d : Nat × Nat}
+    (heq : Equitable ctx level lab ptn) {c d : Nat × Nat}
     (hc : c ∈ cells ptn level n) (hd : d ∈ cells ptn level n) :
     joinTest ctx lab (worksetOf n lab d.1 d.2) c.1 c.2 = true ↔
       ¬ (worksetOf n lab d.1 d.2).interIsEmpty ctx.g[lab[c.1]!]! = true ∧
@@ -140,7 +138,7 @@ theorem bestcellRow_eq_spec {ctx : Ctx n} {lab ptn : Array Nat}
     have hd' := start_cell (by omega : n ≤ ptn.size) hend hd
     rw [← hcstart] at hc'
     rw [← hdstart] at hd'
-    have hj := joinTest_iff_first heq hlab hlsz hpsz hend hc' hd'
+    have hj := joinTest_iff_first heq hc' hd'
     rcases hjv : joinTest ctx lab
         (worksetOf n lab startArr[v2]!
           (cellEnd ptn level startArr[v2]!))

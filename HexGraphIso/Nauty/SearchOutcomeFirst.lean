@@ -364,7 +364,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx n}
       v = 0 ∨ (breakout n pre.lab pre.ptn (level + 1) tc
         pre.lab[tc + o]!).2.1[v - 1]! ≤ level + 1
     rw [breakout_ptn]
-    exact split_starts hokPre.ptnSize hcellPre (by omega)
+    exact split_starts hcellPre (by omega)
   · intro target entry hlt hentry
     rcases Nat.lt_succ_iff_lt_or_eq.mp hlt with hold | rfl
     · rw [FrameTrail.push_of_ne _ _ (Nat.ne_of_lt hold)] at hentry

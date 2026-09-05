@@ -568,7 +568,7 @@ theorem pickSplit_lt {active : VSet n} {hint s : Nat} :
       exact VSet.mem_lt (VSet.nextElem_mem hne)
 
 theorem trivialSplit_stOk {level cell1 cell2 : Nat} {c1 c2 : Int}
-    {st : RefineSt n} (h : StOk n level st) (h1 : cell1 < n) (h2 : cell2 < n) :
+    {st : RefineSt n} (h : StOk n level st) :
     StOk n level (trivialSplit level cell1 cell2 c1 c2 st) := by
   obtain ⟨hsl, hlab, hsp, hend⟩ := h
   rw [trivialSplit]
@@ -594,7 +594,7 @@ theorem trivialSplit_stOk {level cell1 cell2 : Nat} {c1 c2 : Int}
     exact ⟨hsl, hlab, hsp, hend⟩
 
 theorem trivialCell_stOk {level cell1 cell2 : Nat} {gRow : VSet n} {st : RefineSt n}
-    (h : StOk n level st) (h1 : cell1 < n) (h2 : cell2 < n) :
+    (h : StOk n level st) (h2 : cell2 < n) :
     StOk n level (trivialCell level gRow cell1 cell2 st) := by
   rw [trivialCell]
   rcases hc : (cell1 == cell2) with _ | _
@@ -602,13 +602,9 @@ theorem trivialCell_stOk {level cell1 cell2 : Nat} {gRow : VSet n} {st : RefineS
     have hsplit := splitCellLoop_ok (gRow := gRow) (cell2 - cell1 + 2) st.lab
       (Int.ofNat cell1) (Int.ofNat cell2) h.labOk
       (by simp only [Int.ofNat_eq_natCast]; omega)
-      (by
-        simp only [Int.ofNat_eq_natCast]
-        have := h.labSize
-        omega)
+      (by simp only [Int.ofNat_eq_natCast]; rw [h.labSize]; exact Int.ofNat_lt.mpr h2)
     exact trivialSplit_stOk
       ⟨hsplit.1.trans h.labSize, hsplit.2, h.ptnSize, h.ptnEnd⟩
-      h1 h2
   · simp only [ite_true]
     exact h
 
@@ -701,7 +697,7 @@ theorem ptn_windowStep (level cell1 cell2 v c1 c2 : Nat) (maxcell : Int)
   repeat' first | exact Or.inl rfl | exact Or.inr rfl | split
 
 theorem windowStep_stOk {level cell1 cell2 v c1 c2 : Nat} {maxcell : Int}
-    {st : RefineSt n} (h : StOk n level st) (hc1 : c1 < n) :
+    {st : RefineSt n} (h : StOk n level st) :
     StOk n level (windowStep level cell1 cell2 v c1 c2 maxcell st) := by
   obtain ⟨hsl, hlab, hsp, hend⟩ := h
   refine ⟨?_, ?_, ?_, ?_⟩
@@ -734,12 +730,12 @@ theorem windowScan_stOk {level cell1 cell2 : Nat} {counts : List Nat}
     rcases Decidable.em (multOf counts v > 0) with hm | hm
     · simp only [ite_eq_left hm]
       exact windowScan_stOk hc2 vs (c1 + multOf counts v) _ _
-        (windowStep_stOk h (by omega)) (by omega)
+        (windowStep_stOk h) (by omega)
     · simp only [ite_eq_right hm]
       exact windowScan_stOk hc2 vs c1 maxcell st h (by omega)
 
 theorem nontrivialFix_stOk {level cell1 : Nat} {st : RefineSt n}
-    (h : StOk n level st) (h1 : cell1 < n) :
+    (h : StOk n level st) :
     StOk n level (nontrivialFix cell1 st) := by
   rw [nontrivialFix]
   split
@@ -754,7 +750,7 @@ theorem nodup_range_map_add (b k : Nat) :
   omega
 
 theorem nontrivialCell_stOk {ctx : Ctx n} {level cell1 cell2 : Nat} {workset : VSet n}
-    {st : RefineSt n} (h : StOk n level st) (h1 : cell1 < n) (h2 : cell2 < n) :
+    {st : RefineSt n} (h : StOk n level st) (h2 : cell2 < n) :
     StOk n level (nontrivialCell ctx level workset cell1 cell2 st) := by
   rw [nontrivialCell]
   rcases hc : (cell1 == cell2) with _ | _
@@ -787,7 +783,7 @@ theorem nontrivialCell_stOk {ctx : Ctx n} {level cell1 cell2 : Nat} {workset : V
         (segmentOf_mem (cell1 := cell1) (counts := counts) h.labOk
           (by omega) (countValues counts))
       exact nontrivialFix_stOk
-        ⟨hws.1.trans h.labSize, hws.2, hW.ptnSize, hW.ptnEnd⟩ h1
+        ⟨hws.1.trans h.labSize, hws.2, hW.ptnSize, hW.ptnEnd⟩
     · simp only [ite_true]
       exact ⟨h.labSize, h.labOk, h.ptnSize, h.ptnEnd⟩
   · simp only [ite_true]
@@ -840,7 +836,7 @@ theorem refineTrivial_go_stOk {level : Nat} {gRow : VSet n} :
   | (c1, c2) :: rest, st, h, hcs => by
     rw [refineTrivial.go]
     exact refineTrivial_go_stOk rest _
-      (trivialCell_stOk h (hcs (c1, c2) (by simp)).1 (hcs (c1, c2) (by simp)).2)
+      (trivialCell_stOk h (hcs (c1, c2) (by simp)).2)
       (fun p hp => hcs p (List.mem_cons_of_mem _ hp))
 
 theorem refineTrivial_stOk {ctx : Ctx n} {level split1 : Nat} {st : RefineSt n}
@@ -862,8 +858,7 @@ theorem refineNontrivial_go_stOk {ctx : Ctx n} {level : Nat} {workset : VSet n} 
   | (c1, c2) :: rest, st, h, hcs => by
     rw [refineNontrivial.go]
     exact refineNontrivial_go_stOk rest _
-      (nontrivialCell_stOk h (hcs (c1, c2) (by simp)).1
-        (hcs (c1, c2) (by simp)).2)
+      (nontrivialCell_stOk h (hcs (c1, c2) (by simp)).2)
       (fun p hp => hcs p (List.mem_cons_of_mem _ hp))
 
 theorem refineNontrivial_stOk {ctx : Ctx n} {level split1 split2 : Nat}

@@ -226,7 +226,7 @@ theorem otherNode_hint_state (ctx : Ctx n)
   generalize hpr : processnode ctx level
     (refine ctx level st.lab st.ptn st.active numcells).numcells _ = pr
   rcases hc : cheapautom pr.2.ptn level n with _ | _ <;>
-    simp only [hc, Bool.false_eq_true, not_false_eq_true, ite_true,
+    simp only [Bool.false_eq_true, not_false_eq_true, ite_true,
       not_true_eq_false, ite_false] <;>
     generalize hL : (otherChildLoop ctx inf tcLevel fuel (n + 1)
       level _ _ _ _ _ _) = L <;>

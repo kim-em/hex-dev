@@ -98,7 +98,7 @@ theorem toNodeNoneInc {ctx : Ctx n}
   | frozen _ returned => cases returned
   | cheap _ returned => cases returned
   | exhausted _ finalCursor progress bounded =>
-      exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
 
 end LoopExit
 

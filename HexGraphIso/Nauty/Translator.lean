@@ -533,11 +533,11 @@ private theorem isautomInner_gate (ctx : Ctx n) (γ : Array Nat)
   constructor
   · intro hp
     by_cases hgt : pos > i
-    · rw [if_pos hgt, if_neg (by simpa using hp hgt)]
-    · rw [if_neg hgt]
+    · rw [ite_eq_left hgt, ite_eq_right (by simpa using hp hgt)]
+    · rw [ite_eq_right hgt]
   · intro hp
     rcases Decidable.not_imp_iff_and_not.mp hp with ⟨hgt, hne⟩
-    rw [if_pos hgt, if_pos (by simpa using hne)]
+    rw [ite_eq_left hgt, ite_eq_left (by simpa using hne)]
 
 private theorem isautomOuter_gate (ctx : Ctx n) (γ : Array Nat) (i : Nat) :
     IsGate (isautomOuter ctx γ i) (isautomPass ctx γ i) := by
@@ -898,7 +898,7 @@ private theorem forIn_id_inv {α β : Type} {P : β → Prop}
 
 /-- The outer loop body of `witness?`, spelled with the named core
 matchers so it is definitionally identical to the `do`-desugaring. -/
-private def witnessOuter (ctx : Ctx n) (rsLab : Array Nat) (tc o : Nat)
+private def witnessOuter (rsLab : Array Nat) (tc o : Nat)
     (usable : Array (Array Nat × Array Nat)) (_x : Nat)
     (__s : Option (Option (Nat × Array Nat)) ×
       Array (Nat × Array Nat) × VSet n × Nat) :
@@ -956,9 +956,9 @@ private def witnessOuter (ctx : Ctx n) (rsLab : Array Nat) (tc o : Nat)
           pure (ForInStep.yield (none, queue, seen, head))
   else pure (ForInStep.yield (none, queue, seen, head))
 
-private theorem witness?_eq (ctx : Ctx n) (rsLab : Array Nat) (tc : Nat)
+private theorem witness?_eq (rsLab : Array Nat) (tc : Nat)
     (usable : Array (Array Nat × Array Nat)) (o : Nat) :
-    witness? ctx rsLab tc usable o =
+    witness? n rsLab tc usable o =
       if (o == 0 || usable.isEmpty) = true then none
       else
         Break.runK.match_1 (fun _ => Id (Option (Nat × Array Nat)))
@@ -966,7 +966,7 @@ private theorem witness?_eq (ctx : Ctx n) (rsLab : Array Nat) (tc : Nat)
             ((none : Option (Option (Nat × Array Nat))),
               #[(rsLab[tc + o]!, Array.range n)],
               VSet.empty.insert rsLab[tc + o]!, (0 : Nat))
-            (witnessOuter ctx rsLab tc o usable) :
+            (witnessOuter rsLab tc o usable) :
               Id (Option (Option (Nat × Array Nat)) ×
                 Array (Nat × Array Nat) × VSet n × Nat)).fst
           (fun r => pure r) (fun _ => pure none) := by
@@ -993,7 +993,7 @@ private theorem witnessOuter_inv {ctx : Ctx n} {rsLab : Array Nat}
       Array (Nat × Array Nat) × VSet n × Nat)
     (hs : WitnessInv ctx s) :
     WitnessInv ctx
-      (stepState (witnessOuter ctx rsLab tc o usable x s)) := by
+      (stepState (witnessOuter rsLab tc o usable x s)) := by
   rw [witnessOuter]
   dsimp only
   split
@@ -1047,7 +1047,7 @@ theorem witness?_checkAutom {ctx : Ctx n} {rsLab : Array Nat}
     {o' : Nat} {π : Array Nat}
     (hu : ∀ p ∈ usable, checkAutom ctx.g p.1 = true ∧
       checkAutom ctx.g p.2 = true)
-    (hw : witness? ctx rsLab tc usable o = some (o', π)) :
+    (hw : witness? n rsLab tc usable o = some (o', π)) :
     checkAutom ctx.g π = true := by
   rw [witness?_eq] at hw
   by_cases h0 : (o == 0 || usable.isEmpty) = true
@@ -1066,14 +1066,14 @@ theorem witness?_checkAutom {ctx : Ctx n} {rsLab : Array Nat}
         exact checkAutom_range
       · intro a b h
         exact nomatch h
-    have hinv := forIn_id_inv (f := witnessOuter ctx rsLab tc o usable)
+    have hinv := forIn_id_inv (f := witnessOuter rsLab tc o usable)
       (List.range n)
       (fun x _ s hs => witnessOuter_inv hu x s hs) _ hinit
     rcases hfst : (forIn (List.range n)
         ((none : Option (Option (Nat × Array Nat))),
           #[(rsLab[tc + o]!, Array.range n)],
           VSet.empty.insert rsLab[tc + o]!, (0 : Nat))
-        (witnessOuter ctx rsLab tc o usable) :
+        (witnessOuter rsLab tc o usable) :
           Id (Option (Option (Nat × Array Nat)) ×
             Array (Nat × Array Nat) × VSet n × Nat)).fst with _ | r
     · rw [hfst] at hw

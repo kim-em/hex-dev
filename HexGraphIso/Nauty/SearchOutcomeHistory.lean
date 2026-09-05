@@ -245,7 +245,7 @@ theorem processnode_order {ctx : Ctx n} {level numcells : Nat}
 control. -/
 theorem leafFinish {ctx : Ctx n} {level current : Nat} {st : SearchSt n}
     {trail : FrameTrail} (h : RefTrail ctx current st trail) :
-    RefTrail ctx current (Nauty.leafFinish ctx level st) trail := by
+    RefTrail ctx current (Nauty.leafFinish level st) trail := by
   unfold Nauty.leafFinish
   split
   · simp only
@@ -255,7 +255,7 @@ theorem leafFinish {ctx : Ctx n} {level current : Nat} {st : SearchSt n}
 
 /-- Recovery preserves GCA ordering provided the first control is no
 deeper than the receiving frame. -/
-theorem recover_order {ctx : Ctx n} {level inf : Nat} {st : SearchSt n}
+theorem recover_order {level inf : Nat} {st : SearchSt n}
     (horder : st.gcaFirst ≤ st.gcaCanon)
     (hfirstBound : st.gcaFirst ≤ level) :
     (Nauty.recover n inf level st).gcaFirst ≤

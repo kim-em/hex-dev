@@ -202,7 +202,7 @@ theorem cursorRank_le {cursor : Option Nat} {n : Nat}
 /-- A loop cannot consume more fuel than the remaining bounded cursor
 range.  This is the contradiction used to rule out the exhaustion outcome
 of the executable root sweeps. -/
-theorem LoopResult.exhaustion_false {ctx : Ctx n}
+theorem LoopResult.exhaustion_false
     {cursor finalCursor : Option Nat} {loopFuel : Nat}
     (hfuel : n < cursorRank cursor + loopFuel)
     (hprogress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
@@ -1796,7 +1796,7 @@ theorem NodeResult.of_loop_none {ctx : Ctx n}
   | unwind sound target returned below payload => cases returned
   | pruned target returned below sound installed read full => cases returned
   | exhausted returned sound finalSet finalCursor cover progress bounded =>
-      exact (LoopResult.exhaustion_false (ctx := ctx) hfuel progress bounded).elim
+      exact (LoopResult.exhaustion_false hfuel progress bounded).elim
 
 /-- Prepending a sound child fragment transports every recursive loop
 outcome.  In the prune case, the recursive exact incumbent and the

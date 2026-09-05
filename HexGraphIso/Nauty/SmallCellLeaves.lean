@@ -128,7 +128,7 @@ theorem cells_length_eq_bcount {ptn : Array Nat} {level nn : Nat}
 
 /-- The first-branch shape: every cell is a singleton, a pair, or the
 unique triple. -/
-def SmallShape (ctx : Ctx n) (level : Nat) (ptn : Array Nat) : Prop :=
+def SmallShape (n : Nat) (level : Nat) (ptn : Array Nat) : Prop :=
   ∀ q ∈ cells ptn level n, q.2 + 1 - q.1 ≤ 2 ∨
     (q.2 + 1 - q.1 = 3 ∧
       ∀ q' ∈ cells ptn level n, q'.2 + 1 - q'.1 = 3 → q' = q)
@@ -139,8 +139,8 @@ at every cell, and both descend through individualization, which is
 why the invariant carries the disjunction rather than either
 disjunct. A defect-four node need not have the first-branch shape:
 the four-vertex empty graph's root is a single cell of size four. -/
-def NodeShape (ctx : Ctx n) (level : Nat) (ptn : Array Nat) : Prop :=
-  SmallShape ctx level ptn ∨
+def NodeShape (n : Nat) (level : Nat) (ptn : Array Nat) : Prop :=
+  SmallShape n level ptn ∨
     n - (cells ptn level n).length ≤ 4
 
 /-- The facts every deviation below a cheapautom node consumes,
@@ -150,7 +150,7 @@ structure SubtreeOk (ctx : Ctx n) (level : Nat) (st : RefineSt n) :
   it : IterOk ctx level st
   eqt : Equitable ctx level st.lab st.ptn
   acc : bcount st.ptn level n = st.numcells
-  shape : NodeShape ctx level st.ptn
+  shape : NodeShape n level st.ptn
 
 /-- Every cell of the child partition sits inside a cell of the split
 partition: refinement only adds boundaries. -/
@@ -218,8 +218,8 @@ window exactly. -/
 theorem smallShape_child {st : RefineSt n} {level tc e o : Nat}
     (hIt : IterOk ctx level st) (hlvl : level < n)
     (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
-    (ho : o ≤ e - tc) (hsmall : SmallShape ctx level st.ptn) :
-    SmallShape ctx (level + 1)
+    (ho : o ≤ e - tc) (hsmall : SmallShape n level st.ptn) :
+    SmallShape n (level + 1)
       (childSt ctx level st tc st.lab[tc + o]!).ptn := by
   have hpsz := hIt.ok.ptnSize
   have hend := hIt.ok.ptnEnd
@@ -294,8 +294,8 @@ grows. -/
 theorem nodeShape_child {st : RefineSt n} {level tc e o : Nat}
     (hIt : IterOk ctx level st) (hlvl : level < n)
     (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
-    (ho : o ≤ e - tc) (hsh : NodeShape ctx level st.ptn) :
-    NodeShape ctx (level + 1)
+    (ho : o ≤ e - tc) (hsh : NodeShape n level st.ptn) :
+    NodeShape n (level + 1)
       (childSt ctx level st tc st.lab[tc + o]!).ptn := by
   rcases hsh with hsmall | hdef
   · exact Or.inl (smallShape_child hIt hlvl hcell hne ho hsmall)

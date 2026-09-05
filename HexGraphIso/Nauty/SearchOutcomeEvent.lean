@@ -174,7 +174,7 @@ theorem leafFinish {G : Colored n k} {ctx : Ctx n}
     {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunEvent G ctx tcLevel level cs bs fs st best trail) :
     RunEvent G ctx tcLevel level cs bs fs
-      (Nauty.leafFinish ctx level st) best trail := by
+      (Nauty.leafFinish level st) best trail := by
   unfold Nauty.leafFinish
   split
   · simp only
@@ -191,9 +191,9 @@ end RunEvent
 namespace ReturnStab
 
 /-- Leaf cleanup leaves the recorded-generator store unchanged. -/
-theorem leafFinish {ctx : Ctx n} {level : Nat} {st : SearchSt n}
+theorem leafFinish {level : Nat} {st : SearchSt n}
     {trail : FrameTrail} {r : Int} (h : ReturnStab trail r st) :
-    ReturnStab trail r (Nauty.leafFinish ctx level st) := by
+    ReturnStab trail r (Nauty.leafFinish level st) := by
   apply h.ofGenTraceEq
   unfold Nauty.leafFinish
   split

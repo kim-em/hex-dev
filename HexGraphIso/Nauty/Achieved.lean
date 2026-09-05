@@ -500,7 +500,7 @@ theorem refInv_nontrivialCell {ctx : Ctx n}
 
 /-! # The passes, the loop, and `refine` -/
 
-theorem refInv_cells_facts {ctx : Ctx n} {level : Nat}
+theorem refInv_cells_facts {level : Nat}
     {lab0 ptn0 : Array Nat} {st : RefineSt n}
     (hinv : RefInv level lab0 ptn0 st)
     (hnn : n ≤ ptn0.size) (hs : lab0.size = ptn0.size)
@@ -579,10 +579,10 @@ theorem refInv_refineStep {ctx : Ctx n} {level split1 : Nat}
   split
   · rw [refineTrivial]
     exact refInv_refineTrivial_go _ _ (refInv_record hinv rfl rfl)
-      (refInv_cells_facts (ctx := ctx) (refInv_record hinv rfl rfl) hnn hs hend0)
+      (refInv_cells_facts (refInv_record hinv rfl rfl) hnn hs hend0)
   · rw [refineNontrivial]
     exact refInv_refineNontrivial_go _ _ (refInv_record hinv rfl rfl)
-      (refInv_cells_facts (ctx := ctx) (refInv_record hinv rfl rfl) hnn hs hend0)
+      (refInv_cells_facts (refInv_record hinv rfl rfl) hnn hs hend0)
 
 theorem refInv_refineLoop {ctx : Ctx n} {level : Nat}
     {lab0 ptn0 : Array Nat}

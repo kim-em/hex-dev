@@ -111,7 +111,7 @@ theorem split_end {ptn : Array Nat} {level tc : Nat}
 /-- The active singleton created by individualization marks a cell start
 of the split partition. -/
 theorem split_starts {ptn : Array Nat} {level tc len : Nat}
-    (hpsz : ptn.size = n) (hcell : IsCell ptn level tc len)
+    (hcell : IsCell ptn level tc len)
     (hrange : tc + len ≤ n) :
     ∀ v : Nat, ((VSet.empty : VSet n).insert tc).mem v = true →
       v = 0 ∨ (ptn.set! tc (level + 1))[v - 1]! ≤ level + 1 := by
@@ -207,7 +207,7 @@ theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx n}
   · exact split_end (searchOk_end hn0 hok hlevel) (by
       rw [hok.ptnSize]
       omega)
-  · exact split_starts hok.ptnSize hcell (by omega)
+  · exact split_starts hcell (by omega)
   · intro q
     rcases Nat.lt_or_ge q n with hq | hq
     · exact hrefOk.vals q hq

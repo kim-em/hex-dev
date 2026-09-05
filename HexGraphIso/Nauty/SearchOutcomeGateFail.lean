@@ -170,9 +170,9 @@ theorem otherLeafSt_setEqlev (ctx : Ctx n) (level numcells : Nat)
   all_goals rfl
 
 /-- Leaf cleanup commutes with overwriting the agreement depth. -/
-theorem leafFinish_setEqlev (ctx : Ctx n) (level e : Nat) (st : SearchSt n) :
-    leafFinish ctx level { st with eqlevFirst := e } =
-      { leafFinish ctx level st with eqlevFirst := e } := by
+theorem leafFinish_setEqlev (level e : Nat) (st : SearchSt n) :
+    leafFinish level { st with eqlevFirst := e } =
+      { leafFinish level st with eqlevFirst := e } := by
   unfold leafFinish
   dsimp only
   split <;> split <;> rfl
@@ -231,7 +231,7 @@ theorem otherNode_gateFail_state (ctx : Ctx n)
     rw [otherNode_leaf_done_state ctx inf tcLevel fuel level numcells st hnum
       hearly, otherNode_leaf_done_state ctx inf tcLevel fuel level numcells
       { st with eqlevFirst := 0 } hnum' hdone', hpre', hproc]
-    show (_, leafFinish ctx level
+    show (_, leafFinish level
         (SearchSt.setEqlev pre.eqlevFirst
           (processnode ctx level n { pre with eqlevFirst := 0 }).2)) = _
     unfold SearchSt.setEqlev
@@ -479,7 +479,7 @@ theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx n}
   -- the executable output in terms of the leaf comparison
   have hleaf : otherNode ctx inf tcLevel (fuel + 1) level numcells st = P ∨
       otherNode ctx inf tcLevel (fuel + 1) level numcells st =
-        (Int.ofNat level - 1, leafFinish ctx level P.2) := by
+        (Int.ofNat level - 1, leafFinish level P.2) := by
     by_cases hearly : P.1 < Int.ofNat level
     · exact Or.inl (otherNode_leaf_early ctx inf tcLevel fuel level numcells
         st hnum hearly)
@@ -517,14 +517,14 @@ theorem OtherRun.ofGateFail {G : Colored n k} {ctx : Ctx n}
         (hlivePre.processnode hprep.trailOk hprep.firstBound).1
     · have hbest : outBest = some (incKey ctx bs' P.2.canonlab) := by
         rw [← hread', ← hstIncEq, hleaf]
-        show stInc ctx (leafFinish ctx level P.2) = _
+        show stInc ctx (leafFinish level P.2) = _
         rw [stInc_leafFinish]
         exact hevent.read
       rw [hleaf] at hstable ⊢
       rw [hbest]
       dsimp only at hstable ⊢
       exact EventOut.intro level full bs'
-        (hevent.leafFinish (ctx := ctx) (level := level)) hfull hstem
+        (hevent.leafFinish (level := level)) hfull hstem
         (by omega) (by simp only [Int.ofNat_eq_natCast]; omega) hstable
         ((hlivePre.processnode hprep.trailOk hprep.firstBound).1.leafFinish)
   refine ⟨?_, ?_⟩
