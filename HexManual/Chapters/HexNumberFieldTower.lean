@@ -112,13 +112,10 @@ def gMinus : Poly T2 := #p[-1, (-2 : Rat) • r2, 1]
 
 #guard gPlus * gMinus = quartic
 
-#guard
-  match factor? T2 quartic with
-  | some F =>
-      coeffs F.scalar = #[1, 0] &&
-        F.factors.all (fun g => g.2 = 1) &&
-        F.factors.map (·.1) == #[gMinus, gPlus]
-  | none => false
+#guard (factor? T2 quartic).any fun F =>
+  coeffs F.scalar = #[1, 0] &&
+    F.factors.all (fun g => g.2 = 1) &&
+    F.factors.map (·.1) == #[gMinus, gPlus]
 ```
 
 At each level `K(α)/K` the method searches a fixed list of integer shifts for
@@ -140,18 +137,18 @@ has dimension four and the four roots square to `2` or `3`:
 def biquadratic : Poly rat :=
   liftZPoly rat #p[6, 0, -5, 0, 1]
 
-#guard
-  match split? rat biquadratic with
-  | some S =>
-      S.extension.tower.dim = 4 &&
-        match S.roots with
-        | .finite rs =>
-            rs.size = 4 && rs.all fun r =>
-              r.2 = 1 &&
-                (coeffs (r.1 * r.1) = #[2, 0, 0, 0] ||
-                  coeffs (r.1 * r.1) = #[3, 0, 0, 0])
-        | .all => false
-  | none => false
+/-- The finite root list of a splitting; the zero polynomial has none. -/
+def finiteRoots {T : NumberTower} : Roots T → Array (Elem T × Nat)
+  | .finite rs => rs
+  | .all => #[]
+
+#guard (split? rat biquadratic).any fun S =>
+  S.extension.tower.dim = 4 &&
+    let rs := finiteRoots S.roots
+    rs.size = 4 && rs.all fun r =>
+      r.2 = 1 &&
+        (coeffs (r.1 * r.1) = #[2, 0, 0, 0] ||
+          coeffs (r.1 * r.1) = #[3, 0, 0, 0])
 ```
 
 Building the same field by hand, `ℚ(√2)(√3)`, and flattening it recovers the
@@ -168,16 +165,11 @@ def s3 : Elem T23 := Q23.gen
 #guard T23.dim = 4
 #guard (s2 + s3) * (s2 - s3) = ofRat T23 (-1)
 
-#guard
-  match flatten? T23 with
-  | some F =>
-      F.root.p = #p[1, 0, -10, 0, 1] &&
-        (F.toPrimitive s2).coeffs =
-          #p[0, -9 / 2, 0, 1 / 2] &&
-        (F.toPrimitive s3).coeffs =
-          #p[0, 11 / 2, 0, -1 / 2] &&
-        F.fromPrimitive (F.toPrimitive s3) == s3
-  | none => false
+#guard (flatten? T23).any fun F =>
+  F.root.p = #p[1, 0, -10, 0, 1] &&
+    (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2] &&
+    (F.toPrimitive s3).coeffs = #p[0, 11 / 2, 0, -1 / 2] &&
+    F.fromPrimitive (F.toPrimitive s3) == s3
 
 end HexNumberFieldTowerChapter
 ```

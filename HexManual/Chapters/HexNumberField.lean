@@ -152,16 +152,22 @@ representation. Its roots are lazy roots with multiplicities: the polynomial
 polynomial `X⁴ − 2`.
 
 ```lean
-#guard
-  match (AlgebraicPoly.ofArray #[-sqrt2, 0, 1]).roots with
-  | .finite rs =>
-      rs.size = 2 && rs.all fun r =>
-        r.multiplicity = 1 &&
-          r.root.exact.p = #p[-2, 0, 0, 0, 1]
-  | .all => false
+/-- The finite root list; the zero polynomial has none listed. -/
+def finiteRoots : RootSet → Array RootCount
+  | .finite rs => rs
+  | .all => #[]
+
+def quarticRoots : Array RootCount :=
+  finiteRoots (AlgebraicPoly.ofArray #[-sqrt2, 0, 1]).roots
+
+#guard quarticRoots.size = 2
+#guard quarticRoots.all fun r =>
+  r.multiplicity = 1 &&
+    r.root.exact.p = #p[-2, 0, 0, 0, 1]
 ```
 
-The `.all` branch is the zero polynomial, every number being a root of it.
+The `.all` case of a root set is the zero polynomial, every number being a
+root of it.
 
 {docstring Hex.AlgebraicPoly.roots}
 
