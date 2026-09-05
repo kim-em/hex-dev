@@ -1321,6 +1321,38 @@ private def towerInvChainSteps (input : ElemInput) : Array TowerInvStep :=
         (value.size + relation.size + 1) 0 #[]
   | [] => #[]
 
+open Hex.NumberTower.Arithmetic in
+/-- Division is inversion of the divisor followed by one top-level product
+by the inverse. Charge that product exactly: every pair of top-level
+coefficients is one lower-field product at the operands' limb widths, and
+the top-level reduction modulo the quadratic relation adds one more such
+product per reduced coefficient. -/
+private def towerDivisionProductLimbWork (input : ElemInput) : Nat × Nat × Nat :=
+  match input.tower.levels.toList with
+  | level :: lower =>
+      let inverse := coeffs input.b⁻¹
+      let a := Coeff.value level lower (coeffs input.a)
+      let b := Coeff.value level lower inverse
+      let bits := ratArrayBits inverse
+      let product := lowerPolyProductLimbWork lower a b
+      let reduction := (level.degree - 1) *
+        (ratArrayBits (coeffs (input.a * input.b⁻¹))).limbs * levelsDim lower
+      (product + reduction, bits.numMax, bits.denMax)
+  | [] => (0, 0, 0)
+
+private def printTowerDivChainSteps : IO Unit := do
+  IO.println "n,lower_dim,divisor_inv_limb_work,inverse_num_max,inverse_den_max,product_limb_work,division_limb_work"
+  for n in #[2, 3, 4, 6, 8, 12] do
+    let input := prepRecursiveElemInput n
+    let lowerDim := match input.tower.levels.toList with
+      | _ :: lower => Hex.NumberTower.levelsDim lower
+      | [] => 1
+    let divisorInput : ElemInput := { input with a := input.b, b := input.a }
+    let invWork := (towerInvChainSteps divisorInput).foldl
+      (fun acc step => acc + step.lowerInvLimbWork + step.lowerProdLimbWork) 0
+    let (productWork, numMax, denMax) := towerDivisionProductLimbWork input
+    IO.println s!"{n},{lowerDim},{invWork},{numMax},{denMax},{productWork},{invWork + productWork}"
+
 private def printTowerInvChainSteps : IO Unit := do
   IO.println "n,lower_dim,step,dividend_degree,divisor_degree,next_remainder_degree,next_remainder_zero,lc_num_max,lc_den_max,divisor_num_max,divisor_den_max,cofactor_num_max,cofactor_den_max,lower_inversions,lower_products,lower_inv_limb_work,lower_prod_limb_work,limb_work"
   for n in #[2, 3, 4, 6, 8, 12] do
@@ -1622,5 +1654,8 @@ def main (args : List String) : IO UInt32 := do
   match args with
   | ["tower-inv-chain-stats"] =>
       Hex.NumberTowerBench.printTowerInvChainSteps
+      return 0
+  | ["tower-div-chain-stats"] =>
+      Hex.NumberTowerBench.printTowerDivChainSteps
       return 0
   | _ => LeanBench.Cli.dispatch args
