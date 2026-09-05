@@ -18,9 +18,10 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
 from release.sync_released import (  # noqa: E402
     MANIFEST,
+    SKELETON,
+    keep_paths,
     managed_paths,
     released_ci_workflows,
-    removal_paths,
     source_build_settings,
 )
 from release import aggregate_readme  # noqa: E402
@@ -41,6 +42,23 @@ RETIRED_FIELDS = (
     "oracles",
 )
 
+# Top-level names a mirror never carries: the development instruments, the
+# bench-result and performance-report ledgers, and mirror-local agent notes.
+# `keep_paths` exists for a file the mirror owns, not as a way back to
+# publishing what the sweep is there to remove. A published figure under
+# `reports/figures/` arrives as a managed destination from the entry's
+# `figures:` list, never through this hatch.
+UNPUBLISHED_TREES = (
+    ".claude",
+    ".github",
+    "bench",
+    "conformance",
+    "conformance-fixtures",
+    "reports",
+    "scripts",
+    "vendor",
+)
+
 
 def fail(message: str) -> NoReturn:
     raise ValueError(message)
@@ -55,6 +73,28 @@ def check_library_only(entry: dict) -> None:
             "to the mirror; benchmarks, conformance drivers, fixtures and "
             "oracles stay in hex-dev"
         )
+    if "remove_paths" in entry:
+        fail(
+            f"{entry['repo']}: remove_paths is retired; the sync now deletes "
+            "everything outside the entry's managed paths and the unmanaged "
+            "skeleton, so nothing needs enumerating per entry"
+        )
+
+
+def check_keep_paths(entry: dict) -> None:
+    """Reject an escape hatch that widens a mirror past its library."""
+    for path in keep_paths(entry):
+        if path.parts[0] in UNPUBLISHED_TREES:
+            fail(
+                f"{entry['repo']}: keep_paths entry {path} names a tree no "
+                "mirror publishes; benchmarks, conformance drivers, fixtures, "
+                "oracles, bench results and performance reports stay in hex-dev"
+            )
+        if path.parts[0] in SKELETON:
+            fail(
+                f"{entry['repo']}: keep_paths entry {path} is already kept as "
+                "part of every mirror's unmanaged skeleton"
+            )
 
 
 def check_build_settings(entry: dict) -> None:
@@ -510,16 +550,16 @@ def main() -> int:
                 if destination in destinations:
                     fail(f"{repo}: duplicate managed destination {destination}")
                 destinations.add(destination)
-            removals = removal_paths(entry)
-            for removal in removals:
+            check_keep_paths(entry)
+            for kept in keep_paths(entry):
                 if any(
-                    removal == destination
-                    or removal in destination.parents
-                    or destination in removal.parents
+                    kept == destination
+                    or kept in destination.parents
+                    or destination in kept.parents
                     for destination in destinations
                 ):
                     fail(
-                        f"{repo}: remove_paths entry {removal} overlaps a managed destination"
+                        f"{repo}: keep_paths entry {kept} overlaps a managed destination"
                     )
             if entry.get("readme", True):
                 readme = REPO_ROOT / lib / "README.md"

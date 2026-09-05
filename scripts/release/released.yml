@@ -2,18 +2,28 @@
 #
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
-# from this monorepo: it overwrites the repo's *managed* paths from here, leaves
-# everything else except the release-wide toolchain and dependency locks
-# untouched, enables native Verso docstrings in each managed-source repo's
-# lakefile, copies the monorepo's Lean toolchain, synchronizes exact external
-# dependency locks, rewrites cross-repo Hex pins to the commits just synced,
-# and commits to the released repo's `main`.
+# from this monorepo: it deletes everything outside the repo's *managed* paths
+# and its unmanaged skeleton, overwrites the managed paths from here, enables
+# native Verso docstrings in each managed-source repo's lakefile, copies the
+# monorepo's Lean toolchain, synchronizes exact external dependency locks,
+# rewrites cross-repo Hex pins to the commits just synced, and commits to the
+# released repo's `main`.
 #
 # A released repo ships the library and nothing else: its Lean source, umbrella,
 # SPEC and README. Benchmarks, conformance drivers, fixtures and oracles are
 # development instruments that only make sense against the whole graph, so they
 # live here and run in this monorepo's CI; a mirror's own CI builds what it
 # publishes, which is what its users consume.
+#
+# That is a property of the driver, not of this file. `allowed_paths` in
+# sync_released.py computes what a mirror may contain -- the entry's managed
+# paths, the managed .github/workflows/ci.yml, and the skeleton the sync does
+# not author (root Lake files, lake-manifest.json, lean-toolchain, LICENSE,
+# .gitignore, AGENTS.md) -- and `prune_unmanaged` deletes the rest. A new entry
+# therefore inherits the whole policy, and there is nothing per-entry to
+# remember. Nothing else under .github/ survives, so a mirror cannot accumulate
+# a second workflow beside its build-only one; nor do `reports/` or `.claude/`,
+# beyond the figures an entry names below.
 #
 # Order is topological (upstream first) so each repo's freshly-pushed SHA is
 # known before its downstream consumers are processed.
@@ -40,11 +50,11 @@
 # `test_modules` lists verification-only modules copied with the source but
 # intentionally absent from the public umbrella; released CI builds them via a
 # non-public `lean_lib` target.
-# `remove_paths` lists obsolete released-repo paths that the sync must delete.
-# Entries must be explicit relative paths and cannot overlap managed paths. Most
-# entries name the bench and conformance sidecars, fixtures and oracles an
-# earlier shape published, together with the mirror-local helpers that only
-# served them; the sidecar Lake projects go with their directories.
+# `keep_paths` is the escape hatch out of that sweep: explicit relative paths a
+# mirror owns that are neither managed nor part of the common skeleton. One
+# entry uses it, for `hex-test-kit`'s fixed `HexTestKit.lean` umbrella. It can
+# only preserve, so a forgotten entry surfaces as a deletion in the dry run, not
+# as an over-published mirror; it may not name a development instrument.
 # `build_modules` lists complete development umbrellas that the released Lake
 # skeleton must build separately from the curated public umbrella.
 # `executables` maps an unmanaged released executable name to its mathematical
@@ -91,7 +101,7 @@ repos:
     paths:                 # explicit: only the shared helper source
       - { src: "Hex", dest: "Hex" }
     spec: null
-    remove_paths: [scripts/oracle]
+    keep_paths: [HexTestKit.lean]   # mirror-local umbrella, authored there
     pins: []
     lakefile: toml
 
@@ -100,7 +110,6 @@ repos:
     lib: HexArith
     umbrella: true
     spec: hex-arith
-    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh]
     pins: []
     lakefile: lean
 
@@ -109,7 +118,6 @@ repos:
     lib: HexPrimality
     umbrella: true
     spec: hex-primality
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/bench, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith]
     lakefile: toml
 
@@ -117,7 +125,6 @@ repos:
     lib: HexPrimalityMathlib
     umbrella: true
     spec: hex-primality-mathlib
-    remove_paths: [conformance]
     pins: [hex-basic, hex-arith, hex-primality]
     lakefile: toml
 
@@ -126,7 +133,6 @@ repos:
     lib: HexPoly
     umbrella: true
     spec: hex-poly
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: []
     lakefile: toml
 
@@ -136,7 +142,6 @@ repos:
     test_modules: [HexMvPoly.KernelTests]
     umbrella: true
     spec: hex-mv-poly
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-poly]
     lakefile: toml
 
@@ -145,7 +150,6 @@ repos:
     lib: HexModArith
     umbrella: true
     spec: hex-mod-arith
-    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh]
     pins: [hex-arith]
     lakefile: lean
 
@@ -160,7 +164,6 @@ repos:
     lib: HexMvPolyMathlib
     umbrella: true
     spec: hex-mv-poly-mathlib
-    remove_paths: [conformance]
     pins: [hex-basic, hex-poly, hex-mv-poly, hex-poly-mathlib]
     lakefile: toml
 
@@ -169,7 +172,6 @@ repos:
     lib: HexPolyFp
     umbrella: true
     spec: hex-poly-fp
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
     lakefile: toml
 
@@ -179,7 +181,6 @@ repos:
     test_modules: [HexSparsePoly.KernelTests]
     umbrella: true
     spec: hex-sparse-poly
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-poly]
     lakefile: toml
 
@@ -187,7 +188,6 @@ repos:
     lib: HexSparsePolyMathlib
     umbrella: true
     spec: hex-sparse-poly-mathlib
-    remove_paths: [conformance]
     pins: [hex-basic, hex-poly, hex-sparse-poly, hex-poly-mathlib]
     lakefile: toml
 
@@ -196,7 +196,6 @@ repos:
     lib: HexPolyZ
     umbrella: true
     spec: hex-poly-z
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
     lakefile: toml
 
@@ -219,7 +218,6 @@ repos:
     lib: HexGFqRing
     umbrella: true
     spec: hex-gfq-ring
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp]
     lakefile: toml
 
@@ -228,7 +226,6 @@ repos:
     lib: HexHensel
     umbrella: true
     spec: hex-hensel
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp]
     lakefile: toml
 
@@ -251,7 +248,6 @@ repos:
     lib: HexRoots
     umbrella: true
     spec: hex-roots
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
     lakefile: toml
 
@@ -261,7 +257,6 @@ repos:
     test_modules: [HexRealRoots.ReplayTest]
     umbrella: true
     spec: hex-real-roots
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
     lakefile: toml
 
@@ -278,7 +273,6 @@ repos:
     test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests]
     umbrella: true
     spec: hex-real-roots-mathlib
-    remove_paths: [conformance]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots]
     lakefile: toml
 
@@ -287,7 +281,6 @@ repos:
     lib: HexMatrix
     umbrella: true
     spec: hex-matrix
-    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh, scripts/ci/run_oracles.sh, scripts/oracle]
     pins: [hex-basic]
     lakefile: toml
 
@@ -296,7 +289,6 @@ repos:
     lib: HexRowReduce
     umbrella: true
     spec: hex-row-reduce
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/run_oracles.sh, scripts/oracle]
     pins: [hex-basic, hex-matrix]
     lakefile: toml
 
@@ -306,7 +298,6 @@ repos:
     test_modules: [HexBerlekamp.FactorTacticTests]
     umbrella: true
     spec: hex-berlekamp
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring]
     lakefile: toml
 
@@ -315,7 +306,6 @@ repos:
     lib: HexConway
     umbrella: true
     spec: hex-conway
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
     lakefile: toml
 
@@ -324,7 +314,6 @@ repos:
     lib: HexGFqField
     umbrella: true
     spec: hex-gfq-field
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
     lakefile: toml
 
@@ -333,7 +322,6 @@ repos:
     lib: HexGF2
     umbrella: true
     spec: hex-gf2
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/check_clmul_paths.sh, scripts/oracle]
     pins: [hex-basic]
     lakefile: lean
 
@@ -349,7 +337,6 @@ repos:
     lib: HexGFq
     umbrella: true
     spec: hex-gfq
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2]
     lakefile: toml
 
@@ -365,7 +352,6 @@ repos:
     lib: HexDeterminant
     umbrella: true
     spec: hex-determinant
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/run_oracles.sh, scripts/oracle]
     pins: [hex-basic, hex-matrix]
     lakefile: toml
 
@@ -374,7 +360,6 @@ repos:
     lib: HexBareiss
     umbrella: true
     spec: hex-bareiss
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/run_oracles.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-determinant, hex-matrix]
     lakefile: toml
 
@@ -419,7 +404,6 @@ repos:
     lib: HexGramSchmidt
     umbrella: true
     spec: hex-gram-schmidt
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/run_oracles.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
@@ -440,7 +424,6 @@ repos:
     executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
     spec: hex-lll
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/hexlll_probe_provider.c, scripts/ci/run_oracles.sh, scripts/oracle, scripts/plots]
     pins: [hex-basic, hex-arith, hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: lean
     # user-facing performance doc (HexLLL/PERFORMANCE.md -> repo-root PERFORMANCE.md)
@@ -465,7 +448,6 @@ repos:
     build_modules: [HexBerlekampZassenhaus.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel]
     lakefile: lean
 
@@ -529,7 +511,6 @@ repos:
     lib: HexResultant
     umbrella: true
     spec: hex-resultant
-    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh]
     pins: [hex-basic, hex-poly, hex-matrix, hex-determinant]
     lakefile: toml
 
@@ -545,7 +526,6 @@ repos:
     lib: HexNumberField
     umbrella: true
     spec: hex-number-field
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant]
     lakefile: toml
 
@@ -565,7 +545,6 @@ repos:
     test_modules: [HexNumberFieldTower.Embed]
     umbrella: true
     spec: hex-number-field-tower
-    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
     pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-number-field]
     lakefile: toml
 
@@ -587,7 +566,6 @@ repos:
     test_modules: [HexRCF.LanguageTests, HexRCF.SturmBuilderTests, HexRCF.CarrierTests, HexRCF.IsolationsTests, HexRCF.SeparationTests, HexRCF.CellsTests, HexRCF.CommonRootTests, HexRCF.SignMatrixTests, HexRCF.BuilderTests, HexRCF.CertificateTests, HexRCF.DecisionTests, HexRCF.ReifyTests, HexRCF.LintTests]
     umbrella: true
     spec: hex-rcf
-    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh]
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib]
     lakefile: toml
 

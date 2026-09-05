@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from scripts.release.check_released_manifest import (
     check_build_settings,
     check_ci_workflows,
+    check_keep_paths,
     check_library_only,
     check_phase_admission,
     parse_sync_baseline,
@@ -34,6 +35,39 @@ class LibraryOnlyTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "stay in hex-dev"):
                     check_library_only(
                         {"repo": "leanprover/hex-example", field: value}
+                    )
+
+    def test_remove_paths_is_retired(self) -> None:
+        with self.assertRaisesRegex(ValueError, "remove_paths is retired"):
+            check_library_only(
+                {"repo": "leanprover/hex-example", "remove_paths": ["bench"]}
+            )
+
+
+class KeepPathsTests(unittest.TestCase):
+    def test_mirror_local_file_is_accepted(self) -> None:
+        check_keep_paths(
+            {"repo": "leanprover/hex-test-kit", "keep_paths": ["HexTestKit.lean"]}
+        )
+
+    def test_unpublished_trees_are_rejected(self) -> None:
+        for path in ("bench", "conformance/HexExample",
+                     "conformance-fixtures", "scripts/oracle/example.py",
+                     "reports/hex-example-performance.md",
+                     "reports/figures/hex-example.svg",
+                     ".claude/CLAUDE.md", ".github/workflows/bench.yml"):
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(ValueError, "stay in hex-dev"):
+                    check_keep_paths(
+                        {"repo": "leanprover/hex-example", "keep_paths": [path]}
+                    )
+
+    def test_skeleton_paths_are_rejected_as_redundant(self) -> None:
+        for path in ("LICENSE", "lean-toolchain"):
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(ValueError, "unmanaged skeleton"):
+                    check_keep_paths(
+                        {"repo": "leanprover/hex-example", "keep_paths": [path]}
                     )
 
 

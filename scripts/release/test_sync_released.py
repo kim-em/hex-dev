@@ -41,43 +41,171 @@ class SyncReleasedTests(unittest.TestCase):
             (self.repo / "bench" / "lean-toolchain").read_text(), expected)
         self.assertEqual(len(notes), 2)
 
-    def test_apply_paths_removes_obsolete_released_path(self) -> None:
+    def _bridge_clone(self) -> Path:
+        """A mirror carrying the skeleton, its library, and stale extras."""
+        clone = self.repo / "clone"
+        (clone / "HexBridge").mkdir(parents=True)
+        (clone / "HexBridge" / "Basic.lean").write_text("--\n", encoding="utf-8")
+        for name in ("LICENSE", "AGENTS.md", ".gitignore", "README.md",
+                     "lakefile.toml", "lake-manifest.json", "lean-toolchain"):
+            (clone / name).write_text("skeleton\n", encoding="utf-8")
+        (clone / ".github" / "workflows").mkdir(parents=True)
+        (clone / ".github" / "workflows" / "ci.yml").write_text(
+            "name: CI\n", encoding="utf-8")
+        (clone / ".github" / "workflows" / "bench.yml").write_text(
+            "name: bench\n", encoding="utf-8")
+        (clone / ".github" / "dependabot.yml").write_text(
+            "version: 2\n", encoding="utf-8")
+        (clone / ".claude").mkdir()
+        (clone / ".claude" / "CLAUDE.md").write_text("notes\n", encoding="utf-8")
+        (clone / "reports" / "bench-results").mkdir(parents=True)
+        (clone / "reports" / "bench-results" / "run.json").write_text(
+            "{}\n", encoding="utf-8")
+        (clone / "reports" / "hex-bridge-performance.md").write_text(
+            "report\n", encoding="utf-8")
+        for stale in ("bench/HexBridge", "conformance/HexBridge",
+                      "conformance-fixtures/HexBridge", "scripts/oracle"):
+            (clone / stale).mkdir(parents=True)
+            (clone / stale / "file").write_text("stale\n", encoding="utf-8")
+        (clone / "conformance" / "lakefile.toml").write_text(
+            "name = \"conformance\"\n", encoding="utf-8")
+        (clone / "SPEC").mkdir()
+        (clone / "SPEC" / "hex-bridge.md").write_text("spec\n", encoding="utf-8")
+        (clone / "SPEC" / "obsolete.md").write_text("stale\n", encoding="utf-8")
+        return clone
+
+    def _bridge_entry(self) -> dict:
+        return {
+            "repo": "leanprover/hex-bridge",
+            "lib": "HexBridge",
+            "readme": False,
+            "umbrella": False,
+            "spec": "hex-bridge",
+        }
+
+    def test_prune_removes_everything_outside_the_allowance(self) -> None:
+        clone = self._bridge_clone()
         with tempfile.TemporaryDirectory() as source_directory:
             source = Path(source_directory)
-            (source / "HexBridge").mkdir()
-            clone = self.repo / "clone"
-            stale = clone / "conformance" / "HexBridge"
-            stale.mkdir(parents=True)
-            (stale / "Conformance.lean").write_text("stale\n", encoding="utf-8")
-            entry = {
-                "repo": "leanprover/hex-bridge",
-                "lib": "HexBridge",
-                "readme": False,
-                "umbrella": False,
-                "spec": None,
-                "remove_paths": ["conformance"],
-            }
-            workflows = self.repo / "released-ci.yml"
-            workflows.write_text(
-                "workflows:\n  hex-bridge: |\n    name: CI\n", encoding="utf-8"
-            )
-            with (
-                patch.object(sync_released, "REPO_ROOT", source),
-                patch.object(sync_released, "RELEASED_CI", workflows),
-            ):
-                notes = sync_released.apply_paths(entry, clone)
-            self.assertFalse((clone / "conformance").exists())
-            self.assertIn("  remove conformance", notes)
-            self.assertEqual(
-                (clone / ".github" / "workflows" / "ci.yml").read_text(),
-                "name: CI\n",
-            )
-            with (
-                patch.object(sync_released, "REPO_ROOT", source),
-                patch.object(sync_released, "RELEASED_CI", workflows),
-            ):
-                notes = sync_released.apply_paths(entry, clone)
-            self.assertNotIn("  remove conformance", notes)
+            with patch.object(sync_released, "REPO_ROOT", source):
+                notes = sync_released.prune_unmanaged(self._bridge_entry(), clone)
+        for gone in ("bench", "conformance", "conformance-fixtures", "scripts",
+                     "SPEC/obsolete.md", ".claude", "reports",
+                     ".github/workflows/bench.yml", ".github/dependabot.yml"):
+            self.assertFalse((clone / gone).exists(), gone)
+            self.assertIn(f"  remove {gone}", notes)
+        for kept in ("HexBridge/Basic.lean", "SPEC/hex-bridge.md", "LICENSE",
+                     "AGENTS.md", ".gitignore", "README.md", "lakefile.toml",
+                     "lake-manifest.json", "lean-toolchain",
+                     ".github/workflows/ci.yml"):
+            self.assertTrue((clone / kept).exists(), kept)
+
+    def test_prune_keeps_only_the_figures_the_entry_publishes(self) -> None:
+        """`reports/` goes, except the figures the manifest names."""
+        clone = self.repo / "clone"
+        (clone / "reports" / "figures").mkdir(parents=True)
+        (clone / "reports" / "figures" / "hex-bridge-scaling.svg").write_text(
+            "<svg/>", encoding="utf-8")
+        (clone / "reports" / "figures" / "stale.svg").write_text(
+            "<svg/>", encoding="utf-8")
+        (clone / "reports" / "bench-results").mkdir()
+        (clone / "reports" / "bench-results" / "run.json").write_text(
+            "{}\n", encoding="utf-8")
+        (clone / "reports" / "hex-bridge-performance.md").write_text(
+            "report\n", encoding="utf-8")
+        entry = dict(self._bridge_entry(), performance=True,
+                     figures=["hex-bridge-scaling.svg"])
+        with tempfile.TemporaryDirectory() as source_directory:
+            with patch.object(sync_released, "REPO_ROOT", Path(source_directory)):
+                notes = sync_released.prune_unmanaged(entry, clone)
+        self.assertTrue(
+            (clone / "reports" / "figures" / "hex-bridge-scaling.svg").is_file())
+        for gone in ("reports/figures/stale.svg", "reports/bench-results",
+                     "reports/hex-bridge-performance.md"):
+            self.assertFalse((clone / gone).exists(), gone)
+            self.assertIn(f"  remove {gone}", notes)
+
+    def test_prune_is_idempotent(self) -> None:
+        clone = self._bridge_clone()
+        entry = self._bridge_entry()
+        with tempfile.TemporaryDirectory() as source_directory:
+            source = Path(source_directory)
+            with patch.object(sync_released, "REPO_ROOT", source):
+                sync_released.prune_unmanaged(entry, clone)
+                self.assertEqual(sync_released.prune_unmanaged(entry, clone), [])
+
+    def test_prune_leaves_the_pins_only_aggregate_alone(self) -> None:
+        clone = self.repo / "clone"
+        (clone / "docs").mkdir(parents=True)
+        (clone / "docs" / "index.html").write_text("<p>", encoding="utf-8")
+        (clone / "Hex.lean").write_text("import HexBasic\n", encoding="utf-8")
+        (clone / ".github" / "workflows").mkdir(parents=True)
+        (clone / ".github" / "workflows" / "docs.yml").write_text(
+            "name: docs\n", encoding="utf-8")
+        (clone / ".claude").mkdir()
+        (clone / ".claude" / "CLAUDE.md").write_text("notes\n", encoding="utf-8")
+        entry = {"repo": "leanprover/hex", "pins_only": True}
+        self.assertEqual(
+            sync_released.prune_unmanaged(entry, clone), ["  remove .claude"])
+        self.assertFalse((clone / ".claude").exists())
+        self.assertTrue((clone / "Hex.lean").is_file())
+        self.assertTrue((clone / "docs" / "index.html").is_file())
+        self.assertTrue((clone / ".github" / "workflows" / "docs.yml").is_file())
+
+    def test_prune_honours_the_keep_paths_escape_hatch(self) -> None:
+        clone = self.repo / "clone"
+        clone.mkdir()
+        (clone / "HexTestKit.lean").write_text("import Hex\n", encoding="utf-8")
+        (clone / "Stale.lean").write_text("--\n", encoding="utf-8")
+        entry = {
+            "repo": "leanprover/hex-test-kit",
+            "lib": "Hex",
+            "readme": False,
+            "umbrella": False,
+            "spec": None,
+            "paths": [{"src": "Hex", "dest": "Hex"}],
+            "keep_paths": ["HexTestKit.lean"],
+        }
+        with tempfile.TemporaryDirectory() as source_directory:
+            with patch.object(sync_released, "REPO_ROOT", Path(source_directory)):
+                notes = sync_released.prune_unmanaged(entry, clone)
+        self.assertTrue((clone / "HexTestKit.lean").is_file())
+        self.assertEqual(notes, ["  remove Stale.lean"])
+
+    def test_every_manifest_entry_sweeps_development_instruments(self) -> None:
+        """The policy holds for every entry, including ones added later.
+
+        This is the regression the per-entry deletion list could not carry: an
+        entry admitted to the manifest without its own cleanup list published
+        the sidecars anyway.
+        """
+        document = yaml.safe_load(
+            sync_released.MANIFEST.read_text(encoding="utf-8"))
+        instruments = ("bench", "conformance", "conformance-fixtures",
+                       "scripts/oracle", "scripts/ci", "reports/bench-results",
+                       ".claude")
+        for entry in document["repos"]:
+            if entry.get("pins_only"):
+                continue
+            with self.subTest(repo=entry["repo"]):
+                clone = self.repo / "sweep" / entry["repo"].split("/")[-1]
+                for instrument in instruments:
+                    (clone / instrument).mkdir(parents=True)
+                    (clone / instrument / "file").write_text(
+                        "stale\n", encoding="utf-8")
+                (clone / "reports" / "performance.md").write_text(
+                    "report\n", encoding="utf-8")
+                workflows = clone / ".github" / "workflows"
+                workflows.mkdir(parents=True)
+                for name in ("ci.yml", "bench.yml"):
+                    (workflows / name).write_text("name: x\n", encoding="utf-8")
+                sync_released.prune_unmanaged(entry, clone)
+                for instrument in instruments:
+                    self.assertFalse((clone / instrument).exists(), instrument)
+                self.assertFalse((clone / "scripts").exists())
+                self.assertFalse((clone / "reports" / "performance.md").exists())
+                self.assertFalse((workflows / "bench.yml").exists())
+                self.assertTrue((workflows / "ci.yml").is_file())
 
     def test_apply_paths_copies_explicit_supporting_file(self) -> None:
         with tempfile.TemporaryDirectory() as source_directory:
@@ -112,44 +240,28 @@ class SyncReleasedTests(unittest.TestCase):
                 "print('checked')\n",
             )
 
-    def test_apply_paths_rejects_symlinked_removal_parent(self) -> None:
+    def test_prune_unlinks_a_symlink_without_following_it(self) -> None:
+        clone = self.repo / "clone"
+        clone.mkdir()
+        outside = self.repo / "outside"
+        outside.mkdir()
+        (outside / "kept").write_text("keep\n", encoding="utf-8")
+        (clone / "linked").symlink_to(outside, target_is_directory=True)
         with tempfile.TemporaryDirectory() as source_directory:
             source = Path(source_directory)
             (source / "HexBridge").mkdir()
-            clone = self.repo / "clone"
-            clone.mkdir()
-            outside = self.repo / "outside"
-            outside.mkdir()
-            (outside / "kept").write_text("keep\n", encoding="utf-8")
-            (clone / "linked").symlink_to(outside, target_is_directory=True)
-            entry = {
-                "repo": "leanprover/hex-bridge",
-                "lib": "HexBridge",
-                "readme": False,
-                "umbrella": False,
-                "spec": None,
-                "remove_paths": ["linked/kept"],
-            }
-            workflows = self.repo / "released-ci.yml"
-            workflows.write_text(
-                "workflows:\n  hex-bridge: |\n    name: CI\n", encoding="utf-8"
-            )
-            with (
-                patch.object(sync_released, "REPO_ROOT", source),
-                patch.object(sync_released, "RELEASED_CI", workflows),
-                self.assertRaisesRegex(
-                    ValueError, "unsafe remove_paths destination escapes clone"
-                ),
-            ):
-                sync_released.apply_paths(entry, clone)
-            self.assertEqual((outside / "kept").read_text(), "keep\n")
+            with patch.object(sync_released, "REPO_ROOT", source):
+                notes = sync_released.prune_unmanaged(self._bridge_entry(), clone)
+        self.assertEqual(notes, ["  remove linked"])
+        self.assertFalse((clone / "linked").exists())
+        self.assertEqual((outside / "kept").read_text(), "keep\n")
 
-    def test_removal_paths_rejects_unsafe_destinations(self) -> None:
+    def test_keep_paths_rejects_unsafe_destinations(self) -> None:
         for path in (".", "..", "../outside", "/absolute"):
             with self.subTest(path=path), self.assertRaisesRegex(
-                ValueError, "unsafe remove_paths entry"
+                ValueError, "unsafe keep_paths entry"
             ):
-                sync_released.removal_paths({"remove_paths": [path]})
+                sync_released.keep_paths({"keep_paths": [path]})
 
     def test_released_ci_workflow_requires_complete_text_mapping(self) -> None:
         source = self.repo / "released-ci.yml"
