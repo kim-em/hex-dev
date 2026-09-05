@@ -22,15 +22,17 @@ Core conformance for `HexGraphIso`.
   `Perm.ofVector?`/`inv`/`comp`, `Label` round trips,
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
   `findIso`, `checkIso?`, `canonicalize`,
-  `canon`, `label`, `Reference.canon`, `Nauty.runColored`,
+  `canon`, `label`, `Nauty.canonSpecKey`, `Nauty.specCanon`,
+  `Nauty.runColored`,
   `Nauty.canonicalize?`, `Nauty.certifyCanon?`, `autos`,
   `Graph.autos`, `Nauty.runColoredTraced`, `Cases.engine`.
 - **Covered properties:** builder rejection and duplicate collapse;
   permutation inverse and composition laws; `relabel G (label G) =
   canon G` evaluated on committed inputs; canonical-form invariance
   under committed relabellings; colour-cell contiguity of canonical
-  forms; verdict agreement between the reference implementation and the
-  nauty-compatible search; found transporters accepted by `checkIso`;
+  forms; verdict agreement between the declarative specification key and
+  the nauty-compatible search; found transporters accepted by
+  `checkIso`;
   exhaustion returning `none`, never `false`; every returned
   automorphism generator accepted by `checkIso` against the graph
   itself, the orbit array constant on each orbit, and the group order
@@ -134,11 +136,13 @@ private def rot3 : Perm 3 :=
 -- within the replay limit the bounded check agrees with `checkIso`
 #guard checkIso? {} p3 p3' (Perm.id 3) == some (checkIso p3 p3' (Perm.id 3))
 
-/-! # Reference and nauty-compatible agreement
+/-! # Specification and nauty-compatible agreement
 
-The nauty-compatible search and the proven reference implementation must
-agree on every isomorphism verdict. Their canonical representatives are
-not required to coincide. -/
+The nauty-compatible search and the unpruned declarative specification
+must agree on every isomorphism verdict, and the public canonical form
+must be the form the specification key determines. `canonSpecKey`
+enumerates the whole refinement tree, so these checks run at the sizes
+where that is feasible. -/
 
 private def nautyForm {n k : Nat} (G : Colored n k) : Option (Colored n k) :=
   (Nauty.canonicalize? G).map (·.form)
@@ -152,6 +156,34 @@ private def sameVerdict {n k : Nat} (G H : Colored n k) : Bool :=
 #guard sameVerdict p3 k3
 #guard sameVerdict c4 path4
 #guard sameVerdict c4 c4
+
+-- the specification key decides isomorphism exactly as `isIso` does
+private def specVerdict {n k : Nat} (G H : Colored n k) : Bool :=
+  (Nauty.keyCmp (Nauty.canonSpecKey G) (Nauty.canonSpecKey H) == .eq) ==
+    isIso G H
+
+#guard specVerdict p3 p3'
+#guard specVerdict p3 k3
+#guard specVerdict p3 p3
+#guard specVerdict c4 path4
+#guard specVerdict c4 c4
+#guard specVerdict (Graph.singleColor (Families.cycle 6))
+  (Graph.singleColor (Families.copies 2 (Families.cycle 3)))
+#guard specVerdict (Graph.singleColor (Families.cycle 6))
+  (Graph.singleColor (Families.cycle 6))
+
+-- the public canonical form is the form the specification key
+-- determines
+private def specFormAgrees {n k : Nat} (G : Colored n k) : Bool :=
+  (Nauty.specCanon G == canon G) &&
+    (Nauty.formOfKey G (Nauty.canonSpecKey G).rows == canon G)
+
+#guard specFormAgrees p3
+#guard specFormAgrees p3'
+#guard specFormAgrees k3
+#guard specFormAgrees c4
+#guard specFormAgrees path4
+#guard specFormAgrees (Graph.singleColor (Families.cycle 6))
 
 -- the public canonical form now carries nauty's canonical rows: the
 -- certificate-checked `canon` and the transcribed search agree on the
@@ -173,7 +205,7 @@ private def canonRowsAgree {n k : Nat} (G : Colored n k) : Bool :=
 
 /-! # The Petersen pair at `n = 10`
 
-`Reference.canon` is factorially infeasible at `n = 10`; these checks
+`Nauty.canonSpecKey` is factorially infeasible at `n = 10`; these checks
 exercise only the nauty-compatible search: the generalized Petersen
 presentation `G(5, 2)` and the Kneser presentation `K(5, 2)` receive the
 same canonical form, and the pentagonal prism receives a different one
@@ -265,13 +297,6 @@ where go : List Nauty.CertNode → Bool
 #guard (Families.grid 3 4).degree ⟨0, by decide⟩ == 2
 #guard (Families.copies 3 (Families.cycle 3)).degree ⟨4, by decide⟩ == 2
 #guard (Families.completeMultipartite [2, 3]).degree ⟨0, by decide⟩ == 3
--- the verified pairwise decision agrees with the nauty search on a
--- structured pair: C6 versus two triangles
-#guard
-  Pairwise.decideIso? 100000
-    (Graph.singleColor (Families.cycle 6))
-    (Graph.singleColor (Families.copies 2 (Families.cycle 3))) ==
-    some false
 
 /-! # Automorphisms -/
 

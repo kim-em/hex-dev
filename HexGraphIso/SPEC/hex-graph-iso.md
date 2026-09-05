@@ -451,27 +451,12 @@ canonical form, so the conformance fixtures, the benchmark corpus and
 the nauty compatibility target are stated on the coloured surface only;
 nothing about the uncoloured names needs separate pinning.
 
-## Reference canonical form
-
-`Hex.GraphIso.Reference` contains the first implementation. It first constructs
-the colour-sorting label, which lists vertices by increasing colour and then
-by original vertex. It enumerates all permutations of the label entries within
-each contiguous output cell, relabels the graph, and selects the largest
-serialized coloured adjacency matrix under an explicitly defined lexicographic
-order. The order compares cell sizes first and then upper-triangle adjacency
-bits in row-major order.
-
-This definition has its own proofs of the relabelling, isomorphism, and
-biconditional theorems (the analogues of `relabel_label`, `canon_iso`,
-and `iso_iff_canon_eq`). It is suitable for exhaustive small tests and
-for checking later implementations. It is not used as a production
-fallback and is not required to return nauty's label or canonical form.
-
 The public `canon` is the checked-label transcription of the nauty
 search; its theorems come from the certificate replay, which is proven
-to accept the transcription's answer on every input. Development
-namespaces (`Reference`, `Nauty`) remain available as the cross-check
-and the transcription layer.
+to accept the transcription's answer on every input. The `Nauty`
+namespace holds both the transcription layer and the declarative
+`canonSpecKey`, which is the executable cross-check at factorially
+feasible sizes.
 
 ## nauty-compatible individualization and refinement
 
@@ -679,8 +664,9 @@ the pipeline must keep:
   translator it justifies the collapse of dominated subtrees before
   emission.
 - With the declarative form and these proofs carrying the
-  correctness story, the `Reference` implementation's cross-check
-  role reduces to conformance testing on small cases.
+  correctness story, the cross-check role of a second canonical form
+  reduces to conformance testing on small cases, which `canonSpecKey`
+  covers.
 
 Label-level agreement is available only along this route. The checker
 pins a labelling's rows, not the labelling itself, so an exhaustive
@@ -1185,7 +1171,8 @@ Property checks independent of nauty include:
 - `relabel G (label G) = canon G`;
 - invariance under deterministic random relabelling;
 - colour preservation and contiguity;
-- agreement with `Reference.canon` on the isomorphism verdict;
+- agreement with `Nauty.canonSpecKey` on the isomorphism verdict at
+  factorially feasible sizes;
 - agreement among all retained implementation stages on their common domain;
 - rejection of a changed edge, colour, permutation entry, refinement record,
   automorphism, prune record, leaf comparison, or difference position in a
@@ -1261,7 +1248,7 @@ rungs.
 
 The Mathlib-free benchmark driver registers:
 
-- `Reference.canon` on factorially feasible sizes;
+- `Nauty.canonSpecKey` on factorially feasible sizes;
 - the unpruned implementation and every retained pruning stage on common
   inputs;
 - public `canonicalize`, `findIso`, and `isIso`;

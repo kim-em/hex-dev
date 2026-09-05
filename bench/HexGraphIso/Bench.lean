@@ -12,7 +12,7 @@ import LeanBench
 Benchmark registrations for `hex-graph-iso`.
 
 This first slice measures the polynomially modelled building blocks and
-the factorially modelled reference canonical form on deterministic
+the exponentially modelled declarative canonical key on deterministic
 family inputs; input construction is hoisted into `prep` so each model
 tracks the timed operation.
 
@@ -25,9 +25,10 @@ Scientific registrations:
   cubic model.
 * `runRelabel`: relabelling a coloured graph along a rotation,
   quadratic bit-matrix work.
-* `runReferenceCanon`: the reference canonical form, dominated by the
-  `n^n` candidate enumeration with quadratic per-candidate work; capped
-  at the small sizes where the factorial-style enumeration is practical.
+* `runSpecCanon`: the declarative canonical key `Nauty.canonSpecKey`,
+  whose unpruned walk visits every individualization branch and refines
+  at each node; capped at the small sizes where that enumeration is
+  practical.
 
 The nauty-compatible search declares no polynomial model in `n`
 (HexGraphIso/SPEC/hex-graph-iso.md § Benchmarks); the public operations
@@ -150,18 +151,19 @@ setup_benchmark runRelabel n => n ^ 2
     maxSecondsPerCall := 1.0
   }
 
-/-- Benchmark target: the reference canonical form, factorially
+/-- Benchmark target: the declarative canonical key, exponentially
 expensive by design. -/
-def runReferenceCanon (input : GraphInput) : Nat :=
+def runSpecCanon (input : GraphInput) : Nat :=
   match graphOf input with
-  | some ⟨_, G⟩ => (Reference.canonicalize G).label.perm.vec.toList.foldl
-      (fun a v => a + v.val) 0
+  | some ⟨_, G⟩ => (Nauty.canonSpecKey G).codes.foldl (· + ·) 0
   | none => 0
 
-/- Cost model: the reference form enumerates all cell-respecting
-labellings — at most n! ≤ n ^ n — and serializes an n × n adjacency
-matrix for each comparison, so the declared model is n ^ n · n². -/
-setup_benchmark runReferenceCanon n => n ^ n * n ^ 2
+/- Cost model: the specification walk prunes nothing, so it
+individualizes every vertex of the target cell at every level and
+visits at most n! ≤ n ^ n nodes; each node runs one equitable
+refinement, cubic in n by the `runRefine` derivation. The declared
+model is therefore n ^ n · n³. -/
+setup_benchmark runSpecCanon n => n ^ n * n ^ 3
   with prep := prepGraph
   where {
     paramFloor := 2
@@ -205,7 +207,8 @@ def runNautyCanon12 : Unit → IO String := runNautyCanonAt 12
 def runHexCanon16 : Unit → IO String := runHexCanonAt 16
 def runNautyCanon16 : Unit → IO String := runNautyCanonAt 16
 
-/-- The unpruned specification key on a factorially feasible size. -/
+/-- The unpruned specification key at the largest feasible size, as a
+fixed comparison point against the pinned baseline. -/
 def runSpecKey6 : Unit → IO Nat := fun _ =>
   match graphOf { n := 6 } with
   | some ⟨_, G⟩ =>

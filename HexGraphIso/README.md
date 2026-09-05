@@ -79,8 +79,6 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   `¬ Isomorphic G H`, coloured or uncoloured, accepting
   `(maxNodes := ...)`, `(maxCertNodes := ...)`, and
   `(maxCheckerSteps := ...)` overrides.
-- `Hex.GraphIso.Reference` is an independent exhaustive canonical form kept
-  as a cross-check of the production pipeline.
 
 # Verification
 

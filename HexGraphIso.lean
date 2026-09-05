@@ -9,8 +9,6 @@ module
 public import HexGraphIso.Perm
 public import HexGraphIso.Colored
 public import HexGraphIso.Iso
-public import HexGraphIso.Lex
-public import HexGraphIso.Reference
 public import HexGraphIso.Limits
 public import HexGraphIso.Nauty.Bits
 public import HexGraphIso.Nauty.VSet
@@ -107,8 +105,6 @@ public import HexGraphIso.Autos
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
-public import HexGraphIso.Pairwise
-public import HexGraphIso.PairwiseSound
 public import HexGraphIso.Families
 
 public section
@@ -116,7 +112,7 @@ public section
 /-!
 `HexGraphIso` is the Mathlib-free coloured graph canonical labelling
 library: nauty's individualization-and-refinement algorithm, run in Lean
-and proved to agree with an exhaustive reference canonical form.
+and proved to compute the declarative canonical form `Nauty.specCanon`.
 
 The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon` and
 `label` are the canonical labelling, `findIso` and `isIso` decide

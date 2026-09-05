@@ -23,6 +23,11 @@ there is no empty cell and no redundant colour count in the public type.
 `DecidableEq (Coloring n k)` compares only `cells`; proof irrelevance
 handles `onto`. Equality of `Colored n k` is equality of the graph and the
 colour vector, which keeps fixture comparison kernel-reducible.
+
+`CanonResult` pairs a canonical form with the label producing it, and
+`ColorSorted` says the colour classes are contiguous in vertex order, the
+shape every canonical form has. Both are stated here because the whole
+canonicalization stack above builds on them.
 -/
 
 namespace Hex.GraphIso
@@ -179,5 +184,53 @@ positive `n`. -/
 
 @[simp] theorem _root_.Hex.Graph.graph_singleColor {n : Nat} (G : Graph n)
     (h : 0 < n) : (G.singleColor h).graph = G := rfl
+
+section CanonicalForm
+
+variable {n k : Nat}
+
+/-- A canonical form and the label producing it, kept together. -/
+structure CanonResult (n k : Nat) where
+  /-- The canonical coloured graph. -/
+  form : Colored n k
+  /-- The label producing the canonical form: `form = G.relabel label`. -/
+  label : Label n
+deriving DecidableEq
+
+/-- A coloured graph whose colour classes are contiguous in vertex order:
+the first cell occupies the least vertices, and so on. Every canonical form
+satisfies this. -/
+@[expose] def ColorSorted (K : Colored n k) : Prop :=
+  ∀ i j : Fin n, i ≤ j → K.coloring.cells[i] ≤ K.coloring.cells[j]
+
+/-- Executable check for `ColorSorted`, a plain Boolean fold so the kernel
+replays it without unfolding quantifier instances. -/
+@[expose] def colorSortedCheck (K : Colored n k) : Bool :=
+  (List.finRange n).all fun i => (List.finRange n).all fun j =>
+    !(decide (i ≤ j)) || decide (K.coloring.cells[i] ≤ K.coloring.cells[j])
+
+theorem colorSortedCheck_iff (K : Colored n k) :
+    colorSortedCheck K = true ↔ ColorSorted K := by
+  rw [colorSortedCheck]
+  simp only [List.all_eq_true, List.mem_finRange, true_implies,
+    Bool.or_eq_true, Bool.not_eq_true', decide_eq_true_eq,
+    decide_eq_false_iff_not]
+  constructor
+  · intro h i j hij
+    rcases h i j with hn | hle
+    · exact absurd hij hn
+    · exact hle
+  · intro h i j
+    rcases Decidable.em (i ≤ j) with hij | hij
+    · exact Or.inr (h i j hij)
+    · exact Or.inl hij
+
+instance (K : Colored n k) : Decidable (ColorSorted K) :=
+  if h : colorSortedCheck K then
+    .isTrue ((colorSortedCheck_iff K).mp h)
+  else
+    .isFalse fun hs => h ((colorSortedCheck_iff K).mpr hs)
+
+end CanonicalForm
 
 end Hex.GraphIso

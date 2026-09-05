@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Reference
+public import HexGraphIso.Iso
 
 public section
 

@@ -119,11 +119,12 @@ example : Graph.Isomorphic petersen kneser52 := by graph_iso
 The pentagonal prism, `Families.gpetersen 5 1`, is the interesting
 negative companion: like the Petersen graph it has ten vertices, every
 one of degree three, so degree refinement alone does not settle the
-question. The fully verified pairwise decision can individualize a
-vertex, re-refine, and refute every branch; the tactic normally closes
-this case by replaying the smaller canonical-key certificates instead.
+question. The tactic closes it by replaying one canonical-key
+certificate per side in the kernel: each replay pins that graph's
+nauty-semantic canonical key, and two different keys refute the
+isomorphism.
 
-{docstring Hex.GraphIso.Pairwise.search}
+{docstring Hex.GraphIso.Nauty.checkKey_sound}
 
 ```lean
 def prism5 : Graph 10 := Families.gpetersen 5 1
