@@ -53,6 +53,13 @@ public import HexLLLMathlib
 public import HexBerlekampZassenhausMathlib
 public import HexGraphIso
 public import HexGraphIsoMathlib
+public import HexResultant
+public import HexResultantMathlib
+public import HexNumberField
+public import HexNumberFieldMathlib
+public import HexNumberFieldTower
+public import HexNumberFieldTowerMathlib
+public import HexRCF
 
 /-!
 Mirror of the released aggregate's umbrella.

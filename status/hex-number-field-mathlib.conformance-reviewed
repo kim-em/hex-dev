@@ -23,5 +23,8 @@ registry classification and the absence of ordinary Phase-4 metadata are
 therefore consistent. The later phase record remains valid: the library is
 still integrated in the build and library graph, its proof and documentation
 artifacts remain present, and its Phase-7 material is carried by the shared
-number-field manual chapter. The pair remains unreleased and is intentionally
-absent from the publish manifest.
+number-field manual chapter. The pair is published through
+scripts/release/released.yml as hex-number-field and
+hex-number-field-mathlib; the mirrors ship the library, umbrella, SPEC and
+README, and none of the conformance or benchmark instruments described
+above.

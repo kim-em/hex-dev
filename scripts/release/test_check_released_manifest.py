@@ -177,6 +177,37 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class MathlibOnlyRowTests(unittest.TestCase):
+    """A Mathlib-facing library with no computational half takes the Mathlib column."""
+
+    def test_mathlib_only_entry_links_in_the_mathlib_column(self) -> None:
+        from scripts.release import aggregate_readme
+
+        manifest = {
+            "repos": [
+                {"repo": "leanprover/hex-foo", "lib": "HexFoo", "component": "Foo", "pins": []},
+                {"repo": "leanprover/hex-foo-mathlib", "lib": "HexFooMathlib", "pins": ["hex-foo"]},
+                {
+                    "repo": "leanprover/hex-tac",
+                    "lib": "HexTac",
+                    "component": "A tactic",
+                    "mathlib_only": True,
+                    "pins": [],
+                },
+                {"repo": "leanprover/hex", "pins_only": True, "pins": ["hex-foo", "hex-foo-mathlib", "hex-tac"]},
+            ]
+        }
+        table = aggregate_readme.render_table(manifest)
+        self.assertIn(
+            "| Foo | [HexFoo](https://github.com/leanprover/hex-foo) | "
+            "[HexFooMathlib](https://github.com/leanprover/hex-foo-mathlib) |",
+            table,
+        )
+        self.assertIn(
+            "| A tactic | n/a | [HexTac](https://github.com/leanprover/hex-tac) |",
+            table,
+        )
+
 class PublishedImportClosureTests(unittest.TestCase):
     """A released umbrella may reach only published libraries."""
 

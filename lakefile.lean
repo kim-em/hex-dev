@@ -886,7 +886,21 @@ lean_lib HexReleaseTests where
     `HexMvPoly.KernelTests,
     `HexSparsePoly.KernelTests,
     `HexGraphIso.TacticTests,
-    `HexGraphIsoMathlib.TacticTests]
+    `HexGraphIsoMathlib.TacticTests,
+    `HexNumberFieldTower.Embed,
+    `HexRCF.LanguageTests,
+    `HexRCF.SturmBuilderTests,
+    `HexRCF.CarrierTests,
+    `HexRCF.IsolationsTests,
+    `HexRCF.SeparationTests,
+    `HexRCF.CellsTests,
+    `HexRCF.CommonRootTests,
+    `HexRCF.SignMatrixTests,
+    `HexRCF.BuilderTests,
+    `HexRCF.CertificateTests,
+    `HexRCF.DecisionTests,
+    `HexRCF.ReifyTests,
+    `HexRCF.LintTests]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list
@@ -952,24 +966,6 @@ lean_lib HexSmithTests where
 lean_lib HexCharPolyTests where
   globs := #[`HexCharPoly.CharPolyElabTests,
     `HexCharPolyMathlib.CharPolyElabTests]
-
--- HexRCF is not yet a published split repository, so its verification-only
--- modules stay separate from the release-manifest-backed target above.
-@[default_target]
-lean_lib HexRCFTests where
-  globs := #[`HexRCF.LanguageTests,
-    `HexRCF.SturmBuilderTests,
-    `HexRCF.CarrierTests,
-    `HexRCF.IsolationsTests,
-    `HexRCF.SeparationTests,
-    `HexRCF.CellsTests,
-    `HexRCF.CommonRootTests,
-    `HexRCF.SignMatrixTests,
-    `HexRCF.BuilderTests,
-    `HexRCF.CertificateTests,
-    `HexRCF.DecisionTests,
-    `HexRCF.ReifyTests,
-    `HexRCF.LintTests]
 
 -- Mirrors the released aggregate's module-system umbrella, so a library that
 -- never adopted the module system fails here instead of after the publish-out

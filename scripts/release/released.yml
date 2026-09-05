@@ -520,6 +520,73 @@ repos:
     pins: [hex-basic, hex-matrix, hex-graph-iso]
     lakefile: toml
 
+  - repo: leanprover/hex-resultant
+    component: Resultants and discriminants
+    lib: HexResultant
+    umbrella: true
+    spec: hex-resultant
+    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh]
+    pins: [hex-basic, hex-poly, hex-matrix, hex-determinant]
+    lakefile: toml
+
+  - repo: leanprover/hex-resultant-mathlib
+    lib: HexResultantMathlib
+    umbrella: true
+    spec: hex-resultant-mathlib
+    pins: [hex-basic, hex-poly, hex-poly-mathlib, hex-matrix, hex-determinant, hex-resultant]
+    lakefile: toml
+
+  - repo: leanprover/hex-number-field
+    component: Algebraic numbers
+    lib: HexNumberField
+    umbrella: true
+    spec: hex-number-field
+    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant]
+    lakefile: toml
+
+  - repo: leanprover/hex-number-field-mathlib
+    lib: HexNumberFieldMathlib
+    umbrella: true
+    spec: hex-number-field-mathlib
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field]
+    lakefile: toml
+
+  # `Embed.lean` is a file of compiled `#guard` regressions with no public
+  # declarations, so it ships as a verification-only module rather than
+  # riding in the umbrella every consumer elaborates.
+  - repo: leanprover/hex-number-field-tower
+    component: Number field towers
+    lib: HexNumberFieldTower
+    test_modules: [HexNumberFieldTower.Embed]
+    umbrella: true
+    spec: hex-number-field-tower
+    remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-number-field]
+    lakefile: toml
+
+  - repo: leanprover/hex-number-field-tower-mathlib
+    lib: HexNumberFieldTowerMathlib
+    umbrella: true
+    spec: hex-number-field-tower-mathlib
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower]
+    lakefile: toml
+
+  # `HexRCF` imports Mathlib and has no separate companion: the `rcf` tactic
+  # targets `ℝ`, so its soundness theorem lives in the same library. Its name
+  # lacks the Mathlib suffix, so it takes a table row; `mathlib_only` puts
+  # that row's link in the Mathlib column of the aggregate README.
+  - repo: leanprover/hex-rcf
+    component: Real-closed-field decision (`rcf` tactic)
+    mathlib_only: true
+    lib: HexRCF
+    test_modules: [HexRCF.LanguageTests, HexRCF.SturmBuilderTests, HexRCF.CarrierTests, HexRCF.IsolationsTests, HexRCF.SeparationTests, HexRCF.CellsTests, HexRCF.CommonRootTests, HexRCF.SignMatrixTests, HexRCF.BuilderTests, HexRCF.CertificateTests, HexRCF.DecisionTests, HexRCF.ReifyTests, HexRCF.LintTests]
+    umbrella: true
+    spec: hex-rcf
+    remove_paths: [bench, conformance, scripts/ci/check_bench_verify_budget.sh]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib]
+    lakefile: toml
+
   # Aggregate: re-pinned only, never regenerated from managed source (its
   # umbrella lakefile.toml and HexAll.lean live only in the released repo).
   # Its README is the one managed artifact: rendered from `readme_template`
@@ -529,5 +596,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-graph-iso, hex-graph-iso-mathlib]
+    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
     lakefile: toml
