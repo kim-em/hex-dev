@@ -28,7 +28,6 @@ public import HexGraphIso.SeparatorPacked
 public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Cert
 public import HexGraphIso.Nauty.CertAutom
-public import HexGraphIso.ModuleBoundaryTests
 public import HexGraphIso.Nauty.CanonForm
 public import HexGraphIso.Nauty.TranscriptionInv
 public import HexGraphIso.Nauty.LeafFaithful
@@ -100,7 +99,6 @@ public import HexGraphIso.Nauty.QuartetStmt
 public import HexGraphIso.Nauty.QuartetLoop
 public import HexGraphIso.Nauty.QuartetNode
 public import HexGraphIso.Nauty.OrbJoin
-public import HexGraphIso.Nauty.Domination
 public import HexGraphIso.Nauty.Equitable
 public import HexGraphIso.Nauty.EquitableStep
 public import HexGraphIso.Nauty.EquitableFix
