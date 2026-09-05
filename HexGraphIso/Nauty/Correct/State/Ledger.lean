@@ -114,7 +114,7 @@ theorem childKey_eq_of_subtree {ctx : Ctx n} {st : RefineSt n}
       hcell (by omega) (by rw [hS.it.ok.ptnSize]; exact hrange)
   have hdiff : tc + len - 1 - tc = len - 1 := by omega
   obtain ⟨sigma, hrows, hperm, hmap⟩ :=
-    flipData_of_subtreeOk (oU := oU) (oV := oV) hS hgsz hsymm hloop hmem
+    stabilizer_transitive (oU := oU) (oV := oV) hS hgsz hsymm hloop hmem
       (by omega) (by rw [hdiff]; omega) (by rw [hdiff]; omega) hUV
   let gamma := renamingArray sigma
   have hstab : CellStab st.ptn level st.lab gamma := by
@@ -249,7 +249,7 @@ theorem pairOk_fmptn_of_subtree {ctx : Ctx n} {G : Colored n k}
       subst q
       omega
     obtain ⟨sigma, hrows, hperm, hmap⟩ :=
-      flipData_of_subtreeOk hS hgsz hsymm hloop hcell
+      stabilizer_transitive hS hgsz hsymm hloop hcell
         (by omega) (by omega) (by omega) hoff
     let gamma := renamingArray sigma
     refine ⟨gamma, checkAutom_renaming sigma hrows, ?_, ?_, ?_⟩

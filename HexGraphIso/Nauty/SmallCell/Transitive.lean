@@ -17,25 +17,20 @@ import all HexGraphIso.Nauty.SmallCell.Leaves
 public section
 
 /-!
-All leaves below a cheapautom node: the flip data read off either
-node shape, the all-leaves induction over a target path, and the
-imperative descents it applies to.
--/
+`stabilizer_transitive`: for an equitable partition satisfying
+`cheapautom`, the cell stabilizer in the automorphism group acts
+transitively on every cell.
 
-/-!
-All leaves below a cheapautom node (SPEC § Verified search
-refinement, the code-1 arm of the store-validity obligation).
+A passing guard leaves the node in one of two shapes, and either one
+yields the flip data a deviation consumes. `stabilizer_transitive`
+reads a pair or triple target off the first-branch shape, and a target
+of any size at most five off a defect of at most four, where the exotic
+analogues apply. The all-leaves induction over a target-position path
+then recurses on equal choices and glues one deviation at a differing
+choice, and the imperative descents below apply it.
 
-A passing guard leaves the node in one of two shapes, and these
-lemmas turn either into the flip data every deviation consumes:
-`flipData_of_subtreeOk` reads a pair or triple target off the
-first-branch shape, and a target of any size at most five off a
-defect of at most four, where the exotic analogues apply. The
-all-leaves induction then walks a target-position path, recursing on
-equal choices and gluing one deviation at a differing choice.
-
-They sit above the exotic layer because that is where the
-defect-four flip data is proved; everything else the induction needs
+This module sits above the exotic layer because that is where the
+defect-four flip data is proved. Everything else the induction needs
 lives in `SmallCell/Leaves`.
 -/
 
@@ -49,7 +44,7 @@ variable {ctx : Ctx n}
 first-branch shape names a pair or triple target; a defect of at most
 four bounds every cell at five positions and hands the target to the
 exotic analogues. -/
-theorem flipData_of_subtreeOk {st : RefineSt n} {level tc te oU oV : Nat}
+theorem stabilizer_transitive {st : RefineSt n} {level tc te oU oV : Nat}
     (hS : SubtreeOk ctx level st)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u w, u < n → w < n →
@@ -165,7 +160,7 @@ theorem descPath_leafRows_all
       exact ih (subtreeOk_child hS hlvl hsymm hcell₁ hne₁ ho₁)
         htail₁ ht₁ hUd htail₂ ht₂ hVd
     · -- a deviation at this level, by the target's size
-      have hflip := flipData_of_subtreeOk hS hgsz hsymm hloop
+      have hflip := stabilizer_transitive hS hgsz hsymm hloop
         hcell₁ hne₁ ho₁ ho₂ (fun h => hval (by rw [h]))
       obtain ⟨σ, hgm, hspσ, hvv⟩ := hflip
       obtain ⟨W, qW, hdescW, hqW, hlrW, hptnW⟩ :=
@@ -205,7 +200,7 @@ branches of `cheapautom_iff` are exactly the two disjuncts of
 `NodeShape` (`cheapautom_shape_or_exotic`). The second branch, a
 defect of at most four with a cell of size four or five or with two
 triples, keeps its own shape rather than being forced into the first,
-which it need not have; `flipData_of_subtreeOk` hands it to the
+which it need not have; `stabilizer_transitive` hands it to the
 defect-four flip analogues (`SmallCell/FourCell`).
 
 The run-level facts these theorems consume — the two descents from
