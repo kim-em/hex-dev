@@ -56,19 +56,24 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
 - `colored_iso_iff_canon_eq` is the headline equivalence: Mathlib-side
   isomorphism holds exactly when the executable certified canonical forms of
   the two encodings agree.
-- `graph_iso` gains `SimpleGraph` goals — `G ≃g H`, `Nonempty (G ≃g H)`,
-  `IsEmpty (G ≃g H)`, `¬ Nonempty (G ≃g H)` — and the corresponding
-  `Colored.Iso` / `Colored.Isomorphic` goals, reusing the Mathlib-free
-  engine under the same tactic name.
+- `graph_iso` gains `SimpleGraph` goals (`G ≃g H`, `Nonempty (G ≃g H)`,
+  `IsEmpty (G ≃g H)`, `¬ Nonempty (G ≃g H)`) and the corresponding
+  `Colored.Iso` and `Colored.Isomorphic` goals, reusing the Mathlib-free
+  search under the same tactic name. It accepts the same three limits,
+  `(maxSearchNodes := ...)`, `(maxCertRecords := ...)` and
+  `(maxKernelSteps := ...)`, and does not reinterpret them.
 
 # Verification
 
-The bridge adds no search and no decision procedure. Every positive goal
-emits a literal transporter that the kernel replays through the Mathlib-free
-`checkIso?`, and every negative goal goes through the shared negative engine
-and decodes across `not_encode_iso`. Cheap cardinality and colour-class
-refutations (`isEmpty_iso_of_card_ne`,
-`not_isomorphic_of_card_color_ne`) are proved on the Mathlib side.
+This library adds no search and no decision procedure. A positive goal
+encodes both graphs, runs the Mathlib-free `findIso`, and emits a literal
+transporter the kernel checks through `Kernel.checkIso` and
+`Kernel.isIso_of_checkIso`, exactly as the Mathlib-free tactic does. A
+negative goal takes the same root-separator and certificate-replay routes
+and decodes the result through the `not_encode_iso` theorems. Cardinality
+and colour-class refutations (`isEmpty_iso_of_card_ne`,
+`not_isomorphic_of_card_color_ne`) are proved on the Mathlib side and run
+before any search.
 
 ```lean
 theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
