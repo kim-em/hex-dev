@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import yaml
+
 from scripts.release import aggregate_readme, sync_released
 
 
@@ -298,21 +300,6 @@ class SyncReleasedTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
             sync_released.validate_skeleton({"lakefile": "toml"}, self.repo)
 
-    def test_release_skeleton_checks_module_precompilation(self) -> None:
-        lakefile = self.repo / "lakefile.toml"
-        lakefile.write_text(
-            '[[lean_lib]]\nname = "Consumer"\n',
-            encoding="utf-8",
-        )
-        entry = {"lakefile": "toml", "precompile_modules": True}
-        with self.assertRaisesRegex(RuntimeError, "must precompile modules"):
-            sync_released.validate_skeleton(entry, self.repo)
-        lakefile.write_text(
-            '[[lean_lib]]\nname = "Consumer"\nprecompileModules = true\n',
-            encoding="utf-8",
-        )
-        sync_released.validate_skeleton(entry, self.repo)
-
     def test_manifest_uses_exact_external_commit(self) -> None:
         manifest = {
             "version": "1.1.0",
@@ -561,6 +548,142 @@ class SyncReleasedTests(unittest.TestCase):
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertEqual(advanced["upstream"], "new-upstream")
         self.assertEqual(advanced["downstream"], "new-downstream")
+
+
+class LibBuildSettingTests(unittest.TestCase):
+    """The mirror's `lean_lib` must be built the way hex-dev builds it.
+
+    A mirror that drops `precompileModules` still compiles; the failure surfaces
+    only downstream, where an `@[extern]` declaration has no native
+    implementation because its module dynlib was never built.
+    """
+
+    SOURCE = (
+        "lean_lib Plain where\n"
+        "\n"
+        "lean_lib Consumer where\n"
+        "  -- comment lines are not settings\n"
+        "  precompileModules := true\n"
+        "\n"
+        "lean_lib Linked where\n"
+        "  precompileModules := true\n"
+        "  extraDepTargets := #[`consumerffi]\n"
+        "  moreLinkArgs :=\n"
+        "    if System.Platform.isOSX then\n"
+        "      #[]\n"
+        "    else\n"
+        "      #[\"-ldl\"]\n"
+    )
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        # The monorepo lakefile and the mirror clone are separate trees, and
+        # both are called lakefile.lean.
+        self.repo = Path(self.temporary.name) / "clone"
+        self.repo.mkdir()
+        self.source = Path(self.temporary.name) / "hex-dev" / "lakefile.lean"
+        self.source.parent.mkdir()
+        self.source.write_text(self.SOURCE, encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def settings(self, lib: str) -> dict[str, str]:
+        return sync_released.source_build_settings(lib, self.source)
+
+    def rewrite(self, entry: dict) -> list[str]:
+        with patch.object(sync_released, "LAKEFILE", self.source):
+            return sync_released.rewrite_lib_settings(entry, self.repo)
+
+    def test_settings_are_read_from_the_monorepo_lakefile(self) -> None:
+        self.assertEqual(self.settings("Plain"), {})
+        self.assertEqual(self.settings("Consumer"), {"precompileModules": "true"})
+        self.assertEqual(self.settings("Linked"), {
+            "precompileModules": "true",
+            "extraDepTargets": "#[`consumerffi]",
+            "moreLinkArgs": 'if System.Platform.isOSX then #[] else #["-ldl"]',
+        })
+
+    def test_a_released_library_must_be_a_lean_lib_here(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "declares no lean_lib Absent"):
+            self.settings("Absent")
+
+    def test_toml_mirror_gains_precompilation(self) -> None:
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(
+            'name = "consumer"\n\n[[lean_lib]]\nname = "Consumer"\n\n'
+            '[[lean_lib]]\nname = "ConsumerTests"\nglobs = ["Consumer.Tests"]\n',
+            encoding="utf-8")
+        entry = {"lib": "Consumer", "lakefile": "toml"}
+        notes = self.rewrite(entry)
+        self.assertEqual(notes, ["  precompileModules on lean_lib Consumer "
+                                 "(lakefile.toml)"])
+        text = lakefile.read_text(encoding="utf-8")
+        self.assertIn('name = "Consumer"\nprecompileModules = true\n', text)
+        self.assertNotIn("ConsumerTests\"\nprecompileModules", text)
+        self.assertEqual(self.rewrite(entry), [])
+
+    def test_lean_mirror_gains_precompilation(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "@[default_target]\nlean_lib Consumer where\n"
+            "  moreLinkArgs := #[]\n\nlean_exe check where\n"
+            "  root := `Consumer.Check\n",
+            encoding="utf-8")
+        entry = {"lib": "Consumer", "lakefile": "lean"}
+        self.assertEqual(self.rewrite(entry),
+                         ["  precompileModules on lean_lib Consumer "
+                          "(lakefile.lean)"])
+        self.assertIn("lean_lib Consumer where\n  precompileModules := true\n"
+                      "  moreLinkArgs := #[]\n",
+                      lakefile.read_text(encoding="utf-8"))
+        self.assertEqual(self.rewrite(entry), [])
+
+    def test_a_bare_lean_lib_gains_a_settings_block(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "@[default_target]\nlean_lib Consumer\n\nlean_lib Other where\n",
+            encoding="utf-8")
+        self.rewrite({"lib": "Consumer", "lakefile": "lean"})
+        self.assertIn("lean_lib Consumer where\n  precompileModules := true\n",
+                      lakefile.read_text(encoding="utf-8"))
+
+    def test_a_library_without_settings_is_left_alone(self) -> None:
+        lakefile = self.repo / "lakefile.toml"
+        original = '[[lean_lib]]\nname = "PlainLib"\n'
+        lakefile.write_text(original, encoding="utf-8")
+        self.assertEqual(self.rewrite({"lib": "Plain", "lakefile": "toml"}), [])
+        self.assertEqual(lakefile.read_text(encoding="utf-8"), original)
+
+    def test_a_missing_link_setting_stops_the_publication(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "lean_lib Linked where\n  extraDepTargets := #[`consumerffi]\n",
+            encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "must set moreLinkArgs"):
+            self.rewrite({"lib": "Linked", "lakefile": "lean"})
+
+    def test_a_missing_mirror_library_stops_the_publication(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[lean_lib]]\nname = "Other"\n', encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "declares no lean_lib Consumer"):
+            self.rewrite({"lib": "Consumer", "lakefile": "toml"})
+
+    def test_a_contradicting_mirror_setting_stops_the_publication(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[lean_lib]]\nname = "Consumer"\nprecompileModules = false\n',
+            encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "contradicting"):
+            self.rewrite({"lib": "Consumer", "lakefile": "toml"})
+
+    def test_every_released_library_keeps_its_monorepo_lean_lib(self) -> None:
+        manifest = yaml.safe_load(
+            sync_released.MANIFEST.read_text(encoding="utf-8"))
+        for entry in manifest["repos"]:
+            if entry.get("pins_only"):
+                continue
+            with self.subTest(repo=entry["repo"]):
+                sync_released.source_build_settings(entry["lib"])
 
 
 class TokenPreflightTests(unittest.TestCase):

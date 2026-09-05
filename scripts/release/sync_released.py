@@ -4,7 +4,8 @@
 For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
   2. overwrites its *managed* paths and centrally owned CI workflow,
-  3. for managed-source repos, enables native Verso docstrings,
+  3. for managed-source repos, enables native Verso docstrings and carries the
+     `lean_lib` build settings this monorepo's lakefile gives the library,
   4. copies the stable Lean toolchain and exact external dependency pins,
   5. rewrites cross-repo Hex pins in the repo's Lake files,
   6. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
@@ -88,6 +89,30 @@ TOKEN_HELP = (
     "https://github.com/organizations/leanprover/settings/personal-access-token-requests"
 )
 LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
+LAKEFILE = REPO_ROOT / "lakefile.lean"
+
+# `lean_lib` settings a consumer of a released library sees. They are derived
+# from this monorepo's lakefile rather than declared in released.yml, because
+# hex-dev is the source of truth for how a library is built and a second,
+# hand-maintained copy of that decision drifts.
+#
+# `precompileModules` is the one the sync writes: it decides whether Lake builds
+# and ships the module dynlib carrying a library's `@[extern]` symbols, so a
+# mirror that drops it still compiles yet fails in any downstream package that
+# evaluates the library during elaboration ("Could not find native
+# implementation of external declaration"). It is a self-contained Boolean,
+# expressible in both Lake file flavours, so the sync can insert it.
+#
+# `extraDepTargets` and `moreLinkArgs` are validated but never written: they
+# name targets defined only in the mirror's own (unmanaged) Lake skeleton, such
+# as `hexlllffi`, and hex-dev spells `moreLinkArgs` as an arbitrary Lean
+# expression (HexLLL's is a platform conditional) that has no `lakefile.toml`
+# form. Synthesizing either would produce a Lake file that does not elaborate,
+# which is worse than the divergence, so the sync reports it and refuses to
+# publish instead.
+WRITTEN_LIB_SETTINGS = ("precompileModules",)
+CHECKED_LIB_SETTINGS = ("extraDepTargets", "moreLinkArgs")
+BUILD_LIB_SETTINGS = WRITTEN_LIB_SETTINGS + CHECKED_LIB_SETTINGS
 
 
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
@@ -428,6 +453,163 @@ def rewrite_toolchains(clone: Path) -> list[str]:
     return notes
 
 
+def _lean_lib_header(text: str, lib: str) -> re.Match[str] | None:
+    """The `lean_lib <lib>` declaration in a Lean Lake file, if it has one.
+
+    Group `where` is unset for a bare `lean_lib Foo`, which Lake accepts and
+    some mirror skeletons use; the settings block then has to be opened before a
+    setting can be added.
+    """
+    return re.search(
+        r"(?m)^lean_lib[ \t]+«?" + re.escape(lib)
+        + r"»?[ \t]*(?P<where>where)?[ \t]*$",
+        text,
+    )
+
+
+def _block_end(text: str, start: int) -> int:
+    """Where an indented Lean settings block starting at `start` ends."""
+    following = re.search(r"(?m)^\S", text[start:])
+    return start + following.start() if following is not None else len(text)
+
+
+def _lean_settings(body: str) -> dict[str, str]:
+    """Settings assigned in an indented Lean `lean_lib` body, values joined."""
+    settings: dict[str, str] = {}
+    current: str | None = None
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("--"):
+            continue
+        assignment = re.match(r"[ \t]+([A-Za-z][A-Za-z0-9_']*)[ \t]*:=(.*)$", line)
+        if assignment is not None:
+            current = assignment.group(1)
+            settings[current] = assignment.group(2).strip()
+        elif current is not None:
+            settings[current] = f"{settings[current]} {stripped}".strip()
+    return settings
+
+
+def lean_lib_settings(text: str) -> dict[str, dict[str, str]]:
+    """Every `lean_lib` in a Lean Lake file, mapped to its assigned settings."""
+    libs: dict[str, dict[str, str]] = {}
+    for header in re.finditer(
+            r"(?m)^lean_lib[ \t]+«?([A-Za-z_][A-Za-z0-9_']*)»?[ \t]*(?:where)?[ \t]*$",
+            text):
+        body = text[header.end():_block_end(text, header.end())]
+        libs[header.group(1)] = _lean_settings(body)
+    return libs
+
+
+def source_build_settings(lib: str, path: Path | None = None) -> dict[str, str]:
+    """The build settings this monorepo's lakefile assigns to `lib`.
+
+    The single source of truth for how a released library is built. A released
+    library with no `lean_lib` here cannot have its settings carried into the
+    mirror at all, so that is an error rather than an empty answer.
+    """
+    source = path or LAKEFILE
+    libs = lean_lib_settings(source.read_text(encoding="utf-8"))
+    if lib not in libs:
+        raise RuntimeError(f"{source} declares no lean_lib {lib}")
+    return {name: value for name, value in libs[lib].items()
+            if name in BUILD_LIB_SETTINGS}
+
+
+def _toml_lib_block(text: str, lib: str) -> re.Match[str] | None:
+    """The `[[lean_lib]]` array-of-tables entry naming `lib`, if there is one."""
+    for block in re.finditer(r"(?ms)^\[\[lean_lib\]\][ \t]*\n(.*?)(?=^\[|\Z)", text):
+        if re.search(r'(?m)^[ \t]*name[ \t]*=[ \t]*"' + re.escape(lib) + r'"[ \t]*$',
+                     block.group(1)):
+            return block
+    return None
+
+
+def _toml_settings(body: str) -> dict[str, str]:
+    """Keys assigned in a TOML table body (single-line values suffice here)."""
+    return {match.group(1): match.group(2).strip() for match in re.finditer(
+        r"(?m)^[ \t]*([A-Za-z][A-Za-z0-9_]*)[ \t]*=(.*)$", body)}
+
+
+def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
+    """Carry this monorepo's `lean_lib` build settings into the mirror.
+
+    The mirror's Lake skeleton is otherwise unmanaged, and a library built one
+    way here and another way there is a defect its own CI cannot see: the mirror
+    builds, and only a downstream consumer discovers the difference. So the sync
+    writes `precompileModules` into the mirror's `lean_lib` when this monorepo
+    sets it and the mirror does not, exactly as it rewrites pins, and refuses to
+    publish when a setting it cannot safely synthesize has gone missing. See
+    `BUILD_LIB_SETTINGS`.
+    """
+    if entry.get("pins_only"):
+        return []
+    lib = entry["lib"]
+    required = source_build_settings(lib)
+    if not required:
+        return []
+    lakefile = clone / f"lakefile.{entry['lakefile']}"
+    text = lakefile.read_text(encoding="utf-8")
+    toml = entry["lakefile"] == "toml"
+    block = _toml_lib_block(text, lib) if toml else _lean_lib_header(text, lib)
+    if block is None:
+        raise RuntimeError(
+            f"released Lake file {lakefile} declares no lean_lib {lib}, so the "
+            f"build settings hex-dev gives it ({', '.join(sorted(required))}) "
+            "cannot be carried across"
+        )
+    if toml:
+        body_start = block.start(1)
+        body = block.group(1)
+        present = _toml_settings(body)
+    else:
+        body_start = block.end()
+        body = text[body_start:_block_end(text, body_start)]
+        present = _lean_settings(body)
+    for setting in CHECKED_LIB_SETTINGS:
+        if setting in required and setting not in present:
+            raise RuntimeError(
+                f"released Lake file {lakefile} must set {setting} on lean_lib "
+                f"{lib}, as hex-dev's lakefile.lean does; the sync cannot write "
+                "it, because it names targets defined only in this repository's "
+                "own Lake skeleton"
+            )
+    notes: list[str] = []
+    for setting in WRITTEN_LIB_SETTINGS:
+        if setting not in required:
+            continue
+        if required[setting] != "true":
+            raise RuntimeError(
+                f"hex-dev's lakefile.lean sets {setting} on lean_lib {lib} to "
+                f"{required[setting]!r}; only `true` can be published"
+            )
+        if present.get(setting) == "true":
+            continue
+        if setting in present:
+            raise RuntimeError(
+                f"released Lake file {lakefile} sets {setting} on lean_lib "
+                f"{lib} to {present[setting]!r}, contradicting hex-dev's `true`"
+            )
+        if toml:
+            insert_at = body_start + len(body.rstrip())
+            text = f"{text[:insert_at]}\n{setting} = true{text[insert_at:]}"
+        else:
+            opener = "" if block.group("where") else " where"
+            text = f"{text[:body_start]}{opener}\n  {setting} := true{text[body_start:]}"
+        notes.append(f"  {setting} on lean_lib {lib} ({lakefile.name})")
+    if notes:
+        if toml:
+            try:
+                tomllib.loads(text)
+            except tomllib.TOMLDecodeError as err:
+                raise RuntimeError(
+                    f"build-setting rewrite produced invalid TOML in {lakefile}: "
+                    f"{err}"
+                ) from err
+        lakefile.write_text(text, encoding="utf-8")
+    return notes
+
+
 def validate_skeleton(entry: dict, clone: Path) -> None:
     """Check the unmanaged Lake file carries every release build root.
 
@@ -443,16 +625,6 @@ def validate_skeleton(entry: dict, clone: Path) -> None:
             f"{clone}"
         )
     text = lakefile.read_text(encoding="utf-8")
-    if entry.get("precompile_modules"):
-        assignment = (
-            r"(?m)^\s*precompileModules\s*=\s*true\s*$"
-            if entry["lakefile"] == "toml"
-            else r"(?m)^\s*precompileModules\s*:=\s*true\s*$"
-        )
-        if re.search(assignment, text) is None:
-            raise RuntimeError(
-                f"released Lake file {lakefile} must precompile modules"
-            )
     for module in entry.get("test_modules", []):
         if module not in text:
             raise RuntimeError(
@@ -1054,6 +1226,8 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         validate_external_imports(entry, clone)
         if not entry.get("pins_only"):
             for line in rewrite_doc_verso(clone):
+                print(line)
+            for line in rewrite_lib_settings(entry, clone):
                 print(line)
         for line in rewrite_toolchains(clone):
             print(line)

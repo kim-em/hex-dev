@@ -51,6 +51,12 @@
 # root module. The sync refuses to publish when the skeleton is stale.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
+# The mirror's `lean_lib` build settings are deliberately *not* recorded here:
+# this monorepo's `lakefile.lean` is the source of truth for how a library is
+# built, so the sync reads the `lean_lib <lib>` block and carries the settings
+# across itself, writing `precompileModules` into the mirror when it is missing
+# and refusing to publish when a setting it cannot synthesize has gone. A second
+# copy of a build decision in this manifest only gives it somewhere to drift.
 # `announcements` maps a venue (`blog`, `zulip`, `linkedin`) to the https URL
 # where this library was announced; it renders as one line per library in the
 # aggregate README's Announcements section. Deliberately not a table column:
@@ -220,7 +226,6 @@ repos:
   - repo: leanprover/hex-hensel
     component: Hensel lifting
     lib: HexHensel
-    precompile_modules: true
     umbrella: true
     spec: hex-hensel
     remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/oracle]
@@ -326,7 +331,6 @@ repos:
   - repo: leanprover/hex-gf2
     component: Packed GF(2) polynomials
     lib: HexGF2
-    precompile_modules: true
     umbrella: true
     spec: hex-gf2
     remove_paths: [bench, conformance, conformance-fixtures, scripts/ci/check_bench_verify_budget.sh, scripts/ci/check_clmul_paths.sh, scripts/oracle]

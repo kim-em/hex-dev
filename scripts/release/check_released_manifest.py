@@ -21,6 +21,7 @@ from release.sync_released import (  # noqa: E402
     managed_paths,
     released_ci_workflows,
     removal_paths,
+    source_build_settings,
 )
 from release import aggregate_readme  # noqa: E402
 
@@ -54,6 +55,30 @@ def check_library_only(entry: dict) -> None:
             "to the mirror; benchmarks, conformance drivers, fixtures and "
             "oracles stay in hex-dev"
         )
+
+
+def check_build_settings(entry: dict) -> None:
+    """Keep the mirror's build settings derivable from hex-dev's lakefile.
+
+    The sync reads the `lean_lib <lib>` block here and carries its settings into
+    the mirror. Two things have to hold for that to be more than a no-op, and
+    neither is visible at sync time until a repository is already being
+    published: the manifest must not carry a competing hand-written copy of a
+    build decision, and the library must still be a `lean_lib` in this
+    monorepo's lakefile. A renamed or globbed-away target would otherwise leave
+    the sync deriving an empty settings map and publishing a mirror that quietly
+    stops precompiling.
+    """
+    repo = entry["repo"]
+    if "precompile_modules" in entry:
+        fail(
+            f"{repo}: precompile_modules is derived from lakefile.lean, not "
+            "declared here; drop the key"
+        )
+    try:
+        source_build_settings(entry["lib"])
+    except RuntimeError as error:
+        fail(f"{repo}: {error}")
 
 
 def parse_sync_baseline(text: str, source: str) -> set[str]:
@@ -426,8 +451,7 @@ def main() -> int:
             if lib in library_names:
                 fail(f"duplicate released library {lib}")
             library_names.add(lib)
-            if not isinstance(entry.get("precompile_modules", False), bool):
-                fail(f"{repo}: precompile_modules must be a Boolean")
+            check_build_settings(entry)
             test_modules = entry.get("test_modules", [])
             if (
                 not isinstance(test_modules, list)
