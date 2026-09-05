@@ -106,6 +106,7 @@ public import HexGraphIso.Nauty.EquitableStep
 public import HexGraphIso.Nauty.EquitableFix
 public import HexGraphIso.Nauty.TargetCell
 public import HexGraphIso.Ops
+public import HexGraphIso.Autos
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic

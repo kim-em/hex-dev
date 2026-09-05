@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Ops
+public import HexGraphIso.Autos
 
 public section
 
@@ -214,5 +214,50 @@ theorem isIso_eq_false_iff (G H : Graph n) (h : 0 < n) :
 theorem isomorphic_of_isIso {G H : Graph n} {h : 0 < n}
     (hi : isIso G H h = true) : Isomorphic G H :=
   (isIso_eq_true_iff G H h).mp hi
+
+/-! # Automorphisms -/
+
+/-- Two vertices lie in one orbit of the automorphism group. -/
+def SameOrbit (G : Graph n) (u v : Fin n) : Prop :=
+  ∃ p, IsIso G G p ∧ p.get u = v
+
+/-- The one-cell view carries the orbit relation both ways: at one
+colour the coloured and uncoloured automorphism groups coincide. -/
+theorem sameOrbit_singleColor_iff (G : Graph n) (u v : Fin n) (h : 0 < n) :
+    GraphIso.SameOrbit (G.singleColor h) u v ↔ SameOrbit G u v := by
+  constructor
+  · intro hc
+    rcases hc.elim with ⟨p, hp, hu⟩
+    exact ⟨p, (isIso_singleColor_iff G G p h).mp hp, hu⟩
+  · rintro ⟨p, hp, hu⟩
+    exact GraphIso.SameOrbit.intro p ((isIso_singleColor_iff G G p h).mpr hp) hu
+
+/-- Generators of the automorphism group of a graph, with the vertex
+orbits, the orbit count and the group order. -/
+@[expose] def autos (G : Graph n) (h : 0 < n := by first | decide | omega) :
+    GraphIso.AutResult n :=
+  GraphIso.autos (G.singleColor h)
+
+/-- Membership: every returned generator is an automorphism. -/
+theorem autos_isIso {G : Graph n} {h : 0 < n} {p : GraphIso.Perm n}
+    (hp : p ∈ (autos G h).gens) : IsIso G G p :=
+  (isIso_singleColor_iff G G p h).mp (GraphIso.autos_isIso hp)
+
+/-- The orbit array has one entry per vertex. -/
+theorem size_autos_orbits (G : Graph n) (h : 0 < n) :
+    (autos G h).orbits.size = n :=
+  GraphIso.size_autos_orbits _
+
+/-- Every orbit representative is a vertex. -/
+theorem autos_orbits_lt (G : Graph n) (h : 0 < n) {v : Nat} (hv : v < n) :
+    (autos G h).orbits[v]! < n :=
+  GraphIso.autos_orbits_lt _ hv
+
+/-- Soundness of the orbits: vertices sharing a representative are
+carried onto each other by an automorphism. -/
+theorem autos_sameOrbit (G : Graph n) (h : 0 < n) (u v : Fin n)
+    (hu : (autos G h).orbits[u.val]! = (autos G h).orbits[v.val]!) :
+    SameOrbit G u v :=
+  (sameOrbit_singleColor_iff G u v h).mp (GraphIso.autos_sameOrbit _ u v hu)
 
 end Hex.Graph
