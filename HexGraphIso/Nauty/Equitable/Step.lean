@@ -11,13 +11,16 @@ public import HexGraphIso.Nauty.Equitable.Basic
 public section
 
 /-!
-The equitability fixpoint theorem (SPEC § Verified search refinement,
-the cheapautom clause of the store-validity obligation).
+The active-set and potential bookkeeping of one refinement step.
 
-`HexGraphIso.Nauty.Equitable.Basic` defines the predicates and proves the
-per-pass postconditions; this file proves the active-set and potential
-bookkeeping of one refinement step, consumed by
-`HexGraphIso.Nauty.Equitable.Fix` for the fixpoint theorem.
+`HexGraphIso.Nauty.Equitable.Basic` defines the predicates and proves
+the per-pass postconditions. This file proves that one `refineStep`
+drops the potential strictly and activates the fragment starts the
+certificate argument needs, that distinct cells of an injective
+labelling have disjoint splitter sets, and that an injective bounded
+labelling on `n` positions hits every vertex.
+`HexGraphIso.Nauty.Equitable.Fix` consumes these for the fixpoint
+theorem.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -936,9 +939,9 @@ private theorem nontrivialFix_numcells (cell1 : Nat) (st : RefineSt n) :
 
 /-- One processed cell of the nontrivial pass, the bookkeeping half:
 active bits and boundaries outside the window untouched, the
-potential ledger balanced, and the two activation clauses — an active
-cell activates every fragment start, an inactive one every fragment
-start but one. -/
+potential ledger balanced, and the two activation clauses. An active
+cell activates every fragment start, and an inactive one every
+fragment start but one. -/
 theorem nontrivialCell_outcome {ctx : Ctx n}
     {level cell1 cell2 : Nat} {workset : VSet n} {st : RefineSt n}
     (h12 : cell1 ≤ cell2) (hsz : cell2 < st.ptn.size) (hnb : cell2 < n)

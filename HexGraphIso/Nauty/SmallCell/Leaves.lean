@@ -16,8 +16,7 @@ import all HexGraphIso.Nauty.Equitable.Fix
 public section
 
 /-!
-The all-leaves node invariant (SPEC § Verified search refinement, the
-code-1 arm of the store-validity obligation).
+The node invariant the all-leaves induction carries.
 
 Every deviation below a cheapautom node consumes the same node facts:
 the iteration invariant, equitability, an accurate boundary count, and
@@ -26,8 +25,7 @@ carries their disjunction: the first-branch shape (every cell a
 singleton, a pair, or one triple), or a defect of at most four. The
 second is not a special case of the first. The four-vertex empty
 graph's root is one cell of size four, so it has a defect of three and
-no first-branch shape, and the instrumentation probe records it as a
-reachable admission witness.
+no first-branch shape.
 
 This file packages those facts as `SubtreeOk` and proves the invariant
 descends through one individualize-and-refine step
@@ -44,8 +42,8 @@ the cell count grows; `cells_length_eq_bcount` reads that count off
 the boundary count, where `bcount_breakout_eq` and `refine_frozen`
 already measure it.
 
-Turning either shape into flip data belongs to `SmallCell/Transitive`, above
-the exotic layer where the defect-four analogues are proved.
+Turning either shape into flip data belongs to `SmallCell/Transitive`,
+above the exotic layer where the defect-four analogues are proved.
 -/
 
 namespace Hex.GraphIso.Nauty

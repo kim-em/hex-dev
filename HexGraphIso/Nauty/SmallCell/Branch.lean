@@ -16,15 +16,14 @@ import all HexGraphIso.Nauty.Equitable.Fix
 public section
 
 /-!
-The cheapautom descent and branch step (SPEC § Verified search
-refinement, the code-1 arm of the store-validity obligation).
+The cheapautom descent and the branch step at a pair target.
 
-`HexGraphIso.Nauty.SmallCell.Guard` proves the guard characterization and
-the flip theorem; this file carries them down the search subtree: the
-descent seed (individualize-and-refine preserves equitability), the
-guard's cell-size consequences, and the branch step -- the two
-children of a pair target cell refine to states related by the flip,
-collapsing at a discrete child to equal leaf rows.
+`HexGraphIso.Nauty.SmallCell.Guard` proves the guard characterization
+and the flip theorem. This file carries them down the search subtree:
+the descent seed (individualize-and-refine preserves equitability),
+the guard's cell-size consequences, and the branch step, in which the
+two children of a pair target cell refine to states related by the
+flip and collapse at a discrete child to equal leaf rows.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -1517,7 +1516,7 @@ theorem stPerm_lab_eq {level : Nat} {st st' : RefineSt n}
   exact (cellsPerm_singleton h.cells hc).symm
 
 /-- The leaf collapse: when the second child's refinement is discrete,
-the two children's leaf rows coincide -- the flip is absorbed by
+the two children's leaf rows coincide. The flip is absorbed by
 `leafRows_map`. -/
 theorem branch_leafRows {numcells : Nat}
     (hgsz : ctx.g.size = n)

@@ -16,20 +16,17 @@ import all HexGraphIso.Nauty.Equitable.Fix
 public section
 
 /-!
-The exotic defect-four flip data (SPEC § Verified search refinement,
-the code-1 arm of the store-validity obligation).
+The exotic defect-four flip data.
 
 `cheapautom`'s second branch passes on partitions whose defect
 (vertices minus cells) is at most four without the all-pairs-and-one-
-triple shape of the first branch; the possible nontrivial cell
-multisets are `{4}`, `{5}`, `{4,2}` and `{3,3}`, and the probe showed
-admissions governed by such passes are pervasive on the conformance
-corpus. This file proves the flip data for those configurations: for
-any two members of any nontrivial cell, a row-preserving self-symmetry
-of the node carrying one to the other, entering the deviation doors
-exactly as the pair and triple instances do.
+triple shape of the first branch. The possible nontrivial cell
+multisets are `{4}`, `{5}`, `{4,2}` and `{3,3}`. This file proves the
+flip data for those configurations: for any two members of any
+nontrivial cell, a row-preserving self-symmetry of the node carrying
+one to the other, in the shape the pair and triple deviations consume.
 
-No shape enumeration is needed; everything is forced by counting:
+No shape enumeration is needed. Everything is forced by counting:
 
 * the differ set of two cell members (the other members whose bits at
   the two differ) always has even size, one half adjacent to the
