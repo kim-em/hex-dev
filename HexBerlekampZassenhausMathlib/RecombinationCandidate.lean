@@ -161,7 +161,7 @@ theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset
   classical
   have hpos : 0 < d.liftedFactors.size := by
     rw [← Array.length_toList, hloc]; simp
-  haveI : Nonempty (LiftedFactorIndex d) := ⟨⟨0, hpos⟩⟩
+  have : Nonempty (LiftedFactorIndex d) := ⟨⟨0, hpos⟩⟩
   have hne : (Finset.univ : LiftedFactorSubset d).Nonempty := Finset.univ_nonempty
   -- A Boolean mask over the tail, from the `subsetSplits` enumeration.
   have hsplit : (sc_sel, sc_rest) ∈ Hex.subsetSplits tail :=

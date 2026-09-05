@@ -97,7 +97,7 @@ target cell leaves the incumbent alone, except through `canoncode`,
 which it rewrites exactly when the current node's code beats the
 incumbent's at this level. Stated as the three fields so the caller can
 see which one moves. -/
-theorem stInc_otherNodePrep {ctx : Ctx} (level code : Nat)
+theorem stInc_otherNodePrep (level code : Nat)
     (st : SearchSt) :
     (otherNodePrep level code st).canonlevel = st.canonlevel ∧
       (otherNodePrep level code st).canonlab = st.canonlab :=

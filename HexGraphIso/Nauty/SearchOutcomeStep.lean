@@ -46,7 +46,6 @@ theorem LoopInv.childKeyAll {G : Colored n k} {ctx : Ctx}
       rsLab rsPtn tc len tcell cursor base st best trail)
     (hoffset : offset < len)
     (hfrozen : rsLab[tc + offset]! = tv)
-    (hcurrent : currentOffset < len)
     (hcurrentAt : st.lab[tc + currentOffset]! = tv) :
     ∀ o, o < len → rsLab[tc + o]! = tv →
       sweepKey ctx tcLevel specFuel level codes rsLab rsPtn tc numcells o =

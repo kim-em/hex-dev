@@ -1315,13 +1315,13 @@ theorem isolate_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
       (le_max_right _ _) strategy hd
     obtain ⟨atoms, hmap⟩ := array_mapM_atoms rs hatoms
     refine ⟨atoms, ?_⟩
-    rw [Hex.isolate, dif_pos hd]
+    rw [Hex.isolate, dite_eq_left hd]
     change (Hex.isolateAll? p target #[Hex.Component.cauchy p hd] strategy).bind
       (fun rs => rs.mapM Hex.Certified.asAtom?) = some atoms
     rw [hall]
     exact hmap
   · refine ⟨#[], ?_⟩
-    rw [Hex.isolate, dif_neg hd]
+    rw [Hex.isolate, dite_eq_right hd]
     simp [hpSize]
 
 /-- A nonzero squarefree polynomial has a successful isolation whose atoms

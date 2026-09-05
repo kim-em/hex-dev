@@ -121,7 +121,7 @@ def regularizeMeaning : Program.Meaning ℝ :=
 def natLiteralMeaning : Program.Meaning ℝ :=
   { operation := natLiteralOp, relation := fun xs _ => xs = [] }
 
-def builtinMeanings (config : Config) : Array (Program.Meaning ℝ) :=
+def builtinMeanings (_config : Config) : Array (Program.Meaning ℝ) :=
   #[sourceMeaning, negMeaning, addMeaning, subMeaning, mulMeaning,
     powMeaning, absMeaning, minMeaning, maxMeaning, dyadicLiteralMeaning,
     invMeaning, divMeaning, regularizeMeaning, natLiteralMeaning]

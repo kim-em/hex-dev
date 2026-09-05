@@ -13,7 +13,10 @@
     "git_commit": "ab371eaf9cf79015b8241d367432f21e4353b37f",
     "git_dirty": false,
     "timestamp_unix_ms": 1788403864090,
-    "timestamp_iso": "2026-09-03T02:51:04Z"
+    "timestamp_iso": "2026-09-03T02:51:04Z",
+    "source_fingerprints": {
+      "hex-factor": "56acaa5943ff"
+    }
   },
   "config": {
     "cutoff_seconds": 10.0,

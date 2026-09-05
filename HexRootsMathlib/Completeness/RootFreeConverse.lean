@@ -557,7 +557,7 @@ theorem adjacent_of_supDist_lt {s t : Hex.DyadicSquare}
     (hprec : s.prec = t.prec)
     (hdist : supDist (center s) (center t) < 4 * halfWidth s) :
     Hex.DyadicSquare.adjacent s t = true := by
-  rw [Hex.DyadicSquare.adjacent, if_pos hprec]
+  rw [Hex.DyadicSquare.adjacent, ite_eq_left hprec]
   let fourH : _root_.Dyadic := .ofIntWithPrec 1 (s.prec - 2)
   have hfour : Dyadic.toReal fourH = 4 * halfWidth s := by
     dsimp [fourH]

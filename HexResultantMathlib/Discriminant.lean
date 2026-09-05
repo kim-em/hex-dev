@@ -28,7 +28,7 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
   let F := HexPolyMathlib.toPolynomial f
   by_cases hsmall : f.size ≤ 1
   · unfold disc
-    rw [if_pos hsmall]
+    rw [ite_eq_left hsmall]
     have hdeg : F.natDegree = 0 := by
       rw [show F.natDegree = f.degree?.getD 0 by
         simpa only [F] using HexPolyMathlib.natDegree_toPolynomial f]
@@ -92,7 +92,7 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
     rw [hFn] at hformal
     rw [hlc] at hformal
     unfold disc
-    rw [if_neg hsmall]
+    rw [ite_eq_right hsmall]
     change
       negOnePow (R := R) (n * (n - 1) / 2) *
           exactDiv (powNat f.leadingCoeff gap * resultant f d)

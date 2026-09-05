@@ -615,7 +615,7 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
   letI := ZMod64.primeModulusOfPrime c.prime
   intro hzero
   unfold berlekampFactorsModP
-  rw [dif_pos hzero]
+  rw [dite_eq_left hzero]
 
 /-- Reduce an integer coefficient to its canonical natural-number residue modulo `p` for the modular Horner evaluator. -/
 private def intCoeffModNat (z : Int) (p : Nat) : Nat :=
@@ -869,7 +869,7 @@ theorem isGoodPrime_modP_isZero_false
       apply hadm
       have hcoeffs_zero : f.coeffs.size = 0 := by simpa [DensePoly.size] using hsize_zero
       have hlead : DensePoly.leadingCoeff f = 0 := by
-        simp [DensePoly.leadingCoeff, hcoeffs_zero, Array.getD] <;> rfl
+        simp [DensePoly.leadingCoeff, hcoeffs_zero, Array.getD]; rfl
       unfold ZPoly.leadingCoeffModP
       rw [hlead]
       show (ZMod64.ofNat p (ZPoly.intModNat 0 p) : ZMod64 p) = 0
@@ -902,7 +902,7 @@ theorem leadingCoeffAdmissible_size_pos
     apply hadm
     have hcoeffs_zero : f.coeffs.size = 0 := by simpa [DensePoly.size] using hsize_zero
     have hlead : DensePoly.leadingCoeff f = 0 := by
-      simp [DensePoly.leadingCoeff, hcoeffs_zero, Array.getD] <;> rfl
+      simp [DensePoly.leadingCoeff, hcoeffs_zero, Array.getD]; rfl
     unfold ZPoly.leadingCoeffModP
     rw [hlead]
     show (ZMod64.ofNat p (ZPoly.intModNat 0 p) : ZMod64 p) = 0

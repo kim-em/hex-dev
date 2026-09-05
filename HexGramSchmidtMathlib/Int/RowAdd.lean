@@ -131,8 +131,8 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     · have hqNat : qf.val = j.val := hqj
       have hq_last : qf = last := Fin.ext hqj
       simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
-        Hex.Matrix.getElem_ofFn, hqNat, if_true]
-      rw [if_pos hq_last]
+        Hex.Matrix.getElem_ofFn, hqNat, ite_true]
+      rw [ite_eq_left hq_last]
       simp only [Matrix.row]
       change ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht]).dotProduct
           ((Matrix.rowAdd b j k c)[k]) =
@@ -153,8 +153,8 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
             b[GramSchmidt.liftFinLE qf ht] :=
         rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE qf ht) c hq_ne_k
       simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
-        Hex.Matrix.getElem_ofFn, if_neg hqNat]
-      rw [if_neg hq_ne_last]
+        Hex.Matrix.getElem_ofFn, ite_eq_right hqNat]
+      rw [ite_eq_right hq_ne_last]
       simp only [Matrix.row, ← Hex.Matrix.getElem_eq_getRow]
       rw [hp_row, hq_row]
       show _ = (GramSchmidt.leadingGramMatrixInt b t ht)[p][qf]
@@ -168,15 +168,15 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     · have hqNat : qf.val = j.val := hqj
       have hq_last : qf = last := Fin.ext hqj
       simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
-        Hex.Matrix.getElem_ofFn, hqNat, if_true]
-      rw [if_pos hq_last]
+        Hex.Matrix.getElem_ofFn, hqNat, ite_true]
+      rw [ite_eq_left hq_last]
     · have hq_ne_last : qf ≠ last := by
         intro h
         exact hqj (congrArg Fin.val h)
       have hqNat : qf.val ≠ j.val := hqj
       simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
-        Hex.Matrix.getElem_ofFn, if_neg hqNat]
-      rw [if_neg hq_ne_last]
+        Hex.Matrix.getElem_ofFn, ite_eq_right hqNat]
+      rw [ite_eq_right hq_ne_last]
       show _ = (GramSchmidt.leadingGramMatrixInt b t ht)[p][qf]
       rw [getElem_leadingGramMatrixInt]
       rfl
@@ -192,10 +192,10 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
         simpa [last] using hval
       simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn]
-      rw [if_pos hq_last, hq_lift]
+      rw [ite_eq_left hq_last, hq_lift]
     · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn]
-      rw [if_neg hq_last]
+      rw [ite_eq_right hq_last]
   calc
     Matrix.det (GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk)
         = Matrix.det (Matrix.setCol M last (fun p => oldCol p + c * gramCol p)) := by
@@ -282,7 +282,7 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
   -- Case split on `q = kt` and `p = kt`.
   by_cases hqk : q = kt
   · -- q = kt branch
-    rw [if_pos hqk]
+    rw [ite_eq_left hqk]
     rw [rowAdd_get_rect (GramSchmidt.leadingGramMatrixInt b t ht) jt kt p c q,
         rowAdd_get_rect (GramSchmidt.leadingGramMatrixInt b t ht) jt kt p c jt]
     -- The `b[·]` rewrites for `liftFinLE jt ht` and `liftFinLE kt ht`
@@ -317,7 +317,7 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
             b[j].dotProduct b[k] + c * b[j].dotProduct b[j] :=
         dot_rowAdd_row_at_right b j k c b[j]
       rw [hrec_k, hrec_j]
-      simp only [if_pos hpk]
+      simp only [ite_eq_left hpk]
       rw [hM_entry kt q, hM_entry jt q, hM_entry kt jt, hM_entry jt jt]
       have hb_q : b[GramSchmidt.liftFinLE q ht] = b[k] :=
         congrArg b.getRow hqn_k
@@ -337,10 +337,10 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
         congrArg b.getRow hqn_k
       rw [hrowAdd_q, rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE p ht) c hpn_ne,
         dot_rowAdd_row_at_right b j k c (b[GramSchmidt.liftFinLE p ht])]
-      simp only [if_neg hpk]
+      simp only [ite_eq_right hpk]
       rw [hM_entry p q, hM_entry p jt, hbjt_lift, hb_q]
   · -- q ≠ kt branch
-    rw [if_neg hqk]
+    rw [ite_eq_right hqk]
     have hqn_ne : (GramSchmidt.liftFinLE q ht).val ≠ k.val :=
       fun h => hqk (Fin.ext h)
     rw [rowAdd_get_rect (GramSchmidt.leadingGramMatrixInt b t ht) jt kt p c q,
@@ -358,13 +358,13 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
             (Matrix.rowAdd b j k c)[k] :=
         congrArg (Matrix.rowAdd b j k c).getRow hpn_k
       rw [hrowAdd_p, dot_rowAdd_row_at_left b j k c (b[GramSchmidt.liftFinLE q ht])]
-      simp only [if_pos hpk]
+      simp only [ite_eq_left hpk]
       rw [hM_entry kt q, hM_entry jt q, hbjt_lift, hbkt_lift]
     · -- p ≠ kt, q ≠ kt
       have hpn_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val :=
         fun h => hpk (Fin.ext h)
       rw [rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE p ht) c hpn_ne]
-      simp only [if_neg hpk]
+      simp only [ite_eq_right hpk]
       rw [hM_entry p q]
 
 /-- When the modified row index `k` lies inside the leading `t`-prefix

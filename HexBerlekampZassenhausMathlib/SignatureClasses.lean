@@ -285,7 +285,7 @@ theorem representativeColumns_decompose_at
       rw [List.mem_range] at hmem
       exact (hk₀_fresh k hmem) (by simpa using hsig)
     rw [List.filter_cons]
-    rw [if_pos (by simpa using hk₀_pred)]
+    rw [ite_eq_left (by simpa using hk₀_pred)]
   · intro rep hrep
     rw [List.mem_filter] at hrep
     rcases hrep with ⟨hmem, hpred⟩
@@ -423,7 +423,7 @@ private theorem partitionAcc_succ_of_match
       (sig m, (List.range m).filter (fun j => sig j = sig k₀) ++ [m]) := by
     show (sig k₀, (List.range (m + 1)).filter (fun j => sig j = sig k₀)) =
          (sig m, (List.range m).filter (fun j => sig j = sig k₀) ++ [m])
-    rw [filter_range_succ_sig_eq, if_pos hk₀_sig.symm, hk₀_sig]
+    rw [filter_range_succ_sig_eq, ite_eq_left hk₀_sig.symm, hk₀_sig]
   -- Each suffix entry: p' rep = p rep when sig m ≠ sig rep.
   have hsuffix_eq : suffix.map p' = suffix.map p := by
     apply List.map_congr_left

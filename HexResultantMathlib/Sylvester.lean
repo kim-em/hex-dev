@@ -116,16 +116,16 @@ private theorem coeffInt_eq_ite [CommRing R] [DecidableEq R]
       if j ≤ i ∧ i ≤ d + j then p.coeff (d + j - i) else 0 := by
   unfold coeffInt
   by_cases hnonneg : 0 ≤ (d : Int) - (i : Int) + (j : Int)
-  · rw [if_neg (by omega)]
+  · rw [ite_eq_right (by omega)]
     have hnat : ((d : Int) - (i : Int) + (j : Int)).toNat = d + j - i := by
       omega
     rw [hnat]
     by_cases hji : j ≤ i
     · have hidj : i ≤ d + j := by omega
-      rw [if_pos ⟨hji, hidj⟩]
-    · rw [if_neg (by omega)]
+      rw [ite_eq_left ⟨hji, hidj⟩]
+    · rw [ite_eq_right (by omega)]
       exact coeff_eq_zero_of_size_le p (by omega)
-  · rw [if_pos (by omega), if_neg (by omega)]
+  · rw [ite_eq_left (by omega), ite_eq_right (by omega)]
 
 /-- At index zero, the generalized coefficient matrix is Mathlib's
 Sylvester matrix with both axes reversed. -/
@@ -143,7 +143,7 @@ private theorem coeffMatrixAt_zero_eq_sylvester [CommRing R] [DecidableEq R]
   simp only [Nat.sub_zero, _root_.Matrix.of_apply, HexPolyMathlib.coeff_toPolynomial,
     Int.ofNat_eq_natCast, Int.natCast_zero]
   by_cases hj : j.val < dg
-  · rw [if_pos hj]
+  · rw [ite_eq_left hj]
     have hiBound : i.val < df + dg := by simp
     have hrow :
         (if i.val = df + dg - 1 then
@@ -151,31 +151,31 @@ private theorem coeffMatrixAt_zero_eq_sylvester [CommRing R] [DecidableEq R]
           else coeffInt f ((df : Int) - i.val + j.val)) =
           coeffInt f ((df : Int) - i.val + j.val) := by
       by_cases hi : i.val = df + dg - 1
-      · rw [if_pos hi]
+      · rw [ite_eq_left hi]
         congr 1
         omega
-      · rw [if_neg hi]
+      · rw [ite_eq_right hi]
     rw [hrow, coeffInt_eq_ite f df i.val j.val hf]
     have hjrev : ¬(Fin.rev j).val < df := by
       simp [Fin.rev]
       omega
-    rw [dif_neg hjrev]
+    rw [dite_eq_right hjrev]
     by_cases hji : j.val ≤ i.val ∧ i.val ≤ df + j.val
-    · rw [if_pos hji]
+    · rw [ite_eq_left hji]
       have hraw :
           (Fin.rev j).val - df ≤ (Fin.rev i).val ∧
             (Fin.rev i).val ≤ (Fin.rev j).val - df + df := by
         simp [Fin.rev]
         omega
-      rw [if_pos hraw]
+      rw [ite_eq_left hraw]
       congr 1
       simp [Fin.rev]
       omega
-    · rw [if_neg hji]
-      rw [if_neg]
+    · rw [ite_eq_right hji]
+      rw [ite_eq_right]
       simp [Fin.rev] at hji ⊢
       omega
-  · rw [if_neg hj]
+  · rw [ite_eq_right hj]
     have hiBound : i.val < df + dg := by simp
     have hrow :
         (if i.val = df + dg - 1 then
@@ -186,28 +186,28 @@ private theorem coeffMatrixAt_zero_eq_sylvester [CommRing R] [DecidableEq R]
           coeffInt g
             ((dg : Int) - i.val + ((j.val - dg : Nat) : Int)) := by
       by_cases hi : i.val = df + dg - 1
-      · rw [if_pos hi]
+      · rw [ite_eq_left hi]
         congr 1
         omega
-      · rw [if_neg hi]
+      · rw [ite_eq_right hi]
     rw [hrow, coeffInt_eq_ite g dg i.val (j.val - dg) hg]
     have hjrev : (Fin.rev j).val < df := by
       simp [Fin.rev]
       omega
-    rw [dif_pos hjrev]
+    rw [dite_eq_left hjrev]
     by_cases hji : j.val - dg ≤ i.val ∧ i.val ≤ dg + (j.val - dg)
-    · rw [if_pos hji]
+    · rw [ite_eq_left hji]
       have hraw :
           (Fin.rev j).val ≤ (Fin.rev i).val ∧
             (Fin.rev i).val ≤ (Fin.rev j).val + dg := by
         simp [Fin.rev]
         omega
-      rw [if_pos hraw]
+      rw [ite_eq_left hraw]
       congr 1
       simp [Fin.rev]
       omega
-    · rw [if_neg hji]
-      rw [if_neg]
+    · rw [ite_eq_right hji]
+      rw [ite_eq_right]
       simp [Fin.rev] at hji ⊢
       omega
 
@@ -271,7 +271,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       rw [hz]
       simp only [↓reduceIte]
-      rw [if_pos hgsmall, HexPolyMathlib.toPolynomial_zero, hzdeg, hgdeg]
+      rw [ite_eq_left hgsmall, HexPolyMathlib.toPolynomial_zero, hzdeg, hgdeg]
       simp [Polynomial.resultant]
     · have hgdeg : 0 < g.degree?.getD 0 := by
         have hgpos : 0 < g.size := by omega
@@ -280,7 +280,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       rw [hz]
       simp only [↓reduceIte]
-      rw [if_neg hgsmall, HexPolyMathlib.toPolynomial_zero, hzdeg,
+      rw [ite_eq_right hgsmall, HexPolyMathlib.toPolynomial_zero, hzdeg,
         Polynomial.resultant_zero_left]
       simp [hgdeg.ne']
   · by_cases hg : g = 0
@@ -300,7 +300,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
         unfold resultant
         rw [hfz, hz]
         simp only [Bool.false_eq_true, ↓reduceIte]
-        rw [if_pos hfsmall, HexPolyMathlib.toPolynomial_zero, hzdeg, hfdeg]
+        rw [ite_eq_left hfsmall, HexPolyMathlib.toPolynomial_zero, hzdeg, hfdeg]
         simp [Polynomial.resultant]
       · have hfdeg : 0 < f.degree?.getD 0 := by
           rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
@@ -308,7 +308,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
         unfold resultant
         rw [hfz, hz]
         simp only [Bool.false_eq_true, ↓reduceIte]
-        rw [if_neg hfsmall, HexPolyMathlib.toPolynomial_zero, hzdeg,
+        rw [ite_eq_right hfsmall, HexPolyMathlib.toPolynomial_zero, hzdeg,
           Polynomial.resultant_zero_right]
         simp [hfdeg.ne']
     · have hfpos : 0 < f.size := by
@@ -330,7 +330,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       simp only [hfz, hgz, Bool.false_eq_true, ↓reduceIte]
       by_cases hfg : f.size < g.size
-      · rw [if_pos hfg]
+      · rw [ite_eq_left hfg]
         rw [resultantOrdered_eq_coeffMinor g f hg hf (by omega)]
         rw [Subresultant.coeffMinor_zero_eq_resultant]
         rw [hdf, hdg]
@@ -339,7 +339,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
         exact (Polynomial.resultant_comm
           (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)
           (Subresultant.formalDegree f) (Subresultant.formalDegree g)).symm
-      · rw [if_neg hfg]
+      · rw [ite_eq_right hfg]
         rw [resultantOrdered_eq_coeffMinor f g hf hg (by omega)]
         rw [Subresultant.coeffMinor_zero_eq_resultant, hdf, hdg]
 

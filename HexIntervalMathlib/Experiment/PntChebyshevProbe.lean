@@ -288,7 +288,7 @@ theorem vonMangoldt_le_contribution {n : Nat} (hn : n ≤ 11723) :
     (ArithmeticFunction.vonMangoldt n : Real) ≤ contribution n / 10 := by
   rw [ArithmeticFunction.vonMangoldt_apply]
   by_cases hpp : IsPrimePow n
-  · rw [if_pos hpp]
+  · rw [ite_eq_left hpp]
     obtain ⟨p, k, hp, hk, hpow⟩ := (isPrimePow_nat_iff n).mp hpp
     subst n
     rw [hp.pow_minFac hk.ne']
@@ -310,7 +310,7 @@ theorem vonMangoldt_le_contribution {n : Nat} (hn : n ≤ 11723) :
       have base := powerBase_pow hp hk2 hn
       simpa [contribution, checked, base, hp.ne_zero] using
         logData_log_le p hp.two_le
-  · rw [if_neg hpp]
+  · rw [ite_eq_right hpp]
     positivity
 
 /-- Incremental all-coordinate checker state with a natural-number

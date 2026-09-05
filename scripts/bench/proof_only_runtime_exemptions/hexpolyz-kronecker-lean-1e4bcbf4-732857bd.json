@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/Kronecker.lean",
+ "baseline_blob": "1e4bcbf4f376e1885e97f3cd1710a211ba6e24ea",
+ "current_blob": "732857bdcc110866c697deb70d6afdd382f429c2",
+ "reason": "Renames the conditional-reduction lemmas Lean 4.34 deprecates (if_pos, if_neg, dif_pos, dif_neg, if_true, if_false) to their successors ite_eq_left, ite_eq_right, dite_eq_left, dite_eq_right, ite_true, ite_false. The successors have identical statements and argument structure, and every edit is inside a proof; no definition and no factorization-service runtime path changes."
+}

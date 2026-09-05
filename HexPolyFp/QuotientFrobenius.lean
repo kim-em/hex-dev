@@ -278,10 +278,10 @@ theorem reduce_monomial_eq (m : Nat) (c : ZMod64 p) :
     from FpPoly.C_mul_eq_scale c _]
   rw [DensePoly.coeff_scale c _ k hzero, DensePoly.coeff_monomial m (1 : ZMod64 p) k]
   by_cases hk : k = m
-  · simp only [hk, if_true]
+  · simp only [hk, ite_true]
     show c = c * (1 : ZMod64 p)
     grind
-  · simp only [hk, if_false]
+  · simp only [hk, ite_false]
     exact hzero.symm
 
 private def quotMonoSum (f : FpPoly p)
@@ -305,7 +305,7 @@ private theorem coeff_fpPolyMonoSum (f : FpPoly p) (m k : Nat) :
       show (0 : FpPoly p).coeff k = if k < 0 then f.coeff k else 0
       rw [DensePoly.coeff_zero]
       have hk : ¬ k < 0 := Nat.not_lt_zero k
-      rw [if_neg hk]
+      rw [ite_eq_right hk]
       rfl
   | succ m ih =>
       show (fpPolyMonoSum f m + DensePoly.monomial m (f.coeff m)).coeff k =
@@ -314,18 +314,18 @@ private theorem coeff_fpPolyMonoSum (f : FpPoly p) (m k : Nat) :
       by_cases hk_lt_m : k < m
       · have hk_lt_succ : k < m + 1 := Nat.lt_succ_of_lt hk_lt_m
         have hk_ne_m : k ≠ m := Nat.ne_of_lt hk_lt_m
-        simp only [hk_lt_m, if_true, hk_lt_succ, hk_ne_m, if_false]
+        simp only [hk_lt_m, ite_true, hk_lt_succ, hk_ne_m, ite_false]
         show f.coeff k + 0 = f.coeff k
         grind
       · by_cases hk_eq_m : k = m
         · subst hk_eq_m
           have hk_lt_succ : k < k + 1 := Nat.lt_succ_self k
           have hk_lt_self : ¬ k < k := Nat.lt_irrefl k
-          simp only [hk_lt_self, if_false, hk_lt_succ, if_true]
+          simp only [hk_lt_self, ite_false, hk_lt_succ, ite_true]
           show 0 + f.coeff k = f.coeff k
           grind
         · have hk_not_lt_succ : ¬ k < m + 1 := by omega
-          simp only [hk_lt_m, hk_eq_m, hk_not_lt_succ, if_false]
+          simp only [hk_lt_m, hk_eq_m, hk_not_lt_succ, ite_false]
           show 0 + 0 = (0 : ZMod64 p)
           grind
 

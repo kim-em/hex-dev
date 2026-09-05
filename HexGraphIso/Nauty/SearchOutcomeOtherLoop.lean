@@ -368,7 +368,7 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx}
         child
       have hcall : otherNode ctx inf tcLevel runFuel (level + 1)
           (numcells + 1) child = (res.1, res.2) := rfl
-      have heq := hh.inv.childKeyAll hoffset hatFrozen hcurrent hat
+      have heq := hh.inv.childKeyAll hoffset hatFrozen hat
       have hkeyLe : keyLe (nodeKey ctx tcLevel specFuel (level + 1) codes
           child (numcells + 1)) bound := by
         rw [← heq offset hoffset hatFrozen]

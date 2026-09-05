@@ -104,7 +104,7 @@ private theorem natDegree_toMathlibPolynomial_factorPolys_eq
     letI := primeData.bounds
     (HexBerlekampMathlib.toMathlibPolynomial primeData.factorPolys[i]).natDegree =
       primeData.factorDegrees[i] := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hpair :=
     checkCertAtFactor_of_checkFactorCerts primeData hcheck i hi_deg hi_polys hi_certs
   have hdegree :
@@ -219,8 +219,8 @@ theorem checkIrreducibleCert_sound
           exact List.mem_of_mem_drop hmem_drop
       -- Extract `Nat.Prime primeData.p` from hypothesis
       have hp_prime : Nat.Prime primeData.p := hprime primeData hpd_mem
-      haveI : Fact (Nat.Prime primeData.p) := ⟨hp_prime⟩
-      letI := primeData.bounds
+      have : Fact (Nat.Prime primeData.p) := ⟨hp_prime⟩
+      let := primeData.bounds
       -- Extract checkForPolynomial fact
       have hcheckPoly := Hex.checkIrreducibleCert_prime_data f cert hcert primeData hpd_mem
       have hgood := Hex.checkIrreducibleCert_isGoodPrime f cert hcert primeData hpd_mem
@@ -254,7 +254,7 @@ theorem checkIrreducibleCert_sound
       -- Then c.leadingCoeff mod p ≠ 0 (using p prime → ZMod p domain)
       have hc_lc_map_ne :
           (Int.castRingHom (ZMod primeData.p)) c.leadingCoeff ≠ 0 := by
-        haveI : IsDomain (ZMod primeData.p) := inferInstance
+        have : IsDomain (ZMod primeData.p) := inferInstance
         intro heq
         apply hF_lc_map_ne
         have : F.leadingCoeff = c.leadingCoeff * d.leadingCoeff := by
@@ -275,7 +275,7 @@ theorem checkIrreducibleCert_sound
         map_intCast_zmod_toPolynomial_eq_factorPolys_product f primeData hcheckPoly
       rw [hF_modP_eq] at hc_modP_dvd_F_modP
       -- Construct Hex.ZMod64.PrimeModulus from Mathlib primality
-      haveI hpm : Hex.ZMod64.PrimeModulus primeData.p :=
+      have hpm : Hex.ZMod64.PrimeModulus primeData.p :=
         Hex.ZMod64.primeModulusOfPrime
           ⟨hp_prime.two_le, fun m hdvd => hp_prime.eq_one_or_self_of_dvd m hdvd⟩
       -- Each factor in factorPolys is irreducible (via Rabin)
@@ -315,7 +315,7 @@ theorem checkIrreducibleCert_sound
           simp only [Hex.PrimeFactorData.checkCertAtFactor, Bool.and_eq_true] at hp
           obtain ⟨_, hif⟩ := hp
           have hmonic' : Hex.DensePoly.leadingCoeff primeData.factorPolys[i] = 1 := hmonic
-          rw [dif_pos hmonic'] at hif
+          rw [dite_eq_left hmonic'] at hif
           exact hif
         have hrabin :=
           Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest

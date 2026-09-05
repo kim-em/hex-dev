@@ -676,7 +676,7 @@ private theorem coeff_hornerList [Semiring R] : ∀ (l : List R) (n : ℕ),
       cases n with
       | zero => simp
       | succ m =>
-          rw [Polynomial.coeff_add, Polynomial.coeff_C, if_neg (Nat.succ_ne_zero m),
+          rw [Polynomial.coeff_add, Polynomial.coeff_C, ite_eq_right (Nat.succ_ne_zero m),
             Polynomial.coeff_X_mul, coeff_hornerList cs m, zero_add, List.getD_cons_succ]
 
 /-- Composition pushes through the Horner fold: substituting `M` for `X` turns

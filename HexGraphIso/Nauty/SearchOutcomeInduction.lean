@@ -1250,9 +1250,9 @@ theorem RunEvent.recover {G : Colored n k} {ctx : Ctx}
     exact h.firstPositive
   · rw [recover_gcaCanon]
     by_cases hc : level < st.gcaCanon
-    · rw [if_pos hc]
+    · rw [ite_eq_left hc]
       omega
-    · rw [if_neg hc]
+    · rw [ite_eq_right hc]
       exact h.canonPositive
   · rw [hframes.2.2.2.2.2.2.1]
     exact hfirst

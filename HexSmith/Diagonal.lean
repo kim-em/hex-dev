@@ -168,9 +168,9 @@ private theorem swap_same (ops : Smith.Accumulator α r r)
   rcases t with ⟨matrix', diag', acc'⟩
   rcases h with ⟨rfl, rfl⟩
   by_cases hij : i = j
-  · simp only [swap, Smith.swapRows, Smith.swapCols, if_pos hij]
+  · simp only [swap, Smith.swapRows, Smith.swapCols, ite_eq_left hij]
     exact ⟨rfl, rfl⟩
-  · simp only [swap, Smith.swapRows, Smith.swapCols, if_neg hij]
+  · simp only [swap, Smith.swapRows, Smith.swapCols, ite_eq_right hij]
     exact ⟨rfl, rfl⟩
 
 private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
@@ -186,11 +186,11 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
       rcases h with ⟨rfl, rfl⟩
       rw [normalizeFuel, normalizeFuel]
       by_cases ht : target < r
-      · rw [dif_pos ht, dif_pos ht]
+      · rw [dite_eq_left ht, dite_eq_left ht]
         cases hf : findNonzero? matrix target with
-        | none => simp only [hf]; exact ⟨rfl, rfl⟩
+        | none => simp only []; exact ⟨rfl, rfl⟩
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := swap_same ops ops'
               (⟨rfl, rfl⟩ : Same
@@ -202,28 +202,28 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
                 ({ matrix := matrix, diag := diag, accumulator := acc } : Smith.Result α r r)
                 pivot found).matrix[(pivot, pivot)] < 0
             · simp only [pivot] at hp hmatrix hdiag ⊢
-              rw [if_pos hp]
+              rw [ite_eq_left hp]
               have hp' : (swap ops'
                   ({ matrix := matrix, diag := diag, accumulator := acc' } : Smith.Result β r r)
                   ⟨target, ht⟩ found).matrix[
                     ((⟨target, ht⟩ : Fin r), (⟨target, ht⟩ : Fin r))] < 0 := by
                 rw [← hmatrix]
                 exact hp
-              rw [if_pos hp']
+              rw [ite_eq_left hp']
               apply ih
               exact ⟨congrArg (fun M => Matrix.rowScale M ⟨target, ht⟩ (-1)) hmatrix,
                 hdiag⟩
             · simp only [pivot] at hp hmatrix hdiag ⊢
-              rw [if_neg hp]
+              rw [ite_eq_right hp]
               have hp' : ¬ (swap ops'
                   ({ matrix := matrix, diag := diag, accumulator := acc' } : Smith.Result β r r)
                   ⟨target, ht⟩ found).matrix[
                     ((⟨target, ht⟩ : Fin r), (⟨target, ht⟩ : Fin r))] < 0 := by
                 rw [← hmatrix]
                 exact hp
-              rw [if_neg hp']
+              rw [ite_eq_right hp']
               exact ih (target + 1) ⟨hmatrix, hdiag⟩
-      · rw [dif_neg ht, dif_neg ht]
+      · rw [dite_eq_right ht, dite_eq_right ht]
         exact ⟨rfl, rfl⟩
 
 private theorem pairStep_same (ops : Smith.Accumulator α r r)
@@ -235,21 +235,21 @@ private theorem pairStep_same (ops : Smith.Accumulator α r r)
   rcases h with ⟨rfl, rfl⟩
   simp only [pairStep, Matrix.getElem_pair_eq_nested]
   by_cases ha : matrix[i][i] = 0
-  · rw [if_pos ha, if_pos ha]
+  · rw [ite_eq_left ha, ite_eq_left ha]
     by_cases hb : matrix[j][j] = 0
-    · rw [if_pos hb, if_pos hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
       exact ⟨rfl, rfl⟩
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       exact swap_same ops ops' ⟨rfl, rfl⟩ i j
-  · rw [if_neg ha, if_neg ha]
+  · rw [ite_eq_right ha, ite_eq_right ha]
     by_cases hb : matrix[j][j] = 0
-    · rw [if_pos hb, if_pos hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
       exact ⟨rfl, rfl⟩
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       by_cases hab : matrix[i][i] = matrix[j][j]
-      · rw [if_pos hab, if_pos hab]
+      · rw [ite_eq_left hab, ite_eq_left hab]
         exact ⟨rfl, rfl⟩
-      · rw [if_neg hab, if_neg hab]
+      · rw [ite_eq_right hab, ite_eq_right hab]
         exact ⟨rfl, rfl⟩
 
 private theorem passFuel_same (ops : Smith.Accumulator α r r)
@@ -261,10 +261,10 @@ private theorem passFuel_same (ops : Smith.Accumulator α r r)
   | succ fuel ih =>
       rw [passFuel, passFuel]
       by_cases hi : index + 1 < r
-      · rw [dif_pos hi, dif_pos hi]
+      · rw [dite_eq_left hi, dite_eq_left hi]
         exact ih (index + 1) (pairStep_same ops ops' h
           ⟨index, by omega⟩ ⟨index + 1, hi⟩)
-      · rw [dif_neg hi, dif_neg hi]
+      · rw [dite_eq_right hi, dite_eq_right hi]
         exact h
 
 private theorem pass_same (ops : Smith.Accumulator α r r)
@@ -358,7 +358,7 @@ private theorem carry_allDvd {a z : Nat} {xs : List Nat}
 private theorem pass_allDvd {xs : List Nat} {z : Nat}
     (h : AllDvd xs z) : AllDvd (pass xs) z := by
   cases xs with
-  | nil => simpa [pass, AllDvd]
+  | nil => simp [pass, AllDvd]
   | cons a xs =>
       apply carry_allDvd
       · exact h a (by simp)
@@ -529,7 +529,7 @@ private theorem vectorPassFuel_toList (fuel index : Nat) (v : Vector Nat r)
   | succ fuel ih =>
       rw [vectorPassFuel]
       have hi : index + 1 < r := by omega
-      rw [dif_pos hi]
+      rw [dite_eq_left hi]
       let i : Fin r := ⟨index, by omega⟩
       let j : Fin r := ⟨index + 1, hi⟩
       let w := vectorStep v i j
@@ -547,14 +547,14 @@ private theorem vectorPassFuel_toList (fuel index : Nat) (v : Vector Nat r)
             have hkj : k ≠ index + 1 := by omega
             have hik : index ≠ k := Ne.symm hki
             have hjk : index + 1 ≠ k := Ne.symm hkj
-            simp [List.getElem_append, hkpre, w, vectorStep, i, j,
-              Vector.getElem_set, hki, hkj, hik, hjk, hir, hi, hmin]
+            simp [hkpre, w, vectorStep, i, j,
+              hik, hjk, hmin]
           · have hkeq : k = index := by simp at hk hk'; omega
             subst k
-            simp [List.getElem_append, w, vectorStep, i, j,
-              Vector.getElem_set, hir, hi, hmin]
+            simp [w, vectorStep, i, j,
+              hmin]
       have hget : w[index + 1] = Nat.lcm v[index] v[index + 1] := by
-        simp [w, vectorStep, i, j, Vector.getElem_set, hir, hi]
+        simp [w, vectorStep, i, j]
       have hdrop : w.toList.drop (index + 1 + 1) =
           v.toList.drop (index + 1 + 1) := by
         apply List.ext_getElem
@@ -564,8 +564,8 @@ private theorem vectorPassFuel_toList (fuel index : Nat) (v : Vector Nat r)
           have hkj : index + 1 + 1 + k ≠ index + 1 := by omega
           have hik : index ≠ index + 1 + 1 + k := Ne.symm hki
           have hjk : index + 1 ≠ index + 1 + 1 + k := Ne.symm hkj
-          simp [w, vectorStep, i, j, Vector.getElem_set, hir, hi,
-            hki, hkj, hik, hjk]
+          simp [w, vectorStep, i, j,
+            hik, hjk]
       rw [htake, hget, hdrop]
       have hsplit : v.toList.drop (index + 1) =
           v[index + 1] :: v.toList.drop (index + 1 + 1) := by
@@ -624,7 +624,7 @@ def nonzeros : List Nat → List Nat
     nonzeros (List.replicate n 0) = [] := by
   cases n with
   | zero => rfl
-  | succ n => rw [List.replicate_succ, nonzeros, if_pos rfl]
+  | succ n => rw [List.replicate_succ, nonzeros, ite_eq_left rfl]
 
 private theorem chain_zero_all {xs : List Nat} (h : Chain (0 :: xs)) :
     ∀ x ∈ xs, x = 0 := by
@@ -695,15 +695,15 @@ theorem chain_split (xs : List Nat) (h : Chain xs) :
               simp at hx
           · obtain ⟨k, hsplit, hchain, hpos⟩ := ih h.2
             refine ⟨k, ?_, ?_, ?_⟩
-            · rw [nonzeros, if_neg ha]
+            · rw [nonzeros, ite_eq_right ha]
               simpa only [List.cons_append] using congrArg (List.cons a) hsplit
             · by_cases hb : b = 0
               · subst b
                 simp [nonzeros, ha, Chain]
-              · simp only [nonzeros, if_neg ha, if_neg hb, Chain] at hchain ⊢
+              · simp only [nonzeros, ite_eq_right ha, ite_eq_right hb, Chain] at hchain ⊢
                 exact ⟨h.1, hchain⟩
             · intro x hx
-              rw [nonzeros, if_neg ha] at hx
+              rw [nonzeros, ite_eq_right ha] at hx
               simp only [List.mem_cons] at hx
               rcases hx with rfl | hx
               · omega
@@ -849,14 +849,14 @@ theorem pairArray_size (values : Array Int) (hsize : values.size = r)
     (i j : Fin r) : (pairArray values hsize i j).size = r := by
   simp only [pairArray]
   by_cases ha : values[i.val]'(by omega) = 0
-  · rw [if_pos ha]
+  · rw [ite_eq_left ha]
     by_cases hb : values[j.val]'(by omega) = 0
-    · rw [if_pos hb]; exact hsize
-    · rw [if_neg hb]; simpa using hsize
-  · rw [if_neg ha]
+    · rw [ite_eq_left hb]; exact hsize
+    · rw [ite_eq_right hb]; simpa using hsize
+  · rw [ite_eq_right ha]
     by_cases hb : values[j.val]'(by omega) = 0
-    · rw [if_pos hb]; exact hsize
-    · rw [if_neg hb]
+    · rw [ite_eq_left hb]; exact hsize
+    · rw [ite_eq_right hb]
       split <;> simp [hsize]
 
 private theorem pairArray_eq (values : Array Int) (hsize : values.size = r)
@@ -864,14 +864,14 @@ private theorem pairArray_eq (values : Array Int) (hsize : values.size = r)
     pairArray values hsize i j = (pairValues ⟨values, hsize⟩ i j).toArray := by
   simp only [pairArray, pairValues, Fin.getElem_fin, Vector.getElem_mk]
   by_cases ha : values[i.val]'(by omega) = 0
-  · simp only [ha, if_pos]
+  · simp only [ha, ite_eq_left]
     by_cases hb : values[j.val]'(by omega) = 0
-    · simp only [hb, if_pos]
+    · simp only [hb, ite_eq_left]
     · simp [hb]
-  · simp only [ha, if_neg]
+  · simp only [ha]
     by_cases hb : values[j.val]'(by omega) = 0
     · simp [hb]
-    · simp only [hb, if_neg]
+    · simp only [hb]
       by_cases hab : values[i.val]'(by omega) = values[j.val]'(by omega)
       · simp [hab]
       · simp [hab]
@@ -922,22 +922,22 @@ private theorem pairValues_eq (ops : Smith.Accumulator α r r) (s : Result α r)
     (i j : Fin r) : pairValues s.values i j = (pairStep ops s i j).values := by
   simp only [pairValues, pairStep]
   by_cases ha : s.values[i] = 0
-  · rw [if_pos ha, if_pos ha]
+  · rw [ite_eq_left ha, ite_eq_left ha]
     by_cases hb : s.values[j] = 0
-    · rw [if_pos hb, if_pos hb]
-    · rw [if_neg hb, if_neg hb, swap]
+    · rw [ite_eq_left hb, ite_eq_left hb]
+    · rw [ite_eq_right hb, ite_eq_right hb, swap]
       split
       · rename_i hij
         subst j
         exact (hb ha).elim
       · rfl
-  · rw [if_neg ha, if_neg ha]
+  · rw [ite_eq_right ha, ite_eq_right ha]
     by_cases hb : s.values[j] = 0
-    · rw [if_pos hb, if_pos hb]
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       by_cases hab : s.values[i] = s.values[j]
-      · rw [if_pos hab, if_pos hab]
-      · rw [if_neg hab, if_neg hab]
+      · rw [ite_eq_left hab, ite_eq_left hab]
+      · rw [ite_eq_right hab, ite_eq_right hab]
 
 /-- Consecutive form-only adjacent updates. -/
 @[expose]
@@ -1137,11 +1137,11 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
       rcases h with ⟨rfl⟩
       rw [normalizeFuel, normalizeFuel]
       by_cases ht : target < r
-      · rw [dif_pos ht, dif_pos ht]
+      · rw [dite_eq_left ht, dite_eq_left ht]
         cases hf : findNonzero? values target with
-        | none => simp only [hf]; exact ⟨rfl⟩
+        | none => simp only []; exact ⟨rfl⟩
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := swap_same ops ops'
               (⟨rfl⟩ : Same
@@ -1157,7 +1157,7 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
                   pivot found).values[pivot] < 0 := by
                 rw [← hvalues]
                 exact hp
-              rw [if_pos hp, if_pos hp']
+              rw [ite_eq_left hp, ite_eq_left hp']
               apply ih
               exact ⟨by rw [hvalues]⟩
             · have hp' : ¬ (swap ops'
@@ -1165,9 +1165,9 @@ private theorem normalizeFuel_same (ops : Smith.Accumulator α r r)
                   pivot found).values[pivot] < 0 := by
                 rw [← hvalues]
                 exact hp
-              rw [if_neg hp, if_neg hp']
+              rw [ite_eq_right hp, ite_eq_right hp']
               exact ih (target + 1) ⟨hvalues⟩
-      · rw [dif_neg ht, dif_neg ht]
+      · rw [dite_eq_right ht, dite_eq_right ht]
         exact ⟨rfl⟩
 
 private theorem pairStep_same (ops : Smith.Accumulator α r r)
@@ -1178,21 +1178,21 @@ private theorem pairStep_same (ops : Smith.Accumulator α r r)
   rcases h with ⟨rfl⟩
   simp only [pairStep]
   by_cases ha : values[i] = 0
-  · rw [if_pos ha, if_pos ha]
+  · rw [ite_eq_left ha, ite_eq_left ha]
     by_cases hb : values[j] = 0
-    · rw [if_pos hb, if_pos hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
       exact ⟨rfl⟩
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       exact swap_same ops ops' ⟨rfl⟩ i j
-  · rw [if_neg ha, if_neg ha]
+  · rw [ite_eq_right ha, ite_eq_right ha]
     by_cases hb : values[j] = 0
-    · rw [if_pos hb, if_pos hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
       exact ⟨rfl⟩
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       by_cases hab : values[i] = values[j]
-      · rw [if_pos hab, if_pos hab]
+      · rw [ite_eq_left hab, ite_eq_left hab]
         exact ⟨rfl⟩
-      · rw [if_neg hab, if_neg hab]
+      · rw [ite_eq_right hab, ite_eq_right hab]
         exact ⟨rfl⟩
 
 private theorem passFuel_same (ops : Smith.Accumulator α r r)
@@ -1204,10 +1204,10 @@ private theorem passFuel_same (ops : Smith.Accumulator α r r)
   | succ fuel ih =>
       rw [passFuel, passFuel]
       by_cases hi : index + 1 < r
-      · rw [dif_pos hi, dif_pos hi]
+      · rw [dite_eq_left hi, dite_eq_left hi]
         exact ih (index + 1) (pairStep_same ops ops' h
           ⟨index, by omega⟩ ⟨index + 1, hi⟩)
-      · rw [dif_neg hi, dif_neg hi]
+      · rw [dite_eq_right hi, dite_eq_right hi]
         exact h
 
 private theorem pass_same (ops : Smith.Accumulator α r r)

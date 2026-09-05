@@ -218,7 +218,7 @@ theorem rationalGcdCandidate_of_primitive {f h : ZPoly} (hf : Primitive f) :
   change normalizePrimitiveSign (DensePoly.scale (1 : Int) primitive) = primitive
   rw [hscaleOne]
   unfold normalizePrimitiveSign
-  rw [if_neg (by
+  rw [ite_eq_right (by
     have hlead := leadingCoeff_ratPolyPrimitivePart_nonneg
       (DensePoly.gcd (toRatPoly f) (toRatPoly h))
     have hleadPrimitive : 0 ≤ DensePoly.leadingCoeff primitive := by
@@ -1041,7 +1041,7 @@ theorem rationalGcdCert_checks (f h : ZPoly) :
     have hcop :
         checkCoprime cofL cofR (rationalCoprimeWitness cofL cofR) = true :=
       rationalCoprimeWitness_checks hcofNz hcopSize
-    rw [rationalGcdCert, if_neg hzero]
+    rw [rationalGcdCert, ite_eq_right hzero]
     change checkGcd f h
       { gcd := g, cofL := cofL, cofR := cofR,
         coprime := rationalCoprimeWitness cofL cofR } = true
@@ -1057,7 +1057,7 @@ candidate in its gcd field. -/
 theorem rationalGcdCert_gcd {f h : ZPoly} (hnz : f ≠ 0 ∨ h ≠ 0) :
     (rationalGcdCert f h).gcd = rationalGcdCandidate f h := by
   unfold rationalGcdCert
-  rw [if_neg (by
+  rw [ite_eq_right (by
     intro hzero
     rcases hnz with hf | hh
     · exact hf hzero.1
@@ -1124,9 +1124,9 @@ private theorem structuralReduction?_products {f h : ZPoly}
   unfold structuralReduction? at hresult
   dsimp only at hresult
   by_cases hzero : f.isZero || h.isZero
-  · rw [if_pos hzero] at hresult
+  · rw [ite_eq_left hzero] at hresult
     contradiction
-  · rw [if_neg hzero] at hresult
+  · rw [ite_eq_right hzero] at hresult
     let commonPower := min (xOrder f) (xOrder h)
     let commonContent : Int := Int.ofNat (Int.gcd (content f) (content h))
     let factor := DensePoly.scale commonContent (xPower commonPower)
@@ -1205,12 +1205,12 @@ private theorem afterCoprime_checks (f h : ZPoly) :
     checkGcd f h (afterCoprime f h) = true := by
   unfold afterCoprime
   by_cases hsmall : max f.size h.size ≤ heuSizeLimit
-  · rw [if_pos hsmall]
+  · rw [ite_eq_left hsmall]
     generalize hheu : heuCert? f h = cert?
     cases cert? with
     | some cert => exact heuCert?_checks hheu
     | none => exact brownOrFallback_checks f h
-  · rw [if_neg hsmall]
+  · rw [ite_eq_right hsmall]
     exact brownOrFallback_checks f h
 
 /-- Routes 1--4 on inputs after structural content and `x`-power removal. -/
@@ -1237,9 +1237,9 @@ private theorem reducedGcdCert_checks (f h : ZPoly) :
   | some cert => exact differenceCert?_checks hdiff
   | none =>
       by_cases hbits : brownBitCutoff < max (maxAbs f).log2 (maxAbs h).log2
-      · rw [if_pos hbits]
+      · rw [ite_eq_left hbits]
         exact brownOrFallback_checks f h
-      · rw [if_neg hbits]
+      · rw [ite_eq_right hbits]
         generalize hcop : coprimeCert? f h = coprime?
         cases coprime? with
         | some cert => exact coprimeCert?_checks hcop
@@ -1298,7 +1298,7 @@ theorem gcdCert_checks (f h : ZPoly) :
           simp only
           let cert := reducedGcdCert reduced.left reduced.right
           by_cases hfactor : reduced.factor == 1
-          · rw [if_pos hfactor]
+          · rw [ite_eq_left hfactor]
             have hfactorEq : reduced.factor = 1 := by
               simpa only [beq_iff_eq] using hfactor
             have hproducts := structuralReduction?_products hreduction
@@ -1314,7 +1314,7 @@ theorem gcdCert_checks (f h : ZPoly) :
               exact hproducts.2
             simpa only [cert, hleft, hright] using
               reducedGcdCert_checks reduced.left reduced.right
-          · rw [if_neg hfactor]
+          · rw [ite_eq_right hfactor]
             generalize hrestore : restoreStructural? f h reduced cert = restored?
             cases restored? with
             | some restored =>

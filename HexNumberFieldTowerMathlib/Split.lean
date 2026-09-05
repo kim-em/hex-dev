@@ -35,11 +35,11 @@ private theorem oneLevel_isRoot (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   have hdvd := shifted_dvd_norm level lower hvalid hinjectiveTop f 0
   have hdvdComplex := Polynomial.map_dvd
     (LevelSemantics.coeffHom (level :: lower) hvalid hinjectiveTop hinvTop)
@@ -80,7 +80,7 @@ private theorem basePolynomial (f : Array (Array Rat)) :
     rawPolynomial [] (Factor.rawPoly [] f) =
       (HexPolyMathlib.toPolynomial (Factor.toRatPoly f)).map
         (algebraMap Rat ℂ) := by
-  letI : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
+  let : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
   have hvalidNil : LevelsValid [] := by exact trivial
   have hhom :
       (algebraMap Rat ℂ).comp LevelSemantics.coeffRatEquiv.toRingHom =
@@ -117,7 +117,7 @@ theorem iterated_isRoot_toRat (T : NumberTower) (f : Poly T) (z : ℂ)
 
 private theorem toRatPoly_ne_zero (f : Array (Array Rat))
     (hf : Factor.rawPoly [] f ≠ 0) : Factor.toRatPoly f ≠ 0 := by
-  letI : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
+  let : Field (Arithmetic.Coeff []) := LevelSemantics.coeffFieldNil
   intro hzero
   have hmap := LevelSemantics.map_rawPoly_nil f
   rw [hzero, HexPolyMathlib.toPolynomial_zero] at hmap
@@ -367,7 +367,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
       (factorEliminant T f) hcoreSize hnot z hcoreRoot
   unfold factorRoot?
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   have hisolateSome := HexRootsMathlib.isolate_isSome
     (factorEliminant T f) hsimple hcoreNe
     (separationDepth (factorEliminant T f) : Int) .nkThenPellet
@@ -380,7 +380,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined
+          rw [dite_eq_left (HexRootsMathlib.isolate_refined
             (factorEliminant T f) hsimple
             (separationDepth (factorEliminant T f) : Int)
             .nkThenPellet hisolate iso hiso)]
@@ -871,7 +871,7 @@ private theorem adjoin_dim_le {T : NumberTower} (candidate : AlgebraicRoot)
   by_cases hdegreeZero : selected.degree?.getD 0 = 0
   · simp [hdegreeZero] at h
   by_cases hdegreeOne : selected.degree?.getD 0 = 1
-  · simp only [hdegreeZero, hdegreeOne, one_ne_zero, ↓reduceIte,
+  · simp only [hdegreeOne, one_ne_zero, ↓reduceIte,
       Option.some.injEq] at h
     subst E
     exact Nat.le_refl T.dim
@@ -1051,7 +1051,7 @@ private theorem mem_roots_of_isRoot {T : NumberTower} {f : Poly T}
         exact Polynomial.leadingCoeff_ne_zero.mpr hf
       have hproduct := (mul_eq_zero.mp hmappedRoot).resolve_left hlead
       rw [Polynomial.eval_list_prod, List.prod_eq_zero_iff] at hproduct
-      simp only [List.map_map, Function.comp_apply] at hproduct
+      simp only [List.map_map] at hproduct
       obtain ⟨entry, hentry, hentryZero⟩ := List.mem_map.mp hproduct
       have hpositive := hS.2.2.2.1
       rw [hroots] at hpositive
@@ -1238,7 +1238,7 @@ private theorem linearSplitting_sound {T : NumberTower} {f : Poly T}
   refine ⟨identity_preserves T, hreconstruct, ?_,
     linearRoots_positive r hlinear,
     linearRoots_nodup r hsound hlinear, ?_, ?_⟩
-  · simp [S, hf]
+  · simp [hf]
   · intro entry hentry
     change entry ∈ roots.toList at hentry
     change Polynomial.eval (T.toComplex entry.1)
@@ -1416,9 +1416,9 @@ private theorem zeroSplitting_sound (T : NumberTower) :
   refine ⟨identity_preserves T, ?_, ?_, trivial, trivial, ?_, ?_⟩
   · change 0 = mapPoly id (0 : Poly T)
     exact (mapPoly_id T 0).symm
-  · simp [S, toPolynomial_zero]
+  · simp [toPolynomial_zero]
   · intro entry hentry
-    exact (by simpa [S, Roots.Contains] using hentry)
+    exact (by simp [Roots.Contains] at hentry)
   · intro a
     change Splitting.GeneratedBy S a
     exact Splitting.GeneratedBy.base (S := S) a
@@ -1448,13 +1448,13 @@ private theorem constantSplitting_sound {T : NumberTower} {f : Poly T}
       mapPoly_id, hpoly]
     simp
   refine ⟨identity_preserves T, hreconstruct, ?_, ?_, ?_, ?_, ?_⟩
-  · simp [S, hf]
+  · simp [hf]
   · change (Roots.finite (#[] : Array (Elem T × Nat))).Positive
     rintro ⟨a, b⟩ hentry
     simp at hentry
-  · simp [S, Roots.NoDuplicates]
+  · simp [Roots.NoDuplicates]
   · intro entry hentry
-    exact (by simpa [S, Roots.Contains] using hentry)
+    exact (by simp [Roots.Contains] at hentry)
   · intro a
     change Splitting.GeneratedBy S a
     exact Splitting.GeneratedBy.base (S := S) a

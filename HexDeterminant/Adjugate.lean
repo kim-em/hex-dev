@@ -160,9 +160,9 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     rw [hrow, hcol, adjugate_get]
   by_cases hij : i = j
   · subst hij
-    rw [hentry, if_pos rfl]
+    rw [hentry, ite_eq_left rfl]
     exact (det_eq_foldl_laplace_row M i).symm
-  · rw [hentry, if_neg hij, ← Fin.foldl_eq_finRange_foldl]
+  · rw [hentry, ite_eq_right hij, ← Fin.foldl_eq_finRange_foldl]
     exact foldl_alien_cofactor_eq_zero M i j hij
 
 /-- The adjugate identity `M * adjugate M = det M • identity`. -/
@@ -173,8 +173,8 @@ theorem mul_adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   intro i j
   rw [mul_adjugate_apply, Matrix.smul_getElem, getElem_identity]
   by_cases h : i = j
-  · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
-  · rw [if_neg h, if_neg h]; show (0 : R) = det M * 0; grind
+  · rw [ite_eq_left h, ite_eq_left h]; show det M = det M * 1; grind
+  · rw [ite_eq_right h, ite_eq_right h]; show (0 : R) = det M * 0; grind
 
 /-- Entrywise version of `adjugate M * M = det M • 1`.
 
@@ -228,9 +228,9 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   by_cases hij : i = j
   · subst hij
     rfl
-  · rw [if_neg hij]
+  · rw [ite_eq_right hij]
     have hji : j ≠ i := fun h => hij h.symm
-    rw [if_neg hji]
+    rw [ite_eq_right hji]
 
 /-- The adjugate identity `adjugate M * M = det M • identity`.
 
@@ -244,8 +244,8 @@ theorem adjugate_mul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   intro i j
   rw [adjugate_mul_apply, Matrix.smul_getElem, getElem_identity]
   by_cases h : i = j
-  · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
-  · rw [if_neg h, if_neg h]; show (0 : R) = det M * 0; grind
+  · rw [ite_eq_left h, ite_eq_left h]; show det M = det M * 1; grind
+  · rw [ite_eq_right h, ite_eq_right h]; show (0 : R) = det M * 0; grind
 
 /-- Column-`0` view of `M * adjugate M`. -/
 theorem mul_adjugate_apply_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -469,9 +469,9 @@ private theorem setRow_mul_adjugate_apply_ne
   rw [setRow_mul_adjugate_apply_row, setRow_row_ne M r i u hir]
   by_cases his : i = s
   · subst his
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact cofactorRowPairing_self M i
-  · rw [if_neg his]
+  · rw [ite_eq_right his]
     exact cofactorRowPairing_alien_eq_zero M i s his
 
 /-- Lift a bilinear "`det · f = a · g - b · h`" pointwise identity over a
@@ -544,9 +544,9 @@ private theorem det_mul_cofactor_setRow_eq
       rw [adjugate_mul_apply, adjugate_get]
       by_cases hcl : c = l
       · subst hcl
-        rw [if_pos rfl, if_pos rfl]
+        rw [ite_eq_left rfl, ite_eq_left rfl]
       · have hlc : l ≠ c := fun h => hcl h.symm
-        rw [if_neg hcl, if_neg hlc]
+        rw [ite_eq_right hcl, ite_eq_right hlc]
         grind
     rw [hcongr]
     have hmatch :=
@@ -584,13 +584,13 @@ private theorem det_mul_cofactor_setRow_eq
       by_cases hir : i = r
       · subst hir
         have his_ne : i ≠ s := fun h => hrs h.symm
-        rw [setRow_mul_adjugate_apply_self M i u s, if_pos rfl, if_neg his_ne,
+        rw [setRow_mul_adjugate_apply_self M i u s, ite_eq_left rfl, ite_eq_right his_ne,
           Lean.Grind.AddCommMonoid.add_zero]
-      · rw [setRow_mul_adjugate_apply_ne M r u i s hir, if_neg hir]
+      · rw [setRow_mul_adjugate_apply_ne M r u i s hir, ite_eq_right hir]
         by_cases his : i = s
         · subst his
-          rw [if_pos rfl, if_pos rfl, Lean.Grind.AddCommMonoid.zero_add]
-        · rw [if_neg his, if_neg his, Lean.Grind.Semiring.mul_zero,
+          rw [ite_eq_left rfl, ite_eq_left rfl, Lean.Grind.AddCommMonoid.zero_add]
+        · rw [ite_eq_right his, ite_eq_right his, Lean.Grind.Semiring.mul_zero,
             Lean.Grind.AddCommMonoid.add_zero]
     rw [hbody, List.foldl_add_add]
     have hr_extract :=

@@ -55,9 +55,9 @@ theorem vecMul_unit (B : Matrix Int n m) (i : Fin n) :
             (if k = i then B[i][col] else 0)
           by_cases hki : k = i
           · subst k
-            rw [if_pos rfl, Int.mul_one]
-            rw [if_pos rfl]
-          · rw [if_neg hki, if_neg (Ne.symm hki), Int.mul_zero]
+            rw [ite_eq_left rfl, Int.mul_one]
+            rw [ite_eq_left rfl]
+          · rw [ite_eq_right hki, ite_eq_right (Ne.symm hki), Int.mul_zero]
     _ = B[i][col] := by
       rw [List.foldl_add_single (List.finRange n) 0 i
         (fun _ => B[i][col]) (List.mem_finRange _) (List.nodup_finRange n)]

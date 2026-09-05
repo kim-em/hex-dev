@@ -178,7 +178,7 @@ private theorem map_natDegree_factorsModP
     data.factorsModP.toList.map
         (fun g => (HexBerlekampMathlib.toMathlibPolynomial g).natDegree) =
       (Hex.directFactorDegrees data).toList := by
-  letI := data.bounds
+  let := data.bounds
   simp only [Hex.directFactorDegrees, Array.toList_map]
   refine List.map_congr_left ?_
   intro g _
@@ -199,9 +199,9 @@ theorem exists_subMultiset_directFactorDegrees_of_dvd
     {c : Hex.ZPoly} (hdvd : c ∣ core) :
     ∃ S ≤ ((Hex.directFactorDegrees data).toList : Multiset Nat),
       S.sum = c.degree?.getD 0 := by
-  letI := data.bounds
-  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
-  letI : Hex.ZMod64.PrimeModulus data.p :=
+  let := data.bounds
+  have : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
+  let : Hex.ZMod64.PrimeModulus data.p :=
     Hex.ZMod64.primeModulusOfPrime hval.prime
   have hcore_modP_nz :
       (@Hex.ZPoly.modP data.p data.bounds core).isZero = false :=

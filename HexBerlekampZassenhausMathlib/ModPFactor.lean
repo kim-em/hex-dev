@@ -65,7 +65,7 @@ theorem toMathlibPolynomial_modPFactorProduct
     HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S) =
       ∏ i ∈ S,
         HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   unfold modPFactorProduct
   rw [show
       (S.toList.foldl (fun acc i => acc * modPFactor primeData i)
@@ -152,7 +152,7 @@ private theorem monicModularImage_dvd_self_of_isZero_false
     {p : Nat} [Hex.ZMod64.Bounds p] (hprime : Hex.Nat.Prime p)
     {f : Hex.FpPoly p} (hf : f.isZero = false) :
     Hex.monicModularImage f ∣ f := by
-  letI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
+  let : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
   have hsize_pos : 0 < f.size :=
     (Hex.DensePoly.isZero_eq_false_iff _).mp hf
   have hlead_ne :
@@ -170,7 +170,7 @@ theorem monicModPImage_dvd_self_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
     monicModPImage f ∣ f := by
-  letI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
+  let : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
   unfold monicModPImage
   simp only [hf, Bool.false_eq_true, ↓reduceIte]
   have hf_ne : f ≠ 0 := by
@@ -303,8 +303,8 @@ theorem monicModPImage_dvd_monicModularImage_of_dvd_of_goodPrime
         (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
       Hex.monicModularImage
         (@Hex.ZPoly.modP primeData.p primeData.bounds core) := by
-  letI := primeData.bounds
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let := primeData.bounds
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hcore_iszero :
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
@@ -494,8 +494,8 @@ theorem mem_modPSubset_of_dvd
           (@Hex.ZPoly.modP primeData.p primeData.bounds factor))) :
     i ∈ S := by
   classical
-  letI := primeData.bounds
-  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  let := primeData.bounds
+  have : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   let F : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
     fun j => @HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
       (modPFactor primeData j)
@@ -561,7 +561,7 @@ leading-coefficient normalisation divides the unit scalar back out. -/
 theorem monicModPImage_scale {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {c : Hex.ZMod64 p} (hc : c ≠ 0) (f : Hex.FpPoly p) :
     monicModPImage (Hex.DensePoly.scale c f) = monicModPImage f := by
-  letI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
+  let : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
   cases hf : f.isZero with
   | true =>
     have hf_size : f.size = 0 := by
@@ -633,7 +633,7 @@ private theorem modP_scale_neg_one {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.ZPol
 /-- `-1` is a nonzero residue modulo a prime. -/
 private theorem neg_one_ne_zero_zmod {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) : (-1 : Hex.ZMod64 p) ≠ 0 := by
-  haveI : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
+  have : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
   intro h
   have hz : HexModArithMathlib.ZMod64.toZMod (-1 : Hex.ZMod64 p) =
       HexModArithMathlib.ZMod64.toZMod (0 : Hex.ZMod64 p) := by rw [h]
@@ -684,7 +684,7 @@ theorem representsIntegerFactorModP_of_associated
       Associated (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g))
     (hf : RepresentsIntegerFactorModP primeData f S) :
     RepresentsIntegerFactorModP primeData g S := by
-  letI := primeData.bounds
+  let := primeData.bounds
   unfold RepresentsIntegerFactorModP at hf ⊢
   rw [hf]
   exact monicModPImage_modP_eq_of_associated hprime hassoc
@@ -759,7 +759,7 @@ theorem modPFactorSubset_disjoint_of_not_associated
       ¬ Associated (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g)) :
     Disjoint S T := by
   classical
-  letI := primeData.bounds
+  let := primeData.bounds
   set p := primeData.p with hp_def
   -- `modP f`, `modP g` are nonzero because they divide the nonzero `modP core`.
   have hf_modP_nz : (Hex.ZPoly.modP p f).isZero = false :=

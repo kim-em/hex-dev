@@ -30,7 +30,7 @@ namespace HexBerlekampZassenhausMathlib
 
 namespace IntReductionMod
 
-open Polynomial
+open _root_.Polynomial
 
 variable {p : ℕ}
 /-! # Rational repeated-part transport
@@ -552,7 +552,7 @@ private theorem List.nodup_of_prod_squarefree
       · subst hx
         rw [Multiset.count_replicate_self]
         omega
-      · rw [Multiset.count_replicate, if_neg (Ne.symm hx)]
+      · rw [Multiset.count_replicate, ite_eq_right (Ne.symm hx)]
         exact Nat.zero_le _
     have hdvd_prod := Multiset.prod_dvd_prod_of_le hle
     rw [Multiset.prod_replicate, Multiset.prod_coe] at hdvd_prod
@@ -971,7 +971,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
       by_contra hlt
       have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
       unfold Hex.normalizeFactorSign at hq_norm
-      rw [if_pos hlt'] at hq_norm
+      rw [ite_eq_left hlt'] at hq_norm
       apply hq_ne
       apply Hex.DensePoly.ext_coeff
       intro n
@@ -1279,7 +1279,7 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
       by_contra hlt
       have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
       unfold Hex.normalizeFactorSign at hq_norm
-      rw [if_pos hlt'] at hq_norm
+      rw [ite_eq_left hlt'] at hq_norm
       apply hq_ne
       apply Hex.DensePoly.ext_coeff
       intro n

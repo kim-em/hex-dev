@@ -150,7 +150,7 @@ theorem sub_eq_add_neg {T : NumberTower} (a b : Elem T) :
   congr 1
   funext i
   simpa only [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn,
-    dif_pos i.isLt, Option.getD_some] using Rat.sub_eq_add_neg
+    dite_eq_left i.isLt, Option.getD_some] using Rat.sub_eq_add_neg
       ((coeffs a).getD i 0) ((coeffs b).getD i 0)
 
 /-- Coordinatewise negation is an additive inverse. -/

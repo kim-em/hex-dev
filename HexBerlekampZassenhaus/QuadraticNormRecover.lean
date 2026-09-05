@@ -254,7 +254,7 @@ theorem check_of_certify? {f : ZPoly} {cert : QuadraticNormCertificate}
   | some proposal =>
       rw [hrec] at h
       by_cases hcheck : proposal.check f = true
-      · simp only [hcheck, if_true] at h
+      · simp only [hcheck, ite_true] at h
         rw [← Option.some.inj h]
         exact hcheck
       · simp only [Bool.not_eq_true] at hcheck

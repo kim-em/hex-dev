@@ -585,10 +585,10 @@ theorem mulNttCrt?_eq (left right result : FpPoly p)
                         ((DensePoly.ofList (intLift left) : DensePoly Int) *
                           DensePoly.ofList (intLift right)).coeff j.val := by
                     change reference.toArray[j.val]'(by
-                      simpa [hreferenceSize] using j.isLt) = _
+                      simp [hreferenceSize]) = _
                     rw [List.getElem_toArray]
                     rw [List.getElem_eq_getD (h := by
-                      simpa [hreferenceSize] using j.isLt)
+                      simp [hreferenceSize])
                         (Zero.zero : Int)]
                     exact getD_intReference n j.val left right
                   have hmoduli : plan.moduli = selection.moduli :=

@@ -394,15 +394,15 @@ theorem LiftModulus.centered_eq (m : LiftModulus) (z : Int) :
   unfold LiftModulus.centered centeredModNat
   by_cases hm : m.nat = 0
   · simp [hm]
-  · simp only [hm, if_false, m.int_eq, m.half_eq, Int.ofNat_eq_natCast]
+  · simp only [hm, ite_false, m.int_eq, m.half_eq, Int.ofNat_eq_natCast]
     have hne : ((m.nat : Nat) : Int) ≠ 0 := by omega
     have hnonneg : 0 ≤ z % ((m.nat : Nat) : Int) := Int.emod_nonneg z hne
     by_cases hhalf : 2 * (z % ((m.nat : Nat) : Int)).natAbs ≤ m.nat
     · have hle : z % ((m.nat : Nat) : Int) ≤ ((m.nat / 2 : Nat) : Int) := by omega
-      rw [if_pos hle, if_pos hhalf]
+      rw [ite_eq_left hle, ite_eq_left hhalf]
     · have hnle : ¬ z % ((m.nat : Nat) : Int) ≤ ((m.nat / 2 : Nat) : Int) := by omega
       have hnotneg : ¬ z % ((m.nat : Nat) : Int) < 0 := by omega
-      rw [if_neg hnle, if_neg hhalf, if_neg hnotneg]
+      rw [ite_eq_right hnle, ite_eq_right hhalf, ite_eq_right hnotneg]
 
 /-- Centred residue modulo `p^b`, the `mod^±` operation in the BHKS cut. -/
 @[expose]
@@ -553,7 +553,7 @@ theorem centeredModNat_emod_self (z : Int) (m : Nat) :
       show z % Int.ofNat m % Int.ofNat m = z % Int.ofNat m
       exact Int.emod_emod _ _
     unfold centeredModNat
-    rw [if_neg hm, if_neg hm, hmod]
+    rw [ite_eq_right hm, ite_eq_right hm, hmod]
 
 /-- `centeredModNat` chooses a representative congruent to the input modulo `m`. -/
 theorem self_sub_centeredModNat_dvd (z : Int) (m : Nat) :
@@ -589,7 +589,7 @@ theorem centeredResiduePow_add_pow_mul_psiCut
       centeredResiduePow p b (centeredResiduePow p a z) +
         ((p ^ b : Nat) : Int) * psiCut p a b z := by
   unfold psiCut
-  rw [if_neg hmod]
+  rw [ite_eq_right hmod]
   let xCentered := centeredResiduePow p a z
   let lower := centeredResiduePow p b xCentered
   have hdvd : ((p ^ b : Nat) : Int) ∣ xCentered - lower := by
@@ -637,7 +637,7 @@ theorem psiCut_eq_zero_of_natAbs_le
   have hbne : (p ^ b : Nat) ≠ 0 := Nat.ne_of_gt hbpos
   have hcentered_amb : centeredResiduePow p a z = y :=
     centeredResiduePow_eq_of_natAbs_le p a y z B hbound hsep_a hcongr
-  rw [if_neg hbne]
+  rw [ite_eq_right hbne]
   show (centeredResiduePow p a z - centeredResiduePow p b (centeredResiduePow p a z))
       / Int.ofNat (p ^ b) = 0
   rw [hcentered_amb]

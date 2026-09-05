@@ -207,7 +207,7 @@ theorem substHom_reduceMod (b : Hex.FpPoly p) (fm : Hex.FpPoly p)
     (hzero : substHom f hf hp hirr b fm = 0) (g : Hex.FpPoly p) :
     substHom f hf hp hirr b (Hex.GFqRing.reduceMod fm g) =
       substHom f hf hp hirr b g := by
-  letI : Hex.DensePoly.DivModLaws (Hex.ZMod64 p) :=
+  let : Hex.DensePoly.DivModLaws (Hex.ZMod64 p) :=
     Hex.ZMod64.instDivModLawsZMod64Fp p
   have hspec := Hex.DensePoly.DivModLaws.divMod_spec (R := Hex.ZMod64 p) g fm
   have hg : (Hex.DensePoly.divMod g fm).1 * fm + Hex.GFqRing.reduceMod fm g = g := hspec

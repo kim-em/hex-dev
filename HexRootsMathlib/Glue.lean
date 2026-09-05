@@ -35,7 +35,7 @@ theorem linked_symm {s t : Hex.DyadicSquare} : Linked s t → Linked t s := Or.s
 
 /-- Executable adjacency is reflexive: a square is adjacent to itself. -/
 theorem edge_refl (s : Hex.DyadicSquare) : Edge s s := by
-  rw [Edge, Hex.DyadicSquare.adjacent, if_pos rfl]
+  rw [Edge, Hex.DyadicSquare.adjacent, ite_eq_left rfl]
   have hpos : (0 : _root_.Dyadic) < .ofIntWithPrec 1 (s.prec - 2) := by
     apply Dyadic.toReal_lt_toReal_iff.mp
     rw [Dyadic.toReal_zero, Dyadic.toReal_ofIntWithPrec]

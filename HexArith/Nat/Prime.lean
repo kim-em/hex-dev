@@ -393,8 +393,8 @@ private theorem binom_foldl (n : Nat) :
 theorem binom_eq_choose (n k : Nat) : binom n k = choose n k := by
   unfold binom
   by_cases h : n < k
-  · rw [if_pos h]; exact (choose_eq_zero_of_lt h).symm
-  · rw [if_neg h]
+  · rw [ite_eq_left h]; exact (choose_eq_zero_of_lt h).symm
+  · rw [ite_eq_right h]
     have hkn : k ≤ n := Nat.le_of_not_lt h
     rcases Nat.le_total k (n - k) with hle | hle
     · rw [Nat.min_eq_left hle]; exact binom_foldl n k hkn
@@ -718,14 +718,14 @@ private theorem no_divisor_of_isPrimeTrialAux {n fuel k : Nat}
   | zero =>
       rw [isPrimeTrialAux] at h
       by_cases hstop : n < k * k
-      · rw [if_pos hstop] at h
+      · rw [ite_eq_left hstop] at h
         intro d hkd hd hsq
         have hdk : d = k := by
           simp only [Nat.pow_zero] at hd
           omega
         subst d
         omega
-      · rw [if_neg hstop] at h
+      · rw [ite_eq_right hstop] at h
         intro d hkd hd _
         have hdk : d = k := by
           simp only [Nat.pow_zero] at hd
@@ -735,11 +735,11 @@ private theorem no_divisor_of_isPrimeTrialAux {n fuel k : Nat}
   | succ fuel ih =>
       rw [isPrimeTrialAux] at h
       by_cases hstop : n < k * k
-      · rw [if_pos hstop] at h
+      · rw [ite_eq_left hstop] at h
         intro d hkd _ hsq
         have hkk : k * k ≤ d * d := Nat.mul_le_mul hkd hkd
         omega
-      · rw [if_neg hstop, Bool.and_eq_true] at h
+      · rw [ite_eq_right hstop, Bool.and_eq_true] at h
         intro d hkd hd hsq
         have hpow : 2 ^ (fuel + 1) = 2 ^ fuel + 2 ^ fuel := by
           rw [Nat.pow_succ]
@@ -820,8 +820,8 @@ private theorem isPrimeTrialAux_of_prime {n : Nat} (hn : Prime n) :
       intro k hk2
       rw [isPrimeTrialAux]
       by_cases hstop : n < k * k
-      · rw [if_pos hstop]
-      · rw [if_neg hstop]
+      · rw [ite_eq_left hstop]
+      · rw [ite_eq_right hstop]
         apply decide_eq_true
         intro hmod
         have hdvd : k ∣ n := Nat.dvd_of_mod_eq_zero hmod
@@ -836,8 +836,8 @@ private theorem isPrimeTrialAux_of_prime {n : Nat} (hn : Prime n) :
       intro k hk2
       rw [isPrimeTrialAux]
       by_cases hstop : n < k * k
-      · rw [if_pos hstop]
-      · rw [if_neg hstop, Bool.and_eq_true]
+      · rw [ite_eq_left hstop]
+      · rw [ite_eq_right hstop, Bool.and_eq_true]
         exact ⟨ih k hk2,
           ih (k + 2 ^ fuel) (Nat.le_trans hk2 (Nat.le_add_right k _))⟩
 
