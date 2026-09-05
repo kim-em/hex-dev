@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Cert
+public import HexGraphIso.Nauty.Cert.Cert
 
 public section
 

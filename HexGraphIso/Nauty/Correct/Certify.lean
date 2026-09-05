@@ -8,8 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Correct.OffPath.Node
 public import HexGraphIso.Nauty.Correct.FirstPath.Sweep
-import all HexGraphIso.Nauty.CertAutom
-import all HexGraphIso.Nauty.CanonForm
+import all HexGraphIso.Nauty.Cert.CertAutom
+import all HexGraphIso.Nauty.Cert.CanonForm
 
 public section
 

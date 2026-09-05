@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Iso
-public import HexGraphIso.Nauty.CanonForm
+public import HexGraphIso.Nauty.Cert.CanonForm
 
 public section
 

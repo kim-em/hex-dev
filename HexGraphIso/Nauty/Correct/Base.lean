@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Outcome
-public import HexGraphIso.Nauty.SearchReach
-import all HexGraphIso.Nauty.Search
+public import HexGraphIso.Nauty.Invariant.Reach
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

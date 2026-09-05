@@ -7,10 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Unwind.Trail
-public import HexGraphIso.Nauty.QuartetNode
-public import HexGraphIso.Nauty.TargetCell
-import all HexGraphIso.Nauty.Search
-import all HexGraphIso.Nauty.SmallCellTie
+public import HexGraphIso.Nauty.Invariant.Incumbent
+public import HexGraphIso.Nauty.Invariant.TargetCell
+import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.SmallCell.Transitive
+import all HexGraphIso.Nauty.Invariant.Store
 
 public section
 

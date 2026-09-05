@@ -6,12 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.LoopCoverage
-public import HexGraphIso.Nauty.QuartetStmt
-public import HexGraphIso.Nauty.AutosLedger
-import all HexGraphIso.Nauty.OrbJoin
-import all HexGraphIso.Nauty.EquitableStep
-import HexGraphIso.Nauty.QuartetLoop
+public import HexGraphIso.Nauty.Invariant.Coverage
+public import HexGraphIso.Nauty.Invariant.Incumbent
+public import HexGraphIso.Nauty.Invariant.Autos
+import all HexGraphIso.Nauty.Invariant.Orbits
+import all HexGraphIso.Nauty.Equitable.Step
+import HexGraphIso.Nauty.Invariant.Closure
 
 public section
 

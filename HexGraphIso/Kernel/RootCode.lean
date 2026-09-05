@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Kernel.CheckKey
-public import HexGraphIso.Nauty.SpecIso
+public import HexGraphIso.Nauty.Spec.SpecIso
 
 public section
 
