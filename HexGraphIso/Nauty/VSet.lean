@@ -1195,6 +1195,21 @@ theorem rowCmp_gt_iff_lt {s t : VSet n} : s.rowCmp t = .gt ↔ t.rowCmp s = .lt 
   · rintro ⟨d, h1, h2, h3⟩
     exact ⟨d, h2, h1, fun i hi => (h3 i hi).symm⟩
 
+/-- The row order is transitive. -/
+theorem rowCmp_gt_trans {s t u : VSet n} (h1 : s.rowCmp t = .gt) (h2 : t.rowCmp u = .gt) :
+    s.rowCmp u = .gt := by
+  rw [rowCmp_gt_iff] at h1 h2 ⊢
+  obtain ⟨d1, hs1, ht1, hpre1⟩ := h1
+  obtain ⟨d2, ht2, hu2, hpre2⟩ := h2
+  rcases Nat.lt_trichotomy d1 d2 with hlt | heq | hgt
+  · refine ⟨d1, hs1, by rw [← hpre2 d1 hlt]; exact ht1, fun i hi => ?_⟩
+    rw [hpre1 i hi, hpre2 i (Nat.lt_trans hi hlt)]
+  · subst heq
+    rw [ht1] at ht2
+    cases ht2
+  · refine ⟨d2, by rw [hpre1 d2 hgt]; exact ht2, hu2, fun i hi => ?_⟩
+    rw [hpre1 i (Nat.lt_trans hi hgt), hpre2 i hi]
+
 /-! # Bulk construction -/
 
 /-- The set of vertices below `n` satisfying a predicate. -/
