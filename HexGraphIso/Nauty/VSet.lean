@@ -375,6 +375,26 @@ theorem mem_inter (s t : VSet n) (w : Nat) :
   · rw [getElem!_zipWith_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi]
     simp
 
+/-- Union. -/
+@[expose] def union (s t : VSet n) : VSet n :=
+  ofLimbs (Array.zipWith (· ||| ·) s.limbs t.limbs)
+    (wf_zipWith _ (fun a b ha hb => Nat.or_lt_two_pow ha hb)
+      (fun a b j h => by
+        rw [Nat.testBit_or] at h
+        rcases ha : a.testBit j with _ | _
+        · rw [ha] at h; simp at h; exact Or.inr h
+        · exact Or.inl rfl)
+      s t)
+
+theorem mem_union (s t : VSet n) (w : Nat) :
+    (s.union t).mem w = (s.mem w || t.mem w) := by
+  rw [union, mem_ofLimbs, mem, mem]
+  rcases Nat.lt_or_ge (w / 63) (limbCount n) with hi | hi
+  · rw [getElem!_zipWith _ s t _ hi, Nat.testBit_or]
+  · rw [getElem!_zipWith_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi,
+      getElem!_limbs_of_ge t _ hi]
+    simp
+
 /-- Symmetric difference. -/
 @[expose] def xor (s t : VSet n) : VSet n :=
   ofLimbs (Array.zipWith (· ^^^ ·) s.limbs t.limbs)
@@ -1698,6 +1718,125 @@ theorem card_image (σ : Renaming n) (s : VSet n) : (s.image σ).card = s.card :
         rw [List.mem_filter, List.mem_range] at hv
         exact ⟨(σ.maps v).mp hv.1, by rw [mem_image_apply σ s hv.1]; exact hv.2⟩
   rw [hperm.length_eq, List.length_map]
+
+/-! # Identities of the empty set -/
+
+@[simp] theorem inter_empty (s : VSet n) : s.inter empty = empty :=
+  ext fun w => by rw [mem_inter, mem_empty, Bool.and_false]
+
+@[simp] theorem empty_inter (s : VSet n) : (empty : VSet n).inter s = empty :=
+  ext fun w => by rw [mem_inter, mem_empty, Bool.false_and]
+
+@[simp] theorem union_empty (s : VSet n) : s.union empty = s :=
+  ext fun w => by rw [mem_union, mem_empty, Bool.or_false]
+
+@[simp] theorem empty_union (s : VSet n) : (empty : VSet n).union s = s :=
+  ext fun w => by rw [mem_union, mem_empty, Bool.false_or]
+
+theorem inter_self (s : VSet n) : s.inter s = s :=
+  ext fun w => by rw [mem_inter, Bool.and_self]
+
+/-! # Counts over disjoint unions -/
+
+private theorem countP_or_disjoint {p q : Nat → Bool} :
+    ∀ l : List Nat, (∀ i ∈ l, ¬(p i = true ∧ q i = true)) →
+      l.countP (fun i => p i || q i) = l.countP p + l.countP q
+  | [], _ => rfl
+  | x :: l, h => by
+    rw [List.countP_cons, List.countP_cons, List.countP_cons,
+      countP_or_disjoint l fun i hi => h i (List.mem_cons_of_mem x hi)]
+    rcases hp : p x with _ | _ <;> rcases hq : q x with _ | _
+    · simp
+    · simp; omega
+    · simp; omega
+    · exact absurd ⟨hp, hq⟩ (h x (List.mem_cons_self ..))
+
+/-- Member counts add over a disjoint union. -/
+theorem card_union_disjoint {a b : VSet n} (hd : a.inter b = empty) :
+    (a.union b).card = a.card + b.card := by
+  rw [card_eq_countBelow, card_eq_countBelow, card_eq_countBelow, countBelow, countBelow,
+    countBelow]
+  have hf : (a.union b).mem = fun i => a.mem i || b.mem i := funext fun i => mem_union a b i
+  rw [hf]
+  refine countP_or_disjoint _ fun i _ hpq => ?_
+  have := congrArg (fun s => s.mem i) hd
+  simp only [mem_inter, mem_empty, hpq.1, hpq.2] at this
+  cases this
+
+theorem inter_union_distrib (a b x : VSet n) :
+    (a.union b).inter x = (a.inter x).union (b.inter x) :=
+  ext fun w => by
+    rw [mem_inter, mem_union, mem_union, mem_inter, mem_inter]
+    cases a.mem w <;> cases b.mem w <;> cases x.mem w <;> rfl
+
+/-- Counts into a set add over a disjoint union. -/
+theorem cardInter_union_disjoint {a b : VSet n} (hd : a.inter b = empty) (x : VSet n) :
+    (a.union b).cardInter x = a.cardInter x + b.cardInter x := by
+  rw [cardInter_eq, cardInter_eq, cardInter_eq, inter_union_distrib]
+  refine card_union_disjoint (ext fun w => ?_)
+  have := congrArg (fun s => s.mem w) hd
+  simp only [mem_inter, mem_empty] at this ⊢
+  cases ha : a.mem w <;> cases hb : b.mem w <;> simp_all
+
+/-! # Singletons -/
+
+theorem mem_singleton (u v : Nat) :
+    ((empty : VSet n).insert u).mem v = (u == v && decide (u < n)) := by
+  rw [mem_insert, mem_empty, Bool.false_or]
+
+theorem inter_comm (s t : VSet n) : s.inter t = t.inter s :=
+  ext fun w => by rw [mem_inter, mem_inter, Bool.and_comm]
+
+theorem cardInter_comm (s t : VSet n) : s.cardInter t = t.cardInter s := by
+  rw [cardInter_eq, cardInter_eq, inter_comm]
+
+/-- The count into a singleton is the membership bit. -/
+theorem cardInter_singleton (u : Nat) (x : VSet n) :
+    ((empty : VSet n).insert u).cardInter x = if x.mem u then 1 else 0 := by
+  rw [cardInter_eq, card_eq_countBelow, countBelow]
+  rcases hb : x.mem u with _ | _
+  · have hz : (List.range n).countP
+        (fun v => (((empty : VSet n).insert u).inter x).mem v) = 0 := by
+      rw [List.countP_eq_zero]
+      intro v _
+      rw [mem_inter, mem_singleton]
+      rcases Decidable.em (u = v) with rfl | hne
+      · simp [hb]
+      · simp [hne]
+    rw [hz]
+    simp
+  · have hu : u < n := mem_lt hb
+    rw [List.countP_eq_length_filter]
+    have hsplit : List.range n = List.range u ++ u :: List.range' (u + 1) (n - (u + 1)) := by
+      have h1 := @List.range'_append 0 u (n - u) 1
+      rw [Nat.zero_add, Nat.one_mul, show u + (n - u) = n by omega] at h1
+      rw [List.range_eq_range', ← h1, ← List.range_eq_range',
+        show n - u = (n - (u + 1)) + 1 by omega, List.range'_succ]
+    have hfilter : (List.range n).filter
+        (fun v => (((empty : VSet n).insert u).inter x).mem v) = [u] := by
+      rw [hsplit, List.filter_append, List.filter_cons_of_pos (by
+        rw [mem_inter, mem_singleton, beq_self_eq_true, decide_eq_true hu, hb]
+        rfl)]
+      have hl : (List.range u).filter
+          (fun v => (((empty : VSet n).insert u).inter x).mem v) = [] := by
+        rw [List.filter_eq_nil_iff]
+        intro v hv
+        rw [List.mem_range] at hv
+        rw [mem_inter, mem_singleton, show (u == v) = false by
+          simp only [beq_eq_false_iff_ne, ne_eq]; omega]
+        simp
+      have hr : (List.range' (u + 1) (n - (u + 1))).filter
+          (fun v => (((empty : VSet n).insert u).inter x).mem v) = [] := by
+        rw [List.filter_eq_nil_iff]
+        intro v hv
+        rw [List.mem_range'] at hv
+        rw [mem_inter, mem_singleton, show (u == v) = false by
+          simp only [beq_eq_false_iff_ne, ne_eq]; omega]
+        simp
+      rw [hl, hr]
+      rfl
+    rw [hfilter]
+    rfl
 
 /-! # Cardinality comparisons -/
 
