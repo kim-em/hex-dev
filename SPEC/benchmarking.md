@@ -1270,6 +1270,25 @@ the prose or make regeneration routine enough to stop carrying meaning,
 and the rule gives up nothing, since it reads both blobs rather than
 trusting a claim about them.
 
+A relevant set also omits the test modules no measured artifact imports.
+A compiled sweep driver never links them and the retimed tactic file
+never elaborates against them, so adding a regression case cannot move a
+curve, and charging a re-measurement for one would price tests out of
+the libraries whose performance they guard. The criterion is import
+reachability, not the file name: each library's
+`ModuleBoundaryTests.lean` stays in the set, because its umbrella
+publicly imports it and it is therefore inside the closure the figures
+measure. `scripts/bench/test_sweep_freshness.py` derives both closures
+from the repository's own import graph and fails if an omitted module
+ever becomes reachable, so the omission is a checked fact rather than a
+standing claim.
+
+Changing a relevant set re-keys the family, which invalidates every
+committed fingerprint at once. That is the price of tightening or
+widening it, and it is paid deliberately: one re-measurement for a
+family that re-measures in minutes, or one exemption per removed path
+for a family that carries the channel.
+
 That is also why the sweep driver does not fingerprint its own run: it is
 a relevant path for all six factorization systems, so editing it would
 mark every comparator record stale. A sweep is stamped afterwards, by the
