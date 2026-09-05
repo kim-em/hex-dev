@@ -158,7 +158,8 @@ def finiteRoots : RootSet → Array RootCount
   | .all => #[]
 
 def quarticRoots : Array RootCount :=
-  finiteRoots (AlgebraicPoly.ofArray #[-sqrt2, 0, 1]).roots
+  finiteRoots
+    (AlgebraicPoly.ofArray #[-sqrt2, 0, 1]).roots
 
 #guard quarticRoots.size = 2
 #guard quarticRoots.all fun r =>
