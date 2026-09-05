@@ -430,4 +430,139 @@ containing it is greater. -/
   (List.range n).foldl
     (fun acc v => if s.testBit v then insert acc perm[v]! else acc) 0
 
+/-! # Word-level lemmas
+
+Bit facts about a single word that the packed vertex-set layer
+(`VSet`) builds its membership lemmas from. -/
+
+/-- The number of set bits below `n`. -/
+@[expose] def bitCount (n s : Nat) : Nat :=
+  (List.range n).countP s.testBit
+
+/-- `popCount` counts exactly the bits below any bound dominating the
+set. -/
+theorem popCount_eq_bitCount : ∀ (n s : Nat), s < 2 ^ n →
+    popCount s = bitCount n s
+  | 0, s, hs => by
+    have h0 : s = 0 := by omega
+    subst h0
+    rw [popCount_zero, bitCount]
+    simp
+  | n + 1, s, hs => by
+    rw [popCount_eq s]
+    have hdiv : s / 2 < 2 ^ n := by
+      rw [Nat.pow_succ] at hs
+      omega
+    rw [popCount_eq_bitCount n (s / 2) hdiv]
+    unfold bitCount
+    rw [List.range_succ_eq_map, List.countP_cons, List.countP_map]
+    have hsucc : (s.testBit ∘ Nat.succ) = (s / 2).testBit := by
+      funext v
+      simp [Function.comp, Nat.testBit_add_one]
+    rw [hsucc]
+    have h0 : (if s.testBit 0 = true then 1 else 0) = s % 2 := by
+      rcases hb : s.testBit 0 with _ | _
+      · simp only [Nat.testBit_zero] at hb
+        simp at hb
+        simp
+        omega
+      · simp only [Nat.testBit_zero] at hb
+        simp at hb
+        simp
+        omega
+    rw [h0]
+    omega
+
+/-- The single-bit set. -/
+theorem testBit_one_shift (v w : Nat) :
+    Nat.testBit (1 <<< v) w = (v == w) := by
+  rw [Nat.testBit_shiftLeft]
+  rcases Decidable.em (v = w) with rfl | hne
+  · simp
+  · have hbeq : (v == w) = false := by simp [hne]
+    rcases Decidable.em (v ≤ w) with hle | hgt
+    · have hz : w - v ≠ 0 := by omega
+      have h1 : Nat.testBit 1 (w - v) = false := by
+        rcases hb : Nat.testBit 1 (w - v) with _ | _
+        · rfl
+        · exact absurd (Nat.testBit_one_eq_true_iff_self_eq_zero.mp hb) hz
+      rw [h1, hbeq]
+      simp
+    · have h2 : decide (v ≤ w) = false := by simp [hgt]
+      rw [h2, hbeq]
+      simp
+
+/-- The least set bit is a member. -/
+theorem testBit_lowBit : ∀ (s : Nat), s ≠ 0 → s.testBit (lowBit s) = true
+  | s, hs => by
+    rw [lowBit_eq, ite_eq_right hs]
+    rcases Decidable.em (s % 2 = 1) with ho | ho
+    · rw [ite_eq_left ho]
+      simp [Nat.testBit_zero, ho]
+    · rw [ite_eq_right ho]
+      have hs2 : s / 2 ≠ 0 := by omega
+      rw [Nat.add_comm 1 (lowBit (s / 2)), Nat.testBit_add_one]
+      exact testBit_lowBit (s / 2) hs2
+  termination_by s => s
+  decreasing_by omega
+
+/-- A set whose bits all lie below `n` is bounded by `2 ^ n`. -/
+theorem lt_two_pow_of_bits {s n : Nat}
+    (h : ∀ i, n ≤ i → s.testBit i = false) : s < 2 ^ n := by
+  rcases Nat.lt_or_ge s (2 ^ n) with hlt | hge
+  · exact hlt
+  · rcases Nat.exists_ge_and_testBit_of_ge_two_pow hge with ⟨i, hi, hb⟩
+    rw [h i hi] at hb
+    exact absurd hb (by simp)
+
+/-- Entry bound after an insertion. -/
+theorem or_shift_lt {x : Nat} (hx : x < 2 ^ 63) {j : Nat}
+    (hj : j < 63) : x ||| (1 <<< j) < 2 ^ 63 := by
+  refine lt_two_pow_of_bits fun i hi => ?_
+  rw [Nat.testBit_or, testBit_one_shift,
+    Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hx
+      (Nat.pow_le_pow_right (by omega) hi))]
+  simp
+  omega
+
+theorem testBit_lt_lowBit :
+    ∀ (s i : Nat), i < lowBit s → s.testBit i = false
+  | s, i, hi => by
+    rw [lowBit_eq] at hi
+    rcases Decidable.em (s = 0) with rfl | hs
+    · rw [ite_eq_left rfl] at hi
+      omega
+    · rw [ite_eq_right hs] at hi
+      rcases Decidable.em (s % 2 = 1) with ho | ho
+      · rw [ite_eq_left ho] at hi
+        omega
+      · rw [ite_eq_right ho] at hi
+        rcases i with _ | j
+        · simp only [Nat.testBit_zero]
+          simp
+          omega
+        · rw [Nat.testBit_add_one]
+          exact testBit_lt_lowBit (s / 2) j (by omega)
+  termination_by s => s
+  decreasing_by omega
+
+theorem lowBit_eq_of {s d : Nat} (hd : s.testBit d = true)
+    (hlow : ∀ i, i < d → s.testBit i = false) : lowBit s = d := by
+  have hs0 : s ≠ 0 := by
+    intro h
+    rw [h] at hd
+    simp at hd
+  rcases Nat.lt_trichotomy (lowBit s) d with h | h | h
+  · exact absurd (testBit_lowBit s hs0) (by rw [hlow _ h]; simp)
+  · exact h
+  · exact absurd hd (by rw [testBit_lt_lowBit s d h]; simp)
+
+theorem xor_ne_zero_of_ne {a b : Nat} (hab : a ≠ b) : a ^^^ b ≠ 0 := by
+  intro h
+  refine hab (Nat.eq_of_testBit_eq fun i => ?_)
+  have hx := congrArg (fun s => Nat.testBit s i) h
+  simp only [Nat.testBit_xor, Nat.zero_testBit] at hx
+  rcases ha : a.testBit i with _ | _ <;>
+    rcases hb : b.testBit i with _ | _ <;> simp_all
+
 end Hex.GraphIso.Nauty
