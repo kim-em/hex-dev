@@ -36,7 +36,7 @@ variable {n k : Nat}
 
 /-- The incumbent reading depends on `canonlevel`, `canoncode` and
 `canonlab`, and on nothing else. -/
-theorem stInc_congr {ctx : Ctx} {st st' : SearchSt}
+theorem stInc_congr {ctx : Ctx n} {st st' : SearchSt n}
     (hlv : st'.canonlevel = st.canonlevel)
     (hcc : st'.canoncode = st.canoncode)
     (hcl : st'.canonlab = st.canonlab) :
@@ -51,36 +51,36 @@ the node's intermediate states, so they compose in either order and do
 not depend on how the body is decomposed. -/
 
 /-- Counting a node leaves the incumbent alone. -/
-theorem stInc_numnodes {ctx : Ctx} (st : SearchSt) (m : Nat) :
+theorem stInc_numnodes {ctx : Ctx n} (st : SearchSt n) (m : Nat) :
     stInc ctx { st with numnodes := m } = stInc ctx st :=
   stInc_congr rfl rfl rfl
 
 /-- Refining leaves the incumbent alone: it writes the labelling, the
 partition and the active set. -/
-theorem stInc_refined {ctx : Ctx} (st : SearchSt)
-    (lab ptn : Array Nat) (active : Nat) :
+theorem stInc_refined {ctx : Ctx n} (st : SearchSt n)
+    (lab ptn : Array Nat) (active : VSet n) :
     stInc ctx { st with lab := lab, ptn := ptn, active := active } =
       stInc ctx st :=
   stInc_congr rfl rfl rfl
 
 /-- Recording this node's refinement code leaves the incumbent alone.
 `firstcode` is the first path's ledger, not the incumbent's. -/
-theorem stInc_firstcode {ctx : Ctx} (st : SearchSt) (fc : Array Nat) :
+theorem stInc_firstcode {ctx : Ctx n} (st : SearchSt n) (fc : Array Nat) :
     stInc ctx { st with firstcode := fc } = stInc ctx st :=
   stInc_congr rfl rfl rfl
 
 /-- Recording this node's target cell leaves the incumbent alone. -/
-theorem stInc_firsttc {ctx : Ctx} (st : SearchSt) (ftc : Array Int) :
+theorem stInc_firsttc {ctx : Ctx n} (st : SearchSt n) (ftc : Array Int) :
     stInc ctx { st with firsttc := ftc } = stInc ctx st :=
   stInc_congr rfl rfl rfl
 
 /-- Accumulating the target-cell total leaves the incumbent alone. -/
-theorem stInc_tctotal {ctx : Ctx} (st : SearchSt) (m : Nat) :
+theorem stInc_tctotal {ctx : Ctx n} (st : SearchSt n) (m : Nat) :
     stInc ctx { st with tctotal := m } = stInc ctx st :=
   stInc_congr rfl rfl rfl
 
 /-- Raising the cheap-automorphism level leaves the incumbent alone. -/
-theorem stInc_noncheaplevel {ctx : Ctx} (st : SearchSt) (m : Nat) :
+theorem stInc_noncheaplevel {ctx : Ctx n} (st : SearchSt n) (m : Nat) :
     stInc ctx { st with noncheaplevel := m } = stInc ctx st :=
   stInc_congr rfl rfl rfl
 
@@ -88,7 +88,7 @@ theorem stInc_noncheaplevel {ctx : Ctx} (st : SearchSt) (m : Nat) :
 `allsamelevel` decrement `firstPathNode` performs when its target cell
 was exhausted, and it is the only write between the child loop's return
 and the node's own. -/
-theorem stInc_allsamelevel {ctx : Ctx} (st : SearchSt) (m : Nat) :
+theorem stInc_allsamelevel {ctx : Ctx n} (st : SearchSt n) (m : Nat) :
     stInc ctx { st with allsamelevel := m } = stInc ctx st :=
   stInc_congr rfl rfl rfl
 
@@ -98,7 +98,7 @@ which it rewrites exactly when the current node's code beats the
 incumbent's at this level. Stated as the three fields so the caller can
 see which one moves. -/
 theorem stInc_otherNodePrep (level code : Nat)
-    (st : SearchSt) :
+    (st : SearchSt n) :
     (otherNodePrep level code st).canonlevel = st.canonlevel ∧
       (otherNodePrep level code st).canonlab = st.canonlab :=
   ⟨(otherNodePrep_frames level code st).2.2.2.1,
@@ -113,20 +113,20 @@ needs. -/
 
 /-- A first-path leaf installs itself: the incumbent's level is this
 node's. -/
-theorem firstterminal_canonlevel (level : Nat) (st : SearchSt) :
+theorem firstterminal_canonlevel (level : Nat) (st : SearchSt n) :
     (firstterminal level st).canonlevel = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
 /-- A first-path leaf installs its own labelling. -/
-theorem firstterminal_canonlab (level : Nat) (st : SearchSt) :
+theorem firstterminal_canonlab (level : Nat) (st : SearchSt n) :
     (firstterminal level st).canonlab = st.lab := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
 /-- A first-path leaf also records its labelling as the first reference
 leaf. -/
-theorem firstterminal_firstlab (level : Nat) (st : SearchSt) :
+theorem firstterminal_firstlab (level : Nat) (st : SearchSt n) :
     (firstterminal level st).firstlab = st.lab := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
@@ -134,7 +134,7 @@ theorem firstterminal_firstlab (level : Nat) (st : SearchSt) :
 /-- A first-path leaf at a positive level leaves something installed,
 which is `NodeConcl.installed` on the leaf arm. -/
 theorem firstterminal_installed {level : Nat} (hlev : level ≠ 0)
-    (st : SearchSt) : (firstterminal level st).canonlevel ≠ 0 := by
+    (st : SearchSt n) : (firstterminal level st).canonlevel ≠ 0 := by
   rw [firstterminal_canonlevel]
   exact hlev
 

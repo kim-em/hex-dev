@@ -1167,6 +1167,22 @@ fingerprinting mechanism is shared with the other published figure
 families; see [SPEC/benchmarking.md](../../SPEC/benchmarking.md)
 §Figure freshness.
 
+The recorded sweep also fixes the per-node asymptotics. Because the
+search visits nauty's tree node for node, the hex/nauty wallclock ratio
+is a per-node constant factor, and the only way the implementation can
+fall behind nauty asymptotically is for that factor to grow with `n`:
+an elementwise loop over vertices where nauty runs a word operation
+shows up as a larger exponent in a power-law fit of per-node cost
+against `n`. `scripts/bench/graphiso_pernode_fit.py --check 0.2` is the
+required check that prevents this: it fits `cost per node ~ n^e` per
+family for hex and for nauty from the most recent recorded sweep and
+fails when, on any family with at least five sizes, the hex exponent
+exceeds nauty's by more than `0.2`. It is a growth check, not a
+constant-factor check: a slowdown uniform in `n` is the per-library
+bench's business. The vertex sets of the search are packed sixty-three
+vertices to a word (`Nauty.VSet`), so every set operation is a loop
+over `⌈n/63⌉` limbs, the same shape as nauty's `setword` loops.
+
 Recorded sweeps accumulate: each regeneration adds its data,
 tactic-timing snapshot, and a `.meta.json` (fingerprint, host, date,
 label) under `reports/bench-results/` without removing predecessors.

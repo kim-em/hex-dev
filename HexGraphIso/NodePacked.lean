@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.NodeLit
 public import HexGraphIso.Nauty.Packed
-public import HexGraphIso.Nauty.PopCount
+public import HexGraphIso.Nauty.VSet
 
 public section
 
@@ -192,9 +192,9 @@ theorem countValuesK_eq (counts : List Nat) :
     | none => nextElemK active none)
 
 theorem pickSplitK_eq (active hint : Nat) :
-    pickSplitK active hint = pickSplit active hint := by
-  cases hn : nextElem active (some hint) <;>
-    simp [pickSplitK, pickSplit, elemK_eq, nextElemK_eq, hn]
+    pickSplitK active hint = pickSplitL active hint := by
+  cases hn : nextElemL active (some hint) <;>
+    simp [pickSplitK, pickSplitL, elemK_eq, nextElemK_eq, hn]
 
 /-- The bound on a bit set's population. -/
 theorem popCount_le_of_lt {nn s : Nat} (hs : s < 2 ^ nn) :
@@ -311,11 +311,11 @@ theorem splitCellLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     rw [splitCellLoopP_succ, splitCellLoopL, cond_blt]
     simp only [add_eq, sub_eq]
     rcases Decidable.em (c1 < d) with hlt | hlt
-    · have he' : elemK gRow (lget ctx labP c1) = elem gRow (atD lab c1 0) := by
+    · have he' : elemK gRow (lget ctx labP c1) = Nat.testBit gRow (atD lab c1 0) := by
         rw [elemK_eq, lget_eq h hl]
       rw [ite_eq_left hlt, ite_eq_left (show (c1 : Int) ≤ (d : Int) - 1 by omega),
         he', cond_beq_true, Int.toNat_natCast]
-      rcases Decidable.em (elem gRow (atD lab c1 0) = true) with he | he
+      rcases Decidable.em (Nat.testBit gRow (atD lab c1 0) = true) with he | he
       · rw [ite_eq_left he, ite_eq_left he]
         have := splitCellLoopP_eq h gRow fuel hl (c1 + 1) d
         simpa using this
@@ -345,59 +345,59 @@ theorem splitCellLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
           ptn := lset ctx st.ptn (Nat.sub d 1) level
           longcode := mashK st.longcode (Nat.sub d 1)
           numcells := Nat.add st.numcells 1
-          active := insertK st.active c1
+          active := insertK ctx.n st.active c1
           hint := c1 }
         { st with
           ptn := lset ctx st.ptn (Nat.sub d 1) level
           longcode := mashK st.longcode (Nat.sub d 1)
           numcells := Nat.add st.numcells 1
-          active := insertK st.active c1 })
+          active := insertK ctx.n st.active c1 })
       (cond (Nat.beq (Nat.sub d 1) cell1)
         { st with
           ptn := lset ctx st.ptn (Nat.sub d 1) level
           longcode := mashK st.longcode (Nat.sub d 1)
           numcells := Nat.add st.numcells 1
-          active := insertK st.active cell1
+          active := insertK ctx.n st.active cell1
           hint := cell1 }
         { st with
           ptn := lset ctx st.ptn (Nat.sub d 1) level
           longcode := mashK st.longcode (Nat.sub d 1)
           numcells := Nat.add st.numcells 1
-          active := insertK st.active cell1 }))
+          active := insertK ctx.n st.active cell1 }))
     st
 
 theorem trivialSplitP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {level : Nat} (hlev : level < 2 ^ ctx.w) (cell1 cell2 c1 d : Nat)
     {st : RefineStP} {stL : RefineStL} (hst : RepSt ctx.w ctx.n st stL) :
     RepSt ctx.w ctx.n (trivialSplitP ctx level cell1 cell2 c1 d st)
-      (trivialSplitL level cell1 cell2 (c1 : Int) ((d : Int) - 1) stL) := by
+      (trivialSplitL ctxL.n level cell1 cell2 (c1 : Int) ((d : Int) - 1) stL) := by
   have hsub : ((d : Int) - 1).toNat = d - 1 := by omega
   rw [trivialSplitP, trivialSplitL, cond_and, cond_or, cond_beq, cond_beq,
     hst.active, elemK_eq]
   simp only [Nat.ble_eq, add_eq, sub_eq, Int.ofNat_eq_natCast, Int.toNat_natCast, hsub,
     beq_iff_eq]
   have hlem : ∀ (i : Nat), RepSt ctx.w ctx.n
-      ⟨st.lab, lset ctx st.ptn (d - 1) level, insertK stL.active i,
+      ⟨st.lab, lset ctx st.ptn (d - 1) level, insertK ctx.n stL.active i,
         st.numcells + 1, i, st.maxpos, mashK st.longcode (d - 1)⟩
-      ⟨stL.lab, stL.ptn.set (d - 1) level, insert stL.active i,
+      ⟨stL.lab, stL.ptn.set (d - 1) level, insertL ctxL.n stL.active i,
         stL.numcells + 1, i, stL.maxpos, mash stL.longcode (d - 1)⟩ := fun i =>
     RepSt.mk' hst.lab (lset_rep h hst.ptn _ hlev)
-      (by simp [hst.numcells, hst.maxpos, hst.longcode, mashK_eq, insertK_eq])
+      (by simp [hst.numcells, hst.maxpos, hst.longcode, mashK_eq, insertK_eq, h.n])
   have hlem' : ∀ (i : Nat), RepSt ctx.w ctx.n
-      ⟨st.lab, lset ctx st.ptn (d - 1) level, insertK stL.active i,
+      ⟨st.lab, lset ctx st.ptn (d - 1) level, insertK ctx.n stL.active i,
         st.numcells + 1, st.hint, st.maxpos, mashK st.longcode (d - 1)⟩
-      ⟨stL.lab, stL.ptn.set (d - 1) level, insert stL.active i,
+      ⟨stL.lab, stL.ptn.set (d - 1) level, insertL ctxL.n stL.active i,
         stL.numcells + 1, stL.hint, stL.maxpos, mash stL.longcode (d - 1)⟩ := fun i =>
     RepSt.mk' hst.lab (lset_rep h hst.ptn _ hlev)
       (by simp [hst.numcells, hst.hint, hst.maxpos, hst.longcode, mashK_eq,
-        insertK_eq])
+        insertK_eq, h.n])
   rcases Decidable.em (cell1 + 1 ≤ d ∧ c1 ≤ cell2) with hc | hc
   · rw [ite_eq_left hc,
       ite_eq_left (show (d : Int) - 1 ≥ (cell1 : Int) ∧ (c1 : Int) ≤ (cell2 : Int) by omega)]
-    rcases Decidable.em (elem stL.active cell1 = true ∨
+    rcases Decidable.em (Nat.testBit stL.active cell1 = true ∨
         cell2 - c1 ≤ d - 1 - cell1) with ho | ho
     · rw [ite_eq_left ho,
-        ite_eq_left (show elem stL.active cell1 = true ∨ d - 1 - cell1 ≥ cell2 - c1 by
+        ite_eq_left (show Nat.testBit stL.active cell1 = true ∨ d - 1 - cell1 ≥ cell2 - c1 by
           simpa using ho)]
       rcases Decidable.em (c1 = cell2) with he | he
       · rw [ite_eq_left he, ite_eq_left he]
@@ -405,7 +405,7 @@ theorem trivialSplitP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
       · rw [ite_eq_right he, ite_eq_right he]
         exact hlem' c1
     · rw [ite_eq_right ho,
-        ite_eq_right (show ¬ (elem stL.active cell1 = true ∨ d - 1 - cell1 ≥ cell2 - c1) by
+        ite_eq_right (show ¬ (Nat.testBit stL.active cell1 = true ∨ d - 1 - cell1 ≥ cell2 - c1) by
           simpa using ho)]
       rcases Decidable.em (d - 1 = cell1) with he | he
       · rw [ite_eq_left he, ite_eq_left he]
@@ -428,7 +428,7 @@ theorem trivialCellP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {level : Nat} (hlev : level < 2 ^ ctx.w) (gRow cell1 cell2 : Nat)
     {st : RefineStP} {stL : RefineStL} (hst : RepSt ctx.w ctx.n st stL) :
     RepSt ctx.w ctx.n (trivialCellP ctx level gRow cell1 cell2 st)
-      (trivialCellL level gRow cell1 cell2 stL) := by
+      (trivialCellL ctxL.n level gRow cell1 cell2 stL) := by
   rw [trivialCellP, trivialCellL, cond_beq]
   rcases Decidable.em (cell1 = cell2) with he | he
   · rw [ite_eq_left he, ite_eq_left (by simpa using he)]
@@ -471,7 +471,7 @@ theorem refineTrivialGoP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     ∀ (cs : List (Nat × Nat)) {st : RefineStP} {stL : RefineStL},
       RepSt ctx.w ctx.n st stL →
       RepSt ctx.w ctx.n (refineTrivialGoP ctx level gRow cs st)
-        (refineTrivialGoL level gRow cs stL)
+        (refineTrivialGoL ctxL.n level gRow cs stL)
   | [], _, _, hst => hst
   | (cell1, cell2) :: rest, _, _, hst => by
     rw [refineTrivialGoP, refineTrivialGoL]
@@ -489,13 +489,13 @@ theorem refineTrivialP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
 
 @[expose] def worksetOfP (ctx : CtxP) (lab lo hi : Nat) : Nat :=
   iterUp (Nat.sub (Nat.add hi 1) lo)
-    (fun o w => insertK w (lget ctx lab (Nat.add lo o))) 0
+    (fun o w => insertK ctx.n w (lget ctx lab (Nat.add lo o))) 0
 
 theorem worksetOfP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) (lo hi : Nat) :
-    worksetOfP ctx labP lo hi = worksetOfL lab lo hi := by
+    worksetOfP ctx labP lo hi = worksetOfL ctxL.n lab lo hi := by
   rw [worksetOfP, worksetOfL, iterUp_eq_foldl]
-  simp only [insertK_eq, lget_eq h hl, add_eq, sub_eq]
+  simp only [insertK_eq, lget_eq h hl, add_eq, sub_eq, h.n]
 
 @[expose] def countsOfP (ctx : CtxP) (lab workset cell1 cell2 : Nat) :
     List Nat :=
@@ -521,7 +521,7 @@ is `0`. -/
   let st :=
     cond (Nat.beq c1 cell1) st
       (let st := { st with
-        active := insertK st.active c1
+        active := insertK ctx.n st.active c1
         numcells := Nat.add st.numcells 1 }
       cond (Nat.beq (Nat.sub c2 c1) 1) { st with hint := c1 } st)
   cond (Nat.ble c2 cell2)
@@ -532,7 +532,7 @@ theorem windowStepP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     (maxcell : Int) (hmax : (maxcell1 : Int) = maxcell + 1)
     {st : RefineStP} {stL : RefineStL} (hst : RepSt ctx.w ctx.n st stL) :
     RepSt ctx.w ctx.n (windowStepP ctx level cell1 cell2 v c1 c2 maxcell1 st)
-      (windowStepL level cell1 cell2 v c1 c2 maxcell stL) := by
+      (windowStepL ctxL.n level cell1 cell2 v c1 c2 maxcell stL) := by
   rw [windowStepP, windowStepL]
   simp only [cond_blt, cond_beq, cond_ble, add_eq, sub_eq, mashK_eq,
     insertK_eq, hst.active, hst.numcells, hst.longcode, hst.maxpos, hst.hint,
@@ -542,8 +542,8 @@ theorem windowStepP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   simp only [h1]
   repeat' split
   all_goals first
-    | exact RepSt.mk' hst.lab (lset_rep h hst.ptn _ hlev) (by simp)
-    | exact RepSt.mk' hst.lab hst.ptn (by simp)
+    | exact RepSt.mk' hst.lab (lset_rep h hst.ptn _ hlev) (by simp [h.n])
+    | exact RepSt.mk' hst.lab hst.ptn (by simp [h.n])
     | (exfalso; omega)
 
 @[expose] def windowScanP (ctx : CtxP) (level cell1 cell2 : Nat)
@@ -563,7 +563,7 @@ theorem windowScanP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
       (maxcell : Int), (maxcell1 : Int) = maxcell + 1 →
       ∀ {st : RefineStP} {stL : RefineStL}, RepSt ctx.w ctx.n st stL →
       RepSt ctx.w ctx.n (windowScanP ctx level cell1 cell2 counts vs c1 maxcell1 st)
-        (windowScanL level cell1 cell2 counts vs c1 maxcell stL)
+        (windowScanL ctxL.n level cell1 cell2 counts vs c1 maxcell stL)
   | [], _, _, _, _, _, _, hst => hst
   | v :: vs, c1, maxcell1, maxcell, hmax, st, stL, hst => by
     rw [windowScanP, windowScanL]
@@ -629,16 +629,17 @@ theorem writeSegmentP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL) :
     exact writeSegmentP_rep h rest (fun y hy => hs y (List.mem_cons_of_mem _ hy))
       (lset_rep h hl cell1 (hs x (List.mem_cons_self ..))) (cell1 + 1)
 
-@[expose] def nontrivialFixP (cell1 : Nat) (st : RefineStP) : RefineStP :=
+@[expose] def nontrivialFixP (n cell1 : Nat) (st : RefineStP) : RefineStP :=
   cond (elemK st.active cell1) st
-    { st with active := eraseK (insertK st.active cell1) st.maxpos }
+    { st with active := eraseK n (insertK n st.active cell1) st.maxpos }
 
-theorem nontrivialFixP_eq (cell1 : Nat) {w n : Nat} {st : RefineStP}
-    {stL : RefineStL} (hst : RepSt w n st stL) :
-    RepSt w n (nontrivialFixP cell1 st) (nontrivialFixL cell1 stL) := by
+theorem nontrivialFixP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL) (cell1 : Nat)
+    {st : RefineStP} {stL : RefineStL} (hst : RepSt ctx.w ctx.n st stL) :
+    RepSt ctx.w ctx.n (nontrivialFixP ctx.n cell1 st) (nontrivialFixL ctxL.n cell1 stL) := by
   rw [nontrivialFixP, nontrivialFixL, elemK_eq, cond_beq_true, hst.active,
-    hst.maxpos, eraseK_eq, insertK_eq]
-  rcases Decidable.em (elem stL.active cell1 = true) with he | he
+    hst.maxpos, eraseK_eq, insertK_eq, h.n]
+  rw [h.n] at hst
+  rcases Decidable.em (Nat.testBit stL.active cell1 = true) with he | he
   · rw [ite_eq_left he, ite_eq_right (by simpa using he)]
     exact hst
   · rw [ite_eq_right he, ite_eq_left (by simpa using he)]
@@ -655,7 +656,7 @@ theorem nontrivialFixP_eq (cell1 : Nat) {w n : Nat} {st : RefineStP}
       { st with longcode := mashK st.longcode (Nat.add lo cell1) }
       (let values := countValuesK counts
       let st' := windowScanP ctx level cell1 cell2 counts values cell1 0 st
-      nontrivialFixP cell1
+      nontrivialFixP ctx.n cell1
         { st' with
           lab := writeSegmentP ctx st'.lab cell1
             (segmentOfP ctx st'.lab cell1 counts values) }))
@@ -686,7 +687,7 @@ theorem nontrivialCellP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
         (countsOfL ctxL stL.lab workset cell1 cell2)
         (countValues (countsOfL ctxL stL.lab workset cell1 cell2)) cell1 0 (-1)
         (by simp) hst
-      refine nontrivialFixP_eq cell1 ⟨?_, hscan.ptn, hscan.active, hscan.numcells,
+      refine nontrivialFixP_eq h cell1 ⟨?_, hscan.ptn, hscan.active, hscan.numcells,
         hscan.hint, hscan.maxpos, hscan.longcode⟩
       rw [segmentOfP_eq h hscan.lab]
       exact writeSegmentP_rep h _
@@ -732,7 +733,7 @@ theorem refineNontrivialP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
 
 @[expose] def refineStepP (ctx : CtxP) (level split1 : Nat) (st : RefineStP) :
     RefineStP :=
-  let st := { st with active := eraseK st.active split1 }
+  let st := { st with active := eraseK ctx.n st.active split1 }
   let split2 := cellEndP ctx st.ptn level split1
   let st := { st with longcode := mashK st.longcode (Nat.add split1 split2) }
   cond (Nat.beq split1 split2)
@@ -749,12 +750,12 @@ theorem refineStepP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     hst.active, hst.longcode]
   have hst' : RepSt ctx.w ctx.n
       { st with
-        active := erase stL.active split1
+        active := eraseL ctx.n stL.active split1
         longcode := mash stL.longcode (split1 + cellEndL stL.ptn level split1) }
       { stL with
-        active := erase stL.active split1
+        active := eraseL ctxL.n stL.active split1
         longcode := mash stL.longcode (split1 + cellEndL stL.ptn level split1) } :=
-    ⟨hst.lab, hst.ptn, rfl, hst.numcells, hst.hint, hst.maxpos, rfl⟩
+    ⟨hst.lab, hst.ptn, by rw [h.n], hst.numcells, hst.hint, hst.maxpos, rfl⟩
   rcases Decidable.em (split1 = cellEndL stL.ptn level split1) with he | he
   · rw [ite_eq_left he, ite_eq_left (by simpa using he)]
     exact refineTrivialP_eq h hlev split1 hst'
@@ -791,7 +792,7 @@ theorem refineLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
       hst.hint]
     rcases Decidable.em (st.numcells < ctx.n) with hl | hl
     · rw [ite_eq_left hl, ite_eq_left (Eq.mp hc hl)]
-      rcases hps : pickSplit stL.active stL.hint with _ | split1
+      rcases hps : pickSplitL stL.active stL.hint with _ | split1
       · exact hst
       · exact refineLoopP_eq h hlev fuel (refineStepP_eq h hlev split1 hst)
     · rw [ite_eq_right hl, ite_eq_right (fun h' => hl (Eq.mpr hc h'))]
@@ -1060,7 +1061,7 @@ theorem breakoutGoP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL) (tv : N
 
 @[expose] def breakoutP (ctx : CtxP) (lab ptn level tc tv : Nat) : Nat × Nat × Nat :=
   (breakoutGoP ctx tv (Nat.add ctx.n 1) lab tc tv, lset ctx ptn tc level,
-    insertK 0 tc)
+    insertK ctx.n 0 tc)
 
 theorem breakoutP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
@@ -1068,13 +1069,13 @@ theorem breakoutP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {level : Nat} (hlev : level < 2 ^ ctx.w) (tc : Nat) {tv : Nat}
     (htv : tv < 2 ^ ctx.w) :
     Rep ctx.w ctx.n (breakoutP ctx labP ptnP level tc tv).1
-        (breakoutL lab ptn level tc tv).1 ∧
+        (breakoutL ctxL.n lab ptn level tc tv).1 ∧
       Rep ctx.w ctx.n (breakoutP ctx labP ptnP level tc tv).2.1
-        (breakoutL lab ptn level tc tv).2.1 ∧
+        (breakoutL ctxL.n lab ptn level tc tv).2.1 ∧
       (breakoutP ctx labP ptnP level tc tv).2.2 =
-        (breakoutL lab ptn level tc tv).2.2 := by
+        (breakoutL ctxL.n lab ptn level tc tv).2.2 := by
   rw [breakoutP, breakoutL]
-  refine ⟨?_, lset_rep h hp tc hlev, insertK_eq 0 tc⟩
+  refine ⟨?_, lset_rep h hp tc hlev, (insertK_eq ctx.n 0 tc).trans (by rw [h.n])⟩
   rw [hl.len, add_eq]
   exact breakoutGoP_rep h tv (ctx.n + 1) hl tc tv htv
 
@@ -1156,7 +1157,7 @@ theorem invPermP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   omega
 
 @[expose] def permsetP (ctx : CtxP) (s perm : Nat) : Nat :=
-  iterUp ctx.n (fun v acc => cond (elemK s v) (insertK acc (lget ctx perm v)) acc) 0
+  iterUp ctx.n (fun v acc => cond (elemK s v) (insertK ctx.n acc (lget ctx perm v)) acc) 0
 
 theorem permsetP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {permP : Nat} {perm : List Nat} (hp : Rep ctx.w ctx.n permP perm) (s : Nat) :
@@ -1165,7 +1166,6 @@ theorem permsetP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   congr 1
   funext acc v
   rw [elemK_eq, cond_beq_true, insertK_eq, lget_eq h hp]
-  rfl
 
 @[expose] def leafRowsP (ctx : CtxP) (lab : Nat) : List Nat :=
   let inv := invPermP ctx lab
@@ -1180,14 +1180,13 @@ theorem leafRowsP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
 /-! # Automorphism validation over packed state -/
 
 @[expose] def imageP (σ : Nat → Nat) (n s : Nat) : Nat :=
-  iterUp n (fun v t => cond (elemK s v) (insertK t (σ v)) t) 0
+  iterUp n (fun v t => cond (elemK s v) (insertK n t (σ v)) t) 0
 
-theorem imageP_eq (σ : Nat → Nat) (n s : Nat) : imageP σ n s = image σ n s := by
-  rw [imageP, image, iterUp_eq_foldl]
+theorem imageP_eq (σ : Nat → Nat) (n s : Nat) : imageP σ n s = imageL n σ s := by
+  rw [imageP, imageL, iterUp_eq_foldl]
   congr 1
   funext t v
   rw [elemK_eq, cond_beq_true, insertK_eq]
-  rfl
 
 /-- A candidate permutation array has `n` entries, all vertices. -/
 @[expose] def gammaOkP (ctx : CtxP) (γl : List Nat) : Bool :=
@@ -1211,10 +1210,10 @@ theorem gammaOkP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
         Nat.beq (rowP ctx (lget ctx γP v))
           (imageP (fun w => lget ctx γP w) ctx.n (rowP ctx v)))
 
-theorem gammaOkP_of_checkAutom {ctx : CtxP} {nn : Nat} {g : Array Nat}
-    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) {γ : Array Nat}
-    (hc : checkAutom g γ nn = true) : gammaOkP ctx γ.toList = true := by
-  rw [checkAutom, Bool.and_eq_true, Bool.and_eq_true, Bool.and_eq_true,
+theorem gammaOkP_of_checkAutom {ctx : CtxP} {nn : Nat} {g : List Nat}
+    (h : CtxRep ctx ⟨nn, g⟩) {γ : Array Nat}
+    (hc : checkAutomL g nn γ = true) : gammaOkP ctx γ.toList = true := by
+  rw [checkAutomL, Bool.and_eq_true, Bool.and_eq_true, Bool.and_eq_true,
     beq_iff_eq, List.all_eq_true] at hc
   obtain ⟨⟨⟨hsize, hsmall⟩, _⟩, _⟩ := hc
   rw [gammaOkP, Bool.and_eq_true, Nat.beq_eq, List.all_eq_true, Array.length_toList,
@@ -1227,16 +1226,14 @@ theorem gammaOkP_of_checkAutom {ctx : CtxP} {nn : Nat} {g : Array Nat}
   rw [getBang_eq_atD, atD_eq_getElem _ i (by simpa [hsize] using hi)] at this
   exact Nat.blt_eq.mpr this
 
-theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
-    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) (γ : Array Nat) :
-    checkAutomP ctx γ = checkAutom g γ nn := by
-  have hrow : ∀ v, rowP ctx v = g[v]! := fun v => by
-    rw [rowP_eq h, getBang_eq_atD]
-    rfl
+theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : List Nat}
+    (h : CtxRep ctx ⟨nn, g⟩) (γ : Array Nat) :
+    checkAutomP ctx γ = checkAutomL g nn γ := by
+  have hrow : ∀ v, rowP ctx v = atD g v 0 := fun v => rowP_eq h v
   rcases hok : gammaOkP ctx γ.toList with _ | _
   · rw [checkAutomP]
     simp only [hok, Bool.false_and]
-    rcases hc : checkAutom g γ nn with _ | _
+    rcases hc : checkAutomL g nn γ with _ | _
     · rfl
     · rw [gammaOkP_of_checkAutom h hc] at hok
       cases hok
@@ -1244,7 +1241,7 @@ theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
     have hok' := hok
     rw [gammaOkP, Bool.and_eq_true, Nat.beq_eq, List.all_eq_true,
       Array.length_toList] at hok'
-    have hsize : γ.size = nn := by rw [hok'.1, h.n]; rfl
+    have hsize : γ.size = nn := by rw [hok'.1, h.n]
     have hget : ∀ v, lget ctx (pack ctx.w γ.toList) v = γ[v]! := fun v => by
       rw [lget_eq h hrep, getBang_eq_atD]
     have hbound : ∀ v, v ∈ List.range nn → (γ[v]! : Nat) < nn := fun v hv => by
@@ -1255,9 +1252,9 @@ theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
       have := Nat.blt_eq.mp (hok'.2 _ hmem)
       rw [h.n] at this
       exact this
-    rw [checkAutomP, checkAutom, Bool.eq_iff_iff]
+    rw [checkAutomP, checkAutomL, Bool.eq_iff_iff]
     simp only [hok, Bool.true_and, Bool.and_eq_true, hget, hrow, isPermK_eq,
-      imageP_eq, allRange_eq, h.n, Ctx.toL, map_getBang_range hsize, beq_iff_eq,
+      imageP_eq, allRange_eq, h.n, map_getBang_range hsize, beq_iff_eq,
       Nat.beq_eq, List.all_eq_true, decide_eq_true_eq]
     constructor
     · rintro ⟨hperm, himgs⟩
@@ -1265,14 +1262,18 @@ theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
     · rintro ⟨⟨_, hperm⟩, himgs⟩
       exact ⟨hperm, himgs⟩
 
+theorem validGammasL_sound {g : List Nat} {nn : Nat} {cert : CertNode} {γ : Array Nat}
+    (h : γ ∈ validGammasL g nn cert) : checkAutomL g nn γ = true :=
+  (List.mem_filter.mp h).2
+
 @[expose] def validGammasP (ctx : CtxP) (cert : CertNode) : List Nat :=
   ((certGammas (Nat.add ctx.n 2) cert []).filter (checkAutomP ctx)).map
     fun γ => pack ctx.w γ.toList
 
-theorem validGammasP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
-    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) (cert : CertNode) :
-    validGammasP ctx cert = (validGammas g nn cert).map fun γ => pack ctx.w γ.toList := by
-  rw [validGammasP, validGammas, add_eq, h.n]
+theorem validGammasP_eq {ctx : CtxP} {nn : Nat} {g : List Nat}
+    (h : CtxRep ctx ⟨nn, g⟩) (cert : CertNode) :
+    validGammasP ctx cert = (validGammasL g nn cert).map fun γ => pack ctx.w γ.toList := by
+  rw [validGammasP, validGammasL, add_eq, h.n]
   congr 1
   exact List.filter_congr fun γ _ => checkAutomP_eq h γ
 
@@ -1290,17 +1291,17 @@ theorem containsGamma_of_mem : ∀ {vgens : List (Array Nat)} {γ : Array Nat},
     · exact Or.inl (by rw [gammaEq]; exact beq_self_eq_true _)
     · exact Or.inr (containsGamma_of_mem hmem)
 
-theorem containsGammaP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
-    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) (cert : CertNode) (γ : Array Nat) :
+theorem containsGammaP_eq {ctx : CtxP} {nn : Nat} {g : List Nat}
+    (h : CtxRep ctx ⟨nn, g⟩) (cert : CertNode) (γ : Array Nat) :
     containsGammaP ctx (validGammasP ctx cert) γ =
-      containsGamma (validGammas g nn cert) γ := by
+      containsGamma (validGammasL g nn cert) γ := by
   rw [Bool.eq_iff_iff, containsGammaP, validGammasP_eq h, Bool.and_eq_true,
     List.any_eq_true]
   constructor
   · rintro ⟨hok, x, hx, hbeq⟩
     rw [List.mem_map] at hx
     obtain ⟨g', hg', rfl⟩ := hx
-    have hc := validGammas_sound hg'
+    have hc := validGammasL_sound hg'
     have hrep := gammaOkP_rep h hok
     have hrep' := gammaOkP_rep h (gammaOkP_of_checkAutom h hc)
     have heq : γ.toList = g'.toList :=
@@ -1311,7 +1312,7 @@ theorem containsGammaP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
     exact containsGamma_of_mem hg'
   · intro hc
     have hmem := containsGamma_mem hc
-    refine ⟨gammaOkP_of_checkAutom h (validGammas_sound hmem), pack ctx.w γ.toList,
+    refine ⟨gammaOkP_of_checkAutom h (validGammasL_sound hmem), pack ctx.w γ.toList,
       List.mem_map.mpr ⟨γ, hmem, rfl⟩, Nat.beq_refl _⟩
 
 /-! # The certificate replay over packed state -/
@@ -1332,7 +1333,7 @@ theorem containsGammaP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
         cond (Nat.blt rs.longcode bc) (some false)
           (cond (Nat.beq rs.longcode bc)
             (cond (discreteAtP ctx rs.ptn level)
-              (match keyCmp
+              (match keyCmpL
                 ⟨[rs.longcode, codeSentinel], leafRowsP ctx rs.lab⟩
                 ⟨bc :: brest, brows⟩ with
               | .gt => none
@@ -1482,11 +1483,11 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
                         if o' < co.2 &&
                             containsGamma vgens γ &&
                             checkCellsPermL
-                              (breakoutL rsLab rsPtn (level + 1) tc
+                              (breakoutL ctxL.n rsLab rsPtn (level + 1) tc
                                 (atD rsLab (tc + co.2) 0)).2.1
-                              (breakoutL rsLab rsPtn (level + 1)
+                              (breakoutL ctxL.n rsLab rsPtn (level + 1)
                                 tc (atD rsLab (tc + o') 0)).1
-                              ((breakoutL rsLab rsPtn (level + 1) tc
+                              ((breakoutL ctxL.n rsLab rsPtn (level + 1) tc
                                 (atD rsLab (tc + co.2) 0)).1.map
                                 fun w => atD γ.toList w 0)
                               (level + 1) ctxL.n then
@@ -1495,11 +1496,11 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
                           none
                       | _ =>
                         checkNodeL ctxL tcLevel brows vgens fuel (level + 1)
-                          (breakoutL rsLab rsPtn (level + 1) tc
+                          (breakoutL ctxL.n rsLab rsPtn (level + 1) tc
                             (atD rsLab (tc + co.2) 0)).1
-                          (breakoutL rsLab rsPtn (level + 1) tc
+                          (breakoutL ctxL.n rsLab rsPtn (level + 1) tc
                             (atD rsLab (tc + co.2) 0)).2.1
-                          (breakoutL rsLab rsPtn (level + 1) tc
+                          (breakoutL ctxL.n rsLab rsPtn (level + 1) tc
                             (atD rsLab (tc + co.2) 0)).2.2
                           (m + 1) co.1 brest
                     with
@@ -1607,22 +1608,24 @@ theorem flatRows_small (nn : Nat) (flat : List Bool) :
   intro r hr
   rw [flatRows, List.toList_toArray, List.mem_map] at hr
   obtain ⟨seg, _, rfl⟩ := hr
-  have hfold : ∀ (l : List Nat) (acc : Nat), (∀ j, j ∈ l → j < nn) → acc < 2 ^ nn →
-      l.foldl (fun row j => if atD seg j false then Nauty.insert row j else row) acc <
+  have hfold : ∀ (l : List Nat) (acc : Nat), acc < 2 ^ nn →
+      l.foldl (fun row j => if atD seg j false then insertL nn row j else row) acc <
         2 ^ nn := by
     intro l
     induction l with
-    | nil => intro acc _ h; simpa using h
+    | nil => intro acc h; simpa using h
     | cons j rest ih =>
-      intro acc hl hacc
+      intro acc hacc
       rw [List.foldl_cons]
-      refine ih _ (fun x hx => hl x (List.mem_cons_of_mem _ hx)) ?_
+      refine ih _ ?_
       split
-      · rw [Nauty.insert, Nat.one_shiftLeft]
-        exact Nat.or_lt_two_pow hacc
-          (Nat.pow_lt_pow_right (by decide) (hl j (List.mem_cons_self ..)))
+      · rw [insertL]
+        split
+        · rw [Nat.one_shiftLeft]
+          exact Nat.or_lt_two_pow hacc (Nat.pow_lt_pow_right (by decide) (by assumption))
+        · exact hacc
       · exact hacc
-  exact hfold _ 0 (fun j hj => List.mem_range.mp hj) (Nat.two_pow_pos nn)
+  exact hfold _ 0 (Nat.two_pow_pos nn)
 
 /-! # Rows packed from the flat literal
 
@@ -1633,7 +1636,8 @@ position, a spine walk per bit; `rowOfSegK` reads the segment once. -/
 @[expose] def rowOfSegK : List Bool → Nat → Nat
   | [], _ => 0
   | b :: rest, j =>
-    cond b (insertK (rowOfSegK rest (Nat.add j 1)) j) (rowOfSegK rest (Nat.add j 1))
+    cond b (Nat.lor (rowOfSegK rest (Nat.add j 1)) (Nat.shiftLeft 1 j))
+      (rowOfSegK rest (Nat.add j 1))
 
 theorem atD_of_length_le {α : Type} : ∀ (l : List α) (i : Nat) (d : α),
     l.length ≤ i → atD l i d = d
@@ -1658,7 +1662,7 @@ theorem testBit_rowOfSegK : ∀ (seg : List Bool) (j i : Nat),
       · have hsub : i - j = (i - (j + 1)) + 1 := by omega
         rw [hsub, atD]
         simp [show j ≤ i by omega, show j + 1 ≤ i by omega]
-    · rw [Bool.cond_true, insertK_eq, Nauty.insert, Nat.one_shiftLeft, Nat.testBit_or,
+    · rw [Bool.cond_true, lor_eq, shiftLeft_eq, Nat.one_shiftLeft, Nat.testBit_or,
         Nat.testBit_two_pow, ih]
       rcases Nat.lt_trichotomy i j with h | rfl | h
       · simp [Nat.not_le.mpr h, show ¬ j + 1 ≤ i by omega, Nat.ne_of_gt h]
@@ -1667,30 +1671,31 @@ theorem testBit_rowOfSegK : ∀ (seg : List Bool) (j i : Nat),
         rw [hsub, atD]
         simp [show j ≤ i by omega, show j + 1 ≤ i by omega, Nat.ne_of_lt h]
 
-theorem testBit_rowFold (seg : List Bool) : ∀ (len a acc i : Nat),
+theorem testBit_rowFold (nn : Nat) (seg : List Bool) : ∀ (len a acc i : Nat), a + len ≤ nn →
     ((List.range' a len).foldl
-      (fun row j => if atD seg j false then Nauty.insert row j else row) acc).testBit i =
+      (fun row j => if atD seg j false then insertL nn row j else row) acc).testBit i =
       (acc.testBit i || (decide (a ≤ i ∧ i < a + len) && atD seg i false))
-  | 0, a, acc, i => by
+  | 0, a, acc, i, _ => by
     simp only [List.range'_zero, List.foldl_nil, Nat.add_zero]
     have : ¬ (a ≤ i ∧ i < a) := by omega
     simp [this]
-  | len + 1, a, acc, i => by
-    rw [List.range'_succ, List.foldl_cons, testBit_rowFold seg len (a + 1) _ i]
+  | len + 1, a, acc, i, hle => by
+    rw [List.range'_succ, List.foldl_cons, testBit_rowFold nn seg len (a + 1) _ i (by omega),
+      insertL, ite_eq_left (show a < nn by omega)]
     have hrange : decide (a + 1 ≤ i ∧ i < a + 1 + len) =
         (decide (a ≤ i ∧ i < a + (len + 1)) && decide (i ≠ a)) := by
       rw [Bool.eq_iff_iff]
       simp only [Bool.and_eq_true, decide_eq_true_eq, ne_eq]
       omega
     rcases hs : atD seg a false with _ | _
-    · rw [ite_eq_right (by simp [hs]), hrange]
+    · rw [ite_eq_right (by simp), hrange]
       rcases Decidable.em (i = a) with rfl | hne
       · simp
         intro h
         rw [hs] at h
         cases h
       · simp [hne]
-    · rw [ite_eq_left (by simp [hs]), Nauty.insert, Nat.one_shiftLeft, Nat.testBit_or,
+    · rw [ite_eq_left (by simp), Nat.one_shiftLeft, Nat.testBit_or,
         Nat.testBit_two_pow, hrange]
       rcases Decidable.em (i = a) with rfl | hne
       · simp
@@ -1700,10 +1705,10 @@ theorem testBit_rowFold (seg : List Bool) : ∀ (len a acc i : Nat),
 theorem rowOfSegK_eq (nn : Nat) (seg : List Bool) (hlen : seg.length ≤ nn) :
     rowOfSegK seg 0 =
       (List.range nn).foldl
-        (fun row j => if atD seg j false then Nauty.insert row j else row) 0 := by
+        (fun row j => if atD seg j false then insertL nn row j else row) 0 := by
   refine Nat.eq_of_testBit_eq fun i => ?_
-  rw [testBit_rowOfSegK, List.range_eq_range', testBit_rowFold, Nat.zero_testBit,
-    Nat.sub_zero]
+  rw [testBit_rowOfSegK, List.range_eq_range', testBit_rowFold nn seg nn 0 0 i (by omega),
+    Nat.zero_testBit, Nat.sub_zero]
   rcases Decidable.em (i < nn) with hi | hi
   · simp [hi]
   · rw [atD_of_length_le _ _ _ (by omega)]
@@ -1753,7 +1758,7 @@ theorem initW_lt (n : Nat) : n + 2 < 2 ^ initW n := Nat.lt_log2_self
 `checkKeyLit` replays. -/
 theorem initRep (G : Colored n k) (flat : List Bool) (hn0 : 0 < n) :
     CtxRep (initCtx n (pack n (flatRows n flat).toList))
-        (Ctx.toL ⟨n, flatRows n flat⟩) ∧
+        ⟨n, (flatRows n flat).toList⟩ ∧
       Rep (initW n) n (initLabP G) (initialPartition G).1.toList ∧
       Rep (initW n) n (initPtnP G)
         (initPtn n (n + 2) (initialPartition G).2).toList := by
@@ -1777,26 +1782,28 @@ from the tied adjacency matrix (`packRowsK`), the labelling and
 partition packed with the field width `initW n`. The negative route's
 kernel obligation. -/
 @[expose] def checkKeyP (G : Colored n k) (rows : Nat)
-    (cert : CertNode) (B : Key) : Bool :=
+    (cert : CertNode) (K : KeyL) : Bool :=
+  K.rows.all (fun r => r < 2 ^ n) &&
   if n == 0 then
-    B.codes == [] && B.rows == []
+    K.codes == [] && K.rows == []
   else
     let ctx := initCtx n rows
-    checkNodeP ctx 100 B.rows (validGammasP ctx cert) n 1
-      (initLabP G) (initPtnP G) (initActive (initialPartition G).2)
-      (initialPartition G).2.length cert B.codes = some true
+    checkNodeP ctx 100 K.rows (validGammasP ctx cert) n 1
+      (initLabP G) (initPtnP G) (initActive n (initialPartition G).2).toNat
+      (initialPartition G).2.length cert K.codes = some true
 
 theorem checkKeyP_eq (G : Colored n k) (flat : List Bool)
-    (cert : CertNode) (B : Key) :
-    checkKeyP G (packRowsK n flat) cert B = checkKeyLit G flat cert B := by
+    (cert : CertNode) (K : KeyL) :
+    checkKeyP G (packRowsK n flat) cert K = checkKeyLit G flat cert K := by
   rw [checkKeyP, checkKeyLit]
+  congr 1
   rcases Decidable.em (n = 0) with hn | hn
   · rw [ite_eq_left (by simpa using hn), ite_eq_left (by simpa using hn)]
   · rw [ite_eq_right (by simpa using hn), ite_eq_right (by simpa using hn)]
     dsimp only
     rw [packRowsK_eq]
     obtain ⟨hctx, hlab, hptn⟩ := initRep G flat (Nat.pos_of_ne_zero hn)
-    rw [checkNodeP_eq hctx 100 B.rows (containsGammaP_eq hctx cert) n 1
+    rw [checkNodeP_eq hctx 100 K.rows (containsGammaP_eq hctx cert) n 1
       (by show 1 + n ≤ n + 1; omega) hlab hptn]
 
 /-- Tying equalities plus two packed-state key certificates with
@@ -1804,12 +1811,12 @@ differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysL`
 with the replay over packed state and the rows tied as one packed
 number. -/
 theorem not_isomorphic_of_checkKeysP {G H : Colored n k}
-    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key} {NA NB : Nat}
+    {certG certH : Nauty.CertNode} {BG BH : Nauty.KeyL} {NA NB : Nat}
     (hA : packRowsK n G.graph.adjMatrix.data.toList = NA)
     (hB : packRowsK n H.graph.adjMatrix.data.toList = NB)
     (hG : checkKeyP G NA certG BG = true)
     (hH : checkKeyP H NB certH BH = true)
-    (hd : Nauty.checkDiff BG BH = true) : ¬Isomorphic G H := by
+    (hd : Nauty.checkDiffL BG BH = true) : ¬Isomorphic G H := by
   subst hA hB
   rw [checkKeyP_eq] at hG hH
   exact not_isomorphic_of_checkKeysL rfl rfl hG hH hd

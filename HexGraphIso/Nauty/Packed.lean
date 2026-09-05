@@ -200,28 +200,30 @@ theorem allRange_eq (k : Nat) (p : Nat → Bool) :
 
 /-! # Bit-set operations, raw -/
 
-/-- `elem` with the accelerated steps only. -/
+/-- Membership with the accelerated steps only. -/
 @[expose] def elemK (s v : Nat) : Bool :=
   Nat.beq (Nat.land (Nat.shiftRight s v) 1) 1
 
-theorem elemK_eq (s v : Nat) : elemK s v = elem s v := by
-  rw [elemK, elem, Nat.testBit, land_eq, shiftRight_eq, Nat.and_one_is_mod,
+theorem elemK_eq (s v : Nat) : elemK s v = s.testBit v := by
+  rw [elemK, Nat.testBit, land_eq, shiftRight_eq, Nat.and_one_is_mod,
     Nat.and_comm, Nat.and_one_is_mod]
   rcases Nat.mod_two_eq_zero_or_one (s >>> v) with h | h <;> simp [h] <;> rfl
 
-/-- `insert`, raw. -/
-@[expose] def insertK (s v : Nat) : Nat :=
-  Nat.lor s (Nat.shiftLeft 1 v)
+/-- `insertL`, raw: a no-op outside the vertex range. -/
+@[expose] def insertK (n s v : Nat) : Nat :=
+  cond (Nat.blt v n) (Nat.lor s (Nat.shiftLeft 1 v)) s
 
-theorem insertK_eq (s v : Nat) : insertK s v = insert s v := rfl
-
-/-- `erase`, raw. -/
-@[expose] def eraseK (s v : Nat) : Nat :=
-  cond (elemK s v) (Nat.xor s (Nat.shiftLeft 1 v)) s
-
-theorem eraseK_eq (s v : Nat) : eraseK s v = erase s v := by
-  rw [eraseK, erase, elemK_eq, cond_beq_true]
+theorem insertK_eq (n s v : Nat) : insertK n s v = insertL n s v := by
+  rw [insertK, insertL, cond_blt]
   rfl
+
+/-- `eraseL`, raw: a no-op outside the vertex range. -/
+@[expose] def eraseK (n s v : Nat) : Nat :=
+  cond (Nat.blt v n) (cond (elemK s v) (Nat.xor s (Nat.shiftLeft 1 v)) s) s
+
+theorem eraseK_eq (n s v : Nat) : eraseK n s v = eraseL n s v := by
+  rw [eraseK, eraseL, cond_blt, elemK_eq]
+  by_cases h1 : v < n <;> by_cases h2 : s.testBit v = true <;> simp [h1, h2] <;> rfl
 
 /-- `mash`, raw. -/
 @[expose] def mashK (l i : Nat) : Nat :=
@@ -367,8 +369,8 @@ theorem lowBitK_eq (s : Nat) : lowBitK s = lowBit s := by
   cond (Nat.beq s' 0) none (some (lowBitK s'))
 
 theorem nextElemK_eq (s : Nat) (pos : Option Nat) :
-    nextElemK s pos = nextElem s pos := by
-  unfold nextElemK nextElem
+    nextElemK s pos = nextElemL s pos := by
+  unfold nextElemK nextElemL
   cases pos <;> simp only [cond_beq, lowBitK_eq, shiftLeft_eq, shiftRight_eq,
     add_eq]
 

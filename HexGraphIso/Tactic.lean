@@ -16,6 +16,7 @@ public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.CanonForm
+public meta import HexGraphIso.NodeLit
 public meta import Lean
 public import HexGraphIso.PairwiseSound
 public meta import HexGraphIso.PairwiseSound
@@ -75,11 +76,12 @@ structure Raw where
   n : Nat
   /-- The number of colours. -/
   k : Nat
-  /-- Adjacency bitset rows. -/
-  rows : Array Nat
+  /-- The packed adjacency rows. -/
+  rows : Array (Nauty.VSet n)
   /-- The colour of each vertex. -/
   colors : Array Nat
-deriving Inhabited, Repr
+
+instance : Inhabited Raw := ⟨{ n := 0, k := 0, rows := #[], colors := #[] }⟩
 
 /-- The runtime image of a coloured graph. -/
 def Colored.toRaw {n k : Nat} (G : Colored n k) : Raw where
@@ -130,7 +132,7 @@ meta def evalColored (e : Expr) : MetaM Raw := do
         other modules may need `public meta import`."
 
 /-- Run the nauty-compatible canonical search on a runtime graph. -/
-meta def rawCanon (r : Raw) : Nauty.RunResult := Id.run do
+meta def rawCanon (r : Raw) : Nauty.RunResult r.n := Id.run do
   let mut lab0 : Array Nat := #[]
   let mut ends : List Nat := []
   for c in [0 : r.k] do
@@ -153,7 +155,7 @@ meta def rawCheckIso (a b : Raw) (p : Array Nat) : Bool := Id.run do
       return false
   for u in [0 : a.n] do
     for v in [0 : a.n] do
-      if (b.rows[p[u]!]! >>> p[v]!) &&& 1 != (a.rows[u]! >>> v) &&& 1 then
+      if b.rows[p[u]!]!.mem p[v]! != a.rows[u]!.mem v then
         return false
   return true
 
@@ -175,7 +177,7 @@ meta def rawFindIso (a b : Raw) : Option (Array Nat) × Nat := Id.run do
     sizesB := sizesB.set! b.colors[v]! (sizesB[b.colors[v]!]! + 1)
   if sizesA != sizesB then
     return (none, nodes)
-  if ra.canong != rb.canong then
+  if ra.canong.map Nauty.VSet.toNat != rb.canong.map Nauty.VSet.toNat then
     return (none, nodes)
   let mut p : Array Nat := .replicate a.n 0
   for i in [0 : a.n] do
@@ -211,7 +213,7 @@ meta def kernelDecideProof (p : Expr) : MetaM Expr := do
 row-major order. -/
 meta def rawFlat (r : Raw) : List Bool :=
   (List.range r.n).flatMap fun i =>
-    (List.range r.n).map fun j => r.rows[i]!.testBit j
+    (List.range r.n).map fun j => r.rows[i]!.mem j
 
 /-- A `List Bool` literal expression. -/
 meta def boolListLit (bs : List Bool) : MetaM Expr :=
@@ -232,7 +234,7 @@ meta def matrixPackedSide (n : Nat) (e : Expr) : MetaM Expr := do
 /-- The packed rows of a runtime graph, row `v` at bits
 `[n * v, n * (v + 1))`: the literal side of the packed-rows equality. -/
 meta def rawPackedRows (r : Raw) : Nat :=
-  (List.range r.n).foldr (fun v acc => r.rows[v]! + (acc <<< r.n)) 0
+  (List.range r.n).foldr (fun v acc => r.rows[v]!.toNat + (acc <<< r.n)) 0
 
 /-- Tie a coloured graph expression to its packed rows literal, one
 sequential kernel evaluation of the graph's adjacency; returns the
@@ -253,9 +255,9 @@ meta partial def certNodeExpr : Nauty.CertNode → MetaM Expr
     return mkApp (mkConst ``Nauty.CertNode.node)
       (← mkListLit (mkConst ``Nauty.CertNode) elems)
 
-/-- Reify a canonical key as a literal expression. -/
-meta def keyExpr (B : Nauty.Key) : Expr :=
-  mkApp2 (mkConst ``Nauty.Key.mk) (toExpr B.codes) (toExpr B.rows)
+/-- Reify a literal canonical key as an expression. -/
+meta def keyExpr (K : Nauty.KeyL) : Expr :=
+  mkApp2 (mkConst ``Nauty.KeyL.mk) (toExpr K.codes) (toExpr K.rows)
 
 /-- Match `Isomorphic G H` (returning `(false, n, k, G, H)`) or
 `¬ Isomorphic G H` (returning `true` first); `none` for other goals. -/
@@ -304,15 +306,15 @@ private meta unsafe def evalBoolUnsafe (e : Expr) : MetaM Bool :=
 private meta opaque evalBoolCore (e : Expr) : MetaM Bool
 
 private meta unsafe def evalCertUnsafe (e : Expr) :
-    MetaM (Option (Nauty.CertNode × Nauty.Key)) := do
-  evalExpr (Option (Nauty.CertNode × Nauty.Key))
+    MetaM (Option (Nauty.CertNode × Nauty.KeyL)) := do
+  evalExpr (Option (Nauty.CertNode × Nauty.KeyL))
     (← mkAppM ``Option
       #[← mkAppM ``Prod
-        #[mkConst ``Nauty.CertNode, mkConst ``Nauty.Key]]) e
+        #[mkConst ``Nauty.CertNode, mkConst ``Nauty.KeyL]]) e
 
 @[implemented_by evalCertUnsafe]
 private meta opaque evalCertCore (e : Expr) :
-    MetaM (Option (Nauty.CertNode × Nauty.Key))
+    MetaM (Option (Nauty.CertNode × Nauty.KeyL))
 
 private meta def countAutom : Nauty.CertNode → Nat
   | .leaf | .codePrune => 0
@@ -332,12 +334,12 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
   -- successfully — a bad candidate must fall back here, not surface as
   -- a kernel rejection at module finalization
   let bounded (e : Expr) :
-      MetaM (Option (Nauty.CertNode × Nauty.Key)) := do
-    evalCertCore (← mkAppM ``Nauty.certifyKeyBounded?
+      MetaM (Option (Nauty.CertNode × Nauty.KeyL)) := do
+    evalCertCore (← mkAppM ``certifyKeyLit?
       #[mkNatLit cfg.maxNodes, e])
   let some (certG, BG) ← bounded GE | return none
   let some (certH, BH) ← bounded HE | return none
-  unless Nauty.checkDiff BG BH do
+  unless Nauty.checkDiffL BG BH do
     throwError "graph_iso: the graphs are isomorphic; the negative goal \
         is not provable"
   -- one `checkCost` per record plus one per `.autom` payload, both sides
@@ -356,13 +358,13 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
   let (hA, NAe) ← tiePackedRows GE a
   let (hB, NBe) ← tiePackedRows HE b
   let mkCheck (graphE litE : Expr) (cert : Nauty.CertNode)
-      (B : Nauty.Key) : MetaM Expr := do
+      (B : Nauty.KeyL) : MetaM Expr := do
     let checkTerm ← mkAppM ``checkKeyP
       #[graphE, litE, ← certNodeExpr cert, keyExpr B]
     kernelDecideProof (← mkAppM ``Eq #[checkTerm, mkConst ``Bool.true])
   let hG ← mkCheck GE NAe certG BG
   let hH ← mkCheck HE NBe certH BH
-  let diffTerm ← mkAppM ``Nauty.checkDiff #[keyExpr BG, keyExpr BH]
+  let diffTerm ← mkAppM ``Nauty.checkDiffL #[keyExpr BG, keyExpr BH]
   let hd ← kernelDecideProof
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
   let proof ← mkAppM ``not_isomorphic_of_checkKeysP

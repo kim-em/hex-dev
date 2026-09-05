@@ -11,7 +11,6 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Refine
-public import HexGraphIso.Nauty.Image
 public import HexGraphIso.Canon
 
 public section
@@ -38,23 +37,24 @@ namespace Hex.GraphIso.Nauty
 /-- The sentinel code above every real refinement code: nauty's `077777`. -/
 @[expose] def codeSentinel : Nat := 0o77777
 
-/-- Search state: nauty's globals for one `nauty()` invocation. -/
-structure SearchSt where
+/-- Search state: nauty's globals for one `nauty()` invocation on `n`
+vertices. -/
+structure SearchSt (n : Nat) where
   lab : Array Nat
   ptn : Array Nat
-  active : Nat
+  active : VSet n
   orbits : Array Nat
-  fixedpts : Nat := 0
+  fixedpts : VSet n := .empty
   /-- Stored `(fix, mcr)` pairs of discovered automorphisms; nauty's
   workspace, whose last slot is overwritten once `wsCap` pairs exist. -/
-  autos : Array (Nat × Nat) := #[]
+  autos : Array (VSet n × VSet n) := #[]
   wsCap : Nat := 500
   firstcode : Array Nat
   canoncode : Array Nat
   firsttc : Array Int
   firstlab : Array Nat
   canonlab : Array Nat
-  canong : Array Nat
+  canong : Array (VSet n)
   samerows : Nat := 0
   compCanon : Int := 0
   eqlevFirst : Nat := 0
@@ -81,8 +81,10 @@ structure SearchSt where
   genTrace : Array (Array Nat) := #[]
 deriving Inhabited
 
+variable {n : Nat}
+
 /-- Record an automorphism pair in the bounded workspace. -/
-def pushAuto (st : SearchSt) (pair : Nat × Nat) : SearchSt :=
+def pushAuto (st : SearchSt n) (pair : VSet n × VSet n) : SearchSt n :=
   if st.autos.size == st.wsCap then
     { st with autos := st.autos.set! (st.wsCap - 1) pair }
   else
@@ -90,7 +92,7 @@ def pushAuto (st : SearchSt) (pair : Nat × Nat) : SearchSt :=
 
 /-- nauty's `recover`: reopen the partition below `level` and pull the
 level bookkeeping back. -/
-def recover (n inf : Nat) (level : Nat) (st : SearchSt) : SearchSt := Id.run do
+def recover (n inf : Nat) (level : Nat) (st : SearchSt n) : SearchSt n := Id.run do
   let mut ptn := st.ptn
   for i in [0 : n] do
     if ptn[i]! > level then
@@ -108,7 +110,7 @@ def recover (n inf : Nat) (level : Nat) (st : SearchSt) : SearchSt := Id.run do
 
 /-- nauty's `firstterminal`: install the first leaf as both the first-path
 data and the initial best-so-far leaf. -/
-def firstterminal (level : Nat) (st : SearchSt) : SearchSt := Id.run do
+def firstterminal (level : Nat) (st : SearchSt n) : SearchSt n := Id.run do
   let mut st := st
   st := { st with
     maxlevel := level
@@ -129,9 +131,9 @@ def firstterminal (level : Nat) (st : SearchSt) : SearchSt := Id.run do
 
 /-- nauty's `processnode`: classify a non-first-path node and act on it.
 Returns the level to return to. -/
-def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
-    Int × SearchSt := Id.run do
-  let n := ctx.n
+def processnode (ctx : Ctx n) (level numcells : Nat) (st : SearchSt n) :
+    Int × SearchSt n := Id.run do
+  let n := n
   let mut st := st
   let mut code := 0
   let mut workperm : Array Nat := .replicate n 0
@@ -222,18 +224,19 @@ def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
 /-- nauty's `longprune`: intersect the target cell with the minimum-cell
 representatives of every stored automorphism fixing all currently fixed
 points. -/
-def longprune (tcell : Nat) (fixedpts : Nat) (autos : Array (Nat × Nat)) : Nat :=
+def longprune (tcell fixedpts : VSet n)
+    (autos : Array (VSet n × VSet n)) : VSet n :=
   autos.foldl
     (fun tcell (fix, mcr) =>
-      if fixedpts &&& fix == fixedpts then tcell &&& mcr else tcell)
+      if fixedpts.subset fix then tcell.inter mcr else tcell)
     tcell
 
 /-- nauty's `shortprune`: intersect the target cell with the `mcr` set of
 the most recently stored automorphism. The store is never empty when this
 is called; an empty store leaves the cell unchanged. -/
-def shortprune (tcell : Nat) (st : SearchSt) : Nat :=
+def shortprune (tcell : VSet n) (st : SearchSt n) : VSet n :=
   match st.autos.back? with
-  | some (_, mcr) => tcell &&& mcr
+  | some (_, mcr) => tcell.inter mcr
   | none => tcell
 
 set_option maxHeartbeats 800000 in
@@ -241,12 +244,11 @@ mutual
 
 /-- nauty's `firstpathnode`: produce a node on the leftmost path. Returns
 the level to return to. -/
-@[expose] def firstPathNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
-    (level numcells : Nat) (st : SearchSt) : Int × SearchSt :=
+@[expose] def firstPathNode (ctx : Ctx n) (inf tcLevel : Nat) (fuel : Nat)
+    (level numcells : Nat) (st : SearchSt n) : Int × SearchSt n :=
   match fuel with
   | 0 => (0, st)
   | fuel + 1 => Id.run do
-    let n := ctx.n
     let mut st := { st with numnodes := st.numnodes + 1 }
     let rs := refine ctx level st.lab st.ptn st.active numcells
     st := { st with lab := rs.lab, ptn := rs.ptn, active := rs.active }
@@ -254,7 +256,7 @@ the level to return to. -/
     let refcode := rs.longcode
     st := { st with firstcode := st.firstcode.set! level refcode }
     let mut tc : Int := -1
-    let mut tcell : Nat := 0
+    let mut tcell : VSet n := .empty
     let mut tcellsize : Nat := 0
     if numcells ≠ n then
       let (tcPos, cellSet, size) := maketargetcell ctx st.lab st.ptn level tcLevel (-1)
@@ -268,10 +270,10 @@ the level to return to. -/
       return (Int.ofNat level - 1, st)
     if st.noncheaplevel ≥ level ∧ ¬ cheapautom st.ptn level n then
       st := { st with noncheaplevel := level + 1 }
-    let tv1 := (nextElem tcell none).getD 0
+    let tv1 := (tcell.nextElem none).getD 0
     let (r, index, st') :=
       firstChildLoop ctx inf tcLevel fuel (n + 1) level numcells (tc.toNat) tv1
-        (nextElem tcell none) tcell 0 st
+        (tcell.nextElem none) tcell 0 st
     st := st'
     match r with
     | some rtn => return (rtn, st)
@@ -284,9 +286,9 @@ termination_by (fuel, 0, 0)
 /-- The child loop of `firstpathnode`: individualize each surviving
 target-cell vertex in ascending order, tracking the orbit index count.
 Returns `some rtn` for an early unwind. -/
-@[expose] def firstChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
-    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : Nat)
-    (index0 : Nat) (st0 : SearchSt) : Option Int × Nat × SearchSt :=
+@[expose] def firstChildLoop (ctx : Ctx n) (inf tcLevel : Nat) (fuel cfuel : Nat)
+    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet n)
+    (index0 : Nat) (st0 : SearchSt n) : Option Int × Nat × SearchSt n :=
   match cfuel, tv? with
   | 0, _ => (none, index0, st0)
   | _, none => (none, index0, st0)
@@ -295,12 +297,12 @@ Returns `some rtn` for an early unwind. -/
     let mut tcell := tcell0
     let mut index := index0
     if st.orbits[tv]! == tv then
-      let (lab, ptn, active) := breakout st.lab st.ptn (level + 1) tc tv
+      let (lab, ptn, active) := breakout n st.lab st.ptn (level + 1) tc tv
       st := { st with
         lab := lab
         ptn := ptn
         active := active
-        fixedpts := insert st.fixedpts tv
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }
       let mut rtnlevel : Int := 0
       if tv == tv1 then
@@ -311,25 +313,25 @@ Returns `some rtn` for an early unwind. -/
         let (r, st') := otherNode ctx inf tcLevel fuel (level + 1) (numcells + 1) st
         rtnlevel := r
         st := st'
-      st := { st with fixedpts := erase st.fixedpts tv }
+      st := { st with fixedpts := st.fixedpts.erase tv }
       if rtnlevel < Int.ofNat level then
         return (some rtnlevel, index, st)
       if st.needshortprune then
         st := { st with needshortprune := false }
         tcell := shortprune tcell st
-      st := recover ctx.n inf level st
+      st := recover n inf level st
     if st.orbits[tv]! == tv1 then
       index := index + 1
     return firstChildLoop ctx inf tcLevel fuel cfuel level numcells tc tv1
-      (nextElem tcell (some tv)) tcell index st
+      (tcell.nextElem (some tv)) tcell index st
 termination_by (fuel, 1, cfuel)
 
 /-- The comparison bookkeeping of nauty's `othernode` between the
 refinement and the target-cell choice: the first-path level-code
 comparison and the best-so-far level-code comparison, exactly as the
 corresponding `othernode` lines perform them. -/
-def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt) :
-    SearchSt := Id.run do
+def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt n) :
+    SearchSt n := Id.run do
   let mut st := st
   if st.eqlevFirst == level - 1 ∧ code == st.firstcode[level]! then
     st := { st with eqlevFirst := level }
@@ -346,12 +348,11 @@ def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt) :
 
 /-- nauty's `othernode`: produce a node off the leftmost path. Returns the
 level to return to. -/
-@[expose] def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
-    (level numcells : Nat) (st : SearchSt) : Int × SearchSt :=
+@[expose] def otherNode (ctx : Ctx n) (inf tcLevel : Nat) (fuel : Nat)
+    (level numcells : Nat) (st : SearchSt n) : Int × SearchSt n :=
   match fuel with
   | 0 => (0, st)
   | fuel + 1 => Id.run do
-    let n := ctx.n
     let mut st := { st with numnodes := st.numnodes + 1 }
     let rs := refine ctx level st.lab st.ptn st.active numcells
     st := { st with lab := rs.lab, ptn := rs.ptn, active := rs.active }
@@ -359,7 +360,7 @@ level to return to. -/
     let code := rs.longcode
     st := otherNodePrep level code st
     let mut tc : Int := -1
-    let mut tcell : Nat := 0
+    let mut tcell : VSet n := .empty
     if numcells < n ∧ (st.eqlevFirst == level ∨ st.compCanon ≥ (0 : Int)) then
       if st.compCanon < (0 : Int) then
         let (tcPos, cellSet, size) :=
@@ -384,10 +385,10 @@ level to return to. -/
       tcell := shortprune tcell st
     if ¬ cheapautom st.ptn level n then
       st := { st with noncheaplevel := level + 1 }
-    let tv1 := (nextElem tcell none).getD 0
+    let tv1 := (tcell.nextElem none).getD 0
     let (r, st') :=
       otherChildLoop ctx inf tcLevel fuel (n + 1) level numcells (tc.toNat) tv1
-        (nextElem tcell none) tcell st
+        (tcell.nextElem none) tcell st
     st := st'
     match r with
     | some rtn => return (rtn, st)
@@ -395,23 +396,23 @@ level to return to. -/
 termination_by (fuel, 0, 0)
 
 /-- The child loop of `othernode`. -/
-@[expose] def otherChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
-    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : Nat)
-    (st0 : SearchSt) : Option Int × SearchSt :=
+@[expose] def otherChildLoop (ctx : Ctx n) (inf tcLevel : Nat) (fuel cfuel : Nat)
+    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : VSet n)
+    (st0 : SearchSt n) : Option Int × SearchSt n :=
   match cfuel, tv? with
   | 0, _ => (none, st0)
   | _, none => (none, st0)
   | cfuel + 1, some tv => Id.run do
     let mut st := st0
     let mut tcell := tcell0
-    let (lab, ptn, active) := breakout st.lab st.ptn (level + 1) tc tv
+    let (lab, ptn, active) := breakout n st.lab st.ptn (level + 1) tc tv
     st := { st with
       lab := lab
       ptn := ptn
       active := active
-      fixedpts := insert st.fixedpts tv }
+      fixedpts := st.fixedpts.insert tv }
     let (rtnlevel, st') := otherNode ctx inf tcLevel fuel (level + 1) (numcells + 1) st
-    st := { st' with fixedpts := erase st'.fixedpts tv }
+    st := { st' with fixedpts := st'.fixedpts.erase tv }
     if rtnlevel < Int.ofNat level then
       return (some rtnlevel, st)
     if st.needshortprune then
@@ -419,18 +420,18 @@ termination_by (fuel, 0, 0)
       tcell := shortprune tcell st
     if tv == tv1 then
       tcell := longprune tcell st.fixedpts st.autos
-    st := recover ctx.n inf level st
+    st := recover n inf level st
     return otherChildLoop ctx inf tcLevel fuel cfuel level numcells tc tv1
-      (nextElem tcell (some tv)) tcell st
+      (tcell.nextElem (some tv)) tcell st
 termination_by (fuel, 1, cfuel)
 
 end
 
-/-- The result of a canonical search: nauty's `canonlab` and the rows of
-`canong`, with the observable statistics. -/
-structure RunResult where
+/-- The result of a canonical search on `n` vertices: nauty's `canonlab`
+and the rows of `canong`, with the observable statistics. -/
+structure RunResult (n : Nat) where
   canonlab : Array Nat
-  canong : Array Nat
+  canong : Array (VSet n)
   numnodes : Nat
   numorbits : Nat
   numgenerators : Nat
@@ -446,14 +447,15 @@ end. -/
   cellEnds.foldl (fun ptn e => ptn.set! e 0) (Array.replicate n inf)
 
 /-- The initial active set: one bit per cell start. -/
-@[expose] def initActive (cellEnds : List Nat) : Nat :=
-  (cellEnds.foldl (fun (p : Nat × Nat) e => (insert p.1 p.2, e + 1)) (0, 0)).1
+@[expose] def initActive (n : Nat) (cellEnds : List Nat) : VSet n :=
+  (cellEnds.foldl (fun (p : VSet n × Nat) e => (p.1.insert p.2, e + 1))
+    (.empty, 0)).1
 
 /-- Run the pinned dense-nauty canonical search on `n` vertices with
 adjacency rows `g` and the initial ordered partition `(lab0, cellEnds)`;
 `cellEnds` lists, in order, the last position of each colour cell. -/
-def run (n : Nat) (g : Array Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
-    RunResult := Id.run do
+def run (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat) (cellEnds : List Nat) :
+    RunResult n := Id.run do
   if n == 0 then
     return {
       canonlab := #[]
@@ -466,18 +468,18 @@ def run (n : Nat) (g : Array Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
       tctotal := 0
       canupdates := 1 }
   let inf := n + 2
-  let ctx : Ctx := { n, g }
-  let st : SearchSt :=
+  let ctx : Ctx n := { g }
+  let st : SearchSt n :=
     { lab := lab0
       ptn := initPtn n inf cellEnds
-      active := initActive cellEnds
+      active := initActive n cellEnds
       orbits := .ofFn (n := n) fun i => i.val
       firstcode := .replicate (n + 2) 0
       canoncode := .replicate (n + 2) 0
       firsttc := .replicate (n + 2) (-1)
       firstlab := .replicate n 0
       canonlab := .replicate n 0
-      canong := .replicate n 0
+      canong := .replicate n .empty
       numorbits := n }
   let (_, st) := firstPathNode ctx inf 100 (n + 2) 1 cellEnds.length st
   let canong := updatecan ctx st.canong st.canonlab st.samerows
@@ -499,8 +501,8 @@ The search's `canoncode` chain and the certificate checker use the
 same code coordinates (each child call is seeded with the parent's
 recomputed cell count), so the codes are read off the final state
 directly. -/
-structure TraceRun where
-  result : RunResult
+structure TraceRun (n : Nat) where
+  result : RunResult n
   autos : Array (Array Nat)
   /-- The best leaf's refinement codes at levels `1 .. canonlevel`,
   without the sentinel. -/
@@ -509,8 +511,8 @@ structure TraceRun where
 /-- `run`, additionally returning the trace: the identical traversal
 on the identical state, also reading off the recorded generators and
 the best path's codes. -/
-def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
-    (cellEnds : List Nat) : TraceRun := Id.run do
+def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) : TraceRun n := Id.run do
   if n == 0 then
     return {
       result := {
@@ -526,18 +528,18 @@ def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
       autos := #[]
       bestCodes := [] }
   let inf := n + 2
-  let ctx : Ctx := { n, g }
-  let st : SearchSt :=
+  let ctx : Ctx n := { g }
+  let st : SearchSt n :=
     { lab := lab0
       ptn := initPtn n inf cellEnds
-      active := initActive cellEnds
+      active := initActive n cellEnds
       orbits := .ofFn (n := n) fun i => i.val
       firstcode := .replicate (n + 2) 0
       canoncode := .replicate (n + 2) 0
       firsttc := .replicate (n + 2) (-1)
       firstlab := .replicate n 0
       canonlab := .replicate n 0
-      canong := .replicate n 0
+      canong := .replicate n .empty
       numorbits := n }
   let (_, st) := firstPathNode ctx inf 100 (n + 2) 1 cellEnds.length st
   let canong := updatecan ctx st.canong st.canonlab st.samerows
@@ -556,166 +558,24 @@ def runTraced (n : Nat) (g : Array Nat) (lab0 : Array Nat)
     bestCodes := (List.range' 1 st.canonlevel).map
       fun i => st.canoncode[i]! }
 
-variable {n k : Nat}
+variable {k : Nat}
 
 /-- The adjacency row of one vertex of a coloured graph. -/
-@[expose] def rowOf (G : Colored n k) (i : Nat) : Nat :=
-  (List.range n).foldl
-    (fun row j =>
-      if h : i < n ∧ j < n then
-        if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then insert row j else row
-      else row)
-    0
+@[expose] def rowOf (G : Colored n k) (i : Nat) : VSet n :=
+  VSet.ofFn fun j =>
+    if h : i < n ∧ j < n then G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ else false
 
-/-- `rowOf` without the `List.range` fold or the per-set-bit shifts:
-most-significant-first Horner accumulation over descending vertex
-numbers, allocation-free. -/
-def rowOfFast (G : Colored n k) (i : Nat) : Nat :=
-  if hi : i < n then go ⟨i, hi⟩ n (Nat.le_refl n) 0 else 0
-where
-  go (iv : Fin n) : (j : Nat) → j ≤ n → Nat → Nat
-  | 0, _, acc => acc
-  | j + 1, h, acc =>
-    go iv j (Nat.le_of_succ_le h)
-      (2 * acc + if G.graph.adj iv ⟨j, h⟩ then 1 else 0)
-
-private theorem rowOfFast_go_eq {G : Colored n k} (iv : Fin n) :
-    ∀ (j : Nat) (h : j ≤ n) (acc : Nat),
-      rowOfFast.go G iv j h acc =
-        acc * 2 ^ j + rowOfFast.go G iv j h 0
-  | 0, _, acc => by simp [rowOfFast.go]
-  | j + 1, h, acc => by
-    rw [rowOfFast.go, rowOfFast.go,
-      rowOfFast_go_eq iv j _ (2 * acc + _),
-      rowOfFast_go_eq iv j _ (2 * 0 + _)]
-    simp only [Nat.mul_zero, Nat.zero_add]
-    have hp : acc * 2 ^ (j + 1) = 2 * acc * 2 ^ j := by
-      rw [Nat.pow_succ, Nat.mul_comm 2 acc, Nat.mul_assoc,
-        Nat.mul_comm (2 ^ j) 2, ← Nat.mul_assoc]
-    rw [hp, Nat.add_mul]
-    omega
-
-private theorem rowOfFast_go_lt {G : Colored n k} (iv : Fin n) :
-    ∀ (j : Nat) (h : j ≤ n), rowOfFast.go G iv j h 0 < 2 ^ j
-  | 0, _ => Nat.zero_lt_one
-  | j + 1, h => by
-    rw [rowOfFast.go, rowOfFast_go_eq iv j]
-    have hz := rowOfFast_go_lt (G := G) iv j (Nat.le_of_succ_le h)
-    have hp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by
-      rw [Nat.pow_succ]; omega
-    rcases Decidable.em (G.graph.adj iv ⟨j, h⟩ = true) with ha | ha
-    · simp only [ha, ite_true]
-      omega
-    · rw [ite_eq_right ha]
-      omega
-
-/-- The adjacency bit of `go`'s accumulator, by position. -/
-private theorem testBit_rowOfFast_go {G : Colored n k} (iv : Fin n) :
-    ∀ (j : Nat) (h : j ≤ n) (t : Nat),
-      (rowOfFast.go G iv j h 0).testBit t =
-        if ht : t < j then
-          G.graph.adj iv ⟨t, Nat.lt_of_lt_of_le ht h⟩
-        else
-          false
-  | 0, _, t => by simp [rowOfFast.go]
-  | j + 1, h, t => by
-    rw [rowOfFast.go, rowOfFast_go_eq iv j]
-    have hz := rowOfFast_go_lt (G := G) iv j (Nat.le_of_succ_le h)
-    have hih := testBit_rowOfFast_go (G := G) iv j
-      (Nat.le_of_succ_le h) t
-    have hp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by
-      rw [Nat.pow_succ]; omega
-    simp only [Nat.mul_zero, Nat.zero_add]
-    rcases Decidable.em (G.graph.adj iv ⟨j, h⟩ = true) with ha | ha
-    · rw [ite_eq_left ha, Nat.one_mul]
-      rcases Nat.lt_trichotomy t j with hlt | heq | hgt
-      · rw [Nat.testBit_two_pow_add_gt hlt, hih, dite_eq_left hlt,
-          dite_eq_left (by omega : t < j + 1)]
-      · subst heq
-        rw [Nat.testBit_two_pow_add_eq,
-          Nat.testBit_lt_two_pow hz, dite_eq_left (Nat.lt_succ_self t),
-          ha]
-        rfl
-      · have h2 : 2 ^ (j + 1) ≤ 2 ^ t :=
-          Nat.pow_le_pow_right (by omega) hgt
-        rw [Nat.testBit_lt_two_pow (by omega :
-            2 ^ j + rowOfFast.go G iv j (Nat.le_of_succ_le h) 0 <
-              2 ^ t), dite_eq_right (by omega)]
-    · rw [ite_eq_right ha, Nat.zero_mul, Nat.zero_add, hih]
-      simp only [Bool.not_eq_true] at ha
-      rcases Nat.lt_trichotomy t j with hlt | heq | hgt
-      · rw [dite_eq_left hlt, dite_eq_left (by omega : t < j + 1)]
-      · subst heq
-        rw [dite_eq_right (by omega), dite_eq_left (Nat.lt_succ_self t), ha]
-      · rw [dite_eq_right (by omega), dite_eq_right (by omega)]
-
-/-- The adjacency bit of the `rowOf` fold, by position. -/
-private theorem testBit_rowOf_foldl {G : Colored n k} {i : Nat} :
-    ∀ (l : List Nat) (row0 t : Nat),
-      ((l.foldl (fun row j =>
-        if h : i < n ∧ j < n then
-          if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then insert row j else row
-        else row) row0).testBit t) =
-      (row0.testBit t || (l.contains t &&
-        (if h : i < n ∧ t < n then
-          (G.graph.adj ⟨i, h.1⟩ ⟨t, h.2⟩ : Bool)
-        else false)))
-  | [], row0, t => by simp
-  | j :: rest, row0, t => by
-    rw [List.foldl_cons, testBit_rowOf_foldl rest, List.contains_cons]
-    rcases Decidable.em (i < n ∧ j < n) with hij | hij
-    · rw [dite_eq_left hij]
-      rcases Decidable.em (G.graph.adj ⟨i, hij.1⟩ ⟨j, hij.2⟩ = true)
-        with ha | ha
-      · rw [ite_eq_left ha, testBit_insert]
-        rcases Decidable.em (j = t) with heq | hne
-        · subst heq
-          rw [dite_eq_left hij, ha]
-          simp
-        · rw [beq_eq_false_iff_ne.mpr hne,
-            beq_eq_false_iff_ne.mpr (Ne.symm hne)]
-          simp
-      · rw [ite_eq_right ha]
-        rcases Decidable.em (j = t) with heq | hne
-        · subst heq
-          rw [dite_eq_left hij]
-          simp only [Bool.not_eq_true] at ha
-          rw [ha]
-          simp
-        · rw [beq_eq_false_iff_ne.mpr (Ne.symm hne)]
-          simp
-    · rw [dite_eq_right hij]
-      rcases Decidable.em (j = t) with heq | hne
-      · subst heq
-        rw [dite_eq_right hij]
-        simp
-      · rw [beq_eq_false_iff_ne.mpr (Ne.symm hne)]
-        simp
-
-@[csimp] theorem rowOf_eq_rowOfFast : @rowOf = @rowOfFast := by
-  funext n k G i
-  apply Nat.eq_of_testBit_eq
-  intro t
-  rw [rowOf, testBit_rowOf_foldl, rowOfFast]
-  rcases Decidable.em (i < n) with hi | hi
-  · rw [dite_eq_left hi, testBit_rowOfFast_go]
-    rcases Decidable.em (t < n) with htn | htn
-    · have hc : (List.range n).contains t = true := by
-        simp [htn]
-      rw [hc, dite_eq_left (⟨hi, htn⟩ : i < n ∧ t < n), dite_eq_left htn]
-      simp
-    · have hc : (List.range n).contains t = false := by
-        simp
-        omega
-      rw [hc, dite_eq_right htn,
-        dite_eq_right (fun h : i < n ∧ t < n => htn h.2)]
-      simp
-  · rw [dite_eq_right hi,
-      dite_eq_right (fun h : i < n ∧ t < n => hi h.1)]
-    simp [Nat.zero_testBit]
+theorem mem_rowOf (G : Colored n k) (i j : Nat) :
+    (rowOf G i).mem j =
+      if h : i < n ∧ j < n then G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ else false := by
+  rw [rowOf, VSet.mem_ofFn]
+  rcases Decidable.em (i < n ∧ j < n) with h | h
+  · rw [dite_eq_left h, show decide (j < n) = true by simp [h.2]]
+    rfl
+  · rw [dite_eq_right h, Bool.and_false]
 
 /-- The adjacency rows of a coloured graph. -/
-@[expose] def rowsOf (G : Colored n k) : Array Nat :=
+@[expose] def rowsOf (G : Colored n k) : Array (VSet n) :=
   ((List.range n).map (rowOf G)).toArray
 
 /-- The vertices of one colour, in increasing order. -/
@@ -739,13 +599,13 @@ cell end positions of a coloured graph. -/
   (lab.toArray, ends.reverse)
 
 /-- Run the nauty-compatible search on a coloured graph. -/
-def runColored (G : Colored n k) : RunResult :=
+def runColored (G : Colored n k) : RunResult n :=
   let (lab0, cellEnds) := initialPartition G
   run n (rowsOf G) lab0 cellEnds
 
 /-- Run the nauty-compatible search on a coloured graph, returning
 the trace for the certificate producer. -/
-def runColoredTraced (G : Colored n k) : TraceRun :=
+def runColoredTraced (G : Colored n k) : TraceRun n :=
   let (lab0, cellEnds) := initialPartition G
   runTraced n (rowsOf G) lab0 cellEnds
 

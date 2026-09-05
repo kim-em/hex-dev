@@ -15,7 +15,7 @@ Consumption rules for search unwinds at their target child loop.
 
 The executable state does not retain a parent loop's refined labelling:
 `recover` reopens the partition but deliberately leaves the descendant
-labelling in `SearchSt`.  A direct unwind therefore needs an explicit
+labelling in `SearchSt n`.  A direct unwind therefore needs an explicit
 relation between its stored anchor and the frozen loop frame.  Orbit
 unwinds instead resolve through the receiving loop's evolving coverage.
 -/
@@ -37,13 +37,13 @@ structure SweepFrame where
   ⟨specFuel, codes, rsLab, rsPtn, tc, numcells⟩
 
 /-- The frame stored by a direct unwind anchor. -/
-@[expose] def Anchor.frame {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} (a : Anchor ctx tcLevel level best) : SweepFrame :=
+@[expose] def Anchor.frame {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} (a : Anchor ctx tcLevel level best) : SweepFrame :=
   ⟨a.specFuel, a.codes, a.rsLab, a.rsPtn, a.tc, a.numcells⟩
 
 /-- The immutable frame named by a generator guide. -/
-@[expose] def Guide.frame {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} (g : Guide ctx tcLevel level best) : SweepFrame :=
+@[expose] def Guide.frame {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} (g : Guide ctx tcLevel level best) : SweepFrame :=
   ⟨g.specFuel, g.codes, g.rsLab, g.rsPtn, g.tc, g.numcells⟩
 
 /-- One active ancestor frame together with the child offset followed by
@@ -60,12 +60,12 @@ abbrev FrameTrail := Nat → Option TrailEntry
 
 /-- Every active ancestor frame reaches the current labelling, and its
 closed boundaries remain frozen in the current partition. -/
-structure TrailOk (ctx : Ctx) (level : Nat) (st : SearchSt)
+structure TrailOk (ctx : Ctx n) (level : Nat) (st : SearchSt n)
     (trail : FrameTrail) : Prop where
   reach : ∀ target entry, target < level → trail target = some entry →
     cellsPerm entry.frame.rsPtn target entry.frame.rsLab st.lab
   ptnSize : ∀ target entry, target < level → trail target = some entry →
-    entry.frame.rsPtn.size = ctx.n
+    entry.frame.rsPtn.size = n
   endClosed : ∀ target entry, target < level →
     trail target = some entry →
     entry.frame.rsPtn[entry.frame.rsPtn.size - 1]! ≤ target
@@ -83,7 +83,7 @@ structure TrailOk (ctx : Ctx) (level : Nat) (st : SearchSt)
         entry.frame.rsLab[entry.frame.tc + entry.offset]!
 
 /-- No ancestor frame is present in the empty trail. -/
-theorem TrailOk.empty (ctx : Ctx) (level : Nat) (st : SearchSt) :
+theorem TrailOk.empty (ctx : Ctx n) (level : Nat) (st : SearchSt n) :
     TrailOk ctx level st FrameTrail.empty := by
   constructor <;> intro target entry _ hentry
   all_goals simp [FrameTrail.empty] at hentry
@@ -103,21 +103,21 @@ theorem FrameTrail.push_of_ne (trail : FrameTrail) {level q : Nat}
   simp [FrameTrail.push, hne]
 
 /-- A direct anchor was created from the active frame at its target. -/
-@[expose] def Anchor.Located {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} (trail : FrameTrail)
+@[expose] def Anchor.Located {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} (trail : FrameTrail)
     (a : Anchor ctx tcLevel level best) : Prop :=
   trail level = some ⟨a.frame, a.offset⟩
 
 /-- A guide names the active frame at its target. -/
-@[expose] def Guide.Located {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} (trail : FrameTrail)
+@[expose] def Guide.Located {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} (trail : FrameTrail)
     (g : Guide ctx tcLevel level best) : Prop :=
   ∃ entry, trail level = some entry ∧ entry.frame = g.frame
 
 /-- Adding a different, deeper active child preserves an older anchor's
 location. -/
-theorem Anchor.Located.push {ctx : Ctx} {tcLevel target level : Nat}
-    {best : Option Key} {trail : FrameTrail}
+theorem Anchor.Located.push {ctx : Ctx n} {tcLevel target level : Nat}
+    {best : Option (Key n)} {trail : FrameTrail}
     {a : Anchor ctx tcLevel target best} {entry : TrailEntry}
     (h : a.Located trail) (hne : target ≠ level) :
     a.Located (trail.push level entry) := by
@@ -127,8 +127,8 @@ theorem Anchor.Located.push {ctx : Ctx} {tcLevel target level : Nat}
 
 /-- Adding a different, deeper active child preserves a guide's frame
 location. -/
-theorem Guide.Located.push {ctx : Ctx} {tcLevel target level : Nat}
-    {best : Option Key} {trail : FrameTrail}
+theorem Guide.Located.push {ctx : Ctx n} {tcLevel target level : Nat}
+    {best : Option (Key n)} {trail : FrameTrail}
     {g : Guide ctx tcLevel target best} {entry : TrailEntry}
     (h : g.Located trail) (hne : target ≠ level) :
     g.Located (trail.push level entry) := by
@@ -138,15 +138,15 @@ theorem Guide.Located.push {ctx : Ctx} {tcLevel target level : Nat}
 
 /-- A guide for the newly pushed frame is located there immediately;
 the active descent offset need not be the guide's own explored offset. -/
-theorem Guide.Located.pushSelf {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} (trail : FrameTrail)
+theorem Guide.Located.pushSelf {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} (trail : FrameTrail)
     (g : Guide ctx tcLevel level best) (offset : Nat) :
     g.Located (trail.push level ⟨g.frame, offset⟩) := by
   exact ⟨⟨g.frame, offset⟩, FrameTrail.push_self _ _ _, rfl⟩
 
 /-- A located guide's ancestor frame reaches the current labelling. -/
-theorem Guide.reachAt {ctx : Ctx} {tcLevel target level : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Guide.reachAt {ctx : Ctx n} {tcLevel target level : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (g : Guide ctx tcLevel target best) (hloc : g.Located trail)
     (hok : TrailOk ctx level st trail) (hlt : target < level) :
     cellsPerm g.rsPtn target g.rsLab st.lab := by
@@ -157,8 +157,8 @@ theorem Guide.reachAt {ctx : Ctx} {tcLevel target level : Nat}
 
 /-- A located guide identifies the exact active ancestor child followed
 by the current descent. -/
-theorem Guide.active {ctx : Ctx} {tcLevel target level : Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Guide.active {ctx : Ctx n} {tcLevel target level : Nat}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (g : Guide ctx tcLevel target best) (hloc : g.Located trail)
     (hok : TrailOk ctx level st trail) (hlt : target < level) :
     ∃ o, trail target = some ⟨g.frame, o⟩ ∧ o < g.len ∧
@@ -190,11 +190,11 @@ theorem Guide.active {ctx : Ctx} {tcLevel target level : Nat}
 
 /-- Location evidence follows a guide when a checked carrier turns it
 into an unwind anchor. -/
-theorem Guide.locateAnchor {ctx : Ctx} {tcLevel level : Nat}
-    {before best : Option Key} (trail : FrameTrail)
+theorem Guide.locateAnchor {ctx : Ctx n} {tcLevel level : Nat}
+    {before best : Option (Key n)} (trail : FrameTrail)
     (g : Guide ctx tcLevel level before)
     {oCur : Nat} (hentry : trail level = some ⟨g.frame, oCur⟩)
-    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows before best)
+    (hgsz : ctx.g.size = n) (hinc : IncGrows before best)
     {cur : Array Nat} {store : Array (Array Nat)}
     (hcarrier : LabelCarrier ctx g.ref cur store)
     (hstab : ∀ γ ∈ store, CellStab g.rsPtn level g.rsLab γ)
@@ -209,11 +209,11 @@ theorem Guide.locateAnchor {ctx : Ctx} {tcLevel level : Nat}
 
 /-- Location evidence follows a witness-local carrier into its direct
 unwind anchor. -/
-theorem Guide.locateAnchorCell {ctx : Ctx} {tcLevel level : Nat}
-    {before best : Option Key} (trail : FrameTrail)
+theorem Guide.locateAnchorCell {ctx : Ctx n} {tcLevel level : Nat}
+    {before best : Option (Key n)} (trail : FrameTrail)
     (g : Guide ctx tcLevel level before)
     {oCur : Nat} (hentry : trail level = some ⟨g.frame, oCur⟩)
-    (hgsz : ctx.g.size = ctx.n) (hinc : IncGrows before best)
+    (hgsz : ctx.g.size = n) (hinc : IncGrows before best)
     {cur : Array Nat} {store : Array (Array Nat)}
     (hcarrier : CellCarrier ctx g.rsPtn level g.rsLab g.ref cur store)
     (hcur : oCur < g.len)
@@ -227,8 +227,8 @@ theorem Guide.locateAnchorCell {ctx : Ctx} {tcLevel level : Nat}
 
 /-- Location evidence attached to each direct unwind constructor.  Orbit
 unwinds use only the target loop's own frame and need no stored frame. -/
-inductive Unwind.Located (trail : FrameTrail) {ctx : Ctx} {tcLevel target : Nat}
-    {out : SearchSt} {best : Option Key} :
+inductive Unwind.Located (trail : FrameTrail) {ctx : Ctx n} {tcLevel target : Nat}
+    {out : SearchSt n} {best : Option (Key n)} :
     Unwind ctx tcLevel target out best → Prop where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
@@ -245,8 +245,8 @@ inductive Unwind.Located (trail : FrameTrail) {ctx : Ctx} {tcLevel target : Nat}
 unwinds already carry a checked cell carrier in their anchor, while the
 orbit-pointer arm relies on every admitted generator stabilizing the
 receiving cell. -/
-inductive Unwind.FrameStable {ctx : Ctx} {tcLevel target : Nat}
-    {out : SearchSt} {best : Option Key}
+inductive Unwind.FrameStable {ctx : Ctx n} {tcLevel target : Nat}
+    {out : SearchSt n} {best : Option (Key n)}
     (rsPtn : Array Nat) (level : Nat) (rsLab : Array Nat) :
     Unwind ctx tcLevel target out best → Prop where
   | first (anchor : Anchor ctx tcLevel target best)
@@ -262,8 +262,8 @@ inductive Unwind.FrameStable {ctx : Ctx} {tcLevel target : Nat}
 
 /-- Extending the trail at a different, deeper level preserves the source
 location of a transported unwind. -/
-theorem Unwind.Located.push {ctx : Ctx} {tcLevel target level : Nat}
-    {out : SearchSt} {best : Option Key} {trail : FrameTrail}
+theorem Unwind.Located.push {ctx : Ctx n} {tcLevel target level : Nat}
+    {out : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     {payload : Unwind ctx tcLevel target out best} {entry : TrailEntry}
     (h : payload.Located trail) (hne : target ≠ level) :
     payload.Located (trail.push level entry) := by
@@ -275,8 +275,8 @@ theorem Unwind.Located.push {ctx : Ctx} {tcLevel target level : Nat}
   | orbit payload => exact .orbit payload
 
 /-- An unwind anchor belongs to the indicated frozen child-loop frame. -/
-structure Anchor.At {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} (a : Anchor ctx tcLevel level best)
+structure Anchor.At {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} (a : Anchor ctx tcLevel level best)
     (specFuel : Nat) (codes : List Nat) (rsLab rsPtn : Array Nat)
     (tc numcells : Nat) : Prop where
   fuel : a.specFuel = specFuel
@@ -288,8 +288,8 @@ structure Anchor.At {ctx : Ctx} {tcLevel level : Nat}
 
 /-- Looking up the same active frame as a located anchor identifies all
 of the frozen loop parameters required to consume it. -/
-theorem Anchor.at_of_loc {ctx : Ctx} {tcLevel level specFuel tc numcells : Nat}
-    {codes : List Nat} {rsLab rsPtn : Array Nat} {best : Option Key}
+theorem Anchor.at_of_loc {ctx : Ctx n} {tcLevel level specFuel tc numcells : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {best : Option (Key n)}
     {trail : FrameTrail} {offset : Nat}
     (a : Anchor ctx tcLevel level best)
     (hloc : a.Located trail)
@@ -315,8 +315,8 @@ theorem Anchor.at_of_loc {ctx : Ctx} {tcLevel level specFuel tc numcells : Nat}
 
 /-- A located anchor follows the child offset recorded by the active
 descent at its target. -/
-theorem Anchor.offset_of_loc {ctx : Ctx} {tcLevel level : Nat}
-    {best : Option Key} {trail : FrameTrail} {frame : SweepFrame}
+theorem Anchor.offset_of_loc {ctx : Ctx n} {tcLevel level : Nat}
+    {best : Option (Key n)} {trail : FrameTrail} {frame : SweepFrame}
     {offset : Nat} (a : Anchor ctx tcLevel level best)
     (hloc : a.Located trail)
     (hframe : trail level = some ⟨frame, offset⟩) :
@@ -327,8 +327,8 @@ theorem Anchor.offset_of_loc {ctx : Ctx} {tcLevel level : Nat}
 
 /-- A located anchor supplies coverage of its stored child offset in the
 receiving loop's frame. -/
-theorem Anchor.doneAt {ctx : Ctx} {tcLevel level specFuel tc numcells : Nat}
-    {codes : List Nat} {rsLab rsPtn : Array Nat} {best : Option Key}
+theorem Anchor.doneAt {ctx : Ctx n} {tcLevel level specFuel tc numcells : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {best : Option (Key n)}
     (a : Anchor ctx tcLevel level best)
     (h : a.At specFuel codes rsLab rsPtn tc numcells) :
     ChildDone ctx tcLevel specFuel level codes rsLab rsPtn tc numcells
@@ -338,14 +338,14 @@ theorem Anchor.doneAt {ctx : Ctx} {tcLevel level specFuel tc numcells : Nat}
 
 /-- A direct generator anchor addressed to this loop advances coverage
 past the current child. -/
-theorem SweepCover.anchor {ctx : Ctx}
-    {tcLevel specFuel level tc len numcells tcell tv : Nat}
+theorem SweepCover.anchor {ctx : Ctx n}
+    {tcLevel specFuel level tc len numcells : Nat} {tcell : VSet n} {tv : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {before best : Option Key}
+    {cursor : Option Nat} {before best : Option (Key n)}
     (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell cursor before)
     (hinc : IncGrows before best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (a : Anchor ctx tcLevel level best)
     (hat : a.At specFuel codes rsLab rsPtn tc numcells)
     (htv : rsLab[tc + a.offset]! = tv)
@@ -367,15 +367,15 @@ theorem SweepCover.anchor {ctx : Ctx}
 
 /-- A located direct anchor consumes the active child named by the target
 trail entry. -/
-theorem SweepCover.locatedAnchor {ctx : Ctx}
-    {tcLevel specFuel level tc len numcells tcell tv offset : Nat}
+theorem SweepCover.locatedAnchor {ctx : Ctx n}
+    {tcLevel specFuel level tc len numcells : Nat} {tcell : VSet n} {tv offset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {before best : Option Key}
+    {cursor : Option Nat} {before best : Option (Key n)}
     {trail : FrameTrail}
     (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell cursor before)
     (hinc : IncGrows before best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (a : Anchor ctx tcLevel level best) (hloc : a.Located trail)
     (hframe : trail level = some
       ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
@@ -394,67 +394,65 @@ theorem SweepCover.locatedAnchor {ctx : Ctx}
 
 /-- An orbit unwind addressed to this loop advances coverage through its
 strictly smaller, sound pointer. -/
-theorem SweepCover.orbitUnwind {ctx : Ctx}
-    {tcLevel specFuel level tc len numcells tcell tv o : Nat}
+theorem SweepCover.orbitUnwind {ctx : Ctx n}
+    {tcLevel specFuel level tc len numcells : Nat} {tcell : VSet n} {tv o : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {before best : Option Key} {out : SearchSt}
+    {cursor : Option Nat} {before best : Option (Key n)} {out : SearchSt n}
     (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell cursor before)
     (hinc : IncGrows before best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (ho : o < len) (htv : rsLab[tc + o]! = tv)
     (payload : OrbitUnwind ctx level out)
     (hcoset : out.cosetindex = tv)
-    (hgsz : ctx.g.size = ctx.n)
-    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
     (hv : ∀ γ ∈ out.genTrace.toList,
-      checkAutom ctx.g γ ctx.n = true)
+      checkAutom ctx.g γ = true)
     (hstab : ∀ γ ∈ out.genTrace.toList,
       CellStab rsPtn level rsLab γ)
-    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hs : rsLab.size = n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1) :
+      rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1) :
     SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell (some tv) best := by
   have hne : out.orbits[tv]! ≠ tv := by
     rw [← hcoset]
     exact Nat.ne_of_lt payload.smaller
-  exact (h.grow hinc).orbitSkip hnext ho htv hgsz hbg hv hstab hs hinj
+  exact (h.grow hinc).orbitSkip hnext ho htv hgsz hv hstab hs hinj
     hok hsp hend hvals hic hrange hlf payload.sound hne
 
 /-- Every located generator unwind addressed to this loop consumes the
 active child.  Direct carriers use their stored frame and offset; the
 special code-two arm uses its sound orbit pointer. -/
-theorem SweepCover.unwind {ctx : Ctx}
-    {tcLevel specFuel level tc len numcells tcell tv offset : Nat}
+theorem SweepCover.unwind {ctx : Ctx n}
+    {tcLevel specFuel level tc len numcells : Nat} {tcell : VSet n} {tv offset : Nat}
     {codes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {before best : Option Key} {out : SearchSt}
+    {cursor : Option Nat} {before best : Option (Key n)} {out : SearchSt n}
     {trail : FrameTrail} {payload : Unwind ctx tcLevel level out best}
     (h : SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell cursor before)
     (hinc : IncGrows before best)
-    (hnext : nextElem tcell cursor = some tv)
+    (hnext : tcell.nextElem cursor = some tv)
     (hloc : payload.Located trail)
     (hframe : trail level = some
       ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
     (ho : offset < len) (htv : rsLab[tc + offset]! = tv)
     (hcoset : out.cosetindex = tv)
-    (hgsz : ctx.g.size = ctx.n)
-    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hgsz : ctx.g.size = n)
     (hv : ∀ γ ∈ out.genTrace.toList,
-      checkAutom ctx.g γ ctx.n = true)
+      checkAutom ctx.g γ = true)
     (hstab : payload.FrameStable rsPtn level rsLab)
-    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hs : rsLab.size = n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1) :
+      rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1) :
     SweepCover ctx tcLevel specFuel level codes rsLab rsPtn tc len
       numcells tcell (some tv) best := by
   have hrange' : tc + len ≤ rsLab.size := by rwa [hs]
@@ -469,7 +467,7 @@ theorem SweepCover.unwind {ctx : Ctx}
   | orbit orbitPayload =>
       cases hstab with
       | orbit _ stable =>
-          exact h.orbitUnwind hinc hnext ho htv orbitPayload hcoset hgsz hbg
+          exact h.orbitUnwind hinc hnext ho htv orbitPayload hcoset hgsz
             hv stable hs hinj hok hsp hend hvals hic hrange hlf
 
 end Hex.GraphIso.Nauty

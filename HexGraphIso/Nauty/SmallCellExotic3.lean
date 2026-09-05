@@ -36,7 +36,7 @@ matching, a four-cycle or complete.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # Complementary pairs in a cell of four
 
@@ -173,24 +173,24 @@ theorem sw3_invol {n : Nat} (h : Sw3Ok n u v x y a b) :
 /-- A triple swap preserves every row when each swapped pair looks
 alike from outside and the three pairs cross each other coherently. -/
 theorem sw3_bits
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
-    (h : Sw3Ok ctx.n u v x y a b)
-    (hfix : ∀ z, z < ctx.n → z ≠ u → z ≠ v → z ≠ x → z ≠ y →
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
+    (h : Sw3Ok n u v x y a b)
+    (hfix : ∀ z, z < n → z ≠ u → z ≠ v → z ≠ x → z ≠ y →
       z ≠ a → z ≠ b →
-      (ctx.g[z]!).testBit u = (ctx.g[z]!).testBit v ∧
-      (ctx.g[z]!).testBit x = (ctx.g[z]!).testBit y ∧
-      (ctx.g[z]!).testBit a = (ctx.g[z]!).testBit b)
-    (h1 : (ctx.g[u]!).testBit x = (ctx.g[v]!).testBit y)
-    (h2 : (ctx.g[u]!).testBit y = (ctx.g[v]!).testBit x)
-    (h3 : (ctx.g[u]!).testBit a = (ctx.g[v]!).testBit b)
-    (h4 : (ctx.g[u]!).testBit b = (ctx.g[v]!).testBit a)
-    (h5 : (ctx.g[x]!).testBit a = (ctx.g[y]!).testBit b)
-    (h6 : (ctx.g[x]!).testBit b = (ctx.g[y]!).testBit a) :
-    ∀ z z', z < ctx.n → z' < ctx.n →
-      (ctx.g[sw3 u v x y a b z]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[z]!).testBit z' := by
+      (ctx.g[z]!).mem u = (ctx.g[z]!).mem v ∧
+      (ctx.g[z]!).mem x = (ctx.g[z]!).mem y ∧
+      (ctx.g[z]!).mem a = (ctx.g[z]!).mem b)
+    (h1 : (ctx.g[u]!).mem x = (ctx.g[v]!).mem y)
+    (h2 : (ctx.g[u]!).mem y = (ctx.g[v]!).mem x)
+    (h3 : (ctx.g[u]!).mem a = (ctx.g[v]!).mem b)
+    (h4 : (ctx.g[u]!).mem b = (ctx.g[v]!).mem a)
+    (h5 : (ctx.g[x]!).mem a = (ctx.g[y]!).mem b)
+    (h6 : (ctx.g[x]!).mem b = (ctx.g[y]!).mem a) :
+    ∀ z z', z < n → z' < n →
+      (ctx.g[sw3 u v x y a b z]!).mem (sw3 u v x y a b z') =
+        (ctx.g[z]!).mem z' := by
   have hun := h.1
   have hvn := h.2.1
   have hxn := h.2.2.1
@@ -198,19 +198,19 @@ theorem sw3_bits
   have han := h.2.2.2.2.1
   have hbn := h.2.2.2.2.2.1
   -- the six moved rows against an arbitrary second argument
-  have key : ∀ z', z' < ctx.n →
-      ((ctx.g[v]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[u]!).testBit z' ∧
-       (ctx.g[u]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[v]!).testBit z') ∧
-      ((ctx.g[y]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[x]!).testBit z' ∧
-       (ctx.g[x]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[y]!).testBit z') ∧
-      ((ctx.g[b]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[a]!).testBit z' ∧
-       (ctx.g[a]!).testBit (sw3 u v x y a b z') =
-        (ctx.g[b]!).testBit z') := by
+  have key : ∀ z', z' < n →
+      ((ctx.g[v]!).mem (sw3 u v x y a b z') =
+        (ctx.g[u]!).mem z' ∧
+       (ctx.g[u]!).mem (sw3 u v x y a b z') =
+        (ctx.g[v]!).mem z') ∧
+      ((ctx.g[y]!).mem (sw3 u v x y a b z') =
+        (ctx.g[x]!).mem z' ∧
+       (ctx.g[x]!).mem (sw3 u v x y a b z') =
+        (ctx.g[y]!).mem z') ∧
+      ((ctx.g[b]!).mem (sw3 u v x y a b z') =
+        (ctx.g[a]!).mem z' ∧
+       (ctx.g[a]!).mem (sw3 u v x y a b z') =
+        (ctx.g[b]!).mem z') := by
     intro z' hz'
     rcases Decidable.em (z' = u) with hz'u | hz'u
     · rw [hz'u, sw3_u]
@@ -317,34 +317,33 @@ four without naming them. -/
 
 section FourCell
 
-variable {st : RefineSt} {level tc d2 oU oV w1 w2 : Nat}
+variable {st : RefineSt n} {level tc d2 oU oV w1 w2 : Nat}
 
 /-- Complementary pairs of a four-cell are equally adjacent. -/
 theorem fourCell_comp
     (hIt : IterOk ctx level st)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level n)
     (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hw1 : w1 ≤ 3) (hw2 : w2 ≤ 3)
     (hnd : ([oU, oV, w1, w2] : List Nat).Nodup) :
-    (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + w1]! =
-      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[tc + w2]! ∧
-    (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + w2]! =
-      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[tc + w1]! ∧
-    (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[tc + oV]! =
-      (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[tc + w2]! := by
+    (ctx.g[st.lab[tc + oU]!]!).mem st.lab[tc + w1]! =
+      (ctx.g[st.lab[tc + oV]!]!).mem st.lab[tc + w2]! ∧
+    (ctx.g[st.lab[tc + oU]!]!).mem st.lab[tc + w2]! =
+      (ctx.g[st.lab[tc + oV]!]!).mem st.lab[tc + w1]! ∧
+    (ctx.g[st.lab[tc + oU]!]!).mem st.lab[tc + oV]! =
+      (ctx.g[st.lab[tc + w1]!]!).mem st.lab[tc + w2]! := by
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
   have hinj := hIt.inj
-  have htn : tc + 3 < ctx.n := by
+  have htn : tc + 3 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
     rw [hpsz] at this
     omega
-  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hlsz]; omega)
   have hbd : ∀ x ∈ ([oU, oV, w1, w2] : List Nat), x < 4 := by
     intro x hx
@@ -362,15 +361,14 @@ theorem fourCell_comp
   have hm : tc + 3 + 1 - tc = 4 := by omega
   -- each member's count into the cell, reindexed by the four names
   have hdeg : ∀ o, o ≤ 3 →
-      popCount (worksetOf st.lab tc (tc + 3) &&&
-          ctx.g[st.lab[tc + o]!]!) =
+      (worksetOf n st.lab tc (tc + 3)).cardInter
+          ctx.g[st.lab[tc + o]!]! =
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + oU]! +
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + oV]! +
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + w1]! +
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[tc + w2]! := by
     intro o ho
-    have h := count_into_cell hpsz hend hinj hlb hC
-      (hg _ (hlb (tc + o) (by omega)))
+    have h := count_into_cell (ctx := ctx) (u := st.lab[tc + o]!) hpsz hend hinj hC
     rw [hm] at h
     rw [h, sum_range_of_distinct _ (by simp) hnd hbd]
     simp only [List.map_cons, List.map_nil, List.sum_cons,
@@ -424,41 +422,40 @@ cross-count restricted to one of its two sides. -/
 /-- The double-swap route at a four-cell beside a pair. -/
 theorem fourPair_sw2
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
-    (hP : (d2, d2 + 1) ∈ cells st.ptn level ctx.n)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level n)
+    (hP : (d2, d2 + 1) ∈ cells st.ptn level n)
     (hCP : tc ≠ d2)
-    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 3) →
+    (hsing : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 3) →
       q ≠ (d2, d2 + 1) → q.2 = q.1)
     (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hw1 : w1 ≤ 3) (hw2 : w2 ≤ 3)
     (hUV : oU ≠ oV) (hUw1 : oU ≠ w1) (hUw2 : oU ≠ w2)
     (hVw1 : oV ≠ w1) (hVw2 : oV ≠ w2) (h12 : w1 ≠ w2)
     (hPfix : ∀ q, q ≤ 1 →
-      (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + oU]! =
-        (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + oV]! ∧
-      (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + w1]! =
-        (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + w2]!) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      (ctx.g[st.lab[d2 + q]!]!).mem st.lab[tc + oU]! =
+        (ctx.g[st.lab[d2 + q]!]!).mem st.lab[tc + oV]! ∧
+      (ctx.g[st.lab[d2 + q]!]!).mem st.lab[tc + w1]! =
+        (ctx.g[st.lab[d2 + q]!]!).mem st.lab[tc + w2]!) :
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
   have hinj := hIt.inj
-  have htn : tc + 3 < ctx.n := by
+  have htn : tc + 3 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
     rw [hpsz] at this
     omega
-  have hdn : d2 + 1 < ctx.n := by
+  have hdn : d2 + 1 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hP
     rw [hpsz] at this
     omega
-  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hlsz]; omega)
   have hnd : ([oU, oV, w1, w2] : List Nat).Nodup := by
     simp [hUV, hUw1, hUw2, hVw1, hVw2, h12]
@@ -487,31 +484,31 @@ theorem fourPair_sw2
     intro o q ho hq hcon
     have := hinj (tc + o) (d2 + q) (by omega) (by omega) hcon
     omega
-  have hun : st.lab[tc + oU]! < ctx.n := hlb _ (by omega)
-  have hvn : st.lab[tc + oV]! < ctx.n := hlb _ (by omega)
-  have hxn : st.lab[tc + w1]! < ctx.n := hlb _ (by omega)
-  have hyn : st.lab[tc + w2]! < ctx.n := hlb _ (by omega)
-  have hOk : Sw2Ok ctx.n st.lab[tc + oU]! st.lab[tc + oV]!
+  have hun : st.lab[tc + oU]! < n := hlb _ (by omega)
+  have hvn : st.lab[tc + oV]! < n := hlb _ (by omega)
+  have hxn : st.lab[tc + w1]! < n := hlb _ (by omega)
+  have hyn : st.lab[tc + w2]! < n := hlb _ (by omega)
+  have hOk : Sw2Ok n st.lab[tc + oU]! st.lab[tc + oV]!
       st.lab[tc + w1]! st.lab[tc + w2]! :=
     ⟨hun, hvn, hxn, hyn, hin1 _ _ hoU hoV hUV,
       hin1 _ _ hoU hw1 hUw1, hin1 _ _ hoU hw2 hUw2,
       hin1 _ _ hoV hw1 hVw1, hin1 _ _ hoV hw2 hVw2,
       hin1 _ _ hw1 hw2 h12⟩
-  obtain ⟨hc1, hc2, -⟩ := fourCell_comp hIt hg hsymm hloop hE hC
+  obtain ⟨hc1, hc2, -⟩ := fourCell_comp hIt hsymm hloop hE hC
     hoU hoV hw1 hw2 hnd
   -- everything outside the four moved members treats them in pairs
-  have hfix : ∀ z, z < ctx.n → z ≠ st.lab[tc + oU]! →
+  have hfix : ∀ z, z < n → z ≠ st.lab[tc + oU]! →
       z ≠ st.lab[tc + oV]! → z ≠ st.lab[tc + w1]! →
       z ≠ st.lab[tc + w2]! →
-      (ctx.g[z]!).testBit st.lab[tc + oU]! =
-        (ctx.g[z]!).testBit st.lab[tc + oV]! ∧
-      (ctx.g[z]!).testBit st.lab[tc + w1]! =
-        (ctx.g[z]!).testBit st.lab[tc + w2]! := by
+      (ctx.g[z]!).mem st.lab[tc + oU]! =
+        (ctx.g[z]!).mem st.lab[tc + oV]! ∧
+      (ctx.g[z]!).mem st.lab[tc + w1]! =
+        (ctx.g[z]!).mem st.lab[tc + w2]! := by
     intro z hz hzu hzv hzx hzy
     obtain ⟨j, hj, rfl⟩ := labInj_surj
       (by rw [hlsz]; exact Nat.le_refl _) hIt.ok.labOk hinj z hz
     obtain ⟨p, hp, hj1, hj2⟩ := cells_cover (ptn := st.ptn)
-      (level := level) (nn := ctx.n) j (by omega)
+      (level := level) (nn := n) j (by omega)
     rcases Decidable.em (p = (tc, tc + 3)) with rfl | hpC
     · -- a member of the four-cell is one of the four moved labels
       have hw : j - tc ≤ 3 := by
@@ -539,7 +536,7 @@ theorem fourPair_sw2
       exact hPfix (j - d2) hq
     · have hps : p.2 = p.1 := hsing p hp hpC hpP
       have hjp : j = p.1 := by omega
-      have hpmem : (p.1, p.1) ∈ cells st.ptn level ctx.n := by
+      have hpmem : (p.1, p.1) ∈ cells st.ptn level n := by
         have hpe : p = (p.1, p.1) := by
           obtain ⟨qa, qb⟩ := p
           simp only at hps ⊢
@@ -551,13 +548,13 @@ theorem fourPair_sw2
       have hd := cell_const_into_singleton hE hC hpmem
         (o := w1) (o' := w2) (by omega) (by omega)
       rw [← hjp] at hc hd
-      have hjn : st.lab[j]! < ctx.n := hlb j hj
+      have hjn : st.lab[j]! < n := hlb j hj
       constructor
       · rw [hsymm _ _ hjn hun, hsymm _ _ hjn hvn]
         exact hc
       · rw [hsymm _ _ hjn hxn, hsymm _ _ hjn hyn]
         exact hd
-  have hset : ∀ p ∈ cells st.ptn level ctx.n,
+  have hset : ∀ p ∈ cells st.ptn level n,
       ∀ o, o < p.2 + 1 - p.1 →
       ∃ o', o' < p.2 + 1 - p.1 ∧
         sw2 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + w1]!
@@ -579,7 +576,7 @@ theorem fourPair_sw2
         (fun h => hcross w2 o hw2 (by omega) h.symm)⟩
     · have hps : p.2 = p.1 := hsing p hp hpC hpP
       have ho1 : o = 0 := by omega
-      have hbd : p.1 < ctx.n := by
+      have hbd : p.1 < n := by
         have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
           hend _ hp
         have h2 := cells_le _ hp
@@ -598,7 +595,7 @@ theorem fourPair_sw2
         (hother w1 hw1) (hother w2 hw2)⟩
   obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
     (f := sw2 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + w1]!
-      st.lab[tc + w2]!) hIt hgsz hg (sw2_lt hOk)
+      st.lab[tc + w2]!) hIt hgsz (sw2_lt hOk)
     (fun w _ => sw2_invol hOk w)
     (sw2_bits hsymm hloop hOk hfix hc1 hc2) hset
   refine ⟨σ, hrm, hsp, ?_⟩
@@ -616,29 +613,28 @@ members cross the pair coherently, as they do on opposite sides of a
 matched split. -/
 theorem fourPair_sw3
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
-    (hP : (d2, d2 + 1) ∈ cells st.ptn level ctx.n)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level n)
+    (hP : (d2, d2 + 1) ∈ cells st.ptn level n)
     (hCP : tc ≠ d2)
-    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 3) →
+    (hsing : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 3) →
       q ≠ (d2, d2 + 1) → q.2 = q.1)
     (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hw1 : w1 ≤ 3) (hw2 : w2 ≤ 3)
     (hUV : oU ≠ oV) (hUw1 : oU ≠ w1) (hUw2 : oU ≠ w2)
     (hVw1 : oV ≠ w1) (hVw2 : oV ≠ w2) (h12 : w1 ≠ w2)
-    (hUV0 : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + 0]! =
-      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + 1]!)
-    (hUV1 : (ctx.g[st.lab[tc + oU]!]!).testBit st.lab[d2 + 1]! =
-      (ctx.g[st.lab[tc + oV]!]!).testBit st.lab[d2 + 0]!)
-    (hW0 : (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[d2 + 0]! =
-      (ctx.g[st.lab[tc + w2]!]!).testBit st.lab[d2 + 1]!)
-    (hW1 : (ctx.g[st.lab[tc + w1]!]!).testBit st.lab[d2 + 1]! =
-      (ctx.g[st.lab[tc + w2]!]!).testBit st.lab[d2 + 0]!) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    (hUV0 : (ctx.g[st.lab[tc + oU]!]!).mem st.lab[d2 + 0]! =
+      (ctx.g[st.lab[tc + oV]!]!).mem st.lab[d2 + 1]!)
+    (hUV1 : (ctx.g[st.lab[tc + oU]!]!).mem st.lab[d2 + 1]! =
+      (ctx.g[st.lab[tc + oV]!]!).mem st.lab[d2 + 0]!)
+    (hW0 : (ctx.g[st.lab[tc + w1]!]!).mem st.lab[d2 + 0]! =
+      (ctx.g[st.lab[tc + w2]!]!).mem st.lab[d2 + 1]!)
+    (hW1 : (ctx.g[st.lab[tc + w1]!]!).mem st.lab[d2 + 1]! =
+      (ctx.g[st.lab[tc + w2]!]!).mem st.lab[d2 + 0]!) :
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! ∧
       st.lab[d2 + 1]! = σ.toFun st.lab[d2 + 0]! ∧
@@ -647,15 +643,15 @@ theorem fourPair_sw3
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
   have hinj := hIt.inj
-  have htn : tc + 3 < ctx.n := by
+  have htn : tc + 3 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
     rw [hpsz] at this
     omega
-  have hdn : d2 + 1 < ctx.n := by
+  have hdn : d2 + 1 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hP
     rw [hpsz] at this
     omega
-  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hlsz]; omega)
   have hnd : ([oU, oV, w1, w2] : List Nat).Nodup := by
     simp [hUV, hUw1, hUw2, hVw1, hVw2, h12]
@@ -687,13 +683,13 @@ theorem fourPair_sw3
     intro hcon
     have := hinj (d2 + 0) (d2 + 1) (by omega) (by omega) hcon
     omega
-  have hun : st.lab[tc + oU]! < ctx.n := hlb _ (by omega)
-  have hvn : st.lab[tc + oV]! < ctx.n := hlb _ (by omega)
-  have hxn : st.lab[tc + w1]! < ctx.n := hlb _ (by omega)
-  have hyn : st.lab[tc + w2]! < ctx.n := hlb _ (by omega)
-  have han : st.lab[d2 + 0]! < ctx.n := hlb _ (by omega)
-  have hbn : st.lab[d2 + 1]! < ctx.n := hlb _ (by omega)
-  have hOk : Sw3Ok ctx.n st.lab[tc + oU]! st.lab[tc + oV]!
+  have hun : st.lab[tc + oU]! < n := hlb _ (by omega)
+  have hvn : st.lab[tc + oV]! < n := hlb _ (by omega)
+  have hxn : st.lab[tc + w1]! < n := hlb _ (by omega)
+  have hyn : st.lab[tc + w2]! < n := hlb _ (by omega)
+  have han : st.lab[d2 + 0]! < n := hlb _ (by omega)
+  have hbn : st.lab[d2 + 1]! < n := hlb _ (by omega)
+  have hOk : Sw3Ok n st.lab[tc + oU]! st.lab[tc + oV]!
       st.lab[tc + w1]! st.lab[tc + w2]! st.lab[d2 + 0]!
       st.lab[d2 + 1]! :=
     ⟨hun, hvn, hxn, hyn, han, hbn,
@@ -705,24 +701,24 @@ theorem fourPair_sw3
       hin1 _ _ hw1 hw2 h12, hcross w1 0 hw1 (by omega),
       hcross w1 1 hw1 (by omega), hcross w2 0 hw2 (by omega),
       hcross w2 1 hw2 (by omega), hpne⟩
-  obtain ⟨hc1, hc2, -⟩ := fourCell_comp hIt hg hsymm hloop hE hC
+  obtain ⟨hc1, hc2, -⟩ := fourCell_comp hIt hsymm hloop hE hC
     hoU hoV hw1 hw2 hnd
   -- only the singletons remain outside the six moved members
-  have hfix : ∀ z, z < ctx.n → z ≠ st.lab[tc + oU]! →
+  have hfix : ∀ z, z < n → z ≠ st.lab[tc + oU]! →
       z ≠ st.lab[tc + oV]! → z ≠ st.lab[tc + w1]! →
       z ≠ st.lab[tc + w2]! → z ≠ st.lab[d2 + 0]! →
       z ≠ st.lab[d2 + 1]! →
-      (ctx.g[z]!).testBit st.lab[tc + oU]! =
-        (ctx.g[z]!).testBit st.lab[tc + oV]! ∧
-      (ctx.g[z]!).testBit st.lab[tc + w1]! =
-        (ctx.g[z]!).testBit st.lab[tc + w2]! ∧
-      (ctx.g[z]!).testBit st.lab[d2 + 0]! =
-        (ctx.g[z]!).testBit st.lab[d2 + 1]! := by
+      (ctx.g[z]!).mem st.lab[tc + oU]! =
+        (ctx.g[z]!).mem st.lab[tc + oV]! ∧
+      (ctx.g[z]!).mem st.lab[tc + w1]! =
+        (ctx.g[z]!).mem st.lab[tc + w2]! ∧
+      (ctx.g[z]!).mem st.lab[d2 + 0]! =
+        (ctx.g[z]!).mem st.lab[d2 + 1]! := by
     intro z hz hzu hzv hzx hzy hza hzb
     obtain ⟨j, hj, rfl⟩ := labInj_surj
       (by rw [hlsz]; exact Nat.le_refl _) hIt.ok.labOk hinj z hz
     obtain ⟨p, hp, hj1, hj2⟩ := cells_cover (ptn := st.ptn)
-      (level := level) (nn := ctx.n) j (by omega)
+      (level := level) (nn := n) j (by omega)
     rcases Decidable.em (p = (tc, tc + 3)) with rfl | hpC
     · have hw : j - tc ≤ 3 := by
         have h1 : tc ≤ j := hj1
@@ -751,7 +747,7 @@ theorem fourPair_sw3
       · exact absurd rfl hzb
     · have hps : p.2 = p.1 := hsing p hp hpC hpP
       have hjp : j = p.1 := by omega
-      have hpmem : (p.1, p.1) ∈ cells st.ptn level ctx.n := by
+      have hpmem : (p.1, p.1) ∈ cells st.ptn level n := by
         have hpe : p = (p.1, p.1) := by
           obtain ⟨qa, qb⟩ := p
           simp only at hps ⊢
@@ -765,12 +761,12 @@ theorem fourPair_sw3
       have hcP := cell_const_into_singleton hE hP hpmem
         (o := 0) (o' := 1) (by omega) (by omega)
       rw [← hjp] at hcU hcW hcP
-      have hjn : st.lab[j]! < ctx.n := hlb j hj
+      have hjn : st.lab[j]! < n := hlb j hj
       refine ⟨?_, ?_, ?_⟩
       · rw [hsymm _ _ hjn hun, hsymm _ _ hjn hvn]; exact hcU
       · rw [hsymm _ _ hjn hxn, hsymm _ _ hjn hyn]; exact hcW
       · rw [hsymm _ _ hjn han, hsymm _ _ hjn hbn]; exact hcP
-  have hset : ∀ p ∈ cells st.ptn level ctx.n,
+  have hset : ∀ p ∈ cells st.ptn level n,
       ∀ o, o < p.2 + 1 - p.1 →
       ∃ o', o' < p.2 + 1 - p.1 ∧
         sw3 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + w1]!
@@ -792,7 +788,7 @@ theorem fourPair_sw3
       · exact ⟨0, by omega, by rw [h, sw3_b hOk]⟩
     · have hps : p.2 = p.1 := hsing p hp hpC hpP
       have ho1 : o = 0 := by omega
-      have hbd : p.1 < ctx.n := by
+      have hbd : p.1 < n := by
         have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
           hend _ hp
         have h2 := cells_le _ hp
@@ -822,7 +818,7 @@ theorem fourPair_sw3
   obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
     (f := sw3 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[tc + w1]!
       st.lab[tc + w2]! st.lab[d2 + 0]! st.lab[d2 + 1]!)
-    hIt hgsz hg (sw3_lt hOk) (fun w _ => sw3_invol hOk w)
+    hIt hgsz (sw3_lt hOk) (fun w _ => sw3_invol hOk w)
     (sw3_bits hsymm hloop hOk hfix hc1 hc2 hUV0 hUV1 hW0 hW1) hset
   refine ⟨σ, hrm, hsp, ?_, ?_, ?_⟩
   · rw [hat (tc + oU) (by omega), sw3_u]
@@ -879,34 +875,33 @@ set_option maxHeartbeats 1000000 in
 singletons. -/
 theorem fourPair_flip_data
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
-    (hP : (d2, d2 + 1) ∈ cells st.ptn level ctx.n)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level n)
+    (hP : (d2, d2 + 1) ∈ cells st.ptn level n)
     (hCP : tc ≠ d2)
-    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 3) →
+    (hsing : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 3) →
       q ≠ (d2, d2 + 1) → q.2 = q.1)
     (hoU : oU ≤ 3) (hoV : oV ≤ 3) (hne : oU ≠ oV) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
   have hinj := hIt.inj
-  have htn : tc + 3 < ctx.n := by
+  have htn : tc + 3 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
     rw [hpsz] at this
     omega
-  have hdn : d2 + 1 < ctx.n := by
+  have hdn : d2 + 1 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hP
     rw [hpsz] at this
     omega
-  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hlsz]; omega)
   obtain ⟨w1, w2, hw1, hw2, hUw1, hUw2, hVw1, hVw2, h12⟩ :=
     other_two hoU hoV hne
@@ -927,26 +922,24 @@ theorem fourPair_flip_data
       omega
   -- the forward counts into the pair
   have hfwd : ∀ o, o ≤ 3 →
-      popCount (worksetOf st.lab d2 (d2 + 1) &&&
-          ctx.g[st.lab[tc + o]!]!) =
+      (worksetOf n st.lab d2 (d2 + 1)).cardInter
+          ctx.g[st.lab[tc + o]!]! =
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! := by
     intro o ho
-    have h := count_into_cell hpsz hend hinj hlb hP
-      (hg _ (hlb (tc + o) (by omega)))
+    have h := count_into_cell (ctx := ctx) (u := st.lab[tc + o]!) hpsz hend hinj hP
     rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two₄] at h
     exact h
   -- the reverse counts into the four-cell
   have hrev : ∀ q, q ≤ 1 →
-      popCount (worksetOf st.lab tc (tc + 3) &&&
-          ctx.g[st.lab[d2 + q]!]!) =
+      (worksetOf n st.lab tc (tc + 3)).cardInter
+          ctx.g[st.lab[d2 + q]!]! =
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + oU]! +
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + oV]! +
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + w1]! +
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + w2]! := by
     intro q hq
-    have h := count_into_cell hpsz hend hinj hlb hC
-      (hg _ (hlb (d2 + q) (by omega)))
+    have h := count_into_cell (ctx := ctx) (u := st.lab[d2 + q]!) hpsz hend hinj hC
     rw [show tc + 3 + 1 - tc = 4 by omega] at h
     rw [h, sum_range_of_distinct _ (by simp) hnd hbd]
     simp only [List.map_cons, List.map_nil, List.sum_cons,
@@ -975,7 +968,7 @@ theorem fourPair_flip_data
     fun o q => bitCnt_le_one _ _
   -- the pair's view of the four members, in the two useful shapes
   have hbit : ∀ o q, o ≤ 3 → q ≤ 1 →
-      ((ctx.g[st.lab[tc + o]!]!).testBit st.lab[d2 + q]! = true ↔
+      ((ctx.g[st.lab[tc + o]!]!).mem st.lab[d2 + q]! = true ↔
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! = 1) :=
     fun o q ho hq => ⟨fun h => bitCnt_eq_one.mpr h,
       fun h => bitCnt_eq_one.mp h⟩
@@ -984,8 +977,8 @@ theorem fourPair_flip_data
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + q]! =
           bitCnt ctx.g[st.lab[tc + o']!]! st.lab[d2 + q]!) →
       ∀ q, q ≤ 1 →
-        (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + o]! =
-          (ctx.g[st.lab[d2 + q]!]!).testBit st.lab[tc + o']! := by
+        (ctx.g[st.lab[d2 + q]!]!).mem st.lab[tc + o]! =
+          (ctx.g[st.lab[d2 + q]!]!).mem st.lab[tc + o']! := by
     intro o o' ho ho' h q hq
     have h1 := hsy o q ho hq
     have h2 := hsy o' q ho' hq
@@ -1005,7 +998,7 @@ theorem fourPair_flip_data
   have hUw2c := hfc oU w2 hoU hw2
   rcases hsum with h0 | h1 | h2
   · -- no edges between the two cells
-    refine fourPair_sw2 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+    refine fourPair_sw2 hIt hgsz hsymm hloop hE hC hP hCP hsing
       hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12 ?_
     intro q hq
     have e1 := hle oU 0
@@ -1042,7 +1035,7 @@ theorem fourPair_flip_data
           bitCnt ctx.g[st.lab[tc + oV]!]! st.lab[d2 + 0]!)
       with hsame | hdiff
     · -- the chosen members sit on the same side of the split
-      refine fourPair_sw2 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+      refine fourPair_sw2 hIt hgsz hsymm hloop hE hC hP hCP hsing
         hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12 ?_
       intro q hq
       have e1 := hle oU 0
@@ -1075,20 +1068,20 @@ theorem fourPair_flip_data
             bitCnt ctx.g[st.lab[tc + oU]!]! st.lab[d2 + 0]!)
         with hw1U | hw1V
       · obtain ⟨σ, hrm, hsp, hfl, -, -⟩ :=
-          fourPair_sw3 hIt hgsz hg hsymm hloop hE hC hP hCP
+          fourPair_sw3 hIt hgsz hsymm hloop hE hC hP hCP
             hsing hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12
             (bitCnt_inj.mp (by omega)) (bitCnt_inj.mp (by omega))
             (bitCnt_inj.mp (by omega)) (bitCnt_inj.mp (by omega))
         exact ⟨σ, hrm, hsp, hfl⟩
       · obtain ⟨σ, hrm, hsp, hfl, -, -⟩ :=
-          fourPair_sw3 hIt hgsz hg hsymm hloop hE hC hP hCP
+          fourPair_sw3 hIt hgsz hsymm hloop hE hC hP hCP
             hsing hoU hoV hw2 hw1 hne hUw2 hUw1 hVw2 hVw1
             (Ne.symm h12)
             (bitCnt_inj.mp (by omega)) (bitCnt_inj.mp (by omega))
             (bitCnt_inj.mp (by omega)) (bitCnt_inj.mp (by omega))
         exact ⟨σ, hrm, hsp, hfl⟩
   · -- every member meets both of the pair
-    refine fourPair_sw2 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+    refine fourPair_sw2 hIt hgsz hsymm hloop hE hC hP hCP hsing
       hoU hoV hw1 hw2 hne hUw1 hUw2 hVw1 hVw2 h12 ?_
     intro q hq
     have e1 := hle oU 0
@@ -1117,37 +1110,36 @@ is again the triple swap. -/
 /-- The transposition route at a pair target beside a four-cell. -/
 theorem pairFour_sw1
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
-    (hP : (d2, d2 + 1) ∈ cells st.ptn level ctx.n)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level n)
+    (hP : (d2, d2 + 1) ∈ cells st.ptn level n)
     (hCP : tc ≠ d2)
-    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 3) →
+    (hsing : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 3) →
       q ≠ (d2, d2 + 1) → q.2 = q.1)
     (hqU : qU ≤ 1) (hqV : qV ≤ 1) (hqne : qU ≠ qV)
     (huni : ∀ o, o ≤ 3 →
-      (ctx.g[st.lab[tc + o]!]!).testBit st.lab[d2 + qU]! =
-        (ctx.g[st.lab[tc + o]!]!).testBit st.lab[d2 + qV]!) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      (ctx.g[st.lab[tc + o]!]!).mem st.lab[d2 + qU]! =
+        (ctx.g[st.lab[tc + o]!]!).mem st.lab[d2 + qV]!) :
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[d2 + qV]! = σ.toFun st.lab[d2 + qU]! := by
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
   have hinj := hIt.inj
-  have htn : tc + 3 < ctx.n := by
+  have htn : tc + 3 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
     rw [hpsz] at this
     omega
-  have hdn : d2 + 1 < ctx.n := by
+  have hdn : d2 + 1 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hP
     rw [hpsz] at this
     omega
-  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hlsz]; omega)
   have hI1 := cells_isCell (by rw [hpsz]; exact Nat.le_refl _)
     hend _ hC
@@ -1170,19 +1162,19 @@ theorem pairFour_sw1
     intro q q' hq hq' hne' hcon
     have := hinj (d2 + q) (d2 + q') (by omega) (by omega) hcon
     omega
-  have hun : st.lab[d2 + qU]! < ctx.n := hlb _ (by omega)
-  have hvn : st.lab[d2 + qV]! < ctx.n := hlb _ (by omega)
+  have hun : st.lab[d2 + qU]! < n := hlb _ (by omega)
+  have hvn : st.lab[d2 + qV]! < n := hlb _ (by omega)
   have huv := hin2 _ _ hqU hqV hqne
-  have hfix : ∀ z, z < ctx.n → z ≠ st.lab[d2 + qU]! →
+  have hfix : ∀ z, z < n → z ≠ st.lab[d2 + qU]! →
       z ≠ st.lab[d2 + qV]! →
-      (ctx.g[z]!).testBit st.lab[d2 + qU]! =
-        (ctx.g[z]!).testBit st.lab[d2 + qV]! := by
+      (ctx.g[z]!).mem st.lab[d2 + qU]! =
+        (ctx.g[z]!).mem st.lab[d2 + qV]! := by
     intro z hz hzu hzv
     obtain ⟨j, hj, rfl⟩ := labInj_surj
       (by rw [hlsz]; exact Nat.le_refl _) hIt.ok.labOk hinj z hz
     obtain ⟨p, hp, hj1, hj2⟩ := cells_cover (ptn := st.ptn)
-      (level := level) (nn := ctx.n) j (by omega)
-    have hjn : st.lab[j]! < ctx.n := hlb j hj
+      (level := level) (nn := n) j (by omega)
+    have hjn : st.lab[j]! < n := hlb j hj
     rcases Decidable.em (p = (tc, tc + 3)) with rfl | hpC
     · have hw : j - tc ≤ 3 := by
         have h1 : tc ≤ j := hj1
@@ -1207,7 +1199,7 @@ theorem pairFour_sw1
       · exact absurd rfl hzv
     · have hps : p.2 = p.1 := hsing p hp hpC hpP
       have hjp : j = p.1 := by omega
-      have hpmem : (p.1, p.1) ∈ cells st.ptn level ctx.n := by
+      have hpmem : (p.1, p.1) ∈ cells st.ptn level n := by
         have hpe : p = (p.1, p.1) := by
           obtain ⟨qa, qb⟩ := p
           simp only at hps ⊢
@@ -1219,7 +1211,7 @@ theorem pairFour_sw1
       rw [← hjp] at hc
       rw [hsymm _ _ hjn hun, hsymm _ _ hjn hvn]
       exact hc
-  have hset : ∀ p ∈ cells st.ptn level ctx.n,
+  have hset : ∀ p ∈ cells st.ptn level n,
       ∀ o, o < p.2 + 1 - p.1 →
       ∃ o', o' < p.2 + 1 - p.1 ∧
         sw1 st.lab[d2 + qU]! st.lab[d2 + qV]! st.lab[p.1 + o]! =
@@ -1239,7 +1231,7 @@ theorem pairFour_sw1
         (hcross o qV (by omega) hqV)⟩
     · have hps : p.2 = p.1 := hsing p hp hpC hpP
       have ho1 : o = 0 := by omega
-      have hbd : p.1 < ctx.n := by
+      have hbd : p.1 < n := by
         have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
           hend _ hp
         have h2 := cells_le _ hp
@@ -1256,7 +1248,7 @@ theorem pairFour_sw1
           (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
       exact ⟨o, ho, sw1_fix (hother qU hqU) (hother qV hqV)⟩
   obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
-    (f := sw1 st.lab[d2 + qU]! st.lab[d2 + qV]!) hIt hgsz hg
+    (f := sw1 st.lab[d2 + qU]! st.lab[d2 + qV]!) hIt hgsz
     (sw1_lt hun hvn) (fun w _ => sw1_invol huv w)
     (sw1_bits hsymm hloop hun hvn huv hfix) hset
   refine ⟨σ, hrm, hsp, ?_⟩
@@ -1267,55 +1259,52 @@ set_option maxHeartbeats 1000000 in
 singletons. -/
 theorem pairFour_flip_data
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hC : (tc, tc + 3) ∈ cells st.ptn level ctx.n)
-    (hP : (d2, d2 + 1) ∈ cells st.ptn level ctx.n)
+    (hC : (tc, tc + 3) ∈ cells st.ptn level n)
+    (hP : (d2, d2 + 1) ∈ cells st.ptn level n)
     (hCP : tc ≠ d2)
-    (hsing : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 3) →
+    (hsing : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 3) →
       q ≠ (d2, d2 + 1) → q.2 = q.1)
     (hqU : qU ≤ 1) (hqV : qV ≤ 1) (hqne : qU ≠ qV) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[d2 + qV]! = σ.toFun st.lab[d2 + qU]! := by
   have hpsz := hIt.ok.ptnSize
   have hlsz := hIt.ok.labSize
   have hend := hIt.ok.ptnEnd
   have hinj := hIt.inj
-  have htn : tc + 3 < ctx.n := by
+  have htn : tc + 3 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hC
     rw [hpsz] at this
     omega
-  have hdn : d2 + 1 < ctx.n := by
+  have hdn : d2 + 1 < n := by
     have := cells_bound (by rw [hpsz]; exact Nat.le_refl _) hend _ hP
     rw [hpsz] at this
     omega
-  have hlb : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hlsz]; omega)
   have hfwd : ∀ o, o ≤ 3 →
-      popCount (worksetOf st.lab d2 (d2 + 1) &&&
-          ctx.g[st.lab[tc + o]!]!) =
+      (worksetOf n st.lab d2 (d2 + 1)).cardInter
+          ctx.g[st.lab[tc + o]!]! =
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! := by
     intro o ho
-    have h := count_into_cell hpsz hend hinj hlb hP
-      (hg _ (hlb (tc + o) (by omega)))
+    have h := count_into_cell (ctx := ctx) (u := st.lab[tc + o]!) hpsz hend hinj hP
     rw [show d2 + 1 + 1 - d2 = 2 by omega, sum_range_two₄] at h
     exact h
   have hrev : ∀ q, q ≤ 1 →
-      popCount (worksetOf st.lab tc (tc + 3) &&&
-          ctx.g[st.lab[d2 + q]!]!) =
+      (worksetOf n st.lab tc (tc + 3)).cardInter
+          ctx.g[st.lab[d2 + q]!]! =
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 0]! +
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 1]! +
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 2]! +
         bitCnt ctx.g[st.lab[d2 + q]!]! st.lab[tc + 3]! := by
     intro q hq
-    have h := count_into_cell hpsz hend hinj hlb hC
-      (hg _ (hlb (d2 + q) (by omega)))
+    have h := count_into_cell (ctx := ctx) (u := st.lab[d2 + q]!) hpsz hend hinj hC
     rw [show tc + 3 + 1 - tc = 4 by omega] at h
     rw [h, sum_range_of_distinct _ (l := [0, 1, 2, 3]) (by simp)
       (by simp) (by intro x hx; simp at hx; omega)]
@@ -1351,7 +1340,7 @@ theorem pairFour_flip_data
       (∀ o, o ≤ 3 →
         bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 0]! +
           bitCnt ctx.g[st.lab[tc + o]!]! st.lab[d2 + 1]! = 1) →
-      ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+      ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
         StPerm level st (mapSt σ st) ∧
         st.lab[d2 + 1]! = σ.toFun st.lab[d2 + 0]! ∧
         st.lab[d2 + 0]! = σ.toFun st.lab[d2 + 1]! := by
@@ -1362,7 +1351,7 @@ theorem pairFour_flip_data
     have o3 := hone c hc
     have o4 := hone d hd
     obtain ⟨σ, hrm, hsp, -, hp1, hp2⟩ :=
-      fourPair_sw3 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+      fourPair_sw3 hIt hgsz hsymm hloop hE hC hP hCP hsing
         ha hc hb hd hac hab had (Ne.symm hbc) hcd hbd
         (bitCnt_inj.mp (by omega)) (bitCnt_inj.mp (by omega))
         (bitCnt_inj.mp (by omega)) (bitCnt_inj.mp (by omega))
@@ -1389,7 +1378,7 @@ theorem pairFour_flip_data
   have e8 := hle 3 1
   rcases hsum with h0 | h1 | h2
   · -- the pair meets no member of the four-cell
-    refine pairFour_sw1 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+    refine pairFour_sw1 hIt hgsz hsymm hloop hE hC hP hCP hsing
       hqU hqV hqne ?_
     intro o ho
     have ho4 : o = 0 ∨ o = 1 ∨ o = 2 ∨ o = 3 := by omega
@@ -1417,7 +1406,7 @@ theorem pairFour_flip_data
       have s7 := hsy 2 1 (by omega) (by omega)
       have s8 := hsy 3 1 (by omega) (by omega)
       omega
-    have hpick : ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    have hpick : ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
         StPerm level st (mapSt σ st) ∧
         st.lab[d2 + 1]! = σ.toFun st.lab[d2 + 0]! ∧
         st.lab[d2 + 0]! = σ.toFun st.lab[d2 + 1]! := by
@@ -1467,7 +1456,7 @@ theorem pairFour_flip_data
     · exact ⟨σ, hrm, hsp, hp1⟩
     · exact ⟨σ, hrm, hsp, hp2⟩
   · -- the pair meets every member of the four-cell
-    refine pairFour_sw1 hIt hgsz hg hsymm hloop hE hC hP hCP hsing
+    refine pairFour_sw1 hIt hgsz hsymm hloop hE hC hP hCP hsing
       hqU hqV hqne ?_
     intro o ho
     have ho4 : o = 0 ∨ o = 1 ∨ o = 2 ∨ o = 3 := by omega
@@ -1582,7 +1571,7 @@ end Shape
 
 section Dispatch
 
-variable {st : RefineSt} {level tc te oU oV : Nat}
+variable {st : RefineSt n} {level tc te oU oV : Nat}
 
 set_option maxHeartbeats 1000000 in
 /-- Flip data at every cell of a partition whose defect is at most
@@ -1591,37 +1580,36 @@ it dispatches to the pair and triple routes of the first branch
 together with the four exotic routes. -/
 theorem defect4_flip_data
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ w, w < ctx.n → ctx.g[w]! < 2 ^ ctx.n)
-    (hsymm : ∀ z w, z < ctx.n → w < ctx.n →
-      (ctx.g[z]!).testBit w = (ctx.g[w]!).testBit z)
-    (hloop : ∀ z, z < ctx.n → (ctx.g[z]!).testBit z = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ z w, z < n → w < n →
+      (ctx.g[z]!).mem w = (ctx.g[w]!).mem z)
+    (hloop : ∀ z, z < n → (ctx.g[z]!).mem z = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hdef : ctx.n - (cells st.ptn level ctx.n).length ≤ 4)
-    (hT : (tc, te) ∈ cells st.ptn level ctx.n)
+    (hdef : n - (cells st.ptn level n).length ≤ 4)
+    (hT : (tc, te) ∈ cells st.ptn level n)
     (hoU : oU ≤ te - tc) (hoV : oV ≤ te - tc) (hne : oU ≠ oV) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! := by
   have hpsz := hIt.ok.ptnSize
   have hend := hIt.ok.ptnEnd
-  have hnn : ctx.n ≤ st.ptn.size := by rw [hpsz]; exact Nat.le_refl _
-  have hexc := exc_sum_eq_defect (nn := ctx.n) (level := level)
+  have hnn : n ≤ st.ptn.size := by rw [hpsz]; exact Nat.le_refl _
+  have hexc := exc_sum_eq_defect (nn := n) (level := level)
     (ptn := st.ptn) hpsz hend
   have hle : tc ≤ te := cells_le _ hT
-  have hsize5 : ∀ q ∈ cells st.ptn level ctx.n, q.2 - q.1 ≤ 4 := by
+  have hsize5 : ∀ q ∈ cells st.ptn level n, q.2 - q.1 ≤ 4 := by
     intro q hq
     have := exc_ge_one (q := q) _ hq
     omega
-  have hpair2 : ∀ q ∈ cells st.ptn level ctx.n,
-      ∀ q' ∈ cells st.ptn level ctx.n, q ≠ q' →
+  have hpair2 : ∀ q ∈ cells st.ptn level n,
+      ∀ q' ∈ cells st.ptn level n, q ≠ q' →
         (q.2 - q.1) + (q'.2 - q'.1) ≤ 4 := by
     intro q hq q' hq' hqq
     have := exc_ge_two (q := q) (q' := q') _ hq hq' hqq
     omega
-  have htri3 : ∀ q ∈ cells st.ptn level ctx.n,
-      ∀ q' ∈ cells st.ptn level ctx.n,
-      ∀ q'' ∈ cells st.ptn level ctx.n, q ≠ q' → q ≠ q'' → q' ≠ q'' →
+  have htri3 : ∀ q ∈ cells st.ptn level n,
+      ∀ q' ∈ cells st.ptn level n,
+      ∀ q'' ∈ cells st.ptn level n, q ≠ q' → q ≠ q'' → q' ≠ q'' →
         (q.2 - q.1) + (q'.2 - q'.1) + (q''.2 - q''.1) ≤ 4 := by
     intro q hq q' hq' q'' hq'' h1 h2 h3
     have := exc_ge_three (q := q) (q' := q') (q'' := q'') _ hq hq'
@@ -1636,7 +1624,7 @@ theorem defect4_flip_data
     subst hte
     have hTe : (Prod.snd (tc, tc + 1)) - (Prod.fst (tc, tc + 1)) = 1 :=
       by omega
-    rcases Decidable.em (∃ q ∈ cells st.ptn level ctx.n,
+    rcases Decidable.em (∃ q ∈ cells st.ptn level n,
         3 ≤ q.2 - q.1) with ⟨C, hC, hCbig⟩ | hnobig
     · -- a four-cell beside it: the exotic route
       have hCle : C.1 ≤ C.2 := cells_le _ hC
@@ -1652,7 +1640,7 @@ theorem defect4_flip_data
         simp only at hCex ⊢
         have hcb : cb = ca + 3 := by omega
         rw [hcb]
-      have hC' : (C.1, C.1 + 3) ∈ cells st.ptn level ctx.n :=
+      have hC' : (C.1, C.1 + 3) ∈ cells st.ptn level n :=
         hCform ▸ hC
       have hCP : C.1 ≠ tc := by
         intro hcon
@@ -1660,7 +1648,7 @@ theorem defect4_flip_data
           (by omega) (by omega) (by omega) (by omega)
         simp only [Prod.mk.injEq] at heq
         omega
-      refine pairFour_flip_data hIt hgsz hg hsymm hloop hE hC' hT
+      refine pairFour_flip_data hIt hgsz hsymm hloop hE hC' hT
         hCP ?_ (by omega) (by omega) hne
       intro q hq hqC hqP
       rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
@@ -1671,7 +1659,7 @@ theorem defect4_flip_data
           (fun hcon => hqP hcon.symm)
         omega
     · -- no large cell: the first branch's pair route applies
-      refine pair_flip_data hIt hgsz hg hsymm hloop hE hT ?_
+      refine pair_flip_data hIt hgsz hsymm hloop hE hT ?_
         (by omega) (by omega) hne
       intro q hq hqp
       have hql := cells_le _ hq
@@ -1685,7 +1673,7 @@ theorem defect4_flip_data
     subst hte
     have hTe : (Prod.snd (tc, tc + 2)) - (Prod.fst (tc, tc + 2)) = 2 :=
       by omega
-    rcases Decidable.em (∃ q ∈ cells st.ptn level ctx.n,
+    rcases Decidable.em (∃ q ∈ cells st.ptn level n,
         q ≠ (tc, tc + 2) ∧ q.2 - q.1 = 2) with ⟨D, hD, hDne, hDex⟩ |
       hnotri
     · -- two triples: the exotic route
@@ -1694,14 +1682,14 @@ theorem defect4_flip_data
         simp only at hDex ⊢
         have hdb : db = da + 2 := by omega
         rw [hdb]
-      have hD' : (D.1, D.1 + 2) ∈ cells st.ptn level ctx.n :=
+      have hD' : (D.1, D.1 + 2) ∈ cells st.ptn level n :=
         hDform ▸ hD
       have hTD : tc ≠ D.1 := by
         intro hcon
         have heq := cells_eq_of_shared hnn hend hT hD' (j := tc)
           (by omega) (by omega) (by omega) (by omega)
         exact hDne (by rw [hDform, ← heq])
-      refine twoTriple_flip_data hIt hgsz hg hsymm hloop hE hT hD'
+      refine twoTriple_flip_data hIt hgsz hsymm hloop hE hT hD'
         hTD ?_ (by omega) (by omega) hne
       intro q hq hqT hqD
       rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
@@ -1712,7 +1700,7 @@ theorem defect4_flip_data
           (fun hcon => hqT hcon.symm) hDq
         omega
     · -- a unique triple with everything else small
-      refine triple_flip_data hIt hgsz hg hsymm hloop hE hT ?_
+      refine triple_flip_data hIt hgsz hsymm hloop hE hT ?_
         (by omega) (by omega) hne
       intro q hq hqT
       have hql := cells_le _ hq
@@ -1725,7 +1713,7 @@ theorem defect4_flip_data
     subst hte
     have hTe : (Prod.snd (tc, tc + 3)) - (Prod.fst (tc, tc + 3)) = 3 :=
       by omega
-    rcases Decidable.em (∃ q ∈ cells st.ptn level ctx.n,
+    rcases Decidable.em (∃ q ∈ cells st.ptn level n,
         q ≠ (tc, tc + 3) ∧ q.1 < q.2) with ⟨P, hP, hPne, hPnt⟩ |
       hnopair
     · -- a pair beside it: the exotic route
@@ -1738,7 +1726,7 @@ theorem defect4_flip_data
         simp only at hPex ⊢
         have hpb : pb = pa + 1 := by omega
         rw [hpb]
-      have hP' : (P.1, P.1 + 1) ∈ cells st.ptn level ctx.n :=
+      have hP' : (P.1, P.1 + 1) ∈ cells st.ptn level n :=
         hPform ▸ hP
       have hCP : tc ≠ P.1 := by
         intro hcon
@@ -1746,7 +1734,7 @@ theorem defect4_flip_data
           (by omega) (by omega) (by omega) (by omega)
         simp only [Prod.mk.injEq] at heq
         omega
-      refine fourPair_flip_data hIt hgsz hg hsymm hloop hE hT hP'
+      refine fourPair_flip_data hIt hgsz hsymm hloop hE hT hP'
         hCP ?_ (by omega) (by omega) hne
       intro q hq hqT hqP
       rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
@@ -1757,7 +1745,7 @@ theorem defect4_flip_data
           (fun hcon => hqT hcon.symm) hPq
         omega
     · -- a lone four-cell
-      refine oneCell_flip_data hIt hgsz hg hsymm hloop hE hT
+      refine oneCell_flip_data hIt hgsz hsymm hloop hE hT
         (by omega) ?_ (by omega) (by omega) hne
       intro q hq hqT
       rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt
@@ -1768,7 +1756,7 @@ theorem defect4_flip_data
     subst hte
     have hTe : (Prod.snd (tc, tc + 4)) - (Prod.fst (tc, tc + 4)) = 4 :=
       by omega
-    refine oneCell_flip_data hIt hgsz hg hsymm hloop hE hT
+    refine oneCell_flip_data hIt hgsz hsymm hloop hE hT
       (by omega) ?_ (by omega) (by omega) hne
     intro q hq hqT
     rcases Nat.eq_or_lt_of_le (cells_le _ hq) with heq | hlt

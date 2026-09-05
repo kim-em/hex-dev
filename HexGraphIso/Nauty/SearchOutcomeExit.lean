@@ -25,23 +25,23 @@ namespace Hex.GraphIso.Nauty
 /-- Two states describe the same recovered search frame at `level` when
 their partitions agree and their current labellings differ only within
 that partition's cells. -/
-structure FrameRel (level : Nat) (st out : SearchSt) : Prop where
+structure FrameRel (level : Nat) (st out : SearchSt n) : Prop where
   ptn : out.ptn = st.ptn
   lab : cellsPerm st.ptn level st.lab out.lab
 
 namespace FrameRel
 
-theorem refl (level : Nat) (st : SearchSt) : FrameRel level st st :=
+theorem refl (level : Nat) (st : SearchSt n) : FrameRel level st st :=
   ⟨rfl, cellsPerm_refl _ _ _⟩
 
-theorem symm {level : Nat} {st out : SearchSt}
+theorem symm {level : Nat} {st out : SearchSt n}
     (h : FrameRel level st out) : FrameRel level out st := by
   constructor
   · exact h.ptn.symm
   · rw [h.ptn]
     exact cellsPerm_symm h.lab
 
-theorem trans {level : Nat} {a b c : SearchSt}
+theorem trans {level : Nat} {a b c : SearchSt n}
     (hab : FrameRel level a b) (hbc : FrameRel level b c) :
     FrameRel level a c := by
   constructor
@@ -53,7 +53,7 @@ theorem trans {level : Nat} {a b c : SearchSt}
 /-- A recovered `SearchOut` between valid endpoints is exactly a frame
 relation. -/
 theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
-    {st out : SearchSt} (h : SearchOut G level level st out)
+    {st out : SearchSt n} (h : SearchOut G level level st out)
     (hst : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out) : FrameRel level st out :=
   ⟨h.ptnEq hst hout, h.perm⟩
@@ -63,7 +63,7 @@ end FrameRel
 /-- The guide-control facts preserved by every off-path search fragment.
 The second canonical alternative records a newly installed descendant of
 the fragment's entry frame. -/
-structure GuideRel (level : Nat) (st out : SearchSt) : Prop where
+structure GuideRel (level : Nat) (st out : SearchSt n) : Prop where
   first : out.gcaFirst = st.gcaFirst
   order : out.gcaFirst ≤ out.gcaCanon
   canon :
@@ -72,12 +72,12 @@ structure GuideRel (level : Nat) (st out : SearchSt) : Prop where
 
 namespace GuideRel
 
-theorem refl {level : Nat} {st : SearchSt}
+theorem refl {level : Nat} {st : SearchSt n}
     (horder : st.gcaFirst ≤ st.gcaCanon) : GuideRel level st st :=
   ⟨rfl, horder, Or.inl ⟨rfl, rfl⟩⟩
 
 /-- Guide relations compose across an equivalent recovered frame. -/
-theorem trans {level : Nat} {a b c : SearchSt}
+theorem trans {level : Nat} {a b c : SearchSt n}
     (hab : GuideRel level a b) (hbc : GuideRel level b c)
     (hframe : FrameRel level a b) : GuideRel level a c := by
   constructor
@@ -96,9 +96,9 @@ end GuideRel
 /-- Result of one node call.  `done` is the ordinary one-level return;
 `frozen` and `cheap` retain the distinct witnesses needed when the return
 crosses more than one loop; `unwind` is reserved for stored generators. -/
-inductive NodeExit (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
-    (codes : List Nat) (st out : SearchSt) (numcells : Nat)
-    (best outBest : Option Key) (trail : FrameTrail) (r : Int) : Prop where
+inductive NodeExit (ctx : Ctx n) (tcLevel specFuel runFuel level : Nat)
+    (codes : List Nat) (st out : SearchSt n) (numcells : Nat)
+    (best outBest : Option (Key n)) (trail : FrameTrail) (r : Int) : Prop where
   | done
       (returned : r = Int.ofNat level - 1)
       (exact : outBest = some (incMax best
@@ -130,32 +130,32 @@ inductive NodeExit (ctx : Ctx) (tcLevel specFuel runFuel level : Nat)
 valid at their returned frame.  Implicit cheap-cell pairs retain root
 validity and the deeper boundary needed to localize them when the return
 reaches its receiving loop. -/
-inductive ShortSource (G : Colored n k) (ctx : Ctx) (out : SearchSt)
+inductive ShortSource (G : Colored n k) (ctx : Ctx n) (out : SearchSt n)
     (trail : FrameTrail) (r : Int) : Prop where
-  | explicit (target fix mcr : Nat)
+  | explicit (target : Nat) (fix mcr : VSet n)
       (returned : r = Int.ofNat target)
       (back : out.autos.back? = some (fix, mcr))
       (valid : ∀ entry, trail target = some entry →
-        PairOk ctx.g entry.frame.rsPtn entry.frame.rsLab target ctx.n
+        PairOk ctx.g entry.frame.rsPtn entry.frame.rsLab target
           fix mcr)
   | implicit (target : Nat)
       (returned : r = Int.ofNat target)
       (below : target < out.noncheaplevel)
       (back : out.autos.back? = some
-        (fmptn out.lab out.ptn out.noncheaplevel ctx.n))
+        (fmptn out.lab out.ptn out.noncheaplevel n))
       (root : PairOk ctx.g
         (initPtn n (n + 2) (initialPartition G).2)
-        (initialPartition G).1 1 ctx.n
-        (fmptn out.lab out.ptn out.noncheaplevel ctx.n).1
-        (fmptn out.lab out.ptn out.noncheaplevel ctx.n).2)
+        (initialPartition G).1 1
+        (fmptn out.lab out.ptn out.noncheaplevel n).1
+        (fmptn out.lab out.ptn out.noncheaplevel n).2)
 
 namespace ShortSource
 
 /-- Fixed-point cleanup after a child return does not affect the stored
 pair or its source evidence. -/
-theorem setFixed {G : Colored n k} {ctx : Ctx} {out : SearchSt}
+theorem setFixed {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     {trail : FrameTrail} {r : Int}
-    (h : ShortSource G ctx out trail r) (fixedpts : Nat) :
+    (h : ShortSource G ctx out trail r) (fixedpts : VSet n) :
     ShortSource G ctx { out with fixedpts := fixedpts } trail r := by
   cases h with
   | explicit target fix mcr returned back valid =>
@@ -165,7 +165,7 @@ theorem setFixed {G : Colored n k} {ctx : Ctx} {out : SearchSt}
 
 /-- The final first-path counter adjustment changes none of the fields
 used by a live short-prune source. -/
-theorem firstFinish {G : Colored n k} {ctx : Ctx} {out : SearchSt}
+theorem firstFinish {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     {trail : FrameTrail} {r : Int} {level size index : Nat}
     (h : ShortSource G ctx out trail r) :
     ShortSource G ctx (Nauty.firstFinish level size index out) trail r := by
@@ -185,8 +185,8 @@ namespace NodeExit
 /-- Every result of a positive-level node lies strictly below that node's
 level.  This is the one-step bound that lets a receiving loop identify an
 explicit or implicit short-prune source with its own level. -/
-theorem below {ctx : Ctx} {tcLevel specFuel runFuel level numcells : Nat}
-    {codes : List Nat} {st out : SearchSt} {best outBest : Option Key}
+theorem below {ctx : Ctx n} {tcLevel specFuel runFuel level numcells : Nat}
+    {codes : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (h : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
       best outBest trail r) (hlevel : 0 < level) :
@@ -207,9 +207,9 @@ theorem below {ctx : Ctx} {tcLevel specFuel runFuel level numcells : Nat}
 
 /-- The final first-path counter adjustment preserves every corrected node
 exit, including the payload of a located unwind. -/
-theorem firstFinish {ctx : Ctx}
+theorem firstFinish {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells size index : Nat}
-    {codes : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {codes : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail} {r : Int}
     (hfuel : runFuel ≠ 0)
     (h : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
@@ -247,10 +247,10 @@ end NodeExit
 both the exact loop maximum and the payload required to cross an older
 frame.  Cursor-fuel exhaustion remains explicit and cannot be confused
 with completion. -/
-inductive LoopExit (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
+inductive LoopExit (ctx : Ctx n) (tcLevel specFuel runFuel loopFuel level : Nat)
     (codes : List Nat) (rsLab rsPtn : Array Nat)
-    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
-    (st out : SearchSt) (best outBest : Option Key) (trail : FrameTrail)
+    (tc len numcells : Nat) (tcell : VSet n) (cursor : Option Nat) (bound : Key n)
+    (st out : SearchSt n) (best outBest : Option (Key n)) (trail : FrameTrail)
     (r : Option Int) : Prop where
   | done
       (returned : r = none)
@@ -274,14 +274,14 @@ inductive LoopExit (ctx : Ctx) (tcLevel specFuel runFuel loopFuel level : Nat)
   | exhausted
       (returned : r = none) (finalCursor : Option Nat)
       (progress : cursorRank cursor + loopFuel ≤ cursorRank finalCursor)
-      (bounded : ∀ v, finalCursor = some v → v < ctx.n)
+      (bounded : ∀ v, finalCursor = some v → v < n)
 
 /-- Concrete node result paired with the corrected return classification.
 The event and trail clauses are independent of the semantic maximum and
 remain reusable from the established leaf machinery. -/
-structure NodeRun (G : Colored n k) (ctx : Ctx)
+structure NodeRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel level : Nat) (codes fs : List Nat)
-    (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
+    (st out : SearchSt n) (numcells : Nat) (best outBest : Option (Key n))
     (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
   exit : NodeExit ctx tcLevel specFuel runFuel level codes st out numcells
     best outBest receiptTrail r
@@ -293,9 +293,9 @@ structure NodeRun (G : Colored n k) (ctx : Ctx)
 
 /-- Off-path nodes additionally preserve the first-path control and coset
 cursor needed by their enclosing sibling loop. -/
-structure OtherRun (G : Colored n k) (ctx : Ctx)
+structure OtherRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel level : Nat) (codes fs : List Nat)
-    (st out : SearchSt) (numcells : Nat) (best outBest : Option Key)
+    (st out : SearchSt n) (numcells : Nat) (best outBest : Option (Key n))
     (receiptTrail eventTrail : FrameTrail) (r : Int) : Prop where
   node : NodeRun G ctx tcLevel specFuel runFuel level codes fs st out
     numcells best outBest receiptTrail eventTrail r
@@ -309,11 +309,11 @@ structure OtherRun (G : Colored n k) (ctx : Ctx)
 /-- A sibling-loop proof paired with its corrected exit reason.  The
 established proof retains coverage, event, and recovery facts; `exit`
 separately records why an unfinished suffix is nevertheless absorbed. -/
-structure LoopRun (G : Colored n k) (ctx : Ctx)
+structure LoopRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
-    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
-    (st out : SearchSt) (best outBest : Option Key)
+    (tc len numcells : Nat) (tcell : VSet n) (cursor : Option Nat) (bound : Key n)
+    (st out : SearchSt n) (best outBest : Option (Key n))
     (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
   proof : LoopProof G ctx tcLevel specFuel runFuel loopFuel level stem codes
     fs rsLab rsPtn tc len numcells tcell cursor bound st out best outBest
@@ -325,11 +325,11 @@ structure LoopRun (G : Colored n k) (ctx : Ctx)
     r = some value ∧ ShortSource G ctx out eventTrail value
 
 /-- An off-path sibling sweep additionally retains its coset cursor. -/
-structure OtherLoopRun (G : Colored n k) (ctx : Ctx)
+structure OtherLoopRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
-    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
-    (st out : SearchSt) (best outBest : Option Key)
+    (tc len numcells : Nat) (tcell : VSet n) (cursor : Option Nat) (bound : Key n)
+    (st out : SearchSt n) (best outBest : Option (Key n))
     (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
   proof : OtherLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
     codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
@@ -342,11 +342,11 @@ structure OtherLoopRun (G : Colored n k) (ctx : Ctx)
 
 /-- The first-path sibling sweep retains both reference histories in its
 established proof and the corrected reason for abandoning any suffix. -/
-structure FirstLoopRun (G : Colored n k) (ctx : Ctx)
+structure FirstLoopRun (G : Colored n k) (ctx : Ctx n)
     (tcLevel specFuel runFuel loopFuel level : Nat)
     (stem codes fs : List Nat) (rsLab rsPtn : Array Nat)
-    (tc len numcells tcell : Nat) (cursor : Option Nat) (bound : Key)
-    (st out : SearchSt) (best outBest : Option Key)
+    (tc len numcells : Nat) (tcell : VSet n) (cursor : Option Nat) (bound : Key n)
+    (st out : SearchSt n) (best outBest : Option (Key n))
     (receiptTrail eventTrail : FrameTrail) (r : Option Int) : Prop where
   proof : FirstLoopProof G ctx tcLevel specFuel runFuel loopFuel level stem
     codes fs rsLab rsPtn tc len numcells tcell cursor bound st out best
@@ -364,9 +364,9 @@ interface.  This conversion is safe at one node: both early exit variants
 already carry exactness for that node.  What is deliberately not recovered
 is the old loop rule that treated such an exit as coverage of every later
 sibling. -/
-theorem toOutcome {G : Colored n k} {ctx : Ctx}
+theorem toOutcome {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Int}
     (h : NodeRun G ctx tcLevel specFuel runFuel level codes fs st out
       numcells best outBest receiptTrail eventTrail r) :
@@ -401,9 +401,9 @@ theorem toOutcome {G : Colored n k} {ctx : Ctx}
 
 /-- Restore the established result interface used by the invariant
 transport lemmas after the corrected exit has been classified. -/
-theorem toProof {G : Colored n k} {ctx : Ctx}
+theorem toProof {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Int}
     (h : NodeRun G ctx tcLevel specFuel runFuel level codes fs st out
       numcells best outBest receiptTrail eventTrail r) :
@@ -416,9 +416,9 @@ end NodeRun
 namespace OtherRun
 
 /-- Forget the semantic receipt and expose the off-path guide relation. -/
-theorem guide {G : Colored n k} {ctx : Ctx}
+theorem guide {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Int}
     (h : OtherRun G ctx tcLevel specFuel runFuel level codes fs st out
       numcells best outBest receiptTrail eventTrail r) :
@@ -427,9 +427,9 @@ theorem guide {G : Colored n k} {ctx : Ctx}
 
 /-- Restore the established off-path interface for ordinary parent-level
 consumption and recovery. -/
-theorem toProof {G : Colored n k} {ctx : Ctx}
+theorem toProof {G : Colored n k} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells : Nat} {codes fs : List Nat}
-    {st out : SearchSt} {best outBest : Option Key}
+    {st out : SearchSt n} {best outBest : Option (Key n)}
     {receiptTrail eventTrail : FrameTrail} {r : Int}
     (h : OtherRun G ctx tcLevel specFuel runFuel level codes fs st out
       numcells best outBest receiptTrail eventTrail r) :
@@ -444,11 +444,11 @@ namespace LoopExit
 
 /-- Changing only the mutable live set leaves an already classified loop
 exit unchanged. -/
-theorem reindexSet {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level tc len numcells tcell tcell'
-      : Nat}
+theorem reindexSet {ctx : Ctx n}
+    {tcLevel specFuel runFuel loopFuel level tc len numcells : Nat}
+    {tcell tcell' : VSet n}
     {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
-    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {bound : Key n} {st out : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail} {r : Option Int}
     (h : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
       rsPtn tc len numcells tcell cursor bound st out best outBest trail r) :
@@ -467,10 +467,10 @@ theorem reindexSet {ctx : Ctx}
 
 /-- One processed cursor step increases both the loop fuel and its
 starting-rank budget. -/
-theorem step {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level tv tc len numcells tcell : Nat}
+theorem step {ctx : Ctx n}
+    {tcLevel specFuel runFuel loopFuel level tv tc len numcells : Nat} {tcell : VSet n}
     {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
-    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {bound : Key n} {st out : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail} {r : Option Int}
     (ha : After cursor tv)
     (h : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
@@ -494,11 +494,11 @@ theorem step {ctx : Ctx}
 
 /-- A sound processed child changes only the incoming incumbent of the
 classified recursive tail. -/
-theorem prepend {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level tc len numcells tcell : Nat}
+theorem prepend {ctx : Ctx n}
+    {tcLevel specFuel runFuel loopFuel level tc len numcells : Nat} {tcell : VSet n}
     {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
-    {bound : Key} {st recSt out : SearchSt}
-    {best mid outBest : Option Key} {trail : FrameTrail} {r : Option Int}
+    {bound : Key n} {st recSt out : SearchSt n}
+    {best mid outBest : Option (Key n)} {trail : FrameTrail} {r : Option Int}
     (hpre : LoopSound ctx bound best mid)
     (h : LoopExit ctx tcLevel specFuel runFuel loopFuel level codes rsLab
       rsPtn tc len numcells tcell cursor bound recSt out mid outBest trail
@@ -527,12 +527,11 @@ theorem prepend {ctx : Ctx}
 /-- At a small-cell node, exactness of the selected child is exactness of
 the whole sibling sweep, so the saved-boundary return remains a cheap exit
 after fixed-point cleanup. -/
-theorem ofCheap {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level boundary tc len numcells tcell
-      fixedpts : Nat}
+theorem ofCheap {ctx : Ctx n}
+    {tcLevel specFuel runFuel loopFuel level boundary tc len numcells : Nat} {tcell fixedpts : VSet n}
     {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
-    {bound childKey : Key} {st out : SearchSt}
-    {best outBest : Option Key} {trail : FrameTrail}
+    {bound childKey : Key n} {st out : SearchSt n}
+    {best outBest : Option (Key n)} {trail : FrameTrail}
     (hboundary : 1 ≤ boundary) (hbelow : boundary ≤ level)
     (hsaved : out.noncheaplevel = boundary)
     (hbound : bound = childKey)
@@ -547,11 +546,10 @@ theorem ofCheap {ctx : Ctx}
 /-- An early frozen child absorbs both the explored prefix and every live
 suffix child, yielding the exact loop maximum while retaining the frozen
 payload for the next enclosing frame. -/
-theorem ofFrozen {ctx : Ctx}
-    {tcLevel specFuel runFuel loopFuel level tail tc len numcells tcell
-      fixedpts : Nat}
+theorem ofFrozen {ctx : Ctx n}
+    {tcLevel specFuel runFuel loopFuel level tail tc len numcells : Nat} {tcell fixedpts : VSet n}
     {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat}
-    {bound : Key} {st out : SearchSt} {best outBest : Option Key}
+    {bound : Key n} {st out : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail} {value : Int}
     (hfreeze : FrozenOut ctx codes out outBest value)
     (hlevel : level = codes.length) (hbelow : value < Int.ofNat level)
@@ -575,12 +573,11 @@ theorem ofFrozen {ctx : Ctx}
 
 /-- Convert an integer-valued loop exit to the enclosing node, shortening
 the frozen comparison prefix at the node boundary. -/
-theorem toNodeSome {ctx : Ctx}
-    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level
-      tc len nodeNumcells loopNumcells tcell : Nat}
+theorem toNodeSome {ctx : Ctx n}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
     {nodeCodes loopCodes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key} {trail : FrameTrail} {value : Int}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {best outBest : Option (Key n)} {trail : FrameTrail} {value : Int}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
       nodeSt nodeNumcells)
     (hprefix : loopCodes.take nodeCodes.length = nodeCodes)
@@ -614,15 +611,14 @@ theorem toNodeSome {ctx : Ctx}
 
 /-- With nonzero cursor fuel, a `none` loop result is genuine completion
 and supplies the enclosing node's ordinary one-level return. -/
-theorem toNodeNone {ctx : Ctx}
-    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level
-      tc len nodeNumcells loopNumcells tcell : Nat}
+theorem toNodeNone {ctx : Ctx n}
+    {tcLevel nodeSpecFuel loopSpecFuel nodeRunFuel runFuel loopFuel level tc len nodeNumcells loopNumcells : Nat} {tcell : VSet n}
     {nodeCodes loopCodes : List Nat} {rsLab rsPtn : Array Nat}
-    {cursor : Option Nat} {bound : Key} {nodeSt loopSt out : SearchSt}
-    {best outBest : Option Key} {trail : FrameTrail}
+    {cursor : Option Nat} {bound : Key n} {nodeSt loopSt out : SearchSt n}
+    {best outBest : Option (Key n)} {trail : FrameTrail}
     (hbound : bound = nodeKey ctx tcLevel nodeSpecFuel level nodeCodes
       nodeSt nodeNumcells)
-    (hfuel : ctx.n < cursorRank cursor + loopFuel)
+    (hfuel : n < cursorRank cursor + loopFuel)
     (h : LoopExit ctx tcLevel loopSpecFuel runFuel loopFuel level loopCodes
       rsLab rsPtn tc len loopNumcells tcell cursor bound loopSt out best
       outBest trail none) :
@@ -644,9 +640,9 @@ namespace RunPrep
 
 /-- A fresh request from the frozen-downward `processnode` arm records
 the implicit pair admitted at the saved cheap-cell boundary. -/
-theorem fastSource {G : Colored n k} {ctx : Ctx}
+theorem fastSource {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {codes bs fs : List Nat}
-    {st : SearchSt} {best : Option Key} {trail : FrameTrail}
+    {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
     (h : RunPrep G ctx tcLevel level codes bs fs numcells st best trail)
     (hbound : st.noncheaplevel ≤ level)
     (hg : st.eqlevFirst ≠ level ∧ st.compCanon < 0)
@@ -667,7 +663,7 @@ theorem fastSource {G : Colored n k} {ctx : Ctx}
     rw [Int.toNat_of_nonneg hnonneg]
     exact pruneReturn_lt
   · rw [processnode_fast_autos hg]
-    have hback := pruneAutos_back (ctx := ctx) h.workspace hne
+    have hback := pruneAutos_back h.workspace hne
     rw [(processnode_frames ctx level numcells st).1,
       (processnode_frames ctx level numcells st).2.1,
       (processnode_frames ctx level numcells st).2.2.2.2.2.2.2.1]
@@ -684,28 +680,27 @@ namespace NodeInv
 /-- A negative, non-generator discrete leaf produces the corrected exit:
 ordinary comparison pruning retains its frozen prefix, while the only
 remaining return is the explicit cheap-cell jump. -/
-theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
+theorem negativeLeaf {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
-      numcells).ptn level ctx.n = true)
+      numcells).ptn level n = true)
     (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
       true))
     (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
-    (hgen : (processnode ctx level ctx.n
+    (hgen : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).2.genTrace =
         (otherLeafSt ctx level numcells st).genTrace)
-    (hearly : (processnode ctx level ctx.n
+    (hearly : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail) :
@@ -722,16 +717,16 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
     omega
   have hstem : full.take codes.length = codes := by
     simp only [full, List.take_left']
-  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+  have hprep : RunPrep G ctx tcLevel level full bs fs n leaf best
       trail := by
     simpa only [full, leaf, hnum] using
-      hnode.run.otherLeaf hn hn0 hlevel hpath
+      hnode.run.otherLeaf hn0 hlevel hpath
   have hcheap' : leaf.noncheaplevel ≤ level := by
     change (otherLeafSt ctx level numcells st).noncheaplevel ≤ level
     rw [RefTrail.otherLeaf_noncheaplevel]
     exact hcheap
   obtain ⟨outBest, houtcome, hexact⟩ := hnode.plainLeaf
-    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn hn0 hgb
+    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn0
     hsymm hloop hlevel hpath hcheap hnum hdisc hef hgen hearly hlive
   have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
     hnum hearly
@@ -739,7 +734,7 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
     intro heq
     apply hef
     simp only [leaf, heq, beq_self_eq_true]
-  have hmode := hprep.pruneMode hn hfull hstem hfirstNe hneg
+  have hmode := hprep.pruneMode hfull hstem hfirstNe hneg
   have hexit : NodeExit ctx tcLevel (specFuel + 1) (fuel + 1) level
       codes st (otherNode ctx inf tcLevel (fuel + 1) level numcells st).2
       numcells best outBest trail
@@ -747,7 +742,7 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
     rcases hmode with hfreeze | hjump
     · rw [hout]
       apply NodeExit.frozen hearly hexact
-      have hreadOut : stInc ctx (processnode ctx level ctx.n leaf).2 =
+      have hreadOut : stInc ctx (processnode ctx level n leaf).2 =
           outBest := by
         rw [← hout]
         exact houtcome.event.read
@@ -760,7 +755,7 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
       · exact hprep.cheap.positive
       · exact hcheap'
       · rw [hout]
-        exact (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.2.1
+        exact (processnode_frames ctx level n leaf).2.2.2.2.2.2.2.1
       · exact hexact
   refine ⟨outBest, ?_⟩
   exact {
@@ -777,15 +772,15 @@ theorem negativeLeaf {G : Colored n k} {ctx : Ctx}
 
 /-- An early off-path leaf also preserves the guide and coset fields used
 when its unwind stops at the immediately enclosing sibling loop. -/
-theorem earlyOther {G : Colored n k} {ctx : Ctx}
+theorem earlyOther {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best outBest : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best outBest : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hpath : level = codes.length + 1)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
-    (hearly : (processnode ctx level ctx.n
+      numcells).numcells = n)
+    (hearly : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail)
@@ -800,16 +795,16 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
   let leaf := otherLeafSt ctx level numcells st
   have hout := otherNode_leaf_early ctx inf tcLevel fuel level numcells st
     hnum hearly
-  have hprep := hnode.run.otherLeaf hn hn0 hlevel hpath
+  have hprep := hnode.run.otherLeaf hn0 hlevel hpath
   have hlive' : Live ctx level leaf trail := by
     simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
-  have hfirst : (processnode ctx level ctx.n leaf).2.gcaFirst =
+  have hfirst : (processnode ctx level n leaf).2.gcaFirst =
       st.gcaFirst :=
-    (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.1 |>.trans
+    (processnode_frames ctx level n leaf).2.2.2.2.2.2.1 |>.trans
       (by simpa only [leaf] using
         (RefTrail.otherLeaf_gcaFirst ctx level numcells st))
-  have horder : (processnode ctx level ctx.n leaf).2.gcaFirst ≤
-      (processnode ctx level ctx.n leaf).2.gcaCanon :=
+  have horder : (processnode ctx level n leaf).2.gcaFirst ≤
+      (processnode ctx level n leaf).2.gcaCanon :=
     (hlive'.processnode (by simpa only [leaf] using hprep.trailOk)
       (by simpa only [leaf] using hprep.firstBound)).2
   have hleafCanonGca : leaf.gcaCanon = st.gcaCanon := by
@@ -817,7 +812,7 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
       (RefTrail.otherLeaf_gcaCanon ctx level numcells st)
   have hleafCanonLab : leaf.canonlab = st.canonlab := by
     let rs := refine ctx level st.lab st.ptn st.active numcells
-    let base : SearchSt :=
+    let base : SearchSt n :=
       { st with
         lab := rs.lab
         ptn := rs.ptn
@@ -828,7 +823,7 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
   have hleafLab : leaf.lab =
       (refine ctx level st.lab st.ptn st.active numcells).lab := by
     let rs := refine ctx level st.lab st.ptn st.active numcells
-    let base : SearchSt :=
+    let base : SearchSt n :=
       { st with
         lab := rs.lab
         ptn := rs.ptn
@@ -837,12 +832,12 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
     change (otherNodePrep level rs.longcode base).lab = rs.lab
     exact (otherNodePrep_frames level rs.longcode base).2.2.2.2.2.2.2.2.2.2.2.1
   have hcanon :
-      ((processnode ctx level ctx.n leaf).2.gcaCanon = st.gcaCanon ∧
-          (processnode ctx level ctx.n leaf).2.canonlab = st.canonlab) ∨
-        (level ≤ (processnode ctx level ctx.n leaf).2.gcaCanon ∧
+      ((processnode ctx level n leaf).2.gcaCanon = st.gcaCanon ∧
+          (processnode ctx level n leaf).2.canonlab = st.canonlab) ∨
+        (level ≤ (processnode ctx level n leaf).2.gcaCanon ∧
           cellsPerm st.ptn level st.lab
-            (processnode ctx level ctx.n leaf).2.canonlab) := by
-    rcases processnode_canonGuide ctx level ctx.n leaf with hold | hnew
+            (processnode ctx level n leaf).2.canonlab) := by
+    rcases processnode_canonGuide ctx level n leaf with hold | hnew
     · exact Or.inl ⟨hold.1.trans hleafCanonGca,
         hold.2.trans hleafCanonLab⟩
     · right
@@ -852,8 +847,8 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
       · rw [hnew.2, hleafLab]
         exact (refine_refInv (ctx := ctx)
           (by
-            rw [hnode.run.searchOk.ptnSize, ← hn]
-            exact Nat.le_refl ctx.n)
+            rw [hnode.run.searchOk.ptnSize]
+            exact Nat.le_refl n)
           (hnode.run.searchOk.labSize.trans
             hnode.run.searchOk.ptnSize.symm)
           (searchOk_end hn0 hnode.run.searchOk hlevel)).perm
@@ -864,31 +859,30 @@ theorem earlyOther {G : Colored n k} {ctx : Ctx}
     canonGuide := by rw [hout]; exact hcanon
     coset := by
       rw [hout]
-      exact (processnode_coset ctx level ctx.n leaf).trans
+      exact (processnode_coset ctx level n leaf).trans
         (by simpa only [leaf] using
           (OtherProof.otherLeafSt_coset ctx level numcells st)) }
 
 /-- A code-one automorphism leaf returns the stored first-path unwind,
 with all off-path control fields retained for the enclosing sibling loop. -/
-theorem firstOther {G : Colored n k} {ctx : Ctx}
+theorem firstOther {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hn0 : 0 < n)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hnp : (otherLeafSt ctx level numcells st).compCanon ≤ 0)
     (heq : ((otherLeafSt ctx level numcells st).eqlevFirst == level) =
       true)
     (hsent : (otherLeafSt ctx level numcells st).firstcode[level + 1]! =
       codeSentinel)
-    (hpass : isautom ctx (firstScatter ctx.n
+    (hpass : isautom ctx (firstScatter n
       (otherLeafSt ctx level numcells st).firstlab
       (otherLeafSt ctx level numcells st).lab) = true)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
@@ -899,7 +893,7 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   obtain ⟨houtcome, target, hreturned, hbelow, hcontrol, payload, hloc⟩ :=
     hnode.firstLeaf (inf := inf) (specFuel := specFuel) (fuel := fuel)
-      hn hn0 hgsz hgb hsymm hloop hlevel hpath hnum hnp heq hsent hpass
+      hn0 hgsz hsymm hloop hlevel hpath hnum hnp heq hsent hpass
       hlive
   let leaf := otherLeafSt ctx level numcells st
   have hfirstBelow : leaf.gcaFirst < level := by
@@ -907,8 +901,8 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
     rw [RefTrail.otherLeaf_gcaFirst]
     exact hnode.firstBelow
   have hreturn := (processnode_auto (ctx := ctx) (level := level)
-    (numcells := ctx.n) (st := leaf) heq hsent (by simp) hpass).1
-  have hearly : (processnode ctx level ctx.n leaf).1 <
+    (numcells := n) (st := leaf) heq hsent (by simp) hpass).1
+  have hearly : (processnode ctx level n leaf).1 <
       Int.ofNat level := by
     rw [hreturn]
     exact Int.ofNat_lt.mpr hfirstBelow
@@ -935,24 +929,23 @@ theorem firstOther {G : Colored n k} {ctx : Ctx}
       rw [processnode_auto_short heq hsent (by simp) hpass,
         hleafClear] at hshort
       cases hshort }
-  exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
+  exact hnode.earlyOther hn0 hlevel hpath hnum hearly hlive hrun
 
 /-- A code-two row tie returns either its canonical guide or its
 first-ancestor orbit guide, retaining the chosen unwind explicitly. -/
-theorem tiedOther {G : Colored n k} {ctx : Ctx}
+theorem tiedOther {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgsz : ctx.g.size = ctx.n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hn0 : 0 < n)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
       true))
     (hcc : (otherLeafSt ctx level numcells st).compCanon = 0)
@@ -962,12 +955,12 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
       (otherLeafSt ctx level numcells st).canonlab
       (otherLeafSt ctx level numcells st).samerows)
       (otherLeafSt ctx level numcells st).lab).1 = 0)
-    (hcoset : (processnode ctx level ctx.n
-      (otherLeafSt ctx level numcells st)).2.cosetindex < ctx.n)
-    (horbit : OrbSound (OrbConn (processnode ctx level ctx.n
-      (otherLeafSt ctx level numcells st)).2.genTrace.toList ctx.n)
-      (processnode ctx level ctx.n
-        (otherLeafSt ctx level numcells st)).2.orbits ctx.n)
+    (hcoset : (processnode ctx level n
+      (otherLeafSt ctx level numcells st)).2.cosetindex < n)
+    (horbit : OrbSound (OrbConn (processnode ctx level n
+      (otherLeafSt ctx level numcells st)).2.genTrace.toList n)
+      (processnode ctx level n
+        (otherLeafSt ctx level numcells st)).2.orbits n)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail) :
     OtherRun G ctx tcLevel (specFuel + 1) (fuel + 1) level codes fs st
@@ -976,15 +969,15 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
       (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   obtain ⟨houtcome, target, hreturned, hbelow, hcontrol, payload, hloc⟩ :=
     hnode.tiedLeaf (inf := inf) (specFuel := specFuel) (fuel := fuel)
-      hn hn0 hgsz hgb hsymm hloop hlevel hpath hcheap hnum hef hcc hge
+      hn0 hgsz hsymm hloop hlevel hpath hcheap hnum hef hcc hge
       htie hcoset horbit hlive
   let leaf := otherLeafSt ctx level numcells st
   let full := codes ++
     [(refine ctx level st.lab st.ptn st.active numcells).longcode]
-  have hprep : RunPrep G ctx tcLevel level full bs fs ctx.n leaf best
+  have hprep : RunPrep G ctx tcLevel level full bs fs n leaf best
       trail := by
     simpa only [full, leaf, hnum] using
-      hnode.run.otherLeaf hn hn0 hlevel hpath
+      hnode.run.otherLeaf hn0 hlevel hpath
   have hlive' : Live ctx level leaf trail := by
     simpa only [leaf] using hlive.otherLeaf (numcells := numcells)
   have hcanonBelow : leaf.gcaCanon < level := by
@@ -994,8 +987,8 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
   have hfirstBelow : leaf.gcaFirst < level :=
     Nat.lt_of_le_of_lt hlive'.order hcanonBelow
   have hreturns := (processnode_rowTie (ctx := ctx) (level := level)
-    (numcells := ctx.n) (st := leaf) hef (by simp) hcc hge htie).1
-  have hearly : (processnode ctx level ctx.n leaf).1 <
+    (numcells := n) (st := leaf) hef (by simp) hcc hge htie).1
+  have hearly : (processnode ctx level n leaf).1 <
       Int.ofNat level := by
     rcases hreturns with hfirst | hcanon
     · rw [hfirst]
@@ -1023,39 +1016,38 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx}
       have hleafClear : leaf.needshortprune = false := by
         rw [otherLeafSt_short, hnode.shortClear]
       apply ShortSource.explicit leaf.gcaCanon
-        (fmperm (canonScatter ctx.n leaf.canonlab leaf.lab) ctx.n).1
-        (fmperm (canonScatter ctx.n leaf.canonlab leaf.lab) ctx.n).2
+        (fmperm (canonScatter n leaf.canonlab leaf.lab) n).1
+        (fmperm (canonScatter n leaf.canonlab leaf.lab) n).2
       · exact processnode_rowTie_short hef (by simp) hcc hge htie
           hleafClear hshort
       · exact hprep.rowTieBack hef (by simp) hcc hge htie
       · intro entry hentry
-        exact hlive'.rowTiePair hn hn0 hgb hprep hcanonBelow htie hentry }
-  exact hnode.earlyOther hn hn0 hlevel hpath hnum hearly hlive hrun
+        exact hlive'.rowTiePair hn0 hprep hcanonBelow htie hentry }
+  exact hnode.earlyOther hn0 hlevel hpath hnum hearly hlive hrun
 
 /-- The negative non-generator leaf, with the off-path fields needed by
 its parent loop retained. -/
-theorem negativeOther {G : Colored n k} {ctx : Ctx}
+theorem negativeOther {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
-      numcells).ptn level ctx.n = true)
+      numcells).ptn level n = true)
     (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
       true))
     (hneg : (otherLeafSt ctx level numcells st).compCanon < 0)
-    (hgen : (processnode ctx level ctx.n
+    (hgen : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).2.genTrace =
         (otherLeafSt ctx level numcells st).genTrace)
-    (hearly : (processnode ctx level ctx.n
+    (hearly : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 < Int.ofNat level)
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail) :
@@ -1065,34 +1057,33 @@ theorem negativeOther {G : Colored n k} {ctx : Ctx}
         numcells best outBest trail trail
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   obtain ⟨outBest, hrun⟩ := hnode.negativeLeaf
-    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn hn0 hgb hsymm
+    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn0 hsymm
     hloop hlevel hpath hcheap hnum hdisc hef hneg hgen hearly hlive
-  exact ⟨outBest, hnode.earlyOther hn hn0 hlevel hpath hnum hearly
+  exact ⟨outBest, hnode.earlyOther hn0 hlevel hpath hnum hearly
     hlive hrun⟩
 
 /-- A non-generator leaf whose return remains at the current boundary is
 an ordinary exact off-path node run. -/
-theorem doneLeaf {G : Colored n k} {ctx : Ctx}
+theorem doneLeaf {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel specFuel fuel level numcells : Nat}
-    {codes bs fs : List Nat} {st : SearchSt} {best : Option Key}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)}
     {trail : FrameTrail}
-    (hn : ctx.n = n) (hn0 : 0 < n)
-    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u v, u < ctx.n → v < ctx.n →
-      (ctx.g[u]!).testBit v = (ctx.g[v]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hn0 : 0 < n)
+    (hsymm : ∀ u v, u < n → v < n →
+      (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
     (hcheap : st.noncheaplevel ≤ level)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells = ctx.n)
+      numcells).numcells = n)
     (hdisc : discreteAt (refine ctx level st.lab st.ptn st.active
-      numcells).ptn level ctx.n = true)
+      numcells).ptn level n = true)
     (hef : ¬(((otherLeafSt ctx level numcells st).eqlevFirst == level) =
       true))
-    (hgen : (processnode ctx level ctx.n
+    (hgen : (processnode ctx level n
       (otherLeafSt ctx level numcells st)).2.genTrace =
         (otherLeafSt ctx level numcells st).genTrace)
-    (hdone : ¬((processnode ctx level ctx.n
+    (hdone : ¬((processnode ctx level n
       (otherLeafSt ctx level numcells st)).1 < Int.ofNat level))
     (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hlive : Live ctx level st trail) :
@@ -1102,52 +1093,52 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx}
         numcells best outBest trail trail
         (otherNode ctx inf tcLevel (fuel + 1) level numcells st).1 := by
   obtain ⟨outBest, houtcome, hexact⟩ := hnode.plainLeafDone
-    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn hn0 hgb hsymm
+    (inf := inf) (specFuel := specFuel) (fuel := fuel) hn0 hsymm
     hloop hlevel hpath hcheap hnum hdisc hef hgen hdone hlive
   let leaf := otherLeafSt ctx level numcells st
-  let final := leafFinish ctx level (processnode ctx level ctx.n leaf).2
+  let final := leafFinish level (processnode ctx level n leaf).2
   have hout := otherNode_leaf_done_state ctx inf tcLevel fuel level
     numcells st hnum hdone
-  have hfirstProc : (processnode ctx level ctx.n leaf).2.gcaFirst =
+  have hfirstProc : (processnode ctx level n leaf).2.gcaFirst =
       leaf.gcaFirst :=
-    (processnode_frames ctx level ctx.n leaf).2.2.2.2.2.2.1
+    (processnode_frames ctx level n leaf).2.2.2.2.2.2.1
   have hfirstLeaf : leaf.gcaFirst = st.gcaFirst := by
     simpa only [leaf] using
       (RefTrail.otherLeaf_gcaFirst ctx level numcells st)
   have hfirst : final.gcaFirst = st.gcaFirst := by
     have heq : final.gcaFirst =
-        (processnode ctx level ctx.n leaf).2.gcaFirst := by
+        (processnode ctx level n leaf).2.gcaFirst := by
       unfold final
       rw [leafFinish]
       split <;> split <;> rfl
     exact heq.trans (hfirstProc.trans hfirstLeaf)
-  have horderProc : (processnode ctx level ctx.n leaf).2.gcaFirst ≤
-      (processnode ctx level ctx.n leaf).2.gcaCanon :=
+  have horderProc : (processnode ctx level n leaf).2.gcaFirst ≤
+      (processnode ctx level n leaf).2.gcaCanon :=
     (hlive.otherLeaf (numcells := numcells) |>.processnode
       (by simpa only [leaf] using
-        (hnode.run.otherLeaf hn hn0 hlevel hpath).trailOk)
+        (hnode.run.otherLeaf hn0 hlevel hpath).trailOk)
       (by simpa only [leaf] using
-        (hnode.run.otherLeaf hn hn0 hlevel hpath).firstBound)).2
+        (hnode.run.otherLeaf hn0 hlevel hpath).firstBound)).2
   have horder : final.gcaFirst ≤ final.gcaCanon := by
     have hfirstEq : final.gcaFirst =
-        (processnode ctx level ctx.n leaf).2.gcaFirst := by
+        (processnode ctx level n leaf).2.gcaFirst := by
       unfold final
       rw [leafFinish]
       split <;> split <;> rfl
     have hcanonEq : final.gcaCanon =
-        (processnode ctx level ctx.n leaf).2.gcaCanon := by
+        (processnode ctx level n leaf).2.gcaCanon := by
       unfold final
       rw [leafFinish]
       split <;> split <;> rfl
     rw [hfirstEq, hcanonEq]
     exact horderProc
   have hcanonGca : final.gcaCanon =
-      (processnode ctx level ctx.n leaf).2.gcaCanon := by
+      (processnode ctx level n leaf).2.gcaCanon := by
     unfold final
     rw [leafFinish]
     split <;> split <;> rfl
   have hcanonLab : final.canonlab =
-      (processnode ctx level ctx.n leaf).2.canonlab := by
+      (processnode ctx level n leaf).2.canonlab := by
     unfold final
     rw [leafFinish]
     split <;> split <;> rfl
@@ -1156,7 +1147,7 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx}
       (RefTrail.otherLeaf_gcaCanon ctx level numcells st)
   have hleafCanonLab : leaf.canonlab = st.canonlab := by
     let rs := refine ctx level st.lab st.ptn st.active numcells
-    let base : SearchSt :=
+    let base : SearchSt n :=
       { st with
         lab := rs.lab
         ptn := rs.ptn
@@ -1167,7 +1158,7 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx}
   have hleafLab : leaf.lab =
       (refine ctx level st.lab st.ptn st.active numcells).lab := by
     let rs := refine ctx level st.lab st.ptn st.active numcells
-    let base : SearchSt :=
+    let base : SearchSt n :=
       { st with
         lab := rs.lab
         ptn := rs.ptn
@@ -1179,7 +1170,7 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx}
       (final.gcaCanon = st.gcaCanon ∧ final.canonlab = st.canonlab) ∨
         (level ≤ final.gcaCanon ∧
           cellsPerm st.ptn level st.lab final.canonlab) := by
-    rcases processnode_canonGuide ctx level ctx.n leaf with hold | hnew
+    rcases processnode_canonGuide ctx level n leaf with hold | hnew
     · left
       exact ⟨hcanonGca.trans (hold.1.trans hleafCanonGca),
         hcanonLab.trans (hold.2.trans hleafCanonLab)⟩
@@ -1190,8 +1181,8 @@ theorem doneLeaf {G : Colored n k} {ctx : Ctx}
       · rw [hcanonLab, hnew.2, hleafLab]
         exact (refine_refInv (ctx := ctx)
           (by
-            rw [hnode.run.searchOk.ptnSize, ← hn]
-            exact Nat.le_refl ctx.n)
+            rw [hnode.run.searchOk.ptnSize]
+            exact Nat.le_refl n)
           (hnode.run.searchOk.labSize.trans
             hnode.run.searchOk.ptnSize.symm)
           (searchOk_end hn0 hnode.run.searchOk hlevel)).perm

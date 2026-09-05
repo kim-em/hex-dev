@@ -15,9 +15,10 @@ public section
 The separator routes over packed kernel state: the root refinement
 code (`sepRootP`) and the root node's two codes (`nodeSepP`),
 replayed with the packed refinement of `HexGraphIso.NodePacked` and
-proven equal to the `Array` originals through the list clones. The
-tactic's root and two-code separator obligations replay these on the
-rows tied as one packed number.
+proven equal to the list clones of `HexGraphIso.Separator`, which the
+packed-set originals are proven equal to there. The tactic's root and
+two-code separator obligations replay these on the rows tied as one
+packed number.
 -/
 
 namespace Hex.GraphIso
@@ -28,19 +29,20 @@ variable {n k : Nat}
 
 /-- The root refinement code over packed state, for `2 ≤ n`. -/
 @[expose] def sepRootP (n rows : Nat) (lab0 ptn0 : Nat) (cellEnds : List Nat) : Nat :=
-  (refineP (initCtx n rows) 1 lab0 ptn0 (initActive cellEnds) cellEnds.length).longcode
+  (refineP (initCtx n rows) 1 lab0 ptn0 (initActive n cellEnds).toNat
+    cellEnds.length).longcode
 
 theorem sepRootP_eq (G : Colored n k) (flat : List Bool) (hn : 2 ≤ n) :
     some (sepRootP n (packRowsK n flat) (initLabP G) (initPtnP G)
         (initialPartition G).2) =
-      sepRoot n (flatRows n flat) (initialPartition G).1 (initialPartition G).2 := by
-  rw [sepRoot, ite_eq_right (by omega), sepRootP, packRowsK_eq]
+      sepRootL n (flatRows n flat).toList (initialPartition G).1.toList
+        (initialPartition G).2 := by
+  rw [sepRootL, sepRootP, packRowsK_eq]
   obtain ⟨hctx, hlab, hptn⟩ := initRep G flat (by omega)
   have hrs := refineP_eq hctx (level := 1)
     (by show (1 : Nat) < 2 ^ initW n; have := initW_lt n; omega) hlab hptn
-    (initActive (initialPartition G).2) (initialPartition G).2.length
-  rw [hrs.longcode, refineL_eq]
-  rfl
+    (initActive n (initialPartition G).2).toNat (initialPartition G).2.length
+  rw [hrs.longcode]
 
 /-- `nodeSep` over packed state. -/
 @[expose] def nodeSepP (ctx : CtxP) (level lab ptn active numcells : Nat) :
@@ -56,31 +58,21 @@ theorem sepRootP_eq (G : Colored n k) (flat : List Bool) (hn : 2 ≤ n) :
       some ((List.range (Nat.sub tcr.2.2 1)).foldl
         (fun mx j => maxK mx (childHead (Nat.add j 1))) (childHead 0))))
 
-theorem nodeSepP_eq {ctx : CtxP} {ctxA : Ctx} (h : CtxRep ctx ctxA.toL)
-    {level : Nat} (hlev : level + 1 < 2 ^ ctx.w) {labP : Nat} {lab : Array Nat}
-    (hl : Rep ctx.w ctx.n labP lab.toList) {ptnP : Nat} {ptn : Array Nat}
-    (hp : Rep ctx.w ctx.n ptnP ptn.toList) (active numcells : Nat) :
+theorem nodeSepP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {level : Nat} (hlev : level + 1 < 2 ^ ctx.w) {labP : Nat} {lab : List Nat}
+    (hl : Rep ctx.w ctx.n labP lab) {ptnP : Nat} {ptn : List Nat}
+    (hp : Rep ctx.w ctx.n ptnP ptn) (active numcells : Nat) :
     nodeSepP ctx level labP ptnP active numcells =
-      nodeSep ctxA level lab ptn active numcells := by
+      nodeSepL ctxL level lab ptn active numcells := by
   have hrs := refineP_eq h (level := level) (by omega) hl hp active numcells
-  rw [refineL_eq] at hrs
-  have hrlab : Rep ctx.w ctx.n (refineP ctx level labP ptnP active numcells).lab
-      (refine ctxA level lab ptn active numcells).lab.toList := hrs.lab
-  have hrptn : Rep ctx.w ctx.n (refineP ctx level labP ptnP active numcells).ptn
-      (refine ctxA level lab ptn active numcells).ptn.toList := hrs.ptn
-  have hcode : (refineP ctx level labP ptnP active numcells).longcode =
-      (refine ctxA level lab ptn active numcells).longcode := hrs.longcode
-  have hnum : (refineP ctx level labP ptnP active numcells).numcells =
-      (refine ctxA level lab ptn active numcells).numcells := hrs.numcells
   have hdisc : discreteAtP ctx (refineP ctx level labP ptnP active numcells).ptn level =
-      discreteAt (refine ctxA level lab ptn active numcells).ptn level ctxA.n := by
-    rw [discreteAtP_eq h hrptn, discreteAtL_eq]
-    rfl
+      discreteAtL (refineL ctxL level lab ptn active numcells).ptn level ctxL.n :=
+    discreteAtP_eq h hrs.ptn level
   have htc : specMaketargetcellP ctx (refineP ctx level labP ptnP active numcells).lab
       (refineP ctx level labP ptnP active numcells).ptn level 100 =
-      specMaketargetcell ctxA (refine ctxA level lab ptn active numcells).lab
-        (refine ctxA level lab ptn active numcells).ptn level 100 := by
-    rw [specMaketargetcellP_eq h hrlab hrptn, specMaketargetcellL_eq]
+      specMaketargetcellL ctxL (refineL ctxL level lab ptn active numcells).lab
+        (refineL ctxL level lab ptn active numcells).ptn level 100 :=
+    specMaketargetcellP_eq h hrs.lab hrs.ptn level 100
   have hchild : ∀ (tc o : Nat),
       (refineP ctx (level + 1)
         (breakoutP ctx (refineP ctx level labP ptnP active numcells).lab
@@ -92,73 +84,47 @@ theorem nodeSepP_eq {ctx : CtxP} {ctxA : Ctx} (h : CtxRep ctx ctxA.toL)
         (breakoutP ctx (refineP ctx level labP ptnP active numcells).lab
           (refineP ctx level labP ptnP active numcells).ptn (level + 1) tc
           (lget ctx (refineP ctx level labP ptnP active numcells).lab (tc + o))).2.2
-        ((refine ctxA level lab ptn active numcells).numcells + 1)).longcode =
-      (refine ctxA (level + 1)
-        (breakout (refine ctxA level lab ptn active numcells).lab
-          (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).1
-        (breakout (refine ctxA level lab ptn active numcells).lab
-          (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.1
-        (breakout (refine ctxA level lab ptn active numcells).lab
-          (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.2
-        ((refine ctxA level lab ptn active numcells).numcells + 1)).longcode := by
+        ((refineL ctxL level lab ptn active numcells).numcells + 1)).longcode =
+      (refineL ctxL (level + 1)
+        (breakoutL ctxL.n (refineL ctxL level lab ptn active numcells).lab
+          (refineL ctxL level lab ptn active numcells).ptn (level + 1) tc
+          (atD (refineL ctxL level lab ptn active numcells).lab (tc + o) 0)).1
+        (breakoutL ctxL.n (refineL ctxL level lab ptn active numcells).lab
+          (refineL ctxL level lab ptn active numcells).ptn (level + 1) tc
+          (atD (refineL ctxL level lab ptn active numcells).lab (tc + o) 0)).2.1
+        (breakoutL ctxL.n (refineL ctxL level lab ptn active numcells).lab
+          (refineL ctxL level lab ptn active numcells).ptn (level + 1) tc
+          (atD (refineL ctxL level lab ptn active numcells).lab (tc + o) 0)).2.2
+        ((refineL ctxL level lab ptn active numcells).numcells + 1)).longcode := by
     intro tc o
-    have hbr := breakoutP_eq h hrlab hrptn hlev tc
+    have hbr := breakoutP_eq h hrs.lab hrs.ptn hlev tc
       (lget_lt h (refineP ctx level labP ptnP active numcells).lab (tc + o))
-    rw [lget_eq h hrlab, ← getBang_eq_atD] at hbr ⊢
-    rw [breakoutL_eq] at hbr
+    rw [lget_eq h hrs.lab] at hbr ⊢
     obtain ⟨hbr1, hbr2, hbr3⟩ := hbr
-    have hbr1' : Rep ctx.w ctx.n
-        (breakoutP ctx (refineP ctx level labP ptnP active numcells).lab
-          (refineP ctx level labP ptnP active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).1
-        (breakout (refine ctxA level lab ptn active numcells).lab
-          (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).1.toList := hbr1
-    have hbr2' : Rep ctx.w ctx.n
-        (breakoutP ctx (refineP ctx level labP ptnP active numcells).lab
-          (refineP ctx level labP ptnP active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.1
-        (breakout (refine ctxA level lab ptn active numcells).lab
-          (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.1.toList := hbr2
-    have hbr3' :
-        (breakoutP ctx (refineP ctx level labP ptnP active numcells).lab
-          (refineP ctx level labP ptnP active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.2 =
-        (breakout (refine ctxA level lab ptn active numcells).lab
-          (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-          (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.2 := hbr3
-    rw [hbr3']
-    have hrs' := refineP_eq h (level := level + 1) hlev hbr1' hbr2'
-      (breakout (refine ctxA level lab ptn active numcells).lab
-        (refine ctxA level lab ptn active numcells).ptn (level + 1) tc
-        (refine ctxA level lab ptn active numcells).lab[tc + o]!).2.2
-      ((refine ctxA level lab ptn active numcells).numcells + 1)
-    rw [refineL_eq] at hrs'
-    exact hrs'.longcode
-  rw [nodeSepP, nodeSep]
+    rw [hbr3]
+    exact (refineP_eq h (level := level + 1) hlev hbr1 hbr2 _ _).longcode
+  rw [nodeSepP, nodeSepL]
   dsimp only
-  simp only [hdisc, htc, hcode, hchild, hnum, cond_beq_true, add_eq, sub_eq, maxK_eq]
+  simp only [hdisc, htc, hrs.longcode, hchild, hrs.numcells, cond_beq_true, add_eq, sub_eq,
+    maxK_eq]
 
 /-- `sepCodes` over packed state, for `2 ≤ n`. -/
 @[expose] def sepCodesP (n rows lab0 ptn0 : Nat) (cellEnds : List Nat) :
     Option Nat × Option Nat :=
-  nodeSepP (initCtx n rows) 1 lab0 ptn0 (initActive cellEnds) cellEnds.length
+  nodeSepP (initCtx n rows) 1 lab0 ptn0 (initActive n cellEnds).toNat cellEnds.length
 
 theorem sepCodesP_eq (G : Colored n k) (flat : List Bool) (hn : 2 ≤ n) :
     sepCodesP n (packRowsK n flat) (initLabP G) (initPtnP G) (initialPartition G).2 =
-      sepCodes n (flatRows n flat) (initialPartition G).1 (initialPartition G).2 := by
-  rw [sepCodes, ite_eq_right (by omega), sepCodesP, packRowsK_eq]
+      sepCodesL n (flatRows n flat).toList (initialPartition G).1.toList
+        (initialPartition G).2 := by
+  rw [sepCodesL, sepCodesP, packRowsK_eq]
   obtain ⟨hctx, hlab, hptn⟩ := initRep G flat (by omega)
   exact nodeSepP_eq hctx (by have := initW_lt n; show 1 + 1 < 2 ^ initW n; omega)
     hlab hptn _ _
 
 /-- The two-code separator on the tied packed rows. -/
 @[expose] def sepDiffLitP (G H : Colored n k) (NA NB : Nat) : Bool :=
-  if n < 2 then false else
+  decide (2 ≤ n) &&
   sepPair (sepCodesP n NA (initLabP G) (initPtnP G) (initialPartition G).2)
     (sepCodesP n NB (initLabP H) (initPtnP H) (initialPartition H).2)
 
@@ -167,16 +133,16 @@ theorem not_isomorphic_of_sepDiffLitP {G H : Colored n k} {NA NB : Nat}
     (hB : packRowsK n H.graph.adjMatrix.data.toList = NB)
     (h : sepDiffLitP G H NA NB = true) : ¬Isomorphic G H := by
   subst hA hB
-  rw [sepDiffLitP] at h
-  rcases Decidable.em (n < 2) with hn | hn
-  · rw [ite_eq_left hn] at h
-    cases h
-  · rw [ite_eq_right hn, sepCodesP_eq G _ (by omega), sepCodesP_eq H _ (by omega)] at h
-    exact not_isomorphic_of_sepDiffLit rfl rfl h
+  rw [sepDiffLitP, Bool.and_eq_true, decide_eq_true_eq] at h
+  obtain ⟨hn, h⟩ := h
+  rw [sepCodesP_eq G _ hn, sepCodesP_eq H _ hn] at h
+  refine not_isomorphic_of_sepDiffLit rfl rfl ?_
+  rw [sepDiffLit, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨hn, h⟩
 
 /-- The root separator on the tied packed rows. -/
 @[expose] def sepRootLitP (G H : Colored n k) (NA NB : Nat) : Bool :=
-  if n < 2 then false else
+  decide (2 ≤ n) &&
   !Nat.beq (sepRootP n NA (initLabP G) (initPtnP G) (initialPartition G).2)
     (sepRootP n NB (initLabP H) (initPtnP H) (initialPartition H).2)
 
@@ -185,15 +151,14 @@ theorem not_isomorphic_of_sepRootLitP {G H : Colored n k} {NA NB : Nat}
     (hB : packRowsK n H.graph.adjMatrix.data.toList = NB)
     (h : sepRootLitP G H NA NB = true) : ¬Isomorphic G H := by
   subst hA hB
-  rw [sepRootLitP] at h
-  rcases Decidable.em (n < 2) with hn | hn
-  · rw [ite_eq_left hn] at h
-    cases h
-  · rw [ite_eq_right hn] at h
-    refine not_isomorphic_of_sepRootLit rfl rfl ?_
-    rw [sepRootLit, ← sepRootP_eq G _ (by omega), ← sepRootP_eq H _ (by omega)]
-    rw [Bool.not_eq_true', beq_eq_beq, beq_eq_false_iff_ne] at h
-    rw [optNe]
-    simpa using h
+  rw [sepRootLitP, Bool.and_eq_true, decide_eq_true_eq] at h
+  obtain ⟨hn, h⟩ := h
+  refine not_isomorphic_of_sepRootLit rfl rfl ?_
+  rw [sepRootLit, Bool.and_eq_true, decide_eq_true_eq]
+  refine ⟨hn, ?_⟩
+  rw [← sepRootP_eq G _ hn, ← sepRootP_eq H _ hn]
+  rw [Bool.not_eq_true', beq_eq_beq, beq_eq_false_iff_ne] at h
+  rw [optNe]
+  simpa using h
 
 end Hex.GraphIso

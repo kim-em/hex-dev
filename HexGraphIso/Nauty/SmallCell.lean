@@ -59,7 +59,7 @@ sites) and the arm-2 assembly in `StoreValid.lean`.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # The guard characterization -/
 
@@ -178,27 +178,27 @@ theorem cheapautom_iff {ptn : Array Nat} {level nn : Nat}
 /-! # Counting toolkit -/
 
 /-- The adjacency bit as a count. -/
-def bitCnt (r v : Nat) : Nat := if r.testBit v then 1 else 0
+def bitCnt (r : VSet n) (v : Nat) : Nat := if r.mem v then 1 else 0
 
-theorem bitCnt_le_one (r v : Nat) : bitCnt r v ≤ 1 := by
+theorem bitCnt_le_one (r : VSet n) (v : Nat) : bitCnt r v ≤ 1 := by
   rw [bitCnt]
   split <;> omega
 
-theorem bitCnt_eq_zero {r v : Nat} :
-    bitCnt r v = 0 ↔ r.testBit v = false := by
+theorem bitCnt_eq_zero {r : VSet n} {v : Nat} :
+    bitCnt r v = 0 ↔ r.mem v = false := by
   rw [bitCnt]
-  rcases h : r.testBit v with _ | _ <;> simp
+  rcases h : r.mem v with _ | _ <;> simp
 
-theorem bitCnt_eq_one {r v : Nat} :
-    bitCnt r v = 1 ↔ r.testBit v = true := by
+theorem bitCnt_eq_one {r : VSet n} {v : Nat} :
+    bitCnt r v = 1 ↔ r.mem v = true := by
   rw [bitCnt]
-  rcases h : r.testBit v with _ | _ <;> simp
+  rcases h : r.mem v with _ | _ <;> simp
 
-theorem bitCnt_inj {r r' v v' : Nat} :
-    bitCnt r v = bitCnt r' v' ↔ r.testBit v = r'.testBit v' := by
+theorem bitCnt_inj {r r' : VSet n} {v v' : Nat} :
+    bitCnt r v = bitCnt r' v' ↔ r.mem v = r'.mem v' := by
   rw [bitCnt, bitCnt]
-  rcases h : r.testBit v with _ | _ <;>
-    rcases h' : r'.testBit v' with _ | _ <;> simp
+  rcases h : r.mem v with _ | _ <;>
+    rcases h' : r'.mem v' with _ | _ <;> simp
 
 private theorem sum_range_succ (f : Nat → Nat) (m : Nat) :
     ((List.range (m + 1)).map f).sum = ((List.range m).map f).sum + f m := by
@@ -240,53 +240,24 @@ private theorem sum_range_eq_len {f : Nat → Nat} :
     · exact sum_range_eq_len m (fun o ho => hf o (by omega)) (by omega)
         o (by omega)
 
-private theorem or_and_distrib (a b r : Nat) :
-    (a ||| b) &&& r = (a &&& r) ||| (b &&& r) := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  simp only [Nat.testBit_and, Nat.testBit_or]
-  cases a.testBit i <;> cases b.testBit i <;> cases r.testBit i <;> rfl
-
-private theorem and_r_disjoint {a b : Nat} (r : Nat) (h : a &&& b = 0) :
-    (a &&& r) &&& (b &&& r) = 0 := by
-  refine Nat.eq_of_testBit_eq fun i => ?_
-  have hab := congrArg (fun t => t.testBit i) h
-  simp only [Nat.testBit_and, Nat.zero_testBit] at hab ⊢
-  cases ha : a.testBit i <;> cases hb : b.testBit i <;>
-    cases r.testBit i <;> simp_all
-
-/-- A window of bounded vertices has a bounded splitter set. -/
-private theorem worksetOf_lt_of_bounds {lab : Array Nat} {lo hi n : Nat}
-    (hb : ∀ o, o < hi + 1 - lo → lab[lo + o]! < n) :
-    worksetOf lab lo hi < 2 ^ n := by
-  refine lt_two_pow_of_bits fun i hi' => ?_
-  rw [testBit_worksetOf]
-  refine List.any_eq_false.mpr fun v hv => ?_
-  rw [segN] at hv
-  obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hv
-  have := hb o (List.mem_range.mp ho)
-  simp
-  omega
-
 /-- The count into a window's splitter set expands into the sum of the
 adjacency bits at the window's members. -/
-theorem popCount_workset_and {lab : Array Nat} {n r : Nat}
-    (hr : r < 2 ^ n) :
+theorem cardInter_workset {lab : Array Nat} (r : VSet n) :
     ∀ (len lo : Nat),
       (∀ o o', o ≤ len → o' ≤ len → o ≠ o' →
         lab[lo + o]! ≠ lab[lo + o']!) →
-      (∀ o, o ≤ len → lab[lo + o]! < n) →
-      popCount (worksetOf lab lo (lo + len) &&& r) =
+      (worksetOf n lab lo (lo + len)).cardInter r =
         ((List.range (len + 1)).map fun o => bitCnt r lab[lo + o]!).sum
-  | 0, lo, _, hb => by
-    rw [Nat.add_zero, worksetOf_singleton, popCount_and_single]
+  | 0, lo, _ => by
+    rw [Nat.add_zero, worksetOf_singleton, VSet.cardInter_singleton]
     simp [bitCnt]
-  | len + 1, lo, hdist, hb => by
-    have hsplit : worksetOf lab lo (lo + (len + 1)) =
-        worksetOf lab lo (lo + len) |||
-          worksetOf lab (lo + len + 1) (lo + len + 1) :=
+  | len + 1, lo, hdist => by
+    have hsplit : worksetOf n lab lo (lo + (len + 1)) =
+        (worksetOf n lab lo (lo + len)).union
+          (worksetOf n lab (lo + len + 1) (lo + len + 1)) :=
       worksetOf_split (by omega) (by omega)
-    have hdisj : worksetOf lab lo (lo + len) &&&
-        worksetOf lab (lo + len + 1) (lo + len + 1) = 0 := by
+    have hdisj : (worksetOf n lab lo (lo + len)).inter
+        (worksetOf n lab (lo + len + 1) (lo + len + 1)) = VSet.empty := by
       refine worksetOf_disjoint fun v hv1 hv2 => ?_
       rw [segN] at hv1 hv2
       obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hv1
@@ -297,21 +268,10 @@ theorem popCount_workset_and {lab : Array Nat} {n r : Nat}
       subst ho'0
       have he' : lab[lo + (len + 1)]! = lab[lo + o]! := he
       exact hdist o (len + 1) (by omega) (by omega) (by omega) he'.symm
-    have hb1 : worksetOf lab lo (lo + len) < 2 ^ n :=
-      worksetOf_lt_of_bounds fun o ho => hb o (by omega)
-    have hb2 : worksetOf lab (lo + len + 1) (lo + len + 1) < 2 ^ n :=
-      worksetOf_lt_of_bounds fun o ho => by
-        have ho0 : o = 0 := by omega
-        subst ho0
-        exact hb (len + 1) (by omega)
-    rw [hsplit, or_and_distrib,
-      popCount_or_disjoint (and_r_disjoint r hdisj)
-        (Nat.lt_of_le_of_lt (Nat.and_le_left ..) hb1)
-        (Nat.lt_of_le_of_lt (Nat.and_le_left ..) hb2),
-      popCount_workset_and hr len lo
-        (fun o o' h1 h2 h3 => hdist o o' (by omega) (by omega) h3)
-        (fun o ho => hb o (by omega)),
-      worksetOf_singleton, popCount_and_single]
+    rw [hsplit, VSet.cardInter_union_disjoint hdisj,
+      cardInter_workset r len lo
+        (fun o o' h1 h2 h3 => hdist o o' (by omega) (by omega) h3),
+      worksetOf_singleton, VSet.cardInter_singleton]
     conv => rhs; rw [sum_range_succ]
     have hidx : lo + len + 1 = lo + (len + 1) := by omega
     rw [hidx, bitCnt]
@@ -326,32 +286,30 @@ private theorem sum_range_two (f : Nat → Nat) :
 
 /-- Adjacency-bit counts are symmetric between vertices. -/
 theorem bitCnt_symm
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    {u w : Nat} (hu : u < ctx.n) (hw : w < ctx.n) :
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {u w : Nat} (hu : u < n) (hw : w < n) :
     bitCnt ctx.g[u]! w = bitCnt ctx.g[w]! u := by
   rw [bitCnt, bitCnt, hsymm u w hu hw]
 
 /-- The count of a vertex into a cell's splitter set is the sum of its
 adjacency bits at the cell's members. -/
 theorem count_into_cell {lab ptn : Array Nat} {level : Nat}
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    {d e : Nat} (hD : (d, e) ∈ cells ptn level ctx.n)
-    {u : Nat} (hru : ctx.g[u]! < 2 ^ ctx.n) :
-    popCount (worksetOf lab d e &&& ctx.g[u]!) =
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    {d e : Nat} (hD : (d, e) ∈ cells ptn level n)
+    {u : Nat} :
+    (worksetOf n lab d e).cardInter ctx.g[u]! =
       ((List.range (e + 1 - d)).map fun o =>
         bitCnt ctx.g[u]! lab[d + o]!).sum := by
   have hde : d ≤ e := cells_le _ hD
-  have he : e < ctx.n := by
+  have he : e < n := by
     have := cells_bound (by omega) hend _ hD
     omega
-  have h := popCount_workset_and (lab := lab) (n := ctx.n) hru (e - d) d
+  have h := cardInter_workset (lab := lab) (n := n) ctx.g[u]! (e - d) d
     (fun o o' h1 h2 h3 heq2 => h3 (by
       have := hinj (d + o) (d + o') (by omega) (by omega) heq2
       omega))
-    (fun o ho => hlb (d + o) (by omega))
   rw [show d + (e - d) = e by omega] at h
   rw [show e + 1 - d = (e - d) + 1 by omega]
   exact h
@@ -361,34 +319,33 @@ cells of an equitable partition satisfy the two cross equalities, in
 every configuration (empty, complete, or either matching). -/
 theorem pair_swap_eq {lab ptn : Array Nat} {level : Nat}
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    {c d : Nat} (hP : (c, c + 1) ∈ cells ptn level ctx.n)
-    (hQ : (d, d + 1) ∈ cells ptn level ctx.n) :
-    (ctx.g[lab[c]!]!).testBit lab[d]! =
-      (ctx.g[lab[c + 1]!]!).testBit lab[d + 1]! ∧
-    (ctx.g[lab[c]!]!).testBit lab[d + 1]! =
-      (ctx.g[lab[c + 1]!]!).testBit lab[d]! := by
-  have hc1 : c + 1 < ctx.n := by
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {c d : Nat} (hP : (c, c + 1) ∈ cells ptn level n)
+    (hQ : (d, d + 1) ∈ cells ptn level n) :
+    (ctx.g[lab[c]!]!).mem lab[d]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d + 1]! ∧
+    (ctx.g[lab[c]!]!).mem lab[d + 1]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d]! := by
+  have hc1 : c + 1 < n := by
     have := cells_bound (by omega) hend _ hP
     omega
-  have hd1 : d + 1 < ctx.n := by
+  have hd1 : d + 1 < n := by
     have := cells_bound (by omega) hend _ hQ
     omega
   have h1 := hE _ hP _ hQ 0 1 (by omega) (by omega)
   simp only [Nat.add_zero] at h1
-  rw [count_into_cell hps hend hinj hlb hQ (hg _ (hlb c (by omega))),
-    count_into_cell hps hend hinj hlb hQ (hg _ (hlb (c + 1) hc1)),
+  rw [count_into_cell hps hend hinj hQ,
+    count_into_cell hps hend hinj hQ,
     show d + 1 + 1 - d = 2 by omega, sum_range_two, sum_range_two] at h1
   simp only [Nat.add_zero] at h1
   have h2 := hE _ hQ _ hP 0 1 (by omega) (by omega)
   simp only [Nat.add_zero] at h2
-  rw [count_into_cell hps hend hinj hlb hP (hg _ (hlb d (by omega))),
-    count_into_cell hps hend hinj hlb hP (hg _ (hlb (d + 1) hd1)),
+  rw [count_into_cell hps hend hinj hP,
+    count_into_cell hps hend hinj hP,
     show c + 1 + 1 - c = 2 by omega, sum_range_two, sum_range_two] at h2
   simp only [Nat.add_zero] at h2
   rw [bitCnt_symm hsymm (hlb d (by omega)) (hlb c (by omega)),
@@ -400,34 +357,33 @@ theorem pair_swap_eq {lab ptn : Array Nat} {level : Nat}
 /-- The matching configuration between two pair cells: each member of
 one pair is adjacent to exactly one member of the other, in one of the
 two consistent ways. -/
-def PairMatch (g : Array Nat) (x y z t : Nat) : Prop :=
-  ((g[x]!).testBit z = true ∧ (g[y]!).testBit t = true ∧
-    (g[x]!).testBit t = false ∧ (g[y]!).testBit z = false) ∨
-  ((g[x]!).testBit t = true ∧ (g[y]!).testBit z = true ∧
-    (g[x]!).testBit z = false ∧ (g[y]!).testBit t = false)
+def PairMatch (g : Array (VSet n)) (x y z t : Nat) : Prop :=
+  ((g[x]!).mem z = true ∧ (g[y]!).mem t = true ∧
+    (g[x]!).mem t = false ∧ (g[y]!).mem z = false) ∨
+  ((g[x]!).mem t = true ∧ (g[y]!).mem z = true ∧
+    (g[x]!).mem z = false ∧ (g[y]!).mem t = false)
 
 /-- Between two non-matching pair cells of an equitable partition the
 bits are insensitive to swapping either pair alone. -/
 theorem pair_eq_of_not_match {lab ptn : Array Nat} {level : Nat}
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    {c d : Nat} (hP : (c, c + 1) ∈ cells ptn level ctx.n)
-    (hQ : (d, d + 1) ∈ cells ptn level ctx.n)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {c d : Nat} (hP : (c, c + 1) ∈ cells ptn level n)
+    (hQ : (d, d + 1) ∈ cells ptn level n)
     (hnm : ¬ PairMatch ctx.g lab[c]! lab[c + 1]! lab[d]! lab[d + 1]!) :
-    (ctx.g[lab[c]!]!).testBit lab[d]! =
-      (ctx.g[lab[c + 1]!]!).testBit lab[d]! ∧
-    (ctx.g[lab[c]!]!).testBit lab[d + 1]! =
-      (ctx.g[lab[c + 1]!]!).testBit lab[d + 1]! := by
+    (ctx.g[lab[c]!]!).mem lab[d]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d]! ∧
+    (ctx.g[lab[c]!]!).mem lab[d + 1]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d + 1]! := by
   obtain ⟨h1, h2⟩ :=
-    pair_swap_eq hE hps hend hinj hlb hg hsymm hP hQ
+    pair_swap_eq hE hps hend hinj hlb hsymm hP hQ
   rw [PairMatch] at hnm
-  rcases hp : (ctx.g[lab[c]!]!).testBit lab[d]! with _ | _ <;>
-    rcases hq : (ctx.g[lab[c]!]!).testBit lab[d + 1]! with _ | _ <;>
+  rcases hp : (ctx.g[lab[c]!]!).mem lab[d]! with _ | _ <;>
+    rcases hq : (ctx.g[lab[c]!]!).mem lab[d + 1]! with _ | _ <;>
       rw [hp] at h1 <;> rw [hq] at h2 <;>
         rw [hp, hq] at hnm <;> simp_all
 
@@ -436,29 +392,28 @@ a cell of odd size: parity forces the count between them to be empty
 or complete. -/
 theorem pair_odd_eq {lab ptn : Array Nat} {level : Nat}
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    {c d e : Nat} (hP : (c, c + 1) ∈ cells ptn level ctx.n)
-    (hD : (d, e) ∈ cells ptn level ctx.n)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {c d e : Nat} (hP : (c, c + 1) ∈ cells ptn level n)
+    (hD : (d, e) ∈ cells ptn level n)
     (hodd : (e + 1 - d) % 2 = 1) :
     ∀ o, o < e + 1 - d →
-      (ctx.g[lab[c]!]!).testBit lab[d + o]! =
-        (ctx.g[lab[c + 1]!]!).testBit lab[d + o]! := by
-  have hc1 : c + 1 < ctx.n := by
+      (ctx.g[lab[c]!]!).mem lab[d + o]! =
+        (ctx.g[lab[c + 1]!]!).mem lab[d + o]! := by
+  have hc1 : c + 1 < n := by
     have := cells_bound (by omega) hend _ hP
     omega
   have hde : d ≤ e := cells_le _ hD
-  have he : e < ctx.n := by
+  have he : e < n := by
     have := cells_bound (by omega) hend _ hD
     omega
   have hxy := hE _ hP _ hD 0 1 (by omega) (by omega)
   simp only [Nat.add_zero] at hxy
-  rw [count_into_cell hps hend hinj hlb hD (hg _ (hlb c (by omega))),
-    count_into_cell hps hend hinj hlb hD (hg _ (hlb (c + 1) hc1))]
+  rw [count_into_cell hps hend hinj hD,
+    count_into_cell hps hend hinj hD]
     at hxy
   have hB : ∀ o, o < e + 1 - d →
       bitCnt ctx.g[lab[c]!]! lab[d + o]! +
@@ -468,9 +423,8 @@ theorem pair_odd_eq {lab ptn : Array Nat} {level : Nat}
     intro o ho
     have h := hE _ hD _ hP o 0 (by omega) (by omega)
     simp only [Nat.add_zero] at h
-    rw [count_into_cell hps hend hinj hlb hP
-        (hg _ (hlb (d + o) (by omega))),
-      count_into_cell hps hend hinj hlb hP (hg _ (hlb d (by omega))),
+    rw [count_into_cell hps hend hinj hP,
+      count_into_cell hps hend hinj hP,
       show c + 1 + 1 - c = 2 by omega, sum_range_two, sum_range_two]
       at h
     simp only [Nat.add_zero] at h
@@ -532,24 +486,23 @@ theorem pair_odd_eq {lab ptn : Array Nat} {level : Nat}
 
 /-! # The flip theorem -/
 
-/-- Image bits under a bounded involution read off the preimage bit. -/
-theorem testBit_image_invol {f : Nat → Nat} {n s : Nat}
+/-- Image membership under a bounded involution reads off the preimage. -/
+theorem mem_image_invol {f : Nat → Nat} {s : VSet n}
     (hfb : ∀ v, v < n → f v < n) (hinvol : ∀ v, v < n → f (f v) = v)
     {z : Nat} (hz : z < n) :
-    (image f n s).testBit z = s.testBit (f z) := by
-  rw [testBit_image]
-  rcases hb : s.testBit (f z) with _ | _
+    (s.image f).mem z = s.mem (f z) := by
+  rw [VSet.mem_image]
+  rcases hb : s.mem (f z) with _ | _
   · refine List.any_eq_false.mpr fun u hu hcontra => ?_
     have hun := List.mem_range.mp hu
-    rw [Bool.and_eq_true, beq_iff_eq] at hcontra
-    obtain ⟨hb1, hb2⟩ := hcontra
-    have huz : u = f z := by
-      rw [← hb2, hinvol u hun]
+    rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq] at hcontra
+    obtain ⟨⟨hb1, hb2⟩, _⟩ := hcontra
+    have huz : u = f z := by rw [← hb2, hinvol u hun]
     rw [huz, hb] at hb1
-    exact absurd hb1 (by simp)
+    exact Bool.false_ne_true hb1
   · refine List.any_eq_true.mpr ⟨f z, List.mem_range.mpr (hfb z hz), ?_⟩
     rw [hb, hinvol z hz]
-    simp
+    simp [hz]
 
 section Flip
 
@@ -561,39 +514,38 @@ of an unflipped cell, given matching closure and odd unflipped
 sizes. -/
 private theorem flip_bit_aux
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hSclosed : ∀ p ∈ cells ptn level ctx.n,
-      ∀ q ∈ cells ptn level ctx.n, S p.1 → q.2 = q.1 + 1 →
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hSclosed : ∀ p ∈ cells ptn level n,
+      ∀ q ∈ cells ptn level n, S p.1 → q.2 = q.1 + 1 →
         PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
         S q.1)
-    (hOdd : ∀ q ∈ cells ptn level ctx.n, q.2 ≠ q.1 + 1 →
+    (hOdd : ∀ q ∈ cells ptn level n, q.2 ≠ q.1 + 1 →
       (q.2 + 1 - q.1) % 2 = 1)
-    {c : Nat} (hP : (c, c + 1) ∈ cells ptn level ctx.n) (hSc : S c)
-    {q : Nat × Nat} (hq : q ∈ cells ptn level ctx.n) (hnq : ¬ S q.1)
+    {c : Nat} (hP : (c, c + 1) ∈ cells ptn level n) (hSc : S c)
+    {q : Nat × Nat} (hq : q ∈ cells ptn level n) (hnq : ¬ S q.1)
     {j : Nat} (hj1 : q.1 ≤ j) (hj2 : j ≤ q.2) :
-    (ctx.g[lab[c]!]!).testBit lab[j]! =
-      (ctx.g[lab[c + 1]!]!).testBit lab[j]! := by
+    (ctx.g[lab[c]!]!).mem lab[j]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[j]! := by
   rcases Classical.em (q.2 = q.1 + 1) with hqp | hqnp
-  · have hq' : (q.1, q.1 + 1) ∈ cells ptn level ctx.n := by
+  · have hq' : (q.1, q.1 + 1) ∈ cells ptn level n := by
       rw [← hqp]
       exact hq
     have hnm : ¬ PairMatch ctx.g lab[c]! lab[c + 1]!
         lab[q.1]! lab[q.1 + 1]! :=
       fun hm => hnq (hSclosed _ hP _ hq hSc hqp hm)
     obtain ⟨h1, h2⟩ :=
-      pair_eq_of_not_match hE hps hend hinj hlb hg hsymm hP hq' hnm
+      pair_eq_of_not_match hE hps hend hinj hlb hsymm hP hq' hnm
     rcases Decidable.em (j = q.1) with rfl | hne
     · exact h1
     · have : j = q.1 + 1 := by omega
       rw [this]
       exact h2
   · have hodd := hOdd _ hq hqnp
-    have h := pair_odd_eq hE hps hend hinj hlb hg hsymm hP hq hodd
+    have h := pair_odd_eq hE hps hend hinj hlb hsymm hP hq hodd
       (j - q.1) (by omega)
     rw [show q.1 + (j - q.1) = j by omega] at h
     exact h
@@ -602,27 +554,26 @@ private theorem flip_bit_aux
 arguments through the flip preserves every adjacency bit. -/
 private theorem flip_bit
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
-    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hSpair : ∀ p ∈ cells ptn level n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level n, S p.1 →
       f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
-    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+    (hSfix : ∀ p ∈ cells ptn level n, ¬ S p.1 →
       ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!)
-    (hSclosed : ∀ p ∈ cells ptn level ctx.n,
-      ∀ q ∈ cells ptn level ctx.n, S p.1 → q.2 = q.1 + 1 →
+    (hSclosed : ∀ p ∈ cells ptn level n,
+      ∀ q ∈ cells ptn level n, S p.1 → q.2 = q.1 + 1 →
         PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
         S q.1)
-    (hOdd : ∀ q ∈ cells ptn level ctx.n, q.2 ≠ q.1 + 1 →
+    (hOdd : ∀ q ∈ cells ptn level n, q.2 ≠ q.1 + 1 →
       (q.2 + 1 - q.1) % 2 = 1) :
-    ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[f lab[i]!]!).testBit (f lab[j]!) =
-        (ctx.g[lab[i]!]!).testBit lab[j]! := by
+    ∀ i j, i < n → j < n →
+      (ctx.g[f lab[i]!]!).mem (f lab[j]!) =
+        (ctx.g[lab[i]!]!).mem lab[j]! := by
   intro i j hi hj
   obtain ⟨p, hp, hpi1, hpi2⟩ := cells_cover (ptn := ptn)
     (level := level) i hi
@@ -633,16 +584,16 @@ private theorem flip_bit
   · -- both flipped
     have hpp := hSpair _ hp hSp
     have hqp := hSpair _ hq hSq
-    have hp' : (p.1, p.1 + 1) ∈ cells ptn level ctx.n := by
+    have hp' : (p.1, p.1 + 1) ∈ cells ptn level n := by
       rw [← hpp]; exact hp
-    have hq' : (q.1, q.1 + 1) ∈ cells ptn level ctx.n := by
+    have hq' : (q.1, q.1 + 1) ∈ cells ptn level n := by
       rw [← hqp]; exact hq
     obtain ⟨hswp1, hswp2⟩ := hSswap _ hp' hSp
     obtain ⟨hswq1, hswq2⟩ := hSswap _ hq' hSq
-    have hp1n : p.1 + 1 < ctx.n := by
+    have hp1n : p.1 + 1 < n := by
       have := cells_bound (by omega) hend _ hp'
       omega
-    have hq1n : q.1 + 1 < ctx.n := by
+    have hq1n : q.1 + 1 < n := by
       have := cells_bound (by omega) hend _ hq'
       omega
     rcases Classical.em (p.1 = q.1) with heq | hnepq
@@ -659,7 +610,7 @@ private theorem flip_bit
           hloop _ (hlb _ hp1n)]
     · -- distinct flipped pairs
       obtain ⟨hsw1, hsw2⟩ :=
-        pair_swap_eq hE hps hend hinj hlb hg hsymm hp' hq'
+        pair_swap_eq hE hps hend hinj hlb hsymm hp' hq'
       have hiv : i = p.1 ∨ i = p.1 + 1 := by omega
       have hjv : j = q.1 ∨ j = q.1 + 1 := by omega
       rcases hiv with rfl | hiv <;> rcases hjv with rfl | hjv
@@ -673,12 +624,12 @@ private theorem flip_bit
         exact hsw1
   · -- i flipped, j not
     have hpp := hSpair _ hp hSp
-    have hp' : (p.1, p.1 + 1) ∈ cells ptn level ctx.n := by
+    have hp' : (p.1, p.1 + 1) ∈ cells ptn level n := by
       rw [← hpp]; exact hp
     obtain ⟨hswp1, hswp2⟩ := hSswap _ hp' hSp
     have hfix := hSfix _ hq hSq (j - q.1) (by omega)
     rw [show q.1 + (j - q.1) = j by omega] at hfix
-    have haux := flip_bit_aux hE hps hend hinj hlb hg hsymm
+    have haux := flip_bit_aux hE hps hend hinj hlb hsymm
       hSclosed hOdd hp' hSp hq hSq hqj1 hqj2
     have hiv : i = p.1 ∨ i = p.1 + 1 := by omega
     rcases hiv with rfl | hiv
@@ -688,14 +639,14 @@ private theorem flip_bit
       exact haux
   · -- j flipped, i not
     have hqp := hSpair _ hq hSq
-    have hq' : (q.1, q.1 + 1) ∈ cells ptn level ctx.n := by
+    have hq' : (q.1, q.1 + 1) ∈ cells ptn level n := by
       rw [← hqp]; exact hq
     obtain ⟨hswq1, hswq2⟩ := hSswap _ hq' hSq
     have hfix := hSfix _ hp hSp (i - p.1) (by omega)
     rw [show p.1 + (i - p.1) = i by omega] at hfix
-    have haux := flip_bit_aux hE hps hend hinj hlb hg hsymm
+    have haux := flip_bit_aux hE hps hend hinj hlb hsymm
       hSclosed hOdd hq' hSq hp hSp hpi1 hpi2
-    have hq1n : q.1 + 1 < ctx.n := by
+    have hq1n : q.1 + 1 < n := by
       have := cells_bound (by omega) hend _ hq'
       omega
     have hjv : j = q.1 ∨ j = q.1 + 1 := by omega
@@ -720,49 +671,40 @@ matching-closed set of pair cells and fixing every other vertex
 preserves the adjacency rows. -/
 theorem flip_rows
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hsurj : ∀ v, v < ctx.n → ∃ i, i < ctx.n ∧ lab[i]! = v)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
-    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
-    (hSpair : ∀ p ∈ cells ptn level ctx.n, S p.1 → p.2 = p.1 + 1)
-    (hSswap : ∀ p ∈ cells ptn level ctx.n, S p.1 →
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsurj : ∀ v, v < n → ∃ i, i < n ∧ lab[i]! = v)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hfb : ∀ v, v < n → f v < n)
+    (hinvol : ∀ v, v < n → f (f v) = v)
+    (hSpair : ∀ p ∈ cells ptn level n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level n, S p.1 →
       f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
-    (hSfix : ∀ p ∈ cells ptn level ctx.n, ¬ S p.1 →
+    (hSfix : ∀ p ∈ cells ptn level n, ¬ S p.1 →
       ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!)
-    (hSclosed : ∀ p ∈ cells ptn level ctx.n,
-      ∀ q ∈ cells ptn level ctx.n, S p.1 → q.2 = q.1 + 1 →
+    (hSclosed : ∀ p ∈ cells ptn level n,
+      ∀ q ∈ cells ptn level n, S p.1 → q.2 = q.1 + 1 →
         PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
         S q.1)
-    (hOdd : ∀ q ∈ cells ptn level ctx.n, q.2 ≠ q.1 + 1 →
+    (hOdd : ∀ q ∈ cells ptn level n, q.2 ≠ q.1 + 1 →
       (q.2 + 1 - q.1) % 2 = 1) :
-    ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]! := by
+    ∀ v, v < n → ctx.g[f v]! = (ctx.g[v]!).image f := by
   intro v hv
-  refine Nat.eq_of_testBit_eq fun z => ?_
-  rcases Decidable.em (z < ctx.n) with hz | hz
-  · rw [testBit_image_invol hfb hinvol hz]
+  refine VSet.ext fun z => ?_
+  rcases Decidable.em (z < n) with hz | hz
+  · rw [mem_image_invol hfb hinvol hz]
     obtain ⟨i, hi, rfl⟩ := hsurj v hv
     obtain ⟨j, hj, hjz⟩ := hsurj (f z) (hfb z hz)
     rw [← hjz]
-    have hkey := flip_bit hE hps hend hinj hlb hg hsymm hloop
+    have hkey := flip_bit hE hps hend hinj hlb hsymm hloop
       hSpair hSswap hSfix hSclosed hOdd i j hi hj
     rw [hjz, hinvol z hz] at hkey
     rw [← hjz] at hkey
     exact hkey
-  · have h1 : (ctx.g[f v]!).testBit z = false :=
-      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le (hg _ (hfb v hv))
-        (Nat.pow_le_pow_right (by omega) (by omega)))
-    rw [h1, testBit_image]
-    refine (List.any_eq_false.mpr fun u hu hcontra => ?_).symm
-    have hun := List.mem_range.mp hu
-    rw [Bool.and_eq_true, beq_iff_eq] at hcontra
-    have := hfb u hun
-    omega
+  · rw [VSet.mem_of_ge (by omega), VSet.mem_of_ge (by omega)]
 
 end Flip
 

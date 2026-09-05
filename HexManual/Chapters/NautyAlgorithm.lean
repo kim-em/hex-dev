@@ -409,12 +409,16 @@ tag := "nauty-algorithm-lean"
 %%%
 
 The Lean implementation follows part one section by section. A graph is
-stored as one natural number per vertex, used as a bitset: bit `v` of
-row `u` is set exactly when `u` and `v` are adjacent. The row
-comparison of part one is implemented directly on these bitsets. It is
-not the numerical order on the natural numbers: in the numerical order
-the largest vertex would be the most significant, while in the
-comparison of part one the smallest vertex is the most significant.
+stored as one vertex set per vertex, {name Hex.GraphIso.Nauty.VSet}`VSet`:
+row `u` contains `v` exactly when `u` and `v` are adjacent. A vertex set
+is packed sixty-three vertices to a word, as nauty packs its `setword`
+arrays, so every set operation of the search costs one machine operation
+per word rather than one per vertex; the specification the theorems
+mention is the natural-number bitset `VSet.toNat` recovers from it. The
+row comparison of part one is implemented directly on these sets. It is
+not the numerical order on the bitsets: in the numerical order the
+largest vertex would be the most significant, while in the comparison of
+part one the smallest vertex is the most significant.
 
 ## Refinement
 
@@ -444,25 +448,25 @@ private def pathSix : Colored 6 1 :=
       [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
     coloring := Coloring.trivial 6 }
 
-private def pathCtx : Ctx := { n := 6, g := rowsOf pathSix }
+private def pathCtx : Ctx 6 := { g := rowsOf pathSix }
 
-private def initialState : RefineSt :=
+private def initialState : RefineSt 6 :=
   { lab := #[0, 1, 2, 3, 4, 5]
     ptn := initPtn 6 8 [5]
-    active := initActive [5]
+    active := initActive 6 [5]
     numcells := 1
     hint := 0
     maxpos := 0
     longcode := 1 }
 
-private def blocks (st : RefineSt) : List (List Nat) :=
+private def blocks (st : RefineSt 6) : List (List Nat) :=
   (cells st.ptn 1 6).map fun (lo, hi) =>
     (List.range (hi + 1 - lo)).map fun i => st.lab[lo + i]!
 
-private def firstSplit : RefineSt :=
+private def firstSplit : RefineSt 6 :=
   refineStep pathCtx 1 0 initialState
 
-private def secondSplit : RefineSt :=
+private def secondSplit : RefineSt 6 :=
   refineStep pathCtx 1 firstSplit.hint firstSplit
 
 private def trace : List (List (List Nat)) :=
@@ -478,7 +482,7 @@ private def trace : List (List (List Nat)) :=
    [[0, 5], [2, 3], [1, 4]]]
 
 #guard (refine pathCtx 1 #[0, 1, 2, 3, 4, 5]
-    (initPtn 6 8 [5]) (initActive [5]) 1).longcode = 27540
+    (initPtn 6 8 [5]) (initActive 6 [5]) 1).longcode = 27540
 
 end NautyAlgorithmChapterExample
 ```

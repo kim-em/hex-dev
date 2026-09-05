@@ -227,7 +227,7 @@ structure CanonCert (n k : Nat) where
   /-- The pruned tree the producer visited. -/
   tree : Nauty.CertNode
   /-- The claimed canonical key. -/
-  key : Nauty.Key
+  key : Nauty.Key n
   /-- The labelling achieving the key. -/
   lab : Array Nat
 
@@ -242,7 +242,7 @@ the certificate actually produced. -/
     Option (CanonCert n k) :=
   if searchCost n ≤ limits.maxNodes then
     match
-      (if n == 0 then some ((.leaf : Nauty.CertNode), (⟨[], []⟩ : Nauty.Key))
+      (if n == 0 then some ((.leaf : Nauty.CertNode), (⟨[], []⟩ : Nauty.Key n))
        else Nauty.produceCand G none) with
     | none => none
     | some (cert, B) =>

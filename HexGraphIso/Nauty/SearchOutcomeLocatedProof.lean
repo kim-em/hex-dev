@@ -21,7 +21,7 @@ namespace Hex.GraphIso.Nauty
 `SearchOut` low-boundary contract identifies their partitions exactly.
 The labelling may still differ by a within-cell permutation. -/
 theorem SearchOut.ptnEq {G : Colored n k} {level numcells : Nat}
-    {st out : SearchSt} (h : SearchOut G level level st out)
+    {st out : SearchSt n} (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out) : out.ptn = st.ptn := by
   apply Array.ext h.ptnSize
@@ -40,7 +40,7 @@ theorem SearchOut.ptnEq {G : Colored n k} {level numcells : Nat}
 entry frame, possibly at a different offset within the target cell.  The
 two resulting child labellings remain cell-equivalent. -/
 theorem SearchOut.breakoutPerm {G : Colored n k} {level numcells tc len o : Nat}
-    {st out : SearchSt} (h : SearchOut G level level st out)
+    {st out : SearchSt n} (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
@@ -48,8 +48,8 @@ theorem SearchOut.breakoutPerm {G : Colored n k} {level numcells tc len o : Nat}
     (hrange : tc + len ≤ n) (ho : o < len) :
     ∃ oCur, oCur < len ∧ out.lab[tc + oCur]! = st.lab[tc + o]! ∧
       cellsPerm (st.ptn.set! tc (level + 1)) (level + 1)
-        (breakout st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (breakout out.lab out.ptn (level + 1) tc st.lab[tc + o]!).1 := by
+        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+        (breakout n out.lab out.ptn (level + 1) tc st.lab[tc + o]!).1 := by
   have hend := searchOk_end hn0 hok hlevel
   have hmem : st.lab[tc + o]! ∈ segN st.lab tc len :=
     mem_segN_iff.mpr ⟨o, ho, rfl⟩
@@ -80,7 +80,7 @@ theorem SearchOut.breakoutPerm {G : Colored n k} {level numcells tc len o : Nat}
   have hcell' : (tc, tc + len - 1) ∈ cells st.ptn level n :=
     isCell_mem_cells hcell (by rw [hok.ptnSize]; exact Nat.le_refl n)
       hend (by omega)
-  have hb := breakout_cellsPerm_map (ctx := { n := n, g := #[] })
+  have hb := breakout_cellsPerm_map (n := n)
     (σ := σ) (labV := st.lab) (labU := out.lab) (ptn := st.ptn)
     (level := level) (tc := tc) (e := tc + len - 1)
     (oV := o) (oU := oCur) hok.ptnSize hok.labSize hout.labSize hend
@@ -108,21 +108,18 @@ theorem split_end {ptn : Array Nat} {level tc : Nat}
   · rw [Array.getElem!_set!_ne _ _ _ _ hx]
     omega
 
-/-- The active singleton created by individualization is bounded by the
-vertex universe. -/
-theorem singleActive_lt {n tc : Nat} (htc : tc < n) :
-    insert 0 tc < 2 ^ n := by
-  rw [insert, Nat.zero_or, Nat.shiftLeft_eq, Nat.one_mul]
-  exact Nat.pow_lt_pow_right (by omega) htc
-
 /-- The active singleton created by individualization marks a cell start
 of the split partition. -/
 theorem split_starts {ptn : Array Nat} {level tc len : Nat}
-    (_hpsz : ptn.size = n) (hcell : IsCell ptn level tc len) :
-    ∀ v : Nat, elem (insert 0 tc) v = true →
+    (hcell : IsCell ptn level tc len)
+    (hrange : tc + len ≤ n) :
+    ∀ v : Nat, ((VSet.empty : VSet n).insert tc).mem v = true →
       v = 0 ∨ (ptn.set! tc (level + 1))[v - 1]! ≤ level + 1 := by
   intro v hv
-  rw [elem_single] at hv
+  have htc : tc < n := by
+    have := hcell.1
+    omega
+  rw [mem_single htc] at hv
   have hvtc : v = tc := of_decide_eq_true hv
   subst v
   rcases Decidable.em (tc = 0) with h0 | h0
@@ -137,20 +134,20 @@ theorem split_starts {ptn : Array Nat} {level tc len : Nat}
 permutation produces the same specification child key. This is the bridge
 from `SearchOut.breakoutPerm` to the exact key premise consumed by
 `SweepCover.receipt`. -/
-theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx}
-    (hn : ctx.n = n) {level numcells tc len o specFuel tcLevel : Nat}
-    {st out child : SearchSt}
+theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx n}
+    {level numcells tc len o specFuel tcLevel : Nat}
+    {st out child : SearchSt n}
     (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len)
-    (hclab : child.lab = (breakout out.lab out.ptn (level + 1) tc
+    (hclab : child.lab = (breakout n out.lab out.ptn (level + 1) tc
       st.lab[tc + o]!).1)
-    (hcptn : child.ptn = (breakout out.lab out.ptn (level + 1) tc
+    (hcptn : child.ptn = (breakout n out.lab out.ptn (level + 1) tc
       st.lab[tc + o]!).2.1)
-    (hcactive : child.active = (breakout out.lab out.ptn (level + 1) tc
+    (hcactive : child.active = (breakout n out.lab out.ptn (level + 1) tc
       st.lab[tc + o]!).2.2)
     (hcanon : child.canonlab = out.canonlab)
     (hfuel : level + 1 + specFuel ≤ n + 1) :
@@ -163,7 +160,7 @@ theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx}
   have hcellOut : IsCell out.ptn level tc len := by
     rw [hptn]
     exact hcell
-  have hclab' : child.lab = (breakout out.lab out.ptn (level + 1) tc
+  have hclab' : child.lab = (breakout n out.lab out.ptn (level + 1) tc
       out.lab[tc + oCur]!).1 := by
     rw [hat]
     exact hclab
@@ -171,30 +168,30 @@ theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx}
     rw [hcptn, breakout_ptn]
   have hchildOk := breakout_searchOk (st' := child) hn0 hout hlevel
     hcellOut hlen hrange hoCur hclab' hcptn' hcanon
-  let refChild : SearchSt :=
+  let refChild : SearchSt n :=
     { st with
-      lab := (breakout st.lab st.ptn (level + 1) tc
+      lab := (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).1
-      ptn := (breakout st.lab st.ptn (level + 1) tc
+      ptn := (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).2.1
-      active := (breakout st.lab st.ptn (level + 1) tc
+      active := (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).2.2 }
   have hrefOk : SearchOk G (level + 1) (numcells + 1) refChild := by
     apply breakout_searchOk hn0 hok hlevel hcell hlen hrange ho
     · rfl
-    · exact breakout_ptn st.lab st.ptn (level + 1) tc
+    · exact breakout_ptn (n := n) st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!
     · rfl
   change nodeKey ctx tcLevel specFuel (level + 1) codes refChild
       (numcells + 1) =
     nodeKey ctx tcLevel specFuel (level + 1) codes child
       (numcells + 1)
-  apply nodeKey_perm hn tcLevel specFuel (level + 1) codes refChild child
+  apply nodeKey_perm tcLevel specFuel (level + 1) codes refChild child
     (numcells + 1)
   · change cellsPerm
-      (breakout st.lab st.ptn (level + 1) tc
+      (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).2.1 (level + 1)
-      (breakout st.lab st.ptn (level + 1) tc
+      (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).1 child.lab
     rw [breakout_ptn, hclab]
     exact hperm
@@ -207,12 +204,10 @@ theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx}
   · rw [hcactive]
     rfl
   · exact hrefOk.ptnSize
-  · apply singleActive_lt
-    omega
   · exact split_end (searchOk_end hn0 hok hlevel) (by
       rw [hok.ptnSize]
       omega)
-  · exact split_starts hok.ptnSize hcell
+  · exact split_starts hcell (by omega)
   · intro q
     rcases Nat.lt_or_ge q n with hq | hq
     · exact hrefOk.vals q hq
@@ -223,9 +218,9 @@ theorem SearchOut.breakoutKey {G : Colored n k} {ctx : Ctx}
 
 /-- First-path exit bookkeeping preserves the location of a transported
 generator unwind. -/
-theorem Unwind.Located.firstFinish {ctx : Ctx}
-    {tcLevel target level size index : Nat} {st : SearchSt}
-    {best : Option Key} {trail : FrameTrail}
+theorem Unwind.Located.firstFinish {ctx : Ctx n}
+    {tcLevel target level size index : Nat} {st : SearchSt n}
+    {best : Option (Key n)} {trail : FrameTrail}
     {payload : Unwind ctx tcLevel target st best}
     (h : payload.Located trail) :
     (payload.firstFinish (level := level) (size := size)
@@ -257,9 +252,9 @@ theorem Unwind.Located.firstFinish {ctx : Ctx}
 
 /-- Every located node receipt crosses the first-path exit-counter
 update. -/
-theorem NodeReceipt.firstFinish {trail : FrameTrail} {ctx : Ctx}
+theorem NodeReceipt.firstFinish {trail : FrameTrail} {ctx : Ctx n}
     {tcLevel specFuel runFuel level numcells size index : Nat}
-    {cs : List Nat} {st out : SearchSt} {best outBest : Option Key}
+    {cs : List Nat} {st out : SearchSt n} {best outBest : Option (Key n)}
     {r : Int} (hfuel : runFuel ≠ 0)
     (h : NodeReceipt trail ctx tcLevel specFuel runFuel level cs st out
       numcells best outBest r) :
@@ -283,12 +278,12 @@ theorem NodeReceipt.firstFinish {trail : FrameTrail} {ctx : Ctx}
 set_option maxHeartbeats 800000 in
 /-- A located child-loop receipt supplies the complete outcome of a
 non-discrete first-path node. -/
-theorem firstPath_internal_receipt (ctx : Ctx)
+theorem firstPath_internal_receipt (ctx : Ctx n)
     (inf tcLevel specFuel fuel level numcells tail : Nat)
-    (cs : List Nat) (st : SearchSt) (best outBest : Option Key)
+    (cs : List Nat) (st : SearchSt n) (best outBest : Option (Key n))
     (trail : FrameTrail)
     (hnum : (refine ctx level st.lab st.ptn st.active
-      numcells).numcells ≠ ctx.n)
+      numcells).numcells ≠ n)
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level cs st numcells =
       let rs := refine ctx level st.lab st.ptn st.active numcells
       let mt := maketargetcell ctx rs.lab rs.ptn level tcLevel (-1)
@@ -304,7 +299,7 @@ theorem firstPath_internal_receipt (ctx : Ctx)
       tcLevel (-1)).2.2 = tail + 1) :
     let rs := refine ctx level st.lab st.ptn st.active numcells
     let mt := maketargetcell ctx rs.lab rs.ptn level tcLevel (-1)
-    let pre0 : SearchSt := { st with
+    let pre0 : SearchSt n := { st with
       lab := rs.lab
       ptn := rs.ptn
       active := rs.active
@@ -313,13 +308,13 @@ theorem firstPath_internal_receipt (ctx : Ctx)
       numnodes := st.numnodes + 1
       tctotal := st.tctotal + mt.2.2 }
     let pre := if pre0.noncheaplevel ≥ level ∧
-        ¬ cheapautom pre0.ptn level ctx.n then
+        ¬ cheapautom pre0.ptn level n then
       { pre0 with noncheaplevel := level + 1 }
     else pre0
-    let L := firstChildLoop ctx inf tcLevel fuel (ctx.n + 1) level
-      rs.numcells mt.1 ((nextElem mt.2.1 none).getD 0)
-      (nextElem mt.2.1 none) mt.2.1 0 pre
-    LoopReceipt trail ctx tcLevel specFuel fuel (ctx.n + 1) level
+    let L := firstChildLoop ctx inf tcLevel fuel (n + 1) level
+      rs.numcells mt.1 ((mt.2.1.nextElem none).getD 0)
+      (mt.2.1.nextElem none) mt.2.1 0 pre
+    LoopReceipt trail ctx tcLevel specFuel fuel (n + 1) level
       (cs ++ [rs.longcode]) rs.lab rs.ptn mt.1 mt.2.2 rs.numcells
       mt.2.1 none
       (nodeKey ctx tcLevel (specFuel + 1) level cs st numcells)
@@ -331,14 +326,14 @@ theorem firstPath_internal_receipt (ctx : Ctx)
   dsimp only
   intro hloop
   rw [firstPath_internal_state ctx inf tcLevel fuel level numcells st hnum]
-  generalize hL : firstChildLoop ctx inf tcLevel fuel (ctx.n + 1)
+  generalize hL : firstChildLoop ctx inf tcLevel fuel (n + 1)
       level _ _ _ _ _ _ _ = L at hloop ⊢
   rcases L with ⟨r, index, out⟩
   cases r with
   | none =>
       have hnode := NodeReceipt.ofLoopNone (ctx := ctx)
         (nodeRunFuel := fuel + 1) (cursor := none)
-        (loopFuel := ctx.n + 1) rfl hchildren hlen
+        (loopFuel := n + 1) rfl hchildren hlen
         (by simp only [cursorRank]; omega) hloop
       exact hnode.firstFinish (by omega)
   | some r =>
@@ -347,12 +342,12 @@ theorem firstPath_internal_receipt (ctx : Ctx)
 
 /-- Once the imperative prefix exposes an off-path child loop, its
 located receipt constructs the corresponding located node receipt. -/
-theorem otherNode_receipt {ctx : Ctx}
+theorem otherNode_receipt {ctx : Ctx n}
     {inf tcLevel specFuel fuel level nodeNumcells loopNumcells tail : Nat}
-    {nodeCs loopCs : List Nat} {nodeSt loopSt : SearchSt}
-    {rsLab rsPtn : Array Nat} {tc len tcell : Nat}
-    {best outBest : Option Key} {trail : FrameTrail}
-    {L : Option Int × SearchSt}
+    {nodeCs loopCs : List Nat} {nodeSt loopSt : SearchSt n}
+    {rsLab rsPtn : Array Nat} {tc len : Nat} {tcell : VSet n}
+    {best outBest : Option (Key n)} {trail : FrameTrail}
+    {L : Option Int × SearchSt n}
     (hchildren : nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
         nodeNumcells =
       keysMax
@@ -367,7 +362,7 @@ theorem otherNode_receipt {ctx : Ctx}
       match L.1 with
       | some r => (r, L.2)
       | none => (Int.ofNat level - 1, L.2))
-    (hloop : LoopReceipt trail ctx tcLevel specFuel fuel (ctx.n + 1) level
+    (hloop : LoopReceipt trail ctx tcLevel specFuel fuel (n + 1) level
       loopCs rsLab rsPtn tc len loopNumcells tcell none
       (nodeKey ctx tcLevel (specFuel + 1) level nodeCs nodeSt
         nodeNumcells)
@@ -383,7 +378,7 @@ theorem otherNode_receipt {ctx : Ctx}
   | none =>
       exact NodeReceipt.ofLoopNone (ctx := ctx)
         (nodeRunFuel := fuel + 1) (cursor := none)
-        (loopFuel := ctx.n + 1) rfl hchildren hlen
+        (loopFuel := n + 1) rfl hchildren hlen
         (by simp only [cursorRank]; omega) hloop
   | some r =>
       exact NodeReceipt.ofLoopSome (ctx := ctx)
@@ -391,40 +386,40 @@ theorem otherNode_receipt {ctx : Ctx}
 
 /-- An off-path child generator unwind strictly past this loop returns
 with its frame location intact after fixed-vertex cleanup. -/
-theorem otherLoop_childReceipt (ctx : Ctx)
+theorem otherLoop_childReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
-    (cursor : Option Nat) (bound : Key) (st : SearchSt)
-    (best outBest : Option Key) (target : Nat) (trail : FrameTrail)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st : SearchSt n)
+    (best outBest : Option (Key n)) (target : Nat) (trail : FrameTrail)
     (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }
       (numcells + 1) best outBest)
     (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }
       (numcells + 1)) bound)
     (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }).1 = Int.ofNat target)
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }).1 = Int.ofNat target)
     (hbelow : target < level)
     (payload : Unwind ctx tcLevel target
       (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
         { st with
-          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-          fixedpts := insert st.fixedpts tv }).2 outBest)
+          lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := st.fixedpts.insert tv }).2 outBest)
     (hloc : payload.Located trail) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
@@ -443,14 +438,14 @@ theorem otherLoop_childReceipt (ctx : Ctx)
 
 /-- First-path loop fuel exhaustion is retained as a distinct located
 receipt. -/
-theorem firstLoop_zeroReceipt (ctx : Ctx)
+theorem firstLoop_zeroReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
-    (tv? cursor : Option Nat) (tcell index : Nat) (bound : Key)
-    (st : SearchSt) (best : Option Key) (trail : FrameTrail)
+    (tv? cursor : Option Nat) (tcell : VSet n) (index : Nat) (bound : Key n)
+    (st : SearchSt n) (best : Option (Key n)) (trail : FrameTrail)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    (hcursor : ∀ v, cursor = some v → v < n) :
     LoopReceipt trail ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn
       tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
@@ -464,14 +459,14 @@ theorem firstLoop_zeroReceipt (ctx : Ctx)
 
 /-- Off-path loop fuel exhaustion is retained as a distinct located
 receipt. -/
-theorem otherLoop_zeroReceipt (ctx : Ctx)
+theorem otherLoop_zeroReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
-    (tv? cursor : Option Nat) (tcell : Nat) (bound : Key) (st : SearchSt)
-    (best : Option Key) (trail : FrameTrail)
+    (tv? cursor : Option Nat) (tcell : VSet n) (bound : Key n) (st : SearchSt n)
+    (best : Option (Key n)) (trail : FrameTrail)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hcursor : ∀ v, cursor = some v → v < ctx.n) :
+    (hcursor : ∀ v, cursor = some v → v < n) :
     LoopReceipt trail ctx tcLevel specFuel runFuel 0 level cs rsLab rsPtn
       tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel 0 level numcells tc tv1 tv?
@@ -484,15 +479,15 @@ theorem otherLoop_zeroReceipt (ctx : Ctx)
     (by omega) hcursor
 
 /-- An absent next child completes a positive-fuel first-path loop. -/
-theorem firstLoop_doneReceipt (ctx : Ctx)
+theorem firstLoop_doneReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat)
-    (tcell index : Nat) (cursor : Option Nat) (bound : Key)
-    (st : SearchSt) (best : Option Key) (trail : FrameTrail)
+    (tcell : VSet n) (index : Nat) (cursor : Option Nat) (bound : Key n)
+    (st : SearchSt n) (best : Option (Key n)) (trail : FrameTrail)
     (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = best)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = none) :
+    (hnext : tcell.nextElem cursor = none) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -505,15 +500,15 @@ theorem firstLoop_doneReceipt (ctx : Ctx)
     hcover fun o ho => no_child_after hnext rsLab[tc + o]! ho.2.1 ho.2.2
 
 /-- An absent next child completes a positive-fuel off-path loop. -/
-theorem otherLoop_doneReceipt (ctx : Ctx)
+theorem otherLoop_doneReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
-    (cursor : Option Nat) (bound : Key) (st : SearchSt)
-    (best : Option Key) (trail : FrameTrail)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st : SearchSt n)
+    (best : Option (Key n)) (trail : FrameTrail)
     (hinstalled : st.canonlevel ≠ 0) (hread : stInc ctx st = best)
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = none) :
+    (hnext : tcell.nextElem cursor = none) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -527,28 +522,27 @@ theorem otherLoop_doneReceipt (ctx : Ctx)
 
 /-- A non-root orbit pointer skips the current first-path child while
 retaining located outcomes from the recursive tail. -/
-theorem firstLoop_orbitReceipt (ctx : Ctx)
+theorem firstLoop_orbitReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index o : Nat)
-    (cursor : Option Nat) (bound : Key) (st : SearchSt)
-    (best : Option Key) (trail : FrameTrail)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n) (index o : Nat)
+    (cursor : Option Nat) (bound : Key n) (st : SearchSt n)
+    (best : Option (Key n)) (trail : FrameTrail)
     (gens : List (Array Nat))
     (hcover : SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len
       numcells tcell cursor best)
-    (hnext : nextElem tcell cursor = some tv) (ho : o < len)
+    (hnext : tcell.nextElem cursor = some tv) (ho : o < len)
     (htv : rsLab[tc + o]! = tv)
-    (hgsz : ctx.g.size = ctx.n)
-    (hbg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ ctx.n = true)
+    (hgsz : ctx.g.size = n)
+    (hv : ∀ γ ∈ gens, checkAutom ctx.g γ = true)
     (hstab : ∀ γ ∈ gens, CellStab rsPtn level rsLab γ)
-    (hs : rsLab.size = ctx.n) (hinj : LabInj rsLab rsLab.size)
-    (hok : LabOk rsLab ctx.n) (hsp : rsPtn.size = ctx.n)
+    (hs : rsLab.size = n) (hinj : LabInj rsLab rsLab.size)
+    (hok : LabOk rsLab n) (hsp : rsPtn.size = n)
     (hend : rsPtn[rsPtn.size - 1]! ≤ level)
     (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨
-      rsPtn[q]! = ctx.n + 2)
-    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ ctx.n)
-    (hlf : level + 1 + specFuel ≤ ctx.n + 1)
-    (hsound : OrbSound (OrbConn gens ctx.n) st.orbits ctx.n)
+      rsPtn[q]! = n + 2)
+    (hic : IsCell rsPtn level tc len) (hrange : tc + len ≤ n)
+    (hlf : level + 1 + specFuel ≤ n + 1)
+    (hsound : OrbSound (OrbConn gens n) st.orbits n)
     (horbit : (st.orbits[tv]! == tv) = false)
     (hrec : ∀ index',
       SweepCover ctx tcLevel specFuel level cs rsLab rsPtn tc len numcells
@@ -556,10 +550,10 @@ theorem firstLoop_orbitReceipt (ctx : Ctx)
       LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
         rsLab rsPtn tc len numcells tcell (some tv) bound st
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem tcell (some tv)) tcell index' st).2.2
+          tv1 (tcell.nextElem (some tv)) tcell index' st).2.2
         best best
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem tcell (some tv)) tcell index' st).1) :
+          tv1 (tcell.nextElem (some tv)) tcell index' st).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -569,7 +563,7 @@ theorem firstLoop_orbitReceipt (ctx : Ctx)
         tc tv1 (some tv) tcell index st).1 := by
   have hne : st.orbits[tv]! ≠ tv := by
     simpa only [beq_eq_false_iff_ne] using horbit
-  have hcover' := hcover.orbitSkip hnext ho htv hgsz hbg hv hstab hs hinj
+  have hcover' := hcover.orbitSkip hnext ho htv hgsz hv hstab hs hinj
     hok hsp hend hvals hic hrange hlf hsound hne
   unfold firstChildLoop
   simp only [horbit, Bool.false_eq_true, ite_false, Id.run_pure,
@@ -580,45 +574,45 @@ theorem firstLoop_orbitReceipt (ctx : Ctx)
 
 /-- An off-path child of the first-path loop transports a located unwind
 strictly past the loop. -/
-theorem firstLoop_otherReceipt (ctx : Ctx)
+theorem firstLoop_otherReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
-    (cursor : Option Nat) (bound : Key) (st : SearchSt)
-    (best outBest : Option Key) (target : Nat) (trail : FrameTrail)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n) (index : Nat)
+    (cursor : Option Nat) (bound : Key n) (st : SearchSt n)
+    (best outBest : Option (Key n)) (target : Nat) (trail : FrameTrail)
     (hrep : (st.orbits[tv]! == tv) = true)
     (hother : (tv == tv1) = false)
     (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }
       (numcells + 1) best outBest)
     (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }
       (numcells + 1)) bound)
     (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }).1 = Int.ofNat target)
     (hbelow : target < level)
     (payload : Unwind ctx tcLevel target
       (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
         { st with
-          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-          fixedpts := insert st.fixedpts tv
+          lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := st.fixedpts.insert tv
           cosetindex := tv }).2 outBest)
     (hloc : payload.Located trail) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
@@ -639,45 +633,45 @@ theorem firstLoop_otherReceipt (ctx : Ctx)
 
 /-- The guiding child transports a located unwind strictly past the loop
 after installing its first-path return controls. -/
-theorem firstLoop_guideReceipt (ctx : Ctx)
+theorem firstLoop_guideReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
-    (cursor : Option Nat) (bound : Key) (st : SearchSt)
-    (best outBest : Option Key) (target : Nat) (trail : FrameTrail)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n) (index : Nat)
+    (cursor : Option Nat) (bound : Key n) (st : SearchSt n)
+    (best outBest : Option (Key n)) (target : Nat) (trail : FrameTrail)
     (hrep : (st.orbits[tv]! == tv) = true)
     (hfirst : (tv == tv1) = true)
     (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }
       (numcells + 1) best outBest)
     (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }
       (numcells + 1)) bound)
     (hreturn : (firstPathNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv }).1 = Int.ofNat target)
     (hbelow : target < level)
     (payload : Unwind ctx tcLevel target
       (firstPathNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
         { st with
-          lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-          ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-          active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-          fixedpts := insert st.fixedpts tv
+          lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := st.fixedpts.insert tv
           cosetindex := tv }).2 outBest)
     (hloc : payload.Located trail) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
@@ -699,91 +693,91 @@ theorem firstLoop_guideReceipt (ctx : Ctx)
 
 /-- After an ordinary child completes without either filter, an off-path
 loop continues while retaining every located recursive outcome. -/
-theorem otherLoop_nextReceipt (ctx : Ctx)
+theorem otherLoop_nextReceipt (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell : Nat)
-    (cursor : Option Nat) (bound : Key) (st : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hsound : NodeSound ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }
       (numcells + 1) best mid)
     (hkey : keyLe (nodeKey ctx tcLevel specFuel (level + 1) cs
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }
       (numcells + 1)) bound)
     (hreturn : (otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }).1 = r)
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }).1 = r)
     (hstay : ¬ r < Int.ofNat level)
     (hshort : (otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv }).2.needshortprune = false)
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv }).2.needshortprune = false)
     (hother : (tv == tv1) = false)
     (hrec : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
       cs rsLab rsPtn tc len numcells tcell (some tv) bound
-      (recover ctx.n inf level
+      (recover n inf level
         { (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
           { st with
-            lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-            ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-            active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-            fixedpts := insert st.fixedpts tv }).2 with
-          fixedpts := erase (otherNode ctx inf tcLevel runFuel (level + 1)
+            lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+            ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+            active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+            fixedpts := st.fixedpts.insert tv }).2 with
+          fixedpts := (otherNode ctx inf tcLevel runFuel (level + 1)
             (numcells + 1)
             { st with
-              lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-              ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-              active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-              fixedpts := insert st.fixedpts tv }).2.fixedpts tv })
+              lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+              ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+              active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+              fixedpts := st.fixedpts.insert tv }).2.fixedpts.erase tv })
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem tcell (some tv)) tcell
-        (recover ctx.n inf level
+        (tcell.nextElem (some tv)) tcell
+        (recover n inf level
           { (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
             { st with
-              lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-              ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-              active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-              fixedpts := insert st.fixedpts tv }).2 with
-            fixedpts := erase (otherNode ctx inf tcLevel runFuel (level + 1)
+              lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+              ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+              active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+              fixedpts := st.fixedpts.insert tv }).2 with
+            fixedpts := (otherNode ctx inf tcLevel runFuel (level + 1)
               (numcells + 1)
               { st with
-                lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-                ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-                active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-                fixedpts := insert st.fixedpts tv }).2.fixedpts tv })).2
+                lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+                ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+                active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+                fixedpts := st.fixedpts.insert tv }).2.fixedpts.erase tv })).2
       mid outBest
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem tcell (some tv)) tcell
-        (recover ctx.n inf level
+        (tcell.nextElem (some tv)) tcell
+        (recover n inf level
           { (otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1)
             { st with
-              lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-              ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-              active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-              fixedpts := insert st.fixedpts tv }).2 with
-            fixedpts := erase (otherNode ctx inf tcLevel runFuel (level + 1)
+              lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+              ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+              active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+              fixedpts := st.fixedpts.insert tv }).2 with
+            fixedpts := (otherNode ctx inf tcLevel runFuel (level + 1)
               (numcells + 1)
               { st with
-                lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-                ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-                active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-                fixedpts := insert st.fixedpts tv }).2.fixedpts tv })).1) :
+                lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+                ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+                active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+                fixedpts := st.fixedpts.insert tv }).2.fixedpts.erase tv })).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -806,35 +800,35 @@ theorem otherLoop_nextReceipt (ctx : Ctx)
 short prune, the first-path loop recovers its parent frame and continues.
 The child call is exposed as one equation so the mutual induction need not
 duplicate its output expression in every premise. -/
-theorem firstLoop_otherNext (ctx : Ctx)
+theorem firstLoop_otherNext (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n) (index : Nat)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hrep : (st.orbits[tv]! == tv) = true)
     (hother : (tv == tv1) = false)
     (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = false)
-    (hrecover : recSt = recover ctx.n inf level
-      { child with fixedpts := erase child.fixedpts tv })
+    (hrecover : recSt = recover n inf level
+      { child with fixedpts := child.fixedpts.erase tv })
     (hpre : LoopSound ctx bound best mid)
     (hrec : ∀ index',
       LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
         rsLab rsPtn tc len numcells tcell (some tv) bound recSt
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem tcell (some tv)) tcell index' recSt).2.2
+          tv1 (tcell.nextElem (some tv)) tcell index' recSt).2.2
         mid outBest
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem tcell (some tv)) tcell index' recSt).1) :
+          tv1 (tcell.nextElem (some tv)) tcell index' recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -855,27 +849,27 @@ theorem firstLoop_otherNext (ctx : Ctx)
 /-- After the guiding child completes without requesting a short prune,
 the first-path loop installs its return controls, recovers the parent
 frame, and continues with every recursive location intact. -/
-theorem firstLoop_guideNext (ctx : Ctx)
+theorem firstLoop_guideNext (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell index : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (tcell : VSet n) (index : Nat)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hrep : (st.orbits[tv]! == tv) = true)
     (hfirst : (tv == tv1) = true)
     (hcall : firstPathNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = false)
-    (hrecover : recSt = recover ctx.n inf level
+    (hrecover : recSt = recover n inf level
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         gcaFirst := level
         stabvertex := tv1 })
     (hpre : LoopSound ctx bound best mid)
@@ -883,10 +877,10 @@ theorem firstLoop_guideNext (ctx : Ctx)
       LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
         rsLab rsPtn tc len numcells tcell (some tv) bound recSt
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem tcell (some tv)) tcell index' recSt).2.2
+          tv1 (tcell.nextElem (some tv)) tcell index' recSt).2.2
         mid outBest
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem tcell (some tv)) tcell index' recSt).1) :
+          tv1 (tcell.nextElem (some tv)) tcell index' recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -906,34 +900,34 @@ theorem firstLoop_guideNext (ctx : Ctx)
 /-- When the guiding child of an off-path loop completes without a short
 prune, the long-pruned recursive sweep reindexes to the loop's original
 entry set while retaining located outcomes. -/
-theorem otherLoop_longNext (ctx : Ctx)
+theorem otherLoop_longNext (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell filtered : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (filtered : VSet n) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv } = (r, child))
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = false)
     (hfirst : (tv == tv1) = true)
     (hfiltered : filtered = longprune tcell
-      (erase child.fixedpts tv) child.autos)
-    (hrecover : recSt = recover ctx.n inf level
-      { child with fixedpts := erase child.fixedpts tv })
+      (child.fixedpts.erase tv) child.autos)
+    (hrecover : recSt = recover n inf level
+      { child with fixedpts := child.fixedpts.erase tv })
     (hpre : LoopSound ctx bound best mid)
     (hrec : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
       cs rsLab rsPtn tc len numcells filtered (some tv) bound recSt
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem filtered (some tv)) filtered recSt).2
+        (filtered.nextElem (some tv)) filtered recSt).2
       mid outBest
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem filtered (some tv)) filtered recSt).1) :
+        (filtered.nextElem (some tv)) filtered recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -952,38 +946,38 @@ theorem otherLoop_longNext (ctx : Ctx)
 
 /-- A short-pruned off-path sweep whose current child is not the guiding
 vertex reindexes its recursive receipt to the original entry set. -/
-theorem otherLoop_shortNext (ctx : Ctx)
+theorem otherLoop_shortNext (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
-    (cs : List Nat) (rsLab rsPtn : Array Nat) (len tcell filtered : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (cs : List Nat) (rsLab rsPtn : Array Nat) (len : Nat) (filtered : VSet n) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv } = (r, child))
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = true)
     (hother : (tv == tv1) = false)
     (hfiltered : filtered = shortprune tcell
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         needshortprune := false })
-    (hrecover : recSt = recover ctx.n inf level
+    (hrecover : recSt = recover n inf level
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         needshortprune := false })
     (hpre : LoopSound ctx bound best mid)
     (hrec : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
       cs rsLab rsPtn tc len numcells filtered (some tv) bound recSt
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem filtered (some tv)) filtered recSt).2
+        (filtered.nextElem (some tv)) filtered recSt).2
       mid outBest
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem filtered (some tv)) filtered recSt).1) :
+        (filtered.nextElem (some tv)) filtered recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -1002,41 +996,41 @@ theorem otherLoop_shortNext (ctx : Ctx)
 /-- When both executable filters fire, their composed target set still
 reindexes to the original off-path loop entry while locations are retained.
 -/
-theorem otherLoop_bothNext (ctx : Ctx)
+theorem otherLoop_bothNext (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat)
-    (len tcell shortSet filtered : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (len : Nat) (shortSet : VSet n) (filtered : VSet n) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv } = (r, child))
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = true)
     (hfirst : (tv == tv1) = true)
     (hshortSet : shortSet = shortprune tcell
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         needshortprune := false })
     (hfiltered : filtered = longprune shortSet
-      (erase child.fixedpts tv) child.autos)
-    (hrecover : recSt = recover ctx.n inf level
+      (child.fixedpts.erase tv) child.autos)
+    (hrecover : recSt = recover n inf level
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         needshortprune := false })
     (hpre : LoopSound ctx bound best mid)
     (hrec : LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level
       cs rsLab rsPtn tc len numcells filtered (some tv) bound recSt
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem filtered (some tv)) filtered recSt).2
+        (filtered.nextElem (some tv)) filtered recSt).2
       mid outBest
       (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-        (nextElem filtered (some tv)) filtered recSt).1) :
+        (filtered.nextElem (some tv)) filtered recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (otherChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -1055,42 +1049,42 @@ theorem otherLoop_bothNext (ctx : Ctx)
 
 /-- A short-pruned non-guiding first-path child reindexes the recursive
 sweep to the original loop entry while retaining located outcomes. -/
-theorem firstLoop_otherShort (ctx : Ctx)
+theorem firstLoop_otherShort (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat)
-    (len tcell filtered index : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (len index : Nat) (filtered : VSet n) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hrep : (st.orbits[tv]! == tv) = true)
     (hother : (tv == tv1) = false)
     (hcall : otherNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = true)
     (hfiltered : filtered = shortprune tcell
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         needshortprune := false })
-    (hrecover : recSt = recover ctx.n inf level
+    (hrecover : recSt = recover n inf level
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         needshortprune := false })
     (hpre : LoopSound ctx bound best mid)
     (hrec : ∀ index',
       LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
         rsLab rsPtn tc len numcells filtered (some tv) bound recSt
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem filtered (some tv)) filtered index' recSt).2.2
+          tv1 (filtered.nextElem (some tv)) filtered index' recSt).2.2
         mid outBest
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem filtered (some tv)) filtered index' recSt).1) :
+          tv1 (filtered.nextElem (some tv)) filtered index' recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells
@@ -1110,34 +1104,34 @@ theorem firstLoop_otherShort (ctx : Ctx)
 
 /-- A short-pruned guiding first-path child installs the guide controls
 before reindexing the recursive sweep to its original entry set. -/
-theorem firstLoop_guideShort (ctx : Ctx)
+theorem firstLoop_guideShort (ctx : Ctx n)
     (inf tcLevel specFuel runFuel loopFuel level numcells tc tv1 tv : Nat)
     (cs : List Nat) (rsLab rsPtn : Array Nat)
-    (len tcell filtered index : Nat)
-    (cursor : Option Nat) (bound : Key) (st child recSt : SearchSt)
-    (best mid outBest : Option Key) (r : Int) (trail : FrameTrail)
-    (hnext : nextElem tcell cursor = some tv)
+    (len index : Nat) (filtered : VSet n) (tcell : VSet n)
+    (cursor : Option Nat) (bound : Key n) (st child recSt : SearchSt n)
+    (best mid outBest : Option (Key n)) (r : Int) (trail : FrameTrail)
+    (hnext : tcell.nextElem cursor = some tv)
     (hrep : (st.orbits[tv]! == tv) = true)
     (hfirst : (tv == tv1) = true)
     (hcall : firstPathNode ctx inf tcLevel runFuel (level + 1)
       (numcells + 1)
       { st with
-        lab := (breakout st.lab st.ptn (level + 1) tc tv).1
-        ptn := (breakout st.lab st.ptn (level + 1) tc tv).2.1
-        active := (breakout st.lab st.ptn (level + 1) tc tv).2.2
-        fixedpts := insert st.fixedpts tv
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
         cosetindex := tv } = (r, child))
     (hstay : ¬ r < Int.ofNat level)
     (hshort : child.needshortprune = true)
     (hfiltered : filtered = shortprune tcell
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         gcaFirst := level
         stabvertex := tv1
         needshortprune := false })
-    (hrecover : recSt = recover ctx.n inf level
+    (hrecover : recSt = recover n inf level
       { child with
-        fixedpts := erase child.fixedpts tv
+        fixedpts := child.fixedpts.erase tv
         gcaFirst := level
         stabvertex := tv1
         needshortprune := false })
@@ -1146,10 +1140,10 @@ theorem firstLoop_guideShort (ctx : Ctx)
       LoopReceipt trail ctx tcLevel specFuel runFuel loopFuel level cs
         rsLab rsPtn tc len numcells filtered (some tv) bound recSt
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem filtered (some tv)) filtered index' recSt).2.2
+          tv1 (filtered.nextElem (some tv)) filtered index' recSt).2.2
         mid outBest
         (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-          tv1 (nextElem filtered (some tv)) filtered index' recSt).1) :
+          tv1 (filtered.nextElem (some tv)) filtered index' recSt).1) :
     LoopReceipt trail ctx tcLevel specFuel runFuel (loopFuel + 1) level cs
       rsLab rsPtn tc len numcells tcell cursor bound st
       (firstChildLoop ctx inf tcLevel runFuel (loopFuel + 1) level numcells

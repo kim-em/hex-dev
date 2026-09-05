@@ -42,13 +42,13 @@ variable {n k : Nat}
 /-- Validate a certificate together with the claimed canonical
 labelling: the replay must accept the key, and the labelling's leaf
 rows must be the key's rows. Returns the canonical form and label. -/
-@[expose] def checkCanon (G : Colored n k) (cert : CertNode) (B : Key)
+@[expose] def checkCanon (G : Colored n k) (cert : CertNode) (B : Key n)
     (lab : Array Nat) : Option (CanonResult n k) :=
   match Label.ofArray? n lab with
   | none => none
   | some l =>
     if checkKey G cert B &&
-        (B.rows == leafRows { n := n, g := rowsOf G } lab) &&
+        (B.rows == leafRows { g := rowsOf G } lab) &&
         colorSortedCheck G lab then
       some { form := G.relabel l, label := l }
     else
@@ -56,12 +56,12 @@ rows must be the key's rows. Returns the canonical form and label. -/
 
 /-- A successful `checkCanon` pins the spec key, exhibits the form as
 a relabelling, and keeps the form in the isomorphism class. -/
-theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key}
+theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
     canonSpecKey G = B ∧ res.form = G.relabel res.label ∧
       Isomorphic G res.form ∧
-      B.rows = leafRows { n := n, g := rowsOf G } lab := by
+      B.rows = leafRows { g := rowsOf G } lab := by
   rw [checkCanon] at h
   split at h
   · cases h
@@ -90,7 +90,7 @@ until the single replay accepts. -/
 @[expose] def certifyCanon? (G : Colored n k) :
     Option (CanonResult n k) :=
   match
-    (if n == 0 then some ((.leaf : CertNode), (⟨[], []⟩ : Key))
+    (if n == 0 then some ((.leaf : CertNode), (⟨[], []⟩ : Key n))
      else produceCand G none) with
   | none => none
   | some (cert, B) => checkCanon G cert B (runColored G).canonlab
@@ -100,7 +100,7 @@ labelling forces the transcription to succeed with the same result:
 both build the `CanonResult` from `(runColored G).canonlab` by the
 same checked construction. -/
 theorem canonicalize?_eq_of_checkCanon {G : Colored n k}
-    {cert : CertNode} {B : Key} {res : CanonResult n k}
+    {cert : CertNode} {B : Key n} {res : CanonResult n k}
     (h : checkCanon G cert B (runColored G).canonlab = some res) :
     canonicalize? G = some res := by
   rw [checkCanon] at h
@@ -128,17 +128,17 @@ theorem canonicalize?_eq_of_certifyCanon {G : Colored n k}
 
 /-- Executable disequality of two canonical keys: the lexicographic
 comparison finds the first differing entry. -/
-@[expose] def checkDiff (B1 B2 : Key) : Bool :=
+@[expose] def checkDiff (B1 B2 : Key n) : Bool :=
   keyCmp B1 B2 != Ordering.eq
 
-theorem checkDiff_sound {B1 B2 : Key} (h : checkDiff B1 B2 = true) :
+theorem checkDiff_sound {B1 B2 : Key n} (h : checkDiff B1 B2 = true) :
     B1 ≠ B2 := by
   rw [checkDiff, bne_iff_ne, ne_eq] at h
   intro he
   exact h (keyCmp_eq_iff.mpr he)
 
 /-- Distinct spec keys separate isomorphism classes. -/
-theorem not_isomorphic_of_key_ne {G H : Colored n k} {BG BH : Key}
+theorem not_isomorphic_of_key_ne {G H : Colored n k} {BG BH : Key n}
     (hG : canonSpecKey G = BG) (hH : canonSpecKey H = BH)
     (hne : BG ≠ BH) : ¬Isomorphic G H := fun hiso =>
   hne (hG ▸ hH ▸ canonSpecKey_eq_of_isomorphic hiso)
@@ -146,7 +146,7 @@ theorem not_isomorphic_of_key_ne {G H : Colored n k} {BG BH : Key}
 /-- Two checked certificates with differing keys prove
 non-isomorphism. -/
 theorem not_isomorphic_of_certs {G H : Colored n k}
-    {certG certH : CertNode} {BG BH : Key} {labG labH : Array Nat}
+    {certG certH : CertNode} {BG BH : Key n} {labG labH : Array Nat}
     {resG resH : CanonResult n k}
     (hG : checkCanon G certG BG labG = some resG)
     (hH : checkCanon H certH BH labH = some resH)
@@ -159,7 +159,7 @@ non-isomorphism: the Boolean form of `not_isomorphic_of_certs`, whose
 kernel obligation is two `checkKey` replays and one key comparison,
 with no achieving labelling required. -/
 theorem not_isomorphic_of_checkKeys {G H : Colored n k}
-    {certG certH : CertNode} {BG BH : Key}
+    {certG certH : CertNode} {BG BH : Key n}
     (hG : checkKey G certG BG = true)
     (hH : checkKey H certH BH = true)
     (hd : checkDiff BG BH = true) : ¬Isomorphic G H :=
@@ -259,7 +259,7 @@ theorem rowOf_relabel {G : Colored n k} {l : Label n}
     (hl : ∀ (i : Nat) (h : i < n), (l.get ⟨i, h⟩).val = lab[i]!)
     {i : Nat} (hi : i < n) :
     rowOf (G.relabel l) i =
-      permset (rowsOf G)[lab[i]!]! (invPerm lab) n := by
+      (rowsOf G)[lab[i]!]!.permset (invPerm lab) := by
   have hn0 : 0 < n := by omega
   have hlabl : ∀ j, j < n → lab[j]! < n := fun j hj => by
     rw [← hl j hj]
@@ -280,12 +280,10 @@ theorem rowOf_relabel {G : Colored n k} {l : Label n}
     rw [hwe]
     show (l.perm.get w).val = v
     rw [hw]
-  have hps : permset (rowsOf G)[lab[i]!]! (invPerm lab) n =
-      image (fun v => (invPerm lab)[v]!) n (rowsOf G)[lab[i]!]! := rfl
-  rw [hps]
-  refine Nat.eq_of_testBit_eq fun t => ?_
+  rw [VSet.permset]
+  refine VSet.ext fun t => ?_
   rcases Nat.lt_or_ge t n with ht | ht
-  · rw [testBit_rowOf_lt (G.relabel l) hi ht, testBit_image]
+  · rw [mem_rowOf_lt (G.relabel l) hi ht, VSet.mem_image]
     rw [Colored.adj_relabel]
     have hgi : l.get ⟨i, hi⟩ = ⟨lab[i]!, hlabl i hi⟩ :=
       Fin.eq_of_val_eq (hl i hi)
@@ -299,8 +297,8 @@ theorem rowOf_relabel {G : Colored n k} {l : Label n}
       rw [List.any_eq_false]
       intro v hv
       have hvn := List.mem_range.mp hv
-      simp only [Bool.and_eq_true, beq_iff_eq, not_and]
-      intro hbit hinv
+      rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+      rintro ⟨⟨hbit, hinv⟩, _⟩
       -- v = lab[t]! since invPerm is injective on the range
       obtain ⟨j, hj, hje⟩ := hsurj v hvn
       have hjt : j = t := by
@@ -311,31 +309,21 @@ theorem rowOf_relabel {G : Colored n k} {l : Label n}
       subst hjt
       subst hje
       rw [getElem!_rowsOf G (hlabl i hi),
-        testBit_rowOf_lt G (hlabl i hi) (hlabl j hj)] at hbit
+        mem_rowOf_lt G (hlabl i hi) (hlabl j hj)] at hbit
       rw [hadj] at hbit
       cases hbit
     · -- edge: the witness is lab[t]!
       symm
       rw [List.any_eq_true]
       refine ⟨lab[t]!, List.mem_range.mpr (hlabl t ht), ?_⟩
-      simp only [Bool.and_eq_true, beq_iff_eq]
-      constructor
-      · rw [getElem!_rowsOf G (hlabl i hi),
-          testBit_rowOf_lt G (hlabl i hi) (hlabl t ht)]
-        exact hadj
-      · exact getElem!_invPerm lab hinj (by omega)
-          (by rw [hsz]; exact hlabl t ht)
+      rw [Bool.and_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+      have hinv : (invPerm lab)[lab[t]!]! = t :=
+        getElem!_invPerm lab hinj (by omega) (by rw [hsz]; exact hlabl t ht)
+      refine ⟨⟨?_, hinv⟩, by rw [hinv]; exact ht⟩
+      rw [getElem!_rowsOf G (hlabl i hi), mem_rowOf_lt G (hlabl i hi) (hlabl t ht)]
+      exact hadj
   · -- above the vertex range both sides are clear
-    rw [Nat.testBit_lt_two_pow
-      (Nat.lt_of_lt_of_le (rowOf_lt (G.relabel l) i)
-        (Nat.pow_le_pow_right (by omega) ht))]
-    symm
-    rw [testBit_image, List.any_eq_false]
-    intro v hv
-    simp only [Bool.and_eq_true, beq_iff_eq, not_and]
-    intro _ hinv
-    have := getElem!_invPerm_lt (lab := lab) (by omega) v
-    omega
+    rw [VSet.mem_of_ge ht, VSet.mem_of_ge ht]
 
 /-- The claimed labelling's leaf rows are exactly the rows of the
 relabelled graph. -/
@@ -343,7 +331,7 @@ theorem rowsOf_relabel_eq_leafRows {G : Colored n k} {l : Label n}
     {lab : Array Nat} (hsz : lab.size = n)
     (hl : ∀ (i : Nat) (h : i < n), (l.get ⟨i, h⟩).val = lab[i]!) :
     rowsOf (G.relabel l) =
-      (leafRows { n := n, g := rowsOf G } lab).toArray := by
+      (leafRows { g := rowsOf G } lab).toArray := by
   rw [rowsOf, leafRows]
   congr 1
   refine List.map_congr_left fun i hi => ?_
@@ -353,7 +341,7 @@ theorem rowsOf_relabel_eq_leafRows {G : Colored n k} {l : Label n}
 
 /-- Everything a successful `checkCanon` establishes, with the label's
 entries pinned to the claimed array. -/
-theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key}
+theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
     lab.size = n ∧
@@ -361,7 +349,7 @@ theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key}
     (∀ (i : Nat) (hi : i < n), (res.label.get ⟨i, hi⟩).val =
       lab[i]!) ∧
     checkKey G cert B = true ∧
-    B.rows = leafRows { n := n, g := rowsOf G } lab ∧
+    B.rows = leafRows { g := rowsOf G } lab ∧
     colorSortedCheck G lab = true := by
   rw [checkCanon] at h
   split at h
@@ -381,7 +369,7 @@ theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key}
     · cases h
 
 /-- The rows of a checked canonical form are the key's rows. -/
-theorem checkCanon_rows {G : Colored n k} {cert : CertNode} {B : Key}
+theorem checkCanon_rows {G : Colored n k} {cert : CertNode} {B : Key n}
     {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
     rowsOf res.form = B.rows.toArray := by
@@ -391,7 +379,7 @@ theorem checkCanon_rows {G : Colored n k} {cert : CertNode} {B : Key}
 /-- The colours of a checked canonical form are nondecreasing along
 the vertex order. -/
 theorem checkCanon_sorted {G : Colored n k} {cert : CertNode}
-    {B : Key} {lab : Array Nat} {res : CanonResult n k}
+    {B : Key n} {lab : Array Nat} {res : CanonResult n k}
     (h : checkCanon G cert B lab = some res) :
     ∀ (i : Nat) (hi1 : i + 1 < n),
       (res.form.coloring.cells[i]'(by omega)).val ≤
@@ -484,7 +472,7 @@ theorem colorList_perm_of_lengths {G' H' G H : Colored n k}
 /-- Two checked canonical forms with the same key and the same colour
 class sizes are equal. -/
 theorem checkCanon_form_eq {G H : Colored n k}
-    {certG certH : CertNode} {B : Key} {labG labH : Array Nat}
+    {certG certH : CertNode} {B : Key n} {labG labH : Array Nat}
     {resG resH : CanonResult n k}
     (hG : checkCanon G certG B labG = some resG)
     (hH : checkCanon H certH B labH = some resH)
@@ -494,9 +482,9 @@ theorem checkCanon_form_eq {G H : Colored n k}
   have hrG := checkCanon_rows hG
   have hrH := checkCanon_rows hH
   have hadj : ∀ (K : Colored n k) (i j : Fin n),
-      K.graph.adj i j = ((rowsOf K)[i.val]!).testBit j.val := by
+      K.graph.adj i j = ((rowsOf K)[i.val]!).mem j.val := by
     intro K i j
-    rw [getElem!_rowsOf K i.isLt, testBit_rowOf_lt K i.isLt j.isLt]
+    rw [getElem!_rowsOf K i.isLt, mem_rowOf_lt K i.isLt j.isLt]
   have hclG : colorList resG.form = colorList resH.form := by
     refine List.Perm.eq_of_pairwise
       (fun a b _ _ h1 h2 => Nat.le_antisymm h1 h2) ?_ ?_ ?_
@@ -559,7 +547,7 @@ theorem cellSizesCheck_sound {G H : Colored n k}
 /-- Two checked certificates with the same key and matching colour
 class sizes prove isomorphism. -/
 theorem isomorphic_of_certs {G H : Colored n k}
-    {certG certH : CertNode} {B : Key} {labG labH : Array Nat}
+    {certG certH : CertNode} {B : Key n} {labG labH : Array Nat}
     {resG resH : CanonResult n k}
     (hG : checkCanon G certG B labG = some resG)
     (hH : checkCanon H certH B labH = some resH)

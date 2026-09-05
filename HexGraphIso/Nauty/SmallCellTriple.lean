@@ -83,7 +83,7 @@ configurations outside the first branch, per the probe.
 
 namespace Hex.GraphIso.Nauty
 
-variable {ctx : Ctx}
+variable {ctx : Ctx n}
 
 /-! # The sharpened guard: sizes at most three, at most one triple -/
 
@@ -270,22 +270,21 @@ bit, and the count into a pair is twice the bit at either member by
 any other cell of size at most two. -/
 theorem triple_const {lab ptn : Array Nat} {level : Nat}
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    {d : Nat} (hT : (d, d + 2) ∈ cells ptn level ctx.n)
-    {c ce : Nat} (hC : (c, ce) ∈ cells ptn level ctx.n)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {d : Nat} (hT : (d, d + 2) ∈ cells ptn level n)
+    {c ce : Nat} (hC : (c, ce) ∈ cells ptn level n)
     (hsz : ce + 1 - c ≤ 2)
     {o o' w : Nat} (ho : o < 3) (ho' : o' < 3) (hw : w < ce + 1 - c) :
-    (ctx.g[lab[d + o]!]!).testBit lab[c + w]! =
-      (ctx.g[lab[d + o']!]!).testBit lab[c + w]! := by
-  have hd2 : d + 2 < ctx.n := by
+    (ctx.g[lab[d + o]!]!).mem lab[c + w]! =
+      (ctx.g[lab[d + o']!]!).mem lab[c + w]! := by
+  have hd2 : d + 2 < n := by
     have := cells_bound (by omega) hend _ hT
     omega
-  have hce : ce < ctx.n := by
+  have hce : ce < n := by
     have := cells_bound (by omega) hend _ hC
     omega
   have hcce := cells_le _ hC
@@ -295,41 +294,39 @@ theorem triple_const {lab ptn : Array Nat} {level : Nat}
     subst hone
     have hw0 : w = 0 := by omega
     subst hw0
-    rw [worksetOf_singleton, popCount_and_single,
-      popCount_and_single] at hcount
-    rcases hb : (ctx.g[lab[d + o]!]!).testBit lab[ce]! with _ | _ <;>
-      rcases hb' : (ctx.g[lab[d + o']!]!).testBit lab[ce]! with _ | _ <;>
+    rw [worksetOf_singleton, VSet.cardInter_singleton,
+      VSet.cardInter_singleton] at hcount
+    rcases hb : (ctx.g[lab[d + o]!]!).mem lab[ce]! with _ | _ <;>
+      rcases hb' : (ctx.g[lab[d + o']!]!).mem lab[ce]! with _ | _ <;>
         rw [hb, hb'] at hcount <;> simp_all
   · -- a pair
     have hpair : ce = c + 1 := by omega
     subst hpair
-    have hC' : (c, c + 1) ∈ cells ptn level ctx.n := hC
+    have hC' : (c, c + 1) ∈ cells ptn level n := hC
     have hodd3 : (d + 2 + 1 - d) % 2 = 1 := by omega
-    have hboth := pair_odd_eq hE hps hend hinj hlb hg hsymm hC' hT
+    have hboth := pair_odd_eq hE hps hend hinj hlb hsymm hC' hT
       hodd3
     have hb_o := hboth o (by omega)
     have hb_o' := hboth o' (by omega)
     -- transport the pair-side equalities to the triple side
     have hto : o ≤ 2 := by omega
     have hto' : o' ≤ 2 := by omega
-    have hself_o : (ctx.g[lab[d + o]!]!).testBit lab[c]! =
-        (ctx.g[lab[d + o]!]!).testBit lab[c + 1]! := by
+    have hself_o : (ctx.g[lab[d + o]!]!).mem lab[c]! =
+        (ctx.g[lab[d + o]!]!).mem lab[c + 1]! := by
       rw [hsymm lab[d + o]! lab[c]! (hlb (d + o) (by omega))
           (hlb c (by omega)),
         hsymm lab[d + o]! lab[c + 1]! (hlb (d + o) (by omega))
           (hlb (c + 1) (by omega))]
       exact hb_o
-    have hself_o' : (ctx.g[lab[d + o']!]!).testBit lab[c]! =
-        (ctx.g[lab[d + o']!]!).testBit lab[c + 1]! := by
+    have hself_o' : (ctx.g[lab[d + o']!]!).mem lab[c]! =
+        (ctx.g[lab[d + o']!]!).mem lab[c + 1]! := by
       rw [hsymm lab[d + o']! lab[c]! (hlb (d + o') (by omega))
           (hlb c (by omega)),
         hsymm lab[d + o']! lab[c + 1]! (hlb (d + o') (by omega))
           (hlb (c + 1) (by omega))]
       exact hb_o'
-    rw [count_into_cell hps hend hinj hlb hC'
-        (hg _ (hlb _ (by omega))),
-      count_into_cell hps hend hinj hlb hC'
-        (hg _ (hlb _ (by omega))),
+    rw [count_into_cell hps hend hinj hC',
+      count_into_cell hps hend hinj hC',
       show c + 1 + 1 - c = 2 by omega, sum_range_two,
       sum_range_two] at hcount
     simp only [Nat.add_zero] at hcount
@@ -341,8 +338,8 @@ theorem triple_const {lab ptn : Array Nat} {level : Nat}
       bitCnt_inj.mpr hself_o'
     have hkey : bitCnt ctx.g[lab[d + o]!]! lab[c]! =
         bitCnt ctx.g[lab[d + o']!]! lab[c]! := by omega
-    have hbit0 : (ctx.g[lab[d + o]!]!).testBit lab[c]! =
-        (ctx.g[lab[d + o']!]!).testBit lab[c]! := bitCnt_inj.mp hkey
+    have hbit0 : (ctx.g[lab[d + o]!]!).mem lab[c]! =
+        (ctx.g[lab[d + o']!]!).mem lab[c]! := bitCnt_inj.mp hkey
     rcases Decidable.em (w = 0) with rfl | hw1
     · exact hbit0
     · have hw1' : w = 1 := by omega
@@ -360,21 +357,20 @@ vertices would need an odd handshake). -/
 /-- All off-diagonal internal bits of the triple agree. -/
 theorem triple_internal {lab ptn : Array Nat} {level : Nat}
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    {d : Nat} (hT : (d, d + 2) ∈ cells ptn level ctx.n) :
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    {d : Nat} (hT : (d, d + 2) ∈ cells ptn level n) :
     ∀ o o' u u', o < 3 → o' < 3 → u < 3 → u' < 3 → o ≠ o' → u ≠ u' →
-      (ctx.g[lab[d + o]!]!).testBit lab[d + o']! =
-        (ctx.g[lab[d + u]!]!).testBit lab[d + u']! := by
-  have hd2 : d + 2 < ctx.n := by
+      (ctx.g[lab[d + o]!]!).mem lab[d + o']! =
+        (ctx.g[lab[d + u]!]!).mem lab[d + u']! := by
+  have hd2 : d + 2 < n := by
     have := cells_bound (by omega) hend _ hT
     omega
-  have hbnd : ∀ o, o < 3 → d + o < ctx.n := by
+  have hbnd : ∀ o, o < 3 → d + o < n := by
     intro o ho
     omega
   -- the three row sums are equal
@@ -387,10 +383,8 @@ theorem triple_internal {lab ptn : Array Nat} {level : Nat}
         bitCnt ctx.g[lab[d + o']!]! lab[d + 2]! := by
     intro o o' ho ho'
     have hcount := hE _ hT _ hT o o' (by omega) (by omega)
-    rw [count_into_cell hps hend hinj hlb hT
-        (hg _ (hlb _ (hbnd o ho))),
-      count_into_cell hps hend hinj hlb hT
-        (hg _ (hlb _ (hbnd o' ho'))),
+    rw [count_into_cell hps hend hinj hT,
+      count_into_cell hps hend hinj hT,
       show d + 2 + 1 - d = 3 by omega, sum_range_three,
       sum_range_three] at hcount
     exact hcount
@@ -465,22 +459,21 @@ variable {lab ptn : Array Nat} {level d : Nat} {f : Nat → Nat}
 two transposed members. -/
 private theorem triple_adj_aux
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hT : (d, d + 2) ∈ cells ptn level ctx.n)
-    (hsmall : ∀ q ∈ cells ptn level ctx.n, q ≠ (d, d + 2) →
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hT : (d, d + 2) ∈ cells ptn level n)
+    (hsmall : ∀ q ∈ cells ptn level n, q ≠ (d, d + 2) →
       q.2 + 1 - q.1 ≤ 2)
     {a b : Nat} (ha : a < 3) (hb : b < 3)
-    {j : Nat} (hj : j < ctx.n)
+    {j : Nat} (hj : j < n)
     (hjA : lab[j]! ≠ lab[d + a]!) (hjB : lab[j]! ≠ lab[d + b]!) :
-    (ctx.g[lab[d + a]!]!).testBit lab[j]! =
-      (ctx.g[lab[d + b]!]!).testBit lab[j]! := by
-  have hd2 : d + 2 < ctx.n := by
+    (ctx.g[lab[d + a]!]!).mem lab[j]! =
+      (ctx.g[lab[d + b]!]!).mem lab[j]! := by
+  have hd2 : d + 2 < n := by
     have := cells_bound (by omega) hend _ hT
     omega
   obtain ⟨q, hq, hj1, hj2⟩ := cells_cover (ptn := ptn)
@@ -496,14 +489,14 @@ private theorem triple_adj_aux
     have hwb : j - d ≠ b := fun hcon => hjB (by
       have : j = d + b := by omega
       rw [this])
-    have hint := triple_internal hE hps hend hinj hlb hg hsymm hloop
+    have hint := triple_internal hE hps hend hinj hlb hsymm hloop
       hT a (j - d) b (j - d) ha hw3 hb hw3
       (fun hcon => hwa hcon.symm) (fun hcon => hwb hcon.symm)
     rw [show d + (j - d) = j by omega] at hint
     exact hint
   · -- j sits in another, small cell
     have hqsz := hsmall q hq hqT
-    have hconst := triple_const hE hps hend hinj hlb hg hsymm hT hq
+    have hconst := triple_const hE hps hend hinj hlb hsymm hT hq
       hqsz (o := a) (o' := b) (w := j - q.1) ha hb (by omega)
     rw [show q.1 + (j - q.1) = j by omega] at hconst
     exact hconst
@@ -511,28 +504,27 @@ private theorem triple_adj_aux
 /-- Bit invariance under the triple transposition. -/
 private theorem triple_flip_bit
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hT : (d, d + 2) ∈ cells ptn level ctx.n)
-    (hsmall : ∀ q ∈ cells ptn level ctx.n, q ≠ (d, d + 2) →
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hT : (d, d + 2) ∈ cells ptn level n)
+    (hsmall : ∀ q ∈ cells ptn level n, q ≠ (d, d + 2) →
       q.2 + 1 - q.1 ≤ 2)
     {a b : Nat} (ha : a < 3) (hb : b < 3)
     (hswap : f lab[d + a]! = lab[d + b]! ∧ f lab[d + b]! = lab[d + a]!)
-    (hfix : ∀ v, v < ctx.n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
+    (hfix : ∀ v, v < n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
       f v = v) :
-    ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[f lab[i]!]!).testBit (f lab[j]!) =
-        (ctx.g[lab[i]!]!).testBit lab[j]! := by
-  have hd2 : d + 2 < ctx.n := by
+    ∀ i j, i < n → j < n →
+      (ctx.g[f lab[i]!]!).mem (f lab[j]!) =
+        (ctx.g[lab[i]!]!).mem lab[j]! := by
+  have hd2 : d + 2 < n := by
     have := cells_bound (by omega) hend _ hT
     omega
-  have hAn : lab[d + a]! < ctx.n := hlb (d + a) (by omega)
-  have hBn : lab[d + b]! < ctx.n := hlb (d + b) (by omega)
+  have hAn : lab[d + a]! < n := hlb (d + a) (by omega)
+  have hBn : lab[d + b]! < n := hlb (d + b) (by omega)
   intro i j hi hj
   rcases Decidable.em (lab[i]! = lab[d + a]!) with hiA | hiA
   · -- lab i is the first transposed member
@@ -542,7 +534,7 @@ private theorem triple_flip_bit
     · rcases Decidable.em (lab[j]! = lab[d + b]!) with hjB | hjB
       · rw [hjB, hswap.2, hsymm lab[d + a]! lab[d + b]! hAn hBn]
       · rw [hfix lab[j]! (hlb j hj) hjA hjB]
-        exact triple_adj_aux hE hps hend hinj hlb hg hsymm hloop hT
+        exact triple_adj_aux hE hps hend hinj hlb hsymm hloop hT
           hsmall hb ha hj hjB hjA
   · rcases Decidable.em (lab[i]! = lab[d + b]!) with hiB | hiB
     · -- lab i is the second transposed member
@@ -552,7 +544,7 @@ private theorem triple_flip_bit
       · rcases Decidable.em (lab[j]! = lab[d + b]!) with hjB | hjB
         · rw [hjB, hswap.2, hloop _ hAn, hloop _ hBn]
         · rw [hfix lab[j]! (hlb j hj) hjA hjB]
-          exact triple_adj_aux hE hps hend hinj hlb hg hsymm hloop hT
+          exact triple_adj_aux hE hps hend hinj hlb hsymm hloop hT
             hsmall ha hb hj hjA hjB
     · -- lab i is fixed
       rw [hfix lab[i]! (hlb i hi) hiA hiB]
@@ -560,13 +552,13 @@ private theorem triple_flip_bit
       · rw [hjA, hswap.1,
           hsymm lab[i]! lab[d + b]! (hlb i hi) hBn,
           hsymm lab[i]! lab[d + a]! (hlb i hi) hAn]
-        exact triple_adj_aux hE hps hend hinj hlb hg hsymm hloop hT
+        exact triple_adj_aux hE hps hend hinj hlb hsymm hloop hT
           hsmall hb ha hi hiB hiA
       · rcases Decidable.em (lab[j]! = lab[d + b]!) with hjB | hjB
         · rw [hjB, hswap.2,
             hsymm lab[i]! lab[d + a]! (hlb i hi) hAn,
             hsymm lab[i]! lab[d + b]! (hlb i hi) hBn]
-          exact triple_adj_aux hE hps hend hinj hlb hg hsymm hloop hT
+          exact triple_adj_aux hE hps hend hinj hlb hsymm hloop hT
             hsmall ha hb hi hiA hiB
         · rw [hfix lab[j]! (hlb j hj) hjA hjB]
 
@@ -574,45 +566,36 @@ private theorem triple_flip_bit
 fixing every other vertex, preserves the adjacency rows. -/
 theorem triple_flip_rows
     (hE : Equitable ctx level lab ptn)
-    (hps : ptn.size = ctx.n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < ctx.n → j < ctx.n → lab[i]! = lab[j]! → i = j)
-    (hlb : ∀ i, i < ctx.n → lab[i]! < ctx.n)
-    (hsurj : ∀ v, v < ctx.n → ∃ i, i < ctx.n ∧ lab[i]! = v)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
-    (hfb : ∀ v, v < ctx.n → f v < ctx.n)
-    (hinvol : ∀ v, v < ctx.n → f (f v) = v)
-    (hT : (d, d + 2) ∈ cells ptn level ctx.n)
-    (hsmall : ∀ q ∈ cells ptn level ctx.n, q ≠ (d, d + 2) →
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsurj : ∀ v, v < n → ∃ i, i < n ∧ lab[i]! = v)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hfb : ∀ v, v < n → f v < n)
+    (hinvol : ∀ v, v < n → f (f v) = v)
+    (hT : (d, d + 2) ∈ cells ptn level n)
+    (hsmall : ∀ q ∈ cells ptn level n, q ≠ (d, d + 2) →
       q.2 + 1 - q.1 ≤ 2)
     {a b : Nat} (ha : a < 3) (hb : b < 3)
     (hswap : f lab[d + a]! = lab[d + b]! ∧ f lab[d + b]! = lab[d + a]!)
-    (hfix : ∀ v, v < ctx.n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
+    (hfix : ∀ v, v < n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
       f v = v) :
-    ∀ v, v < ctx.n → ctx.g[f v]! = image f ctx.n ctx.g[v]! := by
+    ∀ v, v < n → ctx.g[f v]! = (ctx.g[v]!).image f := by
   intro v hv
-  refine Nat.eq_of_testBit_eq fun z => ?_
-  rcases Decidable.em (z < ctx.n) with hz | hz
-  · rw [testBit_image_invol hfb hinvol hz]
+  refine VSet.ext fun z => ?_
+  rcases Decidable.em (z < n) with hz | hz
+  · rw [mem_image_invol hfb hinvol hz]
     obtain ⟨i, hi, rfl⟩ := hsurj v hv
     obtain ⟨j, hj, hjz⟩ := hsurj (f z) (hfb z hz)
     rw [← hjz]
-    have hkey := triple_flip_bit hE hps hend hinj hlb hg hsymm hloop
+    have hkey := triple_flip_bit hE hps hend hinj hlb hsymm hloop
       hT hsmall ha hb hswap hfix i j hi hj
     rw [hjz, hinvol z hz] at hkey
     rw [← hjz] at hkey
     exact hkey
-  · have h1 : (ctx.g[f v]!).testBit z = false :=
-      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le (hg _ (hfb v hv))
-        (Nat.pow_le_pow_right (by omega) (by omega)))
-    rw [h1, testBit_image]
-    refine (List.any_eq_false.mpr fun u hu hcontra => ?_).symm
-    have hun := List.mem_range.mp hu
-    rw [Bool.and_eq_true, beq_iff_eq] at hcontra
-    have := hfb u hun
-    omega
+  · rw [VSet.mem_of_ge (by omega), VSet.mem_of_ge (by omega)]
 
 end TripleFlip
 
@@ -765,18 +748,18 @@ variable {lab ptn : Array Nat} {level d : Nat}
 /-- The mapped labelling is cell-contents equivalent to the original
 when the map transposes two members of one triple cell and fixes every
 other vertex. -/
-theorem cellsPerm_self_tripleSwap {σ : Renaming ctx.n}
-    (hps : ptn.size = ctx.n) (hlsz : lab.size = ctx.n)
+theorem cellsPerm_self_tripleSwap {σ : Renaming n}
+    (hps : ptn.size = n) (hlsz : lab.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : LabInj lab ctx.n) (hlb : LabOk lab ctx.n)
-    (hT : (d, d + 2) ∈ cells ptn level ctx.n)
+    (hinj : LabInj lab n) (hlb : LabOk lab n)
+    (hT : (d, d + 2) ∈ cells ptn level n)
     {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
     (hswap : σ.toFun lab[d + a]! = lab[d + b]! ∧
       σ.toFun lab[d + b]! = lab[d + a]!)
-    (hfix : ∀ v, v < ctx.n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
+    (hfix : ∀ v, v < n → v ≠ lab[d + a]! → v ≠ lab[d + b]! →
       σ.toFun v = v) :
     cellsPerm ptn level lab (lab.map σ.toFun) := by
-  have hd2 : d + 2 < ctx.n := by
+  have hd2 : d + 2 < n := by
     have := cells_bound (by omega) hend _ hT
     omega
   have hIsT : IsCell ptn level d 3 := by
@@ -784,9 +767,9 @@ theorem cellsPerm_self_tripleSwap {σ : Renaming ctx.n}
     rw [show d + 2 + 1 - d = 3 by omega] at h
     exact h
   intro α len hIs
-  rcases Decidable.em (α < ctx.n) with han | han
+  rcases Decidable.em (α < n) with han | han
   · -- in range
-    have hcross : α + len ≤ ctx.n := by
+    have hcross : α + len ≤ n := by
       have := isCell_no_cross hend hIs (by omega)
       omega
     have hmapAt : ∀ o, o < len →
@@ -797,7 +780,7 @@ theorem cellsPerm_self_tripleSwap {σ : Renaming ctx.n}
     · -- the triple's own run: the window is swapped in place
       subst heq2
       rw [← heq1] at hswap hfix
-      have hα2 : α + 2 < ctx.n := by omega
+      have hα2 : α + 2 < n := by omega
       have hval : ∀ w, w < 3 → σ.toFun lab[α + w]! =
           if w = a then lab[α + b]!
           else if w = b then lab[α + a]! else lab[α + w]! := by
@@ -913,14 +896,14 @@ theorem cellsPerm_self_tripleSwap {σ : Renaming ctx.n}
 end TripleSelf
 
 /-- The transposition packaged as a state self-equivalence. -/
-theorem stPerm_self_tripleSwap {σ : Renaming ctx.n} {st : RefineSt}
+theorem stPerm_self_tripleSwap {σ : Renaming n} {st : RefineSt n}
     {level d : Nat}
-    (hok : StOk ctx.n level st) (hinj : LabInj st.lab ctx.n)
-    (hT : (d, d + 2) ∈ cells st.ptn level ctx.n)
+    (hok : StOk n level st) (hinj : LabInj st.lab n)
+    (hT : (d, d + 2) ∈ cells st.ptn level n)
     {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
     (hswap : σ.toFun st.lab[d + a]! = st.lab[d + b]! ∧
       σ.toFun st.lab[d + b]! = st.lab[d + a]!)
-    (hfix : ∀ v, v < ctx.n → v ≠ st.lab[d + a]! →
+    (hfix : ∀ v, v < n → v ≠ st.lab[d + a]! →
       v ≠ st.lab[d + b]! → σ.toFun v = v) :
     StPerm level st (mapSt σ st) := by
   refine ⟨rfl, rfl, rfl, rfl, rfl, rfl, ?_, ?_⟩
@@ -933,17 +916,17 @@ theorem stPerm_self_tripleSwap {σ : Renaming ctx.n} {st : RefineSt}
 /-- The generalized single-deviation theorem: a self-symmetry of the
 node carrying one child's individualized vertex to another's mirrors
 any discrete descent below the first child, with equal leaf rows. -/
-theorem deviation_leafRows_self {σ : Renaming ctx.n} {st : RefineSt}
-    {level tc e oU oV level' : Nat} {U' : RefineSt}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
+theorem deviation_leafRows_self {σ : Renaming n} {st : RefineSt n}
+    {level tc e oU oV level' : Nat} {U' : RefineSt n}
+    (hIt : IterOk ctx level st) (hlvl : level < n)
     (hg : RowsMap σ ctx.g ctx.g)
     (hsp : StPerm level st (mapSt σ st))
-    (hcell : (tc, e) ∈ cells st.ptn level ctx.n) (hne : tc < e)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
     (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
     (hvv : st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]!)
     (hdesc : Descends ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + oU]!) level' U')
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
     ∃ V', Descends ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + oV]!) level' V' ∧
       leafRows ctx V'.lab = leafRows ctx U'.lab := by
@@ -954,30 +937,29 @@ theorem deviation_leafRows_self {σ : Renaming ctx.n} {st : RefineSt}
 /-- The flip data at a triple target: a row-preserving self-symmetry
 of the node carrying one child's individualized vertex to the
 other's. -/
-theorem triple_flip_data {st : RefineSt} {level tc : Nat}
+theorem triple_flip_data {st : RefineSt n} {level tc : Nat}
     (hIt : IterOk ctx level st)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hT : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
-    (hsmall : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
+    (hT : (tc, tc + 2) ∈ cells st.ptn level n)
+    (hsmall : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 2) →
       q.2 + 1 - q.1 ≤ 2)
     {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b) :
-    ∃ σ : Renaming ctx.n, RowsMap σ ctx.g ctx.g ∧
+    ∃ σ : Renaming n, RowsMap σ ctx.g ctx.g ∧
       StPerm level st (mapSt σ st) ∧
       st.lab[tc + b]! = σ.toFun st.lab[tc + a]! := by
-  have hd2 : tc + 2 < ctx.n := by
+  have hd2 : tc + 2 < n := by
     have := cells_bound (by rw [hIt.ok.ptnSize]; omega)
       hIt.ok.ptnEnd _ hT
     rw [hIt.ok.ptnSize] at this
     omega
-  have hlb' : ∀ i, i < ctx.n → st.lab[i]! < ctx.n := fun i hi =>
+  have hlb' : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
     hIt.ok.labOk i (by rw [hIt.ok.labSize]; omega)
-  have hAn : st.lab[tc + a]! < ctx.n := hlb' (tc + a) (by omega)
-  have hBn : st.lab[tc + b]! < ctx.n := hlb' (tc + b) (by omega)
+  have hAn : st.lab[tc + a]! < n := hlb' (tc + a) (by omega)
+  have hBn : st.lab[tc + b]! < n := hlb' (tc + b) (by omega)
   have hABne : st.lab[tc + a]! ≠ st.lab[tc + b]! := by
     intro hcon
     have := hIt.inj (tc + a) (tc + b) (by omega) (by omega) hcon
@@ -994,12 +976,12 @@ theorem triple_flip_data {st : RefineSt} {level tc : Nat}
       rw [ite_eq_left rfl]
     · show (if st.lab[tc + b]! = st.lab[tc + a]! then _ else _) = _
       rw [ite_eq_right (fun h => hABne h.symm), ite_eq_left rfl]
-  have hfixf : ∀ v, v < ctx.n → v ≠ st.lab[tc + a]! →
+  have hfixf : ∀ v, v < n → v ≠ st.lab[tc + a]! →
       v ≠ st.lab[tc + b]! → f v = v := by
     intro v _ hvA hvB
     show (if v = st.lab[tc + a]! then _ else _) = _
     rw [ite_eq_right hvA, ite_eq_right hvB]
-  have hfb : ∀ v, v < ctx.n → f v < ctx.n := by
+  have hfb : ∀ v, v < n → f v < n := by
     intro v hv
     rcases Decidable.em (v = st.lab[tc + a]!) with rfl | hvA
     · rw [hswapf.1]
@@ -1009,7 +991,7 @@ theorem triple_flip_data {st : RefineSt} {level tc : Nat}
         exact hAn
       · rw [hfixf v hv hvA hvB]
         exact hv
-  have hinvol : ∀ v, v < ctx.n → f (f v) = v := by
+  have hinvol : ∀ v, v < n → f (f v) = v := by
     intro v hv
     rcases Decidable.em (v = st.lab[tc + a]!) with rfl | hvA
     · rw [hswapf.1, hswapf.2]
@@ -1017,62 +999,61 @@ theorem triple_flip_data {st : RefineSt} {level tc : Nat}
       · rw [hswapf.2, hswapf.1]
       · rw [hfixf v hv hvA hvB, hfixf v hv hvA hvB]
   have hsurj := labInj_surj
-    (by rw [hIt.ok.labSize] ; exact Nat.le_refl _ : ctx.n ≤ _)
+    (by rw [hIt.ok.labSize] ; exact Nat.le_refl _ : n ≤ _)
     hIt.ok.labOk hIt.inj
   have hrows := triple_flip_rows hE hIt.ok.ptnSize hIt.ok.ptnEnd
-    hIt.inj hlb' hsurj hg hsymm hloop hfb hinvol hT hsmall ha hb
+    hIt.inj hlb' hsurj hsymm hloop hfb hinvol hT hsmall ha hb
     hswapf hfixf
   have hgmap := rowsMap_of_flip_rows hgsz hfb hinvol hrows
-  have hswapσ : (renamingOfFlip f ctx.n hfb hinvol).toFun
+  have hswapσ : (renamingOfFlip f n hfb hinvol).toFun
         st.lab[tc + a]! = st.lab[tc + b]! ∧
-      (renamingOfFlip f ctx.n hfb hinvol).toFun
+      (renamingOfFlip f n hfb hinvol).toFun
         st.lab[tc + b]! = st.lab[tc + a]! := by
     constructor
-    · rw [show (renamingOfFlip f ctx.n hfb hinvol).toFun
+    · rw [show (renamingOfFlip f n hfb hinvol).toFun
           st.lab[tc + a]! = f st.lab[tc + a]! from
         renamingOfFlip_at hfb hinvol hAn]
       exact hswapf.1
-    · rw [show (renamingOfFlip f ctx.n hfb hinvol).toFun
+    · rw [show (renamingOfFlip f n hfb hinvol).toFun
           st.lab[tc + b]! = f st.lab[tc + b]! from
         renamingOfFlip_at hfb hinvol hBn]
       exact hswapf.2
-  have hfixσ : ∀ v, v < ctx.n → v ≠ st.lab[tc + a]! →
+  have hfixσ : ∀ v, v < n → v ≠ st.lab[tc + a]! →
       v ≠ st.lab[tc + b]! →
-      (renamingOfFlip f ctx.n hfb hinvol).toFun v = v := by
+      (renamingOfFlip f n hfb hinvol).toFun v = v := by
     intro v hv hvA hvB
-    rw [show (renamingOfFlip f ctx.n hfb hinvol).toFun v = f v from
+    rw [show (renamingOfFlip f n hfb hinvol).toFun v = f v from
       renamingOfFlip_at hfb hinvol hv]
     exact hfixf v hv hvA hvB
   have hsp := stPerm_self_tripleSwap hIt.ok hIt.inj hT ha hb hab
     hswapσ hfixσ
   have hvv : st.lab[tc + b]! =
-      (renamingOfFlip f ctx.n hfb hinvol).toFun st.lab[tc + a]! :=
+      (renamingOfFlip f n hfb hinvol).toFun st.lab[tc + a]! :=
     hswapσ.1.symm
-  exact ⟨renamingOfFlip f ctx.n hfb hinvol, hgmap, hsp, hvv⟩
+  exact ⟨renamingOfFlip f n hfb hinvol, hgmap, hsp, hvv⟩
 
 /-- A deviation at a triple target under the first-branch shape:
 descents below any two of its children reach leaves with the same
 rows. -/
-theorem triple_deviation_leafRows {st : RefineSt}
-    {level tc level' : Nat} {U' : RefineSt}
-    (hIt : IterOk ctx level st) (hlvl : level < ctx.n)
-    (hgsz : ctx.g.size = ctx.n)
-    (hg : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
-    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
-      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
-    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+theorem triple_deviation_leafRows {st : RefineSt n}
+    {level tc level' : Nat} {U' : RefineSt n}
+    (hIt : IterOk ctx level st) (hlvl : level < n)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hE : Equitable ctx level st.lab st.ptn)
-    (hT : (tc, tc + 2) ∈ cells st.ptn level ctx.n)
-    (hsmall : ∀ q ∈ cells st.ptn level ctx.n, q ≠ (tc, tc + 2) →
+    (hT : (tc, tc + 2) ∈ cells st.ptn level n)
+    (hsmall : ∀ q ∈ cells st.ptn level n, q ≠ (tc, tc + 2) →
       q.2 + 1 - q.1 ≤ 2)
     {a b : Nat} (ha : a < 3) (hb : b < 3) (hab : a ≠ b)
     (hdesc : Descends ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + a]!) level' U')
-    (hdisc : ∀ q, q < ctx.n → U'.ptn[q]! ≤ level') :
+    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
     ∃ V', Descends ctx (level + 1)
       (childSt ctx level st tc st.lab[tc + b]!) level' V' ∧
       leafRows ctx V'.lab = leafRows ctx U'.lab := by
-  obtain ⟨σ, hgmap, hsp, hvv⟩ := triple_flip_data hIt hgsz hg hsymm
+  obtain ⟨σ, hgmap, hsp, hvv⟩ := triple_flip_data hIt hgsz hsymm
     hloop hE hT hsmall ha hb hab
   exact deviation_leafRows_self hIt hlvl hgmap hsp hT (by omega)
     (show a ≤ tc + 2 - tc by omega) (show b ≤ tc + 2 - tc by omega)
@@ -1092,12 +1073,12 @@ section PairClosure
 variable {lab ptn : Array Nat} {level : Nat}
 
 /-- The `PairMatch`-reachability closure of a pair-cell start. -/
-inductive PairReach (ctx : Ctx) (lab ptn : Array Nat) (level : Nat)
+inductive PairReach (ctx : Ctx n) (lab ptn : Array Nat) (level : Nat)
     (t : Nat) : Nat → Prop where
   | base : PairReach ctx lab ptn level t t
   | step {c e : Nat} : PairReach ctx lab ptn level t c →
-      (c, c + 1) ∈ cells ptn level ctx.n →
-      (e, e + 1) ∈ cells ptn level ctx.n →
+      (c, c + 1) ∈ cells ptn level n →
+      (e, e + 1) ∈ cells ptn level n →
       PairMatch ctx.g lab[c]! lab[c + 1]! lab[e]! lab[e + 1]! →
       PairReach ctx lab ptn level t e
 
@@ -1130,9 +1111,9 @@ theorem pair_start_ne_second {nn : Nat}
 /-- Every member of the closure of a pair start is itself a pair-cell
 start. -/
 theorem pairReach_pair {t c : Nat}
-    (hroot : (t, t + 1) ∈ cells ptn level ctx.n)
+    (hroot : (t, t + 1) ∈ cells ptn level n)
     (h : PairReach ctx lab ptn level t c) :
-    (c, c + 1) ∈ cells ptn level ctx.n := by
+    (c, c + 1) ∈ cells ptn level n := by
   induction h with
   | base => exact hroot
   | step hr hc he hm ih => exact he

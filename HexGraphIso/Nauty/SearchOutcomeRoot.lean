@@ -29,13 +29,13 @@ variable {n k : Nat}
 unpruned specification key and the key installed by the transcription,
 whatever event trail the run reports. -/
 theorem keyEq_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
-    {fs : List Nat} {best : Option Key} {eventTrail : FrameTrail}
-    (hroot : FirstRun G { n := n, g := rowsOf G } 100 n (n + 2) 1 [] fs
+    {fs : List Nat} {best : Option (Key n)} {eventTrail : FrameTrail}
+    (hroot : FirstRun G { g := rowsOf G } 100 n (n + 2) 1 [] fs
       (rootSt n (initialPartition G).1 (initialPartition G).2)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length best FrameTrail.empty eventTrail
-      (firstPathNode { n := n, g := rowsOf G } (n + 2) 100 (n + 2) 1
+      (firstPathNode { g := rowsOf G } (n + 2) 100 (n + 2) 1
         (initialPartition G).2.length
         (rootSt n (initialPartition G).1 (initialPartition G).2)).1) :
     canonSpecKey G = tracedKey G := by
@@ -74,14 +74,14 @@ theorem keyEq_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
 
 /-- First-path totality at the root fuel yields the key equality. -/
 theorem keyEq_of_firstTotal (G : Colored n k) (hn0 : 0 < n)
-    (h : FirstTotal G { n := n, g := rowsOf G } (n + 2) 100 (n + 2)) :
+    (h : FirstTotal G { g := rowsOf G } (n + 2) 100 (n + 2)) :
     canonSpecKey G = tracedKey G := by
   obtain ⟨fs, outBest, eventTrail, hrun, -⟩ :=
     h n 1 (initialPartition G).2.length []
       (rootSt n (initialPartition G).1 (initialPartition G).2)
-      FrameTrail.empty rfl rfl rfl hn0 (Nat.le_refl 1) rfl (by omega)
+      FrameTrail.empty rfl rfl hn0 (Nat.le_refl 1) rfl (by omega)
       (by omega) (Nat.le_refl 1)
-      (CheapDesc.same { n := n, g := rowsOf G } 1 _)
+      (CheapDesc.same { g := rowsOf G } 1 _)
       (orbSound_orbConn_init _) (FirstInv.root hn0) PathOk.root
   exact keyEq_of_firstRun (Nat.pos_iff_ne_zero.mp hn0) hrun
 

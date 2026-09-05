@@ -164,59 +164,77 @@ private theorem foldl_congr_mem {α β : Type} {f g : α → β → α} :
     exact foldl_congr_mem l
       (fun a' b' hb' => h a' b' (List.mem_cons_of_mem _ hb')) _
 
-/-- Adjacency rows rebuilt from the flat literal, priced for kernel
-reduction: the flat list is cut into rows once, and each row bitset
-folds over its own short segment instead of probing the flat list. -/
+/-- Adjacency rows rebuilt from the flat literal as single-`Nat`
+bitsets, priced for kernel reduction: the flat list is cut into rows
+once, and each row folds over its own short segment instead of probing
+the flat list. This is the row form the kernel replay
+(`HexGraphIso.NodeLit`) computes with. -/
 @[expose] def flatRows (nn : Nat) (flat : List Bool) : Array Nat :=
   ((chunkRows nn nn flat).map fun seg =>
     (List.range nn).foldl
-      (fun row j => if atD seg j false then Nauty.insert row j else row)
+      (fun row j => if atD seg j false then Nauty.insertL nn row j else row)
       0).toArray
 
-theorem flatRows_eq_rowsOf (G : Colored n k) :
-    flatRows n G.graph.adjMatrix.data.toList = Nauty.rowsOf G := by
-  rw [flatRows, Nauty.rowsOf]
+/-- The same rows as packed vertex sets: the form the specification
+side consumes. -/
+@[expose] def rowsOfFlat (nn : Nat) (flat : List Bool) : Array (Nauty.VSet nn) :=
+  ((chunkRows nn nn flat).map fun seg =>
+    Nauty.VSet.ofFn fun j => atD seg j false).toArray
+
+theorem rowsOfFlat_eq_rowsOf (G : Colored n k) :
+    rowsOfFlat n G.graph.adjMatrix.data.toList = Nauty.rowsOf G := by
+  rw [rowsOfFlat, Nauty.rowsOf]
   refine congrArg List.toArray (List.ext_getElem ?_ ?_)
   · rw [List.length_map, chunkRows_length, List.length_map,
       List.length_range]
   · intro i h1 h2
     rw [List.length_map, chunkRows_length] at h1
     rw [List.getElem_map, List.getElem_map, List.getElem_range,
-      ← atD_eq_getElem _ i (by rw [chunkRows_length]; exact h1),
-      Nauty.rowOf]
-    refine foldl_congr_mem _ (fun row j hj => ?_) 0
-    have hjn := List.mem_range.mp hj
-    rw [dite_eq_left (⟨h1, hjn⟩ : i < n ∧ j < n),
-      atD_chunk_flat (by simp) h1 hjn, Nat.mul_comm n i,
-      ← adj_eq_toList_flat G.graph ⟨i, h1⟩ ⟨j, hjn⟩]
+      ← atD_eq_getElem _ i (by rw [chunkRows_length]; exact h1)]
+    refine Nauty.VSet.ext fun j => ?_
+    rw [Nauty.VSet.mem_ofFn, Nauty.mem_rowOf]
+    rcases Decidable.em (j < n) with hj | hj
+    · rw [decide_eq_true hj, Bool.true_and,
+        dite_eq_left (⟨h1, hj⟩ : i < n ∧ j < n),
+        atD_chunk_flat (by simp) h1 hj, Nat.mul_comm n i,
+        ← adj_eq_toList_flat G.graph ⟨i, h1⟩ ⟨j, hj⟩]
+    · rw [decide_eq_false hj, Bool.false_and,
+        dite_eq_right (fun h => hj h.2)]
+
+/-- The kernel's `Nat` rows are the packed rows read as bitsets. -/
+theorem toNat_rowsOfFlat (nn : Nat) (flat : List Bool) :
+    (rowsOfFlat nn flat).toList.map Nauty.VSet.toNat = (flatRows nn flat).toList := by
+  rw [rowsOfFlat, flatRows, List.toList_toArray, List.toList_toArray, List.map_map]
+  refine List.map_congr_left fun seg _ => ?_
+  exact Nauty.VSet.toNat_ofFn _
 
 /-- `Nauty.checkKey` with the adjacency rows rebuilt from a flat
 literal: the negative route's kernel obligation, evaluating the tied
 literal instead of forcing `rowsOf`. -/
 @[expose] def checkKeyFlat (G : Colored n k) (flat : List Bool)
-    (cert : Nauty.CertNode) (B : Nauty.Key) : Bool :=
+    (cert : Nauty.CertNode) (B : Nauty.Key n) : Bool :=
   if n == 0 then
     B.codes == [] && B.rows == []
   else
-    Nauty.checkNode { n := n, g := flatRows n flat } 100 B.rows
-      (Nauty.validGammas (flatRows n flat) n cert) n 1
+    Nauty.checkNode { g := rowsOfFlat n flat } 100 B.rows
+      (Nauty.validGammas (rowsOfFlat n flat) cert) n 1
       (Nauty.initialPartition G).1
       (Nauty.initPtn n (n + 2) (Nauty.initialPartition G).2)
-      (Nauty.initActive (Nauty.initialPartition G).2)
+      (Nauty.initActive n (Nauty.initialPartition G).2)
       (Nauty.initialPartition G).2.length cert B.codes = some true
 
 theorem checkKeyFlat_eq (G : Colored n k) (cert : Nauty.CertNode)
-    (B : Nauty.Key) :
+    (B : Nauty.Key n) :
     checkKeyFlat G G.graph.adjMatrix.data.toList cert B =
       Nauty.checkKey G cert B := by
-  rw [checkKeyFlat, Nauty.checkKey, flatRows_eq_rowsOf]
+  rw [checkKeyFlat, Nauty.checkKey, rowsOfFlat_eq_rowsOf]
 
 /-- Tying equalities plus two flat-literal key certificates with
 differing keys prove non-isomorphism: the kernel evaluates each graph
 once into its literal, and both replays run on rebuilt literal
 rows. -/
 theorem not_isomorphic_of_checkKeysFlat {G H : Colored n k}
-    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key}
+    {certG certH : Nauty.CertNode} {BG BH : Nauty.Key n}
     {LA LB : List Bool}
     (hA : G.graph.adjMatrix.data.toList = LA)
     (hB : H.graph.adjMatrix.data.toList = LB)

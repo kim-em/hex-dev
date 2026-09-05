@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/OfFn.lean",
+  "baseline_blob": "525b585adac4213b07b34b2b5b6f08ef12e09f6c",
+  "current_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
+  "reason": "Adds Hex.Array.zipWith', a kernel-reducible twin of core Array.zipWith with a csimp redirect back to the core loop, plus its lemmas, for the hex-graph-iso packed vertex sets. No factorization library calls it; nothing already defined in the file changes."
+}

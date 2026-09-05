@@ -33,7 +33,7 @@ private theorem charge_none {st : AutState} (h : st.budget = none) :
   rw [AutState.charge, h]
 
 /-- Admission never touches the budget. -/
-private theorem admit_budget (ctx : Ctx) (st : AutState)
+private theorem admit_budget (ctx : Ctx n) (st : AutState)
     (γ : Array Nat) : (st.admit ctx γ).budget = st.budget := by
   rw [AutState.admit]
   simp only [Id.run_pure, apply_ite Id.run]
@@ -41,7 +41,7 @@ private theorem admit_budget (ctx : Ctx) (st : AutState)
   all_goals rfl
 
 /-- Admission never exhausts. -/
-private theorem admit_exhausted (ctx : Ctx) (st : AutState)
+private theorem admit_exhausted (ctx : Ctx n) (st : AutState)
     (γ : Array Nat) : (st.admit ctx γ).exhausted = st.exhausted := by
   rw [AutState.admit]
   simp only [Id.run_pure, apply_ite Id.run]
@@ -49,7 +49,7 @@ private theorem admit_exhausted (ctx : Ctx) (st : AutState)
   all_goals rfl
 
 /-- Harvesting never touches the budget. -/
-private theorem harvest_budget (ctx : Ctx) (st : AutState)
+private theorem harvest_budget (ctx : Ctx n) (st : AutState)
     (lab : Array Nat) : (st.harvest ctx lab).budget = st.budget := by
   rw [AutState.harvest]
   simp only []
@@ -58,7 +58,7 @@ private theorem harvest_budget (ctx : Ctx) (st : AutState)
   all_goals rfl
 
 /-- Harvesting never exhausts. -/
-private theorem harvest_exhausted (ctx : Ctx) (st : AutState)
+private theorem harvest_exhausted (ctx : Ctx n) (st : AutState)
     (lab : Array Nat) :
     (st.harvest ctx lab).exhausted = st.exhausted := by
   rw [AutState.harvest]
@@ -78,9 +78,9 @@ private theorem foldl_pres {α β : Type} (f : β → α → β)
 
 /-- With no budget, the certificate pass never exhausts and keeps no
 budget: the two fields the totality of `produceCand` reads. -/
-private theorem certifyNodeAutom_nobudget (ctx : Ctx) (tcLevel : Nat) :
+private theorem certifyNodeAutom_nobudget (ctx : Ctx n) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (bcodes : List Nat) (st : AutState),
+      (active : VSet n) (numcells : Nat) (bcodes : List Nat) (st : AutState),
       st.budget = none → st.exhausted = false →
       (certifyNodeAutom ctx tcLevel fuel level lab ptn active numcells
           bcodes st).2.budget = none ∧
@@ -130,10 +130,10 @@ theorem produceCand_none_isSome (G : Colored n k) :
   dsimp only
   rw [ite_eq_right (by simp [Option.any])]
   have hst1 : ((runColoredTraced G).autos.foldl
-      (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+      (fun st γ => st.admit { g := rowsOf G } γ)
       (AutState.init n none)).budget = none ∧
       ((runColoredTraced G).autos.foldl
-      (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+      (fun st γ => st.admit { g := rowsOf G } γ)
       (AutState.init n none)).exhausted = false := by
     rw [← Array.foldl_toList]
     refine foldl_pres _
@@ -142,14 +142,14 @@ theorem produceCand_none_isSome (G : Colored n k) :
     intro st γ hst
     exact ⟨(admit_budget _ st γ).trans hst.1,
       (admit_exhausted _ st γ).trans hst.2⟩
-  have h3 := certifyNodeAutom_nobudget { n := n, g := rowsOf G } 100
+  have h3 := certifyNodeAutom_nobudget { g := rowsOf G } 100
     n 1 (initialPartition G).1
     (initPtn n (n + 2) (initialPartition G).2)
-    (initActive (initialPartition G).2)
+    (initActive n (initialPartition G).2)
     (initialPartition G).2.length
     (((runColoredTraced G).bestCodes ++ [codeSentinel]))
     { ((runColoredTraced G).autos.foldl
-        (fun st γ => st.admit { n := n, g := rowsOf G } γ)
+        (fun st γ => st.admit { g := rowsOf G } γ)
         (AutState.init n none)) with
       refLeaf := some (runColoredTraced G).result.canonlab }
     hst1.1 hst1.2
@@ -163,10 +163,10 @@ theorem produceCand_none_isSome (G : Colored n k) :
 the recorded code chain with the sentinel, and the spec rows of the
 traced canonical labelling. -/
 theorem produceCand_key {G : Colored n k} {budget : Option Nat}
-    {cert : CertNode} {B : Key}
+    {cert : CertNode} {B : Key n}
     (h : produceCand G budget = some (cert, B)) :
     B = ⟨(runColoredTraced G).bestCodes ++ [codeSentinel],
-      leafRows { n := n, g := rowsOf G }
+      leafRows { g := rowsOf G }
         (runColoredTraced G).result.canonlab⟩ := by
   rw [produceCand] at h
   dsimp only at h

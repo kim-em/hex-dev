@@ -21,10 +21,10 @@ depend on the search-side generator store.
 
 namespace Hex.GraphIso.Nauty
 
-theorem certifyNodeAutom_automsOk (ctx : Ctx) (tcLevel : Nat) :
+theorem certifyNodeAutom_automsOk (ctx : Ctx n) (tcLevel : Nat) :
     ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active numcells : Nat) (bcodes : List Nat) (st : AutState),
-      AutomsOk (fun γ => checkAutom ctx.g γ ctx.n = true)
+      (active : VSet n) (numcells : Nat) (bcodes : List Nat) (st : AutState),
+      AutomsOk (fun γ => checkAutom ctx.g γ = true)
         (certifyNodeAutom ctx tcLevel fuel level lab ptn active numcells
           bcodes st).1
   | 0, _, _, _, _, _, _, _ => trivial
@@ -42,10 +42,10 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx) (tcLevel : Nat) :
         · trivial
         · split
           · trivial
-          · let P := fun γ => checkAutom ctx.g γ ctx.n = true
+          · let P := fun γ => checkAutom ctx.g γ = true
             let rs := refine ctx level lab ptn active numcells
             let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-            let masks := cellMasks ctx rs.lab rs.ptn level
+            let masks := cellMasks n rs.lab rs.ptn level
             let step :
                 (List CertNode × AutState ×
                     Option (Nat × Array (Array Nat × Array Nat))) →
@@ -54,17 +54,17 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx) (tcLevel : Nat) :
                     Option (Nat × Array (Array Nat × Array Nat)) :=
               fun acc o =>
                 let (kids, st, cache) := acc
-                let cache' := usableGens ctx masks st cache
+                let cache' := usableGens masks st cache
                 let descend : Unit → List CertNode × AutState ×
                     Option (Nat × Array (Array Nat × Array Nat)) :=
                   fun _ =>
-                    let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+                    let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
                       rs.lab[tcr.1 + o]!
                     let (child, st') := certifyNodeAutom ctx tcLevel fuel
                       (level + 1) br.1 br.2.1 br.2.2
                       (rs.numcells + 1) brest st
                     (child :: kids, st', some cache')
-                match witness? ctx rs.lab tcr.1 cache'.2 o with
+                match witness? n rs.lab tcr.1 cache'.2 o with
                 | some (o', γ) =>
                   if childCellsOk ctx rs.lab rs.ptn level tcr.1 o o'
                       γ then
@@ -77,8 +77,8 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx) (tcLevel : Nat) :
                 ∀ c ∈ (step acc o).1, AutomsOk P c := by
               intro acc o hacc c hc
               rcases acc with ⟨kids, stx, cache⟩
-              let cache' := usableGens ctx masks stx cache
-              let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+              let cache' := usableGens masks stx cache
+              let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
                 rs.lab[tcr.1 + o]!
               rcases hout : certifyNodeAutom ctx tcLevel fuel
                   (level + 1) br.1 br.2.1 br.2.2
@@ -89,7 +89,7 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx) (tcLevel : Nat) :
                   (rs.numcells + 1) brest stx
                 rw [hout] at hr
                 exact hr
-              rcases hw : witness? ctx rs.lab tcr.1 cache'.2 o with
+              rcases hw : witness? n rs.lab tcr.1 cache'.2 o with
                 _ | ⟨o', γ⟩
               · simp only [step, cache', hw, br, hout] at hc
                 rcases List.mem_cons.mp hc with rfl | hc
@@ -132,14 +132,14 @@ theorem certifyNodeAutom_automsOk (ctx : Ctx) (tcLevel : Nat) :
 /-- Every automorphism record in a produced candidate has passed the
 trusted automorphism checker. -/
 theorem produceCand_automsOk {n k : Nat} (G : Colored n k)
-    {budget : Option Nat} {cert : CertNode} {B : Key}
+    {budget : Option Nat} {cert : CertNode} {B : Key n}
     (h : produceCand G budget = some (cert, B)) :
-    AutomsOk (fun γ => checkAutom (rowsOf G) γ n = true) cert := by
+    AutomsOk (fun γ => checkAutom (rowsOf G) γ = true) cert := by
   rw [produceCand] at h
   dsimp only at h
   split at h
   · cases h
-  · let ctx : Ctx := { n := n, g := rowsOf G }
+  · let ctx : Ctx n := { g := rowsOf G }
     let st1 := (runColoredTraced G).autos.foldl
       (fun st γ => st.admit ctx γ) (AutState.init n budget)
     let st2 := { st1 with
@@ -147,7 +147,7 @@ theorem produceCand_automsOk {n k : Nat} (G : Colored n k)
     rcases hw : certifyNodeAutom ctx 100 n 1
         (initialPartition G).1
         (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
+        (initActive n (initialPartition G).2)
         (initialPartition G).2.length
         ((runColoredTraced G).bestCodes ++ [codeSentinel]) st2 with
       ⟨cert', st3⟩
@@ -160,7 +160,7 @@ theorem produceCand_automsOk {n k : Nat} (G : Colored n k)
       have hok := certifyNodeAutom_automsOk ctx 100 n 1
         (initialPartition G).1
         (initPtn n (n + 2) (initialPartition G).2)
-        (initActive (initialPartition G).2)
+        (initActive n (initialPartition G).2)
         (initialPartition G).2.length
         ((runColoredTraced G).bestCodes ++ [codeSentinel]) st2
       rw [hw] at hok

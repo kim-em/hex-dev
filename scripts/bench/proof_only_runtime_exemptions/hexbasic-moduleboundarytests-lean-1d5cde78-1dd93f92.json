@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/ModuleBoundaryTests.lean",
+  "baseline_blob": "1d5cde78b8b5c3ca7dbef22780ec9a041d938c87",
+  "current_blob": "1dd93f922eb3a038047ccf03936c070fb66cc723",
+  "reason": "Adds a decide +kernel probe for Hex.Array.zipWith'. The file is a test module that no library imports and no benchmark runs."
+}

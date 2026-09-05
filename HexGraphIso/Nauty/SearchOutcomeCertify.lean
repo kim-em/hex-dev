@@ -28,7 +28,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- Every node of both kinds is total at every executable fuel. -/
-theorem totalAll (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
+theorem totalAll (G : Colored n k) (ctx : Ctx n) (inf tcLevel : Nat) :
     ∀ runFuel, OtherTotal G ctx inf tcLevel runFuel ∧
       FirstTotal G ctx inf tcLevel runFuel
   | 0 => ⟨OtherTotal.zero G ctx inf tcLevel, FirstTotal.zero G ctx inf tcLevel⟩
@@ -43,7 +43,7 @@ theorem totalAll (G : Colored n k) (ctx : Ctx) (inf tcLevel : Nat) :
 theorem canonSpecKey_eq_tracedKey (G : Colored n k) (hn0 : 0 < n) :
     canonSpecKey G = tracedKey G :=
   keyEq_of_firstTotal G hn0
-    (totalAll G { n := n, g := rowsOf G } (n + 2) 100 (n + 2)).2
+    (totalAll G { g := rowsOf G } (n + 2) 100 (n + 2)).2
 
 /-- The certified canonicalization always succeeds. -/
 theorem certifyCanon?_isSome (G : Colored n k) : (certifyCanon? G).isSome := by

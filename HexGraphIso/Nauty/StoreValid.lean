@@ -116,21 +116,20 @@ theorem scatter_isPerm {γ lab₁ lab₂ : Array Nat}
 /-- The code-1 admission under its explicit `isautom` guard: the
 scatter of the leaf labelling over the first-path labelling passes
 `checkAutom` when the `isautom` scan accepted it. -/
-theorem checkAutom_scatter_of_isautom {ctx : Ctx}
-    {γ lab₁ lab₂ : Array Nat} (hγsz : γ.size = ctx.n)
-    (hsz₁ : lab₁.size = ctx.n)
-    (hp₁ : lab₁.toList.Perm (List.range ctx.n))
-    (hsz₂ : lab₂.size = ctx.n)
-    (hp₂ : lab₂.toList.Perm (List.range ctx.n))
-    (hsc : ∀ i, i < ctx.n → γ[lab₁[i]!]! = lab₂[i]!)
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem checkAutom_scatter_of_isautom {ctx : Ctx n}
+    {γ lab₁ lab₂ : Array Nat} (hγsz : γ.size = n)
+    (hsz₁ : lab₁.size = n)
+    (hp₁ : lab₁.toList.Perm (List.range n))
+    (hsz₂ : lab₂.size = n)
+    (hp₂ : lab₂.toList.Perm (List.range n))
+    (hsc : ∀ i, i < n → γ[lab₁[i]!]! = lab₂[i]!)
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (haut : isautom ctx γ = true) :
-    checkAutom ctx.g γ ctx.n = true :=
+    checkAutom ctx.g γ = true :=
   checkAutom_of_isautom hγsz (scatter_isPerm hsz₁ hp₁ hsz₂ hp₂ hsc)
-    hsymm hloop hb haut
+    hsymm hloop haut
 
 /-- A labelling undoes its inverse on vertices. -/
 private theorem getElem!_comp_invPerm {lab : Array Nat}
@@ -153,10 +152,10 @@ private theorem scatter_eq_comp_invPerm {γ lab₁ lab₂ : Array Nat}
   exact hsc j hj
 
 /-- A leaf row is the row's image through the labelling's inverse. -/
-private theorem leafRows_getElem! {ctx : Ctx} {lab : Array Nat}
-    {i : Nat} (hi : i < ctx.n) :
+private theorem leafRows_getElem! {ctx : Ctx n} {lab : Array Nat}
+    {i : Nat} (hi : i < n) :
     (leafRows ctx lab)[i]! =
-      image (fun w => (invPerm lab)[w]!) ctx.n ctx.g[lab[i]!]! := by
+      ctx.g[lab[i]!]!.image (fun w => (invPerm lab)[w]!) := by
   rw [leafRows, getElem!_pos _ _ (by simpa using hi), List.getElem_map,
     List.getElem_range]
   rfl
@@ -167,52 +166,46 @@ leaf rows are joined by an automorphism, so the scatter passes
 relabelled graphs coincide; transporting one row identity back
 through the labellings' inverses shows the scatter preserves every
 row. -/
-theorem checkAutom_scatter_of_leafRows_eq {ctx : Ctx}
-    {γ lab₁ lab₂ : Array Nat} (hγsz : γ.size = ctx.n)
-    (hsz₁ : lab₁.size = ctx.n)
-    (hp₁ : lab₁.toList.Perm (List.range ctx.n))
-    (hsz₂ : lab₂.size = ctx.n)
-    (hp₂ : lab₂.toList.Perm (List.range ctx.n))
-    (hsc : ∀ i, i < ctx.n → γ[lab₁[i]!]! = lab₂[i]!)
-    (hb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem checkAutom_scatter_of_leafRows_eq {ctx : Ctx n}
+    {γ lab₁ lab₂ : Array Nat} (hγsz : γ.size = n)
+    (hsz₁ : lab₁.size = n)
+    (hp₁ : lab₁.toList.Perm (List.range n))
+    (hsz₂ : lab₂.size = n)
+    (hp₂ : lab₂.toList.Perm (List.range n))
+    (hsc : ∀ i, i < n → γ[lab₁[i]!]! = lab₂[i]!)
     (hrows : leafRows ctx lab₁ = leafRows ctx lab₂) :
-    checkAutom ctx.g γ ctx.n = true := by
-  have hbound : ∀ v, v < ctx.n → γ[v]! < ctx.n := by
+    checkAutom ctx.g γ = true := by
+  have hbound : ∀ v, v < n → γ[v]! < n := by
     intro v hv
     obtain ⟨i, hi, hei⟩ := perm_surj hsz₁ hp₁ hv
     rw [← hei, hsc i hi]
     exact perm_getElem!_lt hsz₂ hp₂ hi
-  have htrans : ∀ v, v < ctx.n →
-      ctx.g[γ[v]!]! = image (fun w => γ[w]!) ctx.n ctx.g[v]! := by
+  have htrans : ∀ v, v < n →
+      ctx.g[γ[v]!]! = ctx.g[v]!.image (fun w => γ[w]!) := by
     intro v hv
     obtain ⟨i, hi, hei⟩ := perm_surj hsz₁ hp₁ hv
-    have hrow : image (fun w => (invPerm lab₁)[w]!) ctx.n
-        ctx.g[lab₁[i]!]! =
-        image (fun w => (invPerm lab₂)[w]!) ctx.n ctx.g[lab₂[i]!]! := by
+    have hrow : ctx.g[lab₁[i]!]!.image (fun w => (invPerm lab₁)[w]!) =
+        ctx.g[lab₂[i]!]!.image (fun w => (invPerm lab₂)[w]!) := by
       have h1 := leafRows_getElem! (ctx := ctx) (lab := lab₁) hi
       have h2 := leafRows_getElem! (ctx := ctx) (lab := lab₂) hi
       rw [← h1, ← h2, hrows]
-    have hinvb₁ : ∀ w, w < ctx.n → (invPerm lab₁)[w]! < ctx.n := by
+    have hinvb₁ : ∀ w, w < n → (invPerm lab₁)[w]! < n := by
       intro w _
       have := getElem!_invPerm_lt (lab := lab₁) (by omega) w
       omega
-    have hinvb₂ : ∀ w, w < ctx.n → (invPerm lab₂)[w]! < ctx.n := by
+    have hinvb₂ : ∀ w, w < n → (invPerm lab₂)[w]! < n := by
       intro w _
       have := getElem!_invPerm_lt (lab := lab₂) (by omega) w
       omega
-    have hcomp₂ : image (fun w => lab₂[w]!) ctx.n
-        (image (fun w => (invPerm lab₂)[w]!) ctx.n ctx.g[lab₂[i]!]!) =
-        ctx.g[lab₂[i]!]! := by
+    have hcomp₂ : (ctx.g[lab₂[i]!]!.image (fun w => (invPerm lab₂)[w]!)).image
+        (fun w => lab₂[w]!) = ctx.g[lab₂[i]!]! := by
       rw [← image_comp _ _ _ hinvb₂]
-      calc image (fun w => lab₂[(invPerm lab₂)[w]!]!) ctx.n
-            ctx.g[lab₂[i]!]!
-          = image (fun w => w) ctx.n ctx.g[lab₂[i]!]! :=
+      calc ctx.g[lab₂[i]!]!.image (fun w => lab₂[(invPerm lab₂)[w]!]!)
+          = ctx.g[lab₂[i]!]!.image (fun w => w) :=
             image_congr _ fun w hw => getElem!_comp_invPerm hsz₂ hp₂ hw
-        _ = ctx.g[lab₂[i]!]! :=
-            image_id_of_lt (hb _ (perm_getElem!_lt hsz₂ hp₂ hi))
-    have hcomp₁ : image (fun w => lab₂[w]!) ctx.n
-        (image (fun w => (invPerm lab₁)[w]!) ctx.n ctx.g[lab₁[i]!]!) =
-        image (fun w => γ[w]!) ctx.n ctx.g[lab₁[i]!]! := by
+        _ = ctx.g[lab₂[i]!]! := image_id _
+    have hcomp₁ : (ctx.g[lab₁[i]!]!.image (fun w => (invPerm lab₁)[w]!)).image
+        (fun w => lab₂[w]!) = ctx.g[lab₁[i]!]!.image (fun w => γ[w]!) := by
       rw [← image_comp _ _ _ hinvb₁]
       exact image_congr _ fun w hw =>
         (scatter_eq_comp_invPerm hsz₁ hp₁ hsc hw).symm
@@ -295,7 +288,7 @@ theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
         hne (hinj j p (by omega) (by omega) h.symm)
       rw [Array.getElem!_set!_ne _ _ _ _ hlne, ih (by omega) (by omega)]
 
-private theorem pushAuto_genTrace (st : SearchSt) (pair : Nat × Nat) :
+private theorem pushAuto_genTrace (st : SearchSt n) (pair : VSet n × VSet n) :
     (pushAuto st pair).genTrace = st.genTrace := by
   rw [pushAuto]
   split <;> rfl
@@ -311,28 +304,28 @@ permutation facts the run-level invariant carries; the scatter
 equations feed `checkAutom_scatter_of_isautom` and, through
 `leafEvent_faithful`'s rows account,
 `checkAutom_scatter_of_leafRows_eq`. -/
-theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hinj₁ : ∀ a b, a < ctx.n → b < ctx.n →
+theorem processnode_genTrace {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hinj₁ : ∀ a b, a < n → b < n →
       st.firstlab[a]! = st.firstlab[b]! → a = b)
-    (hb₁ : ∀ i, i < ctx.n → st.firstlab[i]! < ctx.n)
-    (hinj₂ : ∀ a b, a < ctx.n → b < ctx.n →
+    (hb₁ : ∀ i, i < n → st.firstlab[i]! < n)
+    (hinj₂ : ∀ a b, a < n → b < n →
       st.canonlab[a]! = st.canonlab[b]! → a = b)
-    (hb₂ : ∀ i, i < ctx.n → st.canonlab[i]! < ctx.n) :
+    (hb₂ : ∀ i, i < n → st.canonlab[i]! < n) :
     (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
     ∃ γ, (processnode ctx level numcells st).2.genTrace =
-        st.genTrace.push γ ∧ γ.size = ctx.n ∧
-      ((∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]!) ∧
+        st.genTrace.push γ ∧ γ.size = n ∧
+      ((∀ i, i < n → γ[st.firstlab[i]!]! = st.lab[i]!) ∧
           st.firstcode[level + 1]! = codeSentinel ∧
           isautom ctx γ = true ∨
-        (∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]!) ∧
+        (∀ i, i < n → γ[st.canonlab[i]!]! = st.lab[i]!) ∧
           st.compCanon = 0 ∧ st.canonlevel ≤ level ∧
           (testcanlab ctx
             (updatecan ctx st.canong st.canonlab st.samerows)
             st.lab).1 = 0) := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    apply_ite (fun x : Int × SearchSt n => x.2.genTrace),
     pushAuto_genTrace, ite_self]
   simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq]
   rcases Decidable.em (st.eqlevFirst ≠ level ∧ st.compCanon < 0)
@@ -341,16 +334,16 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
     left
     rfl
   rw [ite_eq_right h1]
-  rcases Decidable.em ((numcells == ctx.n) = true) with h2 | h2
+  rcases Decidable.em ((numcells == n) = true) with h2 | h2
   · rw [ite_eq_left h2]
     rcases Decidable.em (((st.eqlevFirst == level) &&
         (st.firstcode[level + 1]! == codeSentinel)) = true) with h3 | h3
     · rw [ite_eq_left h3]
       have hsent : st.firstcode[level + 1]! = codeSentinel := by
         exact beq_iff_eq.mp ((Bool.and_eq_true _ _).mp h3).2
-      rcases Decidable.em (isautom ctx ((List.range ctx.n).foldl
+      rcases Decidable.em (isautom ctx ((List.range n).foldl
             (fun r i => r.set! st.firstlab[i]! st.lab[i]!)
-            (Array.replicate ctx.n 0)) = true) with h4 | h4
+            (Array.replicate n 0)) = true) with h4 | h4
       · rw [ite_eq_left h4, ite_eq_right (by decide)]
         right
         refine ⟨_, rfl, ?_, Or.inl ⟨fun i hi => ?_, hsent, h4⟩⟩
@@ -419,18 +412,18 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
 
 /-- The successful code-one arm appends exactly the first-to-current
 scatter that passed its explicit automorphism scan. -/
-theorem processnode_genTrace_first {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_genTrace_first {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx ((List.range ctx.n).foldl
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx ((List.range n).foldl
       (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-      (Array.replicate ctx.n 0)) = true) :
+      (Array.replicate n 0)) = true) :
     (processnode ctx level numcells st).2.genTrace =
-      st.genTrace.push ((List.range ctx.n).foldl
+      st.genTrace.push ((List.range n).foldl
         (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-        (Array.replicate ctx.n 0)) := by
+        (Array.replicate n 0)) := by
   have hguard : (((st.eqlevFirst == level) &&
       (st.firstcode[level + 1]! == codeSentinel)) = true) := by
     simp only [Bool.and_eq_true, heq, true_and]
@@ -440,16 +433,16 @@ theorem processnode_genTrace_first {ctx : Ctx} {level numcells : Nat}
     exact h.1 (beq_iff_eq.mp heq)
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    apply_ite (fun x : Int × SearchSt n => x.2.genTrace),
     pushAuto_genTrace, ite_self]
   simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq,
     hskip, ite_false, hnc, ite_true, hguard]
-  change (if isautom ctx ((List.range ctx.n).foldl
+  change (if isautom ctx ((List.range n).foldl
       (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-      (Array.replicate ctx.n 0)) then
-      st.genTrace.push ((List.range ctx.n).foldl
+      (Array.replicate n 0)) then
+      st.genTrace.push ((List.range n).foldl
         (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-        (Array.replicate ctx.n 0))
+        (Array.replicate n 0))
     else _) = _
   rw [hpass]
   rfl
@@ -457,30 +450,29 @@ theorem processnode_genTrace_first {ctx : Ctx} {level numcells : Nat}
 /-- The successful code-one event exposes the exact checked carrier it
 appended, including its pointwise action from the first leaf to the current
 leaf. -/
-theorem processnode_firstCarrier {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hsz₁ : st.firstlab.size = ctx.n)
-    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
-      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
-    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem processnode_firstCarrier {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hsz₁ : st.firstlab.size = n)
+    (hp₁ : st.firstlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
+    (hsymm : ∀ i j, i < n → j < n →
+      (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)
+    (hloop : ∀ i, i < n → (ctx.g[i]!).mem i = false)
     (heq : (st.eqlevFirst == level) = true)
     (hsent : st.firstcode[level + 1]! = codeSentinel)
-    (hnc : (numcells == ctx.n) = true)
-    (hpass : isautom ctx ((List.range ctx.n).foldl
+    (hnc : (numcells == n) = true)
+    (hpass : isautom ctx ((List.range n).foldl
       (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-      (Array.replicate ctx.n 0)) = true) :
+      (Array.replicate n 0)) = true) :
     ∃ γ, γ ∈ (processnode ctx level numcells st).2.genTrace ∧
-      checkAutom ctx.g γ ctx.n = true ∧
-      ∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]! := by
-  let γ := (List.range ctx.n).foldl
+      checkAutom ctx.g γ = true ∧
+      ∀ i, i < n → γ[st.firstlab[i]!]! = st.lab[i]! := by
+  let γ := (List.range n).foldl
     (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
-    (Array.replicate ctx.n 0)
+    (Array.replicate n 0)
   have hinj := perm_inj hsz₁ hp₁
-  have hmap : ∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]! := by
+  have hmap : ∀ i, i < n → γ[st.firstlab[i]!]! = st.lab[i]! := by
     intro i hi
     apply foldl_scatter_getElem
       (fun a b ha hb h => hinj a b (by omega) (by omega) h)
@@ -488,58 +480,57 @@ theorem processnode_firstCarrier {ctx : Ctx} {level numcells : Nat}
         rw [Array.size_replicate]
         exact perm_getElem!_lt hsz₁ hp₁ hj)
       (Nat.le_refl _) hi
-  have hsize : γ.size = ctx.n := by
+  have hsize : γ.size = n := by
     simp only [γ, foldl_scatter_size, Array.size_replicate]
-  have hchecked : checkAutom ctx.g γ ctx.n = true :=
+  have hchecked : checkAutom ctx.g γ = true :=
     checkAutom_scatter_of_isautom hsize hsz₁ hp₁ hsz₂ hp₂
-      hmap hsymm hloop hbound (by simpa only [γ] using hpass)
+      hmap hsymm hloop (by simpa only [γ] using hpass)
   refine ⟨γ, ?_, hchecked, hmap⟩
   rw [processnode_genTrace_first heq hsent hnc hpass]
   exact Array.mem_push.mpr (Or.inr rfl)
 
 /-- The row-tied code-two arm appends exactly the incumbent-to-current
 scatter, independently of which greatest-common-ancestor return it takes. -/
-theorem processnode_genTrace_canon {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
+theorem processnode_genTrace_canon {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
     (processnode ctx level numcells st).2.genTrace =
-      st.genTrace.push ((List.range ctx.n).foldl
+      st.genTrace.push ((List.range n).foldl
         (fun w i => w.set! st.canonlab[i]! st.lab[i]!)
-        (Array.replicate ctx.n 0)) := by
+        (Array.replicate n 0)) := by
   rw [processnode]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    apply_ite (fun x : Int × SearchSt n => x.2.genTrace),
     pushAuto_genTrace, ite_self]
   simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq]
   simp [hnc, hef, hcc, hge, htie]
 
 /-- The code-two event exposes the exact checked carrier it appended from
 the incumbent leaf to the current leaf. -/
-theorem processnode_canonCarrier {ctx : Ctx} {level numcells : Nat}
-    {st : SearchSt}
-    (hsz₁ : st.canonlab.size = ctx.n)
-    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
-    (hsz₂ : st.lab.size = ctx.n)
-    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
-    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+theorem processnode_canonCarrier {ctx : Ctx n} {level numcells : Nat}
+    {st : SearchSt n}
+    (hsz₁ : st.canonlab.size = n)
+    (hp₁ : st.canonlab.toList.Perm (List.range n))
+    (hsz₂ : st.lab.size = n)
+    (hp₂ : st.lab.toList.Perm (List.range n))
     (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
     (hef : ¬((st.eqlevFirst == level) = true))
-    (hnc : (numcells == ctx.n) = true)
+    (hnc : (numcells == n) = true)
     (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
     (htie : (testcanlab ctx
       (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
     ∃ γ, γ ∈ (processnode ctx level numcells st).2.genTrace ∧
-      checkAutom ctx.g γ ctx.n = true ∧
-      ∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]! := by
-  let γ := (List.range ctx.n).foldl
+      checkAutom ctx.g γ = true ∧
+      ∀ i, i < n → γ[st.canonlab[i]!]! = st.lab[i]! := by
+  let γ := (List.range n).foldl
     (fun w i => w.set! st.canonlab[i]! st.lab[i]!)
-    (Array.replicate ctx.n 0)
+    (Array.replicate n 0)
   have hinj := perm_inj hsz₁ hp₁
-  have hmap : ∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]! := by
+  have hmap : ∀ i, i < n → γ[st.canonlab[i]!]! = st.lab[i]! := by
     intro i hi
     apply foldl_scatter_getElem
       (fun a b ha hb h => hinj a b (by omega) (by omega) h)
@@ -547,11 +538,11 @@ theorem processnode_canonCarrier {ctx : Ctx} {level numcells : Nat}
         rw [Array.size_replicate]
         exact perm_getElem!_lt hsz₁ hp₁ hj)
       (Nat.le_refl _) hi
-  have hsize : γ.size = ctx.n := by
+  have hsize : γ.size = n := by
     simp only [γ, foldl_scatter_size, Array.size_replicate]
-  have hchecked : checkAutom ctx.g γ ctx.n = true :=
+  have hchecked : checkAutom ctx.g γ = true :=
     checkAutom_scatter_of_leafRows_eq hsize hsz₁ hp₁ hsz₂ hp₂
-      hmap hbound hrows
+      hmap hrows
   refine ⟨γ, ?_, hchecked, hmap⟩
   rw [processnode_genTrace_canon hef hnc hcc hge htie]
   exact Array.mem_push.mpr (Or.inr rfl)
