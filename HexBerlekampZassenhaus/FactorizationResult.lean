@@ -264,7 +264,7 @@ follows by chaining this with the target `target = 2 * B + 1`.
 theorem le_pow_ceilLogP {p : Nat} (hp : 2 ≤ p) (target : Nat) :
     target ≤ p ^ ceilLogP p target := by
   unfold ceilLogP
-  rw [if_neg (by omega : ¬ p ≤ 1)]
+  rw [ite_eq_right (by omega : ¬ p ≤ 1)]
   have hlt2 : target < 2 ^ target := Nat.lt_two_pow_self
   have hle2 : (2 : Nat) ^ target ≤ 2 ^ (target + 1) :=
     Nat.pow_le_pow_right (by decide) (Nat.le_succ _)
@@ -313,7 +313,7 @@ theorem ceilLogP_le_of_le_pow {p : Nat} (hp : 2 ≤ p) (target a : Nat)
     (h : target ≤ p ^ a) :
     ceilLogP p target ≤ a := by
   unfold ceilLogP
-  rw [if_neg (by omega : ¬ p ≤ 1)]
+  rw [ite_eq_right (by omega : ¬ p ≤ 1)]
   have := ceilLogPAux_le p hp target a h (target + 1) 0 (Nat.zero_le a)
   simpa using this
 
@@ -538,8 +538,8 @@ private theorem splitInitialZeros_reassembles (coeffs : List Int) :
                   have hvalue :
                       (DensePoly.ofList core).coeff (n - power) =
                         coeffs.getD n 0 := by
-                    have key := hcoeff_n; rw [if_neg hn] at key; exact key
-                  simp only [hsucc, Nat.succ_sub_succ_eq_sub, if_false, List.getD_cons_succ]
+                    have key := hcoeff_n; rw [ite_eq_right hn] at key; exact key
+                  simp only [hsucc, Nat.succ_sub_succ_eq_sub, ite_false, List.getD_cons_succ]
                   exact hvalue
       · simp [hcoeff]
 
@@ -664,7 +664,7 @@ private theorem reassemblePolynomialFactors_mem
   | mk expanded residual =>
       simp only at hmem
       by_cases hres : residual = 1
-      · rw [if_pos hres] at hmem
+      · rw [ite_eq_left hres] at hmem
         rw [Array.toList_append, Array.toList_append] at hmem
         rcases List.mem_append.mp hmem with hxe | hcf
         · rcases List.mem_append.mp hxe with hx | hexp_mem
@@ -680,7 +680,7 @@ private theorem reassemblePolynomialFactors_mem
             exact expandRepeatedPartFactorArray_mem _ _ _ hexp_mem'
         · right
           exact hcf
-      · rw [if_neg hres] at hmem
+      · rw [ite_eq_right hres] at hmem
         rw [Array.toList_append] at hmem
         rcases List.mem_append.mp hmem with hprefix | hcf
         · exact Or.inl hprefix
@@ -725,7 +725,7 @@ theorem reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
   cases exp with
   | mk expanded residual =>
       simp only at hmem hcomplete
-      rw [if_pos hcomplete] at hmem
+      rw [ite_eq_left hcomplete] at hmem
       rw [Array.toList_append, Array.toList_append] at hmem
       rcases List.mem_append.mp hmem with hxe | hcore
       · rcases List.mem_append.mp hxe with hx | hexp_mem
@@ -754,12 +754,12 @@ private theorem polyProduct_reassemblePolynomialFactors
   | mk expanded residual =>
       simp only at hinv ⊢
       by_cases hres : residual = 1
-      · rw [if_pos hres]
+      · rw [ite_eq_left hres]
         rw [hres] at hinv
         rw [DensePoly.mul_one_right_poly (S := Int)] at hinv
         rw [ZPoly.polyProduct_append, ZPoly.polyProduct_append, polyProduct_xPowerFactorArray_mul,
           hinv]
-      · rw [if_neg hres]
+      · rw [ite_eq_right hres]
         rw [ZPoly.polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors,
           polyProduct_xPowerFactorArray_mul, polyProduct_repeatedPartFactorArray_eq]
 
@@ -840,7 +840,7 @@ private theorem multListProduct_bumpFactorMultiplicity
   | cons entry entries ih =>
       unfold bumpFactorMultiplicity
       by_cases heq : entry.1 = g
-      · simp only [heq, if_true]
+      · simp only [heq, ite_true]
         rw [multListProduct_cons]
         show Factorization.polyPow g (entry.2 + 1) * multListProduct entries =
           g * multListProduct (entry :: entries)
@@ -848,7 +848,7 @@ private theorem multListProduct_bumpFactorMultiplicity
         rw [DensePoly.mul_comm_poly (S := Int)
               (Factorization.polyPow g entry.2) g]
         rw [DensePoly.mul_assoc_poly (S := Int)]
-      · simp only [heq, if_false]
+      · simp only [heq, ite_false]
         rw [multListProduct_cons, multListProduct_cons, ih, ← DensePoly.mul_assoc_poly (S := Int)]
         rw [DensePoly.mul_comm_poly (S := Int)
               (Factorization.polyPow entry.1 entry.2) g]
@@ -904,7 +904,7 @@ theorem normalizeFactorSign_ne_zero_of_ne_zero
     normalizeFactorSign f ≠ 0 := by
   unfold normalizeFactorSign
   by_cases hlead : DensePoly.leadingCoeff f < 0
-  · rw [if_pos hlead]
+  · rw [ite_eq_left hlead]
     intro hzero
     apply hf
     apply DensePoly.ext_coeff
@@ -916,7 +916,7 @@ theorem normalizeFactorSign_ne_zero_of_ne_zero
     rw [DensePoly.coeff_zero] at hcoeff
     rw [DensePoly.coeff_zero]
     omega
-  · rw [if_neg hlead]
+  · rw [ite_eq_right hlead]
     exact hf
 
 private theorem filteredNormalizedFactors_eq_map_normalizeFactorSign_of_no_units
@@ -1421,7 +1421,7 @@ theorem normalizeFactorSign_one :
     change ¬ DensePoly.leadingCoeff (DensePoly.C (1 : Int)) < 0
     simp [DensePoly.leadingCoeff,
       DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
-  rw [if_neg hnot]
+  rw [ite_eq_right hnot]
 
 /-- The `shouldRecordPolynomialFactor` filter rejects the unit `1`.  Exposed
 publicly so Mathlib-side per-branch umbrellas can contradict
@@ -1478,14 +1478,14 @@ theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : ZPoly)
     normalizeFactorSign g = g := by
   unfold normalizeFactorSign
   have hnot : ¬ DensePoly.leadingCoeff g < 0 := by omega
-  rw [if_neg hnot]
+  rw [ite_eq_right hnot]
 
 /-- Sign normalization produces a nonnegative leading coefficient. -/
 theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (normalizeFactorSign g) := by
   unfold normalizeFactorSign
   by_cases hlead : DensePoly.leadingCoeff g < 0
-  · rw [if_pos hlead]
+  · rw [ite_eq_left hlead]
     have hg_ne : g ≠ 0 := by
       intro hzero
       rw [hzero] at hlead
@@ -1493,7 +1493,7 @@ theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
       omega
     rw [ZPoly.leadingCoeff_scale_of_nonzero (-1 : Int) g (by decide)]
     omega
-  · rw [if_neg hlead]
+  · rw [ite_eq_right hlead]
     omega
 
 /-- Sign normalization is idempotent. -/
@@ -1510,13 +1510,13 @@ theorem normalizeFactorSign_primitive (f : ZPoly)
     ZPoly.Primitive (normalizeFactorSign f) := by
   unfold normalizeFactorSign
   by_cases hlead : DensePoly.leadingCoeff f < 0
-  · rw [if_pos hlead]
+  · rw [ite_eq_left hlead]
     show ZPoly.content (DensePoly.scale (-1 : Int) f) = 1
     rw [show ZPoly.content (DensePoly.scale (-1 : Int) f)
           = DensePoly.content (DensePoly.scale (-1 : Int) f) from rfl,
         DensePoly.content_scale_neg_one f]
     exact h
-  · rw [if_neg hlead]
+  · rw [ite_eq_right hlead]
     exact h
 
 /-- Collected factor entries are fixed points of `normalizeFactorSign`. -/
@@ -1592,12 +1592,12 @@ private theorem shift_scale_int (k : Nat) (c : Int) (p : ZPoly) :
     (Int.mul_zero c)]
   rw [DensePoly.coeff_shift]
   by_cases hn : n < k
-  · rw [if_pos hn]
-    rw [if_pos hn]
+  · rw [ite_eq_left hn]
+    rw [ite_eq_left hn]
     change (0 : Int) = c * 0
     rw [Int.mul_zero]
-  · rw [if_neg hn]
-    rw [if_neg hn, DensePoly.coeff_scale (R := Int) c p (n - k) (Int.mul_zero c)]
+  · rw [ite_eq_right hn]
+    rw [ite_eq_right hn, DensePoly.coeff_scale (R := Int) c p (n - k) (Int.mul_zero c)]
 
 private theorem toRatPoly_mul_product (f g : ZPoly) :
     ZPoly.toRatPoly (f * g) = ZPoly.toRatPoly f * ZPoly.toRatPoly g := by
@@ -1671,7 +1671,7 @@ theorem exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
   unfold exactQuotient?
   rw [hisZero_false]
   simp only [Bool.false_or, decide_eq_true_eq]
-  rw [if_neg hcandidate_ne_one]
+  rw [ite_eq_right hcandidate_ne_one]
   exact (ZPoly.divExact?_eq hcandidate_ne).2 hmul.symm
 
 /--
@@ -1721,7 +1721,7 @@ theorem exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord
   unfold exactQuotient?
   rw [hisZero_false]
   simp only [Bool.false_or, decide_eq_true_eq]
-  rw [if_neg hcandidate_ne_one]
+  rw [ite_eq_right hcandidate_ne_one]
   exact (ZPoly.divExact?_eq hcandidate_ne).2 hmul.symm
 
 end Hex

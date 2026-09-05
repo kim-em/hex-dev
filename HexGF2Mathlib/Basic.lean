@@ -87,14 +87,14 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
     intro b; cases b <;> rfl
   by_cases hz : p.isZero = true
   · have hbody : toFpPoly p = Hex.DensePoly.ofList ([] : List (Hex.ZMod64 2)) := by
-      unfold toFpPoly; rw [if_pos hz]
+      unfold toFpPoly; rw [ite_eq_left hz]
     rw [hbody, Hex.DensePoly.coeff_ofList,
       Hex.GF2Poly.eq_zero_of_isZero hz, Hex.GF2Poly.coeff_zero]
     rfl
   · have hbody : toFpPoly p =
         Hex.DensePoly.ofList
           ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))) := by
-      unfold toFpPoly; rw [if_neg hz]
+      unfold toFpPoly; rw [ite_eq_right hz]
     rw [hbody, Hex.DensePoly.coeff_ofList]
     have hrange :
         ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))).getD i
@@ -104,8 +104,8 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
       by_cases hi : i < p.degree + 1 <;> simp [hi, List.getD]
     rw [hrange]
     by_cases hi : i < p.degree + 1
-    · rw [if_pos hi, hcoeffToFp]
-    · rw [if_neg hi]
+    · rw [ite_eq_left hi, hcoeffToFp]
+    · rw [ite_eq_right hi]
       have hzf : p.isZero = false := by
         cases hb : p.isZero with
         | false => rfl
@@ -156,7 +156,7 @@ theorem toFpPoly_one :
   rw [Hex.DensePoly.coeff_C]
   by_cases hi : i = 0
   · subst hi; rfl
-  · simp only [decide_eq_true_eq, if_neg hi]; rfl
+  · simp only [decide_eq_true_eq, ite_eq_right hi]; rfl
 
 /-- A packed coefficient bit `coeffOfFp a` holds at most one set bit. -/
 private theorem coeffOfFp_toNat_lt (a : Hex.ZMod64 2) : (coeffOfFp a).toNat < 2 := by
@@ -170,9 +170,9 @@ private theorem coeffOfFp_testBit_zero (a : Hex.ZMod64 2) :
   unfold coeffOfFp
   by_cases h : a = Hex.ZMod64.zero
   · have ha0 : a = 0 := h
-    rw [if_pos h, ha0]; decide
+    rw [ite_eq_left h, ha0]; decide
   · have ha0 : a ≠ 0 := h
-    rw [if_neg h]; simp [ha0]
+    rw [ite_eq_right h]; simp [ha0]
 
 private theorem zmod2_toNat_zero : (0 : Hex.ZMod64 2).toNat = 0 :=
   Hex.ZMod64.toNat_zero
@@ -424,15 +424,15 @@ theorem toFpPoly_mul (p q : Hex.GF2Poly) :
     have hsn : s ≤ n := by have := List.mem_range.mp hs; omega
     rw [chi_mul, ← coeff_toFpPoly, ← coeff_toFpPoly]
     unfold Hex.FpPoly.mulCoeffTerm
-    rw [if_neg (by omega : ¬ n < s)]
+    rw [ite_eq_right (by omega : ¬ n < s)]
   rw [foldl_add_congr (List.range (n + 1)) _ _ hterm 0]
   have hzero : ∀ i, min ((toFpPoly p).size) (n + 1) ≤ i →
       Hex.FpPoly.mulCoeffTerm (toFpPoly p) (toFpPoly q) n i = 0 := by
     intro i hi
     unfold Hex.FpPoly.mulCoeffTerm
     by_cases hni : n < i
-    · rw [if_pos hni]
-    · rw [if_neg hni]
+    · rw [ite_eq_left hni]
+    · rw [ite_eq_right hni]
       have hcase : (toFpPoly p).size ≤ i ∨ n + 1 ≤ i := by
         rcases Nat.le_total ((toFpPoly p).size) (n + 1) with hle | hle
         · left; rw [Nat.min_eq_left hle] at hi; exact hi
@@ -870,8 +870,8 @@ theorem coeff_equivPolynomial (q : Hex.GF2Poly) (i : Nat) :
   rw [equivPolynomial_apply, HexPolyFpMathlib.fpPolyEquiv_apply,
     HexPolyFpMathlib.coeff_toMathlibPolynomial, coeff_toFpPoly]
   by_cases h : q.coeff i
-  · rw [if_pos h, if_pos h, HexModArithMathlib.ZMod64.toZMod_one]
-  · rw [if_neg h, if_neg h, HexModArithMathlib.ZMod64.toZMod_zero]
+  · rw [ite_eq_left h, ite_eq_left h, HexModArithMathlib.ZMod64.toZMod_one]
+  · rw [ite_eq_right h, ite_eq_right h, HexModArithMathlib.ZMod64.toZMod_zero]
 
 end GF2Poly
 

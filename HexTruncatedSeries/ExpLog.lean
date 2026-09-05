@@ -74,11 +74,11 @@ theorem deriv_log [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
   intro i hi
   rw [coeff_deriv (log a) i hi]
   unfold log logUpTo
-  rw [coeff_ofFn _ (i + 1) (by omega), if_pos (by omega),
+  rw [coeff_ofFn _ (i + 1) (by omega), ite_eq_left (by omega),
     coeff_truncate _ _ (i + 1) (by omega),
     coeff_integrate _ (i + 1) (by omega)]
-  simp only [show i + 1 ≠ 0 by omega, if_false, Nat.add_sub_cancel]
-  rw [coeff_mulUpTo (n - 1) _ _ i (by omega), if_pos hi,
+  simp only [show i + 1 ≠ 0 by omega, ite_false, Nat.add_sub_cancel]
+  rw [coeff_mulUpTo (n - 1) _ _ i (by omega), ite_eq_left hi,
     coeff_mul _ _ i hi]
   simp only [invOfUnit]
   have hinv := NatInverses.invNat_eq (R := R) (m := n - 1) (i + 1)
@@ -92,7 +92,7 @@ private theorem logUpTo_coeff_zero [Lean.Grind.CommRing R]
     (hn : 0 < n) (hm : 0 < m) :
     (logUpTo m a).coeff 0 = 0 := by
   unfold logUpTo
-  rw [coeff_ofFn _ 0 hn, if_pos hm,
+  rw [coeff_ofFn _ 0 hn, ite_eq_left hm,
     coeff_truncate _ _ 0 (by omega), coeff_integrate _ 0 (by omega)]
   simp
 
@@ -110,7 +110,7 @@ private theorem expStep_coeff_zero [Lean.Grind.CommRing R]
     (hn : 0 < n) (hm : 0 < m) :
     (expStep a y m).coeff 0 = 1 := by
   unfold expStep
-  rw [coeff_mulUpTo m y (C 1 + a - logUpTo m y) 0 hn, if_pos hm,
+  rw [coeff_mulUpTo m y (C 1 + a - logUpTo m y) 0 hn, ite_eq_left hm,
     coeff_mul_zero y (C 1 + a - logUpTo m y) hn,
     coeff_sub (C 1 + a) (logUpTo m y) 0 hn,
     coeff_add (C 1) a 0 hn, coeff_C 1 0 hn,
@@ -134,7 +134,7 @@ theorem exp_coeff_zero [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
     (a : TSeries R n) (h : a.coeff 0 = 0) (h0 : 0 < n) :
     (exp a).coeff 0 = 1 := by
   unfold exp expUpTo
-  rw [coeff_ofFn _ 0 h0, if_pos h0]
+  rw [coeff_ofFn _ 0 h0, ite_eq_left h0]
   simpa only [Nat.min_self] using expNewton_coeff_zero a h h0 (steps n)
 
 private theorem deriv_add [Lean.Grind.CommRing R] (a b : TSeries R n) :
@@ -150,7 +150,7 @@ private theorem deriv_one [Lean.Grind.CommRing R] :
   apply ext
   intro i hi
   rw [coeff_deriv 1 i hi, coeff_one (i + 1) (by omega),
-    if_neg (by omega), coeff_zero]
+    ite_eq_right (by omega), coeff_zero]
   grind
 
 private theorem deriv_zero [Lean.Grind.CommRing R] :
@@ -195,7 +195,7 @@ private theorem unitCoeff_mul [Lean.Grind.CommRing R]
   · rw [coeff_mul_zero a b hn, ha, hb]
     grind
   · unfold coeff at ha ⊢
-    rw [dif_neg hn] at ha ⊢
+    rw [dite_eq_right hn] at ha ⊢
     exact ha
 
 private theorem logArg [Lean.Grind.CommRing R]
@@ -205,7 +205,7 @@ private theorem logArg [Lean.Grind.CommRing R]
   · rw [coeff_sub a 1 0 hn, coeff_one 0 hn, ha]
     grind
   · unfold coeff
-    rw [dif_neg hn]
+    rw [dite_eq_right hn]
 
 private theorem log_mul [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] (a b : TSeries R n)
@@ -352,7 +352,7 @@ theorem logUpTo_agree [Lean.Grind.CommRing R]
     intro i hi him
     have hau : a.coeff 0 * 1 = 1 := by rw [ha0]; grind
     unfold log logUpTo
-    rw [coeff_ofFn _ i hi, if_pos him, coeff_ofFn _ i hi, if_pos hi,
+    rw [coeff_ofFn _ i hi, ite_eq_left him, coeff_ofFn _ i hi, ite_eq_left hi,
       coeff_truncate _ _ i hi, coeff_truncate _ _ i hi]
     cases i with
     | zero =>
@@ -361,9 +361,9 @@ theorem logUpTo_agree [Lean.Grind.CommRing R]
     | succ i =>
         rw [coeff_integrate _ (i + 1) (by omega),
           coeff_integrate _ (i + 1) (by omega)]
-        simp only [show i + 1 ≠ 0 by omega, if_false, Nat.add_sub_cancel]
-        rw [coeff_mulUpTo (m - 1) _ _ i (by omega), if_pos (by omega),
-          coeff_mulUpTo (n - 1) _ _ i (by omega), if_pos (by omega),
+        simp only [show i + 1 ≠ 0 by omega, ite_false, Nat.add_sub_cancel]
+        rw [coeff_mulUpTo (m - 1) _ _ i (by omega), ite_eq_left (by omega),
+          coeff_mulUpTo (n - 1) _ _ i (by omega), ite_eq_left (by omega),
           coeff_mul _ _ i (by omega), coeff_mul _ _ i (by omega)]
         congr 1
         unfold convCoeff
@@ -372,8 +372,8 @@ theorem logUpTo_agree [Lean.Grind.CommRing R]
         have hj' : j < i + 1 := List.mem_range.mp hj
         rw [coeff_truncate _ _ (i - j) (by omega),
           coeff_truncate _ _ (i - j) (by omega),
-          coeff_invUpTo m a 1 hau (i - j) (by omega), if_pos (by omega),
-          coeff_invUpTo n a 1 hau (i - j) (by omega), if_pos (by omega)]
+          coeff_invUpTo m a 1 hau (i - j) (by omega), ite_eq_left (by omega),
+          coeff_invUpTo n a 1 hau (i - j) (by omega), ite_eq_left (by omega)]
   · intro i hi _
     omega
 
@@ -563,7 +563,7 @@ private theorem exp_eq [Lean.Grind.CommRing R]
   apply ext
   intro i hi
   unfold exp expUpTo
-  rw [coeff_ofFn _ i hi, if_pos hi, Nat.min_self]
+  rw [coeff_ofFn _ i hi, ite_eq_left hi, Nat.min_self]
 
 /-- Bounded exponential agrees with the full exponential throughout the
 requested prefix. -/
@@ -580,7 +580,7 @@ theorem expUpTo_agree [Lean.Grind.CommRing R]
       exact (h.mono (two_pow_steps_ge (min m n))).symm
     intro i hi him
     unfold expUpTo
-    rw [coeff_ofFn _ i hi, if_pos him, exp_eq a]
+    rw [coeff_ofFn _ i hi, ite_eq_left him, exp_eq a]
     exact hiter i hi (by omega)
   · intro i hi _
     omega

@@ -107,8 +107,8 @@ theorem mulXPow_ofPowerSeries [CommRing R] (f : PowerSeries R) (k : Nat) :
   rw [Hex.TSeries.coeff_mulXPow _ k i hi,
     coeff_ofPowerSeries _ i hi, PowerSeries.coeff_X_pow_mul']
   by_cases hki : k ≤ i
-  · rw [if_pos hki, if_pos hki, coeff_ofPowerSeries f (i - k) (by omega)]
-  · rw [if_neg hki, if_neg hki]
+  · rw [ite_eq_left hki, ite_eq_left hki, coeff_ofPowerSeries f (i - k) (by omega)]
+  · rw [ite_eq_right hki, ite_eq_right hki]
 
 /-- Coefficients of a truncated derivative agree with Mathlib's formal
 derivative wherever both are represented. -/

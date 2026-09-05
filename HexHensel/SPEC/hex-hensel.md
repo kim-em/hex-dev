@@ -154,13 +154,16 @@ uses the fast entry point only where the end-to-end lift improves; small nodes
 retain the existing kernels. Product congruence, factor ordering, canonical
 coefficient ranges, and exact-division checks remain the public semantics.
 
-The ordered product dispatcher uses the balanced `ZPoly.fastPlan` tree for
-factor counts in `[8, 1024)` only when every factor has at most two
-coefficients and maximum coefficient magnitude at most four; it uses the
-retained left fold elsewhere.  The shape guard is part of the measured
-crossover policy, not a correctness precondition.  Three warm outer trials on
-`chungus2` (AMD EPYC 9455), Lean `4.34.0-rc2`, measured the shared deterministic
-small-linear-factor fixtures as follows (medians):
+A balanced `ZPoly.fastPlan` product tree was measured for the ordered
+product at factor counts in `[8, 1024)` when every factor has at most two
+coefficients and maximum coefficient magnitude at most four. Its adoption is
+deferred: the tree depends on hex-poly-fast, which is not yet published, so
+`Array.polyProduct` compiles as the left fold until that library is admitted
+to the release manifest (https://github.com/kim-em/hex-dev/issues/10001); the shape guard recorded here is part of
+the measured crossover policy for that adoption, not a correctness
+precondition. Three warm outer trials on `chungus2` (AMD EPYC 9455), Lean
+`4.34.0-rc2`, measured the shared deterministic small-linear-factor fixtures
+as follows (medians):
 
 | factor count | left fold | balanced tree | selected |
 |---:|---:|---:|:---|
@@ -174,11 +177,11 @@ Regenerate the table with `lake exe hexhensel_bench compare
 Hex.HenselBench.runPolyProductFoldChecksum
 Hex.HenselBench.runPolyProductTreeChecksum --param-floor 4 --param-ceiling
 1024 --param-schedule doubling --cache-mode warm --outer-trials 3
---signal-floor-multiplier 1`.  The public `Array.polyProduct` remains the
-left-fold specification; a `@[csimp]` theorem proves the compiled dispatcher
-extensionally equal to it for every crossover-table and shape-guard choice.
-The BZ adoption audit records why larger-degree and wider-coefficient factors
-must not enter this count-only interval.
+--signal-floor-multiplier 1`.  The public `Array.polyProduct` is the
+left-fold specification; when the tree is adopted, a `@[csimp]` theorem proves
+the compiled dispatcher extensionally equal to it for every crossover-table
+and shape-guard choice. The BZ adoption audit records why larger-degree and
+wider-coefficient factors must not enter this count-only interval.
 
 ## External comparators
 

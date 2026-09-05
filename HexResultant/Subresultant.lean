@@ -131,7 +131,7 @@ private theorem sign_prem_cancel {S : Type u} [Lean.Grind.CommRing S]
       rw [Nat.mul_mod, hu]
       omega
   unfold SubresultantMinor.sign
-  rw [if_pos hmod]
+  rw [ite_eq_left hmod]
 
 /-- The invariant identifies the next Brown scale with the leading principal
 coefficient of the original-pair subresultant and proves its exact quotient
@@ -965,12 +965,12 @@ private theorem subresultantAux_terminal {S : Type u}
           simp only [subresultantAux, p, hpzero, ↓reduceIte]
           rw [hlast]
           by_cases hconst : curr.size = 1
-          · rw [if_pos hconst]
+          · rw [ite_eq_left hconst]
             have hscale0 :
                 hCurr = Subresultant.coeffMinor 0 0 f g := by
               simpa [hconst, Subresultant.coeff_poly] using hscale
             simpa only [hCurr, delta, hconst] using hscale0
-          · rw [if_neg hconst]
+          · rw [ite_eq_right hconst]
             have hcurrPos := size_pos_of_ne_zero curr hcurr
             have hcurrBig : 2 ≤ curr.size := by omega
             have hlocal := Subresultant.coeffMinor_zero_of_prem_zero
@@ -1366,7 +1366,7 @@ theorem resultantOrdered_eq_coeffMinor {S : Type u}
       simp only [p, hpzero, ↓reduceIte]
       rw [hlast]
       by_cases hconst : g.size = 1
-      · rw [if_pos hconst]
+      · rw [ite_eq_left hconst]
         by_cases hfconst : f.size = 1
         · rw [show powNat g.leadingCoeff (f.size - g.size) = 1 by
             simp [hfconst, hconst, powNat]]
@@ -1390,7 +1390,7 @@ theorem resultantOrdered_eq_coeffMinor {S : Type u}
           rw [← Lean.Grind.Semiring.pow_succ]
           congr 1
           omega
-      · rw [if_neg hconst]
+      · rw [ite_eq_right hconst]
         have hgBig : 2 ≤ g.size := by omega
         have hzero := Subresultant.coeffMinor_zero_of_prem_zero
           f g hg hgf hgBig hp

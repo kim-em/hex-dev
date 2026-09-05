@@ -117,12 +117,12 @@ private theorem coordinateMap {F : Type u} [Field F] [DecidableEq F]
     case isTrue hj =>
       rw [Submodule.mem_span_singleton]
       have h := hx' j
-      rw [_root_.dite_eq_left hj] at h
+      rw [dite_eq_left hj] at h
       rcases h with ⟨c, hc⟩
       exact ⟨c, by simpa [smul_eq_mul, mul_comm] using hc.symm⟩
     case isFalse hj =>
       have h := hx' j
-      rw [_root_.dite_eq_right hj] at h
+      rw [dite_eq_right hj] at h
       simpa using h
   · intro hz
     refine ⟨(smithNormalForm A).bM.equivFun.symm z, ?_, ?_⟩
@@ -132,14 +132,14 @@ private theorem coordinateMap {F : Type u} [Field F] [DecidableEq F]
       have hzj := Submodule.mem_pi.mp hz j (Set.mem_univ j)
       unfold coordinateIdeal at hzj
       by_cases hj : j.val < snfRank A
-      · rw [_root_.dite_eq_left hj] at hzj ⊢
+      · rw [dite_eq_left hj] at hzj ⊢
         rw [Submodule.mem_span_singleton] at hzj
         rw [show (smithNormalForm A).bM.repr
           ((smithNormalForm A).bM.equivFun.symm z) j = z j from
             (smithNormalForm A).bM.coord_equivFun_symm j z]
         rcases hzj with ⟨c, hc⟩
         exact ⟨c, by simpa [smul_eq_mul, mul_comm] using hc.symm⟩
-      · rw [_root_.dite_eq_right hj] at hzj ⊢
+      · rw [dite_eq_right hj] at hzj ⊢
         rw [show (smithNormalForm A).bM.repr
           ((smithNormalForm A).bM.equivFun.symm z) j = z j from
             (smithNormalForm A).bM.coord_equivFun_symm j z]
@@ -193,7 +193,7 @@ private def torsionCoordinates {F : Type u} [Field F] [DecidableEq F]
       have hi : (splitFin A (Sum.inl i)).val < snfRank A := by
         simp [splitFin]
       unfold coordinateIdeal
-      rw [_root_.dite_eq_left hi]
+      rw [dite_eq_left hi]
       rw [smithNormalForm_a]
       apply congrArg (fun p => Ideal.span
         {HexPolyMathlib.toPolynomial p})
@@ -211,7 +211,7 @@ private def freeCoordinates {F : Type u} [Field F] [DecidableEq F]
       have hj : ¬ (splitFin A (Sum.inr j)).val < snfRank A := by
         simp [splitFin]
       unfold coordinateIdeal
-      rw [_root_.dite_eq_right hj])
+      rw [dite_eq_right hj])
 
 /-- The presented module is the product of its free part and its cyclic
 torsion summands. -/

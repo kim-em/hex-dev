@@ -65,7 +65,7 @@ private theorem bandRatio (numerator : Nat → Nat) (b stop : Nat) :
   | zero => simp [bandPowerSum]
   | succ stop ih =>
       by_cases h : 4 ≤ stop + 1
-      · rw [sum_Icc_succ_top h, bandPowerSum, if_pos h, ih]
+      · rw [sum_Icc_succ_top h, bandPowerSum, ite_eq_left h, ih]
         rw [div_pow]
         push_cast
         field_simp

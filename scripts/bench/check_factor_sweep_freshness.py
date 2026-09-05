@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 """Fail when factorization measurements no longer cover their source code.
 
-The newest committed observation for every published curve must use the current
-corpus, come from a clean recorded commit, and contain one result for every
-corpus instance. A measurement remains valid across a squash merge when the
-relevant source tree is unchanged. It becomes stale when its system adapter,
-the shared sweep protocol, the corpus, or (for Hex) executable factorization
-code differs from that recorded commit.
+The newest committed observation for every published curve must use the
+current corpus, come from a clean tree, and contain one result for every
+corpus instance. Whether it still describes today's source is decided by
+content, not by the commit it was taken at: each observation records a
+fingerprint of the listing of its system's relevant source, and commits
+that listing as a manifest. A measurement therefore survives the squash
+merge and any rebase that rewrites the commit but not the content.
+
+The relevant set here is honestly broad -- the Hex factor service call
+graph spans HexBasic through HexPolyZ -- and re-measuring needs a
+dedicated-hardware session, so runtime-neutral edits are absorbed instead
+of re-measured: when the fingerprint has moved, every path whose blob
+differs from the manifest must carry a blob-transition exemption under
+``scripts/bench/proof_only_runtime_exemptions/``. The relevant sets, the
+fingerprinting and the exemption machinery are shared with the other
+figure families in ``scripts/bench/sweep_freshness.py``.
 """
 
 from __future__ import annotations
@@ -19,68 +29,14 @@ import re
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-ROOT = Path(__file__).resolve().parents[2]
+from scripts.bench import sweep_freshness as freshness  # noqa: E402
+
+ROOT = freshness.ROOT
 CORPUS = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
-RESULTS = ROOT / "reports" / "bench-results"
-PROOF_ONLY_EXEMPTIONS = (
-    ROOT / "scripts" / "bench" / "proof_only_runtime_exemptions")
-SYSTEMS = ("hex-factor", "flint", "ntl", "pari", "isabelle-bz", "isabelle-lll")
-
-COMMON_PATHS = {
-    "bench/corpus/hexbz-factor-corpus.jsonl",
-    "scripts/bench/factor_sweep.py",
-}
-
-SYSTEM_PATHS = {
-    "flint": {"scripts/oracle/bz_flint_service.py"},
-    "ntl": {
-        "scripts/oracle/bz_ntl_service.cc",
-        "scripts/oracle/setup_bz_ntl_driver.sh",
-    },
-    "pari": {"scripts/oracle/bz_pari_service.py"},
-    "isabelle-bz": {
-        "scripts/oracle/setup_bz_isabelle.sh",
-        "scripts/oracle/bz-isabelle/",
-    },
-    "isabelle-lll": {
-        "scripts/oracle/setup_bz_lll_isabelle.sh",
-        "scripts/oracle/bz-lll-isabelle/",
-    },
-}
-
-HEX_PREFIXES = (
-    "Hex/",
-    "HexArith/",
-    "HexBareiss/",
-    "HexBerlekamp/",
-    "HexBerlekampZassenhaus/",
-    "HexHensel/",
-    "HexLLL/",
-    "HexMatrix/",
-    "HexModArith/",
-    "HexPoly/",
-    "HexPolyFp/",
-    "HexPolyZ/",
-    "HexBasic/",
-)
-
-HEX_PATHS = {
-    "bench/HexBench/FactorService.lean",
-    "HexPrimality/Table.lean",
-    "lakefile.lean",
-    "lake-manifest.json",
-    "lean-toolchain",
-}
-
-
-def git(*args: str) -> str:
-    result = subprocess.run(
-        ["git", *args], cwd=ROOT, text=True, capture_output=True, check=False)
-    if result.returncode:
-        raise SystemExit(result.stderr.strip() or f"git {' '.join(args)} failed")
-    return result.stdout
-
+RESULTS = freshness.RESULTS
+SYSTEMS = freshness.FACTOR_SYSTEMS
 
 LAKEFILE = "lakefile.lean"
 
@@ -127,10 +83,10 @@ def factorization_blocks(text: str) -> dict[str, str]:
 
     That is the package options, the dependencies, the factorization service
     executable, and the libraries it is built from -- the same set of libraries
-    `HEX_PREFIXES` already names as factorization source. Every other
-    declaration builds a different target and cannot reach this one.
+    the hex-factor relevant paths already name as factorization source. Every
+    other declaration builds a different target and cannot reach this one.
     """
-    libs = {prefix.rstrip("/") for prefix in HEX_PREFIXES}
+    libs = set(freshness.FACTOR_LIBRARIES)
     relevant = {}
     for name, body in lakefile_blocks(text).items():
         kind, _, decl = name.partition(" ")
@@ -143,7 +99,7 @@ def factorization_blocks(text: str) -> dict[str, str]:
     return relevant
 
 
-def lakefile_affects_runtime(baseline: str) -> bool:
+def lakefile_texts_differ(before: str, after: str) -> bool:
     """Did this lakefile edit change how the factorization binary is built?
 
     Nearly every change here registers a *new* library or executable, which
@@ -154,16 +110,6 @@ def lakefile_affects_runtime(baseline: str) -> bool:
 
     So compare only the declarations the factorization binary is built from.
     """
-    before = git_blob(baseline, LAKEFILE)
-    after = git_blob("HEAD", LAKEFILE)
-    if before is None or after is None:
-        return True
-    return lakefile_texts_differ(
-        git("cat-file", "blob", before), git("cat-file", "blob", after))
-
-
-def lakefile_texts_differ(before: str, after: str) -> bool:
-    """The block comparison behind `lakefile_affects_runtime`, without git."""
     old_blocks = factorization_blocks(before)
     new_blocks = factorization_blocks(after)
     if set(old_blocks) != set(new_blocks):
@@ -171,53 +117,15 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     return any(new_blocks[name] != body for name, body in old_blocks.items())
 
 
-def source_path(system: str, path: str) -> bool:
-    if path in COMMON_PATHS:
-        return True
-    if system == "hex-factor":
-        return path in HEX_PATHS or (
-            path.endswith(".lean") and path.startswith(HEX_PREFIXES))
-    return any(path == source or path.startswith(source)
-               for source in SYSTEM_PATHS[system])
-
-
-def git_blob(ref: str, path: str) -> str | None:
-    result = subprocess.run(
-        ["git", "rev-parse", f"{ref}:{path}"], cwd=ROOT,
-        text=True, capture_output=True, check=False)
-    return result.stdout.strip() if result.returncode == 0 else None
-
-
-def load_proof_only_exemptions() -> set[tuple[str, str, str]]:
-    """Load exact, reviewer-auditable source transitions with no runtime effect.
-
-    Both blob IDs are required so an exemption expires automatically as soon
-    as the file changes again. This is intentionally narrower than exempting a
-    path or trusting a commit-message marker.
-
-    One file per exemption. A single shared list cannot be merged: entries are
-    appended by whichever branches happen to be open, so concurrent pull
-    requests collide on it textually even when their exemptions are unrelated.
-    """
-    exemptions = set()
-    for entry_path in sorted(PROOF_ONLY_EXEMPTIONS.glob("*.json")):
-        entry = json.loads(entry_path.read_text())
-        required = {"path", "baseline_blob", "current_blob", "reason"}
-        missing = required - entry.keys()
-        if missing:
-            raise SystemExit(
-                f"{entry_path}: missing {', '.join(sorted(missing))}")
-        exemptions.add((
-            entry["path"], entry["baseline_blob"], entry["current_blob"]))
-    return exemptions
-
-
-def proof_only_transition(
-        path: str, baseline: str,
-        exemptions: set[tuple[str, str, str]]) -> bool:
-    baseline_blob = git_blob(baseline, path)
-    current_blob = git_blob("HEAD", path)
-    return (path, baseline_blob, current_blob) in exemptions
+def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
+    """A lakefile transition that cannot reach the factorization binary."""
+    if difference.path != LAKEFILE:
+        return False
+    if difference.baseline is None or difference.current is None:
+        return False
+    return not lakefile_texts_differ(
+        freshness.git("cat-file", "blob", difference.baseline),
+        freshness.git("cat-file", "blob", difference.current))
 
 
 def load_current_reports(corpus_sha: str):
@@ -234,6 +142,60 @@ def load_current_reports(corpus_sha: str):
     return newest
 
 
+def observation(system: str, timestamp, path: Path, report) -> (
+        freshness.Observation | None):
+    """The fingerprint this report recorded for one system, if it has one."""
+    digest = report.get("env", {}).get("source_fingerprints", {}).get(system)
+    if not digest:
+        return None
+    return freshness.Observation(
+        fingerprint=digest, label=path.name, timestamp=timestamp)
+
+
+def record(report_path: Path, ref: str | None) -> int:
+    """Stamp a freshly measured sweep with the source it measured.
+
+    The sweep driver deliberately does not do this itself: it is a shared
+    relevant path for all six systems, so editing it would mark every
+    comparator record stale, and the comparators have no exemption
+    channel. Run this straight after a sweep instead.
+
+    The listing is read from the commit the sweep recorded, which is the
+    source it actually measured, and falls back to the index when the
+    report has no resolvable commit.
+    """
+    report = json.loads(report_path.read_text())
+    systems = [system for system in report.get("config", {}).get("systems", [])
+               if system in SYSTEMS]
+    if not systems:
+        print(f"{report_path.name}: no measured system to fingerprint",
+              file=sys.stderr)
+        return 1
+    if ref is None:
+        commit = report.get("env", {}).get("git_commit")
+        if commit and subprocess.run(
+                ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+                cwd=ROOT, capture_output=True).returncode == 0:
+            ref = commit
+    fingerprints = {}
+    for system in systems:
+        family = freshness.factor_family(system)
+        listing = (freshness.tree_listing(family, ref) if ref
+                   else freshness.index_listing(family))
+        fingerprints[system] = freshness.record(family, listing)
+    env = report.setdefault("env", {})
+    env["source_fingerprints"] = dict(sorted(
+        ((env.get("source_fingerprints") or {}) | fingerprints).items()))
+    report_path.write_text(json.dumps(report, indent=2) + "\n")
+    source = f"commit {ref[:12]}" if ref else "the index"
+    print(f"{report_path.name}: recorded {len(fingerprints)} fingerprint(s) "
+          f"from {source}")
+    for system, digest in sorted(fingerprints.items()):
+        print(f"  {system} {digest} "
+              f"({freshness.factor_family(system).name}-{digest}.manifest)")
+    return 0
+
+
 def main() -> int:
     corpus_sha = hashlib.sha256(CORPUS.read_bytes()).hexdigest()
     corpus_names = {
@@ -241,7 +203,6 @@ def main() -> int:
         if line.strip()
     }
     newest = load_current_reports(corpus_sha)
-    proof_only_exemptions = load_proof_only_exemptions()
     errors = []
     current_rows = {}
 
@@ -249,20 +210,10 @@ def main() -> int:
         if system not in newest:
             errors.append(f"{system}: no measurement for the current corpus")
             continue
-        _, path, report = newest[system]
+        timestamp, path, report = newest[system]
         env = report.get("env", {})
-        commit = env.get("git_commit")
         if env.get("git_dirty") is not False:
             errors.append(f"{system}: {path.name} was measured from a dirty tree")
-        if not commit:
-            errors.append(f"{system}: {path.name} has no source commit")
-            continue
-        commit_exists = subprocess.run(
-            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
-            cwd=ROOT, capture_output=True).returncode == 0
-        if not commit_exists:
-            errors.append(f"{system}: measured commit {commit[:12]} is unavailable")
-            continue
         rows = [row for row in report.get("results", []) if row.get("system") == system]
         current_rows[system] = rows
         names = {row.get("name") for row in rows}
@@ -282,17 +233,19 @@ def main() -> int:
                 f"{system}: {path.name} has duplicate rows: " + ", ".join(duplicates))
         if not report.get("cross_check", {}).get("ok"):
             errors.append(f"{system}: {path.name} failed its differential cross-check")
-        changed = git("diff", "--name-only", f"{commit}..HEAD").splitlines()
-        stale = sorted(
-            name for name in changed
-            if source_path(system, name) and not (
-                system == "hex-factor" and (
-                    proof_only_transition(name, commit, proof_only_exemptions)
-                    or (name == LAKEFILE
-                        and not lakefile_affects_runtime(commit)))))
-        if stale:
+
+        family = freshness.factor_family(system)
+        recorded = observation(system, timestamp, path, report)
+        if recorded is None:
             errors.append(
-                f"{system}: source differs from {commit[:12]}: " + ", ".join(stale))
+                f"{system}: {path.name} records no source fingerprint; "
+                f"re-measure, or record one from the measuring commit with "
+                f"scripts/bench/sweep_freshness.py --record {family.name} "
+                f"--ref <commit>")
+            continue
+        verdict = freshness.assess(
+            family, [recorded], allow=build_only_lakefile_edit)
+        errors.extend(f"{system}: {error}" for error in verdict.errors)
 
     # Newest-per-system plots may combine records made at different times.
     # Recheck those selected answers together rather than relying only on each
@@ -316,10 +269,28 @@ def main() -> int:
         print("factorization performance data is stale:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
+        print("re-measure the affected systems on the benchmarking host, or, "
+              "for an edit that cannot change what was measured, add one JSON "
+              "file naming the exact blob transition under "
+              "scripts/bench/proof_only_runtime_exemptions/", file=sys.stderr)
         return 1
     print("factorization performance data covers the current corpus and source")
     return 0
 
 
+def cli(argv: list[str]) -> int:
+    if argv and argv[0] == "--record":
+        if len(argv) not in (2, 4) or (len(argv) == 4 and argv[2] != "--ref"):
+            print("usage: check_factor_sweep_freshness.py "
+                  "--record <sweep.json> [--ref REF]", file=sys.stderr)
+            return 2
+        return record(Path(argv[1]), argv[3] if len(argv) == 4 else None)
+    if argv:
+        print("usage: check_factor_sweep_freshness.py "
+              "[--record <sweep.json> [--ref REF]]", file=sys.stderr)
+        return 2
+    return main()
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(cli(sys.argv[1:]))

@@ -107,8 +107,10 @@ substitute: for example, in `ℚ(√2, √3)`, a factor defined over `ℚ(√3)`
 duplicated by the unused `√2` embeddings, so every absolute norm after shifting
 only by `√3` has repeated factors.
 
-The Stage 1 vanishing theorem from `hex-resultant-mathlib` is insufficient for
-steps 2 and 5. These theorems depend on its Stage 2 full value correspondence.
+The vanishing criterion of `hex-resultant-mathlib`
+(`resultant_eq_zero_iff_common_root`) is insufficient for steps 2 and 5; they
+rest on its full value correspondence
+(`resultant_eq_leadingCoeff_mul_prod_roots`).
 
 ## Adjoining
 
@@ -179,7 +181,7 @@ dimensions yield the opposite round trip and multiplicativity.
 `AlgebraicRoot.exact_toComplex` identifies the canonical primitive root stored
 in the result.
 
-## Required developments
+## Developments
 
 1. Iterated quotient-field semantics and fixed complex embeddings.
 2. Coordinate basis, dimension, and arithmetic correspondence.
@@ -189,8 +191,7 @@ in the result.
 6. Splitting termination, reconstruction, and generated-field minimality.
 7. Primitive-element degree test and flattening coordinate equivalences.
 
-Items 3 through 7 begin only after Stage 2 of `hex-resultant-mathlib` is
-available.
+Items 3 through 7 rest on that resultant value correspondence.
 
 ## File organisation
 

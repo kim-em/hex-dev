@@ -213,10 +213,10 @@ theorem powLtWordAux_eq (p : Nat) : ∀ (n acc r : Nat),
       intro acc r h
       simp only [Hex.powLtWordAux] at h
       by_cases hlt : acc * p < UInt64.word
-      · rw [if_pos hlt] at h
+      · rw [ite_eq_left hlt] at h
         have := ih (acc * p) r h
         rw [this]; ring
-      · rw [if_neg hlt] at h; exact absurd h (by simp)
+      · rw [ite_eq_right hlt] at h; exact absurd h (by simp)
 
 /-- A successful `powLtWordAux` run stays below the word bound. -/
 theorem powLtWordAux_lt (p : Nat) : ∀ (n acc r : Nat),
@@ -231,8 +231,8 @@ theorem powLtWordAux_lt (p : Nat) : ∀ (n acc r : Nat),
       intro acc r _ h
       simp only [Hex.powLtWordAux] at h
       by_cases hlt : acc * p < UInt64.word
-      · rw [if_pos hlt] at h; exact ih (acc * p) r hlt h
-      · rw [if_neg hlt] at h; exact absurd h (by simp)
+      · rw [ite_eq_left hlt] at h; exact ih (acc * p) r hlt h
+      · rw [ite_eq_right hlt] at h; exact absurd h (by simp)
 
 /-- A successful `powLtWord?` guard certifies both the power value and the word
 bound. -/
@@ -278,7 +278,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
   have hmtoNat : (UInt64.ofNat mval).toNat = mval := by
     rw [UInt64.toNat_ofNat_mod_word]; exact Nat.mod_eq_of_lt hmlt
   rw [Hex.cldQuotientModWord?, hpow]
-  simp only [dif_pos hodd]
+  simp only [dite_eq_left hodd]
   set ctx := _root_.MontCtx.mk (UInt64.ofNat mval) hodd with hctx
   -- the kernel's fW, gW are `toWMap ctx f`, `toWMap ctx g`
   have hgW : Hex.DensePoly.ofCoeffs
@@ -313,7 +313,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     rw [ZPoly.coeff_reduceModPow, hmtoNat, hmeq, Int.ofNat_eq_natCast]
     exact ⟨Int.natCast_nonneg _, by exact_mod_cast intModNat_lt _ (p ^ a) (by omega)⟩
   · -- the cast equality: both quotients are `numerator /ₘ divisor` in `ZMod (p^a)[X]`
-    haveI : Fact (1 < (UInt64.ofNat mval).toNat) := ⟨by rw [hmtoNat]; exact hm1⟩
+    have : Fact (1 < (UInt64.ofNat mval).toNat) := ⟨by rw [hmtoNat]; exact hm1⟩
     have hmpa : (UInt64.ofNat mval).toNat = p ^ a := by rw [hmtoNat]; exact hmeq
     have hpapos : 0 < (UInt64.ofNat mval).toNat := by rw [hmtoNat]; omega
     -- `g` is monic in the various images
@@ -327,8 +327,8 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     have hgsize2 : 1 < g.size := by
       unfold Hex.DensePoly.degree? at hgdeg
       by_cases hs : g.size = 0
-      · rw [dif_pos hs] at hgdeg; simp at hgdeg
-      · rw [dif_neg hs] at hgdeg; simp only [Option.getD_some] at hgdeg; omega
+      · rw [dite_eq_left hs] at hgdeg; simp at hgdeg
+      · rw [dite_eq_right hs] at hgdeg; simp only [Option.getD_some] at hgdeg; omega
     have hgpos : 0 < g.size := by omega
     have hgleading : g.coeff (g.size - 1) = 1 := by
       rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hgpos]; exact hg
@@ -358,7 +358,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
         coeff_toWMap, hgleading, htoW1]
     have hgWd : 0 < (toWMap ctx g).degree?.getD 0 := by
       unfold Hex.DensePoly.degree?
-      rw [dif_neg (by rw [hsz]; omega)]
+      rw [dite_eq_right (by rw [hsz]; omega)]
       simp only [Option.getD_some]; rw [hsz]; omega
     -- shared cancellation shape
     have hcancelZ : ∀ c : Int, c - c / g.leadingCoeff * g.leadingCoeff = 0 := by

@@ -556,14 +556,14 @@ private theorem improvePrimeData?_property
           | some score =>
               simp only
               by_cases hone : score.factorCount = 1
-              · simp only [hone, if_true]
+              · simp only [hone, ite_true]
                 exact hcandidate c score hscore
-              · simp only [hone, if_false]
+              · simp only [hone, ite_false]
                 by_cases hhalf : probeEarlyFactorFloor ≤ score.factorCount ∧
                     2 * score.factorCount ≤ first.factorCount
                 · simp only [hhalf]
                   exact hcandidate c score hscore
-                · simp only [hhalf, if_false]
+                · simp only [hhalf, ite_false]
                   apply ih (first := betterPrimeChoiceDataScore first score)
                     (extra := extra)
                   unfold betterPrimeChoiceDataScore
@@ -595,16 +595,16 @@ private theorem improvePrimeData?_p_le
           | some score =>
               simp only
               by_cases hone : score.factorCount = 1
-              · simp only [hone, if_true]
+              · simp only [hone, ite_true]
                 exact primeChoiceDataScore_p_le f c score
                   (hall c (by simp)) hscore
-              · simp only [hone, if_false]
+              · simp only [hone, ite_false]
                 by_cases hhalf : probeEarlyFactorFloor ≤ score.factorCount ∧
                     2 * score.factorCount ≤ first.factorCount
                 · simp only [hhalf]
                   exact primeChoiceDataScore_p_le f c score
                     (hall c (by simp)) hscore
-                · simp only [hhalf, if_false]
+                · simp only [hhalf, ite_false]
                   apply ih (first := betterPrimeChoiceDataScore first score)
                     (extra := extra)
                   · unfold betterPrimeChoiceDataScore
@@ -632,17 +632,17 @@ private theorem chooseAdaptiveFrom?_property
           simp only [hcurrent] at h
           have hproperty : P current := hcandidate c current hcurrent
           by_cases hone : current.factorCount = 1
-          · simp only [hone, if_true, Option.some.injEq] at h
+          · simp only [hone, ite_true, Option.some.injEq] at h
             rw [← h]
             exact hproperty
-          · simp only [hone, if_false] at h
+          · simp only [hone, ite_false] at h
             by_cases hprobe : shouldProbePrime f current = true
-            · simp only [hprobe, if_true, Option.some.injEq] at h
+            · simp only [hprobe, ite_true, Option.some.injEq] at h
               rw [← h]
               exact improvePrimeData?_property f P current hproperty hcandidate extra candidates
             · have hfalse : shouldProbePrime f current = false :=
                 Bool.eq_false_iff.mpr hprobe
-              simp only [hfalse, Bool.false_eq_true, if_false, Option.some.injEq] at h
+              simp only [hfalse, Bool.false_eq_true, ite_false, Option.some.injEq] at h
               rw [← h]
               exact hproperty
 
@@ -669,10 +669,10 @@ private theorem chooseAdaptiveFrom?_p_le
           have hcurrent_le : current.data.p ≤ 500 :=
             primeChoiceDataScore_p_le f c current (hall c (by simp)) hcurrent
           by_cases hone : current.factorCount = 1
-          · simp only [hone, if_true, Option.some.injEq] at h
+          · simp only [hone, ite_true, Option.some.injEq] at h
             rw [← h]
             exact hcurrent_le
-          · simp only [hone, if_false] at h
+          · simp only [hone, ite_false] at h
             split at h
             · simp only [Option.some.injEq] at h
               rw [← h]
@@ -969,7 +969,7 @@ private theorem chooseAdaptiveFrom?_ne_none_of_good
       | some score =>
           by_cases hone : score.factorCount = 1
           · simp [hone]
-          · simp only [hone, if_false]
+          · simp only [hone, ite_false]
             split <;> simp
       | none =>
           simp only

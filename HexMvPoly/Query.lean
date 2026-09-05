@@ -285,7 +285,7 @@ theorem leadingTerm_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
   apply (leadingTerm_eq_some_iff (C c : MvPoly n R cmp) Mono.zero c).mpr
   constructor
   · unfold coeff? C monomial
-    rw [Hex.dite_eq_right hc, Std.ExtTreeMap.getElem?_insert_self]
+    rw [dite_eq_right hc, Std.ExtTreeMap.getElem?_insert_self]
   · intro m hm
     have hcoeff := (mem_monomials_iff m (C c : MvPoly n R cmp)).mp hm
     rw [coeff_C] at hcoeff
@@ -293,7 +293,7 @@ theorem leadingTerm_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     · subst m
       rw [show cmp Mono.zero Mono.zero = .eq from Std.ReflCmp.compare_self]
       trivial
-    · rw [Hex.ite_eq_right hmzero] at hcoeff
+    · rw [ite_eq_right hmzero] at hcoeff
       contradiction
 
 /-- A nonzero one-term polynomial has its defining term as leading term. -/
@@ -305,7 +305,7 @@ theorem leadingTerm_monomial [Zero R] [BEq R] [LawfulBEq R]
     (monomial m c : MvPoly n R cmp) m c).mpr
   constructor
   · unfold coeff? monomial
-    rw [Hex.dite_eq_right hc, Std.ExtTreeMap.getElem?_insert_self]
+    rw [dite_eq_right hc, Std.ExtTreeMap.getElem?_insert_self]
   · intro k hk
     have hcoeff :=
       (mem_monomials_iff k (monomial m c : MvPoly n R cmp)).mp hk
@@ -314,7 +314,7 @@ theorem leadingTerm_monomial [Zero R] [BEq R] [LawfulBEq R]
     · subst k
       rw [show cmp m m = .eq from Std.ReflCmp.compare_self]
       trivial
-    · rw [Hex.ite_eq_right hkm] at hcoeff
+    · rw [ite_eq_right hkm] at hcoeff
       contradiction
 
 /-- A polynomial has no leading term exactly when it is zero. -/

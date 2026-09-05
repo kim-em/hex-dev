@@ -199,12 +199,12 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
   rw [Hex.ZPoly.isIrreducible]
   by_cases hf0 : f = 0
   · subst hf0
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact ⟨fun h => absurd h (by decide), fun h => absurd rfl h.not_zero⟩
-  · rw [if_neg hf0]
+  · rw [ite_eq_right hf0]
     by_cases hdeg : f.degree?.getD 0 = 0
     · -- constant arm
-      rw [if_pos hdeg]
+      rw [ite_eq_left hdeg]
       have hsize_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
       have hsize1 : f.size = 1 := by
         have hdeg_eq : f.degree?.getD 0 = f.size - 1 := by
@@ -224,7 +224,7 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
         rw [hfC] at h
         exact Hex.ZPoly.isNatPrime_natAbs_of_irreducible_C hk_ne h
     · -- positive-degree arm
-      rw [if_neg hdeg]
+      rw [ite_eq_right hdeg]
       set φ := Hex.ZPoly.factorize f with hφ_def
       have hprod : Hex.Factorization.product φ = f := Hex.factorize_product f
       have hfp1 : ∀ q : Hex.ZPoly, Hex.Factorization.factorPower q 1 = q := fun q => by
@@ -273,14 +273,16 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
         have hCs_g : Hex.DensePoly.C s * g = f := by
           rw [hg_def, hs_def, Hex.normalizeFactorSign]
           by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
-          · rw [if_pos hlc, if_pos hlc, Hex.ZPoly.C_mul_eq_scale, Hex.scale_neg_one_neg_one]
-          · rw [if_neg hlc, if_neg hlc, Hex.ZPoly.C_mul_eq_scale, Hex.densePoly_int_scale_one]
+          · rw [ite_eq_left hlc, ite_eq_left hlc, Hex.ZPoly.C_mul_eq_scale,
+              Hex.scale_neg_one_neg_one]
+          · rw [ite_eq_right hlc, ite_eq_right hlc, Hex.ZPoly.C_mul_eq_scale,
+              Hex.densePoly_int_scale_one]
         have hg_deg : 0 < g.degree?.getD 0 := by
           have : g.size = f.size := by
             rw [hg_def, Hex.normalizeFactorSign]
             by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
-            · rw [if_pos hlc]; exact Hex.ZPoly.scale_size_of_ne_zero (-1) f (by norm_num)
-            · rw [if_neg hlc]
+            · rw [ite_eq_left hlc]; exact Hex.ZPoly.scale_size_of_ne_zero (-1) f (by norm_num)
+            · rw [ite_eq_right hlc]
           have hfsz : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
           have hgeq : g.degree?.getD 0 = g.size - 1 := by
             unfold Hex.DensePoly.degree?; simp [Nat.ne_of_gt (this ▸ hfsz)]

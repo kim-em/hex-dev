@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.NttMul
+public import HexPolyFp.PackedMul
 
 public section
 
@@ -64,8 +64,8 @@ def powModMonicFastAux
   | n + 1, base, acc =>
       let acc' :=
         if (n + 1) % 2 = 0 then acc
-        else modByMonic f (mulFast acc base) hmonic
-      let base' := modByMonic f (mulFast base base) hmonic
+        else modByMonic f (mulPackedFast acc base) hmonic
+      let base' := modByMonic f (mulPackedFast base base) hmonic
       powModMonicFastAux f hmonic ((n + 1) / 2) base' acc'
 termination_by n => n
 decreasing_by
@@ -82,11 +82,11 @@ private theorem powModMonicFastAux_eq
       rw [powModMonicFastAux.eq_def, powModMonicAux.eq_def]
   | case2 n base acc acc' base' ih =>
       rw [powModMonicFastAux.eq_def, powModMonicAux.eq_def]
-      simp only [mulFast_eq]
+      simp only [mulPackedFast_eq]
       exact ih
 
 /-- Compiled modular-power dispatcher.  Tiny moduli retain the reference loop;
-larger moduli use `mulFast` while retaining ordinary monic reduction. -/
+larger moduli use `mulPackedFast` while retaining ordinary monic reduction. -/
 @[inline] def powModMonicImpl (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
     FpPoly p :=
   if f.size < powFastCutoff then
@@ -350,7 +350,7 @@ private theorem powModMonicAux_mod_eq
               DensePoly.modByMonic_eq_mod _ _ hmonic]
         rcases Nat.mod_two_eq_zero_or_one (m + 1) with hmod | hmod
         · -- (m + 1) is even
-          rw [if_pos hmod]
+          rw [ite_eq_left hmod]
           have hk : 2 * ((m + 1) / 2) = m + 1 := by
             have h := Nat.mod_add_div (m + 1) 2
             omega
@@ -369,7 +369,7 @@ private theorem powModMonicAux_mod_eq
                   rw [powLinear_double]
             _ = (acc * powLinear base (m + 1)) % f := by rw [hk]
         · -- (m + 1) is odd
-          rw [if_neg (by omega)]
+          rw [ite_eq_right (by omega)]
           rw [show modByMonic f (acc * base) hmonic = (acc * base) % f from
                 DensePoly.modByMonic_eq_mod _ _ hmonic]
           have hk : 2 * ((m + 1) / 2) + 1 = m + 1 := by
@@ -416,7 +416,7 @@ private theorem powModMonicAux_pos_self_mod
             have h := Nat.mod_add_div (k + 1) 2
             omega
           subst hkz
-          rw [if_neg (by decide : ¬ ((1 : Nat)) % 2 = 0)]
+          rw [ite_eq_right (by decide : ¬ ((1 : Nat)) % 2 = 0)]
           rw [modByMonic_eq_mod_swap f (acc * base) hmonic,
               DensePoly.mod_mod (acc * base) f]
         · -- Recurse via IH with strictly smaller fuel.

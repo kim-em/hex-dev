@@ -62,10 +62,10 @@ private theorem detSignParity_add {R : Type u} [Lean.Grind.Ring R] (a m : Nat) :
       rw [hsucc]
       by_cases hm : (a + m) % 2 = 0
       · have hmnot' : ¬(a + (m + 1)) % 2 = 0 := by omega
-        rw [if_pos hm, if_neg hmnot']
+        rw [ite_eq_left hm, ite_eq_right hmnot']
         grind
       · have hmnext' : (a + (m + 1)) % 2 = 0 := by omega
-        rw [if_neg hm, if_pos hmnext']
+        rw [ite_eq_right hm, ite_eq_left hmnext']
         grind
 
 private theorem detSign_of_inversionCount_add {R : Type u} [Lean.Grind.Ring R]
@@ -180,7 +180,7 @@ private theorem cofactorSign_last_eq_pow {R : Type u} [Lean.Grind.Ring R] {n : N
   have hle : i.val ≤ n := Nat.le_of_lt_succ i.isLt
   have h := detSignParity_add (R := R) (2 * i.val) (n - i.val)
   have heven : (2 * i.val) % 2 = 0 := by omega
-  rw [if_pos heven] at h
+  rw [ite_eq_left heven] at h
   have hsum : 2 * i.val + (n - i.val) = i.val + n := by omega
   rw [hsum] at h
   -- h : (if (i.val + n) % 2 = 0 then 1 else -1) = (-1) ^ (n - i.val) * 1

@@ -167,7 +167,7 @@ theorem sound {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
       · simp only [openRegion, Hex.AtomCertificate.isNK]
         rw [openRegion] at hzopen
         by_cases hkind : certificate.isNK = true
-        · simp only [hkind, if_true] at hzopen ⊢
+        · simp only [hkind, ite_true] at hzopen ⊢
           exact DyadicSquare.openSquare_neg.mpr hzopen
         · simp only [hkind] at hzopen ⊢
           exact DyadicSquare.disc_neg.mpr hzopen
@@ -181,7 +181,7 @@ theorem sound {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
             DyadicRootIsolation.region ⟨s, certificate⟩ := by
           simp only [region, Hex.AtomCertificate.isNK] at hwregion ⊢
           by_cases hkind : certificate.isNK = true
-          · simp only [hkind, if_true] at hwregion ⊢
+          · simp only [hkind, ite_true] at hwregion ⊢
             have hiff := DyadicSquare.closedSquare_neg (s := s) (z := -w)
             simp only [neg_neg] at hiff
             exact hiff.mp hwregion
@@ -481,11 +481,11 @@ theorem certifyPelletAtShift_preserves {p : Hex.ZPoly} {c : Hex.Component}
           · have hr : r = .atom (cl'.atomize hk1) :=
               (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_pos hk1] using
+            simpa only [dite_eq_left hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
           · have hr : r = .cluster cl' := (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_neg hk1] using
+            simpa only [dite_eq_right hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
@@ -529,11 +529,11 @@ theorem certifyPelletExactAt_preserves {p : Hex.ZPoly} {c : Hex.Component}
           · have hr : r = .atom (cl'.atomize hk1) :=
               (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_pos hk1] using
+            simpa only [dite_eq_left hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
           · have hr : r = .cluster cl' := (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_neg hk1] using
+            simpa only [dite_eq_right hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
@@ -577,15 +577,15 @@ theorem certifyPelletSoft_preserves {p : Hex.ZPoly} {c : Hex.Component}
           simp [Hex.TaylorShift.combinedWitnessCheck, hprec, hsCached]
       let cl : Hex.DyadicRootCluster p := ⟨c.squares, k, hs.1, hw⟩
       by_cases hk1 : k = 1
-      · rw [dif_pos hk1] at hcert
+      · rw [dite_eq_left hk1] at hcert
         have hr : r = .atom (cl.atomize hk1) := (Option.some.inj hcert).symm
         subst r
-        simpa only [dif_pos hk1] using
+        simpa only [dite_eq_left hk1] using
           basePellet_mem hs.1 hw hzsquare
-      · rw [dif_neg hk1] at hcert
+      · rw [dite_eq_right hk1] at hcert
         have hr : r = .cluster cl := (Option.some.inj hcert).symm
         subst r
-        simpa only [dif_neg hk1] using
+        simpa only [dite_eq_right hk1] using
           basePellet_mem hs.1 hw hzsquare
   · simp at hcert
 

@@ -373,7 +373,7 @@ at `fuel + 1` to its explicit Bareiss exact-division update. -/
            (state.matrix[k][k] * (bareissGramCanonicalCoeff b fuel i)[a] -
              state.matrix[i][k] * (bareissGramCanonicalCoeff b fuel k)[a])
            state.prevPivot) := by
-  simp [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hi]
+  simp [bareissGramCanonicalCoeff, dite_eq_left hnext, ite_eq_left hi]
   intro hc
   simp only [Matrix.getElem_nat_eq_getRow] at hp
   exact absurd hc hp
@@ -397,7 +397,7 @@ coefficient at `fuel + 1` collapses to the one at `fuel`. -/
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
     bareissGramCanonicalCoeff b (fuel + 1) i =
       bareissGramCanonicalCoeff b fuel i := by
-  simp [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hi]
+  simp [bareissGramCanonicalCoeff, dite_eq_left hnext, ite_eq_right hi]
 
 /-- Recursion equation: singular branch (zero diagonal). A zero pivot skips the
 update, so the canonical coefficient at `fuel + 1` collapses to the one at
@@ -416,7 +416,7 @@ update, so the canonical coefficient at `fuel + 1` collapses to the one at
             (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] = 0) :
     bareissGramCanonicalCoeff b (fuel + 1) i =
       bareissGramCanonicalCoeff b fuel i := by
-  simp [bareissGramCanonicalCoeff, dif_pos hnext]
+  simp [bareissGramCanonicalCoeff, dite_eq_left hnext]
   intro hc
   simp only [Matrix.getElem_nat_eq_getRow] at hp
   exact absurd hp hc
@@ -430,7 +430,7 @@ collapses to the one at `fuel`. -/
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n) :
     bareissGramCanonicalCoeff b (fuel + 1) i =
       bareissGramCanonicalCoeff b fuel i := by
-  simp only [bareissGramCanonicalCoeff, dif_neg hDone]
+  simp only [bareissGramCanonicalCoeff, dite_eq_right hDone]
 
 /-- A `BareissGramRowInvariant` on `noPivotLoop fuel (noPivotInitialState …)`
 is *canonical at `fuel`* when every row's coefficient vector matches
@@ -689,7 +689,7 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
         (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
           bareissGramRowInvariantStepCoeff hinv hnext i hi := by
       show (if hi : _ then _ else _) = _
-      rw [dif_pos hi]
+      rw [dite_eq_left hi]
     rw [hLHS, bareissGramCanonicalCoeff_succ_regular b elapsed i hnext hp hi]
     show Vector.ofFn (fun a : Fin n =>
         Matrix.exactDiv
@@ -704,7 +704,7 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
         (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
           hinv.coeff i := by
       show (if hi : _ then _ else _) = _
-      rw [dif_neg hi]
+      rw [dite_eq_right hi]
     rw [hLHS, bareissGramCanonicalCoeff_succ_processed b elapsed i hnext hp hi]
     exact h_canon i
 

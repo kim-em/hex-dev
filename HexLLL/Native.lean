@@ -143,7 +143,7 @@ theorem foldl_finRange_set_outerSubMul_get_eq
       refine ⟨⟨l.val, Nat.lt_of_lt_of_le hlj hjn⟩, ?_, rfl⟩
       rw [List.mem_map]
       exact ⟨⟨l.val, hlj⟩, List.mem_finRange _, rfl⟩
-    rw [if_pos hex, if_pos hlj]
+    rw [ite_eq_left hex, ite_eq_left hlj]
   · have hno : ¬ ∃ i ∈ (List.finRange jVal).map cast, i.val = l.val := by
       rintro ⟨i, hi_mem, hi_eq⟩
       rw [List.mem_map] at hi_mem
@@ -153,7 +153,7 @@ theorem foldl_finRange_set_outerSubMul_get_eq
         rw [← hi_eq, ← hl', hcast]
         exact l'.isLt
       exact hlj this
-    rw [if_neg hno, if_neg hlj]
+    rw [ite_eq_right hno, ite_eq_right hlj]
 
 /-- Single-column size reduction update for row `k` against row `j`. -/
 @[expose]
@@ -334,13 +334,13 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     Matrix.memLattice (s.swapStep k).b v ↔ Matrix.memLattice s.b v := by
   unfold swapStep
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [dite_eq_left hk]
     by_cases hk0 : 0 < k
-    · rw [dif_pos hk0]
+    · rw [dite_eq_left hk0]
       simpa [GramSchmidt.Int.adjacentSwap] using
         rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
-    · rw [dif_neg hk0]
-  · rw [dif_neg hk]
+    · rw [dite_eq_right hk0]
+  · rw [dite_eq_right hk]
 
 /-- A single-column size reduction preserves the generated lattice. -/
 @[grind =] theorem sizeReduceColumn_memLattice_iff
@@ -349,10 +349,10 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
   unfold sizeReduceColumn
   by_cases hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
-  · rw [dif_pos hreduce]
+  · rw [dite_eq_left hreduce]
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
     exact rowAdd_memLattice_iff s.b hne _ v
-  · rw [dif_neg hreduce]
+  · rw [dite_eq_right hreduce]
 
 /-- `sizeReduce_foldl_memLattice_iff` states that folding size-reduction column
 steps over a list of columns preserves the integer row-lattice membership
@@ -377,10 +377,10 @@ private theorem sizeReduce_foldl_memLattice_iff (s : LLLState n m) (k : Nat) (hk
     Matrix.memLattice (s.sizeReduce k).b v ↔ Matrix.memLattice s.b v := by
   unfold sizeReduce
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [dite_eq_left hk]
     simpa [Fin.foldr_eq_finRange_foldr] using
       sizeReduce_foldl_memLattice_iff s k hk (List.finRange k).reverse v
-  · rw [dif_neg hk]
+  · rw [dite_eq_right hk]
 
 /-- The updated swap state still packages the intended scaled coefficient
 representation for its basis. -/
@@ -508,8 +508,8 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
     show Matrix.memLattice
       (if hdone : k = n then s.b else _) v ↔ _
     by_cases hdone : k = n
-    · rw [dif_pos hdone]
-    · rw [dif_neg hdone]
+    · rw [dite_eq_left hdone]
+    · rw [dite_eq_right hdone]
       by_cases hcond : Int.ofNat δ.den *
             (Int.ofNat ((s.sizeReduce k).d.get
                 ⟨k + 1, Nat.succ_lt_succ (Nat.lt_of_le_of_ne hkn hdone)⟩) *
@@ -523,8 +523,8 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
                   (Nat.lt_of_le_of_ne hkn hdone)⟩ ^ 2) ≥
           δ.num * (Int.ofNat ((s.sizeReduce k).d.get
             ⟨k, Nat.lt_succ_of_lt (Nat.lt_of_le_of_ne hkn hdone)⟩) ^ 2)
-      · rw [if_pos hcond, ih, LLLState.sizeReduce_memLattice_iff]
-      · rw [if_neg hcond, ih, LLLState.swapStep_memLattice_iff,
+      · rw [ite_eq_left hcond, ih, LLLState.sizeReduce_memLattice_iff]
+      · rw [ite_eq_right hcond, ih, LLLState.swapStep_memLattice_iff,
           LLLState.sizeReduce_memLattice_iff]
 
 /-- Initial fuel bound for `lllLoop`, sufficient for valid independent inputs

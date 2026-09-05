@@ -116,7 +116,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       rw [hz]
       simp only [↓reduceIte]
-      rw [if_pos hgsmall, specialize_zero, hzdeg, hgdeg,
+      rw [ite_eq_left hgsmall, specialize_zero, hzdeg, hgdeg,
         eval_toPolynomial, HexPolyMathlib.toPolynomial_one]
       simp [Polynomial.resultant]
     · have hgdeg : 0 < g.degree?.getD 0 := by
@@ -126,7 +126,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       rw [hz]
       simp only [↓reduceIte]
-      rw [if_neg hgsmall, specialize_zero, hzdeg,
+      rw [ite_eq_right hgsmall, specialize_zero, hzdeg,
         eval_toPolynomial, HexPolyMathlib.toPolynomial_zero,
         Polynomial.eval_zero, Polynomial.resultant_zero_left]
       simp [hgdeg.ne']
@@ -148,7 +148,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
         unfold resultant
         rw [hfz, hz]
         simp only [Bool.false_eq_true, ↓reduceIte]
-        rw [if_pos hfsmall, specialize_zero, hzdeg, hfdeg,
+        rw [ite_eq_left hfsmall, specialize_zero, hzdeg, hfdeg,
           eval_toPolynomial, HexPolyMathlib.toPolynomial_one]
         simp [Polynomial.resultant]
       · have hfdeg : 0 < f.degree?.getD 0 := by
@@ -157,7 +157,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
         unfold resultant
         rw [hfz, hz]
         simp only [Bool.false_eq_true, ↓reduceIte]
-        rw [if_neg hfsmall, specialize_zero, hzdeg,
+        rw [ite_eq_right hfsmall, specialize_zero, hzdeg,
           eval_toPolynomial, HexPolyMathlib.toPolynomial_zero,
           Polynomial.eval_zero, Polynomial.resultant_zero_right]
         simp [hfdeg.ne']
@@ -187,7 +187,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       simp only [hfz, hgz, Bool.false_eq_true, ↓reduceIte]
       by_cases hfg : f.size < g.size
-      · rw [if_pos hfg]
+      · rw [ite_eq_left hfg]
         rw [resultantOrdered_eq_coeffMinor g f hg hf (by omega),
           negOnePow_eq_sign]
         have hswap := Subresultant.coeffMinor_swap 0 0 f g
@@ -195,7 +195,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
         rw [← hswap]
         unfold Subresultant.coeffMinor
         exact eval_coeffMinorAt_zero _ _ f g a hfBound hgBound
-      · rw [if_neg hfg]
+      · rw [ite_eq_right hfg]
         rw [resultantOrdered_eq_coeffMinor f g hf hg (by omega)]
         unfold Subresultant.coeffMinor
         exact eval_coeffMinorAt_zero _ _ f g a hfBound hgBound

@@ -264,11 +264,11 @@ private theorem leadingMinor_diag_eq_foldl (d : Vector Int r) (k n m : Nat)
     intro acc i _hi
     simp only [getElem_selectedSubmatrix, getElem_firstColumns]
     rw [getElem_diagMatrix]
-    split <;> simp_all <;> omega
+    split <;> simp_all; omega
   · intro i j hji
     simp only [getElem_selectedSubmatrix, getElem_firstColumns]
     apply diagMatrix_apply_of_ne
-    simp only [Fin.val_mk]
+    simp only []
     omega
 
 /-- On the represented part of a Smith diagonal, the determinantal divisor

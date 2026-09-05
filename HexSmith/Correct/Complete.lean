@@ -394,7 +394,7 @@ private theorem reduceFuel_inverses (pivotRow : Fin n) (pivotCol : Fin m)
                 let normalized := Matrix.rowScale s.matrix pivotRow (-1)
                 have hzero' : normalized[pivotRow][q.2] = 0 := by
                   dsimp only [normalized]
-                  rw [Matrix.getElem_rowScale, if_pos rfl]
+                  rw [Matrix.getElem_rowScale, ite_eq_left rfl]
                   have hz : s.matrix[pivotRow][q.2] = 0 := by
                     simpa only [Matrix.getElem_pair_eq_nested] using hzero
                   rw [hz]
@@ -407,7 +407,7 @@ private theorem reduceFuel_inverses (pivotRow : Fin n) (pivotCol : Fin m)
                 have hb : repairedMatrix[(pivotRow, q.2)] ≠ 0 := by
                   dsimp only [repairedMatrix]
                   rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd,
-                    if_pos rfl, hzero']
+                    ite_eq_left rfl, hzero']
                   simpa using hsource
                 exact ih (repair_inverses hneg pivotRow q.1 pivotCol q.2
                   hrowNe hcolNe hb)
@@ -431,7 +431,7 @@ private theorem reduceFuel_inverses (pivotRow : Fin n) (pivotCol : Fin m)
                   rw [hz, Int.zero_emod] at hs
                   exact hs.2.2 rfl
                 have hb : (Matrix.rowAdd s.matrix q.1 pivotRow 1)[(pivotRow, q.2)] ≠ 0 := by
-                  rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd, if_pos rfl, hzero']
+                  rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd, ite_eq_left rfl, hzero']
                   simpa using hsource
                 exact ih (repair_inverses h pivotRow q.1 pivotCol q.2
                   hrowNe hcolNe hb)
@@ -519,7 +519,7 @@ private theorem diagMatrix_swap (v : Vector Int r) (i j : Fin r) :
   by_cases hri : row = i <;> by_cases hrj : row = j <;>
     by_cases hci : col = i <;> by_cases hcj : col = j
   all_goals simp_all [Fin.ext_iff]
-  all_goals split <;> simp_all <;> omega
+  all_goals split <;> simp_all; omega
 
 private theorem diagMatrix_negate (v : Vector Int r) (i : Fin r) :
     Matrix.rowScale (diagMatrix v r r) i (-1) =
@@ -556,9 +556,9 @@ private theorem Diagonal.Compact.swap_agrees (ops : Accumulator α r r)
   subst denseAcc
   simp only [Diagonal.Compact.swap, Diagonal.swap, swapRows, swapCols]
   by_cases hij : i = j
-  · simp only [if_pos hij]
+  · simp only [ite_eq_left hij]
     exact ⟨rfl, rfl⟩
-  · simp only [if_neg hij]
+  · simp only [ite_eq_right hij]
     exact ⟨diagMatrix_swap values i j, rfl⟩
 
 private theorem Diagonal.findNonzero?_diag (values : Vector Int r)
@@ -583,12 +583,12 @@ private theorem Diagonal.Compact.normalizeFuel_agrees
   | succ fuel ih =>
       rw [Diagonal.Compact.normalizeFuel, Diagonal.normalizeFuel]
       by_cases ht : target < r
-      · rw [dif_pos ht, dif_pos ht]
+      · rw [dite_eq_left ht, dite_eq_left ht]
         rw [h.matrix, Diagonal.findNonzero?_diag]
         cases hf : Diagonal.Compact.findNonzero? compact.values target with
-        | none => simp only [hf]; exact h
+        | none => simp only []; exact h
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := swap_agrees ops h pivot found
             have hpivot :
@@ -600,7 +600,7 @@ private theorem Diagonal.Compact.normalizeFuel_agrees
             · have hp' : (Diagonal.swap ops dense pivot found).matrix[(pivot, pivot)] < 0 := by
                 rw [hpivot]
                 exact hp
-              rw [if_pos hp, if_pos hp']
+              rw [ite_eq_left hp, ite_eq_left hp']
               apply ih
               exact ⟨(congrArg (fun M => Matrix.rowScale M pivot (-1))
                 hmoved.matrix).trans (diagMatrix_negate _ pivot),
@@ -608,9 +608,9 @@ private theorem Diagonal.Compact.normalizeFuel_agrees
             · have hp' : ¬ (Diagonal.swap ops dense pivot found).matrix[(pivot, pivot)] < 0 := by
                 rw [hpivot]
                 exact hp
-              rw [if_neg hp, if_neg hp']
+              rw [ite_eq_right hp, ite_eq_right hp']
               exact ih (target + 1) hmoved
-      · rw [dif_neg ht, dif_neg ht]
+      · rw [dite_eq_right ht, dite_eq_right ht]
         exact h
 
 private def Diagonal.Compact.NonnegTo (s : Diagonal.Compact.Result α r)
@@ -631,7 +631,7 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
   | succ fuel ih =>
       rw [Diagonal.Compact.normalizeFuel]
       have ht : target < r := by omega
-      rw [dif_pos ht]
+      rw [dite_eq_left ht]
       cases hf : Diagonal.Compact.findNonzero? s.values target with
       | none =>
           intro i
@@ -643,9 +643,9 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
               apply Classical.byContradiction
               intro hn
               exact hfind ⟨Nat.le_of_not_gt hi, hn⟩
-            simpa [hz]
+            simp [hz]
       | some found =>
-          simp only [hf]
+          simp only []
           let pivot : Fin r := ⟨target, ht⟩
           have hfound := List.find?_some hf
           simp only [Bool.and_eq_true, decide_eq_true_eq] at hfound
@@ -673,13 +673,13 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
             have hnext : Diagonal.Compact.NonnegTo next (target + 1) := by
               intro i hi
               by_cases hip : i.val = pivot.val
-              · simp [next, Vector.getElem_set, hip]
+              · simp [next, hip]
                 omega
               · have hip' : pivot.val ≠ i.val := Ne.symm hip
-                simp [next, Vector.getElem_set, hip, hip']
+                simp [next, hip']
                 exact hmoved i (by simp [pivot] at hip; omega)
             have hout := ih (target + 1) next hnext (by omega)
-            simpa only [moved, pivot, p, if_pos hneg, next] using hout
+            simpa only [moved, pivot, p, ite_eq_left hneg, next] using hout
           · have hnext : Diagonal.Compact.NonnegTo moved (target + 1) := by
               intro i hi
               by_cases hip : i.val = pivot.val
@@ -688,7 +688,7 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
                 exact Int.le_of_not_gt hneg
               · exact hmoved i (by simp [pivot] at hip; omega)
             have hout := ih (target + 1) moved hnext (by omega)
-            simpa only [moved, pivot, p, if_neg hneg] using hout
+            simpa only [moved, pivot, p, ite_eq_right hneg] using hout
 
 private theorem Diagonal.Compact.normalize_nonneg
     (ops : Accumulator α r r) (s : Diagonal.Compact.Result α r) :
@@ -729,9 +729,9 @@ private theorem Diagonal.Compact.quotient_lcm (a b : Int)
   let l := Nat.lcm a.natAbs b.natAbs
   let g' := Int.ofNat g
   have ha_cast : Int.ofNat a.natAbs = a := by
-    simpa [Int.natAbs_of_nonneg ha] using Int.ofNat_toNat ha
+    simp [Int.natAbs_of_nonneg ha]
   have hb_cast : Int.ofNat b.natAbs = b := by
-    simpa [Int.natAbs_of_nonneg hb] using Int.ofNat_toNat hb
+    simp [Int.natAbs_of_nonneg hb]
   have hga : g' ∣ a := by
     dsimp only [g, g']
     rw [← ha_cast]
@@ -762,7 +762,7 @@ private theorem Diagonal.Compact.quotient_lcm (a b : Int)
 
 private theorem Diagonal.Compact.cast_natAbs (x : Int) (hx : 0 ≤ x) :
     Int.ofNat x.natAbs = x := by
-  simpa [Int.natAbs_of_nonneg hx] using Int.ofNat_toNat hx
+  simp [Int.natAbs_of_nonneg hx]
 
 set_option maxHeartbeats 800000 in
 private theorem Diagonal.Compact.pairStep_model
@@ -785,95 +785,90 @@ private theorem Diagonal.Compact.pairStep_model
   have hji : j.val ≠ i.val := Ne.symm hij
   rw [Diagonal.Compact.pairStep]
   by_cases ha0 : a = 0
-  · rw [if_pos ha0]
+  · rw [ite_eq_left ha0]
     have hai : s.values[i] = 0 := by simpa [a] using ha0
     have hai' : s.values[i.val] = 0 := hai
     by_cases hb0 : b = 0
-    · rw [if_pos hb0]
+    · rw [ite_eq_left hb0]
       have hbj : s.values[j] = 0 := by simpa [b] using hb0
       have hbj' : s.values[j.val] = 0 := hbj
       apply Vector.ext
       intro k hk
       by_cases hki : k = i.val
       · subst k
-        simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hai, hai', hbj, hbj',
-          Vector.getElem_set, hne, hij, hji]
+        simp [Diagonal.Bubble.vectorStep, hai', hbj',
+          hji]
       · by_cases hkj : k = j.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hai, hai', hbj, hbj',
-            Vector.getElem_set, hne, hij, hji]
+          simp [Diagonal.Bubble.vectorStep, hai', hbj']
         · have hik : i.val ≠ k := Ne.symm hki
           have hjk : j.val ≠ k := Ne.symm hkj
-          simp [Diagonal.Bubble.vectorStep, Vector.getElem_set, hki, hkj,
-            hik, hjk, hij, hji, hcastNat k hk]
+          simp [Diagonal.Bubble.vectorStep,
+            hik, hjk]
           exact (hcastNat k hk).symm
 
-    · rw [if_neg hb0]
+    · rw [ite_eq_right hb0]
       apply Vector.ext
       intro k hk
       by_cases hki : k = i.val
       · subst k
-        simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, a, b, hai, hai',
-          ha0, hb0, Vector.getElem_set, Vector.getElem_swap, hne,
-          hij, hji, cast_natAbs b hb]
+        simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, hai',
+          hne,
+          hji]
         exact (hcastNat j.val j.isLt).symm
       · by_cases hkj : k = j.val
         · subst k
-          simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, a, b, hai, hai',
-            ha0, hb0, Vector.getElem_set, Vector.getElem_swap, hne, hij, hji]
+          simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep, hai',
+            hne]
         · have hik : i.val ≠ k := Ne.symm hki
           have hjk : j.val ≠ k := Ne.symm hkj
           simp [Diagonal.Compact.swap, Diagonal.Bubble.vectorStep,
-            Vector.getElem_set, Vector.getElem_swap, hki, hkj, hik, hjk, hne,
-            hij, hji, hcastNat k hk]
+            hki, hkj, hik, hjk, hne]
           exact (hcastNat k hk).symm
-  · rw [if_neg ha0]
+  · rw [ite_eq_right ha0]
     by_cases hb0 : b = 0
-    · rw [if_pos hb0]
+    · rw [ite_eq_left hb0]
       have hbj : s.values[j] = 0 := by simpa [b] using hb0
       have hbj' : s.values[j.val] = 0 := hbj
       apply Vector.ext
       intro k hk
       by_cases hki : k = i.val
       · subst k
-        simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hbj, hbj',
-          Vector.getElem_set, hij, hji, cast_natAbs a ha]
+        simp [Diagonal.Bubble.vectorStep, hbj',
+          hji]
         exact (hcastNat i.val i.isLt).symm
       · by_cases hkj : k = j.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hbj, hbj',
-            Vector.getElem_set, hne, hij, hji]
+          simp [Diagonal.Bubble.vectorStep, hbj']
         · have hik : i.val ≠ k := Ne.symm hki
           have hjk : j.val ≠ k := Ne.symm hkj
-          simp [Diagonal.Bubble.vectorStep, Vector.getElem_set, hki, hkj,
-            hik, hjk, hij, hji, hcastNat k hk]
+          simp [Diagonal.Bubble.vectorStep,
+            hik, hjk]
           exact (hcastNat k hk).symm
-    · rw [if_neg hb0]
+    · rw [ite_eq_right hb0]
       by_cases hab : a = b
-      · rw [if_pos hab]
+      · rw [ite_eq_left hab]
         have habv : s.values[i.val] = s.values[j.val] := by
           simpa [a, b] using hab
         apply Vector.ext
         intro k hk
         by_cases hki : k = i.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
-            Vector.getElem_set, hne, hij, hji, hcastNat i.val i.isLt]
+          simp [Diagonal.Bubble.vectorStep,
+            hji]
           rw [habv, Nat.gcd_self]
           exact (hcastNat j.val j.isLt).symm
         · by_cases hkj : k = j.val
           · subst k
-            simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
-              Vector.getElem_set, hne, hij, hji, hcastNat j.val j.isLt]
+            simp [Diagonal.Bubble.vectorStep]
             rw [habv, Nat.lcm_self]
             exact (hcastNat j.val j.isLt).symm
           · have hik : i.val ≠ k := Ne.symm hki
             have hjk : j.val ≠ k := Ne.symm hkj
-            simp [Diagonal.Bubble.vectorStep, a, b, ha0, hb0, hab,
-              Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
-              hcastNat k hk]
+            simp [Diagonal.Bubble.vectorStep,
+              hik, hjk]
             exact (hcastNat k hk).symm
-      · rw [if_neg hab]
+      · rw [ite_eq_right hab]
         rcases he : HexArith.Int.extGcd a b with ⟨g, u, v⟩
         have hg : g = Nat.gcd a.natAbs b.natAbs := by
           have := HexArith.Int.extGcd_fst a b
@@ -891,18 +886,16 @@ private theorem Diagonal.Compact.pairStep_model
         intro k hk
         by_cases hki : k = i.val
         · subst k
-          simp [Diagonal.Bubble.vectorStep, a, b, he, hg,
-            Vector.getElem_set, hne, hij, hji]
+          simp [Diagonal.Bubble.vectorStep, a, b, hg,
+            hji]
         · by_cases hkj : k = j.val
           · subst k
-            simp [Diagonal.Bubble.vectorStep, a, b, he, hg, hl, hl', hlNat,
-              Vector.getElem_set, hne, hij, hji]
+            simp [Diagonal.Bubble.vectorStep, a, b, hg]
             exact hlNat
           · have hik : i.val ≠ k := Ne.symm hki
             have hjk : j.val ≠ k := Ne.symm hkj
-            simp [Diagonal.Bubble.vectorStep, a, b, he,
-              Vector.getElem_set, hki, hkj, hik, hjk, hij, hji,
-              hcastNat k hk]
+            simp [Diagonal.Bubble.vectorStep,
+              hik, hjk]
             exact (hcastNat k hk).symm
 
 private theorem Diagonal.Compact.pairStep_nonneg
@@ -931,7 +924,7 @@ private theorem Diagonal.Compact.passFuel_model
   | succ fuel ih =>
       rw [Diagonal.Compact.passFuel, Diagonal.Bubble.vectorPassFuel]
       by_cases hi : index + 1 < r
-      · rw [dif_pos hi, dif_pos hi]
+      · rw [dite_eq_left hi, dite_eq_left hi]
         let i : Fin r := ⟨index, by omega⟩
         let j : Fin r := ⟨index + 1, hi⟩
         let next := Diagonal.Compact.pairStep ops s i j
@@ -946,7 +939,7 @@ private theorem Diagonal.Compact.passFuel_model
           intro k hk
           simp
         rw [habs]
-      · rw [dif_neg hi, dif_neg hi]
+      · rw [dite_eq_right hi, dite_eq_right hi]
         apply Vector.ext
         intro k hk
         simp
@@ -1051,8 +1044,8 @@ private theorem Diagonal.Compact.takeWhile_abs (xs : List Int)
       by_cases ha0 : a = 0
       · subst a
         simp [Diagonal.Bubble.nonzeros]
-      · rw [List.takeWhile_cons, if_pos (by simpa)]
-        rw [List.map_cons, Diagonal.Bubble.nonzeros, if_neg (by simpa [ha0])]
+      · rw [List.takeWhile_cons, ite_eq_left (by simpa)]
+        rw [List.map_cons, Diagonal.Bubble.nonzeros, ite_eq_right (by simp [ha0])]
         simp only [List.map_cons, List.cons.injEq]
         exact ⟨(cast_natAbs a ha).symm, ih (by
           intro x hx
@@ -1121,13 +1114,13 @@ private theorem Diagonal.Compact.diagMatrix_split
   · have hij' : i = j := Fin.ext hij
     subst j
     by_cases hi : i.val < xs.length
-    · rw [dif_pos ⟨rfl, i.isLt⟩, dif_pos ⟨rfl, hi⟩]
+    · rw [dite_eq_left ⟨rfl, i.isLt⟩, dite_eq_left ⟨rfl, hi⟩]
       change values.toList[i.val] = xs.toArray[i.val]
       rw [List.getElem_toArray]
-      simp [hsplit, List.getElem_append, hi]
+      simp [hsplit, hi]
     · have hv : values.toList[i.val] = 0 := by
         simp [hsplit, List.getElem_append, hi]
-      simp only [Fin.getElem_fin, hi, and_self, dif_neg, i.isLt, dif_pos]
+      simp only [Fin.getElem_fin, hi, and_self, i.isLt, dite_eq_left]
       rw [Vector.getElem_toList] at hv
       exact hv
   · simp [hij]
@@ -1315,21 +1308,21 @@ private theorem Diagonal.Compact.pairStep_agrees (ops : Accumulator α r r)
     exact diagMatrix_apply_diag values j j rfl j.isLt
   rw [Diagonal.Compact.pairStep, Diagonal.pairStep, hii, hjj]
   by_cases ha : values[i] = 0
-  · rw [if_pos ha, if_pos ha]
+  · rw [ite_eq_left ha, ite_eq_left ha]
     by_cases hb : values[j] = 0
-    · rw [if_pos hb, if_pos hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
       exact ⟨rfl, rfl⟩
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       exact swap_agrees ops ⟨rfl, rfl⟩ i j
-  · rw [if_neg ha, if_neg ha]
+  · rw [ite_eq_right ha, ite_eq_right ha]
     by_cases hb : values[j] = 0
-    · rw [if_pos hb, if_pos hb]
+    · rw [ite_eq_left hb, ite_eq_left hb]
       exact ⟨rfl, rfl⟩
-    · rw [if_neg hb, if_neg hb]
+    · rw [ite_eq_right hb, ite_eq_right hb]
       by_cases hab : values[i] = values[j]
-      · rw [if_pos hab, if_pos hab]
+      · rw [ite_eq_left hab, ite_eq_left hab]
         exact ⟨rfl, rfl⟩
-      · rw [if_neg hab, if_neg hab]
+      · rw [ite_eq_right hab, ite_eq_right hab]
         exact ⟨Diagonal.Compact.pair_matrix values i j hne ha hb, rfl⟩
 
 private theorem Diagonal.Compact.passFuel_agrees (ops : Accumulator α r r)
@@ -1342,10 +1335,10 @@ private theorem Diagonal.Compact.passFuel_agrees (ops : Accumulator α r r)
   | succ fuel ih =>
       rw [Diagonal.Compact.passFuel, Diagonal.passFuel]
       by_cases hi : index + 1 < r
-      · rw [dif_pos hi, dif_pos hi]
+      · rw [dite_eq_left hi, dite_eq_left hi]
         exact ih (index + 1) (pairStep_agrees ops h
           ⟨index, by omega⟩ ⟨index + 1, hi⟩ (by simp))
-      · rw [dif_neg hi, dif_neg hi]
+      · rw [dite_eq_right hi, dite_eq_right hi]
         exact h
 
 private theorem Diagonal.Compact.pass_agrees (ops : Accumulator α r r)
@@ -1401,7 +1394,7 @@ private theorem Diagonal.normalizeFuel_transforms (A : Matrix Int r r)
         cases hf : Diagonal.findNonzero? s.matrix target with
         | none => exact h
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := Diagonal.swap_transforms A h pivot found
             split
@@ -1453,10 +1446,10 @@ private theorem Diagonal.passFuel_transforms (A : Matrix Int r r)
   | succ fuel ih =>
       rw [Diagonal.passFuel]
       by_cases hi : index + 1 < r
-      · rw [dif_pos hi]
+      · rw [dite_eq_left hi]
         exact ih (index + 1) (Diagonal.pairStep_transforms A h
           ⟨index, by omega⟩ ⟨index + 1, hi⟩)
-      · rw [dif_neg hi]
+      · rw [dite_eq_right hi]
         exact h
 
 private theorem Diagonal.pass_transforms (A : Matrix Int r r)
@@ -1554,7 +1547,7 @@ private theorem Diagonal.normalizeFuel_inverses (fuel target : Nat)
         cases hf : Diagonal.findNonzero? s.matrix target with
         | none => exact h
         | some found =>
-            simp only [hf]
+            simp only []
             let pivot : Fin r := ⟨target, ht⟩
             have hmoved := Diagonal.swap_inverses h pivot found
             split
@@ -1612,14 +1605,14 @@ private theorem Diagonal.passFuel_inverses (fuel index : Nat)
   | succ fuel ih =>
       rw [Diagonal.passFuel]
       by_cases hi : index + 1 < r
-      · rw [dif_pos hi]
+      · rw [dite_eq_left hi]
         exact ih (index + 1) (Diagonal.pairStep_inverses h
           ⟨index, by omega⟩ ⟨index + 1, hi⟩ (by
             intro heq
             have := congrArg Fin.val heq
             simp only at this
             omega))
-      · rw [dif_neg hi]
+      · rw [dite_eq_right hi]
         exact h
 
 private theorem Diagonal.pass_inverses
@@ -1713,7 +1706,7 @@ theorem invariantFactors_cast_eq_data (A : Matrix Int n m) :
   have hd := (Smith.run_same (Smith.formAccumulator n m)
     (Smith.transformAccumulator n m) A).diag
   apply Vector.toArray_injective
-  simp only [Vector.toArray_cast, Smith.Result.diagVector]
+  simp only [Smith.Result.diagVector]
   exact congrArg List.toArray hd
 
 /-- The full-data left transform has the recorded right inverse. -/

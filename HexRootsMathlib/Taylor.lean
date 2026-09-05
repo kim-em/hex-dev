@@ -116,8 +116,8 @@ theorem taylor_coeff (p : Hex.ZPoly) (z : Hex.GaussDyadic) (k : Nat) :
       ((toPolyℂ p).comp (X + C (GaussDyadic.toComplex z))).coeff k := by
   rw [Hex.taylor_getD]
   by_cases hk : k < p.size
-  · rw [if_pos hk, toComplex_taylorCoeff, coeff_shift]
-  · rw [if_neg hk, coeff_shift,
+  · rw [ite_eq_left hk, toComplex_taylorCoeff, coeff_shift]
+  · rw [ite_eq_right hk, coeff_shift,
       Nat.sub_eq_zero_of_le (Nat.le_of_not_gt hk)]
     simp only [Finset.range_zero, Finset.sum_empty]
     apply Complex.ext <;> simp [GaussDyadic.toComplex]

@@ -128,7 +128,7 @@ theorem directScaledProduct_congr_of_modP_support
       (Hex.DensePoly.scale
         (Hex.DensePoly.leadingCoeff cofactor) factor)
       (d.p ^ d.k) := by
-  letI := data.bounds
+  let := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
   let d := Hex.ZPoly.directLiftData core B data
   let T : LiftedFactorSubset d :=
@@ -205,7 +205,7 @@ theorem directCandidate_eq_of_modP_support
           (Hex.ZPoly.monicTarget core data.p
             (Hex.precisionForCoeffBound B data.p))
           (Hex.precisionForCoeffBound B data.p) data) S) = factor := by
-  letI := data.bounds
+  let := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
   let d := Hex.ZPoly.directLiftData core B data
   let T : LiftedFactorSubset d :=

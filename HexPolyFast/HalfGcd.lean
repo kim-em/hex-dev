@@ -164,7 +164,7 @@ private theorem add_mulLow_eq (plan : MulPlan F) (len : Nat)
     coeff_mulLow, coeff_mulLow]
   by_cases hi : i < len
   · simp [hi]
-  · rw [_root_.ite_eq_right hi, _root_.ite_eq_right hi]
+  · rw [ite_eq_right hi, ite_eq_right hi]
     have hz : (a * b).coeff i + (c * d).coeff i = 0 := by
       rw [← coeff_add_semiring]
       exact coeff_eq_zero_of_size_le (a * b + c * d) (by omega)
@@ -529,7 +529,7 @@ private theorem size_shift (k : Nat) (p : DensePoly F) :
   · have hpzero : p = 0 := (size_eq_zero_iff p).mp hp
     subst p
     simp [size_zero]
-  · rw [_root_.ite_eq_right hp, size_shift_of_pos k p (Nat.pos_of_ne_zero hp)]
+  · rw [ite_eq_right hp, size_shift_of_pos k p (Nat.pos_of_ne_zero hp)]
 
 private theorem GcdStep.apply_split (matrix : GcdStep F) (k : Nat)
     (a b : DensePoly F) :

@@ -47,9 +47,9 @@ theorem natDegree_toPolyℂ (p : Hex.ZPoly) :
 theorem le_two_pow_ceilLog2 (m : Nat) : m ≤ 2 ^ Hex.ceilLog2 m := by
   unfold Hex.ceilLog2
   by_cases hm : m ≤ 1
-  · rw [if_pos hm]
+  · rw [ite_eq_left hm]
     simpa using hm
-  · rw [if_neg hm]
+  · rw [ite_eq_right hm]
     have hm2 : 2 ≤ m := by omega
     have hne : m - 1 ≠ 0 := by omega
     have hlog := (Nat.log2_lt hne).1 (Nat.lt_succ_self (m - 1).log2)
@@ -250,7 +250,7 @@ theorem toReal_le_two_pow_ceilLog2 (x : _root_.Dyadic) (hx : 0 < toReal x) :
       have hcl : Hex.Dyadic.ceilLog2 (_root_.Dyadic.ofOdd n k hn) =
           (Hex.ceilLog2 n.toNat : Int) - k := by
         show (if n < 0 then (0 : Int) else (Hex.ceilLog2 n.toNat : Int) - k) = _
-        rw [if_neg (by omega)]
+        rw [ite_eq_right (by omega)]
       have hnle : (n : ℝ) ≤ (2 : ℝ) ^ Hex.ceilLog2 n.toNat := by
         have hnat := le_two_pow_ceilLog2 n.toNat
         have hcast : (n.toNat : ℝ) ≤ (2 : ℝ) ^ Hex.ceilLog2 n.toNat := by
@@ -285,7 +285,7 @@ theorem two_pow_ceilLog2_lt_two_mul_toReal (x : _root_.Dyadic)
       have hceil : Hex.Dyadic.ceilLog2 (_root_.Dyadic.ofOdd n k hn) =
           (Hex.ceilLog2 n.toNat : Int) - k := by
         show (if n < 0 then (0 : Int) else (Hex.ceilLog2 n.toNat : Int) - k) = _
-        rw [if_neg (by omega)]
+        rw [ite_eq_right (by omega)]
       rw [hceil, show (Hex.ceilLog2 n.toNat : Int) - k =
           (Hex.ceilLog2 n.toNat : Int) + (-k) by ring,
         zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), zpow_natCast]

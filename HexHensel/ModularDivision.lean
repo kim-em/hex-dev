@@ -259,15 +259,15 @@ private theorem getD_setIfInBounds (a : Array Int) (i j : Nat) (v : Int) :
   by_cases hji : j = i
   · subst hji
     by_cases hi : j < a.size
-    · rw [if_pos ⟨rfl, hi⟩, Array.getD_eq_getD_getElem?,
+    · rw [ite_eq_left ⟨rfl, hi⟩, Array.getD_eq_getD_getElem?,
         Array.getElem?_eq_getElem (by simpa using hi)]
       simp
-    · rw [if_neg (by omega : ¬ (j = j ∧ j < a.size)),
-        Array.setIfInBounds, dif_neg hi]
-  · rw [if_neg (by omega : ¬ (j = i ∧ i < a.size)),
+    · rw [ite_eq_right (by omega : ¬ (j = j ∧ j < a.size)),
+        Array.setIfInBounds, dite_eq_right hi]
+  · rw [ite_eq_right (by omega : ¬ (j = i ∧ i < a.size)),
       Array.getD_eq_getD_getElem?, Array.getD_eq_getD_getElem?,
       Array.getElem?_setIfInBounds]
-    rw [if_neg (by omega : ¬ (i = j))]
+    rw [ite_eq_right (by omega : ¬ (i = j))]
 
 private theorem elimFold_size (M : Nat) (q : ZPoly) (k : Nat) (c : Int) :
     ∀ (len : Nat) (a : Array Int),
@@ -306,19 +306,19 @@ private theorem elimFold_getD (M : Nat) (q : ZPoly) (k : Nat) (c : Int) :
       simp only [List.foldl_cons, List.foldl_nil]
       rw [getD_setIfInBounds, elimFold_size M q k c len a,
         ih a (k + len) (by omega), ih a n (by omega),
-        if_neg (by omega : ¬ (k ≤ k + len ∧ k + len - k < len))]
+        ite_eq_right (by omega : ¬ (k ≤ k + len ∧ k + len - k < len))]
       by_cases hn : n = k + len
       · subst hn
-        rw [if_pos ⟨rfl, by omega⟩, if_pos ⟨by omega, by omega⟩,
+        rw [ite_eq_left ⟨rfl, by omega⟩, ite_eq_left ⟨by omega, by omega⟩,
           show k + len - k = len by omega]
-      · rw [if_neg (by omega : ¬ (n = k + len ∧ k + len < a.size))]
+      · rw [ite_eq_right (by omega : ¬ (n = k + len ∧ k + len < a.size))]
         by_cases hk : k ≤ n
         · by_cases hlt : n - k < len
-          · rw [if_pos ⟨hk, hlt⟩, if_pos ⟨hk, by omega⟩]
-          · rw [if_neg (by omega : ¬ (k ≤ n ∧ n - k < len)),
-              if_neg (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
-        · rw [if_neg (by omega : ¬ (k ≤ n ∧ n - k < len)),
-            if_neg (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
+          · rw [ite_eq_left ⟨hk, hlt⟩, ite_eq_left ⟨hk, by omega⟩]
+          · rw [ite_eq_right (by omega : ¬ (k ≤ n ∧ n - k < len)),
+              ite_eq_right (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
+        · rw [ite_eq_right (by omega : ¬ (k ≤ n ∧ n - k < len)),
+            ite_eq_right (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
 
 private theorem coeff_elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int)
     (hwindow : k + q.size ≤ rem.size) (i : Nat) :
@@ -360,9 +360,9 @@ private theorem intArray_ofFn_getD {n : Nat} (f : Fin n → Int) (i : Nat) :
       if h : i < n then f ⟨i, h⟩ else (Zero.zero : Int) := by
   rw [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn]
   by_cases h : i < n
-  · rw [dif_pos h, dif_pos h]
+  · rw [dite_eq_left h, dite_eq_left h]
     rfl
-  · rw [dif_neg h, dif_neg h]
+  · rw [dite_eq_right h, dite_eq_right h]
     rfl
 
 private theorem coeff_quotStep (quot : ZPoly) (k : Nat) (coeff : Int) (i : Nat) :
@@ -370,17 +370,17 @@ private theorem coeff_quotStep (quot : ZPoly) (k : Nat) (coeff : Int) (i : Nat) 
   unfold quotStep
   rw [DensePoly.coeff_ofCoeffs]
   by_cases hk : k < quot.size
-  · rw [if_pos hk, getD_setIfInBounds]
+  · rw [ite_eq_left hk, getD_setIfInBounds]
     by_cases hik : i = k
-    · rw [if_pos ⟨hik, by simpa using hk⟩, if_pos hik]
-    · rw [if_neg (by omega : ¬ (i = k ∧ k < quot.toArray.size)), if_neg hik,
+    · rw [ite_eq_left ⟨hik, by simpa using hk⟩, ite_eq_left hik]
+    · rw [ite_eq_right (by omega : ¬ (i = k ∧ k < quot.toArray.size)), ite_eq_right hik,
         DensePoly.toArray_getD]
-  · rw [if_neg hk, intArray_ofFn_getD]
+  · rw [ite_eq_right hk, intArray_ofFn_getD]
     by_cases hik : i = k
-    · rw [dif_pos (by omega : i < k + 1), if_pos hik]
+    · rw [dite_eq_left (by omega : i < k + 1), ite_eq_left hik]
     · by_cases hi : i < k + 1
-      · rw [dif_pos hi, if_neg hik]
-      · rw [dif_neg hi, if_neg hik,
+      · rw [dite_eq_left hi, ite_eq_right hik]
+      · rw [dite_eq_right hi, ite_eq_right hik,
           DensePoly.coeff_eq_zero_of_size_le quot (by omega)]
 
 private theorem pow_two_eq_mul (m : Nat) : m ^ 2 = m * m := by
@@ -396,11 +396,11 @@ private theorem coeff_mulMonomialModSquare (m : Nat) (q : ZPoly) (k : Nat)
   rw [monomial_mul_eq_shift_scale, coeff_reduceModPow, pow_two_eq_mul,
     DensePoly.coeff_shift]
   by_cases hk : i < k
-  · rw [if_pos hk, if_neg (by omega : ¬ k ≤ i)]
+  · rw [ite_eq_left hk, ite_eq_right (by omega : ¬ k ≤ i)]
     show intEmod 0 (m * m) = 0
     unfold intEmod intModNat
     simp
-  · rw [if_neg hk, if_pos (by omega : k ≤ i), DensePoly.coeff_scale_semiring]
+  · rw [ite_eq_right hk, ite_eq_left (by omega : k ≤ i), DensePoly.coeff_scale_semiring]
     rfl
 
 /-- The windowed elimination is the specification's elimination, given a
@@ -424,18 +424,18 @@ private theorem elimStep_eq (m : Nat) (hm : 0 < m) (rem q : ZPoly) (k : Nat) (co
     rfl
   rw [coeff_elimStep m rem q k coeff (by omega) i, hrhs]
   by_cases hk : k ≤ i
-  · simp only [if_pos hk]
+  · simp only [ite_eq_left hk]
     rw [intEmod_sub_intEmod _ _ hmm]
     by_cases hi : i - k < q.size
-    · rw [if_pos ⟨hk, hi⟩]
-    · rw [if_neg (by omega : ¬ (k ≤ i ∧ i - k < q.size))]
+    · rw [ite_eq_left ⟨hk, hi⟩]
+    · rw [ite_eq_right (by omega : ¬ (k ≤ i ∧ i - k < q.size))]
       have hr : rem.coeff i = 0 :=
         DensePoly.coeff_eq_zero_of_size_le rem (by omega)
       have hq : q.coeff (i - k) = 0 :=
         DensePoly.coeff_eq_zero_of_size_le q (by omega)
       rw [hr, hq, Int.mul_zero, Int.sub_zero, hzero]
-  · simp only [if_neg hk]
-    rw [Int.sub_zero, if_neg (by omega : ¬ (k ≤ i ∧ i - k < q.size))]
+  · simp only [ite_eq_right hk]
+    rw [Int.sub_zero, ite_eq_right (by omega : ¬ (k ≤ i ∧ i - k < q.size))]
     exact (intEmod_eq_self (hrem i).1 (hrem i).2).symm
 
 /-- The windowed quotient write is the specification's quotient update, given a
@@ -457,10 +457,10 @@ private theorem quotStep_eq (m : Nat) (_hm : 0 < m) (quot : ZPoly) (k : Nat) (co
     rfl
   rw [coeff_quotStep, hrhs]
   by_cases hik : i = k
-  · simp only [if_pos hik]
+  · simp only [ite_eq_left hik]
     rw [hik, hslot, Int.zero_add]
     exact (intEmod_eq_self hc0 hc1).symm
-  · simp only [if_neg hik]
+  · simp only [ite_eq_right hik]
     rw [Int.add_zero]
     exact (intEmod_eq_self (hquot i).1 (hquot i).2).symm
 
@@ -471,9 +471,9 @@ private theorem size_of_degree?_eq_some {p : ZPoly} {d : Nat} (h : p.degree? = s
     p.size = d + 1 := by
   unfold DensePoly.degree? at h
   by_cases hz : p.size = 0
-  · rw [dif_pos hz] at h
+  · rw [dite_eq_left hz] at h
     exact absurd h (by simp)
-  · rw [dif_neg hz] at h
+  · rw [dite_eq_right hz] at h
     have hd : p.size - 1 = d := by
       injection h
     omega
@@ -497,7 +497,7 @@ private theorem elimStep_size_lt (m : Nat) (hm : 0 < m) (rem q : ZPoly) (rd qd :
   have htop : (elimStep m rem q (rd - qd)
       (reduceCoeffModSquare rem.leadingCoeff m)).coeff rd = 0 := by
     rw [coeff_elimStep m rem q (rd - qd) _ (by omega) rd,
-      if_pos ⟨by omega, by omega⟩,
+      ite_eq_left ⟨by omega, by omega⟩,
       show rd - (rd - qd) = qd by omega, hqlead, Int.mul_one,
       reduceCoeffModSquare_eq_intEmod, hrlead, intEmod_sub_intEmod _ _ hmm,
       Int.sub_self]
@@ -558,8 +558,8 @@ private theorem divModMonicModSquareAux_eq_impl
       intro quot rem hquot hrem hsupp
       rw [divModMonicModSquareAux, divModMonicModSquareAuxImpl]
       by_cases hz : q.isZero = true
-      · simp only [hz, if_true]
-      · simp only [hz, if_false, Bool.false_eq_true]
+      · simp only [hz, ite_true]
+      · simp only [hz, ite_false, Bool.false_eq_true]
         cases hrd : rem.degree? with
         | none => simp only
         | some rd =>
@@ -568,8 +568,8 @@ private theorem divModMonicModSquareAux_eq_impl
             | some qd =>
                 simp only
                 by_cases hlt : rd < qd
-                · simp only [if_pos hlt]
-                · simp only [if_neg hlt]
+                · simp only [ite_eq_left hlt]
+                · simp only [ite_eq_right hlt]
                   have hle : qd ≤ rd := by omega
                   have hrsize : rem.size = rd + 1 := size_of_degree?_eq_some hrd
                   have hqsize : q.size = qd + 1 := size_of_degree?_eq_some hqd
@@ -614,7 +614,7 @@ private theorem divModMonicModSquareAux_eq_impl
                         (reduceCoeffModSquare rem.leadingCoeff m)).coeff i = 0 := by
                     intro i hi
                     have hik : i < rd - qd := by omega
-                    rw [coeff_quotStep, if_neg (by omega : ¬ i = rd - qd)]
+                    rw [coeff_quotStep, ite_eq_right (by omega : ¬ i = rd - qd)]
                     exact hsupp i (by omega)
                   rw [← hstepQ, ← hstepR]
                   exact ih _ _ hcanonQ hcanonR hsupp'
@@ -637,7 +637,7 @@ def divModMonicModSquareImpl (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
   funext p q m
   unfold divModMonicModSquare divModMonicModSquareImpl
   by_cases hguard : 0 < m ∧ DensePoly.leadingCoeff q = 1
-  · rw [if_pos hguard]
+  · rw [ite_eq_left hguard]
     have hm := hguard.1
     have hpow : 0 < m ^ 2 := Nat.pow_pos hm
     have hcanon : Canonical (QuadraticLiftResult.reduceModSquare p m) (m * m) := by
@@ -653,7 +653,7 @@ def divModMonicModSquareImpl (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
       omega
     · intro i _
       simp
-  · rw [if_neg hguard]
+  · rw [ite_eq_right hguard]
 
 end ZPoly
 

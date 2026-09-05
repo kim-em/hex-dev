@@ -271,10 +271,10 @@ def ofMvPolynomial [CommSemiring R] [DecidableEq R]
         simp only [List.foldl_cons]
         by_cases hdq : d = q
         · subst d
-          rw [if_pos (by simp), ih hds]
+          rw [ite_eq_left (by simp), ih hds]
           simp [hd]
         · have hqd : q ≠ d := Ne.symm hdq
-          rw [if_neg (by simp [hdq]), ih hds]
+          rw [ite_eq_right (by simp [hdq]), ih hds]
           simp [hqd]
   rw [fold_pick (monoEquiv m) (fun d => MvPolynomial.coeff d p)
     p.support.toList p.support.nodup_toList]
@@ -349,7 +349,7 @@ variable [BEq R] [LawfulBEq R]
   · have h' : monoEquiv (Mono.unit i) ≠ monoEquiv m := by
       intro heq
       exact h (monoEquiv.injective heq).symm
-    rw [if_neg h, if_neg h']
+    rw [ite_eq_right h, ite_eq_right h']
 
 /-- Forward conversion preserves the multiplicative identity. -/
 @[simp] theorem toMvPolynomial_one [CommSemiring R] [DecidableEq R] :
@@ -528,7 +528,7 @@ instance instCommSemiringMvPoly [CommSemiring R] :
     natCast := fun k => C (k : R)
     natCast_zero := by
       apply toMvPolynomial_injective
-      simp [toMvPolynomial_C, toMvPolynomial_zero]
+      simp [toMvPolynomial_zero]
     natCast_succ := fun k => by
       apply toMvPolynomial_injective
       simp [toMvPolynomial_C, toMvPolynomial_add, Nat.cast_succ]

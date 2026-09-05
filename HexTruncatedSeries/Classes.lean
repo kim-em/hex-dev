@@ -177,7 +177,7 @@ instance (priority := 900) (m : Nat) : NatInverses Rat m where
   invNat k := if k = 0 then 0 else (k : Rat)⁻¹
   invNat_eq := by
     intro k hk _
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
     exact Rat.mul_inv_cancel _ (by simp; omega)
 
 end Hex.TSeries

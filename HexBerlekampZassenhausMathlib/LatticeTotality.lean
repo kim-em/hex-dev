@@ -36,9 +36,9 @@ theorem factorLatticeFactorsWithBound_ne_none_of_directPrimePlan
   · rw [Hex.factorLatticeFactorsWithBound]
     by_cases hdeg :
         (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-    · rw [if_pos hdeg]
+    · rw [ite_eq_left hdeg]
       simp
-    · rw [if_neg hdeg]
+    · rw [ite_eq_right hdeg]
       have hB_ne : Hex.latticePrecisionCap f ≠ 0 := by
         have hcore_lc_pos :=
           Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
@@ -50,7 +50,7 @@ theorem factorLatticeFactorsWithBound_ne_none_of_directPrimePlan
         have hbound_le :=
           Hex.defaultFactorCoeffBound_squareFreeCore_le_latticePrecisionCap f
         omega
-      rw [if_neg hB_ne]
+      rw [ite_eq_right hB_ne]
       cases hquad :
           Hex.quadraticIntegerRootFactors?
             (Hex.normalizeForFactor f).squareFreeCore with

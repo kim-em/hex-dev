@@ -666,7 +666,7 @@ theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     change f =
       DensePoly.scale (-(((content scaled : Int) : Rat) / (den : Rat)))
         (toRatPoly (normalizePrimitiveSign (primitivePart scaled)))
-    rw [normalizePrimitiveSign, if_pos hlead]
+    rw [normalizePrimitiveSign, ite_eq_left hlead]
     rw [← rat_scale_toRatPoly_neg_int (((content scaled : Int) : Rat) / (den : Rat))
       (primitivePart scaled)]
     exact hbase
@@ -675,7 +675,7 @@ theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     change f =
       DensePoly.scale (((content scaled : Int) : Rat) / (den : Rat))
         (toRatPoly (normalizePrimitiveSign (primitivePart scaled)))
-    rw [normalizePrimitiveSign, if_neg hlead]
+    rw [normalizePrimitiveSign, ite_eq_right hlead]
     exact hbase
 
 /--
@@ -1144,10 +1144,10 @@ theorem C_mul_eq_scale (c : Int) (p : ZPoly) :
     simp only [List.range_one, List.foldl_cons, List.foldl_nil]
     rw [fold_mulCoeffStep_C_left_range]
     by_cases hn : n < p.size
-    · rw [if_pos hn]
+    · rw [ite_eq_left hn]
       change (0 : Int) + c * p.coeff n = c * p.coeff n
       omega
-    · rw [if_neg hn, DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)]
+    · rw [ite_eq_right hn, DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)]
       change (0 : Int) = c * 0
       rw [Int.mul_zero]
 
@@ -1239,7 +1239,7 @@ private theorem shift_size_of_ne_zero (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
       rw [DensePoly.coeff_shift]
       have hnot : ¬ k + p.size - 1 < k := by omega
       have hidx : k + p.size - 1 - k = p.size - 1 := by omega
-      rw [if_neg hnot, hidx]
+      rw [ite_eq_right hnot, hidx]
       exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
     by_cases hle : k + p.size ≤ (DensePoly.shift k p).size
     · exact hle
@@ -1264,7 +1264,7 @@ theorem leadingCoeff_shift_of_nonzero (k : Nat) (p : ZPoly) (hp : p ≠ 0) :
     rw [DensePoly.coeff_shift]
     have hnot : ¬ k + p.size - 1 < k := by omega
     have hidx : k + p.size - 1 - k = p.size - 1 := by omega
-    rw [if_neg hnot, hidx, DensePoly.leadingCoeff_eq_coeff_last p hpos]
+    rw [ite_eq_right hnot, hidx, DensePoly.leadingCoeff_eq_coeff_last p hpos]
   · rw [shift_size_of_ne_zero k hp]
     omega
 

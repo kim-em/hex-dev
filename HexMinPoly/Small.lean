@@ -98,7 +98,7 @@ private theorem eq_C_of_degree_zero (p : DensePoly F)
     rw [DensePoly.coeff_C]
     by_cases hi : i = 0
     · simp [hi, DensePoly.coeff_zero]
-    · rw [_root_.ite_eq_right hi]
+    · rw [ite_eq_right hi]
       exact rfl
   · have hpos : 0 < p.size := by
       by_cases h : 0 < p.size
@@ -113,7 +113,7 @@ private theorem eq_C_of_degree_zero (p : DensePoly F)
     rw [DensePoly.coeff_C]
     by_cases hi : i = 0
     · simp [hi]
-    · rw [_root_.ite_eq_right hi]
+    · rw [ite_eq_right hi]
       exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
 
 private theorem linear_size (a : F) : (#p[-a, 1] : DensePoly F).size = 2 := by
@@ -134,14 +134,14 @@ private theorem linear_coeff (a : F) (i : Nat) :
       if i = 0 then -a else if i = 1 then 1 else 0 := by
   by_cases hi0 : i = 0
   · subst i
-    rw [DensePoly.coeff_ofCoeffs, _root_.ite_eq_left rfl]
+    rw [DensePoly.coeff_ofCoeffs, ite_eq_left rfl]
     rfl
   · by_cases hi1 : i = 1
     · subst i
-      rw [DensePoly.coeff_ofCoeffs, _root_.ite_eq_right (by omega),
-        _root_.ite_eq_left rfl]
+      rw [DensePoly.coeff_ofCoeffs, ite_eq_right (by omega),
+        ite_eq_left rfl]
       rfl
-    · rw [_root_.ite_eq_right hi0, _root_.ite_eq_right hi1]
+    · rw [ite_eq_right hi0, ite_eq_right hi1]
       apply DensePoly.coeff_eq_zero_of_size_le
       rw [linear_size]
       omega
@@ -169,19 +169,19 @@ private theorem linear_eval (a : F) :
       DensePoly.coeff_monomial, linear_coeff]
     by_cases hi0 : i = 0
     · subst i
-      simp only [_root_.ite_eq_left, _root_.ite_eq_right Nat.zero_ne_one]
+      simp only [ite_eq_left, ite_eq_right Nat.zero_ne_one]
       simp only [field_zero]
       change -a = -a + (0 : F)
       exact (Lean.Grind.Semiring.add_zero (-a)).symm
     · by_cases hi1 : i = 1
       · subst i
-        simp only [_root_.ite_eq_right Nat.one_ne_zero, _root_.ite_eq_left]
+        simp only [ite_eq_right Nat.one_ne_zero, ite_eq_left]
         simp only [field_zero]
         change (1 : F) = 0 + 1
         calc
           (1 : F) = 1 + 0 := (Lean.Grind.Semiring.add_zero 1).symm
           _ = 0 + 1 := Lean.Grind.Semiring.add_comm 1 0
-      · simp only [_root_.ite_eq_right hi0, _root_.ite_eq_right hi1]
+      · simp only [ite_eq_right hi0, ite_eq_right hi1]
         simp only [field_zero]
         change (0 : F) = 0 + 0
         exact (Lean.Grind.Semiring.add_zero 0).symm
@@ -249,15 +249,15 @@ theorem minPoly_zero (n : Nat) (hn : 0 < n) :
     rw [linear_coeff]
     by_cases hi0 : i = 0
     · subst i
-      rw [DensePoly.coeff_ofCoeffs, _root_.ite_eq_left rfl]
+      rw [DensePoly.coeff_ofCoeffs, ite_eq_left rfl]
       change -(0 : F) = 0
       grind
     · by_cases hi1 : i = 1
       · subst i
-        rw [DensePoly.coeff_ofCoeffs, _root_.ite_eq_right (by omega),
-          _root_.ite_eq_left rfl]
+        rw [DensePoly.coeff_ofCoeffs, ite_eq_right (by omega),
+          ite_eq_left rfl]
         rfl
-      · rw [_root_.ite_eq_right hi0, _root_.ite_eq_right hi1]
+      · rw [ite_eq_right hi0, ite_eq_right hi1]
         symm
         apply DensePoly.coeff_eq_zero_of_size_le
         have hs : (#p[0, 1] : DensePoly F).size ≤ 2 := by
@@ -285,7 +285,7 @@ theorem minPoly_zero (n : Nat) (hn : 0 < n) :
     · have hbFin : (basisVec n i)[i] = (1 : F) := by
         unfold basisVec
         rw [Matrix.getElem_row, Matrix.getElem_identity,
-          _root_.ite_eq_left rfl]
+          ite_eq_left rfl]
       have hb : (basisVec n i)[i.val] = (1 : F) := by
         exact hbFin
       have hentry := congrArg (fun v : Vector F n => v[i.val]) h
@@ -320,7 +320,7 @@ theorem minPoly_identity (n : Nat) (hn : 0 < n) :
     have hbFin : (basisVec n i)[i] = (1 : F) := by
       unfold basisVec
       rw [Matrix.getElem_row, Matrix.getElem_identity,
-        _root_.ite_eq_left rfl]
+        ite_eq_left rfl]
     have hbNe : basisVec n i ≠ (0 : Vector F n) := by
       intro hzero
       have hentry := congrArg (fun v : Vector F n => v[i.val]) hzero
@@ -365,7 +365,7 @@ theorem minPoly_one_by_one (A : Matrix F 1 1) :
     have hbFin : (basisVec 1 i)[i] = (1 : F) := by
       unfold basisVec
       rw [Matrix.getElem_row, Matrix.getElem_identity,
-        _root_.ite_eq_left rfl]
+        ite_eq_left rfl]
     have hb : (basisVec 1 i)[i.val] = (1 : F) := by
       exact hbFin
     have hentry := congrArg (fun v : Vector F 1 => v[i.val]) h

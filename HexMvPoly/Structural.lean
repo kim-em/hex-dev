@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 import HexBasic.Fold
 public import HexMvPoly.Eval
 
@@ -135,12 +134,12 @@ theorem predAt_eq_iff (i : Fin n) (m t : Mono n)
     rw [get_mul, get_unit]
     by_cases hki : k = i
     · rw [hki] at hk ⊢
-      simp only [Hex.ite_eq_left] at hk ⊢
+      simp only [ite_eq_left] at hk ⊢
       have ht' : t.get i ≠ 0 := by
         exact ht
       omega
-    · simp only [Hex.ite_eq_right hki]
-      simp only [Hex.ite_eq_right hki] at hk
+    · simp only [ite_eq_right hki]
+      simp only [ite_eq_right hki] at hk
       exact hk
   · rintro rfl
     exact predAt_succAt i m
@@ -652,8 +651,8 @@ theorem mapCoeffs_one {φ : R → S} (hzero : φ 0 = 0) (hone : φ 1 = 1) :
   intro m
   rw [coeff_mapCoeffs hzero, coeff_one, coeff_one]
   by_cases hm : m = Mono.zero
-  · simp only [hm, Hex.ite_true]; exact hone
-  · simp only [hm, Hex.ite_false]; exact hzero
+  · simp only [hm, ite_true]; exact hone
+  · simp only [hm, ite_false]; exact hzero
 
 /-- An additive coefficient map commutes with polynomial addition. -/
 theorem mapCoeffs_add {φ : R → S} (hzero : φ 0 = 0)

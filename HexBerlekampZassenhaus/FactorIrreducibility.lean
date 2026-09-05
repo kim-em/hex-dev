@@ -321,7 +321,7 @@ private theorem zpoly_C_mul_C (a b : Int) :
       DensePoly.coeff_C, DensePoly.coeff_C]
   by_cases hn : n = 0
   · simp [hn]
-  · rw [if_neg hn, if_neg hn]
+  · rw [ite_eq_right hn, ite_eq_right hn]
     exact (Int.mul_zero a).symm
 
 /-- Size of `DensePoly.C k` for nonzero `k` is exactly `1`. -/
@@ -894,9 +894,9 @@ theorem Irreducible_of_modP_irreducible_of_primitive_of_admissible
       intro g hdeg
       unfold DensePoly.degree? at hdeg
       by_cases hg_size : g.size = 0
-      · rw [dif_pos hg_size] at hdeg
+      · rw [dite_eq_left hg_size] at hdeg
         simp at hdeg
-      · rw [dif_neg hg_size] at hdeg
+      · rw [dite_eq_right hg_size] at hdeg
         injection hdeg with hdeg
         omega
     obtain ⟨_, hsplit⟩ := hirr
@@ -999,7 +999,7 @@ theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
     ZPoly.Irreducible (normalizeFactorSign f) := by
   unfold normalizeFactorSign
   by_cases hlc : DensePoly.leadingCoeff f < 0
-  · rw [if_pos hlc]
+  · rw [ite_eq_left hlc]
     -- Sign-flipped branch: `DensePoly.scale (-1) f`.
     have hmulzero : (-1 : Int) * (0 : Int) = 0 := by decide
     -- `scale (-1)` is an involution on `ZPoly`.
@@ -1019,7 +1019,7 @@ theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
           DensePoly.coeff_C, DensePoly.coeff_C]
       by_cases hn : n = 0
       · simp [hn]
-      · rw [if_neg hn, if_neg hn]; omega
+      · rw [ite_eq_right hn, ite_eq_right hn]; omega
     have hscale_C_neg_one : DensePoly.scale (-1 : Int) (DensePoly.C (-1 : Int)) =
         DensePoly.C (1 : Int) := by
       apply DensePoly.ext_coeff
@@ -1028,7 +1028,7 @@ theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
           DensePoly.coeff_C, DensePoly.coeff_C]
       by_cases hn : n = 0
       · simp [hn]
-      · rw [if_neg hn, if_neg hn]; omega
+      · rw [ite_eq_right hn, ite_eq_right hn]; omega
     have hscale_mul_left : ∀ a b : ZPoly,
         DensePoly.scale (-1 : Int) (a * b) = DensePoly.scale (-1 : Int) a * b := by
       intro a b
@@ -1078,7 +1078,7 @@ theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
           rw [hinvol, hscale_C_neg_one] at hcong
           exact hcong
       · exact Or.inr hb
-  · rw [if_neg hlc]
+  · rw [ite_eq_right hlc]
     exact hirr
 
 /-- Every factor emitted by the extracted `X`-power normalization array is
@@ -1256,9 +1256,9 @@ theorem extractXPower_core_primitive_of_ne_zero
       congrArg (fun p : ZPoly => p.coeff n) hshift.symm
     rw [hcoeff_eq, DensePoly.coeff_shift]
     by_cases hn : n < (ZPoly.extractXPower (ZPoly.primitivePart f)).power
-    · rw [if_pos hn]
+    · rw [ite_eq_left hn]
       exact ⟨0, by show (0 : Int) = _ * 0; rw [Int.mul_zero]⟩
-    · rw [if_neg hn]
+    · rw [ite_eq_right hn]
       exact DensePoly.content_dvd_coeff
         (ZPoly.extractXPower (ZPoly.primitivePart f)).core
         (n - (ZPoly.extractXPower (ZPoly.primitivePart f)).power)

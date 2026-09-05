@@ -23,11 +23,12 @@ identity, and no other producer step touches the budget fields.
 
 Layer two's foundation is automorphism closure: `checkAutom` is
 closed under the producer's witness composition, so every witness
-composed from individually-valid generators is itself valid. The full
-layer-two statement — the emitted certificate replays — is
-conditional on key domination (no visited subtree exceeds the claimed
-key), which is layer three's content; the conditional spine and its
-remaining obligations are inventoried at the end of this file.
+composed from individually-valid generators is itself valid.
+
+The programme is complete: `certifyCanon?_isSome` is proved in
+`SearchOutcomeCertify.lean`. It did not take the route this file's
+statements anticipated, and the section following the closure toolkit
+records where each layer-two obligation actually landed.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -145,9 +146,9 @@ theorem produceCand_none_isSome {k : Nat} (G : Colored n k) :
 
 /-! # Graph facts for `rowsOf`: dischargers for the row-set hypotheses
 
-The eventual `checkAutom_of_isautom` bridge is stated graph-agnostically
-over a row array with symmetry, looplessness, and per-row bounds; these
-lemmas discharge those hypotheses for `rowsOf G`. -/
+`checkAutom_of_isautom` below is stated graph-agnostically over a row
+array with symmetry, looplessness, and per-row bounds; these lemmas
+discharge those hypotheses for `rowsOf G`. -/
 
 theorem rowsOf_symm {k : Nat} (G : Colored n k) :
     ∀ i j, i < n → j < n →
@@ -348,64 +349,56 @@ theorem checkAutom_range {g : Array (VSet n)} :
       image_congr _ fun w hw => hget w hw
     rw [hget v hvn, this, image_id _]
 
+    rw [hget v hvn, this, image_id_of_lt (hb v hvn)]
+
 /-!
-# Inventory: the remaining layer-two and layer-three obligations
+# Where the layer-two obligations landed
 
-The layer-two part-b chain is now proven at the end of this file:
-`checkAutom_of_isautom` (the counting bridge, consuming `isautom_iff`,
-the `rowsOf` dischargers above, and the `PopCount` comparison
-toolkit), the validated-store invariant (`GensOk.admit`,
-`GensOk.init`, `GensOk.foldl_admit`), and witness validity
-(`witness?_checkAutom`). What remains open:
+`certifyCanon?_isSome` is proved (`SearchOutcomeCertify.lean`), by a
+route that uses some of what this file states and replaces the rest.
 
-* `isPerm_of_trace`: every `γ` in `(runColoredTraced G).autos`, and
-  every `composeOnto` of two leaf labellings of the certify walk, is
-  a permutation of `[0, n)` — the former is a property of the
-  transcription (layer-four-adjacent), the latter follows from
-  `LabOk` preservation along the walk. The proven store invariant
-  consumes this as its open hypothesis (`hautos` in
-  `GensOk.foldl_admit`, `hγ` in `GensOk.admit`): each candidate that
-  passes the admission filter (`isautom`) must be a permutation of
-  `[0, n)`, phrased as the `checkAutom`-conjunct spelling
-  `((List.range n).map fun v => γ[v]!).isPerm (List.range n)`.
+* `checkAutom_of_isautom`, the counting bridge below, is live. It
+  consumes `isautom_iff`, the `rowsOf` dischargers above and the
+  `PopCount` comparison toolkit, and it is applied in
+  `StoreValid.lean`, where `scatter_isPerm` supplies its permutation
+  hypothesis: both admission sites in `processnode` push a scatter of
+  one discrete leaf labelling over another, which is a permutation by
+  construction. The general obligation an earlier reading of layer
+  two posed here, over every `γ` in `(runColoredTraced G).autos` and
+  every `composeOnto` the certify walk harvests, turned out not to be
+  needed by anything.
+* The validated-store invariant (`GensOk.admit`, `GensOk.init`,
+  `GensOk.foldl_admit`) and witness validity (`witness?_checkAutom`)
+  state store validity as an invariant of the search-side generator
+  store. The landed proof does not use them: `CertStore.lean` proves
+  `certifyNodeAutom_automsOk` structurally over the emitted
+  certificate, because the producer checks each witness immediately
+  before emitting an automorphism prune, so
+  `certifyCanon?_isSome_of_keyEq` carries no store hypothesis.
+* The replay spine is `certifyNode_replays` and
+  `certifyCanon?_isSome_of_dominated` (`CertReplay.lean`), and its
+  domination hypothesis is discharged by `canonSpecKey_eq_tracedKey`,
+  which is layer three. Domination is not removable: `certifyNodeAutom`
+  emits `.codePrune` on the `.gt` comparison, which the replay
+  rejects, and a `.leaf` whose key exceeds the claimed suffix fails
+  `keyCmp`, so an unconditional spine would have been unsound.
 
-**The conditional spine (layer two, part c).** The issue's
-unconditional claim is unsound: `certifyNodeAutom` emits
-`.codePrune` on the `.gt` comparison, which the replay rejects, and a
-`.leaf` whose key exceeds the claimed suffix likewise fails
-`keyCmp`. The honest statement is conditional on key domination:
-
-* `certify_replays_of_dominated`: if every node visited by the walk
-  has `rs.longcode ≤` the claimed code at its depth and every leaf
-  key is `≤ ⟨bcodes, brows⟩` (the `keyLe` conditions `checkNode`
-  enforces), and the store invariant holds, then
-  `checkNode ctx tcLevel brows (validGammas …) … (certifyNodeAutom …).1 bcodes = some a`
-  for some `a`. The induction relates the walk's emission decisions
-  to `checkNode`'s acceptance on identical node state; the
-  `.autom` branch needs the store invariant for the `validGammas`
-  membership and `childCellsOk` for the transported cells.
-
-The domination hypothesis for the traced key is exactly layer three
-(the transcription's leaf is the spec maximum).
+The closure toolkit above is the part of this file with consumers
+outside it: `checkAutom_compose` and `checkAutom_range` are used by
+`AutosLedger.lean` and `SearchOrbit.lean`.
 
 ## The guarded-scan `forIn` technique
 
-The transcription-facing specifications — `isautom_sound` (edge
-preservation from an accepted permutation) and, downstream,
-`isPerm_of_trace` — reason about nested `forIn` loops over `[0, n)`
-with an early `return false`, a loop shape with no reasoning
-precedent in the tree. The reusable technique is a "guarded scan"
-whose state is `Option Bool × Unit`: it yields `(none, ())` while
-every element passes and is done with `(some false, ())` on the first
-failure, so the result flag is `none` exactly when every element
-passes (`forIn_scan_fst_cases`, `forIn_scan_fst_eq_none`), with
+`isautom` is a nested `forIn` over `[0, n)` with an early
+`return false`, a loop shape with no other reasoning precedent in the
+tree. The reusable technique is a "guarded scan" whose state is
+`Option Bool × Unit`: it yields `(none, ())` while every element
+passes and is done with `(some false, ())` on the first failure, so
+the result flag is `none` exactly when every element passes
+(`forIn_scan_fst_cases`, `forIn_scan_fst_eq_none`), with
 `forIn_range_eq` and `id_run_scan` reducing the `[0, n)` range and the
-outer `Id` do-block. The lemma family is staged here for those
-consumers; connecting it to a concrete `isautom` obligation is the
-open step (the hand-abstracted scan body is definitionally equal to
-the desugaring but not `rw`-matchable to it, which needs either a
-direct `List.forIn` induction on the reduced hypothesis or a core
-`forIn`-to-`List.all` characterization).
+outer `Id` do-block. `isautom_iff` below is what it buys, and the
+counting bridge consumes that.
 
 ### Guarded-scan technique
 
@@ -621,16 +614,12 @@ theorem isautom_iff (ctx : Ctx n) (γ : Array Nat) :
     rw [hnone]
 
 /-!
-**Residual gap to `certifyCanon?` totality.** With layers one and
-two, `(Nauty.certifyCanon? G).isSome` additionally needs:
-
-* rows equality — `B.rows = leafRows ctx canonlab` holds by
-  construction of `produceCand`'s key (definitional);
-* `colorSortedCheck G (runColored G).canonlab = true` — a property
-  of the transcribed search's output labelling;
-* layer three — `⟨tr.bestCodes ++ [codeSentinel], leafRows ctx canonlab⟩ = canonSpecKey G`,
-  the maximality of the traced key, which also discharges the
-  domination hypothesis above.
+**The residual gap to `certifyCanon?` totality is closed.** Beyond
+layers one and two it needed the rows equality (definitional from
+`produceCand`'s key), `colorSortedCheck` of the transcription's
+output labelling, and layer three, the maximality of the traced key.
+Layer three is `canonSpecKey_eq_tracedKey` and the assembly is
+`certifyCanon?_isSome`, both in `SearchOutcomeCertify.lean`.
 -/
 
 /-! # Layer two, part b: `checkAutom` from the admission filter
@@ -681,8 +670,8 @@ private theorem map_eq_of_le_of_sum_le {f g : Nat → Nat} :
 `checkAutom`, over any symmetric, loopless, per-row-bounded row
 array. The row hypotheses are discharged for `rowsOf G` by
 `rowsOf_symm`, `rowsOf_loopless`, and `rowsOf_bounded`; the
-permutation hypothesis is the transcription obligation
-(`isPerm_of_trace`), proven separately. -/
+permutation hypothesis is supplied at the use site in
+`StoreValid.lean` by `scatter_isPerm`. -/
 theorem checkAutom_of_isautom {ctx : Ctx n} {γ : Array Nat}
     (hsz : γ.size = n)
     (hperm : (((List.range n).map fun v => γ[v]!).isPerm
@@ -777,12 +766,16 @@ theorem checkAutom_of_isautom {ctx : Ctx n} {γ : Array Nat}
 
 /-! # Layer two, part b: the validated-store invariant
 
-Every generator pair the producer stores passes `checkAutom` — the
+Every generator pair the producer stores passes `checkAutom`: the
 stored generator via the admission filter's `isautom` plus the
 counting bridge, the stored inverse via `checkAutom_invPerm`. The
-permutation side of each candidate (`isPerm_of_trace`) is a
-transcription property proven separately; it enters as the open
-hypothesis on the admitted candidate. -/
+permutation side of each candidate enters as a hypothesis on the
+admitted candidate.
+
+The landed totality proof does not go through this invariant.
+`CertStore.lean` establishes store validity structurally over the
+emitted certificate instead; what follows states the search-side
+invariant. -/
 
 /-- The store invariant: every stored generator pair passes
 `checkAutom` in both components. -/
@@ -848,8 +841,8 @@ theorem GensOk.init (ctx : Ctx n) (nn : Nat) (budget : Option Nat) :
 
 /-- Layer two, part b, the validated-store invariant: an admission
 fold over candidates that are permutations whenever they pass the
-admission filter (the `isPerm_of_trace` obligation, hypothesis
-`hautos`) stores only `checkAutom`-valid generator pairs. -/
+admission filter (hypothesis `hautos`) stores only
+`checkAutom`-valid generator pairs. -/
 theorem GensOk.foldl_admit {ctx : Ctx n} {st : AutState}
     (hsymm : ∀ i j, i < n → j < n →
       (ctx.g[i]!).mem j = (ctx.g[j]!).mem i)

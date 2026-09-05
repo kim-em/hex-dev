@@ -585,10 +585,10 @@ theorem mulNttCrt?_eq (left right result : FpPoly p)
                         ((DensePoly.ofList (intLift left) : DensePoly Int) *
                           DensePoly.ofList (intLift right)).coeff j.val := by
                     change reference.toArray[j.val]'(by
-                      simpa [hreferenceSize] using j.isLt) = _
+                      simp [hreferenceSize]) = _
                     rw [List.getElem_toArray]
                     rw [List.getElem_eq_getD (h := by
-                      simpa [hreferenceSize] using j.isLt)
+                      simp [hreferenceSize])
                         (Zero.zero : Int)]
                     exact getD_intReference n j.val left right
                   have hmoduli : plan.moduli = selection.moduli :=
@@ -689,11 +689,6 @@ theorem mulNttCrt?_eq (left right result : FpPoly p)
 
 /-! # Total dispatch -/
 
-/-- Shorter-size threshold below which generic schoolbook multiplication beats
-the packed lazy-reduction setup.  The forced `F_257` and `F_65537` ladders both
-cross between 8 and 16 coefficients per operand. -/
-@[expose] def packedCutoff : Nat := 16
-
 /-- Shorter-size threshold below which the packed lazy-reduction kernel avoids
 auxiliary-plan construction.  The forced-kernel sweep over `F_65537` keeps
 packed multiplication ahead through `4096` coefficients per operand; CRT-NTT
@@ -709,10 +704,8 @@ auxiliary catalogue cannot serve a large request. -/
 lazy-reduction kernel; large products try auxiliary-prime NTTs and fall back
 to Karatsuba on normal catalogue exhaustion. -/
 def mulFast (left right : FpPoly p) : FpPoly p :=
-  if min left.size right.size < packedCutoff then
-    left * right
-  else if min left.size right.size < nttCrtCutoff then
-    mulPacked left right
+  if min left.size right.size < nttCrtCutoff then
+    mulPackedFast left right
   else
     match mulNttCrt? left right with
     | some result => result
@@ -724,13 +717,11 @@ theorem mulFast_eq (left right : FpPoly p) :
     mulFast left right = left * right := by
   unfold mulFast
   split
-  · rfl
+  · exact mulPackedFast_eq left right
   · split
-    · exact mulPacked_eq left right
-    · split
-      · rename_i result hresult
-        exact mulNttCrt?_eq left right result hresult
-      · exact DensePoly.mulKaratsuba_eq karatsubaCutoff left right
+    · rename_i result hresult
+      exact mulNttCrt?_eq left right result hresult
+    · exact DensePoly.mulKaratsuba_eq karatsubaCutoff left right
 
 /-- Coefficient-owner multiplication plan for generic fast algorithms.  Full
 products use `mulFast`, squaring and slices use the proved Karatsuba kernels. -/

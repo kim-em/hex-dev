@@ -154,11 +154,11 @@ Both entry accessors and `getRow` read the flat buffer directly at `i * m + j`,
 so a single-entry read is `O(1)` and never materializes a row. -/
 
 /-- Entry access by a `Fin n × Fin m` index: the `O(1)` flat read. -/
-@[expose] instance : GetElem (Matrix R n m) (Fin n × Fin m) R (fun _ _ => True) where
+instance : GetElem (Matrix R n m) (Fin n × Fin m) R (fun _ _ => True) where
   getElem M p _ := M.data[p.1.val * m + p.2.val]'(flatIdx_lt p.1.isLt p.2.isLt)
 
 /-- Entry access by a `Nat × Nat` index. -/
-@[expose] instance : GetElem (Matrix R n m) (Nat × Nat) R (fun _ p => p.1 < n ∧ p.2 < m) where
+instance : GetElem (Matrix R n m) (Nat × Nat) R (fun _ p => p.1 < n ∧ p.2 < m) where
   getElem M p h := M.data[p.1 * m + p.2]'(flatIdx_lt h.1 h.2)
 
 /-- The `i`-th row of a matrix, materialized from the flat buffer. This copies the
@@ -493,11 +493,11 @@ theorem getElem_writeRow (d : Vector R (n * m)) (dst : Nat) (hdst : dst < n) (v 
   rw [Fin.foldl_eq_finRange_foldl]
   by_cases hrd : r = dst
   · subst hrd
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact foldl_set_mem (fun s : Fin m => r * m + s.val) (fun s => v[s])
       (fun s => flatIdx_lt hr s.isLt) flatIdx_col_inj
       (List.finRange m) (nodup_finRange m) d ⟨t, ht⟩ (List.mem_finRange _)
-  · rw [if_neg hrd]
+  · rw [ite_eq_right hrd]
     exact foldl_set_ne (fun s : Fin m => dst * m + s.val) (fun s => v[s])
       (fun s => flatIdx_lt hdst s.isLt) (flatIdx_lt hr ht)
       (List.finRange m) d (fun s _ heq => by
@@ -517,8 +517,8 @@ theorem getElem_writeRow (d : Vector R (n * m)) (dst : Nat) (hdst : dst < n) (v 
   show (writeRow M.data dst.val dst.isLt v)[r * m + t]'(flatIdx_lt hr ht) = _
   rw [getElem_writeRow M.data dst.val dst.isLt v hr ht]
   by_cases hrd : r = dst.val
-  · rw [if_pos hrd, if_pos hrd.symm]
-  · rw [if_neg hrd, if_neg (fun h => hrd h.symm), getElem_rows, getElem_getRow_nat]
+  · rw [ite_eq_left hrd, ite_eq_left hrd.symm]
+  · rw [ite_eq_right hrd, ite_eq_right (fun h => hrd h.symm), getElem_rows, getElem_getRow_nat]
 
 /-- Reading back the replaced row `dst` of `setRow M dst v` yields `v`. -/
 @[grind =] theorem setRow_get_self (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
@@ -559,17 +559,17 @@ other row is unchanged. -/
   by_cases h : i < n
   · have hred : modifyEntries (⟨d⟩ : Matrix R n m) i g =
         ⟨Fin.foldl m (fun d t => d.modify (i * m + t.val) (g t)) d⟩ := by
-      simp only [modifyEntries, dif_pos h]
+      simp only [modifyEntries, dite_eq_left h]
     rw [hred, getElem_eq_getRow, getElem_getRow, getElem_eq_getRow, getElem_getRow]
     show (Fin.foldl m (fun d t => d.modify (i * m + t.val) (g t)) d)[r.val * m + c.val]'_ = _
     rw [Fin.foldl_eq_finRange_foldl]
     by_cases hri : r.val = i
     · subst hri
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       exact foldl_modify_mem (fun t : Fin m => r.val * m + t.val) g
         (fun t => flatIdx_lt r.isLt t.isLt) flatIdx_col_inj
         (List.finRange m) (nodup_finRange m) d c (List.mem_finRange _)
-    · rw [if_neg hri]
+    · rw [ite_eq_right hri]
       exact foldl_modify_ne (fun t : Fin m => i * m + t.val) g
         (flatIdx_lt r.isLt c.isLt) (List.finRange m) d (fun t _ heq => by
           have h1 : (i * m + t.val) / m = i := flatIdx_div t.isLt
@@ -577,8 +577,8 @@ other row is unchanged. -/
           rw [heq, h2] at h1
           exact hri h1)
   · have hred : modifyEntries (⟨d⟩ : Matrix R n m) i g = ⟨d⟩ := by
-      simp only [modifyEntries, dif_neg h]
-    rw [hred, if_neg (fun heq => h (by rw [← heq]; exact r.isLt))]
+      simp only [modifyEntries, dite_eq_right h]
+    rw [hred, ite_eq_right (fun heq => h (by rw [← heq]; exact r.isLt))]
 
 /-- The transpose of a dense matrix. -/
 @[expose]
@@ -825,8 +825,8 @@ against `col N j`. -/
   intro i j
   rw [getElem_transpose, getElem_identity, getElem_identity]
   by_cases hij : i = j
-  · rw [if_pos hij, if_pos hij.symm]
-  · rw [if_neg hij, if_neg (fun h => hij h.symm)]
+  · rw [ite_eq_left hij, ite_eq_left hij.symm]
+  · rw [ite_eq_right hij, ite_eq_right (fun h => hij h.symm)]
 
 /-- Row `i` of the identity matrix has a `1` in position `i` and `0` elsewhere. -/
 @[simp, grind =] theorem row_identity [OfNat R 0] [OfNat R 1] {n : Nat} (i : Fin n) :
@@ -852,15 +852,15 @@ against `col N j`. -/
   by_cases h : i < n
   · have hred : modifyRow (⟨d⟩ : Matrix R n m) i f =
         setRow ⟨d⟩ ⟨i, h⟩ (f (getRow ⟨d⟩ ⟨i, h⟩)) := by
-      simp only [modifyRow, dif_pos h, setRow]
+      simp only [modifyRow, dite_eq_left h, setRow]
       rfl
     rw [hred, rows_setRow, Vector.modify_eq_set _ _ _ h, getElem_rows]
   · have hred : modifyRow (⟨d⟩ : Matrix R n m) i f = ⟨d⟩ := by
-      simp only [modifyRow, dif_neg h]
+      simp only [modifyRow, dite_eq_right h]
     rw [hred]
     apply Vector.ext
     intro r hr
-    rw [Vector.getElem_modify hr, if_neg (fun heq => h (by omega))]
+    rw [Vector.getElem_modify hr, ite_eq_right (fun heq => h (by omega))]
 
 /-- Row `i` of `modifyRow M i f` is `f` applied to the old row `i`. -/
 @[simp, grind =] theorem getRow_modifyRow_self (M : Matrix R n m) (i : Fin n)
@@ -888,8 +888,8 @@ private theorem foldl_swap_ne {N : Nat} (idxA idxB : Fin m → Nat)
   | cons x xs ih =>
     intro d0 hne
     rw [List.foldl_cons, ih _ (fun t ht => hne t (List.mem_cons_of_mem _ ht)),
-      Vector.getElem_swap, if_neg (fun heq => (hne x List.mem_cons_self).1 heq.symm),
-      if_neg (fun heq => (hne x List.mem_cons_self).2 heq.symm)]
+      Vector.getElem_swap, ite_eq_right (fun heq => (hne x List.mem_cons_self).1 heq.symm),
+      ite_eq_right (fun heq => (hne x List.mem_cons_self).2 heq.symm)]
 
 /-- A left fold of per-index `swap`s at pairwise-disjoint index pairs over a
 `Nodup` list exchanges the pair values at every member index. -/
@@ -914,23 +914,23 @@ private theorem foldl_swap_mem {N : Nat} (idxA idxB : Fin m → Nat)
       constructor
       · rw [foldl_swap_ne idxA idxB bdA bdB (bdA r) xs _ (fun t ht =>
           ⟨(hdisj t r (hnotail t ht)).1, (hdisj t r (hnotail t ht)).2.2.1⟩),
-          Vector.getElem_swap, if_pos rfl]
+          Vector.getElem_swap, ite_eq_left rfl]
       · rw [foldl_swap_ne idxA idxB bdA bdB (bdB r) xs _ (fun t ht =>
           ⟨(hdisj t r (hnotail t ht)).2.1, (hdisj t r (hnotail t ht)).2.2.2⟩),
           Vector.getElem_swap]
         by_cases hab : idxB r = idxA r
-        · rw [if_pos hab]
+        · rw [ite_eq_left hab]
           simp only [hab]
-        · rw [if_neg hab, if_pos rfl]
+        · rw [ite_eq_right hab, ite_eq_left rfl]
     · have hxr : x ≠ r := fun heq => (List.nodup_cons.mp hnd).1 (heq ▸ hr')
       have hd := hdisj x r hxr
       obtain ⟨h1, h2⟩ := ih (List.nodup_cons.mp hnd).2
         (d0.swap (idxA x) (idxB x) (bdA x) (bdB x)) r hr'
       constructor
-      · rw [h1, Vector.getElem_swap, if_neg (fun heq => hd.2.1 heq.symm),
-          if_neg (fun heq => hd.2.2.2 heq.symm)]
-      · rw [h2, Vector.getElem_swap, if_neg (fun heq => hd.1 heq.symm),
-          if_neg (fun heq => hd.2.2.1 heq.symm)]
+      · rw [h1, Vector.getElem_swap, ite_eq_right (fun heq => hd.2.1 heq.symm),
+          ite_eq_right (fun heq => hd.2.2.2 heq.symm)]
+      · rw [h2, Vector.getElem_swap, ite_eq_right (fun heq => hd.1 heq.symm),
+          ite_eq_right (fun heq => hd.2.2.1 heq.symm)]
 
 /-- Flat index pairs of two distinct rows are pairwise disjoint across distinct
 columns (and within a column, across the two rows). -/
@@ -967,8 +967,8 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
       rw [Vector.getElem_swap]
       by_cases hpt : p = i * m + t.val
       · subst hpt
-        rw [if_pos rfl]
-      · rw [if_neg hpt, if_neg hpt]
+        rw [ite_eq_left rfl]
+      · rw [ite_eq_right hpt, ite_eq_right hpt]
     have hid : (swap (⟨d⟩ : Matrix R n m) i i hi hi).data = d := by
       simp only [swap]
       rw [Fin.foldl_eq_finRange_foldl]
@@ -982,9 +982,9 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
     show (swap (⟨d⟩ : Matrix R n m) i i hi hi).data[r * m + t]'(flatIdx_lt hr ht) = _
     rw [hid]
     by_cases hri : r = i
-    · rw [if_pos hri, getElem_rows, getElem_getRow_nat]
+    · rw [ite_eq_left hri, getElem_rows, getElem_getRow_nat]
       simp only [hri]
-    · rw [if_neg hri, if_neg hri, getElem_rows, getElem_getRow_nat]
+    · rw [ite_eq_right hri, ite_eq_right hri, getElem_rows, getElem_getRow_nat]
   · apply Vector.ext
     intro r hr
     rw [getElem_rows, Vector.getElem_swap]
@@ -996,7 +996,7 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
       rw [Fin.foldl_eq_finRange_foldl]
     by_cases hri : r = i
     · subst hri
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       apply Vector.ext
       intro t ht
       rw [getElem_getRow_nat, getElem_rows, getElem_getRow_nat]
@@ -1007,7 +1007,7 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
         (List.mem_finRange _)).1
     · by_cases hrj : r = j
       · subst hrj
-        rw [if_neg hri, if_pos rfl]
+        rw [ite_eq_right hri, ite_eq_left rfl]
         apply Vector.ext
         intro t ht
         rw [getElem_getRow_nat, getElem_rows, getElem_getRow_nat]
@@ -1016,7 +1016,7 @@ private theorem flatIdx_swap_disj {i j : Nat} (hij : i ≠ j) :
         exact (foldl_swap_mem _ _ (fun s => flatIdx_lt hi s.isLt) (fun s => flatIdx_lt hr s.isLt)
           (flatIdx_swap_disj hij) (List.finRange m) (nodup_finRange m) d ⟨t, ht⟩
           (List.mem_finRange _)).2
-      · rw [if_neg hri, if_neg hrj, getElem_rows]
+      · rw [ite_eq_right hri, ite_eq_right hrj, getElem_rows]
         apply Vector.ext
         intro t ht
         rw [getElem_getRow_nat, getElem_getRow_nat]
@@ -1105,11 +1105,11 @@ the replacement function and every other column is read from `M`. -/
   rw [Fin.foldl_eq_finRange_foldl]
   by_cases hc : c = dst
   · subst hc
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact foldl_set_mem (fun i : Fin n => i.val * m + c.val) v
       (fun i => flatIdx_lt i.isLt c.isLt) (flatIdx_row_inj c.isLt)
       (List.finRange n) (nodup_finRange n) d r (List.mem_finRange _)
-  · rw [if_neg hc]
+  · rw [ite_eq_right hc]
     exact foldl_set_ne (fun i : Fin n => i.val * m + dst.val) v
       (fun i => flatIdx_lt i.isLt dst.isLt) (flatIdx_lt r.isLt c.isLt)
       (List.finRange n) d (fun i _ heq => by
@@ -1125,9 +1125,9 @@ the replacement function and every other column is read from `M`. -/
   intro r c
   rw [getElem_setCol]
   by_cases hc' : c = dst
-  · rw [if_pos hc']
+  · rw [ite_eq_left hc']
     exact congrArg (fun c' : Fin m => M[r][c']) hc'.symm
-  · rw [if_neg hc']
+  · rw [ite_eq_right hc']
 
 /-- Transposing a row replacement is a column replacement on the transpose:
 `setRow` on `M` corresponds to `setCol` on `Mᵀ`. This is the bridge the
@@ -1141,7 +1141,7 @@ theorem transpose_setRow (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
   · subst hb
     rw [show (setRow M b v)[b] = v from setRow_get_self M b v]
     simp
-  · rw [if_neg hb, show (setRow M dst v)[b] = M[b] from setRow_row_ne M dst b v hb,
+  · rw [ite_eq_right hb, show (setRow M dst v)[b] = M[b] from setRow_row_ne M dst b v hb,
       getElem_transpose]
 
 /-- In-place per-entry column modify: replace each entry `M[i][dst]` by
@@ -1164,11 +1164,11 @@ def modifyCol (M : Matrix R n m) (dst : Fin m) (g : Fin n → R → R) : Matrix 
   rw [Fin.foldl_eq_finRange_foldl]
   by_cases hc : c = dst
   · subst hc
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact foldl_modify_mem (fun i : Fin n => i.val * m + c.val) g
       (fun i => flatIdx_lt i.isLt c.isLt) (flatIdx_row_inj c.isLt)
       (List.finRange n) (nodup_finRange n) d r (List.mem_finRange _)
-  · rw [if_neg hc]
+  · rw [ite_eq_right hc]
     exact foldl_modify_ne (fun i : Fin n => i.val * m + dst.val) g
       (flatIdx_lt r.isLt c.isLt) (List.finRange n) d (fun i _ heq => by
         have h1 : (i.val * m + dst.val) % m = dst.val := flatIdx_mod dst.isLt
@@ -1180,7 +1180,7 @@ def modifyCol (M : Matrix R n m) (dst : Fin m) (g : Fin n → R → R) : Matrix 
 theorem getElem_modifyCol_of_ne (M : Matrix R n m) (dst : Fin m) (g : Fin n → R → R)
     (r : Fin n) {c : Fin m} (h : c ≠ dst) :
     (modifyCol M dst g)[r][c] = M[r][c] := by
-  rw [getElem_modifyCol, if_neg h]
+  rw [getElem_modifyCol, ite_eq_right h]
 
 /-- Scalar action on a matrix, delegated to the flat backing buffer. The single
 sanctioned `SMul` instance for matrices: the Mathlib bridge layer reuses it rather

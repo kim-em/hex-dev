@@ -80,7 +80,7 @@ private theorem normalizePrimitiveSign_C_one :
   unfold normalizePrimitiveSign
   have hlead : ¬ DensePoly.leadingCoeff (DensePoly.C (1 : Int)) < 0 := by
     simp [DensePoly.leadingCoeff, DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
-  rw [if_neg hlead]
+  rw [ite_eq_right hlead]
   rfl
 
 /-- Sign-normalization sends the constant `-1` to `1`: its negative leading
@@ -90,7 +90,7 @@ private theorem normalizePrimitiveSign_C_neg_one :
   unfold normalizePrimitiveSign
   have hlead : DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) < 0 := by
     simp [DensePoly.leadingCoeff, DensePoly.coeffs_C_of_ne_zero (by decide : (-1 : Int) ≠ 0)]
-  rw [if_pos hlead]
+  rw [ite_eq_left hlead]
   apply DensePoly.ext_coeff
   intro n
   rw [DensePoly.coeff_scale (R := Int) (-1 : Int) (DensePoly.C (-1 : Int)) n
@@ -141,20 +141,20 @@ theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
   unfold primitiveSquareFreeDecomposition
   by_cases hzero : (primitivePart f).isZero = true
   · refine ⟨0, ?_⟩
-    rw [if_pos hzero]
+    rw [ite_eq_left hzero]
     have hprimitive_zero : primitivePart f = 0 :=
       densePoly_eq_zero_of_isZero_true (primitivePart f) hzero
     rw [hprimitive_zero, toRatPoly_zero, rat_scale_zero]
-  · rw [if_neg hzero]
+  · rw [ite_eq_right hzero]
     let ratPrimitive := toRatPoly (primitivePart f)
     let derivative := DensePoly.derivative ratPrimitive
     by_cases hderivative : derivative.isZero = true
     · rcases toRatPoly_normalizePrimitiveSign_rational_associate (primitivePart f) with
         ⟨unit, hunit⟩
       refine ⟨unit, ?_⟩
-      rw [if_pos hderivative, toRatPoly_one, DensePoly.mul_one_right_poly]
+      rw [ite_eq_left hderivative, toRatPoly_one, DensePoly.mul_one_right_poly]
       simpa [ratPrimitive] using hunit
-    · rw [if_neg hderivative]
+    · rw [ite_eq_right hderivative]
       let repeatedRat := DensePoly.gcd ratPrimitive derivative
       let quotientRat := ratPrimitive / repeatedRat
       rcases ratPolyPrimitivePart_rational_associate quotientRat with
@@ -222,11 +222,11 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore
           simpa [derivative, ratPrimitive] using hderivative_eq)
       have hcore_eq : normalizePrimitiveSign p = 1 :=
         normalizePrimitiveSign_eq_one_of_primitive_size_le_one p hprimitive hsize
-      rw [if_pos hderivative]
+      rw [ite_eq_left hderivative]
       change SquareFreeRat (normalizePrimitiveSign p)
       rw [hcore_eq]
       exact squareFreeRat_one
-    · rw [if_neg hderivative]
+    · rw [ite_eq_right hderivative]
       let repeatedRat := DensePoly.gcd ratPrimitive derivative
       let quotientRat := ratPrimitive / repeatedRat
       have hp_ne : p ≠ 0 := by
@@ -339,12 +339,12 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
     · exfalso
       exact hprimitive_ne (densePoly_eq_zero_of_isZero_true (primitivePart f) hzero)
   unfold primitiveSquareFreeDecomposition
-  rw [if_neg (by simpa using hprimitive_not_isZero)]
+  rw [ite_eq_right (by simpa using hprimitive_not_isZero)]
   let p := primitivePart f
   let ratPrimitive := toRatPoly p
   let derivative := DensePoly.derivative ratPrimitive
   by_cases hderivative : derivative.isZero = true
-  · rw [if_pos hderivative]
+  · rw [ite_eq_left hderivative]
     have hderivative_eq : derivative = 0 :=
       densePoly_eq_zero_of_isZero_true derivative hderivative
     have hsize : p.size ≤ 1 := by
@@ -357,7 +357,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
     rw [hcore_eq]
     change Primitive ((1 : ZPoly) * (1 : ZPoly))
     exact primitive_mul 1 1 primitive_one primitive_one
-  · rw [if_neg hderivative]
+  · rw [ite_eq_right hderivative]
     have hp_ne : p ≠ 0 := by
       simpa [p] using hprimitive_ne
     simpa [p, ratPrimitive, derivative] using
@@ -378,7 +378,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
     let ratPrimitive := toRatPoly p
     let derivative := DensePoly.derivative ratPrimitive
     by_cases hderivative : derivative.isZero = true
-    · rw [if_pos hderivative] at hcore_ne hdegree ⊢
+    · rw [ite_eq_left hderivative] at hcore_ne hdegree ⊢
       have hderivative_eq : derivative = 0 :=
         densePoly_eq_zero_of_isZero_true derivative hderivative
       have hcontent_ne : content f ≠ 0 := by
@@ -398,7 +398,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
         exact size_le_one_of_toRatPoly_derivative_zero p (by
           simpa [derivative, ratPrimitive] using hderivative_eq)
       exact normalizePrimitiveSign_eq_one_of_primitive_size_le_one p hprimitive hsize
-    · rw [if_neg hderivative] at hcore_ne hdegree ⊢
+    · rw [ite_eq_right hderivative] at hcore_ne hdegree ⊢
       let repeatedRat := DensePoly.gcd ratPrimitive derivative
       let quotientRat := ratPrimitive / repeatedRat
       let core := ratPolyPrimitivePart quotientRat
@@ -437,10 +437,10 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_d
     let derivative := DensePoly.derivative ratPrimitive
     by_cases hderivative : derivative.isZero = true
     · -- Case 2: `repeatedPart := 1` by definition.
-      rw [if_pos hderivative]
+      rw [ite_eq_left hderivative]
     · -- Case 3: rule out via gcd-derivative degree arithmetic.
       exfalso
-      rw [if_neg hderivative] at hcore_ne hdegree
+      rw [ite_eq_right hderivative] at hcore_ne hdegree
       let repeatedRat := DensePoly.gcd ratPrimitive derivative
       let quotientRat := ratPrimitive / repeatedRat
       let core := ratPolyPrimitivePart quotientRat
@@ -563,12 +563,12 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoef
     · exfalso
       exact hprimitive_ne (densePoly_eq_zero_of_isZero_true (primitivePart f) hzero)
   unfold primitiveSquareFreeDecomposition
-  rw [if_neg (by simpa using hprimitive_not_isZero)]
+  rw [ite_eq_right (by simpa using hprimitive_not_isZero)]
   let p := primitivePart f
   let ratPrimitive := toRatPoly p
   let derivative := DensePoly.derivative ratPrimitive
   by_cases hderivative : derivative.isZero = true
-  · rw [if_pos hderivative]
+  · rw [ite_eq_left hderivative]
     have hderivative_eq : derivative = 0 :=
       densePoly_eq_zero_of_isZero_true derivative hderivative
     have hsize : p.size ≤ 1 := by
@@ -583,7 +583,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoef
         (by decide) (by decide)]
       exact Int.mul_pos leadingCoeff_one_pos leadingCoeff_one_pos
     simpa [p, hcore_eq] using hprod_pos
-  · rw [if_neg hderivative]
+  · rw [ite_eq_right hderivative]
     let repeatedRat := DensePoly.gcd ratPrimitive derivative
     let quotientRat := ratPrimitive / repeatedRat
     have hp_ne : p ≠ 0 := by
@@ -771,17 +771,17 @@ theorem toRatPoly_repeatedPart_dvd_derivative (f : ZPoly) :
   by_cases hzero : (primitivePart f).isZero
   · have hpz : primitivePart f = 0 :=
       densePoly_eq_zero_of_isZero_true (primitivePart f) hzero
-    simp only [hzero, if_true]
+    simp only [hzero, ite_true]
     rw [hpz]
     simp only [toRatPoly_zero, DensePoly.derivative_zero]
     exact ⟨0, (DensePoly.zero_mul 0).symm⟩
-  · simp only [hzero, Bool.false_eq_true, if_false]
+  · simp only [hzero, Bool.false_eq_true, ite_false]
     by_cases hderiv : (DensePoly.derivative (toRatPoly (primitivePart f))).isZero
-    · simp only [hderiv, if_true]
+    · simp only [hderiv, ite_true]
       rw [toRatPoly_one]
       exact ⟨DensePoly.derivative (toRatPoly (primitivePart f)),
         by rw [DensePoly.mul_comm_poly, DensePoly.mul_one_right_poly]⟩
-    · simp only [hderiv, Bool.false_eq_true, if_false]
+    · simp only [hderiv, Bool.false_eq_true, ite_false]
       exact ratPolyPrimitivePart_gcd_dvd_derivative (toRatPoly (primitivePart f))
 
 /-- A Bezout congruence witness proves that two integer polynomials are coprime
@@ -956,10 +956,10 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat
     · rfl
     · exact absurd (densePoly_eq_zero_of_isZero_true _ hz) hprimitive_ne
   unfold primitiveSquareFreeDecomposition
-  rw [if_neg (by simpa using hnot_isZero)]
+  rw [ite_eq_right (by simpa using hnot_isZero)]
   by_cases hderiv : (DensePoly.derivative (toRatPoly (primitivePart core))).isZero = true
-  · rw [if_pos hderiv]
-  · rw [if_neg hderiv]
+  · rw [ite_eq_left hderiv]
+  · rw [ite_eq_right hderiv]
     have hratPrim_ne : toRatPoly (primitivePart core) ≠ 0 :=
       toRatPoly_ne_zero_of_ne_zero _ hprimitive_ne
     apply ratPolyPrimitivePart_eq_one_of_size_le_one
@@ -1009,7 +1009,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat
       rw [← hre, leadingCoeff_scale_of_nonzero (-1 : Int) _ (by decide)]
       omega
     unfold normalizePrimitiveSign
-    rw [if_pos hlead_prim_neg, ← hre, int_scale_scale]
+    rw [ite_eq_left hlead_prim_neg, ← hre, int_scale_scale]
     show (primitiveSquareFreeDecomposition core).squareFreeCore =
       DensePoly.scale (1 : Int) (primitiveSquareFreeDecomposition core).squareFreeCore
     exact (int_scale_one _).symm

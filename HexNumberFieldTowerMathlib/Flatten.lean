@@ -119,7 +119,7 @@ private theorem replicatePush_getD (n i : Nat) :
       simp [heq]
 
 private theorem unitCoords_fixed (full short index : Nat)
-    (hshort : short ≤ full) (hindex : index < short) :
+    (_hshort : short ≤ full) (hindex : index < short) :
     unitCoords full index =
       Arithmetic.fixedCoeffs full (unitCoords short index) := by
   apply Array.ext
@@ -146,7 +146,7 @@ private theorem unit_generator (level : Level) (lower : List Level)
       Arithmetic.fixedCoeffs (levelsDim (level :: lower))
         ((Array.replicate (levelsDim lower) 0).push 1) := by
     apply Array.ext
-    · simp [unitCoords, Arithmetic.fixedCoeffs, hindex]
+    · simp [unitCoords, Arithmetic.fixedCoeffs]
     · intro i hiLeft hiRight
       have hif : i < levelsDim (level :: lower) := by simpa using hiLeft
       rw [unitCoords_getElem _ _ _ hif,
@@ -237,7 +237,7 @@ private theorem generatorsAux?_sound (T : NumberTower)
       obtain ⟨hdimension, hgenerators⟩ :=
         ih (newer ++ [level]) hlowerLevels hlowerState
       constructor
-      · simpa [levelsDim, hdimension, Nat.mul_comm]
+      · simp [levelsDim, hdimension, Nat.mul_comm]
       · intro generator hgenerator
         simp only [Array.toList_push, List.mem_append,
           List.mem_singleton] at hgenerator
@@ -440,7 +440,7 @@ private theorem toQAdjoin_complex (a : AlgebraicNumber) :
       (DensePoly.ofList ([0, 1] : List Rat)) = Polynomial.X := by
     ext n
     rw [HexPolyMathlib.coeff_toPolynomial, DensePoly.coeff_ofList]
-    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X] <;> rfl
+    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X]; rfl
   rw [hpoly, Polynomial.eval₂_X]
   rfl
 
@@ -535,9 +535,9 @@ private theorem toPrimitiveFold_complex {T : NumberTower}
   | cons i indices ih =>
       simp only [List.foldl_cons, List.map_cons, List.sum_cons]
       by_cases hzero : (coeffs a).getD i 0 = 0
-      · rw [if_pos hzero]
+      · rw [ite_eq_left hzero]
         simpa [hzero] using ih initial
-      · rw [if_neg hzero, ih, QAdjoin.map_add, QAdjoin.map_smul]
+      · rw [ite_eq_right hzero, ih, QAdjoin.map_add, QAdjoin.map_smul]
         ring
 
 private theorem toPrimitiveWith_complex {T : NumberTower}
@@ -739,7 +739,7 @@ private theorem checkCoordinate?_sound (target gamma : AlgebraicNumber)
     (coordinate out : QAdjoin gamma.p gamma.x)
     (h : checkCoordinate? target gamma coordinate = some out) :
     QAdjoin.toComplex out gamma.rep gamma.rep_mk = target.toComplex := by
-  letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+  let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
   unfold checkCoordinate? at h
   obtain ⟨recovered, hrecovered, h⟩ := Option.bind_eq_some_iff.mp h
   by_cases heq : recovered == target
@@ -780,7 +780,7 @@ private theorem recoverPairFast?_sound (theta alpha gamma : AlgebraicNumber)
   by_cases hshift : shift = 0
   · simp [hshift] at h
   · simp only [hshift, ↓reduceIte] at h
-    letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+    let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
     let gammaCoordinate := gamma.toQAdjoin
     let affine : DensePoly (QAdjoin gamma.p gamma.x) :=
       DensePoly.ofList
@@ -810,8 +810,8 @@ private theorem recoverPair?_isSome (theta alpha gamma : AlgebraicNumber)
   have htrace := tracePair?_isSome theta alpha gamma htheta halpha
   unfold recoverPair?
   cases hfast : recoverPairFast? theta alpha gamma shift with
-  | none => simp [hfast, htrace]
-  | some coordinates => simp [hfast]
+  | none => simp [htrace]
+  | some coordinates => simp
 
 private theorem recoverPair?_sound (theta alpha gamma : AlgebraicNumber)
     (shift : Int)
@@ -918,7 +918,7 @@ private theorem searchRecovered?_isSome (theta alpha : AlgebraicNumber)
   unfold searchRecovered?
   cases hfast : searchRecoveredAux theta alpha target 0
       (flattenShiftCount target) with
-  | some recovered => simp [hfast]
+  | some recovered => simp
   | none =>
       obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
         (AlgebraicPoly.Common.extendShift?_isSome theta alpha)
@@ -935,7 +935,7 @@ private theorem searchRecovered?_isSome (theta alpha : AlgebraicNumber)
       obtain ⟨coordinates, hcoordinates⟩ := Option.isSome_iff_exists.mp
         (recoverPair?_isSome theta alpha shifted.value shifted.shift
           htheta halpha)
-      simp [hfast, hshifted, hcoordinates]
+      simp [hshifted, hcoordinates]
 
 private theorem candidateFold_matches (T : NumberTower)
     (generators : List (Generator T)) (current out : Candidate T)
@@ -1107,7 +1107,7 @@ private theorem candidate?_isSome (T : NumberTower)
     (candidate? T generators).isSome := by
   unfold candidate?
   cases hfirst : generators[0]? with
-  | none => simp [hfirst]
+  | none => simp
   | some first =>
       simpa only using candidateFold_isSome T (generators.toList.drop 1)
         { dimension := first.degree
@@ -1404,7 +1404,7 @@ private theorem blockIndex_iff (index exponent width offset : Nat)
     simp [Nat.add_comm, Nat.mul_comm]
 
 private theorem block_unitCoords (degree width index exponent : Nat)
-    (hwidth : 0 < width) (hindex : index < degree * width)
+    (hwidth : 0 < width) (_hindex : index < degree * width)
     (hexponent : exponent < degree) :
     Arithmetic.block (unitCoords (degree * width) index) exponent width =
       if exponent = index / width then unitCoords width (index % width)
@@ -1427,21 +1427,21 @@ private theorem block_unitCoords (degree width index exponent : Nat)
       Vector.getElem_ofFn]
     rw [unitCoords_getD]
     by_cases heq : exponent = index / width
-    · simp only [if_pos heq] at hright ⊢
+    · simp only [ite_eq_left heq] at hright ⊢
       rw [unitCoords_getElem width (index % width) offset hoffset]
       by_cases hsame : index % width = offset
       · have hposition := (blockIndex_iff index exponent width offset
           hwidth hoffset).mpr ⟨heq.symm, hsame⟩
-        simp [hglobal, hposition, hsame, Nat.mod_eq_of_lt hoffset]
+        simp [hglobal, hposition, Nat.mod_eq_of_lt hoffset]
       · have hposition : index ≠ exponent * width + offset := by
           intro hposition
           exact hsame ((blockIndex_iff index exponent width offset
             hwidth hoffset).mp hposition).2
         simp [hglobal, hposition, hsame]
-    · simp only [if_neg heq] at hright ⊢
+    · simp only [ite_eq_right heq] at hright ⊢
       simp only [Arithmetic.fixedCoeffs, Vector.getElem_toArray,
         Vector.getElem_ofFn, Array.getD, Array.size_empty,
-        Nat.not_lt_zero, ↓reduceIte]
+        Nat.not_lt_zero]
       simp only [hglobal, true_and]
       have hne : index ≠ exponent * width + offset := by
         intro hsame
@@ -1513,7 +1513,7 @@ private theorem levelBasis_get (levels : List Level) (hvalid : LevelsValid level
             exponent width) * level.root.toComplex ^ exponent = 0
         rw [block_unitCoords level.degree width index exponent hwidth
           (by simpa [width, levelsDim] using hindex) hexponent']
-        rw [if_neg hne]
+        rw [ite_eq_right hne]
         change LevelSemantics.denote lower
           (Arithmetic.fixedCoeffs (levelsDim lower) #[]) *
             level.root.toComplex ^ exponent = 0
@@ -1563,7 +1563,7 @@ private theorem extendBasis_values {p : ZPoly} {x : SimpleRoot p}
           · simp
           · intro i hleft hright
             simp [Function.comp_def, QAdjoin.map_mul, hpower]
-        · simpa [QAdjoin.map_mul, hpower, hgenerator]
+        · simp [QAdjoin.map_mul, hpower, hgenerator]
   exact hfold entries (#[], 1) (#[], 1)
     (by simp) (QAdjoin.map_one rep hrep)
 
@@ -1671,7 +1671,7 @@ private theorem fold_unit_range {p : ZPoly} {x : SimpleRoot p}
     (List.range count).foldl (fun value i =>
       if index = i then value + (1 : Rat) • values i else value) 0 =
         if index < count then values index else 0 := by
-  letI : Field (QAdjoin p x) := QAdjoin.field p x
+  let : Field (QAdjoin p x) := QAdjoin.field p x
   induction count with
   | zero => simp
   | succ count ih =>
@@ -1717,7 +1717,7 @@ private theorem basisImages_complex (T : NumberTower)
         (basisImages generators candidate.coordinates |>.getD index 0)
         candidate.root.rep candidate.root.rep_mk =
       T.toComplex (T.ofCoeffs (unitCoords T.dim index)) := by
-  letI : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
+  let : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
   have hgeneratorShape := generators?_shape T hgenerators
   have hcandidateShape := candidate?_shape T generators hcandidate
   have hcoordinates := candidate?_represents T generators hcandidate
@@ -1736,8 +1736,8 @@ private theorem basisImages_complex (T : NumberTower)
   have hget := congrArg (fun values : Array ℂ => values.getD index 0) hvalues'
   have hlevelSize : (levelBasis T.levels.toList).toArray.size = T.dim := by
     simp [dim]
-  simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map,
-    Array.getElem?_eq_getElem, Array.size_map, himages, hindex, ↓reduceIte,
+  simp only [Array.getD_eq_getD_getElem?,
+    Array.getElem?_eq_getElem, Array.size_map, himages, hindex,
     hlevelSize, Option.getD_some] at hget
   change QAdjoin.toComplex (images.getD index 0) candidate.root.rep
     candidate.root.rep_mk = _
@@ -1771,7 +1771,7 @@ private theorem constructed_basis_roundtrip (T : NumberTower)
         (toPrimitiveWith (basisImages generators candidate.coordinates)
           (T.ofCoeffs (unitCoords T.dim index))) =
       T.ofCoeffs (unitCoords T.dim index) := by
-  letI : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
+  let : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
   rw [toPrimitiveWith_unit _ index hindex]
   apply toComplex_injective T
   rw [fromPrimitiveWith_complex candidate.value candidate.root.rep
@@ -1815,12 +1815,12 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
     have hgeneratorsSound := Flatten.generators?_sound T hgenerators
     have hcandidateSound := Flatten.candidate?_matches T generators
       hgeneratorsSound hcandidate
-    letI : ZPoly.CheckedIrreducible candidate.root.p :=
+    let : ZPoly.CheckedIrreducible candidate.root.p :=
       candidate.root.checked
     let rep := candidate.root.rep
     have hrep : SimpleRoot.mk rep = candidate.root.x :=
       candidate.root.rep_mk
-    letI : Field (Elem T) := elemField T
+    let : Field (Elem T) := elemField T
     let towerAdd : Elem T →+ ℂ :=
       { toFun := T.toComplex
         map_zero' := by
@@ -1830,7 +1830,7 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
           intro a b
           change T.toComplex (a + b) = T.toComplex a + T.toComplex b
           exact map_add T a b }
-    letI : Module Rat (Elem T) :=
+    let : Module Rat (Elem T) :=
       Function.Injective.module Rat towerAdd (toComplex_injective T)
         (fun q a => by
           change T.toComplex (q • a) = q • T.toComplex a
@@ -1881,10 +1881,10 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
       rw [Flatten.unitCoords_getD]
       by_cases hij : i = j
       · subst j
-        simp [Pi.single_apply]
+        simp
       · have hji : j ≠ i := Ne.symm hij
         have hval : i.val ≠ j.val := fun h => hij (Fin.ext h)
-        simp [Pi.single_apply, hij, hji, hval, j.isLt]
+        simp [hji, hval, j.isLt]
     let towerMap : Elem T →ₗ[Rat] ℂ :=
       { toFun := T.toComplex
         map_add' := map_add T
@@ -1998,7 +1998,7 @@ theorem flatten_toComplex (T : NumberTower) {F : Flattening T}
     (h : T.flatten? = some F) (a : Elem T) :
     QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
       T.toComplex a := by
-  letI : ZPoly.CheckedIrreducible F.root.p := F.root.checked
+  let : ZPoly.CheckedIrreducible F.root.p := F.root.checked
   exact (flatten?_sound T h).2.2.1 a
 
 /-- The inverse primitive coordinate map preserves the fixed complex value. -/
@@ -2006,7 +2006,7 @@ theorem flatten_fromComplex (T : NumberTower) {F : Flattening T}
     (h : T.flatten? = some F) (a : QAdjoin F.root.p F.root.x) :
     T.toComplex (F.fromPrimitive a) =
       QAdjoin.toComplex a F.root.rep F.root.rep_mk := by
-  letI : ZPoly.CheckedIrreducible F.root.p := F.root.checked
+  let : ZPoly.CheckedIrreducible F.root.p := F.root.checked
   exact (flatten?_sound T h).2.2.2.1 a
 
 end Hex.NumberTower

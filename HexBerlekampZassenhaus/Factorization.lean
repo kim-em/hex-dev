@@ -834,8 +834,8 @@ private theorem bhksRecoverClassifiedWithAllOnes_snd (f : ZPoly) (d : LiftData) 
   by_cases hrows :
       1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
         (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
-  · simp only [dif_pos hrows]
-  · simp only [dif_neg hrows]
+  · simp only [dite_eq_left hrows]
+  · simp only [dite_eq_right hrows]
 
 /-- Lattice-method recombination loop: `bhksRecoveryLoop` plus certificate-backed
 early termination. The split path is byte-identical to the fast loop;
@@ -930,8 +930,8 @@ private theorem latticeCoreLoop_unfold
           else latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel) := by
   rw [latticeCoreLoop]
   by_cases hfl : k < floor
-  · rw [if_pos hfl, if_pos hfl]
-  · rw [if_neg hfl, if_neg hfl]
+  · rw [ite_eq_left hfl, ite_eq_left hfl]
+  · rw [ite_eq_right hfl, ite_eq_right hfl]
     simp only [bhksRecoverClassifiedWithAllOnes_fst, bhksRecoverClassifiedWithAllOnes_snd]
 
 /-- The certificate-aware lattice loop can only turn a fast-loop failure into
@@ -952,12 +952,12 @@ private theorem latticeCoreLoop_none_imp_bhksRecoveryLoop_none
       rw [latticeCoreLoop_unfold] at hnone
       rw [bhksRecoveryLoop]
       by_cases hfl : k < floor
-      · rw [if_pos hfl] at hnone ⊢
+      · rw [ite_eq_left hfl] at hnone ⊢
         by_cases hk : k ≥ B
         · simp [hk]
-        · rw [if_neg hk] at hnone ⊢
+        · rw [ite_eq_right hk] at hnone ⊢
           exact ih _ hnone
-      · rw [if_neg hfl] at hnone ⊢
+      · rw [ite_eq_right hfl] at hnone ⊢
         cases hclass :
             bhksRecoverClassified core
               (ZPoly.directLiftData core k primeData) with
@@ -968,25 +968,25 @@ private theorem latticeCoreLoop_none_imp_bhksRecoveryLoop_none
             rw [hclass] at hnone
             by_cases hk : k ≥ B
             · simp [hk]
-            · rw [if_neg hk] at hnone ⊢
+            · rw [ite_eq_right hk] at hnone ⊢
               exact ih _ hnone
         | productMismatch candidates =>
             rw [hclass] at hnone
             by_cases hk : k ≥ B
             · simp [hk]
-            · rw [if_neg hk] at hnone ⊢
+            · rw [ite_eq_right hk] at hnone ⊢
               exact ih _ hnone
         | degenerate =>
             rw [hclass] at hnone
             by_cases hones :
                 bhksSingleAllOnesPartition core
                   (ZPoly.directLiftData core k primeData) = true
-            · rw [if_pos hones] at hnone
+            · rw [ite_eq_left hones] at hnone
               simp at hnone
-            · rw [if_neg hones] at hnone
+            · rw [ite_eq_right hones] at hnone
               by_cases hk : k ≥ B
               · simp [hk]
-              · rw [if_neg hk] at hnone ⊢
+              · rw [ite_eq_right hk] at hnone ⊢
                 exact ih _ hnone
 
 /-- A successful fixed-precision recovery on the scheduled lattice path forces
@@ -1036,12 +1036,12 @@ private theorem latticeCoreLoop_some_spec
       rw [latticeCoreLoop_unfold] at h
       rw [bhksRecoveryLoop]
       by_cases hfl : k < floor
-      · rw [if_pos hfl] at h ⊢
+      · rw [ite_eq_left hfl] at h ⊢
         by_cases hk : k ≥ B
         · simp [hk] at h
-        · rw [if_neg hk] at h ⊢
+        · rw [ite_eq_right hk] at h ⊢
           exact ih _ cf h
-      · rw [if_neg hfl] at h ⊢
+      · rw [ite_eq_right hfl] at h ⊢
         cases hclass : bhksRecoverClassified core (ZPoly.directLiftData core k primeData) with
         | success factors =>
             rw [hclass] at h
@@ -1050,25 +1050,25 @@ private theorem latticeCoreLoop_some_spec
             rw [hclass] at h
             by_cases hk : k ≥ B
             · simp [hk] at h
-            · rw [if_neg hk] at h ⊢
+            · rw [ite_eq_right hk] at h ⊢
               exact ih _ cf h
         | productMismatch cands =>
             rw [hclass] at h
             by_cases hk : k ≥ B
             · simp [hk] at h
-            · rw [if_neg hk] at h ⊢
+            · rw [ite_eq_right hk] at h ⊢
               exact ih _ cf h
         | degenerate =>
             rw [hclass] at h
             by_cases hones :
                 bhksSingleAllOnesPartition core (ZPoly.directLiftData core k primeData) = true
-            · rw [if_pos hones] at h
+            · rw [ite_eq_left hones] at h
               exact Or.inr ⟨(Option.some.inj h).symm,
                 k, Nat.le_of_not_lt hfl, hones⟩
-            · rw [if_neg hones] at h
+            · rw [ite_eq_right hones] at h
               by_cases hk : k ≥ B
               · simp [hk] at h
-              · rw [if_neg hk] at h ⊢
+              · rw [ite_eq_right hk] at h ⊢
                 exact ih _ cf h
 
 /-- A successful `latticeCoreWithBound` call is either a
@@ -1409,10 +1409,10 @@ theorem routeClassical_plan
           proposalEligible (normalizeForFactor f).squareFreeCore
               plan.data.factorsModP.size ∧
             (normalizeForFactor f).squareFreeCore = f
-      · simp only [ClassicalInput.beforeProposal, if_pos hroute] at hmodular
+      · simp only [ClassicalInput.beforeProposal, ite_eq_left hroute] at hmodular
         cases Option.some.inj hmodular
         exact selected
-      · simp only [ClassicalInput.beforeProposal, if_neg hroute] at hmodular
+      · simp only [ClassicalInput.beforeProposal, ite_eq_right hroute] at hmodular
         rw [runClassicalPlan_modular] at hmodular
         cases Option.some.inj hmodular
         exact selected
@@ -1441,7 +1441,7 @@ theorem routeClassical_success
           simpa [hroute.2] using hroute.1
         simp [heligible] at h
       · simpa only [ClassicalInput.beforeProposal, ClassicalInput.run,
-          if_neg hroute] using h
+          ite_eq_right hroute] using h
 
 set_option maxHeartbeats 800000 in
 /-- Every factor returned by a planned CLD run comes from its successful
@@ -1466,9 +1466,9 @@ theorem runLatticePlan_mem_source
   | some cf =>
       simp only [hl] at hmem
       by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
-      · rw [if_pos hp] at hmem
+      · rw [ite_eq_left hp] at hmem
         exact Or.inl ⟨cf, rfl, hmem⟩
-      · rw [if_neg hp] at hmem
+      · rw [ite_eq_right hp] at hmem
         exact Or.inr hmem
 
 /-- Every raw factor of the total selector comes from proposal replay,
@@ -1495,13 +1495,13 @@ theorem runFactor_mem_source (f : ZPoly) {raw : ZPoly}
   | some cf =>
       simp only [hcf] at hmem
       by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
-      · rw [if_pos hp] at hmem
+      · rw [ite_eq_left hp] at hmem
         exact Or.inr (Or.inl
           ⟨cf,
             routeClassical_success f
               (by simpa [hrun] using hcf),
             hmem⟩)
-      · rw [if_neg hp] at hmem
+      · rw [ite_eq_right hp] at hmem
         exact Or.inr (Or.inr (Or.inr hmem))
   | none =>
       simp only [hcf] at hmem
@@ -1538,9 +1538,9 @@ theorem runFactor_mem_source (f : ZPoly) {raw : ZPoly}
           by_cases hlarge : proposalEligible
               (normalizeForFactor f).squareFreeCore
               modular.data.factorsModP.size
-          · simp only [if_pos hlarge] at hmem
+          · simp only [ite_eq_left hlarge] at hmem
             by_cases hcore : (normalizeForFactor f).squareFreeCore = f
-            · simp only [dif_pos hcore] at hmem
+            · simp only [dite_eq_left hcore] at hmem
               generalize hproposal :
                   proposeFactorization f hcore modular = proposal at hmem
               cases hresult : proposal.1 with
@@ -1552,11 +1552,11 @@ theorem runFactor_mem_source (f : ZPoly) {raw : ZPoly}
                   rcases fallbackSource hmem with hl | ht
                   · exact Or.inr (Or.inr (Or.inl hl))
                   · exact Or.inr (Or.inr (Or.inr ht))
-            · simp only [dif_neg hcore] at hmem
+            · simp only [dite_eq_right hcore] at hmem
               rcases fallbackSource hmem with hl | ht
               · exact Or.inr (Or.inr (Or.inl hl))
               · exact Or.inr (Or.inr (Or.inr ht))
-          · simp only [if_neg hlarge] at hmem
+          · simp only [ite_eq_right hlarge] at hmem
             rcases fallbackSource hmem with hl | ht
             · exact Or.inr (Or.inr (Or.inl hl))
             · exact Or.inr (Or.inr (Or.inr ht))
@@ -1610,11 +1610,11 @@ private theorem signedContentScalar_eq_zero_iff (f : ZPoly) :
     by_cases hf : f = 0
     · exact hf
     have hcontent_ne := content_ne_zero_of_zpoly_ne_zero f hf
-    rw [if_neg hf] at h
+    rw [ite_eq_right hf] at h
     by_cases hneg : DensePoly.leadingCoeff f < 0
-    · rw [if_pos hneg] at h
+    · rw [ite_eq_left hneg] at h
       exact absurd (Int.neg_eq_zero.mp h) hcontent_ne
-    · rw [if_neg hneg] at h
+    · rw [ite_eq_right hneg] at h
       exact absurd h hcontent_ne
   · intro hf
     simp [hf]

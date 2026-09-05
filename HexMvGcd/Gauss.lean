@@ -164,14 +164,17 @@ def fractionMap (p : MvPoly n R cmp) :
     MvPoly n (Hex.Fraction R) cmp :=
   mapCoeffs Hex.Fraction.ofCoeff p
 
+omit [Dvd R] in
 @[simp] theorem fractionMap_zero :
     fractionMap (0 : MvPoly n R cmp) = 0 := by
   exact mapCoeffs_zero Hex.Fraction.ofCoeff_zero
 
+omit [Dvd R] in
 theorem fractionMap_add (f g : MvPoly n R cmp) :
     fractionMap (f + g) = fractionMap f + fractionMap g := by
   exact mapCoeffs_add Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_add f g
 
+omit [Dvd R] in
 theorem fractionMap_mul (f g : MvPoly n R cmp) :
     fractionMap (f * g) = fractionMap f * fractionMap g := by
   exact mapCoeffs_mul Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_add

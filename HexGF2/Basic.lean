@@ -1086,8 +1086,8 @@ theorem xorWords_get?_getD (xs ys : Array UInt64) (i : Nat) :
       simp [hks]
   unfold xorWords
   by_cases h : xs.size ≤ ys.size
-  · rw [if_pos h, key xs ys h i, UInt64.xor_comm]
-  · rw [if_neg h, key ys xs (Nat.le_of_lt (Nat.lt_of_not_le h)) i, UInt64.xor_comm]
+  · rw [ite_eq_left h, key xs ys h i, UInt64.xor_comm]
+  · rw [ite_eq_right h, key ys xs (Nat.le_of_lt (Nat.lt_of_not_le h)) i, UInt64.xor_comm]
 
 /-- Raw XOR output has one word for every word position present in either
 input. -/

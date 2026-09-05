@@ -116,7 +116,7 @@ theorem row_diagMatrix_cast {R : Type u} [Lean.Grind.Semiring R] {r n m : Nat}
   by_cases hij : Fin.castLE hrm i = jj
   · have hval : i.val = jj.val := by
       simpa only [Fin.castLE, Fin.mk.injEq] using congrArg Fin.val hij
-    rw [if_pos hij, diagMatrix_apply_diag d (Fin.castLE hrn i) jj hval i.isLt]
+    rw [ite_eq_left hij, diagMatrix_apply_diag d (Fin.castLE hrn i) jj hval i.isLt]
     have hd : d[(⟨(Fin.castLE hrn i).val, i.isLt⟩ : Fin r)] = d[i] := by
       exact congrArg (fun q : Fin r => d[q]) (Fin.ext rfl)
     rw [hd]
@@ -125,7 +125,7 @@ theorem row_diagMatrix_cast {R : Type u} [Lean.Grind.Semiring R] {r n m : Nat}
       intro h
       apply hij
       exact Fin.ext h
-    rw [if_neg hij, diagMatrix_apply_of_ne d (Fin.castLE hrn i) jj hval]
+    rw [ite_eq_right hij, diagMatrix_apply_of_ne d (Fin.castLE hrn i) jj hval]
     exact (Lean.Grind.Semiring.mul_zero d[i]).symm
 
 end Hex.Matrix

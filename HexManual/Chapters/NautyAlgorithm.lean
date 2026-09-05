@@ -375,7 +375,7 @@ words needed for `n` bits. The pinned call supplies the ordered colour
 partition and pins the following options, several of which restate
 their default values:
 
-:::table (header := true)
+:::table +header
 * * option
   * value
 * * `getcanon` (request a canonical graph and labelling)

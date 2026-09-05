@@ -534,7 +534,7 @@ private theorem invRep_rel {a b : Fraction.Rep R}
       intro hb
       exact ha ((num_eq_zero_iff hab).mpr hb)
     unfold invRep
-    rw [dif_neg ha, dif_neg hb]
+    rw [dite_eq_right ha, dite_eq_right hb]
     apply rep_eq
     unfold Fraction.Rep.Rel at hab ⊢
     grind
@@ -620,7 +620,7 @@ theorem inv_inv (a : Fraction R) : a⁻¹⁻¹ = a := by
       · rw [show invRep a = ofRep ⟨a.den, a.num, hnum⟩ by simp [invRep, hnum],
           inv_ofRep]
         unfold invRep
-        rw [dif_neg a.den_ne]
+        rw [dite_eq_right a.den_ne]
 
 /-- The inverse of one is one. -/
 theorem inv_one : (1 : Fraction R)⁻¹ = 1 := by

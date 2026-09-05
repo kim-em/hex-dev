@@ -69,9 +69,9 @@ theorem eq_C_coeff_zero_of_size_one {f : ZPoly} (h : f.size = 1) :
   intro i
   rw [DensePoly.coeff_C]
   match i with
-  | 0 => rw [if_pos rfl]
+  | 0 => rw [ite_eq_left rfl]
   | i + 1 =>
-      rw [if_neg (by omega)]
+      rw [ite_eq_right (by omega)]
       exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
 
 /-- A single-prime modular irreducibility witness for a `ZPoly` factor,

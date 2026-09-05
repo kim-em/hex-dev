@@ -39,7 +39,7 @@ theorem rawPoly_nil_eq_zero_iff (f : Array (Array Rat)) :
       LevelSemantics.DenoteInjective.nil
       LevelSemantics.coeffDenote_inv_nil
     Factor.rawPoly [] f = 0 ↔ Factor.toRatPoly f = 0 := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   constructor
@@ -70,7 +70,7 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
       HexPolyMathlib.toPolynomial
         (let p := Factor.toRatPoly f
          if p.isZero then 0 else DensePoly.scale p.leadingCoeff⁻¹ p) := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   let raw := Factor.rawPoly [] f
@@ -109,7 +109,7 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
         ← DensePoly.isZero_eq_true_iff]
       exact hrawZero
     rw [hpZero]
-    simp only [if_true]
+    simp only [ite_true]
     have hraw : raw = 0 :=
       (DensePoly.size_eq_zero_iff raw).mp
         ((DensePoly.isZero_eq_true_iff raw).mp hrawZero)
@@ -124,7 +124,7 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
           hzero, ← DensePoly.size_eq_zero_iff]
         exact hpSize
     rw [hpZero]
-    simp only [Bool.false_eq_true, if_false]
+    simp only [Bool.false_eq_true, ite_false]
     change (HexPolyMathlib.toPolynomial
         (DensePoly.scale raw.leadingCoeff⁻¹ raw)).map
           LevelSemantics.coeffRatEquiv.toRingHom =
@@ -155,7 +155,7 @@ theorem rawFactorFoldl (levels : List Level)
         (factors.map fun factor => HexPolyMathlib.toPolynomial
           (R := Arithmetic.Coeff levels)
           (Factor.rawPoly levels factor)).prod := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction factors generalizing init with
   | nil => simp
@@ -202,7 +202,7 @@ theorem factorSquarefree_product (levels : List Level)
           (Norm.monic (Factor.rawPoly levels f)) := by
   cases levels with
   | nil =>
-      letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+      let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil
       dsimp only
@@ -266,7 +266,7 @@ theorem factorSquarefree_product (levels : List Level)
                 LevelSemantics.coeffRatEquiv.toRingHom
                 LevelSemantics.coeffRatEquiv.injective
               rw [polynomial_map_list_prod, hmappedList,
-                map_monic_rawPoly_nil, if_neg hinputZero]
+                map_monic_rawPoly_nil, ite_eq_right hinputZero]
               have hpoly := congrArg HexPolyMathlib.toPolynomial hproduct
               rw [← Array.foldl_toList,
                 ratFactorFoldl] at hpoly
@@ -276,7 +276,7 @@ theorem factorSquarefree_product (levels : List Level)
   | cons level lower =>
       let hinv := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
         hinjective
-      letI : Field (Arithmetic.Coeff (level :: lower)) :=
+      let : Field (Arithmetic.Coeff (level :: lower)) :=
         Norm.coeffFieldPoly (level :: lower) hvalid hinjective hinv
       dsimp only
       simp only [Factor.factorSquarefree?] at hresult
@@ -399,9 +399,9 @@ theorem recover_product_associated (level : Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let delta := Arithmetic.Coeff.ofData (level :: lower) #[(shift : Rat)] *
     Factor.topGenerator level lower
@@ -576,9 +576,9 @@ theorem recover_product_monic (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   dsimp only
   intro hsound
@@ -666,9 +666,9 @@ theorem recover_product (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   dsimp only
   intro hcomponentNe hnormSquarefree hnormEq hlowerCoords hlowerProduct
@@ -693,13 +693,13 @@ theorem recover_product (level : Level) (lower : List Level)
     hinjectiveLower hinvLower
   let ιTop := LevelSemantics.coeffHom (level :: lower) hvalid
     hinjectiveTop hinvTop
-  letI : CharZero (Arithmetic.Coeff lower) :=
+  let : CharZero (Arithmetic.Coeff lower) :=
     { cast_injective := by
         intro m n hmn
         apply Nat.cast_injective (R := ℂ)
         have hmapped := congrArg ιLower hmn
         simpa only [map_natCast] using hmapped }
-  letI : CharZero (Arithmetic.Coeff (level :: lower)) :=
+  let : CharZero (Arithmetic.Coeff (level :: lower)) :=
     { cast_injective := by
         intro m n hmn
         apply Nat.cast_injective (R := ℂ)
@@ -1008,9 +1008,9 @@ theorem factorRat_isSome (input : DensePoly Rat)
   have hgcd := gcd_derivative_size_le_one_of_separable p hpSeparable
   have hproduct := factorRat_product p hpNe hpMonic
   dsimp only at hproduct
-  simp only [Factor.factorRat?, hinputZero, Bool.false_eq_true, if_false]
+  simp only [Factor.factorRat?, hinputZero, Bool.false_eq_true, ite_false]
   rw [show DensePoly.scale input.leadingCoeff⁻¹ input = p from rfl]
-  simp only [hpZero, hgcd, if_pos]
+  simp only [hpZero, hgcd, ite_eq_left]
   rw [hproduct]
   simp
 

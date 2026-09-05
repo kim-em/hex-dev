@@ -277,11 +277,11 @@ private theorem brownLoop_checks (f h : ZPoly)
     checkGcd f h cert = true := by
   unfold brownLoop at hfound
   by_cases hfuel : fuel = 0
-  · rw [if_pos hfuel] at hfound
+  · rw [ite_eq_left hfuel] at hfound
     contradiction
-  · rw [if_neg hfuel] at hfound
+  · rw [ite_eq_right hfuel] at hfound
     by_cases hi : index < supply.size
-    · rw [dif_pos hi] at hfound
+    · rw [dite_eq_left hi] at hfound
       dsimp only at hfound
       generalize hoffer : brownOffer f h state supply[index] = offer at hfound
       cases offer with
@@ -311,7 +311,7 @@ private theorem brownLoop_checks (f h : ZPoly)
           | none =>
               exact brownLoop_checks f h supply (index + 1) (fuel - 1)
                 (some next) hfound
-    · rw [dif_neg hi] at hfound
+    · rw [dite_eq_right hi] at hfound
       contradiction
 termination_by fuel
 decreasing_by all_goals omega
@@ -324,9 +324,9 @@ private theorem brownBatches_checks (f h : ZPoly) (remaining start : Nat)
     checkGcd f h cert = true := by
   unfold brownBatches at hcert
   by_cases hremaining : remaining = 0
-  · rw [if_pos hremaining] at hcert
+  · rw [ite_eq_left hremaining] at hcert
     contradiction
-  · rw [if_neg hremaining] at hcert
+  · rw [ite_eq_right hremaining] at hcert
     dsimp only at hcert
     let supply := (ZMod64.primesBelow start (min brownBatchSize remaining)).filter
       (fun p => 2 ^ 30 < p.m)
@@ -367,9 +367,9 @@ theorem brownCert?_checks {f h : ZPoly} {cert : GcdCert}
   | pending state =>
       dsimp only at hcert
       by_cases hbudget : brownPrimeBudget f h ≤ brownBundledSupply.size
-      · rw [if_pos hbudget] at hcert
+      · rw [ite_eq_left hbudget] at hcert
         contradiction
-      · rw [if_neg hbudget] at hcert
+      · rw [ite_eq_right hbudget] at hcert
         exact brownBatches_checks f h
           (brownPrimeBudget f h - brownBundledSupply.size) (2 ^ 31 - 1)
           state hcert
