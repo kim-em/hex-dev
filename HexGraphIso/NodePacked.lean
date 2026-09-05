@@ -205,11 +205,14 @@ theorem popCount_le_of_lt {nn s : Nat} (hs : s < 2 ^ nn) :
 
 /-! # The refine tower over packed state -/
 
-@[expose] def cellEndGoP (ctx : CtxP) (ptn level : Nat) : Nat → Nat → Nat
-  | 0, j => j
-  | fuel + 1, j =>
-    cond (Nat.blt level (lget ctx ptn j))
-      (cellEndGoP ctx ptn level fuel (Nat.add j 1)) j
+@[expose] def cellEndGoP (ctx : CtxP) (ptn level fuel : Nat) : Nat → Nat :=
+  fuelRec fuel (fun j => j) fun ih j =>
+    cond (Nat.blt level (lget ctx ptn j)) (ih (Nat.add j 1)) j
+
+theorem cellEndGoP_succ (ctx : CtxP) (ptn level fuel j : Nat) :
+    cellEndGoP ctx ptn level (fuel + 1) j =
+      cond (Nat.blt level (lget ctx ptn j))
+        (cellEndGoP ctx ptn level fuel (Nat.add j 1)) j := rfl
 
 @[expose] def cellEndP (ctx : CtxP) (ptn level i : Nat) : Nat :=
   cellEndGoP ctx ptn level (Nat.sub ctx.n i) i
@@ -220,7 +223,7 @@ theorem cellEndGoP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
       cellEndGoP ctx ptnP level fuel j = cellEndGoL ptn level fuel j
   | 0, _ => rfl
   | fuel + 1, j => by
-    rw [cellEndGoP, cellEndGoL, cond_blt, lget_eq h hp, add_eq]
+    rw [cellEndGoP_succ, cellEndGoL, cond_blt, lget_eq h hp, add_eq]
     rcases Decidable.em (level < atD ptn j 0) with hl | hl
     · rw [ite_eq_left hl, ite_eq_left hl, cellEndGoP_eq h hp level fuel]
     · rw [ite_eq_right hl, ite_eq_right hl]
@@ -230,14 +233,20 @@ theorem cellEndP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     (level i : Nat) : cellEndP ctx ptnP level i = cellEndL ptn level i := by
   rw [cellEndP, cellEndL, hp.len, sub_eq, cellEndGoP_eq h hp]
 
-@[expose] def cellsGoP (ctx : CtxP) (ptn level : Nat) :
-    Nat → Nat → List (Nat × Nat)
-  | 0, _ => []
-  | fuel + 1, c1 =>
+@[expose] def cellsGoP (ctx : CtxP) (ptn level fuel : Nat) :
+    Nat → List (Nat × Nat) :=
+  fuelRec fuel (fun _ => []) fun ih c1 =>
     cond (Nat.blt c1 ctx.n)
       (let c2 := cellEndP ctx ptn level c1
-      (c1, c2) :: cellsGoP ctx ptn level fuel (Nat.add c2 1))
+      (c1, c2) :: ih (Nat.add c2 1))
       []
+
+theorem cellsGoP_succ (ctx : CtxP) (ptn level fuel c1 : Nat) :
+    cellsGoP ctx ptn level (fuel + 1) c1 =
+      cond (Nat.blt c1 ctx.n)
+        (let c2 := cellEndP ctx ptn level c1
+        (c1, c2) :: cellsGoP ctx ptn level fuel (Nat.add c2 1))
+        [] := rfl
 
 @[expose] def cellsP (ctx : CtxP) (ptn level : Nat) : List (Nat × Nat) :=
   cellsGoP ctx ptn level ctx.n 0
@@ -248,7 +257,7 @@ theorem cellsGoP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
       cellsGoP ctx ptnP level fuel c1 = cellsGoL ptn level ctxL.n fuel c1
   | 0, _ => rfl
   | fuel + 1, c1 => by
-    rw [cellsGoP, cellsGoL, cond_blt, h.n]
+    rw [cellsGoP_succ, cellsGoL, cond_blt, h.n]
     rcases Decidable.em (c1 < ctxL.n) with hl | hl
     · rw [ite_eq_left hl, ite_eq_left hl]
       simp only [cellEndP_eq h hp, add_eq, cellsGoP_eq h hp level fuel]
@@ -261,18 +270,30 @@ theorem cellsP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
 
 /-- The two-pointer partition with `d = c2 + 1`, so the right pointer
 stays a natural (`d = 0` is nauty's `c2 = -1`). -/
-@[expose] def splitCellLoopP (ctx : CtxP) (gRow : Nat) :
-    Nat → Nat → Nat → Nat → (Nat × Nat × Nat)
-  | 0, lab, c1, d => (lab, c1, d)
-  | fuel + 1, lab, c1, d =>
+@[expose] def splitCellLoopP (ctx : CtxP) (gRow fuel : Nat) :
+    Nat → Nat → Nat → (Nat × Nat × Nat) :=
+  fuelRec fuel (fun lab c1 d => (lab, c1, d)) fun ih lab c1 d =>
     cond (Nat.blt c1 d)
       (cond (elemK gRow (lget ctx lab c1))
-        (splitCellLoopP ctx gRow fuel lab (Nat.add c1 1) d)
-        (splitCellLoopP ctx gRow fuel
-          (lset ctx (lset ctx lab c1 (lget ctx lab (Nat.sub d 1)))
+        (ih lab (Nat.add c1 1) d)
+        (ih (lset ctx (lset ctx lab c1 (lget ctx lab (Nat.sub d 1)))
             (Nat.sub d 1) (lget ctx lab c1))
           c1 (Nat.sub d 1)))
       (lab, c1, d)
+
+theorem splitCellLoopP_zero (ctx : CtxP) (gRow lab c1 d : Nat) :
+    splitCellLoopP ctx gRow 0 lab c1 d = (lab, c1, d) := rfl
+
+theorem splitCellLoopP_succ (ctx : CtxP) (gRow fuel lab c1 d : Nat) :
+    splitCellLoopP ctx gRow (fuel + 1) lab c1 d =
+      cond (Nat.blt c1 d)
+        (cond (elemK gRow (lget ctx lab c1))
+          (splitCellLoopP ctx gRow fuel lab (Nat.add c1 1) d)
+          (splitCellLoopP ctx gRow fuel
+            (lset ctx (lset ctx lab c1 (lget ctx lab (Nat.sub d 1)))
+              (Nat.sub d 1) (lget ctx lab c1))
+            c1 (Nat.sub d 1)))
+        (lab, c1, d) := rfl
 
 theorem splitCellLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     (gRow : Nat) : ∀ (fuel : Nat) {labP : Nat} {lab : List Nat},
@@ -284,10 +305,10 @@ theorem splitCellLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
       ((splitCellLoopP ctx gRow fuel labP c1 d).2.2 : Int) =
         (splitCellLoopL gRow fuel lab (c1 : Int) ((d : Int) - 1)).2.2 + 1
   | 0, _, _, hl, c1, d => by
-    rw [splitCellLoopP, splitCellLoopL]
+    rw [splitCellLoopP_zero, splitCellLoopL]
     exact ⟨hl, rfl, by simp⟩
   | fuel + 1, labP, lab, hl, c1, d => by
-    rw [splitCellLoopP, splitCellLoopL, cond_blt]
+    rw [splitCellLoopP_succ, splitCellLoopL, cond_blt]
     simp only [add_eq, sub_eq]
     rcases Decidable.em (c1 < d) with hlt | hlt
     · have he' : elemK gRow (lget ctx labP c1) = elem gRow (atD lab c1 0) := by
@@ -740,15 +761,21 @@ theorem refineStepP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   · rw [ite_eq_right he, ite_eq_right (by simpa using he)]
     exact refineNontrivialP_eq h hlev split1 _ hst'
 
-@[expose] def refineLoopP (ctx : CtxP) (level : Nat) :
-    Nat → RefineStP → RefineStP
-  | 0, st => st
-  | fuel + 1, st =>
+@[expose] def refineLoopP (ctx : CtxP) (level fuel : Nat) : RefineStP → RefineStP :=
+  fuelRec fuel (fun st => st) fun ih st =>
     cond (Nat.blt st.numcells ctx.n)
       (match pickSplitK st.active st.hint with
-      | some split1 => refineLoopP ctx level fuel (refineStepP ctx level split1 st)
+      | some split1 => ih (refineStepP ctx level split1 st)
       | none => st)
       st
+
+theorem refineLoopP_succ (ctx : CtxP) (level fuel : Nat) (st : RefineStP) :
+    refineLoopP ctx level (fuel + 1) st =
+      cond (Nat.blt st.numcells ctx.n)
+        (match pickSplitK st.active st.hint with
+        | some split1 => refineLoopP ctx level fuel (refineStepP ctx level split1 st)
+        | none => st)
+        st := rfl
 
 theorem refineLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     {level : Nat} (hlev : level < 2 ^ ctx.w) :
@@ -760,7 +787,7 @@ theorem refineLoopP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   | fuel + 1, st, stL, hst => by
     have hc : (st.numcells < ctx.n) = (stL.numcells < ctxL.n) := by
       rw [hst.numcells, h.n]
-    rw [refineLoopP, refineLoopL, cond_blt, pickSplitK_eq, hst.active,
+    rw [refineLoopP_succ, refineLoopL, cond_blt, pickSplitK_eq, hst.active,
       hst.hint]
     rcases Decidable.em (st.numcells < ctx.n) with hl | hl
     · rw [ite_eq_left hl, ite_eq_left (Eq.mp hc hl)]
@@ -1002,12 +1029,17 @@ theorem specMaketargetcellP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   simp only [specTargetcellP_eq h hl hp, cellEndP_eq h hp, worksetOfP_eq h hl,
     add_eq, sub_eq]
 
-@[expose] def breakoutGoP (ctx : CtxP) (tv : Nat) : Nat → Nat → Nat → Nat → Nat
-  | 0, lab, _, _ => lab
-  | fuel + 1, lab, i, prev =>
+@[expose] def breakoutGoP (ctx : CtxP) (tv fuel : Nat) : Nat → Nat → Nat → Nat :=
+  fuelRec fuel (fun lab _ _ => lab) fun ih lab i prev =>
     let next := lget ctx lab i
     let lab := lset ctx lab i prev
-    cond (Nat.beq next tv) lab (breakoutGoP ctx tv fuel lab (Nat.add i 1) next)
+    cond (Nat.beq next tv) lab (ih lab (Nat.add i 1) next)
+
+theorem breakoutGoP_succ (ctx : CtxP) (tv fuel lab i prev : Nat) :
+    breakoutGoP ctx tv (fuel + 1) lab i prev =
+      (let next := lget ctx lab i
+      let lab := lset ctx lab i prev
+      cond (Nat.beq next tv) lab (breakoutGoP ctx tv fuel lab (Nat.add i 1) next)) := rfl
 
 theorem breakoutGoP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL) (tv : Nat) :
     ∀ (fuel : Nat) {labP : Nat} {lab : List Nat}, Rep ctx.w ctx.n labP lab →
@@ -1016,7 +1048,7 @@ theorem breakoutGoP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL) (tv : N
         (breakoutGoL tv fuel lab i prev)
   | 0, _, _, hl, _, _, _ => hl
   | fuel + 1, labP, lab, hl, i, prev, hprev => by
-    rw [breakoutGoP, breakoutGoL]
+    rw [breakoutGoP_succ, breakoutGoL]
     simp only [add_eq]
     have hn : lget ctx labP i = atD lab i 0 := lget_eq h hl i
     rw [hn, cond_beq]
@@ -1044,7 +1076,7 @@ theorem breakoutP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
   rw [breakoutP, breakoutL]
   refine ⟨?_, lset_rep h hp tc hlev, insertK_eq 0 tc⟩
   rw [hl.len, add_eq]
-  exact breakoutGoP_rep h tv _ hl tc tv htv
+  exact breakoutGoP_rep h tv (ctx.n + 1) hl tc tv htv
 
 @[expose] def segNP (ctx : CtxP) (lab lo len : Nat) : List Nat :=
   mapRange len fun o => lget ctx lab (Nat.add lo o)
@@ -1653,12 +1685,16 @@ theorem testBit_rowFold (seg : List Bool) : ∀ (len a acc i : Nat),
     rcases hs : atD seg a false with _ | _
     · rw [ite_eq_right (by simp [hs]), hrange]
       rcases Decidable.em (i = a) with rfl | hne
-      · simp [hs]
+      · simp
+        intro h
+        rw [hs] at h
+        cases h
       · simp [hne]
     · rw [ite_eq_left (by simp [hs]), Nauty.insert, Nat.one_shiftLeft, Nat.testBit_or,
         Nat.testBit_two_pow, hrange]
       rcases Decidable.em (i = a) with rfl | hne
-      · simp [hs]
+      · simp
+        exact Or.inr hs
       · simp [hne, Ne.symm hne]
 
 theorem rowOfSegK_eq (nn : Nat) (seg : List Bool) (hlen : seg.length ≤ nn) :

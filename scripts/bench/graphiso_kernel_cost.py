@@ -12,7 +12,8 @@ For every selected pair of the `decision-pairs` corpus (the
 same one-proof Lean file the cactus script builds, with
 ``set_option trace.graph_iso true`` so the tactic reports the route it
 closed through and the certificate record counts, runs
-``lake env lean -Dprofiler=true`` on it, and splits the profiler's
+``lake lean <file> -- -Dprofiler=true`` on it (``lake lean`` loads the
+library's precompiled modules, as a downstream ``lake build`` does), and splits the profiler's
 cumulative categories into type checking (the kernel), interpretation
 (the compiled search running in the interpreter), elaboration, and the
 rest, all excluding import, initialization and parsing. For the
@@ -45,6 +46,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import socket
 import subprocess
@@ -141,8 +143,11 @@ def _run_lean(source: str, timeout: float) -> tuple[str, float, bool, int]:
         path = Path(handle.name)
     start = time.monotonic()
     try:
+        # `lake lean` (not `lake env lean`) loads the precompiled
+        # `HexGraphIso` shared libraries, as a downstream `lake build`
+        # does, so the compiled search runs compiled here too.
         proc = subprocess.run(
-            ["lake", "env", "lean", "-Dprofiler=true", str(path)],
+            ["lake", "lean", str(path), "--", "-Dprofiler=true"],
             cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
         out = (exc.stdout or b"").decode(errors="replace") if isinstance(
@@ -188,7 +193,8 @@ def _measure(record: dict, timeout: float) -> dict:
     result: dict = {"name": record["name"], "n": record["n"],
                     "iso": record["iso"], "family": record.get("family"),
                     "wall_s": round(wall, 3), "timeout": timed_out,
-                    "ok": (not timed_out) and rc == 0}
+                    "ok": (not timed_out) and rc == 0,
+                    "load_1m": round(os.getloadavg()[0], 2)}
     if timed_out:
         return result
     if rc != 0:
@@ -307,6 +313,7 @@ def main() -> int:
         "pairs": str(pairs_path.relative_to(REPO_ROOT))
         if pairs_path.is_relative_to(REPO_ROOT) else str(pairs_path),
         "timeout_s": args.timeout,
+        "load_1m_at_start": round(os.getloadavg()[0], 2),
         "fit_ms_per_record": None if fit is None else
         {"c": fit[0], "exponent": fit[1], "points": len(fit_points)},
         "results": results,
