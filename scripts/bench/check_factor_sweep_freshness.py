@@ -224,6 +224,10 @@ def main() -> int:
         print("factorization performance data is stale:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
+        print("re-measure the affected systems on the benchmarking host, or, "
+              "for an edit that cannot change what was measured, add one JSON "
+              "file naming the exact blob transition under "
+              "scripts/bench/proof_only_runtime_exemptions/", file=sys.stderr)
         return 1
     print("factorization performance data covers the current corpus and source")
     return 0
