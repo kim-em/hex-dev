@@ -68,7 +68,7 @@ private def stageIters : String → Nat
   | _ => 40
 
 private def runStage {n : Nat} (inst : Inst n) (stage : String)
-    (hn : 0 < n) : IO Unit := do
+    (_hn : 0 < n) : IO Unit := do
   let pick (i : Nat) : Colored n 1 := if i % 2 == 0 then inst.g0 else inst.g1
   let iters := stageIters stage
   -- pre-produce fixed certificates for the replay stages
