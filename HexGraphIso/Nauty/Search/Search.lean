@@ -576,7 +576,7 @@ def runColored (G : Colored n k) : RunResult n :=
 `canonlab` and the relabelled coloured graph. `none` only if the raw
 search output fails the label check, which conformance shows does not
 occur. -/
-@[expose] def canonicalize? (G : Colored n k) : Option (CanonResult n k) :=
+@[expose] def searchResult? (G : Colored n k) : Option (CanonResult n k) :=
   (Label.ofArray? n (runColored G).canonlab).map fun l =>
     { form := G.relabel l, label := l }
 

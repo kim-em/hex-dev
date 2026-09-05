@@ -184,7 +184,7 @@ without running it: the proven replay accepts the transcription's own
 answer on every input (`Nauty.certifyCanon?_isSome`, the theorem of
 [Verified search refinement](#verified-search-refinement)), the
 transcription is `Option`-valued only in its executable spelling and
-answers on every input (`Nauty.canonicalize?_isSome`), and
+answers on every input (`Nauty.searchResult?_isSome`), and
 `canonicalize` is that answer with no fallback match
 (`canonicalize_eq_certifyCanon`). The declarative canonical form
 `Nauty.specCanon` is the anchor: `canon_eq_specCanon` identifies the
@@ -681,18 +681,18 @@ anywhere:
 def Nauty.certifyCanon (G : Colored n k) : CanonResult n k :=
   (Nauty.certifyCanon? G).get (Nauty.certifyCanon?_isSome G)
 
-theorem Nauty.canonicalize?_isSome (G : Colored n k) :
-    (Nauty.canonicalize? G).isSome
+theorem Nauty.searchResult?_isSome (G : Colored n k) :
+    (Nauty.searchResult? G).isSome
 
 def canonicalize (G : Colored n k) : CanonResult n k :=
-  (Nauty.canonicalize? G).get (Nauty.canonicalize?_isSome G)
+  (Nauty.searchResult? G).get (Nauty.searchResult?_isSome G)
 
 theorem canonicalize_eq_certifyCanon (G : Colored n k) :
     canonicalize G = Nauty.certifyCanon G
 ```
 
 Totality transports from the certificate pipeline to the transcription
-through `Nauty.canonicalize?_eq_of_certifyCanon`, and the theorem
+through `Nauty.searchResult?_eq_of_certifyCanon`, and the theorem
 surface of [Public operations](#public-operations) is the certificate
 checker's theorem surface transported along
 `canonicalize_eq_certifyCanon`. No certificate is produced or replayed
@@ -1006,7 +1006,7 @@ The anchor declarations, by part-one concept (all in the
 | leaf key and order | `Key`, `keyCmp`, `codeSentinel` |
 | declarative canonical form | `canonSpecKey`, `specCanon` |
 | production leaf comparison | `testcanlab`, `updatecan` |
-| production entry point | `canonicalize?`, public `canonicalize` |
+| production entry point | `searchResult?`, public `canonicalize` |
 | canonical-form theorems | `specCanon_iso`, `specCanon_invariant`, `iso_iff_specCanon_eq` |
 | checked results equal the spec | `checkCanon_form` |
 | recorded automorphisms | `SearchSt.genTrace`, `processnode`, `orbjoin` |

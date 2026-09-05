@@ -99,12 +99,12 @@ until the single replay accepts. -/
 labelling forces the transcription to succeed with the same result:
 both build the `CanonResult` from `(runColored G).canonlab` by the
 same checked construction. -/
-theorem canonicalize?_eq_of_checkCanon {G : Colored n k}
+theorem searchResult?_eq_of_checkCanon {G : Colored n k}
     {cert : CertNode} {B : Key n} {res : CanonResult n k}
     (h : checkCanon G cert B (runColored G).canonlab = some res) :
-    canonicalize? G = some res := by
+    searchResult? G = some res := by
   rw [checkCanon] at h
-  rw [canonicalize?]
+  rw [searchResult?]
   split at h
   · cases h
   · next l hl =>
@@ -116,13 +116,13 @@ theorem canonicalize?_eq_of_checkCanon {G : Colored n k}
 
 /-- Whenever the single trusted replay accepts (`certifyCanon?`
 succeeds), the fast transcription agrees with it exactly. -/
-theorem canonicalize?_eq_of_certifyCanon {G : Colored n k}
+theorem searchResult?_eq_of_certifyCanon {G : Colored n k}
     {res : CanonResult n k} (h : certifyCanon? G = some res) :
-    canonicalize? G = some res := by
+    searchResult? G = some res := by
   rw [certifyCanon?] at h
   split at h
   · cases h
-  · exact canonicalize?_eq_of_checkCanon h
+  · exact searchResult?_eq_of_checkCanon h
 
 /-! # The certificate-based negative decision -/
 

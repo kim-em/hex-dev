@@ -19,7 +19,7 @@ Totality of the certified canonicalization.
 The root instance of first-path totality identifies the unpruned
 specification key with the key the transcription installs; the
 certificate check then succeeds, `certifyCanon` is the resulting total
-certificate-checked canonical form, and `canonicalize?` is total because
+certificate-checked canonical form, and `searchResult?` is total because
 it agrees with it.
 -/
 
@@ -166,7 +166,7 @@ The two node statements are proved together by induction on the
 executable recursion fuel; the root instance identifies the specification
 key with the traced key, and the certificate check then succeeds.
 `certifyCanon` is the resulting total, certificate-checked canonical
-form, and the transcription `canonicalize?` is total because it agrees
+form, and the transcription `searchResult?` is total because it agrees
 with it.
 -/
 
@@ -229,14 +229,14 @@ theorem certifyCanon_relabel (G : Colored n k) :
 
 /-- The transcription agrees with the certificate-checked answer on
 every input. -/
-theorem canonicalize?_eq (G : Colored n k) :
-    canonicalize? G = some (certifyCanon G) :=
-  canonicalize?_eq_of_certifyCanon (certifyCanon?_eq G)
+theorem searchResult?_eq (G : Colored n k) :
+    searchResult? G = some (certifyCanon G) :=
+  searchResult?_eq_of_certifyCanon (certifyCanon?_eq G)
 
 /-- The transcription always answers. -/
-theorem canonicalize?_isSome (G : Colored n k) :
-    (canonicalize? G).isSome := by
-  rw [canonicalize?_eq]
+theorem searchResult?_isSome (G : Colored n k) :
+    (searchResult? G).isSome := by
+  rw [searchResult?_eq]
   rfl
 
 end Hex.GraphIso.Nauty

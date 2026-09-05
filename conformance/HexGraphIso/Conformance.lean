@@ -24,7 +24,7 @@ Core conformance for `HexGraphIso`.
   `findIso`, `checkIso?`, `canonicalize`,
   `canon`, `label`, `Nauty.canonSpecKey`, `Nauty.specCanon`,
   `Nauty.runColored`,
-  `Nauty.canonicalize?`, `Nauty.certifyCanon?`, `autos`,
+  `Nauty.searchResult?`, `Nauty.certifyCanon?`, `autos`,
   `Graph.autos`, `Nauty.runColoredTraced`, `Cases.engine`.
 - **Covered properties:** builder rejection and duplicate collapse;
   permutation inverse and composition laws; `relabel G (label G) =
@@ -145,7 +145,7 @@ enumerates the whole refinement tree, so these checks run at the sizes
 where that is feasible. -/
 
 private def nautyForm {n k : Nat} (G : Colored n k) : Option (Colored n k) :=
-  (Nauty.canonicalize? G).map (·.form)
+  (Nauty.searchResult? G).map (·.form)
 
 private def sameVerdict {n k : Nat} (G H : Colored n k) : Bool :=
   match nautyForm G, nautyForm H with
@@ -199,7 +199,7 @@ private def canonRowsAgree {n k : Nat} (G : Colored n k) : Bool :=
 
 -- the nauty label is a genuine transporter to the nauty form
 #guard
-  match Nauty.canonicalize? c4 with
+  match Nauty.searchResult? c4 with
   | some r => checkIso c4 r.form r.label.toPerm && r.form == c4.relabel r.label
   | none => false
 
@@ -269,13 +269,13 @@ where go : List Nauty.CertNode → Bool
 #guard nautyForm petersen == nautyForm kneser52
 #guard nautyForm petersen != nautyForm prism5
 #guard
-  match Nauty.canonicalize? petersen with
+  match Nauty.searchResult? petersen with
   | some r => decide (ColorSorted r.form) && checkIso petersen r.form r.label.toPerm
   | none => false
 -- transporter between the two Petersen presentations through the two
 -- nauty labels
 #guard
-  match Nauty.canonicalize? petersen, Nauty.canonicalize? kneser52 with
+  match Nauty.searchResult? petersen, Nauty.searchResult? kneser52 with
   | some rP, some rK =>
       checkIso petersen kneser52 ((rK.label.toPerm.inv).comp rP.label.toPerm)
   | _, _ => false
@@ -369,7 +369,7 @@ private def empty0 : Colored 0 0 :=
 #guard isIso empty0 empty0
 #guard canon empty0 == empty0
 #guard (Nauty.certifyCanon? empty0).isSome
-#guard (Nauty.canonicalize? empty0).isSome
+#guard (Nauty.searchResult? empty0).isSome
 #guard (autos empty0).gens.isEmpty
 #guard (autos empty0).numOrbits == 0
 #guard (autos empty0).order == 1
