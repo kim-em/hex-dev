@@ -1039,6 +1039,15 @@ theorem cellEnd_go_unique {ptn : Array Nat} {level : Nat} :
       exact cellEnd_go_unique fuel (start + 1) e (by omega)
         (fun i h1 h2 => hint i (by omega) h2) he (by omega)
 
+/-- A maximal run's end from its start is what `cellEnd` computes. -/
+theorem cellEnd_of_isCell_start {ptn : Array Nat} {level a len : Nat}
+    (h : IsCell ptn level a len) (hin : a + len - 1 < ptn.size) :
+    cellEnd ptn level a = a + len - 1 := by
+  obtain ⟨hpos, -, hint, hcend⟩ := h
+  rw [cellEnd]
+  exact cellEnd_go_unique _ a (a + len - 1) (by omega)
+    (fun i h1 h2 => hint i h1 (by omega)) hcend (by omega)
+
 /-- For a nonsingleton run, the cell end from one past the start is the
 run's last position. -/
 theorem cellEnd_of_isCell {ptn : Array Nat} {level a len : Nat}

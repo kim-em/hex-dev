@@ -29,7 +29,7 @@ division of labour is clean: `Basic.lean` provides the Mathlib-facing types,
 the tactic meets, and `Tactic.lean` the shape matcher and the extension
 registration.
 
-`colored_iso_iff_canonChecked_eq` (`Encode.lean:165`) is the theorem the layer
+`colored_iso_iff_canon_eq` (`Encode.lean:165`) is the theorem the layer
 exists to prove, and it is stated as a biconditional over the encoded graphs
 rather than as two one-sided transport lemmas. `encode_iso_iff` is its
 companion in the other direction. Together they let a caller move between

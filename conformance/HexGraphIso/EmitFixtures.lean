@@ -22,8 +22,8 @@ cases use the SPEC's SplitMix64 corpus seeds.
 
 Each record carries the *public* answer: the canonical label and
 canonical upper-triangle bits are read off `canonicalize` (the
-certificate-checked production pipeline behind `canon` and `label`),
-with the coloured graph built through the public checked constructors.
+production pipeline behind `canon` and `label`), with the coloured
+graph built through the public checked constructors.
 The search-node count comes from the transcribed search
 (`Nauty.runColored`). The oracle recomputes all of them with the pinned
 external nauty, so the campaign pins the public surface, not only the
@@ -76,12 +76,6 @@ private def emitCase (case : String) (n k : Nat) (colors : Array Nat)
   let some G := coloredOf? n k colors edges
     | throw (IO.userError s!"emit: case {case} rejected by the builders")
   let res := canonicalize G
-  -- release-gate cross-checks: the fast tier never falls back and
-  -- agrees with the certificate-checked tier on every emitted case
-  unless (Hex.GraphIso.canonicalize? G).isSome do
-    throw (IO.userError s!"emit: fast fallback observed on {case}")
-  unless res == canonicalizeChecked G do
-    throw (IO.userError s!"emit: fast/checked disagreement on {case}")
   let r := Nauty.runColored G
   let mut sizes : Array Nat := .replicate k 0
   for v in [0 : n] do

@@ -139,10 +139,11 @@ def processnode (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
   if st.eqlevFirst ≠ level ∧ st.compCanon < 0 then
     code := 4
   else if numcells == n then
-    if st.eqlevFirst == level then
+    if st.eqlevFirst == level &&
+        st.firstcode[level + 1]! == codeSentinel then
       for i in [0 : n] do
         workperm := workperm.set! st.firstlab[i]! st.lab[i]!
-      if st.gcaFirst ≥ st.noncheaplevel ∨ isautom ctx workperm then
+      if isautom ctx workperm then
         code := 1
     if code == 0 then
       if st.compCanon == 0 then
@@ -240,7 +241,7 @@ mutual
 
 /-- nauty's `firstpathnode`: produce a node on the leftmost path. Returns
 the level to return to. -/
-def firstPathNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
+@[expose] def firstPathNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
     (level numcells : Nat) (st : SearchSt) : Int × SearchSt :=
   match fuel with
   | 0 => (0, st)
@@ -283,7 +284,7 @@ termination_by (fuel, 0, 0)
 /-- The child loop of `firstpathnode`: individualize each surviving
 target-cell vertex in ascending order, tracking the orbit index count.
 Returns `some rtn` for an early unwind. -/
-def firstChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
+@[expose] def firstChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
     (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : Nat)
     (index0 : Nat) (st0 : SearchSt) : Option Int × Nat × SearchSt :=
   match cfuel, tv? with
@@ -345,7 +346,7 @@ def otherNodePrep (level : Nat) (code : Nat) (st : SearchSt) :
 
 /-- nauty's `othernode`: produce a node off the leftmost path. Returns the
 level to return to. -/
-def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
+@[expose] def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
     (level numcells : Nat) (st : SearchSt) : Int × SearchSt :=
   match fuel with
   | 0 => (0, st)
@@ -394,7 +395,7 @@ def otherNode (ctx : Ctx) (inf tcLevel : Nat) (fuel : Nat)
 termination_by (fuel, 0, 0)
 
 /-- The child loop of `othernode`. -/
-def otherChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
+@[expose] def otherChildLoop (ctx : Ctx) (inf tcLevel : Nat) (fuel cfuel : Nat)
     (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell0 : Nat)
     (st0 : SearchSt) : Option Int × SearchSt :=
   match cfuel, tv? with

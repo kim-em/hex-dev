@@ -159,16 +159,14 @@ is exactly setwise cell preservation. Untrusted fast filter. -/
   masks.all fun m => image (fun w => γ[w]!) ctx.n m == m
 
 /-- The emission predicate for witness-composed automorphisms: the
-earlier-offset requirement and the replay's cell-transport check.
-The replay's `checkAutom` conjunct is deliberately not re-run at
-emission — every witness is a composition of generators the
-admission filter verified individually, a composition of
-automorphisms is an automorphism, and the trusted replay re-checks
-the whole conjunction regardless, so a composition bug costs a
-failed replay, never soundness. -/
+trusted automorphism check, the earlier-offset requirement, and the
+replay's cell-transport check.  Rechecking the witness here makes
+certificate-store validity local to the producer: a malformed cached
+generator or composition can only turn this prune into an ordinary
+descent, rather than poison the whole candidate certificate. -/
 @[expose] def childCellsOk (ctx : Ctx) (rsLab rsPtn : Array Nat) (level tc : Nat)
     (o o' : Nat) (γ : Array Nat) : Bool :=
-  decide (o' < o) &&
+  checkAutom ctx.g γ ctx.n && decide (o' < o) &&
   (let bo := breakout rsLab rsPtn (level + 1) tc rsLab[tc + o]!
    checkCellsPerm bo.2.1
      (breakout rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1

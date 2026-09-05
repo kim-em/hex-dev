@@ -99,6 +99,19 @@ theorem bitCount_le_of_submask {a b : Nat} (h : a &&& b = a) (n : Nat) :
   unfold bitCount
   exact countP_le_of_imp fun i _ hi => testBit_of_submask h hi
 
+/-- A bounded bitset with population zero is empty. -/
+theorem eq_zero_of_popCount_zero {n s : Nat} (hs : s < 2 ^ n)
+    (hp : popCount s = 0) : s = 0 := by
+  refine Nat.eq_of_testBit_eq fun i => ?_
+  rw [Nat.zero_testBit]
+  rcases Nat.lt_or_ge i n with hi | hi
+  · rw [popCount_eq_bitCount n s hs, bitCount,
+      List.countP_eq_zero] at hp
+    have := hp i (List.mem_range.mpr hi)
+    simpa using this
+  · exact Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hs
+      (Nat.pow_le_pow_right (by omega) hi))
+
 /-- A submask has no larger population than its mask. -/
 theorem popCount_le_of_submask {a b n : Nat} (h : a &&& b = a)
     (ha : a < 2 ^ n) (hb : b < 2 ^ n) : popCount a ≤ popCount b := by

@@ -48,6 +48,11 @@ private theorem pushAuto_canonlab (st : SearchSt) (pair : Nat × Nat) :
   rw [pushAuto]
   split <;> rfl
 
+private theorem pushAuto_firstlab (st : SearchSt) (pair : Nat × Nat) :
+    (pushAuto st pair).firstlab = st.firstlab := by
+  rw [pushAuto]
+  split <;> rfl
+
 private theorem firstterminal_lab (level : Nat) (st : SearchSt) :
     (firstterminal level st).lab = st.lab := rfl
 
@@ -146,7 +151,8 @@ private theorem ite_or {α : Type} {P : α → Prop} {c : Prop}
   · exact ha
   · exact hb
 
-private theorem recover_lab (n inf level : Nat) (st : SearchSt) :
+/-- `recover` never changes the current labelling. -/
+theorem recover_lab (n inf level : Nat) (st : SearchSt) :
     (recover n inf level st).lab = st.lab := by
   rw [recover]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
@@ -176,13 +182,15 @@ private theorem recover_ptn_foldl (n inf level : Nat)
     rfl
   rw [h1, forIn_range_eq', forIn_reopen_eq]
 
-private theorem recover_ptn (n inf level : Nat) (st : SearchSt)
+/-- `recover` reopens exactly the entries above its receiving level. -/
+theorem recover_ptn (n inf level : Nat) (st : SearchSt)
     (q : Nat) :
     (recover n inf level st).ptn[q]! =
       if q < n ∧ st.ptn[q]! > level then inf else st.ptn[q]! := by
   rw [recover_ptn_foldl, foldl_reopen_getElem]
 
-private theorem recover_ptn_size (n inf level : Nat) (st : SearchSt) :
+/-- Reopening a partition preserves its array size. -/
+theorem recover_ptn_size (n inf level : Nat) (st : SearchSt) :
     (recover n inf level st).ptn.size = st.ptn.size := by
   rw [recover_ptn_foldl, foldl_reopen_size]
 
@@ -278,7 +286,7 @@ theorem recover_out {G : Colored n k} {level : Nat}
     (hreach : CellsReach G st.lab) :
     SearchOut G level level st (recover n (n + 2) level st) := by
   refine ⟨by rw [recover_lab], recover_ptn_size _ _ _ _, ?_, ?_, ?_,
-    ?_⟩
+    ?_, ?_, ?_⟩
   · rw [recover_lab]
     exact hreach
   · intro q hq
@@ -292,6 +300,12 @@ theorem recover_out {G : Colored n k} {level : Nat}
     · rw [ite_eq_right hc]
   · rw [recover_lab]
     exact cellsPerm_refl _ _ _
+  · left
+    rw [recover]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+      apply_ite SearchSt.firstlab, ite_self]
+  · left
+    rw [recover_canonlab]
   · rw [recover_canonlab]
     exact Or.inl rfl
 
@@ -313,6 +327,21 @@ private theorem otherNodePrep_canonlab (level code : Nat)
   rw [otherNodePrep]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite SearchSt.canonlab, ite_self]
+
+private theorem otherNodePrep_firstlab (level code : Nat)
+    (st : SearchSt) :
+    (otherNodePrep level code st).firstlab = st.firstlab := by
+  rw [otherNodePrep]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.firstlab, ite_self]
+
+private theorem processnode_firstlab (ctx : Ctx) (level numcells : Nat)
+    (st : SearchSt) :
+    (processnode ctx level numcells st).2.firstlab = st.firstlab := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.firstlab),
+    pushAuto_firstlab, ite_self]
 
 /-- `processnode` preserves the node invariant, installing at most a
 reached labelling. -/
@@ -355,9 +384,34 @@ theorem canonlab_or_of {G : Colored n k} {ctx : Ctx}
     rw [he]
     exact ⟨hsz, hre⟩
 
+/-- Transport `processnode`'s preservation of the first leaf through a
+state update that does not touch the stored labelling. -/
+private theorem firstlab_eq_of {ctx : Ctx} {pnl pnn : Nat}
+    {st4 stO : SearchSt} {fl : Array Nat}
+    (hO : stO.firstlab = (processnode ctx pnl pnn st4).2.firstlab)
+    (hf : st4.firstlab = fl) : stO.firstlab = fl := by
+  exact hO.trans ((processnode_firstlab ctx pnl pnn st4).trans hf)
+
+/-- Transport the cell-permutation form of the `processnode` canonical
+store dichotomy through a state update. -/
+private theorem canonStore_or_of {ctx : Ctx} {pnl pnn lev : Nat}
+    {st4 stO : SearchSt} {cl rl lab ptn : Array Nat}
+    (hO : stO.canonlab = (processnode ctx pnl pnn st4).2.canonlab)
+    (hc : st4.canonlab = cl) (hl : st4.lab = rl)
+    (hsz : rl.size = lab.size) (hperm : cellsPerm ptn lev lab rl) :
+    stO.canonlab = cl ∨
+      (stO.canonlab.size = lab.size ∧
+        cellsPerm ptn lev lab stO.canonlab) := by
+  rcases processnode_canonlab ctx pnl pnn st4 with h | h
+  · exact Or.inl (hO.trans (h.trans hc))
+  · right
+    have he : stO.canonlab = rl := hO.trans (h.trans hl)
+    rw [he]
+    exact ⟨hsz, hperm⟩
+
 mutual
 
-private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
+theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel level numcells : Nat) (st : SearchSt)
@@ -481,6 +535,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
             numcells).lab →
           st5.ptn = (refine ctx level st.lab st.ptn st.active
             numcells).ptn →
+          st5.firstlab = st.firstlab →
           st5.canonlab = st.canonlab →
           st5.orbits = st.orbits →
           (SearchOut G (level - 1) level st
@@ -517,7 +572,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
                 (worksetOf (refine ctx level st.lab st.ptn st.active
                   numcells).lab tcw (tcw + lenw - 1)) 0
                   st5).2.2.canonlab)) := by
-        intro st5 h5l h5p h5c h5o
+        intro st5 h5l h5p h5f h5c h5o
         have hok5 := refine_searchOk (st2 := st5) hn hn0 hok h1 h5l
           h5p (Or.inl h5c)
         have hloop := firstChildLoop_ok G ctx hn inf hinf tcLevel
@@ -535,8 +590,9 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
           (fun _ => ⟨by rw [h5p]; exact hicw, hlen2w, hrangen⟩)
           (fun v hv => by rw [h5l]; exact hWmem v hv)
           (fun v hv => nextElem_mem hv)
-        refine ⟨refine_loop_out hn hn0 hok h1 h5l h5p (Or.inl h5c)
-          hloop.1, fun hid => ?_⟩
+        refine ⟨refine_loop_out hn hn0 hok h1 h5l h5p
+          (Or.inl h5f) (Or.inl h5c) (Or.inl h5c) hloop.1,
+          fun hid => ?_⟩
         exact hloop.2 (fun v hv => by rw [h5o]; exact hid v hv)
           hsome (by omega)
       rcases Decidable.em (st.noncheaplevel ≥ level ∧
@@ -544,7 +600,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
             numcells).ptn level ctx.n = true) with hca | hca
       · simp only [ite_eq_left hca]
         split
-        · exact hcont _ rfl rfl rfl rfl
+        · exact hcont _ rfl rfl rfl rfl rfl
         · refine ⟨ite_or (P := fun y : Int × SearchSt =>
               SearchOut G (level - 1) level st y.2) ?_ ?_,
             fun hid => ite_or (P := fun y : Int × SearchSt =>
@@ -562,8 +618,8 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               noncheaplevel := level + 1,
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).1
-              rfl rfl rfl
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).1
+              rfl rfl rfl rfl
           · exact (hcont { st with
               lab := (refine ctx level st.lab st.ptn st.active
                 numcells).lab,
@@ -576,7 +632,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               noncheaplevel := level + 1,
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).1
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).1
           · exact (hcont { st with
               lab := (refine ctx level st.lab st.ptn st.active
                 numcells).lab,
@@ -589,7 +645,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               noncheaplevel := level + 1,
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).2 hid
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).2 hid
           · exact (hcont { st with
               lab := (refine ctx level st.lab st.ptn st.active
                 numcells).lab,
@@ -602,10 +658,10 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               noncheaplevel := level + 1,
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).2 hid
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).2 hid
       · simp only [ite_eq_right hca]
         split
-        · exact hcont _ rfl rfl rfl rfl
+        · exact hcont _ rfl rfl rfl rfl rfl
         · refine ⟨ite_or (P := fun y : Int × SearchSt =>
               SearchOut G (level - 1) level st y.2) ?_ ?_,
             fun hid => ite_or (P := fun y : Int × SearchSt =>
@@ -622,8 +678,8 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
                 st.lab st.ptn st.active numcells).longcode,
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).1
-              rfl rfl rfl
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).1
+              rfl rfl rfl rfl
           · exact (hcont { st with
               lab := (refine ctx level st.lab st.ptn st.active
                 numcells).lab,
@@ -635,7 +691,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
                 st.lab st.ptn st.active numcells).longcode,
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).1
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).1
           · exact (hcont { st with
               lab := (refine ctx level st.lab st.ptn st.active
                 numcells).lab,
@@ -647,7 +703,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
                 st.lab st.ptn st.active numcells).longcode,
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).2 hid
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).2 hid
           · exact (hcont { st with
               lab := (refine ctx level st.lab st.ptn st.active
                 numcells).lab,
@@ -659,7 +715,7 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
                 st.lab st.ptn st.active numcells).longcode,
               firsttc := st.firsttc.set! level (Int.ofNat tcw),
               numnodes := st.numnodes + 1,
-              tctotal := st.tctotal + lenw } rfl rfl rfl rfl).2 hid
+              tctotal := st.tctotal + lenw } rfl rfl rfl rfl rfl).2 hid
     · -- the refined partition is discrete: this node is the leaf
       have hleaf : ((refine ctx level st.lab st.ptn st.active
           numcells).numcells == ctx.n) = true := by
@@ -669,12 +725,14 @@ private theorem firstPathNode_ok (G : Colored n k) (ctx : Ctx)
         · exact absurd he (by simpa using hnl)
       simp only [ite_eq_right hnl, hleaf, ite_true]
       refine ⟨refine_loop_out hn hn0 hok h1 rfl rfl
+        (Or.inr ⟨hRinv.labSize, hRinv.perm⟩)
+        (Or.inr ⟨hRinv.labSize, hRinv.perm⟩)
         (Or.inr ⟨hRsize, hRreach⟩)
         (SearchOut.refl G level level hRreach), fun _ =>
         ⟨hRsize, hRreach⟩⟩
 termination_by (fuel, 0, 0)
 
-private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
+theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel cfuel level numcells tc tv1 : Nat) (tv? : Option Nat)
@@ -755,7 +813,7 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
           (by omega)).mono (B' := level) (by omega)
         have hbase := breakout_child_out hn0 hok h1 hic hlen2 hrange
           ho hDout rfl (breakout_ptn st0.lab st0.ptn (level + 1) tc
-            st0.lab[tc + o]!) rfl
+            st0.lab[tc + o]!) rfl rfl
         have hnotv1 : ¬ st0.lab[tc + o]! = tv1 := by
           intro he
           rw [he] at htv1
@@ -772,7 +830,7 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
               cosetindex := st0.lab[tc + o]! }).1 <
             Int.ofNat level) with hrt | hrt
         · simp only [ite_eq_left hrt]
-          exact ⟨hbase.congr rfl rfl rfl,
+          exact ⟨hbase.congr rfl rfl rfl rfl,
             fun hid heq _ => absurd (by injection heq) hnotv1⟩
         · simp only [ite_eq_right hrt]
           have hcont : ∀ (tcell' idx : Nat) (stG : SearchSt),
@@ -796,6 +854,16 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                     st0.lab[tc + o]!).2.2,
                   fixedpts := insert st0.fixedpts st0.lab[tc + o]!,
                   cosetindex := st0.lab[tc + o]! }).2.ptn →
+              stG.firstlab = (otherNode ctx inf tcLevel fuel
+                (level + 1) (numcells + 1) { st0 with
+                  lab := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).1,
+                  ptn := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).2.1,
+                  active := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).2.2,
+                  fixedpts := insert st0.fixedpts st0.lab[tc + o]!,
+                  cosetindex := st0.lab[tc + o]! }).2.firstlab →
               stG.canonlab = (otherNode ctx inf tcLevel fuel
                 (level + 1) (numcells + 1) { st0 with
                   lab := (breakout st0.lab st0.ptn (level + 1) tc
@@ -812,9 +880,9 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                   numcells tc tv1
                   (nextElem tcell' (some st0.lab[tc + o]!)) tcell'
                   idx (recover ctx.n inf level stG)).2.2 := by
-            intro tcell' idx stG hgl hgp hgc hsub
+            intro tcell' idx stG hgl hgp hgf hgc hsub
             have houtG : SearchOut G level level st0 stG :=
-              hbase.congr hgl hgp hgc
+              hbase.congr hgl hgp hgf hgc
             have hrecout : SearchOut G level level stG
                 (recover ctx.n inf level stG) := by
               rw [hn, hinf]
@@ -860,18 +928,18 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                 (P := fun x : Option Int × Nat × SearchSt =>
                   SearchOut G level level st0 x.2.2) ?_ ?_,
               fun hid heq _ => absurd (by injection heq) hnotv1⟩
-            · refine hcont _ _ _ ?_ ?_ ?_ ?_ <;>
+            · refine hcont _ _ _ ?_ ?_ ?_ ?_ ?_ <;>
                 first | rfl | exact fun v hv => hv
-            · refine hcont _ _ _ ?_ ?_ ?_ ?_ <;>
+            · refine hcont _ _ _ ?_ ?_ ?_ ?_ ?_ <;>
                 first | rfl | exact fun v hv => hv
           · simp only [hnsp, ite_true]
             refine ⟨ite_or
                 (P := fun x : Option Int × Nat × SearchSt =>
                   SearchOut G level level st0 x.2.2) ?_ ?_,
               fun hid heq _ => absurd (by injection heq) hnotv1⟩
-            · refine hcont _ _ _ ?_ ?_ ?_ ?_ <;>
+            · refine hcont _ _ _ ?_ ?_ ?_ ?_ ?_ <;>
                 first | rfl | exact fun v hv => shortprune_subset hv
-            · refine hcont _ _ _ ?_ ?_ ?_ ?_ <;>
+            · refine hcont _ _ _ ?_ ?_ ?_ ?_ ?_ <;>
                 first | rfl | exact fun v hv => shortprune_subset hv
       · -- on the first path: the `firstPathNode` child installs
         simp only [htv1, ite_true]
@@ -882,7 +950,7 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
         have hDout := hDfull.1.mono (B' := level) (by omega)
         have hbase := breakout_child_out hn0 hok h1 hic hlen2 hrange
           ho hDout rfl (breakout_ptn st0.lab st0.ptn (level + 1) tc
-            st0.lab[tc + o]!) rfl
+            st0.lab[tc + o]!) rfl rfl
         rcases Decidable.em ((firstPathNode ctx inf tcLevel fuel
             (level + 1) (numcells + 1) { st0 with
                   lab := (breakout st0.lab st0.ptn (level + 1) tc
@@ -895,7 +963,7 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                   cosetindex := st0.lab[tc + o]! }).1 <
             Int.ofNat level) with hrt | hrt
         · simp only [ite_eq_left hrt]
-          exact ⟨hbase.congr rfl rfl rfl,
+          exact ⟨hbase.congr rfl rfl rfl rfl,
             fun hid heq _ => hDfull.2 (fun v hv => hid v hv)⟩
         · simp only [ite_eq_right hrt]
           have hcont : ∀ (tcell' idx : Nat) (stG : SearchSt),
@@ -919,6 +987,16 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                     st0.lab[tc + o]!).2.2,
                   fixedpts := insert st0.fixedpts st0.lab[tc + o]!,
                   cosetindex := st0.lab[tc + o]! }).2.ptn →
+              stG.firstlab = (firstPathNode ctx inf tcLevel fuel
+                (level + 1) (numcells + 1) { st0 with
+                  lab := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).1,
+                  ptn := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).2.1,
+                  active := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).2.2,
+                  fixedpts := insert st0.fixedpts st0.lab[tc + o]!,
+                  cosetindex := st0.lab[tc + o]! }).2.firstlab →
               stG.canonlab = (firstPathNode ctx inf tcLevel fuel
                 (level + 1) (numcells + 1) { st0 with
                   lab := (breakout st0.lab st0.ptn (level + 1) tc
@@ -965,9 +1043,9 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                     (nextElem tcell' (some st0.lab[tc + o]!)) tcell'
                     idx (recover ctx.n inf level
                       stG)).2.2.canonlab) := by
-            intro tcell' idx stG hgl hgp hgc hsub
+            intro tcell' idx stG hgl hgp hgf hgc hsub
             have houtG : SearchOut G level level st0 stG :=
-              hbase.congr hgl hgp hgc
+              hbase.congr hgl hgp hgf hgc
             have hrecout : SearchOut G level level stG
                 (recover ctx.n inf level stG) := by
               rw [hn, hinf]
@@ -1021,14 +1099,14 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                 (P := fun x : Option Int × Nat × SearchSt =>
                   x.2.2.canonlab.size = n ∧
                     CellsReach G x.2.2.canonlab) ?_ ?_⟩
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).1 <;>
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).1 <;>
                 first | rfl | exact fun v hv => hv
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).1 <;>
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).1 <;>
                 first | rfl | exact fun v hv => hv
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).2
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).2
                 (hDinstalled (fun v hv => hid v hv)) <;>
                 first | rfl | exact fun v hv => hv
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).2
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).2
                 (hDinstalled (fun v hv => hid v hv)) <;>
                 first | rfl | exact fun v hv => hv
           · simp only [hnsp, ite_true]
@@ -1039,19 +1117,19 @@ private theorem firstChildLoop_ok (G : Colored n k) (ctx : Ctx)
                 (P := fun x : Option Int × Nat × SearchSt =>
                   x.2.2.canonlab.size = n ∧
                     CellsReach G x.2.2.canonlab) ?_ ?_⟩
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).1 <;>
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).1 <;>
                 first | rfl | exact fun v hv => shortprune_subset hv
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).1 <;>
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).1 <;>
                 first | rfl | exact fun v hv => shortprune_subset hv
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).2
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).2
                 (hDinstalled (fun v hv => hid v hv)) <;>
                 first | rfl | exact fun v hv => shortprune_subset hv
-            · refine (hcont _ _ _ ?_ ?_ ?_ ?_).2
+            · refine (hcont _ _ _ ?_ ?_ ?_ ?_ ?_).2
                 (hDinstalled (fun v hv => hid v hv)) <;>
                 first | rfl | exact fun v hv => shortprune_subset hv
 termination_by (fuel, 1, cfuel)
 
-private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
+theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel level numcells : Nat) (st : SearchSt)
@@ -1109,6 +1187,27 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
       rw [← hPR, otherNodePrep_ptn]
     have hPRc : PR.canonlab = st.canonlab := by
       rw [← hPR, otherNodePrep_canonlab]
+    have hPRf : PR.firstlab = st.firstlab := by
+      rw [← hPR, otherNodePrep_firstlab]
+    have hreturn : ∀ st7 : SearchSt,
+        st7.lab = (refine ctx level st.lab st.ptn st.active
+          numcells).lab →
+        st7.ptn = (refine ctx level st.lab st.ptn st.active
+          numcells).ptn →
+        (st7.firstlab = st.firstlab ∨
+          (st7.firstlab.size = st.lab.size ∧
+            cellsPerm st.ptn level st.lab st7.firstlab)) →
+        (st7.canonlab = st.canonlab ∨
+          (st7.canonlab.size = st.lab.size ∧
+            cellsPerm st.ptn level st.lab st7.canonlab)) →
+        (st7.canonlab = st.canonlab ∨
+          (st7.canonlab.size = n ∧ CellsReach G st7.canonlab)) →
+        SearchOut G (level - 1) level st st7 := by
+      intro st7 h7l h7p h7f h7c h7reach
+      exact refine_loop_out hn hn0 hok h1 h7l h7p h7f h7c h7reach
+        (SearchOut.refl G level level (by
+          rw [h7l]
+          exact hRreach))
     rcases Decidable.em ((refine ctx level st.lab st.ptn st.active
         numcells).numcells < ctx.n ∧
         ((PR.eqlevFirst == level) = true ∨ PR.compCanon ≥ 0))
@@ -1162,6 +1261,12 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               numcells).lab →
             st7.ptn = (refine ctx level st.lab st.ptn st.active
               numcells).ptn →
+            (st7.firstlab = st.firstlab ∨
+              (st7.firstlab.size = st.lab.size ∧
+                cellsPerm st.ptn level st.lab st7.firstlab)) →
+            (st7.canonlab = st.canonlab ∨
+              (st7.canonlab.size = st.lab.size ∧
+                cellsPerm st.ptn level st.lab st7.canonlab)) →
             (st7.canonlab = st.canonlab ∨
               (st7.canonlab.size = n ∧ CellsReach G st7.canonlab)) →
             (∀ v, elem tcell' v = true →
@@ -1173,7 +1278,7 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                   numcells).numcells tcwA
                 ((nextElem tcell' none).getD 0)
                 (nextElem tcell' none) tcell' st7).2 := by
-          intro tcell' st7 h7l h7p h7c hsub
+          intro tcell' st7 h7l h7p h7f h7cs h7c hsub
           have hok7 := refine_searchOk (st2 := st7) hn hn0 hok h1
             h7l h7p h7c
           have hloop := otherChildLoop_ok G ctx hn inf hinf tcLevel
@@ -1188,12 +1293,15 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               rw [h7l]
               exact hWmemA v (hsub v hv))
             (fun v hv => nextElem_mem hv)
-          exact refine_loop_out hn hn0 hok h1 h7l h7p h7c hloop
+          exact refine_loop_out hn hn0 hok h1 h7l h7p h7f h7cs h7c
+            hloop
         split
         · split
           · -- the node prunes back before its children
-            refine refine_loop_out hn hn0 hok h1 ?_ ?_ ?_
-                (searchOut_id level level ?_ hRreach) <;>
+            refine hreturn _ ?_ ?_
+                (Or.inl (firstlab_eq_of rfl hPRf))
+                (canonStore_or_of rfl hPRc hPRl
+                  hRinv.labSize hRinv.perm) ?_ <;>
             first
             | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
             | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1201,14 +1309,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
           · split
             · split
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
                   | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
                   | exact fun v hv => shortprune_subset hv
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1216,14 +1330,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                   | exact fun v hv => shortprune_subset hv
             · split
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
                   | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
                   | exact fun v hv => hv
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1231,8 +1351,10 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                   | exact fun v hv => hv
         · split
           · -- the node prunes back before its children
-            refine refine_loop_out hn hn0 hok h1 ?_ ?_ ?_
-                (searchOut_id level level ?_ hRreach) <;>
+            refine hreturn _ ?_ ?_
+                (Or.inl (firstlab_eq_of rfl hPRf))
+                (canonStore_or_of rfl hPRc hPRl
+                  hRinv.labSize hRinv.perm) ?_ <;>
             first
             | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
             | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1240,14 +1362,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
           · split
             · split
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
                   | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
                   | exact fun v hv => shortprune_subset hv
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1255,14 +1383,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                   | exact fun v hv => shortprune_subset hv
             · split
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
                   | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
                   | exact fun v hv => hv
               · split <;>
-                  refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                  refine hgo _ _ ?_ ?_
+                      (Or.inl (firstlab_eq_of rfl hPRf))
+                      (canonStore_or_of rfl hPRc hPRl
+                        hRinv.labSize hRinv.perm) ?_ ?_ <;>
                   first
                   | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                   | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1304,6 +1438,12 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               numcells).lab →
             st7.ptn = (refine ctx level st.lab st.ptn st.active
               numcells).ptn →
+            (st7.firstlab = st.firstlab ∨
+              (st7.firstlab.size = st.lab.size ∧
+                cellsPerm st.ptn level st.lab st7.firstlab)) →
+            (st7.canonlab = st.canonlab ∨
+              (st7.canonlab.size = st.lab.size ∧
+                cellsPerm st.ptn level st.lab st7.canonlab)) →
             (st7.canonlab = st.canonlab ∨
               (st7.canonlab.size = n ∧ CellsReach G st7.canonlab)) →
             (∀ v, elem tcell' v = true →
@@ -1315,7 +1455,7 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                   numcells).numcells tcwB
                 ((nextElem tcell' none).getD 0)
                 (nextElem tcell' none) tcell' st7).2 := by
-          intro tcell' st7 h7l h7p h7c hsub
+          intro tcell' st7 h7l h7p h7f h7cs h7c hsub
           have hok7 := refine_searchOk (st2 := st7) hn hn0 hok h1
             h7l h7p h7c
           have hloop := otherChildLoop_ok G ctx hn inf hinf tcLevel
@@ -1330,11 +1470,14 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               rw [h7l]
               exact hWmemB v (hsub v hv))
             (fun v hv => nextElem_mem hv)
-          exact refine_loop_out hn hn0 hok h1 h7l h7p h7c hloop
+          exact refine_loop_out hn hn0 hok h1 h7l h7p h7f h7cs h7c
+            hloop
         split
         · -- the node prunes back before its children
-          refine refine_loop_out hn hn0 hok h1 ?_ ?_ ?_
-              (searchOut_id level level ?_ hRreach) <;>
+          refine hreturn _ ?_ ?_
+              (Or.inl (firstlab_eq_of rfl hPRf))
+              (canonStore_or_of rfl hPRc hPRl
+                hRinv.labSize hRinv.perm) ?_ <;>
           first
           | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
           | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1342,14 +1485,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
         · split
           · split
             · split <;>
-                refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                refine hgo _ _ ?_ ?_
+                    (Or.inl (firstlab_eq_of rfl hPRf))
+                    (canonStore_or_of rfl hPRc hPRl
+                      hRinv.labSize hRinv.perm) ?_ ?_ <;>
                 first
                 | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                 | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
                 | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
                 | exact fun v hv => shortprune_subset hv
             · split <;>
-                refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                refine hgo _ _ ?_ ?_
+                    (Or.inl (firstlab_eq_of rfl hPRf))
+                    (canonStore_or_of rfl hPRc hPRl
+                      hRinv.labSize hRinv.perm) ?_ ?_ <;>
                 first
                 | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                 | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1357,14 +1506,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                 | exact fun v hv => shortprune_subset hv
           · split
             · split <;>
-                refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                refine hgo _ _ ?_ ?_
+                    (Or.inl (firstlab_eq_of rfl hPRf))
+                    (canonStore_or_of rfl hPRc hPRl
+                      hRinv.labSize hRinv.perm) ?_ ?_ <;>
                 first
                 | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                 | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
                 | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
                 | exact fun v hv => hv
             · split <;>
-                refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+                refine hgo _ _ ?_ ?_
+                    (Or.inl (firstlab_eq_of rfl hPRf))
+                    (canonStore_or_of rfl hPRc hPRl
+                      hRinv.labSize hRinv.perm) ?_ ?_ <;>
                 first
                 | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
                 | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1383,6 +1538,12 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
             numcells).lab →
           st7.ptn = (refine ctx level st.lab st.ptn st.active
             numcells).ptn →
+          (st7.firstlab = st.firstlab ∨
+            (st7.firstlab.size = st.lab.size ∧
+              cellsPerm st.ptn level st.lab st7.firstlab)) →
+          (st7.canonlab = st.canonlab ∨
+            (st7.canonlab.size = st.lab.size ∧
+              cellsPerm st.ptn level st.lab st7.canonlab)) →
           (st7.canonlab = st.canonlab ∨
             (st7.canonlab.size = n ∧ CellsReach G st7.canonlab)) →
           tcell' = 0 →
@@ -1392,7 +1553,7 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
                 numcells).numcells (-1 : Int).toNat
               ((nextElem tcell' none).getD 0)
               (nextElem tcell' none) tcell' st7).2 := by
-        intro tcell' st7 h7l h7p h7c h70
+        intro tcell' st7 h7l h7p h7f h7cs h7c h70
         subst h70
         have hok7 := refine_searchOk (st2 := st7) hn hn0 hok h1
           h7l h7p h7c
@@ -1407,11 +1568,14 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
             rw [elem, Nat.zero_testBit] at hv
             cases hv)
           (fun v hv => nextElem_mem hv)
-        exact refine_loop_out hn hn0 hok h1 h7l h7p h7c hloop
+        exact refine_loop_out hn hn0 hok h1 h7l h7p h7f h7cs h7c
+          hloop
       split
       · -- the node prunes back before its children
-        refine refine_loop_out hn hn0 hok h1 ?_ ?_ ?_
-            (searchOut_id level level ?_ hRreach) <;>
+        refine hreturn _ ?_ ?_
+            (Or.inl (firstlab_eq_of rfl hPRf))
+            (canonStore_or_of rfl hPRc hPRl
+              hRinv.labSize hRinv.perm) ?_ <;>
         first
         | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
         | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1419,14 +1583,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
       · split
         · split
           · split <;>
-              refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+              refine hgo _ _ ?_ ?_
+                  (Or.inl (firstlab_eq_of rfl hPRf))
+                  (canonStore_or_of rfl hPRc hPRl
+                    hRinv.labSize hRinv.perm) ?_ ?_ <;>
               first
               | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
               | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
               | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
               | exact hzsub _
           · split <;>
-              refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+              refine hgo _ _ ?_ ?_
+                  (Or.inl (firstlab_eq_of rfl hPRf))
+                  (canonStore_or_of rfl hPRc hPRl
+                    hRinv.labSize hRinv.perm) ?_ ?_ <;>
               first
               | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
               | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1434,14 +1604,20 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               | exact hzsub _
         · split
           · split <;>
-              refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+              refine hgo _ _ ?_ ?_
+                  (Or.inl (firstlab_eq_of rfl hPRf))
+                  (canonStore_or_of rfl hPRc hPRl
+                    hRinv.labSize hRinv.perm) ?_ ?_ <;>
               first
               | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
               | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
               | exact canonlab_or_of rfl hPRc hPRl hRsize hRreach
               | exact rfl
           · split <;>
-              refine hgo _ _ ?_ ?_ ?_ ?_ <;>
+              refine hgo _ _ ?_ ?_
+                  (Or.inl (firstlab_eq_of rfl hPRf))
+                  (canonStore_or_of rfl hPRc hPRl
+                    hRinv.labSize hRinv.perm) ?_ ?_ <;>
               first
               | (refine Eq.trans ?_ hPRl; exact processnode_lab ctx level _ _)
               | (refine Eq.trans ?_ hPRp; exact processnode_ptn ctx level _ _)
@@ -1449,7 +1625,7 @@ private theorem otherNode_ok (G : Colored n k) (ctx : Ctx)
               | exact rfl
 termination_by (fuel, 0, 0)
 
-private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
+theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
     (hn : ctx.n = n) (inf : Nat) (hinf : inf = n + 2)
     (tcLevel : Nat) (hn0 : 0 < n)
     (fuel cfuel level numcells tc tv1 : Nat) (tv? : Option Nat)
@@ -1495,7 +1671,7 @@ private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
       (by omega)).mono (B' := level) (by omega)
     have hbase := breakout_child_out hn0 hok h1 hic hlen2 hrange
       ho hDout rfl (breakout_ptn st0.lab st0.ptn (level + 1) tc
-        st0.lab[tc + o]!) rfl
+        st0.lab[tc + o]!) rfl rfl
     rcases Decidable.em ((otherNode ctx inf tcLevel fuel
         (level + 1) (numcells + 1) { st0 with
                   lab := (breakout st0.lab st0.ptn (level + 1) tc
@@ -1507,7 +1683,7 @@ private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
                   fixedpts := insert st0.fixedpts st0.lab[tc + o]! }).1 <
         Int.ofNat level) with hrt | hrt
     · simp only [ite_eq_left hrt]
-      exact hbase.congr rfl rfl rfl
+      exact hbase.congr rfl rfl rfl rfl
     · simp only [ite_eq_right hrt]
       have hcont : ∀ (tcell' : Nat) (stG : SearchSt),
           stG.lab = (otherNode ctx inf tcLevel fuel (level + 1)
@@ -1528,6 +1704,15 @@ private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
                   active := (breakout st0.lab st0.ptn (level + 1) tc
                     st0.lab[tc + o]!).2.2,
                   fixedpts := insert st0.fixedpts st0.lab[tc + o]! }).2.ptn →
+          stG.firstlab = (otherNode ctx inf tcLevel fuel (level + 1)
+            (numcells + 1) { st0 with
+                  lab := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).1,
+                  ptn := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).2.1,
+                  active := (breakout st0.lab st0.ptn (level + 1) tc
+                    st0.lab[tc + o]!).2.2,
+                  fixedpts := insert st0.fixedpts st0.lab[tc + o]! }).2.firstlab →
           stG.canonlab = (otherNode ctx inf tcLevel fuel (level + 1)
             (numcells + 1) { st0 with
                   lab := (breakout st0.lab st0.ptn (level + 1) tc
@@ -1543,9 +1728,9 @@ private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
               numcells tc tv1
               (nextElem tcell' (some st0.lab[tc + o]!)) tcell'
               (recover ctx.n inf level stG)).2 := by
-        intro tcell' stG hgl hgp hgc hsub
+        intro tcell' stG hgl hgp hgf hgc hsub
         have houtG : SearchOut G level level st0 stG :=
-          hbase.congr hgl hgp hgc
+          hbase.congr hgl hgp hgf hgc
         have hrecout : SearchOut G level level stG
             (recover ctx.n inf level stG) := by
           rw [hn, hinf]
@@ -1589,21 +1774,21 @@ private theorem otherChildLoop_ok (G : Colored n k) (ctx : Ctx)
         refine ite_or
           (P := fun x : Option Int × SearchSt =>
             SearchOut G level level st0 x.2) ?_ ?_
-        · refine hcont _ _ ?_ ?_ ?_ ?_ <;>
+        · refine hcont _ _ ?_ ?_ ?_ ?_ ?_ <;>
             first
             | rfl
             | exact fun v hv => longprune_mem hv
-        · refine hcont _ _ ?_ ?_ ?_ ?_ <;>
+        · refine hcont _ _ ?_ ?_ ?_ ?_ ?_ <;>
             first | rfl | exact fun v hv => hv
       · simp only [hnsp, ite_true]
         refine ite_or
           (P := fun x : Option Int × SearchSt =>
             SearchOut G level level st0 x.2) ?_ ?_
-        · refine hcont _ _ ?_ ?_ ?_ ?_ <;>
+        · refine hcont _ _ ?_ ?_ ?_ ?_ ?_ <;>
             first
             | rfl
             | exact fun v hv => shortprune_subset (longprune_mem hv)
-        · refine hcont _ _ ?_ ?_ ?_ ?_ <;>
+        · refine hcont _ _ ?_ ?_ ?_ ?_ ?_ <;>
             first
             | rfl
             | exact fun v hv => shortprune_subset hv
@@ -1644,7 +1829,7 @@ private theorem ofFn_id_getElem (v : Nat) (hv : v < n) :
   rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
 
 /-- The root state satisfies the search invariant. -/
-private theorem initial_searchOk {k : Nat} (G : Colored n k)
+theorem root_searchOk {k : Nat} (G : Colored n k)
     (hn0 : 0 < n) :
     SearchOk G 1 (initialPartition G).2.length
       { lab := (initialPartition G).1
@@ -1687,7 +1872,7 @@ theorem canonlab_size {k : Nat} (G : Colored n k) :
   · rw [run_canonlab G hn0]
     exact ((firstPathNode_ok G { n := n, g := rowsOf G } rfl (n + 2)
       rfl 100 hn0 (n + 2) 1 (initialPartition G).2.length _
-      (initial_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
+      (root_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
       (fun v hv => ofFn_id_getElem v hv)).1
 
 /-- The transcribed search's canonical labelling is reached: it
@@ -1713,7 +1898,7 @@ theorem canonlab_cellsReach {k : Nat} (G : Colored n k) :
   · rw [run_canonlab G hn0]
     exact ((firstPathNode_ok G { n := n, g := rowsOf G } rfl (n + 2)
       rfl 100 hn0 (n + 2) 1 (initialPartition G).2.length _
-      (initial_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
+      (root_searchOk G hn0) (Nat.le_refl 1) (by omega)).2
       (fun v hv => ofFn_id_getElem v hv)).2
 
 /-- The transcribed search's canonical labelling passes the colour

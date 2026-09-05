@@ -966,6 +966,60 @@ theorem firstCodeInv_eq_of_tied {nn : Nat} {cs fs : List Nat}
   rw [getElem!_pos cs i h1, getElem!_pos fs i h2] at h'
   exact h'
 
+/-- The first-path store decides where the first leaf sits: every
+position within the first path holds a real code, so the sentinel
+appearing just above the current path forces the two paths to end at
+the same level.
+
+This is what the length premise of `firstCodeInv_eq_of_tied` reduces
+to. It cannot be read off the refinement codes: `mash` masks its
+accumulator to fifteen bits, so agreeing codes do not determine the
+partition, let alone its cell count. The store's sentinel position
+does determine it. -/
+theorem firstCodeInv_len_of_sentinel {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode cs.length)
+    (hsent : firstcode[cs.length + 1]! = codeSentinel) :
+    cs.length = fs.length := by
+  refine Nat.le_antisymm hinv.elev_fs (Nat.not_lt.mp fun hlt => ?_)
+  have hc := hinv.fcontent (cs.length + 1) (by omega) (by omega)
+  rw [hsent, Nat.add_sub_cancel,
+    getElem!_pos fs cs.length (by omega)] at hc
+  exact Nat.lt_irrefl _
+    (hc ▸ hinv.flt _ (List.getElem_mem (by omega)))
+
+/-- The sentinel hypothesis above is load-bearing rather than a proof
+convenience. At a live gate whose path is strictly shorter than the
+first path, the current leaf's key strictly exceeds the first leaf's,
+because the sentinel outranks every real code, so the code-`1` skip
+would discard a candidate standing above the incumbent. -/
+theorem firstCodeInv_listCmp_gt_of_lt {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode cs.length)
+    (hlt : cs.length < fs.length) :
+    listCmp compare (cs ++ [codeSentinel]) (fs ++ [codeSentinel]) =
+      .gt := by
+  refine listCmp_gt_of_prefix cs.length _ _
+    (by rw [List.length_append]; simp)
+    (by rw [List.length_append]; simp; omega)
+    (fun i hi => ?_) ?_
+  · rw [getElem!_append_left' hi, getElem!_append_left' (by omega)]
+    simpa using hinv.agree (i + 1) (by omega) (by omega)
+  · rw [getElem!_append_sentinel (Nat.le_refl _),
+      bcode_sentinel (by omega), getElem!_append_left' hlt,
+      getElem!_pos fs cs.length (by omega)]
+    exact hinv.flt _ (List.getElem_mem _)
+
+/-- The code-`1` leaf case in the form the induction applies: at a
+live gate, with the first-path store showing the sentinel just above
+the current level, the two code paths are equal outright. -/
+theorem firstCodeInv_eq_of_live {nn : Nat} {cs fs : List Nat}
+    {firstcode : Array Nat}
+    (hinv : FirstCodeInv nn cs fs firstcode cs.length)
+    (hsent : firstcode[cs.length + 1]! = codeSentinel) :
+    cs = fs :=
+  firstCodeInv_eq_of_tied hinv (firstCodeInv_len_of_sentinel hinv hsent)
+
 private theorem otherNodePrep_firstcode (level code : Nat)
     (st : SearchSt) :
     (otherNodePrep level code st).firstcode = st.firstcode := by

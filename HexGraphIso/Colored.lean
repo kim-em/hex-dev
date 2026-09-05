@@ -72,16 +72,29 @@ theorem isSome_ofVector? (v : Vector (Fin k) n) :
 
 /-- The constant zero colouring: the one-cell colouring of a nonempty vertex
 set. -/
-@[expose] def trivial (n : Nat) (h : 0 < n := by first | omega | decide) :
+-- The size side conditions here and below try `decide` before `omega`.
+-- At a literal size `decide` closes the goal with a self-contained term,
+-- whereas `omega` lifts an auxiliary theorem into the ambient namespace;
+-- at a command that has no enclosing declaration (a `#guard` or `#eval`,
+-- as in the manual chapters) that theorem is named in the root namespace
+-- and two modules that produce one cannot both be imported. `omega`
+-- remains the fallback, and is what runs at a symbolic size.
+@[expose] def trivial (n : Nat) (h : 0 < n := by first | decide | omega) :
     Coloring n 1 where
   cells := Hex.Vector.ofFn' fun _ => 0
   onto c := ⟨⟨0, h⟩, by
     have : c = 0 := Fin.ext (Nat.lt_one_iff.mp c.isLt)
     simp [Hex.Vector.get_eq_getElem, this]⟩
 
+/-- Colour vectors into `Fin 1` are constant, so a one-cell colouring
+carries no information beyond its existence. -/
+@[simp] theorem cells_eq_zero (c : Coloring n 1) {i : Nat} (hi : i < n) :
+    c.cells[i] = 0 :=
+  Fin.ext (Nat.lt_one_iff.mp (c.cells[i]).isLt)
+
 /-- The colouring `i ↦ i % k`, onto whenever `k ≤ n`. -/
-@[expose] def mod (n k : Nat) (hk : 0 < k := by first | omega | decide)
-    (hkn : k ≤ n := by first | omega | decide) : Coloring n k where
+@[expose] def mod (n k : Nat) (hk : 0 < k := by first | decide | omega)
+    (hkn : k ≤ n := by first | decide | omega) : Coloring n k where
   cells := Hex.Vector.ofFn' fun i => ⟨i.val % k, Nat.mod_lt _ hk⟩
   onto c := by
     refine ⟨⟨c.val, Nat.lt_of_lt_of_le c.isLt hkn⟩, ?_⟩
@@ -155,5 +168,16 @@ theorem relabel_relabel (G : Colored n k) (l m : Label n) :
   Colored.ext (fun i j => by simp) (fun i => by simp)
 
 end Colored
+
+/-- The one-cell coloured graph of a bare graph: every vertex takes the
+single colour zero, so a coloured isomorphism is exactly a graph
+isomorphism. `n = 0` would force `k = 0`, so this is defined for
+positive `n`. -/
+@[expose] def _root_.Hex.Graph.singleColor {n : Nat} (G : Graph n)
+    (h : 0 < n := by first | decide | omega) : Colored n 1 :=
+  { graph := G, coloring := Coloring.trivial n h }
+
+@[simp] theorem _root_.Hex.Graph.graph_singleColor {n : Nat} (G : Graph n)
+    (h : 0 < n) : (G.singleColor h).graph = G := rfl
 
 end Hex.GraphIso

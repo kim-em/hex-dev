@@ -32,8 +32,8 @@ umbrellas. Overall docstring coverage is 271/538, or 50%.
 The operation surface in `Ops.lean` is well shaped and is the library's
 strongest file. It sells a genuine two-tier API: a fast tier
 (`canonicalize`, `canon`, `label`, `findIso`, `isIso`) and a certificate-checked
-tier, joined by `canonicalize_eq_canonicalizeChecked`, so a caller can pick a
-tier without the two drifting apart. `iso_iff_canonChecked_eq` is the
+tier, joined by `canonicalize_eq_checked`, so a caller can pick a
+tier without the two drifting apart. `Checked.iso_iff_canon_eq` is the
 biconditional the library exists to prove and it is stated at the right
 generality. The bounded produce-then-replay pipeline (`certify?`, `checkCanon`,
 `canon?`, `checkDiff`) correctly separates the untrusted search from the
@@ -48,7 +48,8 @@ introducing a second one, which is the right design and worth keeping.
 Three structural findings are recorded below. Two are qualifier families that
 belong in namespaces, and one is a namespace-hygiene problem where an internal
 mirror layer and a test module are both part of the shipped API. None is a
-correctness issue and none blocks the release.
+correctness issue and none blocks the release. The first has since been acted
+on and the entry records what was done; the other two remain open.
 
 ## Fixed in this review
 
@@ -57,7 +58,7 @@ These were small enough to act on directly, and the library rebuilds green.
 1. **`HexGraphIso.lean` had no module docstring.** It was 50 `public import`
    lines and a bare `public section`, the only one of the three umbrellas
    without one. Added a docstring that names the intended entry points
-   (`canonicalize`/`canonChecked` and their tiers, the decision operations,
+   (`canonicalize`/`Checked.canon` and their tiers, the decision operations,
    the bounded certificate pipeline, `Families`, `Random`, `graph_iso`) and
    says explicitly that `Hex.GraphIso.Nauty` is the verified engine rather
    than the entry point. A reader landing on the umbrella now learns which of
@@ -66,8 +67,8 @@ These were small enough to act on directly, and the library rebuilds green.
 2. **The eight undocumented soundness theorems in `Ops.lean`.** Every `def` in
    the file was documented; the entire gap was on the theorem side, which is
    backwards, since the theorems are what a prover reaches for first.
-   Documented `findIsoChecked_sound`, `findIsoChecked_isSome_iff`,
-   `isIsoChecked_eq_true_iff`, `isIsoChecked_eq_false_iff`,
+   Documented `Checked.findIso_sound`, `Checked.findIso_isSome_iff`,
+   `Checked.isIso_eq_true_iff`, `Checked.isIso_eq_false_iff`,
    `FindIso.some_sound`, `FindIso.none_sound`, `checkCanon_sound`, and
    `canon?_eq_some`. The `FindIso.none_sound` docstring in particular now
    spells out the `some none` versus outer `none` distinction, which is the
@@ -96,7 +97,7 @@ These were small enough to act on directly, and the library rebuilds green.
 
 6. **Removed `not_isomorphic_of_isIsoChecked_eq_false`.** Unreferenced
    anywhere in the repository including the SPEC and README, an exact
-   restatement of `Ops.lean`'s `isIsoChecked_eq_false_iff` one `.mp` away, in
+   restatement of `Ops.lean`'s `Checked.isIso_eq_false_iff` one `.mp` away, in
    the wrong file, and at eight name segments the worst name in the reviewable
    set. Straightforward cruft.
 
@@ -125,29 +126,59 @@ These were small enough to act on directly, and the library rebuilds green.
 
 ### 1. The `Checked` suffix is a namespace, not a name
 
-Sixteen public names in `Ops.lean` encode the tier in the identifier:
+Sixteen public names encoded the tier in the identifier:
 `canonicalizeChecked`, `canonChecked`, `labelChecked`, `relabelChecked_label`,
 `colorSorted_canonChecked`, `canonChecked_iso`, `canonChecked_invariant`,
 `iso_iff_canonChecked_eq`, `canonicalize_eq_canonicalizeChecked`,
 `findIsoChecked`, `isIsoChecked`, `findIsoChecked_sound`,
 `findIsoChecked_isSome_iff`, `isIsoChecked_eq_true_iff`,
-`isIsoChecked_eq_false_iff`.
+`isIsoChecked_eq_false_iff` in `Ops.lean`, and
+`colored_iso_iff_canonChecked_eq` in the Mathlib layer.
 
 This is the textbook case the house style names: a qualifier repeated across a
-whole family, which should be a namespace. `Hex.GraphIso.Checked.canonicalize`,
-`Checked.canon`, `Checked.findIso`, `Checked.iso_iff_canon_eq` would let the
-two tiers share one vocabulary, and would make
-`canonicalize_eq_canonicalizeChecked` read as `Checked.canonicalize_eq`.
+whole family, which should be a namespace.
 
-**Not fixed, deliberately.** `HexGraphIso/SPEC/hex-graph-iso.md` pins these
-names verbatim in 24 places, including explicit signature blocks for
-`def labelChecked` and `theorem relabelChecked_label`, and
-`HexGraphIso/README.md` lists them. This is a SPEC change, not a refactor, and
-a SPEC change on the eve of a first release should be a deliberate decision
-rather than a side effect of an API review. Recommended as a follow-up issue:
-`HexGraphIso Phase 6: move the Checked tier into its own namespace`. Doing it
-before the first release is much cheaper than after, since after release it is
-a breaking change for downstream consumers.
+**Fixed.** The tier now lives in `Hex.GraphIso.Checked` and shares one
+vocabulary with the fast tier, so the certified twin of any fast name is that
+name under `Checked`:
+
+| was | is |
+| --- | --- |
+| `canonicalizeChecked` | `Checked.canonicalize` |
+| `canonChecked` | `Checked.canon` |
+| `labelChecked` | `Checked.label` |
+| `findIsoChecked` | `Checked.findIso` |
+| `isIsoChecked` | `Checked.isIso` |
+| `relabelChecked_label` | `Checked.relabel_label` |
+| `colorSorted_canonChecked` | `Checked.colorSorted_canon` |
+| `canonChecked_iso` | `Checked.canon_iso` |
+| `canonChecked_invariant` | `Checked.canon_invariant` |
+| `iso_iff_canonChecked_eq` | `Checked.iso_iff_canon_eq` |
+| `findIsoChecked_sound` | `Checked.findIso_sound` |
+| `findIsoChecked_isSome_iff` | `Checked.findIso_isSome_iff` |
+| `isIsoChecked_eq_true_iff` | `Checked.isIso_eq_true_iff` |
+| `isIsoChecked_eq_false_iff` | `Checked.isIso_eq_false_iff` |
+| `canonicalize_eq_canonicalizeChecked` | `canonicalize_eq_checked` |
+| `colored_iso_iff_canonChecked_eq` | `colored_iso_iff_canon_eq` |
+
+Two of the sixteen do not simply move. `canonicalize_eq_canonicalizeChecked`
+states a fact about the fast `canonicalize`, so it stays in `Hex.GraphIso`
+beside its subject and reads `canonicalize_eq_checked`. The Mathlib layer's
+headline biconditional stays in `Hex.GraphIso.Mathlib`, where the fast tier
+has no analogue to be confused with, and drops the qualifier entirely:
+`colored_iso_iff_canon_eq`, matching `canon_encode_indep` beside it, which
+already named the certified canonical form that way.
+
+The use-site cost is the one worth naming: `Checked.canon G` is two
+characters longer than `canonChecked G` and does not read as one word. What it
+buys is that the two tiers are now the same six names, so a caller who knows
+the fast surface knows the certified one, and autocompletion on `Checked.`
+lists exactly the certified tier instead of scattering it through the
+`Hex.GraphIso` namespace. The SPEC, both READMEs, the manual chapter, the
+bench and conformance drivers and the Mathlib layer were updated with it. The
+bench driver names (`runHexCanonChecked{8,12,16}`, `runIsIsoChecked12`) were
+deliberately left alone: they are measurement identifiers recorded in
+`reports/bench-results/`, not API.
 
 ### 2. `NodeLit.lean` ships 92 internal helpers, all carrying an `L` suffix
 
@@ -250,7 +281,7 @@ repository and are not `@[simp]`:
 
 - `Hex.Graph.ne_of_adj`, `isSome_ofEdges?`, `adj_ofEdges?`, `mem_nbrs`
   (`HexGraph/Basic.lean`);
-- `Hex.GraphIso.colorSorted_canonChecked` (`Ops.lean:51`);
+- `Hex.GraphIso.Checked.colorSorted_canon` (`Ops.lean:51`);
 - `Hex.GraphIso.checkDiff_not_isomorphic` (`Ops.lean:394`);
 - `Perm.vec_of_ofVector?`, `Perm.comp_assoc`, `Perm.inv_comp`
   (`Perm.lean`).
@@ -258,7 +289,7 @@ repository and are not `@[simp]`:
 `checkDiff_not_isomorphic` deserves a specific note: it is the terminal
 theorem of the whole `DiffCert` surface, and nothing calls it. The same is
 true of the surface it terminates. `CanonCert`, `DiffCert`, `certify?`,
-`checkCanon`, `canon?`, `checkDiff`, `labelChecked` and `findIsoChecked` are
+`checkCanon`, `canon?`, `checkDiff`, `Checked.label` and `Checked.findIso` are
 referenced only inside `Ops.lean` and in prose in the SPEC and README; no
 bench, conformance, tactic or Mathlib-layer consumer exercises the bounded
 certificate API. That is not dead code, because it is the API the SPEC
@@ -279,6 +310,27 @@ half reads; the `G` half does not. Three use sites each. `Sep.root?` and
 literal-valued variants, would read better. Left alone because getting the
 distinction right needs the same design pass as findings 1 and 2 rather than
 a mechanical rename.
+
+## Since this review
+
+Two further API changes landed with finding 1's namespace move, in the same
+pre-release window and touching the same SPEC section.
+
+`Families.plain` became `Graph.singleColor`. It takes a `Graph n` and returns
+`Colored n 1`, so it belongs on the receiver type rather than among the family
+generators, and it is now reachable by dot notation from any bare graph. The
+Mathlib layer's `Colored.plain` became `Colored.singleColor` so both layers use
+one word for the one-cell view.
+
+The uncoloured surface was added: `Graph.Isomorphic` and `Graph.IsIso` on
+`Graph n`, the fast and `Graph.Checked` operation tiers, their transported
+theorems, and `graph_iso` support for uncoloured goals. This closes an
+asymmetry the review did not name. The Mathlib layer already proved
+`Nonempty (G ≃g H)` for `SimpleGraph`s directly, so only the Mathlib-free
+surface, the one the library leads with, made an uncoloured caller wrap at
+every call and unwrap every conclusion. Nothing is reproved: every uncoloured
+theorem is transported along `Graph.isomorphic_singleColor_iff`, whose content
+is that the colour clause of `IsIso` is vacuous at one colour.
 
 ## In-flight surface
 
@@ -310,10 +362,10 @@ much larger job than this review was.
 ## No Follow-Up Needed
 
 No follow-up is needed for the two-tier operation design in `Ops.lean`. The
-fast and checked tiers are genuinely parallel, `canonicalize_eq_canonicalizeChecked`
-pins them together, and `iso_iff_canonChecked_eq` is stated as the
+fast and checked tiers are genuinely parallel, `canonicalize_eq_checked`
+pins them together, and `Checked.iso_iff_canon_eq` is stated as the
 biconditional rather than as two one-sided lemmas. Only the naming of the tier
-is at issue, not its shape.
+was at issue, not its shape, and finding 1 settled the naming.
 
 No follow-up is needed for the tactic's extension mechanism. One tactic name,
 one `Extension` structure, a hardcoded `extensionNames` list, and a Mathlib
@@ -344,11 +396,10 @@ the undocumented soundness theorems, the undocumented tactic options, a stale
 module docstring, one piece of cruft, and two names that were actively
 misleading.
 
-The three recorded findings are real and should become issues, but none is a
-correctness problem and none should hold the release. Two of them, the
-`Checked` namespace and the `NodeLit` privacy pass, are meaningfully cheaper
-before the first release than after it, and that is the argument for doing
-them soon rather than the argument for blocking on them now.
+The three recorded findings are real and none is a correctness problem. The
+`Checked` namespace has been done, before the release rather than after it,
+which is when it is cheap; the `NodeLit` privacy pass and the umbrella's
+re-export of a test module remain open and should become issues.
 
 The honest qualification on this verdict: it covers 34% of the library's
 public declarations. The other 66% is `Nauty/`, and its Phase 6 pass is owed

@@ -8,6 +8,9 @@ import VersoManual
 
 import HexGraphIsoMathlib
 import Mathlib.Data.Fintype.Powerset
+import Mathlib.Data.Fintype.Sum
+import Mathlib.Tactic.DeriveFintype
+import Mathlib.Tactic.FinCases
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -34,19 +37,26 @@ identical, and prove our theorems about the Lean translation.) The exact
 algorithm, including the output-relevant choices absent from the published
 literature, is specified in {ref "nauty-algorithm"}[The `nauty` canonical
 labelling algorithm]. The
-short names (`canonicalize`, `canon`, `label`, `isIso`) run that
-translation directly and are the fast surface for users who just want
-answers; the `Checked` surface (`canonicalizeChecked`, `canonChecked`,
-…) additionally validates every answer through a proven certificate
-checker and carries the theorems. Two coloured graphs are isomorphic
-exactly when their checked canonical forms are equal
-({name Hex.GraphIso.iso_iff_canonChecked_eq}`iso_iff_canonChecked_eq`),
+public names (`canonicalize`, `canon`, `label`, `isIso`) run that
+translation directly, and the theorems reach them because a proven
+certificate checker is shown to accept the translation's answer on
+every input. Two coloured graphs are isomorphic exactly when their
+canonical forms are equal
+({name Hex.GraphIso.iso_iff_canon_eq}`iso_iff_canon_eq`),
 and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
 checked transporter, negative goals through a checked canonical-key
 certificate when available and a fully verified
 individualization-refinement decision as the exhaustion fallback.
+
+Colours are the general input, but a graph with no colours to speak of
+should not have to acquire one. The same operations and the same
+tactic are available on a bare {name Hex.Graph}`Graph`: `Graph.canon`,
+`Graph.findIso`, `Graph.isIso` and the rest read the one-cell
+view {name Hex.Graph.singleColor}`Graph.singleColor` and hand the
+conclusion back uncoloured, through the single equivalence
+{name Hex.Graph.isomorphic_singleColor_iff}`Graph.isomorphic_singleColor_iff`.
 
 The separate [`nauty-ffi`](https://github.com/leanprover/nauty-ffi) package is
 available for users who want direct access to the corresponding dense-nauty
@@ -56,6 +66,8 @@ dependency or part of the verified `HexGraphIso` library.
 {docstring Hex.GraphIso.Colored}
 
 {docstring Hex.GraphIso.canonicalize}
+
+{docstring Hex.Graph.Isomorphic}
 
 # The Petersen graph three ways
 %%%
@@ -74,18 +86,17 @@ unrelated at general parameters; that `G(5, 2)` and `K(5, 2)` are
 isomorphic is a coincidence special to these values, and proving it is
 the first example below. One explicit edge list shows the generalized
 Petersen numbering concretely, checked against the general
-construction.
+construction. Neither claim mentions colours, so both are stated on
+bare `Graph 10` values.
 
 ```lean
 open Hex Hex.GraphIso
 
 namespace HexGraphIsoChapterExample
 
-def petersen : Colored 10 1 :=
-  Families.plain (Families.gpetersen 5 2)
+def petersen : Graph 10 := Families.gpetersen 5 2
 
-def kneser52 : Colored 10 1 :=
-  Families.plain (Families.kneser 5 2)
+def kneser52 : Graph 10 := Families.kneser 5 2
 
 -- The generalized Petersen numbering, concretely.
 #guard Graph.ofEdges
@@ -94,19 +105,15 @@ def kneser52 : Colored 10 1 :=
      (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)] =
   Families.gpetersen 5 2
 
--- The two canonical searches find an explicit vertex
--- permutation between the presentations; `checkIso`
--- validates it.
-#guard
-  (((Nauty.canonicalize? petersen).bind fun rP =>
-    (Nauty.canonicalize? kneser52).map fun rK =>
-      checkIso petersen kneser52
-        ((rK.label.toPerm.inv).comp rP.label.toPerm))
-    == some true)
+-- The two canonical searches compose into an explicit
+-- vertex permutation between the presentations, and the
+-- decision agrees.
+#guard (Graph.findIso petersen kneser52).isSome
+#guard Graph.isIso petersen kneser52
 
 -- The tactic closes the positive goal through the
 -- kernel-replayed transporter check.
-example : Isomorphic petersen kneser52 := by graph_iso
+example : Graph.Isomorphic petersen kneser52 := by graph_iso
 ```
 
 The pentagonal prism, `Families.gpetersen 5 1`, is the interesting
@@ -119,10 +126,9 @@ this case by replaying the smaller canonical-key certificates instead.
 {docstring Hex.GraphIso.Pairwise.search}
 
 ```lean
-def prism5 : Colored 10 1 :=
-  Families.plain (Families.gpetersen 5 1)
+def prism5 : Graph 10 := Families.gpetersen 5 1
 
-example : ¬ Isomorphic petersen prism5 := by graph_iso
+example : ¬ Graph.Isomorphic petersen prism5 := by graph_iso
 ```
 
 # Ordered colours constrain isomorphisms
@@ -136,7 +142,8 @@ vertices with colour zero is therefore a different constraint from
 marking a non-adjacent pair, although the cell sizes agree. Adjacency of
 the colour-zero pair is an invariant, and the tactic's negative proof is
 obtained from its general checked separator rather than a handwritten
-special-purpose lemma.
+special-purpose lemma. These claims do mention colours, so they are the
+ones stated on {name Hex.GraphIso.Colored}`Colored`.
 
 ```lean
 def markPair (a b : Fin 10) : Coloring 10 2 :=
@@ -144,15 +151,221 @@ def markPair (a b : Fin 10) : Coloring 10 2 :=
     if i = a ∨ i = b then 0 else 1)).getD (Coloring.mod 10 2)
 
 -- 0-1 is an outer pentagon edge; 2-3 likewise; 0-2 is a non-edge.
-def edgeMarkA : Colored 10 2 := ⟨petersen.graph, markPair 0 1⟩
-def edgeMarkB : Colored 10 2 := ⟨petersen.graph, markPair 2 3⟩
-def nonedgeMark : Colored 10 2 := ⟨petersen.graph, markPair 0 2⟩
+def edgeMarkA : Colored 10 2 := ⟨petersen, markPair 0 1⟩
+def edgeMarkB : Colored 10 2 := ⟨petersen, markPair 2 3⟩
+def nonedgeMark : Colored 10 2 := ⟨petersen, markPair 0 2⟩
 
 example : Isomorphic edgeMarkA edgeMarkB := by graph_iso
 example : ¬ Isomorphic edgeMarkA nonedgeMark := by graph_iso
 example : ¬ Isomorphic edgeMarkB nonedgeMark := by graph_iso
 
 end HexGraphIsoChapterExample
+```
+
+# Latin-square isotopy as graph isomorphism
+%%%
+tag := "hex-graph-iso-latin-square"
+%%%
+
+The [nauty introduction](https://pallini.di.uniroma1.it/Introduction.html)
+begins from a broad principle: finite objects built from finite sets and
+relations can often be encoded as coloured graphs. Its Latin-square example
+asks about *isotopy*: two squares are isotopic when one can be obtained from
+the other by independently permuting the rows, the columns, and the symbols.
+
+Before mentioning graphs, we can state that question directly in Lean. We
+package the Latin property as bijectivity of every row and column, and define
+isotopy using three independent permutations.
+
+```lean
+open Hex.GraphIso.Mathlib
+
+namespace LatinSquareExample
+
+structure LatinSquare where
+  entry : Fin 3 → Fin 3 → Fin 3
+  rows : ∀ i, Function.Bijective (entry i)
+  columns : ∀ j, Function.Bijective (fun i => entry i j)
+
+def Isotopic (L M : LatinSquare) : Prop :=
+  ∃ r c s : Equiv.Perm (Fin 3),
+    ∀ i j, M.entry (r i) (c j) = s (L.entry i j)
+```
+
+The introduction illustrates the construction with exactly this square:
+
+```
+1 3 2
+2 1 3
+3 2 1
+```
+
+The definitions below use the zero-based elements of `Fin 3`. The second
+square is obtained by exchanging the first two rows and then exchanging the
+symbols 1 and 2.
+
+```lean
+def nautySquare : LatinSquare where
+  entry
+    | 0, 0 => 0 | 0, 1 => 2 | 0, 2 => 1
+    | 1, 0 => 1 | 1, 1 => 0 | 1, 2 => 2
+    | 2, 0 => 2 | 2, 1 => 1 | 2, 2 => 0
+  rows := by decide
+  columns := by decide
+
+def cyclicSquare : LatinSquare where
+  entry i j := ⟨(i + j) % 3, by omega⟩
+  rows := by decide
+  columns := by decide
+```
+
+Following the nauty introduction, we make a graph with four colours of
+vertices: one vertex for each row, column, symbol, and position. A position
+vertex is joined to its row, its column, and the symbol written there. The
+resulting graph has 18 vertices and 27 edges.
+
+```lean
+inductive Vertex
+  | row : Fin 3 → Vertex
+  | column : Fin 3 → Vertex
+  | symbol : Fin 3 → Vertex
+  | position : Fin 3 × Fin 3 → Vertex
+  deriving DecidableEq, Fintype
+
+private def incidence (L : LatinSquare)
+    (x y : Vertex) : Prop :=
+  match x, y with
+  | .position (i, _), .row i' => i = i'
+  | .position (_, j), .column j' => j = j'
+  | .position (i, j), .symbol k => L.entry i j = k
+  | _, _ => False
+
+private instance (L : LatinSquare) :
+    DecidableRel (incidence L) :=
+  fun x y => by
+    cases x <;> cases y <;>
+      simp only [incidence] <;> infer_instance
+
+private def graph (L : LatinSquare) :
+    SimpleGraph Vertex :=
+  SimpleGraph.fromRel (incidence L)
+
+private def color : Vertex → Fin 4
+  | .row _ => 0
+  | .column _ => 1
+  | .symbol _ => 2
+  | .position _ => 3
+
+def encode (L : LatinSquare) :
+    Hex.GraphIso.Mathlib.Colored Vertex 4 where
+  graph := graph L
+  color := color
+  onto := by decide
+
+private instance (L : LatinSquare) :
+    DecidableRel (encode L).graph.Adj :=
+  fun x y => by
+    change Decidable
+      (x ≠ y ∧ (incidence L x y ∨ incidence L y x))
+    infer_instance
+```
+
+It remains to justify the reduction. A colour-preserving graph isomorphism
+restricts to a permutation on each of the row, column, and symbol vertices.
+The three edges incident to a position vertex then force those permutations
+to satisfy the isotopy equation. The generic `componentPerm` extracts all
+three permutations, keeping the reflection proof itself short.
+
+```lean
+variable {L M : LatinSquare}
+
+private def component : Fin 3 → Fin 3 → Vertex
+  | 0 => Vertex.row
+  | 1 => Vertex.column
+  | 2 => Vertex.symbol
+
+private def index : Vertex → Fin 3
+  | .row i | .column i | .symbol i => i
+  | .position _ => 0
+
+private def componentMap
+    (f : (encode L).Iso (encode M))
+    (kind i : Fin 3) : Fin 3 :=
+  index (f.graphIso (component kind i))
+
+private theorem map_component
+    (f : (encode L).Iso (encode M))
+    (kind i : Fin 3) :
+    f.graphIso (component kind i) =
+      component kind (componentMap f kind i) := by
+  have hc := f.map_color (component kind i)
+  generalize h : f.graphIso (component kind i) = v
+    at hc ⊢
+  fin_cases kind <;> cases v <;>
+    simp_all [component, componentMap, index,
+      encode, color]
+
+private noncomputable def componentPerm
+    (f : (encode L).Iso (encode M)) (kind : Fin 3) :
+    Equiv.Perm (Fin 3) :=
+  Equiv.ofBijective (componentMap f kind) <| by
+    apply Function.Injective.bijective_of_finite
+    intro i j h
+    have hc : component kind i = component kind j := by
+      apply f.graphIso.injective
+      rw [map_component, map_component, h]
+    fin_cases kind <;> simpa [component] using hc
+
+private theorem map_entry
+    (f : (encode L).Iso (encode M)) (i j : Fin 3) :
+    M.entry (componentMap f 0 i) (componentMap f 1 j) =
+      componentMap f 2 (L.entry i j) := by
+  obtain ⟨p, hp⟩ : ∃ p,
+      f.graphIso (Vertex.position (i, j)) =
+        Vertex.position p := by
+    have hc := f.map_color (Vertex.position (i, j))
+    generalize h : f.graphIso (Vertex.position (i, j)) = v
+      at hc
+    cases v <;> simp_all [encode, color]
+  have hr := f.graphIso.map_adj_iff.mpr
+    (show (graph L).Adj (.position (i, j)) (.row i) by
+      simp [graph, incidence])
+  have hc := f.graphIso.map_adj_iff.mpr
+    (show (graph L).Adj (.position (i, j)) (.column j) by
+      simp [graph, incidence])
+  have hs := f.graphIso.map_adj_iff.mpr
+    (show (graph L).Adj
+        (.position (i, j)) (.symbol (L.entry i j)) by
+      simp [graph, incidence])
+  rw [hp,
+    show Vertex.row i = component 0 i from rfl,
+    map_component] at hr
+  rw [hp,
+    show Vertex.column j = component 1 j from rfl,
+    map_component] at hc
+  rw [hp,
+    show Vertex.symbol (L.entry i j) =
+      component 2 (L.entry i j) from rfl,
+    map_component] at hs
+  simp [encode, graph, incidence, component] at hr hc hs
+  simpa [hr, hc] using hs
+
+theorem isotopic_of_isomorphic :
+    (encode L).Isomorphic (encode M) → Isotopic L M := by
+  rintro ⟨f⟩
+  exact ⟨componentPerm f 0, componentPerm f 1,
+    componentPerm f 2, map_entry f⟩
+```
+
+With that bridge established, the promised proof of a statement about Latin
+squares is just the reduction followed by `graph_iso`:
+
+```lean
+example : Isotopic nautySquare cyclicSquare := by
+  apply isotopic_of_isomorphic
+  graph_iso
+
+end LatinSquareExample
 ```
 
 # Performance
@@ -162,75 +375,65 @@ tag := "hex-graph-iso-performance"
 
 The Lean implementation runs the same algorithm as nauty in the
 strictest sense: conformance testing pins the visited-node counters, so
-both programs traverse exactly the same search tree on every input.
-Every timing difference is therefore a per-node constant factor of the
-implementation, never an algorithmic difference. The table shows that
+both programs traverse exactly the same search tree on every
+conformance case. Every timing difference is therefore a per-node
+constant factor of the implementation, never an algorithmic
+difference. The table shows that
 factor on four parametrised families from the benchmark corpus: grids,
 where refinement discretizes quickly; Paley graphs, refinement's hard
 case among the sparse families; and the dense Latin-square and Kneser
-graphs, where the factor is largest. The `fast` column is
-`canonicalize` and the `checked` column is `canonicalizeChecked`, which
-additionally validates every answer through the certificate checker.
+graphs, where the factor is largest. The `hex` column is
+`canonicalize`, which carries the theorems of this chapter as it
+stands: no certificate is produced or replayed on that path.
 
 :::table (header := true)
 * * graph
   * vertices
   * nauty (ms)
-  * fast (ms)
-  * checked (ms)
+  * hex (ms)
 * * `Families.grid 5 5`
   * 25
   * 0.014
   * 0.066
-  * 0.25
 * * `Families.grid 15 15`
   * 225
   * 0.83
   * 14
-  * 38
 * * `Families.paley 29`
   * 29
   * 0.019
   * 0.097
-  * 0.88
 * * `Families.paley 229`
   * 229
-  * 1.1
+  * 1.0
   * 29
-  * 180
 * * `Families.latinSquare 5`
   * 25
   * 0.019
   * 0.14
-  * 0.80
 * * `Families.latinSquare 13`
   * 169
-  * 0.77
-  * 25
-  * 100
+  * 0.78
+  * 24
 * * `Families.kneser 7 2`
   * 21
-  * 0.014
+  * 0.013
   * 0.12
-  * 0.70
 * * `Families.kneser 22 2`
   * 231
-  * 3.4
+  * 3.3
   * 210
-  * 1000
 :::
 
-Measured on chungus2, 2026-09-03, minimum over repeated runs;
-regenerate with `scripts/bench/graphiso_cactus_sweep.sh`. On the
-ten-vertex examples of this chapter, the kernel-checked `graph_iso`
-proof costs roughly 20 to 30 milliseconds on a positive goal and 0.3
-to 1 seconds on a negative one. The gap between the `fast` and
-`checked` columns is the current price of certificate validation; the
-verified search refinement programme in the SPEC is expected to remove
-it, at which point the checked guarantees attach to the fast path
-itself and the `checked` column disappears. For breadth across the
-whole benchmark corpus, see the cactus plots in `reports/figures/` in
-the repository.
+Measured on chungus2, 2026-09-05, minimum over repeated runs;
+regenerate with `scripts/bench/graphiso_cactus_sweep.sh`. On
+ten-vertex pairs like the examples of this chapter, the kernel-checked
+`graph_iso` proof costs roughly 20 milliseconds on a positive goal and
+0.7 to 0.9 seconds on a negative one. That price is separate from the
+table and does not shrink with it: a kernel proof still replays a
+certificate inside the kernel, whereas `canonicalize` runs no replay
+at all. For breadth across the whole benchmark corpus, see the cactus
+plots in `reports/figures/` in the repository.
 
 # The Mathlib correspondence
 %%%
@@ -252,7 +455,7 @@ literals at the use site.
 
 {docstring Hex.GraphIso.Mathlib.encode}
 
-{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canonChecked_eq}
+{docstring Hex.GraphIso.Mathlib.colored_iso_iff_canon_eq}
 
 ```lean
 open Hex.GraphIso.Mathlib

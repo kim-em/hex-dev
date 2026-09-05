@@ -21,10 +21,9 @@ Core conformance for `HexGraphIso`.
   `Graph.relabel`,
   `Perm.ofVector?`/`inv`/`comp`, `Label` round trips,
   `Coloring.ofVector?`, `Colored.relabel`, `checkIso`, `isIso`,
-  `isIsoChecked`, `findIso`, `findIso?`, `checkIso?`, `canon?`,
-  `canonicalize` (fast), `canonicalizeChecked`, `canon`,
-  `canonChecked`, `label`, `Reference.canon`, `Nauty.runColored`,
-  `Nauty.canonicalize?`.
+  `findIso`, `findIso?`, `checkIso?`, `canon?`, `canonicalize`,
+  `canon`, `label`, `Reference.canon`, `Nauty.runColored`,
+  `Nauty.canonicalize?`, `Nauty.certifyCanon?`.
 - **Covered properties:** builder rejection and duplicate collapse;
   permutation inverse and composition laws; `relabel G (label G) =
   canon G` evaluated on committed inputs; canonical-form invariance
@@ -111,14 +110,10 @@ private def rot3 : Perm 3 :=
 -- relabelling by the canonical label produces the canonical form
 #guard p3.relabel (label p3) == canon p3
 #guard c4.relabel (label c4) == canon c4
--- the fast surface agrees with the certificate-checked surface, and
--- the fast path never falls back (canonicalize? answers)
-#guard canonicalize p3 == canonicalizeChecked p3
-#guard canonicalize c4 == canonicalizeChecked c4
-#guard canon k3 == canonChecked k3
-#guard (canonicalize? p3).isSome
-#guard isIso p3 p3' == isIsoChecked p3 p3'
-#guard isIso p3 k3 == isIsoChecked p3 k3
+-- the public surface agrees with the certificate replay's answer
+#guard some (canonicalize p3) == Nauty.certifyCanon? p3
+#guard some (canonicalize c4) == Nauty.certifyCanon? c4
+#guard (Nauty.certifyCanon? k3).map (·.form) == some (canon k3)
 -- canonical forms have contiguous colour cells
 #guard decide (ColorSorted (canon p3))
 #guard decide (ColorSorted (canon c4))
@@ -272,7 +267,7 @@ where go : List Nauty.CertNode → Bool
 -- the Kneser graph K(5,2) is the Petersen graph
 #guard Families.choose 5 2 == 10
 #guard
-  (Nauty.runColored (Families.plain (Families.kneser 5 2))).canong ==
+  (Nauty.runColored (Graph.singleColor (Families.kneser 5 2))).canong ==
     (Nauty.runColored petersen).canong
 -- regularity spot checks: T(5) and Paley 13 are 6-regular, Q3 cubic
 #guard (Families.triangular 5).degree ⟨0, by decide⟩ == 6
@@ -285,8 +280,8 @@ where go : List Nauty.CertNode → Bool
 -- structured pair: C6 versus two triangles
 #guard
   Pairwise.decideIso? {}
-    (Families.plain (Families.cycle 6))
-    (Families.plain (Families.copies 2 (Families.cycle 3))) ==
+    (Graph.singleColor (Families.cycle 6))
+    (Graph.singleColor (Families.copies 2 (Families.cycle 3))) ==
     some false
 
 /-! # The empty graph -/

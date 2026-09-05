@@ -97,7 +97,7 @@ theorem Colored.ofColor?_eq_none_iff [DecidableEq (Fin k)] [DecidableEq V]
 /-- The one-cell coloured graph over a nonempty vertex type, and the
 zero-colour empty graph otherwise. The result is independent of any
 ordering of the vertices. -/
-def Colored.plain (graph : SimpleGraph V) : Sigma fun k => Colored V k :=
+def Colored.singleColor (graph : SimpleGraph V) : Sigma fun k => Colored V k :=
   if h : 0 < Fintype.card V then
     ⟨1,
       { graph := graph

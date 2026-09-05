@@ -564,8 +564,7 @@ The transcribed search is exposed as
 The public entry point is
 {name Hex.GraphIso.canonicalize}`Hex.GraphIso.canonicalize`; the
 {ref "hex-graph-iso"}[HexGraphIso chapter] describes the public
-surface, including the certificate-checked tier that carries the
-theorems.
+surface and the theorems it carries.
 
 {docstring Hex.GraphIso.Nauty.canonicalize?}
 
@@ -589,8 +588,14 @@ identifies an accepted key with
 {name Hex.GraphIso.Nauty.canonSpecKey}`canonSpecKey`, and
 {name Hex.GraphIso.Nauty.checkCanon_form}`checkCanon_form` identifies
 an accepted result with {name Hex.GraphIso.Nauty.specCanon}`specCanon`.
+{name Hex.GraphIso.Nauty.certifyCanon?_isSome}`certifyCanon?_isSome`
+closes the loop: the checker accepts the pruned search's own answer on
+every input, so the public `canonicalize` inherits these theorems
+without replaying a certificate.
 
 {docstring Hex.GraphIso.Nauty.checkCanon_form}
+
+{docstring Hex.GraphIso.Nauty.certifyCanon?_isSome}
 
 All of these theorems are about the Lean definitions. The evidence that
 those definitions agree with dense nauty 2.9.3, splitter order, codes,

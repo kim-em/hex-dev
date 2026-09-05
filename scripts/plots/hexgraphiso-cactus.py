@@ -48,7 +48,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 TACTIC_FILE = """import HexGraphIso
-open Hex.GraphIso
+open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
 example : {goal} := by graph_iso (maxNodes := 100000000) (maxCheckerSteps := 1000000000)
@@ -133,10 +133,8 @@ def main() -> int:
     _cactus(ax_cactus, {
         "nauty 2.9.3 (C, no proof object)":
             [r["nauty_ns"] / 1e9 for r in sweep],
-        "hex canonicalize (fast, conformance-pinned)":
+        "hex canonicalize (proved)":
             [r["fast_ns"] / 1e9 for r in sweep],
-        "hex canonicalizeChecked (validated certificate)":
-            [r["checked_ns"] / 1e9 for r in sweep],
     }, len(sweep))
     ax_cactus.set_title("canonical labelling: cactus over "
                         f"{len(sweep)} family instances")
@@ -145,12 +143,8 @@ def main() -> int:
         rows = sorted((r for r in sweep if r["family"] == family),
                       key=lambda r: r["n"])
         line, = ax_family.plot([r["n"] for r in rows],
-                               [r["checked_ns"] / 1e9 for r in rows],
+                               [r["fast_ns"] / 1e9 for r in rows],
                                marker="o", markersize=3, label=family)
-        ax_family.plot([r["n"] for r in rows],
-                       [r["fast_ns"] / 1e9 for r in rows],
-                       linestyle=":", linewidth=1.4, marker="o",
-                       markersize=2, color=line.get_color())
         ax_family.plot([r["n"] for r in rows],
                        [r["nauty_ns"] / 1e9 for r in rows],
                        linestyle="--", linewidth=1, marker="o",
@@ -159,7 +153,7 @@ def main() -> int:
     ax_family.set_xlabel("n (vertices)")
     ax_family.set_ylabel("canonicalize time (s)")
     ax_family.set_title(
-        "by family: checked (solid), fast (dotted), nauty (dashed)")
+        "by family: hex (solid), nauty (dashed)")
     ax_family.grid(True, which="both", alpha=0.3)
     ax_family.legend(fontsize=8)
     fig.text(0.5, 0.005,
@@ -191,10 +185,8 @@ def main() -> int:
     _cactus(ax, {
         "nauty 2.9.3 (C, no proof object)":
             [r["nauty_ns"] / 1e9 for r in pairs],
-        "hex isIso (fast, conformance-pinned)":
+        "hex isIso (proved)":
             [r["fast_ns"] / 1e9 for r in pairs],
-        "hex isIsoChecked (validated certificate)":
-            [r["checked_ns"] / 1e9 for r in pairs],
         "graph_iso tactic (kernel-checked proof)": tactic_times,
     }, len(pairs))
     positives = sum(1 for r in pairs if r["iso"])

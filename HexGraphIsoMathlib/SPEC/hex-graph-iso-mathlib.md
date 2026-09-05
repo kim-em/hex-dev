@@ -65,7 +65,7 @@ and renumber the used colours explicitly, or use a checked helper returning
 reorders colours because that would change the canonical labelling
 convention.
 
-For uncoloured graphs, `Colored.plain` returns
+For uncoloured graphs, `Colored.singleColor` returns
 `Sigma fun k => Colored V k`. It uses `k = 0` for an empty vertex type and
 `k = 1` otherwise. Its result is independent of any ordering of the vertices.
 
@@ -115,22 +115,26 @@ array, but it cannot change the isomorphism verdict or the abstract
 
 For ordinary uncoloured graphs, analogous definitions omit the colour wrapper
 and use the one-cell executable colouring. These are the definitions used by
-the tactic for `G ≃g H` goals.
+the tactic for `G ≃g H` goals. The Mathlib-free library states the matching
+uncoloured surface on `Graph n` itself
+([hex-graph-iso.md § The uncoloured surface](../../HexGraphIso/SPEC/hex-graph-iso.md#the-uncoloured-surface)),
+so a caller who does not need Mathlib never wraps a graph in a colouring
+either.
 
 ## Mathematical correspondence
 
 The principal Mathlib theorem states the coloured biconditional directly:
 
 ```lean
-theorem colored_iso_iff_canonChecked_eq
+theorem colored_iso_iff_canon_eq
     (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H <->
-      Hex.GraphIso.canonChecked (encode eV G) =
-      Hex.GraphIso.canonChecked (encode eW H)
+      Hex.GraphIso.canon (encode eV G) =
+      Hex.GraphIso.canon (encode eW H)
 ```
 
 It is proved by `encode_iso_iff` and the Mathlib-free
-`Hex.GraphIso.iso_iff_canonChecked_eq`. The uncoloured theorem specializes this
+`Hex.GraphIso.iso_iff_canon_eq`. The uncoloured theorem specializes this
 statement to the one-cell colouring.
 
 The library also proves:
@@ -366,7 +370,7 @@ comparison remain in the Mathlib-free benchmark driver.
 
 The Mathlib-facing release is complete only when:
 
-1. `encode_iso_iff` and `colored_iso_iff_canonChecked_eq` have no unfinished proof.
+1. `encode_iso_iff` and `colored_iso_iff_canon_eq` have no unfinished proof.
 2. Every supported positive goal constructs an explicit isomorphism checked
    by the kernel.
 3. Every supported negative goal ends in the Mathlib-free canonical-form
