@@ -107,9 +107,8 @@ theorem stInc_otherNodePrep (level code : Nat)
 /-! # The leaf arm installs
 
 `firstterminal` is where a first-path leaf becomes the incumbent. These
-record what it leaves behind, which is what makes `NodeConcl.installed`
-true on the leaf arm and fixes the `some` the absorption equation
-needs. -/
+record what it leaves behind, which is what fixes the `some` the
+absorption equation needs on the leaf arm. -/
 
 /-- A first-path leaf installs itself: the incumbent's level is this
 node's. -/
@@ -131,49 +130,11 @@ theorem firstterminal_firstlab (level : Nat) (st : SearchSt n) :
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-/-- A first-path leaf at a positive level leaves something installed,
-which is `NodeConcl.installed` on the leaf arm. -/
+/-- A first-path leaf at a positive level leaves something
+installed. -/
 theorem firstterminal_installed {level : Nat} (hlev : level ≠ 0)
     (st : SearchSt n) : (firstterminal level st).canonlevel ≠ 0 := by
   rw [firstterminal_canonlevel]
   exact hlev
-
-/-! # A boundary case `NodeConcl` does not separate
-
-`NodeConcl` splits on the returned level: `full` fires at
-`Int.ofNat level - 1` and `carried` strictly below it. The search does
-not respect that split, because a node returns `Int.ofNat level - 1` in
-two different ways.
-
-`firstChildLoop` at `level` abandons its sweep exactly when a child
-returns below `level` (`Search.lean`, the `rtnlevel < Int.ofNat level`
-test), handing back `some rtnlevel`; `firstPathNode` then returns that
-value unchanged. Since `Int.ofNat level - 1 < Int.ofNat level`, a child
-returning `level - 1` makes the node return `Int.ofNat level - 1` with
-its loop cut short, so the children after the abandoned one were never
-visited. `NodeConcl.full` nonetheless demands the whole subtree's
-absorption there, while `NodeConcl.carried`, whose guard is strict,
-supplies nothing. `otherNode` has the same shape twice, once after
-`processnode` and once after its loop.
-
-The configuration is reachable, not vacuous. `firstChildLoop` sets
-`gcaFirst := level` after its `tv1` child returns, so once the loop at
-`level - 1` has taken its first-path child, the state carries
-`gcaFirst = level - 1`; a later sibling of that loop runs `otherNode` at
-`level`, and a code-one `processnode` anywhere below returns
-`gcaFirst`, which is `level - 1`. That value propagates up to the node
-at `level`, which returns it through the abandoning branch.
-
-The repair is to let the completed case carry a payload too, so that
-`full` at `Int.ofNat level - 1` offers the absorption equation *or* a
-`CarrierOut`, and the caller's loop discharges the payload at the
-ancestor it names. That matches the architecture the file's design note
-describes, where a generator return is absorbed at the greatest common
-ancestor rather than at the leaf, and it is what lets the loop at
-`level - 1` continue instead of propagating. It is not made here
-because the root assembly consumes the equation directly
-(`dominated_of_root`), so changing the shape means re-deriving that
-assembly and checking the root's own boundary, where the node at level
-one returns zero. -/
 
 end Hex.GraphIso.Nauty

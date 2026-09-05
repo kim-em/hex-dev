@@ -75,6 +75,19 @@ theorem keysMax_eq_of_le {b k : Key n} {l : List (Key n)}
     (hb : b = k ∨ b ∈ l) : keysMax k l = b :=
   keyLe_antisym (keysMax_le hk hl) (keyLe_keysMax hb)
 
+/-- A key that dominates its partner is the maximum of the two. -/
+theorem keyMax_eq_left {b y : Key n} (h : keyLe y b) : keyMax b y = b := by
+  rw [keyMax]
+  split
+  · next hlt => exact absurd (keyCmp_gt_iff_lt.mpr hlt) h
+  · rfl
+
+/-- When the first key compares below the second, the second is the
+maximum. -/
+theorem keyMax_eq_right {b y : Key n} (h : keyCmp b y = .lt) :
+    keyMax b y = y := by
+  rw [keyMax, ite_eq_left h]
+
 /-! # First-difference comparisons of code lists -/
 
 theorem keyCmp_cons_lt {c c' : Nat} (h : c < c') (cs cs' : List Nat)
@@ -99,6 +112,22 @@ theorem keyCmp_cons_eq (c : Nat) (cs cs' : List Nat)
   have hcc : compare c c = Ordering.eq := by
     simp
   simp only [listCmp, hcc]
+
+/-- Prefixing a common code commutes with the key maximum. -/
+theorem keyMax_cons (c : Nat) (cs cs' : List Nat) (r r' : List (VSet n)) :
+    keyMax ⟨c :: cs, r⟩ ⟨c :: cs', r'⟩ =
+      ⟨c :: (keyMax ⟨cs, r⟩ ⟨cs', r'⟩).codes,
+        (keyMax ⟨cs, r⟩ ⟨cs', r'⟩).rows⟩ := by
+  rw [keyMax, keyMax, keyCmp_cons_eq]
+  split
+  · rfl
+  · rfl
+
+theorem keyLe_cons_tail {c : Nat} {cs brest : List Nat} {r br : List (VSet n)}
+    (h : keyLe ⟨c :: cs, r⟩ ⟨c :: brest, br⟩) :
+    keyLe ⟨cs, r⟩ ⟨brest, br⟩ := by
+  rw [keyLe, ← keyCmp_cons_eq c]
+  exact h
 
 /-! # Every spec key starts with the node's refinement code -/
 
@@ -1363,46 +1392,6 @@ theorem checkKey_sound {G : Colored n k} {cert : CertNode} {B : Key n}
     exact (hnode.2 rfl).trans (key_eta B)
 
 /-! # The untrusted producer -/
-
-/-- Branch-and-bound maximum of the incumbent and this subtree's keys,
-expressed at this node's depth. The incumbent prunes children whose
-refinement code falls below its code here. Untrusted: results are
-validated by `checkKey`. -/
-@[expose] def searchNode (ctx : Ctx n) (tcLevel : Nat) :
-    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → Option (Key n) → Key n
-  | 0, _, _, _, _, _, inc => inc.getD ⟨[], []⟩
-  | fuel + 1, level, lab, ptn, active, numcells, inc =>
-    let rs := refine ctx level lab ptn active numcells
-    let step : Option (Key n) → Key n := fun tail0 =>
-      if discreteAt rs.ptn level n then
-        let leafTail : Key n := ⟨[codeSentinel], leafRows ctx rs.lab⟩
-        match tail0 with
-        | none => ⟨rs.longcode :: leafTail.codes, leafTail.rows⟩
-        | some t =>
-          let t' := keyMax t leafTail
-          ⟨rs.longcode :: t'.codes, t'.rows⟩
-      else
-        let tcr := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
-        let t := (List.range tcr.2.2).foldl
-          (fun (acc : Option (Key n)) o =>
-            let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
-              rs.lab[tcr.1 + o]!
-            some (searchNode ctx tcLevel fuel (level + 1) br.1
-              br.2.1 br.2.2 (rs.numcells + 1) acc))
-          tail0
-        match t with
-        | none => ⟨[], []⟩
-        | some t => ⟨rs.longcode :: t.codes, t.rows⟩
-    match inc with
-    | none => step none
-    | some b =>
-      match b.codes with
-      | [] => step none
-      | bc :: brest =>
-        match compare rs.longcode bc with
-        | .lt => b
-        | .gt => step none
-        | .eq => step (some ⟨brest, b.rows⟩)
 
 /-- Build the certificate tree for the final best key. Untrusted. -/
 @[expose] def certifyNode (ctx : Ctx n) (tcLevel : Nat) :

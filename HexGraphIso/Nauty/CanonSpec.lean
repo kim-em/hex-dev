@@ -82,6 +82,12 @@ deriving Inhabited
   | [] => k
   | k' :: rest => keysMax (keyMax k k') rest
 
+/-- The incumbent absorbed into a subtree's best key, an absent
+incumbent contributing nothing. -/
+@[expose] def incMax : Option (Key n) → Key n → Key n
+  | none, y => y
+  | some b, y => keyMax b y
+
 /-- Discreteness of the partition at `level`: every cell a singleton. -/
 @[expose] def discreteAt (ptn : Array Nat) (level nn : Nat) : Bool :=
   (cells ptn level nn).all fun p => p.1 == p.2

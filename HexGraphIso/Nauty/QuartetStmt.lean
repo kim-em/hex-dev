@@ -13,33 +13,20 @@ import all HexGraphIso.Nauty.Search
 public section
 
 /-!
-The quartet's return type (SPEC § Verified search refinement).
+Per-node facts about the search state: the incumbent read off the
+state, the generator a code-one leaf records, the positions a call
+leaves fixed, and the root.
 
-This file states, and does not yet prove, what one call of each of
-`firstPathNode`, `firstChildLoop`, `otherNode` and `otherChildLoop`
-establishes. It exists to fix the shape of the mutual induction's
-conclusion before the induction is written, and in particular to
-record how a generator return carries its justification.
-
-The design point. A node that returns below `level - 1` abandoned
-part of its subtree, so it cannot claim the full absorption equation.
-The leaf and the abandoned suffix are discharged separately.  At a
-code-one leaf, the sentinel immediately above the current path proves
-that its codes equal the first path's codes, and the checked carrier
-proves that their rows agree; `auto_keyMax` therefore absorbs the leaf
-itself without a path-geometry invariant.  The remaining abandonment is
-absorbed *wholesale at the greatest common ancestor*: `processnode`
-returns `gcaFirst`, and the recorded generator carries the first path's
-child of that ancestor onto the current one, so `childKey_of_carried`
-equates the two child subtree keys and the abandoned one is dominated by
-a sibling the search already explored.
-
-The carrier fact is direct. `processnode` builds its generator as
-`workperm[firstlab[i]] := lab[i]`, so `γ` maps `firstlab` to `lab`
-pointwise by construction; the ancestor's target position is frozen
-from that level down, so the two entries at that position are exactly
-the two individualized vertices. Store validity is local as well: code
-one validates its scatter with `isautom` before admission.
+`nodeKey` is a node's subtree key under its path codes. `stInc` reads
+the incumbent from `SearchSt` and `stInc_eq_ghost` identifies it with
+the ghost incumbent `ghostInc` that the induction carries.
+`firstScatter_get` reads off the generator `processnode` builds as
+`workperm[firstlab[i]] := lab[i]`, so the permutation maps `firstlab`
+to `lab` pointwise by construction. The `breakout` lemmas say a
+singleton cell away from the target cell survives both refinement and
+individualization. `rootSt` and `rootOut` are the initial state and the
+run's output, and `stInc_final` and `nodeKey_root` read the incumbent
+and the subtree key there.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -66,9 +53,9 @@ degenerate reading therefore *outranks every reachable leaf key*, and
 that the final incumbent is the degenerate one, which is false as soon
 as the search installs anything.
 
-`SearchModel` already carries the fix: `incMax : Option (Key n) → Key n →
-Key n` with `none` as the bottom, which is what `searchNode_eq` folds
-with.  The semantic induction threads that option explicitly.  It can
+`CanonSpec` already carries the fix: `incMax : Option (Key n) → Key n →
+Key n` with `none` as the bottom.  The semantic induction threads that
+option explicitly.  It can
 be read back from the imperative state only outside the temporary
 upward-comparison window, where `canoncode` contains path codes rather
 than the installed incumbent's codes. -/
@@ -121,81 +108,16 @@ theorem stInc_eq_ghost {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
   rw [stInc, ghostInc, bestCodesOf_eq hinv hne, hinv.blen]
   cases bs <;> simp [incKey]
 
-/-- The payload a generator return carries to its target level.
+/-! # The scatter a code-one admission records
 
-`γ` is the generator `processnode` recorded, it is a checked
-automorphism, and it maps the first path's labelling onto the
-current one pointwise. The last clause is the whole content: at any
-position frozen at or above the return level, the two labellings hold
-the two paths' individualized vertices, so `γ` carries one child of
-the return level's node onto another. -/
-@[expose] def CarrierOut (ctx : Ctx n) (out : SearchSt n) : Prop :=
-  ∃ γ ∈ out.genTrace,
-    checkAutom ctx.g γ = true ∧
-      ∀ i, i < n → γ[out.firstlab[i]!]! = out.lab[i]!
+`processnode` builds its generator by `workperm[firstlab[i]] := lab[i]`
+over `i < n`, so the permutation maps `firstlab` to `lab` pointwise.
+`firstScatter_get` reads that fold back one entry at a time, on the two
+`foldl` lemmas below.
 
-/-- What one node call establishes.
-
-`full` is the absorption equation, available exactly when the node ran
-to completion, and `carried` is the generator payload, available
-exactly when it did not. The two are stated as implications on the
-returned level rather than as a disjunction so that a caller which
-knows which case it is in can use the corresponding clause without a
-case split. `installed` records that a completed node leaves an
-incumbent, which is what makes the `full` equation's left side a
-`some`. -/
-structure NodeConcl (ctx : Ctx n) (tcLevel fuel level : Nat)
-    (cs : List Nat) (st out : SearchSt n) (numcells : Nat)
-    (r : Int) : Prop where
-  /-- Something is installed on the way out of a completed node. -/
-  installed : r = Int.ofNat level - 1 → out.canonlevel ≠ 0
-  /-- Ran to completion: the whole subtree is absorbed. -/
-  full : r = Int.ofNat level - 1 →
-    stInc ctx out =
-      some (incMax (stInc ctx st)
-        (nodeKey ctx tcLevel fuel level cs st numcells))
-  /-- Returned early: the return goes to the recorded ancestor and
-  carries a generator that identifies this subtree with a sibling the
-  search already explored. -/
-  carried : r < Int.ofNat level - 1 →
-    r = Int.ofNat out.gcaFirst ∧ CarrierOut ctx out
-
-/-- What one child-loop call establishes.
-
-The loop folds the children from `tv1` onward into the incumbent.
-`explored` names the offsets it got through; on a `none` return that
-is all of them, and on a `some` return the loop stopped early and the
-payload travels on. -/
-structure LoopConcl (ctx : Ctx n) (tcLevel fuel level : Nat)
-    (cs : List Nat) (st out : SearchSt n)
-    (rsLab rsPtn : Array Nat) (tc numcells : Nat)
-    (explored : List Nat) (r : Option Int) : Prop where
-  /-- Completed with a nonempty sweep: something is installed. -/
-  installed : r = none → explored ≠ [] → out.canonlevel ≠ 0
-  /-- Completed: the incumbent absorbed exactly the children the loop
-  visited, under the node's own code prefix. -/
-  full : r = none →
-    stInc ctx out =
-      (explored.map fun o =>
-          prefixKey cs
-            (childKey ctx tcLevel fuel level rsLab rsPtn tc numcells o)).foldl
-        (fun acc kk => some (incMax acc kk)) (stInc ctx st)
-  /-- Stopped early: the payload identifies the remainder. -/
-  carried : ∀ rr, r = some rr → rr < Int.ofNat level →
-    rr = Int.ofNat out.gcaFirst ∧ CarrierOut ctx out
-
-/-! # The carrier fact is free
-
-The payload's third clause is not an assumption about the search's
-history: it follows from how `processnode` builds its generator. This
-is the feasibility check for the whole architecture, so it is proved
-here rather than asserted.
-
-`StoreValid` already has this fact as a private lemma
-(`foldl_scatter_getElem`) and already consumes exactly this shape in
-`scatter_isPerm`'s `hsc` hypothesis. At integration the private
-lemma should be exposed and these two re-proofs deleted, rather than
-kept in parallel. -/
+`StoreValid` has the same fact as a private lemma
+(`foldl_scatter_getElem`) and consumes exactly this shape in
+`scatter_isPerm`'s `hsc` hypothesis. -/
 
 private theorem foldl_size {lab₁ lab₂ : Array Nat} :
     ∀ (l : List Nat) (base : Array Nat),
@@ -241,52 +163,6 @@ theorem firstScatter_get {flab lab : Array Nat} {nn : Nat}
   exact foldl_get hinj (base := Array.replicate nn 0)
     (fun i hi => by rw [Array.size_replicate]; exact hlt i hi)
     (Nat.le_refl nn) hj
-
-/-- The gca step, which is where a payload is discharged.
-
-At the ancestor the payload's generator carries the abandoned child
-onto an already-explored one, so `childKey_of_carried` equates their
-keys and the abandoned child contributes nothing new. This is stated
-as the shape the loop needs, not proved here. -/
-@[expose] def PayloadAbsorbs (ctx : Ctx n) (tcLevel fuel level : Nat)
-    (rsLab rsPtn : Array Nat) (tc numcells : Nat)
-    (oFirst oCur : Nat) (out : SearchSt n) : Prop :=
-  CarrierOut ctx out →
-    childKey ctx tcLevel fuel level rsLab rsPtn tc numcells oCur =
-      childKey ctx tcLevel fuel level rsLab rsPtn tc numcells oFirst
-
-/-- The payload discharges, given the two position facts.
-
-The carrier clause holds at every position, so it holds at the
-ancestor's target position `tc`; the two hypotheses say what the two
-labellings hold there, namely the two paths' individualized vertices.
-`childKey_of_carried` then equates the two children's subtree keys.
-
-The position facts are the induction's to supply: they are the
-descent's own bookkeeping, not a property of this node. Everything
-else here is the node's well-formedness. -/
-theorem payloadAbsorbs_of_positions {ctx : Ctx n}
-    (hgsz : ctx.g.size = n) (tcLevel fuel level : Nat)
-    {rsLab rsPtn : Array Nat} {tc lenT numcells oFirst oCur : Nat}
-    {out : SearchSt n}
-    (hstab : ∀ γ, checkAutom ctx.g γ = true →
-      (∀ i, i < n → γ[out.firstlab[i]!]! = out.lab[i]!) →
-      CellStab rsPtn level rsLab γ)
-    (hs : rsLab.size = n) (hok : LabOk rsLab n)
-    (hsp : rsPtn.size = n) (hend : rsPtn[rsPtn.size - 1]! ≤ level)
-    (hvals : ∀ q : Nat, rsPtn[q]! ≤ level ∨ rsPtn[q]! = n + 2)
-    (hic : IsCell rsPtn level tc lenT) (hrange : tc + lenT ≤ n)
-    (hoC : oCur < lenT) (hoF : oFirst < lenT)
-    (hlf : level + 1 + fuel ≤ n + 1) (htc : tc < n)
-    (hfirst : out.firstlab[tc]! = rsLab[tc + oFirst]!)
-    (hcur : out.lab[tc]! = rsLab[tc + oCur]!) :
-    PayloadAbsorbs ctx tcLevel fuel level rsLab rsPtn tc numcells
-      oFirst oCur out := by
-  rintro ⟨γ, _, hAut, hmap⟩
-  refine childKey_of_carried hgsz hAut tcLevel fuel level
-    (hstab γ hAut hmap) hs hok hsp hend hvals hic hrange hoC hoF hlf ?_
-  have h := hmap tc htc
-  rwa [hfirst, hcur] at h
 
 /-! # The position facts: the step
 
@@ -378,109 +254,6 @@ does not touch. It is stated as part of that induction rather than
 before it because a node's effect on `lab` is only defined through the
 recursion. -/
 
-/-! # From the loop's fold to the node's maximum
-
-`LoopConcl.full` is a left fold of `incMax` over the offsets the loop
-actually visited, and `specNode_internal` presents the node's key as a
-`keysMax` over *all* of them. Two facts bridge the two, and neither
-mentions the search: the fold is the maximum, and offsets dominated by
-a survivor can be dropped from a maximum.
-
-The second is what the orbit prune and the two sibling filters are
-for. `firstChildLoop` skips a child outright when its orbit
-representative is not itself (`Search.lean`, the `orbits` test), so the
-fold's list is a sublist of the node's children; `childKey_of_orbPruned`
-and `longprune_carried`/`shortprune_carried` say each skipped child's
-key repeats one that survived, which is exactly the hypothesis of
-`keysMax_eq_of_dominated`. -/
-
-/-- A fold of `incMax` from a present incumbent is the seeded
-maximum. -/
-theorem foldl_incMax_some : ∀ (l : List (Key n)) (k : Key n),
-    l.foldl (fun acc kk => some (incMax acc kk)) (some k) =
-      some (keysMax k l)
-  | [], _ => rfl
-  | k' :: rest, k => by
-    rw [List.foldl_cons, keysMax]
-    exact foldl_incMax_some rest (keyMax k k')
-
-/-- A fold of `incMax` from no incumbent is the maximum seeded by the
-first key folded in. -/
-theorem foldl_incMax_none (k : Key n) (l : List (Key n)) :
-    (k :: l).foldl (fun acc kk => some (incMax acc kk)) none =
-      some (keysMax k l) := by
-  rw [List.foldl_cons]
-  exact foldl_incMax_some l k
-
-/-- Keys dominated by what survives can be dropped from a maximum.
-
-This is the shape the skipped children need: `l` is every child of the
-node, `l'` the ones the loop visited, and the hypothesis is that each
-child's key is bounded by the maximum over the visited ones, which the
-prune dischargers supply by exhibiting a visited child with an equal
-key. -/
-theorem keysMax_eq_of_dominated {l l' : List (Key n)} {k : Key n}
-    (hsub : ∀ x ∈ l', x ∈ l)
-    (hdom : ∀ x ∈ l, keyLe x (keysMax k l')) :
-    keysMax k l = keysMax k l' :=
-  keyLe_antisym
-    (keysMax_le (keyLe_keysMax (Or.inl rfl)) hdom)
-    (keysMax_le (keyLe_keysMax (Or.inl rfl))
-      fun y hy => keyLe_keysMax (Or.inr (hsub y hy)))
-
-/-- The dominated-key hypothesis in the form the prune dischargers
-produce it: every child either survived or has the same key as one that
-did. -/
-theorem keysMax_eq_of_repeats {l l' : List (Key n)} {k : Key n}
-    (hsub : ∀ x ∈ l', x ∈ l)
-    (hrep : ∀ x ∈ l, x ∈ l' ∨ ∃ y ∈ l', x = y) :
-    keysMax k l = keysMax k l' :=
-  keysMax_eq_of_dominated hsub fun x hx => by
-    rcases hrep x hx with hm | ⟨y, hy, rfl⟩
-    · exact keyLe_keysMax (Or.inr hm)
-    · exact keyLe_keysMax (Or.inr hy)
-
-/-- The same, with the two maxima seeded independently.
-
-The node and the loop do not share a seed: the node's maximum is seeded
-at its first child, and the loop's fold is seeded at whichever child it
-visited first. Treating both seeds as ordinary members is what lets the
-two be compared. -/
-theorem keysMax_eq_of_dominated' {k k' : Key n} {l l' : List (Key n)}
-    (hsub : ∀ x, (x = k' ∨ x ∈ l') → (x = k ∨ x ∈ l))
-    (hdom : ∀ x, (x = k ∨ x ∈ l) → keyLe x (keysMax k' l')) :
-    keysMax k l = keysMax k' l' :=
-  keyLe_antisym
-    (keysMax_le (hdom k (Or.inl rfl)) fun y hy => hdom y (Or.inr hy))
-    (keysMax_le (keyLe_keysMax (hsub k' (Or.inl rfl)))
-      fun y hy => keyLe_keysMax (hsub y (Or.inr hy)))
-
-/-- **The node's absorption equation from its loop's fold.**
-
-This is the algebra the node step performs, with the search abstracted
-away: the loop folded the children it visited into the incoming
-incumbent, and the node claims the incumbent absorbed the maximum over
-*all* its children. The two agree exactly when every child is dominated
-by the maximum over the visited ones, which is what the prune
-dischargers establish for the children the loop skipped.
-
-The incoming incumbent is handled uniformly, which is the point of
-carrying it as an `Option`: with nothing installed the fold's first
-child seeds the maximum, and with an incumbent present it is one more
-competitor. -/
-theorem node_absorbs_of_loop {inc : Option (Key n)} {k0 e : Key n}
-    {rest es : List (Key n)}
-    (hsub : ∀ x, (x = e ∨ x ∈ es) → (x = k0 ∨ x ∈ rest))
-    (hdom : ∀ x, (x = k0 ∨ x ∈ rest) → keyLe x (keysMax e es)) :
-    (e :: es).foldl (fun acc kk => some (incMax acc kk)) inc =
-      some (incMax inc (keysMax k0 rest)) := by
-  rw [keysMax_eq_of_dominated' hsub hdom]
-  cases inc with
-  | none => rw [foldl_incMax_none]; rfl
-  | some b =>
-    rw [foldl_incMax_some, keysMax]
-    exact congrArg some (keysMax_keyMax es b e)
-
 /-! # The root assembly
 
 The corrected statement reaches the programme's target. The root call
@@ -554,38 +327,3 @@ theorem nodeKey_root {G : Colored n k} (hn0 : n ≠ 0) :
   simp only [beq_iff_eq, hn0, ite_false]
   rfl
 
-/-- The root's incoming incumbent is the bottom: nothing is installed
-before the search starts. -/
-theorem stInc_rootSt {G : Colored n k} :
-    stInc { g := rowsOf G }
-      (rootSt n (initialPartition G).1 (initialPartition G).2) = none :=
-  rfl
-
-/-- **The root assembly.** Given the quartet's conclusion at the root
-call, the traced key is the specification's key. -/
-theorem dominated_of_root {G : Colored n k} (hn0 : n ≠ 0) {r : Int}
-    (hroot : NodeConcl { g := rowsOf G } 100 n 1 []
-      (rootSt n (initialPartition G).1 (initialPartition G).2)
-      (rootOut n (rowsOf G) (initialPartition G).1
-        (initialPartition G).2)
-      (initialPartition G).2.length r)
-    (hr : r = Int.ofNat 1 - 1) :
-    canonSpecKey G = tracedKey G := by
-  have hfull := hroot.full hr
-  have hinst := hroot.installed hr
-  rw [stInc_final hn0 hinst, stInc_rootSt, incMax, nodeKey_root hn0] at hfull
-  exact (Option.some.inj hfull).symm
-
-/-- **The programme's target**, modulo the quartet at the root. -/
-theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
-    {r : Int}
-    (hroot : NodeConcl { g := rowsOf G } 100 n 1 []
-      (rootSt n (initialPartition G).1 (initialPartition G).2)
-      (rootOut n (rowsOf G) (initialPartition G).1
-        (initialPartition G).2)
-      (initialPartition G).2.length r)
-    (hr : r = Int.ofNat 1 - 1) :
-    (certifyCanon? G).isSome :=
-  certifyCanon?_isSome_of_keyEq G (dominated_of_root hn0 hroot hr)
-
-end Hex.GraphIso.Nauty

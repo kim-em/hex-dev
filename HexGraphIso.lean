@@ -46,7 +46,6 @@ public import HexGraphIso.Nauty.SmallCellExotic
 public import HexGraphIso.Nauty.SmallCellExotic2
 public import HexGraphIso.Nauty.SmallCellExotic3
 public import HexGraphIso.Nauty.SmallCellAll
-public import HexGraphIso.Nauty.FirstPath
 public import HexGraphIso.Nauty.CertTotal
 public import HexGraphIso.Nauty.CertReplay
 public import HexGraphIso.Nauty.CertStore
@@ -88,9 +87,9 @@ public import HexGraphIso.Nauty.SearchReach
 public import HexGraphIso.Nauty.Translator
 public import HexGraphIso.Nauty.SpecCanon
 public import HexGraphIso.Nauty.Achieved
-public import HexGraphIso.Nauty.Complete
-public import HexGraphIso.Nauty.SearchModel
-public import HexGraphIso.Nauty.SearchAutom
+public import HexGraphIso.Nauty.Model.Node
+public import HexGraphIso.Nauty.Model.Autom
+public import HexGraphIso.Nauty.Model.Store
 public import HexGraphIso.Nauty.SearchOrbit
 public import HexGraphIso.Nauty.Stabilize
 public import HexGraphIso.Nauty.AutosLedger
