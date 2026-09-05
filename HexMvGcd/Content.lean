@@ -240,7 +240,7 @@ theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
       rw [hq, Lean.Grind.Semiring.zero_mul, coeff_zero]
     subst p
     have hcontent : content (0 : MvPoly n R cmp) = 0 := rfl
-    rw [hcontent, primPart, hcontent, Hex.ite_eq_left rfl]
+    rw [hcontent, primPart, hcontent, ite_eq_left rfl]
     rw [C_zero]
     exact zero_mul _
   · apply ext
@@ -248,7 +248,7 @@ theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
     have hzero : GcdOps.exactDiv (0 : R) (content p) = 0 := by
       simpa only [Lean.Grind.Semiring.zero_mul] using
         LawfulGcdOps.exactDiv_cancel (0 : R) (content p) hc
-    rw [coeff_C_mul, primPart, Hex.ite_eq_right hc,
+    rw [coeff_C_mul, primPart, ite_eq_right hc,
       coeff_mapCoeffs hzero]
     have hdiv := scalarContent_dvd_coeff p m
     rw [← content] at hdiv
