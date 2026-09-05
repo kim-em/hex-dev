@@ -62,6 +62,11 @@ structure CtxRep (ctx : CtxP) (ctxL : CtxL) : Prop where
   m : ctx.m = 2 ^ ctx.w - 1
   rm : ctx.rm = 2 ^ ctx.n - 1
   g : Rep ctx.n ctx.n ctx.g ctxL.g
+  /-- Positions, vertices and the initial partition's infinity `n + 2`
+  fit a field. -/
+  nlt : ctx.n + 2 < 2 ^ ctx.w
+  /-- Every level the replay's fuel of `100` reaches fits a field. -/
+  levels : 101 < 2 ^ ctx.w
 
 /-- Read a packed position or vertex vector. -/
 @[expose] def lget (ctx : CtxP) (a i : Nat) : Nat := pget ctx.w ctx.m a i
@@ -619,7 +624,7 @@ theorem nontrivialFixP_eq (cell1 : Nat) {w n : Nat} {st : RefineStP}
     exact hst
   · rw [ite_eq_right he, ite_eq_left (by simpa using he)]
     exact RepSt.mk' hst.lab hst.ptn
-      (by simp [hst.numcells, hst.hint, hst.maxpos, hst.longcode])
+      (by simp [hst.numcells, hst.hint, hst.longcode])
 
 @[expose] def nontrivialCellP (ctx : CtxP) (level workset cell1 cell2 : Nat)
     (st : RefineStP) : RefineStP :=
@@ -789,5 +794,756 @@ theorem refineP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
     ⟨hl, hp, rfl, rfl, rfl, rfl, rfl⟩
   exact ⟨hloop.lab, hloop.ptn, hloop.active, hloop.numcells, hloop.hint,
     hloop.maxpos, by simp [hloop.longcode, hloop.numcells]⟩
+
+
+/-! # Raw list helpers -/
+
+@[expose] def listContainsK : List Nat → Nat → Bool
+  | [], _ => false
+  | b :: bs, a => cond (Nat.beq a b) true (listContainsK bs a)
+
+theorem listContainsK_eq : ∀ (l : List Nat) (a : Nat),
+    listContainsK l a = l.contains a
+  | [], _ => rfl
+  | b :: bs, a => by
+    rw [listContainsK, List.contains_cons, listContainsK_eq bs a, cond_beq]
+    rcases Decidable.em (a = b) with h | h <;> simp [h]
+
+@[expose] def listEraseK : List Nat → Nat → List Nat
+  | [], _ => []
+  | a :: as, b => cond (Nat.beq a b) as (a :: listEraseK as b)
+
+theorem listEraseK_eq : ∀ (l : List Nat) (b : Nat), listEraseK l b = l.erase b
+  | [], _ => rfl
+  | a :: as, b => by
+    rw [listEraseK, List.erase_cons, listEraseK_eq as b, cond_beq]
+    rcases Decidable.em (a = b) with h | h <;> simp [h]
+
+/-- `List.isPerm`, raw. -/
+@[expose] def isPermK : List Nat → List Nat → Bool
+  | [], l₂ => l₂.isEmpty
+  | a :: l₁, l₂ => listContainsK l₂ a && isPermK l₁ (listEraseK l₂ a)
+
+theorem isPermK_eq : ∀ (l₁ l₂ : List Nat), isPermK l₁ l₂ = l₁.isPerm l₂
+  | [], _ => rfl
+  | a :: l₁, l₂ => by
+    rw [isPermK, List.isPerm, listContainsK_eq, listEraseK_eq, isPermK_eq l₁]
+
+theorem find?_congr {α : Type} {p q : α → Bool} :
+    ∀ (l : List α), (∀ x, x ∈ l → p x = q x) → l.find? p = l.find? q
+  | [], _ => rfl
+  | a :: l, h => by
+    rw [List.find?_cons, List.find?_cons, h a (List.mem_cons_self ..),
+      find?_congr l fun x hx => h x (List.mem_cons_of_mem _ hx)]
+
+theorem map_atD_range {α : Type} (l : List Nat) (f : Nat → α) :
+    (List.range l.length).map (fun i => f (atD l i 0)) = l.map f := by
+  refine List.ext_getElem (by simp) fun i h1 h2 => ?_
+  simp only [List.getElem_map, List.getElem_range]
+  rw [atD_eq_getElem l i (by simpa using h2)]
+
+theorem map_getBang_range {γ : Array Nat} {nn : Nat} (h : γ.size = nn) :
+    (List.range nn).map (fun v => γ[v]!) = γ.toList := by
+  refine List.ext_getElem (by simp [h]) fun i h1 h2 => ?_
+  simp only [List.getElem_map, List.getElem_range, getBang_eq_atD]
+  rw [atD_eq_getElem _ i (by simpa using h2)]
+
+/-! # Target cell, breakout, and leaf machinery over packed state -/
+
+@[expose] def discreteAtP (ctx : CtxP) (ptn level : Nat) : Bool :=
+  (cellsP ctx ptn level).all fun p => Nat.beq p.1 p.2
+
+theorem discreteAtP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn) (level : Nat) :
+    discreteAtP ctx ptnP level = discreteAtL ptn level ctxL.n := by
+  rw [discreteAtP, discreteAtL, cellsP_eq h hp]
+  simp only [beq_eq_beq]
+
+@[expose] def joinTestP (ctx : CtxP) (lab wset c1 c2 : Nat) : Bool :=
+  let counts := countsOfP ctx lab wset c1 c2
+  counts.any (fun c => Nat.blt 0 c) &&
+    counts.any (fun c => Nat.blt c (popCountK wset))
+
+theorem joinTestP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    (wset c1 c2 : Nat) :
+    joinTestP ctx labP wset c1 c2 = joinTestL ctxL lab wset c1 c2 := by
+  rw [joinTestP, joinTestL, countsOfP_eq h hl, popCountK_eq]
+  simp only [blt_eq_decide]
+
+@[expose] def specBestcellRowP (ctx : CtxP) (lab ptn level : Nat)
+    (startArr : List Nat) (workset v2 : Nat) : List Nat → List Nat → List Nat
+  | [], bucket => bucket
+  | v1 :: rest, bucket =>
+    cond (joinTestP ctx lab workset (atD startArr v1 0)
+        (cellEndP ctx ptn level (atD startArr v1 0)))
+      (specBestcellRowP ctx lab ptn level startArr workset v2 rest
+        ((bucket.set v1 (Nat.add (atD bucket v1 0) 1)).set v2
+          (Nat.add (atD bucket v2 0) 1)))
+      (specBestcellRowP ctx lab ptn level startArr workset v2 rest bucket)
+
+theorem specBestcellRowP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn)
+    (level : Nat) (startArr : List Nat) (workset v2 : Nat) :
+    ∀ (vs bucket : List Nat),
+      specBestcellRowP ctx labP ptnP level startArr workset v2 vs bucket =
+        specBestcellRowL ctxL lab ptn level startArr workset v2 vs bucket
+  | [], _ => rfl
+  | v1 :: rest, bucket => by
+    rw [specBestcellRowP, specBestcellRowL, joinTestP_eq h hl, cellEndP_eq h hp,
+      cond_beq_true]
+    simp only [add_eq]
+    rcases Decidable.em (joinTestL ctxL lab workset (atD startArr v1 0)
+        (cellEndL ptn level (atD startArr v1 0)) = true) with hj | hj
+    · rw [ite_eq_left hj, ite_eq_left hj,
+        specBestcellRowP_eq h hl hp level startArr workset v2 rest]
+    · rw [ite_eq_right hj, ite_eq_right hj,
+        specBestcellRowP_eq h hl hp level startArr workset v2 rest]
+
+@[expose] def specBestcellRowsP (ctx : CtxP) (lab ptn level : Nat)
+    (startArr : List Nat) : List Nat → List Nat → List Nat
+  | [], bucket => bucket
+  | v2 :: rest, bucket =>
+    specBestcellRowsP ctx lab ptn level startArr rest
+      (specBestcellRowP ctx lab ptn level startArr
+        (worksetOfP ctx lab (atD startArr v2 0)
+          (cellEndP ctx ptn level (atD startArr v2 0)))
+        v2 (List.range v2) bucket)
+
+theorem specBestcellRowsP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn)
+    (level : Nat) (startArr : List Nat) : ∀ (vs bucket : List Nat),
+      specBestcellRowsP ctx labP ptnP level startArr vs bucket =
+        specBestcellRowsL ctxL lab ptn level startArr vs bucket
+  | [], _ => rfl
+  | v2 :: rest, bucket => by
+    rw [specBestcellRowsP, specBestcellRowsL, worksetOfP_eq h hl, cellEndP_eq h hp,
+      specBestcellRowP_eq h hl hp, specBestcellRowsP_eq h hl hp level startArr rest]
+
+@[expose] def argmaxLoopK (bucket : List Nat) : List Nat → Nat → Nat → Nat
+  | [], v1, _ => v1
+  | i :: rest, v1, v2 =>
+    cond (Nat.blt v2 (atD bucket i 0))
+      (argmaxLoopK bucket rest i (atD bucket i 0))
+      (argmaxLoopK bucket rest v1 v2)
+
+theorem argmaxLoopK_eq (bucket : List Nat) : ∀ (vs : List Nat) (v1 v2 : Nat),
+    argmaxLoopK bucket vs v1 v2 = argmaxLoopL bucket vs v1 v2
+  | [], _, _ => rfl
+  | i :: rest, v1, v2 => by
+    rw [argmaxLoopK, argmaxLoopL, cond_blt]
+    rcases Decidable.em (v2 < atD bucket i 0) with hl | hl
+    · rw [ite_eq_left hl, ite_eq_left hl, argmaxLoopK_eq bucket rest]
+    · rw [ite_eq_right hl, ite_eq_right hl, argmaxLoopK_eq bucket rest]
+
+@[expose] def specBestcellP (ctx : CtxP) (lab ptn level : Nat) : Nat :=
+  let starts := ((cellsP ctx ptn level).filter fun p => !Nat.beq p.1 p.2).map (·.1)
+  let nnt := starts.length
+  cond (Nat.beq nnt 0) ctx.n
+    (let bucket := specBestcellRowsP ctx lab ptn level starts
+      (List.range' 1 (Nat.sub nnt 1)) (List.replicate nnt 0)
+    atD starts (argmaxLoopK bucket (List.range' 1 (Nat.sub nnt 1)) 0 (atD bucket 0 0)) 0)
+
+theorem specBestcellP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn) (level : Nat) :
+    specBestcellP ctx labP ptnP level = specBestcellL ctxL lab ptn level := by
+  rw [specBestcellP, specBestcellL, cellsP_eq h hp]
+  have hf : (fun p : Nat × Nat => !Nat.beq p.1 p.2) = fun x => decide (x.1 ≠ x.2) :=
+    funext fun p => by rw [beq_eq_decide, decide_not]
+  simp only [cond_beq, sub_eq, specBestcellRowsP_eq h hl hp, argmaxLoopK_eq, h.n,
+    beq_iff_eq, hf]
+
+/-- The start of the first nontrivial cell, `0` if every cell is a
+singleton: the target-cell rule below the `tcLevel` cutoff. -/
+@[expose] def firstNontrivialP : List (Nat × Nat) → Nat
+  | [] => 0
+  | p :: rest => cond (Nat.beq p.1 p.2) (firstNontrivialP rest) p.1
+
+@[expose] def specTargetcellP (ctx : CtxP) (lab ptn level tcLevel : Nat) : Nat :=
+  cond (Nat.ble level tcLevel) (specBestcellP ctx lab ptn level)
+    (firstNontrivialP (cellsP ctx ptn level))
+
+theorem specTargetcellP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn)
+    (level tcLevel : Nat) :
+    specTargetcellP ctx labP ptnP level tcLevel =
+      specTargetcellL ctxL lab ptn level tcLevel := by
+  rw [specTargetcellP, specTargetcellL, cellsP_eq h hp, cond_ble]
+  rcases Decidable.em (level ≤ tcLevel) with hle | hle
+  · rw [ite_eq_left hle, ite_eq_left hle, specBestcellP_eq h hl hp]
+  · rw [ite_eq_right hle, ite_eq_right hle]
+    generalize cellsL ptn level ctxL.n = cs
+    induction cs with
+    | nil => rfl
+    | cons p rest ih =>
+      rcases p with ⟨c1, c2⟩
+      rw [firstNontrivialP, List.find?_cons, cond_beq]
+      rcases Decidable.em (c1 = c2) with he | he
+      · rw [ite_eq_left he, ih]
+        simp [he]
+      · rw [ite_eq_right he]
+        simp [he]
+
+@[expose] def specMaketargetcellP (ctx : CtxP) (lab ptn level tcLevel : Nat) :
+    Nat × Nat × Nat :=
+  let i := specTargetcellP ctx lab ptn level tcLevel
+  let j := cellEndP ctx ptn level (Nat.add i 1)
+  (i, worksetOfP ctx lab i j, Nat.add (Nat.sub j i) 1)
+
+theorem specMaketargetcellP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn)
+    (level tcLevel : Nat) :
+    specMaketargetcellP ctx labP ptnP level tcLevel =
+      specMaketargetcellL ctxL lab ptn level tcLevel := by
+  rw [specMaketargetcellP, specMaketargetcellL]
+  simp only [specTargetcellP_eq h hl hp, cellEndP_eq h hp, worksetOfP_eq h hl,
+    add_eq, sub_eq]
+
+@[expose] def breakoutGoP (ctx : CtxP) (tv : Nat) : Nat → Nat → Nat → Nat → Nat
+  | 0, lab, _, _ => lab
+  | fuel + 1, lab, i, prev =>
+    let next := lget ctx lab i
+    let lab := lset ctx lab i prev
+    cond (Nat.beq next tv) lab (breakoutGoP ctx tv fuel lab (Nat.add i 1) next)
+
+theorem breakoutGoP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL) (tv : Nat) :
+    ∀ (fuel : Nat) {labP : Nat} {lab : List Nat}, Rep ctx.w ctx.n labP lab →
+      ∀ (i prev : Nat), prev < 2 ^ ctx.w →
+      Rep ctx.w ctx.n (breakoutGoP ctx tv fuel labP i prev)
+        (breakoutGoL tv fuel lab i prev)
+  | 0, _, _, hl, _, _, _ => hl
+  | fuel + 1, labP, lab, hl, i, prev, hprev => by
+    rw [breakoutGoP, breakoutGoL]
+    simp only [add_eq]
+    have hn : lget ctx labP i = atD lab i 0 := lget_eq h hl i
+    rw [hn, cond_beq]
+    rcases Decidable.em (atD lab i 0 = tv) with he | he
+    · rw [ite_eq_left he, ite_eq_left (by simpa using he)]
+      exact lset_rep h hl i hprev
+    · rw [ite_eq_right he, ite_eq_right (by simpa using he)]
+      exact breakoutGoP_rep h tv fuel (lset_rep h hl i hprev) (i + 1) _ (hl.small.atD i)
+
+@[expose] def breakoutP (ctx : CtxP) (lab ptn level tc tv : Nat) : Nat × Nat × Nat :=
+  (breakoutGoP ctx tv (Nat.add ctx.n 1) lab tc tv, lset ctx ptn tc level,
+    insertK 0 tc)
+
+theorem breakoutP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn)
+    {level : Nat} (hlev : level < 2 ^ ctx.w) (tc : Nat) {tv : Nat}
+    (htv : tv < 2 ^ ctx.w) :
+    Rep ctx.w ctx.n (breakoutP ctx labP ptnP level tc tv).1
+        (breakoutL lab ptn level tc tv).1 ∧
+      Rep ctx.w ctx.n (breakoutP ctx labP ptnP level tc tv).2.1
+        (breakoutL lab ptn level tc tv).2.1 ∧
+      (breakoutP ctx labP ptnP level tc tv).2.2 =
+        (breakoutL lab ptn level tc tv).2.2 := by
+  rw [breakoutP, breakoutL]
+  refine ⟨?_, lset_rep h hp tc hlev, insertK_eq 0 tc⟩
+  rw [hl.len, add_eq]
+  exact breakoutGoP_rep h tv _ hl tc tv htv
+
+@[expose] def segNP (ctx : CtxP) (lab lo len : Nat) : List Nat :=
+  (List.range len).map fun o => lget ctx lab (Nat.add lo o)
+
+theorem segNP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) (lo len : Nat) :
+    segNP ctx labP lo len = segNL lab lo len := by
+  rw [segNP, segNL]
+  simp only [lget_eq h hl, add_eq]
+
+/-- The packed image of a packed labelling under a packed permutation. -/
+@[expose] def mapGammaP (ctx : CtxP) (γP lab : Nat) : Nat :=
+  pack ctx.w ((List.range ctx.n).map fun i => lget ctx γP (lget ctx lab i))
+
+theorem mapGammaP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {γP : Nat} {γl : List Nat} (hg : Rep ctx.w ctx.n γP γl)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
+    Rep ctx.w ctx.n (mapGammaP ctx γP labP) (lab.map fun v => atD γl v 0) := by
+  rw [mapGammaP]
+  have hs : Small ctx.w ((List.range ctx.n).map fun i => lget ctx γP (lget ctx labP i)) := by
+    unfold Small
+    intro x hx
+    rw [List.mem_map] at hx
+    obtain ⟨i, _, rfl⟩ := hx
+    exact lget_lt h _ _
+  have hlen : ((List.range ctx.n).map fun i => lget ctx γP (lget ctx labP i)).length =
+      ctx.n := by simp
+  have heq : ((List.range ctx.n).map fun i => lget ctx γP (lget ctx labP i)) =
+      lab.map fun v => atD γl v 0 := by
+    simp only [lget_eq h hg, lget_eq h hl]
+    rw [← hl.len]
+    exact map_atD_range lab fun v => atD γl v 0
+  exact ⟨by rw [← heq]; exact hlen, by rw [← heq]; exact hs, by rw [heq]⟩
+
+@[expose] def checkCellsPermP (ctx : CtxP) (ptn lab₁ lab₂' level : Nat) : Bool :=
+  (cellsP ctx ptn level).all fun p =>
+    isPermK (segNP ctx lab₁ p.1 (Nat.sub (Nat.add p.2 1) p.1))
+      (segNP ctx lab₂' p.1 (Nat.sub (Nat.add p.2 1) p.1))
+
+theorem checkCellsPermP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {ptnP : Nat} {ptn : List Nat} (hp : Rep ctx.w ctx.n ptnP ptn)
+    {lab₁P : Nat} {lab₁ : List Nat} (h1 : Rep ctx.w ctx.n lab₁P lab₁)
+    {lab₂P : Nat} {lab₂ : List Nat} (h2 : Rep ctx.w ctx.n lab₂P lab₂) (level : Nat) :
+    checkCellsPermP ctx ptnP lab₁P lab₂P level =
+      checkCellsPermL ptn lab₁ lab₂ level ctxL.n := by
+  rw [checkCellsPermP, checkCellsPermL, cellsP_eq h hp]
+  simp only [isPermK_eq, segNP_eq h h1, segNP_eq h h2, add_eq, sub_eq]
+
+@[expose] def invPermGoP (ctx : CtxP) (lab : Nat) : List Nat → Nat → Nat
+  | [], inv => inv
+  | i :: rest, inv => invPermGoP ctx lab rest (lset ctx inv (lget ctx lab i) i)
+
+theorem invPermGoP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
+    ∀ (idx : List Nat), (∀ i, i ∈ idx → i < 2 ^ ctx.w) →
+      ∀ {invP : Nat} {inv : List Nat}, Rep ctx.w ctx.n invP inv →
+      Rep ctx.w ctx.n (invPermGoP ctx labP idx invP) (invPermGoL lab idx inv)
+  | [], _, _, _, hi => hi
+  | i :: rest, hidx, _, _, hi => by
+    rw [invPermGoP, invPermGoL, lget_eq h hl]
+    exact invPermGoP_rep h hl rest (fun j hj => hidx j (List.mem_cons_of_mem _ hj))
+      (lset_rep h hi _ (hidx i (List.mem_cons_self ..)))
+
+@[expose] def invPermP (ctx : CtxP) (lab : Nat) : Nat :=
+  invPermGoP ctx lab (List.range ctx.n) 0
+
+theorem invPermP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
+    Rep ctx.w ctx.n (invPermP ctx labP) (invPermL lab) := by
+  rw [invPermP, invPermL, hl.len]
+  refine invPermGoP_rep h hl _ (fun i hi => ?_) (Rep.replicate ctx.w ctx.n)
+  have := List.mem_range.mp hi
+  have := h.nlt
+  omega
+
+@[expose] def permsetP (ctx : CtxP) (s perm : Nat) : Nat :=
+  (List.range ctx.n).foldl
+    (fun acc v => cond (elemK s v) (insertK acc (lget ctx perm v)) acc) 0
+
+theorem permsetP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {permP : Nat} {perm : List Nat} (hp : Rep ctx.w ctx.n permP perm) (s : Nat) :
+    permsetP ctx s permP = permsetL s perm ctxL.n := by
+  rw [permsetP, permsetL, h.n]
+  congr 1
+  funext acc v
+  rw [elemK_eq, cond_beq_true, insertK_eq, lget_eq h hp]
+  rfl
+
+@[expose] def leafRowsP (ctx : CtxP) (lab : Nat) : List Nat :=
+  let inv := invPermP ctx lab
+  (List.range ctx.n).map fun i => permsetP ctx (rowP ctx (lget ctx lab i)) inv
+
+theorem leafRowsP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {labP : Nat} {lab : List Nat} (hl : Rep ctx.w ctx.n labP lab) :
+    leafRowsP ctx labP = leafRowsL ctxL lab := by
+  rw [leafRowsP, leafRowsL]
+  simp only [permsetP_eq h (invPermP_rep h hl), rowP_eq h, lget_eq h hl, h.n]
+
+/-! # Automorphism validation over packed state -/
+
+@[expose] def imageP (σ : Nat → Nat) (n s : Nat) : Nat :=
+  (List.range n).foldl (fun t v => cond (elemK s v) (insertK t (σ v)) t) 0
+
+theorem imageP_eq (σ : Nat → Nat) (n s : Nat) : imageP σ n s = image σ n s := by
+  rw [imageP, image]
+  congr 1
+  funext t v
+  rw [elemK_eq, cond_beq_true, insertK_eq]
+  rfl
+
+/-- A candidate permutation array has `n` entries, all vertices. -/
+@[expose] def gammaOkP (ctx : CtxP) (γl : List Nat) : Bool :=
+  Nat.beq γl.length ctx.n && γl.all fun v => Nat.blt v ctx.n
+
+theorem gammaOkP_rep {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    {γl : List Nat} (hok : gammaOkP ctx γl = true) :
+    Rep ctx.w ctx.n (pack ctx.w γl) γl := by
+  rw [gammaOkP, Bool.and_eq_true, Nat.beq_eq, List.all_eq_true] at hok
+  refine ⟨hok.1, fun x hx => ?_, rfl⟩
+  have := Nat.blt_eq.mp (hok.2 x hx)
+  have := h.nlt
+  omega
+
+@[expose] def checkAutomP (ctx : CtxP) (γ : Array Nat) : Bool :=
+  let γl := γ.toList
+  gammaOkP ctx γl &&
+    (let γP := pack ctx.w γl
+    isPermK γl (List.range ctx.n) &&
+      (List.range ctx.n).all fun v =>
+        Nat.beq (rowP ctx (lget ctx γP v))
+          (imageP (fun w => lget ctx γP w) ctx.n (rowP ctx v)))
+
+theorem gammaOkP_of_checkAutom {ctx : CtxP} {nn : Nat} {g : Array Nat}
+    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) {γ : Array Nat}
+    (hc : checkAutom g γ nn = true) : gammaOkP ctx γ.toList = true := by
+  rw [checkAutom, Bool.and_eq_true, Bool.and_eq_true, Bool.and_eq_true,
+    beq_iff_eq, List.all_eq_true] at hc
+  obtain ⟨⟨⟨hsize, hsmall⟩, _⟩, _⟩ := hc
+  rw [gammaOkP, Bool.and_eq_true, Nat.beq_eq, List.all_eq_true, Array.length_toList,
+    hsize, h.n]
+  refine ⟨rfl, fun x hx => ?_⟩
+  rw [List.mem_iff_getElem] at hx
+  obtain ⟨i, hi, rfl⟩ := hx
+  rw [Array.length_toList, hsize] at hi
+  have := of_decide_eq_true (hsmall i (List.mem_range.mpr hi))
+  rw [getBang_eq_atD, atD_eq_getElem _ i (by simpa [hsize] using hi)] at this
+  exact Nat.blt_eq.mpr this
+
+theorem checkAutomP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
+    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) (γ : Array Nat) :
+    checkAutomP ctx γ = checkAutom g γ nn := by
+  have hrow : ∀ v, rowP ctx v = g[v]! := fun v => by
+    rw [rowP_eq h, getBang_eq_atD]
+    rfl
+  rcases hok : gammaOkP ctx γ.toList with _ | _
+  · rw [checkAutomP]
+    simp only [hok, Bool.false_and]
+    rcases hc : checkAutom g γ nn with _ | _
+    · rfl
+    · rw [gammaOkP_of_checkAutom h hc] at hok
+      cases hok
+  · have hrep := gammaOkP_rep h hok
+    have hok' := hok
+    rw [gammaOkP, Bool.and_eq_true, Nat.beq_eq, List.all_eq_true,
+      Array.length_toList] at hok'
+    have hsize : γ.size = nn := by rw [hok'.1, h.n]; rfl
+    have hget : ∀ v, lget ctx (pack ctx.w γ.toList) v = γ[v]! := fun v => by
+      rw [lget_eq h hrep, getBang_eq_atD]
+    have hbound : ∀ v, v ∈ List.range nn → (γ[v]! : Nat) < nn := fun v hv => by
+      have hmem : (γ[v]! : Nat) ∈ γ.toList := by
+        rw [getBang_eq_atD, atD_eq_getElem _ v (by
+          rw [Array.length_toList, hsize]; exact List.mem_range.mp hv)]
+        exact List.getElem_mem _
+      have := Nat.blt_eq.mp (hok'.2 _ hmem)
+      rw [h.n] at this
+      exact this
+    rw [checkAutomP, checkAutom, Bool.eq_iff_iff]
+    simp only [hok, Bool.true_and, Bool.and_eq_true, hget, hrow, isPermK_eq,
+      imageP_eq, h.n, Ctx.toL, map_getBang_range hsize, beq_iff_eq, Nat.beq_eq,
+      List.all_eq_true, decide_eq_true_eq]
+    constructor
+    · rintro ⟨hperm, himgs⟩
+      exact ⟨⟨⟨hsize, hbound⟩, hperm⟩, himgs⟩
+    · rintro ⟨⟨_, hperm⟩, himgs⟩
+      exact ⟨hperm, himgs⟩
+
+@[expose] def validGammasP (ctx : CtxP) (cert : CertNode) : List Nat :=
+  ((certGammas (Nat.add ctx.n 2) cert []).filter (checkAutomP ctx)).map
+    fun γ => pack ctx.w γ.toList
+
+theorem validGammasP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
+    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) (cert : CertNode) :
+    validGammasP ctx cert = (validGammas g nn cert).map fun γ => pack ctx.w γ.toList := by
+  rw [validGammasP, validGammas, add_eq, h.n]
+  congr 1
+  exact List.filter_congr fun γ _ => checkAutomP_eq h γ
+
+/-- Membership of a certificate's permutation among the validated
+generators, on packed numbers: the array must have `n` vertex entries
+(so the packing is faithful) and its packing must appear. -/
+@[expose] def containsGammaP (ctx : CtxP) (vgens : List Nat) (γ : Array Nat) : Bool :=
+  gammaOkP ctx γ.toList && vgens.any (Nat.beq (pack ctx.w γ.toList))
+
+theorem containsGamma_of_mem : ∀ {vgens : List (Array Nat)} {γ : Array Nat},
+    γ ∈ vgens → containsGamma vgens γ = true
+  | g :: rest, γ, hmem => by
+    rw [containsGamma, Bool.or_eq_true]
+    rcases List.mem_cons.mp hmem with rfl | hmem
+    · exact Or.inl (by rw [gammaEq]; exact beq_self_eq_true _)
+    · exact Or.inr (containsGamma_of_mem hmem)
+
+theorem containsGammaP_eq {ctx : CtxP} {nn : Nat} {g : Array Nat}
+    (h : CtxRep ctx (Ctx.toL ⟨nn, g⟩)) (cert : CertNode) (γ : Array Nat) :
+    containsGammaP ctx (validGammasP ctx cert) γ =
+      containsGamma (validGammas g nn cert) γ := by
+  rw [Bool.eq_iff_iff, containsGammaP, validGammasP_eq h, Bool.and_eq_true,
+    List.any_eq_true]
+  constructor
+  · rintro ⟨hok, x, hx, hbeq⟩
+    rw [List.mem_map] at hx
+    obtain ⟨g', hg', rfl⟩ := hx
+    have hc := validGammas_sound hg'
+    have hrep := gammaOkP_rep h hok
+    have hrep' := gammaOkP_rep h (gammaOkP_of_checkAutom h hc)
+    have heq : γ.toList = g'.toList :=
+      pack_injective ctx.w _ _ hrep.small hrep'.small (by rw [hrep.len, hrep'.len])
+        (Nat.eq_of_beq_eq_true hbeq)
+    rw [Array.toList_inj] at heq
+    rw [heq]
+    exact containsGamma_of_mem hg'
+  · intro hc
+    have hmem := containsGamma_mem hc
+    refine ⟨gammaOkP_of_checkAutom h (validGammas_sound hmem), pack ctx.w γ.toList,
+      List.mem_map.mpr ⟨γ, hmem, rfl⟩, Nat.beq_refl _⟩
+
+/-! # The certificate replay over packed state -/
+
+@[expose] def checkNodeP (ctx : CtxP) (tcLevel : Nat) (brows : List Nat)
+    (vgens : List Nat) :
+    Nat → Nat → Nat → Nat → Nat → Nat → CertNode → List Nat → Option Bool
+  | 0, _, _, _, _, _, _, _ => none
+  | fuel + 1, level, lab, ptn, active, numcells, cert, bcodes =>
+    match bcodes with
+    | [] => none
+    | bc :: brest =>
+      let rs := refineP ctx level lab ptn active numcells
+      match cert with
+      | .autom _ _ => none
+      | .codePrune => cond (Nat.blt rs.longcode bc) (some false) none
+      | .leaf =>
+        cond (Nat.blt rs.longcode bc) (some false)
+          (cond (Nat.beq rs.longcode bc)
+            (cond (discreteAtP ctx rs.ptn level)
+              (match keyCmp
+                ⟨[rs.longcode, codeSentinel], leafRowsP ctx rs.lab⟩
+                ⟨bc :: brest, brows⟩ with
+              | .gt => none
+              | .eq => some true
+              | .lt => some false)
+              none)
+            none)
+      | .node children =>
+        cond (Nat.blt rs.longcode bc) (some false)
+          (cond (Nat.beq rs.longcode bc)
+            (cond (discreteAtP ctx rs.ptn level) none
+              (let tcr := specMaketargetcellP ctx rs.lab rs.ptn level tcLevel
+              cond (Nat.beq children.length tcr.2.2)
+                ((children.zipIdx 0).foldl
+                  (fun acc (co : CertNode × Nat) =>
+                    match acc with
+                    | none => none
+                    | some a =>
+                      let br := breakoutP ctx rs.lab rs.ptn (Nat.add level 1) tcr.1
+                        (lget ctx rs.lab (Nat.add tcr.1 co.2))
+                      match
+                        match co.1 with
+                        | .autom o' γ =>
+                          cond (Nat.blt o' co.2 &&
+                              containsGammaP ctx vgens γ &&
+                              checkCellsPermP ctx br.2.1
+                                (breakoutP ctx rs.lab rs.ptn (Nat.add level 1)
+                                  tcr.1 (lget ctx rs.lab (Nat.add tcr.1 o'))).1
+                                (mapGammaP ctx (pack ctx.w γ.toList) br.1)
+                                (Nat.add level 1))
+                            (some false) none
+                        | _ =>
+                          checkNodeP ctx tcLevel brows vgens fuel (Nat.add level 1)
+                            br.1 br.2.1 br.2.2 (Nat.add rs.numcells 1) co.1 brest
+                      with
+                      | none => none
+                      | some a' => some (a || a'))
+                  (some false))
+                none))
+            none)
+  termination_by structural fuel => fuel
+
+theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
+    (tcLevel : Nat) (brows : List Nat) {vgensP : List Nat}
+    {vgens : List (Array Nat)}
+    (hcont : ∀ γ, containsGammaP ctx vgensP γ = containsGamma vgens γ) :
+    ∀ (fuel level : Nat), level + fuel ≤ 101 →
+      ∀ {labP : Nat} {lab : List Nat}, Rep ctx.w ctx.n labP lab →
+      ∀ {ptnP : Nat} {ptn : List Nat}, Rep ctx.w ctx.n ptnP ptn →
+      ∀ (active numcells : Nat) (cert : CertNode) (bcodes : List Nat),
+      checkNodeP ctx tcLevel brows vgensP fuel level labP ptnP active numcells
+        cert bcodes =
+      checkNodeL ctxL tcLevel brows vgens fuel level lab ptn active numcells
+        cert bcodes
+  | 0, _, _, _, _, _, _, _, _, _, _, _, _ => rfl
+  | fuel + 1, level, hlev, labP, lab, hl, ptnP, ptn, hp, active, numcells, cert,
+      bcodes => by
+    have hlev1 : level < 2 ^ ctx.w := by have := h.levels; omega
+    have hlev2 : level + 1 < 2 ^ ctx.w := by have := h.levels; omega
+    have hrs := refineP_eq h hlev1 hl hp active numcells
+    cases bcodes with
+    | nil => rfl
+    | cons bc brest =>
+      have hcode : (refineP ctx level labP ptnP active numcells).longcode =
+          (refineL ctxL level lab ptn active numcells).longcode := hrs.longcode
+      have hdisc := discreteAtP_eq h hrs.ptn level
+      rcases hcmp : compare (refineL ctxL level lab ptn active numcells).longcode bc
+        with _ | _ | _
+      · -- lt
+        have hlt := Nat.compare_eq_lt.mp hcmp
+        have hblt : Nat.blt (refineL ctxL level lab ptn active numcells).longcode bc =
+            true := by rw [blt_eq_decide, decide_eq_true hlt]
+        cases cert with
+        | autom o γ => rfl
+        | codePrune =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, Bool.cond_true, hcmp, ite_true]
+        | leaf =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, Bool.cond_true, hcmp]
+        | node children =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, Bool.cond_true, hcmp]
+      · -- eq
+        have heq := Nat.compare_eq_eq.mp hcmp
+        have hnlt : ¬ (refineL ctxL level lab ptn active numcells).longcode < bc := by
+          omega
+        have hblt : Nat.blt (refineL ctxL level lab ptn active numcells).longcode bc =
+            false := by rw [blt_eq_decide, decide_eq_false hnlt]
+        have hbeq : Nat.beq (refineL ctxL level lab ptn active numcells).longcode bc =
+            true := by rw [beq_eq_decide, decide_eq_true heq]
+        cases cert with
+        | autom o γ => rfl
+        | codePrune =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, Bool.cond_false, hcmp, reduceCtorEq, ite_false]
+        | leaf =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, hbeq, Bool.cond_false, Bool.cond_true, hcmp, hdisc,
+            leafRowsP_eq h hrs.lab]
+          rw [cond_beq_true]
+          congr 1
+        | node children =>
+          have hfold : ∀ (rsLabP rsPtnP : Nat) (rsLab rsPtn : List Nat),
+              Rep ctx.w ctx.n rsLabP rsLab → Rep ctx.w ctx.n rsPtnP rsPtn →
+              ∀ (tc m : Nat) (cs : List (CertNode × Nat)) (acc : Option Bool),
+              cs.foldl
+                (fun acc (co : CertNode × Nat) =>
+                  match acc with
+                  | none => none
+                  | some a =>
+                    match
+                      match co.1 with
+                      | .autom o' γ =>
+                        cond (Nat.blt o' co.2 &&
+                            containsGammaP ctx vgensP γ &&
+                            checkCellsPermP ctx
+                              (breakoutP ctx rsLabP rsPtnP (Nat.add level 1) tc
+                                (lget ctx rsLabP (Nat.add tc co.2))).2.1
+                              (breakoutP ctx rsLabP rsPtnP (Nat.add level 1)
+                                tc (lget ctx rsLabP (Nat.add tc o'))).1
+                              (mapGammaP ctx (pack ctx.w γ.toList)
+                                (breakoutP ctx rsLabP rsPtnP (Nat.add level 1) tc
+                                  (lget ctx rsLabP (Nat.add tc co.2))).1)
+                              (Nat.add level 1))
+                          (some false) none
+                      | _ =>
+                        checkNodeP ctx tcLevel brows vgensP fuel (Nat.add level 1)
+                          (breakoutP ctx rsLabP rsPtnP (Nat.add level 1) tc
+                            (lget ctx rsLabP (Nat.add tc co.2))).1
+                          (breakoutP ctx rsLabP rsPtnP (Nat.add level 1) tc
+                            (lget ctx rsLabP (Nat.add tc co.2))).2.1
+                          (breakoutP ctx rsLabP rsPtnP (Nat.add level 1) tc
+                            (lget ctx rsLabP (Nat.add tc co.2))).2.2
+                          (Nat.add m 1) co.1 brest
+                    with
+                    | none => none
+                    | some a' => some (a || a')) acc =
+              cs.foldl
+                (fun acc (co : CertNode × Nat) =>
+                  match acc with
+                  | none => none
+                  | some a =>
+                    match
+                      match co.1 with
+                      | .autom o' γ =>
+                        if o' < co.2 &&
+                            containsGamma vgens γ &&
+                            checkCellsPermL
+                              (breakoutL rsLab rsPtn (level + 1) tc
+                                (atD rsLab (tc + co.2) 0)).2.1
+                              (breakoutL rsLab rsPtn (level + 1)
+                                tc (atD rsLab (tc + o') 0)).1
+                              ((breakoutL rsLab rsPtn (level + 1) tc
+                                (atD rsLab (tc + co.2) 0)).1.map
+                                fun w => atD γ.toList w 0)
+                              (level + 1) ctxL.n then
+                          some false
+                        else
+                          none
+                      | _ =>
+                        checkNodeL ctxL tcLevel brows vgens fuel (level + 1)
+                          (breakoutL rsLab rsPtn (level + 1) tc
+                            (atD rsLab (tc + co.2) 0)).1
+                          (breakoutL rsLab rsPtn (level + 1) tc
+                            (atD rsLab (tc + co.2) 0)).2.1
+                          (breakoutL rsLab rsPtn (level + 1) tc
+                            (atD rsLab (tc + co.2) 0)).2.2
+                          (m + 1) co.1 brest
+                    with
+                    | none => none
+                    | some a' => some (a || a')) acc := by
+            intro rsLabP rsPtnP rsLab rsPtn hrl hrp tc m cs
+            induction cs with
+            | nil => intro acc; rfl
+            | cons co rest ih =>
+              intro acc
+              rw [List.foldl_cons, List.foldl_cons]
+              rcases acc with _ | a
+              · rw [ih]
+              · rw [ih]
+                congr 1
+                rcases co with ⟨c, o⟩
+                have hbr := breakoutP_eq h hrl hrp hlev2 tc (lget_lt h rsLabP (tc + o))
+                rw [lget_eq h hrl] at hbr
+                obtain ⟨hbr1, hbr2, hbr3⟩ := hbr
+                cases c with
+                | leaf =>
+                  simp only [add_eq, lget_eq h hrl]
+                  rw [hbr3, checkNodeP_eq h tcLevel brows hcont fuel (level + 1)
+                    (by omega) hbr1 hbr2]
+                | codePrune =>
+                  simp only [add_eq, lget_eq h hrl]
+                  rw [hbr3, checkNodeP_eq h tcLevel brows hcont fuel (level + 1)
+                    (by omega) hbr1 hbr2]
+                | node ch =>
+                  simp only [add_eq, lget_eq h hrl]
+                  rw [hbr3, checkNodeP_eq h tcLevel brows hcont fuel (level + 1)
+                    (by omega) hbr1 hbr2]
+                | autom o' γ =>
+                  simp only [add_eq, lget_eq h hrl]
+                  rw [hcont γ, blt_eq_decide]
+                  rcases hg : containsGamma vgens γ with _ | _
+                  · simp
+                  · have hok : gammaOkP ctx γ.toList = true := by
+                      have := hcont γ
+                      rw [hg, containsGammaP, Bool.and_eq_true] at this
+                      exact this.1
+                    have hγ := gammaOkP_rep h hok
+                    have hbr' := breakoutP_eq h hrl hrp hlev2 tc
+                      (lget_lt h rsLabP (tc + o'))
+                    rw [lget_eq h hrl] at hbr'
+                    rw [checkCellsPermP_eq h hbr2 hbr'.1 (mapGammaP_rep h hγ hbr1),
+                      cond_beq_true]
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, hbeq, Bool.cond_false, Bool.cond_true, hcmp, hdisc,
+            specMaketargetcellP_eq h hrs.lab hrs.ptn, hrs.numcells]
+          rw [cond_beq_true]
+          congr 1
+          rw [cond_beq]
+          congr 1
+          exact hfold _ _ _ _ hrs.lab hrs.ptn _ _ (children.zipIdx 0) (some false)
+      · -- gt
+        have hgt := Nat.compare_eq_gt.mp hcmp
+        have hnlt : ¬ (refineL ctxL level lab ptn active numcells).longcode < bc := by
+          omega
+        have hne : ¬ (refineL ctxL level lab ptn active numcells).longcode = bc := by
+          omega
+        have hblt : Nat.blt (refineL ctxL level lab ptn active numcells).longcode bc =
+            false := by rw [blt_eq_decide, decide_eq_false hnlt]
+        have hbeq : Nat.beq (refineL ctxL level lab ptn active numcells).longcode bc =
+            false := by rw [beq_eq_decide, decide_eq_false hne]
+        cases cert with
+        | autom o γ => rfl
+        | codePrune =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, Bool.cond_false, hcmp, reduceCtorEq, ite_false]
+        | leaf =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, hbeq, Bool.cond_false, hcmp]
+        | node children =>
+          rw [checkNodeP, checkNodeL]
+          simp only [hcode, hblt, hbeq, Bool.cond_false, hcmp]
+  termination_by structural fuel => fuel
 
 end Hex.GraphIso.Nauty

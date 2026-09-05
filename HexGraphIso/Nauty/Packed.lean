@@ -75,6 +75,33 @@ theorem beq_eq_beq (a b : Nat) : Nat.beq a b = (a == b) := by
   · exact (beq_eq_false_iff_ne.mpr (Nat.ne_of_beq_eq_false hb)).symm
   · exact (beq_iff_eq.mpr (Nat.eq_of_beq_eq_true hb)).symm
 
+theorem blt_eq_decide (a b : Nat) : Nat.blt a b = decide (a < b) := by
+  rcases Decidable.em (a < b) with h | h
+  · rw [decide_eq_true h]
+    exact Nat.blt_eq.mpr h
+  · rw [decide_eq_false h]
+    rcases hb : Nat.blt a b with _ | _
+    · rfl
+    · exact absurd (Nat.blt_eq.mp hb) h
+
+theorem ble_eq_decide (a b : Nat) : Nat.ble a b = decide (a ≤ b) := by
+  rcases Decidable.em (a ≤ b) with h | h
+  · rw [decide_eq_true h]
+    exact Nat.ble_eq.mpr h
+  · rw [decide_eq_false h]
+    rcases hb : Nat.ble a b with _ | _
+    · rfl
+    · exact absurd (Nat.ble_eq.mp hb) h
+
+theorem beq_eq_decide (a b : Nat) : Nat.beq a b = decide (a = b) := by
+  rcases Decidable.em (a = b) with h | h
+  · rw [decide_eq_true h]
+    exact Nat.beq_eq.mpr h
+  · rw [decide_eq_false h]
+    rcases hb : Nat.beq a b with _ | _
+    · rfl
+    · exact absurd (Nat.beq_eq.mp hb) h
+
 theorem cond_beq_true {α : Type} (a : Bool) (x y : α) :
     cond a x y = if a = true then x else y := by
   cases a <;> rfl
@@ -364,6 +391,25 @@ theorem pset_pack (w : Nat) : ∀ (l : List Nat) (i v : Nat), Small w l →
       omega
     · rw [ite_eq_right (by omega), ite_eq_right hi]
       exact pack_cons w x l
+
+theorem pack_injective (w : Nat) : ∀ (l₁ l₂ : List Nat), Small w l₁ → Small w l₂ →
+    l₁.length = l₂.length → pack w l₁ = pack w l₂ → l₁ = l₂
+  | [], [], _, _, _, _ => rfl
+  | [], _ :: _, _, _, hlen, _ => by simp at hlen
+  | _ :: _, [], _, _, hlen, _ => by simp at hlen
+  | x :: l₁, y :: l₂, h₁, h₂, hlen, heq => by
+    rw [pack_cons, pack_cons] at heq
+    have hx : x = y := by
+      have := congrArg (· % 2 ^ w) heq
+      simp only [Nat.add_mul_mod_self_left,
+        Nat.mod_eq_of_lt (h₁ x (List.mem_cons_self ..)),
+        Nat.mod_eq_of_lt (h₂ y (List.mem_cons_self ..))] at this
+      exact this
+    subst hx
+    have hp : pack w l₁ = pack w l₂ :=
+      Nat.eq_of_mul_eq_mul_left (Nat.two_pow_pos w) (Nat.add_left_cancel heq)
+    rw [pack_injective w l₁ l₂ (fun z hz => h₁ z (List.mem_cons_of_mem _ hz))
+      (fun z hz => h₂ z (List.mem_cons_of_mem _ hz)) (by simpa using hlen) hp]
 
 theorem Small.set {w : Nat} {l : List Nat} (h : Small w l) {v : Nat}
     (hv : v < 2 ^ w) (i : Nat) : Small w (l.set i v) := by
