@@ -27,54 +27,14 @@ variable {n k : Nat}
 
 /-! # Adjacency-row characterization -/
 
-theorem testBit_foldl_step (f : Nat → Bool) (step : Nat → Nat → Nat)
-    (hstep : ∀ row j, step row j =
-      if f j then insert row j else row) :
-    ∀ (l : List Nat) (row0 t : Nat),
-      (l.foldl step row0).testBit t =
-        (row0.testBit t || (l.contains t && f t))
-  | [], row0, t => by simp
-  | j :: rest, row0, t => by
-    rw [List.foldl_cons, testBit_foldl_step f step hstep rest,
-      List.contains_cons, hstep]
-    rcases Decidable.em (j = t) with rfl | hne
-    · rcases f j with _ | _
-      · simp
-      · simp [testBit_insert]
-    · have hjt : (j == t) = false := by simp [hne]
-      have htj : (t == j) = false := by simp [Ne.symm hne]
-      rcases f j with _ | _
-      · simp [htj]
-      · simp [testBit_insert, hjt, htj]
-
 /-- The Boolean adjacency test underlying `rowOf`. -/
 @[expose] def adjBit (G : Colored n k) (i j : Nat) : Bool :=
   if h : i < n ∧ j < n then G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ else false
 
-theorem testBit_rowOf (G : Colored n k) (i t : Nat) :
-    (rowOf G i).testBit t = ((List.range n).contains t && adjBit G i t) := by
-  rw [rowOf, testBit_foldl_step (adjBit G i) _ (fun row j => by
-    rw [adjBit]
-    rcases Decidable.em (i < n ∧ j < n) with h | h
-    · rw [dite_eq_left h, dite_eq_left h]
-    · rw [dite_eq_right h, dite_eq_right h]
-      simp)]
-  simp
-
-theorem testBit_rowOf_lt (G : Colored n k) {i t : Nat} (hi : i < n)
+theorem mem_rowOf_lt (G : Colored n k) {i t : Nat} (hi : i < n)
     (ht : t < n) :
-    (rowOf G i).testBit t = G.graph.adj ⟨i, hi⟩ ⟨t, ht⟩ := by
-  rw [testBit_rowOf, adjBit, dite_eq_left ⟨hi, ht⟩]
-  simp [List.mem_range, ht]
-
-theorem rowOf_lt (G : Colored n k) (i : Nat) : rowOf G i < 2 ^ n := by
-  refine lt_two_pow_of_bits fun t ht => ?_
-  rw [testBit_rowOf]
-  have : (List.range n).contains t = false := by
-    simp [List.mem_range]
-    omega
-  rw [this]
-  simp
+    (rowOf G i).mem t = G.graph.adj ⟨i, hi⟩ ⟨t, ht⟩ := by
+  rw [mem_rowOf, dite_eq_left ⟨hi, ht⟩]
 
 theorem size_rowsOf (G : Colored n k) : (rowsOf G).size = n := by
   rw [rowsOf]
@@ -121,15 +81,15 @@ theorem rowsMap_of_isIso {G H : Colored n k} {p : Perm n}
   refine ⟨size_rowsOf G, size_rowsOf H, fun v hv => ?_⟩
   have hσv : renamingOf p v < n := ((renamingOf p).maps v).mp hv
   rw [getElem!_rowsOf H hσv, getElem!_rowsOf G hv]
-  refine Nat.eq_of_testBit_eq fun t => ?_
+  refine VSet.ext fun t => ?_
   rcases Nat.lt_or_ge t n with ht | ht
   · obtain ⟨w, hw⟩ := p.get_surj ⟨t, ht⟩
     have hσw : renamingOf p w.val = t := by
       rw [renamingOf_lt p w.isLt]
       show (p.get w).val = t
       rw [hw]
-    rw [← hσw, testBit_image_apply (renamingOf p) _ w.isLt,
-      testBit_rowOf_lt H hσv (hσw ▸ ht), testBit_rowOf_lt G hv w.isLt]
+    rw [← hσw, VSet.mem_image_apply (renamingOf p) _ w.isLt,
+      mem_rowOf_lt H hσv (hσw ▸ ht), mem_rowOf_lt G hv w.isLt]
     have hfv : (⟨renamingOf p v, hσv⟩ : Fin n) = p.get ⟨v, hv⟩ :=
       Fin.eq_of_val_eq (renamingOf_lt p hv)
     have hfw : (⟨renamingOf p w.val, hσw ▸ ht⟩ : Fin n) = p.get w := by
@@ -138,12 +98,7 @@ theorem rowsMap_of_isIso {G H : Colored n k} {p : Perm n}
       rw [renamingOf_lt p w.isLt]
     rw [hfv, hfw]
     exact h.adj_eq ⟨v, hv⟩ w
-  · rw [Nat.testBit_lt_two_pow
-      (Nat.lt_of_lt_of_le (rowOf_lt H _)
-        (Nat.pow_le_pow_right (by omega) ht)),
-      Nat.testBit_lt_two_pow
-      (Nat.lt_of_lt_of_le (image_lt (renamingOf p) _)
-        (Nat.pow_le_pow_right (by omega) ht))]
+  · rw [VSet.mem_of_ge ht, VSet.mem_of_ge ht]
 
 /-! # Colour classes -/
 
@@ -539,45 +494,24 @@ theorem getElem!_initPtn (n inf : Nat) (ends : List Nat) (q : Nat) :
     · rw [ite_eq_right (by omega), getElem!_neg _ _ (by simpa using hq)]
       rfl
 
-theorem elem_foldl_active :
-    ∀ (ends : List Nat) (acc : Nat × Nat) (w : Nat),
-      elem ((ends.foldl
-        (fun (p : Nat × Nat) e => (insert p.1 p.2, e + 1)) acc).1) w =
+theorem mem_foldl_active :
+    ∀ (ends : List Nat) (acc : VSet n × Nat) (w : Nat),
+      ((ends.foldl
+        (fun (p : VSet n × Nat) e => (p.1.insert p.2, e + 1)) acc).1).mem w =
           true →
-      elem acc.1 w = true ∨ w = acc.2 ∨ ∃ e ∈ ends, w = e + 1
+      acc.1.mem w = true ∨ w = acc.2 ∨ ∃ e ∈ ends, w = e + 1
   | [], acc, w, h => Or.inl h
   | e :: rest, acc, w, h => by
     rw [List.foldl_cons] at h
-    rcases elem_foldl_active rest _ w h with h1 | h1 | h1
-    · have h2 : (insert acc.1 acc.2).testBit w = true := h1
-      rw [testBit_insert] at h2
-      rcases Bool.or_eq_true_iff.mp h2 with h3 | h3
+    rcases mem_foldl_active rest _ w h with h1 | h1 | h1
+    · rw [VSet.mem_insert] at h1
+      rcases Bool.or_eq_true_iff.mp h1 with h3 | h3
       · exact Or.inl h3
-      · have h4 : acc.2 = w := by simpa using h3
-        exact Or.inr (Or.inl h4.symm)
+      · rw [Bool.and_eq_true, beq_iff_eq] at h3
+        exact Or.inr (Or.inl h3.1.symm)
     · exact Or.inr (Or.inr ⟨e, by simp, by simpa using h1⟩)
     · rcases h1 with ⟨e', he', hw⟩
       exact Or.inr (Or.inr ⟨e', List.mem_cons.mpr (Or.inr he'), hw⟩)
-
-theorem foldl_active_lt {n : Nat} :
-    ∀ (ends : List Nat) (acc : Nat × Nat),
-      acc.1 < 2 ^ n → acc.2 < n → (∀ e ∈ ends, e < n) →
-      List.Pairwise (· < ·) ends →
-      ((ends.foldl
-        (fun (p : Nat × Nat) e => (insert p.1 p.2, e + 1)) acc).1) <
-        2 ^ n
-  | [], acc, h1, _, _, _ => h1
-  | e :: rest, acc, h1, h2, hb, hs => by
-    rw [List.foldl_cons]
-    rcases rest with _ | ⟨e', rest'⟩
-    · exact insert_lt h1 h2
-    · rcases List.pairwise_cons.mp hs with ⟨hlt, hs'⟩
-      refine foldl_active_lt (e' :: rest') _ (insert_lt h1 h2) ?_
-        (fun x hx => hb x (List.mem_cons.mpr (Or.inr hx))) hs'
-      have he' : e < e' := hlt e' (by simp)
-      have := hb e' (by simp)
-      show e + 1 < n
-      omega
 
 theorem endsOf_pairwise :
     ∀ (cls : List (List Nat)) (s : Nat),
@@ -905,11 +839,6 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
       intro e he
       have := endsOf_lt _ 0 e (hEnds ▸ he)
       omega
-    have hact : initActive (initialPartition G).2 < 2 ^ n := by
-      rw [initActive]
-      refine foldl_active_lt _ _ (Nat.two_pow_pos n) hn0 hboundEnds ?_
-      rw [hEnds]
-      exact endsOf_pairwise _ 0
     have hmemlast : n - 1 ∈ (initialPartition G).2 := by
       rw [hEnds]
       have := endsOf_last_mem ((List.range k).map (colorClass G)) 0
@@ -921,14 +850,13 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
       rw [hptnsize, getElem!_initPtn, ite_eq_left ⟨hmemlast, by omega⟩]
       omega
     have hstarts : ∀ v : Nat,
-        elem (initActive (initialPartition G).2) v = true →
+        (initActive n (initialPartition G).2).mem v = true →
         v = 0 ∨ (initPtn n (n + 2) (initialPartition G).2)[v - 1]! ≤
           1 := by
       intro v hv
       rw [initActive] at hv
-      rcases elem_foldl_active _ _ _ hv with h1 | h1 | h1
-      · rw [show elem ((0, 0) : Nat × Nat).1 v = Nat.testBit 0 v
-          from rfl, Nat.zero_testBit] at h1
+      rcases mem_foldl_active _ _ _ hv with h1 | h1 | h1
+      · rw [VSet.mem_empty] at h1
         cases h1
       · exact Or.inl h1
       · rcases h1 with ⟨e, he, rfl⟩
@@ -953,24 +881,24 @@ theorem canonSpecKey_eq_of_isIso {G H : Colored n k} {p : Perm n}
           exact Or.inr rfl
         · rw [ite_eq_right (by omega)]
           exact Or.inl (by omega)
-    have h1 := specNode_perm (ctx := { n := n, g := rowsOf H }) rfl
+    have h1 := specNode_perm (ctx := { g := rowsOf H })
       100 n 1 (initialPartition H).1
       ((initialPartition G).1.map (renamingOf p).toFun)
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length
       (initial_cellsPerm h hn0)
       (by rw [Array.size_map, hsizeG, hsizeH])
-      hsizeH hlabH (labOk_map_renaming G p) hptnsize hact hend
+      hsizeH hlabH (labOk_map_renaming G p) hptnsize hend
       hstarts hvals (by show 1 + n ≤ n + 1; omega)
     have h2 := specNode_map (renamingOf p)
-      (ctx := { n := n, g := rowsOf G })
-      (ctx' := { n := n, g := rowsOf H })
-      rfl rfl (rowsMap_of_isIso h) 100 n 1 (initialPartition G).1
+      (ctx := { g := rowsOf G })
+      (ctx' := { g := rowsOf H })
+      (rowsMap_of_isIso h) 100 n 1 (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length
-      hsizeG hlabG hptnsize hact hend
+      hsizeG hlabG hptnsize hend
     exact h1.trans h2
 
 /-- Isomorphic coloured graphs have equal nauty-semantic canonical
