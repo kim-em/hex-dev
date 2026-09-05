@@ -425,6 +425,56 @@ The displayed endpoint proves that the bounded search succeeds. The same
 construction, with the eliminant for each generator/factor evaluation, is used
 by tower adjoining. No API performs unbounded refinement.
 
+## Roots of integer polynomials
+
+```lean
+def ZPoly.algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber)
+def ZPoly.algebraicRoots  (p : ZPoly) : Array AlgebraicNumber
+
+def DyadicSquare.meetsRealAxis (s : DyadicSquare) : Bool
+def AlgebraicRoot.isReal (a : AlgebraicRoot) : Bool
+def AlgebraicNumber.isReal (a : AlgebraicNumber) : Bool
+def AlgebraicNumber.rootLe (a b : AlgebraicNumber) : Bool
+def AlgebraicNumber.approx (a : AlgebraicNumber) (prec : Int := 64) :
+    DyadicComplexBall
+instance : Repr AlgebraicNumber
+```
+
+`algebraicRoots p` is every distinct complex root of `p` in canonical form.
+It takes the squarefree primitive part of `p`, isolates all of its roots with
+the fixed default strategy at `separationDepth`, builds one lazy
+`AlgebraicRoot` per isolation, and exactifies each. Multiplicities are not
+returned; `AlgebraicPoly.roots` on the cast polynomial supplies them. A
+constant, including zero, returns the empty array, and the correspondence
+theorem is stated for nonzero `p`, matching `Polynomial.roots 0 = 0`. `none`
+is reserved for certificate failure, and `algebraicRoots?_isSome` retires it.
+
+The array is sorted by `AlgebraicNumber.rootLe`: real roots first, in
+increasing order, then the nonreal roots ordered by isolation centre (real
+part, then imaginary part, then precision). The order of the real roots is a
+theorem about the values. The order among nonreal roots is deterministic,
+because isolation is deterministic, but it is not determined by the roots
+alone and no client may rely on it beyond determinism.
+
+`meetsRealAxis` tests whether the closed circumscribed disc meets the real
+axis, with the disc radius rounded up to the dyadic `radiusHi`: the centre's
+imaginary part is at most `radiusHi` in absolute value. At separation
+precision this is exact for a stored isolation: a real root lies in the
+closed disc, so its centre is within the true radius, which is below
+`radiusHi`, of the axis; a nonreal root and its conjugate are distinct roots
+of the same integer polynomial, so `radiusHi` itself is less than a quarter
+of their distance `2 |im z|` (the separation bound carries the `1449/1024`
+slack), and the centre is more than `radiusHi` from the axis. `isReal`
+applies it to the stored representative; the companion proves `isReal_iff`.
+
+`approx a prec` is `QAdjoin.approx` applied to `a.toQAdjoin` with the stored
+representative; its ball contains `a.toComplex` and has radius at most
+`2^(-prec)`. The `Repr` instance prints the minimal polynomial and the ball
+centre truncated to twelve decimal places (real part only when `isReal`); it
+is for display and carries no contract beyond `approx`. Its two helpers,
+`AlgebraicNumber.Display.decimal` and `AlgebraicNumber.Display.polynomial`,
+are public only because the instance is, and carry no contract either.
+
 ## Common-field construction
 
 The `Hex.AlgebraicPoly.Common` namespace is the public bounded
@@ -503,6 +553,8 @@ for diagnostics and staged proofs.
 `AlgebraicNumber` has canonical zero `p = X`, so it supplies the `Inhabited`
 fallback used by exactification. `RootSet.all` is the loud fallback for the two
 total root wrappers; their `_isSome` theorems make it unreachable.
+`ZPoly.algebraicRoots` falls back to the empty array, and
+`algebraicRoots?_isSome` makes that branch unreachable too.
 
 ## File organisation
 
@@ -516,6 +568,7 @@ HexNumberField/
   Disambiguate.lean   : candidate bounds and certified selection
   AlgebraicPoly.lean  : semantic coefficient-polynomial representation
   Roots.lean          : fixed-field and algebraic-coefficient root APIs
+  IntegerRoots.lean   : roots of integer polynomials, reality test, display
 ```
 
 Conformance and benchmark drivers live in the shared `conformance/` and
@@ -526,7 +579,11 @@ Conformance and benchmark drivers live in the shared `conformance/` and
 - *core*: at least three cases per public operation, including `√2 + √2`,
   `√2 * √2`, `√2 + (-√2)`, inversion of zero, equal values represented by
   different nonminimal polynomials, an enclosing polynomial with irrelevant
-  factors, repeated input roots, and a conjugate-embedding impostor.
+  factors, repeated input roots, and a conjugate-embedding impostor; for
+  `algebraicRoots`, `X² - 2` (order `-√2, √2`), `(X² - 2)² (X + 3)`
+  (multiplicity dropped, `-3` first), `X³ - 2` (one real root first, then
+  the conjugate pair), and the zero, constant, and `X` polynomials; for
+  `isReal`, a real root, a nonreal root, and zero.
 - *ci*: deterministic small-degree fixtures checked by cypari2. Use
   python-flint independently for integer resultants, factorization, and certified
   complex-root balls.
