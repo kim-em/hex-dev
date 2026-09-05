@@ -888,6 +888,7 @@ lean_lib HexReleaseTests where
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
     `HexSparsePoly.KernelTests,
+    `HexGraphIso.TestGraphs,
     `HexGraphIso.TacticTests,
     `HexGraphIso.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
