@@ -444,7 +444,13 @@ ten-vertex pairs like the examples of this chapter, the kernel-checked
 table and does not shrink with it: a kernel proof still replays a
 certificate inside the kernel, whereas `canonicalize` runs no replay
 at all. For breadth across the whole benchmark corpus, see the cactus
-plots in `reports/figures/` in the repository.
+plots in `reports/figures/` in the repository:
+`hexgraphiso-canon-cactus.svg` for canonical labelling over the
+deterministic families, and `hexgraphiso-pairs-cactus.svg` for the
+proof obligations. The latter plots the negative pairs only. For the
+reason just given the two polarities differ by well over an order of
+magnitude, so a single curve over both would describe neither; the
+figure's caption carries the positive median for comparison.
 
 # The Mathlib correspondence
 %%%

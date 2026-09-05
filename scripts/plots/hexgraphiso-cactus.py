@@ -6,10 +6,16 @@ Local/scheduled tooling, not merge CI. Two plots:
 * ``canon`` — canonical labelling per instance over the deterministic
   families: pinned nauty 2.9.3 (in-process FFI) versus the public
   compiled ``canonicalize``. Data from ``lake exe hexgraphiso_cactus``.
-* ``pairs`` — isomorphism proof obligations of known polarity: the
-  pinned nauty comparator (canonical bits of both sides), the compiled
+* ``pairs`` — **non-isomorphism** proof obligations only: the pinned
+  nauty comparator (canonical bits of both sides), the compiled
   ``isIso`` decision, and the ``graph_iso`` tactic (kernel-checked
-  proof). Pair definitions come from
+  proof). Positive pairs are timed and cached, but excluded from the
+  figure: the tactic settles a positive goal by checking one exhibited
+  transporter, within about two orders of magnitude of the compiled
+  ``isIso``, whereas a negative goal forces the checked canonical-key
+  replay and pays nearly four. Plotting both polarities on one axis
+  averages away that gap and understates the cost of the obligations
+  that actually dominate. Pair definitions come from
   ``lake exe hexgraphiso_cactus pairs`` (single source of truth); this
   script generates one Lean file per pair from the emitted
   ``exprA``/``exprB`` and times ``lake lean <file> -- -Dprofiler=true``,
@@ -40,6 +46,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -182,21 +189,37 @@ def main() -> int:
                 record, args.tactic_timeout)
             cache_path.write_text(json.dumps(cache, indent=1))
 
+    # Negatives only: a positive goal is settled by checking one exhibited
+    # transporter, a negative one by replaying the checked canonical key,
+    # and the two costs differ by orders of magnitude. One mixed curve
+    # would understate the obligations that dominate proof time.
+    negatives = [r for r in pairs if not r["iso"]]
+    positives = [r for r in pairs if r["iso"]]
     fig, ax = plt.subplots(figsize=(7.5, 5))
-    tactic_times = [cache[r["name"]] for r in pairs
+    tactic_times = [cache[r["name"]] for r in negatives
                     if cache.get(r["name"]) is not None]
     _cactus(ax, {
         "nauty 2.9.3 (C, no proof object)":
-            [r["nauty_ns"] / 1e9 for r in pairs],
+            [r["nauty_ns"] / 1e9 for r in negatives],
         "hex isIso (proved)":
-            [r["fast_ns"] / 1e9 for r in pairs],
+            [r["fast_ns"] / 1e9 for r in negatives],
         "graph_iso tactic (kernel-checked proof)": tactic_times,
-    }, len(pairs))
-    positives = sum(1 for r in pairs if r["iso"])
-    ax.set_title(f"isomorphism proof obligations: {positives} positive, "
-                 f"{len(pairs) - positives} negative")
+    }, len(negatives))
+    ax.set_xlabel("non-isomorphic pairs settled")
+    ax.set_title("non-isomorphism proof obligations: cactus over "
+                 f"{len(negatives)} negative pairs")
+    caption = "every pair here is a proof of ¬ Isomorphic A B"
+    pos_tactic = [t for t in (cache.get(r["name"]) for r in positives)
+                  if t is not None]
+    if pos_tactic and tactic_times:
+        neg_median = statistics.median(tactic_times)
+        pos_median = statistics.median(pos_tactic)
+        caption += (f"\nmedian graph_iso time {neg_median:.2f} s; the "
+                    f"{len(positives)} positive pairs, excluded here, "
+                    f"median {pos_median * 1e3:.0f} ms")
+    fig.text(0.5, 0.01, caption, ha="center", fontsize=7, style="italic")
     pairs_png = args.out_dir / "hexgraphiso-pairs-cactus.svg"
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
     fig.savefig(pairs_png)
     plt.close(fig)
 
