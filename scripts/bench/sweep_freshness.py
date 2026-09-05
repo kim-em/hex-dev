@@ -285,11 +285,10 @@ def assess(family: Family, observations: list[Observation],
             observations, key=lambda o: o.timestamp, reverse=True)
         if manifest_path(family, observation.fingerprint).exists()]
     if not with_manifest:
-        known = ", ".join(sorted({o.fingerprint for o in observations})) or "none"
         verdict.errors.append(
             f"no measurement covers the current source (fingerprint "
-            f"{digest}); committed fingerprints: {known}, none of which "
-            f"committed a manifest to compare against")
+            f"{digest}), and none of the {len(observations)} committed "
+            f"measurement(s) carries a manifest to compare against")
         return verdict
 
     verdict.baseline = with_manifest[0]
