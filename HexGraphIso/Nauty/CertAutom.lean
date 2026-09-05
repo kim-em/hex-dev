@@ -146,17 +146,17 @@ leaf. -/
 
 /-- The vertex bitset of every cell of the node's ordered partition. -/
 @[expose] def cellMasks (ctx : Ctx n) (rsLab rsPtn : Array Nat) (level : Nat) :
-    List Nat :=
+    List (VSet n) :=
   (cells rsPtn level n).map fun p =>
     (List.range (p.2 + 1 - p.1)).foldl
-      (fun m o => m.insert rsLab[p.1 + o]!) 0
+      (fun m o => m.insert rsLab[p.1 + o]!) .empty
 
 /-- Does `γ` map every cell bitset onto itself? Since the cells
 partition the vertices and `γ` is a bijection, per-cell image equality
 is exactly setwise cell preservation. Untrusted fast filter. -/
-@[expose] def respectsMasks (ctx : Ctx n) (masks : List Nat) (γ : Array Nat) :
+@[expose] def respectsMasks (ctx : Ctx n) (masks : List (VSet n)) (γ : Array Nat) :
     Bool :=
-  masks.all fun m => image (fun w => γ[w]!) n m == m
+  masks.all fun m => m.image (fun w => γ[w]!) == m
 
 /-- The emission predicate for witness-composed automorphisms: the
 trusted automorphism check, the earlier-offset requirement, and the
@@ -166,7 +166,7 @@ generator or composition can only turn this prune into an ordinary
 descent, rather than poison the whole candidate certificate. -/
 @[expose] def childCellsOk (ctx : Ctx n) (rsLab rsPtn : Array Nat) (level tc : Nat)
     (o o' : Nat) (γ : Array Nat) : Bool :=
-  checkAutom ctx.g γ n && decide (o' < o) &&
+  checkAutom ctx.g γ && decide (o' < o) &&
   (let bo := breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o]!
    checkCellsPerm bo.2.1
      (breakout n rsLab rsPtn (level + 1) tc rsLab[tc + o']!).1
@@ -187,7 +187,7 @@ literal checker predicate. -/
     return none
   let v := rsLab[tc + o]!
   let mut queue : Array (Nat × Array Nat) := #[(v, Array.range n)]
-  let mut seen : Nat := insert 0 v
+  let mut seen : VSet n := VSet.empty.insert v
   let mut head := 0
   for _ in [0 : n] do
     if head < queue.size then
@@ -213,7 +213,7 @@ literal checker predicate. -/
 generation: recompute only when generators were admitted since the
 cache was built (freezing at node entry would lose prunes from
 generators discovered under earlier children). -/
-@[expose] def usableGens (ctx : Ctx n) (masks : List Nat) (st : AutState)
+@[expose] def usableGens (ctx : Ctx n) (masks : List (VSet n)) (st : AutState)
     (cache : Option (Nat × Array (Array Nat × Array Nat))) :
     Nat × Array (Array Nat × Array Nat) :=
   match cache with
@@ -227,7 +227,7 @@ generators discovered under earlier children). -/
 offset through verified automorphisms. Untrusted; `checkKey`
 revalidates everything. -/
 @[expose] def certifyNodeAutom (ctx : Ctx n) (tcLevel : Nat) :
-    Nat → Nat → Array Nat → Array Nat → Nat → Nat → List Nat →
+    Nat → Nat → Array Nat → Array Nat → VSet n → Nat → List Nat →
       AutState → CertNode × AutState
   | 0, _, _, _, _, _, _, st => (.codePrune, st)
   | fuel + 1, level, lab, ptn, active, numcells, bcodes, st0 =>
@@ -283,7 +283,7 @@ No second search runs; the node budget bounds the traced walk. Purely
 a candidate producer — nothing here is trusted. -/
 @[expose] def produceCand (G : Colored n k) (budget : Option Nat) :
     Option (CertNode × Key n) :=
-  let ctx : Ctx n := { n := n, g := rowsOf G }
+  let ctx : Ctx n := { g := rowsOf G }
   let tr := runColoredTraced G
   if budget.any fun b => decide (tr.result.numnodes > b) then
     none
@@ -296,7 +296,7 @@ a candidate producer — nothing here is trusted. -/
     let (cert, st3) := certifyNodeAutom ctx 100 n 1
       (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2)
-      (initActive (initialPartition G).2)
+      (initActive n (initialPartition G).2)
       (initialPartition G).2.length B.codes st2
     if st3.exhausted then
       none
