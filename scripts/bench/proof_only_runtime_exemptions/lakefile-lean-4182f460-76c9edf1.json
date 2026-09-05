@@ -1,6 +1,6 @@
 {
   "path": "lakefile.lean",
-  "baseline_blob": "71977a8b62fac157a12bb1feffe00edc6d02ee43",
+  "baseline_blob": "4182f460f5a07b6b5ad1a15b7f6c012b2e41efe4",
   "current_blob": "76c9edf12dd4735b8348d83ef6808de94d4a14e0",
   "reason": "Sets precompileModules on lean_lib HexGraphIso so the graph_iso tactic's compiled search runs compiled inside the kernel-checked proof. No factorization library imports HexGraphIso, and hexbz_factor_service and its runtime call graph are unchanged."
 }
