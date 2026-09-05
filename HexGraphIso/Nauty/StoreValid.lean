@@ -260,7 +260,8 @@ private theorem forIn_scatter_eq (lab₁ lab₂ : Array Nat) :
     rw [List.forIn_cons]
     exact forIn_scatter_eq lab₁ lab₂ l _
 
-private theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
+/-- A scatter fold preserves the size of its workspace. -/
+theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
     ∀ (l : List Nat) (base : Array Nat),
       (l.foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base).size =
         base.size
@@ -269,7 +270,9 @@ private theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
     rw [List.foldl_cons, foldl_scatter_size lab₁ lab₂ l,
       Array.size_set!]
 
-private theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
+/-- After scanning an injective source prefix, every scanned source slot
+contains its corresponding target value. -/
+theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
     {nn : Nat}
     (hinj : ∀ a b, a < nn → b < nn → lab₁[a]! = lab₁[b]! → a = b)
     {base : Array Nat}
@@ -299,7 +302,8 @@ private theorem pushAuto_genTrace (st : SearchSt) (pair : Nat × Nat) :
 
 /-- `processnode`'s effect on the admitted-generator trace: either
 nothing is pushed, or exactly one scatter is pushed, connecting the
-first-path labelling (code 1, under its two-way guard) or the
+first-path labelling (code 1, at the recorded first-leaf depth and after
+an automorphism scan) or the
 incumbent labelling (code 2, under the `testcanlab` equality on the
 freshly completed `canong`) to the current leaf labelling. The
 injectivity and bound hypotheses on the two base labellings are
@@ -319,7 +323,8 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
     ∃ γ, (processnode ctx level numcells st).2.genTrace =
         st.genTrace.push γ ∧ γ.size = ctx.n ∧
       ((∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]!) ∧
-          (st.noncheaplevel ≤ st.gcaFirst ∨ isautom ctx γ = true) ∨
+          st.firstcode[level + 1]! = codeSentinel ∧
+          isautom ctx γ = true ∨
         (∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]!) ∧
           st.compCanon = 0 ∧ st.canonlevel ≤ level ∧
           (testcanlab ctx
@@ -338,15 +343,17 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
   rw [ite_eq_right h1]
   rcases Decidable.em ((numcells == ctx.n) = true) with h2 | h2
   · rw [ite_eq_left h2]
-    rcases Decidable.em ((st.eqlevFirst == level) = true) with h3 | h3
+    rcases Decidable.em (((st.eqlevFirst == level) &&
+        (st.firstcode[level + 1]! == codeSentinel)) = true) with h3 | h3
     · rw [ite_eq_left h3]
-      rcases Decidable.em (st.gcaFirst ≥ st.noncheaplevel ∨
-          isautom ctx ((List.range ctx.n).foldl
+      have hsent : st.firstcode[level + 1]! = codeSentinel := by
+        exact beq_iff_eq.mp ((Bool.and_eq_true _ _).mp h3).2
+      rcases Decidable.em (isautom ctx ((List.range ctx.n).foldl
             (fun r i => r.set! st.firstlab[i]! st.lab[i]!)
             (Array.replicate ctx.n 0)) = true) with h4 | h4
       · rw [ite_eq_left h4, ite_eq_right (by decide)]
         right
-        refine ⟨_, rfl, ?_, Or.inl ⟨fun i hi => ?_, h4⟩⟩
+        refine ⟨_, rfl, ?_, Or.inl ⟨fun i hi => ?_, hsent, h4⟩⟩
         · rw [foldl_scatter_size, Array.size_replicate]
         · refine foldl_scatter_getElem hinj₁ (fun j hj => ?_)
             (Nat.le_refl _) hi
@@ -409,5 +416,144 @@ theorem processnode_genTrace {ctx : Ctx} {level numcells : Nat}
   · rw [ite_eq_right h2]
     left
     rfl
+
+/-- The successful code-one arm appends exactly the first-to-current
+scatter that passed its explicit automorphism scan. -/
+theorem processnode_genTrace_first {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx ((List.range ctx.n).foldl
+      (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+      (Array.replicate ctx.n 0)) = true) :
+    (processnode ctx level numcells st).2.genTrace =
+      st.genTrace.push ((List.range ctx.n).foldl
+        (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+        (Array.replicate ctx.n 0)) := by
+  have hguard : (((st.eqlevFirst == level) &&
+      (st.firstcode[level + 1]! == codeSentinel)) = true) := by
+    simp only [Bool.and_eq_true, heq, true_and]
+    exact beq_iff_eq.mpr hsent
+  have hskip : ¬(st.eqlevFirst ≠ level ∧ st.compCanon < 0) := by
+    intro h
+    exact h.1 (beq_iff_eq.mp heq)
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    pushAuto_genTrace, ite_self]
+  simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq,
+    hskip, ite_false, hnc, ite_true, hguard]
+  change (if isautom ctx ((List.range ctx.n).foldl
+      (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+      (Array.replicate ctx.n 0)) then
+      st.genTrace.push ((List.range ctx.n).foldl
+        (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+        (Array.replicate ctx.n 0))
+    else _) = _
+  rw [hpass]
+  rfl
+
+/-- The successful code-one event exposes the exact checked carrier it
+appended, including its pointwise action from the first leaf to the current
+leaf. -/
+theorem processnode_firstCarrier {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hp₁ : st.firstlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hsymm : ∀ i j, i < ctx.n → j < ctx.n →
+      (ctx.g[i]!).testBit j = (ctx.g[j]!).testBit i)
+    (hloop : ∀ i, i < ctx.n → (ctx.g[i]!).testBit i = false)
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (heq : (st.eqlevFirst == level) = true)
+    (hsent : st.firstcode[level + 1]! = codeSentinel)
+    (hnc : (numcells == ctx.n) = true)
+    (hpass : isautom ctx ((List.range ctx.n).foldl
+      (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+      (Array.replicate ctx.n 0)) = true) :
+    ∃ γ, γ ∈ (processnode ctx level numcells st).2.genTrace ∧
+      checkAutom ctx.g γ ctx.n = true ∧
+      ∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]! := by
+  let γ := (List.range ctx.n).foldl
+    (fun w i => w.set! st.firstlab[i]! st.lab[i]!)
+    (Array.replicate ctx.n 0)
+  have hinj := perm_inj hsz₁ hp₁
+  have hmap : ∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]! := by
+    intro i hi
+    apply foldl_scatter_getElem
+      (fun a b ha hb h => hinj a b (by omega) (by omega) h)
+      (fun j hj => by
+        rw [Array.size_replicate]
+        exact perm_getElem!_lt hsz₁ hp₁ hj)
+      (Nat.le_refl _) hi
+  have hsize : γ.size = ctx.n := by
+    simp only [γ, foldl_scatter_size, Array.size_replicate]
+  have hchecked : checkAutom ctx.g γ ctx.n = true :=
+    checkAutom_scatter_of_isautom hsize hsz₁ hp₁ hsz₂ hp₂
+      hmap hsymm hloop hbound (by simpa only [γ] using hpass)
+  refine ⟨γ, ?_, hchecked, hmap⟩
+  rw [processnode_genTrace_first heq hsent hnc hpass]
+  exact Array.mem_push.mpr (Or.inr rfl)
+
+/-- The row-tied code-two arm appends exactly the incumbent-to-current
+scatter, independently of which greatest-common-ancestor return it takes. -/
+theorem processnode_genTrace_canon {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    (processnode ctx level numcells st).2.genTrace =
+      st.genTrace.push ((List.range ctx.n).foldl
+        (fun w i => w.set! st.canonlab[i]! st.lab[i]!)
+        (Array.replicate ctx.n 0)) := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.genTrace),
+    pushAuto_genTrace, ite_self]
+  simp only [id_run_eq, forIn_range_toList, forIn_scatter_eq]
+  simp [hnc, hef, hcc, hge, htie]
+
+/-- The code-two event exposes the exact checked carrier it appended from
+the incumbent leaf to the current leaf. -/
+theorem processnode_canonCarrier {ctx : Ctx} {level numcells : Nat}
+    {st : SearchSt}
+    (hsz₁ : st.canonlab.size = ctx.n)
+    (hp₁ : st.canonlab.toList.Perm (List.range ctx.n))
+    (hsz₂ : st.lab.size = ctx.n)
+    (hp₂ : st.lab.toList.Perm (List.range ctx.n))
+    (hbound : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hrows : leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hef : ¬((st.eqlevFirst == level) = true))
+    (hnc : (numcells == ctx.n) = true)
+    (hcc : st.compCanon = 0) (hge : ¬(level < st.canonlevel))
+    (htie : (testcanlab ctx
+      (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0) :
+    ∃ γ, γ ∈ (processnode ctx level numcells st).2.genTrace ∧
+      checkAutom ctx.g γ ctx.n = true ∧
+      ∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]! := by
+  let γ := (List.range ctx.n).foldl
+    (fun w i => w.set! st.canonlab[i]! st.lab[i]!)
+    (Array.replicate ctx.n 0)
+  have hinj := perm_inj hsz₁ hp₁
+  have hmap : ∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]! := by
+    intro i hi
+    apply foldl_scatter_getElem
+      (fun a b ha hb h => hinj a b (by omega) (by omega) h)
+      (fun j hj => by
+        rw [Array.size_replicate]
+        exact perm_getElem!_lt hsz₁ hp₁ hj)
+      (Nat.le_refl _) hi
+  have hsize : γ.size = ctx.n := by
+    simp only [γ, foldl_scatter_size, Array.size_replicate]
+  have hchecked : checkAutom ctx.g γ ctx.n = true :=
+    checkAutom_scatter_of_leafRows_eq hsize hsz₁ hp₁ hsz₂ hp₂
+      hmap hbound hrows
+  refine ⟨γ, ?_, hchecked, hmap⟩
+  rw [processnode_genTrace_canon hef hnc hcc hge htie]
+  exact Array.mem_push.mpr (Or.inr rfl)
 
 end Hex.GraphIso.Nauty

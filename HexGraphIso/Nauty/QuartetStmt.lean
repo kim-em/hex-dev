@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Domination
-public import HexGraphIso.Nauty.CertReplay
+public import HexGraphIso.Nauty.CertStore
 import all HexGraphIso.Nauty.Search
 
 public section
@@ -23,31 +23,23 @@ record how a generator return carries its justification.
 
 The design point. A node that returns below `level - 1` abandoned
 part of its subtree, so it cannot claim the full absorption equation.
-Two architectures were available. The first proves, at the code-one
-leaf, that the leaf's own key does not improve the incumbent
-(`auto_keyMax`), which needs the leaf's path codes to equal the first
-path's, hence needs first-path geometry inside the domination
-argument. The second absorbs the abandonment *wholesale at the
-greatest common ancestor*: `processnode` returns `gcaFirst`, and the
-recorded generator carries the first path's child of that ancestor
-onto the current one, so `childKey_of_carried` equates the two child
-subtree keys and the abandoned one is dominated by a sibling the
-search already explored.
+The leaf and the abandoned suffix are discharged separately.  At a
+code-one leaf, the sentinel immediately above the current path proves
+that its codes equal the first path's codes, and the checked carrier
+proves that their rows agree; `auto_keyMax` therefore absorbs the leaf
+itself without a path-geometry invariant.  The remaining abandonment is
+absorbed *wholesale at the greatest common ancestor*: `processnode`
+returns `gcaFirst`, and the recorded generator carries the first path's
+child of that ancestor onto the current one, so `childKey_of_carried`
+equates the two child subtree keys and the abandoned one is dominated by
+a sibling the search already explored.
 
-The second is what this file states, because the carrier fact it
-needs is immediate. `processnode` builds its generator as
+The carrier fact is direct. `processnode` builds its generator as
 `workperm[firstlab[i]] := lab[i]`, so `γ` maps `firstlab` to `lab`
 pointwise by construction; the ancestor's target position is frozen
 from that level down, so the two entries at that position are exactly
-the two individualized vertices. No statement about codes, code
-lengths, or where the first path went discrete enters anywhere.
-
-`auto_keyMax` is therefore not applied by the induction under this
-architecture, and `cs = fs` is not among the quartet's obligations.
-First-path geometry is still required, but only by store validity:
-the scan-free admission arm of `processnode_checkAutom` needs
-`leafRows firstlab = leafRows lab`, which is the `harm2` obligation
-that `FirstDescOk` supplies.
+the two individualized vertices. Store validity is local as well: code
+one validates its scatter with `isautom` before admission.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -76,9 +68,10 @@ as the search installs anything.
 
 `SearchModel` already carries the fix: `incMax : Option Key → Key →
 Key` with `none` as the bottom, which is what `searchNode_eq` folds
-with. These definitions read the same `Option` off the imperative
-state, using `canonlevel = 0` as "nothing installed yet", so no ghost
-code list is needed and the root assembly below is direct. -/
+with.  The semantic induction threads that option explicitly.  It can
+be read back from the imperative state only outside the temporary
+upward-comparison window, where `canoncode` contains path codes rather
+than the installed incumbent's codes. -/
 
 /-- The incumbent's code list, as `runTraced` reports it. -/
 @[expose] def bestCodesOf (st : SearchSt) : List Nat :=
@@ -89,6 +82,44 @@ install. -/
 @[expose] def stInc (ctx : Ctx) (st : SearchSt) : Option Key :=
   if st.canonlevel = 0 then none
   else some ⟨bestCodesOf st ++ [codeSentinel], leafRows ctx st.canonlab⟩
+
+/-- The semantic incumbent represented by the comparison machine's ghost
+code list. -/
+@[expose] def ghostInc (ctx : Ctx) (bs : List Nat)
+    (canonlab : Array Nat) : Option Key :=
+  if bs = [] then none else some (incKey ctx bs canonlab)
+
+/-- Outside the upward overwrite window, `canoncode` contains exactly the
+ghost incumbent codes. -/
+theorem bestCodesOf_eq {nn : Nat} {cs bs : List Nat} {st : SearchSt}
+    {compCanon : Int}
+    (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
+      st.eqlevCanon compCanon)
+    (hne : compCanon ≠ 1) :
+    bestCodesOf st = bs := by
+  unfold bestCodesOf
+  refine List.ext_getElem (by simp [hinv.blen]) fun i hi hb => ?_
+  rw [List.getElem_map]
+  have hcontent := hinv.content (i + 1) (by omega) (by omega)
+    (fun h => (hne h).elim)
+  have hir : i < (List.range' 1 st.canonlevel).length := by
+    simpa using hi
+  rw [List.getElem_range' hir]
+  have hbcode : bcode bs (i + 1) = bs[i]! :=
+    bcode_of_le (by omega) (by omega)
+  rw [hbcode, getElem!_pos bs i hb] at hcontent
+  simpa [Nat.add_comm] using hcontent
+
+/-- At a stable comparison state, reading the mutable incumbent agrees
+with the semantic ghost incumbent. -/
+theorem stInc_eq_ghost {nn : Nat} {cs bs : List Nat} {ctx : Ctx}
+    {st : SearchSt} {compCanon : Int}
+    (hinv : CodeCmpInv nn cs bs st.canoncode st.canonlevel
+      st.eqlevCanon compCanon)
+    (hne : compCanon ≠ 1) :
+    stInc ctx st = ghostInc ctx bs st.canonlab := by
+  rw [stInc, ghostInc, bestCodesOf_eq hinv hne, hinv.blen]
+  cases bs <;> simp [incKey]
 
 /-- The payload a generator return carries to its target level.
 
@@ -545,8 +576,7 @@ theorem dominated_of_root {G : Colored n k} (hn0 : n ≠ 0) {r : Int}
   rw [stInc_final hn0 hinst, stInc_rootSt, incMax, nodeKey_root hn0] at hfull
   exact (Option.some.inj hfull).symm
 
-/-- **The programme's target**, modulo the quartet at the root and
-store validity. -/
+/-- **The programme's target**, modulo the quartet at the root. -/
 theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
     {r : Int}
     (hroot : NodeConcl { n := n, g := rowsOf G } 100 n 1 []
@@ -554,10 +584,8 @@ theorem certifyCanon?_isSome_of_root {G : Colored n k} (hn0 : n ≠ 0)
       (rootOut n (rowsOf G) (initialPartition G).1
         (initialPartition G).2)
       (initialPartition G).2.length r)
-    (hr : r = Int.ofNat 1 - 1)
-    (hval : ∀ cert B, produceCand G none = some (cert, B) →
-      AutomsOk (fun γ => checkAutom (rowsOf G) γ n = true) cert) :
+    (hr : r = Int.ofNat 1 - 1) :
     (certifyCanon? G).isSome :=
-  certifyCanon?_isSome_of_dominated G (dominated_of_root hn0 hroot hr) hval
+  certifyCanon?_isSome_of_keyEq G (dominated_of_root hn0 hroot hr)
 
 end Hex.GraphIso.Nauty

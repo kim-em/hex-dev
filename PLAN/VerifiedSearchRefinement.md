@@ -94,10 +94,8 @@ candidates from its own leaves. No theorem derives the certificate fact.
 `Translator.lean`'s inventory lists `isPerm_of_trace` and the `composeOnto`
 permutation facts as open.
 
-**This is independent of all the geometry, but only if proved directly
-from permutation preservation.** It stops being independent if you try to
-route it through `GenTraceOk`, whose scan-free code-one arm depends on
-first-path geometry. What the proof needs:
+**This is independent of all the geometry when proved directly from
+permutation preservation.** What the proof needs:
 
 - an `AutState` invariant that every present labelling (`firstLeaf`,
   `prevLeaf`, `refLeaf`) is a permutation of `[0, n)`;
@@ -184,14 +182,13 @@ the incumbent frame lemmas; read both before restating anything.
   invariant (a removed vertex maps to an explored child or to a still-live
   survivor) and resolve it to explored-child coverage only on completion.
 
-### 4. Path geometry
+### 4. Code-one validation
 
-`FirstDescOk` (`Domination.lean`) assumes the current and first descents
-chose the same target-position sequence. It cannot be an invariant field:
-it is false at interior nodes the search passes with the gate open. Derive
-it at the code-one gate instead; its derivation needs item 2.
-
-Its only consumer is the scan-free generator validity arm.
+Code one is admitted only when `firstcode[level + 1]` is the sentinel and
+the constructed scatter passes `isautom`. The sentinel discharges the
+first-path depth clause through `firstCodeInv_eq_of_live`; the scan
+discharges generator validity directly. No `FirstDescOk` invariant is
+needed by the mutual induction.
 
 **Do not remove run store validity from `DomOk`.** Its `genTraceOk`
 (`Domination.lean:1682`) is run-side and remains necessary for orbit skips

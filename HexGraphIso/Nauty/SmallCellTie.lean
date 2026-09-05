@@ -255,18 +255,10 @@ theorem checkAutom_scatter_of_descPaths
 
 /-! # Store validity, assembled per admission event -/
 
-/-- Every generator `processnode` admits passes `checkAutom`, given
-the run-level facts per arm: permutation facts for the three
-labellings (the run invariant carries them); the code-1 gate arm's
-rows equality (`harm2`, discharged by `leafRows_eq_of_descPaths` from
-the two same-target descents below the greatest common ancestor —
-`subtreeOk_of_cheapautom` establishes the node invariant there, with
-its exotic hypothesis discharged by the defect-four analogues); and
-the code-2 arm's rows equality (`harm3`, discharged from the
-incumbent-store account: `updatecan_inv` completes `canong` to the
-incumbent's leaf rows and `testcanlab_fst` reads the tie as row
-equality). The `isautom`-scanned arm needs no rows fact. -/
-theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
+/-- If `processnode` records a generator, the same generator is both
+checked and identified as the scatter from the first or incumbent leaf
+onto the current leaf. -/
+theorem processnode_carrier {level numcells : Nat} {st : SearchSt}
     (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
     (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
       (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
@@ -277,15 +269,14 @@ theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
     (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
     (hsz₂ : st.canonlab.size = ctx.n)
     (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
-    (harm2 : st.noncheaplevel ≤ st.gcaFirst →
-      leafRows ctx st.firstlab = leafRows ctx st.lab)
     (harm3 : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
-        0 →
-      leafRows ctx st.canonlab = leafRows ctx st.lab) :
+        0 → leafRows ctx st.canonlab = leafRows ctx st.lab) :
     (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
     ∃ γ, (processnode ctx level numcells st).2.genTrace =
-        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true := by
+        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true ∧
+      ((∀ i, i < ctx.n → γ[st.firstlab[i]!]! = st.lab[i]!) ∨
+       (∀ i, i < ctx.n → γ[st.canonlab[i]!]! = st.lab[i]!)) := by
   have hp₁ := labInj_perm_range hsz₁ hok₁ hinj₁
   have hpL := labInj_perm_range hszL hokL hinjL
   have hp₂ := labInj_perm_range hsz₂ hok₂ hinj₂
@@ -298,15 +289,44 @@ theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
       hb₁ (fun a b ha hb he => hinj₂ a b ha hb he) hb₂ with
     h | ⟨γ, hpush, hγsz, harm⟩
   · exact Or.inl h
-  · refine Or.inr ⟨γ, hpush, ?_⟩
-    rcases harm with ⟨hsc, hgate⟩ | ⟨hsc, -, -, htceq⟩
-    · rcases hgate with hgate | haut
-      · exact checkAutom_scatter_of_leafRows_eq hγsz hsz₁ hp₁ hszL
-          hpL hsc hgb (harm2 hgate)
-      · exact checkAutom_scatter_of_isautom hγsz hsz₁ hp₁ hszL hpL
-          hsc hsymm hloop hgb haut
-    · exact checkAutom_scatter_of_leafRows_eq hγsz hsz₂ hp₂ hszL hpL
-        hsc hgb (harm3 htceq)
+  · rcases harm with ⟨hsc, -, haut⟩ | ⟨hsc, -, -, htceq⟩
+    · refine Or.inr ⟨γ, hpush, ?_, Or.inl hsc⟩
+      exact checkAutom_scatter_of_isautom hγsz hsz₁ hp₁ hszL hpL
+        hsc hsymm hloop hgb haut
+    · exact Or.inr ⟨γ, hpush,
+        checkAutom_scatter_of_leafRows_eq hγsz hsz₂ hp₂ hszL hpL
+          hsc hgb (harm3 htceq), Or.inr hsc⟩
+
+/-- Every generator `processnode` admits passes `checkAutom`, given
+the run-level facts per arm: permutation facts for the three
+labellings (the run invariant carries them); the code-1 arm's mandatory
+`isautom` scan; and the code-2 arm's rows equality (`harm3`, discharged from the
+incumbent-store account: `updatecan_inv` completes `canong` to the
+incumbent's leaf rows and `testcanlab_fst` reads the tie as row
+equality). -/
+theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt}
+    (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
+    (hsymm : ∀ u w, u < ctx.n → w < ctx.n →
+      (ctx.g[u]!).testBit w = (ctx.g[w]!).testBit u)
+    (hloop : ∀ v, v < ctx.n → (ctx.g[v]!).testBit v = false)
+    (hsz₁ : st.firstlab.size = ctx.n)
+    (hok₁ : LabOk st.firstlab ctx.n) (hinj₁ : LabInj st.firstlab ctx.n)
+    (hszL : st.lab.size = ctx.n)
+    (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
+    (hsz₂ : st.canonlab.size = ctx.n)
+    (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
+    (harm3 : (testcanlab ctx
+        (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
+        0 →
+      leafRows ctx st.canonlab = leafRows ctx st.lab) :
+    (processnode ctx level numcells st).2.genTrace = st.genTrace ∨
+    ∃ γ, (processnode ctx level numcells st).2.genTrace =
+        st.genTrace.push γ ∧ checkAutom ctx.g γ ctx.n = true := by
+  rcases processnode_carrier hgb hsymm hloop hsz₁ hok₁ hinj₁ hszL
+      hokL hinjL hsz₂ hok₂ hinj₂ harm3 with
+    h | ⟨γ, hpush, hcheck, -⟩
+  · exact Or.inl h
+  · exact Or.inr ⟨γ, hpush, hcheck⟩
 
 /-! # The store-validity invariant -/
 
@@ -317,10 +337,14 @@ induction threads: `processnode` is the only primitive that writes
 def GenTraceOk (ctx : Ctx) (st : SearchSt) : Prop :=
   ∀ γ ∈ st.genTrace, checkAutom ctx.g γ ctx.n = true
 
-/-- The invariant survives the admission event. The two rows clauses
-are the run-level bookkeeping the induction carries: the first-path
-agreement behind the scan-free gate, and the row tie behind the
-`testcanlab` arm. -/
+/-- Read one checked-generator fact from the run-side store invariant. -/
+theorem GenTraceOk.check {ctx : Ctx} {st : SearchSt}
+    (h : GenTraceOk ctx st) {γ : Array Nat} (η : γ ∈ st.genTrace.toList) :
+    checkAutom ctx.g γ ctx.n = true :=
+  h γ (Array.mem_toList_iff.mp η)
+
+/-- The invariant survives the admission event. The only row clause is
+the incumbent tie behind the `testcanlab` arm; code 1 is scanned. -/
 theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt}
     (hprev : GenTraceOk ctx st)
     (hgb : ∀ v, v < ctx.n → ctx.g[v]! < 2 ^ ctx.n)
@@ -333,8 +357,6 @@ theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt}
     (hokL : LabOk st.lab ctx.n) (hinjL : LabInj st.lab ctx.n)
     (hsz₂ : st.canonlab.size = ctx.n)
     (hok₂ : LabOk st.canonlab ctx.n) (hinj₂ : LabInj st.canonlab ctx.n)
-    (harm2 : st.noncheaplevel ≤ st.gcaFirst →
-      leafRows ctx st.firstlab = leafRows ctx st.lab)
     (harm3 : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
         0 →
@@ -342,7 +364,7 @@ theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt}
     GenTraceOk ctx (processnode ctx level numcells st).2 := by
   intro γ hγ
   rcases processnode_checkAutom hgb hsymm hloop hsz₁ hok₁ hinj₁ hszL
-      hokL hinjL hsz₂ hok₂ hinj₂ harm2 harm3 with heq | ⟨δ, hpush, hδ⟩
+      hokL hinjL hsz₂ hok₂ hinj₂ harm3 with heq | ⟨δ, hpush, hδ⟩
   · rw [heq] at hγ
     exact hprev γ hγ
   · rw [hpush] at hγ

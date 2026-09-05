@@ -149,6 +149,75 @@ subtree theorem. -/
     (autos : Array (Nat × Nat)) : Prop :=
   ∀ p ∈ autos.toList, PairOk g ptn lab level nn p.1 p.2
 
+/-- The bounded automorphism workspace has a positive capacity and has
+not grown beyond it. -/
+@[expose] def WorkspaceOk (st : SearchSt) : Prop :=
+  0 < st.wsCap ∧ st.autos.size ≤ st.wsCap
+
+namespace WorkspaceOk
+
+/-- Workspace validity depends only on the capacity and pair array. -/
+theorem ofFields {st out : SearchSt} (h : WorkspaceOk st)
+    (hcap : out.wsCap = st.wsCap) (hautos : out.autos = st.autos) :
+    WorkspaceOk out := by
+  unfold WorkspaceOk at h ⊢
+  rw [hcap, hautos]
+  exact h
+
+/-- Admitting one pair preserves the bounded workspace invariant. -/
+theorem push {st : SearchSt} {pair : Nat × Nat} (h : WorkspaceOk st) :
+    WorkspaceOk (pushAuto st pair) := by
+  rcases h with ⟨hcap, hsize⟩
+  constructor
+  · unfold pushAuto
+    split <;> exact hcap
+  · unfold pushAuto
+    rcases hfull : (st.autos.size == st.wsCap) with _ | _
+    · simp only [hfull, Bool.false_eq_true, ite_false, Array.size_push]
+      have hne : st.autos.size ≠ st.wsCap := by
+        intro heq
+        rw [beq_iff_eq.mpr heq] at hfull
+        cases hfull
+      omega
+    · simp only [hfull, ite_true, Array.size_set!]
+      exact hsize
+
+/-- `pushAuto` does not change the configured workspace capacity. -/
+theorem pushCap (st : SearchSt) (pair : Nat × Nat) :
+    (pushAuto st pair).wsCap = st.wsCap := by
+  unfold pushAuto
+  split <;> rfl
+
+/-- `processnode` never changes the configured workspace capacity. -/
+theorem processCap (ctx : Ctx) (level numcells : Nat) (st : SearchSt) :
+    (processnode ctx level numcells st).2.wsCap = st.wsCap := by
+  rw [processnode]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite (fun x : Int × SearchSt => x.2.wsCap), pushCap, ite_self]
+
+/-- Comparison preparation does not change workspace capacity. -/
+theorem prepCap (level code : Nat) (st : SearchSt) :
+    (otherNodePrep level code st).wsCap = st.wsCap := by
+  rw [otherNodePrep]
+  simp only [Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.wsCap, ite_self]
+
+/-- Parent recovery does not change workspace capacity. -/
+theorem recoverCap (n inf level : Nat) (st : SearchSt) :
+    (recover n inf level st).wsCap = st.wsCap := by
+  rw [recover]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.wsCap, ite_self]
+
+/-- First-leaf installation does not change workspace capacity. -/
+theorem firstCap (level : Nat) (st : SearchSt) :
+    (firstterminal level st).wsCap = st.wsCap := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
+    apply_ite SearchSt.wsCap, ite_self]
+
+end WorkspaceOk
+
 /-- Recording a valid pair keeps the ledger, in both the push and the
 cap-slot overwrite branch. -/
 theorem autosOk_pushAuto {g ptn lab : Array Nat} {level nn : Nat}
@@ -168,6 +237,20 @@ theorem autosOk_pushAuto {g ptn lab : Array Nat} {level nn : Nat}
     · exact hok q hmem
     · rw [List.mem_singleton.mp hlast]
       exact hp
+
+/-- With a positive bounded workspace, `pushAuto` leaves the admitted
+pair in the slot read by `shortprune`, both before and at capacity. -/
+theorem pushAuto_back {st : SearchSt} {pair : Nat × Nat}
+    (hcap : 0 < st.wsCap) (hsize : st.autos.size ≤ st.wsCap) :
+    (pushAuto st pair).autos.back? = some pair := by
+  unfold pushAuto
+  rcases hfull : (st.autos.size == st.wsCap) with _ | _
+  · simp only [Bool.false_eq_true, hfull, ite_false, Array.back?_push]
+  · have heq : st.autos.size = st.wsCap := beq_iff_eq.mp hfull
+    simp only [hfull, ite_true, Array.back?_eq_getElem?, Array.size_set!]
+    rw [heq, Array.set!_eq_setIfInBounds,
+      Array.getElem?_setIfInBounds_self_of_lt]
+    omega
 
 /-- The ledger moves down one individualize-and-refine step for any
 pair whose `fix` covers the individualized vertex: each realizer's
@@ -275,7 +358,7 @@ theorem pruned_carried {g ptn lab : Array Nat} {level tc len : Nat}
 
 /-! # The two filters -/
 
-private theorem exists_all_false {α : Type} {f : α → Bool} :
+theorem exists_all_false {α : Type} {f : α → Bool} :
     ∀ {l : List α}, l.all f = false → ∃ x ∈ l, f x = false
   | [], h => absurd h (by simp)
   | x :: l, h => by
@@ -309,6 +392,69 @@ theorem elem_longprune (tcell fixedpts v : Nat)
         !(fixedpts &&& p.1 == fixedpts) || elem p.2 v) := by
   rw [longprune, ← Array.foldl_toList]
   exact elem_foldl_prune autos.toList tcell fixedpts v
+
+/-- If `longprune` removes a current member, one applicable ledger pair
+carries it strictly downward while stabilizing the node's cells. -/
+theorem longprune_drop {g ptn lab : Array Nat} {level fixedpts v tcell : Nat}
+    {autos : Array (Nat × Nat)}
+    (hv : v < n) (hmem : elem tcell v = true)
+    (hdrop : elem (longprune tcell fixedpts autos) v = false)
+    (haut : ∀ p ∈ autos.toList,
+      (fixedpts &&& p.1 == fixedpts) = true →
+      PairOk g ptn lab level n p.1 p.2) :
+    ∃ γ, checkAutom g γ n = true ∧ CellStab ptn level lab γ ∧
+      γ[v]! < v := by
+  rw [elem_longprune, hmem, Bool.true_and] at hdrop
+  obtain ⟨p, hp, hpf⟩ := exists_all_false hdrop
+  have hfix : (fixedpts &&& p.1 == fixedpts) = true := by
+    rcases h : (fixedpts &&& p.1 == fixedpts) with _ | _
+    · rw [h] at hpf
+      exact absurd hpf (by simp)
+    · rfl
+  have hmcr : elem p.2 v = false := by
+    rcases h : elem p.2 v with _ | _
+    · rfl
+    · rw [hfix, h] at hpf
+      exact absurd hpf (by simp)
+  obtain ⟨γ, hγ, _, hstab, hlt⟩ := haut p hp hfix v hv hmcr
+  exact ⟨γ, hγ, hstab, hlt⟩
+
+/-- `longprune` only removes set members. -/
+theorem longprune_subset {tcell fixedpts : Nat}
+    {autos : Array (Nat × Nat)} {v : Nat}
+    (h : elem (longprune tcell fixedpts autos) v = true) :
+    elem tcell v = true := by
+  rw [elem_longprune] at h
+  exact (Bool.and_eq_true _ _).mp h |>.1
+
+/-- `shortprune` only removes set members. -/
+theorem shortprune_subset {tcell : Nat} {st : SearchSt} {v : Nat}
+    (h : elem (shortprune tcell st) v = true) : elem tcell v = true := by
+  rw [shortprune] at h
+  split at h
+  · exact (Bool.and_eq_true _ _).mp (by simpa [elem_and] using h) |>.1
+  · exact h
+
+/-- If `shortprune` removes a current member, the last ledger pair carries
+it strictly downward while stabilizing the node's cells. -/
+theorem shortprune_drop {g ptn lab : Array Nat} {level v tcell : Nat}
+    {st : SearchSt}
+    (hv : v < n) (hmem : elem tcell v = true)
+    (hdrop : elem (shortprune tcell st) v = false)
+    (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
+      PairOk g ptn lab level n fix mcr) :
+    ∃ γ, checkAutom g γ n = true ∧ CellStab ptn level lab γ ∧
+      γ[v]! < v := by
+  rw [shortprune] at hdrop
+  split at hdrop
+  · next fix mcr heq =>
+    have hmcr : elem mcr v = false := by
+      rw [elem_and, hmem, Bool.true_and] at hdrop
+      exact hdrop
+    obtain ⟨γ, hγ, _, hstab, hlt⟩ := hlast fix mcr heq v hv hmcr
+    exact ⟨γ, hγ, hstab, hlt⟩
+  · rw [hmem] at hdrop
+    cases hdrop
 
 /-- `longprune` soundness: under the ledger for fix-passing pairs,
 every vertex of the target cell is carried by a checked, base-fixing,
@@ -1047,6 +1193,97 @@ private theorem fmptn_eq_go (lab ptn : Array Nat) (level nn : Nat) :
   rw [forIn_cellF_eq lab nn]
   rfl
 
+/-- The structural minimum scan is the ordinary fold over the values at
+the listed positions. -/
+private theorem minScan_eq_foldl (lab : Array Nat) :
+    ∀ (l : List Nat) (m : Nat),
+      minScan lab l m = (l.map fun i => lab[i]!).foldl Nat.min m
+  | [], _ => rfl
+  | i :: l, m => by
+    rw [minScan, List.map_cons, List.foldl_cons]
+    rcases Decidable.em (lab[i]! < m) with h | h
+    · rw [ite_eq_left h, minScan_eq_foldl]
+      rw [show m.min lab[i]! = lab[i]! by
+        rw [Nat.min_eq_min]
+        omega]
+    · rw [ite_eq_right h, minScan_eq_foldl]
+      rw [show m.min lab[i]! = m by
+        rw [Nat.min_eq_min]
+        omega]
+
+/-- The minimum inserted for a cell is its permutation-invariant list
+minimum. -/
+private theorem minScan_cell {lab : Array Nat} {c1 len : Nat} :
+    minScan lab (List.range' (c1 + 1) len) lab[c1]! =
+      (segN lab c1 (len + 1)).foldl Nat.min
+        ((segN lab c1 (len + 1)).headD 0) := by
+  rw [segN_cons, minScan_eq_foldl]
+  simp only [List.headD_cons, List.foldl_cons, Nat.min_self]
+  congr 1
+  rw [segN]
+  simp only [List.range'_eq_map_range, List.map_map]
+  exact List.map_congr_left fun i _ => by
+    simp only [Function.comp_apply]
+
+private theorem fmptnGo_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
+    (hperm : cellsPerm ptn level lab lab') :
+    ∀ (cs : List (Nat × Nat)) (fix mcr : Nat),
+      (∀ p ∈ cs, IsCell ptn level p.1 (p.2 + 1 - p.1)) →
+      fmptnGo lab nn cs fix mcr = fmptnGo lab' nn cs fix mcr
+  | [], _, _, _ => rfl
+  | (c1, c2) :: rest, fix, mcr, hcells => by
+      rw [fmptnGo, fmptnGo]
+      have hcell := hcells (c1, c2) (by simp)
+      rcases hc : (c1 == c2) with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h),
+          ite_eq_right (fun h => Bool.noConfusion h)]
+        have hlen : c2 + 1 - c1 = (c2 - c1) + 1 := by
+          have := hcell.1
+          omega
+        have hp := hperm c1 (c2 + 1 - c1) hcell
+        rw [hlen] at hp
+        have hmin := foldl_min_headD_perm hp
+        rw [← minScan_cell, ← minScan_cell] at hmin
+        have hrange : c2 + 1 - (c1 + 1) = c2 - c1 := by omega
+        rw [hrange, hmin]
+        exact fmptnGo_cellsPerm hperm rest fix _
+          (fun p hp => hcells p (by simp [hp]))
+      · rw [ite_eq_left rfl, ite_eq_left rfl]
+        have heq : c1 = c2 := (beq_iff_eq ..).mp hc
+        subst c2
+        have hlab := cellsPerm_singleton hperm (by simpa using hcell)
+        rw [hlab]
+        exact fmptnGo_cellsPerm hperm rest _ _
+          (fun p hp => hcells p (by simp [hp]))
+
+/-- `fmptn` is unchanged when the two partitions list the same cells and
+the two labellings have the same contents in each such cell. -/
+theorem fmptn_congr {lab lab' ptn ptn' : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hcells : cells ptn level nn = cells ptn' level nn)
+    (hperm : cellsPerm ptn level lab lab') :
+    fmptn lab ptn level nn = fmptn lab' ptn' level nn := by
+  rw [fmptn_eq_go, fmptn_eq_go]
+  rw [← hcells]
+  exact fmptnGo_cellsPerm hperm _ 0 0 (cells_isCell hnn hend)
+
+/-- `fmptn` is unchanged when vertices are permuted within every cell
+at the level it reads. -/
+theorem fmptn_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
+    (hnn : nn ≤ ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hperm : cellsPerm ptn level lab lab') :
+    fmptn lab ptn level nn = fmptn lab' ptn level nn :=
+  fmptn_congr hnn hend rfl hperm
+
+/-- A quartet receipt preserves the implicit cheap-automorphism pair at
+its frozen boundary. -/
+theorem SearchOut.fmptn {G : Colored n k} {level nn : Nat}
+    {st out : SearchSt} (h : SearchOut G level level st out)
+    (hnn : nn ≤ st.ptn.size)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
+    fmptn out.lab out.ptn level nn = fmptn st.lab st.ptn level nn :=
+  (fmptn_congr hnn hend (cells_eq_of_low h.ptnSize h.low).symm h.perm).symm
+
 /-- The minimum scan attains a window value at or below its seed. -/
 private theorem minScan_spec {lab : Array Nat} :
     ∀ (l : List Nat) (m : Nat),
@@ -1092,6 +1329,41 @@ private theorem fmptnGo_mcr_mono {lab : Array Nat} {nn : Nat} :
       exact fmptnGo_mcr_mono l _ _ _ (elem_insert_mono _ hx)
     · rw [ite_eq_left rfl]
       exact fmptnGo_mcr_mono l _ _ _ (elem_insert_mono _ hx)
+
+/-- `fix` bits only accumulate through the outer mirror. -/
+private theorem fmptnGo_fix_mono {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr x : Nat),
+      elem fix x = true →
+      elem (fmptnGo lab nn l fix mcr).1 x = true
+  | [], _, _, _, hx => hx
+  | (c1, c2) :: l, fix, mcr, x, hx => by
+    rw [fmptnGo]
+    rcases hc : (c1 == c2) with _ | _
+    · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+      exact fmptnGo_fix_mono l _ _ _ hx
+    · rw [ite_eq_left rfl]
+      exact fmptnGo_fix_mono l _ _ _ (elem_insert_mono _ hx)
+
+/-- Every singleton cell of the list deposits its vertex in `fix`. -/
+private theorem fmptnGo_singleton {lab : Array Nat} {nn : Nat} :
+    ∀ (l : List (Nat × Nat)) (fix mcr c : Nat),
+      (c, c) ∈ l →
+      elem (fmptnGo lab nn l fix mcr).1 lab[c]! = true
+  | [], _, _, _, hmem => absurd hmem (by simp)
+  | (c1, c2) :: l, fix, mcr, c, hmem => by
+    rw [fmptnGo]
+    rcases List.mem_cons.mp hmem with heq | htail
+    · have hc1 : c1 = c := (congrArg Prod.fst heq).symm
+      have hc2 : c2 = c := (congrArg Prod.snd heq).symm
+      subst c1
+      subst c2
+      simp only [beq_self_eq_true, ite_true]
+      exact fmptnGo_fix_mono l _ _ _ (elem_insert_self ..)
+    · rcases hc : (c1 == c2) with _ | _
+      · rw [ite_eq_right (fun h => Bool.noConfusion h)]
+        exact fmptnGo_singleton l _ _ _ htail
+      · rw [ite_eq_left rfl]
+        exact fmptnGo_singleton l _ _ _ htail
 
 /-- `fix` bits of the outer mirror come from singleton cells. -/
 private theorem fmptnGo_fix {lab : Array Nat} {nn : Nat} :
@@ -1169,6 +1441,27 @@ theorem fmptn_fix {lab ptn : Array Nat} {level nn u : Nat}
   rcases fmptnGo_fix _ _ _ _ hu with h0 | h
   · exact absurd h0 (by simp [elem])
   · exact h
+
+/-- Every singleton-cell vertex is present in the `fix` component of the
+implicit pair. -/
+theorem fmptn_singleton {lab ptn : Array Nat} {level nn c : Nat}
+    (hcell : (c, c) ∈ cells ptn level nn) :
+    elem (fmptn lab ptn level nn).1 lab[c]! = true := by
+  rw [fmptn_eq_go]
+  exact fmptnGo_singleton _ 0 0 c hcell
+
+/-- A singleton cell remains a singleton when only the comparison level
+is raised. -/
+theorem isCell_one_mono {ptn : Array Nat} {level saved c : Nat}
+    (h : IsCell ptn level c 1) (hle : level ≤ saved) :
+    IsCell ptn saved c 1 := by
+  rcases h with ⟨hpos, hstart, hinterior, hend⟩
+  refine ⟨hpos, ?_, ?_, by omega⟩
+  · rcases hstart with hzero | hstart
+    · exact Or.inl hzero
+    · exact Or.inr (by omega)
+  · intro i hi hlt
+    omega
 
 /-- A vertex left out of an `fmptn` pair's `mcr` has a strictly
 smaller cellmate. -/

@@ -124,6 +124,13 @@ theorem firstterminal_canonlab (level : Nat) (st : SearchSt) :
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
+/-- A first-path leaf also records its labelling as the first reference
+leaf. -/
+theorem firstterminal_firstlab (level : Nat) (st : SearchSt) :
+    (firstterminal level st).firstlab = st.lab := by
+  rw [firstterminal]
+  simp only [Id.run_bind, Id.run_pure]
+
 /-- A first-path leaf at a positive level leaves something installed,
 which is `NodeConcl.installed` on the leaf arm. -/
 theorem firstterminal_installed {level : Nat} (hlev : level ≠ 0)

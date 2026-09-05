@@ -967,7 +967,7 @@ theorem certifyNode_replays {ctx : Ctx} (hn : ctx.n = n)
                 simp only [Bool.and_eq_true, decide_eq_true_eq]
                   at hcc
                 exact ⟨.autom o' γ, stx2, _, rfl, hbz, hez,
-                  Or.inl ⟨o', γ, rfl, hcc.1, hcc.2⟩⟩
+                  Or.inl ⟨o', γ, rfl, hcc.1.2, hcc.2⟩⟩
               · refine ⟨_, _, _, rfl, ?_, ?_, Or.inr ⟨stx2, hbz,
                   hez, rfl⟩⟩
                 · exact (certifyNodeAutom_nobudget' ctx tcLevel fuel
