@@ -11,7 +11,7 @@ public import HexGraphIso.Colored
 public import HexGraphIso.Iso
 public import HexGraphIso.Lex
 public import HexGraphIso.Reference
-public import HexGraphIso.Canon
+public import HexGraphIso.Limits
 public import HexGraphIso.Nauty.Bits
 public import HexGraphIso.Nauty.VSet
 public import HexGraphIso.Nauty.Refine
@@ -121,10 +121,11 @@ and proved to agree with an exhaustive reference canonical form.
 The user-facing surface is small. `Hex.GraphIso.canonicalize`, `canon` and
 `label` are the canonical labelling, `findIso` and `isIso` decide
 isomorphism, and `iso_iff_canon_eq` is the biconditional the whole
-library exists to prove. `certify?`, `checkCanon` and `canon?` are the
-bounded produce-then-replay pipeline for proof terms, and `checkDiff` its
-negative counterpart. `autos` reports the automorphism generators the search discovers, with
-the vertex orbits, the orbit count and the group order.
+library exists to prove. `Nauty.certifyKey?` and `Nauty.checkCanon` are
+the produce-then-replay pipeline for proof terms, and `Nauty.checkDiff`
+its negative counterpart. `autos` reports the automorphism generators
+the search discovers, with the vertex orbits, the orbit count and the
+group order.
 `Families` supplies the named deterministic graphs
 and `Random` the reproducible pseudo-random ones.
 

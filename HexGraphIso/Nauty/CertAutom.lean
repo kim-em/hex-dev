@@ -15,10 +15,7 @@ The automorphism-pruning certificate producer. Everything here is
 untrusted: candidates are validated by `validateKey?` (the trusted
 `checkKey` replay), and every automorphism prune is self-checked with
 the replay's cell-transport predicate (`childCellsOk`) before use, so
-a producer bug can only cost performance, never soundness. The honest code-prune producer
-`certifyNode` stays in `Cert` untouched; the completeness theorems and
-the exhaustive fallback (`Complete`) are stated about it and carry
-totality.
+a producer bug can only cost performance, never soundness.
 
 Automorphisms are harvested nauty-style from pairs of aligned leaves:
 `γ[ref[i]] = lab[i]` (the `workperm` shape) against the pass's first
@@ -303,34 +300,25 @@ a candidate producer — nothing here is trusted. -/
     else
       some (cert, B)
 
-/-- The candidate pipeline plus trusted validation. -/
-def certifyKeyCore (G : Colored n k) (budget : Option Nat) :
+/-- Produce a checked canonical-key certificate: the pruned
+branch-and-bound search finds the best key, the pruning certificate
+pass rebuilds the tree against it, and the trusted `checkKey` replay
+validates the pair. `budget` caps the traced walk's node count; with
+`none` the walk is unbounded. `none` is returned on budget exhaustion
+as well as on validation failure. -/
+def certifyKey? (G : Colored n k) (budget : Option Nat := none) :
     Option (CertNode × Key n) :=
   if n == 0 then
     validateKey? G .leaf ⟨[], []⟩
   else
     (produceCand G budget).bind fun cb => validateKey? G cb.1 cb.2
 
-/-- Produce a checked canonical-key certificate: the pruned
-branch-and-bound search finds the best key, the pruning certificate
-pass rebuilds the tree against it, and the trusted `checkKey` replay
-validates the pair. -/
-def certifyKey? (G : Colored n k) : Option (CertNode × Key n) :=
-  certifyKeyCore G none
-
-/-- The node-budgeted variant for tactic use: `none` on budget
-exhaustion as well as on validation failure. -/
-def certifyKeyBounded? (budget : Nat) (G : Colored n k) :
-    Option (CertNode × Key n) :=
-  certifyKeyCore G (some budget)
-
-/-- Every key a successful `certifyKeyCore` returns is the spec
-key. -/
-theorem certifyKeyCore_sound {G : Colored n k} {budget : Option Nat}
+/-- Every key a successful `certifyKey?` returns is the spec key. -/
+theorem certifyKey?_sound {G : Colored n k} {budget : Option Nat}
     {cert : CertNode} {B : Key n}
-    (h : certifyKeyCore G budget = some (cert, B)) :
+    (h : certifyKey? G budget = some (cert, B)) :
     canonSpecKey G = B := by
-  rw [certifyKeyCore] at h
+  rw [certifyKey?] at h
   split at h
   · exact validateKey?_sound h
   · rcases hp : produceCand G budget with _ | cb
@@ -338,11 +326,5 @@ theorem certifyKeyCore_sound {G : Colored n k} {budget : Option Nat}
       cases h
     · rw [hp] at h
       exact validateKey?_sound h
-
-/-- Every key a successful `certifyKey?` returns is the spec key. -/
-theorem certifyKey?_sound {G : Colored n k} {cert : CertNode}
-    {B : Key n} (h : certifyKey? G = some (cert, B)) :
-    canonSpecKey G = B :=
-  certifyKeyCore_sound h
 
 end Hex.GraphIso.Nauty

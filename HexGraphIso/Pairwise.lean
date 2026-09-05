@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Iso
 public import HexGraphIso.Lex
-public import HexGraphIso.Canon
+public import HexGraphIso.Limits
 
 public section
 
@@ -142,8 +142,8 @@ worklist, `none` budget exhaustion. -/
 /-- The bounded verified isomorphism decision. `some true` and
 `some false` are both proven verdicts; `none` is search exhaustion under
 `maxNodes` and decides nothing. -/
-@[expose] def decideIso? (limits : SearchLimits) (G H : Colored n k) :
+@[expose] def decideIso? (maxNodes : Nat) (G H : Colored n k) :
     Option Bool :=
-  search G H limits.maxNodes [(colorCells G, colorCells H)]
+  search G H maxNodes [(colorCells G, colorCells H)]
 
 end Hex.GraphIso.Pairwise

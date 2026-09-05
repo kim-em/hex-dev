@@ -11,30 +11,17 @@ public import HexGraphIso.Reference
 public section
 
 /-!
-Resource limits and the bounded permutation check.
+Replay limits and the bounded permutation check.
 
 The public canonical-form operations live in `HexGraphIso.Ops`,
-backed by the certificate-checked nauty-semantic canonicalization;
-this module keeps the limit structures and the replay-bounded
-permutation check they and the tactic layer share.
+backed by the certificate-checked nauty-semantic canonicalization.
+This module keeps the replay limit structure and the bounded
+permutation check that the tactic layer shares with them.
 -/
 
 namespace Hex.GraphIso
 
 variable {n k : Nat}
-
-/-! # Bounded operations -/
-
-/-- Limits on canonical search. `maxNodes` counts every refined partition
-visited, including the root; `maxCertNodes` counts every proof-rule record
-emitted. -/
-structure SearchLimits where
-  /-- The largest number of search nodes visited before exhaustion. -/
-  maxNodes : Nat := 100000
-  /-- The largest number of certificate records emitted before
-  exhaustion. -/
-  maxCertNodes : Nat := 100000
-deriving DecidableEq
 
 /-- Limits on certificate and permutation replay. -/
 structure ReplayLimits where
@@ -43,11 +30,6 @@ structure ReplayLimits where
   inspected, and dense adjacency word inspected. -/
   maxCheckerSteps : Nat := 5000000
 deriving DecidableEq
-
-/-- The node charge of the conservative pre-check: one node per
-enumerated candidate labelling. -/
-@[expose] def searchCost (n : Nat) : Nat :=
-  n ^ n
 
 /-- The step charge of one permutation check: each vertex colour and each
 vertex pair inspected. -/

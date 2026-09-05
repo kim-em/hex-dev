@@ -1282,10 +1282,10 @@ theorem checkKeyLit_eq (G : Colored n k) (flat : List Bool)
     simp only [checkNodeL_eq]
     rfl
 
-/-- The tactic-facing certificate producer: `certifyKeyBounded?` with
+/-- The tactic-facing certificate producer: budgeted `certifyKey?` with
 its key read as a literal. -/
 def certifyKeyLit? (budget : Nat) (G : Colored n k) : Option (CertNode × KeyL) :=
-  (certifyKeyBounded? budget G).map fun p => (p.1, p.2.toL)
+  (certifyKey? G (some budget)).map fun p => (p.1, p.2.toL)
 
 /-- Tying equalities plus two list-state key certificates with
 differing keys prove non-isomorphism: `not_isomorphic_of_checkKeysFlat`

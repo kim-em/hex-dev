@@ -173,34 +173,94 @@ theorem vec_of_ofVector? {v : Vector (Fin n) n} {p : Perm n}
 
 /-! # Inverse -/
 
-/-- The vertex mapping to `i`: the executable preimage search. -/
-@[expose] def preimage (p : Perm n) (i : Fin n) : Fin n :=
-  (((List.finRange n).find? fun j => p.get j == i).getD i)
+/-- One scatter step: record `i` at position `p.get i`. -/
+@[inline, expose] def scatterStep (p : Perm n) (v : Vector (Fin n) n)
+    (i : Fin n) : Vector (Fin n) n :=
+  v.set (p.get i).val i (p.get i).isLt
 
-@[simp] theorem get_preimage (p : Perm n) (i : Fin n) :
-    p.get (p.preimage i) = i := by
-  rw [preimage]
-  rcases hfind : (List.finRange n).find? (fun j => p.get j == i) with _ | j
-  · rcases p.get_surj i with ⟨j, hj⟩
-    have := List.find?_eq_none.mp hfind j (List.mem_finRange j)
-    simp [hj] at this
-  · have := List.find?_some hfind
-    simpa using this
+/-- The image array of the inverse, built by one scatter pass over the
+vertices: each `i` is written at position `p.get i`. Every position is
+written, because `p` is surjective. -/
+@[expose] def invVec (p : Perm n) : Vector (Fin n) n :=
+  (List.finRange n).foldl p.scatterStep (Hex.Vector.ofFn' fun i => i)
+
+/-- A scatter pass leaves untouched every position that is not the image
+of an element of the list. -/
+theorem getElem_foldl_scatterStep_of_forall_ne (p : Perm n) :
+    ∀ (l : List (Fin n)) (v : Vector (Fin n) n) (q : Fin n),
+      (∀ j ∈ l, p.get j ≠ q) →
+        (l.foldl p.scatterStep v)[q.val] = v[q.val] := by
+  intro l
+  induction l with
+  | nil => intro v q _; rfl
+  | cons a l ih =>
+    intro v q h
+    rw [List.foldl_cons,
+      ih (p.scatterStep v a) q (fun j hj => h j (List.mem_cons_of_mem a hj)),
+      scatterStep,
+      Vector.getElem_set_ne (p.get a).isLt q.isLt
+        (fun he => h a List.mem_cons_self (Fin.eq_of_val_eq he))]
+
+/-- A scatter pass writes `i` at position `p.get i` for every `i` in the
+list. -/
+theorem getElem_foldl_scatterStep (p : Perm n) :
+    ∀ (l : List (Fin n)) (v : Vector (Fin n) n) {i : Fin n}, i ∈ l →
+      (l.foldl p.scatterStep v)[(p.get i).val] = i := by
+  intro l
+  induction l with
+  | nil => intro _ _ hi; cases hi
+  | cons a l ih =>
+    intro v i hi
+    rcases Decidable.em (i ∈ l) with hin | hnin
+    · rw [List.foldl_cons]
+      exact ih _ hin
+    · have hia : i = a := (List.mem_cons.mp hi).resolve_right hnin
+      subst hia
+      rw [List.foldl_cons,
+        getElem_foldl_scatterStep_of_forall_ne p l (p.scatterStep v i)
+          (p.get i) (fun j hj => p.get_ne (fun hji => hnin (hji ▸ hj))),
+        scatterStep, Vector.getElem_set_self (p.get i).isLt]
+
+/-- The vertex mapping to `i`, read off the scattered inverse array. -/
+@[expose] def preimage (p : Perm n) (i : Fin n) : Fin n :=
+  p.invVec[i.val]
 
 @[simp] theorem preimage_get (p : Perm n) (i : Fin n) :
     p.preimage (p.get i) = i :=
-  p.get_inj (p.get_preimage (p.get i))
+  getElem_foldl_scatterStep p (List.finRange n) _ (List.mem_finRange i)
 
-/-- The inverse permutation. -/
-@[expose] def inv (p : Perm n) : Perm n :=
-  ofFn p.preimage
-    (fun i j h => by
-      have : p.get (p.preimage i) = p.get (p.preimage j) := congrArg p.get h
-      rwa [get_preimage, get_preimage] at this)
-    (fun i => ⟨p.get i, p.preimage_get i⟩)
+@[simp] theorem get_preimage (p : Perm n) (i : Fin n) :
+    p.get (p.preimage i) = i := by
+  rcases p.get_surj i with ⟨j, hj⟩
+  rw [← hj, preimage_get]
+
+theorem preimage_inj (p : Perm n) {i j : Fin n}
+    (h : p.preimage i = p.preimage j) : i = j := by
+  have := congrArg p.get h
+  rwa [get_preimage, get_preimage] at this
+
+/-- The image array of a permutation is duplicate-free whenever its
+entries are pairwise distinct. -/
+theorem nodup_toList {v : Vector (Fin n) n}
+    (hv : ∀ i j : Fin n, v[i.val] = v[j.val] → i = j) : v.toList.Nodup := by
+  refine List.pairwise_iff_getElem.mpr fun i j hi hj hij => ?_
+  have hi' : i < n := by simpa using hi
+  have hj' : j < n := by simpa using hj
+  simp only [Vector.getElem_toList]
+  intro he
+  exact absurd (hv ⟨i, hi'⟩ ⟨j, hj'⟩ he) (by simp; omega)
+
+/-- The inverse permutation: the scattered inverse array. -/
+@[expose] def inv (p : Perm n) : Perm n where
+  vec := p.invVec
+  nodup := nodup_toList fun _ _ h => p.preimage_inj h
+  complete := fun i => List.mem_iff_getElem.mpr
+    ⟨(p.get i).val, by simp, by
+      rw [Vector.getElem_toList]
+      exact p.preimage_get i⟩
 
 theorem get_inv (p : Perm n) (i : Fin n) : p.inv.get i = p.preimage i :=
-  get_ofFn ..
+  rfl
 
 @[simp] theorem get_inv_get (p : Perm n) (i : Fin n) : p.get (p.inv.get i) = i := by
   rw [get_inv, get_preimage]

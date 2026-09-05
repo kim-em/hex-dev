@@ -94,21 +94,4 @@ theorem Colored.ofColor?_eq_none_iff [DecidableEq (Fin k)] [DecidableEq V]
       rcases not_forall.mp h with ⟨c, hc⟩
       exact ⟨c, fun v hv => hc ⟨v, hv⟩⟩
 
-/-- The one-cell coloured graph over a nonempty vertex type, and the
-zero-colour empty graph otherwise. The result is independent of any
-ordering of the vertices. -/
-def Colored.singleColor (graph : SimpleGraph V) : Sigma fun k => Colored V k :=
-  if h : 0 < Fintype.card V then
-    ⟨1,
-      { graph := graph
-        color := fun _ => 0
-        onto := fun c => by
-          rcases Fintype.card_pos_iff.mp h with ⟨v⟩
-          exact ⟨v, Subsingleton.elim _ _⟩ }⟩
-  else
-    ⟨0,
-      { graph := graph
-        color := fun v => absurd (Fintype.card_pos_iff.mpr ⟨v⟩) h
-        onto := fun c => absurd c.pos (by omega) }⟩
-
 end Hex.GraphIso.Mathlib
