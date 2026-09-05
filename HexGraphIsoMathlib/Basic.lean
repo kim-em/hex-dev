@@ -16,17 +16,16 @@ public section
 Mathlib-facing coloured graphs.
 
 `SimpleGraph.Coloring` expresses proper colouring, where adjacent
-vertices must have different colours; that is not nauty's input. The
+vertices must have different colours. That is not nauty's input. The
 object here is an arbitrary ordered vertex partition: a `SimpleGraph`
 together with an onto colour map into `Fin k`. An isomorphism preserves
 each ordered colour index and may not permute the cells.
 
-The structure requires every colour to occur. A caller with a
-non-surjective map can either restrict `k` and renumber the used colours
-explicitly, or use the checked helper `Colored.ofColor?`, which returns
-`none` together with nothing rather than silently compressing or
-reordering colours — compression would change the canonical labelling
-convention.
+The structure requires every colour to occur. A caller whose colour map
+is not onto can restrict `k` and renumber the used colours explicitly,
+or call `Colored.ofColor?`, which returns `none` instead of compressing
+or reordering the colours. Compressing them would change the ordered
+colouring, and with it the canonical labelling.
 -/
 
 namespace Hex.GraphIso.Mathlib
@@ -36,7 +35,9 @@ universe u v
 variable {V : Type u} {W : Type v} {k : Nat}
 
 /-- A finite simple graph with an ordered vertex colouring by `Fin k` in
-which every colour is used. -/
+which every colour is used. This is the Mathlib-side counterpart of
+`Hex.GraphIso.Colored`: the colouring need not be proper, and an
+isomorphism has to preserve each colour index. -/
 structure Colored (V : Type u) (k : Nat) [Fintype V] where
   /-- The underlying Mathlib graph. -/
   graph : SimpleGraph V
@@ -78,7 +79,8 @@ def Colored.ofColor? [DecidableEq (Fin k)] (graph : SimpleGraph V)
   else
     none
 
-/-- The unused colour witnessing a failed `Colored.ofColor?`. -/
+/-- `Colored.ofColor?` returns `none` exactly when some colour of
+`Fin k` is taken by no vertex. -/
 theorem Colored.ofColor?_eq_none_iff [DecidableEq (Fin k)] [DecidableEq V]
     {graph : SimpleGraph V} {color : V → Fin k} :
     Colored.ofColor? graph color = none ↔ ∃ c : Fin k, ∀ v, color v ≠ c := by
