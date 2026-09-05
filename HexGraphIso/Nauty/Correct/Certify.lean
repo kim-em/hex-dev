@@ -155,7 +155,7 @@ theorem certifyCanon?_isSome_zero (G : Colored 0 k) :
     · refine beq_iff_eq.mpr ?_
       rw [leafRows]
       rfl
-    · exact colorSortedCheck_canonlab G
+    · exact labelColorSorted_canonlab G
 
 end Hex.GraphIso.Nauty
 

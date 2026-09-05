@@ -216,20 +216,20 @@ theorem elemK_eq (s v : Nat) : elemK s v = s.testBit v := by
     Nat.and_comm, Nat.and_one_is_mod]
   rcases Nat.mod_two_eq_zero_or_one (s >>> v) with h | h <;> simp [h] <;> rfl
 
-/-- `insertL`, raw: a no-op outside the vertex range. -/
+/-- `NatSet.insert`, raw: a no-op outside the vertex range. -/
 @[expose] def insertK (n s v : Nat) : Nat :=
   cond (Nat.blt v n) (Nat.lor s (Nat.shiftLeft 1 v)) s
 
-theorem insertK_eq (n s v : Nat) : insertK n s v = insertL n s v := by
-  rw [insertK, insertL, cond_blt]
+theorem insertK_eq (n s v : Nat) : insertK n s v = NatSet.insert n s v := by
+  rw [insertK, NatSet.insert, cond_blt]
   rfl
 
-/-- `eraseL`, raw: a no-op outside the vertex range. -/
+/-- `NatSet.erase`, raw: a no-op outside the vertex range. -/
 @[expose] def eraseK (n s v : Nat) : Nat :=
   cond (Nat.blt v n) (cond (elemK s v) (Nat.xor s (Nat.shiftLeft 1 v)) s) s
 
-theorem eraseK_eq (n s v : Nat) : eraseK n s v = eraseL n s v := by
-  rw [eraseK, eraseL, cond_blt, elemK_eq]
+theorem eraseK_eq (n s v : Nat) : eraseK n s v = NatSet.erase n s v := by
+  rw [eraseK, NatSet.erase, cond_blt, elemK_eq]
   by_cases h1 : v < n <;> by_cases h2 : s.testBit v = true <;> simp [h1, h2] <;> rfl
 
 /-- `mash`, raw. -/
@@ -376,8 +376,8 @@ theorem lowBitK_eq (s : Nat) : lowBitK s = lowBit s := by
   cond (Nat.beq s' 0) none (some (lowBitK s'))
 
 theorem nextElemK_eq (s : Nat) (pos : Option Nat) :
-    nextElemK s pos = nextElemL s pos := by
-  unfold nextElemK nextElemL
+    nextElemK s pos = NatSet.nextElem s pos := by
+  unfold nextElemK NatSet.nextElem
   cases pos <;> simp only [cond_beq, lowBitK_eq, shiftLeft_eq, shiftRight_eq,
     add_eq]
 
@@ -616,7 +616,7 @@ row form the kernel replay computes with. -/
 @[expose] def flatRows (nn : Nat) (flat : List Bool) : Array Nat :=
   ((chunkRows nn nn flat).map fun seg =>
     (List.range nn).foldl
-      (fun row j => if atD seg j false then Nauty.insertL nn row j else row)
+      (fun row j => if atD seg j false then Nauty.NatSet.insert nn row j else row)
       0).toArray
 
 /-- The same rows as packed vertex sets: the form the specification
@@ -661,7 +661,7 @@ theorem flatRows_small (nn : Nat) (flat : List Bool) :
   rw [flatRows, List.toList_toArray, List.mem_map] at hr
   obtain ⟨seg, _, rfl⟩ := hr
   have hfold : ∀ (l : List Nat) (acc : Nat), acc < 2 ^ nn →
-      l.foldl (fun row j => if atD seg j false then insertL nn row j else row) acc <
+      l.foldl (fun row j => if atD seg j false then NatSet.insert nn row j else row) acc <
         2 ^ nn := by
     intro l
     induction l with
@@ -671,7 +671,7 @@ theorem flatRows_small (nn : Nat) (flat : List Bool) :
       rw [List.foldl_cons]
       refine ih _ ?_
       split
-      · rw [insertL]
+      · rw [NatSet.insert]
         split
         · rw [Nat.one_shiftLeft]
           exact Nat.or_lt_two_pow hacc (Nat.pow_lt_pow_right (by decide) (by assumption))
@@ -725,7 +725,7 @@ theorem testBit_rowOfSegK : ∀ (seg : List Bool) (j i : Nat),
 
 theorem testBit_rowFold (nn : Nat) (seg : List Bool) : ∀ (len a acc i : Nat), a + len ≤ nn →
     ((List.range' a len).foldl
-      (fun row j => if atD seg j false then insertL nn row j else row) acc).testBit i =
+      (fun row j => if atD seg j false then NatSet.insert nn row j else row) acc).testBit i =
       (acc.testBit i || (decide (a ≤ i ∧ i < a + len) && atD seg i false))
   | 0, a, acc, i, _ => by
     simp only [List.range'_zero, List.foldl_nil, Nat.add_zero]
@@ -733,7 +733,7 @@ theorem testBit_rowFold (nn : Nat) (seg : List Bool) : ∀ (len a acc i : Nat), 
     simp [this]
   | len + 1, a, acc, i, hle => by
     rw [List.range'_succ, List.foldl_cons, testBit_rowFold nn seg len (a + 1) _ i (by omega),
-      insertL, ite_eq_left (show a < nn by omega)]
+      NatSet.insert, ite_eq_left (show a < nn by omega)]
     have hrange : decide (a + 1 ≤ i ∧ i < a + 1 + len) =
         (decide (a ≤ i ∧ i < a + (len + 1)) && decide (i ≠ a)) := by
       rw [Bool.eq_iff_iff]
@@ -757,7 +757,7 @@ theorem testBit_rowFold (nn : Nat) (seg : List Bool) : ∀ (len a acc i : Nat), 
 theorem rowOfSegK_eq (nn : Nat) (seg : List Bool) (hlen : seg.length ≤ nn) :
     rowOfSegK seg 0 =
       (List.range nn).foldl
-        (fun row j => if atD seg j false then insertL nn row j else row) 0 := by
+        (fun row j => if atD seg j false then NatSet.insert nn row j else row) 0 := by
   refine Nat.eq_of_testBit_eq fun i => ?_
   rw [testBit_rowOfSegK, List.range_eq_range', testBit_rowFold nn seg nn 0 0 i (by omega),
     Nat.zero_testBit, Nat.sub_zero]

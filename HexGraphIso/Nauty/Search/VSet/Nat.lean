@@ -87,18 +87,18 @@ Each packed operation corresponds to its `Nat` counterpart in
 theorem toNat_empty : (empty : VSet n).toNat = 0 :=
   Nat.eq_of_testBit_eq fun v => by rw [testBit_toNat, mem_empty, Nat.zero_testBit]
 
-theorem toNat_insert (s : VSet n) (v : Nat) : (s.insert v).toNat = insertL n s.toNat v :=
+theorem toNat_insert (s : VSet n) (v : Nat) : (s.insert v).toNat = NatSet.insert n s.toNat v :=
   Nat.eq_of_testBit_eq fun w => by
-    rw [testBit_toNat, mem_insert, insertL]
+    rw [testBit_toNat, mem_insert, NatSet.insert]
     rcases Decidable.em (v < n) with hv | hv
     · rw [ite_eq_left hv, Nat.testBit_or, testBit_one_shift, testBit_toNat,
         decide_eq_true hv, Bool.and_true]
     · rw [ite_eq_right hv, testBit_toNat, decide_eq_false hv, Bool.and_false,
         Bool.or_false]
 
-theorem toNat_erase (s : VSet n) (v : Nat) : (s.erase v).toNat = eraseL n s.toNat v :=
+theorem toNat_erase (s : VSet n) (v : Nat) : (s.erase v).toNat = NatSet.erase n s.toNat v :=
   Nat.eq_of_testBit_eq fun w => by
-    rw [testBit_toNat, mem_erase, eraseL]
+    rw [testBit_toNat, mem_erase, NatSet.erase]
     rcases Decidable.em (v < n ∧ s.toNat.testBit v = true) with h | h
     · rw [ite_eq_left h, Nat.testBit_xor, testBit_one_shift, testBit_toNat]
       rcases Decidable.em (v = w) with rfl | hne
@@ -161,8 +161,8 @@ theorem subset_eq_and (s t : VSet n) :
   · intro h
     exact toNat_inj h
 
-theorem nextElem_eq_nextElemL (s : VSet n) (pos : Option Nat) :
-    s.nextElem pos = nextElemL s.toNat pos := by
+theorem nextElem_toNat (s : VSet n) (pos : Option Nat) :
+    s.nextElem pos = NatSet.nextElem s.toNat pos := by
   -- the masked bitset the `Nat` side scans
   have key : ∀ (s' : Nat), (∀ w, s'.testBit w = (decide (scanStart pos ≤ w) && s.mem w)) →
       s.nextElem pos = (if s' = 0 then none else some (lowBit s')) := by
@@ -197,23 +197,23 @@ theorem nextElem_eq_nextElemL (s : VSet n) (pos : Option Nat) :
       rw [testBit_shiftUp, testBit_toNat]
       rfl
 
-theorem rowCmp_eq_rowCmpL (s t : VSet n) : s.rowCmp t = rowCmpL s.toNat t.toNat := by
+theorem rowCmp_toNat (s t : VSet n) : s.rowCmp t = NatSet.rowCmp s.toNat t.toNat := by
   have hne_of : ∀ d, s.mem d ≠ t.mem d → s.toNat ≠ t.toNat := fun d hd he =>
     hd (by rw [← testBit_toNat, ← testBit_toNat, he])
   rcases h : s.rowCmp t with _ | _ | _
   · obtain ⟨d, hs, ht, hlow⟩ := rowCmp_lt_iff.mp h
     have hne := hne_of d (by rw [hs, ht]; exact Bool.false_ne_true)
-    rw [rowCmpL, ite_eq_right hne, lowBit_eq_of (s := s.toNat ^^^ t.toNat) (d := d)
+    rw [NatSet.rowCmp, ite_eq_right hne, lowBit_eq_of (s := s.toNat ^^^ t.toNat) (d := d)
       (by rw [Nat.testBit_xor, testBit_toNat, testBit_toNat, hs, ht]; rfl)
       (fun i hi => by rw [Nat.testBit_xor, testBit_toNat, testBit_toNat, hlow i hi]; simp),
       testBit_toNat, hs]
     rfl
   · rw [rowCmp_eq_iff] at h
     subst h
-    rw [rowCmpL, ite_eq_left rfl]
+    rw [NatSet.rowCmp, ite_eq_left rfl]
   · obtain ⟨d, hs, ht, hlow⟩ := rowCmp_gt_iff.mp h
     have hne := hne_of d (by rw [hs, ht]; decide)
-    rw [rowCmpL, ite_eq_right hne, lowBit_eq_of (s := s.toNat ^^^ t.toNat) (d := d)
+    rw [NatSet.rowCmp, ite_eq_right hne, lowBit_eq_of (s := s.toNat ^^^ t.toNat) (d := d)
       (by rw [Nat.testBit_xor, testBit_toNat, testBit_toNat, hs, ht]; rfl)
       (fun i hi => by rw [Nat.testBit_xor, testBit_toNat, testBit_toNat, hlow i hi]; simp),
       testBit_toNat, hs]
@@ -222,7 +222,7 @@ theorem rowCmp_eq_rowCmpL (s t : VSet n) : s.rowCmp t = rowCmpL s.toNat t.toNat 
 private theorem toNat_foldl_image (σ : Nat → Nat) (s : VSet n) :
     ∀ (l : List Nat) (init : VSet n),
       (l.foldl (fun t v => if s.mem v then t.insert (σ v) else t) init).toNat =
-        l.foldl (fun t v => if s.toNat.testBit v then insertL n t (σ v) else t) init.toNat
+        l.foldl (fun t v => if s.toNat.testBit v then NatSet.insert n t (σ v) else t) init.toNat
   | [], _ => rfl
   | v :: l, init => by
     rw [List.foldl_cons, List.foldl_cons, toNat_foldl_image σ s l, testBit_toNat]
@@ -231,13 +231,13 @@ private theorem toNat_foldl_image (σ : Nat → Nat) (s : VSet n) :
     · simp only [ite_true, toNat_insert]
 
 theorem toNat_image (σ : Nat → Nat) (s : VSet n) :
-    (s.image σ).toNat = imageL n σ s.toNat := by
-  rw [image, imageL, toNat_foldl_image, toNat_empty]
+    (s.image σ).toNat = NatSet.image n σ s.toNat := by
+  rw [image, NatSet.image, toNat_foldl_image, toNat_empty]
 
 theorem toNat_foldl_insert (g : Nat → Nat) :
     ∀ (l : List Nat) (init : VSet n),
       (l.foldl (fun w o => w.insert (g o)) init).toNat =
-        l.foldl (fun w o => insertL n w (g o)) init.toNat
+        l.foldl (fun w o => NatSet.insert n w (g o)) init.toNat
   | [], _ => rfl
   | o :: l, init => by
     rw [List.foldl_cons, List.foldl_cons, toNat_foldl_insert g l, toNat_insert]
@@ -245,7 +245,7 @@ theorem toNat_foldl_insert (g : Nat → Nat) :
 theorem toNat_foldl_insert_if (f : Nat → Bool) :
     ∀ (l : List Nat) (init : VSet n),
       (l.foldl (fun s v => if f v then s.insert v else s) init).toNat =
-        l.foldl (fun s v => if f v then insertL n s v else s) init.toNat
+        l.foldl (fun s v => if f v then NatSet.insert n s v else s) init.toNat
   | [], _ => rfl
   | v :: l, init => by
     rw [List.foldl_cons, List.foldl_cons, toNat_foldl_insert_if f l]
@@ -255,7 +255,7 @@ theorem toNat_foldl_insert_if (f : Nat → Bool) :
 
 theorem toNat_ofFn (f : Nat → Bool) :
     (ofFn f : VSet n).toNat =
-      (List.range n).foldl (fun s v => if f v then insertL n s v else s) 0 := by
+      (List.range n).foldl (fun s v => if f v then NatSet.insert n s v else s) 0 := by
   rw [ofFn, toNat_foldl_insert_if, toNat_empty]
 
 /-- The packed set of a bitset. -/

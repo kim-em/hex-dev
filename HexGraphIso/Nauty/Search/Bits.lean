@@ -523,27 +523,27 @@ theorem testBit_ne_at_lowBit_xor {a b : Nat} (hab : a ≠ b) :
   rw [he] at hx
   simp at hx
 
-/-! # Bitset operations on a single `Nat`
+/-! # `NatSet`: bitset operations on a single `Nat`
 
 The kernel-facing replay (`HexGraphIso.Kernel.CheckKey`) keeps every
 vertex set as one `Nat`, because the kernel's GMP-backed `Nat`
 arithmetic is its cheapest reduction path. These are that layer's set
-operations; `VSet.toNat` relates each to its packed runtime
+operations. `VSet.toNat` relates each to its packed runtime
 counterpart. Insertion and deletion are guarded by the vertex bound
 exactly as the packed operations are, so the correspondences are
 unconditional. -/
 
 /-- Insertion, a no-op outside the vertex range. -/
-@[expose] def insertL (n s v : Nat) : Nat :=
+@[expose] def NatSet.insert (n s v : Nat) : Nat :=
   if v < n then s ||| (1 <<< v) else s
 
 /-- Deletion, a no-op outside the vertex range. -/
-@[expose] def eraseL (n s v : Nat) : Nat :=
+@[expose] def NatSet.erase (n s v : Nat) : Nat :=
   if v < n ∧ s.testBit v = true then s ^^^ (1 <<< v) else s
 
 /-- The least element strictly after the cursor (`none` starts from the
 least element): nauty's `nextelement`. -/
-@[expose] def nextElemL (s : Nat) (pos : Option Nat) : Option Nat :=
+@[expose] def NatSet.nextElem (s : Nat) (pos : Option Nat) : Option Nat :=
   let s' :=
     match pos with
     | none => s
@@ -552,14 +552,14 @@ least element): nauty's `nextelement`. -/
 
 /-- nauty's row order: the least differing vertex decides, and the row
 holding it is the greater. -/
-@[expose] def rowCmpL (a b : Nat) : Ordering :=
+@[expose] def NatSet.rowCmp (a b : Nat) : Ordering :=
   if a = b then .eq
   else if a.testBit (lowBit (a ^^^ b)) then .gt
   else .lt
 
 /-- The image of a bitset under a vertex map. -/
-@[expose] def imageL (n : Nat) (σ : Nat → Nat) (s : Nat) : Nat :=
-  (List.range n).foldl (fun t v => if s.testBit v then insertL n t (σ v) else t) 0
+@[expose] def NatSet.image (n : Nat) (σ : Nat → Nat) (s : Nat) : Nat :=
+  (List.range n).foldl (fun t v => if s.testBit v then NatSet.insert n t (σ v) else t) 0
 
 theorem testBit_shiftUp (x a w : Nat) :
     ((x >>> a) <<< a).testBit w = (decide (a ≤ w) && x.testBit w) := by

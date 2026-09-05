@@ -33,7 +33,7 @@ variable {n k : Nat}
     0
 
 /-- Positions list colours in nondecreasing order. -/
-@[expose] def colorSortedCheck (G : Colored n k) (lab : Array Nat) :
+@[expose] def labelColorSorted (G : Colored n k) (lab : Array Nat) :
     Bool :=
   (List.range n).all fun i =>
     decide (i + 1 = n) ||
@@ -49,7 +49,7 @@ rows must be the key's rows. Returns the canonical form and label. -/
   | some l =>
     if checkKey G cert B &&
         (B.rows == leafRows { g := rowsOf G } lab) &&
-        colorSortedCheck G lab then
+        labelColorSorted G lab then
       some { form := G.relabel l, label := l }
     else
       none
@@ -350,7 +350,7 @@ theorem checkCanon_inv {G : Colored n k} {cert : CertNode} {B : Key n}
       lab[i]!) ∧
     checkKey G cert B = true ∧
     B.rows = leafRows { g := rowsOf G } lab ∧
-    colorSortedCheck G lab = true := by
+    labelColorSorted G lab = true := by
   rw [checkCanon] at h
   split at h
   · cases h
