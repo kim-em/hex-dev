@@ -21,10 +21,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RESULTS = ROOT / "reports" / "bench-results"
 
+# ``checked_ns`` is the certificate replay the public surface ran before
+# the two tiers collapsed; sweeps recorded since omit it, and the frame
+# then omits the series.
 TIERS = [
     ("nauty_ns", "nauty 2.9.3 (C)", "#555555"),
-    ("fast_ns", "hex fast tier", "#1f77b4"),
-    ("checked_ns", "hex checked tier", "#d62728"),
+    ("fast_ns", "hex canonicalize", "#1f77b4"),
+    ("checked_ns", "hex certificate replay (pre-collapse)", "#d62728"),
 ]
 
 
@@ -68,6 +71,8 @@ def main() -> int:
         meta, rows = sweeps[i]
         for key, label, color in TIERS:
             times = sorted(r[key] / 1e9 for r in rows if key in r)
+            if not times:
+                continue
             ax.plot(range(1, len(times) + 1), times, marker="o",
                     markersize=2.5, color=color, label=label)
         ax.set_yscale("log")

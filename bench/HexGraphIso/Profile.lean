@@ -15,10 +15,9 @@ paley61, kneser72, and circulant64 instances.
 Stages: `run` (transcribed search), `trace` (the traced search the
 certificate producer consumes), `produce` (trace plus certificate
 translation), `ckey` (one trusted `checkKey`
-replay), `ccanon` (one `checkCanon`),
-`canon` (the fast public tier), `canonchecked` (the full
-certificate-checked pipeline), `stats` (work counters, no timing). No
-argument runs every stage.
+replay), `ccanon` (one `checkCanon`), `canon` (the public
+canonicalization), `stats` (work counters, no timing). No argument
+runs every stage.
 
 Methodology notes (hard-won):
 - Never measure with `lake env lean` `#eval`: the interpreter is
@@ -69,7 +68,7 @@ private def stageIters : String → Nat
   | _ => 40
 
 private def runStage {n : Nat} (inst : Inst n) (stage : String)
-    (hn : 0 < n) : IO Unit := do
+    (_hn : 0 < n) : IO Unit := do
   let pick (i : Nat) : Colored n 1 := if i % 2 == 0 then inst.g0 else inst.g1
   let iters := stageIters stage
   -- pre-produce fixed certificates for the replay stages
@@ -98,8 +97,6 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
         else
           (match checkCanon inst.g1 c1 b1 (runColored inst.g1).canonlab with
             | some r => (rowsOf r.form).size | none => 0)
-    | "canonchecked" => timeLoop iters fun i =>
-        (rowsOf (Checked.canonicalize (pick i)).form).size
     | "stats" => do
         let r := runColored inst.g0
         IO.println s!"  {inst.name} stats: nauty-nodes={r.numnodes} \
@@ -112,8 +109,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
     IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters)"
 
 private def stages : List String :=
-  ["run", "trace", "produce", "ckey", "ccanon", "canon",
-   "canonchecked", "stats"]
+  ["run", "trace", "produce", "ckey", "ccanon", "canon", "stats"]
 
 def main (args : List String) : IO Unit := do
   let todo := match args with

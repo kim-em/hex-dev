@@ -79,10 +79,10 @@ theorem encode_iso_iff (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
 
 theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
     G.Isomorphic H ↔
-      Checked.canon (encode eV G) = Checked.canon (encode eW H)
+      canon (encode eV G) = canon (encode eW H)
 
 theorem canon_encode_indep (eV eV' : V ≃ Fin n) :
-    Checked.canon (encode eV G) = Checked.canon (encode eV' G)
+    canon (encode eV G) = canon (encode eV' G)
 ```
 
 Use [`hex-graph-iso`](https://github.com/leanprover/hex-graph-iso) alone for

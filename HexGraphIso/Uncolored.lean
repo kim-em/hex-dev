@@ -22,10 +22,8 @@ at the call nor unwraps one from the conclusion.
 `Graph.isomorphic_singleColor_iff` identifies the two notions of
 isomorphism through it. Every theorem here is transported along that
 equivalence rather than reproved, so the uncoloured surface makes
-exactly the promises the coloured one does: the fast names are
-conformance-pinned and carry only their structural statements, and the
-`Checked` names carry the completeness and canonical-invariance
-theorems.
+exactly the promises the coloured one does, completeness and canonical
+invariance included.
 -/
 
 namespace Hex.Graph
@@ -138,90 +136,9 @@ theorem isomorphic_singleColor_iff (G H : Graph n) (h : 0 < n) :
     rcases hg.elim with ⟨p, hp⟩
     exact GraphIso.Isomorphic.intro p ((isIso_singleColor_iff G H p h).mpr hp)
 
-/-! # The certified surface -/
+/-! # Canonical forms and isomorphism search -/
 
-namespace Checked
-
-/-- The certificate-checked canonical form of a graph. -/
-@[expose] def canon (G : Graph n) (h : 0 < n := by first | decide | omega) :
-    Graph n :=
-  (GraphIso.Checked.canon (G.singleColor h)).graph
-
-/-- The label producing the certificate-checked canonical form. -/
-@[expose] def label (G : Graph n) (h : 0 < n := by first | decide | omega) :
-    GraphIso.Label n :=
-  GraphIso.Checked.label (G.singleColor h)
-
-/-- Find one isomorphism from `G` to `H` when one exists. -/
-@[expose] def findIso (G H : Graph n)
-    (h : 0 < n := by first | decide | omega) : Option (GraphIso.Perm n) :=
-  GraphIso.Checked.findIso (G.singleColor h) (H.singleColor h)
-
-/-- The certificate-checked Boolean isomorphism decision. -/
-@[expose] def isIso (G H : Graph n)
-    (h : 0 < n := by first | decide | omega) : Bool :=
-  GraphIso.Checked.isIso (G.singleColor h) (H.singleColor h)
-
-/-- Relabelling by the canonical label produces the canonical form. -/
-theorem relabel_label (G : Graph n) (h : 0 < n) :
-    G.relabel (label G h).get = canon G h :=
-  congrArg GraphIso.Colored.graph
-    (GraphIso.Checked.relabel_label (G.singleColor h))
-
-/-- Every graph is isomorphic to its canonical form. -/
-theorem canon_iso (G : Graph n) (h : 0 < n) : Isomorphic G (canon G h) :=
-  (GraphIso.Checked.canon_iso (G.singleColor h)).graph
-
-/-- Two graphs are isomorphic exactly when their canonical forms are
-equal. -/
-theorem iso_iff_canon_eq (G H : Graph n) (h : 0 < n) :
-    Isomorphic G H ↔ canon G h = canon H h := by
-  constructor
-  · intro hiso
-    exact congrArg GraphIso.Colored.graph
-      ((GraphIso.Checked.iso_iff_canon_eq _ _).mp
-        ((isomorphic_singleColor_iff G H h).mpr hiso))
-  · intro he
-    exact (isomorphic_singleColor_iff G H h).mp
-      ((GraphIso.Checked.iso_iff_canon_eq _ _).mpr
-        (GraphIso.Colored.ext_graph he))
-
-/-- Isomorphic graphs have equal canonical forms. -/
-theorem canon_invariant {G H : Graph n} (h : 0 < n) (hiso : Isomorphic G H) :
-    canon G h = canon H h :=
-  (iso_iff_canon_eq G H h).mp hiso
-
-/-- Soundness of the certificate-checked search: any permutation it
-returns really is an isomorphism. -/
-theorem findIso_sound {G H : Graph n} {p : GraphIso.Perm n} {h : 0 < n}
-    (hp : findIso G H h = some p) : IsIso G H p :=
-  (isIso_singleColor_iff G H p h).mp (GraphIso.Checked.findIso_sound hp)
-
-/-- Completeness of the certificate-checked search: it returns a
-permutation exactly when one exists. -/
-theorem findIso_isSome_iff (G H : Graph n) (h : 0 < n) :
-    (findIso G H h).isSome = true ↔ Isomorphic G H :=
-  (GraphIso.Checked.findIso_isSome_iff _ _).trans
-    (isomorphic_singleColor_iff G H h)
-
-/-- The certificate-checked decision answers `true` exactly on
-isomorphic pairs. -/
-theorem isIso_eq_true_iff (G H : Graph n) (h : 0 < n) :
-    isIso G H h = true ↔ Isomorphic G H :=
-  findIso_isSome_iff G H h
-
-/-- The certificate-checked decision answers `false` exactly on
-non-isomorphic pairs. -/
-theorem isIso_eq_false_iff (G H : Graph n) (h : 0 < n) :
-    isIso G H h = false ↔ ¬Isomorphic G H := by
-  rw [← isIso_eq_true_iff G H h]
-  rcases hb : isIso G H h <;> simp
-
-end Checked
-
-/-! # The fast surface -/
-
-/-- The canonical form of a graph, fast: the underlying graph of the
+/-- The canonical form of a graph: the underlying graph of the
 one-cell coloured canonical form. -/
 @[expose] def canon (G : Graph n) (h : 0 < n := by first | decide | omega) :
     Graph n :=
@@ -232,31 +149,70 @@ one-cell coloured canonical form. -/
     GraphIso.Label n :=
   GraphIso.label (G.singleColor h)
 
-/-- Find one isomorphism when the fast canonical forms agree. -/
+/-- Find one isomorphism from `G` to `H` when one exists. -/
 @[expose] def findIso (G H : Graph n)
     (h : 0 < n := by first | decide | omega) : Option (GraphIso.Perm n) :=
   GraphIso.findIso (G.singleColor h) (H.singleColor h)
 
-/-- The fast Boolean isomorphism decision. `false` is
-conformance-pinned, not proven: use `Graph.Checked.isIso` where a
-`false` answer must carry a proof. -/
+/-- The Boolean isomorphism decision. -/
 @[expose] def isIso (G H : Graph n)
     (h : 0 < n := by first | decide | omega) : Bool :=
   GraphIso.isIso (G.singleColor h) (H.singleColor h)
 
-/-- Relabelling by the label produces the form. -/
+/-- Relabelling by the canonical label produces the canonical form. -/
 theorem relabel_label (G : Graph n) (h : 0 < n) :
     G.relabel (label G h).get = canon G h :=
   congrArg GraphIso.Colored.graph (GraphIso.relabel_label (G.singleColor h))
 
-/-- A found fast transporter is a genuine isomorphism. -/
+/-- Every graph is isomorphic to its canonical form. -/
+theorem canon_iso (G : Graph n) (h : 0 < n) : Isomorphic G (canon G h) :=
+  (GraphIso.canon_iso (G.singleColor h)).graph
+
+/-- Two graphs are isomorphic exactly when their canonical forms are
+equal. -/
+theorem iso_iff_canon_eq (G H : Graph n) (h : 0 < n) :
+    Isomorphic G H ↔ canon G h = canon H h := by
+  constructor
+  · intro hiso
+    exact congrArg GraphIso.Colored.graph
+      ((GraphIso.iso_iff_canon_eq _ _).mp
+        ((isomorphic_singleColor_iff G H h).mpr hiso))
+  · intro he
+    exact (isomorphic_singleColor_iff G H h).mp
+      ((GraphIso.iso_iff_canon_eq _ _).mpr
+        (GraphIso.Colored.ext_graph he))
+
+/-- Isomorphic graphs have equal canonical forms. -/
+theorem canon_invariant {G H : Graph n} (h : 0 < n) (hiso : Isomorphic G H) :
+    canon G h = canon H h :=
+  (iso_iff_canon_eq G H h).mp hiso
+
+/-- Soundness of the search: any permutation it returns really is an
+isomorphism. -/
 theorem findIso_sound {G H : Graph n} {p : GraphIso.Perm n} {h : 0 < n}
     (hp : findIso G H h = some p) : IsIso G H p :=
   (isIso_singleColor_iff G H p h).mp (GraphIso.findIso_sound hp)
 
-/-- One-way soundness: a positive fast answer proves isomorphism. -/
+/-- Completeness of the search: it returns a permutation exactly when
+one exists. -/
+theorem findIso_isSome_iff (G H : Graph n) (h : 0 < n) :
+    (findIso G H h).isSome = true ↔ Isomorphic G H :=
+  (GraphIso.findIso_isSome_iff _ _).trans (isomorphic_singleColor_iff G H h)
+
+/-- The decision answers `true` exactly on isomorphic pairs. -/
+theorem isIso_eq_true_iff (G H : Graph n) (h : 0 < n) :
+    isIso G H h = true ↔ Isomorphic G H :=
+  findIso_isSome_iff G H h
+
+/-- The decision answers `false` exactly on non-isomorphic pairs. -/
+theorem isIso_eq_false_iff (G H : Graph n) (h : 0 < n) :
+    isIso G H h = false ↔ ¬Isomorphic G H := by
+  rw [← isIso_eq_true_iff G H h]
+  rcases hb : isIso G H h <;> simp
+
+/-- A positive answer proves isomorphism. -/
 theorem isomorphic_of_isIso {G H : Graph n} {h : 0 < n}
     (hi : isIso G H h = true) : Isomorphic G H :=
-  (isomorphic_singleColor_iff G H h).mp (GraphIso.isomorphic_of_isIso hi)
+  (isIso_eq_true_iff G H h).mp hi
 
 end Hex.Graph
