@@ -528,7 +528,7 @@ instance instCommSemiringMvPoly [CommSemiring R] :
     natCast := fun k => C (k : R)
     natCast_zero := by
       apply toMvPolynomial_injective
-      simp [toMvPolynomial_C, toMvPolynomial_zero]
+      simp [toMvPolynomial_zero]
     natCast_succ := fun k => by
       apply toMvPolynomial_injective
       simp [toMvPolynomial_C, toMvPolynomial_add, Nat.cast_succ]

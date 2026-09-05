@@ -355,7 +355,7 @@ theorem rawPoly_shiftTop_zero (level : Level) (lower : List Level)
     rawPoly_polyCoords]
   have hzero : Arithmetic.Coeff.ofData (level :: lower) #[(0 : Rat)] = 0 :=
     ofData_zero_eq_zero (level :: lower) hvalid hinjectiveTop
-  simp [hzero, Polynomial.taylor_zero]
+  simp [hzero]
 
 /-- The zero shift leaves the represented polynomial unchanged. -/
 theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
@@ -390,7 +390,7 @@ theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
       #[((0 : Int) : Rat)] = 0 := by
     simpa using ofData_zero_eq_zero (level :: lower) hvalid hinjectiveTop
   rw [hzero]
-  simp [Polynomial.taylor_zero]
+  simp
 
 /-- The lower-field polynomial produced by one unshifted Trager elimination. -/
 def tragerNorm (level : Level) (lower : List Level)
@@ -983,7 +983,7 @@ theorem array_degree_pos_of_raw_degree_pos (levels : List Level)
     rw [DensePoly.degree?_eq_some_of_pos_size p (Nat.pos_of_ne_zero hpSize),
       Option.getD_some]
   have hpSizeLe : p.size ≤ f.size := by
-    exact (DensePoly.size_ofCoeffs_le _).trans (by simp [p, Factor.rawPoly])
+    exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
   rw [hpDegree] at hdegree
   omega
 

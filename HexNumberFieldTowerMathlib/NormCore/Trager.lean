@@ -1063,8 +1063,7 @@ theorem findSquarefreeShift_isSome_of_injective
     let q : DensePoly (Arithmetic.Coeff (level :: lower)) :=
       Factor.rawPoly (level :: lower) f
     have hqSize : q.size ≤ f.size := by
-      exact (DensePoly.size_ofCoeffs_le _).trans (by simp [q,
-        Factor.rawPoly])
+      exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
     change (HexPolyMathlib.toPolynomial q).natDegree ≤ f.size - 1
     rw [HexPolyMathlib.natDegree_toPolynomial]
     by_cases hqZero : q.size = 0
