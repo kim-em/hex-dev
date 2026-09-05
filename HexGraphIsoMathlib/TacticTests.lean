@@ -41,7 +41,7 @@ example : c5a ≃g c5b := by graph_iso
 example : IsEmpty (c5a ≃g p5) := by graph_iso
 example : ¬ Nonempty (c5a ≃g p5) := by graph_iso
 example : c5a ≃g c5b := by
-  graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
 
 /-! # The Petersen graph three ways, with distinct vertex types -/
 
@@ -169,8 +169,8 @@ example : IsEmpty (c5a ≃g c5b) := by graph_iso
 #guard_msgs in
 example : Nonempty (c5a ≃g petersenDrawing) := by graph_iso
 
-/-- error: graph_iso: every negative route is exhausted: the root and two-code separators do not separate these graphs at maxNodes := 0, and certificate replay is unavailable at maxCertNodes := 100000 with maxCheckerSteps := 5000000 -/
+/-- error: graph_iso: search exhausted: visited 12 nodes but maxSearchNodes := 0 -/
 #guard_msgs in
-example : IsEmpty (c5a ≃g p5) := by graph_iso (maxNodes := 0)
+example : Nonempty (c5a ≃g c5b) := by graph_iso (maxSearchNodes := 0)
 
 end HexGraphIsoMathlib.TacticTests

@@ -212,9 +212,9 @@ accepted:
 
 ```lean
 graph_iso
-  (maxNodes := 200000)
-  (maxCertNodes := 200000)
-  (maxCheckerSteps := 10000000)
+  (maxSearchNodes := 200000)
+  (maxCertRecords := 200000)
+  (maxKernelSteps := 10000000)
 ```
 
 The default values remain `100000`, `100000`, and `5000000`. The Mathlib
@@ -313,7 +313,7 @@ Reification charges every enumerated vertex, vertex pair, and colour
 application against an additional elaborator-side size report. These counts
 are displayed on failure but do not replace the three checker limits. The
 literal term is rejected before emission if its certificate record count
-exceeds `maxCertNodes`.
+exceeds `maxCertRecords`.
 
 The library never uses `native_decide`. It introduces no axiom and has no
 fallback to an external graph program.

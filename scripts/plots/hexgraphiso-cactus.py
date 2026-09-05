@@ -58,7 +58,7 @@ TACTIC_FILE = """import HexGraphIso
 open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-example : {goal} := by graph_iso (maxNodes := 100000000) (maxCheckerSteps := 1000000000)
+example : {goal} := by graph_iso (maxSearchNodes := 100000000) (maxKernelSteps := 1000000000)
 """
 
 _TIME = re.compile(r"^\t(.+?) ([0-9.]+)(ms|s|m)$")

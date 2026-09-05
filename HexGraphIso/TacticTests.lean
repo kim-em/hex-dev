@@ -37,12 +37,12 @@ def k3 : Colored 3 1 :=
 example : Isomorphic p3 p3' := by graph_iso
 example : ¬ Isomorphic p3 k3 := by graph_iso
 example : Isomorphic p3 p3' := by
-  graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
 example : Isomorphic p3 p3' := by
-  graph_iso (maxCheckerSteps := 10000000) (maxCertNodes := 200000)
+  graph_iso (maxKernelSteps := 10000000) (maxCertRecords := 200000)
 -- a zero certificate budget must still close the goal; this pair is
--- irregular, so the root separator takes it before any search leg
-example : ¬ Isomorphic p3 k3 := by graph_iso (maxCertNodes := 0)
+-- irregular, so the root separator takes it before the certificate leg
+example : ¬ Isomorphic p3 k3 := by graph_iso (maxCertRecords := 0)
 
 /-- error: graph_iso: the graphs are not isomorphic; the positive goal is not provable -/
 #guard_msgs in
@@ -52,19 +52,15 @@ example : Isomorphic p3 k3 := by graph_iso
 #guard_msgs in
 example : ¬ Isomorphic p3 p3' := by graph_iso
 
-/-- error: graph_iso: search exhausted: visited 6 nodes but maxNodes := 0 -/
+/-- error: graph_iso: search exhausted: visited 6 nodes but maxSearchNodes := 0 -/
 #guard_msgs in
-example : Isomorphic p3 p3' := by graph_iso (maxNodes := 0)
+example : Isomorphic p3 p3' := by graph_iso (maxSearchNodes := 0)
 
-/-- error: graph_iso: replay exhausted: checking the transporter takes 12 steps but maxCheckerSteps := 0 -/
+/-- error: graph_iso: replay exhausted: checking the transporter takes 12 steps but maxKernelSteps := 0 -/
 #guard_msgs in
-example : Isomorphic p3 p3' := by graph_iso (maxCheckerSteps := 0)
+example : Isomorphic p3 p3' := by graph_iso (maxKernelSteps := 0)
 
-/-- error: graph_iso: duplicate limit `maxNodes` -/
-#guard_msgs in
-example : Isomorphic p3 p3' := by graph_iso (maxNodes := 1) (maxNodes := 2)
-
-/-- error: graph_iso: unknown limit `maxFoo` -/
+/-- error: Invalid configuration option `maxFoo` for `Tactic.Config` -/
 #guard_msgs in
 example : Isomorphic p3 p3' := by graph_iso (maxFoo := 1)
 
@@ -106,22 +102,15 @@ set_option maxRecDepth 100000 in
 example : ¬ Isomorphic petersen prism5 := by graph_iso
 
 /-!
-Both separator legs are charged against `maxNodes`: four nodes for the
-root separator, `2 * (n + 1)` for the two-code separator. This pair is
-cubic, so the root separator does not take it, and with certificates
-off the two-code separator is the only leg left. A budget of
-`2 * (n + 1) = 22` funds it and a budget of 21 withdraws it, leaving
-every negative route exhausted.
+This pair is cubic, so the root refinement codes agree and only the
+certificate leg is left; withdrawing its record budget leaves every
+negative route exhausted, and the message names the limit that ran out.
 -/
 
-set_option maxRecDepth 400000 in
-example : ¬ Isomorphic petersen prism5 := by
-  graph_iso (maxCertNodes := 0) (maxNodes := 22)
-
-/-- error: graph_iso: every negative route is exhausted: the root and two-code separators do not separate these graphs at maxNodes := 21, and certificate replay is unavailable at maxCertNodes := 0 with maxCheckerSteps := 5000000 -/
+/-- error: graph_iso: every negative route is exhausted: the root refinement codes agree, and the certificates hold 18 and 13 records but maxCertRecords := 0 -/
 #guard_msgs in
 example : ¬ Isomorphic petersen prism5 := by
-  graph_iso (maxCertNodes := 0) (maxNodes := 21)
+  graph_iso (maxCertRecords := 0)
 
 /-!
 The same pair stated on bare `Graph 10` values: the tactic colours both
@@ -132,17 +121,10 @@ so the uncoloured goals need no wrapping at the call.
 example : Graph.Isomorphic petersenG kneser52G := by graph_iso
 
 example : Graph.Isomorphic petersenG kneser52G := by
-  graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
 
 set_option maxRecDepth 100000 in
 example : ¬ Graph.Isomorphic petersenG prism5G := by graph_iso
-
--- a zero certificate budget must still close the uncoloured goal,
--- exactly as for the coloured one; this pair is cubic, so the root
--- separator does not take it and the two-code separator does
-set_option maxRecDepth 400000 in
-example : ¬ Graph.Isomorphic petersenG prism5G := by
-  graph_iso (maxCertNodes := 0)
 
 /-- error: graph_iso: the graphs are not isomorphic; the positive goal is not provable -/
 #guard_msgs in

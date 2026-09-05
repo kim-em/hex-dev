@@ -24,7 +24,7 @@ before and after a change is one number.
 
 ``--floor`` additionally times the shared floor of every negative
 route: the kernel evaluation of each graph's adjacency into its packed
-rows (the tie ``packRowsK n G.graph.adjMatrix.data.toList = N`` the
+rows (the tie ``Kernel.packRows n G.graph.adjMatrix.data.toList = N`` the
 tactic emits), as one ``of_decide_eq_true`` obligation per side.
 
 Usage:
@@ -70,15 +70,15 @@ set_option trace.graph_iso true
 open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-example : {goal} := by graph_iso (maxNodes := 100000000) (maxCheckerSteps := 1000000000)
+example : {goal} := by graph_iso (maxSearchNodes := 100000000) (maxKernelSteps := 1000000000)
 """
 
 EVAL_FILE = """import HexGraphIso
 open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-#eval IO.println (toString (packRowsK {n} A.graph.adjMatrix.data.toList))
-#eval IO.println (toString (packRowsK {n} B.graph.adjMatrix.data.toList))
+#eval IO.println (toString (Kernel.packRows {n} A.graph.adjMatrix.data.toList))
+#eval IO.println (toString (Kernel.packRows {n} B.graph.adjMatrix.data.toList))
 """
 
 FLOOR_FILE = """import HexGraphIso
@@ -95,8 +95,8 @@ elab "kdecide" : tactic => do
   g.assign (mkApp3 (mkConst ``of_decide_eq_true) p inst h)
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-example : packRowsK {n} A.graph.adjMatrix.data.toList = {litA} := by kdecide
-example : packRowsK {n} B.graph.adjMatrix.data.toList = {litB} := by kdecide
+example : Kernel.packRows {n} A.graph.adjMatrix.data.toList = {litA} := by kdecide
+example : Kernel.packRows {n} B.graph.adjMatrix.data.toList = {litB} := by kdecide
 """
 
 _TIME = re.compile(r"^\t(.+?) ([0-9.]+)(ms|s|m)$")
@@ -205,7 +205,7 @@ def _measure(record: dict, timeout: float) -> dict:
     route = _route(output)
     result["route"] = route.get("route")
     for key in ("records", "recordsG", "recordsH", "autom", "steps",
-                "nodes", "maxNodes"):
+                "nodes"):
         if key in route:
             result[key] = int(route[key])
     if result.get("records"):

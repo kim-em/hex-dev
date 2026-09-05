@@ -69,7 +69,7 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   generate the whole group is not yet proved, so the orbit count and
   the group order are conformance-pinned rather than theorems.
 - `checkIso?` is the replay-bounded permutation check; `ReplayLimits`
-  bounds kernel replay (`maxCheckerSteps`) and exhaustion returns
+  bounds kernel replay (`maxKernelSteps`) and exhaustion returns
   `none`, never evidence of non-isomorphism.
 - `Nauty.certifyKey?` produces a canonical-key certificate and
   `Nauty.checkCanon` replays it against the graph; `Nauty.checkDiff`
@@ -77,8 +77,8 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   the kernel.
 - `graph_iso` closes closed goals of the form `Isomorphic G H` and
   `¬ Isomorphic G H`, coloured or uncoloured, accepting
-  `(maxNodes := ...)`, `(maxCertNodes := ...)`, and
-  `(maxCheckerSteps := ...)` overrides.
+  `(maxSearchNodes := ...)`, `(maxCertRecords := ...)`, and
+  `(maxKernelSteps := ...)` overrides.
 
 # Verification
 

@@ -128,7 +128,7 @@ private def rot3 : Perm 3 :=
 
 /-! # Bounded replay: exhaustion is `none`, never `false` -/
 
-#guard (checkIso? { maxCheckerSteps := 0 } p3 p3' (Perm.id 3)).isNone
+#guard (checkIso? { maxKernelSteps := 0 } p3 p3' (Perm.id 3)).isNone
 #guard
   match checkIso? {} p3 p3 (Perm.id 3) with
   | some b => b

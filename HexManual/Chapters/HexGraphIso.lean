@@ -46,9 +46,9 @@ canonical forms are equal
 and the
 `graph_iso` tactic closes both positive and negative isomorphism goals with the
 kernel performing the decisive replay: positive goals through the
-checked transporter, negative goals through a checked canonical-key
-certificate when available and a fully verified
-individualization-refinement decision as the exhaustion fallback.
+checked transporter, negative goals through the root refinement code
+when it separates the two graphs and through a checked canonical-key
+certificate otherwise.
 
 Colours are the general input, but a graph with no colours to speak of
 should not have to acquire one. The same operations and the same
@@ -142,7 +142,7 @@ and may not permute the cells. Marking an adjacent pair of Petersen
 vertices with colour zero is therefore a different constraint from
 marking a non-adjacent pair, although the cell sizes agree. Adjacency of
 the colour-zero pair is an invariant, and the tactic's negative proof is
-obtained from its general checked separator rather than a handwritten
+obtained from its general checked routes rather than a handwritten
 special-purpose lemma. These claims do mention colours, so they are the
 ones stated on {name Hex.GraphIso.Colored}`Colored`.
 

@@ -32,16 +32,13 @@ example : ¬ Colored.Isomorphic CG CH := by graph_iso
 ```
 
 The reifier encodes both graphs along `Fintype.equivFin` and reuses the
-Mathlib-free machinery: positive goals emit a literal transporter and
-close through the kernel-replayed `checkIso?` and the decoding
-theorems; negative goals go through the shared negative engine (which
-takes certificate replay whenever it is available and retains the
-verified pairwise decision as the exhaustion fallback) and decode through
-the `not_encode_iso` bridge theorems;
-unequal cardinalities close immediately through `Fintype.card_congr`
-obstructions, and empty vertex types through the explicit empty
-isomorphism. The same three logical limits are accepted and are not
-reinterpreted.
+Mathlib-free machinery: positive goals take the core witness route and
+decode its `IsIso` proof; negative goals go through the shared negative
+engine, which tries the root separator and then certificate replay, and
+decode through the `not_encode_iso` theorems; unequal cardinalities
+close immediately through `Fintype.card_congr` obstructions, and empty
+vertex types through the explicit empty isomorphism. The same three
+logical limits are accepted and are not reinterpreted.
 -/
 
 namespace HexGraphIsoMathlib.Tactic
@@ -298,31 +295,21 @@ meta def proveShape (cfg : Hex.GraphIso.Tactic.Config) (target : Expr)
     let a ← Hex.GraphIso.Tactic.evalColored encG
     let b ← Hex.GraphIso.Tactic.evalColored encH
     let (transporter?, nodes) := Hex.GraphIso.Tactic.rawFindIso a b
-    if nodes > cfg.maxNodes then
+    if nodes > cfg.maxSearchNodes then
       throwError "graph_iso: search exhausted: visited {nodes} nodes but \
-          maxNodes := {cfg.maxNodes}"
+          maxSearchNodes := {cfg.maxSearchNodes}"
     match transporter? with
     | none =>
         throwError "graph_iso: the graphs are not isomorphic; the positive \
             goal is not provable"
     | some p =>
-        if Hex.GraphIso.checkCost sG.card > cfg.maxCheckerSteps then
-          throwError "graph_iso: replay exhausted: checking the transporter \
-              takes {Hex.GraphIso.checkCost sG.card} steps but \
-              maxCheckerSteps := {cfg.maxCheckerSteps}"
-        let pE ← Hex.GraphIso.Tactic.permExpr sG.card p
-        let replayE ← mkAppM ``ReplayLimits.mk #[mkNatLit cfg.maxCheckerSteps]
-        let checkTerm ← mkAppM ``checkIso? #[replayE, encG, encH, pE]
-        let someTrue ← mkAppOptM ``Option.some
-          #[mkConst ``Bool, mkConst ``Bool.true]
-        let eqType ← mkAppM ``Eq #[checkTerm, someTrue]
-        let checked ← mkDecideProof eqType
+        let (pE, isIso) ← Hex.GraphIso.Tactic.proveIsIso cfg sG.card encG encH
+          a b p nodes
         let core ← if shape.colored then
-            mkAppM ``coloredIsoOfCheckIso?
-              #[sG.equiv, sH.equiv, replayE, pE, checked]
+            mkAppM ``coloredIsoOfIsIso #[sG.equiv, sH.equiv, pE, isIso]
           else
-            mkAppM ``isoOfCheckIso?
-              #[sG.equiv, sH.equiv, hposG.get!, hposH.get!, replayE, pE, checked]
+            mkAppM ``graphIsoOfIsIso
+              #[sG.equiv, sH.equiv, hposG.get!, hposH.get!, pE, isIso]
         let proof ← if shape.wrap then
             if shape.colored then
               mkAppM ``Colored.Isomorphic.intro #[core]
@@ -333,7 +320,7 @@ meta def proveShape (cfg : Hex.GraphIso.Tactic.Config) (target : Expr)
         return ← finish proof
 
 /-- The `graph_iso` extension for `SimpleGraph` goals. -/
-public meta def extension : Hex.GraphIso.Tactic.Extension where
+@[graph_iso_extension] public meta def extension : Hex.GraphIso.Tactic.Extension where
   prove? cfg target := do
     match ← parseGoal? target with
     | none => return none
