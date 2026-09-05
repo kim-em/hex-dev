@@ -16,7 +16,7 @@ goals: the one-cell colouring of an uncoloured graph, the checked
 kernel-facing entry points for each supported goal shape, and the
 empty-graph and cardinality special cases. The tactic emits applications
 of these theorems on literal data; every decisive check is performed by
-the kernel through `checkIso?` or the verified pairwise decision.
+the kernel through the shared core routes of `HexGraphIso.Tactic`.
 -/
 
 namespace Hex.GraphIso.Mathlib
@@ -67,23 +67,22 @@ theorem onecell_isomorphic_iff {G : SimpleGraph V} {H : SimpleGraph W}
 /-! # Positive entry points -/
 
 /-- A kernel-checked transporter yields a coloured isomorphism. -/
-def coloredIsoOfCheckIso? (eV : V ≃ Fin n) (eW : W ≃ Fin n)
+def coloredIsoOfIsIso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     {G : Colored V k} {H : Colored W k}
     [DecidableRel G.graph.Adj] [DecidableRel H.graph.Adj]
-    (replay : ReplayLimits) (p : Perm n)
-    (h : checkIso? replay (encode eV G) (encode eW H) p = some true) :
+    (p : Perm n) (h : IsIso (encode eV G) (encode eW H) p) :
     Colored.Iso G H :=
-  isoOfIsIso eV eW ((checkIso?_some h).mp rfl)
+  isoOfIsIso eV eW h
 
 /-- A kernel-checked transporter yields a graph isomorphism. -/
-def isoOfCheckIso? (eV : V ≃ Fin n) (eW : W ≃ Fin n)
+def graphIsoOfIsIso (eV : V ≃ Fin n) (eW : W ≃ Fin n)
     {G : SimpleGraph V} {H : SimpleGraph W}
     [DecidableRel G.Adj] [DecidableRel H.Adj]
     (hV : 0 < Fintype.card V) (hW : 0 < Fintype.card W)
-    (replay : ReplayLimits) (p : Perm n)
-    (h : checkIso? replay (encode eV (onecell G hV))
-      (encode eW (onecell H hW)) p = some true) : G ≃g H :=
-  (coloredIsoOfCheckIso? eV eW replay p h).graphIso
+    (p : Perm n)
+    (h : IsIso (encode eV (onecell G hV)) (encode eW (onecell H hW)) p) :
+    G ≃g H :=
+  (coloredIsoOfIsIso eV eW p h).graphIso
 
 /-- Two graphs on empty vertex types are isomorphic. -/
 def isoOfCardZero (G : SimpleGraph V) (H : SimpleGraph W)
