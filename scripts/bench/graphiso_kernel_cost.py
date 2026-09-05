@@ -23,9 +23,9 @@ pairs that closed through that route, so the per-record exponent
 before and after a change is one number.
 
 ``--floor`` additionally times the shared floor of every negative
-route: the kernel evaluation of each graph's flat adjacency literal
-(the tie ``G.graph.adjMatrix.data.toList = [..]``), as one
-``of_decide_eq_true`` obligation per side.
+route: the kernel evaluation of each graph's adjacency into its packed
+rows (the tie ``packRowsK n G.graph.adjMatrix.data.toList = N`` the
+tactic emits), as one ``of_decide_eq_true`` obligation per side.
 
 Usage:
 
@@ -79,8 +79,8 @@ EVAL_FILE = """import HexGraphIso
 open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-#eval IO.println ((repr A.graph.adjMatrix.data.toList).pretty 1000000000)
-#eval IO.println ((repr B.graph.adjMatrix.data.toList).pretty 1000000000)
+#eval IO.println (toString (packRowsK {n} A.graph.adjMatrix.data.toList))
+#eval IO.println (toString (packRowsK {n} B.graph.adjMatrix.data.toList))
 """
 
 FLOOR_FILE = """import HexGraphIso
@@ -97,8 +97,8 @@ elab "kdecide" : tactic => do
   g.assign (mkApp3 (mkConst ``of_decide_eq_true) p inst h)
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-example : A.graph.adjMatrix.data.toList = {litA} := by kdecide
-example : B.graph.adjMatrix.data.toList = {litB} := by kdecide
+example : packRowsK {n} A.graph.adjMatrix.data.toList = {litA} := by kdecide
+example : packRowsK {n} B.graph.adjMatrix.data.toList = {litB} := by kdecide
 """
 
 _TIME = re.compile(r"^\t(.+?) ([0-9.]+)(ms|s|m)$")
@@ -215,6 +215,10 @@ def _measure(record: dict, timeout: float) -> dict:
             result[key] = int(route[key])
     if result.get("records"):
         result["ms_per_record"] = 1e3 * result["typecheck_s"] / result["records"]
+        # the tactic's own charge: one unit per record, one more per
+        # automorphism record (generator validation), two fixed units
+        units = result["records"] + result.get("autom", 0) + 2
+        result["ms_per_unit"] = 1e3 * result["typecheck_s"] / units
     return result
 
 
@@ -225,7 +229,7 @@ def _floor(record: dict, timeout: float) -> dict | None:
     if timed_out or rc != 0:
         return None
     lits = [line.strip() for line in output.splitlines()
-            if line.strip().startswith("[")]
+            if line.strip().isdigit()]
     if len(lits) < 2:
         return None
     source = FLOOR_FILE.format(n=record["n"], exprA=record["exprA"],
@@ -288,7 +292,14 @@ def main() -> int:
         sys.exit("no pairs selected")
 
     fingerprint = _fingerprint()
+    dirty = subprocess.run(["git", "status", "--porcelain", "--", *RELEVANT],
+                           cwd=REPO_ROOT, capture_output=True, text=True).stdout
+    if dirty.strip():
+        print("warning: uncommitted changes under the measured paths; the "
+              "fingerprint names the index, not what is measured:\n" + dirty,
+              file=sys.stderr)
     host = socket.gethostname().split(".")[0]
+    load_at_start = round(os.getloadavg()[0], 2)
     results = []
     for record in pairs:
         print(f"measuring {record['name']} (n={record['n']}) ...",
@@ -313,7 +324,8 @@ def main() -> int:
         "pairs": str(pairs_path.relative_to(REPO_ROOT))
         if pairs_path.is_relative_to(REPO_ROOT) else str(pairs_path),
         "timeout_s": args.timeout,
-        "load_1m_at_start": round(os.getloadavg()[0], 2),
+        "load_1m_at_start": load_at_start,
+        "dirty": bool(dirty.strip()),
         "fit_ms_per_record": None if fit is None else
         {"c": fit[0], "exponent": fit[1], "points": len(fit_points)},
         "results": results,
