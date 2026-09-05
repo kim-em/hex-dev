@@ -594,11 +594,26 @@ theorem mem_ofList (l : List Nat) (v : Nat) :
     (ofList l : VSet n).mem v = (decide (v < n) && l.contains v) := by
   sorry
 
-/-- `ofFn` built one limb at a time by Horner accumulation over the
-vertices of the limb, most significant first: allocation-free and
-without the `List.range` fold. -/
-def ofFnFast (f : Nat → Bool) : VSet n :=
+/-- One limb of `ofFn`: Horner accumulation over the limb's vertices,
+most significant first, so the accumulator stays a scalar throughout. -/
+def ofFnLimb (f : Nat → Bool) (base : Nat) : Nat → Nat → Nat
+  | 0, acc => acc
+  | j + 1, acc =>
+    ofFnLimb f base j (2 * acc + if base + j < n ∧ f (base + j) then 1 else 0)
+
+/-- The limbs of `ofFn`, least significant first. -/
+def ofFnLimbs (f : Nat → Bool) : Nat → Array Nat → Array Nat
+  | 0, acc => acc
+  | i + 1, acc => ofFnLimbs f i (acc.push (ofFnLimb (n := n) f (63 * acc.size) 63 0))
+
+theorem wf_ofFnLimbs (f : Nat → Bool) :
+    Wf n (ofFnLimbs (n := n) f (limbCount n) #[]) := by
   sorry
+
+/-- `ofFn` built one limb at a time: allocation-free and without the
+`List.range` fold. -/
+def ofFnFast (f : Nat → Bool) : VSet n :=
+  ofLimbs (ofFnLimbs (n := n) f (limbCount n) #[]) (wf_ofFnLimbs f)
 
 @[csimp] theorem ofFn_eq_ofFnFast : @ofFn = @ofFnFast := by
   sorry
@@ -615,11 +630,25 @@ theorem mem_image (σ : Nat → Nat) (s : VSet n) (w : Nat) :
       (List.range n).any fun v => s.mem v && σ v == w && decide (σ v < n) := by
   sorry
 
+/-- The set bits of one limb, by repeated lowest-bit extraction, each
+inserted through `σ`. -/
+def imageLimb (σ : Nat → Nat) (base : Nat) : Nat → Nat → VSet n → VSet n
+  | 0, _, acc => acc
+  | fuel + 1, x, acc =>
+    if x = 0 then acc
+    else
+      let j := lowBit x
+      imageLimb σ base fuel (x ^^^ (1 <<< j)) (acc.insert (σ (base + j)))
+
 /-- `image` walking the set bits of each limb by repeated lowest-bit
 extraction, so the cost is proportional to the members and the limbs,
 never to `n` bit tests. -/
 def imageFast (σ : Nat → Nat) (s : VSet n) : VSet n :=
-  sorry
+  go s.limbs.size 0 empty
+where
+  go : Nat → Nat → VSet n → VSet n
+    | 0, _, acc => acc
+    | fuel + 1, i, acc => go fuel (i + 1) (imageLimb σ (63 * i) 63 s.limbs[i]! acc)
 
 @[csimp] theorem image_eq_imageFast : @image = @imageFast := by
   sorry
@@ -648,6 +677,8 @@ theorem toNat_lt (s : VSet n) : s.toNat < 2 ^ n := by
 
 theorem toNat_inj {s t : VSet n} (h : s.toNat = t.toNat) : s = t :=
   ext fun v => by rw [← testBit_toNat, ← testBit_toNat, h]
+
+instance : Repr (VSet n) := ⟨fun s _ => repr s.toNat⟩
 
 end VSet
 
