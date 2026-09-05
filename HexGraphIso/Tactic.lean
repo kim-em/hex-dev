@@ -10,6 +10,8 @@ public import HexGraphIso.Ops
 public import HexGraphIso.Uncolored
 public import HexGraphIso.IsoLit
 public import HexGraphIso.NodeLit
+public import HexGraphIso.NodePacked
+public import HexGraphIso.SeparatorPacked
 public import HexGraphIso.Separator
 public import HexGraphIso.Nauty.Search
 public meta import HexGraphIso.Nauty.Search
@@ -41,18 +43,14 @@ elaboration time as untrusted code and produces a literal forward
 permutation; the goal closes through `checkIsoLit` and
 `isomorphic_of_checkIsoLit`, which check the permutation against
 list-literal adjacency data, so the kernel performs the decisive replay
-without unfolding the executable representation. For
-a negative goal, the tactic selects between two kernel routes by
-measured cost: certificate replay (two Boolean `checkKey` checks plus
-`checkDiff` through `Nauty.not_isomorphic_of_checkKeys`, cost
-proportional to the pruned certificates the compiled search produces)
-and the fully verified pairwise decision `Pairwise.decideIso?`
-(replayed through `Pairwise.decideIso?_not_isomorphic`, cost
-proportional to the nodes its search visits). The pairwise decision is
-offered a node budget equivalent to the certificate replay's cost and
-wins exactly when refinement refutes the pair almost immediately; the
-full-budget pairwise replay is the fallback and exhaustion-semantics
-anchor when certificate production is unavailable. Search exhaustion
+without unfolding the executable representation. For a negative goal,
+the tactic first tries the constant-depth root separator, then takes
+certificate replay whenever the compiled search can produce two
+certificates within the configured record and replay budgets. If
+certificate production is unavailable, it tries the two-code separator
+and finally the fully verified pairwise decision `Pairwise.decideIso?`.
+The full-budget pairwise replay is the fallback and
+exhaustion-semantics anchor for the `maxCertNodes` cap. Search exhaustion
 never closes a negative goal, and every failure leaves the goal
 unchanged and reports the phase and logical limit that failed. No path
 uses `native_decide` and no axiom is introduced.
@@ -95,6 +93,12 @@ def Colored.toRaw {n k : Nat} (G : Colored n k) : Raw where
 namespace Tactic
 
 open Lean Elab Lean.Elab.Tactic Meta
+
+/-- `set_option trace.graph_iso true` reports the route each call closes
+through and, for the certificate route, the certificate record counts
+the kernel replays; the kernel-cost harness
+(`scripts/bench/graphiso_kernel_cost.py`) reads these lines. -/
+meta initialize registerTraceClass `graph_iso
 
 /-- The parsed logical limits of one `graph_iso` call. -/
 meta structure Config where
@@ -222,6 +226,24 @@ meta def matrixListSide (e : Expr) : MetaM Expr := do
   mkAppM ``Vector.toList #[← mkAppM ``Matrix.data
     #[← mkAppM ``Graph.adjMatrix #[← mkAppM ``Colored.graph #[e]]]]
 
+/-- The expression `packRowsK n e.graph.adjMatrix.data.toList`: the
+tying side of the packed-rows equality the negative routes replay. -/
+meta def matrixPackedSide (n : Nat) (e : Expr) : MetaM Expr := do
+  mkAppM ``packRowsK #[mkNatLit n, ← matrixListSide e]
+
+/-- The packed rows of a runtime graph, row `v` at bits
+`[n * v, n * (v + 1))`: the literal side of the packed-rows equality. -/
+meta def rawPackedRows (r : Raw) : Nat :=
+  (List.range r.n).foldr (fun v acc => r.rows[v]!.toNat + (acc <<< r.n)) 0
+
+/-- Tie a coloured graph expression to its packed rows literal, one
+sequential kernel evaluation of the graph's adjacency; returns the
+proof and the literal. -/
+meta def tiePackedRows (e : Expr) (r : Raw) : MetaM (Expr × Expr) := do
+  let lit := mkNatLit (rawPackedRows r)
+  let h ← kernelDecideProof (← mkAppM ``Eq #[← matrixPackedSide r.n e, lit])
+  return (h, lit)
+
 /-- Reify a certificate tree as a literal expression. -/
 meta partial def certNodeExpr : Nauty.CertNode → MetaM Expr
   | .leaf => return mkConst ``Nauty.CertNode.leaf
@@ -302,13 +324,11 @@ private meta def countAutom : Nauty.CertNode → Nat
 /-- The certificate leg of the negative path: node-budgeted certificate
 production on both sides compiled, the key comparison compiled, and the
 kernel replaying only two Boolean `checkKey` certificates plus
-`checkDiff`. Returns the proof together with the total certificate
-record count (the route-selection budget), or `none` when the route is
-unavailable (production exhausted, validation failed, or the replay
-charge exceeds the limits); throws when the keys agree, because the
-goal is then unprovable. -/
+`checkDiff`. Returns `none` when the route is unavailable (production
+exhausted, validation failed, or the replay charge exceeds the limits);
+throws when the keys agree, because the goal is then unprovable. -/
 meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
-    MetaM (Option (Expr × Nat)) := do
+    MetaM (Option Expr) := do
   -- deliberately the VALIDATED bounded producer: the ~10ms compiled
   -- validation guarantees every emitted kernel obligation replays
   -- successfully — a bad candidate must fall back here, not surface as
@@ -330,30 +350,29 @@ meta def proveNotIsoCerts? (cfg : Config) (GE HE : Expr) :
       certH.size ≤ cfg.maxCertNodes &&
       steps ≤ cfg.maxCheckerSteps do
     return none
-  -- tie each side's flat matrix to a literal (one sequential kernel
-  -- evaluation per graph), so the replays run on rebuilt literal rows
-  -- instead of forcing `rowsOf` through per-probe flat-index walks
+  -- tie each side's adjacency to its packed rows literal (one
+  -- sequential kernel evaluation per graph), so the replays run on one
+  -- packed number instead of forcing `rowsOf` through per-probe walks
   let a ← evalColored GE
   let b ← evalColored HE
-  let LAe ← boolListLit (rawFlat a)
-  let LBe ← boolListLit (rawFlat b)
-  let hA ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
-  let hB ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
+  let (hA, NAe) ← tiePackedRows GE a
+  let (hB, NBe) ← tiePackedRows HE b
   let mkCheck (graphE litE : Expr) (cert : Nauty.CertNode)
       (B : Nauty.KeyL) : MetaM Expr := do
-    let checkTerm ← mkAppM ``checkKeyLit
+    let checkTerm ← mkAppM ``checkKeyP
       #[graphE, litE, ← certNodeExpr cert, keyExpr B]
     kernelDecideProof (← mkAppM ``Eq #[checkTerm, mkConst ``Bool.true])
-  let hG ← mkCheck GE LAe certG BG
-  let hH ← mkCheck HE LBe certH BH
+  let hG ← mkCheck GE NAe certG BG
+  let hH ← mkCheck HE NBe certH BH
   let diffTerm ← mkAppM ``Nauty.checkDiffL #[keyExpr BG, keyExpr BH]
   let hd ← kernelDecideProof
     (← mkAppM ``Eq #[diffTerm, mkConst ``Bool.true])
-  let proof ← mkAppM ``not_isomorphic_of_checkKeysL
+  let proof ← mkAppM ``not_isomorphic_of_checkKeysP
     #[hA, hB, hG, hH, hd]
-  return some (proof, certG.size + certH.size)
+  trace[graph_iso] "route=certs n={nv} records={certG.size + certH.size} \
+      recordsG={certG.size} recordsH={certH.size} \
+      autom={countAutom certG + countAutom certH} steps={steps}"
+  return some proof
 
 /-- The pairwise leg: compiled `decideIso?` under `maxNodes` nodes,
 kernel-replaying the same bounded run on refutation. `none` on search
@@ -373,6 +392,7 @@ meta def proveNotIsoPairwise? (maxNodes maxCertNodes : Nat)
         #[mkConst ``Bool, mkConst ``Bool.false]
       let eqType ← mkAppM ``Eq #[decTerm, someFalse]
       let checked ← kernelDecideProof eqType
+      trace[graph_iso] "route=pairwise maxNodes={maxNodes}"
       some <$> mkAppM ``Pairwise.decideIso?_not_isomorphic #[checked]
 
 /-- The root-separator leg of the negative path: when the root
@@ -388,16 +408,13 @@ meta def proveNotIsoRoot? (cfg : Config) (GE HE : Expr) :
     return none
   let a ← evalColored GE
   let b ← evalColored HE
-  let LAe ← boolListLit (rawFlat a)
-  let LBe ← boolListLit (rawFlat b)
-  let hA ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
-  let hB ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
-  let sepTerm ← mkAppM ``sepRootLit #[GE, HE, LAe, LBe]
+  let (hA, NAe) ← tiePackedRows GE a
+  let (hB, NBe) ← tiePackedRows HE b
+  let sepTerm ← mkAppM ``sepRootLitP #[GE, HE, NAe, NBe]
   let hs ← kernelDecideProof
     (← mkAppM ``Eq #[sepTerm, mkConst ``Bool.true])
-  return some (← mkAppM ``not_isomorphic_of_sepRootLit #[hA, hB, hs])
+  trace[graph_iso] "route=root n={a.n}"
+  return some (← mkAppM ``not_isomorphic_of_sepRootLitP #[hA, hB, hs])
 
 /-- The two-code separator leg: kernel cost one refinement per graph
 plus one per root child, independent of certificate availability.
@@ -415,27 +432,20 @@ meta def proveNotIsoSep? (cfg : Config) (GE HE : Expr) :
   unless (← evalBoolCore (← mkAppM ``sepDiffG #[GE, HE])) do
     return none
   let b ← evalColored HE
-  let LAe ← boolListLit (rawFlat a)
-  let LBe ← boolListLit (rawFlat b)
-  let hA ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide GE, LAe])
-  let hB ← kernelDecideProof
-    (← mkAppM ``Eq #[← matrixListSide HE, LBe])
-  let sepTerm ← mkAppM ``sepDiffLit #[GE, HE, LAe, LBe]
+  let (hA, NAe) ← tiePackedRows GE a
+  let (hB, NBe) ← tiePackedRows HE b
+  let sepTerm ← mkAppM ``sepDiffLitP #[GE, HE, NAe, NBe]
   let hs ← kernelDecideProof
     (← mkAppM ``Eq #[sepTerm, mkConst ``Bool.true])
-  return some (← mkAppM ``not_isomorphic_of_sepDiffLit #[hA, hB, hs])
+  trace[graph_iso] "route=sep n={a.n}"
+  return some (← mkAppM ``not_isomorphic_of_sepDiffLitP #[hA, hB, hs])
 
 /-- Produce a proof of `¬ Isomorphic G H` for closed executable coloured
-graphs. Route selection compares measured units: one pairwise node
-kernel-replays for roughly four certificate records (it refines both
-graphs and compares them), so after producing both certificates the
-tactic first offers the pairwise decision a node budget of a quarter
-of the total record count — pairs the refinement refutes almost
-immediately close through the small pairwise replay, and pairs needing
-genuine search close through the two certificate replays. The
-full-budget pairwise decision remains the fallback and
-exhaustion-semantics anchor when certificate production is unavailable.
+graphs. After the root separator, the tactic takes the certificate proof
+whenever certificate production and replay fit their configured budgets.
+If that route is unavailable, the two-code separator and then the
+full-budget pairwise decision provide the fallbacks; the latter is the
+exhaustion-semantics anchor for the certificate-record cap.
 The certificate obligations replay only because their whole closure is
 exposed to the module-finalization kernel; the regression ladder in
 `HexGraphIso.ModuleBoundaryTests` pins that closure. Shared by the
@@ -445,11 +455,7 @@ meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
   match ← proveNotIsoRoot? cfg GE HE with
   | some proof => return proof
   | none => match ← proveNotIsoCerts? cfg GE HE with
-  | some (proof, records) =>
-    match ← proveNotIsoPairwise? (min (records / 4) cfg.maxNodes)
-        cfg.maxCertNodes GE HE with
-    | some pairProof => return pairProof
-    | none => return proof
+  | some proof => return proof
   | none =>
     match ← proveNotIsoSep? cfg GE HE with
     | some proof => return proof
@@ -534,6 +540,7 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
             if ← isDefEq Gsub GE then
               let proof ← mkAppM ``isomorphic_relabel #[GE, lE]
               if ← isDefEq (← inferType proof) target then
+                trace[graph_iso] "route=relabel n={n}"
                 return proof
         if checkCost n > cfg.maxCheckerSteps then
           throwError "graph_iso: replay exhausted: checking the transporter \
@@ -566,6 +573,7 @@ meta def proveGraphIso (cfg : Config) (target : Expr)
           (← mkAppM ``Eq #[chkTerm, mkConst ``Bool.true])
         let proof ← mkAppM ``isomorphic_of_checkIsoLit
           #[hA, hB, hcA, hcB, hp, hchk]
+        trace[graph_iso] "route=witness n={n} nodes={nodes}"
         unless ← isDefEq (← inferType proof) target do
           throwError "graph_iso: internal final proof mismatch"
         return proof

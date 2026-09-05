@@ -40,8 +40,8 @@ example : Isomorphic p3 p3' := by
   graph_iso (maxNodes := 200000) (maxCheckerSteps := 10000000)
 example : Isomorphic p3 p3' := by
   graph_iso (maxCheckerSteps := 10000000) (maxCertNodes := 200000)
--- a zero certificate budget forces the negative path onto the
--- pairwise fallback, which must still close the goal
+-- a zero certificate budget must still close the goal; this pair is
+-- irregular, so the root separator takes it before any search leg
 example : ¬ Isomorphic p3 k3 := by graph_iso (maxCertNodes := 0)
 
 /-- error: graph_iso: the graphs are not isomorphic; the positive goal is not provable -/
@@ -105,6 +105,25 @@ set_option maxRecDepth 100000 in
 example : ¬ Isomorphic petersen prism5 := by graph_iso
 
 /-!
+The pairwise fallback is the exhaustion-semantics anchor, so it needs a
+goal that reaches it. Both separator legs are charged against `maxNodes`
+(four nodes for the root separator, `2 * (n + 1)` for the two-code
+separator), so a budget in `[4, 2 * (n + 1))` funds the pairwise
+decision while withdrawing the two-code separator. This pair is cubic,
+so the root separator does not take it either; with certificates off,
+only `Pairwise.decideIso?` is left. It refutes in 12 nodes.
+-/
+
+set_option maxRecDepth 400000 in
+example : ¬ Isomorphic petersen prism5 := by
+  graph_iso (maxCertNodes := 0) (maxNodes := 21)
+
+/-- error: graph_iso: search exhausted: the pairwise decision ran out of nodes at maxNodes := 11 -/
+#guard_msgs in
+example : ¬ Isomorphic petersen prism5 := by
+  graph_iso (maxCertNodes := 0) (maxNodes := 11)
+
+/-!
 The same pair stated on bare `Graph 10` values: the tactic colours both
 sides with the single colour zero and transports the conclusion back,
 so the uncoloured goals need no wrapping at the call.
@@ -118,8 +137,9 @@ example : Graph.Isomorphic petersenG kneser52G := by
 set_option maxRecDepth 100000 in
 example : ¬ Graph.Isomorphic petersenG prism5G := by graph_iso
 
--- a zero certificate budget forces the uncoloured negative path onto
--- the pairwise fallback, exactly as for the coloured goal
+-- a zero certificate budget must still close the uncoloured goal,
+-- exactly as for the coloured one; this pair is cubic, so the root
+-- separator does not take it and the two-code separator does
 set_option maxRecDepth 400000 in
 example : ¬ Graph.Isomorphic petersenG prism5G := by
   graph_iso (maxCertNodes := 0)

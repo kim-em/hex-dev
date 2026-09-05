@@ -215,7 +215,7 @@ logarithmic factor for coefficient growth. Everything that isolates roots is
 dominated by the isolation, so those rows are fixed inputs rather than
 asymptotics.
 
-:::table (header := true)
+:::table +header
 * * operation
   * input
   * time

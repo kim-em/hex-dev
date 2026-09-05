@@ -279,17 +279,21 @@ whoever widens a token records the change here in the same working
 session. A fine-grained token selects at most 50 repositories.
 Snapshot verified against the live tokens on 2026-09-03 (routing
 measured by a branch-only debug step on the sync workflow counting
-`route_tokens`' output; selections confirmed from the UI).
+`route_tokens`' output; selections confirmed from the UI) and updated
+from the UI on 2026-09-05 for the number-field batch.
 
 `hex-publishing` carries every repository in `released.yml` except the
-four listed under `hex-publishing-2` below: 43 of 50.
+eight listed as released under `hex-publishing-2` below: 48 of 50. The
+number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
+`hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
+is on this token.
 
 `hex-publishing-2` carries 44 of 50:
 
 - released: `hex-primality`, `hex-primality-mathlib`,
-  `hex-sparse-poly`, `hex-sparse-poly-mathlib`;
-- created for publication, not yet in `released.yml`:
-  `hex-resultant`, `hex-resultant-mathlib`, `hex-modular`,
+  `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
+  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
+- created for publication, not yet in `released.yml`: `hex-modular`,
   `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
   `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
   `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
@@ -303,16 +307,20 @@ four listed under `hex-publishing-2` below: 43 of 50.
   `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
   `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
   `hex-truncated-series`, `hex-truncated-series-mathlib`,
-  `hex-char-poly`, `hex-char-poly-mathlib`, `hex-graph-iso`,
-  `hex-graph-iso-mathlib` (the last two pending organization-owner
-  approval).
+  `hex-char-poly`, `hex-char-poly-mathlib`.
+
+Both tokens have a pending organization-owner approval
+(https://github.com/organizations/leanprover/settings/personal-access-token-requests)
+for adding the Workflows read-and-write permission, which the sync needs
+to write each mirror's managed `.github/workflows/ci.yml`. Until it is
+approved, a real sync cannot push a workflow file to any mirror.
 
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-With `hex-publishing-2` at 44, the next widening beyond six more
-repositories needs a third token (`hex-publishing-3`, a new
-`RELEASED_SYNC_PAT_3` secret, and one line in
+With `hex-publishing` at 48 and `hex-publishing-2` at 44, the next
+batch larger than two repositories needs a third token
+(`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
 `.github/workflows/sync-released.yml` and `sync_released.py`'s token
 list). The sync's per-repository routing makes the split invisible to
 everything else.

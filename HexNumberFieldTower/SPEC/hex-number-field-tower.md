@@ -445,7 +445,8 @@ HexNumberFieldTower/
   RawEvaluation.lean  : fixed-embedding evaluation for raw coordinates
   Basic.lean          : NumberTower, Elem, Extension, smart constructors
   Arithmetic.lean     : field operations
-  Embed.lean          : compiled extension regressions (#guard fixtures)
+  Embed.lean          : compiled extension regressions (#guard fixtures; built
+                        by the non-public test target, not re-exported)
   Norm.lean           : recursive resultants
   FactorRaw.lean      : raw tower polynomial factorization
   Factor.lean         : Yun and Trager factorization, checked replay
