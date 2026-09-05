@@ -305,6 +305,89 @@ generation against replay, `runIsIso12` against `runIsIsoChecked12` prices the
 checker, and `runHexCanon*` against `runNautyCanon*` prices the Lean-versus-C
 constant on identical search trees.
 
+### Kernel cost of the negative routes
+
+`scripts/bench/graphiso_kernel_cost.py` times the `graph_iso` obligation of
+each negative corpus pair with the Lean profiler and divides the kernel's
+type-checking time by the certificate record count (both sides summed). The
+two records below are `hexgraphiso-kernel-7e28eb7ddb6c-chungus2.json` (the
+list-state replay, before this work) and
+`hexgraphiso-kernel-993d575b06ab-chungus2.json` (the packed replay), both on
+this host with a load average near 5.
+
+| pair | n | route | records | kernel s, before | kernel s, after |
+|---|---:|---|---:|---:|---:|
+| `neg-c6-vs-2c3` | 6 | certs | 23 | 0.315 | 0.083 |
+| `neg-c10-vs-2c5` | 10 | certs | 33 | 0.912 | 0.282 |
+| `neg-c16-vs-2c8` | 16 | certs | 48 | 3.75 | 1.01 |
+| `neg-circulant10-2-5-vs-1-5` | 10 | certs | 26 | 0.892 | 0.204 |
+| `neg-kneser72-vs-johnson72` | 21 | certs | 83 | 9.00 | 1.77 |
+| `neg-grid4x4-vs-q4` | 16 | root | | 0.769 | 0.202 |
+| `neg-grid4x6-vs-2grid3x4` | 24 | root | | 6.17 | 2.21 |
+| `neg-paley25-vs-latin5` | 25 | root | | 2.98 | 1.29 |
+| `neg-circ48-vs-2circ24` | 48 | certs | 128 | timeout | 64.5 |
+| `neg-paley61-vs-circulant61` | 61 | certs | 156 | timeout | 54.3 |
+
+The per-record fit over the eight certificate-route pairs up to 21
+vertices moved from `0.50 * n^1.80` ms to `0.29 * n^1.47` ms. Over all ten
+certificate-route pairs the fit is `0.054 * n^2.18` ms: the 48- and
+61-vertex pairs pay 500 and 350 ms per record, because a refinement pass is
+linear in `n` and a node needs up to a pass per cell. The 96-vertex pair
+remains out of budget: with `maxRecDepth` raised to 100000 (the default
+limit stops the kernel) its 248 records took 377 s of kernel time before
+the heartbeat limit.
+
+Where the time went, on the Kneser side at 21 vertices (42 records), from a
+`kdecide` probe of the individual definitions:
+
+| stage of the obligation | list-state replay | packed replay |
+|---|---:|---:|
+| whole side | 3.06 s | 0.54 s |
+| tie of the adjacency (the family's own evaluation) | 0.41 s | 0.41 s |
+| rows rebuilt from the literal | 0.15 s | 0.02 s |
+| automorphism validation (8 generators) | 0.38 s | 0.06 s |
+| root refinement | 34 ms | 5 ms |
+| one leaf's rows | 52 ms | 6 ms |
+| one `popCount` of a 21-bit row | 1 ms | 0.14 ms |
+
+Kernel step prices measured on this host: an accelerated `Nat` operation
+about 2 µs whatever the operand size, a bare `Nat.rec` step about 2 µs, a
+structural-recursion step on a `Nat` fuel about 8 µs, a `List.range`
+element about 20 µs, a `List.map` step about 15 µs, a list read or write at
+index `i` about `i` steps. Nesting depth is not the constraint: a chain of
+30000 nested `mash` applications evaluated in 0.5 s. The packed replay
+follows from these prices: fixed-width fields in one `Nat` for the
+labelling, partition and rows (read: a shift and a mask; write: eight
+steps), raw `Nat.beq`/`Nat.blt`/`Nat.land` spellings in place of
+`if`/`==`/`&&&` (each of those unfolds through eight to fifteen instance
+steps), a byte-table `popCount`, and counted loops as one `Nat.rec` step
+per iteration.
+
+Carrying more in the certificate (the refinement's cell-split sequence, the
+target cell, the leaf's rows) so that the kernel verifies rather than
+recomputes was examined against these prices and not adopted. A
+refinement pass over packed state is linear in the cell sizes it touches,
+and its dominant term is the neighbour count of every member into the
+splitter set, which a verifier must compute as well before it can check a
+claimed split; the write-back and the window scan the verifier would skip
+are under a quarter of a pass, while the certificate would grow by a split
+sequence per node. The target cell and the leaf rows cost a few
+milliseconds per node and per leaf after packing.
+
+The adjacency tie is the floor the SPEC records: at 21 vertices the Kneser
+family's `unrankColex` predicate costs the kernel 0.41 s per side, 45 percent
+of the side; for `neg-grid4x6-vs-2grid3x4` the `copies` family reads the
+inner graph's stored matrix through `Array` indexing and the tie is over two
+seconds of the 2.2 s total. Those are the graph definitions' own kernel
+costs, not the replay's.
+
+With `precompileModules` on `HexGraphIso`, the compiled search the tactic
+runs at elaboration time runs compiled when the library's shared objects are
+loaded: interpretation on the Kneser pair fell from 0.41 s to 0.01 s and on
+the 48-vertex pair from 3.4 s to 0.1 s. `lake env lean` does not load them,
+`lake lean` and a downstream `lake build` do; the cactus script and the
+kernel-cost harness use `lake lean`.
+
 ## Concerns
 
 One open item, recorded rather than blocking.
