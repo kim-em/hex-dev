@@ -193,7 +193,8 @@ def autos (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
 /-- The order of the colour-preserving automorphism group, as the
 orbit-stabilizer chain of the pinned search computes it. Conformance
 pins it against nauty's `grpsize`; no theorem states it, because that
-would need the generators to generate the whole group. -/
+would need the generators to generate the whole group, and without
+that it is only a lower bound. -/
 def autOrder (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     Nat :=
   (_root_.Hex.GraphIso.autos (encode e G)).order

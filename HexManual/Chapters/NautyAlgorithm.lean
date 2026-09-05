@@ -412,7 +412,9 @@ one fixing the chosen vertex, so the new run computes the stabilizer.
 The order is the length of the chosen orbit times the order of the
 stabilizer, and the recursion stops when every orbit is a single
 vertex, where the group is trivial. The chain therefore costs one
-traversal per level.
+traversal per level. As with the orbits, the number this produces is
+the true order of the automorphism group when every level's orbit
+array is the true orbit partition, and a lower bound otherwise.
 
 One difference between the reported list and the list of automorphisms
 the program finds is output-relevant enough to state. At a tie leaf of

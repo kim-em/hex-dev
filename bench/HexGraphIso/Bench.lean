@@ -51,12 +51,12 @@ comparator register as fixed benchmarks on committed circulant sizes:
   from pinned nauty's.
 * `runAutGens{12,16}`, `runAutOrbits{12,16}`: the automorphism
   generator list and the vertex orbits, the cheap projections of the
-  automorphism surface — one traversal each.
+  automorphism surface, one traversal each.
 * `runAutOrder{12,16}`: the whole `autos` surface including the
   orbit-stabilizer chain for the group order, which runs one further
   traversal per base point; the gap against `runAutGens` is the price
   of the order.
-* `runAutSound16`: the agreement check on the automorphism surface —
+* `runAutSound16`: the agreement check on the automorphism surface.
   `verify` fails if any returned generator is not accepted by
   `checkIso` against the graph itself, or if the orbit array is not
   constant on the orbits it records. The comparison against pinned

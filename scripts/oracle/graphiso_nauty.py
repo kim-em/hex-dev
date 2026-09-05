@@ -19,7 +19,11 @@ recomputation. nauty emits a generator at every code-1 leaf and at
 every code-2 leaf that grows the orbit partition; the Lean trace
 records both kinds unconditionally, so nauty's list must appear in the
 Lean list as an ordered subsequence, of exactly ``numGenerators``
-entries. The orbit array, the orbit count and the group order
+entries; when the two lists are the same length, which is every case on
+the current corpus, they must agree entry by entry. The recorded list
+itself is pinned by the committed fixture, so a change in the traversal
+shows up as a fixture diff even where the subsequence relation would
+tolerate it. The orbit array, the orbit count and the group order
 (``stats.grpsize1 * 10 ** stats.grpsize2``) are compared exactly.
 
 The compiled shim binary is cached in ``HEX_NAUTY_CACHE`` or
@@ -161,7 +165,20 @@ def _check_autos(record: dict, answer: dict) -> None:
             f"{case}: numGenerators {record['numGenerators']} != nauty "
             f"{len(answer['gens'])}"
         )
-    if not _is_subsequence(answer["gens"], record["gens"]):
+    if len(record["gens"]) == len(answer["gens"]):
+        # the usual case: nothing was suppressed, so the lists must agree
+        # entry by entry rather than only up to a subsequence
+        if record["gens"] != answer["gens"]:
+            raise OracleMismatch(
+                f"{case}: generators {record['gens']} != nauty "
+                f"{answer['gens']}"
+            )
+    elif len(record["gens"]) < len(answer["gens"]):
+        raise OracleMismatch(
+            f"{case}: recorded {len(record['gens'])} generators, fewer than "
+            f"the {len(answer['gens'])} nauty emitted"
+        )
+    elif not _is_subsequence(answer["gens"], record["gens"]):
         raise OracleMismatch(
             f"{case}: nauty generators {answer['gens']} are not a "
             f"subsequence of the recorded trace {record['gens']}"
