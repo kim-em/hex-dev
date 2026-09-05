@@ -1418,7 +1418,7 @@ private theorem zeroSplitting_sound (T : NumberTower) :
     exact (mapPoly_id T 0).symm
   · simp [toPolynomial_zero]
   · intro entry hentry
-    exact (by simpa [S, Roots.Contains] using hentry)
+    exact (by simp [Roots.Contains] at hentry)
   · intro a
     change Splitting.GeneratedBy S a
     exact Splitting.GeneratedBy.base (S := S) a
@@ -1454,7 +1454,7 @@ private theorem constantSplitting_sound {T : NumberTower} {f : Poly T}
     simp at hentry
   · simp [Roots.NoDuplicates]
   · intro entry hentry
-    exact (by simpa [S, Roots.Contains] using hentry)
+    exact (by simp [Roots.Contains] at hentry)
   · intro a
     change Splitting.GeneratedBy S a
     exact Splitting.GeneratedBy.base (S := S) a

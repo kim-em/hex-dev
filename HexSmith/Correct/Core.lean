@@ -1438,8 +1438,8 @@ theorem runFuel_complete (ops : Accumulator α n m) (fuel : Nat)
               (by rw [swapRows_diag]; omega)
             let reduced := reduce ops moved pivotRow pivotCol
             have hprefix := reduce_prefix ops hmoved pivotRow pivotCol
-              (by simpa [reduce_diag, moved, swapCols_diag, swapRows_diag, pivotRow])
-              (by simpa [reduce_diag, moved, swapCols_diag, swapRows_diag, pivotCol])
+              (by simp [swapCols_diag, swapRows_diag, pivotRow])
+              (by simp [swapCols_diag, swapRows_diag, pivotCol])
             have hreduced := reduce_reduced ops moved pivotRow pivotCol hpivot
             simp only
             split

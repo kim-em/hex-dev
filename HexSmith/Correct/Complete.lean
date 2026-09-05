@@ -519,7 +519,7 @@ private theorem diagMatrix_swap (v : Vector Int r) (i j : Fin r) :
   by_cases hri : row = i <;> by_cases hrj : row = j <;>
     by_cases hci : col = i <;> by_cases hcj : col = j
   all_goals simp_all [Fin.ext_iff]
-  all_goals split <;> simp_all <;> omega
+  all_goals split <;> simp_all; omega
 
 private theorem diagMatrix_negate (v : Vector Int r) (i : Fin r) :
     Matrix.rowScale (diagMatrix v r r) i (-1) =
@@ -643,7 +643,7 @@ private theorem Diagonal.Compact.normalizeFuel_nonneg
               apply Classical.byContradiction
               intro hn
               exact hfind ⟨Nat.le_of_not_gt hi, hn⟩
-            simpa [hz]
+            simp [hz]
       | some found =>
           simp only []
           let pivot : Fin r := ⟨target, ht⟩
@@ -729,9 +729,9 @@ private theorem Diagonal.Compact.quotient_lcm (a b : Int)
   let l := Nat.lcm a.natAbs b.natAbs
   let g' := Int.ofNat g
   have ha_cast : Int.ofNat a.natAbs = a := by
-    simpa [Int.natAbs_of_nonneg ha] using Int.ofNat_toNat ha
+    simp [Int.natAbs_of_nonneg ha]
   have hb_cast : Int.ofNat b.natAbs = b := by
-    simpa [Int.natAbs_of_nonneg hb] using Int.ofNat_toNat hb
+    simp [Int.natAbs_of_nonneg hb]
   have hga : g' ∣ a := by
     dsimp only [g, g']
     rw [← ha_cast]
@@ -762,7 +762,7 @@ private theorem Diagonal.Compact.quotient_lcm (a b : Int)
 
 private theorem Diagonal.Compact.cast_natAbs (x : Int) (hx : 0 ≤ x) :
     Int.ofNat x.natAbs = x := by
-  simpa [Int.natAbs_of_nonneg hx] using Int.ofNat_toNat hx
+  simp [Int.natAbs_of_nonneg hx]
 
 set_option maxHeartbeats 800000 in
 private theorem Diagonal.Compact.pairStep_model
@@ -1045,7 +1045,7 @@ private theorem Diagonal.Compact.takeWhile_abs (xs : List Int)
       · subst a
         simp [Diagonal.Bubble.nonzeros]
       · rw [List.takeWhile_cons, ite_eq_left (by simpa)]
-        rw [List.map_cons, Diagonal.Bubble.nonzeros, ite_eq_right (by simpa [ha0])]
+        rw [List.map_cons, Diagonal.Bubble.nonzeros, ite_eq_right (by simp [ha0])]
         simp only [List.map_cons, List.cons.injEq]
         exact ⟨(cast_natAbs a ha).symm, ih (by
           intro x hx

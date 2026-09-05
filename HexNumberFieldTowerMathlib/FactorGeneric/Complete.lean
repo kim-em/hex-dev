@@ -26,8 +26,8 @@ namespace Hex.NumberTower
 squarefree nonconstant input the bounded shift search and every recursive
 call succeed, so `Factor.factorSquarefree?` returns a result. -/
 theorem factorSquarefree_isSome :
-    ∀ (levels : List Level) (hvalid : LevelsValid levels)
-      (hinjective : LevelSemantics.DenoteInjective levels)
+    ∀ (levels : List Level) (_hvalid : LevelsValid levels)
+      (_hinjective : LevelSemantics.DenoteInjective levels)
       (f : Array (Array Rat)),
       Norm.isSquarefree levels f →
       0 < (Factor.rawPoly levels f).degree?.getD 0 →
@@ -759,7 +759,7 @@ private theorem factorFold_sound
       have hcomponentMem : component ∈
           (Factor.yunRaw levels f).toList :=
         hcomponents component (by simp)
-      have hpositive := yun_positive hvalid hinjective hinv f component
+      have hpositive := yun_positive f component
         hcomponentMem
       have hrawNe : Factor.rawPoly levels component.1 ≠ 0 := by
         intro hzero
@@ -865,7 +865,7 @@ theorem factorRaw_isSome (levels : List Level)
         · exact Nat.pos_of_ne_zero hzero)
       component hcomponent
     have hdegree :=
-      (yun_positive hvalid hinjective hinv f component hcomponent).1
+      (yun_positive f component hcomponent).1
     have hsome := factorSquarefree_isSome levels hvalid hinjective
       component.1 hsquarefree hdegree
     obtain ⟨irreducibles, hirreducibles⟩ :=

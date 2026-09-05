@@ -154,11 +154,11 @@ Both entry accessors and `getRow` read the flat buffer directly at `i * m + j`,
 so a single-entry read is `O(1)` and never materializes a row. -/
 
 /-- Entry access by a `Fin n × Fin m` index: the `O(1)` flat read. -/
-@[expose] instance : GetElem (Matrix R n m) (Fin n × Fin m) R (fun _ _ => True) where
+instance : GetElem (Matrix R n m) (Fin n × Fin m) R (fun _ _ => True) where
   getElem M p _ := M.data[p.1.val * m + p.2.val]'(flatIdx_lt p.1.isLt p.2.isLt)
 
 /-- Entry access by a `Nat × Nat` index. -/
-@[expose] instance : GetElem (Matrix R n m) (Nat × Nat) R (fun _ p => p.1 < n ∧ p.2 < m) where
+instance : GetElem (Matrix R n m) (Nat × Nat) R (fun _ p => p.1 < n ∧ p.2 < m) where
   getElem M p h := M.data[p.1 * m + p.2]'(flatIdx_lt h.1 h.2)
 
 /-- The `i`-th row of a matrix, materialized from the flat buffer. This copies the

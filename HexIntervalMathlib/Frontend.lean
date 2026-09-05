@@ -215,7 +215,7 @@ noncomputable def Term.eval (config : Rule.Config) (sources : Nat → ℝ) : Ter
   | .regularize input => input.eval config sources
 
 /-- Exact built-in semantic meaning selected by a frontend term. -/
-protected def Term.meaning (config : Rule.Config) : Term → Program.Meaning ℝ
+protected def Term.meaning (_config : Rule.Config) : Term → Program.Meaning ℝ
   | .source _ => Rule.sourceMeaning
   | .dyadic _ => Rule.dyadicLiteralMeaning
   | .natural _ => Rule.natLiteralMeaning
@@ -597,7 +597,7 @@ theorem Result.seed_contains (config : Rule.Config) (values : Nat → ℝ)
             cases h : entry.term <;> simp [Term.source?, h] at sourceTerm
             case source index =>
               subst source
-              simpa using h
+              simp
           have sourceLt : source < result.sourceCount := by simpa [termEq] using sourceWithin
           have sourceArrayWithin : source < sources.size := by simpa [sourceSize] using sourceLt
           let sourceFact := sources[source]'sourceArrayWithin

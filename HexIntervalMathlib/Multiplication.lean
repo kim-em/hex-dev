@@ -110,7 +110,7 @@ private theorem Raw.Mul.Candidate.lower_min (left right : Raw.Mul.Candidate)
       · subst rightValue
         cases leftAttained <;> cases rightAttained <;>
           simp [less, le_ne_iff_lt] at bound ⊢ <;>
-          aesop <;> linarith
+          first | linarith | (rcases bound with bound | bound <;> linarith)
       · have realNotLess : ¬toReal leftValue < toReal rightValue := by
           simpa only [toReal_lt_iff] using less
         have realNotEqual : toReal leftValue ≠ toReal rightValue := by
@@ -137,7 +137,7 @@ private theorem Raw.Mul.Candidate.upper_max (left right : Raw.Mul.Candidate)
       · subst rightValue
         cases leftAttained <;> cases rightAttained <;>
           simp [less, le_ne_iff_lt] at bound ⊢ <;>
-          aesop <;> linarith
+          first | linarith | (rcases bound with bound | bound <;> linarith)
       · have realNotLess : ¬toReal leftValue < toReal rightValue := by
           simpa only [toReal_lt_iff] using less
         have realNotEqual : toReal leftValue ≠ toReal rightValue := by

@@ -358,7 +358,7 @@ private theorem carry_allDvd {a z : Nat} {xs : List Nat}
 private theorem pass_allDvd {xs : List Nat} {z : Nat}
     (h : AllDvd xs z) : AllDvd (pass xs) z := by
   cases xs with
-  | nil => simpa [pass, AllDvd]
+  | nil => simp [pass, AllDvd]
   | cons a xs =>
       apply carry_allDvd
       · exact h a (by simp)

@@ -1068,7 +1068,6 @@ theorem eval_shiftBase (lower : List Level)
     LevelSemantics.denote_rat lower hvalid]
   rw [hone]
   rw [Polynomial.monomial_one_one_eq_X]
-  push_cast
   ring
 
 /-- Specializing the shifted bivariate input at a conjugate gives ordinary
@@ -1263,7 +1262,7 @@ theorem outerEval_defining (level : Level) (lower : List Level)
         omega)]
     exact LevelSemantics.denseEval_relation level lower hvalid
   rw [Polynomial.eval_map]
-  simpa [hrelation]
+  simp [hrelation]
 
 /-- Rebuilding a raw dense polynomial from its flattened coordinate arrays is
 the identity: `Factor.polyCoords` is a section of `Factor.rawPoly`. -/

@@ -645,9 +645,9 @@ theorem monic_eq_self (levels : List Level)
     (R := Arithmetic.Coeff levels)).injective
   exact Polynomial.eq_of_monic_of_associated
     (toPolynomial_monic_monic levels hvalid hinjective hinv f
-      (fun hzero => by simpa [hzero] using hf))
+      (fun hzero => by simp [hzero] at hf))
     hf (toPolynomial_monic_associated levels hvalid hinjective hinv f
-      (fun hzero => by simpa [hzero] using hf))
+      (fun hzero => by simp [hzero] at hf))
 
 /-- Core counting argument for gcd recovery: a product of two nonunits cannot
 simultaneously divide a squarefree polynomial and a power of one irreducible,
@@ -722,7 +722,7 @@ theorem recoveredCommon_irreducible (level : Level)
   have hcommonNe : common ≠ 0 := by
     intro hzero
     rw [hzero] at hdegree
-    simpa using hdegree
+    simp at hdegree
   have hgNe : g ≠ 0 := by
     intro hzero
     apply hcommonNe
@@ -790,12 +790,10 @@ theorem recoveredCommon_irreducible (level : Level)
     rfl
   have hadDegree : 0 < ad.degree?.getD 0 := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
-    change 0 < (HexPolyMathlib.toPolynomial ad).natDegree
     rw [show HexPolyMathlib.toPolynomial ad = a by simp [ad]]
     exact Nat.pos_of_ne_zero haNatDegree
   have hbdDegree : 0 < bd.degree?.getD 0 := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
-    change 0 < (HexPolyMathlib.toPolynomial bd).natDegree
     rw [show HexPolyMathlib.toPolynomial bd = b by simp [bd]]
     exact Nat.pos_of_ne_zero hbNatDegree
   have hnormAUnit : ¬ IsUnit (HexPolyMathlib.toPolynomial

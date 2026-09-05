@@ -129,7 +129,6 @@ structure BareissState (R : Type u) (n : Nat) where
 
 /-- Compatibility alias for the exact-division primitive now owned by
 `hex-arith`. New code should use `HexArith.Int.exactDiv`. -/
-@[expose]
 abbrev exactDiv (num denom : @& Int) : Int := HexArith.Int.exactDiv num denom
 
 /-- When divisibility is known, `exactDiv` is the GMP-backed exact quotient. -/
@@ -978,12 +977,14 @@ def pivotLoopWith (quot : R → R → R) (fuel : Nat)
       else
         state
 
+omit [One R] [Neg R] in
 /-- With zero fuel, the row-pivoted Bareiss loop returns its input state. -/
 @[grind]
 theorem pivotLoopWith_zero_fuel (state : BareissState R n) :
     pivotLoopWith quot 0 state = state := by
   rfl
 
+omit [One R] [Neg R] in
 /-- If the current step is already past the last update step, the row-pivoted
 Bareiss loop returns its input state. -/
 @[grind]
@@ -992,6 +993,7 @@ theorem pivotLoopWith_done (fuel : Nat) (state : BareissState R n)
     pivotLoopWith quot (fuel + 1) state = state := by
   simp [pivotLoopWith, hDone]
 
+omit [One R] [Neg R] in
 /-- If the current row-pivoted Bareiss pivot is already nonzero, one loop
 iteration applies `stepMatrixWith quot`, advances the step, and recurses without
 changing the row-swap counter. -/
@@ -1009,6 +1011,7 @@ theorem pivotLoopWith_of_regular_no_swap (fuel : Nat) (state : BareissState R n)
           singularStep := none } := by
   simp_all [pivotLoopWith, getRow, Fin.getElem_fin]
 
+omit [One R] [Neg R] in
 /-- If the current pivot is zero and pivot search finds no replacement row,
 the row-pivoted Bareiss loop records a singular step. -/
 @[grind]
@@ -1023,6 +1026,7 @@ theorem pivotLoopWith_of_singular_no_pivot (fuel : Nat) (state : BareissState R 
       { state with singularStep := some state.step } := by
   simp_all [pivotLoopWith]
 
+omit [One R] [Neg R] in
 /-- If the current pivot is zero, pivot search finds a replacement row, and
 the swapped pivot is nonzero, one loop iteration swaps rows, applies
 `stepMatrixWith quot`, advances the step, increments the row-swap counter, and recurses. -/
@@ -1132,12 +1136,14 @@ def noPivotLoopWith (quot : R → R → R) (fuel : Nat)
       else
         state
 
+omit [One R] [Neg R] in
 /-- With zero fuel, the no-pivot Bareiss loop returns its input state. -/
 @[grind]
 theorem noPivotLoopWith_zero_fuel (state : BareissState R n) :
     noPivotLoopWith quot 0 state = state := by
   rfl
 
+omit [One R] [Neg R] in
 /-- If the current step is already past the last update step, the no-pivot loop
 returns its input state. -/
 @[grind]
@@ -1146,6 +1152,7 @@ theorem noPivotLoopWith_done (fuel : Nat) (state : BareissState R n)
     noPivotLoopWith quot (fuel + 1) state = state := by
   simp [noPivotLoopWith, hDone]
 
+omit [One R] [Neg R] in
 /-- If the no-pivot loop sees a zero pivot before completion, it records the
 current step as singular. -/
 @[grind]
@@ -1155,6 +1162,7 @@ theorem noPivotLoopWith_of_singular (fuel : Nat) (state : BareissState R n)
     noPivotLoopWith quot (fuel + 1) state = { state with singularStep := some state.step } := by
   simp_all [noPivotLoopWith]
 
+omit [One R] [Neg R] in
 /-- If the current no-pivot Bareiss pivot is nonzero, one loop iteration applies
 `stepMatrixWith quot`, advances the step, and recurses on the remaining fuel. -/
 @[grind]
@@ -1171,6 +1179,7 @@ theorem noPivotLoopWith_of_regular (fuel : Nat) (state : BareissState R n)
           singularStep := none } := by
   simp_all [noPivotLoopWith]
 
+omit [One R] [Neg R] in
 /-- Entries in rows already processed, or in columns strictly before the current
 step, are unchanged by subsequent no-pivot loop iterations. -/
 @[grind]
@@ -1220,6 +1229,7 @@ theorem noPivotLoopWith_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
           · simpa [k] using hp
       · simp [noPivotLoopWith_done (quot := quot) fuel state hDone]
 
+omit [One R] [Neg R] in
 /-- Diagonal entries at or before the current step are unchanged by subsequent
 no-pivot loop iterations. -/
 @[grind =]
@@ -1228,6 +1238,7 @@ theorem noPivotLoopWith_diag_of_le_step (fuel : Nat) (state : BareissState R n)
     (noPivotLoopWith quot fuel state).matrix[i][i] = state.matrix[i][i] :=
   noPivotLoopWith_matrix_entry_of_row_le_or_col_lt (quot := quot) fuel state i i (Or.inl hi)
 
+omit [One R] [Neg R] in
 /-- The no-pivot loop never changes the row-swap counter. -/
 @[grind =]
 theorem noPivotLoopWith_rowSwaps (fuel : Nat) (state : BareissState R n) :
@@ -1254,6 +1265,7 @@ theorem noPivotLoopWith_rowSwaps (fuel : Nat) (state : BareissState R n) :
           · simpa [k] using hp
       · simp [noPivotLoopWith_done (quot := quot) fuel state hDone]
 
+omit [One R] [Neg R] in
 /-- Once a no-pivot Bareiss state is already at the terminal step boundary,
 additional fuel leaves it unchanged. -/
 -- @[grind]-excluded: structural fixed-point lemma overlapping `noPivotLoopWith_done (quot := quot)`;
@@ -1266,6 +1278,7 @@ theorem noPivotLoopWith_id_at_done
   | zero => rfl
   | succ f _ih => exact noPivotLoopWith_done (quot := quot) f state hDone
 
+omit [One R] [Neg R] in
 /-- Once a no-pivot Bareiss state has recorded a zero pivot at the current
 step, additional fuel leaves that singular fixed point unchanged. -/
 -- @[grind]-excluded: structural fixed-point lemma with bespoke singular-state
@@ -1285,6 +1298,7 @@ theorem noPivotLoopWith_id_at_singular_fixedpoint
       simp at hsing ⊢
       exact hsing.symm
 
+omit [One R] [Neg R] in
 /-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
 fuel from `state` equals running `b` more units after `a` initial units. -/
 -- @[grind]-excluded: fuel-composition (associativity) lemma; as a rewrite it
@@ -1347,6 +1361,7 @@ theorem noPivotLoopWith_add
         rw [noPivotLoopWith_id_at_done (quot := quot) (a' + 1) state hDone]
         exact (noPivotLoopWith_id_at_done (quot := quot) b state hDone).symm
 
+omit [One R] [Neg R] in
 /-- When a no-pivot Bareiss run records no singular step and has enough room,
 the `step` field advances by exactly the amount of consumed fuel. -/
 -- @[grind]-excluded: step-count accounting lemma with arithmetic-room and
@@ -1381,6 +1396,7 @@ theorem noPivotLoopWith_step_eq_add_of_singularStep_none
         show state.step + 1 + f = state.step + (f + 1)
         omega
 
+omit [One R] [Neg R] in
 /-- When the no-pivot Bareiss loop completes `fuel` iterations without
 recording a singular step, the row-pivoted Bareiss loop produces an
 identical state: every diagonal pivot is nonzero, so the row search and
@@ -1433,6 +1449,7 @@ def noPivotInitialState (M : Matrix R n n) : BareissState R n :=
 def bareissNoPivotDataWith (quot : R → R → R) (M : Matrix R n n) : BareissData R n :=
   finish <| noPivotLoopWith quot n (noPivotInitialState M)
 
+omit [Neg R] in
 /-- Characterisation of the generic no-pivot result by its completed loop
 state. Consumers can use this theorem without unfolding the public wrapper. -/
 theorem bareissNoPivotDataWith_eq_finish (M : Matrix R n n) :
@@ -1454,6 +1471,7 @@ def bareissDataWith (quot : R → R → R) (M : Matrix R n n) : BareissData R n 
     rowSwaps := state.rowSwaps
     singularStep := state.singularStep }
 
+omit [Neg R] in
 /-- The packaged row-pivoted Bareiss data is exactly the structured pivot loop
 state finished into public determinant data. This is the equality consumed by the
 Mathlib determinant proof; array storage is erased by `rowsToMatrix`. -/

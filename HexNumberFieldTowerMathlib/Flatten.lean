@@ -119,7 +119,7 @@ private theorem replicatePush_getD (n i : Nat) :
       simp [heq]
 
 private theorem unitCoords_fixed (full short index : Nat)
-    (hshort : short ≤ full) (hindex : index < short) :
+    (_hshort : short ≤ full) (hindex : index < short) :
     unitCoords full index =
       Arithmetic.fixedCoeffs full (unitCoords short index) := by
   apply Array.ext
@@ -237,7 +237,7 @@ private theorem generatorsAux?_sound (T : NumberTower)
       obtain ⟨hdimension, hgenerators⟩ :=
         ih (newer ++ [level]) hlowerLevels hlowerState
       constructor
-      · simpa [levelsDim, hdimension, Nat.mul_comm]
+      · simp [levelsDim, hdimension, Nat.mul_comm]
       · intro generator hgenerator
         simp only [Array.toList_push, List.mem_append,
           List.mem_singleton] at hgenerator
@@ -440,7 +440,7 @@ private theorem toQAdjoin_complex (a : AlgebraicNumber) :
       (DensePoly.ofList ([0, 1] : List Rat)) = Polynomial.X := by
     ext n
     rw [HexPolyMathlib.coeff_toPolynomial, DensePoly.coeff_ofList]
-    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X] <;> rfl
+    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X]; rfl
   rw [hpoly, Polynomial.eval₂_X]
   rfl
 
@@ -1404,7 +1404,7 @@ private theorem blockIndex_iff (index exponent width offset : Nat)
     simp [Nat.add_comm, Nat.mul_comm]
 
 private theorem block_unitCoords (degree width index exponent : Nat)
-    (hwidth : 0 < width) (hindex : index < degree * width)
+    (hwidth : 0 < width) (_hindex : index < degree * width)
     (hexponent : exponent < degree) :
     Arithmetic.block (unitCoords (degree * width) index) exponent width =
       if exponent = index / width then unitCoords width (index % width)
@@ -1563,7 +1563,7 @@ private theorem extendBasis_values {p : ZPoly} {x : SimpleRoot p}
           · simp
           · intro i hleft hright
             simp [Function.comp_def, QAdjoin.map_mul, hpower]
-        · simpa [QAdjoin.map_mul, hpower, hgenerator]
+        · simp [QAdjoin.map_mul, hpower, hgenerator]
   exact hfold entries (#[], 1) (#[], 1)
     (by simp) (QAdjoin.map_one rep hrep)
 

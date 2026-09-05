@@ -85,7 +85,7 @@ private theorem coeff_ext {levels : List Level}
 
 private def elemCoeff (T : NumberTower) (a : Elem T) :
     Arithmetic.Coeff T.levels.toList :=
-  ⟨coeffs a, by simpa [dim] using coeffs_size a⟩
+  ⟨coeffs a, by simp [dim]⟩
 
 /-- Canonical raw coefficients and public tower elements are the same
 fixed-width coordinate field. -/
@@ -249,7 +249,7 @@ theorem polyCoords_rawPoly (T : NumberTower) (f : Poly T) :
     have hsize : q.size = f.size := by omega
     change Factor.polyCoords q = f.toArray.map coeffs
     apply Array.ext
-    · simpa [Factor.polyCoords, hsize]
+    · simp [Factor.polyCoords, hsize]
     · intro i hiq hif
       have hiq' : i < q.toArray.size := by
         simpa [Factor.polyCoords] using hiq
@@ -642,7 +642,7 @@ theorem isIrreducible_iff (T : NumberTower) (f : Poly T) :
 /-- Every returned Trager factorization satisfies reconstruction,
 multiplicity, irreducibility, uniqueness, and ordering. -/
 theorem factor?_sound (T : NumberTower) (f : Poly T)
-    {r : Factorization T f} (h : T.factor? f = some r) :
+    {r : Factorization T f} (_h : T.factor? f = some r) :
     r.Sound := by
   have hcheck := r.checked
   simp only [checkFactorization, Factor.check, Bool.and_eq_true] at hcheck
