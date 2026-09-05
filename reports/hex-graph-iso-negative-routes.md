@@ -127,47 +127,55 @@ wall-clock pairwise win: on Kneser/Johnson, pairwise replay was more than six
 times slower.
 
 For full end-to-end context, the prescribed cactus sweep was regenerated at
-fingerprint `f78fb8c2306b`. Its canonicalization leg is a compiled driver that
+fingerprint `1e41767e7a03`. Its canonicalization leg is a compiled driver that
 reports a minimum over repetitions, and it reproduces: against
 `hexgraphiso-cactus-152d306db788-chungus2.jsonl` the 98 shared rows move by a
-median of -0.5%, with the 10th and 90th percentiles at -1.5% and +0.9%. That
+median of -0.3%, with the 10th and 90th percentiles at -1.7% and +1.1%. That
 leg is measured here and carries the canonicalization figure.
 
-The tactic leg is not measured here. It is one `lake env lean` elaboration per
-case on a machine shared with other build sessions, and it does not reproduce.
-Across six sessions within two hours, on code whose executable definitions
-never changed, `neg-c6-vs-2c3` gave 0.263, 0.263, 0.265, 0.475 and 0.543 s;
-`neg-c10-vs-2c5` gave 0.847, 0.866, 0.878, 1.435 and 1.546 s; and
-`neg-c14-vs-2c7` gave 1.891, 1.962, 2.851 and 3.562 s. Taking a minimum over
-three consecutive repetitions removes spikes but not a sustained background
-load, and the system load average tracks the effect only loosely: a 3.562 s
-minimum-of-three for `neg-c14-vs-2c7` was recorded at load 11 and a 0.543 s
-`neg-c6-vs-2c3` at load 4. Some contended runs are not even monotonic in the
-cycle length, which no property of the algorithm can explain.
+The tactic leg is not measured here, because it does not reproduce on this
+host. It is one `lake env lean` elaboration per case, and the machine is shared
+with other build sessions. Across six sessions within two hours, on code whose
+executable definitions never changed, `neg-c6-vs-2c3` gave 0.263, 0.263, 0.265,
+0.475 and 0.543 s; `neg-c10-vs-2c5` gave 0.847, 0.866, 0.878, 1.435 and
+1.546 s; and `neg-c14-vs-2c7` gave 1.891, 1.962, 2.851 and 3.562 s. A minimum
+over three consecutive repetitions removes spikes but not a sustained
+background load, and the system load average tracks the effect only loosely: a
+3.562 s minimum-of-three for `neg-c14-vs-2c7` was recorded at load 11 and a
+0.543 s `neg-c6-vs-2c3` at load 4. Some contended runs are not even monotonic
+in the cycle length, which no property of the algorithm can explain.
 
-`hexgraphiso-tactic-f78fb8c2306b-chungus2.json` is therefore a copy of
-`hexgraphiso-tactic-da8647a0e6f2-chungus2.json`, the measurement `main` took at
-its own most recent graph-iso fingerprint, and the meta file records that. The
-two fingerprints differ in `HexGraphIso/Tactic.lean` and
+`hexgraphiso-tactic-1e41767e7a03-chungus2.json` is therefore a byte-identical
+copy of `hexgraphiso-tactic-04f38e84f6e2-chungus2.json`, the tactic figure
+`main` currently publishes, and the meta file records that. The two
+fingerprints differ in `HexGraphIso/Tactic.lean` and
 `HexGraphIso/TacticTests.lean` only: the tests are not part of the measured
 library, and the `Tactic.lean` change deletes a compiled probe while leaving
 the emitted proof term identical on every pair in this corpus, so it can only
-reduce elaboration time and cannot touch kernel replay. Publishing `main`'s
-figure unchanged states exactly that, where a fresh contended measurement would
-have invented a difference.
+reduce elaboration time and cannot touch kernel replay. Carrying `main`'s
+figure across unchanged states exactly that, where a fresh contended
+measurement would have invented a difference.
 
-This report therefore makes no end-to-end timing claim for this change. The
-load-bearing evidence is the forced-route comparison above, whose two profiles
-were taken in the same session on the same pair, so the ratio survives whatever
-the host was doing. The long circ48/2circ24 sample and the 61- and 96-vertex
-hard negatives sit at or beyond the 120-second tactic frontier and land on
-either side of it between sessions. The scheduled CFI fresh-module median
-remains 33.899 s.
+Two consequences are inherited rather than introduced, and are recorded here
+so that the next reader does not attribute them to this change. `main`'s
+current tactic figure is itself a contended measurement: its cycle ladder at
+`n = 6, 8, 10, 12, 14, 16` reads 0.955, 0.929, 1.595, 2.558, 3.590 and 4.959 s,
+against 0.274, 0.493, 0.832, 1.327, 1.934 and 3.010 s at the preceding
+graph-iso fingerprint on an executable path that did not change between them,
+and it is not monotonic in the cycle length at the short end. Consequently the
+manual's approximate ten-vertex negative range of 0.7 to 0.9 seconds no longer
+matches the published tactic curve. Both facts are properties of `main` as it
+stands; re-measuring the tactic leg on quiet hardware, or moving that leg to
+the scheduled timing workflow, would settle them.
 
-The manual's Performance table reports canonicalization rather than tactic
-replay and comes from the reproducing compiled leg, so it is unaffected. Its
-separate approximate ten-vertex negative range of 0.7 to 0.9 seconds covers the
-0.832 s cycle pair in the published tactic figure.
+This report makes no end-to-end timing claim for this change. The load-bearing
+evidence is the forced-route comparison above, whose two profiles were taken in
+the same session on the same pair, so the ratio survives whatever the host was
+doing. The long circ48/2circ24 sample and the 61- and 96-vertex hard negatives
+sit at or beyond the 120-second tactic frontier and land on either side of it
+between sessions. The scheduled CFI fresh-module median remains 33.899 s. The
+manual's Performance table reports canonicalization rather than tactic replay
+and comes from the reproducing compiled leg, so it is unaffected.
 
 ## Decision
 
