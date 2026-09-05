@@ -107,8 +107,13 @@ polynomial factorization comparison:
 - `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
   cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
   BZ, and Isabelle LLL. A relevant implementation, adapter, harness, corpus,
-  toolchain, or dependency change after a system's recorded clean commit makes
-  that system stale and the PR must refresh its measurement.
+  toolchain, or dependency change since a system's recorded source fingerprint
+  makes that system stale, and the PR must refresh its measurement or record a
+  runtime-neutral exemption for the paths that moved. `scripts/bench/
+  check_graphiso_sweep_freshness.py` applies the same mechanism to the
+  hex-graph-iso cactus figures; both are built from
+  `scripts/bench/sweep_freshness.py`, whose unit tests run in the same step.
+  See [benchmarking.md](benchmarking.md) §Figure freshness.
 - `scripts/plots/hexbz-cactus.py --check` regenerates all current cactus and
   runtime-by-degree figures with the pinned Matplotlib version and compares the
   SVG bytes with the committed files.

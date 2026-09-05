@@ -2,11 +2,11 @@
 # Regenerate the hex-graph-iso cactus sweep data and figures.
 #
 # Runs the compiled sweep and pairs drivers, stores the data under
-# reports/bench-results/ keyed by the current commit and host, and
+# reports/bench-results/ keyed by the source fingerprint and host, and
 # re-renders the figures (re-timing the tactic leg). Run from the repo
 # root after any change to hex-graph-iso implementation source, and
-# commit the data and figures together with that change;
-# scripts/bench/check_graphiso_sweep_freshness.py is the required
+# commit the data, the manifest and the figures together with that
+# change; scripts/bench/check_graphiso_sweep_freshness.py is the required
 # check that keeps the figures honest.
 set -euo pipefail
 
@@ -16,16 +16,13 @@ cd "$root"
 # The fingerprint reads the index, but the sweep measures the working
 # tree; stage the relevant paths first so an uncommitted change cannot
 # record under its predecessor's key (they are about to be committed
-# together with the data in any case).
-# The pathspec must stay identical to RELEVANT in
-# scripts/bench/check_graphiso_sweep_freshness.py; SPEC and README are
-# excluded because documentation cannot affect measured performance.
-git add -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
-  scripts/plots/hexgraphiso-cactus.py ':!HexGraphIso/SPEC' \
-  ':!HexGraphIso/README.md'
-fp=$(git ls-files -s -- HexGraphIso/ HexGraph/ bench/HexGraphIso/Cactus.lean \
-  scripts/plots/hexgraphiso-cactus.py ':!HexGraphIso/SPEC' \
-  ':!HexGraphIso/README.md' | sha256sum | cut -c1-12)
+# together with the data in any case). The relevant set is declared once,
+# in scripts/bench/sweep_freshness.py, and both the staging pathspec and
+# the fingerprint come from there.
+freshness=scripts/bench/sweep_freshness.py
+# shellcheck disable=SC2046  # a pathspec list, deliberately word-split
+git add -- $(python3 "$freshness" --paths hexgraphiso-cactus)
+fp=$(python3 "$freshness" --record hexgraphiso-cactus)
 host=$(hostname -s)
 
 lake build hexgraphiso_cactus
@@ -46,4 +43,6 @@ cat > "reports/bench-results/hexgraphiso-cactus-$fp-$host.meta.json" <<META
  "label": "$label"
 }
 META
-echo "recorded $sweep, $pairs, tactic times, meta, and reports/figures/hexgraphiso-*.svg"
+echo "recorded $sweep, $pairs, tactic times, meta,"
+echo "reports/bench-results/hexgraphiso-cactus-$fp.manifest"
+echo "and reports/figures/hexgraphiso-*.svg"

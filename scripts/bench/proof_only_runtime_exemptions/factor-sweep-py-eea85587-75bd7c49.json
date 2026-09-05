@@ -1,0 +1,6 @@
+{
+ "path": "scripts/bench/factor_sweep.py",
+ "baseline_blob": "eea8558779362cc28c65934d3108328622933a32",
+ "current_blob": "75bd7c49778ad79d8dda7f9b37dc14cf2c0f8797",
+ "reason": "Records each measured system's source fingerprint in the report env and commits the matching manifest, so freshness is keyed by content rather than by the measuring commit. The corpus, the per-call protocol, the timing policy and every measured code path are unchanged; the added work runs once, before any system is spawned."
+}
