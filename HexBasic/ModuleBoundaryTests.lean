@@ -65,6 +65,10 @@ example : Array.ofFn' (n := 3) (fun i => i.val) = #[0, 1, 2] := by decide
 example : Vector.ofFn' (n := 4) (fun i => i.val * 2) = #v[0, 2, 4, 6] := by
   decide +kernel
 
+/-! # `zipWith` -/
+
+example : Array.zipWith' (· + ·) #[1, 2, 3] #[10, 20] = #[11, 22] := by decide +kernel
+
 /-! # Combined tabulation and equality
 
 An exponent vector built with `ofFn'` and compared for equality. -/

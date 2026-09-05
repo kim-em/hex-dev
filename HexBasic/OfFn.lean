@@ -111,4 +111,38 @@ so that the kernel can reduce it. -/
 @[csimp] theorem Array.map'_eq_map' : @Array.map' = @_root_.Array.map := by
   funext α β f a; exact Array.map'_eq_map f a
 
+/-! # `Array.zipWith` -/
+
+/-- An {name}`Array.zipWith` equivalent that reduces in the kernel under the
+module system: core {name}`Array.zipWith` runs its `zipWithMAux` loop by
+well-founded recursion, so `(Array.zipWith f a b)` stalls downstream
+exactly like {name}`Array.map`. Retire once core exposes a structurally
+recursive implementation. -/
+@[expose] def Array.zipWith' {α : Type u} {β : Type v} {γ : Type w}
+    (f : α → β → γ) (a : Array α) (b : Array β) : Array γ :=
+  (List.zipWith f a.toList b.toList).toArray
+
+@[simp] theorem Array.zipWith'_eq_zipWith {α : Type u} {β : Type v} {γ : Type w}
+    (f : α → β → γ) (a : Array α) (b : Array β) :
+    Array.zipWith' f a b = Array.zipWith f a b := by
+  rw [Array.zipWith', ← Array.toList_zipWith, Array.toArray_toList]
+
+@[simp] theorem Array.size_zipWith' {α : Type u} {β : Type v} {γ : Type w}
+    (f : α → β → γ) (a : Array α) (b : Array β) :
+    (Array.zipWith' f a b).size = min a.size b.size := by
+  simp [Array.zipWith']
+
+@[simp] theorem Array.getElem_zipWith' {α : Type u} {β : Type v} {γ : Type w}
+    (f : α → β → γ) (a : Array α) (b : Array β) (i : Nat)
+    (h : i < (Array.zipWith' f a b).size) :
+    (Array.zipWith' f a b)[i] =
+      f (a[i]'(by simp at h; omega)) (b[i]'(by simp at h; omega)) := by
+  simp [Array.zipWith']
+
+/-- Compiled code uses the core {name}`Array.zipWith`, which writes into an
+array of known capacity; the {name}`List` route exists only so that the
+kernel can reduce it. -/
+@[csimp] theorem Array.zipWith'_eq_zipWith' : @Array.zipWith' = @_root_.Array.zipWith := by
+  funext α β γ f a b; exact Array.zipWith'_eq_zipWith f a b
+
 end Hex

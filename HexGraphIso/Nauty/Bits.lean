@@ -69,10 +69,10 @@ theorem lowBit_eq (s : Nat) :
       rw [lowBit_go_congr s (f₂ := s / 2 + 1) (by omega) (by omega)]
 
 /-- `lowBit` of every nonzero byte, by the specification itself. -/
-def lbByte : Array Nat :=
+@[expose] def lbByte : Array Nat :=
   ((List.range 256).map lowBit).toArray
 
-def lowBitGo (s shift : Nat) : Nat :=
+@[expose] def lowBitGo (s shift : Nat) : Nat :=
   if s = 0 then 0
   else if s % 256 = 0 then lowBitGo (s >>> 8) (shift + 8)
   else shift + lbByte[s % 256]!
@@ -217,10 +217,10 @@ instead of per bit, with the per-byte answers read from tables that
 are definitionally maps of the specification. -/
 
 /-- `popCount` of every byte, by the specification itself. -/
-def pcByte : Array Nat :=
+@[expose] def pcByte : Array Nat :=
   ((List.range 256).map popCount).toArray
 
-def popCountGo (s acc : Nat) : Nat :=
+@[expose] def popCountGo (s acc : Nat) : Nat :=
   if s = 0 then acc
   else popCountGo (s >>> 8) (acc + pcByte[s % 256]!)
 termination_by s
@@ -276,20 +276,20 @@ theorem popCountGo_eq (s acc : Nat) :
 /-- One byte of `toList`: prepend the set positions `base + k`,
 `k < min 8 cnt`, in ascending order (so the whole accumulator is
 descending and one final reverse restores order). -/
-def toListByteGo (b base cnt k : Nat) (acc : List Nat) : List Nat :=
+@[expose] def toListByteGo (b base cnt k : Nat) (acc : List Nat) : List Nat :=
   if k ≥ 8 ∨ k ≥ cnt then acc
   else toListByteGo b base cnt (k + 1)
     (if b.testBit k then (base + k) :: acc else acc)
 termination_by 8 - k
 decreasing_by omega
 
-def toListByte (b base cnt : Nat) (acc : List Nat) : List Nat :=
+@[expose] def toListByte (b base cnt : Nat) (acc : List Nat) : List Nat :=
   toListByteGo b base cnt 0 acc
 
 /-- The byte-chunked `toList` walk: one big-number shift per byte,
 early exit once the remainder is empty. Accumulates reversed; one
 final reverse restores ascending order. -/
-def toListGo (base cnt s : Nat) (acc : List Nat) : List Nat :=
+@[expose] def toListGo (base cnt s : Nat) (acc : List Nat) : List Nat :=
   if cnt = 0 ∨ s = 0 then acc
   else toListGo (base + 8) (cnt - 8) (s >>> 8)
     (toListByte (s % 256) base cnt acc)

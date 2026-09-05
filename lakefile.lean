@@ -1147,11 +1147,6 @@ lean_exe hexgraphiso_cactus where
   srcDir := "bench"
   root := `HexGraphIso.Cactus
 
--- Scratch: packed-set search timing while the theory port is in flight
-lean_exe hexgraphiso_cactus_packed where
-  srcDir := "bench"
-  root := `HexGraphIso.CactusPacked
-
 -- Stage-decomposition profiler for the canonicalization pipeline
 -- (local tool; see bench/HexGraphIso/Profile.lean for methodology).
 lean_exe hexgraphiso_profile where

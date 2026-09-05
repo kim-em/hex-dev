@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.IsoLit
+public import HexGraphIso.NodeLit
 
 public section
 
@@ -35,7 +35,7 @@ private theorem foldl_congr_mem {α β : Type} {f g : α → β → α} :
       (fun a' b' hb' => h a' b' (List.mem_cons_of_mem _ hb')) _
 
 /-- The greater key's code list keeps the greater head. -/
-theorem keyMax_codes_head {k1 k2 : Key} {a b : Nat}
+theorem keyMax_codes_head {k1 k2 : Key n} {a b : Nat}
     {as bs : List Nat} (h1 : k1.codes = a :: as)
     (h2 : k2.codes = b :: bs) :
     ∃ rest, (keyMax k1 k2).codes = Nat.max a b :: rest := by
@@ -71,7 +71,7 @@ theorem keyMax_codes_head {k1 k2 : Key} {a b : Nat}
 /-- The maximal key's code list starts with the maximum of the heads,
 whenever every key in play has a head. -/
 theorem keysMax_codes_head :
-    ∀ (cs : List Key) (c : Key) (a : Nat) (as : List Nat),
+    ∀ (cs : List (Key n)) (c : Key n) (a : Nat) (as : List Nat),
       c.codes = a :: as →
       (∀ k ∈ cs, ∃ b bs, k.codes = b :: bs) →
       ∃ rest, (keysMax c cs).codes =
@@ -88,7 +88,7 @@ theorem keysMax_codes_head :
 
 /-- The maximal key over an indexed child family keeps, as its head,
 the running maximum of the family's head codes. -/
-theorem sep_fold_eq (mt : Nat) (ch : Nat → Key) (H : Nat → Nat)
+theorem sep_fold_eq (mt : Nat) (ch : Nat → Key n) (H : Nat → Nat)
     (hch : ∀ o, ∃ rest, (ch o).codes = H o :: rest) :
     ∃ rest,
       (keysMax (ch 0) ((List.range mt).map (ch ∘ Nat.succ))).codes =
@@ -112,15 +112,15 @@ theorem sep_fold_eq (mt : Nat) (ch : Nat → Key) (H : Nat → Nat)
 /-- The first two spec-key codes of one node, computed with a single
 refinement for the head and one refinement per child for the second —
 the shallow view of `specNode` the separator evaluates. -/
-@[expose] def nodeSep (ctx : Ctx) (level : Nat) (lab ptn : Array Nat)
-    (active numcells : Nat) : Option Nat × Option Nat :=
+@[expose] def nodeSep (ctx : Ctx n) (level : Nat) (lab ptn : Array Nat)
+    (active : VSet n) (numcells : Nat) : Option Nat × Option Nat :=
   let rs := refine ctx level lab ptn active numcells
-  if discreteAt rs.ptn level ctx.n then
+  if discreteAt rs.ptn level n then
     (some rs.longcode, some codeSentinel)
   else
     let tcr := specMaketargetcell ctx rs.lab rs.ptn level 100
     let childHead := fun (o : Nat) =>
-      let br := breakout rs.lab rs.ptn (level + 1) tcr.1
+      let br := breakout n rs.lab rs.ptn (level + 1) tcr.1
         rs.lab[tcr.1 + o]!
       (refine ctx (level + 1) br.1 br.2.1 br.2.2
         (rs.numcells + 1)).longcode
@@ -130,8 +130,8 @@ the shallow view of `specNode` the separator evaluates. -/
 
 /-- With two levels of fuel in hand, the first two codes of `specNode`
 are exactly `nodeSep`. -/
-theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
-    (lab ptn : Array Nat) (active numcells : Nat) :
+theorem specNode_codes_two (ctx : Ctx n) (fuel level : Nat)
+    (lab ptn : Array Nat) (active : VSet n) (numcells : Nat) :
     ((specNode ctx 100 (fuel + 2) level lab ptn active
         numcells).codes.head?,
       (specNode ctx 100 (fuel + 2) level lab ptn active
@@ -139,7 +139,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
       nodeSep ctx level lab ptn active numcells := by
   rw [specNode, nodeSep]
   rcases hdisc : discreteAt
-      (refine ctx level lab ptn active numcells).ptn level ctx.n
+      (refine ctx level lab ptn active numcells).ptn level n
     with _ | _
   · simp only [hdisc, Bool.false_eq_true, ite_false]
     obtain ⟨mt, hmt⟩ : ∃ mt, (specMaketargetcell ctx
@@ -149,7 +149,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
     rw [hmt, List.range_succ_eq_map, List.map_cons, List.map_map]
     have hchild : ∀ o : Nat, ∃ rest,
         (specNode ctx 100 (fuel + 1) (level + 1)
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             (specMaketargetcell ctx
               (refine ctx level lab ptn active numcells).lab
@@ -160,7 +160,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn level
                 100).1 + o]!).1
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             (specMaketargetcell ctx
               (refine ctx level lab ptn active numcells).lab
@@ -171,7 +171,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn level
                 100).1 + o]!).2.1
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             (specMaketargetcell ctx
               (refine ctx level lab ptn active numcells).lab
@@ -184,7 +184,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
                 100).1 + o]!).2.2
           ((refine ctx level lab ptn active numcells).numcells + 1)).codes =
         (refine ctx (level + 1)
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             (specMaketargetcell ctx
               (refine ctx level lab ptn active numcells).lab
@@ -195,7 +195,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn level
                 100).1 + o]!).1
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             (specMaketargetcell ctx
               (refine ctx level lab ptn active numcells).lab
@@ -206,7 +206,7 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
               (refine ctx level lab ptn active numcells).lab
               (refine ctx level lab ptn active numcells).ptn level
                 100).1 + o]!).2.1
-          (breakout (refine ctx level lab ptn active numcells).lab
+          (breakout n (refine ctx level lab ptn active numcells).lab
             (refine ctx level lab ptn active numcells).ptn (level + 1)
             (specMaketargetcell ctx
               (refine ctx level lab ptn active numcells).lab
@@ -229,17 +229,17 @@ theorem specNode_codes_two (ctx : Ctx) (fuel level : Nat)
 /-- The first two codes of the spec key of a graph presentation:
 `canonSpec` read off directly below two vertices, `nodeSep` at the
 root otherwise. -/
-@[expose] def sepCodes (n : Nat) (g lab0 : Array Nat)
+@[expose] def sepCodes (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : Option Nat × Option Nat :=
   if n < 2 then
     ((canonSpec n g lab0 cellEnds).codes.head?,
       (canonSpec n g lab0 cellEnds).codes.tail.head?)
   else
-    nodeSep { n := n, g := g } 1 lab0 (initPtn n (n + 2) cellEnds)
-      (initActive cellEnds) cellEnds.length
+    nodeSep { g := g } 1 lab0 (initPtn n (n + 2) cellEnds)
+      (initActive n cellEnds) cellEnds.length
 
 /-- `sepCodes` is exactly the spec key's first two codes. -/
-theorem sepCodes_eq (n : Nat) (g lab0 : Array Nat)
+theorem sepCodes_eq (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) :
     sepCodes n g lab0 cellEnds =
       ((canonSpec n g lab0 cellEnds).codes.head?,
@@ -292,14 +292,61 @@ theorem sepPair_self (c : Option Nat × Option Nat) :
   rw [sepPair, optNe_self, optNe_self]
   rfl
 
+/-! # The separators over the kernel's list state
+
+The kernel obligations mirror `nodeSep`, `sepCodes` and `sepRoot` over
+the bitset list state of `HexGraphIso.NodeLit`, so that a separator
+proof costs the kernel exactly the refinements it names. Two vertices
+or fewer never reach a separator (the tactic gates the route on its
+node budget), so the list forms cover the search branch only. -/
+
+/-- `nodeSep` over list state. -/
+@[expose] def nodeSepL (ctx : CtxL) (level : Nat) (lab ptn : List Nat)
+    (active numcells : Nat) : Option Nat × Option Nat :=
+  let rs := refineL ctx level lab ptn active numcells
+  if discreteAtL rs.ptn level ctx.n then
+    (some rs.longcode, some codeSentinel)
+  else
+    let tcr := specMaketargetcellL ctx rs.lab rs.ptn level 100
+    let childHead := fun (o : Nat) =>
+      let br := breakoutL ctx.n rs.lab rs.ptn (level + 1) tcr.1
+        (atD rs.lab (tcr.1 + o) 0)
+      (refineL ctx (level + 1) br.1 br.2.1 br.2.2
+        (rs.numcells + 1)).longcode
+    (some rs.longcode,
+      some ((List.range (tcr.2.2 - 1)).foldl
+        (fun mx j => Nat.max mx (childHead (j + 1))) (childHead 0)))
+
+theorem nodeSepL_eq (ctx : Ctx n) (level : Nat) (lab ptn : Array Nat)
+    (active : VSet n) (numcells : Nat) :
+    nodeSepL ctx.toL level lab.toList ptn.toList active.toNat numcells =
+      nodeSep ctx level lab ptn active numcells := by
+  rw [nodeSepL, nodeSep]
+  simp only [refineL_eq, toL_lab, toL_ptn, toL_longcode, toL_numcells, toL_n,
+    discreteAtL_eq, specMaketargetcellL_eq, breakoutL_eq, ← getBang_eq_atD]
+
+/-- `sepCodes` over list state, on the search branch. -/
+@[expose] def sepCodesL (n : Nat) (g lab0 : List Nat) (cellEnds : List Nat) :
+    Option Nat × Option Nat :=
+  nodeSepL ⟨n, g⟩ 1 lab0 (initPtn n (n + 2) cellEnds).toList
+    (initActive n cellEnds).toNat cellEnds.length
+
+theorem sepCodesL_eq (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) (h2 : 2 ≤ n) :
+    sepCodesL n (g.toList.map VSet.toNat) lab0.toList cellEnds =
+      sepCodes n g lab0 cellEnds := by
+  rw [sepCodesL, sepCodes, ite_eq_right (by omega)]
+  exact nodeSepL_eq { g := g } 1 lab0 _ _ _
+
 /-- The separator over tied flat literals: the negative route's
-cheapest kernel obligation, mirroring `checkKeyFlat`'s shape. -/
+cheapest kernel obligation, mirroring `checkKeyLit`'s shape. -/
 @[expose] def sepDiffLit {n k : Nat} (G H : Colored n k)
     (LA LB : List Bool) : Bool :=
+  decide (2 ≤ n) &&
   sepPair
-    (sepCodes n (flatRows n LA) (initialPartition G).1
+    (sepCodesL n (flatRows n LA).toList (initialPartition G).1.toList
       (initialPartition G).2)
-    (sepCodes n (flatRows n LB) (initialPartition H).1
+    (sepCodesL n (flatRows n LB).toList (initialPartition H).1.toList
       (initialPartition H).2)
 
 /-- Tying equalities plus a separator disagreement prove
@@ -311,22 +358,25 @@ theorem not_isomorphic_of_sepDiffLit {n k : Nat} {G H : Colored n k}
     (hB : H.graph.adjMatrix.data.toList = LB)
     (h : sepDiffLit G H LA LB = true) : ¬Isomorphic G H := by
   subst hA hB
-  rw [sepDiffLit, flatRows_eq_rowsOf, flatRows_eq_rowsOf] at h
+  rw [sepDiffLit, Bool.and_eq_true, decide_eq_true_eq] at h
+  obtain ⟨h2, h⟩ := h
+  rw [← toNat_rowsOfFlat, ← toNat_rowsOfFlat, sepCodesL_eq _ _ _ _ h2,
+    sepCodesL_eq _ _ _ _ h2, rowsOfFlat_eq_rowsOf, rowsOfFlat_eq_rowsOf] at h
   intro hiso
   rw [sepCodes_eq_of_isomorphic hiso, sepPair_self] at h
   cases h
 
 /-- The spec key's head code alone: a single refinement. -/
-@[expose] def sepRoot (n : Nat) (g lab0 : Array Nat)
+@[expose] def sepRoot (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : Option Nat :=
   if n < 2 then
     (canonSpec n g lab0 cellEnds).codes.head?
   else
-    some (refine { n := n, g := g } 1 lab0
-      (initPtn n (n + 2) cellEnds) (initActive cellEnds)
+    some (refine { g := g } 1 lab0
+      (initPtn n (n + 2) cellEnds) (initActive n cellEnds)
       cellEnds.length).longcode
 
-theorem sepRoot_eq (n : Nat) (g lab0 : Array Nat)
+theorem sepRoot_eq (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) :
     sepRoot n g lab0 cellEnds = (sepCodes n g lab0 cellEnds).1 := by
   rw [sepRoot, sepCodes]
@@ -337,14 +387,29 @@ theorem sepRoot_eq (n : Nat) (g lab0 : Array Nat)
     · rfl
     · rfl
 
+/-- `sepRoot` over list state, on the search branch. -/
+@[expose] def sepRootL (n : Nat) (g lab0 : List Nat) (cellEnds : List Nat) :
+    Option Nat :=
+  some (refineL ⟨n, g⟩ 1 lab0 (initPtn n (n + 2) cellEnds).toList
+    (initActive n cellEnds).toNat cellEnds.length).longcode
+
+theorem sepRootL_eq (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
+    (cellEnds : List Nat) (h2 : 2 ≤ n) :
+    sepRootL n (g.toList.map VSet.toNat) lab0.toList cellEnds =
+      sepRoot n g lab0 cellEnds := by
+  rw [sepRootL, sepRoot, ite_eq_right (by omega)]
+  exact congrArg some (congrArg RefineStL.longcode
+    (refineL_eq { g := g } 1 lab0 _ _ _))
+
 /-- The root separator over tied flat literals: one refinement per
 graph, the cheapest possible negative kernel obligation. -/
 @[expose] def sepRootLit {n k : Nat} (G H : Colored n k)
     (LA LB : List Bool) : Bool :=
+  decide (2 ≤ n) &&
   optNe
-    (sepRoot n (flatRows n LA) (initialPartition G).1
+    (sepRootL n (flatRows n LA).toList (initialPartition G).1.toList
       (initialPartition G).2)
-    (sepRoot n (flatRows n LB) (initialPartition H).1
+    (sepRootL n (flatRows n LB).toList (initialPartition H).1.toList
       (initialPartition H).2)
 
 /-- Tying equalities plus a root-code disagreement prove
@@ -355,7 +420,10 @@ theorem not_isomorphic_of_sepRootLit {n k : Nat} {G H : Colored n k}
     (hB : H.graph.adjMatrix.data.toList = LB)
     (h : sepRootLit G H LA LB = true) : ¬Isomorphic G H := by
   subst hA hB
-  rw [sepRootLit, flatRows_eq_rowsOf, flatRows_eq_rowsOf,
+  rw [sepRootLit, Bool.and_eq_true, decide_eq_true_eq] at h
+  obtain ⟨h2, h⟩ := h
+  rw [← toNat_rowsOfFlat, ← toNat_rowsOfFlat, sepRootL_eq _ _ _ _ h2,
+    sepRootL_eq _ _ _ _ h2, rowsOfFlat_eq_rowsOf, rowsOfFlat_eq_rowsOf,
     sepRoot_eq, sepRoot_eq] at h
   intro hiso
   rw [sepCodes_eq_of_isomorphic hiso, optNe_self] at h

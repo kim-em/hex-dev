@@ -11,6 +11,8 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Bits
+public import HexBasic.ArrayDecEq
+public import HexBasic.OfFn
 
 public section
 
@@ -103,6 +105,12 @@ theorem limbs_ext {s t : VSet n} (h : s.limbs = t.limbs) : s = t := by
   cases h
   rfl
 
+/-- Equality compares the limb arrays; `Hex.instDecidableEqArray` keeps
+the comparison kernel-reducible across the module boundary. -/
+@[expose] instance : DecidableEq (VSet n) := fun s t =>
+  if h : s.limbs = t.limbs then isTrue (limbs_ext h)
+  else isFalse fun heq => h (by rw [heq])
+
 /-- Sets with the same members are equal. -/
 theorem ext {s t : VSet n} (h : ∀ v, s.mem v = t.mem v) : s = t := by
   refine limbs_ext (Array.ext (by rw [s.size_eq, t.size_eq]) fun i hi _ => ?_)
@@ -118,10 +126,6 @@ theorem ext {s t : VSet n} (h : ∀ v, s.mem v = t.mem v) : s = t := by
 
 theorem ext_iff {s t : VSet n} : s = t ↔ ∀ v, s.mem v = t.mem v :=
   ⟨fun h v => by rw [h], ext⟩
-
-instance : DecidableEq (VSet n) := fun s t =>
-  if h : s.limbs = t.limbs then isTrue (limbs_ext h)
-  else isFalse fun heq => h (by rw [heq])
 
 /-! # Construction -/
 
@@ -317,24 +321,29 @@ theorem mem_erase (s : VSet n) (v w : Nat) :
 
 /-! # Limbwise binary operations -/
 
-theorem size_zipWith_limbs (op : Nat → Nat → Nat) (s t : VSet n) :
-    (Array.zipWith op s.limbs t.limbs).size = limbCount n := by
-  rw [Array.size_zipWith, s.size_eq, t.size_eq, Nat.min_self]
+/-- The limbwise combination of two packed sets. `Hex.Array.zipWith'`
+reduces in the kernel where core `Array.zipWith` stalls, and compiles to
+the core loop. -/
+@[expose] def zipLimbs (op : Nat → Nat → Nat) (s t : VSet n) : Array Nat :=
+  Hex.Array.zipWith' op s.limbs t.limbs
 
-theorem getElem!_zipWith (op : Nat → Nat → Nat) (s t : VSet n)
+theorem size_zipLimbs (op : Nat → Nat → Nat) (s t : VSet n) :
+    (zipLimbs op s t).size = limbCount n := by
+  simp [zipLimbs, s.size_eq, t.size_eq]
+
+theorem getElem!_zipLimbs (op : Nat → Nat → Nat) (s t : VSet n)
     (i : Nat) (hi : i < limbCount n) :
-    (Array.zipWith op s.limbs t.limbs)[i]! = op s.limbs[i]! t.limbs[i]! := by
-  have h1 : i < (Array.zipWith op s.limbs t.limbs).size := by
-    rw [size_zipWith_limbs]; exact hi
-  have h2 : i < s.limbs.size := by rw [s.size_eq]; exact hi
-  have h3 : i < t.limbs.size := by rw [t.size_eq]; exact hi
-  rw [getElem!_pos _ i h1, Array.getElem_zipWith, getElem!_pos s.limbs i h2,
-    getElem!_pos t.limbs i h3]
+    (zipLimbs op s t)[i]! = op s.limbs[i]! t.limbs[i]! := by
+  have hs : i < s.limbs.size := by rw [s.size_eq]; exact hi
+  have ht : i < t.limbs.size := by rw [t.size_eq]; exact hi
+  rw [getElem!_pos _ i (by rw [size_zipLimbs]; exact hi), getElem!_pos _ i hs,
+    getElem!_pos _ i ht]
+  simp [zipLimbs]
 
-theorem getElem!_zipWith_of_ge (op : Nat → Nat → Nat) (s t : VSet n)
+theorem getElem!_zipLimbs_of_ge (op : Nat → Nat → Nat) (s t : VSet n)
     (i : Nat) (hi : limbCount n ≤ i) :
-    (Array.zipWith op s.limbs t.limbs)[i]! = 0 := by
-  rw [getElem!_neg _ i (by rw [size_zipWith_limbs]; omega)]
+    (zipLimbs op s t)[i]! = 0 := by
+  rw [getElem!_neg _ i (by rw [size_zipLimbs]; omega)]
   rfl
 
 theorem getElem!_limbs_of_ge (s : VSet n) (i : Nat) (hi : limbCount n ≤ i) :
@@ -342,19 +351,19 @@ theorem getElem!_limbs_of_ge (s : VSet n) (i : Nat) (hi : limbCount n ≤ i) :
   rw [getElem!_neg _ i (by rw [s.size_eq]; omega)]
   rfl
 
-theorem wf_zipWith (op : Nat → Nat → Nat)
+theorem wf_zipLimbs (op : Nat → Nat → Nat)
     (hop : ∀ a b, a < 2 ^ 63 → b < 2 ^ 63 → op a b < 2 ^ 63)
     (hbit : ∀ a b j, (op a b).testBit j = true →
       a.testBit j = true ∨ b.testBit j = true)
-    (s t : VSet n) : Wf n (Array.zipWith op s.limbs t.limbs) := by
-  refine ⟨size_zipWith_limbs op s t, fun i => ?_, fun v hv => ?_⟩
+    (s t : VSet n) : Wf n (zipLimbs op s t) := by
+  refine ⟨size_zipLimbs op s t, fun i => ?_, fun v hv => ?_⟩
   · rcases Nat.lt_or_ge i (limbCount n) with hi | hi
-    · rw [getElem!_zipWith op s t i hi]
+    · rw [getElem!_zipLimbs op s t i hi]
       exact hop _ _ (s.bounded i) (t.bounded i)
-    · rw [getElem!_zipWith_of_ge op s t i hi]
+    · rw [getElem!_zipLimbs_of_ge op s t i hi]
       exact Nat.two_pow_pos 63
   · rcases Nat.lt_or_ge (v / 63) (limbCount n) with hi | hi
-    · rw [getElem!_zipWith op s t _ hi]
+    · rw [getElem!_zipLimbs op s t _ hi]
       rcases hb : (op s.limbs[v / 63]! t.limbs[v / 63]!).testBit (v % 63)
         with _ | _
       · rfl
@@ -364,13 +373,13 @@ theorem wf_zipWith (op : Nat → Nat → Nat)
           cases h
         · rw [t.clear_of_ge v hv] at h
           cases h
-    · rw [getElem!_zipWith_of_ge op s t _ hi]
+    · rw [getElem!_zipLimbs_of_ge op s t _ hi]
       exact Nat.zero_testBit _
 
 /-- Intersection. -/
 @[expose] def inter (s t : VSet n) : VSet n :=
-  ofLimbs (Array.zipWith (· &&& ·) s.limbs t.limbs)
-    (wf_zipWith _ (fun a b ha _ => Nat.lt_of_le_of_lt (Nat.and_le_left) ha)
+  ofLimbs (zipLimbs (· &&& ·) s t)
+    (wf_zipLimbs _ (fun a b ha _ => Nat.lt_of_le_of_lt (Nat.and_le_left) ha)
       (fun a b j h => by rw [Nat.testBit_and] at h; simp at h; exact Or.inl h.1)
       s t)
 
@@ -378,14 +387,14 @@ theorem mem_inter (s t : VSet n) (w : Nat) :
     (s.inter t).mem w = (s.mem w && t.mem w) := by
   rw [inter, mem_ofLimbs, mem, mem]
   rcases Nat.lt_or_ge (w / 63) (limbCount n) with hi | hi
-  · rw [getElem!_zipWith _ s t _ hi, Nat.testBit_and]
-  · rw [getElem!_zipWith_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi]
+  · rw [getElem!_zipLimbs _ s t _ hi, Nat.testBit_and]
+  · rw [getElem!_zipLimbs_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi]
     simp
 
 /-- Union. -/
 @[expose] def union (s t : VSet n) : VSet n :=
-  ofLimbs (Array.zipWith (· ||| ·) s.limbs t.limbs)
-    (wf_zipWith _ (fun a b ha hb => Nat.or_lt_two_pow ha hb)
+  ofLimbs (zipLimbs (· ||| ·) s t)
+    (wf_zipLimbs _ (fun a b ha hb => Nat.or_lt_two_pow ha hb)
       (fun a b j h => by
         rw [Nat.testBit_or] at h
         rcases ha : a.testBit j with _ | _
@@ -397,15 +406,15 @@ theorem mem_union (s t : VSet n) (w : Nat) :
     (s.union t).mem w = (s.mem w || t.mem w) := by
   rw [union, mem_ofLimbs, mem, mem]
   rcases Nat.lt_or_ge (w / 63) (limbCount n) with hi | hi
-  · rw [getElem!_zipWith _ s t _ hi, Nat.testBit_or]
-  · rw [getElem!_zipWith_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi,
+  · rw [getElem!_zipLimbs _ s t _ hi, Nat.testBit_or]
+  · rw [getElem!_zipLimbs_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi,
       getElem!_limbs_of_ge t _ hi]
     simp
 
 /-- Symmetric difference. -/
 @[expose] def xor (s t : VSet n) : VSet n :=
-  ofLimbs (Array.zipWith (· ^^^ ·) s.limbs t.limbs)
-    (wf_zipWith _ (fun a b ha hb => Nat.xor_lt_two_pow ha hb)
+  ofLimbs (zipLimbs (· ^^^ ·) s t)
+    (wf_zipLimbs _ (fun a b ha hb => Nat.xor_lt_two_pow ha hb)
       (fun a b j h => by
         rw [Nat.testBit_xor] at h
         rcases ha : a.testBit j with _ | _
@@ -417,8 +426,8 @@ theorem mem_xor (s t : VSet n) (w : Nat) :
     (s.xor t).mem w = (s.mem w ^^ t.mem w) := by
   rw [xor, mem_ofLimbs, mem, mem]
   rcases Nat.lt_or_ge (w / 63) (limbCount n) with hi | hi
-  · rw [getElem!_zipWith _ s t _ hi, Nat.testBit_xor]
-  · rw [getElem!_zipWith_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi,
+  · rw [getElem!_zipLimbs _ s t _ hi, Nat.testBit_xor]
+  · rw [getElem!_zipLimbs_of_ge _ s t _ hi, getElem!_limbs_of_ge s _ hi,
       getElem!_limbs_of_ge t _ hi]
     simp
 
@@ -513,7 +522,7 @@ count it, test it for emptiness, or test containment, each in one
 pass over the limbs. -/
 
 /-- Fold a function of corresponding limb pairs over all limbs. -/
-@[specialize] def foldLimbs (f : Nat → Nat → α → α) (s t : VSet n)
+@[expose, specialize] def foldLimbs (f : Nat → Nat → α → α) (s t : VSet n)
     (init : α) : α :=
   go s.limbs.size 0 init
 where
@@ -523,7 +532,7 @@ where
 
 /-- Whether every limb satisfies a predicate of the limb pair, with early
 exit. -/
-@[specialize] def allLimbs (p : Nat → Nat → Bool) (s t : VSet n) : Bool :=
+@[expose, specialize] def allLimbs (p : Nat → Nat → Bool) (s t : VSet n) : Bool :=
   go s.limbs.size 0
 where
   go : Nat → Nat → Bool
@@ -607,7 +616,7 @@ theorem cardInter_eq (s t : VSet n) : s.cardInter t = (s.inter t).card := by
   apply List.map_congr_left
   intro i hi
   rw [List.mem_range] at hi
-  rw [Nat.zero_add, inter, limbs_ofLimbs, getElem!_zipWith _ s t i hi]
+  rw [Nat.zero_add, inter, limbs_ofLimbs, getElem!_zipLimbs _ s t i hi]
 
 private theorem allLimbs_go_iff (p : Nat → Nat → Bool) (s t : VSet n) :
     ∀ (fuel i : Nat),
@@ -653,12 +662,12 @@ theorem interIsEmpty_eq (s t : VSet n) :
   constructor
   · intro h i hi
     rw [← getElem!_pos, inter, limbs_ofLimbs]
-    rw [inter, limbs_ofLimbs, size_zipWith_limbs] at hi
-    rw [getElem!_zipWith _ s t i hi]
+    rw [inter, limbs_ofLimbs, size_zipLimbs] at hi
+    rw [getElem!_zipLimbs _ s t i hi]
     exact h i hi
   · intro h i hi
-    have := h i (by rw [inter, limbs_ofLimbs, size_zipWith_limbs]; exact hi)
-    rw [← getElem!_pos, inter, limbs_ofLimbs, getElem!_zipWith _ s t i hi] at this
+    have := h i (by rw [inter, limbs_ofLimbs, size_zipLimbs]; exact hi)
+    rw [← getElem!_pos, inter, limbs_ofLimbs, getElem!_zipLimbs _ s t i hi] at this
     exact this
 
 theorem subset_iff {s t : VSet n} :
@@ -701,7 +710,7 @@ theorem subset_iff_inter {s t : VSet n} : s.subset t = true ↔ s.inter t = s :=
 /-! # Least element and ascending iteration -/
 
 /-- The least vertex at or after limb `i`, if any. -/
-def firstFrom (s : VSet n) : Nat → Nat → Option Nat
+@[expose] def firstFrom (s : VSet n) : Nat → Nat → Option Nat
   | 0, _ => none
   | fuel + 1, i =>
     let x := s.limbs[i]!
