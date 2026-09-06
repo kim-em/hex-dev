@@ -75,8 +75,8 @@ def sqrt2 : AlgebraicNumber :=
 def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
--- `adjoin` is the companion's total form of `adjoin?`, which
--- never returns `none` (`adjoin?_isSome`).
+-- `adjoin` is the companion's total form of `adjoin?`,
+-- which never returns `none` (`adjoin?_isSome`).
 def Q2 : Extension NumberTower.rat :=
   adjoin NumberTower.rat sqrt2.toRoot
 abbrev T2 : NumberTower := Q2.tower
