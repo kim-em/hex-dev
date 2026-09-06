@@ -20,9 +20,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -49,38 +46,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBasic 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -102,9 +67,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -124,38 +86,6 @@ workflows:
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build
             run: lake build
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -177,9 +107,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -206,38 +133,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexArith 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -259,9 +154,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -288,38 +180,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPrimality 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -341,9 +201,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -369,38 +226,6 @@ workflows:
               lake build HexPrimalityMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -422,9 +247,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -451,38 +273,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPoly 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -504,9 +294,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -533,38 +320,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexMvPoly 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -586,9 +341,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -615,38 +367,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexModArith 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -668,9 +388,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -696,38 +413,6 @@ workflows:
               lake build HexPolyMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -749,9 +434,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -777,38 +459,6 @@ workflows:
               lake build HexMvPolyMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -830,9 +480,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -859,38 +506,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPolyFp 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -912,9 +527,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -941,38 +553,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexSparsePoly 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -994,9 +574,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1022,38 +599,6 @@ workflows:
               lake build HexSparsePolyMathlib HexSparsePolyMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1075,9 +620,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1104,38 +646,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPolyZ 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1157,9 +667,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1181,38 +688,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexModArithMathlib
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1234,9 +709,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1258,38 +730,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexPolyFpMathlib
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1311,9 +751,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1340,38 +777,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGFqRing 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1393,9 +798,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1422,38 +824,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexHensel 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1475,9 +845,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1499,38 +866,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexPolyZMathlib
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1552,9 +887,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1576,38 +908,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexHenselMathlib
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1629,9 +929,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1658,38 +955,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexRoots 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1711,9 +976,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1740,38 +1002,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexRealRoots 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1793,9 +1023,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1817,38 +1044,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexRootsMathlib HexRootsMathlibTests
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1870,9 +1065,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1894,38 +1086,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexRealRootsMathlib HexRealRootsMathlibTests
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1947,9 +1107,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -1976,38 +1133,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexMatrix 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2029,9 +1154,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2058,38 +1180,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexRowReduce 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2111,9 +1201,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2140,38 +1227,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBerlekamp 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2193,9 +1248,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2222,38 +1274,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexConway 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2275,9 +1295,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2304,38 +1321,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGFqField 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2357,9 +1342,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2386,38 +1368,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGF2 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2439,9 +1389,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2463,38 +1410,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexGF2Mathlib
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2516,9 +1431,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2545,38 +1457,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGFq 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2598,9 +1478,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2622,38 +1499,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexGFqMathlib
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2675,9 +1520,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2704,38 +1546,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexDeterminant 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2757,9 +1567,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2786,38 +1593,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBareiss 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2839,9 +1614,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2867,38 +1639,6 @@ workflows:
               lake build HexMatrixMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2920,9 +1660,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -2948,38 +1685,6 @@ workflows:
               lake build HexRowReduceMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3001,9 +1706,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3029,38 +1731,6 @@ workflows:
               lake build HexDeterminantMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3082,9 +1752,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3110,38 +1777,6 @@ workflows:
               lake build HexBareissMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3163,9 +1798,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3187,38 +1819,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexBerlekampMathlib HexBerlekampMathlibTests
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3240,9 +1840,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3269,38 +1866,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGramSchmidt 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3322,9 +1887,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3350,38 +1912,6 @@ workflows:
               lake build HexGramSchmidtMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3403,9 +1933,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3434,38 +1961,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexLLL 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3487,9 +1982,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3516,38 +2008,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexBerlekampZassenhaus 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3569,9 +2029,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3597,38 +2054,6 @@ workflows:
               lake build HexLLLMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3650,9 +2075,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3674,38 +2096,6 @@ workflows:
             run: lake exe cache get
           - name: Build library and release regressions
             run: lake build HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibModules HexBerlekampZassenhausMathlibTests
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3714,7 +2104,6 @@ workflows:
                 .lake/build
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
-
   hex-graph-iso: |
     name: CI
     on:
@@ -3727,9 +2116,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3756,38 +2142,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexGraph HexGraphIso 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3809,9 +2163,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3837,38 +2188,6 @@ workflows:
               lake build HexGraphIsoMathlib HexGraphIsoMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3890,9 +2209,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -3919,38 +2235,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexResultant 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -3972,9 +2256,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4000,38 +2281,6 @@ workflows:
               lake build HexResultantMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -4053,9 +2302,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4082,38 +2328,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexNumberField 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -4135,9 +2349,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4163,38 +2374,6 @@ workflows:
               lake build HexNumberFieldMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -4216,9 +2395,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4245,38 +2421,6 @@ workflows:
               if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexNumberFieldTower 2>/dev/null; then
                 echo "ERROR: a source file imports Mathlib"; exit 1; fi
               echo "Mathlib-free OK"
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -4298,9 +2442,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4326,38 +2467,6 @@ workflows:
               lake build HexNumberFieldTowerMathlib 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -4379,9 +2488,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4407,38 +2513,6 @@ workflows:
               lake build HexRCF HexRCFTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -4460,9 +2534,6 @@ workflows:
     jobs:
       build:
         runs-on: ubuntu-latest
-        env:
-          LAKE_ARTIFACT_CACHE: "true"
-          LAKE_CACHE_DIR: ${{ github.workspace }}/.lake/cache
         steps:
           - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
@@ -4488,38 +2559,6 @@ workflows:
               lake build 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-          # Publish this library's oleans so consumers fetch them with `lake cache
-          # get` instead of recompiling. hex-dev publishes its own build the same
-          # way; this extends it to the released mirrors, which are what downstream
-          # users and the blog's examples actually depend on.
-          #
-          # Only from main, and only after every verification gate above: `lake
-          # cache put` re-uploads every artifact in the mappings file, so running it
-          # per pull request would burn the write budget. Ahead of the terminal
-          # cache save, which must stay last.
-          - name: Publish build outputs to the Lake cache (main only)
-            if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-            env:
-              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
-            run: |
-              if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
-                echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
-              fi
-              CFG="$RUNNER_TEMP/lake-cache-upload.toml"
-              {
-                echo 'cache.defaultUploadService = "hex-r2"'
-                echo '[[cache.service]]'
-                echo 'name = "hex-r2"'
-                echo 'kind = "s3"'
-                echo "artifactEndpoint = \"$S3_ARTIFACT_ENDPOINT\""
-                echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
-              } > "$CFG"
-              export LAKE_CONFIG="$CFG"
-              lake build --no-build -o .lake/outputs.jsonl
-              echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
-              lake cache put .lake/outputs.jsonl --service hex-r2 --repo ${{ github.repository }}
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
