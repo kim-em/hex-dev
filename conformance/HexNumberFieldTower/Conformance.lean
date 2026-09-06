@@ -502,7 +502,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Edge: zero has every element as a root; a nonzero constant has no roots.
 #guard
     let constant : Poly rat := DensePoly.C (ofRat rat 5)
-    match split? 0, split? constant with
+    match split? (0 : Poly rat), split? constant with
     | some zeroResult, some constantResult =>
         match zeroResult.roots, constantResult.roots with
         | .all, .finite roots =>
