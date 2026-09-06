@@ -56,6 +56,10 @@ and transports the executable operations across it:
   compatible with the fixed embedding, `split?` really splits, and
   `flatten?` produces a primitive element of full degree with mutually
   inverse coordinate maps.
+- Total forms `Hex.NumberTower.adjoin`, `factor`, `split` and `flatten`:
+  each unwraps the `Option`-valued operation with its completeness theorem,
+  so `adjoin T a` is definitionally the extension `adjoin? T a` returns, and
+  `adjoin?_eq_some` and its siblings rewrite one to the other.
 
 # Verification
 
