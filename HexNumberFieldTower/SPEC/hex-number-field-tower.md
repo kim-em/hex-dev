@@ -186,6 +186,10 @@ monic defining polynomial. Inversion uses extended gcd in the top polynomial
 quotient and recurses into the lower coefficient field. `rat` has dimension one
 and identifies `Elem rat` with `Rat`.
 
+Natural powers are repeated multiplication, integer powers add inversion,
+and `NatCast`, `IntCast` and `OfNat` instances embed integers through
+`ofRat`, so `a ^ 3 = 2` reads as it does for `QAdjoin`.
+
 The computational layer implements the quotient operations, including
 `inv 0 = 0`. The companion turns the checked factorization evidence into
 semantic irreducibility and proves the field laws, following the quotient-field
