@@ -141,15 +141,6 @@ end ZPoly
 
 namespace AlgebraicNumber
 
-/-- A canonical number prints as the expression that rebuilds it: its minimal
-polynomial and its index among that polynomial's roots in `algebraicRoots`
-order, real roots first in increasing order. Every canonical number is one
-of the roots of its own minimal polynomial, so the index is always found. -/
-instance : Repr AlgebraicNumber where
-  reprPrec a _ :=
-    let index := ((ZPoly.algebraicRoots a.p).findIdx? (· == a)).getD 0
-    Std.Format.text s!"(ZPoly.algebraicRoots {repr a.p})[{index}]!"
-
 end AlgebraicNumber
 
 /-- A fixed-field element prints as its reduced coordinate polynomial,

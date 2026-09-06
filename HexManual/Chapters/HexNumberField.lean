@@ -86,16 +86,28 @@ check is the classical fact that `√2 + √3` has minimal polynomial
 canonical numbers is decidable. Without the Mathlib companion, compare with
 `==`, the executable test; with it, `=` is available too, because the
 companion proves that the test is correct. A number prints as the
-expression that rebuilds it, its minimal polynomial and its index among
-that polynomial's roots; here `√2 + √3` is the largest of the four real roots
-of the quartic:
+expression that rebuilds it: `ZPoly.rootNear` names the root of a polynomial
+nearest to a point, and the printed point is the number's certified
+approximation with enough digits that no other root is nearer:
 
 ```lean (name := sqrtSumEval)
 #eval sqrt2 + sqrt3
 ```
 ```leanOutput sqrtSumEval
-(ZPoly.algebraicRoots #p[1, 0, -10, 0, 1])[3]!
+ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369
 ```
+
+So `√2 + √3` can also be written as the root of its minimal polynomial near
+`3.146`, and the imaginary unit as the root of `X² + 1` near `i`:
+
+```lean
+#guard ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146 =
+  sqrt2 + sqrt3
+#guard ZPoly.rootNear #p[1, 0, 1] 0 1 = AlgebraicNumber.I
+```
+
+A point equidistant from two roots resolves to the first in the output
+order, so `ZPoly.rootNear #p[-2, 0, 1] 0` is `-√2`.
 
 The golden ratio is the positive root of `X² − X − 1`. Its defining identity,
 its reciprocal, and the tenth Lucas number all fall out of decidable equality:

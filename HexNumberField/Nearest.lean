@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField.IntegerRoots
+public import HexNumberField.Roots
 
 public section
 
@@ -64,3 +65,145 @@ def realCompare (a b : AlgebraicNumber) : Ordering :=
     if (a.approx prec).re < (b.approx prec).re then .lt else .gt
 
 end Hex.AlgebraicNumber
+
+namespace Hex
+
+namespace AlgebraicNumber
+
+/-- The rational point `re + im·i` as an algebraic number. -/
+@[expose]
+def ofPoint (re im : Rat) : AlgebraicNumber :=
+  ofRat re + ofRat im * I
+
+/-- The squared distance from `re + im·i` to `a`, as an exact real algebraic
+number: `(a − z)(ā − z̄)`. -/
+@[expose]
+def distSqTo (a : AlgebraicNumber) (re im : Rat) : AlgebraicNumber :=
+  (a - ofPoint re im) * (a.conj - ofPoint re (-im))
+
+/-- Absolute value of a rational. -/
+@[expose]
+def absRat (q : Rat) : Rat := if q < 0 then -q else q
+
+/-- The squared distance from `re + im·i` to a ball's centre. -/
+@[expose]
+def ballDistSq (b : DyadicComplexBall) (re im : Rat) : Rat :=
+  (b.re.toRat - re) * (b.re.toRat - re) + (b.im.toRat - im) * (b.im.toRat - im)
+
+/-- A square-root-free upper bound on the distance from `re + im·i` to a
+ball's centre: the sum of the absolute coordinate differences. -/
+@[expose]
+def ballDistBound (b : DyadicComplexBall) (re im : Rat) : Rat :=
+  absRat (b.re.toRat - re) + absRat (b.im.toRat - im)
+
+/-- Upper bound on the squared distance from `re + im·i` to a ball's points:
+`d + 2rl + r²` with `d` the squared centre distance, `r` the radius and `l`
+the centre distance bound. -/
+@[expose]
+def ballUpper (b : DyadicComplexBall) (re im : Rat) : Rat :=
+  let r := b.radius.toRat
+  ballDistSq b re im + 2 * r * ballDistBound b re im + r * r
+
+/-- Lower bound on the squared distance from `re + im·i` to a ball's points:
+`d − 2rl + r²` when the ball does not reach the point (`r² ≤ d`), else `0`. -/
+@[expose]
+def ballLower (b : DyadicComplexBall) (re im : Rat) : Rat :=
+  let r := b.radius.toRat
+  if r * r ≤ ballDistSq b re im then
+    ballDistSq b re im - 2 * r * ballDistBound b re im + r * r
+  else 0
+
+/-- Whether `a` is certified nearer to `re + im·i` than every other listed
+root, by ball bounds alone. -/
+@[expose]
+def certifiedNearest (roots : Array AlgebraicNumber) (a : AlgebraicNumber)
+    (prec : Int) (re im : Rat) : Bool :=
+  let upper := ballUpper (a.approx prec) re im
+  roots.all fun c => c == a || upper < ballLower (c.approx prec) re im
+
+/-- One step of the exact choice: keep the incumbent unless the candidate is
+strictly nearer. -/
+@[expose]
+def exactStep (re im : Rat) (best : Option AlgebraicNumber) (c : AlgebraicNumber) :
+    Option AlgebraicNumber :=
+  match best with
+  | none => some c
+  | some b =>
+    if (c.distSqTo re im).realCompare (b.distSqTo re im) == .lt then some c else some b
+
+/-- The exact choice: the first root in the array order whose squared
+distance to the point is minimal. -/
+@[expose]
+def exactNearest (roots : Array AlgebraicNumber) (re im : Rat) :
+    Option AlgebraicNumber :=
+  roots.foldl (exactStep re im) none
+
+end AlgebraicNumber
+
+namespace ZPoly
+
+/-- The root of `p` nearest to `re + im·i`; among roots at the same distance,
+the first in `algebraicRoots` order. The fast path certifies a nearest root
+from approximation balls at `AlgebraicNumber.separationPrec p`; when that
+fails, because two roots are nearly or exactly equidistant, the exact squared
+distances decide. A constant polynomial has no roots and yields `0`. -/
+@[expose]
+def rootNear (p : ZPoly) (re : Rat) (im : Rat := 0) : AlgebraicNumber :=
+  let roots := algebraicRoots p
+  let prec := AlgebraicNumber.separationPrec p
+  match roots.find? fun a => AlgebraicNumber.certifiedNearest roots a prec re im with
+  | some a => a
+  | none =>
+    (AlgebraicNumber.exactNearest roots re im).getD
+      (Hex.panicWith 0 "ZPoly.rootNear: the polynomial has no roots")
+
+end ZPoly
+
+namespace AlgebraicNumber
+
+namespace Display
+
+/-- `q` truncated toward zero to `digits` decimal places, as a Lean literal:
+an integer when the fraction is zero, otherwise `d.ddd`, negatives in
+parentheses. A display helper; it carries no contract. -/
+def decimal (q : Rat) (digits : Nat) : String :=
+  let scale : Nat := 10 ^ digits
+  let n : Nat := (q.num.natAbs * scale) / q.den
+  let whole := n / scale
+  let frac := n % scale
+  let body :=
+    if frac = 0 then s!"{whole}"
+    else
+      let fracString := toString frac
+      let padded := "".pushn '0' (digits - fracString.length) ++ fracString
+      s!"{whole}.{padded}"
+  if q.num < 0 && n ≠ 0 then s!"(-{body})" else body
+
+/-- Decimal places at which a truncated isolation centre still names its
+root: `10 ^ -digits ≤ 2 ^ -mahlerPrec`, so the printed point is within
+`(1 + √2) · 2 ^ -mahlerPrec` of the root, less than half the root
+separation. -/
+def digitsFor (mahler : Nat) : Nat :=
+  mahler / 3 + 1
+
+end Display
+
+/-- A canonical number prints as the expression that rebuilds it:
+`ZPoly.rootNear p re` for a real number and `ZPoly.rootNear p re im`
+otherwise, with `re` and `im` the stored isolation centre truncated to
+`digitsFor (mahlerPrec p)` decimals, few enough to read and enough that the
+printed point is nearer to this root than to any other
+(`rootNear_of_close`). -/
+instance : Repr AlgebraicNumber where
+  reprPrec a _ :=
+    let s := a.rep.1.square
+    let digits := Display.digitsFor (mahlerPrec a.p)
+    let re := Display.decimal s.re.toRat digits
+    let point :=
+      if a.isReal then re
+      else re ++ " " ++ Display.decimal s.im.toRat digits
+    Std.Format.text s!"ZPoly.rootNear {repr a.p} {point}"
+
+end AlgebraicNumber
+
+end Hex

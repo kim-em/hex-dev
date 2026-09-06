@@ -256,6 +256,32 @@ the balls of distinct roots of one polynomial are disjoint, so the root whose
 ball meets a given point's ball is unique, and the order of ball centres is
 the order of real roots.
 
+## The nearest root
+
+```lean
+theorem AlgebraicNumber.ofPoint_toComplex (re im : Rat) :
+    (AlgebraicNumber.ofPoint re im).toComplex = (re : ℂ) + (im : ℂ) * Complex.I
+theorem AlgebraicNumber.distSqTo_toComplex (a : AlgebraicNumber) (re im : Rat) :
+    (a.distSqTo re im).toComplex = ‖a.toComplex - ((re : ℂ) + (im : ℂ) * Complex.I)‖ ^ 2
+theorem ZPoly.rootNear_mem (p : ZPoly) (hp : 0 < p.degree?.getD 0) (re im : Rat) :
+    p.rootNear re im ∈ p.algebraicRoots
+theorem ZPoly.rootNear_nearest (p : ZPoly) (re im : Rat) (b : AlgebraicNumber)
+    (hb : b ∈ p.algebraicRoots) :
+    ‖(p.rootNear re im).toComplex - ((re : ℂ) + (im : ℂ) * Complex.I)‖ ≤
+      ‖b.toComplex - ((re : ℂ) + (im : ℂ) * Complex.I)‖
+theorem ZPoly.rootNear_of_close (a : AlgebraicNumber) (re im : Rat)
+    (h : ‖((re : ℂ) + (im : ℂ) * Complex.I) - a.toComplex‖ <
+      2 * ((2 : ℝ) ^ (-(mahlerPrec a.p : ℤ)) * (1449 / 1024))) :
+    a.p.rootNear re im = a
+```
+
+The fast path is sound because every point of a ball is within the radius
+of the centre and `‖w‖ ≤ |w.re| + |w.im|`, so the bounds bracket the true
+distances; the exact path is sound because `distSqTo` is the squared distance
+by `conj_toComplex`, and `realCompare_eq` orders it. A point closer to a
+root than half the separation `mahlerPrec_separates` guarantees is nearer to
+it than to any other root, so the nearest root is that number.
+
 ## Algebraic coefficient polynomials
 
 Interpret `AlgebraicPoly` as a Mathlib `Polynomial ℂ` using
@@ -342,7 +368,7 @@ HexNumberFieldMathlib/
   Exact.lean                 : canonicalization and exactification
   Lazy.lean                  : arithmetic soundness and completeness
   Field.lean                 : the Field instances pinned to executable data
-  Nearest.lean               : imaginary unit, conjugation, exact real order
+  Nearest.lean               : imaginary unit, conjugation, real order, nearest root
   AlgebraicPoly.lean         : semantic coefficient polynomials
   Roots.lean                 : root completeness and multiplicity
   AlgebraicRoots.lean        : finite-output root-set obligations
