@@ -177,12 +177,12 @@ root of it.
 tag := "hex-number-field-fixed"
 %%%
 
-When every computation lives in one field `ℚ(x)`, the coordinates of
-{name}`Hex.QAdjoin` are cheaper than canonical numbers: an element is a
-rational polynomial in `x` reduced modulo the defining polynomial, and
-inversion is an extended gcd. The irreducibility evidence stored in a
-canonical number is what licenses inversion, and it is found as an instance
-automatically.
+If you are working in a fixed number field, use {name}`Hex.QAdjoin`. Any
+algebraic number converts into its own field with
+{name}`Hex.AlgebraicNumber.toQAdjoin`. Arithmetic and equality are efficient
+there, since an element is just a rational polynomial in the generator
+reduced modulo its minimal polynomial, and inverses are calculated with
+extended gcds.
 
 ```lean
 def cbrt2 : AlgebraicNumber :=
@@ -193,7 +193,18 @@ def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 #guard c ^ 3 = 2
 #guard c⁻¹ = c * c / 2
 #guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk == cbrt2
+```
 
+An element prints as its coordinates, a rational polynomial in the generator:
+
+```lean (name := cbrt2Pow)
+#eval c ^ 5
+```
+```leanOutput cbrt2Pow
+2*x^2
+```
+
+```lean -show
 end HexNumberFieldChapter
 ```
 

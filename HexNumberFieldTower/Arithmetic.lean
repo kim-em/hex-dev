@@ -215,6 +215,31 @@ def smul {T : NumberTower} (q : Rat) (a : Elem T) : Elem T :=
 
 instance {T : NumberTower} : SMul Rat (Elem T) := ⟨smul⟩
 
+/-- Natural powers by repeated tower multiplication. -/
+@[expose]
+def natPow {T : NumberTower} (a : Elem T) : Nat → Elem T
+  | 0 => 1
+  | n + 1 => natPow a n * a
+
+instance {T : NumberTower} : Pow (Elem T) Nat := ⟨natPow⟩
+
+/-- Integer powers from natural powers and inversion, with `0⁻¹ = 0`. -/
+@[expose]
+def intPow {T : NumberTower} (a : Elem T) : Int → Elem T
+  | .ofNat n => natPow a n
+  | .negSucc n => (natPow a (n + 1))⁻¹
+
+instance {T : NumberTower} : Pow (Elem T) Int := ⟨intPow⟩
+
+instance {T : NumberTower} : NatCast (Elem T) := ⟨fun n => ofRat T (n : Rat)⟩
+instance {T : NumberTower} : IntCast (Elem T) := ⟨fun n => ofRat T (n : Rat)⟩
+-- Mathlib's generic `OfNat` from `NatCast` has priority 100. Keep this
+-- Mathlib-free fallback below it so importing the companion yields one normal
+-- form for numerals while the executable library still supports literals.
+instance (priority := 90) {T : NumberTower} (n : Nat) :
+    OfNat (Elem T) (n + 2) :=
+  ⟨ofRat T (n + 2 : Nat)⟩
+
 /-- Rational scalar multiplication exposes coordinatewise multiplication. -/
 @[simp]
 theorem coeffs_smul {T : NumberTower} (q : Rat) (a : Elem T) :

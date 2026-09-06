@@ -97,24 +97,12 @@ theorem map_smul (T : NumberTower) (q : Rat) (a : Elem T) :
     LevelSemantics.toComplex_eq_denote T a, coeffs_smul,
     LevelSemantics.denote_smul]
 
-/-- Natural powers assembled from the executable tower multiplication. -/
-@[expose]
-def natPow {T : NumberTower} (a : Elem T) : Nat → Elem T
-  | 0 => 1
-  | n + 1 => natPow a n * a
-
 /-- Natural powers preserve the selected complex interpretation. -/
 theorem map_natPow (T : NumberTower) (a : Elem T) (n : Nat) :
     T.toComplex (natPow a n) = T.toComplex a ^ n := by
   induction n with
   | zero => simp [natPow, map_one]
   | succ n ih => rw [natPow, map_mul, ih, pow_succ]
-
-/-- Integer powers assembled from natural powers and executable inversion. -/
-@[expose]
-def intPow {T : NumberTower} (a : Elem T) : Int → Elem T
-  | .ofNat n => natPow a n
-  | .negSucc n => (natPow a (n + 1))⁻¹
 
 /-- Integer powers preserve the selected complex interpretation. -/
 theorem map_intPow (T : NumberTower) (a : Elem T) (n : Int) :
@@ -126,17 +114,15 @@ theorem map_intPow (T : NumberTower) (a : Elem T) (n : Int) :
       rfl
 
 /-- The law-bearing field whose operations are the existing executable tower
-coordinate operations. Auxiliary casts, scalar actions, and powers use the
-canonical rational embedding and the executable multiplication and inverse. -/
+coordinate operations. The remaining casts and scalar actions use the
+canonical rational embedding. -/
 @[expose, reducible]
 noncomputable def elemField (T : NumberTower) : Field (Elem T) := by
   letI : SMul Nat (Elem T) := ⟨fun n a => (n : Rat) • a⟩
   letI : SMul Int (Elem T) := ⟨fun n a => (n : Rat) • a⟩
   letI : SMul ℚ≥0 (Elem T) := ⟨fun q a => (q : Rat) • a⟩
-  letI : Pow (Elem T) Nat := ⟨fun a n => natPow a n⟩
-  letI : Pow (Elem T) Int := ⟨fun a n => intPow a n⟩
-  letI : NatCast (Elem T) := ⟨fun n => T.ofRat (n : Rat)⟩
-  letI : IntCast (Elem T) := ⟨fun n => T.ofRat (n : Rat)⟩
+  -- The executable `Pow`, `NatCast` and `IntCast` instances are retained: the
+  -- field proves laws for those operations rather than replacing them.
   letI : NNRatCast (Elem T) := ⟨fun q => T.ofRat (q : Rat)⟩
   letI : RatCast (Elem T) := ⟨fun q => T.ofRat q⟩
   apply Function.Injective.field T.toComplex (toComplex_injective T)

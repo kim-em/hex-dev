@@ -96,8 +96,13 @@ end AlgebraicRoot
 namespace ZPoly
 
 /-- Every distinct complex root of `p` as a canonical algebraic number, or
-`none` if a certificate could not be produced. See `algebraicRoots`. -/
-@[expose]
+`none` if a certificate could not be produced. See `algebraicRoots`.
+
+Irreducible, like `algebraicRoots`, so that a type such as `QAdjoin a.p a.x`
+for a root `a` found here is cheap to reduce: `#eval` reduces the type of a
+value while looking for a printing instance, and must not run the root
+isolation symbolically. Proofs unfold it explicitly. -/
+@[expose, irreducible]
 def algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber) :=
   if p.degree?.getD 0 = 0 then
     some #[]
@@ -126,8 +131,9 @@ squarefree primitive part of `p` is isolated, and each isolated root is
 exactified. Real roots come first, in increasing order, then the nonreal
 roots in a deterministic order set by their isolations. Multiplicities are
 not returned; use `AlgebraicPoly.roots` for them. A constant polynomial,
-including zero, has no roots here. -/
-@[expose]
+including zero, has no roots here. Irreducible for the reason given at
+`algebraicRoots?`. -/
+@[expose, irreducible]
 def algebraicRoots (p : ZPoly) : Array AlgebraicNumber :=
   p.algebraicRoots?.getD (Hex.panicWith #[] "ZPoly.algebraicRoots: certification failed")
 
@@ -148,26 +154,33 @@ def decimal (q : Rat) (digits : Nat) : String :=
   let padded := String.ofList (List.replicate (digits - fracDigits.length) '0') ++ fracDigits
   (if q.num < 0 && n ≠ 0 then "-" else "") ++ s!"{whole}.{padded}"
 
-/-- `p` written with descending powers of `X`. A display helper for the
-`Repr` instance; it carries no contract. -/
-def polynomial (p : ZPoly) : String :=
-  let coeffs := p.coeffs
+/-- A rational written as `n` or `n/d`. -/
+def rational (q : Rat) : String :=
+  if q.den = 1 then s!"{q.num}" else s!"{q.num}/{q.den}"
+
+/-- Rational coefficients written with descending powers of `var`. A display
+helper for the `Repr` instances; it carries no contract. -/
+def polynomialIn (var : String) (coeffs : Array Rat) : String :=
   let terms := (List.range coeffs.size).reverse.filterMap fun i =>
     let c := coeffs.getD i 0
     if c = 0 then none
     else
-      let magnitude := c.natAbs
+      let magnitude := rational (if c < 0 then -c else c)
       let body :=
-        if i = 0 then s!"{magnitude}"
+        if i = 0 then magnitude
         else
-          (if magnitude = 1 then "" else s!"{magnitude}*") ++
-            (if i = 1 then "X" else s!"X^{i}")
+          (if magnitude = "1" then "" else s!"{magnitude}*") ++
+            (if i = 1 then var else s!"{var}^{i}")
       some (decide (c < 0), body)
   match terms with
   | [] => "0"
   | (negative, body) :: rest =>
       rest.foldl (fun acc (neg, term) => acc ++ (if neg then " - " else " + ") ++ term)
         ((if negative then "-" else "") ++ body)
+
+/-- `p` written with descending powers of `X`. -/
+def polynomial (p : ZPoly) : String :=
+  polynomialIn "X" (p.coeffs.map fun (c : Int) => (c : Rat))
 
 end Display
 
@@ -183,5 +196,11 @@ instance : Repr AlgebraicNumber where
     Std.Format.text s!"root of {Display.polynomial a.p} near {value}"
 
 end AlgebraicNumber
+
+/-- A fixed-field element prints as its reduced coordinates, a rational
+polynomial in the generator `x`. -/
+instance {p : ZPoly} {x : SimpleRoot p} : Repr (QAdjoin p x) where
+  reprPrec a _ :=
+    Std.Format.text (AlgebraicNumber.Display.polynomialIn "x" a.coeffs.coeffs)
 
 end Hex
