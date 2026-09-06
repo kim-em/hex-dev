@@ -84,6 +84,8 @@ structure Extension (T : NumberTower) where
   gen     : Elem tower
   root    : AlgebraicRoot
 
+instance : Inhabited (Extension T)   -- the identity extension of `T`
+
 def checkFactorization (f : Poly T) (scalar : Elem T)
     (factors : Array (Poly T × Nat)) : Bool
 

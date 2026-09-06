@@ -28,10 +28,12 @@ import HexNumberFieldTower
 
 open Hex NumberTower
 
-def a : Elem rat := rat.ofRat (3/2)
+-- `NumberTower.rat` is the tower with no extensions: its
+-- elements are the rational numbers.
+def a : Elem NumberTower.rat := ofRat NumberTower.rat (3/2)
 
-#guard a * rat.ofRat 3 = rat.ofRat (9/2)
-#guard a⁻¹ * a = rat.ofRat 1
+#guard a * ofRat NumberTower.rat 3 = ofRat NumberTower.rat (9/2)
+#guard a⁻¹ * a = ofRat NumberTower.rat 1
 ```
 
 # Functionality

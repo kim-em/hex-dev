@@ -111,6 +111,11 @@ def Extension.identity (T : NumberTower) : Extension T :=
     gen := 0
     root := AlgebraicNumber.zero.toRoot }
 
+/-- The identity extension is the default, so `(adjoin? T r).get!` unwraps
+an adjunction that `adjoin?_isSome` shows never fails. -/
+instance (T : NumberTower) : Inhabited (Extension T) :=
+  ⟨Extension.identity T⟩
+
 /-- Compose dependent tower extensions while retaining the most recently
 adjoined generator. -/
 @[expose]

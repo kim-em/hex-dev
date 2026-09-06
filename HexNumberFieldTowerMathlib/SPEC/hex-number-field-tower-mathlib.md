@@ -12,6 +12,11 @@ tower as a finite extension of `ℚ` with a fixed embedding into `ℂ`, proves t
 coordinate field operations, and verifies Trager factorization, adjoining,
 splitting fields, and primitive-element flattening.
 
+The total forms in `## Total forms` are `Option.get` applied to the
+`Option`-valued operations with their completeness proofs. They add no
+computation, so the classification stands and the `Option`-valued operations
+remain the conformance and performance owners.
+
 ## Semantic tower
 
 Associate to each `T : NumberTower` a fixed injective complex interpretation.
@@ -181,6 +186,29 @@ dimensions yield the opposite round trip and multiplicativity.
 `AlgebraicRoot.exact_toComplex` identifies the canonical primitive root stored
 in the result.
 
+## Total forms
+
+```lean
+def NumberTower.adjoin (T) (a : AlgebraicRoot) : Extension T
+def NumberTower.factor (T) (f : Poly T) : Factorization T f
+def NumberTower.split (T) (f : Poly T) : Splitting T f
+def NumberTower.flatten (T) : Flattening T
+
+@[simp] theorem NumberTower.adjoin?_eq_some (T) (a) :
+    T.adjoin? a = some (T.adjoin a)
+@[simp] theorem NumberTower.factor?_eq_some (T) (f) :
+    T.factor? f = some (T.factor f)
+@[simp] theorem NumberTower.split?_eq_some (T) (f) :
+    T.split? f = some (T.split f)
+@[simp] theorem NumberTower.flatten?_eq_some (T) :
+    T.flatten? = some T.flatten
+```
+
+Each total form is `Option.get` of the `Option`-valued operation with its
+completeness theorem, so `adjoin T a` is definitionally the extension
+`adjoin? T a` returns. The rewriting lemmas transport every soundness
+statement about the `Option`-valued form to the total one.
+
 ## Developments
 
 1. Iterated quotient-field semantics and fixed complex embeddings.
@@ -210,6 +238,7 @@ HexNumberFieldTowerMathlib/
   Adjoin.lean        : extension invariant
   Split.lean         : splitting-field theorems
   Flatten.lean       : primitive-element equivalence
+  Total.lean         : total forms of the tower operations
 ```
 
 The library is verified by building it. Executable conformance belongs to

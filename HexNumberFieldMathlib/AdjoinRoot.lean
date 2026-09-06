@@ -473,12 +473,9 @@ noncomputable def field (p : ZPoly) (x : SimpleRoot p)
     ⟨fun n a => (n : Rat) • a⟩
   letI : SMul ℚ≥0 (QAdjoin p x) :=
     ⟨fun q a => (q : Rat) • a⟩
-  -- Deliberately retain the executable `SMul Rat` and `Pow` instances. The
-  -- injected field must prove laws for those operations, not replace them.
-  letI : NatCast (QAdjoin p x) :=
-    ⟨fun n => (n : Rat) • (1 : QAdjoin p x)⟩
-  letI : IntCast (QAdjoin p x) :=
-    ⟨fun n => (n : Rat) • (1 : QAdjoin p x)⟩
+  -- Deliberately retain the executable `SMul Rat`, `Pow`, `NatCast` and
+  -- `IntCast` instances. The injected field must prove laws for those
+  -- operations, not replace them.
   letI : NNRatCast (QAdjoin p x) :=
     ⟨fun q => (q : Rat) • (1 : QAdjoin p x)⟩
   letI : RatCast (QAdjoin p x) :=
