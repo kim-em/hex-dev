@@ -308,7 +308,7 @@ private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
         match Evaluation.evalElem? extension.gen,
             factor? input with
         | some evaluated, some factorization =>
-            match QAdjoin.Roots.sameValue? evaluated extension.root,
+            match PolyQuot.Roots.sameValue? evaluated extension.root,
                 selectFactor? extension.tower extension.root
                   factorization.factors with
             | some true, some selected =>

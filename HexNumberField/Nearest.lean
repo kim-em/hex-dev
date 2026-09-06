@@ -146,8 +146,12 @@ namespace ZPoly
 the first in `algebraicRoots` order. The fast path certifies a nearest root
 from approximation balls at `AlgebraicNumber.separationPrec p`; when that
 fails, because two roots are nearly or exactly equidistant, the exact squared
-distances decide. A constant polynomial has no roots and yields `0`. -/
-@[expose]
+distances decide. A constant polynomial has no roots and yields `0`.
+
+Irreducible, like `algebraicRoots`: a type such as `QAdjoin (rootNear p re)`
+is reduced by `#eval` while it looks for a printing instance, and must not
+run the root search symbolically. Proofs unfold it explicitly. -/
+@[expose, irreducible]
 def rootNear (p : ZPoly) (re : Rat) (im : Rat := 0) : AlgebraicNumber :=
   let roots := algebraicRoots p
   let prec := AlgebraicNumber.separationPrec p

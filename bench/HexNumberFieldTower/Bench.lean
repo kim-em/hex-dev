@@ -100,7 +100,7 @@ private def rawPolyChecksum (p : Array (Array Rat)) : UInt64 :=
     (hash p.size)
 
 private def qAdjoinChecksum {p : ZPoly} {x : SimpleRoot p}
-    (a : QAdjoin p x) : UInt64 :=
+    (a : PolyQuot p x) : UInt64 :=
   a.coeffs.toArray.foldl
     (fun checksum q => mixHash checksum (ratChecksum q))
     (hash a.coeffs.size)
@@ -281,18 +281,18 @@ private structure CandidateInput where
 private structure CertifyInput where
   tower : TwoLevel
   candidate : Flatten.Candidate tower.extension.tower
-  images : Array (QAdjoin candidate.root.p candidate.root.x)
+  images : Array (PolyQuot candidate.root.p candidate.root.x)
 
 private structure MapInput where
   tower : TwoLevel
   result : Flattening tower.extension.tower
 
-private structure QAdjoinInput where
+private structure PolyQuotInput where
   rep : RefinedIsolation sqrtTwoPoly
   irreducible : ZPoly.isIrreducible sqrtTwoPoly = true
   simple : HasOnlySimpleRoots sqrtTwoPoly
 
-private def qAdjoinInput? (_ : Unit) : Option QAdjoinInput :=
+private def qAdjoinInput? (_ : Unit) : Option PolyQuotInput :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
       some ⟨sqrtTwoRep, hirred, hsimple⟩
@@ -306,7 +306,7 @@ private def rationalPoly (coefficients : List Rat) : Poly rat :=
 
 initialize sqrtTwoRef : IO.Ref (Option (Extension rat)) ← IO.mkRef none
 
-initialize qAdjoinInputRef : IO.Ref (Option QAdjoinInput) ← IO.mkRef none
+initialize qAdjoinInputRef : IO.Ref (Option PolyQuotInput) ← IO.mkRef none
 
 initialize fourthRootRef : IO.Ref (Option AlgebraicRoot) ← IO.mkRef none
 
@@ -319,7 +319,7 @@ private def getSqrtTwo : IO (Extension rat) := do
   sqrtTwoRef.set (some extension)
   return extension
 
-private def getQAdjoinInput : IO QAdjoinInput := do
+private def getPolyQuotInput : IO PolyQuotInput := do
   if let some input ← qAdjoinInputRef.get then
     return input
   let input ← requireSome "of-qadjoin preparation" (qAdjoinInput? ())
@@ -402,7 +402,7 @@ private def getRecoveryInput : IO RecoveryInput := do
 /-! # Arithmetic and adjoining -/
 
 def runOfQAdjoin : Unit → IO UInt64 := fun _ => do
-  let input ← getQAdjoinInput
+  let input ← getPolyQuotInput
   letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
     ⟨input.irreducible, by decide⟩
   return extensionChecksum
@@ -1681,7 +1681,7 @@ def runFromPrimitiveLadder (input : MapLadderInput) : UInt64 :=
   match input.result with
   | some result =>
       (List.range input.tower.dim).foldl (fun checksum i =>
-        let primitive := QAdjoin.reduce result.root.p result.root.x
+        let primitive := PolyQuot.reduce result.root.p result.root.x
           (DensePoly.ofCoeffs (Flatten.unitCoords input.tower.dim i))
         mixHash checksum (elemChecksum (result.fromPrimitive primitive)))
         (hash input.tower.dim)
@@ -1709,7 +1709,7 @@ prepared input's, set its bit cost. -/
   pure (prepMapLadderInput n)
 
 @[noinline] private def forceToPrimitive {T : NumberTower} (result : Flattening T)
-    (a : Elem T) : IO (QAdjoin result.root.p result.root.x) :=
+    (a : Elem T) : IO (PolyQuot result.root.p result.root.x) :=
   pure (result.toPrimitive a)
 
 private def printToPrimitiveStats : IO Unit := do

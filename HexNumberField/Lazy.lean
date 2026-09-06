@@ -249,7 +249,7 @@ def sub (a b : AlgebraicRoot) : AlgebraicRoot :=
 /-- Guard bits for multiplication-ball amplification. -/
 @[expose]
 def mulGuardBits (a b : AlgebraicRoot) : Nat :=
-  8 + QAdjoin.rootBits a.rep.1.square + QAdjoin.rootBits b.rep.1.square
+  8 + PolyQuot.rootBits a.rep.1.square + PolyQuot.rootBits b.rep.1.square
 
 /-- Guard bits for reciprocal-ball amplification. For a nonzero root of the
 primitive integer polynomial `p`, reciprocal Cauchy gives

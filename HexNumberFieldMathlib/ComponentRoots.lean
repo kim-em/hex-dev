@@ -18,7 +18,7 @@ This module proves semantic contracts for the norm-isolation and selected-
 embedding filter used on one square-free Yun component.
 -/
 
-namespace Hex.QAdjoin.Roots
+namespace Hex.PolyQuot.Roots
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
@@ -171,12 +171,12 @@ private theorem list_foldlM_split {A B : Type*}
 /-- Every entry returned by a successful component run is a root at the
 selected embedding and carries the requested multiplicity. -/
 theorem componentRoots?_sound [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (multiplicity : Nat)
+    (f : DensePoly (PolyQuot p x)) (multiplicity : Nat)
     (hMultiplicity : 0 < multiplicity) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) {roots : Array RootCount}
     (hrun : componentRoots? f multiplicity hMultiplicity rep h = some roots) :
     ∀ entry ∈ roots.toList,
-      Polynomial.eval entry.root.toComplex (QAdjoin.toPolynomialAt f rep h) = 0 ∧
+      Polynomial.eval entry.root.toComplex (PolyQuot.toPolynomialAt f rep h) = 0 ∧
         entry.multiplicity = multiplicity := by
   unfold componentRoots? at hrun
   dsimp only at hrun
@@ -209,7 +209,7 @@ theorem componentRoots?_sound [ZPoly.CheckedIrreducible p]
                     (hrun := hrun)
                     (property := fun out => ∀ entry ∈ out.toList,
                       Polynomial.eval entry.root.toComplex
-                          (QAdjoin.toPolynomialAt f rep h) = 0 ∧
+                          (PolyQuot.toPolynomialAt f rep h) = 0 ∧
                         entry.multiplicity = multiplicity)
                   · intro out candidateRep next _hcandidate hstep hout
                     let candidate : AlgebraicRoot :=
@@ -259,11 +259,11 @@ theorem componentRoots?_sound [ZPoly.CheckedIrreducible p]
 /-- Every semantic root of a nonzero component occurs in a successful
 component run with the requested multiplicity. -/
 theorem componentRoots?_complete [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (multiplicity : Nat)
+    (f : DensePoly (PolyQuot p x)) (multiplicity : Nat)
     (hMultiplicity : 0 < multiplicity) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (hf : !f.isZero) {roots : Array RootCount}
     (hrun : componentRoots? f multiplicity hMultiplicity rep h = some roots)
-    (z : ℂ) (hz : Polynomial.eval z (QAdjoin.toPolynomialAt f rep h) = 0) :
+    (z : ℂ) (hz : Polynomial.eval z (PolyQuot.toPolynomialAt f rep h) = 0) :
     ∃ entry ∈ roots.toList,
       entry.root.toComplex = z ∧ entry.multiplicity = multiplicity := by
   have hnorm : normEliminant f ≠ 0 := normEliminant_ne_zero f hf
@@ -350,7 +350,7 @@ theorem componentRoots?_complete [ZPoly.CheckedIrreducible p]
                         (ZPoly.squareFreeCore (normEliminant f)))
                       f rep h candidate)
                   have hcandidateZero : Polynomial.eval candidate.toComplex
-                      (QAdjoin.toPolynomialAt f rep h) = 0 := by
+                      (PolyQuot.toPolynomialAt f rep h) = 0 := by
                     rw [hcandidateValue]
                     exact hz
                   have hkeepTrue : keep = true := by
@@ -678,7 +678,7 @@ private theorem mergeRoots_contains (roots candidates out : Array RootCount)
 
 private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x)
-    (components : List (DensePoly (QAdjoin p x) × Nat))
+    (components : List (DensePoly (PolyQuot p x) × Nat))
     (hall : ∀ component ∈ components,
       0 < component.1.degree?.getD 0 ∧ 0 < component.2)
     (state out : Array RootCount)
@@ -694,7 +694,7 @@ private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
       (∃ entry ∈ state.toList, entry.root.toComplex = z) ∨
         ∃ component ∈ components,
           Polynomial.eval z
-            (QAdjoin.toPolynomialAt component.1 rep h) = 0 := by
+            (PolyQuot.toPolynomialAt component.1 rep h) = 0 := by
   induction components generalizing state with
   | nil =>
       have hout : state = out := by simpa using hrun
@@ -731,7 +731,7 @@ private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
               have hfoundIff :
                   (∃ entry ∈ found.toList, entry.root.toComplex = z) ↔
                     Polynomial.eval z
-                      (QAdjoin.toPolynomialAt component.1 rep h) = 0 := by
+                      (PolyQuot.toPolynomialAt component.1 rep h) = 0 := by
                 constructor
                 · rintro ⟨entry, hentry, rfl⟩
                   exact (componentRoots?_sound component.1 component.2
@@ -756,7 +756,7 @@ private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
 
 private theorem componentFold_nodup [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x)
-    (components : List (DensePoly (QAdjoin p x) × Nat))
+    (components : List (DensePoly (PolyQuot p x) × Nat))
     (hall : ∀ component ∈ components,
       0 < component.1.degree?.getD 0 ∧ 0 < component.2)
     (state out : Array RootCount)
@@ -786,9 +786,9 @@ private theorem componentFold_nodup [ZPoly.CheckedIrreducible p]
       exact mergeRoots_nodup roots found next hstep hroots
 
 private theorem componentFold_value [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x)
-    (hf : QAdjoin.toPolynomialAt f rep h ≠ 0)
+    (hf : PolyQuot.toPolynomialAt f rep h ≠ 0)
     (hdegree : 0 < f.degree?.getD 0)
     (state out : Array RootCount)
     (hrun : (yun f).toList.foldlM
@@ -801,22 +801,22 @@ private theorem componentFold_value [ZPoly.CheckedIrreducible p]
       state = some out) (z : ℂ)
     (hstate : ∀ entry ∈ state.toList, entry.root.toComplex = z →
       entry.multiplicity =
-        (QAdjoin.toPolynomialAt f rep h).rootMultiplicity z) :
+        (PolyQuot.toPolynomialAt f rep h).rootMultiplicity z) :
     ∀ entry ∈ out.toList, entry.root.toComplex = z →
       entry.multiplicity =
-        (QAdjoin.toPolynomialAt f rep h).rootMultiplicity z := by
-  let embedding := QAdjoin.embedding rep h
-  have hmap (g : DensePoly (QAdjoin p x)) :
-      toPolynomialMap embedding g = QAdjoin.toPolynomialAt g rep h := by
+        (PolyQuot.toPolynomialAt f rep h).rootMultiplicity z := by
+  let embedding := PolyQuot.embedding rep h
+  have hmap (g : DensePoly (PolyQuot p x)) :
+      toPolynomialMap embedding g = PolyQuot.toPolynomialAt g rep h := by
     rw [toPolynomialMap_eq_map]
-    exact (QAdjoin.toPolynomialAt_eq_map g rep h).symm
+    exact (PolyQuot.toPolynomialAt_eq_map g rep h).symm
   have hfMap : toPolynomialMap embedding f ≠ 0 := by
     rw [hmap]
     exact hf
   apply list_foldlM_sound (yun f).toList state out hstate
     (property := fun roots => ∀ entry ∈ roots.toList,
       entry.root.toComplex = z → entry.multiplicity =
-        (QAdjoin.toPolynomialAt f rep h).rootMultiplicity z)
+        (PolyQuot.toPolynomialAt f rep h).rootMultiplicity z)
     (hrun := hrun)
   intro roots component next hcomponent hstep hroots
   have hpositive := (yun_positive f component hcomponent).2
@@ -826,7 +826,7 @@ private theorem componentFold_value [ZPoly.CheckedIrreducible p]
   | some found =>
       rw [hfound] at hstep
       apply mergeRoots_value roots found next hstep z
-        ((QAdjoin.toPolynomialAt f rep h).rootMultiplicity z) hroots
+        ((PolyQuot.toPolynomialAt f rep h).rootMultiplicity z) hroots
       intro entry hentry hvalue
       have hentrySound := componentRoots?_sound component.1 component.2
         hpositive rep h hfound entry hentry
@@ -840,9 +840,9 @@ private theorem componentFold_value [ZPoly.CheckedIrreducible p]
           hcomponentRoot,
         hmap]
 
-end Hex.QAdjoin.Roots
+end Hex.PolyQuot.Roots
 
-namespace Hex.QAdjoin
+namespace Hex.PolyQuot
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
@@ -931,12 +931,12 @@ private theorem foldlMultiplicity_eq_sum (entries : List RootCount) :
 /-- Semantic membership in the fixed-field output is exactly polynomial
 vanishing. -/
 theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (z : ℂ) :
-    RootSet.Contains (QAdjoin.roots f rep h) z ↔
-      Polynomial.eval z (QAdjoin.toPolynomialAt f rep h) = 0 := by
-  by_cases hzero : QAdjoin.toPolynomialAt f rep h = 0
-  · have hall : QAdjoin.roots f rep h = .all :=
+    RootSet.Contains (PolyQuot.roots f rep h) z ↔
+      Polynomial.eval z (PolyQuot.toPolynomialAt f rep h) = 0 := by
+  by_cases hzero : PolyQuot.toPolynomialAt f rep h = 0
+  · have hall : PolyQuot.roots f rep h = .all :=
       (roots_all_iff f rep h).2 hzero
     rw [hall, hzero]
     simp [RootSet.Contains]
@@ -944,23 +944,23 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
       by_contra hnot
       have hisZero : f.isZero := by
         cases hvalue : f.isZero <;> simp_all
-      exact hzero ((QAdjoin.poly_isZero_iff f rep h).1 hisZero)
-    have hdegreeEq : (QAdjoin.toPolynomialAt f rep h).natDegree =
+      exact hzero ((PolyQuot.poly_isZero_iff f rep h).1 hisZero)
+    have hdegreeEq : (PolyQuot.toPolynomialAt f rep h).natDegree =
         f.degree?.getD 0 :=
-      QAdjoin.natDegree_toPolynomialAt f rep h hf
+      PolyQuot.natDegree_toPolynomialAt f rep h hf
     by_cases hdegree : f.degree?.getD 0 = 0
     · have heq := roots?_eq_roots f rep h
       have hfFalse : f.isZero = false := by
         cases hvalue : f.isZero <;> simp_all
-      rw [QAdjoin.roots?, ite_eq_right (by simpa using hfFalse),
+      rw [PolyQuot.roots?, ite_eq_right (by simpa using hfFalse),
         ite_eq_left hdegree] at heq
-      have hroots : QAdjoin.roots f rep h = .finite #[] :=
+      have hroots : PolyQuot.roots f rep h = .finite #[] :=
         (Option.some.inj heq).symm
       constructor
       · simp [hroots, RootSet.Contains]
       · intro hroot
         have hnatDegree :
-            (QAdjoin.toPolynomialAt f rep h).natDegree = 0 := by
+            (PolyQuot.toPolynomialAt f rep h).natDegree = 0 := by
           rw [hdegreeEq, hdegree]
         have hconstant := Polynomial.eq_C_of_natDegree_eq_zero hnatDegree
         rw [hconstant] at hroot
@@ -972,7 +972,7 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
       have heq := roots?_eq_roots f rep h
       have hfFalse : f.isZero = false := by
         cases hvalue : f.isZero <;> simp_all
-      rw [QAdjoin.roots?, ite_eq_right (by simpa using hfFalse),
+      rw [PolyQuot.roots?, ite_eq_right (by simpa using hfFalse),
         ite_eq_right hdegree] at heq
       cases hfold : (Roots.yun f).foldlM
           (fun out component =>
@@ -987,14 +987,14 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
           simp at heq
       | some raw =>
           rw [hfold] at heq
-          have hroots : QAdjoin.roots f rep h =
+          have hroots : PolyQuot.roots f rep h =
               .finite (raw.mergeSort Roots.rootLe) :=
             (Option.some.inj heq).symm
           have hraw :
               (∃ entry ∈ raw.toList, entry.root.toComplex = z) ↔
                 ∃ component ∈ (Roots.yun f).toList,
                   Polynomial.eval z
-                    (QAdjoin.toPolynomialAt component.1 rep h) = 0 := by
+                    (PolyQuot.toPolynomialAt component.1 rep h) = 0 := by
             have hfoldList : (Roots.yun f).toList.foldlM
                 (fun out component =>
                   if hm : 0 < component.2 then do
@@ -1013,14 +1013,14 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
           have hcomponents :
               (∃ component ∈ (Roots.yun f).toList,
                 Polynomial.eval z
-                  (QAdjoin.toPolynomialAt component.1 rep h) = 0) ↔
-                Polynomial.eval z (QAdjoin.toPolynomialAt f rep h) = 0 := by
-            let embedding := QAdjoin.embedding rep h
-            have hmap (g : DensePoly (QAdjoin p x)) :
+                  (PolyQuot.toPolynomialAt component.1 rep h) = 0) ↔
+                Polynomial.eval z (PolyQuot.toPolynomialAt f rep h) = 0 := by
+            let embedding := PolyQuot.embedding rep h
+            have hmap (g : DensePoly (PolyQuot p x)) :
                 Roots.toPolynomialMap embedding g =
-                  QAdjoin.toPolynomialAt g rep h := by
+                  PolyQuot.toPolynomialAt g rep h := by
               rw [Roots.toPolynomialMap_eq_map]
-              exact (QAdjoin.toPolynomialAt_eq_map g rep h).symm
+              exact (PolyQuot.toPolynomialAt_eq_map g rep h).symm
             have hfMap : Roots.toPolynomialMap embedding f ≠ 0 := by
               rw [hmap]
               exact hzero
@@ -1072,14 +1072,14 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
 
 /-- Fixed-field root multiplicities agree with Mathlib multiplicities. -/
 theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (z : ℂ) :
-    (QAdjoin.roots f rep h).multiplicityOf z =
-      Polynomial.rootMultiplicity z (QAdjoin.toPolynomialAt f rep h) := by
+    (PolyQuot.roots f rep h).multiplicityOf z =
+      Polynomial.rootMultiplicity z (PolyQuot.toPolynomialAt f rep h) := by
   classical
-  let polynomial := QAdjoin.toPolynomialAt f rep h
+  let polynomial := PolyQuot.toPolynomialAt f rep h
   by_cases hzero : polynomial = 0
-  · have hall : QAdjoin.roots f rep h = .all :=
+  · have hall : PolyQuot.roots f rep h = .all :=
       (roots_all_iff f rep h).2 hzero
     rw [hall]
     change RootSet.all.multiplicityOf z =
@@ -1087,8 +1087,8 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
     rw [hzero]
     simp [RootSet.multiplicityOf]
   · have hfinite : ∃ entries,
-        QAdjoin.roots f rep h = .finite entries := by
-      cases hroots : QAdjoin.roots f rep h with
+        PolyQuot.roots f rep h = .finite entries := by
+      cases hroots : PolyQuot.roots f rep h with
       | all =>
           exact (hzero ((roots_all_iff f rep h).1 hroots)).elim
       | finite entries => exact ⟨entries, rfl⟩
@@ -1101,11 +1101,11 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
         by_contra hnot
         have hisZero : f.isZero := by
           cases hvalueZero : f.isZero <;> simp_all
-        exact hzero ((QAdjoin.poly_isZero_iff f rep h).1 hisZero)
+        exact hzero ((PolyQuot.poly_isZero_iff f rep h).1 hisZero)
       have hdegreeEq : polynomial.natDegree = f.degree?.getD 0 :=
-        QAdjoin.natDegree_toPolynomialAt f rep h hf
+        PolyQuot.natDegree_toPolynomialAt f rep h hf
       by_cases hdegree : f.degree?.getD 0 = 0
-      · have hcontains : RootSet.Contains (QAdjoin.roots f rep h) z := by
+      · have hcontains : RootSet.Contains (PolyQuot.roots f rep h) z := by
           rw [hroots, RootSet.Contains]
           exact ⟨entry, hentry, hvalue⟩
         have hroot := (contains_roots_iff f rep h z).mp hcontains
@@ -1121,7 +1121,7 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
         have heq := roots?_eq_roots f rep h
         have hfFalse : f.isZero = false := by
           cases hvalueZero : f.isZero <;> simp_all
-        rw [QAdjoin.roots?, ite_eq_right (by simpa using hfFalse),
+        rw [PolyQuot.roots?, ite_eq_right (by simpa using hfFalse),
           ite_eq_right hdegree] at heq
         cases hfold : (Roots.yun f).foldlM
             (fun out component =>
@@ -1166,10 +1166,10 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
 
 /-- The fixed-field driver produces positive multiplicities. -/
 theorem roots_positive [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    RootSet.Positive (QAdjoin.roots f rep h) := by
-  cases hroots : QAdjoin.roots f rep h with
+    RootSet.Positive (PolyQuot.roots f rep h) := by
+  cases hroots : PolyQuot.roots f rep h with
   | all => trivial
   | finite roots =>
       intro entry _hentry
@@ -1177,21 +1177,21 @@ theorem roots_positive [ZPoly.CheckedIrreducible p]
 
 /-- The fixed-field driver merges all semantic duplicates. -/
 theorem roots_noDuplicates [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    RootSet.NoDuplicates (QAdjoin.roots f rep h) := by
+    RootSet.NoDuplicates (PolyQuot.roots f rep h) := by
   have heq := roots?_eq_roots f rep h
-  rw [QAdjoin.roots?] at heq
+  rw [PolyQuot.roots?] at heq
   split at heq
   next _ =>
-    have hroots : QAdjoin.roots f rep h = .all :=
+    have hroots : PolyQuot.roots f rep h = .all :=
       (Option.some.inj heq).symm
     rw [hroots]
     trivial
   next _ =>
     split at heq
     next _ =>
-      have hroots : QAdjoin.roots f rep h = .finite #[] :=
+      have hroots : PolyQuot.roots f rep h = .finite #[] :=
         (Option.some.inj heq).symm
       rw [hroots]
       simp [RootSet.NoDuplicates]
@@ -1209,7 +1209,7 @@ theorem roots_noDuplicates [ZPoly.CheckedIrreducible p]
           simp at heq
       | some raw =>
           rw [hfold] at heq
-          have hroots : QAdjoin.roots f rep h =
+          have hroots : PolyQuot.roots f rep h =
               .finite (raw.mergeSort Roots.rootLe) :=
             (Option.some.inj heq).symm
           rw [hroots]
@@ -1235,21 +1235,21 @@ theorem roots_noDuplicates [ZPoly.CheckedIrreducible p]
 
 /-- The fixed-field driver uses its deterministic canonical root order. -/
 theorem roots_ordered [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    RootSet.Ordered (QAdjoin.roots f rep h) := by
+    RootSet.Ordered (PolyQuot.roots f rep h) := by
   have heq := roots?_eq_roots f rep h
-  rw [QAdjoin.roots?] at heq
+  rw [PolyQuot.roots?] at heq
   split at heq
   next _ =>
-    have hroots : QAdjoin.roots f rep h = .all :=
+    have hroots : PolyQuot.roots f rep h = .all :=
       (Option.some.inj heq).symm
     rw [hroots]
     trivial
   next _ =>
     split at heq
     next _ =>
-      have hroots : QAdjoin.roots f rep h = .finite #[] :=
+      have hroots : PolyQuot.roots f rep h = .finite #[] :=
         (Option.some.inj heq).symm
       rw [hroots]
       simp [RootSet.Ordered]
@@ -1267,7 +1267,7 @@ theorem roots_ordered [ZPoly.CheckedIrreducible p]
           simp at heq
       | some raw =>
           rw [hfold] at heq
-          have hroots : QAdjoin.roots f rep h =
+          have hroots : PolyQuot.roots f rep h =
               .finite (raw.mergeSort Roots.rootLe) :=
             (Option.some.inj heq).symm
           rw [hroots, RootSet.Ordered]
@@ -1276,16 +1276,16 @@ theorem roots_ordered [ZPoly.CheckedIrreducible p]
 /-- For a nonzero fixed-field polynomial, the output multiplicities sum to
 its degree. -/
 theorem totalMultiplicity_roots [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x)
-    (hf : QAdjoin.toPolynomialAt f rep h ≠ 0) :
-    (QAdjoin.roots f rep h).totalMultiplicity =
-      (QAdjoin.toPolynomialAt f rep h).natDegree := by
+    (hf : PolyQuot.toPolynomialAt f rep h ≠ 0) :
+    (PolyQuot.roots f rep h).totalMultiplicity =
+      (PolyQuot.toPolynomialAt f rep h).natDegree := by
   classical
-  let polynomial := QAdjoin.toPolynomialAt f rep h
+  let polynomial := PolyQuot.toPolynomialAt f rep h
   have hfinite : ∃ entries,
-      QAdjoin.roots f rep h = .finite entries := by
-    cases hroots : QAdjoin.roots f rep h with
+      PolyQuot.roots f rep h = .finite entries := by
+    cases hroots : PolyQuot.roots f rep h with
     | all => exact (hf ((roots_all_iff f rep h).1 hroots)).elim
     | finite entries => exact ⟨entries, rfl⟩
   obtain ⟨entries, hroots⟩ := hfinite
@@ -1320,7 +1320,7 @@ theorem totalMultiplicity_roots [ZPoly.CheckedIrreducible p]
     constructor
     · rintro ⟨entry, hentry, rfl⟩
       apply (Polynomial.mem_roots hf).2
-      have hcontains : RootSet.Contains (QAdjoin.roots f rep h)
+      have hcontains : RootSet.Contains (PolyQuot.roots f rep h)
           entry.root.toComplex := by
         rw [hroots, RootSet.Contains]
         exact ⟨entry, hentry, rfl⟩
@@ -1339,4 +1339,4 @@ theorem totalMultiplicity_roots [ZPoly.CheckedIrreducible p]
     foldlMultiplicity_eq_sum entries.toList, hsum, hvalues, hcount]
   exact IsAlgClosed.card_roots_eq_natDegree
 
-end Hex.QAdjoin
+end Hex.PolyQuot

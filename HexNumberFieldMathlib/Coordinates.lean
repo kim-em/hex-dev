@@ -428,14 +428,14 @@ private theorem basisCoeffs_solve (gamma a : AlgebraicNumber)
 
 private theorem coordinateEval (gamma : AlgebraicNumber)
     (coeffs : Vector Rat (degree gamma)) :
-    QAdjoin.toComplex
-        (QAdjoin.reduce gamma.p gamma.x
+    PolyQuot.toComplex
+        (PolyQuot.reduce gamma.p gamma.x
           (DensePoly.ofCoeffs coeffs.toArray))
         gamma.rep gamma.rep_mk =
       ∑ i : Fin (degree gamma),
         (coeffs.get i : ℂ) * gamma.toComplex ^ i.val := by
-  unfold QAdjoin.toComplex QAdjoin.reduce
-  rw [QAdjoin.eval_reduceCoeffs,
+  unfold PolyQuot.toComplex PolyQuot.reduce
+  rw [PolyQuot.eval_reduceCoeffs,
     HexPolyMathlib.eval₂_toPolynomial]
   let f : DensePoly Rat := DensePoly.ofCoeffs coeffs.toArray
   have hfsize : f.size ≤ degree gamma :=
@@ -498,8 +498,8 @@ private theorem coordinateOfSpan_sound (gamma a : AlgebraicNumber)
       (Matrix.ofFn fun i : Fin (degree gamma) =>
         fun j : Fin (degree gamma) => powerTraces[i.val + j.val]!)
       rhs = some coeffs) :
-    QAdjoin.toComplex
-        (QAdjoin.reduce gamma.p gamma.x
+    PolyQuot.toComplex
+        (PolyQuot.reduce gamma.p gamma.x
           (DensePoly.ofCoeffs coeffs.toArray))
         gamma.rep gamma.rep_mk = a.toComplex := by
   obtain ⟨canonical, hcanonical, hreconstruct⟩ :=
@@ -592,21 +592,21 @@ theorem coordinates?_isSome (gamma a : AlgebraicNumber)
       spanCoeffs_isSome_of_det_ne_zero _ rhs hdet
     obtain ⟨coeffs, hcoeffs⟩ :=
       Option.isSome_iff_exists.mp hcoeffsSome
-    let coordinate : QAdjoin gamma.p gamma.x :=
-      QAdjoin.reduce gamma.p gamma.x
+    let coordinate : PolyQuot gamma.p gamma.x :=
+      PolyQuot.reduce gamma.p gamma.x
         (DensePoly.ofCoeffs coeffs.toArray)
     let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
     obtain ⟨recovered, hrecovered⟩ := Option.isSome_iff_exists.mp
-      (QAdjoin.toAlgebraicNumber?_isSome coordinate gamma.rep
+      (PolyQuot.toAlgebraicNumber?_isSome coordinate gamma.rep
         gamma.rep_mk)
     have hcoordinate :
-        QAdjoin.toComplex coordinate gamma.rep gamma.rep_mk =
+        PolyQuot.toComplex coordinate gamma.rep gamma.rep_mk =
           a.toComplex := by
       exact coordinateOfSpan_sound gamma a powers powerTraces hsize
         hvalues ha hpowerTraces products hproductsList rhs hrhs coeffs
         hcoeffs
     have hrecoveredValue : recovered.toComplex = a.toComplex :=
-      (QAdjoin.toAlgebraicNumber?_sound coordinate gamma.rep gamma.rep_mk
+      (PolyQuot.toAlgebraicNumber?_sound coordinate gamma.rep gamma.rep_mk
         hrecovered).trans hcoordinate
     have hrecoveredEq : recovered = a :=
       AlgebraicNumber.toComplex_injective hrecoveredValue
@@ -617,16 +617,16 @@ theorem coordinates?_isSome (gamma a : AlgebraicNumber)
 /-- Successful coordinate recovery represents the original algebraic value at
 the selected primitive embedding. -/
 theorem coordinates?_sound (gamma a : AlgebraicNumber)
-    (powers : Array AlgebraicNumber) {coordinate : QAdjoin gamma.p gamma.x}
+    (powers : Array AlgebraicNumber) {coordinate : PolyQuot gamma.p gamma.x}
     (h : coordinates? gamma a powers = some coordinate) :
-    QAdjoin.toComplex coordinate gamma.rep gamma.rep_mk = a.toComplex := by
+    PolyQuot.toComplex coordinate gamma.rep gamma.rep_mk = a.toComplex := by
   let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
   unfold coordinates? at h
   split at h
   next hzero =>
-    have hcoordinate : (0 : QAdjoin gamma.p gamma.x) = coordinate :=
+    have hcoordinate : (0 : PolyQuot gamma.p gamma.x) = coordinate :=
       Option.some.inj h
-    rw [← hcoordinate, QAdjoin.map_zero]
+    rw [← hcoordinate, PolyQuot.map_zero]
     exact ((AlgebraicNumber.isZero_iff a).mp hzero).symm
   next _ =>
     obtain ⟨powerTraces, _, h⟩ := Option.bind_eq_some_iff.mp h
@@ -638,7 +638,7 @@ theorem coordinates?_sound (gamma a : AlgebraicNumber)
     next heq =>
       have hcoordinate := Option.some.inj h
       subst coordinate
-      rw [← QAdjoin.toAlgebraicNumber?_sound _ gamma.rep gamma.rep_mk
+      rw [← PolyQuot.toAlgebraicNumber?_sound _ gamma.rep gamma.rep_mk
         hrecovered]
       exact (AlgebraicNumber.beq_iff recovered a).mp heq
     next => simp at h

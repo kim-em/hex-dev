@@ -30,9 +30,9 @@ structure Flattening (T : NumberTower) where
   /-- The canonical primitive element generating the whole tower. -/
   root : AlgebraicNumber
   /-- Rewrite tower coordinates in the primitive presentation. -/
-  toPrimitive : Elem T → QAdjoin root.p root.x
+  toPrimitive : Elem T → QAdjoin root
   /-- Evaluate primitive coordinates back to a tower element. -/
-  fromPrimitive : QAdjoin root.p root.x → Elem T
+  fromPrimitive : QAdjoin root → Elem T
 
 /-- The finite combined bound for primitive-element and coordinate-recovery
 collisions in a field of dimension `dimension`. -/
@@ -62,7 +62,7 @@ structure Candidate (T : NumberTower) where
   value : Elem T
   /-- Each combined generator's coordinate in the accumulated
   presentation. -/
-  coordinates : Array (QAdjoin root.p root.x)
+  coordinates : Array (PolyQuot root.p root.x)
 
 /-- Standard coordinate vector of length `dimension`. -/
 @[expose]
@@ -107,24 +107,24 @@ def candidateAt? (theta alpha : AlgebraicNumber) (target index : Nat) :
 presentation. -/
 @[expose]
 def liftZPoly {p : ZPoly} {x : SimpleRoot p}
-    (f : ZPoly) : DensePoly (QAdjoin p x) :=
+    (f : ZPoly) : DensePoly (PolyQuot p x) :=
   DensePoly.ofCoeffs <| f.toArray.map fun (coefficient : Int) =>
-    (coefficient : Rat) • (1 : QAdjoin p x)
+    (coefficient : Rat) • (1 : PolyQuot p x)
 
 /-- Evaluate a rational coordinate polynomial in another fixed presentation. -/
 @[expose]
 def evalRatPoly {p : ZPoly} {x : SimpleRoot p}
-    (f : DensePoly Rat) (a : QAdjoin p x) : QAdjoin p x :=
+    (f : DensePoly Rat) (a : PolyQuot p x) : PolyQuot p x :=
   f.toArray.foldr
     (fun coefficient value =>
-      value * a + coefficient • (1 : QAdjoin p x))
+      value * a + coefficient • (1 : PolyQuot p x))
     0
 
 /-- Recover both inputs through the proved-total trace-pairing coordinates of
 a primitive candidate. -/
 @[expose]
 def tracePair? (theta alpha gamma : AlgebraicNumber) :
-    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) := do
   let powers ← AlgebraicPoly.Common.powers? gamma
     (2 * AlgebraicPoly.Common.degree gamma - 2)
   let thetaCoordinate ←
@@ -137,17 +137,17 @@ def tracePair? (theta alpha gamma : AlgebraicNumber) :
 target. -/
 @[expose]
 def checkCoordinate? (target gamma : AlgebraicNumber)
-    (coordinate : QAdjoin gamma.p gamma.x) :
-    Option (QAdjoin gamma.p gamma.x) := do
-  let recovered ← @QAdjoin.toAlgebraicNumber? gamma.p gamma.x gamma.checked
+    (coordinate : PolyQuot gamma.p gamma.x) :
+    Option (PolyQuot gamma.p gamma.x) := do
+  let recovered ← @PolyQuot.toAlgebraicNumber? gamma.p gamma.x gamma.checked
     coordinate gamma.rep gamma.rep_mk
   if recovered == target then some coordinate else none
 
 /-- Validate both fast gcd coordinates before exposing them. -/
 @[expose]
 def checkPair? (theta alpha gamma : AlgebraicNumber)
-    (coordinates : QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) :
-    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+    (coordinates : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) :
+    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) := do
   let thetaCoordinate ← checkCoordinate? theta gamma coordinates.1
   let alphaCoordinate ← checkCoordinate? alpha gamma coordinates.2
   some (thetaCoordinate, alphaCoordinate)
@@ -156,16 +156,16 @@ def checkPair? (theta alpha gamma : AlgebraicNumber)
 `gamma = theta + shift * alpha` using the validated linear-gcd path only. -/
 @[expose]
 def recoverPairFast? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
-    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) := do
   if shift = 0 then none else
   letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
   let gammaCoordinate := gamma.toQAdjoin
-  let affine : DensePoly (QAdjoin gamma.p gamma.x) :=
+  let affine : DensePoly (PolyQuot gamma.p gamma.x) :=
     DensePoly.ofList
-      [gammaCoordinate, (-(shift : Rat)) • (1 : QAdjoin gamma.p gamma.x)]
+      [gammaCoordinate, (-(shift : Rat)) • (1 : PolyQuot gamma.p gamma.x)]
   let thetaRelation :=
     DensePoly.composeImpl (liftZPoly theta.p) affine
-  let alphaRelation : DensePoly (QAdjoin gamma.p gamma.x) :=
+  let alphaRelation : DensePoly (PolyQuot gamma.p gamma.x) :=
     liftZPoly alpha.p
   let common := DensePoly.gcd thetaRelation alphaRelation
   if common.degree?.getD 0 = 1 && common.leadingCoeff != 0 then
@@ -181,7 +181,7 @@ bounded scan uses only `recoverPairFast?`; this total fallback adds trace
 pairing for the maximum-degree candidate and for a zero shift. -/
 @[expose]
 def recoverPair? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
-    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) :=
+    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) :=
   match recoverPairFast? theta alpha gamma shift with
   | some coordinates => some coordinates
   | none => tracePair? theta alpha gamma
@@ -194,9 +194,9 @@ structure Recovered where
   /-- The accepted full-degree primitive candidate. -/
   root : AlgebraicNumber
   /-- The prior generator's coordinate in the candidate presentation. -/
-  thetaCoordinate : QAdjoin root.p root.x
+  thetaCoordinate : PolyQuot root.p root.x
   /-- The new generator's coordinate in the candidate presentation. -/
-  alphaCoordinate : QAdjoin root.p root.x
+  alphaCoordinate : PolyQuot root.p root.x
 
 /-- Search a prescribed shift suffix, rejecting degree collisions and any
 candidate for which validated linear-gcd recovery fails. -/
@@ -258,8 +258,8 @@ def candidate? {T : NumberTower} (generators : Array (Generator T)) :
 generator. The lower basis remains the fastest-varying coordinate block. -/
 @[expose]
 def extendBasis {p : ZPoly} {x : SimpleRoot p}
-    (basis : Array (QAdjoin p x)) (generator : QAdjoin p x)
-    (degree : Nat) : Array (QAdjoin p x) :=
+    (basis : Array (PolyQuot p x)) (generator : PolyQuot p x)
+    (degree : Nat) : Array (PolyQuot p x) :=
   let state := (List.range degree).foldl
     (fun state _ =>
       (state.1 ++ basis.map fun b => b * state.2,
@@ -272,7 +272,7 @@ presentation. -/
 @[expose]
 def basisImages {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
     (generators : Array (Generator T))
-    (coordinates : Array (QAdjoin p x)) : Array (QAdjoin p x) :=
+    (coordinates : Array (PolyQuot p x)) : Array (PolyQuot p x) :=
   (generators.zip coordinates).foldl
     (fun basis entry => extendBasis basis entry.2 entry.1.degree)
     #[1]
@@ -280,7 +280,7 @@ def basisImages {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
 /-- Apply a rational coordinate vector to precomputed primitive-basis images. -/
 @[expose]
 def toPrimitiveWith {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
-    (images : Array (QAdjoin p x)) (a : Elem T) : QAdjoin p x :=
+    (images : Array (PolyQuot p x)) (a : Elem T) : PolyQuot p x :=
   (List.range T.dim).foldl
     (fun value i =>
       let coefficient := (coeffs a).getD i 0
@@ -291,7 +291,7 @@ def toPrimitiveWith {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
 /-- Evaluate a reduced primitive coordinate polynomial at its tower element. -/
 @[expose]
 def fromPrimitiveWith {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
-    (generator : Elem T) (a : QAdjoin p x) : Elem T :=
+    (generator : Elem T) (a : PolyQuot p x) : Elem T :=
   a.coeffs.toArray.foldr
     (fun coefficient value => value * generator + ofRat T coefficient) 0
 
@@ -312,7 +312,7 @@ remain independent executable defenses even where the semantic proof can
 derive them from the successful construction. -/
 @[expose]
 def certifies {T : NumberTower} (candidate : Candidate T)
-    (images : Array (QAdjoin candidate.root.p candidate.root.x)) : Bool :=
+    (images : Array (PolyQuot candidate.root.p candidate.root.x)) : Bool :=
   let toPrimitive := toPrimitiveWith images
   let fromPrimitive := fromPrimitiveWith candidate.value
   images.size = T.dim && candidate.dimension = T.dim &&

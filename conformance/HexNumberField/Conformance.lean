@@ -14,7 +14,7 @@ python-flint for the integer eliminants and factorization checks in the
 external JSONL profile. Mode: `if_available`.
 
 Covered operations:
-- fixed-presentation `QAdjoin.reduce`, arithmetic, inversion, division, and
+- fixed-presentation `PolyQuot.reduce`, arithmetic, inversion, division, and
   threaded approximation, plus checked and total canonical conversion;
 - lazy `AlgebraicRoot` negation, addition, subtraction, multiplication,
   inversion, division, and exactification in both checked and total forms;
@@ -193,14 +193,14 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
     let xPoly := DensePoly.ofList ([0, 1] : List Rat)
-    let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-      QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot xPoly
-    let two : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-      QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
+    let x : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+      PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot xPoly
+    let two : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+      PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
     x + x = (2 : Rat) • x && x - x = 0 && -x + x = 0 &&
       (3 / 2 : Rat) • x = x + (1 / 2 : Rat) • x &&
       x * x = two && x * x⁻¹ = 1 && x / x = 1 &&
-      (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
+      (0 : PolyQuot sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
   else
     false
 
@@ -208,17 +208,17 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
 -- normalizes trailing zero coefficients.
 #guard
   let x := DensePoly.ofList ([0, 1] : List Rat)
-  QAdjoin.reduceCoeffs sqrtTwoPoly (x * x) = DensePoly.C 2 &&
-    QAdjoin.reduceCoeffs sqrtTwoPoly (x + 1) = x + 1 &&
-    QAdjoin.reduceCoeffs sqrtTwoPoly
+  PolyQuot.reduceCoeffs sqrtTwoPoly (x * x) = DensePoly.C 2 &&
+    PolyQuot.reduceCoeffs sqrtTwoPoly (x + 1) = x + 1 &&
+    PolyQuot.reduceCoeffs sqrtTwoPoly
       (DensePoly.ofList ([3, 0, 0] : List Rat)) = DensePoly.C 3
 
 #guard
   let xPoly := DensePoly.ofList ([0, 1] : List Rat)
-  let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-    QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot xPoly
+  let x : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+    PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot xPoly
   let first := x.approx sqrtTwoRep rfl 24
-  let second := x.approx first.1 (QAdjoin.approx_root x sqrtTwoRep rfl 24) 48
+  let second := x.approx first.1 (PolyQuot.approx_root x sqrtTwoRep rfl 24) 48
   first.2.radius ≤ Dyadic.ofIntWithPrec 1 24 &&
     second.2.radius ≤ Dyadic.ofIntWithPrec 1 48 &&
     first.1.1.square.discsMeet second.1.1.square
@@ -351,18 +351,18 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
 #guard
   match sqrtTwo?, negSqrtTwo?, enclosingRoot? with
   | some positive, some negative, some enclosing =>
-      QAdjoin.Roots.sameValue? positive enclosing = some true &&
-        QAdjoin.Roots.sameValue? positive negative = some false &&
-        QAdjoin.Roots.sameValue? positive positive = some true
+      PolyQuot.Roots.sameValue? positive enclosing = some true &&
+        PolyQuot.Roots.sameValue? positive negative = some false &&
+        PolyQuot.Roots.sameValue? positive positive = some true
   | _, _, _ => false
 
 /-! # Polynomial roots -/
 
-private def fixedSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-  QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
+private def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+  PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot
     (DensePoly.ofList ([0, 1] : List Rat))
 
-private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
+private def fixedLinear : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot) :=
   DensePoly.ofList [-fixedSqrtTwo, 1]
 
 -- Both checked and total fixed-presentation conversions retain the selected
@@ -385,7 +385,7 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
-    match QAdjoin.roots? (fixedLinear * fixedLinear) sqrtTwoRep rfl with
+    match PolyQuot.roots? (fixedLinear * fixedLinear) sqrtTwoRep rfl with
     | some (.finite roots) =>
         roots.size = 1 &&
           (roots[0]?).map (fun root => root.multiplicity) = some 2 &&
@@ -400,7 +400,7 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
-    match QAdjoin.roots (fixedLinear * fixedLinear) sqrtTwoRep rfl with
+    match PolyQuot.roots (fixedLinear * fixedLinear) sqrtTwoRep rfl with
     | .finite roots =>
         roots.size = 1 &&
           (roots[0]?).map (fun root => root.multiplicity) = some 2
@@ -413,10 +413,10 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
     match
-        QAdjoin.roots?
-          (0 : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot))
+        PolyQuot.roots?
+          (0 : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot))
           sqrtTwoRep rfl,
-        QAdjoin.roots? 1 sqrtTwoRep rfl with
+        PolyQuot.roots? 1 sqrtTwoRep rfl with
     | some .all, some (.finite roots) => roots.isEmpty
     | _, _ => false
   else

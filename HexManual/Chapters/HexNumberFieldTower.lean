@@ -41,7 +41,7 @@ alternates factoring and adjoining until a polynomial splits into linear
 factors, and returns the splitting field together with all of the roots.
 {name}`Hex.NumberTower.flatten?` replaces a tower by a single primitive element
 with exact coordinate changes in both directions, so a computation can move
-between the tower and the one-generator form {name}`Hex.QAdjoin` of
+between the tower and the one-generator form {name}`Hex.PolyQuot` of
 `HexNumberField`.
 
 Each operation checks its own result before returning it, and returns `none`
@@ -189,8 +189,8 @@ def F : Flattening T23 := flatten T23
 -- (√2 + √3)^10 = 47525 + 19402√6 over the basis
 -- 1, √2, √3, √6.
 #guard coeffs ((s2 + s3) ^ 10) = #[47525, 0, 0, 19402]
-#guard (F.toPrimitive ((s2 + s3) ^ 10)).toAlgebraicNumber
-    F.root.rep F.root.rep_mk = (sqrt2 + sqrt3) ^ 10
+#guard (F.toPrimitive ((s2 + s3) ^ 10)).toAlgebraicNumber =
+  (sqrt2 + sqrt3) ^ 10
 
 end HexNumberFieldTowerChapter
 ```
