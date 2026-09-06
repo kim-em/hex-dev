@@ -522,7 +522,10 @@ def natPow (a : AlgebraicNumber) : Nat → AlgebraicNumber
 termination_by n => n
 decreasing_by omega
 
-instance : Pow AlgebraicNumber Nat := ⟨natPow⟩
+-- The companion's global `Field` instance also supplies `Pow` through
+-- `Monoid.npow`, definitionally this `natPow` but noncomputable as a term.
+-- Prefer the executable instance so `a ^ n` compiles under the companion.
+instance (priority := 1100) : Pow AlgebraicNumber Nat := ⟨natPow⟩
 
 /-- Integer powers assembled from executable multiplication and inversion. -/
 @[expose]
@@ -530,7 +533,7 @@ def intPow (a : AlgebraicNumber) : Int → AlgebraicNumber
   | .ofNat n => natPow a n
   | .negSucc n => (natPow a (n + 1))⁻¹
 
-instance : Pow AlgebraicNumber Int := ⟨intPow⟩
+instance (priority := 1100) : Pow AlgebraicNumber Int := ⟨intPow⟩
 
 end Hex.AlgebraicNumber
 

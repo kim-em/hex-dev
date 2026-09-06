@@ -164,7 +164,7 @@ function. It returns a {name}`Hex.NumberTower.Flattening`: a single algebraic
 number `γ` generating the whole tower, and the coordinate changes between the
 tower and the field `ℚ(γ)`:
 
-```lean (show := false)
+```lean -show
 example (T : NumberTower) : Flattening T := flatten T
 ```
 
@@ -186,6 +186,8 @@ def F : Flattening T23 := flatten T23
 #guard F.root.p = #p[1, 0, -10, 0, 1]
 #guard (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2]
 #guard F.fromPrimitive (F.toPrimitive s3) == s3
+-- (√2 + √3)^10 = 47525 + 19402√6 over the basis 1, √2, √3, √6.
+#guard coeffs ((s2 + s3) ^ 10) = #[47525, 0, 0, 19402]
 #guard (F.toPrimitive ((s2 + s3) ^ 10)).toAlgebraicNumber
     F.root.rep F.root.rep_mk == (sqrt2 + sqrt3) ^ 10
 
