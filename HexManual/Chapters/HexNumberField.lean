@@ -85,14 +85,16 @@ check is the classical fact that `√2 + √3` has minimal polynomial
 `X⁴ − 10X² + 1`, and the fourth is `1 / (√2 + √3) = √3 − √2`. Equality of
 canonical numbers is decidable. Without the Mathlib companion, compare with
 `==`, the executable test; with it, `=` is available too, because the
-companion proves that the test is correct. Printing a number shows that
-polynomial and twelve decimals of a certified approximation:
+companion proves that the test is correct. A number prints as the
+expression that rebuilds it, its minimal polynomial and its index among
+that polynomial's roots; here `√2 + √3` is the largest of the four real roots
+of the quartic:
 
 ```lean (name := sqrtSumEval)
 #eval sqrt2 + sqrt3
 ```
 ```leanOutput sqrtSumEval
-root of X^4 - 10*X^2 + 1 near 3.146264369941
+(ZPoly.algebraicRoots #p[1, 0, -10, 0, 1])[3]!
 ```
 
 The golden ratio is the positive root of `X² − X − 1`. Its defining identity,
@@ -198,13 +200,18 @@ def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 #guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk = cbrt2
 ```
 
-An element prints as its coordinates, a rational polynomial in the generator:
+An element prints as its coordinate polynomial, and a rational polynomial
+denotes its reduction, so the printed form is again an expression for the
+element: `c⁵ = 2c²`.
 
 ```lean (name := cbrt2Pow)
 #eval c ^ 5
 ```
 ```leanOutput cbrt2Pow
-2*x^2
+#p[0, 0, 2]
+```
+```lean
+#guard c ^ 5 = #p[0, 0, 2]
 ```
 
 ```lean -show
