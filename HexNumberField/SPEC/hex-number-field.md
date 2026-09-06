@@ -500,6 +500,33 @@ is for display and carries no contract beyond `approx`. Its two helpers,
 `AlgebraicNumber.Display.decimal` and `AlgebraicNumber.Display.polynomial`,
 are public only because the instance is, and carry no contract either.
 
+## Exact primitives from stored isolations
+
+```lean
+def AlgebraicNumber.separationPrec (p : ZPoly) : Int
+def AlgebraicNumber.I : AlgebraicNumber
+def AlgebraicNumber.mirrorBall (b : DyadicComplexBall) : DyadicComplexBall
+def AlgebraicNumber.conj (a : AlgebraicNumber) : AlgebraicNumber
+def AlgebraicNumber.realCompare (a b : AlgebraicNumber) : Ordering
+```
+
+`separationPrec p` is `mahlerPrec p + 2`. At that precision the approximation
+balls of two distinct roots of `p` are disjoint: `mahlerPrec p` separates
+distinct roots by more than four ball radii, and the two extra bits absorb the
+centre errors. Every operation here works at a fixed such precision; none
+refines without bound.
+
+`I` is the root of `X² + 1` whose stored isolation centre has positive
+imaginary part. `conj a` is `a` when `a.isReal`; otherwise it is the root of
+`a.p` whose approximation ball at `separationPrec a.p` meets the mirror image
+in the real axis of `a`'s ball, `mirrorBall`, which contains the conjugate.
+That root is unique at that precision. `realCompare a b`, for real `a` and
+`b`, is `.eq` when `a == b` and otherwise orders the centres of the two
+approximation balls at `separationPrec (a.p * b.p)`, at which the balls of
+the two distinct numbers are disjoint. The companion proves `I` is the
+imaginary unit, `conj` is complex conjugation, and `realCompare` is the order
+of the real parts.
+
 ## Common-field construction
 
 The `Hex.AlgebraicPoly.Common` namespace is the public bounded
@@ -594,6 +621,7 @@ HexNumberField/
   AlgebraicPoly.lean  : semantic coefficient-polynomial representation
   Roots.lean          : fixed-field and algebraic-coefficient root APIs
   IntegerRoots.lean   : roots of integer polynomials, reality test, display
+  Nearest.lean        : imaginary unit, conjugation, exact real order
 ```
 
 Conformance and benchmark drivers live in the shared `conformance/` and

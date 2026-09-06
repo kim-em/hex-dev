@@ -539,4 +539,18 @@ private def algebraicRepeated? : Option AlgebraicPoly := do
     (repr s2).pretty == "root of X^2 - 2 near 1.414213562373" &&
     (repr (s2 + s3)).pretty == "root of X^4 - 10*X^2 + 1 near 3.146264369941"
 
+-- The exact primitives: the imaginary unit squares to `-1`, conjugation
+-- fixes real numbers and negates the imaginary unit, and the real order is
+-- exact, including on values that only agree after canonicalization.
+#guard
+  let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+  let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
+  AlgebraicNumber.I * AlgebraicNumber.I == -1 &&
+    AlgebraicNumber.conj (s2 + AlgebraicNumber.I) == s2 - AlgebraicNumber.I &&
+    AlgebraicNumber.conj s2 == s2 &&
+    AlgebraicNumber.realCompare s2 s3 == .lt &&
+    AlgebraicNumber.realCompare s3 s2 == .gt &&
+    AlgebraicNumber.realCompare (s3 - s2) ((s2 + s3)⁻¹) == .eq &&
+    AlgebraicNumber.realCompare (-s2) s2 == .lt
+
 end Hex.NumberFieldConformance

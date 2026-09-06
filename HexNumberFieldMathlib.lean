@@ -11,6 +11,7 @@ public import HexNumberFieldMathlib.ComponentRoots
 public import HexNumberFieldMathlib.AlgebraicRoots
 public import HexNumberFieldMathlib.Field
 public import HexNumberFieldMathlib.IntegerRoots
+public import HexNumberFieldMathlib.Nearest
 
 public section
 
