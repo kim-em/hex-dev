@@ -24,7 +24,7 @@ The transported operations and their computational owners are:
 
 | Transported surface | Computational owner | Owner evidence |
 | --- | --- | --- |
-| `QAdjoin` reduction, arithmetic, scalar actions, powers, inversion, approximation, and checked/total canonical conversion | `HexNumberField` | `conformance/HexNumberField/Conformance.lean`, `hexnumberfield_bench`, and `reports/hex-number-field-performance.md` |
+| `PolyQuot` reduction, arithmetic, scalar actions, powers, inversion, approximation, and checked/total canonical conversion | `HexNumberField` | `conformance/HexNumberField/Conformance.lean`, `hexnumberfield_bench`, and `reports/hex-number-field-performance.md` |
 | Lazy and canonical algebraic-number equality, zero recognition, arithmetic, exactification, and field operations | `HexNumberField` | The same conformance target covers checked and total lazy operations, semantic equality, rational construction, casts, scalar actions, and powers; the same benchmark target registers the corresponding compiled surfaces. |
 | Yun decomposition, candidate disambiguation and merging, fixed-field roots, algebraic-coefficient roots, and common-field presentation (`rational?`, arithmetic and shifts, primitive search, powers, traces, coordinates, and `presentation?`) | `HexNumberField` | The root and algebraic-polynomial sections of the owner conformance target exercise the public pipelines, including common presentation transitively; the owner benchmark registers their components and end-to-end paths. |
 | Selected-root isolation and `RefinedIsolation.refineTo?`; dyadic-ball construction and arithmetic; radius, extent, membership, and square-intersection semantics | `HexRoots` | `conformance/HexRoots/Conformance.lean`, `hexroots_bench`, and `reports/hex-roots-performance.md` |
@@ -67,7 +67,7 @@ Write `pℚ` for `(toPolynomial p).map (algebraMap ℤ ℚ)`.
 ## Semantic maps
 
 ```lean
-noncomputable def QAdjoin.toComplex (a : QAdjoin p x)
+noncomputable def PolyQuot.toComplex (a : PolyQuot p x)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) : ℂ
 
 def AlgebraicRoot.toComplex (a : AlgebraicRoot) : ℂ := rootOf a.x
@@ -88,17 +88,17 @@ instance : LawfulBEq AlgebraicNumber
 instance : DecidableEq AlgebraicNumber
 ```
 
-`QAdjoin.toComplex` evaluates reduced coordinates at an explicit refined
+`PolyQuot.toComplex` evaluates reduced coordinates at an explicit refined
 representative of the selected root. Addition, multiplication, and scalar laws
 therefore do not depend on irreducibility or on the quotient-level `rootOf`
 construction. Under `[ZPoly.CheckedIrreducible p]`, semantic irreducibility
-makes this map injective and validates inversion. `QAdjoin.toAdjoinRoot` is an
+makes this map injective and validates inversion. `PolyQuot.toAdjoinRoot` is an
 actual map to the quotient by the monic rational associate and is proved
 bijective before law-bearing structures are installed. After the operation laws
 are proved, package that bijection as a ring equivalence and `toComplex` as a
 ring embedding without changing any computational operation.
 
-When constructing the `Field (QAdjoin p x)` instance, set its rational scalar
+When constructing the `Field (PolyQuot p x)` instance, set its rational scalar
 action explicitly to the computational `SMul Rat` instance shipped by
 HexNumberField. This keeps Mathlib's generated `qsmul` path definitionally
 identical and avoids a second, diamond-forming rational action.
@@ -121,17 +121,17 @@ theorem AlgebraicNumber.isZero_iff (a : AlgebraicNumber) :
 theorem RefinedIsolation.refineTo?_isSome (rep) (target) :
     (rep.refineTo? target .nkThenPellet).isSome
 
-theorem QAdjoin.approx_sound (...) :
-    QAdjoin.toComplex a rep h ∈ (a.approx rep h prec).2.set
+theorem PolyQuot.approx_sound (...) :
+    PolyQuot.toComplex a rep h ∈ (a.approx rep h prec).2.set
 
-theorem QAdjoin.approx_radius (...) :
+theorem PolyQuot.approx_radius (...) :
     (a.approx rep h prec).2.realRadius ≤ 2 ^ (-prec)
 ```
 
 The totality theorem is deliberately for the default mixed strategy: its NK
 prefix is complete around the represented locally simple root even when the
 ambient polynomial has repeated roots elsewhere. No pure-Pellet totality
-claim is needed for `QAdjoin.approx`.
+claim is needed for `PolyQuot.approx`.
 
 `AlgebraicRoot` deliberately exposes no Boolean or structural equality:
 comparison first exactifies to canonical `AlgebraicNumber`. No structural
@@ -159,18 +159,21 @@ theorem AlgebraicRoot.exact?_isSome (a : AlgebraicRoot) :
 theorem AlgebraicRoot.exact_toComplex (a : AlgebraicRoot) :
     a.exact.toComplex = a.toComplex
 
-theorem QAdjoin.toAlgebraicNumber?_sound
+theorem PolyQuot.toAlgebraicNumber?_sound
     [ZPoly.CheckedIrreducible p] (...) {b} (h : ... = some b) :
-    b.toComplex = QAdjoin.toComplex a rep hrep
+    b.toComplex = PolyQuot.toComplex a rep hrep
 
-theorem QAdjoin.toAlgebraicNumber?_isSome
+theorem PolyQuot.toAlgebraicNumber?_isSome
     [ZPoly.CheckedIrreducible p] (...) :
     (a.toAlgebraicNumber? rep hrep).isSome
 
-theorem QAdjoin.toAlgebraicNumber_toComplex
+theorem PolyQuot.toAlgebraicNumber_toComplex
     [ZPoly.CheckedIrreducible p] (...) :
     (a.toAlgebraicNumber rep hrep).toComplex =
-      QAdjoin.toComplex a rep hrep
+      PolyQuot.toComplex a rep hrep
+
+theorem QAdjoin.toAlgebraicNumber_toComplex {a : AlgebraicNumber} (c : QAdjoin a) :
+    c.toAlgebraicNumber.toComplex = PolyQuot.toComplex c a.rep a.rep_mk
 ```
 
 Exactification completeness follows because the squarefree enclosing polynomial
@@ -300,8 +303,8 @@ computational library does not use `DensePoly AlgebraicNumber`.
 ## Root API correctness
 
 ```lean
-theorem QAdjoin.roots?_isSome [ZPoly.CheckedIrreducible p] (...) :
-    (QAdjoin.roots? f rep h).isSome
+theorem PolyQuot.roots?_isSome [ZPoly.CheckedIrreducible p] (...) :
+    (PolyQuot.roots? f rep h).isSome
 
 theorem AlgebraicPoly.roots?_isSome (f : AlgebraicPoly) :
     f.roots?.isSome
@@ -319,11 +322,11 @@ theorem AlgebraicPoly.multiplicity_roots (f : AlgebraicPoly) (z : ℂ) :
 
 The semantic `RootSet.Contains` interface is deliberate: lazy roots have no
 structural or Boolean equality, while callers may ask about any complex root.
-The internal `QAdjoin.Roots.sameValue?` operation has separate soundness and
+The internal `PolyQuot.Roots.sameValue?` operation has separate soundness and
 completeness contracts because root merging depends on it even though no public
 `BEq AlgebraicRoot` instance exists.
 
-State corresponding fixed-field theorems through `QAdjoin.toComplex`. For finite
+State corresponding fixed-field theorems through `PolyQuot.toComplex`. For finite
 outputs also prove no duplicates, positive multiplicities, deterministic order,
 and that the sum of multiplicities is the polynomial degree.
 
@@ -342,7 +345,7 @@ The proof follows the executable stages:
 
 1. Canonical primitive-positive integer representatives of rational minimal
    polynomials and canonicity of `AlgebraicNumber`.
-2. `QAdjoin.toAdjoinRoot_bijective`, field-law transfer, and approximation
+2. `PolyQuot.toAdjoinRoot_bijective`, field-law transfer, and approximation
    semantics.
 3. Minimal polynomial of the multiplication operator for
    `toAlgebraicNumber?`.

@@ -104,8 +104,8 @@ structure Splitting (T : NumberTower) (f : Poly T) where
 
 structure Flattening (T : NumberTower) where
   root          : AlgebraicNumber
-  toPrimitive   : Elem T → QAdjoin root.p root.x
-  fromPrimitive : QAdjoin root.p root.x → Elem T
+  toPrimitive   : Elem T → QAdjoin root
+  fromPrimitive : QAdjoin root → Elem T
 
 end Hex.NumberTower
 ```
@@ -123,7 +123,7 @@ coordinate arrays. The zero polynomial has scalar zero and an empty factor array
 namespace Hex.NumberTower
 
 /-- Build a one-level tower for the irreducible presentation `ℚ(x)`. -/
-def ofQAdjoin [ZPoly.CheckedIrreducible p]
+def ofPolyQuot [ZPoly.CheckedIrreducible p]
     (hsf : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     Extension rat
@@ -143,7 +143,7 @@ def flatten? (T : NumberTower) : Option (Flattening T)
 end Hex.NumberTower
 ```
 
-`ofQAdjoin` takes squarefreeness explicitly because its returned extension
+`ofPolyQuot` takes squarefreeness explicitly because its returned extension
 stores an `AlgebraicRoot`. Although irreducibility implies squarefreeness in
 characteristic zero, that implication belongs to the Mathlib companion, while
 `HasOnlySimpleRoots p` is already decidable and can be supplied by a
@@ -170,7 +170,7 @@ isomorphic abstract extension but could choose the wrong conjugate.
 The computational layer enforces the invariant through constructor-produced
 certificates:
 
-- `ofQAdjoin` uses its supplied matching `RefinedIsolation`.
+- `ofPolyQuot` uses its supplied matching `RefinedIsolation`.
 - `adjoin?` selects the unique irreducible factor that vanishes at the requested
   `AlgebraicRoot` under the current embedding.
 - `split?` calls `adjoin?` for every new generator.
@@ -188,12 +188,12 @@ and identifies `Elem rat` with `Rat`.
 
 Natural powers are repeated multiplication, integer powers add inversion,
 and `NatCast`, `IntCast` and `OfNat` instances embed integers through
-`ofRat`, so `a ^ 3 = 2` reads as it does for `QAdjoin`.
+`ofRat`, so `a ^ 3 = 2` reads as it does for `PolyQuot`.
 
 The computational layer implements the quotient operations, including
 `inv 0 = 0`. The companion turns the checked factorization evidence into
 semantic irreducibility and proves the field laws, following the quotient-field
-pattern of `QAdjoin` and `hex-gfq-field`.
+pattern of `PolyQuot` and `hex-gfq-field`.
 
 ## Trager factorization
 
@@ -347,7 +347,7 @@ a matrix or a new workflow.
 Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
 
 - Coordinate addition, subtraction, negation, and rational scalar action cost
-  `O(D)` bounded-height rational operations. `ofQAdjoin` constructs and walks
+  `O(D)` bounded-height rational operations. `ofPolyQuot` constructs and walks
   `O(D)` presentation data. Schoolbook multiplication and reduction cost
   `O(D²)` before later fast-arithmetic work.
 - Inversion runs the monic one-sided extended gcd of the top-level coordinate
@@ -460,7 +460,7 @@ HexNumberFieldTower/
   Flatten.lean        : primitive-element conversion
 ```
 
-`Extension` and `ofQAdjoin` live in `Basic.lean` beside the sealed types
+`Extension` and `ofPolyQuot` live in `Basic.lean` beside the sealed types
 whose invariants they establish; `Embed.lean` retains the compiled
 extension regressions exercising them.
 

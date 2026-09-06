@@ -44,7 +44,7 @@ full field arithmetic, totalized by `0⁻¹ = 0`. Only smart constructors can
 admit a level:
 
 - `Hex.NumberTower.rat`: the rational base tower.
-- `Hex.NumberTower.ofQAdjoin`: a one-level tower for an irreducible
+- `Hex.NumberTower.ofPolyQuot`: a one-level tower for an irreducible
   presentation `ℚ(x)`.
 - `Hex.NumberTower.adjoin?`: adjoin a selected absolute algebraic root.
 - `Hex.NumberTower.factor?`: complete irreducible Trager factorization of a
