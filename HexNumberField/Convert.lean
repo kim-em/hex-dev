@@ -28,6 +28,12 @@ namespace Hex
 
 namespace AlgebraicNumber
 
+/-- The minimal polynomial of a canonical algebraic number carries checked
+irreducibility, so `QAdjoin a.p a.x` has inversion and division without the
+evidence being registered by hand. -/
+instance (a : AlgebraicNumber) : ZPoly.CheckedIrreducible a.p :=
+  a.checked
+
 /-- The canonical algebraic number as the fixed-field generator in its own
 minimal-polynomial presentation. -/
 @[expose]

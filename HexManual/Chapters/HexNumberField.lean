@@ -181,14 +181,12 @@ When every computation lives in one field `ℚ(x)`, the coordinates of
 {name}`Hex.QAdjoin` are cheaper than canonical numbers: an element is a
 rational polynomial in `x` reduced modulo the defining polynomial, and
 inversion is an extended gcd. The irreducibility evidence stored in a
-canonical number is what licenses inversion, so it is registered as an
-instance first.
+canonical number is what licenses inversion, and it is found as an instance
+automatically.
 
 ```lean
 def cbrt2 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-2, 0, 0, 1])[0]!
-
-instance : ZPoly.CheckedIrreducible cbrt2.p := cbrt2.checked
 
 def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 
