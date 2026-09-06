@@ -203,8 +203,10 @@ instance (n : Nat) : OfNat (QAdjoin p x) (n + 2)
 
 so numerals such as `2 : QAdjoin p x` denote `(2 : Rat) • 1`, and the
 companion's field structure reuses these casts rather than defining its own.
-`instance : Repr (QAdjoin p x)` prints the reduced coordinates as a rational
-polynomial in the generator `x`, for example `2*x^2`. Inversion requires
+`instance : Coe (DensePoly Rat) (QAdjoin p x)` reduces a rational polynomial,
+so `#p[0, 0, 2]` denotes `2x²` at that type, and
+`instance : Repr (QAdjoin p x)` prints an element as exactly that reduced
+coordinate polynomial, so a printed value can be pasted back. Inversion requires
 `[ZPoly.CheckedIrreducible p]` and uses a monic-normalized polynomial extended
 gcd over `ℚ` to control rational coefficient growth. For the presentation a
 canonical number induces, that evidence is an instance:

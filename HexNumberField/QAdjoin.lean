@@ -114,6 +114,10 @@ instance : SMul Rat (QAdjoin p x) := ⟨smul⟩
 def ofRat (q : Rat) : QAdjoin p x :=
   q • (1 : QAdjoin p x)
 
+/-- A rational polynomial denotes its reduction, so `#p[0, 0, 2]` names the
+element `2x²` when the expected type is `QAdjoin p x`. -/
+instance : Coe (DensePoly Rat) (QAdjoin p x) := ⟨reduce p x⟩
+
 instance : NatCast (QAdjoin p x) := ⟨fun n => ofRat (n : Rat)⟩
 instance : IntCast (QAdjoin p x) := ⟨fun n => ofRat (n : Rat)⟩
 -- Mathlib's generic `OfNat` from `NatCast` has priority 100. Keep this

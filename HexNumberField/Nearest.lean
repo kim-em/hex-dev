@@ -186,10 +186,6 @@ separation. -/
 def digitsFor (mahler : Nat) : Nat :=
   mahler / 3 + 1
 
-/-- An integer polynomial as the literal that rebuilds it. -/
-def polynomialLiteral (p : ZPoly) : String :=
-  "#p[" ++ ", ".intercalate (p.coeffs.toList.map toString) ++ "]"
-
 end Display
 
 /-- A canonical number prints as the expression that rebuilds it:
@@ -206,7 +202,7 @@ instance : Repr AlgebraicNumber where
     let point :=
       if a.isReal then re
       else re ++ " " ++ Display.decimal s.im.toRat digits
-    Std.Format.text s!"ZPoly.rootNear {Display.polynomialLiteral a.p} {point}"
+    Std.Format.text s!"ZPoly.rootNear {repr a.p} {point}"
 
 end AlgebraicNumber
 

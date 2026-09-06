@@ -289,6 +289,11 @@ macro_rules
   | `(#p[$coeffs,*]) =>
       `(Hex.DensePoly.ofCoeffs #[$coeffs,*])
 
+/-- A polynomial prints as the literal that rebuilds it, `#p[a₀, a₁, ...]`. -/
+instance [Repr R] : Repr (DensePoly R) where
+  reprPrec p _ :=
+    "#p[" ++ Std.Format.joinSep (p.coeffs.toList.map repr) ", " ++ "]"
+
 /-- The zero polynomial. -/
 @[expose]
 def zero : DensePoly R :=

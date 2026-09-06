@@ -143,11 +143,10 @@ namespace AlgebraicNumber
 
 end AlgebraicNumber
 
-
-/-- A fixed-field element prints as its reduced coordinates, a rational
-polynomial in the generator `x`. -/
+/-- A fixed-field element prints as its reduced coordinate polynomial,
+`#p[a₀, a₁, ...]`, which rebuilds it through the coercion from
+`DensePoly Rat`. -/
 instance {p : ZPoly} {x : SimpleRoot p} : Repr (QAdjoin p x) where
-  reprPrec a _ :=
-    "#p[" ++ Std.Format.joinSep (a.coeffs.coeffs.toList.map repr) ", " ++ "]"
+  reprPrec a prec := reprPrec a.coeffs prec
 
 end Hex
