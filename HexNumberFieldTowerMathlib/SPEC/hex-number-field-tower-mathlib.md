@@ -77,12 +77,12 @@ injective `ℚ`-algebra homomorphism under its semantic interpretation.
 ## Trager factorization
 
 ```lean
-theorem NumberTower.factor?_sound (T) (f : T.Poly) {r}
-    (h : T.factor? f = some r) :
+theorem NumberTower.factor?_sound {T} (f : Poly T) {r}
+    (h : factor? f = some r) :
     Factorization.Sound T f r
 
-theorem NumberTower.factor?_isSome (T) (f : T.Poly) :
-    (T.factor? f).isSome
+theorem NumberTower.factor?_isSome {T} (f : Poly T) :
+    (factor? f).isSome
 ```
 
 `Factorization.Sound` states reconstruction including the scalar, monicity,
@@ -140,12 +140,12 @@ evaluation-eliminant lower bound for every nonvanishing factor.
 ## Splitting fields
 
 ```lean
-theorem NumberTower.split?_sound (T) (f : T.Poly) {S}
-    (h : T.split? f = some S) :
+theorem NumberTower.split?_sound {T} (f : Poly T) {S}
+    (h : split? f = some S) :
     Splitting.Sound T f S
 
-theorem NumberTower.split?_isSome (T) (f : T.Poly) :
-    (T.split? f).isSome
+theorem NumberTower.split?_isSome {T} (f : Poly T) :
+    (split? f).isSome
 ```
 
 `Splitting.Sound` states that the inclusion preserves coefficients, the mapped
@@ -190,16 +190,16 @@ in the result.
 
 ```lean
 def NumberTower.adjoin (T) (a : AlgebraicRoot) : Extension T
-def NumberTower.factor (T) (f : Poly T) : Factorization T f
-def NumberTower.split (T) (f : Poly T) : Splitting T f
+def NumberTower.factor {T} (f : Poly T) : Factorization T f
+def NumberTower.split {T} (f : Poly T) : Splitting T f
 def NumberTower.flatten (T) : Flattening T
 
 @[simp] theorem NumberTower.adjoin?_eq_some (T) (a) :
     T.adjoin? a = some (T.adjoin a)
-@[simp] theorem NumberTower.factor?_eq_some (T) (f) :
-    T.factor? f = some (T.factor f)
-@[simp] theorem NumberTower.split?_eq_some (T) (f) :
-    T.split? f = some (T.split f)
+@[simp] theorem NumberTower.factor?_eq_some {T} (f) :
+    factor? f = some (factor f)
+@[simp] theorem NumberTower.split?_eq_some {T} (f) :
+    split? f = some (split f)
 @[simp] theorem NumberTower.flatten?_eq_some (T) :
     T.flatten? = some T.flatten
 ```

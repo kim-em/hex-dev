@@ -43,7 +43,7 @@ structure Factorization (T : NumberTower) (f : Poly T) where
 
 /-- Complete irreducible factorization with multiplicity. -/
 @[expose]
-def factor? (T : NumberTower) (f : Poly T) : Option (Factorization T f) := do
+def factor? {T : NumberTower} (f : Poly T) : Option (Factorization T f) := do
   let raw ← Factor.factorRaw? T.levels.toList (f.toArray.map coeffs)
   let scalar := ofCoeffs T raw.scalar
   let factors := raw.factors.map fun factor =>
@@ -75,9 +75,9 @@ private def factorSqrtTwoRoot : SimpleRoot factorSqrtTwoPoly :=
           hsimple factorSqrtTwoRep rfl
         let f : Poly extension.tower := DensePoly.ofCoeffs
           #[ofRat extension.tower (-2), 0, 1]
-        match factor? extension.tower f,
-            factor? extension.tower 0,
-            factor? extension.tower (DensePoly.C (ofRat extension.tower 5)) with
+        match factor? f,
+            factor? (0 : Poly extension.tower),
+            factor? (DensePoly.C (ofRat extension.tower 5)) with
         | some result, some zeroResult, some constantResult =>
             result.factors.size = 2 &&
               coeffs result.scalar = #[1, 0] &&

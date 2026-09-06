@@ -1104,7 +1104,7 @@ private theorem candidateFold_shape (T : NumberTower)
 
 private theorem candidate?_isSome (T : NumberTower)
     (generators : Array (Generator T)) :
-    (candidate? T generators).isSome := by
+    (candidate? generators).isSome := by
   unfold candidate?
   cases hfirst : generators[0]? with
   | none => simp
@@ -1117,7 +1117,7 @@ private theorem candidate?_isSome (T : NumberTower)
 
 private theorem candidate?_shape (T : NumberTower)
     (generators : Array (Generator T)) {candidate : Candidate T}
-    (h : candidate? T generators = some candidate) :
+    (h : candidate? generators = some candidate) :
     candidate.dimension =
         (generators.toList.map Generator.degree).prod ∧
       candidate.coordinates.size = generators.size := by
@@ -1170,7 +1170,7 @@ private theorem candidate?_shape (T : NumberTower)
 private theorem candidate?_matches (T : NumberTower)
     (generators : Array (Generator T))
     (hgenerators : ∀ generator ∈ generators.toList, generator.Matches)
-    {candidate : Candidate T} (h : candidate? T generators = some candidate) :
+    {candidate : Candidate T} (h : candidate? generators = some candidate) :
     candidate.Matches := by
   unfold candidate? at h
   cases hfirst : generators[0]? with
@@ -1201,7 +1201,7 @@ private theorem candidate?_matches (T : NumberTower)
 
 private theorem candidate?_represents (T : NumberTower)
     (generators : Array (Generator T)) {candidate : Candidate T}
-    (h : candidate? T generators = some candidate) :
+    (h : candidate? generators = some candidate) :
     candidate.Represents generators.toList := by
   unfold candidate? at h
   cases hfirst : generators[0]? with
@@ -1711,7 +1711,7 @@ private theorem toPrimitiveWith_unit {T : NumberTower} {p : ZPoly}
 private theorem basisImages_complex (T : NumberTower)
     (generators : Array (Generator T)) (candidate : Candidate T)
     (hgenerators : generators? T = some generators)
-    (hcandidate : candidate? T generators = some candidate)
+    (hcandidate : candidate? generators = some candidate)
     (index : Nat) (hindex : index < T.dim) :
     PolyQuot.toComplex
         (basisImages generators candidate.coordinates |>.getD index 0)
@@ -1765,7 +1765,7 @@ private theorem basisImages_complex (T : NumberTower)
 private theorem constructed_basis_roundtrip (T : NumberTower)
     (generators : Array (Generator T)) (candidate : Candidate T)
     (hgenerators : generators? T = some generators)
-    (hcandidate : candidate? T generators = some candidate)
+    (hcandidate : candidate? generators = some candidate)
     (index : Nat) (hindex : index < T.dim) :
     fromPrimitiveWith candidate.value
         (toPrimitiveWith (basisImages generators candidate.coordinates)

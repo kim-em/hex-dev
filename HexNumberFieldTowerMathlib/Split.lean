@@ -166,7 +166,7 @@ private theorem primitivePart_isRoot (p : DensePoly Rat) (hp : p ≠ 0)
   exact (mul_eq_zero.mp hz).resolve_left (by exact_mod_cast hunitNe)
 
 private theorem retainRoots?_isSome (T : NumberTower) (f : Poly T) :
-    ∀ candidates, (retainRoots? T f candidates).isSome := by
+    ∀ candidates, (retainRoots? f candidates).isSome := by
   intro candidates
   induction candidates with
   | nil => rfl
@@ -179,9 +179,9 @@ private theorem retainRoots?_isSome (T : NumberTower) (f : Poly T) :
 
 private theorem retainRoots?_sound (T : NumberTower) (f : Poly T) :
     ∀ candidates retained,
-      retainRoots? T f candidates = some retained →
+      retainRoots? f candidates = some retained →
       ∀ candidate ∈ retained,
-        Evaluation.vanishesAt? T f candidate = some true := by
+        Evaluation.vanishesAt? f candidate = some true := by
   intro candidates
   induction candidates with
   | nil =>
@@ -212,8 +212,8 @@ private theorem retainRoots?_sound (T : NumberTower) (f : Poly T) :
 private theorem retainRoots?_complete (T : NumberTower) (f : Poly T) :
     ∀ candidates candidate retained,
       candidate ∈ candidates →
-      Evaluation.vanishesAt? T f candidate = some true →
-      retainRoots? T f candidates = some retained →
+      Evaluation.vanishesAt? f candidate = some true →
+      retainRoots? f candidates = some retained →
       candidate ∈ retained := by
   intro candidates
   induction candidates with
@@ -248,7 +248,7 @@ private theorem retainRoots?_complete (T : NumberTower) (f : Poly T) :
 /-- A root returned by the absolute eliminant filter is a root of the input
 tower polynomial in the fixed embedding. -/
 theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
-    {candidate : AlgebraicRoot} (h : factorRoot? T f = some candidate) :
+    {candidate : AlgebraicRoot} (h : factorRoot? f = some candidate) :
     Polynomial.eval candidate.toComplex (T.toPolynomial f) = 0 := by
   unfold factorRoot? at h
   dsimp only at h
@@ -260,8 +260,8 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
       next hdegree =>
         split at h
         next hsimple =>
-          cases hisolate : isolate (factorEliminant T f) hsimple
-              (separationDepth (factorEliminant T f) : Int) with
+          cases hisolate : isolate (factorEliminant f) hsimple
+              (separationDepth (factorEliminant f) : Int) with
           | none => simp [hisolate] at h
           | some isolations =>
               rw [hisolate] at h
@@ -273,8 +273,8 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
                   rw [hrefined] at h
                   simp only [Option.bind_some] at h
                   let candidates := refined.toList.map
-                    fun rep : RefinedIsolation (factorEliminant T f) =>
-                      ({ p := factorEliminant T f
+                    fun rep : RefinedIsolation (factorEliminant f) =>
+                      ({ p := factorEliminant f
                          prim := hprim
                          pos_lc := hpos
                          pos_degree := hdegree
@@ -282,7 +282,7 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
                          x := SimpleRoot.mk rep
                          rep
                          rep_mk := rfl } : AlgebraicRoot)
-                  cases hretained : retainRoots? T f candidates with
+                  cases hretained : retainRoots? f candidates with
                   | none => simp [candidates, hretained] at h
                   | some retained =>
                       rw [show refined.toList.map _ = candidates by rfl,
@@ -306,7 +306,7 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
 its iterated-norm eliminant. -/
 theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
     (hdegreeF : 0 < f.degree?.getD 0) :
-    (factorRoot? T f).isSome := by
+    (factorRoot? f).isSome := by
   have hf : f ≠ 0 := by
     intro hzero
     subst f
@@ -343,36 +343,36 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
       (HexRootsMathlib.toPolyℂ primitive).IsRoot z :=
     primitivePart_isRoot absolute habsolute habsoluteRoot
   have hcoreRoot :
-      (HexRootsMathlib.toPolyℂ (factorEliminant T f)).IsRoot z := by
+      (HexRootsMathlib.toPolyℂ (factorEliminant f)).IsRoot z := by
     simpa [factorEliminant, absolute, primitive] using
       HexPolyZMathlib.isRoot_squareFreeCore hprimitive hprimitiveRoot
-  have hcoreNe : factorEliminant T f ≠ 0 := by
+  have hcoreNe : factorEliminant f ≠ 0 := by
     simpa [factorEliminant, absolute, primitive] using
       ZPoly.squareFreeCore_ne_zero primitive hprimitive
-  have hprim : ZPoly.content (factorEliminant T f) = 1 := by
+  have hprim : ZPoly.content (factorEliminant f) = 1 := by
     simpa [factorEliminant, absolute, primitive, ZPoly.Primitive] using
       ZPoly.squareFreeCore_primitive primitive hprimitive
-  have hpos : 0 < (factorEliminant T f).leadingCoeff := by
+  have hpos : 0 < (factorEliminant f).leadingCoeff := by
     simpa [factorEliminant, absolute, primitive] using
       ZPoly.leadingCoeff_squareFreeCore_pos primitive hprimitive
-  have hsimple : HasOnlySimpleRoots (factorEliminant T f) := by
+  have hsimple : HasOnlySimpleRoots (factorEliminant f) := by
     simpa [factorEliminant, absolute, primitive, HasOnlySimpleRoots] using
       ZPoly.squareFreeRat_squareFreeCore primitive hprimitive
-  have hcoreSize : (factorEliminant T f).size ≠ 0 := by
+  have hcoreSize : (factorEliminant f).size ≠ 0 := by
     intro hsize
     exact hcoreNe ((DensePoly.size_eq_zero_iff _).mp hsize)
-  have hdegree : 0 < (factorEliminant T f).degree?.getD 0 := by
+  have hdegree : 0 < (factorEliminant f).degree?.getD 0 := by
     by_contra hnot
     exact HexRootsMathlib.not_isRoot_of_degree_not_pos
-      (factorEliminant T f) hcoreSize hnot z hcoreRoot
+      (factorEliminant f) hcoreSize hnot z hcoreRoot
   unfold factorRoot?
   dsimp only
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   have hisolateSome := HexRootsMathlib.isolate_isSome
-    (factorEliminant T f) hsimple hcoreNe
-    (separationDepth (factorEliminant T f) : Int) .nkThenPellet
-  cases hisolate : isolate (factorEliminant T f) hsimple
-      (separationDepth (factorEliminant T f) : Int) with
+    (factorEliminant f) hsimple hcoreNe
+    (separationDepth (factorEliminant f) : Int) .nkThenPellet
+  cases hisolate : isolate (factorEliminant f) hsimple
+      (separationDepth (factorEliminant f) : Int) with
   | none => simp [hisolate] at hisolateSome
   | some isolations =>
       simp only [Option.bind_eq_bind, Option.bind_some]
@@ -381,8 +381,8 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
           rw [dite_eq_left (HexRootsMathlib.isolate_refined
-            (factorEliminant T f) hsimple
-            (separationDepth (factorEliminant T f) : Int)
+            (factorEliminant f) hsimple
+            (separationDepth (factorEliminant f) : Int)
             .nkThenPellet hisolate iso hiso)]
           rfl)
       cases hrefined : isolations.mapM
@@ -392,8 +392,8 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
           simp only [Option.bind_some]
           obtain ⟨iso, hiso, hisoRoot⟩ :=
             HexRootsMathlib.isolate_root_mem_of_pos
-              (factorEliminant T f) hsimple
-              (separationDepth (factorEliminant T f) : Int)
+              (factorEliminant f) hsimple
+              (separationDepth (factorEliminant f) : Int)
               .nkThenPellet hdegree hisolate hcoreRoot
           obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
           have hi : i < isolations.size := by simpa using hiList
@@ -416,7 +416,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
             rw [hrawIso, harrIso]
             exact hisoRoot
           let candidate : AlgebraicRoot :=
-            { p := factorEliminant T f
+            { p := factorEliminant f
               prim := hprim
               pos_lc := hpos
               pos_degree := hdegree
@@ -430,12 +430,12 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
               (T.toPolynomial f) = 0 := by
             rw [hcandidateValue]
             exact hz
-          have htrue : Evaluation.vanishesAt? T f candidate = some true :=
+          have htrue : Evaluation.vanishesAt? f candidate = some true :=
             (Evaluation.vanishesAt?_eq_some_true_iff
               T f candidate).mpr hcandidateZero
           let candidates := refined.toList.map
-            fun rep : RefinedIsolation (factorEliminant T f) =>
-              ({ p := factorEliminant T f
+            fun rep : RefinedIsolation (factorEliminant f) =>
+              ({ p := factorEliminant f
                  prim := hprim
                  pos_lc := hpos
                  pos_degree := hdegree
@@ -1255,7 +1255,7 @@ private theorem linearSplitting_sound {T : NumberTower} {f : Poly T}
 private theorem splitAux_isSome (T : NumberTower) (f : Poly T)
     (fuel : Nat) (hf : T.toPolynomial f ≠ 0)
     (hbound : (missingRoots T f).card ≤ fuel) :
-    (splitAux T f fuel).isSome := by
+    (splitAux f fuel).isSome := by
   induction fuel generalizing T f with
   | zero =>
       obtain ⟨factorization, hfactorization⟩ :=
@@ -1352,7 +1352,7 @@ private theorem splitAux_isSome (T : NumberTower) (f : Poly T)
 
 private theorem splitAux_sound (T : NumberTower) (f : Poly T)
     (fuel : Nat) (hf : T.toPolynomial f ≠ 0)
-    {S : Splitting T f} (h : splitAux T f fuel = some S) :
+    {S : Splitting T f} (h : splitAux f fuel = some S) :
     S.Sound := by
   induction fuel generalizing T f S with
   | zero =>
@@ -1462,7 +1462,7 @@ private theorem constantSplitting_sound {T : NumberTower} {f : Poly T}
 /-- Every returned split payload reconstructs the input and generates the
 result extension from the listed roots. -/
 theorem split?_sound (T : NumberTower) (f : Poly T)
-    {S : Splitting T f} (h : T.split? f = some S) :
+    {S : Splitting T f} (h : split? f = some S) :
     S.Sound := by
   unfold split? at h
   split at h
@@ -1494,7 +1494,7 @@ theorem split?_sound (T : NumberTower) (f : Poly T)
 
 /-- The bounded split/refactor loop succeeds for every tower polynomial. -/
 theorem split?_isSome (T : NumberTower) (f : Poly T) :
-    (T.split? f).isSome := by
+    (split? f).isSome := by
   unfold split?
   split
   · rfl

@@ -25,20 +25,20 @@ namespace Evaluation
 /-- Successful executable evaluation of tower coordinates preserves their
 fixed complex value. -/
 theorem evalElem?_sound (T : NumberTower) (a : Elem T)
-    {root : AlgebraicRoot} (h : evalElem? T a = some root) :
+    {root : AlgebraicRoot} (h : evalElem? a = some root) :
     root.toComplex = T.toComplex a := by
   exact (toComplex_eq T a h).symm
 
 /-- Coordinate evaluation succeeds for every validated tower element. -/
 theorem evalElem?_isSome (T : NumberTower) (a : Elem T) :
-    (evalElem? T a).isSome := by
+    (evalElem? a).isSome := by
   simpa [NumberTower.eval?, evalElem?] using eval?_isSome T a
 
 /-- Successful exact tower-polynomial evaluation agrees with semantic
 polynomial evaluation. -/
 theorem evalPoly?_sound (T : NumberTower) (f : Poly T)
     (candidate result : AlgebraicRoot)
-    (h : evalPoly? T f candidate = some result) :
+    (h : evalPoly? f candidate = some result) :
     result.toComplex =
       Polynomial.eval candidate.toComplex (T.toPolynomial f) := by
   rw [toPolynomial_eq_polynomial]
@@ -49,14 +49,14 @@ theorem evalPoly?_sound (T : NumberTower) (f : Poly T)
 polynomial. -/
 theorem vanishesAt?_isSome (T : NumberTower) (f : Poly T)
     (candidate : AlgebraicRoot) :
-    (vanishesAt? T f candidate).isSome := by
+    (vanishesAt? f candidate).isSome := by
   exact rawVanishesAt_isSome T.levels.toList (f.toArray.map coeffs)
     candidate (polyCoords_rawPoly T f)
 
 /-- The total public zero test returns `true` exactly at a semantic root. -/
 theorem vanishesAt?_eq_some_true_iff (T : NumberTower) (f : Poly T)
     (candidate : AlgebraicRoot) :
-    vanishesAt? T f candidate = some true ↔
+    vanishesAt? f candidate = some true ↔
       Polynomial.eval candidate.toComplex (T.toPolynomial f) = 0 := by
   constructor
   · intro h
@@ -321,10 +321,10 @@ private theorem selectFold_no_match (T : NumberTower)
     ∀ (items : List (Poly T × Nat)) (state : Array (Poly T)),
       (∀ entry ∈ items, entry.2 = 1) →
       (∀ entry ∈ items,
-        Evaluation.vanishesAt? T entry.1 candidate = some false) →
+        Evaluation.vanishesAt? entry.1 candidate = some false) →
       items.foldlM (fun selected entry => do
         if entry.2 = 1 then
-          let keep ← Evaluation.vanishesAt? T entry.1 candidate
+          let keep ← Evaluation.vanishesAt? entry.1 candidate
           if keep then some (selected.push entry.1) else some selected
         else
           none) state = some state
@@ -346,12 +346,12 @@ private theorem selectFold_unique (T : NumberTower)
     ∀ (items : List (Poly T × Nat)) (state : Array (Poly T)),
       items.Nodup → chosen ∈ items →
       (∀ entry ∈ items, entry.2 = 1) →
-      Evaluation.vanishesAt? T chosen.1 candidate = some true →
+      Evaluation.vanishesAt? chosen.1 candidate = some true →
       (∀ entry ∈ items, entry ≠ chosen →
-        Evaluation.vanishesAt? T entry.1 candidate = some false) →
+        Evaluation.vanishesAt? entry.1 candidate = some false) →
       items.foldlM (fun selected entry => do
         if entry.2 = 1 then
-          let keep ← Evaluation.vanishesAt? T entry.1 candidate
+          let keep ← Evaluation.vanishesAt? entry.1 candidate
           if keep then some (selected.push entry.1) else some selected
         else
           none) state = some (state.push chosen.1)
@@ -391,9 +391,9 @@ private theorem selectFactor?_complete (T : NumberTower)
     (chosen : Poly T × Nat)
     (hnodup : factors.toList.Nodup) (hchosen : chosen ∈ factors.toList)
     (hmult : ∀ entry ∈ factors.toList, entry.2 = 1)
-    (htrue : Evaluation.vanishesAt? T chosen.1 candidate = some true)
+    (htrue : Evaluation.vanishesAt? chosen.1 candidate = some true)
     (hfalse : ∀ entry ∈ factors.toList, entry ≠ chosen →
-      Evaluation.vanishesAt? T entry.1 candidate = some false) :
+      Evaluation.vanishesAt? entry.1 candidate = some false) :
     selectFactor? T candidate factors = some chosen.1 := by
   have hfold := selectFold_unique T candidate chosen factors.toList #[]
     hnodup hchosen hmult htrue hfalse
@@ -494,14 +494,14 @@ private theorem selectFold_mem (T : NumberTower)
     (state out : Array (Poly T))
     (hrun : items.foldlM (fun selected entry => do
       if entry.2 = 1 then
-        let keep ← Evaluation.vanishesAt? T entry.1 candidate
+        let keep ← Evaluation.vanishesAt? entry.1 candidate
         if keep then some (selected.push entry.1) else some selected
       else
         none) state = some out) {p : Poly T} (hp : p ∈ out.toList) :
     p ∈ state.toList ∨
       ∃ entry ∈ items, entry.1 = p ∧
         entry.2 = 1 ∧
-        Evaluation.vanishesAt? T entry.1 candidate = some true := by
+        Evaluation.vanishesAt? entry.1 candidate = some true := by
   induction items generalizing state with
   | nil =>
       simp only [List.foldlM_nil, Option.pure_def, Option.some.injEq] at hrun
@@ -510,14 +510,14 @@ private theorem selectFold_mem (T : NumberTower)
   | cons entry items ih =>
       rw [List.foldlM_cons] at hrun
       by_cases hmult : entry.2 = 1
-      · cases hvanish : Evaluation.vanishesAt? T entry.1 candidate with
+      · cases hvanish : Evaluation.vanishesAt? entry.1 candidate with
         | none => simp [hmult, hvanish] at hrun
         | some keep =>
             cases keep with
             | false =>
                 have htail : items.foldlM (fun selected entry => do
                     if entry.2 = 1 then
-                      let keep ← Evaluation.vanishesAt? T entry.1 candidate
+                      let keep ← Evaluation.vanishesAt? entry.1 candidate
                       if keep then some (selected.push entry.1)
                       else some selected
                     else none) state = some out := by
@@ -528,7 +528,7 @@ private theorem selectFold_mem (T : NumberTower)
             | true =>
                 have htail : items.foldlM (fun selected entry => do
                     if entry.2 = 1 then
-                      let keep ← Evaluation.vanishesAt? T entry.1 candidate
+                      let keep ← Evaluation.vanishesAt? entry.1 candidate
                       if keep then some (selected.push entry.1)
                       else some selected
                     else none) (state.push entry.1) = some out := by
@@ -547,7 +547,7 @@ private theorem selectFactor?_source (T : NumberTower)
     (candidate : AlgebraicRoot) (factors : Array (Poly T × Nat))
     {selected : Poly T} (h : selectFactor? T candidate factors = some selected) :
     ∃ entry ∈ factors.toList, entry.1 = selected ∧ entry.2 = 1 ∧
-      Evaluation.vanishesAt? T entry.1 candidate = some true := by
+      Evaluation.vanishesAt? entry.1 candidate = some true := by
   unfold selectFactor? at h
   obtain ⟨retained, hfold, hmatch⟩ := Option.bind_eq_some_iff.mp h
   cases hretained : retained.toList with
@@ -833,13 +833,13 @@ theorem adjoin?_isSome (T : NumberTower) (candidate : AlgebraicRoot) :
     apply (factor_fsts_pairwise factorization hsound).imp
     intro a b hfst hab
     exact hfst (congrArg Prod.fst hab)
-  have htrue : Evaluation.vanishesAt? T chosen.1 candidate =
+  have htrue : Evaluation.vanishesAt? chosen.1 candidate =
       some true :=
     (Evaluation.vanishesAt?_eq_some_true_iff
       T chosen.1 candidate).mpr hzero
   have hfalse : ∀ entry ∈ factorization.factors.toList,
       entry ≠ chosen →
-      Evaluation.vanishesAt? T entry.1 candidate = some false := by
+      Evaluation.vanishesAt? entry.1 candidate = some false := by
     intro entry hentry hne
     obtain ⟨keep, hkeep⟩ := Option.isSome_iff_exists.mp
       (Evaluation.vanishesAt?_isSome T entry.1 candidate)
