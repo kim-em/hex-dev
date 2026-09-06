@@ -309,11 +309,10 @@ log: that is the step reporting a missing secret or variable rather than
 failing, so an unprovisioned repository is quiet rather than red.
 
 Changing the publish step means changing `released-ci.yml`, which the sync can
-only deliver once the publishing tokens carry the Workflows permission (see
-"Publishing a new library: widen a token first"). While that approval is
-pending, syncs still succeed because the workflow text is unchanged and nothing
-is pushed; the first sync that actually rewrites a mirror's workflow is the one
-that needs it.
+only deliver while the publishing tokens carry the Workflows permission (see
+"Publishing a new library: widen a token first"). A sync whose workflow text is
+unchanged pushes no workflow file and so never exercises that permission, which
+is worth remembering when diagnosing the first sync after a workflow change.
 
 ### Publishing a new library: widen a token first
 
