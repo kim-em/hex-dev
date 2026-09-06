@@ -60,10 +60,11 @@ tag := "hex-number-field-tower-adjoin"
 
 Every tower starts from {name}`Hex.NumberTower.rat`, the tower with no
 extensions, whose elements are the rational numbers. Adjoining an algebraic
-number to it with {name}`Hex.NumberTower.adjoin?` returns an extension that
-carries the new tower, its generator `gen`, and the inclusion `embed` of the
-field below. Coordinates in `ℚ(√2)` are the pair `#[a, b]` standing for
-`a + b√2`:
+number to a tower `T` returns an {name}`Hex.NumberTower.Extension` of `T`: the
+new tower, the adjoined generator `gen` as an element of it, and the inclusion
+`embed` of the elements of `T`. The type `Extension T` names `T` because
+`embed` is a function out of `Elem T`. Coordinates in `ℚ(√2)` are the pair
+`#[a, b]` standing for `a + b√2`:
 
 ```lean
 open Hex Hex.NumberTower
@@ -110,11 +111,12 @@ def gMinus : Poly T2 := #p[-1, (-2 : Rat) • r2, 1]
 
 #guard gPlus * gMinus = quartic
 
+-- A factorization pairs each factor with its multiplicity.
 #guard
   let F := factor T2 quartic
   coeffs F.scalar = #[1, 0] &&
-    F.factors.all (fun g => g.2 = 1) &&
-    F.factors.map (·.1) == #[gMinus, gPlus]
+    F.factors.all (fun (_, m) => m = 1) &&
+    F.factors.map (fun (g, _) => g) == #[gMinus, gPlus]
 ```
 
 At each level `K(α)/K` the method searches a fixed list of integer shifts for
@@ -152,10 +154,23 @@ def finiteRoots {T : NumberTower} :
           coeffs (r.1 * r.1) = #[3, 0, 0, 0])
 ```
 
-Building the same field by hand, `ℚ(√2)(√3)`, and flattening it recovers the
-classical primitive element: `√2 + √3` generates the field, its minimal
-polynomial is the quartic above, and `√2 = (γ³ − 9γ)/2` in terms of the
-generator `γ`:
+Building the same field by hand, `ℚ(√2)(√3)`, gives a tower whose elements
+have coordinates over two successive generators. Arithmetic there is
+coordinate arithmetic: a power of `√2 + √3` costs a few multiplications of
+coordinate vectors, whereas the same power of the canonical
+{name}`Hex.AlgebraicNumber` recomputes a minimal polynomial at every step.
+{name}`Hex.NumberTower.flatten` is the primitive element theorem as a
+function. It returns a {name}`Hex.NumberTower.Flattening`: a single algebraic
+number `γ` generating the whole tower, and the coordinate changes between the
+tower and the field `ℚ(γ)`:
+
+```lean (show := false)
+example (T : NumberTower) : Flattening T := flatten T
+```
+
+Here `γ` has the quartic above as minimal polynomial, so it is `±√2 ± √3`, and
+`√2 = (γ³ − 9γ)/2` in terms of it. Converting a tower element through the
+flattening and then to a canonical number agrees with computing directly:
 
 ```lean
 def Q23 : Extension T2 := adjoin T2 sqrt3.toRoot
@@ -164,14 +179,15 @@ def s2 : Elem T23 := Q23.embed r2
 def s3 : Elem T23 := Q23.gen
 
 #guard T23.dim = 4
-#guard (s2 + s3) * (s2 - s3) = ofRat T23 (-1)
+#guard (s2 + s3) * (s2 - s3) = -1
 
-#guard
-  let F := flatten T23
-  F.root.p = #p[1, 0, -10, 0, 1] &&
-    (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2] &&
-    (F.toPrimitive s3).coeffs = #p[0, 11 / 2, 0, -1 / 2] &&
-    F.fromPrimitive (F.toPrimitive s3) == s3
+def F : Flattening T23 := flatten T23
+
+#guard F.root.p = #p[1, 0, -10, 0, 1]
+#guard (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2]
+#guard F.fromPrimitive (F.toPrimitive s3) == s3
+#guard (F.toPrimitive ((s2 + s3) ^ 10)).toAlgebraicNumber
+    F.root.rep F.root.rep_mk == (sqrt2 + sqrt3) ^ 10
 
 end HexNumberFieldTowerChapter
 ```
