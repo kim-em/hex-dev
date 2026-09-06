@@ -189,7 +189,7 @@ def F : Flattening T23 := flatten T23
 -- (√2 + √3)^10 = 47525 + 19402√6 over the basis 1, √2, √3, √6.
 #guard coeffs ((s2 + s3) ^ 10) = #[47525, 0, 0, 19402]
 #guard (F.toPrimitive ((s2 + s3) ^ 10)).toAlgebraicNumber
-    F.root.rep F.root.rep_mk == (sqrt2 + sqrt3) ^ 10
+    F.root.rep F.root.rep_mk == AlgebraicNumber.natPow (sqrt2 + sqrt3) 10
 
 end HexNumberFieldTowerChapter
 ```

@@ -193,7 +193,18 @@ def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 #guard c ^ 3 = 2
 #guard c⁻¹ = c * c / 2
 #guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk == cbrt2
+```
 
+An element prints as its coordinates, a rational polynomial in the generator:
+
+```lean (name := cbrt2Pow)
+#eval c ^ 5
+```
+```leanOutput cbrt2Pow
+2*x^2
+```
+
+```lean -show
 end HexNumberFieldChapter
 ```
 
