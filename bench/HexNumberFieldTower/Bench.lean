@@ -357,7 +357,7 @@ private def getCandidateInput : IO CandidateInput := do
       let generators ← requireSome "flatten/candidate-fixture"
         (Flatten.generators? tower.extension.tower)
       let candidate ← requireSome "flatten/candidate-fixture"
-        (Flatten.candidate? tower.extension.tower generators)
+        (Flatten.candidate? generators)
       let input : CandidateInput := ⟨tower, generators, candidate⟩
       candidateInputRef.set (some input)
       pure input
