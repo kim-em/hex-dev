@@ -35,6 +35,53 @@ PUBLIC=https://pub-1ad7cebeb89e49d5afe6887b57e7956a.r2.dev
 ARTIFACT_ENDPOINT_PUBLIC="$PUBLIC/artifacts"
 REVISION_ENDPOINT_PUBLIC="$PUBLIC/revisions"
 
+# Printed whenever the token is missing. R2 shows a secret key once and never
+# again, so a lost file is not recoverable: it means minting a new token. Anyone
+# who hits this, including an agent driving the script, gets the whole procedure
+# here rather than having to find it.
+no_token() {
+  cat <<TXT
+No R2 token found. Looked at \$HEX_LAKE_CACHE_KEY and $KEY_FILE.
+
+If the file was lost, the token cannot be recovered: Cloudflare shows an R2
+secret key once. Mint a new one. The old one can keep working, or be deleted
+from the same screen; a bucket may have several.
+
+  1. Cloudflare dashboard -> R2 -> Manage R2 API Tokens -> Create API token.
+  2. Name it something like hex-cache-ci.
+  3. Permissions: Object Read & Write. Not Admin: publishing only ever puts and
+     gets objects, and never creates or deletes a bucket.
+  4. Apply to specific buckets only -> $BUCKET. The default is every bucket in
+     the account, which is more than this needs.
+  5. Leave the TTL forever and client IP filtering empty; GitHub runners have no
+     stable egress addresses.
+  6. Create, then copy both the Access Key ID and the Secret Access Key.
+
+Store it, in a normal shell rather than through an agent, so the secret does not
+land in a transcript:
+
+  mkdir -p "\$(dirname "$KEY_FILE")" && chmod 700 "\$(dirname "$KEY_FILE")"
+  printf '%s' 'ACCESS_KEY_ID:SECRET_ACCESS_KEY' > $KEY_FILE
+  chmod 600 $KEY_FILE
+
+The colon-joined form is what Lake hands to \`curl --user\` (uploadS3 in
+Lake/Config/Cache.lean).
+
+Check it before provisioning 57 repositories with it. Both must print 200, and
+the second must print the body 'probe':
+
+  KEY=\$(< $KEY_FILE)
+  echo probe > /tmp/probe.txt
+  curl -s -o /dev/null -w 'PUT %{http_code}\\n' --aws-sigv4 aws:amz:auto:s3 \\
+    --user "\$KEY" -X PUT -T /tmp/probe.txt \\
+    $ARTIFACT_ENDPOINT/_probe.txt
+  curl -s -w ' GET %{http_code}\\n' $ARTIFACT_ENDPOINT_PUBLIC/_probe.txt
+
+A 403 on the PUT means the token is scoped to the wrong bucket or was created
+read-only. Then re-run this script.
+TXT
+}
+
 check_only=false
 [[ ${1:-} == "--check" ]] && check_only=true
 
@@ -55,12 +102,15 @@ if ! $check_only; then
   fi
   key=${key%%[$'\n\r']*}
   if [[ -z "$key" ]]; then
-    echo "no token: set HEX_LAKE_CACHE_KEY or write it to $KEY_FILE" >&2
-    echo "(an R2 token as <ACCESS_KEY_ID>:<SECRET_ACCESS_KEY>)" >&2
+    no_token >&2
     exit 2
   fi
   if [[ "$key" != *:* ]]; then
-    echo "token is not in <ACCESS_KEY_ID>:<SECRET_ACCESS_KEY> form" >&2
+    echo "The token in $KEY_FILE is not in <ACCESS_KEY_ID>:<SECRET_ACCESS_KEY> form." >&2
+    echo "Lake passes it straight to \`curl --user\`, so it must be the two halves" >&2
+    echo "joined by a colon, with no spaces or newline." >&2
+    echo >&2
+    no_token >&2
     exit 2
   fi
 fi
@@ -96,7 +146,11 @@ for repo in "${repos[@]}"; do
     printf '%s' "$key" | gh secret set "$SECRET_NAME" --repo "$repo" >/dev/null
     changed+=" secret"
   fi
-  echo "${changed:+set$changed  }${changed:-ok           }$repo"
+  if [[ -n "$changed" ]]; then
+    printf 'set%-22s %s\n' "$changed" "$repo"
+  else
+    printf '%-25s %s\n' "already provisioned" "$repo"
+  fi
 done
 
 if $check_only && (( missing )); then
