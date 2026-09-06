@@ -75,15 +75,18 @@ def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
 #guard (ZPoly.algebraicRoots #p[-2, 0, 1]).size = 2
-#guard sqrt2 * sqrt2 == 2
+#guard sqrt2 * sqrt2 = 2
 #guard (sqrt2 + sqrt3).p = #p[1, 0, -10, 0, 1]
-#guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
+#guard (sqrt2 + sqrt3)⁻¹ = sqrt3 - sqrt2
 ```
 
 The field `p` of a canonical number is its minimal polynomial, so the third
 check is the classical fact that `√2 + √3` has minimal polynomial
-`X⁴ − 10X² + 1`, and the fourth is `1 / (√2 + √3) = √3 − √2`. Printing a
-number shows that polynomial and twelve decimals of a certified approximation:
+`X⁴ − 10X² + 1`, and the fourth is `1 / (√2 + √3) = √3 − √2`. Equality of
+canonical numbers is decidable. Without the Mathlib companion, compare with
+`==`, the executable test; with it, `=` is available too, because the
+companion proves that the test is correct. Printing a number shows that
+polynomial and twelve decimals of a certified approximation:
 
 ```lean (name := sqrtSumEval)
 #eval sqrt2 + sqrt3
@@ -99,8 +102,8 @@ its reciprocal, and the tenth Lucas number all fall out of decidable equality:
 def φ : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-1, -1, 1])[1]!
 
-#guard φ * φ == φ + 1
-#guard φ⁻¹ == φ - 1
+#guard φ * φ = φ + 1
+#guard φ⁻¹ = φ - 1
 -- φ¹⁰ + φ⁻¹⁰ is the Lucas number L₁₀ = 123, so φ¹⁰ is a
 -- root of X² − 123X + 1.
 #guard (φ ^ (10 : Nat)).p = #p[1, -123, 1]
@@ -130,7 +133,7 @@ def lazyProduct : AlgebraicRoot :=
 
 #guard lazyProduct.p = #p[-4, 0, 1]
 #guard lazyProduct.exact.p = #p[-2, 1]
-#guard lazyProduct.exact == 2
+#guard lazyProduct.exact = 2
 ```
 
 A chain of lazy operations therefore costs a chain of resultants and one
@@ -192,7 +195,7 @@ def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 
 #guard c ^ 3 = 2
 #guard c⁻¹ = c * c / 2
-#guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk == cbrt2
+#guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk = cbrt2
 ```
 
 An element prints as its coordinates, a rational polynomial in the generator:

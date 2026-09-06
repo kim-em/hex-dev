@@ -36,9 +36,10 @@ def sqrt2 : AlgebraicNumber :=
 def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
--- Arithmetic is exact and equality is decidable; `p` is the
--- minimal polynomial.
+-- Arithmetic is exact; `p` is the minimal polynomial.
 #guard (sqrt2 + sqrt3).p = #p[1, 0, -10, 0, 1]
+-- Equality is decidable. Without the Mathlib companion,
+-- compare with `==`; with it, `=` works too.
 #guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
 
 /-- info: root of X^4 - 10*X^2 + 1 near 3.146264369941 -/
