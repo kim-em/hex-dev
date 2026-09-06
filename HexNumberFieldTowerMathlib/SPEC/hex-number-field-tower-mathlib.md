@@ -52,7 +52,7 @@ For every validated level, prove:
 
 This is the central invariant. Irreducibility proves the quotient is a field;
 the zero evaluation proves that its chosen embedding is the intended conjugate.
-The private-constructor policy means induction over `rat`, `ofQAdjoin`, and
+The private-constructor policy means induction over `rat`, `ofPolyQuot`, and
 successful `adjoin?`/`split?` results suffices.
 
 ## Arithmetic correspondence
@@ -170,7 +170,7 @@ theorem NumberTower.flatten?_isSome (T) :
 
 theorem NumberTower.flatten_toComplex (T) {F}
     (h : T.flatten? = some F) (a : T.Elem) :
-    QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
+    PolyQuot.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
       T.toComplex a
 ```
 
