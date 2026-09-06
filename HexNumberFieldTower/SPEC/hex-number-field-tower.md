@@ -132,16 +132,24 @@ def ofPolyQuot [ZPoly.CheckedIrreducible p]
 def adjoin? (T : NumberTower) (a : AlgebraicRoot) : Option (Extension T)
 
 /-- Complete irreducible factorization with multiplicity. -/
-def factor? (T : NumberTower) (f : Poly T) : Option (Factorization T f)
+def factor? {T : NumberTower} (f : Poly T) : Option (Factorization T f)
 
 /-- Construct an extension in which `f` splits into linear factors. -/
-def split? (T : NumberTower) (f : Poly T) : Option (Splitting T f)
+def split? {T : NumberTower} (f : Poly T) : Option (Splitting T f)
 
 /-- Replace the whole tower by one canonical primitive-element field. -/
 def flatten? (T : NumberTower) : Option (Flattening T)
 
 end Hex.NumberTower
 ```
+
+An operation takes its tower implicitly when a later argument's type names
+it, so `factor? f` and `split? f` recover the field of definition from the
+polynomial, while `adjoin? T a`, `flatten? T`, `liftZPoly T p` and the
+constants keep it explicit because no other argument mentions it. `Elem` is a
+structure indexed by the tower, so the inference is by structure injectivity,
+not by unfolding coordinates. Dot notation on the tower is therefore not
+available for the implicit operations: write `factor? f`, not `T.factor? f`.
 
 `ofPolyQuot` takes squarefreeness explicitly because its returned extension
 stores an `AlgebraicRoot`. Although irreducibility implies squarefreeness in
@@ -197,7 +205,7 @@ pattern of `PolyQuot` and `hex-gfq-field`.
 
 ## Trager factorization
 
-`factor? T f` first separates content and runs Yun decomposition over `Elem T`.
+`factor? f` first separates content and runs Yun decomposition over `Elem T`.
 Each squarefree component is factored independently, and the Yun index is the
 output multiplicity. This rule is mandatory; factoring the whole input norm and
 recovering multiplicity afterward is not accepted.
@@ -249,7 +257,7 @@ to the recovered tower element. Otherwise append one validated level.
 
 ## Splitting fields
 
-`split? T f` returns `Roots.all` for zero and a finite empty array for a nonzero
+`split? f` returns `Roots.all` for zero and a finite empty array for a nonzero
 constant, without extending the tower. For a nonconstant polynomial:
 
 1. Factor over the current tower.
