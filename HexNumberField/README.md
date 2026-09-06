@@ -42,7 +42,7 @@ def sqrt3 : AlgebraicNumber :=
 -- compare with `==`; with it, `=` works too.
 #guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
 
-/-- info: root of X^4 - 10*X^2 + 1 near 3.146264369941 -/
+/-- info: ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369 -/
 #guard_msgs in
 #eval sqrt2 + sqrt3
 ```

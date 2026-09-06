@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldMathlib.IntegerRoots
+public import HexNumberFieldMathlib.Lazy
+public import HexNumberFieldMathlib.Field
 
 public section
 
@@ -250,7 +252,7 @@ theorem realCompare_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
       symm
       rw [compare_lt_iff_lt]
       by_contra hge
-      push_neg at hge
+      have hge' := not_lt.mp hge
       rw [abs_of_nonneg (by linarith)] at hsep
       linarith
     · rename_i hnlt
@@ -260,7 +262,7 @@ theorem realCompare_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
       symm
       rw [compare_gt_iff_gt]
       by_contra hle
-      push_neg at hle
+      have hle' := not_lt.mp hle
       rw [abs_of_nonpos (by linarith)] at hsep
       linarith
 
@@ -277,7 +279,7 @@ theorem toPolyℂ_xsq_add_one : toPolyℂ #p[1, 0, 1] = X ^ 2 + 1 := by
   · simp [h1]
   · simp [h2]
   · rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
-    simp <;> rfl
+    (simp; rfl)
 
 /-- `mahlerPrec` is at least three. -/
 theorem three_le_mahlerPrec (p : ZPoly) : 3 ≤ mahlerPrec p :=
@@ -380,3 +382,409 @@ info: 'Hex.AlgebraicNumber.realCompare_eq' depends on axioms: [propext, Classica
 #print axioms realCompare_eq
 
 end Hex.AlgebraicNumber
+
+namespace Hex.AlgebraicNumber
+
+open HexRootsMathlib
+
+/-- The complex value of a rational point. -/
+theorem ofPoint_toComplex (re im : Rat) :
+    (ofPoint re im).toComplex = (re : ℂ) + (im : ℂ) * Complex.I := by
+  unfold ofPoint
+  rw [add_toComplex, mul_toComplex, ofRat_toComplex, ofRat_toComplex, I_toComplex]
+
+/-- The conjugate of a rational point. -/
+theorem ofPoint_neg_toComplex (re im : Rat) :
+    (ofPoint re (-im)).toComplex = starRingEnd ℂ ((re : ℂ) + (im : ℂ) * Complex.I) := by
+  rw [ofPoint_toComplex]
+  apply Complex.ext <;> simp
+
+/-- `distSqTo` is the squared distance to the point. -/
+theorem distSqTo_toComplex (a : AlgebraicNumber) (re im : Rat) :
+    (a.distSqTo re im).toComplex =
+      ((‖a.toComplex - ((re : ℂ) + (im : ℂ) * Complex.I)‖ ^ 2 : ℝ) : ℂ) := by
+  unfold distSqTo
+  rw [mul_toComplex, sub_toComplex, sub_toComplex, conj_toComplex, ofPoint_toComplex,
+    ofPoint_neg_toComplex, ← map_sub, Complex.mul_conj, Complex.normSq_eq_norm_sq]
+
+/-- `distSqTo` is real. -/
+theorem distSqTo_isReal (a : AlgebraicNumber) (re im : Rat) :
+    (a.distSqTo re im).isReal = true := by
+  rw [isReal_iff, distSqTo_toComplex, Complex.ofReal_im]
+
+end Hex.AlgebraicNumber
+
+namespace Hex.AlgebraicNumber
+
+open HexRootsMathlib
+
+/-- The point named by two rationals. -/
+noncomputable abbrev point (re im : Rat) : ℂ := (re : ℂ) + (im : ℂ) * Complex.I
+
+theorem absRat_cast (q : Rat) : ((absRat q : Rat) : ℝ) = |(q : ℝ)| := by
+  unfold absRat
+  split
+  · rename_i h
+    rw [abs_of_neg (by exact_mod_cast h)]
+    push_cast
+    ring
+  · rename_i h
+    rw [abs_of_nonneg (by exact_mod_cast not_lt.mp h)]
+
+/-- The squared distance from the point to the centre, as a real. -/
+theorem ballDistSq_cast (b : DyadicComplexBall) (re im : Rat) :
+    ((ballDistSq b re im : Rat) : ℝ) = ‖b.center - point re im‖ ^ 2 := by
+  unfold ballDistSq
+  rw [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re, Complex.sub_im,
+    DyadicComplexBall.center_re, DyadicComplexBall.center_im]
+  simp only [point, Complex.add_re, Complex.add_im, Complex.mul_re, Complex.mul_im,
+    Complex.I_re, Complex.I_im, Dyadic.toReal, Complex.ratCast_re, Complex.ratCast_im]
+  push_cast
+  ring
+
+/-- The centre distance is at most the coordinate bound. -/
+theorem norm_center_sub_le (b : DyadicComplexBall) (re im : Rat) :
+    ‖b.center - point re im‖ ≤ ((ballDistBound b re im : Rat) : ℝ) := by
+  unfold ballDistBound
+  push_cast
+  rw [absRat_cast, absRat_cast]
+  have h := Complex.norm_le_abs_re_add_abs_im (b.center - point re im)
+  rw [Complex.sub_re, Complex.sub_im, DyadicComplexBall.center_re,
+    DyadicComplexBall.center_im] at h
+  simp only [point, Complex.add_re, Complex.add_im, Complex.mul_re, Complex.mul_im,
+    Complex.I_re, Complex.I_im, Dyadic.toReal, Complex.ratCast_re, Complex.ratCast_im] at h
+  push_cast
+  simpa using h
+
+theorem realRadius_eq (b : DyadicComplexBall) : b.realRadius = ((b.radius.toRat : Rat) : ℝ) :=
+  rfl
+
+/-- The squared distance from the point to any point of a ball is at most
+`ballUpper`. -/
+theorem sq_norm_le_ballUpper {b : DyadicComplexBall} {z : ℂ} (hz : z ∈ b.set)
+    (re im : Rat) :
+    ‖z - point re im‖ ^ 2 ≤ ((ballUpper b re im : Rat) : ℝ) := by
+  unfold ballUpper
+  push_cast
+  rw [ballDistSq_cast, ← realRadius_eq]
+  have hr := DyadicComplexBall.radius_nonneg_of_mem hz
+  have hzc := DyadicComplexBall.dist_le_of_mem hz
+  rw [dist_eq_norm] at hzc
+  have hl := norm_center_sub_le b re im
+  have htri : ‖z - point re im‖ ≤ ‖b.center - point re im‖ + b.realRadius := by
+    calc ‖z - point re im‖ = ‖(z - b.center) + (b.center - point re im)‖ := by ring_nf
+      _ ≤ ‖z - b.center‖ + ‖b.center - point re im‖ := norm_add_le _ _
+      _ ≤ b.realRadius + ‖b.center - point re im‖ := by linarith
+      _ = _ := by ring
+  have hnn : 0 ≤ ‖b.center - point re im‖ + b.realRadius := by positivity
+  calc ‖z - point re im‖ ^ 2 ≤ (‖b.center - point re im‖ + b.realRadius) ^ 2 :=
+        pow_le_pow_left₀ (norm_nonneg _) htri 2
+    _ = ‖b.center - point re im‖ ^ 2 + 2 * b.realRadius * ‖b.center - point re im‖ +
+        b.realRadius * b.realRadius := by ring
+    _ ≤ ‖b.center - point re im‖ ^ 2 + 2 * b.realRadius * ((ballDistBound b re im : Rat) : ℝ) +
+        b.realRadius * b.realRadius := by
+        have := mul_le_mul_of_nonneg_left hl (by linarith : (0 : ℝ) ≤ 2 * b.realRadius)
+        linarith
+
+/-- The squared distance from the point to any point of a ball is at least
+`ballLower`. -/
+theorem ballLower_le_sq_norm {b : DyadicComplexBall} {z : ℂ} (hz : z ∈ b.set)
+    (re im : Rat) :
+    ((ballLower b re im : Rat) : ℝ) ≤ ‖z - point re im‖ ^ 2 := by
+  show (((if b.radius.toRat * b.radius.toRat ≤ ballDistSq b re im then
+      ballDistSq b re im - 2 * b.radius.toRat * ballDistBound b re im +
+        b.radius.toRat * b.radius.toRat
+    else 0 : Rat)) : ℝ) ≤ _
+  split
+  · rename_i hfar
+    push_cast
+    rw [ballDistSq_cast, ← realRadius_eq]
+    have hfar' : b.realRadius ^ 2 ≤ ‖b.center - point re im‖ ^ 2 := by
+      have := (Rat.cast_le (K := ℝ)).mpr hfar
+      push_cast at this
+      rw [ballDistSq_cast, ← realRadius_eq] at this
+      linarith [sq b.realRadius]
+    have hr := DyadicComplexBall.radius_nonneg_of_mem hz
+    have hrle : b.realRadius ≤ ‖b.center - point re im‖ :=
+      pow_le_pow_iff_left₀ hr (norm_nonneg _) (by norm_num) |>.mp hfar'
+    have hzc := DyadicComplexBall.dist_le_of_mem hz
+    rw [dist_eq_norm] at hzc
+    have hl := norm_center_sub_le b re im
+    have hrev : ‖b.center - point re im‖ - b.realRadius ≤ ‖z - point re im‖ := by
+      have := norm_sub_norm_le (b.center - point re im) (b.center - z)
+      have heq : b.center - point re im - (b.center - z) = z - point re im := by ring
+      rw [heq, norm_sub_rev b.center z] at this
+      linarith
+    have hnn : 0 ≤ ‖b.center - point re im‖ - b.realRadius := by linarith
+    calc ‖b.center - point re im‖ ^ 2 - 2 * b.realRadius * ((ballDistBound b re im : Rat) : ℝ) +
+          b.realRadius * b.realRadius
+        ≤ ‖b.center - point re im‖ ^ 2 - 2 * b.realRadius * ‖b.center - point re im‖ +
+          b.realRadius * b.realRadius := by
+          have := mul_le_mul_of_nonneg_left hl (by linarith : (0 : ℝ) ≤ 2 * b.realRadius)
+          linarith
+      _ = (‖b.center - point re im‖ - b.realRadius) ^ 2 := by ring
+      _ ≤ ‖z - point re im‖ ^ 2 := pow_le_pow_left₀ hnn hrev 2
+  · push_cast
+    positivity
+
+end Hex.AlgebraicNumber
+
+namespace Hex.AlgebraicNumber
+
+open HexRootsMathlib
+
+/-- The exact comparison of squared distances decides the strict order of
+distances. -/
+theorem realCompare_distSqTo_lt (c b : AlgebraicNumber) (re im : Rat) :
+    ((c.distSqTo re im).realCompare (b.distSqTo re im) == .lt) = true ↔
+      ‖c.toComplex - point re im‖ < ‖b.toComplex - point re im‖ := by
+  rw [beq_iff_eq, realCompare_eq _ _ (distSqTo_isReal c re im) (distSqTo_isReal b re im),
+    compare_lt_iff_lt, distSqTo_toComplex, distSqTo_toComplex, Complex.ofReal_re,
+    Complex.ofReal_re]
+  exact pow_lt_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) (by norm_num)
+
+/-- A certified nearest root is nearest. -/
+theorem certifiedNearest_sound {roots : Array AlgebraicNumber} {a : AlgebraicNumber}
+    {prec : Int} {re im : Rat} (h : certifiedNearest roots a prec re im = true) :
+    ∀ c ∈ roots, ‖a.toComplex - point re im‖ ≤ ‖c.toComplex - point re im‖ := by
+  intro c hc
+  unfold certifiedNearest at h
+  have hc' := (Array.all_eq_true_iff_forall_mem.mp h) c hc
+  rw [Bool.or_eq_true] at hc'
+  rcases hc' with heq | hlt
+  · rw [(beq_iff c a).mp heq]
+  · rw [decide_eq_true_eq] at hlt
+    have hlt' := (Rat.cast_lt (K := ℝ)).mpr hlt
+    have hupper := sq_norm_le_ballUpper (approx_mem a prec) re im
+    have hlower := ballLower_le_sq_norm (approx_mem c prec) re im
+    have hsq : ‖a.toComplex - point re im‖ ^ 2 < ‖c.toComplex - point re im‖ ^ 2 := by
+      linarith
+    exact le_of_lt ((pow_lt_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _)
+      (by norm_num)).mp hsq)
+
+theorem exactStep_none (re im : Rat) (c : AlgebraicNumber) :
+    exactStep re im none c = some c := rfl
+
+theorem exactStep_some (re im : Rat) (b c : AlgebraicNumber) :
+    exactStep re im (some b) c =
+      if (c.distSqTo re im).realCompare (b.distSqTo re im) == .lt then some c
+      else some b := rfl
+
+/-- The fold behind `exactNearest`, on lists. -/
+theorem foldl_exactStep (re im : Rat) :
+    ∀ (l : List AlgebraicNumber) (acc : Option AlgebraicNumber),
+      match l.foldl (exactStep re im) acc with
+      | none => l = [] ∧ acc = none
+      | some r => (r ∈ l ∨ acc = some r) ∧
+          (∀ c ∈ l, ‖r.toComplex - point re im‖ ≤ ‖c.toComplex - point re im‖) ∧
+          (∀ b, acc = some b → ‖r.toComplex - point re im‖ ≤ ‖b.toComplex - point re im‖) := by
+  intro l
+  induction l with
+  | nil =>
+    intro acc
+    cases acc with
+    | none => exact ⟨rfl, rfl⟩
+    | some b =>
+      refine ⟨Or.inr rfl, fun c hc => absurd hc List.not_mem_nil, fun b' hb' => ?_⟩
+      cases hb'
+      exact le_rfl
+  | cons c rest ih =>
+    intro acc
+    rw [List.foldl_cons]
+    cases acc with
+    | none =>
+      rw [exactStep_none]
+      have := ih (some c)
+      revert this
+      generalize rest.foldl (exactStep re im) (some c) = result
+      intro this
+      cases result with
+      | none => exact absurd this.2 (by simp)
+      | some r =>
+        obtain ⟨hmem, hall, hacc⟩ := this
+        refine ⟨?_, ?_, fun b hb => by cases hb⟩
+        · rcases hmem with hmem | hmem
+          · exact Or.inl (List.mem_cons_of_mem _ hmem)
+          · exact Or.inl (Option.some.inj hmem ▸ List.mem_cons_self)
+        · intro d hd
+          rcases List.mem_cons.mp hd with rfl | hd
+          · exact hacc _ rfl
+          · exact hall d hd
+    | some b =>
+      rw [exactStep_some]
+      by_cases hlt : ((c.distSqTo re im).realCompare (b.distSqTo re im) == .lt) = true
+      · rw [ite_eq_left hlt]
+        have := ih (some c)
+        revert this
+        generalize rest.foldl (exactStep re im) (some c) = result
+        intro this
+        cases result with
+        | none => exact absurd this.2 (by simp)
+        | some r =>
+          obtain ⟨hmem, hall, hacc⟩ := this
+          have hcb := (realCompare_distSqTo_lt c b re im).mp hlt
+          refine ⟨?_, ?_, ?_⟩
+          · rcases hmem with hmem | hmem
+            · exact Or.inl (List.mem_cons_of_mem _ hmem)
+            · exact Or.inl (Option.some.inj hmem ▸ List.mem_cons_self)
+          · intro d hd
+            rcases List.mem_cons.mp hd with rfl | hd
+            · exact hacc _ rfl
+            · exact hall d hd
+          · intro b' hb'
+            cases hb'
+            exact (hacc _ rfl).trans (le_of_lt hcb)
+      · rw [ite_eq_right hlt]
+        have := ih (some b)
+        revert this
+        generalize rest.foldl (exactStep re im) (some b) = result
+        intro this
+        cases result with
+        | none => exact absurd this.2 (by simp)
+        | some r =>
+          obtain ⟨hmem, hall, hacc⟩ := this
+          have hbc : ‖b.toComplex - point re im‖ ≤ ‖c.toComplex - point re im‖ :=
+            not_lt.mp fun h => hlt ((realCompare_distSqTo_lt c b re im).mpr h)
+          refine ⟨?_, ?_, ?_⟩
+          · rcases hmem with hmem | hmem
+            · exact Or.inl (List.mem_cons_of_mem _ hmem)
+            · exact Or.inr hmem
+          · intro d hd
+            rcases List.mem_cons.mp hd with rfl | hd
+            · exact (hacc _ rfl).trans hbc
+            · exact hall d hd
+          · exact hacc
+
+/-- `exactNearest` on a nonempty array is a nearest root. -/
+theorem exactNearest_spec (roots : Array AlgebraicNumber) (re im : Rat) :
+    match exactNearest roots re im with
+    | none => roots = #[]
+    | some r => r ∈ roots ∧
+        ∀ c ∈ roots, ‖r.toComplex - point re im‖ ≤ ‖c.toComplex - point re im‖ := by
+  have h := foldl_exactStep re im roots.toList none
+  have hfold : exactNearest roots re im = roots.toList.foldl (exactStep re im) none :=
+    (Array.foldl_toList _).symm
+  rw [hfold]
+  revert h
+  generalize roots.toList.foldl (exactStep re im) none = result
+  intro h
+  cases result with
+  | none =>
+    obtain ⟨hnil, _⟩ := h
+    exact Array.toList_eq_nil_iff.mp hnil
+  | some r =>
+    obtain ⟨hmem, hall, _⟩ := h
+    refine ⟨?_, fun c hc => hall c (Array.mem_def.mp hc)⟩
+    rcases hmem with hmem | hmem
+    · exact Array.mem_def.mpr hmem
+    · cases hmem
+
+end Hex.AlgebraicNumber
+
+namespace Hex
+
+open HexRootsMathlib
+
+/-- A polynomial of positive degree has a root in `algebraicRoots`. -/
+theorem ZPoly.algebraicRoots_ne_empty {p : ZPoly} (hp : 0 < p.degree?.getD 0) :
+    p.algebraicRoots ≠ #[] := by
+  have hpne : p ≠ 0 := by
+    intro h
+    simp [h] at hp
+  have hdeg : 0 < (toPolyℂ p).degree := by
+    rw [← Polynomial.natDegree_pos_iff_degree_pos, natDegree_toPolyℂ]
+    exact hp
+  obtain ⟨z, hz⟩ := Complex.exists_root hdeg
+  obtain ⟨a, ha, _⟩ := (ZPoly.mem_algebraicRoots_iff p hpne z).mpr hz
+  intro hempty
+  rw [hempty] at ha
+  simp at ha
+
+/-- `rootNear` returns a root. -/
+theorem ZPoly.rootNear_mem (p : ZPoly) (hp : 0 < p.degree?.getD 0) (re im : Rat) :
+    p.rootNear re im ∈ p.algebraicRoots := by
+  unfold ZPoly.rootNear
+  dsimp only
+  split
+  · next a ha => exact Array.mem_of_find?_eq_some ha
+  · next _ =>
+    have hspec := AlgebraicNumber.exactNearest_spec p.algebraicRoots re im
+    revert hspec
+    generalize AlgebraicNumber.exactNearest p.algebraicRoots re im = r
+    intro hspec
+    cases r with
+    | none => exact absurd hspec (ZPoly.algebraicRoots_ne_empty hp)
+    | some r => exact hspec.1
+
+/-- `rootNear` is nearest. -/
+theorem ZPoly.rootNear_nearest (p : ZPoly) (re im : Rat) (b : AlgebraicNumber)
+    (hb : b ∈ p.algebraicRoots) :
+    ‖(p.rootNear re im).toComplex - AlgebraicNumber.point re im‖ ≤
+      ‖b.toComplex - AlgebraicNumber.point re im‖ := by
+  unfold ZPoly.rootNear
+  dsimp only
+  split
+  · next a ha =>
+    have hcert : AlgebraicNumber.certifiedNearest p.algebraicRoots a
+        (AlgebraicNumber.separationPrec p) re im = true :=
+      @Array.find?_some _ (fun a => AlgebraicNumber.certifiedNearest p.algebraicRoots a
+        (AlgebraicNumber.separationPrec p) re im) a p.algebraicRoots ha
+    exact AlgebraicNumber.certifiedNearest_sound hcert b hb
+  · next _ =>
+    have hspec := AlgebraicNumber.exactNearest_spec p.algebraicRoots re im
+    revert hspec
+    generalize AlgebraicNumber.exactNearest p.algebraicRoots re im = r
+    intro hspec
+    cases r with
+    | none =>
+      rw [hspec] at hb
+      simp at hb
+    | some r => exact hspec.2 b hb
+
+/-- A point within half the guaranteed separation of a number names it. -/
+theorem ZPoly.rootNear_of_close (a : AlgebraicNumber) (re im : Rat)
+    (h : ‖AlgebraicNumber.point re im - a.toComplex‖ <
+      2 * ((2 : ℝ) ^ (-(mahlerPrec a.p : ℤ)) * (1449 / 1024))) :
+    a.p.rootNear re im = a := by
+  have hpne : a.p ≠ 0 := RefinedIsolation.poly_ne_zero a.rep
+  have hamem : a ∈ a.p.algebraicRoots := by
+    obtain ⟨c, hc, hcval⟩ :=
+      (ZPoly.mem_algebraicRoots_iff a.p hpne a.toComplex).mpr (RefinedIsolation.isRoot a.rep)
+    have := AlgebraicNumber.toComplex_injective hcval
+    subst this
+    exact Array.mem_def.mpr hc
+  have hrmem : a.p.rootNear re im ∈ a.p.algebraicRoots :=
+    ZPoly.rootNear_mem a.p a.pos_degree re im
+  have hnear := ZPoly.rootNear_nearest a.p re im a hamem
+  by_contra hne
+  have hne' : (a.p.rootNear re im).toComplex ≠ a.toComplex :=
+    fun h => hne (AlgebraicNumber.toComplex_injective h)
+  have hrroot : (toPolyℂ a.p).IsRoot (a.p.rootNear re im).toComplex :=
+    (ZPoly.mem_algebraicRoots_iff a.p hpne _).mp ⟨_, Array.mem_def.mp hrmem, rfl⟩
+  have hsep : (2 : ℝ) ^ (-(mahlerPrec a.p : ℤ)) * (1449 / 1024) <
+      ‖(a.p.rootNear re im).toComplex - a.toComplex‖ / 4 :=
+    mahlerPrec_separates a.p hpne _ _ hrroot (RefinedIsolation.isRoot a.rep) hne'
+  have htri := norm_sub_le_norm_sub_add_norm_sub (a.p.rootNear re im).toComplex
+    (AlgebraicNumber.point re im) a.toComplex
+  rw [norm_sub_rev a.toComplex] at hnear
+  linarith
+
+/--
+info: 'Hex.ZPoly.rootNear_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ZPoly.rootNear_mem
+
+/--
+info: 'Hex.ZPoly.rootNear_nearest' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ZPoly.rootNear_nearest
+
+/--
+info: 'Hex.ZPoly.rootNear_of_close' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ZPoly.rootNear_of_close
+
+end Hex

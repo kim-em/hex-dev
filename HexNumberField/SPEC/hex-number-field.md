@@ -494,11 +494,7 @@ applies it to the stored representative; the companion proves `isReal_iff`.
 
 `approx a prec` is `QAdjoin.approx` applied to `a.toQAdjoin` with the stored
 representative; its ball contains `a.toComplex` and has radius at most
-`2^(-prec)`. The `Repr` instance prints the minimal polynomial and the ball
-centre truncated to twelve decimal places (real part only when `isReal`); it
-is for display and carries no contract beyond `approx`. Its two helpers,
-`AlgebraicNumber.Display.decimal` and `AlgebraicNumber.Display.polynomial`,
-are public only because the instance is, and carry no contract either.
+`2^(-prec)`. The `Repr` instance is described under `## The nearest root`.
 
 ## Exact primitives from stored isolations
 
@@ -526,6 +522,53 @@ approximation balls at `separationPrec (a.p * b.p)`, at which the balls of
 the two distinct numbers are disjoint. The companion proves `I` is the
 imaginary unit, `conj` is complex conjugation, and `realCompare` is the order
 of the real parts.
+
+## The nearest root
+
+```lean
+def AlgebraicNumber.ofPoint (re im : Rat) : AlgebraicNumber
+def AlgebraicNumber.distSqTo (a : AlgebraicNumber) (re im : Rat) : AlgebraicNumber
+def AlgebraicNumber.ballDistSq (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.ballDistBound (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.ballUpper (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.ballLower (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.certifiedNearest (roots : Array AlgebraicNumber)
+    (a : AlgebraicNumber) (prec : Int) (re im : Rat) : Bool
+def AlgebraicNumber.exactNearest (roots : Array AlgebraicNumber) (re im : Rat) :
+    Option AlgebraicNumber
+def ZPoly.rootNear (p : ZPoly) (re : Rat) (im : Rat := 0) : AlgebraicNumber
+instance : Repr AlgebraicNumber
+```
+
+`rootNear p re im` is the root of `p` nearest to the point `re + im·i`; among
+roots at exactly the same distance it is the first in `algebraicRoots` order,
+so for instance `rootNear #p[-2, 0, 1] 0` is `-√2` and, from a real point,
+a conjugate pair resolves to the member with the smaller isolation centre.
+Scientific literals are rationals, so `rootNear #p[-2, 0, 1] 1.4` and
+`rootNear #p[1, 0, 1] 0 0.9` read as written. A constant polynomial has no
+roots and yields `0`.
+
+The fast path uses the approximation balls at `separationPrec p`.
+`ballUpper` bounds the squared distance from the point to every point of a
+ball from above by `d + 2rl + r²`, where `d` is the squared distance to the
+centre, `r` the radius and `l = |Δre| + |Δim|`, and `ballLower` bounds it
+from below by `d − 2rl + r²` when `r² ≤ d`, else by `0`; neither takes a
+square root. A root is `certifiedNearest` when its upper bound is below every
+other root's lower bound, and the first such root is returned. When no root is
+certified, because two are nearly or exactly equidistant, `exactNearest`
+compares the exact squared distances `distSqTo`, each the real algebraic
+number `(a − z)(ā − z̄)` built from `conj`, with `realCompare`, and keeps the
+first minimum. No path refines without bound.
+
+The `Repr` instance prints `ZPoly.rootNear p re` for a real number and
+`ZPoly.rootNear p re im` otherwise, with the stored isolation centre
+truncated toward zero to `digitsFor (mahlerPrec p)` decimals, chosen so that
+`10^-digits ≤ 2^-mahlerPrec`. The centre is within `√2 · 2^-mahlerPrec` of
+the root, so the printed point is within `(1 + √2) · 2^-mahlerPrec` of it,
+less than half the root separation `mahlerPrec` guarantees, and the
+companion's `rootNear_of_close` says the nearest root to it is the number
+printed. The print is for display and carries no contract beyond that
+theorem.
 
 ## Common-field construction
 
@@ -621,7 +664,7 @@ HexNumberField/
   AlgebraicPoly.lean  : semantic coefficient-polynomial representation
   Roots.lean          : fixed-field and algebraic-coefficient root APIs
   IntegerRoots.lean   : roots of integer polynomials, reality test, display
-  Nearest.lean        : imaginary unit, conjugation, exact real order
+  Nearest.lean        : imaginary unit, conjugation, exact real order, nearest root, display
 ```
 
 Conformance and benchmark drivers live in the shared `conformance/` and

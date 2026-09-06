@@ -553,4 +553,18 @@ private def algebraicRepeated? : Option AlgebraicPoly := do
     AlgebraicNumber.realCompare (s3 - s2) ((s2 + s3)⁻¹) == .eq &&
     AlgebraicNumber.realCompare (-s2) s2 == .lt
 
+-- The nearest root: from an approximation, from a point equidistant from two
+-- roots (the first in output order wins), and from the real axis for a
+-- conjugate pair; and the display rebuilds the number.
+#guard
+  let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+  let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
+  ZPoly.rootNear #p[-2, 0, 1] 1.4 == s2 &&
+    ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.15 == s2 + s3 &&
+    ZPoly.rootNear #p[1, 0, 1] 0 0.9 == AlgebraicNumber.I &&
+    ZPoly.rootNear #p[-2, 0, 1] 0 == -s2 &&
+    ZPoly.rootNear #p[1, 0, 1] 5 == -AlgebraicNumber.I &&
+    (repr s2).pretty == "ZPoly.rootNear #p[-2, 0, 1] 1.414" &&
+    (repr (s2 + s3)).pretty == "ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369"
+
 end Hex.NumberFieldConformance

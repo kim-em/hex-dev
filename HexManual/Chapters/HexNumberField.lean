@@ -85,15 +85,29 @@ check is the classical fact that `√2 + √3` has minimal polynomial
 `X⁴ − 10X² + 1`, and the fourth is `1 / (√2 + √3) = √3 − √2`. Equality of
 canonical numbers is decidable. Without the Mathlib companion, compare with
 `==`, the executable test; with it, `=` is available too, because the
-companion proves that the test is correct. Printing a number shows that
-polynomial and twelve decimals of a certified approximation:
+companion proves that the test is correct. A number prints as the
+expression that rebuilds it: `ZPoly.rootNear` names the root of a polynomial
+nearest to a point, and the printed point is the number's certified
+approximation with enough digits that no other root is nearer:
 
 ```lean (name := sqrtSumEval)
 #eval sqrt2 + sqrt3
 ```
 ```leanOutput sqrtSumEval
-root of X^4 - 10*X^2 + 1 near 3.146264369941
+ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369
 ```
+
+So `√2 + √3` can also be written as the root of its minimal polynomial near
+`3.146`, and the imaginary unit as the root of `X² + 1` near `i`:
+
+```lean
+#guard ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146 =
+  sqrt2 + sqrt3
+#guard ZPoly.rootNear #p[1, 0, 1] 0 1 = AlgebraicNumber.I
+```
+
+A point equidistant from two roots resolves to the first in the output
+order, so `ZPoly.rootNear #p[-2, 0, 1] 0` is `-√2`.
 
 The golden ratio is the positive root of `X² − X − 1`. Its defining identity,
 its reciprocal, and the tenth Lucas number all fall out of decidable equality:
@@ -204,7 +218,7 @@ An element prints as its coordinates, a rational polynomial in the generator:
 #eval c ^ 5
 ```
 ```leanOutput cbrt2Pow
-2*x^2
+#p[0, 0, 2]
 ```
 
 ```lean -show
