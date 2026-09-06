@@ -116,7 +116,7 @@ def gMinus : Poly T2 := #p[-1, (-2 : Rat) • r2, 1]
   let F := factor T2 quartic
   coeffs F.scalar = #[1, 0] &&
     F.factors.all (fun (_, m) => m = 1) &&
-    F.factors.map (fun (g, _) => g) == #[gMinus, gPlus]
+    F.factors.map (fun (g, _) => g) = #[gMinus, gPlus]
 ```
 
 At each level `K(α)/K` the method searches a fixed list of integer shifts for
@@ -185,12 +185,12 @@ def F : Flattening T23 := flatten T23
 
 #guard F.root.p = #p[1, 0, -10, 0, 1]
 #guard (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2]
-#guard F.fromPrimitive (F.toPrimitive s3) == s3
+#guard F.fromPrimitive (F.toPrimitive s3) = s3
 -- (√2 + √3)^10 = 47525 + 19402√6 over the basis
 -- 1, √2, √3, √6.
 #guard coeffs ((s2 + s3) ^ 10) = #[47525, 0, 0, 19402]
 #guard (F.toPrimitive ((s2 + s3) ^ 10)).toAlgebraicNumber
-    F.root.rep F.root.rep_mk == (sqrt2 + sqrt3) ^ 10
+    F.root.rep F.root.rep_mk = (sqrt2 + sqrt3) ^ 10
 
 end HexNumberFieldTowerChapter
 ```
