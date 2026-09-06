@@ -75,10 +75,10 @@ def sqrt2 : AlgebraicNumber :=
 def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
--- `adjoin?` never returns `none` (`adjoin?_isSome`), so
--- `get!` merely unwraps it.
+-- `adjoin` is the companion's total form of `adjoin?`, which
+-- never returns `none` (`adjoin?_isSome`).
 def Q2 : Extension NumberTower.rat :=
-  (adjoin? NumberTower.rat sqrt2.toRoot).get!
+  adjoin NumberTower.rat sqrt2.toRoot
 abbrev T2 : NumberTower := Q2.tower
 def r2 : Elem T2 := Q2.gen
 
@@ -87,8 +87,7 @@ def r2 : Elem T2 := Q2.gen
 #guard coeffs (Q2.embed (ofRat NumberTower.rat 5)) = #[5, 0]
 
 -- √2 is already there: adjoining it again changes nothing.
-#guard (adjoin? T2 sqrt2.toRoot).any fun E =>
-  E.tower.dim = 2
+#guard (adjoin T2 sqrt2.toRoot).tower.dim = 2
 ```
 
 {docstring Hex.NumberTower.adjoin?}
@@ -111,7 +110,8 @@ def gMinus : Poly T2 := #p[-1, (-2 : Rat) • r2, 1]
 
 #guard gPlus * gMinus = quartic
 
-#guard (factor? T2 quartic).any fun F =>
+#guard
+  let F := factor T2 quartic
   coeffs F.scalar = #[1, 0] &&
     F.factors.all (fun g => g.2 = 1) &&
     F.factors.map (·.1) == #[gMinus, gPlus]
@@ -142,7 +142,8 @@ def finiteRoots {T : NumberTower} :
   | .finite rs => rs
   | .all => #[]
 
-#guard (split? NumberTower.rat biquadratic).any fun S =>
+#guard
+  let S := split NumberTower.rat biquadratic
   S.extension.tower.dim = 4 &&
     let rs := finiteRoots S.roots
     rs.size = 4 && rs.all fun r =>
@@ -157,7 +158,7 @@ polynomial is the quartic above, and `√2 = (γ³ − 9γ)/2` in terms of the
 generator `γ`:
 
 ```lean
-def Q23 : Extension T2 := (adjoin? T2 sqrt3.toRoot).get!
+def Q23 : Extension T2 := adjoin T2 sqrt3.toRoot
 abbrev T23 : NumberTower := Q23.tower
 def s2 : Elem T23 := Q23.embed r2
 def s3 : Elem T23 := Q23.gen
@@ -165,7 +166,8 @@ def s3 : Elem T23 := Q23.gen
 #guard T23.dim = 4
 #guard (s2 + s3) * (s2 - s3) = ofRat T23 (-1)
 
-#guard (flatten? T23).any fun F =>
+#guard
+  let F := flatten T23
   F.root.p = #p[1, 0, -10, 0, 1] &&
     (F.toPrimitive s2).coeffs = #p[0, -9 / 2, 0, 1 / 2] &&
     (F.toPrimitive s3).coeffs = #p[0, 11 / 2, 0, -1 / 2] &&
@@ -177,6 +179,12 @@ end HexNumberFieldTowerChapter
 {docstring Hex.NumberTower.split?}
 
 {docstring Hex.NumberTower.flatten?}
+
+The `Option`-valued operations are the computational library's; the total
+forms {name}`Hex.NumberTower.adjoin`, {name}`Hex.NumberTower.factor`,
+{name}`Hex.NumberTower.split` and {name}`Hex.NumberTower.flatten` come from
+the Mathlib companion, which unwraps each option with its completeness
+theorem.
 
 # Performance
 %%%
