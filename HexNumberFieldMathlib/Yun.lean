@@ -20,7 +20,7 @@ This module relates the executable dense-polynomial Yun loop to root
 multiplicities after an injective embedding of the coefficient field.
 -/
 
-namespace Hex.QAdjoin.Roots
+namespace Hex.PolyQuot.Roots
 
 open scoped QAdjoinField
 
@@ -29,31 +29,31 @@ variable {p : ZPoly} {x : SimpleRoot p}
 /-- Interpret an executable fixed-field polynomial after a field embedding. -/
 noncomputable def toPolynomialMap [ZPoly.CheckedIrreducible p]
     {K : Type*} [Semiring K]
-    (embedding : QAdjoin p x →+* K) (f : DensePoly (QAdjoin p x)) :
+    (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x)) :
     Polynomial K :=
   (HexPolyMathlib.toPolynomial f).map embedding
 
 /-- Unfolding rule for the polynomial interpretation used by the Yun proofs. -/
 theorem toPolynomialMap_eq_map [ZPoly.CheckedIrreducible p]
     {K : Type*} [Semiring K]
-    (embedding : QAdjoin p x →+* K) (f : DensePoly (QAdjoin p x)) :
+    (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x)) :
     toPolynomialMap embedding f =
       (HexPolyMathlib.toPolynomial f).map embedding := by
   rfl
 
 private theorem rat_smul_natCast [ZPoly.CheckedIrreducible p]
-    (n : Nat) (a : QAdjoin p x) :
-    (n : Rat) • a = (n : QAdjoin p x) * a := by
+    (n : Nat) (a : PolyQuot p x) :
+    (n : Rat) • a = (n : PolyQuot p x) * a := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply QAdjoin.toComplex_injective rep hrep
-  change QAdjoin.toComplex ((n : Rat) • a) rep hrep =
-    QAdjoin.toComplex (((n : Rat) • (1 : QAdjoin p x)) * a) rep hrep
-  rw [QAdjoin.map_smul, QAdjoin.map_mul, QAdjoin.map_smul,
-    QAdjoin.map_one, mul_one]
+  apply PolyQuot.toComplex_injective rep hrep
+  change PolyQuot.toComplex ((n : Rat) • a) rep hrep =
+    PolyQuot.toComplex (((n : Rat) • (1 : PolyQuot p x)) * a) rep hrep
+  rw [PolyQuot.map_smul, PolyQuot.map_mul, PolyQuot.map_smul,
+    PolyQuot.map_one, mul_one]
 
 private theorem derivative_eq_dense [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) :
+    (f : DensePoly (PolyQuot p x)) :
     derivative f = f.derivative := by
   apply DensePoly.ext_coeff
   intro n
@@ -72,7 +72,7 @@ private theorem derivative_eq_dense [ZPoly.CheckedIrreducible p]
 /-- The executable fixed-field derivative agrees with the Mathlib derivative
 after dense-polynomial transport. -/
 theorem toPolynomial_derivative [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) :
+    (f : DensePoly (PolyQuot p x)) :
     HexPolyMathlib.toPolynomial (derivative f) =
       Polynomial.derivative (HexPolyMathlib.toPolynomial f) := by
   rw [derivative_eq_dense]
@@ -142,8 +142,8 @@ theorem rootMultiplicity_div {K : Type*} [Field K] [DecidableEq K]
 /-- Monic normalization changes a nonzero polynomial only by a nonzero
 constant factor, so it preserves every root multiplicity. -/
 theorem rootMultiplicity_monic [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
-    (hf : HexPolyMathlib.toPolynomial f ≠ 0) (z : QAdjoin p x) :
+    (f : DensePoly (PolyQuot p x))
+    (hf : HexPolyMathlib.toPolynomial f ≠ 0) (z : PolyQuot p x) :
     (HexPolyMathlib.toPolynomial (monic f)).rootMultiplicity z =
       (HexPolyMathlib.toPolynomial f).rootMultiplicity z := by
   unfold monic
@@ -168,7 +168,7 @@ theorem rootMultiplicity_monic [ZPoly.CheckedIrreducible p]
 
 /-- Monic normalization is associated to its nonzero input. -/
 theorem toPolynomial_monic_associated [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
+    (f : DensePoly (PolyQuot p x))
     (hf : HexPolyMathlib.toPolynomial f ≠ 0) :
     Associated (HexPolyMathlib.toPolynomial (monic f))
       (HexPolyMathlib.toPolynomial f) := by
@@ -199,9 +199,9 @@ theorem rootMultiplicity_associated {K : Type*} [Field K] [DecidableEq K]
 /-- The executable monic gcd realizes the pointwise minimum of root
 multiplicities. -/
 theorem rootMultiplicity_monicGcd [ZPoly.CheckedIrreducible p]
-    (f g : DensePoly (QAdjoin p x))
+    (f g : DensePoly (PolyQuot p x))
     (hf : HexPolyMathlib.toPolynomial f ≠ 0)
-    (hg : HexPolyMathlib.toPolynomial g ≠ 0) (z : QAdjoin p x) :
+    (hg : HexPolyMathlib.toPolynomial g ≠ 0) (z : PolyQuot p x) :
     (HexPolyMathlib.toPolynomial (monic (DensePoly.gcd f g))).rootMultiplicity z =
       min ((HexPolyMathlib.toPolynomial f).rootMultiplicity z)
         ((HexPolyMathlib.toPolynomial g).rootMultiplicity z) := by
@@ -228,7 +228,7 @@ theorem rootMultiplicity_monicGcd [ZPoly.CheckedIrreducible p]
 
 /-- The executable monic gcd divides each nonzero input. -/
 theorem monicGcd_dvd [ZPoly.CheckedIrreducible p]
-    (f g : DensePoly (QAdjoin p x))
+    (f g : DensePoly (PolyQuot p x))
     (hf : HexPolyMathlib.toPolynomial f ≠ 0) :
     monic (DensePoly.gcd f g) ∣ f ∧ monic (DensePoly.gcd f g) ∣ g := by
   let raw := HexPolyMathlib.toPolynomial (DensePoly.gcd f g)
@@ -272,7 +272,7 @@ theorem toPolynomial_div_ne_zero {K : Type*} [Field K] [DecidableEq K]
 
 /-- Monic normalization of a nonzero executable polynomial remains nonzero. -/
 theorem toPolynomial_monic_ne_zero [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
+    (f : DensePoly (PolyQuot p x))
     (hf : HexPolyMathlib.toPolynomial f ≠ 0) :
     HexPolyMathlib.toPolynomial (monic f) ≠ 0 := by
   intro hzero
@@ -280,10 +280,10 @@ theorem toPolynomial_monic_ne_zero [ZPoly.CheckedIrreducible p]
 
 /-- A monic exact quotient subtracts the divisor's root multiplicity. -/
 theorem rootMultiplicity_monicDiv [ZPoly.CheckedIrreducible p]
-    (dividend divisor : DensePoly (QAdjoin p x))
+    (dividend divisor : DensePoly (PolyQuot p x))
     (hdivisor : divisor ∣ dividend)
     (hdividend : HexPolyMathlib.toPolynomial dividend ≠ 0)
-    (z : QAdjoin p x) :
+    (z : PolyQuot p x) :
     (HexPolyMathlib.toPolynomial (monic (dividend / divisor))).rootMultiplicity z =
       (HexPolyMathlib.toPolynomial dividend).rootMultiplicity z -
         (HexPolyMathlib.toPolynomial divisor).rootMultiplicity z := by
@@ -293,8 +293,8 @@ theorem rootMultiplicity_monicDiv [ZPoly.CheckedIrreducible p]
 
 /-- Monic normalization remains associated after any field embedding. -/
 theorem map_monic_associated [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (f : DensePoly (QAdjoin p x)) (hf : toPolynomialMap embedding f ≠ 0) :
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (f : DensePoly (PolyQuot p x)) (hf : toPolynomialMap embedding f ≠ 0) :
     Associated (toPolynomialMap embedding (monic f))
       (toPolynomialMap embedding f) := by
   have hfSource : HexPolyMathlib.toPolynomial f ≠ 0 := by
@@ -307,7 +307,7 @@ theorem map_monic_associated [ZPoly.CheckedIrreducible p]
 embedding. -/
 theorem rootMultiplicity_map_monic [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (f : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0) (z : K) :
     (toPolynomialMap embedding (monic f)).rootMultiplicity z =
       (toPolynomialMap embedding f).rootMultiplicity z :=
@@ -317,7 +317,7 @@ theorem rootMultiplicity_map_monic [ZPoly.CheckedIrreducible p]
 multiplicities after any field embedding. -/
 theorem rootMultiplicity_map_monicGcd [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (f g : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (f g : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0)
     (hg : toPolynomialMap embedding g ≠ 0) (z : K) :
     (toPolynomialMap embedding (monic (DensePoly.gcd f g))).rootMultiplicity z =
@@ -361,8 +361,8 @@ theorem rootMultiplicity_map_monicGcd [ZPoly.CheckedIrreducible p]
 /-- The monic gcd of two polynomials that remain nonzero after a field
 embedding also remains nonzero. -/
 theorem map_monicGcd_ne_zero [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (f g : DensePoly (QAdjoin p x))
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (f g : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0) :
     toPolynomialMap embedding (monic (DensePoly.gcd f g)) ≠ 0 := by
   have hfSource : HexPolyMathlib.toPolynomial f ≠ 0 := by
@@ -384,8 +384,8 @@ theorem map_monicGcd_ne_zero [ZPoly.CheckedIrreducible p]
 
 /-- The executable derivative commutes with every field embedding. -/
 theorem map_derivative [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (f : DensePoly (QAdjoin p x)) :
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (f : DensePoly (PolyQuot p x)) :
     toPolynomialMap embedding (derivative f) =
       Polynomial.derivative (toPolynomialMap embedding f) := by
   simp only [toPolynomialMap, toPolynomial_derivative,
@@ -394,8 +394,8 @@ theorem map_derivative [ZPoly.CheckedIrreducible p]
 /-- Exact executable division remains an exact factorization after a field
 embedding. -/
 theorem map_div_mul [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (dividend divisor : DensePoly (QAdjoin p x))
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (dividend divisor : DensePoly (PolyQuot p x))
     (hdivisor : divisor ∣ dividend) :
     toPolynomialMap embedding (dividend / divisor) *
         toPolynomialMap embedding divisor =
@@ -414,8 +414,8 @@ theorem map_div_mul [ZPoly.CheckedIrreducible p]
 /-- An exact quotient of a polynomial that stays nonzero after embedding also
 stays nonzero. -/
 theorem map_div_ne_zero [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (dividend divisor : DensePoly (QAdjoin p x))
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (dividend divisor : DensePoly (PolyQuot p x))
     (hdivisor : divisor ∣ dividend)
     (hdividend : toPolynomialMap embedding dividend ≠ 0) :
     toPolynomialMap embedding (dividend / divisor) ≠ 0 := by
@@ -427,8 +427,8 @@ theorem map_div_ne_zero [ZPoly.CheckedIrreducible p]
 /-- Exact executable division subtracts root multiplicities after a field
 embedding. -/
 theorem rootMultiplicity_map_div [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (dividend divisor : DensePoly (QAdjoin p x))
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (dividend divisor : DensePoly (PolyQuot p x))
     (hdivisor : divisor ∣ dividend)
     (hdividend : toPolynomialMap embedding dividend ≠ 0) (z : K) :
     (toPolynomialMap embedding (dividend / divisor)).rootMultiplicity z =
@@ -441,8 +441,8 @@ theorem rootMultiplicity_map_div [ZPoly.CheckedIrreducible p]
 embedding. -/
 theorem rootMultiplicity_map_monicDiv [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K)
-    (dividend divisor : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K)
+    (dividend divisor : DensePoly (PolyQuot p x))
     (hdivisor : divisor ∣ dividend)
     (hdividend : toPolynomialMap embedding dividend ≠ 0) (z : K) :
     (toPolynomialMap embedding (monic (dividend / divisor))).rootMultiplicity z =
@@ -454,8 +454,8 @@ theorem rootMultiplicity_map_monicDiv [ZPoly.CheckedIrreducible p]
 
 /-- A monic exact quotient remains nonzero after a field embedding. -/
 theorem map_monicDiv_ne_zero [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (dividend divisor : DensePoly (QAdjoin p x))
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (dividend divisor : DensePoly (PolyQuot p x))
     (hdivisor : divisor ∣ dividend)
     (hdividend : toPolynomialMap embedding dividend ≠ 0) :
     toPolynomialMap embedding (monic (dividend / divisor)) ≠ 0 := by
@@ -468,8 +468,8 @@ theorem map_monicDiv_ne_zero [ZPoly.CheckedIrreducible p]
 The first polynomial contains the root once exactly while `k ≤ r`; the
 repeated part contains the remaining `r - k` copies. -/
 structure YunInvariant [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K) (z : K)
-    (r k : Nat) (w repeated : DensePoly (QAdjoin p x)) : Prop where
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K) (z : K)
+    (r k : Nat) (w repeated : DensePoly (PolyQuot p x)) : Prop where
   /-- The current squarefree-product accumulator is nonzero. -/
   w_ne : toPolynomialMap embedding w ≠ 0
   /-- The current repeated part is nonzero. -/
@@ -484,8 +484,8 @@ structure YunInvariant [ZPoly.CheckedIrreducible p]
 /-- One executable Yun step advances the pointwise loop invariant. -/
 theorem YunInvariant.step [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (z : K) (r k : Nat)
-    (w repeated : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (z : K) (r k : Nat)
+    (w repeated : DensePoly (PolyQuot p x))
     (invariant : YunInvariant embedding z r k w repeated) :
     let shared := monic (DensePoly.gcd w repeated)
     let nextRepeated := monic (repeated / shared)
@@ -526,8 +526,8 @@ theorem YunInvariant.step [ZPoly.CheckedIrreducible p]
 current index is its original multiplicity. -/
 theorem YunInvariant.component [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (z : K) (r k : Nat)
-    (w repeated : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (z : K) (r k : Nat)
+    (w repeated : DensePoly (PolyQuot p x))
     (invariant : YunInvariant embedding z r k w repeated) :
     let shared := monic (DensePoly.gcd w repeated)
     let component := monic (w / shared)
@@ -558,7 +558,7 @@ theorem YunInvariant.component [ZPoly.CheckedIrreducible p]
 multiplicity index one. -/
 theorem YunInvariant.init [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [CharZero K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (f : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0)
     (hdegree : (toPolynomialMap embedding f).natDegree ≠ 0) (z : K) :
     let normalized := monic f
@@ -628,8 +628,8 @@ theorem YunInvariant.init [ZPoly.CheckedIrreducible p]
 
 /-- A nonzero embedded polynomial with a root has positive executable degree. -/
 theorem degree_pos_of_map_root [ZPoly.CheckedIrreducible p]
-    {K : Type*} [Field K] (embedding : QAdjoin p x →+* K)
-    (f : DensePoly (QAdjoin p x)) (hf : toPolynomialMap embedding f ≠ 0)
+    {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
+    (f : DensePoly (PolyQuot p x)) (hf : toPolynomialMap embedding f ≠ 0)
     {z : K} (hroot : (toPolynomialMap embedding f).IsRoot z) :
     0 < f.degree?.getD 0 := by
   have hdegree := Polynomial.degree_pos_of_root hf hroot
@@ -641,8 +641,8 @@ theorem degree_pos_of_map_root [ZPoly.CheckedIrreducible p]
   exact hnatDegree
 
 private theorem mem_yunAux_of_mem [ZPoly.CheckedIrreducible p]
-    (w repeated : DensePoly (QAdjoin p x)) (k fuel : Nat)
-    (out : Array (DensePoly (QAdjoin p x) × Nat)) {entry}
+    (w repeated : DensePoly (PolyQuot p x)) (k fuel : Nat)
+    (out : Array (DensePoly (PolyQuot p x) × Nat)) {entry}
     (hentry : entry ∈ out.toList) :
     entry ∈ (yunAux w repeated k fuel out).toList := by
   induction fuel generalizing w repeated k out with
@@ -660,9 +660,9 @@ private theorem mem_yunAux_of_mem [ZPoly.CheckedIrreducible p]
 
 private theorem yunAux_sound [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (z : K) (r : Nat)
-    (w repeated : DensePoly (QAdjoin p x)) (k fuel : Nat)
-    (out : Array (DensePoly (QAdjoin p x) × Nat))
+    (embedding : PolyQuot p x →+* K) (z : K) (r : Nat)
+    (w repeated : DensePoly (PolyQuot p x)) (k fuel : Nat)
+    (out : Array (DensePoly (PolyQuot p x) × Nat))
     (invariant : YunInvariant embedding z r k w repeated)
     (hOut : ∀ entry ∈ out.toList,
       (toPolynomialMap embedding entry.1).IsRoot z → entry.2 = r) :
@@ -713,9 +713,9 @@ private theorem yunAux_sound [ZPoly.CheckedIrreducible p]
 
 private theorem yunAux_complete [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (z : K) (r : Nat)
-    (w repeated : DensePoly (QAdjoin p x)) (k fuel : Nat)
-    (out : Array (DensePoly (QAdjoin p x) × Nat))
+    (embedding : PolyQuot p x →+* K) (z : K) (r : Nat)
+    (w repeated : DensePoly (PolyQuot p x)) (k fuel : Nat)
+    (out : Array (DensePoly (PolyQuot p x) × Nat))
     (invariant : YunInvariant embedding z r k w repeated)
     (hindex : k ≤ r) (hfuel : r < k + fuel) :
     ∃ entry ∈ (yunAux w repeated k fuel out).toList,
@@ -777,7 +777,7 @@ private theorem yunAux_complete [ZPoly.CheckedIrreducible p]
 component's stored multiplicity. -/
 theorem yun_sound [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [CharZero K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (f : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0)
     (hdegree : 0 < f.degree?.getD 0) (z : K) (entry)
     (hentry : entry ∈ (yun f).toList)
@@ -806,7 +806,7 @@ theorem yun_sound [ZPoly.CheckedIrreducible p]
 at its exact multiplicity. -/
 theorem yun_complete [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [CharZero K] [DecidableEq K]
-    (embedding : QAdjoin p x →+* K) (f : DensePoly (QAdjoin p x))
+    (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0)
     (hdegree : 0 < f.degree?.getD 0) (z : K)
     (hroot : (toPolynomialMap embedding f).IsRoot z) :
@@ -847,4 +847,4 @@ theorem yun_complete [ZPoly.CheckedIrreducible p]
   rw [ite_eq_right (by omega)]
   exact hcomplete
 
-end Hex.QAdjoin.Roots
+end Hex.PolyQuot.Roots

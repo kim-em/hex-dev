@@ -319,12 +319,12 @@ namespace AlgebraicNumber
 
 /-- The fixed-field coordinates of a canonical number evaluate to its value. -/
 theorem toQAdjoin_toComplex (a : AlgebraicNumber) :
-    QAdjoin.toComplex a.toQAdjoin a.rep a.rep_mk = a.toComplex := by
-  unfold QAdjoin.toComplex AlgebraicNumber.toQAdjoin
+    PolyQuot.toComplex a.toQAdjoin a.rep a.rep_mk = a.toComplex := by
+  unfold PolyQuot.toComplex AlgebraicNumber.toQAdjoin
   show Polynomial.eval₂ (algebraMap ℚ ℂ) a.rep.root
-    (HexPolyMathlib.toPolynomial (QAdjoin.reduceCoeffs a.p (DensePoly.ofList [0, 1]))) =
+    (HexPolyMathlib.toPolynomial (PolyQuot.reduceCoeffs a.p (DensePoly.ofList [0, 1]))) =
       a.toComplex
-  rw [QAdjoin.eval_reduceCoeffs]
+  rw [PolyQuot.eval_reduceCoeffs]
   have hX : HexPolyMathlib.toPolynomial (DensePoly.ofList ([0, 1] : List Rat)) =
       Polynomial.X := by
     ext n
@@ -337,14 +337,14 @@ theorem toQAdjoin_toComplex (a : AlgebraicNumber) :
 /-- The approximation ball contains the represented value. -/
 theorem approx_mem (a : AlgebraicNumber) (prec : Int) :
     a.toComplex ∈ (a.approx prec).set := by
-  have h := QAdjoin.approx_sound a.toQAdjoin a.rep a.rep_mk prec
+  have h := PolyQuot.approx_sound a.toQAdjoin a.rep a.rep_mk prec
   rw [toQAdjoin_toComplex] at h
   exact h
 
 /-- The approximation ball has the requested radius. -/
 theorem approx_radius (a : AlgebraicNumber) (prec : Int) :
     (a.approx prec).realRadius ≤ (2 : ℝ) ^ (-prec) :=
-  QAdjoin.approx_radius a.toQAdjoin a.rep a.rep_mk prec
+  PolyQuot.approx_radius a.toQAdjoin a.rep a.rep_mk prec
 
 /-- Complex roots of an integer polynomial are closed under conjugation. -/
 theorem isRoot_conj {p : ZPoly} {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :

@@ -635,7 +635,7 @@ theorem LevelSemantics.norm_denote_le_coordsMajorant :
         RawEvaluation.coordsMajorant levels data
   | [], data => by
       simpa [LevelSemantics.denote, RawEvaluation.coordsMajorant] using
-        QAdjoin.norm_rat_le_ratAbsCeil (data.getD 0 0)
+        PolyQuot.norm_rat_le_ratAbsCeil (data.getD 0 0)
   | level :: lower, data => by
       let indices := List.range level.degree
       let rootBound := 2 ^ cauchyExp level.root.p + 1

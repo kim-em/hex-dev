@@ -15,7 +15,7 @@ public section
 
 This module gives executable dyadic balls their ordinary closed-disc meaning
 in `ℂ` and states the enclosure and requested-radius contracts for
-{name}`Hex.QAdjoin.approx`.
+{name}`Hex.PolyQuot.approx`.
 -/
 
 open Metric Set
@@ -293,7 +293,7 @@ private theorem realRadius_mul_le (a b : DyadicComplexBall)
   nlinarith
 
 private theorem extent_toBall_le (s : DyadicSquare) :
-    extent s.toBall ≤ (2 : ℝ) ^ QAdjoin.rootBits s := by
+    extent s.toBall ≤ (2 : ℝ) ^ PolyQuot.rootBits s := by
   let w := GaussDyadic.hi s.center + s.radiusHi
   have hw : 0 < HexRootsMathlib.Dyadic.toReal w := by
     change 0 < HexRootsMathlib.Dyadic.toReal
@@ -322,7 +322,7 @@ private theorem extent_toBall_le (s : DyadicSquare) :
       simp [extent, w, DyadicSquare.toBall, DyadicSquare.center, realRadius]
     _ ≤ (2 : ℝ) ^ Hex.Dyadic.ceilLog2 w := hceil
     _ ≤ (2 : ℝ) ^ max 0 (Hex.Dyadic.ceilLog2 w) := hpow
-    _ = (2 : ℝ) ^ QAdjoin.rootBits s := by
+    _ = (2 : ℝ) ^ PolyQuot.rootBits s := by
       rw [← hcast, zpow_natCast]
       rfl
 
@@ -534,19 +534,19 @@ private theorem abs_ratCast_le_numAbs (q : Rat) :
 
 private theorem coeff_le_twoPow {f : DensePoly Rat} {q : Rat}
     (hq : q ∈ f.toList) :
-    |(q : ℝ)| ≤ (2 : ℝ) ^ QAdjoin.coeffBits f := by
-  have hbits : Hex.ceilLog2 (q.num.natAbs + 1) ≤ QAdjoin.coeffBits f := by
-    rw [QAdjoin.coeffBits, ← Array.foldl_toList]
+    |(q : ℝ)| ≤ (2 : ℝ) ^ PolyQuot.coeffBits f := by
+  have hbits : Hex.ceilLog2 (q.num.natAbs + 1) ≤ PolyQuot.coeffBits f := by
+    rw [PolyQuot.coeffBits, ← Array.foldl_toList]
     exact List.le_foldl_max_of_mem f.toList
       (fun r => Hex.ceilLog2 (r.num.natAbs + 1)) hq
-  have hnat : q.num.natAbs + 1 ≤ 2 ^ QAdjoin.coeffBits f := by
+  have hnat : q.num.natAbs + 1 ≤ 2 ^ PolyQuot.coeffBits f := by
     exact (HexRootsMathlib.le_two_pow_ceilLog2 _).trans
       (Nat.pow_le_pow_right (by norm_num : 0 < 2) hbits)
   calc
     |(q : ℝ)| ≤ (q.num.natAbs : ℝ) := abs_ratCast_le_numAbs q
     _ ≤ (q.num.natAbs + 1 : Nat) := by norm_num
-    _ ≤ (2 ^ QAdjoin.coeffBits f : Nat) := by exact_mod_cast hnat
-    _ = (2 : ℝ) ^ QAdjoin.coeffBits f := by norm_num
+    _ ≤ (2 ^ PolyQuot.coeffBits f : Nat) := by exact_mod_cast hnat
+    _ = (2 : ℝ) ^ PolyQuot.coeffBits f := by norm_num
 
 private theorem horner_bounds (coeffs : List Rat)
     (zBall initBall : DyadicComplexBall) (coeffPrec : Int) (A K : ℝ)
@@ -1056,9 +1056,9 @@ private theorem evalRatBall_radius_le (f : DensePoly Rat) (s : DyadicSquare)
     (hs0 : 0 ≤ s.toBall.realRadius) (hsK : extent s.toBall ≤ K)
     (hsUlp : s.toBall.realRadius ≤ 2 * (2 : ℝ) ^ (-coeffPrec))
     (hcoeff : ∀ q ∈ f.toList, |(q : ℝ)| ≤ A) :
-    (QAdjoin.evalRatBall f s coeffPrec).realRadius ≤
+    (PolyQuot.evalRatBall f s coeffPrec).realRadius ≤
       (2 : ℝ) ^ (-coeffPrec) * 16 * f.size * A * (2 * K) ^ f.size := by
-  unfold QAdjoin.evalRatBall
+  unfold PolyQuot.evalRatBall
   dsimp only
   cases hback : f.toArray.back? with
   | none =>
@@ -1136,9 +1136,9 @@ the supplied root ball. -/
 theorem evalRatBall_mem (f : DensePoly Rat) (s : DyadicSquare)
     (coeffPrec : Int) {z : ℂ} (hz : z ∈ s.toBall.set) :
     (HexPolyMathlib.toPolynomial f).eval₂ (algebraMap Rat ℂ) z ∈
-      (QAdjoin.evalRatBall f s coeffPrec).set := by
+      (PolyQuot.evalRatBall f s coeffPrec).set := by
   rw [eval_toPolynomial_horner]
-  unfold QAdjoin.evalRatBall
+  unfold PolyQuot.evalRatBall
   dsimp only
   cases hback : f.toArray.back? with
   | none =>
@@ -1296,15 +1296,15 @@ theorem mulRadius_le {p q : ZPoly}
     {br : {r : RefinedIsolation q //
       SimpleRoot.mk r = SimpleRoot.mk b}}
     (har : a.refineTo?
-      (prec + ((8 + QAdjoin.rootBits a.1.square +
-        QAdjoin.rootBits b.1.square : Nat) : Int)) strategy = some ar)
+      (prec + ((8 + PolyQuot.rootBits a.1.square +
+        PolyQuot.rootBits b.1.square : Nat) : Int)) strategy = some ar)
     (hbr : b.refineTo?
-      (prec + ((8 + QAdjoin.rootBits a.1.square +
-        QAdjoin.rootBits b.1.square : Nat) : Int)) strategy = some br) :
+      (prec + ((8 + PolyQuot.rootBits a.1.square +
+        PolyQuot.rootBits b.1.square : Nat) : Int)) strategy = some br) :
     (ar.1.1.square.toBall.mul br.1.1.square.toBall).realRadius ≤
       (2 : ℝ) ^ (-(prec + 4)) := by
-  let A := QAdjoin.rootBits a.1.square
-  let B := QAdjoin.rootBits b.1.square
+  let A := PolyQuot.rootBits a.1.square
+  let B := PolyQuot.rootBits b.1.square
   let G := 8 + A + B
   let H := 4 + A + B
   let δ : ℝ := (2 : ℝ) ^ (-(prec + (G : Int)))
@@ -1607,12 +1607,12 @@ theorem invBall_exists {p : ZPoly} (a : RefinedIsolation p)
 
 end RefinedIsolation
 
-namespace QAdjoin
+namespace PolyQuot
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
 /-- Fixed-field approximation always encloses the represented complex value. -/
-theorem approx_sound (a : QAdjoin p x) (rep : RefinedIsolation p)
+theorem approx_sound (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
     toComplex a rep h ∈ (a.approx rep h prec).2.set := by
   unfold approx
@@ -1647,7 +1647,7 @@ theorem approx_sound (a : QAdjoin p x) (rep : RefinedIsolation p)
     exact DyadicComplexBall.mem_toBall
       (HexRootsMathlib.RefinedIsolation.root_mem_closedDisc rep)
 
-private theorem eval_guard_radius (a : QAdjoin p x) (rep : RefinedIsolation p)
+private theorem eval_guard_radius (a : PolyQuot p x) (rep : RefinedIsolation p)
     (prec : Int)
     {out : {rep' : RefinedIsolation p //
       SimpleRoot.mk rep' = SimpleRoot.mk rep}}
@@ -1747,7 +1747,7 @@ private theorem eval_guard_radius (a : QAdjoin p x) (rep : RefinedIsolation p)
       omega
 
 /-- The guarded approximation achieves the requested dyadic radius. -/
-theorem approx_radius (a : QAdjoin p x) (rep : RefinedIsolation p)
+theorem approx_radius (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
     (a.approx rep h prec).2.realRadius ≤ (2 : ℝ) ^ (-prec) := by
   unfold approx
@@ -1761,6 +1761,6 @@ theorem approx_radius (a : QAdjoin p x) (rep : RefinedIsolation p)
       simp only
       exact eval_guard_radius a rep prec href
 
-end QAdjoin
+end PolyQuot
 
 end Hex

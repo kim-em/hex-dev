@@ -15,12 +15,12 @@ public section
 # Fixed-presentation semantic laws
 
 This module proves the operation laws needed to install a scoped field
-structure on {name}`Hex.QAdjoin`. The executable carrier deliberately supplies
+structure on {name}`Hex.PolyQuot`. The executable carrier deliberately supplies
 only its concrete operations; the {name}`AdjoinRoot` correspondence packages
 those laws without changing the operations or their rational scalar action.
 -/
 
-namespace Hex.QAdjoin
+namespace Hex.PolyQuot
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
@@ -87,9 +87,9 @@ theorem definingPolynomial_irreducible (p : ZPoly)
 
 /-- Send reduced executable coordinates to the corresponding {name}`AdjoinRoot`
 class. This function is defined before a ring structure is installed on
-{name}`Hex.QAdjoin`. -/
+{name}`Hex.PolyQuot`. -/
 @[expose]
-noncomputable def toAdjoinRoot (a : QAdjoin p x) :
+noncomputable def toAdjoinRoot (a : PolyQuot p x) :
     AdjoinRoot (definingPolynomial p) :=
   AdjoinRoot.mk (definingPolynomial p)
     (HexPolyMathlib.toPolynomial a.coeffs)
@@ -97,7 +97,7 @@ noncomputable def toAdjoinRoot (a : QAdjoin p x) :
 /-- Recover the unique reduced executable coordinates of an {name}`AdjoinRoot`
 class. -/
 private noncomputable def fromAdjoinRoot [ZPoly.CheckedIrreducible p]
-    (a : AdjoinRoot (definingPolynomial p)) : QAdjoin p x where
+    (a : AdjoinRoot (definingPolynomial p)) : PolyQuot p x where
   coeffs := HexPolyMathlib.ofPolynomial
     (AdjoinRoot.modByMonicHom (definingPolynomial_monic p) a)
   degree_lt := by
@@ -122,7 +122,7 @@ theorem toAdjoinRoot_bijective [ZPoly.CheckedIrreducible p] :
   apply Function.bijective_iff_has_inverse.mpr
   refine ⟨@fromAdjoinRoot p x _, ?_, ?_⟩
   · intro a
-    apply QAdjoin.ext
+    apply PolyQuot.ext
     apply (HexPolyMathlib.equiv (R := Rat)).injective
     change HexPolyMathlib.toPolynomial
         (HexPolyMathlib.ofPolynomial
@@ -167,7 +167,7 @@ noncomputable def rootHom [ZPoly.CheckedIrreducible p]
 /-- Quotient evaluation agrees with direct evaluation of executable
 coordinates. -/
 theorem rootHom_toAdjoinRoot [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     rootHom rep (toAdjoinRoot a) = toComplex a rep h := by
   rw [rootHom, toAdjoinRoot, AdjoinRoot.lift_mk]
@@ -177,7 +177,7 @@ theorem rootHom_toAdjoinRoot [ZPoly.CheckedIrreducible p]
 presentation. -/
 theorem toComplex_injective [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
-    Function.Injective (fun a : QAdjoin p x => toComplex a rep h) := by
+    Function.Injective (fun a : PolyQuot p x => toComplex a rep h) := by
   let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   intro a b hab
@@ -187,11 +187,11 @@ theorem toComplex_injective [ZPoly.CheckedIrreducible p]
   exact hab
 
 /-- The executable coordinate test recognizes precisely the zero element. -/
-theorem isZero_iff (a : QAdjoin p x) : a.isZero ↔ a = 0 := by
-  rw [QAdjoin.isZero, DensePoly.isZero_eq_true_iff]
+theorem isZero_iff (a : PolyQuot p x) : a.isZero ↔ a = 0 := by
+  rw [PolyQuot.isZero, DensePoly.isZero_eq_true_iff]
   constructor
   · intro hsize
-    apply QAdjoin.ext
+    apply PolyQuot.ext
     apply DensePoly.ext_coeff
     intro n
     change a.coeffs.coeff n = 0
@@ -201,9 +201,9 @@ theorem isZero_iff (a : QAdjoin p x) : a.isZero ↔ a = 0 := by
     exact DensePoly.size_zero
 
 /-- Irreducibility and the reduced-degree invariant make the executable gcd
-guard in {name}`Hex.QAdjoin.inv` succeed for every nonzero element. -/
+guard in {name}`Hex.PolyQuot.inv` succeed for every nonzero element. -/
 theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (ha : a.isZero = false) :
+    (a : PolyQuot p x) (ha : a.isZero = false) :
     (DensePoly.xgcdLeftMonic a.coeffs (ZPoly.toRatPoly p)).gcd.size = 1 := by
   let A := HexPolyMathlib.toPolynomial a.coeffs
   let P := HexPolyMathlib.toPolynomial (ZPoly.toRatPoly p)
@@ -212,7 +212,7 @@ theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
     have hcoeffs : a.coeffs = 0 := by
       apply (HexPolyMathlib.equiv (R := Rat)).injective
       simpa [A] using hA
-    have hazero : a = 0 := QAdjoin.ext hcoeffs
+    have hazero : a = 0 := PolyQuot.ext hcoeffs
     have : a.isZero = true := (isZero_iff a).mpr hazero
     simp [ha] at this
   have hdeg : A.natDegree < P.natDegree := by
@@ -259,7 +259,7 @@ theorem inverse_gcd_size [ZPoly.CheckedIrreducible p]
 
 /-- Fixed-presentation zero evaluates to complex zero. -/
 theorem map_zero (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
-    toComplex (0 : QAdjoin p x) rep h = 0 := by
+    toComplex (0 : PolyQuot p x) rep h = 0 := by
   change
     (HexPolyMathlib.toPolynomial (0 : DensePoly Rat)).eval₂
         (algebraMap Rat ℂ) rep.root = 0
@@ -267,14 +267,14 @@ theorem map_zero (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
 
 /-- Fixed-presentation one evaluates to complex one. -/
 theorem map_one (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
-    toComplex (1 : QAdjoin p x) rep h = 1 := by
+    toComplex (1 : PolyQuot p x) rep h = 1 := by
   change
     (HexPolyMathlib.toPolynomial (1 : DensePoly Rat)).eval₂
         (algebraMap Rat ℂ) rep.root = 1
   rw [HexPolyMathlib.toPolynomial_one, Polynomial.eval₂_one]
 
 /-- Fixed-presentation negation agrees with complex negation. -/
-theorem map_neg (a : QAdjoin p x) (rep : RefinedIsolation p)
+theorem map_neg (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (-a) rep h = -toComplex a rep h := by
   change
@@ -287,7 +287,7 @@ theorem map_neg (a : QAdjoin p x) (rep : RefinedIsolation p)
     Polynomial.eval₂_neg]
 
 /-- Fixed-presentation subtraction agrees with complex subtraction. -/
-theorem map_sub (a b : QAdjoin p x) (rep : RefinedIsolation p)
+theorem map_sub (a b : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (a - b) rep h = toComplex a rep h - toComplex b rep h := by
   change
@@ -302,7 +302,7 @@ theorem map_sub (a b : QAdjoin p x) (rep : RefinedIsolation p)
     Polynomial.eval₂_sub]
 
 /-- The executable rational scalar action is semantic scalar multiplication. -/
-theorem map_smul (q : Rat) (a : QAdjoin p x) (rep : RefinedIsolation p)
+theorem map_smul (q : Rat) (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (q • a) rep h = (q : ℂ) * toComplex a rep h := by
   change
@@ -321,13 +321,13 @@ theorem map_smul (q : Rat) (a : QAdjoin p x) (rep : RefinedIsolation p)
     (map_ratCast (algebraMap Rat ℂ) q)
 
 /-- Executable extended-GCD inversion agrees with complex inversion. -/
-theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
+theorem map_inv [ZPoly.CheckedIrreducible p] (a : PolyQuot p x)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     toComplex a⁻¹ rep h = (toComplex a rep h)⁻¹ := by
   by_cases ha : a.isZero = true
   · have hazero : a = 0 := (isZero_iff a).mp ha
-    change toComplex (QAdjoin.inv a) rep h = _
-    rw [QAdjoin.inv, ite_eq_left ha, map_zero, hazero, map_zero, inv_zero]
+    change toComplex (PolyQuot.inv a) rep h = _
+    rw [PolyQuot.inv, ite_eq_left ha, map_zero, hazero, map_zero, inv_zero]
   · have haFalse : a.isZero = false := by
       cases hzero : a.isZero <;> simp_all
     let m := ZPoly.toRatPoly p
@@ -392,11 +392,11 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       apply ha
       apply (isZero_iff a).mpr
       apply toComplex_injective rep h
-      change toComplex a rep h = toComplex (0 : QAdjoin p x) rep h
+      change toComplex a rep h = toComplex (0 : PolyQuot p x) rep h
       rw [map_zero]
       exact hzero
-    change toComplex (QAdjoin.inv a) rep h = _
-    simp only [QAdjoin.inv, haFalse, Bool.false_eq_true, ite_false]
+    change toComplex (PolyQuot.inv a) rep h = _
+    simp only [PolyQuot.inv, haFalse, Bool.false_eq_true, ite_false]
     rw [hs, ite_eq_left rfl, ite_eq_right hlc0]
     change
       (HexPolyMathlib.toPolynomial
@@ -417,7 +417,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : QAdjoin p x)
       mul_comm, Complex.mul_inv_cancel hvalue]
 
 /-- Fixed-presentation division agrees with complex division. -/
-theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x)
+theorem map_div [ZPoly.CheckedIrreducible p] (a b : PolyQuot p x)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     toComplex (a / b) rep h = toComplex a rep h / toComplex b rep h := by
   change toComplex (a * b⁻¹) rep h = _
@@ -425,7 +425,7 @@ theorem map_div [ZPoly.CheckedIrreducible p] (a b : QAdjoin p x)
   rfl
 
 /-- Executable natural powers preserve the selected interpretation. -/
-theorem map_natPow (a : QAdjoin p x) (n : Nat)
+theorem map_natPow (a : PolyQuot p x) (n : Nat)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     toComplex (natPow a n) rep h = toComplex a rep h ^ n := by
   induction n using Nat.strongRecOn with
@@ -451,7 +451,7 @@ theorem map_natPow (a : QAdjoin p x) (n : Nat)
 
 /-- Executable integer powers preserve the selected interpretation. -/
 theorem map_intPow [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (n : Int)
+    (a : PolyQuot p x) (n : Int)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     toComplex (intPow a n) rep h = toComplex a rep h ^ n := by
   cases n with
@@ -464,22 +464,22 @@ theorem map_intPow [ZPoly.CheckedIrreducible p]
 executable reduced-coordinate operations. -/
 @[expose, reducible]
 noncomputable def field (p : ZPoly) (x : SimpleRoot p)
-    [ZPoly.CheckedIrreducible p] : Field (QAdjoin p x) := by
+    [ZPoly.CheckedIrreducible p] : Field (PolyQuot p x) := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  letI : SMul Nat (QAdjoin p x) :=
+  letI : SMul Nat (PolyQuot p x) :=
     ⟨fun n a => (n : Rat) • a⟩
-  letI : SMul Int (QAdjoin p x) :=
+  letI : SMul Int (PolyQuot p x) :=
     ⟨fun n a => (n : Rat) • a⟩
-  letI : SMul ℚ≥0 (QAdjoin p x) :=
+  letI : SMul ℚ≥0 (PolyQuot p x) :=
     ⟨fun q a => (q : Rat) • a⟩
   -- Deliberately retain the executable `SMul Rat`, `Pow`, `NatCast` and
   -- `IntCast` instances. The injected field must prove laws for those
   -- operations, not replace them.
-  letI : NNRatCast (QAdjoin p x) :=
-    ⟨fun q => (q : Rat) • (1 : QAdjoin p x)⟩
-  letI : RatCast (QAdjoin p x) :=
-    ⟨fun q => q • (1 : QAdjoin p x)⟩
+  letI : NNRatCast (PolyQuot p x) :=
+    ⟨fun q => (q : Rat) • (1 : PolyQuot p x)⟩
+  letI : RatCast (PolyQuot p x) :=
+    ⟨fun q => q • (1 : PolyQuot p x)⟩
   apply Function.Injective.field
     (fun a => toComplex a rep hrep) (toComplex_injective rep hrep)
   · exact map_zero rep hrep
@@ -508,19 +508,19 @@ noncomputable def field (p : ZPoly) (x : SimpleRoot p)
   · exact fun a n => map_natPow a n rep hrep
   · exact fun a n => map_intPow a n rep hrep
   · intro n
-    change toComplex ((n : Rat) • (1 : QAdjoin p x)) rep hrep = (n : ℂ)
+    change toComplex ((n : Rat) • (1 : PolyQuot p x)) rep hrep = (n : ℂ)
     rw [map_smul, map_one, mul_one]
     norm_cast
   · intro n
-    change toComplex ((n : Rat) • (1 : QAdjoin p x)) rep hrep = (n : ℂ)
+    change toComplex ((n : Rat) • (1 : PolyQuot p x)) rep hrep = (n : ℂ)
     rw [map_smul, map_one, mul_one]
     norm_cast
   · intro q
-    change toComplex ((q : Rat) • (1 : QAdjoin p x)) rep hrep = (q : ℂ)
+    change toComplex ((q : Rat) • (1 : PolyQuot p x)) rep hrep = (q : ℂ)
     rw [map_smul, map_one, mul_one]
     norm_cast
   · intro q
-    change toComplex (q • (1 : QAdjoin p x)) rep hrep = (q : ℂ)
+    change toComplex (q • (1 : PolyQuot p x)) rep hrep = (q : ℂ)
     rw [map_smul, map_one, mul_one]
 
 namespace QAdjoinField
@@ -535,19 +535,19 @@ computational imports never acquire a noncomputable proof dictionary. Opening
 the scope makes field notation proof-bearing and therefore noncomputable;
 executable code should use the unscoped operations instead. -/
 noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
-    [ZPoly.CheckedIrreducible p] : Field (QAdjoin p x) := field p x
+    [ZPoly.CheckedIrreducible p] : Field (PolyQuot p x) := field p x
 
 /-- A checked rational presentation has characteristic zero. -/
 noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
-    [ZPoly.CheckedIrreducible p] : CharZero (QAdjoin p x) := by
-  let : Field (QAdjoin p x) := field p x
+    [ZPoly.CheckedIrreducible p] : CharZero (PolyQuot p x) := by
+  let : Field (PolyQuot p x) := field p x
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
   constructor
   intro m n hmn
-  have hvalue := congrArg (fun a : QAdjoin p x => toComplex a rep hrep) hmn
-  change toComplex ((m : Rat) • (1 : QAdjoin p x)) rep hrep =
-    toComplex ((n : Rat) • (1 : QAdjoin p x)) rep hrep at hvalue
+  have hvalue := congrArg (fun a : PolyQuot p x => toComplex a rep hrep) hmn
+  change toComplex ((m : Rat) • (1 : PolyQuot p x)) rep hrep =
+    toComplex ((n : Rat) • (1 : PolyQuot p x)) rep hrep at hvalue
   simp only [map_smul, map_one, mul_one] at hvalue
   exact_mod_cast hvalue
 
@@ -561,25 +561,25 @@ that silently replaces an operation or the rational scalar action fails here. -/
 
 section OperationRegression
 
-variable (a b : QAdjoin p x) (q : Rat) [ZPoly.CheckedIrreducible p]
+variable (a b : PolyQuot p x) (q : Rat) [ZPoly.CheckedIrreducible p]
 
-example : (0 : QAdjoin p x) = QAdjoin.instZero.zero := rfl
-example : (1 : QAdjoin p x) = QAdjoin.instOne.one := rfl
-example : a + b = QAdjoin.add a b := rfl
-example : a - b = QAdjoin.sub a b := rfl
-example : a * b = QAdjoin.mul a b := rfl
-example : -a = QAdjoin.neg a := rfl
-example : a⁻¹ = QAdjoin.inv a := rfl
-example : a / b = QAdjoin.div a b := rfl
-example : a ^ (3 : Nat) = QAdjoin.natPow a 3 := rfl
-example : a ^ (-3 : Int) = QAdjoin.intPow a (-3) := rfl
-example : q • a = QAdjoin.smul q a := rfl
+example : (0 : PolyQuot p x) = PolyQuot.instZero.zero := rfl
+example : (1 : PolyQuot p x) = PolyQuot.instOne.one := rfl
+example : a + b = PolyQuot.add a b := rfl
+example : a - b = PolyQuot.sub a b := rfl
+example : a * b = PolyQuot.mul a b := rfl
+example : -a = PolyQuot.neg a := rfl
+example : a⁻¹ = PolyQuot.inv a := rfl
+example : a / b = PolyQuot.div a b := rfl
+example : a ^ (3 : Nat) = PolyQuot.natPow a 3 := rfl
+example : a ^ (-3 : Int) = PolyQuot.intPow a (-3) := rfl
+example : q • a = PolyQuot.smul q a := rfl
 
 end OperationRegression
 
 /-- The quotient comparison preserves executable zero. -/
 theorem toAdjoinRoot_zero [ZPoly.CheckedIrreducible p] :
-    toAdjoinRoot (0 : QAdjoin p x) = 0 := by
+    toAdjoinRoot (0 : PolyQuot p x) = 0 := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
   let : Fact (_root_.Irreducible (definingPolynomial p)) :=
@@ -590,7 +590,7 @@ theorem toAdjoinRoot_zero [ZPoly.CheckedIrreducible p] :
 
 /-- The quotient comparison preserves executable one. -/
 theorem toAdjoinRoot_one [ZPoly.CheckedIrreducible p] :
-    toAdjoinRoot (1 : QAdjoin p x) = 1 := by
+    toAdjoinRoot (1 : PolyQuot p x) = 1 := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
   let : Fact (_root_.Irreducible (definingPolynomial p)) :=
@@ -601,7 +601,7 @@ theorem toAdjoinRoot_one [ZPoly.CheckedIrreducible p] :
 
 /-- The quotient comparison preserves executable addition. -/
 theorem toAdjoinRoot_add [ZPoly.CheckedIrreducible p]
-    (a b : QAdjoin p x) :
+    (a b : PolyQuot p x) :
     toAdjoinRoot (a + b) = toAdjoinRoot a + toAdjoinRoot b := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
@@ -614,7 +614,7 @@ theorem toAdjoinRoot_add [ZPoly.CheckedIrreducible p]
 
 /-- The quotient comparison preserves executable multiplication. -/
 theorem toAdjoinRoot_mul [ZPoly.CheckedIrreducible p]
-    (a b : QAdjoin p x) :
+    (a b : PolyQuot p x) :
     toAdjoinRoot (a * b) = toAdjoinRoot a * toAdjoinRoot b := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
@@ -628,7 +628,7 @@ theorem toAdjoinRoot_mul [ZPoly.CheckedIrreducible p]
 /-- The quotient comparison preserves executable rational scalar
 multiplication. -/
 theorem toAdjoinRoot_smul [ZPoly.CheckedIrreducible p]
-    (q : Rat) (a : QAdjoin p x) :
+    (q : Rat) (a : PolyQuot p x) :
     toAdjoinRoot (q • a) = q • toAdjoinRoot a := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
@@ -644,7 +644,7 @@ theorem toAdjoinRoot_smul [ZPoly.CheckedIrreducible p]
 /-- The reduced-coordinate comparison as a ring homomorphism. -/
 @[expose]
 noncomputable def toAdjoinRootHom [ZPoly.CheckedIrreducible p] :
-    QAdjoin p x →+* AdjoinRoot (definingPolynomial p) where
+    PolyQuot p x →+* AdjoinRoot (definingPolynomial p) where
   toFun := toAdjoinRoot
   map_zero' := toAdjoinRoot_zero
   map_one' := toAdjoinRoot_one
@@ -655,19 +655,19 @@ noncomputable def toAdjoinRootHom [ZPoly.CheckedIrreducible p] :
 {name}`AdjoinRoot` presentation. -/
 @[expose]
 noncomputable def adjoinRootEquiv [ZPoly.CheckedIrreducible p] :
-    QAdjoin p x ≃+* AdjoinRoot (definingPolynomial p) :=
+    PolyQuot p x ≃+* AdjoinRoot (definingPolynomial p) :=
   RingEquiv.ofBijective toAdjoinRootHom toAdjoinRoot_bijective
 
 /-- The packaged ring equivalence acts by the underlying comparison map. -/
 @[simp]
 theorem adjoinRootEquiv_apply [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) : adjoinRootEquiv a = toAdjoinRoot a := rfl
+    (a : PolyQuot p x) : adjoinRootEquiv a = toAdjoinRoot a := rfl
 
 /-- Evaluation at the selected root as an injective ring homomorphism. -/
 @[expose]
 noncomputable def embedding [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
-    QAdjoin p x →+* ℂ where
+    PolyQuot p x →+* ℂ where
   toFun := fun a => toComplex a rep h
   map_zero' := map_zero rep h
   map_one' := map_one rep h
@@ -677,7 +677,7 @@ noncomputable def embedding [ZPoly.CheckedIrreducible p]
 /-- The packaged ring homomorphism acts by evaluation at the selected root. -/
 @[simp]
 theorem embedding_apply [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     embedding rep h a = toComplex a rep h := rfl
 
@@ -689,7 +689,7 @@ theorem embedding_injective [ZPoly.CheckedIrreducible p]
 /-- Equality in a checked presentation is exactly equality of interpreted
 complex values. -/
 theorem eq_iff_toComplex [ZPoly.CheckedIrreducible p]
-    (a b : QAdjoin p x) (rep : RefinedIsolation p)
+    (a b : PolyQuot p x) (rep : RefinedIsolation p)
     (hrep : SimpleRoot.mk rep = x) :
     a = b ↔ toComplex a rep hrep = toComplex b rep hrep := by
   constructor
@@ -697,4 +697,4 @@ theorem eq_iff_toComplex [ZPoly.CheckedIrreducible p]
   · intro h
     exact @toComplex_injective p x _ rep hrep a b h
 
-end Hex.QAdjoin
+end Hex.PolyQuot

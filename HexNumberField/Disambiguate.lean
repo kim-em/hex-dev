@@ -61,7 +61,7 @@ def evalMajorant {A : Type} [Zero A] [DecidableEq A]
 
 end Disambiguation
 
-namespace QAdjoin
+namespace PolyQuot
 
 /-- Ceiling of the absolute value of a rational, computed with integer
 arithmetic. -/
@@ -72,7 +72,7 @@ def ratAbsCeil (q : Rat) : Nat :=
 /-- Integer magnitude majorant for a fixed-field coordinate evaluated at any
 root of its defining polynomial. -/
 @[expose]
-def valueMajorant {p : ZPoly} {x : SimpleRoot p} (a : QAdjoin p x) : Nat :=
+def valueMajorant {p : ZPoly} {x : SimpleRoot p} (a : PolyQuot p x) : Nat :=
   let rootBound := 2 ^ cauchyExp p + 1
   a.coeffs.toArray.foldr
     (fun coeff acc => acc * rootBound + ratAbsCeil coeff) 0
@@ -86,10 +86,10 @@ unit. The update `E' = 2*V + 2*B*E + 3*E + 1` covers root error, the
 coefficient error. -/
 @[expose]
 def evalMajorant {p : ZPoly} {x : SimpleRoot p}
-    (f : DensePoly (QAdjoin p x)) (q : ZPoly) : Nat :=
+    (f : DensePoly (PolyQuot p x)) (q : ZPoly) : Nat :=
   Disambiguation.evalMajorant f valueMajorant q
 
-end QAdjoin
+end PolyQuot
 
 /-- The specified finite search endpoint
 `ceilLog2(ceil(2 * (1 + height(q)) * C)) + 2`. All inputs are integral, so

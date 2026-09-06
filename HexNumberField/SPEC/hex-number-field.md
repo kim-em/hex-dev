@@ -563,7 +563,8 @@ so for instance `rootNear #p[-2, 0, 1] 0` is `-√2` and, from a real point,
 a conjugate pair resolves to the member with the smaller isolation centre.
 Scientific literals are rationals, so `rootNear #p[-2, 0, 1] 1.4` and
 `rootNear #p[1, 0, 1] 0 0.9` read as written. A constant polynomial has no
-roots and yields `0`.
+roots and yields `0`. Like `algebraicRoots` it is irreducible, so that a type
+mentioning it reduces cheaply when `#eval` looks for a printing instance.
 
 The fast path uses the approximation balls at `separationPrec p`.
 `ballUpper` bounds the squared distance from the point to every point of a
