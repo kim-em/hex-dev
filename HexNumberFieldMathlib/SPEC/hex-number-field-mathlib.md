@@ -234,7 +234,11 @@ Together with `toComplex_injective` and the arithmetic correspondence
 theorems, this transports the field laws from `ℂ` onto the existing executable
 zero, one, casts, scalar actions, powers, and arithmetic operations. The
 installed `Field AlgebraicNumber` therefore changes no computational data
-field; it only supplies the law-bearing dictionary.
+field; it only supplies the law-bearing dictionary. The instance is
+computable: its data fields are the executable operations written out and
+its laws are taken one by one from the transported proof, so code that
+reaches an operation through the field structure, such as `a ^ n` under
+Mathlib's monoid power, compiles and runs the executable operation.
 
 ## Algebraic coefficient polynomials
 
