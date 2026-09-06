@@ -2586,7 +2586,13 @@ extra_workflows:
       # empty commit to `main`.
       concurrency:
         group: ${{ github.workflow }}-${{ github.ref }}
-        cancel-in-progress: true
+        # A render takes hours, and a publish run pushes here whenever any library
+        # moves, so cancelling in progress meant the common case was two publishes
+        # inside one render and no documentation at all from either. Queue instead:
+        # GitHub keeps the running job and holds only the newest push behind it, so
+        # the site still converges on the latest pins without discarding a render
+        # that is nearly done.
+        cancel-in-progress: false
       permissions:
         contents: read
         pages: write
@@ -2617,10 +2623,46 @@ extra_workflows:
                 lake build 2>&1 | tee build.log
                 if grep -qE 'Building Mathlib\b' build.log; then
                   echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
-            # doc-gen4 renders declaration pages for the whole import cone (Mathlib
-            # included) in a docbuild/ sub-project that reuses ../.lake/packages, caches
-            # the generated HTML keyed on lake-manifest.json, and deploys to Pages.
+            # Rendering Mathlib's declaration pages dominates this job, and those pages
+            # only change when Mathlib does. docgen-action's own cache keys on the whole
+            # lake-manifest.json, which every publish rewrites, so it never hits here;
+            # `use-github-cache: false` below turns it off in favour of this pair, keyed
+            # on the revisions of the packages that are not ours.
+            - name: Key the dependency documentation on the upstream revisions
+              id: deps
+              run: |
+                python3 - <<'PY' >> "$GITHUB_OUTPUT"
+                import hashlib, json, pathlib
+                manifest = json.loads(pathlib.Path("lake-manifest.json").read_text())
+                upstream = sorted(
+                    (p["name"], p.get("rev", ""))
+                    for p in manifest["packages"]
+                    if not p["name"].lower().startswith("hex")
+                )
+                toolchain = pathlib.Path("lean-toolchain").read_text().strip()
+                digest = hashlib.sha256(repr((toolchain, upstream)).encode()).hexdigest()
+                print(f"key={digest[:16]}")
+                PY
+            - name: Restore the dependency documentation
+              uses: actions/cache/restore@v4
+              with:
+                path: docbuild/.lake/build
+                key: docs-deps-${{ runner.os }}-${{ steps.deps.outputs.key }}-${{ github.run_id }}
+                restore-keys: docs-deps-${{ runner.os }}-${{ steps.deps.outputs.key }}-
+            # The restore is scoped by upstream revision, so what it returns for Mathlib
+            # and friends is current by construction. Our own libraries move on every
+            # publish, which is what this job exists to pick up, so drop their pages and
+            # let doc-gen4 render them again.
+            - name: Re-render this project's own pages
+              run: rm -rf docbuild/.lake/build/doc/Hex*
             - name: Build and deploy API documentation
               uses: leanprover-community/docgen-action@10db47458f91456d87804787d3dfcd914b9a19e3
               with:
                 build-page: false
+                use-github-cache: false
+            - name: Save the dependency documentation
+              if: success()
+              uses: actions/cache/save@v4
+              with:
+                path: docbuild/.lake/build
+                key: docs-deps-${{ runner.os }}-${{ steps.deps.outputs.key }}-${{ github.run_id }}
