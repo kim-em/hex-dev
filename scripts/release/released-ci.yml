@@ -2567,3 +2567,60 @@ workflows:
                 .lake/build
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+# Workflows a released repository needs beyond its build-only `ci.yml`, keyed
+# the same way and published to `.github/workflows/<name>.yml`. Only the
+# `pins_only` aggregate has one: it is the repository whose Pages site carries
+# the API documentation for every published library, so its renderer belongs
+# under the same source-of-truth rule as everything else here.
+extra_workflows:
+  hex:
+    docs: |
+      name: docs
+      on:
+        push:
+          branches: [main]
+      # No `workflow_dispatch`: docgen-action gates its doc build, artifact upload,
+      # and Pages deploy on `github.event_name == 'push'`, so a manual dispatch would
+      # run the Lean build and then silently skip publishing. Re-render by pushing an
+      # empty commit to `main`.
+      concurrency:
+        group: ${{ github.workflow }}-${{ github.ref }}
+        cancel-in-progress: true
+      permissions:
+        contents: read
+        pages: write
+        id-token: write
+      jobs:
+        docs:
+          runs-on: ubuntu-latest
+          environment:
+            name: github-pages
+          steps:
+            # Mathlib's generated doc HTML is large; free space so the runner doesn't fill up.
+            - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+              with:
+                tool-cache: false
+            - uses: actions/checkout@v4
+              with:
+                fetch-depth: 0 # doc-gen4 source links need full history
+            # Preserve the Mathlib-rebuild guard from ci.yml: fetch the olean cache and
+            # hard-fail if a cache miss would recompile Mathlib from source.
+            - uses: leanprover/lean-action@v1
+              with:
+                auto-config: false
+                build: false
+            - run: lake exe cache get
+            - name: Build the aggregate (fail if Mathlib rebuilds from source)
+              run: |
+                set -o pipefail
+                lake build 2>&1 | tee build.log
+                if grep -qE 'Building Mathlib\b' build.log; then
+                  echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
+            # doc-gen4 renders declaration pages for the whole import cone (Mathlib
+            # included) in a docbuild/ sub-project that reuses ../.lake/packages, caches
+            # the generated HTML keyed on lake-manifest.json, and deploys to Pages.
+            - name: Build and deploy API documentation
+              uses: leanprover-community/docgen-action@10db47458f91456d87804787d3dfcd914b9a19e3
+              with:
+                build-page: false

@@ -161,16 +161,72 @@ def released_ci_workflows(path: Path | None = None) -> dict[str, str]:
     return workflows
 
 
-def apply_ci_workflow(entry: dict, clone: Path) -> str:
-    """Publish the selected central workflow into a released clone."""
+def released_extra_workflows(path: Path | None = None) -> dict[str, dict[str, str]]:
+    """Load the workflows a repository gets beyond its build-only `ci.yml`.
+
+    Keyed by repository short name, then by workflow file stem, so `hex`'s
+    `docs` entry is published as `.github/workflows/docs.yml`. Absent from the
+    document means no repository has one, which is a legitimate state.
+    """
+    source = path or RELEASED_CI
+    document = yaml.safe_load(source.read_text(encoding="utf-8"))
+    extras = document.get("extra_workflows") if isinstance(document, dict) else None
+    if extras is None:
+        return {}
+    if not isinstance(extras, dict):
+        raise ValueError(f"{source}: extra_workflows must be a mapping")
+    for repo, workflows in extras.items():
+        if not isinstance(repo, str) or not isinstance(workflows, dict) or not workflows:
+            raise ValueError(
+                f"{source}: extra_workflows entries must map a name to a non-empty mapping")
+        for stem, workflow in workflows.items():
+            if not isinstance(stem, str) or not isinstance(workflow, str):
+                raise ValueError(
+                    f"{source}: extra workflow entries must map names to text")
+            if stem == "ci":
+                raise ValueError(
+                    f"{source}: {repo} declares ci as an extra workflow; ci.yml is"
+                    " published from the workflows mapping")
+            if not workflow.endswith("\n"):
+                raise ValueError(
+                    f"{source}: extra workflow {stem} for {repo} must end in a newline")
+    return extras
+
+
+def managed_workflow_paths(entry: dict) -> set[Path]:
+    """The `.github/workflows/` files one mirror is allowed to carry.
+
+    Every mirror has `ci.yml`; the manifest may declare further workflows for a
+    repository. This is the allowance, so it describes the destinations without
+    requiring the content to exist: a repository with no managed CI workflow is
+    an error when publishing, not when computing what may survive a sweep.
+    """
+    short = entry["repo"].split("/")[-1]
+    stems = ["ci", *released_extra_workflows().get(short, {})]
+    return {Path(".github") / "workflows" / f"{stem}.yml" for stem in stems}
+
+
+def managed_workflows(entry: dict) -> dict[Path, str]:
+    """The complete `.github/workflows/` content one mirror is published with."""
     short = entry["repo"].split("/")[-1]
     workflows = released_ci_workflows()
     if short not in workflows:
         raise RuntimeError(f"no managed CI workflow for {entry['repo']}")
-    destination = clone / ".github" / "workflows" / "ci.yml"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(workflows[short], encoding="utf-8")
-    return "  scripts/release/released-ci.yml -> .github/workflows/ci.yml"
+    out = {Path(".github") / "workflows" / "ci.yml": workflows[short]}
+    for stem, workflow in released_extra_workflows().get(short, {}).items():
+        out[Path(".github") / "workflows" / f"{stem}.yml"] = workflow
+    return out
+
+
+def apply_ci_workflow(entry: dict, clone: Path) -> list[str]:
+    """Publish the central workflows into a released clone."""
+    notes: list[str] = []
+    for dest_rel, workflow in managed_workflows(entry).items():
+        destination = clone / dest_rel
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(workflow, encoding="utf-8")
+        notes.append(f"  scripts/release/released-ci.yml -> {dest_rel.as_posix()}")
+    return notes
 
 
 def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
@@ -240,9 +296,6 @@ SKELETON = (
     "lean-toolchain",
 )
 
-# The one path under `.github/` a mirror keeps, written by `apply_ci_workflow`
-# rather than by the managed-path copy.
-MANAGED_WORKFLOW = Path(".github") / "workflows" / "ci.yml"
 
 # Removed from every released repository, the `pins_only` aggregate included.
 # The aggregate is otherwise exempt from the sweep, because its umbrella module,
@@ -289,7 +342,7 @@ def allowed_paths(entry: dict) -> tuple[set[Path], set[Path]]:
     """
     subtrees = {Path(name) for name in SKELETON}
     subtrees.update(keep_paths(entry))
-    files = {MANAGED_WORKFLOW}
+    files = managed_workflow_paths(entry)
     for _src, dest_rel, is_dir in managed_paths(entry):
         (subtrees if is_dir else files).add(dest_rel)
     return subtrees, files
@@ -362,7 +415,7 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
         rendered = aggregate_readme.render(manifest, REPO_ROOT / template)
         (clone / "README.md").write_text(rendered, encoding="utf-8")
         notes.append(f"  {template} + released.yml -> README.md (generated)")
-    notes.append(apply_ci_workflow(entry, clone))
+    notes.extend(apply_ci_workflow(entry, clone))
     notes.extend(prune_unmanaged(entry, clone))
     if entry.get("pins_only"):
         return notes

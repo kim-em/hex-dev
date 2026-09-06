@@ -282,6 +282,68 @@ class SyncReleasedTests(unittest.TestCase):
                 {"repo": "leanprover/hex-example"}, self.repo / "clone"
             )
 
+    def test_extra_workflow_is_published_beside_ci(self) -> None:
+        """A declared extra workflow lands at `.github/workflows/<stem>.yml`."""
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n  hex: |\n    name: CI\n"
+            "extra_workflows:\n  hex:\n    docs: |\n      name: docs\n",
+            encoding="utf-8")
+        clone = self.repo / "clone"
+        with patch.object(sync_released, "RELEASED_CI", source):
+            notes = sync_released.apply_ci_workflow(
+                {"repo": "leanprover/hex"}, clone)
+        self.assertEqual(
+            (clone / ".github" / "workflows" / "ci.yml").read_text(), "name: CI\n")
+        self.assertEqual(
+            (clone / ".github" / "workflows" / "docs.yml").read_text(), "name: docs\n")
+        self.assertIn(
+            "  scripts/release/released-ci.yml -> .github/workflows/docs.yml", notes)
+
+    def test_sweep_keeps_a_declared_extra_workflow(self) -> None:
+        """The allowance follows the manifest, so the sweep cannot orphan it."""
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n  hex-bridge: |\n    name: CI\n"
+            "extra_workflows:\n  hex-bridge:\n    docs: |\n      name: docs\n",
+            encoding="utf-8")
+        clone = self._bridge_clone()
+        for stem in ("ci", "docs", "stray"):
+            (clone / ".github" / "workflows" / f"{stem}.yml").write_text(
+                "name: x\n", encoding="utf-8")
+        with tempfile.TemporaryDirectory() as source_directory:
+            with (
+                patch.object(sync_released, "REPO_ROOT", Path(source_directory)),
+                patch.object(sync_released, "RELEASED_CI", source),
+            ):
+                sync_released.prune_unmanaged(self._bridge_entry(), clone)
+        workflows = clone / ".github" / "workflows"
+        self.assertTrue((workflows / "ci.yml").exists())
+        self.assertTrue((workflows / "docs.yml").exists())
+        self.assertFalse((workflows / "stray.yml").exists())
+
+    def test_extra_workflows_reject_a_ci_stem(self) -> None:
+        """`ci.yml` has one source; declaring it twice would be ambiguous."""
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n  hex: |\n    name: CI\n"
+            "extra_workflows:\n  hex:\n    ci: |\n      name: other\n",
+            encoding="utf-8")
+        with (
+            patch.object(sync_released, "RELEASED_CI", source),
+            self.assertRaisesRegex(ValueError, "ci as an extra workflow"),
+        ):
+            sync_released.released_extra_workflows(source)
+
+    def test_extra_workflows_require_a_trailing_newline(self) -> None:
+        source = self.repo / "released-ci.yml"
+        source.write_text(
+            "workflows:\n  hex: |\n    name: CI\n"
+            "extra_workflows:\n  hex:\n    docs: \"name: docs\"\n",
+            encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "must end in a newline"):
+            sync_released.released_extra_workflows(source)
+
     def test_pins_only_apply_overwrites_managed_ci(self) -> None:
         source = self.repo / "released-ci.yml"
         source.write_text(
