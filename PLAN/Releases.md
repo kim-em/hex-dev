@@ -309,11 +309,26 @@ If a mirror ever stops publishing, look for `upload not configured` in its CI
 log: that is the step reporting a missing secret or variable rather than
 failing, so an unprovisioned repository is quiet rather than red.
 
-Changing the publish step means changing `released-ci.yml`, which the sync can
-only deliver while the publishing tokens carry the Workflows permission (see
-"Publishing a new library: widen a token first"). A sync whose workflow text is
-unchanged pushes no workflow file and so never exercises that permission, which
-is worth remembering when diagnosing the first sync after a workflow change.
+Changing the publish step means changing `released-ci.yml`, and as of the first
+such change the sync could not deliver it: the push was rejected with `refusing
+to allow a Personal Access Token to create or update workflow
+.github/workflows/ci.yml without workflow scope`. Neither publishing token
+carries the Workflows permission yet (see "Publishing a new library: widen a
+token first"). A sync whose workflow text is unchanged pushes no workflow file
+and so never exercises the permission, which is why this went unnoticed until a
+workflow actually changed.
+
+That first rollout was therefore done by pushing `.github/workflows/ci.yml` to
+each mirror directly, outside the sync, with a token that does carry the scope.
+Doing that moves every mirror's `main` off the recorded baseline, so
+`synced.json` on `release-sync-baseline` was advanced to the pushed commits in
+the same operation; without that the compare-and-swap guard would have refused
+all 56 as uncoordinated. A dry run afterwards reported no divergence and no
+pending workflow change.
+
+Prefer not to repeat that. Until the tokens are widened, every workflow change
+needs the same two-step manoeuvre, and forgetting the baseline half of it strands
+the whole published set behind the guard.
 
 ### Publishing a new library: widen a token first
 
