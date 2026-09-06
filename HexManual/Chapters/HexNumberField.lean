@@ -200,9 +200,9 @@ def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 #guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk = cbrt2
 ```
 
-An element prints as its coordinate polynomial, and a rational polynomial
-denotes its reduction, so the printed form is again an expression for the
-element: `c⁵ = 2c²`.
+An element prints as its coordinate polynomial, here `c⁵ = 2c²`, and a
+rational polynomial denotes its reduction, so the printed form is again an
+expression for the element:
 
 ```lean (name := cbrt2Pow)
 #eval c ^ 5
@@ -211,7 +211,7 @@ element: `c⁵ = 2c²`.
 #p[0, 0, 2]
 ```
 ```lean
-#guard c ^ 5 = #p[0, 0, 2]
+#guard (c ^ 5).coeffs = #p[0, 0, 2]
 ```
 
 ```lean -show
