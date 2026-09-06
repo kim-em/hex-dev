@@ -15,6 +15,7 @@ public import HexNumberField.Disambiguate
 public import HexNumberField.AlgebraicPoly
 public import HexNumberField.Roots
 public import HexNumberField.IntegerRoots
+public import HexNumberField.Nearest
 
 public section
 

@@ -240,6 +240,22 @@ its laws are taken one by one from the transported proof, so code that
 reaches an operation through the field structure, such as `a ^ n` under
 Mathlib's monoid power, compiles and runs the executable operation.
 
+## Exact primitives
+
+```lean
+theorem AlgebraicNumber.I_toComplex : AlgebraicNumber.I.toComplex = Complex.I
+theorem AlgebraicNumber.conj_toComplex (a : AlgebraicNumber) :
+    a.conj.toComplex = starRingEnd ℂ a.toComplex
+theorem AlgebraicNumber.realCompare_eq (a b : AlgebraicNumber)
+    (ha : a.isReal = true) (hb : b.isReal = true) :
+    a.realCompare b = compare a.toComplex.re b.toComplex.re
+```
+
+Each rests on `mahlerPrec_separates` and `approx_mem`: at `separationPrec`
+the balls of distinct roots of one polynomial are disjoint, so the root whose
+ball meets a given point's ball is unique, and the order of ball centres is
+the order of real roots.
+
 ## Algebraic coefficient polynomials
 
 Interpret `AlgebraicPoly` as a Mathlib `Polynomial ℂ` using
@@ -326,6 +342,7 @@ HexNumberFieldMathlib/
   Exact.lean                 : canonicalization and exactification
   Lazy.lean                  : arithmetic soundness and completeness
   Field.lean                 : the Field instances pinned to executable data
+  Nearest.lean               : imaginary unit, conjugation, exact real order
   AlgebraicPoly.lean         : semantic coefficient polynomials
   Roots.lean                 : root completeness and multiplicity
   AlgebraicRoots.lean        : finite-output root-set obligations
