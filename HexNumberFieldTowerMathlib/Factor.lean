@@ -642,7 +642,7 @@ theorem isIrreducible_iff (T : NumberTower) (f : Poly T) :
 /-- Every returned Trager factorization satisfies reconstruction,
 multiplicity, irreducibility, uniqueness, and ordering. -/
 theorem factor?_sound (T : NumberTower) (f : Poly T)
-    {r : Factorization T f} (_h : T.factor? f = some r) :
+    {r : Factorization T f} (_h : factor? f = some r) :
     r.Sound := by
   have hcheck := r.checked
   simp only [checkFactorization, Factor.check, Bool.and_eq_true] at hcheck
@@ -717,7 +717,7 @@ theorem factor?_sound (T : NumberTower) (f : Poly T)
 
 /-- Recursive Trager factorization succeeds for every tower polynomial. -/
 theorem factor?_isSome (T : NumberTower) (f : Poly T) :
-    (T.factor? f).isSome := by
+    (factor? f).isSome := by
   let input := f.toArray.map coeffs
   have hrawSome := factorRaw_isSome T.levels.toList T.valid
     (coeffDenote_injective T) input

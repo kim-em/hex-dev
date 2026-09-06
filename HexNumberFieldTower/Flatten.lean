@@ -235,7 +235,7 @@ def searchRecovered? (theta alpha : AlgebraicNumber) (target : Nat) :
 /-- Combine the fixed generators one level at a time, retaining a tower
 coordinate for each accepted canonical primitive element. -/
 @[expose]
-def candidate? (T : NumberTower) (generators : Array (Generator T)) :
+def candidate? {T : NumberTower} (generators : Array (Generator T)) :
     Option (Candidate T) := do
   match generators[0]? with
   | none =>
@@ -329,7 +329,7 @@ round trip, and the primitive polynomial relation succeed. -/
 @[expose]
 def flatten? (T : NumberTower) : Option (Flattening T) := do
   let generators ← Flatten.generators? T
-  let candidate ← Flatten.candidate? T generators
+  let candidate ← Flatten.candidate? generators
   let images := Flatten.basisImages generators candidate.coordinates
   if Flatten.certifies candidate images then
     some

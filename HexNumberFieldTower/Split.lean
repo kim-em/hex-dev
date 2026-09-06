@@ -25,13 +25,13 @@ namespace Evaluation
 
 /-- Evaluate a fixed tower element in its chosen absolute embedding. -/
 @[expose]
-def evalElem? (T : NumberTower) (a : Elem T) : Option AlgebraicRoot :=
+def evalElem? {T : NumberTower} (a : Elem T) : Option AlgebraicRoot :=
   RawEvaluation.evalCoords? T.levels.toList (coeffs a)
 
 /-- Exact lazy Horner evaluation of a tower polynomial at an absolute
 candidate root. -/
 @[expose]
-def evalPoly? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot) :
+def evalPoly? {T : NumberTower} (f : Poly T) (candidate : AlgebraicRoot) :
     Option AlgebraicRoot :=
   RawEvaluation.evalPoly? T.levels.toList (f.toArray.map coeffs) candidate
 
@@ -40,7 +40,7 @@ absolute candidate root. Each exact coefficient is refined far enough to
 supply the common `2^-prec` input-error unit consumed by
 {name}`Hex.Disambiguation.evalMajorant`. -/
 @[expose]
-def evalBall? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot)
+def evalBall? {T : NumberTower} (f : Poly T) (candidate : AlgebraicRoot)
     (prec : Nat) : Option DyadicComplexBall :=
   RawEvaluation.evalBall? T.levels.toList (f.toArray.map coeffs)
     candidate prec
@@ -48,7 +48,7 @@ def evalBall? (T : NumberTower) (f : Poly T) (candidate : AlgebraicRoot)
 /-- Decide, with the prescribed finite precision endpoint, whether a tower
 polynomial vanishes at an absolute candidate root. -/
 @[expose]
-def vanishesAt? (T : NumberTower) (f : Poly T)
+def vanishesAt? {T : NumberTower} (f : Poly T)
     (candidate : AlgebraicRoot) : Option Bool :=
   RawEvaluation.vanishesAt? T.levels.toList (f.toArray.map coeffs) candidate
 
@@ -67,7 +67,7 @@ def selectFactor? (T : NumberTower) (candidate : AlgebraicRoot)
     (factors : Array (Poly T × Nat)) : Option (Poly T) := do
   let selected ← factors.foldlM (fun selected entry => do
     if entry.2 = 1 then
-      let keep ← Evaluation.vanishesAt? T entry.1 candidate
+      let keep ← Evaluation.vanishesAt? entry.1 candidate
       if keep then some (selected.push entry.1) else some selected
     else
       none) #[]
@@ -160,7 +160,7 @@ embedding checks before constructing the new carrier index. -/
 def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
     Option (Extension T) := do
   let input := liftZPoly T candidate.p
-  let factorization ← factor? T input
+  let factorization ← factor? input
   let selected ← selectFactor? T candidate factorization.factors
   let d := selected.degree?.getD 0
   if d = 0 then
@@ -183,7 +183,7 @@ def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
 /-- Squarefree primitive integer eliminant obtained by taking the selected
 factor's norm through every tower level. -/
 @[expose]
-def factorEliminant (T : NumberTower) (f : Poly T) : ZPoly :=
+def factorEliminant {T : NumberTower} (f : Poly T) : ZPoly :=
   let absolute := Norm.iterated T.levels.toList (f.toArray.map coeffs)
   ZPoly.squareFreeCore <|
     ZPoly.ratPolyPrimitivePart (Factor.toRatPoly absolute)
@@ -191,19 +191,19 @@ def factorEliminant (T : NumberTower) (f : Poly T) : ZPoly :=
 /-- Retain exactly the absolute candidates at which the relative factor
 vanishes, preserving isolation order. -/
 @[expose]
-def retainRoots? (T : NumberTower) (f : Poly T) :
+def retainRoots? {T : NumberTower} (f : Poly T) :
     List AlgebraicRoot → Option (List AlgebraicRoot)
   | [] => some []
   | candidate :: candidates => do
-      let keep ← Evaluation.vanishesAt? T f candidate
-      let retained ← retainRoots? T f candidates
+      let keep ← Evaluation.vanishesAt? f candidate
+      let retained ← retainRoots? f candidates
       if keep then some (candidate :: retained) else some retained
 
 /-- Isolate the absolute eliminant and retain the first root that zeros the
 relative factor under the current fixed embedding. -/
 @[expose]
-def factorRoot? (T : NumberTower) (f : Poly T) : Option AlgebraicRoot := do
-  let p := factorEliminant T f
+def factorRoot? {T : NumberTower} (f : Poly T) : Option AlgebraicRoot := do
+  let p := factorEliminant f
   if hprim : ZPoly.content p = 1 then
     if hpos : 0 < p.leadingCoeff then
       if hdegree : 0 < p.degree?.getD 0 then
@@ -219,7 +219,7 @@ def factorRoot? (T : NumberTower) (f : Poly T) : Option AlgebraicRoot := do
                x := SimpleRoot.mk rep
                rep
                rep_mk := rfl } : AlgebraicRoot)
-          let retained ← retainRoots? T f candidates
+          let retained ← retainRoots? f candidates
           retained.head?
         else
           none
@@ -246,9 +246,9 @@ embedding needed by proof-facing consumers. Every successful nonlinear
 iteration consumes one fuel unit and must strictly increase the tower
 dimension. -/
 @[expose]
-def splitAux (T : NumberTower) (f : Poly T) (fuel : Nat) :
+def splitAux {T : NumberTower} (f : Poly T) (fuel : Nat) :
     Option (Splitting T f) := do
-  let factorization ← factor? T f
+  let factorization ← factor? f
   match linearRoots? factorization.factors with
   | some roots =>
       some { extension := Extension.identity T
@@ -259,12 +259,12 @@ def splitAux (T : NumberTower) (f : Poly T) (fuel : Nat) :
       | fuel + 1 => do
           let nonlinear ← factorization.factors.toList.find? fun entry =>
             decide (1 < entry.1.degree?.getD 0)
-          let candidate ← factorRoot? T nonlinear.1
+          let candidate ← factorRoot? nonlinear.1
           let step ← adjoin? T candidate
           if step.tower.dim ≤ T.dim then
             none
           else
-            let inner ← splitAux step.tower (mapPoly step.embed f) fuel
+            let inner ← splitAux (mapPoly step.embed f) fuel
             some
               { extension := step.trans inner.extension
                 roots := inner.roots }
@@ -272,7 +272,7 @@ def splitAux (T : NumberTower) (f : Poly T) (fuel : Nat) :
 /-- Construct an extension in which the input polynomial splits into linear
 factors, retaining multiplicities from checked factorization. -/
 @[expose]
-def split? (T : NumberTower) (f : Poly T) : Option (Splitting T f) :=
+def split? {T : NumberTower} (f : Poly T) : Option (Splitting T f) :=
   if f.isZero then
     some { extension := Extension.identity T
            roots := .all }
@@ -280,7 +280,7 @@ def split? (T : NumberTower) (f : Poly T) : Option (Splitting T f) :=
     some { extension := Extension.identity T
            roots := .finite #[] }
   else
-    splitAux T f (f.degree?.getD 0)
+    splitAux f (f.degree?.getD 0)
 
 /-! Compiled fixed-embedding selection regression. -/
 
@@ -305,8 +305,8 @@ private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
         let extension := ofQAdjoin (x := selectSqrtTwoRoot)
           hsimple selectSqrtTwoRep rfl
         let input := liftZPoly extension.tower selectSqrtTwoPoly
-        match Evaluation.evalElem? extension.tower extension.gen,
-            factor? extension.tower input with
+        match Evaluation.evalElem? extension.gen,
+            factor? input with
         | some evaluated, some factorization =>
             match QAdjoin.Roots.sameValue? evaluated extension.root,
                 selectFactor? extension.tower extension.root
@@ -315,7 +315,7 @@ private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
                 factorization.factors.size = 2 &&
                   selected.degree?.getD 0 = 1 &&
                   coeffs (selected.coeff 0) = #[0, -1] &&
-                  Evaluation.vanishesAt? extension.tower selected
+                  Evaluation.vanishesAt? selected
                     extension.root = some true
             | _, _ => false
         | _, _ => false
@@ -467,7 +467,7 @@ private def selectFourthRootTwoRep :
 -- roots.
 #guard
     let constant : Poly rat := DensePoly.C (ofRat rat 5)
-    match split? rat 0, split? rat constant with
+    match split? (0 : Poly rat), split? constant with
     | some zeroResult, some constantResult =>
         zeroResult.extension.tower.dim = 1 &&
           constantResult.extension.tower.dim = 1 &&
@@ -481,7 +481,7 @@ private def selectFourthRootTwoRep :
 #guard
     let quadratic : Poly rat := DensePoly.ofCoeffs
       #[ofRat rat (-2), 0, 1]
-    match split? rat quadratic with
+    match split? quadratic with
     | some result =>
         result.extension.tower.height = 1 &&
           result.extension.tower.dim = 2 &&
@@ -498,7 +498,7 @@ private def selectFourthRootTwoRep :
 #guard
     let repeated : Poly rat := DensePoly.ofCoeffs
       #[ofRat rat 4, 0, ofRat rat (-4), 0, 1]
-    match split? rat repeated with
+    match split? repeated with
     | some result =>
         match result.roots with
         | .finite roots =>
@@ -514,7 +514,7 @@ private def selectFourthRootTwoRep :
 #guard
     let quartic : Poly rat := DensePoly.ofCoeffs
       #[ofRat rat 6, 0, ofRat rat (-5), 0, 1]
-    match split? rat quartic with
+    match split? quartic with
     | some result =>
         result.extension.tower.height = 2 &&
           result.extension.tower.dim = 4 &&

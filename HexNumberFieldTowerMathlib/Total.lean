@@ -29,11 +29,11 @@ def adjoin (T : NumberTower) (a : AlgebraicRoot) : Extension T :=
 
 /-- Factor a polynomial over a tower; total by `factor?_isSome`. -/
 def factor (T : NumberTower) (f : Poly T) : Factorization T f :=
-  (T.factor? f).get (factor?_isSome T f)
+  (factor? f).get (factor?_isSome T f)
 
 /-- Split a polynomial over a tower; total by `split?_isSome`. -/
 def split (T : NumberTower) (f : Poly T) : Splitting T f :=
-  (T.split? f).get (split?_isSome T f)
+  (split? f).get (split?_isSome T f)
 
 /-- Flatten a tower to a primitive element; total by `flatten?_isSome`. -/
 def flatten (T : NumberTower) : Flattening T :=
@@ -44,11 +44,11 @@ def flatten (T : NumberTower) : Flattening T :=
   (Option.some_get (adjoin?_isSome T a)).symm
 
 @[simp] theorem factor?_eq_some (T : NumberTower) (f : Poly T) :
-    T.factor? f = some (T.factor f) :=
+    factor? f = some (T.factor f) :=
   (Option.some_get (factor?_isSome T f)).symm
 
 @[simp] theorem split?_eq_some (T : NumberTower) (f : Poly T) :
-    T.split? f = some (T.split f) :=
+    split? f = some (T.split f) :=
   (Option.some_get (split?_isSome T f)).symm
 
 @[simp] theorem flatten?_eq_some (T : NumberTower) :

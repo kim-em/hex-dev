@@ -409,7 +409,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Typical rational factorization into two distinct linear factors.
 #guard
     let input := rationalPoly [-1, 0, 1]
-    match factor? rat input with
+    match factor? input with
     | some result =>
         coeffs result.scalar = #[1] && result.factors.size = 2 &&
           checkFactorization input result.scalar result.factors &&
@@ -421,7 +421,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 
 -- Edge: zero has zero scalar and no factors.
 #guard
-    match factor? rat (0 : Poly rat) with
+    match factor? (0 : Poly rat) with
     | some result =>
         isZero result.scalar && result.factors.isEmpty &&
           checkFactorization 0 result.scalar result.factors
@@ -430,7 +430,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Repeated irreducible input retains its Yun multiplicity bucket.
 #guard
     let input := rationalPoly [4, 0, -4, 0, 1]
-    match factor? rat input with
+    match factor? input with
     | some result =>
         coeffs result.scalar = #[1] && result.factors.size = 1 &&
           checkFactorization input result.scalar result.factors &&
@@ -441,7 +441,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Non-unit content is separated into the scalar and reconstructs exactly.
 #guard
     let input := rationalPoly [-12, 0, 6]
-    match factor? rat input with
+    match factor? input with
     | some result =>
         coeffs result.scalar = #[6] && result.factors.size = 1 &&
           checkFactorization input result.scalar result.factors &&
@@ -456,7 +456,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
     | some base =>
         let T := base.tower
         let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-3), 0, 1]
-        match factor? T input with
+        match factor? input with
         | some result =>
             coeffs result.scalar = #[1, 0] && result.factors.size = 1 &&
               checkFactorization input result.scalar result.factors &&
@@ -473,7 +473,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
     | some tower =>
         let T := tower.extension.tower
         let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-3), 0, 1]
-        match factor? T input with
+        match factor? input with
         | some result =>
             result.factors.size = 2 &&
               checkFactorization input result.scalar result.factors &&
@@ -489,7 +489,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Typical quadratic: one adjoining step and both simple roots.
 #guard
     let input := rationalPoly [-2, 0, 1]
-    match split? rat input with
+    match split? input with
     | some result =>
         result.extension.tower.dim = 2 && result.extension.tower.height = 1 &&
           match result.roots with
@@ -502,7 +502,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Edge: zero has every element as a root; a nonzero constant has no roots.
 #guard
     let constant : Poly rat := DensePoly.C (ofRat rat 5)
-    match split? rat 0, split? rat constant with
+    match split? 0, split? constant with
     | some zeroResult, some constantResult =>
         match zeroResult.roots, constantResult.roots with
         | .all, .finite roots =>
@@ -514,7 +514,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Repeated factors preserve multiplicity through adjoining and refactoring.
 #guard
     let input := rationalPoly [4, 0, -4, 0, 1]
-    match split? rat input with
+    match split? input with
     | some result =>
         match result.roots with
         | .finite roots =>
@@ -531,7 +531,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
     | some base =>
         let T := base.tower
         let input : Poly T := DensePoly.ofCoeffs #[-base.gen, 0, 1]
-        match split? T input with
+        match split? input with
         | some result =>
             result.extension.tower.dim = 4 &&
               result.extension.tower.height = 2 &&
@@ -547,7 +547,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 -- Adversarial quartic: two genuine adjoining steps and four simple roots.
 #guard
     let input := rationalPoly [6, 0, -5, 0, 1]
-    match split? rat input with
+    match split? input with
     | some result =>
         result.extension.tower.dim = 4 && result.extension.tower.height = 2 &&
           match result.roots with

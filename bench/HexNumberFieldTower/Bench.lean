@@ -522,7 +522,7 @@ initialize repeatedRef : IO.Ref (Option (Poly rat)) ←
 
 private def repeatedFactor? (_ : Unit) :
     Option (Hex.NumberTower.Factorization rat repeatedInput) :=
-  factor? rat repeatedInput
+  factor? repeatedInput
 
 initialize repeatedFactorRef : IO.Ref
     (Option (Hex.NumberTower.Factorization rat repeatedInput)) ←
@@ -538,21 +538,21 @@ private def getRepeatedFactor : IO (Hex.NumberTower.Factorization rat repeatedIn
 def runFactorRat : Unit → IO UInt64 := fun _ => do
   let input ← requireSome "factor/rational" (← repeatedRef.get)
   return factorChecksum
-    (← requireSome "factor/rational" (factor? rat input))
+    (← requireSome "factor/rational" (factor? input))
 
 def runFactorRetry : Unit → IO UInt64 := fun _ => do
   let base ← getSqrtTwo
   let T := base.tower
   let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-3), 0, 1]
   return factorChecksum
-    (← requireSome "factor/retry" (factor? T input))
+    (← requireSome "factor/retry" (factor? input))
 
 def runFactorRecursive : Unit → IO UInt64 := fun _ => do
   let tower ← getTwoLevel
   let T := tower.extension.tower
   let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-1), ofRat T (-1), 1]
   return factorChecksum
-    (← requireSome "factor/recursive" (factor? T input))
+    (← requireSome "factor/recursive" (factor? input))
 
 def runCheckFactorization : Unit → IO UInt64 := fun _ => do
   let result ← getRepeatedFactor
@@ -619,7 +619,7 @@ initialize quarticRef : IO.Ref (Option (Poly rat)) ←
 
 def runSplit : Unit → IO UInt64 := fun _ => do
   let input ← requireSome "split/quartic" (← quarticRef.get)
-  return splitChecksum (← requireSome "split/quartic" (split? rat input))
+  return splitChecksum (← requireSome "split/quartic" (split? input))
 
 def runFlatten : Unit → IO UInt64 := fun _ => do
   let tower ← getTwoLevel
@@ -1438,7 +1438,7 @@ private def getFactorCanonicalInput : IO FactorInput := do
 
 def runTowerFactorLadder : Unit → IO UInt64 := fun _ => do
   let input ← getFactorCanonicalInput
-  return match factor? input.tower input.f with
+  return match factor? input.f with
   | some result => factorChecksum result
   | none => 1
 
@@ -1477,7 +1477,7 @@ private def degreeMultChecksum (pairs : Array (Nat × Nat)) : UInt64 :=
     (hash pairs.size)
 
 private def towerFactorDegrees (input : FactorInput) : UInt64 :=
-  match factor? input.tower input.f with
+  match factor? input.f with
   | some result =>
     degreeMultChecksum <| result.factors.map fun entry =>
       (entry.1.degree?.getD 0, entry.2)
@@ -1584,7 +1584,7 @@ private instance : Inhabited CheckInput :=
 
 private def prepCheckInput (n : Nat) : CheckInput :=
   let input := prepFactorInput n
-  match factor? input.tower input.f with
+  match factor? input.f with
   | some result => ⟨input.tower, input.f, result.scalar, result.factors⟩
   | none => panic! "prepCheckInput: factorization failed"
 
