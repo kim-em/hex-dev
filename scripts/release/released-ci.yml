@@ -61,9 +61,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -136,9 +136,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -218,9 +218,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -300,9 +300,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -381,9 +381,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -463,9 +463,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -545,9 +545,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -627,9 +627,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -708,9 +708,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -789,9 +789,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -871,9 +871,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -953,9 +953,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1034,9 +1034,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1116,9 +1116,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1193,9 +1193,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1270,9 +1270,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1352,9 +1352,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1434,9 +1434,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1511,9 +1511,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1588,9 +1588,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1670,9 +1670,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1752,9 +1752,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1829,9 +1829,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1906,9 +1906,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -1988,9 +1988,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2070,9 +2070,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2152,9 +2152,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2234,9 +2234,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2316,9 +2316,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2398,9 +2398,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2475,9 +2475,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2557,9 +2557,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2634,9 +2634,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2716,9 +2716,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2798,9 +2798,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2879,9 +2879,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -2960,9 +2960,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3041,9 +3041,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3122,9 +3122,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3199,9 +3199,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3281,9 +3281,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3362,9 +3362,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3446,9 +3446,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3528,9 +3528,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3609,9 +3609,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3686,9 +3686,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3768,9 +3768,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3849,9 +3849,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -3931,9 +3931,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4012,9 +4012,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4094,9 +4094,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4175,9 +4175,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4257,9 +4257,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4338,9 +4338,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4419,9 +4419,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
@@ -4500,9 +4500,9 @@ workflows:
           - name: Publish build outputs to the Lake cache (main only)
             if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
             env:
-              LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
-              S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
-              S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+              LAKE_CACHE_KEY: ${{ secrets.HEX_LAKE_CACHE_KEY }}
+              S3_ARTIFACT_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_ARTIFACT_ENDPOINT }}
+              S3_REVISION_ENDPOINT: ${{ vars.HEX_LAKE_CACHE_REVISION_ENDPOINT }}
             run: |
               if [ -z "$LAKE_CACHE_KEY" ] || [ -z "$S3_ARTIFACT_ENDPOINT" ] || [ -z "$S3_REVISION_ENDPOINT" ]; then
                 echo "::notice::upload not configured (LAKE_CACHE_KEY / endpoints); skipping publish"; exit 0
