@@ -15,7 +15,8 @@ The normalization invariant (no trailing zeros) ensures structural equality
 The polynomial literal `#p[a₀, a₁, ...]` abbreviates
 `DensePoly.ofCoeffs #[a₀, a₁, ...]`. Coefficients are listed in ascending
 degree order, and the expected polynomial type determines the coefficient
-type. As with `ofCoeffs`, trailing zero coefficients are removed.
+type. As with `ofCoeffs`, trailing zero coefficients are removed. A polynomial prints, through its `Repr` instance, as that same literal,
+so a printed value can be pasted back.
 
 - Index = degree, `coeffs[i]` is coefficient of `x^i`
 - Normalization invariant: no trailing zeros

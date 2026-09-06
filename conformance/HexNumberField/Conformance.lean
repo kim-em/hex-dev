@@ -531,13 +531,13 @@ private def algebraicRepeated? : Option AlgebraicPoly := do
 
 -- `sqrt(2) + sqrt(3)` through the public entry point has the expected
 -- minimal polynomial, its inverse is `sqrt(3) - sqrt(2)`, and the display
--- names the polynomial and twelve decimals.
+-- is the expression that rebuilds the number.
 #guard
   let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
   let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
   (s2 + s3).p = #p[1, 0, -10, 0, 1] && (s2 + s3)⁻¹ == s3 - s2 &&
-    (repr s2).pretty == "root of X^2 - 2 near 1.414213562373" &&
-    (repr (s2 + s3)).pretty == "root of X^4 - 10*X^2 + 1 near 3.146264369941"
+    (repr s2).pretty == "(ZPoly.algebraicRoots #p[-2, 0, 1])[1]!" &&
+    (repr (s2 + s3)).pretty == "(ZPoly.algebraicRoots #p[1, 0, -10, 0, 1])[3]!"
 
 -- The exact primitives: the imaginary unit squares to `-1`, conjugation
 -- fixes real numbers and negates the imaginary unit, and the real order is

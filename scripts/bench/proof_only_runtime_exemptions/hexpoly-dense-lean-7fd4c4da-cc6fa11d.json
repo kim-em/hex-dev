@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Dense.lean",
+ "baseline_blob": "7fd4c4da15f387692247ac934f8ca653c09d69dc",
+ "current_blob": "cc6fa11d21e587dc2b8c7d6eec4d600c4b11158a",
+ "reason": "Adds a `Repr` instance printing a polynomial as its `#p[...]` literal. A display instance only; no executable definition on the factorization path changes."
+}

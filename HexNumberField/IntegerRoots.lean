@@ -141,66 +141,21 @@ end ZPoly
 
 namespace AlgebraicNumber
 
-namespace Display
-
-/-- `q` truncated toward zero to `digits` decimal places. A display helper
-for the `Repr` instance; it carries no contract. -/
-def decimal (q : Rat) (digits : Nat) : String :=
-  let scale := 10 ^ digits
-  let n := q.num.natAbs * scale / q.den
-  let whole := n / scale
-  let frac := n % scale
-  let fracDigits := toString frac
-  let padded := String.ofList (List.replicate (digits - fracDigits.length) '0') ++ fracDigits
-  (if q.num < 0 && n ≠ 0 then "-" else "") ++ s!"{whole}.{padded}"
-
-/-- A rational written as `n` or `n/d`. -/
-def rational (q : Rat) : String :=
-  if q.den = 1 then s!"{q.num}" else s!"{q.num}/{q.den}"
-
-/-- Rational coefficients written with descending powers of `var`. A display
-helper for the `Repr` instances; it carries no contract. -/
-def polynomialIn (var : String) (coeffs : Array Rat) : String :=
-  let terms := (List.range coeffs.size).reverse.filterMap fun i =>
-    let c := coeffs.getD i 0
-    if c = 0 then none
-    else
-      let magnitude := rational (if c < 0 then -c else c)
-      let body :=
-        if i = 0 then magnitude
-        else
-          (if magnitude = "1" then "" else s!"{magnitude}*") ++
-            (if i = 1 then var else s!"{var}^{i}")
-      some (decide (c < 0), body)
-  match terms with
-  | [] => "0"
-  | (negative, body) :: rest =>
-      rest.foldl (fun acc (neg, term) => acc ++ (if neg then " - " else " + ") ++ term)
-        ((if negative then "-" else "") ++ body)
-
-/-- `p` written with descending powers of `X`. -/
-def polynomial (p : ZPoly) : String :=
-  polynomialIn "X" (p.coeffs.map fun (c : Int) => (c : Rat))
-
-end Display
-
+/-- A canonical number prints as the expression that rebuilds it: its minimal
+polynomial and its index among that polynomial's roots in `algebraicRoots`
+order, real roots first in increasing order. Every canonical number is one
+of the roots of its own minimal polynomial, so the index is always found. -/
 instance : Repr AlgebraicNumber where
   reprPrec a _ :=
-    let ball := a.approx 64
-    let re := Display.decimal ball.re.toRat 12
-    let value :=
-      if a.isReal then re
-      else
-        let im := Display.decimal ball.im.toRat 12
-        re ++ (if im.startsWith "-" then " - " ++ im.drop 1 else " + " ++ im) ++ "i"
-    Std.Format.text s!"root of {Display.polynomial a.p} near {value}"
+    let index := ((ZPoly.algebraicRoots a.p).findIdx? (· == a)).getD 0
+    Std.Format.text s!"(ZPoly.algebraicRoots {repr a.p})[{index}]!"
 
 end AlgebraicNumber
 
-/-- A fixed-field element prints as its reduced coordinates, a rational
-polynomial in the generator `x`. -/
+/-- A fixed-field element prints as its reduced coordinate polynomial,
+`#p[a₀, a₁, ...]`, which rebuilds it through the coercion from
+`DensePoly Rat`. -/
 instance {p : ZPoly} {x : SimpleRoot p} : Repr (QAdjoin p x) where
-  reprPrec a _ :=
-    Std.Format.text (AlgebraicNumber.Display.polynomialIn "x" a.coeffs.coeffs)
+  reprPrec a prec := reprPrec a.coeffs prec
 
 end Hex
