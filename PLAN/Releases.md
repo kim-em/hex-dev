@@ -185,11 +185,11 @@ mirrors' CI workflows are managed centrally in
 
 "Nothing else" is computed, not listed. `allowed_paths` in `sync_released.py`
 derives what each mirror may contain from its manifest entry — the managed
-paths, the managed `.github/workflows/ci.yml`, and the skeleton the sync does
-not author — and `prune_unmanaged` deletes the rest of the clone before
-anything is copied in, so a library admitted to the manifest inherits the
-policy without a cleanup list of its own. Nothing else under `.github/`
-survives, so a mirror cannot accumulate a second workflow beside its build-only
+paths, the workflows `released-ci.yml` declares for it, and the skeleton the
+sync does not author — and `prune_unmanaged` deletes the rest of the clone
+before anything is copied in, so a library admitted to the manifest inherits
+the policy without a cleanup list of its own. Nothing else under `.github/`
+survives, so a mirror cannot accumulate a workflow beside its build-only
 one, and a mirror carries neither a `reports/` tree nor `.claude/` notes beyond
 the figures its entry names. The `pins_only` aggregate is exempt, since its
 umbrella module, lakefile and documentation tree live only in the released
@@ -206,7 +206,8 @@ Five pieces, under `scripts/release/` and `.github/workflows/`:
 
 - `released.yml` — a per-repo manifest: which paths to copy, which mirror-local
   paths to keep, and which upstream repos to pin, in dependency order.
-- `released-ci.yml` — the complete per-repository mirror workflows. Each is one
+- `released-ci.yml` — the complete per-repository mirror workflows. Each entry
+  under `workflows:` is one
   ubuntu job that builds the published library and its regression target;
   repository-specific build commands remain explicit while cache setup and
   policy are uniform. The explicit cache covers the library build plus
@@ -254,6 +255,65 @@ no `lakefile.toml` can express; a mirror missing one stops the publication.
 Deriving all of this from the lakefile rather than restating it in
 `released.yml` is deliberate: a hand-maintained copy of a build decision is one
 that can disagree with the build.
+
+### The Lake cache
+
+Every mirror publishes its compiled oleans to a Cloudflare R2 bucket, so a
+consumer of the released set fetches them with `lake cache get` instead of
+compiling the library graph. Without it, depending on `leanprover/hex` costs
+about 10k Lake jobs and half an hour, none of it Mathlib. hex-dev publishes its
+own build the same way, from `.github/workflows/ci.yml`.
+
+The bucket is `hex-cache`. Uploads are signed against R2's S3 API; downloads are
+plain unauthenticated GETs, because Lake's fetcher sends no credentials, so they
+go through the bucket's public host instead. That is why there are two endpoint
+pairs rather than one, and why the bucket must stay publicly readable.
+
+Publishing happens only from `main`, after every verification gate, and
+immediately before the terminal cache save. `lake cache put` re-uploads every
+artifact in the mappings file with no check for what is already there, so
+running it per pull request would burn R2's write allowance. The job sets
+`LAKE_ARTIFACT_CACHE`: artifact-cache writes default to off while reads default
+to on, and without it the mappings `-o` records would name artifacts that were
+never put in the cache to upload.
+
+Each mirror needs one secret and four variables:
+
+| name | kind | purpose |
+| --- | --- | --- |
+| `HEX_LAKE_CACHE_KEY` | secret | R2 token, `<ACCESS_KEY_ID>:<SECRET_ACCESS_KEY>` |
+| `HEX_LAKE_CACHE_ARTIFACT_ENDPOINT` | variable | signed S3 host, uploads |
+| `HEX_LAKE_CACHE_REVISION_ENDPOINT` | variable | signed S3 host, uploads |
+| `HEX_LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | variable | public host, downloads |
+| `HEX_LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | variable | public host, downloads |
+
+The names are Hex-specific because these could otherwise collide with any other
+Lean project in the organization.
+
+`scripts/release/provision_cache_secrets.sh` sets all five on every repository
+in `released-ci.yml`, plus hex-dev. It is idempotent, so adding a mirror and
+re-running it is the whole ceremony; `--check` takes no token and reports what
+is unprovisioned, which is the cheap way to catch a mirror that was added but
+never given credentials. It is run by hand rather than by the sync, because
+writing a secret from CI would mean widening `RELEASED_SYNC_PAT` with Secrets
+permission and another organization-owner approval.
+
+The token lives at `~/.config/hex/lake-cache-key`, mode 600, and is read from
+there or from `$HEX_LAKE_CACHE_KEY`. R2 shows a secret key once, so a lost file
+is not recoverable and means minting a new token; run the script with no token
+and it prints that procedure in full, including how to verify the new token
+before provisioning 57 repositories with it. A bucket may hold several tokens,
+so the old one need not be revoked first.
+
+If a mirror ever stops publishing, look for `upload not configured` in its CI
+log: that is the step reporting a missing secret or variable rather than
+failing, so an unprovisioned repository is quiet rather than red.
+
+Changing the publish step means changing `released-ci.yml`, which the sync can
+only deliver while the publishing tokens carry the Workflows permission (see
+"Publishing a new library: widen a token first"). A sync whose workflow text is
+unchanged pushes no workflow file and so never exercises that permission, which
+is worth remembering when diagnosing the first sync after a workflow change.
 
 ### Publishing a new library: widen a token first
 

@@ -26,8 +26,11 @@ for and which is therefore deleted by name from every entry.
 
 The skeleton the sweep keeps is `lakefile.toml` or `lakefile.lean`,
 `lake-manifest.json`, `lean-toolchain`, `LICENSE`, `.gitignore`, `AGENTS.md`
-and `README.md`. Under `.github/` only the managed `workflows/ci.yml` survives,
-so a mirror cannot accumulate a second workflow beside its build-only one. A
+and `README.md`. Under `.github/` only the workflows `released-ci.yml` declares
+for that repository survive: every mirror has `workflows/ci.yml`, and an entry
+under `extra_workflows:` adds one more by name, so a mirror cannot accumulate a
+workflow nobody here publishes. The `pins_only` aggregate is the only
+repository with an extra, its `docs` renderer. A
 mirror carries no `reports/` tree and no `.claude/` notes: bench results,
 performance write-ups and agent orientation belong to the whole graph and stay
 here. The one exception is a figure a manifest entry names in its `figures:`

@@ -41,8 +41,9 @@ def sqrt3 : AlgebraicNumber :=
 #guard (sqrt2 + sqrt3).p = #p[1, 0, -10, 0, 1]
 #guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
 
+/-- info: root of X^4 - 10*X^2 + 1 near 3.146264369941 -/
+#guard_msgs in
 #eval sqrt2 + sqrt3
--- root of X^4 - 10*X^2 + 1 near 3.146264369941
 ```
 
 # Functionality
