@@ -185,11 +185,11 @@ mirrors' CI workflows are managed centrally in
 
 "Nothing else" is computed, not listed. `allowed_paths` in `sync_released.py`
 derives what each mirror may contain from its manifest entry — the managed
-paths, the managed `.github/workflows/ci.yml`, and the skeleton the sync does
-not author — and `prune_unmanaged` deletes the rest of the clone before
-anything is copied in, so a library admitted to the manifest inherits the
-policy without a cleanup list of its own. Nothing else under `.github/`
-survives, so a mirror cannot accumulate a second workflow beside its build-only
+paths, the workflows `released-ci.yml` declares for it, and the skeleton the
+sync does not author — and `prune_unmanaged` deletes the rest of the clone
+before anything is copied in, so a library admitted to the manifest inherits
+the policy without a cleanup list of its own. Nothing else under `.github/`
+survives, so a mirror cannot accumulate a workflow beside its build-only
 one, and a mirror carries neither a `reports/` tree nor `.claude/` notes beyond
 the figures its entry names. The `pins_only` aggregate is exempt, since its
 umbrella module, lakefile and documentation tree live only in the released
@@ -206,7 +206,8 @@ Five pieces, under `scripts/release/` and `.github/workflows/`:
 
 - `released.yml` — a per-repo manifest: which paths to copy, which mirror-local
   paths to keep, and which upstream repos to pin, in dependency order.
-- `released-ci.yml` — the complete per-repository mirror workflows. Each is one
+- `released-ci.yml` — the complete per-repository mirror workflows. Each entry
+  under `workflows:` is one
   ubuntu job that builds the published library and its regression target;
   repository-specific build commands remain explicit while cache setup and
   policy are uniform. The explicit cache covers the library build plus
