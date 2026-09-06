@@ -190,8 +190,8 @@ def cbrt2 : AlgebraicNumber :=
 
 def c : QAdjoin cbrt2.p cbrt2.x := cbrt2.toQAdjoin
 
-#guard c ^ (3 : Nat) = (2 : Rat) • 1
-#guard c⁻¹ = (1 / 2 : Rat) • (c * c)
+#guard c ^ 3 = 2
+#guard c⁻¹ = c * c / 2
 #guard c.toAlgebraicNumber cbrt2.rep cbrt2.rep_mk == cbrt2
 
 end HexNumberFieldChapter

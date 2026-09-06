@@ -192,7 +192,17 @@ delegating to the generic exact `DyadicSquare.discContains` geometry primitive.
 
 `QAdjoin p x` retains canonical reduced rational coordinates. Addition,
 subtraction, negation, multiplication modulo `p`, and rational scalar actions do
-not require irreducibility. Inversion requires
+not require irreducibility, and neither do the constants:
+
+```lean
+def QAdjoin.ofRat (q : Rat) : QAdjoin p x
+instance : NatCast (QAdjoin p x)
+instance : IntCast (QAdjoin p x)
+instance (n : Nat) : OfNat (QAdjoin p x) (n + 2)
+```
+
+so numerals such as `2 : QAdjoin p x` denote `(2 : Rat) • 1`, and the
+companion's field structure reuses these casts rather than defining its own. Inversion requires
 `[ZPoly.CheckedIrreducible p]` and uses a monic-normalized polynomial extended
 gcd over `ℚ` to control rational coefficient growth. For the presentation a
 canonical number induces, that evidence is an instance:

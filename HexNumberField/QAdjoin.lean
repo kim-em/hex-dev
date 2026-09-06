@@ -109,6 +109,19 @@ def smul (c : Rat) (a : QAdjoin p x) : QAdjoin p x :=
 
 instance : SMul Rat (QAdjoin p x) := ⟨smul⟩
 
+/-- The rational constant `q` in reduced coordinates. -/
+@[expose]
+def ofRat (q : Rat) : QAdjoin p x :=
+  q • (1 : QAdjoin p x)
+
+instance : NatCast (QAdjoin p x) := ⟨fun n => ofRat (n : Rat)⟩
+instance : IntCast (QAdjoin p x) := ⟨fun n => ofRat (n : Rat)⟩
+-- Mathlib's generic `OfNat` from `NatCast` has priority 100. Keep this
+-- Mathlib-free fallback below it so importing the companion yields one normal
+-- form for numerals while the executable library still supports literals.
+instance (priority := 90) (n : Nat) : OfNat (QAdjoin p x) (n + 2) :=
+  ⟨ofRat (n + 2 : Nat)⟩
+
 /-- Inversion in a checked irreducible presentation, with `0⁻¹ = 0`. The
 one-sided extended gcd tracks only the Bezout coefficient used for the inverse;
 the constant-gcd check is a defensive executable guard whose failure is
