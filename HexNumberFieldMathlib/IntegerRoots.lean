@@ -347,7 +347,7 @@ theorem approx_radius (a : AlgebraicNumber) (prec : Int) :
   QAdjoin.approx_radius a.toQAdjoin a.rep a.rep_mk prec
 
 /-- Complex roots of an integer polynomial are closed under conjugation. -/
-private theorem isRoot_conj {p : ZPoly} {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
+theorem isRoot_conj {p : ZPoly} {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
     (toPolyℂ p).IsRoot (starRingEnd ℂ z) := by
   simp only [Polynomial.IsRoot.def, toPolyℂ, Polynomial.eval_map] at hz ⊢
   have hcomp : (starRingEnd ℂ).comp (Int.castRingHom ℂ) = Int.castRingHom ℂ :=
