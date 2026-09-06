@@ -125,8 +125,65 @@ noncomputable def field : Field AlgebraicNumber := by
   · exact ofRat_toComplex
 
 /-- Canonical algebraic numbers form a field without replacing any executable
-arithmetic operation. -/
-noncomputable instance : Field AlgebraicNumber := field
+arithmetic operation. The instance is computable: every data field is the
+executable operation, written out, and every law is the corresponding law
+of `field`. Code elaborated through the field structure, such as `a ^ n`
+resolved by Mathlib's monoid power, therefore compiles and runs. -/
+instance : Field AlgebraicNumber where
+  add := (· + ·)
+  add_assoc := field.add_assoc
+  zero := 0
+  zero_add := field.zero_add
+  add_zero := field.add_zero
+  nsmul := fun n a => n • a
+  nsmul_zero := field.nsmul_zero
+  nsmul_succ := field.nsmul_succ
+  add_comm := field.add_comm
+  mul := (· * ·)
+  mul_assoc := field.mul_assoc
+  one := 1
+  one_mul := field.one_mul
+  mul_one := field.mul_one
+  npow := fun n a => a ^ n
+  npow_zero := field.npow_zero
+  npow_succ := field.npow_succ
+  zero_mul := field.zero_mul
+  mul_zero := field.mul_zero
+  left_distrib := field.left_distrib
+  right_distrib := field.right_distrib
+  natCast := Nat.cast
+  natCast_zero := field.natCast_zero
+  natCast_succ := field.natCast_succ
+  neg := (- ·)
+  sub := (· - ·)
+  zsmul := fun n a => n • a
+  sub_eq_add_neg := field.sub_eq_add_neg
+  zsmul_zero' := field.zsmul_zero'
+  zsmul_succ' := field.zsmul_succ'
+  zsmul_neg' := field.zsmul_neg'
+  neg_add_cancel := field.neg_add_cancel
+  intCast := Int.cast
+  intCast_ofNat := field.intCast_ofNat
+  intCast_negSucc := field.intCast_negSucc
+  mul_comm := field.mul_comm
+  inv := (·⁻¹)
+  div := (· / ·)
+  zpow := fun n a => a ^ n
+  div_eq_mul_inv := field.div_eq_mul_inv
+  zpow_zero' := field.zpow_zero'
+  zpow_succ' := field.zpow_succ'
+  zpow_neg' := field.zpow_neg'
+  exists_pair_ne := field.exists_pair_ne
+  nnratCast := fun q => ofRat (q : Rat)
+  ratCast := ofRat
+  mul_inv_cancel := field.mul_inv_cancel
+  inv_zero := field.inv_zero
+  nnratCast_def := field.nnratCast_def
+  nnqsmul := fun q a => smul (q : Rat) a
+  nnqsmul_def := field.nnqsmul_def
+  ratCast_def := field.ratCast_def
+  qsmul := fun q a => q • a
+  qsmul_def := field.qsmul_def
 
 /--
 info: 'Hex.AlgebraicNumber.field' depends on axioms: [propext, Classical.choice, Quot.sound]
