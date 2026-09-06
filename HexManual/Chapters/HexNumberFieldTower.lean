@@ -58,10 +58,12 @@ requested complex value, and the splitting field contains every root.
 tag := "hex-number-field-tower-adjoin"
 %%%
 
-A tower starts from an algebraic number. The extension returned by
-{name}`Hex.NumberTower.adjoin?` carries the new tower, its generator `gen`, and
-the inclusion `embed` of the field below. Coordinates in `ℚ(√2)` are the pair
-`#[a, b]` standing for `a + b√2`:
+Every tower starts from {name}`Hex.NumberTower.rat`, the tower with no
+extensions, whose elements are the rational numbers. Adjoining an algebraic
+number to it with {name}`Hex.NumberTower.adjoin?` returns an extension that
+carries the new tower, its generator `gen`, and the inclusion `embed` of the
+field below. Coordinates in `ℚ(√2)` are the pair `#[a, b]` standing for
+`a + b√2`:
 
 ```lean
 open Hex Hex.NumberTower
@@ -79,13 +81,14 @@ private instance (T : NumberTower) :
     Inhabited (Extension T) :=
   ⟨Extension.identity T⟩
 
-def Q2 : Extension rat := (adjoin? rat sqrt2.toRoot).get!
+def Q2 : Extension NumberTower.rat :=
+  (adjoin? NumberTower.rat sqrt2.toRoot).get!
 abbrev T2 : NumberTower := Q2.tower
 def r2 : Elem T2 := Q2.gen
 
 #guard T2.dim = 2
 #guard coeffs (r2 * r2) = #[2, 0]
-#guard coeffs (Q2.embed (ofRat rat 5)) = #[5, 0]
+#guard coeffs (Q2.embed (ofRat NumberTower.rat 5)) = #[5, 0]
 
 -- √2 is already there: adjoining it again changes nothing.
 #guard (adjoin? T2 sqrt2.toRoot).any fun E =>
@@ -134,8 +137,8 @@ tag := "hex-number-field-tower-split"
 has dimension four and the four roots square to `2` or `3`:
 
 ```lean
-def biquadratic : Poly rat :=
-  liftZPoly rat #p[6, 0, -5, 0, 1]
+def biquadratic : Poly NumberTower.rat :=
+  liftZPoly NumberTower.rat #p[6, 0, -5, 0, 1]
 
 /-- The finite root list; empty for the zero polynomial. -/
 def finiteRoots {T : NumberTower} :
@@ -143,7 +146,7 @@ def finiteRoots {T : NumberTower} :
   | .finite rs => rs
   | .all => #[]
 
-#guard (split? rat biquadratic).any fun S =>
+#guard (split? NumberTower.rat biquadratic).any fun S =>
   S.extension.tower.dim = 4 &&
     let rs := finiteRoots S.roots
     rs.size = 4 && rs.all fun r =>
