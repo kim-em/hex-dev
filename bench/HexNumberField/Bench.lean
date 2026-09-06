@@ -43,7 +43,7 @@ The parametric ladders carry the Phase-4 asymptotic evidence:
 
 Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): PARI's `t_POLMOD` arithmetic (`Mod(a, m) * Mod(b, m)` and
-`Mod(a, m)^(-1)`) is the callable PARI surface matching `QAdjoin`
+`Mod(a, m)^(-1)`) is the callable PARI surface matching `PolyQuot`
 multiplication and inversion. The `runQAdjoinMulPair*` / `runPariPolmodMul*`
 rungs run at `n = 4, 6, 8, 12, 16, 20` and the `runQAdjoinInvPair*` /
 `runPariPolmodInv*` rungs at `n = 4, 6, 8, 10, 12, 16`: six rungs each rather than
@@ -95,7 +95,7 @@ private def ratChecksum (q : Rat) : UInt64 :=
   mixHash (hash q.num) (hash (q.den : Int))
 
 private def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
-    (a : QAdjoin p x) : UInt64 :=
+    (a : PolyQuot p x) : UInt64 :=
   a.coeffs.toArray.foldl
     (fun checksum q => mixHash checksum (ratChecksum q))
     (hash a.coeffs.size)
@@ -121,12 +121,12 @@ private def degreeTenRep : RefinedIsolation degreeTenPoly :=
 private def degreeTenRoot : SimpleRoot degreeTenPoly :=
   SimpleRoot.mk degreeTenRep
 
-private def degreeTenInput : QAdjoin degreeTenPoly degreeTenRoot :=
-  QAdjoin.reduce degreeTenPoly degreeTenRoot
+private def degreeTenInput : PolyQuot degreeTenPoly degreeTenRoot :=
+  PolyQuot.reduce degreeTenPoly degreeTenRoot
     (DensePoly.ofList [3, -2, 5, 1, -4, 2, 1, 0, -1, 1])
 
 initialize fixedFieldRef : IO.Ref
-    (Option (QAdjoin degreeTenPoly degreeTenRoot)) ←
+    (Option (PolyQuot degreeTenPoly degreeTenRoot)) ←
   IO.mkRef (some degreeTenInput)
 
 def runFixedMul : Unit → IO UInt64 := fun _ => do
@@ -339,12 +339,12 @@ setup_fixed_benchmark runExact where {
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
 
-private def fixedSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-  QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
+private def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+  PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot
     (DensePoly.ofList ([0, 1] : List Rat))
 
-initialize canonicalQAdjoinRef : IO.Ref
-    (Option (QAdjoin sqrtTwoPoly sqrtTwoRoot)) ←
+initialize canonicalPolyQuotRef : IO.Ref
+    (Option (PolyQuot sqrtTwoPoly sqrtTwoRoot)) ←
   IO.mkRef (some fixedSqrtTwo)
 
 def runQAdjoinCanonical : Unit → IO UInt64 :=
@@ -352,7 +352,7 @@ def runQAdjoinCanonical : Unit → IO UInt64 :=
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
     fun _ => do
       let input ← requireSome "qadjoin/canonical"
-        (← canonicalQAdjoinRef.get)
+        (← canonicalPolyQuotRef.get)
       -- The total wrapper executes `toAlgebraicNumber?` and only projects its
       -- certified result. Group the runtime structural equality decision here.
       return mixHash
@@ -368,7 +368,7 @@ than isolate a caller size parameter, and no executable isolator bound supplies
 a mode-2 ceiling. The total wrapper adds only the constant-time checked-result
 projection. Including both warmup and measured conversion, its 0.93 ms median
 plus the 47 ms spawn floor sits over 10x inside the 500 ms zero-grace
-whole-child budget. `QAdjoin.isZero` is grouped as a constant-time anchor. -/
+whole-child budget. `PolyQuot.isZero` is grouped as a constant-time anchor. -/
 setup_fixed_benchmark runQAdjoinCanonical where {
   repeats := 3
   maxSecondsPerCall := 0.5
@@ -377,12 +377,12 @@ setup_fixed_benchmark runQAdjoinCanonical where {
   expectedHash := some 0x3dacd77644bc8bba
 }
 
-private def rootsInput : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
+private def rootsInput : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot) :=
   let linear := DensePoly.ofList [-fixedSqrtTwo, 1]
   linear * linear
 
 initialize rootsRef : IO.Ref
-    (Option (DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot))) ←
+    (Option (DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot))) ←
   IO.mkRef (some rootsInput)
 
 private def rootSetChecksum : RootSet → UInt64
@@ -399,7 +399,7 @@ def runRoots : Unit → IO UInt64 :=
       ⟨hirred, by decide⟩
     fun _ => do
       let polynomial ← requireSome "roots" (← rootsRef.get)
-      let result := QAdjoin.roots polynomial sqrtTwoRep rfl
+      let result := PolyQuot.roots polynomial sqrtTwoRep rfl
       return rootSetChecksum result
   else
     fun _ => throw <| IO.userError "roots: irreducibility check failed"
@@ -736,7 +736,7 @@ def prepMajorantInput (n : Nat) : MajorantInput :=
     mkRat (Int.ofNat (i % 11 + 1)) (i % 6 + 1)⟩
 
 def runEvalMajorant (input : MajorantInput) : UInt64 :=
-  hash (Disambiguation.evalMajorant input.f QAdjoin.ratAbsCeil sqrtTwoPoly)
+  hash (Disambiguation.evalMajorant input.f PolyQuot.ratAbsCeil sqrtTwoPoly)
 
 initialize majorantFixedRef : IO.Ref (Option MajorantInput) ← IO.mkRef none
 
@@ -757,7 +757,7 @@ grows linearly. A 32-through-4096 sweep remained faster than that model by
 `n^0.689` after the small-Nat/GMP transition, so it supplies no honest
 two-sided wall model; no published bound covers this executable as a dominant
 profiled phase. This fixture uses the public generic's cheap rational
-`valueBound`; production disambiguation additionally pays for QAdjoin or tower
+`valueBound`; production disambiguation additionally pays for PolyQuot or tower
 coordinate majorants, so this is API coverage rather than a proxy for that
 complete phase. The largest controlled input takes 6.0 ms. A 200 ms zero-grace
 whole-child budget includes lazy fixture setup, warmup, and more than 3x the
@@ -897,8 +897,8 @@ private structure FieldInput where
   x : SimpleRoot p
   rep : RefinedIsolation p
   rep_mk : SimpleRoot.mk rep = x
-  a : QAdjoin p x
-  b : QAdjoin p x
+  a : PolyQuot p x
+  b : PolyQuot p x
 
 private instance : Hashable FieldInput where
   hash input :=
@@ -916,8 +916,8 @@ def prepFieldInput (n : Nat) : FieldInput :=
   | some rep =>
     let x := SimpleRoot.mk rep
     { p := p, x := x, rep := rep, rep_mk := rfl
-      a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 3))
-      b := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 7)) }
+      a := PolyQuot.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 3))
+      b := PolyQuot.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 7)) }
   | none => panic! "prepFieldInput: isolation failed"
 
 /-- Prepared inversion fixture: `FieldInput` data plus the runtime-checked
@@ -928,8 +928,8 @@ private structure InvInput where
   x : SimpleRoot p
   rep : RefinedIsolation p
   rep_mk : SimpleRoot.mk rep = x
-  a : QAdjoin p x
-  b : QAdjoin p x
+  a : PolyQuot p x
+  b : PolyQuot p x
   checked : Option (PLift (ZPoly.CheckedIrreducible p))
 
 private instance : Hashable InvInput where
@@ -949,8 +949,8 @@ def prepInvInput (n : Nat) : InvInput :=
       | some rep =>
         let x := SimpleRoot.mk rep
         { p := p, x := x, rep := rep, rep_mk := rfl
-          a := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 5))
-          b := QAdjoin.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 9))
+          a := PolyQuot.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 5))
+          b := PolyQuot.reduce p x (DensePoly.ofCoeffs (denseRatCoeffs m 9))
           checked := some ⟨⟨hirr, hdeg⟩⟩ }
       | none => panic! "prepInvInput: isolation failed"
     else panic! "prepInvInput: degree check failed"
@@ -1113,7 +1113,7 @@ def runQAdjoinDivLadder (input : InvInput) : UInt64 :=
     fixedChecksum (input.a / input.b)
   | none => 0
 
-/- Cost model. `QAdjoin` addition adds the two reduced rational coefficient
+/- Cost model. `PolyQuot` addition adds the two reduced rational coefficient
 vectors coordinatewise: exactly `min` sizes rational additions plus a copy of
 the tail, `O(n)` operations for two dense degree-`(n-1)` operands over the
 degree-`n` modulus. Input numerators and denominators are bounded by the
@@ -1148,7 +1148,7 @@ setup_benchmark runQAdjoinSubLadder n => n
   }
 
 /- Cost model. Negation maps rational negation over the `n` canonical
-coordinates. `QAdjoin.reduce` then rebuilds the degree-`n` rational modulus and
+coordinates. `PolyQuot.reduce` then rebuilds the degree-`n` rational modulus and
 runs `divMod`; the already reduced degree-`(n-1)` result makes that work linear.
 Bounded coefficient height therefore makes the public `Neg` route linear. -/
 setup_benchmark runQAdjoinNegLadder n => n
@@ -1198,7 +1198,7 @@ setup_benchmark runQAdjoinMulLadder n => n * n
 
 initialize qAdjoinApproxRef : IO.Ref (Option FieldInput) ← IO.mkRef none
 
-private def getQAdjoinApproxInput : IO FieldInput := do
+private def getPolyQuotApproxInput : IO FieldInput := do
   match ← qAdjoinApproxRef.get with
   | some input => pure input
   | none =>
@@ -1207,7 +1207,7 @@ private def getQAdjoinApproxInput : IO FieldInput := do
     pure input
 
 def runQAdjoinApprox : Unit → IO UInt64 := fun _ => do
-  return runQAdjoinApproxLadder (← getQAdjoinApproxInput)
+  return runQAdjoinApproxLadder (← getPolyQuotApproxInput)
 
 /- Mode 3. The independently derived conservative bit model is `O(n⁴)`: the
 guard makes the refined root ball `O(n)` bits, exact Horner multiplication
@@ -1661,7 +1661,7 @@ setup_fixed_benchmark runCanonicalRepLadder where {
 produces a genuine multiplicity-2 component and the norm eliminant has
 degree `2m`. -/
 private structure FieldRootsInput where
-  f : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot)
+  f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   checked : Option (PLift (ZPoly.CheckedIrreducible sqrtTwoPoly))
 
 private instance : Inhabited FieldRootsInput :=
@@ -1670,12 +1670,12 @@ private instance : Inhabited FieldRootsInput :=
 private def prepFieldRootsInput (n : Nat) : FieldRootsInput :=
   let m := max n 1
   let coeffs := (Array.range (m + 1)).map fun i =>
-    QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
+    PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot
       (DensePoly.ofList
         [mkRat (Int.ofNat (i + 2)) (i + 3),
          mkRat (if i % 2 == 0 then 1 else -1) 2])
   let g := DensePoly.ofCoeffs coeffs
-  let linear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
+  let linear : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot) :=
     DensePoly.ofList [-1, 1]
   if hirr : ZPoly.isIrreducible sqrtTwoPoly = true then
     ⟨g * g * linear, some ⟨⟨hirr, by decide⟩⟩⟩
@@ -1686,12 +1686,12 @@ private def qAdjoinRootsChecksum (input : FieldRootsInput) : UInt64 :=
   match input.checked with
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
-    rootSetChecksum (QAdjoin.roots input.f sqrtTwoRep rfl)
+    rootSetChecksum (PolyQuot.roots input.f sqrtTwoRep rfl)
   | none => 0
 
 initialize qAdjoinRootsLadderRef : IO.Ref (Option FieldRootsInput) ← IO.mkRef none
 
-private def getQAdjoinRootsLadderInput : IO FieldRootsInput := do
+private def getPolyQuotRootsLadderInput : IO FieldRootsInput := do
   match ← qAdjoinRootsLadderRef.get with
   | some input => pure input
   | none =>
@@ -1700,10 +1700,10 @@ private def getQAdjoinRootsLadderInput : IO FieldRootsInput := do
     pure input
 
 def runQAdjoinRootsLadder : Unit → IO UInt64 := fun _ => do
-  return qAdjoinRootsChecksum (← getQAdjoinRootsLadderInput)
+  return qAdjoinRootsChecksum (← getPolyQuotRootsLadderInput)
 
 private structure RootPhaseInput where
-  f : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot)
+  f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   multiplicity : Nat
   multiplicity_pos : 0 < multiplicity
   eliminant : ZPoly
@@ -1712,12 +1712,12 @@ private def rootPhaseInput? : Option RootPhaseInput :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
     let input := prepFieldRootsInput 6
-    match (QAdjoin.Roots.yun input.f).toList.find? fun component =>
+    match (PolyQuot.Roots.yun input.f).toList.find? fun component =>
         component.1.degree?.getD 0 == 6 with
     | some (f, multiplicity) =>
         if hm : 0 < multiplicity then
           let eliminant := ZPoly.squareFreeCore
-            (QAdjoin.Roots.normEliminant f)
+            (PolyQuot.Roots.normEliminant f)
           some ⟨f, multiplicity, hm, eliminant⟩
         else none
     | none => none
@@ -1736,11 +1736,11 @@ private def getRootPhaseInput : IO RootPhaseInput := do
 
 def runNormEliminant : Unit → IO UInt64 := fun _ => do
   let input ← getRootPhaseInput
-  return polyChecksum (QAdjoin.Roots.normEliminant input.f)
+  return polyChecksum (PolyQuot.Roots.normEliminant input.f)
 
 def runEvalEliminant : Unit → IO UInt64 := fun _ => do
   let input ← getRootPhaseInput
-  return polyChecksum (QAdjoin.Roots.evalEliminant input.f input.eliminant)
+  return polyChecksum (PolyQuot.Roots.evalEliminant input.f input.eliminant)
 
 def runComponentRoots : Unit → IO UInt64 :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
@@ -1748,7 +1748,7 @@ def runComponentRoots : Unit → IO UInt64 :=
     fun _ => do
       let input ← getRootPhaseInput
       let roots ← requireSome "roots/component" <|
-        QAdjoin.Roots.componentRoots? input.f input.multiplicity
+        PolyQuot.Roots.componentRoots? input.f input.multiplicity
           input.multiplicity_pos sqrtTwoRep rfl
       return rootSetChecksum (.finite roots)
   else
@@ -1781,7 +1781,7 @@ setup_fixed_benchmark runComponentRoots where {
 /-- Prepared duplicate-removal fixture from the two Yun components of
 `prepFieldRootsInput`. Component root construction is intentionally outside
 the timed region; the timed kernel starts with the linear component and folds
-the degree-`m` component through `mergeRootList`, matching `QAdjoin.roots?`. -/
+the degree-`m` component through `mergeRootList`, matching `PolyQuot.roots?`. -/
 private structure MergeRootsInput where
   initial : List RootCount
   candidates : Array RootCount
@@ -1801,10 +1801,10 @@ def prepMergeRootsInput (n : Nat) : MergeRootsInput :=
   match input.checked with
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
-    let componentRoots? := (QAdjoin.Roots.yun input.f).foldlM
+    let componentRoots? := (PolyQuot.Roots.yun input.f).foldlM
       (fun out component =>
         if hm : 0 < component.2 then do
-          let roots ← QAdjoin.Roots.componentRoots? component.1 component.2 hm
+          let roots ← PolyQuot.Roots.componentRoots? component.1 component.2 hm
             sqrtTwoRep rfl
           some (out.push roots)
         else
@@ -1820,7 +1820,7 @@ def prepMergeRootsInput (n : Nat) : MergeRootsInput :=
 
 def runMergeRootListLadder (input : MergeRootsInput) : UInt64 :=
   match input.candidates.foldlM
-      (fun roots candidate => QAdjoin.Roots.mergeRootList candidate roots)
+      (fun roots candidate => PolyQuot.Roots.mergeRootList candidate roots)
       input.initial with
   | some roots => rootSetChecksum (.finite roots.toArray)
   | none => 1
@@ -2085,10 +2085,10 @@ def algebraicRootsIsolationStats? (n : Nat) : Option IsolationStats := do
   let common ← AlgebraicPoly.Common.presentation? input.f.coeffs
   letI : ZPoly.CheckedIrreducible common.generator.p := common.generator.checked
   let polynomial := DensePoly.ofCoeffs common.coefficients
-  let components := QAdjoin.Roots.yun polynomial
+  let components := PolyQuot.Roots.yun polynomial
   if components.size = 1 then do
     let component ← components[0]?
-    let eliminant := ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant component.1)
+    let eliminant := ZPoly.squareFreeCore (PolyQuot.Roots.normEliminant component.1)
     some (isolationStats n eliminant)
   else
     none
@@ -2100,10 +2100,10 @@ def fixedFieldRootsIsolationStats? (n : Nat) : Option IsolationStats :=
   match input.checked with
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
-    let component? := (QAdjoin.Roots.yun input.f).toList.find? fun component =>
+    let component? := (PolyQuot.Roots.yun input.f).toList.find? fun component =>
       component.1.degree?.getD 0 == max n 1
     component?.map fun component =>
-      let eliminant := ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant component.1)
+      let eliminant := ZPoly.squareFreeCore (PolyQuot.Roots.normEliminant component.1)
       isolationStats n eliminant
   | none => none
 
@@ -2208,7 +2208,7 @@ setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
     slopeTolerance := 0.35
   }
 
-/- Fixed canonical case. `QAdjoin.roots?` runs Yun decomposition on
+/- Fixed canonical case. `PolyQuot.roots?` runs Yun decomposition on
 `g^2 * (X - 1)` over `ℚ(√2)`, constructs the degree-12 norm eliminant of the
 dense degree-6 repeated component, isolates it at separation depth, and
 disambiguates its six roots. The repaired inclusive profile puts 92.94% of the
@@ -2260,7 +2260,7 @@ setup_fixed_benchmark runAlgebraicRootsLadder where {
 
 /-! # PARI `t_POLMOD` comparator pairs
 
-Fixed per-rung Lean/PARI pairs for `QAdjoin` multiplication and inversion.
+Fixed per-rung Lean/PARI pairs for `PolyQuot` multiplication and inversion.
 Both sides consume the identical deterministic `prepFieldInput` /
 `prepInvInput` fixture and hash the identical reduced rational coefficient
 vector, so `compare` joins on result hashes. The rung fixtures are built
@@ -2269,7 +2269,7 @@ inversion irreducibility check, and the PARI driver startup out of the timed
 region on both sides. -/
 
 /-- Checksum matching `fixedChecksum` on a raw trimmed rational coefficient
-vector, used to compare PARI polmod results against `QAdjoin` results. -/
+vector, used to compare PARI polmod results against `PolyQuot` results. -/
 private def ratCoeffsChecksum (coeffs : Array Rat) : UInt64 :=
   coeffs.foldl (fun checksum q => mixHash checksum (ratChecksum q))
     (hash coeffs.size)
@@ -2392,7 +2392,7 @@ def pariCompareConfig : LeanBench.FixedBenchmarkConfig :=
     minTotalSeconds := 0.2 }
 
 /- Fixed per-rung process-call comparator registrations for PARI t_POLMOD
-multiplication against `QAdjoin` multiplication (quadratic-cost surface; see
+multiplication against `PolyQuot` multiplication (quadratic-cost surface; see
 the `runQAdjoinMulLadder` derivation). Identical inputs, identical reduced
 rational coefficient hash on both sides. -/
 setup_fixed_benchmark runQAdjoinMulPair4 where pariCompareConfig
@@ -2409,7 +2409,7 @@ setup_fixed_benchmark runQAdjoinMulPair20 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodMul20 where pariCompareConfig
 
 /- Fixed per-rung process-call comparator registrations for PARI t_POLMOD
-inversion against `QAdjoin` extended-gcd inversion (quadratic
+inversion against `PolyQuot` extended-gcd inversion (quadratic
 coefficient-operation surface; see the `runQAdjoinInvLadder` derivation). -/
 setup_fixed_benchmark runQAdjoinInvPair4 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv4 where pariCompareConfig

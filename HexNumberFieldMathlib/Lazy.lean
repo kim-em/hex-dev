@@ -1090,10 +1090,10 @@ theorem AlgebraicRoot.ofEliminant?_isSome
                       refined.toList.filter fun r =>
                         r.1.square.meetsBall ball by simp [hselected])
                   have hmatchingRoot : matching.root = z :=
-                    QAdjoin.root_eq_of_meetsBall hpne matching hpRoot
+                    PolyQuot.root_eq_of_meetsBall hpne matching hpRoot
                       hzball hballRadius hmatching.2
                   have hsecondRoot : second.root = z :=
-                    QAdjoin.root_eq_of_meetsBall hpne second hpRoot
+                    PolyQuot.root_eq_of_meetsBall hpne second hpRoot
                       hzball hballRadius hsecond.2
                   exact (hneRoots (hmatchingRoot.trans hsecondRoot.symm)).elim
 

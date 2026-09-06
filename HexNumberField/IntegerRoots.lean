@@ -98,7 +98,7 @@ namespace ZPoly
 /-- Every distinct complex root of `p` as a canonical algebraic number, or
 `none` if a certificate could not be produced. See `algebraicRoots`.
 
-Irreducible, like `algebraicRoots`, so that a type such as `QAdjoin a.p a.x`
+Irreducible, like `algebraicRoots`, so that a type such as `PolyQuot a.p a.x`
 for a root `a` found here is cheap to reduce: `#eval` reduces the type of a
 value while looking for a printing instance, and must not run the root
 isolation symbolically. Proofs unfold it explicitly. -/
@@ -146,7 +146,7 @@ end AlgebraicNumber
 /-- A fixed-field element prints as its reduced coordinate polynomial,
 `#p[a₀, a₁, ...]`, which rebuilds it through the coercion from
 `DensePoly Rat`. -/
-instance {p : ZPoly} {x : SimpleRoot p} : Repr (QAdjoin p x) where
+instance {p : ZPoly} {x : SimpleRoot p} : Repr (PolyQuot p x) where
   reprPrec a prec := reprPrec a.coeffs prec
 
 end Hex

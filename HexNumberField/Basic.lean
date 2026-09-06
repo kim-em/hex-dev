@@ -17,7 +17,7 @@ public section
 /-!
 Core representations for exact algebraic numbers.
 
-`QAdjoin` stores reduced rational coordinates in a fixed presentation,
+`PolyQuot` stores reduced rational coordinates in a fixed presentation,
 `AlgebraicRoot` stores a squarefree factorization-lazy root, and
 `AlgebraicNumber` seals the canonical irreducible representation behind a
 private constructor. The only constructor exposed to later implementation
@@ -36,7 +36,7 @@ class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
   pos_degree : 0 < p.degree?.getD 0
 
 /-- Canonical reduced rational coordinates in the fixed field `ℚ(x)`. -/
-structure QAdjoin (p : ZPoly) (x : SimpleRoot p) where
+structure PolyQuot (p : ZPoly) (x : SimpleRoot p) where
   /-- Reduced rational coordinates in the power basis of the selected root. -/
   coeffs : DensePoly Rat
   /-- The coordinates are already reduced modulo the defining polynomial. -/

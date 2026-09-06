@@ -20,7 +20,7 @@ the bounded zero test in the fixed-field and tower root drivers.
 
 namespace Hex
 
-namespace QAdjoin
+namespace PolyQuot
 
 private theorem le_mul_ceilDiv (n d : Nat) (hd : 0 < d) :
     n ≤ ((n + d - 1) / d) * d := by
@@ -144,7 +144,7 @@ private theorem norm_horner_le (coefficients : List Rat) (z : ℂ) (B : Nat)
 /-- The coordinate majorant bounds the complex norm at the selected field
 embedding. -/
 theorem norm_toComplex_le_valueMajorant {p : ZPoly} {x : SimpleRoot p}
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     ‖toComplex a rep h‖ ≤ valueMajorant a := by
   let B := 2 ^ cauchyExp p + 1
@@ -174,7 +174,7 @@ theorem norm_toComplex_le_valueMajorant {p : ZPoly} {x : SimpleRoot p}
   rw [← Array.foldr_toList]
   exact norm_horner_le a.coeffs.toList rep.root B hz
 
-end QAdjoin
+end PolyQuot
 
 namespace AlgebraicRoot
 
@@ -455,12 +455,12 @@ theorem excludesZero_of_mem_of_lower {b : DyadicComplexBall} {z : ℂ} {D : Nat}
 
 end DyadicComplexBall
 
-namespace QAdjoin.Roots
+namespace PolyQuot.Roots
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
 private theorem hornerBall_bounds [ZPoly.CheckedIrreducible p]
-    (coefficients : List (QAdjoin p x)) (rep : RefinedIsolation p)
+    (coefficients : List (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (z : ℂ) (zBall : DyadicComplexBall)
     (prec : Nat) (rootBound : Nat) (init : ℂ)
     (initBall : DyadicComplexBall) (initState : Nat × Nat)
@@ -502,11 +502,11 @@ private theorem hornerBall_bounds [ZPoly.CheckedIrreducible p]
         (fun coeff value =>
           (coeff.approx rep h (prec : Int)).2.add (zBall.mul value))
         initBall
-      have hcoefficient := QAdjoin.approx_sound coefficient rep h (prec : Int)
+      have hcoefficient := PolyQuot.approx_sound coefficient rep h (prec : Int)
       have hcoefficientNorm :=
-        QAdjoin.norm_toComplex_le_valueMajorant coefficient rep h
+        PolyQuot.norm_toComplex_le_valueMajorant coefficient rep h
       have hcoefficientRadius :=
-        QAdjoin.approx_radius coefficient rep h (prec : Int)
+        PolyQuot.approx_radius coefficient rep h (prec : Int)
       have hδ : 0 ≤ (2 : ℝ) ^ (-(prec : Int)) := by positivity
       have hδ1 : (2 : ℝ) ^ (-(prec : Int)) ≤ 1 := by
         rw [← zpow_zero (2 : ℝ)]
@@ -542,16 +542,16 @@ private theorem hornerBall_bounds [ZPoly.CheckedIrreducible p]
         simpa only [state, ball, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat,
           Nat.cast_one] using hradius
 
-end QAdjoin.Roots
+end PolyQuot.Roots
 
-namespace QAdjoin.Roots
+namespace PolyQuot.Roots
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
 /-- The certified fixed-field Horner evaluator has the radius promised by its
 executable error majorant. -/
 theorem evalBall?_radius [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) (prec : Nat)
     {ball : DyadicComplexBall}
     (hrun : evalBall? f rep h candidate prec = some ball) :
@@ -619,7 +619,7 @@ theorem evalBall?_radius [ZPoly.CheckedIrreducible p]
         simp
       rw [hfold]
       let rootBound := 2 ^ cauchyExp candidate.p + 1
-      let step := fun (coefficient : QAdjoin p x) (state : Nat × Nat) =>
+      let step := fun (coefficient : PolyQuot p x) (state : Nat × Nat) =>
         (state.1 * rootBound + valueMajorant coefficient,
           2 * state.1 + 2 * rootBound * state.2 + 3 * state.2 + 1)
       let state := pre.toList.foldr step (valueMajorant top, 1)
@@ -627,9 +627,9 @@ theorem evalBall?_radius [ZPoly.CheckedIrreducible p]
         candidate'.1.1.square.toBall prec rootBound
         (toComplex top rep h) (top.approx rep h (prec : Int)).2
         (valueMajorant top, 1) hz (by simpa only [rootBound] using hzNorm)
-        hzRadius (QAdjoin.approx_sound top rep h (prec : Int))
-        (QAdjoin.norm_toComplex_le_valueMajorant top rep h)
-        (by simpa using QAdjoin.approx_radius top rep h (prec : Int))
+        hzRadius (PolyQuot.approx_sound top rep h (prec : Int))
+        (PolyQuot.norm_toComplex_le_valueMajorant top rep h)
+        (by simpa using PolyQuot.approx_radius top rep h (prec : Int))
       have hradius :
           (pre.toList.foldr
             (fun coefficient value =>
@@ -649,7 +649,7 @@ theorem evalBall?_radius [ZPoly.CheckedIrreducible p]
       exact hradius.trans (mul_le_mul_of_nonneg_right
         (by exact_mod_cast hmajorant) (by positivity))
 
-end QAdjoin.Roots
+end PolyQuot.Roots
 
 /-- The executable radius predicate is its stated real inequality. -/
 theorem evalRadiusSmall_real {q : ZPoly} {radius : Dyadic}
@@ -784,12 +784,12 @@ theorem evalDisambiguationPrec_isSome_of_endpoint (q : ZPoly) (majorant : Nat)
   · simp
   · simp [hball, hsmall]
 
-namespace QAdjoin.Roots
+namespace PolyQuot.Roots
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
 private theorem evalBall_isSome [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) (prec : Nat) :
     (evalBall? f rep h candidate prec).isSome := by
   obtain ⟨candidate', hrefine⟩ := Option.isSome_iff_exists.mp
@@ -801,7 +801,7 @@ private theorem evalBall_isSome [ZPoly.CheckedIrreducible p]
 /-- The prescribed bounded precision search succeeds for the fixed-field ball
 evaluator. -/
 theorem evalPrec_isSome [ZPoly.CheckedIrreducible p]
-    (q : ZPoly) (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (q : ZPoly) (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) :
     (evalDisambiguationPrec q (evalMajorant f candidate.p)
       (evalBall? f rep h candidate)).isSome := by
@@ -820,7 +820,7 @@ theorem evalPrec_isSome [ZPoly.CheckedIrreducible p]
 /-- The bounded zero-retention test cannot fail for the fixed-field ball
 evaluator. -/
 theorem retainZero?_isSome [ZPoly.CheckedIrreducible p]
-    (q : ZPoly) (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (q : ZPoly) (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) :
     (retainZero? q (evalMajorant f candidate.p)
       (evalBall? f rep h candidate)).isSome := by
@@ -834,7 +834,7 @@ theorem retainZero?_isSome [ZPoly.CheckedIrreducible p]
       (evalBall_isSome f rep h candidate prec)
     simp [hball]
 
-end QAdjoin.Roots
+end PolyQuot.Roots
 
 /-- Conditional correctness of the bounded zero test. Whenever the search
 returns, it retains exactly the zero value represented by the eliminant root

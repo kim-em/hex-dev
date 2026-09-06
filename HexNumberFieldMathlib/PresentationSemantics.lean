@@ -53,7 +53,7 @@ theorem presentation?_sound (coefficients : Array AlgebraicNumber)
     presentation.coefficients.size = coefficients.size ∧
       ∀ i (hi : i < coefficients.size)
           (hiPresentation : i < presentation.coefficients.size),
-        QAdjoin.toComplex presentation.coefficients[i]
+        PolyQuot.toComplex presentation.coefficients[i]
             presentation.generator.rep presentation.generator.rep_mk =
           coefficients[i].toComplex := by
   unfold presentation? at h
