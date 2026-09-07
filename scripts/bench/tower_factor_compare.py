@@ -56,6 +56,16 @@ def quiet_load(samples, windows):
     return {cpu: max(sample.get(cpu, 100.0) for sample in recent) for cpu in cpus}
 
 
+def quiet_host(samples, windows, cpus, max_busy_cpus):
+    """Require a lightly loaded whole host in every preflight window."""
+    if max_busy_cpus is None:
+        return True
+    if len(samples) < windows:
+        return False
+    return all(sum(sample.get(cpu, 100.0) >= BUSY_PERCENT for cpu in cpus)
+               <= max_busy_cpus for sample in samples[-windows:])
+
+
 def read_export(path, names):
     """Validate complete fixed-case exports, including their raw repeat hashes."""
     rows = json.loads(Path(path).read_text())["results"]
@@ -90,13 +100,16 @@ def read_export(path, names):
     return result
 
 
-def host_admission(pair, names, *, require_separated_canonical, quiet_windows):
+def host_admission(pair, names, *, require_separated_canonical, quiet_windows, max_busy_cpus=None):
     """Re-derive admission from recorded samples and affinity commands."""
     if (pair.get("require_separated_canonical", False) != require_separated_canonical
-            or pair.get("quiet_windows", 1) != quiet_windows):
+            or pair.get("quiet_windows", 1) != quiet_windows
+            or pair.get("max_busy_cpus") != max_busy_cpus):
         raise ValueError("pair protocol flags disagree with requested decision")
     if type(quiet_windows) is not int or quiet_windows < 1:
         raise ValueError("invalid quiet-window count")
+    if max_busy_cpus is not None and (type(max_busy_cpus) is not int or max_busy_cpus < 0):
+        raise ValueError("invalid whole-host busy-CPU ceiling")
     cpu, siblings = pair["cpu"], pair["siblings"]
     if (type(cpu) is not int or cpu not in siblings or len(siblings) != len(set(siblings))
             or any(type(i) is not int or i < MIN_CORE for i in siblings)):
@@ -119,7 +132,21 @@ def host_admission(pair, names, *, require_separated_canonical, quiet_windows):
     for sample in history[-quiet_windows:]:
         if max(loads(sample, siblings, exact=False).values()) >= BUSY_PERCENT:
             raise ValueError("busy selected core in quiet-window history")
+    if max_busy_cpus is not None:
+        cpus = pair["cpu_ids"]
+        if (len(cpus) != len(set(cpus)) or not set(siblings).issubset(cpus)
+                or any(type(i) is not int or i < 0 for i in cpus)):
+            raise ValueError("invalid whole-host CPU set")
+        whole_history = [loads(sample, cpus) for sample in history[-quiet_windows:]]
+        if not quiet_host(whole_history, quiet_windows, cpus, max_busy_cpus):
+            raise ValueError("busy whole host in quiet-window history")
     for run in pair["runs"]:
+        if max_busy_cpus is not None:
+            whole = loads(run["preflight_all"], cpus)
+            if {i: whole[i] for i in siblings} != loads(run["preflight"], siblings):
+                raise ValueError("inconsistent whole-host and selected-core preflight")
+            if not quiet_host([whole], 1, cpus, max_busy_cpus):
+                raise ValueError("busy whole host before run")
         command = run["command"]
         if (command[:3] != ["taskset", "-c", str(cpu)] or command[4:5] != ["run"]
                 or command[5:5 + len(names)] != names):
@@ -142,7 +169,7 @@ def host_admission(pair, names, *, require_separated_canonical, quiet_windows):
                 raise ValueError("busy sibling during benchmark")
 
 
-def decision(pairs, names, *, require_separated_canonical=False, quiet_windows=1):
+def decision(pairs, names, *, require_separated_canonical=False, quiet_windows=1, max_busy_cpus=None):
     """Apply the registered retention rule; incomplete series have no verdict."""
     if len(pairs) > 2 or len({p["attempt"] for p in pairs}) != len(pairs):
         raise ValueError("expected at most two distinct accepted pairs")
@@ -153,7 +180,7 @@ def decision(pairs, names, *, require_separated_canonical=False, quiet_windows=1
         if not pair["accepted"] or len(runs) != 2 or not all(r["accepted"] for r in runs):
             raise ValueError("rejected or incomplete host pair")
         host_admission(pair, names, require_separated_canonical=require_separated_canonical,
-                       quiet_windows=quiet_windows)
+                       quiet_windows=quiet_windows, max_busy_cpus=max_busy_cpus)
         order = tuple(r["arm"] for r in runs)
         if set(order) != {"left", "right"}:
             raise ValueError("missing or duplicate arm")
@@ -202,7 +229,11 @@ def main():
                         help="require disjoint improvement for each canonical case in at least one pair")
     parser.add_argument("--quiet-windows", type=int, default=1,
                         help="required consecutive two-second quiet windows before selecting a core")
+    parser.add_argument("--max-busy-cpus", type=int,
+                        help="optional whole-host ceiling on CPUs at least 5%% busy before each run")
     args = parser.parse_args()
+    if args.max_busy_cpus is not None and args.max_busy_cpus < 0:
+        parser.error("--max-busy-cpus must be nonnegative")
     if args.quiet_windows < 1:
         parser.error("--quiet-windows must be positive")
     names = HEX_NAMES if args.hex_only else NAMES
@@ -239,8 +270,10 @@ def main():
                        accepted_pairs=[p["attempt"] for p in pairs],
                        require_separated_canonical=args.require_separated_canonical,
                        quiet_windows=args.quiet_windows,
+                       max_busy_cpus=args.max_busy_cpus,
                        **decision(pairs, names, require_separated_canonical=args.require_separated_canonical,
-                                  quiet_windows=args.quiet_windows))
+                                  quiet_windows=args.quiet_windows,
+                                  max_busy_cpus=args.max_busy_cpus))
         (args.output / f"issue-10074-{args.label}-decision.json").write_text(json.dumps(summary, indent=2) + "\n")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -249,6 +282,7 @@ def main():
                     protocol_commit=commit, script_sha256=script_hash,
                     require_separated_canonical=args.require_separated_canonical,
                     quiet_windows=args.quiet_windows,
+                    max_busy_cpus=args.max_busy_cpus, cpu_ids=sorted(topology),
                     hostname=platform.node(), release_quality=False,
                     pari_provider=provider, names=names,
                     git_status=subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True))
@@ -257,8 +291,10 @@ def main():
         while time.monotonic() < deadline:
             busy = idle_core.busy_by_cpu(2)
             meta["preflight_windows"].append(busy)
-            cpu = select_core(quiet_load(meta["preflight_windows"], args.quiet_windows),
-                              topology, avoid)
+            if quiet_host(meta["preflight_windows"], args.quiet_windows, topology,
+                          args.max_busy_cpus):
+                cpu = select_core(quiet_load(meta["preflight_windows"], args.quiet_windows),
+                                  topology, avoid)
             if cpu is not None:
                 break
             if args.quiet_windows == 1:
@@ -278,8 +314,9 @@ def main():
             if index:
                 busy = idle_core.busy_by_cpu(2)
             pre = {i: busy.get(i, 100.0) for i in siblings}
-            if max(pre.values()) >= BUSY_PERCENT:
-                meta["rejected_preflight"] = dict(arm=arm, busy=pre)
+            if (max(pre.values()) >= BUSY_PERCENT
+                    or not quiet_host([busy], 1, topology, args.max_busy_cpus)):
+                meta["rejected_preflight"] = dict(arm=arm, busy=pre, busy_all=busy)
                 break
             export = str(stem) + f"-{arm}.json"
             command = ["taskset", "-c", str(cpu), binary, "run", *names,
@@ -302,7 +339,8 @@ def main():
                 export_error = str(error)
                 ok = False
             meta["runs"].append(dict(arm=arm, source_commit=source, binary_sha256=digest(binary),
-                                     command=command, export=export, preflight=pre, postflight=post,
+                                     command=command, export=export, preflight=pre, preflight_all=busy,
+                                     postflight=post,
                                      during=samples, sibling_mean=means, exit_code=child.returncode, accepted=ok, export_error=export_error))
             print(args.label, attempt, arm, ok, "post", post, "sibling", means, flush=True)
             if not ok:
