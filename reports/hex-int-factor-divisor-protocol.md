@@ -135,3 +135,21 @@ an accepted inclusive profile. The final profile may use `perf record` and
 `samply import` with the same timed-region filter, calibration and sensitivity
 checks, keeping raw captures and commands. This changes profiling transport,
 not the operation, unprofiled timing protocol, or acceptance tolerances.
+
+## Campaign disposition
+
+Both allowed attempts were contaminated (4.8737% and 5.1226% against the
+0.2% ceiling). The campaign is exhausted and neither raw consistent verdict
+is accepted. The current report records the exact remaining blocker. The
+collector additionally records the built benchmark's hash immediately after
+building; the rejected captures retained wrapper hashes but lacked that direct
+binary hash, and are left unchanged. No new acceptance timing was taken after
+this correction.
+
+The inclusive profile's failed initial clock calibration is retained alongside
+its successful reprocessing. For samply's perf import, the raw sample sequence
+independently fixes the timestamp origin. `normalize_perf.py` requires every
+imported timestamp to equal its raw counterpart plus one offset (within one
+nanosecond) before the unchanged timed-region filter runs. It does not fit to
+timed boundaries. ELF symbol intervals and binary hashes are retained by
+`elf_symbols.py` when samply import omits a presymbolication sidecar.

@@ -3,7 +3,6 @@
 import argparse
 import gzip
 import json
-import os
 from pathlib import Path
 import shutil
 import sys
@@ -42,17 +41,26 @@ def main():
              '--param', '32768', '--target-nanos', '5000000000'])
         run(['samply', 'import', '--save-only', '--no-open', '--unstable-presymbolicate',
              '-o', str(directory / 'samply.json.gz'), str(directory / 'perf.data')])
+        samples = run(['perf', 'script', '--ns', '-F', 'pid,tid,time,event',
+                       '-i', str(directory / 'perf.data')]).stdout
+        (directory / 'perf-samples.txt').write_text(samples)
+        run([sys.executable, str(collector.ROOT / 'scripts/profile/normalize_perf.py'),
+             '--profile', str(directory / 'samply.json.gz'),
+             '--perf-script', str(directory / 'perf-samples.txt'),
+             '--output', str(directory / 'normalized.json.gz')])
         sidecars = list(directory.glob('timed-*.jsonl'))
         if len(sidecars) != 1:
             raise RuntimeError('expected one profile timed-region sidecar')
         run([sys.executable, str(args.profiler_root / 'scripts/filter_samply.py'),
-             '--samply-json', str(directory / 'samply.json.gz'),
+             '--samply-json', str(directory / 'normalized.json.gz'),
              '--sidecar', str(sidecars[0]), '--spawn-anchor', str(anchor),
              '--out', str(directory / 'filtered.json.gz'),
              '--diagnostics', str(directory / 'diagnostics.json'),
              '--label-filter', 'warm-loop'])
+        run([sys.executable, str(collector.ROOT / 'scripts/profile/elf_symbols.py'),
+             str(directory / 'filtered.json.gz'), '--output', str(directory / 'symbols.json')])
         run([sys.executable, str(collector.ROOT / 'scripts/profile/summarize_profile.py'),
-             str(directory / 'filtered.json.gz'), '--symbols', str(directory / 'samply.json.syms.json'),
+             str(directory / 'filtered.json.gz'), '--symbols', str(directory / 'symbols.json'),
              '--diagnostics', str(directory / 'diagnostics.json'),
              '--thread', 'hexintfactor_be', '--top', '25',
              '--output', str(directory / 'summary.json')])

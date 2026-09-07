@@ -76,6 +76,31 @@ class PreservationTests(unittest.TestCase):
     def test_missing_executable(self):
         self.exercise(lambda _: collector.run(['/nonexistent/hex-benchmark']), FileNotFoundError)
 
+    def test_build_failure_keeps_context(self):
+        def action(attempt):
+            collector.run([sys.executable, '-c', 'import sys; print("build failed"); sys.exit(1)'])
+        record = self.exercise(action, subprocess.CalledProcessError)
+        self.assertIn('bench/HexIntFactor/Bench.lean', record['source_sha256'])
+
+    def test_benchmark_hash_precedes_wrapped_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / 'bench'
+            executable.write_bytes(b'benchmark binary')
+            attempt = collector.Attempt(Path(directory) / 'result.json')
+            args = argparse.Namespace(dirty_status='')
+            def run(command, **kwargs):
+                if command[0] == 'lake':
+                    return subprocess.CompletedProcess(command, 0, '', '')
+                raise RuntimeError('audit failed')
+            with patch.object(collector, 'BENCH', executable), \
+                 patch.object(collector, 'run', run), \
+                 patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
+                 patch.object(collector, 'host_state', return_value={}):
+                with self.assertRaisesRegex(RuntimeError, 'audit failed'):
+                    collector.collect_divisors(args, attempt, 7)
+            record = json.loads(attempt.output.read_text())
+            self.assertEqual(record['benchmark_executable_sha256'], collector.sha256(executable))
+
     def test_external_failure_preserves_export(self):
         self.exercise(lambda _: collector.ecm_batch('/nonexistent/ecm', 15, 1), FileNotFoundError)
 
@@ -95,7 +120,9 @@ class DivisorValidationTests(unittest.TestCase):
         export = {'results': [dict(function='Hex.IntFactorBench.runDivisors',
             config=dict(outer_trials=7, param_floor=64, param_ceiling=32768,
                 target_inner_nanos=1000000000, max_seconds_per_call=10,
-                signal_floor_multiplier=1, slope_tolerance=0.15, cache_mode='warm'),
+                signal_floor_multiplier=1, slope_tolerance=0.15, cache_mode='warm',
+                verdict_warmup_fraction=.2, narrow_range_noise_floor=1.5,
+                param_schedule=dict(kind='custom', params=list(collector.DIVISOR_COUNTS))),
             points=points, verdict='consistent_with_declared_complexity')]}
         return export, '\n'.join(audit)
 

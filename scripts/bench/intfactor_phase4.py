@@ -9,6 +9,7 @@ GMP-ECM uses one fixed 256-input batch shape with sigma 0:7, B1 1000, and B2 1
 from __future__ import annotations
 
 import argparse
+from contextlib import suppress
 import hashlib
 import json
 import os
@@ -129,7 +130,8 @@ class Attempt:
                     proc.communicate(stdin, timeout=timeout)
                 except BaseException:
                     # Stop descendants too: benchmark runners themselves spawn children.
-                    os.killpg(proc.pid, signal.SIGKILL)
+                    with suppress(ProcessLookupError):
+                        os.killpg(proc.pid, signal.SIGKILL)
                     proc.wait()
                     raise
                 entry.update(returncode=proc.returncode, status="completed")
@@ -189,6 +191,13 @@ def collect_attempt(args: argparse.Namespace) -> int:
             attempt.record["state_after_error"] = str(error)
         attempt.save()
         ACTIVE_ATTEMPT = None
+
+
+def verify_sources(attempt: Attempt) -> None:
+    changed = [name for name, digest in attempt.record["source_sha256"].items()
+               if not (ROOT / name).is_file() or sha256(ROOT / name) != digest]
+    if changed:
+        raise RuntimeError("sources changed during measurement: " + ", ".join(changed))
 
 
 def git(*args: str) -> str:
@@ -293,6 +302,8 @@ def validate_export(export: dict[str, object]) -> None:
                 failures.append(
                     f"{name}: median {row['median_nanos']} ns > {budget} ns budget"
                 )
+    if not any(row["function"] == "Hex.IntFactorBench.runDivisors" for row in rows):
+        failures.append("missing public divisor registration")
     for bits, _ in BALANCED:
         normal = result(export, f"runBalancedFactor{bits}")
         completion = result(export, f"runBalancedCompletion{bits}")
@@ -477,9 +488,12 @@ def validate_divisors(export: dict, audit: str) -> None:
     required = {"outer_trials": 7, "param_floor": 64, "param_ceiling": 32768,
                 "target_inner_nanos": 1000000000, "max_seconds_per_call": 10,
                 "signal_floor_multiplier": 1, "slope_tolerance": 0.15,
-                "cache_mode": "warm"}
+                "cache_mode": "warm", "verdict_warmup_fraction": 0.2,
+                "narrow_range_noise_floor": 1.5}
     if any(config.get(key) != value for key, value in required.items()):
         raise ValueError("divisor configuration differs from preregistration")
+    if config.get("param_schedule") != {"kind": "custom", "params": list(DIVISOR_COUNTS)}:
+        raise ValueError("divisor schedule differs from preregistration")
     points = row["points"]
     if len(points) != 7 * len(DIVISOR_COUNTS):
         raise ValueError("missing or extra divisor trials")
@@ -498,6 +512,8 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
     attempt.record.update(scope="divisors", state_before=host_state(cpu))
     attempt.save()
     run(["lake", "build", "hexintfactor_bench"], timeout=900)
+    attempt.record["benchmark_executable_sha256"] = sha256(BENCH)
+    attempt.save()
     audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
     attempt.record["divisor_audit"] = audit
     attempt.save()
@@ -514,6 +530,7 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
     attempt.record.update(benchmark_export=export, telemetry=telemetry)
     attempt.save()
     validate_divisors(export, audit)
+    verify_sources(attempt)
     attempt.record["status"] = "accepted"
     attempt.save()
     render(attempt.record)
@@ -562,6 +579,8 @@ def collect(args: argparse.Namespace, attempt: Attempt) -> int:
     if not BENCH.exists():
         raise RuntimeError(f"missing benchmark executable: {BENCH}")
 
+    attempt.record["benchmark_executable_sha256"] = sha256(BENCH)
+    attempt.save()
     export_path = attempt.directory / "bench.json"
     run([
         str(BENCH), "run", "--filter", "Hex.IntFactorBench",
@@ -571,6 +590,10 @@ def collect(args: argparse.Namespace, attempt: Attempt) -> int:
     attempt.record["benchmark_export"] = export
     attempt.save()
     validate_export(export)
+    divisor_audit = run([str(BENCH), "divisor-audit"], timeout=60).stdout
+    validate_divisors({"results": [result(export, "runDivisors")]}, divisor_audit)
+    attempt.record["divisor_audit"] = divisor_audit
+    attempt.save()
 
     control_output = run([str(BENCH), "control-audit"], timeout=120.0).stdout
     control_rows = [line.strip() for line in control_output.splitlines()
@@ -688,6 +711,7 @@ def collect(args: argparse.Namespace, attempt: Attempt) -> int:
         },
     }
     attempt.record.update(record)
+    verify_sources(attempt)
     attempt.record["status"] = "accepted"
     attempt.save()
     render(record)

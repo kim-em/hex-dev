@@ -2,15 +2,16 @@
 
 ## Scope and acceptance
 
-This is the incomplete Phase-4 report for `HexIntFactor`. It covers the five input
+This is the incomplete Phase-4 report for `HexIntFactor`. It covers the six input
 families declared in `libraries.yml`: table and balanced semiprimes, smooth and
 unbalanced semiprimes, power forms, certificate replay and order, and
-generalized divisor sums. The exact declared comparator name is
+generalized divisor sums, and squarefree divisor enumeration. The exact declared comparator name is
 **PARI factor and GMP-ECM**. Both endpoints are informational: PARI exposes a broader
 factorization portfolio, while GMP-ECM is a separately tuned C implementation.
 
-The compiled scientific track contains seven parametric and 31 fixed targets.
-Every parametric target returned the exact harness verdict
+The previously accepted compiled package contains seven parametric and 31 fixed targets.
+The additional `runDivisors` registration has no admissible timing evidence.
+Every previously accepted parametric target returned the exact harness verdict
 `consistent_with_declared_complexity`; every fixed target completed its
 preregistered repeats, agreed across hashes, matched its canonical expected
 hash, and passed its collector-owned scientific budget. The benchmark bodies
@@ -30,6 +31,7 @@ performance owner.
 | power-forms | `runCyclotomicBatch`, `runPowerGenericBatch`, `runPowerSplitBatch` | structural split plus same-seed complete-factorization comparison |
 | certificate-replay-and-order | `runReplay`, `HexIntFactorKernelProbe`, `runOrder`, `runDownstreamOrder`, `runDownstreamPrimitiveRoot` | compiled scaling, actual kernel replay, and opaque fixed operands |
 | generalized-divisor-sums | `runSigmaExponent`, `runSigmaFactorCount`, `runSquareFactorCount`, `runTotientFactorCount` | prepared certified inputs with independently derived models |
+| squarefree-divisor-enumeration | `runDivisors` | public generation, sorting and array materialization; mode 1 registered, timing acceptance blocked by contamination |
 | cross-family default fuel | `runDefaultFuelSchedule` | exact public schedule over all 49 committed cases |
 
 `Hex.IntFactorProfile.runSmooth` (ECM stage 1) and
@@ -416,9 +418,137 @@ balanced rung. These are expected algorithm- and implementation-class gaps
 recorded for orientation, not missing attribution or a failed gating
 requirement.
 
+## Public divisor enumeration supplement
+
+The [committed protocol](hex-int-factor-divisor-protocol.md) registers mode 1:
+`τ log₂ τ` on prechecked squarefree products with `τ = 64..32768`. Balanced
+`mergeSortTR₂` splits establish the tight bound independently of the generated
+order. Generation, array materialization and the complete consuming checksum
+add linear work. No implementation or public complexity contract changed.
+The bridge's `divisors_eq`, `divisors_list_eq` and `numDivisors_eq_card` map
+explicitly to `Hex.IntFactorBench.runDivisors`; this pending owner target
+cannot yet discharge bridge Phase 4.
+
+Preregistration is `de6e13c5c`. Both prescribed attempts ran on `chungus2`,
+CPU 7, with seven trials at each of six rungs. Complete output validation and
+all 42 hashes pass in each export. **Neither attempt is accepted**:
+
+| Attempt | Raw harness verdict | Residual slope | Core interference | Status |
+|---|---|---:|---:|---|
+| [1](bench-results/intfactor-divisors-attempt-1.json) | consistent | -0.012084 | 4.8737% | rejected: contamination |
+| [2](bench-results/intfactor-divisors-attempt-2.json) | consistent | -0.011111 | 5.1226% | rejected: contamination |
+
+The fixed contamination ceiling is 0.2%. The raw exports, every subprocess
+stdout/stderr, exact commands, source/executable hashes, host/core snapshots,
+raw telemetry and timed-region sidecars are in each artifact's adjacent
+`.json.attempt/` directory. The collector entered with a clean source tree;
+LeanBench itself reports dirty because the collector's newly created evidence
+files are untracked during measurement. No tracked source changed during
+these runs. Raw rejected records cannot be rendered as accepted reports.
+
+The two-attempt budget is exhausted. No timing retry is authorized by this
+protocol. A subsequent measurement campaign requires a newly committed
+protocol and a demonstrably controlled CPU-7 window on the designated host;
+it must retain these two rejected runs and the original contrary experiment.
+The earlier inconclusive run and later noisy passing diagnostic are preserved
+in the protocol with their original issue reference. Present contamination
+observations do not establish what caused the old failure.
+
+### Inclusive profile and diagnosis
+
+The profile at `τ=32768` is attribution evidence only. Its captured executable
+hash is recorded in the manifest. The two rejected unprofiled attempts record
+the wrapper executable hashes but omitted a direct benchmark-binary hash;
+the collector now records that hash immediately after building. This
+provenance omission is retained explicitly and is not retroactively repaired
+in those immutable failed records. The initial `samply record`
+capture contained zero samples, and direct `samply import` of a usable perf
+capture failed clock calibration. Those failures remain archived. The
+[normalized profile summary](bench-results/intfactor-divisors-profile-normalized/summary.json)
+uses the **same** perf capture, without taking another timing measurement.
+All 2981 imported sample timestamps agree exactly with raw `perf script --ns`
+timestamps after one fixed offset. `normalize_perf.py` verifies this entire
+sequence before translating to absolute monotonic time; it never uses the
+benchmark boundaries to choose an offset. Symbol intervals come from the
+captured ELF binaries via `nm`; the sidecar records their hashes and commands.
+
+| Inclusive function | Share |
+|---|---:|
+| `Hex.Nat.divisors` | 92.92% |
+| `List.MergeSort.Internal.mergeSortTR₂` | 76.58% |
+| `mergeTR.go` | 49.90% |
+| `Hex.Nat.DivisorEnumeration.values` | 16.33% |
+| `splitRevAt.go` | 9.46% |
+
+These are overlapping inclusive shares. Sorting dominates, with both merge
+and balanced splitting visible. Generation contributes a smaller share.
+Array materialization is visible as `List.toArrayAux` (2.54% leaf time) and
+array pushes. Hashing/consumption and release remain inside the harness's
+registered loop; neither certificate checking nor factor search is present.
+Leaf categories are Lean runtime/list helpers 88.82%, allocation/free 9.32%,
+library code 1.27%, and other 0.58%; no GMP cost was observed. 99.42% is
+classified. This supports the operation-count derivation and identifies
+allocation/runtime overhead without claiming that it explains the original
+trial instability.
+
+The unchanged timed-region filter reports: absolute-monotonic calibration,
+0.967 ms residual against its 5 ms limit; 2911.3 ms timed duration; 2908
+retained samples (2 outside the windows); no other-thread samples inside;
+±5 ms sensitivity **passed**; confidence **passed**. Sampling was 999 Hz on
+CPU 7, AMD EPYC 9455, Linux x86-64, Lean 4.34.0-rc2, LeanBench pin
+`b583ddd7da895dabd3a6b2976a0292dbf42bc095`, samply 0.13.1. This profile passes
+attribution checks but cannot make either contaminated timing run admissible.
+
+The [capture manifest](bench-results/intfactor-divisors-profile.json) retains
+the raw capture's original calibration rejection. Its `.json.attempt/`
+directory contains compressed `perf.data`, imported profile, sidecar,
+commands/logs and source/executable hashes. The separate
+`intfactor-divisors-profile-normalized/` directory holds the exact raw sample
+sequence, normalization, filtered profile, ELF symbol table and summary.
+A fresh capture uses:
+
+```sh
+python3 scripts/profile/intfactor_divisors.py \
+  --profiler-root .lake/lean-bench-samply \
+  --output reports/bench-results/intfactor-divisors-profile-new.json
+```
+
+The profiler checkout is public `kim-em/lean-bench-samply`, pinned to
+`9356baa` (full revision in the capture manifest). The script retains every
+capture outcome and applies the same independent clock conversion, filter
+and inclusive summarizer. To reproduce the current summary from committed
+artifacts, run:
+
+```sh
+python3 scripts/profile/summarize_profile.py \
+  reports/bench-results/intfactor-divisors-profile-normalized/filtered.json.gz \
+  --symbols reports/bench-results/intfactor-divisors-profile-normalized/symbols.json \
+  --diagnostics reports/bench-results/intfactor-divisors-profile-normalized/diagnostics.json \
+  --thread hexintfactor_be --top 25
+```
+
+### Integration audit
+
+Compared with the local Phase-5–7 join `a98ea38b5b2dd1323084fd1d7f4d5db492e717c2`,
+the pair's Lean library sources, umbrella modules and manual chapter are
+unchanged. No `sorry`, `axiom` or `native_decide` occurs in either library's
+Lean sources. The existing proof/API review therefore has no changed library
+declaration to re-audit; this work changes benchmark drivers and evidence
+infrastructure. The combined build of `HexIntFactor HexIntFactorMathlib
+HexConformance HexManual` passes, all 41 benchmark verification cases pass,
+and fresh fixture emission exactly matches the committed corpus. PARI checks
+all 415 IntFactor cases with zero failures. Collector and profile-clock tests,
+phase/DAG checks and applicable source-freshness checks pass. This retains the
+local later-phase work while leaving dependency-ordered recertification
+blocked on Phase 4.
+
 ## Concerns
 
-Public `Hex.Nat.divisors` has no accepted operation-specific measurement or
-inclusive profile. Phase 4 remains incomplete for both HexIntFactor and its
-correspondence-only Mathlib bridge; the registry is at Phase 3. Existing local
-Phase-5–7 artifacts are retained, but are not acceptance of this missing gate.
+Public `Hex.Nat.divisors` still lacks an admissible scientific timing run.
+Both attempts failed the preregistered core-interference gate; the finite retry
+budget is exhausted. [#9619](https://github.com/kim-em/hex-dev/issues/9619)
+remains open. Phase 4 is incomplete for HexIntFactor and HexIntFactorMathlib,
+and both registry counters remain at 3. The inclusive profile and complete
+result validation close those portions of the evidence gap, not the timing
+gate. Existing local Phase-5–7 artifacts are retained for subsequent freshness
+review and recertification after this blocker is resolved.
