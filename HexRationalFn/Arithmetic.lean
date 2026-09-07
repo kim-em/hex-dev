@@ -264,7 +264,7 @@ theorem div?_eq_none (f g : RationalFn K) : div? f g = none ↔ g = 0 := by
 /-- Polynomial powers by binary exponentiation using the supplied multiplication plan. -/
 @[expose]
 def polyPowWith (plan : MulPlan K) (p : DensePoly K) (n : Nat) : DensePoly K :=
-  if n = 0 then 1 else
+  if n = 0 then 1 else if n = 1 then p else
     let r := polyPowWith plan (plan.square p) (n / 2)
     if n % 2 = 0 then r else plan.mul r p
 termination_by n
@@ -276,10 +276,12 @@ theorem polyPowWith_eq (plan : MulPlan K) (p : DensePoly K) (n : Nat) :
   induction n using Nat.strongRecOn generalizing p with
   | ind n ih =>
     change polyPowWith plan p n = natPow p n
-    rw [polyPowWith, natPow]
     by_cases hn : n = 0
-    · simp only [hn, ↓reduceIte]
-    · simp only [hn, ↓reduceIte]
+    · subst n; simp [polyPowWith]
+    by_cases h1 : n = 1
+    · subst n; simp [polyPowWith, natPow, Lean.Grind.Semiring.one_mul]
+    · rw [polyPowWith, natPow]
+      simp only [hn, h1, ↓reduceIte]
       rw [ih (n / 2) (by omega), plan.square_eq]
       split
       · rfl
@@ -307,5 +309,21 @@ theorem powWith_eq (plan : MulPlan K) (f : RationalFn K) (n : Nat) : powWith pla
   apply ext
   · exact (polyPowWith_eq plan f.num n).trans (num_pow f n).symm
   · exact (polyPowWith_eq plan f.den n).trans (den_pow f n).symm
+
+/-- Subtraction is independent of its multiplication plan. -/
+theorem subWith_eq (plan : MulPlan K) (f g : RationalFn K) :
+    subWith plan f g = f - g := addWith_eq plan f (-g)
+
+/-- Division is independent of its multiplication plan. -/
+theorem divWith_eq (plan : MulPlan K) (f g : RationalFn K) :
+    divWith plan f g = f / g := mulWith_eq plan f g⁻¹
+
+/-- Checked inversion agrees with total inversion on nonzero inputs. -/
+theorem inv?_eq_some (f : RationalFn K) (hf : f ≠ 0) : inv? f = some f⁻¹ := by
+  simp only [inv?, num_eq_zero, hf, ↓reduceIte]
+
+/-- Checked division agrees with total division for a nonzero divisor. -/
+theorem div?_eq_some (f g : RationalFn K) (hg : g ≠ 0) : div? f g = some (f / g) := by
+  simp only [div?, num_eq_zero, hg, ↓reduceIte]
 
 end Hex.RationalFn

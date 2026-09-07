@@ -3,7 +3,7 @@
 Canonical univariate rational functions over an effective field, implemented
 as coprime dense polynomials with a monic denominator. The computational
 library is Mathlib-free. Its
-[Mathlib companion](hex-rational-fn-mathlib.md) identifies this representation
+[Mathlib companion](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md) identifies this representation
 with `RatFunc K`.
 
 ## Scope and dependencies
@@ -343,7 +343,7 @@ expose this Bézout normalization certificate protocol. Measure those native
 operations and kernel replay independently. Prime-field plan comparisons use
 the same generic implementation and internal plan-agreement checks.
 
-Follow the ordered complexity modes in [benchmarking](../benchmarking.md).
+Follow the ordered complexity modes in [benchmarking](../../SPEC/benchmarking.md).
 Derive any model independently of timings. Preserve complete output checks,
 record hardware and tool versions, keep Mathlib out of executable benches,
 and extend the existing CI job and scheduled timing workflow.
@@ -406,8 +406,8 @@ Implement in this order:
 5. The companion's equivalence and headline theorem, followed by manual
    examples. No correctness contract may retain `sorry` at completion.
 
-The computational library and its companion are initially registered as
-`planned`, with `done_through: 0`. Activation adds the executable declarations,
-Lake targets and umbrella imports under the ordinary phase rules. Publication
-is through the monorepo release manifest once both libraries meet release
-readiness. This design adds no released-repository dependency yet.
+The computational library and its companion are active through Phase 3.
+The performance report distinguishes measured latency anchors from the remaining
+Phase-4 scaling evidence. Publication is through the monorepo release manifest
+once both libraries meet release readiness. No released-repository dependency
+is introduced here.

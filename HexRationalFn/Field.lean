@@ -263,4 +263,49 @@ instance instField : Lean.Grind.Field (RationalFn K) where
       | succ n => rfl
     | negSucc n => exact (inv_inv (f ^ (n + 1))).symm
 
+/-- Constants preserve zero. -/
+theorem C_zero : C (0 : K) = 0 := by
+  apply ext
+  · change DensePoly.C (0 : K) = (0 : DensePoly K)
+    apply DensePoly.ext_coeff; intro n
+    simp only [coeff_C, coeff_zero]
+    split <;> rfl
+  · rfl
+
+/-- Constants preserve one. -/
+theorem C_one : C (1 : K) = 1 := rfl
+
+/-- Constants preserve addition. -/
+theorem C_add (a b : K) : C (a + b) = C a + C b := by
+  change ofPoly (DensePoly.C (a + b)) = ofPoly (DensePoly.C a) + ofPoly (DensePoly.C b)
+  rw [← ofPoly_add]
+  congr 1
+  apply DensePoly.ext_coeff; intro n
+  simp only [coeff_add_semiring, coeff_C]
+  split
+  · rfl
+  · change (0 : K) = 0 + 0
+    grind
+
+/-- Constants preserve multiplication. -/
+theorem C_mul (a b : K) : C (a * b) = C a * C b := by
+  change ofPoly (DensePoly.C (a * b)) = ofPoly (DensePoly.C a) * ofPoly (DensePoly.C b)
+  rw [← ofPoly_mul, DensePoly.C_mul_C]
+
+/-- Constants preserve total inversion. -/
+theorem C_inv (a : K) : C a⁻¹ = (C a)⁻¹ := by
+  by_cases ha : a = 0
+  · subst a
+    rw [Lean.Grind.Field.inv_zero, C_zero, inv_zero]
+  · have hc : C a ≠ 0 := by
+      intro h
+      have hn := congrArg (fun f : RationalFn K => f.num.coeff 0) h
+      change (DensePoly.C a).coeff 0 = (0 : DensePoly K).coeff 0 at hn
+      apply ha
+      simpa using hn
+    have h : C a * C a⁻¹ = 1 := by
+      rw [← C_mul, Lean.Grind.Field.mul_inv_cancel ha, C_one]
+    have h' := mul_inv_cancel hc
+    grind
+
 end Hex.RationalFn

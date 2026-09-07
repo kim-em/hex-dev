@@ -27,7 +27,7 @@ theorem inv_ne_zero {a : K} (ha : a ≠ 0) : a⁻¹ ≠ 0 := by
   exact Lean.Grind.Field.zero_ne_one h
 
 /-- Schoolbook base-case length for the default Karatsuba plan. -/
-def defaultCutoff : Nat := 32
+def defaultCutoff : Nat := 8
 
 /-- The generic multiplication plan used by rational-function arithmetic. -/
 def defaultPlan : MulPlan K := karatsubaPlan defaultCutoff
@@ -148,6 +148,19 @@ def ofFraction? (p q : DensePoly K) : Option (RationalFn K) :=
 theorem ofFraction?_eq_none (p q : DensePoly K) : ofFraction? p q = none ↔ q = 0 := by
   unfold ofFraction?
   split <;> simp_all
+
+/-- Multiplying a presentation by a common nonzero factor changes no value. -/
+theorem normalize_mul (p q r : DensePoly K) (hq : q ≠ 0) (hr : r ≠ 0) :
+    normalize (p * r) (q * r) (mul_ne_zero hq hr) = normalize p q hq := by
+  apply (normalize_unique defaultPlan (p * r) (q * r) (mul_ne_zero hq hr)
+    (normalize p q hq) ?_).symm
+  have h := normalize_spec p q hq
+  grind
+
+/-- A valid checked fraction is the default normalization. -/
+theorem ofFraction?_eq_some (p q : DensePoly K) (hq : q ≠ 0) :
+    ofFraction? p q = some (normalize p q hq) := by
+  simp [ofFraction?, hq]
 
 /-- Coprime cofactors and the common monic factor removed from two polynomials. -/
 structure Cofactors (p q : DensePoly K) where

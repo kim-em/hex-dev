@@ -40,6 +40,7 @@ import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
+import HexManual.Chapters.HexRationalFn
 import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexPolyZGcd
@@ -182,6 +183,8 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexPolyFast}
 
+{include 2 HexManual.Chapters.HexRationalFn}
+
 {include 2 HexManual.Chapters.HexIntFactor}
 
 {include 2 HexManual.Chapters.HexModular}
@@ -201,4 +204,3 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexSmith}
 
 {include 2 HexManual.Chapters.HexMinPoly}
-

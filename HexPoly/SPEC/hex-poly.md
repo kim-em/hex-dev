@@ -79,6 +79,22 @@ exact-division instances remain in their owning downstream libraries.
 - Every common divisor of `f` and `g` divides `gcd f g`
 - Bezout: `∃ a b, a * f + b * g = gcd f g`
 
+**Coprimality over a lightweight field.** `HexPoly.Coprime` exports
+`DensePoly.Coprime p q := ∃ s t, s*p + t*q = 1` and `coprime_iff`, identifying
+this witness condition with `monicize (gcd p q) = 1`. The monic associate is
+essential: the Euclidean algorithm need not choose a monic gcd.
+The interface includes symmetry, descent along divisibility, the coprime
+divisibility lemma, stability under products and powers, and rescaling by a
+nonzero field element. `coprime_cofactors` proves coprimality after exact
+division by the monic gcd. These are proof-only APIs; they do not change
+polynomial arithmetic or install a new coefficient instance.
+
+Supporting field lemmas cover monicity of one and powers, monicity of exact
+cofactors, nonzero leading coefficients, polynomial cancellation and nonzero
+products, divisibility transitivity, and scaling as multiplication by a constant.
+Names such as `DensePoly.mul_ne_zero` refer to polynomial multiplication;
+Mathlib-facing proofs about scalar products can qualify `_root_.mul_ne_zero`.
+
 **Existential CRT for polynomials** (corollary of Bezout):
 
 ```lean
