@@ -79,6 +79,64 @@ private theorem canonVerdict_checked {ctx : Ctx n} {level : Nat} {st out : Searc
   · simp only [canonVerdict, beq_eq_false_iff_ne.mpr hcomp, Bool.false_eq_true, ite_false] at hauto
     split at hauto <;> cases hauto
 
+/-- The current canonical store is valid, and a better verdict carries
+the row-prefix invariant needed to install the candidate. -/
+def VerdictInv (ctx : Ctx n) (r : Leaf × Search n) : Prop :=
+  CanongInv ctx r.2.canong r.2.canonlab r.2.samerows ∧
+    ∀ sr, r.1 = .better sr → CanongInv ctx r.2.canong r.2.lab sr
+
+private theorem verdict_store (ctx : Ctx n) (sr : Nat) (st : Search n)
+    (hinv : CanongInv ctx st.canong st.canonlab st.samerows)
+    (hnew : CanongInv ctx st.canong st.lab sr) :
+    VerdictInv ctx (if st.compCanon == 0 then (.autoCanon, scatter st.canonlab st)
+      else if st.compCanon > 0 then (.better sr, st) else (.bad, st)) := by
+  split
+  · refine ⟨?_, fun _ h => by cases h⟩
+    simpa only [scatter_eq] using hinv
+  · split
+    · refine ⟨hinv, ?_⟩
+      intro sr' heq
+      cases heq
+      exact hnew
+    · exact ⟨hinv, fun _ h => by cases h⟩
+
+private theorem canonVerdict_store {ctx : Ctx n} {level : Nat} {st : Search n}
+    (hinv : CanongInv ctx st.canong st.canonlab st.samerows) :
+    VerdictInv ctx (canonVerdict ctx level st) := by
+  have hzero := canongInv_zero (ctx := ctx) st.lab (canongInv_size hinv)
+  by_cases hcomp : st.compCanon = 0
+  · by_cases hlevel : level < st.canonlevel
+    · simpa only [canonVerdict, hcomp, beq_self_eq_true, ite_true, hlevel, Id.run_pure, apply_ite Id.run]
+        using verdict_store ctx 0 { st with compCanon := 1 } hinv hzero
+    · have hr := (leafEvent_faithful (lab := st.lab) hinv).2
+      simpa only [canonVerdict, hcomp, beq_self_eq_true, ite_true, hlevel, ite_false, Id.run_pure, apply_ite Id.run]
+        using verdict_store ctx
+          (testcanlab ctx (updatecan ctx st.canong st.canonlab st.samerows) st.lab).2
+          { st with
+            canong := updatecan ctx st.canong st.canonlab st.samerows
+            samerows := n
+            compCanon := (testcanlab ctx (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 }
+          hr.1 hr.2
+  · simpa only [canonVerdict, beq_eq_false_iff_ne.mpr hcomp, Bool.false_eq_true, ite_false, Id.run_pure, apply_ite Id.run]
+      using verdict_store ctx 0 st hinv hzero
+
+/-- Classification preserves the canonical store and prepares any better
+candidate for installation, independently of the comparison-code invariant. -/
+theorem classify_store {ctx : Ctx n} {level numcells : Nat} {st : Search n}
+    (hinv : CanongInv ctx st.canong st.canonlab st.samerows) :
+    VerdictInv ctx (classify ctx level numcells st) := by
+  rw [classify_eq]
+  split
+  · exact ⟨hinv, fun _ h => by cases h⟩
+  · split
+    · exact ⟨hinv, fun _ h => by cases h⟩
+    · split
+      · dsimp only
+        split
+        · exact ⟨by simpa only [scatter_eq] using hinv, fun _ h => by cases h⟩
+        · exact canonVerdict_store (by simpa only [scatter_eq] using hinv)
+      · exact canonVerdict_store hinv
+
 /-- Code-one admission is precisely the first-reference scatter, accepted
 by the cheap boundary or by an explicit automorphism scan. -/
 theorem classify_first {ctx : Ctx n} {level numcells : Nat} {st out : Search n}
@@ -153,5 +211,35 @@ theorem classify_canon_checked {ctx : Ctx n} {level numcells : Nat} {st out : Se
           · simpa only [scatter_eq] using hlab
           · simpa only [scatter_eq] using hlabPerm
       · exact canonVerdict_checked hauto hinv hwork href hrefPerm hlab hlabPerm
+
+private theorem admit_store {ctx : Ctx n} {st : Search n}
+    (h : CanongInv ctx st.canong st.canonlab st.samerows) :
+    CanongInv ctx (admit st).canong (admit st).canonlab (admit st).samerows := by
+  unfold admit pushAuto
+  simp only [Id.run_pure]
+  split <;> exact h
+
+private theorem pruneReturn_store {ctx : Ctx n} {level : Nat} {st : Search n}
+    (h : CanongInv ctx st.canong st.canonlab st.samerows) :
+    let out := (pruneReturn level st).2
+    CanongInv ctx out.canong out.canonlab out.samerows := by
+  unfold pruneReturn pushAuto
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+  repeat' split
+  all_goals exact h
+
+/-- Acting on a justified verdict preserves the canonical row-store invariant. -/
+theorem leafExit_store {ctx : Ctx n} {leaf : Leaf} {level : Nat} {st : Search n}
+    (h : VerdictInv ctx (leaf, st)) :
+    let out := (leafExit leaf level st).2
+    CanongInv ctx out.canong out.canonlab out.samerows := by
+  cases leaf <;> unfold leafExit
+  all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+  all_goals repeat' split
+  all_goals first
+    | exact h.1
+    | exact admit_store h.1
+    | exact pruneReturn_store h.1
+    | exact pruneReturn_store (h.2 _ rfl)
 
 end Hex.GraphIso.Nauty.Engine

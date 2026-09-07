@@ -26,8 +26,9 @@ def prepareFirst (ctx : Ctx n) (tcLevel level numcells : Nat) (st : σ) :
 
 /-- An invariant established by the first child survives the entire sweep,
 including a return past the receiving frame. -/
-theorem sweep_first_stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop} {validCode : Nat → Prop}
-    (h : StablePolicy ctx inf tcLevel P validCode)
+theorem sweep_first_stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
+    {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
+    (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
     (fuel cfuel level numcells tc tv index : Nat) (cell : VSet n) (st : σ)
     (horbit : Policy.orbit (n := n) st tv = tv)
@@ -88,8 +89,9 @@ inductive FirstPath (ctx : Ctx n) (tcLevel : Nat) :
       FirstPath ctx tcLevel (fuel + 1) level numcells st last leaf
 
 /-- An invariant established at the first leaf survives the full search. -/
-theorem FirstPath.stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop} {validCode : Nat → Prop}
-    (h : StablePolicy ctx inf tcLevel P validCode)
+theorem FirstPath.stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
+    {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
+    (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
     {fuel level numcells last : Nat} {st leaf : σ}
     (path : FirstPath ctx tcLevel fuel level numcells st last leaf)

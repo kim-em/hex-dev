@@ -41,14 +41,17 @@ variable [Policy σ n]
 
 /-- Local operations outside the first descent preserve a state invariant. -/
 structure StablePolicy (ctx : Ctx n) (inf tcLevel : Nat) (P : σ → Prop)
-    (validCode : Nat → Prop := fun _ => True) : Prop where
+    (validCode : Nat → Prop := fun _ => True)
+    (validLeaf : Leaf → σ → Prop := fun _ _ => True) : Prop where
   code : ∀ level numcells (st : σ), validCode (Policy.visit ctx level numcells st).2.1
   visit : ∀ level numcells st, P st → P (Policy.visit ctx level numcells st).2.2
   compare : ∀ level code st, validCode code → P st → P (Policy.compareCodes (n := n) level code st)
   target : ∀ level numcells st, P st →
     P (Policy.chooseTarget false ctx tcLevel level numcells st).2.2.2
-  classify : ∀ level numcells st, P st → P (Policy.classify ctx level numcells st).2
-  leaf : ∀ leaf level st, P st → P (Policy.leafExit (n := n) leaf level st).2
+  classify : ∀ level numcells st, P st →
+    P (Policy.classify ctx level numcells st).2 ∧
+      validLeaf (Policy.classify ctx level numcells st).1 (Policy.classify ctx level numcells st).2
+  leaf : ∀ leaf level st, validLeaf leaf st → P st → P (Policy.leafExit (n := n) leaf level st).2
   cheap : ∀ first level st, P st → P (Policy.cheapCheck (n := n) first level st)
   child : ∀ first level tc tv st, P st → P (Policy.child (n := n) first level tc tv st)
   leave : ∀ tv st, P st → P (Policy.leaveChild (n := n) tv st)
@@ -56,10 +59,10 @@ structure StablePolicy (ctx : Ctx n) (inf tcLevel : Nat) (P : σ → Prop)
   afterSweep : ∀ first level size index st, P st →
     P (Policy.afterSweep (n := n) first level size index st)
 
-variable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop} {validCode : Nat → Prop}
+variable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop} {validCode : Nat → Prop} {validLeaf : Leaf → σ → Prop}
 
 /-- An off-path node preserves the state invariant. -/
-theorem StablePolicy.node_step (h : StablePolicy ctx inf tcLevel P validCode)
+theorem StablePolicy.node_step (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     {fuel : Nat} {next : SweepFn σ n}
     (hnext : (stableContract n P).sweepValid fuel (n + 1) next)
     (level numcells : Nat) (st : σ) (hin : P st) :
@@ -78,7 +81,7 @@ theorem StablePolicy.node_step (h : StablePolicy ctx inf tcLevel P validCode)
   have hcl := h.classify level nc targeted ht
   generalize hcval : Policy.classify ctx level nc targeted = c at hcl ⊢
   obtain ⟨leaf, classified⟩ := c
-  have hle := h.leaf leaf level classified hcl
+  have hle := h.leaf leaf level classified hcl.2 hcl.1
   generalize hlval : Policy.leafExit (n := n) leaf level classified = result at hle ⊢
   obtain ⟨exit, out⟩ := result
   have hproject : P out := hle
@@ -99,7 +102,7 @@ theorem StablePolicy.node_step (h : StablePolicy ctx inf tcLevel P validCode)
     | done => exact h.afterSweep false level size index result hn
 
 /-- Once past the first child, all later recursive calls are off-path. -/
-theorem StablePolicy.sweep_step (h : StablePolicy ctx inf tcLevel P validCode)
+theorem StablePolicy.sweep_step (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     {fuel cfuel : Nat} {descend : NodeFn σ} {next : SweepFn σ n}
     (hdescend : (stableContract n P).nodeValid fuel descend)
     (hnext : (stableContract n P).sweepValid fuel cfuel next)
@@ -146,7 +149,7 @@ theorem StablePolicy.sweep_step (h : StablePolicy ctx inf tcLevel P validCode)
   · exact hnext first level numcells tc tv1 (cell.nextElem (some tv)) cell _ st ⟨Past.next htv, hin⟩
 
 /-- Local preservation gives the generic invariant contract. -/
-theorem StablePolicy.sound (h : StablePolicy ctx inf tcLevel P validCode) :
+theorem StablePolicy.sound (h : StablePolicy ctx inf tcLevel P validCode validLeaf) :
     SoundPolicy ctx inf tcLevel (stableContract n P) where
   node_zero := fun _ _ _ _ hin => hin.2
   node_step := by
@@ -159,13 +162,13 @@ theorem StablePolicy.sound (h : StablePolicy ctx inf tcLevel P validCode) :
     h.sweep_step hdescend hnext first level numcells tc tv1 tv index cell st hin.1 hin.2
 
 /-- An off-path node preserves an invariant stable under its local operations. -/
-theorem node_stable (h : StablePolicy ctx inf tcLevel P validCode)
+theorem node_stable (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     (fuel level numcells : Nat) (st : σ) (hin : P st) :
     P (node false ctx inf tcLevel fuel level numcells st).2 :=
   node_sound h.sound false fuel level numcells st ⟨rfl, hin⟩
 
 /-- A later sibling sweep preserves the same invariant. -/
-theorem sweep_stable (h : StablePolicy ctx inf tcLevel P validCode)
+theorem sweep_stable (h : StablePolicy ctx inf tcLevel P validCode validLeaf)
     (first : Bool) (fuel cfuel level numcells tc tv1 index : Nat)
     (cursor : Option Nat) (cell : VSet n) (st : σ)
     (hpast : Past first tv1 cursor) (hin : P st) :

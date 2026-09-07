@@ -139,4 +139,15 @@ theorem firstPath_reference {ctx : Ctx n} {inf tcLevel fuel level numcells last 
   rw [node_eq_generic]
   exact hpath.reference (referencePolicy ctx inf tcLevel) (fun _ _ _ => rfl)
 
+/-- The nonempty initial state has a successful first descent at the root bound. -/
+theorem initial_path (G : Colored n k) (hn0 : 0 < n) :
+    ∃ last leaf, Generic.FirstPath { g := rowsOf G } 100 (n + 2) 1
+      (initialPartition G).2.length
+      (initial n (initialPartition G).1 (initialPartition G).2) last leaf := by
+  apply firstPath_exists hn0 (Nat.le_refl _) (initial_ok G hn0)
+  · intro v hv
+    change (Array.ofFn (n := n) fun i : Fin n => i.val)[v]! = v
+    rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
+  · omega
+
 end Hex.GraphIso.Nauty.Engine

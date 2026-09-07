@@ -112,10 +112,10 @@ theorem depthPolicy (ctx : Ctx n) (inf tcLevel last : Nat) :
       ((referencePolicy ctx inf tcLevel).target level numcells st)
   classify := by
     intro level numcells st h
-    exact h.mono (Nat.le_of_eq (classify_eqlev ctx level numcells st))
-      (classify_reference ctx level numcells st)
+    exact ⟨h.mono (Nat.le_of_eq (classify_eqlev ctx level numcells st))
+      (classify_reference ctx level numcells st), trivial⟩
   leaf := by
-    intro leaf level st h
+    intro leaf level st _ h
     exact h.mono (Nat.le_of_eq (leafExit_eqlev leaf level st)) (leafExit_reference leaf level st)
   cheap := by
     intro first level st h

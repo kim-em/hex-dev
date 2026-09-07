@@ -39,8 +39,8 @@ theorem ReferencePolicy.stable (h : ReferencePolicy ctx inf tcLevel project) (re
   visit := fun level numcells st hin => (h.visit level numcells st).trans hin
   compare := fun level code st _ hin => (h.compare level code st).trans hin
   target := fun level numcells st hin => (h.target level numcells st).trans hin
-  classify := fun level numcells st hin => (h.classify level numcells st).trans hin
-  leaf := fun leaf level st hin => (h.leaf leaf level st).trans hin
+  classify := fun level numcells st hin => ⟨(h.classify level numcells st).trans hin, trivial⟩
+  leaf := fun leaf level st _ hin => (h.leaf leaf level st).trans hin
   cheap := fun first level st hin => (h.cheap first level st).trans hin
   child := fun first level tc tv st hin => (h.child first level tc tv st).trans hin
   leave := fun tv st hin => (h.leave tv st).trans hin
