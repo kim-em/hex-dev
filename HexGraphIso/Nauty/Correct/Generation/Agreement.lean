@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Generation.Control
+public import HexGraphIso.Nauty.Correct.FirstPath.Loop
 import all HexGraphIso.Nauty.Correct.Generation.Control
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Invariant.Domination
@@ -145,5 +146,83 @@ theorem other_agreement (ctx : Ctx n) (inf tcLevel floor : Nat) :
     · rw [ite_eq_right ht]
       apply htail
       exact hm
+
+
+/-- After the guiding vertex, every child is off-path and preserves the
+agreement at the receiving frame, including on early returns. -/
+theorem firstTail_agreement (ctx : Ctx n) (inf tcLevel fuel : Nat) :
+    ∀ cfuel level numcells tc tv1 cursor tcell index (st : SearchSt n),
+      (∀ v, cursor = some v → tv1 < v) → level ≤ st.eqlevFirst →
+      level ≤ (firstChildLoop ctx inf tcLevel fuel cfuel level numcells tc tv1
+        cursor tcell index st).2.2.eqlevFirst := by
+  intro cfuel
+  induction cfuel with
+  | zero =>
+    intro level numcells tc tv1 cursor tcell index st _ hs
+    simpa only [firstChildLoop] using hs
+  | succ cfuel ih =>
+    intro level numcells tc tv1 cursor tcell index st hafter hs
+    cases cursor with
+    | none => simpa only [firstChildLoop] using hs
+    | some tv =>
+      have htv := hafter tv rfl
+      have hnext : ∀ cell : VSet n, ∀ v, cell.nextElem (some tv) = some v → tv1 < v := by
+        intro cell v hv
+        have hv' : tv < v := nextElem_after hv
+        omega
+      cases hrep : st.orbits[tv]! == tv with
+      | false =>
+        rw [firstChildLoop_skip ctx inf tcLevel fuel cfuel level numcells tc tv1 tv tcell index st hrep]
+        exact ih _ _ _ _ _ _ _ _ (hnext _) hs
+      | true =>
+        have hother : (tv == tv1) = false := by simp only [beq_eq_false_iff_ne]; omega
+        let child : SearchSt n := { st with
+          lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+          ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+          active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+          fixedpts := st.fixedpts.insert tv
+          cosetindex := tv }
+        have hc := other_agreement ctx inf tcLevel level fuel (level + 1) (numcells + 1)
+          child (by omega) hs
+        obtain ⟨r, out, hout⟩ : ∃ r out,
+            otherNode ctx inf tcLevel fuel (level + 1) (numcells + 1) child = (r, out) := ⟨_, _, rfl⟩
+        rw [hout] at hc
+        by_cases hearly : r < Int.ofNat level
+        · rw [firstChildLoop_earlyOther ctx inf tcLevel fuel cfuel level numcells tc tv1 tv tcell index st
+            r out hrep hother hout hearly]
+          exact hc
+        · rw [firstChildLoop_stayOther ctx inf tcLevel fuel cfuel level numcells tc tv1 tv tcell index st
+            r out hrep hother hout hearly]
+          dsimp only
+          apply ih _ _ _ _ _ _ _ _ (hnext _)
+          apply recover_agreement (Nat.le_refl _)
+          cases out.needshortprune <;> exact hc
+
+/-- Agreement installed by the guiding child survives the rest of its
+parent's sweep. -/
+theorem firstGuide_agreement {ctx : Ctx n} {inf tcLevel fuel cfuel level numcells tc tv index : Nat}
+    {tcell : VSet n} {st out : SearchSt n} {r : Int}
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hcall : firstPathNode ctx inf tcLevel fuel (level + 1) (numcells + 1)
+      { st with
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
+        cosetindex := tv } = (r, out))
+    (hs : level ≤ out.eqlevFirst) :
+    level ≤ (firstChildLoop ctx inf tcLevel fuel (cfuel + 1) level numcells tc tv
+      (some tv) tcell index st).2.2.eqlevFirst := by
+  by_cases hearly : r < Int.ofNat level
+  · rw [firstChildLoop_earlyGuide ctx inf tcLevel fuel cfuel level numcells tc tv tv tcell index st
+      r out hrep (by simp) hcall hearly]
+    exact hs
+  · rw [firstChildLoop_stayGuide ctx inf tcLevel fuel cfuel level numcells tc tv tv tcell index st
+      r out hrep (by simp) hcall hearly]
+    dsimp only
+    apply firstTail_agreement ctx inf tcLevel fuel cfuel _ _ _ _ _ _ _ _
+      (fun _ hv => nextElem_after hv)
+    apply recover_agreement (Nat.le_refl _)
+    cases out.needshortprune <;> exact hs
 
 end Hex.GraphIso.Nauty.Generation

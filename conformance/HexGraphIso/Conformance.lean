@@ -496,3 +496,7 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.FirstTail.complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.FirstTail.complete
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.first_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.first_agreement

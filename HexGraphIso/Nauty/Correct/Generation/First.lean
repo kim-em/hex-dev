@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Correct.Generation.Prefix
 public import HexGraphIso.Nauty.Correct.Generation.Leaf
 public import HexGraphIso.Nauty.Correct.Generation.Prune
+public import HexGraphIso.Nauty.Correct.Generation.Agreement
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Invariant.Refine
 
@@ -21,7 +22,7 @@ variable {n k : Nat}
 /-- The unique first descent installs a reference that actually occurs
 below its entry, with all refinement codes and target hints intact. The all-same boundary
 never crosses the frame being completed. -/
-theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
+private theorem first_reference_data {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
     (hg : ctx.g = rowsOf G) :
     ∀ fuel level numcells (codes : List Nat) (st : SearchSt n) (trail : FrameTrail),
       FirstInv G ctx level codes numcells st trail →
@@ -29,7 +30,8 @@ theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
       ∃ targets key,
         HasLeaf ctx tcLevel level (refine ctx level st.lab st.ptn st.active numcells) targets key ∧
         Matches ctx level (firstPathNode ctx inf tcLevel fuel level numcells st).2 targets key ∧
-        level ≤ (firstPathNode ctx inf tcLevel fuel level numcells st).2.allsamelevel := by
+        level ≤ (firstPathNode ctx inf tcLevel fuel level numcells st).2.allsamelevel ∧
+        level ≤ (firstPathNode ctx inf tcLevel fuel level numcells st).2.eqlevFirst := by
   intro fuel
   induction fuel with
   | zero =>
@@ -54,7 +56,7 @@ theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
       refine ⟨[], _, hl, hm, ?_⟩
       rw [firstPath_discrete_state ctx inf tcLevel fuel level numcells st hnum]
       simp only [firstterminal, Id.run_bind, Id.run_pure]
-      exact Nat.le_refl _
+      exact ⟨Nat.le_refl _, Nat.le_refl _⟩
     · have hbc : bcount rs.ptn level n < n := by
         rw [hcount]
         exact Nat.lt_of_le_of_ne (hcount ▸ bcount_le _ _ _) hnum
@@ -116,7 +118,7 @@ theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
       have hctc : child.firsttc.size = n + 2 := by
         change pre.firsttc.size = n + 2
         rw [hptc, Array.size_set!, htcsize]
-      obtain ⟨targets, key, hleaf, hmatches, hfloor⟩ := ih (level + 1) (rs.numcells + 1) full child childTrail
+      obtain ⟨targets, key, hleaf, hmatches, hfloor, hagree⟩ := ih (level + 1) (rs.numcells + 1) full child childTrail
         hchild (by omega) (by simp only [full, List.length_append, List.length_singleton]; omega)
         hctc (by omega)
       have hocc : HasLeaf ctx tcLevel (level + 1) (childSt ctx level rs tc tv) targets key := by
@@ -144,6 +146,11 @@ theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
         (cfuel := n) (level := level) (numcells := rs.numcells) (tc := tc) (tv := tv)
         (index := 0) (tcell := tcell) (st := pre) hrep (rfl : firstPathNode ctx inf tcLevel fuel
           (level + 1) (rs.numcells + 1) child = _)
+      have haloop := firstGuide_agreement (ctx := ctx) (inf := inf) (tcLevel := tcLevel)
+        (fuel := fuel) (cfuel := n) (level := level) (numcells := rs.numcells) (tc := tc)
+        (tv := tv) (index := 0) (tcell := tcell) (st := pre) hrep
+        (rfl : firstPathNode ctx inf tcLevel fuel (level + 1) (rs.numcells + 1) child = _)
+        (Nat.le_trans (Nat.le_succ _) hagree)
       have hmloop := hfields.matching hmatchesParent
       have hfloop : level ≤ (firstChildLoop ctx inf tcLevel fuel (n + 1) level rs.numcells tc tv
           (some tv) tcell 0 pre).2.2.allsamelevel := by
@@ -159,17 +166,50 @@ theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
         | some r => (r, loop.2.2)
         | none => (Int.ofNat level - 1, firstFinish level len loop.2.1 loop.2.2)).2
       change Matches ctx level out (tc :: targets) ⟨rs.longcode :: key.codes, key.rows⟩ ∧
-        level ≤ out.allsamelevel
+        level ≤ out.allsamelevel ∧ level ≤ out.eqlevFirst
       dsimp only [out, loop]
       generalize he : firstChildLoop ctx inf tcLevel fuel (n + 1) level rs.numcells tc tv
-        (some tv) tcell 0 pre = result at hmloop hfloop ⊢
+        (some tv) tcell 0 pre = result at hmloop hfloop haloop ⊢
       obtain ⟨r, index, out⟩ := result
       cases r with
-      | some r => exact ⟨hmloop, hfloop⟩
+      | some r => exact ⟨hmloop, hfloop, haloop⟩
       | none =>
         dsimp only
-        refine ⟨?_, finish_floor hfloop⟩
-        unfold firstFinish
-        split <;> exact hmloop.stateEq rfl rfl rfl
+        refine ⟨?_, finish_floor hfloop, ?_⟩
+        · unfold firstFinish
+          split <;> exact hmloop.stateEq rfl rfl rfl
+        · unfold firstFinish
+          split <;> exact haloop
+
+
+/-- The unique first descent installs a reference that actually occurs
+below its entry, preserving its codes, target hints and all-same boundary. -/
+theorem first_reference {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
+    (hg : ctx.g = rowsOf G)
+    (fuel level numcells : Nat) (codes : List Nat) (st : SearchSt n) (trail : FrameTrail)
+    (hfirst : FirstInv G ctx level codes numcells st trail)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (htcsize : st.firsttc.size = n + 2) (hfuel : n < level + fuel) :
+    ∃ targets key,
+      HasLeaf ctx tcLevel level (refine ctx level st.lab st.ptn st.active numcells) targets key ∧
+      Matches ctx level (firstPathNode ctx inf tcLevel fuel level numcells st).2 targets key ∧
+      level ≤ (firstPathNode ctx inf tcLevel fuel level numcells st).2.allsamelevel := by
+  obtain ⟨targets, key, hp, hm, hs, _⟩ :=
+    first_reference_data inf tcLevel hg fuel level numcells codes st trail hfirst hlevel hpath htcsize hfuel
+  exact ⟨targets, key, hp, hm, hs⟩
+
+/-- The first descent establishes agreement through its entry level.
+This records the actual comparison depth, which cannot be recovered from
+the weaker prefix invariant alone. -/
+theorem first_agreement {G : Colored n k} {ctx : Ctx n} (inf tcLevel : Nat)
+    (hg : ctx.g = rowsOf G)
+    (fuel level numcells : Nat) (codes : List Nat) (st : SearchSt n) (trail : FrameTrail)
+    (hfirst : FirstInv G ctx level codes numcells st trail)
+    (hlevel : 1 ≤ level) (hpath : level = codes.length + 1)
+    (htcsize : st.firsttc.size = n + 2) (hfuel : n < level + fuel) :
+    level ≤ (firstPathNode ctx inf tcLevel fuel level numcells st).2.eqlevFirst := by
+  obtain ⟨_, _, _, _, _, ha⟩ :=
+    first_reference_data inf tcLevel hg fuel level numcells codes st trail hfirst hlevel hpath htcsize hfuel
+  exact ha
 
 end Hex.GraphIso.Nauty.Generation
