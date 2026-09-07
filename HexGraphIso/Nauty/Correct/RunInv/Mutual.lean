@@ -81,14 +81,6 @@ theorem firstFinish_fixedpts (level size index : Nat) (st : SearchSt n) :
   rw [firstFinish]
   split <;> rfl
 
-/-- The two path facts carried by the mutual induction: fixed vertices are
-singleton cells, and root-valid automorphisms fixing them stabilize the
-current cells. -/
-structure PathOk (ctx : Ctx n) (rootPtn rootLab : Array Nat)
-    (level : Nat) (st : SearchSt n) : Prop where
-  fixed : FixedCells level st
-  stab : PathStab ctx rootPtn rootLab level st
-
 namespace PathOk
 
 /-- The nonempty root seeds both path facts. -/
@@ -103,29 +95,6 @@ theorem root {G : Colored n k} :
       (PathStab.same (ctx := { g := rowsOf G })
         (st := rootSt n (initialPartition G).1
           (initialPartition G).2))
-
-/-- Node-entry refinement preserves both path facts. -/
-theorem refine {G : Colored n k} {ctx : Ctx n}
-    {rootPtn rootLab : Array Nat} {level : Nat} {active : VSet n} {numcells : Nat}
-    {st : SearchSt n}
-    (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hgsz : ctx.g.size = n)
-    (hok : SearchOk G level numcells st)
-    (hstarts : ∀ v : Nat, active.mem v = true →
-      v = 0 ∨ st.ptn[v - 1]! ≤ level)
-    (h : PathOk ctx rootPtn rootLab level st) :
-    PathOk ctx rootPtn rootLab level
-      { st with
-        lab := (Nauty.refine ctx level st.lab st.ptn active numcells).lab
-        ptn := (Nauty.refine ctx level st.lab st.ptn active numcells).ptn
-        active := (Nauty.refine ctx level st.lab st.ptn active numcells).active } := by
-  have hend := searchOk_end hn0 hok hlevel
-  have hlab : LabOk st.lab n :=
-    labOk_of_reach hok.labSize hok.reach
-  constructor
-  · exact h.fixed.refine hok.labSize hok.ptnSize hend
-  · exact h.stab.refine hgsz hok.labSize hlab hok.ptnSize
-      hend hstarts
 
 /-- A loop child extends both path facts by its selected fresh vertex. -/
 theorem breakout {G : Colored n k} {ctx : Ctx n}
@@ -166,23 +135,6 @@ theorem breakout {G : Colored n k} {ctx : Ctx n}
       (by rw [hok.ptnSize]; exact hinv.range)
       (hok.labSize.trans hok.ptnSize.symm) hlab hcurrent hinv.lenTwo
       hend hvals
-
-/-- Recovered parent state preserves both path facts once child cleanup
-restores the parent's fixed-point set. -/
-theorem ofSearchOut {G : Colored n k} {ctx : Ctx n}
-    {rootPtn rootLab : Array Nat} {level numcells : Nat}
-    {st out : SearchSt n}
-    (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (h : PathOk ctx rootPtn rootLab level st)
-    (hfixed : out.fixedpts = st.fixedpts)
-    (hok : SearchOk G level numcells st)
-    (hout : SearchOk G level numcells out)
-    (heffect : SearchOut G level level st out) :
-    PathOk ctx rootPtn rootLab level out := by
-  constructor
-  · exact h.fixed.ofSearchOut hfixed hok hout heffect
-  · exact h.stab.ofSearchOut hfixed hok hout heffect
-      (searchOk_end hn0 hok hlevel)
 
 /-- The path facts and root ledger supply the exact local ledger needed
 by a pruning filter. -/

@@ -57,7 +57,7 @@ theorem firstSweep_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
     intro smaller index hsub
     apply sweep_safe hn0 hgsz hsymm hloop
     refine ⟨?_, hready.positive, hready.partition, hready.target.subset hsub,
-      (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound⟩
+      (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path⟩
     intro _ v hv
     have hn := (VSet.nextElem_eq_some_iff.mp hv).2.1
     change tv + 1 ≤ v at hn
@@ -146,7 +146,8 @@ theorem initial_firstPre (G : Colored n k) (hn0 : 0 < n) :
   refine ⟨Nat.le_refl _, initial_ok G hn0, initial_equitable G hn0,
     Array.size_replicate, ?_, Array.size_replicate, Array.size_replicate, ?_,
     initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_, ?_,
-    initial_boundary G hn0 { g := rowsOf G }, Nat.le_refl _, initial_pairs G { g := rowsOf G }, by change 0 < 500 ∧ 0 ≤ 500; decide⟩
+    initial_boundary G hn0 { g := rowsOf G }, Nat.le_refl _, initial_pairs G { g := rowsOf G }, by change 0 < 500 ∧ 0 ≤ 500; decide,
+    initial_pathInv G { g := rowsOf G }, (initial_nodeOk G hn0).starts⟩
   · change n < (Array.replicate (n + 2) (-1 : Int)).size
     rw [Array.size_replicate]
     omega

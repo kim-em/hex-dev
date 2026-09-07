@@ -87,6 +87,13 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hch := (reachPolicy G ctx tcLevel hn0).child true level r.1 r.2.1.toNat tv r.2.2.1 ready
     hin.positive hcheap.ok hreadyTarget hcell
   have hentry := hin.child hn0 hsymm htv hgsz hloop
+  have hpathReady := (hin.prepare_path hn0 hgsz tcLevel).cheap true
+  have hfixout := node_fixed (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) true hn0
+    (by have := hin.positive; omega) hentry.partition hentry.path.fixed
+  have hfresh := (fixed_child true hn0 hcheap.ok hpathReady.fixed hreadyTarget hcell).1
+  have hrestore : left.fixedpts = ready.fixedpts := by
+    apply fixed_restore (base := ready) (out := out) _ hfresh
+    exact hfixout
   have hbout := hentry.boundary.firstPath hn0 (by have := hin.positive; omega) hentry.partition hpath
   have hbleft : Boundary G ctx (level + 1) left := hbout.congr rfl rfl rfl
   have ho := node_out (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) true hn0 (by omega) hch.1
@@ -190,6 +197,6 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
     (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, hhist, hrecord,
     recover_equitable hn0 hin.positive hcheap.ok heq hleftFrame,
     hbleft.recover_child hin.positive (by have := Nat.le_trans hcheap.ok.bc (bcount_le _ _ _); omega),
-    recover_bound level left⟩
+    recover_bound level left, hpathReady.recover hn0 hin.positive hcheap.ok hleftFrame hrestore⟩
 
 end Hex.GraphIso.Nauty.Engine

@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.HistoryState
 public import HexGraphIso.Nauty.Policy.Calls
 public import HexGraphIso.Nauty.Policy.EquitableState
-public import HexGraphIso.Nauty.Policy.Pairs
+public import HexGraphIso.Nauty.Policy.PathState
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.HistoryState
@@ -40,6 +40,8 @@ structure NodePre (G : Colored n k) (ctx : Ctx n) (tcLevel level numcells : Nat)
   equitable : Equitable ctx level (st.refined ctx level numcells).lab (st.refined ctx level numcells).ptn
   boundary : Boundary G ctx level st
   cheapBound : st.noncheaplevel ≤ level
+  path : PathInv G ctx level st
+  starts : ∀ v, st.active.mem v = true → v = 0 ∨ st.ptn[v - 1]! ≤ level
 
 /-- A later-sibling sweep retains the parent history and its recorded target. -/
 structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool)
@@ -56,6 +58,15 @@ structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool
   equitable : Equitable ctx level st.lab st.ptn
   boundary : Boundary G ctx (level + 1) st
   cheapBound : st.noncheaplevel ≤ level + 1
+  path : PathInv G ctx level st
+
+/-- At a resumed sweep, every pair passing its fix test has realizers
+stabilizing the partition where the filter is applied. -/
+theorem SweepPre.local_pairs {G : Colored n k} {ctx : Ctx n}
+    {tcLevel level numcells tc tv1 : Nat} {first : Bool} {cursor : Option Nat}
+    {cell : VSet n} {st : Search n}
+    (h : SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st) :
+    LocalAutos ctx level st.view := h.path.pairs h.stored.pairs
 
 /-- The off-path induction preserves all installed data, including the checked generator trace. -/
 def safetyContract (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) : Generic.Contract (Search n) n where
@@ -76,6 +87,7 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     RunInv G ctx (Generic.nodeStep ctx tcLevel next false level numcells st).2 := by
   have hv := ((reachPolicy G ctx tcLevel hn0).visit level numcells st hin.positive hin.partition).1
   dsimp only [policy, Generic.Policy.visit] at hv
+  have hvpath := hin.path.visit hn0 hin.positive hgsz hin.partition hin.starts
   have hvi := hin.stored.visit level numcells
   have hve : Equitable ctx level (visit ctx level numcells st).2.2.lab
       (visit ctx level numcells st).2.2.ptn := hin.equitable
@@ -90,7 +102,7 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   unfold Generic.nodeStep
   dsimp only [policy, Generic.Policy.visit, Generic.Policy.compareCodes, Generic.Policy.chooseTarget,
     Generic.Policy.classify, Generic.Policy.leafExit, Generic.Policy.cheapCheck, Generic.Policy.afterSweep]
-  generalize hvval : visit ctx level numcells st = r at hv hvi hvh hvg hcode hve hvb hvn hvl hvp ⊢
+  generalize hvval : visit ctx level numcells st = r at hv hvi hvh hvg hcode hve hvb hvn hvl hvp hvpath ⊢
   obtain ⟨nc, code, refined⟩ := r
   simp only [Bool.false_eq_true, ite_false]
   let compared := compareCodes level code refined
@@ -100,6 +112,7 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   have hcg : compared.gcaFirst < level := by
     rw [show compared.gcaFirst = refined.gcaFirst from (gcaPolicy ctx 0 tcLevel).compare level code refined]
     exact hvg
+  have htpath := (hvpath.compare code).target false tcLevel nc
   have ht := (reachPolicy G ctx tcLevel hn0).target false level nc compared hin.positive hcp
   dsimp only [policy, Generic.Policy.chooseTarget] at ht
   have htb := (hvb.compare code).target false tcLevel nc
@@ -125,7 +138,7 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   have hrecord : nc < n → Recorded ctx tcLevel level (chooseTarget false ctx tcLevel level nc compared).1.toNat
       (chooseTarget false ctx tcLevel level nc compared).2.2.2 :=
     fun hnc => hch.recorded hnc hin.positive hgsz hsymm hloop
-  generalize htval : chooseTarget false ctx tcLevel level nc compared = t at ht hti hth htg hrecord hte htb htn htl htp ⊢
+  generalize htval : chooseTarget false ctx tcLevel level nc compared = t at ht hti hth htg hrecord hte htb htn htl htp htpath ⊢
   obtain ⟨tc, cell, size, targeted⟩ := t
   change targeted.gcaFirst < level at htg
   obtain ⟨htlocal, htarget⟩ := ht
@@ -178,7 +191,7 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
               (gcaPolicy ctx 0 tcLevel).cheap false level targeted]; omega),
         hth.cheap false (by change targeted.gcaFirst ≤ level; omega),
         (hrecord hnc).cheap false (by change targeted.gcaFirst ≤ level; omega),
-        (by unfold cheapCheck; split <;> exact hte), hcheapBoundary, cheap_bound false htn⟩
+        (by unfold cheapCheck; split <;> exact hte), hcheapBoundary, cheap_bound false htn, htpath.cheap false⟩
     have hn := hnext false level nc tc.toNat ((cell.nextElem none).getD 0)
       (cell.nextElem none) cell 0 (cheapCheck false level targeted) hnextPre
     generalize hsval : next false level nc tc.toNat ((cell.nextElem none).getD 0)
@@ -218,7 +231,7 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
     intro smaller hsub
     exact hnext first level numcells tc tv1 (smaller.nextElem (some tv)) smaller _ _
       ⟨Generic.Past.next htv, hready.positive, hready.partition, hready.target.subset hsub,
-        (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound⟩
+        (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path⟩
   have hlong : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (Id.run (do
         let mut cell := smaller
@@ -275,11 +288,15 @@ theorem safety_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
       (by simpa only [Nat.add_sub_cancel] using
         hin.history.child first hgsz hin.positive hin.partition hin.target htv hin.recorded),
       child_equitable first hn0 hin.positive hin.partition hin.equitable hin.target htv hsymm,
-      hin.boundary.child first hin.positive hin.target htv, (by cases first <;> exact hin.cheapBound)⟩
+      hin.boundary.child first hin.positive hin.target htv, (by cases first <;> exact hin.cheapBound),
+      hin.path.child first hn0 hin.positive hin.partition hin.target htv, child_starts first hin.target htv⟩
   have hd := hdescend false (level + 1) (numcells + 1) (child first level tc tv st) ⟨rfl, hnodePre⟩
   change RunInv G ctx (Generic.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
     (child first level tc tv st)).2 at hd
   rw [← node_eq_generic] at hd
+  have hfixout := node_fixed (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) false hn0
+    (by have := hin.positive; omega) hch.1 hnodePre.path.fixed
+  have hfresh := (fixed_child first hn0 hin.partition hin.path.fixed hin.target htv).1
   have ho := node_out (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) false hn0
     (by have := hin.positive; omega) hch.1
   have hbout := hnodePre.boundary.node (fuel := fuel) (tcLevel := tcLevel) hn0
@@ -301,10 +318,13 @@ theorem safety_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
   split
   · rw [← node_eq_generic]
     generalize hcall : node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (child first level tc tv st) = result at hd hframe hhist hgca hbout ⊢
+      (child first level tc tv st) = result at hd hframe hhist hgca hbout hfixout ⊢
     obtain ⟨exit, out⟩ := result
     let left := { out with fixedpts := out.fixedpts.erase tv }
     have hleft : RunInv G ctx left := hd.leave tv
+    have hrestore : left.fixedpts = st.fixedpts := by
+      apply fixed_restore (base := st) (out := out) _ hfresh
+      exact hfixout.trans (by cases first <;> rfl)
     have hleftFrame : SearchOut G level level st.view left.view := hframe.congr rfl rfl rfl rfl
     have hr := (reachPolicy G ctx tcLevel hn0).recover level numcells st left
       hin.positive hin.partition hleftFrame
@@ -321,11 +341,11 @@ theorem safety_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
         hhist.1, hhist.2 hin.recorded, recover_equitable hn0 hin.positive hin.partition hin.equitable hleftFrame,
         (hbout.congr (out := left) rfl rfl rfl).recover_child hin.positive
           (by have := Nat.le_trans hin.partition.bc (bcount_le _ _ _); omega),
-        recover_bound level left⟩
+        recover_bound level left, hin.path.recover hn0 hin.positive hin.partition hleftFrame hrestore⟩
     exact safety_advance hnext first level numcells tc tv1 tv index cell left exit hleft hready
   · exact hnext first level numcells tc tv1 (cell.nextElem (some tv)) cell _ st
       ⟨Generic.Past.next hpast, hin.positive, hin.partition, hin.target,
-        (fun _ hv => VSet.nextElem_mem hv), hin.stored, hin.ancestor, hin.history, hin.recorded, hin.equitable, hin.boundary, hin.cheapBound⟩
+        (fun _ hv => VSet.nextElem_mem hv), hin.stored, hin.ancestor, hin.history, hin.recorded, hin.equitable, hin.boundary, hin.cheapBound, hin.path⟩
 
 /-- The live histories discharge the generic induction rules for every off-path call. -/
 theorem safetyPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat)

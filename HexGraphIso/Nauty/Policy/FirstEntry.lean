@@ -43,6 +43,8 @@ structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : 
   cheapBound : st.noncheaplevel ≤ level
   pairs : PairsOk G ctx st
   workspace : WorkspaceOk st.view
+  path : PathInv G ctx level st
+  starts : ∀ v, st.active.mem v = true → v = 0 ∨ st.ptn[v - 1]! ≤ level
 
 /-- The chosen first child is a valid mathematical individualization step. -/
 theorem firstChild_offset {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tv : Nat}
@@ -113,6 +115,16 @@ theorem FirstPre.prepare_boundary {G : Colored n k} {ctx : Ctx n} {level numcell
   have hr : Boundary G ctx level (recordFirst level r.2.1 r.2.2) := hv.congr rfl rfl rfl
   exact hr.target true tcLevel r.1
 
+/-- First-path preparation refines the path and preserves it while recording codes and targets. -/
+theorem FirstPre.prepare_path {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
+    {st : Search n} (h : FirstPre G ctx level numcells st) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = n) (tcLevel : Nat) :
+    PathInv G ctx level (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2 := by
+  have hv := h.path.visit hn0 h.positive hgsz h.partition h.starts
+  let r := visit ctx level numcells st
+  have hr : PathInv G ctx level (recordFirst level r.2.1 r.2.2) := hv.fields rfl rfl rfl
+  exact hr.target true tcLevel r.1
+
 /-- The first-path guard validates the pair needed at the next child. -/
 theorem FirstPre.cheap_boundary {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells : Nat}
     {st : Search n} (h : FirstPre G ctx level numcells st) (hn0 : 0 < n)
@@ -163,7 +175,7 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     unfold ready cheapCheck
     split <;> exact prepareFirst_orbits ctx tcLevel level numcells st
   refine ⟨by omega, firstChild_ok hn0 h.positive h.partition htv, ?_,
-    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_, ?_, ?_, ?_, ?_⟩
+    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [hstep]
     exact equitable_breakout hit.ok.labSize hit.ok.ptnSize hit.ok.ptnEnd hit.valsWeak
       hit.ok.labOk hit.inj hsymm h.equitable hcell hne ho hacc.symm
@@ -202,5 +214,13 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     · change ready.autos = st.autos
       unfold ready cheapCheck
       split <;> exact prepareFirst_autos ctx tcLevel level numcells st
+
+  · have hp := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition)
+    have hc := (reachPolicy G ctx tcLevel hn0).cheap true level r.1 r.2.2.2.2 hp.1
+    exact ((h.prepare_path hn0 hgsz tcLevel).cheap true).child true hn0 h.positive hc.ok
+      (hp.2.of_out hc.effect) (VSet.nextElem_mem htv)
+  · have hp := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition)
+    have hc := (reachPolicy G ctx tcLevel hn0).cheap true level r.1 r.2.2.2.2 hp.1
+    exact child_starts true (hp.2.of_out hc.effect) (VSet.nextElem_mem htv)
 
 end Hex.GraphIso.Nauty.Engine
