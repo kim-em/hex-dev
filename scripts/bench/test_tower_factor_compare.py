@@ -31,7 +31,7 @@ class TowerFactorCompareTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare.read_export(self.path, compare.NAMES)
 
-    def pair(self, number, right=FAST, *, strict=False, windows=1):
+    def pair(self, number, right=FAST, *, strict=False, windows=1, max_busy=None):
         cpu, sibling = 24 + number, 72 + number
         loads = {cpu: 0.0, sibling: 1.0}
         runs = [dict(arm=arm, export=str(path), accepted=True,
@@ -43,9 +43,14 @@ class TowerFactorCompareTests(unittest.TestCase):
                 for arm, path in (("left", BASE), ("right", right))]
         if number == 2:
             runs.reverse()
+        whole = {0: 0.0, 48: 0.0, **loads}
+        for run in runs:
+            run["preflight_all"] = whole.copy()
         return dict(attempt=number, runs=runs, accepted=True, cpu=cpu,
-                    siblings=[cpu, sibling], preflight_windows=[loads.copy() for _ in range(windows)],
-                    require_separated_canonical=strict, quiet_windows=windows)
+                    siblings=[cpu, sibling], cpu_ids=list(whole),
+                    preflight_windows=[whole.copy() for _ in range(windows)],
+                    require_separated_canonical=strict, quiet_windows=windows,
+                    max_busy_cpus=max_busy)
 
     def test_real_export_and_retention(self):
         self.assertEqual(len(compare.read_export(BASE, compare.NAMES)), 15)
@@ -69,7 +74,8 @@ class TowerFactorCompareTests(unittest.TestCase):
                 names = pairs[0]["names"] if pairs else compare.HEX_NAMES
                 actual = compare.decision(pairs, names,
                     require_separated_canonical=saved["require_separated_canonical"],
-                    quiet_windows=saved.get("quiet_windows", 1))
+                    quiet_windows=saved.get("quiet_windows", 1),
+                    max_busy_cpus=saved.get("max_busy_cpus"))
                 self.assertEqual(actual, {k: saved[k] for k in actual})
 
     def test_incomplete_series_has_no_verdict(self):
@@ -178,6 +184,41 @@ class TowerFactorCompareTests(unittest.TestCase):
                     compare.decision([pair], compare.NAMES)
         with self.assertRaises(ValueError):
             compare.decision([self.pair(1), self.pair(2, strict=True)], compare.NAMES)
+
+    def test_global_ceiling_applies_to_each_window(self):
+        cpus = [0, 1, 2]
+        rotating = [{0: 5, 1: 0, 2: 0}, {0: 0, 1: 5, 2: 0}]
+        self.assertTrue(compare.quiet_host(rotating, 2, cpus, 1))
+        rotating[0][2] = 5
+        self.assertFalse(compare.quiet_host(rotating, 2, cpus, 1))
+        self.assertFalse(compare.quiet_host(rotating[:1], 2, cpus, 1))
+        self.assertFalse(compare.quiet_host([{0: 0, 1: 0}], 1, cpus, 0))
+
+    def test_global_history_is_rechecked(self):
+        pair = self.pair(1, windows=2, max_busy=1)
+        self.assertIsNone(compare.decision([pair], compare.NAMES,
+            quiet_windows=2, max_busy_cpus=1)["eligible"])
+        pair["preflight_windows"][0].update({0: 100, 48: 100})
+        with self.assertRaisesRegex(ValueError, "busy whole host"):
+            compare.decision([pair], compare.NAMES, quiet_windows=2, max_busy_cpus=1)
+
+    def test_between_arm_global_preflight_is_rechecked(self):
+        pair = self.pair(1, max_busy=1)
+        pair["runs"][1]["preflight_all"].update({0: 100, 48: 100})
+        with self.assertRaisesRegex(ValueError, "busy whole host"):
+            compare.decision([pair], compare.NAMES, max_busy_cpus=1)
+
+    def test_global_preflight_must_match_selected_core(self):
+        pair = self.pair(1, max_busy=1)
+        pair["runs"][0]["preflight_all"][pair["cpu"]] = 1
+        with self.assertRaisesRegex(ValueError, "inconsistent"):
+            compare.decision([pair], compare.NAMES, max_busy_cpus=1)
+
+    def test_global_ceiling_cannot_be_reinterpreted(self):
+        with self.assertRaises(ValueError):
+            compare.decision([self.pair(1, max_busy=1)], compare.NAMES)
+        with self.assertRaises(ValueError):
+            compare.decision([self.pair(1)], compare.NAMES, max_busy_cpus=1)
 
     def test_serialized_cpu_keys(self):
         pair = json.loads(json.dumps(self.pair(1)))
