@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGraphIso.Cases
-import HexGraphIso.Nauty.Correct.Generation
+import HexGraphIso.Nauty.Correct.Generation.FirstGeneration
 
 /-!
 Core conformance for `HexGraphIso`.
