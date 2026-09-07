@@ -618,11 +618,48 @@ The tag `bench/issue-10074-measured` preserves the measured source history
 across the integration rebase onto the upstream `natDegree` API rewrite.
 
 The archived runners identify the code that collected each series. The final
-validator separately rechecks all 24 accepted exports after collection and
-records six `*-validated-decision.json` artifacts, including raw min/median/max
+validator separately rechecks all 28 accepted exports after collection and
+records seven `*-validated-decision.json` artifacts, including raw min/median/max
 values, source/binary consistency, accepted host status, and opposite arm
-orders. The five original/modular/norm/recovery/combined comparisons qualify;
+orders. The six comparisons of retained implementations qualify;
 the additional normalization comparison does not.
+
+### Integrated executable
+
+The integrated implementation at `2ae8157bc` includes the upstream
+`natDegree` API rewrite. The accessor is an inline abbreviation of the old
+expression, but generated code and the executable hash differ. A separate
+preregistered comparison measures this actual integrated binary against the
+original executable. Attempts 4 and 6 pass on CPU 27/sibling 75 and CPU
+32/sibling 80, respectively, with opposite arm orders. All four earlier
+attempts are rejected on host telemetry and remain archived. Every Hex and
+fresh PARI hash matches; the complete series satisfies the retention rule.
+
+| operation | original median ms | integrated median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 1.068–1.071 | 0.956–0.959 | 1.116–1.117× |
+| factor, degree 3 | 1.462–1.465 | 1.2747–1.2754 | 1.146–1.149× |
+| factor, degree 4 | 2.065–2.077 | 1.760–1.771 | 1.173× |
+| factor, degree 6 | 3.571–3.594 | 2.856–2.864 | 1.251–1.255× |
+| factor, degree 8 | 6.157–6.169 | 4.305–4.318 | 1.429–1.430× |
+| factor, degree 12 | 16.314–16.376 | 8.746–8.837 | 1.853–1.865× |
+| factor, degree 24 | 250.261–250.559 | 33.540–33.691 | 7.43–7.47× |
+| check, degree 24 | 124.749–124.879 | 16.302–16.414 | 7.60–7.66× |
+
+The paired PARI 2.17.3/cypari2 2.2.4 control has protocol-overhead medians
+7.209 and 7.252 µs. All six rungs remain below the 50% overhead-share ceiling.
+These ratios use the same PARI/Hex convention and overhead subtraction as
+above; they describe the integrated binary, not an extrapolation from the
+earlier comparison.
+
+| n | Hex median ms | PARI median µs | raw ratio | adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.956–0.959 | 28.950–29.073 | 0.03028–0.03030 | 0.02274 |
+| 3 | 1.2747–1.2754 | 34.057–34.242 | 0.02672–0.02685 | 0.02103–0.02120 |
+| 4 | 1.760–1.771 | 39.172–39.293 | 0.02212–0.02233 | 0.01803–0.01823 |
+| 6 | 2.856–2.864 | 120.981–123.319 | 0.04237–0.04306 | 0.03983–0.04054 |
+| 8 | 4.305–4.318 | 47.705–47.719 | 0.01105–0.01108 | 0.00937–0.00941 |
+| 12 | 8.746–8.837 | 74.424–74.942 | 0.00848–0.00851 | 0.00766–0.00768 |
 
 ## Profile
 
@@ -826,7 +863,7 @@ captures.
 
 | artefact | source commit / role | host state | SHA-256 |
 |---|---|---|---|
-| [factor follow-up manifest](bench-results/hex-number-field-tower-followup-manifest.json) | original `b8602c76a`, modular `8dd0f8e15`, isolated and combined variants; all accepted/rejected exports, exact runners, and validated decisions | paired core/sibling telemetry; local comparison evidence | `67c134cbe8044221771f3ba4df3f741f90882ef992d8bf416f060a36625d3d99` |
+| [factor follow-up manifest](bench-results/hex-number-field-tower-followup-manifest.json) | original `b8602c76a`, modular `8dd0f8e15`, isolated and combined variants; all accepted/rejected exports, exact runners, and validated decisions | paired core/sibling telemetry; local comparison evidence | `0603c1f6b46b63b64ec78725c9c02ec532473fc556c1425b21f4d6a8b9a6bc09` |
 | [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
 | [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
 | [superseded seven-case mode-3 export](bench-results/hex-number-field-tower-phase4-final-mode3-d277c583-chungus2-cpu19.json) | clean pre-rebase `d277c583` (same patch now `c720b4aca`); earlier canonical-case calibration retained for provenance | [matching postflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | `dcae0daaac0470764794b793606a005a83c845dd9af44a80f61ddad97e593f06` |
@@ -903,6 +940,10 @@ hexnumberfieldtower_emit_fixtures hexnumberfieldtower_bench` (9,698 jobs).
 The selected pre-rebase benchmark executable is byte-identical to the verified
 and measured combined executable from `8d54c7158`, SHA-256
 `d78f6616e823004c807ebcbd343656629e43857e8a3286827cf0293a8c905034`.
+The integrated build also passes all 9,698 jobs, all 49 benchmark checks,
+byte-identical fixtures, and nine PARI oracle cases. Its measured executable
+has SHA-256
+`c3e2de0cb83c2ab3e7fb68997c06778ed8a2369f63c4f21878ec88d7ce3c10a6`.
 All 49 checks include the six PARI comparators using the registered provider.
 The export validator's 19 unit tests pass and run in the existing CI job.
 

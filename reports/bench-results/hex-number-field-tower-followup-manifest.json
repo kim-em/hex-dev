@@ -634,6 +634,96 @@
       "artifact": "hex-number-field-tower-followup-monic-validated-decision.json",
       "source": "post-hoc decision from archived host records and exports",
       "sha256": "36324ff68c5ef5fe14e04437e3e33abd1b2c7d278152f00e550369b7e02605e1"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-1-host.json",
+      "source": "/tmp/issue-10074-rebased-1-host.json",
+      "sha256": "93f157109e892c5ced76c790a5829aa1ff03dab39a02cc1ef8c269f864bab46b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-1-left.json",
+      "source": "/tmp/issue-10074-rebased-1-left.json",
+      "sha256": "a683f882efaa85154f436a5bfcbfeac5faaaef32814856717ac7479580281d61"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-1-right.json",
+      "source": "/tmp/issue-10074-rebased-1-right.json",
+      "sha256": "09e43567d6683474e75a36811b956d96f3447f741f054f91a401182edca70635"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-2-host.json",
+      "source": "/tmp/issue-10074-rebased-2-host.json",
+      "sha256": "9ec6c7ea6c83974d8915bb52d0a31e0a621dcbf05bb64c95f6eb67b20f874fe0"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-2-left.json",
+      "source": "/tmp/issue-10074-rebased-2-left.json",
+      "sha256": "5d0e17965265f00c5bcaf966e23b3225d08cd9ab74c17f5b1669b0ace45cef2c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-3-host.json",
+      "source": "/tmp/issue-10074-rebased-3-host.json",
+      "sha256": "054a0f8563b6ca99e068a32524a8c9ea75fc92367386cf1a1a112388fdbdf97f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-3-left.json",
+      "source": "/tmp/issue-10074-rebased-3-left.json",
+      "sha256": "01773123c7a98e7effe4a3bbc6a07991878246ff700da6e8ca8c3b5967b8cee9"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-4-host.json",
+      "source": "/tmp/issue-10074-rebased-4-host.json",
+      "sha256": "9f798dae7e63f70408d135e423cf6ce63d1ba04c58f5fc30f117d895d5b7db59"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-4-left.json",
+      "source": "/tmp/issue-10074-rebased-4-left.json",
+      "sha256": "0397201f35d822b7e235e13cec2f645957e8b524a2e1a274847db4c6e812bb31"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-4-right.json",
+      "source": "/tmp/issue-10074-rebased-4-right.json",
+      "sha256": "778f20041b96571c8a96d72d220f9b23ed3a50b396894809b1ca1176b181ac0b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-5-host.json",
+      "source": "/tmp/issue-10074-rebased-5-host.json",
+      "sha256": "214c1916c05e2f601a6839d50aa95e7bf9e771bc02b480aea3ced22f8f88caf1"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-5-left.json",
+      "source": "/tmp/issue-10074-rebased-5-left.json",
+      "sha256": "b6695dba7fa9f842d1c7ac140f26b60901bf41360ad7c994e28b69316da928d8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-5-right.json",
+      "source": "/tmp/issue-10074-rebased-5-right.json",
+      "sha256": "bfcb45e11af83ce5b94517284930ae0a6c865c4f1906f1daf26c68a537c9f484"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-6-host.json",
+      "source": "/tmp/issue-10074-rebased-6-host.json",
+      "sha256": "71077e1ed66e345e4808272c8bc15c1bb727e931ba13cd08c4834f282622acc3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-6-left.json",
+      "source": "/tmp/issue-10074-rebased-6-left.json",
+      "sha256": "648eb40b7790fe745ddca38e0ff0fd5edb42c9699fe92fb335503d7bcd9fba9d"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-6-right.json",
+      "source": "/tmp/issue-10074-rebased-6-right.json",
+      "sha256": "bc554beda6e87d5f0e2a5f6ed438c47fc6b88b26e2ef889deb0efb1fe1550838"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-decision.json",
+      "source": "/tmp/issue-10074-rebased-decision.json",
+      "sha256": "a1ae59eba7727f524309ec0f5ff049648769232a1eb0fe911070466e2c550616"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "fde624f781d5f53dc34629c3ae695befbc7a909965b125192745d163e4bbac96"
     }
   ]
 }
