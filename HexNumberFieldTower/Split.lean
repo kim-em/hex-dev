@@ -235,7 +235,7 @@ def factorRoot? {T : NumberTower} (f : Poly T) : Option AlgebraicRoot := do
     if hpos : 0 < p.leadingCoeff then
       if hdegree : 0 < p.natDegree then
         if hsimple : HasOnlySimpleRoots p then do
-          let isolations ← isolate? p hsimple (separationDepth p : Int)
+          let isolations ← ZPoly.isolateComplexRoots? p hsimple (separationDepth p : Int)
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
           let candidates := refined.toList.map fun rep : RefinedIsolation p =>
             ({ p

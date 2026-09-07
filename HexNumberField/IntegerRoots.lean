@@ -115,7 +115,7 @@ def algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber) :=
       if hpos : 0 < q.leadingCoeff then
         if hdeg : 0 < q.natDegree then
           if hsimple : HasOnlySimpleRoots q then do
-            let isolations ← isolate? q hsimple (separationDepth q : Int)
+            let isolations ← ZPoly.isolateComplexRoots? q hsimple (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let roots ← refined.mapM fun rep =>
               (AlgebraicRoot.ofRefined q hprim hpos hdeg hsimple rep).exact?

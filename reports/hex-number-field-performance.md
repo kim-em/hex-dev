@@ -73,7 +73,7 @@ from `CIsolate` in its bounded-precision front end with exact-dyadic fallback,
 speculative Newton acceptance, dual certificate routes, and conservative
 global completeness depth. No proof transfers BSSY's amortised complexity
 analysis across those changes. Profiling does show that this unmatched phase
-dominates: `isolate` accounts for 91.87% of the profiled algebraic-roots
+dominates: `ZPoly.isolateComplexRoots?` accounts for 91.87% of the profiled algebraic-roots
 process, 92% of the lazy-addition process, and 85.01% of the repaired
 fixed-field-roots process; the latter spends 92.94% of the profiled process in
 the enclosing `componentRoots?` phase.
@@ -99,7 +99,7 @@ The per-library SPEC retains the HexRoots isolation ceiling as its worst-case
 contract; changing the benchmark mode does not weaken that contract.
 
 The compiled `isolation-stats` command reproduces the input characterisation.
-`isolation target` is the exact `separationDepth` passed to `isolate`, not the
+`isolation target` is the exact `separationDepth` passed to `ZPoly.isolateComplexRoots?`, not the
 adaptive working precision eventually reached by the isolator:
 
 | family | fixture parameter | degree after `squareFreeCore` | `coeffAbsMax` | `ceilLog2 coeffAbsMax` | isolation target |
@@ -1244,14 +1244,14 @@ fail mode 1 and reopen the finding. The raw local profile is
 | share | function |
 |---:|---|
 | 92.11% | `Hex.AlgebraicRoot.ofEliminant?` |
-| 92.11% | `Hex.isolate?` / `isolateLoop` |
+| 92.11% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 86.32% | `Hex.Component.refineAll` / `IsolationLoop.next` |
 | 84.83% | `Hex.taylor` |
 
 The former parametric `runLazyAddLadder` derivation correctly identified
 isolation at separation depth as dominant, although its scaling model was not
 supported. Eliminant construction is the 5.754 us `runAddEliminant` fixed case
-against a 46 s call, and 92% of the call is inside `isolate`. The replacement
+against a 46 s call, and 92% of the call is inside `ZPoly.isolateComplexRoots?`. The replacement
 fixed registration keeps this phase covered without making an asymptotic claim.
 
 ### `exactification-selection` — certification, not factorization evidence
@@ -1260,7 +1260,7 @@ fixed registration keeps this phase covered without making an asymptotic claim.
 |---:|---|
 | 95.63% | `Hex.AlgebraicRoot.exact?` |
 | 95.58% | `Hex.AlgebraicRoot.exactFactor?` |
-| 95.28% | `Hex.isolate?` / `isolateLoop` |
+| 95.28% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 47.39% | `Hex.AlgebraicNumber.canonicalRep?` / `ofNormalized?` |
 
 The former `runExactLadder` declared the classical BHKS factorization bound
@@ -1277,7 +1277,7 @@ the declared envelope over-predicts by `n^4.14`. This family is now the fixed
 | share | function |
 |---:|---|
 | 83.01% | `Hex.AlgebraicRoot.exactFactor?` |
-| 77.19% | `Hex.isolate?` / `isolateLoop` |
+| 77.19% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 38.53% | `Hex.AlgebraicNumber.canonicalRep?` |
 | **18.04%** | `Hex.ZPoly.factorize` |
 
@@ -1292,7 +1292,7 @@ BHKS factorization bound cannot support mode 2 for this end-to-end family.
 | share | `runExactFactorLadder` | `runCanonicalRepLadder` |
 |---:|---:|---:|
 | registered operation | 95.77% | 96.27% |
-| `Hex.isolate?` / `isolateLoop` | 95.46% | 96.27% |
+| `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` | 95.46% | 96.27% |
 | `Hex.Component.refineAll` | 87.10% | 87.88% |
 | `Hex.exactRootFree` | 84.34% | 85.20% |
 | `Hex.taylor` | 77.35% | 78.18% |
@@ -1339,7 +1339,7 @@ this ladder's slower-than-declared verdict.
 
 | share | function |
 |---:|---|
-| 91.87% | `Hex.isolate?` / `isolateLoop` |
+| 91.87% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 91.45% | `Hex.QAdjoin.roots?` |
 | 91.45% | `Hex.QAdjoin.Roots.componentRoots?` |
 | 82.90% | `Hex.taylor` |
@@ -1362,7 +1362,7 @@ resultants even though neither entered the dominant inclusive ranking.
 |---:|---|
 | 92.96% | `Hex.QAdjoin.roots?` |
 | 92.94% | `Hex.QAdjoin.Roots.componentRoots?` |
-| 85.01% | `Hex.isolate?` / `isolateLoop` |
+| 85.01% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 78.37% | `Hex.taylor` |
 | 7.52% | `Hex.retainZero?` |
 | 7.43% | `Hex.QAdjoin.Roots.evalBall?` |

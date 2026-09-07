@@ -47,7 +47,7 @@ the correctness.
 
 The per-node cost is one Möbius transform (`O(n²)` integer operations via
 Taylor shift) versus the Sturm engine's full chain evaluation, which is why
-this engine runs first in `ZPoly.isolate?`. The deferred companion theorem
+this engine runs first in `ZPoly.isolateRealRoots?`. The deferred companion theorem
 `isolateDescartes?_isSome` (the Obreshkoff two-circle theorem;
 Krandick–Mehlhorn 2006) says none of the `none` outcomes happen for
 square-free input at this depth budget — in particular a non-real conjugate
@@ -143,7 +143,7 @@ with `ZPoly.rootCount p`. The deferred companion theorem `isolateDescartes?_isSo
 input at this budget, so the driver's completeness — established through the
 Sturm engine — never waits on it. The per-node cost is one `O(n²)` Möbius
 transform against the Sturm engine's full chain evaluation, which is why this
-engine runs first in `ZPoly.isolate?`. -/
+engine runs first in `ZPoly.isolateRealRoots?`. -/
 def ZPoly.isolateDescartes? (p : ZPoly) : Option (RealRootIsolations p) :=
   match p.degree? with
   | none => none

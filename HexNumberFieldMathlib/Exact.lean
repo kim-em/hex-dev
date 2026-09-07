@@ -44,23 +44,23 @@ theorem ofNormalized?_isSome
       intro hp
       rw [hp] at pos_degree
       simp at pos_degree
-    have hisolate := HexRootsMathlib.isolate?_isSome p squarefree hpne
+    have hisolate := HexRootsMathlib.isolateComplexRoots?_isSome p squarefree hpne
       (separationDepth p : Int) .nkThenPellet
-    cases hrun : isolate? p squarefree (separationDepth p : Int) with
+    cases hrun : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) with
     | none => simp [hrun] at hisolate
     | some isolations =>
         have hmapSome := HexRootsMathlib.array_mapM_isSome
           (xs := isolations) (f := DyadicRootIsolation.toRefined?)
           (fun iso hiso => by
             unfold DyadicRootIsolation.toRefined?
-            rw [dite_eq_left (HexRootsMathlib.isolate?_refined p squarefree
+            rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined p squarefree
               (separationDepth p : Int) .nkThenPellet hrun iso hiso)]
             rfl)
         cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
         | none => simp [hmap] at hmapSome
         | some refined =>
             obtain ⟨iso, hiso, hisoRoot⟩ :=
-              HexRootsMathlib.isolate?_root_mem_of_pos p squarefree
+              HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos p squarefree
                 (separationDepth p : Int) .nkThenPellet pos_degree hrun
                 (HexRootsMathlib.RefinedIsolation.isRoot rep)
             obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
@@ -176,16 +176,16 @@ theorem exactFactor?_isSome (a : AlgebraicRoot) (q : ZPoly)
     intro hq
     rw [hq] at hdegree
     simp at hdegree
-  have hisolate := HexRootsMathlib.isolate?_isSome q hsimple hqne
+  have hisolate := HexRootsMathlib.isolateComplexRoots?_isSome q hsimple hqne
     (separationDepth q : Int) .nkThenPellet
-  cases hrun : isolate? q hsimple (separationDepth q : Int) with
+  cases hrun : ZPoly.isolateComplexRoots? q hsimple (separationDepth q : Int) with
   | none => simp [hrun] at hisolate
   | some isolations =>
       have hmapSome := HexRootsMathlib.array_mapM_isSome
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dite_eq_left (HexRootsMathlib.isolate?_refined q hsimple
+          rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined q hsimple
             (separationDepth q : Int) .nkThenPellet hrun iso hiso)]
           rfl)
       cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
@@ -208,7 +208,7 @@ theorem exactFactor?_isSome (a : AlgebraicRoot) (q : ZPoly)
           | none => simp [hrefine] at hrefineSome
           | some comparable =>
               obtain ⟨iso, hiso, hisoRoot⟩ :=
-                HexRootsMathlib.isolate?_root_mem_of_pos q hsimple
+                HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos q hsimple
                   (separationDepth q : Int) .nkThenPellet hdegree hrun hroot
               obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
               have hi : i < isolations.size := by simpa using hiList
@@ -1231,16 +1231,16 @@ theorem toAlgebraicNumber?_isSome [ZPoly.CheckedIrreducible p]
         intro hzero
         rw [hzero] at hdegree
         simp at hdegree
-      have hisolate := HexRootsMathlib.isolate?_isSome q hsimple hqne
+      have hisolate := HexRootsMathlib.isolateComplexRoots?_isSome q hsimple hqne
         (separationDepth q : Int) .nkThenPellet
-      cases hrun : isolate? q hsimple (separationDepth q : Int) with
+      cases hrun : ZPoly.isolateComplexRoots? q hsimple (separationDepth q : Int) with
       | none => simp [hrun] at hisolate
       | some isolations =>
           have hmapSome := HexRootsMathlib.array_mapM_isSome
             (xs := isolations) (f := DyadicRootIsolation.toRefined?)
             (fun iso hiso => by
               unfold DyadicRootIsolation.toRefined?
-              rw [dite_eq_left (HexRootsMathlib.isolate?_refined q hsimple
+              rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined q hsimple
                 (separationDepth q : Int) .nkThenPellet hrun iso hiso)]
               rfl)
           cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
@@ -1262,7 +1262,7 @@ theorem toAlgebraicNumber?_isSome [ZPoly.CheckedIrreducible p]
                   Polynomial.eval_map]
                 exact hrootRat
               obtain ⟨iso, hiso, hisoRoot⟩ :=
-                HexRootsMathlib.isolate?_root_mem_of_pos q hsimple
+                HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos q hsimple
                   (separationDepth q : Int) .nkThenPellet hdegree hrun hroot
               obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
               have hi : i < isolations.size := by simpa using hiList
