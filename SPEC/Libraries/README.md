@@ -98,7 +98,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
-- **hex-lattice-enum-mathlib** (planned): integer-span and Euclidean-distance correspondence, packing radius and kissing number
+- **hex-lattice-enum-mathlib** (planned): preparation, search and certificate correctness proofs, integer-span and Euclidean-distance correspondence, packing radius and kissing number
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
@@ -261,8 +261,9 @@ family.
 
 `hex-lattice-enum` adds exact shortest- and closest-vector search to the
 integer lattice APIs. It uses `hex-lll` only for optional preprocessing and
-`hex-gram-schmidt` for exact branch bounds. The Mathlib companion preserves
-the integer span when interpreting the results in Euclidean space.
+`hex-gram-schmidt` for exact branch bounds. The Mathlib companion proves
+preparation validity, complete search and certificate correctness, and interprets
+the results through the integer span in Euclidean space.
 
 The integer normal forms within it:
 
@@ -623,7 +624,7 @@ hex-berlekamp-zassenhaus ┘
 ## Index
 
 - [hex-lattice-enum](hex-lattice-enum.md): exact lattice enumeration, shortest and closest vectors, completeness certificates and geometric consequences
-- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): integer-span and Euclidean-distance correspondence
+- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): correctness proofs for preparation, search and certificates, and integer-span and Euclidean-distance correspondence
 
 Libraries marked **(released)** are published as standalone
 repositories; see
