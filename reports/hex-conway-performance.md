@@ -85,8 +85,8 @@ certificate module alone takes 28–35 seconds, while primitivity takes
 82–102 seconds. The earlier report's approximately 31 seconds was therefore
 not a measurement of the full library. `optimized-38` measures intermediate
 binary replay before full sharding. `candidate-90` matches the Lean sources
-at `cb9da4fa5`. The first wide scopes use binary replay and four proof chains;
-`wide-700` matches `684f0d1ac`. `shared-700` additionally shares Pocklington
+at `c38650d96`. The first wide scopes use binary replay and four proof chains;
+`wide-700` matches `1a1910190`. `shared-700` additionally shares Pocklington
 child proofs. Historical dirty measurements identify measured files by SHA-256;
 the `commit` field alone is not a claim that all measured sources were committed
 at that revision. Reproduction of an intermediate variant requires its stated
@@ -121,6 +121,22 @@ Every completed run produces 180.95 MiB of Conway outputs. Peak sampled
 process-tree RSS is 10.81, 10.51 and 10.31 GiB. The module sums exceed wall
 time because the four chains run concurrently. The raw JSON retains each
 individual shard's timing and artifact totals by suffix.
+
+### Marginal accepted binary depth
+
+A [38-entry control with the final checkers](conway/control-38-shared.json)
+takes 18.369, 18.789, 18.169 seconds. Adding only `(2,16)` gives the
+[39-entry divisor-closed scope](conway/binary16-closure.json), taking
+32.778, 32.496, 32.503 seconds. Its proper divisors 1, 2, 4 and 8 are already
+present, so the marginal addition includes **one entry and four compatibility
+proofs** (56 total), as well as its table, API, irreducibility and primitivity
+outputs. The median wall-time difference is
+14.134 seconds.
+The 39-entry outputs occupy 14.71 MiB,
+with peak process-tree RSS 8.14 GiB.
+This is an entire clean-scope comparison, not timing a theorem with its
+supporting outputs cached. The original 594-entry scope is regenerated after
+these marginal probes.
 
 ### Expensive and unavailable candidates
 
@@ -313,6 +329,9 @@ have five successful trials (2970 observations); the fit is consistent with
 succeeds, all expected hashes match, and no operation ceiling is exceeded.
 The implementation and ceilings are identical to the earlier runs; the runtime
 thread count and CPU affinity are explicit measurement controls.
+[Source and binary identities](conway/scientific-594.json) link the dirty
+pre-rebase run to the matching committed sources. Rebuilding after rebase and
+restoring the accepted scope produces identical benchmark and replay binaries.
 
 ```sh
 LEAN_NUM_THREADS=1 HEXCONWAY_ENFORCE_BUDGETS=1 taskset -c 21 \

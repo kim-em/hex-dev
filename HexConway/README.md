@@ -86,7 +86,9 @@ example : DensePoly.Monic f := conwayPoly_monic 3 4 supportedEntry_3_4
   dependencies; `--check` verifies committed output. Ordinary builds neither
   fetch source data nor search for certificates or factorizations.
 - `rebuild_luebeckConwayPolynomial?` and `#conway_entry_source` remain available
-  as Lean commands for inspecting coefficient and Tier 1 generation.
+  as Lean commands for inspecting coefficient and Tier 1 generation. Their
+  default input path is relative to the `hex-dev` root; in a mirror checkout,
+  supply a cache path with `from`.
 
 # Verification
 

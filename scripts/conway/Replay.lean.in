@@ -45,4 +45,3 @@ private def measureEntry (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     ("primitivity_ns", toJson (primitive - irreducible)),
     ("compatibility_ns", toJson (compatible - primitive)),
     ("compatibility_obligations", toJson divisors.length)]
-

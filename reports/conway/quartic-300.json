@@ -3492,5 +3492,6 @@
     "HexConway/Transport/S3_8.lean": "4a69e111c80137724739d8ddbb6afb87022e0c71ca700ec43ab1a1aeddcd45bd",
     "HexConway/Transport/S3_9.lean": "2cb1b6f4a6710bf0715066de2b2f27f9d5a312e20797b6c63b39d9d7c47f2955",
     "HexConway.lean": "6763a7dac5656ceee78370230a7f861023d638643068398f8b0bf138fe74755f"
-  }
+  },
+  "matching_sources_commit": "6651c9fe1d450437c7a57ffaf9dfd77f76127696"
 }

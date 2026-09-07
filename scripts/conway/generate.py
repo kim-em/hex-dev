@@ -593,7 +593,7 @@ def main():
     )
     companions(entries)
     embeddings(entries)
-    runtime = (HERE / "Replay.lean.in").read_text()
+    runtime = (HERE / "Replay.lean.in").read_text().rstrip() + "\n\n"
     for i, (p, n, c) in enumerate(entries):
         if i % 24 == 0:
             runtime += f"\nprivate def run{i//24} : IO Unit := do\n"

@@ -2733,5 +2733,6 @@
     "HexGFqMathlib/PrimitivityCore.lean": "73ed5ac8948c4992dc4d2a4e6f0bf2288e8a5a9bee976634cd4043792fea80f0",
     "HexGFqMathlib/Subfield.lean": "90d8c1a7e1b380cebdc1aa47a03900e4da4e2f488bdbd59a6cddf71f833ac6d7",
     "HexGFqMathlib.lean": "f09a8519b4556fa2c1e009c9cef338ba5de973eabf585b253982d6f1927c455b"
-  }
+  },
+  "matching_sources_commit": "6651c9fe1d450437c7a57ffaf9dfd77f76127696"
 }
