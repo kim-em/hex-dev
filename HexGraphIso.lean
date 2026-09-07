@@ -129,8 +129,9 @@ concept: `Search` is the executable transcription, `Spec` the
 declarative canonical form, `Cert` the certificates and the trusted
 `checkCanon` replay, `Correct` the induction identifying the two, and
 `Invariant`, `Equitable`, `SmallCell` and `Model` the supporting
-theories. It is exported so proofs can cite it, not because callers are
-expected to reach into it.
+theories. The umbrella exports the canonicalization theory for proofs
+that need it. Generation exposes its public contracts and small witness
+types, keeping the larger implementation behind private imports.
 
 `Hex.GraphIso.Kernel` holds the obligations `graph_iso` hands to the
 kernel: `Kernel.checkIso` for a transporter, `Kernel.checkKey` for a

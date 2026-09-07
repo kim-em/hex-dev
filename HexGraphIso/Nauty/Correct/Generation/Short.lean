@@ -32,26 +32,25 @@ theorem process_short {ctx : Ctx n} {level numcells : Nat} {st : SearchSt n}
     split at hshort
     · exact ‹level ≠ st.noncheaplevel ∧ _›.2
     · contradiction
-  · by_cases hnc : ¬((numcells == n) = true)
+  · by_cases hnc : (numcells == n) = true
+    · by_cases hgate :
+        (st.eqlevFirst == level && st.firstcode[level + 1]! == codeSentinel) = true
+      all_goals by_cases hcomp : (st.compCanon == 0) = true
+      all_goals by_cases hdepth : level < st.canonlevel
+      all_goals
+        unfold processnode at hshort ⊢
+        simp only [hg, hnc, hgate, hcomp, hdepth, ↓reduceIte, bind, pure, Id.run] at hshort ⊢
+        simp only [apply_ite (fun x : Int × SearchSt n => x.1),
+          apply_ite (fun x : Int × SearchSt n => x.2.needshortprune),
+          pushAuto_needshortprune, pushAuto_gcaFirst, pushAuto_gcaCanon,
+          pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_eqlevCanon,
+          Bool.false_eq_true, false_and, true_and, ↓reduceIte] at hshort ⊢
+        simp_all (config := { maxSteps := 1000000 })
+        repeat' (first | split at hshort | split) <;> simp_all
+        all_goals repeat' (first | split at hshort | split) <;> simp_all
+        all_goals omega
     · rw [processnode_internal hg hnc, hclear] at hshort
       contradiction
-    have hnc : (numcells == n) = true := by simpa using hnc
-    by_cases hgate :
-      (st.eqlevFirst == level && st.firstcode[level + 1]! == codeSentinel) = true
-    all_goals by_cases hcomp : (st.compCanon == 0) = true
-    all_goals by_cases hdepth : level < st.canonlevel
-    all_goals
-      unfold processnode at hshort ⊢
-      simp only [hg, hnc, hgate, hcomp, hdepth, ↓reduceIte, bind, pure, Id.run] at hshort ⊢
-      simp only [apply_ite (fun x : Int × SearchSt n => x.1),
-        apply_ite (fun x : Int × SearchSt n => x.2.needshortprune),
-        pushAuto_needshortprune, pushAuto_gcaFirst, pushAuto_gcaCanon,
-        pushAuto_noncheaplevel, pushAuto_allsamelevel, pushAuto_eqlevCanon,
-        Bool.false_eq_true, false_and, true_and, ↓reduceIte] at hshort ⊢
-      simp_all (config := { maxSteps := 1000000 })
-      repeat' (first | split at hshort | split) <;> simp_all
-      all_goals repeat' (first | split at hshort | split) <;> simp_all
-      all_goals omega
 
 end Generation
 

@@ -144,9 +144,10 @@ bookkeeping is stated on. -/
   (trace G).filterMap fun γ => (autom? G γ).map fun p => (γ, p)
 
 /-- The generators: the recorded traversal automorphisms that pass the
-check, in discovery order. `Aut.trace_admitted` proves that every recorded
-entry passes. Completeness uses the whole trace, including redundant
-code-2 entries; removing them would need a further generation proof. -/
+check, in discovery order. `Aut.trace_admitted` in `HexGraphIso.AutTrace`
+proves that every recorded entry passes. Completeness uses the whole
+trace, including redundant code-2 entries; removing them would need a
+further generation proof. -/
 @[expose] def gens (G : Colored n k) : List (Perm n) :=
   (checked G).map (·.2)
 
@@ -357,8 +358,9 @@ structure AutResult (n : Nat) where
 vertex orbits, the orbit count and the orbit-stabilizer product for the
 group order. Every returned permutation is an automorphism
 (`autos_isIso`). Vertices sharing an orbit representative are in one
-orbit (`autos_sameOrbit`), and `autos_complete` proves that the list
-generates the full group. The Mathlib bridge proves exact cardinality
+orbit (`autos_sameOrbit_of_eq`). `HexGraphIso.AutComplete` supplies the
+biconditional `autos_sameOrbit` and proves in `autos_complete` that the
+list generates the full group. The Mathlib bridge proves exact cardinality
 theorems for the orbit count and order.
 Computing the order runs one traversal per base point, so a
 caller who wants only the generators or the orbits should take
