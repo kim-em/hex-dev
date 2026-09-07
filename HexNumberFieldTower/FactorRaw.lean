@@ -245,8 +245,9 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
       if Norm.isSquarefree (level :: lower) f then
         let (shift, norm) ← Norm.findSquarefreeShift level lower f
         let lowerFactors ← factorSquarefree? lower norm
-        let factors := recover level lower shift f lowerFactors
         let p := Norm.monic (rawPoly (level :: lower) f)
+        let factors := if lowerFactors.size = 1 then #[polyCoords p]
+          else recover level lower shift f lowerFactors
         let product := factors.foldl
           (fun product factor => product * rawPoly (level :: lower) factor)
           1

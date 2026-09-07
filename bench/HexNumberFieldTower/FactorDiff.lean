@@ -1,8 +1,24 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
 module
 
 public import HexNumberFieldTower.FactorRaw
 
 public section
+
+/-!
+# Exact differential checks for tower factorization experiments
+
+The reference namespaces below freeze the computational norm and factorization
+definitions from `af7b4d49f661a23debf82960bfff3c78435ff135`. Keep them independent
+of the candidate's norm, recovery dispatch, and checker. This untimed local
+driver compares complete coordinate arrays and certificate acceptance; it is
+not a lean-bench registration or a source of performance measurements.
+-/
 namespace Hex.NumberTower
 
 namespace ReferenceNorm
