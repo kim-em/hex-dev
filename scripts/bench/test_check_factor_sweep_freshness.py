@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from scripts.bench import check_factor_sweep_freshness as guard
+from scripts.bench import sweep_freshness as freshness
 
 
 BASE = """\
@@ -21,6 +22,8 @@ require "leanprover-community" / "batteries" @ git "main"
 lean_lib HexPoly where
   srcDir := "."
 
+private def hexArithOTarget := "cc"
+
 lean_exe hexbz_factor_service where
   srcDir := "bench"
   root := `HexBench.FactorService
@@ -29,21 +32,22 @@ lean_exe hexbz_factor_service where
 
 class LakefileBlocks(unittest.TestCase):
     def test_splits_top_level_declarations(self):
-        blocks = guard.lakefile_blocks(BASE)
+        blocks = freshness.lakefile_blocks(BASE)
         self.assertIn("package hex", blocks)
         self.assertIn("lean_lib HexPoly", blocks)
+        self.assertIn("def hexArithOTarget", blocks)
         self.assertIn("lean_exe hexbz_factor_service", blocks)
         self.assertIn('require "leanprover-community"', blocks)
 
     def test_indented_body_stays_with_its_declaration(self):
-        blocks = guard.lakefile_blocks(BASE)
+        blocks = freshness.lakefile_blocks(BASE)
         self.assertIn('root := `HexBench.FactorService',
                       blocks["lean_exe hexbz_factor_service"])
         self.assertNotIn("srcDir", blocks["package hex"])
 
     def test_leading_comment_attaches_to_the_following_declaration(self):
         text = BASE + '\n-- a note\nlean_lib HexNew where\n  srcDir := "."\n'
-        blocks = guard.lakefile_blocks(text)
+        blocks = freshness.lakefile_blocks(text)
         self.assertIn("-- a note", blocks["lean_lib HexNew"])
 
 
@@ -89,6 +93,11 @@ class LakefileAffectsRuntime(unittest.TestCase):
     def test_editing_a_factorization_library_is_a_runtime_change(self):
         after = BASE.replace('lean_lib HexPoly where\n  srcDir := "."',
                              'lean_lib HexPoly where\n  srcDir := "src"')
+        self.assertTrue(guard.lakefile_texts_differ(BASE, after))
+
+    def test_editing_a_factorization_build_helper_is_a_runtime_change(self):
+        after = BASE.replace('hexArithOTarget := "cc"',
+                             'hexArithOTarget := "clang"')
         self.assertTrue(guard.lakefile_texts_differ(BASE, after))
 
 

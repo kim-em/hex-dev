@@ -18,13 +18,11 @@ build configuration and Lean toolchain. Vendor prose is excluded; C
 sources and headers are tracked. The set and the shared mechanism are
 declared in ``scripts/bench/sweep_freshness.py``.
 
-The family declares no exemption channel, so any difference has to be
-re-measured, with one exception the check verifies for itself: a ``.lean``
-path whose two blobs are equal once their comments are removed
-(``lean_comment_only``). Prose under the library tree is edited often
-enough, and cannot move a curve, that making every docstring cost a sweep
-would either stop the prose being written or make regeneration routine
-enough to stop meaning anything.
+The family declares no exemption channel, so any runtime-relevant difference
+has to be re-measured. The check itself verifies two exceptions: a ``.lean``
+path whose two blobs are equal once their comments are removed, and a lakefile
+edit outside the declarations that build the cactus executable. Neither relies
+on a persistent assertion that can go stale.
 """
 
 from __future__ import annotations
@@ -42,6 +40,56 @@ FAMILY = freshness.GRAPHISO
 RESULTS = freshness.RESULTS
 
 SWEEP_RE = re.compile(r"^hexgraphiso-cactus-([0-9a-f]{12})-[^.]+\.jsonl$")
+LAKEFILE = "lakefile.lean"
+
+GRAPHISO_LIBRARIES = {"Hex", "HexBasic", "HexGraph", "HexGraphIso"}
+GRAPHISO_EXECUTABLE = "hexgraphiso_cactus"
+GRAPHISO_EXTERN_LIBRARY = "hexnautyffi"
+GRAPHISO_BUILD_DEFS = {"nautyVendorOTarget", "nautyCanonOTarget"}
+
+
+def graphiso_blocks(text: str) -> dict[str, str]:
+    """The lakefile declarations that can affect the cactus executable."""
+    relevant = {}
+    for name, body in freshness.lakefile_blocks(text).items():
+        kind, _, declaration = name.partition(" ")
+        if kind in ("package", "require"):
+            relevant[name] = body
+        elif kind == "lean_lib" and declaration in GRAPHISO_LIBRARIES:
+            relevant[name] = body
+        elif kind == "lean_exe" and declaration == GRAPHISO_EXECUTABLE:
+            relevant[name] = body
+        elif kind == "extern_lib" and declaration == GRAPHISO_EXTERN_LIBRARY:
+            relevant[name] = body
+        elif kind == "def" and declaration in GRAPHISO_BUILD_DEFS:
+            relevant[name] = body
+    return relevant
+
+
+def lakefile_texts_differ(before: str, after: str) -> bool:
+    """Whether a lakefile edit changes the cactus executable's build."""
+    old_blocks = graphiso_blocks(before)
+    new_blocks = graphiso_blocks(after)
+    if set(old_blocks) != set(new_blocks):
+        return True
+    return any(new_blocks[name] != body for name, body in old_blocks.items())
+
+
+def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
+    """A lakefile transition outside the cactus executable's build graph."""
+    if difference.path != LAKEFILE:
+        return False
+    if difference.baseline is None or difference.current is None:
+        return False
+    return not lakefile_texts_differ(
+        freshness.blob_text(difference.baseline),
+        freshness.blob_text(difference.current))
+
+
+def runtime_neutral_edit(difference: freshness.Difference) -> bool:
+    """A source edit mechanically known not to change either cactus curve."""
+    return (freshness.lean_comment_only(difference)
+            or build_only_lakefile_edit(difference))
 
 
 def observations() -> tuple[list[freshness.Observation], list[str]]:
@@ -71,8 +119,7 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
 
 def main() -> int:
     found, errors = observations()
-    verdict = freshness.assess(FAMILY, found,
-                               allow=freshness.lean_comment_only)
+    verdict = freshness.assess(FAMILY, found, allow=runtime_neutral_edit)
     errors.extend(verdict.errors)
     errors.extend(freshness.missing_figures(FAMILY))
 

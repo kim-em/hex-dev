@@ -112,13 +112,13 @@ def current_sweep() -> Path:
     A sweep recorded at the current fingerprint wins. Otherwise the same
     verdict as `check_graphiso_sweep_freshness.py` applies: when the
     source differs from the newest recorded sweep only in paths the
-    freshness check exempts (a `.lean` file whose comments alone changed),
-    that sweep still measures this source and the fit reads it.
+    freshness check verifies as runtime-neutral, that sweep still measures
+    this source and the fit reads it.
     """
     from scripts.bench import check_graphiso_sweep_freshness as check
     found, errors = check.observations()
-    verdict = freshness.assess(freshness.GRAPHISO, found,
-                               allow=freshness.lean_comment_only)
+    verdict = freshness.assess(
+        freshness.GRAPHISO, found, allow=check.runtime_neutral_edit)
     covering = verdict.matched or (verdict.baseline if verdict.fresh else None)
     if errors or covering is None:
         sys.exit(f"no recorded sweep covers the current source "

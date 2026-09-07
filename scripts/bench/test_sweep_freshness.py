@@ -11,6 +11,7 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
+from scripts.bench import check_graphiso_sweep_freshness as graphiso_guard
 from scripts.bench import sweep_freshness as freshness
 
 
@@ -49,6 +50,51 @@ class EntryMatching(unittest.TestCase):
         self.assertEqual(FAMILY.staging_pathspec(), [
             "Lib/", "Other/*.lean", "one/file.txt",
             ":!Lib/SPEC", ":!Lib/README.md"])
+
+
+class GraphIsoLakefile(unittest.TestCase):
+    BASE = """\
+import Lake
+open Lake DSL
+
+package hex where
+  leanOptions := #[]
+
+require "leanprover-community" / "batteries" @ git "main"
+
+lean_lib Hex where
+
+lean_lib HexBasic where
+
+lean_lib HexGraph where
+
+lean_lib HexGraphIso where
+
+private def nautyVendorOTarget (pkg : Package) := pkg.dir
+
+extern_lib hexnautyffi (pkg) := do
+  pure (pkg.dir, #[])
+
+lean_exe hexgraphiso_cactus where
+  srcDir := "bench"
+  root := `HexGraphIso.Cactus
+"""
+
+    def test_unrelated_target_does_not_change_cactus_build(self):
+        after = self.BASE + "\nlean_lib HexInterval where\n"
+        self.assertFalse(
+            graphiso_guard.lakefile_texts_differ(self.BASE, after))
+
+    def test_cactus_executable_change_is_relevant(self):
+        after = self.BASE.replace("HexGraphIso.Cactus", "HexGraphIso.CactusV2")
+        self.assertTrue(
+            graphiso_guard.lakefile_texts_differ(self.BASE, after))
+
+    def test_nauty_build_helper_change_is_relevant(self):
+        after = self.BASE.replace(
+            "pkg.dir\n\nextern_lib", "pkg.buildDir\n\nextern_lib")
+        self.assertTrue(
+            graphiso_guard.lakefile_texts_differ(self.BASE, after))
 
 
 class Differences(unittest.TestCase):
