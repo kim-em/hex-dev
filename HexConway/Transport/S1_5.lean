@@ -159,12 +159,19 @@ theorem ofCoeffs_307_3_monic :
   rw [heq]
   exact luebeckConwayPolynomial_307_3_monic
 
-theorem ofCoeffs_311_2_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 311 [17, 310, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_311_2
-  change luebeckConwayPolynomialOfCoeffs 311 [17, 310, 1] = luebeckConwayPolynomial_311_2 at heq
+theorem ofCoeffs_311_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 311 [294, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_311_1
+  change luebeckConwayPolynomialOfCoeffs 311 [294, 1] = luebeckConwayPolynomial_311_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_311_2_monic
+  exact luebeckConwayPolynomial_311_1_monic
+
+theorem ofCoeffs_311_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 311 [294, 3, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_311_3
+  change luebeckConwayPolynomialOfCoeffs 311 [294, 3, 0, 1] = luebeckConwayPolynomial_311_3 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_311_3_monic
 
 theorem ofCoeffs_313_1_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 313 [303, 1]) := by
@@ -179,13 +186,6 @@ theorem ofCoeffs_313_3_monic :
   change luebeckConwayPolynomialOfCoeffs 313 [303, 2, 0, 1] = luebeckConwayPolynomial_313_3 at heq
   rw [heq]
   exact luebeckConwayPolynomial_313_3_monic
-
-theorem ofCoeffs_317_2_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 317 [2, 313, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_317_2
-  change luebeckConwayPolynomialOfCoeffs 317 [2, 313, 1] = luebeckConwayPolynomial_317_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_317_2_monic
 
 
 end Conway

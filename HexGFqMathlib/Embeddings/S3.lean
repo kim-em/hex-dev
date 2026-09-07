@@ -12,6 +12,402 @@ public section
 
 namespace HexGFqMathlib.Conway
 
+/-- The canonical embedding of GF(419^1) into GF(419^4). -/
+noncomputable def embed_419_1_4 :
+    Hex.GFq 419 1 Hex.Conway.supportedEntry_419_1 →+*
+      Hex.GFq 419 4 Hex.Conway.supportedEntry_419_4 :=
+  conwayEmbed 419 1 4 _ _ Hex.Conway.compat_419_1_4
+
+/-- The canonical embedding of GF(419^2) into GF(419^4). -/
+noncomputable def embed_419_2_4 :
+    Hex.GFq 419 2 Hex.Conway.supportedEntry_419_2 →+*
+      Hex.GFq 419 4 Hex.Conway.supportedEntry_419_4 :=
+  conwayEmbed 419 2 4 _ _ Hex.Conway.compat_419_2_4
+
+/-- The canonical embedding of GF(421^1) into GF(421^2). -/
+noncomputable def embed_421_1_2 :
+    Hex.GFq 421 1 Hex.Conway.supportedEntry_421_1 →+*
+      Hex.GFq 421 2 Hex.Conway.supportedEntry_421_2 :=
+  conwayEmbed 421 1 2 _ _ Hex.Conway.compat_421_1_2
+
+/-- The canonical embedding of GF(421^1) into GF(421^3). -/
+noncomputable def embed_421_1_3 :
+    Hex.GFq 421 1 Hex.Conway.supportedEntry_421_1 →+*
+      Hex.GFq 421 3 Hex.Conway.supportedEntry_421_3 :=
+  conwayEmbed 421 1 3 _ _ Hex.Conway.compat_421_1_3
+
+/-- The canonical embedding of GF(421^1) into GF(421^4). -/
+noncomputable def embed_421_1_4 :
+    Hex.GFq 421 1 Hex.Conway.supportedEntry_421_1 →+*
+      Hex.GFq 421 4 Hex.Conway.supportedEntry_421_4 :=
+  conwayEmbed 421 1 4 _ _ Hex.Conway.compat_421_1_4
+
+/-- The canonical embedding of GF(421^2) into GF(421^4). -/
+noncomputable def embed_421_2_4 :
+    Hex.GFq 421 2 Hex.Conway.supportedEntry_421_2 →+*
+      Hex.GFq 421 4 Hex.Conway.supportedEntry_421_4 :=
+  conwayEmbed 421 2 4 _ _ Hex.Conway.compat_421_2_4
+
+/-- The canonical embedding of GF(431^1) into GF(431^2). -/
+noncomputable def embed_431_1_2 :
+    Hex.GFq 431 1 Hex.Conway.supportedEntry_431_1 →+*
+      Hex.GFq 431 2 Hex.Conway.supportedEntry_431_2 :=
+  conwayEmbed 431 1 2 _ _ Hex.Conway.compat_431_1_2
+
+/-- The canonical embedding of GF(431^1) into GF(431^3). -/
+noncomputable def embed_431_1_3 :
+    Hex.GFq 431 1 Hex.Conway.supportedEntry_431_1 →+*
+      Hex.GFq 431 3 Hex.Conway.supportedEntry_431_3 :=
+  conwayEmbed 431 1 3 _ _ Hex.Conway.compat_431_1_3
+
+/-- The canonical embedding of GF(431^1) into GF(431^4). -/
+noncomputable def embed_431_1_4 :
+    Hex.GFq 431 1 Hex.Conway.supportedEntry_431_1 →+*
+      Hex.GFq 431 4 Hex.Conway.supportedEntry_431_4 :=
+  conwayEmbed 431 1 4 _ _ Hex.Conway.compat_431_1_4
+
+/-- The canonical embedding of GF(431^2) into GF(431^4). -/
+noncomputable def embed_431_2_4 :
+    Hex.GFq 431 2 Hex.Conway.supportedEntry_431_2 →+*
+      Hex.GFq 431 4 Hex.Conway.supportedEntry_431_4 :=
+  conwayEmbed 431 2 4 _ _ Hex.Conway.compat_431_2_4
+
+/-- The canonical embedding of GF(433^1) into GF(433^2). -/
+noncomputable def embed_433_1_2 :
+    Hex.GFq 433 1 Hex.Conway.supportedEntry_433_1 →+*
+      Hex.GFq 433 2 Hex.Conway.supportedEntry_433_2 :=
+  conwayEmbed 433 1 2 _ _ Hex.Conway.compat_433_1_2
+
+/-- The canonical embedding of GF(433^1) into GF(433^3). -/
+noncomputable def embed_433_1_3 :
+    Hex.GFq 433 1 Hex.Conway.supportedEntry_433_1 →+*
+      Hex.GFq 433 3 Hex.Conway.supportedEntry_433_3 :=
+  conwayEmbed 433 1 3 _ _ Hex.Conway.compat_433_1_3
+
+/-- The canonical embedding of GF(433^1) into GF(433^4). -/
+noncomputable def embed_433_1_4 :
+    Hex.GFq 433 1 Hex.Conway.supportedEntry_433_1 →+*
+      Hex.GFq 433 4 Hex.Conway.supportedEntry_433_4 :=
+  conwayEmbed 433 1 4 _ _ Hex.Conway.compat_433_1_4
+
+/-- The canonical embedding of GF(433^2) into GF(433^4). -/
+noncomputable def embed_433_2_4 :
+    Hex.GFq 433 2 Hex.Conway.supportedEntry_433_2 →+*
+      Hex.GFq 433 4 Hex.Conway.supportedEntry_433_4 :=
+  conwayEmbed 433 2 4 _ _ Hex.Conway.compat_433_2_4
+
+/-- The canonical embedding of GF(439^1) into GF(439^2). -/
+noncomputable def embed_439_1_2 :
+    Hex.GFq 439 1 Hex.Conway.supportedEntry_439_1 →+*
+      Hex.GFq 439 2 Hex.Conway.supportedEntry_439_2 :=
+  conwayEmbed 439 1 2 _ _ Hex.Conway.compat_439_1_2
+
+/-- The canonical embedding of GF(439^1) into GF(439^3). -/
+noncomputable def embed_439_1_3 :
+    Hex.GFq 439 1 Hex.Conway.supportedEntry_439_1 →+*
+      Hex.GFq 439 3 Hex.Conway.supportedEntry_439_3 :=
+  conwayEmbed 439 1 3 _ _ Hex.Conway.compat_439_1_3
+
+/-- The canonical embedding of GF(439^1) into GF(439^4). -/
+noncomputable def embed_439_1_4 :
+    Hex.GFq 439 1 Hex.Conway.supportedEntry_439_1 →+*
+      Hex.GFq 439 4 Hex.Conway.supportedEntry_439_4 :=
+  conwayEmbed 439 1 4 _ _ Hex.Conway.compat_439_1_4
+
+/-- The canonical embedding of GF(439^2) into GF(439^4). -/
+noncomputable def embed_439_2_4 :
+    Hex.GFq 439 2 Hex.Conway.supportedEntry_439_2 →+*
+      Hex.GFq 439 4 Hex.Conway.supportedEntry_439_4 :=
+  conwayEmbed 439 2 4 _ _ Hex.Conway.compat_439_2_4
+
+/-- The canonical embedding of GF(443^1) into GF(443^2). -/
+noncomputable def embed_443_1_2 :
+    Hex.GFq 443 1 Hex.Conway.supportedEntry_443_1 →+*
+      Hex.GFq 443 2 Hex.Conway.supportedEntry_443_2 :=
+  conwayEmbed 443 1 2 _ _ Hex.Conway.compat_443_1_2
+
+/-- The canonical embedding of GF(443^1) into GF(443^3). -/
+noncomputable def embed_443_1_3 :
+    Hex.GFq 443 1 Hex.Conway.supportedEntry_443_1 →+*
+      Hex.GFq 443 3 Hex.Conway.supportedEntry_443_3 :=
+  conwayEmbed 443 1 3 _ _ Hex.Conway.compat_443_1_3
+
+/-- The canonical embedding of GF(443^1) into GF(443^4). -/
+noncomputable def embed_443_1_4 :
+    Hex.GFq 443 1 Hex.Conway.supportedEntry_443_1 →+*
+      Hex.GFq 443 4 Hex.Conway.supportedEntry_443_4 :=
+  conwayEmbed 443 1 4 _ _ Hex.Conway.compat_443_1_4
+
+/-- The canonical embedding of GF(443^2) into GF(443^4). -/
+noncomputable def embed_443_2_4 :
+    Hex.GFq 443 2 Hex.Conway.supportedEntry_443_2 →+*
+      Hex.GFq 443 4 Hex.Conway.supportedEntry_443_4 :=
+  conwayEmbed 443 2 4 _ _ Hex.Conway.compat_443_2_4
+
+/-- The canonical embedding of GF(449^1) into GF(449^2). -/
+noncomputable def embed_449_1_2 :
+    Hex.GFq 449 1 Hex.Conway.supportedEntry_449_1 →+*
+      Hex.GFq 449 2 Hex.Conway.supportedEntry_449_2 :=
+  conwayEmbed 449 1 2 _ _ Hex.Conway.compat_449_1_2
+
+/-- The canonical embedding of GF(449^1) into GF(449^3). -/
+noncomputable def embed_449_1_3 :
+    Hex.GFq 449 1 Hex.Conway.supportedEntry_449_1 →+*
+      Hex.GFq 449 3 Hex.Conway.supportedEntry_449_3 :=
+  conwayEmbed 449 1 3 _ _ Hex.Conway.compat_449_1_3
+
+/-- The canonical embedding of GF(449^1) into GF(449^4). -/
+noncomputable def embed_449_1_4 :
+    Hex.GFq 449 1 Hex.Conway.supportedEntry_449_1 →+*
+      Hex.GFq 449 4 Hex.Conway.supportedEntry_449_4 :=
+  conwayEmbed 449 1 4 _ _ Hex.Conway.compat_449_1_4
+
+/-- The canonical embedding of GF(449^2) into GF(449^4). -/
+noncomputable def embed_449_2_4 :
+    Hex.GFq 449 2 Hex.Conway.supportedEntry_449_2 →+*
+      Hex.GFq 449 4 Hex.Conway.supportedEntry_449_4 :=
+  conwayEmbed 449 2 4 _ _ Hex.Conway.compat_449_2_4
+
+/-- The canonical embedding of GF(457^1) into GF(457^2). -/
+noncomputable def embed_457_1_2 :
+    Hex.GFq 457 1 Hex.Conway.supportedEntry_457_1 →+*
+      Hex.GFq 457 2 Hex.Conway.supportedEntry_457_2 :=
+  conwayEmbed 457 1 2 _ _ Hex.Conway.compat_457_1_2
+
+/-- The canonical embedding of GF(457^1) into GF(457^3). -/
+noncomputable def embed_457_1_3 :
+    Hex.GFq 457 1 Hex.Conway.supportedEntry_457_1 →+*
+      Hex.GFq 457 3 Hex.Conway.supportedEntry_457_3 :=
+  conwayEmbed 457 1 3 _ _ Hex.Conway.compat_457_1_3
+
+/-- The canonical embedding of GF(457^1) into GF(457^4). -/
+noncomputable def embed_457_1_4 :
+    Hex.GFq 457 1 Hex.Conway.supportedEntry_457_1 →+*
+      Hex.GFq 457 4 Hex.Conway.supportedEntry_457_4 :=
+  conwayEmbed 457 1 4 _ _ Hex.Conway.compat_457_1_4
+
+/-- The canonical embedding of GF(457^2) into GF(457^4). -/
+noncomputable def embed_457_2_4 :
+    Hex.GFq 457 2 Hex.Conway.supportedEntry_457_2 →+*
+      Hex.GFq 457 4 Hex.Conway.supportedEntry_457_4 :=
+  conwayEmbed 457 2 4 _ _ Hex.Conway.compat_457_2_4
+
+/-- The canonical embedding of GF(461^1) into GF(461^2). -/
+noncomputable def embed_461_1_2 :
+    Hex.GFq 461 1 Hex.Conway.supportedEntry_461_1 →+*
+      Hex.GFq 461 2 Hex.Conway.supportedEntry_461_2 :=
+  conwayEmbed 461 1 2 _ _ Hex.Conway.compat_461_1_2
+
+/-- The canonical embedding of GF(461^1) into GF(461^3). -/
+noncomputable def embed_461_1_3 :
+    Hex.GFq 461 1 Hex.Conway.supportedEntry_461_1 →+*
+      Hex.GFq 461 3 Hex.Conway.supportedEntry_461_3 :=
+  conwayEmbed 461 1 3 _ _ Hex.Conway.compat_461_1_3
+
+/-- The canonical embedding of GF(461^1) into GF(461^4). -/
+noncomputable def embed_461_1_4 :
+    Hex.GFq 461 1 Hex.Conway.supportedEntry_461_1 →+*
+      Hex.GFq 461 4 Hex.Conway.supportedEntry_461_4 :=
+  conwayEmbed 461 1 4 _ _ Hex.Conway.compat_461_1_4
+
+/-- The canonical embedding of GF(461^2) into GF(461^4). -/
+noncomputable def embed_461_2_4 :
+    Hex.GFq 461 2 Hex.Conway.supportedEntry_461_2 →+*
+      Hex.GFq 461 4 Hex.Conway.supportedEntry_461_4 :=
+  conwayEmbed 461 2 4 _ _ Hex.Conway.compat_461_2_4
+
+/-- The canonical embedding of GF(463^1) into GF(463^2). -/
+noncomputable def embed_463_1_2 :
+    Hex.GFq 463 1 Hex.Conway.supportedEntry_463_1 →+*
+      Hex.GFq 463 2 Hex.Conway.supportedEntry_463_2 :=
+  conwayEmbed 463 1 2 _ _ Hex.Conway.compat_463_1_2
+
+/-- The canonical embedding of GF(463^1) into GF(463^3). -/
+noncomputable def embed_463_1_3 :
+    Hex.GFq 463 1 Hex.Conway.supportedEntry_463_1 →+*
+      Hex.GFq 463 3 Hex.Conway.supportedEntry_463_3 :=
+  conwayEmbed 463 1 3 _ _ Hex.Conway.compat_463_1_3
+
+/-- The canonical embedding of GF(463^1) into GF(463^4). -/
+noncomputable def embed_463_1_4 :
+    Hex.GFq 463 1 Hex.Conway.supportedEntry_463_1 →+*
+      Hex.GFq 463 4 Hex.Conway.supportedEntry_463_4 :=
+  conwayEmbed 463 1 4 _ _ Hex.Conway.compat_463_1_4
+
+/-- The canonical embedding of GF(463^2) into GF(463^4). -/
+noncomputable def embed_463_2_4 :
+    Hex.GFq 463 2 Hex.Conway.supportedEntry_463_2 →+*
+      Hex.GFq 463 4 Hex.Conway.supportedEntry_463_4 :=
+  conwayEmbed 463 2 4 _ _ Hex.Conway.compat_463_2_4
+
+/-- The canonical embedding of GF(467^1) into GF(467^2). -/
+noncomputable def embed_467_1_2 :
+    Hex.GFq 467 1 Hex.Conway.supportedEntry_467_1 →+*
+      Hex.GFq 467 2 Hex.Conway.supportedEntry_467_2 :=
+  conwayEmbed 467 1 2 _ _ Hex.Conway.compat_467_1_2
+
+/-- The canonical embedding of GF(467^1) into GF(467^3). -/
+noncomputable def embed_467_1_3 :
+    Hex.GFq 467 1 Hex.Conway.supportedEntry_467_1 →+*
+      Hex.GFq 467 3 Hex.Conway.supportedEntry_467_3 :=
+  conwayEmbed 467 1 3 _ _ Hex.Conway.compat_467_1_3
+
+/-- The canonical embedding of GF(467^1) into GF(467^4). -/
+noncomputable def embed_467_1_4 :
+    Hex.GFq 467 1 Hex.Conway.supportedEntry_467_1 →+*
+      Hex.GFq 467 4 Hex.Conway.supportedEntry_467_4 :=
+  conwayEmbed 467 1 4 _ _ Hex.Conway.compat_467_1_4
+
+/-- The canonical embedding of GF(467^2) into GF(467^4). -/
+noncomputable def embed_467_2_4 :
+    Hex.GFq 467 2 Hex.Conway.supportedEntry_467_2 →+*
+      Hex.GFq 467 4 Hex.Conway.supportedEntry_467_4 :=
+  conwayEmbed 467 2 4 _ _ Hex.Conway.compat_467_2_4
+
+/-- The canonical embedding of GF(479^1) into GF(479^2). -/
+noncomputable def embed_479_1_2 :
+    Hex.GFq 479 1 Hex.Conway.supportedEntry_479_1 →+*
+      Hex.GFq 479 2 Hex.Conway.supportedEntry_479_2 :=
+  conwayEmbed 479 1 2 _ _ Hex.Conway.compat_479_1_2
+
+/-- The canonical embedding of GF(479^1) into GF(479^3). -/
+noncomputable def embed_479_1_3 :
+    Hex.GFq 479 1 Hex.Conway.supportedEntry_479_1 →+*
+      Hex.GFq 479 3 Hex.Conway.supportedEntry_479_3 :=
+  conwayEmbed 479 1 3 _ _ Hex.Conway.compat_479_1_3
+
+/-- The canonical embedding of GF(479^1) into GF(479^4). -/
+noncomputable def embed_479_1_4 :
+    Hex.GFq 479 1 Hex.Conway.supportedEntry_479_1 →+*
+      Hex.GFq 479 4 Hex.Conway.supportedEntry_479_4 :=
+  conwayEmbed 479 1 4 _ _ Hex.Conway.compat_479_1_4
+
+/-- The canonical embedding of GF(479^2) into GF(479^4). -/
+noncomputable def embed_479_2_4 :
+    Hex.GFq 479 2 Hex.Conway.supportedEntry_479_2 →+*
+      Hex.GFq 479 4 Hex.Conway.supportedEntry_479_4 :=
+  conwayEmbed 479 2 4 _ _ Hex.Conway.compat_479_2_4
+
+/-- The canonical embedding of GF(487^1) into GF(487^2). -/
+noncomputable def embed_487_1_2 :
+    Hex.GFq 487 1 Hex.Conway.supportedEntry_487_1 →+*
+      Hex.GFq 487 2 Hex.Conway.supportedEntry_487_2 :=
+  conwayEmbed 487 1 2 _ _ Hex.Conway.compat_487_1_2
+
+/-- The canonical embedding of GF(487^1) into GF(487^3). -/
+noncomputable def embed_487_1_3 :
+    Hex.GFq 487 1 Hex.Conway.supportedEntry_487_1 →+*
+      Hex.GFq 487 3 Hex.Conway.supportedEntry_487_3 :=
+  conwayEmbed 487 1 3 _ _ Hex.Conway.compat_487_1_3
+
+/-- The canonical embedding of GF(487^1) into GF(487^4). -/
+noncomputable def embed_487_1_4 :
+    Hex.GFq 487 1 Hex.Conway.supportedEntry_487_1 →+*
+      Hex.GFq 487 4 Hex.Conway.supportedEntry_487_4 :=
+  conwayEmbed 487 1 4 _ _ Hex.Conway.compat_487_1_4
+
+/-- The canonical embedding of GF(487^2) into GF(487^4). -/
+noncomputable def embed_487_2_4 :
+    Hex.GFq 487 2 Hex.Conway.supportedEntry_487_2 →+*
+      Hex.GFq 487 4 Hex.Conway.supportedEntry_487_4 :=
+  conwayEmbed 487 2 4 _ _ Hex.Conway.compat_487_2_4
+
+/-- The canonical embedding of GF(491^1) into GF(491^2). -/
+noncomputable def embed_491_1_2 :
+    Hex.GFq 491 1 Hex.Conway.supportedEntry_491_1 →+*
+      Hex.GFq 491 2 Hex.Conway.supportedEntry_491_2 :=
+  conwayEmbed 491 1 2 _ _ Hex.Conway.compat_491_1_2
+
+/-- The canonical embedding of GF(491^1) into GF(491^3). -/
+noncomputable def embed_491_1_3 :
+    Hex.GFq 491 1 Hex.Conway.supportedEntry_491_1 →+*
+      Hex.GFq 491 3 Hex.Conway.supportedEntry_491_3 :=
+  conwayEmbed 491 1 3 _ _ Hex.Conway.compat_491_1_3
+
+/-- The canonical embedding of GF(491^1) into GF(491^4). -/
+noncomputable def embed_491_1_4 :
+    Hex.GFq 491 1 Hex.Conway.supportedEntry_491_1 →+*
+      Hex.GFq 491 4 Hex.Conway.supportedEntry_491_4 :=
+  conwayEmbed 491 1 4 _ _ Hex.Conway.compat_491_1_4
+
+/-- The canonical embedding of GF(491^2) into GF(491^4). -/
+noncomputable def embed_491_2_4 :
+    Hex.GFq 491 2 Hex.Conway.supportedEntry_491_2 →+*
+      Hex.GFq 491 4 Hex.Conway.supportedEntry_491_4 :=
+  conwayEmbed 491 2 4 _ _ Hex.Conway.compat_491_2_4
+
+/-- The canonical embedding of GF(499^1) into GF(499^2). -/
+noncomputable def embed_499_1_2 :
+    Hex.GFq 499 1 Hex.Conway.supportedEntry_499_1 →+*
+      Hex.GFq 499 2 Hex.Conway.supportedEntry_499_2 :=
+  conwayEmbed 499 1 2 _ _ Hex.Conway.compat_499_1_2
+
+/-- The canonical embedding of GF(499^1) into GF(499^3). -/
+noncomputable def embed_499_1_3 :
+    Hex.GFq 499 1 Hex.Conway.supportedEntry_499_1 →+*
+      Hex.GFq 499 3 Hex.Conway.supportedEntry_499_3 :=
+  conwayEmbed 499 1 3 _ _ Hex.Conway.compat_499_1_3
+
+/-- The canonical embedding of GF(499^1) into GF(499^4). -/
+noncomputable def embed_499_1_4 :
+    Hex.GFq 499 1 Hex.Conway.supportedEntry_499_1 →+*
+      Hex.GFq 499 4 Hex.Conway.supportedEntry_499_4 :=
+  conwayEmbed 499 1 4 _ _ Hex.Conway.compat_499_1_4
+
+/-- The canonical embedding of GF(499^2) into GF(499^4). -/
+noncomputable def embed_499_2_4 :
+    Hex.GFq 499 2 Hex.Conway.supportedEntry_499_2 →+*
+      Hex.GFq 499 4 Hex.Conway.supportedEntry_499_4 :=
+  conwayEmbed 499 2 4 _ _ Hex.Conway.compat_499_2_4
+
+/-- The canonical embedding of GF(503^1) into GF(503^2). -/
+noncomputable def embed_503_1_2 :
+    Hex.GFq 503 1 Hex.Conway.supportedEntry_503_1 →+*
+      Hex.GFq 503 2 Hex.Conway.supportedEntry_503_2 :=
+  conwayEmbed 503 1 2 _ _ Hex.Conway.compat_503_1_2
+
+/-- The canonical embedding of GF(503^1) into GF(503^3). -/
+noncomputable def embed_503_1_3 :
+    Hex.GFq 503 1 Hex.Conway.supportedEntry_503_1 →+*
+      Hex.GFq 503 3 Hex.Conway.supportedEntry_503_3 :=
+  conwayEmbed 503 1 3 _ _ Hex.Conway.compat_503_1_3
+
+/-- The canonical embedding of GF(509^1) into GF(509^2). -/
+noncomputable def embed_509_1_2 :
+    Hex.GFq 509 1 Hex.Conway.supportedEntry_509_1 →+*
+      Hex.GFq 509 2 Hex.Conway.supportedEntry_509_2 :=
+  conwayEmbed 509 1 2 _ _ Hex.Conway.compat_509_1_2
+
+/-- The canonical embedding of GF(509^1) into GF(509^3). -/
+noncomputable def embed_509_1_3 :
+    Hex.GFq 509 1 Hex.Conway.supportedEntry_509_1 →+*
+      Hex.GFq 509 3 Hex.Conway.supportedEntry_509_3 :=
+  conwayEmbed 509 1 3 _ _ Hex.Conway.compat_509_1_3
+
+/-- The canonical embedding of GF(521^1) into GF(521^2). -/
+noncomputable def embed_521_1_2 :
+    Hex.GFq 521 1 Hex.Conway.supportedEntry_521_1 →+*
+      Hex.GFq 521 2 Hex.Conway.supportedEntry_521_2 :=
+  conwayEmbed 521 1 2 _ _ Hex.Conway.compat_521_1_2
+
+/-- The canonical embedding of GF(521^1) into GF(521^3). -/
+noncomputable def embed_521_1_3 :
+    Hex.GFq 521 1 Hex.Conway.supportedEntry_521_1 →+*
+      Hex.GFq 521 3 Hex.Conway.supportedEntry_521_3 :=
+  conwayEmbed 521 1 3 _ _ Hex.Conway.compat_521_1_3
+
+/-- The canonical embedding of GF(523^1) into GF(523^2). -/
+noncomputable def embed_523_1_2 :
+    Hex.GFq 523 1 Hex.Conway.supportedEntry_523_1 →+*
+      Hex.GFq 523 2 Hex.Conway.supportedEntry_523_2 :=
+  conwayEmbed 523 1 2 _ _ Hex.Conway.compat_523_1_2
+
+/-- The canonical embedding of GF(523^1) into GF(523^3). -/
+noncomputable def embed_523_1_3 :
+    Hex.GFq 523 1 Hex.Conway.supportedEntry_523_1 →+*
+      Hex.GFq 523 3 Hex.Conway.supportedEntry_523_3 :=
+  conwayEmbed 523 1 3 _ _ Hex.Conway.compat_523_1_3
+
 /-- The canonical embedding of GF(541^1) into GF(541^2). -/
 noncomputable def embed_541_1_2 :
     Hex.GFq 541 1 Hex.Conway.supportedEntry_541_1 →+*
@@ -383,401 +779,5 @@ noncomputable def embed_733_1_3 :
     Hex.GFq 733 1 Hex.Conway.supportedEntry_733_1 →+*
       Hex.GFq 733 3 Hex.Conway.supportedEntry_733_3 :=
   conwayEmbed 733 1 3 _ _ Hex.Conway.compat_733_1_3
-
-/-- The canonical embedding of GF(739^1) into GF(739^2). -/
-noncomputable def embed_739_1_2 :
-    Hex.GFq 739 1 Hex.Conway.supportedEntry_739_1 →+*
-      Hex.GFq 739 2 Hex.Conway.supportedEntry_739_2 :=
-  conwayEmbed 739 1 2 _ _ Hex.Conway.compat_739_1_2
-
-/-- The canonical embedding of GF(739^1) into GF(739^3). -/
-noncomputable def embed_739_1_3 :
-    Hex.GFq 739 1 Hex.Conway.supportedEntry_739_1 →+*
-      Hex.GFq 739 3 Hex.Conway.supportedEntry_739_3 :=
-  conwayEmbed 739 1 3 _ _ Hex.Conway.compat_739_1_3
-
-/-- The canonical embedding of GF(743^1) into GF(743^2). -/
-noncomputable def embed_743_1_2 :
-    Hex.GFq 743 1 Hex.Conway.supportedEntry_743_1 →+*
-      Hex.GFq 743 2 Hex.Conway.supportedEntry_743_2 :=
-  conwayEmbed 743 1 2 _ _ Hex.Conway.compat_743_1_2
-
-/-- The canonical embedding of GF(743^1) into GF(743^3). -/
-noncomputable def embed_743_1_3 :
-    Hex.GFq 743 1 Hex.Conway.supportedEntry_743_1 →+*
-      Hex.GFq 743 3 Hex.Conway.supportedEntry_743_3 :=
-  conwayEmbed 743 1 3 _ _ Hex.Conway.compat_743_1_3
-
-/-- The canonical embedding of GF(751^1) into GF(751^2). -/
-noncomputable def embed_751_1_2 :
-    Hex.GFq 751 1 Hex.Conway.supportedEntry_751_1 →+*
-      Hex.GFq 751 2 Hex.Conway.supportedEntry_751_2 :=
-  conwayEmbed 751 1 2 _ _ Hex.Conway.compat_751_1_2
-
-/-- The canonical embedding of GF(751^1) into GF(751^3). -/
-noncomputable def embed_751_1_3 :
-    Hex.GFq 751 1 Hex.Conway.supportedEntry_751_1 →+*
-      Hex.GFq 751 3 Hex.Conway.supportedEntry_751_3 :=
-  conwayEmbed 751 1 3 _ _ Hex.Conway.compat_751_1_3
-
-/-- The canonical embedding of GF(757^1) into GF(757^2). -/
-noncomputable def embed_757_1_2 :
-    Hex.GFq 757 1 Hex.Conway.supportedEntry_757_1 →+*
-      Hex.GFq 757 2 Hex.Conway.supportedEntry_757_2 :=
-  conwayEmbed 757 1 2 _ _ Hex.Conway.compat_757_1_2
-
-/-- The canonical embedding of GF(757^1) into GF(757^3). -/
-noncomputable def embed_757_1_3 :
-    Hex.GFq 757 1 Hex.Conway.supportedEntry_757_1 →+*
-      Hex.GFq 757 3 Hex.Conway.supportedEntry_757_3 :=
-  conwayEmbed 757 1 3 _ _ Hex.Conway.compat_757_1_3
-
-/-- The canonical embedding of GF(761^1) into GF(761^2). -/
-noncomputable def embed_761_1_2 :
-    Hex.GFq 761 1 Hex.Conway.supportedEntry_761_1 →+*
-      Hex.GFq 761 2 Hex.Conway.supportedEntry_761_2 :=
-  conwayEmbed 761 1 2 _ _ Hex.Conway.compat_761_1_2
-
-/-- The canonical embedding of GF(761^1) into GF(761^3). -/
-noncomputable def embed_761_1_3 :
-    Hex.GFq 761 1 Hex.Conway.supportedEntry_761_1 →+*
-      Hex.GFq 761 3 Hex.Conway.supportedEntry_761_3 :=
-  conwayEmbed 761 1 3 _ _ Hex.Conway.compat_761_1_3
-
-/-- The canonical embedding of GF(769^1) into GF(769^2). -/
-noncomputable def embed_769_1_2 :
-    Hex.GFq 769 1 Hex.Conway.supportedEntry_769_1 →+*
-      Hex.GFq 769 2 Hex.Conway.supportedEntry_769_2 :=
-  conwayEmbed 769 1 2 _ _ Hex.Conway.compat_769_1_2
-
-/-- The canonical embedding of GF(769^1) into GF(769^3). -/
-noncomputable def embed_769_1_3 :
-    Hex.GFq 769 1 Hex.Conway.supportedEntry_769_1 →+*
-      Hex.GFq 769 3 Hex.Conway.supportedEntry_769_3 :=
-  conwayEmbed 769 1 3 _ _ Hex.Conway.compat_769_1_3
-
-/-- The canonical embedding of GF(773^1) into GF(773^2). -/
-noncomputable def embed_773_1_2 :
-    Hex.GFq 773 1 Hex.Conway.supportedEntry_773_1 →+*
-      Hex.GFq 773 2 Hex.Conway.supportedEntry_773_2 :=
-  conwayEmbed 773 1 2 _ _ Hex.Conway.compat_773_1_2
-
-/-- The canonical embedding of GF(773^1) into GF(773^3). -/
-noncomputable def embed_773_1_3 :
-    Hex.GFq 773 1 Hex.Conway.supportedEntry_773_1 →+*
-      Hex.GFq 773 3 Hex.Conway.supportedEntry_773_3 :=
-  conwayEmbed 773 1 3 _ _ Hex.Conway.compat_773_1_3
-
-/-- The canonical embedding of GF(787^1) into GF(787^2). -/
-noncomputable def embed_787_1_2 :
-    Hex.GFq 787 1 Hex.Conway.supportedEntry_787_1 →+*
-      Hex.GFq 787 2 Hex.Conway.supportedEntry_787_2 :=
-  conwayEmbed 787 1 2 _ _ Hex.Conway.compat_787_1_2
-
-/-- The canonical embedding of GF(787^1) into GF(787^3). -/
-noncomputable def embed_787_1_3 :
-    Hex.GFq 787 1 Hex.Conway.supportedEntry_787_1 →+*
-      Hex.GFq 787 3 Hex.Conway.supportedEntry_787_3 :=
-  conwayEmbed 787 1 3 _ _ Hex.Conway.compat_787_1_3
-
-/-- The canonical embedding of GF(797^1) into GF(797^2). -/
-noncomputable def embed_797_1_2 :
-    Hex.GFq 797 1 Hex.Conway.supportedEntry_797_1 →+*
-      Hex.GFq 797 2 Hex.Conway.supportedEntry_797_2 :=
-  conwayEmbed 797 1 2 _ _ Hex.Conway.compat_797_1_2
-
-/-- The canonical embedding of GF(797^1) into GF(797^3). -/
-noncomputable def embed_797_1_3 :
-    Hex.GFq 797 1 Hex.Conway.supportedEntry_797_1 →+*
-      Hex.GFq 797 3 Hex.Conway.supportedEntry_797_3 :=
-  conwayEmbed 797 1 3 _ _ Hex.Conway.compat_797_1_3
-
-/-- The canonical embedding of GF(809^1) into GF(809^2). -/
-noncomputable def embed_809_1_2 :
-    Hex.GFq 809 1 Hex.Conway.supportedEntry_809_1 →+*
-      Hex.GFq 809 2 Hex.Conway.supportedEntry_809_2 :=
-  conwayEmbed 809 1 2 _ _ Hex.Conway.compat_809_1_2
-
-/-- The canonical embedding of GF(809^1) into GF(809^3). -/
-noncomputable def embed_809_1_3 :
-    Hex.GFq 809 1 Hex.Conway.supportedEntry_809_1 →+*
-      Hex.GFq 809 3 Hex.Conway.supportedEntry_809_3 :=
-  conwayEmbed 809 1 3 _ _ Hex.Conway.compat_809_1_3
-
-/-- The canonical embedding of GF(811^1) into GF(811^2). -/
-noncomputable def embed_811_1_2 :
-    Hex.GFq 811 1 Hex.Conway.supportedEntry_811_1 →+*
-      Hex.GFq 811 2 Hex.Conway.supportedEntry_811_2 :=
-  conwayEmbed 811 1 2 _ _ Hex.Conway.compat_811_1_2
-
-/-- The canonical embedding of GF(811^1) into GF(811^3). -/
-noncomputable def embed_811_1_3 :
-    Hex.GFq 811 1 Hex.Conway.supportedEntry_811_1 →+*
-      Hex.GFq 811 3 Hex.Conway.supportedEntry_811_3 :=
-  conwayEmbed 811 1 3 _ _ Hex.Conway.compat_811_1_3
-
-/-- The canonical embedding of GF(821^1) into GF(821^2). -/
-noncomputable def embed_821_1_2 :
-    Hex.GFq 821 1 Hex.Conway.supportedEntry_821_1 →+*
-      Hex.GFq 821 2 Hex.Conway.supportedEntry_821_2 :=
-  conwayEmbed 821 1 2 _ _ Hex.Conway.compat_821_1_2
-
-/-- The canonical embedding of GF(821^1) into GF(821^3). -/
-noncomputable def embed_821_1_3 :
-    Hex.GFq 821 1 Hex.Conway.supportedEntry_821_1 →+*
-      Hex.GFq 821 3 Hex.Conway.supportedEntry_821_3 :=
-  conwayEmbed 821 1 3 _ _ Hex.Conway.compat_821_1_3
-
-/-- The canonical embedding of GF(823^1) into GF(823^2). -/
-noncomputable def embed_823_1_2 :
-    Hex.GFq 823 1 Hex.Conway.supportedEntry_823_1 →+*
-      Hex.GFq 823 2 Hex.Conway.supportedEntry_823_2 :=
-  conwayEmbed 823 1 2 _ _ Hex.Conway.compat_823_1_2
-
-/-- The canonical embedding of GF(823^1) into GF(823^3). -/
-noncomputable def embed_823_1_3 :
-    Hex.GFq 823 1 Hex.Conway.supportedEntry_823_1 →+*
-      Hex.GFq 823 3 Hex.Conway.supportedEntry_823_3 :=
-  conwayEmbed 823 1 3 _ _ Hex.Conway.compat_823_1_3
-
-/-- The canonical embedding of GF(827^1) into GF(827^2). -/
-noncomputable def embed_827_1_2 :
-    Hex.GFq 827 1 Hex.Conway.supportedEntry_827_1 →+*
-      Hex.GFq 827 2 Hex.Conway.supportedEntry_827_2 :=
-  conwayEmbed 827 1 2 _ _ Hex.Conway.compat_827_1_2
-
-/-- The canonical embedding of GF(827^1) into GF(827^3). -/
-noncomputable def embed_827_1_3 :
-    Hex.GFq 827 1 Hex.Conway.supportedEntry_827_1 →+*
-      Hex.GFq 827 3 Hex.Conway.supportedEntry_827_3 :=
-  conwayEmbed 827 1 3 _ _ Hex.Conway.compat_827_1_3
-
-/-- The canonical embedding of GF(829^1) into GF(829^2). -/
-noncomputable def embed_829_1_2 :
-    Hex.GFq 829 1 Hex.Conway.supportedEntry_829_1 →+*
-      Hex.GFq 829 2 Hex.Conway.supportedEntry_829_2 :=
-  conwayEmbed 829 1 2 _ _ Hex.Conway.compat_829_1_2
-
-/-- The canonical embedding of GF(829^1) into GF(829^3). -/
-noncomputable def embed_829_1_3 :
-    Hex.GFq 829 1 Hex.Conway.supportedEntry_829_1 →+*
-      Hex.GFq 829 3 Hex.Conway.supportedEntry_829_3 :=
-  conwayEmbed 829 1 3 _ _ Hex.Conway.compat_829_1_3
-
-/-- The canonical embedding of GF(839^1) into GF(839^2). -/
-noncomputable def embed_839_1_2 :
-    Hex.GFq 839 1 Hex.Conway.supportedEntry_839_1 →+*
-      Hex.GFq 839 2 Hex.Conway.supportedEntry_839_2 :=
-  conwayEmbed 839 1 2 _ _ Hex.Conway.compat_839_1_2
-
-/-- The canonical embedding of GF(839^1) into GF(839^3). -/
-noncomputable def embed_839_1_3 :
-    Hex.GFq 839 1 Hex.Conway.supportedEntry_839_1 →+*
-      Hex.GFq 839 3 Hex.Conway.supportedEntry_839_3 :=
-  conwayEmbed 839 1 3 _ _ Hex.Conway.compat_839_1_3
-
-/-- The canonical embedding of GF(853^1) into GF(853^2). -/
-noncomputable def embed_853_1_2 :
-    Hex.GFq 853 1 Hex.Conway.supportedEntry_853_1 →+*
-      Hex.GFq 853 2 Hex.Conway.supportedEntry_853_2 :=
-  conwayEmbed 853 1 2 _ _ Hex.Conway.compat_853_1_2
-
-/-- The canonical embedding of GF(853^1) into GF(853^3). -/
-noncomputable def embed_853_1_3 :
-    Hex.GFq 853 1 Hex.Conway.supportedEntry_853_1 →+*
-      Hex.GFq 853 3 Hex.Conway.supportedEntry_853_3 :=
-  conwayEmbed 853 1 3 _ _ Hex.Conway.compat_853_1_3
-
-/-- The canonical embedding of GF(857^1) into GF(857^2). -/
-noncomputable def embed_857_1_2 :
-    Hex.GFq 857 1 Hex.Conway.supportedEntry_857_1 →+*
-      Hex.GFq 857 2 Hex.Conway.supportedEntry_857_2 :=
-  conwayEmbed 857 1 2 _ _ Hex.Conway.compat_857_1_2
-
-/-- The canonical embedding of GF(857^1) into GF(857^3). -/
-noncomputable def embed_857_1_3 :
-    Hex.GFq 857 1 Hex.Conway.supportedEntry_857_1 →+*
-      Hex.GFq 857 3 Hex.Conway.supportedEntry_857_3 :=
-  conwayEmbed 857 1 3 _ _ Hex.Conway.compat_857_1_3
-
-/-- The canonical embedding of GF(859^1) into GF(859^2). -/
-noncomputable def embed_859_1_2 :
-    Hex.GFq 859 1 Hex.Conway.supportedEntry_859_1 →+*
-      Hex.GFq 859 2 Hex.Conway.supportedEntry_859_2 :=
-  conwayEmbed 859 1 2 _ _ Hex.Conway.compat_859_1_2
-
-/-- The canonical embedding of GF(859^1) into GF(859^3). -/
-noncomputable def embed_859_1_3 :
-    Hex.GFq 859 1 Hex.Conway.supportedEntry_859_1 →+*
-      Hex.GFq 859 3 Hex.Conway.supportedEntry_859_3 :=
-  conwayEmbed 859 1 3 _ _ Hex.Conway.compat_859_1_3
-
-/-- The canonical embedding of GF(863^1) into GF(863^2). -/
-noncomputable def embed_863_1_2 :
-    Hex.GFq 863 1 Hex.Conway.supportedEntry_863_1 →+*
-      Hex.GFq 863 2 Hex.Conway.supportedEntry_863_2 :=
-  conwayEmbed 863 1 2 _ _ Hex.Conway.compat_863_1_2
-
-/-- The canonical embedding of GF(863^1) into GF(863^3). -/
-noncomputable def embed_863_1_3 :
-    Hex.GFq 863 1 Hex.Conway.supportedEntry_863_1 →+*
-      Hex.GFq 863 3 Hex.Conway.supportedEntry_863_3 :=
-  conwayEmbed 863 1 3 _ _ Hex.Conway.compat_863_1_3
-
-/-- The canonical embedding of GF(877^1) into GF(877^2). -/
-noncomputable def embed_877_1_2 :
-    Hex.GFq 877 1 Hex.Conway.supportedEntry_877_1 →+*
-      Hex.GFq 877 2 Hex.Conway.supportedEntry_877_2 :=
-  conwayEmbed 877 1 2 _ _ Hex.Conway.compat_877_1_2
-
-/-- The canonical embedding of GF(877^1) into GF(877^3). -/
-noncomputable def embed_877_1_3 :
-    Hex.GFq 877 1 Hex.Conway.supportedEntry_877_1 →+*
-      Hex.GFq 877 3 Hex.Conway.supportedEntry_877_3 :=
-  conwayEmbed 877 1 3 _ _ Hex.Conway.compat_877_1_3
-
-/-- The canonical embedding of GF(881^1) into GF(881^2). -/
-noncomputable def embed_881_1_2 :
-    Hex.GFq 881 1 Hex.Conway.supportedEntry_881_1 →+*
-      Hex.GFq 881 2 Hex.Conway.supportedEntry_881_2 :=
-  conwayEmbed 881 1 2 _ _ Hex.Conway.compat_881_1_2
-
-/-- The canonical embedding of GF(881^1) into GF(881^3). -/
-noncomputable def embed_881_1_3 :
-    Hex.GFq 881 1 Hex.Conway.supportedEntry_881_1 →+*
-      Hex.GFq 881 3 Hex.Conway.supportedEntry_881_3 :=
-  conwayEmbed 881 1 3 _ _ Hex.Conway.compat_881_1_3
-
-/-- The canonical embedding of GF(883^1) into GF(883^2). -/
-noncomputable def embed_883_1_2 :
-    Hex.GFq 883 1 Hex.Conway.supportedEntry_883_1 →+*
-      Hex.GFq 883 2 Hex.Conway.supportedEntry_883_2 :=
-  conwayEmbed 883 1 2 _ _ Hex.Conway.compat_883_1_2
-
-/-- The canonical embedding of GF(883^1) into GF(883^3). -/
-noncomputable def embed_883_1_3 :
-    Hex.GFq 883 1 Hex.Conway.supportedEntry_883_1 →+*
-      Hex.GFq 883 3 Hex.Conway.supportedEntry_883_3 :=
-  conwayEmbed 883 1 3 _ _ Hex.Conway.compat_883_1_3
-
-/-- The canonical embedding of GF(887^1) into GF(887^2). -/
-noncomputable def embed_887_1_2 :
-    Hex.GFq 887 1 Hex.Conway.supportedEntry_887_1 →+*
-      Hex.GFq 887 2 Hex.Conway.supportedEntry_887_2 :=
-  conwayEmbed 887 1 2 _ _ Hex.Conway.compat_887_1_2
-
-/-- The canonical embedding of GF(887^1) into GF(887^3). -/
-noncomputable def embed_887_1_3 :
-    Hex.GFq 887 1 Hex.Conway.supportedEntry_887_1 →+*
-      Hex.GFq 887 3 Hex.Conway.supportedEntry_887_3 :=
-  conwayEmbed 887 1 3 _ _ Hex.Conway.compat_887_1_3
-
-/-- The canonical embedding of GF(907^1) into GF(907^2). -/
-noncomputable def embed_907_1_2 :
-    Hex.GFq 907 1 Hex.Conway.supportedEntry_907_1 →+*
-      Hex.GFq 907 2 Hex.Conway.supportedEntry_907_2 :=
-  conwayEmbed 907 1 2 _ _ Hex.Conway.compat_907_1_2
-
-/-- The canonical embedding of GF(907^1) into GF(907^3). -/
-noncomputable def embed_907_1_3 :
-    Hex.GFq 907 1 Hex.Conway.supportedEntry_907_1 →+*
-      Hex.GFq 907 3 Hex.Conway.supportedEntry_907_3 :=
-  conwayEmbed 907 1 3 _ _ Hex.Conway.compat_907_1_3
-
-/-- The canonical embedding of GF(911^1) into GF(911^2). -/
-noncomputable def embed_911_1_2 :
-    Hex.GFq 911 1 Hex.Conway.supportedEntry_911_1 →+*
-      Hex.GFq 911 2 Hex.Conway.supportedEntry_911_2 :=
-  conwayEmbed 911 1 2 _ _ Hex.Conway.compat_911_1_2
-
-/-- The canonical embedding of GF(911^1) into GF(911^3). -/
-noncomputable def embed_911_1_3 :
-    Hex.GFq 911 1 Hex.Conway.supportedEntry_911_1 →+*
-      Hex.GFq 911 3 Hex.Conway.supportedEntry_911_3 :=
-  conwayEmbed 911 1 3 _ _ Hex.Conway.compat_911_1_3
-
-/-- The canonical embedding of GF(919^1) into GF(919^2). -/
-noncomputable def embed_919_1_2 :
-    Hex.GFq 919 1 Hex.Conway.supportedEntry_919_1 →+*
-      Hex.GFq 919 2 Hex.Conway.supportedEntry_919_2 :=
-  conwayEmbed 919 1 2 _ _ Hex.Conway.compat_919_1_2
-
-/-- The canonical embedding of GF(919^1) into GF(919^3). -/
-noncomputable def embed_919_1_3 :
-    Hex.GFq 919 1 Hex.Conway.supportedEntry_919_1 →+*
-      Hex.GFq 919 3 Hex.Conway.supportedEntry_919_3 :=
-  conwayEmbed 919 1 3 _ _ Hex.Conway.compat_919_1_3
-
-/-- The canonical embedding of GF(929^1) into GF(929^2). -/
-noncomputable def embed_929_1_2 :
-    Hex.GFq 929 1 Hex.Conway.supportedEntry_929_1 →+*
-      Hex.GFq 929 2 Hex.Conway.supportedEntry_929_2 :=
-  conwayEmbed 929 1 2 _ _ Hex.Conway.compat_929_1_2
-
-/-- The canonical embedding of GF(929^1) into GF(929^3). -/
-noncomputable def embed_929_1_3 :
-    Hex.GFq 929 1 Hex.Conway.supportedEntry_929_1 →+*
-      Hex.GFq 929 3 Hex.Conway.supportedEntry_929_3 :=
-  conwayEmbed 929 1 3 _ _ Hex.Conway.compat_929_1_3
-
-/-- The canonical embedding of GF(937^1) into GF(937^2). -/
-noncomputable def embed_937_1_2 :
-    Hex.GFq 937 1 Hex.Conway.supportedEntry_937_1 →+*
-      Hex.GFq 937 2 Hex.Conway.supportedEntry_937_2 :=
-  conwayEmbed 937 1 2 _ _ Hex.Conway.compat_937_1_2
-
-/-- The canonical embedding of GF(937^1) into GF(937^3). -/
-noncomputable def embed_937_1_3 :
-    Hex.GFq 937 1 Hex.Conway.supportedEntry_937_1 →+*
-      Hex.GFq 937 3 Hex.Conway.supportedEntry_937_3 :=
-  conwayEmbed 937 1 3 _ _ Hex.Conway.compat_937_1_3
-
-/-- The canonical embedding of GF(941^1) into GF(941^2). -/
-noncomputable def embed_941_1_2 :
-    Hex.GFq 941 1 Hex.Conway.supportedEntry_941_1 →+*
-      Hex.GFq 941 2 Hex.Conway.supportedEntry_941_2 :=
-  conwayEmbed 941 1 2 _ _ Hex.Conway.compat_941_1_2
-
-/-- The canonical embedding of GF(941^1) into GF(941^3). -/
-noncomputable def embed_941_1_3 :
-    Hex.GFq 941 1 Hex.Conway.supportedEntry_941_1 →+*
-      Hex.GFq 941 3 Hex.Conway.supportedEntry_941_3 :=
-  conwayEmbed 941 1 3 _ _ Hex.Conway.compat_941_1_3
-
-/-- The canonical embedding of GF(947^1) into GF(947^2). -/
-noncomputable def embed_947_1_2 :
-    Hex.GFq 947 1 Hex.Conway.supportedEntry_947_1 →+*
-      Hex.GFq 947 2 Hex.Conway.supportedEntry_947_2 :=
-  conwayEmbed 947 1 2 _ _ Hex.Conway.compat_947_1_2
-
-/-- The canonical embedding of GF(947^1) into GF(947^3). -/
-noncomputable def embed_947_1_3 :
-    Hex.GFq 947 1 Hex.Conway.supportedEntry_947_1 →+*
-      Hex.GFq 947 3 Hex.Conway.supportedEntry_947_3 :=
-  conwayEmbed 947 1 3 _ _ Hex.Conway.compat_947_1_3
-
-/-- The canonical embedding of GF(953^1) into GF(953^2). -/
-noncomputable def embed_953_1_2 :
-    Hex.GFq 953 1 Hex.Conway.supportedEntry_953_1 →+*
-      Hex.GFq 953 2 Hex.Conway.supportedEntry_953_2 :=
-  conwayEmbed 953 1 2 _ _ Hex.Conway.compat_953_1_2
-
-/-- The canonical embedding of GF(953^1) into GF(953^3). -/
-noncomputable def embed_953_1_3 :
-    Hex.GFq 953 1 Hex.Conway.supportedEntry_953_1 →+*
-      Hex.GFq 953 3 Hex.Conway.supportedEntry_953_3 :=
-  conwayEmbed 953 1 3 _ _ Hex.Conway.compat_953_1_3
-
-/-- The canonical embedding of GF(967^1) into GF(967^2). -/
-noncomputable def embed_967_1_2 :
-    Hex.GFq 967 1 Hex.Conway.supportedEntry_967_1 →+*
-      Hex.GFq 967 2 Hex.Conway.supportedEntry_967_2 :=
-  conwayEmbed 967 1 2 _ _ Hex.Conway.compat_967_1_2
-
-/-- The canonical embedding of GF(967^1) into GF(967^3). -/
-noncomputable def embed_967_1_3 :
-    Hex.GFq 967 1 Hex.Conway.supportedEntry_967_1 →+*
-      Hex.GFq 967 3 Hex.Conway.supportedEntry_967_3 :=
-  conwayEmbed 967 1 3 _ _ Hex.Conway.compat_967_1_3
 
 end HexGFqMathlib.Conway

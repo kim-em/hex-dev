@@ -19,6 +19,38 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
+/-- The verified table supports C(229, 3). -/
+@[expose] def supportedEntry_229_3 : SupportedEntry 229 3 :=
+  ⟨luebeckConwayPolynomial_229_3, prime_229, luebeckConwayPolynomial?_hit_229_3⟩
+
+/-- The verified table supports C(569, 3). -/
+@[expose] def supportedEntry_569_3 : SupportedEntry 569 3 :=
+  ⟨luebeckConwayPolynomial_569_3, prime_569, luebeckConwayPolynomial?_hit_569_3⟩
+
+/-- The verified table supports C(641, 3). -/
+@[expose] def supportedEntry_641_3 : SupportedEntry 641 3 :=
+  ⟨luebeckConwayPolynomial_641_3, prime_641, luebeckConwayPolynomial?_hit_641_3⟩
+
+/-- The verified table supports C(727, 3). -/
+@[expose] def supportedEntry_727_3 : SupportedEntry 727 3 :=
+  ⟨luebeckConwayPolynomial_727_3, prime_727, luebeckConwayPolynomial?_hit_727_3⟩
+
+/-- The verified table supports C(797, 3). -/
+@[expose] def supportedEntry_797_3 : SupportedEntry 797 3 :=
+  ⟨luebeckConwayPolynomial_797_3, prime_797, luebeckConwayPolynomial?_hit_797_3⟩
+
+/-- The verified table supports C(887, 3). -/
+@[expose] def supportedEntry_887_3 : SupportedEntry 887 3 :=
+  ⟨luebeckConwayPolynomial_887_3, prime_887, luebeckConwayPolynomial?_hit_887_3⟩
+
+/-- The verified table supports C(983, 3). -/
+@[expose] def supportedEntry_983_3 : SupportedEntry 983 3 :=
+  ⟨luebeckConwayPolynomial_983_3, prime_983, luebeckConwayPolynomial?_hit_983_3⟩
+
+/-- The verified table supports C(317, 3). -/
+@[expose] def supportedEntry_317_3 : SupportedEntry 317 3 :=
+  ⟨luebeckConwayPolynomial_317_3, prime_317, luebeckConwayPolynomial?_hit_317_3⟩
+
 /-- The verified table supports C(409, 3). -/
 @[expose] def supportedEntry_409_3 : SupportedEntry 409 3 :=
   ⟨luebeckConwayPolynomial_409_3, prime_409, luebeckConwayPolynomial?_hit_409_3⟩
@@ -59,13 +91,13 @@ namespace Conway
 @[expose] def supportedEntry_383_3 : SupportedEntry 383 3 :=
   ⟨luebeckConwayPolynomial_383_3, prime_383, luebeckConwayPolynomial?_hit_383_3⟩
 
-/-- The verified table supports C(167, 3). -/
-@[expose] def supportedEntry_167_3 : SupportedEntry 167 3 :=
-  ⟨luebeckConwayPolynomial_167_3, prime_167, luebeckConwayPolynomial?_hit_167_3⟩
+/-- The verified table supports C(47, 3). -/
+@[expose] def supportedEntry_47_3 : SupportedEntry 47 3 :=
+  ⟨luebeckConwayPolynomial_47_3, prime_47, luebeckConwayPolynomial?_hit_47_3⟩
 
-/-- The verified table supports C(73, 3). -/
-@[expose] def supportedEntry_73_3 : SupportedEntry 73 3 :=
-  ⟨luebeckConwayPolynomial_73_3, prime_73, luebeckConwayPolynomial?_hit_73_3⟩
+/-- The verified table supports C(5, 4). -/
+@[expose] def supportedEntry_5_4 : SupportedEntry 5 4 :=
+  ⟨luebeckConwayPolynomial_5_4, prime_five, luebeckConwayPolynomial?_hit_5_4⟩
 
 /-- The verified table supports C(97, 3). -/
 @[expose] def supportedEntry_97_3 : SupportedEntry 97 3 :=
@@ -75,45 +107,13 @@ namespace Conway
 @[expose] def supportedEntry_31_3 : SupportedEntry 31 3 :=
   ⟨luebeckConwayPolynomial_31_3, prime_31, luebeckConwayPolynomial?_hit_31_3⟩
 
-/-- The verified table supports C(859, 2). -/
-@[expose] def supportedEntry_859_2 : SupportedEntry 859 2 :=
-  ⟨luebeckConwayPolynomial_859_2, prime_859, luebeckConwayPolynomial?_hit_859_2⟩
+/-- The verified table supports C(571, 2). -/
+@[expose] def supportedEntry_571_2 : SupportedEntry 571 2 :=
+  ⟨luebeckConwayPolynomial_571_2, prime_571, luebeckConwayPolynomial?_hit_571_2⟩
 
-/-- The verified table supports C(461, 2). -/
-@[expose] def supportedEntry_461_2 : SupportedEntry 461 2 :=
-  ⟨luebeckConwayPolynomial_461_2, prime_461, luebeckConwayPolynomial?_hit_461_2⟩
-
-/-- The verified table supports C(547, 2). -/
-@[expose] def supportedEntry_547_2 : SupportedEntry 547 2 :=
-  ⟨luebeckConwayPolynomial_547_2, prime_547, luebeckConwayPolynomial?_hit_547_2⟩
-
-/-- The verified table supports C(617, 2). -/
-@[expose] def supportedEntry_617_2 : SupportedEntry 617 2 :=
-  ⟨luebeckConwayPolynomial_617_2, prime_617, luebeckConwayPolynomial?_hit_617_2⟩
-
-/-- The verified table supports C(661, 2). -/
-@[expose] def supportedEntry_661_2 : SupportedEntry 661 2 :=
-  ⟨luebeckConwayPolynomial_661_2, prime_661, luebeckConwayPolynomial?_hit_661_2⟩
-
-/-- The verified table supports C(709, 2). -/
-@[expose] def supportedEntry_709_2 : SupportedEntry 709 2 :=
-  ⟨luebeckConwayPolynomial_709_2, prime_709, luebeckConwayPolynomial?_hit_709_2⟩
-
-/-- The verified table supports C(761, 2). -/
-@[expose] def supportedEntry_761_2 : SupportedEntry 761 2 :=
-  ⟨luebeckConwayPolynomial_761_2, prime_761, luebeckConwayPolynomial?_hit_761_2⟩
-
-/-- The verified table supports C(821, 2). -/
-@[expose] def supportedEntry_821_2 : SupportedEntry 821 2 :=
-  ⟨luebeckConwayPolynomial_821_2, prime_821, luebeckConwayPolynomial?_hit_821_2⟩
-
-/-- The verified table supports C(853, 2). -/
-@[expose] def supportedEntry_853_2 : SupportedEntry 853 2 :=
-  ⟨luebeckConwayPolynomial_853_2, prime_853, luebeckConwayPolynomial?_hit_853_2⟩
-
-/-- The verified table supports C(919, 2). -/
-@[expose] def supportedEntry_919_2 : SupportedEntry 919 2 :=
-  ⟨luebeckConwayPolynomial_919_2, prime_919, luebeckConwayPolynomial?_hit_919_2⟩
+/-- The verified table supports C(11, 3). -/
+@[expose] def supportedEntry_11_3 : SupportedEntry 11 3 :=
+  ⟨luebeckConwayPolynomial_11_3, prime_eleven, luebeckConwayPolynomial?_hit_11_3⟩
 
 
 end Conway

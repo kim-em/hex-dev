@@ -19,13 +19,45 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-/-- The verified table supports C(17, 1). -/
-@[expose] def supportedEntry_17_1 : SupportedEntry 17 1 :=
-  ⟨luebeckConwayPolynomial_17_1, prime_17, luebeckConwayPolynomial?_hit_17_1⟩
+/-- The verified table supports C(487, 1). -/
+@[expose] def supportedEntry_487_1 : SupportedEntry 487 1 :=
+  ⟨luebeckConwayPolynomial_487_1, prime_487, luebeckConwayPolynomial?_hit_487_1⟩
 
-/-- The verified table supports C(5, 1). -/
-@[expose] def supportedEntry_5_1 : SupportedEntry 5 1 :=
-  ⟨luebeckConwayPolynomial_5_1, prime_five, luebeckConwayPolynomial?_hit_5_1⟩
+/-- The verified table supports C(3, 2). -/
+@[expose] def supportedEntry_3_2 : SupportedEntry 3 2 :=
+  ⟨luebeckConwayPolynomial_3_2, prime_three, luebeckConwayPolynomial?_hit_3_2⟩
+
+/-- The verified table supports C(167, 1). -/
+@[expose] def supportedEntry_167_1 : SupportedEntry 167 1 :=
+  ⟨luebeckConwayPolynomial_167_1, prime_167, luebeckConwayPolynomial?_hit_167_1⟩
+
+/-- The verified table supports C(197, 1). -/
+@[expose] def supportedEntry_197_1 : SupportedEntry 197 1 :=
+  ⟨luebeckConwayPolynomial_197_1, prime_197, luebeckConwayPolynomial?_hit_197_1⟩
+
+/-- The verified table supports C(31, 1). -/
+@[expose] def supportedEntry_31_1 : SupportedEntry 31 1 :=
+  ⟨luebeckConwayPolynomial_31_1, prime_31, luebeckConwayPolynomial?_hit_31_1⟩
+
+/-- The verified table supports C(101, 1). -/
+@[expose] def supportedEntry_101_1 : SupportedEntry 101 1 :=
+  ⟨luebeckConwayPolynomial_101_1, prime_101, luebeckConwayPolynomial?_hit_101_1⟩
+
+/-- The verified table supports C(37, 1). -/
+@[expose] def supportedEntry_37_1 : SupportedEntry 37 1 :=
+  ⟨luebeckConwayPolynomial_37_1, prime_37, luebeckConwayPolynomial?_hit_37_1⟩
+
+/-- The verified table supports C(53, 1). -/
+@[expose] def supportedEntry_53_1 : SupportedEntry 53 1 :=
+  ⟨luebeckConwayPolynomial_53_1, prime_53, luebeckConwayPolynomial?_hit_53_1⟩
+
+/-- The verified table supports C(11, 1). -/
+@[expose] def supportedEntry_11_1 : SupportedEntry 11 1 :=
+  ⟨luebeckConwayPolynomial_11_1, prime_eleven, luebeckConwayPolynomial?_hit_11_1⟩
+
+/-- The verified table supports C(7, 1). -/
+@[expose] def supportedEntry_7_1 : SupportedEntry 7 1 :=
+  ⟨luebeckConwayPolynomial_7_1, prime_seven, luebeckConwayPolynomial?_hit_7_1⟩
 
 
 end Conway

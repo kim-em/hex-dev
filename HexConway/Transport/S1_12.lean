@@ -19,68 +19,173 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-theorem ofCoeffs_967_1_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 967 [962, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_967_1
-  change luebeckConwayPolynomialOfCoeffs 967 [962, 1] = luebeckConwayPolynomial_967_1 at heq
+theorem ofCoeffs_881_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 881 [878, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_881_1
+  change luebeckConwayPolynomialOfCoeffs 881 [878, 1] = luebeckConwayPolynomial_881_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_967_1_monic
+  exact luebeckConwayPolynomial_881_1_monic
 
-theorem ofCoeffs_967_3_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 967 [962, 1, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_967_3
-  change luebeckConwayPolynomialOfCoeffs 967 [962, 1, 0, 1] = luebeckConwayPolynomial_967_3 at heq
+theorem ofCoeffs_881_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 881 [878, 1, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_881_3
+  change luebeckConwayPolynomialOfCoeffs 881 [878, 1, 0, 1] = luebeckConwayPolynomial_881_3 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_967_3_monic
+  exact luebeckConwayPolynomial_881_3_monic
 
-theorem ofCoeffs_971_2_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 971 [6, 970, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_971_2
-  change luebeckConwayPolynomialOfCoeffs 971 [6, 970, 1] = luebeckConwayPolynomial_971_2 at heq
+theorem ofCoeffs_883_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 883 [2, 879, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_883_2
+  change luebeckConwayPolynomialOfCoeffs 883 [2, 879, 1] = luebeckConwayPolynomial_883_2 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_971_2_monic
+  exact luebeckConwayPolynomial_883_2_monic
 
-theorem ofCoeffs_977_1_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 977 [974, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_977_1
-  change luebeckConwayPolynomialOfCoeffs 977 [974, 1] = luebeckConwayPolynomial_977_1 at heq
+theorem ofCoeffs_887_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 887 [882, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_887_1
+  change luebeckConwayPolynomialOfCoeffs 887 [882, 1] = luebeckConwayPolynomial_887_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_977_1_monic
+  exact luebeckConwayPolynomial_887_1_monic
 
-theorem ofCoeffs_977_3_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 977 [974, 1, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_977_3
-  change luebeckConwayPolynomialOfCoeffs 977 [974, 1, 0, 1] = luebeckConwayPolynomial_977_3 at heq
+theorem ofCoeffs_887_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 887 [882, 1, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_887_3
+  change luebeckConwayPolynomialOfCoeffs 887 [882, 1, 0, 1] = luebeckConwayPolynomial_887_3 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_977_3_monic
+  exact luebeckConwayPolynomial_887_3_monic
 
-theorem ofCoeffs_983_2_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 983 [5, 981, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_983_2
-  change luebeckConwayPolynomialOfCoeffs 983 [5, 981, 1] = luebeckConwayPolynomial_983_2 at heq
+theorem ofCoeffs_907_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 907 [2, 903, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_907_2
+  change luebeckConwayPolynomialOfCoeffs 907 [2, 903, 1] = luebeckConwayPolynomial_907_2 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_983_2_monic
+  exact luebeckConwayPolynomial_907_2_monic
 
-theorem ofCoeffs_991_1_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 991 [985, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_991_1
-  change luebeckConwayPolynomialOfCoeffs 991 [985, 1] = luebeckConwayPolynomial_991_1 at heq
+theorem ofCoeffs_911_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 911 [894, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_911_1
+  change luebeckConwayPolynomialOfCoeffs 911 [894, 1] = luebeckConwayPolynomial_911_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_991_1_monic
+  exact luebeckConwayPolynomial_911_1_monic
 
-theorem ofCoeffs_991_3_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 991 [985, 4, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_991_3
-  change luebeckConwayPolynomialOfCoeffs 991 [985, 4, 0, 1] = luebeckConwayPolynomial_991_3 at heq
+theorem ofCoeffs_911_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 911 [894, 1, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_911_3
+  change luebeckConwayPolynomialOfCoeffs 911 [894, 1, 0, 1] = luebeckConwayPolynomial_911_3 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_991_3_monic
+  exact luebeckConwayPolynomial_911_3_monic
 
-theorem ofCoeffs_997_2_monic :
-    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 997 [7, 995, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_997_2
-  change luebeckConwayPolynomialOfCoeffs 997 [7, 995, 1] = luebeckConwayPolynomial_997_2 at heq
+theorem ofCoeffs_919_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 919 [7, 910, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_919_2
+  change luebeckConwayPolynomialOfCoeffs 919 [7, 910, 1] = luebeckConwayPolynomial_919_2 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_997_2_monic
+  exact luebeckConwayPolynomial_919_2_monic
+
+theorem ofCoeffs_929_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 929 [926, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_929_1
+  change luebeckConwayPolynomialOfCoeffs 929 [926, 1] = luebeckConwayPolynomial_929_1 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_929_1_monic
+
+theorem ofCoeffs_929_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 929 [926, 5, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_929_3
+  change luebeckConwayPolynomialOfCoeffs 929 [926, 5, 0, 1] = luebeckConwayPolynomial_929_3 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_929_3_monic
+
+theorem ofCoeffs_937_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 937 [5, 934, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_937_2
+  change luebeckConwayPolynomialOfCoeffs 937 [5, 934, 1] = luebeckConwayPolynomial_937_2 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_937_2_monic
+
+theorem ofCoeffs_941_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 941 [939, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_941_1
+  change luebeckConwayPolynomialOfCoeffs 941 [939, 1] = luebeckConwayPolynomial_941_1 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_941_1_monic
+
+theorem ofCoeffs_941_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 941 [939, 3, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_941_3
+  change luebeckConwayPolynomialOfCoeffs 941 [939, 3, 0, 1] = luebeckConwayPolynomial_941_3 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_941_3_monic
+
+theorem ofCoeffs_947_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 947 [2, 943, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_947_2
+  change luebeckConwayPolynomialOfCoeffs 947 [2, 943, 1] = luebeckConwayPolynomial_947_2 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_947_2_monic
+
+theorem ofCoeffs_953_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 953 [950, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_953_1
+  change luebeckConwayPolynomialOfCoeffs 953 [950, 1] = luebeckConwayPolynomial_953_1 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_953_1_monic
+
+theorem ofCoeffs_953_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 953 [950, 7, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_953_3
+  change luebeckConwayPolynomialOfCoeffs 953 [950, 7, 0, 1] = luebeckConwayPolynomial_953_3 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_953_3_monic
+
+theorem ofCoeffs_967_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 967 [5, 965, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_967_2
+  change luebeckConwayPolynomialOfCoeffs 967 [5, 965, 1] = luebeckConwayPolynomial_967_2 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_967_2_monic
+
+theorem ofCoeffs_971_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 971 [965, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_971_1
+  change luebeckConwayPolynomialOfCoeffs 971 [965, 1] = luebeckConwayPolynomial_971_1 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_971_1_monic
+
+theorem ofCoeffs_971_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 971 [965, 3, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_971_3
+  change luebeckConwayPolynomialOfCoeffs 971 [965, 3, 0, 1] = luebeckConwayPolynomial_971_3 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_971_3_monic
+
+theorem ofCoeffs_977_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 977 [3, 972, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_977_2
+  change luebeckConwayPolynomialOfCoeffs 977 [3, 972, 1] = luebeckConwayPolynomial_977_2 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_977_2_monic
+
+theorem ofCoeffs_983_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 983 [978, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_983_1
+  change luebeckConwayPolynomialOfCoeffs 983 [978, 1] = luebeckConwayPolynomial_983_1 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_983_1_monic
+
+theorem ofCoeffs_983_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 983 [978, 1, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_983_3
+  change luebeckConwayPolynomialOfCoeffs 983 [978, 1, 0, 1] = luebeckConwayPolynomial_983_3 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_983_3_monic
+
+theorem ofCoeffs_991_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 991 [6, 989, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_991_2
+  change luebeckConwayPolynomialOfCoeffs 991 [6, 989, 1] = luebeckConwayPolynomial_991_2 at heq
+  rw [heq]
+  exact luebeckConwayPolynomial_991_2_monic
 
 
 end Conway

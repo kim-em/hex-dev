@@ -19,6 +19,250 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
+/-- Imported C(353, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_353_1 : FpPoly 353 :=
+  { coeffs := #[(350 : ZMod64 353), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(353, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_353_1_monic : DensePoly.Monic luebeckConwayPolynomial_353_1 := by rfl
+
+/-- Positive degree of C(353, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_353_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_353_1 := by decide
+
+/-- Lookup identifies the imported C(353, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_353_1 :
+    luebeckConwayPolynomial? 353 1 = some luebeckConwayPolynomial_353_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 353 [350, 1]) = some luebeckConwayPolynomial_353_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 353 [350, 1]) k =
+        ([350, 1].toArray.map (fun m => ZMod64.ofNat 353 m)).getD k
+          (Zero.zero : ZMod64 353) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_353_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(401, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_401_1 : FpPoly 401 :=
+  { coeffs := #[(398 : ZMod64 401), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(401, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_401_1_monic : DensePoly.Monic luebeckConwayPolynomial_401_1 := by rfl
+
+/-- Positive degree of C(401, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_401_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_401_1 := by decide
+
+/-- Lookup identifies the imported C(401, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_401_1 :
+    luebeckConwayPolynomial? 401 1 = some luebeckConwayPolynomial_401_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 401 [398, 1]) = some luebeckConwayPolynomial_401_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 401 [398, 1]) k =
+        ([398, 1].toArray.map (fun m => ZMod64.ofNat 401 m)).getD k
+          (Zero.zero : ZMod64 401) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_401_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(479, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_479_1 : FpPoly 479 :=
+  { coeffs := #[(466 : ZMod64 479), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(479, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_479_1_monic : DensePoly.Monic luebeckConwayPolynomial_479_1 := by rfl
+
+/-- Positive degree of C(479, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_479_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_479_1 := by decide
+
+/-- Lookup identifies the imported C(479, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_479_1 :
+    luebeckConwayPolynomial? 479 1 = some luebeckConwayPolynomial_479_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 479 [466, 1]) = some luebeckConwayPolynomial_479_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 479 [466, 1]) k =
+        ([466, 1].toArray.map (fun m => ZMod64.ofNat 479 m)).getD k
+          (Zero.zero : ZMod64 479) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_479_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(2, 2), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_2_2 : FpPoly 2 :=
+  { coeffs := #[(1 : ZMod64 2), 1, 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(2, 2). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_2_2_monic : DensePoly.Monic luebeckConwayPolynomial_2_2 := by rfl
+
+/-- Positive degree of C(2, 2). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_2_2_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_2_2 := by decide
+
+/-- Lookup identifies the imported C(2, 2). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_2_2 :
+    luebeckConwayPolynomial? 2 2 = some luebeckConwayPolynomial_2_2 := by
+  show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) = some luebeckConwayPolynomial_2_2
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) k =
+        ([1, 1, 1].toArray.map (fun m => ZMod64.ofNat 2 m)).getD k
+          (Zero.zero : ZMod64 2) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_2_2]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | 2 => rfl
+  | _ + 3 => rfl
+
+/-- Imported C(137, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_137_1 : FpPoly 137 :=
+  { coeffs := #[(134 : ZMod64 137), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(137, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_137_1_monic : DensePoly.Monic luebeckConwayPolynomial_137_1 := by rfl
+
+/-- Positive degree of C(137, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_137_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_137_1 := by decide
+
+/-- Lookup identifies the imported C(137, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_137_1 :
+    luebeckConwayPolynomial? 137 1 = some luebeckConwayPolynomial_137_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 137 [134, 1]) = some luebeckConwayPolynomial_137_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 137 [134, 1]) k =
+        ([134, 1].toArray.map (fun m => ZMod64.ofNat 137 m)).getD k
+          (Zero.zero : ZMod64 137) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_137_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(173, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_173_1 : FpPoly 173 :=
+  { coeffs := #[(171 : ZMod64 173), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(173, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_173_1_monic : DensePoly.Monic luebeckConwayPolynomial_173_1 := by rfl
+
+/-- Positive degree of C(173, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_173_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_173_1 := by decide
+
+/-- Lookup identifies the imported C(173, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_173_1 :
+    luebeckConwayPolynomial? 173 1 = some luebeckConwayPolynomial_173_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 173 [171, 1]) = some luebeckConwayPolynomial_173_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 173 [171, 1]) k =
+        ([171, 1].toArray.map (fun m => ZMod64.ofNat 173 m)).getD k
+          (Zero.zero : ZMod64 173) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_173_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(227, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_227_1 : FpPoly 227 :=
+  { coeffs := #[(225 : ZMod64 227), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(227, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_227_1_monic : DensePoly.Monic luebeckConwayPolynomial_227_1 := by rfl
+
+/-- Positive degree of C(227, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_227_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_227_1 := by decide
+
+/-- Lookup identifies the imported C(227, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_227_1 :
+    luebeckConwayPolynomial? 227 1 = some luebeckConwayPolynomial_227_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 227 [225, 1]) = some luebeckConwayPolynomial_227_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 227 [225, 1]) k =
+        ([225, 1].toArray.map (fun m => ZMod64.ofNat 227 m)).getD k
+          (Zero.zero : ZMod64 227) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_227_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(73, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_73_1 : FpPoly 73 :=
+  { coeffs := #[(68 : ZMod64 73), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(73, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_73_1_monic : DensePoly.Monic luebeckConwayPolynomial_73_1 := by rfl
+
+/-- Positive degree of C(73, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_73_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_73_1 := by decide
+
+/-- Lookup identifies the imported C(73, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_73_1 :
+    luebeckConwayPolynomial? 73 1 = some luebeckConwayPolynomial_73_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 73 [68, 1]) = some luebeckConwayPolynomial_73_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 73 [68, 1]) k =
+        ([68, 1].toArray.map (fun m => ZMod64.ofNat 73 m)).getD k
+          (Zero.zero : ZMod64 73) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_73_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-- Imported C(97, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_97_1 : FpPoly 97 :=
+  { coeffs := #[(92 : ZMod64 97), 1]
+    normalized := by right; decide }
+
+/-- Monicity of C(97, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_97_1_monic : DensePoly.Monic luebeckConwayPolynomial_97_1 := by rfl
+
+/-- Positive degree of C(97, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_97_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_97_1 := by decide
+
+/-- Lookup identifies the imported C(97, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_97_1 :
+    luebeckConwayPolynomial? 97 1 = some luebeckConwayPolynomial_97_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 97 [92, 1]) = some luebeckConwayPolynomial_97_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 97 [92, 1]) k =
+        ([92, 1].toArray.map (fun m => ZMod64.ofNat 97 m)).getD k
+          (Zero.zero : ZMod64 97) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_97_1]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
 /-- Imported C(113, 1), with ascending coefficients. -/
 @[expose] def luebeckConwayPolynomial_113_1 : FpPoly 113 :=
   { coeffs := #[(110 : ZMod64 113), 1]
@@ -46,28 +290,28 @@ namespace Conway
   | 1 => rfl
   | _ + 2 => rfl
 
-/-- Imported C(59, 1), with ascending coefficients. -/
-@[expose] def luebeckConwayPolynomial_59_1 : FpPoly 59 :=
-  { coeffs := #[(57 : ZMod64 59), 1]
+/-- Imported C(23, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_23_1 : FpPoly 23 :=
+  { coeffs := #[(18 : ZMod64 23), 1]
     normalized := by right; decide }
 
-/-- Monicity of C(59, 1). -/
-@[simp, grind .] theorem luebeckConwayPolynomial_59_1_monic : DensePoly.Monic luebeckConwayPolynomial_59_1 := by rfl
+/-- Monicity of C(23, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_23_1_monic : DensePoly.Monic luebeckConwayPolynomial_23_1 := by rfl
 
-/-- Positive degree of C(59, 1). -/
-@[simp, grind .] theorem luebeckConwayPolynomial_59_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_59_1 := by decide
+/-- Positive degree of C(23, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_23_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_23_1 := by decide
 
-/-- Lookup identifies the imported C(59, 1). -/
-@[simp, grind =] theorem luebeckConwayPolynomial?_hit_59_1 :
-    luebeckConwayPolynomial? 59 1 = some luebeckConwayPolynomial_59_1 := by
-  show some (luebeckConwayPolynomialOfCoeffs 59 [57, 1]) = some luebeckConwayPolynomial_59_1
+/-- Lookup identifies the imported C(23, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_23_1 :
+    luebeckConwayPolynomial? 23 1 = some luebeckConwayPolynomial_23_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 23 [18, 1]) = some luebeckConwayPolynomial_23_1
   congr 1
   apply DensePoly.ext_coeff
   intro k
-  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 59 [57, 1]) k =
-        ([57, 1].toArray.map (fun m => ZMod64.ofNat 59 m)).getD k
-          (Zero.zero : ZMod64 59) from DensePoly.coeff_ofCoeffs _ k]
-  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_59_1]
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 23 [18, 1]) k =
+        ([18, 1].toArray.map (fun m => ZMod64.ofNat 23 m)).getD k
+          (Zero.zero : ZMod64 23) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_23_1]
   match k with
   | 0 => rfl
   | 1 => rfl
@@ -100,28 +344,28 @@ namespace Conway
   | 1 => rfl
   | _ + 2 => rfl
 
-/-- Imported C(13, 1), with ascending coefficients. -/
-@[expose] def luebeckConwayPolynomial_13_1 : FpPoly 13 :=
-  { coeffs := #[(11 : ZMod64 13), 1]
+/-- Imported C(17, 1), with ascending coefficients. -/
+@[expose] def luebeckConwayPolynomial_17_1 : FpPoly 17 :=
+  { coeffs := #[(14 : ZMod64 17), 1]
     normalized := by right; decide }
 
-/-- Monicity of C(13, 1). -/
-@[simp, grind .] theorem luebeckConwayPolynomial_13_1_monic : DensePoly.Monic luebeckConwayPolynomial_13_1 := by rfl
+/-- Monicity of C(17, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_17_1_monic : DensePoly.Monic luebeckConwayPolynomial_17_1 := by rfl
 
-/-- Positive degree of C(13, 1). -/
-@[simp, grind .] theorem luebeckConwayPolynomial_13_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_13_1 := by decide
+/-- Positive degree of C(17, 1). -/
+@[simp, grind .] theorem luebeckConwayPolynomial_17_1_degree_pos : 0 < FpPoly.degree luebeckConwayPolynomial_17_1 := by decide
 
-/-- Lookup identifies the imported C(13, 1). -/
-@[simp, grind =] theorem luebeckConwayPolynomial?_hit_13_1 :
-    luebeckConwayPolynomial? 13 1 = some luebeckConwayPolynomial_13_1 := by
-  show some (luebeckConwayPolynomialOfCoeffs 13 [11, 1]) = some luebeckConwayPolynomial_13_1
+/-- Lookup identifies the imported C(17, 1). -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_17_1 :
+    luebeckConwayPolynomial? 17 1 = some luebeckConwayPolynomial_17_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 17 [14, 1]) = some luebeckConwayPolynomial_17_1
   congr 1
   apply DensePoly.ext_coeff
   intro k
-  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 13 [11, 1]) k =
-        ([11, 1].toArray.map (fun m => ZMod64.ofNat 13 m)).getD k
-          (Zero.zero : ZMod64 13) from DensePoly.coeff_ofCoeffs _ k]
-  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_13_1]
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 17 [14, 1]) k =
+        ([14, 1].toArray.map (fun m => ZMod64.ofNat 17 m)).getD k
+          (Zero.zero : ZMod64 17) from DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_17_1]
   match k with
   | 0 => rfl
   | 1 => rfl

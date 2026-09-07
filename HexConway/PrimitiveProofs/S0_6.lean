@@ -20,9 +20,21 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-/-- C(17, 1) has a generator of order 16. -/
-theorem primitive_17_1 :
-    Primitive 17 1 supportedEntry_17_1 [2] [4] where
+/-- C(487, 1) has a generator of order 486. -/
+theorem primitive_487_1 :
+    Primitive 487 1 supportedEntry_487_1 [2, 3] [1, 5] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(3, 2) has a generator of order 8. -/
+theorem primitive_3_2 :
+    Primitive 3 2 supportedEntry_3_2 [2] [3] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -30,13 +42,101 @@ theorem primitive_17_1 :
     exact absurd hq (by simp)
   check := by decide +kernel
 
-/-- C(5, 1) has a generator of order 4. -/
-theorem primitive_5_1 :
-    Primitive 5 1 supportedEntry_5_1 [2] [2] where
+/-- C(167, 1) has a generator of order 166. -/
+theorem primitive_167_1 :
+    Primitive 167 1 supportedEntry_167_1 [2, 83] [1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
     · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_83
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(197, 1) has a generator of order 196. -/
+theorem primitive_197_1 :
+    Primitive 197 1 supportedEntry_197_1 [2, 7] [2, 2] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_7
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(31, 1) has a generator of order 30. -/
+theorem primitive_31_1 :
+    Primitive 31 1 supportedEntry_31_1 [2, 3, 5] [1, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_5
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(101, 1) has a generator of order 100. -/
+theorem primitive_101_1 :
+    Primitive 101 1 supportedEntry_101_1 [2, 5] [2, 2] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_5
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(37, 1) has a generator of order 36. -/
+theorem primitive_37_1 :
+    Primitive 37 1 supportedEntry_37_1 [2, 3] [2, 2] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(53, 1) has a generator of order 52. -/
+theorem primitive_53_1 :
+    Primitive 53 1 supportedEntry_53_1 [2, 13] [2, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_13
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(11, 1) has a generator of order 10. -/
+theorem primitive_11_1 :
+    Primitive 11 1 supportedEntry_11_1 [2, 5] [1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_5
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(7, 1) has a generator of order 6. -/
+theorem primitive_7_1 :
+    Primitive 7 1 supportedEntry_7_1 [2, 3] [1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
     exact absurd hq (by simp)
   check := by decide +kernel
 
