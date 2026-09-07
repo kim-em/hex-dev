@@ -50,7 +50,10 @@ seven independent child trials per rung, the exact six-rung custom schedule,
 warm cache mode, `targetInnerNanos = 1000000000`, `maxSecondsPerCall = 10`,
 `signalFloorMultiplier = 1`, and unchanged default slope tolerance `0.15`.
 The harness doubles warmup probes from one call to a 1.953125 ms signal floor,
-then jumps to a power-of-two batch targeting at least 500 ms. Retain all
+then jumps to a power-of-two batch targeting at least 500 ms. The default
+`verdict_warmup_fraction = 0.2` drops the first of the six rungs: the verdict
+range is τ = 256..32768. The τ=64 observations remain diagnostic and are
+never discarded from the export. Retain all
 returned trial points, including lower rungs trimmed by the harness verdict.
 There is no extra internal hot-loop batch or discretionary warmup.
 
@@ -150,6 +153,9 @@ The inclusive profile's failed initial clock calibration is retained alongside
 its successful reprocessing. For samply's perf import, the raw sample sequence
 independently fixes the timestamp origin. `normalize_perf.py` requires every
 imported timestamp to equal its raw counterpart plus one offset (within one
-nanosecond) before the unchanged timed-region filter runs. It does not fit to
+nanosecond) before correcting `meta.startTime` using the independently recorded wall/monotonic
+spawn anchor. All relative sample, marker, counter and lifetime timestamps
+remain unchanged, so the profile has one coherent clock. The unchanged
+timed-region filter then runs. It does not fit to
 timed boundaries. ELF symbol intervals and binary hashes are retained by
 `elf_symbols.py` when samply import omits a presymbolication sidecar.

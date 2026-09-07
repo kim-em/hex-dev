@@ -198,15 +198,18 @@ class Symbolicator:
             table = entry.get("symbol_table") or []
             rvas = [row["rva"] for row in table]
             names = [strings[row["symbol"]] for row in table]
-            self.tables[entry["debug_name"]] = (rvas, names)
+            sizes = [row.get("size") for row in table]
+            self.tables[entry["debug_name"]] = (rvas, names, sizes)
 
     def resolve(self, lib_name: str, address: int) -> "str | None":
         table = self.tables.get(lib_name)
         if table is None:
             return None
-        rvas, names = table
+        rvas, names, sizes = table
         index = bisect.bisect_right(rvas, address) - 1
-        return names[index] if index >= 0 else None
+        if index < 0 or (sizes[index] is not None and address >= rvas[index] + sizes[index]):
+            return None
+        return names[index]
 
 
 def main_thread(profile: dict, thread_name: str = "hexbz_factor_service") -> dict:
@@ -265,6 +268,7 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int,
     self_counts = collections.Counter()
     inclusive_counts = collections.Counter()
     category_counts = collections.Counter()
+    unresolved = 0
     total = 0
     for index in range(samples["length"]):
         stack = samples["stack"][index]
@@ -275,6 +279,8 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int,
             continue
         total += 1
         leaf = names[chain[0]]
+        if leaf.startswith("0x"):
+            unresolved += 1
         self_counts[leaf] += 1
         self_raw_counts[raw_names[chain[0]]] += 1
         category_counts[categorise(leaf)] += 1
@@ -297,6 +303,7 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int,
     own.sort(key=lambda row: -row[1])
     return {
         "samples": total,
+        "unresolved_leaf_percent": round(100 * unresolved / total, 2) if total else 0,
         "leaf_categories": {
             category: share(count)
             for category, count in sorted(category_counts.items(),

@@ -102,7 +102,10 @@ class Attempt:
 
     def save(self) -> None:
         temporary = self.directory / "status.tmp"
-        temporary.write_text(json.dumps(self.record, indent=2, sort_keys=True) + "\n")
+        with temporary.open("w") as stream:
+            stream.write(json.dumps(self.record, indent=2, sort_keys=True) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
         temporary.replace(self.output)
 
     def execute(self, command: list[str], *, stdin: str | None,
@@ -501,16 +504,53 @@ def validate_divisors(export: dict, audit: str) -> None:
         raise ValueError("divisor configuration differs from preregistration")
     if config.get("param_schedule") != {"kind": "custom", "params": list(DIVISOR_COUNTS)}:
         raise ValueError("divisor schedule differs from preregistration")
+    if row.get("verdict_dropped_leading") != 1:
+        raise ValueError("divisor verdict must exclude exactly the registered warmup rung")
     points = row["points"]
     if len(points) != 7 * len(DIVISOR_COUNTS):
         raise ValueError("missing or extra divisor trials")
     for count in DIVISOR_COUNTS:
         group = [p for p in points if p["param"] == count]
+        if sorted(p.get("trial_index", -1) for p in group) != list(range(7)):
+            raise ValueError(f"divisor trial indices differ at {count}")
         if len(group) != 7 or any(p["status"] != "ok" or
                 int(p["result_hash"], 16) != expected_hashes[count] for p in group):
             raise ValueError(f"divisor trial/hash failure at {count}")
     if row["verdict"] != "consistent_with_declared_complexity":
         raise RuntimeError(f"invalid scientific export: divisors verdict={row['verdict']}")
+
+
+def inspect_divisors(attempt: Attempt, directory: Path, audit: str) -> None:
+    """Record available evidence and validation without changing the disposition."""
+    errors = {}
+    for name, filename in (("benchmark_export", "bench.json"), ("telemetry", "telemetry.json")):
+        try:
+            attempt.record[name] = json.loads((directory / filename).read_text())
+        except (OSError, ValueError) as error:
+            errors[name] = str(error)
+    attempt.record["ingestion_errors"] = errors
+    try:
+        validate_divisors(attempt.record.get("benchmark_export", {}), audit)
+        attempt.record["scientific_validation"] = {"status": "passed"}
+    except Exception as error:
+        attempt.record["scientific_validation"] = {
+            "status": "failed", "error_type": type(error).__name__, "error": str(error)}
+    attempt.save()
+
+
+def recheck_attempt(source: Path, output: Path) -> int:
+    """Revalidate retained bytes; this can never turn a rejected run into acceptance."""
+    record = json.loads(source.read_text())
+    directory = Path(str(source) + ".attempt")
+    attempt = Attempt(output)
+    attempt.record.update(scope="divisor-recheck", status="diagnostic",
+        original_status=record["status"], original_attempt=str(source),
+        input_sha256={str(p): sha256(p) for p in
+            (source, directory / "bench.json", directory / "telemetry.json")},
+        validator_sha256=sha256(Path(__file__)))
+    inspect_divisors(attempt, directory, record["divisor_audit"])
+    print(json.dumps(attempt.record["scientific_validation"]))
+    return 0 if attempt.record["scientific_validation"]["status"] == "passed" else 1
 
 
 def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> int:
@@ -526,17 +566,19 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
     attempt.save()
     export_path = attempt.directory / "bench.json"
     telemetry_path = attempt.directory / "telemetry.json"
-    run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
-         "--cpu", str(cpu), "--output", str(telemetry_path),
-         "--interval", "0.25", "--max-core-interference-ratio", "0.002",
-         "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
-         "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
-        timeout=900)
-    export = json.loads(export_path.read_text())
-    telemetry = json.loads(telemetry_path.read_text())
-    attempt.record.update(benchmark_export=export, telemetry=telemetry)
-    attempt.save()
-    validate_divisors(export, audit)
+    try:
+        run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
+             "--cpu", str(cpu), "--output", str(telemetry_path),
+             "--interval", "0.25", "--max-core-interference-ratio", "0.002",
+             "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
+             "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
+            timeout=900)
+    finally:
+        inspect_divisors(attempt, attempt.directory, audit)
+    if attempt.record["scientific_validation"]["status"] != "passed":
+        raise RuntimeError("divisor validation failed; see retained scientific_validation")
+    if attempt.record.get("telemetry", {}).get("summary", {}).get("contaminated", True):
+        raise RuntimeError("divisor telemetry is contaminated or unavailable")
     verify_sources(attempt)
     attempt.record["status"] = "accepted"
     attempt.save()
@@ -548,6 +590,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--audit-attempt", type=Path, help="revalidate retained evidence without measurement")
     parser.add_argument("--pari", default="gp")
     parser.add_argument("--ecm", default="ecm")
     parser.add_argument("--cpu", default="auto")
@@ -561,6 +604,8 @@ def main() -> int:
         return 0
     if args.output is None:
         parser.error("--output is required unless --report is used")
+    if args.audit_attempt:
+        return recheck_attempt(args.audit_attempt, args.output)
     if args.rounds < 5 or args.rounds % 2 == 0 or args.timeout <= 0:
         parser.error("--rounds must be odd and at least 5; --timeout must be positive")
     dirty = git("status", "--porcelain", "--untracked-files=all")

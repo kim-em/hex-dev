@@ -430,7 +430,12 @@ explicitly to `Hex.IntFactorBench.runDivisors`; this pending owner target
 cannot yet discharge bridge Phase 4.
 
 Preregistration is `de6e13c5c`. Both prescribed attempts ran on `chungus2`,
-CPU 7, with seven trials at each of six rungs. Complete output validation and
+CPU 7, with seven trials at each of six rungs. The preregistered default warmup trim
+excludes τ=64 from the verdict, so its tested range is τ=256..32768. The
+retained τ=64 timing/model ratio is about 13.34, versus 11.05..11.93 on the
+first attempt's verdict range. The raw export's per-point `part_of_verdict`
+flags do not reflect that trimming; `verdict_dropped_leading=1` controls the
+verdict and is now explicitly checked. Complete output validation and
 all 42 hashes pass in each export. **Neither attempt is accepted**:
 
 | Attempt | Raw harness verdict | Residual slope | Core interference | Status |
@@ -537,6 +542,12 @@ python3 scripts/profile/summarize_profile.py \
 ```
 
 ### Integration audit
+
+Rolling the counters back makes the Phase-4 report/family/comparator presence
+gate, proof-probe nonemptiness gate and bridge-owner report gate dormant for
+this pair. The report, declared family/comparator names and nonempty core
+proof-probe root have been checked explicitly here; recheck all three before
+recertification. The all-benchmark Mathlib-free scan remains active.
 
 Compared with the local Phase-5–7 join `a98ea38b5b2dd1323084fd1d7f4d5db492e717c2`,
 the pair's Lean library sources, umbrella modules and manual chapter are

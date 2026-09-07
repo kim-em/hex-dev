@@ -44,7 +44,8 @@ class PreservationTests(unittest.TestCase):
         fixture = collector.ROOT / 'reports/bench-results/hex-int-factor-phase4-f80afaec-chungus2-cpu7.json'
         export = json.loads(fixture.read_text())['benchmark_export']
         next(r for r in export['results'] if r['kind'] == 'parametric')['verdict'] = 'inconclusive'
-        self.exercise(lambda _: collector.validate_export(export), RuntimeError)
+        record = self.exercise(lambda _: collector.validate_export(export), RuntimeError)
+        self.assertIn("verdict=inconclusive", record["error"])
 
     def test_malformed_export(self):
         self.exercise(lambda _: json.loads('{'), json.JSONDecodeError)
@@ -124,16 +125,46 @@ class DivisorValidationTests(unittest.TestCase):
                 values += [d * prime for d in values]
             values.sort()
             audit.append(','.join(map(str, [count, values[-1], 42, *values])))
-            points.extend(dict(param=count, status='ok', result_hash='000000000000002a')
-                          for _ in range(7))
+            points.extend(dict(param=count, trial_index=i, status='ok', result_hash='000000000000002a')
+                          for i in range(7))
         export = {'results': [dict(function='Hex.IntFactorBench.runDivisors',
             config=dict(outer_trials=7, param_floor=64, param_ceiling=32768,
                 target_inner_nanos=1000000000, max_seconds_per_call=10,
                 signal_floor_multiplier=1, slope_tolerance=0.15, cache_mode='warm',
                 verdict_warmup_fraction=.2, narrow_range_noise_floor=1.5,
                 param_schedule=dict(kind='custom', params=list(collector.DIVISOR_COUNTS))),
-            points=points, verdict='consistent_with_declared_complexity')]}
+            points=points, verdict_dropped_leading=1, verdict='consistent_with_declared_complexity')]}
         return export, '\n'.join(audit)
+
+    def test_committed_operation_counts(self):
+        from scripts.bench.divisor_model import census
+        expected = json.loads((collector.ROOT /
+            'reports/bench-results/hex-int-factor-divisor-operation-counts.json').read_text())
+        self.assertEqual([census(n) for n in collector.DIVISOR_COUNTS], expected)
+
+    def test_rejected_run_still_records_validation(self):
+        export, audit = self.fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            attempt = collector.Attempt(Path(directory) / 'result.json')
+            attempt.record['status'] = 'rejected'
+            (attempt.directory / 'bench.json').write_text(json.dumps(export))
+            (attempt.directory / 'telemetry.json').write_text(json.dumps({'summary': {'contaminated': True}}))
+            collector.inspect_divisors(attempt, attempt.directory, audit)
+            record = json.loads(attempt.output.read_text())
+            self.assertEqual(record['status'], 'rejected')
+            self.assertEqual(record['scientific_validation']['status'], 'passed')
+            self.assertTrue(record['telemetry']['summary']['contaminated'])
+            self.assertEqual(record['benchmark_export'], export)
+
+    def test_malformed_retained_export(self):
+        with tempfile.TemporaryDirectory() as directory:
+            attempt = collector.Attempt(Path(directory) / 'result.json')
+            attempt.record['status'] = 'rejected'
+            (attempt.directory / 'bench.json').write_text('{')
+            collector.inspect_divisors(attempt, attempt.directory, '')
+            self.assertEqual(attempt.record['status'], 'rejected')
+            self.assertEqual(attempt.record['scientific_validation']['status'], 'failed')
+            self.assertIn('benchmark_export', attempt.record['ingestion_errors'])
 
     def test_complete_output_and_trials(self):
         collector.validate_divisors(*self.fixture())

@@ -73,6 +73,7 @@ jobs:
           python3 -m unittest scripts/bench/test_primality_mathlib_proof_sweep.py
           python3 -m unittest scripts/bench/test_intfactor_phase4.py
           python3 -m unittest scripts/profile/test_normalize_perf.py
+          python3 -m unittest scripts/profile/test_elf_symbols.py
           python3 -m unittest scripts/bench/test_core_telemetry.py
           python3 -m unittest scripts/bench/test_tower_factor_compare.py
           python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
