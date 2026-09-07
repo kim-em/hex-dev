@@ -14,7 +14,7 @@ from pathlib import Path
 import subprocess
 
 
-def verify(path, commit=None):
+def verify(path, commit=None, binary=None):
     data = json.loads(path.read_text())
     revision = commit or data.get("matching_sources_commit") or data.get("commit")
     if not revision:
@@ -32,6 +32,9 @@ def verify(path, commit=None):
             != data["artifact_sha256"]
         ):
             raise ValueError(f"{path}: artifact differs at {data['artifact']}")
+    if binary is not None:
+        if hashlib.sha256(binary.read_bytes()).hexdigest() != data.get("binary_sha256"):
+            raise ValueError(f"{path}: benchmark binary differs at {binary}")
     print(f"{path}: {len(recorded)} source hashes match {revision}")
 
 
@@ -39,9 +42,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("reports", nargs="+", type=Path)
     parser.add_argument("--commit")
+    parser.add_argument(
+        "--binary", type=Path, help="Also verify a rebuilt benchmark binary"
+    )
     args = parser.parse_args()
     for path in args.reports:
-        verify(path, args.commit)
+        verify(path, args.commit, args.binary)
 
 
 if __name__ == "__main__":

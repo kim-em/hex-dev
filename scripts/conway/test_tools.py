@@ -86,6 +86,15 @@ class ConwayToolsTest(unittest.TestCase):
             path.write_text(json.dumps(data))
             with contextlib.redirect_stdout(io.StringIO()):
                 verify(path)
+            binary = Path(directory) / "binary"
+            binary.write_bytes(b"measured executable")
+            data["binary_sha256"] = hashlib.sha256(binary.read_bytes()).hexdigest()
+            path.write_text(json.dumps(data))
+            with contextlib.redirect_stdout(io.StringIO()):
+                verify(path, binary=binary)
+            binary.write_bytes(b"different executable")
+            with self.assertRaisesRegex(ValueError, "benchmark binary differs"):
+                verify(path, binary=binary)
             data["source_sha256"]["lean-toolchain"] = "0" * 64
             path.write_text(json.dumps(data))
             with self.assertRaisesRegex(ValueError, "source differs"):
