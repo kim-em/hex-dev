@@ -329,12 +329,13 @@ large concurrent CPU bursts. Preserve that complete series and use the same
 saved main-`5ca950a2b` and candidate-`a38030daf` binaries for a fresh replication.
 
 Before selecting a core, require that **at most 16 logical CPUs are at least
-5% busy in every one of the fifteen consecutive two-second preflight
+5% busy in every one of sixty consecutive two-second preflight
 windows**, in addition to both selected hardware threads being below 5% in
 all those windows. Missing CPU telemetry counts as busy. The whole-host
 ceiling also applies to the two-second preflight before the second arm.
 Record the complete CPU set and both whole-host preflights, and audit these
-rules from the raw samples. `--max-busy-cpus 16 --quiet-windows 15` selects
+rules from the raw samples. The two quiet minutes avoid starting in short gaps between large CPU bursts.
+`--max-busy-cpus 16 --quiet-windows 60` selects
 these stricter environmental conditions. Default whole-host admission remains
 unchanged for the earlier protocols, whose verdicts are reproduced by tests.
 
