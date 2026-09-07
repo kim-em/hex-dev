@@ -59,12 +59,20 @@ more than once. The original baseline records only maximum child RSS because
 the first tree sampler did not traverse children belonging to other threads.
 Artifact sizes include every retained Conway output, not just `.olean` files.
 The source hashes of the accepted Conway and companion runs match the committed
-library sources; later runtime-driver batching does not change those modules.
+library sources. The final records also hash the local dependency import closure,
+including meta imports and `HexPrimality.Cert`. The source-dirty flag excludes
+measurement reports, and the warm-import list is recorded before timing begins.
 For capped runs these are incomplete artifacts, not the size of a full library.
 
-The worst accepted run leaves **29.037 seconds (9.7%)** below the ceiling.
+The worst accepted run leaves **55.214 seconds (18.4%)** below the ceiling.
 Adding entries or changing replay code requires three fresh measurements;
 marginal costs do not justify extrapolating acceptance.
+
+The [rebase source comparison](conway/rebase-equivalence.json) verifies that
+all 312 Conway and local-dependency source hashes remain unchanged on the
+updated main branch. Only the LeanBench package pin changes, from `b583ddd`
+to `8a37daf`; the proof library does not import LeanBench. Compiled scientific
+measurements use the updated framework separately below.
 
 ## Candidate measurements
 
@@ -82,6 +90,9 @@ marginal costs do not justify extrapolating acceptance.
 | [shared-700](conway/shared-700.json) | 700 | 300.086, 300.071, 300.033 | 10.8 | 205.7 | capped; incomplete |
 | [quartic-500](conway/quartic-500.json) | 627 | 258.782, 300.048, 264.111 | 10.6 | 190.4 | one capped; rejected |
 | [quartic-300](conway/quartic-300.json) | 594 | 251.817, 252.737, 270.963 | 10.8 | 180.9 | complete |
+| [direct exponents, 594](conway/final-594.json) | 594 | 224.512, 213.630, 228.874 | 10.7 | 179.7 | complete |
+| [direct exponents, 627](conway/direct-627.json) | 627 | 249.186, 277.803, 300.010 | 10.4 | incomplete | one capped; rejected |
+| [accepted 594](conway/accepted-594.json) | 594 | 244.786, 217.620, 211.232 | 10.8 | 179.7 | complete |
 
 These measure several implementations, not just different row counts. The
 baseline is the original 38-entry implementation at `b7f4d6200`; its Tier 1
@@ -104,31 +115,44 @@ extends every prime above 13 to degree 4. The 627-entry scope retains degree 4
 only below characteristic 500 and degree 3 at the remaining primes. These are divisor-closed scopes.
 The 820-entry envelope is exactly the issue's proposed envelope, without holes.
 
-The 594-entry scope narrows quartic coverage to primes below 300, retaining
-cubic coverage above that boundary. All three runs complete below the ceiling
-(251.817, 252.737, 270.963 seconds). The nearest larger measured scope, 627 entries, fails one
-of its three runs; it is not accepted on the strength of its two successful runs.
+The accepted 594-entry scope keeps quartic coverage below characteristic 300
+and cubic coverage above that boundary. Its final controlled runs take
+**244.786, 217.620, 211.232 seconds**, all below the ceiling.
 
-For the 594-entry scope, summed module times (seconds) are:
+The checker computes exponents directly, avoiding redundant digit-list witnesses.
+An initial three-run measurement of this simplification takes 224.512, 213.630
+and 228.874 seconds. That additional margin warrants remeasuring the 627-entry
+scope: adding 33 quartic entries, with their 66 new compatibility obligations,
+takes 249.186, 277.803 and 300.010 seconds. The third run is terminated, so this
+larger scope is rejected despite its two successful runs. The accepted scope is
+then restored and measured with the finalized import/provenance tooling.
+
+These are whole-scope marginal comparisons: the degree-one and degree-two
+dependencies of the additional quartic entries are already present. The
+individual binary-entry comparison below also records all missing-entry and
+compatibility obligations. None of these costs supports extrapolating a larger
+scope without rebuilding it.
+
+For the accepted scope, summed module times (seconds) are:
 
 | Module or generated family | Run 1 | Run 2 | Run 3 |
 |---|---:|---:|---:|
-| Table data | 42.37 | 40.00 | 68.53 |
-| Rabin certificates | 143.90 | 139.64 | 182.97 |
-| Generated API | 66.72 | 63.49 | 86.71 |
-| Factor-prime proofs | 5.10 | 4.98 | 11.32 |
-| Primitivity | 430.81 | 402.23 | 393.58 |
-| Compatibility | 176.34 | 197.37 | 151.44 |
-| Power helpers and generation commands | 1.94 | 1.85 | 3.80 |
+| Table data | 50.16 | 46.86 | 46.90 |
+| Rabin certificates | 200.07 | 144.84 | 142.93 |
+| Generated API | 70.01 | 50.10 | 49.21 |
+| Factor-prime proofs | 4.94 | 5.03 | 5.03 |
+| Primitivity | 325.02 | 344.44 | 323.88 |
+| Compatibility | 137.81 | 137.25 | 136.16 |
+| Power helpers and generation commands | 2.35 | 2.36 | 2.38 |
 
-Every completed run produces 180.95 MiB of Conway outputs. Peak sampled
-process-tree RSS is 10.81, 10.51 and 10.31 GiB. The module sums exceed wall
+Every completed run produces 179.74 MiB of Conway outputs. Peak sampled
+process-tree RSS is 10.85, 10.48, 10.47 GiB. The module sums exceed wall
 time because the four chains run concurrently. The raw JSON retains each
 individual shard's timing and artifact totals by suffix.
 
 ### Marginal accepted binary depth
 
-A [38-entry control with the final checkers](conway/control-38-shared.json)
+A [38-entry control with shared factor-prime proofs](conway/control-38-shared.json)
 takes 18.369, 18.789, 18.169 seconds. Adding only `(2,16)` gives the
 [39-entry divisor-closed scope](conway/binary16-closure.json), taking
 32.778, 32.496, 32.503 seconds. Its proper divisors 1, 2, 4 and 8 are already
@@ -139,8 +163,9 @@ outputs. The median wall-time difference is
 The 39-entry outputs occupy 14.71 MiB,
 with peak process-tree RSS 8.14 GiB.
 This is an entire clean-scope comparison, not timing a theorem with its
-supporting outputs cached. The original 594-entry scope is regenerated after
-these marginal probes.
+supporting outputs cached. These individual-entry probes use the preceding digit-list checker; their
+source hashes identify that implementation. The accepted scope is restored
+after the probes.
 
 ### Expensive and unavailable candidates
 
@@ -188,8 +213,11 @@ actual primality proofs for every child: a `.small` payload by itself is not
 claimed to pass the recursive certificate checker. In the 700-entry experiment,
 sharing reduces summed factor-prime module time from 370–454 seconds to under
 ten seconds. Polynomial power and compatibility replay still push the full
-700-entry build above the ceiling. This is a measured limitation of the current
-checkers, not a mathematical limit on Conway polynomials.
+700-entry build above the ceiling. That experiment uses the digit-list checker; it does not establish a
+mathematical limit on Conway polynomials or a timing for every later variant.
+The direct-exponent checker remeasures the nearer 627-entry frontier, which
+still fails one of three runs. No exhaustive search over nonrectangular
+subsets is claimed.
 
 The [all-candidate factor check](conway/all-factor-primes.json) also builds the
 407 distinct multiplicative-order factor primes from all 821 available source
@@ -216,7 +244,8 @@ factorizations and prime certificates, primitivity and compatibility proofs,
 supported-entry APIs, `HexGFq` instances, Mathlib order and embedding
 specializations, and
 a compiled all-entry replay driver. It validates the exact divisor-closed scope
-and preserves baseline support. Ordinary builds do not fetch data or search for
+and preserves baseline support. Generation also checks coefficient agreement
+with the shared factorization corpus on every overlapping key. Ordinary builds do not fetch data or search for
 factorizations or certificates. Irreducibility, primitivity and compatibility
 do not prove lexicographic minimality; the polynomial choice is imported.
 
@@ -243,20 +272,37 @@ script so the report records the actual scope. Regenerate and verify the accepte
 scope again after experiments. Network refresh is a separate explicit operation,
 `scripts/conway/import_source.py`.
 
+`scripts/conway/verify_provenance.py` checks recorded source and dependency
+hashes against the recorded or explicitly selected commit. It also checks a
+referenced scientific artifact, and `--binary` verifies a locally rebuilt
+benchmark binary. Historical reports retain their recorded source sets; the
+verifier does not invent missing historical dependency evidence. The initial
+`final-594` import manifest predates meta-import scanning; `accepted-594` records
+the complete local import closure. The committed Python regression checks cover
+meta imports, shared-cache divergence, duplicate scope keys and hash mismatches.
+
+```sh
+python3 scripts/conway/verify_provenance.py \
+  reports/conway/accepted-594.json reports/conway/accepted-594-bridge.json
+```
+
 ## Additional field and Mathlib build cost
 
-The [full companion measurements](conway/quartic-300-bridge.json) remove all
-`HexGFq` and `HexGFqMathlib` outputs and rebuild the complete `HexGFqMathlib`
-umbrella, retaining Conway and external dependencies. This includes field
-instances, generic field proofs, the packed-field bridge, generator orders,
-subfield soundness, and every generated embedding. No Conway proof obligation
-is moved into this measurement to satisfy the Conway ceiling.
+The [full companion measurements](conway/accepted-594-bridge.json) remove all
+`HexGFq` and `HexGFqMathlib` outputs and explicitly build both complete umbrellas,
+retaining Conway and external dependencies. This includes field instances,
+generic field proofs, the packed-field bridge, generator orders, subfield
+soundness, and every generated embedding. No Conway proof obligation is moved
+into this measurement to satisfy the Conway ceiling.
 
 | Run | Wall seconds | Peak tree RSS GiB | Outputs MiB |
 |---|---:|---:|---:|
-| 1 | 24.830 | 9.98 | 32.34 |
-| 2 | 22.698 | 9.99 | 32.34 |
-| 3 | 22.574 | 9.95 | 32.34 |
+| 1 | 20.525 | 9.88 | 31.22 |
+| 2 | 21.533 | 9.88 | 31.22 |
+| 3 | 21.027 | 9.87 | 31.22 |
+
+The [preceding expanded companion measurements](conway/quartic-300-bridge.json)
+take 24.830, 22.698 and 22.574 seconds with the digit-list transport.
 
 The [original companion observations](conway/baseline-bridge.json) were
 13.602, 12.298 and 12.602 seconds, but cleaned only `HexGFqMathlib` and targeted
@@ -264,6 +310,35 @@ The [original companion observations](conway/baseline-bridge.json) were
 umbrella, so subtracting them from the expanded full-companion measurements
 would not be a controlled estimate of marginal cost. The new measurements
 report the entire additional user-facing build instead.
+
+## Hosted CI observations
+
+[CI run 34135441514](https://github.com/kim-em/hex-dev/actions/runs/34135441514)
+passes the complete job: build, generation, compiled replay, conformance,
+manual, benchmark verification and oracles. Its single Ubuntu runner is
+`runnervmejwal`, an Intel Xeon Platinum 8573C with about 15.6 GiB RAM,
+Lean 4.34.0-rc2 and four measurement threads.
+
+| Target / raw evidence | Wall seconds | Peak summed RSS GiB | Outputs MiB |
+|---|---:|---:|---:|
+| [Conway](conway/ci/34135441514/ci-conway.json) | 392.196 | 9.90 | 177.70 |
+| [Companion](conway/ci/34135441514/ci-bridge.json) | 27.161 | 6.86 | 28.94 |
+
+Neither timed build rebuilds an external dependency. The accompanying
+[compiled replay](conway/ci/34135441514/ci-runtime.jsonl) checks all 594 entries
+and 522 compatibility pairs. The [run record](conway/ci/34135441514/run.json)
+retains source identity and original download hashes;
+[job metadata](conway/ci/34135441514/jobs.json) records the complete CI timings.
+
+This observation uses the same direct-exponent checker and scope, before the
+meta-import scanner and report-only dirty-flag corrections. The original
+companion dirty flag includes the preceding Conway timing files; source hashes
+match the recorded revision. The finalized CI warms all external imports,
+measures each initial clean build once, and reuses its outputs for subsequent
+targets. A 1800-second limit and conservative 14-GiB summed-RSS guard bound each
+hosted measurement. Summed RSS can count shared mappings more than once; it is
+not an exact physical-memory limit. The 300-second acceptance ceiling belongs
+to the designated machine, not these hosted observations.
 
 ## Compiled runtime evidence
 
@@ -277,15 +352,19 @@ using mutable polynomial inputs to prevent compile-time evaluation. With
 Hosted CI checks values and records times without asserting these machine-specific
 runtime ceilings.
 
-The [five complete replay passes](conway/runtime-594.json) cover every selected
+The [five final replay passes](conway/runtime-final-594.json) use one runtime
+thread and CPU 21 affinity. They cover every selected
 entry and all 522 compatibility obligations, with exact emitted-key coverage
 checked on every pass. Maxima over these passes are:
 
 | Operation | Entry at maximum | Maximum | Ceiling |
 |---|---|---:|---:|
-| Irreducibility | `C(263,4)` | 1.178 ms | 2 ms |
-| Primitivity | `C(269,4)` | 2.026 ms | 5 ms |
-| Aggregate compatibility | `C(2,16)` | 2.455 ms | 5 ms |
+| Irreducibility | `C(7,8)` | 0.293 ms | 2 ms |
+| Primitivity | `C(2,16)` | 1.086 ms | 5 ms |
+| Aggregate compatibility | `C(2,16)` | 2.440 ms | 5 ms |
+
+The [preceding replay measurements](conway/runtime-594.json) retain the earlier
+digit-list driver and its source/binary identities.
 
 The development replay executable is built separately from the library target.
 Splitting its generated `main` into functions of 24 entries reduces its Lean
@@ -326,39 +405,44 @@ is changed.
 
 ### Accepted scientific run
 
-The [complete controlled scientific run](bench-results/hex-conway-594-chungus2.json)
-uses `LEAN_NUM_THREADS=1` and CPU 21 affinity on chungus2. All 594 lookup keys
-have five successful trials (2970 observations); the fit is consistent with
-`degree + 2` (`cMin=59.811`, `cMax=65.366`, `beta=-0.002`). Every fixed repeat
-succeeds, all expected hashes match, and no operation ceiling is exceeded.
-The implementation and ceilings are identical to the earlier runs; the runtime
-thread count and CPU affinity are explicit measurement controls.
-[Source and binary identities](conway/scientific-594.json) link the dirty
-pre-rebase run to the matching committed sources. Rebuilding after rebase and
-restoring the accepted scope produces identical benchmark and replay binaries.
+The [final controlled scientific run](bench-results/hex-conway-594-8a37daf-chungus2.json)
+uses the rebased LeanBench revision `8a37daf`, `LEAN_NUM_THREADS=1` and CPU 21
+affinity on chungus2. All 594 lookup keys have five successful trials (2970
+observations); the fit is consistent with `degree + 2`
+(`cMin=80.872`, `cMax=112.811`, `beta=+0.058`).
+Every fixed repeat succeeds, all expected hashes match, and no operation ceiling
+is exceeded. [Source, dependency and binary identities](conway/scientific-final-594.json)
+record the final executable and its inputs. The preceding
+[passing scientific reference](bench-results/hex-conway-594-chungus2.json)
+uses LeanBench `b583ddd` (`cMin=59.811`, `cMax=65.366`, `beta=-0.002`);
+its [original source record](conway/scientific-594.json) remains available.
+The final run is repeated after the framework update, without changing the
+lookup implementation, complexity model or operation ceilings.
 
 ```sh
 LEAN_NUM_THREADS=1 HEXCONWAY_ENFORCE_BUDGETS=1 taskset -c 21 \
   .lake/build/bin/hexconway_bench run --filter Hex.ConwayBench \
   --outer-trials 5 \
-  --export-file reports/bench-results/hex-conway-594-chungus2.json
+  --export-file reports/bench-results/hex-conway-594-8a37daf-chungus2.json
+python3 scripts/conway/verify_provenance.py \
+  reports/conway/scientific-final-594.json --binary .lake/build/bin/hexconway_bench
 ```
 
 | Fixed target suffix | Median µs | Maximum µs |
 |---|---:|---:|
-| `runIrreducibility_2_16` | 138.076 | 140.596 |
-| `runTier2Compat_2_3_6Checksum` | 27.391 | 29.075 |
-| `runTier1Irreducibility_11_6Checksum` | 116.077 | 116.900 |
-| `runTier2Compat_13_1_6Checksum` | 77.548 | 77.676 |
-| `runConwayPolySupported_2_1Checksum` | 0.089 | 0.092 |
-| `runTier1Irreducibility_2_6Checksum` | 19.200 | 19.623 |
-| `runTier1Irreducibility_5_6Checksum` | 69.138 | 72.309 |
-| `runCompat_2_1_16` | 401.147 | 416.214 |
-| `runTier1Irreducibility_2_1Checksum` | 1.220 | 1.239 |
-| `runTier2Compat_2_4_8Checksum` | 51.208 | 51.732 |
-| `runTier1Irreducibility_7_6Checksum` | 96.610 | 98.778 |
-| `runTier1Irreducibility_3_6Checksum` | 39.934 | 40.456 |
-| `runTier1Irreducibility_13_6Checksum` | 131.994 | 136.866 |
+| `runIrreducibility_2_16` | 215.810 | 222.142 |
+| `runTier2Compat_2_3_6Checksum` | 41.211 | 41.566 |
+| `runTier1Irreducibility_11_6Checksum` | 178.581 | 179.232 |
+| `runTier2Compat_13_1_6Checksum` | 119.730 | 121.040 |
+| `runConwayPolySupported_2_1Checksum` | 0.141 | 0.144 |
+| `runTier1Irreducibility_2_6Checksum` | 29.558 | 30.330 |
+| `runTier1Irreducibility_5_6Checksum` | 105.992 | 106.619 |
+| `runCompat_2_1_16` | 625.633 | 650.084 |
+| `runTier1Irreducibility_2_1Checksum` | 2.399 | 2.478 |
+| `runTier2Compat_2_4_8Checksum` | 50.399 | 51.301 |
+| `runTier1Irreducibility_7_6Checksum` | 93.907 | 97.132 |
+| `runTier1Irreducibility_3_6Checksum` | 38.032 | 39.741 |
+| `runTier1Irreducibility_13_6Checksum` | 128.279 | 135.678 |
 
 The lookup registration derives its exact key schedule from `supportedPairs`.
 Its mode-1 model is `degree + 2`, accounting for coefficient materialization and
