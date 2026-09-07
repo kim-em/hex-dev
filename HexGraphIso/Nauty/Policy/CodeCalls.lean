@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexGraphIso.Nauty.Policy.ReturnCodes
 public import HexGraphIso.Nauty.Policy.Safety
 import all HexGraphIso.Nauty.Policy.Fuel
 import all HexGraphIso.Nauty.Policy.Prepared
@@ -23,6 +24,28 @@ public section
 namespace Hex.GraphIso.Nauty.Engine
 
 variable {n k : Nat}
+
+/-- Node preparation advances both code machines by the actual refinement
+code and preserves the incoming semantic incumbent. -/
+theorem Comparison.prepare {ctx : Ctx n} {tcLevel numcells : Nat}
+    {cs bs fs : List Nat} {st : Search n} (h : Comparison ctx cs bs fs st)
+    (hlen : cs.length ≤ n) :
+    let p := prepareOther ctx tcLevel (cs.length + 1) numcells st
+    Comparison ctx (cs ++ [p.2.1]) bs fs p.2.2.2.2.2 ∧
+      p.2.2.2.2.2.key ctx bs = st.key ctx bs := by
+  have hc := refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active numcells
+  change (Engine.visit ctx (cs.length + 1) numcells st).2.1 < codeSentinel at hc
+  refine ⟨?_, ?_⟩
+  · have hm := ((h.visit (cs.length + 1) numcells).compare hc hlen).target tcLevel
+      (Engine.visit ctx (cs.length + 1) numcells st).1
+    simpa only [prepareOther, List.length_append, List.length_singleton] using hm
+  · unfold prepareOther
+    rw [chooseTarget_fields]
+    have hl := (compareCodes_frame (cs.length + 1)
+      (Engine.visit ctx (cs.length + 1) numcells st).2.1
+      (Engine.visit ctx (cs.length + 1) numcells st).2.2).2.2.2
+    simp only [Search.key, hl]
+    rfl
 
 /-- Whole-call code comparisons retain the incoming path and monotonically
 increase the incumbent. A positive sweep comparison requires a first child. -/

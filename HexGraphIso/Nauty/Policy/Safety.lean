@@ -8,16 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.Prepared
-public import HexGraphIso.Nauty.Policy.Calls
-public import HexGraphIso.Nauty.Policy.EquitableState
-public import HexGraphIso.Nauty.Policy.PathState
-import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.Calls
-import all HexGraphIso.Nauty.Policy.HistoryState
-import all HexGraphIso.Nauty.Policy.Invariant
-import all HexGraphIso.Nauty.Policy.Trace
-import all HexGraphIso.Nauty.Policy.Classify
-import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Search.Generic

@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.ReturnCodes
 public import HexGraphIso.Nauty.Policy.CallState
 public import HexGraphIso.Nauty.Policy.Calls
 public import HexGraphIso.Nauty.Policy.EquitableState
@@ -34,28 +33,6 @@ variable {n k : Nat}
     Nat × Nat × (Int × VSet n × Nat × Search n) :=
   let r := visit ctx level numcells st
   (r.1, r.2.1, chooseTarget false ctx tcLevel level r.1 (compareCodes level r.2.1 r.2.2))
-
-/-- Node preparation advances both code machines by the actual refinement
-code and preserves the incoming semantic incumbent. -/
-theorem Comparison.prepare {ctx : Ctx n} {tcLevel numcells : Nat}
-    {cs bs fs : List Nat} {st : Search n} (h : Comparison ctx cs bs fs st)
-    (hlen : cs.length ≤ n) :
-    let p := prepareOther ctx tcLevel (cs.length + 1) numcells st
-    Comparison ctx (cs ++ [p.2.1]) bs fs p.2.2.2.2.2 ∧
-      p.2.2.2.2.2.key ctx bs = st.key ctx bs := by
-  have hc := refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active numcells
-  change (Engine.visit ctx (cs.length + 1) numcells st).2.1 < codeSentinel at hc
-  refine ⟨?_, ?_⟩
-  · have hm := ((h.visit (cs.length + 1) numcells).compare hc hlen).target tcLevel
-      (Engine.visit ctx (cs.length + 1) numcells st).1
-    simpa only [prepareOther, List.length_append, List.length_singleton] using hm
-  · unfold prepareOther
-    rw [chooseTarget_fields]
-    have hl := (compareCodes_frame (cs.length + 1)
-      (Engine.visit ctx (cs.length + 1) numcells st).2.1
-      (Engine.visit ctx (cs.length + 1) numcells st).2.2).2.2.2
-    simp only [Search.key, hl]
-    rfl
 
 /-- A target selected from a non-discrete reached partition contains a vertex. -/
 theorem maketargetcell_nonempty {G : Colored n k} {ctx : Ctx n}
