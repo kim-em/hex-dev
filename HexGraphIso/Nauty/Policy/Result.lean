@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.ChildKey
 public import HexGraphIso.Nauty.Policy.FirstCompare
 public import HexGraphIso.Nauty.Policy.Filters
+public import HexGraphIso.Nauty.Policy.FilterCover
 public import HexGraphIso.Nauty.Policy.ReturnOrigin
 
 public import HexGraphIso.Nauty.Policy.FirstRun
