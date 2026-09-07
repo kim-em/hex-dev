@@ -29,8 +29,8 @@ def orthogonalRows (rows : Matrix Int n m) (mu : Matrix Rat n n) :
       acc + mu[(i, (⟨j.val, by omega⟩ : Fin n))] • previous[j]) 0
     previous.push (((rows.getRow i).map fun x : Int => (x : Rat)) - projection)
 
-/-- Exact data tied to one original basis and one target. -/
-structure Prepared (b : Basis n m) (t : Vector Rat m) where
+/-- Rational data carried by an exhaustive certificate. -/
+structure Data (n m : Nat) where
   /-- Unit lower-triangular Gram-Schmidt coefficient matrix. -/
   mu : Matrix Rat n n
   /-- Rational orthogonalized rows. -/
@@ -42,6 +42,9 @@ structure Prepared (b : Basis n m) (t : Vector Rat m) where
   /-- Component of the target orthogonal to the row span. -/
   residual : Vector Rat m
 
+/-- Prepared data tied to one original basis and one target. -/
+structure Prepared (b : Basis n m) (t : Vector Rat m) extends Data n m
+
 /-- Prepare exact Gram-Schmidt data and retain the target's off-span component. -/
 def prepare (b : Basis n m) (t : Vector Rat m) : Prepared b t :=
   let gs := GramSchmidt.Int.data b.rows
@@ -51,29 +54,39 @@ def prepare (b : Basis n m) (t : Vector Rat m) : Prepared b t :=
     (gs.d[i.val + 1] : Rat) / gs.d[i.val]
   let projection := Vector.ofFn fun i : Fin n =>
     t.dotProduct (orthogonal.getRow i) / norms[i]
-  ⟨mu, orthogonal, norms, projection, t - Matrix.vecMul projection orthogonal⟩
+  ⟨⟨mu, orthogonal, norms, projection, t - Matrix.vecMul projection orthogonal⟩⟩
 
 variable {n m : Nat} {b : Basis n m} {t : Vector Rat m}
 
 /-- Finite rational identities checked by certificate replay. -/
-def Prepared.Valid (p : Prepared b t) : Prop :=
+def Data.Valid (p : Data n m) (rows : Matrix Int n m) (t : Vector Rat m) : Prop :=
   (∀ i : Fin n, 0 < p.norms[i] ∧ p.norms[i] = (p.orthogonal.getRow i).normSq) ∧
   (∀ i j : Fin n, (i < j → p.mu[(i, j)] = 0) ∧
     (i = j → p.mu[(i, j)] = 1) ∧
     (i ≠ j → (p.orthogonal.getRow i).dotProduct (p.orthogonal.getRow j) = 0)) ∧
-  p.mu * p.orthogonal = GramSchmidt.castIntMatrix b.rows ∧
+  p.mu * p.orthogonal = GramSchmidt.castIntMatrix rows ∧
   (∀ i : Fin n, p.projection[i] = t.dotProduct (p.orthogonal.getRow i) / p.norms[i]) ∧
   p.residual = t - Matrix.vecMul p.projection p.orthogonal
 
+/-- Replay rational identities for untrusted certificate data. -/
+def Data.check (p : Data n m) (rows : Matrix Int n m) (t : Vector Rat m) : Bool :=
+  have : Decidable (p.Valid rows t) := by unfold Data.Valid; infer_instance
+  decide (p.Valid rows t)
+
+/-- Validity includes the exact basis and target of the prepared value. -/
+def Prepared.Valid (p : Prepared b t) : Prop := p.toData.Valid b.rows t
+
 /-- Replay every preparation identity by exact rational arithmetic. -/
-def Prepared.check (p : Prepared b t) : Bool :=
-  have : Decidable p.Valid := by unfold Prepared.Valid; infer_instance
-  decide p.Valid
+def Prepared.check (p : Prepared b t) : Bool := p.toData.check b.rows t
 
 /-- Centre for the next coefficient after a suffix has been chosen. -/
-def Prepared.centre (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
+def Data.centre (p : Data n m) (z : Vector Int n) (i : Fin n) : Rat :=
   p.projection[i] - Fin.foldl n (fun acc j =>
     if i < j then acc + p.mu[(j, i)] * (z[j] : Rat) else acc) 0
+
+/-- Centre in data prepared for this basis and target. -/
+def Prepared.centre (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
+  p.toData.centre z i
 
 /-- Exact contribution of one coefficient to the squared distance. -/
 def Prepared.cost (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=

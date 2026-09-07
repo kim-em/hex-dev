@@ -63,6 +63,78 @@ def budgets : IO Unit := do
       require (limit.certificateNodes.all (counts.certificateNodes ≤ ·))
         "certificate budget exceeded"
 
+def minima : IO Unit := do
+  let some a2 := ofMatrix? (matrix 2 3 [[1, -1, 0], [0, 1, -1]])
+    | throw (IO.userError "A2 rejected")
+  let some sv := shortest a2 | throw (IO.userError "positive-rank shortest returned none")
+  require (sv.distanceSq == 2 && sv.points.length == 6) "A2 shortest vectors"
+  require (sv.points.all fun p => p.ambient != 0 && checkPoint a2 0 p)
+    "invalid shortest point"
+  let some gap := ofMatrix? (matrix 2 2 [[2, 0], [1, 2]])
+    | throw (IO.userError "Babai-gap basis rejected")
+  let target := #v[(1 : Rat), 1]
+  require ((babai gap target).distanceSq == 2) "unexpected nearest-plane candidate"
+  let cv := closest gap target
+  require (cv.distanceSq == 1 && cv.points.map (·.ambient.toList) == [[1, 2]])
+    "closest search failed to improve Babai"
+  match closestWith { certificateNodes := some 0 } gap target with
+  | .complete .. => throw (IO.userError "uncertified optimum claimed complete")
+  | .incomplete incumbent _ pending phase _ =>
+    require (incumbent.distanceSq == 1 && phase == .ties && !pending.isEmpty)
+      "tie pass did not retain the improved incumbent"
+  let some square := ofMatrix? (matrix 2 2 [[1, 0], [0, 1]])
+    | throw (IO.userError "square basis rejected")
+  let ties := closest square #v[1/2, 1/2]
+  require (ties.distanceSq == 1/2 && ties.points.map (·.ambient.toList) ==
+    [[0, 0], [0, 1], [1, 0], [1, 1]]) "closest ties missing"
+  let some zero := ofMatrix? (matrix 0 2 []) | throw (IO.userError "rank zero rejected")
+  require (shortest zero).isNone "rank-zero shortest is not none"
+  let cv0 := closest zero #v[3, 4]
+  require (cv0.distanceSq == 25 && cv0.points.map (·.ambient.toList) == [[0, 0]])
+    "rank-zero closest failed"
+
+def certificates : IO Unit := do
+  let some b := ofMatrix? (matrix 2 3 [[1, -1, 0], [0, 1, -1]])
+    | throw (IO.userError "A2 rejected")
+  let cert := enumerationCertificate b 0 2
+  require (checkEnumeration b 0 2 cert) "native certificate rejected"
+  require (!checkEnumerationWith (cert.tree.nodes - 1) b 0 2 cert)
+    "replay node budget not enforced"
+  require (!checkEnumeration b 0 2 { cert with forward := 0 }) "corrupt transform accepted"
+  let badData := { cert.data with norms := #v[(0 : Rat), 1] }
+  require (!checkEnumeration b 0 2 { cert with data := badData }) "corrupt norms accepted"
+  require (!checkEnumeration b 0 2 { cert with points := cert.points.drop 1 })
+    "missing claimed point accepted"
+  match cert.tree with
+  | .node interval children =>
+    require (!checkEnumeration b 0 2
+      { cert with tree := .node ⟨interval.lo, interval.hi + 1⟩ children })
+      "corrupt endpoint accepted"
+    require (!checkEnumeration b 0 2
+      { cert with tree := .node interval (children.drop 1) }) "missing branch accepted"
+    require (!checkEnumeration b 0 2
+      { cert with tree := .node interval (children ++ children.take 1) })
+      "duplicate branch accepted"
+    match children with
+    | (a, .node inner ((c, _) :: tail)) :: rest =>
+      let corrupt := Tree.node interval ((a, .node inner ((c, .empty) :: tail)) :: rest)
+      require (!checkEnumeration b 0 2 { cert with tree := corrupt }) "missing leaf accepted"
+    | _ => throw (IO.userError "unexpected A2 tree")
+  | _ => throw (IO.userError "missing A2 tree")
+  let some sv := shortest b | throw (IO.userError "missing shortest result")
+  let some candidate := sv.points.head? | throw (IO.userError "missing shortest point")
+  require (checkShortest b ⟨candidate, cert⟩) "shortest certificate rejected"
+  let u := matrix 2 2 [[-1, 0], [0, 1]]
+  let some changed := ofMatrix? (u * b.rows) | throw (IO.userError "changed basis rejected")
+  let other := enumerationCertificate changed 0 2
+  let transported : Certificate 2 3 :=
+    { other with
+      forward := u
+      reverse := u
+      points := other.points.map fun p => point b 0 (u.transpose * p.coefficients) }
+  require (checkEnumeration b 0 2 transported) "determinant-minus-one transform rejected"
+  require (transported.points == cert.points) "original coefficient reconstruction disagrees"
+
 def run : IO Unit := do
   intervals
   ball (matrix 2 3 [[1, -1, 0], [0, 1, -1]]) 0 2
@@ -76,6 +148,8 @@ def run : IO Unit := do
   ball (matrix 1 1 [[1]]) #v[-2001/2] (1/4) [[-1001], [-1000]]
   require (ofMatrix? (matrix 2 2 [[1, 2], [2, 4]])).isNone "dependent basis accepted"
   budgets
+  minima
+  certificates
   IO.println "lattice enumeration conformance passed"
 
 end Hex.LatticeEnum.Conformance
