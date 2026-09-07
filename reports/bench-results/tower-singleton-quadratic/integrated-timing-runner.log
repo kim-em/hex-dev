@@ -1,0 +1,10 @@
+integrated-main 1 left False post {34: 3.0, 82: 9.0} sibling {82: 4.636212065176237}
+accepted pairs 0
+integrated-main 2 left True post {31: 1.0, 79: 0.5025125628140703} sibling {79: 0.7770853628655758}
+integrated-main 2 right True post {31: 1.5075376884422111, 79: 1.5} sibling {79: 2.8827545688642218}
+accepted pairs 1
+integrated-main 3 right True post {45: 1.0050251256281406, 93: 0.0} sibling {93: 0.8330240854281182}
+accepted pairs 1
+integrated-main 4 right True post {44: 1.5, 92: 1.492537313432836} sibling {92: 0.23375459386484662}
+integrated-main 4 left True post {44: 0.0, 92: 0.0} sibling {92: 0.3828391543121911}
+accepted pairs 2
