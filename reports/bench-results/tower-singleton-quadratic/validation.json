@@ -27,6 +27,19 @@
       "oracle_failures": 0,
       "fixture_sha256": "4e46cedd7285d1437ad2eb3d7c4a095bf43b801d279f9f0612983c9ac25af36a",
       "fixture_byte_identical": true
+    },
+    {
+      "candidate": "combined",
+      "source_commit": "4209945bcf0aab393a807d622b975c737a7e3349",
+      "binary_sha256": "f6feab899807eb26da3310dd64497a203669505d0fa2c0d4eda3100f56576cf3",
+      "canonical_factor_cases": 31,
+      "norm_array_cases": 750,
+      "corrupted_multiplicities_rejected": true,
+      "bench_verify_cases": 49,
+      "oracle_cases": 9,
+      "oracle_failures": 0,
+      "fixture_sha256": "4e46cedd7285d1437ad2eb3d7c4a095bf43b801d279f9f0612983c9ac25af36a",
+      "fixture_byte_identical": true
     }
   ],
   "proof_status": "Deferred until the preregistered performance gate; no companion build claimed."
