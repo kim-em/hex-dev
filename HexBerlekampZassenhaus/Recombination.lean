@@ -340,7 +340,7 @@ twice the largest per-coordinate bound of `core` itself.
 -/
 @[expose]
 def cldCoeffFloor (core : ZPoly) : Nat :=
-  let n := core.degree?.getD 0
+  let n := core.natDegree
   2 * (List.range (n + 1)).foldl
     (fun acc j => max acc (bhksCoeffBound core j)) 0
 

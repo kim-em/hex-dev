@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/DistinctDegree.lean",
+ "baseline_blob": "445d82bd0b7b0785e5db88650f372b44ad1e804d",
+ "current_blob": "7f2c08ad7c446ada54e41443df286e5ccea505aa",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

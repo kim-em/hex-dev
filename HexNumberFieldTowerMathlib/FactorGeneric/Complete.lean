@@ -30,7 +30,7 @@ theorem factorSquarefree_isSome :
       (_hinjective : LevelSemantics.DenoteInjective levels)
       (f : Array (Array Rat)),
       Norm.isSquarefree levels f →
-      0 < (Factor.rawPoly levels f).degree?.getD 0 →
+      0 < (Factor.rawPoly levels f).natDegree →
       (Factor.factorSquarefree? levels f).isSome := by
   intro levels
   induction levels with
@@ -89,7 +89,7 @@ theorem factorSquarefree_isSome :
           hinvLower norm hnormCheck
       have hnormEq : norm = Norm.oneLevel level lower f shift :=
         findSquarefreeShift_norm level lower f hfind
-      have hnormDegree : 0 < (Factor.rawPoly lower norm).degree?.getD 0 := by
+      have hnormDegree : 0 < (Factor.rawPoly lower norm).natDegree := by
         rw [hnormEq]
         exact oneLevel_degree_pos level lower hvalid hinjectiveTop f shift
           hdegree (by simpa [hnormEq] using hnormSquarefree)
@@ -139,7 +139,7 @@ theorem factorSquarefree_isSome :
             hlowerProduct
             (fun factor hfactor => (hfactorsSound factor hfactor).2)
       have hfactorsDegree : factors.all (fun factor =>
-          0 < (Factor.rawPoly (level :: lower) factor).degree?.getD 0) =
+          0 < (Factor.rawPoly (level :: lower) factor).natDegree) =
           true := by
         rw [Array.all_eq_true_iff_forall_mem]
         intro factor hfactor
@@ -180,11 +180,11 @@ theorem factorSquarefree_isSome :
           let product := factors'.foldl (fun product factor =>
             product * Factor.rawPoly (level :: lower) factor) 1
           if factors'.all (fun factor =>
-              0 < (Factor.rawPoly (level :: lower) factor).degree?.getD 0) &&
+              0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
               product = p then some factors' else none) = some factors
         rw [hlower]
         change (if factors.all (fun factor =>
-            0 < (Factor.rawPoly (level :: lower) factor).degree?.getD 0) &&
+            0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
             factors.foldl (fun product factor =>
               product * Factor.rawPoly (level :: lower) factor) 1 =
               Norm.monic (Factor.rawPoly (level :: lower) f) then
@@ -857,7 +857,7 @@ theorem factorRaw_isSome (levels : List Level)
     intro out component hcomponent
     have hsquarefree := yun_squarefree hvalid hinjective hinv f
       (by
-        by_cases hzero : (Factor.rawPoly levels f).degree?.getD 0 = 0
+        by_cases hzero : (Factor.rawPoly levels f).natDegree = 0
         · have hempty : components = #[] := by
             simp [components, Factor.yunRaw, hzero]
           rw [hempty] at hcomponent
@@ -908,7 +908,7 @@ theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
     exact ⟨of_decide_eq_true hcheck.1.1.2,
       LevelSemantics.isIrreducible_nil_toMathlib f hcheckRaw⟩
   · rintro ⟨hmonic, hirreducible⟩
-    have hdegree : 0 < (Factor.rawPoly [] f).degree?.getD 0 := by
+    have hdegree : 0 < (Factor.rawPoly [] f).natDegree := by
       have hne := hirreducible.ne_zero
       have hnatDegree :
           (HexPolyMathlib.toPolynomial (Factor.rawPoly [] f)).natDegree ≠ 0 := by
@@ -1062,7 +1062,7 @@ theorem isIrreducible_iff_of_injective (levels : List Level)
         · simp at hparts
       · rintro ⟨hmonic, hirreducible⟩
         have hdegree :
-            0 < (Factor.rawPoly (level :: lower) f).degree?.getD 0 := by
+            0 < (Factor.rawPoly (level :: lower) f).natDegree := by
           have hnatDegree : (HexPolyMathlib.toPolynomial
               (Factor.rawPoly (level :: lower) f)).natDegree ≠ 0 := by
             intro hzero
@@ -1252,7 +1252,7 @@ private theorem C_leadingCoeff_eq_of_degreeZero (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
     (p : DensePoly (Arithmetic.Coeff levels))
-    (hdegree : p.degree?.getD 0 = 0) :
+    (hdegree : p.natDegree = 0) :
     let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
     letI : Field (Arithmetic.Coeff levels) :=
       Norm.coeffFieldPoly levels hvalid hinjective hinv
@@ -1370,7 +1370,7 @@ theorem factorRaw_check (levels : List Level)
           (Factor.rawPoly levels factor)) factors).trans hpreProduct
     have hreconstruct : Factor.factorProduct levels
         p.leadingCoeff.data (Factor.canonicalFactors factors) = f := by
-      by_cases hdegree : p.degree?.getD 0 = 0
+      by_cases hdegree : p.natDegree = 0
       · have hcomponents : Factor.yunRaw levels f = #[] := by
           simp [Factor.yunRaw, p, hdegree]
         have hfactors : factors = #[] := by
@@ -1384,7 +1384,7 @@ theorem factorRaw_check (levels : List Level)
           C_leadingCoeff_eq_of_degreeZero levels hvalid hinjective p
             hdegree,
           hcanonical]
-      · have hdegreePositive : 0 < p.degree?.getD 0 :=
+      · have hdegreePositive : 0 < p.natDegree :=
           Nat.pos_of_ne_zero hdegree
         have hyun := yun_product hvalid hinjective hinv f hdegreePositive
         have hyunDense := congrArg (Factor.rawPoly levels) hyun

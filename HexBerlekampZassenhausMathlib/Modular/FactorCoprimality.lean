@@ -59,7 +59,7 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
     (X : Hex.FpPoly p)
     (hX_ne : X ≠ 0)
     (h_no_squared : ∀ d : Hex.FpPoly p,
-        d * d ∣ X → ¬ (0 < d.degree?.getD 0))
+        d * d ∣ X → ¬ (0 < d.natDegree))
     (xs : List (Hex.FpPoly p))
     (h_dvd : Hex.Berlekamp.factorProduct xs ∣ X) :
     Hex.ZPoly.QuadraticMultifactorCoprimeSplits p xs := by
@@ -138,7 +138,7 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
           fpPoly_dvd_trans hrawGcd_sq_dvd_prod hprod_dvd_X
         -- Step 2: rawGcd has degree ≤ 0 by no-squared on X.
         have hrawGcd_not_pos :
-            ¬ (0 < rawGcd.degree?.getD 0) :=
+            ¬ (0 < rawGcd.natDegree) :=
           h_no_squared rawGcd hrawGcd_sq_dvd_X
         -- Step 3: rawGcd ≠ 0 (via `rawGcd * rawGcd ∣ X` with `X ≠ 0`).
         have hrawGcd_ne : rawGcd ≠ 0 := by
@@ -160,11 +160,8 @@ theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
           by_contra hsize_ne
           apply hrawGcd_not_pos
           have hsize_ge_two : 2 ≤ rawGcd.size := by omega
-          have hdeg_form : rawGcd.degree? = some (rawGcd.size - 1) := by
-            unfold Hex.DensePoly.degree?
-            have hne : rawGcd.size ≠ 0 := Nat.pos_iff_ne_zero.mp hrawGcd_size_pos
-            simp [hne]
-          rw [hdeg_form]; simp; omega
+          rw [Hex.DensePoly.natDegree_eq_size_sub_one]
+          omega
         -- Step 5: lc rawGcd ≠ 0.
         have hlc_ne :
             Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) :=
@@ -260,7 +257,7 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
   have h_no_squared :
       ∀ d : Hex.FpPoly primeData.p,
         d * d ∣ Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) →
-          ¬ (0 < d.degree?.getD 0) := by
+          ¬ (0 < d.natDegree) := by
     intro d hdd hpos
     have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core :=
       fpPoly_dvd_trans hdd hmonicImage_dvd
@@ -276,7 +273,7 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
           cases k with
           | zero => rfl
           | succ _ => simp at hunit
-    rw [hdeg] at hpos
+    rw [Hex.DensePoly.natDegree_eq_degree?_getD, hdeg] at hpos
     simp at hpos
   -- Monic image is monic (consumed by Berlekamp's signature and idempotence).
   have hmonicImage_monic :
@@ -584,14 +581,14 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     (hgood :
       letI := primeData.bounds
       Hex.isGoodPrime core primeData.p = true)
-    (hcore_pos : 0 < core.degree?.getD 0) :
+    (hcore_pos : 0 < core.natDegree) :
     ∀ i : ModPFactorIndex primeData,
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
           (modPFactor primeData i)) := by
   let : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hmonicImage_pos :
-      0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).degree?.getD 0 :=
+      0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).natDegree :=
     monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
       core primeData hform hgood hcore_pos
   obtain ⟨hprime, hzero, heq⟩ := hform
@@ -747,7 +744,7 @@ trivial `fModP_eq` / `admissible_prime` / `square_free_reduction` fields. -/
 theorem factors_irreducible_of_choosePrimeData_of_some
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.choosePrimeData? core = some primeData)
-    (hcore_pos : 0 < core.degree?.getD 0) :
+    (hcore_pos : 0 < core.natDegree) :
     ∀ i : ModPFactorIndex primeData,
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds

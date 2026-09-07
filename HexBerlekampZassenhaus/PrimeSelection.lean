@@ -630,7 +630,7 @@ private def evalZPolyModNat (f : ZPoly) (p x : Nat) : Nat :=
 /-- Detect the cheap case where `f mod p` splits completely into linear factors by counting roots modulo `p`. -/
 private def completeLinearDegreeSplit? (f : ZPoly) (p : Nat) [ZMod64.Bounds p] :
     Option (Array Nat) :=
-  let degree := (ZPoly.modP p f).degree?.getD 0
+  let degree := (ZPoly.modP p f).natDegree
   let roots := (List.range p).filter fun x => evalZPolyModNat f p x == 0
   if degree != 0 && roots.length == degree then
     some (Array.replicate degree 1)
@@ -662,7 +662,7 @@ def modularFactorDegreesAt? (f : ZPoly) (p : Nat) : Option (Array Nat) :=
               | none =>
                   if isGoodPrime f c.m then
                     some ((berlekampFactorsModP f c).map (fun factor =>
-                      factor.degree?.getD 0) |>.qsort (· ≤ ·))
+                      factor.natDegree) |>.qsort (· ≤ ·))
                   else
                     none
             else

@@ -104,7 +104,7 @@ def directSelectedFactors (basis : LiftData)
 def directSelectedDegree (basis : LiftData)
     (selected : List (DirectLiftedIndex basis)) : Nat :=
   (directSelectedFactors basis selected).foldl
-    (fun sum factor => sum + factor.degree?.getD 0) 0
+    (fun sum factor => sum + factor.natDegree) 0
 
 /-- Cached trailing-coefficient residue evaluated before candidate
 construction. -/
@@ -158,7 +158,7 @@ structure LiftSupport (basis : LiftData) where
   trails_size : trails.size = basis.liftedFactors.size
   /-- Each recorded degree is its lifted factor's degree. -/
   degrees_eq : ∀ i : DirectLiftedIndex basis,
-    degrees.getD i.1 0 = (directLiftedFactor basis i).degree?.getD 0
+    degrees.getD i.1 0 = (directLiftedFactor basis i).natDegree
   /-- Each recorded trailing coefficient is its lifted factor's constant term. -/
   trails_eq : ∀ i : DirectLiftedIndex basis,
     trails.getD i.1 0 = (directLiftedFactor basis i).coeff 0
@@ -181,7 +181,7 @@ def trail {basis : LiftData} (lift : LiftSupport basis)
 @[simp]
 theorem degree_spec {basis : LiftData} (lift : LiftSupport basis)
     (i : DirectLiftedIndex basis) :
-    lift.degree i = (directLiftedFactor basis i).degree?.getD 0 :=
+    lift.degree i = (directLiftedFactor basis i).natDegree :=
   lift.degrees_eq i
 
 /-- A recorded trailing coefficient is the constant term of the lifted factor
@@ -218,7 +218,7 @@ end LiftSupport
 @[expose]
 def liftSupport (basis : LiftData) : LiftSupport basis :=
   { modulus := LiftModulus.ofNat (liftModulus basis)
-    degrees := basis.liftedFactors.map fun factor => factor.degree?.getD 0
+    degrees := basis.liftedFactors.map fun factor => factor.natDegree
     trails := basis.liftedFactors.map fun factor => factor.coeff 0
     modulus_eq := rfl
     degrees_size := by simp

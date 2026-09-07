@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/QuotientFrobenius.lean",
+ "baseline_blob": "4a747bc8865cad1f4bdd444d37b8e596c003f477",
+ "current_blob": "166c9b8d90a16822422490ced83abdf62b7988ff",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

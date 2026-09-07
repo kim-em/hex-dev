@@ -259,7 +259,7 @@ meta def elabFactorZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
   unless Hex.DensePoly.beqCoeffs (Hex.DensePoly.C scalar * factors.prod) f do
     throwError "{tactic}: internal error: the factor search product does not \
         reconstruct the input; please report this"
-  unless factors.all (fun g => decide (0 < g.degree?.getD 0)) do
+  unless factors.all (fun g => decide (0 < g.natDegree)) do
     throwError "{tactic}: internal error: a constant factor appeared in the \
         factor list; please report this"
   let entries ← Hex.FactorTactic.fpCoverEntries tactic q factors
@@ -305,7 +305,7 @@ meta def elabIrredZMod (tactic : String) (q : Nat) [Hex.ZMod64.Bounds q]
         unless decide (unit = 0) = false &&
             Hex.DensePoly.beqCoeffs (Hex.DensePoly.scale unit m) f &&
             Hex.Berlekamp.checkMonicCert m cert &&
-            decide (0 < f.degree?.getD 0) do
+            decide (0 < f.natDegree) do
           throwError "{tactic}: internal error: the generated certificate \
               fails its own checks; please report this"
         let mE := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE (Hex.CertificateSyntax.fpCoeffNats m)

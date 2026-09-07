@@ -414,7 +414,7 @@ theorem recover_product_associated (level : Level)
     DensePoly.gcd shifted (lifted lowerFactor)
   let common (lowerFactor : Array (Array Rat)) := Norm.monic (g lowerFactor)
   let pass (lowerFactor : Array (Array Rat)) :=
-    0 < (common lowerFactor).degree?.getD 0
+    0 < (common lowerFactor).natDegree
   let unshifted (lowerFactor : Array (Array Rat)) :=
     Factor.rawPoly (level :: lower)
       (Factor.shiftTop level lower (Factor.polyCoords (common lowerFactor))
@@ -525,7 +525,7 @@ theorem recover_product_associated (level : Level)
     apply Polynomial.isUnit_iff_degree_eq_zero.mpr
     rw [Polynomial.degree_eq_natDegree (hcommonPolyNe lowerFactor),
       HexPolyMathlib.natDegree_toPolynomial]
-    have hdegree : (common lowerFactor).degree?.getD 0 = 0 :=
+    have hdegree : (common lowerFactor).natDegree = 0 :=
       Nat.eq_zero_of_not_pos hskip
     rw [hdegree]
     rfl

@@ -85,7 +85,7 @@ theorem evalSign_spec (p : ZPoly) (x : Dyadic) :
 /-- A polynomial whose executable degree is not positive is constant after
 casting, including the zero polynomial. -/
 theorem eval_eq_at_zero (p : ZPoly)
-    (hdegree : ¬0 < p.degree?.getD 0) (x : ℝ) :
+    (hdegree : ¬0 < p.natDegree) (x : ℝ) :
     (toPolyℝ p).eval x = (toPolyℝ p).eval 0 := by
   have hnat : (toPolyℝ p).natDegree = 0 := by
     rw [natDegree_toPolyℝ]
@@ -235,7 +235,7 @@ theorem openCellSign_spec {sentence : Sentence} {carrier : CarrierCert}
     ∃ sign, openCellSign? p isolations cut = some sign ∧
       SignType.sign (((sign.toInt : Int) : ℝ)) =
         SignType.sign ((toPolyℝ p).eval x) := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · have hpmem : p ∈ sentence.polys := by
       simp only [Sentence.polys, List.mem_filter, decide_eq_true_eq]
       exact ⟨hp, hdegree⟩
@@ -281,7 +281,7 @@ theorem signWith?_spec {sentence : Sentence} {carrier : CarrierCert}
         SignType.sign (((sign.toInt : Int) : ℝ)) =
           SignType.sign ((toPolyℝ p).eval x) := by
   subst commonPolys
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · have hpmem : p ∈ sentence.polys := by
       simp only [Sentence.polys, List.mem_filter, decide_eq_true_eq]
       exact ⟨hp, hdegree⟩
@@ -506,7 +506,7 @@ theorem evalSigns_eq_true_iff {formula : Formula}
 /-- Constant-only formula evaluation is exact at every real point, including
 formulas containing the zero polynomial. -/
 theorem evalConstants_eq_true_iff {formula : Formula}
-    (hconstant : ∀ p ∈ formula.polys, ¬0 < p.degree?.getD 0) (x : ℝ) :
+    (hconstant : ∀ p ∈ formula.polys, ¬0 < p.natDegree) (x : ℝ) :
     formula.evalConstants? = some true ↔ formula.toProp x := by
   apply evalSigns_eq_true_iff
   intro p hp

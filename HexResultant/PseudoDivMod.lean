@@ -32,7 +32,8 @@ corresponding default-degree bound. -/
 private theorem degree_lt_of_size_lt {T : Type u} [Lean.Grind.CommRing T]
     [DecidableEq T] (p g : DensePoly T)
     (hg : 1 < g.size) (hp : p.size < g.size) :
-    p.degree?.getD 0 < g.degree?.getD 0 := by
+    p.natDegree < g.natDegree := by
+  unfold Hex.DensePoly.natDegree
   rw [degree?_eq_some_of_pos_size g (by omega), Option.getD_some]
   by_cases hp0 : p.size = 0
   · rw [(degree?_eq_none_iff p).2 hp0, Option.getD_none]
@@ -68,8 +69,8 @@ theorem pseudoDivMod_unique (f g q r : DensePoly S) (hg : g ≠ 0)
       ExactDivLaws.mul_right_cancel (R := DensePoly S) hg hmul
     exact Prod.ext hq (hr'0.trans hr0.symm)
   · have hg_big : 1 < g.size := by omega
-    have hg_deg : 0 < g.degree?.getD 0 := by
-      rw [degree?_eq_some_of_pos_size g hg_pos, Option.getD_some]
+    have hg_deg : 0 < g.natDegree := by
+      rw [natDegree_eq_size_sub_one]
       omega
     have hr_deg := degree_lt_of_size_lt r g hg_big hr
     have hr'_deg := degree_lt_of_size_lt r' g hg_big hr'
@@ -84,7 +85,7 @@ theorem pseudoDivMod_unique (f g q r : DensePoly S) (hg : g ≠ 0)
         simpa only [coeff_add_semiring] using h
       simp only [coeff_sub_ring]
       grind
-    have hdeg : (r' - r).degree?.getD 0 < g.degree?.getD 0 :=
+    have hdeg : (r' - r).natDegree < g.natDegree :=
       degree_getD_sub_lt r' r g hg_deg hr'_deg hr_deg
     have hlc : g.leadingCoeff ≠ (0 : S) :=
       leadingCoeff_ne_zero_of_pos_size g hg_pos

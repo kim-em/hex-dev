@@ -105,7 +105,7 @@ theorem isZero_iff (f : AlgebraicPoly) :
 /-- A nonzero executable polynomial has the same natural degree as its
 semantic interpretation. -/
 theorem natDegree_toPolynomial (f : AlgebraicPoly) (h : !f.isZero) :
-    f.toPolynomial.natDegree = f.degree?.getD 0 := by
+    f.toPolynomial.natDegree = f.natDegree := by
   have hdegree : f.toPolynomial.natDegree = f.size - 1 := by
     apply Polynomial.natDegree_eq_of_le_of_coeff_ne_zero
     · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
@@ -130,7 +130,7 @@ theorem natDegree_toPolynomial (f : AlgebraicPoly) (h : !f.isZero) :
   rw [hdegree]
   have hfalse : f.isZero = false := by
     cases hz : f.isZero <;> simp_all
-  simp [AlgebraicPoly.degree?, hfalse]
+  simp [AlgebraicPoly.natDegree, AlgebraicPoly.degree?, hfalse]
 
 /-- Canonical coefficientwise Boolean equality is faithful to the semantic
 polynomial interpretation. -/
@@ -175,7 +175,8 @@ theorem beq_iff (f g : AlgebraicPoly) :
           exact Array.isEmpty_iff_size_eq_zero.mpr h
         have hffalse : f.isZero = false := Bool.eq_false_iff.mpr hf
         have hgfalse : g.isZero = false := Bool.eq_false_iff.mpr hg
-        simp [AlgebraicPoly.degree?, hffalse, hgfalse] at hdegree
+        simp [AlgebraicPoly.natDegree, AlgebraicPoly.degree?, hffalse,
+          hgfalse] at hdegree
         omega
     change f.data == g.data
     apply beq_iff_eq.mpr

@@ -33,7 +33,7 @@ its proofs are irrelevant for the structural comparison. -/
 instance instDecidableEq : DecidableEq GF2Poly := fun p q =>
   match decEq p.words.toList q.words.toList with
   | isTrue hw =>
-      match Nat.decEq p.degree q.degree with
+      match Nat.decEq p.natDegree q.natDegree with
       | isTrue hd =>
           isTrue (by
             cases p
@@ -110,7 +110,7 @@ def isUnitPolynomial (g : GF2Poly) : Bool :=
 with `n = deg(f)`, exactly when the reduced remainder vanishes. -/
 @[expose]
 def rabinDividesTest (f : GF2Poly) : Bool :=
-  (frobeniusDiffMod f f.degree).isZero
+  (frobeniusDiffMod f f.natDegree).isZero
 
 /-- The gcd leg of Rabin's criterion at a single maximal proper divisor `d`. -/
 @[expose]
@@ -120,15 +120,15 @@ def rabinCoprimeTest (f : GF2Poly) (d : Nat) : Bool :=
 /-- Per-divisor Rabin gcd outcomes for downstream factorization use. -/
 @[expose]
 def rabinWitnesses (f : GF2Poly) : List (Nat × Bool) :=
-  (maximalProperDivisors f.degree).map fun d => (d, rabinCoprimeTest f d)
+  (maximalProperDivisors f.natDegree).map fun d => (d, rabinCoprimeTest f d)
 
 /-- Checking all stored Rabin witnesses is the same as checking the Rabin
 coprime test over every maximal proper divisor. -/
 @[simp, grind =] theorem rabinWitnesses_all (f : GF2Poly) :
     (rabinWitnesses f).all Prod.snd =
-      (maximalProperDivisors f.degree).all fun d => rabinCoprimeTest f d := by
+      (maximalProperDivisors f.natDegree).all fun d => rabinCoprimeTest f d := by
   unfold rabinWitnesses
-  induction maximalProperDivisors f.degree with
+  induction maximalProperDivisors f.natDegree with
   | nil => rfl
   | cons d ds ih => simp [ih]
 
@@ -137,7 +137,7 @@ coprime test over every maximal proper divisor. -/
 divisor `d` of `n = deg(f)`. -/
 @[expose]
 def rabinTest (f : GF2Poly) : Bool :=
-  decide (0 < f.degree) &&
+  decide (0 < f.natDegree) &&
     rabinDividesTest f &&
     (rabinWitnesses f).all Prod.snd
 
@@ -234,7 +234,7 @@ in `HexGF2/RabinSoundness.lean` lifts a `true` outcome to `GF2Poly.Irreducible f
 def checkIrreducibilityCertificate (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   decide (0 < cert.n) &&
-    decide (cert.n = f.degree) &&
+    decide (cert.n = f.natDegree) &&
     checkPowChain f cert &&
     (cert.powChain[cert.n]? == some (monomial 1 % f)) &&
     checkRabinBezoutWitnesses f cert
@@ -265,7 +265,7 @@ in `HexGF2/RabinSoundness.lean` lifts a `true` outcome to `GF2Poly.Irreducible f
 def checkIrreducibilityCertificateLinear (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   decide (0 < cert.n) &&
-    decide (cert.n = f.degree) &&
+    decide (cert.n = f.natDegree) &&
     checkPowChainLinear f cert &&
     (cert.powChain[cert.n]? == some (monomial 1 % f)) &&
     checkRabinBezoutWitnesses f cert
@@ -273,7 +273,7 @@ def checkIrreducibilityCertificateLinear (f : GF2Poly)
 /-- The executable Rabin divisibility test is definitionally the zero-remainder
 test for `X^(2^deg f) - X` modulo `f`. -/
 theorem rabinDividesTest_spec (f : GF2Poly) :
-    rabinDividesTest f = (frobeniusDiffMod f f.degree).isZero := rfl
+    rabinDividesTest f = (frobeniusDiffMod f f.natDegree).isZero := rfl
 
 /-! # Soundness of the certificate checker against `rabinTest`
 
@@ -282,7 +282,7 @@ This file proves the checker-to-`rabinTest` bridge; `HexGF2/RabinSoundness.lean`
 contains `rabinTest_imp_irreducible` and the certificate-to-irreducible
 corollaries. -/
 
-private theorem one_degree_eq_zero : (1 : GF2Poly).degree = 0 := degree_one
+private theorem one_degree_eq_zero : (1 : GF2Poly).natDegree = 0 := natDegree_one
 
 private theorem one_degree?_eq_some_zero : (1 : GF2Poly).degree? = some 0 := degree?_one
 
@@ -294,15 +294,15 @@ private theorem isUnitPolynomial_of_dvd_one {g : GF2Poly}
     intro hg
     rw [hg, zero_mul] at hr
     exact one_ne_zero hr
-  have hgle := degree_le_of_dvd_nonzero hg_ne one_ne_zero hdiv
+  have hgle := natDegree_le_of_dvd_nonzero hg_ne one_ne_zero hdiv
   rw [one_degree_eq_zero] at hgle
-  have hgdeg : g.degree = 0 := Nat.eq_zero_of_le_zero hgle
+  have hgdeg : g.natDegree = 0 := Nat.eq_zero_of_le_zero hgle
   have hgzeroFalse : g.isZero = false := by
     cases hzero : g.isZero
     · rfl
     · exact False.elim (hg_ne (eq_zero_of_isZero hzero))
   obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hgzeroFalse
-  have hd0 : d = 0 := by simpa [degree, hd] using hgdeg
+  have hd0 : d = 0 := by simpa [natDegree, hd] using hgdeg
   unfold isUnitPolynomial
   rw [hd, hd0]
   rfl
@@ -409,7 +409,7 @@ private theorem checkRabinBezoutWitnesses_rabinWitnesses_all
     (hcheck : checkRabinBezoutWitnesses f cert = true)
     (hpow : ∀ k, k ≤ cert.n →
       cert.powChain[k]? = some (xpow2kMod f k))
-    (hn : cert.n = f.degree) :
+    (hn : cert.n = f.natDegree) :
     (rabinWitnesses f).all Prod.snd = true := by
   unfold checkRabinBezoutWitnesses at hcheck
   simp only [Bool.and_eq_true] at hcheck

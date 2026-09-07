@@ -29,7 +29,7 @@ variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 namespace Quotient
 
 variable {g : FpPoly p} {hmonic : DensePoly.Monic g}
-variable {hg_pos : 0 < g.degree?.getD 0}
+variable {hg_pos : 0 < g.natDegree}
 
 /-- A quotient sum equals the reduction of the underlying polynomial sum. -/
 theorem add_eq_reduce_val (a b : Quotient g hmonic hg_pos) :
@@ -285,7 +285,7 @@ theorem reduce_monomial_eq (m : Nat) (c : ZMod64 p) :
     exact hzero.symm
 
 private def quotMonoSum (f : FpPoly p)
-    (g : FpPoly p) (hmonic : DensePoly.Monic g) (hg_pos : 0 < g.degree?.getD 0) :
+    (g : FpPoly p) (hmonic : DensePoly.Monic g) (hg_pos : 0 < g.natDegree) :
     Nat → Quotient g hmonic hg_pos
   | 0 => 0
   | m + 1 =>

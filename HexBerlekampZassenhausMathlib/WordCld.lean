@@ -249,7 +249,7 @@ open HexPolyMathlib in
 /-- Executable degree comparison transports to Mathlib `degree` comparison. -/
 theorem toPoly_degree_lt {S : Type*} [CommRing S] [DecidableEq S] {r g : Hex.DensePoly S}
     (hg0 : toPolynomial g ≠ 0)
-    (hlt : r.degree?.getD 0 < g.degree?.getD 0) :
+    (hlt : r.natDegree < g.natDegree) :
     (toPolynomial r).degree < (toPolynomial g).degree := by
   by_cases hr : toPolynomial r = 0
   · rw [hr, Polynomial.degree_zero]
@@ -270,7 +270,7 @@ theorem intModNat_lt (y : Int) (M : Nat) (hM : 0 < M) : ZPoly.intModNat y M < M 
 open HexPolyMathlib in
 /-- Word-sized and arbitrary-precision logarithmic-derivative quotients agree when the modulus fits. -/
 theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
-    (hg : Hex.DensePoly.Monic g) (hgdeg : 0 < g.degree?.getD 0)
+    (hg : Hex.DensePoly.Monic g) (hgdeg : 0 < g.natDegree)
     {mval : Nat} (hpow : Hex.powLtWord? p a = some mval)
     (hodd : (UInt64.ofNat mval) % 2 = 1) (hm1 : 1 < mval) :
     Hex.cldQuotientModWord? f g p a = some (cldQuotientModBignum f g p a) := by
@@ -325,7 +325,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     have htgne : (toPolynomial g) ≠ 0 := htgm.ne_zero
     -- gW monic / positive degree (the toW-mapped divisor)
     have hgsize2 : 1 < g.size := by
-      unfold Hex.DensePoly.degree? at hgdeg
+      unfold Hex.DensePoly.natDegree Hex.DensePoly.degree? at hgdeg
       by_cases hs : g.size = 0
       · rw [dite_eq_left hs] at hgdeg; simp at hgdeg
       · rw [dite_eq_right hs] at hgdeg; simp only [Option.getD_some] at hgdeg; omega
@@ -356,8 +356,8 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
       show (toWMap ctx g).leadingCoeff = 1
       rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ (by rw [hsz]; exact hgpos), hsz,
         coeff_toWMap, hgleading, htoW1]
-    have hgWd : 0 < (toWMap ctx g).degree?.getD 0 := by
-      unfold Hex.DensePoly.degree?
+    have hgWd : 0 < (toWMap ctx g).natDegree := by
+      unfold Hex.DensePoly.natDegree Hex.DensePoly.degree?
       rw [dite_eq_right (by rw [hsz]; omega)]
       simp only [Option.getD_some]; rw [hsz]; omega
     -- shared cancellation shape

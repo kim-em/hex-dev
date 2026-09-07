@@ -26,7 +26,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 /-- The degree of a polynomial, defaulting to `0` for the zero polynomial. -/
 @[expose]
 def degree (f : FpPoly p) : Nat :=
-  f.degree?.getD 0
+  f.natDegree
 
 /-- Constant polynomials have {name}`FpPoly.degree` equal to `0`. -/
 @[simp, grind =] theorem degree_C (c : ZMod64 p) : degree (C c) = 0 := by
@@ -60,7 +60,7 @@ theorem reduceMod_eq_self_of_degree_lt (f g : FpPoly p) :
 @[simp, grind =] theorem reduceMod_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     reduceMod f 1 = 1 := by
   have hone : FpPoly.degree (1 : FpPoly p) = 0 := by
-    change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 = 0
+    change (DensePoly.C (1 : ZMod64 p)).natDegree = 0
     simp
   exact reduceMod_eq_self_of_degree_lt f 1 (by simpa [hone] using hf)
 

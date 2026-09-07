@@ -265,7 +265,7 @@ squarefree fixtures return all atoms. -/
 -- `(x²+1)(x−5)²`: three certified results, exactly one `k = 2` cluster whose
 -- enclosing disc covers `(5, 0)`, and two atoms covering `±i`.
 #guard
-  (match (if h : 0 < multiple.degree?.getD 0 then
+  (match (if h : 0 < multiple.natDegree then
             isolateAll? multiple 4 #[Component.cauchy multiple h] else none) with
     | some rs =>
         rs.size == 3 &&
@@ -277,14 +277,14 @@ squarefree fixtures return all atoms. -/
 
 -- `rat1` from the Cauchy start: three results, all atoms.
 #guard
-  (match (if h : 0 < rat1.degree?.getD 0 then
+  (match (if h : 0 < rat1.natDegree then
             isolateAll? rat1 32 #[Component.cauchy rat1 h] else none) with
     | some rs => rs.size == 3 && rs.all fun c => match c with | .atom _ => true | .cluster _ => false
     | none => false)
 
 -- Linear `x` from the Cauchy start: a single atom.
 #guard
-  (match (if h : 0 < linear.degree?.getD 0 then
+  (match (if h : 0 < linear.natDegree then
             isolateAll? linear 8 #[Component.cauchy linear h] else none) with
     | some rs => rs.size == 1
     | none => false)
@@ -439,7 +439,7 @@ second round reaches two levels finer, with `candidateK` preserved throughout. -
 
 /-- The Cauchy start component of `rat1` (a single square at `prec = −3`). -/
 private def cauchyRat1 : Component :=
-  if h : 0 < rat1.degree?.getD 0 then Component.cauchy rat1 h else ⟨#[], 0⟩
+  if h : 0 < rat1.natDegree then Component.cauchy rat1 h else ⟨#[], 0⟩
 
 #guard (Component.refine1 rat1 ⟨#[⟨100, 100, 4⟩], 1⟩).isEmpty
 #guard

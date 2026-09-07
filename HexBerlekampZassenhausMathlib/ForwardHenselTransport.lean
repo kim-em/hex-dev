@@ -991,11 +991,11 @@ theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
   have hcl_natDeg :
       (HexPolyZMathlib.toPolynomial cl).natDegree = cl.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hcl_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hcl_size_pos]
   have hlp_natDeg :
       (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
   rw [hcl_natDeg, hsize_eq, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
   -- Mathlib `natDegree_prod_of_monic` over monic factors.
   apply Polynomial.natDegree_prod_of_monic
@@ -1398,11 +1398,11 @@ theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
           (scaledRecombinationCandidate core d T)).natDegree =
         (scaledRecombinationCandidate core d T).size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hsc_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hsc_size_pos]
   have hlp_natDeg :
       (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
   rw [hsc_natDeg, hsc_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
   apply Polynomial.natDegree_prod_of_monic
   intro i _
@@ -1514,11 +1514,11 @@ theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
           (liftedRecoveryCandidate core d T)).natDegree =
         (liftedRecoveryCandidate core d T).size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hrec_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hrec_size_pos]
   have hlp_natDeg :
       (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
   rw [hrec_natDeg, hrec_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
   apply Polynomial.natDegree_prod_of_monic
   intro i _
@@ -1692,7 +1692,7 @@ theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (heq : recombinationCandidate d S = factor)
     (hmonic : Hex.DensePoly.Monic factor)
-    (hpos : 0 < factor.degree?.getD 0)
+    (hpos : 0 < factor.natDegree)
     (hdvd : factor ∣ core) :
     ∃ quotient,
       Hex.exactQuotient? core (recombinationCandidate d S) = some quotient ∧
@@ -1721,7 +1721,7 @@ theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor
     {S : LiftedFactorSubset d}
     (heq : scaledRecombinationCandidate core d S = factor)
     (hmonic : Hex.DensePoly.Monic factor)
-    (hpos : 0 < factor.degree?.getD 0)
+    (hpos : 0 < factor.natDegree)
     (hdvd : factor ∣ target) :
     ∃ quotient,
       Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =
@@ -1755,7 +1755,7 @@ theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor_of_prim
     {S : LiftedFactorSubset d}
     (heq : scaledRecombinationCandidate core d S = factor)
     (hpos_lc : 0 < Hex.DensePoly.leadingCoeff factor)
-    (hpos : 0 < factor.degree?.getD 0)
+    (hpos : 0 < factor.natDegree)
     (hdvd : factor ∣ target) :
     ∃ quotient,
       Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =

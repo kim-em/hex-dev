@@ -132,7 +132,7 @@ private lemma map_filter_eq_of_le_map_val
 mod-`p` image is divisible by that indexed factor. -/
 theorem exists_factor_of_modPIndex
     (core : Hex.ZPoly) (hcore_ne : core ≠ 0)
-    (_hcore_pos : 0 < core.degree?.getD 0)
+    (_hcore_pos : 0 < core.natDegree)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization core primeData)
     (i : ModPFactorIndex primeData) :
@@ -312,7 +312,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hcore_ne : core ≠ 0)
-    (_hcore_pos : 0 < core.degree?.getD 0)
+    (_hcore_pos : 0 < core.natDegree)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization core primeData) :
     ∃! S : ModPFactorSubset primeData,
@@ -493,7 +493,7 @@ theorem existsUnique_modPFactorSubset_of_modPFactorization
     (primeData : Hex.PrimeChoiceData)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hval : ModPFactorization core primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
@@ -535,7 +535,7 @@ unavailable) is excluded; downstream callers discharge it from the same
 theorem modPSubsetPartitionHypotheses_of_modPFactorization
     (core : Hex.ZPoly)
     (primeData : Hex.PrimeChoiceData)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hval : ModPFactorization core primeData) :
     ModPSubsetPartitionHypotheses core primeData True True := by
   refine
@@ -615,7 +615,7 @@ existence projection (a representing subset `S` for `g`), and
 `mem_modPSubset_of_dvd` (the divisibility forces `i ∈ S`). -/
 theorem modPFactor_index_cover
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hval : ModPFactorization core primeData)
     (i : ModPFactorIndex primeData) :
     ∃ (g : Hex.ZPoly) (S : ModPFactorSubset primeData),

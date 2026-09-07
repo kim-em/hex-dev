@@ -386,7 +386,7 @@ def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet) :
 
 /-- The starting component: a single square centred at 0 covering the
     Cauchy root bound, with `candidateK = deg p`. -/
-def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component
+def cauchy (p : ZPoly) (h : 0 < p.natDegree) : Component
 end Component
 
 /-- Repackage a certified `k = 1` cluster as an atom (the Pellet
@@ -663,7 +663,7 @@ correctness; see
 
 ```lean
 def separationDepth (p : ZPoly) : Nat :=
-  mahlerPrec p + ceilLog2 (max 2 (p.degree?.getD 0)) + sepSlack
+  mahlerPrec p + ceilLog2 (max 2 (p.natDegree)) + sepSlack
 ```
 
 with `sepSlack := 8`. `separationDepth` is the depth at which the
@@ -716,7 +716,7 @@ def SimpleRoot.mk (iso : RefinedIsolation p) : SimpleRoot p := Quot.mk _ iso
 /-- A represented simple root forces its defining polynomial to have positive
     degree. -/
 theorem SimpleRoot.posDegree (x : SimpleRoot p) :
-    0 < p.degree?.getD 0
+    0 < p.natDegree
 
 /-- Boolean form of `Intersects`, used for equality tests on data
     containing roots (see hex-number-field). -/

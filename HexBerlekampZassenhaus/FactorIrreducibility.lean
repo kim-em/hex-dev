@@ -203,7 +203,7 @@ must be exactly one polynomial factor with multiplicity one.
 def isIrreducible (f : ZPoly) : Bool :=
   if f = 0 then
     false
-  else if f.degree?.getD 0 = 0 then
+  else if f.natDegree = 0 then
     let k := (f.coeff 0).natAbs
     isNatPrime k
   else
@@ -892,7 +892,7 @@ theorem Irreducible_of_modP_irreducible_of_primitive_of_admissible
     have hdeg_size :
         ∀ {g : FpPoly p}, g.degree? = some 0 → g.size = 1 := by
       intro g hdeg
-      unfold DensePoly.degree? at hdeg
+      unfold DensePoly.natDegree DensePoly.degree? at hdeg
       by_cases hg_size : g.size = 0
       · rw [dite_eq_left hg_size] at hdeg
         simp at hdeg
@@ -1195,7 +1195,7 @@ rational-associate normalization invariant for the extracted primitive polynomia
 theorem normalizedConstantFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData)
     (hnormalized : normalizeForFactor f = normalized)
-    (hconst : normalized.squareFreeCore.degree?.getD 0 = 0) :
+    (hconst : normalized.squareFreeCore.natDegree = 0) :
     ∃ unit : Rat,
       ZPoly.toRatPoly normalized.xFreePrimitive =
         DensePoly.scale unit

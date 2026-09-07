@@ -63,7 +63,7 @@ def addEliminant (p q : ZPoly) : ZPoly :=
 with coefficients in `Int[t]`. -/
 @[expose]
 def mulSubstitute (q : ZPoly) : DensePoly ZPoly :=
-  let n := q.degree?.getD 0
+  let n := q.natDegree
   DensePoly.ofCoeffs <| ((List.range (n + 1)).map fun j =>
     DensePoly.monomial (n - j) (q.coeff (n - j))).toArray
 
@@ -102,8 +102,9 @@ theorem negRoots_lc_pos (p : ZPoly) (hprim : Primitive p)
 
 /-- Negating roots preserves positive degree. -/
 theorem negRoots_degree_pos (p : ZPoly) (hprim : Primitive p)
-    (h : 0 < p.degree?.getD 0) :
-    0 < (negRoots p).degree?.getD 0 := by
+    (h : 0 < p.natDegree) :
+    0 < (negRoots p).natDegree := by
+  unfold Hex.DensePoly.natDegree
   rw [negRoots_eq_reflect hprim, degree?_normalizePrimitiveSign,
     degree?_dilate_neg_one]
   exact h
@@ -121,6 +122,7 @@ normalization. -/
 theorem mahlerPrec_negRoots (p : ZPoly) (h : Primitive p) :
     mahlerPrec (negRoots p) = mahlerPrec p := by
   unfold mahlerPrec
+  unfold Hex.DensePoly.natDegree
   rw [negRoots_eq_reflect h, degree?_normalizePrimitiveSign,
     degree?_dilate_neg_one, coeffAbsMax_normalizePrimitiveSign,
     coeffAbsMax_dilate_neg_one]
@@ -178,7 +180,7 @@ def ofEliminant? (raw : ZPoly)
   let p := ZPoly.squareFreeCore raw
   if hprim : ZPoly.content p = 1 then
     if hpos : 0 < p.leadingCoeff then
-      if hdegree : 0 < p.degree?.getD 0 then
+      if hdegree : 0 < p.natDegree then
         if hsimple : HasOnlySimpleRoots p then do
           let prec : Int := separationDepth p
           let ball ← ballAt prec

@@ -43,7 +43,7 @@ theorem factorClassicalFactors_factor_irreducible
   simp only [Hex.factorClassicalFactors, Hex.runClassical,
     Hex.classicalInput] at hcf
   by_cases hdeg :
-      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+      (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
   · rw [ite_eq_left hdeg] at hcf
     obtain rfl := Option.some.inj hcf
     have hcomplete :=
@@ -125,7 +125,7 @@ theorem factorClassicalFactors_factor_irreducible
                 cases hcf
                 have hcore_degree :
                     0 <
-                      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+                      (Hex.normalizeForFactor f).squareFreeCore.natDegree :=
                   Nat.pos_of_ne_zero hdeg
                 have hcore_squarefree :
                     Squarefree

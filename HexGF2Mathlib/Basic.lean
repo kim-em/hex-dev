@@ -59,7 +59,7 @@ def toFpPoly (p : Hex.GF2Poly) : Hex.FpPoly 2 :=
     if p.isZero then
       []
     else
-      (List.range (p.degree + 1)).map fun i => coeffToFp (p.coeff i)
+      (List.range (p.natDegree + 1)).map fun i => coeffToFp (p.coeff i)
   Hex.DensePoly.ofList coeffs
 
 /-- Pack the coefficients of a single 64-term `FpPoly 2` segment into one
@@ -93,17 +93,17 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
     rfl
   · have hbody : toFpPoly p =
         Hex.DensePoly.ofList
-          ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))) := by
+          ((List.range (p.natDegree + 1)).map (fun j => coeffToFp (p.coeff j))) := by
       unfold toFpPoly; rw [ite_eq_right hz]
     rw [hbody, Hex.DensePoly.coeff_ofList]
     have hrange :
-        ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))).getD i
+        ((List.range (p.natDegree + 1)).map (fun j => coeffToFp (p.coeff j))).getD i
           (Zero.zero : Hex.ZMod64 2) =
-          if i < p.degree + 1 then coeffToFp (p.coeff i)
+          if i < p.natDegree + 1 then coeffToFp (p.coeff i)
           else (Zero.zero : Hex.ZMod64 2) := by
-      by_cases hi : i < p.degree + 1 <;> simp [hi, List.getD]
+      by_cases hi : i < p.natDegree + 1 <;> simp [hi, List.getD]
     rw [hrange]
-    by_cases hi : i < p.degree + 1
+    by_cases hi : i < p.natDegree + 1
     · rw [ite_eq_left hi, hcoeffToFp]
     · rw [ite_eq_right hi]
       have hzf : p.isZero = false := by
@@ -111,7 +111,7 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
         | false => rfl
         | true => exact absurd hb hz
       obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hzf
-      have hdd : p.degree = d := Hex.GF2Poly.degree_eq_of_degree?_eq_some hd
+      have hdd : p.natDegree = d := Hex.GF2Poly.natDegree_eq_of_degree?_eq_some hd
       have hcoeff : p.coeff i = false :=
         Hex.GF2Poly.coeff_eq_false_of_degree?_lt hd (by omega)
       rw [hcoeff]
@@ -527,14 +527,14 @@ theorem irreducible_toFpPoly {p : Hex.GF2Poly} (h : Hex.GF2Poly.Irreducible p) :
     have hb_ne : ofFpPoly b ≠ 0 := fun h0 => hp_ne (by
       rw [← hmul, h0, Hex.GF2Poly.mul_zero])
     have hupgrade : ∀ q : Hex.FpPoly 2, ofFpPoly q ≠ 0 →
-        (ofFpPoly q).degree = 0 → q.degree? = some 0 := by
+        (ofFpPoly q).natDegree = 0 → q.degree? = some 0 := by
       intro q hq hdeg
       have hzf : (ofFpPoly q).isZero = false := by
         cases hb : (ofFpPoly q).isZero with
         | false => rfl
         | true => exact absurd (Hex.GF2Poly.eq_zero_of_isZero hb) hq
       obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hzf
-      have hdd : (ofFpPoly q).degree = d := Hex.GF2Poly.degree_eq_of_degree?_eq_some hd
+      have hdd : (ofFpPoly q).natDegree = d := Hex.GF2Poly.natDegree_eq_of_degree?_eq_some hd
       rw [hdd] at hdeg
       subst hdeg
       calc q.degree? = (toFpPoly (ofFpPoly q)).degree? := by rw [toFpPoly_ofFpPoly]
@@ -747,7 +747,7 @@ theorem coeff_ofNatBelowDegree_eq_false_of_bound
 /-- A reduced polynomial (zero, or of degree `< degree`) has every coefficient
 at index `≥ degree` clear. -/
 private theorem coeff_eq_false_of_degree_le {p : Hex.GF2Poly} {degree j : Nat}
-    (h : p.IsZero ∨ p.degree < degree) (hj : degree ≤ j) :
+    (h : p.IsZero ∨ p.natDegree < degree) (hj : degree ≤ j) :
     p.coeff j = false := by
   rcases h with hzero | hlt
   · rw [Hex.GF2Poly.eq_zero_of_isZero hzero]
@@ -760,13 +760,13 @@ private theorem coeff_eq_false_of_degree_le {p : Hex.GF2Poly} {degree j : Nat}
         | true => exact absurd hb hpz
         | false => rfl
       obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hpz'
-      have hdeg : p.degree = d := Hex.GF2Poly.degree_eq_of_degree?_eq_some hd
+      have hdeg : p.natDegree = d := Hex.GF2Poly.natDegree_eq_of_degree?_eq_some hd
       exact Hex.GF2Poly.coeff_eq_false_of_degree?_lt hd (by omega)
 
 /-- A polynomial known to have degree `< degree` has an index below
 `2 ^ degree` under the packed binary interpretation. -/
 theorem toNat_lt_of_degree_lt {p : Hex.GF2Poly} {degree : Nat}
-    (h : p.IsZero ∨ p.degree < degree) :
+    (h : p.IsZero ∨ p.natDegree < degree) :
     toNat p < 2 ^ degree := by
   apply Nat.lt_pow_two_of_testBit
   intro j hj
@@ -777,7 +777,7 @@ theorem toNat_lt_of_degree_lt {p : Hex.GF2Poly} {degree : Nat}
 representative for that degree bound. -/
 theorem ofNatBelowDegree_reduced (degree : Nat) (i : Fin (2 ^ degree)) :
     (ofNatBelowDegree degree i.1).IsZero ∨
-      (ofNatBelowDegree degree i.1).degree < degree := by
+      (ofNatBelowDegree degree i.1).natDegree < degree := by
   by_cases hz : (ofNatBelowDegree degree i.1).isZero = true
   · exact Or.inl hz
   · right
@@ -786,8 +786,8 @@ theorem ofNatBelowDegree_reduced (degree : Nat) (i : Fin (2 ^ degree)) :
       | true => exact absurd hb hz
       | false => rfl
     obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hz'
-    have hdeg : (ofNatBelowDegree degree i.1).degree = d :=
-      Hex.GF2Poly.degree_eq_of_degree?_eq_some hd
+    have hdeg : (ofNatBelowDegree degree i.1).natDegree = d :=
+      Hex.GF2Poly.natDegree_eq_of_degree?_eq_some hd
     rw [hdeg]
     by_contra hge
     have hfalse : (ofNatBelowDegree degree i.1).coeff d = false :=
@@ -814,7 +814,7 @@ theorem toNat_ofNatBelowDegree (degree : Nat) (i : Fin (2 ^ degree)) :
 /-- Decoding after encoding a reduced packed representative preserves the
 polynomial. -/
 theorem ofNatBelowDegree_toNat {p : Hex.GF2Poly} {degree : Nat}
-    (h : p.IsZero ∨ p.degree < degree) :
+    (h : p.IsZero ∨ p.natDegree < degree) :
     ofNatBelowDegree degree (toNat p) = p := by
   have hbound : toNat p < 2 ^ degree := toNat_lt_of_degree_lt h
   apply Hex.GF2Poly.ext_coeff

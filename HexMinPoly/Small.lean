@@ -90,7 +90,7 @@ theorem krylovDeg_zero {n : Nat} (A : Matrix F n n) :
   exact Option.some.inj h.symm
 
 private theorem eq_C_of_degree_zero (p : DensePoly F)
-    (hdegree : p.degree?.getD 0 = 0) : p = DensePoly.C (p.coeff 0) := by
+    (hdegree : p.natDegree = 0) : p = DensePoly.C (p.coeff 0) := by
   by_cases hp : p = 0
   · subst p
     apply DensePoly.ext_coeff
@@ -105,8 +105,7 @@ private theorem eq_C_of_degree_zero (p : DensePoly F)
       · exact h
       · exact False.elim (hp ((DensePoly.size_eq_zero_iff p).mp
           (Nat.eq_zero_of_not_pos h)))
-    have hdeg := DensePoly.degree?_eq_some_of_pos_size p hpos
-    rw [hdeg, Option.getD_some] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one] at hdegree
     have hsize : p.size ≤ 1 := by omega
     apply DensePoly.ext_coeff
     intro i
@@ -147,8 +146,9 @@ private theorem linear_coeff (a : F) (i : Nat) :
       omega
 
 private theorem linear_degree (a : F) :
-    (#p[-a, 1] : DensePoly F).degree?.getD 0 = 1 := by
+    (#p[-a, 1] : DensePoly F).natDegree = 1 := by
   have hsize := linear_size a
+  unfold Hex.DensePoly.natDegree
   rw [DensePoly.degree?_eq_some_of_pos_size _ (by omega), Option.getD_some,
     hsize]
 
@@ -193,7 +193,7 @@ private theorem linear_dvd_of_eval_eq_zero (p : DensePoly F) (a : F)
     (heval : p.eval a = 0) : (#p[-a, 1] : DensePoly F) ∣ p := by
   let d : DensePoly F := #p[-a, 1]
   let qr := DensePoly.divMod p d
-  have hdDegree : d.degree?.getD 0 = 1 := linear_degree a
+  have hdDegree : d.natDegree = 1 := linear_degree a
   have hdMonic : d.Monic := linear_monic a
   have hcancel : ∀ b : F,
       b - (b / d.leadingCoeff) * d.leadingCoeff = 0 := by
@@ -202,8 +202,8 @@ private theorem linear_dvd_of_eval_eq_zero (p : DensePoly F) (a : F)
     grind
   have hremDegree :=
     DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel p d (by omega) hcancel
-  have hremZero : qr.2.degree?.getD 0 = 0 := by
-    change (DensePoly.divMod p d).2.degree?.getD 0 = 0
+  have hremZero : qr.2.natDegree = 0 := by
+    change (DensePoly.divMod p d).2.natDegree = 0
     omega
   have hremC := eq_C_of_degree_zero qr.2 hremZero
   have hreconstruct : qr.1 * d + qr.2 = p := by

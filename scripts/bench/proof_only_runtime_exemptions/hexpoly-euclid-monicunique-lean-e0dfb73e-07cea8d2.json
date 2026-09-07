@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Euclid/MonicUnique.lean",
+ "baseline_blob": "e0dfb73e4175b5fb5185210e8642a68aa160c25b",
+ "current_blob": "07cea8d2168585c52f76e610594ddc20b5e02fb5",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

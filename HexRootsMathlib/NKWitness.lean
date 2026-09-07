@@ -253,7 +253,8 @@ theorem natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) :
     (toPolyℂ p).natDegree < p.size := by
   rw [natDegree_toPolyℂ]
   have hdegree : p.degree? = some (p.size - 1) := by
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+  unfold Hex.DensePoly.natDegree
   rw [hdegree, Option.getD_some]
   omega
 

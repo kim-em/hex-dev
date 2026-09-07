@@ -53,7 +53,7 @@ def yunAux [ZPoly.CheckedIrreducible p]
       else
         let shared := monic (DensePoly.gcd w repeated)
         let component := monic (w / shared)
-        let out := if 0 < component.degree?.getD 0 then
+        let out := if 0 < component.natDegree then
           out.push (component, multiplicity)
         else
           out
@@ -67,7 +67,7 @@ their distinct root-set conventions. -/
 def yun [ZPoly.CheckedIrreducible p]
     (f : DensePoly (PolyQuot p x)) :
     Array (DensePoly (PolyQuot p x) × Nat) :=
-  if f.degree?.getD 0 = 0 then
+  if f.natDegree = 0 then
     #[]
   else
     let normalized := monic f
@@ -95,7 +95,7 @@ once. -/
 @[expose]
 def clearedOuter (f : DensePoly (PolyQuot p x)) : DensePoly ZPoly :=
   let den := commonDen f
-  let generatorDegree := p.degree?.getD 0
+  let generatorDegree := p.natDegree
   DensePoly.ofCoeffs <| ((List.range generatorDegree).map fun j =>
     DensePoly.ofCoeffs <| ((List.range f.size).map fun i =>
       clearRat den ((f.coeff i).coeffs.coeff j)).toArray).toArray
@@ -120,7 +120,7 @@ enters only the constant coordinate of the constant `z`-coefficient. -/
 @[expose]
 def evalShifted (f : DensePoly (PolyQuot p x)) : DensePoly (DensePoly ZPoly) :=
   let den := commonDen f
-  let generatorDegree := p.degree?.getD 0
+  let generatorDegree := p.natDegree
   DensePoly.ofCoeffs <| ((List.range (Nat.max f.size 1)).map fun i =>
     DensePoly.ofCoeffs <| ((List.range generatorDegree).map fun j =>
       let c := clearRat den ((f.coeff i).coeffs.coeff j)
@@ -172,7 +172,7 @@ def componentRoots? [ZPoly.CheckedIrreducible p]
   let eliminant := ZPoly.squareFreeCore (normEliminant f)
   if hprim : ZPoly.content eliminant = 1 then
     if hpos : 0 < eliminant.leadingCoeff then
-      if hdegree : 0 < eliminant.degree?.getD 0 then
+      if hdegree : 0 < eliminant.natDegree then
         if hsimple : HasOnlySimpleRoots eliminant then do
           let isolations ← isolate eliminant hsimple (separationDepth eliminant : Int)
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
@@ -218,7 +218,7 @@ def sameValue? (a b : AlgebraicRoot) : Option Bool :=
     some ((hp ▸ a.rep).sameRoot b.rep)
   else
     let common := DensePoly.gcd (ZPoly.toRatPoly a.p) (ZPoly.toRatPoly b.p)
-    if common.degree?.getD 0 = 0 then
+    if common.natDegree = 0 then
       some false
     else do
       let a' ← a.exact?
@@ -287,7 +287,7 @@ def roots? [ZPoly.CheckedIrreducible p]
     (h : SimpleRoot.mk rep = x) : Option RootSet :=
   if f.isZero then
     some .all
-  else if f.degree?.getD 0 = 0 then
+  else if f.natDegree = 0 then
     some (.finite #[])
   else do
     let roots ← (Roots.yun f).foldlM
@@ -369,7 +369,7 @@ def shift? (theta alpha : AlgebraicNumber) (c : Int) : Option AlgebraicNumber :=
 /-- Degree of a canonical algebraic number. -/
 @[expose]
 def degree (a : AlgebraicNumber) : Nat :=
-  a.p.degree?.getD 0
+  a.p.natDegree
 
 /-- A primitive-search candidate together with the signed shift that produced
 it. -/

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/Enumeration.lean",
+ "baseline_blob": "52dcb086e516d615bc516b266f76dada9a9f9be2",
+ "current_blob": "ffaeeb842a6b78db9c39422a73af190369a41aad",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

@@ -48,7 +48,7 @@ empty list represents the zero polynomial, matching python-flint's
 `nmod_poly([], 2)` normalisation. -/
 private def coeffsOf (p : GF2Poly) : List Int :=
   if p.isZero then []
-  else (List.range (p.degree + 1)).map fun i =>
+  else (List.range (p.natDegree + 1)).map fun i =>
     if p.coeff i then (1 : Int) else 0
 
 /-- Coefficient list of the packed-word residue stored in a `GF2n.val`. -/

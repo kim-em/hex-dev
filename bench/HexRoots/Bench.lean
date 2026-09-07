@@ -256,7 +256,7 @@ component (a subdivided region localised near a root). Falls back to the Cauchy
 square when the degree is degenerate or every child was `T₀`-discarded. -/
 def midComponent (degree : Nat) : ZPoly × Component :=
   let p := seededPoly degree
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     let start := Component.cauchy p h
     let round1 := start.refine1 p
     let round2 := round1.flatMap (·.refine1 p)
@@ -267,7 +267,7 @@ def midComponent (degree : Nat) : ZPoly × Component :=
 /-- A mid-refinement component on the smooth fixed-separation family. -/
 def separatedMidComponent (degree : Nat) : ZPoly × Component :=
   let p := separatedPoly degree
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     let start := Component.cauchy p h
     let round1 := start.refine1 p
     let round2 := round1.flatMap (·.refine1 p)
@@ -328,7 +328,7 @@ def certifyChecksum (pc : ZPoly × Component) : UInt64 :=
 
 /-- Benchmark target: `isolateAll?` at target precision `32`. -/
 def isolateAllChecksum (p : ZPoly) : UInt64 :=
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     match isolateAll? p 32 #[Component.cauchy p h] with
     | some rs => certifiedArrayChecksum rs
     | none => 0

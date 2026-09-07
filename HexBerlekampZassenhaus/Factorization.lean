@@ -189,7 +189,7 @@ are especially effective there. -/
 @[expose]
 def proposalEligible (f : ZPoly) (liftedFactorCount : Nat) : Prop :=
   proposalLiftedFactorThreshold ≤ liftedFactorCount ∧
-    f.degree?.getD 0 < 4 * nonzeroCoefficientCount f
+    f.natDegree < 4 * nonzeroCoefficientCount f
 
 instance (f : ZPoly) (liftedFactorCount : Nat) :
     Decidable (proposalEligible f liftedFactorCount) := by
@@ -226,7 +226,7 @@ untouched. -/
 @[expose]
 def classicalInput (f : ZPoly) : ClassicalInput f :=
   let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+  if normalized.squareFreeCore.natDegree = 0 then
     .answered
       (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
       { method := .constant }
@@ -436,7 +436,7 @@ def coordinateLatticeProposal
     Option (Array ZPoly) × CoordinateLatticeStats :=
   let L := prepared.coordinateLattice width
   let baseStats : CoordinateLatticeStats :=
-    { residualDegree := f.degree?.getD 0
+    { residualDegree := f.natDegree
       liftedFactorCount := d.liftedFactors.size
       coordinates := prepared.coordinates
       cutThresholds := L.cutThresholds
@@ -460,7 +460,7 @@ def coordinateLatticeProposal
       | some candidates =>
           let stats :=
             { stats with
-              candidateDegrees := candidates.map (·.degree?.getD 0) }
+              candidateDegrees := candidates.map (·.natDegree) }
           if Array.polyProduct candidates = f then
             (some candidates, { stats with accepted := true })
           else
@@ -578,13 +578,13 @@ def proposeFactorization
   | none => (none, { classical := peeled.stats, lattices })
   | some residualPieces =>
       let pieces := peeled.factors ++ residualPieces
-      let pieceDegrees := pieces.map (·.degree?.getD 0)
+      let pieceDegrees := pieces.map (·.natDegree)
       if hpieces : Array.polyProduct pieces = core.poly then
         match hreplay : replayClassicalPieces pieces with
         | none =>
             (none, { classical := peeled.stats, lattices, pieceDegrees })
         | some coreFactors =>
-            let factorDegrees := coreFactors.map (·.degree?.getD 0)
+            let factorDegrees := coreFactors.map (·.natDegree)
             if hproduct :
                 Factorization.product
                     (factorizationOfFactors f coreFactors) = f then
@@ -654,7 +654,7 @@ method of the three-method `factorize` combinator. -/
 @[expose]
 def factorTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+  if normalized.squareFreeCore.natDegree = 0 then
     reassemblePolynomialFactors normalized #[normalized.squareFreeCore]
   else
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
@@ -1132,7 +1132,7 @@ def factorLatticeFactorsWithPlan
     (normalized : FactorNormalizationData) (B : Nat)
     (modular : DirectPrimePlan (SquareFreeInput.ofNormalized normalized)) :
     Option (Array ZPoly) :=
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+  if normalized.squareFreeCore.natDegree = 0 then
     some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
   else if B = 0 then
     none
@@ -1149,7 +1149,7 @@ irreducibles return `some #[f]` instead of `none`. -/
 @[expose]
 def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+  if normalized.squareFreeCore.natDegree = 0 then
     some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
   else if B = 0 then
     none

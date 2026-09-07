@@ -39,7 +39,7 @@ def disc [One R] [Add R] [Sub R] [Mul R] [Div R] [NatCast R]
   else
     let n := f.size - 1
     let d := f.derivative
-    let gap := n - 1 - d.degree?.getD 0
+    let gap := n - 1 - d.natDegree
     negOnePow (n * (n - 1) / 2) *
       exactDiv (powNat f.leadingCoeff gap * resultant f d) f.leadingCoeff
 

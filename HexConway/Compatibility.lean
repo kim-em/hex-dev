@@ -130,7 +130,7 @@ def normExponent (q : Nat) : Nat → Nat
 /-- The executable Frobenius base represents the `p`-th power of the quotient
 indeterminate. -/
 theorem reduce_frobeniusBase_eq_pow
-    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0} :
+    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.natDegree} :
     FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
         (frobeniusBase f hmonic) =
       (FpPoly.Quotient.X (g := f) (hmonic := hmonic) (hg_pos := hf_pos)) ^ p := by
@@ -139,7 +139,7 @@ theorem reduce_frobeniusBase_eq_pow
 /-- Iterating executable modular composition `k` times represents raising a
 quotient element to `p^k`. -/
 theorem reduce_frobeniusIter_eq_pow
-    {f xp : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0}
+    {f xp : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.natDegree}
     (hxp : FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) xp =
       (FpPoly.Quotient.X (g := f) (hmonic := hmonic) (hg_pos := hf_pos)) ^ p) :
     ∀ (k : Nat) (a : FpPoly p),
@@ -167,7 +167,7 @@ theorem reduce_frobeniusIter_eq_pow
 /-- The norm accumulator represents its initial accumulator multiplied by the
 geometric sequence of Frobenius powers of its initial current value. -/
 theorem reduce_normAux_eq_pow
-    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0}
+    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.natDegree}
     (m : Nat) : ∀ (k : Nat) (acc cur : FpPoly p),
       FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
           (normAux f (frobeniusBase f hmonic) hmonic m k acc cur) =
@@ -209,7 +209,7 @@ theorem reduce_normAux_eq_pow
 /-- The quotient class of `normX` is the geometric-sum power of the quotient
 indeterminate. -/
 theorem normX_eq_pow
-    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0}
+    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.natDegree}
     (m k : Nat) :
     FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
         (normX f hmonic m k) =
@@ -283,7 +283,7 @@ through `FpPoly.degree`; the two are definitionally equal, but instance search
 on `Quotient` wants this shape. -/
 theorem conwayPoly_degree_pos (p n : Nat) [ZMod64.Bounds p]
     (hn : SupportedEntry p n) :
-    0 < (conwayPoly p n hn).degree?.getD 0 :=
+    0 < (conwayPoly p n hn).natDegree :=
   conwayPoly_nonconstant p n hn
 
 /-! # What compatibility says about field elements

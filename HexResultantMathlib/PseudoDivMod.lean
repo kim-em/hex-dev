@@ -53,20 +53,24 @@ theorem quotient_degree [CommRing R] [DecidableEq R]
     exact Nat.pos_of_ne_zero fun hg0 =>
       hg ((size_eq_zero_iff g).mp hg0)
   have hfpos : 0 < f.size := Nat.lt_of_lt_of_le hgpos hgf
-  have hgdeg : g.degree?.getD 0 = g.size - 1 := by
+  have hgdeg : g.natDegree = g.size - 1 := by
     by_cases hg0 : g.size = 0
-    · rw [(degree?_eq_none_iff g).2 hg0, Option.getD_none]
+    · unfold Hex.DensePoly.natDegree
+      rw [(degree?_eq_none_iff g).2 hg0, Option.getD_none]
       omega
-    · rw [degree?_eq_some_of_pos_size g (Nat.pos_of_ne_zero hg0),
+    · unfold Hex.DensePoly.natDegree
+      rw [degree?_eq_some_of_pos_size g (Nat.pos_of_ne_zero hg0),
         Option.getD_some]
-  have hfdeg : f.degree?.getD 0 = f.size - 1 := by
-    rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+  have hfdeg : f.natDegree = f.size - 1 := by
+    rw [natDegree_eq_size_sub_one]
   rw [hgdeg, hfdeg]
   by_cases hq0 : (pseudoDivMod f g).1.size = 0
-  · rw [(degree?_eq_none_iff (pseudoDivMod f g).1).2 hq0,
+  · unfold Hex.DensePoly.natDegree
+    rw [(degree?_eq_none_iff (pseudoDivMod f g).1).2 hq0,
       Option.getD_none]
     omega
-  · rw [degree?_eq_some_of_pos_size (pseudoDivMod f g).1
+  · unfold Hex.DensePoly.natDegree
+    rw [degree?_eq_some_of_pos_size (pseudoDivMod f g).1
         (Nat.pos_of_ne_zero hq0), Option.getD_some]
     omega
 
@@ -89,10 +93,8 @@ theorem remainder_degree [CommRing R] [DecidableEq R]
   · right
     rw [HexPolyMathlib.natDegree_toPolynomial,
       HexPolyMathlib.natDegree_toPolynomial,
-      degree?_eq_some_of_pos_size (pseudoDivMod f g).2
-        (Nat.pos_of_ne_zero hr0),
-      degree?_eq_some_of_pos_size g hgpos, Option.getD_some,
-      Option.getD_some]
+      Hex.DensePoly.natDegree_eq_size_sub_one,
+      Hex.DensePoly.natDegree_eq_size_sub_one]
     omega
 
 /-- One fraction-free pseudo-division step transports the formal-degree
@@ -172,10 +174,12 @@ theorem resultant_step_degree [CommRing R] [DecidableEq R]
     rw [HexPolyMathlib.natDegree_toPolynomial,
       HexPolyMathlib.natDegree_toPolynomial]
     by_cases hr0 : r.size = 0
-    · rw [(degree?_eq_none_iff r).2 hr0, Option.getD_none,
+    · unfold Hex.DensePoly.natDegree
+      rw [(degree?_eq_none_iff r).2 hr0, Option.getD_none,
         degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
       omega
-    · rw [degree?_eq_some_of_pos_size r (Nat.pos_of_ne_zero hr0),
+    · unfold Hex.DensePoly.natDegree
+      rw [degree?_eq_some_of_pos_size r (Nat.pos_of_ne_zero hr0),
         degree?_eq_some_of_pos_size f hfpos, Option.getD_some,
         Option.getD_some]
       omega

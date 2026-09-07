@@ -64,7 +64,7 @@ emission condition was not reached within that fuel bound. -/
 @[expose] def isolate (p : ZPoly) (_h : HasOnlySimpleRoots p) (atom_prec : Int)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (DyadicRootIsolation p)) :=
-  if hd : 0 < p.degree?.getD 0 then
+  if hd : 0 < p.natDegree then
     let target := max atom_prec (separationDepth p : Int)
     (isolateAll? p target #[Component.cauchy p hd] strategy).bind fun rs =>
       rs.mapM Certified.asAtom?

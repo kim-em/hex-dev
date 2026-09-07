@@ -429,7 +429,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
         coeffs result.scalar = #[1] && result.factors.size = 2 &&
           checkFactorization input result.scalar result.factors &&
           result.factors.all fun entry =>
-            entry.2 = 1 && entry.1.degree?.getD 0 = 1 &&
+            entry.2 = 1 && entry.1.natDegree = 1 &&
               let root := -(entry.1.coeff 0) / entry.1.leadingCoeff
               coeffs (root * root) = #[1]
     | none => false
@@ -493,7 +493,7 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
             result.factors.size = 2 &&
               checkFactorization input result.scalar result.factors &&
               result.factors.all fun entry =>
-                entry.2 = 1 && entry.1.degree?.getD 0 = 1 &&
+                entry.2 = 1 && entry.1.natDegree = 1 &&
                   let root := -(entry.1.coeff 0) / entry.1.leadingCoeff
                   coeffs (root * root) = #[3, 0, 0, 0]
         | none => false

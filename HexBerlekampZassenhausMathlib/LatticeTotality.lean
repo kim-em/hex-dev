@@ -35,7 +35,7 @@ theorem factorLatticeFactorsWithBound_ne_none_of_directPrimePlan
     simp
   · rw [Hex.factorLatticeFactorsWithBound]
     by_cases hdeg :
-        (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+        (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
     · rw [ite_eq_left hdeg]
       simp
     · rw [ite_eq_right hdeg]
@@ -68,7 +68,7 @@ theorem factorLatticeFactorsWithBound_ne_none_of_directPrimePlan
                 Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
               have hcore_pos :
                   0 <
-                    (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+                    (Hex.normalizeForFactor f).squareFreeCore.natDegree :=
                 Nat.pos_of_ne_zero hdeg
               have hcore_prim :=
                 IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero

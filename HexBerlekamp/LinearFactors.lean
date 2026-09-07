@@ -108,9 +108,9 @@ theorem primeFieldLinearFactor_monic [ZMod64.PrimeModulus p] (c : ZMod64 p) :
 
 /-- Each prime-field linear factor has degree exactly one. -/
 theorem primeFieldLinearFactor_degree [ZMod64.PrimeModulus p] (c : ZMod64 p) :
-    (primeFieldLinearFactor c).degree?.getD 0 = 1 := by
+    (primeFieldLinearFactor c).natDegree = 1 := by
   have hsize := primeFieldLinearFactor_size (p := p) c
-  unfold DensePoly.degree?
+  unfold DensePoly.natDegree DensePoly.degree?
   simp [hsize]
 
 /-- Distinct residues give distinct linear factors. -/

@@ -267,15 +267,15 @@ private theorem fp_dvd_trans {a b c : FpPoly p}
 omit [ZMod64.PrimeModulus p] in
 /-- A polynomial of positive degree is not the unit polynomial. -/
 theorem isUnitPolynomial_eq_false_of_pos_degree
-    {g : FpPoly p} (hpos : 0 < g.degree?.getD 0) :
+    {g : FpPoly p} (hpos : 0 < g.natDegree) :
     isUnitPolynomial g = false := by
   unfold isUnitPolynomial
   cases hdeg : g.degree? with
   | none => rfl
   | some k =>
-    have hk : k = g.degree?.getD 0 := by simp [hdeg]
+    have hk : k = g.natDegree := by rw [DensePoly.natDegree, hdeg]; rfl
     subst hk
-    cases hcase : g.degree?.getD 0 with
+    cases hcase : g.natDegree with
     | zero =>
         simp [hcase] at hpos
     | succ _ => rfl
@@ -339,11 +339,11 @@ theorem rabinTest_imp_irreducible
   have hb_ne_zero : b ≠ 0 := by
     have hba : b * a = f := by rw [FpPoly.mul_comm]; exact hab
     exact factor_ne_zero_of_ne_zero hba hf_ne_zero
-  have ha_pos : 0 < a.degree?.getD 0 :=
+  have ha_pos : 0 < a.natDegree :=
     pos_degree_of_ne_zero_of_not_isUnit ha_ne_zero ha_unit
-  have hb_pos : 0 < b.degree?.getD 0 :=
+  have hb_pos : 0 < b.natDegree :=
     pos_degree_of_ne_zero_of_not_isUnit hb_ne_zero hb_unit
-  have ha_lt : a.degree?.getD 0 < basisSize f :=
+  have ha_lt : a.natDegree < basisSize f :=
     factor_degree_lt_basisSize hab ha_ne_zero hb_pos
   -- Pick a monic irreducible factor `g` of `a`.
   obtain ⟨g, hg_irr, hg_monic, hg_dvd_a, hg_deg_pos, hg_deg_le_a⟩ :=
@@ -359,20 +359,20 @@ theorem rabinTest_imp_irreducible
   have hg_dvd_xPowSubX_n : g ∣ xPowSubX (p := p) (basisSize f) :=
     fp_dvd_trans hg_dvd_f hf_dvd_xPowSubX_n
   -- Rabin: `deg g ∣ basisSize f`.
-  have hdeg_dvd : g.degree?.getD 0 ∣ basisSize f :=
+  have hdeg_dvd : g.natDegree ∣ basisSize f :=
     degree_dvd_of_irreducible_dvd_xPowSubX hg_irr hg_monic hg_deg_pos
       hg_dvd_xPowSubX_n
   -- `deg g < basisSize f` because `deg g ≤ deg a < basisSize f`.
-  have hdeg_lt : g.degree?.getD 0 < basisSize f :=
+  have hdeg_lt : g.natDegree < basisSize f :=
     Nat.lt_of_le_of_lt hg_deg_le_a ha_lt
   -- Route `deg g` through some maximal proper divisor `m` of `basisSize f`.
   obtain ⟨m, hm_mem, hdeg_dvd_m⟩ :=
     exists_maximalProperDivisor_dvd hg_deg_pos hdeg_dvd hdeg_lt
   -- `g ∣ X^(p^(deg g)) - X` (Rabin backward direction).
-  have hg_dvd_xPowSubX_deg : g ∣ xPowSubX (p := p) (g.degree?.getD 0) :=
+  have hg_dvd_xPowSubX_deg : g ∣ xPowSubX (p := p) (g.natDegree) :=
     irreducible_dvd_xPowSubX_degree hg_irr hg_monic hg_deg_pos
   -- `X^(p^(deg g)) - X ∣ X^(p^m) - X` via the divisibility chain.
-  have hxPow_dvd_xPow : xPowSubX (p := p) (g.degree?.getD 0) ∣
+  have hxPow_dvd_xPow : xPowSubX (p := p) (g.natDegree) ∣
       xPowSubX (p := p) m :=
     xPowSubX_dvd_of_dvd hdeg_dvd_m
   have hg_dvd_xPowSubX_m : g ∣ xPowSubX (p := p) m :=

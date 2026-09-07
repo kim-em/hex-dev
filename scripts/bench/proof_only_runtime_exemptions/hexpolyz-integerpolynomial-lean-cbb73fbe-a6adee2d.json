@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/IntegerPolynomial.lean",
+ "baseline_blob": "cbb73fbeea543a0c31b529b31fb9454a250ead07",
+ "current_blob": "a6adee2d4ebc958bccb73f35576c53fd8c721f3b",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

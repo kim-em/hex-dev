@@ -79,7 +79,7 @@ private theorem toReal_sub (a b : Dyadic) :
 squarefree `p` and `lo < mid < hi`, the count over `(lo, hi]` is the sum of the
 counts over `(lo, mid]` and `(mid, hi]`: the half-open interval splits as a
 disjoint union, and the root-filter cardinalities add. -/
-private theorem sturmCount_split (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem sturmCount_split (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo mid hi : Dyadic} (h1 : lo < mid) (h2 : mid < hi) :
     Hex.sturmCount p ⟨lo, hi, dlt_trans h1 h2⟩
       = Hex.sturmCount p ⟨lo, mid, h1⟩ + Hex.sturmCount p ⟨mid, hi, h2⟩ := by
@@ -118,7 +118,7 @@ private theorem sturmCount_split (hdeg : 1 ≤ (p.degree?).getD 0)
   exact_mod_cast hnat
 
 /-- A count-`0` interval contains no real root of `p`. -/
-private theorem no_root_of_count_zero (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem no_root_of_count_zero (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {J : Hex.DyadicInterval} (h : Hex.sturmCount p J = 0)
     (hP0 : toPolyℝ p ≠ 0) {r : ℝ} (hr : (toPolyℝ p).IsRoot r)
     (hlo : Dyadic.toReal J.lower < r) (hhi : r ≤ Dyadic.toReal J.upper) : False := by
@@ -247,7 +247,7 @@ difference between `-rootBound p` and `rootBound p` counts the real roots of `p`
 in `(-R, R]`, which is *every* real root (Cauchy bound), i.e. `rootCount p`. This
 is a statement about `p`'s roots only — the chain elements' own (possibly larger)
 zeros never enter, so there is no `±R`-versus-`±∞` gap. -/
-theorem sturmVar_neg_pos_sub (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmVar_neg_pos_sub (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (-(Hex.rootBound p)) : ℤ)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (Hex.rootBound p)
@@ -303,10 +303,11 @@ private theorem toReal_le_two_pow_ceilLog2Dyadic (x : Dyadic) (hx : 0 < Dyadic.t
 /-- **The initial interval's width fits the depth budget.** For positive-degree
 `p`, `2 · rootBound p ≤ 2 ^ (isolationDepth p − sepPrec p)`, which is the
 depth-sufficiency hypothesis the `sturmVisit` induction consumes at the top. -/
-theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0) :
+theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ p.natDegree) :
     Dyadic.toReal (Hex.rootBound p) - Dyadic.toReal (-(Hex.rootBound p))
       ≤ (2 : ℝ) ^ ((Hex.isolationDepth p : ℤ) - (Hex.sepPrec p : ℤ)) := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
+    rw [Hex.DensePoly.natDegree_eq_degree?_getD] at hdeg
     rcases hh : p.degree? with _ | n
     · rw [hh] at hdeg; simp at hdeg
     · rcases n with _ | m
@@ -347,7 +348,7 @@ theorem dle_trans {a b c : Dyadic} (h1 : a ≤ b) (h2 : b ≤ c) : a ≤ c :=
 
 /-- `sturmVarAt` is antitone in the point: the count over `(a, b]` is a
 nonnegative cardinality, so the variation at `b` is at most the one at `a`. -/
-theorem sturmVarAt_le (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmVarAt_le (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {a b : Dyadic} (hab : a < b) :
     Hex.sturmVarAt (Hex.ZPoly.sturmChain p) b
       ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) a := by
@@ -375,7 +376,7 @@ theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
 holds at most one real root of a positive-degree squarefree `p` (two distinct
 real roots are more than `4·2^(−sepPrec p)` apart by `sepPrec_separates'`), so
 its exact Sturm count is at most `1`. -/
-theorem sturmCount_le_one (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmCount_le_one (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) (J : Hex.DyadicInterval)
     (hw : Dyadic.toReal J.upper - Dyadic.toReal J.lower
       ≤ (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ))) :
@@ -434,7 +435,7 @@ Structural induction on `depth`:
   bisection emits `left ++ right` with every left interval's upper `≤ mid` and
   every right interval's lower `≥ mid`, so the concatenation stays sorted and
   inside `(lo, hi]`. -/
-private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem sturmVisit_spec (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     ∀ (depth : Nat) (lo hi : Dyadic) (vlo vhi : Nat),
       vlo = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo →
@@ -648,9 +649,10 @@ private theorem isolateSturm?_eq {d : Nat} (hd : p.degree? = some (d + 1))
 (`sturmVisit_spec`) and the emitted total matches
 `rootCount p = sturmVarNegInf − sturmVarPosInf` (the `±rootBound` gap counts
 every root, `sturmVar_neg_pos_sub`), so `assemble?` certifies. -/
-private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateSturm? p).isSome := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
+    rw [Hex.DensePoly.natDegree_eq_degree?_getD] at hdeg
     rcases hh : p.degree? with _ | n
     · rw [hh] at hdeg; simp at hdeg
     · rcases n with _ | m
@@ -702,7 +704,8 @@ theorem isolateSturm?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
   · exact absurd hd (degree?_ne_none hp0)
   · rcases n with _ | n
     · exact isolateSturm?_isSome_of_degree_zero hd
-    · exact isolateSturm?_isSome_of_degree_pos (by simp [hd]) hp
+    · exact isolateSturm?_isSome_of_degree_pos
+        (by simp [Hex.DensePoly.natDegree_eq_degree?_getD, hd]) hp
 
 /-- **The top-level driver succeeds on nonzero squarefree input.** A one-liner
 over `isolateSturm?_isSome`: `isolate?` keeps whichever engine's certified

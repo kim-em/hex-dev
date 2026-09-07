@@ -59,8 +59,8 @@ instance instDecidableEq : DecidableEq (GF2nPoly f hirr) := fun a b =>
 /-- Finite-index coefficient code for the reduced representative of a packed
 quotient-field element. -/
 @[expose]
-def coeffVector (a : GF2nPoly f hirr) : Fin f.degree → Bool :=
-  GF2Poly.reducedCoeffVector f.degree a.val
+def coeffVector (a : GF2nPoly f hirr) : Fin f.natDegree → Bool :=
+  GF2Poly.reducedCoeffVector f.natDegree a.val
 
 /-- The coefficient code is injective on packed quotient-field elements. -/
 theorem eq_of_coeffVector_eq {a b : GF2nPoly f hirr}
@@ -75,7 +75,7 @@ def modulus : GF2Poly :=
   f
 
 /-- Zero is a reduced representative modulo any packed irreducible. -/
-theorem zero_reduced : (0 : GF2Poly).IsZero ∨ (0 : GF2Poly).degree < f.degree := by
+theorem zero_reduced : (0 : GF2Poly).IsZero ∨ (0 : GF2Poly).natDegree < f.natDegree := by
   exact Or.inl rfl
 
 /-- Reduce a packed polynomial to its canonical residue class modulo `f`. -/
@@ -84,7 +84,7 @@ def reducePoly (p : GF2Poly) : GF2nPoly f hirr :=
   let r := p % modulus (f := f)
   if hzero : r.isZero = true then
     ⟨r, Or.inl hzero⟩
-  else if hdegree : r.degree < f.degree then
+  else if hdegree : r.natDegree < f.natDegree then
     ⟨r, Or.inr hdegree⟩
   else
     ⟨0, zero_reduced (f := f)⟩
@@ -96,7 +96,7 @@ modulo the irreducible modulus. -/
   unfold reducePoly modulus
   by_cases hzero : (p % f).isZero = true
   · simp [hzero]
-  · by_cases hdegree : (p % f).degree < f.degree
+  · by_cases hdegree : (p % f).natDegree < f.natDegree
     · simp [hzero, hdegree]
     · have hrem := GF2Poly.mod_degree_lt p f hirr.1
       cases hrem with
@@ -224,7 +224,7 @@ quotient class. -/
 private theorem mod_eq_zero_of_dvd {p f : GF2Poly} (hf : f ≠ 0) (h : f ∣ p) :
     p % f = 0 := by
   rcases h with ⟨c, hc⟩
-  have hrem_reduced : (p % f).isZero = true ∨ (p % f).degree < f.degree :=
+  have hrem_reduced : (p % f).isZero = true ∨ (p % f).natDegree < f.natDegree :=
     GF2Poly.mod_degree_lt p f hf
   have hfdvd_rem : f ∣ p % f := by
     let q := (GF2Poly.divMod p f).1
@@ -247,8 +247,8 @@ private theorem mod_eq_zero_of_dvd {p f : GF2Poly} (hf : f ≠ 0) (h : f ∣ p) 
     | inl hzero_isZero =>
         exact GF2Poly.eq_zero_of_isZero hzero_isZero
     | inr hlt =>
-        have hle : f.degree ≤ (p % f).degree :=
-          GF2Poly.degree_le_of_dvd_nonzero hf hzero hfdvd_rem
+        have hle : f.natDegree ≤ (p % f).natDegree :=
+          GF2Poly.natDegree_le_of_dvd_nonzero hf hzero hfdvd_rem
         omega
 
 /-- If `p` reduces to `0` mod `f` then `f` divides `p`: the reverse direction of
@@ -370,18 +370,18 @@ theorem boolListExpression_val_eq_mod (bs : List Bool) :
   rw [reducePoly_val_eq_mod]
 
 /-- Public quotient-field enumeration: all packed representatives in
-`GF2[X]/(f)`, obtained by reducing every length-`f.degree` Boolean coefficient
+`GF2[X]/(f)`, obtained by reducing every length-`f.natDegree` Boolean coefficient
 list. This is exposed for finite-field cardinality, root-count, and Rabin
 soundness consumers. -/
 @[expose]
 def elements : List (GF2nPoly f hirr) :=
-  (GF2Poly.Internal.coeffBoolLists f.degree).map
+  (GF2Poly.Internal.coeffBoolLists f.natDegree).map
     (boolListExpression (f := f) (hirr := hirr))
 
-/-- The quotient field `GF2[X]/(f)` has exactly `2 ^ f.degree` elements, the
-expected cardinality of a degree-`f.degree` extension of `GF(2)`. -/
+/-- The quotient field `GF2[X]/(f)` has exactly `2 ^ f.natDegree` elements, the
+expected cardinality of a degree-`f.natDegree` extension of `GF(2)`. -/
 @[simp, grind =] theorem elements_length :
-    (elements (f := f) (hirr := hirr)).length = 2 ^ f.degree := by
+    (elements (f := f) (hirr := hirr)).length = 2 ^ f.natDegree := by
   simp [elements]
 
 /-- Every packed quotient-field element appears in `elements`. -/
@@ -396,7 +396,7 @@ theorem mem_elements (a : GF2nPoly f hirr) :
     rw [boolListExpression_val_eq_mod]
     have hofBL_red :
         (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
-          (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
+          (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).natDegree < f.natDegree := by
       have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
       simp at h
       exact h
@@ -421,7 +421,7 @@ theorem boolListExpression_coeffVector (a : GF2nPoly f hirr) :
   rw [boolListExpression_val_eq_mod]
   have hofBL_red :
       (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
-        (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
+        (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).natDegree < f.natDegree := by
     have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
     simp at h
     exact h
@@ -439,10 +439,10 @@ theorem boolListExpression_coeffVector (a : GF2nPoly f hirr) :
   exact GF2Poly.mod_eq_self_of_reduced a.val f a.val_reduced
 
 /-- Every packed quotient element is generated by a Boolean coefficient list in
-the class of `X`, with exactly `f.degree` coefficients. -/
+the class of `X`, with exactly `f.natDegree` coefficients. -/
 theorem exists_boolListExpression (a : GF2nPoly f hirr) :
     ∃ bs : List Bool,
-      bs.length = f.degree ∧
+      bs.length = f.natDegree ∧
         boolListExpression (f := f) (hirr := hirr) bs = a := by
   refine ⟨List.ofFn (coeffVector a), ?_, boolListExpression_coeffVector
     (f := f) (hirr := hirr) a⟩
@@ -453,19 +453,19 @@ theorem elements_nodup :
     (elements (f := f) (hirr := hirr)).Nodup := by
   unfold elements
   apply nodup_map_of_injective
-  · exact GF2Poly.Internal.coeffBoolLists_nodup f.degree
+  · exact GF2Poly.Internal.coeffBoolLists_nodup f.natDegree
   · intro bs hbs bs' hbs' hred
     have hbs_len := GF2Poly.Internal.length_of_mem_coeffBoolLists hbs
     have hbs'_len := GF2Poly.Internal.length_of_mem_coeffBoolLists hbs'
     have hbs_red :
         (GF2Poly.Internal.ofBoolList bs).IsZero ∨
-          (GF2Poly.Internal.ofBoolList bs).degree < f.degree := by
+          (GF2Poly.Internal.ofBoolList bs).natDegree < f.natDegree := by
       have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt bs
       rw [hbs_len] at h
       exact h
     have hbs'_red :
         (GF2Poly.Internal.ofBoolList bs').IsZero ∨
-          (GF2Poly.Internal.ofBoolList bs').degree < f.degree := by
+          (GF2Poly.Internal.ofBoolList bs').natDegree < f.natDegree := by
       have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt bs'
       rw [hbs'_len] at h
       exact h
@@ -484,9 +484,9 @@ theorem elements_nodup :
       List.getElem?_eq_getElem hi, List.getElem?_eq_getElem hi'] at hcoeff
     simpa using hcoeff
 
-/-- The quotient has `2 ^ f.degree` canonical representatives. -/
+/-- The quotient has `2 ^ f.natDegree` canonical representatives. -/
 theorem elements_card :
-    (elements (f := f) (hirr := hirr)).length = 2 ^ f.degree :=
+    (elements (f := f) (hirr := hirr)).length = 2 ^ f.natDegree :=
   elements_length (f := f) (hirr := hirr)
 
 /-- The nonzero packed quotient-field elements, as a duplicate-free sublist of
@@ -506,9 +506,9 @@ theorem nonzeroElements_nodup :
   unfold nonzeroElements
   exact (elements_nodup (f := f) (hirr := hirr)).filter _
 
-/-- There are `2 ^ f.degree - 1` nonzero quotient representatives. -/
+/-- There are `2 ^ f.natDegree - 1` nonzero quotient representatives. -/
 theorem nonzeroElements_card :
-    (nonzeroElements (f := f) (hirr := hirr)).length = 2 ^ f.degree - 1 := by
+    (nonzeroElements (f := f) (hirr := hirr)).length = 2 ^ f.natDegree - 1 := by
   unfold nonzeroElements
   rw [length_filter_ne_eq_pred_of_mem_nodup
     (mem_elements (f := f) (hirr := hirr) 0)
@@ -951,7 +951,7 @@ theorem add_sq (a b : GF2nPoly f hirr) :
       rw [add_self, add_zero]
 
 /-- The quotient identity is not zero under a positive-degree modulus. -/
-theorem one_ne_zero (hf_pos : 0 < f.degree) :
+theorem one_ne_zero (hf_pos : 0 < f.natDegree) :
     (1 : GF2nPoly f hirr) ≠ 0 := by
   intro h
   have hval := congrArg GF2nPoly.val h
@@ -959,9 +959,9 @@ theorem one_ne_zero (hf_pos : 0 < f.degree) :
     rw [one_val]
     exact GF2Poly.mod_eq_self_of_reduced (1 : GF2Poly) f
       (Or.inr (by
-        change (GF2Poly.monomial 0).degree < f.degree
-        rw [show (GF2Poly.monomial 0).degree = 0 from by
-          exact GF2Poly.degree_eq_of_degree?_eq_some (GF2Poly.degree?_monomial 0)]
+        change (GF2Poly.monomial 0).natDegree < f.natDegree
+        rw [show (GF2Poly.monomial 0).natDegree = 0 from by
+          exact GF2Poly.natDegree_eq_of_degree?_eq_some (GF2Poly.degree?_monomial 0)]
         exact hf_pos))
   rw [hone_val, zero_val] at hval
   have hcoeff := congrArg (fun p : GF2Poly => p.coeff 0) hval
