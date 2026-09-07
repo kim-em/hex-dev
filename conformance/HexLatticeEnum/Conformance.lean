@@ -167,6 +167,61 @@ def certificates : IO Unit := do
   require (checkEnumeration b.rows 0 2 transported) "determinant-minus-one transform rejected"
   require (transported.points == cert.points) "original coefficient reconstruction disagrees"
 
+private def rejected (value : Except String α) : Bool :=
+  match value with | .error _ => true | .ok _ => false
+
+private def decoding : IO Unit := do
+  let some b := ofMatrix? (matrix 2 3 [[1, -1, 0], [0, 1, -1]]) |
+    throw (IO.userError "A2 basis rejected")
+  let cert := enumerationCertificate b 0 2
+  let text := encodeCertificate cert
+  let limits : DecodeLimits := {
+    bytes := text.utf8ByteSize
+    dimension := 3
+    nodes := cert.tree.nodes
+    points := cert.points.length }
+  let .ok decoded := decodeCertificate limits 2 3 text | throw (IO.userError "certificate decode failed")
+  require (checkEnumeration b.rows 0 2 decoded) "decoded certificate replay failed"
+  require (encodeCertificate decoded == text) "certificate serialization changed"
+  require (rejected (decodeCertificate { limits with bytes := text.utf8ByteSize - 1 } 2 3 text))
+    "byte limit ignored"
+  require (rejected (decodeCertificate { limits with nodes := cert.tree.nodes - 1 } 2 3 text))
+    "global tree node limit ignored"
+  require (rejected (decodeCertificate { limits with points := cert.points.length - 1 } 2 3 text))
+    "point limit ignored"
+  require (rejected (decodeCertificate { limits with dimension := 2 } 2 3 text))
+    "dimension limit ignored"
+  require (rejected (decodeCertificate { limits with digits := 0 } 2 3 text)) "digit limit ignored"
+  require (rejected (decodeCertificate {} 3 2 text)) "mismatched dimensions accepted"
+  require (rejected (decodeCertificate {} 2 3 (text ++ " trailing"))) "trailing tokens accepted"
+  require (rejected (decodeCertificate {} 2 3 "hex-lattice-enum-1 2 3")) "truncation accepted"
+  require (rejected (decodeCertificate {} 0 1 "hex-lattice-enum-1 0 1 0 0 E 0"))
+    "zero rational denominator accepted"
+  require (rejected (decodeCertificate {} 0 0 "hex-lattice-enum-1 0 0 N 0 0 0 0"))
+    "tree deeper than rank accepted"
+  require (rejected (decodeCertificate {} 0 0 "hex-lattice-enum-1 0 0 E 99999999999999999999"))
+    "excessive point count accepted"
+  require (rejected (decodeCertificate {} 0 0 "hex-lattice-enum-2 0 0 E 0"))
+    "unknown format accepted"
+  let .ok empty := decodeCertificate {} 0 0 "hex-lattice-enum-1 0 0 L 1 0 1" |
+    throw (IO.userError "rank-zero certificate decode failed")
+  require (checkEnumeration (matrix 0 0 []) #v[] 0 empty) "rank-zero decode replay failed"
+  let cvp := closestCertificate b #v[1/2, 1/2, 1/2]
+  require (checkClosest b.rows #v[1/2, 1/2, 1/2] cvp) "native closest certificate rejected"
+  let cvpText := encodeOptimumCertificate cvp
+  let .ok cvpDecoded := decodeOptimumCertificate {} 2 3 cvpText |
+    throw (IO.userError "closest certificate decode failed")
+  require (checkClosest b.rows #v[1/2, 1/2, 1/2] cvpDecoded) "decoded closest replay failed"
+  let some svp := shortestCertificate b | throw (IO.userError "missing native shortest certificate")
+  require (checkShortest b.rows svp) "native shortest certificate rejected"
+  let .ok svpDecoded := decodeOptimumCertificate {} 2 3 (encodeOptimumCertificate svp) |
+    throw (IO.userError "shortest certificate decode failed")
+  require (checkShortest b.rows svpDecoded) "decoded shortest replay failed"
+  require (rejected (decodeOptimumCertificate { bytes := 0 } 2 3 cvpText))
+    "optimum byte limit ignored"
+  require (rejected (decodeOptimumCertificate {} 2 3 (cvpText ++ " trailing")))
+    "optimum trailing tokens accepted"
+
 def run : IO Unit := do
   intervals
   ball (matrix 2 3 [[1, -1, 0], [0, 1, -1]]) 0 2
@@ -183,6 +238,7 @@ def run : IO Unit := do
   budgets
   minima
   certificates
+  decoding
   IO.println "lattice enumeration conformance passed"
 
 end Hex.LatticeEnum.Conformance
