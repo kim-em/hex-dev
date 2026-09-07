@@ -160,7 +160,7 @@ theorem first_uniform {G : Colored n k} {ctx : Ctx n} (tcLevel : Nat)
         (totalAll G ctx (n + 2) tcLevel fuel).1 (totalAll G ctx (n + 2) tcLevel fuel).2
         (by omega) (by omega) hlevel hpath hlt hfirst hpathOk hcheap hdesc horb
         hcell hlen hrange rfl (by omega)
-      obtain ⟨_, _, _, _, _, last, hcounter⟩ := hL
+      obtain ⟨_, _, _, _, _, _, last, hcounter⟩ := hL
       dsimp only at hcounter
       rw [hnext] at hcounter
       rw [firstPath_internal_state ctx (n + 2) tcLevel fuel level numcells st hnum,

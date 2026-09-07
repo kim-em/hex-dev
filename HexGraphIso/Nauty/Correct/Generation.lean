@@ -27,3 +27,5 @@ public import HexGraphIso.Nauty.Correct.Generation.Loop
 public import HexGraphIso.Nauty.Correct.Generation.Node
 public import HexGraphIso.Nauty.Correct.Generation.FirstReceipt
 public import HexGraphIso.Nauty.Correct.Generation.Tail
+public import HexGraphIso.Nauty.Correct.Generation.FirstCoverage
+public import HexGraphIso.Nauty.Correct.Generation.FirstReturn

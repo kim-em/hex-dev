@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.FirstPath.Hyp
-public import HexGraphIso.Nauty.Correct.Generation.Counter
+public import HexGraphIso.Nauty.Correct.Generation.Head
 import all HexGraphIso.Nauty.Search.Search
 
 public section
@@ -524,6 +524,8 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx n}
           (firstChildLoop ctx inf tcLevel runFuel (n + 1) level
             r.numcells tc tv1 (tcell.nextElem none) tcell 0 pre).2.2
           outBest ∧
+        Generation.FirstHead G ctx inf tcLevel specFuel runFuel level r.numcells tc len tv1
+          st.noncheaplevel full r.lab r.ptn tcell pre trail ∧
         ∃ last, Generation.Counted (segN r.lab tc len)
           (fun v => ∃ γ, checkAutom ctx.g γ = true ∧
             CellStab r.ptn level r.lab γ ∧ γ[v]! = tv1) last
@@ -738,6 +740,11 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx n}
     exact this
   rw [hcall] at hrunG hkeepG
   dsimp only at hrunG hkeepG
+  have hhead := Generation.FirstHead.intro (e := st.noncheaplevel)
+    hnext hrep hpreLab hprePtn hpathPre ho hato (rfl : child = _)
+    hfirstChild hpathChild (by rw [hchildNcl]; exact hpreBnd) hdescChild
+    (show OrbSound (OrbConn child.genTrace.toList n) child.orbits n from horbPre)
+    hcall hrunG hkeepG
   have hgca : level + 1 ≤ out.gcaFirst := hkeepG.guide
   have horderG : level + 1 ≤ out.gcaCanon :=
     Nat.le_trans hgca hrunG.proof.order
@@ -829,7 +836,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx n}
           tc tv1 (some tv1) tcell 0 pre).2.1 := by
       rw [hstate]
       exact ⟨none, Generation.Counted.start _ _⟩
-    refine ⟨outBest, eventTrail, ?_, hkeepOut, hcounter⟩
+    refine ⟨outBest, eventTrail, ?_, hkeepOut, hhead (fun hn => (hn hstay).elim), hcounter⟩
     rcases hexit : hrunG.exit with
       ⟨returned, exact⟩ |
       ⟨target, returned, below, sound, payload, located, control⟩ |
@@ -1125,14 +1132,14 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx n}
       hhRec'.inv.frozenLabOk hhRec'.inv.frozenPtnSize hhRec'.inv.frozenLabSize
       hhRec'.inv.frozenEnd hhRec'.orbits
       (fun γ hγ => hhRec'.inv.run.genTraceOk.check hγ) hhRec'.live.frameStab
-    obtain ⟨last, hcounterTail, _⟩ := Generation.firstTail_counted hg hinf hn0 ih
+    obtain ⟨last, hcounterTail, htraceTail⟩ := Generation.firstTail_counted hg hinf hn0 ih
       hrun hspec hfull.symm n (some tv1) tcell' recSt outBest eventTrail bs _
       hhRec' hcounterGuide
     have hstate := firstChildLoop_stayGuide ctx inf tcLevel runFuel n
       level r.numcells tc tv1 tv1 tcell 0 pre value out hrep hfirstTv hcall
       hstay
     dsimp only at hstate
-    refine ⟨outBest', eventTrail', ?_, ?_, last, ?_⟩
+    refine ⟨outBest', eventTrail', ?_, ?_, hhead (fun _ => htraceTail), last, ?_⟩
     · refine (FirstSweepRun.nextGuide hnext hrep hfirstTv hcall hstay
         ?_ hpreG hrunTail).retrail hext
       exact hfixedRec
@@ -1418,7 +1425,7 @@ theorem FirstInv.internalTotal {G : Colored n k} {ctx : Ctx n}
     (by omega) (by omega) hlevel hpath hlt hfirst hpathOk hcheap hdesc horb
     hcell hlen2 hrange rfl (by omega)
   dsimp only at hL
-  obtain ⟨fs, outBest, eventTrail, hrunL, hout, hcounter⟩ := hL
+  obtain ⟨fs, outBest, eventTrail, hrunL, hout, _, hcounter⟩ := hL
   rw [firstPath_internal_state ctx inf tcLevel runFuel level numcells st hnum]
   dsimp only
   rw [hspecEq, hmk]
