@@ -764,6 +764,50 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
     return notes
 
 
+def lake_declaration(text: str, name: str) -> tuple[int, int]:
+    """Locate an unindented build helper and its indented body.
+
+    Managed helpers use ordinary `def` declarations without attributes. Refuse
+    missing or ambiguous declarations rather than modifying the wrong recipe.
+    """
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
+        raise RuntimeError(f"invalid Lake build helper name: {name!r}")
+    matches = list(re.finditer(
+        r"(?m)^(?:private |public )?def " + re.escape(name) + r"(?=\s|\()[^\n]*\n",
+        text,
+    ))
+    if len(matches) != 1:
+        raise RuntimeError(f"expected one Lake build helper {name}, found {len(matches)}")
+    start = matches[0].start()
+    end = _block_end(text, matches[0].end())
+    return start, end
+
+
+def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
+    """Copy selected C build recipes from the source-of-truth Lake file."""
+    names = entry.get("lake_declarations", [])
+    if not names:
+        return []
+    if (entry.get("lakefile") != "lean" or not isinstance(names, list)
+            or not all(isinstance(name, str) for name in names)
+            or len(names) != len(set(names))):
+        raise RuntimeError("lake_declarations requires a Lean Lake file and unique helper names")
+    source = LAKEFILE.read_text(encoding="utf-8")
+    path = clone / "lakefile.lean"
+    text = path.read_text(encoding="utf-8")
+    notes = []
+    for name in names:
+        src_start, src_end = lake_declaration(source, name)
+        dst_start, dst_end = lake_declaration(text, name)
+        definition = source[src_start:src_end].rstrip() + "\n\n"
+        if text[dst_start:dst_end] != definition:
+            text = text[:dst_start] + definition + text[dst_end:]
+            notes.append(f"  build helper {name} (lakefile.lean)")
+    if notes:
+        path.write_text(text, encoding="utf-8")
+    return notes
+
+
 def validate_skeleton(entry: dict, clone: Path) -> None:
     """Check the unmanaged Lake file carries every release build root.
 
@@ -1382,6 +1426,8 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             for line in rewrite_doc_verso(clone):
                 print(line)
             for line in rewrite_lib_settings(entry, clone):
+                print(line)
+            for line in rewrite_lake_declarations(entry, clone):
                 print(line)
         for line in rewrite_toolchains(clone):
             print(line)
