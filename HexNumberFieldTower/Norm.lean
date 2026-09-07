@@ -58,11 +58,8 @@ def shiftedOuter (level : Level) (lower : List Level)
   let negShift : Coeff lower := Coeff.ofData lower #[(-(c : Rat))]
   let xSubCY : DensePoly (DensePoly (Coeff lower)) :=
     DensePoly.ofCoeffs #[x, DensePoly.C negShift]
-  let start : DensePoly (DensePoly (Coeff lower)) ×
-      DensePoly (DensePoly (Coeff lower)) := (0, 1)
-  (f.foldl (fun state coefficient =>
-    (state.1 + liftCoefficient level lower coefficient * state.2,
-      state.2 * xSubCY)) start).1
+  f.foldr (fun coefficient value =>
+    liftCoefficient level lower coefficient + xSubCY * value) 0
 
 /-- One Trager norm step. Input coefficients are flattened over
 `level :: lower`; output coefficients are flattened over `lower`. -/
