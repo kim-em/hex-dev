@@ -916,19 +916,6 @@ theorem lcm_normalized [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) : polyNormalize (lcm f h) = lcm f h := by
   exact polyNormalize_idem _
 
-private theorem reorder_mul
-    {cmp' : Mono n → Mono n → Ordering}
-    [IsMonomialOrder cmp] [IsMonomialOrder cmp']
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    (p q : MvPoly n R cmp) :
-    reorder cmp' (p * q) = reorder cmp' p * reorder cmp' q := by
-  apply ext
-  intro m
-  rw [coeff_reorder, coeff_mul, coeff_mul]
-  apply List.foldl_add_congr (Mono.splits m)
-  intro ab _
-  rw [coeff_reorder, coeff_reorder]
-
 private theorem reorder_reorder
     {cmp' : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp] [IsMonomialOrder cmp']

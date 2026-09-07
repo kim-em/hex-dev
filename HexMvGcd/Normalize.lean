@@ -212,7 +212,7 @@ theorem normalize_scalarContent [LawfulGcdOps R] (p : MvPoly n R cmp) :
       simp only
       exact LawfulGcdOps.normalize_idem _
 
-private theorem eq_zero_of_mul_eq_zero {a b : Mono n}
+theorem eq_zero_of_mul_eq_zero {a b : Mono n}
     (h : Mono.mul a b = Mono.zero) : a = Mono.zero := by
   apply Vector.ext
   intro i hi
@@ -227,7 +227,7 @@ private theorem eq_zero_of_mul_eq_zero {a b : Mono n}
   rw [Mono.getElem_zero]
   exact (Nat.eq_zero_of_add_eq_zero hj').1
 
-private theorem eq_zero_of_isLE [IsMonomialOrder cmp] {m : Mono n}
+theorem eq_zero_of_isLE [IsMonomialOrder cmp] {m : Mono n}
     (h : (cmp m Mono.zero).isLE) : m = Mono.zero := by
   cases hcmp : cmp m Mono.zero with
   | lt =>
@@ -236,6 +236,93 @@ private theorem eq_zero_of_isLE [IsMonomialOrder cmp] {m : Mono n}
       exact False.elim (IsMonomialOrder.zero_le m hgt)
   | eq => exact Std.LawfulEqCmp.eq_of_compare hcmp
   | gt => simp [hcmp] at h
+
+omit [Dvd R] [GcdOps R] in
+/-- A polynomial with a multiplicative inverse is a constant, and its
+coefficient has the corresponding scalar inverse. The source comparator need
+not itself be a monomial order. -/
+theorem unit_eq_C
+    (one_ne_zero : (1 : R) ≠ 0)
+    (noZeroDiv : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0)
+    {p q : MvPoly n R cmp} (hpq : p * q = 1) :
+    ∃ c d : R, p = C c ∧ c * d = 1 := by
+  let p' : MvPoly n R Mono.lex := reorder Mono.lex p
+  let q' : MvPoly n R Mono.lex := reorder Mono.lex q
+  have hpq' : p' * q' = 1 := by
+    calc
+      p' * q' = reorder Mono.lex (p * q) :=
+        (reorder_mul (R := R) (cmp := cmp) (cmp' := Mono.lex) p q).symm
+      _ = reorder Mono.lex (1 : MvPoly n R cmp) := by rw [hpq]
+      _ = 1 := by
+        apply ext
+        intro m
+        rw [coeff_reorder, coeff_one, coeff_one]
+  have hpzero : p' ≠ 0 := by
+    intro hp
+    rw [hp, MvPoly.zero_mul] at hpq'
+    have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hpq'
+    rw [coeff_zero, coeff_one, ite_eq_left rfl] at hcoeff
+    exact one_ne_zero hcoeff.symm
+  have hqzero : q' ≠ 0 := by
+    intro hq
+    rw [hq, MvPoly.mul_zero] at hpq'
+    have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hpq'
+    rw [coeff_zero, coeff_one, ite_eq_left rfl] at hcoeff
+    exact one_ne_zero hcoeff.symm
+  cases hpLead : p'.leadingTerm with
+  | none => exact False.elim (hpzero ((leadingTerm_eq_none_iff p').mp hpLead))
+  | some pterm =>
+      rcases pterm with ⟨mp, cp⟩
+      cases hqLead : q'.leadingTerm with
+      | none => exact False.elim (hqzero ((leadingTerm_eq_none_iff q').mp hqLead))
+      | some qterm =>
+          rcases qterm with ⟨mq, cq⟩
+          have hlead := leadingTerm_mul_of_no_zero_div noZeroDiv hpLead hqLead
+          have hcoeff := coeff_eq_of_leadingTerm hlead
+          rw [hpq', coeff_one] at hcoeff
+          have hcp : cp ≠ 0 := by
+            intro hzero
+            have hopt := (leadingTerm_eq_some_iff p' mp cp).mp hpLead |>.1
+            exact p'.coeff?_ne_zero mp (hopt.trans (congrArg some hzero))
+          have hcq : cq ≠ 0 := by
+            intro hzero
+            have hopt := (leadingTerm_eq_some_iff q' mq cq).mp hqLead |>.1
+            exact q'.coeff?_ne_zero mq (hopt.trans (congrArg some hzero))
+          have hcprod : cp * cq ≠ 0 := by
+            intro hzero
+            rcases noZeroDiv cp cq hzero with hzero | hzero
+            · exact hcp hzero
+            · exact hcq hzero
+          have hmono : Mono.mul mp mq = Mono.zero := by
+            by_cases hmono : Mono.mul mp mq = Mono.zero
+            · exact hmono
+            · rw [ite_eq_right hmono] at hcoeff
+              exact False.elim (hcprod hcoeff.symm)
+          have hcoeffUnit : cp * cq = 1 := by
+            rw [ite_eq_left hmono] at hcoeff
+            exact hcoeff.symm
+          have hmp : mp = Mono.zero := eq_zero_of_mul_eq_zero hmono
+          have hpC' : p' = C cp := by
+            apply ext
+            intro m
+            rw [coeff_C]
+            by_cases hm : m = Mono.zero
+            · subst m
+              rw [← hmp, coeff_eq_of_leadingTerm hpLead]
+              simp
+            · rw [ite_eq_right hm]
+              apply coeff_eq_zero_of_not_mem m p'
+              intro hmem
+              have hle := le_leadingTerm hpLead m hmem
+              rw [hmp] at hle
+              exact hm (eq_zero_of_isLE hle)
+          refine ⟨cp, cq, ?_, hcoeffUnit⟩
+          apply ext
+          intro m
+          calc
+            coeff m p = coeff m p' := (coeff_reorder Mono.lex m p).symm
+            _ = if m = Mono.zero then cp else 0 := by rw [hpC', coeff_C]
+            _ = coeff m (C cp : MvPoly n R cmp) := (coeff_C m cp).symm
 
 /-- Unit recognition is sound and complete under the coefficient gcd laws. -/
 theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
@@ -271,74 +358,17 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
             rfl
         | cons next rest => simp [polyIsUnit, hterms] at hunit
   · rintro ⟨q, hpq⟩
-    have hpzero : p ≠ 0 := by
-      intro hp
-      subst p
-      rw [zero_mul] at hpq
-      have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hpq
-      rw [coeff_zero, coeff_one, ite_eq_left rfl] at hcoeff
-      exact LawfulGcdOps.one_ne_zero hcoeff.symm
-    have hqzero : q ≠ 0 := by
-      intro hq
-      subst q
-      rw [mul_zero] at hpq
-      have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hpq
-      rw [coeff_zero, coeff_one, ite_eq_left rfl] at hcoeff
-      exact LawfulGcdOps.one_ne_zero hcoeff.symm
-    cases hpLead : p.leadingTerm with
-    | none => exact False.elim (hpzero ((leadingTerm_eq_none_iff p).mp hpLead))
-    | some pterm =>
-        rcases pterm with ⟨mp, cp⟩
-        cases hqLead : q.leadingTerm with
-        | none => exact False.elim (hqzero ((leadingTerm_eq_none_iff q).mp hqLead))
-        | some qterm =>
-            rcases qterm with ⟨mq, cq⟩
-            have hlead := leadingTerm_mul hpLead hqLead
-            have hcoeff := coeff_eq_of_leadingTerm hlead
-            rw [hpq, coeff_one] at hcoeff
-            have hcp : cp ≠ 0 := by
-              intro hzero
-              have hopt := (leadingTerm_eq_some_iff p mp cp).mp hpLead |>.1
-              exact p.coeff?_ne_zero mp
-                (hopt.trans (congrArg some hzero))
-            have hcq : cq ≠ 0 := by
-              intro hzero
-              have hopt := (leadingTerm_eq_some_iff q mq cq).mp hqLead |>.1
-              exact q.coeff?_ne_zero mq
-                (hopt.trans (congrArg some hzero))
-            have hcprod : cp * cq ≠ 0 := by
-              intro hzero
-              rcases LawfulGcdOps.no_zero_div cp cq hzero with hzero | hzero
-              · exact hcp hzero
-              · exact hcq hzero
-            have hmono : Mono.mul mp mq = Mono.zero := by
-              by_cases hmono : Mono.mul mp mq = Mono.zero
-              · exact hmono
-              · rw [ite_eq_right hmono] at hcoeff
-                exact False.elim (hcprod hcoeff.symm)
-            have hcoeffUnit : cp * cq = 1 := by
-              rw [ite_eq_left hmono] at hcoeff
-              exact hcoeff.symm
-            have hmp : mp = Mono.zero := eq_zero_of_mul_eq_zero hmono
-            have hpC : p = C cp := by
-              apply ext
-              intro m
-              rw [coeff_C]
-              by_cases hm : m = Mono.zero
-              · subst m
-                rw [← hmp, coeff_eq_of_leadingTerm hpLead]
-                simp
-              · rw [ite_eq_right hm]
-                apply coeff_eq_zero_of_not_mem m p
-                intro hmem
-                have hle := le_leadingTerm hpLead m hmem
-                rw [hmp] at hle
-                exact hm (eq_zero_of_isLE hle)
-            have hisUnit : GcdOps.isUnit cp = true :=
-              (LawfulGcdOps.isUnit_iff cp).mpr ⟨cq, hcoeffUnit⟩
-            rw [hpC]
-            rw [polyIsUnit, termsList_C, ite_eq_right hcp]
-            simp [hisUnit]
+    rcases unit_eq_C LawfulGcdOps.one_ne_zero LawfulGcdOps.no_zero_div hpq with
+      ⟨cp, cq, hpC, hcoeffUnit⟩
+    have hcp : cp ≠ 0 := by
+      intro hzero
+      rw [hzero, Lean.Grind.Semiring.zero_mul] at hcoeffUnit
+      exact LawfulGcdOps.one_ne_zero hcoeffUnit.symm
+    have hisUnit : GcdOps.isUnit cp = true :=
+      (LawfulGcdOps.isUnit_iff cp).mpr ⟨cq, hcoeffUnit⟩
+    rw [hpC]
+    rw [polyIsUnit, termsList_C, ite_eq_right hcp]
+    simp [hisUnit]
 
 /-- The chosen normalization multiplier is a polynomial unit. -/
 theorem polyNormUnit_isUnit [IsMonomialOrder cmp] [LawfulGcdOps R]

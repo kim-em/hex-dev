@@ -184,9 +184,11 @@ private theorem leadingTerm_monomial_mul {g : MvPoly n R cmp}
       ← IsMonomialOrder.mul_mono (cmp := cmp) b mg m]
     exact le_leadingTerm hg b hb
 
-/-- The leading term of a product is the product of the leading terms over a
-coefficient domain. -/
-theorem leadingTerm_mul [LawfulGcdOps R]
+omit [Dvd R] [GcdOps R] in
+/-- The leading term of a product is the product of the leading terms when
+the coefficient ring has no zero divisors. -/
+theorem leadingTerm_mul_of_no_zero_div
+    (noZeroDiv : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0)
     {p q : MvPoly n R cmp} {mp mq : Mono n} {cp cq : R}
     (hp : p.leadingTerm = some (mp, cp))
     (hq : q.leadingTerm = some (mq, cq)) :
@@ -201,7 +203,7 @@ theorem leadingTerm_mul [LawfulGcdOps R]
     exact q.coeff?_ne_zero mq (hqc.trans (congrArg some hzero))
   have hprod : cp * cq ≠ 0 := by
     intro hzero
-    rcases LawfulGcdOps.no_zero_div cp cq hzero with hzero | hzero
+    rcases noZeroDiv cp cq hzero with hzero | hzero
     · exact hcp hzero
     · exact hcq hzero
   have hcoeff : coeff (Mono.mul mp mq) (p * q) = cp * cq := by
@@ -263,6 +265,14 @@ theorem leadingTerm_mul [LawfulGcdOps R]
   · intro m hm
     rcases exists_mul_of_mem hm with ⟨a, ha, b, hb, rfl⟩
     exact mul_isLE (le_leadingTerm hp a ha) (le_leadingTerm hq b hb)
+
+/-- The leading-term product law specialized to executable gcd domains. -/
+theorem leadingTerm_mul [LawfulGcdOps R]
+    {p q : MvPoly n R cmp} {mp mq : Mono n} {cp cq : R}
+    (hp : p.leadingTerm = some (mp, cp))
+    (hq : q.leadingTerm = some (mq, cq)) :
+    (p * q).leadingTerm = some (Mono.mul mp mq, cp * cq) :=
+  leadingTerm_mul_of_no_zero_div LawfulGcdOps.no_zero_div hp hq
 
 omit [DecidableEq R] [Dvd R] [GcdOps R] in
 private theorem leadRel_sub_of_cancel {r s : MvPoly n R cmp}
