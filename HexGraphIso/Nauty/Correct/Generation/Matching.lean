@@ -96,6 +96,30 @@ theorem target {tcLevel tc : Nat} {rest : List Nat} {rs : RefineSt n}
   apply match_target heq hok.ok.labOk hok.ok.labSize hok.ok.ptnSize hok.ok.ptnEnd
   simpa only [List.getElem!_cons_zero, Nat.add_zero, hspec] using htc.symm
 
+/-- A matching reference's complete hinted target record agrees with the
+specification, including the vertex set and its size. -/
+theorem target_spec {tcLevel tc : Nat} {rest : List Nat} {rs : RefineSt n}
+    (h : Matches ctx level st (tc :: rest) key)
+    (hleaf : HasLeaf ctx tcLevel level rs (tc :: rest) key)
+    (hok : IterOk ctx level rs) (heq : Equitable ctx level rs.lab rs.ptn) :
+    maketargetcell ctx rs.lab rs.ptn level tcLevel st.firsttc[level]! =
+      specMaketargetcell ctx rs.lab rs.ptn level tcLevel := by
+  have htc := h.targets 0 (by simp)
+  have hspec : tc = specTargetcell ctx rs.lab rs.ptn level tcLevel := by
+    rcases hleaf.cases with ⟨_, ht, _⟩ | ⟨tc', _, _, rest', _, _, _, _, _, ht, _, htcs, _⟩
+    · cases ht
+    · exact (List.cons.inj htcs).1.trans ht
+  have hchoice := h.target hleaf hok heq
+  simp only [List.getElem!_cons_zero, Nat.add_zero] at htc
+  rw [← htc] at hchoice
+  have ht : targetcell ctx rs.lab rs.ptn level tcLevel st.firsttc[level]! =
+      specTargetcell ctx rs.lab rs.ptn level tcLevel := by
+    have hp := congrArg Int.toNat hchoice
+    change targetcell ctx rs.lab rs.ptn level tcLevel (Int.ofNat tc) = tc at hp
+    rw [← htc, ← hspec]
+    exact hp
+  rw [maketargetcell, specMaketargetcell, ht]
+
 /-- At a discrete matching occurrence the terminal sentinel and row
 comparison are both exact, even if the canonical incumbent is larger. -/
 theorem discrete {tcLevel : Nat} {rs : RefineSt n}
