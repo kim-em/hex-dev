@@ -11,6 +11,7 @@ import all HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.Colors
+import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Search.Engine
 
 public section
@@ -36,6 +37,15 @@ theorem runState_colors (G : Colored n k) :
     change perm ∈ (#[] : Array (Array Nat)) at hp
     simp at hp
   · exact (runState_safe G hn0).colors
+
+/-- Every pair in the final workspace has checked colour-preserving realizers. -/
+theorem runState_pairs (G : Colored n k) :
+    PairsOk G { g := rowsOf G }
+      (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by
+  rcases Nat.eq_zero_or_pos n with hn0 | hn0
+  · subst n
+    exact initial_pairs G { g := rowsOf G }
+  · exact (runState_safe G hn0).pairs
 
 /-- The structured engine's reported generators preserve the ordered colour cells. -/
 theorem runColoredTraced_stab (G : Colored n k) {perm : Array Nat}

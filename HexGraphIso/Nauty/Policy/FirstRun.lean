@@ -50,14 +50,14 @@ theorem firstSweep_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
   obtain ⟨exit, out⟩ := result
   let left := { afterChildFirst level tv out with fixedpts := out.fixedpts.erase tv }
   let ready := recoverLevels level (recoverPtn (n + 2) level left)
-  have hleft : RunInv G ctx left := hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl
+  have hleft : RunInv G ctx left := hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl rfl
   have hcontinue : ∀ smaller index, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv
         (smaller.nextElem (some tv)) smaller index ready).2.2 := by
     intro smaller index hsub
     apply sweep_safe hn0 hgsz hsymm hloop
     refine ⟨?_, hready.positive, hready.partition, hready.target.subset hsub,
-      (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded⟩
+      (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound⟩
     intro _ v hv
     have hn := (VSet.nextElem_eq_some_iff.mp hv).2.1
     change tv + 1 ≤ v at hn
@@ -96,7 +96,8 @@ theorem FirstPre.firstterminal {G : Colored n k} {ctx : Ctx n} {level numcells :
   have hp := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition).1
   have hs := prepareFirst_stores ctx tcLevel level numcells st
   refine ⟨isPerm_of_cellsReach hp.labSize hn0 hp.reach, ⟨hp.labSize, hp.reach⟩, ?_,
-    hs.2.2.2.1.trans h.scratch, ?_, ?_, hp.reach, h.colors.congr hs.2.2.2.2⟩
+    hs.2.2.2.1.trans h.scratch, ?_, ?_, hp.reach, h.colors.congr hs.2.2.2.2,
+    h.pairs.congr (prepareFirst_autos ctx tcLevel level numcells st)⟩
   · apply canongInv_zero
     change (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.canong.size = n
     rw [hs.2.2.1, h.cache]
@@ -122,8 +123,8 @@ theorem firstPath_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numce
   | @step fuel level numcells last st leaf tv hopen htv horbit tail ih =>
     let r := Generic.prepareFirst ctx tcLevel level numcells st
     let ready := cheapCheck true level r.2.2.2.2
-    have hchild := ih (hin.child hn0 hsymm htv)
-    have hready := firstChild_ready hin hn0 hsymm hopen htv horbit tail hchild
+    have hchild := ih (hin.child hn0 hsymm htv hgsz hloop)
+    have hready := firstChild_ready hin hn0 hsymm hopen htv horbit tail hchild hgsz hloop
     have hs := firstSweep_safe (cfuel := n) hn0 hgsz hsymm hloop level r.1 r.2.1.toNat tv 0
       r.2.2.1 ready horbit hchild hready
     rw [node_first]
@@ -142,7 +143,8 @@ theorem initial_firstPre (G : Colored n k) (hn0 : 0 < n) :
       (initial n (initialPartition G).1 (initialPartition G).2) := by
   refine ⟨Nat.le_refl _, initial_ok G hn0, initial_equitable G hn0,
     Array.size_replicate, ?_, Array.size_replicate, Array.size_replicate, ?_,
-    initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_, ?_⟩
+    initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_, ?_,
+    initial_boundary G hn0 { g := rowsOf G }, Nat.le_refl _, initial_pairs G { g := rowsOf G }⟩
   · change n < (Array.replicate (n + 2) (-1 : Int)).size
     rw [Array.size_replicate]
     omega

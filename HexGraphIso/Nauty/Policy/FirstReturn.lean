@@ -51,7 +51,9 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
         (child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)) last leaf)
     (hchild : let r := Generic.prepareFirst ctx tcLevel level numcells st
       RunInv G ctx (node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1)
-        (child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2))).2) :
+        (child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2))).2)
+    (hgsz : ctx.g.size = n)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
     let r := Generic.prepareFirst ctx tcLevel level numcells st
     let out := (node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1)
       (child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2))).2
@@ -84,13 +86,16 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hcell : r.2.2.1.mem tv = true := VSet.nextElem_mem htv
   have hch := (reachPolicy G ctx tcLevel hn0).child true level r.1 r.2.1.toNat tv r.2.2.1 ready
     hin.positive hcheap.ok hreadyTarget hcell
+  have hentry := hin.child hn0 hsymm htv hgsz hloop
+  have hbout := hentry.boundary.firstPath hn0 (by have := hin.positive; omega) hentry.partition hpath
+  have hbleft : Boundary G ctx (level + 1) left := hbout.congr rfl rfl rfl
   have ho := node_out (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) true hn0 (by omega) hch.1
   have hframe : SearchOut G level level ready.view out.view := hch.2 _
     (by simpa only [Nat.add_sub_cancel, policy, Generic.Policy.child] using ho)
   have hleftFrame : SearchOut G level level ready.view left.view := hframe.congr rfl rfl rfl rfl
   have hrec := (reachPolicy G ctx tcLevel hn0).recover level r.1 ready left hin.positive hcheap.ok hleftFrame
   have hstored : RunInv G ctx result :=
-    (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl).recover (n + 2) level
+    (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl rfl).recover (n + 2) level
   have hcheapHist : CheapHistory ctx tcLevel level level r.1 result := by
     intro hc
     rw [hgr] at hc ⊢
@@ -175,7 +180,16 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hhist : History ctx tcLevel level level r.1 result := ⟨hcheapHist, hroute⟩
   have hrecord : Recorded ctx tcLevel level r.2.1.toNat result :=
     ⟨fun _ _ => hsaved, fun _ => Or.inr hsaved⟩
+  have heq : Equitable ctx level ready.lab ready.ptn := by
+    have hl := (prepareFirst_fields ctx tcLevel level numcells st).1
+    have hp := (prepareFirst_fields ctx tcLevel level numcells st).2.1
+    unfold ready cheapCheck
+    split <;> change Equitable ctx level r.2.2.2.2.lab r.2.2.2.2.ptn
+    all_goals rw [hl, hp]; exact hin.equitable
   exact ⟨(by intro _ v hv; cases hv), hin.positive, hrec.ok, hreadyTarget.of_out hrec.effect,
-    (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, hhist, hrecord⟩
+    (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, hhist, hrecord,
+    recover_equitable hn0 hin.positive hcheap.ok heq hleftFrame,
+    hbleft.recover_child hin.positive (by have := Nat.le_trans hcheap.ok.bc (bcount_le _ _ _); omega),
+    recover_bound level left⟩
 
 end Hex.GraphIso.Nauty.Engine

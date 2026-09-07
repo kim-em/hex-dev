@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.FirstCheap
 public import HexGraphIso.Nauty.Policy.Orbits
+public import HexGraphIso.Nauty.Policy.FirstBoundary
 import all HexGraphIso.Nauty.Policy.FirstCheap
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.Leftmost
@@ -38,6 +39,9 @@ structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : 
   /-- Recorded generators stabilize the initial colour partition. -/
   colors : TraceStab G st
   small : st.noncheaplevel < level → SubtreeOk ctx level (st.refined ctx level numcells)
+  boundary : Boundary G ctx level st
+  cheapBound : st.noncheaplevel ≤ level
+  pairs : PairsOk G ctx st
 
 /-- The chosen first child is a valid mathematical individualization step. -/
 theorem firstChild_offset {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tv : Nat}
@@ -83,12 +87,46 @@ theorem prepareFirst_stores (ctx : Ctx n) (tcLevel level numcells : Nat) (st : S
   simp only [recordFirst, Array.size_set!]
   exact ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+/-- First-path preparation preserves the workspace before the first admission. -/
+theorem prepareFirst_autos (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
+    (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.autos = st.autos := by
+  unfold Generic.prepareFirst
+  dsimp only [policy, Generic.Policy.visit, Generic.Policy.chooseTarget, Generic.Policy.recordFirst]
+  rw [chooseFirst_fields]
+  rfl
+
+/-- First-path preparation preserves every previously frozen implicit pair. -/
+theorem FirstPre.prepare_boundary {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
+    {st : Search n} (h : FirstPre G ctx level numcells st) (tcLevel : Nat) :
+    Boundary G ctx level (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2 := by
+  have hv := h.boundary.visit (numcells := numcells) h.positive
+  let r := visit ctx level numcells st
+  have hr : Boundary G ctx level (recordFirst level r.2.1 r.2.2) := hv.congr rfl rfl rfl
+  exact hr.target true tcLevel r.1
+
+/-- The first-path guard validates the pair needed at the next child. -/
+theorem FirstPre.cheap_boundary {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells : Nat}
+    {st : Search n} (h : FirstPre G ctx level numcells st) (hn0 : 0 < n)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
+    Boundary G ctx (level + 1)
+      (cheapCheck true level (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2) := by
+  apply (h.prepare_boundary tcLevel).cheap true h.positive
+  intro hguard
+  obtain ⟨hl, hp, _⟩ := prepareFirst_fields ctx tcLevel level numcells st
+  rw [hp] at hguard
+  rw [hl, hp]
+  exact refined_pair hn0 h.positive h.partition h.equitable hgsz hsymm hloop hguard
+
 /-- A first-path child inherits the entry conditions, including the exact cheap boundary. -/
 theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tv : Nat}
     {st : Search n} (h : FirstPre G ctx level numcells st)
     (hn0 : 0 < n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
-    (htv : (Generic.prepareFirst ctx tcLevel level numcells st).2.2.1.nextElem none = some tv) :
+    (htv : (Generic.prepareFirst ctx tcLevel level numcells st).2.2.1.nextElem none = some tv)
+    (hgsz : ctx.g.size = n)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
     let r := Generic.prepareFirst ctx tcLevel level numcells st
     FirstPre G ctx (level + 1) (r.1 + 1)
       (Engine.child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)) := by
@@ -116,7 +154,7 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     unfold ready cheapCheck
     split <;> exact prepareFirst_orbits ctx tcLevel level numcells st
   refine ⟨by omega, firstChild_ok hn0 h.positive h.partition htv, ?_,
-    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_⟩
+    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_, ?_, ?_, ?_⟩
   · rw [hstep]
     exact equitable_breakout hit.ok.labSize hit.ok.ptnSize hit.ok.ptnEnd hit.valsWeak
       hit.ok.labOk hit.inj hsymm h.equitable hcell hne ho hacc.symm
@@ -132,5 +170,20 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
       (show ready.noncheaplevel ≤ level from by change ready.noncheaplevel < level + 1 at hc; omega)
     rw [hstep]
     exact subtreeOk_child hsmall hlevel hsymm hcell hne ho
+
+  · apply (h.cheap_boundary hn0 hgsz hsymm hloop).child true h.positive
+    · exact ((prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition).2).of_out
+        ((reachPolicy G ctx tcLevel hn0).cheap true level r.1 r.2.2.2.2
+          (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition).1).effect
+    · exact VSet.nextElem_mem htv
+  · change ready.noncheaplevel ≤ level + 1
+    apply cheap_bound true
+    rw [prepareFirst_noncheap]
+    exact h.cheapBound
+
+  · apply h.pairs.congr
+    change ready.autos = st.autos
+    unfold ready cheapCheck
+    split <;> exact prepareFirst_autos ctx tcLevel level numcells st
 
 end Hex.GraphIso.Nauty.Engine

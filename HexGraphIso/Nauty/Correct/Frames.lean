@@ -287,7 +287,7 @@ theorem FirstInv.child {G : Colored n k} {ctx : Ctx n}
             (initialPartition G).1 1
             (fmptn r.lab r.ptn level n).1
             (fmptn r.lab r.ptn level n).2 := by
-          apply pairOk_fmptn_of_subtree (ctx := ctx) (G := G)
+          apply SubtreeOk.pair_ok (ctx := ctx) (G := G)
             (r := r) hn0 hlevel
           · rw [hg]
             exact size_rowsOf G
