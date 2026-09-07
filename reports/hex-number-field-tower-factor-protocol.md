@@ -93,7 +93,7 @@ If a shared-host burst prevents selecting any idle core, that is an
 unavailable environment, not a negative verdict on an implementation.
 A further replication uses the same binaries, fixed cases, repeats, warmup,
 2-second budgets, opposite pair orders, and 5% admission thresholds. It
-prefers physical cores whose lowest logical CPU is at least 24 on `chungus2`,
+selects physical cores whose lowest logical CPU is at least 24 on `chungus2`,
 to avoid competing with other automatic selectors that prefer low indices.
 Before the first arm of a pair it waits up to 15 minutes for a two-second
 quiet CPU/sibling sample, recording every preflight window. A busy second-arm
@@ -114,3 +114,13 @@ exposure window. Retention uses the same hash, canonical-median, and
 repeat-range criteria. The final comparison against the original executable
 includes fresh PARI and overhead measurements. The monic shortcut must retain
 the existing zero and nonmonic behavior and all certificate guarantees.
+
+The reusable runner is [tower_factor_compare.py](../scripts/bench/tower_factor_compare.py).
+Supply the registered interpreter with `--pari-python` (or the explicit
+`HEX_PARI_BENCH_PYTHON` environment variable). It records Python, cypari2,
+and PARI versions and fails before timing if the provider is unavailable.
+It validates every named case, all five raw repeats, hashes, warmup, budgets,
+and derived timing summaries, then writes a series decision. Incomplete
+series retain their accepted pairs and have no retention verdict. Full
+preflight snapshots are retained to make unavailable-core decisions auditable;
+the high-index placement is a heuristic, not a reservation against other work.
