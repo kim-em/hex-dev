@@ -143,7 +143,8 @@ theorem rows_emit {level : Nat} {st : SearchSt n}
     (hrows : leafRows ctx st.firstlab = leafRows ctx st.lab)
     (hlevel : st.eqlevFirst = level) (hsent : st.firstcode[level + 1]! = codeSentinel) :
     (processnode ctx level n st).2.genTrace = st.genTrace.push (firstScatter n st.firstlab st.lab) ∧
-      LabelCarrier ctx st.firstlab st.lab (processnode ctx level n st).2.genTrace := by
+      LabelCarrier ctx st.firstlab st.lab (processnode ctx level n st).2.genTrace ∧
+      (processnode ctx level n st).1 = Int.ofNat st.gcaFirst := by
   have hmap : ∀ i, i < n → (firstScatter n st.firstlab st.lab)[st.firstlab[i]!]! = st.lab[i]! :=
     fun _ hi => firstScatter_get
       (fun _ _ ha hb he => perm_inj hfirstSize hfirst _ _ (by omega) (by omega) he)
@@ -155,7 +156,8 @@ theorem rows_emit {level : Nat} {st : SearchSt n}
     (numcells := n) (by simp [hlevel]) hsent (by simp)
     (by simpa only [firstScatter_fold] using hscan)
   rw [firstScatter_fold] at hpush
-  refine ⟨hpush, firstScatter n st.firstlab st.lab, ?_, hcheck, hmap⟩
+  refine ⟨hpush, ⟨firstScatter n st.firstlab st.lab, ?_, hcheck, hmap⟩,
+    (processnode_auto (by simp [hlevel]) hsent (by simp) hscan).1⟩
   rw [hpush]
   exact Array.mem_push_self
 
