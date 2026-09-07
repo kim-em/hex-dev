@@ -451,10 +451,8 @@ private theorem sparseModulus_size {n k constant : Nat} (hn : 0 < n) :
 private theorem sparseModulus_degree {n k constant : Nat} (hn : 0 < n) :
     FpPoly.degree (sparseModulus n k constant) = n := by
   change (sparseModulus n k constant).natDegree = n
-  rw [DensePoly.degree?_eq_some_of_pos_size _ (by
-    rw [sparseModulus_size hn]
-    omega)]
-  simp [sparseModulus_size hn]
+  rw [DensePoly.natDegree_eq_size_sub_one, sparseModulus_size hn]
+  omega
 
 private theorem sparseModulus_monic {n k constant : Nat} (hn : 0 < n) :
     DensePoly.Monic (sparseModulus n k constant) := by

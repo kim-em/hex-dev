@@ -568,7 +568,6 @@ theorem size_eq_zero_iff (p : DensePoly R) : p.size = 0 ↔ p = 0 := by
 /-- The degree, with the zero polynomial given degree `0`. This is the form
 most callers want, matching Mathlib's `Polynomial.natDegree`; `degree?`
 remains for the ones that must distinguish the zero polynomial. -/
-@[expose]
 abbrev natDegree (p : DensePoly R) : Nat :=
   p.degree?.getD 0
 

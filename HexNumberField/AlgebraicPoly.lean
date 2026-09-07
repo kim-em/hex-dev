@@ -88,7 +88,6 @@ def degree? (f : AlgebraicPoly) : Option Nat :=
 
 /-- The degree, with the zero polynomial given degree `0`, matching
 `DensePoly.natDegree`. -/
-@[expose]
 abbrev natDegree (f : AlgebraicPoly) : Nat :=
   f.degree?.getD 0
 

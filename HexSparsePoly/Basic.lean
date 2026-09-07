@@ -102,7 +102,6 @@ def degree? (s : SparsePoly R) : Option Nat :=
 
 /-- The degree, with the zero polynomial given degree `0`, matching
 `DensePoly.natDegree`. -/
-@[expose]
 abbrev natDegree (s : SparsePoly R) : Nat :=
   s.degree?.getD 0
 
