@@ -46,7 +46,7 @@ structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool
   stored : RunInv G ctx st
   ancestor : st.gcaFirst ≤ level
   history : History ctx tcLevel level level numcells st
-  recorded : Recorded level tc st
+  recorded : Recorded ctx tcLevel level tc st
 
 /-- The off-path induction preserves all installed data, including the checked generator trace. -/
 def safetyContract (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) : Generic.Contract (Search n) n where
@@ -93,7 +93,7 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     rw [show (chooseTarget false ctx tcLevel level nc compared).2.2.2.gcaFirst = compared.gcaFirst from
       (gcaPolicy ctx 0 tcLevel).target level nc compared]
     exact hcg
-  have hrecord : nc < n → Recorded level (chooseTarget false ctx tcLevel level nc compared).1.toNat
+  have hrecord : nc < n → Recorded ctx tcLevel level (chooseTarget false ctx tcLevel level nc compared).1.toNat
       (chooseTarget false ctx tcLevel level nc compared).2.2.2 :=
     fun hnc => hch.recorded hnc hin.positive hgsz hsymm hloop
   generalize htval : chooseTarget false ctx tcLevel level nc compared = t at ht hti hth htg hrecord ⊢

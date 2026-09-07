@@ -14,6 +14,11 @@ import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Policy.Safety
+import all HexGraphIso.Nauty.Policy.RouteHistory
+import all HexGraphIso.Nauty.Policy.Tracking
+import all HexGraphIso.Nauty.Policy.RouteState
+import all HexGraphIso.Nauty.Policy.Route
+import all HexGraphIso.Nauty.Policy.CheapHistory
 import all HexGraphIso.Nauty.Policy.HistoryState
 import all HexGraphIso.Nauty.Policy.Alignment
 import all HexGraphIso.Nauty.Policy.Recovery
@@ -86,7 +91,7 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hrec := (reachPolicy G ctx tcLevel hn0).recover level r.1 ready left hin.positive hcheap.ok hleftFrame
   have hstored : RunInv G ctx result :=
     (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl).recover (n + 2) level
-  have hhist : History ctx tcLevel level level r.1 result := by
+  have hcheapHist : CheapHistory ctx tcLevel level level r.1 result := by
     intro hc
     rw [hgr] at hc ⊢
     have houtcheap : out.noncheaplevel ≤ level := by
@@ -124,8 +129,7 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
             unfold ready cheapCheck
             split <;> exact hp.symm
         exact hd.recover hcheap.ok hleftFrame
-  have hrecord : Recorded level r.2.1.toNat result := by
-    intro _ _
+  have hsaved : result.firsttc[level]! = Int.ofNat r.2.1.toNat := by
     have hrleft := (referencePolicy ctx (n + 2) tcLevel).recover level left
     have htleft := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.1) hrleft
     change result.firsttc = out.firsttc at htleft
@@ -146,6 +150,31 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
     unfold ready cheapCheck
     split <;> change r.2.2.2.2.firsttc[level]! = r.2.1
     all_goals rw [hstore, Array.getElem!_set!_self _ _ _ hlevel]
+  have hroute : RouteHistory ctx tcLevel level level r.1 result := by
+    unfold RouteHistory
+    rw [hgr]
+    have hl : R.lab = ready.lab := by
+      have hl := (prepareFirst_fields ctx tcLevel level numcells st).1
+      unfold ready cheapCheck
+      split <;> exact hl.symm
+    have hp : R.ptn = ready.ptn := by
+      have hp := (prepareFirst_fields ctx tcLevel level numcells st).2.1
+      unfold ready cheapCheck
+      split <;> exact hp.symm
+    refine ⟨R, href.congr hr, refined_iter hn0 hin.positive hin.partition, hin.equitable, ?_, ?_⟩
+    · have hc := hcheap.ok.count
+      change r.1 = bcount ready.ptn level n at hc
+      rw [hp]
+      exact hc.symm
+    · refine ⟨?_, fun _ => ?_⟩
+      · rw [recover_eqlev]
+        omega
+      · have hd : GuidedAt ctx tcLevel result.firsttc level R level r.1 ready :=
+          ⟨R, GuidedPerm.refl _ _ _ _ _, hl, hp, rfl⟩
+        exact hd.recover hcheap.ok hleftFrame
+  have hhist : History ctx tcLevel level level r.1 result := ⟨hcheapHist, hroute⟩
+  have hrecord : Recorded ctx tcLevel level r.2.1.toNat result :=
+    ⟨fun _ _ => hsaved, fun _ => Or.inr hsaved⟩
   exact ⟨(by intro _ v hv; cases hv), hin.positive, hrec.ok, hreadyTarget.of_out hrec.effect,
     (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, hhist, hrecord⟩
 

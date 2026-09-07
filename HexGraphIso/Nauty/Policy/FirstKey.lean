@@ -58,7 +58,7 @@ theorem History.first_key {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
     pathLeafKey ctx cs st.lab = incKey ctx fs st.firstlab := by
-  obtain ⟨root, href, hd, hs, ha⟩ := h hcheap
+  obtain ⟨root, href, hd, hs, ha⟩ := h.cheapHistory hcheap
   obtain ⟨hsent, hrows⟩ := ha.first_leaf href hd hs hok heq hgsz hsymm hloop
   have hc : cs = fs := firstCodeInv_eq_of_live (heq ▸ hcodes) hsent
   simp only [pathLeafKey, incKey, hc, hrows]

@@ -76,7 +76,7 @@ namespace Engine
 
 /-- A checked scatter between the leaves stabilizes their common
 ancestor, and hence forces equal depth for guided descents. -/
-theorem Guided.depth_checked {tcLevel base last₁ last₂ : Nat}
+theorem Guided.leaf_checked {tcLevel base last₁ last₂ : Nat}
     {store : Array Int} {perm : Array Nat} {root first current : RefineSt n}
     {p₁ p₂ : List (Nat × Nat)}
     (hfirst : DescPath ctx base root p₁ last₁ first)
@@ -87,7 +87,7 @@ theorem Guided.depth_checked {tcLevel base last₁ last₂ : Nat}
     (hdisc₁ : ∀ q, q < n → first.ptn[q]! ≤ last₁)
     (hdisc₂ : ∀ q, q < n → current.ptn[q]! ≤ last₂)
     (hgsz : ctx.g.size = n) (hcheck : checkAutom ctx.g perm = true)
-    (hmap : ∀ i, i < n → perm[first.lab[i]!]! = current.lab[i]!) : last₂ = last₁ := by
+    (hmap : ∀ i, i < n → perm[first.lab[i]!]! = current.lab[i]!) : last₂ = last₁ ∧ leafRows ctx current.lab = leafRows ctx first.lab := by
   have hfirstOk := descends_iterOk hfirst.descends hok
   have hcurrentOk := descends_iterOk hcurrent.descends hok
   obtain ⟨σ, hσ, hg⟩ := checkAutom_sound hgsz hcheck
@@ -109,7 +109,25 @@ theorem Guided.depth_checked {tcLevel base last₁ last₂ : Nat}
     · change cellsPerm root.ptn base root.lab (root.lab.map σ.toFun)
       rw [hrootMap]
       exact hstab
-  exact Guided.depth_map hg hfirst hok hselect htarget hcurrent hguided hsp hdisc₁ hdisc₂ hlabels
+  refine ⟨Guided.depth_map hg hfirst hok hselect htarget hcurrent hguided hsp hdisc₁ hdisc₂ hlabels, ?_⟩
+  rw [← hlabels]
+  exact leafRows_map σ hg hfirstOk.ok.labOk hfirstOk.ok.labSize
+
+/-- Checked guided leaves have equal descent depth. -/
+theorem Guided.depth_checked {tcLevel base last₁ last₂ : Nat}
+    {store : Array Int} {perm : Array Nat} {root first current : RefineSt n}
+    {p₁ p₂ : List (Nat × Nat)}
+    (hfirst : DescPath ctx base root p₁ last₁ first)
+    (hok : IterOk ctx base root) (hselect : Selects ctx tcLevel base root p₁)
+    (htarget : Targets store base (p₁.map Prod.fst))
+    (hcurrent : DescPath ctx base root p₂ last₂ current)
+    (hguided : Guided ctx tcLevel store base root p₂)
+    (hdisc₁ : ∀ q, q < n → first.ptn[q]! ≤ last₁)
+    (hdisc₂ : ∀ q, q < n → current.ptn[q]! ≤ last₂)
+    (hgsz : ctx.g.size = n) (hcheck : checkAutom ctx.g perm = true)
+    (hmap : ∀ i, i < n → perm[first.lab[i]!]! = current.lab[i]!) : last₂ = last₁ := by
+  exact (Guided.leaf_checked hfirst hok hselect htarget hcurrent hguided hdisc₁ hdisc₂
+    hgsz hcheck hmap).1
 
 end Engine
 

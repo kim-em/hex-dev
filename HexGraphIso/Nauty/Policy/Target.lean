@@ -77,4 +77,15 @@ theorem chooseTarget_fields (ctx : Ctx n) (tcLevel level numcells : Nat)
   repeat' split
   all_goals rfl
 
+/-- Selecting an active target returns a nonnegative position. -/
+theorem chooseTarget_cast {ctx : Ctx n} {tcLevel level numcells : Nat} {st : Search n}
+    (hnc : numcells < n) (heq : st.eqlevFirst = level) :
+    Int.ofNat (chooseTarget false ctx tcLevel level numcells st).1.toNat =
+      (chooseTarget false ctx tcLevel level numcells st).1 := by
+  unfold chooseTarget
+  simp only [Bool.false_eq_true, ite_false, Bool.not_false, Bool.true_and, heq,
+    beq_self_eq_true, Bool.true_or, Bool.and_true, hnc, decide_true, ite_true,
+    Id.run_pure, apply_ite Id.run, apply_ite Prod.fst, ite_self]
+  rfl
+
 end Hex.GraphIso.Nauty.Engine
