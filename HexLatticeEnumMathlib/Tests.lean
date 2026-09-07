@@ -34,6 +34,16 @@ example (b : Basis n m) (answer : Minimum n m) (h : shortest b = some answer)
         ∀ w, b.rows.memLattice w → w ≠ 0 → distance v 0 ≤ distance w 0 :=
   shortest_spec b answer h v
 
+example (b : Basis n m) (t : Vector Rat m) (r : Rat) :
+    checkEnumeration b.rows t r (enumerationCertificate b t r) = true :=
+  enumerationCertificate_check b t r
+
+example (b : Basis n m) (t : Vector Rat m) : checkClosest b.rows t (closestCertificate b t) = true :=
+  closestCertificate_check b t
+
+example (b : Basis n m) (cert : OptimumCertificate n m) (h : shortestCertificate b = some cert) :
+    checkShortest b.rows cert = true := shortestCertificate_check b cert h
+
 private def halfCertificate : Certificate 1 1 where
   rows := Matrix.ofRows #v[#v[1]]
   forward := Matrix.ofRows #v[#v[1]]
