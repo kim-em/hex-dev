@@ -124,7 +124,7 @@ theorem centre_eq (p : Data n m) (rows : Hex.Matrix Int n m)
     funext acc j
     split_ifs <;> simp
   unfold Data.centre
-  rw [hf, Fin.foldl_eq_finRange_foldl, foldl_finRange_eq_sum]
+  rw [hf, foldl_finRange_eq_sum]
   change ((z.map fun x : Int => (x : Rat)) * p.mu)[i] - _ = _
   rw [Hex.Matrix.getElem_vecMul, HexMatrixMathlib.dotProduct_eq]
   simp only [_root_.dotProduct, vectorEquiv_apply]
@@ -156,7 +156,7 @@ theorem distance_decomposition (p : Data n m) (rows : Hex.Matrix Int n m)
     (t : Vector Rat m) (hp : p.Valid rows t) (z : Vector Int n) :
     distance (Hex.Matrix.vecMul z rows) t = p.residual.normSq +
       ∑ i : Fin n, p.norms[i] * ((z[i] : Rat) - p.centre z i) ^ 2 := by
-  unfold distance
+  simp only [distance, subtract_eq, castVector_eq]
   rw [cast_vector, ← hp.2.2.1, ← Hex.Matrix.vecMul_mul, norm_difference p rows t hp]
   congr 1
   apply Finset.sum_congr rfl
@@ -188,7 +188,7 @@ theorem centre_congr (p : Data n m) (z w : Vector Int n) (i : Fin n)
     (h : ∀ j : Fin n, i < j → z[j] = w[j]) : p.centre z i = p.centre w i := by
   unfold Data.centre
   congr 1
-  apply congrArg (fun f => Fin.foldl n f 0)
+  apply congrArg (fun f => (List.finRange n).foldl f 0)
   funext acc j
   split_ifs with hij
   · rw [h j hij]
@@ -226,7 +226,7 @@ theorem vector_injective (b : Basis n m) : Function.Injective (vector b) := by
 
 /-- Squared distances are nonnegative, independently of preparation. -/
 theorem distance_nonneg (v : Vector Int m) (t : Vector Rat m) : 0 ≤ distance v t := by
-  unfold distance Vector.normSq
+  simp only [distance, subtract_eq, castVector_eq, Vector.normSq]
   rw [HexMatrixMathlib.dotProduct_eq]
   exact Finset.sum_nonneg fun i _ => mul_self_nonneg _
 

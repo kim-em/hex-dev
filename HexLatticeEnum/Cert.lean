@@ -37,17 +37,17 @@ structure Replay (n m : Nat) where
 /-- Exact child coverage, allowing any permutation but no missing or duplicate labels. -/
 def checkLabels (interval : Interval) (children : List (Int × Tree)) : Bool :=
   children.length == interval.size &&
-    (children.map Prod.fst).mergeSort (fun x y => x ≤ y) ==
+    Hex.List.sort (children.map Prod.fst) (fun x y => x ≤ y) ==
       (List.range interval.size).map (fun (i : Nat) => interval.lo + (i : Int))
 
 /-- Replay a coefficient tree with a global node limit and recomputed suffix costs.
 The checker descends by dimension and consumes the allowance across siblings. -/
-def replay (b : Basis n m) (t : Vector Rat m) (radius : Rat)
+def replay (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
     (forward : Matrix Int n n) (data : Data n m) :
     (k : Nat) → k ≤ n → Vector Int n → Rat → Tree → Nat → Option (Replay n m)
   | _, _, _, _, _, 0 => none
   | 0, _, z, _, tree, fuel + 1 =>
-    let p := point b t (forward.transpose * z)
+    let p := pointRows rows t (forward.transpose * z)
     match tree with
     | .leaf => if p.distanceSq ≤ radius then some ⟨[p], fuel⟩ else none
     | .empty => if radius < p.distanceSq then some ⟨[], fuel⟩ else none
@@ -64,7 +64,7 @@ def replay (b : Basis n m) (t : Vector Rat m) (radius : Rat)
       else
         let visitChild := fun (a : Int) (tree : Tree) (remaining : Nat) =>
           let delta := (a : Rat) - centre
-          replay b t radius forward data k (by omega) (z.set k a (by omega))
+          replay rows t radius forward data k (by omega) (z.set k a (by omega))
             (suffix + data.norms[i] * delta * delta) tree remaining
         let rec loop (children : List (Int × Tree)) (remaining : Nat)
             (points : List (Point n m)) : Option (Replay n m) := do
@@ -78,11 +78,11 @@ termination_by k _ _ _ _ _ => k
 
 /-- Check transforms, preparation identities, every branch, and the claimed output.
 The replay bound is independent of the producer's resource limits. -/
-def checkEnumerationWith (maxNodes : Nat) (b : Basis n m) (t : Vector Rat m)
+def checkEnumerationWith (maxNodes : Nat) (rows : Matrix Int n m) (t : Vector Rat m)
     (radius : Rat) (cert : Certificate n m) : Bool :=
-  Matrix.sameLatticeCert b.rows cert.rows cert.forward cert.reverse &&
+  Matrix.sameLatticeCert rows cert.rows cert.forward cert.reverse &&
     cert.data.check cert.rows t &&
-    match replay b t radius cert.forward cert.data n (Nat.le_refl n) 0 0 cert.tree maxNodes with
+    match replay rows t radius cert.forward cert.data n (Nat.le_refl n) (Vector.replicate n 0) 0 cert.tree maxNodes with
     | none => false
     | some result => decide (sortPoints result.points = cert.points)
 
@@ -100,9 +100,9 @@ decreasing_by
   omega
 
 /-- Unbudgeted replay uses the exact node count of the finite supplied tree. -/
-def checkEnumeration (b : Basis n m) (t : Vector Rat m)
+def checkEnumeration (rows : Matrix Int n m) (t : Vector Rat m)
     (radius : Rat) (cert : Certificate n m) : Bool :=
-  checkEnumerationWith cert.tree.nodes b t radius cert
+  checkEnumerationWith cert.tree.nodes rows t radius cert
 
 /-- Produce a complete certificate in the original basis using the common traversal. -/
 def enumerationCertificate (b : Basis n m) (t : Vector Rat m) (radius : Rat) : Certificate n m :=
@@ -119,16 +119,17 @@ structure OptimumCertificate (n m : Nat) where
   enumeration : Certificate n m
 
 /-- Replay a global closest-vector certificate, including every tie. -/
-def checkClosest (b : Basis n m) (t : Vector Rat m) (cert : OptimumCertificate n m) : Bool :=
-  checkPoint b t cert.candidate &&
-    checkEnumeration b t cert.candidate.distanceSq cert.enumeration &&
+def checkClosest (rows : Matrix Int n m) (t : Vector Rat m) (cert : OptimumCertificate n m) : Bool :=
+  checkPoint rows t cert.candidate &&
+    checkEnumeration rows t cert.candidate.distanceSq cert.enumeration &&
     cert.enumeration.points.all (fun p => p.distanceSq == cert.candidate.distanceSq)
 
 /-- Replay a global nonzero shortest-vector certificate, including both signs. -/
-def checkShortest (b : Basis n m) (cert : OptimumCertificate n m) : Bool :=
-  cert.candidate.ambient != 0 && checkPoint b 0 cert.candidate &&
-    checkEnumeration b 0 cert.candidate.distanceSq cert.enumeration &&
-    cert.enumeration.points.all (fun p => p.ambient == 0 ||
+def checkShortest (rows : Matrix Int n m) (cert : OptimumCertificate n m) : Bool :=
+  decide (cert.candidate.ambient ≠ Vector.replicate m 0) &&
+    checkPoint rows (Vector.replicate m 0) cert.candidate &&
+    checkEnumeration rows (Vector.replicate m 0) cert.candidate.distanceSq cert.enumeration &&
+    cert.enumeration.points.all (fun p => decide (p.ambient = Vector.replicate m 0) ||
       p.distanceSq == cert.candidate.distanceSq)
 
 end Hex.LatticeEnum

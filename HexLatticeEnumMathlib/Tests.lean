@@ -1,0 +1,58 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+import HexLatticeEnum
+import HexLatticeEnumMathlib
+
+/-! Build-only examples of mathematical preparation and literal kernel certificate replay. -/
+
+open Hex Hex.LatticeEnum HexLatticeEnumMathlib
+
+example (b : Basis n m) (t : Vector Rat m) : (prepare b t).Valid := prepare_valid b t
+
+example (b : Basis n m) : Function.Injective (vector b) := vector_injective b
+
+example (b : Basis n m) (t : Vector Rat m) (z : Vector Int n) :
+    distanceSq b t z = (prepare b t).residual.normSq +
+      ∑ i : Fin n, (prepare b t).norms[i] * ((z[i] : Rat) - (prepare b t).centre z i) ^ 2 :=
+  distance_decomposition (prepare b t).toData b.rows t (prepare_valid b t) z
+
+private def halfCertificate : Certificate 1 1 where
+  rows := Matrix.ofRows #v[#v[1]]
+  forward := Matrix.ofRows #v[#v[1]]
+  reverse := Matrix.ofRows #v[#v[1]]
+  data := ⟨Matrix.ofRows #v[#v[1]], Matrix.ofRows #v[#v[1]], #v[1], #v[1/2], #v[0]⟩
+  tree := .node ⟨0, 1⟩ [(0, .leaf), (1, .leaf)]
+  points := [⟨#v[0], #v[0], 1/4⟩, ⟨#v[1], #v[1], 1/4⟩]
+
+example : checkPoint (Matrix.ofRows #v[#v[1]]) #v[1/2]
+    (⟨#v[0], #v[0], 1/4⟩ : Point 1 1) = true := by decide +kernel
+example : Matrix.sameLatticeCert (Matrix.ofRows #v[#v[1]]) halfCertificate.rows
+    halfCertificate.forward halfCertificate.reverse = true := by decide +kernel
+example : halfCertificate.data.check halfCertificate.rows #v[1/2] = true := by decide +kernel
+example : checkEnumeration (Matrix.ofRows #v[#v[1]]) #v[1/2] (1/4) halfCertificate = true := by
+  decide +kernel
+
+example : checkClosest (Matrix.ofRows #v[#v[1]]) #v[1/2]
+    ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ = true := by decide +kernel
+
+example : (bounds 0 1 4).lo = -2 := by decide +kernel
+
+private def unitCertificate : Certificate 1 1 where
+  rows := Matrix.ofRows #v[#v[1]]
+  forward := Matrix.ofRows #v[#v[1]]
+  reverse := Matrix.ofRows #v[#v[1]]
+  data := ⟨Matrix.ofRows #v[#v[1]], Matrix.ofRows #v[#v[1]], #v[1], #v[0], #v[0]⟩
+  tree := .node ⟨-1, 1⟩ [(0, .leaf), (-1, .leaf), (1, .leaf)]
+  points := [⟨#v[-1], #v[-1], 1⟩, ⟨#v[0], #v[0], 0⟩, ⟨#v[1], #v[1], 1⟩]
+
+example : checkShortest (Matrix.ofRows #v[#v[1]])
+    ⟨⟨#v[1], #v[1], 1⟩, unitCertificate⟩ = true := by decide +kernel
+
+example : checkEnumeration (Matrix.ofRows #v[#v[1]]) #v[0] 1
+    { unitCertificate with tree := .node ⟨-1, 1⟩ [(0, .leaf), (1, .leaf)] } = false := by
+  decide +kernel

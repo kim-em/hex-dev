@@ -916,7 +916,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
         (basisPrefixProjection b i j hi (Nat.lt_trans hj hi))
   rw [hsys]
   unfold Matrix.mulVec Matrix.row
-  simp only [Vector.getElem_ofFn, Fin.getElem_fin]
+  simp only [Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn, Fin.getElem_fin]
   rw [Vector.dotProduct]
   change
     (List.finRange (j + 1)).foldl

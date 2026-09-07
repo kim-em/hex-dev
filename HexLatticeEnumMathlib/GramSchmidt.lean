@@ -136,6 +136,6 @@ theorem prepare_valid : (prepare b t).Valid := by
 
 /-- Replay accepts preparation from every independent input, including rank zero. -/
 theorem prepare_check : (prepare b t).check = true := by
-  simpa [Prepared.check, Data.check, Prepared.Valid] using prepare_valid b t
+  simpa [Prepared.check, Data.check_iff, Prepared.Valid] using prepare_valid b t
 
 end HexLatticeEnumMathlib

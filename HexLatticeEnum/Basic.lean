@@ -7,6 +7,7 @@ module
 
 public import HexLLL.Lattice
 public import HexMatrix.Certificate
+public import HexBasic.Sort
 
 @[expose] public section
 
@@ -27,9 +28,30 @@ def ofMatrix? (rows : Matrix Int n m) : Option (Basis n m) :=
 def vector (b : Basis n m) (z : Vector Int n) : Vector Int m :=
   Matrix.vecMul z b.rows
 
+/-- Kernel-reducible rational coordinate cast. -/
+def castVector (v : Vector Int m) : Vector Rat m :=
+  Hex.Vector.ofFn' fun i => (v[i] : Rat)
+
+/-- Kernel-reducible coordinate subtraction. -/
+def subtract (u v : Vector Rat m) : Vector Rat m :=
+  Hex.Vector.ofFn' fun i => u[i] - v[i]
+
+/-- Coordinate casting agrees with the standard vector map. -/
+@[simp] theorem castVector_eq (v : Vector Int m) :
+    castVector v = v.map (fun x : Int => (x : Rat)) := by
+  apply Vector.ext
+  intro i hi
+  simp [castVector]
+
+/-- Coordinate subtraction agrees with vector subtraction. -/
+@[simp] theorem subtract_eq (u v : Vector Rat m) : subtract u v = u - v := by
+  apply Vector.ext
+  intro i hi
+  simp [subtract]
+
 /-- Squared Euclidean distance to a rational target. -/
 def distance (v : Vector Int m) (t : Vector Rat m) : Rat :=
-  ((v.map fun x : Int => (x : Rat)) - t).normSq
+  (subtract (castVector v) t).normSq
 
 /-- Squared distance of an original-basis coefficient vector to the target. -/
 def distanceSq (b : Basis n m) (t : Vector Rat m) (z : Vector Int n) : Rat :=
@@ -45,13 +67,18 @@ structure Point (n m : Nat) where
   distanceSq : Rat
   deriving DecidableEq, Repr
 
+/-- Reconstruct a point from raw rows, requiring no independence proof for replay. -/
+def pointRows (rows : Matrix Int n m) (t : Vector Rat m) (z : Vector Int n) : Point n m :=
+  let v := Matrix.vecMul z rows
+  ⟨z, v, distance v t⟩
+
 /-- Construct a point by direct reconstruction and distance evaluation. -/
 def point (b : Basis n m) (t : Vector Rat m) (z : Vector Int n) : Point n m :=
-  ⟨z, vector b z, distanceSq b t z⟩
+  pointRows b.rows t z
 
 /-- Replay a point's coefficient and distance claims. -/
-def checkPoint (b : Basis n m) (t : Vector Rat m) (p : Point n m) : Bool :=
-  decide (p = point b t p.coefficients)
+def checkPoint (rows : Matrix Int n m) (t : Vector Rat m) (p : Point n m) : Bool :=
+  decide (p = pointRows rows t p.coefficients)
 
 /-- Deterministic public order on points, by ambient integer coordinates. -/
 def pointLE (p q : Point n m) : Bool :=
@@ -59,7 +86,7 @@ def pointLE (p q : Point n m) : Bool :=
 
 /-- Sort a complete result independently of traversal order. -/
 def sortPoints (ps : List (Point n m)) : List (Point n m) :=
-  ps.mergeSort pointLE
+  Hex.List.sort ps pointLE
 
 /-- Every reconstructed vector lies in the original integer row lattice. -/
 theorem vector_mem (b : Basis n m) (z : Vector Int n) :
@@ -67,7 +94,7 @@ theorem vector_mem (b : Basis n m) (z : Vector Int n) :
 
 /-- Directly constructed points pass their replay check. -/
 theorem checkPoint_point (b : Basis n m) (t : Vector Rat m) (z : Vector Int n) :
-    checkPoint b t (point b t z) = true := by
-  simp [checkPoint, point]
+    checkPoint b.rows t (point b t z) = true := by
+  simp [checkPoint, point, pointRows]
 
 end Hex.LatticeEnum

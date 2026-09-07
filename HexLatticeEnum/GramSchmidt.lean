@@ -70,8 +70,31 @@ def Data.Valid (p : Data n m) (rows : Matrix Int n m) (t : Vector Rat m) : Prop 
 
 /-- Replay rational identities for untrusted certificate data. -/
 def Data.check (p : Data n m) (rows : Matrix Int n m) (t : Vector Rat m) : Bool :=
-  have : Decidable (p.Valid rows t) := by unfold Data.Valid; infer_instance
-  decide (p.Valid rows t)
+  let reconstructed := p.mu * p.orthogonal
+  decide (
+    (∀ i : Fin n, 0 < p.norms[i] ∧ p.norms[i] = (p.orthogonal.getRow i).normSq) ∧
+    (∀ i j : Fin n, (i < j → p.mu[(i, j)] = 0) ∧
+      (i = j → p.mu[(i, j)] = 1) ∧
+      (i ≠ j → (p.orthogonal.getRow i).dotProduct (p.orthogonal.getRow j) = 0)) ∧
+    (∀ i : Fin n, ∀ j : Fin m, reconstructed[(i, j)] = ((rows[(i, j)] : Int) : Rat)) ∧
+    (∀ i : Fin n, p.projection[i] = t.dotProduct (p.orthogonal.getRow i) / p.norms[i]) ∧
+    p.residual = subtract t (Matrix.vecMul p.projection p.orthogonal))
+
+/-- The kernel-reducible data check decides exactly the preparation identities. -/
+@[simp] theorem Data.check_iff (p : Data n m) (rows : Matrix Int n m) (t : Vector Rat m) :
+    p.check rows t = true ↔ p.Valid rows t := by
+  have hc : (∀ i : Fin n, ∀ j : Fin m,
+      (p.mu * p.orthogonal)[(i, j)] = ((rows[(i, j)] : Int) : Rat)) ↔
+      p.mu * p.orthogonal = GramSchmidt.castIntMatrix rows := by
+    constructor
+    · intro h
+      apply Matrix.ext_getElem
+      intro i j
+      simpa [GramSchmidt.castIntMatrix] using h i j
+    · intro h i j
+      rw [h]
+      simp [GramSchmidt.castIntMatrix]
+  simp only [Data.check, decide_eq_true_eq, hc, subtract_eq, Data.Valid]
 
 /-- Validity includes the exact basis and target of the prepared value. -/
 def Prepared.Valid (p : Prepared b t) : Prop := p.toData.Valid b.rows t
@@ -81,7 +104,7 @@ def Prepared.check (p : Prepared b t) : Bool := p.toData.check b.rows t
 
 /-- Centre for the next coefficient after a suffix has been chosen. -/
 def Data.centre (p : Data n m) (z : Vector Int n) (i : Fin n) : Rat :=
-  p.projection[i] - Fin.foldl n (fun acc j =>
+  p.projection[i] - (List.finRange n).foldl (fun acc j =>
     if i < j then acc + p.mu[(j, i)] * (z[j] : Rat) else acc) 0
 
 /-- Centre in data prepared for this basis and target. -/
