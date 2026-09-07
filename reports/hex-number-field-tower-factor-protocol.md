@@ -33,3 +33,9 @@ factorization/checker regressions, and the Mathlib correspondence proofs.
 
 These local measurements establish before/after constants, not a replacement
 release-quality shared-host verdict or a change to Phase-4 coverage.
+
+An attempt whose postflight sample finds either CPU 13 or sibling 61 at least
+5% busy is retained as a contaminated diagnostic. Allow at most two retries
+with the same settings, after the core and sibling are idle again; rerun both
+binaries and PARI in each retry. The first candidate attempt crossed that
+host-state threshold, so its export and host metadata are retained separately.
