@@ -677,7 +677,7 @@ theorem boundEq {G : Colored n k} {ctx : Ctx n}
   have hkey : ∀ o, o < len → key o = key offset := by
     intro o ho
     apply congrArg (prefixKey codes)
-    exact childKey_eq_of_subtree (tcLevel := tcLevel)
+    exact SubtreeOk.child_key_eq (tcLevel := tcLevel)
       (fuel := specFuel) (numcells := numcells) (oU := offset) (oV := o)
       hsmall hgsz hsymm hloop hinv.cell hinv.lenTwo hinv.range
       hoffset ho hinv.fuelBound

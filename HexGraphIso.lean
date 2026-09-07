@@ -17,6 +17,7 @@ public import HexGraphIso.Nauty.Spec.Equivariance
 public import HexGraphIso.Nauty.Search.Search
 public import HexGraphIso.Nauty.Search.Engine
 public import HexGraphIso.Nauty.Policy.Result
+public import HexGraphIso.Nauty.Policy.CheapKey
 public import HexGraphIso.Nauty.Policy.Prune
 public import HexGraphIso.Nauty.Policy.Exhaustive
 public import HexGraphIso.Nauty.Spec.CanonSpec

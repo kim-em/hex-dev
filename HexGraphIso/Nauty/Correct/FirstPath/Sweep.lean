@@ -440,7 +440,7 @@ theorem boundEq_of_subtree {ctx : Ctx n}
   have hkey : ∀ o, o < len → key o = key offset := by
     intro o ho
     apply congrArg (prefixKey codes)
-    exact childKey_eq_of_subtree (tcLevel := tcLevel)
+    exact SubtreeOk.child_key_eq (tcLevel := tcLevel)
       (fuel := specFuel) (numcells := numcells) (oU := offset) (oV := o)
       hsmall hgsz hsymm hloop hcell hlen2 hrange hoffset ho hfuel
   rw [hbound]
