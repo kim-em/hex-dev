@@ -13,3 +13,4 @@ public import HexLatticeEnumMathlib.Cert
 public import HexLatticeEnumMathlib.Native
 public import HexLatticeEnumMathlib.Budget
 public import HexLatticeEnumMathlib.OptimizationBudget
+public import HexLatticeEnumMathlib.Preprocess

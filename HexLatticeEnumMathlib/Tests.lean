@@ -52,6 +52,12 @@ example (b : Basis n m) (t : Vector Rat m) (r : Rat) (budget : Budget) :
     | .complete _ _ counts | .incomplete _ _ counts => Within budget counts :=
   enumerateWith_within b t r budget
 
+example (b : Basis n m) (change : BasisChange b) (t : Vector Rat m) (r : Rat) :
+    change.enumerate t r = enumerate b t r := change_enumerate change t r
+
+example (b : Basis n m) (change : BasisChange b) (t : Vector Rat m) (r : Rat) :
+    checkEnumeration b.rows t r (change.certificate t r) = true := change_certificate_check change t r
+
 private def halfCertificate : Certificate 1 1 where
   rows := Matrix.ofRows #v[#v[1]]
   forward := Matrix.ofRows #v[#v[1]]

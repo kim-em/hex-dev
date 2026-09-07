@@ -222,6 +222,37 @@ private def decoding : IO Unit := do
   require (rejected (decodeOptimumCertificate {} 2 3 (cvpText ++ " trailing")))
     "optimum trailing tokens accepted"
 
+private def preprocessing : IO Unit := do
+  let some b := ofMatrix? (matrix 2 2 [[1, 100], [0, 1]]) |
+    throw (IO.userError "sheared basis rejected")
+  let change := lllPreprocess b
+  require (Hex.lllReducedCheck change.working.rows (3/4) (11/20)) "preprocessed basis is not LLL-reduced"
+  require (Matrix.sameLatticeCert b.rows change.working.rows change.forward change.reverse)
+    "LLL transforms failed replay"
+  let target : Vector Rat 2 := #v[1/2, -1/2]
+  require ((retarget (prepare b 0) target).check) "retargeted preparation failed replay"
+  require (change.enumerate target (1/2) == enumerate b target (1/2)) "preprocessed ball changed coefficients"
+  require (change.closest target == closest b target) "preprocessed closest vectors changed"
+  require (change.shortest == shortest b) "preprocessed shortest vectors changed"
+  require (checkEnumeration b.rows target (1/2) (change.certificate target (1/2)))
+    "preprocessed ball certificate rejected"
+  require (checkClosest b.rows target (change.closestCertificate target)) "preprocessed closest certificate rejected"
+  let some sv := change.shortestCertificate | throw (IO.userError "missing preprocessed shortest certificate")
+  require (checkShortest b.rows sv) "preprocessed shortest certificate rejected"
+  require (checkBasisChange b b.rows (matrix 2 2 [[1, 0], [0, 1]]) (matrix 2 2 [[0, 0], [0, 0]])).isNone
+    "invalid reverse transform accepted"
+  require (checkBasisChange b (matrix 2 2 [[1, 0], [2, 0]])
+    (matrix 2 2 [[1, 0], [0, 1]]) (matrix 2 2 [[1, 0], [0, 1]])).isNone
+    "dependent working basis accepted"
+  let some empty := ofMatrix? (matrix 0 2 []) | throw (IO.userError "rank-zero basis rejected")
+  require ((lllPreprocess empty).closest #v[3, 4] == closest empty #v[3, 4]) "rank-zero preprocessing changed result"
+  for budget in ([{ nodes := some 0 }, { answers := some 0 }, { certificateNodes := some 0 }] : List Budget) do
+    match change.closestWith budget target with
+    | .complete .. => throw (IO.userError "preprocessed budget exhaustion reported complete")
+    | .incomplete candidate _ pending _ _ =>
+      require (checkPoint b.rows target candidate) "preprocessed partial incumbent reconstruction failed"
+      require (!pending.isEmpty) "preprocessed partial result lost pending work"
+
 def run : IO Unit := do
   intervals
   ball (matrix 2 3 [[1, -1, 0], [0, 1, -1]]) 0 2
@@ -239,6 +270,7 @@ def run : IO Unit := do
   minima
   certificates
   decoding
+  preprocessing
   IO.println "lattice enumeration conformance passed"
 
 end Hex.LatticeEnum.Conformance
