@@ -10,7 +10,7 @@ public import Mathlib
 public import HexRealRootsMathlib.ChainCorrespond
 public import HexRealRoots.Var
 -- `import all` on the executable modules so the non-`@[expose]` bodies of
--- `sturmChain`, `sturmCount`, `sturmVarAt`, and `signVar` unfold here (the
+-- `sturmChain`, `ZPoly.sturmCount`, `sturmVarAt`, and `signVar` unfold here (the
 -- degree-positivity derivation reads the empty chain of a degree-`≤ 0` input).
 import all HexRealRootsMathlib.Separation
 import all HexRealRoots.Basic
@@ -72,7 +72,7 @@ theorem degree_pos_of_count_one (iso : Hex.RealRootIsolation p) :
   by_contra h
   have hz : p.natDegree = 0 := by omega
   have hc := iso.count_one
-  unfold Hex.sturmCount at hc
+  unfold Hex.ZPoly.sturmCount at hc
   rw [sturmChain_eq_nil_of_degree_nonpos hz] at hc
   simp only [Hex.sturmVarAt, List.map_nil, Hex.signVar, List.filter_nil,
     Hex.signVar.go, Nat.cast_zero, sub_zero] at hc
@@ -120,7 +120,7 @@ theorem RealRootIsolation.exists_unique_root (hp : Hex.ZPoly.SquareFreeRat p)
   exact hyM
 
 /-- The positive-degree core of `RealRootIsolations.isolates`: the injective
-root map from isolations hits `rootCount p` distinct roots, which is all of
+root map from isolations hits `ZPoly.rootCount p` distinct roots, which is all of
 them. -/
 private theorem isolates_of_degree_pos (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) (out : Hex.RealRootIsolations p) :

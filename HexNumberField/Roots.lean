@@ -174,7 +174,7 @@ def componentRoots? [ZPoly.CheckedIrreducible p]
     if hpos : 0 < eliminant.leadingCoeff then
       if hdegree : 0 < eliminant.natDegree then
         if hsimple : HasOnlySimpleRoots eliminant then do
-          let isolations ← isolate eliminant hsimple (separationDepth eliminant : Int)
+          let isolations ← isolate? eliminant hsimple (separationDepth eliminant : Int)
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
           let evaluationEliminant := evalEliminant f eliminant
           refined.foldlM

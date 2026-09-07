@@ -286,7 +286,7 @@ def refinePoly : ZPoly := DensePoly.ofCoeffs #[6, -7, 0, 1]
 refined form against itself. `none` never occurs for this squarefree fixture. -/
 def refineAtom? : Option (DyadicRootIsolation refinePoly) :=
   if h : HasOnlySimpleRoots refinePoly then
-    match isolate refinePoly h 0 with
+    match isolate? refinePoly h 0 with
     | some atoms => atoms[0]?
     | none => none
   else none
@@ -338,7 +338,7 @@ def isolateAllChecksum (p : ZPoly) : UInt64 :=
 strategy-invariant projection; `0` for non-squarefree or degenerate inputs. -/
 def isolateDigest (strategy : AtomStrategy) (p : ZPoly) : UInt64 :=
   if h : HasOnlySimpleRoots p then
-    match isolate p h 0 strategy with
+    match isolate? p h 0 strategy with
     | some atoms => rootsDigest atoms
     | none => 0
   else 0

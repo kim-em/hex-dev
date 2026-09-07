@@ -248,7 +248,7 @@ def runAddEliminant : Unit → IO UInt64 := fun _ => do
 def runIsolateAdd : Unit → IO UInt64 := fun _ => do
   let input ← requireSome "lazy/isolate-add" (← isolateInputRef.get)
   let isolations ← requireSome "lazy/isolate-add"
-    (isolate input.polynomial input.simple (input.depth : Int))
+    (isolate? input.polynomial input.simple (input.depth : Int))
   return isolations.foldl
     (fun checksum isolation =>
       mixHash checksum (squareChecksum isolation.square))
@@ -836,7 +836,7 @@ general constructor remains the fixture for ladders whose polynomial is not
 the binomial used to choose `ladderRootSeed`. -/
 private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
     Option (RefinedIsolation p) := do
-  let isolations ← isolate p h (separationDepth p : Int)
+  let isolations ← isolate? p h (separationDepth p : Int)
   let iso ← isolations[0]?
   iso.toRefined?
 
@@ -845,9 +845,9 @@ candidate factor. This pins exactification fixtures to the intended factor
 rather than to the enclosing isolator's emission order. -/
 private def refinedFactor? (p q : ZPoly) (hp : HasOnlySimpleRoots p)
     (hq : HasOnlySimpleRoots q) : Option (RefinedIsolation p) := do
-  let pIsolations ← isolate p hp (separationDepth p : Int)
+  let pIsolations ← isolate? p hp (separationDepth p : Int)
   let pRefined ← pIsolations.mapM DyadicRootIsolation.toRefined?
-  let qIsolations ← isolate q hq (separationDepth q : Int)
+  let qIsolations ← isolate? q hq (separationDepth q : Int)
   let qIsolation ← qIsolations[0]?
   let qRefined ← qIsolation.toRefined?
   pRefined.toList.find? fun rep =>
