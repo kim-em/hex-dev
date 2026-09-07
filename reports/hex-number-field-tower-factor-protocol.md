@@ -277,3 +277,25 @@ extension of its attempt limit or a reclassification of any rejected arm.
 Select the first two host-admitted opposite-order pairs without inspecting
 their timings, and retain every attempt. Do not develop the combined
 correspondence proofs until the complete marginal comparison passes.
+
+### Integrated implementation comparison
+
+The proof-complete implementation rebased onto main
+`064902321b7674a3993270e0f437d2f2149a10b8` without conflicts. Before measuring
+that integrated build, compare it against a new baseline whose complete
+benchmark import closure is main at that commit. Build the baseline by
+restoring main's `Norm.lean` and `FactorRaw.lean`, the only computational
+modules changed by this implementation; the untimed differential driver and
+Mathlib proofs are outside the benchmark import closure. Save and hash both
+executables, then restore and rebuild the candidate and its companion.
+Record the candidate source commit and both binary hashes with the exports.
+
+Use all fifteen registrations, the explicit PARI provider, five repeats,
+registered warmup and budgets, two admitted opposite-order pairs, the stronger
+canonical range-separation gate, and the twelve-attempt cap. Select high cores
+with `--quiet-windows 15`; retain all attempts and use the same preflight,
+postflight and sibling-utilization admission rules as the sustained-quiet
+replication. No build or profiler overlaps timing. Verify differential
+correctness, fixtures, the oracle, and benchmark checks before timing. An
+incomplete or failing comparison does not validate the integrated performance
+claim. Do not fit an exponent or combine gains multiplicatively.
