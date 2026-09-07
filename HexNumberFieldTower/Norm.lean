@@ -61,13 +61,34 @@ def shiftedOuter (level : Level) (lower : List Level)
   f.foldr (fun coefficient value =>
     liftCoefficient level lower coefficient + xSubCY * value) 0
 
+/-- Shift modulo a quadratic relation, keeping only the constant and linear
+generator coefficients. For `Y² + bY + a`, the norm is `A² - bAB + aB²`. -/
+@[expose]
+def quadratic (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) (c : Int) : Array (Array Rat) :=
+  let a := Coeff.ofData lower (level.defining.getD 0 #[])
+  let b := Coeff.ofData lower (level.defining.getD 1 #[])
+  let shift := Coeff.ofData lower #[(c : Rat)]
+  let ca := shift * a
+  let cb := shift * b
+  let scale (k : Coeff lower) (p : DensePoly (Coeff lower)) :=
+    if k = 0 then 0 else DensePoly.scale k p
+  let (p, q) := f.foldr (fun coefficient (p, q) =>
+    (DensePoly.shift 1 p + scale ca q +
+        DensePoly.C (Coeff.ofData lower (block coefficient 0 (levelsDim lower))),
+     DensePoly.shift 1 q - scale shift p + scale cb q +
+        DensePoly.C (Coeff.ofData lower (block coefficient 1 (levelsDim lower)))))
+    (0, 0)
+  (p * p - p * scale b q + q * scale a q).toArray.map Coeff.data
+
 /-- One Trager norm step. Input coefficients are flattened over
 `level :: lower`; output coefficients are flattened over `lower`. -/
 @[expose]
 def oneLevel (level : Level) (lower : List Level)
     (f : Array (Array Rat)) (c : Int) : Array (Array Rat) :=
-  (DensePoly.resultant (definingOuter level lower)
-    (shiftedOuter level lower f c)).toArray.map Coeff.data
+  if level.degree = 2 then quadratic level lower f c else
+    (DensePoly.resultant (definingOuter level lower)
+      (shiftedOuter level lower f c)).toArray.map Coeff.data
 
 /-- Eliminate every tower generator without shifting. This absolute norm is
 used to obtain root candidates for splitting; recursive Trager factorization
