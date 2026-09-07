@@ -58,5 +58,20 @@
     "oracle_failures": 0,
     "fixture_byte_identical": true,
     "validator_unit_tests": 26
+  },
+  "integrated": {
+    "baseline_commit": "064902321b7674a3993270e0f437d2f2149a10b8",
+    "baseline_binary_sha256": "d98f56dd4daf6ad51104e23633d550dede9aa990dfb43b4e34264fa50cb4950e",
+    "candidate_commit": "ca2e5f176",
+    "candidate_binary_sha256": "9c51c94c1112d372c3aa8e4acd11f575f909f83fe1c24355566464177441fdee",
+    "baseline_bench_verify_cases": 49,
+    "candidate_bench_verify_cases": 49,
+    "canonical_factor_cases": 31,
+    "norm_array_cases": 750,
+    "fixture_byte_identical": true,
+    "oracle_cases": 9,
+    "oracle_failures": 0,
+    "proof_build_passed": true,
+    "timing_status": "Preregistered; awaiting integrated comparison."
   }
 }
