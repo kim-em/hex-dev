@@ -472,3 +472,7 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.OtherSweep.reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.OtherSweep.reference
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.other_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.other_reference
