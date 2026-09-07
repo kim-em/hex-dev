@@ -884,9 +884,46 @@ ends at twelve attempts with only pair 4 admitted and **no performance
 verdict**. All attempted runs and their rejecting host telemetry are retained.
 A separately preregistered replication adds a whole-host preflight ceiling
 and two quiet minutes. Its [initial collection](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-quiet-decision.json)
-reaches the preflight deadline before any timed arm and has no verdict. An
-unchanged retry remains pending. Graph-only integration at main `9fdda65ba`
-leaves the saved candidate hash unchanged, as checked by a full tower rebuild.
+reaches the preflight deadline before any timed arm and has no verdict. Its
+[unchanged retry](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-quiet-retry-decision.json)
+admits one pair before the reverse-order preflight times out, so it also has no
+verdict. Graph-only integration at main `9fdda65ba` leaves that saved candidate
+hash unchanged, as checked by a full tower rebuild.
+
+Main `ac24c7832` subsequently adds shared `HexBasic` code, changing the tower
+executable. The final comparison therefore rebuilds both sides from this exact
+base. The baseline SHA-256 is `5700c6bd…`; the candidate built from `dbdb01ead`
+is `e01da6b4…`. The first collection rejects an arm at postflight and then
+times out in preflight, so it remains an incomplete record. The separately
+preregistered [final retry](bench-results/tower-singleton-quadratic/issue-10074-integrated-final-main-retry-decision.json)
+admits its first two attempts in opposite order and **passes** the stronger
+gate. All hashes match, every Hex median improves in both pairs, no smaller rung
+has a repeat-range-disjoint regression, and both canonical candidate ranges
+are separated below their baseline ranges.
+
+| operation | main median ms | candidate median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 0.975–0.976 | 0.640–0.642 | 1.519–1.523× |
+| factor, degree 3 | 1.284–1.287 | 0.763–0.765 | 1.679–1.687× |
+| factor, degree 4 | 1.785–1.789 | 0.991–0.998 | 1.792–1.801× |
+| factor, degree 6 | 2.880–2.884 | 1.399–1.405 | 2.052–2.059× |
+| factor, degree 8 | 4.287–4.335 | 1.874–1.877 | 2.288–2.310× |
+| factor, degree 12 | 8.802–8.805 | 3.448–3.465 | 2.540–2.554× |
+| factor, degree 24 | 33.324–33.633 | 9.129–9.212 | **3.650–3.651×** |
+| check, degree 24 | 16.259–16.390 | 4.186–4.199 | **3.872–3.915×** |
+
+Fresh PARI controls from those admitted candidate arms use PARI 2.17.3 and
+cypari2 2.2.4. Protocol-overhead medians are 7.250–7.271 µs. The comparator
+remains informational and the ratios retain the PARI/Hex convention.
+
+| n | Hex median ms | PARI median µs | raw ratio | adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.640–0.642 | 29.069–29.334 | 0.0453–0.0458 | 0.0340–0.0345 |
+| 3 | 0.763–0.765 | 34.464–34.474 | 0.0451–0.0452 | 0.0356–0.0357 |
+| 4 | 0.991–0.998 | 39.026–39.157 | 0.0391–0.0395 | 0.0318–0.0322 |
+| 6 | 1.399–1.405 | 121.994–122.490 | 0.0872–0.0872 | 0.0820–0.0820 |
+| 8 | 1.874–1.877 | 47.711–48.059 | 0.0254–0.0256 | 0.0216–0.0218 |
+| 12 | 3.448–3.465 | 75.171–75.202 | 0.0217–0.0218 | 0.0196–0.0197 |
 
 ### Rational squarefreeness
 

@@ -94,7 +94,23 @@
     "proof_build_passed": true,
     "restored_candidate_hash_matches": true,
     "timing_status": "Original integrated-harness series exhausted twelve attempts with only pair 4 admitted: no verdict. A stricter whole-host preflight replication is required.",
-    "whole_host_replication": "integrated-harness-quiet reached its preflight deadline before any timed arm; no verdict. Retry uses identical preregistered conditions.",
+    "whole_host_replication": "integrated-harness-quiet reached its preflight deadline before any timed arm; its identical retry admitted one pair before the reverse-order preflight timed out. Both are retained with no verdict.",
     "graph_integration_hash_matches": true
+  },
+  "final_main": {
+    "baseline_commit": "ac24c7832383e7d6b043d692f76ea91884de5f5f",
+    "baseline_binary_sha256": "5700c6bd98f656eb1157e430cf57a7e4d566293b86aa853c0c17345a9016fa50",
+    "candidate_commit": "dbdb01ead",
+    "candidate_binary_sha256": "e01da6b4ee9b8aa175824ad184262f01a23545e3e303ce8a49620457383920a7",
+    "proof_build_passed": true,
+    "canonical_factor_cases": 31,
+    "norm_array_cases": 750,
+    "bench_verify_cases": 49,
+    "timing_status": "Passed the stronger gate in the first two host-admitted opposite-order pairs of the preregistered retry. The preceding collection is retained with no admitted pair and no verdict.",
+    "decision": "issue-10074-integrated-final-main-retry-decision.json",
+    "factor_ladder_speedup": [3.6503325755569973, 3.651090143489269],
+    "replay_speedup": [3.8721362651589177, 3.9153667703525934],
+    "host_audit_series": 12,
+    "host_audit_preserves_decisions": true
   }
 }
