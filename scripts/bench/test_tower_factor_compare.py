@@ -50,6 +50,45 @@ class TowerFactorCompareTests(unittest.TestCase):
         self.assertFalse(verdict["complete"])
         self.assertIsNone(verdict["eligible"])
 
+    def candidate_ranges(self, separated):
+        candidate = json.loads(FAST.read_text())
+        baseline = compare.read_export(BASE, compare.NAMES)
+        for row in candidate["results"]:
+            if row["function"] not in compare.HEX_NAMES[-2:]:
+                continue
+            base = baseline[row["function"]]
+            # Improve the median but overlap the baseline unless requested.
+            high = base["min_nanos"] - 1 if row["function"] in separated else base["max_nanos"]
+            times = [base["min_nanos"] // 2] * 4 + [high]
+            for point, nanos in zip(row["points"], times):
+                point["total_nanos"] = nanos * point["inner_repeats"]
+            row.update(min_nanos=times[0], median_nanos=times[2], max_nanos=times[4])
+        path = Path(self.directory.name) / ("candidate-" + str(len(list(Path(self.directory.name).glob('candidate-*')))) + ".json")
+        path.write_text(json.dumps(candidate))
+        return path
+
+    def test_stricter_gate_preserves_old_verdict(self):
+        path = self.candidate_ranges(set())
+        pairs = [self.pair(1, path), self.pair(2, path)]
+        self.assertTrue(compare.decision(pairs, compare.NAMES)["eligible"])
+        self.assertFalse(compare.decision(pairs, compare.NAMES,
+                                         require_separated_canonical=True)["eligible"])
+
+    def test_separation_required_for_each_canonical_case(self):
+        path = self.candidate_ranges({compare.HEX_NAMES[-2]})
+        self.assertFalse(compare.decision([self.pair(1, path), self.pair(2, path)],
+                         compare.NAMES, require_separated_canonical=True)["eligible"])
+
+    def test_separation_can_occur_in_different_pairs(self):
+        first = self.candidate_ranges({compare.HEX_NAMES[-2]})
+        second = self.candidate_ranges({compare.HEX_NAMES[-1]})
+        self.assertTrue(compare.decision([self.pair(1, first), self.pair(2, second)],
+                        compare.NAMES, require_separated_canonical=True)["eligible"])
+
+    def test_stricter_incomplete_series_has_no_verdict(self):
+        self.assertIsNone(compare.decision([self.pair(1)], compare.NAMES,
+                                          require_separated_canonical=True)["eligible"])
+
     def test_invalid_pair_provenance(self):
         edits = [lambda p: p.update(accepted=False),
                  lambda p: p["runs"][0].update(accepted=False),
