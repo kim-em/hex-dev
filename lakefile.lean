@@ -1426,3 +1426,7 @@ lean_lib HexManual where
 -- (`.github/workflows/pages.yml`) and on demand via `lake exe hexmanual`.
 lean_exe hexmanual where
   root := `Main
+
+lean_exe tower_factor_diff where
+  srcDir := "bench"
+  root := `HexNumberFieldTower.FactorDiff
