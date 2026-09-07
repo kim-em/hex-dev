@@ -42,7 +42,7 @@ theorem vectorEquiv_vecMul [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) 
   change (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[j.val] =
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct Hex.Matrix.transpose
-  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum,
+  rw [Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum,
     Fintype.linearCombination_apply, Finset.sum_apply]
   apply Finset.sum_congr rfl
   intro i _
@@ -67,11 +67,11 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   change (Hex.Matrix.mulVec E.nullspaceMatrix c)[j.val] =
     ∑ k : Fin (m - D.rank), c[k] * (E.nullspace.get k)[j]
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct
-  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum]
+  rw [Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum]
   apply Finset.sum_congr rfl
   intro k _
   unfold Hex.Matrix.IsRowReduced.nullspace Hex.Matrix.col
-  simp [mul_comm, Vector.get, Vector.toArray_ofFn]
+  simp [mul_comm, Vector.get, Hex.Vector.ofFn'_eq_ofFn, Vector.toArray_ofFn]
   left
   change (E.nullspaceMatrix.getRow j)[k.val] = (E.nullspaceMatrix.getRow j)[k.val]
   rfl
