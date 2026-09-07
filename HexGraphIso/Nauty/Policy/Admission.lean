@@ -7,14 +7,15 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.Scatter
-public import HexGraphIso.Nauty.SmallCell.Transitive
+public import HexGraphIso.Nauty.SmallCell.Prefix
 import all HexGraphIso.Nauty.Search.Engine
 
 public section
 
 /-!
 The cheap code-one admission uses two discrete descents from a common
-small-cell ancestor. Their target-position paths must agree. The
+small-cell ancestor. The current target-position path must be a prefix
+of the first one. The
 run invariant supplies this history at the first greatest common
 ancestor, independently of the finite refinement codes.
 -/
@@ -23,7 +24,7 @@ namespace Hex.GraphIso.Nauty.Engine
 
 variable {n : Nat}
 
-/-- Same-target descents below a cheap ancestor validate the engine's
+/-- Compatible descents below a cheap ancestor validate the engine's
 first-reference scatter without an automorphism scan. -/
 theorem scatter_of_descPaths {ctx : Ctx n} {st : Search n}
     (hgsz : ctx.g.size = n)
@@ -34,7 +35,7 @@ theorem scatter_of_descPaths {ctx : Ctx n} {st : Search n}
     {p₁ p₂ : List (Nat × Nat)} {level₁ level₂ : Nat} {U V : RefineSt n}
     (hU : DescPath ctx st.gcaFirst ancestor p₁ level₁ U)
     (hV : DescPath ctx st.gcaFirst ancestor p₂ level₂ V)
-    (htargets : p₂.map Prod.fst = p₁.map Prod.fst)
+    (htargets : p₂.map Prod.fst <+: p₁.map Prod.fst)
     (hUd : ∀ i, i < n → U.ptn[i]! ≤ level₁)
     (hVd : ∀ i, i < n → V.ptn[i]! ≤ level₂)
     (hfirst : st.firstlab = U.lab) (hcurrent : st.lab = V.lab)
@@ -52,7 +53,7 @@ theorem scatter_of_descPaths {ctx : Ctx n} {st : Search n}
   · rw [hcurrent]
     exact labInj_perm_range hVok.ok.labSize hVok.ok.labOk hVok.inj
   · rw [hfirst, hcurrent]
-    exact (leafRows_eq_of_descPaths hgsz hsymm hloop hsmall hU hV
-      htargets hUd hVd).symm
+    exact (descPath_prefix hgsz hsymm hloop (p₁.map Prod.fst)
+      hsmall hU rfl hUd hV htargets hVd).2.symm
 
 end Hex.GraphIso.Nauty.Engine
