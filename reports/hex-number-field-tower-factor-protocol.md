@@ -81,3 +81,8 @@ and conformance pass, the canonical factor/check medians improve in two
 accepted paired comparisons (alternating arm order), and no fixed rung has a
 repeat-range-disjoint regression. Retain an inconclusive variant as measured
 investigation evidence rather than wiring it into the factoring path.
+
+The combined variant is compared both to the merged modular-check executable
+and to the original executable, with the same two accepted opposite-order
+pairs and the same admission rules. The latter comparison measures the total
+improvement directly rather than multiplying speedups from separate runs.
