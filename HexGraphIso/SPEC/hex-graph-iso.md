@@ -265,9 +265,10 @@ def autos (G : Colored n k) : AutResult n
 `gens` is the traversal's own generator list in discovery order: the
 `workperm` the pinned search records at each code-1 and code-2 leaf,
 rebuilt as a `Perm n` and kept only after `checkIso` accepts it.
-Because the transcription replays nauty's traversal exactly, the list
-is deterministic and conformance-pinnable, not merely the group it
-generates. `orbits` is the vertex-orbit array `orbjoin` builds from
+The list is deterministic and conformance-pinnable. It may contain a
+code-2 automorphism whose orbit join changes nothing, which nauty omits
+from its emitted list; completeness applies to the recorded list.
+`orbits` is the vertex-orbit array `orbjoin` builds from
 those generators, which is the array nauty reports; every entry is the
 representative of its orbit, and `numOrbits` counts the
 representatives. `order` is computed by the orbit-stabilizer
