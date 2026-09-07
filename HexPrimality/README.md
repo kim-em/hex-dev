@@ -33,6 +33,8 @@ example : Hex.Nat.Prime 2147483647 := by primality
 
 - `PrimeCert` represents stored-table leaves and the square-root and cube-root
   Pocklington criteria. `checkPrime` replays a certificate by kernel reduction.
+- `prime_of_pocklington` combines checked parent arithmetic with separately
+  proved child primes, allowing generated libraries to share child proofs.
 - `primeCert?` performs explicitly seeded, fuel-bounded certificate search;
   `isPrime?` is the bounded exact decision and `isPrime` adds a total
   trial-division fallback.

@@ -40,6 +40,13 @@ Covered edge cases:
 namespace Hex
 namespace GfqConformance
 
+-- Expanded table entries are also available through instance-selected fields.
+example : GFq.CommittedEntry 2 16 := inferInstance
+example : GFq.CommittedEntry 997 3 := inferInstance
+example : GFqC.modulus (p := 2) (n := 16) = Conway.luebeckConwayPolynomial_2_16 := rfl
+example : GFqC.modulus (p := 997) (n := 3) = Conway.luebeckConwayPolynomial_997_3 := rfl
+
+
 private def coeffNats {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 

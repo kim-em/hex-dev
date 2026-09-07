@@ -76,7 +76,11 @@ Concretely:
   libraries, the bench exes, the conformance `#guard` drivers, and the
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
   bridge required by integer-factorization correctness — followed by a
-  separate memory-bounded `lake build HexManual`). It then runs the two
+  separate memory-bounded `lake build HexManual`). Conway and its companion
+  first warm external imports, then clean their restored outputs and measure
+  their initial builds; the remaining targets reuse those outputs. These
+  hosted observations use explicit resource limits and do not enforce the
+  designated-machine Conway ceiling. It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the

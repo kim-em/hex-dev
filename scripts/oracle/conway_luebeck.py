@@ -4,7 +4,7 @@
 Reads JSONL produced by `lake exe hexconway_emit_fixtures` and compares
 Lean's committed Conway coefficients against:
 
-* `scripts/oracle/luebeck_conway_cache.json` (always);
+* `scripts/conway/candidates.json` (always);
 * the optional `conway-polynomials` package table adapter when requested.
 
 The optional package leg is a table-source check, not an independent
@@ -24,7 +24,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexConway" / "conway.jsonl"
-DEFAULT_CACHE = REPO_ROOT / "scripts" / "oracle" / "luebeck_conway_cache.json"
+DEFAULT_CACHE = REPO_ROOT / "scripts" / "conway" / "candidates.json"
 DEFAULT_FAILURE_DIR = REPO_ROOT / "conformance-failures"
 
 sys.path.insert(0, str(REPO_ROOT))
@@ -92,6 +92,7 @@ def check(
     source: str | Path | None,
     *,
     cache_path: Path,
+    scope_path: Path,
     check_package: bool,
     require_package: bool,
     failure_dir: Path,
@@ -102,6 +103,8 @@ def check(
     cases, results = split_fixtures_results(read_fixtures(source))
     failures = 0
     checked = 0
+    expected_keys = {tuple(key) for key in json.loads(scope_path.read_text())}
+    result_keys = []
     if check_package:
         try:
             package_lookup(2, 1)
@@ -128,6 +131,7 @@ def check(
         try:
             key = _fixture_key(fixture)
             expected = cache[key]
+            result_keys.append(key)
         except (KeyError, ValueError) as exc:
             print(f"FAIL {lib}/{case_id}: {exc}", file=sys.stderr)
             failures += 1
@@ -174,6 +178,13 @@ def check(
                 print(f"FAIL {lib}/{case_id} (conway-polynomials): {exc}", file=sys.stderr)
                 failures += 1
 
+    if set(result_keys) != expected_keys or len(result_keys) != len(expected_keys):
+        missing = sorted(expected_keys - set(result_keys))
+        extra = sorted(set(result_keys) - expected_keys)
+        print(f"FAIL scope coverage: missing={missing}, extra={extra}, "
+              f"rows={len(result_keys)}, expected={len(expected_keys)}", file=sys.stderr)
+        failures += 1
+
     print(
         f"conway_luebeck.py: checked {checked} comparison(s), "
         f"{failures} failure(s)",
@@ -192,6 +203,9 @@ def main(argv: list[str] | None = None) -> int:
         help=f"read the committed sample at {DEFAULT_FIXTURE.relative_to(REPO_ROOT)}",
     )
     parser.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
+    parser.add_argument("--scope", type=Path,
+                        default=REPO_ROOT / "scripts/conway/scope.json",
+                        help="exact required supported pair list")
     parser.add_argument(
         "--check-conway-polynomials",
         action="store_true",
@@ -216,6 +230,7 @@ def main(argv: list[str] | None = None) -> int:
     return check(
         source,
         cache_path=args.cache,
+        scope_path=args.scope,
         check_package=check_package,
         require_package=args.require_conway_polynomials,
         failure_dir=Path(args.failure_dir),

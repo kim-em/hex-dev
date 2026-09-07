@@ -97,7 +97,7 @@ committed entry.
 `ofPolyHom`. The check runs on `FpPoly`
 representatives with structural powers, while `orderOf` is about Mathlib's `^`
 in the field, so each ingredient travels separately: `ofPolyHom_linPowMod` and
-`ofPolyHom_digitPowMod` move the powers through `map_mul` and `map_pow`,
+`ofPolyHom_powerResidue` move the powers through `map_mul` and `map_pow`,
 `ofPolyHom_eq_one_iff` turns "not one" on a reduced representative into "not
 one" in the field, `mathlibPrime_of_hexPrime` converts the Mathlib-free
 primality predicate, and `mem_of_prime_dvd_primePowerProduct` shows that a
@@ -105,10 +105,10 @@ validated prime-power product lists every prime dividing it, so a short prime
 list cannot weaken the test.
 
 `orderOf_gen_of_primitive` unpacks the validated Boolean conjunctions, aligns
-each listed prime with its digit witness, transports both power conditions,
+each listed prime with its prime-divided power, transports both power conditions,
 and applies Mathlib's `orderOf_eq_of_pow_and_pow_div_prime`. The named
 `orderOf_gen_p_n` corollaries expose the resulting `orderOf α = p ^ n - 1`
-statement for every committed entry with `p ^ n > 2`.
+statement for every committed entry, including the trivial group at `GF(2)`.
 
 ## Namespaces
 

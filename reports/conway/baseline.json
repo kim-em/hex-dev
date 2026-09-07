@@ -1,0 +1,270 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "targets": [
+    "HexConway"
+  ],
+  "commit": "b7f4d6200bc20cbadf29ab4b3d9009334a4d6de9",
+  "runs": [
+    {
+      "wall_seconds": 118.50566528597847,
+      "exit_code": 0,
+      "artifact_bytes": 11220143,
+      "modules": [
+        "HexConway.Rebuild (665ms)",
+        "HexConway.Table (2.3s)",
+        "HexConway.EntrySource (765ms)",
+        "HexConway.Certificates (28s)",
+        "HexConway.Api (2.8s)",
+        "HexConway.Compatibility (16s)",
+        "HexConway.Primitivity (82s)",
+        "HexConway (493ms)"
+      ],
+      "log": "reports/conway/baseline-1.log.gz",
+      "timing": "reports/conway/baseline-1.time",
+      "max_child_rss_kib": 5540624,
+      "artifact_bytes_by_suffix": {
+        ".hash": 896,
+        ".json": 291689,
+        ".c": 1632542,
+        ".olean": 2308000,
+        ".server": 342536,
+        ".private": 5267256,
+        ".sig": 1408,
+        ".ir": 821432,
+        ".ilean": 520134,
+        ".trace": 34250
+      },
+      "artifact_count": 128
+    },
+    {
+      "wall_seconds": 124.94538443582132,
+      "exit_code": 0,
+      "artifact_bytes": 11220143,
+      "modules": [
+        "HexConway.Rebuild (622ms)",
+        "HexConway.Table (2.4s)",
+        "HexConway.EntrySource (775ms)",
+        "HexConway.Certificates (28s)",
+        "HexConway.Api (2.8s)",
+        "HexConway.Compatibility (16s)",
+        "HexConway.Primitivity (89s)",
+        "HexConway (520ms)"
+      ],
+      "log": "reports/conway/baseline-2.log.gz",
+      "timing": "reports/conway/baseline-2.time",
+      "max_child_rss_kib": 5560084,
+      "artifact_bytes_by_suffix": {
+        ".hash": 896,
+        ".json": 291689,
+        ".c": 1632542,
+        ".olean": 2308000,
+        ".server": 342536,
+        ".private": 5267256,
+        ".sig": 1408,
+        ".ir": 821432,
+        ".ilean": 520134,
+        ".trace": 34250
+      },
+      "artifact_count": 128
+    },
+    {
+      "wall_seconds": 146.49425677023828,
+      "exit_code": 0,
+      "artifact_bytes": 11220143,
+      "modules": [
+        "HexConway.Rebuild (636ms)",
+        "HexConway.Table (2.4s)",
+        "HexConway.EntrySource (815ms)",
+        "HexConway.Certificates (35s)",
+        "HexConway.Api (4.1s)",
+        "HexConway.Compatibility (24s)",
+        "HexConway.Primitivity (102s)",
+        "HexConway (516ms)"
+      ],
+      "log": "reports/conway/baseline-3.log.gz",
+      "timing": "reports/conway/baseline-3.time",
+      "max_child_rss_kib": 5522476,
+      "artifact_bytes_by_suffix": {
+        ".hash": 896,
+        ".json": 291689,
+        ".c": 1632542,
+        ".olean": 2308000,
+        ".server": 342536,
+        ".private": 5267256,
+        ".sig": 1408,
+        ".ir": 821432,
+        ".ilean": 520134,
+        ".trace": 34250
+      },
+      "artifact_count": 128
+    }
+  ],
+  "source_sha256": {
+    "HexConway/Api.lean": "13730a56916fb03c7c69aac904a6d6e0529e77142d8a2348ac32e0dcfc53ae4b",
+    "HexConway/Certificates.lean": "6a1a0d4b34741cbc8ff829c552cbdd31c75f25fa73f81b696738d91cadcf085f",
+    "HexConway/Compatibility.lean": "2d012787f6f6813ce33cca8bada4144486fcb5e8b58bb61c20354d3c5af304fa",
+    "HexConway/EntrySource.lean": "ad9943f80a4eb66197e68100cb23ce7b3bee0685a08503552a2426884dfe7471",
+    "HexConway/Primitivity.lean": "1ba2f97d1cfed120b1c5cfb6cba6a5cb5f7a2f5cd3e4e5a3d5f389ff25a5af7c",
+    "HexConway/Rebuild.lean": "c8d1bcbeebf3009fb945d6f0ba3e5cca9101a3b161209440bd5da50db171ae02",
+    "HexConway/Table.lean": "2210cd0d531323a80a43e60cb94eadc92dc2ac6b6f3c92efecd92a58b404ebdf",
+    "HexConway.lean": "316997004af59ec6f7c8fc12ef8d2b52afbf2c7fb031c5bfd38a0bc1d0232355"
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ]
+  ]
+}

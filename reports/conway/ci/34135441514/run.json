@@ -1,0 +1,20 @@
+{
+  "id": 34135441514,
+  "html_url": "https://github.com/kim-em/hex-dev/actions/runs/34135441514",
+  "head_sha": "ae08881781f9fe058d6c71ecee6e19fb8e5516b7",
+  "run_attempt": 1,
+  "created_at": "2026-09-07T14:53:53Z",
+  "event": "pull_request",
+  "source_revision": "ae08881781f9fe058d6c71ecee6e19fb8e5516b7",
+  "download_sha256": {
+    "ci-bridge-1.log.gz": "230427cf48c6a05709772f855adbd7693f5248ab9f36318b474f98086c00962c",
+    "ci-bridge-1.time": "2d946b0607620d79018d7078c72e2ccbb2a3891fed92df198e6442645a87703a",
+    "ci-bridge.json": "0e12c73ab7fa388a521c08b3d4b2d07c4416bf1754839544e30d84fe27bf3e8d",
+    "ci-conway-1.log.gz": "8456dae8357a9e7c5293f7d82c11b87c29954c99d303b522886103cb4320c562",
+    "ci-conway-1.time": "eef4ec69301b98a47c1107cd6b0e5aeac36c63028b9f91e991336af1bcee3c63",
+    "ci-conway.json": "f6dd0bb649003734e36cc88a58a13f676dc652d35d8cb0634a6a88bacf3b552c",
+    "ci-runtime.jsonl": "d4b33698deb3b2290d1b17f681581762632d55902a7627d2f04c34bc7f854ee8"
+  },
+  "path_note": "Log and timing paths below are relocated from the artifact build directory; measurement values are unchanged.",
+  "limitations": "This 594-entry observation predates the meta-import scanner and report-only dirty-flag fixes. No external dependency rebuilt in either timed section. The bridge dirty flag includes the preceding Conway measurement outputs."
+}

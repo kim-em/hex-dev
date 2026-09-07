@@ -8,10 +8,12 @@ A database of Conway polynomials for Lean 4, without Mathlib. Conway
 polynomials are the canonical irreducible polynomials `C(p, n)` used to present
 `GF(p^n)` so that the subfield embeddings agree with each other. This package
 commits a slice of Frank Lübeck's table as ordinary Lean data and proves that
-every committed entry is irreducible, every nontrivial entry is primitive, and
+every committed entry is irreducible and primitive, and
 every proper divisor-degree pair is compatible. It builds on
 [`hex-berlekamp`](https://github.com/leanprover/hex-berlekamp) for
-irreducibility certificates and
+irreducibility certificates,
+[`hex-primality`](https://github.com/leanprover/hex-primality) for checked
+factor-prime certificates, and
 [`hex-gfq-ring`](https://github.com/leanprover/hex-gfq-ring) for the quotient
 that compatibility is stated in. The subfield embedding `GFq p m →+* GFq p n`
 and the Mathlib-side order statements live in
@@ -48,9 +50,19 @@ example : DensePoly.Monic f := conwayPoly_monic 3 4 supportedEntry_3_4
 # Functionality
 
 - `luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p)`
-  is the committed table, generated into ordinary Lean code. It covers 38
-  entries: `p` in `2, 3, 5, 7, 11, 13`, to degree `6` for the odd primes and to
-  degree `8` for `p = 2`.
+  is the committed table, generated into ordinary Lean code. It covers **594
+  entries** in every prime characteristic below 1000:
+
+  | Characteristic | Degrees |
+  |---|---|
+  | 2 | 1–16 |
+  | 3, 5, 7 | 1–8 |
+  | 11, 13 | 1–6 |
+  | Other primes below 300 | 1–4 |
+  | Primes from 300 to 1000 | 1–3 |
+
+  These ranges contain no holes and are closed under positive degree divisors.
+
 - `SupportedEntry p n` packages a table hit with the primality witness and the
   proof that the lookup resolves to it. It cannot be built for an uncommitted
   pair, which is how `conwayPoly p n h` stays total only where the table
@@ -62,17 +74,27 @@ example : DensePoly.Monic f := conwayPoly_monic 3 4 supportedEntry_3_4
   computed by `compatCheck`. `subfieldGen` names the norm element it is about,
   and `subfieldGen_eq_norm` proves that it is
   `X ^ ((p^n - 1) / (p^m - 1))` in the quotient.
-- `Primitive p n h qs es fullDigits perPrimeDigits` is primitivity, computed by
+- `Primitive p n h qs es` is primitivity, computed by
   `primitiveCheck`, which validates the supplied factorization of `p^n - 1`
   before running the two power conditions.
-- `rebuild_luebeckConwayPolynomial?` regenerates the coefficient table from the
-  cached Lübeck slice, and `#conway_entry_source` renders the literal, the
-  monic and degree facts, the table-hit lemma, and the Rabin certificate that a
-  new entry needs. Neither runs during a build.
+- Primitivity and compatibility are exposed as named `primitive_p_n` and
+  `compat_p_m_n` facts; they do not have a dispatcher over arbitrary lookup witnesses.
+- `supportedPairs` enumerates the exact verified keys. The development
+  monorepo's `scripts/conway/scope.json` is the generation input; the shared
+  factorization corpus cache is kept separate.
+- `scripts/conway/generate.py` in `hex-dev` deterministically regenerates all
+  coefficients, certificates, compatibility facts, supported-entry witnesses,
+  and Mathlib generator-order specializations. Run it with the pinned Python
+  dependencies; `--check` verifies committed output. Ordinary builds neither
+  fetch source data nor search for certificates or factorizations.
+- `rebuild_luebeckConwayPolynomial?` and `#conway_entry_source` remain available
+  as Lean commands for inspecting coefficient and Tier 1 generation. Their
+  default input path is relative to the `hex-dev` root; in a mirror checkout,
+  supply a cache path with `from`.
 
 # Verification
 
-Every one of the 38 committed entries carries an irreducibility certificate
+Every supported entry carries an irreducibility certificate
 that the kernel replays; `native_decide` is not used anywhere. The aggregate
 dispatch theorem is `luebeckConwayPolynomial?_irreducible`, and the API-facing
 form is
@@ -84,7 +106,7 @@ theorem conwayPoly_irreducible
 ```
 
 Divisor compatibility is proved for every committed pair `(p, m, n)` with
-`m ∣ n` and `m < n`: 52 theorems `compat_p_m_n`, plus `not_compatible_11_4_6`
+`m ∣ n` and `m < n`: 522 theorems `compat_p_m_n`, plus `not_compatible_11_4_6`
 as a negative control so the check is visibly not vacuous. The `Bool` is
 promoted to a statement about field elements, which is the well-definedness
 input a subfield embedding needs:
@@ -103,18 +125,25 @@ theorem eval_conwayPoly_subfieldGen_eq_zero
         (hg_pos := conwayPoly_degree_pos p n hn)
 ```
 
-Primitivity is proved for the 37 committed entries with `p^n > 2`, one theorem
-`primitive_p_n` each. `C(2, 1)` is excluded because its multiplicative group is
-trivial. Because `primitiveCheck` validates that the supplied divisors multiply
-back to `p^n - 1`, a short prime list cannot make the check pass.
+Primitivity has one theorem `primitive_p_n` for every supported entry.
+`C(2, 1)` explicitly handles the trivial multiplicative group: the factor list
+is empty and the generator has order one. `primitiveCheck` verifies that the
+supplied prime powers multiply to `p^n - 1`, so a missing factor cannot silently
+weaken the order test. Larger factors use Mathlib-free Pocklington certificates.
+
+The polynomial choice is imported from Lübeck's table. Irreducibility,
+primitivity and compatibility do not prove lexicographic minimality.
 
 On-demand search for pairs the table does not cover is specified but not
 implemented. There is no API for it, and no `(p, n)` outside the committed
 slice can be constructed. The transport of primitivity into Mathlib's
 `orderOf` language, and the canonical embedding `conwayEmbed`, live in
-[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib). See the
-[SPEC](SPEC/hex-conway.md) for the tier boundaries and the proof budget that
-sets the size of the committed slice.
+[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib). The scope is selected under a **300-second clean Conway rebuild ceiling**
+with dependencies already built, including both verification tiers and all
+normal library outputs. The additional Mathlib cost is measured separately.
+See the [SPEC](SPEC/hex-conway.md) and the
+[measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-conway-performance.md)
+for the machine, repeated runs, measured limits and reproduction commands.
 
 # Contributing
 

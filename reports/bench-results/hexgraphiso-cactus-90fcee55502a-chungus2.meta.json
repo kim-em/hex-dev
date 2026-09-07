@@ -1,0 +1,11 @@
+{
+  "fingerprint": "90fcee55502a",
+  "host": "chungus2",
+  "date": "2026-09-07T21:41:04Z",
+  "describe": "742042cf67af",
+  "label": "Conway replay and lattice-enum targets; unchanged graph algorithms",
+  "cpu_affinity": [
+    21
+  ],
+  "lean_num_threads": 1
+}

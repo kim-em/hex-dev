@@ -1456,6 +1456,10 @@ lean_exe hexstrassen_compare where
   srcDir := "bench"
   root := `HexStrassen.Compare
 
+lean_exe hexconway_replay where
+  srcDir := "bench"
+  root := `HexConway.Replay
+
 lean_exe hexconway_bench where
   srcDir := "bench"
   root := `HexConway.Bench

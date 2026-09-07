@@ -1,0 +1,3859 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "targets": [
+    "HexConway"
+  ],
+  "commit": "cb9da4fa5c75013997998f2c84b46e808dac1d39",
+  "runs": [
+    {
+      "max_child_rss_kib": null,
+      "wall_seconds": 300.0910873846151,
+      "peak_tree_rss_kib": 46718120,
+      "exit_code": -15,
+      "artifact_bytes": 75582425,
+      "modules": [
+        "HexConway.Power (758ms)",
+        "HexConway.Rebuild (909ms)",
+        "HexConway.Bounds (2.4s)",
+        "HexConway.Coefficients (3.5s)",
+        "HexConway.Entries.S0_0 (2.5s)",
+        "HexConway.Entries.S1_0 (2.5s)",
+        "HexConway.Entries.S2_0 (2.5s)",
+        "HexConway.Entries.S3_0 (2.6s)",
+        "HexConway.Entries.S1_1 (1.9s)",
+        "HexConway.FactorProofs.S1_0 (10s)",
+        "HexConway.Entries.S0_1 (2.0s)",
+        "HexConway.Entries.S2_1 (2.0s)",
+        "HexConway.FactorProofs.S0_0 (10s)",
+        "HexConway.FactorProofs.S2_0 (10s)",
+        "HexConway.Entries.S3_1 (2.0s)",
+        "HexConway.FactorProofs.S3_0 (10s)",
+        "HexConway.Entries.S1_2 (1.9s)",
+        "HexConway.Entries.S2_2 (2.1s)",
+        "HexConway.Entries.S0_2 (2.1s)",
+        "HexConway.Entries.S3_2 (2.0s)",
+        "HexConway.Entries.S1_3 (1.9s)",
+        "HexConway.Entries.S2_3 (2.1s)",
+        "HexConway.Entries.S3_3 (2.0s)",
+        "HexConway.Entries.S0_3 (2.1s)",
+        "HexConway.Entries.S1_4 (1.0s)",
+        "HexConway.Entries.S0_4 (1.9s)",
+        "HexConway.Entries.S2_4 (1.9s)",
+        "HexConway.Entries.S3_4 (2.0s)",
+        "HexConway.Entries.S1_5 (1.8s)",
+        "HexConway.Entries.S3_5 (1.9s)",
+        "HexConway.Entries.S0_5 (1.0s)",
+        "HexConway.Entries.S2_5 (1.0s)",
+        "HexConway.Entries.S1_6 (1.8s)",
+        "HexConway.Entries.S0_6 (1.7s)",
+        "HexConway.Entries.S2_6 (1.7s)",
+        "HexConway.Entries.S3_6 (1.8s)",
+        "HexConway.Entries.S1_7 (1.6s)",
+        "HexConway.Entries.S0_7 (1.5s)",
+        "HexConway.Entries.S2_7 (1.5s)",
+        "HexConway.Entries.S3_7 (1.6s)",
+        "HexConway.Entries.S1_8 (1.2s)",
+        "HexConway.Entries.S0_8 (950ms)",
+        "HexConway.Entries.S2_8 (932ms)",
+        "HexConway.Entries.S3_8 (1.1s)",
+        "HexConway.Table (312ms)",
+        "HexConway.EntrySource (1.2s)",
+        "HexConway.FactorProofs.S1_1 (21s)",
+        "HexConway.FactorProofs.S0_1 (21s)",
+        "HexConway.FactorProofs.S2_1 (21s)",
+        "HexConway.FactorProofs.S3_1 (21s)",
+        "HexConway.FactorProofs.S1_2 (21s)",
+        "HexConway.FactorProofs.S0_2 (21s)",
+        "HexConway.FactorProofs.S2_2 (21s)",
+        "HexConway.FactorProofs.S3_2 (21s)",
+        "HexConway.FactorProofs.S0_3 (21s)",
+        "HexConway.FactorProofs.S1_3 (22s)",
+        "HexConway.FactorProofs.S2_3 (21s)",
+        "HexConway.FactorProofs.S3_3 (21s)",
+        "HexConway.FactorProofs.S2_4 (6.1s)",
+        "HexConway.FactorProofs.S0_4 (6.9s)",
+        "HexConway.FactorProofs.S3_4 (5.9s)",
+        "HexConway.FactorProofs.S1_4 (7.1s)",
+        "HexConway.PrimeFactors (476ms)",
+        "HexConway.Rabin.S1_0 (251s)",
+        "HexConway.Rabin.S1_1 (22s)"
+      ],
+      "log": "reports/conway/envelope-820-1.log.gz",
+      "timing": "reports/conway/envelope-820-1.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 2302184,
+        ".c": 13733452,
+        ".hash": 7280,
+        ".olean": 7985840,
+        ".sig": 11440,
+        ".server": 2000304,
+        ".ir": 4725376,
+        ".private": 41588872,
+        ".ilean": 2960206,
+        ".trace": 267471
+      },
+      "artifact_count": 1044
+    },
+    {
+      "max_child_rss_kib": null,
+      "wall_seconds": 300.09065522719175,
+      "peak_tree_rss_kib": 45339152,
+      "exit_code": -15,
+      "artifact_bytes": 72298345,
+      "modules": [
+        "HexConway.Power (470ms)",
+        "HexConway.Rebuild (867ms)",
+        "HexConway.Bounds (1.8s)",
+        "HexConway.Coefficients (2.6s)",
+        "HexConway.Entries.S3_0 (2.1s)",
+        "HexConway.Entries.S0_0 (2.2s)",
+        "HexConway.Entries.S1_0 (2.2s)",
+        "HexConway.Entries.S2_0 (2.2s)",
+        "HexConway.FactorProofs.S3_0 (8.0s)",
+        "HexConway.Entries.S3_1 (1.7s)",
+        "HexConway.Entries.S2_1 (1.6s)",
+        "HexConway.FactorProofs.S2_0 (8.2s)",
+        "HexConway.Entries.S0_1 (1.7s)",
+        "HexConway.Entries.S1_1 (1.7s)",
+        "HexConway.FactorProofs.S1_0 (8.3s)",
+        "HexConway.FactorProofs.S0_0 (8.5s)",
+        "HexConway.Entries.S3_2 (1.5s)",
+        "HexConway.Entries.S2_2 (1.6s)",
+        "HexConway.Entries.S0_2 (1.7s)",
+        "HexConway.Entries.S1_2 (1.7s)",
+        "HexConway.Entries.S2_3 (1.5s)",
+        "HexConway.Entries.S3_3 (1.6s)",
+        "HexConway.Entries.S1_3 (1.6s)",
+        "HexConway.Entries.S0_3 (1.6s)",
+        "HexConway.Entries.S2_4 (1.4s)",
+        "HexConway.Entries.S3_4 (1.5s)",
+        "HexConway.Entries.S1_4 (1.5s)",
+        "HexConway.Entries.S0_4 (1.5s)",
+        "HexConway.Entries.S2_5 (1.4s)",
+        "HexConway.Entries.S3_5 (1.5s)",
+        "HexConway.Entries.S1_5 (1.4s)",
+        "HexConway.Entries.S0_5 (1.5s)",
+        "HexConway.Entries.S2_6 (1.3s)",
+        "HexConway.Entries.S3_6 (1.4s)",
+        "HexConway.Entries.S1_6 (1.3s)",
+        "HexConway.Entries.S0_6 (1.4s)",
+        "HexConway.Entries.S2_7 (1.5s)",
+        "HexConway.Entries.S1_7 (1.3s)",
+        "HexConway.Entries.S3_7 (1.4s)",
+        "HexConway.Entries.S0_7 (1.4s)",
+        "HexConway.Entries.S1_8 (765ms)",
+        "HexConway.Entries.S2_8 (826ms)",
+        "HexConway.Entries.S3_8 (879ms)",
+        "HexConway.Entries.S0_8 (746ms)",
+        "HexConway.Table (291ms)",
+        "HexConway.EntrySource (1.0s)",
+        "HexConway.FactorProofs.S2_1 (19s)",
+        "HexConway.FactorProofs.S3_1 (19s)",
+        "HexConway.FactorProofs.S1_1 (19s)",
+        "HexConway.FactorProofs.S0_1 (19s)",
+        "HexConway.FactorProofs.S3_2 (21s)",
+        "HexConway.FactorProofs.S2_2 (21s)",
+        "HexConway.FactorProofs.S0_2 (21s)",
+        "HexConway.FactorProofs.S1_2 (22s)",
+        "HexConway.FactorProofs.S3_3 (22s)",
+        "HexConway.FactorProofs.S0_3 (21s)",
+        "HexConway.FactorProofs.S2_3 (22s)",
+        "HexConway.FactorProofs.S1_3 (22s)",
+        "HexConway.FactorProofs.S3_4 (6.1s)",
+        "HexConway.FactorProofs.S2_4 (6.2s)",
+        "HexConway.FactorProofs.S0_4 (6.9s)",
+        "HexConway.FactorProofs.S1_4 (6.9s)",
+        "HexConway.PrimeFactors (480ms)",
+        "HexConway.Rabin.S1_0 (254s)"
+      ],
+      "log": "reports/conway/envelope-820-2.log.gz",
+      "timing": "reports/conway/envelope-820-2.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 2243071,
+        ".c": 12376798,
+        ".hash": 7168,
+        ".olean": 7950960,
+        ".sig": 11264,
+        ".server": 1974856,
+        ".ir": 4392840,
+        ".private": 40196480,
+        ".ilean": 2881692,
+        ".trace": 263216
+      },
+      "artifact_count": 1028
+    },
+    {
+      "max_child_rss_kib": null,
+      "wall_seconds": 300.0540054962039,
+      "peak_tree_rss_kib": 45360232,
+      "exit_code": -15,
+      "artifact_bytes": 72298345,
+      "modules": [
+        "HexConway.Power (714ms)",
+        "HexConway.Rebuild (916ms)",
+        "HexConway.Bounds (3.3s)",
+        "HexConway.Coefficients (4.3s)",
+        "HexConway.Entries.S3_0 (3.1s)",
+        "HexConway.Entries.S0_0 (3.2s)",
+        "HexConway.Entries.S1_0 (3.2s)",
+        "HexConway.Entries.S2_0 (3.3s)",
+        "HexConway.FactorProofs.S3_0 (12s)",
+        "HexConway.FactorProofs.S2_0 (12s)",
+        "HexConway.FactorProofs.S0_0 (12s)",
+        "HexConway.FactorProofs.S1_0 (12s)",
+        "HexConway.Entries.S3_1 (1.7s)",
+        "HexConway.Entries.S0_1 (1.6s)",
+        "HexConway.Entries.S1_1 (1.8s)",
+        "HexConway.Entries.S2_1 (1.7s)",
+        "HexConway.Entries.S0_2 (1.6s)",
+        "HexConway.Entries.S3_2 (1.7s)",
+        "HexConway.Entries.S1_2 (1.7s)",
+        "HexConway.Entries.S2_2 (1.7s)",
+        "HexConway.Entries.S0_3 (1.6s)",
+        "HexConway.Entries.S3_3 (1.6s)",
+        "HexConway.Entries.S1_3 (1.5s)",
+        "HexConway.Entries.S2_3 (1.6s)",
+        "HexConway.Entries.S0_4 (1.5s)",
+        "HexConway.Entries.S3_4 (1.6s)",
+        "HexConway.Entries.S1_4 (1.6s)",
+        "HexConway.Entries.S2_4 (1.5s)",
+        "HexConway.Entries.S0_5 (1.5s)",
+        "HexConway.Entries.S3_5 (1.5s)",
+        "HexConway.Entries.S1_5 (1.5s)",
+        "HexConway.Entries.S2_5 (1.5s)",
+        "HexConway.Entries.S3_6 (1.4s)",
+        "HexConway.Entries.S0_6 (1.5s)",
+        "HexConway.Entries.S1_6 (1.4s)",
+        "HexConway.Entries.S2_6 (1.4s)",
+        "HexConway.Entries.S3_7 (1.4s)",
+        "HexConway.Entries.S0_7 (1.4s)",
+        "HexConway.Entries.S1_7 (1.4s)",
+        "HexConway.Entries.S2_7 (1.4s)",
+        "HexConway.Entries.S0_8 (741ms)",
+        "HexConway.Entries.S1_8 (798ms)",
+        "HexConway.Entries.S3_8 (876ms)",
+        "HexConway.Entries.S2_8 (836ms)",
+        "HexConway.Table (288ms)",
+        "HexConway.EntrySource (969ms)",
+        "HexConway.FactorProofs.S0_1 (19s)",
+        "HexConway.FactorProofs.S3_1 (19s)",
+        "HexConway.FactorProofs.S1_1 (19s)",
+        "HexConway.FactorProofs.S2_1 (20s)",
+        "HexConway.FactorProofs.S0_2 (22s)",
+        "HexConway.FactorProofs.S3_2 (23s)",
+        "HexConway.FactorProofs.S1_2 (22s)",
+        "HexConway.FactorProofs.S2_2 (23s)",
+        "HexConway.FactorProofs.S0_3 (22s)",
+        "HexConway.FactorProofs.S3_3 (23s)",
+        "HexConway.FactorProofs.S1_3 (23s)",
+        "HexConway.FactorProofs.S2_3 (23s)",
+        "HexConway.FactorProofs.S3_4 (6.3s)",
+        "HexConway.FactorProofs.S0_4 (7.3s)",
+        "HexConway.FactorProofs.S1_4 (7.3s)",
+        "HexConway.FactorProofs.S2_4 (6.3s)",
+        "HexConway.PrimeFactors (551ms)",
+        "HexConway.Rabin.S1_0 (254s)"
+      ],
+      "log": "reports/conway/envelope-820-3.log.gz",
+      "timing": "reports/conway/envelope-820-3.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 2243071,
+        ".c": 12376798,
+        ".hash": 7168,
+        ".olean": 7950960,
+        ".sig": 11264,
+        ".server": 1974856,
+        ".ir": 4392840,
+        ".private": 40196480,
+        ".ilean": 2881692,
+        ".trace": 263216
+      },
+      "artifact_count": 1028
+    }
+  ],
+  "source_sha256": {
+    "HexConway/Api.lean": "101e63ee24f129d3657d8d200ca7438b2f75b3f8852d29fac46e5ae817f40cc2",
+    "HexConway/ApiCore.lean": "662b050d5178358e80baf4e01f256bef87c0fff425038f3dcb0ed2bc522345c8",
+    "HexConway/Bounds.lean": "01d502c7b446d7bd80d5a6bcf85ee08667634b92c32def7cb05ea8dbaf560a9e",
+    "HexConway/Certificates.lean": "e484e70a1a75f408811950124bf623b735f905c41a0b195025a45c0aa999ef84",
+    "HexConway/Coefficients.lean": "c5d19c360c4f1a5a5348c7fed63fb02c037b211b1d76cdbe894d0d106df8164c",
+    "HexConway/Compatibility.lean": "0b7334222c7a5c0a72107a83aef9b11e58c7ca6e22da4e15efac08448898905a",
+    "HexConway/CompatibilityCore.lean": "22dd173ec02dff763e69d5d3e6ba86a408dea4099b29829a34d2a4d636da610a",
+    "HexConway/CompatibilityProofs/S0_0.lean": "6f097d7cbee1163fb65975805e98aba57d6a292e119005ead52137761b649aff",
+    "HexConway/CompatibilityProofs/S0_1.lean": "dea89518b853ab10f8dc1122ffce3f839330f36cab0c36472108400da64a4f70",
+    "HexConway/CompatibilityProofs/S0_10.lean": "ac2cb7e3df414177ee79dccae2f643f9b7033eb94e95f3ff28ca1ee2765bf68b",
+    "HexConway/CompatibilityProofs/S0_2.lean": "a3909550f8fdec5943a7a8db7773170cee26d9064db1a94d0bc152f590182bc5",
+    "HexConway/CompatibilityProofs/S0_3.lean": "d4fe9a21cbe89a0e2ace1bc03052099eeee99b105d0a20a9b6ffaf32f902ef01",
+    "HexConway/CompatibilityProofs/S0_4.lean": "07f77afb125cbfd0caba7cb2e891d1257f742408e443ff94dd9f57cd606d2d1a",
+    "HexConway/CompatibilityProofs/S0_5.lean": "7389241222e2d06f92e44ea183f9a7fd1137f26921e5d1255f478d3ee13ba019",
+    "HexConway/CompatibilityProofs/S0_6.lean": "6a0bc974a5e002676dede76dcf093ca8eeedbaae1e0805b2ee6783b33d3261da",
+    "HexConway/CompatibilityProofs/S0_7.lean": "b2c833f9409ba8a900811a093980f3012e62ae2b192549f9be837cdbc501849a",
+    "HexConway/CompatibilityProofs/S0_8.lean": "c8136ac5aca3410bc80c0464ca4cc11e7c96f31886a07faf02ff74a33ef63c60",
+    "HexConway/CompatibilityProofs/S0_9.lean": "b7cf6a48223a20d624b22cfba1810611d8597b5d54dac2570b23e994a8c21414",
+    "HexConway/CompatibilityProofs/S1_0.lean": "c3c3a20b82f585f6244748f6c24b1a50d8d063b1a44d66862912ba6e0502fc46",
+    "HexConway/CompatibilityProofs/S1_1.lean": "2667cb4bf8d7a3481ad89a5c6320274e7af210251e273ffd096ba9e660f0c41e",
+    "HexConway/CompatibilityProofs/S1_10.lean": "e1880037f1698d0754be2b2297ff64ccb18150d4589f176ec317fcc86fa6595a",
+    "HexConway/CompatibilityProofs/S1_2.lean": "5985f5fe03a2af072182c695352f37ff8d8ea4d2984fdedfe77203765d6c19b2",
+    "HexConway/CompatibilityProofs/S1_3.lean": "60c888a1004cc4f57e428c86a19e3bdb64f0bf5fd7f7a68e49ea48413acb895c",
+    "HexConway/CompatibilityProofs/S1_4.lean": "5aceec914e72d6de3c4ae62865394a8be8e10143ec9e0fce41296923df868e18",
+    "HexConway/CompatibilityProofs/S1_5.lean": "18a0e173f3ee15bce19881254e3853267654a8e561ceda21e9385ce29a60a02c",
+    "HexConway/CompatibilityProofs/S1_6.lean": "8ef232a12ee7179a06d5bad75c5849fac59deb40ffb632a8d38b5eb73dcdd92e",
+    "HexConway/CompatibilityProofs/S1_7.lean": "6fb73aa7dae571b599b30d18340c59bb3149e75f6bc941539e324d916bfec85e",
+    "HexConway/CompatibilityProofs/S1_8.lean": "594cdd79d17bae5ab66a3b077eecd6ce5a92502ada8f4b62cc986e37057184f4",
+    "HexConway/CompatibilityProofs/S1_9.lean": "ccf5008604ff1959ae501f5c0be6dd17cdf5d87360549614269b8be827d844b1",
+    "HexConway/CompatibilityProofs/S2_0.lean": "e922854f09699859515061765218aa2983849d4dbbc6aadc7328eca02ab1ff22",
+    "HexConway/CompatibilityProofs/S2_1.lean": "a16cb6ef810d64f45a995c8f285fcb0e710e8b6caea226346d75c0e70af88bd6",
+    "HexConway/CompatibilityProofs/S2_10.lean": "32543b206f4ae8f8d76f50251796d7af1425b2df0caf2fe3d16a9bde74718a07",
+    "HexConway/CompatibilityProofs/S2_2.lean": "3f1b96c319c089c970557053137a92092eed80354d41fb8dbf5a39f6d9b528bc",
+    "HexConway/CompatibilityProofs/S2_3.lean": "fceb48c9924687e01d6c16553c11bd05b078e9755b8549d9b3c60c8dcae8cded",
+    "HexConway/CompatibilityProofs/S2_4.lean": "d1eb6ee970bfc04ddd42bec4f5309641d622bbd49ee6b37356aff4e352a3ff08",
+    "HexConway/CompatibilityProofs/S2_5.lean": "ebbd96acb31d0e6941e2d540ffad7219c8875bb013302bb92fb0065e9c51e522",
+    "HexConway/CompatibilityProofs/S2_6.lean": "44ff1af27012159866563cd771181c27426d17021cb5173a44b2a735a69d206f",
+    "HexConway/CompatibilityProofs/S2_7.lean": "ba760cd14a2104607f398f1c13d1b66f0bda6bcc2ae52f3e5d87cd7e068e5356",
+    "HexConway/CompatibilityProofs/S2_8.lean": "e2b7b9a62b073695d52f2a7becc3c3452ee8afbf31e9e6a724338df43e32118a",
+    "HexConway/CompatibilityProofs/S2_9.lean": "85b75936416ea7af710214f7cc3986e7acb5e1aaa3ac0a44b3d27782d079b856",
+    "HexConway/CompatibilityProofs/S3_0.lean": "ac053a6cbd5890eeeb23af7e707600ce68bfe2fe7f89ee5df7340864ee619a1a",
+    "HexConway/CompatibilityProofs/S3_1.lean": "3bb33a461e3cc8f05b43e66cda6d1cf4ddcdce47ac2f78afffeb650b7bfc964e",
+    "HexConway/CompatibilityProofs/S3_10.lean": "211850866a55b83351ef2d9240d5d765fe1c87df45922c5384bed52a94166109",
+    "HexConway/CompatibilityProofs/S3_2.lean": "a7e43428e1f6e29412885fc2cc4ca680390f6fdd7e472ee14158d894a8d7c101",
+    "HexConway/CompatibilityProofs/S3_3.lean": "3e06d86f394215ae2353cf96454bb871bac15e0dec2ac0a7f33fc6bf60b407f3",
+    "HexConway/CompatibilityProofs/S3_4.lean": "1f8f3362ce6c91a23a1e65125ebf454a0a7871898b3f24a4fbc50de11d129c0d",
+    "HexConway/CompatibilityProofs/S3_5.lean": "2fbf4b5517219d2639088a113105058f869337c9f0fd6e3248684d0b5dcedcbb",
+    "HexConway/CompatibilityProofs/S3_6.lean": "87b3c3f4b4af39ad61ac50dfa9d93dbdf1415336a3c9ccd6e1fd2d41ea3ccc8b",
+    "HexConway/CompatibilityProofs/S3_7.lean": "34438c2f9c2d7c6a5d3e7857d62598aa4996b9188c82b39547244594d6202cf8",
+    "HexConway/CompatibilityProofs/S3_8.lean": "0a2e4df5d53e3ffb23e9392e8a3e51b5af58d48b6ab3190732bd40ac483c4bd0",
+    "HexConway/CompatibilityProofs/S3_9.lean": "5c03e8ff80cb03c654a28fbde4f11bd3403815821fb89b11cde832effd80eda8",
+    "HexConway/Entries/S0_0.lean": "166d95363cd52666e35690185418297f3b20f1ab736714a59246f26bfc6f0638",
+    "HexConway/Entries/S0_1.lean": "016629a565ba3a0ea179bc93bcfd05bc21a6c9fd7acb643dd94c4b24a4a0b682",
+    "HexConway/Entries/S0_2.lean": "380bf9551268b9ff52a293d42c6d12e33cef3d99448a2b77757ce21161c36d41",
+    "HexConway/Entries/S0_3.lean": "14c488066a159ded61a607962db026407b93435598c0e1acf1d92725f13dd1dd",
+    "HexConway/Entries/S0_4.lean": "248a9ba7a4a97b266b0d896aa6accb4e59dd1bbedc55a54ccfaf61134acf8081",
+    "HexConway/Entries/S0_5.lean": "cba6e3e73e849b916ae9ac634f03b0f8926ccfbcc04a857e07d6a47452a1c672",
+    "HexConway/Entries/S0_6.lean": "d726da058eec4fe8733a6b86e4ae6241a24ddb9e622c3f6d329a91ea9044bcc5",
+    "HexConway/Entries/S0_7.lean": "a88f4bd7a352e29028a4b23b1ea29e56638026d06308213389cf4775c5ea89aa",
+    "HexConway/Entries/S0_8.lean": "a8cdd12b522990d9536f3011428bf584865ea9ff96deb1d2d85b6d150f3d7a33",
+    "HexConway/Entries/S1_0.lean": "aa2bfe1fd6b637a3bd216c6b58498d5d6d81d5ad80b26ee5b20f7e9eda4fa608",
+    "HexConway/Entries/S1_1.lean": "c8febde9f9dc86a8bd7624e60bddff9d37a167bf0b3ed640bcfd726bb26298e9",
+    "HexConway/Entries/S1_2.lean": "e1fab2946dc513ea95a03cf0a43b4893d0d4c9023126bc5a8fcd507a03867919",
+    "HexConway/Entries/S1_3.lean": "32e136c161901f9936962df6b6913320459df1e2a66b080d9b2a164b22f9e923",
+    "HexConway/Entries/S1_4.lean": "fe47e7621aea3b93395c8abf3119460474ff572290ef0d23ae3754aab6fafd1a",
+    "HexConway/Entries/S1_5.lean": "5c69293368251c579ff08b0ec22516ae1e1ba3a1f1a90d3f3b998c227af497ad",
+    "HexConway/Entries/S1_6.lean": "a414143fc74fde781843ccf4b8f6a98ce08caf0dbfcc98ccfc3f42d900ceb7df",
+    "HexConway/Entries/S1_7.lean": "29037cae314096e674e9415e997ddaca3c7b02e8d2ca8db181745f1a94dd060b",
+    "HexConway/Entries/S1_8.lean": "cd078a3cae8061672afe72c0a97309f2ad1790c4da4c1fc4c380aa3cf92f0a9b",
+    "HexConway/Entries/S2_0.lean": "b55de6d9e37d3743082550fa64588b4545362011908f68d3c077bb7d506f9fa0",
+    "HexConway/Entries/S2_1.lean": "6e04f020a3976110bfb56d5dd6a62a9c6261a63b1a672c32c57c91c9acc16770",
+    "HexConway/Entries/S2_2.lean": "9727154d06515766800fd8a956cec891976b88fccad98b7e6e95a86c48d5a0b0",
+    "HexConway/Entries/S2_3.lean": "2a809b1846f4c921018d5f3a14043226f968d1cd76a16ab8bf25811420860f81",
+    "HexConway/Entries/S2_4.lean": "17f2505dfc068efb5648e3a2df61a176d62c7dafc86a57cbad687b725b62bf2e",
+    "HexConway/Entries/S2_5.lean": "7619b405c2b2d5804b016c3796fcdcbd4cc75cd67c6b045f2113395c9e27c188",
+    "HexConway/Entries/S2_6.lean": "93011e2b6d4165f59d33e7b737b165f222ca82b4e005267eb4d9c50713eff352",
+    "HexConway/Entries/S2_7.lean": "8ea6641cccb5c1fcb71e3508b571d089dd6e6961803756564c06b4e131695e77",
+    "HexConway/Entries/S2_8.lean": "5139be4e9df211d295aa25ac54dbab1d366fc42a4ea298cd63cb1d549a615492",
+    "HexConway/Entries/S3_0.lean": "264190780ee98d968664667dfc02d03a872740c123f8323ae25f1bd34ddc6064",
+    "HexConway/Entries/S3_1.lean": "3f2b2325aebb361a44b28f954e057b5846ac9228e97122f7f144dd795214e186",
+    "HexConway/Entries/S3_2.lean": "a176289da903c4dd0ce83e23207cd38c41344325fbea4397c5a86abbcd054fc3",
+    "HexConway/Entries/S3_3.lean": "718d1886974d851fb6d212c8644e8a081f475cc67edc009e523f484a847b24f0",
+    "HexConway/Entries/S3_4.lean": "ce0beb8d0226b296770fd47aff8268da0e58a68977e2b8003c5abcf0f7b32894",
+    "HexConway/Entries/S3_5.lean": "ac58f0e7eeb962b9b8fd5701c5960f48b8309482324dbcba767780a469953fef",
+    "HexConway/Entries/S3_6.lean": "a95519282bd0eeac6c9a3a16489f3dc4fd1433ad0cdaa8cc24530003bc4d5f07",
+    "HexConway/Entries/S3_7.lean": "0bb8940cd6355451433648f51087c876bb8ea3a144a7c42d3ea8eafd12b97636",
+    "HexConway/Entries/S3_8.lean": "653ea26897e260e3df4965c393e4e498f5a9ffdfee7c66c75cf5feebbe02c43a",
+    "HexConway/EntrySource.lean": "ad9943f80a4eb66197e68100cb23ce7b3bee0685a08503552a2426884dfe7471",
+    "HexConway/FactorProofs/S0_0.lean": "ff9040dbd7316b2969e3ec65490c5d7268482f21a797efbf518e51c482c40517",
+    "HexConway/FactorProofs/S0_1.lean": "dd64eb4e367b8c99755ed8e3431eff5da07450b429d89c3282b68b9d8b892c6c",
+    "HexConway/FactorProofs/S0_2.lean": "8b26cb57d6b9ba0fce6ea9a21c5c8227b3f97e9f4633e60f92128fcf7906c970",
+    "HexConway/FactorProofs/S0_3.lean": "2b6a7c27d98b98cd79818f19a9cef738a25dbd66e48342322af29898a3c544cd",
+    "HexConway/FactorProofs/S0_4.lean": "47b9c68a65d9e30bc9cfdf1fffa9fcde59604c286130844e33a329f7ba91fcef",
+    "HexConway/FactorProofs/S1_0.lean": "2ef893fa99befef1016bc062d10f49e76a75fd29d1b38522f7682c95844aea77",
+    "HexConway/FactorProofs/S1_1.lean": "e330b7a3d14c218e5e166b6736db9139fff597a19173df83fe9bffe353c1a33e",
+    "HexConway/FactorProofs/S1_2.lean": "8d1a4f9119a0c1c3e91dfabc58c20ea0647cf72e52865572f13b79f3b53031c6",
+    "HexConway/FactorProofs/S1_3.lean": "15f613247b34e3b21b525d1428de3a6d63b849c1dcce1805daadbd85a15b9123",
+    "HexConway/FactorProofs/S1_4.lean": "7cd2575f33c5b33cfe1a78a3ec31e10b740941eef84869dab133b59d24f07637",
+    "HexConway/FactorProofs/S2_0.lean": "b2c2ab8629227e7b33304453ebde4b713becd00acf2e7fe6f5945b96854844f6",
+    "HexConway/FactorProofs/S2_1.lean": "0cf87567c4501808d9ad414ad73015f76446d6cb7e2a5647575593f332719ff1",
+    "HexConway/FactorProofs/S2_2.lean": "591faa22cf8472ff16540755d526fa412661c25137a032658801d7aacda6cf5f",
+    "HexConway/FactorProofs/S2_3.lean": "1fbc48d9a9c41229a9418aca598db6d05c43e6c7fab46bd30f08413d7139198c",
+    "HexConway/FactorProofs/S2_4.lean": "6ee9f09b284bc3b029f1cfc5a78488d9c31ed51d6b9cd10aae69f26d409703ff",
+    "HexConway/FactorProofs/S3_0.lean": "fd04afbf2310df62df072c5e59540b2a8af82c9efc29290e0e86a610b1a5cb73",
+    "HexConway/FactorProofs/S3_1.lean": "b61c80457a89f902959aabed0380bb6fadbe4412792abdd1007068a704dda7e1",
+    "HexConway/FactorProofs/S3_2.lean": "91ba9b18fa825a1d1caa10a0049ff4fe441a5a8c346d7e9ce0f4609aa2243350",
+    "HexConway/FactorProofs/S3_3.lean": "034204b252ea104ba1974cf1248ced081bef4fd470d3720a200ac093afe845eb",
+    "HexConway/FactorProofs/S3_4.lean": "f5e9610b8b195b0f2a42aaa304e17ee294ec2b80e0238c0f4fe9dd85bce5c659",
+    "HexConway/Irreducible.lean": "7fd7bb5fa704a7149a896a299c624f4afa0ac5d4e0fc6fccae97e6fd496f161c",
+    "HexConway/Monic.lean": "20db99a3badd45ecbdaa9448529bcd31be6a12cbf4d33a675a2cdb91e7e003b5",
+    "HexConway/Power.lean": "9cd0359f6a71987695ab0795ca05da24f404091d7eb99aab88c09a6e896cae58",
+    "HexConway/PrimeFactors.lean": "a131c8d84e5687e522a9ec9c3de33e210015b194e8430f6802c33d7528af350f",
+    "HexConway/PrimitiveProofs/S0_0.lean": "38ac5c85acd89c7e7289d5c2a1b4ec8e584ef2a970df4d52952cf0d4fb6ae261",
+    "HexConway/PrimitiveProofs/S0_1.lean": "7c2ec67ecaf0426cebfb2e0e6c96afc1012e2662a07b7faf4bfcd87eb3267d4d",
+    "HexConway/PrimitiveProofs/S0_2.lean": "ec9b4ae7e699dfef0bdc725395c76869cc5a7ad34d860ecc0ceae5580c87ce3f",
+    "HexConway/PrimitiveProofs/S0_3.lean": "63630f328ceeca51417100a07fabcceb01d0592b7452db6d92ffd5f0df3e238c",
+    "HexConway/PrimitiveProofs/S0_4.lean": "492821a5a963fc7a80b1e29589cd11df617956292cca2847c4ffd69b25cae4ab",
+    "HexConway/PrimitiveProofs/S0_5.lean": "6911b856417bbd4300158274228e019d071487796fde409265ba1a7a565b7133",
+    "HexConway/PrimitiveProofs/S0_6.lean": "50cfbadfb8ceaced0651b832ef6cc35b41ababf1585ee7e3155b40a69d17c5f7",
+    "HexConway/PrimitiveProofs/S0_7.lean": "eb29e5198951d5aabea66cffd17bb7b6082664da5745a0e8a9837d489d7e7fb9",
+    "HexConway/PrimitiveProofs/S0_8.lean": "d0e94a217aa539c1a13332d41bfde603355e35f2e1e99e12d072aa66e6ac6314",
+    "HexConway/PrimitiveProofs/S1_0.lean": "9fa1a70519870407bb91832504df3fffd91075cff277a023d42844820694da46",
+    "HexConway/PrimitiveProofs/S1_1.lean": "2efe1be98ee2a93808e614231219caa4f34b2d28d31690056fd14d1754cba21c",
+    "HexConway/PrimitiveProofs/S1_2.lean": "727eea8002c7bddb096ecfb0f5cf177470c01430e31b4b1398bd711c737347bd",
+    "HexConway/PrimitiveProofs/S1_3.lean": "e019cc19be2f8d1275b345f2ad0c27207c3cd761375446c41e768d53fce13e40",
+    "HexConway/PrimitiveProofs/S1_4.lean": "cf105801eeca69ae817de158de6f5aa8ce378f76fff7a2b7b6de3cab200bf198",
+    "HexConway/PrimitiveProofs/S1_5.lean": "987ac274118989857e6c2280f2591ac494f8d81a6a8198d2009252e9f27e5f40",
+    "HexConway/PrimitiveProofs/S1_6.lean": "cc02bedee96e36584f192b4127cdbc5a579c41fa57c7e29308be1c9876fb5390",
+    "HexConway/PrimitiveProofs/S1_7.lean": "bdce34c6e6bce2c79489484ed17db552a530af365d27d4681ebd9616580ff533",
+    "HexConway/PrimitiveProofs/S1_8.lean": "8027dcb013b2acc1175996b4ab9bfd765a8d4c9055e699910fb7c7efe7034c76",
+    "HexConway/PrimitiveProofs/S2_0.lean": "a06bbf8aac8fe384607c7043d9816c805ccc2f174fb3ae8f7a89d7938c1da932",
+    "HexConway/PrimitiveProofs/S2_1.lean": "1d30fe50d7c3efe803c8e11a365ab46cc4c576338a30ac7a324bcf52f71524b8",
+    "HexConway/PrimitiveProofs/S2_2.lean": "3df6070d7ed8cbb41f1d69260ad970a5070b8da2870c1791ffe401c0334fd3c8",
+    "HexConway/PrimitiveProofs/S2_3.lean": "692216a8002a915d66f38b49c6ebdab925cf20d9e5df600f5a49895c701144c8",
+    "HexConway/PrimitiveProofs/S2_4.lean": "a238ff1875f9aff7f192bf538ccdb665b4a2abfb32a64fcc4ded36474777a956",
+    "HexConway/PrimitiveProofs/S2_5.lean": "112901fb8c3c4ae52f0616ef3e3c4210212e368b8862581a33069fc2f24b3f35",
+    "HexConway/PrimitiveProofs/S2_6.lean": "ea975eabf99b497037511efe7c9498c3e8d87136253b34f541ae5f5e9f5b712b",
+    "HexConway/PrimitiveProofs/S2_7.lean": "e5f8628cf5a3bd29d46a88a857a6dfd5c4657731267609bcabf16510e68a326a",
+    "HexConway/PrimitiveProofs/S2_8.lean": "892adfef42488c4b5236f673dc5fb3b19f035d7a293e838a06b9cd039ff28077",
+    "HexConway/PrimitiveProofs/S3_0.lean": "d7d8181ac40a9858f7d578a5d212a9d96de927330e934795fe0cb422b6f38352",
+    "HexConway/PrimitiveProofs/S3_1.lean": "82a3e3e533c1f63734b97ded36e84ad8ee76c8aacbdfdac8184b8611bbe5f2c5",
+    "HexConway/PrimitiveProofs/S3_2.lean": "41341c7d5f91bebf8a42ec0c4e64290d322bfa8af927137dd45d27e7d81733fa",
+    "HexConway/PrimitiveProofs/S3_3.lean": "9801eeab9774de728d408c63ee488f75e14b88a688dae6bf3cb17ab5908aa9d9",
+    "HexConway/PrimitiveProofs/S3_4.lean": "46a6ad1bca1648bb536c0cfbbb561038231ad2dd6b5526553065cadef06e8127",
+    "HexConway/PrimitiveProofs/S3_5.lean": "677fdc3d5abaa7c62ba93fcdc6c3e9d4167f9b357c6ffbbee972463b890c2250",
+    "HexConway/PrimitiveProofs/S3_6.lean": "d456fa234a1dcff729b46b384de0f79ba86ba1e3276a862b199d9be2fe3b98c8",
+    "HexConway/PrimitiveProofs/S3_7.lean": "7f94873670644f44fde3f8a951f25c8e89655152583d7e2037da2c53373677ce",
+    "HexConway/PrimitiveProofs/S3_8.lean": "64c727ac93151914cb320c9f2d6b6a5376045f74fe3cb7368d6165eb4639ef25",
+    "HexConway/Primitivity.lean": "6dc6dc46754edbf13b160b8a3ac251dd83d353e807fc6308d1ba62e9b6d4f8a3",
+    "HexConway/PrimitivityCore.lean": "93226a7d37b1d4c4a7b47dd4f04e6c9f5446053ba3da923bd308cfc3dc257a9a",
+    "HexConway/Rabin/S0_0.lean": "703b81106e26b7cd52ff791576f29ffc08bb3766975ffb61cecdb1e0c838f3cf",
+    "HexConway/Rabin/S0_1.lean": "0a1b00dc11fcc21469cb27033639230064df2bd22861b0eb51439843696a2543",
+    "HexConway/Rabin/S0_2.lean": "e6deeba0bb938ae9932b3bd54e5a8ebd8fd9b0c4d66cc87b739cd3dcadd7348c",
+    "HexConway/Rabin/S0_3.lean": "99bbf813206c73c977a0343d2dbede183fadf51b26e3806ca001e228e6dd56b0",
+    "HexConway/Rabin/S0_4.lean": "b2323cb39382bddd192e6cc3941f2eb1c68d72d79a4b152fab69f290daebfc7a",
+    "HexConway/Rabin/S0_5.lean": "30b9e3384b57d2ca5325a724fa79b53eaa2a493c82d8b83509df8e23130682a5",
+    "HexConway/Rabin/S0_6.lean": "375370c98dca2c4061d00f2114578db92d3ad20be8fa56357d575895c6d4884a",
+    "HexConway/Rabin/S0_7.lean": "791b4b4c85b5f27c412bdcee1633fe165f548e18120f63b3de3cdef05bc797d0",
+    "HexConway/Rabin/S0_8.lean": "cbe131e9f29f82dcee65c0f0d5951fa266d4601531166cb6fc6bb10cec6196d0",
+    "HexConway/Rabin/S1_0.lean": "26d6c331916662d283979088e53e8b9242b5691322b77ea9f78f177fca948efa",
+    "HexConway/Rabin/S1_1.lean": "c61b7b0fe045a8c749ff2187a9c8b7c2bb882f006800c94d0e9b6ae66c3b31c2",
+    "HexConway/Rabin/S1_2.lean": "a6593ffb34de5fee74e5eefd06e1c3e995f4984783fe509b4f8ff4225c045ef2",
+    "HexConway/Rabin/S1_3.lean": "4982252a3183ecab016355e1c5eed74b907812f6783230244a0811f85c45355f",
+    "HexConway/Rabin/S1_4.lean": "f9fd373dd1ca741dbde7ed344fca3ab9bf473a34ae7db839708b38e1c448938c",
+    "HexConway/Rabin/S1_5.lean": "a62a0af9e74d0cecf168e648f5054a176e9177e25a8e6d9a2cfad02974c5612d",
+    "HexConway/Rabin/S1_6.lean": "aad509d5b5ce17a59ea798ce833f3685df9d308ba77230e348ddd7d237117b98",
+    "HexConway/Rabin/S1_7.lean": "7dac67e7ebf99d3ecded42a64f7ee397e2c5458d82e677d90b8e936f59c61335",
+    "HexConway/Rabin/S1_8.lean": "573421d5d4131e99b1c762da5c0e3814481f071aa62b412d8be83dac7b3727ca",
+    "HexConway/Rabin/S2_0.lean": "2c191459099268fab385de877d39c6046f60e41a469eba1146b94913b78ec1fe",
+    "HexConway/Rabin/S2_1.lean": "e50dffe9529fb9432297fdd0a7eec98477059802c9159a8481fc814ce11fc393",
+    "HexConway/Rabin/S2_2.lean": "3146f35acd41732f2054b7b2ea1f3653f98deb997547a30c2083542f61934302",
+    "HexConway/Rabin/S2_3.lean": "8596c001c48f5250ee634848d7aa9cd42389bc229f6c070d3f05f1b591dd2254",
+    "HexConway/Rabin/S2_4.lean": "71dec0643e18c13f1139bd431bd4f86328f450e0b3f434febd185ee95b639f1b",
+    "HexConway/Rabin/S2_5.lean": "8f3ef8628bdf696e2684985c61a7e1297f567cb598ef05abfe784d16575603b4",
+    "HexConway/Rabin/S2_6.lean": "8e94aeff124c781b5e1daa4fe85b8e7c5446f4ab9dc780f4f548acd355fb3ab0",
+    "HexConway/Rabin/S2_7.lean": "56b9d89b4b12dfaab9a2a49a8ad0ce950d3a2fbed86d23fb7eb233a7b410a470",
+    "HexConway/Rabin/S2_8.lean": "eb237d3c6da698a722fa5abe3b2b3910ab1ce1af9f8ec45185896e2d0aa3cb53",
+    "HexConway/Rabin/S3_0.lean": "d37bbf10e38013ad29618477df9b3237a0721cc714497fe24a110111d6ea440e",
+    "HexConway/Rabin/S3_1.lean": "997d860e3c2c4ad4f80027338b7dfffaf78f377f868ee70e65031ab90a2219ad",
+    "HexConway/Rabin/S3_2.lean": "148f8d1c2fe62c27f78d3aa7773581ec55a61a2a15e2f26bf007473c02eebddf",
+    "HexConway/Rabin/S3_3.lean": "fa915ad3d1dc9ded7b92416f8b1eb0793b2b0347169db9a5a82d880727d278d6",
+    "HexConway/Rabin/S3_4.lean": "ef1abd29a54ab412eecb17a6808b6a08ea7d014d08397e90226b642a52a2f7c6",
+    "HexConway/Rabin/S3_5.lean": "066a9fb8d2532a9782fd0e3044ba0d3e6d6c28df06f8ad310734d1f1cfacbed3",
+    "HexConway/Rabin/S3_6.lean": "47339eefe1a20df6a88da9474fe85a8e8d889e4a5ada03cc3fb45b1b7347091f",
+    "HexConway/Rabin/S3_7.lean": "a7b4914f70e117a0d9013b10d2e0f57a69075a4571973388e63cfcef90518708",
+    "HexConway/Rabin/S3_8.lean": "8457f618c7a05f90fa2856afc9642f5d776e607f40300d6a2a00be166c38e135",
+    "HexConway/Rebuild.lean": "c8d1bcbeebf3009fb945d6f0ba3e5cca9101a3b161209440bd5da50db171ae02",
+    "HexConway/Supported/S0_0.lean": "3ab1c74629b3c4d7602307bcfdde7d10ed146c7132021a6d0954debb77d78751",
+    "HexConway/Supported/S0_1.lean": "1f7a5bb75b143ce3781397265ed1a8b85f7fe930748681255616bbb0210ce3ca",
+    "HexConway/Supported/S0_2.lean": "4cd0c05afb49f4ac0063c93b11205ccb5fb61a1cea02e813b18ff468cc944b96",
+    "HexConway/Supported/S0_3.lean": "68db44d5103e5a450bf09f2df44591bdf5f796ebbb961145983ddd82567be30c",
+    "HexConway/Supported/S0_4.lean": "545a238dec62f81cb118ba3aaf43b7e1eb2fddb5f9034dce167b69ea244935c1",
+    "HexConway/Supported/S0_5.lean": "38e3214106ec8a49bea13b9b3fb3bfbe9189c31d659e93de5cfc776d1fe822f3",
+    "HexConway/Supported/S0_6.lean": "f47cbbb1f5d663562331066950f6c2bd83a374c88d786748c071a6be26b8b0ea",
+    "HexConway/Supported/S0_7.lean": "8d266ccbb12db050f6240265b84d2c5d1af9ef05eb443db38219b25b17dbcb21",
+    "HexConway/Supported/S0_8.lean": "133a73fc2b6a4c9b94af967d61222a52d01c346339758abcc345bc0f54cb23b2",
+    "HexConway/Supported/S1_0.lean": "43675b1275c649806e8022240fb9638e14ff590eb2e974124f0ffebbfebc0829",
+    "HexConway/Supported/S1_1.lean": "48aeee05a5d2340846cadbc68841a95c5ed77ae68f536d24eae894715e439f4d",
+    "HexConway/Supported/S1_2.lean": "eab827577c71b78f168f5c1993f5293d06afeec1db5ffe2831aacb0c84292ff8",
+    "HexConway/Supported/S1_3.lean": "56df073c10142b5cc7a6564722c00d6287bd691916311669de330857d2bd1355",
+    "HexConway/Supported/S1_4.lean": "5e048eaccc13db16b98328a3a432f50d406e4c83d4a7d8907f88a83e64463282",
+    "HexConway/Supported/S1_5.lean": "662d443e1ee0f4a58e8cccd01556f71093ea495bd7714da95711826be3856a17",
+    "HexConway/Supported/S1_6.lean": "e07d62f588a782fd06b14dc0e9b3d051be342cc9abcbf967253568db85890315",
+    "HexConway/Supported/S1_7.lean": "13928eefa119a7eb45331d0194a01086d86cbcb24301c003da55abdadefc9edd",
+    "HexConway/Supported/S1_8.lean": "0d2bb4c16519efde74475baf196d23e9a7eb6e65776d48d001d507f5046211ed",
+    "HexConway/Supported/S2_0.lean": "be68611daf2931dace4331d16a2047f424d6edac4bc9e63522abae2c1276ecef",
+    "HexConway/Supported/S2_1.lean": "19a6b1b6d20451f81224fea392b136d9c4a4c2b31898aaa2bd1e6066feb11dd1",
+    "HexConway/Supported/S2_2.lean": "caf0142faf0fb01be08db89d761ec34061fa8bd53c26334db28b790e718c9221",
+    "HexConway/Supported/S2_3.lean": "d2e301f023a71269f01674dddb70f2070291d90e9ba2f0b178f12185e94db83c",
+    "HexConway/Supported/S2_4.lean": "b09db2b05238b9c3e1a0e1b36eddc64cd100dbfbd3f936e8d0a22f4503926936",
+    "HexConway/Supported/S2_5.lean": "7394a34b575bc2ab613ae6f69b16a75a6b7df30f92a8a465aadecaa95f57711c",
+    "HexConway/Supported/S2_6.lean": "4eae30da971634e6019253da7058c1e7e7bf988a6a263a658cde4337b16d1491",
+    "HexConway/Supported/S2_7.lean": "0214793538d15197700b27493709c67bc146683961518b3fa6c5c63b392e7fd2",
+    "HexConway/Supported/S2_8.lean": "edc755ac82e9d78ef102eb762819d19eb8878b62363c6cc294ee0283aff39f62",
+    "HexConway/Supported/S3_0.lean": "46f909145c9a03bfd94ba42371c4868b18a76702c9d92a5827b65567311ccd0d",
+    "HexConway/Supported/S3_1.lean": "73aac2be7222284d90721db6c3d9d7792fafcb03464552950df8dec6d579d98e",
+    "HexConway/Supported/S3_2.lean": "f03076ed387903f2537aa57c0ba3c068335cc4ef7bb16ffaefe771f556cadf32",
+    "HexConway/Supported/S3_3.lean": "9c4ca8fcb78e53afa6e86b4927fbc00061b520c2c53032bf102e14b1a8b01302",
+    "HexConway/Supported/S3_4.lean": "8879ce63606020592975e4539852dc4965bf8eed1bfe37f43eedcedff8111bab",
+    "HexConway/Supported/S3_5.lean": "f54a2e2411d80bc918b52c1727e017fb80b5240dd0a2b3e9fbe6fa56c9f9f7b7",
+    "HexConway/Supported/S3_6.lean": "7110e082419e2a47b25dc2fa9c5341931458b2095cb5f6b8ba09257d3bb90a91",
+    "HexConway/Supported/S3_7.lean": "4785916a1b8c3b10b32e3342974c246352537365e6f66679abe72043c75998f8",
+    "HexConway/Supported/S3_8.lean": "e70f0c7511239427bf62b26e58e896ea1fba81b4c1b518ad9043335ea51ded82",
+    "HexConway/Table.lean": "5531d747c819b8df0875075736a17c787365f6e3968363c808b55348efd9bb4f",
+    "HexConway/Transport/S0_0.lean": "183b2b77f72ff82ed644145069d4505a5621d78ab09dd8ec9c4849b0be1982ef",
+    "HexConway/Transport/S0_1.lean": "e07faeee86fdca64ff42efc65b9e09385b65700d5336dc9e268815555aac5aef",
+    "HexConway/Transport/S0_10.lean": "95ded379ba061d5320353ccc3da15cbd23cf2b79b9cfeb3bb2c1177dd38c6cb1",
+    "HexConway/Transport/S0_11.lean": "43e13e4c856dbf764bb350665f79990188b65cce98be184352ebdfea2a4addbf",
+    "HexConway/Transport/S0_12.lean": "0abae8acaedeb0ae3392b9edd7e4395cba7fda0943c96087636ae711c6ca0dfc",
+    "HexConway/Transport/S0_13.lean": "2ea4deae076cfa8acf1891bd56f4a0a14ed0f190abbe8a10d06a9432a68b7857",
+    "HexConway/Transport/S0_14.lean": "e53482633cc6a0369f36cb6584bd78e055036d1dfa9414d61e864ec4efa3867a",
+    "HexConway/Transport/S0_15.lean": "79405b59c95e96acffbe5d59fb568bd7bf44530239577c6f5ba53a422eb54331",
+    "HexConway/Transport/S0_16.lean": "301e261b587610e8dcda9b581e4529b1f2a6b68bf5ef9f2c78e22b95c008aca1",
+    "HexConway/Transport/S0_17.lean": "19f87b025c96ad7d48c5a5328bdcf6280d6f730dd693605837c917f3b2de8658",
+    "HexConway/Transport/S0_2.lean": "706e1fa5812b2442baea1c1cb14c93c37a474f7cc0b053a78339ca2df5aa7308",
+    "HexConway/Transport/S0_3.lean": "2d5e6f6b18767a4ae3d8d7442062957647bd95a30e8d9ae9fafa712155b1458c",
+    "HexConway/Transport/S0_4.lean": "1a282a1bea5994b213759e431beb98b91d559f25b118cb4573bce054632c4f88",
+    "HexConway/Transport/S0_5.lean": "1819c000ee858cd8e1975dcfe4446db770f917483340ea878dfab11183712086",
+    "HexConway/Transport/S0_6.lean": "f47844f2e10bbd538b925dade4163b3b49e0acad721f6e06dc0db739a71be4fb",
+    "HexConway/Transport/S0_7.lean": "d55c166cb735ee54337f19c6e8aa9439b74e66cdd1d0a5d7e956f9a40cdf128c",
+    "HexConway/Transport/S0_8.lean": "f38228f19d9abaa4a4ecabcc81b27604e0936326257bc742344bb396f0cc6536",
+    "HexConway/Transport/S0_9.lean": "70f49d84a36db148cab297166ea4c05478a603094a6c586a48d178b605a76a92",
+    "HexConway/Transport/S1_0.lean": "d1fd80c6afba9cb45e953f0d994f32c515061b17e9ed26a065ee87c57fbcb982",
+    "HexConway/Transport/S1_1.lean": "474d5247ca376802be7c70946d416b1990f1ed171d76355344ad8bba95d22c30",
+    "HexConway/Transport/S1_10.lean": "488f2c1e79ca198f48950cc273908b60e7d04a86f97e555874a811b947e0c190",
+    "HexConway/Transport/S1_11.lean": "0052670164b8e32a85824a83052d78fe0a24ee44cb55de601ce42d1f4f20300f",
+    "HexConway/Transport/S1_12.lean": "cb65d2d9cf8737853fadd7d383f4e6c054ef1ef192fe64173a46cf07bac3b4b6",
+    "HexConway/Transport/S1_13.lean": "33e798677f2eec47390278298eabfd575eac703c3d3824b315b66bb8a5207a37",
+    "HexConway/Transport/S1_14.lean": "20264fba01efbcdeee07bf87574154c21e07679ac3666a464f9cd8bbac87edab",
+    "HexConway/Transport/S1_15.lean": "c65c8044052c34f3dbeaf0ac195becf25617c188f753d607c4dd5f23bce475d2",
+    "HexConway/Transport/S1_16.lean": "a52ae5fdc3ff02cf9eec45839c37a89684641c93a1590e147443ea86e8a5cb22",
+    "HexConway/Transport/S1_17.lean": "ea97a5c6af668ff2063f8689ac6765b62183d027180454b41a6fef48a1b1eddc",
+    "HexConway/Transport/S1_2.lean": "55ff700020b50f8b695230663a5efbf04b07dac2ab7ed161af39f0fe6151797b",
+    "HexConway/Transport/S1_3.lean": "70ecece918f46c891124157d053a949ec282e8d8f8fa6669cdf1e252afa1ef33",
+    "HexConway/Transport/S1_4.lean": "90a4265fa965da8c96369b44ca7a1dcc65b93db2c54263ac3233a536a51fcf4f",
+    "HexConway/Transport/S1_5.lean": "6996c2129f86a17c53eadfe891adbd67dde96687ddab72b67981b46f3beba0fc",
+    "HexConway/Transport/S1_6.lean": "4970c37549976c679b3d38345f140ec29bc27081994d6c8cf387364fb4bb3f21",
+    "HexConway/Transport/S1_7.lean": "23ec60387989ff825fe9763f3c3cb76b0ddfcd819289855ea855619a8b423490",
+    "HexConway/Transport/S1_8.lean": "a9def24a99fa3c50565d85e1f5d9794ad20c793a76ca402f1df166b859caf7a4",
+    "HexConway/Transport/S1_9.lean": "3d1f8a477d760c5873875c41bf7fcdf341e3ff977b70f0378ba18cd87cf23286",
+    "HexConway/Transport/S2_0.lean": "bec8a916532a8c1ed53246be3cf783a56c52ff5a10c0a9cc24567a81132f6636",
+    "HexConway/Transport/S2_1.lean": "68ef421d8e095ff399ea8f4cb1ac4377176f48ce98baf2387cf983bacb400fa7",
+    "HexConway/Transport/S2_10.lean": "23f98356d00441f5dd98c1d0b78a3b93bc4ab4989185b168eca1fa613c7ec3eb",
+    "HexConway/Transport/S2_11.lean": "3a070de8d278706fa0fcb29af81e03a153aa4025b5fe94e71993abb008d27d15",
+    "HexConway/Transport/S2_12.lean": "97bd667af560a28e24fdba224b355f34b200dffdcc21aafe57df4307589a7156",
+    "HexConway/Transport/S2_13.lean": "ca7de6a3b8c4b03a651c9a1daa199c461308ae886a9d80503a01acd9de8a9681",
+    "HexConway/Transport/S2_14.lean": "95955e270a22204b279cb525af685b65ec7eacaf1b8dfb9889a43a373d704f38",
+    "HexConway/Transport/S2_15.lean": "764a73245d01af6a6cb7019359ae06b452fad8621f625e7cceed5024cfc18203",
+    "HexConway/Transport/S2_16.lean": "7f40a70d686f3b47b9a0f91585b614dd151933b2bf56c9da092fa7b1a6156446",
+    "HexConway/Transport/S2_17.lean": "c723bbc150a3ce15132c216e21c186abf00f71ecda9c77518cbdaa3ccf0cf5eb",
+    "HexConway/Transport/S2_2.lean": "63e654cd85b7deb628cd2cf10bf46f87c9565bf16575b92696d2ca5ed3578c7c",
+    "HexConway/Transport/S2_3.lean": "a2b81fbd306304ec473af3c8854a9fbd4846e97b64bc92e7ccb09b9185f8d4b8",
+    "HexConway/Transport/S2_4.lean": "4ee491b4cfe814f1d30535da6a1c57cb30addd33c1f43e43b6f0e243990112e6",
+    "HexConway/Transport/S2_5.lean": "7e12d587926d40a53c3b5122af8e19d5e381d52cdaa7241e4c8a97e15bc4348f",
+    "HexConway/Transport/S2_6.lean": "83382711d613eaff1b938619d42b3ac21564880f704dfd708cb490bf15d00b25",
+    "HexConway/Transport/S2_7.lean": "c59a160f448fbb3f3ef4c7e02a499835b2a6902f8e227d4ba25267558130ec75",
+    "HexConway/Transport/S2_8.lean": "1fbe972504da49acf41b730d6bb5386a7d6f699394e9f9fea54cf86ffda1c67d",
+    "HexConway/Transport/S2_9.lean": "7b6fc678cc93ebc84a5e1b53f41d76d97d8e0857cf3c0c640d0456f717bb5430",
+    "HexConway/Transport/S3_0.lean": "aef938524691e35149a48cdac7fa03307a5ed270cc52ea889bc08f191f04f393",
+    "HexConway/Transport/S3_1.lean": "9479832103da90461cb720e796837f1c2e27eeb60aa882350893996ab1bed442",
+    "HexConway/Transport/S3_10.lean": "26041485482a3ab4adf97163833b367ccb3ec4bc6c43ca181bdb817216cafd5f",
+    "HexConway/Transport/S3_11.lean": "cf9fb2850d4e3f972718fbf2fc842426fd94260cdf16a412f00c76e63457aac5",
+    "HexConway/Transport/S3_12.lean": "3fad24a356546fd101ff24e3f411b725cef6491c45310446863410bbbf75cc6b",
+    "HexConway/Transport/S3_13.lean": "1faa6dab98ce9bdbe72039013d1cf894ee53d8d48bc82b9bc59ad0cbfe64f2b6",
+    "HexConway/Transport/S3_14.lean": "4817f1832b658a6bad4b72bdee5abc6faacbe38e035b40132499156567f4aab0",
+    "HexConway/Transport/S3_15.lean": "dc0bc65be5a24f3afc180b6544408008b1a32b473360a2eb828f754cf8d3819c",
+    "HexConway/Transport/S3_16.lean": "3d1c00c9bb42a1e451641ad65fa902519289a9c256c45ca68c4d7a5502c898f4",
+    "HexConway/Transport/S3_17.lean": "2ab1f680a445b28599d85032f6eb5334e0f817883b33a65862fb47db461fd020",
+    "HexConway/Transport/S3_2.lean": "616657576817b777013cd4f0624802d9be851454b40c6afcd74a1fa622770240",
+    "HexConway/Transport/S3_3.lean": "e583ac8912f1322720aae01f8600f09590e3d84058489f01ec5315de66ed08a3",
+    "HexConway/Transport/S3_4.lean": "d6f1b40d4d8e79cd35d857fc7de9a5ec095ceeadb25b1a7fa1bfb18245870575",
+    "HexConway/Transport/S3_5.lean": "a1ccb1978fd79a736f82fc95f175c8e67b6a6fe489109bb0220e34b745a95062",
+    "HexConway/Transport/S3_6.lean": "ba021e6048aa0b916d587b15f43a0478e96f849135f53ff5f4157dee49a87ede",
+    "HexConway/Transport/S3_7.lean": "87378ad72ffc17ed3b7bf3f74bd16747c5afb330b68f8b35ebf5c61f2e832c98",
+    "HexConway/Transport/S3_8.lean": "e6ff28e57f39ee6056132dcc916154d7a6d0a0fc7090dfa850f440eec8f656bb",
+    "HexConway/Transport/S3_9.lean": "9c8b7f4646bf2642748dc5f3bfd55f279b58c6c1a6f96d70de18525778eb9562",
+    "HexConway.lean": "316997004af59ec6f7c8fc12ef8d2b52afbf2c7fb031c5bfd38a0bc1d0232355"
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      2,
+      9
+    ],
+    [
+      2,
+      10
+    ],
+    [
+      2,
+      11
+    ],
+    [
+      2,
+      12
+    ],
+    [
+      2,
+      13
+    ],
+    [
+      2,
+      14
+    ],
+    [
+      2,
+      15
+    ],
+    [
+      2,
+      16
+    ],
+    [
+      2,
+      17
+    ],
+    [
+      2,
+      18
+    ],
+    [
+      2,
+      19
+    ],
+    [
+      2,
+      20
+    ],
+    [
+      2,
+      21
+    ],
+    [
+      2,
+      22
+    ],
+    [
+      2,
+      23
+    ],
+    [
+      2,
+      24
+    ],
+    [
+      2,
+      25
+    ],
+    [
+      2,
+      26
+    ],
+    [
+      2,
+      27
+    ],
+    [
+      2,
+      28
+    ],
+    [
+      2,
+      29
+    ],
+    [
+      2,
+      30
+    ],
+    [
+      2,
+      31
+    ],
+    [
+      2,
+      32
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      3,
+      7
+    ],
+    [
+      3,
+      8
+    ],
+    [
+      3,
+      9
+    ],
+    [
+      3,
+      10
+    ],
+    [
+      3,
+      11
+    ],
+    [
+      3,
+      12
+    ],
+    [
+      3,
+      13
+    ],
+    [
+      3,
+      14
+    ],
+    [
+      3,
+      15
+    ],
+    [
+      3,
+      16
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      5,
+      8
+    ],
+    [
+      5,
+      9
+    ],
+    [
+      5,
+      10
+    ],
+    [
+      5,
+      11
+    ],
+    [
+      5,
+      12
+    ],
+    [
+      5,
+      13
+    ],
+    [
+      5,
+      14
+    ],
+    [
+      5,
+      15
+    ],
+    [
+      5,
+      16
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      7,
+      9
+    ],
+    [
+      7,
+      10
+    ],
+    [
+      7,
+      11
+    ],
+    [
+      7,
+      12
+    ],
+    [
+      7,
+      13
+    ],
+    [
+      7,
+      14
+    ],
+    [
+      7,
+      15
+    ],
+    [
+      7,
+      16
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      11,
+      7
+    ],
+    [
+      11,
+      8
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ],
+    [
+      13,
+      7
+    ],
+    [
+      13,
+      8
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      17,
+      3
+    ],
+    [
+      17,
+      4
+    ],
+    [
+      17,
+      5
+    ],
+    [
+      17,
+      6
+    ],
+    [
+      17,
+      7
+    ],
+    [
+      17,
+      8
+    ],
+    [
+      19,
+      1
+    ],
+    [
+      19,
+      2
+    ],
+    [
+      19,
+      3
+    ],
+    [
+      19,
+      4
+    ],
+    [
+      19,
+      5
+    ],
+    [
+      19,
+      6
+    ],
+    [
+      19,
+      7
+    ],
+    [
+      19,
+      8
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      23,
+      2
+    ],
+    [
+      23,
+      3
+    ],
+    [
+      23,
+      4
+    ],
+    [
+      23,
+      5
+    ],
+    [
+      23,
+      6
+    ],
+    [
+      23,
+      7
+    ],
+    [
+      23,
+      8
+    ],
+    [
+      29,
+      1
+    ],
+    [
+      29,
+      2
+    ],
+    [
+      29,
+      3
+    ],
+    [
+      29,
+      4
+    ],
+    [
+      29,
+      5
+    ],
+    [
+      29,
+      6
+    ],
+    [
+      29,
+      7
+    ],
+    [
+      29,
+      8
+    ],
+    [
+      31,
+      1
+    ],
+    [
+      31,
+      2
+    ],
+    [
+      31,
+      3
+    ],
+    [
+      31,
+      4
+    ],
+    [
+      31,
+      5
+    ],
+    [
+      31,
+      6
+    ],
+    [
+      31,
+      7
+    ],
+    [
+      31,
+      8
+    ],
+    [
+      37,
+      1
+    ],
+    [
+      37,
+      2
+    ],
+    [
+      37,
+      3
+    ],
+    [
+      37,
+      4
+    ],
+    [
+      37,
+      5
+    ],
+    [
+      37,
+      6
+    ],
+    [
+      37,
+      7
+    ],
+    [
+      37,
+      8
+    ],
+    [
+      41,
+      1
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      41,
+      3
+    ],
+    [
+      41,
+      4
+    ],
+    [
+      41,
+      5
+    ],
+    [
+      41,
+      6
+    ],
+    [
+      41,
+      7
+    ],
+    [
+      41,
+      8
+    ],
+    [
+      43,
+      1
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      43,
+      3
+    ],
+    [
+      43,
+      4
+    ],
+    [
+      43,
+      5
+    ],
+    [
+      43,
+      6
+    ],
+    [
+      43,
+      7
+    ],
+    [
+      43,
+      8
+    ],
+    [
+      47,
+      1
+    ],
+    [
+      47,
+      2
+    ],
+    [
+      47,
+      3
+    ],
+    [
+      47,
+      4
+    ],
+    [
+      47,
+      5
+    ],
+    [
+      47,
+      6
+    ],
+    [
+      47,
+      7
+    ],
+    [
+      47,
+      8
+    ],
+    [
+      53,
+      1
+    ],
+    [
+      53,
+      2
+    ],
+    [
+      53,
+      3
+    ],
+    [
+      53,
+      4
+    ],
+    [
+      53,
+      5
+    ],
+    [
+      53,
+      6
+    ],
+    [
+      53,
+      7
+    ],
+    [
+      53,
+      8
+    ],
+    [
+      59,
+      1
+    ],
+    [
+      59,
+      2
+    ],
+    [
+      59,
+      3
+    ],
+    [
+      59,
+      4
+    ],
+    [
+      59,
+      5
+    ],
+    [
+      59,
+      6
+    ],
+    [
+      59,
+      7
+    ],
+    [
+      59,
+      8
+    ],
+    [
+      61,
+      1
+    ],
+    [
+      61,
+      2
+    ],
+    [
+      61,
+      3
+    ],
+    [
+      61,
+      4
+    ],
+    [
+      61,
+      5
+    ],
+    [
+      61,
+      6
+    ],
+    [
+      61,
+      7
+    ],
+    [
+      61,
+      8
+    ],
+    [
+      67,
+      1
+    ],
+    [
+      67,
+      2
+    ],
+    [
+      67,
+      3
+    ],
+    [
+      67,
+      4
+    ],
+    [
+      67,
+      5
+    ],
+    [
+      67,
+      6
+    ],
+    [
+      67,
+      7
+    ],
+    [
+      67,
+      8
+    ],
+    [
+      71,
+      1
+    ],
+    [
+      71,
+      2
+    ],
+    [
+      71,
+      3
+    ],
+    [
+      71,
+      4
+    ],
+    [
+      71,
+      5
+    ],
+    [
+      71,
+      6
+    ],
+    [
+      71,
+      7
+    ],
+    [
+      71,
+      8
+    ],
+    [
+      73,
+      1
+    ],
+    [
+      73,
+      2
+    ],
+    [
+      73,
+      3
+    ],
+    [
+      73,
+      4
+    ],
+    [
+      73,
+      5
+    ],
+    [
+      73,
+      6
+    ],
+    [
+      73,
+      7
+    ],
+    [
+      73,
+      8
+    ],
+    [
+      79,
+      1
+    ],
+    [
+      79,
+      2
+    ],
+    [
+      79,
+      3
+    ],
+    [
+      79,
+      4
+    ],
+    [
+      79,
+      5
+    ],
+    [
+      79,
+      6
+    ],
+    [
+      79,
+      7
+    ],
+    [
+      79,
+      8
+    ],
+    [
+      83,
+      1
+    ],
+    [
+      83,
+      2
+    ],
+    [
+      83,
+      3
+    ],
+    [
+      83,
+      4
+    ],
+    [
+      83,
+      5
+    ],
+    [
+      83,
+      6
+    ],
+    [
+      83,
+      7
+    ],
+    [
+      83,
+      8
+    ],
+    [
+      89,
+      1
+    ],
+    [
+      89,
+      2
+    ],
+    [
+      89,
+      3
+    ],
+    [
+      89,
+      4
+    ],
+    [
+      89,
+      5
+    ],
+    [
+      89,
+      6
+    ],
+    [
+      89,
+      7
+    ],
+    [
+      89,
+      8
+    ],
+    [
+      97,
+      1
+    ],
+    [
+      97,
+      2
+    ],
+    [
+      97,
+      3
+    ],
+    [
+      97,
+      4
+    ],
+    [
+      97,
+      5
+    ],
+    [
+      97,
+      6
+    ],
+    [
+      97,
+      7
+    ],
+    [
+      97,
+      8
+    ],
+    [
+      101,
+      1
+    ],
+    [
+      101,
+      2
+    ],
+    [
+      101,
+      3
+    ],
+    [
+      101,
+      4
+    ],
+    [
+      103,
+      1
+    ],
+    [
+      103,
+      2
+    ],
+    [
+      103,
+      3
+    ],
+    [
+      103,
+      4
+    ],
+    [
+      107,
+      1
+    ],
+    [
+      107,
+      2
+    ],
+    [
+      107,
+      3
+    ],
+    [
+      107,
+      4
+    ],
+    [
+      109,
+      1
+    ],
+    [
+      109,
+      2
+    ],
+    [
+      109,
+      3
+    ],
+    [
+      109,
+      4
+    ],
+    [
+      113,
+      1
+    ],
+    [
+      113,
+      2
+    ],
+    [
+      113,
+      3
+    ],
+    [
+      113,
+      4
+    ],
+    [
+      127,
+      1
+    ],
+    [
+      127,
+      2
+    ],
+    [
+      127,
+      3
+    ],
+    [
+      127,
+      4
+    ],
+    [
+      131,
+      1
+    ],
+    [
+      131,
+      2
+    ],
+    [
+      131,
+      3
+    ],
+    [
+      131,
+      4
+    ],
+    [
+      137,
+      1
+    ],
+    [
+      137,
+      2
+    ],
+    [
+      137,
+      3
+    ],
+    [
+      137,
+      4
+    ],
+    [
+      139,
+      1
+    ],
+    [
+      139,
+      2
+    ],
+    [
+      139,
+      3
+    ],
+    [
+      139,
+      4
+    ],
+    [
+      149,
+      1
+    ],
+    [
+      149,
+      2
+    ],
+    [
+      149,
+      3
+    ],
+    [
+      149,
+      4
+    ],
+    [
+      151,
+      1
+    ],
+    [
+      151,
+      2
+    ],
+    [
+      151,
+      3
+    ],
+    [
+      151,
+      4
+    ],
+    [
+      157,
+      1
+    ],
+    [
+      157,
+      2
+    ],
+    [
+      157,
+      3
+    ],
+    [
+      157,
+      4
+    ],
+    [
+      163,
+      1
+    ],
+    [
+      163,
+      2
+    ],
+    [
+      163,
+      3
+    ],
+    [
+      163,
+      4
+    ],
+    [
+      167,
+      1
+    ],
+    [
+      167,
+      2
+    ],
+    [
+      167,
+      3
+    ],
+    [
+      167,
+      4
+    ],
+    [
+      173,
+      1
+    ],
+    [
+      173,
+      2
+    ],
+    [
+      173,
+      3
+    ],
+    [
+      173,
+      4
+    ],
+    [
+      179,
+      1
+    ],
+    [
+      179,
+      2
+    ],
+    [
+      179,
+      3
+    ],
+    [
+      179,
+      4
+    ],
+    [
+      181,
+      1
+    ],
+    [
+      181,
+      2
+    ],
+    [
+      181,
+      3
+    ],
+    [
+      181,
+      4
+    ],
+    [
+      191,
+      1
+    ],
+    [
+      191,
+      2
+    ],
+    [
+      191,
+      3
+    ],
+    [
+      191,
+      4
+    ],
+    [
+      193,
+      1
+    ],
+    [
+      193,
+      2
+    ],
+    [
+      193,
+      3
+    ],
+    [
+      193,
+      4
+    ],
+    [
+      197,
+      1
+    ],
+    [
+      197,
+      2
+    ],
+    [
+      197,
+      3
+    ],
+    [
+      197,
+      4
+    ],
+    [
+      199,
+      1
+    ],
+    [
+      199,
+      2
+    ],
+    [
+      199,
+      3
+    ],
+    [
+      199,
+      4
+    ],
+    [
+      211,
+      1
+    ],
+    [
+      211,
+      2
+    ],
+    [
+      211,
+      3
+    ],
+    [
+      211,
+      4
+    ],
+    [
+      223,
+      1
+    ],
+    [
+      223,
+      2
+    ],
+    [
+      223,
+      3
+    ],
+    [
+      223,
+      4
+    ],
+    [
+      227,
+      1
+    ],
+    [
+      227,
+      2
+    ],
+    [
+      227,
+      3
+    ],
+    [
+      227,
+      4
+    ],
+    [
+      229,
+      1
+    ],
+    [
+      229,
+      2
+    ],
+    [
+      229,
+      3
+    ],
+    [
+      229,
+      4
+    ],
+    [
+      233,
+      1
+    ],
+    [
+      233,
+      2
+    ],
+    [
+      233,
+      3
+    ],
+    [
+      233,
+      4
+    ],
+    [
+      239,
+      1
+    ],
+    [
+      239,
+      2
+    ],
+    [
+      239,
+      3
+    ],
+    [
+      239,
+      4
+    ],
+    [
+      241,
+      1
+    ],
+    [
+      241,
+      2
+    ],
+    [
+      241,
+      3
+    ],
+    [
+      241,
+      4
+    ],
+    [
+      251,
+      1
+    ],
+    [
+      251,
+      2
+    ],
+    [
+      251,
+      3
+    ],
+    [
+      251,
+      4
+    ],
+    [
+      257,
+      1
+    ],
+    [
+      257,
+      2
+    ],
+    [
+      257,
+      3
+    ],
+    [
+      257,
+      4
+    ],
+    [
+      263,
+      1
+    ],
+    [
+      263,
+      2
+    ],
+    [
+      263,
+      3
+    ],
+    [
+      263,
+      4
+    ],
+    [
+      269,
+      1
+    ],
+    [
+      269,
+      2
+    ],
+    [
+      269,
+      3
+    ],
+    [
+      269,
+      4
+    ],
+    [
+      271,
+      1
+    ],
+    [
+      271,
+      2
+    ],
+    [
+      271,
+      3
+    ],
+    [
+      271,
+      4
+    ],
+    [
+      277,
+      1
+    ],
+    [
+      277,
+      2
+    ],
+    [
+      277,
+      3
+    ],
+    [
+      277,
+      4
+    ],
+    [
+      281,
+      1
+    ],
+    [
+      281,
+      2
+    ],
+    [
+      281,
+      3
+    ],
+    [
+      281,
+      4
+    ],
+    [
+      283,
+      1
+    ],
+    [
+      283,
+      2
+    ],
+    [
+      283,
+      3
+    ],
+    [
+      283,
+      4
+    ],
+    [
+      293,
+      1
+    ],
+    [
+      293,
+      2
+    ],
+    [
+      293,
+      3
+    ],
+    [
+      293,
+      4
+    ],
+    [
+      307,
+      1
+    ],
+    [
+      307,
+      2
+    ],
+    [
+      307,
+      3
+    ],
+    [
+      307,
+      4
+    ],
+    [
+      311,
+      1
+    ],
+    [
+      311,
+      2
+    ],
+    [
+      311,
+      3
+    ],
+    [
+      311,
+      4
+    ],
+    [
+      313,
+      1
+    ],
+    [
+      313,
+      2
+    ],
+    [
+      313,
+      3
+    ],
+    [
+      313,
+      4
+    ],
+    [
+      317,
+      1
+    ],
+    [
+      317,
+      2
+    ],
+    [
+      317,
+      3
+    ],
+    [
+      317,
+      4
+    ],
+    [
+      331,
+      1
+    ],
+    [
+      331,
+      2
+    ],
+    [
+      331,
+      3
+    ],
+    [
+      331,
+      4
+    ],
+    [
+      337,
+      1
+    ],
+    [
+      337,
+      2
+    ],
+    [
+      337,
+      3
+    ],
+    [
+      337,
+      4
+    ],
+    [
+      347,
+      1
+    ],
+    [
+      347,
+      2
+    ],
+    [
+      347,
+      3
+    ],
+    [
+      347,
+      4
+    ],
+    [
+      349,
+      1
+    ],
+    [
+      349,
+      2
+    ],
+    [
+      349,
+      3
+    ],
+    [
+      349,
+      4
+    ],
+    [
+      353,
+      1
+    ],
+    [
+      353,
+      2
+    ],
+    [
+      353,
+      3
+    ],
+    [
+      353,
+      4
+    ],
+    [
+      359,
+      1
+    ],
+    [
+      359,
+      2
+    ],
+    [
+      359,
+      3
+    ],
+    [
+      359,
+      4
+    ],
+    [
+      367,
+      1
+    ],
+    [
+      367,
+      2
+    ],
+    [
+      367,
+      3
+    ],
+    [
+      367,
+      4
+    ],
+    [
+      373,
+      1
+    ],
+    [
+      373,
+      2
+    ],
+    [
+      373,
+      3
+    ],
+    [
+      373,
+      4
+    ],
+    [
+      379,
+      1
+    ],
+    [
+      379,
+      2
+    ],
+    [
+      379,
+      3
+    ],
+    [
+      379,
+      4
+    ],
+    [
+      383,
+      1
+    ],
+    [
+      383,
+      2
+    ],
+    [
+      383,
+      3
+    ],
+    [
+      383,
+      4
+    ],
+    [
+      389,
+      1
+    ],
+    [
+      389,
+      2
+    ],
+    [
+      389,
+      3
+    ],
+    [
+      389,
+      4
+    ],
+    [
+      397,
+      1
+    ],
+    [
+      397,
+      2
+    ],
+    [
+      397,
+      3
+    ],
+    [
+      397,
+      4
+    ],
+    [
+      401,
+      1
+    ],
+    [
+      401,
+      2
+    ],
+    [
+      401,
+      3
+    ],
+    [
+      401,
+      4
+    ],
+    [
+      409,
+      1
+    ],
+    [
+      409,
+      2
+    ],
+    [
+      409,
+      3
+    ],
+    [
+      409,
+      4
+    ],
+    [
+      419,
+      1
+    ],
+    [
+      419,
+      2
+    ],
+    [
+      419,
+      3
+    ],
+    [
+      419,
+      4
+    ],
+    [
+      421,
+      1
+    ],
+    [
+      421,
+      2
+    ],
+    [
+      421,
+      3
+    ],
+    [
+      421,
+      4
+    ],
+    [
+      431,
+      1
+    ],
+    [
+      431,
+      2
+    ],
+    [
+      431,
+      3
+    ],
+    [
+      431,
+      4
+    ],
+    [
+      433,
+      1
+    ],
+    [
+      433,
+      2
+    ],
+    [
+      433,
+      3
+    ],
+    [
+      433,
+      4
+    ],
+    [
+      439,
+      1
+    ],
+    [
+      439,
+      2
+    ],
+    [
+      439,
+      3
+    ],
+    [
+      439,
+      4
+    ],
+    [
+      443,
+      1
+    ],
+    [
+      443,
+      2
+    ],
+    [
+      443,
+      3
+    ],
+    [
+      443,
+      4
+    ],
+    [
+      449,
+      1
+    ],
+    [
+      449,
+      2
+    ],
+    [
+      449,
+      3
+    ],
+    [
+      449,
+      4
+    ],
+    [
+      457,
+      1
+    ],
+    [
+      457,
+      2
+    ],
+    [
+      457,
+      3
+    ],
+    [
+      457,
+      4
+    ],
+    [
+      461,
+      1
+    ],
+    [
+      461,
+      2
+    ],
+    [
+      461,
+      3
+    ],
+    [
+      461,
+      4
+    ],
+    [
+      463,
+      1
+    ],
+    [
+      463,
+      2
+    ],
+    [
+      463,
+      3
+    ],
+    [
+      463,
+      4
+    ],
+    [
+      467,
+      1
+    ],
+    [
+      467,
+      2
+    ],
+    [
+      467,
+      3
+    ],
+    [
+      467,
+      4
+    ],
+    [
+      479,
+      1
+    ],
+    [
+      479,
+      2
+    ],
+    [
+      479,
+      3
+    ],
+    [
+      479,
+      4
+    ],
+    [
+      487,
+      1
+    ],
+    [
+      487,
+      2
+    ],
+    [
+      487,
+      3
+    ],
+    [
+      487,
+      4
+    ],
+    [
+      491,
+      1
+    ],
+    [
+      491,
+      2
+    ],
+    [
+      491,
+      3
+    ],
+    [
+      491,
+      4
+    ],
+    [
+      499,
+      1
+    ],
+    [
+      499,
+      2
+    ],
+    [
+      499,
+      3
+    ],
+    [
+      499,
+      4
+    ],
+    [
+      503,
+      1
+    ],
+    [
+      503,
+      2
+    ],
+    [
+      503,
+      3
+    ],
+    [
+      503,
+      4
+    ],
+    [
+      509,
+      1
+    ],
+    [
+      509,
+      2
+    ],
+    [
+      509,
+      3
+    ],
+    [
+      509,
+      4
+    ],
+    [
+      521,
+      1
+    ],
+    [
+      521,
+      2
+    ],
+    [
+      521,
+      3
+    ],
+    [
+      521,
+      4
+    ],
+    [
+      523,
+      1
+    ],
+    [
+      523,
+      2
+    ],
+    [
+      523,
+      3
+    ],
+    [
+      523,
+      4
+    ],
+    [
+      541,
+      1
+    ],
+    [
+      541,
+      2
+    ],
+    [
+      541,
+      3
+    ],
+    [
+      541,
+      4
+    ],
+    [
+      547,
+      1
+    ],
+    [
+      547,
+      2
+    ],
+    [
+      547,
+      3
+    ],
+    [
+      547,
+      4
+    ],
+    [
+      557,
+      1
+    ],
+    [
+      557,
+      2
+    ],
+    [
+      557,
+      3
+    ],
+    [
+      557,
+      4
+    ],
+    [
+      563,
+      1
+    ],
+    [
+      563,
+      2
+    ],
+    [
+      563,
+      3
+    ],
+    [
+      563,
+      4
+    ],
+    [
+      569,
+      1
+    ],
+    [
+      569,
+      2
+    ],
+    [
+      569,
+      3
+    ],
+    [
+      569,
+      4
+    ],
+    [
+      571,
+      1
+    ],
+    [
+      571,
+      2
+    ],
+    [
+      571,
+      3
+    ],
+    [
+      571,
+      4
+    ],
+    [
+      577,
+      1
+    ],
+    [
+      577,
+      2
+    ],
+    [
+      577,
+      3
+    ],
+    [
+      577,
+      4
+    ],
+    [
+      587,
+      1
+    ],
+    [
+      587,
+      2
+    ],
+    [
+      587,
+      3
+    ],
+    [
+      587,
+      4
+    ],
+    [
+      593,
+      1
+    ],
+    [
+      593,
+      2
+    ],
+    [
+      593,
+      3
+    ],
+    [
+      593,
+      4
+    ],
+    [
+      599,
+      1
+    ],
+    [
+      599,
+      2
+    ],
+    [
+      599,
+      3
+    ],
+    [
+      599,
+      4
+    ],
+    [
+      601,
+      1
+    ],
+    [
+      601,
+      2
+    ],
+    [
+      601,
+      3
+    ],
+    [
+      601,
+      4
+    ],
+    [
+      607,
+      1
+    ],
+    [
+      607,
+      2
+    ],
+    [
+      607,
+      3
+    ],
+    [
+      607,
+      4
+    ],
+    [
+      613,
+      1
+    ],
+    [
+      613,
+      2
+    ],
+    [
+      613,
+      3
+    ],
+    [
+      613,
+      4
+    ],
+    [
+      617,
+      1
+    ],
+    [
+      617,
+      2
+    ],
+    [
+      617,
+      3
+    ],
+    [
+      617,
+      4
+    ],
+    [
+      619,
+      1
+    ],
+    [
+      619,
+      2
+    ],
+    [
+      619,
+      3
+    ],
+    [
+      619,
+      4
+    ],
+    [
+      631,
+      1
+    ],
+    [
+      631,
+      2
+    ],
+    [
+      631,
+      3
+    ],
+    [
+      631,
+      4
+    ],
+    [
+      641,
+      1
+    ],
+    [
+      641,
+      2
+    ],
+    [
+      641,
+      3
+    ],
+    [
+      641,
+      4
+    ],
+    [
+      643,
+      1
+    ],
+    [
+      643,
+      2
+    ],
+    [
+      643,
+      3
+    ],
+    [
+      643,
+      4
+    ],
+    [
+      647,
+      1
+    ],
+    [
+      647,
+      2
+    ],
+    [
+      647,
+      3
+    ],
+    [
+      647,
+      4
+    ],
+    [
+      653,
+      1
+    ],
+    [
+      653,
+      2
+    ],
+    [
+      653,
+      3
+    ],
+    [
+      653,
+      4
+    ],
+    [
+      659,
+      1
+    ],
+    [
+      659,
+      2
+    ],
+    [
+      659,
+      3
+    ],
+    [
+      659,
+      4
+    ],
+    [
+      661,
+      1
+    ],
+    [
+      661,
+      2
+    ],
+    [
+      661,
+      3
+    ],
+    [
+      661,
+      4
+    ],
+    [
+      673,
+      1
+    ],
+    [
+      673,
+      2
+    ],
+    [
+      673,
+      3
+    ],
+    [
+      673,
+      4
+    ],
+    [
+      677,
+      1
+    ],
+    [
+      677,
+      2
+    ],
+    [
+      677,
+      3
+    ],
+    [
+      677,
+      4
+    ],
+    [
+      683,
+      1
+    ],
+    [
+      683,
+      2
+    ],
+    [
+      683,
+      3
+    ],
+    [
+      683,
+      4
+    ],
+    [
+      691,
+      1
+    ],
+    [
+      691,
+      2
+    ],
+    [
+      691,
+      3
+    ],
+    [
+      691,
+      4
+    ],
+    [
+      701,
+      1
+    ],
+    [
+      701,
+      2
+    ],
+    [
+      701,
+      3
+    ],
+    [
+      701,
+      4
+    ],
+    [
+      709,
+      1
+    ],
+    [
+      709,
+      2
+    ],
+    [
+      709,
+      3
+    ],
+    [
+      709,
+      4
+    ],
+    [
+      719,
+      1
+    ],
+    [
+      719,
+      2
+    ],
+    [
+      719,
+      3
+    ],
+    [
+      719,
+      4
+    ],
+    [
+      727,
+      1
+    ],
+    [
+      727,
+      2
+    ],
+    [
+      727,
+      3
+    ],
+    [
+      727,
+      4
+    ],
+    [
+      733,
+      1
+    ],
+    [
+      733,
+      2
+    ],
+    [
+      733,
+      3
+    ],
+    [
+      733,
+      4
+    ],
+    [
+      739,
+      1
+    ],
+    [
+      739,
+      2
+    ],
+    [
+      739,
+      3
+    ],
+    [
+      739,
+      4
+    ],
+    [
+      743,
+      1
+    ],
+    [
+      743,
+      2
+    ],
+    [
+      743,
+      3
+    ],
+    [
+      743,
+      4
+    ],
+    [
+      751,
+      1
+    ],
+    [
+      751,
+      2
+    ],
+    [
+      751,
+      3
+    ],
+    [
+      751,
+      4
+    ],
+    [
+      757,
+      1
+    ],
+    [
+      757,
+      2
+    ],
+    [
+      757,
+      3
+    ],
+    [
+      757,
+      4
+    ],
+    [
+      761,
+      1
+    ],
+    [
+      761,
+      2
+    ],
+    [
+      761,
+      3
+    ],
+    [
+      761,
+      4
+    ],
+    [
+      769,
+      1
+    ],
+    [
+      769,
+      2
+    ],
+    [
+      769,
+      3
+    ],
+    [
+      769,
+      4
+    ],
+    [
+      773,
+      1
+    ],
+    [
+      773,
+      2
+    ],
+    [
+      773,
+      3
+    ],
+    [
+      773,
+      4
+    ],
+    [
+      787,
+      1
+    ],
+    [
+      787,
+      2
+    ],
+    [
+      787,
+      3
+    ],
+    [
+      787,
+      4
+    ],
+    [
+      797,
+      1
+    ],
+    [
+      797,
+      2
+    ],
+    [
+      797,
+      3
+    ],
+    [
+      797,
+      4
+    ],
+    [
+      809,
+      1
+    ],
+    [
+      809,
+      2
+    ],
+    [
+      809,
+      3
+    ],
+    [
+      809,
+      4
+    ],
+    [
+      811,
+      1
+    ],
+    [
+      811,
+      2
+    ],
+    [
+      811,
+      3
+    ],
+    [
+      811,
+      4
+    ],
+    [
+      821,
+      1
+    ],
+    [
+      821,
+      2
+    ],
+    [
+      821,
+      3
+    ],
+    [
+      821,
+      4
+    ],
+    [
+      823,
+      1
+    ],
+    [
+      823,
+      2
+    ],
+    [
+      823,
+      3
+    ],
+    [
+      823,
+      4
+    ],
+    [
+      827,
+      1
+    ],
+    [
+      827,
+      2
+    ],
+    [
+      827,
+      3
+    ],
+    [
+      827,
+      4
+    ],
+    [
+      829,
+      1
+    ],
+    [
+      829,
+      2
+    ],
+    [
+      829,
+      3
+    ],
+    [
+      829,
+      4
+    ],
+    [
+      839,
+      1
+    ],
+    [
+      839,
+      2
+    ],
+    [
+      839,
+      3
+    ],
+    [
+      839,
+      4
+    ],
+    [
+      853,
+      1
+    ],
+    [
+      853,
+      2
+    ],
+    [
+      853,
+      3
+    ],
+    [
+      853,
+      4
+    ],
+    [
+      857,
+      1
+    ],
+    [
+      857,
+      2
+    ],
+    [
+      857,
+      3
+    ],
+    [
+      857,
+      4
+    ],
+    [
+      859,
+      1
+    ],
+    [
+      859,
+      2
+    ],
+    [
+      859,
+      3
+    ],
+    [
+      859,
+      4
+    ],
+    [
+      863,
+      1
+    ],
+    [
+      863,
+      2
+    ],
+    [
+      863,
+      3
+    ],
+    [
+      863,
+      4
+    ],
+    [
+      877,
+      1
+    ],
+    [
+      877,
+      2
+    ],
+    [
+      877,
+      3
+    ],
+    [
+      877,
+      4
+    ],
+    [
+      881,
+      1
+    ],
+    [
+      881,
+      2
+    ],
+    [
+      881,
+      3
+    ],
+    [
+      881,
+      4
+    ],
+    [
+      883,
+      1
+    ],
+    [
+      883,
+      2
+    ],
+    [
+      883,
+      3
+    ],
+    [
+      883,
+      4
+    ],
+    [
+      887,
+      1
+    ],
+    [
+      887,
+      2
+    ],
+    [
+      887,
+      3
+    ],
+    [
+      887,
+      4
+    ],
+    [
+      907,
+      1
+    ],
+    [
+      907,
+      2
+    ],
+    [
+      907,
+      3
+    ],
+    [
+      907,
+      4
+    ],
+    [
+      911,
+      1
+    ],
+    [
+      911,
+      2
+    ],
+    [
+      911,
+      3
+    ],
+    [
+      911,
+      4
+    ],
+    [
+      919,
+      1
+    ],
+    [
+      919,
+      2
+    ],
+    [
+      919,
+      3
+    ],
+    [
+      919,
+      4
+    ],
+    [
+      929,
+      1
+    ],
+    [
+      929,
+      2
+    ],
+    [
+      929,
+      3
+    ],
+    [
+      929,
+      4
+    ],
+    [
+      937,
+      1
+    ],
+    [
+      937,
+      2
+    ],
+    [
+      937,
+      3
+    ],
+    [
+      937,
+      4
+    ],
+    [
+      941,
+      1
+    ],
+    [
+      941,
+      2
+    ],
+    [
+      941,
+      3
+    ],
+    [
+      941,
+      4
+    ],
+    [
+      947,
+      1
+    ],
+    [
+      947,
+      2
+    ],
+    [
+      947,
+      3
+    ],
+    [
+      947,
+      4
+    ],
+    [
+      953,
+      1
+    ],
+    [
+      953,
+      2
+    ],
+    [
+      953,
+      3
+    ],
+    [
+      953,
+      4
+    ],
+    [
+      967,
+      1
+    ],
+    [
+      967,
+      2
+    ],
+    [
+      967,
+      3
+    ],
+    [
+      967,
+      4
+    ],
+    [
+      971,
+      1
+    ],
+    [
+      971,
+      2
+    ],
+    [
+      971,
+      3
+    ],
+    [
+      971,
+      4
+    ],
+    [
+      977,
+      1
+    ],
+    [
+      977,
+      2
+    ],
+    [
+      977,
+      3
+    ],
+    [
+      977,
+      4
+    ],
+    [
+      983,
+      1
+    ],
+    [
+      983,
+      2
+    ],
+    [
+      983,
+      3
+    ],
+    [
+      983,
+      4
+    ],
+    [
+      991,
+      1
+    ],
+    [
+      991,
+      2
+    ],
+    [
+      991,
+      3
+    ],
+    [
+      991,
+      4
+    ],
+    [
+      997,
+      1
+    ],
+    [
+      997,
+      2
+    ],
+    [
+      997,
+      3
+    ],
+    [
+      997,
+      4
+    ]
+  ]
+}

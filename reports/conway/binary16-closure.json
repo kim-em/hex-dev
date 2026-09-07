@@ -1,0 +1,581 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "scheduling": "Lake default scheduling; four import chains per polynomial-proof family; compatibility follows its primitivity chain; factor-prime proofs form one chain",
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95
+  ],
+  "mem_total_kib": 131530076,
+  "lake_manifest_sha256": "cdc2d5b8bfecf4930e5858f429cf3154dd6bff2da7df79375acdb0966790b060",
+  "cleaned_prefixes": [
+    "HexConway"
+  ],
+  "ceiling_seconds": 300.0,
+  "memory_ceiling_kib": 0,
+  "rss_sampling_seconds": 0.1,
+  "targets": [
+    "HexConway"
+  ],
+  "commit": "6651c9fe1d450437c7a57ffaf9dfd77f76127696",
+  "runs": [
+    {
+      "load_average_start": [
+        6.1279296875,
+        7.78955078125,
+        23.79052734375
+      ],
+      "load_average_end": [
+        6.17529296875,
+        7.62158203125,
+        23.1416015625
+      ],
+      "dependency_builds": [],
+      "capped": false,
+      "memory_capped": false,
+      "max_child_rss_kib": 3677836,
+      "wall_seconds": 32.77832120400126,
+      "peak_tree_rss_kib": 8536120,
+      "exit_code": 0,
+      "artifact_bytes": 15419451,
+      "artifact_count": 672,
+      "artifact_bytes_by_suffix": {
+        ".c": 2172393,
+        ".json": 1925740,
+        ".hash": 4704,
+        ".sig": 7392,
+        ".ir": 1080808,
+        ".server": 344456,
+        ".olean": 2279896,
+        ".ilean": 541663,
+        ".trace": 175887,
+        ".private": 6886512
+      },
+      "modules": [
+        "HexConway.Bounds (303ms)",
+        "HexConway.FactorProofs.S0_0 (322ms)",
+        "HexConway.Power (456ms)",
+        "HexConway.Rebuild (614ms)",
+        "HexConway.Coefficients (354ms)",
+        "HexConway.PrimeFactors (246ms)",
+        "HexConway.Entries.S0_0 (368ms)",
+        "HexConway.Entries.S1_0 (816ms)",
+        "HexConway.Entries.S2_0 (840ms)",
+        "HexConway.Entries.S3_0 (893ms)",
+        "HexConway.Table (256ms)",
+        "HexConway.EntrySource (788ms)",
+        "HexConway.Rabin.S3_0 (2.5s)",
+        "HexConway.Rabin.S0_0 (3.2s)",
+        "HexConway.Rabin.S1_0 (3.3s)",
+        "HexConway.Rabin.S2_0 (3.6s)",
+        "HexConway.Certificates (258ms)",
+        "HexConway.Transport.S0_0 (304ms)",
+        "HexConway.Transport.S1_0 (320ms)",
+        "HexConway.Transport.S2_0 (335ms)",
+        "HexConway.Transport.S3_0 (319ms)",
+        "HexConway.Irreducible (358ms)",
+        "HexConway.Monic (398ms)",
+        "HexConway.ApiCore (1.6s)",
+        "HexConway.Supported.S0_0 (270ms)",
+        "HexConway.Supported.S1_0 (290ms)",
+        "HexConway.Supported.S2_0 (299ms)",
+        "HexConway.Supported.S3_0 (307ms)",
+        "HexConway.Api (264ms)",
+        "HexConway.PrimitivityCore (341ms)",
+        "HexConway.CompatibilityCore (600ms)",
+        "HexConway.PrimitiveProofs.S3_0 (4.6s)",
+        "HexConway.PrimitiveProofs.S1_0 (5.9s)",
+        "HexConway.PrimitiveProofs.S2_0 (7.1s)",
+        "HexConway.CompatibilityProofs.S3_0 (6.0s)",
+        "HexConway.PrimitiveProofs.S0_0 (12s)",
+        "HexConway.Primitivity (261ms)",
+        "HexConway.CompatibilityProofs.S1_0 (7.6s)",
+        "HexConway.CompatibilityProofs.S2_0 (7.1s)",
+        "HexConway.CompatibilityProofs.S0_0 (9.0s)",
+        "HexConway.Compatibility (297ms)",
+        "HexConway (488ms)"
+      ],
+      "log": "reports/conway/binary16-closure-1.log.gz",
+      "timing": "reports/conway/binary16-closure-1.time"
+    },
+    {
+      "load_average_start": [
+        6.17529296875,
+        7.62158203125,
+        23.1416015625
+      ],
+      "load_average_end": [
+        5.76123046875,
+        7.38427734375,
+        22.568359375
+      ],
+      "dependency_builds": [],
+      "capped": false,
+      "memory_capped": false,
+      "max_child_rss_kib": 3678864,
+      "wall_seconds": 32.49614793100045,
+      "peak_tree_rss_kib": 8498928,
+      "exit_code": 0,
+      "artifact_bytes": 15419451,
+      "artifact_count": 672,
+      "artifact_bytes_by_suffix": {
+        ".c": 2172393,
+        ".json": 1925740,
+        ".hash": 4704,
+        ".sig": 7392,
+        ".ir": 1080808,
+        ".server": 344456,
+        ".olean": 2279896,
+        ".ilean": 541663,
+        ".trace": 175887,
+        ".private": 6886512
+      },
+      "modules": [
+        "HexConway.Bounds (313ms)",
+        "HexConway.FactorProofs.S0_0 (318ms)",
+        "HexConway.Power (446ms)",
+        "HexConway.Rebuild (603ms)",
+        "HexConway.PrimeFactors (245ms)",
+        "HexConway.Coefficients (369ms)",
+        "HexConway.Entries.S0_0 (370ms)",
+        "HexConway.Entries.S1_0 (784ms)",
+        "HexConway.Entries.S2_0 (856ms)",
+        "HexConway.Entries.S3_0 (907ms)",
+        "HexConway.Table (257ms)",
+        "HexConway.EntrySource (795ms)",
+        "HexConway.Rabin.S3_0 (2.5s)",
+        "HexConway.Rabin.S0_0 (3.1s)",
+        "HexConway.Rabin.S1_0 (3.2s)",
+        "HexConway.Rabin.S2_0 (3.6s)",
+        "HexConway.Certificates (260ms)",
+        "HexConway.Transport.S0_0 (311ms)",
+        "HexConway.Transport.S1_0 (330ms)",
+        "HexConway.Transport.S2_0 (322ms)",
+        "HexConway.Transport.S3_0 (322ms)",
+        "HexConway.Monic (369ms)",
+        "HexConway.Irreducible (392ms)",
+        "HexConway.ApiCore (1.6s)",
+        "HexConway.Supported.S0_0 (279ms)",
+        "HexConway.Supported.S1_0 (289ms)",
+        "HexConway.Supported.S2_0 (292ms)",
+        "HexConway.Supported.S3_0 (344ms)",
+        "HexConway.Api (265ms)",
+        "HexConway.PrimitivityCore (346ms)",
+        "HexConway.CompatibilityCore (618ms)",
+        "HexConway.PrimitiveProofs.S3_0 (4.7s)",
+        "HexConway.PrimitiveProofs.S1_0 (5.9s)",
+        "HexConway.PrimitiveProofs.S2_0 (7.3s)",
+        "HexConway.CompatibilityProofs.S3_0 (6.1s)",
+        "HexConway.PrimitiveProofs.S0_0 (11s)",
+        "HexConway.Primitivity (264ms)",
+        "HexConway.CompatibilityProofs.S1_0 (7.5s)",
+        "HexConway.CompatibilityProofs.S2_0 (7.2s)",
+        "HexConway.CompatibilityProofs.S0_0 (10s)",
+        "HexConway.Compatibility (303ms)",
+        "HexConway (490ms)"
+      ],
+      "log": "reports/conway/binary16-closure-2.log.gz",
+      "timing": "reports/conway/binary16-closure-2.time"
+    },
+    {
+      "load_average_start": [
+        5.76123046875,
+        7.38427734375,
+        22.568359375
+      ],
+      "load_average_end": [
+        6.22314453125,
+        7.32373046875,
+        21.9853515625
+      ],
+      "dependency_builds": [],
+      "capped": false,
+      "memory_capped": false,
+      "max_child_rss_kib": 3679676,
+      "wall_seconds": 32.50307511899882,
+      "peak_tree_rss_kib": 8511104,
+      "exit_code": 0,
+      "artifact_bytes": 15419451,
+      "artifact_count": 672,
+      "artifact_bytes_by_suffix": {
+        ".c": 2172393,
+        ".json": 1925740,
+        ".hash": 4704,
+        ".sig": 7392,
+        ".ir": 1080808,
+        ".server": 344456,
+        ".olean": 2279896,
+        ".ilean": 541663,
+        ".trace": 175887,
+        ".private": 6886512
+      },
+      "modules": [
+        "HexConway.Bounds (311ms)",
+        "HexConway.FactorProofs.S0_0 (337ms)",
+        "HexConway.Power (465ms)",
+        "HexConway.Rebuild (599ms)",
+        "HexConway.PrimeFactors (256ms)",
+        "HexConway.Coefficients (363ms)",
+        "HexConway.Entries.S0_0 (380ms)",
+        "HexConway.Entries.S1_0 (823ms)",
+        "HexConway.Entries.S2_0 (847ms)",
+        "HexConway.Entries.S3_0 (892ms)",
+        "HexConway.Table (265ms)",
+        "HexConway.EntrySource (786ms)",
+        "HexConway.Rabin.S3_0 (2.5s)",
+        "HexConway.Rabin.S1_0 (3.2s)",
+        "HexConway.Rabin.S0_0 (3.2s)",
+        "HexConway.Rabin.S2_0 (3.7s)",
+        "HexConway.Certificates (264ms)",
+        "HexConway.Transport.S0_0 (319ms)",
+        "HexConway.Transport.S1_0 (323ms)",
+        "HexConway.Transport.S2_0 (324ms)",
+        "HexConway.Transport.S3_0 (341ms)",
+        "HexConway.Irreducible (374ms)",
+        "HexConway.Monic (379ms)",
+        "HexConway.ApiCore (1.7s)",
+        "HexConway.Supported.S0_0 (269ms)",
+        "HexConway.Supported.S1_0 (291ms)",
+        "HexConway.Supported.S2_0 (297ms)",
+        "HexConway.Supported.S3_0 (303ms)",
+        "HexConway.Api (268ms)",
+        "HexConway.PrimitivityCore (352ms)",
+        "HexConway.CompatibilityCore (615ms)",
+        "HexConway.PrimitiveProofs.S3_0 (4.8s)",
+        "HexConway.PrimitiveProofs.S1_0 (5.9s)",
+        "HexConway.PrimitiveProofs.S2_0 (7.4s)",
+        "HexConway.CompatibilityProofs.S3_0 (6.2s)",
+        "HexConway.PrimitiveProofs.S0_0 (11s)",
+        "HexConway.Primitivity (259ms)",
+        "HexConway.CompatibilityProofs.S1_0 (7.5s)",
+        "HexConway.CompatibilityProofs.S2_0 (7.3s)",
+        "HexConway.CompatibilityProofs.S0_0 (10s)",
+        "HexConway.Compatibility (302ms)",
+        "HexConway (491ms)"
+      ],
+      "log": "reports/conway/binary16-closure-3.log.gz",
+      "timing": "reports/conway/binary16-closure-3.time"
+    }
+  ],
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      2,
+      16
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ]
+  ],
+  "input_sha256": {
+    "scripts/conway/ApiTail.lean.in": "97ab27b3e263d79379c5489773799dbd2e355b6b2b454f0c68e5898a1bf2e6c1",
+    "scripts/conway/Replay.lean.in": "80a94fafe5b279e930c6b638c610087d4007b31097432580ae39b394213bf646",
+    "scripts/conway/baseline-scope.json": "32926464f8138d703dce07f932b53d7e9fa4663b445b8183c9253fcce7dabf62",
+    "scripts/conway/candidates.json": "f522efadff49065b1d34326a20fa7bc5398aa0ef14d6ae97cdc1f282e4e88652",
+    "scripts/conway/check.py": "b720cef2f1d5521ffbec3e5bdaabb6ac5ed0ad31777893d3052760ee8c919a8d",
+    "scripts/conway/generate.py": "149e934a665fb239bc92c4889bba224577a0137bef1e838fb8a569075800ee7f",
+    "scripts/conway/import_source.py": "36708c98c3ccb6edcad4a31cc525108f38f35db2f65806e0ae3a4d2780f39c44",
+    "scripts/conway/measure.py": "d24e61399f85cf777baf88295f930348ac82eb8ca8b653df54c71aa01e881fe0",
+    "scripts/conway/requirements.txt": "25f9f1fb1988b230147a1d3092d34e09c069eb7a6c6d6df46b3973b9f2d36efc",
+    "scripts/conway/scope-90.json": "3eff5c37fc9e7172fad92e7e058a1d5c3bb1682ab8abeba1888edcce58be89ec",
+    "scripts/conway/scope-binary16.json": "683a1f5a40adea4f7d422704b58f0a4664f7df3db50c96491788dc9994a95a74",
+    "scripts/conway/scope-binary32.json": "e7027f4846343a8d6fd4719f1ba354c21b1b69c63d79fa7209ac6b2d52937665",
+    "scripts/conway/scope-binary64.json": "af0b1611e752ce4b52c933eb880b3758ebb6cb507e2c9214365a04ff0332cc86",
+    "scripts/conway/scope-envelope.json": "3c1edb9030cb460ba2566ec4268335ef56b8e741bf9d29448fc584c58eadc5db",
+    "scripts/conway/scope-quartic300.json": "cb2c475a6cf586aa5c51ca21e3932ffb4462d0cf0d45afa6fce41bc78f3c8d19",
+    "scripts/conway/scope-quartic500.json": "1a35ac3e113e493d8b109fe08d7a2699c27f9b081d5b413c89e3140d28eaa1eb",
+    "scripts/conway/scope-wide.json": "f5d1c1ab090323fe017b1b605373868896f09a0e07e4766b21166488544999b4",
+    "scripts/conway/scope-wide3.json": "7b20caf4dba19090a8fa6f9a39342354f814eb6d2661088736678b5e3fd1d4e8",
+    "scripts/conway/scope-wide4.json": "0366911786fbd086ca4c828fb48a6d6f993901875a97a31953d28415b1b2a071",
+    "scripts/conway/scope.json": "683a1f5a40adea4f7d422704b58f0a4664f7df3db50c96491788dc9994a95a74"
+  },
+  "source_sha256": {
+    "HexConway/Api.lean": "069c69321e5b99501d43ba4cf4aa793286f674911296a509d29340f31bc3943d",
+    "HexConway/ApiCore.lean": "a9602fb83f8e39faa081cf83b46ddde6da7ee881e3dd4bce36d48ce0f844d752",
+    "HexConway/Bounds.lean": "6eb9c64ac3d6bcf3f415b79606b5ad8e08df58f0124ef326ca88f54ea1a1e4e7",
+    "HexConway/Certificates.lean": "e5ff5fa55a0e55843f599f7951d0fb5b0838e117d89893c97b504c22bb51fd68",
+    "HexConway/Coefficients.lean": "aef38c62026d47b5f4fb3189487c75777d9261f7aa6e5ea2803e041809b0d2b9",
+    "HexConway/Compatibility.lean": "e9502fe8ad463fe8d6bc6ce3170b274f93deda7a4d37e3dcd3f89d2eec07d3c5",
+    "HexConway/CompatibilityCore.lean": "27fe589a5a938d9ffd42a7454f5d08791a4adf00f5a747fd287cec7b0204114c",
+    "HexConway/CompatibilityProofs/S0_0.lean": "f75b6bc2591373f63d4a0ff52d6f38c2f3130dbb387c19a27bad8c317edfc44d",
+    "HexConway/CompatibilityProofs/S1_0.lean": "3d53aa6213495a1d1fdd0fa1067d6806824a560c20d091801bfdea3177f93cf1",
+    "HexConway/CompatibilityProofs/S2_0.lean": "4fdf77009a31fb9676aae2621e88547ba71955421f9f9d6d27932493c4c207ae",
+    "HexConway/CompatibilityProofs/S3_0.lean": "b3d3925bf91624ab5a8ad1f588df64beaaffd3acbf0f2dde5829333bb490790f",
+    "HexConway/Entries/S0_0.lean": "180d027ea099b23518fbfd6ba793d1a2aca0c7417348ce300622eb75313a5e9f",
+    "HexConway/Entries/S1_0.lean": "c634819e15aa7f341a69b9d5a3bb8fe64c20a1b242df136116e50466af115612",
+    "HexConway/Entries/S2_0.lean": "ec867951e16ae8eb31edea12e06d4280f12c4ee70b0acb95c41ae0c1e0b1520e",
+    "HexConway/Entries/S3_0.lean": "087f09e8de5372ef41e8ba8417fac0308b49ea01bef6088b64c45ad3f57b97fc",
+    "HexConway/EntrySource.lean": "ffc9c70235ccda588aae3b229c30544b8559a33113383d52312c23848e4a13bd",
+    "HexConway/FactorProofs/S0_0.lean": "3dc3b99f6bfa1240baed722d1b962aad99ca38725d81f2a83ab11997c63e1809",
+    "HexConway/Irreducible.lean": "5d5778270ed84e7eb161e91933873bcf77ead7dd4c9adc1642a18bbf7493dba8",
+    "HexConway/Monic.lean": "2035cf5af97d5c9856b7cec5c59562b71a8fa846860d03d800154dec6e441fc5",
+    "HexConway/Power.lean": "9cd0359f6a71987695ab0795ca05da24f404091d7eb99aab88c09a6e896cae58",
+    "HexConway/PrimeFactors.lean": "1b121c2725173c10e862f68674173480c77fe6eaa96a21f6116e2575891f6dff",
+    "HexConway/PrimitiveProofs/S0_0.lean": "b0e35402c4fc57e59e78c582223d05a621d52e4e87d576cf0c49cccb73febca6",
+    "HexConway/PrimitiveProofs/S1_0.lean": "5e672e3344394835f0640b1080f05f9b8db28dcfc16877627290d8f502b48371",
+    "HexConway/PrimitiveProofs/S2_0.lean": "1ecfb4afba05e50175661249b8e12d037488890aa9ac715475df187c11abd5d1",
+    "HexConway/PrimitiveProofs/S3_0.lean": "7ae4e9991c67b02723d6ea1006585db93df07c0bf348753d148479958f10a92f",
+    "HexConway/Primitivity.lean": "c56a91d4293e3492c91f9bf33945d79085367e931150c8b9cdaad75696857a03",
+    "HexConway/PrimitivityCore.lean": "70546e02d81dbedb4ac7bd5303f2e741b47e6fdbf767a484275e34b30dac2a2a",
+    "HexConway/Rabin/S0_0.lean": "6eb17aba120fc958c00cc93884cc63f384bdc38563deccd9c151332b81061f73",
+    "HexConway/Rabin/S1_0.lean": "378f0fdc2b35d49c3252ec5dacef88bc25fc834b0444940b6cb7300a5190e0be",
+    "HexConway/Rabin/S2_0.lean": "8e388393c1285e9ebbf3382a3363bfedf3a4a101a241a5b6fec016c0faf0c16d",
+    "HexConway/Rabin/S3_0.lean": "5d0fa2b32ce00b33fe99e55bca846c848ef63aed3512eb8223b9b53c7bde73ea",
+    "HexConway/Rebuild.lean": "c1a3cafc8df3e89643b531d0444f8a21bbe6593529f0dfc63052e4ac0098d3da",
+    "HexConway/Supported/S0_0.lean": "06734154b87033a7c822389bb5d656b248a3b648db6a534c1e8a9a50d23e42bb",
+    "HexConway/Supported/S1_0.lean": "4fea883aacbac6634245f0f9afbbb4016bafc37e250cd1d6ce6fc8ae568ded46",
+    "HexConway/Supported/S2_0.lean": "0800c822963fa56d9c964e3e16405744bbffe658f39151329fbc082873c37a4f",
+    "HexConway/Supported/S3_0.lean": "77c33d98e3db5c3b16beef98ee6714bd6e68201cc400e47e7db97c9f3235fc35",
+    "HexConway/Table.lean": "2df88755ec6368efde8173d558527c388e2cdb283fa34812980abd3162e21088",
+    "HexConway/Transport/S0_0.lean": "f3447bdc507aa58cc4e0ec582aad74a343f9c29e61d0d02f3273e9a74277c403",
+    "HexConway/Transport/S1_0.lean": "61d484262322b02a7e68cdd950bc7dfcac33c92816a054fd083898a932d6c16b",
+    "HexConway/Transport/S2_0.lean": "4a854077c03d090e19a6fd10cc5a8bfe10b2a44f6a9329ec3163873744b8e3e0",
+    "HexConway/Transport/S3_0.lean": "d3232bc3df8c07ddf83bb722c06b91f997153d015e5f416f27448fa3a74f7975",
+    "HexConway.lean": "6763a7dac5656ceee78370230a7f861023d638643068398f8b0bf138fe74755f"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "machine": "chungus2",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "cpu_affinity": [
+    21
+  ],
+  "lean_num_threads": 1,
+  "commit": "8b511516d05072328859eb749c36f72939646e12",
+  "binary_sha256": "ad8e6e9db5133a6a934477bf9d58a943de7833755ff41496f0e819054dcd2160",
+  "driver_sha256": "b7bc24bf9cdc6d3bad926948fd9a24408d866c55609f68f9ded6bb53e8a8312e",
+  "runs": [
+    "reports/conway/runtime-final-594-1.jsonl",
+    "reports/conway/runtime-final-594-2.jsonl",
+    "reports/conway/runtime-final-594-3.jsonl",
+    "reports/conway/runtime-final-594-4.jsonl",
+    "reports/conway/runtime-final-594-5.jsonl"
+  ],
+  "budgets_ns": {
+    "irreducibility": 2000000,
+    "primitivity": 5000000,
+    "compatibility": 5000000
+  },
+  "maxima": {
+    "irreducibility": {
+      "compatibility_ns": 1005791,
+      "compatibility_obligations": 3,
+      "irreducibility_ns": 292975,
+      "n": 8,
+      "p": 7,
+      "primitivity_ns": 797603
+    },
+    "primitivity": {
+      "compatibility_ns": 2440159,
+      "compatibility_obligations": 4,
+      "irreducibility_ns": 241048,
+      "n": 16,
+      "p": 2,
+      "primitivity_ns": 1086451
+    },
+    "compatibility": {
+      "compatibility_ns": 2440159,
+      "compatibility_obligations": 4,
+      "irreducibility_ns": 241048,
+      "n": 16,
+      "p": 2,
+      "primitivity_ns": 1086451
+    }
+  }
+}
