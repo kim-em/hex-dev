@@ -688,3 +688,10 @@ incomplete for both libraries, and both registry counters remain at 3.
 The inclusive profile and complete result validation remain available for
 integration once admissible timing evidence exists. The existing local
 Phase-5–7 work remains preserved; it does not discharge Phase 4.
+
+The [third campaign protocol](hex-int-factor-divisor-protocol-3.md) raises the
+host-interference ceiling to 0.5%, uses a resolution-aware 30-second preflight
+on surveyed pair 33/81, and preserves the model and all scientific settings.
+It is preregistered separately; no result from either exhausted protocol is
+reclassified. Phase 4 remains incomplete until this campaign earns admissible
+timing evidence and the integration audit succeeds.

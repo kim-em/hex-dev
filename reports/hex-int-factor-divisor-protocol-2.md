@@ -5,6 +5,9 @@ this committed protocol and telemetry correction. The original campaign's two
 rejected attempts remain rejected. The original inconclusive experiment and
 noisy diagnostic pass remain in [the original protocol](hex-int-factor-divisor-protocol.md).
 No benchmark implementation, scientific tolerance or public contract changes.
+This campaign is exhausted. The later
+[0.5% protocol](hex-int-factor-divisor-protocol-3.md) is separately
+preregistered and does not reclassify any result described here.
 
 ## Operation and model
 
