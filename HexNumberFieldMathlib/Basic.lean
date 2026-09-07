@@ -267,7 +267,7 @@ private theorem RefinedIsolation.eq_of_canonical {p : ZPoly}
         · simp at htoJ
       have hij : i = j := by
         by_contra hij
-        apply HexRootsMathlib.isolate?_roots_ne p squarefree₁
+        apply HexRootsMathlib.isolateComplexRoots?_roots_ne p squarefree₁
           (separationDepth p : Int) .nkThenPellet hisolate hi hj hij
         rw [← hrawI, ← hrawJ]
         change HexRootsMathlib.DyadicRootIsolation.root r.1 =

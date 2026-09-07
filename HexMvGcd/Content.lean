@@ -49,7 +49,7 @@ def primPart (p : MvPoly n R cmp) : MvPoly n R cmp :=
 The returned certificate stores every step that the checker replays. Steps are
 consed into a reversed accumulator and reversed once after the fold. -/
 def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) : ContentCert n R cmp :=
   let pair := coeffs.foldl
@@ -61,7 +61,7 @@ def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
 /-- Forward-order specification of the reverse-accumulator content fold. -/
 private def contentTrace {R : Type u} {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp) :
     MvPoly n R cmp → List (MvPoly n R cmp) →
       MvPoly n R cmp × List (GcdCert n R cmp)
@@ -73,7 +73,7 @@ private def contentTrace {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
 private theorem contentFold_eq_trace {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) (acc : MvPoly n R cmp)
     (done : List (GcdCert n R cmp)) :
@@ -94,7 +94,7 @@ private theorem contentFold_eq_trace {R : Type u}
 
 private theorem contentCertWith_eq_trace {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) :
     contentCertWith produce coeffs =
@@ -126,7 +126,7 @@ private theorem contentTrace_checks {R : Type u}
 /-- A producer-built fold has exactly one step per coefficient. -/
 theorem contentCertWith_length {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) :
     (contentCertWith produce coeffs).steps.length = coeffs.length := by
@@ -177,7 +177,9 @@ theorem contentCertWith_checks {R : Type u}
             (produce f h) = true := by
         simpa [checkGcd, checkOps] using hproduce
       simp only [checkContent, checkContentUsing]
-      rw [ContentCert.value_ofSteps, ContentCert.steps_ofSteps]
+      simp only [ContentCert.ofSteps]
+      rw [Cert.Content.value_ofSteps (E := RatLeaf R),
+        Cert.Content.steps_ofSteps (E := RatLeaf R)]
       exact contentTrace_checks
         (checkGcdUsing (baseCheckCoprime (cmp := cmp))) produce hp coeffs
         (0 : MvPoly 0 R cmp)
@@ -187,7 +189,9 @@ theorem contentCertWith_checks {R : Type u}
             f h (produce f h) = true := by
         simpa [checkGcd, checkOps] using hproduce
       simp only [checkContent, checkContentUsing]
-      rw [ContentCert.value_ofSteps, ContentCert.steps_ofSteps]
+      simp only [ContentCert.ofSteps]
+      rw [Cert.Content.value_ofSteps (E := RatLeaf R),
+        Cert.Content.steps_ofSteps (E := RatLeaf R)]
       exact contentTrace_checks
         (checkGcdUsing
           (succCheckCoprime (checkOps (R := R) n) (cmp := cmp)))

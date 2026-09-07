@@ -33,6 +33,38 @@ isometry are separate extensions. A dependent matrix is rejected rather than
 silently enumerated with duplicate coefficient representations. A later
 Hermite-normal-form adapter can compute a basis and prove lattice equality.
 
+### Execution and proof ownership
+
+`HexLatticeEnum` owns every executable definition: input checks, exact data
+preparation, integer bounds, coefficient ordering, enumeration, optimization,
+budgets, basis transformations, certificate production, decoding and checking.
+All public operations run with only this library imported. Their definitions
+and termination arguments must not depend on the Mathlib companion.
+
+`HexLatticeEnumMathlib` owns the unconditional correctness proofs for those
+definitions, including preparation validity, enumeration completeness,
+optimality, certificate soundness and acceptance of generated certificates.
+It also identifies the results with integer spans and real Euclidean geometry.
+The theorem obligations below belong to this companion unless explicitly
+identified as computational termination obligations. Elementary arithmetic,
+reconstruction and traversal lemmas may stay in the computational library
+when their proofs use only its existing dependencies.
+
+Prepared data and their validity predicates may be defined in the
+computational library. Local search lemmas may assume that validity; the
+companion proves it for data produced from every accepted independent input
+and discharges it in the public theorems. Callers supply no additional
+Gram-Schmidt correctness witness to execute the public operations or use
+their unconditional guarantees. Runtime validation alone does not establish
+that preparation always succeeds on supported inputs.
+
+This follows the existing LLL split: executable integer Gram-Schmidt data
+are computed without Mathlib, while their determinant and norm correspondence
+is proved in `HexGramSchmidtMathlib`. Follow the
+[Bareiss proof-placement boundary](../../HexBareiss/SPEC/hex-bareiss.md#mathlib-free-vs-mathlib-bridge-proof-surface)
+for these proofs. The companion proves properties of the computational
+definitions directly; it does not provide a second search implementation.
+
 ## Basis, coefficients and result identity
 
 Use the namespace `Hex.LatticeEnum`. The required input shape is:
@@ -80,9 +112,21 @@ coefficients `nu` give `d_i = D[i+1]/D[i]` and
 Reconstruct the rational orthogonalized vectors by the triangular recurrence
 `b_i* = b_i - sum_{j<i} mu[i,j] * b_j*`. This is executable rational
 arithmetic. The semantic `GramSchmidt.Rat.basis` API contains noncomputable
-definitions, so citing that API is not a substitute for an executable
-preparation routine. Prove agreement using the integer data's correspondence
-theorems and the existing orthogonality and reconstruction lemmas.
+wrappers around the executable `GramSchmidt.basisMatrix` and `coeffMatrix`
+kernels. The preparation routine uses the integer data and the triangular
+recurrence above; its agreement with the semantic basis is proved in
+`HexLatticeEnumMathlib` using the integer data's correspondence theorems
+and the existing orthogonality and reconstruction lemmas.
+
+In particular, `GramSchmidt.Int.gramDetVec_eq_gramDet` consumes a
+`StepWitness`, whose general constructor `StepWitness.ofGram` is in
+`HexGramSchmidtMathlib`. The norm-ratio theorem `basis_normSq` and
+scaled-coefficient correspondence `scaledCoeffs_eq` also live there.
+Use these in the companion to prove that `prepare` yields the stated
+coefficients and positive norms for every `Basis`; the executable routine
+does not take these proofs as additional inputs. Any internal preparation
+validation-failure branch must be proved unreachable for such inputs and
+must not add a public failure case.
 
 Compute `tau_i = <t,b_i*>/d_i` and
 `t_perp = t - sum_i tau_i*b_i*`. Prove orthogonality of `t_perp` to every
@@ -162,8 +206,9 @@ The API names and result contracts are:
 | `closest b t` | Every closest lattice vector and their common squared distance. |
 | `closestWith budget b t` | Complete closest-vector answer or incomplete progress with an incumbent. |
 
-`enumerate_spec` states both directions, with no unmentioned hypothesis on
-the target:
+The companion theorem `enumerate_spec` states both directions for the
+computational `enumerate`, with no extra preparation-validity hypothesis or
+unmentioned hypothesis on the target:
 
 ```text
 v occurs in the returned ambient vectors ↔
@@ -212,6 +257,15 @@ algorithms with finite searches, with no claim of practical feasibility at
 arbitrary rank. Their totality proofs must not rely on choosing a large fuel
 constant experimentally.
 
+Executable traversal must terminate by decreasing remaining dimension and
+finite child intervals, independently of the Mathlib correctness proofs.
+Optimization updates the incumbent within the finite initial search and
+then performs a finite search for ties. Any internal handling of invalid
+prepared data must also terminate; the companion proves that the public
+operations on `Basis` inputs take the valid branches and exhaust precisely
+the required search. Budget exhaustion and external cancellation remain the
+sources of incomplete results in the budgeted operations on supported inputs.
+
 When preprocessing returns `B' = U*B` and `B = V*B'`, replay the existing
 `Matrix.sameLatticeCert`. Keep the original input in every public result.
 For coefficients represented as columns, `z` in `B'` becomes `Uᵀ*z` in
@@ -241,9 +295,12 @@ claimed output. Data are finite and decoded with explicit node/size limits.
 The checker does not trust a stored radius bound, cached suffix cost or a
 candidate's claimed Gram-Schmidt coefficients.
 
-`checkEnumeration_sound` proves `enumerate_spec` for accepted certificates.
-The native producer has an accompanying theorem that every finished fixed-
-radius run supplies an accepted certificate. Certificate replay can require
+The checker and native producer are defined in `HexLatticeEnum`. The companion's
+`checkEnumeration_sound` proves the complete membership, reconstruction and
+uniqueness contract of `enumerate_spec` for the output of any accepted
+certificate, without assuming that the certificate came from the native
+producer. The companion also proves that every finished fixed-radius run on
+supported inputs supplies an accepted certificate. Certificate replay can require
 asymptotically as many nodes as enumeration. This SPEC does not promise a
 compact polynomial-size proof of an exhaustive search.
 
@@ -254,13 +311,23 @@ vectors the supplied point is nonzero, and every nonzero leaf must have norm
 every strictly better point, proves attainment and includes all ties.
 The rank-zero shortest answer has its own direct proof.
 
-Proof-producing callers execute search outside the kernel and replay literal
-certificates with `checkEnumeration_sound` or the optimum-checker theorem.
-Expose the integer/rational checking operations for kernel reduction, with
+Proof-producing callers import the companion's `checkEnumeration_sound` or
+optimum-checker theorem, execute the computational search outside the kernel,
+and replay literal certificates through the computational checker. Expose
+the integer/rational checking operations for kernel reduction, with
 separate limits for generation, decoding and replay. `native_decide` and new
 axioms are forbidden. No generic certificate-cache format is introduced here.
 
 ## Mathlib companion
+
+`HexLatticeEnumMathlib` proves correctness of the executable API as well as
+its correspondence with Mathlib. It establishes preparation validity,
+`vector_injective`, the exact distance decomposition, exhaustive search and
+all-ties optimality, and certificate-checker soundness and producer acceptance.
+Its public `enumerate_spec`, `shortest_spec` and `closest_spec` theorems apply
+to the operations in `Hex.LatticeEnum` with only their stated input contracts.
+Internal validity hypotheses are discharged using the existing integer
+Gram-Schmidt correspondence. No executable operation moves into this library.
 
 The lattice is the **integer span** of the basis rows, not their rational or
 real span. `HexLatticeEnumMathlib` identifies it with a `Submodule ℤ` of the
@@ -268,10 +335,9 @@ rational coordinate space and with its image in real Euclidean space. A
 `Submodule ℚ` generated by a nonzero row would contain arbitrarily short
 rational multiples and would invalidate shortest-vector claims.
 
-The headline theorem `enumerate_spec` transports complete ambient-vector
-membership to that integer span and the real squared-distance inequality.
-Prove `shortest_spec` and `closest_spec` against the mathematical minima,
-with list completeness as well as soundness. Coordinate casts preserve the
+Alongside the computational API's headline theorems, prove their integer-span
+and real squared-distance formulations, including global shortest and closest
+minima with list completeness as well as soundness. Coordinate casts preserve the
 exact rational squared distances. Prove discreteness from the integer
 embedding and independence rather than assuming that every finitely generated
 real additive subgroup is discrete.
@@ -286,6 +352,7 @@ The companion is to be classified `correspondence_only: true` when activated.
 Its comparator absence class is **correspondence-only-layer**. Runtime
 conformance and performance belong to the computational owner below.
 Build-only examples under `HexLatticeEnumMathlib/Tests.lean` exercise the
+preparation theorem, unconditional search contracts, kernel certificate replay,
 transport and geometric consequences, with no runtime benchmark declarations.
 
 Computational conformance owner: `HexLatticeEnum`.
@@ -369,18 +436,29 @@ scheduled hardware workflow. No additional workflow or matrix is introduced.
 ## Placement and implementation order
 
 1. `HexLatticeEnum/Basic.lean` defines independent inputs, coefficients,
-   ambient vectors and distance. `GramSchmidt.lean` prepares exact data and
-   proves the distance decomposition.
+   ambient vectors and distance. `GramSchmidt.lean` implements exact data
+   preparation and its validity predicate. In
+   `HexLatticeEnumMathlib/GramSchmidt.lean`, prove preparation validity,
+   coefficient injectivity and the distance decomposition using the existing
+   Gram-Schmidt correspondence.
 2. `Bounds.lean` defines exact integer intervals and Schnorr-Euchner order.
-   `Enumerate.lean` implements fixed-radius search and its completeness proof.
-3. `Closest.lean` implements Babai and optimization. `Shortest.lean` handles
-   nonzero minima. Budgeted forms share the same traversal.
-4. `Cert.lean` implements fixed-radius and optimum checkers, native
-   certificate production and kernel replay tests.
-5. `HexLatticeEnumMathlib/Correspondence.lean` transports integer-span and
-   distance facts. `Geometry.lean` proves the packing-radius and kissing-number
-   consequences. Add umbrellas, conformance, benchmarks and the manual under
-   the ordinary phase rules.
+   `HexLatticeEnum/Enumerate.lean` implements fixed-radius search and its
+   structural termination argument. `HexLatticeEnumMathlib/Enumerate.lean`
+   proves bounds, ordering and search completeness, reusing elementary lemmas
+   from the computational library where available.
+3. `HexLatticeEnum/Closest.lean` implements Babai and optimization.
+   `Shortest.lean` handles nonzero minima. Budgeted forms share the same
+   traversal. The companion's `Closest.lean` and `Shortest.lean` prove the
+   candidate, budget and unconditional all-ties optimality contracts.
+4. `HexLatticeEnum/Cert.lean` implements fixed-radius and optimum checkers,
+   native certificate production and bounded decoding. The companion's
+   `Cert.lean` proves checker soundness and producer acceptance;
+   `HexLatticeEnumMathlib/Tests.lean` includes kernel replay proofs.
+5. `HexLatticeEnumMathlib/Correspondence.lean` establishes integer-span and
+   real-distance formulations of the correctness theorems. `Geometry.lean`
+   proves the packing-radius and kissing-number consequences. Add umbrellas,
+   computational conformance and benchmarks, and the manual under the ordinary
+   phase rules.
 
 The first manual example is an integer least-squares problem with a
 nonoptimal Babai candidate, followed by a certified closest vector. For a

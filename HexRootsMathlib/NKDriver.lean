@@ -137,13 +137,13 @@ theorem isolateAll_nk_simple {p : Hex.ZPoly} {target : Int}
     (Array.getElem_mem_toList hi)
   exact ⟨iso, hiso, NKData.sound hnk⟩
 
-/-- In the positive-degree branch, successful `isolate` execution is a
+/-- In the positive-degree branch, successful `ZPoly.isolateComplexRoots?` execution is a
 successful Cauchy-started `isolateAll?` run whose result indices correspond
 exactly to the returned NK atoms. -/
 theorem isolate_nk_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms) :
     ∃ rs : Array (Hex.Certified p),
       Hex.isolateAll? p (max atomPrec (Hex.separationDepth p : Int))
         #[Hex.Component.cauchy p hdegree] .nk = some rs ∧
@@ -152,7 +152,7 @@ theorem isolate_nk_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         rs[i] = .atom atoms[i] ∧ Hex.nkWitness p atoms[i].square ∧
           atoms[i].witness.isNK = true := by
   have hrun' := hrun
-  rw [Hex.isolate?, dite_eq_left hdegree] at hrun'
+  rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_left hdegree] at hrun'
   let target := max atomPrec (Hex.separationDepth p : Int)
   cases hall : Hex.isolateAll? p target
       #[Hex.Component.cauchy p hdegree] .nk with
@@ -186,7 +186,7 @@ requested precision and contains a unique interior simple root. -/
 theorem isolate_nk_simple (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms)
     {i : Nat} (hi : i < atoms.size) :
     atomPrec ≤ atoms[i].square.prec ∧
       Hex.nkWitness p atoms[i].square ∧
@@ -210,7 +210,7 @@ disjoint closed circumscribed discs. -/
 theorem isolate_nk_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms)
     {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
     Disjoint (DyadicSquare.closedDisc atoms[i].square)
       (DyadicSquare.closedDisc atoms[j].square) := by
@@ -229,7 +229,7 @@ theorem isolate_nk_covers_once_of_pos (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
     (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms)
     {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z) :
     ∃! i : Fin atoms.size,
       z ∈ DyadicSquare.closedSquare atoms[i].square := by
@@ -282,28 +282,28 @@ theorem not_isRoot_of_degree_not_pos (p : Hex.ZPoly) (hp : p.size ≠ 0)
   apply hdegree
   simpa only [natDegree_toPolyℂ] using hpos
 
-/-- A successful non-positive-degree `isolate` call is exactly the nonzero
+/-- A successful non-positive-degree `ZPoly.isolateComplexRoots?` call is exactly the nonzero
 constant branch and returns the empty atom array. -/
 theorem isolate_nk_nonpositive (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
     (hdegree : ¬0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms) :
     p.size ≠ 0 ∧ atoms = #[] := by
   have hrun' := hrun
-  rw [Hex.isolate?, dite_eq_right hdegree] at hrun'
+  rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_right hdegree] at hrun'
   by_cases hp : p.size = 0
   · simp [hp] at hrun'
   · have hatoms : atoms = #[] := by
       simpa only [hp, ↓reduceIte, Option.some.injEq] using hrun'.symm
     exact ⟨hp, hatoms⟩
 
-/-- Every successful NK-only `isolate` call assigns each complex root to
+/-- Every successful NK-only `ZPoly.isolateComplexRoots?` call assigns each complex root to
 exactly one returned atom, including the vacuous nonzero-constant branch. -/
 theorem isolate_nk_covers_once (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms)
     {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z) :
     ∃! i : Fin atoms.size,
       z ∈ DyadicSquare.closedSquare atoms[i].square := by
@@ -313,11 +313,11 @@ theorem isolate_nk_covers_once (p : Hex.ZPoly)
     exact (not_isRoot_of_degree_not_pos p hp hdegree z hzroot).elim
 
 /-- Any two differently indexed atoms returned by successful NK-only
-`isolate` execution have disjoint closed circumscribed discs. -/
+`ZPoly.isolateComplexRoots?` execution have disjoint closed circumscribed discs. -/
 theorem isolate_nk_pairwise (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms)
     {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
     Disjoint (DyadicSquare.closedDisc atoms[i].square)
       (DyadicSquare.closedDisc atoms[j].square) := by
@@ -332,7 +332,7 @@ precision and has the unique interior simple-root contract. -/
 theorem isolate_nk_atom_sound (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate? p h atomPrec .nk = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec .nk = some atoms)
     {i : Nat} (hi : i < atoms.size) :
     atomPrec ≤ atoms[i].square.prec ∧
       Hex.nkWitness p atoms[i].square ∧

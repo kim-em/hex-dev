@@ -88,8 +88,8 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-invariant-factors-mathlib**: the characteristic-matrix module correspondence, product agreement with the independently computed characteristic polynomial, and largest-factor agreement with the independently computed minimal polynomial
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
-- **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
-- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolate?`
+- **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
+- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
 - **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
@@ -98,7 +98,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
-- **hex-lattice-enum-mathlib** (planned): integer-span and Euclidean-distance correspondence, packing radius and kissing number
+- **hex-lattice-enum-mathlib** (planned): preparation, search and certificate correctness proofs, integer-span and Euclidean-distance correspondence, packing radius and kissing number
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
@@ -261,8 +261,9 @@ family.
 
 `hex-lattice-enum` adds exact shortest- and closest-vector search to the
 integer lattice APIs. It uses `hex-lll` only for optional preprocessing and
-`hex-gram-schmidt` for exact branch bounds. The Mathlib companion preserves
-the integer span when interpreting the results in Euclidean space.
+`hex-gram-schmidt` for exact branch bounds. The Mathlib companion proves
+preparation validity, complete search and certificate correctness, and interprets
+the results through the integer span in Euclidean space.
 
 The integer normal forms within it:
 
@@ -623,7 +624,7 @@ hex-berlekamp-zassenhaus ┘
 ## Index
 
 - [hex-lattice-enum](hex-lattice-enum.md): exact lattice enumeration, shortest and closest vectors, completeness certificates and geometric consequences
-- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): integer-span and Euclidean-distance correspondence
+- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): correctness proofs for preparation, search and certificates, and integer-span and Euclidean-distance correspondence
 
 Libraries marked **(released)** are published as standalone
 repositories; see
@@ -680,9 +681,9 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-z-gcd.md](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
 - [hex-cyclotomic.md](hex-cyclotomic.md): dense integer cyclotomic polynomials indexed by a checked factorization, the squarefree-kernel and divisor-recursion routes, the divisor family, and the factorization of `x^n - 1` (the Mathlib companion is specified in the same file)
 - [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
-- [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
+- [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
-- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolate?`
+- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)

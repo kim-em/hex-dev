@@ -141,7 +141,7 @@ theorem SimpleRoot.posDegree {p : ZPoly} (x : SimpleRoot p) :
   exact i.1.posDegree
 
 /-- Wrap an isolation as a `RefinedIsolation` when it meets the separation
-    precision, deciding the subtype bound. `isolate`'s output always
+    precision, deciding the subtype bound. `ZPoly.isolateComplexRoots?`'s output always
     qualifies (its target has a `separationDepth ≥ mahlerPrec` floor); this
     is the constructor consumers use to record that fact. -/
 @[expose]

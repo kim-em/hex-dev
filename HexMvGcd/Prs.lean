@@ -28,7 +28,7 @@ universe u
 
 /-- Operations constructed together at one arity. Keeping the pair together
 makes every recursive call visibly decrease the arity. -/
-structure PrsOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
+structure PrsOpsAt (R : Type u) [Lean.Grind.CommRing R] (n : Nat) : Type (u + 1) where
   gcdCert : (cmp : Mono n → Mono n → Ordering) → [IsMonomialOrder cmp] →
     MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp
   coprimeCert : (cmp : Mono n → Mono n → Ordering) → [IsMonomialOrder cmp] →

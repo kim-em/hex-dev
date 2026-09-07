@@ -206,6 +206,16 @@ def embedLower (level : Level) (lower : List Level)
   polyCoords <| DensePoly.ofCoeffs <| f.map fun coefficient =>
     Coeff.ofData levels coefficient
 
+/-- Start recovery division with the monic shifted component when it has
+smaller degree than the lifted norm factor. The remaining Euclidean chain
+uses exactly the reference gcd's remaining fuel and remainder representative. -/
+@[expose]
+def recoveryGcd (p q : DensePoly (Coeff levels)) : DensePoly (Coeff levels) :=
+  if p.isZero = false ∧ p.size < q.size ∧ p.leadingCoeff = 1 then
+    DensePoly.gcdAux p (DensePoly.modArray q p id) (p.size + q.size - 1)
+  else
+    DensePoly.gcd p q
+
 /-- Recover current-level factors from irreducible lower factors of a
 squarefree Trager norm, then undo the selected generator shift. -/
 @[expose]
@@ -217,7 +227,7 @@ def recover (level : Level) (lower : List Level)
   let shifted := rawPoly levels (shiftTop level lower component shift)
   lowerFactors.foldl (fun out lowerFactor =>
     let lifted := rawPoly levels (embedLower level lower lowerFactor)
-    let common := Norm.monic (DensePoly.gcd shifted lifted)
+    let common := Norm.monic (recoveryGcd shifted lifted)
     if 0 < common.natDegree then
       let unshifted := shiftTop level lower (polyCoords common) (-shift)
       out.push (polyCoords (Norm.monic (rawPoly levels unshifted)))
@@ -517,6 +527,20 @@ private def factorSqrtThreeLevel : Level where
     let padded : Array (Array Rat) := #[#[-1, 0, 0], #[1]]
     let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
     !check [] f #[1] #[(padded, 2), (xSubOne, 1)]
+
+-- Exercise the monic first remainder, a nonzero continuation, and the
+-- zero/nonmonic/degree-order fallback cases over three tower heights.
+#guard
+    [[], [yunSqrtTwoLevel], [factorSqrtThreeLevel, yunSqrtTwoLevel]].all fun levels =>
+      let x := rawPoly levels #[#[], #[1]]
+      let p := x * x + 1
+      let q := p * x
+      let twice := DensePoly.scale (Coeff.ofData levels #[2]) p
+      recoveryGcd p q = p &&
+        recoveryGcd p (q + 1) = 1 &&
+        recoveryGcd (0 : DensePoly (Coeff levels)) q = q &&
+        recoveryGcd twice (twice * x) = twice &&
+        recoveryGcd q p = p
 
 end Factor
 

@@ -210,9 +210,10 @@ structure IsoData where
 constant Sturm tail), optionally refining every root to width `2 ^ (-widthK)`
 through the cached-chain `refineToWithChain`. -/
 meta def runBackend (f : Hex.ZPoly) (widthK : Option Int) : MetaM IsoData := do
-  let some out := Hex.ZPoly.isolate? f
-    | throwError "isolate_roots: internal error: the backend ZPoly.isolate? returned none on \
-        square-free input (please report this as a bug)"
+  let some out := Hex.ZPoly.isolateRealRoots? f
+    | throwError "isolate_roots: internal error: the backend \
+        ZPoly.isolateRealRoots? returned none on square-free input \
+        (please report this as a bug)"
   let chain := Hex.ZPoly.sturmChain f
   let isos := out.isolations
   let refined := match widthK with

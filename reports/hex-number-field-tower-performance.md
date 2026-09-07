@@ -370,6 +370,18 @@ The captured rational-squarefreeness path is only 2.05% inclusive, so eliminatin
 that duplication is not needed to remove the dominant exact-gcd coefficient
 growth.
 
+### Norm construction and gcd recovery
+
+Independent fixed-case comparisons retain two additional changes. The shifted
+bivariate norm input uses a descending Horner fold, avoiding the separate
+ascending-power accumulator. Recovery uses the public remainder-only division
+worker with identity leading-coefficient scaling when the shifted component is
+monic and smaller than its lifted norm factor. Its companion theorem proves
+exact equality with the reference gcd, including the unnormalised remainder
+representative and remaining fuel. All public reconstruction, irreducibility,
+ordering, multiplicity, and certificate checks remain in place.
+
+
 ## Comparator ratios
 
 The library SPEC declares one external comparator,
@@ -469,13 +481,47 @@ level these units produce). The measurements above cover exactly the
 
 The [comparison protocol](hex-number-field-tower-factor-protocol.md) retains
 the existing fixed inputs, five repeats, a 0.2-second inner-batch floor, and
-unchanged 2-second canonical budgets. No exponent was fitted. **There is no
-accepted new timing comparison:** the first candidate's CPU/sibling were
-96%/97% busy at postflight, and both protocol-amended retries failed the 5%
-idleness threshold. The next baseline's CPU/sibling were 98.5%/97.5%; the
-final baseline on CPU 1 failed at 13.1%/1.5%. Both retries stopped before
-running the candidate. The retry limit is exhausted.
-These runs do not replace the earlier Phase-4 evidence or establish a speedup.
+unchanged 2-second canonical budgets. Two accepted paired comparisons of the
+original executable against the merged modular-check executable give the
+following **ranges of paired medians and speedups**. Both arms of each pair
+used the same core; the second pair reversed the arm order. No exponent was
+fitted. Every Hex result hash matches, including the canonical certificate
+checksum, and every fresh PARI degree/multiplicity checksum matches Hex.
+
+| operation | baseline median ms | modular median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 1.079–1.080 | 1.035–1.045 | 1.03–1.04× |
+| factor, degree 3 | 1.462–1.469 | 1.393–1.407 | 1.04–1.05× |
+| factor, degree 4 | 2.069–2.076 | 1.934–1.935 | 1.07× |
+| factor, degree 6 | 3.597–3.600 | 3.055–3.121 | 1.15–1.18× |
+| factor, degree 8 | 6.128–6.153 | 4.509–4.577 | 1.34–1.36× |
+| factor, degree 12 | 16.565–16.594 | 9.262–9.298 | 1.78–1.79× |
+| factor, degree 24 | 250.279–252.941 | 34.380–34.625 | 7.23–7.36× |
+| check, degree 24 | 125.002–125.079 | 16.848–16.988 | 7.36–7.42× |
+
+The accepted pairs used CPU 5/sibling 53 and CPU 15/sibling 63. Each arm
+passed the registered two-second pre/post idleness checks and the mean
+sibling-utilization gate during execution. The first five attempts were
+rejected on host telemetry (one before timing); every rejected export is
+retained alongside the accepted exports in the
+[artifact manifest](bench-results/hex-number-field-tower-followup-manifest.json).
+The manifest also preserves the orchestration script. Harness exports record
+the measurement checkout; the host records identify each saved executable's
+source commit and SHA-256. This is local shared-host evidence, not a
+release-quality verdict or a replacement for Phase-4 model coverage.
+
+Fresh PARI measurements remain informational and variable: in the two modular
+arms, degree-12 medians were 76.277 and 97.002 µs, giving raw PARI/Hex time
+ratios of 0.00820 and 0.01047. The corresponding protocol-overhead medians were
+7.585 and 7.382 µs. These pairs establish the Hex before/after improvement;
+the comparator still has a substantial gap and performs no certificate replay.
+
+The earlier comparison series supplied no accepted result: its first
+candidate's CPU/sibling were 96%/97% busy at postflight, and both
+protocol-amended retries failed the 5% idleness threshold. The next baseline's
+CPU/sibling were 98.5%/97.5%; the final baseline on CPU 1 failed at
+13.1%/1.5%. Those retries stopped before running the candidate and remain
+contaminated diagnostics, excluded from the table above.
 
 For transparency, the first attempt's raw per-call medians are retained below
 as **contaminated diagnostics only**. All repeat hashes agree, all eight Hex
@@ -495,6 +541,126 @@ ratio.
 | factor, degree 24 | 253.152 | 34.443 |
 | check, degree 24 | 125.242 | 16.711 |
 
+
+### Norm and recovery comparisons
+
+
+The [artifact manifest](bench-results/hex-number-field-tower-followup-manifest.json)
+contains complete exports and telemetry for two accepted opposite-order pairs
+per variant. The eight Hex hashes match throughout. Both isolated variants
+and their combination meet the registered retention criteria. These are
+ranges of paired speedups on the unchanged canonical degree-24 inputs:
+
+| variant against modular-check baseline | factor speedup | replay speedup |
+|---|---:|---:|
+| Horner norm construction | 1.018× | 1.019–1.022× |
+| monic first recovery remainder | 1.025–1.044× | 1.004–1.019× |
+| both changes | 1.017–1.032× | 1.025–1.033× |
+
+The smaller effects are variable across local pairs and are not additive.
+The 0.36% isolated recovery replay improvement in one pair is smaller than
+its repeat spread: baseline min/median/max 16.626/16.819/17.068 ms and
+candidate 16.466/16.759/17.085 ms. The retention rule requires both canonical
+medians to improve but excludes smaller-rung regressions only when ranges
+are disjoint; it is a selection rule, not a statistical significance test.
+No minimum effect size was registered, and none is inferred afterward.
+One isolated recovery degree-4 median increased by 0.53%; its repeat ranges
+overlap, so it is not a repeat-range-disjoint regression. The combined
+implementation improves every Hex median in both accepted pairs.
+
+A separate direct comparison of the combined implementation (`8d54c7158`)
+against the original executable gives the following ranges. These speedups
+are measured directly, not multiplied from the ablations:
+
+| operation | original median ms | combined median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 1.073–1.074 | 0.955–0.966 | 1.11–1.13× |
+| factor, degree 3 | 1.453–1.464 | 1.271–1.275 | 1.14–1.15× |
+| factor, degree 4 | 2.077–2.080 | 1.761–1.765 | 1.18× |
+| factor, degree 6 | 3.573–3.587 | 2.849–2.857 | 1.25–1.26× |
+| factor, degree 8 | 6.098–6.121 | 4.285–4.297 | 1.42–1.43× |
+| factor, degree 12 | 16.297–16.399 | 8.695–8.767 | 1.87× |
+| factor, degree 24 | 250.251–250.794 | 33.329–33.403 | 7.49–7.52× |
+| check, degree 24 | 124.527–124.651 | 16.295–16.538 | 7.54–7.64× |
+
+
+Fresh PARI 2.17.3/cypari2 2.2.4 measurements paired with the combined binary
+remain informational. Protocol-overhead medians are 7.236 and 7.290 µs;
+all rungs pass the 50% overhead-share eligibility threshold. The adjusted
+ratio is `(PARI median − overhead median) / Hex median`, with construction
+and serialization still charged to PARI. Values below are ranges across the
+two accepted pairs; ratios retain the PARI/Hex convention above.
+
+| n | Hex median ms | PARI median µs | raw ratio | adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.955–0.966 | 28.924–29.080 | 0.02994–0.03046 | 0.02245–0.02282 |
+| 3 | 1.271–1.275 | 34.069–34.375 | 0.02672–0.02704 | 0.02105–0.02131 |
+| 4 | 1.761–1.765 | 39.551–39.616 | 0.02241–0.02250 | 0.01831–0.01836 |
+| 6 | 2.849–2.857 | 119.987–121.588 | 0.04212–0.04256 | 0.03958–0.04001 |
+| 8 | 4.285–4.297 | 47.611–48.016 | 0.01111–0.01118 | 0.00942–0.00948 |
+| 12 | 8.695–8.767 | 74.756–75.037 | 0.00856–0.00860 | 0.00773–0.00777 |
+
+The additional already-monic normalization variant (`9c6234e8e`) is **not
+retained**. Both accepted pairs improve factorization (1.012–1.013× at degree
+24 and 1.131–1.159× at degree 2), but replay is inconsistent: 16.271 to
+16.367 ms in one pair (0.6% slower), and 16.283 to 16.074 ms in the other.
+The registered rule requires improvement in both canonical replay medians.
+The complete negative retention decision and all rejected attempts remain in
+the manifest. This is an inconclusive replay effect, not evidence of a
+repeat-range-disjoint regression, and the criterion was not relaxed afterward.
+
+The original baseline commit is an ancestor of the retained GitHub PR ref
+`refs/pull/10077/head`. Unrelated graph-isomorphism changes between source
+checkpoints are outside the tower benchmark's computational imports. Saved
+binary hashes identify the executables; harness checkout metadata is not used
+as a substitute for their source provenance.
+The tag `bench/issue-10074-measured` preserves the measured source history
+across the integration rebase onto the upstream `natDegree` API rewrite.
+
+The archived runners identify the code that collected each series. The final
+validator separately rechecks all 28 accepted exports after collection and
+records seven `*-validated-decision.json` artifacts, including raw min/median/max
+values, source/binary consistency, accepted host status, and opposite arm
+orders. The six comparisons of retained implementations qualify;
+the additional normalization comparison does not.
+
+### Integrated executable
+
+The integrated implementation at `2ae8157bc` includes the upstream
+`natDegree` API rewrite. The accessor is an inline abbreviation of the old
+expression, but generated code and the executable hash differ. A separate
+preregistered comparison measures this actual integrated binary against the
+original executable. Attempts 4 and 6 pass on CPU 27/sibling 75 and CPU
+32/sibling 80, respectively, with opposite arm orders. All four earlier
+attempts are rejected on host telemetry and remain archived. Every Hex and
+fresh PARI hash matches; the complete series satisfies the retention rule.
+
+| operation | original median ms | integrated median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 1.068–1.071 | 0.956–0.959 | 1.116–1.117× |
+| factor, degree 3 | 1.462–1.465 | 1.2747–1.2754 | 1.146–1.149× |
+| factor, degree 4 | 2.065–2.077 | 1.760–1.771 | 1.173× |
+| factor, degree 6 | 3.571–3.594 | 2.856–2.864 | 1.251–1.255× |
+| factor, degree 8 | 6.157–6.169 | 4.305–4.318 | 1.429–1.430× |
+| factor, degree 12 | 16.314–16.376 | 8.746–8.837 | 1.853–1.865× |
+| factor, degree 24 | 250.261–250.559 | 33.540–33.691 | 7.43–7.47× |
+| check, degree 24 | 124.749–124.879 | 16.302–16.414 | 7.60–7.66× |
+
+The paired PARI 2.17.3/cypari2 2.2.4 control has protocol-overhead medians
+7.209 and 7.252 µs. All six rungs remain below the 50% overhead-share ceiling.
+These ratios use the same PARI/Hex convention and overhead subtraction as
+above; they describe the integrated binary, not an extrapolation from the
+earlier comparison.
+
+| n | Hex median ms | PARI median µs | raw ratio | adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.956–0.959 | 28.950–29.073 | 0.03028–0.03030 | 0.02274 |
+| 3 | 1.2747–1.2754 | 34.057–34.242 | 0.02672–0.02685 | 0.02103–0.02120 |
+| 4 | 1.760–1.771 | 39.172–39.293 | 0.02212–0.02233 | 0.01803–0.01823 |
+| 6 | 2.856–2.864 | 120.981–123.319 | 0.04237–0.04306 | 0.03983–0.04054 |
+| 8 | 4.305–4.318 | 47.705–47.719 | 0.01105–0.01108 | 0.00937–0.00941 |
+| 12 | 8.746–8.837 | 74.424–74.942 | 0.00848–0.00851 | 0.00766–0.00768 |
+
 ## Profile
 
 ### Rational squarefreeness
@@ -508,8 +674,8 @@ candidate, so these are not renormalized into comparable within-target shares.
 In the candidate capture, recovery occupies 26.61%, shifted norm construction
 20.54%, integer factorization 10.00%, and the modular rational squarefreeness
 predicate 2.05% of the whole thread. Checked replay is still 48.56% inclusive;
-its work overlaps those phases. This identifies recovery and norm construction
-as the next targets without attributing the original loss to certificate
+its work overlaps those phases. These shares motivate the isolated recovery and norm-construction
+comparisons above without attributing the original loss to certificate
 checking alone.
 
 The captured helper is named `Norm.ratSquarefreeFast` at source `b4a02beaf`;
@@ -650,7 +816,7 @@ these whole-capture shares is promoted to an exact within-target percentage.
 95.71% of the raw capture is inside `Hex.NumberTower.adjoin?`. The dominant
 phase is candidate-factor disambiguation under the fixed embedding:
 `RawEvaluation.vanishesAt?` 95.46% → `Hex.AlgebraicRoot.ofEliminant?`
-94.92% → the upstream isolation kernel `Hex.isolate?`/`isolateLoop` 95.15%,
+94.92% → the upstream isolation kernel `Hex.ZPoly.isolateComplexRoots?`/`isolateLoop` 95.15%,
 with `Hex.taylor` 69.37% and dyadic Gauss arithmetic (`GaussDyadic.mul`
 46.63%) as the leaf work; `Internal.extend?` (level validation) is 31.88%
 and factor selection `selectFactor?` 63.62%. The factorization step itself
@@ -658,7 +824,7 @@ is not visible at this input because the quartic factors immediately; the
 cost is the SPEC's embedding invariant being enforced (`adjoin?` "selects
 the unique irreducible factor that vanishes at the requested AlgebraicRoot
 under the current embedding"). The isolation kernel that dominates is the
-same `Hex.isolate?` measured by HexNumberField's and HexRoots' registered
+same `Hex.ZPoly.isolateComplexRoots?` measured by HexNumberField's and HexRoots' registered
 isolation ladders; its asymptotic evidence lives in those upstream reports,
 and the tower-level boundary is measured end to end by the registered
 `runAdjoin`/`runAdjoinIdentity` cases.
@@ -667,14 +833,14 @@ and the tower-level boundary is measured end to end by the registered
 
 `runSplit`: 99.90% inside `Hex.NumberTower.splitAux`; root retention and
 adjoining dominate through the same disambiguation path
-(`RawEvaluation.vanishesAt?` 66.97%, `Hex.isolate?` 64.55%), with the
+(`RawEvaluation.vanishesAt?` 66.97%, `Hex.ZPoly.isolateComplexRoots?` 64.55%), with the
 remainder in the tower factorization it repeats after each extension.
 `runFlatten`: 97.93% inside the target, 97.36% in
 `Hex.NumberTower.flatten?`, dominated by the primitive-element candidate
 search `Flatten.searchRecoveredAux` 90.20% whose cost is
 `Flatten.candidateAt?` → `Hex.AlgebraicPoly.Common.shift?` 83.22% (the
 integer eliminant of `θ + cα`) and the canonical exactification
-`Hex.AlgebraicRoot.exact?` 61.83%, both running the upstream `Hex.isolate?`
+`Hex.AlgebraicRoot.exact?` 61.83%, both running the upstream `Hex.ZPoly.isolateComplexRoots?`
 kernel (94.99%). The flattening components the search feeds are the
 registered `runBasisImages`, `runCertifies`, `runCoordinateMaps`,
 `runRecoverPair`, and `runRecoverSearch` cases; the eliminant/exactification
@@ -697,6 +863,7 @@ captures.
 
 | artefact | source commit / role | host state | SHA-256 |
 |---|---|---|---|
+| [factor follow-up manifest](bench-results/hex-number-field-tower-followup-manifest.json) | original `b8602c76a`, modular `8dd0f8e15`, isolated and combined variants; all accepted/rejected exports, exact runners, and validated decisions | paired core/sibling telemetry; local comparison evidence | `0603c1f6b46b63b64ec78725c9c02ec532473fc556c1425b21f4d6a8b9a6bc09` |
 | [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
 | [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
 | [superseded seven-case mode-3 export](bench-results/hex-number-field-tower-phase4-final-mode3-d277c583-chungus2-cpu19.json) | clean pre-rebase `d277c583` (same patch now `c720b4aca`); earlier canonical-case calibration retained for provenance | [matching postflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | `dcae0daaac0470764794b793606a005a83c845dd9af44a80f61ddad97e593f06` |
@@ -762,7 +929,23 @@ The computational and Mathlib tower libraries build, all 49 bench checks pass,
 and emitted fixtures remain byte-for-byte identical. The PARI oracle checks
 nine cases with no failures. Added regressions cover both bad-prime branches,
 rational denominators, repeated polynomials, zero/constants, and rejection of
-corrupted public factorization scalars and multiplicities.
+corrupted public factorization scalars and multiplicities. Recovery guards
+cover exact and nonzero first remainders and each fallback condition over
+rationals and towers of heights one and two; the Mathlib proof establishes
+equality with the reference gcd, including its remaining fuel.
+
+The final selected implementation passes
+`lake build HexNumberFieldTowerMathlib HexNumberFieldTower.Conformance
+hexnumberfieldtower_emit_fixtures hexnumberfieldtower_bench` (9,698 jobs).
+The selected pre-rebase benchmark executable is byte-identical to the verified
+and measured combined executable from `8d54c7158`, SHA-256
+`d78f6616e823004c807ebcbd343656629e43857e8a3286827cf0293a8c905034`.
+The integrated build also passes all 9,698 jobs, all 49 benchmark checks,
+byte-identical fixtures, and nine PARI oracle cases. Its measured executable
+has SHA-256
+`c3e2de0cb83c2ab3e7fb68997c06778ed8a2369f63c4f21878ec88d7ce3c10a6`.
+All 49 checks include the six PARI comparators using the registered provider.
+The export validator's 19 unit tests pass and run in the existing CI job.
 
 ### Reference verification
 

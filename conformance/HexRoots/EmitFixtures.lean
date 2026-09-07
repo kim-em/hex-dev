@@ -18,8 +18,8 @@ python-flint's `fmpz_poly.complex_roots()` (certified Arb balls with
 multiplicities) and cross-checks that the Lean certification discs
 cover the flint roots with matching multiplicities.
 
-The driver uses `isolateAll?` at target `32` rather than `isolate`: the oracle
-needs root *locations*, not the separation precision `isolate` forces.
+The driver uses `isolateAll?` at target `32` rather than `ZPoly.isolateComplexRoots?`: the oracle
+needs root *locations*, not the separation precision `ZPoly.isolateComplexRoots?` forces.
 
 **Fixture set.** The CI tier contains 50 degree-20 dense
 polynomials from the seed-`0xC0FFEE` LCG, plus the small curated rational and

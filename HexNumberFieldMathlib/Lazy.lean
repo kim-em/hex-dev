@@ -897,7 +897,7 @@ theorem AlgebraicRoot.ofEliminant?_sound
                     simpa [p] using
                       HexPolyZMathlib.isRoot_squareFreeCore hrawne hroot
                   obtain ⟨iso, hiso, hisoRoot⟩ :=
-                    HexRootsMathlib.isolate?_root_mem_of_pos p hsimple
+                    HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos p hsimple
                       (separationDepth p : Int) .nkThenPellet hdegree
                       hisolate hpRoot
                   obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
@@ -982,10 +982,10 @@ theorem AlgebraicRoot.ofEliminant?_isSome
   dsimp only
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   rw [hballAt]
-  have hisolateSome := HexRootsMathlib.isolate?_isSome
+  have hisolateSome := HexRootsMathlib.isolateComplexRoots?_isSome
     (ZPoly.squareFreeCore raw) hsimple hpne
     (separationDepth (ZPoly.squareFreeCore raw) : Int) .nkThenPellet
-  cases hisolate : isolate? (ZPoly.squareFreeCore raw) hsimple
+  cases hisolate : ZPoly.isolateComplexRoots? (ZPoly.squareFreeCore raw) hsimple
       (separationDepth (ZPoly.squareFreeCore raw) : Int) with
   | none => simp [hisolate] at hisolateSome
   | some isolations =>
@@ -994,7 +994,7 @@ theorem AlgebraicRoot.ofEliminant?_isSome
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dite_eq_left (HexRootsMathlib.isolate?_refined
+          rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined
             (ZPoly.squareFreeCore raw) hsimple
             (separationDepth (ZPoly.squareFreeCore raw) : Int)
             .nkThenPellet hisolate iso hiso)]
@@ -1027,7 +1027,7 @@ theorem AlgebraicRoot.ofEliminant?_isSome
               · exact (congrArg Subtype.val (Option.some.inj htoJ)).symm
               · simp at htoJ
             intro hroots
-            apply HexRootsMathlib.isolate?_roots_ne
+            apply HexRootsMathlib.isolateComplexRoots?_roots_ne
               (ZPoly.squareFreeCore raw) hsimple
               (separationDepth (ZPoly.squareFreeCore raw) : Int)
               .nkThenPellet hisolate
@@ -1036,7 +1036,7 @@ theorem AlgebraicRoot.ofEliminant?_isSome
               HexRootsMathlib.DyadicRootIsolation.root refined[j].1 at hroots
             simpa [hrawI, hrawJ] using hroots
           obtain ⟨iso, hiso, hisoRoot⟩ :=
-            HexRootsMathlib.isolate?_root_mem_of_pos
+            HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos
               (ZPoly.squareFreeCore raw) hsimple
               (separationDepth (ZPoly.squareFreeCore raw) : Int)
               .nkThenPellet hdegree hisolate hpRoot

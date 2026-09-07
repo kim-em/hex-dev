@@ -17,7 +17,7 @@ the body is false. For a false existential there is no single
 counterexample witness; the diagnostic instead reports that every
 relevant cell was checked and found false. Operational totality of the
 compiled builder follows from the squarefree carrier and
-`isolate?_isSome`, together with the structurally fuel-bounded
+`isolateRealRoots?_isSome`, together with the structurally fuel-bounded
 separation pass, from
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md).
 It is not exposed
@@ -192,7 +192,7 @@ proved equivalences.
    lemma for `Q = P*R` with `R ∣ Q'`. Since `Q` is the atom product,
    these are exactly the union of the atom root sets.
 
-   Run `Hex.ZPoly.isolate? P`; the compiled builder knows this succeeds from
+   Run `Hex.ZPoly.isolateRealRoots? P`; the compiled builder knows this succeeds from
    the squarefreeness theorem. If there are no nonconstant atoms, do
    not construct a carrier: the decomposition is the single cell `ℝ`
    and the sign matrix is the already-folded constant formula.
