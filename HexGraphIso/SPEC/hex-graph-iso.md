@@ -347,8 +347,11 @@ private implementation imports. `Uncolored` retains the basic executable
 API, and `UncoloredComplete` adds its generation and orbit-equivalence
 theorems; the `HexGraphIso` umbrella exposes both. Conformance still compares all
 four fields against nauty, while search counters remain conformance-pinned
-observables. Automation for group-order goals can use these theorems; the
-automorphism tactic is separate work.
+observables. The intended automorphism tactic extends `graph_iso` to a
+given permutation's automorphism property, a stated group-order fact,
+and the corresponding Mathlib self-isomorphism and group-cardinality
+goals. These goal forms are supported by the checker and theorems above;
+the tactic implementation is separate work.
 
 ## The uncoloured surface
 
