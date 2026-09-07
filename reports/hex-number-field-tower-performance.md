@@ -614,6 +614,8 @@ The original baseline commit is an ancestor of the retained GitHub PR ref
 checkpoints are outside the tower benchmark's computational imports. Saved
 binary hashes identify the executables; harness checkout metadata is not used
 as a substitute for their source provenance.
+The tag `bench/issue-10074-measured` preserves the measured source history
+across the integration rebase onto the upstream `natDegree` API rewrite.
 
 The archived runners identify the code that collected each series. The final
 validator separately rechecks all 24 accepted exports after collection and
@@ -898,8 +900,8 @@ equality with the reference gcd, including its remaining fuel.
 The final selected implementation passes
 `lake build HexNumberFieldTowerMathlib HexNumberFieldTower.Conformance
 hexnumberfieldtower_emit_fixtures hexnumberfieldtower_bench` (9,698 jobs).
-Its benchmark executable is byte-identical to the verified and measured
-combined executable from `8d54c7158`, SHA-256
+The selected pre-rebase benchmark executable is byte-identical to the verified
+and measured combined executable from `8d54c7158`, SHA-256
 `d78f6616e823004c807ebcbd343656629e43857e8a3286827cf0293a8c905034`.
 All 49 checks include the six PARI comparators using the registered provider.
 The export validator's 19 unit tests pass and run in the existing CI job.

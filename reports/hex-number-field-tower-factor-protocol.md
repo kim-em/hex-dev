@@ -129,3 +129,17 @@ the high-index placement is a heuristic, not a reservation against other work.
 This runner is scoped to this issue's host and fixed protocol. It fails closed
 on an invalid export or preflight timeout and refuses to overwrite a series;
 its partial artifacts remain available without an automatic resumed verdict.
+
+### Integration comparison
+
+The integrated Horner/recovery implementation at `2ae8157bc` includes the
+upstream `natDegree` API rewrite. Although that accessor is an inline
+abbreviation for the former expression, the rebuilt executable differs, so
+compare it directly against the original `b8602c76a` executable in a new
+`rebased` series. Use all fifteen fixed registrations, including fresh PARI
+and overhead calls, with the same five repeats, batch floor, budgets,
+quiet-core policy, twelve-attempt limit, opposite pair orders, and retention
+criteria. The candidate SHA-256 is
+`c3e2de0cb83c2ab3e7fb68997c06778ed8a2369f63c4f21878ec88d7ce3c10a6`.
+The tag `bench/issue-10074-measured` preserves all pre-rebase source commits
+and preregistrations referenced by the earlier artifacts.
