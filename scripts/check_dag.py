@@ -321,6 +321,12 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
 
         spec_dir = root / name / "SPEC"
         specs = sorted(spec_dir.glob("*.md")) if spec_dir.is_dir() else []
+        # Source-less planned libraries keep their design in the central index.
+        if not info.is_active and not spec_dir.is_dir():
+            planned_spec = (
+                root / "SPEC" / "Libraries" / Path(pascal_to_spec_path(name)).name
+            )
+            specs = [planned_spec] if planned_spec.is_file() else []
         if len(specs) != 1:
             errors.append(
                 f"{name} declares correspondence_only but has {len(specs)} library SPECs; "
@@ -366,7 +372,7 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
                     owner_conformance = (
                         root / "conformance" / owner / "Conformance.lean"
                     )
-                    if not owner_conformance.is_file():
+                    if info.is_active and not owner_conformance.is_file():
                         errors.append(
                             f"{name} names computational conformance owner {owner} "
                             "without a core conformance module"

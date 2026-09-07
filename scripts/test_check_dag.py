@@ -223,6 +223,37 @@ class CorrespondenceOnlyTest(unittest.TestCase):
             ),
         )
 
+    def test_planned_correspondence_uses_central_spec_without_runtime_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "lakefile.lean").write_text("", encoding="utf-8")
+            spec = root / "SPEC/Libraries/hex-bridge.md"
+            spec.parent.mkdir(parents=True)
+            spec.write_text(
+                "# Planned correspondence\n\n"
+                "correspondence-only-layer\n\n"
+                "Computational conformance owner: `HexCore`\n"
+                "Computational performance owner: `HexCore`\n",
+                encoding="utf-8",
+            )
+            libraries = OrderedDict(
+                HexCore=LibraryInfo("HexCore", (), False, 0, "planned"),
+                HexBridge=LibraryInfo(
+                    "HexBridge", ("HexCore",), True, 0, "planned",
+                    correspondence_only=True,
+                ),
+            )
+            self.assertEqual(
+                check_correspondence_only(root, libraries, root / "lakefile.lean"), []
+            )
+            spec.write_text("# Missing owner declarations\n", encoding="utf-8")
+            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
+            self.assertTrue(any("does not declare correspondence-only-layer" in e for e in errors))
+            self.assertTrue(any("does not identify computational conformance owners" in e for e in errors))
+            spec.unlink()
+            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
+            self.assertTrue(any("has 0 library SPECs" in e for e in errors))
+
     def test_phase3_accepts_performance_owner_without_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

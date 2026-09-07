@@ -5,6 +5,7 @@
 - **hex-primality**: Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, the `primality` tactic
 - **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
+- **hex-rational-fn** (planned): canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
@@ -66,6 +67,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-int-factor-mathlib**: agreement with `Nat.factorization`, `Decidable (Squarefree n)`, and `orderOf` in `(ZMod n)ˣ`
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
+- **hex-rational-fn-mathlib** (planned): equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
@@ -109,6 +111,7 @@ Each library with its immediate dependencies:
 - **hex-primality**: hex-arith, hex-basic
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
+- **hex-rational-fn**: hex-poly, hex-poly-fast
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
@@ -166,6 +169,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-int-factor-mathlib**: hex-int-factor, hex-primality-mathlib
 - **hex-finite-field-mathlib**: hex-finite-field, hex-mod-arith-mathlib, hex-poly-mathlib
 - **hex-poly-mathlib**: hex-poly
+- **hex-rational-fn-mathlib**: hex-rational-fn, hex-poly-mathlib
 - **hex-sparse-poly-mathlib**: hex-sparse-poly, hex-poly-mathlib, hex-poly
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
@@ -220,6 +224,21 @@ The reasoning is in [hex-modular §Why not inside hex-arith](../../HexModular/SP
 and [hex-poly-z-gcd §Why this is not hex-mv-gcd at arity one](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md).
 
 ## Library DAG
+
+`hex-rational-fn` uses dense polynomial arithmetic and the explicit fast
+multiplication plans. Its planned Mathlib companion identifies canonical
+fractions with `RatFunc`. Function fields and rational-expression tactics may
+depend on this pair, without adding dependencies in the reverse direction.
+
+```mermaid
+flowchart LR
+  P[hex-poly] --> F[hex-poly-fast]
+  P --> R[hex-rational-fn]
+  F --> R
+  P --> PM[hex-poly-mathlib]
+  R --> RM[hex-rational-fn-mathlib]
+  PM --> RM
+```
 
 The matrix family splits internally. `hex-matrix` is the dense base.
 `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
@@ -617,6 +636,8 @@ for developments whose source-local move has not happened yet.
 - [hex-modular-matrix.md](hex-modular-matrix.md): multi-modular determinant, certified rank, and Dixon p-adic linear solving (the Mathlib companion is specified in the same file)
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
+- [hex-rational-fn](hex-rational-fn.md): canonical univariate fractions, cancellation algorithms, evaluation and certificate replay
+- [hex-rational-fn-mathlib](hex-rational-fn-mathlib.md): equivalence with `RatFunc`, canonical components and operation correspondence
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
