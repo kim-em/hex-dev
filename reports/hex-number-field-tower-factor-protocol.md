@@ -47,3 +47,37 @@ The environmental policy was amended after rejected measurements:
 `20ff1f2f9` specifies the retry allowance and 5% postflight threshold after the
 first attempt; `0faa834dc` specifies CPU 1 for the final retry after the second
 attempt. These amendments do not retrospectively qualify any timing result.
+
+## Follow-up comparisons
+
+A new local comparison series uses the same fixed inputs, five repeats,
+0.2-second batch floor, warmup, and unchanged mode-3 budgets. The original
+baseline binary has SHA-256
+`9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810`;
+the merged modular-check binary has SHA-256
+`ff0dc3dfce3582d45dc7fa7e8bb5cb5b92fa1cca37dc3282c929d0c568b8f0df`.
+This series also measures independent norm-construction and recovery variants
+against the merged implementation, then their combination if both improve.
+The norm hypothesis is that a descending Horner fold avoids materializing
+all ascending powers and multiplying them by each lifted coefficient.
+The recovery hypothesis is that exact divisibility or a single irreducible
+norm factor permits avoiding unnecessary gcd or shift work. These are fixed
+input constant comparisons; no exponent is inferred from timings.
+
+Each comparison selects an idle physical core with `idle_core.py` before
+starting either arm, records its logical CPU and SMT sibling, and uses that
+same placement for both binaries and fresh PARI calls. No build or profiler
+from this session overlaps a measurement. Record two-second preflight and
+postflight samples for each arm and sample sibling utilization during each
+arm. Reject an arm if its pre/post CPU or sibling utilization is at least 5%,
+or mean sibling utilization during execution is at least 5%. Preserve every
+attempt, including rejected results. Retry the whole pair, never one arm,
+at most twelve times; choose a new idle core before each retry. Host telemetry
+alone determines rejection, never a timing value. These comparisons remain
+local shared-host evidence, not release-quality performance verdicts.
+
+Retain an optimization only when all result hashes match, correctness proofs
+and conformance pass, the canonical factor/check medians improve in two
+accepted paired comparisons (alternating arm order), and no fixed rung has a
+repeat-range-disjoint regression. Retain an inconclusive variant as measured
+investigation evidence rather than wiring it into the factoring path.
