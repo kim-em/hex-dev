@@ -307,7 +307,7 @@ restores the parent's fixed-point set. -/
 theorem ofSearchOut {G : Colored n k} {ctx : Ctx n}
     {rootPtn rootLab : Array Nat} {level numcells : Nat}
     {st out : SearchSt n}
-   
+
     (h : PathStab ctx rootPtn rootLab level st)
     (hfixed : out.fixedpts = st.fixedpts)
     (hok : SearchOk G level numcells st)
