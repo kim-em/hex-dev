@@ -118,6 +118,20 @@ theorem admit_scatter {G : Colored n k} {γ ref cur : Array Nat}
     ∃ p, autom? G γ = some p :=
   admit hcheck (ColorMap.scatter hn hrefSize href hcur hmap)
 
+/-- A root-ledger carrier preserves colours because it stabilizes every
+initial colour cell. This includes carriers of implicit pruning pairs. -/
+theorem admit_root {G : Colored n k} {γ : Array Nat}
+    (hcheck : checkAutom (rowsOf G) γ = true)
+    (hstab : CellStab (initPtn n (n + 2) (initialPartition G).2) 1
+      (initialPartition G).1 γ) : ∃ p, autom? G γ = some p := by
+  apply admit hcheck
+  intro v
+  have hn : 0 < n := by have := v.isLt; omega
+  exact ColorMap.scatter hn (initial_nodeOk G hn).labSize
+    (cellsReach_initial G) hstab
+    (fun i hi => (getElem!_map_of_lt (fun w => γ[w]!) _
+      (by rw [(initial_nodeOk G hn).labSize]; exact hi)).symm) v
+
 /-- Every array in the executable trace is admitted, including redundant
 code-two automorphisms. The proof uses the search invariant; it adds no
 work to the traversal. -/

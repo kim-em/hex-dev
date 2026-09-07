@@ -1584,8 +1584,8 @@ theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     (h : ShortSource G ctx out trail r) (e : Nat) :
     ShortSource G ctx { out with eqlevFirst := e } trail r := by
   cases h with
-  | explicit target fix mcr returned back valid =>
-      exact .explicit target fix mcr returned back valid
+  | explicit target fix mcr returned back valid source =>
+      exact .explicit target fix mcr returned back valid source
   | implicit target returned below back root =>
       exact .implicit target returned below back root
 

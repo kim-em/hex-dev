@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Correct.Exit.Final
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Invariant.Domination
 
 public section
 
@@ -347,6 +348,7 @@ inductive ShortSource (G : Colored n k) (ctx : Ctx n) (out : SearchSt n)
       (valid : ∀ entry, trail target = some entry →
         PairOk ctx.g entry.frame.rsPtn entry.frame.rsLab target
           fix mcr)
+      (source : ∃ γ ∈ out.genTrace, fmperm γ n = (fix, mcr))
   | implicit (target : Nat)
       (returned : r = Int.ofNat target)
       (below : target < out.noncheaplevel)
@@ -367,8 +369,8 @@ theorem setFixed {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     (h : ShortSource G ctx out trail r) (fixedpts : VSet n) :
     ShortSource G ctx { out with fixedpts := fixedpts } trail r := by
   cases h with
-  | explicit target fix mcr returned back valid =>
-      exact .explicit target fix mcr returned back valid
+  | explicit target fix mcr returned back valid source =>
+      exact .explicit target fix mcr returned back valid source
   | implicit target returned below back root =>
       exact .implicit target returned below back root
 
@@ -381,8 +383,8 @@ theorem firstFinish {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
   rw [Nauty.firstFinish]
   split
   · cases h with
-    | explicit target fix mcr returned back valid =>
-        exact .explicit target fix mcr returned back valid
+    | explicit target fix mcr returned back valid source =>
+        exact .explicit target fix mcr returned back valid source
     | implicit target returned below back root =>
         exact .implicit target returned below back root
   · exact h
@@ -1230,7 +1232,12 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx n}
           hleafClear hshort
       · exact hprep.rowTieBack hef (by simp) hcc hge htie
       · intro entry hentry
-        exact hlive'.rowTiePair hn0 hprep hcanonBelow htie hentry }
+        exact hlive'.rowTiePair hn0 hprep hcanonBelow htie hentry
+      · refine ⟨canonScatter n leaf.canonlab leaf.lab, ?_, rfl⟩
+        rw [processnode_genTrace_canon hef (by simp) hcc hge htie]
+        apply Array.mem_push.mpr
+        right
+        rw [canonScatter_eq_firstScatter, firstScatter_fold] }
   exact hnode.earlyOther hn0 hlevel hpath hnum hearly hlive hrun
 
 /-- The negative non-generator leaf, with the off-path fields needed by
