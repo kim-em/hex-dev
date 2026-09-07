@@ -42,5 +42,21 @@
       "fixture_byte_identical": true
     }
   ],
-  "proof_status": "Deferred until the preregistered performance gate; no companion build claimed."
+  "proof_status": "Full HexNumberFieldTowerMathlib build passed, including quadratic resultant equivalence and singleton recovery soundness/completeness. No runtime change; benchmark SHA-256 equals measured combined prototype.",
+  "proof_complete_checks": {
+    "build_targets": [
+      "HexNumberFieldTowerMathlib",
+      "HexNumberFieldTower.Conformance",
+      "hexnumberfieldtower_emit_fixtures",
+      "hexnumberfieldtower_bench",
+      "tower_factor_diff"
+    ],
+    "canonical_factor_cases": 31,
+    "norm_array_cases": 750,
+    "bench_verify_cases": 49,
+    "oracle_cases": 9,
+    "oracle_failures": 0,
+    "fixture_byte_identical": true,
+    "validator_unit_tests": 26
+  }
 }

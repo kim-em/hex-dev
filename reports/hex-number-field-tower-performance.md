@@ -730,7 +730,7 @@ show more variation between allocation and runtime leaf categories; the
 initial sequence stopped at a hash-format comparison in postprocessing, not
 a failed benchmark result. The complete replication compares hashes numerically.
 
-### Next factorization experiments
+### Profile-guided factorization changes
 
 1. **Singleton-norm recovery.** When the recursively factored accepted norm
    has one certified irreducible factor, return the canonical monic component
@@ -761,11 +761,11 @@ The previously tested already-monic shortcut remains excluded by its timing
 decision. Direct modular number-field factorization is a larger algorithmic
 project; absolute-presentation caching needs deeper-tower fixtures.
 
-The phase shares identify work to attack, not attainable speedups. Before
-implementing either leading experiment, preregister independent fixed-case
-comparisons against the integrated baseline, followed by a combined comparison
-if both qualify. Include reducible and recursive-tower correctness cases,
-retain all timing attempts, and measure both public factorization and replay.
+The phase shares identify work to attack, not attainable speedups. The first
+two changes are implemented and measured below; explicit irreducibility evidence
+remains a possible follow-up. Independent, combined, and marginal comparisons
+cover public factorization and replay, with reducible and recursive-tower
+correctness cases and every timing attempt retained.
 The [experiment protocol](hex-number-field-tower-factor-protocol.md#singleton-recovery-and-quadratic-norm-experiments)
 requires differential correctness checks and a performance decision before
 developing correspondence proofs; only proved and verified candidates may
@@ -829,8 +829,13 @@ matches 750 full norm arrays. The grid includes nonzero linear terms in the
 quadratic relation, rational denominators, signed shifts, a lower quadratic
 field, and cubic fallback. All 49 benchmark checks, byte-identical fixtures,
 and the nine PARI oracle cases pass. These checks establish experimental
-correctness coverage; they do not replace the correspondence proofs required
-before integration.
+correctness coverage. The companion additionally proves the quadratic Horner
+invariant and exact equality with the reference resultant, including arbitrary
+quadratic linear terms and recursive lower fields. The singleton recovery
+product identifies the returned canonical factor exactly. The existing public
+factorization soundness, completeness, monicity, and replay theorems build with
+both branches. The proof-complete benchmark executable has the identical
+SHA-256 hash to the measured combined prototype.
 
 ### Rational squarefreeness
 
