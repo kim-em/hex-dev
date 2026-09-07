@@ -251,9 +251,13 @@ The C extern bodies live in `HexArith/ffi/wide_arith.c`:
 
 The C source is wired into `lakefile.lean` via an `extern_lib`
 block (paralleling `extern_lib hexgf2ffi` for HexGF2's CLMUL). The
-block compiles the `.c` sources to `.o` via `compileO` (with
-`-I (← getLeanIncludeDir).toString -fPIC`), bundles them into a
-static library via `buildStaticLib`, and Lake links that library
+block compiles the `.c` sources to `.o` with `cc`, Lean’s include
+directory, `-fPIC`, and `-O3`. Each compiler process receives the
+object directory as `TMPDIR`, so temporary files remain inside
+`.lake/build` even when a downstream sandbox forbids writes to `/tmp`.
+The release sync copies this recipe from the monorepo Lake file.
+The block bundles the objects into a static library via `buildStaticLib`,
+and Lake links that library
 into anything depending on `lean_lib HexArith`. The same
 `extern_lib` block carries `mpz_gcdext.c` (see "Extern contract:
 `mpz_gcdext`" below). Putting `.c` paths in `moreLinkArgs` (or in

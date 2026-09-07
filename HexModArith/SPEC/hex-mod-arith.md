@@ -6,6 +6,14 @@ representative in `[0, p)`); Barrett and Montgomery from `hex-arith`
 provide opt-in *operations* on `ZMod64` for hot loops, not parallel
 types.
 
+## Native build
+
+The `hexmodarithffi` Lake target compiles `zmod64_mul.c` with `cc`, Lean’s
+include directory, `-fPIC`, and `-O3`. It sets `TMPDIR` to the object directory
+for that compiler process, keeping temporary files inside `.lake/build` when
+a downstream sandbox forbids writes to `/tmp`. The release sync copies the
+recipe from the monorepo Lake file.
+
 ## Bounds typeclass and type
 
 ```lean
