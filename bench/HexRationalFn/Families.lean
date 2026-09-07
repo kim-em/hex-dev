@@ -79,7 +79,7 @@ def coprimePair (n : Nat) : Pair :=
 
 def sharedPair (n : Nat) : Pair :=
   let h := dense (max n 1)
-  ⟨fraction 1 (h * #p[0, 1]), fraction 1 (h * #p[1, 1])⟩
+  ⟨fraction 1 (h * #p[0, 1]), fraction (-2) (h * #p[1, 1])⟩
 
 def addCoprime (i : Pair) := output (i.f + i.g)
 def addShared (i : Pair) := output (i.f + i.g)
@@ -94,7 +94,8 @@ def checkedDivide (i : Pair) := (div? i.f i.g).map output
 -- remainder chains, linear unbalanced products, and bounded coefficient arithmetic.
 setup_benchmark addCoprime n => n with prep := coprimePair where config
 -- Θ(n): the shared degree-n factor leaves fixed linear cofactors. The second gcd
--- is against their fixed linear sum; every dense product has a fixed short factor.
+-- is against 1-X, whose synthetic-division partial sums have O(log n) bits
+-- (machine-word-sized throughout this ladder). Every product has a short factor.
 setup_benchmark addShared n => n with prep := sharedPair where config
 -- Θ(n): equal-denominator addition normalizes 2a/(a+1), whose Euclidean chain
 -- has bounded length; coefficient scaling and full result hashing are linear.

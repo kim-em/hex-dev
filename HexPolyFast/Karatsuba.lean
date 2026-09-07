@@ -945,7 +945,7 @@ theorem karatsubaBlocks_csimp : @karatsubaBlocks = @karatsubaBlocksImpl := by
 /-- Full Karatsuba multiplication.  Strongly skewed operands are processed in
 blocks near the shorter size rather than padded to the longer size. -/
 def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
-  if a.size = 0 || b.size = 0 then
+  if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
     mulImpl a b
   else if 2 * b.size < a.size then
     karatsubaBlocks cutoff b.size a.size a b
