@@ -26,51 +26,6 @@ search induction crosses a state update.
 
 namespace Hex.GraphIso.Nauty
 
-/-- Refinement preserves an existing singleton cell. -/
-theorem isCell_refine_one {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells a : Nat}
-    {lab ptn : Array Nat} (hnn : n = ptn.size)
-    (hls : lab.size = ptn.size) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hc : IsCell ptn level a 1) :
-    IsCell (Nauty.refine ctx level lab ptn active numcells).ptn
-      level a 1 := by
-  obtain ⟨hpos, hstart, _, hclose⟩ := hc
-  refine ⟨hpos, ?_, ?_, ?_⟩
-  · rcases hstart with rfl | hstart
-    · exact Or.inl rfl
-    · right
-      rw [refine_frozen hnn hls hend hstart]
-      exact hstart
-  · intro i hi hlt
-    omega
-  · have hclose' : ptn[a]! ≤ level := by simpa using hclose
-    change (Nauty.refine ctx level lab ptn active numcells).ptn[a]! ≤ level
-    rw [refine_frozen hnn hls hend hclose']
-    exact hclose'
-
-/-- Splitting a different non-singleton cell preserves a singleton. -/
-theorem isCell_set_miss {ptn : Array Nat} {level a tc len : Nat}
-    (ha : IsCell ptn level a 1) (ht : IsCell ptn level tc len)
-    (hlen : 2 ≤ len) :
-    IsCell (ptn.set! tc (level + 1)) (level + 1) a 1 := by
-  have hne : tc ≠ a ∧ tc ≠ a - 1 := by
-    rcases isCell_disjoint_or_eq ha ht with hleft | hright | heq
-    · constructor <;> omega
-    · constructor <;> omega
-    · omega
-  obtain ⟨hpos, hstart, _, hclose⟩ := ha
-  refine ⟨hpos, ?_, ?_, ?_⟩
-  · rcases hstart with rfl | hstart
-    · exact Or.inl rfl
-    · right
-      rw [Array.getElem!_set!_ne _ _ _ _ hne.2]
-      omega
-  · intro i hi hlt
-    omega
-  · have hclose' : ptn[a]! ≤ level := by simpa using hclose
-    simpa using (show (ptn.set! tc (level + 1))[a]! ≤ level + 1 by
-      rw [Array.getElem!_set!_ne _ _ _ _ hne.1]
-      omega)
-
 /-- Reindex frame reach across unchanged labelling and partition fields. -/
 theorem TrailOk.stateEq {ctx : Ctx n} {level : Nat} {st st' : SearchSt n}
     {trail : FrameTrail} (h : TrailOk ctx level st trail)

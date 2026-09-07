@@ -284,7 +284,7 @@ theorem IterOk.valsWeak {st : RefineSt n} {level : Nat}
     omega
 
 /-- The final position of the split partition stays closed. -/
-private theorem setTc_end {ptn : Array Nat} {level tc : Nat}
+theorem setTc_end {ptn : Array Nat} {level tc : Nat}
     (hend : ptn[ptn.size - 1]! ≤ level) (htc : tc < ptn.size) :
     (ptn.set! tc (level + 1))[(ptn.set! tc
       (level + 1)).size - 1]! ≤ level + 1 := by
