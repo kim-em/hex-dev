@@ -42,6 +42,7 @@ structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : 
   boundary : Boundary G ctx level st
   cheapBound : st.noncheaplevel ≤ level
   pairs : PairsOk G ctx st
+  workspace : WorkspaceOk st.view
 
 /-- The chosen first child is a valid mathematical individualization step. -/
 theorem firstChild_offset {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tv : Nat}
@@ -90,6 +91,14 @@ theorem prepareFirst_stores (ctx : Ctx n) (tcLevel level numcells : Nat) (st : S
 /-- First-path preparation preserves the workspace before the first admission. -/
 theorem prepareFirst_autos (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
     (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.autos = st.autos := by
+  unfold Generic.prepareFirst
+  dsimp only [policy, Generic.Policy.visit, Generic.Policy.chooseTarget, Generic.Policy.recordFirst]
+  rw [chooseFirst_fields]
+  rfl
+
+/-- First-path preparation keeps the configured workspace capacity. -/
+theorem prepareFirst_capacity (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
+    (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.wsCap = st.wsCap := by
   unfold Generic.prepareFirst
   dsimp only [policy, Generic.Policy.visit, Generic.Policy.chooseTarget, Generic.Policy.recordFirst]
   rw [chooseFirst_fields]
@@ -154,7 +163,7 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     unfold ready cheapCheck
     split <;> exact prepareFirst_orbits ctx tcLevel level numcells st
   refine ⟨by omega, firstChild_ok hn0 h.positive h.partition htv, ?_,
-    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_, ?_, ?_, ?_⟩
+    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_, ?_, ?_, ?_, ?_⟩
   · rw [hstep]
     exact equitable_breakout hit.ok.labSize hit.ok.ptnSize hit.ok.ptnEnd hit.valsWeak
       hit.ok.labOk hit.inj hsymm h.equitable hcell hne ho hacc.symm
@@ -185,5 +194,13 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     change ready.autos = st.autos
     unfold ready cheapCheck
     split <;> exact prepareFirst_autos ctx tcLevel level numcells st
+
+  · apply h.workspace.ofFields
+    · change ready.wsCap = st.wsCap
+      unfold ready cheapCheck
+      split <;> exact prepareFirst_capacity ctx tcLevel level numcells st
+    · change ready.autos = st.autos
+      unfold ready cheapCheck
+      split <;> exact prepareFirst_autos ctx tcLevel level numcells st
 
 end Hex.GraphIso.Nauty.Engine

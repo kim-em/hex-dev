@@ -50,7 +50,7 @@ theorem firstSweep_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
   obtain ⟨exit, out⟩ := result
   let left := { afterChildFirst level tv out with fixedpts := out.fixedpts.erase tv }
   let ready := recoverLevels level (recoverPtn (n + 2) level left)
-  have hleft : RunInv G ctx left := hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl rfl
+  have hleft : RunInv G ctx left := hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl rfl rfl
   have hcontinue : ∀ smaller index, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv
         (smaller.nextElem (some tv)) smaller index ready).2.2 := by
@@ -97,7 +97,9 @@ theorem FirstPre.firstterminal {G : Colored n k} {ctx : Ctx n} {level numcells :
   have hs := prepareFirst_stores ctx tcLevel level numcells st
   refine ⟨isPerm_of_cellsReach hp.labSize hn0 hp.reach, ⟨hp.labSize, hp.reach⟩, ?_,
     hs.2.2.2.1.trans h.scratch, ?_, ?_, hp.reach, h.colors.congr hs.2.2.2.2,
-    h.pairs.congr (prepareFirst_autos ctx tcLevel level numcells st)⟩
+    h.pairs.congr (prepareFirst_autos ctx tcLevel level numcells st),
+    h.workspace.ofFields (prepareFirst_capacity ctx tcLevel level numcells st)
+      (prepareFirst_autos ctx tcLevel level numcells st)⟩
   · apply canongInv_zero
     change (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.canong.size = n
     rw [hs.2.2.1, h.cache]
@@ -144,7 +146,7 @@ theorem initial_firstPre (G : Colored n k) (hn0 : 0 < n) :
   refine ⟨Nat.le_refl _, initial_ok G hn0, initial_equitable G hn0,
     Array.size_replicate, ?_, Array.size_replicate, Array.size_replicate, ?_,
     initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_, ?_,
-    initial_boundary G hn0 { g := rowsOf G }, Nat.le_refl _, initial_pairs G { g := rowsOf G }⟩
+    initial_boundary G hn0 { g := rowsOf G }, Nat.le_refl _, initial_pairs G { g := rowsOf G }, by change 0 < 500 ∧ 0 ≤ 500; decide⟩
   · change n < (Array.replicate (n + 2) (-1 : Int)).size
     rw [Array.size_replicate]
     omega
