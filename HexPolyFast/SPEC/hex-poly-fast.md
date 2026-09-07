@@ -343,10 +343,20 @@ Newton reciprocal for the short divisors used by rational-function
 normalization. The proved quotient and remainder are unchanged; explicit
 cached `DivPlan` operations retain the reciprocal path.
 
-The declared cost for quotient length `k` is `O(M(k))` after a reciprocal of
-precision `k` is available and `O(M(k))` including construction, since the
-doubling steps form a geometric series for every supported multiplication
-plan.
+For the reciprocal route, constructing the length-`k` quotient prefix costs
+`O(M(k))` after a reciprocal of precision `k` is available and `O(M(k))`
+including reciprocal construction: the doubling steps form a geometric
+series for every supported multiplication plan. This bound excludes linear
+input/output scans and formation of the full remainder `p - quotient * q`;
+it is not a bound on the entire call independent of the divisor length.
+
+The rational-function degree families exercise the short-operand dispatch
+and the general unbalanced block accumulator; their current measurements
+and operation-only profiles are linked from the
+[backend performance report](../../reports/hex-poly-fast-performance.md).
+The block capacity argument is an algorithmic bound, separately pinned by
+raw-array regression checks; `ofCoeffs_blocks` proves polynomial semantics,
+not allocation bounds.
 
 The cached-divisor crossover is measured separately from one-shot reciprocal
 construction. Three cold outer trials on `chungus2` (AMD EPYC 9455), Lean
