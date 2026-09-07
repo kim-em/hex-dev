@@ -629,15 +629,8 @@ and normalization unit. -/
 theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) : radical p ∣ p := by
   let q := polyNormalize (primPart p)
-  rcases (polyIsUnit_iff (polyNormUnit (primPart p))).mp
-      (polyNormUnit_isUnit (primPart p)) with ⟨u, hu⟩
-  have hrestore : C (content p) * u * q = p := by
-    calc
-      C (content p) * u * q =
-          C (content p) * (primPart p * (polyNormUnit (primPart p) * u)) := by
-        simp only [q, polyNormalize]
-        grind
-      _ = p := by rw [hu, mul_one, content_mul_primPart]
+  have hrestore : C (sqfPrimitiveSplit p).1 * q = p :=
+    sqfPrimitiveSplit_product p
   unfold radical
   change (if q == 0 then 0 else quotient q (gcdList (q :: derivatives q))) ∣ p
   by_cases hq : q = 0
@@ -653,12 +646,12 @@ theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
       rw [hzero, mul_zero] at hr
       exact hq hr
     have hquot := quotient_mul_of_dvd hd0 hd
-    refine ⟨C (content p) * u * gcdList (q :: derivatives q), ?_⟩
+    refine ⟨C (sqfPrimitiveSplit p).1 * gcdList (q :: derivatives q), ?_⟩
     calc
-      p = C (content p) * u * q := hrestore.symm
-      _ = (C (content p) * u * gcdList (q :: derivatives q)) *
+      p = C (sqfPrimitiveSplit p).1 * q := hrestore.symm
+      _ = (C (sqfPrimitiveSplit p).1 * gcdList (q :: derivatives q)) *
           quotient q (gcdList (q :: derivatives q)) := by
-        rw [mul_assoc (C (content p) * u),
+        rw [mul_assoc (C (sqfPrimitiveSplit p).1),
           mul_comm (gcdList _) (quotient ..), hquot]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in

@@ -205,7 +205,7 @@ jobs:
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \
-            HexConformance NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
+            HexConformance HexMvFactorizationTests NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
             hexpolysmith_emit_fixtures \
