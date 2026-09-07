@@ -1,5 +1,8 @@
 # Public divisor enumeration measurement protocol
 
+This original campaign is exhausted. The [corrected ownership protocol](hex-int-factor-divisor-protocol-2.md)
+registers the subsequent finite campaign; its results do not replace these attempts.
+
 This protocol registers a mode-1, two-sided `τ log₂ τ` claim for public
 `Hex.Nat.divisors`, including generation, sorting and array materialization.
 It supplements the existing IntFactor package. Phase 4 remains incomplete

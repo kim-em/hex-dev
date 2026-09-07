@@ -64,51 +64,36 @@ def busy_seconds(
     return (after[0] - before[0]) / tick_hz
 
 
-def process_snapshot() -> dict[int, tuple[int, str, int, str]]:
-    result: dict[int, tuple[int, str, int, str]] = {}
-    for stat_path in Path("/proc").glob("[0-9]*/stat"):
-        try:
-            text = stat_path.read_text()
-            close = text.rfind(")")
-            pid = int(text[: text.find(" ")])
-            comm = text[text.find("(") + 1 : close]
-            fields = text[close + 2 :].split()
-            # After the closing parenthesis: state, ppid, ..., processor.
-            result[pid] = (int(fields[1]), fields[0], int(fields[36]), comm)
-        except (FileNotFoundError, IndexError, PermissionError, ValueError):
-            continue
-    return result
+def parse_task(tgid: int, text: str) -> dict[str, object]:
+    """Read identity and group ownership from the same Linux task stat record."""
+    close = text.rfind(")")
+    fields = text[close + 2 :].split()
+    return {
+        "tgid": tgid, "tid": int(text[: text.find(" ")]),
+        "state": fields[0], "pgrp": int(fields[2]),
+        "cpu": int(fields[36]), "comm": text[text.find("(") + 1 : close],
+    }
 
 
-def task_snapshot() -> list[tuple[int, int, str, int, str]]:
-    """Return (tgid, tid, state, last_cpu, comm) for every visible task."""
-    result: list[tuple[int, int, str, int, str]] = []
+def task_snapshot() -> list[dict[str, object]]:
+    """Return each visible task, including its atomically observed process group."""
+    result: list[dict[str, object]] = []
     for stat_path in Path("/proc").glob("[0-9]*/task/[0-9]*/stat"):
         try:
-            text = stat_path.read_text()
-            close = text.rfind(")")
-            tid = int(text[: text.find(" ")])
-            comm = text[text.find("(") + 1 : close]
-            fields = text[close + 2 :].split()
-            tgid = int(stat_path.parts[-4])
-            result.append((tgid, tid, fields[0], int(fields[36]), comm))
-        except (FileNotFoundError, IndexError, PermissionError, ValueError):
+            result.append(parse_task(int(stat_path.parts[-4]), stat_path.read_text()))
+        except (FileNotFoundError, ProcessLookupError, IndexError, PermissionError, ValueError):
             continue
     return result
 
 
-def descendants(
-    root: int, snapshot: dict[int, tuple[int, str, int, str]]
-) -> set[int]:
-    found = {root}
-    changed = True
-    while changed:
-        changed = False
-        for pid, (ppid, _state, _cpu, _comm) in snapshot.items():
-            if ppid in found and pid not in found:
-                found.add(pid)
-                changed = True
-    return found
+def foreign_tasks(tasks: Iterable[dict[str, object]], monitored: Iterable[int],
+                  owned_group: int) -> list[dict[str, object]]:
+    # The monitor creates a dedicated process group before spawning the runner.
+    # Children inherit it at fork, so even a child born during this scan is
+    # classified correctly without a racy, earlier process ancestry snapshot.
+    # The benchmark does not daemonize or change process groups.
+    return [task for task in tasks if task["state"] == "R"
+            and task["cpu"] in monitored and task["pgrp"] != owned_group]
 
 
 def utc_now() -> str:
@@ -261,18 +246,18 @@ def main() -> int:
     sidecar_template = f"{sidecar_stem}-%p.jsonl"
     child_env = os.environ.copy()
     child_env["LEAN_BENCH_TIMED_REGIONS_SIDECAR"] = sidecar_template
+    # Keep the collector's killpg timeout cleanup intact: when launched in its
+    # dedicated session this is already our group. Standalone invocations get
+    # a fresh group too, excluding unrelated commands in the caller's session.
+    if os.getpgrp() != os.getpid():
+        os.setpgid(0, 0)
+    owned_group = os.getpgrp()
     process = subprocess.Popen(command, preexec_fn=pin_child, env=child_env)
     while True:
         time.sleep(args.interval)
         current = cpu_counters()
         current_mono_ns = time.monotonic_ns()
-        snapshot = process_snapshot()
-        owned = descendants(process.pid, snapshot)
-        foreign = [
-            {"tgid": tgid, "tid": tid, "cpu": cpu, "comm": comm}
-            for tgid, tid, state, cpu, comm in task_snapshot()
-            if state == "R" and cpu in monitored and tgid not in owned
-        ]
+        foreign = foreign_tasks(task_snapshot(), monitored, owned_group)
         samples.append(
             {
                 "mono_t0_ns": previous_mono_ns,
@@ -343,7 +328,9 @@ def main() -> int:
         args.max_core_interference_ratio,
     )
     document = {
-        "schema": 2,
+        "schema": 3,
+        "ownership": "dedicated-process-group",
+        "owned_process_group": owned_group,
         "command": command,
         "cpu": args.cpu,
         "smt_siblings": sibling_cpus,

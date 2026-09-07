@@ -466,10 +466,11 @@ LeanBench itself reports dirty because the collector's newly created evidence
 files are untracked during measurement. No tracked source changed during
 these runs. Raw rejected records cannot be rendered as accepted reports.
 
-The two-attempt budget is exhausted. No timing retry is authorized by this
-protocol. A subsequent measurement campaign requires a newly committed
-protocol and a demonstrably controlled CPU-7 window on the designated host;
-it must retain these two rejected runs and the original contrary experiment.
+The original two-attempt budget is exhausted. The subsequent
+[corrected ownership protocol](hex-int-factor-divisor-protocol-2.md) registers
+a new finite campaign on CPU 62, with a quiet physical-core preflight and the
+unchanged contamination ceiling. It retains these two rejected runs and the
+original contrary experiment.
 The earlier inconclusive run and later noisy passing diagnostic are preserved
 in the protocol with their original issue reference. Present contamination
 observations do not establish what caused the old failure.

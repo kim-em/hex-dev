@@ -27,8 +27,9 @@ import time
 
 try:
     import idle_core
+    import core_telemetry
 except ModuleNotFoundError:
-    from scripts.bench import idle_core
+    from scripts.bench import idle_core, core_telemetry
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -553,10 +554,38 @@ def recheck_attempt(source: Path, output: Path) -> int:
     return 0 if attempt.record["scientific_validation"]["status"] == "passed" else 1
 
 
+def quiet_core(cpu: int, attempt: Attempt) -> None:
+    """Retain a bounded preflight search for a quiet physical-core window."""
+    siblings = sorted(core_telemetry.sibling_set(cpu))
+    os.sched_setaffinity(0, os.sched_getaffinity(0) - set(siblings))
+    observations = []
+    attempt.record["quiet_core_preflight"] = observations
+    # Fixed campaign-2 rule: at most 150 two-second windows (five minutes).
+    for _ in range(150):
+        before = core_telemetry.cpu_counters()
+        start = time.monotonic_ns()
+        time.sleep(2)
+        after = core_telemetry.cpu_counters()
+        end = time.monotonic_ns()
+        elapsed = (end - start) / 1e9
+        busy = {str(c): core_telemetry.busy_seconds(before[c], after[c],
+                    os.sysconf("SC_CLK_TCK")) for c in siblings}
+        quiet = all(0 <= seconds / elapsed <= 0.002 for seconds in busy.values())
+        observations.append(dict(mono_t0_ns=start, mono_t1_ns=end,
+                                 busy_seconds=busy, quiet=quiet))
+        attempt.save()
+        if quiet:
+            return
+    raise RuntimeError("no quiet physical-core window in 150 preflight observations")
+
+
 def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> int:
-    if socket.gethostname() != "chungus2" or cpu != 7 or args.dirty_status:
-        raise RuntimeError("divisor acceptance requires clean chungus2 CPU 7 protocol")
-    attempt.record.update(scope="divisors", state_before=host_state(cpu))
+    if socket.gethostname() != "chungus2" or cpu != 62 or args.dirty_status:
+        raise RuntimeError("divisor acceptance requires clean chungus2 CPU 62 protocol")
+    if core_telemetry.sibling_set(cpu) != {14, 62}:
+        raise RuntimeError("divisor protocol requires SMT pair 14/62")
+    attempt.record.update(scope="divisors", campaign=2,
+        protocol="reports/hex-int-factor-divisor-protocol-2.md", state_before=host_state(cpu))
     attempt.save()
     run(["lake", "build", "hexintfactor_bench"], timeout=900)
     attempt.record["benchmark_executable_sha256"] = sha256(BENCH)
@@ -564,6 +593,8 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
     audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
     attempt.record["divisor_audit"] = audit
     attempt.save()
+    # Gate only on independent host counters, before starting any timed run.
+    quiet_core(cpu, attempt)
     export_path = attempt.directory / "bench.json"
     telemetry_path = attempt.directory / "telemetry.json"
     try:

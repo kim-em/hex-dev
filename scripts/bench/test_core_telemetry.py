@@ -22,14 +22,21 @@ class CoreTelemetryTest(unittest.TestCase):
             (22, 47),
         )
 
-    def test_descendants(self):
-        snapshot = {
-            10: (1, "S", 0, "root"),
-            11: (10, "S", 0, "child"),
-            12: (11, "R", 1, "grandchild"),
-            20: (1, "R", 1, "foreign"),
-        }
-        self.assertEqual(core_telemetry.descendants(10, snapshot), {10, 11, 12})
+    def test_atomic_task_identity(self):
+        fields = ["R", "10", "99"] + ["0"] * 34
+        fields[36] = "7"
+        task = core_telemetry.parse_task(12, "13 (name with ) parentheses) " + " ".join(fields))
+        self.assertEqual(task, dict(tgid=12, tid=13, state="R", pgrp=99,
+                                   cpu=7, comm="name with ) parentheses"))
+
+    def test_child_born_during_scan_is_owned(self):
+        # No process ancestry snapshot is needed for a newly born child/thread.
+        tasks = [dict(tgid=12, tid=13, state="R", pgrp=99, cpu=7, comm="bench"),
+                 dict(tgid=20, tid=21, state="R", pgrp=20, cpu=7, comm="bench"),
+                 dict(tgid=30, tid=31, state="S", pgrp=30, cpu=7, comm="idle"),
+                 dict(tgid=40, tid=41, state="R", pgrp=40, cpu=55, comm="sibling")]
+        self.assertEqual(core_telemetry.foreign_tasks(tasks, [7, 55], 99),
+                         [tasks[1], tasks[3]])
 
     def test_merge_regions(self):
         self.assertEqual(
