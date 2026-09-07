@@ -16,3 +16,4 @@ public import HexLatticeEnumMathlib.OptimizationBudget
 public import HexLatticeEnumMathlib.Preprocess
 public import HexLatticeEnumMathlib.Correspondence
 public import HexLatticeEnumMathlib.Geometry
+public import HexLatticeEnumMathlib.TransportCert

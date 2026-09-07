@@ -129,3 +129,11 @@ example (b : Basis n m) (a : Minimum n m) (h : shortest b = some a) :
 example (b : Basis n m) (hn : 1 ≤ n) :
     Hex.isLLLReduced (lllPreprocess b).working.rows (3/4) (11/20) :=
   lllPreprocess_reduced b (3/4) (by norm_num) (by norm_num) hn
+
+example (b : Basis n m) (change : BasisChange b) (t : Vector Rat m) :
+    checkClosest b.rows t (change.closestCertificate t) = true :=
+  change_closestCertificate_check change t
+
+example (b : Basis n m) (change : BasisChange b) (c : OptimumCertificate n m)
+    (h : change.shortestCertificate = some c) : checkShortest b.rows c = true :=
+  change_shortestCertificate_check change c h
