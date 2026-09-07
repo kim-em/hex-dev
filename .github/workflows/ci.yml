@@ -219,6 +219,7 @@ jobs:
         run: |
           python3 -m unittest scripts/conway/test_tools.py
           python3 scripts/conway/generate.py --check
+          python3 scripts/conway/verify_provenance.py reports/conway/ci-conway.json reports/conway/ci-bridge.json --commit HEAD
           .lake/build/bin/hexconway_replay > reports/conway/ci-runtime.jsonl
       - name: Upload Conway rebuild evidence
         if: always()
