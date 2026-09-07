@@ -26,7 +26,7 @@
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-graph**: immutable finite simple directed and undirected graphs, checked construction, maps, subgraphs, traversal, and executable adjacency
 - **hex-graph-iso**: nauty-compatible canonical forms, canonical labels, checked transporters, and positive and negative `graph_iso` proofs for finite ordered-coloured simple graphs
-- **hex-perm-group** (planned): finite permutation groups with checked stabilizer chains, constructive membership, exact order, point stabilizers and bounded coset enumeration
+- **hex-perm-group** (planned): checked permutation groups, finite actions, complete subgroup search, block systems, normal and derived subgroups, ranking, and direct/wreath products
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
 - **hex-padics**: fixed-precision approximations to `Z_p` and `Q_p`, with the valuation reported as a bound when that is all the data supports, precision-aware arithmetic, partial inversion and division, and exactification by rational reconstruction
@@ -102,7 +102,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
-- **hex-perm-group-mathlib** (planned): correspondence with permutation subgroups, membership, cardinality, stabilizers and cosets
+- **hex-perm-group-mathlib** (planned): correspondence for permutation groups, finite actions, subgroup search, block systems, normal structure, sampling and products
 
 ## Implementation dependencies
 
@@ -346,8 +346,9 @@ complete contracts are in
 
 The planned [hex-perm-group](hex-perm-group.md) and
 [hex-perm-group-mathlib](hex-perm-group-mathlib.md) pair extracts the shared
-permutation type and adds checked Schreier-Sims chains. On activation, graph
-isomorphism will depend on this Mathlib-free group library; its companion
+permutation type and adds checked Schreier-Sims chains, finite actions and
+complete subgroup search. On activation, graph isomorphism will depend on
+this Mathlib-free group library; its companion
 will reuse the general permutation correspondence. The current dependency
 registry remains unchanged for graph isomorphism until that migration.
 

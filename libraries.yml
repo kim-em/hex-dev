@@ -500,6 +500,18 @@ libraries:
           description: Equal presentations, strict inclusions and failed inclusions.
         - name: enumeration
           description: Element count and subgroup index with output limits enforced.
+        - name: element-access
+          description: Sign, cycle type, rank/unrank and supplied-index sampling, including orders above 64 bits.
+        - name: finite-actions
+          description: Tuple, subset and partition orbits, induced images and kernels with varied domain size.
+        - name: subgroup-search
+          description: Set transporters and stabilizers, intersections, centralizers and normalizers with varied pruning effectiveness.
+        - name: blocks
+          description: Minimal invariant equivalences and primitivity with varied degree, seed count and block sizes.
+        - name: normal-structure
+          description: Joins, normality, abelianness, normal closure, core and derived series of soluble and nonsoluble groups.
+        - name: products
+          description: Direct and imprimitive wreath products with varied factor degrees, generator counts and top-group orbits.
         - name: certificate-replay
           description: Construction, word generation and kernel replay separated by certificate size.
   HexPermGroupMathlib:
