@@ -14,3 +14,5 @@ public import HexLatticeEnumMathlib.Native
 public import HexLatticeEnumMathlib.Budget
 public import HexLatticeEnumMathlib.OptimizationBudget
 public import HexLatticeEnumMathlib.Preprocess
+public import HexLatticeEnumMathlib.Correspondence
+public import HexLatticeEnumMathlib.Geometry

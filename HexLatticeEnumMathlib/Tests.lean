@@ -105,3 +105,23 @@ example : checkShortest (Matrix.ofRows #v[#v[1]])
 example : checkEnumeration (Matrix.ofRows #v[#v[1]]) #v[0] 1
     { unitCertificate with tree := .node ⟨-1, 1⟩ [(0, .leaf), (1, .leaf)] } = false := by
   decide +kernel
+
+example (c : Rat) (interval : Interval) :
+    ((coefficients interval c).toList).Pairwise (Nearer c) := coefficients_ordered interval c
+
+example (c : Rat) (z : Int) : Nearer c (nearest c) z := nearest_spec c z
+
+example (b : Basis n m) (t : Vector Rat m) (x : EuclideanSpace Real (Fin m)) :
+    x ∈ ((closest b t).points.map Point.ambient).map realVector ↔
+      x ∈ realLattice b ∧ ∀ y ∈ realLattice b, dist x (realTarget t) ≤ dist y (realTarget t) :=
+  closest_real_spec b t x
+
+example (b : Basis n m) : IsDiscrete (realLattice b : Set (EuclideanSpace Real (Fin m))) :=
+  realLattice_discrete b
+
+example (b : Basis n m) (a : Minimum n m) (h : shortest b = some a) (r : Real) :
+    IsPacking b r ↔ r ≤ Real.sqrt (a.distanceSq : Real) / 2 := packing_radius b a h r
+
+example (b : Basis n m) (a : Minimum n m) (h : shortest b = some a) :
+    (contacts b (Real.sqrt (a.distanceSq : Real) / 2)).ncard = a.points.length :=
+  kissing_number b a h
