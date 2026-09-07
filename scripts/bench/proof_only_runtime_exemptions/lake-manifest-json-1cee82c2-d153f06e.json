@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "1cee82c2c75ac7384aeee9882ffd620a5b6a8f30",
+  "current_blob": "d153f06e7ad483f794005531541d3469150c3075",
+  "reason": "Only the lean-bench revision changes, from b583ddd7 to 8a37daf1, to support operation-only sampling profiles. No factorization library or hexbz_factor_service imports LeanBench; the dependency is used by independent benchmark executables and cannot change the factor service runtime call graph."
+}

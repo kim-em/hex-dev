@@ -67,6 +67,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
+    "HexRationalFnBenchSupport",
+    "HexRationalFnKernelProbe",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",

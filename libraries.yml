@@ -157,8 +157,9 @@ libraries:
   HexRationalFn:
     deps: [HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    proof_probes: [bench/HexRationalFn/ProofProbe]
     phase4:
       comparators:
         - tool: FLINT fmpz_poly_q via a persistent C driver
@@ -183,7 +184,7 @@ libraries:
     deps: [HexRationalFn, HexPolyMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 3
+    done_through: 4
     status: active
   HexMvPoly:
     deps: [HexPoly, HexBasic]

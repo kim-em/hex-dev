@@ -1300,6 +1300,17 @@ lean_exe hexrationalfn_bench where
   srcDir := "bench"
   root := `HexRationalFn.Bench
 
+lean_lib HexRationalFnBenchSupport where
+  srcDir := "bench"
+  roots := #[`HexRationalFn.Scaling, `HexRationalFn.Families,
+    `HexRationalFn.Workloads, `HexRationalFn.Fixtures]
+
+lean_lib HexRationalFnKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexRationalFn.ProofProbe.Support, `HexRationalFn.ProofProbe.Baseline,
+    `HexRationalFn.ProofProbe.Replay4, `HexRationalFn.ProofProbe.Replay16,
+    `HexRationalFn.ProofProbe.Replay64, `HexRationalFn.ProofProbe.Reject64]
+
 lean_exe hexpolyfast_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyFast.EmitFixtures

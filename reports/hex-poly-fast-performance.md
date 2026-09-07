@@ -118,6 +118,56 @@ libraries that own the coefficient representation.
 
 ## Verdicts
 
+### Current unbalanced-multiplication and division paths
+
+Clean revision `31869b9c2` validates the unique, preallocated unbalanced
+accumulator and the short-operand division dispatch. The executable passes
+all 64 smoke checks. The eight affected scientific registrations below all
+give `consistent_with_declared_complexity`, with no failed or truncated row.
+They retain their existing models, schedules, 0.2-second inner targets,
+one outer trial, signal floor 1, and declared leading-rung exclusions. This is
+a focused backend regression refresh; the independent rational-function
+acceptance sweep below uses three outer trials and signal floor 10.
+
+[Block-path export](bench-results/hex-poly-fast-blocks-31869b9c-chungus2-cpu4.json)
+and [division export](bench-results/hex-poly-fast-division-31869b9c-chungus2-cpu5.json)
+retain full hashes, parameters, trial rows, configuration and clean-checkout
+provenance. Both use the host/toolchain above, pinned to CPUs 4 and 5 respectively.
+
+| Target | β | Signal-eligible rows |
+| --- | ---: | ---: |
+| `runBlocksOffset` | +0.085 | 9/9 |
+| `runKaratsubaSkew` | +0.069 | 9/9 |
+| `runKaratsubaRatio2` | -0.027 | 10/10 |
+| `runKaratsubaRatio4` | -0.024 | 9/9 |
+| `runKaratsubaRatio16` | -0.048 | 8/8 |
+| `runNewtonDivision` | -0.034 | 9/9 |
+| `runSkewNewtonDivision` | -0.066 | 9/9 |
+| `runCachedDivision` | -0.003 | 9/9 |
+
+Reproduce with `taskset -c 4 .lake/build/bin/hexpolyfast_bench run`, followed by
+the first five full names (`Hex.PolyFastBench.` prefix), or CPU 5 and the final
+three names, then `--export-file /tmp/polyfast.json`. No model or threshold
+override is needed.
+
+The fixed-ratio block targets vary the short length. The independent
+[growing-ratio experiment](hex-rational-fn-performance.md#compiled-scientific-results)
+fixes odd/even short lengths and varies the long length; both planned and
+schoolbook routes pass the linear model. That consumer report also supplies
+current linear short-divisor/cancellation cases, full-result FLINT comparisons,
+and [operation-only profiles](hex-rational-fn-performance.md#compiled-timed-regions)
+of the changed block, division, and half-gcd paths. In particular,
+`Raw.blocksInto` is 84.81% inclusive and its balanced `Raw.mulAux` products
+80.87% in the unbalanced profile, rather than repeated output copying.
+
+The preallocated buffer's exact size is pinned by structural conformance
+guards, including odd blocks and terminal overshoot. These guards do not
+substitute for the scientific scaling verdicts. The measurements below remain
+the explicitly versioned full-library baseline and historical crossovers;
+they are not represented as fresh measurements of the modified backend.
+
+### Full-library baseline
+
 `lake exe hexpolyfast_bench list` and `verify` passed all 57 registrations at
 commit `0aaa2af1f`. The two later regression targets
 `runKaratsubaRatioUnder2` and `runRemainderTree` passed focused verification at

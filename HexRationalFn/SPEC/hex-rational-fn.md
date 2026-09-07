@@ -348,6 +348,46 @@ Derive any model independently of timings. Preserve complete output checks,
 record hardware and tool versions, keep Mathlib out of executable benches,
 and extend the existing CI job and scheduled timing workflow.
 
+### Performance evidence tracks
+
+The compiled operations and the certificate-proof consumer are separate
+measurement surfaces. Ordinary mathematical correspondence theorems are not
+advertised proof-search operations.
+
+| Surface | Track and targets |
+| --- | --- |
+| `normalizeWith`, `normalize`, `ofFraction?` | Compiled: `RationalFnFamilies.normalizeDegree`, `normalizeCancel`, `checkedFraction`; `RationalFnWorkloads.normalizeChain`, `heightNormalize`. |
+| `ofPoly`, `C`, `X`, natural/integer casts, `toPoly?`, stored-pair projections | Compiled: `RationalFnWorkloads.constructors`, a bounded-degree, bounded-word constant-work family. |
+| `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addCancel`, `addTotal`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
+| `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `unbalanced`, `unbalancedSchoolbook`, `heightMultiply`. |
+| Negation, inversion, `inv?` | Compiled: `RationalFnScaling.negate`; `RationalFnFamilies.inverse`, `checkedInverse` include nonmonic scaling. The monic `RationalFnScaling.inverse` is supplemental sharing/hash evidence. |
+| `DecidableEq`, `BEq`, `eval?` | Compiled: `RationalFnScaling.equal`, `different`, `evaluate`, `evaluatePole`. |
+| `derivativeWith`, `derivative` | Compiled: `RationalFnWorkloads.derivative`, `derivativeCancel`, `derivativePolynomial`, `heightDerivative`. |
+| `splitWith`, `split` | Compiled: `RationalFnWorkloads.polynomialPart`, with a nonzero remainder and bounded short divisor. |
+| `powWith`, natural powers | Compiled: `RationalFnWorkloads.square` varies base degree at exponent two; `power` varies exponent and output degree over the prime field. |
+| `certifyWith`, executable `check`, executable `ofCert?` | Compiled: `RationalFnFamilies.generate`, `accept`; `RationalFnScaling.replay`, `reject`. |
+| Kernel replay of literal certificate-check equalities | Proof: `bench/HexRationalFn/ProofProbe`, externally measured by `scripts/bench/rationalfn_kernel_replay.py`; no LeanBench timing is used. |
+
+Default wrappers and their `With` variants execute the same algorithm with the
+selected lawful plan. Fixed schoolbook/Karatsuba and cancelled/naive comparison
+groups provide plan/route agreement; they are not the operation-coverage
+models. The controlled degree families do not claim generic rational bit
+complexity. The height families keep degrees fixed and use the published
+quadratic coefficient-arithmetic upper bound; their named intermediate
+cofactor and quotient-rule sizes are emitted with the matched FLINT fixtures.
+The long Euclidean chain over `ZMod64 7` separately covers the generic half-gcd
+phase without coupling degree to rational coefficient growth.
+
+Each kernel probe has a five-second absolute fresh-module build budget, six
+rotated reference/candidate samples, an import-only baseline, and cheap and
+replay same-module noise controls. The accepted witnesses have degrees 5, 17,
+and 65; the rejection probe changes the last checked Bezout identity. Literal
+payloads are in a warm imported support module, so the reported build time is
+certificate theorem elaboration and kernel replay, not certificate search or
+payload generation. Standard logical axioms are recorded from `#print axioms`;
+no additional axiom, native decision procedure, or trusted external checker is
+introduced.
+
 ## Conformance
 
 Create `conformance/HexRationalFn/{Conformance,EmitFixtures}.lean`,

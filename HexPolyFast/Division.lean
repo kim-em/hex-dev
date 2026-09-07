@@ -643,4 +643,28 @@ theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
   change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size ≤ q.size - 1 at h
   omega
 
+/-- Maximum short operand length for direct one-shot polynomial division. -/
+def divisionCutoff : Nat := 8
+
+/-- Short divisors and short quotients use array long division. Its work is
+linear in the long operand when either length is bounded; building a full
+Newton reciprocal in that regime would introduce unnecessary dense products. -/
+def divModWithImpl {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
+  if q.size ≤ divisionCutoff || quotientLength p q ≤ divisionCutoff then
+    divMod p q
+  else
+    if hq : q = 0 then (0, p) else
+      let k := quotientLength p q
+      let plan := DivPlan.ofNonzero mul q hq k
+      plan.divMod p (Nat.le_refl k)
+
+/-- The short-operand division dispatch preserves both quotient and remainder. -/
+@[csimp] theorem divModWith_csimp : @divModWith = @divModWithImpl := by
+  funext F instEq instField mul p q
+  unfold divModWithImpl
+  split
+  · exact divModWith_eq mul p q
+  · rfl
+
 end Hex.DensePoly
