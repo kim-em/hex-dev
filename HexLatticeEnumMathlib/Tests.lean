@@ -53,6 +53,18 @@ example : checkEnumeration (Matrix.ofRows #v[#v[1]]) #v[1/2] (1/4) halfCertifica
 example : checkClosest (Matrix.ofRows #v[#v[1]]) #v[1/2]
     ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ = true := by decide +kernel
 
+example (b : Basis 1 1) (hb : b.rows = Matrix.ofRows #v[#v[1]]) :
+    Optimal b #v[1/2] .closest (⟨#v[0], #v[0], 1/4⟩ : Point 1 1) := by
+  apply (checkClosest_sound b #v[1/2] ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ ?_).1
+  rw [hb]
+  decide +kernel
+
+example (b : Basis 1 1) (hb : b.rows = Matrix.ofRows #v[#v[1]]) (v : Vector Int 1) :
+    v ∈ halfCertificate.points.map Point.ambient ↔ b.rows.memLattice v ∧ distance v #v[1/2] ≤ 1/4 := by
+  apply checkEnumeration_sound b #v[1/2] (1/4) halfCertificate ?_ v
+  rw [hb]
+  decide +kernel
+
 example : (bounds 0 1 4).lo = -2 := by decide +kernel
 
 private def unitCertificate : Certificate 1 1 where

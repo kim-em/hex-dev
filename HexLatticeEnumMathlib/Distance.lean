@@ -194,14 +194,13 @@ theorem centre_congr (p : Data n m) (z w : Vector Int n) (i : Fin n)
   · rw [h j hij]
   · rfl
 
-/-- Independent integer rows give unique original-basis coefficients. -/
-theorem vector_injective (b : Basis n m) : Function.Injective (vector b) := by
+/-- Valid positive orthogonal data prove uniqueness of integer row coordinates. -/
+theorem data_injective (p : Data n m) (rows : Hex.Matrix Int n m) (t : Vector Rat m)
+    (hp : p.Valid rows t) : Function.Injective (fun z : Vector Int n => Hex.Matrix.vecMul z rows) := by
   intro z w hzw
-  let p := prepare b (0 : Vector Rat m)
-  have hp : p.Valid := prepare_valid b 0
   have heq : Hex.Matrix.vecMul (z.map fun x : Int => (x : Rat)) p.mu =
       Hex.Matrix.vecMul (w.map fun x : Int => (x : Rat)) p.mu := by
-    apply orthogonal_injective p.toData b.rows 0 hp
+    apply orthogonal_injective p rows t hp
     dsimp only
     rw [Hex.Matrix.vecMul_mul, Hex.Matrix.vecMul_mul, hp.2.2.1,
       ← cast_vector, ← cast_vector]
@@ -213,16 +212,20 @@ theorem vector_injective (b : Basis n m) : Function.Injective (vector b) := by
     | of_succ k hk ih =>
       intro i hi
       by_cases hki : k = i.val
-      · have hc : p.toData.centre z i = p.toData.centre w i :=
-          centre_congr p.toData z w i (fun j hij => ih j (by omega))
+      · have hc : p.centre z i = p.centre w i :=
+          centre_congr p z w i (fun j hij => ih j (by omega))
         have he := congrArg (fun a : Vector Rat n => a[i] - p.projection[i]) heq
-        rw [centre_eq p.toData b.rows 0 hp z i, centre_eq p.toData b.rows 0 hp w i, hc] at he
+        rw [centre_eq p rows t hp z i, centre_eq p rows t hp w i, hc] at he
         have he' : (z[i] : Rat) = (w[i] : Rat) := by linarith
         exact_mod_cast he'
       · exact ih i (by omega)
   apply Vector.ext
   intro i hi
   exact hall 0 (Nat.zero_le n) ⟨i, hi⟩ (Nat.zero_le i)
+
+/-- Independent integer rows give unique original-basis coefficients. -/
+theorem vector_injective (b : Basis n m) : Function.Injective (vector b) :=
+  data_injective (prepare b 0).toData b.rows 0 (prepare_valid b 0)
 
 /-- Squared distances are nonnegative, independently of preparation. -/
 theorem distance_nonneg (v : Vector Int m) (t : Vector Rat m) : 0 ≤ distance v t := by
