@@ -185,6 +185,43 @@ theorem mem_gens {G : Colored n k} {γ : Array Nat} {p : Perm n}
   apply List.mem_filterMap.mpr
   exact ⟨γ, htrace, by simp [hcheck]⟩
 
+/-- A recorded leaf carrier supplies a generated permutation with the
+same pointwise action on the entire reference labelling. -/
+theorem generated_carrier {G : Colored n k} {ctx : Ctx n}
+    {ref cur : Array Nat} {store : Array (Array Nat)}
+    (h : LabelCarrier ctx ref cur store)
+    (hstore : ∀ γ ∈ store, γ ∈ trace G)
+    (href : LabOk ref n) (hsize : ref.size = n) :
+    ∃ p, Perm.Generated (gens G) p ∧
+      ∀ i, (hi : i < n) → (p.get ⟨ref[i]!, href i (by omega)⟩).val = cur[i]! := by
+  obtain ⟨γ, hmem, _, hmap⟩ := h
+  have hraw : γ ∈ raw G := by rw [raw_eq_trace]; exact hstore γ hmem
+  obtain ⟨p, hp, hval⟩ := raw_mem hraw
+  exact ⟨p, .mem hp, fun i hi => (hval ⟨ref[i]!, href i (by omega)⟩).trans (hmap i hi)⟩
+
+/-- Agreement on a reference permutation labelling identifies the whole
+permutation. No orbit-count inference is needed for this final step. -/
+theorem generated_of_reference {G : Colored n k} {p q : Perm n}
+    {ref : Array Nat} (hsize : ref.size = n)
+    (href : ref.toList.Perm (List.range n))
+    (hq : Perm.Generated (gens G) q)
+    (heq : ∀ i, (hi : i < n) → ∀ hv : ref[i]! < n,
+      q.get ⟨ref[i]!, hv⟩ = p.get ⟨ref[i]!, hv⟩) :
+    Perm.Generated (gens G) p := by
+  have hpq : q = p := by
+    apply Perm.ext
+    intro v
+    obtain ⟨i, hi, hiv⟩ := List.mem_iff_getElem.mp
+      (href.mem_iff.mpr (List.mem_range.mpr v.isLt))
+    have hin : i < n := by simpa [hsize] using hi
+    have hv : ref[i]! = v.val := by
+      rw [getElem!_pos ref i (by omega)]
+      exact hiv
+    have h := heq i hin (by omega)
+    have hv' : (⟨ref[i]!, by omega⟩ : Fin n) = v := Fin.ext hv
+    rwa [hv'] at h
+  rwa [← hpq]
+
 end Aut
 
 namespace Nauty.Generation
