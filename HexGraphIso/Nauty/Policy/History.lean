@@ -45,11 +45,43 @@ theorem DescPath.append {ctx : Ctx n} {base level last : Nat}
   | step tc e o hlvl hcell hne ho htail ih =>
     exact .step tc e o hlvl hcell hne ho (ih h₂)
 
+/-- Split a descent at a prescribed number of individualizations. -/
+theorem DescPath.split {ctx : Ctx n} {base level : Nat}
+    {root leaf : RefineSt n} {path : List (Nat × Nat)}
+    (h : DescPath ctx base root path level leaf) {k : Nat}
+    (hk : k ≤ path.length) :
+    ∃ middle, DescPath ctx base root (path.take k) (base + k) middle ∧
+      DescPath ctx (base + k) middle (path.drop k) level leaf := by
+  induction h generalizing k with
+  | refl base root =>
+    have hk0 : k = 0 := by simpa using hk
+    subst k
+    exact ⟨root, .refl _ _, .refl _ _⟩
+  | @step base last root leaf path tc e o hlvl hcell hne ho htail ih =>
+    cases k with
+    | zero => exact ⟨root, .refl _ _, .step tc e o hlvl hcell hne ho htail⟩
+    | succ k =>
+      obtain ⟨middle, hpre, hpost⟩ := ih (k := k) (by simpa using hk)
+      have hlevel : base + 1 + k = base + (k + 1) := by omega
+      rw [hlevel] at hpre hpost
+      exact ⟨middle, .step tc e o hlvl hcell hne ho hpre, hpost⟩
+
 namespace Engine
 
 /-- A list of target positions is stored at consecutive ancestor levels. -/
 def Targets (store : Array Int) (base : Nat) (positions : List Nat) : Prop :=
   ∀ i, i < positions.length → store[base + i]! = Int.ofNat positions[i]!
+
+/-- The initial segment of a stored target history reads the same slots. -/
+theorem Targets.take {store : Array Int} {base : Nat} {xs : List Nat}
+    (h : Targets store base xs) (k : Nat) : Targets store base (xs.take k) := by
+  intro i hi
+  have hix : i < xs.length := by
+    have hlen := hi
+    simp only [List.length_take] at hlen
+    omega
+  rw [getElem!_pos (xs.take k) i hi, List.getElem_take]
+  simpa only [getElem!_pos xs i hix] using h i hix
 
 /-- Two histories read from one store agree through the shorter history. -/
 theorem Targets.prefix {store : Array Int} {base : Nat} {xs ys : List Nat}
