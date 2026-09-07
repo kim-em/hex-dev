@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCell.Leaves
+public import HexGraphIso.Nauty.SmallCell.Transitive
 
 public section
 

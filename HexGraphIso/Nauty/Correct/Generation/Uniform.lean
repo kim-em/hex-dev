@@ -50,6 +50,22 @@ theorem Uniform.node {tcLevel level tc e : Nat} {st : RefineSt n}
     obtain ⟨rfl, rfl⟩ := hchildren o ho rest tail hchild
     exact ⟨rfl, rfl⟩
 
+/-- Each child of a uniform node has the same uniform suffix. -/
+theorem Uniform.child {tcLevel level tc e o : Nat} {rs : RefineSt n}
+    {targets : List Nat} {key : Key n}
+    (h : Uniform ctx tcLevel level rs (tc :: targets) ⟨rs.longcode :: key.codes, key.rows⟩)
+    (hlvl : level < n) (hcell : (tc, e) ∈ cells rs.ptn level n) (hne : tc < e)
+    (htarget : tc = specTargetcell ctx rs.lab rs.ptn level tcLevel) (ho : o ≤ e - tc) :
+    Uniform ctx tcLevel (level + 1) (childSt ctx level rs tc rs.lab[tc + o]!) targets key := by
+  intro targets' key' hleaf
+  obtain ⟨ht, hk⟩ := h _ _ (hleaf.step hlvl hcell hne ho htarget)
+  refine ⟨(List.cons.inj ht).2, ?_⟩
+  have hc := (List.cons.inj (congrArg Key.codes hk)).2
+  have hr := congrArg Key.rows hk
+  cases key
+  cases key'
+  congr
+
 /-- Checked cell stabilizers carrying every child to one uniform child
 make the whole target subtree uniform. -/
 theorem Uniform.carriers {tcLevel level tc e oGuide : Nat} {rs : RefineSt n}

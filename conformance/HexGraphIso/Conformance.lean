@@ -440,3 +440,11 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.first_uniform' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.first_uniform
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.uniform_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.uniform_reference
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.RefPath.transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.RefPath.transport
