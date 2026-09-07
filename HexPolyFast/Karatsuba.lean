@@ -245,11 +245,28 @@ def addShift (offset : Nat) (a b : Array R) : Array R :=
 private def addAtStep (offset : Nat) (b acc : Array R) (i : Nat) : Array R :=
   acc.set! (offset + i) (acc.getD (offset + i) 0 + b.getD i 0)
 
+/-- Visit the block support without allocating an index list. -/
+private def addAtLoop (offset : Nat) (b : Array R) : Nat → Nat → Array R → Array R
+  | _, 0, acc => acc
+  | i, count + 1, acc =>
+      addAtLoop offset b (i + 1) count (addAtStep offset b acc i)
+
+omit [DecidableEq R] in
+private theorem addAtLoop_eq (offset : Nat) (b : Array R) (count : Nat) :
+    ∀ i acc, addAtLoop offset b i count acc =
+      (List.range' i count).foldl (addAtStep offset b) acc := by
+  induction count with
+  | zero => intros; rfl
+  | succ count ih =>
+      intro i acc
+      rw [addAtLoop, List.range'_succ, List.foldl_cons]
+      exact ih _ _
+
 /-- Accumulate only the shifted block support. The undersized-buffer branch
 grows the array without dropping coefficients, preserving unrestricted inputs. -/
 def addAt (offset : Nat) (acc b : Array R) : Array R :=
   if offset + b.size ≤ acc.size then
-    (List.range b.size).foldl (addAtStep offset b) acc
+    addAtLoop offset b 0 b.size acc
   else addShift offset acc b
 
 omit [DecidableEq R] in
@@ -300,6 +317,7 @@ private theorem addAt_eq_addShift (offset : Nat) (acc b : Array R) :
   unfold addAt
   split
   · rename_i hcap
+    rw [addAtLoop_eq, ← List.range_eq_range']
     have hsize := size_addAtSteps offset b (List.range b.size) acc
     apply Array.ext
     · simp [hsize, addShift, Nat.max_eq_left hcap]
@@ -324,8 +342,10 @@ private def segment (offset len : Nat) (a : Array R) : Array R :=
 private def blocksInto (cutoff blockSize : Nat) :
     Nat → Nat → Array R → Array R → Array R → Array R
   | 0, offset, acc, long, short =>
-      let tail := segment offset long.size long
-      addAt offset acc (mulAux cutoff (max tail.size short.size) tail short)
+      if long.size ≤ offset then acc
+      else
+        let tail := segment offset long.size long
+        addAt offset acc (mulAux cutoff (max tail.size short.size) tail short)
   | fuel + 1, offset, acc, long, short =>
       if long.size ≤ offset then acc
       else
@@ -333,10 +353,14 @@ private def blocksInto (cutoff blockSize : Nat) :
         blocksInto cutoff blockSize fuel (offset + blockSize)
           (addAt offset acc (mulAux cutoff (max head.size short.size) head short)) long short
 
-/-- Fuelled unbalanced block multiplication over raw arrays. -/
+/-- Fuelled unbalanced block multiplication over raw arrays. For ordinary
+block dispatch, each raw product has size at most twice the short length minus
+one, including recursive padding. Since every visited offset is below the long
+length, this buffer contains every shifted block support. The growing fallback
+in `addAt` also handles unrestricted block sizes and prematurely exhausted fuel. -/
 def blocks (cutoff blockSize fuel : Nat) (long short : Array R) : Array R :=
   blocksInto cutoff blockSize fuel 0
-    (Array.replicate (2 * (long.size + short.size + 1)) 0) long short
+    (Array.replicate (long.size + 2 * max (min blockSize long.size) short.size + 1) 0) long short
 
 /-- A clipped raw schoolbook product. -/
 def schoolbookSlice (lo len : Nat) (a b : Array R) : Array R :=
@@ -819,21 +843,22 @@ private theorem ofCoeffs_blocksInto (cutoff blockSize fuel offset : Nat)
     (acc long short : Array R) :
     (ofCoeffs (blocksInto cutoff blockSize fuel offset acc long short) : DensePoly R) =
       ofCoeffs acc + shift offset (ofCoeffs (high offset long) * ofCoeffs short) := by
+  have hempty (offset : Nat) (h : long.size ≤ offset) :
+      (ofCoeffs (high offset long) : DensePoly R) = 0 := by
+    apply (size_eq_zero_iff (ofCoeffs (high offset long) : DensePoly R)).mp
+    exact Nat.le_antisymm
+      (Nat.le_trans (size_ofCoeffs_le (high offset long)) (by simp [high]; omega))
+      (Nat.zero_le _)
   induction fuel generalizing offset acc with
   | zero =>
-      rw [blocksInto, addAt_eq_addShift, ofCoeffs_addShift, ofCoeffs_mulAux, segment_to_end]
+      rw [blocksInto]
+      split
+      · rw [hempty _ ‹_›, zero_mul, shift_zero_right, add_zero_poly]
+      · rw [addAt_eq_addShift, ofCoeffs_addShift, ofCoeffs_mulAux, segment_to_end]
   | succ fuel ih =>
       rw [blocksInto]
       split
-      · rename_i hempty
-        have hhigh : (ofCoeffs (high offset long) : DensePoly R) = 0 := by
-          apply (size_eq_zero_iff (ofCoeffs (high offset long) : DensePoly R)).mp
-          exact Nat.le_antisymm
-            (Nat.le_trans (size_ofCoeffs_le (high offset long)) (by
-              simp [high]
-              omega))
-            (Nat.zero_le _)
-        rw [hhigh, zero_mul, shift_zero_right, add_zero_poly]
+      · rw [hempty _ ‹_›, zero_mul, shift_zero_right, add_zero_poly]
       · rw [ih, addAt_eq_addShift, ofCoeffs_addShift, ofCoeffs_mulAux,
           add_assoc_poly, ← shift_shift, ← shift_add]
         congr 1
@@ -847,7 +872,8 @@ theorem ofCoeffs_blocks (cutoff blockSize fuel : Nat) (long short : Array R) :
       ofCoeffs long * ofCoeffs short := by
   unfold blocks
   rw [ofCoeffs_blocksInto, high_zero, shift_zero_left]
-  have hrep : (ofCoeffs (Array.replicate (2 * (long.size + short.size + 1)) (0 : R)) :
+  have hrep : (ofCoeffs (Array.replicate
+      (long.size + 2 * max (min blockSize long.size) short.size + 1) (0 : R)) :
       DensePoly R) = 0 := ofCoeffs_replicate_zero _
   rw [hrep, zero_add]
 

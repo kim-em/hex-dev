@@ -2,11 +2,18 @@
 """Protocol conversion regressions, without requiring FLINT or SymPy."""
 
 import unittest
+from unittest.mock import patch
 
-from rationalfn_flint import decode, encode, integer_pair
+from scripts.bench.rationalfn_flint import ROOT, decode, encode, git_state, integer_pair
 
 
 class RationalFnProtocolTests(unittest.TestCase):
+    def test_checkout_provenance(self):
+        with patch("scripts.bench.rationalfn_flint.subprocess.check_output",
+                   side_effect=["abc123\n", " M changed\n"]) as run:
+            self.assertEqual(git_state(), {"commit": "abc123", "git_dirty": True})
+            self.assertTrue(all(call.kwargs["cwd"] == ROOT for call in run.call_args_list))
+
     def test_shared_denominator(self):
         pair = {"num": [[-1, 2], [2, 3]], "den": [[3, 4], [1, 1]]}
         self.assertEqual(integer_pair(pair), [[-6, 8], [9, 12]])

@@ -64,6 +64,7 @@ jobs:
           python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py
           python3 -m unittest scripts/ci/test_check_persistent_flint_warmup.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
+          python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_berlekamp_mathlib_sweep.py

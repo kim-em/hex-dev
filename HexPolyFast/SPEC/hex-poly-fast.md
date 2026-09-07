@@ -334,6 +334,15 @@ remainder. `divModMonicWith` supplies the analogous commutative-ring API.
 For `q ≠ 0`, `divModWith_size_lt` gives the strict coefficient-length bound
 `(divModWith mul p q).2.size < q.size`, including zero remainders.
 
+The one-shot `divModWith` runtime dispatch uses direct array long division
+when the divisor length or quotient length is at most `divisionCutoff = 8`.
+With quotient length `k` and divisor length `d`, this route performs O(kd)
+coefficient updates plus linear input/output scans, so it is linear in the
+long operand when either length is bounded. This avoids constructing a dense
+Newton reciprocal for the short divisors used by rational-function
+normalization. The proved quotient and remainder are unchanged; explicit
+cached `DivPlan` operations retain the reciprocal path.
+
 The declared cost for quotient length `k` is `O(M(k))` after a reciprocal of
 precision `k` is available and `O(M(k))` including construction, since the
 doubling steps form a geometric series for every supported multiplication

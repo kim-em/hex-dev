@@ -19,6 +19,15 @@ import sys
 
 OPS = {"normalize", "add", "sub", "mul", "div", "inv", "neg", "pow",
        "derivative", "equal", "eval"}
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def git_state():
+    """Identify the coordinator's checkout, independently of the caller's cwd."""
+    git = lambda *args: subprocess.check_output(
+        ["git", *args], cwd=ROOT, text=True).strip()
+    return {"commit": git("rev-parse", "HEAD"),
+            "git_dirty": bool(git("status", "--porcelain"))}
 
 
 def integer_pair(pair):
@@ -137,7 +146,7 @@ def main():
                           "platform": platform.platform(),
                           "cpu_affinity": sorted(os.sched_getaffinity(0))
                           if hasattr(os, "sched_getaffinity") else None,
-                          "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+                          **git_state(),
                           "driver_sha256": digest(args.driver), "fixtures_sha256": digest(args.fixtures),
                           "coordinator_sha256": digest(__file__),
                           "driver_source_sha256": digest(Path(__file__).with_suffix(".c"))}, indent=2))

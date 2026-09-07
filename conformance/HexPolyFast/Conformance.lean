@@ -85,6 +85,24 @@ private def ratioUnder2Right : DensePoly Int :=
 #guard mulKaratsuba 32 ratioUnder2Left ratioUnder2Right =
   ratioUnder2Left * ratioUnder2Right
 
+-- Raw block parameters are unrestricted: overshooting the input with the last
+-- block must not allocate an offset-sized zero suffix. Keep the test offset
+-- modest so a regression fails the bound without exhausting CI memory.
+#guard let r := Karatsuba.Raw.blocks 2 4096 1 a.toArray b.toArray
+  r.size ≤ 32 ∧ (ofCoeffs r : DensePoly Int) = a * b
+#guard (ofCoeffs (Karatsuba.Raw.blocks 2 8 0 long.toArray short.toArray) : DensePoly Int) =
+  long * short
+#guard (ofCoeffs (Karatsuba.Raw.blocks 2 0 3 a.toArray b.toArray) : DensePoly Int) = a * b
+#guard (ofCoeffs (Karatsuba.Raw.blocks 2 4096 1 #[] b.toArray) : DensePoly Int) = 0
+
+-- The accumulator capacity includes this raw-product padding bound, not only
+-- the canonical product degree. Include odd, skew, cutoff, and fuel boundaries.
+#guard [0, 1, 2, 3, 8, 9, 17, 33, 64].all fun m =>
+  [0, 1, 2, 3, 8, 9, 17, 33, 64].all fun n =>
+    [0, 1, 8].all fun cutoff => [0, 1, 8].all fun fuel =>
+      (Karatsuba.Raw.mulAux cutoff fuel (Array.replicate m (1 : Int))
+        (Array.replicate n (1 : Int))).size ≤ 2 * max m n - 1
+
 private def plan : MulPlan Int := karatsubaPlan 2
 
 #guard mulWith (schoolbookPlan : MulPlan Int) a b = a * b

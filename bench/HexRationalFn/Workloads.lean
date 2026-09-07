@@ -132,7 +132,7 @@ def normalizeChain (i : DensePoly F × DensePoly F) :=
 -- not asserted: finite-characteristic cancellations change matrix supports and
 -- admissible high-half blocks, despite the prescribed full Euclidean chain.
 setup_benchmark normalizeChain n => multiplicationCost n * (Nat.log2 n + 1)
-  with prep := continuants where { config with tags := #["degree"] }
+  with prep := continuants where { config with tags := #["degree", "upper-bound"] }
 
 def powerInput (n : Nat) : Nat × RationalFn F := (n, ofPoly #p[1, 1])
 def power (i : Nat × RationalFn F) :=
