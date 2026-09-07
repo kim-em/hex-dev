@@ -734,10 +734,9 @@ a failed benchmark result. The complete replication compares hashes numerically.
 
 1. **Singleton-norm recovery.** When the recursively factored accepted norm
    has one certified irreducible factor, return the canonical monic component
-   directly. Prove that the norm certificate implies irreducibility of the
-   component and that this agrees with the checked recovery result. This
-   targets the entire recovery phase, including shifting, rather than only
-   its gcd. The [independent untimed PARI check](bench-results/hex-number-field-tower-profile-af7b4d49f-norm-check.json)
+   directly. The recovery product proves exact agreement with the original
+   gcd result and transfers its irreducibility theorem to the component. This
+   removes the entire recovery phase for singleton norms, including shifting. The [independent untimed PARI check](bench-results/hex-number-field-tower-profile-af7b4d49f-norm-check.json)
    finds one irreducible norm factor at every registered Selmer rung
    `2, 3, 4, 6, 8, 12, 24`, so the condition applies to this family.
    Multiple-factor norms retain ordinary recovery.
@@ -745,8 +744,9 @@ a failed benchmark result. The complete replication compares hashes numerically.
    defining degree during Horner evaluation. For the quadratic fixture this
    means computing `A(X) + Y B(X)` modulo `Y² - 2`, then using
    `A² - 2B²` for the norm. The target is the combined 51.31–51.98% norm
-   construction/resultant phase, with an exact norm-equivalence proof and
-   a general fallback. A guard for a provably repeated shift-zero norm is
+   construction/resultant phase. Exact norm equivalence is proved for every
+   quadratic relation `Y² + bY + a` over a validated lower tower; other degrees
+   retain the general resultant. A guard for a provably repeated shift-zero norm is
    another possible local experiment, but these profiles do not isolate its
    cost, so no saving is attributed to it.
 3. **Explicit irreducibility evidence.** If replay remains expensive after
@@ -836,6 +836,40 @@ product identifies the returned canonical factor exactly. The existing public
 factorization soundness, completeness, monicity, and replay theorems build with
 both branches. The proof-complete benchmark executable has the identical
 SHA-256 hash to the measured combined prototype.
+
+### Integrated singleton and quadratic implementation
+
+The proof-complete implementation is rebased onto main `064902321` and
+compared with a newly built baseline from that main revision, using the
+[preregistered integrated comparison](hex-number-field-tower-factor-protocol.md#integrated-implementation-comparison).
+The [decision](bench-results/tower-singleton-quadratic/issue-10074-integrated-main-decision.json)
+admits opposite-order attempts 2 and 4 and passes the stronger gate. Attempts
+1 and 3 remain excluded by host telemetry and are retained in full. All eight
+Hex cases improve with disjoint repeat ranges in both admitted pairs, all
+hashes match, and all fifteen Hex/PARI/control registrations complete.
+
+Degree-24 factorization medians fall from 34.108–34.120 ms to 9.041–9.096 ms
+(**3.750–3.774×**). Replay falls from 16.628–16.678 ms to 4.166–4.167 ms
+(**3.991–4.002×**). These are direct comparisons of the final integrated
+executables, not products of earlier gains. Both binaries pass all 49
+benchmark checks. The restored candidate has exactly the saved measured
+binary hash; the full companion and conformance build, differential checks,
+fixture comparison, and nine PARI oracle cases pass.
+
+Fresh PARI comparisons from those same candidate runs follow. Ranges enclose
+the two admitted medians or paired ratios; they are not confidence intervals.
+The protocol-control medians are 7.251–7.262 µs, subtracted only from PARI in
+the adjusted ratio. The comparator remains informational; these local
+shared-host fixed-input results make no complexity claim.
+
+| n | Hex median (ms) | PARI median (µs) | PARI/Hex raw ratio | Overhead-adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.635–0.638 | 28.985–29.060 | 0.0455–0.0457 | 0.0342–0.0342 |
+| 3 | 0.757–0.761 | 34.372–34.662 | 0.0452–0.0458 | 0.0356–0.0362 |
+| 4 | 0.991–1.008 | 39.130–39.485 | 0.0388–0.0398 | 0.0316–0.0325 |
+| 6 | 1.391–1.396 | 121.578–121.776 | 0.0872–0.0874 | 0.0820–0.0822 |
+| 8 | 1.856–1.860 | 47.747–48.012 | 0.0257–0.0259 | 0.0218–0.0220 |
+| 12 | 3.421–3.425 | 75.060–75.139 | 0.0219–0.0220 | 0.0198–0.0198 |
 
 ### Rational squarefreeness
 
