@@ -288,6 +288,10 @@ The [54 query cases](bench-results/hex-rational-fn-flint-queries-83d22022-chungu
 and [216 arithmetic cases](bench-results/hex-rational-fn-flint-workloads-83d22022-chungus2-cpu5.json)
 all agree, including their 30 trivial-input controls. Each export records three
 raw trials, source/driver/fixture hashes, affinity, and both representation sizes.
+The coordinator records its own checkout, including a dirty flag that counts
+untracked files. All cited exports have `git_dirty: false`; write measurement
+outputs outside the checkout (as below) until the run is complete. Informational
+FLINT timings do not themselves issue a release-quality verdict.
 
 FLINT stores an integer-polynomial pair with scalar normalization; Hex stores
 rational coefficients with monic denominator. Parsing, input conversion,
