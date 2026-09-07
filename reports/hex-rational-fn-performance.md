@@ -257,8 +257,8 @@ rung. FLINT's early shape rejection differs from Lean's numerator-first traversa
 It remains a complete-output correctness comparison, not a throughput claim.
 
 The inverse baseline was 65–113× slower before the monic fast path. The largest
-remaining eligible query gap is pole evaluation, so that case also requires a
-profile. No matched throughput claim is made yet for arithmetic, normalization,
+remaining eligible query gap is pole evaluation, profiled below.
+No matched throughput claim is made yet for arithmetic, normalization,
 height, or calculus. Replay has no comparable surface in `fmpz_poly_q`.
 
 Reproduction (choose and record an idle CPU before timing):
@@ -279,6 +279,8 @@ monic optimization), AMD EPYC 9455, NixOS/Linux 6.12.100 x86_64, Lean 4.34.0-rc2
 lean-bench 0.1.0, samply 0.13.1 at 999 Hz, and lean-bench-samply
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`. Captures are unpinned: a pinned samply
 attempt produced zero samples and failed calibration, and is not evidence.
+The post-optimization inverse and pole captures use clean commit
+`e3075d6134d25d049b59459f268d739d41a9ee66` on the same environment.
 Only benchmark-thread samples inside the recorded timed regions are retained;
 these loops include the benchmark's complete-result hash.
 
@@ -286,6 +288,12 @@ these loops include the benchmark's complete-result hash.
 | --- | ---: | ---: | ---: | ---: | ---: |
 | inverse, before fast path | 0.00% | 37.00% | 38.05% | 21.86% | 96.92% |
 | replay | 0.56% | 36.54% | 40.92% | 21.85% | 99.87% |
+| inverse, monic fast path | 0.06% | 0.00% | 0.00% | 99.94% | 100.00% |
+| pole evaluation | 0.00% | 36.14% | 45.70% | 18.13% | 99.97% |
+
+For post-optimization inversion, the table classifies the identified core
+`instHashableRat.hash` leaf (73.18%) as Lean runtime/library support. The generic
+summary classifier leaves that symbol in `other`; the raw summary is unchanged.
 
 The [inverse summary](bench-results/hex-rational-fn-inverse-2d47ce18-profile.json)
 attributes 95.53% inclusive cost to `RationalFn.inv`, 94.11% to `Rat.mul`, and
@@ -294,6 +302,12 @@ one. The monic branch now returns the reversed pair directly, with the same
 coprimality and monicity proofs. This removes unnecessary coefficient operations;
 it is not a change to generic nonmonic inversion or rational arithmetic.
 
+The [post-optimization inverse summary](bench-results/hex-rational-fn-inverse-e3075d61-profile.json)
+shows `RationalFn.inv` at only 0.09% inclusive, with no sampled GMP or allocation
+leaves. Full-output hashing dominates the remaining loop. This profile measures
+the registered operation-plus-hash contract; its linear slope must not be read
+as a linear lower bound on monic inversion alone.
+
 The [replay summary](bench-results/hex-rational-fn-replay-2d47ce18-profile.json)
 attributes 100% inclusive to `RationalFn.check`, 90.24% to `DensePoly.mulImpl`,
 7.71% to `DensePoly.addImpl`, and 2.05% to trailing-zero trimming. These are the
@@ -301,12 +315,21 @@ two dense-witness products, sum, and canonical comparison named by the replay
 model. Rational multiplication/addition and their gcd/allocation costs dominate
 the leaf budget; no Euclidean witness generation occurs in replay.
 
+The [pole summary](bench-results/hex-rational-fn-pole-e3075d61-profile.json) places
+99.94% inclusive cost in `RationalFn.eval?` and its array Horner fold, with
+`Rat.mul` at 65.86%, `Rat.add` at 32.96%, and `lean_nat_gcd` at 86.15%.
+The denominator is evaluated before the numerator, so no numerator evaluation
+or rational division occurs at this pole. The observed gap is in the registered
+Horner arithmetic and its allocation, not hidden fixture preparation.
+
 Filtering diagnostics (full blocks are retained in the summaries):
 
 | Case | Residual | Timed duration | Retained samples | ±5 ms sensitivity | Confidence |
 | --- | ---: | ---: | ---: | --- | --- |
 | inverse, before fast path | 0.913 ms | 4339.949 ms | 4313 | passed | passed |
 | replay | 1.380 ms | 3773.230 ms | 3749 | passed | passed |
+| inverse, monic fast path | 0.881 ms | 3508.679 ms | 3479 | passed | passed |
+| pole evaluation | 1.295 ms | 3164.139 ms | 3149 | passed | passed |
 
 Exact capture command, with `OP=inverse` or `OP=replay`:
 
@@ -320,6 +343,10 @@ python3 /tmp/lean-bench-samply/scripts/profile_bench.py \
 ```
 
 Raw compressed profiles remain developer-local, not committed.
+The post-optimization commands differ only in the output path
+(`/tmp/hex-rationalfn.ycP9Of/inverse-fast-8192.json.gz` and
+`/tmp/hex-rationalfn.ycP9Of/pole-8192.json.gz`) and use registered names
+`Hex.RationalFnScaling.inverse` and `Hex.RationalFnScaling.evaluatePole`.
 
 ## Concerns
 

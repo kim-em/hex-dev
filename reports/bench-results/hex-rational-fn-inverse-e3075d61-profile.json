@@ -1,0 +1,303 @@
+{
+  "allocation_share_percent": 0.0,
+  "classified_percent": 26.82,
+  "diagnostics": {
+    "bench_pid": 2677508,
+    "bench_thread_name": "hexrationalfn_bench",
+    "bench_thread_tid": "2677520",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": 1.1346402168273926,
+          "boundary_residual_trimmed_max_ms": 0.8805737495422363,
+          "hit_count": 3479,
+          "regions_without_samples": 5,
+          "within_residual_limit": true
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 10,
+          "within_residual_limit": false
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 1.1346402168273926,
+      "residual_ms": 0.8805737495422363,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "absolute-monotonic-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.8805737495422363,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 3505.2,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 10,
+    "rejected_samples_bench_thread": 9,
+    "retained_samples_bench_thread": 3479,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1788768678847.6338,
+    "samply_timestamp_mode": "absolute-monotonic-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 3474,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 37,
+              "name": "0x4b72778",
+              "samples": 855
+            },
+            {
+              "function": 42,
+              "name": "0x4b72764",
+              "samples": 443
+            },
+            {
+              "function": 49,
+              "name": "0x4b72745",
+              "samples": 243
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 3479,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 37,
+              "name": "0x4b72778",
+              "samples": 858
+            },
+            {
+              "function": 42,
+              "name": "0x4b72764",
+              "samples": 443
+            },
+            {
+              "function": 49,
+              "name": "0x4b72745",
+              "samples": 243
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 3478,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 37,
+              "name": "0x4b72778",
+              "samples": 857
+            },
+            {
+              "function": 42,
+              "name": "0x4b72764",
+              "samples": 443
+            },
+            {
+              "function": 49,
+              "name": "0x4b72745",
+              "samples": 243
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 3474,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0014392630972941854,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 41,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.0034971427860650407,
+          "total_variation_distance": 0.0009817106438284372,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 3478,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0008625646923519264,
+          "exchanged_samples": 3,
+          "failure_reasons": [],
+          "leaf_function_support_size": 42,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.0027385579988017613,
+          "total_variation_distance": 0.0004849602007014729,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 3016479543646773,
+    "spawn_anchor_mono_ns": 3016479303219363,
+    "spawn_anchor_wall_ns": 1788768678845473208,
+    "stage": "complete",
+    "total_timed_ms": 3508.67923
+  },
+  "inclusive_hex": [
+    {
+      "function": "_private.HexRationalFn.Scaling.0_Hex.RationalFnScaling.initFn_.lam_0.00_@.HexRationalFn.Scaling.4235466438__hygCtx_.hyg.33.",
+      "percent": 100.0
+    }
+  ],
+  "leaf_categories": {
+    "lean-own-code": 0.06,
+    "lean-runtime": 26.76,
+    "other": 73.18
+  },
+  "profile": "/tmp/hex-rationalfn.ycP9Of/inverse-fast-8192.json.gz",
+  "samples": 3479,
+  "symbols": "/tmp/hex-rationalfn.ycP9Of/inverse-fast-8192.json.syms.json",
+  "top_inclusive": [
+    {
+      "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 100.0
+    },
+    {
+      "function": "start_thread",
+      "percent": 100.0
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexRationalFn.Scaling.0_Hex.RationalFnScaling.initFn_.lam_0.00_@.HexRationalFn.Scaling.4235466438__hygCtx_.hyg.33.",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 100.0
+    },
+    {
+      "function": "lean::lthread::imp::_main(void*)",
+      "percent": 100.0
+    },
+    {
+      "function": "fun_124075",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 100.0
+    },
+    {
+      "function": "instHashableRat.hash",
+      "percent": 73.18
+    },
+    {
+      "function": "lean-bench_.private.Init.While.0_repeatM.erased",
+      "percent": 0.57
+    },
+    {
+      "function": "Hex.RationalFn.inv",
+      "percent": 0.09
+    },
+    {
+      "function": "lean-bench.LeanBench.blackBox",
+      "percent": 0.09
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.06
+    },
+    {
+      "function": "lean_st_ref_set",
+      "percent": 0.06
+    },
+    {
+      "function": "Hex.DensePoly.trimTrailingZerosGo",
+      "percent": 0.03
+    },
+    {
+      "function": "lean_st_ref_take",
+      "percent": 0.03
+    }
+  ],
+  "top_self": [
+    {
+      "function": "instHashableRat.hash",
+      "percent": 73.18
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 26.62
+    },
+    {
+      "function": "Hex.RationalFn.inv",
+      "percent": 0.06
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.06
+    },
+    {
+      "function": "lean_st_ref_set",
+      "percent": 0.06
+    },
+    {
+      "function": "lean_st_ref_take",
+      "percent": 0.03
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 73.18,
+      "symbol": "instHashableRat.hash"
+    },
+    {
+      "percent": 26.62,
+      "symbol": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop_.at_.00_private.HexRationalFn.Scaling.0_Hex.RationalFnScaling.initFn.00_@.HexRationalFn.Scaling.4235466438__hygCtx_.hyg.33_spec_0_.redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "Hex.RationalFn.inv_.at_.00Hex.RationalFnScaling.inverse.spec_0"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean_st_ref_set"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_st_ref_take"
+    }
+  ]
+}
