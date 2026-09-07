@@ -789,6 +789,8 @@ lean_lib HexConformance where
 
     ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains].map Glob.one
 
+    ++ #[`HexLatticeEnum.Conformance].map Glob.one
+
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntFactor.Conformance,
@@ -1035,9 +1037,9 @@ lean_exe hexlll_emit_fixtures where
   srcDir := "conformance"
   root := `HexLLL.EmitFixtures
 
-lean_exe hexlatticeenum_conformance where
+lean_exe hexlatticeenum_emit_fixtures where
   srcDir := "conformance"
-  root := `HexLatticeEnum.Conformance
+  root := `HexLatticeEnum.EmitFixtures
 
 lean_exe hexrealroots_emit_fixtures where
   srcDir := "conformance"
