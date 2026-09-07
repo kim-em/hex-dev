@@ -35,6 +35,7 @@ structure NodePre (G : Colored n k) (ctx : Ctx n) (tcLevel level numcells : Nat)
   partition : SearchOk G level numcells st.view
   stored : RunInv G ctx st
   ancestor : st.gcaFirst < level
+  canonAncestor : st.gcaCanon < level
   history : let r := visit ctx level numcells st
     History ctx tcLevel level (level - 1) r.1 r.2.2
   equitable : Equitable ctx level (st.refined ctx level numcells).lab (st.refined ctx level numcells).ptn
@@ -53,6 +54,7 @@ structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool
   cursor_mem : ∀ v, cursor = some v → cell.mem v = true
   stored : RunInv G ctx st
   ancestor : st.gcaFirst ≤ level
+  canonAncestor : st.gcaCanon ≤ level
   history : History ctx tcLevel level level numcells st
   recorded : Recorded ctx tcLevel level tc st
   equitable : Equitable ctx level st.lab st.ptn

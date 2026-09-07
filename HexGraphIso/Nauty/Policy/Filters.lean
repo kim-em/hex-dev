@@ -59,6 +59,32 @@ theorem leafExit_cheap_bound {level target : Nat} {short : Bool} {st : Search n}
     have hb := pruneReturn_bound h
     exact hb
 
+/-- With both saved ancestors below the node, every leaf return leaves
+that node. The implicit return also respects the saved cheap boundary. -/
+theorem leafExit_bound {level target : Nat} {short : Bool} {st : Search n} {leaf : Leaf}
+    (hf : st.gcaFirst < level) (hc : st.gcaCanon < level)
+    (hn : st.noncheaplevel ≤ level)
+    (h : (leafExit leaf level st).1 = .unwind target short) : target < level := by
+  have hg : ∀ s : Search n,
+      (admit s).gcaFirst = s.gcaFirst ∧ (admit s).gcaCanon = s.gcaCanon := by
+    intro s
+    unfold admit pushAuto
+    simp only [Id.run_pure]
+    split <;> exact ⟨rfl, rfl⟩
+  cases leaf with
+  | bad => have := leafExit_cheap_bound (Or.inl rfl) h; omega
+  | better sr => have := leafExit_cheap_bound (Or.inr ⟨sr, rfl⟩) h; omega
+  | internal =>
+    change Generic.Exit.done = .unwind target short at h
+    cases h
+  | autoFirst | autoCanon =>
+    unfold leafExit at h
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
+    repeat' split at h
+    all_goals have ht := (Generic.Exit.unwind.inj h).1
+    all_goals simp only [(hg _).1, (hg _).2] at ht
+    all_goals first | exact ht ▸ hf | exact ht ▸ hc
+
 /-- A short code-2 return targets the saved canonical ancestor. -/
 theorem leafExit_canon_target {level target : Nat} {st : Search n}
     (h : (leafExit .autoCanon level st).1 = .unwind target true) :

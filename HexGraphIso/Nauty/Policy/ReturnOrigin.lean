@@ -8,7 +8,9 @@ module
 
 public import HexGraphIso.Nauty.Policy.Short
 public import HexGraphIso.Nauty.Policy.Filters
-public import HexGraphIso.Nauty.Policy.CallState
+public import HexGraphIso.Nauty.Policy.Prepared
+import all HexGraphIso.Nauty.Policy.Prepared
+import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Short
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
@@ -28,6 +30,36 @@ justify the receiving fix test. -/
 namespace Hex.GraphIso.Nauty.Engine
 
 variable {n : Nat}
+
+/-- The leaf action of an actual prepared node returns to a strict ancestor. -/
+theorem NodePre.leaf_bound {k : Nat} {G : Colored n k} {ctx : Ctx n}
+    {tcLevel level numcells target : Nat} {short : Bool} {st : Search n}
+    (hin : NodePre G ctx tcLevel level numcells st) :
+    let p := prepareOther ctx tcLevel level numcells st
+    let c := classify ctx level p.1 p.2.2.2.2.2
+    (leafExit c.1 level c.2).1 = .unwind target short → target < level := by
+  intro p c he
+  apply leafExit_bound (st := c.2) (leaf := c.1) ?_ ?_ ?_ he
+  · have hg := (gcaPolicy ctx 0 tcLevel).classify level p.1 p.2.2.2.2.2
+    change c.2.gcaFirst = p.2.2.2.2.2.gcaFirst at hg
+    rw [hg]
+    change (chooseTarget false ctx tcLevel level _ (compareCodes level _ _)).2.2.2.gcaFirst < level
+    rw [chooseTarget_fields]
+    have hc := (gcaPolicy ctx 0 tcLevel).compare level
+      (visit ctx level numcells st).2.1 (visit ctx level numcells st).2.2
+    change (compareCodes level _ _).gcaFirst = _ at hc
+    rw [hc]
+    exact hin.ancestor
+  · change (classify ctx level p.1 p.2.2.2.2.2).2.gcaCanon < level
+    rw [classify_canon]
+    change (chooseTarget false ctx tcLevel level _ (compareCodes level _ _)).2.2.2.gcaCanon < level
+    rw [target_canon, compare_canon]
+    exact hin.canonAncestor
+  · change (classify ctx level p.1 p.2.2.2.2.2).2.noncheaplevel ≤ level
+    rw [classify_noncheap]
+    change (chooseTarget false ctx tcLevel level _ (compareCodes level _ _)).2.2.2.noncheaplevel ≤ level
+    rw [target_noncheap, compare_noncheap]
+    exact hin.cheapBound
 
 /-- A short return retains its emitting leaf's state, apart from the
 fixed-point cleanup and first-path controls updated by enclosing loops. -/

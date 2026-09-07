@@ -108,7 +108,7 @@ theorem firstSweep_codes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : N
     intro smaller index hsub
     have hp : SweepPre G ctx tcLevel true level numcells tc tv (smaller.nextElem (some tv)) smaller ready := by
       refine ⟨?_, hready.positive, hready.partition, hready.target.subset hsub,
-        (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history,
+        (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.canonAncestor, hready.history,
         hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path⟩
       intro _ v hv
       have hn := (VSet.nextElem_eq_some_iff.mp hv).2.1

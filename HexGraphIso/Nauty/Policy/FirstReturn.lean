@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.FirstEntry
+import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.FirstEntry
 import all HexGraphIso.Nauty.Policy.FirstRef
@@ -194,7 +195,7 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
     split <;> change Equitable ctx level r.2.2.2.2.lab r.2.2.2.2.ptn
     all_goals rw [hl, hp]; exact hin.equitable
   exact ⟨(by intro _ v hv; cases hv), hin.positive, hrec.ok, hreadyTarget.of_out hrec.effect,
-    (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, hhist, hrecord,
+    (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, recover_canon_le level _, hhist, hrecord,
     recover_equitable hn0 hin.positive hcheap.ok heq hleftFrame,
     hbleft.recover_child hin.positive (by have := Nat.le_trans hcheap.ok.bc (bcount_le _ _ _); omega),
     recover_bound level left, hpathReady.recover hn0 hin.positive hcheap.ok hleftFrame hrestore⟩

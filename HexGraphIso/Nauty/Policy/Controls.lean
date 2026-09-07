@@ -39,6 +39,39 @@ theorem leafExit_gca (leaf : Leaf) (level : Nat) (st : Search n) :
     | exact admit_gca _
     | exact pruneReturn_gca level _
 
+/-- Code comparison retains the ancestor of the canonical path. -/
+theorem compare_canon (level code : Nat) (st : Search n) :
+    (compareCodes level code st).gcaCanon = st.gcaCanon := by
+  unfold compareCodes
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon, ite_self]
+
+/-- Target selection retains the ancestor of the canonical path. -/
+theorem target_canon (first : Bool) (ctx : Ctx n) (tcLevel level numcells : Nat)
+    (st : Search n) :
+    (chooseTarget first ctx tcLevel level numcells st).2.2.2.gcaCanon = st.gcaCanon := by
+  cases first <;> first | rw [chooseTarget_fields] | rw [chooseFirst_fields]
+
+/-- Classification retains the ancestor of the canonical path. -/
+theorem classify_canon (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
+    (classify ctx level numcells st).2.gcaCanon = st.gcaCanon := by
+  unfold classify
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
+    apply_ite Search.gcaCanon, ite_self]
+
+/-- Testing a small cell retains the ancestor of the canonical path. -/
+theorem cheap_canon (first : Bool) (level : Nat) (st : Search n) :
+    (cheapCheck first level st).gcaCanon = st.gcaCanon := by
+  unfold cheapCheck
+  split <;> rfl
+
+/-- Recovery clamps the canonical ancestor to the receiving sweep. -/
+theorem recover_canon_le (level : Nat) (st : Search n) :
+    (recoverLevels level st).gcaCanon ≤ level := by
+  unfold recoverLevels
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon]
+  repeat' split
+  all_goals omega
+
 /-- Outside the first descent the first-path ancestor is a fixed frame. -/
 theorem gcaPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     Generic.ReferencePolicy ctx inf tcLevel (fun st : Search n => st.gcaFirst) where

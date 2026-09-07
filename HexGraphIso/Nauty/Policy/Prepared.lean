@@ -10,6 +10,7 @@ public import HexGraphIso.Nauty.Policy.CallState
 public import HexGraphIso.Nauty.Policy.Calls
 public import HexGraphIso.Nauty.Policy.EquitableState
 public import HexGraphIso.Nauty.Policy.PathState
+import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.HistoryState
@@ -132,10 +133,11 @@ theorem NodePre.prepare {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells 
   have hvp : (visit ctx level numcells st).2.2.ptn = (st.refined ctx level numcells).ptn := rfl
   have hvh := hin.history
   have hvg : (visit ctx level numcells st).2.2.gcaFirst < level := hin.ancestor
+  have hvcg : (visit ctx level numcells st).2.2.gcaCanon < level := hin.canonAncestor
   have hcode := refine_longcode_lt ctx level st.lab st.ptn st.active numcells
   change (visit ctx level numcells st).2.1 < codeSentinel at hcode
   unfold prepareOther
-  generalize hvval : visit ctx level numcells st = r at hv hvi hvh hvg hcode hve hvb hvn hvl hvp hvpath ⊢
+  generalize hvval : visit ctx level numcells st = r at hv hvi hvh hvg hvcg hcode hve hvb hvn hvl hvp hvpath ⊢
   obtain ⟨nc, code, refined⟩ := r
   dsimp only
   let compared := compareCodes level code refined
@@ -168,10 +170,13 @@ theorem NodePre.prepare {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells 
     rw [show (chooseTarget false ctx tcLevel level nc compared).2.2.2.gcaFirst = compared.gcaFirst from
       (gcaPolicy ctx 0 tcLevel).target level nc compared]
     exact hcg
+  have htcg : (chooseTarget false ctx tcLevel level nc compared).2.2.2.gcaCanon < level := by
+    rw [target_canon, compare_canon]
+    exact hvcg
   have hrecord : nc < n → Recorded ctx tcLevel level (chooseTarget false ctx tcLevel level nc compared).1.toNat
       (chooseTarget false ctx tcLevel level nc compared).2.2.2 :=
     fun hnc => hch.recorded hnc hin.positive hgsz hsymm hloop
-  generalize htval : chooseTarget false ctx tcLevel level nc compared = t at ht hti hth htg hrecord hte htb htn htl htp htpath ⊢
+  generalize htval : chooseTarget false ctx tcLevel level nc compared = t at ht hti hth htg htcg hrecord hte htb htn htl htp htpath ⊢
   obtain ⟨tc, cell, size, targeted⟩ := t
   change targeted.gcaFirst < level at htg
   obtain ⟨htlocal, htarget⟩ := ht
@@ -207,6 +212,7 @@ theorem NodePre.prepare {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells 
       (fun _ hv => VSet.nextElem_mem hv), hti.cheap false level,
       (by rw [show (cheapCheck false level targeted).gcaFirst = targeted.gcaFirst from
             (gcaPolicy ctx 0 tcLevel).cheap false level targeted]; omega),
+      (by rw [cheap_canon]; exact Nat.le_of_lt htcg),
       hth.cheap false (by change targeted.gcaFirst ≤ level; omega),
       (hrecord hnc).cheap false (by change targeted.gcaFirst ≤ level; omega),
       (by unfold cheapCheck; split <;> exact hte), hcheapBoundary, cheap_bound false htn, htpath.cheap false⟩
@@ -226,6 +232,7 @@ theorem SweepPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
   have hnodePre : NodePre G ctx tcLevel (level + 1) (numcells + 1) (Engine.child first level tc tv st) :=
     ⟨(by have := hin.positive; omega), hch.1, hin.stored.child first level tc tv,
       (by cases first <;> change st.gcaFirst < level + 1 <;> have := hin.ancestor <;> omega),
+      (by cases first <;> change st.gcaCanon < level + 1 <;> have := hin.canonAncestor <;> omega),
       (by simpa only [Nat.add_sub_cancel] using
         hin.history.child first hgsz hin.positive hin.partition hin.target htv hin.recorded),
       child_equitable first hn0 hin.positive hin.partition hin.equitable hin.target htv hsymm,
@@ -240,7 +247,7 @@ theorem SweepPre.next {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tc
     (hsub : ∀ v, smaller.mem v = true → cell.mem v = true) :
     SweepPre G ctx tcLevel first level numcells tc tv1 (smaller.nextElem (some tv)) smaller st :=
   ⟨Generic.Past.next (fun hf => h.past hf tv rfl), h.positive, h.partition, h.target.subset hsub,
-    (fun _ hv => VSet.nextElem_mem hv), h.stored, h.ancestor, h.history, h.recorded,
+    (fun _ hv => VSet.nextElem_mem hv), h.stored, h.ancestor, h.canonAncestor, h.history, h.recorded,
     h.equitable, h.boundary, h.cheapBound, h.path⟩
 
 /-- Returning from the actual off-path child restores the parent
@@ -298,7 +305,7 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
           change out.gcaFirst = st.gcaFirst at hgca
           rw [hgca]
           exact hin.ancestor),
-      hhist.1, hhist.2 hin.recorded, recover_equitable hn0 hin.positive hin.partition hin.equitable hleftFrame,
+      recover_canon_le level _, hhist.1, hhist.2 hin.recorded, recover_equitable hn0 hin.positive hin.partition hin.equitable hleftFrame,
       (hbout.congr (out := left) rfl rfl rfl).recover_child hin.positive
         (by have := Nat.le_trans hin.partition.bc (bcount_le _ _ _); omega),
       recover_bound level left, hin.path.recover hn0 hin.positive hin.partition hleftFrame hrestore⟩
