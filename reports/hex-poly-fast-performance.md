@@ -125,7 +125,9 @@ accumulator and the short-operand division dispatch. The executable passes
 all 64 smoke checks. The eight affected scientific registrations below all
 give `consistent_with_declared_complexity`, with no failed or truncated row.
 They retain their existing models, schedules, 0.2-second inner targets,
-three trials, signal floor 1, and declared leading-rung exclusions.
+one outer trial, signal floor 1, and declared leading-rung exclusions. This is
+a focused backend regression refresh; the independent rational-function
+acceptance sweep below uses three outer trials and signal floor 10.
 
 [Block-path export](bench-results/hex-poly-fast-blocks-31869b9c-chungus2-cpu4.json)
 and [division export](bench-results/hex-poly-fast-division-31869b9c-chungus2-cpu5.json)
