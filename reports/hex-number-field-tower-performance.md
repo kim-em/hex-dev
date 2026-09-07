@@ -95,8 +95,12 @@ The factor family uses Selmer trinomials `X^n - X - 1` over `ℚ(√2)`.
 Rational coefficients make the shift-zero norm a square, so the canonical
 factor case genuinely retries before accepting a squarefree degree-48 norm,
 recursively factors it over `ℚ`, returns the canonical component through
-singleton recovery, and checks the result. The explicit retry anchor and independently budgeted height-two
-recursive case confirm both control-flow paths.
+singleton recovery, and checks the result. Thus the eight Hex cases in this
+comparison all use a quadratic top level and a singleton norm factor; their
+speedups do not measure the multiple-factor gcd recovery branch. Reducible
+conformance and differential cases cover that branch for correctness. The
+explicit retry anchor and independently budgeted height-two recursive case
+confirm both control-flow paths.
 
 ### Scientific ranges and host protocol
 
@@ -834,8 +838,9 @@ invariant and exact equality with the reference resultant, including arbitrary
 quadratic linear terms and recursive lower fields. The singleton recovery
 product identifies the returned canonical factor exactly. The existing public
 factorization soundness, completeness, monicity, and replay theorems build with
-both branches. The proof-complete benchmark executable has the identical
-SHA-256 hash to the measured combined prototype.
+both branches. Before rebasing, the proof-complete build at `4d6608de3` had the identical
+SHA-256 hash (`f6feab89…`) to the measured combined prototype. The integrated
+executable has hash `9c51c94c…` and its separate comparison follows below.
 
 ### Integrated singleton and quadratic implementation
 
