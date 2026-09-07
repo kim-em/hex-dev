@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTowerMathlib.FactorGeneric.Yun
+public import HexNumberFieldTowerMathlib.FactorGeneric.Sound
 
 public section
 
@@ -169,26 +170,33 @@ theorem factorSquarefree_isSome :
           rawFactorFoldl (level :: lower) hvalid hinjectiveTop hinvTop,
           hfactorsProduct]
         simp
+      have hchoice : (if lowerFactors.size = 1 then
+          #[Factor.polyCoords (Norm.monic (Factor.rawPoly (level :: lower) f))]
+          else Factor.recover level lower shift f lowerFactors) = factors := by
+        by_cases hsingle : lowerFactors.size = 1
+        · simp only [hsingle, ite_true]
+          exact (recover_singleton level lower hvalid hinjectiveTop f shift
+            lowerFactors hsingle
+            (by rwa [natDegree_monic (level :: lower) hvalid hinjectiveTop hinvTop])
+            hfactorsProduct).symm
+        · simp only [hsingle, ite_false, factors]
       have hresult : Factor.factorSquarefree? (level :: lower) f =
           some factors := by
         simp only [Factor.factorSquarefree?, hcheck, ite_true]
         rw [hfind]
         change (do
           let lowerFactors ← Factor.factorSquarefree? lower norm
-          let factors' := Factor.recover level lower shift f lowerFactors
           let p := Norm.monic (Factor.rawPoly (level :: lower) f)
+          let factors' := if lowerFactors.size = 1 then #[Factor.polyCoords p]
+            else Factor.recover level lower shift f lowerFactors
           let product := factors'.foldl (fun product factor =>
             product * Factor.rawPoly (level :: lower) factor) 1
           if factors'.all (fun factor =>
               0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
               product = p then some factors' else none) = some factors
         rw [hlower]
-        change (if factors.all (fun factor =>
-            0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
-            factors.foldl (fun product factor =>
-              product * Factor.rawPoly (level :: lower) factor) 1 =
-              Norm.monic (Factor.rawPoly (level :: lower) f) then
-            some factors else none) = some factors
+        simp only [Option.bind_eq_bind, Option.bind_some]
+        rw [hchoice]
         rw [hfactorsDegree, hproduct]
         simp
       exact Option.isSome_iff_exists.mpr ⟨factors, hresult⟩
@@ -652,32 +660,56 @@ private theorem factorSquarefree_mem_monic
         rcases pair with ⟨shift, norm⟩
         obtain ⟨lowerFactors, hlower, hresult⟩ :=
           Option.bind_eq_some_iff.mp hresult
+        let chosen := if lowerFactors.size = 1 then
+          #[Factor.polyCoords (Norm.monic (Factor.rawPoly (level :: lower) f))]
+          else Factor.recover level lower shift f lowerFactors
+        change (if chosen.all (fun factor =>
+            0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
+            chosen.foldl (fun product factor =>
+              product * Factor.rawPoly (level :: lower) factor) 1 =
+              Norm.monic (Factor.rawPoly (level :: lower) f) then
+            some chosen else none) = some factors at hresult
         split at hresult
-        · cases hresult
-          obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
-            recover_mem level lower hvalid hinjective shift f lowerFactors hfactor
-          let common := Norm.monic
-            (DensePoly.gcd
-              (Factor.rawPoly (level :: lower)
-                (Factor.shiftTop level lower f shift))
-              (Factor.rawPoly (level :: lower)
-                (Factor.embedLower level lower lowerFactor)))
-          let unshifted := Factor.rawPoly (level :: lower)
-            (Factor.shiftTop level lower (Factor.polyCoords common) (-shift))
-          have hrawEq : Factor.rawPoly (level :: lower) factor =
-              Norm.monic unshifted := by
-            rw [← hrecovered, rawPoly_polyCoords]
-          have hirreducible :=
-            (factorSquarefree_mem_sound (level :: lower) hvalid hinjective f
-              hfull factor hfactor).2
-          have hunshifted : unshifted ≠ 0 := by
+        · have heq := Option.some.inj hresult
+          subst factors
+          by_cases hsingle : lowerFactors.size = 1
+          · have hfactorEq : factor = Factor.polyCoords
+                (Norm.monic (Factor.rawPoly (level :: lower) f)) := by
+              simpa [chosen, hsingle] using hfactor
+            have hirreducible :=
+              (factorSquarefree_mem_sound (level :: lower) hvalid hinjective f
+                hfull factor hfactor).2
+            rw [hfactorEq, rawPoly_polyCoords] at hirreducible ⊢
+            apply toPolynomial_monic_monic (level :: lower) hvalid hinjective hinv
             intro hzero
             apply hirreducible.ne_zero
-            rw [hrawEq, hzero]
-            simp [Norm.monic]
-          rw [hrawEq]
-          exact toPolynomial_monic_monic (level :: lower) hvalid
-            hinjective hinv unshifted hunshifted
+            simp [hzero, Norm.monic]
+          · have hfactor : factor ∈ Factor.recover level lower shift f lowerFactors := by
+              simpa only [chosen, hsingle, ite_false] using hfactor
+            obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
+              recover_mem level lower hvalid hinjective shift f lowerFactors hfactor
+            let common := Norm.monic
+              (DensePoly.gcd
+                (Factor.rawPoly (level :: lower)
+                  (Factor.shiftTop level lower f shift))
+                (Factor.rawPoly (level :: lower)
+                  (Factor.embedLower level lower lowerFactor)))
+            let unshifted := Factor.rawPoly (level :: lower)
+              (Factor.shiftTop level lower (Factor.polyCoords common) (-shift))
+            have hrawEq : Factor.rawPoly (level :: lower) factor =
+                Norm.monic unshifted := by
+              rw [← hrecovered, rawPoly_polyCoords]
+            have hirreducible :=
+              (factorSquarefree_mem_sound (level :: lower) hvalid hinjective f
+                hfull factor (by simpa only [chosen, hsingle, ite_false] using hfactor)).2
+            have hunshifted : unshifted ≠ 0 := by
+              intro hzero
+              apply hirreducible.ne_zero
+              rw [hrawEq, hzero]
+              simp [Norm.monic]
+            rw [hrawEq]
+            exact toPolynomial_monic_monic (level :: lower) hvalid
+              hinjective hinv unshifted hunshifted
         · contradiction
       · contradiction
 
