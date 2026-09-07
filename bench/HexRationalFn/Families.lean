@@ -81,8 +81,18 @@ def sharedPair (n : Nat) : Pair :=
   let h := dense (max n 1)
   ⟨fraction 1 (h * #p[0, 1]), fraction (-2) (h * #p[1, 1])⟩
 
+def sharedCancelPair (n : Nat) : Pair :=
+  let h := dense (max n 1) * #p[-1, 1]
+  ⟨fraction 1 (h * #p[0, 1]), fraction (-2) (h * #p[1, 1])⟩
+
+def zeroSumPair (n : Nat) : Pair :=
+  let f := consecutive (dense (max n 1))
+  ⟨f, -f⟩
+
 def addCoprime (i : Pair) := output (i.f + i.g)
 def addShared (i : Pair) := output (i.f + i.g)
+def addCancel (i : Pair) := output (i.f + i.g)
+def addTotal (i : Pair) := output (i.f + i.g)
 def addEqual (i : Pair) := output (i.f + i.f)
 def subtract (i : Pair) := output (i.f - i.g)
 def multiply (i : Pair) := output (i.f * i.g)
@@ -97,6 +107,13 @@ setup_benchmark addCoprime n => n with prep := coprimePair where { config with t
 -- is against 1-X, whose synthetic-division partial sums have O(log n) bits
 -- (machine-word-sized throughout this ladder). Every product has a short factor.
 setup_benchmark addShared n => n with prep := sharedPair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): here the shared denominator factor includes X-1, so the
+-- second gcd really cancels X-1 from the numerator 1-X. All products and exact
+-- divisors have bounded short degree; synthetic-division sums stay word-sized.
+setup_benchmark addCancel n => n with prep := sharedCancelPair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): equal denominators take the direct branch; adding opposite
+-- dense numerators visits n coefficients before returning the canonical zero.
+setup_benchmark addTotal n => n with prep := zeroSumPair where { config with tags := #["degree"] }
 -- Cost model: Θ(n): equal-denominator addition normalizes 2a/(a+1), whose Euclidean chain
 -- has bounded length; coefficient scaling and full result hashing are linear.
 setup_benchmark addEqual n => n with prep := cancelPair where { config with tags := #["degree"] }

@@ -64,6 +64,32 @@ setup_benchmark multiply n => multiplicationCost n with prep := balanced where {
 -- 2n, so this is an output-size ladder rather than a fixed-output power anchor.
 setup_benchmark square n => multiplicationCost n with prep := polynomial where { config with tags := #["degree"] }
 
+/-- Vary the long/short ratio, including an odd short length that pads recursive
+Karatsuba blocks. Both lengths exceed the schoolbook dispatch cutoff. -/
+def unbalancedInput (n : Nat) : Pair × Pair :=
+  let pair := fun m =>
+    (⟨ofPoly (dense (m * max n 1 - 1)), ofPoly (dense (m - 1))⟩ : Pair)
+  (pair 33, pair 64)
+
+def unbalanced (i : Pair × Pair) := (multiply i.1, multiply i.2)
+def unbalancedSchoolbook (i : Pair × Pair) :=
+  let product := fun j => output (mulWith schoolbookPlan j.f j.g)
+  (product i.1, product i.2)
+
+private def ratioConfig : LeanBench.BenchmarkConfig :=
+  { config with
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512]
+    tags := #["degree", "ratio"] }
+
+-- Cost model: Θ(n): with fixed short lengths m=33,64 and long length mn,
+-- there are n balanced blocks, each costing M(m), and Θ(mn) accumulator updates
+-- and output hashing. This tests the SPEC's O(ceil(long/short)*M(short)) bound
+-- along its ratio axis, independently of the balanced degree ladder.
+setup_benchmark unbalanced n => n with prep := unbalancedInput where ratioConfig
+-- Cost model: Θ(n): schoolbook costs Θ((mn)m), with m fixed at 33 and 64.
+-- It has the same canonical full output and parameter domain as unbalanced.
+setup_benchmark unbalancedSchoolbook n => n with prep := unbalancedInput where ratioConfig
+
 def constructors (n : Nat) :=
   let p : DensePoly Rat := #p[(n : Rat), 1]
   (output (ofPoly p), output (C (n : Rat)), output (X : RationalFn Rat),

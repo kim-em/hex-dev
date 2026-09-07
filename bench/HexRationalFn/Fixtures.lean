@@ -75,6 +75,7 @@ def emitFixtures : IO Unit := do
     let k := cancelPair n
     for (name, op, i) in [
         ("addCoprime", "add", c), ("addShared", "add", sharedPair n),
+        ("addCancel", "add", sharedCancelPair n), ("addTotal", "add", zeroSumPair n),
         ("addEqual", "add", { k with g := k.f }), ("subtract", "sub", c),
         ("multiply", "mul", c), ("cancelMultiply", "mul", k),
         ("divide", "div", c), ("checkedDivide", "div", c)] do

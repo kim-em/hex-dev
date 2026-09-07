@@ -358,8 +358,8 @@ advertised proof-search operations.
 | --- | --- |
 | `normalizeWith`, `normalize`, `ofFraction?` | Compiled: `RationalFnFamilies.normalizeDegree`, `normalizeCancel`, `checkedFraction`; `RationalFnWorkloads.normalizeChain`, `heightNormalize`. |
 | `ofPoly`, `C`, `X`, natural/integer casts, `toPoly?`, stored-pair projections | Compiled: `RationalFnWorkloads.constructors`, a bounded-degree, bounded-word constant-work family. |
-| `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
-| `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `heightMultiply`. |
+| `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addCancel`, `addTotal`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
+| `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `unbalanced`, `unbalancedSchoolbook`, `heightMultiply`. |
 | Negation, inversion, `inv?` | Compiled: `RationalFnScaling.negate`; `RationalFnFamilies.inverse`, `checkedInverse` include nonmonic scaling. The monic `RationalFnScaling.inverse` is supplemental sharing/hash evidence. |
 | `DecidableEq`, `BEq`, `eval?` | Compiled: `RationalFnScaling.equal`, `different`, `evaluate`, `evaluatePole`. |
 | `derivativeWith`, `derivative` | Compiled: `RationalFnWorkloads.derivative`, `derivativeCancel`, `derivativePolynomial`, `heightDerivative`. |
