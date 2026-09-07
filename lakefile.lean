@@ -915,6 +915,7 @@ lean_lib HexMvFactorizationTests where
     `HexModular.LoopTests,
     `HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
+    `HexMvGcd.CertTests,
     `HexMvGcd.Eval,
     `HexMvGcd.SquarefreeTests,
     `HexMvHensel.KernelTests,

@@ -627,46 +627,51 @@ certificate contains two content certificates. Every occurrence is
 strictly positive and every cycle drops the arity before returning to a
 coprimality certificate.
 
+The recursive core has fixed parameters `R`, `[Lean.Grind.CommRing R]`,
+and a family `E` of optional leaves. Only the arity, comparator, and its
+representation instances are indices. The same ring parameter is used by
+all recursive evidence and by the laws in a `split` coefficient homomorphism;
+constructors cannot substitute operation dictionaries.
+
+| Core constructor | Evidence replayed |
+| --- | --- |
+| `Cert.Coprime.unit` | One input is a unit. |
+| `Cert.Coprime.base u v` | A scalar Bézout identity, at arity zero. |
+| `Cert.Coprime.bezout u v` | A polynomial Bézout identity. |
+| `Cert.Coprime.split` | A bundled prime, coefficient homomorphism, evaluation point, image Bézout coefficients, two lower-arity content folds, and their coprimality certificate. |
+| `Cert.Coprime.splitBezout` | A variable, a nonzero polynomial constant in that variable, its Bézout expression, two lower-arity content folds, and their coprimality certificate. |
+| `Cert.Coprime.leaf` | Data in `E` at the current arity and order. |
+| `Cert.Gcd.mk` | A gcd, two exact cofactors, and their coprimality certificate. |
+| `Cert.Content.mk` | A content value and a strictly positive list of gcd certificates. |
+
+Every arity-dropping constructor carries `[IsMonomialOrder cmp']`, which
+supplies both comparator instances required by its lower-arity values.
+`ContentCert.ofSteps` exposes the usual `List` interface to content folds.
+
+The public `CoprimeCert`, `GcdCert`, and `ContentCert` specialize this core
+to rational-lift leaves. Such a leaf contains a `RatModel R`: a ring
+isomorphism to canonical `Rat`, with both inverse laws and the ring-map
+laws proved for the fixed ambient ring. It identifies rational coefficient
+representations without restricting the universe of the generic API.
+In particular, `RatModel.not_int` rules out such a leaf over canonical `Int`.
+The rational payload itself has only the following data:
+
 ```lean
-mutual
-  inductive CoprimeCert :
-      (n : Nat) → (R : Type u) → [Zero R] →
-      (cmp : Mono n → Mono n → Ordering) →
-      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
-    | unit : CoprimeCert n R cmp
-    | base (u v : R) : CoprimeCert 0 R cmp
-    | bezout (u v : MvPoly n R cmp) : CoprimeCert n R cmp
-    | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
-        [IsMonomialOrder cmp'] [One R] [Add R] [Mul R]
-        (P : ZMod64.Prime)
-        (φ : @CoeffHom R P.m _ _ _ _ P.bounds)
-        (a : Fin n → @ZMod64 P.m P.bounds)
-        (α β : @FpPoly P.m P.bounds)
-        (left right : ContentCert n R cmp')
-        (rest : CoprimeCert n R cmp') : CoprimeCert (n+1) R cmp
-    | splitBezout (i : Fin (n+1))
-        (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
-        (u v : MvPoly (n+1) R cmp) (r : MvPoly n R cmp')
-        (left right : ContentCert n R cmp')
-        (rest : CoprimeCert n R cmp') : CoprimeCert (n+1) R cmp
-    | ratLift (scaleL scaleR : Rat) (left right : MvPoly n Int cmp)
-        (cert : CoprimeCert n Int cmp) : CoprimeCert n Rat cmp
+abbrev IntCoprimeCert (n : Nat) (cmp : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
+  Cert.Coprime Int Cert.NoLeaves n cmp
 
-  inductive GcdCert :
-      (n : Nat) → (R : Type u) → [Zero R] →
-      (cmp : Mono n → Mono n → Ordering) →
-      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
-    | mk (gcd cofL cofR : MvPoly n R cmp) (coprime : CoprimeCert n R cmp)
+structure RatLiftCert (n : Nat) (cmp : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  scaleL : Rat
+  scaleR : Rat
+  left : MvPoly n Int cmp
+  right : MvPoly n Int cmp
+  cert : IntCoprimeCert n cmp
 
-  /-- A checked left fold of gcd over a polynomial's coefficient list.
-  `steps[k]` certifies the gcd of the previous accumulator and coefficient
-  `k`; `value` is the final accumulator. -/
-  inductive ContentCert :
-      (n : Nat) → (R : Type u) → [Zero R] →
-      (cmp : Mono n → Mono n → Ordering) →
-      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
-    | mk (value : MvPoly n R cmp) (steps : List (GcdCert n R cmp))
-end
+def CoprimeCert.ratLift (scaleL scaleR : Rat)
+    (left right : MvPoly n Int cmp) (cert : IntCoprimeCert n cmp) :
+    CoprimeCert n Rat cmp
 
 def GcdCert.gcd : GcdCert n R cmp → MvPoly n R cmp
 def GcdCert.cofL : GcdCert n R cmp → MvPoly n R cmp
@@ -679,11 +684,12 @@ def checkCoprime (f h : MvPoly n R cmp) : CoprimeCert n R cmp → Bool
 def checkGcd (f h : MvPoly n R cmp) : GcdCert n R cmp → Bool
 ```
 
-All three declarations use the identical index telescope shown above;
-`n`, `R`, `cmp`, and the representation instances are indices rather than
-mixing parameters and indices across the mutual block. Every arity-dropping
-constructor carries `[IsMonomialOrder cmp']`, which supplies both comparator
-instances required to form its lower-arity `MvPoly` values.
+`Cert.NoLeaves` is empty at every arity. Thus the integer payload has no
+rational lifts, including in nested coefficient-content folds. Its integer
+ring, gcd operations, and equality decisions are the canonical instances
+fixed by `checkRatLift`; no source domain, embedding, or replacement
+operations are certificate data. Caller-assembled certificates remain
+supported: acceptance must imply coprimality without producer provenance.
 
 `checkContent` starts at zero, requires exactly one `GcdCert` per
 coefficient, checks each certificate against the current accumulator and
@@ -974,7 +980,10 @@ having is under "Open questions"; it is not assumed anywhere above.
 `gcdCert` on `MvPoly n Rat cmp` scales both inputs to primitive integer
 polynomials, computes there, and scales back. Its cofactor certificate is
 `ratLift` with the two nonzero scales, the primitive integer models, and
-their checked integer coprimality certificate. This is a requirement
+their checked integer coprimality certificate. `Cert.stripCoprime?` extracts
+ordinary evidence from the producer result, traversing all content folds
+and rejecting any optional leaf before constructing the rational wrapper.
+This extraction performs no search and is outside kernel replay. This is a requirement
 rather than an option, and the benchmark family named below checks that
 the extended PRS is not taken merely because the input coefficients are
 rational.
@@ -1454,8 +1463,9 @@ contain `contentIn`, `gcd`, any `GcdProducer`, or `divExact?`; nested
 replay. The closure also includes `polyIsUnit`, `polyNormUnit`,
 `polyNormalize`, base `GcdOps.isUnit` / `normUnit`, and the coefficient
 equality decision (`BEq` with `LawfulBEq`). `ratLift` additionally reaches
-the `scalarContent` fold and coefficientwise `Int → Rat` map, neither of
-which calls a multivariate producer. Each operation in the closure is
+the canonical integer `scalarContent` fold, coefficientwise `Int → Rat`
+map, and the rational-representation map, none of which calls a multivariate
+producer. Each operation in the closure is
 `@[expose]`.
 
 Nothing in routes 1 through 4 is in that closure. Prime search,
@@ -1725,7 +1735,8 @@ HexMvGcd/
   View.lean         -- constIn and the degree helpers on the univariate view
   Normalize.lean    -- polyIsUnit, polyNormUnit, polyNormalize, scalarContent
   Gauss.lean        -- proof-only GcdDomainLaws lift and primitive descent
-  Cert.lean         -- three certificate types, ratLift, checker soundness
+  CertData.lean     -- fixed-ring recursive evidence and canonical rational lift data
+  Cert.lean         -- certificate replay and checker soundness
   Content.lean      -- certificate-producing content/primitive parts and Gauss laws
   Prs.lean          -- the extended-subresultant fallback, route 4
   Fast.lean         -- routes 0 and 1, tryCoprimeCert?

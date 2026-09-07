@@ -53,14 +53,14 @@ def samplePoints {p : Nat} [ZMod64.Bounds p] (sampleFuel : Nat) :
       let (rest, rand'') ← samplePoints sampleFuel n rand'
       .ok (Fin.cases (ZMod64.ofNat p value) rest, rand'')
 
-structure GcdRun (n : Nat) (R : Type u) [Zero R]
+structure GcdRun (n : Nat) (R : Type u) [Lean.Grind.CommRing R]
     (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
   cert : GcdCert n R cmp
   rand : Rand
 
 /-- Untrusted fast-backend output. -/
-structure GcdProposal (n : Nat) (R : Type u) [Zero R]
+structure GcdProposal (n : Nat) (R : Type u) [Lean.Grind.CommRing R]
     (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
   cert? : Option (GcdCert n R cmp)
@@ -70,16 +70,16 @@ structure GcdProposal (n : Nat) (R : Type u) [Zero R]
 mandatory route-0 factor.  Implementations must treat their two polynomial
 arguments as the already-reduced problem and must not repeat structural
 reduction. -/
-class GcdProducer (R : Type u) [Zero R] where
+class GcdProducer (R : Type u) [Lean.Grind.CommRing R] where
   propose : {n : Nat} → (cmp : Mono n → Mono n → Ordering) →
     [IsMonomialOrder cmp] → GcdConfig →
     MvPoly n R cmp → MvPoly n R cmp → GcdProposal n R cmp
 
 /-- Abstract rings have no coefficient-specific speculative route. -/
-@[instance_reducible] def noFastProducer {R : Type u} [Zero R] : GcdProducer R where
+@[instance_reducible] def noFastProducer {R : Type u} [Lean.Grind.CommRing R] : GcdProducer R where
   propose := fun _ _ cfg _ _ => ⟨none, cfg.rand⟩
 
-instance (priority := 10) instNoFastProducer {R : Type u} [Zero R] :
+instance (priority := 10) instNoFastProducer {R : Type u} [Lean.Grind.CommRing R] :
     GcdProducer R := noFastProducer
 
 /-- Route 0: zero and unit cases, all represented by genuine replayable
@@ -267,7 +267,7 @@ def intCoeffHom (prime : ZMod64.Prime) :
 random state even when the image is inconclusive.  The coefficient
 homomorphism is explicit certificate data, so the same recursion serves
 integers and polynomial coefficients evaluated into their ground field. -/
-structure CoprimeOpsAt (R : Type u) [Zero R] [One R] [Add R] [Mul R]
+structure CoprimeOpsAt (R : Type u) [Lean.Grind.CommRing R]
     (n : Nat) where
   tryAt : (cmp : Mono n → Mono n → Ordering) →
     [IsMonomialOrder cmp] → (P : ZMod64.Prime) →
