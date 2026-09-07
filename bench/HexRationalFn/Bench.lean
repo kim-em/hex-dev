@@ -8,6 +8,8 @@ import HexRationalFn
 import LeanBench
 import HexRationalFn.Scaling
 import HexRationalFn.Families
+import HexRationalFn.Workloads
+import HexRationalFn.Fixtures
 
 /-!
 Fixed-workload latency measurements, not fitted asymptotic claims: rational
@@ -224,6 +226,9 @@ def validate : IO Unit := do
 end Hex.RationalFnBench
 
 def main (args : List String) : IO UInt32 := do
+  if args == ["emit-workloads"] then
+    Hex.RationalFnFixtures.emitFixtures
+    return 0
   if args == ["emit-scaling"] then
     Hex.RationalFnScaling.emitFixtures
     return 0

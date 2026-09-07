@@ -15,6 +15,7 @@ from pathlib import Path
 import platform
 import statistics
 import subprocess
+import sys
 
 OPS = {"normalize", "add", "sub", "mul", "div", "inv", "neg", "pow",
        "derivative", "equal", "eval"}
@@ -61,6 +62,10 @@ def decode(line):
 
 
 def main():
+    # Controlled coefficient-height fixtures exceed Python's decimal-input
+    # guard; these are local generated algebraic test inputs, not a web service.
+    if hasattr(sys, "set_int_max_str_digits"):
+        sys.set_int_max_str_digits(0)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("driver")
     parser.add_argument("fixtures")
@@ -106,6 +111,7 @@ def main():
                             times[op].append(seconds)
                     count += 1
                     result = {"fixture": number, "operation": op,
+                              "intermediate_hex_sizes": row.get("intermediate_hex_sizes"),
                               "benchmark": row.get("benchmark"), "parameter": row.get("parameter"),
                               "seconds": seconds, "samples_seconds": samples, "sizes": sizes,
                               "input_hex_lengths": [[len(pair[k]) for k in ("num", "den")]

@@ -50,19 +50,19 @@ def config : LeanBench.BenchmarkConfig :=
   { paramSchedule := .custom #[32, 64, 128, 256, 512, 1024, 2048, 4096],
     targetInnerNanos := 2000000000, maxSecondsPerCall := 10, outerTrials := 3 }
 
--- Θ(n): a and a+1 have constant-length Euclidean quotient chains. The fixed
+-- Cost model: Θ(n): a and a+1 have constant-length Euclidean quotient chains. The fixed
 -- linear common factor adds bounded quotient work; exact division by it and
 -- final scaling traverse dense length-n arrays with bounded coefficients.
-setup_benchmark normalizeDegree n => n with prep := degreeInput where config
--- Θ(n): the two residual linear factors are fixed. Euclid cancels their dense
+setup_benchmark normalizeDegree n => n with prep := degreeInput where { config with tags := #["degree"] }
+-- Cost model: Θ(n): the two residual linear factors are fixed. Euclid cancels their dense
 -- common factor in boundedly many linear array operations; final outputs are fixed.
-setup_benchmark normalizeCancel n => n with prep := cancelInput where config
--- Θ(n): the checked constructor adds a constant-time zero-denominator guard to
+setup_benchmark normalizeCancel n => n with prep := cancelInput where { config with tags := #["degree"] }
+-- Cost model: Θ(n): the checked constructor adds a constant-time zero-denominator guard to
 -- the same degree-varying normalization; the complete result hash is linear.
-setup_benchmark checkedFraction n => n with prep := degreeInput where config
--- Θ(n): normalization plus xgcd of consecutive degree-n residuals has a bounded
+setup_benchmark checkedFraction n => n with prep := degreeInput where { config with tags := #["degree"] }
+-- Cost model: Θ(n): normalization plus xgcd of consecutive degree-n residuals has a bounded
 -- quotient chain and bounded coefficients. All four certificate arrays are hashed.
-setup_benchmark generate n => n with prep := degreeInput where config
+setup_benchmark generate n => n with prep := degreeInput where { config with tags := #["degree"] }
 
 structure Pair where
   f : RationalFn Rat
@@ -90,29 +90,29 @@ def cancelMultiply (i : Pair) := output (i.f * i.g)
 def divide (i : Pair) := output (i.f / i.g)
 def checkedDivide (i : Pair) := (div? i.f i.g).map output
 
--- Θ(n): one degree-n and one fixed linear denominator are coprime; bounded
+-- Cost model: Θ(n): one degree-n and one fixed linear denominator are coprime; bounded
 -- remainder chains, linear unbalanced products, and bounded coefficient arithmetic.
-setup_benchmark addCoprime n => n with prep := coprimePair where config
--- Θ(n): the shared degree-n factor leaves fixed linear cofactors. The second gcd
+setup_benchmark addCoprime n => n with prep := coprimePair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): the shared degree-n factor leaves fixed linear cofactors. The second gcd
 -- is against 1-X, whose synthetic-division partial sums have O(log n) bits
 -- (machine-word-sized throughout this ladder). Every product has a short factor.
-setup_benchmark addShared n => n with prep := sharedPair where config
--- Θ(n): equal-denominator addition normalizes 2a/(a+1), whose Euclidean chain
+setup_benchmark addShared n => n with prep := sharedPair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): equal-denominator addition normalizes 2a/(a+1), whose Euclidean chain
 -- has bounded length; coefficient scaling and full result hashing are linear.
-setup_benchmark addEqual n => n with prep := cancelPair where config
--- Θ(n): negation plus the same coprime-denominator addition chain and hash walk.
-setup_benchmark subtract n => n with prep := coprimePair where config
--- Θ(n): cross gcds with one or X have bounded quotient chains. Products have
+setup_benchmark addEqual n => n with prep := cancelPair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): negation plus the same coprime-denominator addition chain and hash walk.
+setup_benchmark subtract n => n with prep := coprimePair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): cross gcds with one or X have bounded quotient chains. Products have
 -- fixed short factors; this coprime control actually forms a growing numerator/denominator.
-setup_benchmark multiply n => n with prep := coprimePair where config
--- Θ(n): both cross gcds cancel equal dense polynomials. Exact quotient work scans
+setup_benchmark multiply n => n with prep := coprimePair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): both cross gcds cancel equal dense polynomials. Exact quotient work scans
 -- those arrays; final products are constant. This is maximal cancellation only.
-setup_benchmark cancelMultiply n => n with prep := cancelPair where config
--- Θ(n): inversion of a fixed linear fraction followed by the same unbalanced
+setup_benchmark cancelMultiply n => n with prep := cancelPair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): inversion of a fixed linear fraction followed by the same unbalanced
 -- cancellation/product work. No rational coefficient height grows with n.
-setup_benchmark divide n => n with prep := coprimePair where config
--- Θ(n): the nonzero guard is constant; the successful division and full hash dominate.
-setup_benchmark checkedDivide n => n with prep := coprimePair where config
+setup_benchmark divide n => n with prep := coprimePair where { config with tags := #["degree"] }
+-- Cost model: Θ(n): the nonzero guard is constant; the successful division and full hash dominate.
+setup_benchmark checkedDivide n => n with prep := coprimePair where { config with tags := #["degree"] }
 
 def inverseInput (n : Nat) : RationalFn Rat :=
   let f := consecutive (dense (max n 1))
@@ -122,15 +122,15 @@ def inverseInput (n : Nat) : RationalFn Rat :=
 def inverse (f : RationalFn Rat) := output f⁻¹
 def checkedInverse (f : RationalFn Rat) := (inv? f).map output
 
--- Θ(n): the numerator leading coefficient is two, so both swapped arrays must
+-- Cost model: Θ(n): the numerator leading coefficient is two, so both swapped arrays must
 -- be scaled by 1/2. This exercises nonmonic inversion, not the sharing fast path.
-setup_benchmark inverse n => n with prep := inverseInput where config
--- Θ(n): the checked nonzero guard adds constant work to nonmonic inversion.
-setup_benchmark checkedInverse n => n with prep := inverseInput where config
+setup_benchmark inverse n => n with prep := inverseInput where { config with tags := #["degree"] }
+-- Cost model: Θ(n): the checked nonzero guard adds constant work to nonmonic inversion.
+setup_benchmark checkedInverse n => n with prep := inverseInput where { config with tags := #["degree"] }
 
 def accept (i : RationalFnScaling.ReplayInput) := (ofCert? i.p i.q i.cert).map output
--- Θ(n): validating the degree-n Bezout witnesses dominates; accepted pair degree
+-- Cost model: Θ(n): validating the degree-n Bezout witnesses dominates; accepted pair degree
 -- stays one. This benchmarks construction through the public checked replay API.
-setup_benchmark accept n => n with prep := Hex.RationalFnScaling.prepWitness where config
+setup_benchmark accept n => n with prep := Hex.RationalFnScaling.prepWitness where { config with tags := #["degree"] }
 
 end Hex.RationalFnFamilies
