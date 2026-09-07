@@ -84,6 +84,10 @@ python3 scripts/bench/intfactor_phase4.py --divisors --cpu 62 \
   --output reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json
 ```
 
+This command is reproducible from campaign-2 commit
+`36e2a3d1a858c0684859476aa38153804e745d10`; the current collector is configured
+for the later exhausted campaign and intentionally refuses this CPU/protocol.
+
 Use the suffix `attempt-2.json` only for the allowed contamination replacement.
 Never overwrite old evidence. Render accepted reports with `--report ARTIFACT`.
 The existing inclusive profile remains applicable if its measured Lean sources

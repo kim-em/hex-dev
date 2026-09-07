@@ -31,24 +31,29 @@ derivation and attribution. No weaker evidence mode is registered.
 Use the unchanged LeanBench registration: seven independent child trials per
 rung, warm cache mode, `targetInnerNanos = 1000000000`,
 `maxSecondsPerCall = 10`, `signalFloorMultiplier = 1`, slope tolerance `0.15`
-and verdict warmup fraction `0.2`. The verdict range is τ=256..32768; retain
-all τ=64 points as diagnostic. Acceptance requires all 42 scheduled points,
-all checksums matching the independently validated arrays, and exact verdict
-`consistent_with_declared_complexity`. Timing spread and an inconvenient
-scientific verdict are never contamination criteria and never license removal.
+and verdict warmup fraction `0.2`. Fix `paramFloor = 64`,
+`paramCeiling = 32768` and `narrowRangeNoiseFloor = 1.5`. The verdict range is
+τ=256..32768; retain all τ=64 points as diagnostic. Acceptance requires all
+42 scheduled points, all checksums matching the independently validated
+arrays, and exact verdict `consistent_with_declared_complexity`. Timing spread
+and an inconvenient scientific verdict are never contamination criteria and
+never license removal.
 
 ## Host and contamination controls
 
 Use designated shared host `chungus2`, logical CPU **81**, with SMT sibling
-**33**. The retained untimed 30-second survey chose pair 33/81 because its
-maximum sibling busy fraction was tied for lowest among the 47 eligible
-physical cores at about 0.333%; CPU 81 itself had 0.06 seconds busy versus
-0.10 seconds on CPU 33. These observations select placement only and contain
-no operation timings.
+**33**. The retained
+[untimed 30-second survey](bench-results/intfactor-divisors-core-survey-30s.json)
+found pairs 31/79 and 33/81 tied for the lowest maximum sibling busy fraction
+among the 47 eligible physical cores at about 0.333%. Pair 33/81 was selected
+because CPU 81 had the lowest individual busy time of those four logical CPUs:
+0.06 seconds, versus 0.09 on CPU 31 and 0.10 on CPUs 33 and 79. These
+observations select placement only and contain no operation timings.
 
-The campaign ceiling is **0.005 (0.5%)**. This is small relative to the
-registered 15% slope tolerance while permitting the best independently
-observed core pair. It remains a rejection gate, not a correction applied to
+The issue owner authorized a campaign ceiling of **0.005 (0.5%)**. This is
+small relative to the registered 15% slope tolerance while permitting the best
+independently observed core pairs; only four of the 47 surveyed pairs met it in
+that untimed survey. It remains a rejection gate, not a correction applied to
 timings. At the host's 100 Hz scheduler accounting rate, a 30-second preflight
 has about 0.033% resolution per tick and permits at most 15 busy ticks per
 sibling, subject to the exact measured wall duration. The collector records
@@ -111,9 +116,14 @@ run passes, retain the exact blocker and leave both counters at 3.
 The preregistration commit is
 `0fac6714191c290fd60c5fdb910f11d7fab1875a`. The sole
 [attempt](bench-results/intfactor-divisors-campaign-3-attempt-1.json) was run
-from that clean commit and is explicitly rejected. The build and complete
-divisor audit passed, but none of the ten preflight windows met the 0.5% gate
-on both siblings, so no timing subprocess or telemetry sidecar was created.
+from that clean commit and is explicitly rejected. The build and divisor-audit
+export completed, but the collector version in that commit did not
+independently revalidate the export before the preflight gate. None of the ten
+preflight windows met the 0.5% gate on both siblings, so no timing subprocess
+or telemetry sidecar was created. The later
+[diagnostic recheck](bench-results/intfactor-divisors-campaign-3-recheck.json)
+independently reconstructs and validates every retained divisor array while
+preserving the attempt's rejected status and reporting the absent timing export.
 The retained busy fractions for CPUs 33/81 were, respectively:
 
 | window | CPU 33 | CPU 81 |
@@ -135,3 +145,8 @@ and retains exact monotonic intervals, tick-derived busy seconds, host state,
 commands, stdout/stderr, source hashes, executable hash and the full audit.
 Preflight exhaustion is not timed contamination and does not authorize the
 replacement attempt. This campaign is exhausted with Phase 4 incomplete.
+The campaign executable hash is
+`a83c57121ae815fec4f38ed91fa5b55b6f15c8983bfae7a17e28286f33e755f3`,
+which differs from the existing inclusive profile's `64991c51...` hash even
+though the measured Lean sources and toolchain are unchanged. A future
+admissible timing package therefore needs a fresh inclusive profile.

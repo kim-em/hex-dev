@@ -99,11 +99,70 @@ class PreservationTests(unittest.TestCase):
                  patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
                  patch.object(collector, 'host_state', return_value={}), \
                  patch.object(collector.core_telemetry, 'sibling_set',
-                              return_value=set(collector.DIVISOR_SIBLINGS)):
+                              return_value={33, 81}):
                 with self.assertRaisesRegex(RuntimeError, 'audit failed'):
-                    collector.collect_divisors(args, attempt, collector.DIVISOR_CPU)
+                    collector.collect_divisors(args, attempt, 81)
             record = json.loads(attempt.output.read_text())
             self.assertEqual(record['benchmark_executable_sha256'], collector.sha256(executable))
+
+    def test_registered_cpu_guard(self):
+        args = argparse.Namespace(dirty_status='')
+        attempt = Mock(record={})
+        with patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
+             patch.object(collector.os, 'sched_getaffinity', return_value={0, 33, 81}), \
+             patch.object(collector.os, 'sched_setaffinity'):
+            with self.assertRaisesRegex(RuntimeError, 'CPU 81 protocol'):
+                collector.collect_divisors(args, attempt, 80)
+
+    def test_audit_is_validated_before_preflight(self):
+        _, audit = DivisorValidationTests().fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / 'bench'
+            executable.write_bytes(b'benchmark binary')
+            attempt = collector.Attempt(Path(directory) / 'result.json')
+            args = argparse.Namespace(dirty_status='')
+            def run(command, **kwargs):
+                stdout = audit if command[-1] == 'divisor-audit' else ''
+                return subprocess.CompletedProcess(command, 0, stdout, '')
+            with patch.object(collector, 'BENCH', executable), \
+                 patch.object(collector, 'run', run), \
+                 patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
+                 patch.object(collector, 'host_state', return_value={}), \
+                 patch.object(collector.core_telemetry, 'sibling_set', return_value={33, 81}), \
+                 patch.object(collector, 'quiet_core', side_effect=RuntimeError('preflight failed')):
+                with self.assertRaisesRegex(RuntimeError, 'preflight failed'):
+                    collector.collect_divisors(args, attempt, 81)
+            record = json.loads(attempt.output.read_text())
+            self.assertEqual(record['audit_validation'], {'status': 'passed'})
+
+    def test_timed_interference_ceiling_is_pinned(self):
+        _, audit = DivisorValidationTests().fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / 'bench'
+            executable.write_bytes(b'benchmark binary')
+            attempt = collector.Attempt(Path(directory) / 'result.json')
+            args = argparse.Namespace(dirty_status='')
+            commands = []
+            def run(command, **kwargs):
+                commands.append(command)
+                stdout = audit if command[-1] == 'divisor-audit' else ''
+                return subprocess.CompletedProcess(command, 0, stdout, '')
+            def inspect(attempt, directory, audit):
+                attempt.record['scientific_validation'] = {'status': 'passed'}
+                attempt.record['telemetry'] = {'summary': {'contaminated': False}}
+            with patch.object(collector, 'BENCH', executable), \
+                 patch.object(collector, 'run', run), \
+                 patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
+                 patch.object(collector, 'host_state', return_value={}), \
+                 patch.object(collector.core_telemetry, 'sibling_set', return_value={33, 81}), \
+                 patch.object(collector, 'quiet_core'), \
+                 patch.object(collector, 'inspect_divisors', inspect), \
+                 patch.object(collector, 'verify_sources'), \
+                 patch.object(collector, 'render'):
+                self.assertEqual(collector.collect_divisors(args, attempt, 81), 0)
+            telemetry = next(c for c in commands if 'core_telemetry.py' in c[1])
+            index = telemetry.index('--max-core-interference-ratio')
+            self.assertEqual(telemetry[index + 1], '0.005')
 
     def test_quiet_preflight_retains_busy_and_quiet_windows(self):
         attempt = Mock(record={})

@@ -493,13 +493,14 @@ DIVISOR_CAMPAIGN = 3
 DIVISOR_PROTOCOL = "reports/hex-int-factor-divisor-protocol-3.md"
 DIVISOR_CPU = 81
 DIVISOR_SIBLINGS = frozenset({33, 81})
-DIVISOR_INTERFERENCE_RATIO = 0.005
+DIVISOR_PREFLIGHT_RATIO = 0.005
+DIVISOR_TIMED_INTERFERENCE_RATIO = 0.005
 DIVISOR_PREFLIGHT_SECONDS = 30
 DIVISOR_PREFLIGHT_WINDOWS = 10
 
 
-def validate_divisors(export: dict, audit: str) -> None:
-    """Independently reconstruct every output; check every trial and its checksum."""
+def validate_divisor_audit(audit: str) -> dict[int, int]:
+    """Independently reconstruct and compare every complete divisor array."""
     expected_hashes = {}
     lines = audit.splitlines()
     if len(lines) != len(DIVISOR_COUNTS):
@@ -513,6 +514,12 @@ def validate_divisors(export: dict, audit: str) -> None:
         if param != count or subject != expected[-1] or values != expected:
             raise ValueError(f"divisor audit mismatch at {count}")
         expected_hashes[count] = checksum
+    return expected_hashes
+
+
+def validate_divisors(export: dict, audit: str) -> None:
+    """Independently reconstruct every output; check every trial and its checksum."""
+    expected_hashes = validate_divisor_audit(audit)
     if "results" not in export:
         raise ValueError("no benchmark export")
     rows = export["results"]
@@ -555,6 +562,12 @@ def inspect_divisors(attempt: Attempt, directory: Path, audit: str) -> None:
             errors[name] = str(error)
     attempt.record["ingestion_errors"] = errors
     try:
+        validate_divisor_audit(audit)
+        attempt.record["audit_validation"] = {"status": "passed"}
+    except Exception as error:
+        attempt.record["audit_validation"] = {
+            "status": "failed", "error_type": type(error).__name__, "error": str(error)}
+    try:
         validate_divisors(attempt.record.get("benchmark_export", {}), audit)
         attempt.record["scientific_validation"] = {"status": "passed"}
     except Exception as error:
@@ -593,7 +606,7 @@ def quiet_core(cpu: int, attempt: Attempt) -> None:
     attempt.record["quiet_core_config"] = {
         "window_seconds": DIVISOR_PREFLIGHT_SECONDS,
         "max_windows": DIVISOR_PREFLIGHT_WINDOWS,
-        "max_busy_fraction_per_sibling": DIVISOR_INTERFERENCE_RATIO,
+        "max_busy_fraction_per_sibling": DIVISOR_PREFLIGHT_RATIO,
         "tick_hz": os.sysconf("SC_CLK_TCK"),
     }
     for _ in range(DIVISOR_PREFLIGHT_WINDOWS):
@@ -605,7 +618,7 @@ def quiet_core(cpu: int, attempt: Attempt) -> None:
         elapsed = (end - start) / 1e9
         busy = {str(c): core_telemetry.busy_seconds(before[c], after[c],
                     os.sysconf("SC_CLK_TCK")) for c in siblings}
-        quiet = all(0 <= seconds / elapsed <= DIVISOR_INTERFERENCE_RATIO
+        quiet = all(0 <= seconds / elapsed <= DIVISOR_PREFLIGHT_RATIO
                     for seconds in busy.values())
         observations.append(dict(mono_t0_ns=start, mono_t1_ns=end,
                                  busy_seconds=busy, quiet=quiet))
@@ -634,6 +647,15 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
         attempt.save()
         audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
         attempt.record["divisor_audit"] = audit
+        try:
+            validate_divisor_audit(audit)
+            attempt.record["audit_validation"] = {"status": "passed"}
+        except Exception as error:
+            attempt.record["audit_validation"] = {
+                "status": "failed", "error_type": type(error).__name__,
+                "error": str(error)}
+            attempt.save()
+            raise
         attempt.save()
         # Gate only on independent host counters, before starting any timed run.
         quiet_core(cpu, attempt)
@@ -643,7 +665,7 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
             run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
                  "--cpu", str(cpu), "--output", str(telemetry_path),
                  "--interval", "0.25", "--max-core-interference-ratio",
-                 str(DIVISOR_INTERFERENCE_RATIO),
+                 str(DIVISOR_TIMED_INTERFERENCE_RATIO),
                  "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
                  "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
                 timeout=900)

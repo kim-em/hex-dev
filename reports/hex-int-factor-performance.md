@@ -692,14 +692,23 @@ Phase-5–7 work remains preserved; it does not discharge Phase 4.
 The [third campaign protocol](hex-int-factor-divisor-protocol-3.md) raised the
 host-interference ceiling to 0.5%, used a resolution-aware 30-second preflight
 on surveyed pair 33/81, and preserved the model and all scientific settings.
+The issue owner authorized that ceiling; only four of 47 pairs met it during
+the retained untimed survey.
 Its sole [retained attempt](bench-results/intfactor-divisors-campaign-3-attempt-1.json)
 was made from clean preregistration commit
-`0fac6714191c290fd60c5fdb910f11d7fab1875a`. The build and independent
-complete-result audit passed, but all ten preflight windows exceeded 0.5% on
-at least one sibling. The closest window measured CPU 33 at 0.49999% and CPU
-81 at 1.03331%; another measured CPU 81 at 0.29999% but CPU 33 at 0.73332%.
-The collector therefore rejected the attempt before operation timing and
-retained the exact windows, commands, stdout/stderr, hashes and host state.
+`0fac6714191c290fd60c5fdb910f11d7fab1875a`. The build and divisor-audit export
+completed, but independent complete-result validation did not run before the
+preflight failed. The complete arrays remain retained. The later
+[diagnostic recheck](bench-results/intfactor-divisors-campaign-3-recheck.json)
+independently validates every retained array and still reports the absent
+timing export. All ten preflight windows exceeded 0.5% on at least one sibling.
+The closest window measured CPU 81 at 0.29999% and CPU 33 at 0.73332%; the
+other near miss measured CPU 33 at 0.49999% and CPU 81 at 1.03331%. The
+collector therefore rejected the attempt before operation timing and retained
+the exact windows, commands, stdout/stderr, hashes and host state.
 Preflight exhaustion does not authorize the protocol's contamination-only
 replacement, so the third campaign is exhausted. It reclassifies no earlier
 result. Phase 4 remains incomplete and both registry counters remain at 3.
+The campaign executable hash `a83c5712...` differs from the existing inclusive
+profile's `64991c51...` hash, despite unchanged measured sources and toolchain,
+so any future admissible timing package will require a fresh inclusive profile.
