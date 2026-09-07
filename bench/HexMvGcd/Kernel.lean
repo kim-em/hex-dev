@@ -85,31 +85,31 @@ private theorem modularDegreeX :
     letI : ZMod64.Bounds primeTwo.m := primeTwo.bounds
     letI : ZMod64.PrimeModulus primeTwo.m :=
       ZMod64.primeModulusOfPrime primeTwo.prime
-    decide ((imageAtRaw primeTwo (intCoeffHom primeTwo).toField noPoint
+    decide ((imageAt primeTwo (intCoeffHom primeTwo) noPoint
       0 Mono.lex x).degree? = (toUnivariate 0 Mono.lex x).degree?) = true := by
-  unfold x imageAtRaw
+  unfold x imageAt
   decide +kernel
 
 private theorem modularDegreeXPlusOne :
     letI : ZMod64.Bounds primeTwo.m := primeTwo.bounds
     letI : ZMod64.PrimeModulus primeTwo.m :=
       ZMod64.primeModulusOfPrime primeTwo.prime
-    decide ((imageAtRaw primeTwo (intCoeffHom primeTwo).toField noPoint
+    decide ((imageAt primeTwo (intCoeffHom primeTwo) noPoint
       0 Mono.lex (x + 1)).degree? =
         (toUnivariate 0 Mono.lex (x + 1)).degree?) = true := by
-  unfold x imageAtRaw
+  unfold x imageAt
   decide +kernel
 
 private theorem modularCombination :
     letI : ZMod64.Bounds primeTwo.m := primeTwo.bounds
     letI : ZMod64.PrimeModulus primeTwo.m :=
       ZMod64.primeModulusOfPrime primeTwo.prime
-    let fImage := imageAtRaw primeTwo (intCoeffHom primeTwo).toField
+    let fImage := imageAt primeTwo (intCoeffHom primeTwo)
       noPoint 0 Mono.lex x
-    let hImage := imageAtRaw primeTwo (intCoeffHom primeTwo).toField
+    let hImage := imageAt primeTwo (intCoeffHom primeTwo)
       noPoint 0 Mono.lex (x + 1)
     (1 * fImage + 1 * hImage == 1) = true := by
-  unfold x imageAtRaw
+  unfold x imageAt
   decide +kernel
 
 private def modularSplit : CoprimeCert 1 Int Mono.lex :=
@@ -121,16 +121,15 @@ private def badModularSplit : CoprimeCert 1 Int Mono.lex :=
     1 0 xContent xPlusOneContent .unit
 
 theorem modularSplitValid : checkCoprime x (x + 1) modularSplit = true := by
-  simp only [checkCoprime, succCheckCoprime, modularSplit]
+  simp only [checkCoprime, succCheckCoprime, Cert.succCheck, modularSplit]
   unfold checkContentUsing checkContentSteps checkGcdUsing
     xContent xPlusOneContent zeroZeroStep zeroOneStep oneOneStep
-  unfold baseCheckCoprime
+  unfold baseCheckCoprime Cert.baseCheck
   unfold Nat.Internal.elimOffset
   dsimp only
   simp only [modularDegreeX, modularDegreeXPlusOne, modularCombination,
     viewX, viewXPlusOne, polyNormalize_zero, normalizeOneP0]
-  simp only [checkContentSteps, GcdCert.gcd, GcdCert.cofL, GcdCert.cofR,
-    normalizeOneP0]
+  simp only [checkContentSteps, normalizeOneP0]
   decide +kernel
 
 theorem modularSplitCorrupt :
@@ -146,21 +145,38 @@ private def badBezoutSplit : CoprimeCert 1 Int Mono.lex :=
     xContent xPlusOneContent .unit
 
 theorem bezoutSplitValid : checkCoprime x (x + 1) bezoutSplit = true := by
-  unfold checkCoprime checkOps succCheckCoprime bezoutSplit
+  unfold checkCoprime checkOps succCheckCoprime Cert.succCheck bezoutSplit
   dsimp only
   unfold checkContentUsing checkContentSteps checkGcdUsing
     xContent xPlusOneContent zeroZeroStep zeroOneStep oneOneStep
-  unfold baseCheckCoprime
+  unfold baseCheckCoprime Cert.baseCheck
   unfold Nat.Internal.elimOffset
   dsimp only
   simp only [viewX, viewXPlusOne, polyNormalize_zero, normalizeOneP0]
-  simp only [checkContentSteps, GcdCert.gcd, GcdCert.cofL, GcdCert.cofR,
-    normalizeOneP0]
+  simp only [checkContentSteps, normalizeOneP0]
   decide +kernel
 
 theorem bezoutSplitCorrupt :
     checkCoprime x (x + 1) badBezoutSplit = false := by
   decide +kernel
+
+private def strippedReplay (cert : CoprimeCert 1 Int Mono.lex) : Bool :=
+  match Cert.stripCoprime? cert with
+  | none => false
+  | some ordinary =>
+      (Cert.checkOps (S := Int) (E := Cert.NoLeaves)
+        (fun _ _ _ _ _ impossible => nomatch impossible) 1).coprime
+          Mono.lex x (x + 1) ordinary
+
+/-- Extraction preserves modular replay, including both content folds. -/
+theorem stripModularValid : strippedReplay modularSplit = true := by
+  change checkCoprime x (x + 1) modularSplit = true
+  exact modularSplitValid
+
+/-- Extraction preserves Bézout replay, including both content folds. -/
+theorem stripBezoutValid : strippedReplay bezoutSplit = true := by
+  change checkCoprime x (x + 1) bezoutSplit = true
+  exact bezoutSplitValid
 
 private def directBezout : CoprimeCert 1 Int Mono.lex :=
   .bezout (-1) 1
@@ -252,14 +268,14 @@ private theorem secondNestedGcd : secondNestedStep.gcd = 1 := by
 theorem nestedContentValid :
     checkContent [x, x + 1] nestedContent = true := by
   unfold checkContent checkOps checkContentUsing nestedContent
-  simp only [checkContentSteps, ContentCert.value, firstNestedGcd,
+  simp only [checkContentSteps, firstNestedGcd,
     secondNestedGcd, firstNestedValid, secondNestedValid]
   decide +kernel
 
 theorem nestedContentCorrupt :
     checkContent [x, x + 1] badNestedContent = false := by
   unfold checkContent checkOps checkContentUsing badNestedContent
-  simp only [checkContentSteps, ContentCert.value, firstNestedGcd,
+  simp only [checkContentSteps, firstNestedGcd,
     secondNestedGcd, firstNestedValid, secondNestedValid]
   decide +kernel
 
@@ -334,17 +350,8 @@ private def flatRatLift : RatLiftCert 0 Mono.lex where
 theorem flatRatLiftValid : checkRatLift (C 2) (C 3) flatRatLift = true := by
   decide +kernel
 
-private def identityEmbedding : CoeffEmbedding Int Int where
-  toFun := fun z => z
-
-/-- Mere nonzero scaling cannot witness coprimality outside a field. -/
-private def nonunitLift : CoprimeCert 0 Int Mono.lex :=
-  .ratLiftCore identityEmbedding (by rfl) (by rfl)
-    (by intros; rfl) (by intros; rfl) (by intro a b h; exact h)
-    2 2 1 1 1 1 .unit
-
-theorem nonunitLiftCorrupt :
-    checkCoprime (C 2) (C 2) nonunitLift = false := by
-  decide +kernel
+/-- Integer coefficients cannot supply a rational-lift representation. -/
+theorem noIntegerLift (model : RatModel Int) : False :=
+  model.not_int
 
 end Hex.MvGcdBench.Kernel

@@ -1401,7 +1401,10 @@ with what those call: `MvPoly` multiplication, powering, and equality,
 `imageAt`, `lcIn`, `toUnivariate`, `constIn`, `MvPoly.eval`,
 `polyNormalize`, `scalarContent`, hex-mv-gcd's `checkContent`,
 `DensePoly` content, primitive part, degree and equality, and `List`
-length and indexing. Each is `@[expose]`.
+length and indexing. Each is `@[expose]`. The shared GCD content checker
+also includes canonical rational-leaf replay in its transitive dependency
+closure, although `RatModel.not_int` rules out that leaf for these integer
+coefficients; see hex-mv-gcd's kernel-exposure contract.
 
 Nothing in the pipeline is in that closure: point search, prime search,
 `witnessOf?`, the lift, and the recombination enumeration are search
