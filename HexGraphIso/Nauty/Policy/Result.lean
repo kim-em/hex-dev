@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.CodeCalls
+public import HexGraphIso.Nauty.Policy.FirstCompare
 public import HexGraphIso.Nauty.Policy.Filters
 
 public import HexGraphIso.Nauty.Policy.FirstRun
