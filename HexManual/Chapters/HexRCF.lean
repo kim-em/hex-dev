@@ -51,23 +51,15 @@ statement without a named witness, and the witness in the cubic above is
 irrational. `rcf` needs neither hints nor a witness, and on this fragment it
 always answers.
 
-Import `HexRCF` and write `rcf` at the goal:
+Import `HexRCF` and write `rcf` at the goal. Here it proves that the Chebyshev
+polynomial `T₅` is bounded by one on `(−1, 1]` and attains the bound, that a
+cubic has a root in a dyadic interval and none outside it, and that a quartic
+is nonnegative with equality at exactly one point. Each is one call:
 
 ```lean
 example : ∀ x : ℝ, x ^ 2 + 1 > 0 := by
   rcf
-```
 
-# Three facts a mathematician might want
-%%%
-tag := "hex-rcf-examples"
-%%%
-
-The Chebyshev polynomial `T₅` is bounded by one on `(−1, 1]` and attains the
-bound; a cubic has a root in a dyadic interval and none outside it; a quartic
-is nonnegative with equality at exactly one point. Each is one call:
-
-```lean
 example : ∀ x : ℝ, x ∈ Set.Ioc (-1 : ℝ) 1 →
     -1 ≤ 16 * x ^ 5 - 20 * x ^ 3 + 5 * x ∧
       16 * x ^ 5 - 20 * x ^ 3 + 5 * x ≤ 1 := by
