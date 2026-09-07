@@ -42,8 +42,8 @@ def checkLabels (interval : Interval) (children : List (Int × Tree)) : Bool :=
 
 /-- Replay a coefficient tree with a global node limit and recomputed suffix costs.
 The checker descends by dimension and consumes the allowance across siblings. -/
-def replay (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
-    (forward : Matrix Int n n) (data : Data n m) :
+def replayAux (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
+    (forward : Matrix Int n n) (data : Data n m) (residualSq : Rat) :
     (k : Nat) → k ≤ n → Vector Int n → Rat → Tree → Nat → Option (Replay n m)
   | _, _, _, _, _, 0 => none
   | 0, _, z, _, tree, fuel + 1 =>
@@ -55,7 +55,7 @@ def replay (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
   | k + 1, hk, z, suffix, tree, fuel + 1 =>
     let i : Fin n := ⟨k, by omega⟩
     let centre := data.centre z i
-    let interval := bounds centre data.norms[i] (radius - data.residual.normSq - suffix)
+    let interval := bounds centre data.norms[i] (radius - residualSq - suffix)
     match tree with
     | .leaf => none
     | .empty => if interval.size == 0 then some ⟨[], fuel⟩ else none
@@ -64,7 +64,7 @@ def replay (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
       else
         let visitChild := fun (a : Int) (tree : Tree) (remaining : Nat) =>
           let delta := (a : Rat) - centre
-          replay rows t radius forward data k (by omega) (z.set k a (by omega))
+          replayAux rows t radius forward data residualSq k (by omega) (z.set k a (by omega))
             (suffix + data.norms[i] * delta * delta) tree remaining
         let rec loop (children : List (Int × Tree)) (remaining : Nat)
             (points : List (Point n m)) : Option (Replay n m) := do
@@ -75,6 +75,12 @@ def replay (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
             loop children child.remaining (child.points.reverse ++ points)
         loop children fuel []
 termination_by k _ _ _ _ _ => k
+
+/-- Replay computes the constant residual norm once, independently of producer caches. -/
+def replay (rows : Matrix Int n m) (t : Vector Rat m) (radius : Rat)
+    (forward : Matrix Int n n) (data : Data n m) (k : Nat) (hk : k ≤ n)
+    (z : Vector Int n) (suffix : Rat) (tree : Tree) (maxNodes : Nat) : Option (Replay n m) :=
+  replayAux rows t radius forward data data.residual.normSq k hk z suffix tree maxNodes
 
 /-- Check transforms, preparation identities, every branch, and the claimed output.
 The replay bound is independent of the producer's resource limits. -/

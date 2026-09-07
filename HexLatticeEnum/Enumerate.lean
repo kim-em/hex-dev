@@ -88,8 +88,8 @@ def room (limit : Option Nat) (used : Nat) : Bool :=
 /-- Fincke–Pohst traversal with exact finite intervals and lazy coefficient order.
 The outer recursion decreases dimension; the inner recursion decreases the
 exact number of children. Budget checks occur before resource allocation. -/
-def traverse (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
-    (budget : Budget) (mode : SearchMode) :
+def traverseAux (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
+    (budget : Budget) (mode : SearchMode) (residualSq : Rat) :
     (k : Nat) → k ≤ n → Vector Int n → Rat → SearchState n m → Traversal n m
   | k, hk, z, suffix, state => Id.run do
     let saveTree := mode == .ball
@@ -124,13 +124,13 @@ def traverse (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
     | k + 1 =>
       let i : Fin n := ⟨k, by omega⟩
       let centre := p.centre z i
-      let interval := bounds centre p.norms[i] (state.radius - p.residual.normSq - suffix)
+      let interval := bounds centre p.norms[i] (state.radius - residualSq - suffix)
       if interval.size == 0 then
         return ⟨state, if saveTree then some .empty else none, []⟩
       let visitChild := fun (a : Int) (s : SearchState n m) =>
         let z' := z.set k a (by omega)
         let delta := (a : Rat) - centre
-        traverse b t p budget mode k (by omega) z'
+        traverseAux b t p budget mode residualSq k (by omega) z'
           (suffix + p.norms[i] * delta * delta) s
       let rec children (fuel : Nat) (cursor : Coefficients)
           (s : SearchState n m) (trees : List (Int × Tree)) : Traversal n m :=
@@ -149,6 +149,12 @@ def traverse (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
               ⟨child.state, none, child.pending ++ siblings⟩
       return children interval.size (coefficients interval centre) state []
 termination_by k _ _ _ _ => k
+
+/-- Traverse with the constant orthogonal residual norm computed once for the entire pass. -/
+def traverse (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
+    (budget : Budget) (mode : SearchMode) (k : Nat) (hk : k ≤ n)
+    (z : Vector Int n) (suffix : Rat) (state : SearchState n m) : Traversal n m :=
+  traverseAux b t p budget mode p.residual.normSq k hk z suffix state
 
 /-- Public fixed-radius result, distinguishing exhaustion from partial progress. -/
 inductive Enumeration (n m : Nat) where
