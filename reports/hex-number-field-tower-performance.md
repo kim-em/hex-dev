@@ -421,6 +421,89 @@ the fixed-embedding root selection, coordinate maps, or validated tower
 level these units produce). The measurements above cover exactly the
 `factor?` surface PARI does expose.
 
+### Rational squarefreeness in Trager
+
+The rational base now tests the integer primitive part modulo the certified
+prime 499 before running an exact rational gcd. A successful modular test is
+sufficient for squarefreeness; a bad leading coefficient or discriminant falls
+back to the exact test. The compiler replacement `Norm.ratSquarefree_eq_fast`
+is kernel-proved equal to the original rational gcd predicate, including zero
+and rational denominators. The tower correspondence proof transports the base
+case from singleton coordinate arrays to `Rat`. Factor reconstruction,
+canonical ordering, multiplicities, and recursive irreducibility replay remain
+fully checked.
+
+The [untimed remainder-sequence replay](bench-results/hex-number-field-tower-factor-heights-b4a02beaf.csv)
+identifies coefficient growth inside the squarefreeness gcd, rather than a
+large shift count. Every registered Selmer rung rejects shift zero and accepts
+shift one; the latter is certified modulo 499. The accepted norms have integer
+coefficients, but the unnormalized exact gcd creates large rational scalars:
+
+| input degree | norm degree | norm numerator bits | gcd numerator bits | gcd denominator bits |
+|---:|---:|---:|---:|---:|
+| 2 | 4 | 3 | 8 | 5 |
+| 3 | 6 | 4 | 46 | 42 |
+| 4 | 8 | 6 | 121 | 109 |
+| 6 | 12 | 9 | 449 | 438 |
+| 8 | 16 | 11 | 1,035 | 1,014 |
+| 12 | 24 | 17 | 3,464 | 3,430 |
+| 24 | 48 | 36 | 25,546 | 25,476 |
+
+These are maximum bit lengths over the exact remainder sequence, not fitted
+costs or timing exponents. Regenerate them with
+`lake exe hexnumberfieldtower_bench tower-factor-stats`. The successful modular
+trial removes this rational gcd from both norm acceptance and the rational
+factorizer, including their certificate replay. Rejected trials still use the
+exact algorithm, so this does not improve the worst-case contract. The fixture
+already has one quadratic level; no absolute-presentation conversion is needed
+for this change, and deeper-tower presentation tradeoffs remain unmeasured.
+
+The [comparison protocol](hex-number-field-tower-factor-protocol.md) retains
+the existing fixed inputs, five repeats, a 0.2-second inner-batch floor, and
+unchanged 2-second canonical budgets. No exponent was fitted. **There is no
+accepted new timing comparison:** the first candidate's CPU/sibling were
+96%/97% busy at postflight, and both preregistered retries failed the 5%
+idleness threshold; the next baseline's were 98.5%/97.5%; the final baseline, moved together
+with the candidate to CPU 1, failed at 13.1%/1.5%. The retry limit is exhausted.
+These runs do not replace the earlier Phase-4 evidence or establish a speedup.
+
+For transparency, the first attempt's raw per-call medians are retained below
+as **contaminated diagnostics only**. All repeat hashes agree, all eight Hex
+before/after hashes match, and all six fresh PARI degree/multiplicity hashes
+match Hex. PARI 2.17.3/cypari2 2.2.4 was available, but its timings and 10.753 µs
+protocol-overhead median share the rejected run and supply no new comparator
+ratio.
+
+| operation | baseline ms | candidate ms (contaminated) |
+|---|---:|---:|
+| factor, degree 2 | 1.072 | 1.056 |
+| factor, degree 3 | 1.462 | 1.398 |
+| factor, degree 4 | 2.072 | 1.913 |
+| factor, degree 6 | 3.593 | 3.099 |
+| factor, degree 8 | 6.299 | 4.578 |
+| factor, degree 12 | 16.978 | 9.201 |
+| factor, degree 24 | 253.152 | 34.443 |
+| check, degree 24 | 125.242 | 16.711 |
+
+The [sampling summaries](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json)
+are unfiltered fixed-benchmark-thread shape diagnostics, including autotuning,
+and make no timing claim. GMP accounts for 79.98% of baseline leaf samples
+and 23.86% of candidate leaf samples. Missing GMP ancestors leave only 46.60%
+of baseline samples in the resolved `factor?` frame, versus 99.33% for the
+candidate, so these are not renormalized into comparable within-target shares.
+In the candidate capture, recovery occupies 26.61%, shifted norm construction
+20.54%, integer factorization 10.00%, and the modular rational squarefreeness
+predicate 2.05% of the whole thread. Checked replay is still 48.56% inclusive;
+its work overlaps those phases. This identifies recovery and norm construction
+as the next targets without attributing the original loss to certificate
+checking alone.
+
+The computational and Mathlib tower libraries build, all 49 bench checks pass,
+and emitted fixtures remain byte-for-byte identical. The PARI oracle checks
+nine cases with no failures. Added regressions cover both bad-prime branches,
+rational denominators, repeated polynomials, zero/constants, and rejection of
+corrupted public factorization scalars and multiplicities.
+
 ## Profile
 
 samply 0.13.1 sampled at 999 Hz on the same `chungus2` hardware (Linux
@@ -638,6 +721,15 @@ captures.
 | [rejected negation telemetry](bench-results/hex-number-field-tower-negation-telemetry-rejected-86d54d9fa-chungus2-cpu3.json) | 481 timed regions; interference ratio 0.003274 exceeded the 0.002 ceiling | CPU 3 and SMT sibling 51 | `0564f704333a9527e3bfd605326cd6d6d3104053b6b5aaa610790c88ef958357` |
 | [negation allocation counts](bench-results/hex-number-field-tower-negation-allocation-counts-86d54d9fa.json) | five repeated small-allocation counts at dimensions 128 and 256 plus an empty-body control | unpinned count diagnostic | `2c3c386e854dddf50ef021ce53cb908985400595f7c51ebae936ebbff38b0f85` |
 | [negation inclusive profile](bench-results/hex-number-field-tower-negation-profile-86d54d9fa-chungus2.json) | clean pre-rebase `86d54d9fa`; negation sources match rebased `7db1a55be`; timed-region-filtered dimension-448 public negation and hash | unpinned shape capture | `b69714a5a9e9dce3562ba0137c73e3e8ef30a7718c4caf595ff33bffc17493e0` |
+| [factor baseline](bench-results/hex-number-field-tower-factor-baseline-b8602c76a.json) | `b8602c76a`; saved baseline binary; unimported draft makes harness git-dirty | local diagnostic | `c18855d828c15207f3603a5f40858cb2305b607a9b5ee40d6796582ffb6124f4` |
+| [contaminated factor candidate](bench-results/hex-number-field-tower-factor-contaminated-b4a02beaf.json) | clean `b4a02beaf`; first candidate and fresh PARI pairs | local diagnostic | `b8e10d2bf4d7e8a0c7bddef83976bd9bedb9e531a31c877759265f872d31e29e` |
+| [first comparison host metadata](bench-results/hex-number-field-tower-factor-contaminated-host-b4a02beaf.json) | CPU 13/sibling 61; failed postflight | local diagnostic | `35437ab094a2c39e19964964cbb09b7e82dcd8513184034e570e1b84f06a06eb` |
+| [second factor baseline](bench-results/hex-number-field-tower-factor-contaminated-baseline2-b8602c76a.json) | clean `b8602c76a` detached checkout; saved baseline binary | local diagnostic | `f273467b752f5f70486866a868c4926ea6dac29479fc9fdbc2b678d8380711eb` |
+| [second comparison host metadata](bench-results/hex-number-field-tower-factor-contaminated-host2-20ff1f2f9.json) | CPU 13/sibling 61; failed baseline postflight, candidate skipped | local diagnostic | `e25432e5962f8db66cd962a82f825fbf9c75e2e459dd44a9df3a0971fee5c5d1` |
+| [third factor baseline](bench-results/hex-number-field-tower-factor-contaminated-baseline3-b8602c76a.json) | clean `b8602c76a` detached checkout; saved baseline binary | local diagnostic | `479546a46c90bee2a89257c2571777d845006c5122bad6627a348a4c5a327683` |
+| [third comparison host metadata](bench-results/hex-number-field-tower-factor-contaminated-host3-0faa834dc.json) | CPU 1/sibling 49; failed baseline postflight, candidate skipped | local diagnostic | `4c982ad715541892a9440957972ae22bc22b682171237f16e6393d068eba1d17` |
+| [factor coefficient heights](bench-results/hex-number-field-tower-factor-heights-b4a02beaf.csv) | clean `b4a02beaf`; untimed exact remainder replay | local diagnostic | `028f998f4e7eba2ab9807215357e247e6e0ebb62d7b25bb29289eefd8cdb57bc` |
+| [factor comparison profiles](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json) | baseline binary from `b8602c76a`, candidate from `b4a02beaf`; raw hashes embedded | local diagnostic | `5a0ff9630bd3e1db8e5b7ee64dde6fde990f85570a1cc08bf13737d63c3e8ef7` |
 
 The evidence comprises the single-root bounded-height fixtures, eight passing
 mode-1 surfaces, nine independently budgeted mode-3 surfaces, the untimed
@@ -668,4 +760,7 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 ## Concerns
 
-None.
+The rational-squarefreeness fast path has no accepted new timing comparison.
+Its correctness and coefficient-growth evidence are complete; a quantitative
+speedup or revised PARI ratio requires a controlled host. The contaminated
+exports above do not change the existing Phase-4 verdicts.
