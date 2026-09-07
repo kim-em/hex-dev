@@ -145,6 +145,9 @@ lean_lib HexPolyZ where
 
 lean_lib HexPolyZGcd where
 
+@[default_target]
+lean_lib HexRationalFn where
+
 lean_lib HexRoots where
 
 lean_lib HexResultant where
@@ -775,6 +778,8 @@ lean_lib HexConformance where
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
     ++ #[`HexPolyFast.Conformance].map Glob.one
+
+    ++ #[`HexRationalFn.Conformance].map Glob.one
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
