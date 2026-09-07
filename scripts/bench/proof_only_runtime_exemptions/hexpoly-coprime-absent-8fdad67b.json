@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Coprime.lean",
+  "baseline_blob": null,
+  "current_blob": "8fdad67b02691640a31ffa0ae08a9ed0e33cdca5",
+  "reason": "The added module contains only the Prop-valued Bezout coprimality predicate and theorems. It introduces no executable definitions, instances, or compiler replacement attributes. All declarations are erased from compiled factorization, and no existing polynomial algorithm is changed."
+}
