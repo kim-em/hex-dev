@@ -143,3 +143,112 @@ criteria. The candidate SHA-256 is
 `c3e2de0cb83c2ab3e7fb68997c06778ed8a2369f63c4f21878ec88d7ce3c10a6`.
 The tag `bench/issue-10074-measured` preserves all pre-rebase source commits
 and preregistrations referenced by the earlier artifacts.
+
+## Singleton recovery and quadratic norm experiments
+
+The [fresh profiles](hex-number-field-tower-performance.md#factorization-after-norm-and-recovery-improvements)
+identify two independent targets: recovery including shifts (about 26% of
+factorization), and shifted norm construction plus resultants (about 52%).
+These shares motivate experiments; they are not predicted speedups. The
+execution order is **prototype, differential checks, timing decision, then
+correspondence proofs**. No prototype is eligible to merge before its proofs
+and final verification pass.
+
+### Baseline and independent prototypes
+
+Use the computational source at `af7b4d49f661a23debf82960bfff3c78435ff135`
+as the common baseline for both prototypes. Its saved benchmark executable is
+`/tmp/tower-factor-profile-af7b4d49f/hexnumberfieldtower_bench`, SHA-256
+`038b21ce95e7a3c2571d869347206ca3ab4e049633ca700490af9937d7c20b2f`.
+Record candidate source commits and saved binary hashes before measuring.
+Keep each prototype isolated from the other and from unrelated upstream
+runtime changes. Any necessary baseline change requires a new recorded
+baseline before candidate measurements.
+
+1. **Singleton recovery.** In `Factor.factorSquarefree?`, after the accepted
+   norm has been recursively factored, use the singleton case to return the
+   canonical monic input component instead of calling `Factor.recover`.
+   Retain squarefreeness, recursive norm factorization, reconstruction,
+   positive-degree, and public certificate checks. Do not put an unconditional
+   singleton shortcut in `recover`: an arbitrary one-element lower-factor
+   array does not establish that it factors the accepted norm. Empty and
+   multiple-factor cases keep the existing recovery behavior.
+2. **Quadratic norm.** Dispatch in `Norm.oneLevel` when the top defining
+   polynomial has degree two; retain the current resultant path for other
+   degrees. For `m(Y) = Y² + bY + a`, maintain `A(X) + Y B(X)` during Horner
+   evaluation modulo `m`. Multiplication by `X - cY` sends `(A, B)` to
+   `(XA + caB, XB - cA + cbB)`; add the two blocks of the next input
+   coefficient afterward. Return `A² - bAB + aB²`. For `Y² - 2` this is
+   `A² - 2B²`. This supports quadratic coefficients over a lower tower,
+   rather than recognizing the particular Selmer fixture. Preserve canonical
+   output encoding, shifts, zero/constants, and rational denominators.
+
+Build prototypes through `lake build` on the Mathlib-free computational and
+benchmark targets. During this stage the companion proofs may need updates;
+do not replace them with axioms or sorries or count stale proof artifacts as
+validation. First inspect the existing norm and recovery theorem statements
+for a plausible proof route, but defer constructing those proofs until the
+performance decision. A mathematical counterexample ends the candidate even
+if benchmark outputs happen to agree.
+
+### Correctness checks before timing
+
+Compare against the reference implementation, not only against a checksum of
+factor degrees. Require equality of the full canonical factorization output
+and checker results, byte-identical conformance fixtures, and all 49 registered
+benchmark checks with the explicit PARI provider. Check corrupted certificates
+still fail. Exercise irreducible and reducible inputs, repeated factors,
+nonmonic inputs, denominators, zero/constants, and a height-two tower.
+
+For the quadratic norm, additionally compare the entire norm coefficient
+array against the existing resultant on a deterministic grid of small inputs
+with both generator-coordinate blocks populated, shifts `0, 1, -1, 2, -2`,
+quadratic relations with nonzero linear term, and coefficients over a lower
+quadratic field. Include nonquadratic fallback cases. Confirm the intended
+fast branches actually execute in the public factor and replay benchmarks.
+
+### Timing gate before proof development
+
+Use the eight existing Hex fixed cases: degrees `2, 3, 4, 6, 8, 12`, canonical
+degree-24 factorization, and canonical degree-24 replay. Reuse the five repeats,
+0.2-second batch floor, registered warmup, unchanged canonical 2-second
+budgets, quiet high-core placement, pre/postflight and sibling-utilization
+thresholds, opposite pair orders, and twelve-attempt limit above. No local
+build or profiler overlaps timing. Preserve every attempted export and its
+telemetry; an incomplete series has no performance verdict. Fit no exponent.
+
+Compare each isolated prototype against the common baseline. Advance to proof
+development only if both canonical medians improve in both accepted pairs,
+all hashes match, and no smaller rung has a repeat-range-disjoint regression.
+For these new experiments, additionally require each canonical operation's
+candidate maximum to be below the baseline minimum in at least one accepted
+pair. This stricter effect-separation gate is fixed before measurement; it
+does not revise earlier experiments or constitute a significance test. Extend
+the artifact validator to enforce it before running these series.
+
+If both isolated variants qualify, measure the combination against the common
+baseline and against each isolated variant. Apply the same timing gate to
+all three comparisons so that both changes must contribute when combined.
+If an isolated or marginal effect is inconclusive, retain its investigation
+artifacts and defer its proof work; do not relax the gate after seeing results.
+Use Hex-only comparisons for the isolated and marginal experiments. The final
+candidate-versus-baseline comparison includes all fifteen registrations,
+including fresh PARI and its overhead control with the explicitly recorded
+provider. Measure combined effects directly, not by multiplying speedups.
+
+### Proof and integration stage
+
+For each retained implementation, prove the singleton norm's implication for
+component irreducibility and the correspondence of the returned canonical
+factor, or prove the quadratic Horner invariant and exact norm identity,
+respectively. Preserve the existing public soundness/completeness statements.
+Build the tower Mathlib companion and rerun conformance, oracle, and benchmark
+checks. If a proof obligation forces a runtime change, remeasure the changed
+candidate before treating the earlier performance decision as final.
+
+Record measured results and source provenance before opening the implementation
+PR. Obtain the requested independent second opinion while CI runs, resolve
+integration conflicts, and require green CI before merging. After any rebase
+that changes the measured executable, validate performance on the integrated
+binary again. The accepted prototype is a reason to invest in proofs, not a
+substitute for them.

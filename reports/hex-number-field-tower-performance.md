@@ -765,9 +765,11 @@ The phase shares identify work to attack, not attainable speedups. Before
 implementing either leading experiment, preregister independent fixed-case
 comparisons against the integrated baseline, followed by a combined comparison
 if both qualify. Include reducible and recursive-tower correctness cases,
-prove the fast paths, retain all timing attempts, and measure both public
-factorization and replay. No new exponent or wall-time model follows from
-this profile.
+retain all timing attempts, and measure both public factorization and replay.
+The [experiment protocol](hex-number-field-tower-factor-protocol.md#singleton-recovery-and-quadratic-norm-experiments)
+requires differential correctness checks and a performance decision before
+developing correspondence proofs; only proved and verified candidates may
+merge. No new exponent or wall-time model follows from this profile.
 
 ### Rational squarefreeness
 
