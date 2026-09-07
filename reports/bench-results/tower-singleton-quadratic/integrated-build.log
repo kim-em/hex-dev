@@ -1,0 +1,494 @@
+ℹ [290/495] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+✔ [2287/2811] Built HexPoly.Coprime (673ms)
+✔ [2591/3196] Built HexPoly.Coprime:c.o (57ms)
+✔ [3875/4145] Built HexPoly (480ms)
+✔ [3876/4289] Built HexPoly:c.o (58ms)
+✔ [4021/4579] Built HexPoly:shared (75ms)
+✔ [6345/6863] Built HexResultant.ExactDiv (956ms)
+✔ [8079/8572] Built HexPolyFp.Field (1.4s)
+✔ [8081/8572] Built HexPolyFp.Field:dynlib (76ms)
+⚠ [8713/9088] Built HexPolyZ.IntegerPolynomial (1.9s)
+warning: HexPolyZ/IntegerPolynomial.lean:172:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, size_dilate_neg_one]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [8827/9290] Built HexPolyMathlib.PolynomialEquivalence (1.0s)
+ℹ [9165/9705] Replayed HexPrimality.Table:c.o
+info: stderr:
+/home/kim/worktrees/hex-dev/hex-dev-issue-10074/.lake/build/ir/HexPrimality/Table.c:30:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]
+1 warning generated.
+✔ [9242/9705] Built HexBerlekampZassenhaus.QuadraticNorm (566ms)
+✔ [9243/9705] Built HexResultant.Fraction (1.5s)
+✔ [9250/9705] Built HexPolyZ.ExactDivision (792ms)
+✔ [9252/9705] Built HexPolyFp.Ring (1.7s)
+✔ [9254/9705] Built HexPolyZ.Kronecker (1.5s)
+✔ [9256/9705] Built HexBerlekampZassenhaus.QuadraticNormRecover (929ms)
+✔ [9258/9705] Built HexPolyFp.Ring:dynlib (79ms)
+⚠ [9259/9705] Built HexPolyZ.Rational (1.7s)
+warning: HexPolyZ/Rational.lean:190:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, size_normalizePrimitiveSign]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9261/9705] Built HexPolyMathlib.Euclid (2.4s)
+✔ [9262/9705] Built HexResultant.Basic (4.5s)
+✔ [9264/9705] Built HexPolyFp.Degree (1.3s)
+✔ [9266/9705] Built HexPolyFp.Degree:dynlib (76ms)
+✔ [9267/9705] Built HexPolyZ.Decomposition (1.2s)
+✔ [9269/9705] Built HexResultant.PseudoDivMod (687ms)
+✔ [9271/9705] Built HexPolyFp.PrimeField (545ms)
+✔ [9274/9705] Built HexPolyFp.Packed (712ms)
+✔ [9277/9705] Built HexPolyMathlib (1.2s)
+✔ [9278/9705] Built HexPolyFp.Enumeration (810ms)
+✔ [9281/9705] Built HexPolyZ.Mignotte (1.0s)
+✔ [9283/9705] Built HexResultant.FractionPoly (707ms)
+✔ [9285/9705] Built HexPolyFp.PackedMul (643ms)
+✔ [9288/9705] Built HexPolyZ (413ms)
+✔ [9290/9705] Built HexPolyZ:shared (70ms)
+✔ [9291/9705] Built HexResultant.SubresultantMinor (695ms)
+✔ [9293/9705] Built HexPolyFp.SquareFree.Algebra (1.9s)
+✔ [9296/9705] Built HexPolyFp.ModCompose (560ms)
+✔ [9299/9705] Built HexRoots.Basic (649ms)
+✔ [9301/9705] Built HexPolyFp.Quotient.Ring (1.4s)
+✔ [9304/9705] Built HexPolyFp.Frobenius (973ms)
+✔ [9307/9705] Built HexRoots.Cauchy (498ms)
+✔ [9309/9705] Built HexRoots.MahlerPrec (531ms)
+✔ [9311/9705] Built HexRoots.Taylor (1.2s)
+✔ [9313/9705] Built HexPolyFp.SquareFree.YunContribution (1.5s)
+✔ [9316/9705] Built HexResultant.DeterminantAlgebra (1.9s)
+✔ [9318/9705] Built HexRoots.Newton (482ms)
+✔ [9320/9705] Built HexRoots.SoftPellet (793ms)
+✔ [9322/9705] Built HexPolyFp.SquareFree.YunReduce (1.2s)
+✔ [9325/9705] Built HexRoots.Pellet (572ms)
+✔ [9326/9705] Built HexResultant.BlockDeterminant (1.1s)
+✔ [9329/9705] Built HexPolyFp.SquareFree.YunMeasure (975ms)
+✔ [9332/9705] Built HexPolyFp.Quotient (3.7s)
+✔ [9335/9705] Built HexPolyFp.SquareFree.YunCorrect (815ms)
+✔ [9338/9705] Built HexPolyFp.SquareFree (821ms)
+✔ [9341/9705] Built HexRoots.Kantorovich (2.5s)
+✔ [9343/9705] Built HexResultant.BrownTraub (2.5s)
+✔ [9345/9705] Built HexRoots.SimpleRoot (630ms)
+✔ [9347/9705] Built HexRoots.Bisection (714ms)
+✔ [9349/9705] Built HexPolyFp.QuotientFrobenius (1.1s)
+✔ [9352/9705] Built HexRoots.Refine (758ms)
+✔ [9354/9705] Built HexRoots.IsolateAll (518ms)
+✔ [9355/9705] Built HexRoots.IsolateAll:c.o (119ms)
+✔ [9356/9705] Built HexRoots (460ms)
+✔ [9357/9705] Built HexResultant.SubresultantCofactor (2.4s)
+✔ [9360/9705] Built HexPolyFp.Compose (1.9s)
+✔ [9363/9705] Built HexResultant.Subresultant (2.9s)
+✔ [9365/9705] Built HexResultant.Discriminant (545ms)
+✔ [9367/9705] Built HexPolyFp.QuotientCompose (537ms)
+✔ [9370/9705] Built HexPolyFp (487ms)
+✔ [9372/9705] Built HexPolyFp:shared (76ms)
+⚠ [9376/9705] Replayed HexBerlekamp.Factor
+warning: HexBerlekamp/Factor.lean:661:12: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9378/9705] Replayed HexBerlekamp.RabinSoundness.RabinCore
+warning: HexBerlekamp/RabinSoundness/RabinCore.lean:1431:10: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?] at hh_deg
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9380/9705] Replayed HexBerlekamp.RabinSoundness.KernelWitness
+warning: HexBerlekamp/RabinSoundness/KernelWitness.lean:57:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9382/9705] Replayed HexBerlekamp.DistinctDegree
+warning: HexBerlekamp/DistinctDegree.lean:344:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9407/9705] Built HexHensel.ModularPolynomial (910ms)
+✔ [9410/9705] Built HexHensel.WordStep (814ms)
+✔ [9412/9705] Built HexHensel.WordStep:dynlib (71ms)
+✔ [9413/9705] Built HexHensel.ModularDivision (1.3s)
+✔ [9415/9705] Built HexHensel.ModularDivision:dynlib (73ms)
+✔ [9416/9705] Built HexHensel.WordTransport (800ms)
+✔ [9419/9705] Built HexHensel.Linear (1.8s)
+✔ [9422/9705] Built HexResultant.SubresultantExt (3.8s)
+⚠ [9424/9705] Built HexPolyFpMathlib.Basic (2.9s)
+warning: HexPolyFpMathlib/Basic.lean:303:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, hsize]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9425/9705] Built HexHensel.WordMul (510ms)
+✔ [9428/9705] Built HexResultant (485ms)
+✔ [9430/9705] Built HexHensel.Multifactor (716ms)
+✔ [9433/9705] Built HexPolyFpMathlib.SquareFree (1.4s)
+✔ [9434/9705] Built HexResultantMathlib.Basic (1.4s)
+✔ [9435/9705] Built HexHensel.Quadratic (1.0s)
+✔ [9438/9705] Built HexPolyFpMathlib (1.4s)
+✔ [9439/9705] Built HexResultantMathlib.PseudoDivMod (1.8s)
+✔ [9440/9705] Built HexHensel.QuadraticMultifactor (1.5s)
+✔ [9443/9705] Built HexHensel (438ms)
+✔ [9445/9705] Built HexHensel:shared (71ms)
+✔ [9446/9705] Built HexResultantMathlib.Sylvester (2.9s)
+✔ [9447/9705] Built HexBerlekampZassenhaus.WordCld (558ms)
+✔ [9449/9705] Built HexBerlekampMathlib.Irreducibility (2.3s)
+✔ [9450/9705] Built HexBerlekampZassenhaus.PrimeSelection (1.1s)
+✔ [9452/9705] Built HexPolyZMathlib.PolynomialEquivalence (1.6s)
+✔ [9453/9705] Built HexBerlekampZassenhaus.SquareFreeModularCert (630ms)
+✔ [9454/9705] Built HexHenselMathlib.CoprimeLift (1.7s)
+✔ [9456/9705] Built HexResultantMathlib.Roots (1.4s)
+✔ [9457/9705] Built HexResultantMathlib.Discriminant (2.1s)
+✔ [9458/9705] Built HexBerlekampMathlib.FactorPoly (1.7s)
+✔ [9459/9705] Built HexBerlekampZassenhaus.FactorizationData (1.1s)
+✔ [9461/9705] Built HexBerlekampZassenhaus.RatSquarefree (705ms)
+✔ [9463/9705] Built HexPolyZMathlib.PolyParse (1.0s)
+✔ [9464/9705] Built HexBerlekampZassenhaus.Certificate (879ms)
+✔ [9466/9705] Built HexRootsMathlib.Basic (2.2s)
+✔ [9467/9705] Built HexResultantMathlib.Chain (2.3s)
+✔ [9468/9705] Built HexPolyZMathlib.Mignotte (2.7s)
+✔ [9469/9705] Built HexBerlekampZassenhausMathlib.QuadraticNorm (2.9s)
+✔ [9470/9705] Built HexBerlekampZassenhaus.CertificateSyntax (1.0s)
+✔ [9472/9705] Built HexHenselMathlib.HenselLemmas (3.2s)
+⚠ [9473/9705] Built HexRootsMathlib.Taylor (2.0s)
+warning: HexRootsMathlib/Taylor.lean:73:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9474/9705] Built HexPolyZMathlib.Squarefree (4.6s)
+✔ [9475/9705] Built HexBerlekampZassenhaus.Classical.Obstruction (3.4s)
+✔ [9477/9705] Built HexResultantMathlib.Specialize (2.6s)
+✔ [9478/9705] Built HexBerlekampZassenhausMathlib.QuadraticNormIrreducible (2.2s)
+✔ [9479/9705] Built HexRootsMathlib.Geometry (3.1s)
+✔ [9480/9705] Built HexResultantMathlib (1.6s)
+✔ [9481/9705] Built HexPolyZMathlib (3.1s)
+✔ [9482/9705] Built HexRootsMathlib.HasOnlySimpleRoots (3.2s)
+⚠ [9483/9705] Built HexRootsMathlib.SoftPellet (2.9s)
+warning: HexRootsMathlib/SoftPellet.lean:504:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9484/9705] Built HexBerlekampZassenhausMathlib.Resultant (5.0s)
+⚠ [9485/9705] Built HexRootsMathlib.NKWitness (3.3s)
+warning: HexRootsMathlib/NKWitness.lean:256:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9486/9705] Built HexRootsMathlib.MahlerPrec (3.8s)
+⚠ [9487/9705] Built HexRootsMathlib.RootFree (1.5s)
+warning: HexRootsMathlib/RootFree.lean:109:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [9488/9705] Built HexRootsMathlib.Bisection (2.0s)
+✔ [9489/9705] Built HexRootsMathlib.Cauchy (3.1s)
+✔ [9490/9705] Built HexRootsMathlib.Pellet (2.5s)
+✔ [9491/9705] Built HexRootsMathlib.Completeness.NKRecertification (3.6s)
+✔ [9492/9705] Built HexBerlekampZassenhaus.ChoosePrimeData (11s)
+✔ [9493/9705] Built HexRootsMathlib.Glue (1.9s)
+✔ [9495/9705] Built HexRootsMathlib.Completeness.PelletDyadic (2.2s)
+✔ [9496/9705] Built HexBerlekampZassenhaus.FactorizationResult (1.2s)
+✔ [9498/9705] Built HexBerlekampZassenhaus.SquareFreeInput (711ms)
+✔ [9500/9705] Built HexRootsMathlib.Component (3.5s)
+✔ [9501/9705] Built HexBerlekampZassenhaus.Lattice (1.5s)
+✔ [9503/9705] Built HexRootsMathlib.Completeness.NKConverse (5.9s)
+✔ [9504/9705] Built HexBerlekampZassenhausMathlib.WordCld (2.2s)
+✔ [9505/9705] Built HexRootsMathlib.Loop (3.9s)
+✔ [9506/9705] Built HexBerlekampZassenhaus.BhksCandidates (4.4s)
+✔ [9508/9705] Built HexBerlekampZassenhaus.BhksRecover (924ms)
+✔ [9510/9705] Built HexBerlekampZassenhaus.Recombination (1.3s)
+✔ [9512/9705] Built HexRootsMathlib.NKCertify (3.9s)
+✔ [9513/9705] Built HexBerlekampZassenhaus.Modular.PrimePlan (761ms)
+✔ [9515/9705] Built HexBerlekampZassenhaus.Hensel.DirectLift (652ms)
+✔ [9517/9705] Built HexBerlekampZassenhaus.Classical.Candidate (620ms)
+✔ [9519/9705] Built HexBerlekampZassenhaus.Classical.CombinationIterator (950ms)
+✔ [9521/9705] Built HexBerlekampZassenhaus.Classical.Search (747ms)
+✔ [9523/9705] Built HexBerlekampZassenhaus.Classical.Factorization (747ms)
+✔ [9525/9705] Built HexRootsMathlib.NKDriver (4.5s)
+✔ [9526/9705] Built HexRootsMathlib.Certificate (4.7s)
+✔ [9527/9705] Built HexBerlekampZassenhaus.Factorization (1.0s)
+✔ [9529/9705] Built HexBerlekampZassenhaus.FactorIrreducibility (1.4s)
+✔ [9531/9705] Built HexBerlekampZassenhaus.Factored (572ms)
+✔ [9533/9705] Built HexBerlekampZassenhaus.RecombinationFactors (1.4s)
+✔ [9534/9705] Built HexBerlekampZassenhaus.EisensteinCriterion (1.4s)
+✔ [9537/9705] Built HexRootsMathlib.Driver (4.2s)
+✔ [9538/9705] Built HexBerlekampZassenhaus.IrreducibleDecide (442ms)
+✔ [9540/9705] Built HexBerlekampZassenhaus.TrialFactorization (1.4s)
+✔ [9541/9705] Built HexRootsMathlib.Completeness.NKDepth (5.3s)
+✔ [9543/9705] Built HexBerlekampZassenhaus.FactorTactic (1.4s)
+✔ [9545/9705] Built HexBerlekampZassenhaus.QuadraticFactors (2.4s)
+✔ [9547/9705] Built HexRootsMathlib.SimpleRoot (4.1s)
+✔ [9548/9705] Built HexBerlekampZassenhaus.PrimitiveFactors (2.7s)
+✔ [9550/9705] Built HexBerlekampZassenhaus.FactorProduct (892ms)
+✔ [9552/9705] Built HexRootsMathlib.Completeness.RootFreeConverse (6.2s)
+✔ [9553/9705] Built HexBerlekampZassenhaus (508ms)
+✔ [9555/9705] Built HexRootsMathlib.Isolate (3.8s)
+✔ [9556/9705] Built HexNumberField.Basic (951ms)
+✔ [9557/9705] Built HexNumberField.Basic:c.o (160ms)
+✔ [9558/9705] Built HexBerlekampZassenhausMathlib.ModularPolynomial (1.4s)
+✔ [9559/9705] Built HexNumberField.Approx (932ms)
+✔ [9560/9705] Built HexBerlekampZassenhausMathlib.SignatureClasses (1.9s)
+✔ [9562/9705] Built HexBerlekampZassenhausMathlib.Factorization (2.1s)
+✔ [9563/9705] Built HexBerlekampZassenhausMathlib.FactorBound (2.2s)
+✔ [9564/9705] Built HexNumberField.PolyQuot (1.2s)
+✔ [9566/9705] Built HexRootsMathlib.Refinement (2.9s)
+✔ [9567/9705] Built HexBerlekampZassenhausMathlib.ModPFactor (2.4s)
+✔ [9568/9705] Built HexNumberField.Convert (1.1s)
+✔ [9569/9705] Built HexBerlekampZassenhausMathlib.IrreducibilityCertificate (2.1s)
+✔ [9570/9705] Built HexRootsMathlib.Completeness.SurvivorComponent (4.8s)
+✔ [9571/9705] Built HexNumberField.Convert:c.o (317ms)
+✔ [9572/9705] Built HexNumberField.IntegerRoots (628ms)
+✔ [9573/9705] Built HexNumberField.IntegerRoots:c.o (130ms)
+✔ [9574/9705] Built HexNumberField.Lazy (1.1s)
+✔ [9575/9705] Built HexBerlekampZassenhausMathlib.Lattice.ProjectedRows (3.4s)
+✔ [9576/9705] Built HexBerlekampZassenhausMathlib.LiftedFactor (1.8s)
+✔ [9577/9705] Built HexNumberField.Lazy:c.o (598ms)
+✔ [9578/9705] Built HexNumberField.Disambiguate (841ms)
+✔ [9580/9705] Built HexNumberField.AlgebraicPoly (1.1s)
+✔ [9582/9705] Built HexBerlekampZassenhausMathlib.Lattice.CutProjection (2.3s)
+✔ [9583/9705] Built HexBerlekampZassenhausMathlib.M1Recovery (2.5s)
+✔ [9584/9705] Built HexNumberField.Roots (1.5s)
+✔ [9585/9705] Built HexNumberField.Nearest (1.1s)
+✔ [9587/9705] Built HexNumberField.Roots:c.o (1.4s)
+✔ [9588/9705] Built HexNumberField (907ms)
+✔ [9590/9705] Built HexBerlekampZassenhausMathlib.RecombinationSplit (3.3s)
+✔ [9591/9705] Built HexNumberFieldTower.Data (833ms)
+✔ [9593/9705] Built HexNumberFieldTower.RawArithmetic (1.0s)
+✔ [9595/9705] Built HexRootsMathlib.Completeness.DriverCompleteness (9.6s)
+✔ [9596/9705] Built HexBerlekampZassenhausMathlib.RecombinationCandidate (2.7s)
+✔ [9597/9705] Built HexNumberFieldTower.Norm (900ms)
+✔ [9599/9705] Built HexBerlekampZassenhausMathlib.Lattice.SupportEquivalence (7.9s)
+✔ [9600/9705] Built HexNumberFieldTower.FactorRaw (1.7s)
+✔ [9602/9705] Built HexBerlekampZassenhausMathlib.Hensel.LiftedFactors (2.1s)
+✔ [9603/9705] Built HexNumberFieldTower.RawEvaluation (1.1s)
+✔ [9604/9705] Built HexBerlekampZassenhausMathlib.Lattice (1.7s)
+✔ [9606/9705] Built HexRootsMathlib.IsolateTotal (3.5s)
+✔ [9607/9705] Built HexNumberFieldTower.FactorDiff (1.6s)
+✔ [9609/9705] Built tower_factor_diff:exe (837ms)
+✔ [9610/9705] Built HexNumberFieldTower.Basic (1.4s)
+✔ [9612/9705] Built HexBerlekampZassenhausMathlib.Modular.FactorProduct (2.6s)
+✔ [9613/9705] Built HexRootsMathlib.Completeness.RefinementCompleteness (4.0s)
+✔ [9614/9705] Built HexBerlekampZassenhausMathlib.Recovery (2.2s)
+✔ [9615/9705] Built HexNumberFieldTower.Arithmetic (965ms)
+✔ [9617/9705] Built HexNumberFieldTower.Factor (1.5s)
+✔ [9619/9705] Built HexBerlekampZassenhausMathlib.Modular.FactorCoprimality (2.8s)
+✔ [9620/9705] Built HexBerlekampZassenhausMathlib.PartitionRefinement (2.4s)
+✔ [9621/9705] Built HexRootsMathlib (3.9s)
+✔ [9622/9705] Built HexBerlekampZassenhausMathlib.CLDColumnBound (6.2s)
+✔ [9623/9705] Built HexBerlekampZassenhausMathlib.LocalFactors (2.1s)
+✔ [9624/9705] Built HexNumberFieldTower.Split (4.3s)
+✔ [9625/9705] Built HexNumberFieldTower.Split:c.o (317ms)
+✔ [9626/9705] Built HexBerlekampZassenhausMathlib.ModPFactorization (3.4s)
+✔ [9627/9705] Built HexNumberFieldTower.Flatten (4.5s)
+✔ [9628/9705] Built HexBerlekampZassenhausMathlib.BadVector (6.6s)
+✔ [9630/9705] Built HexNumberFieldTower (792ms)
+✔ [9632/9705] Built HexNumberFieldTower.EmitFixtures (1.5s)
+✔ [9634/9705] Built HexBerlekampZassenhausMathlib.SubsetCoprimality (5.5s)
+✔ [9635/9705] Built hexnumberfieldtower_emit_fixtures:exe (748ms)
+✔ [9636/9705] Built HexNumberFieldTower.Bench (3.9s)
+✔ [9638/9705] Built hexnumberfieldtower_bench:exe (622ms)
+✔ [9639/9705] Built HexBerlekampZassenhausMathlib.Termination (5.9s)
+✔ [9640/9705] Built HexBerlekampZassenhausMathlib.IntReductionMod.Descent (4.4s)
+✔ [9641/9705] Built HexBerlekampZassenhausMathlib.ForwardHenselTransport (4.6s)
+✔ [9642/9705] Built HexBerlekampZassenhausMathlib.ModPPartition (4.7s)
+✔ [9643/9705] Built HexBerlekampZassenhausMathlib.Lattice.CandidateCorrectness (2.1s)
+✔ [9644/9705] Built HexBerlekampZassenhausMathlib.Modular.PrimePlan (2.4s)
+✔ [9645/9705] Built HexBerlekampZassenhausMathlib.IntReductionMod.Transport (3.2s)
+✔ [9646/9705] Built HexBerlekampZassenhausMathlib.Classical.Recovery (2.0s)
+✔ [9647/9705] Built HexBerlekampZassenhausMathlib.IntReductionMod (2.2s)
+✔ [9648/9705] Built HexBerlekampZassenhausMathlib.Hensel.DirectLift (2.8s)
+✔ [9649/9705] Built HexBerlekampZassenhausMathlib.Classical.SupportPartition (2.2s)
+✔ [9650/9705] Built HexBerlekampZassenhausMathlib.Classical.CombinationIterator (2.2s)
+✔ [9651/9705] Built HexBerlekampZassenhausMathlib.Lattice.DirectSupport (2.4s)
+✔ [9652/9705] Built HexBerlekampZassenhausMathlib.Classical.SearchCompleteness (1.6s)
+✔ [9653/9705] Built HexBerlekampZassenhausMathlib.Classical.Factorization (1.8s)
+✔ [9654/9705] Built HexBerlekampZassenhausMathlib.Lattice.DirectRecovery (3.9s)
+✔ [9655/9705] Built HexBerlekampZassenhausMathlib.Lattice.DirectAdequacy (4.1s)
+✔ [9656/9705] Built HexBerlekampZassenhausMathlib.LatticeFactorization (2.6s)
+✔ [9657/9705] Built HexBerlekampZassenhausMathlib.FactorIrreducibility (2.4s)
+✔ [9658/9705] Built HexBerlekampZassenhausMathlib.FactorSoundness (2.7s)
+✔ [9659/9705] Built HexBerlekampZassenhausMathlib.FactorTransport (2.5s)
+✔ [9660/9705] Built HexBerlekampZassenhausMathlib.FactorTactic (3.3s)
+✔ [9661/9705] Built HexBerlekampZassenhausMathlib.KernelFactorTactic (2.7s)
+✔ [9662/9705] Built HexBerlekampZassenhausMathlib (2.4s)
+✔ [9663/9705] Built HexNumberFieldMathlib.Basic (2.0s)
+✔ [9664/9705] Built HexNumberFieldMathlib.AdjoinRoot (3.6s)
+✔ [9665/9705] Built HexNumberFieldTower.Conformance (58s)
+✔ [9666/9705] Built HexNumberFieldMathlib.Yun (8.2s)
+✔ [9667/9705] Built HexNumberFieldMathlib.Approx (11s)
+✔ [9668/9705] Built HexNumberFieldMathlib.Exact (6.1s)
+✔ [9669/9705] Built HexNumberFieldMathlib.IntegerRoots (3.1s)
+✔ [9670/9705] Built HexNumberFieldMathlib.Lazy (4.1s)
+✔ [9671/9705] Built HexNumberFieldMathlib.AlgebraicPoly (2.8s)
+✔ [9672/9705] Built HexNumberFieldMathlib.RootDisambiguation (4.2s)
+✔ [9673/9705] Built HexNumberFieldMathlib.Presentation (3.2s)
+✔ [9674/9705] Built HexNumberFieldMathlib.Field (2.9s)
+✔ [9675/9705] Built HexNumberFieldMathlib.Primitive (3.0s)
+✔ [9676/9705] Built HexNumberFieldMathlib.Nearest (3.6s)
+✔ [9677/9705] Built HexNumberFieldMathlib.Roots (8.3s)
+✔ [9678/9705] Built HexNumberFieldMathlib.Coordinates (4.8s)
+✔ [9679/9705] Built HexNumberFieldMathlib.PresentationSemantics (2.8s)
+✔ [9680/9705] Built HexNumberFieldMathlib.ComponentRoots (4.2s)
+✔ [9681/9705] Built HexNumberFieldMathlib.AlgebraicRoots (2.5s)
+✔ [9682/9705] Built HexNumberFieldMathlib (2.3s)
+✔ [9683/9705] Built HexNumberFieldTowerMathlib.Basic (7.3s)
+✔ [9684/9705] Built HexNumberFieldTowerMathlib.ArithmeticCore.Basic (3.9s)
+✔ [9685/9705] Built HexNumberFieldTowerMathlib.ArithmeticCore.Field (4.0s)
+✔ [9686/9705] Built HexNumberFieldTowerMathlib.ArithmeticCore (2.4s)
+✔ [9687/9705] Built HexNumberFieldTowerMathlib.NormCore.Basic (4.8s)
+✔ [9688/9705] Built HexNumberFieldTowerMathlib.NormCore.Quadratic (7.1s)
+✔ [9689/9705] Built HexNumberFieldTowerMathlib.NormCore.Trager (7.0s)
+✔ [9690/9705] Built HexNumberFieldTowerMathlib.NormCore (4.1s)
+✔ [9691/9705] Built HexNumberFieldTowerMathlib.FactorGeneric.Trager (8.8s)
+✔ [9692/9705] Built HexNumberFieldTowerMathlib.FactorGeneric.Product (5.7s)
+✔ [9693/9705] Built HexNumberFieldTowerMathlib.FactorGeneric.Sound (4.8s)
+✔ [9694/9705] Built HexNumberFieldTowerMathlib.FactorGeneric.Yun (6.0s)
+✔ [9695/9705] Built HexNumberFieldTowerMathlib.FactorGeneric.Complete (7.2s)
+✔ [9696/9705] Built HexNumberFieldTowerMathlib.FactorGeneric (4.7s)
+✔ [9697/9705] Built HexNumberFieldTowerMathlib.Arithmetic (6.0s)
+✔ [9698/9705] Built HexNumberFieldTowerMathlib.Norm (5.1s)
+✔ [9699/9705] Built HexNumberFieldTowerMathlib.Factor (6.4s)
+✔ [9700/9705] Built HexNumberFieldTowerMathlib.Adjoin (6.2s)
+✔ [9701/9705] Built HexNumberFieldTowerMathlib.Split (6.1s)
+✔ [9702/9705] Built HexNumberFieldTowerMathlib.Flatten (8.8s)
+✔ [9703/9705] Built HexNumberFieldTowerMathlib.Total (4.9s)
+✔ [9704/9705] Built HexNumberFieldTowerMathlib (3.3s)
+Build completed successfully (9705 jobs).
