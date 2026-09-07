@@ -31,19 +31,46 @@ class TowerFactorCompareTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare.read_export(self.path, compare.NAMES)
 
-    def pair(self, number, right=FAST):
+    def pair(self, number, right=FAST, *, strict=False, windows=1):
+        cpu, sibling = 24 + number, 72 + number
+        loads = {cpu: 0.0, sibling: 1.0}
         runs = [dict(arm=arm, export=str(path), accepted=True,
-                     source_commit=arm, binary_sha256=arm)
+                     source_commit=arm, binary_sha256=arm,
+                     command=["taskset", "-c", str(cpu), "/saved/bench", "run"] + compare.NAMES,
+                     preflight=loads.copy(), postflight=loads.copy(),
+                     during=[{cpu: 100.0, sibling: 1.0}], sibling_mean={sibling: 1.0},
+                     exit_code=0, export_error=None)
                 for arm, path in (("left", BASE), ("right", right))]
         if number == 2:
             runs.reverse()
-        return dict(attempt=number, runs=runs, accepted=True)
+        return dict(attempt=number, runs=runs, accepted=True, cpu=cpu,
+                    siblings=[cpu, sibling], preflight_windows=[loads.copy() for _ in range(windows)],
+                    require_separated_canonical=strict, quiet_windows=windows)
 
     def test_real_export_and_retention(self):
         self.assertEqual(len(compare.read_export(BASE, compare.NAMES)), 15)
         verdict = compare.decision([self.pair(1), self.pair(2)], compare.NAMES)
         self.assertTrue(verdict["eligible"])
         self.assertEqual(len(verdict["checks"]), 16)
+
+    def test_committed_series_reproduce_with_host_audit(self):
+        directory = REPORTS / "tower-singleton-quadratic"
+        decisions = sorted(directory.glob("*-decision.json"))
+        self.assertGreaterEqual(len(decisions), 7)
+        for path in decisions:
+            with self.subTest(series=path.name):
+                saved = json.loads(path.read_text())
+                stem = path.name.removesuffix("-decision.json")
+                pairs = [json.loads((directory / f"{stem}-{n}-host.json").read_text())
+                         for n in saved["accepted_pairs"]]
+                for pair in pairs:
+                    for run in pair["runs"]:
+                        run["export"] = str(REPORTS.parents[1] / run["export"])
+                names = pairs[0]["names"] if pairs else compare.HEX_NAMES
+                actual = compare.decision(pairs, names,
+                    require_separated_canonical=saved["require_separated_canonical"],
+                    quiet_windows=saved.get("quiet_windows", 1))
+                self.assertEqual(actual, {k: saved[k] for k in actual})
 
     def test_incomplete_series_has_no_verdict(self):
         verdict = compare.decision([self.pair(1)], compare.NAMES)
@@ -71,22 +98,24 @@ class TowerFactorCompareTests(unittest.TestCase):
         path = self.candidate_ranges(set())
         pairs = [self.pair(1, path), self.pair(2, path)]
         self.assertTrue(compare.decision(pairs, compare.NAMES)["eligible"])
+        for pair in pairs:
+            pair["require_separated_canonical"] = True
         self.assertFalse(compare.decision(pairs, compare.NAMES,
                                          require_separated_canonical=True)["eligible"])
 
     def test_separation_required_for_each_canonical_case(self):
         path = self.candidate_ranges({compare.HEX_NAMES[-2]})
-        self.assertFalse(compare.decision([self.pair(1, path), self.pair(2, path)],
+        self.assertFalse(compare.decision([self.pair(1, path, strict=True), self.pair(2, path, strict=True)],
                          compare.NAMES, require_separated_canonical=True)["eligible"])
 
     def test_separation_can_occur_in_different_pairs(self):
         first = self.candidate_ranges({compare.HEX_NAMES[-2]})
         second = self.candidate_ranges({compare.HEX_NAMES[-1]})
-        self.assertTrue(compare.decision([self.pair(1, first), self.pair(2, second)],
+        self.assertTrue(compare.decision([self.pair(1, first, strict=True), self.pair(2, second, strict=True)],
                         compare.NAMES, require_separated_canonical=True)["eligible"])
 
     def test_stricter_incomplete_series_has_no_verdict(self):
-        self.assertIsNone(compare.decision([self.pair(1)], compare.NAMES,
+        self.assertIsNone(compare.decision([self.pair(1, strict=True)], compare.NAMES,
                                           require_separated_canonical=True)["eligible"])
 
     def test_invalid_pair_provenance(self):
@@ -102,6 +131,57 @@ class TowerFactorCompareTests(unittest.TestCase):
                 edit(pair)
                 with self.assertRaises(ValueError):
                     compare.decision([self.pair(1), pair], compare.NAMES)
+
+    def test_host_admission_recomputed_from_samples(self):
+        edits = {
+            "busy preflight": lambda p: p["runs"][0]["preflight"].update({p["cpu"]: 5}),
+            "busy postflight": lambda p: p["runs"][0]["postflight"].update({p["siblings"][1]: 5}),
+            "forged mean": lambda p: p["runs"][0]["sibling_mean"].update({p["siblings"][1]: 0}),
+            "busy during": lambda p: p["runs"][0]["during"][0].update({p["siblings"][1]: 5}),
+            "missing during": lambda p: p["runs"][0].update(during=[]),
+            "missing sibling": lambda p: p["runs"][0]["during"][0].pop(p["siblings"][1]),
+            "nonfinite telemetry": lambda p: p["runs"][0]["postflight"].update({p["cpu"]: float("nan")}),
+            "wrong affinity": lambda p: p["runs"][0]["command"].__setitem__(2, "99"),
+            "failed process": lambda p: p["runs"][0].update(exit_code=1),
+            "invalid export": lambda p: p["runs"][0].update(export_error="missing case"),
+            "wrong benchmarks": lambda p: p.update(names=compare.HEX_NAMES),
+        }
+        for label, edit in edits.items():
+            with self.subTest(label=label):
+                pair = self.pair(1)
+                edit(pair)
+                with self.assertRaises(ValueError):
+                    compare.decision([pair], compare.NAMES)
+
+    def test_busy_sibling_rejected_with_consistent_mean(self):
+        pair = self.pair(1)
+        sibling = pair["siblings"][1]
+        pair["runs"][0]["during"][0][sibling] = 5.0
+        pair["runs"][0]["sibling_mean"][sibling] = 5.0
+        with self.assertRaises(ValueError):
+            compare.decision([pair], compare.NAMES)
+
+    def test_recorded_quiet_windows_rechecked(self):
+        pair = self.pair(1, windows=15)
+        self.assertIsNone(compare.decision([pair], compare.NAMES, quiet_windows=15)["eligible"])
+        pair["preflight_windows"][0][pair["siblings"][1]] = 5.0
+        with self.assertRaises(ValueError):
+            compare.decision([pair], compare.NAMES, quiet_windows=15)
+        pair["preflight_windows"].pop(0)
+        with self.assertRaises(ValueError):
+            compare.decision([pair], compare.NAMES, quiet_windows=15)
+
+    def test_protocol_flags_cannot_be_reinterpreted(self):
+        for pair in (self.pair(1, strict=True), self.pair(1, windows=15)):
+            with self.subTest(pair=pair):
+                with self.assertRaises(ValueError):
+                    compare.decision([pair], compare.NAMES)
+        with self.assertRaises(ValueError):
+            compare.decision([self.pair(1), self.pair(2, strict=True)], compare.NAMES)
+
+    def test_serialized_cpu_keys(self):
+        pair = json.loads(json.dumps(self.pair(1)))
+        self.assertIsNone(compare.decision([pair], compare.NAMES)["eligible"])
 
     def test_cross_arm_hash_mismatch(self):
         candidate = json.loads(FAST.read_text())
