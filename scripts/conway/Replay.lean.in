@@ -1,0 +1,39 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexConway
+
+open Hex Hex.Conway Lean
+
+/-! Compiled verification timings for the complete supported scope.
+The mutable input prevents closed checks from being folded by the compiler.
+These timings measure runtime verification, not proof elaboration or replay. -/
+
+private def measureEntry (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (input : {f : FpPoly p // DensePoly.Monic f})
+    (qs es fullDigits : List Nat) (perPrimeDigits : List (List Nat))
+    (divisors : List (Nat × FpPoly p)) : IO Unit := do
+  let ref ← IO.mkRef input
+  let f ← ref.get
+  let start ← IO.monoNanosNow
+  unless Berlekamp.rabinTest f.val f.property do
+    throw <| IO.userError s!"irreducibility failed: ({p}, {n})"
+  let irreducible ← IO.monoNanosNow
+  unless primitiveCheck f.val f.property n qs es fullDigits perPrimeDigits do
+    throw <| IO.userError s!"primitivity failed: ({p}, {n})"
+  let primitive ← IO.monoNanosNow
+  for (m, small) in divisors do
+    unless compatCheck small f.val f.property m (n / m) do
+      throw <| IO.userError s!"compatibility failed: ({p}, {m}, {n})"
+  let compatible ← IO.monoNanosNow
+  IO.println <| Json.compress <| Json.mkObj [
+    ("p", toJson p), ("n", toJson n),
+    ("irreducibility_ns", toJson (irreducible - start)),
+    ("primitivity_ns", toJson (primitive - irreducible)),
+    ("compatibility_ns", toJson (compatible - primitive)),
+    ("compatibility_obligations", toJson divisors.length)]
+
+def main : IO Unit := do

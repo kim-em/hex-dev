@@ -129,9 +129,9 @@ namespace HexConwayChapter
 -- the odd primes to 6.
 #guard luebeckConwayPolynomial? 2 8 =
   some luebeckConwayPolynomial_2_8
-#guard luebeckConwayPolynomial? 2 9 =
+#guard luebeckConwayPolynomial? 2 129 =
   (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 3 7 =
+#guard luebeckConwayPolynomial? 3 129 =
   (none : Option (FpPoly 3))
 #guard luebeckConwayPolynomial? 2 0 =
   (none : Option (FpPoly 2))

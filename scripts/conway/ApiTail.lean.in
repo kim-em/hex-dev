@@ -57,6 +57,8 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
   subst hf
   unfold luebeckConwayCoeffs? at hcoeffs
   split at hcoeffs
+  all_goals first | cases hcoeffs | skip
+  all_goals split at hcoeffs
   all_goals
     (cases hcoeffs
      all_goals
@@ -94,6 +96,8 @@ private theorem degree_eq_of_coeff_ne_zero_of_size_le
   subst hf
   unfold luebeckConwayCoeffs? at hcoeffs
   split at hcoeffs
+  all_goals first | cases hcoeffs | skip
+  all_goals split at hcoeffs
   all_goals
     cases hcoeffs <;>
       (apply degree_eq_of_coeff_ne_zero_of_size_le

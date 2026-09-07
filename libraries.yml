@@ -751,7 +751,7 @@ libraries:
         - name: multifactor-lifting
           description: Ordered multifactor products on branch-isolated schedules, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures at fixed high precision.
   HexConway:
-    deps: [HexBerlekamp]
+    deps: [HexBerlekamp, HexPrimality]
     mathlib: false
     done_through: 7
     status: active

@@ -4,7 +4,7 @@
 Reads JSONL produced by `lake exe hexconway_emit_fixtures` and compares
 Lean's committed Conway coefficients against:
 
-* `scripts/oracle/luebeck_conway_cache.json` (always);
+* `scripts/conway/candidates.json` (always);
 * the optional `conway-polynomials` package table adapter when requested.
 
 The optional package leg is a table-source check, not an independent
@@ -24,7 +24,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexConway" / "conway.jsonl"
-DEFAULT_CACHE = REPO_ROOT / "scripts" / "oracle" / "luebeck_conway_cache.json"
+DEFAULT_CACHE = REPO_ROOT / "scripts" / "conway" / "candidates.json"
 DEFAULT_FAILURE_DIR = REPO_ROOT / "conformance-failures"
 
 sys.path.insert(0, str(REPO_ROOT))

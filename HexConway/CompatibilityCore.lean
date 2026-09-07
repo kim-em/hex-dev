@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexConway.Api
+public import HexConway.Power
 public import HexPolyFp.ModCompose
 public import HexPolyFp.Frobenius
 public import HexPolyFp.QuotientCompose
@@ -81,7 +82,7 @@ modular exponentiation so the kernel can replay it. Linear in `p`, which is at
 most `13` for the committed entries. -/
 @[expose]
 def frobeniusBase (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
-  FpPoly.powModMonicLinear FpPoly.X f hmonic p
+  powMod FpPoly.X f hmonic p
 
 /-- Apply the Frobenius `g ↦ g ^ p` to a residue `k` times, as `k` modular
 compositions with `xp = x ^ p mod f`.
@@ -93,7 +94,7 @@ coefficients instead of `p` modular multiplications. -/
 def frobeniusIter (f xp : FpPoly p) (hmonic : DensePoly.Monic f) :
     Nat → FpPoly p → FpPoly p
   | 0, g => g
-  | k + 1, g => frobeniusIter f xp hmonic k (FpPoly.composeModMonicImpl g xp f hmonic)
+  | k + 1, g => frobeniusIter f xp hmonic k (compose g xp f hmonic)
 
 /-- The norm accumulator: multiply together `k` successive `p^m`-th powers of
 the residue of `x`, reducing modulo `f` at each step.
@@ -134,6 +135,8 @@ theorem reduce_frobeniusBase_eq_pow
     FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
         (frobeniusBase f hmonic) =
       (FpPoly.Quotient.X (g := f) (hmonic := hmonic) (hg_pos := hf_pos)) ^ p := by
+  unfold frobeniusBase
+  rw [powMod_eq]
   exact FpPoly.Quotient.reduce_powModMonicLinear_eq_pow FpPoly.X p
 
 /-- Iterating executable modular composition `k` times represents raising a
@@ -157,9 +160,9 @@ theorem reduce_frobeniusIter_eq_pow
       rw [frobeniusIter, reduce_frobeniusIter_eq_pow hxp k]
       have hstep :
           FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
-              (FpPoly.composeModMonicImpl a xp f hmonic) =
+              (compose a xp f hmonic) =
             (FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) a) ^ p := by
-        rw [← FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonicImpl, hxp,
+        rw [compose_eq, ← FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonicImpl, hxp,
           FpPoly.Quotient.Internal.eval_pow_prime,
           FpPoly.Quotient.Internal.eval_X_eq_reduce]
       rw [hstep, FpPoly.Quotient.pow_mul, Nat.pow_succ, Nat.mul_comm p]
@@ -257,7 +260,7 @@ at the norm is exactly a modular composition. -/
 @[expose]
 def compatCheck (fm fn : FpPoly p) (hmonic : DensePoly.Monic fn)
     (m k : Nat) : Bool :=
-  FpPoly.composeModMonicImpl fm (normX fn hmonic m k) fn hmonic == 0
+  compose fm (normX fn hmonic m k) fn hmonic == 0
 
 /--
 Compatibility of two committed Conway entries across the subfield lattice.
@@ -348,6 +351,8 @@ theorem eval_conwayPoly_subfieldGen_eq_zero
         (hmonic := conwayPoly_monic p n hn)
         (hg_pos := conwayPoly_degree_pos p n hn) := by
   apply FpPoly.Quotient.eval_reduce_eq_zero_of_composeModMonicImpl_eq_zero
+  change (compose _ _ _ _ == 0) = true at hcompat
+  rw [compose_eq] at hcompat
   exact beq_iff_eq.mp hcompat
 
 /-- The explicit finite-field norm power is a root of the smaller Conway

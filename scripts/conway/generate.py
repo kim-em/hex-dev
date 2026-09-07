@@ -9,6 +9,7 @@ import argparse
 import shutil
 import tempfile
 import json
+import re
 from math import gcd, isqrt
 from pathlib import Path
 from functools import lru_cache
@@ -107,7 +108,8 @@ private def cert_{p}_{n} : Berlekamp.IrreducibilityCertificate where
 @[grind .] theorem {nm}_irreducible : FpPoly.Irreducible {nm} :=
   Berlekamp.rabinTest_imp_irreducible {nm} {nm}_monic
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      {nm} {nm}_monic cert_{p}_{n} (by decide +kernel))
+      {nm} {nm}_monic cert_{p}_{n}
+      (by rw [← checkRabin_eq]; decide +kernel))
 
 '''
 
@@ -122,7 +124,11 @@ def table(entries):
     out+='''/-- Imported coefficients in ascending degree order. -/
 @[expose] def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
 '''
-    out+=''.join(f'  | {p}, {n} => some {c}\n' for p,n,c in entries)+'  | _, _ => none\n\n'
+    for p in sorted({p for p,n,c in entries}):
+        out += f'  | {p}, n => match n with\n'
+        out += ''.join(f'    | {n} => some {c}\n' for q,n,c in entries if p == q)
+        out += '    | _ => none\n'
+    out += '  | _, _ => none\n\n'
     out+='''/-- Construct a polynomial from ascending coefficient representatives. -/
 @[expose] def luebeckConwayPolynomialOfCoeffs
     (p : Nat) [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
@@ -190,7 +196,11 @@ def api(entries,template):
   unfold luebeckConwayCoeffs? at hcoeffs
   split at hcoeffs
 '''
-        out+=''.join(f'  · cases hcoeffs\n    exact ofCoeffs_{p}_{n}_{prop}\n' for p,n,c in entries)+'  · cases hcoeffs\n\n'
+        for p in sorted({p for p,n,c in entries}):
+            out += '  · split at hcoeffs\n'
+            out += ''.join(f'    · cases hcoeffs; exact ofCoeffs_{p}_{n}_{prop}\n' for q,n,c in entries if p == q)
+            out += '    · cases hcoeffs\n'
+        out += '  · cases hcoeffs\n\n'
     out+='''/-- A lookup witness for a committed polynomial. -/
 structure SupportedEntry (p n : Nat) [ZMod64.Bounds p] where
   /-- The selected polynomial. -/
@@ -224,7 +234,7 @@ theorem primitive_{p}_{n} :
 '''
         for q in qs:
             out+=f'''    rcases List.mem_cons.mp hq with rfl | hq
-    · exact Hex.Nat.prime_of_checkPrimeAt (c := {prime_cert(q)}) (by decide +kernel)
+    · exact factorPrime_{q}
 '''
         out+='    exact absurd hq (by simp)\n  check := by decide +kernel\n\n'
     return out
@@ -232,6 +242,52 @@ theorem primitive_{p}_{n} :
 def replace_generated(path,body):
     s=path.read_text(); a,b=s.split('-- BEGIN GENERATED\n',1); _,c=b.split('-- END GENERATED',1)
     path.write_text(a+'-- BEGIN GENERATED\n'+body+'-- END GENERATED'+c)
+
+def shards(folder, blocks, imports):
+    """Four serial import chains bound simultaneous generated proof modules.
+
+Each shard also stays below the repository's source-file line budget.
+"""
+    directory = ROOT/'HexConway'/folder
+    directory.mkdir(parents=True, exist_ok=True)
+    for old in directory.glob('*.lean'):
+        old.unlink()
+    def weight(block):
+        keys = re.findall(r'C\((\d+), (\d+)\)', block)
+        if keys:
+            p, n = map(int, keys[-1])
+            return max(1, n**3 * p.bit_length() * len(factors(p**n-1)))
+        return len(block.splitlines())
+    lanes, costs = [[], [], [], []], [0, 0, 0, 0]
+    for block in sorted(blocks, key=weight, reverse=True):
+        lane = min(range(4), key=lambda i: costs[i])
+        lanes[lane].append(block); costs[lane] += weight(block)
+    names = []
+    for lane in range(4):
+        chunks, current, lines = [], [], 0
+        for block in lanes[lane]:
+            size = len(block.splitlines())
+            if current and (lines + size > 1200 or len(current) >= 24):
+                chunks.append(current); current, lines = [], 0
+            current.append(block); lines += size
+        if current: chunks.append(current)
+        previous = None
+        for i, chunk in enumerate(chunks):
+            name_ = f'HexConway.{folder}.S{lane}_{i}'
+            dependencies = imports + ([previous] if previous else [])
+            (directory/f'S{lane}_{i}.lean').write_text(module(dependencies)+''.join(chunk)+END)
+            names.append(name_); previous = name_
+    return names
+
+
+def generated_imports(path, folder, names):
+    source = path.read_text()
+    source = re.sub(rf'^public import HexConway\.{folder}\..*\n', '', source, flags=re.M)
+    source = source.replace('public section', ''.join(f'public import {n}\n' for n in names)+'\npublic section', 1)
+    if not source.startswith('/-'):
+        source = HEADER.split('module')[0] + source
+    path.write_text(re.sub(r'\n{3,}', '\n\n', source))
+
 
 def main():
     global ROOT
@@ -255,19 +311,60 @@ def main():
         assert all((p,d) in scope for d in range(1,n+1) if n%d==0),(p,n,'missing divisor')
         assert len(rows[p,n])==n+1 and rows[p,n][-1]==1 and all(0<=c<p for c in rows[p,n])
     entries=[(p,n,rows[p,n]) for p,n in scope]
-    (ROOT/'HexConway/Table.lean').write_text(table(entries))
-    (ROOT/'HexConway/Certificates.lean').write_text(module(['HexConway.Table'])+''.join(cert(*e) for e in entries)+END)
-    (ROOT/'HexConway/Api.lean').write_text(api(entries,(HERE/'ApiTail.lean.in').read_text()))
-    replace_generated(ROOT/'HexConway/Primitivity.lean',primitive(entries))
+    full_table = table(entries)
+    literal_start = full_table.index('/-- Imported C(')
+    (ROOT/'HexConway/Coefficients.lean').write_text(full_table[:literal_start]+END)
+    literals = re.split(r'(?=/-- Imported C\()', full_table[literal_start:-len(END)])
+    names = shards('Entries', [b for b in literals if b.strip()], ['HexConway.Coefficients'])
+    (ROOT/'HexConway/Table.lean').write_text(module(names)+END)
+    names = shards('Rabin', [cert(*e) for e in entries], ['HexConway.Table','HexConway.Power'])
+    (ROOT/'HexConway/Certificates.lean').write_text(module(names)+END)
+    full_api = api(entries,(HERE/'ApiTail.lean.in').read_text())
+    start = full_api.index('private theorem')
+    lookup_start = full_api.index('/-- Every successful lookup')
+    struct_start = full_api.index('/-- A lookup witness')
+    supported_start = full_api.index('/-- The verified table supports')
+    tail_start = full_api.index('/-- Recover the committed Conway modulus')
+    transports = re.split(r'(?=private theorem)', full_api[start:lookup_start])
+    names = shards('Transport', [b.replace('private theorem','theorem') for b in transports if b.strip()], ['HexConway.Certificates'])
+    lookups = re.split(r'(?=/-- Every successful lookup)', full_api[lookup_start:struct_start])
+    lookups = [b for b in lookups if b.strip()]
+    for kind, body in zip(['Irreducible', 'Monic'], lookups, strict=True):
+        (ROOT/f'HexConway/{kind}.lean').write_text(module(names)+body+END)
+    (ROOT/'HexConway/ApiCore.lean').write_text(module(['HexConway.Irreducible','HexConway.Monic'])+full_api[struct_start:supported_start]+full_api[tail_start:])
+    supported = re.split(r'(?=/-- The verified table supports)', full_api[supported_start:tail_start])
+    names = shards('Supported', [b for b in supported if b.strip()], ['HexConway.ApiCore'])
+    (ROOT/'HexConway/Api.lean').write_text(module(['HexConway.ApiCore',*names])+END)
+    prime_blocks = []
+    for q in sorted({q for p,n,c in entries for q,e in (factors(p**n-1) if p**n>2 else [])}):
+        proof = (f'Hex.Nat.prime_of_bounded {q} {isqrt(q)} (by decide) (by decide) (by decide)' if q < 256 else f'Hex.Nat.prime_of_checkPrimeAt (c := {prime_cert(q)}) (by decide +kernel)')
+        prime_blocks.append(f'/-- Primality of a factor of a supported multiplicative order. -/\ntheorem factorPrime_{q} : Hex.Nat.Prime {q} :=\n  {proof}\n\n')
+    names = shards('FactorProofs', prime_blocks, ['HexPrimality.Cert'])
+    (ROOT/'HexConway/PrimeFactors.lean').write_text(module(names)+END)
+    names = shards('PrimitiveProofs', [primitive([e]) for e in entries], ['HexConway.PrimitivityCore','HexConway.PrimeFactors'])
+    replace_generated(ROOT/'HexConway/Primitivity.lean','')
+    generated_imports(ROOT/'HexConway/Primitivity.lean', 'PrimitiveProofs', names)
     compat=''
     for p,n,c in entries:
         for m in range(1,n):
             if n%m==0: compat+=f'/-- Compatibility of C({p}, {m}) with C({p}, {n}). -/\ntheorem compat_{p}_{m}_{n} :\n    Compatible {p} {m} {n} supportedEntry_{p}_{m} supportedEntry_{p}_{n} := by decide +kernel\n\n'
-    replace_generated(ROOT/'HexConway/Compatibility.lean',compat)
+    blocks = re.split(r'(?=/-- Compatibility of)', compat)
+    names = shards('CompatibilityProofs', [b for b in blocks if b.strip()], ['HexConway.CompatibilityCore'])
+    replace_generated(ROOT/'HexConway/Compatibility.lean','')
+    generated_imports(ROOT/'HexConway/Compatibility.lean', 'CompatibilityProofs', names)
     bridge=''
     for p,n,c in entries:
         bridge+=f'/-- The Conway generator of GF({p}^{n}) has order {p**n-1}. -/\ntheorem orderOf_gen_{p}_{n} :\n    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_{p}_{n} Hex.FpPoly.X) = {p} ^ {n} - 1 :=\n  orderOf_gen_of_primitive _ Hex.Conway.primitive_{p}_{n}\n\n'
     replace_generated(ROOT/'HexGFqMathlib/Primitivity.lean',bridge)
+    runtime = (HERE/'Replay.lean.in').read_text()
+    for p,n,c in entries:
+        fs = factors(p**n-1) if p**n>2 else []
+        qs = [q for q,e in fs]
+        es = [e for q,e in fs]
+        divisors = ', '.join(f'({m}, {name(p,m)})' for m in range(1,n) if n % m == 0)
+        runtime += f'  measureEntry {p} {n} ⟨{name(p,n)}, {name(p,n)}_monic⟩\n    {qs} {es} {digits(p**n-1)}\n    {[digits((p**n-1)//q) for q in qs]} [{divisors}]\n'
+    (ROOT/'bench/HexConway').mkdir(parents=True, exist_ok=True)
+    (ROOT/'bench/HexConway/Replay.lean').write_text(runtime)
     if temp:
         for path in ROOT.rglob('*.lean'):
             expected = original_root / path.relative_to(ROOT)

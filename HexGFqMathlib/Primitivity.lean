@@ -75,6 +75,23 @@ theorem ofPolyHom_linPowMod (hm : Hex.DensePoly.Monic f) (x : Hex.FpPoly p) :
           (Hex.FpPoly.modByMonic f (Hex.Conway.linPowMod f hm x k * x) hm) = _
       rw [ofPolyHom_modByMonic, map_mul, ofPolyHom_linPowMod hm x k, pow_succ]
 
+/-- The binary generator power represents the corresponding field power. -/
+theorem ofPolyHom_powerResidue (hm : Hex.DensePoly.Monic f) (k : Nat) :
+    ofPolyHom f hf hp hirr (Hex.Conway.powerResidue f hm k) =
+      (ofPolyHom f hf hp hirr Hex.FpPoly.X) ^ k := by
+  rw [Hex.Conway.powerResidue, ofPolyHom_modByMonic, Hex.Conway.powMod_eq,
+    ← Hex.Conway.linPowMod_eq]
+  exact ofPolyHom_linPowMod hm Hex.FpPoly.X k
+
+/-- A generator power representative is already reduced. -/
+theorem reduceMod_powerResidue (hm : Hex.DensePoly.Monic f) (k : Nat) :
+    Hex.GFqRing.reduceMod f (Hex.Conway.powerResidue f hm k) =
+      Hex.Conway.powerResidue f hm k := by
+  unfold Hex.Conway.powerResidue
+  rw [show ∀ y, Hex.FpPoly.modByMonic f y hm = Hex.GFqRing.reduceMod f y from
+    fun y => by rw [Hex.FpPoly.modByMonic, Hex.DensePoly.modByMonic_eq_mod]; rfl]
+  exact Hex.GFqRing.reduceMod_idem f _
+
 /-- The executable Horner power carries too, with the accumulator contributing
 its own `q ^ length` factor. -/
 theorem ofPolyHom_digitPowMod (hm : Hex.DensePoly.Monic f) (q : Nat)
@@ -217,8 +234,8 @@ theorem orderOf_gen_of_primitive {n : Nat} (h : Hex.Conway.SupportedEntry p n)
       (Hex.Conway.conwayPoly_nonconstant p n h) h.prime
       (Hex.Conway.conwayPoly_irreducible p n h) Hex.FpPoly.X) ^
         Hex.Conway.digitsValue 2 fullDigits = 1
-    rw [← ofPolyHom_digitPowMod_one
-      (Hex.Conway.conwayPoly_monic p n h) 2 Hex.FpPoly.X fullDigits]
+    rw [← ofPolyHom_powerResidue
+      (Hex.Conway.conwayPoly_monic p n h) (Hex.Conway.digitsValue 2 fullDigits)]
     rw [hfullPower, map_one]
     rfl
   · intro q hq hqdiv
@@ -234,27 +251,23 @@ theorem orderOf_gen_of_primitive {n : Nat} (h : Hex.Conway.SupportedEntry p n)
     have hds : ds ∈ perPrimeDigits := (List.of_mem_zip hrds).2
     have hdigits : Hex.Conway.digitsValue 2 ds = (p ^ n - 1) / q :=
       hperDigits (q, ds) hrds
-    have hrep : Hex.Conway.digitPowMod (Hex.Conway.conwayPoly p n h)
-        (Hex.Conway.conwayPoly_monic p n h) 2 Hex.FpPoly.X 1 ds ≠ 1 := by
+    have hrep : Hex.Conway.powerResidue (Hex.Conway.conwayPoly p n h)
+        (Hex.Conway.conwayPoly_monic p n h) (Hex.Conway.digitsValue 2 ds) ≠ 1 := by
       intro heq
       have hnot := hperPower ds hds
       rw [heq] at hnot
       simp at hnot
-    have hdsne : ds ≠ [] := by
-      intro hnil
-      subst ds
-      exact hrep rfl
     rw [← hdigits]
     change (ofPolyHom (Hex.Conway.conwayPoly p n h)
       (Hex.Conway.conwayPoly_nonconstant p n h) h.prime
       (Hex.Conway.conwayPoly_irreducible p n h) Hex.FpPoly.X) ^
         Hex.Conway.digitsValue 2 ds ≠ 1
-    rw [← ofPolyHom_digitPowMod_one
-      (Hex.Conway.conwayPoly_monic p n h) 2 Hex.FpPoly.X ds]
+    rw [← ofPolyHom_powerResidue
+      (Hex.Conway.conwayPoly_monic p n h) (Hex.Conway.digitsValue 2 ds)]
     intro hone
     exact hrep ((ofPolyHom_eq_one_iff
-      (reduceMod_digitPowMod (Hex.Conway.conwayPoly_monic p n h) 2
-        Hex.FpPoly.X ds 1 hdsne)).mp hone)
+      (reduceMod_powerResidue (Hex.Conway.conwayPoly_monic p n h)
+        (Hex.Conway.digitsValue 2 ds))).mp hone)
 
 -- BEGIN GENERATED
 /-- The Conway generator of GF(2^1) has order 1. -/
@@ -297,6 +310,46 @@ theorem orderOf_gen_2_8 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_8 Hex.FpPoly.X) = 2 ^ 8 - 1 :=
   orderOf_gen_of_primitive _ Hex.Conway.primitive_2_8
 
+/-- The Conway generator of GF(2^9) has order 511. -/
+theorem orderOf_gen_2_9 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_9 Hex.FpPoly.X) = 2 ^ 9 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_9
+
+/-- The Conway generator of GF(2^10) has order 1023. -/
+theorem orderOf_gen_2_10 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_10 Hex.FpPoly.X) = 2 ^ 10 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_10
+
+/-- The Conway generator of GF(2^11) has order 2047. -/
+theorem orderOf_gen_2_11 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_11 Hex.FpPoly.X) = 2 ^ 11 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_11
+
+/-- The Conway generator of GF(2^12) has order 4095. -/
+theorem orderOf_gen_2_12 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_12 Hex.FpPoly.X) = 2 ^ 12 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_12
+
+/-- The Conway generator of GF(2^13) has order 8191. -/
+theorem orderOf_gen_2_13 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_13 Hex.FpPoly.X) = 2 ^ 13 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_13
+
+/-- The Conway generator of GF(2^14) has order 16383. -/
+theorem orderOf_gen_2_14 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_14 Hex.FpPoly.X) = 2 ^ 14 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_14
+
+/-- The Conway generator of GF(2^15) has order 32767. -/
+theorem orderOf_gen_2_15 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_15 Hex.FpPoly.X) = 2 ^ 15 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_15
+
+/-- The Conway generator of GF(2^16) has order 65535. -/
+theorem orderOf_gen_2_16 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_2_16 Hex.FpPoly.X) = 2 ^ 16 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_2_16
+
 /-- The Conway generator of GF(3^1) has order 2. -/
 theorem orderOf_gen_3_1 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_3_1 Hex.FpPoly.X) = 3 ^ 1 - 1 :=
@@ -326,6 +379,16 @@ theorem orderOf_gen_3_5 :
 theorem orderOf_gen_3_6 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_3_6 Hex.FpPoly.X) = 3 ^ 6 - 1 :=
   orderOf_gen_of_primitive _ Hex.Conway.primitive_3_6
+
+/-- The Conway generator of GF(3^7) has order 2186. -/
+theorem orderOf_gen_3_7 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_3_7 Hex.FpPoly.X) = 3 ^ 7 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_3_7
+
+/-- The Conway generator of GF(3^8) has order 6560. -/
+theorem orderOf_gen_3_8 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_3_8 Hex.FpPoly.X) = 3 ^ 8 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_3_8
 
 /-- The Conway generator of GF(5^1) has order 4. -/
 theorem orderOf_gen_5_1 :
@@ -357,6 +420,16 @@ theorem orderOf_gen_5_6 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_5_6 Hex.FpPoly.X) = 5 ^ 6 - 1 :=
   orderOf_gen_of_primitive _ Hex.Conway.primitive_5_6
 
+/-- The Conway generator of GF(5^7) has order 78124. -/
+theorem orderOf_gen_5_7 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_5_7 Hex.FpPoly.X) = 5 ^ 7 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_5_7
+
+/-- The Conway generator of GF(5^8) has order 390624. -/
+theorem orderOf_gen_5_8 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_5_8 Hex.FpPoly.X) = 5 ^ 8 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_5_8
+
 /-- The Conway generator of GF(7^1) has order 6. -/
 theorem orderOf_gen_7_1 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_7_1 Hex.FpPoly.X) = 7 ^ 1 - 1 :=
@@ -386,6 +459,16 @@ theorem orderOf_gen_7_5 :
 theorem orderOf_gen_7_6 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_7_6 Hex.FpPoly.X) = 7 ^ 6 - 1 :=
   orderOf_gen_of_primitive _ Hex.Conway.primitive_7_6
+
+/-- The Conway generator of GF(7^7) has order 823542. -/
+theorem orderOf_gen_7_7 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_7_7 Hex.FpPoly.X) = 7 ^ 7 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_7_7
+
+/-- The Conway generator of GF(7^8) has order 5764800. -/
+theorem orderOf_gen_7_8 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_7_8 Hex.FpPoly.X) = 7 ^ 8 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_7_8
 
 /-- The Conway generator of GF(11^1) has order 10. -/
 theorem orderOf_gen_11_1 :
@@ -446,6 +529,196 @@ theorem orderOf_gen_13_5 :
 theorem orderOf_gen_13_6 :
     orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_13_6 Hex.FpPoly.X) = 13 ^ 6 - 1 :=
   orderOf_gen_of_primitive _ Hex.Conway.primitive_13_6
+
+/-- The Conway generator of GF(17^1) has order 16. -/
+theorem orderOf_gen_17_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_17_1 Hex.FpPoly.X) = 17 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_17_1
+
+/-- The Conway generator of GF(17^2) has order 288. -/
+theorem orderOf_gen_17_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_17_2 Hex.FpPoly.X) = 17 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_17_2
+
+/-- The Conway generator of GF(19^1) has order 18. -/
+theorem orderOf_gen_19_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_19_1 Hex.FpPoly.X) = 19 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_19_1
+
+/-- The Conway generator of GF(19^2) has order 360. -/
+theorem orderOf_gen_19_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_19_2 Hex.FpPoly.X) = 19 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_19_2
+
+/-- The Conway generator of GF(23^1) has order 22. -/
+theorem orderOf_gen_23_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_23_1 Hex.FpPoly.X) = 23 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_23_1
+
+/-- The Conway generator of GF(23^2) has order 528. -/
+theorem orderOf_gen_23_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_23_2 Hex.FpPoly.X) = 23 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_23_2
+
+/-- The Conway generator of GF(29^1) has order 28. -/
+theorem orderOf_gen_29_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_29_1 Hex.FpPoly.X) = 29 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_29_1
+
+/-- The Conway generator of GF(29^2) has order 840. -/
+theorem orderOf_gen_29_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_29_2 Hex.FpPoly.X) = 29 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_29_2
+
+/-- The Conway generator of GF(31^1) has order 30. -/
+theorem orderOf_gen_31_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_31_1 Hex.FpPoly.X) = 31 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_31_1
+
+/-- The Conway generator of GF(31^2) has order 960. -/
+theorem orderOf_gen_31_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_31_2 Hex.FpPoly.X) = 31 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_31_2
+
+/-- The Conway generator of GF(37^1) has order 36. -/
+theorem orderOf_gen_37_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_37_1 Hex.FpPoly.X) = 37 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_37_1
+
+/-- The Conway generator of GF(37^2) has order 1368. -/
+theorem orderOf_gen_37_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_37_2 Hex.FpPoly.X) = 37 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_37_2
+
+/-- The Conway generator of GF(41^1) has order 40. -/
+theorem orderOf_gen_41_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_41_1 Hex.FpPoly.X) = 41 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_41_1
+
+/-- The Conway generator of GF(41^2) has order 1680. -/
+theorem orderOf_gen_41_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_41_2 Hex.FpPoly.X) = 41 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_41_2
+
+/-- The Conway generator of GF(43^1) has order 42. -/
+theorem orderOf_gen_43_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_43_1 Hex.FpPoly.X) = 43 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_43_1
+
+/-- The Conway generator of GF(43^2) has order 1848. -/
+theorem orderOf_gen_43_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_43_2 Hex.FpPoly.X) = 43 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_43_2
+
+/-- The Conway generator of GF(47^1) has order 46. -/
+theorem orderOf_gen_47_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_47_1 Hex.FpPoly.X) = 47 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_47_1
+
+/-- The Conway generator of GF(47^2) has order 2208. -/
+theorem orderOf_gen_47_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_47_2 Hex.FpPoly.X) = 47 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_47_2
+
+/-- The Conway generator of GF(53^1) has order 52. -/
+theorem orderOf_gen_53_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_53_1 Hex.FpPoly.X) = 53 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_53_1
+
+/-- The Conway generator of GF(53^2) has order 2808. -/
+theorem orderOf_gen_53_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_53_2 Hex.FpPoly.X) = 53 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_53_2
+
+/-- The Conway generator of GF(59^1) has order 58. -/
+theorem orderOf_gen_59_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_59_1 Hex.FpPoly.X) = 59 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_59_1
+
+/-- The Conway generator of GF(59^2) has order 3480. -/
+theorem orderOf_gen_59_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_59_2 Hex.FpPoly.X) = 59 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_59_2
+
+/-- The Conway generator of GF(61^1) has order 60. -/
+theorem orderOf_gen_61_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_61_1 Hex.FpPoly.X) = 61 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_61_1
+
+/-- The Conway generator of GF(61^2) has order 3720. -/
+theorem orderOf_gen_61_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_61_2 Hex.FpPoly.X) = 61 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_61_2
+
+/-- The Conway generator of GF(67^1) has order 66. -/
+theorem orderOf_gen_67_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_67_1 Hex.FpPoly.X) = 67 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_67_1
+
+/-- The Conway generator of GF(67^2) has order 4488. -/
+theorem orderOf_gen_67_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_67_2 Hex.FpPoly.X) = 67 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_67_2
+
+/-- The Conway generator of GF(71^1) has order 70. -/
+theorem orderOf_gen_71_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_71_1 Hex.FpPoly.X) = 71 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_71_1
+
+/-- The Conway generator of GF(71^2) has order 5040. -/
+theorem orderOf_gen_71_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_71_2 Hex.FpPoly.X) = 71 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_71_2
+
+/-- The Conway generator of GF(73^1) has order 72. -/
+theorem orderOf_gen_73_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_73_1 Hex.FpPoly.X) = 73 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_73_1
+
+/-- The Conway generator of GF(73^2) has order 5328. -/
+theorem orderOf_gen_73_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_73_2 Hex.FpPoly.X) = 73 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_73_2
+
+/-- The Conway generator of GF(79^1) has order 78. -/
+theorem orderOf_gen_79_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_79_1 Hex.FpPoly.X) = 79 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_79_1
+
+/-- The Conway generator of GF(79^2) has order 6240. -/
+theorem orderOf_gen_79_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_79_2 Hex.FpPoly.X) = 79 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_79_2
+
+/-- The Conway generator of GF(83^1) has order 82. -/
+theorem orderOf_gen_83_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_83_1 Hex.FpPoly.X) = 83 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_83_1
+
+/-- The Conway generator of GF(83^2) has order 6888. -/
+theorem orderOf_gen_83_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_83_2 Hex.FpPoly.X) = 83 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_83_2
+
+/-- The Conway generator of GF(89^1) has order 88. -/
+theorem orderOf_gen_89_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_89_1 Hex.FpPoly.X) = 89 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_89_1
+
+/-- The Conway generator of GF(89^2) has order 7920. -/
+theorem orderOf_gen_89_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_89_2 Hex.FpPoly.X) = 89 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_89_2
+
+/-- The Conway generator of GF(97^1) has order 96. -/
+theorem orderOf_gen_97_1 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_97_1 Hex.FpPoly.X) = 97 ^ 1 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_97_1
+
+/-- The Conway generator of GF(97^2) has order 9408. -/
+theorem orderOf_gen_97_2 :
+    orderOf (Hex.GFq.ofPoly Hex.Conway.supportedEntry_97_2 Hex.FpPoly.X) = 97 ^ 2 - 1 :=
+  orderOf_gen_of_primitive _ Hex.Conway.primitive_97_2
 
 -- END GENERATED
 

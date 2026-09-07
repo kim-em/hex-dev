@@ -85,9 +85,9 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
 #guard coeffs? 13 6 = some [2, 11, 11, 10, 0, 0, 1]
 
 #guard luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 2 9 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 3 7 = (none : Option (FpPoly 3))
-#guard luebeckConwayPolynomial? 17 1 = (none : Option (FpPoly 17))
+#guard luebeckConwayPolynomial? 2 129 = (none : Option (FpPoly 2))
+#guard luebeckConwayPolynomial? 3 129 = (none : Option (FpPoly 3))
+#guard luebeckConwayPolynomial? 17 129 = (none : Option (FpPoly 17))
 
 #guard coeffs? 2 7 = some [1, 1, 0, 0, 0, 0, 0, 1]
 #guard coeffs? 2 8 = some [1, 0, 1, 1, 1, 0, 0, 0, 1]

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexConway.Api
+public import HexConway.Power
 public import HexPrimality.Cert
 
 public section
@@ -65,6 +66,18 @@ def linPowMod (f : FpPoly p) (hm : DensePoly.Monic f) (x : FpPoly p) :
   | 0 => 1
   | k + 1 => FpPoly.modByMonic f (linPowMod f hm x k * x) hm
 
+omit [ZMod64.PrimeModulus p] in
+/-- The structural linear helper agrees with the polynomial library's power. -/
+theorem linPowMod_eq (f : FpPoly p) (hm : DensePoly.Monic f) (x : FpPoly p)
+    (k : Nat) : linPowMod f hm x k = FpPoly.powModMonicLinear x f hm k := by
+  induction k with
+  | zero => rfl
+  | succ k ih => simp only [linPowMod, FpPoly.powModMonicLinear, ih]
+
+/-- A reduced representative of the generator raised to a supplied exponent. -/
+@[expose] def powerResidue (f : FpPoly p) (hm : DensePoly.Monic f) (k : Nat) : FpPoly p :=
+  FpPoly.modByMonic f (powMod FpPoly.X f hm k) hm
+
 /-- Horner over base-`q` digits, most significant first: raises the accumulator
 to the `q`-th power and multiplies in `x ^ d` at each digit. -/
 @[expose]
@@ -117,8 +130,8 @@ def primitiveCheck (f : FpPoly p) (hm : DensePoly.Monic f) (n : Nat)
   (perPrimeDigits.length == qs.length) &&
   ((qs.zip perPrimeDigits).all (fun qd => digitsValue 2 qd.2 == order / qd.1)) &&
   -- `α ^ (p^n - 1) = 1`, and `α ^ ((p^n - 1) / q) ≠ 1` for each such prime.
-  (digitPowMod f hm 2 FpPoly.X 1 fullDigits == 1) &&
-  perPrimeDigits.all (fun ds => !(digitPowMod f hm 2 FpPoly.X 1 ds == 1))
+  (powerResidue f hm (digitsValue 2 fullDigits) == 1) &&
+  perPrimeDigits.all (fun ds => !(powerResidue f hm (digitsValue 2 ds) == 1))
 
 /--
 The committed entry `C(p, n)` is primitive: the residue of `x` has

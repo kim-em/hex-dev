@@ -37,44 +37,15 @@ private def emitAt (p n : Nat) [ZMod64.Bounds p] : IO Unit := do
       emitResult lib caseId "coeffs" (polyValue (coeffNats poly))
 
 def emitAll : IO Unit := do
-  emitAt 2 1
-  emitAt 2 2
-  emitAt 2 3
-  emitAt 2 4
-  emitAt 2 5
-  emitAt 2 6
-  emitAt 2 7
-  emitAt 2 8
-  emitAt 3 1
-  emitAt 3 2
-  emitAt 3 3
-  emitAt 3 4
-  emitAt 3 5
-  emitAt 3 6
-  emitAt 5 1
-  emitAt 5 2
-  emitAt 5 3
-  emitAt 5 4
-  emitAt 5 5
-  emitAt 5 6
-  emitAt 7 1
-  emitAt 7 2
-  emitAt 7 3
-  emitAt 7 4
-  emitAt 7 5
-  emitAt 7 6
-  emitAt 11 1
-  emitAt 11 2
-  emitAt 11 3
-  emitAt 11 4
-  emitAt 11 5
-  emitAt 11 6
-  emitAt 13 1
-  emitAt 13 2
-  emitAt 13 3
-  emitAt 13 4
-  emitAt 13 5
-  emitAt 13 6
+  for (p, n) in supportedPairs do
+    if h0 : 0 < p then
+      if h1 : p < 2 ^ 31 then
+        letI : ZMod64.Bounds p := ⟨h0, h1⟩
+        emitAt p n
+      else
+        throw <| IO.userError s!"unsupported characteristic bound: {p}"
+    else
+      throw <| IO.userError "zero characteristic in verified scope"
 
 end Hex.ConwayEmit
 

@@ -291,7 +291,10 @@ theorem substHom_conwayPoly_eq_zero (p : Nat) [Hex.ZMod64.Bounds p]
       (Hex.Conway.normX (Hex.Conway.conwayPoly p n hn)
         (Hex.Conway.conwayPoly_monic p n hn) m (n / m))
       (Hex.Conway.conwayPoly p n hn) (Hex.Conway.conwayPoly_monic p n hn) = 0 :=
-    beq_iff_eq.mp hcompat
+    beq_iff_eq.mp (by
+      change (Hex.Conway.compose _ _ _ _ == 0) = true at hcompat
+      rw [Hex.Conway.compose_eq] at hcompat
+      exact hcompat)
   have hcompose := Hex.FpPoly.composeModMonic_eq_composeModMonicImpl
     (Hex.Conway.conwayPoly p m hm)
     (Hex.Conway.normX (Hex.Conway.conwayPoly p n hn)
