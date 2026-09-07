@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberFieldTowerMathlib.NormCore.Basic
+public import HexNumberFieldTowerMathlib.NormCore.Quadratic
 
 public section
 
@@ -74,13 +74,19 @@ private theorem relation_sum_of_mem_rootSet (level : Level)
     one_mul] at hxzero
   exact hxzero
 
-/-- Re-decoding an executable one-level norm recovers the dense resultant
-before its coefficients were flattened for the recursive call. -/
-theorem rawPoly_oneLevel (level : Level) (lower : List Level)
+/-- The decoded executable norm agrees with the dense resultant over a
+validated lower field. The quadratic branch uses algebraic equivalence,
+followed by the same exact coordinate round trip as the general fallback. -/
+theorem rawPoly_resultant (level : Level) (lower : List Level)
+    (hlower : LevelsValid lower)
+    (hinjective : LevelSemantics.DenoteInjective lower)
+    (hinv : ∀ a : Arithmetic.Coeff lower,
+      LevelSemantics.coeffDenote lower a⁻¹ = (LevelSemantics.coeffDenote lower a)⁻¹)
     (f : Array (Array Rat)) (c : Int) :
     Factor.rawPoly lower (oneLevel level lower f c) =
       DensePoly.resultant (definingOuter level lower)
         (shiftedOuter level lower f c) := by
+  rw [oneLevel_eq level lower hlower hinjective hinv]
   let result := DensePoly.resultant (definingOuter level lower)
     (shiftedOuter level lower f c)
   change DensePoly.ofCoeffs
@@ -123,22 +129,11 @@ theorem oneLevel_resultant (level : Level) (lower : List Level)
   let outer := definingOuter level lower
   let shifted := shiftedOuter level lower f c
   let result := DensePoly.resultant outer shifted
-  have honeLevel : oneLevel level lower f c =
-      result.toArray.map Arithmetic.Coeff.data := by
-    rfl
   have hroundTrip :
       DensePoly.ofCoeffs
           ((oneLevel level lower f c).map
             (Arithmetic.Coeff.ofData lower)) = result := by
-    rw [honeLevel, Array.map_map]
-    have harray : result.toArray.map
-        (Arithmetic.Coeff.ofData lower ∘ Arithmetic.Coeff.data) =
-          result.toArray := by
-      apply Array.ext
-      · simp
-      · intro i hi₁ hi₂
-        simp [Function.comp_def]
-    rw [harray, DensePoly.ofCoeffs_toArray]
+    exact rawPoly_resultant level lower hlower hinjective hinv f c
   rw [hroundTrip, ← rawPolynomialHom_apply lower hlower hinjective hinv]
   dsimp only [result]
   rw [DensePoly.toPolynomial_resultant,
@@ -344,7 +339,8 @@ theorem shifted_dvd_norm (level : Level) (lower : List Level)
       (by rw [hMdegree]) (by rw [hGdegree]) (Or.inl hmPos.ne')
   have hresult : Factor.rawPoly lower (oneLevel level lower f c) =
       Polynomial.resultant M G (m := m) (n := n) := by
-    rw [rawPoly_oneLevel, DensePoly.toPolynomial_resultant]
+    rw [rawPoly_resultant level lower hvalid.2.2 hinjectiveLower hinvLower,
+      DensePoly.toPolynomial_resultant]
   have hMzero : Φ M = 0 := by
     rw [show M = HexPolyMathlib.toPolynomial
       (definingOuter level lower) from rfl,
