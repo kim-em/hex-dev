@@ -77,8 +77,8 @@ setup_benchmark equal n => n with prep := prepQuery where queryConfig
 -- Linear two-sided model: array comparison visits n down to 0; the only
 -- difference is at coefficient 0, after Θ(n) bounded-word comparisons.
 setup_benchmark different n => n with prep := prepQuery where queryConfig
--- Linear two-sided model: inversion scales both degree-n arrays by leading coefficient 1.
--- Scaling and the harness's complete output hash each require Θ(n) work.
+-- Linear two-sided model: monic-numerator inversion shares the swapped arrays;
+-- the harness's complete output hash still requires Θ(n) bounded-word work.
 setup_benchmark inverse n => n with prep := prepQuery where queryConfig
 -- Linear two-sided model: negation traverses the degree-n numerator; full output hashing is
 -- also Θ(n). Negation does not run a gcd or change coefficient bit lengths.
