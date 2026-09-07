@@ -808,6 +808,19 @@ from 33.15–33.18 ms to 9.116–9.131 ms (3.634–3.637×); replay medians fall
 16.14–16.40 ms to 4.171–4.199 ms (3.845–3.932×). These are directly measured
 combined gains, not products of the isolated speedups.
 
+Both marginal effects also pass the stronger gate. Adding the quadratic norm
+to singleton recovery gives a further 2.691–2.709× factorization and
+2.840–2.864× replay speedup
+([accepted attempts 5 and 6](bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-decision.json)).
+Adding singleton recovery to the quadratic norm gives a further 2.006–2.051×
+factorization and 2.119–2.154× replay speedup
+([accepted attempts 4 and 6](bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-quiet-decision.json)).
+The latter uses the preregistered sustained-quiet replication after the
+[original series](bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-decision.json)
+exhausted twelve attempts with only one admitted pair and no verdict. The
+replication tightens preflight to thirty consecutive quiet seconds; it keeps
+the binaries, cases, performance gate, and all other admission rules fixed.
+
 The [validation record](bench-results/tower-singleton-quadratic/validation.json)
 records saved executable hashes and correctness checks. Each isolated variant
 and their combination matches the frozen reference on 31 complete canonical
