@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexGraphIso.Nauty.Policy.CheapShape
 public import HexGraphIso.Nauty.Policy.HistoryState
 public import HexGraphIso.Nauty.Policy.Calls
 public import HexGraphIso.Nauty.Policy.EquitableState
@@ -43,6 +44,7 @@ structure NodePre (G : Colored n k) (ctx : Ctx n) (tcLevel level numcells : Nat)
   cheapBound : st.noncheaplevel ≤ level
   path : PathInv G ctx level st
   starts : ∀ v, st.active.mem v = true → v = 0 ∨ st.ptn[v - 1]! ≤ level
+  small : st.noncheaplevel < level → NodeShape n level (st.refined ctx level numcells).ptn
 
 /-- A later-sibling sweep retains the parent history and its recorded target. -/
 structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool)
@@ -61,6 +63,26 @@ structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool
   boundary : Boundary G ctx (level + 1) st
   cheapBound : st.noncheaplevel ≤ level + 1
   path : PathInv G ctx level st
+  small : st.noncheaplevel ≤ level → NodeShape n level st.ptn
+
+/-- Below a saved cheap boundary, the actual refined node satisfies the
+small-cell theorem's complete geometric and equitable invariant. -/
+theorem NodePre.subtree {G : Colored n k} {ctx : Ctx n}
+    {tcLevel level numcells : Nat} {st : Search n}
+    (h : NodePre G ctx tcLevel level numcells st) (hn0 : 0 < n)
+    (hc : st.noncheaplevel < level) : SubtreeOk ctx level (st.refined ctx level numcells) := by
+  have hv := ((reachPolicy G ctx tcLevel hn0).visit level numcells st h.positive h.partition).1
+  exact hv.subtree hn0 h.positive rfl rfl rfl h.equitable (h.small hc)
+
+/-- A cheap sweep supplies the small-cell invariant for its current parent
+partition, including after a descendant has returned and recovery ran. -/
+theorem SweepPre.subtree {G : Colored n k} {ctx : Ctx n}
+    {tcLevel level numcells tc tv1 : Nat} {first : Bool} {cursor : Option Nat}
+    {cell : VSet n} {st : Search n}
+    (h : SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st) (hn0 : 0 < n)
+    (hc : st.noncheaplevel ≤ level) :
+    SubtreeOk ctx level ⟨st.lab, st.ptn, st.active, numcells, 0, 0, 0⟩ :=
+  h.partition.subtree hn0 h.positive rfl rfl rfl h.equitable (h.small hc)
 
 /-- At a resumed sweep, every pair passing its fix test has realizers
 stabilizing the partition where the filter is applied. -/

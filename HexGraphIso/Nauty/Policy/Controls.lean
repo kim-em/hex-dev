@@ -16,7 +16,8 @@ namespace Hex.GraphIso.Nauty.Engine
 
 variable {n : Nat}
 
-private theorem admit_gca (st : Search n) : (admit st).gcaFirst = st.gcaFirst := by
+/-- Admitting a generator retains the first-path ancestor. -/
+theorem admit_gca (st : Search n) : (admit st).gcaFirst = st.gcaFirst := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
@@ -38,6 +39,50 @@ theorem leafExit_gca (leaf : Leaf) (level : Nat) (st : Search n) :
     | rfl
     | exact admit_gca _
     | exact pruneReturn_gca level _
+
+/-- Admitting a generator retains the canonical ancestor. -/
+theorem admit_canon (st : Search n) : (admit st).gcaCanon = st.gcaCanon := by
+  unfold admit pushAuto
+  simp only [Id.run_pure]
+  split <;> rfl
+
+/-- Admitting a generator retains the canonical labelling. -/
+theorem admit_ref (st : Search n) : (admit st).canonlab = st.canonlab := by
+  unfold admit pushAuto
+  simp only [Id.run_pure]
+  split <;> rfl
+
+/-- A canonical automorphism return retains its reference labelling. -/
+theorem autoCanon_ref (level : Nat) (st : Search n) :
+    (leafExit .autoCanon level st).2.canonlab = st.canonlab := by
+  unfold leafExit
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+  repeat' split
+  all_goals exact admit_ref _
+
+/-- A canonical automorphism return retains its canonical ancestor. -/
+theorem autoCanon_ancestor (level : Nat) (st : Search n) :
+    (leafExit .autoCanon level st).2.gcaCanon = st.gcaCanon := by
+  unfold leafExit
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+  repeat' split
+  all_goals exact admit_canon _
+
+/-- The shared prune tail retains the canonical ancestor. -/
+theorem pruneReturn_canon (level : Nat) (st : Search n) :
+    (pruneReturn level st).2.gcaCanon = st.gcaCanon := by
+  unfold pruneReturn pushAuto
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+  repeat' split
+  all_goals rfl
+
+/-- Parent recovery retains the stored canonical labelling. -/
+theorem recover_ref (inf level : Nat) (st : Search n) :
+    (recoverLevels level (recoverPtn inf level st)).canonlab = st.canonlab := by
+  unfold recoverLevels recoverPtn
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab]
+  repeat' split
+  all_goals rfl
 
 /-- Code comparison retains the ancestor of the canonical path. -/
 theorem compare_canon (level code : Nat) (st : Search n) :

@@ -215,7 +215,11 @@ theorem NodePre.prepare {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells 
       (by rw [cheap_canon]; exact Nat.le_of_lt htcg),
       hth.cheap false (by change targeted.gcaFirst ≤ level; omega),
       (hrecord hnc).cheap false (by change targeted.gcaFirst ≤ level; omega),
-      (by unfold cheapCheck; split <;> exact hte), hcheapBoundary, cheap_bound false htn, htpath.cheap false⟩
+      (by unfold cheapCheck; split <;> exact hte), hcheapBoundary, cheap_bound false htn, htpath.cheap false,
+      (by intro hs
+          have hshape := cheap_shape hn0 hin.positive htlocal.ok hte hs
+          unfold cheapCheck
+          split <;> exact hshape)⟩
   exact hnextPre
 
 /-- An eligible sweep entry supplies the precondition of its off-path child. -/
@@ -237,7 +241,10 @@ theorem SweepPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
         hin.history.child first hgsz hin.positive hin.partition hin.target htv hin.recorded),
       child_equitable first hn0 hin.positive hin.partition hin.equitable hin.target htv hsymm,
       hin.boundary.child first hin.positive hin.target htv, (by cases first <;> exact hin.cheapBound),
-      hin.path.child first hn0 hin.positive hin.partition hin.target htv, child_starts first hin.target htv⟩
+      hin.path.child first hn0 hin.positive hin.partition hin.target htv, child_starts first hin.target htv,
+      (by intro hs
+          have hb : st.noncheaplevel ≤ level := by cases first <;> change st.noncheaplevel < level + 1 at hs <;> omega
+          exact child_shape first hn0 hin.positive hin.partition hin.target htv (hin.small hb))⟩
   exact hnodePre
 
 /-- Advancing to a surviving larger entry retains the sweep's local invariants. -/
@@ -248,7 +255,7 @@ theorem SweepPre.next {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tc
     SweepPre G ctx tcLevel first level numcells tc tv1 (smaller.nextElem (some tv)) smaller st :=
   ⟨Generic.Past.next (fun hf => h.past hf tv rfl), h.positive, h.partition, h.target.subset hsub,
     (fun _ hv => VSet.nextElem_mem hv), h.stored, h.ancestor, h.canonAncestor, h.history, h.recorded,
-    h.equitable, h.boundary, h.cheapBound, h.path⟩
+    h.equitable, h.boundary, h.cheapBound, h.path, h.small⟩
 
 /-- Returning from the actual off-path child restores the parent
 history, fixed points, and local stabilizer ledger. -/
@@ -308,7 +315,14 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
       recover_canon_le level _, hhist.1, hhist.2 hin.recorded, recover_equitable hn0 hin.positive hin.partition hin.equitable hleftFrame,
       (hbout.congr (out := left) rfl rfl rfl).recover_child hin.positive
         (by have := Nat.le_trans hin.partition.bc (bcount_le _ _ _); omega),
-      recover_bound level left, hin.path.recover hn0 hin.positive hin.partition hleftFrame hrestore⟩
+      recover_bound level left, hin.path.recover hn0 hin.positive hin.partition hleftFrame hrestore,
+      (by intro hs
+          apply recover_shape hin.partition hleftFrame hin.small ?_ hs
+          have hb := node_boundary (ctx := ctx) (inf := n + 2) (tcLevel := tcLevel)
+            (fuel := fuel) (level := level + 1) (numcells := numcells + 1)
+            (st := Engine.child first level tc tv st) (by omega)
+          rw [hcall] at hb
+          cases first <;> exact hb)⟩
   exact hready
 
 end Hex.GraphIso.Nauty.Engine

@@ -57,7 +57,7 @@ theorem firstSweep_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
     intro smaller index hsub
     apply sweep_safe hn0 hgsz hsymm hloop
     refine ⟨?_, hready.positive, hready.partition, hready.target.subset hsub,
-      (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.canonAncestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path⟩
+      (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.canonAncestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path, hready.small⟩
     intro _ v hv
     have hn := (VSet.nextElem_eq_some_iff.mp hv).2.1
     change tv + 1 ≤ v at hn

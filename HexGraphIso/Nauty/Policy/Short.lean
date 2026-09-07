@@ -27,9 +27,10 @@ def shortContract (P : Nat → σ → Prop) : Contract σ n where
 /-- Only leaf emission and cleanup along an unconsumed return must
 preserve the property. A receiving loop may consume it and resume. -/
 structure ShortPolicy (P : Nat → σ → Prop) : Prop where
-  leaf : ∀ leaf level st target,
-    (Policy.leafExit (n := n) leaf level st).1 = .unwind target true →
-      P target (Policy.leafExit (n := n) leaf level st).2
+  leaf : ∀ (ctx : Ctx n) level numcells st,
+    let c := Policy.classify ctx level numcells st
+    ∀ target, (Policy.leafExit (n := n) c.1 level c.2).1 = .unwind target true →
+      P target (Policy.leafExit (n := n) c.1 level c.2).2
   afterFirst : ∀ level tv target st, P target st →
     P target (Policy.afterChildFirst (n := n) level tv st)
   leave : ∀ tv target st, P target st → P target (Policy.leaveChild (n := n) tv st)
@@ -113,9 +114,10 @@ theorem short_node (h : ShortPolicy (n := n) P) {fuel : Nat} {next : SweepFn σ 
     · exact finish prepared
   | false =>
     simp only [Bool.false_eq_true, ite_false]
-    generalize Policy.classify ctx level nc prepared = classified
+    have hl := h.leaf ctx level nc prepared
+    dsimp only at hl
+    generalize Policy.classify ctx level nc prepared = classified at hl ⊢
     obtain ⟨leaf, classified⟩ := classified
-    have hl := h.leaf leaf level classified
     generalize Policy.leafExit (n := n) leaf level classified = result at hl ⊢
     obtain ⟨exit, out⟩ := result
     cases exit with

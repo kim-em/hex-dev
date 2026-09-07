@@ -98,7 +98,7 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
     intro smaller hsub
     exact hnext first level numcells tc tv1 (smaller.nextElem (some tv)) smaller _ _
       ⟨Generic.Past.next htv, hready.positive, hready.partition, hready.target.subset hsub,
-        (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.canonAncestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path⟩
+        (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.canonAncestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path, hready.small⟩
   have hlong : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (Generic.resume (n + 2) next first level numcells tc tv1 tv smaller index out).2.2 := by
     intro smaller hsub
@@ -165,7 +165,7 @@ theorem safety_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     exact safety_advance hnext first level numcells tc tv1 tv index cell left exit hleft hready
   · exact hnext first level numcells tc tv1 (cell.nextElem (some tv)) cell _ st
       ⟨Generic.Past.next hpast, hin.positive, hin.partition, hin.target,
-        (fun _ hv => VSet.nextElem_mem hv), hin.stored, hin.ancestor, hin.canonAncestor, hin.history, hin.recorded, hin.equitable, hin.boundary, hin.cheapBound, hin.path⟩
+        (fun _ hv => VSet.nextElem_mem hv), hin.stored, hin.ancestor, hin.canonAncestor, hin.history, hin.recorded, hin.equitable, hin.boundary, hin.cheapBound, hin.path, hin.small⟩
 
 /-- The live histories discharge the generic induction rules for every off-path call. -/
 theorem safetyPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat)

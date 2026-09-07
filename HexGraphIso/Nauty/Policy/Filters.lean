@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.FixedState
+import HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Engine
@@ -65,12 +66,6 @@ theorem leafExit_bound {level target : Nat} {short : Bool} {st : Search n} {leaf
     (hf : st.gcaFirst < level) (hc : st.gcaCanon < level)
     (hn : st.noncheaplevel ≤ level)
     (h : (leafExit leaf level st).1 = .unwind target short) : target < level := by
-  have hg : ∀ s : Search n,
-      (admit s).gcaFirst = s.gcaFirst ∧ (admit s).gcaCanon = s.gcaCanon := by
-    intro s
-    unfold admit pushAuto
-    simp only [Id.run_pure]
-    split <;> exact ⟨rfl, rfl⟩
   cases leaf with
   | bad => have := leafExit_cheap_bound (Or.inl rfl) h; omega
   | better sr => have := leafExit_cheap_bound (Or.inr ⟨sr, rfl⟩) h; omega
@@ -82,28 +77,18 @@ theorem leafExit_bound {level target : Nat} {short : Bool} {st : Search n} {leaf
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
     repeat' split at h
     all_goals have ht := (Generic.Exit.unwind.inj h).1
-    all_goals simp only [(hg _).1, (hg _).2] at ht
+    all_goals simp only [admit_gca, admit_canon] at ht
     all_goals first | exact ht ▸ hf | exact ht ▸ hc
 
 /-- A short code-2 return targets the saved canonical ancestor. -/
 theorem leafExit_canon_target {level target : Nat} {st : Search n}
     (h : (leafExit .autoCanon level st).1 = .unwind target true) :
     target = (leafExit .autoCanon level st).2.gcaCanon := by
-  have hg : ∀ s : Search n, (admit s).gcaCanon = s.gcaCanon := by
-    intro s
-    unfold admit pushAuto
-    simp only [Id.run_pure]
-    split <;> rfl
-  have hr : (leafExit .autoCanon level st).2.gcaCanon = st.gcaCanon := by
-    unfold leafExit
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
-    repeat' split
-    all_goals exact hg _
-  rw [hr]
+  rw [autoCanon_ancestor]
   unfold leafExit at h
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
   repeat' split at h
-  all_goals simp only [Generic.Exit.unwind.injEq, hg, Bool.false_eq_true, and_false] at h
+  all_goals simp only [Generic.Exit.unwind.injEq, admit_canon, Bool.false_eq_true, and_false] at h
   all_goals first | exact h.1.symm | contradiction
 
 /-- A short return from a bad or better leaf satisfies the implicit-pair

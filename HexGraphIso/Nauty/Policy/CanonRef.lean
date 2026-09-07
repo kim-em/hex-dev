@@ -24,6 +24,49 @@ variable {n k : Nat}
 
 /-- The actual child either retains the old reference and does not raise
 its ancestor, or installs a reference through the chosen vertex. -/
+theorem child_canon {G : Colored n k} {ctx : Ctx n}
+    {tcLevel fuel level numcells tc tv : Nat} {first : Bool}
+    {cell : VSet n} {st : Search n}
+    (h : SearchOk G level numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (childFirst : Bool) :
+    let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (child first level tc tv st)).2
+    (out.gcaCanon ≤ st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
+      (out.canonlab.size = st.lab.size ∧ cellsPerm st.ptn level st.lab out.canonlab ∧
+        out.canonlab[tc]! = tv) := by
+  intro out
+  have hc := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
+    hlevel h htarget ht
+  have hr := node_canon (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
+    childFirst hn0 (by omega) hc.1
+  rcases hr.source with hr | hr
+  · left
+    cases first <;> exact hr
+  · exact Or.inr (child_store (ctx := ctx) first hn0 hlevel h htarget ht hr.2)
+
+/-- A canonical reference pointing above the child is precisely the
+reference held by the receiving parent before the child was entered. -/
+theorem child_canon_old {G : Colored n k} {ctx : Ctx n}
+    {tcLevel fuel level numcells tc tv : Nat} {first : Bool}
+    {cell : VSet n} {st : Search n}
+    (h : SearchOk G level numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (childFirst : Bool) :
+    let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (child first level tc tv st)).2
+    out.gcaCanon ≤ level → out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab := by
+  intro out he
+  have hc := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
+    hlevel h htarget ht
+  have hr := node_canon (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
+    childFirst hn0 (by omega) hc.1
+  have hs := hr.old (by change out.gcaCanon < level + 1; omega)
+  cases first <;> exact hs
+
+/-- Later siblings use the partition-only canonical-return theorem. -/
 theorem SweepPre.canon_return {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv1 tv : Nat} {first : Bool}
     {cell : VSet n} {st : Search n}
@@ -33,20 +76,10 @@ theorem SweepPre.canon_return {G : Colored n k} {ctx : Ctx n}
       (child first level tc tv st)).2
     (out.gcaCanon ≤ st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
       (out.canonlab.size = st.lab.size ∧ cellsPerm st.ptn level st.lab out.canonlab ∧
-        out.canonlab[tc]! = tv) := by
-  intro out
-  have ht := h.cursor_mem tv rfl
-  have hc := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
-    h.positive h.partition h.target ht
-  have hr := node_canon (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
-    childFirst hn0 (by have := h.positive; omega) hc.1
-  rcases hr.source with hr | hr
-  · left
-    cases first <;> exact hr
-  · exact Or.inr (child_store (ctx := ctx) first hn0 h.positive h.partition h.target ht hr.2)
+        out.canonlab[tc]! = tv) :=
+  child_canon h.partition hn0 h.positive h.target (h.cursor_mem tv rfl) childFirst
 
-/-- A canonical reference pointing above the child is precisely the
-reference held by the receiving parent before the child was entered. -/
+/-- Later siblings retain precisely the reference above their child. -/
 theorem SweepPre.canon_old {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv1 tv : Nat} {first : Bool}
     {cell : VSet n} {st : Search n}
@@ -54,15 +87,8 @@ theorem SweepPre.canon_old {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (childFirst : Bool) :
     let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
-    out.gcaCanon ≤ level → out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab := by
-  intro out he
-  have ht := h.cursor_mem tv rfl
-  have hc := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
-    h.positive h.partition h.target ht
-  have hr := node_canon (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
-    childFirst hn0 (by have := h.positive; omega) hc.1
-  have hs := hr.old (by change out.gcaCanon < level + 1; omega)
-  cases first <;> exact hs
+    out.gcaCanon ≤ level → out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab :=
+  child_canon_old h.partition hn0 h.positive h.target (h.cursor_mem tv rfl) childFirst
 
 /-- At a frozen sweep frame, a canonical ancestor pointing to this level
 names a child already bounded by the incumbent. -/
@@ -70,6 +96,25 @@ def CanonGuide (level tc : Nat) (base : Search n) (key : Nat → Key n)
     (best : Option (Key n)) (st : Search n) : Prop :=
   st.gcaCanon = level → ∃ v, Generic.Covers (key v) best ∧ st.canonlab[tc]! = v ∧
     cellsPerm base.ptn level base.lab st.canonlab
+
+/-- The guide's reference vertex belongs to the original target window,
+even if a filter has removed it from the mutable target set. -/
+theorem CanonGuide.mem {level tc len : Nat} {base st : Search n}
+    {key : Nat → Key n} {best : Option (Key n)}
+    (h : CanonGuide level tc base key best st)
+    (hok : LabOk base.lab n) (hc : IsCell base.ptn level tc len)
+    (hr : tc + len ≤ base.lab.size) (he : st.gcaCanon = level) :
+    ∃ v, Generic.Covers (key v) best ∧ st.canonlab[tc]! = v ∧
+      (windowSet n base.lab tc len).mem v = true := by
+  obtain ⟨v, hv, hat, hp⟩ := h he
+  have hm : v ∈ segN base.lab tc len := by
+    apply (hp tc len hc).mem_iff.mpr
+    rw [← hat]
+    exact mem_segN_iff.mpr ⟨0, hc.1, by simp⟩
+  refine ⟨v, hv, hat, mem_windowSet.mpr ⟨?_, hm⟩⟩
+  obtain ⟨o, ho, heq⟩ := mem_segN_iff.mp hm
+  rw [← heq]
+  exact hok _ (by omega)
 
 /-- A canonical return to this loop names its previously covered
 reference child, even before the returned partition is recovered. -/
@@ -104,11 +149,7 @@ theorem CanonGuide.recover {G : Colored n k} {level tc tv : Nat}
   have hgc : (recoverLevels level (recoverPtn inf level out)).gcaCanon = min level out.gcaCanon := by
     rw [recover_canon]
     rfl
-  have hcc : (recoverLevels level (recoverPtn inf level out)).canonlab = out.canonlab := by
-    unfold recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab]
-    repeat' split
-    all_goals rfl
+  have hcc := recover_ref inf level out
   intro he
   rw [hgc] at he
   rcases hreturn with hreturn | hreturn
@@ -124,23 +165,34 @@ theorem CanonGuide.recover {G : Colored n k} {level tc tv : Nat}
       intro a len hc
       exact hreturn.2.1 a len (isCell_of_low hframe.low hc)
 
-/-- An actual child supplies the reference alternatives needed to restore
-the receiving loop's canonical guide after fixed-point cleanup. -/
-theorem SweepPre.canon_guide {G : Colored n k} {ctx : Ctx n}
+/-- A child's guide survives both first-child control updates and fixed-point
+cleanup. Only the reached partition is required, so this also applies before
+any first-path sibling has returned. -/
+theorem child_canon_guide {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv1 tv : Nat} {first : Bool}
     {cell : VSet n} {base st : Search n} {key : Nat → Key n}
     {before after : Option (Key n)}
-    (h : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st)
-    (hn0 : 0 < n) (childFirst : Bool)
+    (h : SearchOk G level numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (hbound : st.gcaCanon ≤ level)
     (hguide : CanonGuide level tc base key before st)
     (hframe : SearchOut G level level base.view st.view)
     (hgrows : Generic.Grows before after) (hdone : Generic.Covers (key tv) after) :
+    let childFirst := first && tv == tv1
     let raw := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
-    let out := { raw with fixedpts := raw.fixedpts.erase tv }
+    let left := if childFirst then afterChildFirst level tv1 raw else raw
+    let out := { left with fixedpts := left.fixedpts.erase tv }
     CanonGuide level tc base key after (recoverLevels level (recoverPtn (n + 2) level out)) := by
-  intro raw out
-  apply hguide.recover h.canonAncestor hgrows hdone hframe
-  exact h.canon_return (fuel := fuel) hn0 childFirst
+  intro childFirst raw left out
+  apply hguide.recover hbound hgrows hdone hframe
+  have hr := child_canon (first := first) (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
+    h hn0 hlevel htarget ht childFirst
+  change (out.gcaCanon ≤ st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
+    (out.canonlab.size = st.lab.size ∧ cellsPerm st.ptn level st.lab out.canonlab ∧
+      out.canonlab[tc]! = tv)
+  dsimp only [out, left]
+  cases childFirst <;> exact hr
 
 end Hex.GraphIso.Nauty.Engine

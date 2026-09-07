@@ -90,11 +90,11 @@ valid partition states. -/
 theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
     {st out : SearchSt n} (h : FixedCells level st)
     (hfixed : out.fixedpts = st.fixedpts)
-    (hok : SearchOk G level numcells st)
-    (hout : SearchOk G level numcells out)
+    (_hok : SearchOk G level numcells st)
+    (_hout : SearchOk G level numcells out)
     (heffect : SearchOut G level level st out) :
     FixedCells level out :=
-  h.ofCellsPerm hfixed (heffect.ptnEq hok hout) heffect.perm
+  h.ofEffect hfixed heffect
 
 /-- Refinement preserves every existing fixed singleton. -/
 theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {st : SearchSt n}

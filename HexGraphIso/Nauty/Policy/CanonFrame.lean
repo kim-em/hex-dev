@@ -189,28 +189,17 @@ theorem CanonOut.child {G : Colored n k} {ctx : Ctx n}
 /-- Leaf installation is the only leaf action that raises the canonical ancestor. -/
 theorem canon_leaf (leaf : Leaf) (level : Nat) (st : Search n) :
     CanonOut level st (leafExit leaf level st).2 := by
-  have ha : ∀ s : Search n, (admit s).gcaCanon = s.gcaCanon := by
-    intro s
-    unfold admit pushAuto
-    simp only [Id.run_pure]
-    split <;> rfl
-  have hp : ∀ s : Search n, (pruneReturn level s).2.gcaCanon = s.gcaCanon := by
-    intro s
-    unfold pruneReturn pushAuto
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
-    repeat' split
-    all_goals rfl
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
   all_goals repeat' split
   all_goals first
     | exact ⟨Nat.min_le_right _ _, Or.inl ⟨Nat.le_refl _, rfl⟩⟩
-    | exact ⟨by rw [ha]; exact Nat.min_le_right _ _,
-        Or.inl ⟨Nat.le_of_eq (ha _), (admit_frame _).2.2.2⟩⟩
-    | exact ⟨by rw [hp]; exact Nat.min_le_right _ _,
-        Or.inl ⟨Nat.le_of_eq (hp _), (pruneReturn_frame level _).2.2.2⟩⟩
-    | exact ⟨by rw [hp]; exact Nat.min_le_left _ _,
-        Or.inr ⟨by rw [hp]; exact Nat.le_refl _,
+    | exact ⟨by rw [admit_canon]; exact Nat.min_le_right _ _,
+        Or.inl ⟨Nat.le_of_eq (admit_canon _), (admit_frame _).2.2.2⟩⟩
+    | exact ⟨by rw [pruneReturn_canon]; exact Nat.min_le_right _ _,
+        Or.inl ⟨Nat.le_of_eq (pruneReturn_canon level _), (pruneReturn_frame level _).2.2.2⟩⟩
+    | exact ⟨by rw [pruneReturn_canon]; exact Nat.min_le_left _ _,
+        Or.inr ⟨by rw [pruneReturn_canon]; exact Nat.le_refl _,
           congrArg Array.size (pruneReturn_frame level _).2.2.2,
           by rw [(pruneReturn_frame level _).2.2.2]; exact cellsPerm_refl _ _ _⟩⟩
 
@@ -221,11 +210,7 @@ theorem CanonOut.recover {level : Nat} {st out : Search n}
   have hg : (recoverLevels level (recoverPtn inf level out)).gcaCanon = min level out.gcaCanon := by
     rw [recover_canon]
     rfl
-  have hc : (recoverLevels level (recoverPtn inf level out)).canonlab = out.canonlab := by
-    unfold recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab]
-    repeat' split
-    all_goals rfl
+  have hc := recover_ref inf level out
   have hf := h.floor
   constructor
   · rw [hg]; omega

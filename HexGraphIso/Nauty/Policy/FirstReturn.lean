@@ -104,9 +104,8 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hrec := (reachPolicy G ctx tcLevel hn0).recover level r.1 ready left hin.positive hcheap.ok hleftFrame
   have hstored : RunInv G ctx result :=
     (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl rfl rfl).recover (n + 2) level
-  have hcheapHist : CheapHistory ctx tcLevel level level r.1 result := by
+  have cheap_parent : result.noncheaplevel ≤ level → ready.noncheaplevel ≤ level := by
     intro hc
-    rw [hgr] at hc ⊢
     have houtcheap : out.noncheaplevel ≤ level := by
       have he := recover_noncheap (n + 2) level left
       change result.noncheaplevel = if level < out.noncheaplevel then level + 1 else out.noncheaplevel at he
@@ -119,6 +118,11 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
         have hret := firstPath_noncheap (inf := n + 2) hpath (Nat.lt_succ_self level) hchcheap
         change level < out.noncheaplevel at hret
         omega
+    exact hreadycheap
+  have hcheapHist : CheapHistory ctx tcLevel level level r.1 result := by
+    intro hc
+    rw [hgr] at hc ⊢
+    have hreadycheap := cheap_parent hc
     have hs := firstCheap_small hn0 hin.positive hin.partition hin.equitable hin.small hreadycheap
     let href' := href.congr hr
     refine ⟨R, href', ?_, hs, ?_⟩
@@ -194,10 +198,20 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
     unfold ready cheapCheck
     split <;> change Equitable ctx level r.2.2.2.2.lab r.2.2.2.2.ptn
     all_goals rw [hl, hp]; exact hin.equitable
+  have hsmall : result.noncheaplevel ≤ level → NodeShape n level result.ptn := by
+    intro hc
+    rw [recover_ptn_eq hcheap.ok hleftFrame]
+    have hs := (firstCheap_small hn0 hin.positive hin.partition hin.equitable hin.small
+      (cheap_parent hc)).shape
+    have hp := (prepareFirst_fields ctx tcLevel level numcells st).2.1
+    change NodeShape n level ready.ptn
+    unfold ready cheapCheck
+    split <;> change NodeShape n level r.2.2.2.2.ptn
+    all_goals rw [hp]; exact hs
   exact ⟨(by intro _ v hv; cases hv), hin.positive, hrec.ok, hreadyTarget.of_out hrec.effect,
     (by intro v hv; cases hv), hstored, Nat.le_of_eq hgr, recover_canon_le level _, hhist, hrecord,
     recover_equitable hn0 hin.positive hcheap.ok heq hleftFrame,
     hbleft.recover_child hin.positive (by have := Nat.le_trans hcheap.ok.bc (bcount_le _ _ _); omega),
-    recover_bound level left, hpathReady.recover hn0 hin.positive hcheap.ok hleftFrame hrestore⟩
+    recover_bound level left, hpathReady.recover hn0 hin.positive hcheap.ok hleftFrame hrestore, hsmall⟩
 
 end Hex.GraphIso.Nauty.Engine
