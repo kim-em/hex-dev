@@ -124,6 +124,24 @@ structure OptimumCertificate (n m : Nat) where
   /-- Exhaustive ball containing every possible improvement and tie. -/
   enumeration : Certificate n m
 
+/-- Package the exhaustive tie pass without repeating preparation or enumeration. -/
+def optimumCertificate (b : Basis n m) (p : Prepared b t)
+    (run : OptimumRun n m) : OptimumCertificate n m :=
+  ⟨run.incumbent, ⟨b.rows, Matrix.identity n, Matrix.identity n, p.toData,
+    run.traversal.tree.getD .empty, sortPoints run.traversal.state.points⟩⟩
+
+/-- Produce an attained closest point and the complete fixed-radius certificate for all ties. -/
+def closestCertificate (b : Basis n m) (t : Vector Rat m) : OptimumCertificate n m :=
+  let p := prepare b t
+  let seed := point b t (nearestPlane p n (Nat.le_refl n) 0)
+  optimumCertificate b p (optimize {} b t p .closest seed)
+
+/-- Produce a shortest-vector certificate; rank zero has no nonzero optimum. -/
+def shortestCertificate (b : Basis n m) : Option (OptimumCertificate n m) :=
+  shortestSeed b |>.map fun seed =>
+    let p := prepare b 0
+    optimumCertificate b p (optimize {} b 0 p .shortest seed)
+
 /-- Replay a global closest-vector certificate, including every tie. -/
 def checkClosest (rows : Matrix Int n m) (t : Vector Rat m) (cert : OptimumCertificate n m) : Bool :=
   checkPoint rows t cert.candidate &&

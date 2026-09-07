@@ -21,6 +21,19 @@ example (b : Basis n m) (t : Vector Rat m) (z : Vector Int n) :
       ∑ i : Fin n, (prepare b t).norms[i] * ((z[i] : Rat) - (prepare b t).centre z i) ^ 2 :=
   distance_decomposition (prepare b t).toData b.rows t (prepare_valid b t) z
 
+example (b : Basis n m) (t : Vector Rat m) (v : Vector Int m) :
+    v ∈ (closest b t).points.map Point.ambient ↔
+      b.rows.memLattice v ∧ ∀ w, b.rows.memLattice w → distance v t ≤ distance w t :=
+  closest_spec b t v
+
+example (b : Basis n m) : shortest b = none ↔ n = 0 := shortest_none b
+
+example (b : Basis n m) (answer : Minimum n m) (h : shortest b = some answer)
+    (v : Vector Int m) : v ∈ answer.points.map Point.ambient ↔
+      b.rows.memLattice v ∧ v ≠ 0 ∧
+        ∀ w, b.rows.memLattice w → w ≠ 0 → distance v 0 ≤ distance w 0 :=
+  shortest_spec b answer h v
+
 private def halfCertificate : Certificate 1 1 where
   rows := Matrix.ofRows #v[#v[1]]
   forward := Matrix.ofRows #v[#v[1]]

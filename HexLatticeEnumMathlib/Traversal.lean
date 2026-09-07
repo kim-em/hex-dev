@@ -18,7 +18,7 @@ open Hex.LatticeEnum
 variable {n m : Nat}
 
 /-- Complete fixed-radius traversal appends each newly feasible point exactly once. -/
-def BallResult (before : SearchState n m) (run : Traversal n m) (P : Point n m → Prop) : Prop :=
+@[expose] def BallResult (before : SearchState n m) (run : Traversal n m) (P : Point n m → Prop) : Prop :=
   run.pending = [] ∧ run.tree.isSome = true ∧ run.state.radius = before.radius ∧
     ∃ fresh : List (Point n m), run.state.points = fresh ++ before.points ∧ fresh.Nodup ∧
       ∀ q, q ∈ fresh ↔ P q
@@ -75,7 +75,7 @@ theorem children_spec (z : Vector Int n) (cost : Rat) (k : Nat) (interval : Inte
           · exact Or.inl ⟨b, hb, hp⟩
 
 /-- Coefficients agree on the suffix already fixed by traversal. -/
-def Matches (k : Nat) (z w : Vector Int n) : Prop :=
+@[expose] def Matches (k : Nat) (z w : Vector Int n) : Prop :=
   ∀ i : Fin n, k ≤ i.val → w[i] = z[i]
 
 /-- Setting the next coefficient extends the suffix by exactly one coordinate. -/
@@ -98,7 +98,7 @@ theorem matches_set (k : Nat) (hk : k < n) (z w : Vector Int n) (a : Int) :
       simpa only [Fin.getElem_fin, Vector.getElem_set_ne hk i.isLt (Ne.symm hik)] using he
 
 /-- A directly reconstructed point satisfying the fixed suffix and closed-ball bound. -/
-def Feasible (b : Basis n m) (t : Vector Rat m) (r : Rat) (k : Nat)
+@[expose] def Feasible (b : Basis n m) (t : Vector Rat m) (r : Rat) (k : Nat)
     (z : Vector Int n) (q : Point n m) : Prop :=
   q = point b t q.coefficients ∧ Matches k z q.coefficients ∧ q.distanceSq ≤ r
 
@@ -286,5 +286,27 @@ theorem enumerate_ambient_nodup (b : Basis n m) (t : Vector Rat m) (r : Rat) :
   have hqpoint := ((enumerate_point_spec b t r q).mp hq).1
   have hqpoint' := ((enumerate_point_spec b t r q').mp hq').1
   rw [hqpoint, hqpoint', hz]
+
+/-- Public sorting puts ambient coordinates in nondecreasing lexicographic order. -/
+theorem sortPoints_sorted (ps : List (Point n m)) :
+    (sortPoints ps).Pairwise (fun p q => compare p.ambient.toList q.ambient.toList ≠ .gt) := by
+  have ht : ∀ a b c : Point n m, pointLE a b → pointLE b c → pointLE a c := by
+    intro a b c hab hbc
+    simp only [pointLE, decide_eq_true_eq] at hab hbc ⊢
+    exact Ordering.isLE_iff_ne_gt.mp (Std.TransOrd.isLE_trans
+      (Ordering.isLE_iff_ne_gt.mpr hab) (Ordering.isLE_iff_ne_gt.mpr hbc))
+  have hall : ∀ a b : Point n m, pointLE a b || pointLE b a := by
+    intro a b
+    simp only [pointLE, Bool.or_eq_true, decide_eq_true_eq]
+    have hswap := Std.OrientedOrd.eq_swap (a := a.ambient.toList) (b := b.ambient.toList)
+    cases hab : compare a.ambient.toList b.ambient.toList <;>
+      cases hba : compare b.ambient.toList a.ambient.toList <;> simp_all
+  have hs := List.pairwise_mergeSort ht hall ps
+  simpa only [sortPoints, Hex.List.sort_eq, pointLE, decide_eq_true_eq] using hs
+
+/-- Complete enumeration is sorted independently of the coefficient visitation order. -/
+theorem enumerate_sorted (b : Basis n m) (t : Vector Rat m) (r : Rat) :
+    (enumerate b t r).Pairwise (fun p q => compare p.ambient.toList q.ambient.toList ≠ .gt) :=
+  sortPoints_sorted _
 
 end HexLatticeEnumMathlib

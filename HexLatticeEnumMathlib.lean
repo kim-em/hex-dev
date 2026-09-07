@@ -6,3 +6,6 @@ public import HexLatticeEnumMathlib.Distance
 public import HexLatticeEnumMathlib.Order
 public import HexLatticeEnumMathlib.Enumerate
 public import HexLatticeEnumMathlib.Traversal
+
+public import HexLatticeEnumMathlib.Closest
+public import HexLatticeEnumMathlib.Shortest

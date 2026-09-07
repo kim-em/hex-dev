@@ -106,15 +106,14 @@ def traverseAux (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
       let candidate := point b t z
       if candidate.distanceSq > state.radius then
         return ⟨state, if saveTree then some .empty else none, []⟩
-      match mode with
-      | .ball =>
+      if saveTree then
         if !room budget.answers state.counts.answers then
           return ⟨state, none, [work]⟩
         return ⟨{ state with
           points := candidate :: state.points
           counts := { state.counts with answers := state.counts.answers + 1 } },
           some .leaf, []⟩
-      | .closest | .shortest =>
+      else
         let eligible := mode == .closest || candidate.ambient != 0
         if eligible && candidate.distanceSq < state.radius then
           return ⟨{ state with
