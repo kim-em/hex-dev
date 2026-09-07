@@ -63,6 +63,33 @@ theorem firstChild_refined (ctx : Ctx n) (tcLevel level numcells tv : Nat) (st :
   all_goals rw [hl, hp]
   all_goals rfl
 
+/-- Preparing a first-path node records precisely its refinement code. -/
+theorem prepareFirst_code (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
+    (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.firstcode =
+      st.firstcode.set! level (st.refined ctx level numcells).longcode := by
+  unfold Generic.prepareFirst
+  change (chooseTarget true ctx tcLevel level _ _).2.2.2.firstcode = _
+  rw [chooseFirst_fields]
+  rfl
+
+/-- The first descent retains the refinement codes of every earlier ancestor. -/
+theorem firstPath_code_before {ctx : Ctx n} {tcLevel fuel level numcells last slot : Nat}
+    {st leaf : Search n} (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
+    (hslot : slot < level) : leaf.firstcode[slot]! = st.firstcode[slot]! := by
+  induction hpath with
+  | leaf fuel level numcells st hdisc =>
+    rw [prepareFirst_code]
+    exact Array.getElem!_set!_ne _ _ _ _ (by omega)
+  | @step fuel level numcells last st leaf tv hopen htv horbit tail ih =>
+    rw [ih (by omega)]
+    change (cheapCheck true level
+      (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2).firstcode[slot]! = _
+    unfold cheapCheck
+    split
+    all_goals try dsimp only
+    all_goals rw [prepareFirst_code]
+    all_goals exact Array.getElem!_set!_ne _ _ _ _ (by omega)
+
 /-- The first descent never changes a target slot above its current level. -/
 theorem firstPath_before {ctx : Ctx n} {tcLevel fuel level numcells last slot : Nat}
     {st leaf : Search n}
@@ -182,16 +209,25 @@ theorem firstPath_history {G : Colored n k} {ctx : Ctx n}
     (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab
       (st.refined ctx level numcells).ptn)
-    (hsize : n < st.firsttc.size) :
+    (hsize : n < st.firsttc.size) (hcodeSize : n < st.firstcode.size) :
     ∃ path U, DescPath ctx level (st.refined ctx level numcells) path last U ∧
       Selects ctx tcLevel level (st.refined ctx level numcells) path ∧
       Targets leaf.firsttc level (path.map Prod.fst) ∧
-      U.lab = leaf.lab ∧ U.ptn = leaf.ptn ∧ (∀ i, i < n → U.ptn[i]! ≤ last) := by
+      U.lab = leaf.lab ∧ U.ptn = leaf.ptn ∧ (∀ i, i < n → U.ptn[i]! ≤ last) ∧
+      StoredCodes leaf.firstcode level (pathCodes ctx level (st.refined ctx level numcells) path) := by
   induction hpath with
   | leaf fuel level numcells st hdisc =>
     let U := st.refined ctx level numcells
     obtain ⟨hl, hp, _⟩ := prepareFirst_fields ctx tcLevel level numcells st
-    refine ⟨[], U, .refl _ _, trivial, (fun _ h => by simp at h), hl.symm, hp.symm, ?_⟩
+    have hstored : StoredCodes (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.firstcode
+        level (pathCodes ctx level U []) := by
+      intro i hi
+      have hi0 : i = 0 := by simp only [pathCodes, List.length_singleton] at hi; omega
+      subst i
+      simp only [Nat.add_zero, pathCodes, List.getElem!_cons_zero]
+      rw [prepareFirst_code, Array.getElem!_set!_self _ _ _
+        (by have := Nat.le_trans hok.bc (bcount_le _ _ _); omega)]
+    refine ⟨[], U, .refl _ _, trivial, (fun _ h => by simp at h), hl.symm, hp.symm, ?_, hstored⟩
     have hr := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 hlevel hok).1
     have hc : n = bcount U.ptn level n := by
       have h := hdisc.symm.trans hr.count
@@ -260,12 +296,28 @@ theorem firstPath_history {G : Colored n k} {ctx : Ctx n}
       all_goals try dsimp only
       all_goals rw [hstore, Array.size_set!]
       all_goals exact hsize
-    obtain ⟨path, U, hdesc, hsel, htargets, hUL, hUP, hdisc⟩ := ih (by omega) hchild hce hcs
+    have hcc : n < child.firstcode.size := by
+      change n < (cheapCheck true level r.2.2.2.2).firstcode.size
+      unfold cheapCheck
+      split
+      all_goals try dsimp only
+      all_goals rw [prepareFirst_code, Array.size_set!]
+      all_goals exact hcodeSize
+    obtain ⟨path, U, hdesc, hsel, htargets, hUL, hUP, hdisc, hcodes⟩ := ih (by omega) hchild hce hcs hcc
     change DescPath ctx (level + 1) (child.refined ctx (level + 1) (r.1 + 1)) path last U at hdesc
     change Selects ctx tcLevel (level + 1) (child.refined ctx (level + 1) (r.1 + 1)) path at hsel
-    rw [hstep] at hdesc hsel
+    change StoredCodes leaf.firstcode (level + 1)
+      (pathCodes ctx (level + 1) (child.refined ctx (level + 1) (r.1 + 1)) path) at hcodes
+    rw [hstep] at hdesc hsel hcodes
+    have hhead : leaf.firstcode[level]! = R.longcode := by
+      rw [firstPath_code_before tail (by omega)]
+      change (cheapCheck true level r.2.2.2.2).firstcode[level]! = R.longcode
+      unfold cheapCheck
+      split
+      all_goals try dsimp only
+      all_goals rw [prepareFirst_code, Array.getElem!_set!_self _ _ _ (by omega)]
     refine ⟨(r.2.1.toNat, o) :: path, U, .step _ _ _ hlt hc hne ho' hdesc,
-      ⟨htarget, hsel⟩, Targets.cons ?_ htargets, hUL, hUP, hdisc⟩
+      ⟨htarget, hsel⟩, Targets.cons ?_ htargets, hUL, hUP, hdisc, StoredCodes.cons hhead hcodes⟩
     rw [firstPath_before tail (by omega)]
     have hw : child.firsttc[level]! = (st.firsttc.set! level r.2.1)[level]! := by
       change (cheapCheck true level r.2.2.2.2).firsttc[level]! = _
@@ -290,21 +342,32 @@ theorem firstPath_saved {G : Colored n k} {ctx : Ctx n}
     (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab
       (st.refined ctx level numcells).ptn)
-    (hsize : n < st.firsttc.size) :
+    (hsize : n < st.firsttc.size) (hcodeSize : n < st.firstcode.size) :
     let out := (node true ctx inf tcLevel fuel level numcells st).2
     ∃ path U, DescPath ctx level (st.refined ctx level numcells) path last U ∧
       Selects ctx tcLevel level (st.refined ctx level numcells) path ∧
       Targets out.firsttc level (path.map Prod.fst) ∧
-      U.lab = out.firstlab ∧ (∀ i, i < n → U.ptn[i]! ≤ last) := by
-  obtain ⟨path, U, hd, hs, ht, hl, _, hdisc⟩ :=
-    firstPath_history hn0 hsymm hpath hlevel hok heq hsize
+      U.lab = out.firstlab ∧ (∀ i, i < n → U.ptn[i]! ≤ last) ∧
+      StoredCodes out.firstcode level (pathCodes ctx level (st.refined ctx level numcells) path) := by
+  obtain ⟨path, U, hd, hs, ht, hl, _, hdisc, hcodes⟩ :=
+    firstPath_history hn0 hsymm hpath hlevel hok heq hsize hcodeSize
   have href := firstPath_reference (inf := inf) hpath
   have htc := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.1) href
   have hfirst := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.2) href
   change (node true ctx inf tcLevel fuel level numcells st).2.firsttc =
     leaf.firsttc.set! (last + 1) (-1) at htc
   change (node true ctx inf tcLevel fuel level numcells st).2.firstlab = leaf.lab at hfirst
-  refine ⟨path, U, hd, hs, ?_, hl.trans hfirst.symm, hdisc⟩
+  have hcode := congrArg (fun x : Array Nat × Array Int × Array Nat => x.1) href
+  change (node true ctx inf tcLevel fuel level numcells st).2.firstcode =
+    leaf.firstcode.set! (last + 1) codeSentinel at hcode
+  have hstored : StoredCodes (node true ctx inf tcLevel fuel level numcells st).2.firstcode level
+      (pathCodes ctx level (st.refined ctx level numcells) path) := by
+    rw [hcode]
+    apply hcodes.set_after
+    rw [pathCodes_length]
+    have := hd.length
+    omega
+  refine ⟨path, U, hd, hs, ?_, hl.trans hfirst.symm, hdisc, hstored⟩
   rw [htc]
   apply ht.set_after
   have hlen := hd.length
@@ -343,11 +406,12 @@ theorem runState_history (G : Colored n k) (hn0 : 0 < n) :
   obtain ⟨last, leaf, hpath⟩ := firstPath_exists (ctx := { g := rowsOf G })
     (tcLevel := 100) (fuel := n + 2) hn0 (Nat.le_refl _) (initial_ok G hn0) horbit (by omega)
   have hs := firstPath_saved (inf := n + 2) hn0 (rowsOf_symm G) hpath (Nat.le_refl _)
-    (initial_ok G hn0) (initial_equitable G hn0) (by simp [initial])
+    (initial_ok G hn0) (initial_equitable G hn0) (by simp [initial]) (by simp [initial])
   refine ⟨last, ?_⟩
   unfold runState
   rw [ite_eq_right (show (n == 0) ≠ true by simp; omega)]
-  exact hs
+  obtain ⟨path, U, hd, hsel, ht, hl, hdisc, _⟩ := hs
+  exact ⟨path, U, hd, hsel, ht, hl, hdisc⟩
 
 /-- Recording first-path codes preserves the allocated code-store size. -/
 theorem firstPath_codeSize {ctx : Ctx n} {tcLevel fuel level numcells last : Nat}

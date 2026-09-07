@@ -47,6 +47,7 @@ structure FirstRef (ctx : Ctx n) (tcLevel base : Nat) (root : RefineSt n) (st : 
   lab : leaf.lab = st.firstlab
   discrete : ∀ i, i < n → leaf.ptn[i]! ≤ last
   sentinel : st.firstcode[last + 1]! = codeSentinel
+  codes : StoredCodes st.firstcode base (pathCodes ctx base root path)
 
 /-- Updating other state fields leaves a saved reference history valid. -/
 def FirstRef.congr {ctx : Ctx n} {tcLevel base : Nat} {root : RefineSt n}
@@ -59,7 +60,8 @@ def FirstRef.congr {ctx : Ctx n} {tcLevel base : Nat} {root : RefineSt n}
   change out.firsttc = st.firsttc at htargets
   change out.firstlab = st.firstlab at hlab
   exact ⟨h.last, h.leaf, h.path, h.descent, h.selects, htargets.symm ▸ h.targets,
-    h.lab.trans hlab.symm, h.discrete, by rw [hcodes]; exact h.sentinel⟩
+    h.lab.trans hlab.symm, h.discrete, (by rw [hcodes]; exact h.sentinel),
+    by rw [hcodes]; exact h.codes⟩
 
 /-- An off-path call preserves every frozen first-reference history. -/
 def FirstRef.node {ctx : Ctx n} {inf tcLevel fuel base level numcells : Nat}
@@ -88,10 +90,10 @@ theorem firstRef_of_path {G : Colored n k} {ctx : Ctx n}
     (htsize : n < st.firsttc.size) (hcsize : st.firstcode.size = n + 2) :
     ∃ href : FirstRef ctx tcLevel level (st.refined ctx level numcells)
       (node true ctx inf tcLevel fuel level numcells st).2, href.last = last := by
-  obtain ⟨path, U, hd, hs, ht, hl, hdisc⟩ :=
-    firstPath_saved (inf := inf) hn0 hsymm hpath hlevel hok heq htsize
+  obtain ⟨path, U, hd, hs, ht, hl, hdisc, hcodes⟩ :=
+    firstPath_saved (inf := inf) hn0 hsymm hpath hlevel hok heq htsize (by rw [hcsize]; omega)
   have hlast := (descends_iterOk hd.descends (refined_iter hn0 hlevel hok)).lvl
-  exact ⟨⟨last, U, path, hd, hs, ht, hl, hdisc, firstPath_sentinel hpath hcsize hlast⟩, rfl⟩
+  exact ⟨⟨last, U, path, hd, hs, ht, hl, hdisc, firstPath_sentinel hpath hcsize hlast, hcodes⟩, rfl⟩
 
 /-- First-code agreement cannot extend below the saved first leaf. -/
 theorem FirstRef.depth {ctx : Ctx n} {tcLevel base : Nat} {root : RefineSt n}
@@ -100,6 +102,16 @@ theorem FirstRef.depth {ctx : Ctx n} {tcLevel base : Nat} {root : RefineSt n}
   have hb := hc.sentinel_bound (by omega) h.sentinel
   have := hc.elev_fs
   omega
+
+/-- The comparison's semantic first codes agree with the saved descent
+at every real slot represented by both histories. -/
+theorem FirstRef.code_eq {ctx : Ctx n} {tcLevel base i : Nat} {root : RefineSt n}
+    {st : Search n} (h : FirstRef ctx tcLevel base root st) {cs fs : List Nat}
+    (hc : FirstCodeInv n cs fs st.firstcode st.eqlevFirst)
+    (hbase : 1 ≤ base) (hi : i < (pathCodes ctx base root h.path).length)
+    (hf : base + i ≤ fs.length) :
+    (pathCodes ctx base root h.path)[i]! = fs[base + i - 1]! :=
+  (h.codes i hi).symm.trans (hc.fcontent (base + i) (by omega) hf)
 
 /-- A surviving first-code comparison follows the saved target at a cheap ancestor. -/
 theorem FirstRef.target {ctx : Ctx n} {tcLevel base level : Nat}

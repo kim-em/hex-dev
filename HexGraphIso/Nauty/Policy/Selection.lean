@@ -16,6 +16,44 @@ namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
+/-- The refinement codes encountered along an individualization path, including its endpoint. -/
+def pathCodes (ctx : Ctx n) : Nat → RefineSt n → List (Nat × Nat) → List Nat
+  | _, st, [] => [st.longcode]
+  | level, st, (tc, o) :: path =>
+      st.longcode :: pathCodes ctx (level + 1) (childSt ctx level st tc st.lab[tc + o]!) path
+
+/-- A descent has one refinement code at every node. -/
+theorem pathCodes_length (ctx : Ctx n) (level : Nat) (st : RefineSt n) (path : List (Nat × Nat)) :
+    (pathCodes ctx level st path).length = path.length + 1 := by
+  induction path generalizing level st with
+  | nil => rfl
+  | cons a path ih =>
+    cases a
+    simp only [pathCodes, List.length_cons, ih]
+
+/-- A consecutive segment of an array stores the codes of a path. -/
+def StoredCodes (store : Array Nat) (base : Nat) (codes : List Nat) : Prop :=
+  ∀ i, i < codes.length → store[base + i]! = codes[i]!
+
+/-- A stored head and a stored suffix form a single code segment. -/
+theorem StoredCodes.cons {store : Array Nat} {base code : Nat} {codes : List Nat}
+    (head : store[base]! = code) (tail : StoredCodes store (base + 1) codes) :
+    StoredCodes store base (code :: codes) := by
+  intro i hi
+  cases i with
+  | zero => simpa using head
+  | succ i =>
+    simpa only [List.getElem!_cons_succ, show base + (i + 1) = base + 1 + i by omega]
+      using tail i (by simpa using hi)
+
+/-- A sentinel written after the path leaves every real code intact. -/
+theorem StoredCodes.set_after {store : Array Nat} {base slot value : Nat} {codes : List Nat}
+    (h : StoredCodes store base codes) (hafter : base + codes.length ≤ slot) :
+    StoredCodes (store.set! slot value) base codes := by
+  intro i hi
+  rw [Array.getElem!_set!_ne _ _ _ _ (by omega)]
+  exact h i hi
+
 /-- Every target on a path is chosen by the unhinted specification rule. -/
 def Selects (ctx : Ctx n) (tcLevel : Nat) :
     Nat → RefineSt n → List (Nat × Nat) → Prop

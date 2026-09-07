@@ -24,6 +24,16 @@ def pathKey (ctx : Ctx n) : Nat → RefineSt n → List (Nat × Nat) → Key n
       prefixKey [st.longcode]
         (pathKey ctx (level + 1) (childSt ctx level st tc st.lab[tc + o]!) path)
 
+/-- The key stores the descent's real refinement codes followed by its sentinel. -/
+theorem pathKey_codes (ctx : Ctx n) (path : List (Nat × Nat))
+    (level : Nat) (st : RefineSt n) :
+    (pathKey ctx level st path).codes = pathCodes ctx level st path ++ [codeSentinel] := by
+  induction path generalizing level st with
+  | nil => rfl
+  | cons a path ih =>
+    obtain ⟨tc, o⟩ := a
+    simp only [pathKey, pathCodes, prefixKey, ih, List.cons_append, List.nil_append]
+
 /-- Any complete selected descent below a small-cell node realizes its
 entire specification maximum, including every refinement code. -/
 theorem SubtreeOk.path_key {ctx : Ctx n}
