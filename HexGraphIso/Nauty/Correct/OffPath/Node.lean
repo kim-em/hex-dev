@@ -439,7 +439,7 @@ theorem NodeInv.sweepNode {G : Colored n k} {ctx : Ctx n}
       · exact hncl
       · rw [hncl] at hlt
         omega }
-  obtain ⟨outBest, eventTrail, hrunL, hguideL, hkeepL⟩ :=
+  obtain ⟨outBest, eventTrail, hrunL, hguideL, hkeepL, _⟩ :=
     otherLoopTotal (tv1 := (tcell.nextElem none).getD 0) (tail := len - 1)
       hg hinf hn0 ih (by omega) (by omega) hpathFull hstemFull hpastFull
       hbound (by omega) (n + 1) none tcell start best trail bs hh

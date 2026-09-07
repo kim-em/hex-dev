@@ -23,3 +23,4 @@ public import HexGraphIso.Nauty.Correct.Generation.Canon
 public import HexGraphIso.Nauty.Correct.Generation.CanonReceipt
 public import HexGraphIso.Nauty.Correct.Generation.Agreement
 public import HexGraphIso.Nauty.Correct.Generation.Return
+public import HexGraphIso.Nauty.Correct.Generation.Loop

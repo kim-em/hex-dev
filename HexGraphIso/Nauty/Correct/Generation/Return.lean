@@ -74,7 +74,7 @@ theorem RefReturn.ofEarly {ctx : Ctx n}
   | exhausted returned state incumbent emptyFuel => exact (hfuel emptyFuel).elim
 
 /-- An off-path child's saved cheap boundary stays below no new ancestor. -/
-theorem OtherKeep.above {ctx : Ctx n} {level : Nat} {st out : SearchSt n}
+theorem _root_.Hex.GraphIso.Nauty.OtherKeep.above {ctx : Ctx n} {level : Nat} {st out : SearchSt n}
     (h : Nauty.OtherKeep ctx (level + 1) st out) (hb : level < st.noncheaplevel) :
     level < out.noncheaplevel := by
   by_cases hn : level < out.noncheaplevel

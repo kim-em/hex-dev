@@ -464,3 +464,11 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.PathCover.canon' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.PathCover.canon
+
+/-- info: 'Hex.GraphIso.Nauty.otherLoopTotal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.otherLoopTotal
+
+/-- info: 'Hex.GraphIso.Nauty.OtherSweep.reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.OtherSweep.reference
