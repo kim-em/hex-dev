@@ -356,10 +356,154 @@ private def runPair (p : PairInst) : IO Unit := do
     "\", \"exprB\": \"" ++ escape p.exprB ++ "\"}"
   (← IO.getStdout).flush
 
+/-! # The shared corpus file
+
+`dump` writes the materialized instances in the plain-text corpus format
+that the cross-implementation comparison reads, and `read` times this
+implementation on such a file. A corpus is a sequence of blocks
+
+```
+G <name> <family> <n>
+<n lines of n `0`/`1` characters>
+```
+
+one line per adjacency row. Handing every implementation the same file
+is what keeps that comparison honest: each is measured on one labelling
+of one graph, not on whatever its own family generator happens to emit.
+The format is line-oriented rather than JSON so that an `n = 2000`
+instance is 2000 short lines rather than one four-megabyte one, and
+`read` streams it, since a sweep reaching that size holds hundreds of
+megabytes of adjacency if the whole file is materialized first.
+`scripts/bench/graphiso_corpus.py` generates larger corpora in the same
+families; `scripts/bench/ffi/nauty_corpus_bench.c` is the unmarshalled
+nauty reference over the same file.
+-/
+
+/-- Emit one instance in the shared corpus format. -/
+private def dumpInst (i : Inst) : IO Unit := do
+  let ⟨n, G⟩ := i.packed
+  IO.println s!"G {i.name} {i.family} {n}"
+  for row in adjStrings G do
+    IO.println row
+  (← IO.getStdout).flush
+
+/-- Emit one pair problem's two materialized adjacencies together with
+its polarity, so that another implementation can be checked against the
+same decisions. Pairs stay JSON: they carry the polarity field, and
+they are small. -/
+private def dumpPair (p : PairInst) : IO Unit := do
+  let ⟨n, A, B⟩ := p.packed
+  unless isIso A B == p.iso do
+    throw <| IO.userError s!"pair {p.name}: polarity mismatch"
+  let quote (rows : List String) : String :=
+    String.intercalate ", " (rows.map fun r => "\"" ++ r ++ "\"")
+  IO.println <| "{\"family\": \"" ++ p.family ++ "\", \"name\": \"" ++
+    p.name ++ s!"\", \"n\": {n}, \"iso\": {p.iso}" ++
+    ", \"rowsA\": [" ++ quote (adjStrings A) ++
+    "], \"rowsB\": [" ++ quote (adjStrings B) ++ "]}"
+  (← IO.getStdout).flush
+
+/-- Read one corpus block from `h`, or `none` at end of file. -/
+private def chomp (s : String) : String :=
+  String.ofList (s.toList.reverse.dropWhile (fun c => c == '\n' || c == '\r')).reverse
+
+private def readBlock (h : IO.FS.Handle) :
+    IO (Option (String × String × Array String)) := do
+  let mut header := ""
+  repeat
+    let line ← h.getLine
+    if line.isEmpty then return none
+    let line := chomp line
+    if !line.isEmpty then
+      header := line
+      break
+  match header.splitOn " " with
+  | ["G", name, family, nStr] =>
+    let some n := nStr.toNat? | throw <| IO.userError s!"corpus: bad n {nStr}"
+    let mut rows : Array String := Array.emptyWithCapacity n
+    for _ in [0:n] do
+      let row := chomp (← h.getLine)
+      unless row.length == n do
+        throw <| IO.userError
+          s!"corpus: {name} has a row of length {row.length}, expected {n}"
+      rows := rows.push row
+    return some (name, family, rows)
+  | _ => throw <| IO.userError s!"corpus: bad header {header}"
+
+/-- Which column `read` measures. A sweep under a per-instance time
+budget runs one process per column, so that an instance's budget is
+spent on the one measurement it is being judged on. -/
+private inductive Column where
+  /-- The public `canonicalize`. -/
+  | canon
+  /-- The raw search `runColored`, whose result shape is the one other
+  canonical-labelling libraries return. -/
+  | run
+  /-- The pinned nauty comparator through the FFI. -/
+  | ffi
+  /-- All three. -/
+  | all
+
+private def Column.ofString? : String → Option Column
+  | "canon" => some .canon
+  | "run" => some .run
+  | "ffi" => some .ffi
+  | "all" => some .all
+  | _ => none
+
+/-- Time this implementation on one corpus instance. -/
+private def runRead (col : Column) (name family : String)
+    (rows : Array String) : IO Unit := do
+  let n := rows.size
+  let bits := rows.map fun r => (r.toList.map (· == '1')).toArray
+  if h : 0 < n then
+    let G := Graph.singleColor
+      (Graph.ofRel fun i j => (bits[i.val]!)[j.val]!) h
+    let want : Column → Bool
+      | .all => true
+      | c => match c, col with
+        | .canon, .canon | .run, .run | .ffi, .ffi => true
+        | _, _ => false
+    let mut fields : List String := []
+    if want .canon then
+      let ns ← timeMinNs fun _ => pure (digest (canonicalize G))
+      fields := s!"\"fast_ns\": {ns}" :: fields
+    if want .run then
+      let ns ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
+      fields := s!"\"lit_ns\": {ns}" :: fields
+    if want .ffi then
+      -- marshalled once, outside the timer
+      let prep ← Hex.BenchOracle.Nauty.prepare n 1 (List.replicate n 0)
+        (adjStrings G)
+      let ns ← timeMinNs fun _ => do
+        let r ← Hex.BenchOracle.Nauty.canonPrepared prep
+        pure (r.lab.foldl (· + ·) 0)
+      fields := s!"\"nauty_ffi_ns\": {ns}" :: fields
+    fields := s!"\"nodes\": {(Nauty.runColored G).numnodes}" :: fields
+    IO.println <| "{\"family\": \"" ++ family ++ "\", \"name\": \"" ++
+      name ++ s!"\", \"n\": {n}, " ++
+      String.intercalate ", " fields.reverse ++ "}"
+    (← IO.getStdout).flush
+
+/-- Stream a corpus file, timing each instance as it is read. -/
+private def runCorpus (col : Column) (path : String) : IO Unit := do
+  let h ← IO.FS.Handle.mk path .read
+  repeat
+    match ← readBlock h with
+    | none => break
+    | some (name, family, rows) => runRead col name family rows
+
 def main (args : List String) : IO Unit := do
   match args with
   | ["pairs"] => for p in pairInstances do runPair p
   | ["engine"] => for i in instances do runEngine i
+  | ["dump"] => for i in instances do dumpInst i
+  | ["dumppairs"] => for p in pairInstances do dumpPair p
+  | ["read", path] => runCorpus .all path
+  | ["read", path, col] =>
+    let some c := Column.ofString? col
+      | throw <| IO.userError s!"read: unknown column {col}"
+    runCorpus c path
   | _ => for i in instances do runInst i
 
 end Hex.GraphIsoCactus
