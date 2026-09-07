@@ -17,14 +17,20 @@ namespace Hex.GraphIso.Nauty.Engine
 
 variable {n k : Nat}
 
+/-- Positive capacity makes the newest slot readable even when insertion
+overwrites the last slot of a full workspace. -/
+theorem pushAuto_back {st : Search n} (hcap : 0 < st.wsCap) (pair : VSet n × VSet n) :
+    (pushAuto st pair).autos.back? = some pair := by
+  change (pushAuto st pair).view.autos.back? = some pair
+  rw [view_pushAuto]
+  exact Nauty.pushAuto_back hcap
+
 /-- A valid workspace exposes the newly inserted pair to the short filter,
 including the overwrite at capacity. -/
 theorem RunInv.push_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : RunInv G ctx st) (pair : VSet n × VSet n) :
-    (pushAuto st pair).autos.back? = some pair := by
-  change (pushAuto st pair).view.autos.back? = some pair
-  rw [view_pushAuto]
-  exact Nauty.pushAuto_back h.workspace.1
+    (pushAuto st pair).autos.back? = some pair :=
+  pushAuto_back h.workspace.1 pair
 
 /-- The short filter following an explicit admission reads that admission's pair. -/
 theorem RunInv.auto_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
@@ -73,6 +79,39 @@ theorem RunInv.short_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (hexit : (leafExit leaf level st).1 = .unwind target true) :
     (leafExit leaf level st).2.autos.back? = some (fmptn st.lab st.ptn st.noncheaplevel n) :=
   h.cheap_back ha (leafExit_cheap_short ha hexit)
+
+/-- Each short-prune request exposes the pair admitted by the same leaf
+action. Only code 2 and the implicit prune tail can set this flag. -/
+theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
+    {leaf : Leaf} {level target : Nat}
+    (hexit : (leafExit leaf level st).1 = .unwind target true) :
+    (leaf = .autoCanon ∧
+      (leafExit leaf level st).2.autos.back? = some (fmperm st.workperm n)) ∨
+    ((leaf = .bad ∨ ∃ sr, leaf = .better sr) ∧ level ≠ st.noncheaplevel ∧
+      (leafExit leaf level st).2.autos.back? = some (fmptn st.lab st.ptn st.noncheaplevel n)) := by
+  cases leaf with
+  | internal =>
+    unfold leafExit at hexit
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at hexit
+    split at hexit <;> simp at hexit
+  | autoFirst =>
+    unfold leafExit at hexit
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at hexit
+    split at hexit <;> simp at hexit
+  | autoCanon =>
+    refine Or.inl ⟨rfl, ?_⟩
+    rw [leafExit_autos, admit_autos]
+    exact pushAuto_back hcap _
+  | bad =>
+    have hne := leafExit_cheap_short (Or.inl rfl) hexit
+    refine Or.inr ⟨Or.inl rfl, hne, ?_⟩
+    rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
+    exact pushAuto_back hcap _
+  | better sr =>
+    have hne := leafExit_cheap_short (Or.inr ⟨sr, rfl⟩) hexit
+    refine Or.inr ⟨Or.inr ⟨sr, rfl⟩, hne, ?_⟩
+    rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
+    exact pushAuto_back hcap _
 
 /-- Recovery retains the pruning workspace seen by the just-completed child. -/
 theorem recover_autos (inf level : Nat) (st : Search n) :
