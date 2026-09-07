@@ -65,12 +65,18 @@ theorem cheap_canon (first : Bool) (level : Nat) (st : Search n) :
   split <;> rfl
 
 /-- Recovery clamps the canonical ancestor to the receiving sweep. -/
-theorem recover_canon_le (level : Nat) (st : Search n) :
-    (recoverLevels level st).gcaCanon ≤ level := by
+theorem recover_canon (level : Nat) (st : Search n) :
+    (recoverLevels level st).gcaCanon = min level st.gcaCanon := by
   unfold recoverLevels
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon]
   repeat' split
   all_goals omega
+
+/-- The recovered canonical ancestor is no deeper than its sweep. -/
+theorem recover_canon_le (level : Nat) (st : Search n) :
+    (recoverLevels level st).gcaCanon ≤ level := by
+  rw [recover_canon]
+  exact Nat.min_le_left _ _
 
 /-- Outside the first descent the first-path ancestor is a fixed frame. -/
 theorem gcaPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
