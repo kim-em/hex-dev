@@ -1237,9 +1237,11 @@ deliberately so. -/
 def Squarefree (p : MvPoly n R cmp) : Prop :=
   p ≠ 0 ∧ ∀ d, d * d ∣ p → IsConst d
 
+attribute [local instance] Lean.Grind.Semiring.natCast
+
 /-- Mathlib-free characteristic zero: every positive natural remains
-nonzero after casting to `R`. -/
-class NatNoZero (R : Type u) [Zero R] [NatCast R] : Prop where
+nonzero under the coefficient ring's own cast. -/
+class NatNoZero (R : Type u) [Lean.Grind.CommRing R] : Prop where
   natCast_ne_zero : ∀ m : Nat, 0 < m → (m : R) ≠ 0
 
 /-- The fraction field used to interpret the relative squarefree predicate
@@ -1327,7 +1329,21 @@ theorem radical_zero [NatNoZero R] : radical (0 : MvPoly n R cmp) = 0
 ```
 
 `NatNoZero R` asserts `(m : R) ≠ 0` for `0 < m`, which is characteristic
-zero stated Mathlib-free, with instances for `Int` and `Rat`.
+zero stated Mathlib-free, with instances for `Int` and `Rat`. The cast in
+this assertion is `Lean.Grind.Semiring.natCast` from the same
+`Lean.Grind.CommRing R` used for coefficient arithmetic. `derivatives`,
+`yunLoop`, `sqfStep`, `sqfOps`, `isSquarefree`, `radical`, `sqfDecomp`, and
+their correctness theorems take no independent `[NatCast R]` argument.
+The public decomposition helpers `yunLoop`, `sqfStep`, and `sqfOps` also
+require `[NatNoZero R]`; calling them directly does not bypass the
+characteristic-zero requirement of `sqfDecomp`. The arity-zero helper
+`sqfBase` only extracts a scalar and works in any coefficient characteristic.
+Every differentiation in this pipeline uses that ring cast, including the
+recursive content and Yun steps. A local cast supplied by a caller cannot
+change the decision or multiplicities, or certify characteristic zero for
+a positive-characteristic ring. The general `MvPoly.derivative` retains
+its explicit cast argument; these ring-based consumers fix it internally.
+
 `PerfectFrac R` asserts that the fraction field of `R` is perfect, which
 holds in characteristic zero and for finite fields, and fails for
 `F_p(t)`.
