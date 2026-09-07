@@ -925,6 +925,11 @@ remains informational and the ratios retain the PARI/Hex convention.
 | 8 | 1.874–1.877 | 47.711–48.059 | 0.0254–0.0256 | 0.0216–0.0218 |
 | 12 | 3.448–3.465 | 75.171–75.202 | 0.0217–0.0218 | 0.0196–0.0197 |
 
+After this collection, rebasing onto main `71d7d06bf` integrates the Conway
+table work. Rebuilding both sides preserves their executable hashes exactly
+(`5700c6bd…` and `e01da6b4…`), so the comparison above applies unchanged to
+the final integrated code.
+
 ### Rational squarefreeness
 
 The [sampling summaries](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json)

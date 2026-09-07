@@ -111,6 +111,9 @@
     "factor_ladder_speedup": [3.6503325755569973, 3.651090143489269],
     "replay_speedup": [3.8721362651589177, 3.9153667703525934],
     "host_audit_series": 12,
-    "host_audit_preserves_decisions": true
+    "host_audit_preserves_decisions": true,
+    "conway_integration_commit": "410f691c6",
+    "conway_baseline_hash_matches": true,
+    "conway_candidate_hash_matches": true
   }
 }
