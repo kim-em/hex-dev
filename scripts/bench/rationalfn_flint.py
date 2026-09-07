@@ -128,7 +128,9 @@ def main():
         digest = lambda path: hashlib.sha256(Path(path).read_bytes()).hexdigest()
         print(json.dumps({"rows": rows, "checked_cases": count, "repeats": args.repeats,
                           "trials": args.trials, "host": platform.node(),
-                          "platform": platform.platform(), "cpu_affinity": sorted(os.sched_getaffinity(0)),
+                          "platform": platform.platform(),
+                          "cpu_affinity": sorted(os.sched_getaffinity(0))
+                          if hasattr(os, "sched_getaffinity") else None,
                           "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                           "driver_sha256": digest(args.driver), "fixtures_sha256": digest(args.fixtures),
                           "coordinator_sha256": digest(__file__),
