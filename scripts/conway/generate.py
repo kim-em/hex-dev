@@ -118,10 +118,6 @@ def name(p, n):
     return f"luebeckConwayPolynomial_{p}_{n}"
 
 
-def digits(k):
-    return [int(x) for x in bin(k)[2:]]
-
-
 def cert(p, n, c):
     chain = [div([0, 1], c, p)[1]]
     for _ in range(n):
@@ -281,8 +277,7 @@ def primitive(entries):
         es = [e for q, e in fs]
         out += f"""/-- C({p}, {n}) has a generator of order {p**n-1}. -/
 theorem primitive_{p}_{n} :
-    Primitive {p} {n} supportedEntry_{p}_{n} {qs} {es}
-      {digits(p**n-1)} {[digits((p**n-1)//q) for q in qs]} where
+    Primitive {p} {n} supportedEntry_{p}_{n} {qs} {es} where
   primes := by
     intro q hq
 """
@@ -316,6 +311,7 @@ def shards(folder, blocks, imports, predecessors=None):
         if keys:
             p, n = map(int, keys[-1])
             return max(1, n**3 * p.bit_length() * len(factors(p**n - 1)))
+        # Transport blocks only wrap proofs; balance them by source line count.
         return len(block.splitlines())
 
     lanes, costs = [[], [], [], []], [0, 0, 0, 0]
@@ -478,25 +474,27 @@ def main():
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
     original_root = ROOT
-    temp = tempfile.TemporaryDirectory() if args.check else None
-    if temp:
-        ROOT = Path(temp.name)
-        for part in ["HexConway", "HexGFq", "HexGFqMathlib"]:
-            (ROOT / part).mkdir()
-        for part in ["HexConway/Primitivity.lean", "HexConway/Compatibility.lean"]:
-            shutil.copyfile(original_root / part, ROOT / part)
     data = json.loads((HERE / "candidates.json").read_text())
     rows = {(e["p"], e["n"]): e["coeffs"] for e in data["entries"]}
     if data.get("coefficient_order") != "ascending":
         raise ValueError("Expected ascending source coefficients")
     if len(rows) != len(data["entries"]):
         raise ValueError("Duplicate source keys")
+    shared = json.loads(
+        (original_root / "scripts/oracle/luebeck_conway_cache.json").read_text()
+    )["entries"]
+    for row in shared:
+        key = (row["p"], row["n"])
+        if key in rows and row["coeffs"] != rows[key]:
+            raise ValueError(f"Shared factorization corpus cache differs at {key}")
     scope = sorted(tuple(k) for k in json.loads(args.scope.read_text()))
-    assert len(scope) == len(set(scope))
+    if len(scope) != len(set(scope)):
+        raise ValueError("Duplicate scope keys")
     baseline = {
         tuple(k) for k in json.loads((HERE / "baseline-scope.json").read_text())
     }
-    assert baseline <= set(scope), "The verified baseline must be preserved"
+    if not baseline <= set(scope):
+        raise ValueError("The verified baseline must be preserved")
     for p, n in scope:
         if (
             not isinstance(p, int)
@@ -505,18 +503,24 @@ def main():
             or n < 1
         ):
             raise ValueError(f"Invalid scope key: {(p, n)}")
-        assert (p, n) in rows, (p, n, "unavailable")
-        assert all((p, d) in scope for d in range(1, n + 1) if n % d == 0), (
-            p,
-            n,
-            "missing divisor",
-        )
-        assert (
+        if (p, n) not in rows:
+            raise ValueError(f"Unavailable source entry: {(p, n)}")
+        if not all((p, d) in scope for d in range(1, n + 1) if n % d == 0):
+            raise ValueError(f"Missing degree divisor of {(p, n)}")
+        if not (
             len(rows[p, n]) == n + 1
             and rows[p, n][-1] == 1
-            and all(0 <= c < p for c in rows[p, n])
-        )
+            and all(isinstance(c, int) and 0 <= c < p for c in rows[p, n])
+        ):
+            raise ValueError(f"Invalid source coefficients: {(p, n)}")
     entries = [(p, n, rows[p, n]) for p, n in scope]
+    temp = tempfile.TemporaryDirectory() if args.check else None
+    if temp:
+        ROOT = Path(temp.name)
+        for part in ["HexConway", "HexGFq", "HexGFqMathlib"]:
+            (ROOT / part).mkdir()
+        for part in ["HexConway/Primitivity.lean", "HexConway/Compatibility.lean"]:
+            shutil.copyfile(original_root / part, ROOT / part)
     full_table = table(entries)
     literal_start = full_table.index("/-- Imported C(")
     coeff_start = full_table.index("/-- Imported coefficients")
@@ -601,7 +605,7 @@ def main():
         qs = [q for q, e in fs]
         es = [e for q, e in fs]
         divisors = ", ".join(f"({m}, {name(p,m)})" for m in range(1, n) if n % m == 0)
-        runtime += f"  measureEntry {p} {n} ⟨{name(p,n)}, {name(p,n)}_monic⟩ {qs} {es} {digits(p**n-1)} {[digits((p**n-1)//q) for q in qs]} [{divisors}]\n"
+        runtime += f"  measureEntry {p} {n} ⟨{name(p,n)}, {name(p,n)}_monic⟩ {qs} {es} [{divisors}]\n"
     runtime += "\ndef main : IO Unit := do\n" + "".join(
         f"  run{i}\n" for i in range((len(entries) + 23) // 24)
     )

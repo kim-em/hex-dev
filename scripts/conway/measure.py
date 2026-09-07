@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import time
+from provenance import sources, dependencies, hashes, imports
 
 
 def clean(prefix):
@@ -59,6 +60,11 @@ def main():
     ap.add_argument("--threads", type=int, default=8)
     ap.add_argument("--companion", action="store_true")
     ap.add_argument(
+        "--warm-dependencies",
+        action="store_true",
+        help="Build external imports before cleaning and starting the clock",
+    )
+    ap.add_argument(
         "--ceiling",
         type=float,
         default=0,
@@ -82,7 +88,28 @@ def main():
         )
     prefix = "HexGFqMathlib" if args.companion else "HexConway"
     prefixes = ["HexGFq", "HexGFqMathlib"] if args.companion else [prefix]
-    targets = ["HexGFqMathlib"] if args.companion else ["HexConway"]
+    targets = ["HexGFq", "HexGFqMathlib"] if args.companion else ["HexConway"]
+    timer = shutil.which("time")
+    if timer is None or "GNU" not in subprocess.check_output(
+        [timer, "--version"], text=True
+    ):
+        ap.error("GNU time is required (install the system 'time' package)")
+    measured_sources = sources(prefixes)
+    external_imports = sorted(
+        {
+            name
+            for path in measured_sources
+            for name in imports(path)
+            if name.split(".", 1)[0] not in prefixes
+            and Path(name.replace(".", "/") + ".lean").is_file()
+        }
+    )
+    if args.warm_dependencies:
+        subprocess.run(
+            ["lake", "--no-cache", "build", *external_imports],
+            check=True,
+            env={**os.environ, "LEAN_NUM_THREADS": str(args.threads)},
+        )
     out = Path("reports/conway")
     out.mkdir(exist_ok=True, parents=True)
     report = dict(
@@ -109,6 +136,10 @@ def main():
         rss_sampling_seconds=0.1,
         targets=targets,
         commit=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        dirty=bool(
+            subprocess.check_output(["git", "status", "--porcelain"], text=True)
+        ),
+        warmed_imports=external_imports if args.warm_dependencies else [],
         runs=[],
     )
     report["scope"] = json.loads(Path("scripts/conway/scope.json").read_text())
@@ -117,22 +148,15 @@ def main():
         for p in sorted(Path("scripts/conway").glob("*"))
         if p.is_file() and p.suffix in {".py", ".json", ".in", ".txt"}
     }
-    report["source_sha256"] = {
-        str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in sorted(
-            p
-            for name in prefixes
-            for p in [*Path(name).rglob("*.lean"), Path(name + ".lean")]
-        )
-        if p.exists()
-    }
+    report["source_sha256"] = hashes(measured_sources)
+    report["dependency_sha256"] = hashes(dependencies(measured_sources))
     for i in range(args.runs):
         for name in prefixes:
             clean(name)
         log = out / f"{args.label}-{i+1}.log"
         timing = out / f"{args.label}-{i+1}.time"
         cmd = [
-            "time",
+            timer,
             "-v",
             "-o",
             str(timing),

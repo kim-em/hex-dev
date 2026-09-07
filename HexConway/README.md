@@ -74,9 +74,11 @@ example : DensePoly.Monic f := conwayPoly_monic 3 4 supportedEntry_3_4
   computed by `compatCheck`. `subfieldGen` names the norm element it is about,
   and `subfieldGen_eq_norm` proves that it is
   `X ^ ((p^n - 1) / (p^m - 1))` in the quotient.
-- `Primitive p n h qs es fullDigits perPrimeDigits` is primitivity, computed by
+- `Primitive p n h qs es` is primitivity, computed by
   `primitiveCheck`, which validates the supplied factorization of `p^n - 1`
   before running the two power conditions.
+- Primitivity and compatibility are exposed as named `primitive_p_n` and
+  `compat_p_m_n` facts; they do not have a dispatcher over arbitrary lookup witnesses.
 - `supportedPairs` enumerates the exact verified keys. The development
   monorepo's `scripts/conway/scope.json` is the generation input; the shared
   factorization corpus cache is kept separate.

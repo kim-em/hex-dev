@@ -107,8 +107,8 @@ Rabin certificates contain the Frobenius chain and Bezout witnesses. The
 binary checker is proved equal to the existing incremental Rabin checker,
 whose soundness yields irreducibility. There is no new trust assumption.
 
-Primitivity validates a factorization of `N = p^n - 1`, checks that the supplied
-binary digit lists encode the full and prime-divided exponents, and verifies
+Primitivity validates a factorization of `N = p^n - 1`, computes the full and
+prime-divided exponents directly, and verifies
 `α^N = 1` and `α^(N/q) ≠ 1` for every factor prime `q`. A factor-primality proof
 is shared across all entries using that prime. Factors below 100000 use bounded
 trial division. Larger factors use `Hex.Nat.checkPockArith` with separately
@@ -157,3 +157,7 @@ comparator for this imported-table service (`input-source-only` under
 On-demand search for a lexicographically minimal compatible polynomial is a
 separate, unimplemented feature. Lookup and verification do not invoke it, and
 expanding imported coverage does not reopen that search feature.
+
+Primitivity and compatibility APIs expose named `primitive_p_n` and
+`compat_p_m_n` facts for each supported pair. Unlike the irreducibility and
+monicity APIs, these do not dispatch over an arbitrary lookup witness.

@@ -22,8 +22,7 @@ namespace Conway
 
 /-- C(113, 1) has a generator of order 112. -/
 theorem primitive_113_1 :
-    Primitive 113 1 supportedEntry_113_1 [2, 7] [4, 1]
-      [1, 1, 1, 0, 0, 0, 0] [[1, 1, 1, 0, 0, 0], [1, 0, 0, 0, 0]] where
+    Primitive 113 1 supportedEntry_113_1 [2, 7] [4, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -35,8 +34,7 @@ theorem primitive_113_1 :
 
 /-- C(59, 1) has a generator of order 58. -/
 theorem primitive_59_1 :
-    Primitive 59 1 supportedEntry_59_1 [2, 29] [1, 1]
-      [1, 1, 1, 0, 1, 0] [[1, 1, 1, 0, 1], [1, 0]] where
+    Primitive 59 1 supportedEntry_59_1 [2, 29] [1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -48,8 +46,7 @@ theorem primitive_59_1 :
 
 /-- C(257, 1) has a generator of order 256. -/
 theorem primitive_257_1 :
-    Primitive 257 1 supportedEntry_257_1 [2] [8]
-      [1, 0, 0, 0, 0, 0, 0, 0, 0] [[1, 0, 0, 0, 0, 0, 0, 0]] where
+    Primitive 257 1 supportedEntry_257_1 [2] [8] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -59,8 +56,7 @@ theorem primitive_257_1 :
 
 /-- C(13, 1) has a generator of order 12. -/
 theorem primitive_13_1 :
-    Primitive 13 1 supportedEntry_13_1 [2, 3] [2, 1]
-      [1, 1, 0, 0] [[1, 1, 0], [1, 0, 0]] where
+    Primitive 13 1 supportedEntry_13_1 [2, 3] [2, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq

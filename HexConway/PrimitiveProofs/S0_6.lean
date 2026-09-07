@@ -22,8 +22,7 @@ namespace Conway
 
 /-- C(17, 1) has a generator of order 16. -/
 theorem primitive_17_1 :
-    Primitive 17 1 supportedEntry_17_1 [2] [4]
-      [1, 0, 0, 0, 0] [[1, 0, 0, 0]] where
+    Primitive 17 1 supportedEntry_17_1 [2] [4] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -33,8 +32,7 @@ theorem primitive_17_1 :
 
 /-- C(5, 1) has a generator of order 4. -/
 theorem primitive_5_1 :
-    Primitive 5 1 supportedEntry_5_1 [2] [2]
-      [1, 0, 0] [[1, 0]] where
+    Primitive 5 1 supportedEntry_5_1 [2] [2] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq

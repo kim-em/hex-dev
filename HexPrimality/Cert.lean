@@ -624,7 +624,9 @@ private theorem checkPock3Arith_spec {n r s w : Nat}
 /-- Pocklington replay with separately proved child primes. This permits a
 certificate generator to share child proofs across many parent certificates.
 Only each child's subject is used; `checkPockArith` validates the parent
-arithmetic, factor ordering and witnesses. -/
+arithmetic, factor ordering and witnesses. The `PrimeCert` payload is ignored
+apart from its subject: a `.small q` here is not checked against the table.
+The separate `hprimes` hypothesis must prove that `q` is prime. -/
 theorem prime_of_pocklington {n : Nat}
     {factors : List (Nat × Nat × PrimeCert)}
     (hcheck : checkPockArith n factors = true)

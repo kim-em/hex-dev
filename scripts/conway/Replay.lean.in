@@ -17,7 +17,7 @@ These timings measure runtime verification, not proof elaboration or replay. -/
 
 private def measureEntry (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (input : {f : FpPoly p // DensePoly.Monic f})
-    (qs es fullDigits : List Nat) (perPrimeDigits : List (List Nat))
+    (qs es : List Nat)
     (divisors : List (Nat × FpPoly p)) : IO Unit := do
   let ref ← IO.mkRef input
   let f ← ref.get
@@ -25,7 +25,7 @@ private def measureEntry (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   unless Berlekamp.rabinTest f.val f.property do
     throw <| IO.userError s!"irreducibility failed: ({p}, {n})"
   let irreducible ← IO.monoNanosNow
-  unless primitiveCheck f.val f.property n qs es fullDigits perPrimeDigits do
+  unless primitiveCheck f.val f.property n qs es do
     throw <| IO.userError s!"primitivity failed: ({p}, {n})"
   let primitive ← IO.monoNanosNow
   for (m, small) in divisors do

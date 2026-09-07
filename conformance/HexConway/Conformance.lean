@@ -67,6 +67,8 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
 #guard coeffs? 13 5 = some [11, 4, 0, 0, 0, 1]
 #guard coeffs? 13 6 = some [2, 11, 11, 10, 0, 0, 1]
 
+#guard luebeckConwayCoeffs? 1009 1 = none
+
 #guard luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
 #guard luebeckConwayPolynomial? 2 129 = (none : Option (FpPoly 2))
 #guard luebeckConwayPolynomial? 3 129 = (none : Option (FpPoly 3))
@@ -477,16 +479,15 @@ failure the next time the table is widened. -/
 
 -- GF(2) explicitly has the trivial multiplicative group.
 #guard primitiveCheck luebeckConwayPolynomial_2_1 luebeckConwayPolynomial_2_1_monic
-  1 [] [] [1] []
--- Missing factors, incorrect multiplicities and incorrect exponents are rejected.
+  1 [] []
+-- Missing factors and incorrect multiplicities are rejected.
 #guard !primitiveCheck luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic
-  2 [] [] [1, 0, 0, 0] []
+  2 [] []
 #guard !primitiveCheck luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic
-  2 [2] [2] [1, 0, 0, 0] [[1, 0, 0]]
-#guard !primitiveCheck luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic
-  2 [2] [3] [1, 0, 0] [[1, 0, 0]]
-#guard !primitiveCheck luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic
-  2 [2] [3] [1, 0, 0, 0] [[1]]
+  2 [2] [2]
+-- A nonprimitive generator fails the prime-divided power condition.
+#guard !primitiveCheck luebeckConwayPolynomial_3_1 luebeckConwayPolynomial_3_1_monic
+  2 [2] [3]
 #guard !compatCheck luebeckConwayPolynomial_11_4 luebeckConwayPolynomial_11_6
   luebeckConwayPolynomial_11_6_monic 4 1
 

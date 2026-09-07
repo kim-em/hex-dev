@@ -97,7 +97,7 @@ jobs:
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user \
-            python-flint gmpy2 cypari2 conway-polynomials sympy matplotlib==3.11.1
+            python-flint gmpy2 cypari2 conway-polynomials sympy==1.14.0 matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
       - name: Verify performance measurements and figures are current
         run: |
@@ -196,28 +196,29 @@ jobs:
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
       # previously-separate conformance workflow reuse this job's build instead
-      # of recompiling the whole graph a second time. Kept as three sequential
-      # `lake build` invocations rather than one: a single invocation lets Lake
+      # of recompiling the whole graph a second time. Kept as sequential
+      # build stages rather than one: a single invocation lets Lake
       # parallelize the Mathlib-heavy library compiles, the exe links, the
       # conformance/fixture builds, and the Verso manual all at once, whose
       # combined memory peak exhausts the runner. Sequential invocations share
-      # `.lake/build` (no recompilation) but cap the peak at whichever single
+      # `.lake/build` after the initial clean Conway measurements, and cap the peak at whichever
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
         run: |
-          # Complete the Conway proof chains before the rest of the graph so
-          # their memory peak does not overlap unrelated Mathlib elaboration.
-          lake build HexConway
+          # Warm external dependencies outside the measurement, then perform
+          # each clean build once before the rest of the graph. Subsequent
+          # targets reuse these outputs. Hosted limits bound regressions;
+          # the 300-second acceptance ceiling belongs to the named machine.
+          python3 scripts/conway/measure.py ci-conway --runs 1 --threads 4 \
+            --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
+          python3 scripts/conway/measure.py ci-bridge --runs 1 --threads 4 --companion \
+            --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Verify Conway generation and compiled certificates
         run: |
-          python3 -m pip install --user -r scripts/conway/requirements.txt
+          python3 -m unittest scripts/conway/test_tools.py
           python3 scripts/conway/generate.py --check
           .lake/build/bin/hexconway_replay > reports/conway/ci-runtime.jsonl
-      - name: Measure clean Conway and companion rebuilds
-        run: |
-          python3 scripts/conway/measure.py ci-conway --runs 1 --threads 4
-          python3 scripts/conway/measure.py ci-bridge --runs 1 --threads 4 --companion
       - name: Upload Conway rebuild evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -62,6 +62,10 @@ The source hashes of the accepted Conway and companion runs match the committed
 library sources; later runtime-driver batching does not change those modules.
 For capped runs these are incomplete artifacts, not the size of a full library.
 
+The worst accepted run leaves **29.037 seconds (9.7%)** below the ceiling.
+Adding entries or changing replay code requires three fresh measurements;
+marginal costs do not justify extrapolating acceptance.
+
 ## Candidate measurements
 
 | Scope / raw evidence | Entries | Wall seconds, three runs | Peak RSS GiB | Output MiB | Result |

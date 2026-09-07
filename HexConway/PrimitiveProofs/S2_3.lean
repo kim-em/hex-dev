@@ -22,8 +22,7 @@ namespace Conway
 
 /-- C(937, 2) has a generator of order 877968. -/
 theorem primitive_937_2 :
-    Primitive 937 2 supportedEntry_937_2 [2, 3, 7, 13, 67] [4, 2, 1, 1, 1]
-      [1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0] [[1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0], [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0]] where
+    Primitive 937 2 supportedEntry_937_2 [2, 3, 7, 13, 67] [4, 2, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -41,8 +40,7 @@ theorem primitive_937_2 :
 
 /-- C(967, 2) has a generator of order 935088. -/
 theorem primitive_967_2 :
-    Primitive 967 2 supportedEntry_967_2 [2, 3, 7, 11, 23] [4, 1, 1, 2, 1]
-      [1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0] [[1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0], [1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0], [1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0]] where
+    Primitive 967 2 supportedEntry_967_2 [2, 3, 7, 11, 23] [4, 1, 1, 2, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -60,8 +58,7 @@ theorem primitive_967_2 :
 
 /-- C(331, 2) has a generator of order 109560. -/
 theorem primitive_331_2 :
-    Primitive 331 2 supportedEntry_331_2 [2, 3, 5, 11, 83] [3, 1, 1, 1, 1]
-      [1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0] [[1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0], [1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0], [1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0]] where
+    Primitive 331 2 supportedEntry_331_2 [2, 3, 5, 11, 83] [3, 1, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -79,8 +76,7 @@ theorem primitive_331_2 :
 
 /-- C(389, 2) has a generator of order 151320. -/
 theorem primitive_389_2 :
-    Primitive 389 2 supportedEntry_389_2 [2, 3, 5, 13, 97] [3, 1, 1, 1, 1]
-      [1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0] [[1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0], [1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0], [1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0], [1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0], [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0]] where
+    Primitive 389 2 supportedEntry_389_2 [2, 3, 5, 13, 97] [3, 1, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -98,8 +94,7 @@ theorem primitive_389_2 :
 
 /-- C(443, 2) has a generator of order 196248. -/
 theorem primitive_443_2 :
-    Primitive 443 2 supportedEntry_443_2 [2, 3, 13, 17, 37] [3, 1, 1, 1, 1]
-      [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0] [[1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0], [1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0], [1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0]] where
+    Primitive 443 2 supportedEntry_443_2 [2, 3, 13, 17, 37] [3, 1, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -117,8 +112,7 @@ theorem primitive_443_2 :
 
 /-- C(13, 3) has a generator of order 2196. -/
 theorem primitive_13_3 :
-    Primitive 13 3 supportedEntry_13_3 [2, 3, 61] [2, 2, 1]
-      [1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0] [[1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0], [1, 0, 1, 1, 0, 1, 1, 1, 0, 0], [1, 0, 0, 1, 0, 0]] where
+    Primitive 13 3 supportedEntry_13_3 [2, 3, 61] [2, 2, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -132,8 +126,7 @@ theorem primitive_13_3 :
 
 /-- C(211, 2) has a generator of order 44520. -/
 theorem primitive_211_2 :
-    Primitive 211 2 supportedEntry_211_2 [2, 3, 5, 7, 53] [3, 1, 1, 1, 1]
-      [1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0] [[1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0], [1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0], [1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0], [1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0], [1, 1, 0, 1, 0, 0, 1, 0, 0, 0]] where
+    Primitive 211 2 supportedEntry_211_2 [2, 3, 5, 7, 53] [3, 1, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -151,8 +144,7 @@ theorem primitive_211_2 :
 
 /-- C(541, 2) has a generator of order 292680. -/
 theorem primitive_541_2 :
-    Primitive 541 2 supportedEntry_541_2 [2, 3, 5, 271] [3, 3, 1, 1]
-      [1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0] [[1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0], [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]] where
+    Primitive 541 2 supportedEntry_541_2 [2, 3, 5, 271] [3, 3, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -168,8 +160,7 @@ theorem primitive_541_2 :
 
 /-- C(593, 2) has a generator of order 351648. -/
 theorem primitive_593_2 :
-    Primitive 593 2 supportedEntry_593_2 [2, 3, 11, 37] [5, 3, 1, 1]
-      [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0] [[1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0], [1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0], [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0]] where
+    Primitive 593 2 supportedEntry_593_2 [2, 3, 11, 37] [5, 3, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -185,8 +176,7 @@ theorem primitive_593_2 :
 
 /-- C(647, 2) has a generator of order 418608. -/
 theorem primitive_647_2 :
-    Primitive 647 2 supportedEntry_647_2 [2, 3, 17, 19] [4, 4, 1, 1]
-      [1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0] [[1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0], [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0], [1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0]] where
+    Primitive 647 2 supportedEntry_647_2 [2, 3, 17, 19] [4, 4, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -202,8 +192,7 @@ theorem primitive_647_2 :
 
 /-- C(719, 2) has a generator of order 516960. -/
 theorem primitive_719_2 :
-    Primitive 719 2 supportedEntry_719_2 [2, 3, 5, 359] [5, 2, 1, 1]
-      [1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0] [[1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0], [1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0], [1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], [1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0]] where
+    Primitive 719 2 supportedEntry_719_2 [2, 3, 5, 359] [5, 2, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -219,8 +208,7 @@ theorem primitive_719_2 :
 
 /-- C(773, 2) has a generator of order 597528. -/
 theorem primitive_773_2 :
-    Primitive 773 2 supportedEntry_773_2 [2, 3, 43, 193] [3, 2, 1, 1]
-      [1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0] [[1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0], [1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0], [1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0], [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]] where
+    Primitive 773 2 supportedEntry_773_2 [2, 3, 43, 193] [3, 2, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -236,8 +224,7 @@ theorem primitive_773_2 :
 
 /-- C(877, 2) has a generator of order 769128. -/
 theorem primitive_877_2 :
-    Primitive 877 2 supportedEntry_877_2 [2, 3, 73, 439] [3, 1, 1, 1]
-      [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0] [[1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0], [1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0], [1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0]] where
+    Primitive 877 2 supportedEntry_877_2 [2, 3, 73, 439] [3, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -253,8 +240,7 @@ theorem primitive_877_2 :
 
 /-- C(977, 2) has a generator of order 954528. -/
 theorem primitive_977_2 :
-    Primitive 977 2 supportedEntry_977_2 [2, 3, 61, 163] [5, 1, 1, 1]
-      [1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0] [[1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0], [1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0], [1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0], [1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0]] where
+    Primitive 977 2 supportedEntry_977_2 [2, 3, 61, 163] [5, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -270,8 +256,7 @@ theorem primitive_977_2 :
 
 /-- C(269, 2) has a generator of order 72360. -/
 theorem primitive_269_2 :
-    Primitive 269 2 supportedEntry_269_2 [2, 3, 5, 67] [3, 3, 1, 1]
-      [1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0] [[1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0], [1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]] where
+    Primitive 269 2 supportedEntry_269_2 [2, 3, 5, 67] [3, 3, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -287,8 +272,7 @@ theorem primitive_269_2 :
 
 /-- C(293, 2) has a generator of order 85848. -/
 theorem primitive_293_2 :
-    Primitive 293 2 supportedEntry_293_2 [2, 3, 7, 73] [3, 1, 2, 1]
-      [1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0] [[1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0], [1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0], [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0], [1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0]] where
+    Primitive 293 2 supportedEntry_293_2 [2, 3, 7, 73] [3, 1, 2, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -304,8 +288,7 @@ theorem primitive_293_2 :
 
 /-- C(347, 2) has a generator of order 120408. -/
 theorem primitive_347_2 :
-    Primitive 347 2 supportedEntry_347_2 [2, 3, 29, 173] [3, 1, 1, 1]
-      [1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0] [[1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0], [1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 1, 1, 0, 0, 0]] where
+    Primitive 347 2 supportedEntry_347_2 [2, 3, 29, 173] [3, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -321,8 +304,7 @@ theorem primitive_347_2 :
 
 /-- C(397, 2) has a generator of order 157608. -/
 theorem primitive_397_2 :
-    Primitive 397 2 supportedEntry_397_2 [2, 3, 11, 199] [3, 2, 1, 1]
-      [1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0] [[1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0], [1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0], [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], [1, 1, 0, 0, 0, 1, 1, 0, 0, 0]] where
+    Primitive 397 2 supportedEntry_397_2 [2, 3, 11, 199] [3, 2, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -338,8 +320,7 @@ theorem primitive_397_2 :
 
 /-- C(449, 2) has a generator of order 201600. -/
 theorem primitive_449_2 :
-    Primitive 449 2 supportedEntry_449_2 [2, 3, 5, 7] [7, 2, 2, 1]
-      [1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0] [[1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]] where
+    Primitive 449 2 supportedEntry_449_2 [2, 3, 5, 7] [7, 2, 2, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -355,8 +336,7 @@ theorem primitive_449_2 :
 
 /-- C(499, 2) has a generator of order 249000. -/
 theorem primitive_499_2 :
-    Primitive 499 2 supportedEntry_499_2 [2, 3, 5, 83] [3, 1, 3, 1]
-      [1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0] [[1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0], [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0], [1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0]] where
+    Primitive 499 2 supportedEntry_499_2 [2, 3, 5, 83] [3, 1, 3, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -372,8 +352,7 @@ theorem primitive_499_2 :
 
 /-- C(3, 4) has a generator of order 80. -/
 theorem primitive_3_4 :
-    Primitive 3 4 supportedEntry_3_4 [2, 5] [4, 1]
-      [1, 0, 1, 0, 0, 0, 0] [[1, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0]] where
+    Primitive 3 4 supportedEntry_3_4 [2, 5] [4, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -385,8 +364,7 @@ theorem primitive_3_4 :
 
 /-- C(157, 2) has a generator of order 24648. -/
 theorem primitive_157_2 :
-    Primitive 157 2 supportedEntry_157_2 [2, 3, 13, 79] [3, 1, 1, 1]
-      [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0] [[1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0], [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0], [1, 0, 0, 1, 1, 1, 0, 0, 0]] where
+    Primitive 157 2 supportedEntry_157_2 [2, 3, 13, 79] [3, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -402,8 +380,7 @@ theorem primitive_157_2 :
 
 /-- C(191, 2) has a generator of order 36480. -/
 theorem primitive_191_2 :
-    Primitive 191 2 supportedEntry_191_2 [2, 3, 5, 19] [7, 1, 1, 1]
-      [1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0] [[1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0], [1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]] where
+    Primitive 191 2 supportedEntry_191_2 [2, 3, 5, 19] [7, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
@@ -419,8 +396,7 @@ theorem primitive_191_2 :
 
 /-- C(227, 2) has a generator of order 51528. -/
 theorem primitive_227_2 :
-    Primitive 227 2 supportedEntry_227_2 [2, 3, 19, 113] [3, 1, 1, 1]
-      [1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0] [[1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0], [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 1, 0, 0, 0]] where
+    Primitive 227 2 supportedEntry_227_2 [2, 3, 19, 113] [3, 1, 1, 1] where
   primes := by
     intro q hq
     rcases List.mem_cons.mp hq with rfl | hq

@@ -92,43 +92,12 @@ theorem reduceMod_powerResidue (hm : Hex.DensePoly.Monic f) (k : Nat) :
     fun y => by rw [Hex.FpPoly.modByMonic, Hex.DensePoly.modByMonic_eq_mod]; rfl]
   exact Hex.GFqRing.reduceMod_idem f _
 
-/-- The executable Horner power carries too, with the accumulator contributing
-its own `q ^ length` factor. -/
-theorem ofPolyHom_digitPowMod (hm : Hex.DensePoly.Monic f) (q : Nat)
-    (x : Hex.FpPoly p) :
-    ∀ (ds : List Nat) (acc : Hex.FpPoly p),
-      ofPolyHom f hf hp hirr (Hex.Conway.digitPowMod f hm q x acc ds) =
-        (ofPolyHom f hf hp hirr acc) ^ (q ^ ds.length) *
-          (ofPolyHom f hf hp hirr x) ^ (Hex.Conway.digitsValue q ds)
-  | [], acc => by
-      show ofPolyHom f hf hp hirr acc = _
-      rw [List.length_nil, pow_zero, pow_one, Hex.Conway.digitsValue, pow_zero,
-        mul_one]
-  | d :: ds, acc => by
-      show ofPolyHom f hf hp hirr
-          (Hex.Conway.digitPowMod f hm q x
-            (Hex.FpPoly.modByMonic f
-              (Hex.Conway.linPowMod f hm acc q * Hex.Conway.linPowMod f hm x d) hm)
-            ds) = _
-      rw [ofPolyHom_digitPowMod hm q x ds, ofPolyHom_modByMonic, map_mul,
-        ofPolyHom_linPowMod, ofPolyHom_linPowMod, mul_pow, ← pow_mul, ← pow_mul,
-        Hex.Conway.digitsValue, List.length_cons, pow_succ, mul_assoc,
-        ← pow_add]
-      ring_nf
-
-/-- With the accumulator at `1`, the Horner power is exactly the power at the
-digit list's value. -/
-theorem ofPolyHom_digitPowMod_one (hm : Hex.DensePoly.Monic f) (q : Nat)
-    (x : Hex.FpPoly p) (ds : List Nat) :
-    ofPolyHom f hf hp hirr (Hex.Conway.digitPowMod f hm q x 1 ds) =
-      (ofPolyHom f hf hp hirr x) ^ (Hex.Conway.digitsValue q ds) := by
-  rw [ofPolyHom_digitPowMod, map_one, one_pow, one_mul]
-
 /-! # From the executable check to `orderOf`
 
 Two more ingredients. Reduction is not injective in general, so a `≠ 1` on
 representatives does not by itself give a `≠ 1` in the field — but on *reduced*
-representatives it does, and the Horner power always returns one. And the
+representatives it does: `reduceMod_powerResidue` proves that `powerResidue`
+always returns a reduced representative. The
 supplied prime list has to be shown exhaustive, which is where the validated
 product does its work.
 -/
@@ -148,26 +117,6 @@ theorem ofPolyHom_eq_one_iff {y : Hex.FpPoly p}
   · intro h
     subst h
     exact map_one _
-
-set_option maxHeartbeats 400000 in
-/-- The Horner power returns a reduced representative on a nonempty digit
-list: its last step is a reduction. -/
-theorem reduceMod_digitPowMod (hm : Hex.DensePoly.Monic f) (q : Nat)
-    (x : Hex.FpPoly p) :
-    ∀ (ds : List Nat) (acc : Hex.FpPoly p), ds ≠ [] →
-      Hex.GFqRing.reduceMod f (Hex.Conway.digitPowMod f hm q x acc ds) =
-        Hex.Conway.digitPowMod f hm q x acc ds
-  | [], _, h => absurd rfl h
-  | [_], acc, _ => by
-      show Hex.GFqRing.reduceMod f (Hex.FpPoly.modByMonic f _ hm) =
-        Hex.FpPoly.modByMonic f _ hm
-      rw [show ∀ y, Hex.FpPoly.modByMonic f y hm = Hex.GFqRing.reduceMod f y from
-        fun y => by rw [Hex.FpPoly.modByMonic, Hex.DensePoly.modByMonic_eq_mod]; rfl]
-      exact Hex.GFqRing.reduceMod_idem f _
-  | d :: e :: ds, acc, _ => by
-      show Hex.GFqRing.reduceMod f
-          (Hex.Conway.digitPowMod f hm q x _ (e :: ds)) = _
-      exact reduceMod_digitPowMod hm q x (e :: ds) _ (by simp)
 
 /-- Hex's Mathlib-free prime predicate implies Mathlib's. -/
 theorem mathlibPrime_of_hexPrime {q : Nat} (h : Hex.Nat.Prime q) :
@@ -211,62 +160,48 @@ theorem mem_of_prime_dvd_primePowerProduct :
 generator has multiplicative order `p ^ n - 1`.
 
 This is the assembly point for the component transport lemmas above. The
-factorization check makes `qs` exhaustive, while the two digit-power checks
+factorization check makes `qs` exhaustive, while the two power checks
 become the hypotheses of `orderOf_eq_of_pow_and_pow_div_prime`. -/
 theorem orderOf_gen_of_primitive {n : Nat} (h : Hex.Conway.SupportedEntry p n)
-    {qs es fullDigits : List Nat} {perPrimeDigits : List (List Nat)}
-    (hprimitive : Hex.Conway.Primitive p n h qs es fullDigits perPrimeDigits) :
+    {qs es : List Nat}
+    (hprimitive : Hex.Conway.Primitive p n h qs es) :
     orderOf (Hex.GFq.ofPoly h Hex.FpPoly.X) = p ^ n - 1 := by
   have hcheck := hprimitive.check
   simp only [Hex.Conway.primitiveCheck, Bool.and_eq_true, beq_iff_eq,
     List.all_eq_true] at hcheck
-  -- Factorization, full digits, list length, per-prime digits, full power,
-  -- and per-prime powers, in `primitiveCheck` order.
-  rcases hcheck with
-    ⟨⟨⟨⟨⟨hfactor, hfullDigits⟩, hlength⟩, hperDigits⟩, hfullPower⟩, hperPower⟩
+  rcases hcheck with ⟨⟨hfactor, hfullPower⟩, hperPower⟩
   apply orderOf_eq_of_pow_and_pow_div_prime
   · have hn : 0 < n := by
       simpa only [HexGFqMathlib.GFq.conwayPoly_degree h] using
         Hex.Conway.conwayPoly_nonconstant p n h
     exact Nat.sub_pos_of_lt (Nat.one_lt_pow (Nat.ne_of_gt hn) h.prime.one_lt)
-  · rw [← hfullDigits]
-    change (ofPolyHom (Hex.Conway.conwayPoly p n h)
+  · change (ofPolyHom (Hex.Conway.conwayPoly p n h)
       (Hex.Conway.conwayPoly_nonconstant p n h) h.prime
       (Hex.Conway.conwayPoly_irreducible p n h) Hex.FpPoly.X) ^
-        Hex.Conway.digitsValue 2 fullDigits = 1
+        (p ^ n - 1) = 1
     rw [← ofPolyHom_powerResidue
-      (Hex.Conway.conwayPoly_monic p n h) (Hex.Conway.digitsValue 2 fullDigits)]
+      (Hex.Conway.conwayPoly_monic p n h) ((p ^ n - 1))]
     rw [hfullPower, map_one]
     rfl
   · intro q hq hqdiv
     have hqmem : q ∈ qs := mem_of_prime_dvd_primePowerProduct qs es hq
       (fun r hr => mathlibPrime_of_hexPrime (hprimitive.primes r hr))
       (hfactor.symm ▸ hqdiv)
-    have hqmap : q ∈ (qs.zip perPrimeDigits).map Prod.fst := by
-      rw [List.map_fst_zip (Nat.le_of_eq hlength.symm)]
-      exact hqmem
-    obtain ⟨⟨r, ds⟩, hrds, hr⟩ := List.mem_map.mp hqmap
-    change r = q at hr
-    subst r
-    have hds : ds ∈ perPrimeDigits := (List.of_mem_zip hrds).2
-    have hdigits : Hex.Conway.digitsValue 2 ds = (p ^ n - 1) / q :=
-      hperDigits (q, ds) hrds
     have hrep : Hex.Conway.powerResidue (Hex.Conway.conwayPoly p n h)
-        (Hex.Conway.conwayPoly_monic p n h) (Hex.Conway.digitsValue 2 ds) ≠ 1 := by
+        (Hex.Conway.conwayPoly_monic p n h) (((p ^ n - 1) / q)) ≠ 1 := by
       intro heq
-      have hnot := hperPower ds hds
+      have hnot := hperPower q hqmem
       rw [heq] at hnot
       simp at hnot
-    rw [← hdigits]
     change (ofPolyHom (Hex.Conway.conwayPoly p n h)
       (Hex.Conway.conwayPoly_nonconstant p n h) h.prime
       (Hex.Conway.conwayPoly_irreducible p n h) Hex.FpPoly.X) ^
-        Hex.Conway.digitsValue 2 ds ≠ 1
+        ((p ^ n - 1) / q) ≠ 1
     rw [← ofPolyHom_powerResidue
-      (Hex.Conway.conwayPoly_monic p n h) (Hex.Conway.digitsValue 2 ds)]
+      (Hex.Conway.conwayPoly_monic p n h) (((p ^ n - 1) / q))]
     intro hone
     exact hrep ((ofPolyHom_eq_one_iff
       (reduceMod_powerResidue (Hex.Conway.conwayPoly_monic p n h)
-        (Hex.Conway.digitsValue 2 ds))).mp hone)
+        (((p ^ n - 1) / q)))).mp hone)
 
 end HexGFqMathlib
