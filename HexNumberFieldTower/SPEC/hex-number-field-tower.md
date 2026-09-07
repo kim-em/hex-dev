@@ -242,7 +242,13 @@ For one squarefree component `g`:
    factor, recovery uses monic remainder division for the first Euclidean
    remainder and resumes the reference gcd chain with its remaining fuel.
 7. Verify that the recovered factors reconstruct the component and pass the
-   tower factorization checker.
+   tower factorization checker. For a singleton norm the returned component
+   reconstructs by construction; irreducibility follows from the recursively
+   checked norm and the proved recovery product. Public tower operations use
+   validated `NumberTower` values. The raw helpers taking `List Level` do not
+   validate arbitrary presentations and do not certify that their input list
+   defines a tower of fields. In particular, `Internal.extend?` checks a new
+   relation over its already validated parent tower.
 
 Each recursive step uses a one-level executable resultant, not a determinant
 materialized as a dense matrix. It is intentionally not replaced by one absolute
