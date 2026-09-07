@@ -172,6 +172,21 @@ class TowerFactorCompareTests(unittest.TestCase):
         self.assertEqual(compare.select_core({24: 0, 25: 0, 73: 0}, topology, set()), 25)
         self.assertIsNone(compare.select_core({24: 0}, {24: {24, 72}}, set()))
 
+    def test_quiet_history_must_be_complete(self):
+        self.assertEqual(compare.quiet_load([{24: 0, 72: 0}], 2), {})
+
+    def test_earlier_busy_window_blocks_selection(self):
+        history = [{24: 0, 72: 5}, {24: 0, 72: 0}]
+        self.assertIsNone(compare.select_core(compare.quiet_load(history, 2),
+                                             {24: {24, 72}}, set()))
+        history.append({24: 0, 72: 0})
+        self.assertEqual(compare.select_core(compare.quiet_load(history, 2),
+                                             {24: {24, 72}}, set()), 24)
+
+    def test_missing_cpu_in_any_quiet_window_blocks_selection(self):
+        history = [{24: 0}, {24: 0, 72: 0}]
+        self.assertEqual(compare.quiet_load(history, 2)[72], 100.0)
+
     def test_busy_threshold_is_strict(self):
         self.assertIsNone(compare.select_core({24: 5, 72: 0}, {24: {24, 72}}, set()))
 

@@ -46,6 +46,15 @@ def select_core(busy, topology, avoid):
     return next((cpu for load, cpu in free if load < BUSY_PERCENT), None)
 
 
+def quiet_load(samples, windows):
+    """Worst load in each required window; absent CPUs are unavailable."""
+    if len(samples) < windows:
+        return {}
+    recent = samples[-windows:]
+    cpus = set().union(*(sample.keys() for sample in recent))
+    return {cpu: max(sample.get(cpu, 100.0) for sample in recent) for cpu in cpus}
+
+
 def read_export(path, names):
     """Validate complete fixed-case exports, including their raw repeat hashes."""
     rows = json.loads(Path(path).read_text())["results"]
@@ -136,7 +145,11 @@ def main():
     parser.add_argument("--hex-only", action="store_true")
     parser.add_argument("--require-separated-canonical", action="store_true",
                         help="require disjoint improvement for each canonical case in at least one pair")
+    parser.add_argument("--quiet-windows", type=int, default=1,
+                        help="required consecutive two-second quiet windows before selecting a core")
     args = parser.parse_args()
+    if args.quiet_windows < 1:
+        parser.error("--quiet-windows must be positive")
     names = HEX_NAMES if args.hex_only else NAMES
     env = dict(os.environ)
     provider = None
@@ -170,6 +183,7 @@ def main():
         summary = dict(label=args.label, status=status, attempts=attempts,
                        accepted_pairs=[p["attempt"] for p in pairs],
                        require_separated_canonical=args.require_separated_canonical,
+                       quiet_windows=args.quiet_windows,
                        **decision(pairs, names, require_separated_canonical=args.require_separated_canonical))
         (args.output / f"issue-10074-{args.label}-decision.json").write_text(json.dumps(summary, indent=2) + "\n")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -178,6 +192,7 @@ def main():
         meta = dict(label=args.label, attempt=attempt, runs=[], preflight_windows=[],
                     protocol_commit=commit, script_sha256=script_hash,
                     require_separated_canonical=args.require_separated_canonical,
+                    quiet_windows=args.quiet_windows,
                     hostname=platform.node(), release_quality=False,
                     pari_provider=provider, names=names,
                     git_status=subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True))
@@ -185,11 +200,13 @@ def main():
         cpu = None
         while time.monotonic() < deadline:
             busy = idle_core.busy_by_cpu(2)
-            cpu = select_core(busy, topology, avoid)
             meta["preflight_windows"].append(busy)
+            cpu = select_core(quiet_load(meta["preflight_windows"], args.quiet_windows),
+                              topology, avoid)
             if cpu is not None:
                 break
-            time.sleep(10)
+            if args.quiet_windows == 1:
+                time.sleep(10)
         if cpu is None:
             meta.update(accepted=False, reason="preflight_timeout")
             Path(str(stem) + "-host.json").write_text(json.dumps(meta, indent=2) + "\n")
