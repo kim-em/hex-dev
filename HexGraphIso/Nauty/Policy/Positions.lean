@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Selection
 public import HexGraphIso.Nauty.Invariant.Singleton
-import all HexGraphIso.Nauty.SmallCell.Descent
+import all HexGraphIso.Nauty.Spec.Descent
 
 public section
 

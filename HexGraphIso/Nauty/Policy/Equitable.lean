@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Route
 import all HexGraphIso.Nauty.Policy.Route
-import all HexGraphIso.Nauty.SmallCell.Descent
+import all HexGraphIso.Nauty.Spec.Descent
 
 public section
 

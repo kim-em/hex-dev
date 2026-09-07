@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Transport
 public import HexGraphIso.Nauty.Invariant.Stabilize
-import all HexGraphIso.Nauty.SmallCell.Descent
+import all HexGraphIso.Nauty.Spec.Descent
 import all HexGraphIso.Nauty.Invariant.Stabilize
 import all HexGraphIso.Nauty.Equitable.Basic
 

@@ -70,4 +70,57 @@ theorem History.autoFirst_key {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   have hc : cs = fs := firstCodeInv_eq_of_live (heq ▸ hcodes) hsent
   simp only [pathLeafKey, incKey, hc, hrows]
 
+/-- At every discrete node with live histories, the leaf action computes
+exactly the maximum of its incoming incumbent and its current leaf key.
+The saved first key is already bounded by the incoming incumbent. -/
+theorem History.leaf_max {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {cs bs fs : List Nat} {st : Search n}
+    (h : History ctx tcLevel cs.length cs.length n st)
+    (hinv : RunInv G ctx st) (hn0 : 0 < n) (hlevel : 1 ≤ cs.length)
+    (hok : SearchOk G cs.length n st.view)
+    (hcanon : Codes cs bs st)
+    (hfirst : FirstCodeInv n cs fs st.firstcode st.eqlevFirst)
+    (hbs : bs ≠ [])
+    (hle : keyLe (incKey ctx fs st.firstlab) (incKey ctx bs st.canonlab))
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
+    let verdict := Engine.classify ctx cs.length n st
+    let out := (leafExit verdict.1 cs.length verdict.2).2
+    ∃ bs', Settled cs bs' out ∧ out.key ctx bs' =
+      some (incMax (st.key ctx bs) (pathLeafKey ctx cs st.lab)) := by
+  have hlen : cs.length ≤ n := by
+    have hb := hok.bc
+    have hc := hok.count
+    change cs.length ≤ bcount st.ptn cs.length n at hb
+    change n = bcount st.ptn cs.length n at hc
+    omega
+  apply Engine.leaf_max hcanon hlen (by intro he; simp [he] at hlevel) hbs hinv.cache
+  intro ha
+  have hpair : Engine.classify ctx cs.length n st =
+      (.autoFirst, (Engine.classify ctx cs.length n st).2) := by
+    exact Prod.ext ha rfl
+  rw [h.autoFirst_key hinv hn0 hok hfirst hpair hgsz hsymm hloop]
+  exact hle
+
+/-- The completed leaf action exposes that maximum through the executable
+code store, even if the incoming store was in the overwrite window. -/
+theorem History.leaf_best {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
+    {cs bs fs : List Nat} {st : Search n}
+    (h : History ctx tcLevel cs.length cs.length n st)
+    (hinv : RunInv G ctx st) (hn0 : 0 < n) (hlevel : 1 ≤ cs.length)
+    (hok : SearchOk G cs.length n st.view)
+    (hcanon : Codes cs bs st)
+    (hfirst : FirstCodeInv n cs fs st.firstcode st.eqlevFirst)
+    (hbs : bs ≠ [])
+    (hle : keyLe (incKey ctx fs st.firstlab) (incKey ctx bs st.canonlab))
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
+    let verdict := Engine.classify ctx cs.length n st
+    (leafExit verdict.1 cs.length verdict.2).2.best ctx =
+      some (incMax (st.key ctx bs) (pathLeafKey ctx cs st.lab)) := by
+  obtain ⟨bs', hm, hk⟩ := h.leaf_max hinv hn0 hlevel hok hcanon hfirst hbs hle hgsz hsymm hloop
+  exact hm.read.trans hk
+
 end Hex.GraphIso.Nauty.Engine

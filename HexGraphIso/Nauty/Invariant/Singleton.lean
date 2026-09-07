@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Invariant.Refine
-public import HexGraphIso.Nauty.SmallCell.Branch
+public import HexGraphIso.Nauty.Equitable.Individualize
 public import HexGraphIso.Nauty.Equitable.Fix
 import all HexGraphIso.Nauty.Search.Search
 
