@@ -535,7 +535,7 @@ cover standalone and collector launch modes, monitor failure, interruption,
 nonzero runner exits, successful exits with leaked children, and a child whose
 main thread exited while worker threads remained live. All 41 affected collector/telemetry/profile tests and the phase checks pass;
 [validation logs](bench-results/intfactor-campaign-2-cleanup-validation-4.json)
-and the [preflight-only diagnostic recheck](bench-results/intfactor-divisors-campaign-2-recheck.json)
+and the [preflight-only diagnostic recheck](bench-results/intfactor-divisors-campaign-2-recheck-2.json)
 are retained. These are correctness tests, not new performance runs.
 
 ### Inclusive profile and diagnosis
