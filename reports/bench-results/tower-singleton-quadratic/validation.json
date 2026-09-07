@@ -57,7 +57,7 @@
     "oracle_cases": 9,
     "oracle_failures": 0,
     "fixture_byte_identical": true,
-    "validator_unit_tests": 32
+    "validator_unit_tests": 37
   },
   "integrated": {
     "baseline_commit": "064902321b7674a3993270e0f437d2f2149a10b8",
@@ -93,6 +93,8 @@
     "oracle_failures": 0,
     "proof_build_passed": true,
     "restored_candidate_hash_matches": true,
-    "timing_status": "Original integrated-harness series exhausted twelve attempts with only pair 4 admitted: no verdict. A stricter whole-host preflight replication is required."
+    "timing_status": "Original integrated-harness series exhausted twelve attempts with only pair 4 admitted: no verdict. A stricter whole-host preflight replication is required.",
+    "whole_host_replication": "integrated-harness-quiet reached its preflight deadline before any timed arm; no verdict. Retry uses identical preregistered conditions.",
+    "graph_integration_hash_matches": true
   }
 }
