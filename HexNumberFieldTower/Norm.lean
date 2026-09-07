@@ -7,8 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTower.RawArithmetic
+public import HexNumberFieldTower.RatSquarefree
 public import HexResultant
 public meta import HexNumberFieldTower.RawArithmetic
+public meta import HexNumberFieldTower.RatSquarefree
 public meta import HexResultant
 
 public section
@@ -91,12 +93,16 @@ def derivative (lower : List Level) (f : DensePoly (Coeff lower)) :
 def monic (f : DensePoly (Coeff lower)) : DensePoly (Coeff lower) :=
   if f.isZero then 0 else DensePoly.scale f.leadingCoeff⁻¹ f
 
-/-- Executable squarefreeness test over a checked lower tower. -/
+/-- Executable squarefreeness test over a checked lower tower. The rational
+base uses the certified modular trial before exact gcd fallback. -/
 @[expose]
 def isSquarefree (lower : List Level) (f : Array (Array Rat)) : Bool :=
-  let p : DensePoly (Coeff lower) :=
-    DensePoly.ofCoeffs (f.map (Coeff.ofData lower))
-  !p.isZero && (DensePoly.gcd p (derivative lower p)).size ≤ 1
+  match lower with
+  | [] => ratSquarefree (DensePoly.ofCoeffs (f.map fun a => a.getD 0 0))
+  | _ :: _ =>
+    let p : DensePoly (Coeff lower) :=
+      DensePoly.ofCoeffs (f.map (Coeff.ofData lower))
+    !p.isZero && (DensePoly.gcd p (derivative lower p)).size ≤ 1
 
 /-- Number of deterministic Trager shifts required for a top degree `d` and
 component degree `m`. -/

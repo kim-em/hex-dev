@@ -1524,6 +1524,37 @@ def runTowerFactorPair12 : Unit → IO UInt64 := fun _ => do
   return towerFactorDegrees (← getFactorPair factorPairRef12 12)
 def runPariNfFactor12 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 12
 
+/-- Maximum numerator and denominator bit lengths in the unnormalized
+rational remainder sequence used by the exact squarefreeness fallback. -/
+private def gcdHeights (a b : DensePoly Rat) : Nat → Nat × Nat
+  | 0 => ((ratPolyBits a).numMax, (ratPolyBits a).denMax)
+  | fuel + 1 =>
+    let bits := ratPolyBits a
+    if b.isZero then (bits.numMax, bits.denMax)
+    else
+      let rest := gcdHeights b (DensePoly.divMod a b).2 fuel
+      (max bits.numMax rest.1, max bits.denMax rest.2)
+
+/-- Untimed Trager diagnostics: compare the input norm's coefficient heights
+with the exact gcd chain, and record whether the modular trial certifies it.
+This replays the rejected zero shift and the first accepted shift. -/
+private def printFactorStats : IO Unit := do
+  IO.println "n,shift,norm_degree,norm_num_bits,norm_den_bits,gcd_num_bits,gcd_den_bits,modular_certificate,squarefree"
+  for n in #[2, 3, 4, 6, 8, 12, 24] do
+    let input := prepFactorInput n
+    let [level] := input.tower.levels.toList
+      | throw (IO.userError "factor stats: expected one quadratic level")
+    let f := input.f.toArray.map coeffs
+    let (accepted, _) ← requireSome "factor stats: shift search"
+      (Norm.findSquarefreeShift level [] f)
+    for shift in #[0, accepted] do
+      let p := Factor.toRatPoly (Norm.oneLevel level [] f shift)
+      let derivative := DensePoly.derivative p
+      let bits := ratPolyBits p
+      let heights := gcdHeights p derivative (p.size + derivative.size + 1)
+      let certificate := modularSquareFreeCoreFires (ZPoly.ratPolyPrimitivePart p)
+      IO.println s!"{n},{shift},{p.degree?.getD 0},{bits.numMax},{bits.denMax},{heights.1},{heights.2},{certificate},{Norm.ratSquarefree p}"
+
 /-- Timing shape shared by both sides of every PARI pair: the discarded
 `warmupFirstIter` call builds the lazily cached rung fixture (and, on the
 PARI side, spawns the persistent driver) outside the timed region, and the
@@ -1747,5 +1778,8 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["tower-to-primitive-stats"] =>
       Hex.NumberTowerBench.printToPrimitiveStats
+      return 0
+  | ["tower-factor-stats"] =>
+      Hex.NumberTowerBench.printFactorStats
       return 0
   | _ => LeanBench.Cli.dispatch args
