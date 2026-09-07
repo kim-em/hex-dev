@@ -1046,12 +1046,6 @@ theorem equitable_breakout
 
 end Package
 
-section Sizes
-
-variable {ptn : Array Nat} {level nn : Nat}
-
-end Sizes
-
 end Descent
 
 /-- A bounded involution, extended by the identity beyond the vertex

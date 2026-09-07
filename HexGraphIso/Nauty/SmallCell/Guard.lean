@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCell.Count
+public import HexGraphIso.Nauty.Equitable.Cells
 
 public section
 
