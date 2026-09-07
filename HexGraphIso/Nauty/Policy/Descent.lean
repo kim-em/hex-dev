@@ -68,13 +68,16 @@ theorem Descends.subtree {ctx : Ctx n} {base level : Nat} {root leaf : RefineSt 
   | step tc e o hlvl hcell hne ho htail ih =>
     exact ih (subtreeOk_child hroot hlvl hsymm hcell hne ho)
 
-private def idRenaming : Renaming n :=
+/-- The identity vertex renaming. -/
+def idRenaming : Renaming n :=
   ⟨id, fun _ _ h => h, fun _ => Iff.rfl⟩
 
-private theorem mapSt_id (st : RefineSt n) : mapSt idRenaming st = st := by
+/-- Mapping by the identity leaves a refinement state unchanged. -/
+theorem mapSt_id (st : RefineSt n) : mapSt idRenaming st = st := by
   simp only [mapSt, idRenaming, Array.map_id]
 
-private theorem rowsMap_id {ctx : Ctx n} (hsize : ctx.g.size = n) :
+/-- The identity renaming preserves a correctly sized row array. -/
+theorem rowsMap_id {ctx : Ctx n} (hsize : ctx.g.size = n) :
     RowsMap idRenaming ctx.g ctx.g := by
   refine ⟨hsize, hsize, ?_⟩
   intro v _
