@@ -117,6 +117,29 @@ theorem FirstRef.target {ctx : Ctx n} {tcLevel base level : Nat}
   · exact h.discrete
   · exact hopen
 
+/-- A discrete current descent below a cheap ancestor reaches the saved
+first depth and has the saved first leaf's rows. -/
+theorem FirstRef.leaf_eq {ctx : Ctx n} {tcLevel base level : Nat}
+    {root current : RefineSt n} {st : Search n}
+    (h : FirstRef ctx tcLevel base root st) (hdepth : level ≤ h.last)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hsmall : SubtreeOk ctx base root)
+    (hcurrent : FollowsPerm ctx st.firsttc base root level current)
+    (hdisc : ∀ i, i < n → current.ptn[i]! ≤ level) :
+    level = h.last ∧ leafRows ctx current.lab = leafRows ctx st.firstlab := by
+  obtain ⟨V, ⟨path, hd, ht⟩, hVL, hVP⟩ := hcurrent.leaf hsmall.it hdisc
+  have hp : path.map Prod.fst <+: h.path.map Prod.fst := by
+    apply ht.prefix h.targets
+    have hlen := h.descent.length
+    have hclen := hd.length
+    simp only [List.length_map]
+    omega
+  obtain ⟨hlevel, hrows⟩ := descPath_prefix hgsz hsymm hloop _ hsmall
+    h.descent rfl h.discrete hd hp (fun i hi => by rw [hVP]; exact hdisc i hi)
+  exact ⟨hlevel, by rw [← hVL, ← h.lab]; exact hrows⟩
+
 /-- The reference history and current descent justify the executable cheap scatter. -/
 theorem FirstRef.scatter {ctx : Ctx n} {tcLevel level : Nat}
     {root current : RefineSt n} {st : Search n}
