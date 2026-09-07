@@ -524,7 +524,10 @@ restores its original affinity after the attempt and rejects an empty observer
 CPU set. Rechecking a preflight-only artifact records unavailable raw timing
 files as diagnostic failure instead of crashing. Synthetic subprocess tests
 cover standalone and collector launch modes, monitor failure, interruption and
-nonzero runner exits. These are correctness tests, not new performance runs.
+nonzero runner exits. All 40 current Python tests and the phase checks pass;
+[validation logs](bench-results/intfactor-campaign-2-cleanup-validation-2.json)
+and the [preflight-only diagnostic recheck](bench-results/intfactor-divisors-campaign-2-recheck.json)
+are retained. These are correctness tests, not new performance runs.
 
 ### Inclusive profile and diagnosis
 

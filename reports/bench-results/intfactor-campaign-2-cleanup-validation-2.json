@@ -1,0 +1,117 @@
+{
+  "command": [
+    "-"
+  ],
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "scripts.bench.test_core_telemetry",
+        "scripts.bench.test_intfactor_phase4",
+        "scripts.profile.test_normalize_perf",
+        "scripts.profile.test_elf_symbols"
+      ],
+      "elapsed_nanos": 3368337233,
+      "ended_ns": 1788786331989779006,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788786328621132453,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0000.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0000.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bench/intfactor_phase4.py",
+        "--audit-attempt",
+        "reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json",
+        "--output",
+        "reports/bench-results/intfactor-divisors-campaign-2-recheck.json"
+      ],
+      "elapsed_nanos": 113923360,
+      "ended_ns": 1788786332104660888,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 1,
+      "started_ns": 1788786331990446096,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0001.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0001.stdout",
+      "timeout_seconds": 60
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase4.py"
+      ],
+      "elapsed_nanos": 113875219,
+      "ended_ns": 1788786332219751520,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788786332105549236,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0002.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0002.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "elapsed_nanos": 4470121434,
+      "ended_ns": 1788786336690782534,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788786332220362316,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0003.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0003.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase7.py"
+      ],
+      "elapsed_nanos": 64036569,
+      "ended_ns": 1788786336756309946,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788786336691872642,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0004.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation-2.json.attempt/command-0004.stdout",
+      "timeout_seconds": 120
+    }
+  ],
+  "commit": "16b367d017cd36c3864602a7660858f647ac6bf1",
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619",
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6",
+  "recheck_expected_exit": 1,
+  "schema": "hex-int-factor-attempt/1",
+  "scope": "integration-validation",
+  "source_sha256": {
+    "scripts/bench/core_telemetry.py": "645211d07ff14ae99dbe129573dcc64c148dcfad9e5d615c39f31f9721d3988a",
+    "scripts/bench/intfactor_phase4.py": "67b8c5fbdc7d277438842cf6f3a42bedecb3ae1b53149925beee57d446ac2dc0",
+    "scripts/bench/test_core_telemetry.py": "3cc48430afe423b7ee64b1766a97bb372fd1f5a6c083677fbe96d8d4c0b4472e",
+    "scripts/bench/test_intfactor_phase4.py": "97dcd09b65f2442caa2cb2c9b30c791c6d80899066cbdb5816c45d05c91e12f0"
+  },
+  "started_ns": 1788786328616365568,
+  "status": "verified"
+}
