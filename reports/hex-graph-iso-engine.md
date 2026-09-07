@@ -106,6 +106,25 @@ and complete logs are committed alongside the timings. The [Valgrind
 manual](https://valgrind.org/docs/manual/manual-core-adv.html) describes
 this limitation of heap tools with custom allocators.
 
+The supplemental wrapper in `scripts/bench/graphiso_dhat.c` counts those
+mimalloc requests through DHAT ad-hoc events, including `mi_new_n` for
+C++ containers. An audit of calls in the compiled profiler finds these
+three allocation entry points outside mimalloc itself. A thread-local
+nesting counter prevents double counting. The wrapper's calibration
+executable performs three allocations, two through nested entry points,
+and DHAT records exactly three events.
+
+| allocation requests | literal | engine | literal per node | engine per node |
+|---|---|---|---|---|
+| libc/GMP (ordinary DHAT) | 60,809,336 | 60,809,336 | 980.796 | 980.796 |
+| mimalloc (DHAT ad-hoc events) | 68,206,460 | 67,518,459 | 1100.104 | 1089.007 |
+
+Thus the engine also reduces the measured mimalloc allocation requests
+by about 1.01%. Ad-hoc events count successful allocation requests, not
+allocation sizes or peak live memory. Both ordinary and supplemental
+profiles include the common process setup and use the same 62,000 node
+visits as denominator.
+
 ## Reproduction
 
 ```sh
@@ -120,6 +139,12 @@ python3 scripts/bench/graphiso_engine_compare.py engine.jsonl --check
 python3 scripts/bench/graphiso_pernode_fit.py --sweep engine.jsonl --column eng_ns --check 0.2
 valgrind --tool=dhat --dhat-out-file=run.json .lake/build/bin/hexgraphiso_profile run
 valgrind --tool=dhat --dhat-out-file=erun.json .lake/build/bin/hexgraphiso_profile erun
+cc -shared -fPIC -O2 $(pkg-config --cflags valgrind) \
+  scripts/bench/graphiso_dhat.c -o /tmp/graphiso_dhat.so
+LD_PRELOAD=/tmp/graphiso_dhat.so valgrind --tool=dhat --mode=ad-hoc \
+  --dhat-out-file=mi-run.json .lake/build/bin/hexgraphiso_profile run
+LD_PRELOAD=/tmp/graphiso_dhat.so valgrind --tool=dhat --mode=ad-hoc \
+  --dhat-out-file=mi-erun.json .lake/build/bin/hexgraphiso_profile erun
 scripts/bench/graphiso_cactus_sweep.sh issue-10041
 python3 scripts/bench/check_graphiso_sweep_freshness.py
 python3 scripts/bench/graphiso_pernode_fit.py --check 0.2

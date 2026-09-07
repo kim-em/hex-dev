@@ -18,5 +18,23 @@
       "nodes": 62000,
       "blocks_per_node": 980.7957419354839
     }
+  },
+  "mimalloc": {
+    "wrapper": "scripts/bench/graphiso_dhat.c",
+    "wrapper_sha256": "bed757deb873f73b249d0ebb7e0940473d732e88e2bba2a59e487f5f62e56f32",
+    "mode": "ad-hoc",
+    "calibration_events": 3,
+    "counts": {
+      "run": {
+        "events": 68206460,
+        "nodes": 62000,
+        "events_per_node": 1100.104193548387
+      },
+      "erun": {
+        "events": 67518459,
+        "nodes": 62000,
+        "events_per_node": 1089.0074032258065
+      }
+    }
   }
 }
