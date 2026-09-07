@@ -11,6 +11,7 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Search.Search
+public import HexGraphIso.Nauty.Search.Generic
 
 public section
 
@@ -131,23 +132,11 @@ any of the seven returned statistics.
 
 namespace Hex.GraphIso.Nauty.Engine
 
-/-- Completion of a sweep, an unwind to a level with an optional short
-prune, or exhaustion of the recursion bound. -/
-inductive Exit where
-  | done
-  | unwind (target : Nat) (short : Bool)
-  | fuel
-  deriving BEq, Repr, Inhabited
+/-- Search termination and nonlocal return control. -/
+abbrev Exit := Generic.Exit
 
-/-- The five node classifications in nauty's `processnode`. A better
-leaf carries the number of adjacency rows shared with the incumbent. -/
-inductive Leaf where
-  | internal
-  | autoFirst
-  | autoCanon
-  | better (sr : Nat)
-  | bad
-  deriving BEq, Repr, Inhabited
+/-- The five node classifications. -/
+abbrev Leaf := Generic.Leaf
 
 /-- The search globals, stored in one record so array updates need only
 consume one constructor. Level and target-cell data are call arguments. -/
