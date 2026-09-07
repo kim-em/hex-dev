@@ -1119,6 +1119,10 @@ theorem eval_shiftedOuter (level : Level) (lower : List Level)
     simp only [ψ]
     rw [rawOuter_eq_map lower hvalid.2.2 hinjective hinv]
     simp
+  have hone : ψ 1 = 1 := by
+    simp only [ψ]
+    rw [rawOuter_eq_map lower hvalid.2.2 hinjective hinv]
+    simp
   have hadd (u v : DensePoly (DensePoly (Arithmetic.Coeff lower))) :
       ψ (u + v) = ψ u + ψ v := by
     simp only [ψ]
@@ -1135,23 +1139,38 @@ theorem eval_shiftedOuter (level : Level) (lower : List Level)
       rawOuter_eq_map lower hvalid.2.2 hinjective hinv,
       HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul,
       Polynomial.eval_mul]
-  have hfold : ∀ (items : List (Array Rat)),
-      ψ (items.foldr (fun coefficient value =>
-        liftCoefficient level lower coefficient + base * value) 0) =
-      ((items.foldr (fun a value =>
-        Polynomial.C (LevelSemantics.evalAt level lower x a) +
-          Polynomial.X * value) 0).comp q) := by
+  have hfold : ∀ (items : List (Array Rat))
+      (state : DensePoly (DensePoly (Arithmetic.Coeff lower)) ×
+        DensePoly (DensePoly (Arithmetic.Coeff lower))),
+      ψ ((items.foldl (fun state coefficient =>
+          (state.1 + liftCoefficient level lower coefficient * state.2,
+            state.2 * base)) state).1) =
+        ψ state.1 + ψ state.2 *
+          ((items.foldr
+            (fun a value =>
+              Polynomial.C (LevelSemantics.evalAt level lower x a) +
+                Polynomial.X * value) 0).comp q) := by
     intro items
     induction items with
-    | nil => simpa using hzero
+    | nil =>
+        intro state
+        simp
     | cons a items ih =>
-        simp only [List.foldr_cons, hadd, hmul, hlift, hbase, ih,
+        intro state
+        simp only [List.foldl_cons, List.foldr_cons]
+        rw [ih]
+        simp only []
+        rw [hadd, hmul, hmul, hlift, hbase]
+        simp only [
           Polynomial.add_comp, Polynomial.C_comp,
           Polynomial.mul_comp, Polynomial.X_comp]
-  change ψ (f.foldr (fun coefficient value =>
-    liftCoefficient level lower coefficient + base * value) 0) = _
-  rw [← Array.foldr_toList]
-  simpa [conjugatePolynomial, q] using hfold f.toList
+        ring
+  change ψ ((f.foldl (fun state coefficient =>
+      (state.1 + liftCoefficient level lower coefficient * state.2,
+        state.2 * base)) (0, 1)).1) = _
+  rw [← Array.foldl_toList]
+  simpa [conjugatePolynomial, q, hzero, hone] using
+    hfold f.toList (0, 1)
 
 /-- The executable outer defining polynomial is the constant-coefficient lift
 of the ordinary lower-field relation. -/
