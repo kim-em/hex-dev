@@ -42,15 +42,15 @@ structure QueryInput where
   different : RationalFn Rat
   deriving Hashable
 
-/-- Equal inputs have independently rebuilt arrays; a mismatch is at the last
-numerator coefficient, so both equality branches walk the full numerator. -/
+/-- Equal inputs have independently rebuilt arrays. Array equality visits high
+indices first, so the constant coefficient is the last compared coefficient. -/
 def prepQuery (n : Nat) : QueryInput :=
   -- The smoke runner probes zero; scientific parameters are all at least 128.
   let n := max n 1
   let p := dense n
   let copy := ofList p.toArray.reverse.toList.reverse
   ⟨consecutive p, consecutive copy,
-    ofPoly (p + monomial n 1)⟩
+    ofPoly (p + 1)⟩
 
 def equal (i : QueryInput) : Bool := i.f == i.equal
 def different (i : QueryInput) : Bool := i.f == i.different
@@ -74,7 +74,8 @@ def queryConfig : LeanBench.BenchmarkConfig :=
 -- Linear two-sided model: equal independently allocated canonical arrays require Θ(n)
 -- coefficient comparisons; all coefficients have bounded word-size values.
 setup_benchmark equal n => n with prep := prepQuery where queryConfig
--- Linear two-sided model: the first difference is at coefficient n, after Θ(n) comparisons.
+-- Linear two-sided model: array comparison visits n down to 0; the only
+-- difference is at coefficient 0, after Θ(n) bounded-word comparisons.
 setup_benchmark different n => n with prep := prepQuery where queryConfig
 -- Linear two-sided model: inversion scales both degree-n arrays by leading coefficient 1.
 -- Scaling and the harness's complete output hash each require Θ(n) work.
@@ -130,6 +131,10 @@ def validate : IO Unit := do
       throw (IO.userError s!"query degree mismatch at {n}")
     unless equal i && !(different i) do
       throw (IO.userError s!"equality fixture mismatch at {n}")
+    unless i.f.num.size == i.different.num.size &&
+        i.f.num.toArray.extract 1 (n + 1) == i.different.num.toArray.extract 1 (n + 1) &&
+        i.f.num.coeff 0 != i.different.num.coeff 0 do
+      throw (IO.userError s!"late-mismatch location drift at {n}")
     unless evaluate i == some (i.f.num.eval (-1) / i.f.den.eval (-1)) do
       throw (IO.userError s!"regular evaluation fixture mismatch at {n}")
     unless evaluatePole (prepPole n) == none do

@@ -49,7 +49,7 @@ private def prepare (n cancellation bits : Nat) : Input :=
   let cert := if hq : q ≠ 0 then certifyWith defaultPlan p q hq
     else ⟨0, 1, 0, 1⟩
   let t : DensePoly Rat := monomial 32 1 + 1
-  ⟨p, q, f, g, ofPoly (f.num + monomial (f.num.size - 1) 1), fraction 1 #p[0, 1],
+  ⟨p, q, f, g, ofPoly (f.num + 1), fraction 1 #p[0, 1],
     cert, { cert with s := cert.s + 1 },
     { cert with s := cert.s + t * cert.den, t := cert.t - t * cert.num }⟩
 
