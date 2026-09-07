@@ -354,3 +354,23 @@ Preserve that complete preflight record. The `integrated-harness-quiet-retry`
 series retries the identical protocol after the integration checks, using the
 same two saved binaries and first-two-admitted-pairs rule. Graph-only changes
 at main `9fdda65ba` leave the candidate binary hash unchanged after rebuilding.
+
+### Final main integration comparison
+
+The whole-host retry admitted pair 1, then timed out during pair 2's preflight;
+it remains incomplete and has no verdict. Rebasing onto main `ac24c7832` changes
+the benchmark executable because that release adds shared `HexBasic` code.
+Before any further timing, build both sides from that exact base and save them:
+baseline `ac24c7832`, SHA-256
+`5700c6bd98f656eb1157e430cf57a7e4d566293b86aa853c0c17345a9016fa50`, and
+candidate `dbdb01ead`, SHA-256
+`e01da6b4ee9b8aa175824ad184262f01a23545e3e303ce8a49620457383920a7`.
+
+Run a new `integrated-final-main` series under the identical final protocol:
+all fifteen registrations, explicit recorded PARI provider, five repeats,
+registered warmup and budgets, the first two fully admitted opposite-order
+pairs, twelve-attempt cap, `--quiet-windows 60 --max-busy-cpus 16`, complete
+raw host telemetry, hash agreement, and the stronger canonical range-separation
+gate. No build or profiler may overlap collection. Retain every attempted
+export. An incomplete series has no verdict; do not combine it with a previous
+series or relax the environmental or performance gates.
