@@ -104,8 +104,7 @@ theorem FirstRef.depth {ctx : Ctx n} {tcLevel base : Nat} {root : RefineSt n}
 /-- A surviving first-code comparison follows the saved target at a cheap ancestor. -/
 theorem FirstRef.target {ctx : Ctx n} {tcLevel base level : Nat}
     {root current : RefineSt n} {st : Search n}
-    (h : FirstRef ctx tcLevel base root st) {cs fs : List Nat}
-    (hc : FirstCodeInv n cs fs st.firstcode st.eqlevFirst) (heq : st.eqlevFirst = level)
+    (h : FirstRef ctx tcLevel base root st) (hdepth : level ≤ h.last)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
@@ -114,16 +113,14 @@ theorem FirstRef.target {ctx : Ctx n} {tcLevel base level : Nat}
     (hopen : ∃ i, i < n ∧ level < current.ptn[i]!) :
     Int.ofNat (specTargetcell ctx current.lab current.ptn level tcLevel) = st.firsttc[level]! := by
   apply hcurrent.target hgsz hsymm hloop hsmall h.descent h.selects h.targets
-  · rw [← heq]
-    exact h.depth hc
+  · exact hdepth
   · exact h.discrete
   · exact hopen
 
 /-- The reference history and current descent justify the executable cheap scatter. -/
 theorem FirstRef.scatter {ctx : Ctx n} {tcLevel level : Nat}
     {root current : RefineSt n} {st : Search n}
-    (h : FirstRef ctx tcLevel st.gcaFirst root st) {cs fs : List Nat}
-    (hc : FirstCodeInv n cs fs st.firstcode st.eqlevFirst) (heq : st.eqlevFirst = level)
+    (h : FirstRef ctx tcLevel st.gcaFirst root st) (hdepth : level ≤ h.last)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
@@ -138,7 +135,6 @@ theorem FirstRef.scatter {ctx : Ctx n} {tcLevel level : Nat}
     h.lab.symm (hlab.trans hVL.symm) hwork
   have hlen := h.descent.length
   have hclen := hd.length
-  have hb := h.depth hc
   simp only [List.length_map]
   omega
 

@@ -41,6 +41,33 @@ theorem StPerm.trans {level : Nat} {U V W : RefineSt n}
   intro tc len hc
   exact (hUV.cells tc len hc).trans (hVW.cells tc len (by rwa [hUV.ptn]))
 
+/-- Cell-equivalent states have the same equitability property. -/
+theorem StPerm.equitable {ctx : Ctx n} {level : Nat} {current leaf : RefineSt n}
+    (h : StPerm level current leaf) (heq : Equitable ctx level leaf.lab leaf.ptn)
+    (hsize : leaf.ptn.size = n) (hend : leaf.ptn[leaf.ptn.size - 1]! ≤ level) :
+    Equitable ctx level current.lab current.ptn := by
+  rw [← h.ptn]
+  have hp := h.symm.cells
+  intro cd hcd de hde
+  have hcdCell := cells_isCell (Nat.le_of_eq hsize.symm) hend cd hcd
+  have hdeCell := cells_isCell (Nat.le_of_eq hsize.symm) hend de hde
+  have hcdPerm := hp cd.1 (cd.2 + 1 - cd.1) hcdCell
+  have hdePerm := hp de.1 (de.2 + 1 - de.1) hdeCell
+  have hwork : worksetOf n leaf.lab de.1 de.2 = worksetOf n current.lab de.1 de.2 :=
+    worksetOf_perm hdePerm
+  rw [splitDone_iff_constOn, ← hwork]
+  exact (splitDone_iff_constOn.mp (heq cd hcd de hde)).perm hcdPerm.symm
+
+/-- The small-cell invariant holds along any mathematical descent. -/
+theorem Descends.subtree {ctx : Ctx n} {base level : Nat} {root leaf : RefineSt n}
+    (h : Descends ctx base root level leaf) (hroot : SubtreeOk ctx base root)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u) :
+    SubtreeOk ctx level leaf := by
+  induction h with
+  | refl => exact hroot
+  | step tc e o hlvl hcell hne ho htail ih =>
+    exact ih (subtreeOk_child hroot hlvl hsymm hcell hne ho)
+
 private def idRenaming : Renaming n :=
   ⟨id, fun _ _ h => h, fun _ => Iff.rfl⟩
 
@@ -65,6 +92,28 @@ theorem Follows.perm {ctx : Ctx n} {store : Array Int} {base level : Nat}
     {root leaf : RefineSt n} (h : Follows ctx store base root level leaf) :
     FollowsPerm ctx store base root level leaf :=
   ⟨leaf, h, .refl _ _⟩
+
+/-- A descent modulo cell order retains the mathematical node invariant. -/
+theorem FollowsPerm.iter {ctx : Ctx n} {store : Array Int} {base level : Nat}
+    {root current : RefineSt n} (h : FollowsPerm ctx store base root level current)
+    (hroot : IterOk ctx base root) : IterOk ctx level current := by
+  obtain ⟨leaf, ⟨path, hd, _⟩, hp⟩ := h
+  apply iterOk_of_stPerm (σ := idRenaming) (descends_iterOk hd.descends hroot)
+  rw [mapSt_id]
+  exact hp
+
+/-- A descent modulo cell order retains the entire small-cell invariant. -/
+theorem FollowsPerm.subtree {ctx : Ctx n} {store : Array Int} {base level : Nat}
+    {root current : RefineSt n} (h : FollowsPerm ctx store base root level current)
+    (hroot : SubtreeOk ctx base root)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u) :
+    SubtreeOk ctx level current := by
+  have hit := h.iter hroot.it
+  obtain ⟨leaf, ⟨path, hd, _⟩, hp⟩ := h
+  have hs := hd.descends.subtree hroot hsymm
+  exact ⟨hit, hp.equitable hs.eqt hs.it.ok.ptnSize hs.it.ok.ptnEnd,
+    by rw [← hp.ptn, ← hp.numcells]; exact hs.acc,
+    by rw [← hp.ptn]; exact hs.shape⟩
 
 /-- A cell-preserving relabelling of a recovered parent keeps its history. -/
 theorem FollowsPerm.setLab {ctx : Ctx n} {store : Array Int} {base level : Nat}

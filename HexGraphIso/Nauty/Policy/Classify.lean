@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.FirstRef
+public import HexGraphIso.Nauty.Policy.Depth
+import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Search.Engine
 import all HexGraphIso.Nauty.Policy.State
 
@@ -105,9 +106,8 @@ theorem classify_first {ctx : Ctx n} {level numcells : Nat} {st out : Search n}
 /-- The restored code-one admission is checked whenever the two histories
 at its cheap ancestor are available. -/
 theorem classify_first_checked {ctx : Ctx n} {tcLevel level numcells : Nat}
-    {st out : Search n} {cs fs : List Nat}
+    {st out : Search n}
     (hauto : classify ctx level numcells st = (.autoFirst, out))
-    (hc : FirstCodeInv n cs fs st.firstcode st.eqlevFirst)
     (hwork : st.workperm.size = n)
     (hfirst : st.firstlab.size = n) (hfirstPerm : st.firstlab.toList.Perm (List.range n))
     (hlab : st.lab.size = n) (hlabPerm : st.lab.toList.Perm (List.range n))
@@ -115,16 +115,16 @@ theorem classify_first_checked {ctx : Ctx n} {tcLevel level numcells : Nat}
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hhistory : st.noncheaplevel ≤ st.gcaFirst →
-      ∃ root current, Nonempty (FirstRef ctx tcLevel st.gcaFirst root st) ∧
-        SubtreeOk ctx st.gcaFirst root ∧
+      ∃ root current, ∃ href : FirstRef ctx tcLevel st.gcaFirst root st,
+        Depth href.last st ∧ SubtreeOk ctx st.gcaFirst root ∧
         FollowsPerm ctx st.firsttc st.gcaFirst root level current ∧
         (∀ i, i < n → current.ptn[i]! ≤ level) ∧ st.lab = current.lab) :
     checkAutom ctx.g out.workperm = true := by
   obtain ⟨_, heq, hout, hguard⟩ := classify_first hauto
   rcases hguard with hcheap | hscan
-  · obtain ⟨root, current, ⟨href⟩, hsmall, hcurrent, hdisc, hl⟩ := hhistory hcheap
+  · obtain ⟨root, current, href, hdepth, hsmall, hcurrent, hdisc, hl⟩ := hhistory hcheap
     rw [hout]
-    exact href.scatter hc heq hgsz hsymm hloop hsmall hcurrent hdisc hl hwork
+    exact href.scatter (by rw [← heq]; exact hdepth.1) hgsz hsymm hloop hsmall hcurrent hdisc hl hwork
   · rw [hout] at hscan ⊢
     exact scatter_isautom hwork hfirst hfirstPerm hlab hlabPerm hsymm hloop hscan
 
