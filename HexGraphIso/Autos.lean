@@ -18,9 +18,10 @@ Automorphism generators, vertex orbits and the group order.
 The nauty traversal discovers automorphisms as it runs: each one is a
 `workperm` recorded at a code-1 or code-2 leaf, in discovery order, and
 the search prunes with the same permutations. `Aut.trace` is that list,
-transcribed. The transcription replays nauty's traversal exactly, so
-the list itself is determined, not just the group it generates, and
-conformance compares it against nauty entry by entry.
+transcribed. The list is deterministic. It can include code-2 entries
+whose orbit join changes nothing, which nauty suppresses. Conformance
+checks nauty's list as an ordered subsequence, with entry-by-entry
+agreement when the lengths match.
 
 No permutation from the search is trusted as given. Each raw array
 passes through `autom?`, which rebuilds it as a `Perm n` and runs the
@@ -143,7 +144,9 @@ bookkeeping is stated on. -/
   (trace G).filterMap fun γ => (autom? G γ).map fun p => (γ, p)
 
 /-- The generators: the recorded traversal automorphisms that pass the
-check, in discovery order. -/
+check, in discovery order. `Aut.trace_admitted` proves that every recorded
+entry passes. Completeness uses the whole trace, including redundant
+code-2 entries; removing them would need a further generation proof. -/
 @[expose] def gens (G : Colored n k) : List (Perm n) :=
   (checked G).map (·.2)
 
@@ -308,16 +311,12 @@ colouring computes the stabilizer. `orb` is the orbit array of `G`,
 taken as an argument so that a caller holding it already does not pay
 for a second traversal.
 
-`fuel = n` is enough. Each step individualizes a vertex of a
-non-singleton orbit, so that vertex and every vertex individualized
-before it are singletons in the next level's orbit array. The number of
-vertices in non-singleton orbits therefore drops by at least one per
-step and never passes through one, so at most `n - 1` steps precede the
-call that finds no non-singleton orbit. The `indiv?` failure arm cannot
-be reached: the orbit array only ever merges vertices joined by a
-checked colour-preserving automorphism, so an orbit is contained in a
-colour cell, and a vertex of a non-singleton orbit is never alone in
-its cell. -/
+`fuel = n` is enough: every successful individualization adds a colour,
+and a valid colouring has at most `n` colours. The Mathlib bridge proves
+this bound in `orderAux_card` with the invariant `n ≤ k + fuel`. At
+`k = n`, every automorphism fixes every vertex. `indiv_of_orbitSize`
+proves that the failure arm is unreachable when an orbit is non-singleton:
+colour-preserving automorphisms keep that orbit inside one colour cell. -/
 def orderAux (fuel : Nat) {n k : Nat} (G : Colored n k) (orb : Array Nat) :
     Nat :=
   match fuel with

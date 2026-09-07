@@ -342,7 +342,10 @@ individualized graph's group with the chosen point stabilizer.
 
 These are proof-only additions. Canonicalization, unchecked traces, checked
 generators, and the order computation keep their existing executable paths;
-no caller computes a generation certificate. Conformance still compares all
+no caller computes a generation certificate. The completeness proof uses
+private implementation imports. `Uncolored` retains the basic executable
+API, and `UncoloredComplete` adds its generation and orbit-equivalence
+theorems; the `HexGraphIso` umbrella exposes both. Conformance still compares all
 four fields against nauty, while search counters remain conformance-pinned
 observables. Automation for group-order goals can use these theorems; the
 automorphism tactic is separate work.
@@ -375,8 +378,11 @@ def Graph.autos (G : Graph n) (h : 0 < n) : AutResult n
 ```
 
 with `Graph.autos_isIso`, `Graph.size_autos_orbits`,
-`Graph.autos_orbits_lt` and `Graph.autos_sameOrbit` the uncoloured
-readings of the four coloured theorems.
+`Graph.autos_orbits_lt`, `Graph.autos_sameOrbit`, and `Graph.autos_complete`
+the uncoloured readings of the five coloured theorems. Both coloured and
+uncoloured APIs retain the one-way implication as `autos_sameOrbit_of_eq`;
+callers using the old implication can use that name or apply `.mp` to
+the new biconditional.
 
 `n = 0` forces `k = 0`, so `Graph.singleColor` and every operation
 below take `0 < n`. The hypothesis is an auto-parameter discharged by

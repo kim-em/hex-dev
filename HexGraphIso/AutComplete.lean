@@ -6,7 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Correct.Generation.FirstGeneration
+public import HexGraphIso.Autos
+public import HexGraphIso.Generated
+-- Export the contract without exporting the traversal proof implementation.
+import HexGraphIso.Nauty.Correct.Generation.FirstGeneration
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Invariant.Incumbent
 import all HexGraphIso.Autos

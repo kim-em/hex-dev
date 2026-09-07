@@ -496,6 +496,9 @@ GRAPHISO = Family(
         "HexGraph/",
         "bench/HexGraphIso/Cactus.lean",
         "scripts/plots/hexgraphiso-cactus.py",
+        "Hex/BenchOracle/Nauty.lean",
+        "Hex/BenchOracle/ffi/nauty_canon.c",
+        "vendor/nauty-2.9.3/",
     ),
     exclude=("HexGraphIso/SPEC", "HexGraphIso/README.md") + GRAPHISO_TESTS,
     figures=(

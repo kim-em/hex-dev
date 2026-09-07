@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.AutComplete
+public import HexGraphIso.Autos
 import all HexGraphIso.Autos
 import all HexGraphIso.Colored
 import all HexGraphIso.Iso

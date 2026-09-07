@@ -13,8 +13,8 @@ regenerate everything with ``scripts/bench/graphiso_cactus_sweep.sh`` and
 commit the new data and figures together with the code change.
 
 The relevant-source set is deliberately tight (the hex-graph-iso
-implementation, its graph substrate, the sweep driver, and the plot
-script), so unrelated pull requests never trip this check and
+implementation, its graph substrate, the sweep driver, the plot
+script, and the nauty comparator), so unrelated pull requests never trip this check and
 re-measuring is the cheap answer rather than writing an exemption; a
 change to a shared helper that measurably shifts these curves shows up in
 the per-library benchmarks first. It is declared, with the shared

@@ -169,6 +169,14 @@ statements are `Hex.GraphIso.Aut.closure_eq_group`, `Aut.numOrbits_card`, and
 `Aut.order_card`. All use the unchanged computational library; these proofs
 introduce no runtime certificate construction.
 
+The bridge supplies global `Group (Hex.GraphIso.Perm n)` and
+`MulAction (Hex.GraphIso.Perm n) (Fin n)` instances, with composition acting
+as forward permutation application, plus the simp lemmas `Perm.mul_get`
+and `Perm.one_get`. Its `Fintype (Perm n)` instance is noncomputable, for
+cardinality proofs; executable permutation enumeration must provide its
+own computable enumeration. `Colored.Iso G G` also has the corresponding
+group and vertex-action instances.
+
 These are ordinary theorems, not classical choice definitions hidden behind
 an executable-looking name. The compiled algorithm remains the one in
 `hex-graph-iso`.

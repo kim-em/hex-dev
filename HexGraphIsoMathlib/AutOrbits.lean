@@ -9,6 +9,7 @@ module
 public import HexGraphIsoMathlib.AutGroup
 public import Mathlib.Data.List.FinRange
 public import Mathlib.SetTheory.Cardinal.Finite
+import all HexGraphIso.AutGroup
 import all HexGraphIso.Autos
 import all HexGraphIso.Nauty.Invariant.OrbitComplete
 

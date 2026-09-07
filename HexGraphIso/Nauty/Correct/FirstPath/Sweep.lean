@@ -8,6 +8,9 @@ module
 
 public import HexGraphIso.Nauty.Correct.FirstPath.Hyp
 public import HexGraphIso.Nauty.Correct.Generation.Head
+public import HexGraphIso.Nauty.Correct.Generation.Counted
+-- Counter proofs are implementation dependencies; only their witness types are public.
+import HexGraphIso.Nauty.Correct.Generation.Counter
 import all HexGraphIso.Nauty.Search.Search
 
 public section

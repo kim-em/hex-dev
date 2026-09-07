@@ -67,7 +67,6 @@ public import HexGraphIso.Nauty.Correct.FirstPath.Loop
 public import HexGraphIso.Nauty.Correct.FirstPath.Hyp
 public import HexGraphIso.Nauty.Correct.FirstPath.Sweep
 public import HexGraphIso.Nauty.Correct.Certify
-public import HexGraphIso.Nauty.Correct.Generation
 public import HexGraphIso.Nauty.Equitable.Root
 public import HexGraphIso.Nauty.Invariant.Reach
 public import HexGraphIso.Nauty.Cert.Translator
@@ -90,10 +89,10 @@ public import HexGraphIso.Nauty.Equitable.Fix
 public import HexGraphIso.Nauty.Invariant.TargetCell
 public import HexGraphIso.Ops
 public import HexGraphIso.Autos
-public import HexGraphIso.AutGroup
 public import HexGraphIso.AutComplete
 public import HexGraphIso.AutIndiv
 public import HexGraphIso.Uncolored
+public import HexGraphIso.UncoloredComplete
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic
 public import HexGraphIso.Families
