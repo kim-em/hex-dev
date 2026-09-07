@@ -55,30 +55,32 @@ The [initial complete export](bench-results/hex-lattice-enum/scientific-initial.
 contains 17 passing ladders and two inconclusive results. The final
 [rank](bench-results/hex-lattice-enum/rank-final.json) and
 [cube](bench-results/hex-lattice-enum/cube-final.json) exports replace those two.
-The table uses the final selected exports. C is time divided by the declared
+A [complete final rerun](bench-results/hex-lattice-enum/scientific-final.json)
+passes all 19 ladders together and preserves every fixed-anchor hash. The table
+uses this final rerun. C is time divided by the declared
 model, in nanoseconds; β is the harness slope of that normalized cost.
 
 | Registration | Model | Range | C range | β | Verdict |
 | --- | --- | --- | --- | --- | --- |
-| `runAmbient` | m | 64–2048 | 2975.7–3158.1 | -0.008 | consistent |
-| `runAmbientBabai` | m | 64–2048 | 309.4–328.6 | 0.001 | consistent |
-| `runAmbientBudget` | m | 64–2048 | 2166.0–2297.3 | -0.007 | consistent |
-| `runAmbientCertificate` | m | 64–2048 | 3183.7–3393.5 | -0.017 | consistent |
-| `runAmbientClosest` | m | 64–2048 | 4266.3–5586.5 | 0.016 | consistent |
-| `runAmbientDecode` | m | 64–2048 | 951.9–1036.9 | -0.014 | consistent |
-| `runAmbientEncode` | m | 64–2048 | 476.8–539.2 | 0.008 | consistent |
-| `runAmbientInput` | m | 64–2048 | 130.5–146.3 | 0.006 | consistent |
-| `runAmbientLLL` | m | 64–2048 | 6251.7–7607.9 | -0.054 | consistent |
-| `runAmbientOptimum` | m | 64–2048 | 1083.8–1173.8 | -0.017 | consistent |
-| `runAmbientPreparation` | m | 64–2048 | 1255.7–1312.2 | -0.005 | consistent |
-| `runAmbientReplay` | m | 64–2048 | 5118.2–5648.3 | -0.025 | consistent |
-| `runAmbientRetarget` | m | 64–2048 | 1157.9–1326.9 | -0.031 | consistent |
-| `runAmbientShortest` | m | 64–2048 | 4958.2–5908.2 | -0.015 | consistent |
-| `runAmbientTies` | m | 64–2048 | 486.1–554.8 | -0.017 | consistent |
-| `runCube` | n²2ⁿ | 8–13 | 85.8–134.3 | — | consistent |
-| `runRadius` | r(log₂r + 1) | 64–4096 | 207.7–329.2 | -0.098 | consistent |
-| `runRank` | n³ | 32–256 | 259.3–325.7 | -0.108 | consistent |
-| `runShear` | s² | 8–256 | 1098.8–1884.7 | -0.089 | consistent |
+| `runAmbient` | m | 64–2048 | 4496.3–5180.8 | 0.010 | consistent |
+| `runAmbientBabai` | m | 64–2048 | 487.4–503.4 | -0.002 | consistent |
+| `runAmbientBudget` | m | 64–2048 | 2858.6–3518.1 | -0.021 | consistent |
+| `runAmbientCertificate` | m | 64–2048 | 4547.2–5608.4 | 0.030 | consistent |
+| `runAmbientClosest` | m | 64–2048 | 4834.4–5220.8 | -0.010 | consistent |
+| `runAmbientDecode` | m | 64–2048 | 1425.8–1683.9 | -0.022 | consistent |
+| `runAmbientEncode` | m | 64–2048 | 679.2–758.3 | -0.018 | consistent |
+| `runAmbientInput` | m | 64–2048 | 81.1–91.9 | -0.018 | consistent |
+| `runAmbientLLL` | m | 64–2048 | 9163.2–9820.1 | 0.022 | consistent |
+| `runAmbientOptimum` | m | 64–2048 | 1378.7–1822.8 | 0.003 | consistent |
+| `runAmbientPreparation` | m | 64–2048 | 1772.0–1991.0 | 0.012 | consistent |
+| `runAmbientReplay` | m | 64–2048 | 3415.6–3530.6 | 0.004 | consistent |
+| `runAmbientRetarget` | m | 64–2048 | 842.0–860.7 | 0.004 | consistent |
+| `runAmbientShortest` | m | 64–2048 | 7123.0–8120.6 | -0.015 | consistent |
+| `runAmbientTies` | m | 64–2048 | 731.2–878.8 | 0.005 | consistent |
+| `runCube` | n²2ⁿ | 8–13 | 133.7–197.4 | — | consistent |
+| `runRadius` | r(log₂r + 1) | 64–4096 | 320.0–509.7 | -0.087 | consistent |
+| `runRank` | n³ | 32–256 | 270.4–415.8 | 0.067 | consistent |
+| `runShear` | s² | 8–256 | 1697.3–1990.8 | 0.030 | consistent |
 
 The rank family has (n+1)² visited nodes and 2n+1 leaves; its centre and
 reconstruction work is Θ(n³). The original n=8…128 sweep was inconclusive
@@ -90,8 +92,8 @@ The cube family has exactly 2ⁿ ties; its Θ(n²2ⁿ) declaration is unchanged.
 Its original n=6…12 sweep was inconclusive; n=8…13 with three trials passes.
 These failures and their resolution are tracked in [#10111](https://github.com/kim-em/hex-dev/issues/10111).
 
-The final rank-256 median is about 4.35 seconds; cube rank 13 emits 8192 points
-in about 119 milliseconds. The three rank trials have substantial spread on
+The final rank-256 median is about 6.98 seconds; cube rank 13 emits 8192 points
+in about 185 milliseconds. The three rank trials have substantial spread on
 smaller rungs; the full samples remain in the export. Fixed anchors retain their
 expected hashes. The [smoke log](bench-results/hex-lattice-enum/verify.log)
 records all 35 passes and less than one second in the CI budget wrapper.
