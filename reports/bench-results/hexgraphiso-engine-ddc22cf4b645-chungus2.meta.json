@@ -1,0 +1,22 @@
+{
+  "fingerprint": "ddc22cf4b645",
+  "host": "chungus2",
+  "source_head": "9a739251d936cc81a38e0cee1e6f8edb13b06721",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "cpu": 91,
+  "trials": 3,
+  "aggregation": "per-instance median of each timing column over all three trials",
+  "instances": 98,
+  "dhat": {
+    "run": {
+      "blocks": 60809336,
+      "nodes": 62000,
+      "blocks_per_node": 980.7957419354839
+    },
+    "erun": {
+      "blocks": 60809336,
+      "nodes": 62000,
+      "blocks_per_node": 980.7957419354839
+    }
+  }
+}

@@ -1,0 +1,5 @@
+twin: fixtures agree over 6028 cases
+twin: autos agree over 205 cases
+twin: campaign agree over 32798 cases
+graphiso oracle: 6233 cases checked against nauty 2.9.3 (205 automorphism-group cases)
+graphiso oracle: 32798 cases checked against nauty 2.9.3 (0 automorphism-group cases)

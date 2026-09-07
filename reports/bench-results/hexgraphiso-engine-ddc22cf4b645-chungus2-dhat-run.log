@@ -1,0 +1,22 @@
+warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
+==3341973== DHAT, a dynamic heap analysis tool
+==3341973== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==3341973== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==3341973== Command: .lake/build/bin/hexgraphiso_profile run
+==3341973== 
+== run
+  paley61 run: 43795us/iter (2000 iters, 14000 node-visits)
+  kneser72 run: 13266us/iter (2000 iters, 36000 node-visits)
+  circulant64 run: 28870us/iter (2000 iters, 12000 node-visits)
+==3341973== 
+==3341973== Total:     752,200,180 bytes in 60,809,336 blocks
+==3341973== At t-gmax: 132,316 bytes in 253 blocks
+==3341973== At t-end:  20,372 bytes in 238 blocks
+==3341973== Reads:     632,211,771 bytes
+==3341973== Writes:    751,425,061 bytes
+==3341973== 
+==3341973== To view the resulting profile, open
+==3341973==   file:///nix/store/g1x8a2mgb9lnjhqpi3cszjham8a3p8zq-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==3341973== in a web browser, click on "Load...", and then select the file
+==3341973==   /tmp/issue-10041-dhat-final-run.json
+==3341973== The text at the bottom explains the abbreviations used in the output.
