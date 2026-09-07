@@ -374,3 +374,11 @@ raw host telemetry, hash agreement, and the stronger canonical range-separation
 gate. No build or profiler may overlap collection. Retain every attempted
 export. An incomplete series has no verdict; do not combine it with a previous
 series or relax the environmental or performance gates.
+
+The first `integrated-final-main` series rejects its first arm at postflight
+and reaches the fifteen-minute preflight deadline on its second attempt, so it
+admits no pair and has no verdict. Retain it unchanged. The
+`integrated-final-main-retry` series repeats the identical frozen binaries,
+two-minute whole-host admission, first-two-opposite-order-pairs rule, gates,
+and limits. It is a separate environmental replication, not an extension or
+reinterpretation of the incomplete series.
