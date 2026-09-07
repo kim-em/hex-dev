@@ -252,3 +252,28 @@ integration conflicts, and require green CI before merging. After any rebase
 that changes the measured executable, validate performance on the integrated
 binary again. The accepted prototype is a reason to invest in proofs, not a
 substitute for them.
+
+### Sustained-quiet marginal replication
+
+The `combined-quadratic` series exhausted twelve attempts with only one
+host-admitted pair (attempt 10), so it has no performance verdict. Preserve
+the entire series. A fresh replication of this marginal comparison uses the
+same saved quadratic and combined binaries (`af91cca87`, SHA-256
+`28701e063ccb1667223fdd56eb899c84afc3571e3efd05a372a1f7822ce4c4d9`, and
+`4209945bc`, SHA-256
+`f6feab899807eb26da3310dd64497a203669505d0fa2c0d4eda3100f56576cf3`).
+
+Before selecting a core for each attempted pair, require fifteen consecutive
+two-second windows in which both the core and its SMT sibling are each below
+5% busy. An absent CPU makes its core unavailable. Keep the fifteen-minute
+preflight deadline and twelve-attempt limit per series. Between-arm preflight,
+postflight, during-run sibling admission, same-core pairing, opposite orders,
+all eight Hex cases, repeat counts, warmup, budgets, hashes, and the stronger
+performance gate are unchanged. The runner's `--quiet-windows 15` selects this
+stricter preflight; its default preserves the earlier protocols.
+
+This is an environmental replication of an incomplete series, not an
+extension of its attempt limit or a reclassification of any rejected arm.
+Select the first two host-admitted opposite-order pairs without inspecting
+their timings, and retain every attempt. Do not develop the combined
+correspondence proofs until the complete marginal comparison passes.
