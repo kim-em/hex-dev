@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexGraphIso.Nauty.Policy.Filters
+
 public import HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.Invariant
