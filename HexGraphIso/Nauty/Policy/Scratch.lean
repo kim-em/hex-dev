@@ -18,29 +18,34 @@ namespace Hex.GraphIso.Nauty.Engine
 
 variable {n k : Nat}
 
-private theorem admit_workSize (st : Search n) :
-    (admit st).workperm.size = st.workperm.size := by
+private theorem admit_workperm (st : Search n) :
+    (admit st).workperm = st.workperm := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
-private theorem pruneReturn_workSize (level : Nat) (st : Search n) :
-    (pruneReturn level st).2.workperm.size = st.workperm.size := by
+private theorem pruneReturn_workperm (level : Nat) (st : Search n) :
+    (pruneReturn level st).2.workperm = st.workperm := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
   repeat' split
   all_goals rfl
 
-/-- Leaf actions consume the scratch permutation without resizing it. -/
-theorem leafExit_workSize (leaf : Leaf) (level : Nat) (st : Search n) :
-    (leafExit leaf level st).2.workperm.size = st.workperm.size := by
+/-- Leaf actions retain the permutation written by classification. -/
+theorem leafExit_workperm (leaf : Leaf) (level : Nat) (st : Search n) :
+    (leafExit leaf level st).2.workperm = st.workperm := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
   all_goals repeat' split
   all_goals first
     | rfl
-    | exact admit_workSize _
-    | exact pruneReturn_workSize level _
+    | exact admit_workperm _
+    | exact pruneReturn_workperm level _
+
+/-- Leaf actions consume the scratch permutation without resizing it. -/
+theorem leafExit_workSize (leaf : Leaf) (level : Nat) (st : Search n) :
+    (leafExit leaf level st).2.workperm.size = st.workperm.size :=
+  congrArg Array.size (leafExit_workperm leaf level st)
 
 /-- Classifying a node may replace scratch entries but preserves its allocation. -/
 theorem classify_workSize (ctx : Ctx n) (level numcells : Nat) (st : Search n) :

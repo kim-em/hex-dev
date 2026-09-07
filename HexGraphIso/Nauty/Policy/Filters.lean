@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.Safety
+public import HexGraphIso.Nauty.Policy.FixedState
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Engine
@@ -15,7 +15,7 @@ public section
 
 namespace Hex.GraphIso.Nauty.Engine
 
-variable {n k : Nat}
+variable {n : Nat}
 
 /-- Positive capacity makes the newest slot readable even when insertion
 overwrites the last slot of a full workspace. -/
@@ -25,31 +25,6 @@ theorem pushAuto_back {st : Search n} (hcap : 0 < st.wsCap) (pair : VSet n × VS
   rw [view_pushAuto]
   exact Nauty.pushAuto_back hcap
 
-/-- A valid workspace exposes the newly inserted pair to the short filter,
-including the overwrite at capacity. -/
-theorem RunInv.push_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
-    (h : RunInv G ctx st) (pair : VSet n × VSet n) :
-    (pushAuto st pair).autos.back? = some pair :=
-  pushAuto_back h.workspace.1 pair
-
-/-- The short filter following an explicit admission reads that admission's pair. -/
-theorem RunInv.auto_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
-    (h : RunInv G ctx st) {leaf : Leaf} (level : Nat)
-    (ha : leaf = .autoFirst ∨ leaf = .autoCanon) :
-    (leafExit leaf level st).2.autos.back? = some (fmperm st.workperm n) := by
-  rcases ha with rfl | rfl
-  all_goals rw [leafExit_autos, admit_autos]
-  all_goals exact h.push_back _
-
-/-- The cheap prune tail exposes its frozen implicit pair to the short filter. -/
-theorem RunInv.cheap_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
-    (h : RunInv G ctx st) {leaf : Leaf} {level : Nat}
-    (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr) (hne : level ≠ st.noncheaplevel) :
-    (leafExit leaf level st).2.autos.back? = some (fmptn st.lab st.ptn st.noncheaplevel n) := by
-  rcases ha with rfl | ⟨sr, rfl⟩
-  all_goals rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
-  all_goals exact h.push_back _
-
 /-- The shared prune tail requests a short filter only after admitting
 its implicit pair at a level different from the saved boundary. -/
 theorem pruneReturn_short {level target : Nat} {st : Search n}
@@ -57,6 +32,53 @@ theorem pruneReturn_short {level target : Nat} {st : Search n}
   intro he
   unfold pruneReturn at h
   simp [he] at h
+
+/-- The implicit prune tail returns no deeper than the parent of its
+saved cheap boundary, including the signed-to-natural conversion. -/
+theorem pruneReturn_bound {level target : Nat} {short : Bool} {st : Search n}
+    (h : (pruneReturn level st).1 = .unwind target short) :
+    target ≤ st.noncheaplevel - 1 := by
+  unfold pruneReturn pushAuto at h
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
+  repeat' split at h
+  all_goals have ht := (Generic.Exit.unwind.inj h).1
+  all_goals repeat' split at ht
+  all_goals simp only [Int.ofNat_eq_natCast] at *
+  all_goals omega
+
+/-- Both implicit-pair leaf actions use the same bounded return target. -/
+theorem leafExit_cheap_bound {level target : Nat} {short : Bool} {st : Search n} {leaf : Leaf}
+    (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr)
+    (h : (leafExit leaf level st).1 = .unwind target short) :
+    target ≤ st.noncheaplevel - 1 := by
+  rcases ha with rfl | ⟨sr, rfl⟩
+  all_goals unfold leafExit at h
+  all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
+  all_goals split at h
+  all_goals
+    have hb := pruneReturn_bound h
+    exact hb
+
+/-- A short code-2 return targets the saved canonical ancestor. -/
+theorem leafExit_canon_target {level target : Nat} {st : Search n}
+    (h : (leafExit .autoCanon level st).1 = .unwind target true) :
+    target = (leafExit .autoCanon level st).2.gcaCanon := by
+  have hg : ∀ s : Search n, (admit s).gcaCanon = s.gcaCanon := by
+    intro s
+    unfold admit pushAuto
+    simp only [Id.run_pure]
+    split <;> rfl
+  have hr : (leafExit .autoCanon level st).2.gcaCanon = st.gcaCanon := by
+    unfold leafExit
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+    repeat' split
+    all_goals exact hg _
+  rw [hr]
+  unfold leafExit at h
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
+  repeat' split at h
+  all_goals simp only [Generic.Exit.unwind.injEq, hg, Bool.false_eq_true, and_false] at h
+  all_goals first | exact h.1.symm | contradiction
 
 /-- A short return from a bad or better leaf satisfies the implicit-pair
 admission test used by that very leaf action. -/
@@ -71,15 +93,6 @@ theorem leafExit_cheap_short {level target : Nat} {st : Search n} {leaf : Leaf}
     have hp := pruneReturn_short h
     exact hp
 
-/-- The actual short flag supplies the premise for reading the newly
-admitted implicit pair; no separate admission assumption is needed. -/
-theorem RunInv.short_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
-    (h : RunInv G ctx st) {leaf : Leaf} {level target : Nat}
-    (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr)
-    (hexit : (leafExit leaf level st).1 = .unwind target true) :
-    (leafExit leaf level st).2.autos.back? = some (fmptn st.lab st.ptn st.noncheaplevel n) :=
-  h.cheap_back ha (leafExit_cheap_short ha hexit)
-
 /-- Each short-prune request exposes the pair admitted by the same leaf
 action. Only code 2 and the implicit prune tail can set this flag. -/
 theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
@@ -87,7 +100,7 @@ theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
     (hexit : (leafExit leaf level st).1 = .unwind target true) :
     (leaf = .autoCanon ∧
       (leafExit leaf level st).2.autos.back? = some (fmperm st.workperm n)) ∨
-    ((leaf = .bad ∨ ∃ sr, leaf = .better sr) ∧ level ≠ st.noncheaplevel ∧
+    ((leaf = .bad ∨ ∃ sr, leaf = .better sr) ∧
       (leafExit leaf level st).2.autos.back? = some (fmptn st.lab st.ptn st.noncheaplevel n)) := by
   cases leaf with
   | internal =>
@@ -104,12 +117,12 @@ theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
     exact pushAuto_back hcap _
   | bad =>
     have hne := leafExit_cheap_short (Or.inl rfl) hexit
-    refine Or.inr ⟨Or.inl rfl, hne, ?_⟩
+    refine Or.inr ⟨Or.inl rfl, ?_⟩
     rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
     exact pushAuto_back hcap _
   | better sr =>
     have hne := leafExit_cheap_short (Or.inr ⟨sr, rfl⟩) hexit
-    refine Or.inr ⟨Or.inr ⟨sr, rfl⟩, hne, ?_⟩
+    refine Or.inr ⟨Or.inr ⟨sr, rfl⟩, ?_⟩
     rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
     exact pushAuto_back hcap _
 
@@ -132,23 +145,5 @@ theorem recover_filters (inf level : Nat) (cell : VSet n) (st : Search n) :
   · rw [recover_fixed, recover_autos]
   · unfold shortprune
     rw [recover_autos]
-
-/-- Fix-passing pairs at a sweep carry each vertex of the full
-target cell to a surviving representative under a checked automorphism
-stabilizing this partition and fixing its individualized path. -/
-theorem SweepPre.window_carriers {G : Colored n k} {ctx : Ctx n}
-    {tcLevel level numcells tc tv1 len : Nat} {first : Bool} {cursor : Option Nat}
-    {cell : VSet n} {st : Search n}
-    (h : SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st)
-    (hn0 : 0 < n) (hc : IsCell st.ptn level tc len) (hr : tc + len ≤ n) :
-    ∀ v, v < n → (windowSet n st.lab tc len).mem v = true →
-      ∃ γ, checkAutom ctx.g γ = true ∧
-        (∀ u, u < n → st.fixedpts.mem u = true → γ[u]! = u) ∧
-        CellStab st.ptn level st.lab γ ∧
-        (windowSet n st.lab tc len).mem γ[v]! = true ∧
-        (Nauty.longprune (windowSet n st.lab tc len) st.fixedpts st.autos).mem γ[v]! = true :=
-  Nauty.longprune_carried (labOk_of_reach h.partition.labSize h.partition.reach)
-    h.partition.labSize h.partition.ptnSize (searchOk_end hn0 h.partition h.positive)
-    hc hr h.local_pairs
 
 end Hex.GraphIso.Nauty.Engine

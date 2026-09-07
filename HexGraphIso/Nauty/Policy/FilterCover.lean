@@ -49,7 +49,7 @@ variable {n k : Nat}
 
 /-- Coverage of a frozen target cell, indexed by vertex labels. Live
 vertices can include the cursor condition as well as mutable set membership. -/
-@[expose] def SweepCover (ctx : Ctx n) (tcLevel fuel level numcells tc len : Nat)
+@[expose] def CellCover (ctx : Ctx n) (tcLevel fuel level numcells tc len : Nat)
     (cs : List Nat) (st : Search n) (live : Nat → Prop) (best : Option (Key n)) : Prop :=
   ChildCover (fun v => prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells v))
     id (fun v => (windowSet n st.lab tc len).mem v = true)
@@ -57,29 +57,29 @@ vertices can include the cursor condition as well as mutable set membership. -/
       (prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells v)) best) live
 
 /-- Before visiting children, every target vertex represents itself. -/
-theorem SweepCover.init (ctx : Ctx n) (tcLevel fuel level numcells tc len : Nat)
+theorem CellCover.init (ctx : Ctx n) (tcLevel fuel level numcells tc len : Nat)
     (cs : List Nat) (st : Search n) (best : Option (Key n)) :
-    SweepCover ctx tcLevel fuel level numcells tc len cs st
+    CellCover ctx tcLevel fuel level numcells tc len cs st
       (fun v => (windowSet n st.lab tc len).mem v = true) best :=
   (ChildCover.init _ _ _).monoDone (fun _ h => h.elim)
 
 /-- Growing the incumbent preserves all previously covered children. -/
-theorem SweepCover.grow {ctx : Ctx n} {tcLevel fuel level numcells tc len : Nat}
+theorem CellCover.grow {ctx : Ctx n} {tcLevel fuel level numcells tc len : Nat}
     {cs : List Nat} {st : Search n} {live : Nat → Prop} {before after : Option (Key n)}
-    (h : SweepCover ctx tcLevel fuel level numcells tc len cs st live before)
+    (h : CellCover ctx tcLevel fuel level numcells tc len cs st live before)
     (hg : Generic.Grows before after) :
-    SweepCover ctx tcLevel fuel level numcells tc len cs st live after :=
+    CellCover ctx tcLevel fuel level numcells tc len cs st live after :=
   h.monoDone (fun _ hc => hc.grow hg)
 
 /-- Visiting the least live vertex advances the cursor and absorbs every
 original child represented by that vertex. -/
-theorem SweepCover.visit {ctx : Ctx n} {tcLevel fuel level numcells tc len tv : Nat}
+theorem CellCover.visit {ctx : Ctx n} {tcLevel fuel level numcells tc len tv : Nat}
     {cs : List Nat} {st : Search n} {live : Nat → Prop} {best : Option (Key n)}
-    (h : SweepCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (h : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
     (hle : ∀ v, live v → tv ≤ v)
     (hc : Generic.Covers
       (prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells tv)) best) :
-    SweepCover ctx tcLevel fuel level numcells tc len cs st (fun v => live v ∧ tv < v) best := by
+    CellCover ctx tcLevel fuel level numcells tc len cs st (fun v => live v ∧ tv < v) best := by
   apply h.step ?_ (fun _ hd => hd)
   intro v hv
   by_cases he : v = tv
@@ -89,28 +89,63 @@ theorem SweepCover.visit {ctx : Ctx n} {tcLevel fuel level numcells tc len tv : 
     rwa [hz]
   · exact Or.inr ⟨v, ⟨hv, by have := hle v hv; omega⟩, rfl, Nat.le_refl _⟩
 
-/-- Exhausting the live set covers the full original target cell. -/
-theorem SweepCover.finish {ctx : Ctx n} {tcLevel fuel level numcells tc len : Nat}
+/-- A child repeating a smaller representative is already covered when
+it reaches the cursor. Ranked coverage rules out a still-live carrier
+below that cursor, including after earlier filters. -/
+theorem CellCover.skip {ctx : Ctx n} {tcLevel fuel level numcells tc len tv rep : Nat}
     {cs : List Nat} {st : Search n} {live : Nat → Prop} {best : Option (Key n)}
-    (h : SweepCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (h : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (hle : ∀ v, live v → tv ≤ v)
+    (hr : (windowSet n st.lab tc len).mem rep = true) (hlt : rep < tv)
+    (hkey : vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells tv =
+      vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells rep) :
+    CellCover ctx tcLevel fuel level numcells tc len cs st (fun v => live v ∧ tv < v) best := by
+  apply h.visit hle
+  rcases h rep hr with hd | ⟨w, hw, _, hrank⟩
+  · rwa [hkey]
+  · have := hle w hw
+    change w ≤ rep at hrank
+    omega
+
+/-- Exhausting the live set covers the full original target cell. -/
+theorem CellCover.finish {ctx : Ctx n} {tcLevel fuel level numcells tc len : Nat}
+    {cs : List Nat} {st : Search n} {live : Nat → Prop} {best : Option (Key n)}
+    (h : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
     (hempty : ∀ v, ¬ live v) :
     ∀ v, (windowSet n st.lab tc len).mem v = true → Generic.Covers
       (prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells v)) best :=
   ChildCover.finish h hempty
 
+/-- The executable cursor terminator exhausts every live member at or
+after its scan start, closing coverage of the original target cell. -/
+theorem CellCover.finish_cursor {ctx : Ctx n} {tcLevel fuel level numcells tc len : Nat}
+    {cs : List Nat} {st : Search n} {live : Nat → Prop} {best : Option (Key n)}
+    {cell : VSet n} {cursor : Option Nat}
+    (h : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (hmem : ∀ v, live v → cell.mem v = true)
+    (hle : ∀ v, live v → VSet.scanStart cursor ≤ v)
+    (hnone : cell.nextElem cursor = none) :
+    ∀ v, (windowSet n st.lab tc len).mem v = true → Generic.Covers
+      (prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells v)) best := by
+  apply h.finish
+  intro v hv
+  have hf := VSet.nextElem_none hnone v (hle v hv)
+  rw [hmem v hv] at hf
+  cases hf
+
 /-- Restoring a parent can reorder its labels, but preserves every
 vertex-indexed child key and the accumulated coverage relation. -/
-theorem SweepCover.frame {G : Colored n k} {ctx : Ctx n}
+theorem CellCover.frame {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc len : Nat} {cs : List Nat}
     {st out : Search n} {live : Nat → Prop} {best : Option (Key n)}
-    (h : SweepCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (h : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
     (hf : SearchOut G level level st.view out.view)
     (hok : SearchOk G level numcells st.view) (hout : SearchOk G level numcells out.view)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hc : IsCell st.ptn level tc len) (hlen : 2 ≤ len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
     (hsub : ∀ v, live v → (windowSet n st.lab tc len).mem v = true) :
-    SweepCover ctx tcLevel fuel level numcells tc len cs out live best := by
+    CellCover ctx tcLevel fuel level numcells tc len cs out live best := by
   have hw : windowSet n st.lab tc len = windowSet n out.lab tc len := hf.window_eq hc
   have hk : ∀ v, (windowSet n st.lab tc len).mem v = true →
       prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells v) =
@@ -138,10 +173,10 @@ theorem SweepPre.long_cover {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hc : IsCell st.ptn level tc len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
-    (hcover : SweepCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (hcover : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
     (hsub : ∀ v, live v → (windowSet n st.lab tc len).mem v = true)
     (hmem : ∀ v, live v → cell.mem v = true) :
-    SweepCover ctx tcLevel fuel level numcells tc len cs st
+    CellCover ctx tcLevel fuel level numcells tc len cs st
       (fun v => live v ∧ (Nauty.longprune cell st.fixedpts st.autos).mem v = true) best := by
   apply ChildCover.pruned hcover (labOk_of_reach h.partition.labSize h.partition.reach)
     hc (by change tc + len ≤ st.view.lab.size; rw [h.partition.labSize]; exact hr) hsub
@@ -152,7 +187,7 @@ theorem SweepPre.long_cover {G : Colored n k} {ctx : Ctx n}
     exact longprune_drop (windowSet_lt (hsub v hv)) (hmem v hv) hd h.local_pairs
 
 /-- The actual short filter preserves ranked coverage once its newest
-pair passes the receiving loop's fix test. Pair origin alone is not that test. -/
+pair passes the receiving loop's fix test. -/
 theorem SweepPre.short_cover {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv1 len : Nat} {first : Bool} {cursor : Option Nat}
     {cell : VSet n} {st : Search n} {cs : List Nat} {live : Nat → Prop} {best : Option (Key n)}
@@ -160,11 +195,11 @@ theorem SweepPre.short_cover {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hc : IsCell st.ptn level tc len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
-    (hcover : SweepCover ctx tcLevel fuel level numcells tc len cs st live best)
+    (hcover : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
     (hsub : ∀ v, live v → (windowSet n st.lab tc len).mem v = true)
     (hmem : ∀ v, live v → cell.mem v = true)
     (hfix : ∀ fix mcr, st.autos.back? = some (fix, mcr) → st.fixedpts.subset fix = true) :
-    SweepCover ctx tcLevel fuel level numcells tc len cs st
+    CellCover ctx tcLevel fuel level numcells tc len cs st
       (fun v => live v ∧ (shortprune cell st).mem v = true) best := by
   apply ChildCover.pruned hcover (labOk_of_reach h.partition.labSize h.partition.reach)
     hc (by change tc + len ≤ st.view.lab.size; rw [h.partition.labSize]; exact hr) hsub

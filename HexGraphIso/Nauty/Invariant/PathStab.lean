@@ -62,6 +62,31 @@ theorem ofCellsPerm {level : Nat} {st out : SearchSt n}
 
 /-- A parent-level search effect preserves fixed singletons when it
 preserves the fixed-point bitset. -/
+theorem ofEffect {G : Colored n k} {level : Nat} {st out : SearchSt n}
+    (h : FixedCells level st) (hfixed : out.fixedpts = st.fixedpts)
+    (heffect : SearchOut G level level st out) : FixedCells level out := by
+  intro v hv hm
+  rw [hfixed] at hm
+  obtain ⟨q, hq, hqv, hc⟩ := h v hv hm
+  exact ⟨q, hq, (heffect.atSingleton hc).trans hqv, isCell_of_low heffect.low hc⟩
+
+/-- Fixed singleton cells are present in the implicit pair at every
+deeper comparison level. -/
+theorem fmptn {level saved : Nat} {st : SearchSt n}
+    (h : FixedCells level st) (hsize : st.ptn.size = n)
+    (hend : st.ptn[st.ptn.size - 1]! ≤ level) (hsaved : level ≤ saved) :
+    st.fixedpts.subset (Nauty.fmptn st.lab st.ptn saved n).1 = true := by
+  apply VSet.subset_iff.mpr
+  intro v hv
+  obtain ⟨q, hq, hqv, hc⟩ := h v (VSet.mem_lt hv) hv
+  have hm := isCell_mem_cells (isCell_one_mono hc hsaved)
+    (by rw [hsize]; exact Nat.le_refl _) (Nat.le_trans hend hsaved) hq
+  have hm' : (q, q) ∈ cells st.ptn saved n := by simpa using hm
+  have hf := fmptn_singleton (lab := st.lab) hm' (by rw [hqv]; exact VSet.mem_lt hv)
+  rwa [hqv] at hf
+
+/-- A parent-level search effect preserves fixed singletons between
+valid partition states. -/
 theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
     {st out : SearchSt n} (h : FixedCells level st)
     (hfixed : out.fixedpts = st.fixedpts)

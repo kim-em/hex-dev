@@ -39,8 +39,8 @@ variable {P : Nat → σ → Prop}
 /-- Resuming a sweep obtains any new short return from its continuation. -/
 theorem short_resume {fuel cfuel : Nat} {next : SweepFn σ n}
     (hnext : (shortContract (n := n) P).sweepValid fuel cfuel next)
-    (inf : Nat) (first : Bool) (level numcells tc tv1 tv index : Nat)
-    (cell : VSet n) (st : σ) :
+    (inf : Nat) (first : Bool) (level numcells tc tv1 tv : Nat)
+    (cell : VSet n) (index : Nat) (st : σ) :
     ∀ target, (resume inf next first level numcells tc tv1 tv cell index st).1 =
       .unwind target true →
       P target (resume inf next first level numcells tc tv1 tv cell index st).2.2 := by
@@ -50,8 +50,8 @@ theorem short_resume {fuel cfuel : Nat} {next : SweepFn σ n}
 /-- An intermediate loop transports an unconsumed short return. -/
 theorem short_advance {fuel cfuel : Nat} {next : SweepFn σ n}
     (hnext : (shortContract (n := n) P).sweepValid fuel cfuel next)
-    (inf : Nat) (first : Bool) (level numcells tc tv1 tv index : Nat)
-    (cell : VSet n) (st : σ) (exit : Exit)
+    (inf : Nat) (first : Bool) (level numcells tc tv1 tv : Nat)
+    (cell : VSet n) (index : Nat) (st : σ) (exit : Exit)
     (hout : ∀ target, exit = .unwind target true → P target st) :
     ∀ target, (advance inf next first level numcells tc tv1 tv cell index st exit).1 =
       .unwind target true →
@@ -59,13 +59,13 @@ theorem short_advance {fuel cfuel : Nat} {next : SweepFn σ n}
   unfold advance
   cases exit with
   | fuel => simp
-  | done => exact short_resume hnext inf first level numcells tc tv1 tv index cell st
+  | done => exact short_resume hnext inf first level numcells tc tv1 tv cell index st
   | unwind target short =>
     simp only [Id.run_pure, apply_ite Id.run]
     split
     · exact hout
     · cases short <;>
-        exact short_resume hnext inf first level numcells tc tv1 tv index _ st
+        exact short_resume hnext inf first level numcells tc tv1 tv _ index st
 
 /-- A node can emit a short return only at a leaf or through its sweep. -/
 theorem short_node (h : ShortPolicy (n := n) P) {fuel : Nat} {next : SweepFn σ n}
@@ -129,8 +129,8 @@ theorem short_sweep (h : ShortPolicy (n := n) P) {fuel cfuel : Nat}
     {descend : NodeFn σ} {next : SweepFn σ n}
     (hdescend : (shortContract (n := n) P).nodeValid fuel descend)
     (hnext : (shortContract (n := n) P).sweepValid fuel cfuel next)
-    (inf : Nat) (first : Bool) (level numcells tc tv1 tv index : Nat)
-    (cell : VSet n) (st : σ) :
+    (inf : Nat) (first : Bool) (level numcells tc tv1 tv : Nat)
+    (cell : VSet n) (index : Nat) (st : σ) :
     ∀ target, (sweepStep inf descend next first level numcells tc tv1 tv cell index st).1 =
       .unwind target true →
       P target (sweepStep inf descend next first level numcells tc tv1 tv cell index st).2.2 := by
@@ -163,7 +163,7 @@ theorem ShortPolicy.sound (h : ShortPolicy (n := n) P) (ctx : Ctx n) (inf tcLeve
   sweep_zero := by intros; simp [shortContract]
   sweep_step := by
     intro fuel cfuel descend next hd hn first level numcells tc tv1 tv cell index st _
-    exact short_sweep h hd hn inf first level numcells tc tv1 tv index cell st
+    exact short_sweep h hd hn inf first level numcells tc tv1 tv cell index st
 
 /-- Every short return carries a property of its emitting leaf. -/
 theorem node_short (h : ShortPolicy (n := n) P) (first : Bool) (ctx : Ctx n)
