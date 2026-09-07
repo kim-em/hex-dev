@@ -88,7 +88,7 @@ is `inconclusive` with a negative slope, translated only as the one-sided
 mode-2 rule permits.
 
 All measurements below use clean source commit
-`024645b02a46c0e8125f70c16f4dea0b59a4b9a2`, Lean 4.34.0-rc2,
+`83d220225762a783750c110949b37fb80479ba90`, Lean 4.34.0-rc2,
 lean-bench commit `8a37daf1074c3bdbd0da479b55538bad4a0022db`,
 Linux x86_64 on `chungus2` (AMD EPYC 9455, 48 physical/96 logical CPUs).
 This is a shared development host, not a dedicated timing runner. Raw
@@ -119,54 +119,54 @@ taskset -c 2 .lake/build/bin/hexrationalfn_bench run --filter RationalFnWorkload
 
 The unmodified exports retain every trial, hash, RSS, startup-floor observation,
 configuration, and environment:
-[queries/replay](bench-results/hex-rational-fn-scaling-024645b0-chungus2-cpu3.json),
-[normalization/arithmetic](bench-results/hex-rational-fn-families-024645b0-chungus2-cpu1.json),
-[remaining axes](bench-results/hex-rational-fn-workloads-024645b0-chungus2-cpu2.json).
+[queries/replay](bench-results/hex-rational-fn-scaling-83d22022-chungus2-cpu3.json),
+[normalization/arithmetic](bench-results/hex-rational-fn-families-83d22022-chungus2-cpu1.json),
+[remaining axes](bench-results/hex-rational-fn-workloads-83d22022-chungus2-cpu2.json).
 β is the fitted slope of time divided by the declared model, not the raw
 time exponent.
 
 | Case | Model / mode | β | Signal-eligible rows | Largest-rung median (µs) |
 | --- | --- | ---: | ---: | ---: |
-| `F.accept` | `n` / 1 | -0.017 | 24/24 | 5534.350 |
-| `F.addCancel` | `n` / 1 | -0.018 | 24/24 | 49077.426 |
-| `F.addCoprime` | `n` / 1 | -0.005 | 24/24 | 19173.279 |
-| `F.addEqual` | `n` / 1 | +0.002 | 24/24 | 19934.795 |
-| `F.addShared` | `n` / 1 | -0.005 | 24/24 | 54159.285 |
-| `F.addTotal` | `n` / 1 | -0.011 | 24/24 | 345.355 |
-| `F.cancelMultiply` | `n` / 1 | -0.009 | 24/24 | 15770.094 |
-| `F.checkedDivide` | `n` / 1 | -0.011 | 24/24 | 30203.691 |
-| `F.checkedFraction` | `n` / 1 | -0.005 | 24/24 | 15744.032 |
-| `F.checkedInverse` | `n` / 1 | -0.001 | 24/24 | 1535.224 |
-| `F.divide` | `n` / 1 | -0.012 | 24/24 | 20224.891 |
-| `F.generate` | `n` / 1 | +0.011 | 24/24 | 26452.411 |
-| `F.inverse` | `n` / 1 | -0.006 | 24/24 | 1547.024 |
-| `F.multiply` | `n` / 1 | -0.007 | 24/24 | 28763.304 |
-| `F.normalizeCancel` | `n` / 1 | -0.017 | 24/24 | 19305.476 |
-| `F.normalizeDegree` | `n` / 1 | -0.010 | 24/24 | 15341.862 |
-| `F.subtract` | `n` / 1 | -0.008 | 24/24 | 19179.739 |
-| `S.different` | `n` / 1 | +0.072 | 24/24 | 146.458 |
-| `S.equal` | `n` / 1 | -0.003 | 24/24 | 232.552 |
-| `S.evaluate` | `n` / 1 | +0.010 | 24/24 | 10024.252 |
-| `S.evaluatePole` | `n` / 1 | -0.001 | 24/24 | 3146.468 |
-| `S.inverse` | `n` / 1 | -0.008 | 24/24 | 111.408 |
-| `S.negate` | `n` / 1 | -0.097 | 24/24 | 1197.519 |
-| `S.reject` | `n` / 1 | -0.008 | 24/24 | 21651.190 |
-| `S.replay` | `n` / 1 | -0.001 | 24/24 | 15146.174 |
-| `W.constructors` | `1` / 1 | -0.065 | 24/24 | 0.615 |
-| `W.derivative` | `n` / 1 | -0.007 | 24/24 | 22378.008 |
-| `W.derivativeCancel` | `n` / 1 | -0.016 | 24/24 | 21793.676 |
-| `W.derivativePolynomial` | `n` / 1 | +0.007 | 24/24 | 11947.622 |
-| `W.heightAdd` | `n ^ 2` / 2 | -1.341 | 24/24 | 3349.444 |
-| `W.heightDerivative` | `n ^ 2` / 2 | -1.478 | 24/24 | 3007.631 |
-| `W.heightMultiply` | `n ^ 2` / 2 | -1.196 | 24/24 | 4162.697 |
-| `W.heightNormalize` | `n ^ 2` / 2 | -1.259 | 24/24 | 2101.742 |
-| `W.multiply` | `M(n)` / 1 | -0.041 | 24/24 | 646785.725 |
-| `W.normalizeChain` | `M(n)(log₂n+1)` / 2 | -0.054 | 24/24 | 1135888.367 |
-| `W.polynomialPart` | `n` / 1 | +0.002 | 24/24 | 2292.260 |
-| `W.power` | `M(n)` / 1 | +0.013 | 24/24 | 29266.112 |
-| `W.square` | `M(n)` / 1 | +0.024 | 24/24 | 604500.191 |
-| `W.unbalanced` | `n` / 1 | -0.009 | 24/24 | 424156.581 |
-| `W.unbalancedSchoolbook` | `n` / 1 | -0.003 | 24/24 | 582010.613 |
+| `F.accept` | `n` / 1 | -0.014 | 24/24 | 3751.734 |
+| `F.addCancel` | `n` / 1 | -0.080 | 24/24 | 32329.279 |
+| `F.addCoprime` | `n` / 1 | -0.009 | 24/24 | 19247.119 |
+| `F.addEqual` | `n` / 1 | -0.006 | 24/24 | 13330.746 |
+| `F.addShared` | `n` / 1 | -0.002 | 24/24 | 56389.649 |
+| `F.addTotal` | `n` / 1 | -0.013 | 24/24 | 344.926 |
+| `F.cancelMultiply` | `n` / 1 | -0.008 | 24/24 | 10420.919 |
+| `F.checkedDivide` | `n` / 1 | -0.011 | 24/24 | 20642.495 |
+| `F.checkedFraction` | `n` / 1 | -0.013 | 24/24 | 15785.099 |
+| `F.checkedInverse` | `n` / 1 | -0.000 | 24/24 | 1088.900 |
+| `F.divide` | `n` / 1 | -0.006 | 24/24 | 20824.098 |
+| `F.generate` | `n` / 1 | -0.013 | 24/24 | 24693.746 |
+| `F.inverse` | `n` / 1 | -0.003 | 24/24 | 1075.351 |
+| `F.multiply` | `n` / 1 | -0.009 | 24/24 | 19309.717 |
+| `F.normalizeCancel` | `n` / 1 | -0.009 | 24/24 | 20519.945 |
+| `F.normalizeDegree` | `n` / 1 | +0.002 | 24/24 | 23922.930 |
+| `F.subtract` | `n` / 1 | -0.009 | 24/24 | 19319.609 |
+| `S.different` | `n` / 1 | -0.012 | 24/24 | 111.994 |
+| `S.equal` | `n` / 1 | -0.011 | 24/24 | 224.405 |
+| `S.evaluate` | `n` / 1 | -0.004 | 24/24 | 9681.097 |
+| `S.evaluatePole` | `n` / 1 | -0.002 | 24/24 | 3351.166 |
+| `S.inverse` | `n` / 1 | -0.011 | 24/24 | 148.818 |
+| `S.negate` | `n` / 1 | +0.003 | 24/24 | 1245.354 |
+| `S.reject` | `n` / 1 | -0.023 | 24/24 | 19430.162 |
+| `S.replay` | `n` / 1 | -0.002 | 24/24 | 15009.221 |
+| `W.constructors` | `1` / 1 | +0.002 | 24/24 | 0.603 |
+| `W.derivative` | `n` / 1 | -0.005 | 24/24 | 15152.056 |
+| `W.derivativeCancel` | `n` / 1 | -0.014 | 24/24 | 21747.197 |
+| `W.derivativePolynomial` | `n` / 1 | -0.002 | 24/24 | 12196.232 |
+| `W.heightAdd` | `n ^ 2` / 2 | -1.290 | 24/24 | 2820.852 |
+| `W.heightDerivative` | `n ^ 2` / 2 | -1.496 | 24/24 | 2941.033 |
+| `W.heightMultiply` | `n ^ 2` / 2 | -1.194 | 24/24 | 4155.314 |
+| `W.heightNormalize` | `n ^ 2` / 2 | -1.260 | 24/24 | 2085.730 |
+| `W.multiply` | `multiplicationCost n` / 1 | -0.051 | 24/24 | 427563.928 |
+| `W.normalizeChain` | `multiplicationCost n * (Nat.log2 n + 1)` / 2 | -0.064 | 24/24 | 1174581.088 |
+| `W.polynomialPart` | `n` / 1 | +0.002 | 24/24 | 2432.267 |
+| `W.power` | `multiplicationCost n` / 1 | +0.008 | 24/24 | 18925.575 |
+| `W.square` | `multiplicationCost n` / 1 | +0.006 | 24/24 | 405943.876 |
+| `W.unbalanced` | `n` / 1 | -0.017 | 24/24 | 646721.504 |
+| `W.unbalancedSchoolbook` | `n` / 1 | +0.001 | 24/24 | 592990.147 |
 
 The 35 fixed anchors also pass their frozen expected hashes. They provide
 conformance and common-domain comparisons, not operation-coverage evidence.
@@ -180,14 +180,17 @@ The corrected [4918f828 export](bench-results/hex-rational-fn-families-4918f828-
 passes the 15 original linear families. Short operands now use schoolbook
 multiplication and short divisors/quotients use direct division. General
 unbalanced blocking additionally uses a unique accumulator instead of copying
-the growing suffix. Its semantic equality is proved for every fuel, and the
+the growing suffix. For input lengths L and S, its preallocated capacity is
+L + 2 max(min(blockSize,L),S) + 1;
+coefficient updates use a list-free tail-recursive loop, and empty terminal
+tails allocate nothing. Its semantic equality is proved for every fuel, and the
 new ratio sweep above passes for both odd and even short lengths. The
 unbalanced profile confirms that balanced block products, not output copying,
 dominate.
 
 ### Fresh-module proof results
 
-The [complete proof export](bench-results/hex-rational-fn-kernel-replay-024645b0-chungus2-cpu22.json)
+The [complete proof export](bench-results/hex-rational-fn-kernel-replay-83d22022-chungus2-cpu22.json)
 has `measurement_state: complete`, `release_quality: true`, and no validity
 exceptions. It records the full local import closure's SHA-256 hashes,
 toolchain/dependency checkout identities, cache/import boundary, compiler
@@ -203,27 +206,27 @@ python3 scripts/bench/rationalfn_kernel_replay.py \
 Each timed arm is `lake build +MODULE:olean` after its own outputs are removed;
 `lake build +MODULE:deps` warms only imports. CPU 22 and SMT sibling 70 are
 checked together. The accepted run contains 72 arm-frequency observations,
-2.76% frequency spread, eight rejected pair attempts, and no exhausted pair.
+2.69% frequency spread, one rejected pair attempt, and no exhausted pair.
 The effective interference ceiling includes the protocol's three-tick
-accounting allowance; the largest accepted effective ratio is 4.48%, not a
+accounting allowance; the largest accepted effective ratio is 4.46%, not a
 claim that every short arm achieved the nominal 0.2% ratio.
 
 The null controls' signed deltas in milliseconds, in recorded round order, are:
 
-- Import: 8.071, 2.369, 8.560, −8.618, 0.154, 3.404; median 2.886,
-  IQR 6.197, range 17.178, IQR/build magnitude 0.90%.
-- Replay: 6.228, −3.299, −9.458, −4.811, 1.610, 4.855; median −0.845,
-  IQR 8.477, range 15.685, IQR/build magnitude 1.07%.
+- Import: 6.852, -31.584, -30.132, -0.797, -3.809, 159.286; median -2.303,
+  IQR 28.491, range 190.870, IQR/build magnitude 4.02%.
+- Replay: 4.333, -5.845, 57.912, -9.863, 6.022, -55.723; median -0.756,
+  IQR 14.458, range 113.635, IQR/build magnitude 1.82%.
 
 They describe paired noise; the preregistered absolute-only verdict uses
 each candidate's maximum raw build time, not a baseline-subtracted estimate.
 
 | Probe | Reference median ms | Candidate median ms | Candidate maximum ms | Budget ms | Candidate .olean bytes |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Replay4 | 687.472 | 791.688 | 802.198 | 5000 | 7432 |
-| Replay16 | 686.942 | 791.513 | 846.379 | 5000 | 7440 |
-| Replay64 | 688.170 | 779.977 | 791.679 | 5000 | 7440 |
-| Reject64 | 682.702 | 783.686 | 795.303 | 5000 | 13352 |
+| Replay4 | 689.535 | 779.114 | 1075.234 | 5000 | 7432 |
+| Replay16 | 726.329 | 802.122 | 1010.709 | 5000 | 7440 |
+| Replay64 | 692.759 | 793.046 | 1012.960 | 5000 | 7440 |
+| Reject64 | 694.578 | 803.541 | 874.809 | 5000 | 13352 |
 
 The import-only .olean is 1640 bytes. All certificate theorems report exactly
 `[propext, Classical.choice, Quot.sound]`; there is no `sorryAx`,
@@ -234,7 +237,7 @@ not added to compiled timings and make no witness-size asymptotic claim.
 
 ### Internal alternatives
 
-The [comparison export](bench-results/hex-rational-fn-comparisons-024645b0.json)
+The [comparison export](bench-results/hex-rational-fn-comparisons-83d22022.json)
 retains all native results and exact commands. Every group reports
 `allAgreed` on its intentional common domain: eight schoolbook/Karatsuba
 plans on the same four polynomial pairs; four individual product-size
@@ -248,31 +251,31 @@ Fixed names use prefix `Hex.RationalFnBench.`.
 
 | Product coefficient count | Schoolbook µs | Default Karatsuba µs | Schoolbook/default |
 | --- | ---: | ---: | ---: |
-| 16 | 52.188 | 48.815 | 1.07× |
-| 32 | 201.979 | 161.494 | 1.25× |
-| 64 | 839.967 | 518.848 | 1.62× |
-| 128 | 3151.243 | 1624.486 | 1.94× |
+| 16 | 55.041 | 51.779 | 1.06× |
+| 32 | 213.232 | 168.207 | 1.27× |
+| 64 | 844.500 | 541.101 | 1.56× |
+| 128 | 3394.647 | 1707.558 | 1.99× |
 
 The corresponding names are `runSchoolbookN` and `runKaratsubaAtN`.
 On the aggregate four-pair input, cutoffs 1, 2, 4, 8, 16, 32, 64 take
-3769.030, 2924.033, 2454.562, 2328.019, 2481.936, 2876.129, 3559.050 µs,
-respectively, against schoolbook's 4164.076 µs. Cutoff eight has the smallest
-observed aggregate time and remains the default; this is not a claim that
-one cutoff is optimal for every field or size.
+4017.693, 3211.442, 2686.531, 2518.147, 2672.731, 3156.093, 3777.805 µs,
+respectively, against schoolbook's 4568.232 µs. Cutoff 8 has the smallest
+observed aggregate time. The default remains eight; small crossover differences
+on this shared host do not establish an optimal cutoff for every field or size.
 
 | Cancellation input degree | Cross-cancel µs | Multiply/normalize µs | Naive/cancel |
 | --- | ---: | ---: | ---: |
-| 1 | 9.086 | 7.726 | 0.85× |
-| 2 | 11.834 | 12.607 | 1.07× |
-| 4 | 17.182 | 24.895 | 1.45× |
-| 8 | 27.601 | 63.525 | 2.30× |
-| 16 | 49.459 | 163.990 | 3.32× |
+| 1 | 9.984 | 8.362 | 0.84× |
+| 2 | 13.179 | 14.051 | 1.07× |
+| 4 | 18.961 | 26.049 | 1.37× |
+| 8 | 29.335 | 66.296 | 2.26× |
+| 16 | 50.563 | 175.492 | 3.47× |
 
 These are `runCancelN` and `runNaiveN`. The operands are inverse fractions:
 cross-cancellation leaves degree-zero products, whereas the naive intermediate
 numerator/denominator have degree 2n. The combined `runMultiplication` anchor,
-which also includes a non-cancelling product, takes 721.903 µs versus
-1501.938 µs for `runMultiplyNormalize`. Cancellation is not promised to win
+which also includes a non-cancelling product, takes 762.650 µs versus
+1600.578 µs for `runMultiplyNormalize`. Cancellation is not promised to win
 on the smallest input.
 
 ### External rational arithmetic
@@ -281,8 +284,8 @@ on the smallest input.
 relative-performance gating goal. The [C driver](../scripts/bench/rationalfn_flint.c)
 uses FLINT 3.6.0; the [coordinator](../scripts/bench/rationalfn_flint.py) compares
 full canonical `Rat` coefficient arrays after exact representation conversion.
-The [54 query cases](bench-results/hex-rational-fn-flint-queries-024645b0-chungus2-cpu5.json)
-and [216 arithmetic cases](bench-results/hex-rational-fn-flint-workloads-024645b0-chungus2-cpu5.json)
+The [54 query cases](bench-results/hex-rational-fn-flint-queries-83d22022-chungus2-cpu5.json)
+and [216 arithmetic cases](bench-results/hex-rational-fn-flint-workloads-83d22022-chungus2-cpu5.json)
 all agree, including their 30 trivial-input controls. Each export records three
 raw trials, source/driver/fixture hashes, affinity, and both representation sizes.
 
@@ -329,42 +332,46 @@ per case expose the trend without extending the ladder past a wallclock cap.
 
 | Case | Control (ns) | 128 | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 16384 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `S.equal` | 29.18 | 4.7/5.1 | 4.8 | 4.9 | 4.8 | 5.0 | 5.0 | 4.9 | 5.0 |
-| `S.different` | 25.90 | 35.1/10733.5* | 70.1/5857.4* | 138.8/22495.0* | 364.4/22371.5* | 785.0/—* | 1557.4/—* | 3208.4/—* | 5781.1/—* |
-| `S.inverse` | 32.04 | 2.7/3.0 | 2.7 | 2.8 | 2.8 | 2.9 | 2.9 | 2.9 | 2.9 |
-| `S.negate` | 31.24 | 39.2/43.1 | 40.7 | 40.0 | 36.7 | 28.5 | 30.4 | 31.3 | 31.6 |
-| `S.evaluate` | 40.85 | 73.7 | 70.2 | 76.1 | 72.6 | 74.9 | 74.3 | 77.9 | 79.8 |
-| `S.evaluatePole` | 32.56 | 46.7/49.7 | 47.9 | 49.4 | 49.5 | 51.6 | 50.8 | 51.1 | 50.8 |
+| `S.equal` | 30.63 | 4.4/4.7 | 4.6 | 4.5 | 4.9 | 4.2 | 4.2 | 4.8 | 4.7 |
+| `S.different` | 27.04 | 34.2/2598.6* | 67.0/14622.1* | 136.1/—* | 268.7/—* | 544.2/—* | 1075.5/—* | 2079.7/—* | 3941.2/81208.1* |
+| `S.inverse` | 33.03 | 3.5/3.8 | 3.7 | 3.7 | 3.8 | 3.8 | 3.7 | 3.7 | 3.7 |
+| `S.negate` | 33.37 | 26.1/28.7 | 28.5 | 29.7 | 30.5 | 31.4 | 32.0 | 29.8 | 23.8 |
+| `S.evaluate` | 45.74 | 67.2 | 71.3 | 72.2 | 73.0 | 76.1 | 71.0 | 70.0 | 46.9 |
+| `S.evaluatePole` | 33.49 | 44.8/47.6 | 48.5 | 51.1 | 46.2 | 49.2 | 48.4 | 48.3 | 32.6 |
+
 #### Rational arithmetic: degree axis
+
 | Case | Control (ns) | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `F.normalizeDegree` | 250.67 | 32.9/35.1 | 65.8/70.4 | 45.3 | 54.0 | 82.4 | 82.4 | 71.6 | 62.7 |
-| `F.checkedFraction` | 241.04 | 59.9/67.2 | 64.6/68.9 | 42.7 | 78.5 | 55.7 | 71.1 | 69.6 | 46.6 |
-| `F.normalizeCancel` | 241.97 | 102.3/119.3 | 100.7/108.7 | 122.1 | 134.3 | 139.1 | 132.4 | 120.7 | 112.3 |
-| `F.addCoprime` | 84.51 | 348.6/424.0 | 337.5/371.3 | 399.8/423.7 | 261.3 | 409.8 | 361.5 | 373.7 | 342.1 |
-| `F.addShared` | 338.40 | 202.7/238.4 | 232.8/256.3 | 236.2 | 202.4 | 229.6 | 294.8 | 196.6 | 207.8 |
-| `F.addCancel` | 512.73 | 128.3/151.2 | 105.2/112.6 | 167.1/176.8 | 115.0 | 166.4 | 124.1 | 124.6 | 128.0 |
-| `F.addTotal` | 158.70 | 1.7/1.9 | 1.3 | 2.1 | 1.4 | 2.0 | 2.2 | 1.6 | 1.6 |
-| `F.addEqual` | 223.17 | 50.5/54.1 | 59.1 | 58.6 | 66.8 | 65.2 | 71.0 | 56.0 | 54.6 |
-| `F.subtract` | 88.95 | 339.7/415.9 | 366.2/409.2 | 224.9 | 394.8 | 407.9 | 334.1 | 290.7 | 359.3 |
-| `F.multiply` | 82.88 | 454.7/539.4 | 473.7/520.1 | 478.4 | 490.3 | 322.5 | 511.3 | 327.0 | 355.4 |
-| `F.cancelMultiply` | 259.22 | 43.0/47.0 | 33.5 | 45.4 | 48.0 | 54.0 | 43.1 | 52.7 | 38.5 |
-| `F.divide` | 88.97 | 293.7/345.5 | 354.2/391.1 | 208.1 | 279.7 | 368.5 | 320.7 | 300.2 | 290.2 |
-| `F.checkedDivide` | 88.45 | 314.8/351.9 | 532.3/587.7 | 550.1 | 369.2 | 344.6 | 518.0 | 514.5 | 507.4 |
-| `F.inverse` | 32.41 | 108.5/149.6 | 134.9/163.2 | 146.0/161.3 | 151.5/159.5 | 153.5 | 146.4 | 113.4 | 98.1 |
-| `F.checkedInverse` | 32.27 | 126.9/189.9 | 78.9/88.3 | 142.9/158.0 | 153.7/161.8 | 151.2 | 152.5 | 160.6 | 105.7 |
-| `W.derivative` | 172.06 | 350.2/509.7 | 220.5/245.9 | 258.1/275.8 | 322.0 | 248.3 | 256.3 | 305.0 | 283.4 |
-| `W.derivativeCancel` | 384.17 | 286.9/677.9* | 238.7/320.3 | 233.1/266.9 | 335.5/368.8 | 308.5 | 241.7 | 245.5 | 258.6 |
-| `W.derivativePolynomial` | 43.04 | 1140.5/2440.1* | 834.1/1040.0 | 1387.2/1662.4 | 1590.6/1752.6 | 1239.2 | 1203.4 | 1360.0 | 2028.4 |
-| `W.multiply` | 54.45 | 1001.1/1166.3 | 608.5 | 1591.0 | 1522.1 | 1813.4 | 2369.1 | 3535.7 | 4042.2 |
-| `W.square` | 50.79 | 1107.9/1403.2 | 648.1 | 1134.5 | 1815.7 | 2978.1 | 3034.6 | 3894.4 | 5013.8 |
+| `F.normalizeDegree` | 419.72 | 53.8/60.5 | 69.6/75.3 | 67.3 | 74.2 | 83.2 | 86.0 | 101.5 | 101.2 |
+| `F.checkedFraction` | 417.52 | 41.5/47.4 | 46.6/50.4 | 48.7 | 74.4 | 55.2 | 55.4 | 58.9 | 54.1 |
+| `F.normalizeCancel` | 414.03 | 59.6/69.1 | 74.7/82.3 | 81.6/86.1 | 133.2 | 142.1 | 96.0 | 103.3 | 97.1 |
+| `F.addCoprime` | 136.99 | 226.8/278.9 | 228.3/253.4 | 239.3/252.8 | 378.7 | 404.3 | 255.6 | 390.3 | 324.2 |
+| `F.addShared` | 590.39 | 129.8/155.0 | 148.5/164.9 | 158.7/168.2 | 273.4 | 260.7 | 278.8 | 203.3 | 221.3 |
+| `F.addCancel` | 980.61 | 81.2/100.8 | 90.6/102.4 | 100.0/106.8 | 161.4/170.4 | 107.9 | 117.3 | 134.7 | 98.4 |
+| `F.addTotal` | 296.73 | 1.1/1.2 | 1.2/1.3 | 1.3 | 1.3 | 1.5 | 1.5 | 1.6 | 1.6 |
+| `F.addEqual` | 432.26 | 22.1/24.1 | 25.2/26.5 | 26.1 | 44.4 | 30.5 | 44.5 | 32.2 | 30.5 |
+| `F.subtract` | 154.00 | 227.8/289.3 | 233.5/263.8 | 238.5/253.7 | 374.4 | 259.3 | 326.3 | 273.6 | 385.1 |
+| `F.multiply` | 84.84 | 187.5/207.8 | 200.5/211.9 | 200.5 | 203.1 | 221.4 | 338.9 | 230.0 | 224.2 |
+| `F.cancelMultiply` | 267.10 | 26.0/28.3 | 19.6 | 21.7 | 30.7 | 25.7 | 25.5 | 25.7 | 29.7 |
+| `F.divide` | 144.43 | 202.5/242.4 | 210.7/231.8 | 210.9 | 349.3 | 375.2 | 318.0 | 245.3 | 244.8 |
+| `F.checkedDivide` | 147.24 | 203.3/244.6 | 210.6/231.9 | 217.2 | 209.6 | 229.1 | 241.7 | 379.2 | 244.8 |
+| `F.inverse` | 40.08 | 59.3/81.2 | 62.7/73.4 | 94.3/106.2 | 100.2/106.5 | 91.8 | 107.3 | 73.5 | 79.8 |
+| `F.checkedInverse` | 39.85 | 59.0/80.7 | 59.3/68.9 | 95.0/106.9 | 102.0/108.5 | 99.4 | 72.6 | 71.9 | 74.7 |
+| `W.derivative` | 218.63 | 148.2/198.9 | 150.5/173.8 | 204.4/225.5 | 221.8/233.9 | 226.8 | 220.7 | 211.5 | 161.0 |
+| `W.derivativeCancel` | 335.90 | 197.1/297.9 | 214.8/267.8 | 227.0/254.7 | 241.0/256.0 | 287.4 | 243.2 | 245.0 | 229.0 |
+| `W.derivativePolynomial` | 40.80 | 793.6/1203.7 | 886.2/1092.6 | 970.2/1082.4 | 1031.4/1092.8 | 1102.3 | 1681.2 | 1262.8 | 1277.8 |
+| `W.multiply` | 47.52 | 603.7/674.2 | 486.7 | 1011.2 | 1330.0 | 1244.3 | 2068.3 | 2054.3 | 2854.5 |
+| `W.square` | 50.87 | 602.0/725.3 | 512.2 | 1214.9 | 1523.6 | 1502.3 | 2367.0 | 2535.1 | 2885.2 |
+
 #### Rational arithmetic: coefficient-height axis
+
 | Case | Control (ns) | 128 | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 16384 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `W.heightNormalize` | 687.75 | 38.3/53.9 | 32.9/43.3 | 37.8/49.1 | 41.6/51.6 | 34.9/39.3 | 47.2/51.4 | 72.0/76.4 | 130.7 |
-| `W.heightAdd` | 199.23 | 82.4/90.3 | 34.8 | 17.8 | 8.2 | 3.4 | 2.1 | 1.5 | 1.3 |
-| `W.heightMultiply` | 435.76 | 38.3/43.7 | 26.8/29.0 | 16.1 | 6.5 | 4.0 | 2.8 | 2.7 | 2.3 |
-| `W.heightDerivative` | 676.73 | 86.2/104.3 | 83.9/100.6 | 86.8/101.0 | 67.2/73.6 | 48.3 | 52.8 | 65.8 | 47.7 |
+| `W.heightNormalize` | 1129.58 | 32.5/53.9 | 31.2/49.8 | 50.7/103.8* | 38.9/56.0 | 37.5/46.8 | 66.5/82.3 | 76.8/85.4 | 101.1/107.0 |
+| `W.heightAdd` | 327.24 | 38.0/42.1 | 23.0 | 12.2 | 5.9 | 3.4 | 2.0 | 1.4 | 0.9 |
+| `W.heightMultiply` | 419.19 | 36.8/41.5 | 25.3/27.2 | 15.3 | 8.1 | 5.0 | 3.3 | 2.6 | 2.0 |
+| `W.heightDerivative` | 778.72 | 87.5/108.3 | 80.0/97.7 | 88.0/104.3 | 81.3/92.1 | 53.3/56.8 | 52.2 | 46.5 | 44.6 |
 
 The query ratios are broadly flat past the small-input regime. The unequal
 query is deliberately ineligible throughout: FLINT rejects the denominator
@@ -375,7 +382,7 @@ Short-factor arithmetic ratios fluctuate with shared-host load and fixed
 costs but show no sustained extra power of degree. Total addition cancellation
 is close to FLINT; nonmonic inversion and rational gcd/short-product paths have
 much larger constants. The balanced product and square gaps grow strongly:
-for square, 1815.7× at 256 becomes 5013.8× at 4096. This is expected divergence
+for square, 1523.6× at 256 becomes 2885.2× at 4096. This is expected divergence
 between different algorithm classes, not a same-class gating failure.
 The generic field plan uses Karatsuba and normalized rational arithmetic;
 FLINT 3.6's [multiplication](https://github.com/flintlib/flint/blob/v3.6.0/src/fmpz_poly/mul.c)
@@ -385,7 +392,7 @@ larger lengths in this non-FFT_SMALL build. Requiring a generic field plan to
 match that specialized integer backend is not this library's contract.
 
 On the height axis, addition and multiplication ratios shrink sharply toward
-the top (1.3× and 2.3×), while normalization worsens to 130.7× and differentiation
+the top (0.9× and 2.0×), while normalization reaches 101.1× and differentiation
 remains tens of times slower. These are fixed-degree, data-dependent
 coefficient-arithmetic/representation effects, not evidence for a new fitted
 polynomial-degree model. The mode-2 bounds remain one-sided.
@@ -412,13 +419,13 @@ kernel-build and compiled-operation times.
 
 All eleven captures below pass calibration, sample-count and sensitivity
 checks, and classify at least 98% of retained leaf samples.
-The [profile export](bench-results/hex-rational-fn-profiles-024645b0.json)
+The [profile export](bench-results/hex-rational-fn-profiles-83d22022.json)
 contains full diagnostic blocks, ranked self/inclusive costs, symbolized
 function names, child output, commands, hashes, and raw-profile locations.
 It covers every manifest input family, the long-chain mode-2 phase, the repaired
-unbalanced path, and the worst measured comparator gap (`W.square`, 4096).
+unbalanced path, and the worst eligible raw comparator gap (`W.square`, 4096).
 
-The binary/source and host are the same `024645b0` environment as the scientific
+The binary/source and host are the same `83d22022` environment as the scientific
 runs. Samply is 0.13.1 at 999 Hz. Filtering uses lean-bench-samply commit
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`.
 With `LEAN_BENCH_PROFILE_KERNEL=1`, each invocation is bracketed by a
@@ -429,56 +436,51 @@ timing parsers, so they cannot enter a scientific complexity verdict.
 
 | Family / case (parameter) | Timed ms | Samples | Residual ms | Own / GMP / allocation / runtime % | Classified % |
 | --- | ---: | ---: | ---: | --- | ---: |
-| normalization: `F.normalizeDegree` (4096) | 3893.0 | 3868 | 2.382 | 3.26 / 34.41 / 40.10 / 21.90 | 99.66 |
-| addition: `F.addCancel` (4096) | 4049.2 | 2599 | 1.021 | 2.58 / 32.17 / 41.98 / 23.16 | 99.88 |
-| multiplication: `W.multiply` (1024) | 3124.3 | 3103 | 0.999 | 2.19 / 31.49 / 43.89 / 22.43 | 100.00 |
-| coefficient-height: `W.heightDerivative` (16384) | 5259.2 | 5226 | 2.440 | 0.06 / 81.86 / 17.05 / 1.01 | 99.98 |
-| queries: `S.evaluatePole` (65536) | 3094.1 | 3077 | 1.300 | 0.00 / 32.17 / 46.08 / 20.25 | 98.51 |
-| calculus: `W.derivativeCancel` (4096) | 2769.1 | 2767 | 0.994 | 1.73 / 39.90 / 35.67 / 21.32 | 98.63 |
-| certificate-replay: `F.accept` (65536) | 3829.0 | 1887 | 0.989 | 0.32 / 35.72 / 38.37 / 25.54 | 99.95 |
-| normalization: `W.normalizeChain` (2048) | 6799.0 | 6787 | 0.920 | 32.44 / 0.00 / 25.20 / 42.36 | 100.00 |
-| multiplication: `W.unbalanced` (512) | 10874.2 | 10822 | 0.990 | 3.38 / 39.82 / 30.25 / 24.97 | 98.42 |
-| addition: `F.addCoprime` (4096) | 4778.7 | 4765 | 1.535 | 1.95 / 33.54 / 40.67 / 22.39 | 98.55 |
-| calculus: `W.square` (4096) | 10014.7 | 9964 | 0.994 | 2.96 / 35.66 / 34.05 / 27.32 | 99.99 |
+| normalization: `F.normalizeDegree` (4096) | 8335.6 | 8268 | 3.291 | 3.17 / 32.78 / 42.67 / 21.00 | 99.61 |
+| addition: `F.addCancel` (4096) | 6661.3 | 6564 | 2.430 | 2.86 / 46.89 / 25.93 / 23.99 | 99.68 |
+| multiplication: `W.multiply` (1024) | 10134.2 | 10054 | 2.432 | 4.26 / 41.93 / 23.92 / 29.86 | 99.97 |
+| coefficient-height: `W.heightDerivative` (16384) | 6381.7 | 6334 | 2.637 | 0.13 / 78.86 / 18.69 / 2.19 | 99.87 |
+| queries: `S.evaluatePole` (65536) | 9484.6 | 9362 | 4.193 | 0.00 / 38.41 / 35.77 / 25.32 | 99.50 |
+| calculus: `W.derivativeCancel` (4096) | 5564.6 | 5545 | 1.000 | 2.00 / 37.31 / 39.91 / 20.67 | 99.89 |
+| certificate-replay: `F.accept` (65536) | 7535.6 | 7528 | 0.998 | 0.31 / 36.17 / 37.41 / 26.01 | 99.89 |
+| normalization: `W.normalizeChain` (2048) | 7029.6 | 7028 | 0.976 | 32.98 / 0.00 / 23.82 / 43.20 | 100.00 |
+| multiplication: `W.unbalanced` (512) | 7031.6 | 7009 | 0.970 | 2.21 / 33.57 / 42.25 / 21.91 | 99.94 |
+| addition: `F.addCoprime` (4096) | 9575.9 | 9547 | 0.999 | 2.23 / 36.10 / 37.02 / 23.02 | 98.37 |
+| calculus: `W.square` (4096) | 6714.9 | 6697 | 0.898 | 2.20 / 35.69 / 36.51 / 25.61 | 100.00 |
 
 Every sensitivity check passes at ±5 ms; each nominal residual is below the
 configured five-millisecond threshold. The full diagnostic records also show
-expected/retained samples and rejected samples. Low-confidence supplemental
-chain captures were discarded; only the successful 2048 case above qualifies.
+expected/retained samples and rejected samples. Only captures passing every
+confidence check are included.
 
-Inclusive attribution (percentages overlap along call stacks):
+Inclusive attribution (percentages overlap along call stacks; tail calls can
+remove the caller's frame):
 
-- Normalization: `normalizeWith` 100%, `xgcdWith` 64.97%. The constant-length
-  Euclidean chain, exact division and coefficient rescaling account for the
-  linear family. GMP coefficient arithmetic and allocation dominate leaf cost.
-- Addition with cancellation: `addCoreWith` 100%, `cancelWith` 87.73%,
-  `xgcdWith` 70.91%. It computes the denominator gcd and cancels X−1 from the
-  second gcd. The coprime control similarly has `cancelWith` 76.18% and
-  `xgcdWith` 61.18%; these are the registered addition algorithms, not
-  unmeasured setup.
-- Balanced multiplication: `mulWith` 100%, `mulKaratsuba` 96.39%.
-  For the worst-gap square, `powWith` and `polyPowWith` are 100%,
-  `Raw.squareAux` 99.70%, schoolbook leaves 61.95%, and combination 21.13%.
-  The large external gap is dominated by per-coefficient rational
-  arithmetic/allocation through the generic Karatsuba recurrence.
-- Unbalanced multiplication: `Raw.blocksInto` 84.39%, `Raw.mulAux` 79.09%,
-  schoolbook leaves 55.16%. The tail-recursive accumulator hands a uniquely
-  owned array to `Array.set!`; generated C does not increment its array
-  reference before the update. Work is concentrated in balanced block products.
-- Coefficient-height: GMP occupies 81.86% of leaf samples; normalization is
-  64.39% inclusive and xgcd 60.20%. Large integer gcd/multiplication/division,
-  rather than polynomial-degree growth, justify the coefficient upper bound.
-- Queries: `eval?` is 100% inclusive, traversing the dense pole denominator.
-  The bounded-partial-sum Horner loop accounts for the registered linear work.
-- Calculus: quotient-rule differentiation spends 75.86% inclusive in
-  normalization and 62.70% in xgcd, cancelling the known common X factor.
-  The power/square capture separately attributes its balanced recurrence.
-- Certificate-replay: `check` and `ofCert?` are each 100% inclusive.
-  The two long-witness/linear-polynomial products and the final equality,
-  not certificate generation or output hashing, dominate this accepted case.
-- Long-chain normalization: `normalizeWith` 99.99%, `xgcdWith` 99.94%.
-  Half-gcd matrix products over F₇ account for the published O(M(n) log n)
-  phase. GMP is absent, separating this degree experiment from height costs.
+- `F.normalizeDegree`: `normalizeWith` 100.00%, `xgcdWith` 64.56%.
+- `F.addCancel`: `addCoreWith` 100.00%, `cancelWith` 87.66%, `xgcdWith` 71.21%.
+- `W.multiply`: `mulWith` 100.00%, `mulKaratsuba` 96.37%.
+- `W.heightDerivative`: `normalizeWith` 64.95%, `xgcdWith` 60.99%.
+- `S.evaluatePole`: `eval?` 99.94%.
+- `W.derivativeCancel`: `RationalFn.derivativeWith` 23.88%, `normalizeWith` 76.09%, `xgcdWith` 62.56%.
+- `F.accept`: `ofCert?` 100.00%, `check` 100.00%.
+- `W.normalizeChain`: `normalizeWith` 99.99%, `xgcdWith` 99.93%.
+- `W.unbalanced`: `blocksInto` 84.81%, `mulAux` 80.87%, `schoolbook` 56.76%.
+- `F.addCoprime`: `cancelWith` 76.44%, `xgcdWith` 61.18%.
+- `W.square`: `powWith` 100.00%, `polyPowWith` 100.00%, `squareAux` 99.72%, `schoolbook` 62.74%, `combine` 20.83%.
+
+Normalization and addition are dominated by gcd, exact division, coefficient
+rescaling, and allocation. The second addition gcd cancels X−1 on `addCancel`; the
+coprime control measures the same arithmetic path without that cancellation.
+Balanced products and squares follow the generic Karatsuba recurrence with
+rational schoolbook leaves. The unbalanced path spends its time in balanced
+block products; its list-free accumulator hands a uniquely owned array to
+`Array.set!`, and generated C does not increment that array reference before
+the update. The coefficient-height case is dominated by GMP arithmetic, while
+the F₇ long-chain experiment isolates half-gcd/matrix products without GMP.
+Queries traverse the dense pole denominator. Differentiation performs the
+quotient rule and cancels the known X factor. Certificate acceptance measures
+the two long-witness/linear-polynomial products and final equality, not
+certificate generation or output hashing.
 
 All dominant phases therefore map to named registrations and their polynomial
 backend; no unexplained dominant cost is assigned to a fixed anchor.
@@ -497,12 +499,11 @@ python3 scripts/profile/summarize_profile.py /tmp/square-kernel.json.gz \
   --thread hexrationalfn_bench --top 100 --output /tmp/square-summary.json
 ```
 
-The first seven captures used a five-second target and affinity
-`4-21,23-47,52-69,71-95`; the four supplemental captures used ten seconds and
-unrestricted affinity. The target includes calibration probes and is not a
+All captures used a ten-second target and unrestricted affinity. The target
+includes calibration probes and is not a
 promise of exactly that much retained time. Raw compressed profiles,
 presymbolication sidecars and diagnostics are also archived locally under
-`.lake/profiles/rational-fn-024645b0/`; analytical summaries and raw hashes are
+`.lake/profiles/rational-fn-83d22022/`; analytical summaries and raw hashes are
 committed. No large sampled stack dump is required in the source tree.
 
 ### Proof-track replacement
