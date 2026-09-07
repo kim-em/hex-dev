@@ -12,6 +12,7 @@ reports/hex-number-field-tower-factor-protocol.md.
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -89,7 +90,59 @@ def read_export(path, names):
     return result
 
 
-def decision(pairs, names, *, require_separated_canonical=False):
+def host_admission(pair, names, *, require_separated_canonical, quiet_windows):
+    """Re-derive admission from recorded samples and affinity commands."""
+    if (pair.get("require_separated_canonical", False) != require_separated_canonical
+            or pair.get("quiet_windows", 1) != quiet_windows):
+        raise ValueError("pair protocol flags disagree with requested decision")
+    if type(quiet_windows) is not int or quiet_windows < 1:
+        raise ValueError("invalid quiet-window count")
+    cpu, siblings = pair["cpu"], pair["siblings"]
+    if (type(cpu) is not int or cpu not in siblings or len(siblings) != len(set(siblings))
+            or any(type(i) is not int or i < MIN_CORE for i in siblings)):
+        raise ValueError("invalid selected core or sibling set")
+    if pair.get("names", names) != names:
+        raise ValueError("pair benchmark names disagree with requested decision")
+
+    def loads(sample, cpus, *, exact=True):
+        normalized = {int(k): v for k, v in sample.items()}
+        if ((exact and set(normalized) != set(cpus))
+                or any(i not in normalized or not isinstance(normalized[i], (int, float))
+                       or not math.isfinite(normalized[i]) or not 0 <= normalized[i] <= 100
+                       for i in cpus)):
+            raise ValueError("missing or invalid CPU telemetry")
+        return {i: normalized[i] for i in cpus}
+
+    history = pair["preflight_windows"]
+    if len(history) < quiet_windows:
+        raise ValueError("incomplete quiet-window history")
+    for sample in history[-quiet_windows:]:
+        if max(loads(sample, siblings, exact=False).values()) >= BUSY_PERCENT:
+            raise ValueError("busy selected core in quiet-window history")
+    for run in pair["runs"]:
+        command = run["command"]
+        if (command[:3] != ["taskset", "-c", str(cpu)] or command[4:5] != ["run"]
+                or command[5:5 + len(names)] != names):
+            raise ValueError("run command disagrees with pair affinity or benchmark names")
+        if run["exit_code"] != 0 or run.get("export_error") is not None:
+            raise ValueError("failed benchmark process or invalid export")
+        for key in ("preflight", "postflight"):
+            if max(loads(run[key], siblings).values()) >= BUSY_PERCENT:
+                raise ValueError("busy preflight or postflight")
+        samples = [loads(sample, siblings) for sample in run["during"]]
+        if not samples:
+            raise ValueError("missing during-run telemetry")
+        other = [i for i in siblings if i != cpu]
+        means = loads(run["sibling_mean"], other)
+        for i in other:
+            mean = sum(sample[i] for sample in samples) / len(samples)
+            if not math.isclose(means[i], mean, rel_tol=1e-12, abs_tol=1e-12):
+                raise ValueError("sibling mean disagrees with raw telemetry")
+            if mean >= BUSY_PERCENT:
+                raise ValueError("busy sibling during benchmark")
+
+
+def decision(pairs, names, *, require_separated_canonical=False, quiet_windows=1):
     """Apply the registered retention rule; incomplete series have no verdict."""
     if len(pairs) > 2 or len({p["attempt"] for p in pairs}) != len(pairs):
         raise ValueError("expected at most two distinct accepted pairs")
@@ -99,6 +152,8 @@ def decision(pairs, names, *, require_separated_canonical=False):
         runs = pair["runs"]
         if not pair["accepted"] or len(runs) != 2 or not all(r["accepted"] for r in runs):
             raise ValueError("rejected or incomplete host pair")
+        host_admission(pair, names, require_separated_canonical=require_separated_canonical,
+                       quiet_windows=quiet_windows)
         order = tuple(r["arm"] for r in runs)
         if set(order) != {"left", "right"}:
             raise ValueError("missing or duplicate arm")
@@ -184,7 +239,8 @@ def main():
                        accepted_pairs=[p["attempt"] for p in pairs],
                        require_separated_canonical=args.require_separated_canonical,
                        quiet_windows=args.quiet_windows,
-                       **decision(pairs, names, require_separated_canonical=args.require_separated_canonical))
+                       **decision(pairs, names, require_separated_canonical=args.require_separated_canonical,
+                                  quiet_windows=args.quiet_windows))
         (args.output / f"issue-10074-{args.label}-decision.json").write_text(json.dumps(summary, indent=2) + "\n")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     for attempt in range(1, MAX_ATTEMPTS + 1):

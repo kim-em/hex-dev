@@ -57,7 +57,7 @@
     "oracle_cases": 9,
     "oracle_failures": 0,
     "fixture_byte_identical": true,
-    "validator_unit_tests": 26
+    "validator_unit_tests": 32
   },
   "integrated": {
     "baseline_commit": "064902321b7674a3993270e0f437d2f2149a10b8",
@@ -74,6 +74,9 @@
     "proof_build_passed": true,
     "timing_status": "Passed stronger gate; first two host-admitted opposite-order pairs are attempts 2 and 4; all four attempts retained.",
     "decision": "issue-10074-integrated-main-decision.json",
-    "restored_candidate_hash_matches": true
+    "restored_candidate_hash_matches": true,
+    "host_audit_series": 7,
+    "host_audit_preserves_decisions": true,
+    "differential_driver_ci_gated": true
   }
 }
