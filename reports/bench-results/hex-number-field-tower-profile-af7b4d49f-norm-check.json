@@ -1,0 +1,86 @@
+{
+  "scope": "Untimed independent PARI factorization of the shift-one norm; no performance claim.",
+  "norm_expression": "Res_y(y^2-2,(x-y)^n-(x-y)-1)",
+  "pari_version": "(2, 17, 3)",
+  "cypari2_version": "2.2.4",
+  "python_version": "3.14.6",
+  "rows": [
+    {
+      "n": 2,
+      "shift": 1,
+      "norm_degree": 4,
+      "factor_degrees": [
+        4
+      ],
+      "multiplicities": [
+        1
+      ]
+    },
+    {
+      "n": 3,
+      "shift": 1,
+      "norm_degree": 6,
+      "factor_degrees": [
+        6
+      ],
+      "multiplicities": [
+        1
+      ]
+    },
+    {
+      "n": 4,
+      "shift": 1,
+      "norm_degree": 8,
+      "factor_degrees": [
+        8
+      ],
+      "multiplicities": [
+        1
+      ]
+    },
+    {
+      "n": 6,
+      "shift": 1,
+      "norm_degree": 12,
+      "factor_degrees": [
+        12
+      ],
+      "multiplicities": [
+        1
+      ]
+    },
+    {
+      "n": 8,
+      "shift": 1,
+      "norm_degree": 16,
+      "factor_degrees": [
+        16
+      ],
+      "multiplicities": [
+        1
+      ]
+    },
+    {
+      "n": 12,
+      "shift": 1,
+      "norm_degree": 24,
+      "factor_degrees": [
+        24
+      ],
+      "multiplicities": [
+        1
+      ]
+    },
+    {
+      "n": 24,
+      "shift": 1,
+      "norm_degree": 48,
+      "factor_degrees": [
+        48
+      ],
+      "multiplicities": [
+        1
+      ]
+    }
+  ]
+}

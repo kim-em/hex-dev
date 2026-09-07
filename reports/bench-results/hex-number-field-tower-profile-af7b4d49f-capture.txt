@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Capture fixed degree-24 tower factor/replay shapes; no timing verdict."""
+import collections
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import platform
+import subprocess
+import sys
+import time
+
+ROOT = Path.cwd()
+sys.path.insert(0, str(ROOT / 'scripts/profile'))
+sys.path.insert(0, str(ROOT / 'scripts/bench'))
+import factor_sampling_profile as profile_tools
+import idle_core
+
+BINARY = ROOT / '.lake/build/bin/hexnumberfieldtower_bench'
+SOURCE = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+STEM = '/tmp/tower-factor-profile-' + SOURCE[:9] + '-replication'
+SCHEDULE = [('factor', 1), ('check', 1), ('check', 2), ('factor', 2)]
+NAMES = {'factor': 'runTowerFactorLadder', 'check': 'runTowerCheckFactorization'}
+HASHES = {'factor': '0x3a7f4c606ce48b1b', 'check': '0x000000000000000b'}
+PHASES = [
+    ('recovery', ['Hex.NumberTower.Factor.recover']),
+    ('rational factorization', ['Hex.NumberTower.Factor.factorRat?']),
+    ('Yun production', ['Hex.NumberTower.Factor.yunRaw']),
+    ('Yun check', ['Hex.NumberTower.Factor.checkYun']),
+    ('norm construction', ['Hex.NumberTower.Norm.shiftedOuter']),
+    ('resultant', ['Hex.DensePoly.resultant', 'Hex.DensePoly.resultantOrdered']),
+    ('squarefreeness', ['Hex.NumberTower.Norm.isSquarefree']),
+]
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+def extra_summary(profile, syms, thread_name, kind):
+    thread = profile_tools.main_thread(profile, thread_name)
+    resolved = profile_tools.frame_names(profile, thread, syms)
+    phases = collections.Counter(); contexts = collections.Counter(); allocations = collections.Counter()
+    counted = 0; target = 'Hex.NumberTower.factor?' if kind == 'factor' else 'Hex.NumberTower.Factor.check'
+    for stack in thread['samples']['stack']:
+        if stack is None: continue
+        chain = profile_tools.stack_chain(thread, stack)
+        if not chain: continue
+        names = {resolved[f][0] for f in chain}; counted += 1
+        if target not in names:
+            phase = 'target frame absent'
+        else:
+            phase = next((label for label, matches in PHASES if names.intersection(matches)), 'other target work')
+        phases[phase] += 1
+        if profile_tools.categorise(resolved[chain[0]][0]) == 'allocation':
+            allocations[phase] += 1
+        context = 'replay' if 'Hex.NumberTower.Factor.check' in names else 'production' if 'Hex.NumberTower.Factor.factorRaw?' in names else 'other or unresolved'
+        contexts[context] += 1
+    def shares(counts): return {k: round(100*v/counted, 2) for k,v in counts.most_common()}
+    return dict(exclusive_phase_percent=shares(phases), allocation_leaf_by_phase_percent=shares(allocations),
+                context_percent=shares(contexts), phase_precedence=PHASES,
+                phase_scope='All sampled stacks; precedence makes bins disjoint. Absent target frames remain separate, not renormalized.')
+
+meta = dict(source_commit=SOURCE, binary=str(BINARY), binary_sha256=digest(BINARY),
+            capture_script_sha256=digest(__file__), analysis_script_sha256=digest(ROOT/'scripts/profile/factor_sampling_profile.py'),
+            hostname=platform.node(), platform=platform.platform(),
+            cpu_model=next(line.split(':',1)[1].strip() for line in Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name')),
+            samply=subprocess.check_output(['samply','--version'],text=True).strip(),
+            lean_toolchain=(ROOT/'lean-toolchain').read_text().strip(),
+            lean_bench=json.loads((ROOT/'lake-manifest.json').read_text())['packages'],
+            git_status=subprocess.check_output(['git','status','--porcelain'],text=True),
+            rate_hz=999, target_nanos=5000000000, schedule=SCHEDULE,
+            scope='Whole main benchmark thread for fixed dispatch, including warmup, preparation and autotuning. No timed-region sidecar, calibration or timing verdict.', profiles=[])
+meta['lean_bench'] = next(p for p in meta['lean_bench'] if p.get('url', '').endswith('/lean-bench.git'))
+Path(STEM+'-protocol.json').write_text(json.dumps(meta,indent=2)+'\n')
+topology=idle_core.sibling_map(); avoid={cpu for cpu,group in topology.items() if min(group)<24}
+for kind, repeat in SCHEDULE:
+    preflight_windows=[]
+    for window in range(90):
+        pre=idle_core.busy_by_cpu(2)
+        preflight_windows.append(pre)
+        free=sorted((max(pre.get(i,100) for i in group),cpu) for cpu,group in topology.items() if cpu not in avoid)
+        cpu=next((cpu for busy,cpu in free if busy<5),None)
+        if cpu is not None: break
+        if window % 6 == 0: print('Waiting for an idle core',kind,repeat,flush=True)
+        time.sleep(8)
+    if cpu is None: raise RuntimeError('No idle core after 15 minutes; completed captures remain saved.')
+    siblings=sorted(topology[cpu]); avoid.update(siblings)
+    path=Path(STEM+f'-{kind}-{repeat}.json.gz'); log=Path(STEM+f'-{kind}-{repeat}.log')
+    command=['samply','record','--save-only','--no-open','--rate','999','--unstable-presymbolicate','-o',str(path),'--',
+             'taskset','-c',str(cpu),str(BINARY),'_child','--bench','Hex.NumberTowerBench.'+NAMES[kind],
+             '--fixed','--min-total-nanos','5000000000','--repeat-index',str(repeat-1)]
+    during=[]
+    print('Starting',kind,repeat,'cpu',cpu,flush=True)
+    with log.open('w') as output:
+        process=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT)
+        while process.poll() is None:
+            busy=idle_core.busy_by_cpu(2);during.append({i:busy.get(i,100) for i in siblings})
+    post=idle_core.busy_by_cpu(2)
+    if process.returncode: raise RuntimeError(log.read_text())
+    rows=[json.loads(line) for line in log.read_text().splitlines() if line.startswith('{')]
+    row=next(r for r in rows if r.get('function')=='Hex.NumberTowerBench.'+NAMES[kind])
+    if row['status']!='ok' or int(row['result_hash'],16)!=int(HASHES[kind],16): raise RuntimeError(row)
+    with gzip.open(path) as f: profile=json.load(f)
+    syms_path=path.with_suffix('').with_suffix('.json.syms.json');syms=profile_tools.Symbolicator(syms_path)
+    thread=max(profile['threads'],key=lambda t:t['samples']['length'])
+    summary=profile_tools.analyse(profile,syms,35,thread['name'])
+    summary.update(extra_summary(profile,syms,thread['name'],kind))
+    record=dict(kind=kind,repeat=repeat,cpu=cpu,siblings=siblings,command=command,
+                preflight_windows=preflight_windows,preflight={i:pre[i] for i in siblings},postflight={i:post.get(i,100) for i in siblings},during=during,
+                raw_profile=str(path),raw_sha256=digest(path),symbols=str(syms_path),symbols_sha256=digest(syms_path),
+                child_result=row,thread=thread['name'],summary=summary)
+    meta['profiles'].append(record)
+    Path(STEM+'-summary.json').write_text(json.dumps(meta,indent=2)+'\n')
+    print('Completed',kind,repeat,'samples',summary['samples'],'classified',summary['classified_percent'],flush=True)
+print(STEM+'-summary.json',flush=True)
