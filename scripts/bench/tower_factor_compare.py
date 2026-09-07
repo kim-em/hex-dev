@@ -80,7 +80,7 @@ def read_export(path, names):
     return result
 
 
-def decision(pairs, names):
+def decision(pairs, names, *, require_separated_canonical=False):
     """Apply the registered retention rule; incomplete series have no verdict."""
     if len(pairs) > 2 or len({p["attempt"] for p in pairs}) != len(pairs):
         raise ValueError("expected at most two distinct accepted pairs")
@@ -117,6 +117,10 @@ def decision(pairs, names):
         canonical = {PREFIX + "runTowerFactorLadder", PREFIX + "runTowerCheckFactorization"}
         eligible = all(c["hashes_match"] and not c["disjoint_regression"] for c in checks)
         eligible = eligible and all(c["faster"] for c in checks if c["function"] in canonical)
+        if require_separated_canonical:
+            eligible = eligible and all(any(
+                c["right_nanos"][2] < c["left_nanos"][0]
+                for c in checks if c["function"] == name) for name in canonical)
     return dict(complete=len(pairs) == 2, eligible=eligible, checks=checks)
 
 
@@ -130,6 +134,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--pari-python", default=os.environ.get("HEX_PARI_BENCH_PYTHON"))
     parser.add_argument("--hex-only", action="store_true")
+    parser.add_argument("--require-separated-canonical", action="store_true",
+                        help="require disjoint improvement for each canonical case in at least one pair")
     args = parser.parse_args()
     names = HEX_NAMES if args.hex_only else NAMES
     env = dict(os.environ)
@@ -162,13 +168,16 @@ def main():
     script_hash = digest(__file__)
     def summarize(status, attempts):
         summary = dict(label=args.label, status=status, attempts=attempts,
-                       accepted_pairs=[p["attempt"] for p in pairs], **decision(pairs, names))
+                       accepted_pairs=[p["attempt"] for p in pairs],
+                       require_separated_canonical=args.require_separated_canonical,
+                       **decision(pairs, names, require_separated_canonical=args.require_separated_canonical))
         (args.output / f"issue-10074-{args.label}-decision.json").write_text(json.dumps(summary, indent=2) + "\n")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     for attempt in range(1, MAX_ATTEMPTS + 1):
         stem = args.output / f"issue-10074-{args.label}-{attempt}"
         meta = dict(label=args.label, attempt=attempt, runs=[], preflight_windows=[],
                     protocol_commit=commit, script_sha256=script_hash,
+                    require_separated_canonical=args.require_separated_canonical,
                     hostname=platform.node(), release_quality=False,
                     pari_provider=provider, names=names,
                     git_status=subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True))
