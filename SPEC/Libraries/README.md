@@ -47,6 +47,7 @@
 - **hex-berlekamp**: Berlekamp factoring, distinct-degree and equal-degree factorization (Cantor-Zassenhaus), and the Rabin irreducibility test over any `F_q`; the `factor_poly` / `irreducibility` tactic drivers (native `FpPoly p` arms plus extensions for other input types)
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll**: LLL lattice basis reduction
+- **hex-lattice-enum** (planned): exact closed-ball enumeration, all shortest and closest vectors, and checked completeness certificates
 - **hex-berlekamp-zassenhaus**: complete factoring of `Z[x]`; the `Hex.ZPoly` extension for `factor_poly` / `irreducibility`
 - **hex-summation**: certificate-checked hypergeometric summation: Gosper, Zeilberger, and Petkovšek's Hyper, as untrusted searches whose certificates are verified by `MvPoly` identity checkers
 - **hex-conway**: Conway polynomial database
@@ -96,6 +97,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
+- **hex-lattice-enum-mathlib** (planned): integer-span and Euclidean-distance correspondence, packing radius and kissing number
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
@@ -137,6 +139,7 @@ Each library with its immediate dependencies:
 - **hex-finite-field**: hex-arith, hex-mod-arith, hex-poly, hex-poly-fp, hex-matrix, hex-basic
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
 - **hex-lll**: hex-gram-schmidt, hex-matrix, hex-basic
+- **hex-lattice-enum**: hex-lll, hex-gram-schmidt, hex-matrix, hex-basic
 - **hex-poly-fp**: hex-poly, hex-mod-arith, hex-poly-fast, hex-modular
 - **hex-poly-z**: hex-poly, hex-arith, hex-basic, hex-poly-fast, hex-mod-arith, hex-modular
 - **hex-poly-z-gcd**: hex-poly-z, hex-poly-fp, hex-poly, hex-modular, hex-mod-arith, hex-arith, hex-resultant
@@ -197,6 +200,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-invariant-factors-mathlib**: hex-invariant-factors, hex-poly-smith-mathlib, hex-char-poly-mathlib, hex-min-poly-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
 - **hex-lll-mathlib**: hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
+- **hex-lattice-enum-mathlib**: hex-lattice-enum, hex-lll-mathlib, hex-gram-schmidt-mathlib, hex-matrix-mathlib
 - **hex-poly-fp-mathlib**: hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib
 - **hex-berlekamp-mathlib**: hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib
 - **hex-hensel-mathlib**: hex-hensel, hex-poly-mathlib
@@ -250,6 +254,11 @@ member with a dependency outside the family, on `hex-poly` for the
 polynomial Euclidean operations. Each has a matching `*-mathlib` companion
 of the same shape. In the diagram below, `hex-matrix` stands for that whole
 family.
+
+`hex-lattice-enum` adds exact shortest- and closest-vector search to the
+integer lattice APIs. It uses `hex-lll` only for optional preprocessing and
+`hex-gram-schmidt` for exact branch bounds. The Mathlib companion preserves
+the integer span when interpreting the results in Euclidean space.
 
 The integer normal forms within it:
 
@@ -600,6 +609,9 @@ hex-berlekamp-zassenhaus ┘
 ```
 
 ## Index
+
+- [hex-lattice-enum](hex-lattice-enum.md): exact lattice enumeration, shortest and closest vectors, completeness certificates and geometric consequences
+- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): integer-span and Euclidean-distance correspondence
 
 Libraries marked **(released)** are published as standalone
 repositories; see
