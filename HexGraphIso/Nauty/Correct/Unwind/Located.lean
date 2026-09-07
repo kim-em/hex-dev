@@ -705,25 +705,6 @@ Operational composition lemmas for frame-aware search receipts.
 
 namespace Hex.GraphIso.Nauty
 
-/-- Once both ends of a loop frame are recovered at the same level, the
-`SearchOut` low-boundary contract identifies their partitions exactly.
-The labelling may still differ by a within-cell permutation. -/
-theorem SearchOut.ptnEq {G : Colored n k} {level numcells : Nat}
-    {st out : SearchSt n} (h : SearchOut G level level st out)
-    (hok : SearchOk G level numcells st)
-    (hout : SearchOk G level numcells out) : out.ptn = st.ptn := by
-  apply Array.ext h.ptnSize
-  intro i hi hi'
-  have hin : i < n := by rw [hout.ptnSize] at hi; exact hi
-  have heq : out.ptn[i]! = st.ptn[i]! := by
-    rcases hok.vals i hin with hold | hold
-    · exact h.low i (Or.inl hold)
-    · rcases hout.vals i hin with hnew | hnew
-      · exact h.low i (Or.inr hnew)
-      · rw [hold, hnew]
-  simpa only [getElem!_pos out.ptn i hi, getElem!_pos st.ptn i hi']
-    using heq
-
 /-- A recovered loop state individualizes the same vertex as its frozen
 entry frame, possibly at a different offset within the target cell.  The
 two resulting child labellings remain cell-equivalent. -/
