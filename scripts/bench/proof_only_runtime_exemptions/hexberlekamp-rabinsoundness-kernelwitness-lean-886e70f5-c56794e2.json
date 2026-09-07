@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/RabinSoundness/KernelWitness.lean",
+ "baseline_blob": "886e70f5169abeffc55ea5de7d2a3e9dd8028ffb",
+ "current_blob": "c56794e26707c7b1adef43c9b0ed8bf2336e6cbf",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}
