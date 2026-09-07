@@ -486,12 +486,27 @@ rung, batching and 0.2% interference ceiling were unchanged.
 
 The [retained preflight rejection](bench-results/intfactor-divisors-campaign-2-attempt-1.json)
 contains all 150 two-second observations. None qualified. The quietest window
-had 0.01 seconds of busy time on each logical CPU in 2.000560614 seconds
+had 0.01 seconds of busy time on each logical CPU in 2.000562594 seconds
 (about 0.5% each); some windows had 2.00 seconds of busy time. No acceptance
 timings or telemetry sidecars were collected, and no harness verdict exists
 for this campaign. The five-minute preflight limit ended the campaign; there
 was no contamination replacement or further timing retry. This is a host
-availability failure, not a test of the complexity model.
+availability failure under a stringent preflight, not a test of the complexity
+model. At the host's 100 Hz scheduler accounting resolution, one busy tick in
+two seconds is about 0.5%, so this preflight effectively demanded **zero ticks
+on both siblings**. The selected core's survey already showed about 4.4% busy
+time on each sibling. Zero-tick windows are possible in principle, but this
+survey supplied no evidence that this core could meet that requirement.
+
+The timed-run interference score is coarse too: any foreign runnable sighting
+charges the whole overlapping sample interval, generally more than the entire
+0.2% budget for a roughly 30-second collection. It functions as an effective
+zero-sighting gate plus a small weighted sibling-tick allowance, not an estimate
+of interference with 0.2% precision. These resolution limits do not authorize
+reinterpreting or loosening either rejected campaign. Before any further
+campaign, preregister a resolution-aware observation window and justify its
+host controls independently of operation timings; do not rerun this exhausted
+protocol unchanged.
 
 The rejected record retains commands, the successful build and outside-timing
 array export, stdout/stderr, all source hashes, host state and the direct
@@ -499,6 +514,17 @@ benchmark executable hash. That hash is exactly the existing inclusive
 profile's `64991c51f642fd47bc6ab40f611ddad4a67ea409fb7bd2af219d7c3ecb7b2150`,
 so the profile still describes the current operation. Neither that match nor
 the preflight observations supply the missing scientific timings.
+
+The collector's subsequent infrastructure corrections do not change this
+retained campaign: monitor exceptions and explicit interruption now preserve
+partial telemetry before terminating the entire group, including grandchildren;
+nonzero command exits also clean up the group. Successful samples retain owned
+runnable tasks and the direct child PID, so ownership is auditable. The collector
+restores its original affinity after the attempt and rejects an empty observer
+CPU set. Rechecking a preflight-only artifact records unavailable raw timing
+files as diagnostic failure instead of crashing. Synthetic subprocess tests
+cover standalone and collector launch modes, monitor failure, interruption and
+nonzero runner exits. These are correctness tests, not new performance runs.
 
 ### Inclusive profile and diagnosis
 

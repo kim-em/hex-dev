@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
 import unittest
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
 from pathlib import Path
 import tempfile
 
@@ -37,6 +43,82 @@ class CoreTelemetryTest(unittest.TestCase):
                  dict(tgid=40, tid=41, state="R", pgrp=40, cpu=55, comm="sibling")]
         self.assertEqual(core_telemetry.foreign_tasks(tasks, [7, 55], 99),
                          [tasks[1], tasks[3]])
+
+    def test_group_ownership_and_failure_cleanup(self):
+        if not sys.platform.startswith("linux") or len(os.sched_getaffinity(0)) < 2:
+            self.skipTest("Linux with at least two eligible CPUs is required")
+        cpu = min(os.sched_getaffinity(0))
+        # Synthetic ownership test, not performance evidence. The monitor creates
+        # its own group in standalone mode and reuses the collector's session
+        # group in collector mode. Inject a monitor failure after a grandchild
+        # has started and require both processes to be dead after rejection.
+        for mode in ("success", "proc-error", "signal", "runner-error"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "telemetry.json"
+                identities = Path(directory) / "identities.json"
+                child_code = """
+import json, os, subprocess, sys, time
+from pathlib import Path
+child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
+temporary = Path(sys.argv[1] + ".tmp")
+temporary.write_text(json.dumps(dict(pid=os.getpid(), grandchild=child.pid, pgrp=os.getpgrp())))
+temporary.replace(sys.argv[1])
+if sys.argv[2] == 'runner-error': sys.exit(3)
+if sys.argv[2] == 'success':
+    child.terminate(); child.wait(); time.sleep(0.1)
+else: time.sleep(60)
+"""
+                monitor_code = """
+import os, signal, sys, time
+from pathlib import Path
+from scripts.bench import core_telemetry as m
+cpu, output, identities, mode, child_code = sys.argv[1:]
+m.sibling_set = lambda _: {int(cpu)}
+original = m.cpu_counters
+calls = 0
+def counters():
+    global calls
+    calls += 1
+    if calls > 1 and mode in ('proc-error', 'signal'):
+        deadline = time.monotonic() + 5
+        while not Path(identities).exists() and time.monotonic() < deadline: time.sleep(0.01)
+        if mode == 'signal': os.kill(os.getpid(), signal.SIGTERM)
+        raise OSError('injected proc failure')
+    return original()
+m.cpu_counters = counters
+sys.argv = ['core_telemetry.py', '--cpu', cpu, '--output', output, '--interval', '0.05',
+            '--', sys.executable, '-c', child_code, identities, mode]
+raise SystemExit(m.main())
+"""
+                for dedicated in (False, True):
+                    with self.subTest(dedicated_session=dedicated):
+                        identities.unlink(missing_ok=True)
+                        result = subprocess.run([sys.executable, "-c", monitor_code,
+                            str(cpu), str(output), str(identities), mode, child_code],
+                            capture_output=True, text=True, timeout=15,
+                            start_new_session=dedicated)
+                        record = json.loads(output.read_text())
+                        identity = json.loads(identities.read_text())
+                        self.assertEqual(record["owned_process_group"], identity["pgrp"])
+                        self.assertEqual(record["child_pid"], identity["pid"])
+                        self.assertEqual(record["ownership"], "dedicated-process-group")
+                        self.assertEqual(result.returncode, 0 if mode == "success" else -signal.SIGKILL)
+                        if mode in ("proc-error", "signal"):
+                            self.assertEqual(record["status"], "rejected")
+                            self.assertIn("monitor_error", record)
+                        if mode != "success":
+                            for pid in (identity["pid"], identity["grandchild"]):
+                                deadline = time.monotonic() + 2
+                                while time.monotonic() < deadline:
+                                    try:
+                                        task = core_telemetry.parse_task(pid, Path(f"/proc/{pid}/stat").read_text())
+                                    except FileNotFoundError:
+                                        break
+                                    if task["state"] == "Z":
+                                        break
+                                    time.sleep(0.01)
+                                else:
+                                    self.fail(f"owned process {pid} survived monitor failure")
 
     def test_merge_regions(self):
         self.assertEqual(

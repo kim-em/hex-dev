@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Monitor a pinned command and grade interference in LeanBench timed regions."""
+"""Monitor a pinned command and grade interference in LeanBench timed regions.
+
+The monitor and command form a cancellation group. For standalone use, send
+SIGINT/SIGTERM to the monitor PID or signal that group; the caller's original
+process group is not the cancellation boundary. On failure the monitor writes
+partial evidence, then SIGKILLs the group, including itself and grandchildren.
+The collector already launches the monitor in a dedicated session.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +14,8 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import signal
+import sys
 from pathlib import Path
 import subprocess
 import time
@@ -81,7 +90,7 @@ def task_snapshot() -> list[dict[str, object]]:
     for stat_path in Path("/proc").glob("[0-9]*/task/[0-9]*/stat"):
         try:
             result.append(parse_task(int(stat_path.parts[-4]), stat_path.read_text()))
-        except (FileNotFoundError, ProcessLookupError, IndexError, PermissionError, ValueError):
+        except (OSError, IndexError, ValueError):
             continue
     return result
 
@@ -92,6 +101,7 @@ def foreign_tasks(tasks: Iterable[dict[str, object]], monitored: Iterable[int],
     # Children inherit it at fork, so even a child born during this scan is
     # classified correctly without a racy, earlier process ancestry snapshot.
     # The benchmark does not daemonize or change process groups.
+    monitored = set(monitored)
     return [task for task in tasks if task["state"] == "R"
             and task["cpu"] in monitored and task["pgrp"] != owned_group]
 
@@ -252,114 +262,158 @@ def main() -> int:
     if os.getpgrp() != os.getpid():
         os.setpgid(0, 0)
     owned_group = os.getpgrp()
-    process = subprocess.Popen(command, preexec_fn=pin_child, env=child_env)
-    while True:
-        time.sleep(args.interval)
-        current = cpu_counters()
-        current_mono_ns = time.monotonic_ns()
-        foreign = foreign_tasks(task_snapshot(), monitored, owned_group)
-        samples.append(
-            {
-                "mono_t0_ns": previous_mono_ns,
-                "mono_t1_ns": current_mono_ns,
-                "elapsed_seconds": round(
-                    (current_mono_ns - started_mono_ns) / 1_000_000_000, 3
-                ),
-                "busy_percent": {
-                    str(cpu): round(
-                        busy_percent(previous[cpu], current[cpu]), 3
-                    )
-                    for cpu in monitored
-                },
-                "busy_seconds": {
-                    str(cpu): round(
-                        busy_seconds(previous[cpu], current[cpu], tick_hz), 6
-                    )
-                    for cpu in monitored
-                },
-                "interval_wall_seconds": round(
-                    (current_mono_ns - previous_mono_ns) / 1_000_000_000, 6
-                ),
-                "foreign_runnable": foreign,
-                "load_average": [round(value, 3) for value in os.getloadavg()],
-            }
-        )
-        previous = current
-        previous_mono_ns = current_mono_ns
-        # Always take the sample that observes process completion. Otherwise a
-        # short final timed region can fall between the last sample and the
-        # next loop-condition poll and disappear from the graded interval set.
-        if process.poll() is not None:
-            break
+    # A dedicated group is also the cancellation boundary for standalone use:
+    # signal the monitor PID (handled below) or its group, not the caller's group.
+    def interrupted(signum: int, _frame: object) -> None:
+        raise InterruptedError(f"telemetry interrupted by signal {signum}")
 
-    return_code = process.wait()
-    sidecar_paths = sorted(
-        args.output.parent.glob(Path(sidecar_stem).name + "-*.jsonl")
-    )
-    timed_regions_error: str | None = None
+    completed = False
+    process = None
+    previous_handlers = {sig: signal.signal(sig, interrupted)
+                         for sig in (signal.SIGTERM, signal.SIGINT)}
     try:
-        timed_regions, sidecar_count = load_timed_regions(sidecar_paths)
-    except (OSError, ValueError) as error:
-        # Preserve a fail-closed telemetry document even when a sidecar was
-        # truncated or malformed, so a long run leaves reviewable evidence.
-        timed_regions = []
-        sidecar_count = len(sidecar_paths)
-        timed_regions_error = str(error)
-    for sample in samples:
-        sample_start = int(sample["mono_t0_ns"])
-        sample_end = int(sample["mono_t1_ns"])
-        duration_ns = sample_end - sample_start
-        timed_ns = overlap_ns(sample_start, sample_end, timed_regions)
-        sample["timed_overlap_seconds"] = round(timed_ns / 1_000_000_000, 6)
-        sample["timed_fraction"] = round(
-            timed_ns / duration_ns if duration_ns > 0 else 0.0, 6
-        )
+        process = subprocess.Popen(command, preexec_fn=pin_child, env=child_env)
+        while True:
+            time.sleep(args.interval)
+            current = cpu_counters()
+            current_mono_ns = time.monotonic_ns()
+            tasks = task_snapshot()
+            foreign = foreign_tasks(tasks, monitored, owned_group)
+            samples.append(
+                {
+                    "mono_t0_ns": previous_mono_ns,
+                    "mono_t1_ns": current_mono_ns,
+                    "elapsed_seconds": round(
+                        (current_mono_ns - started_mono_ns) / 1_000_000_000, 3
+                    ),
+                    "busy_percent": {
+                        str(cpu): round(
+                            busy_percent(previous[cpu], current[cpu]), 3
+                        )
+                        for cpu in monitored
+                    },
+                    "busy_seconds": {
+                        str(cpu): round(
+                            busy_seconds(previous[cpu], current[cpu], tick_hz), 6
+                        )
+                        for cpu in monitored
+                    },
+                    "interval_wall_seconds": round(
+                        (current_mono_ns - previous_mono_ns) / 1_000_000_000, 6
+                    ),
+                    "foreign_runnable": foreign,
+                    "owned_runnable": [task for task in tasks if task["state"] == "R"
+                                       and task["pgrp"] == owned_group],
+                    "load_average": [round(value, 3) for value in os.getloadavg()],
+                }
+            )
+            previous = current
+            previous_mono_ns = current_mono_ns
+            # Always take the sample that observes process completion. Otherwise a
+            # short final timed region can fall between the last sample and the
+            # next loop-condition poll and disappear from the graded interval set.
+            if process.poll() is not None:
+                break
 
-    sibling_cpus = sorted(set(monitored) - {args.cpu})
-    elapsed = (time.monotonic_ns() - started_mono_ns) / 1_000_000_000
-    timed_regions_complete = (
-        timed_regions_error is None and sidecar_count > 0 and bool(timed_regions)
-    )
-    verdict = interference_summary(
-        samples,
-        args.cpu,
-        sibling_cpus,
-        timed_regions_complete,
-        args.max_core_interference_ratio,
-    )
-    document = {
-        "schema": 3,
-        "ownership": "dedicated-process-group",
-        "owned_process_group": owned_group,
-        "command": command,
-        "cpu": args.cpu,
-        "smt_siblings": sibling_cpus,
-        "interval_seconds": args.interval,
-        "started_utc": started,
-        "ended_utc": utc_now(),
-        "elapsed_seconds": round(elapsed, 3),
-        "timed_region_sidecars": [str(path) for path in sidecar_paths],
-        "timed_region_sidecars_retained": True,
-        "timed_regions_error": timed_regions_error,
-        "command_return_code": return_code,
-        "thresholds": {
-            "max_core_interference_ratio": args.max_core_interference_ratio,
-        },
-        "summary": {
-            "sample_count": len(samples),
-            "timed_region_sidecar_count": sidecar_count,
-            "timed_region_count_after_union": len(timed_regions),
-            "timed_regions_complete": timed_regions_complete,
-            **verdict,
-        },
-        "samples": samples,
-    }
-    args.output.write_text(json.dumps(document, indent=2) + "\n")
-    if return_code != 0:
-        return return_code
-    if verdict["contaminated"] and args.fail_on_contamination:
-        return 2
-    return 0
+        return_code = process.wait()
+        sidecar_paths = sorted(
+            args.output.parent.glob(Path(sidecar_stem).name + "-*.jsonl")
+        )
+        timed_regions_error: str | None = None
+        try:
+            timed_regions, sidecar_count = load_timed_regions(sidecar_paths)
+        except (OSError, ValueError) as error:
+            # Preserve a fail-closed telemetry document even when a sidecar was
+            # truncated or malformed, so a long run leaves reviewable evidence.
+            timed_regions = []
+            sidecar_count = len(sidecar_paths)
+            timed_regions_error = str(error)
+        for sample in samples:
+            sample_start = int(sample["mono_t0_ns"])
+            sample_end = int(sample["mono_t1_ns"])
+            duration_ns = sample_end - sample_start
+            timed_ns = overlap_ns(sample_start, sample_end, timed_regions)
+            sample["timed_overlap_seconds"] = round(timed_ns / 1_000_000_000, 6)
+            sample["timed_fraction"] = round(
+                timed_ns / duration_ns if duration_ns > 0 else 0.0, 6
+            )
+
+        sibling_cpus = sorted(set(monitored) - {args.cpu})
+        elapsed = (time.monotonic_ns() - started_mono_ns) / 1_000_000_000
+        timed_regions_complete = (
+            timed_regions_error is None and sidecar_count > 0 and bool(timed_regions)
+        )
+        verdict = interference_summary(
+            samples,
+            args.cpu,
+            sibling_cpus,
+            timed_regions_complete,
+            args.max_core_interference_ratio,
+        )
+        document = {
+            "schema": 3,
+            "ownership": "dedicated-process-group",
+            "owned_process_group": owned_group,
+            "child_pid": process.pid,
+            "command": command,
+            "cpu": args.cpu,
+            "smt_siblings": sibling_cpus,
+            "interval_seconds": args.interval,
+            "started_utc": started,
+            "ended_utc": utc_now(),
+            "elapsed_seconds": round(elapsed, 3),
+            "timed_region_sidecars": [str(path) for path in sidecar_paths],
+            "timed_region_sidecars_retained": True,
+            "timed_regions_error": timed_regions_error,
+            "command_return_code": return_code,
+            "thresholds": {
+                "max_core_interference_ratio": args.max_core_interference_ratio,
+            },
+            "summary": {
+                "sample_count": len(samples),
+                "timed_region_sidecar_count": sidecar_count,
+                "timed_region_count_after_union": len(timed_regions),
+                "timed_regions_complete": timed_regions_complete,
+                **verdict,
+            },
+            "samples": samples,
+        }
+        args.output.write_text(json.dumps(document, indent=2) + "\n")
+        if return_code != 0:
+            return return_code
+        completed = True
+        if verdict["contaminated"] and args.fail_on_contamination:
+            return 2
+        return 0
+    except BaseException as error:
+        # Preserve partial samples before killing the whole owned group. Killing
+        # only the direct child can orphan the benchmark runner's grandchildren.
+        partial = {
+            "schema": 3, "status": "rejected", "command": command,
+            "cpu": args.cpu, "smt_siblings": sorted(siblings - {args.cpu}),
+            "ownership": "dedicated-process-group",
+            "owned_process_group": owned_group,
+            "child_pid": process.pid if process is not None else None,
+            "started_utc": started, "ended_utc": utc_now(),
+            "monitor_error": {"type": type(error).__name__, "message": str(error)},
+            "timed_region_sidecars": [str(path) for path in sorted(
+                args.output.parent.glob(Path(sidecar_stem).name + "-*.jsonl"))],
+            "samples": samples, "summary": {"contaminated": True},
+        }
+        with args.output.open("w") as stream:
+            stream.write(json.dumps(partial, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        print(f"telemetry monitor failed: {error}", file=sys.stderr, flush=True)
+        raise
+    finally:
+        if not completed:
+            # The monitor belongs to this group too. Evidence has been written
+            # before SIGKILL; the collector records the rejected signal exit.
+            # This also covers a nonzero runner exit and failed evidence writes.
+            os.killpg(owned_group, signal.SIGKILL)
+        for sig, handler in previous_handlers.items():
+            signal.signal(sig, handler)
 
 
 if __name__ == "__main__":

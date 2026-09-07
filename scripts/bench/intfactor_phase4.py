@@ -547,9 +547,11 @@ def recheck_attempt(source: Path, output: Path) -> int:
     attempt.record.update(scope="divisor-recheck", status="diagnostic",
         original_status=record["status"], original_attempt=str(source),
         input_sha256={str(p): sha256(p) for p in
-            (source, directory / "bench.json", directory / "telemetry.json")},
+            (source, directory / "bench.json", directory / "telemetry.json") if p.exists()},
+        unavailable_raw_artifacts=[str(p) for p in
+            (directory / "bench.json", directory / "telemetry.json") if not p.exists()],
         validator_sha256=sha256(Path(__file__)))
-    inspect_divisors(attempt, directory, record["divisor_audit"])
+    inspect_divisors(attempt, directory, record.get("divisor_audit", ""))
     print(json.dumps(attempt.record["scientific_validation"]))
     return 0 if attempt.record["scientific_validation"]["status"] == "passed" else 1
 
@@ -557,7 +559,10 @@ def recheck_attempt(source: Path, output: Path) -> int:
 def quiet_core(cpu: int, attempt: Attempt) -> None:
     """Retain a bounded preflight search for a quiet physical-core window."""
     siblings = sorted(core_telemetry.sibling_set(cpu))
-    os.sched_setaffinity(0, os.sched_getaffinity(0) - set(siblings))
+    affinity = os.sched_getaffinity(0) - set(siblings)
+    if not affinity:
+        raise RuntimeError("no CPU remains for the quiet-core observer")
+    os.sched_setaffinity(0, affinity)
     observations = []
     attempt.record["quiet_core_preflight"] = observations
     # Fixed campaign-2 rule: at most 150 two-second windows (five minutes).
@@ -570,6 +575,8 @@ def quiet_core(cpu: int, attempt: Attempt) -> None:
         elapsed = (end - start) / 1e9
         busy = {str(c): core_telemetry.busy_seconds(before[c], after[c],
                     os.sysconf("SC_CLK_TCK")) for c in siblings}
+        # At 100 Hz and two seconds this requires zero busy ticks on both
+        # siblings. Preserve the exhausted preregistration; do not loosen it.
         quiet = all(0 <= seconds / elapsed <= 0.002 for seconds in busy.values())
         observations.append(dict(mono_t0_ns=start, mono_t1_ns=end,
                                  busy_seconds=busy, quiet=quiet))
@@ -580,41 +587,45 @@ def quiet_core(cpu: int, attempt: Attempt) -> None:
 
 
 def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> int:
-    if socket.gethostname() != "chungus2" or cpu != 62 or args.dirty_status:
-        raise RuntimeError("divisor acceptance requires clean chungus2 CPU 62 protocol")
-    if core_telemetry.sibling_set(cpu) != {14, 62}:
-        raise RuntimeError("divisor protocol requires SMT pair 14/62")
-    attempt.record.update(scope="divisors", campaign=2,
-        protocol="reports/hex-int-factor-divisor-protocol-2.md", state_before=host_state(cpu))
-    attempt.save()
-    run(["lake", "build", "hexintfactor_bench"], timeout=900)
-    attempt.record["benchmark_executable_sha256"] = sha256(BENCH)
-    attempt.save()
-    audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
-    attempt.record["divisor_audit"] = audit
-    attempt.save()
-    # Gate only on independent host counters, before starting any timed run.
-    quiet_core(cpu, attempt)
-    export_path = attempt.directory / "bench.json"
-    telemetry_path = attempt.directory / "telemetry.json"
+    original_affinity = os.sched_getaffinity(0)
     try:
-        run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
-             "--cpu", str(cpu), "--output", str(telemetry_path),
-             "--interval", "0.25", "--max-core-interference-ratio", "0.002",
-             "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
-             "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
-            timeout=900)
+        if socket.gethostname() != "chungus2" or cpu != 62 or args.dirty_status:
+            raise RuntimeError("divisor acceptance requires clean chungus2 CPU 62 protocol")
+        if core_telemetry.sibling_set(cpu) != {14, 62}:
+            raise RuntimeError("divisor protocol requires SMT pair 14/62")
+        attempt.record.update(scope="divisors", campaign=2,
+            protocol="reports/hex-int-factor-divisor-protocol-2.md", state_before=host_state(cpu))
+        attempt.save()
+        run(["lake", "build", "hexintfactor_bench"], timeout=900)
+        attempt.record["benchmark_executable_sha256"] = sha256(BENCH)
+        attempt.save()
+        audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
+        attempt.record["divisor_audit"] = audit
+        attempt.save()
+        # Gate only on independent host counters, before starting any timed run.
+        quiet_core(cpu, attempt)
+        export_path = attempt.directory / "bench.json"
+        telemetry_path = attempt.directory / "telemetry.json"
+        try:
+            run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
+                 "--cpu", str(cpu), "--output", str(telemetry_path),
+                 "--interval", "0.25", "--max-core-interference-ratio", "0.002",
+                 "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
+                 "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
+                timeout=900)
+        finally:
+            inspect_divisors(attempt, attempt.directory, audit)
+        if attempt.record["scientific_validation"]["status"] != "passed":
+            raise RuntimeError("divisor validation failed; see retained scientific_validation")
+        if attempt.record.get("telemetry", {}).get("summary", {}).get("contaminated", True):
+            raise RuntimeError("divisor telemetry is contaminated or unavailable")
+        verify_sources(attempt)
+        attempt.record["status"] = "accepted"
+        attempt.save()
+        render(attempt.record)
+        return 0
     finally:
-        inspect_divisors(attempt, attempt.directory, audit)
-    if attempt.record["scientific_validation"]["status"] != "passed":
-        raise RuntimeError("divisor validation failed; see retained scientific_validation")
-    if attempt.record.get("telemetry", {}).get("summary", {}).get("contaminated", True):
-        raise RuntimeError("divisor telemetry is contaminated or unavailable")
-    verify_sources(attempt)
-    attempt.record["status"] = "accepted"
-    attempt.save()
-    render(attempt.record)
-    return 0
+        os.sched_setaffinity(0, original_affinity)
 
 
 def main() -> int:
