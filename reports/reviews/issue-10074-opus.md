@@ -64,3 +64,35 @@ the findings, their verification, and the resulting changes.
 Validation after these changes: the full `HexNumberFieldTowerMathlib` build
 and the differential driver pass; 32 validator tests pass, including the
 retained-artifact audit. The measured benchmark executable remains unchanged.
+
+## Focused review of the graph-sweep freshness rule
+
+A second read-only Opus review examined the checked allowance added after an
+upstream graph-sweep fingerprint expansion. It could not construct an accepted
+Lake change that reaches the measured graph artifacts, but identified two
+latent sources of an under-approximated import closure. Both were fixed:
+
+- Import resolution now examines every tracked Lean source whose path suffix
+  matches the imported module, rather than assuming sources live only at the
+  repository root, `bench`, or `conformance`. This covers current and future
+  source directories and conservatively scans every ambiguous match.
+- The closure and tracked umbrella set now use the Git index and read exact
+  blobs, matching the state fingerprinted by the sweep machinery. Untracked or
+  unstaged worktree files cannot change the decision.
+
+The review also caught the default `roots := #[name]` of a `lean_lib` with an
+explicit `globs` field. A new library whose name is in the measured import
+closure is now rejected explicitly. The graph freshness verdict and per-node
+sweep selector share the same allowance. Tests cover arbitrary source
+directories, exact index blobs, the measured closure's positive namespaces,
+default library roots, mode and path guards, closure failure, and the complete
+allowance wiring.
+
+The suggested consolidation with the factor-sweep Lake block parser was not
+made. The present graph rule intentionally recognizes a smaller syntax and
+fails closed; its remaining positional limitations cause only false rejects.
+Moving both mature checks onto a new shared parser would enlarge the change
+without strengthening the accepted set's safety. Documentation now states the
+`bench`/`conformance` restriction, top-level namespace exclusion, `roots` versus
+`globs` semantics, index-based closure, and the factor check's separate
+build-input rule.

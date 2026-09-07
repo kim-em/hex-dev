@@ -93,9 +93,39 @@ class IndependentTargetTests(unittest.TestCase):
     def test_real_driver_namespaces_are_independent(self):
         prefixes = check.graph_import_prefixes()
         self.assertIsNotNone(prefixes)
-        self.assertIn("HexGraphIso", prefixes)
+        self.assertTrue({"Hex", "HexBasic", "HexGraph", "HexGraphIso", "HexMatrix"}
+                        <= prefixes)
         self.assertNotIn("HexNumberFieldTower", prefixes)
         self.assertNotIn("HexRationalFn", prefixes)
+
+    def test_lake_allowance_guards_and_imported_namespace(self):
+        old, new = "old-lake", "new-lake"
+        difference = check.freshness.Difference(
+            "lakefile.lean", old, new, "100644", "100644")
+        before, after = BASE, BASE + "\n" + EXE
+        listing = "100644 source 0\tHexOther.lean\n"
+        def fake_git(*args):
+            if args == ("cat-file", "blob", old):
+                return before
+            if args == ("cat-file", "blob", new):
+                return after
+            if args[:3] == ("ls-files", "-s", "--"):
+                return listing
+            raise AssertionError(args)
+        with patch.object(check.freshness, "git", side_effect=fake_git), \
+                patch.object(check, "graph_import_prefixes",
+                             return_value={"HexGraphIso"}):
+            self.assertTrue(check.independent_lake_targets(difference))
+        with patch.object(check.freshness, "git", side_effect=fake_git), \
+                patch.object(check, "graph_import_prefixes",
+                             return_value={"HexGraphIso", "HexOther"}):
+            self.assertFalse(check.independent_lake_targets(difference))
+        with patch.object(check, "graph_import_prefixes", return_value=None):
+            self.assertFalse(check.independent_lake_targets(difference))
+        self.assertFalse(check.independent_lake_targets(
+            check.freshness.Difference("other", old, new, "100644", "100644")))
+        self.assertFalse(check.independent_lake_targets(
+            check.freshness.Difference("lakefile.lean", old, new, "100644", "100755")))
 
     def test_import_all_and_ambiguous_local_locations(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -108,12 +138,46 @@ class IndependentTargetTests(unittest.TestCase):
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text)
-            with patch.object(check.freshness, "ROOT", root):
+            blobs = {}
+            listing = []
+            for number, (name, text) in enumerate(files.items()):
+                blob = f"blob{number}"
+                blobs[blob] = text
+                listing.append(f"100644 {blob} 0\t{name}")
+            def fake_git(*args):
+                if args[:3] == ("ls-files", "-s", "--"):
+                    return "\n".join(listing) + "\n"
+                if args[:2] == ("cat-file", "blob"):
+                    return blobs[args[2]]
+                raise AssertionError(args)
+            with patch.object(check.freshness, "git", side_effect=fake_git):
                 self.assertEqual(check.graph_import_prefixes(),
                                  {"HexGraphIso", "HexHelper", "Lean", "HexOther",
                                   "Init", "Std", "Lake"})
-                (root / "HexGraphIso.lean").write_text("import HexHelper.«Core»\n")
+                blobs["blob0"] = "import HexHelper.«Core»\n"
                 self.assertIsNone(check.graph_import_prefixes())
+
+    def test_closure_reads_index_and_all_source_directories(self):
+        files = {
+            "HexGraphIso.lean": "import Hidden.Entry\n",
+            "bench/HexGraphIso/Cactus.lean": "import HexGraphIso\n",
+            "examples/Hidden/Entry.lean": "import HexOther.Reached\n",
+            "generated/HexOther/Reached.lean": "import Std\n",
+        }
+        blobs = {}
+        listing = []
+        for number, (name, body) in enumerate(files.items()):
+            blob = f"blob{number}"
+            blobs[blob] = body
+            listing.append(f"100644 {blob} 0\t{name}")
+        def fake_git(*args):
+            if args[:3] == ("ls-files", "-s", "--"):
+                return "\n".join(listing) + "\n"
+            if args[:2] == ("cat-file", "blob"):
+                return blobs[args[2]]
+            raise AssertionError(args)
+        with patch.object(check.freshness, "git", side_effect=fake_git):
+            self.assertTrue({"Hidden", "HexOther"} <= check.graph_import_prefixes())
 
 
 if __name__ == "__main__":

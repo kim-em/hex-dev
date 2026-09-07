@@ -59,38 +59,69 @@ IMPORT = re.compile(
 IMPORT_START = re.compile(r"[ \t]*(?:(?:public|private|meta)[ \t]+)*import\b")
 
 
+def index_lean_sources() -> tuple[dict[Path, list[str]], set[str]]:
+    """Tracked Lean modules by path suffix, using the index's exact blobs."""
+    sources: dict[Path, list[str]] = {}
+    local_prefixes: set[str] = set()
+    listing = freshness.git("ls-files", "-s", "--", "*.lean")
+    for line in listing.splitlines():
+        metadata, separator, path_text = line.partition("\t")
+        if not separator:
+            raise ValueError("git ls-files returned a malformed Lean source entry")
+        _mode, blob, stage = metadata.split()
+        if stage != "0":
+            raise ValueError(f"{path_text} is unmerged in the index")
+        path = Path(path_text)
+        parts = path.with_suffix("").parts
+        for start, part in enumerate(parts):
+            if re.fullmatch(NAME, part):
+                suffix = Path(*parts[start:]).with_suffix(".lean")
+                sources.setdefault(suffix, []).append(blob)
+                # Every component might be the first module component after a
+                # source directory. Extra entries only make resolution more
+                # conservative when an import has no tracked source.
+                local_prefixes.add(part)
+    return sources, local_prefixes
+
+
 def graph_import_prefixes() -> set[str] | None:
     """Over-approximate the graph driver's and tactic's imported namespaces.
 
-    Inspect every local source location for an import, so ambiguity only
-    rejects an allowance. Nonlocal imports still contribute their namespace.
-    Unsupported import syntax fails closed.
+    Inspect every tracked source whose path suffix matches an imported module,
+    so every declared source directory is covered and ambiguity only widens
+    the closure. Read the index's blobs, matching the source fingerprint.
+    Nonlocal imports still contribute their namespace. Unsupported import
+    syntax and unresolved local modules fail closed.
     """
     prefixes = {"HexGraphIso", "Init", "Lean", "Std", "Lake"}
-    stack = [freshness.ROOT / "HexGraphIso.lean",
-             freshness.ROOT / "bench/HexGraphIso/Cactus.lean"]
+    try:
+        sources, local_prefixes = index_lean_sources()
+    except ValueError:
+        return None
+    stack = ["HexGraphIso", "HexGraphIso.Cactus"]
     seen = set()
     while stack:
-        path = stack.pop()
-        if path in seen:
+        module = stack.pop()
+        if module in seen:
             continue
-        seen.add(path)
-        if not path.is_file():
-            return None
-        for line in freshness.strip_lean_comments(path.read_text()).splitlines():
-            if not IMPORT_START.match(line):
-                continue
-            match = IMPORT.fullmatch(line)
-            if match is None:
+        seen.add(module)
+        relative = Path(*module.split(".")).with_suffix(".lean")
+        blobs = sources.get(relative, [])
+        if not blobs:
+            if module.split(".")[0] in local_prefixes:
                 return None
-            for module in match[1].split():
-                prefixes.add(module.split(".")[0])
-                relative = Path(*module.split(".")).with_suffix(".lean")
-                for directory in (freshness.ROOT, freshness.ROOT / "bench",
-                                  freshness.ROOT / "conformance"):
-                    source = directory / relative
-                    if source.is_file():
-                        stack.append(source)
+            continue
+        for blob in blobs:
+            for line in freshness.strip_lean_comments(
+                    freshness.blob_text(blob)).splitlines():
+                if not IMPORT_START.match(line):
+                    continue
+                match = IMPORT.fullmatch(line)
+                if match is None:
+                    return None
+                for imported_module in match[1].split():
+                    prefixes.add(imported_module.split(".")[0])
+                    stack.append(imported_module)
     return prefixes
 
 
@@ -156,11 +187,16 @@ def independent_lake_targets(difference: freshness.Difference) -> bool:
     imported = graph_import_prefixes()
     if imported is None:
         return False
-    # Existing Hex library namespaces cannot be supplied by Lean's external
-    # packages. Excluding every imported namespace also rules out ownership
-    # changes for modules used by either measured artifact.
-    independent = {path.stem for path in freshness.ROOT.glob("Hex*.lean")
-                   if path.stem not in imported}
+    # Existing tracked umbrella modules cannot be supplied by Lean's external
+    # packages. Read the index rather than the worktree so the allowance is
+    # adjudicated from the same state as the source fingerprint.
+    independent = set()
+    for line in freshness.git("ls-files", "-s", "--", "Hex*.lean").splitlines():
+        metadata, _, path_text = line.partition("\t")
+        _mode, _blob, stage = metadata.split()
+        path = Path(path_text)
+        if stage == "0" and path.parent == Path(".") and path.stem not in imported:
+            independent.add(path.stem)
     return independent_target_additions(freshness.blob_text(difference.baseline),
                                         freshness.blob_text(difference.current), independent,
                                         imported)
