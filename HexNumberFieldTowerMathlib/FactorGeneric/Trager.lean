@@ -1635,7 +1635,7 @@ theorem factorRat_mem_sound (input : DensePoly Rat)
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   intro factor hfactor
-  simp only [Factor.factorRat?] at hresult
+  simp only [Factor.factorRat?, ZPoly.ratSquarefree] at hresult
   split at hresult
   · cases hresult
     simp at hfactor

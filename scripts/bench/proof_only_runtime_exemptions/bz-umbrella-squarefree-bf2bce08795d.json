@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus.lean",
+  "baseline_blob": "f323b1fc838d727db24996ff8650bca5a1eac79e",
+  "current_blob": "bf2bce08795dad33c959c6d1641ad2d7786a2533",
+  "reason": "Exports a new reusable rational-squarefreeness API. No existing integer-factorization service computation calls ratSquarefree or ratSquarefreeFast, and the new csimp rule matches only the newly introduced ratSquarefree constant. The definitions retain their tower callers; no preexisting BZ executable definition is changed. The guards run during compilation. This exemption covers the existing integer-factorization sweep only, not the intentionally changed tower path."
+}

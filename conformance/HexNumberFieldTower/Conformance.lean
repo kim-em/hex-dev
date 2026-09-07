@@ -406,6 +406,21 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
 
 /-! # `factor?` and `checkFactorization` -/
 
+-- Bad reduction at the modular trial prime must fall back to exact arithmetic.
+-- Rational content survives, and replay still rejects a corrupted scalar or
+-- multiplicity even when the modular squarefreeness path is available.
+#guard
+    #[rationalPoly [-499 / 3, 0, 1 / 3],
+      rationalPoly [1 / 3, 499 / 3],
+      rationalPoly [-2 / 3, 0, 1 / 3]].all fun input =>
+      match factor? input with
+      | some result =>
+          checkFactorization input result.scalar result.factors &&
+            !checkFactorization input (result.scalar + 1) result.factors &&
+            !checkFactorization input result.scalar
+              (result.factors.map fun entry => (entry.1, entry.2 + 1))
+      | none => false
+
 -- Typical rational factorization into two distinct linear factors.
 #guard
     let input := rationalPoly [-1, 0, 1]
