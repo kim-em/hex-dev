@@ -40,10 +40,29 @@ theorem SweepPre.canon_return {G : Colored n k} {ctx : Ctx n}
     h.positive h.partition h.target ht
   have hr := node_canon (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
     childFirst hn0 (by have := h.positive; omega) hc.1
-  rcases hr with hr | hr
+  rcases hr.source with hr | hr
   · left
     cases first <;> exact hr
-  · exact Or.inr (child_store (ctx := ctx) first hn0 h.positive h.partition h.target ht hr)
+  · exact Or.inr (child_store (ctx := ctx) first hn0 h.positive h.partition h.target ht hr.2)
+
+/-- A canonical reference pointing above the child is precisely the
+reference held by the receiving parent before the child was entered. -/
+theorem SweepPre.canon_old {G : Colored n k} {ctx : Ctx n}
+    {tcLevel fuel level numcells tc tv1 tv : Nat} {first : Bool}
+    {cell : VSet n} {st : Search n}
+    (h : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st)
+    (hn0 : 0 < n) (childFirst : Bool) :
+    let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (child first level tc tv st)).2
+    out.gcaCanon ≤ level → out.gcaCanon = st.gcaCanon ∧ out.canonlab = st.canonlab := by
+  intro out he
+  have ht := h.cursor_mem tv rfl
+  have hc := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
+    h.positive h.partition h.target ht
+  have hr := node_canon (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
+    childFirst hn0 (by have := h.positive; omega) hc.1
+  have hs := hr.old (by change out.gcaCanon < level + 1; omega)
+  cases first <;> exact hs
 
 /-- At a frozen sweep frame, a canonical ancestor pointing to this level
 names a child already bounded by the incumbent. -/
@@ -51,6 +70,24 @@ def CanonGuide (level tc : Nat) (base : Search n) (key : Nat → Key n)
     (best : Option (Key n)) (st : Search n) : Prop :=
   st.gcaCanon = level → ∃ v, Generic.Covers (key v) best ∧ st.canonlab[tc]! = v ∧
     cellsPerm base.ptn level base.lab st.canonlab
+
+/-- A canonical return to this loop names its previously covered
+reference child, even before the returned partition is recovered. -/
+theorem SweepPre.canon_locate {G : Colored n k} {ctx : Ctx n}
+    {tcLevel fuel level numcells tc tv1 tv : Nat} {first : Bool}
+    {cell : VSet n} {base st : Search n} {key : Nat → Key n} {best : Option (Key n)}
+    (h : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st)
+    (hn0 : 0 < n) (childFirst : Bool) (hguide : CanonGuide level tc base key best st) :
+    let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (child first level tc tv st)).2
+    out.gcaCanon = level → ∃ v, Generic.Covers (key v) best ∧ out.canonlab[tc]! = v ∧
+      cellsPerm base.ptn level base.lab out.canonlab := by
+  intro out he
+  have hs := h.canon_old (fuel := fuel) hn0 childFirst (Nat.le_of_eq he)
+  obtain ⟨v, hv, hat, hp⟩ := hguide (hs.1.symm.trans he)
+  refine ⟨v, hv, ?_, ?_⟩
+  · rw [hs.2]; exact hat
+  · rw [hs.2]; exact hp
 
 /-- The receiving loop uses either its old covered reference or the child
 whose result was just absorbed, then clamps the reference's ancestor. -/

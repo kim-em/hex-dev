@@ -86,7 +86,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     · exact (compareCodes_frame level code refined).2.2.2
     · rfl
   have hcan : CanonOut level refined compared :=
-    (CanonOut.refl level refined).fields hcc (Nat.le_of_eq hcg)
+    (CanonOut.refl level refined).fields hcc hcg
   have ht := rp.target first level nc compared hlevel hcomp.ok
   dsimp only [policy, Generic.Policy.chooseTarget] at ht
   have htc := (chooseTarget_frame first ctx tcLevel level nc compared).2.2.2
@@ -113,7 +113,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   obtain ⟨tc, cell, size, targeted⟩ := t
   obtain ⟨htlocal, htarget⟩ := ht
   have hprepared := hcomp.trans htlocal
-  have hcanPrepared : CanonOut level refined targeted := hcan.fields htc (Nat.le_of_eq htg)
+  have hcanPrepared : CanonOut level refined targeted := hcan.fields htc htg
   have hfinish : ∀ prepared, Generic.Local G Search.view level nc refined prepared →
       CanonOut level refined prepared → Generic.Target Search.view level tc.toNat cell prepared →
       CanonOut level st (let ready := cheapCheck first level prepared
@@ -126,7 +126,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     have hc := rp.cheap first level nc prepared hp.ok
     have hcc : CanonOut level refined (cheapCheck first level prepared) := by
       unfold cheapCheck
-      split <;> exact hcan.fields rfl (Nat.le_refl _)
+      split <;> exact hcan.fields rfl rfl
     apply hvcanon
     apply hcc.trans _ (hp.trans hc).effect
     exact canon_finish hnext first level nc tc.toNat size cell _ hlevel hc.ok (ht.of_out hc.effect)
@@ -136,7 +136,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     split
     · apply hvcanon
       apply hcanPrepared.trans _ hprepared.effect
-      exact Or.inr ⟨rfl, cellsPerm_refl _ _ _⟩
+      exact ⟨Nat.min_le_left _ _, Or.inr ⟨Nat.le_refl _, rfl, cellsPerm_refl _ _ _⟩⟩
     · exact hfinish targeted hprepared hcanPrepared htarget
   | false =>
     simp only [Bool.false_eq_true, ite_false]
@@ -144,7 +144,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     dsimp only [policy, Generic.Policy.classify] at hcl
     have hcla : CanonOut level refined (classify ctx level nc targeted).2 :=
       hcanPrepared.fields (classify_frame ctx level nc targeted).2.2.2
-        (Nat.le_of_eq (classify_canon ctx level nc targeted))
+        (classify_canon ctx level nc targeted)
     generalize hcval : classify ctx level nc targeted = classified at hcl hcla ⊢
     obtain ⟨leaf, classified⟩ := classified
     have hle := rp.leaf leaf level nc classified hcl.ok
@@ -233,11 +233,11 @@ theorem canon_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     · apply canon_advance (ctx := ctx) (tcLevel := tcLevel) hn0 hnext first level numcells tc tv1 tv index cell st
         _ exit hlevel hok htarget
       · exact he.congr rfl rfl rfl rfl
-      · exact ha.fields rfl (Nat.le_refl _)
+      · exact ha.fields rfl rfl
     · apply canon_advance (ctx := ctx) (tcLevel := tcLevel) hn0 hnext first level numcells tc tv1 tv index cell st
         _ exit hlevel hok htarget
       · exact he.congr rfl rfl rfl rfl
-      · exact ha.fields rfl (Nat.le_refl _)
+      · exact ha.fields rfl rfl
   · exact (hnext first level numcells tc tv1 (cell.nextElem (some tv)) cell _ st
       ⟨hlevel, hok, htarget, fun _ hv => VSet.nextElem_mem hv⟩).2
 
