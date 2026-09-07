@@ -143,4 +143,34 @@ def validate : IO Unit := do
       throw (IO.userError s!"witness fixture mismatch at {n}")
   IO.println "PASS: query and witness scaling fixtures"
 
+private def ratJson (c : Rat) : Lean.Json := Lean.toJson (c.num, c.den)
+
+private def polyJson (p : DensePoly Rat) : Lean.Json :=
+  Lean.Json.arr (p.toArray.map ratJson)
+
+private def fractionJson (f : RationalFn Rat) : Lean.Json :=
+  Lean.Json.mkObj [("num", polyJson f.num), ("den", polyJson f.den)]
+
+/-- Complete matched-input QQ fixtures for the persistent FLINT driver. The
+zero parameter is a trivial-input timing control, not a scientific rung. -/
+def emitFixtures : IO Unit := do
+  for n in [0, 128, 256, 512, 1024, 2048, 4096, 8192, 16384] do
+    let i := prepQuery n
+    let pole := prepPole n
+    let optionJson := fun v => match v with
+      | some r => ratJson r
+      | none => Lean.Json.null
+    for (name, op, operands, expected, point) in
+        [("equal", "equal", #[i.f, i.equal], Lean.toJson (equal i), (-1 : Rat)),
+         ("different", "equal", #[i.f, i.different], Lean.toJson (different i), -1),
+         ("inverse", "inv", #[i.f], fractionJson i.f⁻¹, -1),
+         ("negate", "neg", #[i.f], fractionJson (-i.f), -1),
+         ("evaluate", "eval", #[i.f], optionJson (evaluate i), -1),
+         ("evaluatePole", "eval", #[pole], optionJson (evaluatePole pole), 1)] do
+      IO.println (Lean.Json.mkObj [
+        ("schema_version", Lean.toJson (1 : Nat)), ("domain", Lean.toJson "QQ"),
+        ("parameter", Lean.toJson n), ("benchmark", Lean.toJson s!"Hex.RationalFnScaling.{name}"),
+        ("operation", Lean.toJson op), ("operands", Lean.Json.arr (operands.map fractionJson)),
+        ("point", ratJson point), ("expected", expected)]).compress
+
 end Hex.RationalFnScaling

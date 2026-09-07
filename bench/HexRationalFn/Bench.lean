@@ -223,6 +223,9 @@ def validate : IO Unit := do
 end Hex.RationalFnBench
 
 def main (args : List String) : IO UInt32 := do
+  if args == ["emit-scaling"] then
+    Hex.RationalFnScaling.emitFixtures
+    return 0
   if args == ["sizes"] then
     Hex.RationalFnBench.validate
     Hex.RationalFnScaling.validate
