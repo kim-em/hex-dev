@@ -475,6 +475,31 @@ The earlier inconclusive run and later noisy passing diagnostic are preserved
 in the protocol with their original issue reference. Present contamination
 observations do not establish what caused the old failure.
 
+### Corrected ownership campaign
+
+The subsequent preregistration is `36e2a3d1fa8fe9e1f49067246c58f98aaba8d4a1`.
+Its monitor identifies ownership from each task's process group in the same
+stat read as its state and CPU, removing the process-snapshot race. The
+untimed core survey selected physical core 14/62; the collector then required
+an independently quiet window before any timing. The model, seven trials per
+rung, batching and 0.2% interference ceiling were unchanged.
+
+The [retained preflight rejection](bench-results/intfactor-divisors-campaign-2-attempt-1.json)
+contains all 150 two-second observations. None qualified. The quietest window
+had 0.01 seconds of busy time on each logical CPU in 2.000560614 seconds
+(about 0.5% each); some windows had 2.00 seconds of busy time. No acceptance
+timings or telemetry sidecars were collected, and no harness verdict exists
+for this campaign. The five-minute preflight limit ended the campaign; there
+was no contamination replacement or further timing retry. This is a host
+availability failure, not a test of the complexity model.
+
+The rejected record retains commands, the successful build and outside-timing
+array export, stdout/stderr, all source hashes, host state and the direct
+benchmark executable hash. That hash is exactly the existing inclusive
+profile's `64991c51f642fd47bc6ab40f611ddad4a67ea409fb7bd2af219d7c3ecb7b2150`,
+so the profile still describes the current operation. Neither that match nor
+the preflight observations supply the missing scientific timings.
+
 ### Inclusive profile and diagnosis
 
 The profile at `τ=32768` is attribution evidence only. Its captured executable
@@ -592,13 +617,24 @@ phase/DAG checks and applicable source-freshness checks pass. This retains the
 local later-phase work while leaving dependency-ordered recertification
 blocked on Phase 4.
 
+The [corrected campaign validation record](bench-results/intfactor-campaign-2-integration.json)
+retains the fresh 11122-job build, all 41 benchmark verification cases, all 37
+collector/telemetry/profile tests, matching fixture emission, the 415-case PARI
+oracle, phase/DAG/freshness checks, and the Mathlib-free scan of 43 executables
+and 191 proof probes. The pair's library declarations and manual chapter are
+still unchanged from the accepted local Phase-5–7 join. Both counters remain
+at 3 because this campaign produced no admissible timing evidence.
+
 ## Concerns
 
 Public `Hex.Nat.divisors` still lacks an admissible scientific timing run.
-Both attempts failed the preregistered core-interference gate; the finite retry
-budget is exhausted. [#9619](https://github.com/kim-em/hex-dev/issues/9619)
-remains open. Phase 4 is incomplete for HexIntFactor and HexIntFactorMathlib,
-and both registry counters remain at 3. The inclusive profile and complete
-result validation close those portions of the evidence gap, not the timing
-gate. Existing local Phase-5–7 artifacts are retained for subsequent freshness
-review and recertification after this blocker is resolved.
+The original two attempts failed the core-interference gate. The corrected
+ownership campaign then exhausted all 150 quiet-window observations before
+any timing could start. Its precise remaining dependency is a sufficiently
+quiet physical core on designated host `chungus2` under the committed controls;
+this session cannot reserve a core or suppress other sessions' workloads.
+[#9619](https://github.com/kim-em/hex-dev/issues/9619) remains open, Phase 4 is
+incomplete for both libraries, and both registry counters remain at 3.
+The inclusive profile and complete result validation remain available for
+integration once admissible timing evidence exists. The existing local
+Phase-5–7 work remains preserved; it does not discharge Phase 4.
