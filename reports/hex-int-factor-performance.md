@@ -516,10 +516,14 @@ so the profile still describes the current operation. Neither that match nor
 the preflight observations supply the missing scientific timings.
 
 The collector's subsequent infrastructure corrections do not change this
-retained campaign: monitor exceptions and explicit interruption now preserve
-partial telemetry before terminating the entire group, including grandchildren;
-nonzero command exits also clean up the group. The group must belong to a
+retained campaign: monitor exceptions and explicit interruption now atomically preserve
+partial telemetry. Every exit cleans up descendants using PID handles and a
+bounded rescan, including successful exits with leftover workers. Ordinary
+cleanup preserves the runner exit code; whole-group SIGKILL is the fallback
+if cleanup fails. The group must belong to a
 dedicated session, so failure cleanup cannot include unrelated pipeline members.
+Collector timeouts allow five seconds for partial telemetry to be written,
+then kill the whole group while retaining the leader PID until cleanup.
 Standalone process-group leaders are rejected before child creation and must
 launch through `setsid --wait`; the collector already creates a dedicated
 session. Successful samples retain owned
@@ -527,9 +531,10 @@ runnable tasks and the direct child PID, so ownership is auditable. The collecto
 restores its original affinity after the attempt and rejects an empty observer
 CPU set. Rechecking a preflight-only artifact records unavailable raw timing
 files as diagnostic failure instead of crashing. Synthetic subprocess tests
-cover standalone and collector launch modes, monitor failure, interruption and
-nonzero runner exits. All 41 current Python tests and the phase checks pass;
-[validation logs](bench-results/intfactor-campaign-2-cleanup-validation-3.json)
+cover standalone and collector launch modes, monitor failure, interruption,
+nonzero runner exits, successful exits with leaked children, and a child whose
+main thread exited while worker threads remained live. All 41 affected collector/telemetry/profile tests and the phase checks pass;
+[validation logs](bench-results/intfactor-campaign-2-cleanup-validation-4.json)
 and the [preflight-only diagnostic recheck](bench-results/intfactor-divisors-campaign-2-recheck.json)
 are retained. These are correctness tests, not new performance runs.
 

@@ -4,6 +4,7 @@ import unittest
 import json
 import os
 import signal
+import select
 import subprocess
 import sys
 import time
@@ -52,18 +53,29 @@ class CoreTelemetryTest(unittest.TestCase):
         # its own group in standalone mode and reuses the collector's session
         # group in collector mode. Inject a monitor failure after a grandchild
         # has started and require both processes to be dead after rejection.
-        for mode in ("success", "proc-error", "signal", "runner-error"):
+        for mode in ("success", "success-leak", "success-leak-thread", "proc-error", "signal", "runner-error"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
                 output = Path(directory) / "telemetry.json"
                 identities = Path(directory) / "identities.json"
                 child_code = """
 import json, os, subprocess, sys, time
 from pathlib import Path
-child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
+grandchild_code = 'import time; time.sleep(60)'
+if sys.argv[2] == 'success-leak-thread':
+    grandchild_code = 'import ctypes, threading, time; threading.Thread(target=time.sleep, args=(60,)).start(); ctypes.CDLL(None).pthread_exit(None)'
+child = subprocess.Popen([sys.executable, '-c', grandchild_code])
+if sys.argv[2] == 'success-leak-thread':
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        stat = Path(f'/proc/{child.pid}/stat').read_text()
+        if stat[stat.rfind(')') + 2:].split()[0] == 'Z': break
+        time.sleep(0.01)
+    else: raise RuntimeError('grandchild leader did not exit')
 temporary = Path(sys.argv[1] + ".tmp")
 temporary.write_text(json.dumps(dict(pid=os.getpid(), grandchild=child.pid, pgrp=os.getpgrp())))
 temporary.replace(sys.argv[1])
 if sys.argv[2] == 'runner-error': sys.exit(3)
+if sys.argv[2] in ('success-leak', 'success-leak-thread'): sys.exit(0)
 if sys.argv[2] == 'success':
     child.terminate(); child.wait(); time.sleep(0.1)
 else: time.sleep(60)
@@ -103,7 +115,8 @@ raise SystemExit(m.main())
                         self.assertEqual(record["session_id"], identity["pgrp"])
                         self.assertEqual(record["child_pid"], identity["pid"])
                         self.assertEqual(record["ownership"], "dedicated-process-group")
-                        self.assertEqual(result.returncode, 0 if mode == "success" else -signal.SIGKILL)
+                        self.assertEqual(result.returncode, {"success": 0, "success-leak": 0, "success-leak-thread": 0,
+                            "proc-error": 1, "signal": 128 + signal.SIGTERM, "runner-error": 3}[mode])
                         if mode in ("proc-error", "signal"):
                             self.assertEqual(record["status"], "rejected")
                             self.assertIn("monitor_error", record)
@@ -111,12 +124,18 @@ raise SystemExit(m.main())
                             for pid in (identity["pid"], identity["grandchild"]):
                                 deadline = time.monotonic() + 2
                                 while time.monotonic() < deadline:
+                                    descriptor = None
                                     try:
-                                        task = core_telemetry.parse_task(pid, Path(f"/proc/{pid}/stat").read_text())
+                                        descriptor = os.pidfd_open(pid)
+                                        poller = select.poll()
+                                        poller.register(descriptor, select.POLLIN)
+                                        if poller.poll(0):
+                                            break
                                     except (FileNotFoundError, ProcessLookupError):
                                         break
-                                    if task["state"] == "Z":
-                                        break
+                                    finally:
+                                        if descriptor is not None:
+                                            os.close(descriptor)
                                     time.sleep(0.01)
                                 else:
                                     self.fail(f"owned process {pid} survived monitor failure")

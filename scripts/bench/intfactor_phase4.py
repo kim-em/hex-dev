@@ -134,10 +134,25 @@ class Attempt:
                 try:
                     proc.communicate(stdin, timeout=timeout)
                 except BaseException:
-                    # Stop descendants too: benchmark runners themselves spawn children.
-                    with suppress(ProcessLookupError):
-                        os.killpg(proc.pid, signal.SIGKILL)
-                    proc.wait()
+                    # Give the monitor time to persist partial telemetry, then
+                    # stop the entire group even if a descendant ignored TERM.
+                    # WNOWAIT keeps the leader's PID reserved until killpg, so
+                    # an early exit cannot redirect the kill to a reused PID.
+                    entry["termination_grace_seconds"] = 5
+                    try:
+                        with suppress(ProcessLookupError):
+                            os.killpg(proc.pid, signal.SIGTERM)
+                        deadline = time.monotonic() + 5
+                        while time.monotonic() < deadline:
+                            if os.waitid(os.P_PID, proc.pid,
+                                    os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None:
+                                break
+                            time.sleep(0.01)
+                    finally:
+                        with suppress(ProcessLookupError):
+                            os.killpg(proc.pid, signal.SIGKILL)
+                        proc.wait()
+                        entry["termination_returncode"] = proc.returncode
                     raise
                 process_elapsed = time.monotonic_ns() - process_started
                 entry.update(returncode=proc.returncode, status="completed",
@@ -491,6 +506,8 @@ def validate_divisors(export: dict, audit: str) -> None:
         if param != count or subject != expected[-1] or values != expected:
             raise ValueError(f"divisor audit mismatch at {count}")
         expected_hashes[count] = checksum
+    if "results" not in export:
+        raise ValueError("no benchmark export")
     rows = export["results"]
     if len(rows) != 1 or rows[0]["function"] != "Hex.IntFactorBench.runDivisors":
         raise ValueError("expected exactly the public divisor registration")
@@ -563,6 +580,7 @@ def quiet_core(cpu: int, attempt: Attempt) -> None:
     if not affinity:
         raise RuntimeError("no CPU remains for the quiet-core observer")
     os.sched_setaffinity(0, affinity)
+    attempt.record["observer_affinity"] = sorted(os.sched_getaffinity(0))
     observations = []
     attempt.record["quiet_core_preflight"] = observations
     # Fixed campaign-2 rule: at most 150 two-second windows (five minutes).

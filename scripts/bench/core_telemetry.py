@@ -6,7 +6,8 @@ Standalone callers that are already process-group leaders must use setsid --wait
 For standalone use, send
 SIGINT/SIGTERM to the monitor PID or signal that group; the caller's original
 process group is not the cancellation boundary. On failure the monitor writes
-partial evidence, then SIGKILLs the group, including itself and grandchildren.
+partial evidence. Descendants are stopped on every exit using PID handles; if
+that cleanup fails, SIGKILL of the entire group is the final fallback.
 The collector already launches the monitor in a dedicated session.
 """
 
@@ -17,6 +18,7 @@ from datetime import datetime, timezone
 import json
 import os
 import signal
+import select
 import sys
 from pathlib import Path
 import subprocess
@@ -220,6 +222,63 @@ def interference_summary(
     }
 
 
+def write_telemetry(path: Path, document: dict[str, object]) -> None:
+    temporary = path.with_name(path.name + f".tmp-{os.getpid()}")
+    with temporary.open("w") as stream:
+        stream.write(json.dumps(document, indent=2) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(path)
+
+
+def stop_descendants(group: int, process: subprocess.Popen | None) -> None:
+    """Drain our dedicated group without killing the monitor or reusing a PID.
+
+    Keeping the monitor in the group preserves the collector's killpg timeout
+    boundary. PID handles let ordinary cleanup retain the runner's exit code.
+    Rescan to catch descendants forked while the previous scan was in flight.
+    """
+    deadline = time.monotonic() + 5
+    while True:
+        live = False
+        for path in Path("/proc").glob("[0-9]*/stat"):
+            descriptor = None
+            try:
+                pid = int(path.parent.name)
+                if pid == os.getpid():
+                    continue
+                task = parse_task(pid, path.read_text())
+                if task["pgrp"] != group:
+                    continue
+                descriptor = os.pidfd_open(pid)
+                # The PID might have exited/recycled before pidfd_open. Confirm
+                # the current process still belongs to our dedicated group;
+                # the signal then targets only the process held by the handle.
+                task = parse_task(pid, path.read_text())
+                poller = select.poll()
+                poller.register(descriptor, select.POLLIN)
+                # A zombie leader can still have live worker threads. A process
+                # pidfd becomes readable only after its last thread exits:
+                # https://man7.org/linux/man-pages/man2/pidfd_open.2.html
+                exited = any(mask & (select.POLLIN | select.POLLHUP)
+                             for _, mask in poller.poll(0))
+                if task["pgrp"] == group and not exited:
+                    live = True
+                    signal.pidfd_send_signal(descriptor, signal.SIGKILL)
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            finally:
+                if descriptor is not None:
+                    os.close(descriptor)
+        if not live:
+            if process is not None:
+                process.wait(timeout=1)
+            return
+        if time.monotonic() >= deadline:
+            raise TimeoutError("owned process group did not drain in five seconds")
+        time.sleep(0.01)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cpu", type=int, required=True)
@@ -269,10 +328,14 @@ def main() -> int:
     owned_group = os.getpgrp()
     # A dedicated group is also the cancellation boundary for standalone use:
     # signal the monitor PID (handled below) or its group, not the caller's group.
+    interrupted_signal = None
+
     def interrupted(signum: int, _frame: object) -> None:
+        nonlocal interrupted_signal
+        interrupted_signal = signum
         raise InterruptedError(f"telemetry interrupted by signal {signum}")
 
-    completed = False
+    document = None
     process = None
     previous_handlers = {sig: signal.signal(sig, interrupted)
                          for sig in (signal.SIGTERM, signal.SIGINT)}
@@ -308,7 +371,8 @@ def main() -> int:
                     ),
                     "foreign_runnable": foreign,
                     "owned_runnable": [task for task in tasks if task["state"] == "R"
-                                       and task["pgrp"] == owned_group],
+                                       and task["pgrp"] == owned_group
+                                       and task["tgid"] != os.getpid()],
                     "load_average": [round(value, 3) for value in os.getloadavg()],
                 }
             )
@@ -384,17 +448,17 @@ def main() -> int:
             },
             "samples": samples,
         }
-        args.output.write_text(json.dumps(document, indent=2) + "\n")
+        write_telemetry(args.output, document)
         if return_code != 0:
             return return_code
-        completed = True
         if verdict["contaminated"] and args.fail_on_contamination:
             return 2
         return 0
     except BaseException as error:
-        # Preserve partial samples before killing the whole owned group. Killing
-        # only the direct child can orphan the benchmark runner's grandchildren.
-        partial = {
+        # Ignore repeated interruption while preserving the first failure.
+        for sig in previous_handlers:
+            signal.signal(sig, signal.SIG_IGN)
+        document = {
             "schema": 3, "status": "rejected", "command": command,
             "cpu": args.cpu, "smt_siblings": sorted(siblings - {args.cpu}),
             "ownership": "dedicated-process-group",
@@ -407,18 +471,26 @@ def main() -> int:
                 args.output.parent.glob(Path(sidecar_stem).name + "-*.jsonl"))],
             "samples": samples, "summary": {"contaminated": True},
         }
-        with args.output.open("w") as stream:
-            stream.write(json.dumps(partial, indent=2) + "\n")
-            stream.flush()
-            os.fsync(stream.fileno())
+        write_telemetry(args.output, document)
         print(f"telemetry monitor failed: {error}", file=sys.stderr, flush=True)
+        if interrupted_signal is not None:
+            return 128 + interrupted_signal
         raise
     finally:
-        if not completed:
-            # The monitor belongs to this group too. Evidence has been written
-            # before SIGKILL; the collector records the rejected signal exit.
-            # This also covers a nonzero runner exit and failed evidence writes.
-            os.killpg(owned_group, signal.SIGKILL)
+        for sig in previous_handlers:
+            signal.signal(sig, signal.SIG_IGN)
+        try:
+            stop_descendants(owned_group, process)
+        except BaseException as cleanup_error:
+            # Preserve any original error as well as the cleanup failure before
+            # the last-resort group kill, which deliberately includes us.
+            document = document or {"schema": 3, "command": command, "samples": samples}
+            document.update(status="rejected", cleanup_error=str(cleanup_error))
+            document.setdefault("summary", {})["contaminated"] = True
+            try:
+                write_telemetry(args.output, document)
+            finally:
+                os.killpg(owned_group, signal.SIGKILL)
         for sig, handler in previous_handlers.items():
             signal.signal(sig, handler)
 

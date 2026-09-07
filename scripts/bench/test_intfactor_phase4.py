@@ -67,10 +67,11 @@ class PreservationTests(unittest.TestCase):
         def action(attempt):
             try:
                 collector.run([sys.executable, '-c',
-                    'import time, sys; print("partial-out", flush=True); print("partial-err", file=sys.stderr, flush=True); time.sleep(30)'], timeout=0.2)
+                    'import time, sys, signal; signal.signal(signal.SIGTERM, lambda *_: (print("term-preserved", flush=True), sys.exit(0))); print("partial-out", flush=True); print("partial-err", file=sys.stderr, flush=True); time.sleep(30)'], timeout=0.2)
             finally:
                 entry = attempt.record['commands'][-1]
-                self.assertEqual(Path(entry['stdout']).read_text(), 'partial-out\n')
+                self.assertEqual(Path(entry['stdout']).read_text(), 'partial-out\nterm-preserved\n')
+                self.assertEqual(entry['termination_returncode'], 0)
                 self.assertEqual(Path(entry['stderr']).read_text(), 'partial-err\n')
         self.exercise(action, subprocess.TimeoutExpired)
 
@@ -112,7 +113,7 @@ class PreservationTests(unittest.TestCase):
         with patch.object(collector.core_telemetry, "sibling_set", return_value={62, 14}), \
              patch.object(collector.core_telemetry, "cpu_counters", side_effect=ticks), \
              patch.object(collector.os, "sched_setaffinity") as affinity, \
-             patch.object(collector.os, "sched_getaffinity", return_value={1, 14, 62}), \
+             patch.object(collector.os, "sched_getaffinity", side_effect=[{1, 14, 62}, {1}]), \
              patch.object(collector.os, "sysconf", return_value=100), \
              patch.object(collector.time, "sleep"), \
              patch.object(collector.time, "monotonic_ns", side_effect=[0, 2_000_000_000, 2_000_000_000, 4_000_000_000]):
@@ -120,6 +121,7 @@ class PreservationTests(unittest.TestCase):
         self.assertEqual([r["quiet"] for r in attempt.record["quiet_core_preflight"]], [False, True])
         self.assertEqual(attempt.save.call_count, 2)
         affinity.assert_called_once_with(0, {1})
+        self.assertEqual(attempt.record["observer_affinity"], [1])
 
     def test_quiet_preflight_exhaustion(self):
         attempt = Mock(record={})
@@ -127,7 +129,7 @@ class PreservationTests(unittest.TestCase):
              patch.object(collector.core_telemetry, "cpu_counters", return_value={62: (0, 0), 14: (0, 0)}), \
              patch.object(collector.core_telemetry, "busy_seconds", return_value=0.1), \
              patch.object(collector.os, "sched_setaffinity") as affinity, \
-             patch.object(collector.os, "sched_getaffinity", return_value={1, 14, 62}), \
+             patch.object(collector.os, "sched_getaffinity", side_effect=[{1, 14, 62}, {1}]), \
              patch.object(collector.time, "sleep"), \
              patch.object(collector.time, "monotonic_ns", side_effect=[i * 2_000_000_000 for i in range(300)]):
             with self.assertRaisesRegex(RuntimeError, "150 preflight"):
