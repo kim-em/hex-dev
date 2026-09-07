@@ -3,3 +3,4 @@ module
 public import HexLatticeEnumMathlib.GramSchmidt
 public import HexLatticeEnumMathlib.Bounds
 public import HexLatticeEnumMathlib.Distance
+public import HexLatticeEnumMathlib.Order
