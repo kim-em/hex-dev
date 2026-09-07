@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Equitable.Basic
+public import HexGraphIso.Nauty.SmallCell.Count
 public import HexGraphIso.Nauty.Invariant.Store
 import all HexGraphIso.Nauty.Equitable.Basic
 
@@ -160,99 +160,6 @@ theorem cheapautom_iff {ptn : Array Nat} {level nn : Nat}
   rw [cheapautom, cells,
     cheapautom_go_cells hps hend nn 0 nn 0 (Or.inl rfl)]
   simp
-
-/-! # Counting toolkit -/
-
-/-- The adjacency bit as a count. -/
-def bitCnt (r : VSet n) (v : Nat) : Nat := if r.mem v then 1 else 0
-
-theorem bitCnt_le_one (r : VSet n) (v : Nat) : bitCnt r v ≤ 1 := by
-  rw [bitCnt]
-  split <;> omega
-
-theorem bitCnt_eq_zero {r : VSet n} {v : Nat} :
-    bitCnt r v = 0 ↔ r.mem v = false := by
-  rw [bitCnt]
-  rcases h : r.mem v with _ | _ <;> simp
-
-theorem bitCnt_eq_one {r : VSet n} {v : Nat} :
-    bitCnt r v = 1 ↔ r.mem v = true := by
-  rw [bitCnt]
-  rcases h : r.mem v with _ | _ <;> simp
-
-theorem bitCnt_inj {r r' : VSet n} {v v' : Nat} :
-    bitCnt r v = bitCnt r' v' ↔ r.mem v = r'.mem v' := by
-  rw [bitCnt, bitCnt]
-  rcases h : r.mem v with _ | _ <;>
-    rcases h' : r'.mem v' with _ | _ <;> simp
-
-/-- The count into a window's splitter set expands into the sum of the
-adjacency bits at the window's members. -/
-theorem cardInter_workset {lab : Array Nat} (r : VSet n) :
-    ∀ (len lo : Nat),
-      (∀ o o', o ≤ len → o' ≤ len → o ≠ o' →
-        lab[lo + o]! ≠ lab[lo + o']!) →
-      (worksetOf n lab lo (lo + len)).cardInter r =
-        ((List.range (len + 1)).map fun o => bitCnt r lab[lo + o]!).sum
-  | 0, lo, _ => by
-    rw [Nat.add_zero, worksetOf_singleton, VSet.cardInter_singleton]
-    simp [bitCnt]
-  | len + 1, lo, hdist => by
-    have hsplit : worksetOf n lab lo (lo + (len + 1)) =
-        (worksetOf n lab lo (lo + len)).union
-          (worksetOf n lab (lo + len + 1) (lo + len + 1)) :=
-      worksetOf_split (by omega) (by omega)
-    have hdisj : (worksetOf n lab lo (lo + len)).inter
-        (worksetOf n lab (lo + len + 1) (lo + len + 1)) = VSet.empty := by
-      refine worksetOf_disjoint fun v hv1 hv2 => ?_
-      rw [segN] at hv1 hv2
-      obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hv1
-      obtain ⟨o', ho', he⟩ := List.mem_map.mp hv2
-      have ho2 := List.mem_range.mp ho
-      have ho2' := List.mem_range.mp ho'
-      have ho'0 : o' = 0 := by omega
-      subst ho'0
-      have he' : lab[lo + (len + 1)]! = lab[lo + o]! := he
-      exact hdist o (len + 1) (by omega) (by omega) (by omega) he'.symm
-    rw [hsplit, VSet.cardInter_union_disjoint hdisj,
-      cardInter_workset r len lo
-        (fun o o' h1 h2 h3 => hdist o o' (by omega) (by omega) h3),
-      worksetOf_singleton, VSet.cardInter_singleton]
-    conv => rhs; rw [sum_range_succ]
-    have hidx : lo + len + 1 = lo + (len + 1) := by omega
-    rw [hidx, bitCnt]
-
-/-! # Small cells in an equitable partition -/
-
-/-- Adjacency-bit counts are symmetric between vertices. -/
-theorem bitCnt_symm
-    (hsymm : ∀ u w, u < n → w < n →
-      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
-    {u w : Nat} (hu : u < n) (hw : w < n) :
-    bitCnt ctx.g[u]! w = bitCnt ctx.g[w]! u := by
-  rw [bitCnt, bitCnt, hsymm u w hu hw]
-
-/-- The count of a vertex into a cell's splitter set is the sum of its
-adjacency bits at the cell's members. -/
-theorem count_into_cell {lab ptn : Array Nat} {level : Nat}
-    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
-    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
-    {d e : Nat} (hD : (d, e) ∈ cells ptn level n)
-    {u : Nat} :
-    (worksetOf n lab d e).cardInter ctx.g[u]! =
-      ((List.range (e + 1 - d)).map fun o =>
-        bitCnt ctx.g[u]! lab[d + o]!).sum := by
-  have hde : d ≤ e := cells_le _ hD
-  have he : e < n := by
-    have := cells_bound (by omega) hend _ hD
-    omega
-  have h := cardInter_workset (lab := lab) (n := n) ctx.g[u]! (e - d) d
-    (fun o o' h1 h2 h3 heq2 => h3 (by
-      have := hinj (d + o) (d + o') (by omega) (by omega) heq2
-      omega))
-  rw [show d + (e - d) = e by omega] at h
-  rw [show e + 1 - d = (e - d) + 1 by omega]
-  exact h
 
 /-- Swapping both pairs preserves adjacency: the bits between two pair
 cells of an equitable partition satisfy the two cross equalities, in
