@@ -1,0 +1,99 @@
+Hex.NumberTowerBench.runTowerFactorPair2    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:04Z, host=chungus2
+  repeat 0  809.380 µs  (×2^8, total 207.201 ms)
+  repeat 1  794.711 µs  (×2^8, total 203.446 ms)
+  repeat 2  794.213 µs  (×2^8, total 203.319 ms)
+  repeat 3  795.681 µs  (×2^8, total 203.695 ms)
+  repeat 4  804.658 µs  (×2^8, total 205.993 ms)
+  median: 795.681 µs    min: 794.213 µs    max: 809.380 µs
+  hash: all repeats agree
+  observed hash: 0x91a80e0030157d88
+  peak RSS: 69_716 kB..69_992 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerFactorPair3    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:07Z, host=chungus2
+  repeat 0    1.018 ms  (×2^8, total 260.667 ms)
+  repeat 1  998.139 µs  (×2^8, total 255.524 ms)
+  repeat 2    1.022 ms  (×2^8, total 261.703 ms)
+  repeat 3    1.016 ms  (×2^8, total 260.188 ms)
+  repeat 4    1.011 ms  (×2^8, total 258.744 ms)
+  median: 1.016 ms    min: 998.139 µs    max: 1.022 ms
+  hash: all repeats agree
+  observed hash: 0x564b7c1b2bee61fa
+  peak RSS: 69_904 kB..70_300 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerFactorPair4    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:10Z, host=chungus2
+  repeat 0  1.369 ms  (×2^8, total 350.584 ms)
+  repeat 1  1.361 ms  (×2^8, total 348.318 ms)
+  repeat 2  1.346 ms  (×2^8, total 344.682 ms)
+  repeat 3  1.350 ms  (×2^8, total 345.650 ms)
+  repeat 4  1.371 ms  (×2^8, total 350.949 ms)
+  median: 1.361 ms    min: 1.346 ms    max: 1.371 ms
+  hash: all repeats agree
+  observed hash: 0x2c83a4cef9799294
+  peak RSS: 69_692 kB..70_344 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerFactorPair6    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:15Z, host=chungus2
+  repeat 0  2.096 ms  (×2^7, total 268.282 ms)
+  repeat 1  2.109 ms  (×2^7, total 269.977 ms)
+  repeat 2  2.098 ms  (×2^7, total 268.512 ms)
+  repeat 3  2.069 ms  (×2^7, total 264.860 ms)
+  repeat 4  2.090 ms  (×2^7, total 267.504 ms)
+  median: 2.096 ms    min: 2.069 ms    max: 2.109 ms
+  hash: all repeats agree
+  observed hash: 0x49213ee8f422ba78
+  peak RSS: 69_760 kB..70_320 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerFactorPair8    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:18Z, host=chungus2
+  repeat 0  2.950 ms  (×2^7, total 377.633 ms)
+  repeat 1  3.030 ms  (×2^7, total 387.855 ms)
+  repeat 2  2.964 ms  (×2^7, total 379.414 ms)
+  repeat 3  2.984 ms  (×2^7, total 381.939 ms)
+  repeat 4  2.969 ms  (×2^7, total 380.021 ms)
+  median: 2.969 ms    min: 2.950 ms    max: 3.030 ms
+  hash: all repeats agree
+  observed hash: 0x9621b9eb5cafb441
+  peak RSS: 69_792 kB..70_016 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerFactorPair12    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:23Z, host=chungus2
+  repeat 0  6.005 ms  (×2^6, total 384.306 ms)
+  repeat 1  5.689 ms  (×2^6, total 364.121 ms)
+  repeat 2  5.800 ms  (×2^6, total 371.219 ms)
+  repeat 3  5.803 ms  (×2^6, total 371.372 ms)
+  repeat 4  5.732 ms  (×2^6, total 366.870 ms)
+  median: 5.800 ms    min: 5.689 ms    max: 6.005 ms
+  hash: all repeats agree
+  observed hash: 0x803ff6b97716ffb9
+  peak RSS: 69_792 kB..70_348 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerFactorLadder    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:28Z, host=chungus2
+  repeat 0  18.456 ms  (×2^4, total 295.302 ms)
+  repeat 1  18.455 ms  (×2^4, total 295.273 ms)
+  repeat 2  18.410 ms  (×2^4, total 294.566 ms)
+  repeat 3  18.356 ms  (×2^4, total 293.690 ms)
+  repeat 4  19.218 ms  (×2^4, total 307.493 ms)
+  median: 18.455 ms    min: 18.356 ms    max: 19.218 ms
+  hash: all repeats agree
+  observed hash: 0x3a7f4c606ce48b1b
+  expected hash: matches
+  peak RSS: 69_888 kB..70_124 kB (across 5 ok repeat(s))
+
+Hex.NumberTowerBench.runTowerCheckFactorization    [fixed] repeats=5
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=af91cca-dirty, 2026-09-07T12:53:32Z, host=chungus2
+  repeat 0  8.697 ms  (×2^5, total 278.315 ms)
+  repeat 1  8.631 ms  (×2^5, total 276.180 ms)
+  repeat 2  8.593 ms  (×2^5, total 274.980 ms)
+  repeat 3  8.608 ms  (×2^5, total 275.461 ms)
+  repeat 4  8.621 ms  (×2^5, total 275.878 ms)
+  median: 8.621 ms    min: 8.593 ms    max: 8.697 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_880 kB..70_316 kB (across 5 ok repeat(s))
+
+exported to reports/bench-results/tower-singleton-quadratic/issue-10074-quadratic-af7-9-right.json

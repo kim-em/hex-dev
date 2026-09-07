@@ -1,0 +1,33 @@
+{
+  "baseline_commit": "af7b4d49f661a23debf82960bfff3c78435ff135",
+  "baseline_binary_sha256": "038b21ce95e7a3c2571d869347206ca3ab4e049633ca700490af9937d7c20b2f",
+  "candidates": [
+    {
+      "candidate": "singleton",
+      "source_commit": "3ba41890502f31742239ce0edfc555c74e6dca3d",
+      "binary_sha256": "3fdc4e1d60671ba8b5f8f1f93db4a258fdf33f1b8b5bc918b48803d9944e437f",
+      "canonical_factor_cases": 31,
+      "norm_array_cases": 750,
+      "corrupted_multiplicities_rejected": true,
+      "bench_verify_cases": 49,
+      "oracle_cases": 9,
+      "oracle_failures": 0,
+      "fixture_sha256": "4e46cedd7285d1437ad2eb3d7c4a095bf43b801d279f9f0612983c9ac25af36a",
+      "fixture_byte_identical": true
+    },
+    {
+      "candidate": "quadratic",
+      "source_commit": "af91cca879eca033f55e7c564fc12d38a1bc36be",
+      "binary_sha256": "28701e063ccb1667223fdd56eb899c84afc3571e3efd05a372a1f7822ce4c4d9",
+      "canonical_factor_cases": 31,
+      "norm_array_cases": 750,
+      "corrupted_multiplicities_rejected": true,
+      "bench_verify_cases": 49,
+      "oracle_cases": 9,
+      "oracle_failures": 0,
+      "fixture_sha256": "4e46cedd7285d1437ad2eb3d7c4a095bf43b801d279f9f0612983c9ac25af36a",
+      "fixture_byte_identical": true
+    }
+  ],
+  "proof_status": "Deferred until the preregistered performance gate; no companion build claimed."
+}
