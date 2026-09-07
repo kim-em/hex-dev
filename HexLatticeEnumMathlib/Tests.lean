@@ -44,6 +44,14 @@ example (b : Basis n m) (t : Vector Rat m) : checkClosest b.rows t (closestCerti
 example (b : Basis n m) (cert : OptimumCertificate n m) (h : shortestCertificate b = some cert) :
     checkShortest b.rows cert = true := shortestCertificate_check b cert h
 
+example (b : Basis n m) (t : Vector Rat m) (budget : Budget) :
+    OptimizationSpec b t .closest (closestWith budget b t) := closestWith_spec b t budget
+
+example (b : Basis n m) (t : Vector Rat m) (r : Rat) (budget : Budget) :
+    match enumerateWith budget b t r with
+    | .complete _ _ counts | .incomplete _ _ counts => Within budget counts :=
+  enumerateWith_within b t r budget
+
 private def halfCertificate : Certificate 1 1 where
   rows := Matrix.ofRows #v[#v[1]]
   forward := Matrix.ofRows #v[#v[1]]

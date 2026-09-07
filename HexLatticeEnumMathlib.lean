@@ -11,3 +11,5 @@ public import HexLatticeEnumMathlib.Closest
 public import HexLatticeEnumMathlib.Shortest
 public import HexLatticeEnumMathlib.Cert
 public import HexLatticeEnumMathlib.Native
+public import HexLatticeEnumMathlib.Budget
+public import HexLatticeEnumMathlib.OptimizationBudget
