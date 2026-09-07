@@ -1,0 +1,17 @@
+.....E..................................
+======================================================================
+ERROR: test_group_ownership_and_failure_cleanup (scripts.bench.test_core_telemetry.CoreTelemetryTest.test_group_ownership_and_failure_cleanup) (dedicated_session=True, mode='proc-error')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/scripts/bench/test_core_telemetry.py", line 114, in test_group_ownership_and_failure_cleanup
+    task = core_telemetry.parse_task(pid, Path(f"/proc/{pid}/stat").read_text())
+                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/nix/store/sq6mi2qwdi6ywnmzvb5wq9b8n7jn9knp-python3-3.14.6-env/lib/python3.14/pathlib/__init__.py", line 788, in read_text
+    return f.read()
+           ~~~~~~^^
+ProcessLookupError: [Errno 3] No such process
+
+----------------------------------------------------------------------
+Ran 40 tests in 3.705s
+
+FAILED (errors=1)

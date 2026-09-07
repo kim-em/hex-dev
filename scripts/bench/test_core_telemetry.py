@@ -112,7 +112,7 @@ raise SystemExit(m.main())
                                 while time.monotonic() < deadline:
                                     try:
                                         task = core_telemetry.parse_task(pid, Path(f"/proc/{pid}/stat").read_text())
-                                    except FileNotFoundError:
+                                    except (FileNotFoundError, ProcessLookupError):
                                         break
                                     if task["state"] == "Z":
                                         break
