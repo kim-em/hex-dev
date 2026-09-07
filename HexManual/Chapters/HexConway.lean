@@ -13,7 +13,7 @@ open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "HexConway: Tier 1 Conway-polynomial lookup" =>
+#doc (Manual) "HexConway: verified Conway-polynomial lookup" =>
 %%%
 tag := "hex-conway"
 %%%
@@ -29,11 +29,11 @@ compatible presentation of the finite field `𝔽_{pⁿ}`. The full treatment
 of Conway polynomials has three tiers: a Tier 1 lookup of committed
 table entries, Tier 2 proofs that those entries satisfy the Conway
 compatibility conditions across the subfield lattice, and Tier 3
-search for entries beyond the committed table. `HexConway` currently
-implements Tier 1 only: it exposes the imported
+search for entries beyond the committed table. `HexConway` implements Tiers 1 and 2: it exposes the imported
 [Lübeck](http://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/)
-Conway table as a lookup, keeping the baseline lookup separate from the
-later compatibility and search work.
+Conway table as a lookup with irreducibility, primitivity, and divisor
+compatibility proofs. Tier 3 search is unimplemented. The imported choice
+comes from Lübeck; these proofs do not establish lexicographic minimality.
 
 `HexConway` is Mathlib-free. It depends only on `HexBerlekamp` (for the
 Rabin irreducibility checker that certifies each committed entry) and
@@ -217,7 +217,9 @@ tag := "hex-conway-cross-references"
   {ref "hex-conway-correctness"}[correctness section]. The prime-field
   polynomial type {name}`Hex.FpPoly` and its arithmetic are reached
   transitively through it.
-* Tier 2 and Tier 3 belong to this library and are not yet implemented.
+* Tier 2 primitivity and divisor compatibility are implemented in this
+  library. Generator-order and subfield-embedding bridges live in
+  `HexGFqMathlib`. Tier 3 search is unimplemented.
   Until Tier 2 lands, what Lean checks about a committed entry is that
   it is monic, irreducible, and of the requested degree. That it is the
   *Conway* polynomial for its pair, rather than some other irreducible
