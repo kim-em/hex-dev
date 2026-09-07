@@ -1,0 +1,729 @@
+{
+  "artifacts": [
+    {
+      "artifact": "hex-number-field-tower-followup-modular-1-host.json",
+      "source": "/tmp/issue-10074-modular-1-host.json",
+      "sha256": "fd4939a59b74fbadfee6c77b925b70a3ad0444789750d2bbb510812ff816c09b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-1-left.json",
+      "source": "/tmp/issue-10074-modular-1-left.json",
+      "sha256": "17e1f6370072c79e36676d2bfcede6240972400b17e5e515618c7b14700e7a5e"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-1-right.json",
+      "source": "/tmp/issue-10074-modular-1-right.json",
+      "sha256": "a457f729d2492cbdf1ca97c7ebfbdaa903154ae54a0186b3b706d9e22baf36c8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-2-host.json",
+      "source": "/tmp/issue-10074-modular-2-host.json",
+      "sha256": "c4b3d3684385acfdfa0ce3f8f7d930655e8dad62f2a29977f95a490a8584223d"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-2-left.json",
+      "source": "/tmp/issue-10074-modular-2-left.json",
+      "sha256": "c18fe725ee19300995800c68e179e5ec9c5304595d1cc731462e6e1e513b1ff3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-3-host.json",
+      "source": "/tmp/issue-10074-modular-3-host.json",
+      "sha256": "de5f9eb3e790a76e382e7ccf6f326e7ec7017f655ef387fa6c9fd5ac5cfb0691"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-3-left.json",
+      "source": "/tmp/issue-10074-modular-3-left.json",
+      "sha256": "33097eac3e3892f1856d1328dabccecd4057d648c0448966e1fd112b9df3da8b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-4-host.json",
+      "source": "/tmp/issue-10074-modular-4-host.json",
+      "sha256": "3e9ba4c5f4274d4820b43d9f476e616e97cf8d3406fe77e5e006e0288f2c3c54"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-4-left.json",
+      "source": "/tmp/issue-10074-modular-4-left.json",
+      "sha256": "952a39267674732013aff412bed631f11298e3d44172edc53394d68ca3fe4258"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-5-host.json",
+      "source": "/tmp/issue-10074-modular-5-host.json",
+      "sha256": "b629ce38026d4b05e75d5de081f4ec47c28bdf2b92511d8ea1a24ea688880149"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-6-host.json",
+      "source": "/tmp/issue-10074-modular-6-host.json",
+      "sha256": "87516c7d72961d78a87c909f09537952ef7865d47f369e0bbc5faf747329c1fc"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-6-left.json",
+      "source": "/tmp/issue-10074-modular-6-left.json",
+      "sha256": "41d77796539cd957c03841738a35ef774a63e5c5c02c3d395579637e5e05b440"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-6-right.json",
+      "source": "/tmp/issue-10074-modular-6-right.json",
+      "sha256": "8f245ceae5919b2f4c55032689a98491a0bd109dc46685a9a4709da5e5dd5981"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-7-host.json",
+      "source": "/tmp/issue-10074-modular-7-host.json",
+      "sha256": "55c36a12fa38f69b80b588be95c997ed859ea383e51767930c343b7df2b3940a"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-7-left.json",
+      "source": "/tmp/issue-10074-modular-7-left.json",
+      "sha256": "c58898562dc6fb14e0b2dccbd7df90e5844273cfdaa1a133d030139f8bea7d51"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-7-right.json",
+      "source": "/tmp/issue-10074-modular-7-right.json",
+      "sha256": "806bf687622e82ef3da99b016e88788e808d778913b39011bed75fa606a2e4fb"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-runner.txt",
+      "source": "/tmp/issue-10074-compare.py",
+      "sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-1-host.json",
+      "source": "/tmp/issue-10074-horner-1-host.json",
+      "sha256": "85cc160d03eb0bf594ce0c8623aef4e330d0c34be67e38a19478b186d92b753a"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-2-host.json",
+      "source": "/tmp/issue-10074-horner-2-host.json",
+      "sha256": "966fc4fb34a6b9d4f8cc83eae0c3288a0713078b3c32c3845760f536495b0887"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-3-host.json",
+      "source": "/tmp/issue-10074-horner-3-host.json",
+      "sha256": "ec1d03ea80125ae0080baaf644d4a9f1bac945a39485688c5cb6a5819e1f0bd5"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-3-left.json",
+      "source": "/tmp/issue-10074-horner-3-left.json",
+      "sha256": "4411e28f2134b2ebcf5cd4d3b077897607fbbb7f35ed7afa4ca34b8e3a43d18f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-4-host.json",
+      "source": "/tmp/issue-10074-horner-4-host.json",
+      "sha256": "33df3a2c0687955c81c075638e25ed9b0f1c1ce4bfd88071ab2788e3a3ac1ce7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-4-left.json",
+      "source": "/tmp/issue-10074-horner-4-left.json",
+      "sha256": "a69b6ddf02b6d84a80a7ace1571f21c57f004d26f2ea4c65bb415081eeb9581e"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-4-right.json",
+      "source": "/tmp/issue-10074-horner-4-right.json",
+      "sha256": "6e98e9925bb42ef8d504f594ab1162ca5e2f5cfba5a5d87e79b1c0d9a5fed7d7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-5-host.json",
+      "source": "/tmp/issue-10074-horner-5-host.json",
+      "sha256": "9ee2a4c26dba9a084d35d9c18a96d0feb81710060ac89baab7b72cfc1f5d34b4"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-6-host.json",
+      "source": "/tmp/issue-10074-horner-6-host.json",
+      "sha256": "97ab8473ca4bd6054fc85d68d4745f09364dedf9607d952d8a01cf6eb8330d50"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-7-host.json",
+      "source": "/tmp/issue-10074-horner-7-host.json",
+      "sha256": "aaf6305621d1103367a3cd4b7c066f7af1ceca2d45beb3ebbfc26efbad4ac604"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-7-left.json",
+      "source": "/tmp/issue-10074-horner-7-left.json",
+      "sha256": "fef37c954770f9bc1c5fc81a3e7e09cf916123fa965e2ebd1331ff82a7265c2f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-8-host.json",
+      "source": "/tmp/issue-10074-horner-8-host.json",
+      "sha256": "f88d4c2d0490d87c0471d03987323f76ff9bc23d35c160bbbabc52d0d6c74ece"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery-1-host.json",
+      "source": "/tmp/issue-10074-recovery-1-host.json",
+      "sha256": "ff14a64eab8dab24148bd397c0eedfaa2053a28b7d53186c9b5e8b58c89230d7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-variant-runner.txt",
+      "source": "/tmp/issue-10074-compare.py",
+      "sha256": "5686e67b534b1e3cf036a2f71cb3ca6a93ce97c8362cb96dfa0a304d2f74884c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-variant-driver.txt",
+      "source": "/tmp/issue-10074-variants.py",
+      "sha256": "c807303eb6940b6b429ca9d7a6c7ba78ea31e1739ed9742b231b6533750c4c68"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-interrupted-variant-decisions.json",
+      "source": "/tmp/issue-10074-variant-decisions.json",
+      "sha256": "23ad2ef90311c1c9a6b5c12b42d644a240a2531d63fa359ca07e2d6c5060f0f8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-interruption.txt",
+      "source": "/tmp/issue-10074-horner-comparison.log",
+      "sha256": "561e71904190720dd9e40d692be56502a9164e371e5d7399704111fab67fb971"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery-interruption.txt",
+      "source": "/tmp/issue-10074-recovery-comparison.log",
+      "sha256": "1e29a6fb4181ba2e2fe5f68c4723ec07c283edd3ad185aaa58173c90add4b2db"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-1-host.json",
+      "source": "/tmp/issue-10074-combined2-1-host.json",
+      "sha256": "d3105215f5023c1cec6c37ecca71c9a620bf779b2169c6264aa430f91606639f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-1-left.json",
+      "source": "/tmp/issue-10074-combined2-1-left.json",
+      "sha256": "90ae6683ae5fbb03ac8c1afad108c0b3d399489751f8460fa6ec41d68030c28e"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-2-host.json",
+      "source": "/tmp/issue-10074-combined2-2-host.json",
+      "sha256": "a42a4e0d91ef8b3a7fa4adf1af79a0b52ae865b7c9dbe0b46f54c907f98eaae0"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-2-left.json",
+      "source": "/tmp/issue-10074-combined2-2-left.json",
+      "sha256": "a943f54df16884220f14cd98532cada777bfcbac2619190ffc3289db11362c28"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-3-host.json",
+      "source": "/tmp/issue-10074-combined2-3-host.json",
+      "sha256": "2865a520dc384c982d028155d95da536208ab9dd0c023dafacf14808388364bd"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-3-left.json",
+      "source": "/tmp/issue-10074-combined2-3-left.json",
+      "sha256": "2d81736eacb6fd29f9a512ddfb42b2637bad499e3ecb03df7a6563eb4d2139bb"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-4-host.json",
+      "source": "/tmp/issue-10074-combined2-4-host.json",
+      "sha256": "b7166e77ac29e3e27c8b78d938ccea950c41c025a50949bfad6cc0e81da3eda3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-4-left.json",
+      "source": "/tmp/issue-10074-combined2-4-left.json",
+      "sha256": "b81c316b29fa441889571bb6f6e5319ed3d97dad53dc8df589fef2c51b7e24b7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-4-right.json",
+      "source": "/tmp/issue-10074-combined2-4-right.json",
+      "sha256": "e7093f926f895a9f90f079105d366db99197f768ea1c7bda6963c766a844397a"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-5-host.json",
+      "source": "/tmp/issue-10074-combined2-5-host.json",
+      "sha256": "77a697056fea75a09006786f75a2aa539baeac68cccf240695107412f9f78846"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-5-right.json",
+      "source": "/tmp/issue-10074-combined2-5-right.json",
+      "sha256": "d82997d79730baaa5cb60ed226cbc77e8dd9ce6a4b182eab3c7d8a1c328a26e1"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-6-host.json",
+      "source": "/tmp/issue-10074-combined2-6-host.json",
+      "sha256": "a42ead032ae4eea6ff70a5609a5f482e0236c2b94e063b8e3129a34adcd5a96f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-6-right.json",
+      "source": "/tmp/issue-10074-combined2-6-right.json",
+      "sha256": "0d8125dd187a76bebfd11b105ee3e358bdf508bb1b2a7840d9c54987bb43e699"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-7-host.json",
+      "source": "/tmp/issue-10074-combined2-7-host.json",
+      "sha256": "e2a3b470c66aa0125294c4612b86856d0bf5f8b03a05d8eaaaf00de15ec1ca77"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-7-left.json",
+      "source": "/tmp/issue-10074-combined2-7-left.json",
+      "sha256": "dbd4754601d6d06a53d066df34a1a199c37d241005c6ac55d8dfc30493a64c0a"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-7-right.json",
+      "source": "/tmp/issue-10074-combined2-7-right.json",
+      "sha256": "2e1d10a35eeaac3b8813396299de2837425640af5f2869448fde799cbddb81d3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-1-host.json",
+      "source": "/tmp/issue-10074-horner2-1-host.json",
+      "sha256": "572b53360b0885b5fb6ca6cc04eba34c683292f654f782b4357234f2275210d7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-1-left.json",
+      "source": "/tmp/issue-10074-horner2-1-left.json",
+      "sha256": "0e8cf9cb926457887fa41602d8a0bd3c2c60a35f89c96743d7a5b2977228034c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-2-host.json",
+      "source": "/tmp/issue-10074-horner2-2-host.json",
+      "sha256": "daf517dab8e7e8bb731eb1fd02d1226ca99f55a2ed091282592375263737775d"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-2-left.json",
+      "source": "/tmp/issue-10074-horner2-2-left.json",
+      "sha256": "f79fb55401357a1b90d4930e2bf8b5fef5acd47548a72195279d64b38e66d750"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-3-host.json",
+      "source": "/tmp/issue-10074-horner2-3-host.json",
+      "sha256": "9fecc31f60bfe133e72612d440df0ccc5a6517635967e432bd986ffb2dd7bf51"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-3-left.json",
+      "source": "/tmp/issue-10074-horner2-3-left.json",
+      "sha256": "9a09ba04f330064749c19bef6c081b65b112e88c2657b0626b1a6a63d8dfba3b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-4-host.json",
+      "source": "/tmp/issue-10074-horner2-4-host.json",
+      "sha256": "576fbe8736d2be4ef244a24af95e9dce6f17adfcab6ec4bfcd3de0b42fa915e4"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-4-left.json",
+      "source": "/tmp/issue-10074-horner2-4-left.json",
+      "sha256": "17164649cfa7748da4973131761346742455cfd1f09e0a6f5df123ecd18b879b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-5-host.json",
+      "source": "/tmp/issue-10074-horner2-5-host.json",
+      "sha256": "948269bb90886d05e5f049e611726e92bd54073f5930e00dee0a34335911356f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-5-left.json",
+      "source": "/tmp/issue-10074-horner2-5-left.json",
+      "sha256": "cad803a071b7415a63c7f0c7ef68c36f347fab20642a7f926aa50cfd6ad85e4c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-5-right.json",
+      "source": "/tmp/issue-10074-horner2-5-right.json",
+      "sha256": "4239e2cdd168ad1d636c3f8361bfdd2e1f8e02e41e978b1c7a52852677094749"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-6-host.json",
+      "source": "/tmp/issue-10074-horner2-6-host.json",
+      "sha256": "b1c5d76bcabde616d158bfbd91bf8c84f566e77018b2beb8b658efc8d83ebd42"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-6-left.json",
+      "source": "/tmp/issue-10074-horner2-6-left.json",
+      "sha256": "dd5863333a2a9145e6440e11be5d04bd60208e854180574e7f3c8dc94276c221"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-6-right.json",
+      "source": "/tmp/issue-10074-horner2-6-right.json",
+      "sha256": "c50495bfc9ebd3bb0b609cdae2a97ef6b8ea37ebc2abf5d3f0e9764fcd719122"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-1-host.json",
+      "source": "/tmp/issue-10074-recovery2-1-host.json",
+      "sha256": "55aca2806cb87b329c593e042eb3db96fbd05b5f639c60e64e23fe7287b3b4c4"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-1-left.json",
+      "source": "/tmp/issue-10074-recovery2-1-left.json",
+      "sha256": "5d8f4a2303533cb211d99062e018a3b7e2ec7b267e1771907967069d7a74652b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-1-right.json",
+      "source": "/tmp/issue-10074-recovery2-1-right.json",
+      "sha256": "72e95e4b06c4597d05c5ab556331c3d426aaea5fa9e1c8e80633c26bbcdd4f45"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-2-host.json",
+      "source": "/tmp/issue-10074-recovery2-2-host.json",
+      "sha256": "7b2e10c85adb515f6d040066fbb2b99a9e5ea6104999fce118e45c8d700c0fb0"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-2-right.json",
+      "source": "/tmp/issue-10074-recovery2-2-right.json",
+      "sha256": "c685d4f79a628e509f4cf5ecb8ac5d5a8190752c4ab644430c40edee9a7cae28"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-3-host.json",
+      "source": "/tmp/issue-10074-recovery2-3-host.json",
+      "sha256": "0d3fc01901a33e9655c3d4a85037c2de65a7981e8eb83c89d8e7834e66d10a6b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-3-right.json",
+      "source": "/tmp/issue-10074-recovery2-3-right.json",
+      "sha256": "81311ecf0e7c5a2e90783a0e00ad999a86dc31ad01594f4513b33f7742a9d77f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-4-host.json",
+      "source": "/tmp/issue-10074-recovery2-4-host.json",
+      "sha256": "9602574bae46fe3b5ce6825790a979fe6b7ce10bcc42773472c33562b28d5fc9"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-4-right.json",
+      "source": "/tmp/issue-10074-recovery2-4-right.json",
+      "sha256": "e08dc028878673f8e8e6676fbe3a74a830650e4c4aadb0fb52b94e5f31f3be03"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-5-host.json",
+      "source": "/tmp/issue-10074-recovery2-5-host.json",
+      "sha256": "300337c8da7d5da39e2b8a07d23878071b45d104ec2836f1f0e6201ab2498817"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-5-left.json",
+      "source": "/tmp/issue-10074-recovery2-5-left.json",
+      "sha256": "13f12c78f6c68656a47514976876dea90b9f56990fe9d43f8ace1dffe8ed29fe"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-5-right.json",
+      "source": "/tmp/issue-10074-recovery2-5-right.json",
+      "sha256": "81cf582e37a05ef8d68a1ffa59bd92ade460284788af3db5fc8bcf4eeb0da067"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-1-host.json",
+      "source": "/tmp/issue-10074-total2-1-host.json",
+      "sha256": "1329476bc7d86d887cbfc224646ee66b0a4ecdaf51339aa7ad5b0574d397cccd"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-1-left.json",
+      "source": "/tmp/issue-10074-total2-1-left.json",
+      "sha256": "6f01728b8339a2dbb4c53c9754b326fbc3f116bdf2c1b13872124fcc40419326"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-2-host.json",
+      "source": "/tmp/issue-10074-total2-2-host.json",
+      "sha256": "a22c822451e2a73d02c7b2aa6f8b7945c2174849a6b451dadc0f4470908d3ec6"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-2-left.json",
+      "source": "/tmp/issue-10074-total2-2-left.json",
+      "sha256": "e703b2d57233b9a1c115658205ed2f0e027f4cdf5915aaaade28060fb037dfdc"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-2-right.json",
+      "source": "/tmp/issue-10074-total2-2-right.json",
+      "sha256": "f71ce5894917aaf0e3ffe849ffb6cd94a92c675f914b2821a607c5e01d244e51"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-3-host.json",
+      "source": "/tmp/issue-10074-total2-3-host.json",
+      "sha256": "95bacbf764c8632540405c6520ad461e44468cd1efa0e658bf93fb7c6cf04f29"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-3-left.json",
+      "source": "/tmp/issue-10074-total2-3-left.json",
+      "sha256": "23bbed9234e30d857e1e31d5eac70a592eaf57a1f38b0d22c03778195308f88e"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-3-right.json",
+      "source": "/tmp/issue-10074-total2-3-right.json",
+      "sha256": "4d4371684cea8d616c8738f4a51d187d8fb2ee01016dd39e690d9ea202b01ddc"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-quiet-runner.txt",
+      "source": "/tmp/issue-10074-runner-v2.py",
+      "sha256": "ae327aabec7f3231999b7e848738eef5c513c0a8203301f1cb45fe69025b77a8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-quiet-driver.txt",
+      "source": "/tmp/issue-10074-variants2.py",
+      "sha256": "0787da316ff8a6beb6ab7ea829960245796443c936da6ff680c4f3e13ae956a3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-variant-decisions.json",
+      "source": "/tmp/issue-10074-variant2-decisions.json",
+      "sha256": "9426b5d02b783adf2bab665330217cb07a8691b8e836ee6b198b8bffb7823007"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-1-host.json",
+      "source": "/tmp/issue-10074-monic-1-host.json",
+      "sha256": "4d0ad4b5c6923dc4a39c555dbf3af424379592a9ac33ce4b4bff4c3f51d9ff1f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-1-left.json",
+      "source": "/tmp/issue-10074-monic-1-left.json",
+      "sha256": "6a9afb1ccaddd5ae83afa8fa0ef855faf7dbcebd10c867981e748426112ac8a2"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-10-host.json",
+      "source": "/tmp/issue-10074-monic-10-host.json",
+      "sha256": "eb9f4633289ee1d1ea50df976de79f956dc7158d3258d0861e0178f3fbcf6847"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-10-right.json",
+      "source": "/tmp/issue-10074-monic-10-right.json",
+      "sha256": "ec54555552f5151665d016e0f26bb420a538fb706732041ae6bf184b46254267"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-11-host.json",
+      "source": "/tmp/issue-10074-monic-11-host.json",
+      "sha256": "a89a3f5126fdee3a710641327bb1b2ea8a472af6ac0aac4395d338566c485205"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-11-left.json",
+      "source": "/tmp/issue-10074-monic-11-left.json",
+      "sha256": "7bcdf33cfea9cf5f867bdbea29ec44ef0bd72bb65cdd288cfd9be8a0b5f15e7b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-11-right.json",
+      "source": "/tmp/issue-10074-monic-11-right.json",
+      "sha256": "0a5d42a7066ed1eb97ee08fb73154f17fadd40d0185618f88409d5bd5f5af54a"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-12-host.json",
+      "source": "/tmp/issue-10074-monic-12-host.json",
+      "sha256": "a1a6d8014ad2becd9e160cc72967f91d8e6e4de9155dad8ade8943b8e5423367"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-12-left.json",
+      "source": "/tmp/issue-10074-monic-12-left.json",
+      "sha256": "7de0190d3f884328f11aa52ccaebb1fc2848744cc779f9c7e6ee6bc4a3589236"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-12-right.json",
+      "source": "/tmp/issue-10074-monic-12-right.json",
+      "sha256": "ed43978857aa6830928df1367827835d9f52fd788fad1e03073aa673eaa20d75"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-2-host.json",
+      "source": "/tmp/issue-10074-monic-2-host.json",
+      "sha256": "76fe41e073ff1aaad54480f96b50fa7d3770ccf6b0e914c6cd543105832c85af"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-2-left.json",
+      "source": "/tmp/issue-10074-monic-2-left.json",
+      "sha256": "4d564359642ae31fe2d1dcff087f19538db76d8fca2c9d564944e2bc768692b2"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-3-host.json",
+      "source": "/tmp/issue-10074-monic-3-host.json",
+      "sha256": "eca8adef97b652230c1d253e57302d829b69bb086961cbbdc3c9ae5478e39b41"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-3-left.json",
+      "source": "/tmp/issue-10074-monic-3-left.json",
+      "sha256": "3a0ddf027724785e460616b2a0293fbe932c5b90f0caebe89ac54f296d16cd06"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-3-right.json",
+      "source": "/tmp/issue-10074-monic-3-right.json",
+      "sha256": "b0c4740eca0779c755682657f61e66d0507cae89ffa9aeedf4107afd120dff82"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-4-host.json",
+      "source": "/tmp/issue-10074-monic-4-host.json",
+      "sha256": "ff1cb5c59edaee07b0aeb310525049f13cb3f7babdd0860a2fdd4a23be84b929"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-4-right.json",
+      "source": "/tmp/issue-10074-monic-4-right.json",
+      "sha256": "1bfdb6ea5dd759777f7eaa1a7c65757ee03f270222a6e72ac5b8adf9d8dadad5"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-5-host.json",
+      "source": "/tmp/issue-10074-monic-5-host.json",
+      "sha256": "2edc8f977635e4b3b1a8fdd02a02b5511ca46b4e20409861f65304f698d61645"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-5-left.json",
+      "source": "/tmp/issue-10074-monic-5-left.json",
+      "sha256": "16b414925568cb161661e4146c3045986206368a88dd6de558b3e8c15f7ac827"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-5-right.json",
+      "source": "/tmp/issue-10074-monic-5-right.json",
+      "sha256": "c1df56cf22c3ca0c9b45de7e47b413093dfb9870aa6b99484962fdb758374d46"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-6-host.json",
+      "source": "/tmp/issue-10074-monic-6-host.json",
+      "sha256": "64fe1ae48c698472bde4d8f1f2a3ac90857574c3a89840795aecdbf889f82a9d"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-6-right.json",
+      "source": "/tmp/issue-10074-monic-6-right.json",
+      "sha256": "50e9197518e3aef6dc4038dc654f4e23991a3a9098b1c63018e28ef1c293d039"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-7-host.json",
+      "source": "/tmp/issue-10074-monic-7-host.json",
+      "sha256": "2014f1fbea0231daaa9acaebf3f6ce01df3461cb1b909f511ea44891c5e1b9eb"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-7-left.json",
+      "source": "/tmp/issue-10074-monic-7-left.json",
+      "sha256": "ccb60a209617ab7c8fb4117df863c4c435d568755487e1ddfd184258fc5194cc"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-7-right.json",
+      "source": "/tmp/issue-10074-monic-7-right.json",
+      "sha256": "56b0388afd457e2c88914af2181945ed73f84c4e5afdcc63d646bd8a8ae7fa37"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-8-host.json",
+      "source": "/tmp/issue-10074-monic-8-host.json",
+      "sha256": "fcde239093522c94b763672d4e04e9faefae48d3f7eca0076b22099491e7bca6"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-8-left.json",
+      "source": "/tmp/issue-10074-monic-8-left.json",
+      "sha256": "4f53604cd39a17961e01fe0147f71b94a7e20a6c1387599ad2f9abad40d114c8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-8-right.json",
+      "source": "/tmp/issue-10074-monic-8-right.json",
+      "sha256": "23e2fed3776f22c3e477f29106f813910d9d560d6a0a614685dc751027363915"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-9-host.json",
+      "source": "/tmp/issue-10074-monic-9-host.json",
+      "sha256": "2410f5f815aaec4b536dd928c22a755f35af3ec4ca6919e636213adb4fac2abc"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-9-right.json",
+      "source": "/tmp/issue-10074-monic-9-right.json",
+      "sha256": "9370acf41025f5a3e0c2da50ed5d2fc1d8861cc42d182926a1f347a9f74e2956"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-decision.json",
+      "source": "/tmp/issue-10074-monic-decision.json",
+      "sha256": "10a77422b8e45e5f9be25b489316d9656a7529c5d2c0f847a6db7599cd5accff"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-validated-runner.txt",
+      "source": "scripts/bench/tower_factor_compare.py",
+      "sha256": "8429890abecd54323335d40da21fafc2b7883bd5e441cc52b8f30e69fae916f5"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-decision-validator.txt",
+      "source": "scripts/bench/tower_factor_compare.py",
+      "sha256": "251b1a75f968330f30f8556851be267125bb0d866c9d8438c4597c0522e8f8b3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-modular-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "2d64a743da74da9c12e62bb5bfc6eb322e7a7d42b813ee687ed29237b35f5f8b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner2-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "f9565e92ab1846be4628e3e5735f117d90b7c4c40df5ec18b6dccfc556eb402d"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery2-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "57be526e360f159a703286a79b26f6ad0573359901299290e76a40e2dec952ab"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-combined2-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "e9569fd2e4526152cc9ccc7a741efb45d0f6feb7b47613729c7a582f2180402c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-total2-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "df8e1f94ebd2ffdd253bda04664f021dc504dfa64e2be00715d32cf1f0ebd272"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-monic-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "36324ff68c5ef5fe14e04437e3e33abd1b2c7d278152f00e550369b7e02605e1"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-1-host.json",
+      "source": "/tmp/issue-10074-rebased-1-host.json",
+      "sha256": "93f157109e892c5ced76c790a5829aa1ff03dab39a02cc1ef8c269f864bab46b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-1-left.json",
+      "source": "/tmp/issue-10074-rebased-1-left.json",
+      "sha256": "a683f882efaa85154f436a5bfcbfeac5faaaef32814856717ac7479580281d61"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-1-right.json",
+      "source": "/tmp/issue-10074-rebased-1-right.json",
+      "sha256": "09e43567d6683474e75a36811b956d96f3447f741f054f91a401182edca70635"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-2-host.json",
+      "source": "/tmp/issue-10074-rebased-2-host.json",
+      "sha256": "9ec6c7ea6c83974d8915bb52d0a31e0a621dcbf05bb64c95f6eb67b20f874fe0"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-2-left.json",
+      "source": "/tmp/issue-10074-rebased-2-left.json",
+      "sha256": "5d0e17965265f00c5bcaf966e23b3225d08cd9ab74c17f5b1669b0ace45cef2c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-3-host.json",
+      "source": "/tmp/issue-10074-rebased-3-host.json",
+      "sha256": "054a0f8563b6ca99e068a32524a8c9ea75fc92367386cf1a1a112388fdbdf97f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-3-left.json",
+      "source": "/tmp/issue-10074-rebased-3-left.json",
+      "sha256": "01773123c7a98e7effe4a3bbc6a07991878246ff700da6e8ca8c3b5967b8cee9"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-4-host.json",
+      "source": "/tmp/issue-10074-rebased-4-host.json",
+      "sha256": "9f798dae7e63f70408d135e423cf6ce63d1ba04c58f5fc30f117d895d5b7db59"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-4-left.json",
+      "source": "/tmp/issue-10074-rebased-4-left.json",
+      "sha256": "0397201f35d822b7e235e13cec2f645957e8b524a2e1a274847db4c6e812bb31"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-4-right.json",
+      "source": "/tmp/issue-10074-rebased-4-right.json",
+      "sha256": "778f20041b96571c8a96d72d220f9b23ed3a50b396894809b1ca1176b181ac0b"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-5-host.json",
+      "source": "/tmp/issue-10074-rebased-5-host.json",
+      "sha256": "214c1916c05e2f601a6839d50aa95e7bf9e771bc02b480aea3ced22f8f88caf1"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-5-left.json",
+      "source": "/tmp/issue-10074-rebased-5-left.json",
+      "sha256": "b6695dba7fa9f842d1c7ac140f26b60901bf41360ad7c994e28b69316da928d8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-5-right.json",
+      "source": "/tmp/issue-10074-rebased-5-right.json",
+      "sha256": "bfcb45e11af83ce5b94517284930ae0a6c865c4f1906f1daf26c68a537c9f484"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-6-host.json",
+      "source": "/tmp/issue-10074-rebased-6-host.json",
+      "sha256": "71077e1ed66e345e4808272c8bc15c1bb727e931ba13cd08c4834f282622acc3"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-6-left.json",
+      "source": "/tmp/issue-10074-rebased-6-left.json",
+      "sha256": "648eb40b7790fe745ddca38e0ff0fd5edb42c9699fe92fb335503d7bcd9fba9d"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-6-right.json",
+      "source": "/tmp/issue-10074-rebased-6-right.json",
+      "sha256": "bc554beda6e87d5f0e2a5f6ed438c47fc6b88b26e2ef889deb0efb1fe1550838"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-decision.json",
+      "source": "/tmp/issue-10074-rebased-decision.json",
+      "sha256": "a1ae59eba7727f524309ec0f5ff049648769232a1eb0fe911070466e2c550616"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-rebased-validated-decision.json",
+      "source": "post-hoc decision from archived host records and exports",
+      "sha256": "fde624f781d5f53dc34629c3ae695befbc7a909965b125192745d163e4bbac96"
+    }
+  ]
+}

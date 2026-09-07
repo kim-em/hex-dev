@@ -1,0 +1,27 @@
+import subprocess,sys,json,glob
+from pathlib import Path
+modular='/tmp/issue-10074-modular'; modsha='8dd0f8e155ebd9c49cb08728dde3051fb8fec4a5'
+variants=[('horner','b66d41b8a'),('recovery','bd3b01bd3')]
+status={}
+def compare(label,left,right,leftsha,rightsha):
+ cmd=[sys.executable,'/tmp/issue-10074-compare.py',label,left,right,leftsha,rightsha]
+ with open('/tmp/issue-10074-'+label+'-comparison.log','w') as log:
+  code=subprocess.call(cmd,stdout=log,stderr=subprocess.STDOUT)
+ checks=[]
+ for host in sorted(glob.glob('/tmp/issue-10074-'+label+'-*-host.json')):
+  meta=json.loads(Path(host).read_text())
+  if not meta['accepted']:continue
+  arms={r['arm']:{b['function'].split('.')[-1]:b for b in json.loads(Path(r['export']).read_text())['results']} for r in meta['runs']}
+  for name,a in arms['left'].items():
+   if not name.startswith('runTower'):continue
+   b=arms['right'][name]
+   checks.append({'pair':meta['attempt'],'function':name,'hashes_match':a['observed_hash']==b['observed_hash'] and a['hashes_agree'] and b['hashes_agree'],'faster':b['median_nanos']<a['median_nanos'],'disjoint_regression':b['min_nanos']>a['max_nanos'],'speedup':a['median_nanos']/b['median_nanos']})
+ valid=code==0 and len(checks)==16 and all(c['hashes_match'] and not c['disjoint_regression'] for c in checks) and all(c['faster'] for c in checks if c['function'] in ['runTowerFactorLadder','runTowerCheckFactorization'])
+ status[label]={'eligible':valid,'runner_exit':code,'checks':checks}
+ Path('/tmp/issue-10074-variant-decisions.json').write_text(json.dumps(status,indent=2)+'\n')
+ print(label,'eligible',valid,flush=True)
+ return valid
+for label,sha in variants:compare(label,modular,'/tmp/issue-10074-'+label,modsha,sha)
+if all(status[k]['eligible'] for k,_ in variants):
+ if compare('combined',modular,'/tmp/issue-10074-combined',modsha,'8d54c7158c907005a9578431c9f43bd743b9827f'):
+  compare('total','/tmp/issue-10074-baseline','/tmp/issue-10074-combined','b8602c76a08f7348391aafd50b9a8a13cf1a0b32','8d54c7158c907005a9578431c9f43bd743b9827f')

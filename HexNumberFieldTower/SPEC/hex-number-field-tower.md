@@ -224,14 +224,17 @@ For one squarefree component `g`:
    Enumerate exactly that many distinct shifts in the deterministic order
    `0, 1, -1, 2, -2, ...`.
 3. For each `c`, substitute `X - c * αₙ` and compute only the one-level norm
-   `Res_Y(mₙ(Y), g(X - cY))`, a polynomial over `K`.
+   `Res_Y(mₙ(Y), g(X - cY))`, a polynomial over `K`. The shifted
+   bivariate input is constructed by descending Horner evaluation.
 4. Accept the first shift whose one-level norm is squarefree over `K`. Among the
    `N` conjugate shifted roots, each unordered pair excludes at most one integer
    shift, so `tragerShiftCount` proves that the bounded search succeeds.
 5. Recursively call the same factorization algorithm on that norm over `K`.
 6. Embed each returned lower-tower factor into `Poly T`, take its gcd with the
    shifted component, undo the shift, normalize monically, and discard
-   constants.
+   constants. When the shifted component is monic and smaller than the lifted
+   factor, recovery uses monic remainder division for the first Euclidean
+   remainder and resumes the reference gcd chain with its remaining fuel.
 7. Verify that the recovered factors reconstruct the component and pass the
    tower factorization checker.
 
