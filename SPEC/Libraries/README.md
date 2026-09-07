@@ -26,6 +26,7 @@
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-graph**: immutable finite simple directed and undirected graphs, checked construction, maps, subgraphs, traversal, and executable adjacency
 - **hex-graph-iso**: nauty-compatible canonical forms, canonical labels, checked transporters, and positive and negative `graph_iso` proofs for finite ordered-coloured simple graphs
+- **hex-perm-group** (planned): checked permutation groups, finite actions, complete subgroup search, block systems, normal and derived subgroups, ranking, and direct/wreath products
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
 - **hex-padics**: fixed-precision approximations to `Z_p` and `Q_p`, with the valuation reported as a bound when that is all the data supports, precision-aware arithmetic, partial inversion and division, and exactification by rational reconstruction
@@ -47,6 +48,7 @@
 - **hex-berlekamp**: Berlekamp factoring, distinct-degree and equal-degree factorization (Cantor-Zassenhaus), and the Rabin irreducibility test over any `F_q`; the `factor_poly` / `irreducibility` tactic drivers (native `FpPoly p` arms plus extensions for other input types)
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll**: LLL lattice basis reduction
+- **hex-lattice-enum** (planned): exact closed-ball enumeration, all shortest and closest vectors, and checked completeness certificates
 - **hex-berlekamp-zassenhaus**: complete factoring of `Z[x]`; the `Hex.ZPoly` extension for `factor_poly` / `irreducibility`
 - **hex-summation**: certificate-checked hypergeometric summation: Gosper, Zeilberger, and Petkovšek's Hyper, as untrusted searches whose certificates are verified by `MvPoly` identity checkers
 - **hex-conway**: Conway polynomial database
@@ -87,7 +89,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
-- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `isolate?`
+- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolate?`
 - **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
@@ -96,11 +98,13 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
+- **hex-lattice-enum-mathlib** (planned): integer-span and Euclidean-distance correspondence, packing radius and kissing number
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
+- **hex-perm-group-mathlib** (planned): correspondence for permutation groups, finite actions, subgroup search, block systems, normal structure, sampling and products
 
 ## Implementation dependencies
 
@@ -130,6 +134,7 @@ Each library with its immediate dependencies:
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-invariant-factors**: hex-poly-smith
 - **hex-graph-iso**: hex-basic, hex-matrix (the `HexGraph` graph representation is folded into this library)
+- **hex-perm-group** (planned): hex-basic
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
@@ -137,6 +142,7 @@ Each library with its immediate dependencies:
 - **hex-finite-field**: hex-arith, hex-mod-arith, hex-poly, hex-poly-fp, hex-matrix, hex-basic
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
 - **hex-lll**: hex-gram-schmidt, hex-matrix, hex-basic
+- **hex-lattice-enum**: hex-lll, hex-gram-schmidt, hex-matrix, hex-basic
 - **hex-poly-fp**: hex-poly, hex-mod-arith, hex-poly-fast, hex-modular
 - **hex-poly-z**: hex-poly, hex-arith, hex-basic, hex-poly-fast, hex-mod-arith, hex-modular
 - **hex-poly-z-gcd**: hex-poly-z, hex-poly-fp, hex-poly, hex-modular, hex-mod-arith, hex-arith, hex-resultant
@@ -197,6 +203,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-invariant-factors-mathlib**: hex-invariant-factors, hex-poly-smith-mathlib, hex-char-poly-mathlib, hex-min-poly-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
 - **hex-lll-mathlib**: hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
+- **hex-lattice-enum-mathlib**: hex-lattice-enum, hex-lll-mathlib, hex-gram-schmidt-mathlib, hex-matrix-mathlib
 - **hex-poly-fp-mathlib**: hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib
 - **hex-berlekamp-mathlib**: hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib
 - **hex-hensel-mathlib**: hex-hensel, hex-poly-mathlib
@@ -205,6 +212,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
 - **hex-summation-mathlib**: hex-summation
 - **hex-graph-iso-mathlib**: hex-graph-iso
+- **hex-perm-group-mathlib** (planned): hex-perm-group
 
 LLL is the recombination primitive used by Berlekamp-Zassenhaus: BZ
 encodes its lifted local factors as a lattice basis and calls
@@ -250,6 +258,11 @@ member with a dependency outside the family, on `hex-poly` for the
 polynomial Euclidean operations. Each has a matching `*-mathlib` companion
 of the same shape. In the diagram below, `hex-matrix` stands for that whole
 family.
+
+`hex-lattice-enum` adds exact shortest- and closest-vector search to the
+integer lattice APIs. It uses `hex-lll` only for optional preprocessing and
+`hex-gram-schmidt` for exact branch bounds. The Mathlib companion preserves
+the integer span when interpreting the results in Euclidean space.
 
 The integer normal forms within it:
 
@@ -339,6 +352,14 @@ correspondence until another graph algorithm needs that conversion. The
 complete contracts are in
 [hex-graph-iso](../../HexGraphIso/SPEC/hex-graph-iso.md) and
 [hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
+
+The planned [hex-perm-group](hex-perm-group.md) and
+[hex-perm-group-mathlib](hex-perm-group-mathlib.md) pair extracts the shared
+permutation type and adds checked Schreier-Sims chains, finite actions and
+complete subgroup search. On activation, graph isomorphism will depend on
+this Mathlib-free group library; its companion
+will reuse the general permutation correspondence. The current dependency
+registry remains unchanged for graph isomorphism until that migration.
 
 ```
 hex-basic -- hex-graph -- hex-graph-iso -- hex-graph-iso-mathlib
@@ -601,6 +622,9 @@ hex-berlekamp-zassenhaus ┘
 
 ## Index
 
+- [hex-lattice-enum](hex-lattice-enum.md): exact lattice enumeration, shortest and closest vectors, completeness certificates and geometric consequences
+- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): integer-span and Euclidean-distance correspondence
+
 Libraries marked **(released)** are published as standalone
 repositories; see
 [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-libraries).
@@ -658,7 +682,7 @@ for developments whose source-local move has not happened yet.
 - [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
 - [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
-- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `isolate?`
+- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolate?`
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)

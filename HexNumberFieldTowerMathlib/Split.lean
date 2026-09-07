@@ -260,7 +260,7 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
       next hdegree =>
         split at h
         next hsimple =>
-          cases hisolate : isolate (factorEliminant f) hsimple
+          cases hisolate : isolate? (factorEliminant f) hsimple
               (separationDepth (factorEliminant f) : Int) with
           | none => simp [hisolate] at h
           | some isolations =>
@@ -305,7 +305,7 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
 /-- Every positive-degree tower polynomial supplies an absolute root through
 its iterated-norm eliminant. -/
 theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
-    (hdegreeF : 0 < f.degree?.getD 0) :
+    (hdegreeF : 0 < f.natDegree) :
     (factorRoot? f).isSome := by
   have hf : f ≠ 0 := by
     intro hzero
@@ -361,17 +361,17 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
   have hcoreSize : (factorEliminant f).size ≠ 0 := by
     intro hsize
     exact hcoreNe ((DensePoly.size_eq_zero_iff _).mp hsize)
-  have hdegree : 0 < (factorEliminant f).degree?.getD 0 := by
+  have hdegree : 0 < (factorEliminant f).natDegree := by
     by_contra hnot
     exact HexRootsMathlib.not_isRoot_of_degree_not_pos
       (factorEliminant f) hcoreSize hnot z hcoreRoot
   unfold factorRoot?
   dsimp only
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
-  have hisolateSome := HexRootsMathlib.isolate_isSome
+  have hisolateSome := HexRootsMathlib.isolate?_isSome
     (factorEliminant f) hsimple hcoreNe
     (separationDepth (factorEliminant f) : Int) .nkThenPellet
-  cases hisolate : isolate (factorEliminant f) hsimple
+  cases hisolate : isolate? (factorEliminant f) hsimple
       (separationDepth (factorEliminant f) : Int) with
   | none => simp [hisolate] at hisolateSome
   | some isolations =>
@@ -380,7 +380,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dite_eq_left (HexRootsMathlib.isolate_refined
+          rw [dite_eq_left (HexRootsMathlib.isolate?_refined
             (factorEliminant f) hsimple
             (separationDepth (factorEliminant f) : Int)
             .nkThenPellet hisolate iso hiso)]
@@ -391,7 +391,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
       | some refined =>
           simp only [Option.bind_some]
           obtain ⟨iso, hiso, hisoRoot⟩ :=
-            HexRootsMathlib.isolate_root_mem_of_pos
+            HexRootsMathlib.isolate?_root_mem_of_pos
               (factorEliminant f) hsimple
               (separationDepth (factorEliminant f) : Int)
               .nkThenPellet hdegree hisolate hcoreRoot
@@ -463,7 +463,7 @@ private theorem linearRoots?_get {T : NumberTower}
     (h : linearRoots? factors = some roots) :
     factors.size = roots.size ∧
       ∀ (i : Nat) (hi : i < factors.size) (hj : i < roots.size),
-        factors[i].1.degree?.getD 0 = 1 ∧
+        factors[i].1.natDegree = 1 ∧
           0 < factors[i].2 ∧
           roots[i] =
             (-(factors[i].1.coeff 0) / factors[i].1.leadingCoeff,
@@ -533,18 +533,12 @@ private abbrev composeExtension {T : NumberTower} (outer : Extension T)
     root := inner.root }
 
 private theorem size_eq_two_of_degree_one {T : NumberTower} (f : Poly T)
-    (hdegree : f.degree?.getD 0 = 1) : f.size = 2 := by
-  have hpos : 0 < f.size := by
-    by_contra hnot
-    have hzero : f.size = 0 := by omega
-    rw [(DensePoly.degree?_eq_none_iff f).2 hzero] at hdegree
-    simp at hdegree
-  rw [DensePoly.degree?_eq_some_of_pos_size f hpos] at hdegree
-  simp only [Option.getD_some] at hdegree
+    (hdegree : f.natDegree = 1) : f.size = 2 := by
+  rw [DensePoly.natDegree_eq_size_sub_one] at hdegree
   omega
 
 private theorem linearFactor_semantic {T : NumberTower} (f : Poly T)
-    (hdegree : f.degree?.getD 0 = 1) (hmonic : f.leadingCoeff = 1) :
+    (hdegree : f.natDegree = 1) (hmonic : f.leadingCoeff = 1) :
     T.toPolynomial f = Polynomial.X - Polynomial.C
       (T.toComplex (-f.coeff 0 / f.leadingCoeff)) := by
   have hsize := size_eq_two_of_degree_one f hdegree
@@ -592,7 +586,7 @@ private theorem leadingCoeff_toPolynomial (T : NumberTower) (f : Poly T) :
     (T.toPolynomial f).leadingCoeff = T.toComplex f.leadingCoeff := by
   by_cases hpos : 0 < f.size
   · rw [Polynomial.leadingCoeff, natDegree_toPolynomial,
-      DensePoly.degree?_eq_some_of_pos_size f hpos, Option.getD_some,
+      DensePoly.natDegree_eq_size_sub_one,
       coeff_toPolynomial, DensePoly.leadingCoeff_eq_coeff_last f hpos]
   · have hzero : f = 0 :=
       (DensePoly.size_eq_zero_iff f).mp (by omega)
@@ -838,7 +832,7 @@ private theorem not_contains_factor_root {T : NumberTower} {f : Poly T}
     (r : Factorization T f) (hsound : r.Sound)
     (entry : Poly T × Nat) (hentry : entry ∈ r.factors.toList)
     (candidate : AlgebraicRoot)
-    (hdegree : 1 < entry.1.degree?.getD 0)
+    (hdegree : 1 < entry.1.natDegree)
     (hroot : Polynomial.eval candidate.toComplex
       (T.toPolynomial entry.1) = 0) :
     ¬ Extension.AlreadyContains T candidate := by
@@ -868,9 +862,9 @@ private theorem adjoin_dim_le {T : NumberTower} (candidate : AlgebraicRoot)
   obtain ⟨factorization, hfactorization, h⟩ :=
     Option.bind_eq_some_iff.mp h
   obtain ⟨selected, hselected, h⟩ := Option.bind_eq_some_iff.mp h
-  by_cases hdegreeZero : selected.degree?.getD 0 = 0
+  by_cases hdegreeZero : selected.natDegree = 0
   · simp [hdegreeZero] at h
-  by_cases hdegreeOne : selected.degree?.getD 0 = 1
+  by_cases hdegreeOne : selected.natDegree = 1
   · simp only [hdegreeOne, one_ne_zero, ↓reduceIte,
       Option.some.injEq] at h
     subst E
@@ -880,7 +874,7 @@ private theorem adjoin_dim_le {T : NumberTower} (candidate : AlgebraicRoot)
     simp only [Option.some.injEq] at h
     subst E
     rw [Internal.extend?_dim T (levelOfFactor candidate selected) htower]
-    change T.dim ≤ selected.degree?.getD 0 * T.dim
+    change T.dim ≤ selected.natDegree * T.dim
     rw [Nat.mul_comm]
     exact Nat.le_mul_of_pos_right T.dim (by omega)
 
@@ -889,9 +883,9 @@ private theorem nonlinear_find_isSome {T : NumberTower} {f : Poly T}
     (r : Factorization T f) (hsound : r.Sound)
     (hlinear : linearRoots? r.factors = none) :
     (r.factors.toList.find? fun entry =>
-      decide (1 < entry.1.degree?.getD 0)).isSome := by
+      decide (1 < entry.1.natDegree)).isSome := by
   cases hfind : r.factors.toList.find? fun entry =>
-      decide (1 < entry.1.degree?.getD 0) with
+      decide (1 < entry.1.natDegree) with
   | some entry => rfl
   | none =>
       have hmapSome : (linearRoots? r.factors).isSome := by
@@ -899,12 +893,12 @@ private theorem nonlinear_find_isSome {T : NumberTower} {f : Poly T}
         apply HexRootsMathlib.array_mapM_isSome
         intro entry hentry
         have hentrySound := hsound.2.1 entry hentry
-        have hnot : ¬1 < entry.1.degree?.getD 0 := by
+        have hnot : ¬1 < entry.1.natDegree := by
           have := (List.find?_eq_none.mp hfind entry hentry)
           simpa using this
-        have hdegree : entry.1.degree?.getD 0 = 1 := by
+        have hdegree : entry.1.natDegree = 1 := by
           have hirreducible := hentrySound.2.2.toMathlib
-          have hpositive : 0 < entry.1.degree?.getD 0 := by
+          have hpositive : 0 < entry.1.natDegree := by
             simpa only [HexPolyMathlib.natDegree_toPolynomial] using
               hirreducible.natDegree_pos
           omega
@@ -922,7 +916,7 @@ private noncomputable def missingRoots (T : NumberTower) (f : Poly T) :
     ¬ContainsValue T z
 
 private theorem missingRoots_card_le (T : NumberTower) (f : Poly T) :
-    (missingRoots T f).card ≤ f.degree?.getD 0 := by
+    (missingRoots T f).card ≤ f.natDegree := by
   classical
   unfold missingRoots
   calc
@@ -931,7 +925,7 @@ private theorem missingRoots_card_le (T : NumberTower) (f : Poly T) :
       Finset.card_mono (Finset.filter_subset _ _)
     _ ≤ (T.toPolynomial f).roots.card := Multiset.toFinset_card_le _
     _ ≤ (T.toPolynomial f).natDegree := Polynomial.card_roots' _
-    _ = f.degree?.getD 0 := natDegree_toPolynomial T f
+    _ = f.natDegree := natDegree_toPolynomial T f
 
 private theorem missingRoots_decreases {T : NumberTower} {f : Poly T}
     (candidate : AlgebraicRoot) (step : Extension T)
@@ -1270,10 +1264,10 @@ private theorem splitAux_isSome (T : NumberTower) (f : Poly T)
             Option.isSome_iff_exists.mp
               (nonlinear_find_isSome factorization
                 hfactorizationSound hlinear)
-          have hdegree : 1 < nonlinear.1.degree?.getD 0 := by
+          have hdegree : 1 < nonlinear.1.natDegree := by
             have hselected := List.find?_some
               (p := fun entry : Poly T × Nat =>
-                decide (1 < entry.1.degree?.getD 0)) hnonlinear
+                decide (1 < entry.1.natDegree)) hnonlinear
             simpa using hselected
           obtain ⟨candidate, hcandidate⟩ :=
             Option.isSome_iff_exists.mp
@@ -1305,10 +1299,10 @@ private theorem splitAux_isSome (T : NumberTower) (f : Poly T)
             Option.isSome_iff_exists.mp
               (nonlinear_find_isSome factorization
                 hfactorizationSound hlinear)
-          have hdegree : 1 < nonlinear.1.degree?.getD 0 := by
+          have hdegree : 1 < nonlinear.1.natDegree := by
             have hselected := List.find?_some
               (p := fun entry : Poly T × Nat =>
-                decide (1 < entry.1.degree?.getD 0)) hnonlinear
+                decide (1 < entry.1.natDegree)) hnonlinear
             simpa using hselected
           obtain ⟨candidate, hcandidate⟩ :=
             Option.isSome_iff_exists.mp
@@ -1343,7 +1337,7 @@ private theorem splitAux_isSome (T : NumberTower) (f : Poly T)
           obtain ⟨inner, hinner⟩ := Option.isSome_iff_exists.mp
             (ih step.tower (mapPoly step.embed f) hlocalNe hlocalBound)
           have hnonlinearArray : factorization.factors.find?
-              (fun entry => decide (1 < entry.1.degree?.getD 0)) =
+              (fun entry => decide (1 < entry.1.natDegree)) =
               some nonlinear := by
             simpa using hnonlinear
           unfold splitAux
@@ -1424,7 +1418,7 @@ private theorem zeroSplitting_sound (T : NumberTower) :
     exact Splitting.GeneratedBy.base (S := S) a
 
 private theorem constantSplitting_sound {T : NumberTower} {f : Poly T}
-    (hf : T.toPolynomial f ≠ 0) (hdegree : f.degree?.getD 0 = 0) :
+    (hf : T.toPolynomial f ≠ 0) (hdegree : f.natDegree = 0) :
     ({ extension := Extension.identity T
        roots := .finite #[] } : Splitting T f).Sound := by
   let S : Splitting T f :=
@@ -1490,7 +1484,7 @@ theorem split?_sound (T : NumberTower) (f : Poly T)
       subst S
       exact constantSplitting_sound hf hdegree
     next hdegree =>
-      exact splitAux_sound T f (f.degree?.getD 0) hf h
+      exact splitAux_sound T f (f.natDegree) hf h
 
 /-- The bounded split/refactor loop succeeds for every tower polynomial. -/
 theorem split?_isSome (T : NumberTower) (f : Poly T) :
@@ -1510,7 +1504,7 @@ theorem split?_isSome (T : NumberTower) (f : Poly T) :
             DensePoly.size_zero
         rw [hzeroTest] at hnonzero
         contradiction
-      exact splitAux_isSome T f (f.degree?.getD 0) hf
+      exact splitAux_isSome T f (f.natDegree) hf
         (missingRoots_card_le T f)
 
 end Hex.NumberTower

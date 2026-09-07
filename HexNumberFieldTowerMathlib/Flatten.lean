@@ -790,13 +790,13 @@ private theorem recoverPairFast?_sound (theta alpha gamma : AlgebraicNumber)
       liftZPoly alpha.p
     let common := DensePoly.gcd thetaRelation alphaRelation
     by_cases hlinear :
-        (common.degree?.getD 0 = 1 && common.leadingCoeff != 0) = true
+        (common.natDegree = 1 && common.leadingCoeff != 0) = true
     · dsimp [common, thetaRelation, alphaRelation, affine,
         gammaCoordinate] at hlinear
       simp only [hlinear, ↓reduceIte] at h
       exact checkPair?_sound theta alpha gamma _ coordinates h
     · have hfalse :
-          (common.degree?.getD 0 = 1 && common.leadingCoeff != 0) = false :=
+          (common.natDegree = 1 && common.leadingCoeff != 0) = false :=
         Bool.eq_false_of_not_eq_true hlinear
       dsimp [common, thetaRelation, alphaRelation, affine,
         gammaCoordinate] at hfalse

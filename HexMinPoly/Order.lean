@@ -77,17 +77,20 @@ private theorem krylovVec_mem_of_monic_annihilator (A : Matrix F n n)
     let p := DensePoly.monomial j (1 : F)
     let qr := DensePoly.divMod p q
     let rem := qr.2
-    have hremDegree : rem.degree?.getD 0 < k := by
+    have hremDegree : rem.natDegree < k := by
+      have hqPos : 0 < q.natDegree := by
+        rw [DensePoly.natDegree, hqDegree]; exact hkPos
       have h := DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel
-        p q (by rw [hqDegree]; exact hkPos) hcancel
-      simpa [qr, rem, hqDegree] using h
+        p q hqPos hcancel
+      have hqk : q.natDegree = k := by rw [DensePoly.natDegree, hqDegree]; rfl
+      simpa [qr, rem, hqk] using h
     have hremSize : rem.size ≤ k := by
       by_cases hzero : rem.size = 0
       · omega
       · have hpos : 0 < rem.size := Nat.pos_of_ne_zero hzero
         have hdegree := DensePoly.degree?_eq_some_of_pos_size rem hpos
-        have hdegreeVal : rem.degree?.getD 0 = rem.size - 1 := by
-          rw [hdegree, Option.getD_some]
+        have hdegreeVal : rem.natDegree = rem.size - 1 :=
+          DensePoly.natDegree_eq_size_sub_one rem
         rw [hdegreeVal] at hremDegree
         omega
     refine ⟨rem.coeffVec k, ?_⟩
@@ -539,10 +542,13 @@ theorem vecMinPoly_dvd (A : Matrix F n n) (v : Vector F n) (p : DensePoly F) :
       · omega
       · exact hcancel
     · have hdPos : 0 < d := Nat.pos_of_ne_zero hd
-      have hremDegree : qr.2.degree?.getD 0 < d := by
+      have hremDegree : qr.2.natDegree < d := by
+        have hmPos : 0 < m.natDegree := by
+          rw [DensePoly.natDegree, hmDegree]; exact hdPos
         have h := DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel
-          p m (by rw [hmDegree]; exact hdPos) hcancel
-        simpa [hmDegree] using h
+          p m hmPos hcancel
+        have hmd : m.natDegree = d := by rw [DensePoly.natDegree, hmDegree]; rfl
+        simpa [hmd] using h
       by_cases hr : qr.2 = 0
       · exact hr
       · have hrPos : 0 < qr.2.size := by
@@ -554,8 +560,8 @@ theorem vecMinPoly_dvd (A : Matrix F n n) (v : Vector F n) (p : DensePoly F) :
         have hrDegree : qr.2.degree? = some k :=
           DensePoly.degree?_eq_some_of_pos_size qr.2 hrPos
         have hklt : k < d := by
-          have hkval : qr.2.degree?.getD 0 = k := by
-            rw [hrDegree, Option.getD_some]
+          have hkval : qr.2.natDegree = k :=
+            DensePoly.natDegree_eq_size_sub_one qr.2
           rw [hkval] at hremDegree
           exact hremDegree
         let rmonic := DensePoly.monicize qr.2

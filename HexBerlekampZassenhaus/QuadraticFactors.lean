@@ -76,7 +76,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
   intro factor hmem
   let roots := integerRootCandidates core
   let split := splitIntegerRootFactorsAux core roots roots.length
-  let candidates := trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+  let candidates := trialDivisionCandidatesUpTo B (split.2.natDegree / 2)
   let peel := trialDivisionPeelAux split.2 candidates
   have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
     splitIntegerRootFactorsAux_product core roots roots.length split.1 split.2 rfl
@@ -244,7 +244,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
     (hquad : quadraticIntegerRootFactors? core = some factors) :
     ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor := by
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -261,7 +261,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
         cases hquad
         exact hsplit_norm
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           intro factor hmem
@@ -321,7 +321,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
     (hquad : quadraticIntegerRootFactors? core = some factors) :
     ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true := by
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -338,7 +338,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
         cases hquad
         exact hsplit_record
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           intro factor hmem
@@ -409,7 +409,7 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
           (integerRootCandidates core).length).2) :
     ZPoly.Irreducible factor := by
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -423,7 +423,7 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
           (target := core) (roots := roots) (fuel := roots.length)
           (factors := split.1) (residual := split.2) rfl hmem
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push] at hmem
@@ -440,7 +440,7 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
 
 /-- The optional final residual of the quadratic integer-root branch is
 irreducible whenever the square-free part is primitive with positive leading coefficient.
-The function's degree filter forces the residual's `degree?.getD 0` to be at
+The function's degree filter forces the residual's `natDegree` to be at
 most `1`; primitivity rules out degree-`0` residuals (which would be non-unit
 constants dividing every coefficient of the primitive polynomial); hence the
 residual, when emitted, has size two and is irreducible by the
@@ -464,7 +464,7 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
         (integerRootCandidates core).length).2) :
     ZPoly.Irreducible factor := by
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -480,7 +480,7 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
           (target := core) (roots := roots) (fuel := roots.length)
           (factors := split.1) (residual := split.2) rfl hmem
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           have hsplit_prod :
@@ -512,7 +512,7 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
           have hres_size_pos : 0 < split.2.size :=
             ZPoly.size_pos_of_ne_zero split.2 hres_ne_zero
           have hres_size_le : split.2.size ≤ 2 := by
-            unfold DensePoly.degree? at hres_deg
+            unfold DensePoly.natDegree DensePoly.degree? at hres_deg
             have hnz : split.2.size ≠ 0 := by omega
             simp [hnz] at hres_deg
             omega
@@ -703,7 +703,7 @@ theorem quadraticIntegerRootFactors?_product
     (hquad : quadraticIntegerRootFactors? core = some factors) :
     Array.polyProduct factors = core := by
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -719,7 +719,7 @@ theorem quadraticIntegerRootFactors?_product
         cases hquad
         simpa [hres_one, ZPoly.one_mul_zpoly] using hsplit_prod
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [polyProduct_push, DensePoly.mul_comm_poly (S := Int)]
@@ -747,10 +747,10 @@ theorem polyProduct_quadraticIntegerRootFactors?_some
 
 /-- Every factor emitted by `quadraticIntegerRootFactors?` has dense size two.
 The branch is only entered when
-`core.degree?.getD 0 = 2`. Linear factors emitted by the splitter are
+`core.natDegree = 2`. Linear factors emitted by the splitter are
 `linearFactorForRoot r = X - r`, which has size `2` by
 `linearFactorForRoot_size_eq_two`. The optional final residual has
-`degree?.getD 0 ≤ 1` by construction, so its size is `≤ 2`; the case
+`natDegree ≤ 1` by construction, so its size is `≤ 2`; the case
 `size = 1` (constant residual) is incompatible with primitivity of `core`
 combined with positivity of `leadingCoeff core` (the same argument used in
 `quadraticIntegerRootFactors?_residual_irreducible` to rule out non-unit
@@ -758,7 +758,7 @@ constant residuals).
 
 Used by the Mathlib-side discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` to
-discharge the per-factor `0 < q.degree?.getD 0` and `0 < leadingCoeff q`
+discharge the per-factor `0 < q.natDegree` and `0 < leadingCoeff q`
 preconditions of the non-monic expansion-complete surface
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`. -/
 theorem quadraticIntegerRootFactors?_factor_size_eq_two
@@ -769,7 +769,7 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
     {factor : ZPoly} (hmem : factor ∈ coreFactors.toList) :
     factor.size = 2 := by
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -791,7 +791,7 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
         cases hquad
         exact hsplit_size factor hmem
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push] at hmem
@@ -829,7 +829,7 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
             have hres_size_pos : 0 < split.2.size :=
               ZPoly.size_pos_of_ne_zero split.2 hres_ne_zero
             have hres_size_le : split.2.size ≤ 2 := by
-              unfold DensePoly.degree? at hres_deg
+              unfold DensePoly.natDegree DensePoly.degree? at hres_deg
               have hnz : split.2.size ≠ 0 := by omega
               simp [hnz] at hres_deg
               omega
@@ -1098,7 +1098,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
   -- contradiction discharge the linear-vs-residual case without it).
   have _ := hcore_primitive
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
+  by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
@@ -1120,7 +1120,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
         cases hquad
         exact hLL
       · rw [ite_eq_right hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        by_cases hres_deg : split.2.natDegree ≤ 1
         · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push]

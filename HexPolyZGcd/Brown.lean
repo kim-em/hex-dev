@@ -149,7 +149,7 @@ monic image by `gamma` costs at most one further factor of `gamma`. -/
 def brownCoeffBound (f h : ZPoly) : Nat :=
   let f0 := primitivePart f
   let h0 := primitivePart h
-  let degreeBound := min (f0.degree?.getD 0) (h0.degree?.getD 0)
+  let degreeBound := min (f0.natDegree) (h0.natDegree)
   let center := degreeBound / 2
   let factorBound := min
     (mignotteCoeffBound f0 degreeBound center)

@@ -63,13 +63,13 @@ equal word arrays.
 The coefficient and degree accessors read the packed bits back out.
 {name}`Hex.GF2Poly.coeff` returns the coefficient of `xⁿ` as a `Bool`,
 {name}`Hex.GF2Poly.degree?` returns the degree of a nonzero polynomial,
-and {name}`Hex.GF2Poly.degree` defaults the zero polynomial to `0`.
+and {name}`Hex.GF2Poly.natDegree` defaults the zero polynomial to `0`.
 
 {docstring Hex.GF2Poly.coeff}
 
 {docstring Hex.GF2Poly.degree?}
 
-{docstring Hex.GF2Poly.degree}
+{docstring Hex.GF2Poly.natDegree}
 
 The simplest builders are {name}`Hex.GF2Poly.zero`,
 {name}`Hex.GF2Poly.one`, {name}`Hex.GF2Poly.ofUInt64` (a single packed
@@ -203,7 +203,7 @@ open Hex Hex.GF2Poly
 namespace HexGF2Chapter
 
 -- A monomial sets exactly one coefficient bit.
-#guard (GF2Poly.monomial 5).degree = 5
+#guard (GF2Poly.monomial 5).natDegree = 5
 #guard (GF2Poly.monomial 5).coeff 5 = true
 #guard (GF2Poly.monomial 5).coeff 4 = false
 
@@ -214,7 +214,7 @@ namespace HexGF2Chapter
 
 -- The leading term governs the degree of a sum.
 #guard (GF2Poly.monomial 3
-          + GF2Poly.monomial 5).degree = 5
+          + GF2Poly.monomial 5).natDegree = 5
 
 -- Shifting left by k multiplies by x^k.
 #guard ((GF2Poly.monomial 1).shiftLeft 3).toWords
@@ -223,7 +223,7 @@ namespace HexGF2Chapter
 -- gcd(f, f) = f, up to the monic normalization
 -- that holds automatically over F_2.
 #guard (GF2Poly.gcd (GF2Poly.monomial 7)
-          (GF2Poly.monomial 7)).degree = 7
+          (GF2Poly.monomial 7)).natDegree = 7
 
 end HexGF2Chapter
 ```
@@ -437,7 +437,7 @@ example (p q : GF2Poly) :
 
 {docstring HexGF2Mathlib.GF2nPoly.field}
 
-The `Fact (0 < f.degree)` hypothesis on that instance is not
+The `Fact (0 < f.natDegree)` hypothesis on that instance is not
 bureaucracy. {name}`Hex.GF2Poly.Irreducible` asks that the modulus be
 nonzero and admit no factorization into two positive-degree parts, and
 the constant `1` satisfies both. `GF2nPoly 1 _` is then the trivial ring,

@@ -143,7 +143,7 @@ def mvDegreeBounded (i : Fin (n + 1)) (images : List ZPoly)
   images.length == answer.length &&
     (List.range images.length).all fun j =>
       MvPoly.degreeOf i (answer.getD j 0) <
-        (images.getD j 0).degree?.getD 0
+        (images.getD j 0).natDegree
 
 /-- Check the computed equation throughout the requested truncation box. -/
 def checkDiophantine (q : Nat) (i : Fin (n + 1)) (d : Fin n → Nat)
@@ -191,21 +191,21 @@ theorem diophantine_spec {q : Nat} {i : Fin (n + 1)}
     {images witness : List ZPoly} {c : MvPoly (n + 1) Int cmp}
     (huni : UniValid q images witness)
     (hbs : bs.length = images.length)
-    (hc : MvPoly.degreeOf i c < (uniProduct images).degree?.getD 0)
+    (hc : MvPoly.degreeOf i c < (uniProduct images).natDegree)
     (hb : ∀ j, j < bs.length →
       imageAt i cmp' (fun _ => 0) (bs.getD j 0) =
         (complements images).getD j 0)
     (hbdeg : ∀ j, j < bs.length →
       MvPoly.degreeOf i (bs.getD j 0) +
-          (images.getD j 0).degree?.getD 0 ≤
-        (uniProduct images).degree?.getD 0) :
+          (images.getD j 0).natDegree ≤
+        (uniProduct images).natDegree) :
     ∃ answer sum,
       diophantine q i cmp' d bs images witness c = some answer ∧
       mvCombination? answer bs = some sum ∧
       BoxCongr i d q sum c ∧
       ∀ j, j < images.length →
         MvPoly.degreeOf i (answer.getD j 0) <
-          (images.getD j 0).degree?.getD 0 := by
+          (images.getD j 0).natDegree := by
   sorry
 
 end Hex.MvHensel

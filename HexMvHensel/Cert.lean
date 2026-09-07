@@ -78,7 +78,7 @@ def failure? (inp : Input n cmp cmp') : Option Failure :=
       inp.setup.exponent = 0 || mainDegree = 0 ||
       !imagesPositive inp.images then
     some .arity
-  else if image.degree?.getD 0 != mainDegree then
+  else if image.natDegree != mainDegree then
     some .degreeDrop
   else if uniProduct inp.images != image then
     some .imageProduct

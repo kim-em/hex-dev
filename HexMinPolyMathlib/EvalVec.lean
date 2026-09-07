@@ -83,9 +83,8 @@ theorem vectorEquiv_evalVec (p : Hex.DensePoly F) (A : Hex.Matrix F n n)
       · exact False.elim (hp ((Hex.DensePoly.size_eq_zero_iff p).mp
           (Nat.eq_zero_of_not_pos h)))
     have hsize : (equiv p).natDegree + 1 = p.size := by
-      rw [equiv_apply, natDegree_toPolynomial]
-      have hdegree := Hex.DensePoly.degree?_eq_some_of_pos_size p hpPos
-      rw [hdegree, Option.getD_some]
+      rw [equiv_apply, natDegree_toPolynomial,
+        Hex.DensePoly.natDegree_eq_size_sub_one]
       omega
     rw [Hex.Matrix.evalVec_eq_vecMul_krylov p A v p.size (Nat.le_refl _)]
     rw [vectorEquiv_vecMul_krylov]

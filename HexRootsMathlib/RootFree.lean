@@ -106,7 +106,8 @@ theorem shift_natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) (c : ℂ) :
   have hpoly : (toPolyℂ p).natDegree < p.size := by
     rw [natDegree_toPolyℂ]
     have hdegree : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+    unfold Hex.DensePoly.natDegree
     rw [hdegree, Option.getD_some]
     omega
   exact (Polynomial.natDegree_comp_le.trans_lt (by simpa using hpoly))
@@ -307,7 +308,7 @@ private theorem softRootCountLoop_zero {bits rounds : Nat} {ks : List Nat}
 private theorem rootFreeLoop_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     {bits : Nat} {cs : Array Hex.CoeffBall}
     (henclose : BallsEnclose cs (localPoly p s))
-    (hcheck : Hex.softRootFreeLoop bits (Hex.graeffeRounds (p.degree?.getD 0))
+    (hcheck : Hex.softRootFreeLoop bits (Hex.graeffeRounds (p.natDegree))
       cs Hex.softSqrt2Lo Hex.softSqrt2Hi = true)
     {z : ℂ}
     (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :

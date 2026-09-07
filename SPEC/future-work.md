@@ -949,14 +949,21 @@ the two library families.
 
 ### Permutation groups
 
-Provide finite permutation groups with orbits, stabilizers, subgroup
-containment, cosets, and the transitive-group data required by resolvent
-methods. Executable certificates should cover membership and subgroup
-relations; classification tables and their trust boundary need an explicit
-data policy.
+The initial library is specified in
+[hex-perm-group](Libraries/hex-perm-group.md) and
+[hex-perm-group-mathlib](Libraries/hex-perm-group-mathlib.md). It provides
+checked deterministic stabilizer chains, constructive membership, exact
+order, sign and cycle type, rank/unrank and supplied-index sampling,
+finite actions with images and kernels, and complete set/subgroup search.
+It includes block systems and primitivity, normal closure, core and derived
+series, direct and imprimitive wreath products, and bounded element/coset
+enumeration. It extracts the shared permutation representation from graph
+isomorphism and proves completeness of checked chains and subgroup search.
 
-This library is independently useful and is a prerequisite for certified
-Galois-group computation.
+Transitive-group data required by resolvent methods remain a later extension.
+Classification tables need versioned provenance, checked embeddings and a
+separate completeness policy. The initial computational library is useful
+independently and supplies infrastructure for certified Galois-group work.
 
 ### Matrix groups and finite-dimensional modules
 
@@ -1100,32 +1107,13 @@ within the stated bounds.
 
 ### Exact lattice search and geometry
 
-`hex-lattice-enum` should depend on `hex-lll` and implement
-Fincke-Pohst enumeration with Schnorr-Euchner coefficient ordering. It uses an
-exact rational Gram-Schmidt decomposition for pruning, with interval or
-floating-point values allowed only to choose the next branch. Its operations
-enumerate every vector of squared norm at most a rational bound, find all
-shortest vectors, and solve closest-vector problems relative to a rational
-target and bound. A closest-vector search begins from a Babai nearest-plane
-candidate but proves optimality by complete enumeration.
-
-The enumeration invariant describes the affine interval for every remaining
-coefficient after fixing a suffix. Correctness proves that pruning removes
-only vectors whose exact lower bound exceeds the radius. The result list is
-duplicate-free and contains exactly the lattice vectors in the closed ball.
-The shortest-vector theorem supplies a nonzero vector of minimum norm and
-proves that no shorter nonzero vector exists. The closest-vector theorem proves
-membership of the reported lattice point and minimal distance to the target.
-If enumeration is stopped by a budget, the result retains the explored radius
-and incumbent but makes no optimality claim.
-
-`hex-lattice-enum-mathlib` identifies the row lattice with the corresponding
-`Submodule` of a rational inner-product space. It transports exact norms and
-proves that the executable minima agree with the mathematical minimum over
-the discrete lattice. This layer also proves packing-radius and kissing-number
-statements from complete shortest-vector enumeration. Successive minima need
-an additional independence certificate for each threshold and a proof that no
-smaller radius contains the required number of independent vectors.
+Exact ball enumeration and all shortest/closest vectors are specified in
+[hex-lattice-enum](Libraries/hex-lattice-enum.md), with integer-span and
+Euclidean-distance correspondence in
+[hex-lattice-enum-mathlib](Libraries/hex-lattice-enum-mathlib.md).
+Successive minima remain an extension: they need an independence certificate
+at each threshold and a proof that no smaller radius contains the required
+number of independent vectors.
 
 `hex-lattice-voronoi` should be restricted initially to positive-definite
 integral lattices of modest rank. It enumerates Voronoi-relevant vectors,

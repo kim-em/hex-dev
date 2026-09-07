@@ -44,7 +44,7 @@ namespace Quotient
 open Internal
 
 variable {g : FpPoly p} {hmonic : DensePoly.Monic g}
-variable {hg_pos : 0 < g.degree?.getD 0}
+variable {hg_pos : 0 < g.natDegree}
 
 /-- One Horner step commutes with reduction into the quotient. -/
 private theorem reduce_horner_step (acc b : FpPoly p) (c : ZMod64 p) :

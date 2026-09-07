@@ -1244,7 +1244,7 @@ fail mode 1 and reopen the finding. The raw local profile is
 | share | function |
 |---:|---|
 | 92.11% | `Hex.AlgebraicRoot.ofEliminant?` |
-| 92.11% | `Hex.isolate` / `isolateLoop` |
+| 92.11% | `Hex.isolate?` / `isolateLoop` |
 | 86.32% | `Hex.Component.refineAll` / `IsolationLoop.next` |
 | 84.83% | `Hex.taylor` |
 
@@ -1260,7 +1260,7 @@ fixed registration keeps this phase covered without making an asymptotic claim.
 |---:|---|
 | 95.63% | `Hex.AlgebraicRoot.exact?` |
 | 95.58% | `Hex.AlgebraicRoot.exactFactor?` |
-| 95.28% | `Hex.isolate` / `isolateLoop` |
+| 95.28% | `Hex.isolate?` / `isolateLoop` |
 | 47.39% | `Hex.AlgebraicNumber.canonicalRep?` / `ofNormalized?` |
 
 The former `runExactLadder` declared the classical BHKS factorization bound
@@ -1277,7 +1277,7 @@ the declared envelope over-predicts by `n^4.14`. This family is now the fixed
 | share | function |
 |---:|---|
 | 83.01% | `Hex.AlgebraicRoot.exactFactor?` |
-| 77.19% | `Hex.isolate` / `isolateLoop` |
+| 77.19% | `Hex.isolate?` / `isolateLoop` |
 | 38.53% | `Hex.AlgebraicNumber.canonicalRep?` |
 | **18.04%** | `Hex.ZPoly.factorize` |
 
@@ -1292,7 +1292,7 @@ BHKS factorization bound cannot support mode 2 for this end-to-end family.
 | share | `runExactFactorLadder` | `runCanonicalRepLadder` |
 |---:|---:|---:|
 | registered operation | 95.77% | 96.27% |
-| `Hex.isolate` / `isolateLoop` | 95.46% | 96.27% |
+| `Hex.isolate?` / `isolateLoop` | 95.46% | 96.27% |
 | `Hex.Component.refineAll` | 87.10% | 87.88% |
 | `Hex.exactRootFree` | 84.34% | 85.20% |
 | `Hex.taylor` | 77.35% | 78.18% |
@@ -1339,7 +1339,7 @@ this ladder's slower-than-declared verdict.
 
 | share | function |
 |---:|---|
-| 91.87% | `Hex.isolate` / `isolateLoop` |
+| 91.87% | `Hex.isolate?` / `isolateLoop` |
 | 91.45% | `Hex.QAdjoin.roots?` |
 | 91.45% | `Hex.QAdjoin.Roots.componentRoots?` |
 | 82.90% | `Hex.taylor` |
@@ -1362,7 +1362,7 @@ resultants even though neither entered the dominant inclusive ranking.
 |---:|---|
 | 92.96% | `Hex.QAdjoin.roots?` |
 | 92.94% | `Hex.QAdjoin.Roots.componentRoots?` |
-| 85.01% | `Hex.isolate` / `isolateLoop` |
+| 85.01% | `Hex.isolate?` / `isolateLoop` |
 | 78.37% | `Hex.taylor` |
 | 7.52% | `Hex.retainZero?` |
 | 7.43% | `Hex.QAdjoin.Roots.evalBall?` |

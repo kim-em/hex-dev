@@ -267,7 +267,7 @@ private theorem RefinedIsolation.eq_of_canonical {p : ZPoly}
         · simp at htoJ
       have hij : i = j := by
         by_contra hij
-        apply HexRootsMathlib.isolate_roots_ne p squarefree₁
+        apply HexRootsMathlib.isolate?_roots_ne p squarefree₁
           (separationDepth p : Int) .nkThenPellet hisolate hi hj hij
         rw [← hrawI, ← hrawJ]
         change HexRootsMathlib.DyadicRootIsolation.root r.1 =
@@ -352,7 +352,7 @@ info: 'Hex.AlgebraicNumber.toComplex_injective' depends on axioms: [propext, Cla
 supplied refined isolation, including the explicit canonical-zero path. -/
 theorem AlgebraicNumber.ofNormalized?_toComplex
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
-    (pos_degree : 0 < p.degree?.getD 0)
+    (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) {a : AlgebraicNumber}
     (h : AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked

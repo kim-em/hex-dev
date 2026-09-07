@@ -624,9 +624,35 @@ theorem radical_squarefree [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) (hp : p ≠ 0) : Squarefree (radical p) := by
   sorry
 
+/-- The radical divides the original input, including its scalar content
+and normalization unit. -/
 theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) : radical p ∣ p := by
-  sorry
+  let q := polyNormalize (primPart p)
+  have hrestore : C (sqfPrimitiveSplit p).1 * q = p :=
+    sqfPrimitiveSplit_product p
+  unfold radical
+  change (if q == 0 then 0 else quotient q (gcdList (q :: derivatives q))) ∣ p
+  by_cases hq : q = 0
+  · simp only [hq, beq_self_eq_true, ite_true, mul_zero] at hrestore ⊢
+    rw [← hrestore]
+    exact ⟨0, (mul_zero 0).symm⟩
+  · simp only [beq_iff_eq, hq, ite_false]
+    have hd : gcdList (q :: derivatives q) ∣ q :=
+      gcdList_dvd (List.mem_cons_self ..)
+    have hd0 : gcdList (q :: derivatives q) ≠ 0 := by
+      intro hzero
+      rcases hd with ⟨r, hr⟩
+      rw [hzero, mul_zero] at hr
+      exact hq hr
+    have hquot := quotient_mul_of_dvd hd0 hd
+    refine ⟨C (sqfPrimitiveSplit p).1 * gcdList (q :: derivatives q), ?_⟩
+    calc
+      p = C (sqfPrimitiveSplit p).1 * q := hrestore.symm
+      _ = (C (sqfPrimitiveSplit p).1 * gcdList (q :: derivatives q)) *
+          quotient q (gcdList (q :: derivatives q)) := by
+        rw [mul_assoc (C (sqfPrimitiveSplit p).1),
+          mul_comm (gcdList _) (quotient ..), hquot]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 @[simp] theorem radical_zero [IsMonomialOrder cmp] [NatCast R] [NatNoZero R] :

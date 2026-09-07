@@ -48,7 +48,7 @@ theorem definingPolynomial_monic (p : ZPoly) [ZPoly.CheckedIrreducible p] :
 /-- Monic normalization preserves the executable defining degree. -/
 theorem natDegree_definingPolynomial (p : ZPoly)
     [ZPoly.CheckedIrreducible p] :
-    (definingPolynomial p).natDegree = p.degree?.getD 0 := by
+    (definingPolynomial p).natDegree = p.natDegree := by
   have hirr := ZPoly.CheckedIrreducible.irreducibleRat p
   have hlc :
       (HexPolyZMathlib.toPolyℚ p).leadingCoeff =
@@ -340,8 +340,7 @@ theorem map_inv [ZPoly.CheckedIrreducible p] (a : PolyQuot p x)
     have hnat :
         (HexPolyMathlib.toPolynomial r.gcd).natDegree = 0 := by
       rw [HexPolyMathlib.natDegree_toPolynomial,
-        DensePoly.degree?_eq_some_of_pos_size _ hpos, hs]
-      rfl
+        DensePoly.natDegree_eq_size_sub_one, hs]
     have hcoeff :
         (HexPolyMathlib.toPolynomial r.gcd).coeff 0 =
           r.gcd.leadingCoeff := by

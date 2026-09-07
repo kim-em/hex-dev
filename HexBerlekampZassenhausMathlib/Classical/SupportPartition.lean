@@ -48,7 +48,7 @@ supports at the selected square-free prime. -/
 theorem modPFactorSubset_disjoint_of_modPFactorization
     {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
     (hval : ModPFactorization core data)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     {f g : Hex.ZPoly} {S T : ModPFactorSubset data}
     (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
     (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
@@ -486,7 +486,7 @@ theorem directSupportPartition_initial
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hrecovery :
       2 * Hex.ZPoly.defaultFactorCoeffBound core <
@@ -587,7 +587,7 @@ theorem DirectSupportPartition.factorDvdCandidate
     (h : DirectSupportPartition core B data J target)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
@@ -775,7 +775,7 @@ theorem DirectSupportPartition.supportSubsetCandidate
     (h : DirectSupportPartition core B data J target)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)

@@ -160,7 +160,7 @@ def IsStage (inp : Input n cmp cmp') (count : Nat)
       prefixVars count (shiftedLeading.getD j 0)) ∧
   (∀ j, j < inp.images.length →
     MvPoly.degreeOf i (factors.getD j 0) =
-      (inp.images.getD j 0).degree?.getD 0) ∧
+      (inp.images.getD j 0).natDegree) ∧
   (∀ j, j < inp.images.length →
     prefixNonMain i count (factors.getD j 0) = factors.getD j 0) ∧
   BoxCongr i d inp.setup.modulus (mvProduct factors)

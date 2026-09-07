@@ -282,19 +282,19 @@ private theorem genericN16Mod_monic : DensePoly.Monic genericN16Mod := by
   rfl
 
 /-- The packed degree-16 `GF(2)` modulus `genericN16Mod` has degree 16. -/
-private theorem genericN16Mod_degree_eq : genericN16Mod.degree?.getD 0 = 16 := by
-  unfold genericN16Mod GFq.packedGF2FpPoly DensePoly.degree? DensePoly.size
+private theorem genericN16Mod_degree_eq : genericN16Mod.natDegree = 16 := by
+  unfold genericN16Mod GFq.packedGF2FpPoly DensePoly.natDegree DensePoly.degree? DensePoly.size
   rfl
 
 /-- The packed degree-16 `GF(2)` modulus `genericN16Mod` has positive degree. -/
-private theorem genericN16Mod_degree_pos : 0 < genericN16Mod.degree?.getD 0 := by
+private theorem genericN16Mod_degree_pos : 0 < genericN16Mod.natDegree := by
   rw [genericN16Mod_degree_eq]
   decide
 
 /-- Any `polyP2` built from at most 16 coefficients has size within the degree of
 `genericN16Mod`, the size bound the quotient-witness steps require. -/
 private theorem polyP2_size_le_16 {arr : Array Nat} (h : arr.size ≤ 16) :
-    (polyP2 arr).size ≤ genericN16Mod.degree?.getD 0 := by
+    (polyP2 arr).size ≤ genericN16Mod.natDegree := by
   rw [genericN16Mod_degree_eq]
   unfold polyP2 FpPoly.ofCoeffs
   exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simpa using h)
@@ -1112,18 +1112,18 @@ private def genericN32Cert : Berlekamp.IrreducibilityCertificate where
     genericN32Quotients = true
 
 /-- The packed degree-32 `GF(2)` modulus `genericMod` has degree 32. -/
-private theorem genericMod_degree_eq : genericMod.degree?.getD 0 = 32 := by
-  unfold genericMod GFq.packedGF2FpPoly DensePoly.degree? DensePoly.size
+private theorem genericMod_degree_eq : genericMod.natDegree = 32 := by
+  unfold genericMod GFq.packedGF2FpPoly DensePoly.natDegree DensePoly.degree? DensePoly.size
   rfl
 
 /-- The packed degree-32 `GF(2)` modulus `genericMod` has positive degree. -/
-private theorem genericMod_degree_pos : 0 < genericMod.degree?.getD 0 := by
+private theorem genericMod_degree_pos : 0 < genericMod.natDegree := by
   rw [genericMod_degree_eq]; decide
 
 /-- Any `polyP2` built from at most 32 coefficients has size within the degree of
 `genericMod`, the size bound the quotient-witness steps require. -/
 private theorem polyP2_size_le_32 {arr : Array Nat} (h : arr.size ≤ 32) :
-    (polyP2 arr).size ≤ genericMod.degree?.getD 0 := by
+    (polyP2 arr).size ≤ genericMod.natDegree := by
   rw [genericMod_degree_eq]
   unfold polyP2 FpPoly.ofCoeffs
   exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simpa using h)

@@ -86,6 +86,11 @@ def isZero (f : AlgebraicPoly) : Bool :=
 def degree? (f : AlgebraicPoly) : Option Nat :=
   if f.isZero then none else some (f.size - 1)
 
+/-- The degree, with the zero polynomial given degree `0`, matching
+`DensePoly.natDegree`. -/
+abbrev natDegree (f : AlgebraicPoly) : Nat :=
+  f.degree?.getD 0
+
 /-- Canonical coefficientwise Boolean equality. -/
 @[expose]
 def beq (f g : AlgebraicPoly) : Bool :=

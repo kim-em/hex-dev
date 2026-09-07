@@ -38,27 +38,27 @@ theorem sub_mul_poly {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
 positive-degree `g` is again below `g`. -/
 theorem degree_getD_sub_lt {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
     (a b g : DensePoly S)
-    (hg : 0 < g.degree?.getD 0)
-    (ha : a.degree?.getD 0 < g.degree?.getD 0)
-    (hb : b.degree?.getD 0 < g.degree?.getD 0) :
-    (a - b).degree?.getD 0 < g.degree?.getD 0 := by
-  -- `g` has size ≥ 2, and `g.degree?.getD 0 = g.size - 1`.
+    (hg : 0 < g.natDegree)
+    (ha : a.natDegree < g.natDegree)
+    (hb : b.natDegree < g.natDegree) :
+    (a - b).natDegree < g.natDegree := by
+  -- `g` has size ≥ 2, and `g.natDegree = g.size - 1`.
   have hg_pos : 0 < g.size := by
     rcases Nat.eq_zero_or_pos g.size with h0 | h0
-    · have hz : g.degree?.getD 0 = 0 := by
-        rw [(degree?_eq_none_iff g).mpr h0, Option.getD_none]
+    · have hz : g.natDegree = 0 := by
+        rw [natDegree_eq_size_sub_one, h0]
       omega
     · exact h0
-  have hg_deg : g.degree?.getD 0 = g.size - 1 := by
-    rw [degree?_eq_some_of_pos_size g hg_pos, Option.getD_some]
+  have hg_deg : g.natDegree = g.size - 1 := by
+    rw [natDegree_eq_size_sub_one]
   -- Any polynomial of degree below `g` has size ≤ g.size - 1.
-  have size_le : ∀ (p : DensePoly S), p.degree?.getD 0 < g.degree?.getD 0 →
+  have size_le : ∀ (p : DensePoly S), p.natDegree < g.natDegree →
       p.size ≤ g.size - 1 := by
     intro p hp
     rcases Nat.eq_zero_or_pos p.size with hps | hps
     · omega
-    · have hpd : p.degree?.getD 0 = p.size - 1 := by
-        rw [degree?_eq_some_of_pos_size p hps, Option.getD_some]
+    · have hpd : p.natDegree = p.size - 1 := by
+        rw [natDegree_eq_size_sub_one]
       rw [hpd, hg_deg] at hp
       omega
   have ha_size := size_le a ha
@@ -77,13 +77,8 @@ theorem degree_getD_sub_lt {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
       exact coeff_last_ne_zero_of_pos_size (a - b) (by omega) (hzero _ hlast)
     · exact h
   -- Conclude on `degree?`.
-  rcases Nat.eq_zero_or_pos (a - b).size with hs | hs
-  · have hz : (a - b).degree?.getD 0 = 0 := by
-      rw [(degree?_eq_none_iff (a - b)).mpr hs, Option.getD_none]
-    omega
-  · rw [degree?_eq_some_of_pos_size (a - b) hs, hg_deg]
-    simp only [Option.getD_some]
-    omega
+  rw [natDegree_eq_size_sub_one, hg_deg]
+  omega
 
 /-- Uniqueness of Euclidean division by a positive-degree divisor whose leading
 coefficient is a two-sided unit (in particular, a monic divisor): a reconstruction
@@ -91,19 +86,19 @@ with a small remainder is {name}`divMod`. -/
 theorem divMod_eq_of_reconstruction {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (num g q r : DensePoly S)
-    (hg : 0 < g.degree?.getD 0)
+    (hg : 0 < g.natDegree)
     (hcancel : ∀ a : S, a - (a / g.leadingCoeff) * g.leadingCoeff = (Zero.zero : S))
     (hexact : ∀ a : S, (a * g.leadingCoeff) / g.leadingCoeff = a)
     (h_top_ne : ∀ a : S, a ≠ (Zero.zero : S) → a * g.leadingCoeff ≠ (Zero.zero : S))
     (hrec : q * g + r = num)
-    (hrdeg : r.degree?.getD 0 < g.degree?.getD 0) :
+    (hrdeg : r.natDegree < g.natDegree) :
     divMod num g = (q, r) := by
   -- The actual quotient/remainder.
   rcases hqr : divMod num g with ⟨q', r'⟩
   have hrec' : q' * g + r' = num := by
     have h := divMod_reconstruction num g hcancel
     rw [hqr] at h; exact h
-  have hr'deg : r'.degree?.getD 0 < g.degree?.getD 0 := by
+  have hr'deg : r'.natDegree < g.natDegree := by
     have h := divMod_remainder_degree_lt_of_pos_degree_of_cancel num g hg hcancel
     rw [hqr] at h; exact h
   -- Difference identity: `(q - q') * g = r' - r`.
@@ -120,7 +115,7 @@ theorem divMod_eq_of_reconstruction {S : Type _}
     rw [coeff_sub_ring, coeff_sub_ring]
     grind
   -- One division, two incompatible values unless both differences vanish.
-  have hdegd : (r' - r).degree?.getD 0 < g.degree?.getD 0 :=
+  have hdegd : (r' - r).natDegree < g.natDegree :=
     degree_getD_sub_lt r' r g hg hr'deg hrdeg
   have hg_ne : g ≠ 0 := by
     intro hzero

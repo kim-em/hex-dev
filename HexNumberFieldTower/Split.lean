@@ -78,7 +78,7 @@ def selectFactor? (T : NumberTower) (candidate : AlgebraicRoot)
 /-- Encode a selected monic relative factor as one raw extension level. -/
 @[expose]
 def levelOfFactor (candidate : AlgebraicRoot) (selected : Poly T) : Level :=
-  let d := selected.degree?.getD 0
+  let d := selected.natDegree
   let defining := ((List.range d).map fun i =>
     coeffs (selected.coeff i)).toArray
   ⟨d, defining, candidate⟩
@@ -87,6 +87,33 @@ def levelOfFactor (candidate : AlgebraicRoot) (selected : Poly T) : Level :=
 inductive Roots (T : NumberTower) where
   | all
   | finite (roots : Array (Elem T × Nat))
+
+namespace Roots
+
+/-- The recorded roots with multiplicity, or `none` for the zero polynomial,
+every element being a root of that. -/
+@[expose]
+def finite? {T : NumberTower} : Roots T → Option (Array (Elem T × Nat))
+  | .finite roots => some roots
+  | .all => none
+
+/-- The recorded roots with multiplicity; the zero polynomial gives the empty
+array. -/
+@[expose]
+def toArray {T : NumberTower} (roots : Roots T) : Array (Elem T × Nat) :=
+  roots.finite?.getD #[]
+
+@[simp] theorem finite?_finite {T : NumberTower} (roots : Array (Elem T × Nat)) :
+    (Roots.finite roots).finite? = some roots := rfl
+
+@[simp] theorem finite?_all {T : NumberTower} : (Roots.all (T := T)).finite? = none := rfl
+
+@[simp] theorem toArray_finite {T : NumberTower} (roots : Array (Elem T × Nat)) :
+    (Roots.finite roots).toArray = roots := rfl
+
+@[simp] theorem toArray_all {T : NumberTower} : (Roots.all (T := T)).toArray = #[] := rfl
+
+end Roots
 
 /-- A checked extension together with all roots of the original polynomial in
 that extension. -/
@@ -162,7 +189,7 @@ def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
   let input := liftZPoly T candidate.p
   let factorization ← factor? input
   let selected ← selectFactor? T candidate factorization.factors
-  let d := selected.degree?.getD 0
+  let d := selected.natDegree
   if d = 0 then
     none
   else if d = 1 then
@@ -206,9 +233,9 @@ def factorRoot? {T : NumberTower} (f : Poly T) : Option AlgebraicRoot := do
   let p := factorEliminant f
   if hprim : ZPoly.content p = 1 then
     if hpos : 0 < p.leadingCoeff then
-      if hdegree : 0 < p.degree?.getD 0 then
+      if hdegree : 0 < p.natDegree then
         if hsimple : HasOnlySimpleRoots p then do
-          let isolations ← isolate p hsimple (separationDepth p : Int)
+          let isolations ← isolate? p hsimple (separationDepth p : Int)
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
           let candidates := refined.toList.map fun rep : RefinedIsolation p =>
             ({ p
@@ -235,7 +262,7 @@ def factorRoot? {T : NumberTower} (f : Poly T) : Option AlgebraicRoot := do
 def linearRoots? {T : NumberTower} (factors : Array (Poly T × Nat)) :
     Option (Array (Elem T × Nat)) :=
   factors.mapM fun entry =>
-    if entry.1.degree?.getD 0 = 1 && 0 < entry.2 then
+    if entry.1.natDegree = 1 && 0 < entry.2 then
       some (-(entry.1.coeff 0) / entry.1.leadingCoeff, entry.2)
     else
       none
@@ -258,7 +285,7 @@ def splitAux {T : NumberTower} (f : Poly T) (fuel : Nat) :
       | 0 => none
       | fuel + 1 => do
           let nonlinear ← factorization.factors.toList.find? fun entry =>
-            decide (1 < entry.1.degree?.getD 0)
+            decide (1 < entry.1.natDegree)
           let candidate ← factorRoot? nonlinear.1
           let step ← adjoin? T candidate
           if step.tower.dim ≤ T.dim then
@@ -276,11 +303,11 @@ def split? {T : NumberTower} (f : Poly T) : Option (Splitting T f) :=
   if f.isZero then
     some { extension := Extension.identity T
            roots := .all }
-  else if f.degree?.getD 0 = 0 then
+  else if f.natDegree = 0 then
     some { extension := Extension.identity T
            roots := .finite #[] }
   else
-    splitAux f (f.degree?.getD 0)
+    splitAux f (f.natDegree)
 
 /-! Compiled fixed-embedding selection regression. -/
 
@@ -313,7 +340,7 @@ private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
                   factorization.factors with
             | some true, some selected =>
                 factorization.factors.size = 2 &&
-                  selected.degree?.getD 0 = 1 &&
+                  selected.natDegree = 1 &&
                   coeffs (selected.coeff 0) = #[0, -1] &&
                   Evaluation.vanishesAt? selected
                     extension.root = some true
@@ -424,7 +451,7 @@ private def selectFourthRootTwoRep :
               #[(minus, 1), (plus, 1)] with
           | some selected =>
               let level := levelOfFactor fourth selected
-              selected.degree?.getD 0 = 2 &&
+              selected.natDegree = 2 &&
                 coeffs (selected.coeff 0) = #[0, -1] &&
                 level.defining = #[#[0, -1], #[0, 0]]
           | none => false

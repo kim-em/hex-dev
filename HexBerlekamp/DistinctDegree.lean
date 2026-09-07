@@ -341,7 +341,7 @@ private theorem isUnitPolynomial_one
     | _ => false) = true
   have hcoeffs : (DensePoly.C (1 : ZMod64 p)).coeffs = #[(1 : ZMod64 p)] :=
     DensePoly.coeffs_C_of_ne_zero (ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)))
-  simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+  simp [DensePoly.natDegree, DensePoly.degree?, DensePoly.size, hcoeffs]
 
 /-- `finishDegreePower` from unit accumulator `1` preserves `residual`: the
 emitted bucket factor times the returned residual equals `residual`. -/
@@ -623,7 +623,7 @@ private theorem unitPolynomial_dvd_any
     [ZMod64.PrimeModulus p]
     {u target : FpPoly p} (hu : isUnitPolynomial u = true) :
     u ∣ target := by
-  have hu_degree : ¬ 0 < u.degree?.getD 0 := by
+  have hu_degree : ¬ 0 < u.natDegree := by
     intro hpos
     unfold isUnitPolynomial at hu
     cases hdeg : u.degree? with
@@ -634,7 +634,7 @@ private theorem unitPolynomial_dvd_any
         rw [hdeg] at hu
         cases k with
         | zero =>
-            rw [hdeg] at hpos
+            rw [DensePoly.natDegree, hdeg] at hpos
             simp at hpos
         | succ _ => simp at hu
   have hu_deg : u.degree? = some 0 := by
@@ -650,10 +650,10 @@ private theorem unitPolynomial_dvd_any
         | succ _ => simp at hu
   have hu_size_ne_zero : u.size ≠ 0 := by
     intro hsize
-    unfold DensePoly.degree? at hu_deg
+    unfold DensePoly.natDegree DensePoly.degree? at hu_deg
     simp [hsize] at hu_deg
   have hu_size : u.size = 1 := by
-    unfold DensePoly.degree? at hu_deg
+    unfold DensePoly.natDegree DensePoly.degree? at hu_deg
     simp [hu_size_ne_zero] at hu_deg
     omega
   have hmod : target % u = 0 := by

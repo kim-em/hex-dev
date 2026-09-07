@@ -113,8 +113,8 @@ private theorem natDegree_toMathlibPolynomial_factorPolys_eq
       decide_eq_true_eq] at hpair
     exact hpair.1.2
   rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize]
-  show primeData.factorPolys[i].degree?.getD 0 = _
-  rw [hdegree]
+  show primeData.factorPolys[i].natDegree = _
+  rw [Hex.DensePoly.natDegree_eq_degree?_getD, hdegree]
   rfl
 
 /--
@@ -176,7 +176,7 @@ theorem checkIrreducibleCert_sound
         rw [← hcd_eq, Polynomial.natDegree_mul hc_ne hd_ne]
       have hc_le_half : c.natDegree ≤ F.natDegree / 2 := by omega
       -- c.natDegree ∈ candidateFactorDegrees f
-      have hF_natDeg : F.natDegree = f.degree?.getD 0 :=
+      have hF_natDeg : F.natDegree = f.natDegree :=
         HexPolyMathlib.natDegree_toPolynomial f
       have htarget_mem :
           c.natDegree ∈ Hex.ZPolyIrreducibilityCertificate.candidateFactorDegrees f := by
@@ -441,7 +441,7 @@ theorem irreducible_of_checkIrreducibleCertLinear
     (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)
     (hprime : cert.perPrime.all (fun primeData => decide (Nat.Prime primeData.p)) = true)
     (hcontent : decide (Hex.ZPoly.content f = 1) = true)
-    (hpos : decide (0 < f.degree?.getD 0) = true)
+    (hpos : decide (0 < f.natDegree) = true)
     (hcert : Hex.checkIrreducibleCertLinear f cert = true) :
     Irreducible (HexPolyZMathlib.toPolynomial f) := by
   have hprime' : ∀ primeData ∈ cert.perPrime.toList, Nat.Prime primeData.p := by
@@ -454,7 +454,7 @@ theorem irreducible_of_checkIrreducibleCertLinear
     rw [← hget]
     simpa [Array.getElem_toList] using of_decide_eq_true hdec
   have hcontent' : Hex.ZPoly.content f = 1 := of_decide_eq_true hcontent
-  have hdeg : (HexPolyZMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+  have hdeg : (HexPolyZMathlib.toPolynomial f).natDegree = f.natDegree :=
     HexPolyMathlib.natDegree_toPolynomial f
   exact checkIrreducibleCertLinear_sound f cert hprime'
     (HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive f hcontent')

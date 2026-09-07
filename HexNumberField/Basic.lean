@@ -33,14 +33,14 @@ class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
   is_true : ZPoly.isIrreducible p = true
   /-- `p` has positive degree, excluding the prime constants the integer
   checker also accepts. -/
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
 
 /-- Canonical reduced rational coordinates in the fixed field `ℚ(x)`. -/
 structure PolyQuot (p : ZPoly) (x : SimpleRoot p) where
   /-- Reduced rational coordinates in the power basis of the selected root. -/
   coeffs : DensePoly Rat
   /-- The coordinates are already reduced modulo the defining polynomial. -/
-  degree_lt : coeffs.degree?.getD 0 < p.degree?.getD 0
+  degree_lt : coeffs.natDegree < p.natDegree
 
 /-- A factorization-lazy algebraic root with an eagerly certified isolating
 representative. -/
@@ -52,7 +52,7 @@ structure AlgebraicRoot where
   /-- `p` has positive leading coefficient. -/
   pos_lc : 0 < p.leadingCoeff
   /-- `p` has positive degree. -/
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
   /-- `p` has only simple roots. -/
   squarefree : HasOnlySimpleRoots p
   /-- The selected root of `p`. -/
@@ -86,7 +86,7 @@ def IsCanonical (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     (p ≠ ZPoly.X ∧
       ∃ (isolations : Array (DyadicRootIsolation p))
         (refined : Array (RefinedIsolation p)),
-        isolate p squarefree (separationDepth p : Int) = some isolations ∧
+        isolate? p squarefree (separationDepth p : Int) = some isolations ∧
           isolations.mapM DyadicRootIsolation.toRefined? = some refined ∧
           rep ∈ refined.toList)
 
@@ -97,7 +97,7 @@ def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
     Option {r : RefinedIsolation p //
       IsCanonical p squarefree r ∧ r.sameRoot rep = true} :=
-  match hisolate : isolate p squarefree (separationDepth p : Int) with
+  match hisolate : isolate? p squarefree (separationDepth p : Int) with
   | none => none
   | some isolations =>
       match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
@@ -125,7 +125,7 @@ structure AlgebraicNumber where
   /-- `p` has positive leading coefficient. -/
   pos_lc : 0 < p.leadingCoeff
   /-- `p` has positive degree. -/
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
   /-- The Boolean irreducibility checker accepted `p`. -/
   checked : ZPoly.CheckedIrreducible p
   /-- `p` has only simple roots. -/
@@ -193,7 +193,7 @@ private def zeroRaw : AlgebraicNumber :=
 -- Keep executable evidence that the ordinary isolator also meets its stated
 -- completeness bound on `X`; the explicit zero path makes totality independent
 -- of this bounded computation.
-#guard (isolate ZPoly.X zero_squarefree
+#guard (isolate? ZPoly.X zero_squarefree
   (separationDepth ZPoly.X : Int)).isSome
 
 /-- The canonical algebraic number zero, represented by the fixed explicit
@@ -220,7 +220,7 @@ constructors. It is checked because failure of the bounded isolation driver is
 retired only by the Mathlib companion's completeness proof. -/
 def ofNormalized?
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
-    (pos_degree : 0 < p.degree?.getD 0)
+    (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) : Option AlgebraicNumber :=
   if _hzero : p = ZPoly.X then
@@ -236,7 +236,7 @@ the checked boundary needed by the Mathlib totality proof without exposing the
 sealed `AlgebraicNumber` constructor. -/
 theorem ofNormalized?_isSome_eq
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
-    (pos_degree : 0 < p.degree?.getD 0)
+    (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) :
     (ofNormalized? p prim pos_lc pos_degree checked squarefree rep).isSome =
@@ -252,7 +252,7 @@ theorem ofNormalized?_isSome_eq
 /-- Successful canonicalization retains the supplied normalized polynomial. -/
 theorem ofNormalized?_p
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
-    (pos_degree : 0 < p.degree?.getD 0)
+    (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) {a : AlgebraicNumber}
     (h : ofNormalized? p prim pos_lc pos_degree checked squarefree rep = some a) :
@@ -271,7 +271,7 @@ stores a representative intersecting the supplied isolation. This is the
 Mathlib-free behavioral boundary used by semantic soundness proofs. -/
 theorem ofNormalized?_spec
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
-    (pos_degree : 0 < p.degree?.getD 0)
+    (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) {a : AlgebraicNumber}
     (h : ofNormalized? p prim pos_lc pos_degree checked squarefree rep = some a) :
@@ -349,5 +349,31 @@ structure RootCount where
 inductive RootSet where
   | all
   | finite (roots : Array RootCount)
+
+namespace RootSet
+
+/-- The recorded roots of a nonzero polynomial, or `none` for the zero
+polynomial, every number being a root of that. -/
+@[expose]
+def finite? : RootSet → Option (Array RootCount)
+  | .finite roots => some roots
+  | .all => none
+
+/-- The recorded roots, with the zero polynomial giving the empty array. -/
+@[expose]
+def toArray (roots : RootSet) : Array RootCount :=
+  roots.finite?.getD #[]
+
+@[simp] theorem finite?_finite (roots : Array RootCount) :
+    (RootSet.finite roots).finite? = some roots := rfl
+
+@[simp] theorem finite?_all : RootSet.all.finite? = none := rfl
+
+@[simp] theorem toArray_finite (roots : Array RootCount) :
+    (RootSet.finite roots).toArray = roots := rfl
+
+@[simp] theorem toArray_all : RootSet.all.toArray = #[] := rfl
+
+end RootSet
 
 end Hex

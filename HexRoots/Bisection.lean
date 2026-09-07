@@ -243,7 +243,7 @@ to the exact cached list. -/
 /-- The Pellet half of component certification using a supplied shift. -/
 @[expose] def certifyPelletShift? (p : ZPoly) (c : Component)
     (shift : TaylorShift p (encSquare c.squares).center) : Option (Certified p) :=
-  let deg := p.degree?.getD 0
+  let deg := p.natDegree
   let ks := #[c.candidateK] ++ ((Array.range (deg + 1)).filter (· != c.candidateK))
   certifyPelletListShift? p c shift ks.toList
 
@@ -251,7 +251,7 @@ to the exact cached list. -/
     compatibility surface computes its own shift; `certify?` supplies the
     already-cached shift to `certifyPelletShift?`. -/
 @[expose] def certifyPellet? (p : ZPoly) (c : Component) : Option (Certified p) :=
-  let deg := p.degree?.getD 0
+  let deg := p.natDegree
   let ks := #[c.candidateK] ++ ((Array.range (deg + 1)).filter (· != c.candidateK))
   certifyPelletList? p c ks.toList
 
@@ -302,7 +302,7 @@ to the exact cached list. -/
     let wideShift : TaylorShift p wideCenter :=
       if hcenter : enc.center = wideCenter then shift.cast hcenter
       else TaylorShift.compute p wideCenter
-    let deg := p.degree?.getD 0
+    let deg := p.natDegree
     let ks := #[wide.candidateK] ++
       ((Array.range (deg + 1)).filter (· != wide.candidateK))
     return certifyPelletListShift? p wide wideShift ks.toList

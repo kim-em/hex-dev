@@ -205,7 +205,7 @@ private theorem zmod64_zero_ne_one_of_pos_degree
           hall _
         exact False.elim (hback (by simp [hback_eq, hcoeff]))
   have hdeg : FpPoly.degree f = 0 := by
-    simp [FpPoly.degree, DensePoly.degree?, DensePoly.size, hsize]
+    simp [FpPoly.degree, DensePoly.natDegree, DensePoly.degree?, DensePoly.size, hsize]
   simp [hdeg] at hf
 
 /-- Modulo any nonconstant polynomial, the zero and one quotient elements are distinct. -/

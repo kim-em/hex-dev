@@ -10,7 +10,7 @@ public import Mathlib
 public import HexRealRootsMathlib.ChainCorrespond
 public import HexRealRoots.Var
 -- `import all` on the executable modules so the non-`@[expose]` bodies of
--- `sturmChain`, `sturmCount`, `sturmVarAt`, and `signVar` unfold here (the
+-- `sturmChain`, `ZPoly.sturmCount`, `sturmVarAt`, and `signVar` unfold here (the
 -- degree-positivity derivation reads the empty chain of a degree-`≤ 0` input).
 import all HexRealRootsMathlib.Separation
 import all HexRealRoots.Basic
@@ -34,7 +34,7 @@ Both consume only the decidable certificate fields (`count_one`, `ordered`,
 `complete`) plus the correspondence theorems `sturmCount_eq_card_roots` and
 `rootCount_eq_card_roots` from `ChainCorrespond`.
 
-The correspondence theorems carry a `1 ≤ (p.degree?).getD 0` hypothesis
+The correspondence theorems carry a `1 ≤ p.natDegree` hypothesis
 (`SquareFreeRat` alone is insufficient — `SquareFreeRat 0` is vacuous).
 `exists_unique_root` does **not** need any extra hypothesis: a
 `RealRootIsolation` carries `count_one`, and a Sturm count of `1` forces a
@@ -54,9 +54,10 @@ noncomputable section
 variable {p : Hex.ZPoly}
 
 /-- A polynomial of degree `≤ 0` has the empty Sturm chain. -/
-private theorem sturmChain_eq_nil_of_degree_nonpos (h : (p.degree?).getD 0 = 0) :
+private theorem sturmChain_eq_nil_of_degree_nonpos (h : p.natDegree = 0) :
     Hex.ZPoly.sturmChain p = #[] := by
   have hcase : p.degree? = none ∨ p.degree? = some 0 := by
+    unfold Hex.DensePoly.natDegree at h
     rcases hd : p.degree? with _ | n
     · exact Or.inl rfl
     · rcases n with _ | m
@@ -67,11 +68,11 @@ private theorem sturmChain_eq_nil_of_degree_nonpos (h : (p.degree?).getD 0 = 0) 
 /-- A Sturm count of `1` forces positive degree: a degree-`≤ 0` input has the
 empty chain, whose count is `0` at every pair of endpoints. -/
 theorem degree_pos_of_count_one (iso : Hex.RealRootIsolation p) :
-    1 ≤ (p.degree?).getD 0 := by
+    1 ≤ p.natDegree := by
   by_contra h
-  have hz : (p.degree?).getD 0 = 0 := by omega
+  have hz : p.natDegree = 0 := by omega
   have hc := iso.count_one
-  unfold Hex.sturmCount at hc
+  unfold Hex.ZPoly.sturmCount at hc
   rw [sturmChain_eq_nil_of_degree_nonpos hz] at hc
   simp only [Hex.sturmVarAt, List.map_nil, Hex.signVar, List.filter_nil,
     Hex.signVar.go, Nat.cast_zero, sub_zero] at hc
@@ -94,7 +95,7 @@ theorem RealRootIsolation.exists_unique_root (hp : Hex.ZPoly.SquareFreeRat p)
     (iso : Hex.RealRootIsolation p) :
     ∃! r : ℝ, (toPolyℝ p).IsRoot r ∧
       Dyadic.toReal iso.interval.lower < r ∧ r ≤ Dyadic.toReal iso.interval.upper := by
-  have hdeg : 1 ≤ (p.degree?).getD 0 := degree_pos_of_count_one iso
+  have hdeg : 1 ≤ p.natDegree := degree_pos_of_count_one iso
   have hp0 : p ≠ 0 := by
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
@@ -119,9 +120,9 @@ theorem RealRootIsolation.exists_unique_root (hp : Hex.ZPoly.SquareFreeRat p)
   exact hyM
 
 /-- The positive-degree core of `RealRootIsolations.isolates`: the injective
-root map from isolations hits `rootCount p` distinct roots, which is all of
+root map from isolations hits `ZPoly.rootCount p` distinct roots, which is all of
 them. -/
-private theorem isolates_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem isolates_of_degree_pos (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) (out : Hex.RealRootIsolations p) :
     ∀ r : ℝ, (toPolyℝ p).IsRoot r →
       ∃! iso ∈ out.isolations.toList,
@@ -214,14 +215,14 @@ theorem RealRootIsolations.isolates (hp0 : p ≠ 0)
       exfalso
       have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
       have hnd : (toPolyℝ p).natDegree = 0 := by
-        rw [natDegree_toPolyℝ, hd]; rfl
+        rw [natDegree_toPolyℝ, Hex.DensePoly.natDegree, hd]; rfl
       have hC := Polynomial.eq_C_of_natDegree_eq_zero hnd
       have hc0 : (toPolyℝ p).coeff 0 = 0 := by
         have := hr
         rw [Polynomial.IsRoot, hC, Polynomial.eval_C] at this
         exact this
       exact hP0 (by rw [hC, hc0, Polynomial.C_0])
-    · exact isolates_of_degree_pos (by simp [hd]) hp out
+    · exact isolates_of_degree_pos (by simp [Hex.DensePoly.natDegree, hd]) hp out
 
 /-- Dot-notation alias in the `Hex` namespace for
 `HexRealRootsMathlib.RealRootIsolation.exists_unique_root`, so

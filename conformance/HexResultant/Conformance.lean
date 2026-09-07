@@ -80,7 +80,7 @@ private def strictTail (chain : Array (DensePoly Int)) : Bool :=
 /-- Check the public sharp length bound for a nonzero input pair. -/
 private def withinChainBound (f g : DensePoly Int) : Bool :=
   decide ((subresultantChain f g).size ≤
-    min (f.degree?.getD 0) (g.degree?.getD 0) + 2)
+    min (f.natDegree) (g.natDegree) + 2)
 
 /-! # Exact-division helpers -/
 
@@ -450,7 +450,7 @@ example (f g : DensePoly Int) (i : Nat) (hi : 1 ≤ i)
 
 example (f g : DensePoly Int) (hf : f ≠ 0) (hg : g ≠ 0) :
     (subresultantChain f g).size ≤
-      min (f.degree?.getD 0) (g.degree?.getD 0) + 2 :=
+      min (f.natDegree) (g.natDegree) + 2 :=
   subresultantChain_size_le f g hf hg
 
 example (f g : DensePoly Int) (hg : g ≠ 0) (extra : Nat) :

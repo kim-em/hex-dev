@@ -245,8 +245,8 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
   | some a, some b =>
       match a.add? b, a.mul? b, a.sub? b with
       | some sum, some product, some difference =>
-          sum.p.degree?.getD 0 = 4 && product.p.degree?.getD 0 = 2 &&
-            difference.p.degree?.getD 0 = 4 &&
+          sum.p.natDegree = 4 && product.p.natDegree = 2 &&
+            difference.p.natDegree = 4 &&
             decide (3 < sum.rep.1.square.re) &&
             decide (0 < product.rep.1.square.re) &&
             decide (-1 < difference.rep.1.square.re) &&

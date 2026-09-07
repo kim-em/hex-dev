@@ -164,8 +164,8 @@ private def adversarialDiagonal : Vector (DensePoly Rat) 3 :=
 -- The total invariant-factor degree agrees with the determinant degree.
 #guard
   (invariantFactors typical).toList.foldl
-      (fun degree p => degree + p.degree?.getD 0) 0 ==
-    (Matrix.det typical).degree?.getD 0
+      (fun degree p => degree + p.natDegree) 0 ==
+    (Matrix.det typical).natDegree
 
 -- Rectangular orientation and rank-deficient coverage.
 private def wide : Matrix (DensePoly Rat) 2 3 :=

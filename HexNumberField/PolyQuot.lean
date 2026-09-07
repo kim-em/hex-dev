@@ -70,8 +70,8 @@ instance : Zero (PolyQuot p x) where
 
 instance : One (PolyQuot p x) where
   one := ⟨1, by
-    change (DensePoly.C (1 : Rat)).degree?.getD 0 < p.degree?.getD 0
-    rw [DensePoly.degree?_C_getD]
+    change (DensePoly.C (1 : Rat)).natDegree < p.natDegree
+    rw [DensePoly.natDegree_C]
     exact x.posDegree⟩
 
 /-- Reduced coordinate addition. -/

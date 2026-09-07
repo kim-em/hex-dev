@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/TrialFactorization.lean",
+ "baseline_blob": "c82d9ef68fbe1e2df7165d9f3c3a0605c56599b4",
+ "current_blob": "a9aa21aa14a4b2c55b1819010488b6e7723e9db2",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

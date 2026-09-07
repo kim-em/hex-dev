@@ -114,13 +114,13 @@ private theorem field_reconstruct (p q : DensePoly F) (hq : q.isZero = false) :
   exact divMod_reconstruction p q (field_cancel_lead q hq)
 
 private theorem field_remainder_degree (p q : DensePoly F) (hq : q.isZero = false)
-    (hdegree : 0 < q.degree?.getD 0) :
-    (divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
+    (hdegree : 0 < q.natDegree) :
+    (divMod p q).2.natDegree < q.natDegree := by
   exact divMod_remainder_degree_lt_of_pos_degree_of_cancel p q hdegree
     (field_cancel_lead q hq)
 
 private theorem field_small_remainder (p q : DensePoly F) (hq : q.isZero = false)
-    (hdegree : ¬ 0 < q.degree?.getD 0) :
+    (hdegree : ¬ 0 < q.natDegree) :
     (divMod p q).2 = 0 := by
   have hqPos : 0 < q.size := by
     by_cases h : 0 < q.size
@@ -130,8 +130,8 @@ private theorem field_small_remainder (p q : DensePoly F) (hq : q.isZero = false
       rw [hi] at hq
       cases hq
   have hqSize : q.size = 1 := by
-    have hdeg : q.degree?.getD 0 = q.size - 1 := by
-      rw [degree?_eq_some_of_pos_size q hqPos, Option.getD_some]
+    have hdeg : q.natDegree = q.size - 1 := by
+      rw [natDegree_eq_size_sub_one]
     rw [hdeg] at hdegree
     omega
   exact divMod_remainder_eq_zero_of_degree_zero_of_cancel p q hqSize

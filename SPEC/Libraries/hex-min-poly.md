@@ -896,7 +896,7 @@ theorem minPoly_dvd_charPoly (A : Hex.Matrix F n n) :
 
 /-- The degree bound the Mathlib-free layer does not have. -/
 theorem degree?_minPoly_le (A : Hex.Matrix F n n) :
-    (Hex.Matrix.minPoly A).degree?.getD 0 ≤ n
+    (Hex.Matrix.minPoly A).natDegree ≤ n
 
 /-- The executable `lcm` is Mathlib's, as an equality rather than an
 association, because both are monic-normalised. -/

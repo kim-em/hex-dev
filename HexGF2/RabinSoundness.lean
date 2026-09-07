@@ -174,7 +174,7 @@ private theorem dvd_xPowSubX_add_frobeniusDiffMod (f : GF2Poly) (k : Nat) :
 /-! # Reduced-residue helpers -/
 
 private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
-    (hred : p.isZero = true ∨ p.degree < bound) (hbound : bound ≤ n) :
+    (hred : p.isZero = true ∨ p.natDegree < bound) (hbound : bound ≤ n) :
     p.coeff n = false := by
   cases hred with
   | inl hzero =>
@@ -187,14 +187,14 @@ private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
         obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hpzeroFalse
         have hdn : d < n := by
           have hdegree' : d < bound := by
-            simpa [degree, hd] using hdegree
+            simpa [natDegree, hd] using hdegree
           omega
         exact coeff_eq_false_of_degree?_lt hd hdn
 
 private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
-    (hp : p.isZero = true ∨ p.degree < bound)
-    (hq : q.isZero = true ∨ q.degree < bound) :
-    (p + q).isZero = true ∨ (p + q).degree < bound := by
+    (hp : p.isZero = true ∨ p.natDegree < bound)
+    (hq : q.isZero = true ∨ q.natDegree < bound) :
+    (p + q).isZero = true ∨ (p + q).natDegree < bound := by
   by_cases hsumZero : (p + q).isZero = true
   · exact Or.inl hsumZero
   · right
@@ -209,11 +209,11 @@ private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
         rw [coeff_add_eq_bne, hpfalse, hqfalse] at htrue
         contradiction
       · omega
-    change (p + q).degree < bound
-    simpa [degree, hd] using hdbound
+    change (p + q).natDegree < bound
+    simpa [natDegree, hd] using hdbound
 
 private theorem reduced_dvd_eq_zero {f r : GF2Poly}
-    (hf : f ≠ 0) (hred : r.isZero = true ∨ r.degree < f.degree)
+    (hf : f ≠ 0) (hred : r.isZero = true ∨ r.natDegree < f.natDegree)
     (hdvd : f ∣ r) :
     r = 0 := by
   by_cases hr : r = 0
@@ -222,19 +222,19 @@ private theorem reduced_dvd_eq_zero {f r : GF2Poly}
     | inl hzero =>
         exact eq_zero_of_isZero hzero
     | inr hlt =>
-        have hle : f.degree ≤ r.degree := degree_le_of_dvd_nonzero hf hr hdvd
+        have hle : f.natDegree ≤ r.natDegree := natDegree_le_of_dvd_nonzero hf hr hdvd
         omega
 
 /-- Each `xpow2kMod` value is a `% f` step, so it is reduced modulo `f`. -/
 private theorem xpow2kMod_reduced (f : GF2Poly) (hf : f ≠ 0) :
     ∀ k, (xpow2kMod f k).isZero = true ∨
-      (xpow2kMod f k).degree < f.degree
+      (xpow2kMod f k).natDegree < f.natDegree
   | 0 => by
-      show (monomial 1 % f).isZero = true ∨ (monomial 1 % f).degree < f.degree
+      show (monomial 1 % f).isZero = true ∨ (monomial 1 % f).natDegree < f.natDegree
       exact mod_degree_lt _ f hf
   | k + 1 => by
       show ((xpow2kMod f k) * (xpow2kMod f k) % f).isZero = true ∨
-        ((xpow2kMod f k) * (xpow2kMod f k) % f).degree < f.degree
+        ((xpow2kMod f k) * (xpow2kMod f k) % f).natDegree < f.natDegree
       exact mod_degree_lt _ f hf
 
 /--
@@ -261,9 +261,9 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
         have hmod_red := mod_degree_lt (monomial 1) f hf
         have hdiff_red :
             (frobeniusDiffMod f k).isZero = true ∨
-              (frobeniusDiffMod f k).degree < f.degree := by
+              (frobeniusDiffMod f k).natDegree < f.natDegree := by
           show ((xpow2kMod f k) + (monomial 1 % f)).isZero = true ∨
-            ((xpow2kMod f k) + (monomial 1 % f)).degree < f.degree
+            ((xpow2kMod f k) + (monomial 1 % f)).natDegree < f.natDegree
           exact add_reduced_of_reduced hxpow_red hmod_red
         exact reduced_dvd_eq_zero hf hdiff_red hdiff
     rw [isZero_iff_eq_zero]
@@ -288,20 +288,20 @@ available, `irreducible_dvd_xPowSubX_degree` follows by char-2 cancellation.
 -/
 theorem xpow2kMod_eq_modX_at_degree
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
-    (hg_pos : 0 < g.degree) :
-    xpow2kMod g g.degree = monomial 1 % g := by
+    (hg_pos : 0 < g.natDegree) :
+    xpow2kMod g g.natDegree = monomial 1 % g := by
   let Xq : GF2nPoly g hg_irr := GF2nPoly.X (f := g) (hirr := hg_irr)
-  have hfixed : GF2nPoly.frobeniusIter Xq g.degree = Xq :=
+  have hfixed : GF2nPoly.frobeniusIter Xq g.natDegree = Xq :=
     GF2nPoly.frobeniusIter_degree_eq_self
       (f := g) (hirr := hg_irr) hg_pos Xq
   have hreduce :
-      GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g g.degree) =
+      GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g g.natDegree) =
         GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1) := by
     calc
-      GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g g.degree)
-          = GF2nPoly.frobeniusIter Xq g.degree := by
+      GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g g.natDegree)
+          = GF2nPoly.frobeniusIter Xq g.natDegree := by
               exact (GF2nPoly.quotient_X_frobeniusIter_eq_reduce_xpow2kMod
-                (f := g) (hirr := hg_irr) g.degree).symm
+                (f := g) (hirr := hg_irr) g.natDegree).symm
       _ = Xq := hfixed
       _ = GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1) := rfl
   have hval := congrArg GF2nPoly.val hreduce
@@ -310,8 +310,8 @@ theorem xpow2kMod_eq_modX_at_degree
     intro hzero
     rw [hzero] at hg_pos
     simp at hg_pos
-  have hxred := xpow2kMod_reduced g hg_ne g.degree
-  rw [GF2Poly.mod_eq_self_of_reduced (xpow2kMod g g.degree) g hxred] at hval
+  have hxred := xpow2kMod_reduced g hg_ne g.natDegree
+  rw [GF2Poly.mod_eq_self_of_reduced (xpow2kMod g g.natDegree) g hxred] at hval
   exact hval
 
 /--
@@ -323,11 +323,11 @@ carries the residue-field Fermat–Euler argument.
 -/
 theorem irreducible_dvd_xPowSubX_degree
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
-    (hg_pos : 0 < g.degree) :
-    g ∣ xPowSubX g.degree := by
-  rw [(dvd_xPowSubX_iff_frobeniusDiffMod_isZero g g.degree),
+    (hg_pos : 0 < g.natDegree) :
+    g ∣ xPowSubX g.natDegree := by
+  rw [(dvd_xPowSubX_iff_frobeniusDiffMod_isZero g g.natDegree),
       isZero_iff_eq_zero]
-  show xpow2kMod g g.degree + monomial 1 % g = 0
+  show xpow2kMod g g.natDegree + monomial 1 % g = 0
   rw [xpow2kMod_eq_modX_at_degree hg_irr hg_pos, add_self]
 
 /--
@@ -521,17 +521,17 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
     rcases hgh with ⟨r, hr⟩
     apply hh_ne_zero
     rw [hr, hg, zero_mul]
-  have hh_deg : h.degree = 0 := degree_eq_of_degree?_eq_some hh_deg?
-  have hgle : g.degree ≤ h.degree :=
-    degree_le_of_dvd_nonzero hg_ne_zero hh_ne_zero hgh
+  have hh_deg : h.natDegree = 0 := natDegree_eq_of_degree?_eq_some hh_deg?
+  have hgle : g.natDegree ≤ h.natDegree :=
+    natDegree_le_of_dvd_nonzero hg_ne_zero hh_ne_zero hgh
   rw [hh_deg] at hgle
-  have hg_deg_zero : g.degree = 0 := Nat.eq_zero_of_le_zero hgle
+  have hg_deg_zero : g.natDegree = 0 := Nat.eq_zero_of_le_zero hgle
   have hg_isZero_false : g.isZero = false := by
     cases hzero : g.isZero
     · rfl
     · exact False.elim (hg_ne_zero (eq_zero_of_isZero hzero))
   obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hg_isZero_false
-  have hd0 : d = 0 := by simpa [degree, hd] using hg_deg_zero
+  have hd0 : d = 0 := by simpa [natDegree, hd] using hg_deg_zero
   unfold isUnitPolynomial
   rw [hd, hd0]
   rfl
@@ -547,7 +547,7 @@ private theorem dvd_trans {a b c : GF2Poly} (hab : a ∣ b) (hbc : b ∣ c) :
   rw [hs, hr, mul_assoc]
 
 /-- A polynomial of positive degree is nonzero. -/
-theorem ne_zero_of_pos_degree {f : GF2Poly} (hpos : 0 < f.degree) : f ≠ 0 := by
+theorem ne_zero_of_pos_degree {f : GF2Poly} (hpos : 0 < f.natDegree) : f ≠ 0 := by
   intro hzero
   rw [hzero] at hpos
   simp at hpos
@@ -562,7 +562,7 @@ soundness: absolute divisibility by `X^(2^k) - X` is the same as
 -/
 theorem dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
-    (hg_pos : 0 < g.degree) (k : Nat) :
+    (hg_pos : 0 < g.natDegree) (k : Nat) :
     g ∣ xPowSubX k ↔
       GF2nPoly.frobeniusIter (GF2nPoly.X (f := g) (hirr := hg_irr)) k =
         GF2nPoly.X (f := g) (hirr := hg_irr) := by
@@ -638,19 +638,19 @@ orchestration layer; the divisibility/equality translation stays centralized in
 -/
 theorem quotient_X_frobenius_fixed_iff_degree_dvd
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
-    (hg_pos : 0 < g.degree) {n : Nat}
+    (hg_pos : 0 < g.natDegree) {n : Nat}
     (hfixed :
       GF2nPoly.frobeniusIter (GF2nPoly.X (f := g) (hirr := hg_irr)) n =
         GF2nPoly.X (f := g) (hirr := hg_irr)) :
-    g.degree ∣ n := by
+    g.natDegree ∣ n := by
   let Xq : GF2nPoly g hg_irr := GF2nPoly.X (f := g) (hirr := hg_irr)
-  have hmod_fixed : GF2nPoly.frobeniusIter Xq (n % g.degree) = Xq :=
+  have hmod_fixed : GF2nPoly.frobeniusIter Xq (n % g.natDegree) = Xq :=
     GF2nPoly.frobeniusIter_mod_degree_eq_of_fixed
       (f := g) (hirr := hg_irr) hg_pos (a := Xq) hfixed
-  by_cases hr_zero : n % g.degree = 0
+  by_cases hr_zero : n % g.natDegree = 0
   · exact Nat.dvd_of_mod_eq_zero hr_zero
-  · have hr_pos : 0 < n % g.degree := Nat.pos_of_ne_zero hr_zero
-    have hr_lt : n % g.degree < g.degree := Nat.mod_lt n hg_pos
+  · have hr_pos : 0 < n % g.natDegree := Nat.pos_of_ne_zero hr_zero
+    have hr_lt : n % g.natDegree < g.natDegree := Nat.mod_lt n hg_pos
     exact False.elim
       (GF2nPoly.frobeniusIter_X_ne_self_of_pos_lt_degree
         (f := g) (hirr := hg_irr) hg_pos hr_pos hr_lt hmod_fixed)
@@ -661,11 +661,11 @@ Forward Rabin degree theorem for packed GF2 polynomials.
 If an irreducible `g` of positive degree divides `X^(2^n) - X`, then
 `deg g` divides `n`.
 -/
-theorem degree_dvd_of_irreducible_dvd_xPowSubX
+theorem natDegree_dvd_of_irreducible_dvd_xPowSubX
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
-    (hg_pos : 0 < g.degree) {n : Nat}
+    (hg_pos : 0 < g.natDegree) {n : Nat}
     (hg_dvd : g ∣ xPowSubX n) :
-    g.degree ∣ n := by
+    g.natDegree ∣ n := by
   exact quotient_X_frobenius_fixed_iff_degree_dvd hg_irr hg_pos
     ((dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X hg_irr hg_pos n).mp hg_dvd)
 
@@ -679,8 +679,8 @@ theorem factor_ne_zero_of_ne_zero
 
 /-- A nonzero polynomial whose degree is not zero has positive degree. -/
 theorem pos_degree_of_ne_zero_of_not_degree_zero
-    {a : GF2Poly} (_ha_ne_zero : a ≠ 0) (ha_not_unit : a.degree ≠ 0) :
-    0 < a.degree := by
+    {a : GF2Poly} (_ha_ne_zero : a ≠ 0) (ha_not_unit : a.natDegree ≠ 0) :
+    0 < a.natDegree := by
   omega
 
 /-- A nonzero packed `GF2Poly` has a successful `degree?` computation. -/
@@ -698,33 +698,33 @@ the cofactor `b` has positive degree.
 -/
 theorem factor_degree_lt
     {f a b : GF2Poly}
-    (hab : a * b = f) (ha_ne_zero : a ≠ 0) (hb_pos : 0 < b.degree) :
-    a.degree < f.degree := by
+    (hab : a * b = f) (ha_ne_zero : a ≠ 0) (hb_pos : 0 < b.natDegree) :
+    a.natDegree < f.natDegree := by
   have hb_ne_zero : b ≠ 0 := ne_zero_of_pos_degree hb_pos
   obtain ⟨da, hda⟩ := degree?_isSome_of_ne_zero ha_ne_zero
   obtain ⟨db, hdb⟩ := degree?_isSome_of_ne_zero hb_ne_zero
   have hab_deg : (a * b).degree? = some (da + db) :=
     degree?_mul_of_degree?_eq_some hda hdb
   have hf_deg : f.degree? = some (da + db) := hab ▸ hab_deg
-  have ha_deg : a.degree = da := degree_eq_of_degree?_eq_some hda
-  have hb_deg : b.degree = db := degree_eq_of_degree?_eq_some hdb
-  have hf_deg_eq : f.degree = da + db := degree_eq_of_degree?_eq_some hf_deg
+  have ha_deg : a.natDegree = da := natDegree_eq_of_degree?_eq_some hda
+  have hb_deg : b.natDegree = db := natDegree_eq_of_degree?_eq_some hdb
+  have hf_deg_eq : f.natDegree = da + db := natDegree_eq_of_degree?_eq_some hf_deg
   rw [hb_deg] at hb_pos
   omega
 
 /-- A positive-degree polynomial is not a unit polynomial. -/
 theorem isUnitPolynomial_eq_false_of_pos_degree
-    {g : GF2Poly} (hpos : 0 < g.degree) :
+    {g : GF2Poly} (hpos : 0 < g.natDegree) :
     isUnitPolynomial g = false := by
   unfold isUnitPolynomial
   cases hdeg : g.degree? with
   | none =>
       rfl
   | some k =>
-      have hk : k = g.degree := by
-        exact (degree_eq_of_degree?_eq_some hdeg).symm
+      have hk : k = g.natDegree := by
+        exact (natDegree_eq_of_degree?_eq_some hdeg).symm
       subst hk
-      cases hcase : g.degree with
+      cases hcase : g.natDegree with
       | zero =>
           simp [hcase] at hpos
       | succ _ =>
@@ -737,13 +737,13 @@ the gcd leg holds at every maximal proper divisor.
 theorem rabinCoprimeTest_of_mem_maximalProperDivisors
     (f : GF2Poly)
     (hwitnesses : (rabinWitnesses f).all Prod.snd = true)
-    {m : Nat} (hm : m ∈ maximalProperDivisors f.degree) :
+    {m : Nat} (hm : m ∈ maximalProperDivisors f.natDegree) :
     rabinCoprimeTest f m = true := by
   unfold rabinWitnesses at hwitnesses
   rw [List.all_eq_true] at hwitnesses
   have hmem :
       (m, rabinCoprimeTest f m) ∈
-        (maximalProperDivisors f.degree).map
+        (maximalProperDivisors f.natDegree).map
           (fun d => (d, rabinCoprimeTest f d)) :=
     List.mem_map.mpr ⟨m, hm, rfl⟩
   exact hwitnesses _ hmem
@@ -766,10 +766,10 @@ Given any `a` of positive degree `n`, there is an irreducible divisor of
 `a` of positive degree at most `n`.
 -/
 private theorem exists_irreducible_factor_of_pos_degree_aux :
-    ∀ (n : Nat) (a : GF2Poly), a.degree = n → 0 < a.degree →
+    ∀ (n : Nat) (a : GF2Poly), a.natDegree = n → 0 < a.natDegree →
         ∃ g : GF2Poly,
           GF2Poly.Irreducible g ∧ g ∣ a ∧
-            0 < g.degree ∧ g.degree ≤ a.degree := by
+            0 < g.natDegree ∧ g.natDegree ≤ a.natDegree := by
   classical
   intro n
   induction n using Nat.strongRecOn with
@@ -779,28 +779,28 @@ private theorem exists_irreducible_factor_of_pos_degree_aux :
     · exact ⟨a, hirr, dvd_refl' a, ha_pos, Nat.le_refl _⟩
     · have ha_ne : a ≠ 0 := ne_zero_of_pos_degree ha_pos
       have hnotforall :
-          ¬ (∀ x y : GF2Poly, x * y = a → x.degree = 0 ∨ y.degree = 0) :=
+          ¬ (∀ x y : GF2Poly, x * y = a → x.natDegree = 0 ∨ y.natDegree = 0) :=
         fun h => hirr ⟨ha_ne, h⟩
-      have hex : ∃ x y, x * y = a ∧ x.degree ≠ 0 ∧ y.degree ≠ 0 := by
+      have hex : ∃ x y, x * y = a ∧ x.natDegree ≠ 0 ∧ y.natDegree ≠ 0 := by
         apply Classical.byContradiction
         intro hno
         apply hnotforall
         intro x y hxy
-        by_cases hx0 : x.degree = 0
+        by_cases hx0 : x.natDegree = 0
         · exact Or.inl hx0
-        · by_cases hy0 : y.degree = 0
+        · by_cases hy0 : y.natDegree = 0
           · exact Or.inr hy0
           · exact (hno ⟨x, y, hxy, hx0, hy0⟩).elim
       obtain ⟨x, y, hxy, hx_deg_ne, hy_deg_ne⟩ := hex
-      have hx_pos : 0 < x.degree := Nat.pos_of_ne_zero hx_deg_ne
-      have hy_pos : 0 < y.degree := Nat.pos_of_ne_zero hy_deg_ne
+      have hx_pos : 0 < x.natDegree := Nat.pos_of_ne_zero hx_deg_ne
+      have hy_pos : 0 < y.natDegree := Nat.pos_of_ne_zero hy_deg_ne
       have hx_dvd_a : x ∣ a := ⟨y, hxy.symm⟩
       have hx_ne_zero : x ≠ 0 := ne_zero_of_pos_degree hx_pos
-      have hx_lt : x.degree < a.degree :=
+      have hx_lt : x.natDegree < a.natDegree :=
         factor_degree_lt hxy hx_ne_zero hy_pos
-      have hx_lt_n : x.degree < n := hn ▸ hx_lt
+      have hx_lt_n : x.natDegree < n := hn ▸ hx_lt
       obtain ⟨g, hg_irr, hg_dvd_x, hg_deg_pos, hg_deg_le_x⟩ :=
-        ih x.degree hx_lt_n x rfl hx_pos
+        ih x.natDegree hx_lt_n x rfl hx_pos
       exact ⟨g, hg_irr, dvd_trans hg_dvd_x hx_dvd_a, hg_deg_pos,
         Nat.le_trans hg_deg_le_x (Nat.le_of_lt hx_lt)⟩
 
@@ -810,14 +810,14 @@ Every nonconstant factor of a packed GF2 polynomial has an irreducible factor.
 The proof is the usual descent on degree, specialized to the project-side
 `GF2Poly.Irreducible` predicate and the packed divisibility relation. The
 hypothesis `a * b = f` is irrelevant to the construction; descent operates
-purely on `a` via strong induction on `a.degree`.
+purely on `a` via strong induction on `a.natDegree`.
 -/
 theorem exists_irreducible_factor_of_factor
-    {f a b : GF2Poly} (_hab : a * b = f) (ha_pos : 0 < a.degree) :
+    {f a b : GF2Poly} (_hab : a * b = f) (ha_pos : 0 < a.natDegree) :
     ∃ g : GF2Poly,
       GF2Poly.Irreducible g ∧ g ∣ a ∧
-        0 < g.degree ∧ g.degree ≤ a.degree :=
-  exists_irreducible_factor_of_pos_degree_aux a.degree a rfl ha_pos
+        0 < g.natDegree ∧ g.natDegree ≤ a.natDegree :=
+  exists_irreducible_factor_of_pos_degree_aux a.natDegree a rfl ha_pos
 
 /-! # Soundness theorem -/
 
@@ -835,18 +835,18 @@ theorem rabinTest_imp_irreducible
   simp only [rabinTest, Bool.and_eq_true, decide_eq_true_eq] at hrabin
   obtain ⟨⟨hpos, hdivides⟩, hwitnesses⟩ := hrabin
   have hdiff_isZero :
-      (frobeniusDiffMod f f.degree).isZero = true := by
+      (frobeniusDiffMod f f.natDegree).isZero = true := by
     unfold rabinDividesTest at hdivides
     exact hdivides
-  have hf_dvd_xPowSubX_n : f ∣ xPowSubX f.degree :=
-    (dvd_xPowSubX_iff_frobeniusDiffMod_isZero f f.degree).mpr hdiff_isZero
+  have hf_dvd_xPowSubX_n : f ∣ xPowSubX f.natDegree :=
+    (dvd_xPowSubX_iff_frobeniusDiffMod_isZero f f.natDegree).mpr hdiff_isZero
   have hf_ne_zero : f ≠ 0 := ne_zero_of_pos_degree hpos
   refine ⟨hf_ne_zero, ?_⟩
   intro a b hab
-  by_cases ha_unit : a.degree = 0
+  by_cases ha_unit : a.natDegree = 0
   · exact Or.inl ha_unit
   refine Or.inr ?_
-  by_cases hb_unit : b.degree = 0
+  by_cases hb_unit : b.natDegree = 0
   · exact hb_unit
   exfalso
   have ha_ne_zero : a ≠ 0 := factor_ne_zero_of_ne_zero hab hf_ne_zero
@@ -855,11 +855,11 @@ theorem rabinTest_imp_irreducible
       rw [mul_comm]
       exact hab
     exact factor_ne_zero_of_ne_zero hba hf_ne_zero
-  have ha_pos : 0 < a.degree :=
+  have ha_pos : 0 < a.natDegree :=
     pos_degree_of_ne_zero_of_not_degree_zero ha_ne_zero ha_unit
-  have hb_pos : 0 < b.degree :=
+  have hb_pos : 0 < b.natDegree :=
     pos_degree_of_ne_zero_of_not_degree_zero hb_ne_zero hb_unit
-  have ha_lt : a.degree < f.degree :=
+  have ha_lt : a.natDegree < f.natDegree :=
     factor_degree_lt hab ha_ne_zero hb_pos
   obtain ⟨g, hg_irr, hg_dvd_a, hg_deg_pos, hg_deg_le_a⟩ :=
     exists_irreducible_factor_of_factor hab ha_pos
@@ -870,17 +870,17 @@ theorem rabinTest_imp_irreducible
       f = a * b := hab.symm
       _ = (g * r) * b := by rw [hr]
       _ = g * (r * b) := by rw [mul_assoc]
-  have hg_dvd_xPowSubX_n : g ∣ xPowSubX f.degree :=
+  have hg_dvd_xPowSubX_n : g ∣ xPowSubX f.natDegree :=
     dvd_trans hg_dvd_f hf_dvd_xPowSubX_n
-  have hdeg_dvd : g.degree ∣ f.degree :=
-    degree_dvd_of_irreducible_dvd_xPowSubX hg_irr hg_deg_pos hg_dvd_xPowSubX_n
-  have hdeg_lt : g.degree < f.degree :=
+  have hdeg_dvd : g.natDegree ∣ f.natDegree :=
+    natDegree_dvd_of_irreducible_dvd_xPowSubX hg_irr hg_deg_pos hg_dvd_xPowSubX_n
+  have hdeg_lt : g.natDegree < f.natDegree :=
     Nat.lt_of_le_of_lt hg_deg_le_a ha_lt
   obtain ⟨m, hm_mem, hdeg_dvd_m⟩ :=
     exists_maximalProperDivisor_dvd hg_deg_pos hdeg_dvd hdeg_lt
-  have hg_dvd_xPowSubX_deg : g ∣ xPowSubX g.degree :=
+  have hg_dvd_xPowSubX_deg : g ∣ xPowSubX g.natDegree :=
     irreducible_dvd_xPowSubX_degree hg_irr hg_deg_pos
-  have hxPow_dvd_xPow : xPowSubX g.degree ∣ xPowSubX m :=
+  have hxPow_dvd_xPow : xPowSubX g.natDegree ∣ xPowSubX m :=
     xPowSubX_dvd_of_dvd hdeg_dvd_m
   have hg_dvd_xPowSubX_m : g ∣ xPowSubX m :=
     dvd_trans hg_dvd_xPowSubX_deg hxPow_dvd_xPow

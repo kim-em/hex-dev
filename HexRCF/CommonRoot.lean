@@ -63,9 +63,7 @@ theorem noRoot_of_constant {atom carrier : ZPoly} {cert : CommonRootCert}
   have hcast0 : toPolyℝ cert.gcd ≠ 0 :=
     fun hzero => hg0 (toPolyℝ_eq_zero_iff.mp hzero)
   have hdegree : (toPolyℝ cert.gcd).natDegree = 0 := by
-    rw [natDegree_toPolyℝ,
-      DensePoly.degree?_eq_some_of_pos_size cert.gcd (by omega), hvalid]
-    rfl
+    rw [natDegree_toPolyℝ, DensePoly.natDegree_eq_size_sub_one, hvalid]
   have hunit : IsUnit (toPolyℝ cert.gcd) := by
     rw [Polynomial.isUnit_iff_degree_eq_zero,
       Polynomial.degree_eq_natDegree hcast0, hdegree]

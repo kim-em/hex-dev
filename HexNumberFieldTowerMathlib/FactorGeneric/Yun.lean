@@ -509,7 +509,7 @@ degree. Keeping this transport separate prevents the recursive Yun proof from
 re-elaborating the coefficient-field construction at every induction step. -/
 theorem natDegree_rawPolynomial
     (f : DensePoly (Arithmetic.Coeff levels)) :
-    (Norm.rawPolynomial levels f).natDegree = f.degree?.getD 0 := by
+    (Norm.rawPolynomial levels f).natDegree = f.natDegree := by
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   rw [← Norm.rawPolynomialHom_apply levels hvalid hinjective hinv]
@@ -539,7 +539,7 @@ theorem degree_pos_of_rawPolynomial_root
     (f : DensePoly (Arithmetic.Coeff levels))
     (hf : Norm.rawPolynomial levels f ≠ 0) {z : ℂ}
     (hroot : (Norm.rawPolynomial levels f).IsRoot z) :
-    0 < f.degree?.getD 0 := by
+    0 < f.natDegree := by
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hdegree := Polynomial.degree_pos_of_root hf hroot
@@ -725,7 +725,7 @@ theorem yunAux_complete (z : ℂ) (r : Nat)
           simp [heq]
         have hroot : (Norm.rawPolynomial levels component).IsRoot z :=
           (Polynomial.rootMultiplicity_pos hcomponentNe).mp hpositive
-        have hdegree : 0 < component.degree?.getD 0 :=
+        have hdegree : 0 < component.natDegree :=
           degree_pos_of_rawPolynomial_root hvalid hinjective hinv component
             hcomponentNe hroot
         rw [ite_eq_left hdegree]
@@ -753,11 +753,11 @@ theorem yunAux_positive
     (multiplicity fuel : Nat) (out : Array (Array (Array Rat) × Nat))
     (hMultiplicity : 0 < multiplicity)
     (hOut : ∀ component ∈ out.toList,
-      0 < (Factor.rawPoly levels component.1).degree?.getD 0 ∧
+      0 < (Factor.rawPoly levels component.1).natDegree ∧
         0 < component.2) :
     ∀ component ∈
       (Factor.yunAux levels w repeated multiplicity fuel out).toList,
-      0 < (Factor.rawPoly levels component.1).degree?.getD 0 ∧
+      0 < (Factor.rawPoly levels component.1).natDegree ∧
         0 < component.2 := by
   induction fuel generalizing w repeated multiplicity out with
   | zero => simpa [Factor.yunAux] using hOut
@@ -878,10 +878,10 @@ theorem yunAux_monic
           · rw [rawPoly_polyCoords]
             have hcomponentNe : component ≠ 0 := by
               intro hzero
-              have hdegreeZero : component.degree?.getD 0 = 0 := by
+              have hdegreeZero : component.natDegree = 0 := by
                 rw [hzero]
                 simp
-              have hdegreeComponent : 0 < component.degree?.getD 0 := by
+              have hdegreeComponent : 0 < component.natDegree := by
                 simpa [component, shared] using hdegree
               omega
             have hquotientNe : w / shared ≠ 0 := by
@@ -907,7 +907,7 @@ theorem rootMultiplicity_le_natDegree_complex
 the component's stored multiplicity. -/
 theorem yun_sound
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0)
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree)
     (z : ℂ) (entry : Array (Array Rat) × Nat)
     (hentry : entry ∈ (Factor.yunRaw levels f).toList)
     (hroot : (Norm.rawPolynomial levels
@@ -917,7 +917,7 @@ theorem yun_sound
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
-  have hdegreeP : 0 < p.degree?.getD 0 := hdegree
+  have hdegreeP : 0 < p.natDegree := hdegree
   have hnatDegree : (Norm.rawPolynomial levels p).natDegree ≠ 0 := by
     rw [natDegree_rawPolynomial hvalid hinjective hinv]
     omega
@@ -934,7 +934,7 @@ theorem yun_sound
       distinct repeated :=
     YunInvariant.init hvalid hinjective hinv p hpNe hnatDegree z
   unfold Factor.yunRaw at hentry
-  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)] at hentry
+  rw [ite_eq_right (by omega : p.natDegree ≠ 0)] at hentry
   exact yunAux_sound hvalid hinjective hinv z
     ((Norm.rawPolynomial levels p).rootMultiplicity z)
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
@@ -944,7 +944,7 @@ theorem yun_sound
 component at its exact multiplicity. -/
 theorem yun_complete
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0)
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree)
     (z : ℂ)
     (hroot : (Norm.rawPolynomial levels
       (Factor.rawPoly levels f)).IsRoot z) :
@@ -956,7 +956,7 @@ theorem yun_complete
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
-  have hdegreeP : 0 < p.degree?.getD 0 := hdegree
+  have hdegreeP : 0 < p.natDegree := hdegree
   have hnatDegree : (Norm.rawPolynomial levels p).natDegree ≠ 0 := by
     rw [natDegree_rawPolynomial hvalid hinjective hinv]
     omega
@@ -976,11 +976,10 @@ theorem yun_complete
     have hpZero : p = 0 := (DensePoly.size_eq_zero_iff p).mp hsizeZero
     rw [hpZero] at hdegreeP
     simp at hdegreeP
-  have hdenseDegree : p.degree?.getD 0 = p.size - 1 := by
-    rw [DensePoly.degree?_eq_some_of_pos_size p hsize]
-    rfl
+  have hdenseDegree : p.natDegree = p.size - 1 :=
+    DensePoly.natDegree_eq_size_sub_one p
   have hdegreeEq : (Norm.rawPolynomial levels p).natDegree =
-      p.degree?.getD 0 :=
+      p.natDegree :=
     natDegree_rawPolynomial hvalid hinjective hinv p
   have hfuel : r < 1 + (p.size + 1) := by omega
   let normalized := Norm.monic p
@@ -992,13 +991,13 @@ theorem yun_complete
   have hcomplete := yunAux_complete hvalid hinjective hinv z r
     distinct repeated 1 (p.size + 1) #[] invariant hindex hfuel
   unfold Factor.yunRaw
-  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)]
+  rw [ite_eq_right (by omega : p.natDegree ≠ 0)]
   exact hcomplete
 
 /-- Every emitted Yun component has only simple roots over `ℂ`. -/
 theorem yun_rootMultiplicity_le_one
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0)
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree)
     (entry : Array (Array Rat) × Nat)
     (hentry : entry ∈ (Factor.yunRaw levels f).toList) (z : ℂ) :
     (Norm.rawPolynomial levels
@@ -1006,7 +1005,7 @@ theorem yun_rootMultiplicity_le_one
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
-  have hdegreeP : 0 < p.degree?.getD 0 := hdegree
+  have hdegreeP : 0 < p.natDegree := hdegree
   have hnatDegree : (Norm.rawPolynomial levels p).natDegree ≠ 0 := by
     rw [natDegree_rawPolynomial hvalid hinjective hinv]
     omega
@@ -1022,7 +1021,7 @@ theorem yun_rootMultiplicity_le_one
   have invariant : YunInvariant z r 1 distinct repeated :=
     YunInvariant.init hvalid hinjective hinv p hpNe hnatDegree z
   unfold Factor.yunRaw at hentry
-  rw [ite_eq_right (by omega : p.degree?.getD 0 ≠ 0)] at hentry
+  rw [ite_eq_right (by omega : p.natDegree ≠ 0)] at hentry
   exact yunAux_rootMultiplicity_le_one hvalid hinjective hinv z r
     distinct repeated 1 (p.size + 1) #[] invariant (by simp)
     entry hentry
@@ -1033,7 +1032,7 @@ multiplicity. -/
 theorem yun_positive
     (f : Array (Array Rat)) (component : Array (Array Rat) × Nat)
     (hcomponent : component ∈ (Factor.yunRaw levels f).toList) :
-    0 < (Factor.rawPoly levels component.1).degree?.getD 0 ∧
+    0 < (Factor.rawPoly levels component.1).natDegree ∧
       0 < component.2 := by
   simp only [Factor.yunRaw] at hcomponent
   split at hcomponent
@@ -1069,7 +1068,7 @@ theorem yun_monic
 /-- Every tower Yun component passes the executable squarefreeness test. -/
 theorem yun_squarefree
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0)
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree)
     (component : Array (Array Rat) × Nat)
     (hcomponent : component ∈ (Factor.yunRaw levels f).toList) :
     Norm.isSquarefree levels component.1 := by
@@ -1101,7 +1100,7 @@ theorem yun_squarefree
 /-- Distinct tower Yun components pass the executable coprimality test. -/
 theorem yun_coprime
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0)
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree)
     (a b : Array (Array Rat) × Nat)
     (ha : a ∈ (Factor.yunRaw levels f).toList)
     (hb : b ∈ (Factor.yunRaw levels f).toList)
@@ -1117,9 +1116,8 @@ theorem yun_coprime
   have hsizeG : ¬g.size ≤ 1 := hsize
   have hsize' : 1 < g.size := by omega
   have hgSize : 0 < g.size := by omega
-  have hgDegree : 0 < g.degree?.getD 0 := by
-    rw [DensePoly.degree?_eq_some_of_pos_size g hgSize]
-    simp only [Option.getD_some]
+  have hgDegree : 0 < g.natDegree := by
+    rw [DensePoly.natDegree_eq_size_sub_one]
     omega
   have htargetDegree : 0 < (Norm.rawPolynomial levels g).natDegree := by
     rw [natDegree_rawPolynomial hvalid hinjective hinv]
@@ -1259,7 +1257,7 @@ complete) components weighted by their own multiplicities at `z` sum to the
 input's multiplicity at `z`. -/
 theorem yunMultiplicity_sum
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) (z : ℂ)
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree) (z : ℂ)
     (components : List (Array (Array Rat) × Nat))
     (hcomponents : ∀ entry ∈ components,
       entry ∈ (Factor.yunRaw levels f).toList)
@@ -1397,7 +1395,7 @@ theorem yun_rawPolynomial_monic
 input exactly. -/
 theorem yun_product
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) :
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree) :
     Factor.yunProduct levels (Factor.yunRaw levels f) =
       Factor.polyCoords (Norm.monic (Factor.rawPoly levels f)) := by
   let : Field (Arithmetic.Coeff levels) :=
@@ -1408,7 +1406,7 @@ theorem yun_product
     Norm.rawPolynomial levels (Factor.rawPoly levels entry.1) ^ entry.2
   let product := polys.prod
   let normalized := Norm.rawPolynomial levels (Norm.monic p)
-  have hdegreeP : 0 < p.degree?.getD 0 := hdegree
+  have hdegreeP : 0 < p.natDegree := hdegree
   have hpNe : p ≠ 0 := by
     intro hzero
     rw [hzero] at hdegreeP
@@ -1514,9 +1512,9 @@ theorem checkYun_yunRaw
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
-  by_cases hdegreeZero : p.degree?.getD 0 = 0
+  by_cases hdegreeZero : p.natDegree = 0
   · simp [Factor.checkYun, Factor.yunRaw, p, hdegreeZero]
-  · have hdegree : 0 < p.degree?.getD 0 :=
+  · have hdegree : 0 < p.natDegree :=
       Nat.pos_of_ne_zero hdegreeZero
     let components := Factor.yunRaw levels f
     have hmultiplicities :
@@ -1526,7 +1524,7 @@ theorem checkYun_yunRaw
     have hpositiveMonic : components.all (fun component =>
         0 < component.2 &&
           let factor := Factor.rawPoly levels component.1
-          0 < factor.degree?.getD 0 && factor.leadingCoeff = 1) := by
+          0 < factor.natDegree && factor.leadingCoeff = 1) := by
       rw [Array.all_eq_true_iff_forall_mem]
       intro component hcomponent
       have hcomponent' : component ∈

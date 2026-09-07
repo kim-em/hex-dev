@@ -102,7 +102,7 @@ dense polynomial below the defining degree. -/
 theorem dense_eq_zero_of_eval (level : Level) (lower : List Level)
     (hinjective : DenoteInjective (level :: lower))
     (f : DensePoly (Arithmetic.Coeff lower))
-    (hdegree : f.degree?.getD 0 < level.degree)
+    (hdegree : f.natDegree < level.degree)
     (heval : denseEval lower level.root.toComplex level.degree f = 0) :
     f = 0 := by
   have hlift : liftDense level lower f = liftDense level lower 0 := by
@@ -135,8 +135,8 @@ theorem dense_eq_zero_of_eval (level : Level) (lower : List Level)
     apply DensePoly.coeff_eq_zero_of_size_le
     by_cases hf : f.size = 0
     · omega
-    · have hdeg : f.degree?.getD 0 = f.size - 1 := by
-        simp [DensePoly.degree?, hf]
+    · have hdeg : f.natDegree = f.size - 1 := by
+        simp [DensePoly.natDegree, DensePoly.degree?, hf]
       rw [hdeg] at hdegree
       omega
 
@@ -194,23 +194,20 @@ theorem denseEval_relation (level : Level) (lower : List Level)
 degree. -/
 theorem value_degree_lt (level : Level) (lower : List Level) (a : Array Rat)
     (hdegree : 0 < level.degree) :
-    (Arithmetic.Coeff.value level lower a).degree?.getD 0 < level.degree := by
+    (Arithmetic.Coeff.value level lower a).natDegree < level.degree := by
   have hsize : (Arithmetic.Coeff.value level lower a).size ≤ level.degree :=
     (DensePoly.size_ofCoeffs_le _).trans (by
       simp)
-  by_cases hzero : (Arithmetic.Coeff.value level lower a).size = 0
-  · simp [DensePoly.degree?, hzero, hdegree]
-  · rw [DensePoly.degree?_eq_some_of_pos_size _ (Nat.pos_of_ne_zero hzero),
-      Option.getD_some]
-    omega
+  rw [DensePoly.natDegree_eq_size_sub_one]
+  omega
 
 /-- Evaluation at the selected generator distinguishes all lower-coefficient
 polynomials below the defining degree. This is the exact semantic consequence
 of irreducibility needed to construct the next tower embedding. -/
 def Separates (level : Level) (lower : List Level) : Prop :=
   ∀ f g : DensePoly (Arithmetic.Coeff lower),
-    f.degree?.getD 0 < level.degree →
-    g.degree?.getD 0 < level.degree →
+    f.natDegree < level.degree →
+    g.natDegree < level.degree →
     denseEval lower level.root.toComplex level.degree f =
     denseEval lower level.root.toComplex level.degree g →
     f = g
@@ -317,10 +314,9 @@ theorem relation_size (level : Level) (lower : List Level)
 /-- The executable relation has its advertised defaulted degree. -/
 theorem relation_degree (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower)) :
-    (Arithmetic.Coeff.relation level lower).degree?.getD 0 = level.degree := by
-  rw [DensePoly.degree?_eq_some_of_pos_size _ (by
-      rw [relation_size level lower hvalid]
-      omega), Option.getD_some, relation_size level lower hvalid]
+    (Arithmetic.Coeff.relation level lower).natDegree = level.degree := by
+  rw [DensePoly.natDegree_eq_size_sub_one,
+    relation_size level lower hvalid]
   omega
 
 /-- An irreducible defining relation that vanishes at the selected generator
@@ -444,7 +440,7 @@ theorem relation_irreducible_of_injective (level : Level)
     have hlt : q.natDegree < level.degree := by omega
     let dense : DensePoly (Arithmetic.Coeff lower) :=
       HexPolyMathlib.ofPolynomial q
-    have hdenseDegree : dense.degree?.getD 0 < level.degree := by
+    have hdenseDegree : dense.natDegree < level.degree := by
       rw [← HexPolyMathlib.natDegree_toPolynomial]
       simpa [dense]
     have hdenseEval :
@@ -496,9 +492,9 @@ theorem xgcdLeftMonic_size_one (level : Level) (lower : List Level)
   let result := DensePoly.xgcdLeftMonic value relation
   let gcd := result.gcd
   change gcd.size = 1
-  have hvalueDegree : value.degree?.getD 0 < level.degree :=
+  have hvalueDegree : value.natDegree < level.degree :=
     value_degree_lt level lower a (Nat.zero_lt_of_lt hvalid.1.1)
-  have hrelationDegree : relation.degree?.getD 0 = level.degree :=
+  have hrelationDegree : relation.natDegree = level.degree :=
     relation_degree level lower hvalid
   have hvalueMap : denseMap lower level.root.toComplex hvalid.2.2
       hlowerInjective hinv value = denote (level :: lower) a := by
@@ -532,7 +528,7 @@ theorem xgcdLeftMonic_size_one (level : Level) (lower : List Level)
     apply hvalueNe
     rw [hq, hzero]
     exact DensePoly.zero_mul q
-  have hgcdDegree : gcd.degree?.getD 0 < level.degree := by
+  have hgcdDegree : gcd.natDegree < level.degree := by
     have hpolyValue : HexPolyMathlib.toPolynomial value ≠ 0 :=
       toPolynomial_ne_zero hvalueNe
     have hle := Polynomial.natDegree_le_of_dvd
@@ -555,16 +551,16 @@ theorem xgcdLeftMonic_size_one (level : Level) (lower : List Level)
     rw [hfactor, hzero]
     rw [DensePoly.mul_comm_poly gcd 0]
     exact DensePoly.zero_mul gcd
-  have hgcdDegreeZero : gcd.degree?.getD 0 = 0 := by
+  have hgcdDegreeZero : gcd.natDegree = 0 := by
     apply Nat.eq_zero_of_not_pos
     intro hgcdPos
-    have hfactorDegree : factor.degree?.getD 0 < level.degree := by
+    have hfactorDegree : factor.natDegree < level.degree := by
       have hgcdPolyNe : HexPolyMathlib.toPolynomial gcd ≠ 0 :=
         toPolynomial_ne_zero hgcdNe
       have hfactorPolyNe : HexPolyMathlib.toPolynomial factor ≠ 0 :=
         toPolynomial_ne_zero hfactorNe
       have hsum : level.degree =
-          gcd.degree?.getD 0 + factor.degree?.getD 0 := by
+          gcd.natDegree + factor.natDegree := by
         calc
           level.degree = (HexPolyMathlib.toPolynomial relation).natDegree := by
             simpa using hrelationDegree.symm
@@ -576,7 +572,7 @@ theorem xgcdLeftMonic_size_one (level : Level) (lower : List Level)
           _ = (HexPolyMathlib.toPolynomial gcd).natDegree +
                 (HexPolyMathlib.toPolynomial factor).natDegree := by
             rw [Polynomial.natDegree_mul hgcdPolyNe hfactorPolyNe]
-          _ = gcd.degree?.getD 0 + factor.degree?.getD 0 := by
+          _ = gcd.natDegree + factor.natDegree := by
             rw [HexPolyMathlib.natDegree_toPolynomial,
               HexPolyMathlib.natDegree_toPolynomial]
       omega
@@ -601,8 +597,7 @@ theorem xgcdLeftMonic_size_one (level : Level) (lower : List Level)
     intro n
     rw [DensePoly.coeff_zero]
     exact DensePoly.coeff_eq_zero_of_size_le gcd (by omega)
-  rw [DensePoly.degree?_eq_some_of_pos_size gcd hgcdSizePos,
-    Option.getD_some] at hgcdDegreeZero
+  rw [DensePoly.natDegree_eq_size_sub_one] at hgcdDegreeZero
   omega
 
 /-- The normalized monic extended-gcd coefficient used by executable
@@ -637,9 +632,9 @@ theorem denote_xgcd_inverse (level : Level) (lower : List Level)
       (Arithmetic.flattenBlocks level.degree (levelsDim lower)
         (((List.range level.degree).map fun i =>
           ((scaled % relation).coeff i).data).toArray)) = _
-  have hvalueDegree : value.degree?.getD 0 < level.degree :=
+  have hvalueDegree : value.natDegree < level.degree :=
     value_degree_lt level lower a (Nat.zero_lt_of_lt hvalid.1.1)
-  have hrelationDegree : relation.degree?.getD 0 = level.degree :=
+  have hrelationDegree : relation.natDegree = level.degree :=
     relation_degree level lower hvalid
   have hvalueMap : denseMap lower level.root.toComplex hvalid.2.2
       hlowerInjective hinv value = denote (level :: lower) a := by
@@ -697,7 +692,7 @@ theorem denote_xgcd_inverse (level : Level) (lower : List Level)
     rw [hrelationPolynomial, zero_mul, add_zero] at hmapDivision
     rw [denseMap, HexPolyMathlib.toPolynomial_mod, denseMap]
     exact hmapDivision
-  have hnormalizedDegree : (scaled % relation).degree?.getD 0 < level.degree := by
+  have hnormalizedDegree : (scaled % relation).natDegree < level.degree := by
     rw [← hrelationDegree]
     exact DensePoly.mod_degree_lt_of_pos_degree scaled relation (by
       rw [hrelationDegree]
@@ -1026,7 +1021,7 @@ theorem isIrreducible_nil_toMathlib (f : Array (Array Rat))
   simp only [Factor.isIrreducible, Bool.and_eq_true] at hcheck
   have hdegree := hcheck.1.1.1
   have hirreducible := hcheck.2
-  have hdegree' : 0 < (Factor.rawPoly [] f).degree?.getD 0 :=
+  have hdegree' : 0 < (Factor.rawPoly [] f).natDegree :=
     of_decide_eq_true hdegree
   let raw := Factor.toRatPoly f
   let primitive := ZPoly.ratPolyPrimitivePart raw

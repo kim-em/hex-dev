@@ -18,7 +18,7 @@ Mode:
 
 Covered operations:
 - `GF2Poly.ofWords`, `GF2Poly.ofUInt64`, `GF2Poly.monomial`, `GF2Poly.toWords`.
-- `GF2Poly.coeff`, `GF2Poly.degree?`, `GF2Poly.degree`.
+- `GF2Poly.coeff`, `GF2Poly.degree?`, `GF2Poly.natDegree`.
 - `GF2Poly.add`, `GF2Poly.mulXk`, `GF2Poly.divXk`, `GF2Poly.mul`.
 - `GF2Poly.divMod`, `GF2Poly.div`, `GF2Poly.mod`, `GF2Poly.gcd`, `GF2Poly.xgcd`.
 - `pureClmul` and trusted-runtime `clmul`.
@@ -92,11 +92,11 @@ private def pDividend : GF2Poly :=
 #guard (monomial 70).coeff 69 = false
 
 #guard (0 : GF2Poly).degree? = none
-#guard (0 : GF2Poly).degree = 0
+#guard (0 : GF2Poly).natDegree = 0
 #guard (ofUInt64 0x80).degree? = some 7
-#guard (ofUInt64 0x80).degree = 7
+#guard (ofUInt64 0x80).natDegree = 7
 #guard pCross.degree? = some 64
-#guard pCross.degree = 64
+#guard pCross.natDegree = 64
 
 #guard w (pA + pB) = #[0b1101]
 #guard ((pA + pB).coeff 1) = ((pA.coeff 1) != (pB.coeff 1))
@@ -315,7 +315,7 @@ example (a : Hex.GF2nPoly f hirr) : a * 1 + 0 = a := by grind
 example (a : Hex.GF2nPoly f hirr) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
   Hex.GF2nPoly.mul_inv_cancel a ha
 
-example (hdeg : 0 < f.degree) : (0 : Hex.GF2nPoly f hirr) ≠ 1 :=
+example (hdeg : 0 < f.natDegree) : (0 : Hex.GF2nPoly f hirr) ≠ 1 :=
   Hex.GF2nPoly.zero_ne_one_of_degree_pos hdeg
 
 end GrindStructure

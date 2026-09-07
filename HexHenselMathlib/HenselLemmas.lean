@@ -55,7 +55,7 @@ theorem hensel_correct
         (Hex.FpPoly.liftToZ (s * Hex.ZPoly.modP p g + t * Hex.ZPoly.modP p h))
         1 p)
     (hmonic : Hex.DensePoly.Monic g)
-    (hgdeg : 0 < g.degree?.getD 0) :
+    (hgdeg : 0 < g.natDegree) :
     let r := Hex.ZPoly.henselLift p k f g h s t
     let φ := Int.castRingHom (ZMod (p ^ k))
     (HexPolyMathlib.toPolynomial r.g).map φ *
@@ -107,7 +107,7 @@ theorem hensel_degree
         (Hex.FpPoly.liftToZ (s * Hex.ZPoly.modP p g + t * Hex.ZPoly.modP p h))
         1 p)
     (hmonic : Hex.DensePoly.Monic g)
-    (hgdeg : 0 < g.degree?.getD 0) :
+    (hgdeg : 0 < g.natDegree) :
     let r := Hex.ZPoly.henselLift p k f g h s t
     (HexPolyMathlib.toPolynomial r.g).natDegree =
       (HexPolyMathlib.toPolynomial g).natDegree := by
@@ -116,7 +116,8 @@ theorem hensel_degree
       r.g.degree? = g.degree? := by
     simpa [r] using
       Hex.ZPoly.henselLift_degree?_of_base p k f g h s t hk hp hprod hbez hmonic hgdeg
-  simp [r, HexPolyMathlib.natDegree_toPolynomial, hdegree]
+  simp only [r, HexPolyMathlib.natDegree_toPolynomial,
+    Hex.DensePoly.natDegree_eq_degree?_getD, hdegree]
 
 /--
 Equality of Mathlib polynomial reductions modulo `m` gives the executable

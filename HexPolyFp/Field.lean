@@ -160,15 +160,15 @@ private theorem add_sub_add_right (a b c d : DensePoly (ZMod64 p)) :
 /-- `(DensePoly.divMod f m).2` has degree strictly below `m` when `m` has positive degree. -/
 private theorem divMod_remainder_degree_lt
     [PrimeModulus p] (f m : DensePoly (ZMod64 p))
-    (hdegree : 0 < m.degree?.getD 0) :
-    (DensePoly.divMod f m).2.degree?.getD 0 < m.degree?.getD 0 := by
+    (hdegree : 0 < m.natDegree) :
+    (DensePoly.divMod f m).2.natDegree < m.natDegree := by
   apply DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel f m hdegree
   intro a
   let lead := m.leadingCoeff
   have hpos_size : 0 < m.size := by
     by_cases hzero : m.size = 0
-    · have hdeg_zero : m.degree?.getD 0 = 0 := by
-        simp [DensePoly.degree?, hzero]
+    · have hdeg_zero : m.natDegree = 0 := by
+        simp [DensePoly.natDegree, DensePoly.degree?, hzero]
       omega
     · exact Nat.pos_of_ne_zero hzero
   have hlead_eq : lead = m.coeff (m.size - 1) := by
@@ -231,8 +231,8 @@ private theorem zmod_div_mul_cancel_of_ne [PrimeModulus p]
 /-- `f % m` has degree strictly below `m` when `m` has positive degree. -/
 private theorem mod_remainder_degree_lt
     [PrimeModulus p] (f m : DensePoly (ZMod64 p))
-    (hdegree : 0 < m.degree?.getD 0) :
-    (f % m).degree?.getD 0 < m.degree?.getD 0 := by
+    (hdegree : 0 < m.natDegree) :
+    (f % m).natDegree < m.natDegree := by
   exact divMod_remainder_degree_lt f m hdegree
 
 /-- Folding `DensePoly.mulCoeffStep f g n i` over `List.range m` adds `f.coeff i * g.coeff (n - i)`
@@ -359,36 +359,36 @@ theorem coeff_mul_at_top
 positive degree. -/
 private theorem canonical_remainder_unique_of_pos_degree
     [PrimeModulus p] (r s m : DensePoly (ZMod64 p))
-    (hr : r.degree?.getD 0 < m.degree?.getD 0)
-    (hs : s.degree?.getD 0 < m.degree?.getD 0)
+    (hr : r.natDegree < m.natDegree)
+    (hs : s.natDegree < m.natDegree)
     (hcongr : DensePoly.Congr r s m) :
     r = s := by
   -- We have r - s = m * k for some k.
   rcases hcongr with ⟨k, hk⟩
   -- m has positive degree, so m.size ≥ 2.
-  have hm_pos : 0 < m.degree?.getD 0 := Nat.lt_of_le_of_lt (Nat.zero_le _) hr
+  have hm_pos : 0 < m.natDegree := Nat.lt_of_le_of_lt (Nat.zero_le _) hr
   have hm_size_ge : 2 ≤ m.size := by
     by_cases hms : m.size = 0
-    · simp [DensePoly.degree?, hms] at hm_pos
+    · simp [DensePoly.natDegree, DensePoly.degree?, hms] at hm_pos
     · have hms_pos : 0 < m.size := Nat.pos_of_ne_zero hms
-      have hdeg_eq : m.degree?.getD 0 = m.size - 1 := by
-        simp [DensePoly.degree?, hms]
+      have hdeg_eq : m.natDegree = m.size - 1 := by
+        simp [DensePoly.natDegree, DensePoly.degree?, hms]
       rw [hdeg_eq] at hm_pos
       omega
   -- Both r and s have size at most m.size - 1.
-  have hm_deg : m.degree?.getD 0 = m.size - 1 := by
+  have hm_deg : m.natDegree = m.size - 1 := by
     have hms : m.size ≠ 0 := by omega
-    simp [DensePoly.degree?, hms]
+    simp [DensePoly.natDegree, DensePoly.degree?, hms]
   have hr_size_le : r.size ≤ m.size - 1 := by
     by_cases hrs : r.size = 0
     · omega
-    · have hr_deg : r.degree?.getD 0 = r.size - 1 := by simp [DensePoly.degree?, hrs]
+    · have hr_deg : r.natDegree = r.size - 1 := by simp [DensePoly.natDegree, DensePoly.degree?, hrs]
       rw [hr_deg, hm_deg] at hr
       omega
   have hs_size_le : s.size ≤ m.size - 1 := by
     by_cases hss : s.size = 0
     · omega
-    · have hs_deg : s.degree?.getD 0 = s.size - 1 := by simp [DensePoly.degree?, hss]
+    · have hs_deg : s.natDegree = s.size - 1 := by simp [DensePoly.natDegree, DensePoly.degree?, hss]
       rw [hs_deg, hm_deg] at hs
       omega
   -- (r - s) has size ≤ m.size - 1.
@@ -502,7 +502,7 @@ private theorem mod_remainders_congr_of_congr [PrimeModulus p]
 /-- {name}`mod_eq_mod_of_congr_pos_degree` turns congruence modulo a positive-degree modulus into equality of canonical remainders. -/
 private theorem mod_eq_mod_of_congr_pos_degree
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
-    (hdegree : 0 < m.degree?.getD 0)
+    (hdegree : 0 < m.natDegree)
     (hcongr : DensePoly.Congr f g m) :
     f % m = g % m := by
   apply canonical_remainder_unique_of_pos_degree
@@ -530,7 +530,7 @@ private theorem eq_of_sub_eq_zero (f g : DensePoly (ZMod64 p))
 /-- {name}`mod_eq_mod_of_congr_not_pos_degree` handles the zero and constant modulus cases of remainder congruence when the modulus has no positive degree. -/
 private theorem mod_eq_mod_of_congr_not_pos_degree
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
-    (hdegree : ¬ 0 < m.degree?.getD 0)
+    (hdegree : ¬ 0 < m.natDegree)
     (hcongr : DensePoly.Congr f g m) :
     f % m = g % m := by
   by_cases hm_zero : m.size = 0
@@ -548,8 +548,8 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
     rw [hk, hmk_zero]
   · have hm_size : m.size = 1 := by
       have hm_pos : 0 < m.size := Nat.pos_of_ne_zero hm_zero
-      have hdeg : m.degree?.getD 0 = m.size - 1 := by
-        simp [DensePoly.degree?, hm_zero]
+      have hdeg : m.natDegree = m.size - 1 := by
+        simp [DensePoly.natDegree, DensePoly.degree?, hm_zero]
       rw [hdeg] at hdegree
       omega
     have hlead_ne : m.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
@@ -577,7 +577,7 @@ private theorem mod_eq_mod_of_congr
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
     (hcongr : DensePoly.Congr f g m) :
     f % m = g % m := by
-  by_cases hdegree : 0 < m.degree?.getD 0
+  by_cases hdegree : 0 < m.natDegree
   · exact mod_eq_mod_of_congr_pos_degree f g m hdegree hcongr
   · exact mod_eq_mod_of_congr_not_pos_degree f g m hdegree hcongr
 
@@ -705,7 +705,7 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
     exact divMod_remainder_degree_lt f g hdegree
   divModMonic_eq_divMod_of_monic := by
     intro f g hmonic
-    by_cases hdeg : f.degree?.getD 0 < g.degree?.getD 0
+    by_cases hdeg : f.natDegree < g.natDegree
     · show DensePoly.divModMonic f g hmonic = DensePoly.divMod f g
       unfold DensePoly.divModMonic
       rw [DensePoly.divModArray_eq_zero_self_of_degree_lt f g id hdeg]
@@ -731,8 +731,8 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
       exact h2
     · have hpos_size : 0 < g.size := Nat.pos_of_ne_zero hsize0
       have hsize1 : g.size = 1 := by
-        have hdeg_eq : g.degree?.getD 0 = g.size - 1 := by
-          simp [DensePoly.degree?, hsize0]
+        have hdeg_eq : g.natDegree = g.size - 1 := by
+          simp [DensePoly.natDegree, DensePoly.degree?, hsize0]
         have hnot_pos : ¬ 0 < g.size - 1 := by
           intro h
           apply hdegree
@@ -789,7 +789,7 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
 private theorem divMod_remainder_eq_zero_of_not_pos_degree
     [PrimeModulus p] (f m : DensePoly (ZMod64 p))
     (hmzero : m.isZero = false)
-    (hdegree : ¬ 0 < m.degree?.getD 0) :
+    (hdegree : ¬ 0 < m.natDegree) :
     (DensePoly.divMod f m).2 = 0 := by
   have hpos_size : 0 < m.size := by
     have hsize : m.coeffs.size ≠ 0 := by
@@ -797,8 +797,8 @@ private theorem divMod_remainder_eq_zero_of_not_pos_degree
     simpa [DensePoly.size, Nat.pos_iff_ne_zero] using hsize
   have hsize0 : m.size ≠ 0 := Nat.pos_iff_ne_zero.mp hpos_size
   have hsize1 : m.size = 1 := by
-    have hdeg_eq : m.degree?.getD 0 = m.size - 1 := by
-      simp [DensePoly.degree?, hsize0]
+    have hdeg_eq : m.natDegree = m.size - 1 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize0]
     have hnot_pos : ¬ 0 < m.size - 1 := by
       intro h
       apply hdegree
@@ -840,7 +840,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 /-- Finite-field remainder with the divisor's coefficient inverse computed
 once for the whole long-division pass. -/
 def modCached (f g : FpPoly p) : FpPoly p :=
-  if f.degree?.getD 0 < g.degree?.getD 0 then
+  if f.natDegree < g.natDegree then
     f
   else
     let invLead := ZMod64.inv g.leadingCoeff
@@ -852,7 +852,7 @@ does not require primality of the modulus. -/
 theorem modCached_eq (f g : FpPoly p) :
     modCached f g = DensePoly.mod f g := by
   unfold modCached DensePoly.mod DensePoly.divMod
-  by_cases hlt : f.degree?.getD 0 < g.degree?.getD 0
+  by_cases hlt : f.natDegree < g.natDegree
   · simp [hlt]
   · simp only [hlt, ↓reduceIte]
     rw [DensePoly.modArray_eq_divModArray_snd]

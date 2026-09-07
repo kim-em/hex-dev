@@ -54,7 +54,7 @@ theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := 
     exact absurd this (by omega)
   have hcoeffs : (DensePoly.C (1 : ZMod64 p)).coeffs = #[(1 : ZMod64 p)] :=
     DensePoly.coeffs_C_of_ne_zero hone_ne_zero
-  simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+  simp [DensePoly.natDegree, DensePoly.degree?, DensePoly.size, hcoeffs]
 
 /-- A polynomial accepted by `isUnitPolynomial` (degree-zero, hence a
 nonzero constant) divides `1 : FpPoly p`. -/
@@ -74,10 +74,10 @@ theorem dvd_one_of_isUnitPolynomial
         | succ _ => simp at hu
   have hu_size_ne_zero : u.size ≠ 0 := by
     intro hsize
-    unfold DensePoly.degree? at hu_deg
+    unfold DensePoly.natDegree DensePoly.degree? at hu_deg
     simp [hsize] at hu_deg
   have hu_size : u.size = 1 := by
-    unfold DensePoly.degree? at hu_deg
+    unfold DensePoly.natDegree DensePoly.degree? at hu_deg
     simp [hu_size_ne_zero] at hu_deg
     omega
   have hmod : (1 : FpPoly p) % u = 0 := by
@@ -256,7 +256,7 @@ candidate.
 theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split
     (a b : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
-    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree) (hb_pos : 0 < b.natDegree)
     (hsquareFree : ∀ d, d ∣ (a * b) → d ∣ DensePoly.derivative (a * b) →
       isUnitPolynomial d = true)
     (hgcd_monic : DensePoly.Monic (DensePoly.gcd a b)) :
@@ -461,7 +461,7 @@ private theorem dvd_one_of_witnessProduct_dvd_of_all_gcd_isUnit
 
 /-- If `f` has positive degree, then `gcd(f, a)` is nonzero for any `a`. -/
 private theorem gcd_isZero_false_of_left_pos_degree
-    {f : FpPoly p} (a : FpPoly p) (hf_pos : 0 < f.degree?.getD 0) :
+    {f : FpPoly p} (a : FpPoly p) (hf_pos : 0 < f.natDegree) :
     (DensePoly.gcd f a).isZero = false := by
   have hf_ne : f ≠ 0 := ne_zero_of_pos_degree hf_pos
   cases hg : (DensePoly.gcd f a).isZero with
@@ -487,7 +487,7 @@ some `gcd(f, w - C c)` is non-unit. The proof uses only coprime cancellation
 and the divisibility hypothesis. -/
 theorem exists_gcd_not_isUnit_of_witnessProduct_dvd_of_pos_degree
     {f w : FpPoly p}
-    (hf_pos : 0 < f.degree?.getD 0)
+    (hf_pos : 0 < f.natDegree)
     (hdvd : f ∣ (ZMod64.values p).foldl
         (fun acc c => acc * (w - FpPoly.C c)) 1) :
     ∃ c : ZMod64 p,
@@ -520,7 +520,7 @@ the form consumed by the executable Berlekamp split surface (see
 used at the call site to derive the witness-level divisibility hypothesis. -/
 theorem exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree
     {f w : FpPoly p}
-    (hf_pos : 0 < f.degree?.getD 0)
+    (hf_pos : 0 < f.natDegree)
     (hdvd : f ∣ (ZMod64.values p).foldl
         (fun acc c => acc * (w - FpPoly.C c)) 1)
     (hnonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c))) :
@@ -555,7 +555,7 @@ executable search reflection.
 -/
 theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
     {f w : FpPoly p}
-    (hf_pos : 0 < f.degree?.getD 0)
+    (hf_pos : 0 < f.natDegree)
     (hdvd : f ∣ (ZMod64.values p).foldl
         (fun acc c => acc * (w - FpPoly.C c)) 1)
     (hnonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c))) :
@@ -680,7 +680,7 @@ arbitrary Bezout pair `s * a + t * b = 1` instead of `gcd a b = 1`. -/
 private theorem exists_reduced_crtZeroOne_kernelWitness_of_bezout
     (a b s t : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
-    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree) (hb_pos : 0 < b.natDegree)
     (hbez : s * a + t * b = 1) :
     ∃ h : FpPoly p,
       h = crtZeroOneCandidate a b s t % (a * b) ∧
@@ -712,13 +712,13 @@ through `common_dvd_one_of_squareFree_mul` and the Bezout-coefficient method.
 private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split
     (a b : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
-    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree) (hb_pos : 0 < b.natDegree)
     (hsf : ∀ d, d ∣ (a * b) → d ∣ DensePoly.derivative (a * b) →
       isUnitPolynomial d = true) :
     ∃ h : FpPoly p,
       (a * b) ∣ (FpPoly.linearPow h p - h) ∧
       (∀ c : ZMod64 p, ¬ DensePoly.Congr h (DensePoly.C c) (a * b)) ∧
-      h.size ≤ (a * b).degree?.getD 0 := by
+      h.size ≤ (a * b).natDegree := by
   have hgcd_dvd_one : DensePoly.gcd a b ∣ (1 : FpPoly p) :=
     common_dvd_one_of_squareFree_mul hsf
       (DensePoly.gcd_dvd_left a b) (DensePoly.gcd_dvd_right a b)
@@ -728,7 +728,7 @@ private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_spli
       a b s t ha hb ha_pos hb_pos hbez
   refine ⟨h, hdvd, hnonconst, ?_⟩
   haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
-  have hab_pos : 0 < (a * b).degree?.getD 0 := by
+  have hab_pos : 0 < (a * b).natDegree := by
     have ha_ne : a ≠ 0 := ne_zero_of_pos_degree ha_pos
     have hb_ne : b ≠ 0 := ne_zero_of_pos_degree hb_pos
     rw [FpPoly.degree?_mul_eq_add_degree? a b ha_ne hb_ne]
@@ -744,9 +744,9 @@ private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_spli
         0 < (crtZeroOneCandidate a b s t % (a * b)).size :=
       Nat.pos_of_ne_zero hsize
     have hdeg_eq :
-        (crtZeroOneCandidate a b s t % (a * b)).degree?.getD 0 =
+        (crtZeroOneCandidate a b s t % (a * b)).natDegree =
           (crtZeroOneCandidate a b s t % (a * b)).size - 1 := by
-      unfold DensePoly.degree?
+      unfold DensePoly.natDegree DensePoly.degree?
       simp [Nat.ne_of_gt hpos]
     omega
 

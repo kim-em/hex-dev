@@ -1766,7 +1766,7 @@ def quadraticHenselStepWord? (m : Nat) (f g h s t : ZPoly) : Option QuadraticLif
     if hodd : (UInt64.ofNat (m * m)) % 2 = 1 then
       if _h1 : 1 < m * m then
         if _hm : DensePoly.leadingCoeff g = 1 then
-          if _hd : 0 < g.degree?.getD 0 then
+          if _hd : 0 < g.natDegree then
             let ctx := _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd
             -- Convert each integer polynomial once.  Sharing these packed
             -- Montgomery arrays avoids repeating coefficient `Int.emod` and
@@ -1950,7 +1950,7 @@ private def quadraticHenselFactorsWord?
     if hodd : (UInt64.ofNat (m * m)) % 2 = 1 then
       if _h1 : 1 < m * m then
         if _hm : DensePoly.leadingCoeff g = 1 then
-          if _hd : 0 < g.degree?.getD 0 then
+          if _hd : 0 < g.natDegree then
             let ctx := _root_.MontCtx.mk (UInt64.ofNat (m * m)) hodd
             let fW := ZPoly.toWP ctx f
             let gW := ZPoly.toWP ctx g
@@ -2038,7 +2038,7 @@ private theorem quadraticHenselFactorsWord?_eq
       · simp only [dite_eq_left h1]
         by_cases hm : DensePoly.leadingCoeff g = 1
         · simp only [dite_eq_left hm]
-          by_cases hd : 0 < g.degree?.getD 0
+          by_cases hd : 0 < g.natDegree
           · simp only [dite_eq_left hd, Option.map_some]
           · simp only [dite_eq_right hd, Option.map_none]
         · simp only [dite_eq_right hm, Option.map_none]
@@ -2494,15 +2494,15 @@ private theorem one_lt_of_mul (m : Nat) (h1 : 1 < m * m) : 1 < m := by
 private theorem toWP_divModMonicModSquare (m : Nat)
     (ctx : _root_.MontCtx (UInt64.ofNat (m * m)))
     (hM : (UInt64.ofNat (m * m)).toNat = m * m) (hm1 : 1 < m * m)
-    (p q : ZPoly) (hqm : DensePoly.Monic q) (hqd : 0 < q.degree?.getD 0) :
+    (p q : ZPoly) (hqm : DensePoly.Monic q) (hqd : 0 < q.natDegree) :
     DensePoly.divMod (ZPoly.toWP ctx p) (ZPoly.toWP ctx q) =
       (ZPoly.toWP ctx (divModMonicModSquare p q m).1,
        ZPoly.toWP ctx (divModMonicModSquare p q m).2) := by
   have hqpos : 0 < q.size := by
     rcases Nat.eq_zero_or_pos q.size with h0 | h0
     · exfalso
-      rw [DensePoly.degree?, dite_eq_left h0] at hqd
-      simp at hqd
+      rw [DensePoly.natDegree_eq_size_sub_one, h0] at hqd
+      omega
     · exact h0
   have hm1' : 1 < (UInt64.ofNat (m * m)).toNat := by
     rw [hM]
@@ -2529,7 +2529,7 @@ private theorem toWP_divModMonicModSquare (m : Nat)
   · rw [ZPoly.toWP_degree_eq_of_monic ctx hqm hqpos hm1']
     have hq2 : 2 ≤ q.size := by
       have hh := hqd
-      rw [DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some] at hh
+      rw [DensePoly.natDegree_eq_size_sub_one] at hh
       omega
     refine Nat.lt_of_le_of_lt (ZPoly.toWP_degree_le ctx (divModMonicModSquare p q m).2) ?_
     have hz := divModMonicModSquare_remainder_coeff_eq_zero_of_monic m p q hmbase hqm
@@ -2538,17 +2538,12 @@ private theorem toWP_divModMonicModSquare (m : Nat)
       · exact absurd (hz _ (by omega))
           (DensePoly.coeff_last_ne_zero_of_pos_size _ (by omega))
       · exact hge
-    rcases Nat.eq_zero_or_pos (divModMonicModSquare p q m).2.size with h0 | h0
-    · rw [DensePoly.degree?, dite_eq_left h0, Option.getD_none,
-        DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some]
-      omega
-    · rw [DensePoly.degree?_eq_some_of_pos_size _ h0,
-        DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some, Option.getD_some]
-      omega
+    rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.natDegree_eq_size_sub_one]
+    omega
 
 theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
     (h2 : m * m < UInt64.word) (hodd : (UInt64.ofNat (m * m)) % 2 = 1) (h1 : 1 < m * m)
-    (hmlc : DensePoly.leadingCoeff g = 1) (hd : 0 < g.degree?.getD 0) :
+    (hmlc : DensePoly.leadingCoeff g = 1) (hd : 0 < g.natDegree) :
     quadraticHenselStepWord? m f g h s t = some (quadraticHenselStepBignum m f g h s t) := by
   have hM : (UInt64.ofNat (m * m)).toNat = m * m := by
     rw [UInt64.toNat_ofNat_mod_word]
@@ -2558,12 +2553,12 @@ theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
   have hgpos : 0 < g.size := by
     rcases Nat.eq_zero_or_pos g.size with h0 | h0
     · exfalso
-      rw [DensePoly.degree?, dite_eq_left h0] at hd
-      simp at hd
+      rw [DensePoly.natDegree_eq_size_sub_one, h0] at hd
+      omega
     · exact h0
   have hg2 : 2 ≤ g.size := by
     have hh := hd
-    rw [DensePoly.degree?_eq_some_of_pos_size g hgpos, Option.getD_some] at hh
+    rw [DensePoly.natDegree_eq_size_sub_one] at hh
     omega
   have hmbase : 1 < m := one_lt_of_mul m h1
   unfold quadraticHenselStepWord?
@@ -2620,14 +2615,14 @@ theorem quadraticHenselStepWord?_eq (m : Nat) (f g h s t : ZPoly)
       ZPoly.intModNat_one (show 0 < m ^ 2 from by rw [Nat.pow_two]; exact hm0),
       Nat.mod_eq_of_lt (show 1 < m ^ 2 from by rw [Nat.pow_two]; exact h1)]
     rfl
-  have hg'deg : 0 < g'.degree?.getD 0 := by
+  have hg'deg : 0 < g'.natDegree := by
     have hg'size : g.size ≤ g'.size := by
       rcases Nat.lt_or_ge g'.size g.size with hlt | hge
       · exact absurd hg'coeff (by
           rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
           exact Int.zero_ne_one)
       · exact hge
-    rw [DensePoly.degree?_eq_some_of_pos_size _ (by omega), Option.getD_some]
+    rw [DensePoly.natDegree_eq_size_sub_one]
     omega
   have hGwe : gWv = ZPoly.toWP ctx g' := by
     rw [← hgWv, hFqe, hg', toWP_addModSquare m ctx hM hm0]
@@ -2688,7 +2683,7 @@ theorem quadraticHenselStep_eq_bignum
     quadraticHenselStep m f g h s t = quadraticHenselStepBignum m f g h s t := by
   unfold quadraticHenselStep
   by_cases hguard : (m * m < UInt64.word) ∧ ((UInt64.ofNat (m * m)) % 2 = 1) ∧
-      (1 < m * m) ∧ (DensePoly.leadingCoeff g = 1) ∧ (0 < g.degree?.getD 0)
+      (1 < m * m) ∧ (DensePoly.leadingCoeff g = 1) ∧ (0 < g.natDegree)
   · obtain ⟨h2, hodd, h1, hmlc, hd⟩ := hguard
     rw [quadraticHenselStepWord?_eq m f g h s t h2 hodd h1 hmlc hd]
   · have hnone : quadraticHenselStepWord? m f g h s t = none := by
@@ -2701,7 +2696,7 @@ theorem quadraticHenselStep_eq_bignum
           · rw [dite_eq_left c]
             by_cases d : DensePoly.leadingCoeff g = 1
             · rw [dite_eq_left d]
-              by_cases e : 0 < g.degree?.getD 0
+              by_cases e : 0 < g.natDegree
               · exact absurd ⟨a, b, c, d, e⟩ hguard
               · rw [dite_eq_right e]
             · rw [dite_eq_right d]

@@ -76,8 +76,9 @@ def sqrt2 : AlgebraicNumber :=
 def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
--- `adjoin` is the companion's total form of `adjoin?`,
--- which never returns `none` (`adjoin?_isSome`).
+-- `adjoin` is the Mathlib companion library's total
+-- form of `adjoin?`, which never returns `none`
+-- (`adjoin?_isSome`).
 def Q2 : Extension NumberTower.rat :=
   adjoin NumberTower.rat sqrt2.toRoot
 abbrev T2 : NumberTower := Q2.tower
@@ -138,16 +139,10 @@ has dimension four and the four roots square to `2` or `3`:
 def biquadratic : Poly NumberTower.rat :=
   liftZPoly NumberTower.rat #p[6, 0, -5, 0, 1]
 
-/-- The finite root list; empty for the zero polynomial. -/
-def finiteRoots {T : NumberTower} :
-    Roots T → Array (Elem T × Nat)
-  | .finite rs => rs
-  | .all => #[]
-
 #guard
   let S := split NumberTower.rat biquadratic
   S.extension.tower.dim = 4 &&
-    let rs := finiteRoots S.roots
+    let rs := S.roots.toArray
     rs.size = 4 && rs.all fun r =>
       r.2 = 1 &&
         (coeffs (r.1 * r.1) = #[2, 0, 0, 0] ||

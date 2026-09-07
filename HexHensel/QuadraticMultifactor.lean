@@ -274,16 +274,16 @@ theorem henselLiftFactors_canonical
 /-- Sum of polynomial degrees used to estimate the work on one side of a
 multifactor Hensel split. -/
 def factorDegreeSum (factors : List ZPoly) : Nat :=
-  factors.foldl (fun total g => total + g.degree?.getD 0) 0
+  factors.foldl (fun total g => total + g.natDegree) 0
 
 /-- Largest polynomial degree in a prospective multifactor Hensel node. -/
 def factorMaxDegree (factors : List ZPoly) : Nat :=
-  factors.foldl (fun largest g => max largest (g.degree?.getD 0)) 0
+  factors.foldl (fun largest g => max largest (g.natDegree)) 0
 
 /-- Total and largest degree in one traversal. -/
 def factorDegreeStats (factors : List ZPoly) : Nat × Nat :=
   factors.foldl (fun (total, largest) g =>
-    let degree := g.degree?.getD 0
+    let degree := g.natDegree
     (total + degree, max largest degree)) (0, 0)
 
 /-- Degree imbalance produced by splitting `factors` at `i`. -/

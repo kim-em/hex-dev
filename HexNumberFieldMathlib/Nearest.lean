@@ -686,7 +686,7 @@ namespace Hex
 open HexRootsMathlib
 
 /-- A polynomial of positive degree has a root in `algebraicRoots`. -/
-theorem ZPoly.algebraicRoots_ne_empty {p : ZPoly} (hp : 0 < p.degree?.getD 0) :
+theorem ZPoly.algebraicRoots_ne_empty {p : ZPoly} (hp : 0 < p.natDegree) :
     p.algebraicRoots ≠ #[] := by
   have hpne : p ≠ 0 := by
     intro h
@@ -701,7 +701,7 @@ theorem ZPoly.algebraicRoots_ne_empty {p : ZPoly} (hp : 0 < p.degree?.getD 0) :
   simp at ha
 
 /-- `rootNear` returns a root. -/
-theorem ZPoly.rootNear_mem (p : ZPoly) (hp : 0 < p.degree?.getD 0) (re im : Rat) :
+theorem ZPoly.rootNear_mem (p : ZPoly) (hp : 0 < p.natDegree) (re im : Rat) :
     p.rootNear re im ∈ p.algebraicRoots := by
   unfold ZPoly.rootNear
   dsimp only

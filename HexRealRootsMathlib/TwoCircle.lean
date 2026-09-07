@@ -14,7 +14,7 @@ public import HexRealRootsMathlib.TwoCircleSector
 public import HexRealRootsMathlib.Drivers
 public import HexRealRoots.IsolateDescartes
 -- `import all` on the executable modules so the non-`@[expose]` bodies of
--- `descartesVisit`, `isolateDescartes?`, `mobiusTransform`, `descartesVar`,
+-- `descartesVisit`, `ZPoly.isolateDescartes?`, `mobiusTransform`, `descartesVar`,
 -- `sturmVarAt`, `sturmChain`, `evalDyadic`, `dyadicSign`, `rootBound`,
 -- `sepPrec`, `isolationDepth`, and `assemble?` unfold here.
 import all HexRealRootsMathlib.Separation
@@ -107,11 +107,11 @@ theorem bZero_iff (hi : Dyadic) :
 Sturm count on `(lo, hi]` splits as the number of positive roots of the Möbius
 transform (= the `p`-roots in the open interval `(a, b)`) plus the endpoint
 indicator `[p(hi) = 0]`. No width budget is needed: the count is exact. -/
-theorem descartes_node_count (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem descartes_node_count (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo hi : Dyadic} (hlt : lo < hi) :
     (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
         - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi
-      = ((mobiusPoly ((p.degree?).getD 0) (Dyadic.toReal lo) (Dyadic.toReal hi)
+      = ((mobiusPoly (p.natDegree) (Dyadic.toReal lo) (Dyadic.toReal hi)
             (toPolyℝ p)).roots.countP (0 < ·) : Int)
         + (if (toPolyℝ p).IsRoot (Dyadic.toReal hi) then 1 else 0) := by
   classical
@@ -119,7 +119,7 @@ theorem descartes_node_count (hdeg : 1 ≤ (p.degree?).getD 0)
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
   have hab : Dyadic.toReal lo < Dyadic.toReal hi := toReal_lt_toReal_iff.mpr hlt
-  have hdeg' : (toPolyℝ p).natDegree ≤ (p.degree?).getD 0 := le_of_eq (natDegree_toPolyℝ p)
+  have hdeg' : (toPolyℝ p).natDegree ≤ p.natDegree := le_of_eq (natDegree_toPolyℝ p)
   have hsep : (toPolyℝ p).Separable := separable_toPolyℝ p ((squareFreeRat_iff p hp0).mp hp)
   have hnodup : (toPolyℝ p).roots.Nodup := nodup_roots hsep
   set a := Dyadic.toReal lo with ha
@@ -179,7 +179,7 @@ private def dispatchC (p : Hex.ZPoly) (lo hi : Dyadic) (hlt : lo < hi) : Bool :=
 /-- **Candidate rows certify.** When the dispatch Boolean is `true` (either
 `V = 0 ∧ p(hi) = 0` or `V = 1 ∧ p(hi) ≠ 0`) the exact Sturm count is `1`, so the
 node's certification guard succeeds. -/
-private theorem node_candidate (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem node_candidate (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo hi : Dyadic} (hlt : lo < hi)
     (hC : dispatchC p lo hi hlt = true) :
     (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : Int)
@@ -188,7 +188,7 @@ private theorem node_candidate (hdeg : 1 ≤ (p.degree?).getD 0)
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
   have hab : Dyadic.toReal lo < Dyadic.toReal hi := toReal_lt_toReal_iff.mpr hlt
-  set M := mobiusPoly ((p.degree?).getD 0) (Dyadic.toReal lo) (Dyadic.toReal hi) (toPolyℝ p) with hM
+  set M := mobiusPoly (p.natDegree) (Dyadic.toReal lo) (Dyadic.toReal hi) (toPolyℝ p) with hM
   have hMne : M ≠ 0 := mobiusPoly_ne_zero_of_ne (ne_of_lt hab) hP0
   have hV : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = Polynomial.signVariations M :=
     descartesVar_mobiusTransform p ⟨lo, hi, hlt⟩ hdeg
@@ -211,7 +211,7 @@ private theorem node_candidate (hdeg : 1 ≤ (p.degree?).getD 0)
 /-- **Discard rows are truthful.** When the dispatch Boolean is `false` with
 `V = 0` (so `p(hi) ≠ 0`), the exact Sturm count is `0`, so the node's emitted
 `#[]` matches. -/
-private theorem node_discard (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem node_discard (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo hi : Dyadic} (hlt : lo < hi)
     (hC : dispatchC p lo hi hlt = false)
     (hV0 : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = 0) :
@@ -221,7 +221,7 @@ private theorem node_discard (hdeg : 1 ≤ (p.degree?).getD 0)
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
   have hab : Dyadic.toReal lo < Dyadic.toReal hi := toReal_lt_toReal_iff.mpr hlt
-  set M := mobiusPoly ((p.degree?).getD 0) (Dyadic.toReal lo) (Dyadic.toReal hi) (toPolyℝ p) with hM
+  set M := mobiusPoly (p.natDegree) (Dyadic.toReal lo) (Dyadic.toReal hi) (toPolyℝ p) with hM
   have hMne : M ≠ 0 := mobiusPoly_ne_zero_of_ne (ne_of_lt hab) hP0
   have hV : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = Polynomial.signVariations M :=
     descartesVar_mobiusTransform p ⟨lo, hi, hlt⟩ hdeg
@@ -259,7 +259,7 @@ private theorem nodup_roots_toPolyℂ (hp0 : p ≠ 0) (hp : Hex.ZPoly.SquareFree
 transform-roots outside the sector correspond to two distinct roots of `p` inside
 the two-circle region, which are closer than `4·2^{−sepPrec p}`, contradicting
 the Mahler separation bound. -/
-theorem bisect_refute_sector (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem bisect_refute_sector (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo hi : Dyadic} (hlt : lo < hi)
     (hw : Dyadic.toReal hi - Dyadic.toReal lo ≤ (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ)))
     (hV2 : 2 ≤ Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩)) :
@@ -277,7 +277,7 @@ theorem bisect_refute_sector (hdeg : 1 ≤ (p.degree?).getD 0)
   set b := Dyadic.toReal hi with hb
   have hab : a < b := toReal_lt_toReal_iff.mpr hlt
   have habℂ : (a : ℂ) ≠ (b : ℂ) := fun h => (ne_of_lt hab) (Complex.ofReal_inj.mp h)
-  set M := mobiusPoly ((p.degree?).getD 0) a b (toPolyℝ p) with hM
+  set M := mobiusPoly (p.natDegree) a b (toPolyℝ p) with hM
   have hMne : M ≠ 0 := mobiusPoly_ne_zero_of_ne (ne_of_lt hab) hP0
   have hV2M : 2 ≤ Polynomial.signVariations M := by
     have h := descartesVar_mobiusTransform p ⟨lo, hi, hlt⟩ hdeg
@@ -342,7 +342,7 @@ theorem bisect_refute_sector (hdeg : 1 ≤ (p.degree?).getD 0)
 /-- **The `V = 1 ∧ p(hi) = 0` row is impossible at the depth budget.** It puts
 two real roots — an interior root and `hi` — in `(lo, hi]`, a Sturm count of `2`,
 contradicting `sturmCount_le_one`. -/
-theorem bisect_refute_double (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem bisect_refute_double (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo hi : Dyadic} (hlt : lo < hi)
     (hw : Dyadic.toReal hi - Dyadic.toReal lo ≤ (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ)))
     (hV1 : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = 1)
@@ -352,7 +352,7 @@ theorem bisect_refute_double (hdeg : 1 ≤ (p.degree?).getD 0)
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
   have hab : Dyadic.toReal lo < Dyadic.toReal hi := toReal_lt_toReal_iff.mpr hlt
-  set M := mobiusPoly ((p.degree?).getD 0) (Dyadic.toReal lo) (Dyadic.toReal hi) (toPolyℝ p) with hM
+  set M := mobiusPoly (p.natDegree) (Dyadic.toReal lo) (Dyadic.toReal hi) (toPolyℝ p) with hM
   have hMne : M ≠ 0 := mobiusPoly_ne_zero_of_ne (ne_of_lt hab) hP0
   have hV : Hex.descartesVar (Hex.mobiusTransform p ⟨lo, hi, hlt⟩) = Polynomial.signVariations M :=
     descartesVar_mobiusTransform p ⟨lo, hi, hlt⟩ hdeg
@@ -382,7 +382,7 @@ Structural induction on `depth`. Candidate and discard nodes are exact leaves
 `depth = 0` (`bisect_refute_double`, `bisect_refute_sector`) and recurse into
 halved children at `depth + 1`; the size telescopes and the emissions stay
 ordered exactly as in `sturmVisit_spec`. -/
-private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem descartesVisit_spec (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     ∀ (depth : Nat) (lo hi : Dyadic),
       lo < hi →
@@ -561,11 +561,12 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
 /-! # Driver completeness -/
 
 /-- The positive-degree core: the worklist drains (`descartesVisit_spec`) and the
-emitted total matches `rootCount p = sturmVarNegInf − sturmVarPosInf` (the
+emitted total matches `ZPoly.rootCount p = sturmVarNegInf − sturmVarPosInf` (the
 `±rootBound` gap counts every root), so `assemble?` certifies. -/
-private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateDescartes? p).isSome := by
+private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ p.natDegree)
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateDescartes? p).isSome := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
+    rw [Hex.DensePoly.natDegree_eq_degree?_getD] at hdeg
     rcases hh : p.degree? with _ | n
     · rw [hh] at hdeg; simp at hdeg
     · rcases n with _ | m
@@ -578,16 +579,16 @@ private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?)
   have hInt := sturmVar_neg_pos_sub hdeg hp
   have hsize' : arr.size = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
       - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) := by
-    have hrc : Hex.rootCount p = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
+    have hrc : Hex.ZPoly.rootCount p = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
         - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) := rfl
     rw [hsize, ← hrc]; omega
-  -- `isolateDescartes?` on positive-degree square-free `p` is the top run + `assemble?`.
-  have heq : Hex.isolateDescartes? p
+  -- `ZPoly.isolateDescartes?` on positive-degree square-free `p` is the top run + `assemble?`.
+  have heq : Hex.ZPoly.isolateDescartes? p
       = (match Hex.descartesVisit p (Hex.ZPoly.sturmChain p) rfl (Hex.isolationDepth p)
             (-(Hex.rootBound p)) (Hex.rootBound p) with
           | none => none
           | some arr => Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl arr) := by
-    unfold Hex.isolateDescartes?
+    unfold Hex.ZPoly.isolateDescartes?
     simp only [hd]
     rw [ite_eq_left hp]
     rfl
@@ -597,9 +598,9 @@ private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?)
 /-- The Descartes engine on a nonzero constant: the driver's `some 0` branch
 hands `assemble?` the empty array through the empty chain. -/
 private theorem isolateDescartes?_isSome_of_degree_zero (hd : p.degree? = some 0) :
-    (Hex.isolateDescartes? p).isSome := by
-  have heq : Hex.isolateDescartes? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
-    unfold Hex.isolateDescartes?; rw [hd]
+    (Hex.ZPoly.isolateDescartes? p).isSome := by
+  have heq : Hex.ZPoly.isolateDescartes? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
+    unfold Hex.ZPoly.isolateDescartes?; rw [hd]
   have hchain0 : Hex.ZPoly.sturmChain p = #[] := by
     unfold Hex.ZPoly.sturmChain; rw [hd]; rfl
   rw [heq]
@@ -609,20 +610,21 @@ private theorem isolateDescartes?_isSome_of_degree_zero (hd : p.degree? = some 0
 
 /-- **The Descartes engine succeeds on nonzero square-free input.**
 For nonzero `p` passing the executable `SquareFreeRat` test,
-`isolateDescartes? p ≠ none`, so the runtime never falls back to the Sturm
+`ZPoly.isolateDescartes? p ≠ none`, so the runtime never falls back to the Sturm
 engine.
 
 Positive degree is the real content (`isolateDescartes?_isSome_of_degree_pos`,
 the two-circle termination argument); a nonzero constant certifies through the
 empty chain. As with `isolateSturm?_isSome`, the `p ≠ 0` hypothesis is added
-because `SquareFreeRat 0` is vacuous while `isolateDescartes? 0 = none`. -/
+because `SquareFreeRat 0` is vacuous while `ZPoly.isolateDescartes? 0 = none`. -/
 theorem isolateDescartes?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateDescartes? p).isSome := by
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateDescartes? p).isSome := by
   rcases hd : p.degree? with _ | n
   · exact absurd hd (degree?_ne_none hp0)
   · rcases n with _ | n
     · exact isolateDescartes?_isSome_of_degree_zero hd
-    · exact isolateDescartes?_isSome_of_degree_pos (by simp [hd]) hp
+    · exact isolateDescartes?_isSome_of_degree_pos
+        (by simp [Hex.DensePoly.natDegree_eq_degree?_getD, hd]) hp
 
 end
 

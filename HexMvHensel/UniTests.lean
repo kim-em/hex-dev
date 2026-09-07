@@ -8,6 +8,7 @@ module
 
 import all HexMvHensel.Uni
 import all HexPoly.Dense
+import all HexPoly.Instances
 import all HexPoly.Operations
 import all HexPoly.Euclid.DivGcd
 import all HexPoly.Euclid.MulRing

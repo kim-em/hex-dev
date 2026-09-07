@@ -30,11 +30,13 @@ quantity here is exact: the emission test is a pairwise
 `DyadicSquare.discsMeet` comparison of stored squares, and the precision
 comparisons are on the exact `Int` precs.
 
-The public one-atom wrapper first tries a bounded lineage-local speculative
-pass, preserving Newton's logarithmic precision growth. If that pass cannot
-emit exactly one target-ready atom, `refineLoop` restarts from the original
-atom and uses the same globally reglued prefix as the full driver; subdivision
-can split even a single starting square into sibling survivor lineages.
+The public one-atom wrapper first tries a fast pass that follows the one
+atom's own lineage, which keeps Newton's precision growth. If that pass
+cannot produce exactly one atom at the target precision, its work is
+discarded and `refineLoop` runs the full driver again from the original
+atom; that driver re-splits and re-merges components across the whole
+search, so a single starting square can end up as several sibling
+lineages.
 
 `findAtomLoop` starts instead from an uncertified caller-selected square. It
 stops as soon as any component certifies as an atom that can be refined to the
@@ -197,11 +199,11 @@ all squares refine and reglue globally; afterwards this is `nextLocal`. -/
 
 end IsolationLoop
 
-/-- Refinement loop for one already-isolated atom.  Subdivision can split even
-one starting component into several survivor lineages, so before the fixed
-completeness depth this uses the same globally reglued transition as the full
-driver.  A result is emitted only when it is the single target-ready atom
-required by `refineAtom?`. -/
+/-- Refinement loop for one already-isolated atom. Bisection can split even one
+starting component into several surviving pieces, so up to the fixed
+completeness depth this re-splits and re-merges components exactly as the full
+driver does. A result is emitted only when it is the single atom at the target
+precision that `refineAtom?` requires. -/
 @[expose] def refineLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
     Nat → Array Component → Option (Array (Certified p))
   | 0, _ => none
@@ -215,14 +217,15 @@ required by `refineAtom?`. -/
       refineLoop p target strategy fuel <|
         IsolationLoop.next p target tried
 
-/-- Small speculative budget used before the globally normalized completeness
-fallback. Successful Newton adoption normally needs only logarithmically many
-rounds, while failure simply restarts from the original atom on `refineLoop`. -/
+/-- Budget for the fast lineage-local pass, tried before the full driver.
+A successful Newton adoption normally needs only logarithmically many rounds;
+failure just restarts from the original atom on `refineLoop`. -/
 @[expose] def fastRefineFuel : Nat := 64
 
-/-- Opportunistic lineage-local refinement. This loop is only a fast path: its
-result is accepted under the same singleton-atom guard as `refineLoop`, and any
-failure falls back to the globally reglued complete loop. -/
+/-- Opportunistic refinement along one atom's lineage. This loop is only a
+fast path: its result is accepted under the same singleton-atom guard as
+`refineLoop`, and any failure falls back to the full driver, which re-splits
+and re-merges components across the whole search. -/
 @[expose] def refineFastLoop (p : ZPoly) (target : Int)
     (strategy : AtomStrategy) :
     Nat → Array Component → Option (Array (Certified p))
@@ -398,10 +401,11 @@ end IsolationLoop
         isolateLoop p target strategy fuel <|
           IsolationLoop.next p target tried
 
-/-- Refine to `target` precision. A bounded lineage-local pass preserves the
-usual logarithmic speculative-Newton path. If it does not produce exactly one
-target-ready atom, refinement restarts from the input under the globally
-reglued complete loop. -/
+/-- Refine to `target` precision. A bounded pass along the atom's own lineage
+keeps the usual Newton path, which roughly doubles the correct bits per step.
+If that pass does not produce exactly one atom at the target precision,
+refinement starts again from the input under the full driver, which re-splits
+and re-merges components across the whole search. -/
 @[expose] def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p) :=

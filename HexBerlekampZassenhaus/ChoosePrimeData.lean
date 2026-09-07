@@ -118,7 +118,7 @@ private def firstCertificate?
 positive-degree integer polynomial.  Prime blocks are added only until every
 possible proper factor degree is obstructed. -/
 def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
-  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
+  if ZPoly.content f != 1 || f.natDegree == 0 then none else
   match firstCertificate? f smallPrimeCandidates #[] with
   | none => none
   | some cert => if cert.certifies f then some cert else none
@@ -467,7 +467,7 @@ private def probeCoeffLog : Nat := 512
 peels the explicit difference-of-squares structure cheaply, so a large modular
 factor count is not evidence that prime look-ahead will pay for itself. -/
 private def isEvenPowerDifference (f : ZPoly) : Bool :=
-  decide (f.degree?.getD 0 % 2 = 0) &&
+  decide (f.natDegree % 2 = 0) &&
     match f.toArray.toList with
     | -1 :: coeffs =>
         match coeffs.reverse with
@@ -484,7 +484,7 @@ private def isEvenPowerDifference (f : ZPoly) : Bool :=
 justify bounded prime look-ahead. -/
 private def shouldProbePrime (f : ZPoly) (score : PrimeChoiceDataScore) : Bool :=
   let coeffs := f.toArray
-  let degree := f.degree?.getD 0
+  let degree := f.natDegree
   (decide (probeSwollenFactors ≤ score.factorCount) &&
       coeffs.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2)) ||
     (decide (probeMinDegree ≤ degree) &&

@@ -6,41 +6,21 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCell.Branch
+public import HexGraphIso.Nauty.Equitable.Individualize
 import all HexGraphIso.Nauty.Equitable.Basic
-public import HexGraphIso.Nauty.Equitable.Step
 import all HexGraphIso.Nauty.Equitable.Step
-public import HexGraphIso.Nauty.Equitable.Fix
 import all HexGraphIso.Nauty.Equitable.Fix
 
 public section
 
 /-!
-The bisimulation carrying the branch step down a cheapautom subtree.
-
-`HexGraphIso.Nauty.SmallCell.Branch` relates the two children of a pair
-target cell by the flip at a single level. This file carries the
-relation down the subtree. The mechanism is a bisimulation: a state
-whose labelling is cell-equivalent to a renamed copy of another
-state's stays so after both individualize corresponding vertices and
-refine (`stPerm_child`), so a whole descent below one state mirrors
-below the other (`descends_transport`), and at discrete leaves the
-renaming is absorbed by `leafRows_map` (`descends_leafRows`). Gluing
-`branch_step` at the deviation level gives the single-deviation
-theorem: any leaf reached below the second child of a pair target has
-the same leaf rows as the mirrored leaf below the first child
-(`deviation_leafRows`).
+The individualize-and-refine step, its iteration invariant, and its
+equivariance under graph automorphisms and within-cell permutations.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
-
-/-! # Window effect of individualization
-
-`breakout` rotates the target value to the front of its cell window
-and touches nothing outside it; the rotated window is the value
-followed by the window with its first occurrence erased. -/
 
 /-- The rotated target window. -/
 theorem breakout_segN_target {lab ptn : Array Nat}
@@ -88,8 +68,6 @@ theorem breakout_segN_outside {lab ptn : Array Nat}
   · exact breakout_go_outside _ _ _ _ _ (by omega)
   · exact breakout_go_outside_right _ len _ _ _ hw _ (by omega)
 
-/-! # List toolkit -/
-
 /-- Erasure commutes with an injective map. -/
 private theorem map_erase_of_inj {f : Nat → Nat}
     (hinj : ∀ a b, f a = f b → a = b) :
@@ -117,13 +95,6 @@ private theorem perm_erase {l1 l2 : List Nat} (a : Nat)
   · have hm2 : a ∉ l2 := fun hx => hm (h.mem_iff.mpr hx)
     rw [List.erase_of_not_mem hm, List.erase_of_not_mem hm2]
     exact h
-
-/-! # Corresponding individualization
-
-Two labellings whose cells are equivalent up to a renaming stay so
-after individualizing corresponding vertices: the split singletons
-match by the correspondence, the remainders by erasing it, and the
-untouched cells by the parent equivalence. -/
 
 /-- Individualizing corresponding vertices preserves the renamed cell
 equivalence on the split partition. -/
@@ -256,8 +227,6 @@ theorem breakout_cellsPerm_map {σ : Renaming n}
       omega : ((breakout n labU ptn (level + 1) tc
         labU[tc + oU]!).1.map σ.toFun).size ≤ a)]
 
-/-! # Renamed and permuted labelling facts -/
-
 /-- A renaming keeps every entry a vertex. -/
 theorem labOk_map {n : Nat} (σ : Renaming n) {lab : Array Nat}
     (h : LabOk lab n) : LabOk (lab.map σ.toFun) n := by
@@ -287,8 +256,6 @@ theorem labOk_of_perm {lab lab' : Array Nat} {nn : Nat}
   obtain ⟨o, ho, hov⟩ := mem_segN_iff.mp (hp.mem_iff.mp hm)
   rw [← hov]
   exact h (0 + o) (by omega)
-
-/-! # The subtree step and its node invariant -/
 
 /-- One individualize-and-refine step of the search subtree. -/
 @[expose] def childSt (ctx : Ctx n) (level : Nat) (st : RefineSt n)
@@ -449,8 +416,6 @@ theorem iterOk_of_stPerm {σ : Renaming n} {V U : RefineSt n}
     rw [← hptn]
     exact hU.vals q hq
 
-/-! # The bisimulation step -/
-
 /-- Cell equivalence up to a row-preserving renaming survives
 individualizing corresponding vertices and refining. -/
 theorem stPerm_child {σ : Renaming n} {V U : RefineSt n}
@@ -517,8 +482,6 @@ theorem stPerm_child {σ : Renaming n} {V U : RefineSt n}
   rw [hptn, hnum]
   exact h1
 
-/-! # Descents through the subtree -/
-
 /-- A descent: a sequence of individualize-and-refine steps, each at a
 nontrivial cell of the current partition. -/
 inductive Descends (ctx : Ctx n) :
@@ -540,117 +503,5 @@ theorem descends_iterOk {level level' : Nat} {st st' : RefineSt n}
   | refl _ _ => exact hok
   | step tc e o hlvl hcell hne ho htail ih =>
     exact ih (iterOk_child hok hlvl hcell hne ho)
-
-/-- The bisimulation: a descent below one state mirrors below any
-state whose labelling is cell-equivalent up to a row-preserving
-renaming, ending in the transported relation. -/
-theorem descends_transport {σ : Renaming n}
-    (hg : RowsMap σ ctx.g ctx.g) :
-    ∀ {level level' : Nat} {U U' V : RefineSt n},
-      Descends ctx level U level' U' → IterOk ctx level U →
-      StPerm level V (mapSt σ U) →
-      ∃ V', Descends ctx level V level' V' ∧
-        StPerm level' V' (mapSt σ U')
-  | _, _, _, _, V, .refl _ _, _, hsp => ⟨V, .refl _ _, hsp⟩
-  | level, level', U, U', V,
-      .step tc e o hlvl hcell hne ho htail, hU, hsp => by
-    have hV := iterOk_of_stPerm hU hsp
-    have hptn : U.ptn = V.ptn := hsp.ptn
-    have hpszV := hV.ok.ptnSize
-    have hendV := hV.ok.ptnEnd
-    have hcellV : (tc, e) ∈ cells V.ptn level n := by
-      rw [← hptn]
-      exact hcell
-    have hen : e < n := target_end_lt hpszV hendV hcellV
-    have hcellIsV : IsCell V.ptn level tc (e + 1 - tc) :=
-      cells_isCell (by omega) hendV _ hcellV
-    have hmemU : σ.toFun U.lab[tc + o]! ∈
-        segN (U.lab.map σ.toFun) tc (e + 1 - tc) := by
-      rw [segN_map (by rw [hU.ok.labSize]; omega)]
-      exact List.mem_map.mpr
-        ⟨U.lab[tc + o]!, mem_segN_iff.mpr ⟨o, by omega, rfl⟩, rfl⟩
-    have hcpT := hsp.cells tc (e + 1 - tc) hcellIsV
-    have hmemV : σ.toFun U.lab[tc + o]! ∈
-        segN V.lab tc (e + 1 - tc) := hcpT.mem_iff.mpr hmemU
-    obtain ⟨oV, hoVlt, hoVval⟩ := mem_segN_iff.mp hmemV
-    have hsp' := stPerm_child hg hsp hU hcell hne
-      (by omega) ho hoVval
-    have hUok' := iterOk_child hU hlvl hcell hne ho
-    obtain ⟨V', hdesc, hspL⟩ :=
-      descends_transport hg htail hUok' hsp'
-    exact ⟨V', .step tc e oV hlvl hcellV hne (by omega) hdesc, hspL⟩
-
-/-- The leaf collapse: a descent to a discrete state below one side
-mirrors below the other with equal leaf rows. The renaming is
-absorbed at the leaf. -/
-theorem descends_leafRows {σ : Renaming n}
-    (hg : RowsMap σ ctx.g ctx.g)
-    {level level' : Nat} {U U' V : RefineSt n}
-    (h : Descends ctx level U level' U')
-    (hU : IterOk ctx level U) (hsp : StPerm level V (mapSt σ U))
-    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
-    ∃ V', Descends ctx level V level' V' ∧
-      leafRows ctx V'.lab = leafRows ctx U'.lab := by
-  obtain ⟨V', hdesc, hspL⟩ := descends_transport hg h hU hsp
-  have hU' := descends_iterOk h hU
-  have hV' := iterOk_of_stPerm hU' hspL
-  have hptn : U'.ptn = V'.ptn := hspL.ptn
-  have hVdisc : ∀ q, q < V'.ptn.size → V'.ptn[q]! ≤ level' := by
-    intro q hq
-    rw [← hptn]
-    rw [hV'.ok.ptnSize] at hq
-    exact hdisc q hq
-  have hVsz : V'.lab.size = V'.ptn.size := by
-    rw [hV'.ok.labSize, hV'.ok.ptnSize]
-  have hlabeq := stPerm_lab_eq hspL hVdisc hVsz
-  have hlabeq' : U'.lab.map σ.toFun = V'.lab := hlabeq
-  have hlr : leafRows ctx V'.lab = leafRows ctx U'.lab := by
-    rw [← hlabeq']
-    exact leafRows_map σ hg hU'.ok.labOk hU'.ok.labSize
-  exact ⟨V', hdesc, hlr⟩
-
-/-! # The single-deviation theorem
-
-Gluing the branch step at the deviation level: any descent to a leaf
-below the first child of a pair target mirrors below the second child
-with equal leaf rows. -/
-
-/-- A deviation at a pair target: descents below the two children
-reach leaves with the same rows. -/
-theorem deviation_leafRows {S : Nat → Prop} {f : Nat → Nat}
-    {st : RefineSt n} {level tc level' : Nat} {U' : RefineSt n}
-    (hIt : IterOk ctx level st) (hgsz : ctx.g.size = n)
-    (hlvl : level < n)
-    (hfb : ∀ v, v < n → f v < n)
-    (hinvol : ∀ v, v < n → f (f v) = v)
-    (hrows : ∀ v, v < n → ctx.g[f v]! = (ctx.g[v]!).image f)
-    (hcell : (tc, tc + 1) ∈ cells st.ptn level n)
-    (hStc : S tc)
-    (hSpair : ∀ p ∈ cells st.ptn level n, S p.1 → p.2 = p.1 + 1)
-    (hSswap : ∀ p ∈ cells st.ptn level n, S p.1 →
-      f st.lab[p.1]! = st.lab[p.1 + 1]! ∧
-        f st.lab[p.1 + 1]! = st.lab[p.1]!)
-    (hSfix : ∀ p ∈ cells st.ptn level n, ¬ S p.1 →
-      ∀ o, o < p.2 + 1 - p.1 → f st.lab[p.1 + o]! = st.lab[p.1 + o]!)
-    (hdesc : Descends ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + 0]!) level' U')
-    (hdisc : ∀ q, q < n → U'.ptn[q]! ≤ level') :
-    ∃ V', Descends ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + 1]!) level' V' ∧
-      leafRows ctx V'.lab = leafRows ctx U'.lab := by
-  have hg : RowsMap (renamingOfFlip f n hfb hinvol) ctx.g ctx.g :=
-    rowsMap_of_flip_rows hgsz hfb hinvol hrows
-  have hstep := branch_step (S := S) hgsz hIt.ok.ptnSize
-    hIt.ok.labSize hIt.ok.ptnEnd hIt.valsWeak hIt.ok.labOk hIt.inj
-    hfb hinvol hrows hcell hStc hSpair hSswap hSfix
-    (numcells := st.numcells)
-  have hU0 : IterOk ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + 0]!) :=
-    iterOk_child hIt hlvl hcell (by omega) (by omega)
-  have hstep' : StPerm (level + 1)
-      (childSt ctx level st tc st.lab[tc + 1]!)
-      (mapSt (renamingOfFlip f n hfb hinvol)
-        (childSt ctx level st tc st.lab[tc + 0]!)) := hstep
-  exact descends_leafRows hg hdesc hU0 hstep' hdisc
 
 end Hex.GraphIso.Nauty

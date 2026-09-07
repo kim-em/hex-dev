@@ -179,8 +179,8 @@ any interval is the sign-variation gap of the *literal* certified chain at the
 two endpoints — the shape the elaborator `decide`s per emitted root. -/
 theorem sturmCount_eq_of_cert {p : ZPoly} {chain : Array ZPoly}
     (h : SturmChainCert p chain) (I : DyadicInterval) :
-    sturmCount p I = (sturmVarAt chain I.lower : Int) - sturmVarAt chain I.upper := by
-  unfold sturmCount
+    ZPoly.sturmCount p I = (sturmVarAt chain I.lower : Int) - sturmVarAt chain I.upper := by
+  unfold ZPoly.sturmCount
   rw [← cert_imp_eq h]
 
 /-- **Root-count transport.** Under a valid certificate, the total root count of
@@ -188,8 +188,8 @@ theorem sturmCount_eq_of_cert {p : ZPoly} {chain : Array ZPoly}
 the elaborator `decide`s for the `complete` field. -/
 theorem rootCount_eq_of_cert {p : ZPoly} {chain : Array ZPoly}
     (h : SturmChainCert p chain) :
-    rootCount p = sturmVarNegInf chain - sturmVarPosInf chain := by
-  unfold rootCount
+    ZPoly.rootCount p = sturmVarNegInf chain - sturmVarPosInf chain := by
+  unfold ZPoly.rootCount
   rw [← cert_imp_eq h]
 
 end ZPoly

@@ -100,6 +100,11 @@ exponent, so the degree is the last stored exponent. -/
 def degree? (s : SparsePoly R) : Option Nat :=
   s.terms.back?.map (·.1)
 
+/-- The degree, with the zero polynomial given degree `0`, matching
+`DensePoly.natDegree`. -/
+abbrev natDegree (s : SparsePoly R) : Nat :=
+  s.degree?.getD 0
+
 /-- The leading coefficient, which is `0` for the zero polynomial. -/
 def leadingCoeff (s : SparsePoly R) : R :=
   match s.terms.back? with

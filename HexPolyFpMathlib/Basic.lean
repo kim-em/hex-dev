@@ -287,7 +287,7 @@ trivial ring every transported polynomial is zero and every executable
 coefficient is zero as well. -/
 @[simp, grind =]
 theorem natDegree_toMathlibPolynomial (f : Hex.FpPoly p) :
-    (toMathlibPolynomial f).natDegree = f.degree?.getD 0 := by
+    (toMathlibPolynomial f).natDegree = f.natDegree := by
   by_cases hsize : f.size = 0
   · have hf_zero : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hsize
     rw [hf_zero]
@@ -300,7 +300,8 @@ theorem natDegree_toMathlibPolynomial (f : Hex.FpPoly p) :
     rw [hzero, Polynomial.natDegree_zero]
   · have hpos : 0 < f.size := Nat.pos_of_ne_zero hsize
     have hdegree_some : f.degree? = some (f.size - 1) := by
-      simp [Hex.DensePoly.degree?, hsize]
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, hsize]
+    unfold Hex.DensePoly.natDegree
     rw [hdegree_some, Option.getD_some]
     apply le_antisymm
     · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
@@ -329,6 +330,7 @@ theorem leadingCoeff_toMathlibPolynomial (f : Hex.FpPoly p) :
   · have hf_zero : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hsize
     rw [hf_zero, Hex.DensePoly.leadingCoeff_zero, Hex.DensePoly.coeff_zero]
   · have hpos : 0 < f.size := Nat.pos_of_ne_zero hsize
+    unfold Hex.DensePoly.natDegree
     rw [Hex.DensePoly.degree?_eq_some_of_pos_size f hpos, Option.getD_some,
       Hex.DensePoly.leadingCoeff_eq_coeff_last f hpos]
 

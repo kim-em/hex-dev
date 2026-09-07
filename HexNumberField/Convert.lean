@@ -72,10 +72,10 @@ before their discs are compared. -/
 def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
   if hprim : ZPoly.content q = 1 then
     if hpos : 0 < q.leadingCoeff then
-      if hdegree : 0 < q.degree?.getD 0 then
+      if hdegree : 0 < q.natDegree then
         if hirred : ZPoly.isIrreducible q = true then
           if hsquarefree : HasOnlySimpleRoots q then do
-            let isolations ← isolate q hsquarefree (separationDepth q : Int)
+            let isolations ← isolate? q hsquarefree (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let comparable ← refined.mapM fun r =>
               (r.refineTo? (mahlerPrec a.p : Int)).unattach
@@ -96,7 +96,9 @@ def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
     none
 
 /-- Factor a lazy root's enclosing polynomial and select the normalized
-irreducible factor containing its chosen root. -/
+irreducible factor containing its chosen root. `none` is a checked
+implementation branch whose unreachability is proved by the Mathlib
+companion. -/
 @[expose]
 def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
   (ZPoly.factorize a.p).factors.foldl
@@ -106,8 +108,8 @@ def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
       | none => exactFactor? a entry.1)
     none
 
-/-- Canonicalize a lazy root. Failure is a checked implementation branch whose
-unreachability is proved by the Mathlib companion. -/
+/-- Canonicalize a lazy root: the total form of `exact?`, whose `none` branch
+the Mathlib companion proves unreachable. -/
 @[expose]
 def exact (a : AlgebraicRoot) : AlgebraicNumber :=
   a.exact?.getD (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed")
@@ -220,8 +222,8 @@ def krylovPowers (a : PolyQuot p x) :
 @[expose]
 def krylovOrbit [ZPoly.CheckedIrreducible p]
     (a : PolyQuot p x) :
-    Vector (PolyQuot p x) (p.degree?.getD 0 + 1) :=
-  krylovPowers a (p.degree?.getD 0)
+    Vector (PolyQuot p x) (p.natDegree + 1) :=
+  krylovPowers a (p.natDegree)
 
 /-- The monic polynomial encoded by a Krylov dependence vector. -/
 @[expose]
@@ -233,9 +235,9 @@ the span of its predecessors. -/
 @[expose]
 def relationAt? [ZPoly.CheckedIrreducible p]
     (_a : PolyQuot p x)
-    (orbit : Vector (PolyQuot p x) (p.degree?.getD 0 + 1))
+    (orbit : Vector (PolyQuot p x) (p.natDegree + 1))
     (k : Nat) : Option ZPoly :=
-  let n := p.degree?.getD 0
+  let n := p.natDegree
   if hk : k ≤ n then
     let previous : Matrix Rat k n := Matrix.ofFn fun i j =>
       (orbit.get ⟨i.val, by omega⟩).coeffs.coeff j
@@ -251,7 +253,7 @@ normalized as a primitive positive-leading integer polynomial. -/
 @[expose]
 def minpoly? [ZPoly.CheckedIrreducible p]
     (a : PolyQuot p x) : Option ZPoly :=
-  let n := p.degree?.getD 0
+  let n := p.natDegree
   let orbit := a.krylovOrbit
   (List.range n).findSome? fun i => a.relationAt? orbit (i + 1)
 
@@ -265,10 +267,10 @@ def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
   let q ← a.minpoly?
   if hprim : ZPoly.content q = 1 then
     if hpos : 0 < q.leadingCoeff then
-      if hdegree : 0 < q.degree?.getD 0 then
+      if hdegree : 0 < q.natDegree then
         if hirred : ZPoly.isIrreducible q = true then
           if hsquarefree : HasOnlySimpleRoots q then do
-            let isolations ← isolate q hsquarefree (separationDepth q : Int)
+            let isolations ← isolate? q hsquarefree (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let requested : Int := mahlerPrec q
             let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)

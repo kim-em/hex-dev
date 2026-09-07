@@ -192,26 +192,50 @@ private def runHexCanonAt (m : Nat) (_ : Unit) : IO String :=
   | some ⟨_, G⟩ => return triBitsOf (canon G)
   | none => return ""
 
-private def runNautyCanonAt (m : Nat) (_ : Unit) : IO String := do
+/-- The comparator's input for the `m`-vertex circulant, marshalled once.
+Pushing an adjacency across the FFI boundary is `O(m²)` and is not part
+of what nauty does, so it must not sit inside a benchmark that reports
+nauty's time. -/
+private def preparedCirculant (m : Nat) : Option Hex.BenchOracle.Nauty.Prepared :=
   match graphOf { n := m } with
   | some ⟨m', G⟩ =>
-    let result ← Hex.BenchOracle.Nauty.canon m' 1
-      (List.replicate m' 0) (adjStrings G)
-    return result.tri
+    (Hex.BenchOracle.Nauty.prepare? m' 1 (List.replicate m' 0)
+      (adjStrings G)).toOption
+  | none => none
+
+private def preparedCirculant8 : Option Hex.BenchOracle.Nauty.Prepared :=
+  preparedCirculant 8
+private def preparedCirculant12 : Option Hex.BenchOracle.Nauty.Prepared :=
+  preparedCirculant 12
+private def preparedCirculant16 : Option Hex.BenchOracle.Nauty.Prepared :=
+  preparedCirculant 16
+
+/-- Time the comparator on an already-marshalled graph. The result is the
+labelling and the node count, not the canonical form: rendering the form
+is another `O(m²)` that nauty does not do. -/
+private def runNautyCanonPrepared
+    (p : Option Hex.BenchOracle.Nauty.Prepared) (_ : Unit) : IO String := do
+  match p with
+  | some prep =>
+    let result ← Hex.BenchOracle.Nauty.canonPrepared prep
+    return s!"{result.lab.foldl (· + ·) 0}:{result.nodes}"
   | none => return ""
 
 /-- The public `canon` on the 8-vertex circulant. -/
 def runHexCanon8 : Unit → IO String := runHexCanonAt 8
 /-- Pinned nauty on the 8-vertex circulant. -/
-def runNautyCanon8 : Unit → IO String := runNautyCanonAt 8
+def runNautyCanon8 : Unit → IO String :=
+  runNautyCanonPrepared preparedCirculant8
 /-- The public `canon` on the 12-vertex circulant. -/
 def runHexCanon12 : Unit → IO String := runHexCanonAt 12
 /-- Pinned nauty on the 12-vertex circulant. -/
-def runNautyCanon12 : Unit → IO String := runNautyCanonAt 12
+def runNautyCanon12 : Unit → IO String :=
+  runNautyCanonPrepared preparedCirculant12
 /-- The public `canon` on the 16-vertex circulant. -/
 def runHexCanon16 : Unit → IO String := runHexCanonAt 16
 /-- Pinned nauty on the 16-vertex circulant. -/
-def runNautyCanon16 : Unit → IO String := runNautyCanonAt 16
+def runNautyCanon16 : Unit → IO String :=
+  runNautyCanonPrepared preparedCirculant16
 
 /-- The unpruned specification key at the largest feasible size, as a
 fixed comparison point against the pinned baseline. -/

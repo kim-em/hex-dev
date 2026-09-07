@@ -51,8 +51,11 @@ def isReal (a : AlgebraicNumber) : Bool :=
   a.rep.1.square.meetsRealAxis
 
 /-- The output order of `ZPoly.algebraicRoots`: real roots first, in
-increasing order of their isolation centres (which is their order as real
-numbers), then nonreal roots by isolation centre and precision. -/
+increasing order of their isolation centres, which is their order as real
+numbers; then the nonreal roots ordered lexicographically by isolation
+centre, real part first, then imaginary part, then precision. That order is
+deterministic, but it depends on the isolations rather than on the roots
+alone, so no client should rely on more than its determinism. -/
 @[expose]
 def rootLe (a b : AlgebraicNumber) : Bool :=
   match a.isReal, b.isReal with
@@ -80,7 +83,7 @@ namespace AlgebraicRoot
 polynomial. -/
 @[expose]
 def ofRefined (q : ZPoly) (prim : ZPoly.content q = 1) (pos_lc : 0 < q.leadingCoeff)
-    (pos_degree : 0 < q.degree?.getD 0) (squarefree : HasOnlySimpleRoots q)
+    (pos_degree : 0 < q.natDegree) (squarefree : HasOnlySimpleRoots q)
     (rep : RefinedIsolation q) : AlgebraicRoot :=
   { p := q
     prim := prim
@@ -104,15 +107,15 @@ value while looking for a printing instance, and must not run the root
 isolation symbolically. Proofs unfold it explicitly. -/
 @[expose, irreducible]
 def algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber) :=
-  if p.degree?.getD 0 = 0 then
+  if p.natDegree = 0 then
     some #[]
   else
     let q := ZPoly.squareFreeCore p
     if hprim : ZPoly.content q = 1 then
       if hpos : 0 < q.leadingCoeff then
-        if hdeg : 0 < q.degree?.getD 0 then
+        if hdeg : 0 < q.natDegree then
           if hsimple : HasOnlySimpleRoots q then do
-            let isolations ← isolate q hsimple (separationDepth q : Int)
+            let isolations ← isolate? q hsimple (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let roots ← refined.mapM fun rep =>
               (AlgebraicRoot.ofRefined q hprim hpos hdeg hsimple rep).exact?

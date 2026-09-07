@@ -159,10 +159,12 @@ theorem degree_lt_of_size_le (g : Hex.FpPoly p) (d : Nat)
   rcases Nat.eq_zero_or_pos g.size with h | h
   · have hzero : Hex.FpPoly.degree g = 0 := by
       unfold Hex.FpPoly.degree
+      unfold Hex.DensePoly.natDegree
       rw [(Hex.DensePoly.degree?_eq_none_iff g).mpr h]; rfl
     omega
   · have hsome : Hex.FpPoly.degree g = g.size - 1 := by
       unfold Hex.FpPoly.degree
+      unfold Hex.DensePoly.natDegree
       rw [Hex.DensePoly.degree?_eq_some_of_pos_size g h]; rfl
     omega
 
@@ -173,6 +175,7 @@ theorem size_le_degree_succ (f : Hex.FpPoly p) :
   · omega
   · have hsome : Hex.FpPoly.degree f = f.size - 1 := by
       unfold Hex.FpPoly.degree
+      unfold Hex.DensePoly.natDegree
       rw [Hex.DensePoly.degree?_eq_some_of_pos_size f h]; rfl
     omega
 

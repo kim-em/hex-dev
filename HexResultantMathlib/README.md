@@ -30,7 +30,7 @@ example (f g : DensePoly ℤ) :
     DensePoly.resultant f g =
       Polynomial.resultant (HexPolyMathlib.toPolynomial f)
         (HexPolyMathlib.toPolynomial g)
-        (m := f.degree?.getD 0) (n := g.degree?.getD 0) :=
+        (m := f.natDegree) (n := g.natDegree) :=
   DensePoly.toPolynomial_resultant f g
 ```
 

@@ -465,7 +465,7 @@ private theorem xgcd_repr_gcd_coeff_zero_ne_zero_of_ne_zero
   have hdeg : g.degree? = some 0 :=
     xgcd_repr_gcd_degree_eq_zero_of_ne_zero (x := x) hx
   have hsize : g.size = 1 := by
-    unfold DensePoly.degree? at hdeg
+    unfold DensePoly.natDegree DensePoly.degree? at hdeg
     by_cases hzero : g.size = 0
     · simp [hzero] at hdeg
     · have hpred : g.size - 1 = 0 := by

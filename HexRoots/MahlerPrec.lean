@@ -133,7 +133,7 @@ end ZPoly
     `ceilLog2`'s junk-`0` branch handles `n ≤ 1` and `a = 0`, so the value
     is a small harmless total (`3` for `n ≤ 1`). -/
 @[expose] def mahlerPrec (p : ZPoly) : Nat :=
-  let n := p.degree?.getD 0
+  let n := p.natDegree
   let a := ZPoly.coeffAbsMax p
   let t := (n + 2) * ceilLog2 n + (n - 1) * ceilLog2 (n + 1) + 2 * (n - 1) * ceilLog2 a
   3 + (t + 1) / 2
@@ -151,6 +151,6 @@ end ZPoly
     level), and `sepSlack` covers the fixed factors. It is the depth
     bound used by `stopDepth`. -/
 @[expose] def separationDepth (p : ZPoly) : Nat :=
-  mahlerPrec p + ceilLog2 (Nat.max 2 (p.degree?.getD 0)) + sepSlack
+  mahlerPrec p + ceilLog2 (Nat.max 2 (p.natDegree)) + sepSlack
 
 end Hex

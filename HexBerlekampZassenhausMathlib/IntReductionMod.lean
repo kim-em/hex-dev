@@ -185,7 +185,7 @@ theorem reassembly_complete
     Hex.exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct _ _
   have hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q :=
     Hex.exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign _ _ hcore_pos
-  have hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0 :=
+  have hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree :=
     Hex.exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos _ _ hcore_prim hcore_pos
   -- Per-factor positive leading coefficient from `normalizeFactorSign q = q`
   -- and irreducibility (hence `q ≠ 0`).
@@ -220,9 +220,8 @@ theorem reassembly_complete
     have hq_ne : q ≠ 0 := (hirr q hq).not_zero
     have hq_size_pos : 0 < q.size := Hex.ZPoly.size_pos_of_ne_zero q hq_ne
     have hq_deg := hdegree q hq
-    have hq_deg_eq : q.degree?.getD 0 = q.size - 1 := by
-      unfold Hex.DensePoly.degree?
-      simp [Nat.ne_of_gt hq_size_pos]
+    have hq_deg_eq : q.natDegree = q.size - 1 := by
+      rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     omega
   have hrp_ne_zero : (Hex.normalizeForFactor f).repeatedPart ≠ 0 := by
     intro hzero
@@ -319,7 +318,7 @@ theorem factorTrialFactorsWithBound_factor_irreducible
   have hcore_prim :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   simp only [Hex.factorTrialFactorsWithBound] at hmem
-  by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
   · rw [ite_eq_left hdeg] at hmem
     have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
     rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete

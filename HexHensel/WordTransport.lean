@@ -365,17 +365,20 @@ theorem toWP_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size) (h1
 
 /-- A monic polynomial keeps its degree after reduction to a nontrivial Montgomery modulus. -/
 theorem toWP_degree_eq_of_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size)
-    (h1 : 1 < m.toNat) : (toWP ctx z).degree?.getD 0 = z.degree?.getD 0 := by
+    (h1 : 1 < m.toNat) : (toWP ctx z).natDegree = z.natDegree := by
   have hs := toWP_size_eq_of_monic ctx hz hzpos h1
+  unfold Hex.DensePoly.natDegree
   rw [DensePoly.degree?_eq_some_of_pos_size _ (by rw [hs]; exact hzpos),
     DensePoly.degree?_eq_some_of_pos_size z hzpos, Option.getD_some, Option.getD_some, hs]
 
 /-- Modular conversion cannot increase polynomial degree. -/
-theorem toWP_degree_le (z : ZPoly) : (toWP ctx z).degree?.getD 0 ≤ z.degree?.getD 0 := by
+theorem toWP_degree_le (z : ZPoly) : (toWP ctx z).natDegree ≤ z.natDegree := by
   have hs := size_toWP_le ctx z
   rcases Nat.eq_zero_or_pos (toWP ctx z).size with h0 | h0
-  · rw [DensePoly.degree?, dite_eq_left h0]; simp
-  · rw [DensePoly.degree?_eq_some_of_pos_size _ h0, Option.getD_some]
+  · unfold Hex.DensePoly.natDegree
+    rw [DensePoly.degree?, dite_eq_left h0]; simp
+  · unfold Hex.DensePoly.natDegree
+    rw [DensePoly.degree?_eq_some_of_pos_size _ h0, Option.getD_some]
     rcases Nat.eq_zero_or_pos z.size with hz0 | hz0
     · omega
     · rw [DensePoly.degree?_eq_some_of_pos_size z hz0, Option.getD_some]; omega

@@ -837,7 +837,7 @@ squarefree binomial (the certified positive root). -/
 private def mkLadderRoot? (p : ZPoly) (n : Nat) : Option AlgebraicRoot :=
   if hprim : ZPoly.content p = 1 then
     if hlc : 0 < p.leadingCoeff then
-      if hdeg : 0 < p.degree?.getD 0 then
+      if hdeg : 0 < p.natDegree then
         if hsf : HasOnlySimpleRoots p then
           match positiveBinomialRoot? p n with
           | some rep =>
@@ -1322,9 +1322,9 @@ private def towerInvChainStepsAux (lower : List Level)
           qr.1.size * r₁'.size + qr.1.size * s₁'.size
         let step : TowerInvStep :=
           { index := index
-            dividendDegree := r₀.degree?.getD 0
-            divisorDegree := r₁'.degree?.getD 0
-            nextRemainderDegree := qr.2.degree?.getD 0
+            dividendDegree := r₀.natDegree
+            divisorDegree := r₁'.natDegree
+            nextRemainderDegree := qr.2.natDegree
             nextRemainderZero := qr.2.isZero
             lcNumMax := lcBits.numMax
             lcDenMax := lcBits.denMax
@@ -1480,7 +1480,7 @@ private def towerFactorDegrees (input : FactorInput) : UInt64 :=
   match factor? input.f with
   | some result =>
     degreeMultChecksum <| result.factors.map fun entry =>
-      (entry.1.degree?.getD 0, entry.2)
+      (entry.1.natDegree, entry.2)
   | none => 1
 
 private def pariNfFactorDegrees (m : Nat) : IO UInt64 := do

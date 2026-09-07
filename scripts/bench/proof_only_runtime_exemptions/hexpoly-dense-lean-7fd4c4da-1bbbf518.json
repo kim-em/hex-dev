@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Dense.lean",
+ "baseline_blob": "7fd4c4da15f387692247ac934f8ca653c09d69dc",
+ "current_blob": "1bbbf518bd5dcb280077749329fc402c45fa72f2",
+ "reason": "Adds the `Hex.DensePoly.natDegree` abbreviation for `degree?.getD 0` with its three defining lemmas, and renames `degree?_C_getD` and `degree?_monomial_getD_of_ne_zero` to `natDegree_C` and `natDegree_monomial_of_ne_zero`. `abbrev` marks the new declaration `@[reducible, inline]`, so it unfolds to the term it replaced; no existing definition changes and the compiled code is unchanged."
+}

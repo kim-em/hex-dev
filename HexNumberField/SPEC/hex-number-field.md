@@ -26,7 +26,7 @@ The shipped Mathlib-free API separates the semantic class
 ```lean
 class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
   is_true : ZPoly.isIrreducible p = true
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
 ```
 
 Checked constructors branch on the Boolean and can therefore return this
@@ -45,7 +45,7 @@ namespace Hex
 
 structure PolyQuot (p : ZPoly) (x : SimpleRoot p) where
   coeffs    : DensePoly Rat
-  degree_lt : coeffs.degree?.getD 0 < p.degree?.getD 0
+  degree_lt : coeffs.natDegree < p.natDegree
 
 @[ext] theorem PolyQuot.ext (h : a.coeffs = b.coeffs) : a = b
 instance : DecidableEq (PolyQuot p x)
@@ -58,7 +58,7 @@ structure AlgebraicRoot where
   p          : ZPoly
   prim       : ZPoly.Primitive p
   pos_lc     : 0 < p.leadingCoeff
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
   squarefree : HasOnlySimpleRoots p
   x          : SimpleRoot p
   rep        : RefinedIsolation p
@@ -70,7 +70,7 @@ def AlgebraicNumber.p (a : AlgebraicNumber) : ZPoly
 def AlgebraicNumber.prim (a : AlgebraicNumber) : ZPoly.Primitive a.p
 def AlgebraicNumber.pos_lc (a : AlgebraicNumber) : 0 < a.p.leadingCoeff
 def AlgebraicNumber.pos_degree (a : AlgebraicNumber) :
-    0 < a.p.degree?.getD 0
+    0 < a.p.natDegree
 def AlgebraicNumber.checked (a : AlgebraicNumber) :
     ZPoly.CheckedIrreducible a.p
 def AlgebraicNumber.squarefree (a : AlgebraicNumber) :
@@ -117,6 +117,7 @@ def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
 def AlgebraicPoly.coeff (f : AlgebraicPoly) (n : Nat) : AlgebraicNumber
 def AlgebraicPoly.size (f : AlgebraicPoly) : Nat
 def AlgebraicPoly.degree? (f : AlgebraicPoly) : Option Nat
+abbrev AlgebraicPoly.natDegree (f : AlgebraicPoly) : Nat
 def AlgebraicPoly.isZero (f : AlgebraicPoly) : Bool
 def AlgebraicPoly.beq (f g : AlgebraicPoly) : Bool
 instance : BEq AlgebraicPoly
@@ -466,7 +467,7 @@ by tower adjoining. No API performs unbounded refinement.
 
 ```lean
 def AlgebraicRoot.ofRefined (q : ZPoly) (prim : ZPoly.content q = 1)
-    (pos_lc : 0 < q.leadingCoeff) (pos_degree : 0 < q.degree?.getD 0)
+    (pos_lc : 0 < q.leadingCoeff) (pos_degree : 0 < q.natDegree)
     (squarefree : HasOnlySimpleRoots q) (rep : RefinedIsolation q) :
     AlgebraicRoot
 def ZPoly.algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber)

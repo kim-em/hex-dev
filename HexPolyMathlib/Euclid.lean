@@ -54,19 +54,19 @@ private theorem field_divMod_spec [Field R] [DecidableEq R]
           (Nat.pos_of_ne_zero hq))
 
 private theorem field_divMod_remainder_degree_lt [Field R] [DecidableEq R]
-    (p q : Hex.DensePoly R) (hdegree : 0 < q.degree?.getD 0) :
-    (Hex.DensePoly.divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
+    (p q : Hex.DensePoly R) (hdegree : 0 < q.natDegree) :
+    (Hex.DensePoly.divMod p q).2.natDegree < q.natDegree := by
   apply Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel p q hdegree
   intro a
   apply field_div_cancel
   apply Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size
   by_cases hq : q.size = 0
-  · simp [Hex.DensePoly.degree?, hq] at hdegree
+  · simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, hq] at hdegree
   · exact Nat.pos_of_ne_zero hq
 
 private theorem field_divMod_remainder_eq_zero_of_not_pos_degree
     [Field R] [DecidableEq R] (p q : Hex.DensePoly R)
-    (hqfalse : q.isZero = false) (hdegree : ¬ 0 < q.degree?.getD 0) :
+    (hqfalse : q.isZero = false) (hdegree : ¬ 0 < q.natDegree) :
     (Hex.DensePoly.divMod p q).2 = 0 := by
   have hqsize_ne : q.size ≠ 0 := by
     intro hsize
@@ -76,8 +76,8 @@ private theorem field_divMod_remainder_eq_zero_of_not_pos_degree
     rw [hzero] at hqfalse
     contradiction
   have hqsize : q.size = 1 := by
-    have hdeg : q.degree?.getD 0 = q.size - 1 := by
-      simp [Hex.DensePoly.degree?, hqsize_ne]
+    have hdeg : q.natDegree = q.size - 1 := by
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, hqsize_ne]
     rw [hdeg] at hdegree
     omega
   exact Hex.DensePoly.divMod_remainder_eq_zero_of_degree_zero_of_cancel p q hqsize
@@ -93,8 +93,8 @@ private theorem degree_toPolynomial_remainder_lt [Field R] [DecidableEq R]
     intro h
     apply hq
     exact (equiv (R := R)).injective (by simpa using h)
-  by_cases hpos : 0 < q.degree?.getD 0
-  · have hnat : r.degree?.getD 0 < q.degree?.getD 0 := by
+  by_cases hpos : 0 < q.natDegree
+  · have hnat : r.natDegree < q.natDegree := by
       simpa [r] using field_divMod_remainder_degree_lt p q hpos
     change (toPolynomial r).degree < (toPolynomial q).degree
     by_cases hr : r = 0
@@ -193,7 +193,7 @@ instance (priority := 50) instDivModLawsField [Field R] [DecidableEq R] :
   divMod_remainder_degree_lt_of_pos_degree := field_divMod_remainder_degree_lt
   divModMonic_eq_divMod_of_monic := by
     intro p q hmonic
-    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    by_cases hlt : p.natDegree < q.natDegree
     · rw [Hex.DensePoly.divMod_eq_zero_self_of_degree_lt p q hlt]
       unfold Hex.DensePoly.divModMonic
       exact Hex.DensePoly.divModArray_eq_zero_self_of_degree_lt p q id hlt

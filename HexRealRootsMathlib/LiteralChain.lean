@@ -231,9 +231,7 @@ private theorem cast_unit {p : Hex.ZPoly} (hsize : p.size = 1) :
     simp at hsize
   have hcast0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
   have hdegree : (toPolyℝ p).natDegree = 0 := by
-    rw [natDegree_toPolyℝ,
-      Hex.DensePoly.degree?_eq_some_of_pos_size p (by omega), hsize]
-    rfl
+    rw [natDegree_toPolyℝ, Hex.DensePoly.natDegree_eq_size_sub_one, hsize]
   rw [Polynomial.isUnit_iff_degree_eq_zero,
     Polynomial.degree_eq_natDegree hcast0, hdegree]
   rfl

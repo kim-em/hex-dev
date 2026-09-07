@@ -171,7 +171,7 @@ private theorem directSelectedDegree_cons_reverse
     Hex.directSelectedDegree basis
         (head :: (x :: selectedRev).reverse) =
       Hex.directSelectedDegree basis (head :: selectedRev.reverse) +
-        (Hex.directLiftedFactor basis x).degree?.getD 0 := by
+        (Hex.directLiftedFactor basis x).natDegree := by
   simp [Hex.directSelectedDegree, Hex.directSelectedFactors,
     List.reverse_cons, List.map_append, List.foldl_append]
 
@@ -277,14 +277,14 @@ theorem scanDirectCombinations_found
               Hex.scanDirectCombinations coreLc target basis lift image head xs choose
                 (x :: selectedRev) rejectedRev
                 (selectedDegree +
-                  (Hex.directLiftedFactor basis x).degree?.getD 0)
+                  (Hex.directLiftedFactor basis x).natDegree)
                 (selectedTrail *
                     (Hex.directLiftedFactor basis x).coeff 0 %
                   (Hex.liftModulus basis : Int)) =
               included at h
           have hdegree' :
               selectedDegree +
-                  (Hex.directLiftedFactor basis x).degree?.getD 0 =
+                  (Hex.directLiftedFactor basis x).natDegree =
                 Hex.directSelectedDegree basis
                   (head :: (x :: selectedRev).reverse) := by
             rw [directSelectedDegree_cons_reverse, ← hdegree]
@@ -400,7 +400,7 @@ theorem scanDirectCombinations_finds
             obtain ⟨split, tried, hfound⟩ :=
               ih choose (x :: selectedRev) rejectedRev
                 (selectedDegree +
-                  (Hex.directLiftedFactor basis x).degree?.getD 0)
+                  (Hex.directLiftedFactor basis x).natDegree)
                 (selectedTrail *
                     (Hex.directLiftedFactor basis x).coeff 0 %
                   (Hex.liftModulus basis : Int))
@@ -418,7 +418,7 @@ theorem scanDirectCombinations_finds
                 Hex.scanDirectCombinations coreLc target basis lift image head xs
                   choose (x :: selectedRev) rejectedRev
                   (selectedDegree +
-                    (Hex.directLiftedFactor basis x).degree?.getD 0)
+                    (Hex.directLiftedFactor basis x).natDegree)
                   (selectedTrail *
                       (Hex.directLiftedFactor basis x).coeff 0 %
                     (Hex.liftModulus basis : Int)) =
