@@ -1,0 +1,57 @@
+Hex.IntFactorBench.runDivisors    expected complexity: n * n.log2    [warm cache]
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=de6e13c-dirty, 2026-09-07T07:38:13Z, host=chungus2
+   param  per-call    repeats  C
+      64    5.109 µs  ×2^17    C=13.336 [trial 1/7] †
+     256   24.428 µs  ×2^15    C=11.928 [trial 1/7]
+   1_024  116.486 µs  ×2^13    C=11.359 [trial 1/7]
+   4_096  553.113 µs  ×2^10    C=11.176 [trial 1/7]
+  16_384    2.489 ms  ×2^8     C=11.049 [trial 1/7]
+  32_768    5.578 ms  ×2^7     C=11.271 [trial 1/7]
+      64    5.244 µs  ×2^17    C=13.336 [trial 2/7] †
+     256   24.320 µs  ×2^15    C=11.928 [trial 2/7]
+   1_024  116.312 µs  ×2^13    C=11.359 [trial 2/7]
+   4_096  550.719 µs  ×2^10    C=11.176 [trial 2/7]
+  16_384    2.532 ms  ×2^8     C=11.049 [trial 2/7]
+  32_768    5.448 ms  ×2^7     C=11.271 [trial 2/7]
+      64    5.131 µs  ×2^17    C=13.336 [trial 3/7] †
+     256   24.309 µs  ×2^15    C=11.928 [trial 3/7]
+   1_024  116.437 µs  ×2^13    C=11.359 [trial 3/7]
+   4_096  548.847 µs  ×2^10    C=11.176 [trial 3/7]
+  16_384    2.557 ms  ×2^8     C=11.049 [trial 3/7]
+  32_768    5.602 ms  ×2^7     C=11.271 [trial 3/7]
+      64    5.192 µs  ×2^17    C=13.336 [trial 4/7] †
+     256   24.487 µs  ×2^15    C=11.928 [trial 4/7]
+   1_024  116.011 µs  ×2^13    C=11.359 [trial 4/7]
+   4_096  552.148 µs  ×2^10    C=11.176 [trial 4/7]
+  16_384    2.549 ms  ×2^8     C=11.049 [trial 4/7]
+  32_768    5.552 ms  ×2^7     C=11.271 [trial 4/7]
+      64    5.118 µs  ×2^17    C=13.336 [trial 5/7] †
+     256   24.970 µs  ×2^15    C=11.928 [trial 5/7]
+   1_024  116.115 µs  ×2^13    C=11.359 [trial 5/7]
+   4_096  549.303 µs  ×2^10    C=11.176 [trial 5/7]
+  16_384    2.534 ms  ×2^8     C=11.049 [trial 5/7]
+  32_768    5.420 ms  ×2^7     C=11.271 [trial 5/7]
+      64    5.106 µs  ×2^17    C=13.336 [trial 6/7] †
+     256   24.719 µs  ×2^15    C=11.928 [trial 6/7]
+   1_024  116.938 µs  ×2^13    C=11.359 [trial 6/7]
+   4_096  547.811 µs  ×2^10    C=11.176 [trial 6/7]
+  16_384    2.518 ms  ×2^8     C=11.049 [trial 6/7]
+  32_768    5.524 ms  ×2^7     C=11.271 [trial 6/7]
+      64    5.121 µs  ×2^17    C=13.336 [trial 7/7] †
+     256   24.392 µs  ×2^15    C=11.928 [trial 7/7]
+   1_024  116.169 µs  ×2^13    C=11.359 [trial 7/7]
+   4_096  531.593 µs  ×2^10    C=11.176 [trial 7/7]
+  16_384    2.544 ms  ×2^8     C=11.049 [trial 7/7]
+  32_768    5.540 ms  ×2^7     C=11.271 [trial 7/7]
+  verdict: consistent with declared complexity (cMin=11.049, cMax=11.928, β=-0.012)
+  per-spawn floor (harness self-measurement): 50.787 ms
+  peak RSS: 70_632 kB..79_600 kB (across 42 ok row(s))
+  trial summaries (7 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+        64  7/7       5.121 µs    5.106 µs    5.244 µs  2.683%
+       256  7/7      24.428 µs   24.309 µs   24.970 µs  2.709%
+     1_024  7/7     116.312 µs  116.011 µs  116.938 µs  0.797%
+     4_096  7/7     549.303 µs  531.593 µs  553.113 µs  3.918%
+    16_384  7/7       2.534 ms    2.489 ms    2.557 ms  2.683%
+    32_768  7/7       5.540 ms    5.420 ms    5.602 ms  3.299%
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/bench.json

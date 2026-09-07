@@ -1,0 +1,478 @@
+{
+  "string_table": [
+    "start_thread",
+    "__clone3",
+    "__memmove_avx512_unaligned_erms",
+    "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexIntFactor_Bench_0__Hex_IntFactorBench_initFn_00___x40_HexIntFactor_Bench_3914627745____hygCtx___hyg_33__spec__0___redArg",
+    "lp_Hex___private_HexIntFactor_Bench_0__Hex_IntFactorBench_initFn___lam__0_00___x40_HexIntFactor_Bench_3914627745____hygCtx___hyg_33_",
+    "lp_Hex___private_HexIntFactor_Bench_0__Hex_IntFactorBench_initFn___lam__0_00___x40_HexIntFactor_Bench_3914627745____hygCtx___hyg_33____boxed",
+    "lp_Hex_Hex_Nat_PrimePower_prime",
+    "lp_Hex_Hex_Nat_DivisorEnumeration_powers",
+    "lp_Hex_List_mapTR_loop___at___00Hex_Nat_DivisorEnumeration_extend_spec__0",
+    "lp_Hex___private_Init_Data_List_Impl_0__List_flatMapTR_go___at___00Hex_Nat_DivisorEnumeration_extend_spec__1",
+    "lp_Hex_Hex_Nat_DivisorEnumeration_values",
+    "lp_Hex_Hex_Nat_divisors___redArg",
+    "lp_lean_x2dbench___private_LeanBench_RunEnv_0__LeanBench_RunEnv_detectCpuModel",
+    "lp_lean_x2dbench___private_LeanBench_RunEnv_0__LeanBench_RunEnv_detectCpuCores",
+    "lp_lean_x2dbench_LeanBench_RunEnv_capture",
+    "lp_lean_x2dbench_LeanBench_wrapLoopForSidecar",
+    "lp_lean_x2dbench_LeanBench_wrapLoopForSidecar___boxed",
+    "lp_lean_x2dbench___private_Init_While_0__repeatM_erased___at___00LeanBench_autoTune_spec__0___redArg",
+    "lp_lean_x2dbench_LeanBench_autoTune",
+    "lp_lean_x2dbench_LeanBench_runChildMode",
+    "lp_lean_x2dbench_LeanBench_Cli_runChildCmd",
+    "lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed",
+    "l_Nat_decLe___boxed",
+    "l_List_lengthTR___redArg",
+    "l_List_reverseAux___redArg",
+    "lean_array_to_list_impl",
+    "l_List_foldl___at___00Array_appendList_spec__0___redArg",
+    "l_List_toArrayAux___redArg",
+    "lean_list_to_array",
+    "l_String_splitOnAux",
+    "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg",
+    "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg",
+    "l_List_MergeSort_Internal_splitRevInTwo___redArg",
+    "l_List_MergeSort_Internal_splitRevInTwo_x27___redArg",
+    "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg",
+    "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg",
+    "l_List_MergeSort_Internal_mergeSortTR_u2082___redArg",
+    "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+    "_ZN4lean7lthread3imp5_mainEPv",
+    "lean_free_object",
+    "lean_dec_ref_cold",
+    "lean_string_utf8_get",
+    "lean_copy_expand_array",
+    "lean_array_push",
+    "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+    "lean_apply_2",
+    "lean_inc_heartbeat",
+    "mi_free",
+    "mi_malloc_small",
+    "_ZL19mi_arenas_try_allocP9mi_heap_smmbbP10mi_arena_smiP10mi_memid_s",
+    "_ZL28mi_arenas_page_regular_allocP10mi_theap_smm",
+    "_ZL24mi_arenas_page_free_primP9mi_page_s",
+    "_Z15_mi_arenas_freePvm10mi_memid_s",
+    "_ZL23mi_arena_schedule_purgeP10mi_arena_smm",
+    "_Z18_mi_arenas_collectbbP8mi_tld_s",
+    "_ZL37mi_bbitmap_try_find_and_clear_genericP12mi_bbitmap_smmPmPFbP11mi_bchunk_smS1_E",
+    "_ZL6mi_binm",
+    "_ZL20mi_page_queue_removeP15mi_page_queue_sP9mi_page_s",
+    "_Z15_mi_page_retireP9mi_page_s",
+    "_Z25_mi_theap_collect_retiredP10mi_theap_sb",
+    "_ZL19mi_page_extend_freeP10mi_theap_sP9mi_page_s",
+    "_Z18_mi_malloc_genericP10mi_theap_smmPm",
+    "_ZL23mi_arenas_try_find_freeP9mi_heap_smmbbP10mi_arena_smiP10mi_memid_s",
+    "_ZL21mi_arena_try_alloc_atP10mi_arena_smbmP10mi_memid_s",
+    "_ZL26mi_arenas_page_alloc_freshP10mi_theap_smmmb",
+    "_ZL24mi_page_free_list_extendP9mi_page_smm",
+    "_ZL26mi_page_queue_find_free_exP10mi_theap_sP15mi_page_queue_sb"
+  ],
+  "data": [
+    {
+      "debug_name": "libc.so.6",
+      "symbol_table": [
+        {
+          "rva": 641904,
+          "size": 1280,
+          "symbol": 0
+        },
+        {
+          "rva": 1196112,
+          "size": 71,
+          "symbol": 1
+        },
+        {
+          "rva": 1670784,
+          "size": 1984,
+          "symbol": 2
+        }
+      ]
+    },
+    {
+      "debug_name": "hexintfactor_bench",
+      "symbol_table": [
+        {
+          "rva": 12258688,
+          "size": 634,
+          "symbol": 3
+        },
+        {
+          "rva": 12259328,
+          "size": 1081,
+          "symbol": 4
+        },
+        {
+          "rva": 12260416,
+          "size": 42,
+          "symbol": 5
+        },
+        {
+          "rva": 12413104,
+          "size": 35,
+          "symbol": 6
+        },
+        {
+          "rva": 12543072,
+          "size": 332,
+          "symbol": 7
+        },
+        {
+          "rva": 12543408,
+          "size": 545,
+          "symbol": 8
+        },
+        {
+          "rva": 12543968,
+          "size": 205,
+          "symbol": 9
+        },
+        {
+          "rva": 12544176,
+          "size": 120,
+          "symbol": 10
+        },
+        {
+          "rva": 12546192,
+          "size": 34,
+          "symbol": 11
+        },
+        {
+          "rva": 12602752,
+          "size": 960,
+          "symbol": 12
+        },
+        {
+          "rva": 12604096,
+          "size": 1177,
+          "symbol": 13
+        },
+        {
+          "rva": 12611008,
+          "size": 2806,
+          "symbol": 14
+        },
+        {
+          "rva": 12632368,
+          "size": 833,
+          "symbol": 15
+        },
+        {
+          "rva": 12633216,
+          "size": 47,
+          "symbol": 16
+        },
+        {
+          "rva": 12635456,
+          "size": 1626,
+          "symbol": 17
+        },
+        {
+          "rva": 12637264,
+          "size": 3610,
+          "symbol": 18
+        },
+        {
+          "rva": 12645280,
+          "size": 5441,
+          "symbol": 19
+        },
+        {
+          "rva": 13229904,
+          "size": 1933,
+          "symbol": 20
+        },
+        {
+          "rva": 13231840,
+          "size": 42,
+          "symbol": 21
+        },
+        {
+          "rva": 78850192,
+          "size": 144,
+          "symbol": 22
+        },
+        {
+          "rva": 78855264,
+          "size": 172,
+          "symbol": 23
+        },
+        {
+          "rva": 78958656,
+          "size": 252,
+          "symbol": 24
+        },
+        {
+          "rva": 79046032,
+          "size": 179,
+          "symbol": 25
+        },
+        {
+          "rva": 79046448,
+          "size": 304,
+          "symbol": 26
+        },
+        {
+          "rva": 79055280,
+          "size": 304,
+          "symbol": 27
+        },
+        {
+          "rva": 79055584,
+          "size": 107,
+          "symbol": 28
+        },
+        {
+          "rva": 79918144,
+          "size": 940,
+          "symbol": 29
+        },
+        {
+          "rva": 79928512,
+          "size": 999,
+          "symbol": 30
+        },
+        {
+          "rva": 79929520,
+          "size": 715,
+          "symbol": 31
+        },
+        {
+          "rva": 79930240,
+          "size": 359,
+          "symbol": 32
+        },
+        {
+          "rva": 79930608,
+          "size": 215,
+          "symbol": 33
+        },
+        {
+          "rva": 79930832,
+          "size": 1032,
+          "symbol": 34
+        },
+        {
+          "rva": 79931872,
+          "size": 1032,
+          "symbol": 35
+        },
+        {
+          "rva": 79932912,
+          "size": 79,
+          "symbol": 36
+        },
+        {
+          "rva": 80380144,
+          "size": 32,
+          "symbol": 37
+        },
+        {
+          "rva": 80381792,
+          "size": 160,
+          "symbol": 38
+        },
+        {
+          "rva": 80678320,
+          "size": 131,
+          "symbol": 39
+        },
+        {
+          "rva": 80678592,
+          "size": 192,
+          "symbol": 40
+        },
+        {
+          "rva": 80705840,
+          "size": 63,
+          "symbol": 41
+        },
+        {
+          "rva": 80711904,
+          "size": 284,
+          "symbol": 42
+        },
+        {
+          "rva": 80712208,
+          "size": 78,
+          "symbol": 43
+        },
+        {
+          "rva": 80716144,
+          "size": 749,
+          "symbol": 44
+        },
+        {
+          "rva": 80733120,
+          "size": 7242,
+          "symbol": 45
+        },
+        {
+          "rva": 80930688,
+          "size": 10,
+          "symbol": 46
+        },
+        {
+          "rva": 80970992,
+          "size": 107,
+          "symbol": 47
+        },
+        {
+          "rva": 80971488,
+          "size": 65,
+          "symbol": 48
+        },
+        {
+          "rva": 80986352,
+          "size": 1249,
+          "symbol": 49
+        },
+        {
+          "rva": 80988288,
+          "size": 1032,
+          "symbol": 50
+        },
+        {
+          "rva": 80989952,
+          "size": 474,
+          "symbol": 51
+        },
+        {
+          "rva": 80992336,
+          "size": 267,
+          "symbol": 52
+        },
+        {
+          "rva": 80992944,
+          "size": 469,
+          "symbol": 53
+        },
+        {
+          "rva": 80994272,
+          "size": 1155,
+          "symbol": 54
+        },
+        {
+          "rva": 81022256,
+          "size": 1510,
+          "symbol": 55
+        },
+        {
+          "rva": 81061504,
+          "size": 94,
+          "symbol": 56
+        },
+        {
+          "rva": 81063728,
+          "size": 427,
+          "symbol": 57
+        },
+        {
+          "rva": 81064336,
+          "size": 302,
+          "symbol": 58
+        },
+        {
+          "rva": 81064640,
+          "size": 419,
+          "symbol": 59
+        },
+        {
+          "rva": 81065200,
+          "size": 222,
+          "symbol": 60
+        },
+        {
+          "rva": 81065520,
+          "size": 931,
+          "symbol": 61
+        },
+        {
+          "rva": 81118384,
+          "size": 1443,
+          "symbol": 62
+        },
+        {
+          "rva": 81119840,
+          "size": 767,
+          "symbol": 63
+        },
+        {
+          "rva": 81120608,
+          "size": 1791,
+          "symbol": 64
+        },
+        {
+          "rva": 81130960,
+          "size": 90,
+          "symbol": 65
+        },
+        {
+          "rva": 81131824,
+          "size": 1000,
+          "symbol": 66
+        }
+      ]
+    }
+  ],
+  "provenance": [
+    {
+      "command": [
+        "nm",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+      ],
+      "stderr": "",
+      "binary_sha256": "fc8e04292ecf9c1dfe9114c258e913bd4498c4a42e59c72fd62e0a23b71a81b0"
+    },
+    {
+      "command": [
+        "nm",
+        "-D",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+      ],
+      "stderr": "",
+      "binary_sha256": "fc8e04292ecf9c1dfe9114c258e913bd4498c4a42e59c72fd62e0a23b71a81b0"
+    },
+    {
+      "path": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6",
+      "status": "symbolized",
+      "resolved_addresses": 7,
+      "unresolved_addresses": 0
+    },
+    {
+      "command": [
+        "nm",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/bin/hexintfactor_bench"
+      ],
+      "stderr": "",
+      "binary_sha256": "64991c51f642fd47bc6ab40f611ddad4a67ea409fb7bd2af219d7c3ecb7b2150"
+    },
+    {
+      "command": [
+        "nm",
+        "-D",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/bin/hexintfactor_bench"
+      ],
+      "stderr": "",
+      "binary_sha256": "64991c51f642fd47bc6ab40f611ddad4a67ea409fb7bd2af219d7c3ecb7b2150"
+    },
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/bin/hexintfactor_bench",
+      "status": "symbolized",
+      "resolved_addresses": 461,
+      "unresolved_addresses": 0
+    }
+  ]
+}
