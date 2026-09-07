@@ -19,9 +19,11 @@ sources and headers are tracked. The set and the shared mechanism are
 declared in ``scripts/bench/sweep_freshness.py``.
 
 The family declares no exemption channel, so any difference has to be
-re-measured, with one exception the check verifies for itself: a ``.lean``
-path whose two blobs are equal once their comments are removed
-(``lean_comment_only``). Prose under the library tree is edited often
+re-measured, with checked exceptions: a ``.lean`` path whose two blobs are equal once
+comments are removed, and additions of plain literal Lake targets in existing
+Hex library namespaces outside the measured import closure. Target additions
+cannot change existing declarations, build options, defaults, or module
+ownership within that closure. Prose under the library tree is edited often
 enough, and cannot move a curve, that making every docstring cost a sweep
 would either stop the prose being written or make regeneration routine
 enough to stop meaning anything.
@@ -29,6 +31,7 @@ enough to stop meaning anything.
 
 from __future__ import annotations
 
+import difflib
 import json
 from pathlib import Path
 import re
@@ -42,6 +45,120 @@ FAMILY = freshness.GRAPHISO
 RESULTS = freshness.RESULTS
 
 SWEEP_RE = re.compile(r"^hexgraphiso-cactus-([0-9a-f]{12})-[^.]+\.jsonl$")
+
+
+NAME = r"[A-Za-z_][A-Za-z0-9_]*"
+MODULE = NAME + r"(?:\." + NAME + r")*"
+TARGET = re.compile(
+    rf"lean_(exe|lib) ({NAME}) where\n"
+    r'  srcDir := "(bench|conformance)"\n'
+    rf"  (root|roots|globs) := (`{MODULE}|#\[\s*`{MODULE}(?:\s*,\s*`{MODULE})*\s*,?\s*\])\n")
+IMPORT = re.compile(
+    rf"[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+(?:all[ \t]+)?"
+    rf"({MODULE}(?:[ \t]+{MODULE})*)[ \t]*")
+IMPORT_START = re.compile(r"[ \t]*(?:(?:public|private|meta)[ \t]+)*import\b")
+
+
+def graph_import_prefixes() -> set[str] | None:
+    """Over-approximate the graph driver's and tactic's imported namespaces.
+
+    Inspect every local source location for an import, so ambiguity only
+    rejects an allowance. Nonlocal imports still contribute their namespace.
+    Unsupported import syntax fails closed.
+    """
+    prefixes = {"HexGraphIso"}
+    stack = [freshness.ROOT / "HexGraphIso.lean",
+             freshness.ROOT / "bench/HexGraphIso/Cactus.lean"]
+    seen = set()
+    while stack:
+        path = stack.pop()
+        if path in seen:
+            continue
+        seen.add(path)
+        if not path.is_file():
+            return None
+        for line in freshness.strip_lean_comments(path.read_text()).splitlines():
+            if not IMPORT_START.match(line):
+                continue
+            match = IMPORT.fullmatch(line)
+            if match is None:
+                return None
+            for module in match[1].split():
+                prefixes.add(module.split(".")[0])
+                relative = Path(*module.split(".")).with_suffix(".lean")
+                for directory in (freshness.ROOT, freshness.ROOT / "bench",
+                                  freshness.ROOT / "conformance"):
+                    source = directory / relative
+                    if source.is_file():
+                        stack.append(source)
+    return prefixes
+
+
+def independent_target_additions(before: str, after: str, prefixes: set[str]) -> bool:
+    """Recognize only insertions of literal, non-default independent targets.
+
+    Insertions must follow an existing executable's final `root` field and
+    precede another target or EOF. This prevents moving an attribute/scoped
+    option onto a new target or stealing fields from an existing declaration.
+    The rest of the file must remain byte-for-byte equal after comment removal.
+    """
+    before = freshness.strip_lean_comments(before)
+    after = freshness.strip_lean_comments(after)
+    old, new = before.splitlines(keepends=True), after.splitlines(keepends=True)
+    names = set()
+    for kind, start, end, left, right in difflib.SequenceMatcher(
+            None, old, new, autojunk=False).get_opcodes():
+        if kind == "equal":
+            continue
+        if kind != "insert":
+            return False
+        previous = next((line.rstrip("\n") for line in reversed(old[:start]) if line.strip()), "")
+        following = next((line.rstrip("\n") for line in old[end:] if line.strip()), "")
+        if not re.fullmatch(rf"  root := `{MODULE}", previous):
+            return False
+        if following and not re.fullmatch(rf"lean_(?:lib|exe) {NAME} where", following):
+            return False
+        addition = "".join(new[left:right])
+        cursor, count = 0, 0
+        while cursor < len(addition):
+            blank = re.match(r"[ \t]*\n", addition[cursor:])
+            if blank:
+                cursor += blank.end()
+                continue
+            match = TARGET.match(addition, cursor)
+            if match is None:
+                return False
+            target_kind, name, _directory, field, value = match.groups()
+            if (name in names or re.search(rf"\b{re.escape(name)}\b", before)
+                    or (target_kind == "exe") != (field == "root")
+                    or (field == "root") != value.startswith("`")):
+                return False
+            modules = re.findall(rf"`({MODULE})", value)
+            if any(module.split(".")[0] not in prefixes for module in modules):
+                return False
+            names.add(name)
+            count += 1
+            cursor = match.end()
+        if not count:
+            return False
+    return bool(names)
+
+
+def independent_lake_targets(difference: freshness.Difference) -> bool:
+    """A checked allowance for new targets outside graph import namespaces."""
+    if (difference.path != "lakefile.lean" or difference.baseline is None
+            or difference.current is None or difference.baseline_mode != difference.current_mode):
+        return False
+    imported = graph_import_prefixes()
+    if imported is None:
+        return False
+    # Existing Hex library namespaces cannot be supplied by Lean's external
+    # packages. Excluding every imported namespace also rules out ownership
+    # changes for modules used by either measured artifact.
+    independent = {path.stem for path in freshness.ROOT.glob("Hex*.lean")
+                   if path.stem not in imported}
+    return independent_target_additions(freshness.blob_text(difference.baseline),
+                                        freshness.blob_text(difference.current), independent)
 
 
 def observations() -> tuple[list[freshness.Observation], list[str]]:
@@ -72,7 +189,8 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
 def main() -> int:
     found, errors = observations()
     verdict = freshness.assess(FAMILY, found,
-                               allow=freshness.lean_comment_only)
+                               allow=lambda difference: freshness.lean_comment_only(difference)
+                               or independent_lake_targets(difference))
     errors.extend(verdict.errors)
     errors.extend(freshness.missing_figures(FAMILY))
 

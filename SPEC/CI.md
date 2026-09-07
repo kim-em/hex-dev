@@ -116,9 +116,9 @@ polynomial factorization comparison:
   own curve can instead record a runtime-neutral exemption for the paths that
   moved. `scripts/bench/
   check_graphiso_sweep_freshness.py` applies the same mechanism to the
-  hex-graph-iso cactus figures, where a `.lean` path differing only inside
-  its comments is the one difference the check clears without a
-  measurement, on evidence it reads rather than a recorded claim; both are
+  hex-graph-iso cactus figures, where mechanically checked comment-only edits
+  and independent literal Lake target additions can clear without a new
+  measurement, on evidence the check reads rather than a recorded claim; both are
   built from `scripts/bench/sweep_freshness.py`, whose unit tests run in
   the same step.
   See [benchmarking.md](benchmarking.md) §Figure freshness.

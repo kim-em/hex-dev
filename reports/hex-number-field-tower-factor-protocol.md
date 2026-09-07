@@ -347,3 +347,10 @@ fully admitted opposite-order pairs without looking at their timings. No
 build or profiler overlaps collection; no exponent is fitted. This is a fresh
 replication with stricter preconditions, not an extension or reinterpretation
 of the incomplete series.
+
+The initial whole-host replication (`integrated-harness-quiet`) reaches its
+fifteen-minute preflight deadline before any timed arm, with no verdict.
+Preserve that complete preflight record. The `integrated-harness-quiet-retry`
+series retries the identical protocol after the integration checks, using the
+same two saved binaries and first-two-admitted-pairs rule. Graph-only changes
+at main `9fdda65ba` leave the candidate binary hash unchanged after rebuilding.

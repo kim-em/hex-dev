@@ -882,7 +882,11 @@ but their hashes differ, so the comparison above is not a verdict for that
 harness revision. The [first harness integration series](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-decision.json)
 ends at twelve attempts with only pair 4 admitted and **no performance
 verdict**. All attempted runs and their rejecting host telemetry are retained.
-A separately preregistered replication adds a whole-host preflight ceiling.
+A separately preregistered replication adds a whole-host preflight ceiling
+and two quiet minutes. Its [initial collection](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-quiet-decision.json)
+reaches the preflight deadline before any timed arm and has no verdict. An
+unchanged retry remains pending. Graph-only integration at main `9fdda65ba`
+leaves the saved candidate hash unchanged, as checked by a full tower rebuild.
 
 ### Rational squarefreeness
 
