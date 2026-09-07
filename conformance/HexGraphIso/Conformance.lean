@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGraphIso.Cases
+import HexGraphIso.Nauty.Correct.Generation
 
 /-!
 Core conformance for `HexGraphIso`.
@@ -421,3 +422,21 @@ private def empty0 : Colored 0 0 :=
 #guard twinAgrees empty0
 
 end Hex.GraphIso.Conformance
+
+/-! The search-generation proofs must remain independent of unfinished declarations. -/
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.first_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.first_reference
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.cheap_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.cheap_reference
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.firstTail_counted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.firstTail_counted
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.first_uniform' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.first_uniform

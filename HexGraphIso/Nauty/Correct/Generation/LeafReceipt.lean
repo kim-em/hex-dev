@@ -36,18 +36,17 @@ theorem carrier (h : LeafCover ctx tcLevel level st tc len targets key tcell cur
     (hok : IterOk ctx level st) (hlvl : level < n) (hgsz : ctx.g.size = n)
     (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e) (hlen : len = e + 1 - tc)
     (href : oRef < len) (habsent : ¬ ChildLeaf ctx tcLevel level st tc targets key oRef)
-    (hcarrier : LabelCarrier ctx ref cur store)
-    (hstab : ∀ γ ∈ store, CellStab st.ptn level st.lab γ)
+    (hcarrier : CellCarrier ctx st.ptn level st.lab ref cur store)
     (hatRef : ref[tc]! = st.lab[tc + oRef]!) (hatCur : cur[tc]! = tv) :
     LeafCover ctx tcLevel level st tc len targets key tcell (some tv) := by
   have he := target_end_lt hok.ok.ptnSize hok.ok.ptnEnd hcell
-  obtain ⟨γ, hmem, hcheck, hmap⟩ := hcarrier
+  obtain ⟨γ, _, hcheck, hmap, hstab⟩ := hcarrier
   apply h.advance hnext
   intro o ho hat
   have hact : γ[st.lab[tc + oRef]!]! = st.lab[tc + o]! := by
     rw [← hatRef, hat, ← hatCur]
     exact hmap tc (by omega)
-  exact fun hleaf => habsent ((HasLeaf.carried_iff hok hlvl hgsz hcheck (hstab γ hmem)
+  exact fun hleaf => habsent ((HasLeaf.carried_iff hok hlvl hgsz hcheck hstab
     hcell hne (by omega) (by omega) hact).mpr hleaf)
 
 /-- A carrier to an earlier reference child discharges the current child
@@ -59,11 +58,10 @@ theorem reference (h : LeafCover ctx tcLevel level st tc len targets key tcell c
     (hok : IterOk ctx level st) (hlvl : level < n) (hgsz : ctx.g.size = n)
     (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e) (hlen : len = e + 1 - tc)
     (href : oRef < len) (hearlier : st.lab[tc + oRef]! < tv)
-    (hcarrier : LabelCarrier ctx ref cur store)
-    (hstab : ∀ γ ∈ store, CellStab st.ptn level st.lab γ)
+    (hcarrier : CellCarrier ctx st.ptn level st.lab ref cur store)
     (hatRef : ref[tc]! = st.lab[tc + oRef]!) (hatCur : cur[tc]! = tv) :
     LeafCover ctx tcLevel level st tc len targets key tcell (some tv) :=
   h.carrier hnext hok hlvl hgsz hcell hne hlen href (h.smaller hnext href hearlier)
-    hcarrier hstab hatRef hatCur
+    hcarrier hatRef hatCur
 
 end Hex.GraphIso.Nauty.Generation.LeafCover

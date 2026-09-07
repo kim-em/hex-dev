@@ -67,6 +67,7 @@ public import HexGraphIso.Nauty.Correct.FirstPath.Loop
 public import HexGraphIso.Nauty.Correct.FirstPath.Hyp
 public import HexGraphIso.Nauty.Correct.FirstPath.Sweep
 public import HexGraphIso.Nauty.Correct.Certify
+public import HexGraphIso.Nauty.Correct.Generation
 public import HexGraphIso.Nauty.Equitable.Root
 public import HexGraphIso.Nauty.Invariant.Reach
 public import HexGraphIso.Nauty.Cert.Translator

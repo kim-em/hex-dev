@@ -50,4 +50,15 @@ theorem finish_floor {level size index : Nat} {st : SearchSt n}
     omega
   · exact h
 
+/-- Lowering the all-same boundary to the completed frame requires both
+a uniform child boundary and a counter equal to the original cell size. -/
+theorem finish_drop {level size index : Nat} {st : SearchSt n}
+    (hbefore : level < st.allsamelevel)
+    (hafter : (firstFinish level size index st).allsamelevel ≤ level) :
+    size = index ∧ st.allsamelevel = level + 1 := by
+  unfold firstFinish at hafter
+  split at hafter
+  · next hif => exact ⟨beq_iff_eq.mp hif.1, beq_iff_eq.mp hif.2⟩
+  · exact (Nat.not_le_of_gt hbefore hafter).elim
+
 end Hex.GraphIso.Nauty.Generation
