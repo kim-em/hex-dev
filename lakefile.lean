@@ -297,6 +297,9 @@ lean_lib HexGramSchmidt where
 
 lean_lib HexLatticeEnum where
 
+@[default_target]
+lean_lib HexLatticeEnumMathlib where
+
 lean_lib HexLLL where
   precompileModules := true
   extraDepTargets := #[`hexlllffi]
