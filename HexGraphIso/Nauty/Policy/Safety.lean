@@ -105,9 +105,11 @@ theorem safety_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   dsimp only [policy, Generic.Policy.classify] at hclp
   have hclv := classify_store hti.cache (level := level) (numcells := nc)
   have hcheck := hth.checked hti hn0 htlocal.ok hgsz hsymm hloop
-  generalize hcval : classify ctx level nc targeted = c at hcli hclp hclv hcheck ⊢
+  have hcolor := classify_stab hn0 hti.scratch hti.firstSize hti.firstReach
+    hti.canonical.1 hti.canonical.2 htlocal.ok.reach (ctx := ctx) (level := level) (numcells := nc)
+  generalize hcval : classify ctx level nc targeted = c at hcli hclp hclv hcheck hcolor ⊢
   obtain ⟨leaf, classified⟩ := c
-  have hli := hcli.leaf leaf hclp hclv.2 hcheck
+  have hli := hcli.leaf leaf hclp hclv.2 hcheck hcolor
   generalize hlval : leafExit leaf level classified = result at hli ⊢
   obtain ⟨exit, out⟩ := result
   cases exit with

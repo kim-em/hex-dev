@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.Orbits
+public import HexGraphIso.Nauty.Policy.Colors
 public import HexGraphIso.Nauty.Policy.Store
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Trace
@@ -31,6 +32,10 @@ structure RunInv (G : Colored n k) (ctx : Ctx n) (st : Search n) : Prop where
   trace : TraceOk ctx st
   /-- Every orbit pointer is connected by recorded generators. -/
   orbits : OrbitsOk st
+  /-- The saved first labelling respects the initial colour cells. -/
+  firstReach : CellsReach G st.firstlab
+  /-- Recorded generators stabilize the initial colour partition. -/
+  colors : TraceStab G st
 
 /-- The saved first permutation has exactly one entry for every vertex. -/
 theorem RunInv.firstSize {G : Colored n k} {ctx : Ctx n} {st : Search n}
@@ -44,9 +49,10 @@ theorem RunInv.of_out {G : Colored n k} {ctx : Ctx n} {B level : Nat} {st out : 
     (hfirst : out.firstlab = st.firstlab)
     (hcache : CanongInv ctx out.canong out.canonlab out.samerows)
     (hscratch : out.workperm.size = st.workperm.size) (htrace : TraceOk ctx out)
-    (horbits : OrbitsOk out) :
+    (horbits : OrbitsOk out) (hcolors : TraceStab G out) :
     RunInv G ctx out := by
-  refine ⟨by rw [hfirst]; exact h.first, ?_, hcache, hscratch.trans h.scratch, htrace, horbits⟩
+  refine ⟨by rw [hfirst]; exact h.first, ?_, hcache, hscratch.trans h.scratch, htrace, horbits,
+    by rw [hfirst]; exact h.firstReach, hcolors⟩
   rcases hout.canon with hc | hc
   · change out.canonlab = st.canonlab at hc
     rw [hc]
@@ -61,7 +67,7 @@ theorem RunInv.congr {G : Colored n k} {ctx : Ctx n} {st out : Search n}
     (ho : out.orbits = st.orbits) :
     RunInv G ctx out := by
   refine ⟨by rw [hf]; exact h.first, by rw [hc]; exact h.canonical,
-    hstore, hw.trans h.scratch, ?_, h.orbits.congr ht ho⟩
+    hstore, hw.trans h.scratch, ?_, h.orbits.congr ht ho, by rw [hf]; exact h.firstReach, h.colors.congr ht⟩
   intro γ hγ
   rw [ht] at hγ
   exact h.trace γ hγ
@@ -102,12 +108,13 @@ theorem RunInv.leaf {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st : Search n} (h : RunInv G ctx st) (leaf : Leaf)
     (hok : SearchOk G level numcells st.view)
     (hnew : ∀ sr, leaf = .better sr → CanongInv ctx st.canong st.lab sr)
-    (hcheck : leaf = .autoFirst ∨ leaf = .autoCanon → checkAutom ctx.g st.workperm = true) :
+    (hcheck : leaf = .autoFirst ∨ leaf = .autoCanon → checkAutom ctx.g st.workperm = true)
+    (hcolor : leaf = .autoFirst ∨ leaf = .autoCanon → ColorStab G st.workperm) :
     RunInv G ctx (leafExit leaf level st).2 := by
   obtain ⟨hl, hp, hf, hc⟩ := leafExit_frame leaf level st
   exact h.of_out (frame_out (B := level) hok hl hp (Or.inl hf) hc) hf
     (leafExit_store ⟨h.cache, hnew⟩) (leafExit_workSize leaf level st)
-    (leafExit_checked h.trace leaf hcheck) (h.orbits.leaf h.trace leaf level hcheck)
+    (leafExit_checked h.trace leaf hcheck) (h.orbits.leaf h.trace leaf level hcheck) (h.colors.leaf leaf level hcolor)
 
 /-- The cheap-boundary update preserves persistent data. -/
 theorem RunInv.cheap {G : Colored n k} {ctx : Ctx n} {st : Search n}

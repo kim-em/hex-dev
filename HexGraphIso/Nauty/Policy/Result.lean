@@ -10,6 +10,7 @@ public import HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Orbits
+import all HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Search.Engine
 
 public section
@@ -25,6 +26,21 @@ theorem runState_orbits (G : Colored n k) :
   · subst n
     exact initial_orbits 0 (initialPartition G).1 (initialPartition G).2
   · exact (runState_safe G hn0).orbits
+
+/-- Every generator in the completed run stabilizes the initial colour partition. -/
+theorem runState_colors (G : Colored n k) :
+    TraceStab G (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by
+  rcases Nat.eq_zero_or_pos n with hn0 | hn0
+  · subst n
+    intro perm hp
+    change perm ∈ (#[] : Array (Array Nat)) at hp
+    simp at hp
+  · exact (runState_safe G hn0).colors
+
+/-- The structured engine's reported generators preserve the ordered colour cells. -/
+theorem runColoredTraced_stab (G : Colored n k) {perm : Array Nat}
+    (hp : perm ∈ (runColoredTraced G).autos) : ColorStab G perm :=
+  runState_colors G perm hp
 
 /-- The engine returns a full canonical labelling. -/
 theorem canonlab_size (G : Colored n k) : (runColored G).canonlab.size = n := by

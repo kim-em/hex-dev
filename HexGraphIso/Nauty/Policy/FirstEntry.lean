@@ -35,6 +35,8 @@ structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : 
   trace : TraceOk ctx st
   /-- Every orbit pointer is connected by recorded generators. -/
   orbits : OrbitsOk st
+  /-- Recorded generators stabilize the initial colour partition. -/
+  colors : TraceStab G st
   small : st.noncheaplevel < level → SubtreeOk ctx level (st.refined ctx level numcells)
 
 /-- The chosen first child is a valid mathematical individualization step. -/
@@ -114,7 +116,7 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     unfold ready cheapCheck
     split <;> exact prepareFirst_orbits ctx tcLevel level numcells st
   refine ⟨by omega, firstChild_ok hn0 h.positive h.partition htv, ?_,
-    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, ?_⟩
+    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, h.colors.congr hstores.2.2.2.2, ?_⟩
   · rw [hstep]
     exact equitable_breakout hit.ok.labSize hit.ok.ptnSize hit.ok.ptnEnd hit.valsWeak
       hit.ok.labOk hit.inj hsymm h.equitable hcell hne ho hacc.symm

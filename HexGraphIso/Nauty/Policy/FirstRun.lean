@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.FirstReturn
 import all HexGraphIso.Nauty.Policy.FirstReturn
+import all HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.FirstEntry
 import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Policy.Safety
@@ -95,7 +96,7 @@ theorem FirstPre.firstterminal {G : Colored n k} {ctx : Ctx n} {level numcells :
   have hp := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition).1
   have hs := prepareFirst_stores ctx tcLevel level numcells st
   refine ⟨isPerm_of_cellsReach hp.labSize hn0 hp.reach, ⟨hp.labSize, hp.reach⟩, ?_,
-    hs.2.2.2.1.trans h.scratch, ?_, ?_⟩
+    hs.2.2.2.1.trans h.scratch, ?_, ?_, hp.reach, h.colors.congr hs.2.2.2.2⟩
   · apply canongInv_zero
     change (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.canong.size = n
     rw [hs.2.2.1, h.cache]
@@ -141,10 +142,13 @@ theorem initial_firstPre (G : Colored n k) (hn0 : 0 < n) :
       (initial n (initialPartition G).1 (initialPartition G).2) := by
   refine ⟨Nat.le_refl _, initial_ok G hn0, initial_equitable G hn0,
     Array.size_replicate, ?_, Array.size_replicate, Array.size_replicate, ?_,
-    initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_⟩
+    initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_, ?_⟩
   · change n < (Array.replicate (n + 2) (-1 : Int)).size
     rw [Array.size_replicate]
     omega
+  · intro γ hγ
+    change γ ∈ (#[] : Array (Array Nat)) at hγ
+    simp at hγ
   · intro γ hγ
     change γ ∈ (#[] : Array (Array Nat)) at hγ
     simp at hγ
