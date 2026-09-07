@@ -49,12 +49,9 @@ private def mkInst {n : Nat} (name : String) (G : Hex.Graph n) (h : 0 < n) :
   let g0 := G.singleColor h
   { name, g0, g1 := g0.relabel (rot n h) }
 
-/-- The search the `erun` stage times against `run`. It calls
-`runColored`, so as it stands the two stages time the same search.
-Point this definition at another search to profile that one beside the
-transcribed port. -/
+/-- The structured search measured against the literal port. -/
 private def engine {n k : Nat} (G : Colored n k) : RunResult n :=
-  runColored G
+  Engine.runColored G
 
 private def countAutom : CertNode → Nat
   | .leaf | .codePrune => 0

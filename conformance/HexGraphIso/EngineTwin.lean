@@ -13,15 +13,13 @@ committed fixture corpus, of its automorphism records and of the
 extended campaign, and compares the
 whole traversal rather than only its answer: `canonlab`, `canong`, the
 seven statistics of `Nauty.RunResult`, the accepted automorphisms in
-discovery order, and the best path's refinement codes.
+discovery order, the best path's refinement codes, and the final orbit partition.
 
 The first case on which the two disagree is printed with the differing
 fields, the vertex count, the colour vector and the edge list, and the
 run exits non-zero. With no argument every corpus runs; `fixtures`,
 `autos` and `campaign` select one.
 
-`Nauty.RunResult` does not carry the final `orbits` array, so the twin
-compares `numorbits` rather than the orbit partition itself.
 -/
 
 namespace Hex.GraphIsoTwin
@@ -53,7 +51,12 @@ disagreement as an error. -/
 private def check (seen : IO.Ref Nat) (case : Case) : IO Unit := do
   let some G := coloredOf? case.n case.k case.colors case.edges
     | throw (IO.userError s!"twin: case {case.name} rejected by the builders")
-  match diffs (runColoredTraced G) (engine G) with
+  let (lab0, cellEnds) := initialPartition G
+  let (exit, st) := Engine.runState case.n (rowsOf G) lab0 cellEnds
+  let ds := diffs (runColoredTraced G) (engine G)
+  let ds := if literalOrbits G == st.orbits then ds else ds ++ ["orbits"]
+  let ds := if exit == .unwind 0 false then ds else ds ++ ["exit"]
+  match ds with
   | [] => seen.modify (· + 1)
   | ds =>
     throw <| IO.userError <|
