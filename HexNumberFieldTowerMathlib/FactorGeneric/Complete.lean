@@ -655,7 +655,7 @@ private theorem factorSquarefree_mem_monic
         split at hresult
         · cases hresult
           obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
-            recover_mem level lower shift f lowerFactors hfactor
+            recover_mem level lower hvalid hinjective shift f lowerFactors hfactor
           let common := Norm.monic
             (DensePoly.gcd
               (Factor.rawPoly (level :: lower)

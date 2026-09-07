@@ -1172,10 +1172,31 @@ theorem polynomial_squarefree_map {K L : Type*}
   PerfectField.separable_iff_squarefree.mp
     ((PerfectField.separable_iff_squarefree.mpr hp).map (f := f))
 
+/-- Monic recovery division preserves the exact unnormalised gcd. -/
+theorem recoveryGcd_eq (levels : List Level) (hvalid : LevelsValid levels)
+    (hinjective : LevelSemantics.DenoteInjective levels)
+    (p q : DensePoly (Arithmetic.Coeff levels)) :
+    Factor.recoveryGcd p q = DensePoly.gcd p q := by
+  let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
+  let : Field (Arithmetic.Coeff levels) :=
+    Norm.coeffFieldPoly levels hvalid hinjective hinv
+  unfold Factor.recoveryGcd
+  split
+  · rename_i h
+    rw [DensePoly.gcd_eq_aux_mod p q h.1 h.2.1]
+    congr 1
+    rw [DensePoly.modArray_eq_divModArray_snd]
+    have hmonic : DensePoly.Monic p := h.2.2
+    change (DensePoly.divModMonic q p hmonic).2 = (DensePoly.divMod q p).2
+    exact congrArg Prod.snd (DensePoly.divModMonic_eq_divMod_of_monic q p hmonic)
+  · rfl
+
 /-- Membership inversion for `Factor.recover`: every recovered factor arises
 from some lower factor whose lifted gcd with the shifted component is
 nonconstant, by un-shifting and renormalising that gcd. -/
 theorem recover_mem (level : Level) (lower : List Level)
+    (hvalid : LevelsValid (level :: lower))
+    (hinjective : LevelSemantics.DenoteInjective (level :: lower))
     (shift : Int) (component : Array (Array Rat))
     (lowerFactors : Array (Array (Array Rat)))
     {factor : Array (Array Rat)}
@@ -1210,7 +1231,7 @@ theorem recover_mem (level : Level) (lower : List Level)
       (fun out lowerFactor =>
         if pass lowerFactor then out.push (recovered lowerFactor) else out) #[] := by
     simpa only [Factor.recover, Array.foldl_toList, shifted, lifted,
-      common, pass, recovered] using hfactor
+      common, pass, recovered, recoveryGcd_eq (level :: lower) hvalid hinjective] using hfactor
   rcases mem_foldl_push_if pass recovered lowerFactors.toList #[] factor hfold with
       hnil | ⟨lowerFactor, hlower, hpass, hrecovered⟩
   · simp at hnil
@@ -1260,7 +1281,7 @@ theorem recover_mem_sound (level : Level) (lower : List Level)
   dsimp only
   intro hsquarefree hlower factor hfactor
   obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
-    recover_mem level lower shift component lowerFactors hfactor
+    recover_mem level lower hvalid hinjectiveTop shift component lowerFactors hfactor
   have hlowerSound := hlower lowerFactor hlowerFactor
   constructor
   · rw [← hrecovered, rawPoly_polyCoords]

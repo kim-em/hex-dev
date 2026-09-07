@@ -543,7 +543,8 @@ theorem recover_product_associated (level : Level)
     have hfold := foldl_push_if_toList pass recovered
       lowerFactors.toList (#[] : Array (Array (Array Rat)))
     simpa only [Factor.recover, Array.foldl_toList, List.nil_append,
-      shifted, lifted, g, common, pass, unshifted, result, recovered] using hfold
+      shifted, lifted, g, common, pass, unshifted, result, recovered,
+      recoveryGcd_eq (level :: lower) hvalid hinjectiveTop] using hfold
   rw [taylor_list_prod, hrecoverList]
   simpa [List.map_filterMap, Function.comp_def, recovered,
     rawPoly_polyCoords, delta, shifted, lifted] using hfiltered
@@ -597,7 +598,7 @@ theorem recover_product_monic (level : Level) (lower : List Level)
           Factor.recover level lower shift component lowerFactors := by
         exact Array.mem_toList_iff.mp (hmem factor (by simp))
       obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
-        recover_mem level lower shift component lowerFactors hfactorMem
+        recover_mem level lower hvalid hinjectiveTop shift component lowerFactors hfactorMem
       let shifted := Factor.rawPoly (level :: lower)
         (Factor.shiftTop level lower component shift)
       let lifted := Factor.rawPoly (level :: lower)
