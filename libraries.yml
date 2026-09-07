@@ -553,6 +553,36 @@ libraries:
           description: known divisibility chains conjugated by random unimodular matrices
         - name: presentation-smith
           description: sparse abelian-group relation matrices run through the dense implementation
+  HexLatticeEnum:
+    deps: [HexLLL, HexGramSchmidt, HexMatrix, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: fplll shortest_vector and closest_vector
+          class: informational
+          rationale: "fplll uses floating-point Gram-Schmidt with error control and returns a candidate; Hex uses exact rationals and separately enumerates all ties and produces completeness certificates."
+      input_families:
+        - name: rank-radius
+          description: Rank and squared radius varied separately with visited-node and output counts.
+        - name: basis-quality
+          description: The same lattice under unimodular shears, with and without LLL preprocessing.
+        - name: coefficient-height
+          description: Fixed rank and shape with increasing basis and target bit lengths.
+        - name: rectangular-target
+          description: Fixed rank with increasing ambient dimension and nonzero orthogonal target residual.
+        - name: ties-boundary
+          description: Multiple minima and lattice vectors exactly on a closed-ball boundary.
+        - name: babai-gap
+          description: Rational targets where Babai nearest-plane rounding misses the optimum.
+        - name: certificate-replay
+          description: Separate preparation, search, tie enumeration, certificate generation and replay costs.
+  HexLatticeEnumMathlib:
+    deps: [HexLatticeEnum, HexLLLMathlib, HexGramSchmidtMathlib, HexMatrixMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
