@@ -101,3 +101,16 @@ preflight still rejects the whole pair. At most twelve timed pair attempts
 are allowed per comparison; a preflight timeout produces an explicit partial
 artifact. This environment amendment applies only to the new replication;
 none of the interrupted earlier variant measurements is admitted afterward.
+
+### Monic normalization variant
+
+A further fixed-input hypothesis is that returning an already-monic polynomial
+unchanged avoids a tower inversion of one and a coefficientwise scale by one.
+Compare this shortcut against the combined Horner/recovery executable
+`8d54c7158`, using the eight Hex registrations, five repeats, the same warmup
+and batch floor, and two accepted opposite-order pairs. The unchanged PARI
+registrations are omitted from this isolated comparison to shorten each
+exposure window. Retention uses the same hash, canonical-median, and
+repeat-range criteria. The final comparison against the original executable
+includes fresh PARI and overhead measurements. The monic shortcut must retain
+the existing zero and nonmonic behavior and all certificate guarantees.
