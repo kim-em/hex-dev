@@ -160,7 +160,7 @@ def factorRat? (input : DensePoly Rat) :
     DensePoly.scale input.leadingCoeff⁻¹ input
   if p.isZero then
     some #[]
-  else if Norm.ratSquarefree p then
+  else if ZPoly.ratSquarefree p then
     let integer := ZPoly.ratPolyPrimitivePart p
     let factorization := ZPoly.factorize integer
     let factors := (factorization.factors.flatMap fun entry =>

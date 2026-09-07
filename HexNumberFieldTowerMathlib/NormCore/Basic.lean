@@ -739,8 +739,8 @@ theorem isSquarefree_iff (levels : List Level)
   have hboolean : Norm.isSquarefree levels f ↔ P.Separable := by
     cases levels with
     | nil =>
-      change ratSquarefree (Factor.toRatPoly f) ↔ _
-      rw [ratSquarefree, separable_iff, ← LevelSemantics.map_rawPoly_nil f]
+      change ZPoly.ratSquarefree (Factor.toRatPoly f) ↔ _
+      rw [ZPoly.ratSquarefree, separable_iff, ← LevelSemantics.map_rawPoly_nil f]
       change IsCoprime
           ((HexPolyMathlib.toPolynomial (Factor.rawPoly [] f)).map
             LevelSemantics.coeffRatEquiv.toRingHom)

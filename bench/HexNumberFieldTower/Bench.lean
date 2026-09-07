@@ -1553,7 +1553,7 @@ private def printFactorStats : IO Unit := do
       let bits := ratPolyBits p
       let heights := gcdHeights p derivative (p.size + derivative.size + 1)
       let certificate := modularSquareFreeCoreFires (ZPoly.ratPolyPrimitivePart p)
-      IO.println s!"{n},{shift},{p.degree?.getD 0},{bits.numMax},{bits.denMax},{heights.1},{heights.2},{certificate},{Norm.ratSquarefree p}"
+      IO.println s!"{n},{shift},{p.degree?.getD 0},{bits.numMax},{bits.denMax},{heights.1},{heights.2},{certificate},{ZPoly.ratSquarefree p}"
 
 /-- Timing shape shared by both sides of every PARI pair: the discarded
 `warmupFirstIter` call builds the lazily cached rung fixture (and, on the

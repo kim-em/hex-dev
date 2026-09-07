@@ -7,10 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTower.RawArithmetic
-public import HexNumberFieldTower.RatSquarefree
+public import HexBerlekampZassenhaus.RatSquarefree
 public import HexResultant
 public meta import HexNumberFieldTower.RawArithmetic
-public meta import HexNumberFieldTower.RatSquarefree
+public meta import HexBerlekampZassenhaus.RatSquarefree
 public meta import HexResultant
 
 public section
@@ -98,7 +98,9 @@ base uses the certified modular trial before exact gcd fallback. -/
 @[expose]
 def isSquarefree (lower : List Level) (f : Array (Array Rat)) : Bool :=
   match lower with
-  | [] => ratSquarefree (DensePoly.ofCoeffs (f.map fun a => a.getD 0 0))
+  -- This is Factor.toRatPoly, spelled out to avoid the downstream import.
+  -- The base case of the companion's isSquarefree_iff pins them definitionally.
+  | [] => ZPoly.ratSquarefree (DensePoly.ofCoeffs (f.map fun a => a.getD 0 0))
   | _ :: _ =>
     let p : DensePoly (Coeff lower) :=
       DensePoly.ofCoeffs (f.map (Coeff.ofData lower))

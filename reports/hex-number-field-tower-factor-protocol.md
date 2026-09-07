@@ -41,3 +41,9 @@ The first retry uses CPU 13 with sibling 61. The final retry uses CPU 1 with
 sibling 49, selected idle before this amendment because CPU 61 has acquired
 an independent profiling workload. Both binaries move together; this changes
 the placement, not the inputs, repeat count, budgets, or acceptance threshold.
+
+Preregistration provenance: `b8602c76a` fixes the model and measurement schedule.
+The environmental policy was amended after rejected measurements:
+`20ff1f2f9` specifies the retry allowance and 5% postflight threshold after the
+first attempt; `0faa834dc` specifies CPU 1 for the final retry after the second
+attempt. These amendments do not retrospectively qualify any timing result.

@@ -326,6 +326,50 @@ Inconclusive parametric diagnostics do not make `verify` fail: they are
 retained measurements, not accepted modes. No hash, oracle, or comparator
 check substitutes for the performance modes above.
 
+### Rational squarefreeness in Trager
+
+The rational base now tests the integer primitive part modulo the certified
+prime 499 before running an exact rational gcd. A successful modular test is
+sufficient for squarefreeness; a bad leading coefficient or discriminant falls
+back to the exact test. The compiler replacement `ZPoly.ratSquarefree_eq_fast`
+is kernel-proved equal to the original rational gcd predicate, including zero
+and rational denominators. The tower correspondence proof transports the base
+case from singleton coordinate arrays to `Rat`. Factor reconstruction,
+canonical ordering, multiplicities, and recursive irreducibility replay remain
+fully checked.
+
+The [untimed remainder-sequence replay](bench-results/hex-number-field-tower-factor-heights-b4a02beaf.csv)
+identifies coefficient growth inside the squarefreeness gcd, rather than a
+large shift count. Every registered Selmer rung rejects shift zero and accepts
+shift one; the latter is certified modulo 499. The accepted norms have integer
+coefficients, but the unnormalized exact gcd creates large rational scalars:
+
+| input degree | norm degree | norm numerator bits | gcd numerator bits | gcd denominator bits |
+|---:|---:|---:|---:|---:|
+| 2 | 4 | 3 | 8 | 5 |
+| 3 | 6 | 4 | 46 | 42 |
+| 4 | 8 | 6 | 121 | 109 |
+| 6 | 12 | 9 | 449 | 438 |
+| 8 | 16 | 11 | 1,035 | 1,014 |
+| 12 | 24 | 17 | 3,464 | 3,430 |
+| 24 | 48 | 36 | 25,546 | 25,476 |
+
+These are maximum bit lengths over the exact remainder sequence, not fitted
+costs or timing exponents. Regenerate them with
+`lake exe hexnumberfieldtower_bench tower-factor-stats`. The successful modular
+trial removes this rational gcd from both norm acceptance and the rational
+factorizer, including their certificate replay. Rejected trials still use the
+exact algorithm, so this does not improve the worst-case contract. The fixture
+already has one quadratic level; no absolute-presentation conversion is needed
+for this change, and deeper-tower presentation tradeoffs remain unmeasured.
+
+The rational factorizer still recomputes the primitive part after the
+squarefreeness check, and integer factorization performs its own normalization
+and modular trial. This adds duplicate preprocessing work.
+The captured rational-squarefreeness path is only 2.05% inclusive, so eliminating
+that duplication is not needed to remove the dominant exact-gcd coefficient
+growth.
+
 ## Comparator ratios
 
 The library SPEC declares one external comparator,
@@ -421,50 +465,16 @@ the fixed-embedding root selection, coordinate maps, or validated tower
 level these units produce). The measurements above cover exactly the
 `factor?` surface PARI does expose.
 
-### Rational squarefreeness in Trager
-
-The rational base now tests the integer primitive part modulo the certified
-prime 499 before running an exact rational gcd. A successful modular test is
-sufficient for squarefreeness; a bad leading coefficient or discriminant falls
-back to the exact test. The compiler replacement `Norm.ratSquarefree_eq_fast`
-is kernel-proved equal to the original rational gcd predicate, including zero
-and rational denominators. The tower correspondence proof transports the base
-case from singleton coordinate arrays to `Rat`. Factor reconstruction,
-canonical ordering, multiplicities, and recursive irreducibility replay remain
-fully checked.
-
-The [untimed remainder-sequence replay](bench-results/hex-number-field-tower-factor-heights-b4a02beaf.csv)
-identifies coefficient growth inside the squarefreeness gcd, rather than a
-large shift count. Every registered Selmer rung rejects shift zero and accepts
-shift one; the latter is certified modulo 499. The accepted norms have integer
-coefficients, but the unnormalized exact gcd creates large rational scalars:
-
-| input degree | norm degree | norm numerator bits | gcd numerator bits | gcd denominator bits |
-|---:|---:|---:|---:|---:|
-| 2 | 4 | 3 | 8 | 5 |
-| 3 | 6 | 4 | 46 | 42 |
-| 4 | 8 | 6 | 121 | 109 |
-| 6 | 12 | 9 | 449 | 438 |
-| 8 | 16 | 11 | 1,035 | 1,014 |
-| 12 | 24 | 17 | 3,464 | 3,430 |
-| 24 | 48 | 36 | 25,546 | 25,476 |
-
-These are maximum bit lengths over the exact remainder sequence, not fitted
-costs or timing exponents. Regenerate them with
-`lake exe hexnumberfieldtower_bench tower-factor-stats`. The successful modular
-trial removes this rational gcd from both norm acceptance and the rational
-factorizer, including their certificate replay. Rejected trials still use the
-exact algorithm, so this does not improve the worst-case contract. The fixture
-already has one quadratic level; no absolute-presentation conversion is needed
-for this change, and deeper-tower presentation tradeoffs remain unmeasured.
+### Modular squarefreeness comparison
 
 The [comparison protocol](hex-number-field-tower-factor-protocol.md) retains
 the existing fixed inputs, five repeats, a 0.2-second inner-batch floor, and
 unchanged 2-second canonical budgets. No exponent was fitted. **There is no
 accepted new timing comparison:** the first candidate's CPU/sibling were
-96%/97% busy at postflight, and both preregistered retries failed the 5%
-idleness threshold; the next baseline's were 98.5%/97.5%; the final baseline, moved together
-with the candidate to CPU 1, failed at 13.1%/1.5%. The retry limit is exhausted.
+96%/97% busy at postflight, and both protocol-amended retries failed the 5%
+idleness threshold. The next baseline's CPU/sibling were 98.5%/97.5%; the
+final baseline on CPU 1 failed at 13.1%/1.5%. Both retries stopped before
+running the candidate. The retry limit is exhausted.
 These runs do not replace the earlier Phase-4 evidence or establish a speedup.
 
 For transparency, the first attempt's raw per-call medians are retained below
@@ -485,6 +495,10 @@ ratio.
 | factor, degree 24 | 253.152 | 34.443 |
 | check, degree 24 | 125.242 | 16.711 |
 
+## Profile
+
+### Rational squarefreeness
+
 The [sampling summaries](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json)
 are unfiltered fixed-benchmark-thread shape diagnostics, including autotuning,
 and make no timing claim. GMP accounts for 79.98% of baseline leaf samples
@@ -498,13 +512,12 @@ its work overlaps those phases. This identifies recovery and norm construction
 as the next targets without attributing the original loss to certificate
 checking alone.
 
-The computational and Mathlib tower libraries build, all 49 bench checks pass,
-and emitted fixtures remain byte-for-byte identical. The PARI oracle checks
-nine cases with no failures. Added regressions cover both bad-prime branches,
-rational denominators, repeated polynomials, zero/constants, and rejection of
-corrupted public factorization scalars and multiplicities.
+The captured helper is named `Norm.ratSquarefreeFast` at source `b4a02beaf`;
+the same implementation is now `ZPoly.ratSquarefreeFast` in the shared
+Berlekamp–Zassenhaus library. The source and binary provenance remains attached
+to the captures.
 
-## Profile
+### Phase-4 profile coverage
 
 samply 0.13.1 sampled at 999 Hz on the same `chungus2` hardware (Linux
 x86-64 6.12.100, AMD EPYC 9455 48-Core Processor, 96 logical CPUs), Lean
@@ -745,6 +758,14 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 ## Verification
 
+The computational and Mathlib tower libraries build, all 49 bench checks pass,
+and emitted fixtures remain byte-for-byte identical. The PARI oracle checks
+nine cases with no failures. Added regressions cover both bad-prime branches,
+rational denominators, repeated polynomials, zero/constants, and rejection of
+corrupted public factorization scalars and multiplicities.
+
+### Reference verification
+
 - `lake build HexNumberFieldTower HexNumberFieldTower.Conformance
   hexnumberfieldtower_emit_fixtures`: pass.
 - `lake exe hexnumberfieldtower_bench list`: 8 parametric plus 41 fixed
@@ -760,7 +781,4 @@ and cypari2 2.2.4. Reference host: `chungus2`, Linux x86-64, AMD EPYC 9455
 
 ## Concerns
 
-The rational-squarefreeness fast path has no accepted new timing comparison.
-Its correctness and coefficient-growth evidence are complete; a quantitative
-speedup or revised PARI ratio requires a controlled host. The contaminated
-exports above do not change the existing Phase-4 verdicts.
+None.

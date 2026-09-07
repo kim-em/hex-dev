@@ -12,7 +12,7 @@ import all HexPolyZ.Rational
 
 public section
 
-namespace Hex.NumberTower.Norm
+namespace Hex.ZPoly
 
 /-- Exact squarefreeness over the rational base field, excluding zero. -/
 @[expose]
@@ -88,4 +88,4 @@ below must take the exact fallback and still accept the squarefree input. -/
     !ratSquarefreeFast (rational * rational) &&
     !ratSquarefreeFast 0 && ratSquarefreeFast 1
 
-end Hex.NumberTower.Norm
+end Hex.ZPoly

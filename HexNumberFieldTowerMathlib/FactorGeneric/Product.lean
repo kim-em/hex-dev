@@ -230,7 +230,7 @@ theorem factorSquarefree_product (levels : List Level)
         apply (HexPolyMathlib.equiv (R := Rat)).injective
         simpa using hinputPoly
       simp only [Factor.factorSquarefree?] at hresult
-      simp only [Factor.factorRat?, Norm.ratSquarefree] at hresult
+      simp only [Factor.factorRat?, ZPoly.ratSquarefree] at hresult
       split at hresult
       · cases hresult
         exfalso
@@ -1010,7 +1010,7 @@ theorem factorRat_isSome (input : DensePoly Rat)
   dsimp only at hproduct
   simp only [Factor.factorRat?, hinputZero, Bool.false_eq_true, ite_false]
   rw [show DensePoly.scale input.leadingCoeff⁻¹ input = p from rfl]
-  simp only [Norm.ratSquarefree, hpZero, hgcd, decide_true, Bool.not_false,
+  simp only [ZPoly.ratSquarefree, hpZero, hgcd, decide_true, Bool.not_false,
     Bool.true_and, ite_eq_left]
   rw [hproduct]
   simp
