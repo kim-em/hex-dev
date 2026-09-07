@@ -31,6 +31,35 @@ theorem initial_stab {G : Colored n k} {p : Perm n}
   rw [he]
   exact initial_cellsPerm hp hn
 
+/-- A true automorphism fixing the individualized path stabilizes the
+current cells in the raw representation used by search pruning. -/
+theorem path_stab {G : Colored n k} {st : SearchSt n} {level : Nat}
+    (hn : 0 < n)
+    (hpath : PathStab { g := rowsOf G }
+      (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st)
+    {p : Perm n} (hp : IsIso G G p)
+    (hfix : ∀ v : Fin n, st.fixedpts.mem v.val = true → p.get v = v) :
+    CellStab st.ptn level st.lab (renamingArray (renamingOf p)) := by
+  have hcheck := checkAutom_renaming (ctx := { g := rowsOf G })
+    (renamingOf p) (rowsMap_of_isIso hp)
+  exact hpath _ hcheck (initial_stab hp hn) (fun u hu hm => by
+    rw [renamingArray_get _ hu, renamingOf_lt p hu, hfix ⟨u, hu⟩ hm])
+
+/-- Every target cell is invariant under the true point stabilizer of the
+current individualized path. -/
+theorem window_stable {G : Colored n k} {st : SearchSt n} {level tc len : Nat}
+    (hpath : PathStab { g := rowsOf G }
+      (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st)
+    (hlab : LabOk st.lab n) (hcell : IsCell st.ptn level tc len)
+    (hrange : tc + len ≤ st.lab.size)
+    {p : Perm n} (hp : IsIso G G p)
+    (hfix : ∀ v : Fin n, st.fixedpts.mem v.val = true → p.get v = v)
+    (v : Fin n) (hv : (windowSet n st.lab tc len).mem v.val = true) :
+    (windowSet n st.lab tc len).mem (p.get v).val = true := by
+  have hn : 0 < n := by have := v.isLt; omega
+  have h := windowSet_carry (path_stab hn hpath hp hfix) hcell hrange hlab hv
+  rwa [renamingArray_get _ v.isLt, renamingOf_lt p v.isLt] at h
+
 /-- At a discrete partition, a cell stabilizer fixes every vertex. -/
 theorem discrete_fixes {ptn lab γ : Array Nat} {level : Nat}
     (hstab : CellStab ptn level lab γ)
@@ -63,10 +92,7 @@ theorem terminal {G : Colored n k} {st : SearchSt n} {level : Nat}
   apply Perm.ext
   intro v
   have hn : 0 < n := by have := v.isLt; omega
-  have hcheck := checkAutom_renaming (ctx := { g := rowsOf G })
-    (renamingOf p) (rowsMap_of_isIso hp)
-  have hstab := hpath _ hcheck (initial_stab hp hn) (fun u hu hm => by
-    rw [renamingArray_get _ hu, renamingOf_lt p hu, hfix ⟨u, hu⟩ hm])
+  have hstab := path_stab hn hpath hp hfix
   have he := discrete_fixes hstab hsize hperm hptn hend hdisc v.val v.isLt
   rw [renamingArray_get _ v.isLt, renamingOf_lt p v.isLt] at he
   simpa only [Perm.get_id] using (Fin.ext he : p.get v = v)
