@@ -113,10 +113,12 @@ private def runDigest {n : Nat} (r : Nauty.RunResult n) : Nat :=
 private def runInst (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
   let fastNs ← timeMinNs fun _ => pure (digest (canonicalize G))
-  let colors := List.replicate n 0
-  let adj := adjStrings G
+  -- marshalled once, outside the timer: pushing the adjacency across the
+  -- FFI boundary is O(n²) and is not something nauty does
+  let prep ← Hex.BenchOracle.Nauty.prepare n 1 (List.replicate n 0)
+    (adjStrings G)
   let nautyNs ← timeMinNs fun _ => do
-    let r ← Hex.BenchOracle.Nauty.canon n 1 colors adj
+    let r ← Hex.BenchOracle.Nauty.canonPrepared prep
     pure (r.lab.foldl (· + ·) 0)
   let nodes := (Nauty.runColored G).numnodes
   IO.println <| "{\"family\": \"" ++ i.family ++ "\", \"name\": \"" ++
@@ -130,10 +132,10 @@ private def runEngine (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
   let litNs ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
   let engNs ← timeMinNs fun _ => pure (runDigest (engine G))
-  let colors := List.replicate n 0
-  let adj := adjStrings G
+  let prep ← Hex.BenchOracle.Nauty.prepare n 1 (List.replicate n 0)
+    (adjStrings G)
   let nautyNs ← timeMinNs fun _ => do
-    let r ← Hex.BenchOracle.Nauty.canon n 1 colors adj
+    let r ← Hex.BenchOracle.Nauty.canonPrepared prep
     pure (r.lab.foldl (· + ·) 0)
   IO.println <| "{\"family\": \"" ++ i.family ++ "\", \"name\": \"" ++
     i.name ++ s!"\", \"n\": {n}, \"lit_ns\": {litNs}" ++
@@ -340,12 +342,12 @@ private def runPair (p : PairInst) : IO Unit := do
   let fastNs ← timeMinNs fun _ =>
     pure (if isIso A B then 1 else 0)
   let colors := List.replicate n 0
-  let adjA := adjStrings A
-  let adjB := adjStrings B
+  let prepA ← Hex.BenchOracle.Nauty.prepare n 1 colors (adjStrings A)
+  let prepB ← Hex.BenchOracle.Nauty.prepare n 1 colors (adjStrings B)
   let nautyNs ← timeMinNs fun _ => do
-    let ra ← Hex.BenchOracle.Nauty.canon n 1 colors adjA
-    let rb ← Hex.BenchOracle.Nauty.canon n 1 colors adjB
-    pure (if ra.tri == rb.tri then 1 else 0)
+    let ra ← Hex.BenchOracle.Nauty.canonPrepared prepA
+    let rb ← Hex.BenchOracle.Nauty.canonPrepared prepB
+    pure (if ra.sameForm rb then 1 else 0)
   IO.println <| "{\"family\": \"" ++ p.family ++ "\", \"name\": \"" ++
     p.name ++ s!"\", \"n\": {n}, \"iso\": {p.iso}" ++
     s!", \"fast_ns\": {fastNs}" ++

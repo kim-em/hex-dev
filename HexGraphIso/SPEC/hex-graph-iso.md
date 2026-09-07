@@ -1097,6 +1097,17 @@ The Mathlib-free benchmark driver registers:
   vendored source and the comparator are development-monorepo tooling
   only and ship with no released library.
 
+A comparator reports the time of the thing it stands in for, so nothing
+it does that nauty does not may sit inside a timed region. Marshalling a
+graph across the FFI boundary and reading a canonical form back are both
+`O(n²)`, so the comparator splits them off: `prepare` marshals, and is
+called before the timer starts, `canonPrepared` is the timed call and
+decodes only the `O(n)` labelling and the node count, and the canonical
+form comes back packed one bit per entry and is compared with `sameForm`
+rather than rendered. A driver that calls `canon` inside a timing loop is
+measuring the binding, not nauty; on the family sweeps that mistake
+inflated nauty's reported time by a median factor of three.
+
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
 result agreement as well as timing. The nauty comparator is `gating` in the
