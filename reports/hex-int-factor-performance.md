@@ -466,13 +466,88 @@ LeanBench itself reports dirty because the collector's newly created evidence
 files are untracked during measurement. No tracked source changed during
 these runs. Raw rejected records cannot be rendered as accepted reports.
 
-The two-attempt budget is exhausted. No timing retry is authorized by this
-protocol. A subsequent measurement campaign requires a newly committed
-protocol and a demonstrably controlled CPU-7 window on the designated host;
-it must retain these two rejected runs and the original contrary experiment.
+The original two-attempt budget is exhausted. The subsequent
+[corrected ownership protocol](hex-int-factor-divisor-protocol-2.md) registers
+a new finite campaign on CPU 62, with a quiet physical-core preflight and the
+unchanged contamination ceiling. It retains these two rejected runs and the
+original contrary experiment.
 The earlier inconclusive run and later noisy passing diagnostic are preserved
 in the protocol with their original issue reference. Present contamination
 observations do not establish what caused the old failure.
+
+### Corrected ownership campaign
+
+The subsequent preregistration is `36e2a3d1fa8fe9e1f49067246c58f98aaba8d4a1`.
+Its monitor identifies ownership from each task's process group in the same
+stat read as its state and CPU, removing the process-snapshot race. The
+untimed core survey selected physical core 14/62; the collector then required
+an independently quiet window before any timing. The model, seven trials per
+rung, batching and 0.2% interference ceiling were unchanged.
+
+The [retained preflight rejection](bench-results/intfactor-divisors-campaign-2-attempt-1.json)
+contains all 150 two-second observations. None qualified. The quietest window
+had 0.01 seconds of busy time on each logical CPU in 2.000562594 seconds
+(about 0.5% each); some windows had 2.00 seconds of busy time. No acceptance
+timings or telemetry sidecars were collected, and no harness verdict exists
+for this campaign. The five-minute preflight limit ended the campaign; there
+was no contamination replacement or further timing retry. This is a host
+availability failure under a stringent preflight, not a test of the complexity
+model. At the host's 100 Hz scheduler accounting resolution, one busy tick in
+two seconds is about 0.5%, so this preflight effectively demanded **zero ticks
+on both siblings**. The selected core's survey already showed about 4.4% busy
+time on each sibling. Zero-tick windows are possible in principle, but this
+survey supplied no evidence that this core could meet that requirement.
+
+The timed-run interference score is coarse too: any foreign runnable sighting
+charges the whole overlapping sample interval, generally more than the entire
+0.2% budget for a roughly 30-second collection. It functions as an effective
+zero-sighting gate plus a small weighted sibling-tick allowance, not an estimate
+of interference with 0.2% precision. These resolution limits do not authorize
+reinterpreting or loosening either rejected campaign. Before any further
+campaign, preregister a resolution-aware observation window and justify its
+host controls independently of operation timings; do not rerun this exhausted
+protocol unchanged.
+
+An additional [untimed 30-second host survey](bench-results/intfactor-divisors-core-survey-30s.json)
+checks the resolution issue without changing the ceiling. Its committed
+`scripts/bench/core_survey.py` generator retains raw counters, clock bounds,
+100 Hz tick frequency, topology, observer affinity and source hashes. The
+observer uses CPU 0, excluding its 0/48 physical core from selection. None
+of the other 47 physical-core pairs meets 0.002 on both siblings. The smallest
+maximum sibling fraction is 0.003333327 (about 0.33%); pairs 31/79 and 33/81 tie
+at that maximum. A tick in this window is about 0.033%, so the failure persists
+with finer resolution. This is host availability evidence only: no operation
+timings were taken and no subsequent acceptance campaign was registered.
+
+The rejected record retains commands, the successful build and outside-timing
+array export, stdout/stderr, all source hashes, host state and the direct
+benchmark executable hash. That hash is exactly the existing inclusive
+profile's `64991c51f642fd47bc6ab40f611ddad4a67ea409fb7bd2af219d7c3ecb7b2150`,
+so the profile still describes the current operation. Neither that match nor
+the preflight observations supply the missing scientific timings.
+
+The collector's subsequent infrastructure corrections do not change this
+retained campaign: monitor exceptions and explicit interruption now atomically preserve
+partial telemetry. Every exit cleans up descendants using PID handles and a
+bounded rescan, including successful exits with leftover workers. Ordinary
+cleanup preserves the runner exit code; whole-group SIGKILL is the fallback
+if cleanup fails. The group must belong to a
+dedicated session, so failure cleanup cannot include unrelated pipeline members.
+Collector timeouts allow five seconds for partial telemetry to be written,
+then kill the whole group while retaining the leader PID until cleanup.
+Standalone process-group leaders are rejected before child creation and must
+launch through `setsid --wait`; the collector already creates a dedicated
+session. Successful samples retain owned
+runnable tasks and the direct child PID, so ownership is auditable. The collector
+restores its original affinity after the attempt and rejects an empty observer
+CPU set. Rechecking a preflight-only artifact records unavailable raw timing
+files as diagnostic failure instead of crashing. Synthetic subprocess tests
+cover standalone and collector launch modes, monitor failure, interruption,
+nonzero runner exits, successful exits with leaked children, and a child whose
+main thread exited while worker threads remained live. All 41 affected collector/telemetry/profile tests and the phase checks pass;
+[validation logs](bench-results/intfactor-campaign-2-cleanup-validation-4.json)
+and the [preflight-only diagnostic recheck](bench-results/intfactor-divisors-campaign-2-recheck-2.json)
+are retained. These are correctness tests, not new performance runs.
 
 ### Inclusive profile and diagnosis
 
@@ -591,13 +666,25 @@ phase/DAG checks and applicable source-freshness checks pass. This retains the
 local later-phase work while leaving dependency-ordered recertification
 blocked on Phase 4.
 
+The [corrected campaign validation record](bench-results/intfactor-campaign-2-integration.json)
+retains the fresh 11122-job build, all 41 benchmark verification cases, all 37
+collector/telemetry/profile tests, matching fixture emission, the 415-case PARI
+oracle, phase/DAG/freshness checks, and the Mathlib-free scan of 43 executables
+and 191 proof probes. The pair's library declarations and manual chapter are
+still unchanged from the accepted local Phase-5–7 join. Both counters remain
+at 3 because this campaign produced no admissible timing evidence.
+
 ## Concerns
 
 Public `Hex.Nat.divisors` still lacks an admissible scientific timing run.
-Both attempts failed the preregistered core-interference gate; the finite retry
-budget is exhausted. [#9619](https://github.com/kim-em/hex-dev/issues/9619)
-remains open. Phase 4 is incomplete for HexIntFactor and HexIntFactorMathlib,
-and both registry counters remain at 3. The inclusive profile and complete
-result validation close those portions of the evidence gap, not the timing
-gate. Existing local Phase-5–7 artifacts are retained for subsequent freshness
-review and recertification after this blocker is resolved.
+The original two attempts failed the core-interference gate. The corrected
+ownership campaign then exhausted all 150 quiet-window observations before
+any timing could start. The longer untimed survey also found no eligible pair among 47 physical cores.
+The precise remaining dependency is a sufficiently quiet physical core on
+designated host `chungus2` under justified, newly preregistered controls;
+this session cannot reserve a core or suppress other sessions' workloads.
+[#9619](https://github.com/kim-em/hex-dev/issues/9619) remains open, Phase 4 is
+incomplete for both libraries, and both registry counters remain at 3.
+The inclusive profile and complete result validation remain available for
+integration once admissible timing evidence exists. The existing local
+Phase-5–7 work remains preserved; it does not discharge Phase 4.

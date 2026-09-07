@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from scripts.bench import intfactor_phase4 as collector
 
@@ -67,10 +67,11 @@ class PreservationTests(unittest.TestCase):
         def action(attempt):
             try:
                 collector.run([sys.executable, '-c',
-                    'import time, sys; print("partial-out", flush=True); print("partial-err", file=sys.stderr, flush=True); time.sleep(30)'], timeout=0.2)
+                    'import time, sys, signal; signal.signal(signal.SIGTERM, lambda *_: (print("term-preserved", flush=True), sys.exit(0))); print("partial-out", flush=True); print("partial-err", file=sys.stderr, flush=True); time.sleep(30)'], timeout=0.2)
             finally:
                 entry = attempt.record['commands'][-1]
-                self.assertEqual(Path(entry['stdout']).read_text(), 'partial-out\n')
+                self.assertEqual(Path(entry['stdout']).read_text(), 'partial-out\nterm-preserved\n')
+                self.assertEqual(entry['termination_returncode'], 0)
                 self.assertEqual(Path(entry['stderr']).read_text(), 'partial-err\n')
         self.exercise(action, subprocess.TimeoutExpired)
 
@@ -96,11 +97,65 @@ class PreservationTests(unittest.TestCase):
             with patch.object(collector, 'BENCH', executable), \
                  patch.object(collector, 'run', run), \
                  patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
-                 patch.object(collector, 'host_state', return_value={}):
+                 patch.object(collector, 'host_state', return_value={}), \
+                 patch.object(collector.core_telemetry, 'sibling_set', return_value={14, 62}):
                 with self.assertRaisesRegex(RuntimeError, 'audit failed'):
-                    collector.collect_divisors(args, attempt, 7)
+                    collector.collect_divisors(args, attempt, 62)
             record = json.loads(attempt.output.read_text())
             self.assertEqual(record['benchmark_executable_sha256'], collector.sha256(executable))
+
+    def test_quiet_preflight_retains_busy_and_quiet_windows(self):
+        attempt = Mock(record={})
+        ticks = [{62: (0, 200), 14: (0, 200)},
+                 {62: (1, 400), 14: (0, 400)},
+                 {62: (1, 400), 14: (0, 400)},
+                 {62: (1, 600), 14: (0, 600)}]
+        with patch.object(collector.core_telemetry, "sibling_set", return_value={62, 14}), \
+             patch.object(collector.core_telemetry, "cpu_counters", side_effect=ticks), \
+             patch.object(collector.os, "sched_setaffinity") as affinity, \
+             patch.object(collector.os, "sched_getaffinity", side_effect=[{1, 14, 62}, {1}]), \
+             patch.object(collector.os, "sysconf", return_value=100), \
+             patch.object(collector.time, "sleep"), \
+             patch.object(collector.time, "monotonic_ns", side_effect=[0, 2_000_000_000, 2_000_000_000, 4_000_000_000]):
+            collector.quiet_core(62, attempt)
+        self.assertEqual([r["quiet"] for r in attempt.record["quiet_core_preflight"]], [False, True])
+        self.assertEqual(attempt.save.call_count, 2)
+        affinity.assert_called_once_with(0, {1})
+        self.assertEqual(attempt.record["observer_affinity"], [1])
+
+    def test_quiet_preflight_exhaustion(self):
+        attempt = Mock(record={})
+        with patch.object(collector.core_telemetry, "sibling_set", return_value={62, 14}), \
+             patch.object(collector.core_telemetry, "cpu_counters", return_value={62: (0, 0), 14: (0, 0)}), \
+             patch.object(collector.core_telemetry, "busy_seconds", return_value=0.1), \
+             patch.object(collector.os, "sched_setaffinity") as affinity, \
+             patch.object(collector.os, "sched_getaffinity", side_effect=[{1, 14, 62}, {1}]), \
+             patch.object(collector.time, "sleep"), \
+             patch.object(collector.time, "monotonic_ns", side_effect=[i * 2_000_000_000 for i in range(300)]):
+            with self.assertRaisesRegex(RuntimeError, "150 preflight"):
+                collector.quiet_core(62, attempt)
+        self.assertEqual(len(attempt.record["quiet_core_preflight"]), 150)
+        self.assertFalse(any(r["quiet"] for r in attempt.record["quiet_core_preflight"]))
+
+    def test_quiet_preflight_requires_observer_cpu(self):
+        with patch.object(collector.core_telemetry, "sibling_set", return_value={14, 62}), \
+             patch.object(collector.os, "sched_getaffinity", return_value={14, 62}):
+            with self.assertRaisesRegex(RuntimeError, "no CPU remains"):
+                collector.quiet_core(62, Mock(record={}))
+
+    def test_recheck_without_timing_artifacts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "preflight.json"
+            source.write_text(json.dumps(dict(status="rejected", divisor_audit="")))
+            output = Path(directory) / "recheck.json"
+            with patch("builtins.print"):
+                self.assertEqual(collector.recheck_attempt(source, output), 1)
+            record = json.loads(output.read_text())
+            self.assertEqual(record["status"], "diagnostic")
+            self.assertEqual(record["original_status"], "rejected")
+            self.assertEqual(len(record["unavailable_raw_artifacts"]), 2)
+            self.assertEqual(record["scientific_validation"]["status"], "failed")
+            self.assertEqual(set(record["ingestion_errors"]), {"benchmark_export", "telemetry"})
 
     def test_ecm_excludes_evidence_bookkeeping(self):
         result = subprocess.CompletedProcess(['ecm'], 0, '3 5\n' * collector.ECM_BATCH, '')
