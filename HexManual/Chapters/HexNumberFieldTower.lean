@@ -226,7 +226,7 @@ on fixed inputs rather than as asymptotics.
   * 7.9 ms
 * * `factor?`
   * `X²⁴ − X − 1` over `ℚ(√2)`
-  * 34 ms
+  * 9.2 ms
 * * `split?`
   * `(X² − 2)(X² − 3)` over `ℚ`
   * 68 ms
@@ -242,10 +242,9 @@ Per-call medians on chungus2 from the exports recorded in
 `reports/hex-number-field-tower-performance.md` in the `hex-dev` repository;
 regenerate with `.lake/build/bin/hexnumberfieldtower_bench run
 Hex.NumberTowerBench.<target>`. Factoring over a number field is far slower
-than PARI's `nffactor` on the same inputs (thirty to a hundred and twenty
-times on the Selmer family `Xⁿ − X − 1` over `ℚ(√2)`, at `n = 2` and
-`n = 12` respectively); the report records the comparison and its
-provenance.
+than PARI's `nffactor` on the same inputs (twenty-two to forty-six times on
+the Selmer family `Xⁿ − X − 1` over `ℚ(√2)`, at `n = 2` and `n = 12`
+respectively); the report records the comparison and its provenance.
 
 # The Mathlib correspondence
 %%%
