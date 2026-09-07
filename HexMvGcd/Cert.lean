@@ -43,23 +43,6 @@ def imageAt {n : Nat} {R : Type u}
   DensePoly.ofList <| (List.range q.size).map fun k =>
     MvPoly.eval a (MvPoly.mapCoeffs φ.toField (q.coeff k))
 
-/-- Computational core of `imageAt`, taking the underlying coefficient map. -/
-def imageAtRaw {n : Nat} {R : Type u}
-    {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    (P : ZMod64.Prime)
-    (φ : R → @ZMod64 P.m P.bounds)
-    (a : Fin n → @ZMod64 P.m P.bounds)
-    (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
-    [IsMonomialOrder cmp'] (f : MvPoly (n + 1) R cmp) :
-    @FpPoly P.m P.bounds :=
-  letI : ZMod64.Bounds P.m := P.bounds
-  letI : ZMod64.PrimeModulus P.m := ZMod64.primeModulusOfPrime P.prime
-  let q := toUnivariate i cmp' f
-  DensePoly.ofList <| (List.range q.size).map fun k =>
-    MvPoly.eval a (MvPoly.mapCoeffs φ (q.coeff k))
-
 /-- Coefficientwise cast from the integer model used by `ratLift`. -/
 def intModelToRat {n : Nat} {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -148,8 +131,8 @@ named lets producer proofs state the natural induction invariant. -/
       letI : ZMod64.Bounds P.m := P.bounds
       letI : ZMod64.PrimeModulus P.m :=
         ZMod64.primeModulusOfPrime P.prime
-      let fImage := imageAtRaw P φ.toField a i cmp' f
-      let hImage := imageAtRaw P φ.toField a i cmp' h
+      let fImage := imageAt P φ a i cmp' f
+      let hImage := imageAt P φ a i cmp' h
       let fView := toUnivariate i cmp' f
       let hView := toUnivariate i cmp' h
       exact decide (fImage.degree? = fView.degree?) &&
@@ -167,6 +150,8 @@ named lets producer proofs state the natural induction invariant. -/
         lower.content cmp' hView.toArray.toList right &&
         lower.coprime cmp' left.value right.value rest
 
+/-- Generic replay parameterized by a leaf checker. Soundness requires a
+separate contract for that callback; the public checkers fix it to `checkRatLeaf`. -/
 @[reducible] def Cert.checkOps {S : Type u} {E : Cert.Leaves.{v}}
     [Lean.Grind.CommRing S] [DecidableEq S] [BEq S] [LawfulBEq S]
     [Dvd S] [GcdOps S]
@@ -237,6 +222,16 @@ abbrev CheckOpsAt (R : Type u) [Lean.Grind.CommRing R] (n : Nat) :=
         gcd := fun cmp _ => checkGcdUsing (succCheckCoprime lower (cmp := cmp))
         content := fun cmp _ => checkContentUsing
           (checkGcdUsing (succCheckCoprime lower (cmp := cmp))) }
+
+/-- The public replay package is the generic core at rational leaves. -/
+theorem checkOps_eq {R : Type u}
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] (n : Nat) :
+    checkOps (R := R) n = Cert.checkOps (fun _ _ => checkRatLeaf) n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      simp only [checkOps, Cert.checkOps, ih]
 
 /-- Replay recursive coprimality evidence. -/
 @[reducible] def checkCoprime {n : Nat} {R : Type u}

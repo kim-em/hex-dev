@@ -8,6 +8,7 @@ module
 
 public import HexMvGcd.Instances
 public import HexModArith.Modulus
+public import HexPolyFp.Field
 
 @[expose] public section
 

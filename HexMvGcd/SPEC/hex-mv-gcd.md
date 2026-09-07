@@ -690,6 +690,10 @@ ring, gcd operations, and equality decisions are the canonical instances
 fixed by `checkRatLift`; no source domain, embedding, or replacement
 operations are certificate data. Caller-assembled certificates remain
 supported: acceptance must imply coprimality without producer provenance.
+This is the soundness contract of `checkCoprime`, `checkGcd`, and
+`checkContent` at the public leaf family. The generic `Cert.checkOps`
+provides structural replay with a caller-supplied leaf checker; a soundness
+claim for another leaf family requires its own callback contract.
 
 `checkContent` starts at zero, requires exactly one `GcdCert` per
 coefficient, checks each certificate against the current accumulator and
@@ -714,6 +718,9 @@ are the stated scalar multiples of the coefficientwise `Int → Rat` images,
 that both integer models have `scalarContent = 1`, and that `cert` checks
 for those models. Gauss descent then transports integer coprimality to
 rational coprimality without a nonexistent `Rat → ZMod64` homomorphism.
+For a leaf over an arbitrary rational representation `R`, `checkRatLeaf`
+first maps both inputs coefficientwise through `model.toRat`, then runs
+this canonical `checkRatLift` replay.
 
 Indexing the certificate by the arity is what makes "each step removes a
 variable" true, and it is free: the constructor's result type says so.
@@ -1465,8 +1472,13 @@ replay. The closure also includes `polyIsUnit`, `polyNormUnit`,
 equality decision (`BEq` with `LawfulBEq`). `ratLift` additionally reaches
 the canonical integer `scalarContent` fold, coefficientwise `Int → Rat`
 map, and the rational-representation map, none of which calls a multivariate
-producer. Each operation in the closure is
-`@[expose]`.
+producer. Each operation in the closure is `@[expose]`.
+
+The shared public replay package retains the rational-leaf branch even
+when instantiated at `Int`. `RatModel.not_int` rules out data reaching that
+branch, but its canonical rational operations still belong to the full
+syntactic dependency closure. The ordinary integer replay inside a rational
+lift uses `Cert.NoLeaves` and has no such branch.
 
 Nothing in routes 1 through 4 is in that closure. Prime search,
 interpolation, CRT, and the extended subresultant chain are search; they

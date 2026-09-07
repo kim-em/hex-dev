@@ -134,6 +134,10 @@ theorem no_integer_lift (model : RatModel Int) : False := model.not_int
 #guard_msgs in
 #print axioms forged_rejected
 
+/-- info: 'Hex.MvPoly.CertTests.not_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms not_coprime
+
 /-- info: 'Hex.MvPoly.CertTests.wrapper_accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms wrapper_accepted

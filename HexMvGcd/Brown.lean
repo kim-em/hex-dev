@@ -703,6 +703,7 @@ def ratLiftCoprime? {n : Nat}
   if left.scale == 0 || right.scale == 0 then (none, cfg.rand)
   else
     let run := gcdCertWith cfg left.poly right.poly
+    -- `RatModel.not_int` rules out a leaf in this integer evidence.
     match Cert.stripCoprime? run.cert.coprime with
     | none => (none, run.rand)
     | some integerCert =>

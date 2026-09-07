@@ -298,8 +298,8 @@ def coprimeStep {n : Nat} {R : Type u}
       let main : Fin (n + 1) := ⟨0, by omega⟩
       let fView := toUnivariate main Mono.lex f
       let hView := toUnivariate main Mono.lex h
-      let fImage := imageAtRaw prime φ.toField points main Mono.lex f
-      let hImage := imageAtRaw prime φ.toField points main Mono.lex h
+      let fImage := imageAt prime φ points main Mono.lex f
+      let hImage := imageAt prime φ points main Mono.lex h
       if fImage.degree? != fView.degree? || hImage.degree? != hView.degree? then
         (none, rand')
       else
