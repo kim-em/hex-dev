@@ -25,6 +25,12 @@ core rational instance; companion examples separately exercise the Mathlib-induc
 instance and kernel certificate replay. This instance choice is not a second
 unrelated field hypothesis on the companion's theorems.
 
+The same choice applies at each level of an iterated rational-function field:
+for `RationalFn (RationalFn K)`, choose the Mathlib-induced lightweight field
+on the inner `RationalFn K` before defining outer values. The computational
+and Mathlib-induced bundled field instances are not automatically identified,
+even though their arithmetic, scalar multiplication, powers and casts agree.
+
 Define `HexRationalFnMathlib.toRatFunc f` by embedding
 `HexPolyMathlib.toPolynomial f.num` and `f.den` into `RatFunc K` and dividing.
 Prove `toRatFunc_injective` from cross multiplication and the computational

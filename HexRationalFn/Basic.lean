@@ -67,6 +67,12 @@ def ofPoly (p : DensePoly K) : RationalFn K :=
 instance : Zero (RationalFn K) := ⟨ofPoly 0⟩
 instance : One (RationalFn K) := ⟨ofPoly 1⟩
 
+/-- Polynomial embedding preserves zero. -/
+theorem ofPoly_zero : ofPoly (0 : DensePoly K) = 0 := rfl
+
+/-- Polynomial embedding preserves one. -/
+theorem ofPoly_one : ofPoly (1 : DensePoly K) = 1 := rfl
+
 /-- Embed a coefficient as a constant rational function. -/
 @[expose]
 def C (a : K) : RationalFn K := ofPoly (DensePoly.C a)

@@ -30,6 +30,26 @@ noncomputable instance field : Field (RationalFn K) :=
       (fun f => (RationalFn.mul_comm 1 f).trans (RationalFn.mul_one f))
       (fun _ h => RationalFn.mul_inv_cancel h) RationalFn.inv_zero
       RationalFn.left_distrib ⟨0, 1, RationalFn.zero_ne_one⟩ with
+    nsmul := fun n f => (Nat.cast n : RationalFn K) * f
+    nsmul_zero := fun f => by
+      change (0 : RationalFn K) * f = 0
+      exact RationalFn.zero_mul f
+    nsmul_succ := fun n f => by
+      change (Nat.cast (n + 1) : RationalFn K) * f = Nat.cast n * f + f
+      rw [Lean.Grind.Semiring.natCast_succ, Lean.Grind.Semiring.right_distrib,
+        Lean.Grind.Semiring.one_mul]
+    zsmul := fun n f => (Int.cast n : RationalFn K) * f
+    zsmul_zero' := fun f => by
+      change (0 : RationalFn K) * f = 0
+      exact RationalFn.zero_mul f
+    zsmul_succ' := fun n f => by
+      change (Int.cast ((n + 1 : Nat) : Int) : RationalFn K) * f =
+        Int.cast (n : Int) * f + f
+      rw [Lean.Grind.Ring.intCast_natCast, Lean.Grind.Ring.intCast_natCast,
+        Lean.Grind.Semiring.natCast_succ, Lean.Grind.Semiring.right_distrib,
+        Lean.Grind.Semiring.one_mul]
+    zsmul_neg' := fun n f => by
+      exact Lean.Grind.Ring.neg_zsmul ((n + 1 : Nat) : Int) f
     npow := fun n f => RationalFn.powWith RationalFn.defaultPlan f n
     npow_zero := RationalFn.pow_zero
     npow_succ := fun n f => RationalFn.pow_succ f n

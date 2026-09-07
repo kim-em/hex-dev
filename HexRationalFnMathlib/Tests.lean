@@ -24,6 +24,15 @@ example (f : RationalFn (ZMod 2)) : HexPolyMathlib.toPolynomial f.den = (toRatFu
 
 example (f : RationalFn ℚ) (n : Nat) : toRatFunc (f ^ n) = toRatFunc f ^ n := toRatFunc_pow f n
 
+-- Both instance paths retain the executable scalar multiplication definition.
+example (f : RationalFn ℚ) (n : Nat) :
+    (inferInstance : AddMonoid (RationalFn ℚ)).nsmul n f =
+      @SMul.smul Nat (RationalFn ℚ) RationalFn.instSMulNat n f := rfl
+
+example (f : RationalFn ℚ) (n : Int) :
+    (inferInstance : SubNegMonoid (RationalFn ℚ)).zsmul n f =
+      @SMul.smul Int (RationalFn ℚ) RationalFn.instSMulInt n f := rfl
+
 example : RationalFn.eval? (0 : RationalFn ℚ) 0 = some 0 := by decide +kernel
 
 /-- The canonical fraction one over X, constructed without a gcd search. -/
