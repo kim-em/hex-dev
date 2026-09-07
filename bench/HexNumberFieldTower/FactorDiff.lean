@@ -1,28 +1,127 @@
-/-
-Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
-Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Kim Morrison
--/
-
 module
 
-public import HexNumberFieldTower.Norm
-public import HexBerlekampZassenhaus
-public meta import HexNumberFieldTower.Norm
-public meta import HexBerlekampZassenhaus
+public import HexNumberFieldTower.FactorRaw
 
 public section
-
-/-!
-# Raw tower polynomial factorization
-
-The first stage of tower factorization is characteristic-zero Yun
-decomposition. It runs on the runtime-indexed tower carrier so the same code
-serves both public fixed towers and recursive Trager calls on a lower tail.
--/
 namespace Hex.NumberTower
 
-namespace Factor
+namespace ReferenceNorm
+
+open Arithmetic
+
+/-- Interpret flattened current-tower coordinates as a polynomial in the top
+generator, with coefficients that are constant polynomials in `X` over the
+lower tower. -/
+@[expose]
+def liftCoefficient (level : Level) (lower : List Level)
+    (a : Array Rat) : DensePoly (DensePoly (Coeff lower)) :=
+  let lowerDim := levelsDim lower
+  DensePoly.ofCoeffs <| ((List.range level.degree).map fun j =>
+    DensePoly.C (Coeff.ofData lower (block a j lowerDim))).toArray
+
+/-- The newest level's monic defining polynomial in the elimination variable,
+with coefficients regarded as constant polynomials in `X`. -/
+@[expose]
+def definingOuter (level : Level) (lower : List Level) :
+    DensePoly (DensePoly (Coeff lower)) :=
+  DensePoly.ofCoeffs <| (((List.range level.degree).map fun i =>
+    DensePoly.C (Coeff.ofData lower (level.defining.getD i #[]))).toArray).push
+      (DensePoly.C 1)
+
+/-- Substitute `X - cY` into a polynomial over the current tower, presenting
+the result as a polynomial in `Y` over `lower[X]`. -/
+@[expose]
+def shiftedOuter (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) (c : Int) :
+    DensePoly (DensePoly (Coeff lower)) :=
+  let x : DensePoly (Coeff lower) := DensePoly.monomial 1 1
+  let negShift : Coeff lower := Coeff.ofData lower #[(-(c : Rat))]
+  let xSubCY : DensePoly (DensePoly (Coeff lower)) :=
+    DensePoly.ofCoeffs #[x, DensePoly.C negShift]
+  f.foldr (fun coefficient value =>
+    liftCoefficient level lower coefficient + xSubCY * value) 0
+
+/-- One Trager norm step. Input coefficients are flattened over
+`level :: lower`; output coefficients are flattened over `lower`. -/
+@[expose]
+def oneLevel (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) (c : Int) : Array (Array Rat) :=
+  (DensePoly.resultant (definingOuter level lower)
+    (shiftedOuter level lower f c)).toArray.map Coeff.data
+
+/-- Eliminate every tower generator without shifting. This absolute norm is
+used to obtain root candidates for splitting; recursive Trager factorization
+continues to use `oneLevel` independently at each level. -/
+@[expose]
+def iterated : (levels : List Level) → Array (Array Rat) → Array (Array Rat)
+  | [], f => f
+  | level :: lower, f => iterated lower (oneLevel level lower f 0)
+
+/-- Formal derivative over a runtime-indexed lower tower. -/
+@[expose]
+def derivative (lower : List Level) (f : DensePoly (Coeff lower)) :
+    DensePoly (Coeff lower) :=
+  DensePoly.ofCoeffs <| ((List.range (f.size - 1)).map fun i =>
+    Coeff.ofData lower <| (f.coeff (i + 1)).data.map fun q =>
+      ((i + 1 : Nat) : Rat) * q).toArray
+
+/-- Monic normalization over the runtime-indexed lower tower. -/
+@[expose]
+def monic (f : DensePoly (Coeff lower)) : DensePoly (Coeff lower) :=
+  if f.isZero then 0 else DensePoly.scale f.leadingCoeff⁻¹ f
+
+/-- Executable squarefreeness test over a checked lower tower. The rational
+base uses the certified modular trial before exact gcd fallback. -/
+@[expose]
+def isSquarefree (lower : List Level) (f : Array (Array Rat)) : Bool :=
+  match lower with
+  -- This is Factor.toRatPoly, spelled out to avoid the downstream import.
+  -- The base case of the companion's isSquarefree_iff pins them definitionally.
+  | [] => ZPoly.ratSquarefree (DensePoly.ofCoeffs (f.map fun a => a.getD 0 0))
+  | _ :: _ =>
+    let p : DensePoly (Coeff lower) :=
+      DensePoly.ofCoeffs (f.map (Coeff.ofData lower))
+    !p.isZero && (DensePoly.gcd p (derivative lower p)).size ≤ 1
+
+/-- Number of deterministic Trager shifts required for a top degree `d` and
+component degree `m`. -/
+@[expose]
+def tragerShiftCount (d m : Nat) : Nat :=
+  Nat.choose (d * m) 2 + 1
+
+/-- Deterministic signed enumeration `0, 1, -1, 2, -2, ...`. -/
+@[expose]
+def signedShift (i : Nat) : Int :=
+  AlgebraicPoly.Common.signedShift i
+
+/-- Search successive signed shifts without materializing the remaining range. -/
+@[expose]
+def findSquarefreeShiftAux (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) (i : Nat) : Nat →
+    Option (Int × Array (Array Rat))
+  | 0 => none
+  | fuel + 1 =>
+    let c := signedShift i
+    let norm := oneLevel level lower f c
+    if isSquarefree lower norm then
+      some (c, norm)
+    else
+      findSquarefreeShiftAux level lower f (i + 1) fuel
+
+/-- Search exactly the finite Trager collision bound and return the first
+shift whose one-level norm is squarefree over the lower tower. -/
+@[expose]
+def findSquarefreeShift (level : Level) (lower : List Level)
+    (f : Array (Array Rat)) : Option (Int × Array (Array Rat)) :=
+  findSquarefreeShiftAux level lower f 0
+    (tragerShiftCount level.degree (f.size - 1))
+
+
+end ReferenceNorm
+end Hex.NumberTower
+namespace Hex.NumberTower
+
+namespace ReferenceFactor
 
 open Arithmetic
 
@@ -55,13 +154,13 @@ def yunAux (levels : List Level)
       if w = 1 then
         out
       else
-        let shared := Norm.monic (DensePoly.gcd w repeated)
-        let component := Norm.monic (w / shared)
+        let shared := ReferenceNorm.monic (DensePoly.gcd w repeated)
+        let component := ReferenceNorm.monic (w / shared)
         let out := if 0 < component.natDegree then
           out.push (polyCoords component, multiplicity)
         else
           out
-        let nextRepeated := Norm.monic (repeated / shared)
+        let nextRepeated := ReferenceNorm.monic (repeated / shared)
         yunAux levels shared nextRepeated (multiplicity + 1) fuel out
 
 /-- Yun squarefree decomposition over raw tower coordinates. Zero and
@@ -73,10 +172,10 @@ def yunRaw (levels : List Level) (f : Array (Array Rat)) :
   if p.natDegree = 0 then
     #[]
   else
-    let normalized := Norm.monic p
-    let repeated := Norm.monic
-      (DensePoly.gcd normalized (Norm.derivative levels normalized))
-    let distinct := Norm.monic (normalized / repeated)
+    let normalized := ReferenceNorm.monic p
+    let repeated := ReferenceNorm.monic
+      (DensePoly.gcd normalized (ReferenceNorm.derivative levels normalized))
+    let distinct := ReferenceNorm.monic (normalized / repeated)
     yunAux levels distinct repeated 1 (p.size + 1) #[]
 
 /-- Polynomial power used by reconstruction checks, computed by repeated
@@ -134,8 +233,8 @@ def checkYun (levels : List Level) (f : Array (Array Rat))
           0 < factor.natDegree && factor.leadingCoeff = 1) &&
       yunPairwiseCoprime levels components &&
       components.all (fun component =>
-        Norm.isSquarefree levels component.1) &&
-      yunProduct levels components = polyCoords (Norm.monic p)
+        ReferenceNorm.isSquarefree levels component.1) &&
+      yunProduct levels components = polyCoords (ReferenceNorm.monic p)
 
 /-- Recover the rational polynomial stored by base-tower raw coordinates. -/
 @[expose]
@@ -227,10 +326,10 @@ def recover (level : Level) (lower : List Level)
   let shifted := rawPoly levels (shiftTop level lower component shift)
   lowerFactors.foldl (fun out lowerFactor =>
     let lifted := rawPoly levels (embedLower level lower lowerFactor)
-    let common := Norm.monic (recoveryGcd shifted lifted)
+    let common := ReferenceNorm.monic (recoveryGcd shifted lifted)
     if 0 < common.natDegree then
       let unshifted := shiftTop level lower (polyCoords common) (-shift)
-      out.push (polyCoords (Norm.monic (rawPoly levels unshifted)))
+      out.push (polyCoords (ReferenceNorm.monic (rawPoly levels unshifted)))
     else
       out) #[]
 
@@ -242,12 +341,11 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
     Option (Array (Array (Array Rat)))
   | [], f => factorRat? (toRatPoly f)
   | level :: lower, f => do
-      if Norm.isSquarefree (level :: lower) f then
-        let (shift, norm) ← Norm.findSquarefreeShift level lower f
+      if ReferenceNorm.isSquarefree (level :: lower) f then
+        let (shift, norm) ← ReferenceNorm.findSquarefreeShift level lower f
         let lowerFactors ← factorSquarefree? lower norm
-        let p := Norm.monic (rawPoly (level :: lower) f)
-        let factors := if lowerFactors.size = 1 then #[polyCoords p]
-          else recover level lower shift f lowerFactors
+        let factors := recover level lower shift f lowerFactors
+        let p := ReferenceNorm.monic (rawPoly (level :: lower) f)
         let product := factors.foldl
           (fun product factor => product * rawPoly (level :: lower) factor)
           1
@@ -336,7 +434,7 @@ Trager reconstruction. -/
 def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
   let p := rawPoly levels f
   0 < p.natDegree && p.leadingCoeff = 1 &&
-    Norm.isSquarefree levels f &&
+    ReferenceNorm.isSquarefree levels f &&
     match levels with
     | [] => ZPoly.isIrreducible (ZPoly.ratPolyPrimitivePart (toRatPoly f))
     | _ :: _ =>
@@ -384,165 +482,65 @@ def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
   else
     none
 
-/-! Compiled Yun regressions. -/
 
-private def yunSqrtTwoLevel : Level where
-  degree := 2
-  defining := #[#[-2], #[0]]
-  root := AlgebraicNumber.zero.toRoot
-
-private def factorSqrtThreeLevel : Level where
-  degree := 2
-  defining := #[#[-3, 0], #[0, 0]]
-  root := AlgebraicNumber.zero.toRoot
-
-#guard
-    let xSubOne : DensePoly (Coeff []) :=
-      DensePoly.ofCoeffs #[Coeff.ofData [] #[-1], Coeff.ofData [] #[1]]
-    let xAddTwo : DensePoly (Coeff []) :=
-      DensePoly.ofCoeffs #[Coeff.ofData [] #[2], Coeff.ofData [] #[1]]
-    let f := polyPow xSubOne 3 * polyPow xAddTwo 2
-    let components := yunRaw [] (polyCoords f)
-    components =
-      #[(polyCoords xAddTwo, 2), (polyCoords xSubOne, 3)] &&
-      checkYun [] (polyCoords f) components
-
-#guard
-    let levels := [yunSqrtTwoLevel]
-    let xSubSqrtTwo : DensePoly (Coeff levels) :=
-      DensePoly.ofCoeffs
-        #[Coeff.ofData levels #[0, -1], Coeff.ofData levels #[1, 0]]
-    let xAddSqrtTwo : DensePoly (Coeff levels) :=
-      DensePoly.ofCoeffs
-        #[Coeff.ofData levels #[0, 1], Coeff.ofData levels #[1, 0]]
-    let f := polyPow xSubSqrtTwo 2 * xAddSqrtTwo
-    let components := yunRaw levels (polyCoords f)
-    components =
-      #[(polyCoords xAddSqrtTwo, 1), (polyCoords xSubSqrtTwo, 2)] &&
-      checkYun levels (polyCoords f) components
-
-#guard yunRaw [] #[] = #[] && checkYun [] #[] #[]
-
--- Reconstruction alone is insufficient: splitting one irreducible factor
--- across two multiplicity entries must be rejected as non-coprime.
-#guard
-    let xSubOne : DensePoly (Coeff []) :=
-      DensePoly.ofCoeffs #[Coeff.ofData [] #[-1], Coeff.ofData [] #[1]]
-    let f := polyPow xSubOne 3
-    !checkYun [] (polyCoords f)
-      #[(polyCoords xSubOne, 1), (polyCoords xSubOne, 2)]
-
--- Positive multiplicity is not enough: Yun components must have positive
--- polynomial degree, so the constant unit is never a component.
-#guard
-    let one : DensePoly (Coeff []) := 1
-    !checkYun [] (polyCoords one) #[(polyCoords one, 1)]
-
-#guard
-    let xSqSubTwo : DensePoly Rat := DensePoly.ofList [-2, 0, 1]
-    let xSubThree : DensePoly Rat := DensePoly.ofList [-3, 1]
-    let input := xSqSubTwo * xSubThree
-    match factorRat? input with
-    | some factors =>
-        factors.size = 2 &&
-          factors.foldl
-            (fun product factor => product * toRatPoly factor) 1 =
-            xSqSubTwo * xSubThree
-    | none => false
-
--- The rational base case is entered only for a squarefree Yun component.
-#guard
-    let xSubOne : DensePoly Rat := DensePoly.ofList [-1, 1]
-    (factorRat? (xSubOne * xSubOne)).isNone
-
--- Trager's first three shifts collide conjugate sums for `X²-2`; the bounded
--- search reaches shift `2`, recovers both linear factors, and undoes the shift.
-#guard
-    let levels := [yunSqrtTwoLevel]
-    let xSqSubTwo : Array (Array Rat) :=
-      #[#[-2, 0], #[0, 0], #[1, 0]]
-    match Norm.findSquarefreeShift yunSqrtTwoLevel [] xSqSubTwo,
-        factorSquarefree? levels xSqSubTwo with
-    | some (shift, _), some factors =>
-        let product := factors.foldl
-          (fun product factor => product * rawPoly levels factor) 1
-        shift = 2 && factors.size = 2 &&
-          product = rawPoly levels xSqSubTwo
-    | _, _ => false
-
-#guard
-    let levels := [yunSqrtTwoLevel]
-    let xSqSubThree : Array (Array Rat) :=
-      #[#[-3, 0], #[0, 0], #[1, 0]]
-    match factorSquarefree? levels xSqSubThree with
-    | some factors =>
-        factors = #[xSqSubThree]
-    | none => false
-
--- Recursive one-level Trager must retain the intermediate field. Over
--- Q(sqrt(2), sqrt(3)), `X² - 3` splits at the top level even though an
--- absolute norm would obscure that structure with repeated powers.
-#guard
-    let levels := [factorSqrtThreeLevel, yunSqrtTwoLevel]
-    let xSqSubThree : Array (Array Rat) :=
-      #[#[-3, 0, 0, 0], #[0, 0, 0, 0], #[1, 0, 0, 0]]
-    match factorRaw? levels xSqSubThree with
-    | some result =>
-        result.factors.size = 2 &&
-          check levels xSqSubThree result.scalar result.factors
-    | none => false
-
--- The squarefree entry guard rejects invalid recursive calls before spending
--- the full collision-bound search on resultants.
-#guard
-    let levels := [yunSqrtTwoLevel]
-    let xSubOne : DensePoly (Coeff levels) :=
-      rawPoly levels #[#[-1, 0], #[1, 0]]
-    (factorSquarefree? levels (polyCoords (polyPow xSubOne 2))).isNone
-
-#guard
-    let levels := [yunSqrtTwoLevel]
-    let xSqSubTwo : DensePoly (Coeff levels) :=
-      rawPoly levels #[#[-2, 0], #[0, 0], #[1, 0]]
-    let xSubOne : DensePoly (Coeff levels) :=
-      rawPoly levels #[#[-1, 0], #[1, 0]]
-    let f := polyPow xSqSubTwo 2 * polyPow xSubOne 3
-    match factorRaw? levels (polyCoords f) with
-    | some result =>
-        result.factors.size = 3 &&
-          result.factors.all (fun factor => 0 < factor.2) &&
-          check levels (polyCoords f) result.scalar result.factors
-    | none => false
-
--- A factor may appear only once in the canonical certificate; its complete
--- multiplicity belongs in the paired natural number.
-#guard
-    let xSubOne : Array (Array Rat) := #[#[-1], #[1]]
-    let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
-    !check [] f #[1] #[(xSubOne, 1), (xSubOne, 2)]
-
--- Coordinate padding cannot disguise a duplicate factor from the strict
--- canonical-order check.
-#guard
-    let xSubOne : Array (Array Rat) := #[#[-1], #[1]]
-    let padded : Array (Array Rat) := #[#[-1, 0, 0], #[1]]
-    let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
-    !check [] f #[1] #[(padded, 2), (xSubOne, 1)]
-
--- Exercise the monic first remainder, a nonzero continuation, and the
--- zero/nonmonic/degree-order fallback cases over three tower heights.
-#guard
-    [[], [yunSqrtTwoLevel], [factorSqrtThreeLevel, yunSqrtTwoLevel]].all fun levels =>
-      let x := rawPoly levels #[#[], #[1]]
-      let p := x * x + 1
-      let q := p * x
-      let twice := DensePoly.scale (Coeff.ofData levels #[2]) p
-      recoveryGcd p q = p &&
-        recoveryGcd p (q + 1) = 1 &&
-        recoveryGcd (0 : DensePoly (Coeff levels)) q = q &&
-        recoveryGcd twice (twice * x) = twice &&
-        recoveryGcd q p = p
-
-end Factor
-
+end ReferenceFactor
 end Hex.NumberTower
+
+open Hex Hex.NumberTower Hex.NumberTower.Arithmetic
+
+private def level (degree : Nat) (defining : Array (Array Rat)) : Level :=
+  ⟨degree, defining, AlgebraicNumber.zero.toRoot⟩
+
+private def compareFactor (levels : List Level) (f : Array (Array Rat)) : IO Unit := do
+  let actual := Factor.factorRaw? levels f
+  let expected := ReferenceFactor.factorRaw? levels f
+  match actual, expected with
+  | some a, some b =>
+    unless a.scalar == b.scalar && a.factors == b.factors do
+      throw (IO.userError s!"canonical factor mismatch: {repr f}")
+    let check := Factor.check levels f a.scalar a.factors
+    unless check == ReferenceFactor.check levels f b.scalar b.factors do
+      throw (IO.userError "checker mismatch")
+    unless check do throw (IO.userError s!"checker rejected: {repr f}")
+    if !a.factors.isEmpty then
+      let bad := a.factors.modify 0 fun (p, n) => (p, n + 1)
+      if Factor.check levels f a.scalar bad || ReferenceFactor.check levels f b.scalar bad then
+        throw (IO.userError "corrupted multiplicity accepted")
+  | _, _ => throw (IO.userError s!"factorization missing: {repr f}")
+
+def main : IO Unit := do
+  let sqrtTwo := level 2 #[#[-2], #[0]]
+  let sqrtThree := level 2 #[#[-3, 0], #[0, 0]]
+  let mut factors := 0
+  for levels in [[], [sqrtTwo], [sqrtThree, sqrtTwo]] do
+    let x : DensePoly (Coeff levels) := DensePoly.monomial 1 1
+    let a := Coeff.ofData levels #[1/2, 1/3, 1/4, 1/5]
+    let first := x - DensePoly.C a
+    let second := x + 1
+    for p in #[0, 1, DensePoly.C a, first, first * second,
+        Factor.polyPow first 2 * second,
+        DensePoly.scale (Coeff.ofData levels #[2/3]) (first * second),
+        x * x - x - 1] do
+      compareFactor levels (Factor.polyCoords p)
+      factors := factors + 1
+  for n in #[2, 3, 4, 6, 8, 12, 24] do
+    let f := (Array.range (n + 1)).map fun i =>
+      if i == n then #[1, 0] else if i == 0 || i == 1 then #[-1, 0] else #[0, 0]
+    compareFactor [sqrtTwo] f
+    factors := factors + 1
+  let mut norms := 0
+  for (top, lower) in [(sqrtTwo, []), (level 2 #[#[1], #[1]], []),
+      (sqrtThree, [sqrtTwo]), (level 2 #[#[1, 1], #[1, -1]], [sqrtTwo]),
+      (level 3 #[#[-2], #[0], #[0]], [])] do
+    for n in Array.range 6 do
+      for seed in Array.range 5 do
+        let f := (Array.range n).map fun i =>
+          (Array.range (top.degree * levelsDim lower)).map fun j =>
+            ((Int.ofNat ((i * 3 + j * 2 + seed) % 7) - 3 : Int) : Rat) / (j + 1 : Nat)
+        for shift in #[0, 1, -1, 2, -2] do
+          let expected := ReferenceNorm.oneLevel top lower f shift
+          let actual := Norm.oneLevel top lower f shift
+          unless actual == expected do
+            throw (IO.userError s!"norm mismatch: {top.degree}, {n}, {seed}, {shift}: {repr actual} != {repr expected}")
+          norms := norms + 1
+  IO.println s!"Exact canonical factorizations/checks: {factors}; exact norm arrays: {norms}; corrupted multiplicities rejected."
