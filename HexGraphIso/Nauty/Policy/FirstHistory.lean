@@ -349,4 +349,38 @@ theorem runState_history (G : Colored n k) (hn0 : 0 < n) :
   rw [ite_eq_right (show (n == 0) ≠ true by simp; omega)]
   exact hs
 
+/-- Recording first-path codes preserves the allocated code-store size. -/
+theorem firstPath_codeSize {ctx : Ctx n} {tcLevel fuel level numcells last : Nat}
+    {st leaf : Search n}
+    (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf) :
+    leaf.firstcode.size = st.firstcode.size := by
+  have hprepare : ∀ level numcells (st : Search n),
+      (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.firstcode.size =
+        st.firstcode.size := by
+    intro level numcells st
+    unfold Generic.prepareFirst
+    change (chooseTarget true ctx tcLevel level _ _).2.2.2.firstcode.size = _
+    rw [chooseFirst_fields]
+    exact Array.size_set! _ _ _
+  induction hpath with
+  | leaf fuel level numcells st hdisc => exact hprepare level numcells st
+  | @step fuel level numcells last st leaf tv hopen htv horbit tail ih =>
+    rw [ih]
+    change (cheapCheck true level
+      (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2).firstcode.size = _
+    unfold cheapCheck
+    split <;> exact hprepare level numcells st
+
+/-- The saved reference marks the level immediately after its actual first leaf. -/
+theorem firstPath_sentinel {ctx : Ctx n} {inf tcLevel fuel level numcells last : Nat}
+    {st leaf : Search n}
+    (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
+    (hsize : st.firstcode.size = n + 2) (hlast : last ≤ n) :
+    (node true ctx inf tcLevel fuel level numcells st).2.firstcode[last + 1]! = codeSentinel := by
+  have href := firstPath_reference (inf := inf) hpath
+  have hcode := congrArg (fun x : Array Nat × Array Int × Array Nat => x.1) href
+  change (node true ctx inf tcLevel fuel level numcells st).2.firstcode =
+    leaf.firstcode.set! (last + 1) codeSentinel at hcode
+  rw [hcode, Array.getElem!_set!_self _ _ _ (by rw [firstPath_codeSize hpath, hsize]; omega)]
+
 end Hex.GraphIso.Nauty.Engine
