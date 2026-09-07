@@ -481,7 +481,7 @@ private theorem softWitnessAt_local {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial)) :
     rootsInDisc (localPoly p s) 0 r = k := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.taylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softWitnessAt] using h
   have hk := softGraeffeLoop_size hloop
@@ -501,7 +501,7 @@ private theorem softSeededWitness_local {p : Hex.ZPoly}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial)) :
     rootsInDisc (localPoly p s) 0 r = k := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.exactTaylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softSeededWitness] using h
   have hk := softGraeffeLoop_size hloop
@@ -609,7 +609,7 @@ private theorem softWitnessAt_local_boundary {p : Hex.ZPoly}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial))
     {z : ℂ} (hz : z ∈ sphere 0 r) : (localPoly p s).eval z ≠ 0 := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.taylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softWitnessAt] using h
   have hk := softGraeffeLoop_size hloop
@@ -629,7 +629,7 @@ private theorem softSeededWitness_local_boundary {p : Hex.ZPoly}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial))
     {z : ℂ} (hz : z ∈ sphere 0 r) : (localPoly p s).eval z ≠ 0 := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.exactTaylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softSeededWitness] using h
   have hk := softGraeffeLoop_size hloop

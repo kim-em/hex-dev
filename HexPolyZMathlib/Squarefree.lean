@@ -38,9 +38,11 @@ theorem size_le_one_iff_natDegree_eq_zero {R : Type*} [Semiring R] [DecidableEq 
     g.size ≤ 1 ↔ (HexPolyMathlib.toPolynomial g).natDegree = 0 := by
   rw [HexPolyMathlib.natDegree_toPolynomial]
   by_cases h : g.size = 0
-  · rw [(Hex.DensePoly.degree?_eq_none_iff g).mpr h]
+  · unfold Hex.DensePoly.natDegree
+    rw [(Hex.DensePoly.degree?_eq_none_iff g).mpr h]
     simp [h]
-  · rw [Hex.DensePoly.degree?_eq_some_of_pos_size g (Nat.pos_of_ne_zero h),
+  · unfold Hex.DensePoly.natDegree
+    rw [Hex.DensePoly.degree?_eq_some_of_pos_size g (Nat.pos_of_ne_zero h),
       Option.getD_some]
     omega
 

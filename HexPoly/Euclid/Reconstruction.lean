@@ -302,11 +302,11 @@ private theorem isZero_zero {S : Type _} [Zero S] [DecidableEq S] :
 
 private theorem degree_getD_lt_size_add_one {S : Type _} [Zero S] [DecidableEq S]
     (p : DensePoly S) :
-    p.degree?.getD 0 < p.size + 1 := by
+    p.natDegree < p.size + 1 := by
   by_cases hsize : p.size = 0
-  · simp [degree?, hsize]
-  · have hdeg : p.degree?.getD 0 = p.size - 1 := by
-      simp [degree?, hsize]
+  · simp [natDegree, degree?, hsize]
+  · have hdeg : p.natDegree = p.size - 1 := by
+      simp [natDegree, degree?, hsize]
     omega
 
 /-- Reflexivity of `DensePoly` divisibility (the Mathlib-free `dvd_refl`). -/
@@ -550,9 +550,9 @@ private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
       ∀ p q : DensePoly S,
-        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+        q.isZero = false → ¬ 0 < q.natDegree → (divMod p q).2 = 0)
     (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
-    (hfuel : r₁.degree?.getD 0 < fuel) :
+    (hfuel : r₁.natDegree < fuel) :
     (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₀ ∧
       (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₁ := by
   induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
@@ -572,11 +572,11 @@ private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
           cases h : r₁.isZero <;> simp [h] at hr₁zero ⊢
         change (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₀ ∧
           (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁
-        by_cases hpos : 0 < r₁.degree?.getD 0
-        · have hrem_degree : rem.degree?.getD 0 < r₁.degree?.getD 0 := by
+        by_cases hpos : 0 < r₁.natDegree
+        · have hrem_degree : rem.natDegree < r₁.natDegree := by
             simpa [qr, rem] using
               DivModLaws.divMod_remainder_degree_lt_of_pos_degree r₀ r₁ hpos
-          have hrem_fuel : rem.degree?.getD 0 < fuel := by omega
+          have hrem_fuel : rem.natDegree < fuel := by omega
           have hrec := ih r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) hrem_fuel
           have hg_r₁ : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
               (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁ := hrec.1
@@ -611,7 +611,7 @@ theorem gcd_dvd_left_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
       ∀ p q : DensePoly S,
-        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+        q.isZero = false → ¬ 0 < q.natDegree → (divMod p q).2 = 0)
     (p q : DensePoly S) :
     gcd p q ∣ p := by
   rw [gcd_eq_xgcd_gcd]
@@ -628,7 +628,7 @@ theorem gcd_dvd_right_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
       ∀ p q : DensePoly S,
-        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+        q.isZero = false → ¬ 0 < q.natDegree → (divMod p q).2 = 0)
     (p q : DensePoly S) :
     gcd p q ∣ q := by
   rw [gcd_eq_xgcd_gcd]
@@ -646,15 +646,15 @@ theorem gcd_dvd_inputs_of_reconstruction {S : Type _}
       let qr := divMod p q
       qr.1 * q + qr.2 = p)
     (hdegree : ∀ p q : DensePoly S, q.isZero = false →
-      0 < q.degree?.getD 0 →
-      (divMod p q).2.degree?.getD 0 < q.degree?.getD 0)
+      0 < q.natDegree →
+      (divMod p q).2.natDegree < q.natDegree)
     (hsmall : ∀ p q : DensePoly S, q.isZero = false →
-      ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+      ¬ 0 < q.natDegree → (divMod p q).2 = 0)
     (p q : DensePoly S) : gcd p q ∣ p ∧ gcd p q ∣ q := by
   rw [gcd_eq_xgcd_gcd]
   unfold xgcd
   have aux : ∀ (fuel : Nat) (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S),
-      r₁.degree?.getD 0 < fuel →
+      r₁.natDegree < fuel →
       (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₀ ∧
         (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₁ := by
     intro fuel
@@ -679,8 +679,8 @@ theorem gcd_dvd_inputs_of_reconstruction {S : Type _}
               (t₀ - qr.1 * t₁) fuel).gcd ∣ r₀ ∧
             (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
               (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁
-          by_cases hpos : 0 < r₁.degree?.getD 0
-          · have hremDegree : rem.degree?.getD 0 < r₁.degree?.getD 0 := by
+          by_cases hpos : 0 < r₁.natDegree
+          · have hremDegree : rem.natDegree < r₁.natDegree := by
               simpa [qr, rem] using hdegree r₀ r₁ hr₁false hpos
             have hrec := ih r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
               (t₀ - qr.1 * t₁) (by omega)
@@ -913,7 +913,7 @@ theorem divMod_reconstruction {S : Type _}
     let qr := divMod p q
     qr.1 * q + qr.2 = p := by
   unfold divMod
-  by_cases hdeg : p.degree?.getD 0 < q.degree?.getD 0
+  by_cases hdeg : p.natDegree < q.natDegree
   · simp [hdeg]
     rw [zero_mul, zero_add]
   · simp [hdeg]
@@ -1565,16 +1565,12 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
       omega
     · have h := hp_size_lower hqq_zero; omega
   unfold divMod
-  by_cases hdeg_short : p.degree?.getD 0 < q.degree?.getD 0
+  by_cases hdeg_short : p.natDegree < q.natDegree
   · -- Short circuit: must show qq = 0 and p = 0.
     rw [ite_eq_left hdeg_short]
     have hp_size_lt_q : p.size < q.size := by
-      unfold degree? at hdeg_short
-      have hq_ne : q.size ≠ 0 := by omega
-      by_cases hp_zero_size : p.size = 0
-      · omega
-      · simp [hp_zero_size, hq_ne] at hdeg_short
-        omega
+      rw [natDegree_eq_size_sub_one, natDegree_eq_size_sub_one] at hdeg_short
+      omega
     have hqq_zero : qq = 0 := by
       by_cases h : qq = 0
       · exact h

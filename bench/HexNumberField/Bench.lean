@@ -858,7 +858,7 @@ squarefree polynomial (the first isolated root). -/
 private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
   if hprim : ZPoly.content p = 1 then
     if hlc : 0 < p.leadingCoeff then
-      if hdeg : 0 < p.degree?.getD 0 then
+      if hdeg : 0 < p.natDegree then
         if hsf : HasOnlySimpleRoots p then
           match refinedOf? p hsf with
           | some rep =>
@@ -875,7 +875,7 @@ private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
 private def mkFactorRoot? (p q : ZPoly) : Option AlgebraicRoot :=
   if hprim : ZPoly.content p = 1 then
     if hlc : 0 < p.leadingCoeff then
-      if hdeg : 0 < p.degree?.getD 0 then
+      if hdeg : 0 < p.natDegree then
         if hsf : HasOnlySimpleRoots p then
           if hq : HasOnlySimpleRoots q then
             match refinedFactor? p q hsf hq with
@@ -944,7 +944,7 @@ def prepInvInput (n : Nat) : InvInput :=
   let m := max n 2
   let p := xPowSubTwo m
   if hirr : ZPoly.isIrreducible p = true then
-    if hdeg : 0 < p.degree?.getD 0 then
+    if hdeg : 0 < p.natDegree then
       match positiveBinomialRoot? p m with
       | some rep =>
         let x := SimpleRoot.mk rep
@@ -992,7 +992,7 @@ private structure InvChainStep where
   limbWork : Nat
 
 private def degreeD (p : DensePoly Rat) : Nat :=
-  p.degree?.getD 0
+  p.natDegree
 
 /- Replay `xgcdLeftMonicAux` exactly, retaining diagnostics outside the timed
 benchmark. `coefficientOps` counts the scalar slots touched by normalization,
@@ -1713,7 +1713,7 @@ private def rootPhaseInput? : Option RootPhaseInput :=
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
     let input := prepFieldRootsInput 6
     match (PolyQuot.Roots.yun input.f).toList.find? fun component =>
-        component.1.degree?.getD 0 == 6 with
+        component.1.natDegree == 6 with
     | some (f, multiplicity) =>
         if hm : 0 < multiplicity then
           let eliminant := ZPoly.squareFreeCore
@@ -2067,7 +2067,7 @@ structure IsolationStats where
 private def isolationStats (n : Nat) (p : ZPoly) : IsolationStats :=
   let coeffAbsMax := ZPoly.coeffAbsMax p
   { parameter := n
-    degree := p.degree?.getD 0
+    degree := p.natDegree
     coeffAbsMax
     coeffBitHeight := ceilLog2 coeffAbsMax
     isolationTarget := separationDepth p }
@@ -2101,7 +2101,7 @@ def fixedFieldRootsIsolationStats? (n : Nat) : Option IsolationStats :=
   | some ⟨inst⟩ =>
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly := inst
     let component? := (PolyQuot.Roots.yun input.f).toList.find? fun component =>
-      component.1.degree?.getD 0 == max n 1
+      component.1.natDegree == max n 1
     component?.map fun component =>
       let eliminant := ZPoly.squareFreeCore (PolyQuot.Roots.normEliminant component.1)
       isolationStats n eliminant

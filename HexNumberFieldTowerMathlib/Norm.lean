@@ -107,7 +107,7 @@ theorem toPolynomial_injective (T : NumberTower) :
 /-- Semantic interpretation preserves the executable polynomial degree. -/
 @[simp]
 theorem natDegree_toPolynomial (T : NumberTower) (f : Poly T) :
-    (T.toPolynomial f).natDegree = f.degree?.getD 0 := by
+    (T.toPolynomial f).natDegree = f.natDegree := by
   rw [toPolynomial_eq_map,
     Polynomial.natDegree_map_eq_of_injective T.embedding.injective,
     HexPolyMathlib.natDegree_toPolynomial]

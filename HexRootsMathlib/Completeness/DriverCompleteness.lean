@@ -344,7 +344,7 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
   let enc := Hex.encSquare component
   let wide := enc.doubled.doubled
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   let d := 3 * M
   have hM : 0 < M := by dsimp [M]; positivity
   have hd : 0 < d := by dsimp [d]; positivity
@@ -428,12 +428,12 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
     change 3 * M ≤ ‖w - DyadicSquare.center wide‖
     nlinarith
   have hcard : roots.card ≤ N := by
-    have hdegree : roots.card + 1 = p.degree?.getD 0 := by
+    have hdegree : roots.card + 1 = p.natDegree := by
       calc
         roots.card + 1 = f.roots.card := by rw [hrootsEq]; simp
         _ = f.natDegree := (IsAlgClosed.splits f).natDegree_eq_card_roots.symm
-        _ = p.degree?.getD 0 := by simpa [f] using natDegree_toPolyℂ p
-    exact (by omega : roots.card ≤ p.degree?.getD 0).trans (Nat.le_max_right _ _)
+        _ = p.natDegree := by simpa [f] using natDegree_toPolyℂ p
+    exact (by omega : roots.card ≤ p.natDegree).trans (Nat.le_max_right _ _)
   apply exactWitness_one_of_roots hp hsize hrootsEq hd hremote
   intro j hj
   let L := (2 : ℝ) ^ (j : Int)
@@ -572,7 +572,7 @@ theorem certify_pellet_of_glueCovered {p : Hex.ZPoly}
   have hwitness' : Hex.witness p (Hex.encSquare wc.squares) 1 := by
     simpa [wc] using hwitness
   let rest :=
-    ((Array.range (p.degree?.getD 0 + 1)).filter (· != wc.candidateK)).toList
+    ((Array.range (p.natDegree + 1)).filter (· != wc.candidateK)).toList
   let ks := 1 :: rest
   have liftCert {iso : Hex.DyadicRootIsolation p}
       (hlist : Hex.Component.certifyPelletListShift? p wc
@@ -770,7 +770,7 @@ private theorem radius_lt_mahler_div {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     DyadicSquare.radius s <
       ((2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)) / 512 := by
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   have hRN := NKData.radiusHi_mul_degree_le hprec
   have hRpos : 0 < Dyadic.toReal s.radiusHi := by
     rw [DyadicSquare.radiusHi_eq]
@@ -910,12 +910,8 @@ private theorem exists_covered_component {p : Hex.ZPoly}
     (hcover : Worklist.Covers p work) :
     ∃ z c, (toPolyℂ p).IsRoot z ∧ c ∈ work.toList ∧
       z ∈ Component.region c := by
-  have hdegree : p.degree? = some (p.size - 1) := by
-    have hpos : 0 < p.size := by omega
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hpos]
   have hnat : 0 < (toPolyℂ p).natDegree := by
-    rw [natDegree_toPolyℂ, hdegree]
-    simp
+    rw [natDegree_toPolyℂ, Hex.DensePoly.natDegree_eq_size_sub_one]
     omega
   obtain ⟨z, hzroot⟩ := Complex.exists_root
     (Polynomial.natDegree_pos_iff_degree_pos.mp hnat)
@@ -1223,7 +1219,7 @@ theorem isolateAll_cauchy_complete {p : Hex.ZPoly} {target : Int}
     (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
     (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
     (hsepTarget : (Hex.separationDepth p : Int) ≤ target)
-    (strategy : Hex.AtomStrategy) (hd : 0 < p.degree?.getD 0) :
+    (strategy : Hex.AtomStrategy) (hd : 0 < p.natDegree) :
     ∃ rs, Hex.isolateAll? p target
         #[Hex.Component.cauchy p hd] strategy = some rs ∧
       ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p, r = .atom iso := by
@@ -1296,18 +1292,15 @@ theorem isolate_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     intro i
     rw [Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)]
     rfl
-  by_cases hd : 0 < p.degree?.getD 0
-  · have hdegree : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, hpSize]
-    have hsize : 1 < p.size := by
-      rw [hdegree] at hd
-      simp at hd
+  by_cases hd : 0 < p.natDegree
+  · have hsize : 1 < p.size := by
+      rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hd
       omega
     have hpℂ : toPolyℂ p ≠ 0 := by
       intro hzero
       have hnat := natDegree_toPolyℂ p
-      rw [hzero, Polynomial.natDegree_zero, hdegree] at hnat
-      simp at hnat
+      rw [hzero, Polynomial.natDegree_zero,
+        Hex.DensePoly.natDegree_eq_size_sub_one] at hnat
       omega
     let target := max atomPrec (Hex.separationDepth p : Int)
     obtain ⟨rs, hall, hatoms⟩ := isolateAll_cauchy_complete hpℂ hsize

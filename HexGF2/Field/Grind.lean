@@ -133,7 +133,7 @@ nonzero and admit no factorization into two positive-degree parts, which the
 constant `1` satisfies. `GF2nPoly 1 _` is then the trivial ring, where every
 residue is `0` and `0 = 1`, so both `zero_ne_one` and characteristic two fail.
 
-`hex-gfq-field` avoids this by carrying `hf : 0 < f.degree` as a separate type
+`hex-gfq-field` avoids this by carrying `hf : 0 < f.natDegree` as a separate type
 parameter beside the irreducibility proof. `GF2nPoly` does not, so the field
 laws are supplied as definitions taking that hypothesis rather than as
 instances. A caller with a genuine modulus has the hypothesis to hand: every
@@ -149,16 +149,16 @@ committed `PackedGF2Entry` carries `degree_pos`.
     a ^ ((n : Int) + 1) = a ^ (n : Int) * a := pow_succ a n
 
 /-- Zero and one are distinct when the modulus is nonconstant. -/
-theorem zero_ne_one_of_degree_pos (hdeg : 0 < f.degree) :
+theorem zero_ne_one_of_degree_pos (hdeg : 0 < f.natDegree) :
     (0 : GF2nPoly f hirr) ≠ 1 := by
   intro h
   have hval := congrArg GF2nPoly.val h
   rw [zero_val, one_val, GF2Poly.mod_eq_self_of_reduced 1 f
-    (Or.inr (by rw [GF2Poly.degree_one]; exact hdeg))] at hval
+    (Or.inr (by rw [GF2Poly.natDegree_one]; exact hdeg))] at hval
   exact absurd hval (by decide)
 
 /-- One is its own inverse. -/
-theorem inv_one_of_degree_pos (hdeg : 0 < f.degree) :
+theorem inv_one_of_degree_pos (hdeg : 0 < f.natDegree) :
     (1 : GF2nPoly f hirr)⁻¹ = 1 := by
   have h := mul_inv_cancel (1 : GF2nPoly f hirr)
     (fun hc => zero_ne_one_of_degree_pos (f := f) (hirr := hirr) hdeg hc.symm)
@@ -166,7 +166,7 @@ theorem inv_one_of_degree_pos (hdeg : 0 < f.degree) :
   exact h
 
 /-- A nonzero element has a nonzero inverse. -/
-theorem inv_ne_zero_of_degree_pos (hdeg : 0 < f.degree)
+theorem inv_ne_zero_of_degree_pos (hdeg : 0 < f.natDegree)
     {a : GF2nPoly f hirr} (ha : a ≠ 0) : a⁻¹ ≠ 0 := by
   intro hc
   have h := mul_inv_cancel a ha
@@ -174,7 +174,7 @@ theorem inv_ne_zero_of_degree_pos (hdeg : 0 < f.degree)
   exact zero_ne_one_of_degree_pos (f := f) (hirr := hirr) hdeg h
 
 /-- Inversion is an involution, by cancelling through the defining identity. -/
-theorem inv_inv_of_degree_pos (hdeg : 0 < f.degree) (a : GF2nPoly f hirr) :
+theorem inv_inv_of_degree_pos (hdeg : 0 < f.natDegree) (a : GF2nPoly f hirr) :
     (a⁻¹)⁻¹ = a := by
   by_cases ha : a = 0
   · subst ha; rw [inv_zero, inv_zero]
@@ -187,7 +187,7 @@ theorem inv_inv_of_degree_pos (hdeg : 0 < f.degree) (a : GF2nPoly f hirr) :
       _ = a := by rw [mul_one]
 
 /-- Negating an integer exponent inverts the power. -/
-theorem zpow_neg_of_degree_pos (hdeg : 0 < f.degree)
+theorem zpow_neg_of_degree_pos (hdeg : 0 < f.natDegree)
     (a : GF2nPoly f hirr) (n : Int) : a ^ (-n) = (a ^ n)⁻¹ := by
   cases n with
   | ofNat k =>
@@ -205,7 +205,7 @@ theorem zpow_neg_of_degree_pos (hdeg : 0 < f.degree)
 /-- Field laws for the packed quotient, given a nonconstant irreducible modulus.
 
 Not an instance: see the note above on why irreducibility alone is not enough. -/
-@[instance_reducible] def fieldOfDegreePos (hdeg : 0 < f.degree) : Lean.Grind.Field (GF2nPoly f hirr) where
+@[instance_reducible] def fieldOfDegreePos (hdeg : 0 < f.natDegree) : Lean.Grind.Field (GF2nPoly f hirr) where
   div_eq_mul_inv := div_eq_mul_inv
   zero_ne_one := zero_ne_one_of_degree_pos hdeg
   inv_zero := inv_zero
@@ -215,7 +215,7 @@ Not an instance: see the note above on why irreducibility alone is not enough. -
   zpow_neg := zpow_neg_of_degree_pos hdeg
 
 /-- Characteristic two, given a nonconstant irreducible modulus. -/
-theorem isCharPOfDegreePos (hdeg : 0 < f.degree) :
+theorem isCharPOfDegreePos (hdeg : 0 < f.natDegree) :
     Lean.Grind.IsCharP (GF2nPoly f hirr) 2 where
   ofNat_ext_iff {x y} := by
     show (natCast x : GF2nPoly f hirr) = natCast y ↔ x % 2 = y % 2

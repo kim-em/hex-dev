@@ -1552,7 +1552,7 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
     {R : Type u} [Zero R] [DecidableEq R]
     (arr : Array R) (hsize : 2 ≤ arr.size)
     (hback : arr[arr.size - 1]'(by omega) ≠ Zero.zero) :
-    0 < (DensePoly.ofCoeffs arr).degree?.getD 0 := by
+    0 < (DensePoly.ofCoeffs arr).natDegree := by
   have hgetd_eq :
       arr.getD (arr.size - 1) (Zero.zero : R) = arr[arr.size - 1]'(by omega) :=
     (Array.getElem_eq_getD (Zero.zero : R)).symm
@@ -1562,6 +1562,7 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
     rcases Nat.lt_or_ge (arr.size - 1) (DensePoly.ofCoeffs arr).size with hlt | hge
     · exact hlt
     · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le _ hge))
+  unfold Hex.DensePoly.natDegree
   rw [show (DensePoly.ofCoeffs arr).degree? =
         if _h : (DensePoly.ofCoeffs arr).size = 0 then none
         else some ((DensePoly.ofCoeffs arr).size - 1) from rfl]
@@ -1600,7 +1601,8 @@ private theorem degree_eq_of_coeff_ne_zero_of_size_le
     · exact hlt
     · exact False.elim
         (hcoeff (DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hlt)))
-  change f.degree?.getD 0 = n
+  change f.natDegree = n
+  unfold Hex.DensePoly.natDegree
   rw [DensePoly.degree?_eq_some_of_pos_size f (by omega)]
   simp only [Option.getD_some]
   omega

@@ -218,7 +218,7 @@ class PackedGF2Entry (n : Nat) where
 monic degree-one polynomials over `𝔽₂`. Used to enumerate the possible factors
 when proving a degree-two packed modulus irreducible. -/
 private theorem gf2poly_degree_one_eq_monomial_or_x_plus_one {p : GF2Poly}
-    (hp : p.degree = 1) :
+    (hp : p.natDegree = 1) :
     p = GF2Poly.monomial 1 ∨ p = GF2Poly.ofUInt64Monic 1 1 := by
   have hpNonzero : p ≠ 0 := by
     intro hzero
@@ -229,7 +229,7 @@ private theorem gf2poly_degree_one_eq_monomial_or_x_plus_one {p : GF2Poly}
     · exact False.elim (hpNonzero (GF2Poly.eq_zero_of_isZero hzero))
   obtain ⟨d, hd⟩ := GF2Poly.degree?_isSome_of_isZero_false hpzeroFalse
   have hd1 : d = 1 := by
-    simpa [GF2Poly.degree, hd] using hp
+    simpa [GF2Poly.natDegree, hd] using hp
   subst d
   by_cases h0 : p.coeff 0 = true
   · right
@@ -288,9 +288,9 @@ theorem packedGF2Entry_2_1_irreducible :
   constructor
   · exact gf2poly_x_plus_one_ne_zero
   · intro a b hab
-    by_cases ha0 : a.degree = 0
+    by_cases ha0 : a.natDegree = 0
     · exact Or.inl ha0
-    by_cases hb0 : b.degree = 0
+    by_cases hb0 : b.natDegree = 0
     · exact Or.inr hb0
     exfalso
     have habWords := congrArg GF2Poly.toWords hab
@@ -304,17 +304,17 @@ theorem packedGF2Entry_2_1_irreducible :
       simp [hzero]
     have hfNonzero : GF2Poly.ofUInt64Monic 1 1 ≠ 0 :=
       gf2poly_x_plus_one_ne_zero
-    have hfDegree : (GF2Poly.ofUInt64Monic 1 1).degree = 1 := by
+    have hfDegree : (GF2Poly.ofUInt64Monic 1 1).natDegree = 1 := by
       decide
-    have haDegree : a.degree = 1 := by
+    have haDegree : a.natDegree = 1 := by
       have haDvd : a ∣ GF2Poly.ofUInt64Monic 1 1 := ⟨b, by simp [hab]⟩
-      have hle := GF2Poly.degree_le_of_dvd_nonzero
+      have hle := GF2Poly.natDegree_le_of_dvd_nonzero
         haNonzero hfNonzero haDvd
       rw [hfDegree] at hle
       omega
-    have hbDegree : b.degree = 1 := by
+    have hbDegree : b.natDegree = 1 := by
       have hbDvd : b ∣ GF2Poly.ofUInt64Monic 1 1 := ⟨a, by simp [GF2Poly.mul_comm, hab]⟩
-      have hle := GF2Poly.degree_le_of_dvd_nonzero
+      have hle := GF2Poly.natDegree_le_of_dvd_nonzero
         hbNonzero hfNonzero hbDvd
       rw [hfDegree] at hle
       omega
@@ -1079,10 +1079,10 @@ canonical packed `GF2q` representation. -/
   have hn1 : 1 < 2 ^ n :=
     calc 1 = 2 ^ 0 := by decide
       _ < 2 ^ n := Nat.pow_lt_pow_right (by decide) h.degree_pos
-  -- `ofUInt64 1 = (1 : GF2Poly)`, and `1 % modulus = 1` since `1.degree < modulus.degree = n`.
+  -- `ofUInt64 1 = (1 : GF2Poly)`, and `1 % modulus = 1` since `1.natDegree < modulus.natDegree = n`.
   have hmod : (1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n = 1 :=
     GF2Poly.mod_eq_self_of_reduced 1 _ <| Or.inr <| by
-      rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 h.lower h.degree_lt_word]
+      rw [GF2Poly.natDegree_ofUInt64Monic_of_lt_64 h.lower h.degree_lt_word]
       exact h.degree_pos
   -- Hence `ofUInt64 (packedReduceWord ... (ofUInt64 1)) = 1` as polynomials.
   have hpoly :
@@ -1092,7 +1092,7 @@ canonical packed `GF2q` representation. -/
       h.degree_lt_word (GF2Poly.ofUInt64 1) (Or.inr ?_)]
     · show (1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n = 1
       exact hmod
-    · show ((1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n).degree < n
+    · show ((1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n).natDegree < n
       rw [hmod]; exact h.degree_pos
   -- Compare the single stored words: both `ofUInt64 _` and `ofUInt64 1` equal `ofWords #[1]`.
   have hword :

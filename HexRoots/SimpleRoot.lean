@@ -125,16 +125,17 @@ theorem DyadicRootIsolation.size_gt_one {p : ZPoly} (i : DyadicRootIsolation p) 
 
 /-- A certified atom can only exist for a positive-degree polynomial. -/
 theorem DyadicRootIsolation.posDegree {p : ZPoly} (i : DyadicRootIsolation p) :
-    0 < p.degree?.getD 0 := by
+    0 < p.natDegree := by
   have hsize := i.size_gt_one
   have hpos : 0 < p.size := by omega
+  unfold Hex.DensePoly.natDegree
   rw [DensePoly.degree?_eq_some_of_pos_size p hpos]
   simp
   omega
 
 /-- Every represented simple root belongs to a positive-degree polynomial. -/
 theorem SimpleRoot.posDegree {p : ZPoly} (x : SimpleRoot p) :
-    0 < p.degree?.getD 0 := by
+    0 < p.natDegree := by
   refine Quot.inductionOn x ?_
   intro i
   exact i.1.posDegree

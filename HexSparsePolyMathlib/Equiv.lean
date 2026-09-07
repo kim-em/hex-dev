@@ -170,9 +170,10 @@ the zero polynomial mapping to `0`. -/
 @[simp, grind =]
 theorem equiv_natDegree [CommRing R] [DecidableEq R]
     (s : Hex.SparsePoly R) :
-    (equiv s).natDegree = s.degree?.getD 0 := by
-  rw [equiv_apply, HexPolyMathlib.natDegree_toPolynomial,
-    Hex.SparsePoly.degree?_toDense]
+    (equiv s).natDegree = s.natDegree := by
+  rw [equiv_apply, HexPolyMathlib.natDegree_toPolynomial]
+  unfold Hex.DensePoly.natDegree Hex.SparsePoly.natDegree
+  rw [Hex.SparsePoly.degree?_toDense]
 
 /-- The leading coefficient corresponds. -/
 @[simp, grind =]

@@ -32,8 +32,7 @@ one root. As with real-root isolation the certificates are exact: the Taylor
 coefficients at the centre are exact Gaussian dyadics, and every witness is a
 strict comparison between two dyadic rationals, with no floats and no error
 budget. The search may use approximate dyadic reciprocals to place candidate
-squares, but those are only hints; nothing counts until an exact witness
-rechecks it.
+squares, but those are only hints.
 
 The computational core is Mathlib-free. It expands a polynomial about a
 Gaussian-dyadic centre, tests candidate squares, subdivides, and glues the
@@ -97,8 +96,15 @@ The strategy argument, a {name}`Hex.AtomStrategy`, selects which certificate
 form the driver attempts, and in which order: `.nk` for the
 Newton-Kantorovich witness alone, `.pellet` for the Pellet witness alone, and
 `.nkThenPellet` (the general default) for the former with the latter as
-fallback. The explicit single-form strategies let either certificate be
-selected or benchmarked on its own; callers with no such need pick the default.
+fallback. The two tests differ in what they need: the Newton-Kantorovich
+witness certifies on the doubled square and gives the sharper enclosure, but
+it needs the derivative to dominate there, which fails near a cluster of
+roots; the Pellet witness certifies on the quadrupled square by a coefficient
+inequality, so it still succeeds in that case. Trying Newton first and
+falling back to Pellet therefore certifies more squares than either alone,
+and avoids subdividing further just to satisfy Newton. The explicit
+single-form strategies let either certificate be selected or benchmarked on
+its own; callers with no such need pick the default.
 
 The precision is an integer lower bound on each returned square's `prec`, so
 its half-width is at most `2⁻ᵖʳᵉᶜ`. The driver also floors this target at the
@@ -195,8 +201,10 @@ re-running the whole isolator, refine its atom directly:
 
 {docstring Hex.DyadicRootIsolation.refineTo?}
 
-Refinement combines a speculative Newton step, which gains quadratic precision
-when it certifies, with subdivision as the fallback. It preserves the root, so
+Refinement first tries a Newton step, which roughly doubles the number of
+correct bits each time it certifies. When the step does not certify, the
+square is bisected and the search continues on the halves, which is slower
+but always makes progress. Either way the root is preserved, so
 the refined atom can stand in for the original wherever a caller needs a
 tighter enclosure. This is the operation the demo uses to drive the real root
 of `x³ − x − 1` down to 80 bits.

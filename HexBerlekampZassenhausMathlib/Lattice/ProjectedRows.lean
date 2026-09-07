@@ -509,7 +509,7 @@ used by the executable CLD rows. -/
 theorem coeffWidth_eq
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S) :
-    L.coeffWidth = D.f.degree?.getD 0 := by
+    L.coeffWidth = D.f.natDegree := by
   rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
     factorScale, inputScale_coprime, scaledProduct_congr⟩
   cases basis_eq

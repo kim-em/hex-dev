@@ -168,7 +168,7 @@ def recoverPairFast? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
   let alphaRelation : DensePoly (PolyQuot gamma.p gamma.x) :=
     liftZPoly alpha.p
   let common := DensePoly.gcd thetaRelation alphaRelation
-  if common.degree?.getD 0 = 1 && common.leadingCoeff != 0 then
+  if common.natDegree = 1 && common.leadingCoeff != 0 then
     let alphaCoordinate := -(common.coeff 0) / common.leadingCoeff
     let thetaCoordinate :=
       gammaCoordinate - (shift : Rat) • alphaCoordinate

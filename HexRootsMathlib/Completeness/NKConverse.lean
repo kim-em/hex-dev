@@ -438,9 +438,7 @@ theorem witness_of_remote_roots {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   have hsizeEq : p.size = roots.card + 2 := by
     have hnat := natDegree_eq_of_roots hroots
     rw [natDegree_toPolyℂ] at hnat
-    have hdegree : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, Nat.ne_of_gt (by omega : 0 < p.size)]
-    rw [hdegree, Option.getD_some] at hnat
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hnat
     omega
   apply witness_of_estimates p s (by rw [coeffs_size]; omega) hnorm
   · have hexact :

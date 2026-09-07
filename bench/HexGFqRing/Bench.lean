@@ -90,7 +90,7 @@ def modulus (degree : Nat) : FpPoly 65537 :=
 
 /-- Generated moduli are nonconstant, so quotient representatives are meaningful. -/
 theorem modulus_pos_degree (degree : Nat) : 0 < FpPoly.degree (modulus (degree + 1)) := by
-  unfold FpPoly.degree DensePoly.degree? DensePoly.size modulus
+  unfold FpPoly.degree DensePoly.natDegree DensePoly.degree? DensePoly.size modulus
   simp
 
 /-- Stable checksum for polynomial-valued benchmark results. -/

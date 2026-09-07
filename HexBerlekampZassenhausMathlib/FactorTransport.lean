@@ -63,7 +63,7 @@ theorem zpolyIrreducible_of_checkIrreducibleCertLinear
     (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)
     (hprime : cert.perPrime.all (fun primeData => decide (Nat.Prime primeData.p)) = true)
     (hcontent : decide (Hex.ZPoly.content f = 1) = true)
-    (hpos : decide (0 < f.degree?.getD 0) = true)
+    (hpos : decide (0 < f.natDegree) = true)
     (hcert : Hex.checkIrreducibleCertLinear f cert = true) :
     Hex.ZPoly.Irreducible f :=
   (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
@@ -79,7 +79,7 @@ def checkMultiPrimeCert (f : Hex.ZPoly)
     (cert : Hex.ZPolyIrreducibilityCertificate) : Bool :=
   cert.perPrime.all (fun primeData => decide (Nat.Prime primeData.p)) &&
     decide (Hex.ZPoly.content f = 1) &&
-    decide (0 < f.degree?.getD 0) &&
+    decide (0 < f.natDegree) &&
     Hex.checkIrreducibleCertLinear f cert
 
 /-- A passing `checkMultiPrimeCert` forces free-layer irreducibility. -/

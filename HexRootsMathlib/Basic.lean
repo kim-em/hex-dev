@@ -38,7 +38,7 @@ coefficients. -/
 
 /-- The complex cast preserves the executable natural degree. -/
 theorem natDegree_toPolyℂ (p : Hex.ZPoly) :
-    (toPolyℂ p).natDegree = p.degree?.getD 0 := by
+    (toPolyℂ p).natDegree = p.natDegree := by
   rw [toPolyℂ, Polynomial.natDegree_map_eq_of_injective
     (RingHom.injective_int (Int.castRingHom ℂ)),
     HexPolyMathlib.natDegree_toPolynomial]

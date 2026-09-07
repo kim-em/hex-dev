@@ -228,7 +228,8 @@ private theorem fractionRemSizeLt
         p q hqsize (fractionDivCancel q hqpos)
     rw [hrzero, DensePoly.size_zero]
     exact hqpos
-  · have hqdeg : 0 < q.degree?.getD 0 := by
+  · have hqdeg : 0 < q.natDegree := by
+      unfold Hex.DensePoly.natDegree
       rw [DensePoly.degree?_eq_some_of_pos_size q hqpos, Option.getD_some]
       omega
     have hdeg :=
@@ -244,10 +245,9 @@ private theorem fractionRemSizeLt
           intro hsize
           exact hr ((DensePoly.size_eq_zero_iff r).mp hsize)
         omega
-      change r.degree?.getD 0 < q.degree?.getD 0 at hdeg
-      rw [DensePoly.degree?_eq_some_of_pos_size r hrpos,
-        DensePoly.degree?_eq_some_of_pos_size q hqpos,
-        Option.getD_some, Option.getD_some] at hdeg
+      change r.natDegree < q.natDegree at hdeg
+      rw [DensePoly.natDegree_eq_size_sub_one,
+        DensePoly.natDegree_eq_size_sub_one] at hdeg
       omega
 
 omit [BEq R] [LawfulBEq R] [Dvd R] in

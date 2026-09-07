@@ -28,8 +28,8 @@ namespace ZPoly
 /-- The squarefree primitive part of a polynomial of positive degree has
 positive degree. -/
 private theorem squareFreeCore_degree_pos (p : ZPoly)
-    (h0 : ¬ p.degree?.getD 0 = 0) :
-    0 < (ZPoly.squareFreeCore p).degree?.getD 0 := by
+    (h0 : ¬ p.natDegree = 0) :
+    0 < (ZPoly.squareFreeCore p).natDegree := by
   have hpne : p ≠ 0 := by
     intro hp
     apply h0
@@ -50,10 +50,10 @@ private theorem squareFreeCore_degree_pos (p : ZPoly)
 /-- The positive-degree branch of `algebraicRoots?`, with its certificate
 hypotheses named. -/
 private theorem algebraicRoots?_eq_of_pos (p : ZPoly)
-    (h0 : ¬ p.degree?.getD 0 = 0)
+    (h0 : ¬ p.natDegree = 0)
     (hprim : ZPoly.content (ZPoly.squareFreeCore p) = 1)
     (hpos : 0 < (ZPoly.squareFreeCore p).leadingCoeff)
-    (hdeg : 0 < (ZPoly.squareFreeCore p).degree?.getD 0)
+    (hdeg : 0 < (ZPoly.squareFreeCore p).natDegree)
     (hsimple : HasOnlySimpleRoots (ZPoly.squareFreeCore p)) :
     ZPoly.algebraicRoots? p =
       (isolate (ZPoly.squareFreeCore p) hsimple
@@ -71,10 +71,10 @@ private theorem algebraicRoots?_eq_of_pos (p : ZPoly)
 
 /-- The certificate hypotheses of the positive-degree branch all hold. -/
 private theorem squareFreeCore_hypotheses (p : ZPoly)
-    (h0 : ¬ p.degree?.getD 0 = 0) :
+    (h0 : ¬ p.natDegree = 0) :
     ZPoly.content (ZPoly.squareFreeCore p) = 1 ∧
       0 < (ZPoly.squareFreeCore p).leadingCoeff ∧
-      0 < (ZPoly.squareFreeCore p).degree?.getD 0 ∧
+      0 < (ZPoly.squareFreeCore p).natDegree ∧
       HasOnlySimpleRoots (ZPoly.squareFreeCore p) := by
   have hpne : p ≠ 0 := by
     intro hp
@@ -87,7 +87,7 @@ private theorem squareFreeCore_hypotheses (p : ZPoly)
 
 /-- The root-set computation always produces a certificate. -/
 theorem algebraicRoots?_isSome (p : ZPoly) : (ZPoly.algebraicRoots? p).isSome := by
-  by_cases h0 : p.degree?.getD 0 = 0
+  by_cases h0 : p.natDegree = 0
   · unfold ZPoly.algebraicRoots?
     rw [ite_eq_left h0]
     rfl
@@ -150,7 +150,7 @@ private theorem isRoot_of_isRoot_squareFreeCore {p : ZPoly} (hp : p ≠ 0) {z : 
 theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
     (∃ a ∈ (ZPoly.algebraicRoots p).toList, a.toComplex = z) ↔
       (toPolyℂ p).IsRoot z := by
-  by_cases h0 : p.degree?.getD 0 = 0
+  by_cases h0 : p.natDegree = 0
   · have hroots : ZPoly.algebraicRoots p = #[] := by
       have h := algebraicRoots?_eq p
       unfold ZPoly.algebraicRoots? at h
@@ -240,7 +240,7 @@ theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
 /-- The output has no repeated value. -/
 theorem algebraicRoots_nodup (p : ZPoly) :
     (ZPoly.algebraicRoots p).toList.Nodup := by
-  by_cases h0 : p.degree?.getD 0 = 0
+  by_cases h0 : p.natDegree = 0
   · have hroots : ZPoly.algebraicRoots p = #[] := by
       have h := algebraicRoots?_eq p
       unfold ZPoly.algebraicRoots? at h

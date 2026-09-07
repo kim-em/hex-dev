@@ -538,7 +538,7 @@ theorem cldQuotientMod_congr_mul_derivative
     (input g h : Hex.ZPoly) (p k : Nat)
     (hk : 1 < p ^ k)
     (hg_monic : Hex.DensePoly.Monic g)
-    (hg_deg : 0 < g.degree?.getD 0)
+    (hg_deg : 0 < g.natDegree)
     (hdvd : Hex.ZPoly.congr input (g * h) (p ^ k)) :
     Hex.ZPoly.congr
       (g * Hex.cldQuotientMod input g p k)
@@ -557,7 +557,7 @@ theorem cldQuotientMod_congr_mul_derivative
   have hcancel :
       ∀ a : Int, a - (a / g.leadingCoeff) * g.leadingCoeff = 0 := by
     intro a; rw [hg_monic]; omega
-  have hrdeg : r.degree?.getD 0 < g.degree?.getD 0 :=
+  have hrdeg : r.natDegree < g.natDegree :=
     Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel num g hg_deg hcancel
   -- Move the goal to Mathlib polynomials reduced modulo `p ^ k`.
   refine HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ (p ^ k) ?_
@@ -601,7 +601,7 @@ theorem cldQuotientMod_congr_mul_derivative
       Polynomial.map_add, Polynomial.map_mul] using hcg
   -- The mapped remainder has degree below the mapped divisor.
   have hdeg_Mg : ((HexPolyMathlib.toPolynomial g).map φ).degree =
-      (g.degree?.getD 0 : WithBot ℕ) := by
+      (g.natDegree : WithBot ℕ) := by
     rw [(HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).degree_map φ,
       Polynomial.degree_eq_natDegree
         (HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).ne_zero,
@@ -612,10 +612,10 @@ theorem cldQuotientMod_congr_mul_derivative
     rw [hdeg_Mg]
     calc ((HexPolyMathlib.toPolynomial r).map φ).degree
         ≤ (HexPolyMathlib.toPolynomial r).degree := Polynomial.degree_map_le
-      _ ≤ (r.degree?.getD 0 : WithBot ℕ) := by
+      _ ≤ (r.natDegree : WithBot ℕ) := by
           rw [← HexPolyMathlib.natDegree_toPolynomial r]
           exact Polynomial.degree_le_natDegree
-      _ < (g.degree?.getD 0 : WithBot ℕ) := by exact_mod_cast hrdeg
+      _ < (g.natDegree : WithBot ℕ) := by exact_mod_cast hrdeg
   -- Uniqueness of monic division forces the mapped remainder to vanish.
   have hsum : (HexPolyMathlib.toPolynomial r).map φ +
       (HexPolyMathlib.toPolynomial g).map φ * (HexPolyMathlib.toPolynomial q).map φ =
@@ -876,18 +876,18 @@ theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
   obtain ⟨hpoly, hfac⟩ := hgf
   have hreal := abs_phi_coeff_le_of_monic_factor
     (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g) hpoly hg_monic hfac j
-  have hnd : (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+  have hnd : (HexPolyMathlib.toPolynomial f).natDegree = f.natDegree :=
     HexPolyMathlib.natDegree_toPolynomial f
   have hZeq : HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
   have hl2 : HexPolyZMathlib.l2norm (HexPolyMathlib.toPolynomial f)
       ≤ (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
     rw [← hZeq]; exact l2norm_toPolynomial_le_coeffL2NormBound f
   have hbb_nat : Hex.bhksCoeffBound f j
-      = Nat.choose (f.degree?.getD 0 - 1) j * (f.degree?.getD 0)
+      = Nat.choose (f.natDegree - 1) j * (f.natDegree)
           * Hex.ZPoly.coeffL2NormBound f := by
     simp only [Hex.bhksCoeffBound, hex_choose_eq]
   have hbb : (Hex.bhksCoeffBound f j : ℝ)
-      = (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ)
+      = (Nat.choose (f.natDegree - 1) j : ℝ) * (f.natDegree : ℝ)
           * (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
     rw [hbb_nat]; push_cast; ring
   have hkey :
@@ -895,7 +895,7 @@ theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
         ≤ (Hex.bhksCoeffBound f j : ℝ) := by
     refine hreal.trans ?_
     rw [hnd, hbb]
-    have hnn : (0 : ℝ) ≤ (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ) := by
+    have hnn : (0 : ℝ) ≤ (Nat.choose (f.natDegree - 1) j : ℝ) * (f.natDegree : ℝ) := by
       positivity
     exact mul_le_mul_of_nonneg_left hl2 hnn
   exact_mod_cast hkey
@@ -925,7 +925,7 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
       congrArg HexPolyMathlib.toPolynomial hfac)
     j
   have hnd :
-      (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+      (HexPolyMathlib.toPolynomial f).natDegree = f.natDegree :=
     HexPolyMathlib.natDegree_toPolynomial f
   have hZeq :
       HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
@@ -936,13 +936,13 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
     exact l2norm_toPolynomial_le_coeffL2NormBound f
   have hbb_nat :
       Hex.bhksCoeffBound f j =
-        Nat.choose (f.degree?.getD 0 - 1) j * f.degree?.getD 0 *
+        Nat.choose (f.natDegree - 1) j * f.natDegree *
           Hex.ZPoly.coeffL2NormBound f := by
     simp only [Hex.bhksCoeffBound, hex_choose_eq]
   have hbb :
       (Hex.bhksCoeffBound f j : ℝ) =
-        (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) *
-          (f.degree?.getD 0 : ℝ) *
+        (Nat.choose (f.natDegree - 1) j : ℝ) *
+          (f.natDegree : ℝ) *
             (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
     rw [hbb_nat]
     push_cast
@@ -956,8 +956,8 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
     rw [hnd, hbb]
     have hnonneg :
         (0 : ℝ) ≤
-          (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) *
-            (f.degree?.getD 0 : ℝ) := by
+          (Nat.choose (f.natDegree - 1) j : ℝ) *
+            (f.natDegree : ℝ) := by
       positivity
     exact mul_le_mul_of_nonneg_left hl2 hnonneg
   exact_mod_cast hkey
@@ -1135,7 +1135,7 @@ theorem supportProduct_cldSum_congr_of_factors
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
-          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (L.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr f ((L.liftedFactors.getD i.val 1) * h) (p ^ a)) :
     Hex.ZPoly.congr
       (supportProduct L S * supportCldSum L S f p a)
@@ -1183,7 +1183,7 @@ theorem recoveredLift_aggregate_residue
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
-          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (L.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a))
     (j : Nat) :
     Hex.centeredResiduePow D.p D.a
@@ -1388,13 +1388,13 @@ fast-disjunct consumer through `cutProjectionHypotheses_of_shortVectors`. -/
 
 /-- The executable cut-threshold array reads back the per-coordinate threshold. -/
 theorem bhksCutThresholds_getD_of_lt (f : Hex.ZPoly) (p j : Nat)
-    (h : j < f.degree?.getD 0) :
+    (h : j < f.natDegree) :
     (Hex.bhksCutThresholds f p).getD j 0 = Hex.bhksCoeffCutThreshold p f j := by
   unfold Hex.bhksCutThresholds
   rw [Array.getD_eq_getD_getElem?]
   have hsize :
-      (((List.range (f.degree?.getD 0)).map
-        (fun j => Hex.bhksCoeffCutThreshold p f j)).toArray).size = f.degree?.getD 0 := by
+      (((List.range (f.natDegree)).map
+        (fun j => Hex.bhksCoeffCutThreshold p f j)).toArray).size = f.natDegree := by
     simp
   rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
   simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
@@ -1671,7 +1671,7 @@ def recoveredShortVector
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
-          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (L.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a)) :
     SupportShortVectorData L S := by
   classical
@@ -1721,7 +1721,7 @@ def recoveredShortVector
               ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val))
           - t j * (D.p ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) : Int) := by
     intro j
-    have hjlt : j.val < D.f.degree?.getD 0 := j.isLt.trans_eq D.coeffWidth_eq
+    have hjlt : j.val < D.f.natDegree := j.isLt.trans_eq D.coeffWidth_eq
     have hcoord := periodAdjustedVector_coeff_of_blockForm S D.blockForm t j
     rw [show ((periodAdjustedVector L S t)[Fin.natAdd L.factorCount j] : ℤ)
         = (periodAdjustedVector L S t)[(⟨L.factorCount + j.val,

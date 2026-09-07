@@ -57,7 +57,7 @@ def yunAux (levels : List Level)
       else
         let shared := Norm.monic (DensePoly.gcd w repeated)
         let component := Norm.monic (w / shared)
-        let out := if 0 < component.degree?.getD 0 then
+        let out := if 0 < component.natDegree then
           out.push (polyCoords component, multiplicity)
         else
           out
@@ -70,7 +70,7 @@ constants have no positive-degree components. -/
 def yunRaw (levels : List Level) (f : Array (Array Rat)) :
     Array (Array (Array Rat) × Nat) :=
   let p := rawPoly levels f
-  if p.degree?.getD 0 = 0 then
+  if p.natDegree = 0 then
     #[]
   else
     let normalized := Norm.monic p
@@ -124,14 +124,14 @@ the unique empty decomposition. -/
 def checkYun (levels : List Level) (f : Array (Array Rat))
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
   let p := rawPoly levels f
-  if p.degree?.getD 0 = 0 then
+  if p.natDegree = 0 then
     components.isEmpty
   else
     yunMultiplicitiesIncrease components &&
       components.all (fun component =>
         0 < component.2 &&
           let factor := rawPoly levels component.1
-          0 < factor.degree?.getD 0 && factor.leadingCoeff = 1) &&
+          0 < factor.natDegree && factor.leadingCoeff = 1) &&
       yunPairwiseCoprime levels components &&
       components.all (fun component =>
         Norm.isSquarefree levels component.1) &&
@@ -218,7 +218,7 @@ def recover (level : Level) (lower : List Level)
   lowerFactors.foldl (fun out lowerFactor =>
     let lifted := rawPoly levels (embedLower level lower lowerFactor)
     let common := Norm.monic (DensePoly.gcd shifted lifted)
-    if 0 < common.degree?.getD 0 then
+    if 0 < common.natDegree then
       let unshifted := shiftTop level lower (polyCoords common) (-shift)
       out.push (polyCoords (Norm.monic (rawPoly levels unshifted)))
     else
@@ -241,7 +241,7 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
           (fun product factor => product * rawPoly (level :: lower) factor)
           1
         if factors.all (fun factor =>
-            0 < (rawPoly (level :: lower) factor).degree?.getD 0) &&
+            0 < (rawPoly (level :: lower) factor).natDegree) &&
             product = p then
           some factors
         else
@@ -324,7 +324,7 @@ Trager reconstruction. -/
 @[expose]
 def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
   let p := rawPoly levels f
-  0 < p.degree?.getD 0 && p.leadingCoeff = 1 &&
+  0 < p.natDegree && p.leadingCoeff = 1 &&
     Norm.isSquarefree levels f &&
     match levels with
     | [] => ZPoly.isIrreducible (ZPoly.ratPolyPrimitivePart (toRatPoly f))

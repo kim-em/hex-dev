@@ -513,7 +513,7 @@ theorem irreducible_of_smallMod_form
     (hprime_hex : Hex.Nat.Prime primeData.p)
     (hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true)
     (hform : Hex.factorsModPBerlekampForm core primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hprim :
       (HexPolyZMathlib.toPolynomial core).IsPrimitive)
@@ -560,7 +560,7 @@ theorem irreducible_of_smallMod_form
     omega
   -- Positivity of the monic modular image from the positive-degree input.
   have hmonicImg_pos :
-      0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).degree?.getD 0 :=
+      0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).natDegree :=
     monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
       core primeData hform hgood hcore_pos
   -- Apply the no-split lemma to obtain Mathlib irreducibility of the monic image.
@@ -657,7 +657,7 @@ theorem irreducible_of_smallMod
     (hprime_hex : Hex.Nat.Prime primeData.p)
     (hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true)
     (hform : Hex.factorsModPBerlekampForm core primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
     (hlc_map_ne :

@@ -680,7 +680,7 @@ private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x)
     (components : List (DensePoly (PolyQuot p x) × Nat))
     (hall : ∀ component ∈ components,
-      0 < component.1.degree?.getD 0 ∧ 0 < component.2)
+      0 < component.1.natDegree ∧ 0 < component.2)
     (state out : Array RootCount)
     (hrun : components.foldlM
       (fun out component =>
@@ -722,7 +722,7 @@ private theorem componentFold_contains [ZPoly.CheckedIrreducible p]
                 have hsize : 0 < component.1.size := by
                   by_contra hzero
                   have hsizeZero : component.1.size = 0 := by omega
-                  rw [(DensePoly.degree?_eq_none_iff component.1).2 hsizeZero]
+                  rw [DensePoly.natDegree_eq_size_sub_one, hsizeZero]
                     at hcomponent
                   simp at hcomponent
                 have hfalse : component.1.isZero = false :=
@@ -758,7 +758,7 @@ private theorem componentFold_nodup [ZPoly.CheckedIrreducible p]
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x)
     (components : List (DensePoly (PolyQuot p x) × Nat))
     (hall : ∀ component ∈ components,
-      0 < component.1.degree?.getD 0 ∧ 0 < component.2)
+      0 < component.1.natDegree ∧ 0 < component.2)
     (state out : Array RootCount)
     (hrun : components.foldlM
       (fun out component =>
@@ -789,7 +789,7 @@ private theorem componentFold_value [ZPoly.CheckedIrreducible p]
     (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x)
     (hf : PolyQuot.toPolynomialAt f rep h ≠ 0)
-    (hdegree : 0 < f.degree?.getD 0)
+    (hdegree : 0 < f.natDegree)
     (state out : Array RootCount)
     (hrun : (yun f).toList.foldlM
       (fun out component =>
@@ -946,9 +946,9 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
         cases hvalue : f.isZero <;> simp_all
       exact hzero ((PolyQuot.poly_isZero_iff f rep h).1 hisZero)
     have hdegreeEq : (PolyQuot.toPolynomialAt f rep h).natDegree =
-        f.degree?.getD 0 :=
+        f.natDegree :=
       PolyQuot.natDegree_toPolynomialAt f rep h hf
-    by_cases hdegree : f.degree?.getD 0 = 0
+    by_cases hdegree : f.natDegree = 0
     · have heq := roots?_eq_roots f rep h
       have hfFalse : f.isZero = false := by
         cases hvalue : f.isZero <;> simp_all
@@ -968,7 +968,7 @@ theorem contains_roots_iff [ZPoly.CheckedIrreducible p]
         exfalso
         apply hzero
         rw [hconstant, hroot, Polynomial.C_0]
-    · have hdegreePos : 0 < f.degree?.getD 0 := Nat.pos_of_ne_zero hdegree
+    · have hdegreePos : 0 < f.natDegree := Nat.pos_of_ne_zero hdegree
       have heq := roots?_eq_roots f rep h
       have hfFalse : f.isZero = false := by
         cases hvalue : f.isZero <;> simp_all
@@ -1102,9 +1102,9 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
         have hisZero : f.isZero := by
           cases hvalueZero : f.isZero <;> simp_all
         exact hzero ((PolyQuot.poly_isZero_iff f rep h).1 hisZero)
-      have hdegreeEq : polynomial.natDegree = f.degree?.getD 0 :=
+      have hdegreeEq : polynomial.natDegree = f.natDegree :=
         PolyQuot.natDegree_toPolynomialAt f rep h hf
-      by_cases hdegree : f.degree?.getD 0 = 0
+      by_cases hdegree : f.natDegree = 0
       · have hcontains : RootSet.Contains (PolyQuot.roots f rep h) z := by
           rw [hroots, RootSet.Contains]
           exact ⟨entry, hentry, hvalue⟩
@@ -1116,7 +1116,7 @@ theorem multiplicity_roots [ZPoly.CheckedIrreducible p]
         rw [hconstant] at hrootPoly
         simp only [Polynomial.eval_C] at hrootPoly
         exact (hzero (by rw [hconstant, hrootPoly, Polynomial.C_0])).elim
-      · have hdegreePos : 0 < f.degree?.getD 0 :=
+      · have hdegreePos : 0 < f.natDegree :=
           Nat.pos_of_ne_zero hdegree
         have heq := roots?_eq_roots f rep h
         have hfFalse : f.isZero = false := by

@@ -126,7 +126,7 @@ outcome and the gave-up flag. Pure, so cases parallelise as tasks
 with the record stream still written in order by `main`. -/
 private def caseValue (c : Case) : String × Bool :=
   let p : ZPoly := DensePoly.ofCoeffs c.coeffs.toArray
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     match isolateAll? p target #[Component.cauchy p h] with
     | some rs => (certValue rs, false)
     | none    => (noneValue, true)

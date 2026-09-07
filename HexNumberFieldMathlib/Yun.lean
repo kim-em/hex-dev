@@ -631,7 +631,7 @@ theorem degree_pos_of_map_root [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] (embedding : PolyQuot p x →+* K)
     (f : DensePoly (PolyQuot p x)) (hf : toPolynomialMap embedding f ≠ 0)
     {z : K} (hroot : (toPolynomialMap embedding f).IsRoot z) :
-    0 < f.degree?.getD 0 := by
+    0 < f.natDegree := by
   have hdegree := Polynomial.degree_pos_of_root hf hroot
   have hnatDegree : 0 < (toPolynomialMap embedding f).natDegree :=
     Polynomial.natDegree_pos_iff_degree_pos.mpr hdegree
@@ -756,7 +756,7 @@ private theorem yunAux_complete [ZPoly.CheckedIrreducible p]
           simp [heq]
         have hroot : (toPolynomialMap embedding component).IsRoot z :=
           (Polynomial.rootMultiplicity_pos hcomponentNe).mp hpositive
-        have hdegree : 0 < component.degree?.getD 0 :=
+        have hdegree : 0 < component.natDegree :=
           degree_pos_of_map_root embedding component hcomponentNe hroot
         rw [ite_eq_left hdegree]
         refine ⟨(component, k), ?_, hroot, heq⟩
@@ -779,7 +779,7 @@ theorem yun_sound [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [CharZero K] [DecidableEq K]
     (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0)
-    (hdegree : 0 < f.degree?.getD 0) (z : K) (entry)
+    (hdegree : 0 < f.natDegree) (z : K) (entry)
     (hentry : entry ∈ (yun f).toList)
     (hroot : (toPolynomialMap embedding entry.1).IsRoot z) :
     entry.2 = (toPolynomialMap embedding f).rootMultiplicity z := by
@@ -808,7 +808,7 @@ theorem yun_complete [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] [CharZero K] [DecidableEq K]
     (embedding : PolyQuot p x →+* K) (f : DensePoly (PolyQuot p x))
     (hf : toPolynomialMap embedding f ≠ 0)
-    (hdegree : 0 < f.degree?.getD 0) (z : K)
+    (hdegree : 0 < f.natDegree) (z : K)
     (hroot : (toPolynomialMap embedding f).IsRoot z) :
     ∃ entry ∈ (yun f).toList,
       (toPolynomialMap embedding entry.1).IsRoot z ∧
@@ -826,12 +826,11 @@ theorem yun_complete [ZPoly.CheckedIrreducible p]
   have hsize : 0 < f.size := by
     by_contra hzero
     have hsizeZero : f.size = 0 := by omega
-    simp [DensePoly.degree?, hsizeZero] at hdegree
-  have hdenseDegree : f.degree?.getD 0 = f.size - 1 := by
-    rw [DensePoly.degree?_eq_some_of_pos_size f hsize]
-    rfl
+    simp [DensePoly.natDegree, DensePoly.degree?, hsizeZero] at hdegree
+  have hdenseDegree : f.natDegree = f.size - 1 :=
+    DensePoly.natDegree_eq_size_sub_one f
   have hdegreeEq : (toPolynomialMap embedding f).natDegree =
-      f.degree?.getD 0 := by
+      f.natDegree := by
     simp only [toPolynomialMap,
       Polynomial.natDegree_map_eq_of_injective embedding.injective,
       HexPolyMathlib.natDegree_toPolynomial]

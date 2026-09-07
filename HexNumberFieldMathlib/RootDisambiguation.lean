@@ -155,7 +155,7 @@ theorem norm_toComplex_le_valueMajorant {p : ZPoly} {x : SimpleRoot p}
       hpRaw ((DensePoly.size_eq_zero_iff p).mp hsize)
   have hroot : (HexRootsMathlib.toPolyℂ p).IsRoot rep.root :=
     HexRootsMathlib.RefinedIsolation.isRoot rep
-  have hdegree : 0 < p.degree?.getD 0 := by
+  have hdegree : 0 < p.natDegree := by
     rw [← HexRootsMathlib.natDegree_toPolyℂ p,
       Polynomial.natDegree_pos_iff_degree_pos]
     exact Polynomial.degree_pos_of_root hp hroot

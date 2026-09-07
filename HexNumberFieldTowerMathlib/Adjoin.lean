@@ -404,19 +404,17 @@ private theorem selectFactor?_complete (T : NumberTower)
 private theorem levelOfFactor_polynomial (T : NumberTower)
     (candidate : AlgebraicRoot) (selected : Poly T)
     (hmonic : selected.leadingCoeff = 1)
-    (hdegree : 0 < selected.degree?.getD 0) :
+    (hdegree : 0 < selected.natDegree) :
     (levelOfFactor candidate selected).polynomial T.levels.toList =
       selected.toArray.map coeffs := by
-  let d := selected.degree?.getD 0
+  let d := selected.natDegree
+  have hd : selected.size - 1 = d :=
+    (DensePoly.natDegree_eq_size_sub_one selected).symm
   have hsizePos : 0 < selected.size := by
     by_contra hnot
     have hsize : selected.size = 0 := Nat.eq_zero_of_not_pos hnot
-    rw [DensePoly.degree?_eq_none_iff selected |>.mpr hsize] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one, hsize] at hdegree
     simp at hdegree
-  have hd : selected.size - 1 = d := by
-    change selected.size - 1 = selected.degree?.getD 0
-    rw [DensePoly.degree?_eq_some_of_pos_size selected hsizePos,
-      Option.getD_some]
   have hsize : selected.size = d + 1 := by omega
   apply Array.ext
   · simp [Level.polynomial, levelOfFactor, d, hsize]
@@ -453,7 +451,7 @@ private theorem levelOfFactor_polynomial (T : NumberTower)
 
 private theorem levelOfFactor_structuralCheck (T : NumberTower)
     (candidate : AlgebraicRoot) (selected : Poly T)
-    (hdegree : 1 < selected.degree?.getD 0) :
+    (hdegree : 1 < selected.natDegree) :
     (levelOfFactor candidate selected).structuralCheck T.dim = true := by
   simp only [Level.structuralCheck, Bool.and_eq_true, decide_eq_true_eq]
   refine ⟨⟨by simpa [levelOfFactor] using hdegree, by
@@ -468,9 +466,9 @@ private theorem extend_factor_isSome (T : NumberTower)
     (hirreducible : PolynomialIrreducible T selected)
     (hvanish : Polynomial.eval candidate.toComplex
       (T.toPolynomial selected) = 0)
-    (hdegree : 1 < selected.degree?.getD 0) :
+    (hdegree : 1 < selected.natDegree) :
     (Internal.extend? T (levelOfFactor candidate selected)).isSome := by
-  have hdegreePos : 0 < selected.degree?.getD 0 := by omega
+  have hdegreePos : 0 < selected.natDegree := by omega
   have hpolynomial := levelOfFactor_polynomial T candidate selected
     hmonic hdegreePos
   have hstruct := levelOfFactor_structuralCheck T candidate selected
@@ -648,13 +646,9 @@ private def blockPoly (T : NumberTower) (level : Level)
 
 private theorem degree?_lt_of_size_le {T : NumberTower} (f : Poly T)
     {bound : Nat} (hbound : 0 < bound) (hsize : f.size ≤ bound) :
-    f.degree?.getD 0 < bound := by
-  by_cases hzero : f.size = 0
-  · rw [DensePoly.degree?_eq_none_iff f |>.mpr hzero]
-    simpa using hbound
-  · rw [DensePoly.degree?_eq_some_of_pos_size f
-      (Nat.zero_lt_of_ne_zero hzero), Option.getD_some]
-    omega
+    f.natDegree < bound := by
+  rw [DensePoly.natDegree_eq_size_sub_one]
+  omega
 
 private theorem eval_blockPoly (T tower : NumberTower) (level : Level)
     (htower : Internal.extend? T level = some tower)
@@ -710,21 +704,14 @@ theorem adjoin?_sound (T : NumberTower) (candidate : AlgebraicRoot)
     rw [← hentrySelected, toPolynomial_eq_polynomial]
     exact (rawVanishesAt_sound T.levels.toList
       (entry.1.toArray.map coeffs) candidate hvanish).mp rfl
-  by_cases hdegreeZero : selected.degree?.getD 0 = 0
+  by_cases hdegreeZero : selected.natDegree = 0
   · simp [hdegreeZero] at h
-  by_cases hdegreeOne : selected.degree?.getD 0 = 1
+  by_cases hdegreeOne : selected.natDegree = 1
   · simp only [hdegreeOne, one_ne_zero, ↓reduceIte,
       Option.some.injEq] at h
     subst E
     have hselectedSize : selected.size = 2 := by
-      have hsizePos : 0 < selected.size := by
-        by_contra hnot
-        have hsizeZero : selected.size = 0 := Nat.eq_zero_of_not_pos hnot
-        have hnone := DensePoly.degree?_eq_none_iff selected |>.mpr hsizeZero
-        rw [hnone] at hdegreeOne
-        simp at hdegreeOne
-      rw [DensePoly.degree?_eq_some_of_pos_size selected hsizePos,
-        Option.getD_some] at hdegreeOne
+      rw [DensePoly.natDegree_eq_size_sub_one] at hdegreeOne
       omega
     have hcoeffOne : selected.coeff 1 = selected.leadingCoeff := by
       rw [DensePoly.leadingCoeff_eq_coeff_last selected (by omega),
@@ -766,7 +753,7 @@ theorem adjoin?_sound (T : NumberTower) (candidate : AlgebraicRoot)
     obtain ⟨tower, htower, h⟩ := Option.bind_eq_some_iff.mp h
     simp only [Option.some.injEq] at h
     subst E
-    have hdegree : 1 < selected.degree?.getD 0 := by omega
+    have hdegree : 1 < selected.natDegree := by omega
     have hlevelDegree : 1 < (levelOfFactor candidate selected).degree := by
       simpa [levelOfFactor] using hdegree
     have hpreserves := extend_preserves T tower
@@ -787,7 +774,7 @@ theorem adjoin?_sound (T : NumberTower) (candidate : AlgebraicRoot)
         htower (by omega) b
     · have hdimNe : tower.dim ≠ T.dim := by
         rw [Internal.extend?_dim T (levelOfFactor candidate selected) htower]
-        change selected.degree?.getD 0 * T.dim ≠ T.dim
+        change selected.natDegree * T.dim ≠ T.dim
         apply Nat.ne_of_gt
         simpa using Nat.mul_lt_mul_of_pos_right hdegree (dim_pos T)
       have hnotContains : ¬ Extension.AlreadyContains T candidate := by
@@ -857,13 +844,13 @@ theorem adjoin?_isSome (T : NumberTower) (candidate : AlgebraicRoot) :
   have hchosenIrreducible :
       Irreducible (HexPolyMathlib.toPolynomial chosen.1) :=
     (polynomialIrreducible_iff T chosen.1).mp hchosenSound.2.2
-  have hdegree : 0 < chosen.1.degree?.getD 0 := by
+  have hdegree : 0 < chosen.1.natDegree := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
     exact hchosenIrreducible.natDegree_pos
-  by_cases hdegreeOne : chosen.1.degree?.getD 0 = 1
+  by_cases hdegreeOne : chosen.1.natDegree = 1
   · unfold adjoin?
     simp [hfactorization, hselected, hdegreeOne]
-  · have hdegreeGt : 1 < chosen.1.degree?.getD 0 := by omega
+  · have hdegreeGt : 1 < chosen.1.natDegree := by omega
     obtain ⟨tower, htower⟩ := Option.isSome_iff_exists.mp
       (extend_factor_isSome T candidate chosen.1 hchosenSound.1
         hchosenSound.2.2 hzero hdegreeGt)

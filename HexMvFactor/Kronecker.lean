@@ -458,6 +458,7 @@ theorem kronDecide_checks {g : MvPoly n Int cmp} {cert : IrredCert n cmp}
               image himage entry harray
             unfold checkUniFactor
             simp only [hmult, decide_true, hprimEntry, Bool.true_and]
+            rw [DensePoly.natDegree_eq_degree?_getD] at hdegree
             cases hdegreeOpt : entry.1.degree? with
             | none => simp [hdegreeOpt] at hdegree
             | some degree => simpa [hdegreeOpt] using hdegree

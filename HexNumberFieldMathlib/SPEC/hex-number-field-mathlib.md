@@ -266,7 +266,7 @@ theorem AlgebraicNumber.ofPoint_toComplex (re im : Rat) :
     (AlgebraicNumber.ofPoint re im).toComplex = (re : ℂ) + (im : ℂ) * Complex.I
 theorem AlgebraicNumber.distSqTo_toComplex (a : AlgebraicNumber) (re im : Rat) :
     (a.distSqTo re im).toComplex = ‖a.toComplex - ((re : ℂ) + (im : ℂ) * Complex.I)‖ ^ 2
-theorem ZPoly.rootNear_mem (p : ZPoly) (hp : 0 < p.degree?.getD 0) (re im : Rat) :
+theorem ZPoly.rootNear_mem (p : ZPoly) (hp : 0 < p.natDegree) (re im : Rat) :
     p.rootNear re im ∈ p.algebraicRoots
 theorem ZPoly.rootNear_nearest (p : ZPoly) (re im : Rat) (b : AlgebraicNumber)
     (hb : b ∈ p.algebraicRoots) :

@@ -187,7 +187,7 @@ theorem primitive_normalizePrimitiveSign {p : ZPoly} (hp : Primitive p) :
 /-- Sign normalization preserves optional degree. -/
 @[simp] theorem degree?_normalizePrimitiveSign (p : ZPoly) :
     (normalizePrimitiveSign p).degree? = p.degree? := by
-  simp [DensePoly.degree?, size_normalizePrimitiveSign]
+  simp [DensePoly.natDegree, DensePoly.degree?, size_normalizePrimitiveSign]
 
 /-- The rational primitive part is primitive when its content is nonzero. -/
 theorem ratPolyPrimitivePart_primitive (f : DensePoly Rat)
@@ -706,15 +706,15 @@ private theorem rat_div_mul_cancel_of_ne (a b : Rat) (hb : b ≠ 0) :
 `divMod` remainder has strictly smaller degree than a positive-degree
 divisor. -/
 private theorem rat_divMod_remainder_degree_lt (p q : DensePoly Rat)
-    (hdegree : 0 < q.degree?.getD 0) :
-    (DensePoly.divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
+    (hdegree : 0 < q.natDegree) :
+    (DensePoly.divMod p q).2.natDegree < q.natDegree := by
   apply DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel p q hdegree
   intro a
   apply rat_div_mul_cancel_of_ne
   apply rat_leadingCoeff_ne_zero_of_pos_size
   by_cases hq : q.size = 0
-  · have hdeg : q.degree?.getD 0 = 0 := by
-      simp [DensePoly.degree?, hq]
+  · have hdeg : q.natDegree = 0 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hq]
     omega
   · exact Nat.pos_of_ne_zero hq
 
@@ -740,7 +740,7 @@ private theorem rat_divMod_spec (p q : DensePoly Rat) :
       intro a
       apply rat_div_mul_cancel_of_ne
       exact rat_leadingCoeff_ne_zero_of_pos_size q (Nat.pos_of_ne_zero hq)
-    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    by_cases hlt : p.natDegree < q.natDegree
     · rw [DensePoly.divMod_eq_zero_self_of_degree_lt p q hlt]
       change (0 : DensePoly Rat) * q + p = p
       rw [DensePoly.zero_mul, DensePoly.zero_add]
@@ -757,7 +757,7 @@ private theorem rat_divMod_spec_of_not_isZero (p q : DensePoly Rat)
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
   unfold DensePoly.divMod
-  by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+  by_cases hlt : p.natDegree < q.natDegree
   · simp [hlt]
     rw [DensePoly.zero_mul, DensePoly.zero_add]
   · rw [ite_eq_right hlt]
@@ -775,8 +775,8 @@ private theorem rat_divMod_spec_of_not_isZero (p q : DensePoly Rat)
 remainder `p % q` has strictly smaller degree than a positive-degree
 divisor. -/
 private theorem rat_mod_remainder_degree_lt (p q : DensePoly Rat)
-    (hdegree : 0 < q.degree?.getD 0) :
-    (p % q).degree?.getD 0 < q.degree?.getD 0 := by
+    (hdegree : 0 < q.natDegree) :
+    (p % q).natDegree < q.natDegree := by
   exact rat_divMod_remainder_degree_lt p q hdegree
 
 /-- `rat_mod_zero_right_of_size_zero`: over `DensePoly Rat`, `p % m = p`
@@ -1138,32 +1138,32 @@ equal. Their difference `r - s` is a multiple of `m` yet has degree below `m`,
 forcing the multiplier (hence `r - s`) to be zero. -/
 private theorem rat_canonical_remainder_unique_of_pos_degree
     (r s m : DensePoly Rat)
-    (hr : r.degree?.getD 0 < m.degree?.getD 0)
-    (hs : s.degree?.getD 0 < m.degree?.getD 0)
+    (hr : r.natDegree < m.natDegree)
+    (hs : s.natDegree < m.natDegree)
     (hcongr : DensePoly.Congr r s m) :
     r = s := by
   rcases hcongr with ⟨k, hk⟩
-  have hm_pos : 0 < m.degree?.getD 0 := Nat.lt_of_le_of_lt (Nat.zero_le _) hr
+  have hm_pos : 0 < m.natDegree := Nat.lt_of_le_of_lt (Nat.zero_le _) hr
   have hm_size_ge : 2 ≤ m.size := by
     by_cases hms : m.size = 0
-    · simp [DensePoly.degree?, hms] at hm_pos
-    · have hdeg_eq : m.degree?.getD 0 = m.size - 1 := by
-        simp [DensePoly.degree?, hms]
+    · simp [DensePoly.natDegree, DensePoly.degree?, hms] at hm_pos
+    · have hdeg_eq : m.natDegree = m.size - 1 := by
+        simp [DensePoly.natDegree, DensePoly.degree?, hms]
       rw [hdeg_eq] at hm_pos
       omega
-  have hm_deg : m.degree?.getD 0 = m.size - 1 := by
+  have hm_deg : m.natDegree = m.size - 1 := by
     have hms : m.size ≠ 0 := by omega
-    simp [DensePoly.degree?, hms]
+    simp [DensePoly.natDegree, DensePoly.degree?, hms]
   have hr_size_le : r.size ≤ m.size - 1 := by
     by_cases hrs : r.size = 0
     · omega
-    · have hr_deg : r.degree?.getD 0 = r.size - 1 := by simp [DensePoly.degree?, hrs]
+    · have hr_deg : r.natDegree = r.size - 1 := by simp [DensePoly.natDegree, DensePoly.degree?, hrs]
       rw [hr_deg, hm_deg] at hr
       omega
   have hs_size_le : s.size ≤ m.size - 1 := by
     by_cases hss : s.size = 0
     · omega
-    · have hs_deg : s.degree?.getD 0 = s.size - 1 := by simp [DensePoly.degree?, hss]
+    · have hs_deg : s.natDegree = s.size - 1 := by simp [DensePoly.natDegree, DensePoly.degree?, hss]
       rw [hs_deg, hm_deg] at hs
       omega
   have hzero_sub : (0 : Rat) - 0 = 0 := by grind
@@ -1274,7 +1274,7 @@ modulo `m`. Both remainders have degree below `m` and are congruent (by
 `rat_mod_remainders_congr_of_congr`), so uniqueness of the canonical remainder
 makes them equal. -/
 private theorem rat_mod_eq_mod_of_congr_pos_degree (p q m : DensePoly Rat)
-    (hdegree : 0 < m.degree?.getD 0)
+    (hdegree : 0 < m.natDegree)
     (hcongr : DensePoly.Congr p q m) :
     p % m = q % m := by
   apply rat_canonical_remainder_unique_of_pos_degree
@@ -1299,7 +1299,7 @@ remainders modulo `m`. If `m = 0` both remainders are the inputs themselves,
 which the congruence forces equal; if `m` is a nonzero constant both remainders
 are zero. -/
 private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
-    (hdegree : ¬ 0 < m.degree?.getD 0)
+    (hdegree : ¬ 0 < m.natDegree)
     (hcongr : DensePoly.Congr p q m) :
     p % m = q % m := by
   by_cases hm_zero : m.size = 0
@@ -1318,8 +1318,8 @@ private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
     rw [hk, hmk_zero]
   · have hm_size : m.size = 1 := by
       have hm_pos : 0 < m.size := Nat.pos_of_ne_zero hm_zero
-      have hdeg : m.degree?.getD 0 = m.size - 1 := by
-        simp [DensePoly.degree?, hm_zero]
+      have hdeg : m.natDegree = m.size - 1 := by
+        simp [DensePoly.natDegree, DensePoly.degree?, hm_zero]
       rw [hdeg] at hdegree
       omega
     have hlead_ne : m.leadingCoeff ≠ (Zero.zero : Rat) := by
@@ -1340,7 +1340,7 @@ preceding lemmas. This is the workhorse behind the `mod_eq_mod_of_congr` law. -/
 private theorem rat_mod_eq_mod_of_congr (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :
     p % m = q % m := by
-  by_cases hdegree : 0 < m.degree?.getD 0
+  by_cases hdegree : 0 < m.natDegree
   · exact rat_mod_eq_mod_of_congr_pos_degree p q m hdegree hcongr
   · exact rat_mod_eq_mod_of_congr_not_pos_degree p q m hdegree hcongr
 
@@ -1361,7 +1361,7 @@ has non-positive degree (so `q` is a nonzero constant), the remainder component
 of `divMod p q` is zero, because the leading coefficient is invertible. -/
 private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly Rat)
     (hqfalse : q.isZero = false)
-    (hdegree : ¬ 0 < q.degree?.getD 0) :
+    (hdegree : ¬ 0 < q.natDegree) :
     (DensePoly.divMod p q).2 = 0 := by
   have hqsize_ne : q.size ≠ 0 := by
     intro hsize
@@ -1370,8 +1370,8 @@ private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly 
     rw [hzero] at hqfalse
     contradiction
   have hqsize : q.size = 1 := by
-    have hdeg : q.degree?.getD 0 = q.size - 1 := by
-      simp [DensePoly.degree?, hqsize_ne]
+    have hdeg : q.natDegree = q.size - 1 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hqsize_ne]
     rw [hdeg] at hdegree
     omega
   have hlead_ne : q.leadingCoeff ≠ (Zero.zero : Rat) := by
@@ -1388,7 +1388,7 @@ instance instDivModLawsRat : DensePoly.DivModLaws Rat where
     exact rat_divMod_remainder_degree_lt p q hdegree
   divModMonic_eq_divMod_of_monic := by
     intro p q hmonic
-    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    by_cases hlt : p.natDegree < q.natDegree
     · rw [DensePoly.divMod_eq_zero_self_of_degree_lt p q hlt]
       unfold DensePoly.divModMonic
       exact DensePoly.divModArray_eq_zero_self_of_degree_lt p q id hlt
@@ -1438,18 +1438,18 @@ instance instDivModLawsRat : DensePoly.DivModLaws Rat where
 This direct wrapper lets downstream computational structures consume the
 public law without repeatedly elaborating the full typeclass dictionary. -/
 theorem rat_mod_degree_lt (f g : DensePoly Rat)
-    (h : 0 < g.degree?.getD 0) :
-    (f % g).degree?.getD 0 < g.degree?.getD 0 :=
+    (h : 0 < g.natDegree) :
+    (f % g).natDegree < g.natDegree :=
   instDivModLawsRat.divMod_remainder_degree_lt_of_pos_degree f g h
 
 /-- Remainder degree bound specialized to an integer polynomial cast to
 rational coefficients. -/
 theorem rat_mod_zpoly_degree_lt (f : DensePoly Rat) (p : ZPoly)
-    (h : 0 < p.degree?.getD 0) :
-    (f % toRatPoly p).degree?.getD 0 < p.degree?.getD 0 := by
-  have hrat : 0 < (toRatPoly p).degree?.getD 0 := by
-    simpa [DensePoly.degree?, size_toRatPoly p] using h
-  simpa [DensePoly.degree?, size_toRatPoly p] using
+    (h : 0 < p.natDegree) :
+    (f % toRatPoly p).natDegree < p.natDegree := by
+  have hrat : 0 < (toRatPoly p).natDegree := by
+    simpa [DensePoly.natDegree, DensePoly.degree?, size_toRatPoly p] using h
+  simpa [DensePoly.natDegree, DensePoly.degree?, size_toRatPoly p] using
     rat_mod_degree_lt f (toRatPoly p) hrat
 
 instance ratGcdLaws : DensePoly.GcdLaws Rat where
@@ -1911,9 +1911,9 @@ private theorem densePoly_eq_C_coeff_zero_of_size_le_one {R : Type _} [Zero R] [
       rfl
 
 private theorem size_le_one_of_degree_getD_zero {R : Type _} [Zero R] [DecidableEq R]
-    (p : DensePoly R) (hdegree : p.degree?.getD 0 = 0) :
+    (p : DensePoly R) (hdegree : p.natDegree = 0) :
     p.size ≤ 1 := by
-  unfold DensePoly.degree? at hdegree
+  unfold DensePoly.natDegree DensePoly.degree? at hdegree
   by_cases hzero : p.size = 0
   · omega
   · simp [hzero] at hdegree

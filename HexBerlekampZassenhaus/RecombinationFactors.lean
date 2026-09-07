@@ -1130,12 +1130,12 @@ theorem bhksRecoveryCoreWithBound_some_degree_pos
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
     (h : bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
-    ∀ factor ∈ coreFactors.toList, 0 < factor.degree?.getD 0 :=
+    ∀ factor ∈ coreFactors.toList, 0 < factor.natDegree :=
   bhksRecoveryCoreWithBound_some_all_of_recovery
-    (fun factor => 0 < factor.degree?.getD 0)
+    (fun factor => 0 < factor.natDegree)
     (fun hrecover =>
       bhksRecoverClassified_success_all_of_candidates
-        (fun factor => 0 < factor.degree?.getD 0)
+        (fun factor => 0 < factor.natDegree)
         (fun hcand => bhksIndicatorCandidates?_positive_degree hcand) hrecover)
     core B primeData k fuel coreFactors h
 
@@ -1295,8 +1295,8 @@ theorem degree_pos_of_primitive_norm_record
     (hq_primitive : ZPoly.Primitive q)
     (hq_norm : normalizeFactorSign q = q)
     (hq_record : shouldRecordPolynomialFactor q = true) :
-    0 < q.degree?.getD 0 := by
-  rcases Nat.eq_zero_or_pos (q.degree?.getD 0) with hdeg_eq | hpos
+    0 < q.natDegree := by
+  rcases Nat.eq_zero_or_pos (q.natDegree) with hdeg_eq | hpos
   case inr => exact hpos
   case inl =>
     exfalso
@@ -1305,9 +1305,9 @@ theorem degree_pos_of_primitive_norm_record
       simp at hq_record
       exact hq_record.1.1
     have hq_size_pos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hq_ne
-    have hdeg_unfold : q.degree?.getD 0 =
+    have hdeg_unfold : q.natDegree =
         (if q.size = 0 then 0 else q.size - 1) := by
-      unfold DensePoly.degree?
+      unfold DensePoly.natDegree DensePoly.degree?
       by_cases h : q.size = 0 <;> simp [h]
     rw [hdeg_unfold] at hdeg_eq
     have hsize_eq : q.size = 1 := by

@@ -367,7 +367,7 @@ developments above.
   enumerate the root finset exactly.
   ```lean
   theorem isolateAll_count (p : ZPoly)
-      (h : 0 < p.degree?.getD 0) {target strategy result}
+      (h : 0 < p.natDegree) {target strategy result}
       (hr : isolateAll? p target #[Component.cauchy p h] strategy = some result) :
       ∑ i : Fin result.size, Certified.count result[i] = (toPolyℂ p).natDegree
 

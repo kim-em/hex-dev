@@ -998,13 +998,10 @@ theorem eval_liftCoefficient (level : Level) (lower : List Level)
     exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
   have hdegree : (HexPolyMathlib.toPolynomial lifted).natDegree <
       level.degree := by
-    rw [HexPolyMathlib.natDegree_toPolynomial]
-    by_cases hzero : lifted.size = 0
-    · have hlifted : lifted = 0 := (DensePoly.size_eq_zero_iff lifted).mp hzero
-      simpa [hlifted] using Nat.zero_lt_of_lt hvalid.1.1
-    · rw [DensePoly.degree?_eq_some_of_pos_size lifted (Nat.pos_of_ne_zero hzero),
-        Option.getD_some]
-      omega
+    rw [HexPolyMathlib.natDegree_toPolynomial,
+      DensePoly.natDegree_eq_size_sub_one]
+    have := Nat.zero_lt_of_lt hvalid.1.1
+    omega
   rw [rawOuter_eq_map lower hvalid.2.2 hinjective hinv,
     Polynomial.eval_map,
     Polynomial.eval₂_eq_sum_range'

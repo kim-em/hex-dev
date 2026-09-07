@@ -368,7 +368,7 @@ decomposition is `1`. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
     (f : ZPoly)
     (hcore_ne : (primitiveSquareFreeDecomposition f).squareFreeCore ≠ 0)
-    (hdegree : (primitiveSquareFreeDecomposition f).squareFreeCore.degree?.getD 0 = 0) :
+    (hdegree : (primitiveSquareFreeDecomposition f).squareFreeCore.natDegree = 0) :
     (primitiveSquareFreeDecomposition f).squareFreeCore = 1 := by
   unfold primitiveSquareFreeDecomposition at hcore_ne hdegree ⊢
   by_cases hzero : (primitivePart f).isZero = true
@@ -426,7 +426,7 @@ combined with the quotient being a rational unit). -/
 theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero
     (f : ZPoly)
     (hcore_ne : (primitiveSquareFreeDecomposition f).squareFreeCore ≠ 0)
-    (hdegree : (primitiveSquareFreeDecomposition f).squareFreeCore.degree?.getD 0 = 0) :
+    (hdegree : (primitiveSquareFreeDecomposition f).squareFreeCore.natDegree = 0) :
     (primitiveSquareFreeDecomposition f).repeatedPart = 1 := by
   unfold primitiveSquareFreeDecomposition at hcore_ne hdegree ⊢
   by_cases hzero : (primitivePart f).isZero = true

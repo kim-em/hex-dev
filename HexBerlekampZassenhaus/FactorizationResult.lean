@@ -113,12 +113,12 @@ end ZPoly
 /-- Integer coefficient bound `B_j` used by the BHKS all-coefficients CLD lattice. -/
 @[expose]
 def bhksCoeffBound (f : ZPoly) (j : Nat) : Nat :=
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   Nat.choose (n - 1) j * n * ZPoly.coeffL2NormBound f
 
 /-- Twice the largest per-column CLD coefficient bound of `f`. -/
 def bhksColumnFloor (f : ZPoly) : Nat :=
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   2 * (List.range (n + 1)).foldl
     (fun acc j => max acc (bhksCoeffBound f j)) 0
 
@@ -143,7 +143,7 @@ directly to the executable lattice, selector, and resultant proof.
 -/
 @[expose]
 def bhksBound (f : ZPoly) : Nat :=
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let R := 4 * n + n * n * n
   let V := (2 * n) * 2 ^ (2 * n) * R
   let E := V + V * R + 2 ^ n * R
@@ -357,9 +357,9 @@ private theorem le_foldl_max {g : Nat → Nat} :
 
 /-- Every in-range CLD column bound is dominated by `bhksColumnFloor`. -/
 theorem two_mul_bhksCoeffBound_le_bhksColumnFloor
-    (f : ZPoly) {j : Nat} (hj : j ≤ f.degree?.getD 0) :
+    (f : ZPoly) {j : Nat} (hj : j ≤ f.natDegree) :
     2 * bhksCoeffBound f j ≤ bhksColumnFloor f := by
-  have hmem : j ∈ List.range (f.degree?.getD 0 + 1) :=
+  have hmem : j ∈ List.range (f.natDegree + 1) :=
     List.mem_range.mpr (by omega)
   have hle := le_foldl_max
     (g := fun k => bhksCoeffBound f k) hmem 0
@@ -371,7 +371,7 @@ bounded by the explicit `C` component of `bhksBound`.
 -/
 theorem pow_bhksCoeffCutThreshold_le
     (f : ZPoly) {p j : Nat} (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
-    (hj : j ≤ f.degree?.getD 0) :
+    (hj : j ≤ f.natDegree) :
     p ^ bhksCoeffCutThreshold p f j ≤
       500 * (bhksColumnFloor f + 1) := by
   change p ^ ceilLogP p (2 * bhksCoeffBound f j + 1) ≤ _
@@ -1631,21 +1631,21 @@ returns `some quotient`. -/
 theorem exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
     {target candidate quotient : ZPoly}
     (hmonic : DensePoly.Monic candidate)
-    (hdegree : 0 < candidate.degree?.getD 0)
+    (hdegree : 0 < candidate.natDegree)
     (hmul : quotient * candidate = target) :
     exactQuotient? target candidate = some quotient := by
   have hcandidate_ne : candidate ≠ 0 := by
     intro hzero
-    have hdeg : candidate.degree?.getD 0 = 0 := by
+    have hdeg : candidate.natDegree = 0 := by
       rw [hzero]
-      simp [DensePoly.degree?]
+      simp [DensePoly.natDegree, DensePoly.degree?]
     omega
   have hcandidate_ne_one : candidate ≠ 1 := by
     intro hone
-    have hdeg : candidate.degree?.getD 0 = 0 := by
+    have hdeg : candidate.natDegree = 0 := by
       rw [hone]
-      change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
-      exact DensePoly.degree?_C_getD 1
+      change (DensePoly.C (1 : Int)).natDegree = 0
+      exact DensePoly.natDegree_C 1
     omega
   have hsize_pos : 0 < candidate.size := by
     rcases Nat.lt_or_ge 0 candidate.size with h | h

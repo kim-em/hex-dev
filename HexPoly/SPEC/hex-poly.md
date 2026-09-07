@@ -23,6 +23,30 @@ so a printed value can be pasted back.
 - Structural equality = semantic equality
 - O(1) degree, O(1) coefficient access
 
+**Degree.** `degree?` returns `none` for the zero polynomial and otherwise the
+index of the leading coefficient. `natDegree` is `degree?` with the zero case
+defaulted to `0`, matching Mathlib's `Polynomial.natDegree`, and is the form
+every caller should use unless it must distinguish the zero polynomial:
+
+```lean
+namespace Hex.DensePoly
+
+abbrev natDegree (p : DensePoly R) : Nat := p.degree?.getD 0
+
+theorem natDegree_eq_degree?_getD (p : DensePoly R) :
+    p.natDegree = p.degree?.getD 0
+theorem natDegree_eq_size_sub_one (p : DensePoly R) :
+    p.natDegree = p.size - 1
+@[simp] theorem natDegree_zero : (0 : DensePoly R).natDegree = 0
+
+end Hex.DensePoly
+```
+
+It is a reducible abbreviation rather than a definition so that statements
+phrased either way stay definitionally equal, which keeps the `degree?` lemmas
+usable without a transport step. `hex-sparse-poly`, `hex-gf2` and
+`hex-number-field` carry the same `natDegree` over their own degree functions.
+
 **Operations:**
 - Addition, negation, subtraction, multiplication. `mul` is the schoolbook
   convolution and is the specification at every coefficient type; the

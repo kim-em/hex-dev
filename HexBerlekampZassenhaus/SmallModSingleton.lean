@@ -311,7 +311,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
         some primeData)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hdeg :
-      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0) :
+      (Hex.normalizeForFactor f).squareFreeCore.natDegree ≠ 0) :
     Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
   -- `1 < core.size` from `hdeg`.
   have hcore_size_gt_one : 1 < (Hex.normalizeForFactor f).squareFreeCore.size := by
@@ -319,8 +319,8 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     · exact h
     · exfalso
       apply hdeg
-      show (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-      unfold Hex.DensePoly.degree?
+      show (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
+      unfold Hex.DensePoly.natDegree Hex.DensePoly.degree?
       by_cases hz : (Hex.normalizeForFactor f).squareFreeCore.size = 0
       · simp [hz]
       · simp [hz]

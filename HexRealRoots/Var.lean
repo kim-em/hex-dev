@@ -87,7 +87,7 @@ coefficient `0`, dropped by the zero-skipping convention. -/
 def sturmVarNegInf (chain : Array ZPoly) : Nat :=
   signVar (chain.toList.map (fun q =>
     (DensePoly.leadingCoeff q).sign *
-      (if (DensePoly.degree? q).getD 0 % 2 = 1 then -1 else 1)))
+      (if (q).natDegree % 2 = 1 then -1 else 1)))
 
 /-- The number of real roots of `p` in the half-open interval
 `(I.lower, I.upper]`, as certified by the Sturm chain: the sign-variation

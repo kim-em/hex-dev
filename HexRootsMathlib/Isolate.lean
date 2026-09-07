@@ -96,7 +96,7 @@ Cauchy-started general driver run whose results correspond indexwise to the
 returned atoms. -/
 theorem isolate_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
-    (hdegree : 0 < p.degree?.getD 0)
+    (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
     (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
     ∃ rs : Array (Hex.Certified p),
@@ -132,7 +132,7 @@ theorem isolate_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
 positive-degree isolation. -/
 theorem isolate_root_mem_of_pos (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
-    (strategy : Hex.AtomStrategy) (hdegree : 0 < p.degree?.getD 0)
+    (strategy : Hex.AtomStrategy) (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
     (hrun : Hex.isolate p h atomPrec strategy = some atoms)
     {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z) :
@@ -158,7 +158,7 @@ theorem isolate_root_mem_of_pos (p : Hex.ZPoly)
 returns no atoms, independently of strategy. -/
 theorem isolate_nonpositive (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
-    (strategy : Hex.AtomStrategy) (hdegree : ¬0 < p.degree?.getD 0)
+    (strategy : Hex.AtomStrategy) (hdegree : ¬0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
     (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
     p.size ≠ 0 ∧ atoms = #[] := by
@@ -178,7 +178,7 @@ theorem isolate_prec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
     ∀ iso ∈ atoms.toList,
       max atomPrec (Hex.separationDepth p : Int) ≤ iso.square.prec := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
       isolate_run p h atomPrec strategy hdegree hrun
     intro iso hiso
@@ -221,7 +221,7 @@ theorem isolate_roots_ne (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
     DyadicRootIsolation.root atoms[i] ≠
       DyadicRootIsolation.root atoms[j] := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
       isolate_run p h atomPrec strategy hdegree hrun
     have hi' : i < rs.size := by simpa [hsize] using hi
@@ -254,7 +254,7 @@ theorem isolate_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
     Disjoint (DyadicSquare.closedDisc atoms[i].square)
       (DyadicSquare.closedDisc atoms[j].square) := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
       isolate_run p h atomPrec strategy hdegree hrun
     have hi' : i < rs.size := by simpa [hsize] using hi
@@ -278,7 +278,7 @@ theorem isolate_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
     atoms.size = (toPolyℂ p).natDegree := by
   classical
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
       isolate_run p h atomPrec strategy hdegree hrun
     calc
@@ -308,7 +308,7 @@ theorem isolate_sound (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         (toPolyℂ p).roots.toFinset ∧
       ∀ iso ∈ atoms.toList, atomPrec ≤ iso.square.prec := by
   classical
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · have hq : toPolyℂ p ≠ 0 := by
       intro hzero
       have hnat : (toPolyℂ p).natDegree = 0 := by rw [hzero]; simp

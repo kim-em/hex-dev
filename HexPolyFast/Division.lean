@@ -408,23 +408,21 @@ theorem DivPlan.remainder_size_le (plan : DivPlan R) (p : DensePoly R)
 positive-degree divisor. -/
 theorem DivPlan.remainder_degree_lt (plan : DivPlan R) (p : DensePoly R)
     (hcap : quotientLength p plan.divisor ≤ plan.capacity)
-    (hdeg : 0 < plan.divisor.degree?.getD 0) :
-    (p - mulWith plan.mul (plan.quotient p hcap) plan.divisor).degree?.getD 0 <
-      plan.divisor.degree?.getD 0 := by
+    (hdeg : 0 < plan.divisor.natDegree) :
+    (p - mulWith plan.mul (plan.quotient p hcap) plan.divisor).natDegree <
+      plan.divisor.natDegree := by
   have hdpos : 0 < plan.divisor.size := by
     rcases Nat.eq_zero_or_pos plan.divisor.size with hz | hz
-    · rw [(degree?_eq_none_iff plan.divisor).mpr hz, Option.getD_none] at hdeg
+    · rw [natDegree_eq_size_sub_one, hz] at hdeg
       omega
     · exact hz
-  have hddegree : plan.divisor.degree?.getD 0 = plan.divisor.size - 1 := by
-    rw [degree?_eq_some_of_pos_size plan.divisor hdpos, Option.getD_some]
+  have hddegree : plan.divisor.natDegree = plan.divisor.size - 1 := by
+    rw [natDegree_eq_size_sub_one]
   let r := p - mulWith plan.mul (plan.quotient p hcap) plan.divisor
   have hrsize : r.size ≤ plan.divisor.size - 1 := plan.remainder_size_le p hcap
-  rcases Nat.eq_zero_or_pos r.size with hz | hz
-  · rw [(degree?_eq_none_iff r).mpr hz, Option.getD_none, hddegree]
-    omega
-  · rw [degree?_eq_some_of_pos_size r hz, Option.getD_some, hddegree]
-    omega
+  show r.natDegree < plan.divisor.natDegree
+  rw [natDegree_eq_size_sub_one, hddegree]
+  omega
 
 /-- Divide using a cached reciprocal.  The proof ensures the cached precision
 covers the requested quotient; it is erased from executable code. -/
@@ -459,12 +457,12 @@ theorem DivPlan.divMod_eq_divMod [Div R] (plan : DivPlan R) (p : DensePoly R)
     intro hs
     exact plan.divisor_ne ((size_eq_zero_iff plan.divisor).mp hs)
   have heq : _root_.Hex.DensePoly.divMod p plan.divisor = (q, r) := by
-    by_cases hdeg : 0 < plan.divisor.degree?.getD 0
+    by_cases hdeg : 0 < plan.divisor.natDegree
     · exact divMod_eq_of_reconstruction p plan.divisor q r hdeg hcancel
         hexact h_top_ne hrec (plan.remainder_degree_lt p hcap hdeg)
-    · have hddegree : plan.divisor.degree?.getD 0 =
+    · have hddegree : plan.divisor.natDegree =
           plan.divisor.size - 1 := by
-        rw [degree?_eq_some_of_pos_size plan.divisor hdpos, Option.getD_some]
+        rw [natDegree_eq_size_sub_one]
       have hdsize : plan.divisor.size = 1 := by omega
       have hrsize : r.size ≤ plan.divisor.size - 1 :=
         plan.remainder_size_le p hcap
@@ -544,8 +542,8 @@ theorem divModMonicWith_eq (mul : MulPlan R) (p q : DensePoly R)
         _ = 0 := by grind
     subst p
     letI : Div R := ⟨fun a _ => a⟩
-    have hnot_lt : ¬(0 : DensePoly R).degree?.getD 0 <
-        (0 : DensePoly R).degree?.getD 0 := by omega
+    have hnot_lt : ¬(0 : DensePoly R).natDegree <
+        (0 : DensePoly R).natDegree := by omega
     rw [divModMonic_eq_divMod_of_monic_of_scale 0 0 hq hnot_lt
       (fun _ => rfl)]
     exact (divMod_eq_zero_self_of_size_zero 0 0 size_zero).symm
@@ -570,7 +568,7 @@ theorem divModMonicWith_eq (mul : MulPlan R) (p q : DensePoly R)
         change a * q.leadingCoeff ≠ 0
         rw [hlead]
         simpa only [Lean.Grind.Semiring.mul_one] using ha
-    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    by_cases hlt : p.natDegree < q.natDegree
     · have hfast : _root_.Hex.DensePoly.divMod p q = (0, p) :=
         divMod_eq_zero_self_of_degree_lt p q hlt
       have hmonic : divModMonic p q hq = (0, p) := by

@@ -86,7 +86,7 @@ theorem isolateAll_sound {p : Hex.ZPoly} {target : Int}
 /-- Starting from the Cauchy component, successful isolation with any
 strategy covers every complex root. -/
 theorem isolateAll_cauchy_covers (p : Hex.ZPoly)
-    (hdegree : 0 < p.degree?.getD 0) {target : Int}
+    (hdegree : 0 < p.natDegree) {target : Int}
     {strategy : Hex.AtomStrategy} {rs : Array (Hex.Certified p)}
     (hrun : Hex.isolateAll? p target #[Hex.Component.cauchy p hdegree]
       strategy = some rs) {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z) :
@@ -100,7 +100,7 @@ successful Cauchy-started run. This remains valid when results include
 Pellet clusters: uniqueness is between certificates, not between roots
 inside one cluster. -/
 theorem isolateAll_covers_once (p : Hex.ZPoly)
-    (hdegree : 0 < p.degree?.getD 0) {target : Int}
+    (hdegree : 0 < p.natDegree) {target : Int}
     {strategy : Hex.AtomStrategy} {rs : Array (Hex.Certified p)}
     (hrun : Hex.isolateAll? p target #[Hex.Component.cauchy p hdegree]
       strategy = some rs) {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z) :
@@ -129,7 +129,7 @@ theorem isolateAll_covers_once (p : Hex.ZPoly)
 counts is exactly the polynomial degree. Counts are with multiplicity, so a
 Pellet cluster contributes its stored `k`, while an atom contributes one. -/
 theorem isolateAll_count (p : Hex.ZPoly)
-    (hdegree : 0 < p.degree?.getD 0) {target : Int}
+    (hdegree : 0 < p.natDegree) {target : Int}
     {strategy : Hex.AtomStrategy} {rs : Array (Hex.Certified p)}
     (hrun : Hex.isolateAll? p target #[Hex.Component.cauchy p hdegree]
       strategy = some rs) :
@@ -147,7 +147,7 @@ theorem isolateAll_count (p : Hex.ZPoly)
         have hq : q ≠ 0 := by
           intro hzero
           have hnat : q.natDegree = 0 := by rw [hzero]; simp
-          have hcast : q.natDegree = p.degree?.getD 0 := by
+          have hcast : q.natDegree = p.natDegree := by
             simp only [q, natDegree_toPolyℂ]
           omega
         exact (mem_roots hq).mp hzroots

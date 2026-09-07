@@ -90,12 +90,12 @@ an algorithmic optimization and is not needed by soundness. -/
   {z | ∃ s ∈ c.squares.toList, z ∈ DyadicSquare.closedSquare s}
 
 /-- The initial Cauchy component is a nonempty singleton component. -/
-theorem cauchy_wellFormed (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0) :
+theorem cauchy_wellFormed (p : Hex.ZPoly) (h : 0 < p.natDegree) :
     WellFormed (Hex.Component.cauchy p h) := by
   simp [WellFormed, Hex.Component.cauchy, Hex.Component.prec]
 
 /-- Component-level restatement of executable Cauchy coverage. -/
-theorem isRoot_mem_cauchy (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0)
+theorem isRoot_mem_cauchy (p : Hex.ZPoly) (h : 0 < p.natDegree)
     {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
     z ∈ region (Hex.Component.cauchy p h) :=
   exists_mem_component_cauchy p h hz

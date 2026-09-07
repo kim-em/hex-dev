@@ -309,10 +309,7 @@ theorem exactWitness_one_of_roots {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
   have hsize_eq : p.size = roots.card + 2 := by
     have hnat := natDegree_eq_of_roots hroots
     rw [natDegree_toPolyℂ] at hnat
-    have hdegree : p.degree? = some (p.size - 1) := by
-      have hpos : 0 < p.size := by omega
-      simp [Hex.DensePoly.degree?, Nat.ne_of_gt hpos]
-    rw [hdegree, Option.getD_some] at hnat
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hnat
     omega
   have hrlo : 0 < Dyadic.toReal sq.radiusLo := by
     simp only [Hex.DyadicSquare.radiusLo, Dyadic.toReal_ofIntWithPrec]

@@ -159,11 +159,13 @@ theorem divMod_spec (s t : SparsePoly S) :
 /-- The remainder degree drops below a positive divisor degree,
 transported from `DensePoly.DivModLaws`. -/
 theorem divMod_degree_lt (s t : SparsePoly S)
-    (h : 0 < t.degree?.getD 0) :
-    (divMod s t).2.degree?.getD 0 < t.degree?.getD 0 := by
+    (h : 0 < t.natDegree) :
+    (divMod s t).2.natDegree < t.natDegree := by
   unfold divMod
   simp only [Prod.map_snd]
+  unfold natDegree
   rw [degree?_ofDense, ← degree?_toDense t]
+  unfold natDegree at h
   rw [← degree?_toDense t] at h
   exact DensePoly.DivModLaws.divMod_remainder_degree_lt_of_pos_degree
     s.toDense t.toDense h

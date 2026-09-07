@@ -37,9 +37,9 @@ theorem resultant_eq_zero_iff_common_root
     simpa only [HexPolyMathlib.equiv_apply, HexPolyMathlib.toPolynomial_zero]
       using hzero
   have hFC : FC ≠ 0 := (Polynomial.map_ne_zero_iff hφ).2 hF
-  have hdf : f.degree?.getD 0 = F.natDegree := by
+  have hdf : f.natDegree = F.natDegree := by
     simpa only [F] using (HexPolyMathlib.natDegree_toPolynomial f).symm
-  have hdg : g.degree?.getD 0 = G.natDegree := by
+  have hdg : g.natDegree = G.natDegree := by
     simpa only [G] using (HexPolyMathlib.natDegree_toPolynomial g).symm
   have hFCdeg : FC.natDegree = F.natDegree :=
     Polynomial.natDegree_map_eq_of_injective hφ F

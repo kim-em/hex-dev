@@ -565,6 +565,29 @@ theorem size_eq_zero_iff (p : DensePoly R) : p.size = 0 ↔ p = 0 := by
     subst p
     exact size_zero
 
+/-- The degree, with the zero polynomial given degree `0`. This is the form
+most callers want, matching Mathlib's `Polynomial.natDegree`; `degree?`
+remains for the ones that must distinguish the zero polynomial. -/
+@[expose]
+abbrev natDegree (p : DensePoly R) : Nat :=
+  p.degree?.getD 0
+
+/-- {name}`natDegree` is {name}`degree?` with the zero case defaulted to `0`. -/
+theorem natDegree_eq_degree?_getD (p : DensePoly R) :
+    p.natDegree = p.degree?.getD 0 := rfl
+
+/-- The degree is one less than the number of stored coefficients. `Nat`
+subtraction truncates, which is what gives the zero polynomial degree `0`. -/
+theorem natDegree_eq_size_sub_one (p : DensePoly R) :
+    p.natDegree = p.size - 1 := by
+  unfold natDegree degree?
+  split
+  · rename_i h; rw [h]; rfl
+  · rfl
+
+/-- The zero polynomial has degree `0`. -/
+@[simp, grind =] theorem natDegree_zero : (0 : DensePoly R).natDegree = 0 := rfl
+
 /-- The zero polynomial has no degree. -/
 @[simp, grind =] theorem degree?_zero : (0 : DensePoly R).degree? = none := by
   unfold degree?
@@ -670,15 +693,15 @@ theorem isZero_monomial_eq_false_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R
   intro hzero
   exact hc ((isZero_monomial_eq_true_iff n c).1 hzero)
 
-/-- The {name}`degree?` of a constant polynomial, defaulted to `0`, is `0` regardless of the scalar:
-either `degree? = none` (when `c = 0`) and `getD 0 = 0`, or `degree? = some 0` (otherwise). -/
-@[simp, grind =] theorem degree?_C_getD (c : R) : (C c).degree?.getD 0 = 0 := by
+/-- A constant polynomial has degree `0`, whether or not the scalar is zero. -/
+@[simp, grind =] theorem natDegree_C (c : R) : (C c).natDegree = 0 := by
+  rw [natDegree_eq_size_sub_one]
   by_cases hc : c = (0 : R)
   · rw [hc]
-    change (C (Zero.zero : R)).degree?.getD 0 = 0
-    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, degree?, size]
+    change (C (Zero.zero : R)).size - 1 = 0
+    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, size]
   · change c ≠ Zero.zero at hc
-    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, degree?, size]
+    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, size]
 
 /-- The zero polynomial is the only dense polynomial with no degree. -/
 theorem degree?_eq_none_iff (p : DensePoly R) :
@@ -700,10 +723,10 @@ theorem degree?_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
   have hsize : (monomial n c).size = n + 1 := size_monomial_of_ne_zero hc
   rw [degree?_eq_some_of_pos_size _ (hsize ▸ Nat.succ_pos n), hsize, Nat.add_sub_cancel]
 
-/-- The default-0 degree of a monomial with nonzero coefficient is its exponent. -/
-theorem degree?_monomial_getD_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
-    (monomial n c).degree?.getD 0 = n := by
-  rw [degree?_monomial_of_ne_zero hc, Option.getD_some]
+/-- A monomial with nonzero coefficient has degree its exponent. -/
+theorem natDegree_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c).natDegree = n := by
+  rw [natDegree_eq_degree?_getD, degree?_monomial_of_ne_zero hc, Option.getD_some]
 
 /-- A monomial with nonzero coefficient is not the zero polynomial. -/
 theorem monomial_ne_zero_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :

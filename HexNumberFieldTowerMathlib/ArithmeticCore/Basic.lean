@@ -1384,7 +1384,7 @@ theorem denseMap_eq_denseEval (lower : List Level) (x : ℂ)
     (hinv : ∀ a : Arithmetic.Coeff lower,
       coeffDenote lower a⁻¹ = (coeffDenote lower a)⁻¹)
     (degree : Nat) (f : DensePoly (Arithmetic.Coeff lower))
-    (hdegree : f.degree?.getD 0 < degree) :
+    (hdegree : f.natDegree < degree) :
     letI : Field (Arithmetic.Coeff lower) :=
       coeffField lower hvalid hinjective hinv
     denseMap lower x hvalid hinjective hinv f =
