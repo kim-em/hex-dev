@@ -876,6 +876,14 @@ shared-host fixed-input results make no complexity claim.
 | 8 | 1.856–1.860 | 47.747–48.012 | 0.0257–0.0259 | 0.0218–0.0220 |
 | 12 | 3.421–3.425 | 75.060–75.139 | 0.0219–0.0220 | 0.0198–0.0198 |
 
+The subsequent merge of rational-function work at main `5ca950a2b` updates
+lean-bench to `8a37daf1…`. Both rebuilt tower binaries pass correctness checks,
+but their hashes differ, so the comparison above is not a verdict for that
+harness revision. The [first harness integration series](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-decision.json)
+ends at twelve attempts with only pair 4 admitted and **no performance
+verdict**. All attempted runs and their rejecting host telemetry are retained.
+A separately preregistered replication adds a whole-host preflight ceiling.
+
 ### Rational squarefreeness
 
 The [sampling summaries](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json)

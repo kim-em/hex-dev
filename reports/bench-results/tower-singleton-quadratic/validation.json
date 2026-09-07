@@ -42,7 +42,7 @@
       "fixture_byte_identical": true
     }
   ],
-  "proof_status": "Full HexNumberFieldTowerMathlib build passed, including quadratic resultant equivalence and singleton recovery soundness/completeness. No runtime change; benchmark SHA-256 equals measured combined prototype.",
+  "proof_status": "Both optimization correspondence proofs and the full tower Mathlib companion build pass. Executable hashes and integration-specific checks are recorded separately below.",
   "proof_complete_checks": {
     "build_targets": [
       "HexNumberFieldTowerMathlib",
@@ -93,6 +93,6 @@
     "oracle_failures": 0,
     "proof_build_passed": true,
     "restored_candidate_hash_matches": true,
-    "timing_status": "Preregistered; awaiting comparison."
+    "timing_status": "Original integrated-harness series exhausted twelve attempts with only pair 4 admitted: no verdict. A stricter whole-host preflight replication is required."
   }
 }

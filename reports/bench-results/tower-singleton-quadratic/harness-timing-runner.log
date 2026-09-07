@@ -1,0 +1,28 @@
+integrated-harness 1 left False post {31: 23.0, 79: 11.442786069651742} sibling {79: 6.728693622769043}
+accepted pairs 0
+integrated-harness 2 left False post {47: 11.557788944723619, 95: 8.0} sibling {95: 0.6376933247010469}
+accepted pairs 0
+integrated-harness 3 left True post {40: 0.0, 88: 0.0} sibling {88: 3.6805161508348054}
+integrated-harness 3 right False post {40: 1.0050251256281406, 88: 22.0} sibling {88: 0.29967249181229527}
+accepted pairs 0
+integrated-harness 4 left True post {44: 0.0, 92: 0.0} sibling {92: 0.1894862026723082}
+integrated-harness 4 right True post {44: 0.0, 92: 0.0} sibling {92: 0.3165058293123995}
+accepted pairs 1
+integrated-harness 5 right True post {42: 0.0, 90: 0.5025125628140703} sibling {90: 0.6449221714413829}
+accepted pairs 1
+integrated-harness 6 right True post {32: 0.0, 80: 0.4975124378109453} sibling {80: 0.5005904314274523}
+integrated-harness 6 left False post {32: 5.527638190954774, 80: 1.5} sibling {80: 0.5876806402918694}
+accepted pairs 1
+integrated-harness 7 right False post {41: 98.99497487437186, 89: 99.0} sibling {89: 73.44211178915909}
+accepted pairs 1
+integrated-harness 8 right False post {27: 92.42424242424242, 75: 95.45454545454545} sibling {75: 58.9897996888394}
+accepted pairs 1
+integrated-harness 9 right False post {43: 99.5, 91: 99.49748743718592} sibling {91: 96.17856438399372}
+accepted pairs 1
+integrated-harness 10 right False post {45: 94.02985074626865, 93: 95.47738693467336} sibling {93: 12.80419104856414}
+accepted pairs 1
+integrated-harness 11 right False post {26: 98.48484848484848, 74: 98.50746268656717} sibling {74: 68.308470800802}
+accepted pairs 1
+integrated-harness 12 right True post {46: 0.4975124378109453, 94: 0.0} sibling {94: 1.5328173404726126}
+integrated-harness 12 left False post {46: 97.97979797979798, 94: 94.5273631840796} sibling {94: 78.04497979412227}
+accepted pairs 1
