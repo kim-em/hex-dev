@@ -78,5 +78,21 @@
     "host_audit_series": 7,
     "host_audit_preserves_decisions": true,
     "differential_driver_ci_gated": true
+  },
+  "harness_integration": {
+    "baseline_commit": "5ca950a2b900d4b95ca739c5ffe899e8c62c8a82",
+    "baseline_binary_sha256": "4031c1165728f833850b06d29971674a6960d2f79234889f45a2d2b1a658d969",
+    "candidate_commit": "a38030daff049fc1e6a308161d7abf1699545890",
+    "candidate_binary_sha256": "b5f7cfb214bd5e50a1a855e52c847794bbe457ea28044cb276fe3bc2cae5774d",
+    "baseline_bench_verify_cases": 49,
+    "candidate_bench_verify_cases": 49,
+    "canonical_factor_cases": 31,
+    "norm_array_cases": 750,
+    "fixture_byte_identical": true,
+    "oracle_cases": 9,
+    "oracle_failures": 0,
+    "proof_build_passed": true,
+    "restored_candidate_hash_matches": true,
+    "timing_status": "Preregistered; awaiting comparison."
   }
 }
