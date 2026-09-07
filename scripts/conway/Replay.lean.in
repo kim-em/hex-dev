@@ -8,6 +8,9 @@ import HexConway
 
 open Hex Hex.Conway Lean
 
+set_option maxRecDepth 100000
+set_option maxHeartbeats 80000000
+
 /-! Compiled verification timings for the complete supported scope.
 The mutable input prevents closed checks from being folded by the compiler.
 These timings measure runtime verification, not proof elaboration or replay. -/
@@ -29,6 +32,13 @@ private def measureEntry (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     unless compatCheck small f.val f.property m (n / m) do
       throw <| IO.userError s!"compatibility failed: ({p}, {m}, {n})"
   let compatible ← IO.monoNanosNow
+  if (← IO.getEnv "HEXCONWAY_ENFORCE_BUDGETS") == some "1" then
+    for (label, elapsed, ceiling) in [
+        ("irreducibility", irreducible - start, 2_000_000),
+        ("primitivity", primitive - irreducible, 5_000_000),
+        ("compatibility", compatible - primitive, 5_000_000)] do
+      if elapsed > ceiling then
+        throw <| IO.userError s!"{label} ({p}, {n}): {elapsed} ns exceeds {ceiling} ns"
   IO.println <| Json.compress <| Json.mkObj [
     ("p", toJson p), ("n", toJson n),
     ("irreducibility_ns", toJson (irreducible - start)),

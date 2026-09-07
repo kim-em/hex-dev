@@ -6,9 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekamp.RabinSoundness
-public import HexGFqRing.PolynomialQuotient
-public import HexArith.Nat.Prime
+public import HexConway.Bounds
 
 public section
 
@@ -19,204 +17,6 @@ set_option maxHeartbeats 80000000
 
 namespace Hex
 namespace Conway
-
-/-- Primality of characteristic 2. -/
-theorem prime_two : Hex.Nat.Prime 2 :=
-  Hex.Nat.prime_of_bounded 2 1 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 2. -/
-instance instPrimeModulus2 : ZMod64.PrimeModulus 2 := ZMod64.primeModulusOfPrime prime_two
-
-/-- Word bounds for characteristic 3. -/
-instance bounds3 : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 3. -/
-theorem prime_three : Hex.Nat.Prime 3 :=
-  Hex.Nat.prime_of_bounded 3 1 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 3. -/
-instance instPrimeModulus3 : ZMod64.PrimeModulus 3 := ZMod64.primeModulusOfPrime prime_three
-
-/-- Word bounds for characteristic 5. -/
-instance bounds5 : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 5. -/
-theorem prime_five : Hex.Nat.Prime 5 :=
-  Hex.Nat.prime_of_bounded 5 2 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 5. -/
-instance instPrimeModulus5 : ZMod64.PrimeModulus 5 := ZMod64.primeModulusOfPrime prime_five
-
-/-- Word bounds for characteristic 7. -/
-instance bounds7 : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 7. -/
-theorem prime_seven : Hex.Nat.Prime 7 :=
-  Hex.Nat.prime_of_bounded 7 2 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 7. -/
-instance instPrimeModulus7 : ZMod64.PrimeModulus 7 := ZMod64.primeModulusOfPrime prime_seven
-
-/-- Word bounds for characteristic 11. -/
-instance bounds11 : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 11. -/
-theorem prime_eleven : Hex.Nat.Prime 11 :=
-  Hex.Nat.prime_of_bounded 11 3 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 11. -/
-instance instPrimeModulus11 : ZMod64.PrimeModulus 11 := ZMod64.primeModulusOfPrime prime_eleven
-
-/-- Word bounds for characteristic 13. -/
-instance bounds13 : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 13. -/
-theorem prime_thirteen : Hex.Nat.Prime 13 :=
-  Hex.Nat.prime_of_bounded 13 3 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 13. -/
-instance instPrimeModulus13 : ZMod64.PrimeModulus 13 := ZMod64.primeModulusOfPrime prime_thirteen
-
-/-- Word bounds for characteristic 17. -/
-instance bounds17 : ZMod64.Bounds 17 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 17. -/
-theorem prime_17 : Hex.Nat.Prime 17 :=
-  Hex.Nat.prime_of_bounded 17 4 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 17. -/
-instance instPrimeModulus17 : ZMod64.PrimeModulus 17 := ZMod64.primeModulusOfPrime prime_17
-
-/-- Word bounds for characteristic 19. -/
-instance bounds19 : ZMod64.Bounds 19 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 19. -/
-theorem prime_19 : Hex.Nat.Prime 19 :=
-  Hex.Nat.prime_of_bounded 19 4 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 19. -/
-instance instPrimeModulus19 : ZMod64.PrimeModulus 19 := ZMod64.primeModulusOfPrime prime_19
-
-/-- Word bounds for characteristic 23. -/
-instance bounds23 : ZMod64.Bounds 23 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 23. -/
-theorem prime_23 : Hex.Nat.Prime 23 :=
-  Hex.Nat.prime_of_bounded 23 4 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 23. -/
-instance instPrimeModulus23 : ZMod64.PrimeModulus 23 := ZMod64.primeModulusOfPrime prime_23
-
-/-- Word bounds for characteristic 29. -/
-instance bounds29 : ZMod64.Bounds 29 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 29. -/
-theorem prime_29 : Hex.Nat.Prime 29 :=
-  Hex.Nat.prime_of_bounded 29 5 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 29. -/
-instance instPrimeModulus29 : ZMod64.PrimeModulus 29 := ZMod64.primeModulusOfPrime prime_29
-
-/-- Word bounds for characteristic 31. -/
-instance bounds31 : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 31. -/
-theorem prime_31 : Hex.Nat.Prime 31 :=
-  Hex.Nat.prime_of_bounded 31 5 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 31. -/
-instance instPrimeModulus31 : ZMod64.PrimeModulus 31 := ZMod64.primeModulusOfPrime prime_31
-
-/-- Word bounds for characteristic 37. -/
-instance bounds37 : ZMod64.Bounds 37 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 37. -/
-theorem prime_37 : Hex.Nat.Prime 37 :=
-  Hex.Nat.prime_of_bounded 37 6 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 37. -/
-instance instPrimeModulus37 : ZMod64.PrimeModulus 37 := ZMod64.primeModulusOfPrime prime_37
-
-/-- Word bounds for characteristic 41. -/
-instance bounds41 : ZMod64.Bounds 41 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 41. -/
-theorem prime_41 : Hex.Nat.Prime 41 :=
-  Hex.Nat.prime_of_bounded 41 6 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 41. -/
-instance instPrimeModulus41 : ZMod64.PrimeModulus 41 := ZMod64.primeModulusOfPrime prime_41
-
-/-- Word bounds for characteristic 43. -/
-instance bounds43 : ZMod64.Bounds 43 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 43. -/
-theorem prime_43 : Hex.Nat.Prime 43 :=
-  Hex.Nat.prime_of_bounded 43 6 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 43. -/
-instance instPrimeModulus43 : ZMod64.PrimeModulus 43 := ZMod64.primeModulusOfPrime prime_43
-
-/-- Word bounds for characteristic 47. -/
-instance bounds47 : ZMod64.Bounds 47 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 47. -/
-theorem prime_47 : Hex.Nat.Prime 47 :=
-  Hex.Nat.prime_of_bounded 47 6 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 47. -/
-instance instPrimeModulus47 : ZMod64.PrimeModulus 47 := ZMod64.primeModulusOfPrime prime_47
-
-/-- Word bounds for characteristic 53. -/
-instance bounds53 : ZMod64.Bounds 53 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 53. -/
-theorem prime_53 : Hex.Nat.Prime 53 :=
-  Hex.Nat.prime_of_bounded 53 7 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 53. -/
-instance instPrimeModulus53 : ZMod64.PrimeModulus 53 := ZMod64.primeModulusOfPrime prime_53
-
-/-- Word bounds for characteristic 59. -/
-instance bounds59 : ZMod64.Bounds 59 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 59. -/
-theorem prime_59 : Hex.Nat.Prime 59 :=
-  Hex.Nat.prime_of_bounded 59 7 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 59. -/
-instance instPrimeModulus59 : ZMod64.PrimeModulus 59 := ZMod64.primeModulusOfPrime prime_59
-
-/-- Word bounds for characteristic 61. -/
-instance bounds61 : ZMod64.Bounds 61 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 61. -/
-theorem prime_61 : Hex.Nat.Prime 61 :=
-  Hex.Nat.prime_of_bounded 61 7 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 61. -/
-instance instPrimeModulus61 : ZMod64.PrimeModulus 61 := ZMod64.primeModulusOfPrime prime_61
-
-/-- Word bounds for characteristic 67. -/
-instance bounds67 : ZMod64.Bounds 67 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 67. -/
-theorem prime_67 : Hex.Nat.Prime 67 :=
-  Hex.Nat.prime_of_bounded 67 8 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 67. -/
-instance instPrimeModulus67 : ZMod64.PrimeModulus 67 := ZMod64.primeModulusOfPrime prime_67
-
-/-- Word bounds for characteristic 71. -/
-instance bounds71 : ZMod64.Bounds 71 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 71. -/
-theorem prime_71 : Hex.Nat.Prime 71 :=
-  Hex.Nat.prime_of_bounded 71 8 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 71. -/
-instance instPrimeModulus71 : ZMod64.PrimeModulus 71 := ZMod64.primeModulusOfPrime prime_71
-
-/-- Word bounds for characteristic 73. -/
-instance bounds73 : ZMod64.Bounds 73 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 73. -/
-theorem prime_73 : Hex.Nat.Prime 73 :=
-  Hex.Nat.prime_of_bounded 73 8 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 73. -/
-instance instPrimeModulus73 : ZMod64.PrimeModulus 73 := ZMod64.primeModulusOfPrime prime_73
-
-/-- Word bounds for characteristic 79. -/
-instance bounds79 : ZMod64.Bounds 79 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 79. -/
-theorem prime_79 : Hex.Nat.Prime 79 :=
-  Hex.Nat.prime_of_bounded 79 8 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 79. -/
-instance instPrimeModulus79 : ZMod64.PrimeModulus 79 := ZMod64.primeModulusOfPrime prime_79
-
-/-- Word bounds for characteristic 83. -/
-instance bounds83 : ZMod64.Bounds 83 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 83. -/
-theorem prime_83 : Hex.Nat.Prime 83 :=
-  Hex.Nat.prime_of_bounded 83 9 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 83. -/
-instance instPrimeModulus83 : ZMod64.PrimeModulus 83 := ZMod64.primeModulusOfPrime prime_83
-
-/-- Word bounds for characteristic 89. -/
-instance bounds89 : ZMod64.Bounds 89 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 89. -/
-theorem prime_89 : Hex.Nat.Prime 89 :=
-  Hex.Nat.prime_of_bounded 89 9 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 89. -/
-instance instPrimeModulus89 : ZMod64.PrimeModulus 89 := ZMod64.primeModulusOfPrime prime_89
-
-/-- Word bounds for characteristic 97. -/
-instance bounds97 : ZMod64.Bounds 97 := ⟨by decide, by decide⟩
-/-- Primality of characteristic 97. -/
-theorem prime_97 : Hex.Nat.Prime 97 :=
-  Hex.Nat.prime_of_bounded 97 9 (by decide) (by decide) (by decide)
-/-- Prime modulus for characteristic 97. -/
-instance instPrimeModulus97 : ZMod64.PrimeModulus 97 := ZMod64.primeModulusOfPrime prime_97
 
 /-- Imported coefficients in ascending degree order. -/
 @[expose] def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
@@ -287,78 +87,974 @@ instance instPrimeModulus97 : ZMod64.PrimeModulus 97 := ZMod64.primeModulusOfPri
   | 17, n => match n with
     | 1 => some [14, 1]
     | 2 => some [3, 16, 1]
+    | 3 => some [14, 1, 0, 1]
+    | 4 => some [3, 10, 7, 0, 1]
     | _ => none
   | 19, n => match n with
     | 1 => some [17, 1]
     | 2 => some [2, 18, 1]
+    | 3 => some [17, 4, 0, 1]
+    | 4 => some [2, 11, 2, 0, 1]
     | _ => none
   | 23, n => match n with
     | 1 => some [18, 1]
     | 2 => some [5, 21, 1]
+    | 3 => some [18, 2, 0, 1]
+    | 4 => some [5, 19, 3, 0, 1]
     | _ => none
   | 29, n => match n with
     | 1 => some [27, 1]
     | 2 => some [2, 24, 1]
+    | 3 => some [27, 2, 0, 1]
+    | 4 => some [2, 15, 2, 0, 1]
     | _ => none
   | 31, n => match n with
     | 1 => some [28, 1]
     | 2 => some [3, 29, 1]
+    | 3 => some [28, 1, 0, 1]
+    | 4 => some [3, 16, 3, 0, 1]
     | _ => none
   | 37, n => match n with
     | 1 => some [35, 1]
     | 2 => some [2, 33, 1]
+    | 3 => some [35, 6, 0, 1]
+    | 4 => some [2, 24, 6, 0, 1]
     | _ => none
   | 41, n => match n with
     | 1 => some [35, 1]
     | 2 => some [6, 38, 1]
+    | 3 => some [35, 1, 0, 1]
+    | 4 => some [6, 23, 0, 0, 1]
     | _ => none
   | 43, n => match n with
     | 1 => some [40, 1]
     | 2 => some [3, 42, 1]
+    | 3 => some [40, 1, 0, 1]
+    | 4 => some [3, 42, 5, 0, 1]
     | _ => none
   | 47, n => match n with
     | 1 => some [42, 1]
     | 2 => some [5, 45, 1]
+    | 3 => some [42, 3, 0, 1]
+    | 4 => some [5, 40, 8, 0, 1]
     | _ => none
   | 53, n => match n with
     | 1 => some [51, 1]
     | 2 => some [2, 49, 1]
+    | 3 => some [51, 3, 0, 1]
+    | 4 => some [2, 38, 9, 0, 1]
     | _ => none
   | 59, n => match n with
     | 1 => some [57, 1]
     | 2 => some [2, 58, 1]
+    | 3 => some [57, 5, 0, 1]
+    | 4 => some [2, 40, 2, 0, 1]
     | _ => none
   | 61, n => match n with
     | 1 => some [59, 1]
     | 2 => some [2, 60, 1]
+    | 3 => some [59, 7, 0, 1]
+    | 4 => some [2, 40, 3, 0, 1]
     | _ => none
   | 67, n => match n with
     | 1 => some [65, 1]
     | 2 => some [2, 63, 1]
+    | 3 => some [65, 6, 0, 1]
+    | 4 => some [2, 54, 8, 0, 1]
     | _ => none
   | 71, n => match n with
     | 1 => some [64, 1]
     | 2 => some [7, 69, 1]
+    | 3 => some [64, 4, 0, 1]
+    | 4 => some [7, 41, 4, 0, 1]
     | _ => none
   | 73, n => match n with
     | 1 => some [68, 1]
     | 2 => some [5, 70, 1]
+    | 3 => some [68, 2, 0, 1]
+    | 4 => some [5, 56, 16, 0, 1]
     | _ => none
   | 79, n => match n with
     | 1 => some [76, 1]
     | 2 => some [3, 78, 1]
+    | 3 => some [76, 9, 0, 1]
+    | 4 => some [3, 66, 2, 0, 1]
     | _ => none
   | 83, n => match n with
     | 1 => some [81, 1]
     | 2 => some [2, 82, 1]
+    | 3 => some [81, 3, 0, 1]
+    | 4 => some [2, 42, 4, 0, 1]
     | _ => none
   | 89, n => match n with
     | 1 => some [86, 1]
     | 2 => some [3, 82, 1]
+    | 3 => some [86, 3, 0, 1]
+    | 4 => some [3, 72, 4, 0, 1]
     | _ => none
   | 97, n => match n with
     | 1 => some [92, 1]
     | 2 => some [5, 96, 1]
+    | 3 => some [92, 9, 0, 1]
+    | 4 => some [5, 80, 6, 0, 1]
+    | _ => none
+  | 101, n => match n with
+    | 1 => some [99, 1]
+    | 2 => some [2, 97, 1]
+    | 3 => some [99, 3, 0, 1]
+    | 4 => some [2, 78, 1, 0, 1]
+    | _ => none
+  | 103, n => match n with
+    | 1 => some [98, 1]
+    | 2 => some [5, 102, 1]
+    | 3 => some [98, 2, 0, 1]
+    | 4 => some [5, 88, 2, 0, 1]
+    | _ => none
+  | 107, n => match n with
+    | 1 => some [105, 1]
+    | 2 => some [2, 103, 1]
+    | 3 => some [105, 5, 0, 1]
+    | 4 => some [2, 79, 13, 0, 1]
+    | _ => none
+  | 109, n => match n with
+    | 1 => some [103, 1]
+    | 2 => some [6, 108, 1]
+    | 3 => some [103, 1, 0, 1]
+    | 4 => some [6, 98, 11, 0, 1]
+    | _ => none
+  | 113, n => match n with
+    | 1 => some [110, 1]
+    | 2 => some [3, 101, 1]
+    | 3 => some [110, 8, 0, 1]
+    | 4 => some [3, 62, 0, 0, 1]
+    | _ => none
+  | 127, n => match n with
+    | 1 => some [124, 1]
+    | 2 => some [3, 126, 1]
+    | 3 => some [124, 3, 0, 1]
+    | 4 => some [3, 97, 2, 0, 1]
+    | _ => none
+  | 131, n => match n with
+    | 1 => some [129, 1]
+    | 2 => some [2, 127, 1]
+    | 3 => some [129, 3, 0, 1]
+    | 4 => some [2, 109, 9, 0, 1]
+    | _ => none
+  | 137, n => match n with
+    | 1 => some [134, 1]
+    | 2 => some [3, 131, 1]
+    | 3 => some [134, 6, 0, 1]
+    | 4 => some [3, 95, 1, 0, 1]
+    | _ => none
+  | 139, n => match n with
+    | 1 => some [137, 1]
+    | 2 => some [2, 138, 1]
+    | 3 => some [137, 6, 0, 1]
+    | 4 => some [2, 96, 7, 0, 1]
+    | _ => none
+  | 149, n => match n with
+    | 1 => some [147, 1]
+    | 2 => some [2, 145, 1]
+    | 3 => some [147, 3, 0, 1]
+    | 4 => some [2, 107, 7, 0, 1]
+    | _ => none
+  | 151, n => match n with
+    | 1 => some [145, 1]
+    | 2 => some [6, 149, 1]
+    | 3 => some [145, 1, 0, 1]
+    | 4 => some [6, 89, 13, 0, 1]
+    | _ => none
+  | 157, n => match n with
+    | 1 => some [152, 1]
+    | 2 => some [5, 152, 1]
+    | 3 => some [152, 1, 0, 1]
+    | 4 => some [5, 136, 11, 0, 1]
+    | _ => none
+  | 163, n => match n with
+    | 1 => some [161, 1]
+    | 2 => some [2, 159, 1]
+    | 3 => some [161, 7, 0, 1]
+    | 4 => some [2, 91, 8, 0, 1]
+    | _ => none
+  | 167, n => match n with
+    | 1 => some [162, 1]
+    | 2 => some [5, 166, 1]
+    | 3 => some [162, 7, 0, 1]
+    | 4 => some [5, 120, 3, 0, 1]
+    | _ => none
+  | 173, n => match n with
+    | 1 => some [171, 1]
+    | 2 => some [2, 169, 1]
+    | 3 => some [171, 2, 0, 1]
+    | 4 => some [2, 102, 1, 0, 1]
+    | _ => none
+  | 179, n => match n with
+    | 1 => some [177, 1]
+    | 2 => some [2, 172, 1]
+    | 3 => some [177, 4, 0, 1]
+    | 4 => some [2, 109, 1, 0, 1]
+    | _ => none
+  | 181, n => match n with
+    | 1 => some [179, 1]
+    | 2 => some [2, 177, 1]
+    | 3 => some [179, 6, 0, 1]
+    | 4 => some [2, 105, 6, 0, 1]
+    | _ => none
+  | 191, n => match n with
+    | 1 => some [172, 1]
+    | 2 => some [19, 190, 1]
+    | 3 => some [172, 4, 0, 1]
+    | 4 => some [19, 100, 7, 0, 1]
+    | _ => none
+  | 193, n => match n with
+    | 1 => some [188, 1]
+    | 2 => some [5, 192, 1]
+    | 3 => some [188, 1, 0, 1]
+    | 4 => some [5, 148, 6, 0, 1]
+    | _ => none
+  | 197, n => match n with
+    | 1 => some [195, 1]
+    | 2 => some [2, 192, 1]
+    | 3 => some [195, 3, 0, 1]
+    | 4 => some [2, 124, 16, 0, 1]
+    | _ => none
+  | 199, n => match n with
+    | 1 => some [196, 1]
+    | 2 => some [3, 193, 1]
+    | 3 => some [196, 1, 0, 1]
+    | 4 => some [3, 162, 7, 0, 1]
+    | _ => none
+  | 211, n => match n with
+    | 1 => some [209, 1]
+    | 2 => some [2, 207, 1]
+    | 3 => some [209, 2, 0, 1]
+    | 4 => some [2, 161, 8, 0, 1]
+    | _ => none
+  | 223, n => match n with
+    | 1 => some [220, 1]
+    | 2 => some [3, 221, 1]
+    | 3 => some [220, 6, 0, 1]
+    | 4 => some [3, 163, 6, 0, 1]
+    | _ => none
+  | 227, n => match n with
+    | 1 => some [225, 1]
+    | 2 => some [2, 220, 1]
+    | 3 => some [225, 2, 0, 1]
+    | 4 => some [2, 143, 1, 0, 1]
+    | _ => none
+  | 229, n => match n with
+    | 1 => some [223, 1]
+    | 2 => some [6, 228, 1]
+    | 3 => some [223, 1, 0, 1]
+    | 4 => some [6, 162, 7, 0, 1]
+    | _ => none
+  | 233, n => match n with
+    | 1 => some [230, 1]
+    | 2 => some [3, 232, 1]
+    | 3 => some [230, 1, 0, 1]
+    | 4 => some [3, 158, 4, 0, 1]
+    | _ => none
+  | 239, n => match n with
+    | 1 => some [232, 1]
+    | 2 => some [7, 237, 1]
+    | 3 => some [232, 11, 0, 1]
+    | 4 => some [7, 132, 11, 0, 1]
+    | _ => none
+  | 241, n => match n with
+    | 1 => some [234, 1]
+    | 2 => some [7, 238, 1]
+    | 3 => some [234, 1, 0, 1]
+    | 4 => some [7, 152, 14, 0, 1]
+    | _ => none
+  | 251, n => match n with
+    | 1 => some [245, 1]
+    | 2 => some [6, 242, 1]
+    | 3 => some [245, 3, 0, 1]
+    | 4 => some [6, 200, 3, 0, 1]
+    | _ => none
+  | 257, n => match n with
+    | 1 => some [254, 1]
+    | 2 => some [3, 251, 1]
+    | 3 => some [254, 6, 0, 1]
+    | 4 => some [3, 187, 16, 0, 1]
+    | _ => none
+  | 263, n => match n with
+    | 1 => some [258, 1]
+    | 2 => some [5, 261, 1]
+    | 3 => some [258, 14, 0, 1]
+    | 4 => some [5, 171, 5, 0, 1]
+    | _ => none
+  | 269, n => match n with
+    | 1 => some [267, 1]
+    | 2 => some [2, 268, 1]
+    | 3 => some [267, 9, 0, 1]
+    | 4 => some [2, 262, 8, 0, 1]
+    | _ => none
+  | 271, n => match n with
+    | 1 => some [265, 1]
+    | 2 => some [6, 269, 1]
+    | 3 => some [265, 2, 0, 1]
+    | 4 => some [6, 205, 3, 0, 1]
+    | _ => none
+  | 277, n => match n with
+    | 1 => some [272, 1]
+    | 2 => some [5, 274, 1]
+    | 3 => some [272, 3, 0, 1]
+    | 4 => some [5, 222, 1, 0, 1]
+    | _ => none
+  | 281, n => match n with
+    | 1 => some [278, 1]
+    | 2 => some [3, 280, 1]
+    | 3 => some [278, 1, 0, 1]
+    | 4 => some [3, 176, 7, 0, 1]
+    | _ => none
+  | 283, n => match n with
+    | 1 => some [280, 1]
+    | 2 => some [3, 282, 1]
+    | 3 => some [280, 3, 0, 1]
+    | 4 => some [3, 238, 5, 0, 1]
+    | _ => none
+  | 293, n => match n with
+    | 1 => some [291, 1]
+    | 2 => some [2, 292, 1]
+    | 3 => some [291, 2, 0, 1]
+    | 4 => some [2, 166, 3, 0, 1]
+    | _ => none
+  | 307, n => match n with
+    | 1 => some [302, 1]
+    | 2 => some [5, 306, 1]
+    | 3 => some [302, 7, 0, 1]
+    | 4 => some [5, 239, 2, 0, 1]
+    | _ => none
+  | 311, n => match n with
+    | 1 => some [294, 1]
+    | 2 => some [17, 310, 1]
+    | 3 => some [294, 3, 0, 1]
+    | 4 => some [17, 163, 3, 0, 1]
+    | _ => none
+  | 313, n => match n with
+    | 1 => some [303, 1]
+    | 2 => some [10, 310, 1]
+    | 3 => some [303, 2, 0, 1]
+    | 4 => some [10, 239, 8, 0, 1]
+    | _ => none
+  | 317, n => match n with
+    | 1 => some [315, 1]
+    | 2 => some [2, 313, 1]
+    | 3 => some [315, 7, 0, 1]
+    | 4 => some [2, 178, 6, 0, 1]
+    | _ => none
+  | 331, n => match n with
+    | 1 => some [328, 1]
+    | 2 => some [3, 326, 1]
+    | 3 => some [328, 1, 0, 1]
+    | 4 => some [3, 290, 3, 0, 1]
+    | _ => none
+  | 337, n => match n with
+    | 1 => some [327, 1]
+    | 2 => some [10, 332, 1]
+    | 3 => some [327, 2, 0, 1]
+    | 4 => some [10, 224, 25, 0, 1]
+    | _ => none
+  | 347, n => match n with
+    | 1 => some [345, 1]
+    | 2 => some [2, 343, 1]
+    | 3 => some [345, 9, 0, 1]
+    | 4 => some [2, 295, 13, 0, 1]
+    | _ => none
+  | 349, n => match n with
+    | 1 => some [347, 1]
+    | 2 => some [2, 348, 1]
+    | 3 => some [347, 4, 0, 1]
+    | 4 => some [2, 279, 3, 0, 1]
+    | _ => none
+  | 353, n => match n with
+    | 1 => some [350, 1]
+    | 2 => some [3, 348, 1]
+    | 3 => some [350, 3, 0, 1]
+    | 4 => some [3, 199, 0, 0, 1]
+    | _ => none
+  | 359, n => match n with
+    | 1 => some [352, 1]
+    | 2 => some [7, 358, 1]
+    | 3 => some [352, 3, 0, 1]
+    | 4 => some [7, 229, 2, 0, 1]
+    | _ => none
+  | 367, n => match n with
+    | 1 => some [361, 1]
+    | 2 => some [6, 366, 1]
+    | 3 => some [361, 10, 0, 1]
+    | 4 => some [6, 295, 3, 0, 1]
+    | _ => none
+  | 373, n => match n with
+    | 1 => some [371, 1]
+    | 2 => some [2, 369, 1]
+    | 3 => some [371, 5, 0, 1]
+    | 4 => some [2, 304, 15, 0, 1]
+    | _ => none
+  | 379, n => match n with
+    | 1 => some [377, 1]
+    | 2 => some [2, 374, 1]
+    | 3 => some [377, 5, 0, 1]
+    | 4 => some [2, 327, 2, 0, 1]
+    | _ => none
+  | 383, n => match n with
+    | 1 => some [378, 1]
+    | 2 => some [5, 382, 1]
+    | 3 => some [378, 1, 0, 1]
+    | 4 => some [5, 309, 7, 0, 1]
+    | _ => none
+  | 389, n => match n with
+    | 1 => some [387, 1]
+    | 2 => some [2, 379, 1]
+    | 3 => some [387, 2, 0, 1]
+    | 4 => some [2, 266, 2, 0, 1]
+    | _ => none
+  | 397, n => match n with
+    | 1 => some [392, 1]
+    | 2 => some [5, 392, 1]
+    | 3 => some [392, 2, 0, 1]
+    | 4 => some [5, 363, 12, 0, 1]
+    | _ => none
+  | 401, n => match n with
+    | 1 => some [398, 1]
+    | 2 => some [3, 396, 1]
+    | 3 => some [398, 3, 0, 1]
+    | 4 => some [3, 372, 2, 0, 1]
+    | _ => none
+  | 409, n => match n with
+    | 1 => some [388, 1]
+    | 2 => some [21, 404, 1]
+    | 3 => some [388, 3, 0, 1]
+    | 4 => some [21, 407, 12, 0, 1]
+    | _ => none
+  | 419, n => match n with
+    | 1 => some [417, 1]
+    | 2 => some [2, 418, 1]
+    | 3 => some [417, 11, 0, 1]
+    | 4 => some [2, 373, 4, 0, 1]
+    | _ => none
+  | 421, n => match n with
+    | 1 => some [419, 1]
+    | 2 => some [2, 417, 1]
+    | 3 => some [419, 2, 0, 1]
+    | 4 => some [2, 257, 10, 0, 1]
+    | _ => none
+  | 431, n => match n with
+    | 1 => some [424, 1]
+    | 2 => some [7, 430, 1]
+    | 3 => some [424, 2, 0, 1]
+    | 4 => some [7, 323, 2, 0, 1]
+    | _ => none
+  | 433, n => match n with
+    | 1 => some [428, 1]
+    | 2 => some [5, 432, 1]
+    | 3 => some [428, 1, 0, 1]
+    | 4 => some [5, 402, 6, 0, 1]
+    | _ => none
+  | 439, n => match n with
+    | 1 => some [424, 1]
+    | 2 => some [15, 436, 1]
+    | 3 => some [424, 3, 0, 1]
+    | 4 => some [15, 323, 0, 0, 1]
+    | _ => none
+  | 443, n => match n with
+    | 1 => some [441, 1]
+    | 2 => some [2, 437, 1]
+    | 3 => some [441, 4, 0, 1]
+    | 4 => some [2, 383, 4, 0, 1]
+    | _ => none
+  | 449, n => match n with
+    | 1 => some [446, 1]
+    | 2 => some [3, 444, 1]
+    | 3 => some [446, 1, 0, 1]
+    | 4 => some [3, 249, 2, 0, 1]
+    | _ => none
+  | 457, n => match n with
+    | 1 => some [444, 1]
+    | 2 => some [13, 454, 1]
+    | 3 => some [444, 1, 0, 1]
+    | 4 => some [13, 407, 8, 0, 1]
+    | _ => none
+  | 461, n => match n with
+    | 1 => some [459, 1]
+    | 2 => some [2, 460, 1]
+    | 3 => some [459, 3, 0, 1]
+    | 4 => some [2, 393, 3, 0, 1]
+    | _ => none
+  | 463, n => match n with
+    | 1 => some [460, 1]
+    | 2 => some [3, 461, 1]
+    | 3 => some [460, 10, 0, 1]
+    | 4 => some [3, 262, 17, 0, 1]
+    | _ => none
+  | 467, n => match n with
+    | 1 => some [465, 1]
+    | 2 => some [2, 463, 1]
+    | 3 => some [465, 2, 0, 1]
+    | 4 => some [2, 353, 14, 0, 1]
+    | _ => none
+  | 479, n => match n with
+    | 1 => some [466, 1]
+    | 2 => some [13, 474, 1]
+    | 3 => some [466, 4, 0, 1]
+    | 4 => some [13, 386, 6, 0, 1]
+    | _ => none
+  | 487, n => match n with
+    | 1 => some [484, 1]
+    | 2 => some [3, 485, 1]
+    | 3 => some [484, 4, 0, 1]
+    | 4 => some [3, 483, 4, 0, 1]
+    | _ => none
+  | 491, n => match n with
+    | 1 => some [489, 1]
+    | 2 => some [2, 487, 1]
+    | 3 => some [489, 2, 0, 1]
+    | 4 => some [2, 360, 7, 0, 1]
+    | _ => none
+  | 499, n => match n with
+    | 1 => some [492, 1]
+    | 2 => some [7, 493, 1]
+    | 3 => some [492, 2, 0, 1]
+    | 4 => some [7, 495, 4, 0, 1]
+    | _ => none
+  | 503, n => match n with
+    | 1 => some [498, 1]
+    | 2 => some [5, 498, 1]
+    | 3 => some [498, 2, 0, 1]
+    | 4 => some [5, 325, 6, 0, 1]
+    | _ => none
+  | 509, n => match n with
+    | 1 => some [507, 1]
+    | 2 => some [2, 508, 1]
+    | 3 => some [507, 3, 0, 1]
+    | 4 => some [2, 408, 4, 0, 1]
+    | _ => none
+  | 521, n => match n with
+    | 1 => some [518, 1]
+    | 2 => some [3, 515, 1]
+    | 3 => some [518, 4, 0, 1]
+    | 4 => some [3, 509, 0, 0, 1]
+    | _ => none
+  | 523, n => match n with
+    | 1 => some [521, 1]
+    | 2 => some [2, 522, 1]
+    | 3 => some [521, 5, 0, 1]
+    | 4 => some [2, 382, 2, 0, 1]
+    | _ => none
+  | 541, n => match n with
+    | 1 => some [539, 1]
+    | 2 => some [2, 537, 1]
+    | 3 => some [539, 2, 0, 1]
+    | 4 => some [2, 333, 6, 0, 1]
+    | _ => none
+  | 547, n => match n with
+    | 1 => some [545, 1]
+    | 2 => some [2, 543, 1]
+    | 3 => some [545, 4, 0, 1]
+    | 4 => some [2, 334, 8, 0, 1]
+    | _ => none
+  | 557, n => match n with
+    | 1 => some [555, 1]
+    | 2 => some [2, 553, 1]
+    | 3 => some [555, 3, 0, 1]
+    | 4 => some [2, 430, 7, 0, 1]
+    | _ => none
+  | 563, n => match n with
+    | 1 => some [561, 1]
+    | 2 => some [2, 559, 1]
+    | 3 => some [561, 3, 0, 1]
+    | 4 => some [2, 399, 20, 0, 1]
+    | _ => none
+  | 569, n => match n with
+    | 1 => some [566, 1]
+    | 2 => some [3, 568, 1]
+    | 3 => some [566, 4, 0, 1]
+    | 4 => some [3, 381, 7, 0, 1]
+    | _ => none
+  | 571, n => match n with
+    | 1 => some [568, 1]
+    | 2 => some [3, 570, 1]
+    | 3 => some [568, 8, 0, 1]
+    | 4 => some [3, 402, 2, 0, 1]
+    | _ => none
+  | 577, n => match n with
+    | 1 => some [572, 1]
+    | 2 => some [5, 572, 1]
+    | 3 => some [572, 2, 0, 1]
+    | 4 => some [5, 494, 12, 0, 1]
+    | _ => none
+  | 587, n => match n with
+    | 1 => some [585, 1]
+    | 2 => some [2, 583, 1]
+    | 3 => some [585, 3, 0, 1]
+    | 4 => some [2, 444, 16, 0, 1]
+    | _ => none
+  | 593, n => match n with
+    | 1 => some [590, 1]
+    | 2 => some [3, 592, 1]
+    | 3 => some [590, 6, 0, 1]
+    | 4 => some [3, 419, 4, 0, 1]
+    | _ => none
+  | 599, n => match n with
+    | 1 => some [592, 1]
+    | 2 => some [7, 598, 1]
+    | 3 => some [592, 2, 0, 1]
+    | 4 => some [7, 419, 3, 0, 1]
+    | _ => none
+  | 601, n => match n with
+    | 1 => some [594, 1]
+    | 2 => some [7, 598, 1]
+    | 3 => some [594, 1, 0, 1]
+    | 4 => some [7, 347, 14, 0, 1]
+    | _ => none
+  | 607, n => match n with
+    | 1 => some [604, 1]
+    | 2 => some [3, 606, 1]
+    | 3 => some [604, 5, 0, 1]
+    | 4 => some [3, 449, 8, 0, 1]
+    | _ => none
+  | 613, n => match n with
+    | 1 => some [611, 1]
+    | 2 => some [2, 609, 1]
+    | 3 => some [611, 6, 0, 1]
+    | 4 => some [2, 333, 12, 0, 1]
+    | _ => none
+  | 617, n => match n with
+    | 1 => some [614, 1]
+    | 2 => some [3, 612, 1]
+    | 3 => some [614, 3, 0, 1]
+    | 4 => some [3, 503, 2, 0, 1]
+    | _ => none
+  | 619, n => match n with
+    | 1 => some [617, 1]
+    | 2 => some [2, 618, 1]
+    | 3 => some [617, 6, 0, 1]
+    | 4 => some [2, 492, 6, 0, 1]
+    | _ => none
+  | 631, n => match n with
+    | 1 => some [628, 1]
+    | 2 => some [3, 629, 1]
+    | 3 => some [628, 5, 0, 1]
+    | 4 => some [3, 376, 6, 0, 1]
+    | _ => none
+  | 641, n => match n with
+    | 1 => some [638, 1]
+    | 2 => some [3, 635, 1]
+    | 3 => some [638, 4, 0, 1]
+    | 4 => some [3, 629, 0, 0, 1]
+    | _ => none
+  | 643, n => match n with
+    | 1 => some [632, 1]
+    | 2 => some [11, 641, 1]
+    | 3 => some [632, 1, 0, 1]
+    | 4 => some [11, 600, 0, 0, 1]
+    | _ => none
+  | 647, n => match n with
+    | 1 => some [642, 1]
+    | 2 => some [5, 645, 1]
+    | 3 => some [642, 6, 0, 1]
+    | 4 => some [5, 643, 3, 0, 1]
+    | _ => none
+  | 653, n => match n with
+    | 1 => some [651, 1]
+    | 2 => some [2, 649, 1]
+    | 3 => some [651, 3, 0, 1]
+    | 4 => some [2, 596, 6, 0, 1]
+    | _ => none
+  | 659, n => match n with
+    | 1 => some [657, 1]
+    | 2 => some [2, 655, 1]
+    | 3 => some [657, 2, 0, 1]
+    | 4 => some [2, 351, 8, 0, 1]
+    | _ => none
+  | 661, n => match n with
+    | 1 => some [659, 1]
+    | 2 => some [2, 660, 1]
+    | 3 => some [659, 4, 0, 1]
+    | 4 => some [2, 616, 7, 0, 1]
+    | _ => none
+  | 673, n => match n with
+    | 1 => some [668, 1]
+    | 2 => some [5, 672, 1]
+    | 3 => some [668, 1, 0, 1]
+    | 4 => some [5, 416, 6, 0, 1]
+    | _ => none
+  | 677, n => match n with
+    | 1 => some [675, 1]
+    | 2 => some [2, 672, 1]
+    | 3 => some [675, 2, 0, 1]
+    | 4 => some [2, 631, 0, 0, 1]
+    | _ => none
+  | 683, n => match n with
+    | 1 => some [678, 1]
+    | 2 => some [5, 682, 1]
+    | 3 => some [678, 5, 0, 1]
+    | 4 => some [5, 455, 5, 0, 1]
+    | _ => none
+  | 691, n => match n with
+    | 1 => some [688, 1]
+    | 2 => some [3, 686, 1]
+    | 3 => some [688, 14, 0, 1]
+    | 4 => some [3, 632, 3, 0, 1]
+    | _ => none
+  | 701, n => match n with
+    | 1 => some [699, 1]
+    | 2 => some [2, 697, 1]
+    | 3 => some [699, 2, 0, 1]
+    | 4 => some [2, 379, 12, 0, 1]
+    | _ => none
+  | 709, n => match n with
+    | 1 => some [707, 1]
+    | 2 => some [2, 705, 1]
+    | 3 => some [707, 2, 0, 1]
+    | 4 => some [2, 384, 6, 0, 1]
+    | _ => none
+  | 719, n => match n with
+    | 1 => some [708, 1]
+    | 2 => some [11, 715, 1]
+    | 3 => some [708, 1, 0, 1]
+    | 4 => some [11, 602, 5, 0, 1]
+    | _ => none
+  | 727, n => match n with
+    | 1 => some [722, 1]
+    | 2 => some [5, 725, 1]
+    | 3 => some [722, 7, 0, 1]
+    | 4 => some [5, 723, 3, 0, 1]
+    | _ => none
+  | 733, n => match n with
+    | 1 => some [727, 1]
+    | 2 => some [6, 732, 1]
+    | 3 => some [727, 4, 0, 1]
+    | 4 => some [6, 539, 12, 0, 1]
+    | _ => none
+  | 739, n => match n with
+    | 1 => some [736, 1]
+    | 2 => some [3, 734, 1]
+    | 3 => some [736, 11, 0, 1]
+    | 4 => some [3, 678, 3, 0, 1]
+    | _ => none
+  | 743, n => match n with
+    | 1 => some [738, 1]
+    | 2 => some [5, 742, 1]
+    | 3 => some [738, 3, 0, 1]
+    | 4 => some [5, 425, 5, 0, 1]
+    | _ => none
+  | 751, n => match n with
+    | 1 => some [748, 1]
+    | 2 => some [3, 749, 1]
+    | 3 => some [748, 5, 0, 1]
+    | 4 => some [3, 525, 3, 0, 1]
+    | _ => none
+  | 757, n => match n with
+    | 1 => some [755, 1]
+    | 2 => some [2, 753, 1]
+    | 3 => some [755, 6, 0, 1]
+    | 4 => some [2, 537, 10, 0, 1]
+    | _ => none
+  | 761, n => match n with
+    | 1 => some [755, 1]
+    | 2 => some [6, 758, 1]
+    | 3 => some [755, 12, 0, 1]
+    | 4 => some [6, 658, 0, 0, 1]
+    | _ => none
+  | 769, n => match n with
+    | 1 => some [758, 1]
+    | 2 => some [11, 765, 1]
+    | 3 => some [758, 2, 0, 1]
+    | 4 => some [11, 741, 32, 0, 1]
+    | _ => none
+  | 773, n => match n with
+    | 1 => some [771, 1]
+    | 2 => some [2, 772, 1]
+    | 3 => some [771, 2, 0, 1]
+    | 4 => some [2, 444, 4, 0, 1]
+    | _ => none
+  | 787, n => match n with
+    | 1 => some [785, 1]
+    | 2 => some [2, 786, 1]
+    | 3 => some [785, 2, 0, 1]
+    | 4 => some [2, 605, 11, 0, 1]
+    | _ => none
+  | 797, n => match n with
+    | 1 => some [795, 1]
+    | 2 => some [2, 793, 1]
+    | 3 => some [795, 2, 0, 1]
+    | 4 => some [2, 717, 1, 0, 1]
+    | _ => none
+  | 809, n => match n with
+    | 1 => some [806, 1]
+    | 2 => some [3, 799, 1]
+    | 3 => some [806, 1, 0, 1]
+    | 4 => some [3, 644, 4, 0, 1]
+    | _ => none
+  | 811, n => match n with
+    | 1 => some [808, 1]
+    | 2 => some [3, 806, 1]
+    | 3 => some [808, 1, 0, 1]
+    | 4 => some [3, 453, 3, 0, 1]
+    | _ => none
+  | 821, n => match n with
+    | 1 => some [819, 1]
+    | 2 => some [2, 816, 1]
+    | 3 => some [819, 2, 0, 1]
+    | 4 => some [2, 662, 15, 0, 1]
+    | _ => none
+  | 823, n => match n with
+    | 1 => some [820, 1]
+    | 2 => some [3, 821, 1]
+    | 3 => some [820, 3, 0, 1]
+    | 4 => some [3, 819, 4, 0, 1]
+    | _ => none
+  | 827, n => match n with
+    | 1 => some [825, 1]
+    | 2 => some [2, 821, 1]
+    | 3 => some [825, 5, 0, 1]
+    | 4 => some [2, 605, 18, 0, 1]
+    | _ => none
+  | 829, n => match n with
+    | 1 => some [827, 1]
+    | 2 => some [2, 828, 1]
+    | 3 => some [827, 5, 0, 1]
+    | 4 => some [2, 604, 9, 0, 1]
+    | _ => none
+  | 839, n => match n with
+    | 1 => some [828, 1]
+    | 2 => some [11, 838, 1]
+    | 3 => some [828, 4, 0, 1]
+    | 4 => some [11, 609, 2, 0, 1]
+    | _ => none
+  | 853, n => match n with
+    | 1 => some [851, 1]
+    | 2 => some [2, 852, 1]
+    | 3 => some [851, 4, 0, 1]
+    | 4 => some [2, 623, 3, 0, 1]
+    | _ => none
+  | 857, n => match n with
+    | 1 => some [854, 1]
+    | 2 => some [3, 850, 1]
+    | 3 => some [854, 4, 0, 1]
+    | 4 => some [3, 528, 0, 0, 1]
+    | _ => none
+  | 859, n => match n with
+    | 1 => some [857, 1]
+    | 2 => some [2, 858, 1]
+    | 3 => some [857, 6, 0, 1]
+    | 4 => some [2, 530, 2, 0, 1]
+    | _ => none
+  | 863, n => match n with
+    | 1 => some [858, 1]
+    | 2 => some [5, 862, 1]
+    | 3 => some [858, 5, 0, 1]
+    | 4 => some [5, 770, 2, 0, 1]
+    | _ => none
+  | 877, n => match n with
+    | 1 => some [875, 1]
+    | 2 => some [2, 873, 1]
+    | 3 => some [875, 5, 0, 1]
+    | 4 => some [2, 604, 6, 0, 1]
+    | _ => none
+  | 881, n => match n with
+    | 1 => some [878, 1]
+    | 2 => some [3, 869, 1]
+    | 3 => some [878, 1, 0, 1]
+    | 4 => some [3, 447, 0, 0, 1]
+    | _ => none
+  | 883, n => match n with
+    | 1 => some [881, 1]
+    | 2 => some [2, 879, 1]
+    | 3 => some [881, 6, 0, 1]
+    | 4 => some [2, 715, 8, 0, 1]
+    | _ => none
+  | 887, n => match n with
+    | 1 => some [882, 1]
+    | 2 => some [5, 885, 1]
+    | 3 => some [882, 1, 0, 1]
+    | 4 => some [5, 883, 3, 0, 1]
+    | _ => none
+  | 907, n => match n with
+    | 1 => some [905, 1]
+    | 2 => some [2, 903, 1]
+    | 3 => some [905, 4, 0, 1]
+    | 4 => some [2, 478, 14, 0, 1]
+    | _ => none
+  | 911, n => match n with
+    | 1 => some [894, 1]
+    | 2 => some [17, 909, 1]
+    | 3 => some [894, 1, 0, 1]
+    | 4 => some [17, 887, 11, 0, 1]
+    | _ => none
+  | 919, n => match n with
+    | 1 => some [912, 1]
+    | 2 => some [7, 910, 1]
+    | 3 => some [912, 2, 0, 1]
+    | 4 => some [7, 602, 3, 0, 1]
+    | _ => none
+  | 929, n => match n with
+    | 1 => some [926, 1]
+    | 2 => some [3, 917, 1]
+    | 3 => some [926, 5, 0, 1]
+    | 4 => some [3, 787, 0, 0, 1]
+    | _ => none
+  | 937, n => match n with
+    | 1 => some [932, 1]
+    | 2 => some [5, 934, 1]
+    | 3 => some [932, 3, 0, 1]
+    | 4 => some [5, 585, 23, 0, 1]
+    | _ => none
+  | 941, n => match n with
+    | 1 => some [939, 1]
+    | 2 => some [2, 940, 1]
+    | 3 => some [939, 3, 0, 1]
+    | 4 => some [2, 505, 3, 0, 1]
+    | _ => none
+  | 947, n => match n with
+    | 1 => some [945, 1]
+    | 2 => some [2, 943, 1]
+    | 3 => some [945, 3, 0, 1]
+    | 4 => some [2, 894, 8, 0, 1]
+    | _ => none
+  | 953, n => match n with
+    | 1 => some [950, 1]
+    | 2 => some [3, 947, 1]
+    | 3 => some [950, 7, 0, 1]
+    | 4 => some [3, 865, 1, 0, 1]
+    | _ => none
+  | 967, n => match n with
+    | 1 => some [962, 1]
+    | 2 => some [5, 965, 1]
+    | 3 => some [962, 1, 0, 1]
+    | 4 => some [5, 963, 3, 0, 1]
+    | _ => none
+  | 971, n => match n with
+    | 1 => some [965, 1]
+    | 2 => some [6, 970, 1]
+    | 3 => some [965, 3, 0, 1]
+    | 4 => some [6, 527, 2, 0, 1]
+    | _ => none
+  | 977, n => match n with
+    | 1 => some [974, 1]
+    | 2 => some [3, 972, 1]
+    | 3 => some [974, 1, 0, 1]
+    | 4 => some [3, 800, 0, 0, 1]
+    | _ => none
+  | 983, n => match n with
+    | 1 => some [978, 1]
+    | 2 => some [5, 981, 1]
+    | 3 => some [978, 1, 0, 1]
+    | 4 => some [5, 567, 5, 0, 1]
+    | _ => none
+  | 991, n => match n with
+    | 1 => some [985, 1]
+    | 2 => some [6, 989, 1]
+    | 3 => some [985, 4, 0, 1]
+    | 4 => some [6, 794, 10, 0, 1]
+    | _ => none
+  | 997, n => match n with
+    | 1 => some [990, 1]
+    | 2 => some [7, 995, 1]
+    | 3 => some [990, 2, 0, 1]
+    | 4 => some [7, 622, 4, 0, 1]
     | _ => none
   | _, _ => none
 
@@ -373,7 +1069,7 @@ instance instPrimeModulus97 : ZMod64.PrimeModulus 97 := ZMod64.primeModulusOfPri
 
 /-- Exact verified keys, in characteristic and degree order. -/
 @[expose] def supportedPairs : List (Nat × Nat) :=
-  [(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9), (2, 10), (2, 11), (2, 12), (2, 13), (2, 14), (2, 15), (2, 16), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (5, 8), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 7), (7, 8), (11, 1), (11, 2), (11, 3), (11, 4), (11, 5), (11, 6), (13, 1), (13, 2), (13, 3), (13, 4), (13, 5), (13, 6), (17, 1), (17, 2), (19, 1), (19, 2), (23, 1), (23, 2), (29, 1), (29, 2), (31, 1), (31, 2), (37, 1), (37, 2), (41, 1), (41, 2), (43, 1), (43, 2), (47, 1), (47, 2), (53, 1), (53, 2), (59, 1), (59, 2), (61, 1), (61, 2), (67, 1), (67, 2), (71, 1), (71, 2), (73, 1), (73, 2), (79, 1), (79, 2), (83, 1), (83, 2), (89, 1), (89, 2), (97, 1), (97, 2)]
+  [(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9), (2, 10), (2, 11), (2, 12), (2, 13), (2, 14), (2, 15), (2, 16), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (5, 8), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 7), (7, 8), (11, 1), (11, 2), (11, 3), (11, 4), (11, 5), (11, 6), (13, 1), (13, 2), (13, 3), (13, 4), (13, 5), (13, 6), (17, 1), (17, 2), (17, 3), (17, 4), (19, 1), (19, 2), (19, 3), (19, 4), (23, 1), (23, 2), (23, 3), (23, 4), (29, 1), (29, 2), (29, 3), (29, 4), (31, 1), (31, 2), (31, 3), (31, 4), (37, 1), (37, 2), (37, 3), (37, 4), (41, 1), (41, 2), (41, 3), (41, 4), (43, 1), (43, 2), (43, 3), (43, 4), (47, 1), (47, 2), (47, 3), (47, 4), (53, 1), (53, 2), (53, 3), (53, 4), (59, 1), (59, 2), (59, 3), (59, 4), (61, 1), (61, 2), (61, 3), (61, 4), (67, 1), (67, 2), (67, 3), (67, 4), (71, 1), (71, 2), (71, 3), (71, 4), (73, 1), (73, 2), (73, 3), (73, 4), (79, 1), (79, 2), (79, 3), (79, 4), (83, 1), (83, 2), (83, 3), (83, 4), (89, 1), (89, 2), (89, 3), (89, 4), (97, 1), (97, 2), (97, 3), (97, 4), (101, 1), (101, 2), (101, 3), (101, 4), (103, 1), (103, 2), (103, 3), (103, 4), (107, 1), (107, 2), (107, 3), (107, 4), (109, 1), (109, 2), (109, 3), (109, 4), (113, 1), (113, 2), (113, 3), (113, 4), (127, 1), (127, 2), (127, 3), (127, 4), (131, 1), (131, 2), (131, 3), (131, 4), (137, 1), (137, 2), (137, 3), (137, 4), (139, 1), (139, 2), (139, 3), (139, 4), (149, 1), (149, 2), (149, 3), (149, 4), (151, 1), (151, 2), (151, 3), (151, 4), (157, 1), (157, 2), (157, 3), (157, 4), (163, 1), (163, 2), (163, 3), (163, 4), (167, 1), (167, 2), (167, 3), (167, 4), (173, 1), (173, 2), (173, 3), (173, 4), (179, 1), (179, 2), (179, 3), (179, 4), (181, 1), (181, 2), (181, 3), (181, 4), (191, 1), (191, 2), (191, 3), (191, 4), (193, 1), (193, 2), (193, 3), (193, 4), (197, 1), (197, 2), (197, 3), (197, 4), (199, 1), (199, 2), (199, 3), (199, 4), (211, 1), (211, 2), (211, 3), (211, 4), (223, 1), (223, 2), (223, 3), (223, 4), (227, 1), (227, 2), (227, 3), (227, 4), (229, 1), (229, 2), (229, 3), (229, 4), (233, 1), (233, 2), (233, 3), (233, 4), (239, 1), (239, 2), (239, 3), (239, 4), (241, 1), (241, 2), (241, 3), (241, 4), (251, 1), (251, 2), (251, 3), (251, 4), (257, 1), (257, 2), (257, 3), (257, 4), (263, 1), (263, 2), (263, 3), (263, 4), (269, 1), (269, 2), (269, 3), (269, 4), (271, 1), (271, 2), (271, 3), (271, 4), (277, 1), (277, 2), (277, 3), (277, 4), (281, 1), (281, 2), (281, 3), (281, 4), (283, 1), (283, 2), (283, 3), (283, 4), (293, 1), (293, 2), (293, 3), (293, 4), (307, 1), (307, 2), (307, 3), (307, 4), (311, 1), (311, 2), (311, 3), (311, 4), (313, 1), (313, 2), (313, 3), (313, 4), (317, 1), (317, 2), (317, 3), (317, 4), (331, 1), (331, 2), (331, 3), (331, 4), (337, 1), (337, 2), (337, 3), (337, 4), (347, 1), (347, 2), (347, 3), (347, 4), (349, 1), (349, 2), (349, 3), (349, 4), (353, 1), (353, 2), (353, 3), (353, 4), (359, 1), (359, 2), (359, 3), (359, 4), (367, 1), (367, 2), (367, 3), (367, 4), (373, 1), (373, 2), (373, 3), (373, 4), (379, 1), (379, 2), (379, 3), (379, 4), (383, 1), (383, 2), (383, 3), (383, 4), (389, 1), (389, 2), (389, 3), (389, 4), (397, 1), (397, 2), (397, 3), (397, 4), (401, 1), (401, 2), (401, 3), (401, 4), (409, 1), (409, 2), (409, 3), (409, 4), (419, 1), (419, 2), (419, 3), (419, 4), (421, 1), (421, 2), (421, 3), (421, 4), (431, 1), (431, 2), (431, 3), (431, 4), (433, 1), (433, 2), (433, 3), (433, 4), (439, 1), (439, 2), (439, 3), (439, 4), (443, 1), (443, 2), (443, 3), (443, 4), (449, 1), (449, 2), (449, 3), (449, 4), (457, 1), (457, 2), (457, 3), (457, 4), (461, 1), (461, 2), (461, 3), (461, 4), (463, 1), (463, 2), (463, 3), (463, 4), (467, 1), (467, 2), (467, 3), (467, 4), (479, 1), (479, 2), (479, 3), (479, 4), (487, 1), (487, 2), (487, 3), (487, 4), (491, 1), (491, 2), (491, 3), (491, 4), (499, 1), (499, 2), (499, 3), (499, 4), (503, 1), (503, 2), (503, 3), (503, 4), (509, 1), (509, 2), (509, 3), (509, 4), (521, 1), (521, 2), (521, 3), (521, 4), (523, 1), (523, 2), (523, 3), (523, 4), (541, 1), (541, 2), (541, 3), (541, 4), (547, 1), (547, 2), (547, 3), (547, 4), (557, 1), (557, 2), (557, 3), (557, 4), (563, 1), (563, 2), (563, 3), (563, 4), (569, 1), (569, 2), (569, 3), (569, 4), (571, 1), (571, 2), (571, 3), (571, 4), (577, 1), (577, 2), (577, 3), (577, 4), (587, 1), (587, 2), (587, 3), (587, 4), (593, 1), (593, 2), (593, 3), (593, 4), (599, 1), (599, 2), (599, 3), (599, 4), (601, 1), (601, 2), (601, 3), (601, 4), (607, 1), (607, 2), (607, 3), (607, 4), (613, 1), (613, 2), (613, 3), (613, 4), (617, 1), (617, 2), (617, 3), (617, 4), (619, 1), (619, 2), (619, 3), (619, 4), (631, 1), (631, 2), (631, 3), (631, 4), (641, 1), (641, 2), (641, 3), (641, 4), (643, 1), (643, 2), (643, 3), (643, 4), (647, 1), (647, 2), (647, 3), (647, 4), (653, 1), (653, 2), (653, 3), (653, 4), (659, 1), (659, 2), (659, 3), (659, 4), (661, 1), (661, 2), (661, 3), (661, 4), (673, 1), (673, 2), (673, 3), (673, 4), (677, 1), (677, 2), (677, 3), (677, 4), (683, 1), (683, 2), (683, 3), (683, 4), (691, 1), (691, 2), (691, 3), (691, 4), (701, 1), (701, 2), (701, 3), (701, 4), (709, 1), (709, 2), (709, 3), (709, 4), (719, 1), (719, 2), (719, 3), (719, 4), (727, 1), (727, 2), (727, 3), (727, 4), (733, 1), (733, 2), (733, 3), (733, 4), (739, 1), (739, 2), (739, 3), (739, 4), (743, 1), (743, 2), (743, 3), (743, 4), (751, 1), (751, 2), (751, 3), (751, 4), (757, 1), (757, 2), (757, 3), (757, 4), (761, 1), (761, 2), (761, 3), (761, 4), (769, 1), (769, 2), (769, 3), (769, 4), (773, 1), (773, 2), (773, 3), (773, 4), (787, 1), (787, 2), (787, 3), (787, 4), (797, 1), (797, 2), (797, 3), (797, 4), (809, 1), (809, 2), (809, 3), (809, 4), (811, 1), (811, 2), (811, 3), (811, 4), (821, 1), (821, 2), (821, 3), (821, 4), (823, 1), (823, 2), (823, 3), (823, 4), (827, 1), (827, 2), (827, 3), (827, 4), (829, 1), (829, 2), (829, 3), (829, 4), (839, 1), (839, 2), (839, 3), (839, 4), (853, 1), (853, 2), (853, 3), (853, 4), (857, 1), (857, 2), (857, 3), (857, 4), (859, 1), (859, 2), (859, 3), (859, 4), (863, 1), (863, 2), (863, 3), (863, 4), (877, 1), (877, 2), (877, 3), (877, 4), (881, 1), (881, 2), (881, 3), (881, 4), (883, 1), (883, 2), (883, 3), (883, 4), (887, 1), (887, 2), (887, 3), (887, 4), (907, 1), (907, 2), (907, 3), (907, 4), (911, 1), (911, 2), (911, 3), (911, 4), (919, 1), (919, 2), (919, 3), (919, 4), (929, 1), (929, 2), (929, 3), (929, 4), (937, 1), (937, 2), (937, 3), (937, 4), (941, 1), (941, 2), (941, 3), (941, 4), (947, 1), (947, 2), (947, 3), (947, 4), (953, 1), (953, 2), (953, 3), (953, 4), (967, 1), (967, 2), (967, 3), (967, 4), (971, 1), (971, 2), (971, 3), (971, 4), (977, 1), (977, 2), (977, 3), (977, 4), (983, 1), (983, 2), (983, 3), (983, 4), (991, 1), (991, 2), (991, 3), (991, 4), (997, 1), (997, 2), (997, 3), (997, 4)]
 
 
 end Conway

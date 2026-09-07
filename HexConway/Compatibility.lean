@@ -10,12 +10,36 @@ public import HexConway.CompatibilityCore
 
 public import HexConway.CompatibilityProofs.S0_0
 public import HexConway.CompatibilityProofs.S0_1
+public import HexConway.CompatibilityProofs.S0_2
+public import HexConway.CompatibilityProofs.S0_3
+public import HexConway.CompatibilityProofs.S0_4
+public import HexConway.CompatibilityProofs.S0_5
+public import HexConway.CompatibilityProofs.S0_6
+public import HexConway.CompatibilityProofs.S0_7
 public import HexConway.CompatibilityProofs.S1_0
 public import HexConway.CompatibilityProofs.S1_1
+public import HexConway.CompatibilityProofs.S1_2
+public import HexConway.CompatibilityProofs.S1_3
+public import HexConway.CompatibilityProofs.S1_4
+public import HexConway.CompatibilityProofs.S1_5
+public import HexConway.CompatibilityProofs.S1_6
+public import HexConway.CompatibilityProofs.S1_7
 public import HexConway.CompatibilityProofs.S2_0
 public import HexConway.CompatibilityProofs.S2_1
+public import HexConway.CompatibilityProofs.S2_2
+public import HexConway.CompatibilityProofs.S2_3
+public import HexConway.CompatibilityProofs.S2_4
+public import HexConway.CompatibilityProofs.S2_5
+public import HexConway.CompatibilityProofs.S2_6
+public import HexConway.CompatibilityProofs.S2_7
 public import HexConway.CompatibilityProofs.S3_0
 public import HexConway.CompatibilityProofs.S3_1
+public import HexConway.CompatibilityProofs.S3_2
+public import HexConway.CompatibilityProofs.S3_3
+public import HexConway.CompatibilityProofs.S3_4
+public import HexConway.CompatibilityProofs.S3_5
+public import HexConway.CompatibilityProofs.S3_6
+public import HexConway.CompatibilityProofs.S3_7
 
 public section
 
@@ -27,14 +51,6 @@ set_option maxHeartbeats 80000000
 
 -- BEGIN GENERATED
 -- END GENERATED
-
-/-! # The uniform statement
-
-The fifty-two facts above are indexed by literal `(p, m, n)`. This is the form
-the SPEC names: one theorem taking the divisibility hypothesis, dispatching on
-the pair. Anything outside the committed table has no `SupportedEntry`, so the
-hypothesis pair is what makes the match total.
--/
 
 /-- Re-export a supplied compatibility witness through the uniform API.
 The generated `compat_p_m_n` theorems supply the witnesses for supported

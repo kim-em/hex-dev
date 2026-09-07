@@ -7,9 +7,37 @@ Authors: Kim Morrison
 module
 
 public import HexConway.Rabin.S0_0
+public import HexConway.Rabin.S0_1
+public import HexConway.Rabin.S0_2
+public import HexConway.Rabin.S0_3
+public import HexConway.Rabin.S0_4
+public import HexConway.Rabin.S0_5
+public import HexConway.Rabin.S0_6
+public import HexConway.Rabin.S0_7
 public import HexConway.Rabin.S1_0
+public import HexConway.Rabin.S1_1
+public import HexConway.Rabin.S1_2
+public import HexConway.Rabin.S1_3
+public import HexConway.Rabin.S1_4
+public import HexConway.Rabin.S1_5
+public import HexConway.Rabin.S1_6
+public import HexConway.Rabin.S1_7
 public import HexConway.Rabin.S2_0
+public import HexConway.Rabin.S2_1
+public import HexConway.Rabin.S2_2
+public import HexConway.Rabin.S2_3
+public import HexConway.Rabin.S2_4
+public import HexConway.Rabin.S2_5
+public import HexConway.Rabin.S2_6
+public import HexConway.Rabin.S2_7
 public import HexConway.Rabin.S3_0
+public import HexConway.Rabin.S3_1
+public import HexConway.Rabin.S3_2
+public import HexConway.Rabin.S3_3
+public import HexConway.Rabin.S3_4
+public import HexConway.Rabin.S3_5
+public import HexConway.Rabin.S3_6
+public import HexConway.Rabin.S3_7
 
 public section
 

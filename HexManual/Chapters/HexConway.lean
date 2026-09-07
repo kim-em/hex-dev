@@ -35,9 +35,9 @@ Conway table as a lookup with irreducibility, primitivity, and divisor
 compatibility proofs. Tier 3 search is unimplemented. The imported choice
 comes from Lübeck; these proofs do not establish lexicographic minimality.
 
-`HexConway` is Mathlib-free. It depends only on `HexBerlekamp` (for the
-Rabin irreducibility checker that certifies each committed entry) and
-the prime-field polynomial library it reaches through it. Each supported
+`HexConway` is Mathlib-free. It depends on `HexBerlekamp` for Rabin irreducibility certificates and
+`HexPrimality` for certificates of the prime factors of multiplicative
+orders, together with the prime-field polynomial and quotient libraries. Each supported
 `(p, n)` pair commits a named polynomial literal, a machine-checked
 irreducibility proof, and a {name}`Hex.Conway.SupportedEntry` witness
 packaging the lookup together with its proof. See
@@ -125,8 +125,7 @@ namespace HexConwayChapter
   luebeckConwayPolynomial_2_3
 
 -- Unsupported pairs return none rather than
--- searching. The binary column runs to degree 8,
--- the odd primes to 6.
+-- searching or generating certificates.
 #guard luebeckConwayPolynomial? 2 8 =
   some luebeckConwayPolynomial_2_8
 #guard luebeckConwayPolynomial? 2 129 =
@@ -168,39 +167,30 @@ The committed table is ordinary Lean code that the kernel checks like
 any other definition, and it is long: coefficient literals, monicity and
 degree lemmas, a Rabin certificate, and an irreducibility proof for
 every entry. Changing which slice of Lübeck's data is committed is
-therefore not a hand edit. Two commands do it.
+therefore not a hand edit. The offline generator
+`scripts/conway/generate.py` reads the exact pair list in
+`scripts/conway/scope.json` and the pinned source rows in
+`scripts/conway/candidates.json`. With the pinned SymPy version installed,
+run it to regenerate coefficients, Rabin certificates, factorizations,
+primality certificates, primitivity and compatibility proofs, supported-entry
+witnesses, Mathlib generator-order specializations, and the runtime replay
+driver. Its `--check` mode verifies that committed outputs match the inputs.
 
-`rebuild_luebeckConwayPolynomial?` regenerates the coefficient table. It
-reads the committed cache, keeps the entries inside a requested scope,
-and offers the regenerated definition as a `Try this:` replacement for
-the definition written immediately below it:
+Only `scripts/conway/import_source.py` fetches Lübeck's source. The source
+URL, digest, coefficient convention, and unavailable requested pairs are
+recorded alongside the imported rows. The separate shared Lübeck cache
+used by the factorization benchmark corpus is unchanged by this pipeline.
+The Lean commands `rebuild_luebeckConwayPolynomial?` and
+`#conway_entry_source` remain available for inspecting individual entries.
+Ordinary builds perform no network requests or certificate searches.
 
-```
-rebuild_luebeckConwayPolynomial? scope [2:8, 3:6, 5:6, 7:6, 11:6, 13:6]
-```
-
-The scope is a maximum degree per prime, which is what makes the binary
-column reach `n = 8` while the odd primes stop at `n = 6`. The emitted
-replacement carries that invocation commented out directly above the
-definition, so the next reader can see which scope produced the
-committed table and re-run it without reconstructing the arguments.
-
-`#conway_entry_source p n` prints the per-entry block: the polynomial
-literal, its monicity and degree lemmas, the Rabin certificate, and the
-irreducibility proof that replays it. The coefficients come from the
-cache rather than from the caller, so the command cannot be talked into
-emitting a valid certificate under a mislabelled `C(p, n)`.
-
-Neither command touches the network. The cache itself is refreshed from
-Lübeck's published table by
-`scripts/oracle/update_luebeck_conway_cache.py`, which is the only step
-that does, so a rebuild is reproducible offline and its output is a pure
-function of the cache and the scope.
-
-Widening the scope is a cost decision, not a mathematical one. The
-kernel replays each certificate at elaboration time, and that replay is
-what the scope is measured against; `reports/hex-conway-performance.md`
-records the per-entry cost that set the current bounds.
+The scope must preserve existing support and contain every positive divisor
+of each supported degree. Selection is measured against a 300-second clean
+rebuild ceiling for all Conway code and proofs with dependencies already
+built. The selected scope must pass three controlled runs. Additional
+Mathlib bridge compilation is measured separately. See
+`reports/hex-conway-performance.md` for the machine, exact scopes, costs,
+and unavailable or expensive candidates.
 
 # Cross-references
 %%%
@@ -220,14 +210,14 @@ tag := "hex-conway-cross-references"
 * Tier 2 primitivity and divisor compatibility are implemented in this
   library. Generator-order and subfield-embedding bridges live in
   `HexGFqMathlib`. Tier 3 search is unimplemented.
-  Until Tier 2 lands, what Lean checks about a committed entry is that
-  it is monic, irreducible, and of the requested degree. That it is the
-  *Conway* polynomial for its pair, rather than some other irreducible
-  of the same degree, rests on the imported Lübeck table and is checked
-  outside Lean by the conformance oracle. Nothing downstream is weakened
-  by this: {ref "hex-gfq"}[`GFq p n`] is a genuine field of order `pⁿ`
-  either way. What is not yet available is the compatibility across the
-  subfield lattice that motivates the Conway choice in the first place.
+  Every supported entry has an irreducibility proof and a primitivity
+  certificate, including `C(2, 1)` with its trivial multiplicative group.
+  Every supported proper-divisor pair has a compatibility theorem. The
+  lexicographically minimal choice is imported from Lübeck and checked
+  against the pinned source by the conformance oracle; minimality itself
+  is not proved in Lean.
+* `HexPrimality` supplies Mathlib-free Pocklington certificates for large
+  factors of `p^n - 1`, avoiding unbounded trial division during builds.
 * `HexConway` is consumed by {ref "hex-gfq"}[`HexGFq`], which turns a
   {name}`Hex.Conway.SupportedEntry` into the canonical field `GFq p n`
   by handing the committed modulus to the quotient construction in

@@ -7,9 +7,21 @@ Authors: Kim Morrison
 module
 
 public import HexConway.FactorProofs.S0_0
+public import HexConway.FactorProofs.S0_1
+public import HexConway.FactorProofs.S0_2
+public import HexConway.FactorProofs.S0_3
 public import HexConway.FactorProofs.S1_0
+public import HexConway.FactorProofs.S1_1
+public import HexConway.FactorProofs.S1_2
+public import HexConway.FactorProofs.S1_3
 public import HexConway.FactorProofs.S2_0
+public import HexConway.FactorProofs.S2_1
+public import HexConway.FactorProofs.S2_2
+public import HexConway.FactorProofs.S2_3
 public import HexConway.FactorProofs.S3_0
+public import HexConway.FactorProofs.S3_1
+public import HexConway.FactorProofs.S3_2
+public import HexConway.FactorProofs.S3_3
 
 public section
 

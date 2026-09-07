@@ -28,9 +28,9 @@ Scientific registrations:
   checksums the result, and that traversal is linear in the degree, so this
   measurement stands for `C(2, 1)` rather than for the committed table.
 * `runTier1Irreducibility_13_6Checksum`: mode-3 Rabin irreducibility
-  verification for the hardest committed Tier 1 entry, `C(13, 6)`.
+  verification at the retained `C(13, 6)` anchor and binary degree 16.
 * `runTier2Compat_13_1_6Checksum`: mode-3 divisor compatibility for the
-  deepest largest-prime committed pair, `C(13, 1)` inside `C(13, 6)`.
+  divisor pairs, including the binary degree-16 norm chain.
 
 The mode-3 ceilings are enabled only by `HEXCONWAY_ENFORCE_BUDGETS=1` during
 scientific runs, so the CI smoke gate never asserts hosted-runner timing. The
@@ -250,15 +250,13 @@ def runTier2Compat_2_3_6Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_3_6Ref.get
   return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
-/-- Benchmark target: Tier 2 compatibility for the largest odd-prime pair,
-`C(13, 1)` inside `C(13, 6)`. This is the deepest Frobenius chain in the
-committed table: six factors. -/
+/-- Benchmark target: the retained odd-prime compatibility anchor. -/
 def runTier2Compat_13_1_6Checksum : Unit → IO Bool := fun () => do
   withBudget "Tier 2 C(13, 1) in C(13, 6) compatibility" 1_000_000 do
     let cp ← compat_13_1_6Ref.get
     return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
-/-- Benchmark target: Tier 2 compatibility for the deepest binary pair,
+/-- Benchmark target: Tier 2 compatibility for the binary pair,
 `C(2, 4)` inside `C(2, 8)`. -/
 def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_4_8Ref.get
@@ -346,9 +344,7 @@ setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
-/- Mode 3: Rabin verification at `C(13, 6)`, the slowest committed Tier 1
-entry. The 2 ms operation-scoped ceiling and its measured-baseline margin are
-recorded in the headline report. Modes 1 and 2 are ruled out there as well. -/
+/- Retained Tier 1 operation-budget anchor. -/
 setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -361,10 +357,7 @@ setup_fixed_benchmark runTier2Compat_2_3_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
-/- Mode 3: compatibility of `C(13, 1)` inside `C(13, 6)`, the committed pair
-with both the largest prime and deepest six-factor Frobenius chain. The 1 ms
-operation-scoped ceiling and its measured-baseline margin are recorded in the
-headline report. Modes 1 and 2 are ruled out there as well. -/
+/- Retained Tier 2 operation-budget anchor. -/
 setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -372,6 +365,34 @@ setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
 }
 
 setup_fixed_benchmark runTier2Compat_2_4_8Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+private initialize binary16Ref : IO.Ref (MonicPoly 2) ←
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_2_16,
+            Conway.luebeckConwayPolynomial_2_16_monic⟩
+
+/-- Rabin verification at binary degree 16. -/
+def runIrreducibility_2_16 : Unit → IO Bool := fun () => do
+  withBudget "C(2, 16) irreducibility" 2_000_000 do
+    let mp ← binary16Ref.get
+    return Berlekamp.rabinTest mp.poly mp.monic
+
+/-- Full binary degree-16 norm chain, with a mutable larger modulus. -/
+def runCompat_2_1_16 : Unit → IO Bool := fun () => do
+  withBudget "C(2, 1) in C(2, 16) compatibility" 5_000_000 do
+    let mp ← binary16Ref.get
+    return Conway.compatCheck Conway.luebeckConwayPolynomial_2_1 mp.poly mp.monic 1 16
+
+setup_fixed_benchmark runIrreducibility_2_16 where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+setup_fixed_benchmark runCompat_2_1_16 where {
   repeats := 5
   maxSecondsPerCall := 2.0
   expectedHash := some (Hashable.hash true)

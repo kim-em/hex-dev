@@ -35,20 +35,84 @@ theorem factorPrime_41 : Hex.Nat.Prime 41 :=
   Hex.Nat.prime_of_bounded 41 6 (by decide) (by decide) (by decide)
 
 /-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_59 : Hex.Nat.Prime 59 :=
+  Hex.Nat.prime_of_bounded 59 7 (by decide) (by decide) (by decide)
+
+/-- Primality of a factor of a supported multiplicative order. -/
 theorem factorPrime_73 : Hex.Nat.Prime 73 :=
   Hex.Nat.prime_of_bounded 73 8 (by decide) (by decide) (by decide)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_97 : Hex.Nat.Prime 97 :=
+  Hex.Nat.prime_of_bounded 97 9 (by decide) (by decide) (by decide)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_109 : Hex.Nat.Prime 109 :=
+  Hex.Nat.prime_of_bounded 109 10 (by decide) (by decide) (by decide)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_137 : Hex.Nat.Prime 137 :=
+  Hex.Nat.prime_of_bounded 137 11 (by decide) (by decide) (by decide)
 
 /-- Primality of a factor of a supported multiplicative order. -/
 theorem factorPrime_157 : Hex.Nat.Prime 157 :=
   Hex.Nat.prime_of_bounded 157 12 (by decide) (by decide) (by decide)
 
 /-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_1201 : Hex.Nat.Prime 1201 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .pock 1201 [(11, 3, .small 2), (2, 0, .small 3), (2, 1, .small 5)]) (by decide +kernel)
+theorem factorPrime_181 : Hex.Nat.Prime 181 :=
+  Hex.Nat.prime_of_bounded 181 13 (by decide) (by decide) (by decide)
 
 /-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_8191 : Hex.Nat.Prime 8191 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .pock 8191 [(3, 0, .small 2), (7, 1, .small 3), (3, 0, .small 5), (3, 0, .small 7), (2, 0, .small 13)]) (by decide +kernel)
+theorem factorPrime_199 : Hex.Nat.Prime 199 :=
+  Hex.Nat.prime_of_bounded 199 14 (by decide) (by decide) (by decide)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_233 : Hex.Nat.Prime 233 :=
+  Hex.Nat.prime_of_bounded 233 15 (by decide) (by decide) (by decide)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_257 : Hex.Nat.Prime 257 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 257) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_283 : Hex.Nat.Prime 283 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 283) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_317 : Hex.Nat.Prime 317 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 317) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_353 : Hex.Nat.Prime 353 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 353) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_379 : Hex.Nat.Prime 379 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 379) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_419 : Hex.Nat.Prime 419 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 419) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_439 : Hex.Nat.Prime 439 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 439) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_461 : Hex.Nat.Prime 461 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 461) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_499 : Hex.Nat.Prime 499 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 499) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_571 : Hex.Nat.Prime 571 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 571) (by decide +kernel)
+
+/-- Primality of a factor of a supported multiplicative order. -/
+theorem factorPrime_631 : Hex.Nat.Prime 631 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .small 631) (by decide +kernel)
 
 
 end Conway

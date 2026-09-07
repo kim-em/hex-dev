@@ -8,9 +8,37 @@ module
 
 public import HexConway.ApiCore
 public import HexConway.Supported.S0_0
+public import HexConway.Supported.S0_1
+public import HexConway.Supported.S0_2
+public import HexConway.Supported.S0_3
+public import HexConway.Supported.S0_4
+public import HexConway.Supported.S0_5
+public import HexConway.Supported.S0_6
+public import HexConway.Supported.S0_7
 public import HexConway.Supported.S1_0
+public import HexConway.Supported.S1_1
+public import HexConway.Supported.S1_2
+public import HexConway.Supported.S1_3
+public import HexConway.Supported.S1_4
+public import HexConway.Supported.S1_5
+public import HexConway.Supported.S1_6
+public import HexConway.Supported.S1_7
 public import HexConway.Supported.S2_0
+public import HexConway.Supported.S2_1
+public import HexConway.Supported.S2_2
+public import HexConway.Supported.S2_3
+public import HexConway.Supported.S2_4
+public import HexConway.Supported.S2_5
+public import HexConway.Supported.S2_6
+public import HexConway.Supported.S2_7
 public import HexConway.Supported.S3_0
+public import HexConway.Supported.S3_1
+public import HexConway.Supported.S3_2
+public import HexConway.Supported.S3_3
+public import HexConway.Supported.S3_4
+public import HexConway.Supported.S3_5
+public import HexConway.Supported.S3_6
+public import HexConway.Supported.S3_7
 
 public section
 

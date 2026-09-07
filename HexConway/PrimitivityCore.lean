@@ -25,7 +25,7 @@ Order `N` is established by the standard test: `α ^ N = 1`, and
 `α ^ (N / q) ≠ 1` for every prime `q` dividing `N`. Both halves are needed —
 the first alone only says the order divides `N`.
 
-The committed power data uses binary digits. Structural Horner evaluation
+The committed power data uses binary digits. Structural square-and-multiply
 keeps the multiplication count logarithmic in the exponent, independently of
 the characteristic. The generator searches for factorizations offline;
 Pocklington certificates from `HexPrimality` prove their prime factors.
