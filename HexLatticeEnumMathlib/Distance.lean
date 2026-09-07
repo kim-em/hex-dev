@@ -163,6 +163,67 @@ theorem distance_decomposition (p : Data n m) (rows : Hex.Matrix Int n m)
   intro i _
   rw [centre_eq p rows t hp z i, mul_comm]
 
+/-- Positive orthogonal rows have unique rational coordinates. -/
+theorem orthogonal_injective (p : Data n m) (rows : Hex.Matrix Int n m)
+    (t : Vector Rat m) (hp : p.Valid rows t) :
+    Function.Injective (fun a : Vector Rat n => Hex.Matrix.vecMul a p.orthogonal) := by
+  have hdot (a : Vector Rat n) (i : Fin n) :
+      (Hex.Matrix.vecMul a p.orthogonal).dotProduct (p.orthogonal.getRow i) =
+        a[i] * p.norms[i] := by
+    rw [dot_vecMul, Finset.sum_eq_single i]
+    · rw [(hp.1 i).2]
+      rfl
+    · intro j _ hji
+      rw [(hp.2.1 j i).2.2 hji, mul_zero]
+    · simp
+  intro a c hac
+  apply Vector.ext
+  intro j hj
+  have h := congrArg (fun v => v.dotProduct (p.orthogonal.getRow ⟨j, hj⟩)) hac
+  rw [hdot, hdot] at h
+  exact mul_right_cancel₀ (ne_of_gt (hp.1 ⟨j, hj⟩).1) h
+
+/-- Suffix centres depend only on strictly later coefficients. -/
+theorem centre_congr (p : Data n m) (z w : Vector Int n) (i : Fin n)
+    (h : ∀ j : Fin n, i < j → z[j] = w[j]) : p.centre z i = p.centre w i := by
+  unfold Data.centre
+  congr 1
+  apply congrArg (fun f => Fin.foldl n f 0)
+  funext acc j
+  split_ifs with hij
+  · rw [h j hij]
+  · rfl
+
+/-- Independent integer rows give unique original-basis coefficients. -/
+theorem vector_injective (b : Basis n m) : Function.Injective (vector b) := by
+  intro z w hzw
+  let p := prepare b (0 : Vector Rat m)
+  have hp : p.Valid := prepare_valid b 0
+  have heq : Hex.Matrix.vecMul (z.map fun x : Int => (x : Rat)) p.mu =
+      Hex.Matrix.vecMul (w.map fun x : Int => (x : Rat)) p.mu := by
+    apply orthogonal_injective p.toData b.rows 0 hp
+    dsimp only
+    rw [Hex.Matrix.vecMul_mul, Hex.Matrix.vecMul_mul, hp.2.2.1,
+      ← cast_vector, ← cast_vector]
+    exact congrArg (fun v : Vector Int m => v.map fun x : Int => (x : Rat)) hzw
+  have hall : ∀ k : Nat, k ≤ n → ∀ i : Fin n, k ≤ i.val → z[i] = w[i] := by
+    intro k hk
+    induction hk using Nat.decreasingInduction with
+    | self => intro i hi; omega
+    | of_succ k hk ih =>
+      intro i hi
+      by_cases hki : k = i.val
+      · have hc : p.toData.centre z i = p.toData.centre w i :=
+          centre_congr p.toData z w i (fun j hij => ih j (by omega))
+        have he := congrArg (fun a : Vector Rat n => a[i] - p.projection[i]) heq
+        rw [centre_eq p.toData b.rows 0 hp z i, centre_eq p.toData b.rows 0 hp w i, hc] at he
+        have he' : (z[i] : Rat) = (w[i] : Rat) := by linarith
+        exact_mod_cast he'
+      · exact ih i (by omega)
+  apply Vector.ext
+  intro i hi
+  exact hall 0 (Nat.zero_le n) ⟨i, hi⟩ (Nat.zero_le i)
+
 /-- Squared distances are nonnegative, independently of preparation. -/
 theorem distance_nonneg (v : Vector Int m) (t : Vector Rat m) : 0 ≤ distance v t := by
   unfold distance Vector.normSq
