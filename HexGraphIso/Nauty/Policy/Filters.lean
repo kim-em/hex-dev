@@ -44,10 +44,60 @@ theorem RunInv.cheap_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
   all_goals rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
   all_goals exact h.push_back _
 
-/-- The actual sweep's fix-passing pairs carry each vertex of the full
+/-- The shared prune tail requests a short filter only after admitting
+its implicit pair at a level different from the saved boundary. -/
+theorem pruneReturn_short {level target : Nat} {st : Search n}
+    (h : (pruneReturn level st).1 = .unwind target true) : level ≠ st.noncheaplevel := by
+  intro he
+  unfold pruneReturn at h
+  simp [he] at h
+
+/-- A short return from a bad or better leaf satisfies the implicit-pair
+admission test used by that very leaf action. -/
+theorem leafExit_cheap_short {level target : Nat} {st : Search n} {leaf : Leaf}
+    (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr)
+    (h : (leafExit leaf level st).1 = .unwind target true) : level ≠ st.noncheaplevel := by
+  rcases ha with rfl | ⟨sr, rfl⟩
+  all_goals unfold leafExit at h
+  all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst] at h
+  all_goals split at h
+  all_goals
+    have hp := pruneReturn_short h
+    exact hp
+
+/-- The actual short flag supplies the premise for reading the newly
+admitted implicit pair; no separate admission assumption is needed. -/
+theorem RunInv.short_back {G : Colored n k} {ctx : Ctx n} {st : Search n}
+    (h : RunInv G ctx st) {leaf : Leaf} {level target : Nat}
+    (ha : leaf = .bad ∨ ∃ sr, leaf = .better sr)
+    (hexit : (leafExit leaf level st).1 = .unwind target true) :
+    (leafExit leaf level st).2.autos.back? = some (fmptn st.lab st.ptn st.noncheaplevel n) :=
+  h.cheap_back ha (leafExit_cheap_short ha hexit)
+
+/-- Recovery retains the pruning workspace seen by the just-completed child. -/
+theorem recover_autos (inf level : Nat) (st : Search n) :
+    (recoverLevels level (recoverPtn inf level st)).autos = st.autos := by
+  unfold recoverLevels recoverPtn
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
+  repeat' split
+  all_goals rfl
+
+/-- Both filters read the same workspace before and after parent recovery.
+This lets the restored partition justify the filter that ran just before it. -/
+theorem recover_filters (inf level : Nat) (cell : VSet n) (st : Search n) :
+    let out := recoverLevels level (recoverPtn inf level st)
+    Nauty.longprune cell out.fixedpts out.autos = Nauty.longprune cell st.fixedpts st.autos ∧
+      shortprune cell out = shortprune cell st := by
+  dsimp only
+  constructor
+  · rw [recover_fixed, recover_autos]
+  · unfold shortprune
+    rw [recover_autos]
+
+/-- Fix-passing pairs at a sweep carry each vertex of the full
 target cell to a surviving representative under a checked automorphism
 stabilizing this partition and fixing its individualized path. -/
-theorem SweepPre.longprune {G : Colored n k} {ctx : Ctx n}
+theorem SweepPre.window_carriers {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells tc tv1 len : Nat} {first : Bool} {cursor : Option Nat}
     {cell : VSet n} {st : Search n}
     (h : SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st)
