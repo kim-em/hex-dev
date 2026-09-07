@@ -101,6 +101,14 @@ theorem Covers.incMax (best : Option (Key n)) (bound : Key n) :
     Covers bound (some (incMax best bound)) :=
   ⟨_, rfl, le_incMax best bound⟩
 
+/-- Covering every child covers the maximum of their nonempty key list. -/
+theorem Covers.keysMax {head : Key n} {tail : List (Key n)} {best : Option (Key n)}
+    (hh : Covers head best) (ht : ∀ key ∈ tail, Covers key best) :
+    Covers (keysMax head tail) best := by
+  rcases keysMax_mem tail head with he | hm
+  · rwa [he]
+  · exact ht _ hm
+
 /-- A fragment that changes nothing satisfies any fixed bound. -/
 theorem Bounded.refl (bound : Key n) (best : Option (Key n)) :
     Bounded bound best best := by
@@ -183,6 +191,36 @@ structure Result (bound : Key n) (before after : Option (Key n)) (stop : Nat)
   bounded : Bounded bound before after
   /-- The exit either completes coverage or transports an ancestor witness. -/
   coverage : ExitCover bound after stop witness exit
+
+/-- Complete child coverage closes a node once all installed keys have
+the same parent bound. The children include their common code prefix. -/
+theorem Result.node {head : Key n} {tail : List (Key n)}
+    {before after : Option (Key n)} {parent : Nat}
+    {witness : Nat → Option (Key n) → Prop}
+    (hbound : Bounded (keysMax head tail) before after)
+    (hhead : Covers head after) (htail : ∀ key ∈ tail, Covers key after) :
+    Result (keysMax head tail) before after parent witness (.unwind parent false) := by
+  refine ⟨hbound, Nat.le_refl _, ?_⟩
+  simpa only [↓reduceIte] using hhead.keysMax htail
+
+/-- Ancestor witnesses may be rewritten without changing a fragment's
+incumbent bounds or its ordinary completed coverage. -/
+theorem Result.mapWitness {bound : Key n} {before after : Option (Key n)}
+    {stop : Nat} {witness other : Nat → Option (Key n) → Prop} {exit : Exit}
+    (h : Result bound before after stop witness exit)
+    (hw : ∀ target, target < stop → witness target after → other target after) :
+    Result bound before after stop other exit := by
+  refine ⟨h.bounded, ?_⟩
+  cases exit with
+  | done => exact h.coverage
+  | fuel => trivial
+  | unwind target short =>
+    obtain ⟨hle, hc⟩ := h.coverage
+    refine ⟨hle, ?_⟩
+    by_cases he : target = stop
+    · simpa only [he, ↓reduceIte] using hc
+    · simp only [he, ↓reduceIte] at hc ⊢
+      exact hw target (by omega) hc
 
 /-- A complete sweep computes its fixed incumbent maximum. -/
 theorem Result.done {bound : Key n} {before after : Option (Key n)}
