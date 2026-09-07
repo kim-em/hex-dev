@@ -105,3 +105,33 @@ mapping, Phase-5–7 freshness, report Concerns, machine-readable metadata,
 phase/DAG checks and full CI before recertifying either library. Publication
 and release-manifest changes remain outside this campaign. If no admissible
 run passes, retain the exact blocker and leave both counters at 3.
+
+## Campaign result
+
+The preregistration commit is
+`0fac6714191c290fd60c5fdb910f11d7fab1875a`. The sole
+[attempt](bench-results/intfactor-divisors-campaign-3-attempt-1.json) was run
+from that clean commit and is explicitly rejected. The build and complete
+divisor audit passed, but none of the ten preflight windows met the 0.5% gate
+on both siblings, so no timing subprocess or telemetry sidecar was created.
+The retained busy fractions for CPUs 33/81 were, respectively:
+
+| window | CPU 33 | CPU 81 |
+| ---: | ---: | ---: |
+| 1 | 1.000% | 1.833% |
+| 2 | 2.267% | 2.600% |
+| 3 | 2.033% | 2.867% |
+| 4 | 4.433% | 4.700% |
+| 5 | 12.466% | 10.400% |
+| 6 | 1.700% | 1.300% |
+| 7 | 0.500% | 1.033% |
+| 8 | 2.067% | 2.167% |
+| 9 | 0.733% | 0.300% |
+| 10 | 1.033% | 1.867% |
+
+The record has SHA-256
+`217fd2c2c39925b24f83cddf8c8e9df6fd3d623e512bbf1fc291d21149e65893`
+and retains exact monotonic intervals, tick-derived busy seconds, host state,
+commands, stdout/stderr, source hashes, executable hash and the full audit.
+Preflight exhaustion is not timed contamination and does not authorize the
+replacement attempt. This campaign is exhausted with Phase 4 incomplete.

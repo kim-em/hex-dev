@@ -689,9 +689,17 @@ The inclusive profile and complete result validation remain available for
 integration once admissible timing evidence exists. The existing local
 Phase-5–7 work remains preserved; it does not discharge Phase 4.
 
-The [third campaign protocol](hex-int-factor-divisor-protocol-3.md) raises the
-host-interference ceiling to 0.5%, uses a resolution-aware 30-second preflight
-on surveyed pair 33/81, and preserves the model and all scientific settings.
-It is preregistered separately; no result from either exhausted protocol is
-reclassified. Phase 4 remains incomplete until this campaign earns admissible
-timing evidence and the integration audit succeeds.
+The [third campaign protocol](hex-int-factor-divisor-protocol-3.md) raised the
+host-interference ceiling to 0.5%, used a resolution-aware 30-second preflight
+on surveyed pair 33/81, and preserved the model and all scientific settings.
+Its sole [retained attempt](bench-results/intfactor-divisors-campaign-3-attempt-1.json)
+was made from clean preregistration commit
+`0fac6714191c290fd60c5fdb910f11d7fab1875a`. The build and independent
+complete-result audit passed, but all ten preflight windows exceeded 0.5% on
+at least one sibling. The closest window measured CPU 33 at 0.49999% and CPU
+81 at 1.03331%; another measured CPU 81 at 0.29999% but CPU 33 at 0.73332%.
+The collector therefore rejected the attempt before operation timing and
+retained the exact windows, commands, stdout/stderr, hashes and host state.
+Preflight exhaustion does not authorize the protocol's contamination-only
+replacement, so the third campaign is exhausted. It reclassifies no earlier
+result. Phase 4 remains incomplete and both registry counters remain at 3.
