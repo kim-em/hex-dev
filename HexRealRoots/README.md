@@ -26,19 +26,19 @@ open Hex
 
 def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 
-#eval (isolate? p).map (fun roots => roots.isolations.size)
+#eval (ZPoly.isolate? p).map (fun roots => roots.isolations.size)
 ```
 
 # Functionality
 
-- `Hex.isolate?` tries the Descartes search first and falls back to Sturm.
-- `Hex.isolateSturm?` runs direct Sturm bisection.
-- `Hex.isolateDescartes?` runs only the Descartes search, while still
+- `Hex.ZPoly.isolate?` tries the Descartes search first and falls back to Sturm.
+- `Hex.ZPoly.isolateSturm?` runs direct Sturm bisection.
+- `Hex.ZPoly.isolateDescartes?` runs only the Descartes search, while still
   certifying every emitted interval with Sturm.
-- `Hex.rootCount` computes the exact total real-root count.
-- `Hex.sturmCount` computes the exact count in one half-open interval.
+- `Hex.ZPoly.rootCount` computes the exact total real-root count.
+- `Hex.ZPoly.sturmCount` computes the exact count in one half-open interval.
 
-`isolate?` rejects the zero polynomial and, at the core level, expects a
+`ZPoly.isolate?` rejects the zero polynomial and, at the core level, expects a
 squarefree positive-degree input. Nonzero constants produce an empty result.
 The Mathlib bridge's `isolate_roots` elaborator automatically passes through
 the squarefree core, so end users normally do not manage repeated roots

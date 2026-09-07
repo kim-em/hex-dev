@@ -27,7 +27,7 @@ public section
 # Correspondence between the executable Sturm machinery and the abstract theorem
 
 This module connects the executable real-root machinery in `HexRealRoots`
-(`Hex.ZPoly.sturmChain`, `Hex.sturmVarAt`, `Hex.sturmCount`, `Hex.rootCount`,
+(`Hex.ZPoly.sturmChain`, `Hex.sturmVarAt`, `Hex.ZPoly.sturmCount`, `Hex.ZPoly.rootCount`,
 `Hex.ZPoly.SquareFreeRat`) to the abstract `Polynomial ℝ` development in
 `HexRealRootsMathlib.SturmTheorem`.
 
@@ -1441,11 +1441,11 @@ theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
   linarith
 
 /-- **Sturm count correspondence.** For positive-degree, rationally squarefree
-`p`, the executable `Hex.sturmCount p I` equals the number of real roots of
+`p`, the executable `Hex.ZPoly.sturmCount p I` equals the number of real roots of
 `toPolyℝ p` in the half-open interval `(I.lower, I.upper]`. -/
 theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     (hsq : Hex.ZPoly.SquareFreeRat p) (I : Hex.DyadicInterval) :
-    Hex.sturmCount p I
+    Hex.ZPoly.sturmCount p I
       = ((toPolyℝ p).roots.filter
           (fun r => Dyadic.toReal I.lower < r ∧ r ≤ Dyadic.toReal I.upper)).card := by
   have hp0 : p ≠ 0 := by
@@ -1508,11 +1508,11 @@ theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
     exact sign_intCast_sign _
 
 /-- **Root count correspondence.** For positive-degree, rationally squarefree
-`p`, the executable `Hex.rootCount p` equals the total number of real roots
+`p`, the executable `Hex.ZPoly.rootCount p` equals the total number of real roots
 of `toPolyℝ p`. -/
 theorem rootCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     (hsq : Hex.ZPoly.SquareFreeRat p) :
-    Hex.rootCount p = ((toPolyℝ p).roots).card := by
+    Hex.ZPoly.rootCount p = ((toPolyℝ p).roots).card := by
   have hp0 : p ≠ 0 := by
     intro hh; rw [hh] at hp
     simp only [Hex.DensePoly.degree?_zero_getD] at hp

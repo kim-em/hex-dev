@@ -185,9 +185,9 @@ rational-gcd computation whose well-founded recursion the kernel cannot unfold. 
     from the runtime decision procedure. -/
 private def isoAtoms (p : ZPoly) (prec : Int) (strat : AtomStrategy) :
     Option (Array (DyadicRootIsolation p)) :=
-  if h : HasOnlySimpleRoots p then isolate p h prec strat else none
+  if h : HasOnlySimpleRoots p then isolate? p h prec strat else none
 
-/-! # `isolate`: atom count, root coverage, geometry, strategy agreement.
+/-! # `isolate?`: atom count, root coverage, geometry, strategy agreement.
 
 Each squarefree fixture is isolated under all three strategies once; the single
 check per fixture asserts the atom count (its degree), the cross-strategy
@@ -242,14 +242,14 @@ under `nkThenPellet` alone for the same budget reason. -/
     | some ax => ax.size == 6 && ax.all fun i => onUnitCircle i.square
     | none => false)
 
-/-! # `isolate`: degenerate inputs.
+/-! # `isolate?`: degenerate inputs.
 
 `HasOnlySimpleRoots 0` holds (the gcd of `0` and its derivative is `0`, whose
 stored size is `0 ≤ 1`), so the zero polynomial reaches `isolate`, which pins it
 to `none`; a nonzero constant yields `some #[]`; the linear `x` yields a single
 atom whose disc covers the origin. -/
 
-#guard (if h : HasOnlySimpleRoots (0 : ZPoly) then (isolate (0 : ZPoly) h 8).isSome else true) == false
+#guard (if h : HasOnlySimpleRoots (0 : ZPoly) then (isolate? (0 : ZPoly) h 8).isSome else true) == false
 #guard (isoAtoms constant 8 .nkThenPellet).map (·.size) == some 0
 #guard
   (match isoAtoms linear 8 .nkThenPellet with
@@ -524,7 +524,7 @@ roots are preserved under every atom strategy. -/
 #guard (if HasOnlySimpleRoots mignotte then true else false)
 
 #guard (if h : HasOnlySimpleRoots mignotte then
-    match isolate mignotte h 8 with
+    match isolate? mignotte h 8 with
     | some ax =>
         ax.size == 5 &&
           -- the close pair: exactly two atom centres within 10⁻³ of 1/100
@@ -539,7 +539,7 @@ roots are preserved under every atom strategy. -/
   else false)
 
 #guard (if h : HasOnlySimpleRoots mignotte then
-    match isolate mignotte h 8 .nk, isolate mignotte h 8 .pellet with
+    match isolate? mignotte h 8 .nk, isolate? mignotte h 8 .pellet with
     | some a, some b => a.size == 5 && b.size == 5
     | _, _ => false
   else false)

@@ -40,8 +40,8 @@ over `Polynomial ℝ`, independently of the executable `HexRealRoots` types.
 
 The executable correspondence builds on these results:
 `ChainCorrespond` connects {name}`Hex.ZPoly.sturmChain`,
-{name}`Hex.sturmCount`, and
-{name}`Hex.rootCount` to the abstract development; `LiteralChain` proves the
+{name}`Hex.ZPoly.sturmCount`, and
+{name}`Hex.ZPoly.rootCount` to the abstract development; `LiteralChain` proves the
 corresponding theorem
 for a supplied positive-scaled recurrence, and `LiteralIsolations` states
 isolation semantics for its supplied counts; `Separation` supplies the Mahler

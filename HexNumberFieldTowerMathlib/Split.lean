@@ -260,7 +260,7 @@ theorem factorRoot?_sound (T : NumberTower) (f : Poly T)
       next hdegree =>
         split at h
         next hsimple =>
-          cases hisolate : isolate (factorEliminant f) hsimple
+          cases hisolate : isolate? (factorEliminant f) hsimple
               (separationDepth (factorEliminant f) : Int) with
           | none => simp [hisolate] at h
           | some isolations =>
@@ -368,10 +368,10 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
   unfold factorRoot?
   dsimp only
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
-  have hisolateSome := HexRootsMathlib.isolate_isSome
+  have hisolateSome := HexRootsMathlib.isolate?_isSome
     (factorEliminant f) hsimple hcoreNe
     (separationDepth (factorEliminant f) : Int) .nkThenPellet
-  cases hisolate : isolate (factorEliminant f) hsimple
+  cases hisolate : isolate? (factorEliminant f) hsimple
       (separationDepth (factorEliminant f) : Int) with
   | none => simp [hisolate] at hisolateSome
   | some isolations =>
@@ -380,7 +380,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dite_eq_left (HexRootsMathlib.isolate_refined
+          rw [dite_eq_left (HexRootsMathlib.isolate?_refined
             (factorEliminant f) hsimple
             (separationDepth (factorEliminant f) : Int)
             .nkThenPellet hisolate iso hiso)]
@@ -391,7 +391,7 @@ theorem factorRoot?_isSome (T : NumberTower) (f : Poly T)
       | some refined =>
           simp only [Option.bind_some]
           obtain ⟨iso, hiso, hisoRoot⟩ :=
-            HexRootsMathlib.isolate_root_mem_of_pos
+            HexRootsMathlib.isolate?_root_mem_of_pos
               (factorEliminant f) hsimple
               (separationDepth (factorEliminant f) : Int)
               .nkThenPellet hdegree hisolate hcoreRoot

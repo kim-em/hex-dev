@@ -272,9 +272,9 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
   unfold componentRoots?
   dsimp only
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
-  have hisolateSome := HexRootsMathlib.isolate_isSome eliminant hsimple
+  have hisolateSome := HexRootsMathlib.isolate?_isSome eliminant hsimple
     heliminant (separationDepth eliminant : Int) .nkThenPellet
-  cases hisolate : isolate eliminant hsimple
+  cases hisolate : isolate? eliminant hsimple
       (separationDepth eliminant : Int) with
   | none => simp [hisolate] at hisolateSome
   | some isolations =>
@@ -283,7 +283,7 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dite_eq_left (HexRootsMathlib.isolate_refined eliminant hsimple
+          rw [dite_eq_left (HexRootsMathlib.isolate?_refined eliminant hsimple
             (separationDepth eliminant : Int) .nkThenPellet
             hisolate iso hiso)]
           rfl)

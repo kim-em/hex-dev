@@ -422,7 +422,7 @@ def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     positive degree, so the degenerate inputs are pinned here: a
     nonzero constant returns `some #[]` (no roots to isolate), and
     the zero polynomial returns `none`. -/
-def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
+def isolate? (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (DyadicRootIsolation p))
 
@@ -544,7 +544,7 @@ already a target-ready atom with pairwise-disjoint discs. At the
 normalized depth, every component is
 root-bearing; the Mathlib companion proves that all three strategies
 certify it as an atom and that the atom discs are pairwise disjoint.
-Thus `isolate` returns `some` for every nonzero squarefree input.
+Thus `isolate?` returns `some` for every nonzero squarefree input.
 `stopSlack` leaves three further rounds for the general driver and
 non-squarefree inputs. A `none` from a driver means only that its full
 emission condition was not reached within the fixed fuel bound; it does
@@ -620,7 +620,7 @@ one-square witness certifies. Roots on a grid *line* keep a two-square
 or four-square component under pure subdivision. Newton recentring is
 what turns those into single-square atoms.
 
-For polynomials with multiple roots there is no `isolate` analogue.
+For polynomials with multiple roots there is no `isolate?` analogue.
 Use `isolateAll?` directly: a multiple root never atomizes (the `k = 1`
 witness requires `c₁` bounded away from 0, and `c₁ → 0` near a
 multiple root), so it appears in the output as a cluster with its
@@ -772,7 +772,7 @@ def RefinedIsolation.refineTo? (r : RefinedIsolation p) (target : Int)
 which floors the target at `mahlerPrec p` (so the subtype re-wrap
 always succeeds on a `some`) and derives the identity proof from the
 decidable `Intersects` re-check via `Quot.sound`; and
-`DyadicRootIsolation.toRefined?` records that an `isolate` output
+`DyadicRootIsolation.toRefined?` records that an `isolate?` output
 meets the separation precision. `refineTo?` preserves the root
 (`sameRoot r r' = true`, proved meaningful in the companion), so
 callers can substitute the refined representative wherever the
@@ -852,7 +852,7 @@ is made here for pure Pellet refinement of a non-squarefree ambient polynomial.
   worklist, including the local first-refinable-atom search, `stopDepth`, the
   Φ termination measure discussion, and `DyadicRootIsolation.refineTo?` as a
   thin wrapper.
-- `HexRoots/IsolateAll.lean`: `isolateAll?`, `isolate`, and the local
+- `HexRoots/IsolateAll.lean`: `isolateAll?`, `isolate?`, and the local
   `isolateOne?` entry point as thin wrappers over the shared driver loops, and
   the refined threading operation `RefinedIsolation.refineTo?` (below).
 - `HexRoots/SimpleRoot.lean`: `RefinedIsolation`, `Intersects`,
@@ -947,7 +947,7 @@ bit-length at precision `prec`.
   the two base squares are concentric. This does not change the
   asymptotic bound, but removes the repeated dominant `O(n²)` shift
   from those paths.
-- `isolate` for degree `n`, well-separated roots, target precision
+- `isolate?` for degree `n`, well-separated roots, target precision
   `prec`: heuristically `O(n³ · B²)` bit operations. Tight root
   clusters add subdivision depth up to `O(mahlerPrec p)`.
 
@@ -956,7 +956,7 @@ bit-length at precision `prec`.
 Regression ceilings anchored to measured reality (`chungus2`, AMD EPYC 9455,
 96 logical CPUs with substantial idle capacity, Lean 4.32.0-rc1). Every pinned row runs the compiled expression
 `isolateAll? (seededPoly degree) target #[Component.cauchy ...]`; this avoids
-`isolate`'s higher `separationDepth` target and makes the stated precision the
+`isolate?`'s higher `separationDepth` target and makes the stated precision the
 actual driver target. Degree 10 and 20 use three measured cold calls with no
 discarded warmup, degree 50 uses two, and degree 100 uses one. The direct
 driver prints and checks the returned atom count; unlike the canonical fixed

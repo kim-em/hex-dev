@@ -75,7 +75,7 @@ def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
       if hdegree : 0 < q.natDegree then
         if hirred : ZPoly.isIrreducible q = true then
           if hsquarefree : HasOnlySimpleRoots q then do
-            let isolations ← isolate q hsquarefree (separationDepth q : Int)
+            let isolations ← isolate? q hsquarefree (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let comparable ← refined.mapM fun r =>
               (r.refineTo? (mahlerPrec a.p : Int)).unattach
@@ -270,7 +270,7 @@ def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
       if hdegree : 0 < q.natDegree then
         if hirred : ZPoly.isIrreducible q = true then
           if hsquarefree : HasOnlySimpleRoots q then do
-            let isolations ← isolate q hsquarefree (separationDepth q : Int)
+            let isolations ← isolate? q hsquarefree (separationDepth q : Int)
             let refined ← isolations.mapM DyadicRootIsolation.toRefined?
             let requested : Int := mahlerPrec q
             let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)

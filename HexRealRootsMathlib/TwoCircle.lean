@@ -14,7 +14,7 @@ public import HexRealRootsMathlib.TwoCircleSector
 public import HexRealRootsMathlib.Drivers
 public import HexRealRoots.IsolateDescartes
 -- `import all` on the executable modules so the non-`@[expose]` bodies of
--- `descartesVisit`, `isolateDescartes?`, `mobiusTransform`, `descartesVar`,
+-- `descartesVisit`, `ZPoly.isolateDescartes?`, `mobiusTransform`, `descartesVar`,
 -- `sturmVarAt`, `sturmChain`, `evalDyadic`, `dyadicSign`, `rootBound`,
 -- `sepPrec`, `isolationDepth`, and `assemble?` unfold here.
 import all HexRealRootsMathlib.Separation
@@ -561,10 +561,10 @@ private theorem descartesVisit_spec (hdeg : 1 ≤ p.natDegree)
 /-! # Driver completeness -/
 
 /-- The positive-degree core: the worklist drains (`descartesVisit_spec`) and the
-emitted total matches `rootCount p = sturmVarNegInf − sturmVarPosInf` (the
+emitted total matches `ZPoly.rootCount p = sturmVarNegInf − sturmVarPosInf` (the
 `±rootBound` gap counts every root), so `assemble?` certifies. -/
 private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ p.natDegree)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateDescartes? p).isSome := by
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateDescartes? p).isSome := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
     rw [Hex.DensePoly.natDegree_eq_degree?_getD] at hdeg
     rcases hh : p.degree? with _ | n
@@ -579,16 +579,16 @@ private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ p.natDegree
   have hInt := sturmVar_neg_pos_sub hdeg hp
   have hsize' : arr.size = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
       - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) := by
-    have hrc : Hex.rootCount p = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
+    have hrc : Hex.ZPoly.rootCount p = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
         - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) := rfl
     rw [hsize, ← hrc]; omega
-  -- `isolateDescartes?` on positive-degree square-free `p` is the top run + `assemble?`.
-  have heq : Hex.isolateDescartes? p
+  -- `ZPoly.isolateDescartes?` on positive-degree square-free `p` is the top run + `assemble?`.
+  have heq : Hex.ZPoly.isolateDescartes? p
       = (match Hex.descartesVisit p (Hex.ZPoly.sturmChain p) rfl (Hex.isolationDepth p)
             (-(Hex.rootBound p)) (Hex.rootBound p) with
           | none => none
           | some arr => Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl arr) := by
-    unfold Hex.isolateDescartes?
+    unfold Hex.ZPoly.isolateDescartes?
     simp only [hd]
     rw [ite_eq_left hp]
     rfl
@@ -598,9 +598,9 @@ private theorem isolateDescartes?_isSome_of_degree_pos (hdeg : 1 ≤ p.natDegree
 /-- The Descartes engine on a nonzero constant: the driver's `some 0` branch
 hands `assemble?` the empty array through the empty chain. -/
 private theorem isolateDescartes?_isSome_of_degree_zero (hd : p.degree? = some 0) :
-    (Hex.isolateDescartes? p).isSome := by
-  have heq : Hex.isolateDescartes? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
-    unfold Hex.isolateDescartes?; rw [hd]
+    (Hex.ZPoly.isolateDescartes? p).isSome := by
+  have heq : Hex.ZPoly.isolateDescartes? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
+    unfold Hex.ZPoly.isolateDescartes?; rw [hd]
   have hchain0 : Hex.ZPoly.sturmChain p = #[] := by
     unfold Hex.ZPoly.sturmChain; rw [hd]; rfl
   rw [heq]
@@ -610,15 +610,15 @@ private theorem isolateDescartes?_isSome_of_degree_zero (hd : p.degree? = some 0
 
 /-- **The Descartes engine succeeds on nonzero square-free input.**
 For nonzero `p` passing the executable `SquareFreeRat` test,
-`isolateDescartes? p ≠ none`, so the runtime never falls back to the Sturm
+`ZPoly.isolateDescartes? p ≠ none`, so the runtime never falls back to the Sturm
 engine.
 
 Positive degree is the real content (`isolateDescartes?_isSome_of_degree_pos`,
 the two-circle termination argument); a nonzero constant certifies through the
 empty chain. As with `isolateSturm?_isSome`, the `p ≠ 0` hypothesis is added
-because `SquareFreeRat 0` is vacuous while `isolateDescartes? 0 = none`. -/
+because `SquareFreeRat 0` is vacuous while `ZPoly.isolateDescartes? 0 = none`. -/
 theorem isolateDescartes?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateDescartes? p).isSome := by
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateDescartes? p).isSome := by
   rcases hd : p.degree? with _ | n
   · exact absurd hd (degree?_ne_none hp0)
   · rcases n with _ | n

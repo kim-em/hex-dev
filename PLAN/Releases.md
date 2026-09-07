@@ -72,7 +72,7 @@ example that exercises the advertised user story end-to-end.
   integer polynomial. Results carry checked coverage, uniqueness,
   disjointness, count, and precision guarantees.
 - **Integration example:** `Examples/Release5.lean` — use the none-free
-  `HexRootsMathlib.isolate!` wrapper for complex roots and the
+  `HexRootsMathlib.isolate` wrapper for complex roots and the
   `isolate_roots` elaborator for repeated real roots.
 
 ## Release readiness predicate

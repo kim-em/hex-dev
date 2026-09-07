@@ -184,7 +184,7 @@ def ofEliminant? (raw : ZPoly)
         if hsimple : HasOnlySimpleRoots p then do
           let prec : Int := separationDepth p
           let ball ← ballAt prec
-          let isolations ← isolate p hsimple prec
+          let isolations ← isolate? p hsimple prec
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
           match refined.toList.filter fun r => r.1.square.meetsBall ball with
           | [matching] =>

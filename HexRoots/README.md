@@ -28,14 +28,14 @@ def p : ZPoly := DensePoly.ofCoeffs #[-1, -1, 0, 1]
 
 def roots : Option (Array (DyadicRootIsolation p)) :=
   if h : HasOnlySimpleRoots p then
-    isolate p h 32 .nkThenPellet
+    isolate? p h 32 .nkThenPellet
   else
     none
 ```
 
 # Functionality
 
-- `Hex.isolate p h precision strategy` returns pairwise-disjoint atoms for a
+- `Hex.isolate? p h precision strategy` returns pairwise-disjoint atoms for a
   polynomial whose roots are simple. A nonzero constant returns an empty
   array; the zero polynomial returns `none`.
 - `Hex.HasOnlySimpleRoots` is an executable, decidable precondition.
