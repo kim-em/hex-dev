@@ -1,0 +1,303 @@
+{
+  "label": "combined-quadratic-quiet",
+  "status": "complete",
+  "attempts": 6,
+  "accepted_pairs": [
+    4,
+    6
+  ],
+  "require_separated_canonical": true,
+  "quiet_windows": 15,
+  "complete": true,
+  "eligible": true,
+  "checks": [
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair2",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        825434,
+        831679,
+        853516
+      ],
+      "right_nanos": [
+        628717,
+        632728,
+        634811
+      ],
+      "speedup": 1.3144336903061031
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair3",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        1042325,
+        1054630,
+        1093093
+      ],
+      "right_nanos": [
+        748532,
+        750955,
+        753530
+      ],
+      "speedup": 1.4043850829943205
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair4",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        1394880,
+        1406842,
+        1425857
+      ],
+      "right_nanos": [
+        980318,
+        984073,
+        990186
+      ],
+      "speedup": 1.4296114211039221
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair6",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        2152378,
+        2166726,
+        2304163
+      ],
+      "right_nanos": [
+        1376360,
+        1385471,
+        1448329
+      ],
+      "speedup": 1.5638912687454303
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair8",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        3070172,
+        3097583,
+        3185913
+      ],
+      "right_nanos": [
+        1834038,
+        1848643,
+        1861506
+      ],
+      "speedup": 1.6755982631584356
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair12",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        5850124,
+        5867678,
+        5908997
+      ],
+      "right_nanos": [
+        3368132,
+        3387923,
+        3445581
+      ],
+      "speedup": 1.7319395983911086
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerFactorLadder",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        18241787,
+        18256681,
+        18424380
+      ],
+      "right_nanos": [
+        8978993,
+        9101058,
+        9124374
+      ],
+      "speedup": 2.0059954567919465
+    },
+    {
+      "pair": 4,
+      "function": "Hex.NumberTowerBench.runTowerCheckFactorization",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        8709057,
+        8827736,
+        8845804
+      ],
+      "right_nanos": [
+        4139329,
+        4165635,
+        4209978
+      ],
+      "speedup": 2.119181349302087
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair2",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        830424,
+        832771,
+        897616
+      ],
+      "right_nanos": [
+        626222,
+        631703,
+        665128
+      ],
+      "speedup": 1.318295148194642
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair3",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        1050339,
+        1056375,
+        1080087
+      ],
+      "right_nanos": [
+        751233,
+        754093,
+        778421
+      ],
+      "speedup": 1.400855066947976
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair4",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        1397209,
+        1415152,
+        1420417
+      ],
+      "right_nanos": [
+        976248,
+        982473,
+        986801
+      ],
+      "speedup": 1.4403978531725554
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair6",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        2148206,
+        2163554,
+        2176568
+      ],
+      "right_nanos": [
+        1370844,
+        1386499,
+        1396812
+      ],
+      "speedup": 1.5604439671431425
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair8",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        3088119,
+        3144206,
+        3265247
+      ],
+      "right_nanos": [
+        1835008,
+        1855115,
+        1880421
+      ],
+      "speedup": 1.6948846836988543
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorPair12",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        5959475,
+        6009830,
+        6100786
+      ],
+      "right_nanos": [
+        3391043,
+        3410344,
+        3520645
+      ],
+      "speedup": 1.762235715810487
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerFactorLadder",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        18459024,
+        18632786,
+        18909301
+      ],
+      "right_nanos": [
+        9060066,
+        9086656,
+        9297885
+      ],
+      "speedup": 2.050565796702329
+    },
+    {
+      "pair": 6,
+      "function": "Hex.NumberTowerBench.runTowerCheckFactorization",
+      "hashes_match": true,
+      "faster": true,
+      "disjoint_regression": false,
+      "left_nanos": [
+        8879142,
+        8986210,
+        9136773
+      ],
+      "right_nanos": [
+        4132146,
+        4172401,
+        4183750
+      ],
+      "speedup": 2.1537263556403135
+    }
+  ]
+}
