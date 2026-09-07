@@ -55,6 +55,7 @@
 - **hex-gfq-ring**: canonical quotient ring `F_p[x]/(f)` by a nonconstant modulus
 - **hex-gfq-field**: field structure on top of `hex-gfq-ring` when `f` is irreducible
 - **hex-gfq**: convenience wrapper, canonical `GFq p n` plus optimized `GF2q n` using Conway polynomials
+- **hex-discrete-log** (planned): certified finite-field logarithms by baby-step giant-step, Pohlig-Hellman and bounded Pollard rho
 
 **Mathlib companion libraries** (each depends on a computational library and
 Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
@@ -101,6 +102,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-lattice-enum-mathlib** (planned): preparation, search and certificate correctness proofs, integer-span and Euclidean-distance correspondence, packing radius and kissing number
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
+- **hex-discrete-log-mathlib** (planned): exact generator order, canonical logarithms and complete subgroup-membership decisions
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
@@ -161,6 +163,7 @@ Each library with its immediate dependencies:
 - **hex-gfq-ring**: hex-poly-fp
 - **hex-gfq-field**: hex-gfq-ring, hex-berlekamp, hex-finite-field
 - **hex-gfq**: hex-gfq-field, hex-conway, hex-gf2
+- **hex-discrete-log** (planned): hex-basic, hex-gfq, hex-int-factor, hex-modular
 - **hex-gf2**: hex-basic, hex-finite-field
 - **hex-berlekamp-zassenhaus**: hex-berlekamp, hex-hensel, hex-lll
 - **hex-summation**: hex-poly, hex-mv-poly, hex-resultant, hex-matrix, hex-row-reduce, hex-berlekamp-zassenhaus, hex-basic
@@ -209,6 +212,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-hensel-mathlib**: hex-hensel, hex-poly-mathlib
 - **hex-gf2-mathlib**: hex-gf2, hex-poly-fp, hex-gfq-field, hex-poly-fp-mathlib
 - **hex-gfq-mathlib**: hex-gfq, hex-gf2-mathlib
+- **hex-discrete-log-mathlib** (planned): hex-discrete-log, hex-gfq-mathlib, hex-int-factor-mathlib
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
 - **hex-summation-mathlib**: hex-summation
 - **hex-graph-iso-mathlib**: hex-graph-iso
@@ -703,6 +707,8 @@ for developments whose source-local move has not happened yet.
 - [hex-gfq-field](../../HexGFqField/SPEC/hex-gfq-field.md): field structure on top of the quotient ring when `f` is irreducible
 - [hex-gfq](../../HexGFq/SPEC/hex-gfq.md): convenience wrapper `GFq p n` and optimized `GF2q n` using Conway polynomials
 - [hex-gfq-mathlib](../../HexGFqMathlib/SPEC/hex-gfq-mathlib.md): finiteness/cardinality for quotient fields and `GFq p n ≃+* GaloisField p n`
+- [hex-discrete-log](hex-discrete-log.md) (planned): exact-order logarithms, complete BSGS/PH, bounded rho and replay certificates
+- [hex-discrete-log-mathlib](hex-discrete-log-mathlib.md) (planned): finite-field subgroup and canonical-exponent correspondence
 - [hex-gram-schmidt](https://github.com/leanprover/hex-gram-schmidt/blob/main/SPEC/hex-gram-schmidt.md) (released): Gram-Schmidt orthogonalization, coefficients, Gram determinants
 - [hex-gram-schmidt-mathlib](https://github.com/leanprover/hex-gram-schmidt-mathlib/blob/main/SPEC/hex-gram-schmidt-mathlib.md) (released): correspondence with Mathlib's `gramSchmidt`
 - [hex-lll](https://github.com/leanprover/hex-lll/blob/main/SPEC/hex-lll.md) (released): LLL lattice basis reduction algorithm and proofs
