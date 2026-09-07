@@ -771,6 +771,54 @@ requires differential correctness checks and a performance decision before
 developing correspondence proofs; only proved and verified candidates may
 merge. No new exponent or wall-time model follows from this profile.
 
+### Singleton recovery and quadratic norm comparisons
+
+The [preregistered protocol](hex-number-field-tower-factor-protocol.md#singleton-recovery-and-quadratic-norm-experiments)
+compares both prototypes independently with computational baseline
+`af7b4d49f661a23debf82960bfff3c78435ff135`. These are local, shared-host,
+fixed-input constant comparisons; they make no new complexity claim.
+
+| Isolated candidate | Source | Accepted attempts | Degree-24 factor speedup | Degree-24 replay speedup |
+|---|---|---|---|---|
+| Singleton recovery | `3ba418905` | 1, 9 | 1.347–1.348× | 1.357× |
+| Quadratic norm | `af91cca87` | 2, 10 | 1.841–1.867× | 1.889–1.894× |
+
+Both candidates pass the stronger gate: both canonical medians improve in
+both accepted, opposite-order pairs; each canonical repeat range is separated
+from its baseline in at least one pair; hashes match; and no smaller rung has
+a repeat-range-disjoint regression. The
+[singleton decision](bench-results/tower-singleton-quadratic/issue-10074-singleton-af7-decision.json)
+and [quadratic decision](bench-results/tower-singleton-quadratic/issue-10074-quadratic-af7-decision.json)
+retain all sixteen per-case comparisons. Every attempted export and host
+record is retained alongside those decisions, including rejected pairs and
+arms rejected before their paired run could start. Timing values never select
+which pairs are admitted.
+
+The singleton candidate returns the monic input only after the accepted norm
+has been recursively factored into one factor. The quadratic candidate keeps
+two lower-field polynomial accumulators modulo `Y² + bY + a` during the shift
+and computes `A² - bAB + aB²`; other top degrees retain the resultant path.
+Neither candidate removes public certificate replay.
+
+The combination at `4209945bc` also passes the stronger gate against the common
+baseline, including fresh PARI and overhead measurements. Its
+[decision](bench-results/tower-singleton-quadratic/issue-10074-combined-af7-decision.json)
+admits opposite-order attempts 1 and 9. Canonical factorization medians fall
+from 33.15–33.18 ms to 9.116–9.131 ms (3.634–3.637×); replay medians fall from
+16.14–16.40 ms to 4.171–4.199 ms (3.845–3.932×). These are directly measured
+combined gains, not products of the isolated speedups.
+
+The [validation record](bench-results/tower-singleton-quadratic/validation.json)
+records saved executable hashes and correctness checks. Each isolated variant
+and their combination matches the frozen reference on 31 complete canonical
+factorizations and checker results, rejects corrupted multiplicities, and
+matches 750 full norm arrays. The grid includes nonzero linear terms in the
+quadratic relation, rational denominators, signed shifts, a lower quadratic
+field, and cubic fallback. All 49 benchmark checks, byte-identical fixtures,
+and the nine PARI oracle cases pass. These checks establish experimental
+correctness coverage; they do not replace the correspondence proofs required
+before integration.
+
 ### Rational squarefreeness
 
 The [sampling summaries](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json)
