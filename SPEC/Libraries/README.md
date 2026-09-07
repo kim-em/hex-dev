@@ -26,6 +26,7 @@
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-graph**: immutable finite simple directed and undirected graphs, checked construction, maps, subgraphs, traversal, and executable adjacency
 - **hex-graph-iso**: nauty-compatible canonical forms, canonical labels, checked transporters, and positive and negative `graph_iso` proofs for finite ordered-coloured simple graphs
+- **hex-perm-group** (planned): finite permutation groups with checked stabilizer chains, constructive membership, exact order, point stabilizers and bounded coset enumeration
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
 - **hex-padics**: fixed-precision approximations to `Z_p` and `Q_p`, with the valuation reported as a bound when that is all the data supports, precision-aware arithmetic, partial inversion and division, and exactification by rational reconstruction
@@ -101,6 +102,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
+- **hex-perm-group-mathlib** (planned): correspondence with permutation subgroups, membership, cardinality, stabilizers and cosets
 
 ## Implementation dependencies
 
@@ -130,6 +132,7 @@ Each library with its immediate dependencies:
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-invariant-factors**: hex-poly-smith
 - **hex-graph-iso**: hex-basic, hex-matrix (the `HexGraph` graph representation is folded into this library)
+- **hex-perm-group** (planned): hex-basic
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
@@ -205,6 +208,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
 - **hex-summation-mathlib**: hex-summation
 - **hex-graph-iso-mathlib**: hex-graph-iso
+- **hex-perm-group-mathlib** (planned): hex-perm-group
 
 LLL is the recombination primitive used by Berlekamp-Zassenhaus: BZ
 encodes its lifted local factors as a lattice basis and calls
@@ -339,6 +343,13 @@ correspondence until another graph algorithm needs that conversion. The
 complete contracts are in
 [hex-graph-iso](../../HexGraphIso/SPEC/hex-graph-iso.md) and
 [hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
+
+The planned [hex-perm-group](hex-perm-group.md) and
+[hex-perm-group-mathlib](hex-perm-group-mathlib.md) pair extracts the shared
+permutation type and adds checked Schreier-Sims chains. On activation, graph
+isomorphism will depend on this Mathlib-free group library; its companion
+will reuse the general permutation correspondence. The current dependency
+registry remains unchanged for graph isomorphism until that migration.
 
 ```
 hex-basic -- hex-graph -- hex-graph-iso -- hex-graph-iso-mathlib

@@ -477,6 +477,36 @@ libraries:
           description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
+  HexPermGroup:
+    deps: [HexBasic]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: GAP permutation groups via a persistent process
+          class: informational
+          rationale: Different permutation storage, stabilizer-chain heuristics and specialized group methods; GAP does not emit Lean replay certificates. Compare fresh construction and prepared queries separately.
+      input_families:
+        - name: degree-generators
+          description: Action degree and redundant generator count varied separately.
+        - name: chain-shape
+          description: Cyclic, dihedral, symmetric, alternating and intransitive groups with varied stabilizer depths.
+        - name: membership
+          description: Positive words and negative queries failing at early and late chain levels.
+        - name: stabilizers
+          description: Point and pointwise stabilizers requiring nontrivial Schreier generators.
+        - name: containment
+          description: Equal presentations, strict inclusions and failed inclusions.
+        - name: enumeration
+          description: Element count and subgroup index with output limits enforced.
+        - name: certificate-replay
+          description: Construction, word generation and kernel replay separated by certificate size.
+  HexPermGroupMathlib:
+    deps: [HexPermGroup]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexGraphIso:
     deps: [HexBasic, HexMatrix]
     mathlib: false
