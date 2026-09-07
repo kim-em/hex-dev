@@ -41,6 +41,20 @@ theorem CanonPast.advance {level pos tv : Nat} {cursor : Option Nat} {st : Searc
     change ¬ tv < st.canonlab[pos]!
     omega
 
+/-- The reference child is strictly earlier than the next visited child. -/
+theorem CanonPast.before {level pos tv : Nat} {cursor : Option Nat} {st : SearchSt n}
+    {tcell : VSet n} (h : CanonPast level pos cursor st)
+    (hnext : tcell.nextElem cursor = some tv) (he : st.gcaCanon = level) :
+    st.canonlab[pos]! < tv := by
+  have hs := h.source he
+  have ha := nextElem_after hnext
+  cases cursor with
+  | none => exact (hs trivial).elim
+  | some c =>
+    change ¬ c < st.canonlab[pos]! at hs
+    change c < tv at ha
+    omega
+
 /-- Updates to unrelated bookkeeping preserve the canonical source. -/
 theorem CanonPast.stateEq {level pos : Nat} {cursor : Option Nat} {st out : SearchSt n}
     (h : CanonPast level pos cursor st) (hgca : out.gcaCanon = st.gcaCanon)
@@ -83,5 +97,29 @@ theorem canon_old {level : Nat} {st out : SearchSt n}
   rcases h.canon with hold | hnew
   · exact hold
   · omega
+
+/-- A canonical return to this frame names an earlier original child.
+The return tag and old-reference alternative recover its location from
+the existing frame references, including after target-set pruning. -/
+theorem CanonPast.locate {ctx : Ctx n} {tcLevel specFuel level tc len numcells tv : Nat}
+    {codes : List Nat} {rsLab rsPtn : Array Nat} {cursor : Option Nat} {tcell : VSet n}
+    {st child out : SearchSt n} {best : Option (Key n)}
+    (h : CanonPast level tc cursor st) (hnext : tcell.nextElem cursor = some tv)
+    (hrefs : FrameRefs ctx tcLevel specFuel level codes rsLab rsPtn tc len numcells st best)
+    (hgca : child.gcaCanon = st.gcaCanon) (hlab : child.canonlab = st.canonlab)
+    (hguide : GuideRel (level + 1) child out) (hat : out.gcaCanon = level) :
+    ∃ o, o < len ∧ out.canonlab[tc]! = rsLab[tc + o]! ∧
+      rsLab[tc + o]! < tv ∧ cellsPerm rsPtn level rsLab out.canonlab := by
+  have hold := canon_old hguide (by omega)
+  have hlevel : st.gcaCanon = level := hgca.symm.trans (hold.1.symm.trans hat)
+  obtain ⟨o, ho, _, hpos, hperm⟩ := hrefs.canon hlevel
+  have hbefore := h.before hnext hlevel
+  refine ⟨o, ho, ?_, ?_, ?_⟩
+  · rw [hold.2, hlab]
+    exact hpos
+  · rw [← hpos]
+    exact hbefore
+  · rw [hold.2, hlab]
+    exact hperm
 
 end Hex.GraphIso.Nauty.Generation

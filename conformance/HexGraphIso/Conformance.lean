@@ -452,3 +452,15 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.first_path' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.first_path
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.other_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.other_agreement
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.RefReturn.ofEarly' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.RefReturn.ofEarly
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.PathCover.canon' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.PathCover.canon

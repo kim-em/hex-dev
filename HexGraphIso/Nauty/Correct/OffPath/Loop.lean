@@ -1545,8 +1545,8 @@ namespace Unwind
     {best : Option (Key n)} (e : Nat) :
     Unwind ctx tcLevel target out best →
       Unwind ctx tcLevel target { out with eqlevFirst := e } best
-  | .first anchor carrier => .first anchor carrier
-  | .canon anchor carrier => .canon anchor carrier
+  | .first anchor carrier atFirst => .first anchor carrier atFirst
+  | .canon anchor carrier atCanon => .canon anchor carrier atCanon
   | .orbit payload => .orbit ⟨payload.positive, payload.bound,
       payload.currentLt, payload.smaller, payload.sound⟩
 
@@ -1556,12 +1556,12 @@ theorem Located.setEqlev {ctx : Ctx n} {tcLevel target : Nat}
     {payload : Unwind ctx tcLevel target out best} (e : Nat)
     (h : payload.Located trail) : (payload.setEqlev e).Located trail := by
   cases h with
-  | first anchor carrier located =>
+  | first anchor carrier atFirst located =>
       exact Unwind.Located.first (out := { out with eqlevFirst := e })
-        anchor carrier located
-  | canon anchor carrier located =>
+        anchor carrier atFirst located
+  | canon anchor carrier atCanon located =>
       exact Unwind.Located.canon (out := { out with eqlevFirst := e })
-        anchor carrier located
+        anchor carrier atCanon located
   | orbit payload =>
       exact Unwind.Located.orbit (out := { out with eqlevFirst := e }) _
 
@@ -1574,9 +1574,9 @@ theorem FrozenOut.setEqlev {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
     FrozenOut ctx stem { out with eqlevFirst := e } best r := by
   rcases h with
     ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-      hfloor⟩
+      hfloor, hboundary⟩
   exact ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-    hfloor⟩
+    hfloor, hboundary⟩
 
 /-- A short-prune source does not read the agreement depth. -/
 theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}

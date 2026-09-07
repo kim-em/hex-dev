@@ -20,3 +20,6 @@ public import HexGraphIso.Nauty.Correct.Generation.RefPath
 public import HexGraphIso.Nauty.Correct.Generation.FirstPath
 public import HexGraphIso.Nauty.Correct.Generation.PathCover
 public import HexGraphIso.Nauty.Correct.Generation.Canon
+public import HexGraphIso.Nauty.Correct.Generation.CanonReceipt
+public import HexGraphIso.Nauty.Correct.Generation.Agreement
+public import HexGraphIso.Nauty.Correct.Generation.Return

@@ -71,9 +71,9 @@ theorem unwind (h : Cover G base guide tcell cursor) {tv : Fin n}
       Aut.Carries G base ⟨out.canonlab[pos]!, hcanonLt⟩ guide)
     (hcoset : out.cosetindex = tv.val) : Cover G base guide tcell (some tv.val) := by
   cases payload with
-  | first anchor carrier =>
+  | first anchor carrier atFirst =>
     exact h.reference hnext hfirst carrier htrace hfix hpos rfl hatCur
-  | canon anchor carrier =>
+  | canon anchor carrier atCanon =>
     exact h.reference hnext hcanon carrier htrace hfix hpos rfl hatCur
   | orbit payload =>
     apply h.orbitSkip hnext payload.sound

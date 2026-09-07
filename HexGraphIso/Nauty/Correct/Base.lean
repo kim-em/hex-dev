@@ -1071,14 +1071,18 @@ theorem canonlevel_firstFinish (level tcellsize index : Nat)
     (h : Unwind ctx tcLevel target st best) :
     Unwind ctx tcLevel target (firstFinish level size index st) best := by
   cases h with
-  | first anchor carrier =>
-      apply Unwind.first anchor
-      rw [Nauty.firstFinish]
-      split <;> exact carrier
-  | canon anchor carrier =>
-      apply Unwind.canon anchor
-      rw [Nauty.firstFinish]
-      split <;> exact carrier
+  | first anchor carrier atFirst =>
+      refine Unwind.first anchor ?_ ?_
+      · rw [Nauty.firstFinish]
+        split <;> exact carrier
+      · rw [Nauty.firstFinish]
+        split <;> exact atFirst
+  | canon anchor carrier atCanon =>
+      refine Unwind.canon anchor ?_ ?_
+      · rw [Nauty.firstFinish]
+        split <;> exact carrier
+      · rw [Nauty.firstFinish]
+        split <;> exact atCanon
   | orbit payload =>
       apply Unwind.orbit
       refine ⟨payload.positive, ?_, ?_, ?_, ?_⟩

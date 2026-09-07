@@ -1167,12 +1167,12 @@ theorem escape {G : Colored n k} {ctx : Ctx n}
     ⟨returned, finalCursor, progress, bounded⟩
   · exact .full exact
   · cases payload with
-    | first anchor carrier =>
+    | first anchor carrier atFirst =>
         cases located with
-        | first _ _ loc => exact .first target returned below anchor carrier loc
-    | canon anchor carrier =>
+        | first _ _ _ loc => exact .first target returned below anchor carrier loc
+    | canon anchor carrier atCanon =>
         cases located with
-        | canon _ _ loc => exact .canon target returned below anchor carrier loc
+        | canon _ _ _ loc => exact .canon target returned below anchor carrier loc
     | orbit payload =>
         exfalso
         have := h.guideLevel
