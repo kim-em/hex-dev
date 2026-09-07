@@ -73,9 +73,9 @@ def geometric_mean(values: list[float]) -> float:
 def load_sweep(path: Path, column: str = "fast_ns") -> dict[str, list[dict]]:
     """The timed records of one sweep by family, each sorted by ``n``.
 
-    Every record must carry positive ``fast_ns``, ``nauty_ns`` and
-    ``nodes``, and no family may record the same ``n`` twice: a duplicate
-    would reweight the fit, and a zero would break the logarithm.
+    Every record must carry a positive selected timing column,
+    ``nauty_ns`` and ``nodes``, and no family may record the same ``n`` twice:
+    a duplicate would reweight the fit, and a zero would break the logarithm.
     """
     families: dict[str, list[dict]] = defaultdict(list)
     seen: set[tuple[str, int]] = set()

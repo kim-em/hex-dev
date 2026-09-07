@@ -366,6 +366,14 @@ private def twinAgrees {n k : Nat} (G : Colored n k) : Bool :=
 #guard twinAgrees kneser52
 #guard twinAgrees prism5
 
+-- Code-1 admission uses agreement at this level without testing the next sentinel.
+#guard Id.run do
+  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := { st with
+    firstlab := #[0, 1, 2], eqlevFirst := 2, compCanon := -1, gcaFirst := 1 }
+  let (leaf, _) := Nauty.Engine.classify { g := Nauty.rowsOf p3 } 2 3 st
+  return leaf == .autoFirst
+
 -- At workspace capacity the newest pair overwrites the last slot.
 #guard Id.run do
   let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]

@@ -19,6 +19,19 @@ live blocks. Use ordinary DHAT separately for libc/GMP allocations.
 With -DGRAPHISO_DHAT_CHECK, compile an executable instead of a shared library.
 Running that executable under DHAT ad-hoc mode must report exactly three
 events, including two allocations that call another wrapped entry point.
+
+Audit direct callers with:
+  python3 scripts/bench/graphiso_alloc_calls.py .lake/build/bin/hexgraphiso_profile
+Lean 4.34.0-rc2 output:
+  direct mi_* targets called from outside mimalloc:
+  mi_free
+  mi_free_size
+  mi_malloc
+  mi_malloc_small
+  mi_new_n
+  mi_option_init(mi_option_desc_s*)
+The last target initializes options; it does not allocate a client object.
+This audit does not establish the absence of inlined or indirect allocators.
 */
 
 #include <stddef.h>

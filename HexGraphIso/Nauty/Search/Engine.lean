@@ -102,8 +102,8 @@ any of the seven returned statistics.
 | 951-959 | `updatecan`, `samerows = n`, `testcanlab` | `classify` | reuse already compared rows |
 | 960-964 | equal rows, scatter canonical permutation | `classify` | code 2 |
 | 965-973 | greater or smaller canonical comparison | `classify` | better with `sr`, or bad; noncanonical mode pinned out |
-| 974-979 | max level; code 0 returns current level | `leafExit` | `.done` continues internal node |
-| 980-985 | code 1 workspace overwrite, `fmperm` | `admit`, `pushAuto` | overwrite last pair at 500, append full trace |
+| 974-980 | max level; code 0 returns current level | `leafExit` | `.done` continues internal node |
+| 981-985 | code 1 workspace overwrite, `fmperm` | `admit`, `pushAuto` | overwrite last pair at 500, append full trace |
 | 986-987 | write automorphism | none | pinned-out options: no printing |
 | 988-989 | join orbits, increment generators | `admit`, `leafExit .autoFirst` | always count code 1 |
 | 990-992 | user automorphism callback, Schreier | none | pinned-out options: no callback or Schreier machinery |
@@ -198,7 +198,8 @@ deriving Inhabited
 
 variable {n : Nat}
 
-/-- Record an automorphism pair in the bounded workspace. -/
+/-- Record an automorphism pair in the bounded workspace. This is
+{name}`Hex.GraphIso.Nauty.pushAuto` on the flat engine state. -/
 def pushAuto (st : Search n) (pair : VSet n × VSet n) : Search n :=
   if st.autos.size == st.wsCap then
     { st with autos := st.autos.set! (st.wsCap - 1) pair }
@@ -260,7 +261,8 @@ canonically smaller off-path node uses the first path's target hint. -/
   return (tc, tcell, size, st)
 
 /-- nauty's `firstterminal`: install the first leaf as both the first-path
-data and the initial best-so-far leaf. -/
+data and the initial best-so-far leaf. This retains the updates of
+{name}`Hex.GraphIso.Nauty.firstterminal`. -/
 def firstterminal (level : Nat) (st : Search n) : Search n := Id.run do
   let mut st := st
   st := { st with
@@ -406,7 +408,8 @@ the vertex fixed by the generators subsequently reported there. -/
     { st with allsamelevel := st.allsamelevel - 1 }
   else st
 
-/-- Reopen the partition below the receiving level. -/
+/-- Reopen the partition below the receiving level, as in the rescan of
+{name}`Hex.GraphIso.Nauty.recover`. -/
 @[inline] def recoverPtn (inf level : Nat) (st : Search n) : Search n := Id.run do
   let mut ptn := st.ptn
   for i in [0 : n] do
@@ -414,8 +417,9 @@ the vertex fixed by the generators subsequently reported there. -/
       ptn := ptn.set! i inf
   return { st with ptn }
 
-/-- Clamp the four level counters in nauty's order. Equality in the last
-clamp resets the comparison with the canonical code. -/
+/-- Clamp the four level counters in the order of
+{name}`Hex.GraphIso.Nauty.recover`. Equality in the last clamp resets the
+comparison with the canonical code. -/
 @[inline] def recoverLevels (level : Nat) (st : Search n) : Search n := Id.run do
   let mut st := st
   if level < st.noncheaplevel then
@@ -428,7 +432,8 @@ clamp resets the comparison with the canonical code. -/
     st := { st with eqlevCanon := Int.ofNat level, compCanon := 0 }
   return st
 
-/-- Intersect with the most recently written workspace pair. -/
+/-- Intersect with the most recently written workspace pair, as in
+{name}`Hex.GraphIso.Nauty.shortprune`. -/
 @[inline] def shortprune (tcell : VSet n) (st : Search n) : VSet n :=
   match st.autos.back? with
   | some (_, mcr) => tcell.inter mcr
@@ -468,7 +473,8 @@ the leftmost child of a first-path node remains on the first path. -/
 termination_by (fuel, 0, 0)
 
 /-- Visit remaining target vertices in order, rereading the cell after
-each prune. The orbit index includes skipped vertices on the first path. -/
+each prune. The orbit index includes skipped vertices on the first path.
+Nodes return an unwind or fuel, so the `done` arm after a child is unreachable. -/
 @[expose] def sweep (first : Bool) (ctx : Ctx n) (inf tcLevel fuel cfuel : Nat)
     (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell : VSet n)
     (index : Nat) (st : Search n) : Exit × Nat × Search n :=
@@ -519,7 +525,11 @@ def initial (n : Nat) (lab0 : Array Nat) (cellEnds : List Nat) : Search n :=
     workperm := .replicate n 0
     numorbits := n }
 
-/-- Run the search and retain the final state and exit for diagnostics. -/
+/-- Run the search and retain the final state and exit for diagnostics.
+On a valid nonempty input, cell count is at least the level: refinement
+never decreases it and each child increases it. Thus node depth is at most
+`n`, so node fuel `n + 2` suffices. A sweep visits at most `n` vertices in
+strictly increasing order, so sweep fuel `n + 1` suffices. -/
 def runState (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : Exit × Search n :=
   let st := initial n lab0 cellEnds

@@ -1,0 +1,8 @@
+warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
+==3551571== Nulgrind, the minimal Valgrind tool
+==3551571== Copyright (C) 2002-2024, and GNU GPL'd, by Nicholas Nethercote et al.
+==3551571== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==3551571== Command: .lake/build/bin/hexgraphiso_emit_campaign --engine
+==3551571== 
+admissions: classify=56040 autoFirst=40247 cheap=39889 without_sentinel=0
+==3551571== 

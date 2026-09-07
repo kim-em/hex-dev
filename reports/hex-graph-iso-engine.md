@@ -10,13 +10,17 @@ fuel-recursive functions, and explicit unwind payloads. Its correspondence
 table covers every line of `nauty.c:468-513` and `559-1086`. The code-1
 admission condition is nauty 2.9.3's condition, without the literal port's
 additional sentinel test. There are no proofs, `sorry`, `axiom`, or
-`partial` declarations in the engine.
+`partial` declarations in the engine. Phase B must justify the first-leaf
+scatter admitted when `gcaFirst >= noncheaplevel` using the cheap-automorphism
+subtree theorem. The literal proof instead obtains an explicit successful
+`isautom` test. Conformance does not discharge that proof obligation.
 
 ## Conformance
 
 The twin compares labels, canonical rows, all seven statistics, accepted
 automorphisms in discovery order, canonical path codes, final orbits, and
-normal root termination. Both external oracle runs use the emitters'
+normal root termination. The existing CI job runs this full twin corpus.
+Both external oracle runs use the emitters'
 `--engine` mode, so their canonical labels, forms, and node counts come
 from the engine independently of the literal search.
 
@@ -28,13 +32,29 @@ graphiso oracle: 6233 cases checked against nauty 2.9.3 (205 automorphism-group 
 graphiso oracle: 32798 cases checked against nauty 2.9.3 (0 automorphism-group cases)
 ```
 
-The named conformance guards also exercise workspace overwrite at 500
-pairs, code 2 with unchanged orbits, code 2 returning through a smaller
+The conformance guards also exercise code-1 admission without the next
+sentinel, workspace overwrite at 500 pairs, code 2 with unchanged orbits, code 2 returning through a smaller
 coset representative, fuel exhaustion, and empty input.
 
 Local builds pass for `HexGraphIso`, `HexGraphIsoMathlib`,
 `HexGraphIso.TacticTests`, `HexGraphIso.Conformance`, both emitters, the
 twin executable, the cactus executable, and the stage profiler.
+
+The branch-count probe in `scripts/bench/graphiso_admissions.c` wraps the
+compiled classifier without changing the search. Both instrumented emitter
+streams also pass the external oracle. Its counts are:
+
+| corpus | cases | off-path classifications | code-1 admissions | cheap short-circuit | next code not sentinel |
+|---|---|---|---|---|---|
+| fixtures and automorphism cases | 6,233 | 4,128 | 3,164 | 3,072 | 0 |
+| campaign | 32,798 | 56,040 | 40,247 | 39,889 | 0 |
+
+Thus the corpora exercise 42,961 admissions that skip `isautom`. They do
+not exercise an admission where the next first-path code is not the
+sentinel. The explicit guard checks that latter decision on a constructed
+state, not on a graph traversal exhibiting a refinement-code collision.
+The twin checks normal root termination over the entire corpus. The two
+zero-fuel guards only check that the exhausted base cases are distinguishable.
 
 ## Timing
 
@@ -47,10 +67,17 @@ are committed alongside the median and its metadata under
 
 The largest family geometric mean is 0.99963, the largest individual ratio
 is 1.01600, and the largest engine-minus-literal exponent is 0.00964.
-The comparison passes the default bounds, without increasing the allowed
-family mean. Every instance has identical node counts. The anticipated
+The recorded median passes the default bounds without increasing the
+allowed family mean. A ratio of 0.99963 is statistically indistinguishable
+from 1.00 here: Paley's family mean across the raw trials ranges from
+0.99906 to 1.00272. The substantive conclusion is no regression within
+the noise of this run. The driver always times the literal first, which
+is a possible source of order bias despite each call's warmup. Every instance has identical node counts. The anticipated
 ratios below 0.9 on Kneser, Johnson, and hypercube graphs are not observed:
-the gains on those families are about 1–2%.
+the gains on those families are about 1–2%. The corpus has small search
+trees (one node on every random instance and at most 250 on any instance).
+Both engines retain the same refinement and dense-conversion work, so
+improvements to leaf admission affect only part of their total cost.
 
 engine comparison from hexgraphiso-engine-ddc22cf4b645-chungus2.jsonl
 
@@ -94,8 +121,8 @@ The profiler runs 2,000 iterations each of paley61, kneser72, and
 circulant64, choosing between each graph and its rotation from the running
 node-count sum. Each stage reports 14,000, 36,000, and 12,000 node visits,
 respectively. DHAT 3.27.1 observes 60,809,336 allocated blocks in either
-stage, or 980.796 blocks per visited node. The engine therefore meets the
-specified DHAT block-count comparison with equality.
+stage, or 980.796 blocks per visited node. This equal-count result is a control for the shared libc/GMP work.
+The discriminating allocation measurement is the mimalloc count below.
 
 These are whole-process counts, including the common initialization and
 certificate setup. DHAT's ordinary heap mode sees libc/GMP allocations
@@ -108,8 +135,11 @@ this limitation of heap tools with custom allocators.
 
 The supplemental wrapper in `scripts/bench/graphiso_dhat.c` counts those
 mimalloc requests through DHAT ad-hoc events, including `mi_new_n` for
-C++ containers. An audit of calls in the compiled profiler finds these
-three allocation entry points outside mimalloc itself. A thread-local
+C++ containers. The reproducible
+`scripts/bench/graphiso_alloc_calls.py` audit finds these three allocation
+entry points among direct calls from outside mimalloc. Its command and
+output are recorded with the wrapper. The audit does not rule out
+compiler-inlined or indirect allocation paths in other toolchains. A thread-local
 nesting counter prevents double counting. The wrapper's calibration
 executable performs three allocations, two through nested entry points,
 and DHAT records exactly three events.
@@ -119,8 +149,8 @@ and DHAT records exactly three events.
 | libc/GMP (ordinary DHAT) | 60,809,336 | 60,809,336 | 980.796 | 980.796 |
 | mimalloc (DHAT ad-hoc events) | 68,206,460 | 67,518,459 | 1100.104 | 1089.007 |
 
-Thus the engine also reduces the measured mimalloc allocation requests
-by about 1.01%. Ad-hoc events count successful allocation requests, not
+The measured mimalloc allocation requests decrease by about 1.01%, meeting
+the allocation comparison in addition to the equal libc/GMP control. Ad-hoc events count successful allocation requests, not
 allocation sizes or peak live memory. Both ordinary and supplemental
 profiles include the common process setup and use the same 62,000 node
 visits as denominator.
@@ -145,6 +175,13 @@ LD_PRELOAD=/tmp/graphiso_dhat.so valgrind --tool=dhat --mode=ad-hoc \
   --dhat-out-file=mi-run.json .lake/build/bin/hexgraphiso_profile run
 LD_PRELOAD=/tmp/graphiso_dhat.so valgrind --tool=dhat --mode=ad-hoc \
   --dhat-out-file=mi-erun.json .lake/build/bin/hexgraphiso_profile erun
+python3 scripts/bench/graphiso_alloc_calls.py .lake/build/bin/hexgraphiso_profile
+cc -shared -fPIC -O2 -I"$(lean --print-prefix)/include" \
+  $(pkg-config --cflags valgrind) scripts/bench/graphiso_admissions.c -o /tmp/admissions.so
+LD_PRELOAD=/tmp/admissions.so valgrind --tool=none \
+  .lake/build/bin/hexgraphiso_emit_fixtures --engine > /dev/null
+LD_PRELOAD=/tmp/admissions.so valgrind --tool=none \
+  .lake/build/bin/hexgraphiso_emit_campaign --engine > /dev/null
 scripts/bench/graphiso_cactus_sweep.sh issue-10041
 python3 scripts/bench/check_graphiso_sweep_freshness.py
 python3 scripts/bench/graphiso_pernode_fit.py --check 0.2

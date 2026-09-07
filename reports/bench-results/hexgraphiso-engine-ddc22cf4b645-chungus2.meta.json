@@ -21,7 +21,7 @@
   },
   "mimalloc": {
     "wrapper": "scripts/bench/graphiso_dhat.c",
-    "wrapper_sha256": "bed757deb873f73b249d0ebb7e0940473d732e88e2bba2a59e487f5f62e56f32",
+    "wrapper_sha256": "572cd5be17715f575f1ea3507a0fdc07475a90973cb4b6db83421251bd7034f9",
     "mode": "ad-hoc",
     "calibration_events": 3,
     "counts": {
@@ -35,6 +35,23 @@
         "nodes": 62000,
         "events_per_node": 1089.0074032258065
       }
+    }
+  },
+  "admissions": {
+    "probe": "scripts/bench/graphiso_admissions.c",
+    "fixtures": {
+      "cases": 6233,
+      "classify": 4128,
+      "autoFirst": 3164,
+      "cheap": 3072,
+      "without_sentinel": 0
+    },
+    "campaign": {
+      "cases": 32798,
+      "classify": 56040,
+      "autoFirst": 40247,
+      "cheap": 39889,
+      "without_sentinel": 0
     }
   }
 }

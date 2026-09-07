@@ -976,11 +976,16 @@ the external nauty oracle pins either search on the same cases.
 `hexgraphiso_engine_twin`, which runs both searches on every fixture,
 automorphism and campaign case and compares the whole traversal rather
 than only its answer: the label, the canonical graph, the seven run
-statistics, the accepted automorphisms in discovery order, and the best
-path's refinement codes. The first disagreement is printed with the
-differing fields and the case, and the run exits non-zero. Until the
-structured search exists the second search is the transcription itself,
-so the twin and the `--engine` modes compare it with itself.
+statistics, the accepted automorphisms in discovery order, the best
+path's refinement codes, and the final orbit partition. It also checks
+that the engine finishes with a normal root unwind. The first disagreement
+is printed with the differing fields and the case, and the run exits
+non-zero. The second search is `Nauty.Engine`, whose flat state and two
+fuel-recursive functions implement nauty's node and target-cell sweep.
+The public answer and certificate producer still use the transcription.
+The existing CI conformance job runs the twin on the fixture,
+automorphism, and campaign corpora. External `--engine` oracle comparisons
+are also recorded in [the engine report](../../reports/hex-graph-iso-engine.md).
 
 Property checks independent of nauty include:
 

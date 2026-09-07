@@ -33,8 +33,8 @@ transcribed search.
 
 `--engine` emits the same cases with the label, canonical bits and node
 count read off `Cases.engine` instead, so the oracle pins that search
-against real nauty on its own. The committed fixture is the default
-mode; nothing in CI passes `--engine`.
+against real nauty on its own. The committed fixture uses the default
+mode. CI compares the engine with that search through the full twin corpus.
 -/
 
 def main (args : List String) : IO Unit := do
