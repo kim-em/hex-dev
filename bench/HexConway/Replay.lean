@@ -349,147 +349,110 @@ private def run11 : IO Unit := do
   measureEntry 307 1 ⟨luebeckConwayPolynomial_307_1, luebeckConwayPolynomial_307_1_monic⟩ [2, 3, 17] [1, 2, 1] []
   measureEntry 307 2 ⟨luebeckConwayPolynomial_307_2, luebeckConwayPolynomial_307_2_monic⟩ [2, 3, 7, 11, 17] [3, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_307_1)]
   measureEntry 307 3 ⟨luebeckConwayPolynomial_307_3, luebeckConwayPolynomial_307_3_monic⟩ [2, 3, 17, 43, 733] [1, 3, 1, 1, 1] [(1, luebeckConwayPolynomial_307_1)]
-  measureEntry 307 4 ⟨luebeckConwayPolynomial_307_4, luebeckConwayPolynomial_307_4_monic⟩ [2, 3, 5, 7, 11, 13, 17, 29] [4, 2, 3, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_307_1), (2, luebeckConwayPolynomial_307_2)]
   measureEntry 311 1 ⟨luebeckConwayPolynomial_311_1, luebeckConwayPolynomial_311_1_monic⟩ [2, 5, 31] [1, 1, 1] []
   measureEntry 311 2 ⟨luebeckConwayPolynomial_311_2, luebeckConwayPolynomial_311_2_monic⟩ [2, 3, 5, 13, 31] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_311_1)]
   measureEntry 311 3 ⟨luebeckConwayPolynomial_311_3, luebeckConwayPolynomial_311_3_monic⟩ [2, 5, 19, 31, 5107] [1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_311_1)]
-  measureEntry 311 4 ⟨luebeckConwayPolynomial_311_4, luebeckConwayPolynomial_311_4_monic⟩ [2, 3, 5, 13, 31, 137, 353] [5, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_311_1), (2, luebeckConwayPolynomial_311_2)]
   measureEntry 313 1 ⟨luebeckConwayPolynomial_313_1, luebeckConwayPolynomial_313_1_monic⟩ [2, 3, 13] [3, 1, 1] []
   measureEntry 313 2 ⟨luebeckConwayPolynomial_313_2, luebeckConwayPolynomial_313_2_monic⟩ [2, 3, 13, 157] [4, 1, 1, 1] [(1, luebeckConwayPolynomial_313_1)]
   measureEntry 313 3 ⟨luebeckConwayPolynomial_313_3, luebeckConwayPolynomial_313_3_monic⟩ [2, 3, 13, 181] [3, 2, 1, 2] [(1, luebeckConwayPolynomial_313_1)]
-  measureEntry 313 4 ⟨luebeckConwayPolynomial_313_4, luebeckConwayPolynomial_313_4_monic⟩ [2, 3, 5, 13, 97, 101, 157] [5, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_313_1), (2, luebeckConwayPolynomial_313_2)]
-
-private def run12 : IO Unit := do
   measureEntry 317 1 ⟨luebeckConwayPolynomial_317_1, luebeckConwayPolynomial_317_1_monic⟩ [2, 79] [2, 1] []
   measureEntry 317 2 ⟨luebeckConwayPolynomial_317_2, luebeckConwayPolynomial_317_2_monic⟩ [2, 3, 53, 79] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_317_1)]
   measureEntry 317 3 ⟨luebeckConwayPolynomial_317_3, luebeckConwayPolynomial_317_3_monic⟩ [2, 7, 79, 14401] [2, 1, 1, 1] [(1, luebeckConwayPolynomial_317_1)]
-  measureEntry 317 4 ⟨luebeckConwayPolynomial_317_4, luebeckConwayPolynomial_317_4_monic⟩ [2, 3, 5, 13, 53, 79, 773] [4, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_317_1), (2, luebeckConwayPolynomial_317_2)]
+
+private def run12 : IO Unit := do
   measureEntry 331 1 ⟨luebeckConwayPolynomial_331_1, luebeckConwayPolynomial_331_1_monic⟩ [2, 3, 5, 11] [1, 1, 1, 1] []
   measureEntry 331 2 ⟨luebeckConwayPolynomial_331_2, luebeckConwayPolynomial_331_2_monic⟩ [2, 3, 5, 11, 83] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_331_1)]
   measureEntry 331 3 ⟨luebeckConwayPolynomial_331_3, luebeckConwayPolynomial_331_3_monic⟩ [2, 3, 5, 7, 11, 5233] [1, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_331_1)]
-  measureEntry 331 4 ⟨luebeckConwayPolynomial_331_4, luebeckConwayPolynomial_331_4_monic⟩ [2, 3, 5, 11, 29, 83, 1889] [4, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_331_1), (2, luebeckConwayPolynomial_331_2)]
   measureEntry 337 1 ⟨luebeckConwayPolynomial_337_1, luebeckConwayPolynomial_337_1_monic⟩ [2, 3, 7] [4, 1, 1] []
   measureEntry 337 2 ⟨luebeckConwayPolynomial_337_2, luebeckConwayPolynomial_337_2_monic⟩ [2, 3, 7, 13] [5, 1, 1, 2] [(1, luebeckConwayPolynomial_337_1)]
   measureEntry 337 3 ⟨luebeckConwayPolynomial_337_3, luebeckConwayPolynomial_337_3_monic⟩ [2, 3, 7, 43, 883] [4, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_337_1)]
-  measureEntry 337 4 ⟨luebeckConwayPolynomial_337_4, luebeckConwayPolynomial_337_4_monic⟩ [2, 3, 5, 7, 13, 41, 277] [6, 1, 1, 1, 2, 1, 1] [(1, luebeckConwayPolynomial_337_1), (2, luebeckConwayPolynomial_337_2)]
   measureEntry 347 1 ⟨luebeckConwayPolynomial_347_1, luebeckConwayPolynomial_347_1_monic⟩ [2, 173] [1, 1] []
   measureEntry 347 2 ⟨luebeckConwayPolynomial_347_2, luebeckConwayPolynomial_347_2_monic⟩ [2, 3, 29, 173] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_347_1)]
   measureEntry 347 3 ⟨luebeckConwayPolynomial_347_3, luebeckConwayPolynomial_347_3_monic⟩ [2, 7, 13, 173, 1327] [1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_347_1)]
-  measureEntry 347 4 ⟨luebeckConwayPolynomial_347_4, luebeckConwayPolynomial_347_4_monic⟩ [2, 3, 5, 29, 173, 12041] [4, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_347_1), (2, luebeckConwayPolynomial_347_2)]
   measureEntry 349 1 ⟨luebeckConwayPolynomial_349_1, luebeckConwayPolynomial_349_1_monic⟩ [2, 3, 29] [2, 1, 1] []
   measureEntry 349 2 ⟨luebeckConwayPolynomial_349_2, luebeckConwayPolynomial_349_2_monic⟩ [2, 3, 5, 7, 29] [3, 1, 2, 1, 1] [(1, luebeckConwayPolynomial_349_1)]
   measureEntry 349 3 ⟨luebeckConwayPolynomial_349_3, luebeckConwayPolynomial_349_3_monic⟩ [2, 3, 19, 29, 2143] [2, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_349_1)]
-  measureEntry 349 4 ⟨luebeckConwayPolynomial_349_4, luebeckConwayPolynomial_349_4_monic⟩ [2, 3, 5, 7, 29, 60901] [4, 1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_349_1), (2, luebeckConwayPolynomial_349_2)]
   measureEntry 353 1 ⟨luebeckConwayPolynomial_353_1, luebeckConwayPolynomial_353_1_monic⟩ [2, 11] [5, 1] []
   measureEntry 353 2 ⟨luebeckConwayPolynomial_353_2, luebeckConwayPolynomial_353_2_monic⟩ [2, 3, 11, 59] [6, 1, 1, 1] [(1, luebeckConwayPolynomial_353_1)]
   measureEntry 353 3 ⟨luebeckConwayPolynomial_353_3, luebeckConwayPolynomial_353_3_monic⟩ [2, 11, 19, 6577] [5, 1, 1, 1] [(1, luebeckConwayPolynomial_353_1)]
-  measureEntry 353 4 ⟨luebeckConwayPolynomial_353_4, luebeckConwayPolynomial_353_4_monic⟩ [2, 3, 5, 11, 17, 59, 733] [7, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_353_1), (2, luebeckConwayPolynomial_353_2)]
-
-private def run13 : IO Unit := do
   measureEntry 359 1 ⟨luebeckConwayPolynomial_359_1, luebeckConwayPolynomial_359_1_monic⟩ [2, 179] [1, 1] []
   measureEntry 359 2 ⟨luebeckConwayPolynomial_359_2, luebeckConwayPolynomial_359_2_monic⟩ [2, 3, 5, 179] [4, 2, 1, 1] [(1, luebeckConwayPolynomial_359_1)]
   measureEntry 359 3 ⟨luebeckConwayPolynomial_359_3, luebeckConwayPolynomial_359_3_monic⟩ [2, 7, 37, 179, 499] [1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_359_1)]
-  measureEntry 359 4 ⟨luebeckConwayPolynomial_359_4, luebeckConwayPolynomial_359_4_monic⟩ [2, 3, 5, 13, 179, 4957] [5, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_359_1), (2, luebeckConwayPolynomial_359_2)]
   measureEntry 367 1 ⟨luebeckConwayPolynomial_367_1, luebeckConwayPolynomial_367_1_monic⟩ [2, 3, 61] [1, 1, 1] []
   measureEntry 367 2 ⟨luebeckConwayPolynomial_367_2, luebeckConwayPolynomial_367_2_monic⟩ [2, 3, 23, 61] [5, 1, 1, 1] [(1, luebeckConwayPolynomial_367_1)]
   measureEntry 367 3 ⟨luebeckConwayPolynomial_367_3, luebeckConwayPolynomial_367_3_monic⟩ [2, 3, 13, 61, 3463] [1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_367_1)]
-  measureEntry 367 4 ⟨luebeckConwayPolynomial_367_4, luebeckConwayPolynomial_367_4_monic⟩ [2, 3, 5, 23, 61, 13469] [6, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_367_1), (2, luebeckConwayPolynomial_367_2)]
   measureEntry 373 1 ⟨luebeckConwayPolynomial_373_1, luebeckConwayPolynomial_373_1_monic⟩ [2, 3, 31] [2, 1, 1] []
   measureEntry 373 2 ⟨luebeckConwayPolynomial_373_2, luebeckConwayPolynomial_373_2_monic⟩ [2, 3, 11, 17, 31] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_373_1)]
   measureEntry 373 3 ⟨luebeckConwayPolynomial_373_3, luebeckConwayPolynomial_373_3_monic⟩ [2, 3, 7, 13, 31, 73] [2, 2, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_373_1)]
-  measureEntry 373 4 ⟨luebeckConwayPolynomial_373_4, luebeckConwayPolynomial_373_4_monic⟩ [2, 3, 5, 11, 17, 31, 13913] [4, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_373_1), (2, luebeckConwayPolynomial_373_2)]
+
+private def run13 : IO Unit := do
   measureEntry 379 1 ⟨luebeckConwayPolynomial_379_1, luebeckConwayPolynomial_379_1_monic⟩ [2, 3, 7] [1, 3, 1] []
   measureEntry 379 2 ⟨luebeckConwayPolynomial_379_2, luebeckConwayPolynomial_379_2_monic⟩ [2, 3, 5, 7, 19] [3, 3, 1, 1, 1] [(1, luebeckConwayPolynomial_379_1)]
   measureEntry 379 3 ⟨luebeckConwayPolynomial_379_3, luebeckConwayPolynomial_379_3_monic⟩ [2, 3, 7, 61, 787] [1, 4, 1, 1, 1] [(1, luebeckConwayPolynomial_379_1)]
-  measureEntry 379 4 ⟨luebeckConwayPolynomial_379_4, luebeckConwayPolynomial_379_4_monic⟩ [2, 3, 5, 7, 19, 71821] [4, 3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_379_1), (2, luebeckConwayPolynomial_379_2)]
   measureEntry 383 1 ⟨luebeckConwayPolynomial_383_1, luebeckConwayPolynomial_383_1_monic⟩ [2, 191] [1, 1] []
   measureEntry 383 2 ⟨luebeckConwayPolynomial_383_2, luebeckConwayPolynomial_383_2_monic⟩ [2, 3, 191] [8, 1, 1] [(1, luebeckConwayPolynomial_383_1)]
   measureEntry 383 3 ⟨luebeckConwayPolynomial_383_3, luebeckConwayPolynomial_383_3_monic⟩ [2, 191, 147073] [1, 1, 1] [(1, luebeckConwayPolynomial_383_1)]
-  measureEntry 383 4 ⟨luebeckConwayPolynomial_383_4, luebeckConwayPolynomial_383_4_monic⟩ [2, 3, 5, 191, 14669] [9, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_383_1), (2, luebeckConwayPolynomial_383_2)]
   measureEntry 389 1 ⟨luebeckConwayPolynomial_389_1, luebeckConwayPolynomial_389_1_monic⟩ [2, 97] [2, 1] []
   measureEntry 389 2 ⟨luebeckConwayPolynomial_389_2, luebeckConwayPolynomial_389_2_monic⟩ [2, 3, 5, 13, 97] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_389_1)]
   measureEntry 389 3 ⟨luebeckConwayPolynomial_389_3, luebeckConwayPolynomial_389_3_monic⟩ [2, 7, 97, 21673] [2, 1, 1, 1] [(1, luebeckConwayPolynomial_389_1)]
-  measureEntry 389 4 ⟨luebeckConwayPolynomial_389_4, luebeckConwayPolynomial_389_4_monic⟩ [2, 3, 5, 13, 29, 97, 2609] [4, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_389_1), (2, luebeckConwayPolynomial_389_2)]
-
-private def run14 : IO Unit := do
   measureEntry 397 1 ⟨luebeckConwayPolynomial_397_1, luebeckConwayPolynomial_397_1_monic⟩ [2, 3, 11] [2, 2, 1] []
   measureEntry 397 2 ⟨luebeckConwayPolynomial_397_2, luebeckConwayPolynomial_397_2_monic⟩ [2, 3, 11, 199] [3, 2, 1, 1] [(1, luebeckConwayPolynomial_397_1)]
   measureEntry 397 3 ⟨luebeckConwayPolynomial_397_3, luebeckConwayPolynomial_397_3_monic⟩ [2, 3, 11, 31, 1699] [2, 3, 1, 1, 1] [(1, luebeckConwayPolynomial_397_1)]
-  measureEntry 397 4 ⟨luebeckConwayPolynomial_397_4, luebeckConwayPolynomial_397_4_monic⟩ [2, 3, 5, 11, 199, 15761] [4, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_397_1), (2, luebeckConwayPolynomial_397_2)]
   measureEntry 401 1 ⟨luebeckConwayPolynomial_401_1, luebeckConwayPolynomial_401_1_monic⟩ [2, 5] [4, 2] []
   measureEntry 401 2 ⟨luebeckConwayPolynomial_401_2, luebeckConwayPolynomial_401_2_monic⟩ [2, 3, 5, 67] [5, 1, 2, 1] [(1, luebeckConwayPolynomial_401_1)]
   measureEntry 401 3 ⟨luebeckConwayPolynomial_401_3, luebeckConwayPolynomial_401_3_monic⟩ [2, 5, 7, 23029] [4, 2, 1, 1] [(1, luebeckConwayPolynomial_401_1)]
-  measureEntry 401 4 ⟨luebeckConwayPolynomial_401_4, luebeckConwayPolynomial_401_4_monic⟩ [2, 3, 5, 37, 41, 53, 67] [6, 1, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_401_1), (2, luebeckConwayPolynomial_401_2)]
   measureEntry 409 1 ⟨luebeckConwayPolynomial_409_1, luebeckConwayPolynomial_409_1_monic⟩ [2, 3, 17] [3, 1, 1] []
   measureEntry 409 2 ⟨luebeckConwayPolynomial_409_2, luebeckConwayPolynomial_409_2_monic⟩ [2, 3, 5, 17, 41] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_409_1)]
   measureEntry 409 3 ⟨luebeckConwayPolynomial_409_3, luebeckConwayPolynomial_409_3_monic⟩ [2, 3, 17, 55897] [3, 2, 1, 1] [(1, luebeckConwayPolynomial_409_1)]
-  measureEntry 409 4 ⟨luebeckConwayPolynomial_409_4, luebeckConwayPolynomial_409_4_monic⟩ [2, 3, 5, 17, 41, 83641] [5, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_409_1), (2, luebeckConwayPolynomial_409_2)]
   measureEntry 419 1 ⟨luebeckConwayPolynomial_419_1, luebeckConwayPolynomial_419_1_monic⟩ [2, 11, 19] [1, 1, 1] []
   measureEntry 419 2 ⟨luebeckConwayPolynomial_419_2, luebeckConwayPolynomial_419_2_monic⟩ [2, 3, 5, 7, 11, 19] [3, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_419_1)]
   measureEntry 419 3 ⟨luebeckConwayPolynomial_419_3, luebeckConwayPolynomial_419_3_monic⟩ [2, 11, 13, 19, 13537] [1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_419_1)]
-  measureEntry 419 4 ⟨luebeckConwayPolynomial_419_4, luebeckConwayPolynomial_419_4_monic⟩ [2, 3, 5, 7, 11, 19, 41, 2141] [4, 1, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_419_1), (2, luebeckConwayPolynomial_419_2)]
   measureEntry 421 1 ⟨luebeckConwayPolynomial_421_1, luebeckConwayPolynomial_421_1_monic⟩ [2, 3, 5, 7] [2, 1, 1, 1] []
   measureEntry 421 2 ⟨luebeckConwayPolynomial_421_2, luebeckConwayPolynomial_421_2_monic⟩ [2, 3, 5, 7, 211] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_421_1)]
   measureEntry 421 3 ⟨luebeckConwayPolynomial_421_3, luebeckConwayPolynomial_421_3_monic⟩ [2, 3, 5, 7, 59221] [2, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_421_1)]
-  measureEntry 421 4 ⟨luebeckConwayPolynomial_421_4, luebeckConwayPolynomial_421_4_monic⟩ [2, 3, 5, 7, 13, 17, 211, 401] [4, 1, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_421_1), (2, luebeckConwayPolynomial_421_2)]
+
+private def run14 : IO Unit := do
   measureEntry 431 1 ⟨luebeckConwayPolynomial_431_1, luebeckConwayPolynomial_431_1_monic⟩ [2, 5, 43] [1, 1, 1] []
   measureEntry 431 2 ⟨luebeckConwayPolynomial_431_2, luebeckConwayPolynomial_431_2_monic⟩ [2, 3, 5, 43] [5, 3, 1, 1] [(1, luebeckConwayPolynomial_431_1)]
   measureEntry 431 3 ⟨luebeckConwayPolynomial_431_3, luebeckConwayPolynomial_431_3_monic⟩ [2, 5, 7, 43, 67, 397] [1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_431_1)]
-  measureEntry 431 4 ⟨luebeckConwayPolynomial_431_4, luebeckConwayPolynomial_431_4_monic⟩ [2, 3, 5, 43, 293, 317] [6, 3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_431_1), (2, luebeckConwayPolynomial_431_2)]
-
-private def run15 : IO Unit := do
   measureEntry 433 1 ⟨luebeckConwayPolynomial_433_1, luebeckConwayPolynomial_433_1_monic⟩ [2, 3] [4, 3] []
   measureEntry 433 2 ⟨luebeckConwayPolynomial_433_2, luebeckConwayPolynomial_433_2_monic⟩ [2, 3, 7, 31] [5, 3, 1, 1] [(1, luebeckConwayPolynomial_433_1)]
   measureEntry 433 3 ⟨luebeckConwayPolynomial_433_3, luebeckConwayPolynomial_433_3_monic⟩ [2, 3, 37, 1693] [4, 4, 1, 1] [(1, luebeckConwayPolynomial_433_1)]
-  measureEntry 433 4 ⟨luebeckConwayPolynomial_433_4, luebeckConwayPolynomial_433_4_monic⟩ [2, 3, 5, 7, 31, 18749] [6, 3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_433_1), (2, luebeckConwayPolynomial_433_2)]
   measureEntry 439 1 ⟨luebeckConwayPolynomial_439_1, luebeckConwayPolynomial_439_1_monic⟩ [2, 3, 73] [1, 1, 1] []
   measureEntry 439 2 ⟨luebeckConwayPolynomial_439_2, luebeckConwayPolynomial_439_2_monic⟩ [2, 3, 5, 11, 73] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_439_1)]
   measureEntry 439 3 ⟨luebeckConwayPolynomial_439_3, luebeckConwayPolynomial_439_3_monic⟩ [2, 3, 31, 67, 73] [1, 2, 2, 1, 1] [(1, luebeckConwayPolynomial_439_1)]
-  measureEntry 439 4 ⟨luebeckConwayPolynomial_439_4, luebeckConwayPolynomial_439_4_monic⟩ [2, 3, 5, 11, 73, 173, 557] [5, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_439_1), (2, luebeckConwayPolynomial_439_2)]
   measureEntry 443 1 ⟨luebeckConwayPolynomial_443_1, luebeckConwayPolynomial_443_1_monic⟩ [2, 13, 17] [1, 1, 1] []
   measureEntry 443 2 ⟨luebeckConwayPolynomial_443_2, luebeckConwayPolynomial_443_2_monic⟩ [2, 3, 13, 17, 37] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_443_1)]
   measureEntry 443 3 ⟨luebeckConwayPolynomial_443_3, luebeckConwayPolynomial_443_3_monic⟩ [2, 7, 13, 17, 28099] [1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_443_1)]
-  measureEntry 443 4 ⟨luebeckConwayPolynomial_443_4, luebeckConwayPolynomial_443_4_monic⟩ [2, 3, 5, 13, 17, 37, 157] [4, 1, 4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_443_1), (2, luebeckConwayPolynomial_443_2)]
   measureEntry 449 1 ⟨luebeckConwayPolynomial_449_1, luebeckConwayPolynomial_449_1_monic⟩ [2, 7] [6, 1] []
   measureEntry 449 2 ⟨luebeckConwayPolynomial_449_2, luebeckConwayPolynomial_449_2_monic⟩ [2, 3, 5, 7] [7, 2, 2, 1] [(1, luebeckConwayPolynomial_449_1)]
   measureEntry 449 3 ⟨luebeckConwayPolynomial_449_3, luebeckConwayPolynomial_449_3_monic⟩ [2, 7, 97, 2083] [6, 1, 1, 1] [(1, luebeckConwayPolynomial_449_1)]
-  measureEntry 449 4 ⟨luebeckConwayPolynomial_449_4, luebeckConwayPolynomial_449_4_monic⟩ [2, 3, 5, 7, 100801] [8, 2, 2, 1, 1] [(1, luebeckConwayPolynomial_449_1), (2, luebeckConwayPolynomial_449_2)]
   measureEntry 457 1 ⟨luebeckConwayPolynomial_457_1, luebeckConwayPolynomial_457_1_monic⟩ [2, 3, 19] [3, 1, 1] []
   measureEntry 457 2 ⟨luebeckConwayPolynomial_457_2, luebeckConwayPolynomial_457_2_monic⟩ [2, 3, 19, 229] [4, 1, 1, 1] [(1, luebeckConwayPolynomial_457_1)]
   measureEntry 457 3 ⟨luebeckConwayPolynomial_457_3, luebeckConwayPolynomial_457_3_monic⟩ [2, 3, 7, 19, 9967] [3, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_457_1)]
-  measureEntry 457 4 ⟨luebeckConwayPolynomial_457_4, luebeckConwayPolynomial_457_4_monic⟩ [2, 3, 5, 19, 229, 4177] [5, 1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_457_1), (2, luebeckConwayPolynomial_457_2)]
   measureEntry 461 1 ⟨luebeckConwayPolynomial_461_1, luebeckConwayPolynomial_461_1_monic⟩ [2, 5, 23] [2, 1, 1] []
   measureEntry 461 2 ⟨luebeckConwayPolynomial_461_2, luebeckConwayPolynomial_461_2_monic⟩ [2, 3, 5, 7, 11, 23] [3, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_461_1)]
   measureEntry 461 3 ⟨luebeckConwayPolynomial_461_3, luebeckConwayPolynomial_461_3_monic⟩ [2, 5, 23, 373, 571] [2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_461_1)]
-  measureEntry 461 4 ⟨luebeckConwayPolynomial_461_4, luebeckConwayPolynomial_461_4_monic⟩ [2, 3, 5, 7, 11, 23, 106261] [4, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_461_1), (2, luebeckConwayPolynomial_461_2)]
-
-private def run16 : IO Unit := do
   measureEntry 463 1 ⟨luebeckConwayPolynomial_463_1, luebeckConwayPolynomial_463_1_monic⟩ [2, 3, 7, 11] [1, 1, 1, 1] []
   measureEntry 463 2 ⟨luebeckConwayPolynomial_463_2, luebeckConwayPolynomial_463_2_monic⟩ [2, 3, 7, 11, 29] [5, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_463_1)]
   measureEntry 463 3 ⟨luebeckConwayPolynomial_463_3, luebeckConwayPolynomial_463_3_monic⟩ [2, 3, 7, 11, 19, 3769] [1, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_463_1)]
-  measureEntry 463 4 ⟨luebeckConwayPolynomial_463_4, luebeckConwayPolynomial_463_4_monic⟩ [2, 3, 5, 7, 11, 13, 17, 29, 97] [6, 1, 1, 1, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_463_1), (2, luebeckConwayPolynomial_463_2)]
+
+private def run15 : IO Unit := do
   measureEntry 467 1 ⟨luebeckConwayPolynomial_467_1, luebeckConwayPolynomial_467_1_monic⟩ [2, 233] [1, 1] []
   measureEntry 467 2 ⟨luebeckConwayPolynomial_467_2, luebeckConwayPolynomial_467_2_monic⟩ [2, 3, 13, 233] [3, 2, 1, 1] [(1, luebeckConwayPolynomial_467_1)]
   measureEntry 467 3 ⟨luebeckConwayPolynomial_467_3, luebeckConwayPolynomial_467_3_monic⟩ [2, 19, 233, 11503] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_467_1)]
-  measureEntry 467 4 ⟨luebeckConwayPolynomial_467_4, luebeckConwayPolynomial_467_4_monic⟩ [2, 3, 5, 13, 113, 193, 233] [4, 2, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_467_1), (2, luebeckConwayPolynomial_467_2)]
   measureEntry 479 1 ⟨luebeckConwayPolynomial_479_1, luebeckConwayPolynomial_479_1_monic⟩ [2, 239] [1, 1] []
   measureEntry 479 2 ⟨luebeckConwayPolynomial_479_2, luebeckConwayPolynomial_479_2_monic⟩ [2, 3, 5, 239] [6, 1, 1, 1] [(1, luebeckConwayPolynomial_479_1)]
   measureEntry 479 3 ⟨luebeckConwayPolynomial_479_3, luebeckConwayPolynomial_479_3_monic⟩ [2, 43, 239, 5347] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_479_1)]
-  measureEntry 479 4 ⟨luebeckConwayPolynomial_479_4, luebeckConwayPolynomial_479_4_monic⟩ [2, 3, 5, 89, 239, 1289] [7, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_479_1), (2, luebeckConwayPolynomial_479_2)]
   measureEntry 487 1 ⟨luebeckConwayPolynomial_487_1, luebeckConwayPolynomial_487_1_monic⟩ [2, 3] [1, 5] []
   measureEntry 487 2 ⟨luebeckConwayPolynomial_487_2, luebeckConwayPolynomial_487_2_monic⟩ [2, 3, 61] [4, 5, 1] [(1, luebeckConwayPolynomial_487_1)]
   measureEntry 487 3 ⟨luebeckConwayPolynomial_487_3, luebeckConwayPolynomial_487_3_monic⟩ [2, 3, 7, 11317] [1, 6, 1, 1] [(1, luebeckConwayPolynomial_487_1)]
-  measureEntry 487 4 ⟨luebeckConwayPolynomial_487_4, luebeckConwayPolynomial_487_4_monic⟩ [2, 3, 5, 37, 61, 641] [5, 5, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_487_1), (2, luebeckConwayPolynomial_487_2)]
   measureEntry 491 1 ⟨luebeckConwayPolynomial_491_1, luebeckConwayPolynomial_491_1_monic⟩ [2, 5, 7] [1, 1, 2] []
   measureEntry 491 2 ⟨luebeckConwayPolynomial_491_2, luebeckConwayPolynomial_491_2_monic⟩ [2, 3, 5, 7, 41] [3, 1, 1, 2, 1] [(1, luebeckConwayPolynomial_491_1)]
   measureEntry 491 3 ⟨luebeckConwayPolynomial_491_3, luebeckConwayPolynomial_491_3_monic⟩ [2, 5, 7, 37, 6529] [1, 1, 2, 1, 1] [(1, luebeckConwayPolynomial_491_1)]
-  measureEntry 491 4 ⟨luebeckConwayPolynomial_491_4, luebeckConwayPolynomial_491_4_monic⟩ [2, 3, 5, 7, 41, 149, 809] [4, 1, 1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_491_1), (2, luebeckConwayPolynomial_491_2)]
   measureEntry 499 1 ⟨luebeckConwayPolynomial_499_1, luebeckConwayPolynomial_499_1_monic⟩ [2, 3, 83] [1, 1, 1] []
   measureEntry 499 2 ⟨luebeckConwayPolynomial_499_2, luebeckConwayPolynomial_499_2_monic⟩ [2, 3, 5, 83] [3, 1, 3, 1] [(1, luebeckConwayPolynomial_499_1)]
   measureEntry 499 3 ⟨luebeckConwayPolynomial_499_3, luebeckConwayPolynomial_499_3_monic⟩ [2, 3, 7, 83, 109] [1, 2, 1, 1, 2] [(1, luebeckConwayPolynomial_499_1)]
-  measureEntry 499 4 ⟨luebeckConwayPolynomial_499_4, luebeckConwayPolynomial_499_4_monic⟩ [2, 3, 5, 13, 61, 83, 157] [4, 1, 3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_499_1), (2, luebeckConwayPolynomial_499_2)]
-
-private def run17 : IO Unit := do
   measureEntry 503 1 ⟨luebeckConwayPolynomial_503_1, luebeckConwayPolynomial_503_1_monic⟩ [2, 251] [1, 1] []
   measureEntry 503 2 ⟨luebeckConwayPolynomial_503_2, luebeckConwayPolynomial_503_2_monic⟩ [2, 3, 7, 251] [4, 2, 1, 1] [(1, luebeckConwayPolynomial_503_1)]
   measureEntry 503 3 ⟨luebeckConwayPolynomial_503_3, luebeckConwayPolynomial_503_3_monic⟩ [2, 13, 251, 19501] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_503_1)]
@@ -499,6 +462,8 @@ private def run17 : IO Unit := do
   measureEntry 521 1 ⟨luebeckConwayPolynomial_521_1, luebeckConwayPolynomial_521_1_monic⟩ [2, 5, 13] [3, 1, 1] []
   measureEntry 521 2 ⟨luebeckConwayPolynomial_521_2, luebeckConwayPolynomial_521_2_monic⟩ [2, 3, 5, 13, 29] [4, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_521_1)]
   measureEntry 521 3 ⟨luebeckConwayPolynomial_521_3, luebeckConwayPolynomial_521_3_monic⟩ [2, 5, 13, 31, 283] [3, 1, 1, 2, 1] [(1, luebeckConwayPolynomial_521_1)]
+
+private def run16 : IO Unit := do
   measureEntry 523 1 ⟨luebeckConwayPolynomial_523_1, luebeckConwayPolynomial_523_1_monic⟩ [2, 3, 29] [1, 2, 1] []
   measureEntry 523 2 ⟨luebeckConwayPolynomial_523_2, luebeckConwayPolynomial_523_2_monic⟩ [2, 3, 29, 131] [3, 2, 1, 1] [(1, luebeckConwayPolynomial_523_1)]
   measureEntry 523 3 ⟨luebeckConwayPolynomial_523_3, luebeckConwayPolynomial_523_3_monic⟩ [2, 3, 13, 29, 7027] [1, 3, 1, 1, 1] [(1, luebeckConwayPolynomial_523_1)]
@@ -514,8 +479,6 @@ private def run17 : IO Unit := do
   measureEntry 563 1 ⟨luebeckConwayPolynomial_563_1, luebeckConwayPolynomial_563_1_monic⟩ [2, 281] [1, 1] []
   measureEntry 563 2 ⟨luebeckConwayPolynomial_563_2, luebeckConwayPolynomial_563_2_monic⟩ [2, 3, 47, 281] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_563_1)]
   measureEntry 563 3 ⟨luebeckConwayPolynomial_563_3, luebeckConwayPolynomial_563_3_monic⟩ [2, 31, 281, 10243] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_563_1)]
-
-private def run18 : IO Unit := do
   measureEntry 569 1 ⟨luebeckConwayPolynomial_569_1, luebeckConwayPolynomial_569_1_monic⟩ [2, 71] [3, 1] []
   measureEntry 569 2 ⟨luebeckConwayPolynomial_569_2, luebeckConwayPolynomial_569_2_monic⟩ [2, 3, 5, 19, 71] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_569_1)]
   measureEntry 569 3 ⟨luebeckConwayPolynomial_569_3, luebeckConwayPolynomial_569_3_monic⟩ [2, 7, 71, 6619] [3, 2, 1, 1] [(1, luebeckConwayPolynomial_569_1)]
@@ -525,6 +488,8 @@ private def run18 : IO Unit := do
   measureEntry 577 1 ⟨luebeckConwayPolynomial_577_1, luebeckConwayPolynomial_577_1_monic⟩ [2, 3] [6, 2] []
   measureEntry 577 2 ⟨luebeckConwayPolynomial_577_2, luebeckConwayPolynomial_577_2_monic⟩ [2, 3, 17] [7, 2, 2] [(1, luebeckConwayPolynomial_577_1)]
   measureEntry 577 3 ⟨luebeckConwayPolynomial_577_3, luebeckConwayPolynomial_577_3_monic⟩ [2, 3, 19, 5851] [6, 3, 1, 1] [(1, luebeckConwayPolynomial_577_1)]
+
+private def run17 : IO Unit := do
   measureEntry 587 1 ⟨luebeckConwayPolynomial_587_1, luebeckConwayPolynomial_587_1_monic⟩ [2, 293] [1, 1] []
   measureEntry 587 2 ⟨luebeckConwayPolynomial_587_2, luebeckConwayPolynomial_587_2_monic⟩ [2, 3, 7, 293] [3, 1, 2, 1] [(1, luebeckConwayPolynomial_587_1)]
   measureEntry 587 3 ⟨luebeckConwayPolynomial_587_3, luebeckConwayPolynomial_587_3_monic⟩ [2, 293, 547, 631] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_587_1)]
@@ -540,8 +505,6 @@ private def run18 : IO Unit := do
   measureEntry 607 1 ⟨luebeckConwayPolynomial_607_1, luebeckConwayPolynomial_607_1_monic⟩ [2, 3, 101] [1, 1, 1] []
   measureEntry 607 2 ⟨luebeckConwayPolynomial_607_2, luebeckConwayPolynomial_607_2_monic⟩ [2, 3, 19, 101] [6, 1, 1, 1] [(1, luebeckConwayPolynomial_607_1)]
   measureEntry 607 3 ⟨luebeckConwayPolynomial_607_3, luebeckConwayPolynomial_607_3_monic⟩ [2, 3, 13, 101, 9463] [1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_607_1)]
-
-private def run19 : IO Unit := do
   measureEntry 613 1 ⟨luebeckConwayPolynomial_613_1, luebeckConwayPolynomial_613_1_monic⟩ [2, 3, 17] [2, 2, 1] []
   measureEntry 613 2 ⟨luebeckConwayPolynomial_613_2, luebeckConwayPolynomial_613_2_monic⟩ [2, 3, 17, 307] [3, 2, 1, 1] [(1, luebeckConwayPolynomial_613_1)]
   measureEntry 613 3 ⟨luebeckConwayPolynomial_613_3, luebeckConwayPolynomial_613_3_monic⟩ [2, 3, 7, 17, 17923] [2, 3, 1, 1, 1] [(1, luebeckConwayPolynomial_613_1)]
@@ -551,6 +514,8 @@ private def run19 : IO Unit := do
   measureEntry 619 1 ⟨luebeckConwayPolynomial_619_1, luebeckConwayPolynomial_619_1_monic⟩ [2, 3, 103] [1, 1, 1] []
   measureEntry 619 2 ⟨luebeckConwayPolynomial_619_2, luebeckConwayPolynomial_619_2_monic⟩ [2, 3, 5, 31, 103] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_619_1)]
   measureEntry 619 3 ⟨luebeckConwayPolynomial_619_3, luebeckConwayPolynomial_619_3_monic⟩ [2, 3, 19, 103, 6733] [1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_619_1)]
+
+private def run18 : IO Unit := do
   measureEntry 631 1 ⟨luebeckConwayPolynomial_631_1, luebeckConwayPolynomial_631_1_monic⟩ [2, 3, 5, 7] [1, 2, 1, 1] []
   measureEntry 631 2 ⟨luebeckConwayPolynomial_631_2, luebeckConwayPolynomial_631_2_monic⟩ [2, 3, 5, 7, 79] [4, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_631_1)]
   measureEntry 631 3 ⟨luebeckConwayPolynomial_631_3, luebeckConwayPolynomial_631_3_monic⟩ [2, 3, 5, 7, 307, 433] [1, 3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_631_1)]
@@ -566,8 +531,6 @@ private def run19 : IO Unit := do
   measureEntry 653 1 ⟨luebeckConwayPolynomial_653_1, luebeckConwayPolynomial_653_1_monic⟩ [2, 163] [2, 1] []
   measureEntry 653 2 ⟨luebeckConwayPolynomial_653_2, luebeckConwayPolynomial_653_2_monic⟩ [2, 3, 109, 163] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_653_1)]
   measureEntry 653 3 ⟨luebeckConwayPolynomial_653_3, luebeckConwayPolynomial_653_3_monic⟩ [2, 7, 13, 19, 163] [2, 1, 2, 2, 1] [(1, luebeckConwayPolynomial_653_1)]
-
-private def run20 : IO Unit := do
   measureEntry 659 1 ⟨luebeckConwayPolynomial_659_1, luebeckConwayPolynomial_659_1_monic⟩ [2, 7, 47] [1, 1, 1] []
   measureEntry 659 2 ⟨luebeckConwayPolynomial_659_2, luebeckConwayPolynomial_659_2_monic⟩ [2, 3, 5, 7, 11, 47] [3, 1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_659_1)]
   measureEntry 659 3 ⟨luebeckConwayPolynomial_659_3, luebeckConwayPolynomial_659_3_monic⟩ [2, 7, 13, 47, 33457] [1, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_659_1)]
@@ -577,6 +540,8 @@ private def run20 : IO Unit := do
   measureEntry 673 1 ⟨luebeckConwayPolynomial_673_1, luebeckConwayPolynomial_673_1_monic⟩ [2, 3, 7] [5, 1, 1] []
   measureEntry 673 2 ⟨luebeckConwayPolynomial_673_2, luebeckConwayPolynomial_673_2_monic⟩ [2, 3, 7, 337] [6, 1, 1, 1] [(1, luebeckConwayPolynomial_673_1)]
   measureEntry 673 3 ⟨luebeckConwayPolynomial_673_3, luebeckConwayPolynomial_673_3_monic⟩ [2, 3, 7, 151201] [5, 2, 1, 1] [(1, luebeckConwayPolynomial_673_1)]
+
+private def run19 : IO Unit := do
   measureEntry 677 1 ⟨luebeckConwayPolynomial_677_1, luebeckConwayPolynomial_677_1_monic⟩ [2, 13] [2, 2] []
   measureEntry 677 2 ⟨luebeckConwayPolynomial_677_2, luebeckConwayPolynomial_677_2_monic⟩ [2, 3, 13, 113] [3, 1, 2, 1] [(1, luebeckConwayPolynomial_677_1)]
   measureEntry 677 3 ⟨luebeckConwayPolynomial_677_3, luebeckConwayPolynomial_677_3_monic⟩ [2, 13, 459007] [2, 2, 1] [(1, luebeckConwayPolynomial_677_1)]
@@ -592,8 +557,6 @@ private def run20 : IO Unit := do
   measureEntry 709 1 ⟨luebeckConwayPolynomial_709_1, luebeckConwayPolynomial_709_1_monic⟩ [2, 3, 59] [2, 1, 1] []
   measureEntry 709 2 ⟨luebeckConwayPolynomial_709_2, luebeckConwayPolynomial_709_2_monic⟩ [2, 3, 5, 59, 71] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_709_1)]
   measureEntry 709 3 ⟨luebeckConwayPolynomial_709_3, luebeckConwayPolynomial_709_3_monic⟩ [2, 3, 7, 59, 23971] [2, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_709_1)]
-
-private def run21 : IO Unit := do
   measureEntry 719 1 ⟨luebeckConwayPolynomial_719_1, luebeckConwayPolynomial_719_1_monic⟩ [2, 359] [1, 1] []
   measureEntry 719 2 ⟨luebeckConwayPolynomial_719_2, luebeckConwayPolynomial_719_2_monic⟩ [2, 3, 5, 359] [5, 2, 1, 1] [(1, luebeckConwayPolynomial_719_1)]
   measureEntry 719 3 ⟨luebeckConwayPolynomial_719_3, luebeckConwayPolynomial_719_3_monic⟩ [2, 359, 487, 1063] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_719_1)]
@@ -603,6 +566,8 @@ private def run21 : IO Unit := do
   measureEntry 733 1 ⟨luebeckConwayPolynomial_733_1, luebeckConwayPolynomial_733_1_monic⟩ [2, 3, 61] [2, 1, 1] []
   measureEntry 733 2 ⟨luebeckConwayPolynomial_733_2, luebeckConwayPolynomial_733_2_monic⟩ [2, 3, 61, 367] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_733_1)]
   measureEntry 733 3 ⟨luebeckConwayPolynomial_733_3, luebeckConwayPolynomial_733_3_monic⟩ [2, 3, 19, 61, 9439] [2, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_733_1)]
+
+private def run20 : IO Unit := do
   measureEntry 739 1 ⟨luebeckConwayPolynomial_739_1, luebeckConwayPolynomial_739_1_monic⟩ [2, 3, 41] [1, 2, 1] []
   measureEntry 739 2 ⟨luebeckConwayPolynomial_739_2, luebeckConwayPolynomial_739_2_monic⟩ [2, 3, 5, 37, 41] [3, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_739_1)]
   measureEntry 739 3 ⟨luebeckConwayPolynomial_739_3, luebeckConwayPolynomial_739_3_monic⟩ [2, 3, 7, 41, 26041] [1, 3, 1, 1, 1] [(1, luebeckConwayPolynomial_739_1)]
@@ -618,8 +583,6 @@ private def run21 : IO Unit := do
   measureEntry 761 1 ⟨luebeckConwayPolynomial_761_1, luebeckConwayPolynomial_761_1_monic⟩ [2, 5, 19] [3, 1, 1] []
   measureEntry 761 2 ⟨luebeckConwayPolynomial_761_2, luebeckConwayPolynomial_761_2_monic⟩ [2, 3, 5, 19, 127] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_761_1)]
   measureEntry 761 3 ⟨luebeckConwayPolynomial_761_3, luebeckConwayPolynomial_761_3_monic⟩ [2, 5, 19, 579883] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_761_1)]
-
-private def run22 : IO Unit := do
   measureEntry 769 1 ⟨luebeckConwayPolynomial_769_1, luebeckConwayPolynomial_769_1_monic⟩ [2, 3] [8, 1] []
   measureEntry 769 2 ⟨luebeckConwayPolynomial_769_2, luebeckConwayPolynomial_769_2_monic⟩ [2, 3, 5, 7, 11] [9, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_769_1)]
   measureEntry 769 3 ⟨luebeckConwayPolynomial_769_3, luebeckConwayPolynomial_769_3_monic⟩ [2, 3, 31, 6367] [8, 2, 1, 1] [(1, luebeckConwayPolynomial_769_1)]
@@ -629,6 +592,8 @@ private def run22 : IO Unit := do
   measureEntry 787 1 ⟨luebeckConwayPolynomial_787_1, luebeckConwayPolynomial_787_1_monic⟩ [2, 3, 131] [1, 1, 1] []
   measureEntry 787 2 ⟨luebeckConwayPolynomial_787_2, luebeckConwayPolynomial_787_2_monic⟩ [2, 3, 131, 197] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_787_1)]
   measureEntry 787 3 ⟨luebeckConwayPolynomial_787_3, luebeckConwayPolynomial_787_3_monic⟩ [2, 3, 37, 131, 151] [1, 2, 2, 1, 1] [(1, luebeckConwayPolynomial_787_1)]
+
+private def run21 : IO Unit := do
   measureEntry 797 1 ⟨luebeckConwayPolynomial_797_1, luebeckConwayPolynomial_797_1_monic⟩ [2, 199] [2, 1] []
   measureEntry 797 2 ⟨luebeckConwayPolynomial_797_2, luebeckConwayPolynomial_797_2_monic⟩ [2, 3, 7, 19, 199] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_797_1)]
   measureEntry 797 3 ⟨luebeckConwayPolynomial_797_3, luebeckConwayPolynomial_797_3_monic⟩ [2, 157, 199, 4051] [2, 1, 1, 1] [(1, luebeckConwayPolynomial_797_1)]
@@ -644,8 +609,6 @@ private def run22 : IO Unit := do
   measureEntry 823 1 ⟨luebeckConwayPolynomial_823_1, luebeckConwayPolynomial_823_1_monic⟩ [2, 3, 137] [1, 1, 1] []
   measureEntry 823 2 ⟨luebeckConwayPolynomial_823_2, luebeckConwayPolynomial_823_2_monic⟩ [2, 3, 103, 137] [4, 1, 1, 1] [(1, luebeckConwayPolynomial_823_1)]
   measureEntry 823 3 ⟨luebeckConwayPolynomial_823_3, luebeckConwayPolynomial_823_3_monic⟩ [2, 3, 7, 43, 137, 751] [1, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_823_1)]
-
-private def run23 : IO Unit := do
   measureEntry 827 1 ⟨luebeckConwayPolynomial_827_1, luebeckConwayPolynomial_827_1_monic⟩ [2, 7, 59] [1, 1, 1] []
   measureEntry 827 2 ⟨luebeckConwayPolynomial_827_2, luebeckConwayPolynomial_827_2_monic⟩ [2, 3, 7, 23, 59] [3, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_827_1)]
   measureEntry 827 3 ⟨luebeckConwayPolynomial_827_3, luebeckConwayPolynomial_827_3_monic⟩ [2, 7, 59, 684757] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_827_1)]
@@ -655,6 +618,8 @@ private def run23 : IO Unit := do
   measureEntry 839 1 ⟨luebeckConwayPolynomial_839_1, luebeckConwayPolynomial_839_1_monic⟩ [2, 419] [1, 1] []
   measureEntry 839 2 ⟨luebeckConwayPolynomial_839_2, luebeckConwayPolynomial_839_2_monic⟩ [2, 3, 5, 7, 419] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_839_1)]
   measureEntry 839 3 ⟨luebeckConwayPolynomial_839_3, luebeckConwayPolynomial_839_3_monic⟩ [2, 419, 704761] [1, 1, 1] [(1, luebeckConwayPolynomial_839_1)]
+
+private def run22 : IO Unit := do
   measureEntry 853 1 ⟨luebeckConwayPolynomial_853_1, luebeckConwayPolynomial_853_1_monic⟩ [2, 3, 71] [2, 1, 1] []
   measureEntry 853 2 ⟨luebeckConwayPolynomial_853_2, luebeckConwayPolynomial_853_2_monic⟩ [2, 3, 7, 61, 71] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_853_1)]
   measureEntry 853 3 ⟨luebeckConwayPolynomial_853_3, luebeckConwayPolynomial_853_3_monic⟩ [2, 3, 43, 71, 5647] [2, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_853_1)]
@@ -670,8 +635,6 @@ private def run23 : IO Unit := do
   measureEntry 877 1 ⟨luebeckConwayPolynomial_877_1, luebeckConwayPolynomial_877_1_monic⟩ [2, 3, 73] [2, 1, 1] []
   measureEntry 877 2 ⟨luebeckConwayPolynomial_877_2, luebeckConwayPolynomial_877_2_monic⟩ [2, 3, 73, 439] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_877_1)]
   measureEntry 877 3 ⟨luebeckConwayPolynomial_877_3, luebeckConwayPolynomial_877_3_monic⟩ [2, 3, 7, 37, 73, 991] [2, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_877_1)]
-
-private def run24 : IO Unit := do
   measureEntry 881 1 ⟨luebeckConwayPolynomial_881_1, luebeckConwayPolynomial_881_1_monic⟩ [2, 5, 11] [4, 1, 1] []
   measureEntry 881 2 ⟨luebeckConwayPolynomial_881_2, luebeckConwayPolynomial_881_2_monic⟩ [2, 3, 5, 7, 11] [5, 2, 1, 2, 1] [(1, luebeckConwayPolynomial_881_1)]
   measureEntry 881 3 ⟨luebeckConwayPolynomial_881_3, luebeckConwayPolynomial_881_3_monic⟩ [2, 5, 11, 19, 40897] [4, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_881_1)]
@@ -681,6 +644,8 @@ private def run24 : IO Unit := do
   measureEntry 887 1 ⟨luebeckConwayPolynomial_887_1, luebeckConwayPolynomial_887_1_monic⟩ [2, 443] [1, 1] []
   measureEntry 887 2 ⟨luebeckConwayPolynomial_887_2, luebeckConwayPolynomial_887_2_monic⟩ [2, 3, 37, 443] [4, 1, 1, 1] [(1, luebeckConwayPolynomial_887_1)]
   measureEntry 887 3 ⟨luebeckConwayPolynomial_887_3, luebeckConwayPolynomial_887_3_monic⟩ [2, 13, 443, 60589] [1, 1, 1, 1] [(1, luebeckConwayPolynomial_887_1)]
+
+private def run23 : IO Unit := do
   measureEntry 907 1 ⟨luebeckConwayPolynomial_907_1, luebeckConwayPolynomial_907_1_monic⟩ [2, 3, 151] [1, 1, 1] []
   measureEntry 907 2 ⟨luebeckConwayPolynomial_907_2, luebeckConwayPolynomial_907_2_monic⟩ [2, 3, 151, 227] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_907_1)]
   measureEntry 907 3 ⟨luebeckConwayPolynomial_907_3, luebeckConwayPolynomial_907_3_monic⟩ [2, 3, 7, 151, 39217] [1, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_907_1)]
@@ -696,8 +661,6 @@ private def run24 : IO Unit := do
   measureEntry 937 1 ⟨luebeckConwayPolynomial_937_1, luebeckConwayPolynomial_937_1_monic⟩ [2, 3, 13] [3, 2, 1] []
   measureEntry 937 2 ⟨luebeckConwayPolynomial_937_2, luebeckConwayPolynomial_937_2_monic⟩ [2, 3, 7, 13, 67] [4, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_937_1)]
   measureEntry 937 3 ⟨luebeckConwayPolynomial_937_3, luebeckConwayPolynomial_937_3_monic⟩ [2, 3, 13, 292969] [3, 3, 1, 1] [(1, luebeckConwayPolynomial_937_1)]
-
-private def run25 : IO Unit := do
   measureEntry 941 1 ⟨luebeckConwayPolynomial_941_1, luebeckConwayPolynomial_941_1_monic⟩ [2, 5, 47] [2, 1, 1] []
   measureEntry 941 2 ⟨luebeckConwayPolynomial_941_2, luebeckConwayPolynomial_941_2_monic⟩ [2, 3, 5, 47, 157] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_941_1)]
   measureEntry 941 3 ⟨luebeckConwayPolynomial_941_3, luebeckConwayPolynomial_941_3_monic⟩ [2, 5, 47, 811, 1093] [2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_941_1)]
@@ -707,6 +670,8 @@ private def run25 : IO Unit := do
   measureEntry 953 1 ⟨luebeckConwayPolynomial_953_1, luebeckConwayPolynomial_953_1_monic⟩ [2, 7, 17] [3, 1, 1] []
   measureEntry 953 2 ⟨luebeckConwayPolynomial_953_2, luebeckConwayPolynomial_953_2_monic⟩ [2, 3, 7, 17, 53] [4, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_953_1)]
   measureEntry 953 3 ⟨luebeckConwayPolynomial_953_3, luebeckConwayPolynomial_953_3_monic⟩ [2, 7, 17, 181, 5023] [3, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_953_1)]
+
+private def run24 : IO Unit := do
   measureEntry 967 1 ⟨luebeckConwayPolynomial_967_1, luebeckConwayPolynomial_967_1_monic⟩ [2, 3, 7, 23] [1, 1, 1, 1] []
   measureEntry 967 2 ⟨luebeckConwayPolynomial_967_2, luebeckConwayPolynomial_967_2_monic⟩ [2, 3, 7, 11, 23] [4, 1, 1, 2, 1] [(1, luebeckConwayPolynomial_967_1)]
   measureEntry 967 3 ⟨luebeckConwayPolynomial_967_3, luebeckConwayPolynomial_967_3_monic⟩ [2, 3, 7, 23, 67, 4657] [1, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_967_1)]
@@ -722,8 +687,6 @@ private def run25 : IO Unit := do
   measureEntry 991 1 ⟨luebeckConwayPolynomial_991_1, luebeckConwayPolynomial_991_1_monic⟩ [2, 3, 5, 11] [1, 2, 1, 1] []
   measureEntry 991 2 ⟨luebeckConwayPolynomial_991_2, luebeckConwayPolynomial_991_2_monic⟩ [2, 3, 5, 11, 31] [6, 2, 1, 1, 1] [(1, luebeckConwayPolynomial_991_1)]
   measureEntry 991 3 ⟨luebeckConwayPolynomial_991_3, luebeckConwayPolynomial_991_3_monic⟩ [2, 3, 5, 7, 11, 13, 277] [1, 3, 1, 1, 1, 2, 1] [(1, luebeckConwayPolynomial_991_1)]
-
-private def run26 : IO Unit := do
   measureEntry 997 1 ⟨luebeckConwayPolynomial_997_1, luebeckConwayPolynomial_997_1_monic⟩ [2, 3, 83] [2, 1, 1] []
   measureEntry 997 2 ⟨luebeckConwayPolynomial_997_2, luebeckConwayPolynomial_997_2_monic⟩ [2, 3, 83, 499] [3, 1, 1, 1] [(1, luebeckConwayPolynomial_997_1)]
   measureEntry 997 3 ⟨luebeckConwayPolynomial_997_3, luebeckConwayPolynomial_997_3_monic⟩ [2, 3, 13, 31, 83, 823] [2, 2, 1, 1, 1, 1] [(1, luebeckConwayPolynomial_997_1)]
@@ -754,5 +717,3 @@ def main : IO Unit := do
   run22
   run23
   run24
-  run25
-  run26

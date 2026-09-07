@@ -19,7 +19,6 @@ public import HexConway.Transport.S0_9
 public import HexConway.Transport.S0_10
 public import HexConway.Transport.S0_11
 public import HexConway.Transport.S0_12
-public import HexConway.Transport.S0_13
 public import HexConway.Transport.S1_0
 public import HexConway.Transport.S1_1
 public import HexConway.Transport.S1_2
@@ -33,7 +32,6 @@ public import HexConway.Transport.S1_9
 public import HexConway.Transport.S1_10
 public import HexConway.Transport.S1_11
 public import HexConway.Transport.S1_12
-public import HexConway.Transport.S1_13
 public import HexConway.Transport.S2_0
 public import HexConway.Transport.S2_1
 public import HexConway.Transport.S2_2
@@ -47,7 +45,6 @@ public import HexConway.Transport.S2_9
 public import HexConway.Transport.S2_10
 public import HexConway.Transport.S2_11
 public import HexConway.Transport.S2_12
-public import HexConway.Transport.S2_13
 public import HexConway.Transport.S3_0
 public import HexConway.Transport.S3_1
 public import HexConway.Transport.S3_2
@@ -61,7 +58,6 @@ public import HexConway.Transport.S3_9
 public import HexConway.Transport.S3_10
 public import HexConway.Transport.S3_11
 public import HexConway.Transport.S3_12
-public import HexConway.Transport.S3_13
 
 public section
 
@@ -487,199 +483,166 @@ namespace Conway
     · cases hcoeffs; exact ofCoeffs_307_1_monic
     · cases hcoeffs; exact ofCoeffs_307_2_monic
     · cases hcoeffs; exact ofCoeffs_307_3_monic
-    · cases hcoeffs; exact ofCoeffs_307_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_311_1_monic
     · cases hcoeffs; exact ofCoeffs_311_2_monic
     · cases hcoeffs; exact ofCoeffs_311_3_monic
-    · cases hcoeffs; exact ofCoeffs_311_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_313_1_monic
     · cases hcoeffs; exact ofCoeffs_313_2_monic
     · cases hcoeffs; exact ofCoeffs_313_3_monic
-    · cases hcoeffs; exact ofCoeffs_313_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_317_1_monic
     · cases hcoeffs; exact ofCoeffs_317_2_monic
     · cases hcoeffs; exact ofCoeffs_317_3_monic
-    · cases hcoeffs; exact ofCoeffs_317_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_331_1_monic
     · cases hcoeffs; exact ofCoeffs_331_2_monic
     · cases hcoeffs; exact ofCoeffs_331_3_monic
-    · cases hcoeffs; exact ofCoeffs_331_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_337_1_monic
     · cases hcoeffs; exact ofCoeffs_337_2_monic
     · cases hcoeffs; exact ofCoeffs_337_3_monic
-    · cases hcoeffs; exact ofCoeffs_337_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_347_1_monic
     · cases hcoeffs; exact ofCoeffs_347_2_monic
     · cases hcoeffs; exact ofCoeffs_347_3_monic
-    · cases hcoeffs; exact ofCoeffs_347_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_349_1_monic
     · cases hcoeffs; exact ofCoeffs_349_2_monic
     · cases hcoeffs; exact ofCoeffs_349_3_monic
-    · cases hcoeffs; exact ofCoeffs_349_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_353_1_monic
     · cases hcoeffs; exact ofCoeffs_353_2_monic
     · cases hcoeffs; exact ofCoeffs_353_3_monic
-    · cases hcoeffs; exact ofCoeffs_353_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_359_1_monic
     · cases hcoeffs; exact ofCoeffs_359_2_monic
     · cases hcoeffs; exact ofCoeffs_359_3_monic
-    · cases hcoeffs; exact ofCoeffs_359_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_367_1_monic
     · cases hcoeffs; exact ofCoeffs_367_2_monic
     · cases hcoeffs; exact ofCoeffs_367_3_monic
-    · cases hcoeffs; exact ofCoeffs_367_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_373_1_monic
     · cases hcoeffs; exact ofCoeffs_373_2_monic
     · cases hcoeffs; exact ofCoeffs_373_3_monic
-    · cases hcoeffs; exact ofCoeffs_373_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_379_1_monic
     · cases hcoeffs; exact ofCoeffs_379_2_monic
     · cases hcoeffs; exact ofCoeffs_379_3_monic
-    · cases hcoeffs; exact ofCoeffs_379_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_383_1_monic
     · cases hcoeffs; exact ofCoeffs_383_2_monic
     · cases hcoeffs; exact ofCoeffs_383_3_monic
-    · cases hcoeffs; exact ofCoeffs_383_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_389_1_monic
     · cases hcoeffs; exact ofCoeffs_389_2_monic
     · cases hcoeffs; exact ofCoeffs_389_3_monic
-    · cases hcoeffs; exact ofCoeffs_389_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_397_1_monic
     · cases hcoeffs; exact ofCoeffs_397_2_monic
     · cases hcoeffs; exact ofCoeffs_397_3_monic
-    · cases hcoeffs; exact ofCoeffs_397_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_401_1_monic
     · cases hcoeffs; exact ofCoeffs_401_2_monic
     · cases hcoeffs; exact ofCoeffs_401_3_monic
-    · cases hcoeffs; exact ofCoeffs_401_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_409_1_monic
     · cases hcoeffs; exact ofCoeffs_409_2_monic
     · cases hcoeffs; exact ofCoeffs_409_3_monic
-    · cases hcoeffs; exact ofCoeffs_409_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_419_1_monic
     · cases hcoeffs; exact ofCoeffs_419_2_monic
     · cases hcoeffs; exact ofCoeffs_419_3_monic
-    · cases hcoeffs; exact ofCoeffs_419_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_421_1_monic
     · cases hcoeffs; exact ofCoeffs_421_2_monic
     · cases hcoeffs; exact ofCoeffs_421_3_monic
-    · cases hcoeffs; exact ofCoeffs_421_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_431_1_monic
     · cases hcoeffs; exact ofCoeffs_431_2_monic
     · cases hcoeffs; exact ofCoeffs_431_3_monic
-    · cases hcoeffs; exact ofCoeffs_431_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_433_1_monic
     · cases hcoeffs; exact ofCoeffs_433_2_monic
     · cases hcoeffs; exact ofCoeffs_433_3_monic
-    · cases hcoeffs; exact ofCoeffs_433_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_439_1_monic
     · cases hcoeffs; exact ofCoeffs_439_2_monic
     · cases hcoeffs; exact ofCoeffs_439_3_monic
-    · cases hcoeffs; exact ofCoeffs_439_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_443_1_monic
     · cases hcoeffs; exact ofCoeffs_443_2_monic
     · cases hcoeffs; exact ofCoeffs_443_3_monic
-    · cases hcoeffs; exact ofCoeffs_443_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_449_1_monic
     · cases hcoeffs; exact ofCoeffs_449_2_monic
     · cases hcoeffs; exact ofCoeffs_449_3_monic
-    · cases hcoeffs; exact ofCoeffs_449_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_457_1_monic
     · cases hcoeffs; exact ofCoeffs_457_2_monic
     · cases hcoeffs; exact ofCoeffs_457_3_monic
-    · cases hcoeffs; exact ofCoeffs_457_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_461_1_monic
     · cases hcoeffs; exact ofCoeffs_461_2_monic
     · cases hcoeffs; exact ofCoeffs_461_3_monic
-    · cases hcoeffs; exact ofCoeffs_461_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_463_1_monic
     · cases hcoeffs; exact ofCoeffs_463_2_monic
     · cases hcoeffs; exact ofCoeffs_463_3_monic
-    · cases hcoeffs; exact ofCoeffs_463_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_467_1_monic
     · cases hcoeffs; exact ofCoeffs_467_2_monic
     · cases hcoeffs; exact ofCoeffs_467_3_monic
-    · cases hcoeffs; exact ofCoeffs_467_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_479_1_monic
     · cases hcoeffs; exact ofCoeffs_479_2_monic
     · cases hcoeffs; exact ofCoeffs_479_3_monic
-    · cases hcoeffs; exact ofCoeffs_479_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_487_1_monic
     · cases hcoeffs; exact ofCoeffs_487_2_monic
     · cases hcoeffs; exact ofCoeffs_487_3_monic
-    · cases hcoeffs; exact ofCoeffs_487_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_491_1_monic
     · cases hcoeffs; exact ofCoeffs_491_2_monic
     · cases hcoeffs; exact ofCoeffs_491_3_monic
-    · cases hcoeffs; exact ofCoeffs_491_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_499_1_monic
     · cases hcoeffs; exact ofCoeffs_499_2_monic
     · cases hcoeffs; exact ofCoeffs_499_3_monic
-    · cases hcoeffs; exact ofCoeffs_499_4_monic
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_503_1_monic

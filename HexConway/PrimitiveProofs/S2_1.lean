@@ -20,162 +20,6 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-/-- C(127, 4) has a generator of order 260144640. -/
-theorem primitive_127_4 :
-    Primitive 127 4 supportedEntry_127_4 [2, 3, 5, 7, 1613] [9, 2, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_5
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_7
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_1613
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(53, 4) has a generator of order 7890480. -/
-theorem primitive_53_4 :
-    Primitive 53 4 supportedEntry_53_4 [2, 3, 5, 13, 281] [4, 3, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_5
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_13
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_281
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(919, 3) has a generator of order 776151558. -/
-theorem primitive_919_3 :
-    Primitive 919 3 supportedEntry_919_3 [2, 3, 7, 13, 17, 19, 163] [1, 4, 1, 1, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_7
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_13
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_17
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_19
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_163
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(691, 3) has a generator of order 329939370. -/
-theorem primitive_691_3 :
-    Primitive 691 3 supportedEntry_691_3 [2, 3, 5, 19, 23, 8389] [1, 2, 1, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_5
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_19
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_23
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_8389
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(823, 3) has a generator of order 557441766. -/
-theorem primitive_823_3 :
-    Primitive 823 3 supportedEntry_823_3 [2, 3, 7, 43, 137, 751] [1, 2, 1, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_7
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_43
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_137
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_751
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(971, 3) has a generator of order 915498610. -/
-theorem primitive_971_3 :
-    Primitive 971 3 supportedEntry_971_3 [2, 5, 13, 79, 97, 919] [1, 1, 1, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_5
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_13
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_79
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_97
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_919
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(31, 4) has a generator of order 923520. -/
-theorem primitive_31_4 :
-    Primitive 31 4 supportedEntry_31_4 [2, 3, 5, 13, 37] [7, 1, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_5
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_13
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_37
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
-/-- C(277, 3) has a generator of order 21253932. -/
-theorem primitive_277_3 :
-    Primitive 277 3 supportedEntry_277_3 [2, 3, 7, 19, 23, 193] [2, 2, 1, 1, 1, 1] where
-  primes := by
-    intro q hq
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_2
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_3
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_7
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_19
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_23
-    rcases List.mem_cons.mp hq with rfl | hq
-    · exact factorPrime_193
-    exact absurd hq (by simp)
-  check := by decide +kernel
-
 /-- C(463, 3) has a generator of order 99252846. -/
 theorem primitive_463_3 :
     Primitive 463 3 supportedEntry_463_3 [2, 3, 7, 11, 19, 3769] [1, 2, 1, 1, 1, 1] where
@@ -465,6 +309,136 @@ theorem primitive_139_3 :
     · exact factorPrime_23
     rcases List.mem_cons.mp hq with rfl | hq
     · exact factorPrime_499
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(181, 3) has a generator of order 5929740. -/
+theorem primitive_181_3 :
+    Primitive 181 3 supportedEntry_181_3 [2, 3, 5, 79, 139] [2, 3, 1, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_5
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_79
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_139
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(563, 3) has a generator of order 178453546. -/
+theorem primitive_563_3 :
+    Primitive 563 3 supportedEntry_563_3 [2, 31, 281, 10243] [1, 1, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_31
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_281
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_10243
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(593, 3) has a generator of order 208527856. -/
+theorem primitive_593_3 :
+    Primitive 593 3 supportedEntry_593_3 [2, 37, 163, 2161] [4, 1, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_37
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_163
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2161
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(719, 3) has a generator of order 371694958. -/
+theorem primitive_719_3 :
+    Primitive 719 3 supportedEntry_719_3 [2, 359, 487, 1063] [1, 1, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_359
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_487
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_1063
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(769, 3) has a generator of order 454756608. -/
+theorem primitive_769_3 :
+    Primitive 769 3 supportedEntry_769_3 [2, 3, 31, 6367] [8, 2, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_31
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_6367
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(883, 3) has a generator of order 688465386. -/
+theorem primitive_883_3 :
+    Primitive 883 3 supportedEntry_883_3 [2, 3, 7, 260191] [1, 3, 2, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_7
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_260191
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(977, 3) has a generator of order 932574832. -/
+theorem primitive_977_3 :
+    Primitive 977 3 supportedEntry_977_3 [2, 7, 61, 136501] [4, 1, 1, 1] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_7
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_61
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_136501
+    exact absurd hq (by simp)
+  check := by decide +kernel
+
+/-- C(313, 3) has a generator of order 30664296. -/
+theorem primitive_313_3 :
+    Primitive 313 3 supportedEntry_313_3 [2, 3, 13, 181] [3, 2, 1, 2] where
+  primes := by
+    intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_2
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_3
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_13
+    rcases List.mem_cons.mp hq with rfl | hq
+    · exact factorPrime_181
     exact absurd hq (by simp)
   check := by decide +kernel
 

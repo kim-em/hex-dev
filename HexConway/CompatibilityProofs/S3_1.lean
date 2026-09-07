@@ -19,101 +19,101 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-/-- Compatibility of C(349, 1) with C(349, 4). -/
-theorem compat_349_1_4 :
-    Compatible 349 1 4 supportedEntry_349_1 supportedEntry_349_4 := by decide +kernel
+/-- Compatibility of C(271, 1) with C(271, 4). -/
+theorem compat_271_1_4 :
+    Compatible 271 1 4 supportedEntry_271_1 supportedEntry_271_4 := by decide +kernel
 
-/-- Compatibility of C(367, 1) with C(367, 4). -/
-theorem compat_367_1_4 :
-    Compatible 367 1 4 supportedEntry_367_1 supportedEntry_367_4 := by decide +kernel
+/-- Compatibility of C(73, 1) with C(73, 4). -/
+theorem compat_73_1_4 :
+    Compatible 73 1 4 supportedEntry_73_1 supportedEntry_73_4 := by decide +kernel
 
-/-- Compatibility of C(397, 1) with C(397, 4). -/
-theorem compat_397_1_4 :
-    Compatible 397 1 4 supportedEntry_397_1 supportedEntry_397_4 := by decide +kernel
+/-- Compatibility of C(103, 1) with C(103, 4). -/
+theorem compat_103_1_4 :
+    Compatible 103 1 4 supportedEntry_103_1 supportedEntry_103_4 := by decide +kernel
 
-/-- Compatibility of C(431, 1) with C(431, 4). -/
-theorem compat_431_1_4 :
-    Compatible 431 1 4 supportedEntry_431_1 supportedEntry_431_4 := by decide +kernel
+/-- Compatibility of C(113, 1) with C(113, 4). -/
+theorem compat_113_1_4 :
+    Compatible 113 1 4 supportedEntry_113_1 supportedEntry_113_4 := by decide +kernel
 
-/-- Compatibility of C(457, 1) with C(457, 4). -/
-theorem compat_457_1_4 :
-    Compatible 457 1 4 supportedEntry_457_1 supportedEntry_457_4 := by decide +kernel
+/-- Compatibility of C(5, 3) with C(5, 6). -/
+theorem compat_5_3_6 :
+    Compatible 5 3 6 supportedEntry_5_3 supportedEntry_5_6 := by decide +kernel
 
-/-- Compatibility of C(487, 1) with C(487, 4). -/
-theorem compat_487_1_4 :
-    Compatible 487 1 4 supportedEntry_487_1 supportedEntry_487_4 := by decide +kernel
+/-- Compatibility of C(163, 1) with C(163, 4). -/
+theorem compat_163_1_4 :
+    Compatible 163 1 4 supportedEntry_163_1 supportedEntry_163_4 := by decide +kernel
 
-/-- Compatibility of C(2, 2) with C(2, 8). -/
-theorem compat_2_2_8 :
-    Compatible 2 2 8 supportedEntry_2_2 supportedEntry_2_8 := by decide +kernel
+/-- Compatibility of C(199, 1) with C(199, 4). -/
+theorem compat_199_1_4 :
+    Compatible 199 1 4 supportedEntry_199_1 supportedEntry_199_4 := by decide +kernel
 
-/-- Compatibility of C(3, 4) with C(3, 8). -/
-theorem compat_3_4_8 :
-    Compatible 3 4 8 supportedEntry_3_4 supportedEntry_3_8 := by decide +kernel
+/-- Compatibility of C(47, 1) with C(47, 4). -/
+theorem compat_47_1_4 :
+    Compatible 47 1 4 supportedEntry_47_1 supportedEntry_47_4 := by decide +kernel
 
-/-- Compatibility of C(137, 2) with C(137, 4). -/
-theorem compat_137_2_4 :
-    Compatible 137 2 4 supportedEntry_137_2 supportedEntry_137_4 := by decide +kernel
+/-- Compatibility of C(79, 1) with C(79, 4). -/
+theorem compat_79_1_4 :
+    Compatible 79 1 4 supportedEntry_79_1 supportedEntry_79_4 := by decide +kernel
 
-/-- Compatibility of C(149, 2) with C(149, 4). -/
-theorem compat_149_2_4 :
-    Compatible 149 2 4 supportedEntry_149_2 supportedEntry_149_4 := by decide +kernel
+/-- Compatibility of C(101, 1) with C(101, 4). -/
+theorem compat_101_1_4 :
+    Compatible 101 1 4 supportedEntry_101_1 supportedEntry_101_4 := by decide +kernel
 
-/-- Compatibility of C(167, 2) with C(167, 4). -/
-theorem compat_167_2_4 :
-    Compatible 167 2 4 supportedEntry_167_2 supportedEntry_167_4 := by decide +kernel
+/-- Compatibility of C(127, 1) with C(127, 4). -/
+theorem compat_127_1_4 :
+    Compatible 127 1 4 supportedEntry_127_1 supportedEntry_127_4 := by decide +kernel
 
-/-- Compatibility of C(181, 2) with C(181, 4). -/
-theorem compat_181_2_4 :
-    Compatible 181 2 4 supportedEntry_181_2 supportedEntry_181_4 := by decide +kernel
+/-- Compatibility of C(37, 2) with C(37, 4). -/
+theorem compat_37_2_4 :
+    Compatible 37 2 4 supportedEntry_37_2 supportedEntry_37_4 := by decide +kernel
 
-/-- Compatibility of C(223, 2) with C(223, 4). -/
-theorem compat_223_2_4 :
-    Compatible 223 2 4 supportedEntry_223_2 supportedEntry_223_4 := by decide +kernel
+/-- Compatibility of C(53, 2) with C(53, 4). -/
+theorem compat_53_2_4 :
+    Compatible 53 2 4 supportedEntry_53_2 supportedEntry_53_4 := by decide +kernel
 
-/-- Compatibility of C(239, 2) with C(239, 4). -/
-theorem compat_239_2_4 :
-    Compatible 239 2 4 supportedEntry_239_2 supportedEntry_239_4 := by decide +kernel
+/-- Compatibility of C(61, 2) with C(61, 4). -/
+theorem compat_61_2_4 :
+    Compatible 61 2 4 supportedEntry_61_2 supportedEntry_61_4 := by decide +kernel
 
-/-- Compatibility of C(251, 2) with C(251, 4). -/
-theorem compat_251_2_4 :
-    Compatible 251 2 4 supportedEntry_251_2 supportedEntry_251_4 := by decide +kernel
+/-- Compatibility of C(547, 1) with C(547, 3). -/
+theorem compat_547_1_3 :
+    Compatible 547 1 3 supportedEntry_547_1 supportedEntry_547_3 := by decide +kernel
 
-/-- Compatibility of C(271, 2) with C(271, 4). -/
-theorem compat_271_2_4 :
-    Compatible 271 2 4 supportedEntry_271_2 supportedEntry_271_4 := by decide +kernel
+/-- Compatibility of C(811, 1) with C(811, 3). -/
+theorem compat_811_1_3 :
+    Compatible 811 1 3 supportedEntry_811_1 supportedEntry_811_3 := by decide +kernel
 
-/-- Compatibility of C(449, 2) with C(449, 4). -/
-theorem compat_449_2_4 :
-    Compatible 449 2 4 supportedEntry_449_2 supportedEntry_449_4 := by decide +kernel
+/-- Compatibility of C(947, 1) with C(947, 3). -/
+theorem compat_947_1_3 :
+    Compatible 947 1 3 supportedEntry_947_1 supportedEntry_947_3 := by decide +kernel
 
-/-- Compatibility of C(73, 2) with C(73, 4). -/
-theorem compat_73_2_4 :
-    Compatible 73 2 4 supportedEntry_73_2 supportedEntry_73_4 := by decide +kernel
+/-- Compatibility of C(23, 1) with C(23, 4). -/
+theorem compat_23_1_4 :
+    Compatible 23 1 4 supportedEntry_23_1 supportedEntry_23_4 := by decide +kernel
 
-/-- Compatibility of C(103, 2) with C(103, 4). -/
-theorem compat_103_2_4 :
-    Compatible 103 2 4 supportedEntry_103_2 supportedEntry_103_4 := by decide +kernel
+/-- Compatibility of C(31, 1) with C(31, 4). -/
+theorem compat_31_1_4 :
+    Compatible 31 1 4 supportedEntry_31_1 supportedEntry_31_4 := by decide +kernel
 
-/-- Compatibility of C(113, 2) with C(113, 4). -/
-theorem compat_113_2_4 :
-    Compatible 113 2 4 supportedEntry_113_2 supportedEntry_113_4 := by decide +kernel
+/-- Compatibility of C(13, 1) with C(13, 5). -/
+theorem compat_13_1_5 :
+    Compatible 13 1 5 supportedEntry_13_1 supportedEntry_13_5 := by decide +kernel
 
-/-- Compatibility of C(7, 1) with C(7, 6). -/
-theorem compat_7_1_6 :
-    Compatible 7 1 6 supportedEntry_7_1 supportedEntry_7_6 := by decide +kernel
+/-- Compatibility of C(431, 1) with C(431, 3). -/
+theorem compat_431_1_3 :
+    Compatible 431 1 3 supportedEntry_431_1 supportedEntry_431_3 := by decide +kernel
 
-/-- Compatibility of C(163, 2) with C(163, 4). -/
-theorem compat_163_2_4 :
-    Compatible 163 2 4 supportedEntry_163_2 supportedEntry_163_4 := by decide +kernel
+/-- Compatibility of C(523, 1) with C(523, 3). -/
+theorem compat_523_1_3 :
+    Compatible 523 1 3 supportedEntry_523_1 supportedEntry_523_3 := by decide +kernel
 
-/-- Compatibility of C(199, 2) with C(199, 4). -/
-theorem compat_199_2_4 :
-    Compatible 199 2 4 supportedEntry_199_2 supportedEntry_199_4 := by decide +kernel
+/-- Compatibility of C(607, 1) with C(607, 3). -/
+theorem compat_607_1_3 :
+    Compatible 607 1 3 supportedEntry_607_1 supportedEntry_607_3 := by decide +kernel
 
-/-- Compatibility of C(47, 2) with C(47, 4). -/
-theorem compat_47_2_4 :
-    Compatible 47 2 4 supportedEntry_47_2 supportedEntry_47_4 := by decide +kernel
+/-- Compatibility of C(643, 1) with C(643, 3). -/
+theorem compat_643_1_3 :
+    Compatible 643 1 3 supportedEntry_643_1 supportedEntry_643_3 := by decide +kernel
 
 
 end Conway
