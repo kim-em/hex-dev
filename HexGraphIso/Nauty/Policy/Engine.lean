@@ -51,6 +51,7 @@ theorem node_eq_generic (first : Bool) (ctx : Ctx n) (inf tcLevel fuel : Nat)
   | zero => simp only [node, Generic.node]
   | succ fuel =>
     rw [node, Generic.node]
+    unfold Generic.nodeStep
     dsimp only [policy, Generic.Policy.visit, Generic.Policy.recordFirst,
       Generic.Policy.compareCodes, Generic.Policy.chooseTarget, Generic.Policy.firstterminal,
       Generic.Policy.classify, Generic.Policy.leafExit, Generic.Policy.cheapCheck,
@@ -75,6 +76,7 @@ theorem sweep_eq_generic (first : Bool) (ctx : Ctx n) (inf tcLevel fuel cfuel : 
     | zero => simp only [sweep, Generic.sweep]
     | succ cfuel =>
       rw [sweep, Generic.sweep]
+      unfold Generic.sweepStep
       dsimp only [policy, Generic.Policy.child, Generic.Policy.afterChildFirst,
         Generic.Policy.leaveChild, Generic.Policy.orbit, Generic.Policy.shortprune,
         Generic.Policy.longprune, Generic.Policy.recover]

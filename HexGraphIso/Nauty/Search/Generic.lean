@@ -74,16 +74,17 @@ class Policy (σ : Type) (n : Nat) where
 
 variable {n : Nat} {σ : Type} [Policy σ n]
 
-set_option maxHeartbeats 800000 in
-mutual
+/-- A node continuation with its recursion bound supplied by the caller. -/
+abbrev NodeFn (σ : Type) := Bool → Nat → Nat → σ → Exit × σ
 
-/-- Refine a node, classify it, and sweep its surviving children. Only
-the leftmost child of a first-path node remains on the first path. -/
-@[expose] def node (first : Bool) (ctx : Ctx n) (inf tcLevel fuel : Nat)
-    (level numcells : Nat) (st : σ) : Exit × σ :=
-  match fuel with
-  | 0 => (.fuel, st)
-  | fuel + 1 => Id.run do
+/-- A sweep continuation with both recursion bounds supplied by the caller. -/
+abbrev SweepFn (σ : Type) (n : Nat) :=
+  Bool → Nat → Nat → Nat → Nat → Option Nat → VSet n → Nat → σ → Exit × Nat × σ
+
+/-- The local node operations, followed by a supplied child sweep. -/
+@[expose] def nodeStep (ctx : Ctx n) (tcLevel : Nat) (next : SweepFn σ n)
+    (first : Bool) (level numcells : Nat) (st : σ) : Exit × σ :=
+  Id.run do
     let (numcells, refcode, st) := Policy.visit (n := n) ctx level numcells st
     let st := if first then Policy.recordFirst (n := n) level refcode st else Policy.compareCodes (n := n) level refcode st
     let (tc, tcell, tcellsize, st) := Policy.chooseTarget (n := n) first ctx tcLevel level numcells st
@@ -100,28 +101,22 @@ the leftmost child of a first-path node remains on the first path. -/
       | _ => return (exit, st)
     st := Policy.cheapCheck (n := n) first level st
     let tv := tcell.nextElem none
-    let (exit, index, st') := sweep first ctx inf tcLevel fuel (n + 1)
+    let (exit, index, st') := next first
       level numcells tc.toNat (tv.getD 0) tv tcell 0 st
     match exit with
     | .done => return (.unwind (level - 1) false, Policy.afterSweep (n := n) first level tcellsize index st')
     | _ => return (exit, st')
-termination_by (fuel, 0, 0)
 
-/-- Visit remaining target vertices in order, rereading the cell after
-each prune. The orbit index includes skipped vertices on the first path.
-Nodes return an unwind or fuel, so the `done` arm after a child is unreachable. -/
-@[expose] def sweep (first : Bool) (ctx : Ctx n) (inf tcLevel fuel cfuel : Nat)
-    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell : VSet n)
+/-- One target vertex, followed by supplied node and sweep continuations. -/
+@[expose] def sweepStep (inf : Nat) (descend : NodeFn σ) (next : SweepFn σ n)
+    (first : Bool) (level numcells tc tv1 tv : Nat) (tcell : VSet n)
     (index : Nat) (st : σ) : Exit × Nat × σ :=
-  match tv?, cfuel with
-  | none, _ => (.done, index, st)
-  | some _, 0 => (.fuel, index, st)
-  | some tv, cfuel + 1 => Id.run do
+  Id.run do
     let mut st := st
     let mut tcell := tcell
     if !first || Policy.orbit (n := n) st tv == tv then
       st := Policy.child (n := n) first level tc tv st
-      let (exit, st') := node (first && tv == tv1) ctx inf tcLevel fuel
+      let (exit, st') := descend (first && tv == tv1)
         (level + 1) (numcells + 1) st
       st := st'
       if first && tv == tv1 then
@@ -139,8 +134,37 @@ Nodes return an unwind or fuel, so the `done` arm after a child is unreachable. 
         tcell := Policy.longprune (n := n) tcell st
       st := Policy.recover (n := n) inf level st
     let index := if first && Policy.orbit (n := n) st tv == tv1 then index + 1 else index
-    return sweep first ctx inf tcLevel fuel cfuel level numcells tc tv1
+    return next first level numcells tc tv1
       (tcell.nextElem (some tv)) tcell index st
+
+mutual
+
+/-- Refine a node, classify it, and sweep its surviving children. -/
+@[expose] def node (first : Bool) (ctx : Ctx n) (inf tcLevel fuel : Nat)
+    (level numcells : Nat) (st : σ) : Exit × σ :=
+  match fuel with
+  | 0 => (.fuel, st)
+  | fuel + 1 =>
+    nodeStep ctx tcLevel
+      (fun first level numcells tc tv1 cursor cell index st =>
+        sweep first ctx inf tcLevel fuel (n + 1)
+          level numcells tc tv1 cursor cell index st)
+      first level numcells st
+termination_by (fuel, 0, 0)
+
+/-- Sweep surviving vertices, transporting exits below this level. -/
+@[expose] def sweep (first : Bool) (ctx : Ctx n) (inf tcLevel fuel cfuel : Nat)
+    (level numcells tc tv1 : Nat) (tv? : Option Nat) (tcell : VSet n)
+    (index : Nat) (st : σ) : Exit × Nat × σ :=
+  match tv?, cfuel with
+  | none, _ => (.done, index, st)
+  | some _, 0 => (.fuel, index, st)
+  | some tv, cfuel + 1 =>
+    sweepStep inf
+      (fun first level numcells st => node first ctx inf tcLevel fuel level numcells st)
+      (fun first level numcells tc tv1 cursor cell index st =>
+        sweep first ctx inf tcLevel fuel cfuel level numcells tc tv1 cursor cell index st)
+      first level numcells tc tv1 tv tcell index st
 termination_by (fuel, 1, cfuel)
 
 end
