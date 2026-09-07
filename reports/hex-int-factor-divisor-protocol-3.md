@@ -124,6 +124,9 @@ or telemetry sidecar was created. The later
 [diagnostic recheck](bench-results/intfactor-divisors-campaign-3-recheck.json)
 independently reconstructs and validates every retained divisor array while
 preserving the attempt's rejected status and reporting the absent timing export.
+That recheck was generated with validator commit
+`3fb5ae8e4fb975f5d03e3fe01516978eff2809fa` and has SHA-256
+`f500cc845caf5c987ce7a524bb36d49fc1bd85995a866718ce37accf97e1f328`.
 The retained busy fractions for CPUs 33/81 were, respectively:
 
 | window | CPU 33 | CPU 81 |
