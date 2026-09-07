@@ -1,0 +1,1821 @@
+{
+  "schema": 2,
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/bin/hexintfactor_bench",
+    "run",
+    "--filter",
+    "Hex.IntFactorBench.runDivisors",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/bench.json"
+  ],
+  "cpu": 7,
+  "smt_siblings": [
+    55
+  ],
+  "interval_seconds": 0.25,
+  "started_utc": "2026-09-07T07:44:20.205236Z",
+  "ended_utc": "2026-09-07T07:44:53.357569Z",
+  "elapsed_seconds": 33.152,
+  "timed_region_sidecars": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435306.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435376.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435444.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435504.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435543.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435703.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435829.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2435997.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436057.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436157.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436201.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436238.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436322.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436448.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436493.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436576.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436626.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436664.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436682.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436759.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436877.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2436953.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437073.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437115.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437139.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437194.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437295.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437384.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437409.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437463.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437504.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437569.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437636.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2437786.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438005.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438057.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438108.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438119.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438193.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438321.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438389.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-2.json.attempt/telemetry.json.timed-2435206-3014860662990857-2438432.jsonl"
+  ],
+  "timed_region_sidecars_retained": true,
+  "timed_regions_error": null,
+  "command_return_code": 0,
+  "thresholds": {
+    "max_core_interference_ratio": 0.002
+  },
+  "summary": {
+    "sample_count": 78,
+    "timed_region_sidecar_count": 42,
+    "timed_region_count_after_union": 245,
+    "timed_regions_complete": true,
+    "timed_wall_seconds": 30.646333,
+    "foreign_runnable_samples": 3,
+    "measurement_cpu_foreign_seconds_estimate": 1.269223,
+    "smt_sibling_busy_seconds": 0.300676,
+    "aggregate_core_interference_seconds": 1.569899,
+    "aggregate_core_interference_ratio": 0.051226,
+    "contaminated": true
+  },
+  "samples": [
+    {
+      "mono_t0_ns": 3014860662990857,
+      "mono_t1_ns": 3014860915316292,
+      "elapsed_seconds": 0.252,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.25,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.252325,
+      "foreign_runnable": [],
+      "load_average": [
+        2.845,
+        5.878,
+        16.028
+      ],
+      "timed_overlap_seconds": 0.078493,
+      "timed_fraction": 0.311077
+    },
+    {
+      "mono_t0_ns": 3014860915316292,
+      "mono_t1_ns": 3014861345310257,
+      "elapsed_seconds": 0.682,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.429994,
+      "foreign_runnable": [],
+      "load_average": [
+        2.845,
+        5.878,
+        16.028
+      ],
+      "timed_overlap_seconds": 0.429994,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014861345310257,
+      "mono_t1_ns": 3014861768744972,
+      "elapsed_seconds": 1.106,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.423435,
+      "foreign_runnable": [],
+      "load_average": [
+        2.845,
+        5.878,
+        16.028
+      ],
+      "timed_overlap_seconds": 0.371771,
+      "timed_fraction": 0.877988
+    },
+    {
+      "mono_t0_ns": 3014861768744972,
+      "mono_t1_ns": 3014862190436051,
+      "elapsed_seconds": 1.527,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.439
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.421691,
+      "foreign_runnable": [],
+      "load_average": [
+        2.845,
+        5.878,
+        16.028
+      ],
+      "timed_overlap_seconds": 0.421691,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014862190436051,
+      "mono_t1_ns": 3014862612868239,
+      "elapsed_seconds": 1.95,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.422432,
+      "foreign_runnable": [],
+      "load_average": [
+        2.845,
+        5.878,
+        16.028
+      ],
+      "timed_overlap_seconds": 0.370734,
+      "timed_fraction": 0.877618
+    },
+    {
+      "mono_t0_ns": 3014862612868239,
+      "mono_t1_ns": 3014863033221713,
+      "elapsed_seconds": 2.37,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.420353,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.420353,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014863033221713,
+      "mono_t1_ns": 3014863457099615,
+      "elapsed_seconds": 2.794,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.423878,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.372207,
+      "timed_fraction": 0.878099
+    },
+    {
+      "mono_t0_ns": 3014863457099615,
+      "mono_t1_ns": 3014863878105317,
+      "elapsed_seconds": 3.215,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.421006,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.421006,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014863878105317,
+      "mono_t1_ns": 3014864300062280,
+      "elapsed_seconds": 3.637,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.421957,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.370447,
+      "timed_fraction": 0.877927
+    },
+    {
+      "mono_t0_ns": 3014864300062280,
+      "mono_t1_ns": 3014864725085862,
+      "elapsed_seconds": 4.062,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.425024,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.410137,
+      "timed_fraction": 0.964974
+    },
+    {
+      "mono_t0_ns": 3014864725085862,
+      "mono_t1_ns": 3014865154642689,
+      "elapsed_seconds": 4.492,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.273
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.429557,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.392615,
+      "timed_fraction": 0.914
+    },
+    {
+      "mono_t0_ns": 3014865154642689,
+      "mono_t1_ns": 3014865581697865,
+      "elapsed_seconds": 4.919,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.427055,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.375746,
+      "timed_fraction": 0.879853
+    },
+    {
+      "mono_t0_ns": 3014865581697865,
+      "mono_t1_ns": 3014866007246937,
+      "elapsed_seconds": 5.344,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.425549,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.425549,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014866007246937,
+      "mono_t1_ns": 3014866432464046,
+      "elapsed_seconds": 5.769,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425217,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.373535,
+      "timed_fraction": 0.878456
+    },
+    {
+      "mono_t0_ns": 3014866432464046,
+      "mono_t1_ns": 3014866858309407,
+      "elapsed_seconds": 6.195,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.44,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425845,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.425845,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014866858309407,
+      "mono_t1_ns": 3014867283547568,
+      "elapsed_seconds": 6.621,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425238,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.373522,
+      "timed_fraction": 0.878382
+    },
+    {
+      "mono_t0_ns": 3014867283547568,
+      "mono_t1_ns": 3014867707579078,
+      "elapsed_seconds": 7.045,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424032,
+      "foreign_runnable": [],
+      "load_average": [
+        3.338,
+        5.93,
+        15.99
+      ],
+      "timed_overlap_seconds": 0.424032,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014867707579078,
+      "mono_t1_ns": 3014868129858459,
+      "elapsed_seconds": 7.467,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.422279,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.376185,
+      "timed_fraction": 0.890844
+    },
+    {
+      "mono_t0_ns": 3014868129858459,
+      "mono_t1_ns": 3014868553989287,
+      "elapsed_seconds": 7.891,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424131,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.418503,
+      "timed_fraction": 0.986732
+    },
+    {
+      "mono_t0_ns": 3014868553989287,
+      "mono_t1_ns": 3014868976664906,
+      "elapsed_seconds": 8.314,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.422676,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.367226,
+      "timed_fraction": 0.868812
+    },
+    {
+      "mono_t0_ns": 3014868976664906,
+      "mono_t1_ns": 3014869400074714,
+      "elapsed_seconds": 8.737,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.42341,
+      "foreign_runnable": [
+        {
+          "tgid": 2436238,
+          "tid": 2436256,
+          "cpu": 7,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.42341,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014869400074714,
+      "mono_t1_ns": 3014869825247648,
+      "elapsed_seconds": 9.162,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425173,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.370254,
+      "timed_fraction": 0.870831
+    },
+    {
+      "mono_t0_ns": 3014869825247648,
+      "mono_t1_ns": 3014870250249638,
+      "elapsed_seconds": 9.587,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 6.818
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.03
+      },
+      "interval_wall_seconds": 0.425002,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.373501,
+      "timed_fraction": 0.878822
+    },
+    {
+      "mono_t0_ns": 3014870250249638,
+      "mono_t1_ns": 3014870674254539,
+      "elapsed_seconds": 10.011,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424005,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.424004,
+      "timed_fraction": 0.999998
+    },
+    {
+      "mono_t0_ns": 3014870674254539,
+      "mono_t1_ns": 3014871099562623,
+      "elapsed_seconds": 10.437,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425308,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.373458,
+      "timed_fraction": 0.878087
+    },
+    {
+      "mono_t0_ns": 3014871099562623,
+      "mono_t1_ns": 3014871524838419,
+      "elapsed_seconds": 10.862,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425276,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.425276,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014871524838419,
+      "mono_t1_ns": 3014871947435632,
+      "elapsed_seconds": 11.284,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.422597,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.371071,
+      "timed_fraction": 0.878073
+    },
+    {
+      "mono_t0_ns": 3014871947435632,
+      "mono_t1_ns": 3014872372398654,
+      "elapsed_seconds": 11.709,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424963,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.424963,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014872372398654,
+      "mono_t1_ns": 3014872798788923,
+      "elapsed_seconds": 12.136,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.42639,
+      "foreign_runnable": [],
+      "load_average": [
+        3.311,
+        5.881,
+        15.92
+      ],
+      "timed_overlap_seconds": 0.421492,
+      "timed_fraction": 0.988513
+    },
+    {
+      "mono_t0_ns": 3014872798788923,
+      "mono_t1_ns": 3014873225385990,
+      "elapsed_seconds": 12.562,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.426597,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.379336,
+      "timed_fraction": 0.889215
+    },
+    {
+      "mono_t0_ns": 3014873225385990,
+      "mono_t1_ns": 3014873654087608,
+      "elapsed_seconds": 12.991,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.428702,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.376993,
+      "timed_fraction": 0.879382
+    },
+    {
+      "mono_t0_ns": 3014873654087608,
+      "mono_t1_ns": 3014874080372362,
+      "elapsed_seconds": 13.417,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.426285,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.426285,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014874080372362,
+      "mono_t1_ns": 3014874504860129,
+      "elapsed_seconds": 13.842,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.41,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424488,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.372363,
+      "timed_fraction": 0.877206
+    },
+    {
+      "mono_t0_ns": 3014874504860129,
+      "mono_t1_ns": 3014874930311707,
+      "elapsed_seconds": 14.267,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.425452,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.384073,
+      "timed_fraction": 0.902742
+    },
+    {
+      "mono_t0_ns": 3014874930311707,
+      "mono_t1_ns": 3014875355608795,
+      "elapsed_seconds": 14.693,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425297,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.411468,
+      "timed_fraction": 0.967483
+    },
+    {
+      "mono_t0_ns": 3014875355608795,
+      "mono_t1_ns": 3014875784258125,
+      "elapsed_seconds": 15.121,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.428649,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.377511,
+      "timed_fraction": 0.880698
+    },
+    {
+      "mono_t0_ns": 3014875784258125,
+      "mono_t1_ns": 3014876210849423,
+      "elapsed_seconds": 15.548,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.44,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.426591,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.426591,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014876210849423,
+      "mono_t1_ns": 3014876637152563,
+      "elapsed_seconds": 15.974,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 4.651
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.02
+      },
+      "interval_wall_seconds": 0.426303,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.374251,
+      "timed_fraction": 0.877899
+    },
+    {
+      "mono_t0_ns": 3014876637152563,
+      "mono_t1_ns": 3014877059116176,
+      "elapsed_seconds": 16.396,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.421964,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.421964,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014877059116176,
+      "mono_t1_ns": 3014877483031894,
+      "elapsed_seconds": 16.82,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.423916,
+      "foreign_runnable": [
+        {
+          "tgid": 2436953,
+          "tid": 2436956,
+          "cpu": 7,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.423916,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014877483031894,
+      "mono_t1_ns": 3014877906975384,
+      "elapsed_seconds": 17.244,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 9.302
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.04
+      },
+      "interval_wall_seconds": 0.423943,
+      "foreign_runnable": [],
+      "load_average": [
+        3.125,
+        5.8,
+        15.84
+      ],
+      "timed_overlap_seconds": 0.37201,
+      "timed_fraction": 0.877499
+    },
+    {
+      "mono_t0_ns": 3014877906975384,
+      "mono_t1_ns": 3014878333923742,
+      "elapsed_seconds": 17.671,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.426948,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.372393,
+      "timed_fraction": 0.87222
+    },
+    {
+      "mono_t0_ns": 3014878333923742,
+      "mono_t1_ns": 3014878766623321,
+      "elapsed_seconds": 18.104,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.45,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.4327,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.4327,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014878766623321,
+      "mono_t1_ns": 3014879191164107,
+      "elapsed_seconds": 18.528,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424541,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.372692,
+      "timed_fraction": 0.877871
+    },
+    {
+      "mono_t0_ns": 3014879191164107,
+      "mono_t1_ns": 3014879618300123,
+      "elapsed_seconds": 18.955,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.427136,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.391675,
+      "timed_fraction": 0.916979
+    },
+    {
+      "mono_t0_ns": 3014879618300123,
+      "mono_t1_ns": 3014880041438087,
+      "elapsed_seconds": 19.378,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.423138,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.407693,
+      "timed_fraction": 0.963499
+    },
+    {
+      "mono_t0_ns": 3014880041438087,
+      "mono_t1_ns": 3014880465945323,
+      "elapsed_seconds": 19.803,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424507,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.373103,
+      "timed_fraction": 0.878909
+    },
+    {
+      "mono_t0_ns": 3014880465945323,
+      "mono_t1_ns": 3014880893370879,
+      "elapsed_seconds": 20.23,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.427426,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.427426,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014880893370879,
+      "mono_t1_ns": 3014881321439608,
+      "elapsed_seconds": 20.658,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.428069,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.37376,
+      "timed_fraction": 0.873131
+    },
+    {
+      "mono_t0_ns": 3014881321439608,
+      "mono_t1_ns": 3014881748950510,
+      "elapsed_seconds": 21.086,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.427511,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.427511,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014881748950510,
+      "mono_t1_ns": 3014882172175334,
+      "elapsed_seconds": 21.509,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.423225,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.423225,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014882172175334,
+      "mono_t1_ns": 3014882595684239,
+      "elapsed_seconds": 21.933,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.423509,
+      "foreign_runnable": [],
+      "load_average": [
+        3.035,
+        5.737,
+        15.765
+      ],
+      "timed_overlap_seconds": 0.372184,
+      "timed_fraction": 0.87881
+    },
+    {
+      "mono_t0_ns": 3014882595684239,
+      "mono_t1_ns": 3014883024637881,
+      "elapsed_seconds": 22.362,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.273
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.428954,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.37736,
+      "timed_fraction": 0.879722
+    },
+    {
+      "mono_t0_ns": 3014883024637881,
+      "mono_t1_ns": 3014883448688490,
+      "elapsed_seconds": 22.786,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424051,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.424051,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014883448688490,
+      "mono_t1_ns": 3014883872670156,
+      "elapsed_seconds": 23.21,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.41,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.423982,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.372204,
+      "timed_fraction": 0.877877
+    },
+    {
+      "mono_t0_ns": 3014883872670156,
+      "mono_t1_ns": 3014884297551197,
+      "elapsed_seconds": 23.635,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.439
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.424881,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.417775,
+      "timed_fraction": 0.983275
+    },
+    {
+      "mono_t0_ns": 3014884297551197,
+      "mono_t1_ns": 3014884725436674,
+      "elapsed_seconds": 24.062,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.273
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.427885,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.380045,
+      "timed_fraction": 0.888194
+    },
+    {
+      "mono_t0_ns": 3014884725436674,
+      "mono_t1_ns": 3014885150794582,
+      "elapsed_seconds": 24.488,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.44,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.425358,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.37057,
+      "timed_fraction": 0.871195
+    },
+    {
+      "mono_t0_ns": 3014885150794582,
+      "mono_t1_ns": 3014885581849882,
+      "elapsed_seconds": 24.919,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.273
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.431055,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.431055,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014885581849882,
+      "mono_t1_ns": 3014886003408804,
+      "elapsed_seconds": 25.34,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.41,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.421559,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.366763,
+      "timed_fraction": 0.870016
+    },
+    {
+      "mono_t0_ns": 3014886003408804,
+      "mono_t1_ns": 3014886427708843,
+      "elapsed_seconds": 25.765,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.4243,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.4243,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014886427708843,
+      "mono_t1_ns": 3014886859211436,
+      "elapsed_seconds": 26.196,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.431503,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.431503,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014886859211436,
+      "mono_t1_ns": 3014887287878864,
+      "elapsed_seconds": 26.625,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.44,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.428667,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.376806,
+      "timed_fraction": 0.879018
+    },
+    {
+      "mono_t0_ns": 3014887287878864,
+      "mono_t1_ns": 3014887712138282,
+      "elapsed_seconds": 27.049,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.41,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.424259,
+      "foreign_runnable": [],
+      "load_average": [
+        3.113,
+        5.708,
+        15.702
+      ],
+      "timed_overlap_seconds": 0.372511,
+      "timed_fraction": 0.878026
+    },
+    {
+      "mono_t0_ns": 3014887712138282,
+      "mono_t1_ns": 3014888137033514,
+      "elapsed_seconds": 27.474,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.44,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424895,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.424895,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014888137033514,
+      "mono_t1_ns": 3014888559787699,
+      "elapsed_seconds": 27.897,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.422754,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.371063,
+      "timed_fraction": 0.877728
+    },
+    {
+      "mono_t0_ns": 3014888559787699,
+      "mono_t1_ns": 3014888981684332,
+      "elapsed_seconds": 28.319,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.421897,
+      "foreign_runnable": [
+        {
+          "tgid": 2438108,
+          "tid": 2438111,
+          "cpu": 7,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.421897,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014888981684332,
+      "mono_t1_ns": 3014889403782905,
+      "elapsed_seconds": 28.741,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.41,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.422099,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.370482,
+      "timed_fraction": 0.877714
+    },
+    {
+      "mono_t0_ns": 3014889403782905,
+      "mono_t1_ns": 3014889824955254,
+      "elapsed_seconds": 29.162,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.421172,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.369172,
+      "timed_fraction": 0.876534
+    },
+    {
+      "mono_t0_ns": 3014889824955254,
+      "mono_t1_ns": 3014890249602808,
+      "elapsed_seconds": 29.587,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.424648,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.424648,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014890249602808,
+      "mono_t1_ns": 3014890675062777,
+      "elapsed_seconds": 30.012,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 4.651
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.02
+      },
+      "interval_wall_seconds": 0.42546,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.370601,
+      "timed_fraction": 0.871061
+    },
+    {
+      "mono_t0_ns": 3014890675062777,
+      "mono_t1_ns": 3014891101403884,
+      "elapsed_seconds": 30.438,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.426341,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.426341,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014891101403884,
+      "mono_t1_ns": 3014891526065538,
+      "elapsed_seconds": 30.863,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424662,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.424662,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014891526065538,
+      "mono_t1_ns": 3014891947969112,
+      "elapsed_seconds": 31.285,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.421904,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.366312,
+      "timed_fraction": 0.868237
+    },
+    {
+      "mono_t0_ns": 3014891947969112,
+      "mono_t1_ns": 3014892368707296,
+      "elapsed_seconds": 31.706,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.420738,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.366176,
+      "timed_fraction": 0.870319
+    },
+    {
+      "mono_t0_ns": 3014892368707296,
+      "mono_t1_ns": 3014892793226710,
+      "elapsed_seconds": 32.13,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 0.0
+      },
+      "busy_seconds": {
+        "7": 0.42,
+        "55": 0.0
+      },
+      "interval_wall_seconds": 0.424519,
+      "foreign_runnable": [],
+      "load_average": [
+        3.023,
+        5.646,
+        15.628
+      ],
+      "timed_overlap_seconds": 0.424519,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 3014892793226710,
+      "mono_t1_ns": 3014893217459920,
+      "elapsed_seconds": 32.554,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 4.878
+      },
+      "busy_seconds": {
+        "7": 0.43,
+        "55": 0.02
+      },
+      "interval_wall_seconds": 0.424233,
+      "foreign_runnable": [],
+      "load_average": [
+        2.941,
+        5.585,
+        15.555
+      ],
+      "timed_overlap_seconds": 0.371792,
+      "timed_fraction": 0.876385
+    },
+    {
+      "mono_t0_ns": 3014893217459920,
+      "mono_t1_ns": 3014893638147029,
+      "elapsed_seconds": 32.975,
+      "busy_percent": {
+        "7": 100.0,
+        "55": 2.326
+      },
+      "busy_seconds": {
+        "7": 0.41,
+        "55": 0.01
+      },
+      "interval_wall_seconds": 0.420687,
+      "foreign_runnable": [],
+      "load_average": [
+        2.941,
+        5.585,
+        15.555
+      ],
+      "timed_overlap_seconds": 0.420687,
+      "timed_fraction": 1.0
+    }
+  ]
+}
