@@ -86,3 +86,18 @@ The combined variant is compared both to the merged modular-check executable
 and to the original executable, with the same two accepted opposite-order
 pairs and the same admission rules. The latter comparison measures the total
 improvement directly rather than multiplying speedups from separate runs.
+
+### Quiet-preflight replication
+
+If a shared-host burst prevents selecting any idle core, that is an
+unavailable environment, not a negative verdict on an implementation.
+A further replication uses the same binaries, fixed cases, repeats, warmup,
+2-second budgets, opposite pair orders, and 5% admission thresholds. It
+prefers physical cores whose lowest logical CPU is at least 24 on `chungus2`,
+to avoid competing with other automatic selectors that prefer low indices.
+Before the first arm of a pair it waits up to 15 minutes for a two-second
+quiet CPU/sibling sample, recording every preflight window. A busy second-arm
+preflight still rejects the whole pair. At most twelve timed pair attempts
+are allowed per comparison; a preflight timeout produces an explicit partial
+artifact. This environment amendment applies only to the new replication;
+none of the interrupted earlier variant measurements is admitted afterward.
