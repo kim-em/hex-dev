@@ -109,13 +109,36 @@ abbrev SweepFn (σ : Type) (n : Nat) :=
     | .done => return (.unwind (level - 1) false, Policy.afterSweep (n := n) first level tcellsize index st')
     | _ => return (exit, st')
 
+/-- Apply the long filter, recover the parent, and visit the next surviving entry. -/
+@[expose] def resume (inf : Nat) (next : SweepFn σ n)
+    (first : Bool) (level numcells tc tv1 tv : Nat) (cell : VSet n) (index : Nat) (st : σ) :
+    Exit × Nat × σ := Id.run do
+  let mut cell := cell
+  if !first && tv == tv1 then cell := Policy.longprune (n := n) cell st
+  let st := Policy.recover (n := n) inf level st
+  let index := if first && Policy.orbit (n := n) st tv == tv1 then index + 1 else index
+  return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st
+
+/-- Consume a child's exit after fixed-point cleanup, passing a deeper
+unwind outward or filtering and resuming the current sweep. -/
+@[expose] def advance (inf : Nat) (next : SweepFn σ n)
+    (first : Bool) (level numcells tc tv1 tv : Nat) (cell : VSet n) (index : Nat) (st : σ) (exit : Exit) :
+    Exit × Nat × σ := Id.run do
+  let mut cell := cell
+  match exit with
+  | .fuel => return (.fuel, index, st)
+  | .unwind target short =>
+    if target < level then return (exit, index, st)
+    if short then cell := Policy.shortprune (n := n) cell st
+  | .done => pure ()
+  return resume inf next first level numcells tc tv1 tv cell index st
+
 /-- One target vertex, followed by supplied node and sweep continuations. -/
 @[expose] def sweepStep (inf : Nat) (descend : NodeFn σ) (next : SweepFn σ n)
     (first : Bool) (level numcells tc tv1 tv : Nat) (tcell : VSet n)
     (index : Nat) (st : σ) : Exit × Nat × σ :=
   Id.run do
     let mut st := st
-    let mut tcell := tcell
     if !first || Policy.orbit (n := n) st tv == tv then
       st := Policy.child (n := n) first level tc tv st
       let (exit, st') := descend (first && tv == tv1)
@@ -124,17 +147,7 @@ abbrev SweepFn (σ : Type) (n : Nat) :=
       if first && tv == tv1 then
         st := Policy.afterChildFirst (n := n) level tv1 st
       st := Policy.leaveChild (n := n) tv st
-      match exit with
-      | .fuel => return (.fuel, index, st)
-      | .unwind target short =>
-        if target < level then
-          return (exit, index, st)
-        if short then
-          tcell := Policy.shortprune (n := n) tcell st
-      | .done => pure ()
-      if !first && tv == tv1 then
-        tcell := Policy.longprune (n := n) tcell st
-      st := Policy.recover (n := n) inf level st
+      return advance inf next first level numcells tc tv1 tv tcell index st exit
     let index := if first && Policy.orbit (n := n) st tv == tv1 then index + 1 else index
     return next first level numcells tc tv1
       (tcell.nextElem (some tv)) tcell index st

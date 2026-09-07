@@ -273,18 +273,8 @@ theorem ReachPolicy.advance (h : ReachPolicy G ctx inf tcLevel view)
     (hlevel : 1 ≤ level) (hok : SearchOk G level numcells (view base))
     (htarget : Target view level tc cell base)
     (hout : SearchOut G level level (view base) (view out)) :
-    SearchOut G level level (view base) (view (Id.run (do
-      let mut cell := cell
-      match exit with
-      | .fuel => return (Exit.fuel, index, out)
-      | .unwind target short =>
-        if target < level then return (exit, index, out)
-        if short then cell := Policy.shortprune (n := n) cell out
-      | .done => pure ()
-      if !first && tv == tv1 then cell := Policy.longprune (n := n) cell out
-      let st := Policy.recover (n := n) inf level out
-      let index := if first && Policy.orbit (n := n) st tv == tv1 then index + 1 else index
-      return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)).2.2) := by
+    SearchOut G level level (view base) (view (Generic.advance inf next first level numcells tc tv1 tv cell index out exit).2.2) := by
+  unfold Generic.advance
   have hr := h.recover level numcells base out hlevel hok hout
   have hcontinue : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
       SearchOut G level level (view base) (view
@@ -298,13 +288,9 @@ theorem ReachPolicy.advance (h : ReachPolicy G ctx inf tcLevel view)
       ⟨hlevel, hr.ok, (htarget.subset hsub).of_out hr.effect,
         fun v hv => VSet.nextElem_mem hv⟩
   have hlong : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
-      SearchOut G level level (view base) (view (Id.run (do
-        let mut cell := smaller
-        if !first && tv == tv1 then cell := Policy.longprune (n := n) cell out
-        let st := Policy.recover (n := n) inf level out
-        let index := if first && Policy.orbit (n := n) st tv == tv1 then index + 1 else index
-        return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)).2.2) := by
+      SearchOut G level level (view base) (view (Generic.resume inf next first level numcells tc tv1 tv smaller index out).2.2) := by
     intro smaller hsub
+    unfold Generic.resume
     split
     · exact hcontinue _ (fun v hv => hsub v (h.long smaller out v hv))
     · exact hcontinue _ hsub

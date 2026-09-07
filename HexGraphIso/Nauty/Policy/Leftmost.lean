@@ -49,7 +49,7 @@ theorem sweep_first_stable {ctx : Ctx n} {inf tcLevel : Nat} {P : σ → Prop}
     exact sweep_stable h true fuel cfuel level numcells tc tv index _ cell _
       (hpast cell) (h.recover level out hin)
   rw [sweep]
-  unfold sweepStep
+  unfold sweepStep advance resume
   simp only [Bool.not_true, horbit, beq_self_eq_true, Bool.or_true,
     Bool.and_self, Bool.false_and, ite_true]
   generalize hr : node true ctx inf tcLevel fuel (level + 1) (numcells + 1)

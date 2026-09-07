@@ -166,19 +166,10 @@ theorem codes_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (hfuel : n ≤ level + fuel) (hcursor : n ≤ tv + (cfuel + 1))
     (hready : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
       (recoverLevels level (recoverPtn (n + 2) level out))) :
-    let result := Id.run (do
-      let mut cell := cell
-      match exit with
-      | .fuel => return (Generic.Exit.fuel, index, out)
-      | .unwind target short =>
-        if target < level then return (exit, index, out)
-        if short then cell := shortprune cell out
-      | .done => pure ()
-      if !first && tv == tv1 then cell := Nauty.longprune cell out.fixedpts out.autos
-      let st := recoverLevels level (recoverPtn (n + 2) level out)
-      let index := if first && st.orbits[tv]! == tv1 then index + 1 else index
-      return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)
+    let result := Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit
     ∃ bs', ReturnCodes ctx cs bs' fs result.2.2 ∧ Generic.Grows before (result.2.2.key ctx bs') := by
+  unfold Generic.advance
+  dsimp only [policy, Generic.Policy.shortprune]
   have hcomp : Comparison ctx cs bs fs (recoverLevels level (recoverPtn (n + 2) level out)) := by
     simpa only [hlen] using hcodes.recover (n + 2)
   have hnonpos : (recoverLevels level (recoverPtn (n + 2) level out)).compCanon ≤ 0 :=
@@ -195,14 +186,11 @@ theorem codes_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     rw [recover_key] at hg
     exact ⟨bs', hr, hgrows.trans hg⟩
   have hlong : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
-      let result := Id.run (do
-        let mut cell := smaller
-        if !first && tv == tv1 then cell := Nauty.longprune cell out.fixedpts out.autos
-        let st := recoverLevels level (recoverPtn (n + 2) level out)
-        let index := if first && st.orbits[tv]! == tv1 then index + 1 else index
-        return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)
+      let result := Generic.resume (n + 2) next first level numcells tc tv1 tv smaller index out
       ∃ bs', ReturnCodes ctx cs bs' fs result.2.2 ∧ Generic.Grows before (result.2.2.key ctx bs') := by
     intro smaller hsub
+    unfold Generic.resume
+    dsimp only [policy, Generic.Policy.longprune, Generic.Policy.recover, Generic.Policy.orbit]
     split
     · exact hcontinue _ (fun v hv => hsub v (Nauty.longprune_subset hv))
     · exact hcontinue _ hsub

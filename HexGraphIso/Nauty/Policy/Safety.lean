@@ -85,18 +85,10 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
     (hstored : RunInv G ctx out)
     (hready : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
       (recoverLevels level (recoverPtn (n + 2) level out))) :
-    RunInv G ctx (Id.run (do
-      let mut cell := cell
-      match exit with
-      | .fuel => return (Generic.Exit.fuel, index, out)
-      | .unwind target short =>
-        if target < level then return (exit, index, out)
-        if short then cell := shortprune cell out
-      | .done => pure ()
-      if !first && tv == tv1 then cell := Nauty.longprune cell out.fixedpts out.autos
-      let st := recoverLevels level (recoverPtn (n + 2) level out)
-      let index := if first && st.orbits[tv]! == tv1 then index + 1 else index
-      return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)).2.2 := by
+    RunInv G ctx (Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit).2.2 := by
+  unfold Generic.advance
+  dsimp only [policy, Generic.Policy.shortprune, Generic.Policy.longprune, Generic.Policy.recover,
+    Generic.Policy.orbit]
   have htv : first = true → tv1 < tv := fun hf => hready.past hf tv rfl
   have hcontinue : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (next first level numcells tc tv1 (smaller.nextElem (some tv)) smaller
@@ -108,13 +100,10 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
       ⟨Generic.Past.next htv, hready.positive, hready.partition, hready.target.subset hsub,
         (fun _ hv => VSet.nextElem_mem hv), hready.stored, hready.ancestor, hready.history, hready.recorded, hready.equitable, hready.boundary, hready.cheapBound, hready.path⟩
   have hlong : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
-      RunInv G ctx (Id.run (do
-        let mut cell := smaller
-        if !first && tv == tv1 then cell := Nauty.longprune cell out.fixedpts out.autos
-        let st := recoverLevels level (recoverPtn (n + 2) level out)
-        let index := if first && st.orbits[tv]! == tv1 then index + 1 else index
-        return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)).2.2 := by
+      RunInv G ctx (Generic.resume (n + 2) next first level numcells tc tv1 tv smaller index out).2.2 := by
     intro smaller hsub
+    unfold Generic.resume
+    dsimp only [policy, Generic.Policy.longprune, Generic.Policy.recover, Generic.Policy.orbit]
     split
     · exact hcontinue _ (fun v hv => hsub v (Nauty.longprune_subset hv))
     · exact hcontinue _ hsub

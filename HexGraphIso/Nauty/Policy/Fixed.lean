@@ -158,19 +158,9 @@ theorem fixed_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (htarget : Generic.Target Search.view level tc cell base)
     (hfixed : FixedCells level base.view)
     (hout : SearchOut G level level base.view out.view) (hf : out.fixedpts = base.fixedpts) :
-    (Id.run (do
-      let mut cell := cell
-      match exit with
-      | .fuel => return (Generic.Exit.fuel, index, out)
-      | .unwind target short =>
-        if target < level then return (exit, index, out)
-        if short then cell := Generic.Policy.shortprune (n := n) cell out
-      | .done => pure ()
-      if !first && tv == tv1 then cell := Generic.Policy.longprune (n := n) cell out
-      let st := Generic.Policy.recover (n := n) (n + 2) level out
-      let index := if first && Generic.Policy.orbit (n := n) st tv == tv1 then index + 1 else index
-      return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)).2.2.fixedpts =
+    (Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit).2.2.fixedpts =
       base.fixedpts := by
+  unfold Generic.advance
   let reach := reachPolicy G ctx tcLevel hn0
   have hr := reach.recover level numcells base out hlevel hok hout
   have hrf := fixed_recover (ctx := ctx) hn0 hlevel hok hfixed hout hf
@@ -187,14 +177,10 @@ theorem fixed_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
         (fun _ hv => VSet.nextElem_mem hv), hrf⟩
     exact hn.trans ((recover_fixed (n + 2) level out).trans hf)
   have hlong : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
-      (Id.run (do
-        let mut cell := smaller
-        if !first && tv == tv1 then cell := Generic.Policy.longprune (n := n) cell out
-        let st := Generic.Policy.recover (n := n) (n + 2) level out
-        let index := if first && Generic.Policy.orbit (n := n) st tv == tv1 then index + 1 else index
-        return next first level numcells tc tv1 (cell.nextElem (some tv)) cell index st)).2.2.fixedpts =
+      (Generic.resume (n + 2) next first level numcells tc tv1 tv smaller index out).2.2.fixedpts =
         base.fixedpts := by
     intro smaller hsub
+    unfold Generic.resume
     split
     · exact hcontinue _ (fun v hv => hsub v (reach.long smaller out v hv))
     · exact hcontinue _ hsub

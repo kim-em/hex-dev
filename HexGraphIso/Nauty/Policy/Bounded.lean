@@ -110,7 +110,7 @@ theorem BoundedPolicy.sweep_step (h : BoundedPolicy ctx inf tcLevel bound P)
       ⟨Past.next htv, hlevel, h.recover level out hlevel heq⟩
   have hd := hdescend false (level + 1) (numcells + 1)
     (Policy.child (n := n) first level tc tv st) ⟨rfl, (by omega), h.child first level tc tv st hin⟩
-  unfold sweepStep
+  unfold sweepStep advance resume
   simp only [hflag, Bool.false_eq_true, ite_false, Id.run_pure,
     apply_ite Id.run, apply_ite Prod.snd]
   split
@@ -121,7 +121,7 @@ theorem BoundedPolicy.sweep_step (h : BoundedPolicy ctx inf tcLevel bound P)
     cases exit with
     | fuel => exact heq
     | done =>
-      simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
+      simp only [Id.run_pure, apply_ite Prod.snd]
       split <;> exact hcontinue _ _ heq
     | unwind target short =>
       simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]

@@ -43,7 +43,7 @@ theorem sweep_first_bounded {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → 
     exact sweep_bounded h true fuel cfuel level numcells tc tv index _ cell _
       (hpast cell) hlevel (h.recover level out hlevel hin)
   rw [sweep]
-  unfold sweepStep
+  unfold sweepStep advance resume
   simp only [Bool.not_true, horbit, beq_self_eq_true, Bool.or_true,
     Bool.and_self, Bool.false_and, ite_true]
   generalize hr : node true ctx inf tcLevel fuel (level + 1) (numcells + 1)

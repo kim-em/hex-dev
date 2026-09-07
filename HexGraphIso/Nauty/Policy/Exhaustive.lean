@@ -77,7 +77,7 @@ theorem sweep_fold {ctx : Ctx n} {inf tcLevel fuel level tc len : Nat}
     intro o ho hf best tv1 index
     by_cases hlt : o < len
     · rw [ite_eq_left hlt, Generic.sweep]
-      unfold Generic.sweepStep
+      unfold Generic.sweepStep Generic.advance Generic.resume
       dsimp only [policy, Policy.child, Policy.afterChildFirst, Policy.leaveChild,
         Policy.orbit, Policy.shortprune, Policy.longprune, Policy.recover]
       simp only [Bool.not_false, Bool.true_or, Bool.false_and, Bool.false_eq_true,
