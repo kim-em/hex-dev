@@ -23,6 +23,14 @@ theorem prune_floor {level noncheaplevel allsamelevel : Nat} {eqlevCanon : Int}
   unfold pruneReturn
   split <;> dsimp only <;> split <;> simp only [Int.ofNat_eq_natCast] at * <;> omega
 
+/-- Agreement with the canonical prefix also prevents a non-generator
+prune from crossing this level, independently of the all-same boundary. -/
+theorem prune_floor_canon {level noncheaplevel allsamelevel : Nat} {eqlevCanon : Int}
+    (hcheap : level < noncheaplevel) (hcanon : Int.ofNat level ≤ eqlevCanon) :
+    Int.ofNat level ≤ pruneReturn noncheaplevel allsamelevel eqlevCanon := by
+  unfold pruneReturn
+  split <;> dsimp only <;> split <;> simp only [Int.ofNat_eq_natCast] at * <;> omega
+
 /-- A non-generator return crossing an ancestor must use one of the two
 saved subtree boundaries. A comparison-code argument alone is insufficient. -/
 theorem prune_early {level noncheaplevel allsamelevel : Nat} {eqlevCanon : Int}

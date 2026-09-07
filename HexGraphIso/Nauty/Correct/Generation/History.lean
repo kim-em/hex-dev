@@ -161,6 +161,16 @@ theorem other_fields (ctx : Ctx n) (inf tcLevel : Nat) :
     · rw [ite_eq_right ht]
       apply htail; exact ⟨hm.codes, hm.targets, hm.lab, hm.same⟩
 
+/-- The saved all-same boundary remains strictly deeper than the
+first-path guide throughout an off-path subtree. -/
+theorem other_boundary {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat} {st : SearchSt n}
+    (hclear : st.needshortprune = false) (hboundary : st.gcaFirst < st.allsamelevel) :
+    (otherNode ctx inf tcLevel fuel level numcells st).2.gcaFirst <
+      (otherNode ctx inf tcLevel fuel level numcells st).2.allsamelevel := by
+  rw [(node_control ctx inf tcLevel fuel level numcells st hclear).1,
+    (other_fields ctx inf tcLevel fuel level numcells st).same]
+  exact hboundary
+
 /-- Once the guiding vertex has been visited, a first-path sibling sweep
 preserves the complete stored first reference. All later recursive calls
 are off-path, including after target-set filters. -/

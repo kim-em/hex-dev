@@ -18,3 +18,5 @@ public import HexGraphIso.Nauty.Correct.Generation.Same
 public import HexGraphIso.Nauty.Correct.Generation.UniformVisit
 public import HexGraphIso.Nauty.Correct.Generation.RefPath
 public import HexGraphIso.Nauty.Correct.Generation.FirstPath
+public import HexGraphIso.Nauty.Correct.Generation.PathCover
+public import HexGraphIso.Nauty.Correct.Generation.Canon

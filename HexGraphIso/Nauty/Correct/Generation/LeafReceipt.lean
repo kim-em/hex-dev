@@ -21,11 +21,7 @@ theorem smaller (h : LeafCover ctx tcLevel level st tc len targets key tcell cur
     {tv o : Nat} (hnext : tcell.nextElem cursor = some tv)
     (ho : o < len) (hlt : st.lab[tc + o]! < tv) :
     ¬ ChildLeaf ctx tcLevel level st tc targets key o := by
-  rcases h.cover o ho with hd | ⟨j, hj, _, hle⟩
-  · exact hd
-  · have hmin := nextElem_le hnext hj.2.1 hj.2.2
-    dsimp only at hle
-    omega
+  exact VisitCover.smaller h hnext ho hlt
 
 /-- A recorded carrier transfers absence from its reference child to the
 current child. This consumes canonical returns without claiming that the
@@ -40,14 +36,9 @@ theorem carrier (h : LeafCover ctx tcLevel level st tc len targets key tcell cur
     (hatRef : ref[tc]! = st.lab[tc + oRef]!) (hatCur : cur[tc]! = tv) :
     LeafCover ctx tcLevel level st tc len targets key tcell (some tv) := by
   have he := target_end_lt hok.ok.ptnSize hok.ok.ptnEnd hcell
-  obtain ⟨γ, _, hcheck, hmap, hstab⟩ := hcarrier
-  apply h.advance hnext
-  intro o ho hat
-  have hact : γ[st.lab[tc + oRef]!]! = st.lab[tc + o]! := by
-    rw [← hatRef, hat, ← hatCur]
-    exact hmap tc (by omega)
-  exact fun hleaf => habsent ((HasLeaf.carried_iff hok hlvl hgsz hcheck hstab
-    hcell hne (by omega) (by omega) hact).mpr hleaf)
+  apply VisitCover.carrier h hnext (by omega) href habsent hcarrier hatRef hatCur
+  intro γ o j hc hs ho hj hmap
+  exact HasLeaf.carried_iff hok hlvl hgsz hc hs hcell hne (by omega) (by omega) hmap
 
 /-- A carrier to an earlier reference child discharges the current child
 using the ranked coverage invariant, including references removed by

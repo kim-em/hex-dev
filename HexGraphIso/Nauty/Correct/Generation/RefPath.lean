@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Generation.Transport
+import all HexGraphIso.Nauty.Invariant.Orbits
+import all HexGraphIso.Generated
+import all HexGraphIso.Nauty.Correct.Generation.Carry
 
 public section
 
@@ -161,5 +164,66 @@ theorem RefPath.carried {tcLevel boundary level tc e oU oV : Nat}
     hmap.symm.trans (hσ _ hv).symm
   exact h.transport hrows hback hinv (iterOk_child hok hlvl hcell hne hoU)
     (stPerm_child hrows hsp hok hcell hne hoV hoU hmap')
+
+/-- A checked automorphism identifies the sets of leaf keys below the
+two children it relates. The reverse carrier is a forward word in the
+same permutation, using finite permutation cycles. -/
+theorem RefPath.carried_iff {tcLevel boundary level tc e oU oV : Nat}
+    {st : RefineSt n} {γ : Array Nat} {targets : List Nat} {key : Key n}
+    (hok : IterOk ctx level st) (hlvl : level < n)
+    (hgsz : ctx.g.size = n) (hcheck : checkAutom ctx.g γ = true)
+    (hstab : CellStab st.ptn level st.lab γ)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
+    (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
+    (hmap : γ[st.lab[tc + oU]!]! = st.lab[tc + oV]!) :
+    RefPath ctx tcLevel boundary (level + 1) (childSt ctx level st tc st.lab[tc + oU]!) targets key ↔
+      RefPath ctx tcLevel boundary (level + 1) (childSt ctx level st tc st.lab[tc + oV]!) targets key := by
+  constructor
+  · exact RefPath.carried hok hlvl hgsz hcheck hstab hcell hne hoU hoV hmap
+  · intro h
+    have he := target_end_lt hok.ok.ptnSize hok.ok.ptnEnd hcell
+    have hu := hok.ok.labOk (tc + oU) (by rw [hok.ok.labSize]; omega)
+    have hv := hok.ok.labOk (tc + oV) (by rw [hok.ok.labSize]; omega)
+    have hchecks : ∀ δ ∈ [γ], checkAutom ctx.g δ = true := by
+      intro δ hδ
+      rwa [List.mem_singleton.mp hδ]
+    have hstabs : ∀ δ ∈ [γ], CellStab st.ptn level st.lab δ := by
+      intro δ hδ
+      rwa [List.mem_singleton.mp hδ]
+    obtain ⟨w, hw, hact⟩ := wordConn_symm
+      (fun δ hδ => checkAutom_bound (hchecks δ hδ))
+      (fun δ hδ => checkAutom_inj (hchecks δ hδ)) [γ] hu
+      (fun _ hδ => hδ) (by simpa only [applyWord, List.foldl_cons, List.foldl_nil] using hmap)
+    obtain ⟨hca, hst, hval⟩ := wordPerm_spec hok.ok.labOk hok.ok.ptnSize hok.ok.labSize
+      hok.ok.ptnEnd hchecks hstabs w hw
+    exact h.carried hok hlvl hgsz hca hst hcell hne hoV hoU
+      ((hval _ hv).trans hact)
+
+
+/-- Every image of a reference child under the true path stabilizer
+contains the same reference occurrence. This supplies the matching-search
+premise before any generation theorem has been established. -/
+theorem RefPath.orbit {k : Nat} {G : Colored n k} {base : List (Fin n)} {rs : RefineSt n} {st : SearchSt n}
+    {tcLevel boundary level tc e oU oV : Nat} {u v : Fin n} {targets : List Nat} {key : Key n}
+    (hok : IterOk { g := rowsOf G } level rs) (hlvl : level < n)
+    (hpath : PathStab { g := rowsOf G }
+      (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st)
+    (hlab : st.lab = rs.lab) (hptn : st.ptn = rs.ptn)
+    (hbase : ∀ b : Fin n, st.fixedpts.mem b.val = true → b ∈ base)
+    (hcell : (tc, e) ∈ cells rs.ptn level n) (hne : tc < e)
+    (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
+    (hatU : rs.lab[tc + oU]! = u.val) (hatV : rs.lab[tc + oV]! = v.val)
+    (horbit : Aut.Orbit G base u v)
+    (h : RefPath { g := rowsOf G } tcLevel boundary (level + 1)
+      (childSt { g := rowsOf G } level rs tc rs.lab[tc + oU]!) targets key) :
+    RefPath { g := rowsOf G } tcLevel boundary (level + 1)
+      (childSt { g := rowsOf G } level rs tc rs.lab[tc + oV]!) targets key := by
+  obtain ⟨p, hp, hfix, hmap⟩ := horbit
+  have hstab := path_stab (by omega : 0 < n) hpath hp (fun b hb => hfix b (hbase b hb))
+  rw [hlab, hptn] at hstab
+  apply h.carried hok hlvl (size_rowsOf G)
+    (checkAutom_renaming (ctx := { g := rowsOf G }) (renamingOf p) (rowsMap_of_isIso hp))
+    hstab hcell hne hoU hoV
+  rw [hatU, hatV, renamingArray_get _ u.isLt, renamingOf_lt p u.isLt, hmap]
 
 end Hex.GraphIso.Nauty.Generation
