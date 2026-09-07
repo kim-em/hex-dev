@@ -283,6 +283,12 @@ The post-optimization inverse and pole captures use clean commit
 `e3075d6134d25d049b59459f268d739d41a9ee66` on the same environment.
 Only benchmark-thread samples inside the recorded timed regions are retained;
 these loops include the benchmark's complete-result hash.
+They pass calibration and are useful for attributing the registered loop, but
+**do not satisfy the kernel-only hashing exclusion in `SPEC/profiling.md`**.
+`Setup.lean` hashes inside the loop wrapped by `TimedRegions.wrapLoopForSidecar`;
+the filter cannot separate it. This contract discrepancy is tracked in
+[lean-bench #74](https://github.com/kim-em/lean-bench/issues/74). The optimized
+inverse profile below supplies a direct counterexample to hashing exclusion.
 
 | Case | Own code | GMP | Allocation/free | Lean runtime | Classified |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -356,6 +362,9 @@ and valid timed-region profiles. Existing fixed registrations cannot currently
 be profiled through lean-bench's timed-region interface; this is tracked in
 [#10097](https://github.com/kim-em/hex-dev/issues/10097) and
 [lean-bench #73](https://github.com/kim-em/lean-bench/issues/73).
+The parametric profiles also await the kernel-only hashing-exclusion resolution
+in [lean-bench #74](https://github.com/kim-em/lean-bench/issues/74); passing
+timestamp calibration alone does not close that requirement.
 The roughly 984 ms aggregate calculus anchor must be attributed before selecting
 an optimization. Generic nonmonic inversion, query bit-height effects, certificate
 generation, and the Mathlib proof track also remain outside the qualified subset.
