@@ -86,12 +86,12 @@ theorem firstRef_of_path {G : Colored n k} {ctx : Ctx n}
     (heq : Equitable ctx level (st.refined ctx level numcells).lab
       (st.refined ctx level numcells).ptn)
     (htsize : n < st.firsttc.size) (hcsize : st.firstcode.size = n + 2) :
-    Nonempty (FirstRef ctx tcLevel level (st.refined ctx level numcells)
-      (node true ctx inf tcLevel fuel level numcells st).2) := by
+    ∃ href : FirstRef ctx tcLevel level (st.refined ctx level numcells)
+      (node true ctx inf tcLevel fuel level numcells st).2, href.last = last := by
   obtain ⟨path, U, hd, hs, ht, hl, hdisc⟩ :=
     firstPath_saved (inf := inf) hn0 hsymm hpath hlevel hok heq htsize
   have hlast := (descends_iterOk hd.descends (refined_iter hn0 hlevel hok)).lvl
-  exact ⟨⟨last, U, path, hd, hs, ht, hl, hdisc, firstPath_sentinel hpath hcsize hlast⟩⟩
+  exact ⟨⟨last, U, path, hd, hs, ht, hl, hdisc, firstPath_sentinel hpath hcsize hlast⟩, rfl⟩
 
 /-- First-code agreement cannot extend below the saved first leaf. -/
 theorem FirstRef.depth {ctx : Ctx n} {tcLevel base : Nat} {root : RefineSt n}
