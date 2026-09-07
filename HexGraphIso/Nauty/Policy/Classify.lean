@@ -17,7 +17,9 @@ namespace Hex.GraphIso.Nauty.Engine
 
 variable {n : Nat}
 
-private def canonVerdict (ctx : Ctx n) (level : Nat) (st : Search n) : Leaf × Search n := Id.run do
+/-- Canonical comparison after first-reference admission has failed or
+is inapplicable. -/
+def canonVerdict (ctx : Ctx n) (level : Nat) (st : Search n) : Leaf × Search n := Id.run do
   let mut st := st
   let mut sr := 0
   if st.compCanon == 0 then
@@ -42,7 +44,8 @@ private theorem canonVerdict_ne (ctx : Ctx n) (level : Nat) (st : Search n) :
   repeat' split
   all_goals intro h; cases h
 
-private theorem classify_eq (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
+/-- Separate first-reference admission from the canonical verdict. -/
+theorem classify_eq (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     classify ctx level numcells st =
       if st.eqlevFirst != level && st.compCanon < 0 then (.bad, st)
       else if numcells != n then (.internal, st)
