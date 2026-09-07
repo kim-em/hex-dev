@@ -624,9 +624,42 @@ theorem radical_squarefree [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) (hp : p ≠ 0) : Squarefree (radical p) := by
   sorry
 
+/-- The radical divides the original input, including its scalar content
+and normalization unit. -/
 theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) : radical p ∣ p := by
-  sorry
+  let q := polyNormalize (primPart p)
+  rcases (polyIsUnit_iff (polyNormUnit (primPart p))).mp
+      (polyNormUnit_isUnit (primPart p)) with ⟨u, hu⟩
+  have hrestore : C (content p) * u * q = p := by
+    calc
+      C (content p) * u * q =
+          C (content p) * (primPart p * (polyNormUnit (primPart p) * u)) := by
+        simp only [q, polyNormalize]
+        grind
+      _ = p := by rw [hu, mul_one, content_mul_primPart]
+  unfold radical
+  change (if q == 0 then 0 else quotient q (gcdList (q :: derivatives q))) ∣ p
+  by_cases hq : q = 0
+  · simp only [hq, beq_self_eq_true, ite_true, mul_zero] at hrestore ⊢
+    rw [← hrestore]
+    exact ⟨0, (mul_zero 0).symm⟩
+  · simp only [beq_iff_eq, hq, ite_false]
+    have hd : gcdList (q :: derivatives q) ∣ q :=
+      gcdList_dvd (List.mem_cons_self ..)
+    have hd0 : gcdList (q :: derivatives q) ≠ 0 := by
+      intro hzero
+      rcases hd with ⟨r, hr⟩
+      rw [hzero, mul_zero] at hr
+      exact hq hr
+    have hquot := quotient_mul_of_dvd hd0 hd
+    refine ⟨C (content p) * u * gcdList (q :: derivatives q), ?_⟩
+    calc
+      p = C (content p) * u * q := hrestore.symm
+      _ = (C (content p) * u * gcdList (q :: derivatives q)) *
+          quotient q (gcdList (q :: derivatives q)) := by
+        rw [mul_assoc (C (content p) * u),
+          mul_comm (gcdList _) (quotient ..), hquot]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 @[simp] theorem radical_zero [IsMonomialOrder cmp] [NatCast R] [NatNoZero R] :

@@ -236,6 +236,20 @@ private def sqfContract {n : Nat} (p : MvPoly n Int Mono.lex) : Bool :=
   let p := (x + y + 1) ^ 3 * (x + 2)
   radical p == (x + 2) * (x + y + 1) && isSquarefree (radical p)
 
+-- Zero and nonzero scalars use different branches of the radical.
+#guard radical (0 : P2) == 0
+#guard radical (C (-12) : P2) == 1
+#guard radical (C (-12) : MvPoly 0 Int Mono.lex) == 1
+
+-- Exact division restores both the negative scalar content and the repeated
+-- factors omitted by the normalized radical.
+#guard
+  let x : P2 := X 0
+  let y : P2 := X 1
+  let p := C (-6) * (x + 1) ^ 3 * (y + 2) ^ 2
+  radical p == (x + 1) * (y + 2) &&
+    divExact? p (radical p) == some (C (-6) * (x + 1) ^ 2 * (y + 2))
+
 /-! Positive-characteristic exact decisions. -/
 
 private theorem boundsThree : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
