@@ -469,13 +469,47 @@ level these units produce). The measurements above cover exactly the
 
 The [comparison protocol](hex-number-field-tower-factor-protocol.md) retains
 the existing fixed inputs, five repeats, a 0.2-second inner-batch floor, and
-unchanged 2-second canonical budgets. No exponent was fitted. **There is no
-accepted new timing comparison:** the first candidate's CPU/sibling were
-96%/97% busy at postflight, and both protocol-amended retries failed the 5%
-idleness threshold. The next baseline's CPU/sibling were 98.5%/97.5%; the
-final baseline on CPU 1 failed at 13.1%/1.5%. Both retries stopped before
-running the candidate. The retry limit is exhausted.
-These runs do not replace the earlier Phase-4 evidence or establish a speedup.
+unchanged 2-second canonical budgets. Two accepted paired comparisons of the
+original executable against the merged modular-check executable give the
+following **ranges of paired medians and speedups**. Both arms of each pair
+used the same core; the second pair reversed the arm order. No exponent was
+fitted. Every Hex result hash matches, including the canonical certificate
+checksum, and every fresh PARI degree/multiplicity checksum matches Hex.
+
+| operation | baseline median ms | modular median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 1.079–1.080 | 1.035–1.045 | 1.03–1.04× |
+| factor, degree 3 | 1.462–1.469 | 1.393–1.407 | 1.04–1.05× |
+| factor, degree 4 | 2.069–2.076 | 1.934–1.935 | 1.07× |
+| factor, degree 6 | 3.597–3.600 | 3.055–3.121 | 1.15–1.18× |
+| factor, degree 8 | 6.128–6.153 | 4.509–4.577 | 1.34–1.36× |
+| factor, degree 12 | 16.565–16.594 | 9.262–9.298 | 1.78–1.79× |
+| factor, degree 24 | 250.279–252.941 | 34.380–34.625 | 7.23–7.36× |
+| check, degree 24 | 125.002–125.079 | 16.848–16.988 | 7.36–7.42× |
+
+The accepted pairs used CPU 5/sibling 53 and CPU 15/sibling 63. Each arm
+passed the registered two-second pre/post idleness checks and the mean
+sibling-utilization gate during execution. The first five attempts were
+rejected on host telemetry (one before timing); every rejected export is
+retained alongside the accepted exports in the
+[artifact manifest](bench-results/hex-number-field-tower-followup-manifest.json).
+The manifest also preserves the orchestration script. Harness exports record
+the measurement checkout; the host records identify each saved executable's
+source commit and SHA-256. This is local shared-host evidence, not a
+release-quality verdict or a replacement for Phase-4 model coverage.
+
+Fresh PARI measurements remain informational and variable: in the two modular
+arms, degree-12 medians were 76.277 and 97.002 µs, giving raw Hex/PARI time
+ratios of 121.9 and 95.5. The corresponding protocol-overhead medians were
+7.585 and 7.382 µs. These pairs establish the Hex before/after improvement;
+the comparator still has a substantial gap and performs no certificate replay.
+
+The earlier comparison series supplied no accepted result: its first
+candidate's CPU/sibling were 96%/97% busy at postflight, and both
+protocol-amended retries failed the 5% idleness threshold. The next baseline's
+CPU/sibling were 98.5%/97.5%; the final baseline on CPU 1 failed at
+13.1%/1.5%. Those retries stopped before running the candidate and remain
+contaminated diagnostics, excluded from the table above.
 
 For transparency, the first attempt's raw per-call medians are retained below
 as **contaminated diagnostics only**. All repeat hashes agree, all eight Hex

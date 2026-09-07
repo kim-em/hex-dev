@@ -1,0 +1,369 @@
+{
+  "label": "modular",
+  "attempt": 7,
+  "cpu": 15,
+  "siblings": [
+    15,
+    63
+  ],
+  "runs": [
+    {
+      "arm": "right",
+      "source_commit": "8dd0f8e155ebd9c49cb08728dde3051fb8fec4a5",
+      "binary_sha256": "ff0dc3dfce3582d45dc7fa7e8bb5cb5b92fa1cca37dc3282c929d0c568b8f0df",
+      "command": [
+        "taskset",
+        "-c",
+        "15",
+        "/tmp/issue-10074-modular",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-7-right.json"
+      ],
+      "export": "/tmp/issue-10074-modular-7-right.json",
+      "preflight": {
+        "15": 2.0,
+        "63": 1.5
+      },
+      "postflight": {
+        "15": 0.5,
+        "63": 0.0
+      },
+      "during": [
+        {
+          "15": 100.0,
+          "63": 1.9900497512437811
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 1.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 100.0,
+          "63": 23.5
+        },
+        {
+          "15": 99.50248756218906,
+          "63": 0.9950248756218906
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 1.9900497512437811
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.5025125628140703
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.4975124378109453
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 99.49748743718592,
+          "63": 1.5
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 99.5,
+          "63": 0.4975124378109453
+        },
+        {
+          "15": 99.5,
+          "63": 0.0
+        },
+        {
+          "15": 99.5,
+          "63": 0.4975124378109453
+        },
+        {
+          "15": 99.5,
+          "63": 0.9950248756218906
+        },
+        {
+          "15": 99.5,
+          "63": 1.5075376884422111
+        },
+        {
+          "15": 99.0,
+          "63": 1.5
+        },
+        {
+          "15": 99.49748743718592,
+          "63": 2.0
+        },
+        {
+          "15": 99.0049751243781,
+          "63": 0.5
+        },
+        {
+          "15": 99.5049504950495,
+          "63": 0.5025125628140703
+        },
+        {
+          "15": 98.0,
+          "63": 0.9950248756218906
+        },
+        {
+          "15": 97.5,
+          "63": 0.5025125628140703
+        },
+        {
+          "15": 98.5,
+          "63": 2.0
+        },
+        {
+          "15": 98.5,
+          "63": 8.040201005025125
+        },
+        {
+          "15": 99.0,
+          "63": 64.17910447761194
+        },
+        {
+          "15": 100.0,
+          "63": 28.855721393034827
+        },
+        {
+          "15": 99.50248756218906,
+          "63": 0.5025125628140703
+        },
+        {
+          "15": 11.5,
+          "63": 0.5
+        }
+      ],
+      "sibling_mean": {
+        "63": 4.579697695567389
+      },
+      "exit_code": 0,
+      "accepted": true
+    },
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "15",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-7-left.json"
+      ],
+      "export": "/tmp/issue-10074-modular-7-left.json",
+      "preflight": {
+        "15": 0.5,
+        "63": 0.5
+      },
+      "postflight": {
+        "15": 1.0,
+        "63": 0.5025125628140703
+      },
+      "during": [
+        {
+          "15": 99.50248756218906,
+          "63": 0.5
+        },
+        {
+          "15": 100.0,
+          "63": 1.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 1.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 1.4851485148514851
+        },
+        {
+          "15": 100.0,
+          "63": 1.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 99.5049504950495,
+          "63": 0.5
+        },
+        {
+          "15": 100.0,
+          "63": 0.5025125628140703
+        },
+        {
+          "15": 100.0,
+          "63": 1.5075376884422111
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 100.0,
+          "63": 1.5
+        },
+        {
+          "15": 100.0,
+          "63": 1.0050251256281406
+        },
+        {
+          "15": 99.50248756218906,
+          "63": 1.492537313432836
+        },
+        {
+          "15": 99.49748743718592,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.9950248756218906
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 99.5049504950495,
+          "63": 0.5
+        },
+        {
+          "15": 100.0,
+          "63": 0.5025125628140703
+        },
+        {
+          "15": 99.5,
+          "63": 3.5
+        },
+        {
+          "15": 99.50248756218906,
+          "63": 2.0100502512562812
+        },
+        {
+          "15": 100.0,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.4975124378109453
+        },
+        {
+          "15": 99.5049504950495,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.4975124378109453
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 99.5,
+          "63": 0.0
+        },
+        {
+          "15": 100.0,
+          "63": 0.5
+        },
+        {
+          "15": 52.26130653266332,
+          "63": 0.5
+        }
+      ],
+      "sibling_mean": {
+        "63": 0.7342304303275898
+      },
+      "exit_code": 0,
+      "accepted": true
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "ef2b819f0",
+  "script_sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169",
+  "accepted": true
+}

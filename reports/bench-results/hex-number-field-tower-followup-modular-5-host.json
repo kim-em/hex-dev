@@ -1,0 +1,21 @@
+{
+  "label": "modular",
+  "attempt": 5,
+  "cpu": 6,
+  "siblings": [
+    6,
+    54
+  ],
+  "runs": [],
+  "release_quality": false,
+  "protocol_commit": "ef2b819f0",
+  "script_sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169",
+  "rejected_preflight": {
+    "arm": "left",
+    "busy": {
+      "6": 15.0,
+      "54": 3.482587064676617
+    }
+  },
+  "accepted": false
+}
