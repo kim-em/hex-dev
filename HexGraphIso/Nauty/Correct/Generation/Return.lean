@@ -82,6 +82,20 @@ theorem _root_.Hex.GraphIso.Nauty.OtherKeep.above {ctx : Ctx n} {level : Nat} {s
   · have he := h.boundary (by omega)
     omega
 
+/-- At a first-path receiver, every reference return is exactly to
+that receiver: both stored guides are at least its level. -/
+theorem RefReturn.atGuide {ctx : Ctx n} {out : SearchSt n} {r : Int} {level : Nat}
+    (h : RefReturn ctx out r) (hfirst : out.gcaFirst = level)
+    (horder : out.gcaFirst ≤ out.gcaCanon) (hbelow : r < Int.ofNat (level + 1)) :
+    r = Int.ofNat level := by
+  cases h with
+  | first returned carrier => rw [returned, hfirst]
+  | orbit returned payload => rw [returned, hfirst]
+  | canon returned carrier =>
+    rw [hfirst] at horder
+    simp only [returned, Int.ofNat_eq_natCast] at hbelow ⊢
+    omega
+
 /-- Removing the visited singleton from the fixed-point set preserves
 all returned automorphism evidence. -/
 theorem RefReturn.setFixed {ctx : Ctx n} {out : SearchSt n} {r : Int}

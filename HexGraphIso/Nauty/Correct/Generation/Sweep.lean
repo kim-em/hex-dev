@@ -65,6 +65,17 @@ theorem advance (h : Cover G base guide tcell cursor) {tv : Fin n}
       exact hcur hv
     · exact h.past v hv hm ha
 
+/-- Every orbit vertex earlier than the next live child is already
+covered, including vertices removed by an older filter. -/
+theorem before (h : Cover G base guide tcell cursor) {tv u : Fin n}
+    (hnext : tcell.nextElem cursor = some tv.val)
+    (horbit : Aut.Orbit G base guide u) (hlt : u.val < tv.val) :
+    Aut.Carries G base u guide := by
+  rcases h.cover u horbit with hd | ⟨v, hv, _, hle⟩
+  · exact hd
+  · have hmin := nextElem_le hnext hv.2.1 hv.2.2
+    omega
+
 /-- A smaller generated image discharges the current child, even if an
 older filter removed that image from the target set. -/
 theorem smaller (h : Cover G base guide tcell cursor) {tv u : Fin n}

@@ -25,3 +25,5 @@ public import HexGraphIso.Nauty.Correct.Generation.Agreement
 public import HexGraphIso.Nauty.Correct.Generation.Return
 public import HexGraphIso.Nauty.Correct.Generation.Loop
 public import HexGraphIso.Nauty.Correct.Generation.Node
+public import HexGraphIso.Nauty.Correct.Generation.FirstReceipt
+public import HexGraphIso.Nauty.Correct.Generation.Tail

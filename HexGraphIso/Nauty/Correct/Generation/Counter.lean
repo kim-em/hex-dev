@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Correct.Generation.Counted
 public import HexGraphIso.Nauty.Correct.Generation.Control
 public import HexGraphIso.Nauty.Correct.FirstPath.Hyp
+import all HexGraphIso.Nauty.Correct.Generation.Counted
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Correct.Outcome
 
@@ -17,6 +18,58 @@ public section
 namespace Hex.GraphIso.Nauty.Generation
 
 variable {n k : Nat}
+
+/-- The actual visits after the guiding child of a first-path sweep.
+The counter is absent from this proof index because it does not affect
+which child is visited or which state is passed to that child. -/
+inductive FirstTail (G : Colored n k) (ctx : Ctx n)
+    (inf tcLevel specFuel runFuel level numcells tc len tv1 e : Nat)
+    (codes fs : List Nat) (rsLab rsPtn : Array Nat) (base : SearchSt n) :
+    Nat → Option Nat → VSet n → SearchSt n → Option (Key n) → FrameTrail → Prop where
+  | zero {cursor tcell st best trail bs}
+      (hyp : FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells
+        rsLab rsPtn tc len tcell cursor e tv1 base st best trail) :
+      FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base 0 cursor tcell st best trail
+  | done {loopFuel cursor tcell st best trail bs}
+      (hyp : FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells
+        rsLab rsPtn tc len tcell cursor e tv1 base st best trail)
+      (next : tcell.nextElem cursor = none) :
+      FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail
+  | skip {loopFuel cursor tcell st best trail bs tv}
+      (hyp : FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells
+        rsLab rsPtn tc len tcell cursor e tv1 base st best trail)
+      (next : tcell.nextElem cursor = some tv) (orbit : (st.orbits[tv]! == tv) = false)
+      (tail : FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base loopFuel (some tv) tcell st best trail) :
+      FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail
+  | visit {loopFuel cursor tcell st best trail bs tv offset child out r childBest eventTrail}
+      (hyp : FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells
+        rsLab rsPtn tc len tcell cursor e tv1 base st best trail)
+      (next : tcell.nextElem cursor = some tv) (orbit : (st.orbits[tv]! == tv) = true)
+      (offsetLt : offset < len) (atOffset : rsLab[tc + offset]! = tv)
+      (childEq : child = { st with
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
+        cosetindex := tv })
+      (call : otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1) child = (r, out))
+      (run : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs child out
+        (numcells + 1) best childBest
+        (trail.push level ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+        eventTrail r)
+      (keep : OtherKeep ctx (level + 1) child out)
+      (clear : ¬ r < Int.ofNat level → out.needshortprune = false)
+      (continuation : ¬ r < Int.ofNat level →
+        FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+          codes fs rsLab rsPtn base loopFuel (some tv) tcell
+          (recover n inf level (clearShortIf out.needshortprune
+            { out with fixedpts := out.fixedpts.erase tv })) childBest eventTrail) :
+      FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail
 
 set_option maxHeartbeats 1600000 in
 /-- The actual first-path sibling loop counts distinct original vertices
@@ -39,12 +92,14 @@ theorem firstTail_counted {G : Colored n k} {ctx : Ctx n}
       ∃ last, Counted (segN rsLab tc len)
         (fun v => ∃ γ, checkAutom ctx.g γ = true ∧ CellStab rsPtn level rsLab γ ∧ γ[v]! = tv1)
         last (firstChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc tv1
-          (tcell.nextElem cursor) tcell index st).2.1 := by
+          (tcell.nextElem cursor) tcell index st).2.1 ∧
+        FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+          codes fs rsLab rsPtn base loopFuel cursor tcell st best trail := by
   intro loopFuel
   induction loopFuel with
   | zero =>
     intro cursor tcell st best trail bs index hh hc
-    refine ⟨cursor, ?_⟩
+    refine ⟨cursor, ?_, .zero hh⟩
     simpa only [firstChildLoop] using hc
   | succ loopFuel ihLoop =>
     intro cursor tcell st best trail bs index hh hc
@@ -55,7 +110,7 @@ theorem firstTail_counted {G : Colored n k} {ctx : Ctx n}
     have hcodesLen : codes.length = level := hpath.symm
     cases hnext : tcell.nextElem cursor with
     | none =>
-      refine ⟨cursor, ?_⟩
+      refine ⟨cursor, ?_, .done hh hnext⟩
       simpa only [firstChildLoop] using hc
     | some tv =>
       have htvLt : tv < n := hh.inv.nextLt hnext
@@ -86,8 +141,8 @@ theorem firstTail_counted {G : Colored n k} {ctx : Ctx n}
         have hcNext := hc.cellStep (nextElem_after hnext) hm htvLt hh.inv.frozenLabOk
           hh.inv.frozenPtnSize hh.inv.frozenLabSize hh.inv.frozenEnd hh.orbits
           (fun γ hγ => hh.inv.run.genTraceOk.check hγ) hh.live.frameStab
-        obtain ⟨last, htail⟩ := ihLoop (some tv) tcell st best trail bs _ hhSkip hcNext
-        refine ⟨last, ?_⟩
+        obtain ⟨last, htail, htrace⟩ := ihLoop (some tv) tcell st best trail bs _ hhSkip hcNext
+        refine ⟨last, ?_, .skip hh hnext horb htrace⟩
         rw [firstChildLoop_skip ctx inf tcLevel runFuel loopFuel level numcells tc tv1 tv tcell index st horb]
         exact htail
       | true =>
@@ -125,7 +180,8 @@ theorem firstTail_counted {G : Colored n k} {ctx : Ctx n}
         rw [hcall] at hrunChild hkeepChild
         dsimp only at hrunChild hkeepChild
         by_cases hearly : value < Int.ofNat level
-        · refine ⟨cursor, ?_⟩
+        · refine ⟨cursor, ?_, .visit hh hnext horb hoffset' hatFrozen' rfl hcall hrunChild hkeepChild
+            (fun hn => (hn hearly).elim) (fun hn => (hn hearly).elim)⟩
           rw [firstChildLoop_earlyOther ctx inf tcLevel runFuel loopFuel level numcells tc tv1 tv
             tcell index st value out horb hother hcall hearly]
           exact hc
@@ -144,11 +200,48 @@ theorem firstTail_counted {G : Colored n k} {ctx : Ctx n}
           have hcNext := hc.cellStep (nextElem_after hnext) hm htvLt hhRec.inv.frozenLabOk
             hhRec.inv.frozenPtnSize hhRec.inv.frozenLabSize hhRec.inv.frozenEnd hhRec.orbits
             (fun γ hγ => hhRec.inv.run.genTraceOk.check hγ) hhRec.live.frameStab
-          obtain ⟨last, htail⟩ := ihLoop (some tv) tcell recSt childBest eventTrail bs' _ hhRec hcNext
-          refine ⟨last, ?_⟩
+          obtain ⟨last, htail, htrace⟩ := ihLoop (some tv) tcell recSt childBest eventTrail bs' _ hhRec hcNext
+          refine ⟨last, ?_, .visit hh hnext horb hoffset' hatFrozen' rfl hcall hrunChild hkeepChild
+            (fun _ => hshort) (fun _ => htrace)⟩
           rw [firstChildLoop_stayOther ctx inf tcLevel runFuel loopFuel level numcells tc tv1 tv
             tcell index st value out horb hother hcall hearly]
           dsimp only
           simpa only [recSt, cleared, cleaned, hshort, Bool.false_eq_true, ite_false] using htail
+
+/-- The counter proof also records the executed tail independently of
+its initial counter value. -/
+theorem firstTail_trace {G : Colored n k} {ctx : Ctx n}
+    {inf tcLevel specFuel runFuel level numcells tc len tv1 e loopFuel : Nat}
+    {codes bs fs : List Nat} {rsLab rsPtn : Array Nat} {base st : SearchSt n}
+    {cursor : Option Nat} {tcell : VSet n} {best : Option (Key n)} {trail : FrameTrail}
+    (hg : ctx.g = rowsOf G) (hinf : inf = n + 2) (hn0 : 0 < n)
+    (ih : OtherTotal G ctx inf tcLevel runFuel)
+    (hrun : n + 2 < level + 1 + runFuel) (hspec : level + 1 + specFuel = n + 1)
+    (hpath : level = codes.length)
+    (hh : FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn tc len
+      tcell cursor e tv1 base st best trail) :
+    FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+      codes fs rsLab rsPtn base loopFuel cursor tcell st best trail := by
+  have hc : Counted (segN rsLab tc len)
+      (fun v => ∃ γ, checkAutom ctx.g γ = true ∧ CellStab rsPtn level rsLab γ ∧ γ[v]! = tv1)
+      cursor 0 := ⟨[], by simp, rfl, by simp⟩
+  obtain ⟨_, _, ht⟩ := firstTail_counted hg hinf hn0 ih hrun hspec hpath loopFuel cursor
+    tcell st best trail bs 0 hh hc
+  exact ht
+
+/-- Every recorded first-path tail exposes its current loop invariant. -/
+theorem FirstTail.hyp {G : Colored n k} {ctx : Ctx n}
+    {inf tcLevel specFuel runFuel level numcells tc len tv1 e loopFuel : Nat}
+    {codes fs : List Nat} {rsLab rsPtn : Array Nat} {base st : SearchSt n}
+    {cursor : Option Nat} {tcell : VSet n} {best : Option (Key n)} {trail : FrameTrail}
+    (h : FirstTail G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+      codes fs rsLab rsPtn base loopFuel cursor tcell st best trail) :
+    ∃ bs, FirstSweepHyp G ctx tcLevel specFuel level codes bs fs numcells rsLab rsPtn tc len
+      tcell cursor e tv1 base st best trail := by
+  cases h with
+  | zero hyp => exact ⟨_, hyp⟩
+  | done hyp next => exact ⟨_, hyp⟩
+  | skip hyp next orbit tail => exact ⟨_, hyp⟩
+  | visit hyp next orbit offsetLt atOffset childEq call run keep clear continuation => exact ⟨_, hyp⟩
 
 end Hex.GraphIso.Nauty.Generation

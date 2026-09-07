@@ -476,3 +476,23 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.other_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.other_reference
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.RefPath.smallChild' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.RefPath.smallChild
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.firstTail_trace' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.firstTail_trace
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.Cover.receipt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.Cover.receipt
+
+/-- info: 'Hex.GraphIso.Nauty.FirstSweepHyp.visitLevel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.FirstSweepHyp.visitLevel
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.FirstTail.complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.FirstTail.complete

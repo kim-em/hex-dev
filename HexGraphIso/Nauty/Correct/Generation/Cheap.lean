@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Correct.Generation.Descent
+public import HexGraphIso.Nauty.Correct.Generation.RefPath
 import all HexGraphIso.Nauty.SmallCell.Transitive
 import all HexGraphIso.Nauty.Invariant.Refine
 import all HexGraphIso.Nauty.Invariant.Domination
@@ -40,6 +41,33 @@ theorem HasLeaf.smallChild {st : RefineSt n} {tcLevel level tc e oU oV : Nat}
   obtain ⟨σ, hrows, hsp, hmap⟩ := stabilizer_transitive hS hgsz hsymm hloop hcell hne hoU hoV ho
   exact h.transport hrows (iterOk_child hS.it hlvl hcell hne hoU)
     (stPerm_child hrows hsp hS.it hcell hne hoV hoU hmap)
+
+/-- Small-cell transitivity transports the saved reference path,
+including its uniformity guarantees, to every target child. -/
+theorem RefPath.smallChild {st : RefineSt n} {tcLevel boundary level tc e oU oV : Nat}
+    {targets : List Nat} {key : Key n}
+    (hS : SubtreeOk ctx level st) (hlvl : level < n)
+    (hgsz : ctx.g.size = n)
+    (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
+    (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
+    (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
+    (h : RefPath ctx tcLevel boundary (level + 1)
+      (childSt ctx level st tc st.lab[tc + oU]!) targets key) :
+    RefPath ctx tcLevel boundary (level + 1)
+      (childSt ctx level st tc st.lab[tc + oV]!) targets key := by
+  by_cases ho : oU = oV
+  · simpa only [ho] using h
+  obtain ⟨σ, hrows, hsp, hmap⟩ := stabilizer_transitive hS hgsz hsymm hloop hcell hne hoU hoV ho
+  have hraw : st.lab.map (fun v => (renamingArray σ)[v]!) = st.lab.map σ.toFun :=
+    map_congr_of_labOk hS.it.ok.labOk (fun v hv => renamingArray_get σ hv)
+  refine h.carried hS.it hlvl hgsz (checkAutom_renaming σ hrows) ?_ hcell hne hoU hoV ?_
+  · change cellsPerm st.ptn level st.lab (st.lab.map (fun v => (renamingArray σ)[v]!))
+    rw [hraw]
+    exact hsp.cells
+  · have he := target_end_lt hS.it.ok.ptnSize hS.it.ok.ptnEnd hcell
+    rw [renamingArray_get σ (hS.it.ok.labOk _ (by rw [hS.it.ok.labSize]; omega))]
+    exact hmap.symm
 
 /-- A matching small-cell subtree emits a first-reference carrier on its
 first descent and returns to that reference's guide. In particular, no

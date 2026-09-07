@@ -1125,7 +1125,7 @@ theorem firstLoopTotal {G : Colored n k} {ctx : Ctx n}
       hhRec'.inv.frozenLabOk hhRec'.inv.frozenPtnSize hhRec'.inv.frozenLabSize
       hhRec'.inv.frozenEnd hhRec'.orbits
       (fun γ hγ => hhRec'.inv.run.genTraceOk.check hγ) hhRec'.live.frameStab
-    obtain ⟨last, hcounterTail⟩ := Generation.firstTail_counted hg hinf hn0 ih
+    obtain ⟨last, hcounterTail, _⟩ := Generation.firstTail_counted hg hinf hn0 ih
       hrun hspec hfull.symm n (some tv1) tcell' recSt outBest eventTrail bs _
       hhRec' hcounterGuide
     have hstate := firstChildLoop_stayGuide ctx inf tcLevel runFuel n
