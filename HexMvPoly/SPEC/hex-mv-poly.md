@@ -416,6 +416,9 @@ matching the shape of `Hex.DensePoly.derivative` while retaining
 canonical zero deletion. Its coefficient law uses
 `[Lean.Grind.Semiring R] [DecidableEq R]`; the theorem module may expose
 `Lean.Grind.Semiring.natCast` as a default-priority local instance.
+That law concerns the semiring’s own natural cast, not an arbitrary
+caller-selected `NatCast`. Consumers that need mathematical differentiation
+must bind the computational cast to the coefficient semiring’s cast.
 Mathlib's `CommSemiring` already supplies `Zero`, `NatCast`, `Add`, and
 `Mul`, so the companion needs no Mathlib-to-Grind adapter merely to call
 the definition.

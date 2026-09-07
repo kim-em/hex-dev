@@ -282,7 +282,7 @@ private theorem sorted_merge_fold (entries acc : List (SqfFactor n R cmp))
 /-- One decreasing Yun layer in the selected main variable.  The fuel is the
 total degree of the primitive input plus one; in characteristic zero every
 nonterminal layer removes at least one degree from `b`. -/
-def yunLoop [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
+def yunLoop [NatNoZero R] [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
     (b d : MvPoly n R cmp) (acc : List (SqfFactor n R cmp)) :
     List (SqfFactor n R cmp) :=
   match fuel with
@@ -298,7 +298,7 @@ def yunLoop [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
         yunLoop i fuel (k + 1) nextB nextD acc
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem positive_yunLoop [IsMonomialOrder cmp]
+private theorem positive_yunLoop [NatNoZero R] [IsMonomialOrder cmp]
     (i : Fin n) (fuel k : Nat) (b d : MvPoly n R cmp)
     (acc : List (SqfFactor n R cmp)) (hk : 0 < k)
     (hacc : PositiveMultiplicities acc) :
@@ -324,7 +324,7 @@ private def ReverseSortedMultiplicities
   factors.Pairwise fun left right => right.multiplicity < left.multiplicity
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem sorted_yunLoop [IsMonomialOrder cmp]
+private theorem sorted_yunLoop [NatNoZero R] [IsMonomialOrder cmp]
     (i : Fin n) (fuel k : Nat) (b d : MvPoly n R cmp)
     (acc : List (SqfFactor n R cmp))
     (hbelow : MultiplicitiesBelow k acc)
@@ -523,7 +523,7 @@ def sqfBase : SqfOpsAt R 0 where
 
 /-- One recursive content split followed by Yun in a variable which occurs in
 the normalized primitive part. -/
-def sqfStep {m : Nat} (lower : SqfOpsAt R m) :
+def sqfStep [NatNoZero R] {m : Nat} (lower : SqfOpsAt R m) :
     SqfOpsAt R (m + 1) where
   decomp := fun cmp _ p =>
     let split := sqfPrimitiveSplit p
@@ -553,12 +553,12 @@ def sqfStep {m : Nat} (lower : SqfOpsAt R m) :
           ⟨scalar * coefficientDecomp.content, factors⟩
 
 /-- Construct squarefree decomposition recursively in the arity. -/
-def sqfOps : (m : Nat) → SqfOpsAt R m
+def sqfOps [NatNoZero R] : (m : Nat) → SqfOpsAt R m
   | 0 => sqfBase
   | m + 1 => sqfStep (sqfOps m)
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem positive_sqfOps (m : Nat)
+private theorem positive_sqfOps [NatNoZero R] (m : Nat)
     (order : Mono m → Mono m → Ordering) [IsMonomialOrder order]
     (p : MvPoly m R order) :
     PositiveMultiplicities ((sqfOps (R := R) m).decomp order p).factors := by
@@ -580,7 +580,7 @@ private theorem positive_sqfOps (m : Nat)
               · simp [PositiveMultiplicities]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem sorted_sqfOps (m : Nat)
+private theorem sorted_sqfOps [NatNoZero R] (m : Nat)
     (order : Mono m → Mono m → Ordering) [IsMonomialOrder order]
     (p : MvPoly m R order) :
     SortedMultiplicities ((sqfOps (R := R) m).decomp order p).factors := by

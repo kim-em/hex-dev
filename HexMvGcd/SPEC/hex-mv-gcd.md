@@ -1334,6 +1334,10 @@ this assertion is `Lean.Grind.Semiring.natCast` from the same
 `Lean.Grind.CommRing R` used for coefficient arithmetic. `derivatives`,
 `yunLoop`, `sqfStep`, `sqfOps`, `isSquarefree`, `radical`, `sqfDecomp`, and
 their correctness theorems take no independent `[NatCast R]` argument.
+The public decomposition helpers `yunLoop`, `sqfStep`, and `sqfOps` also
+require `[NatNoZero R]`; calling them directly does not bypass the
+characteristic-zero requirement of `sqfDecomp`. The arity-zero helper
+`sqfBase` only extracts a scalar and works in any coefficient characteristic.
 Every differentiation in this pipeline uses that ring cast, including the
 recursive content and Yun steps. A local cast supplied by a caller cannot
 change the decision or multiplicities, or certify characteristic zero for

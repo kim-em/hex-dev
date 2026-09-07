@@ -96,6 +96,8 @@ theorem characteristic_cast [NatNoZero R] (cast : NatCast R) :
 
 end Generic
 
+/- The shadowing casts below are deliberately inert for the squarefree API.
+These checks must keep compiling and evaluating identically with them in scope. -/
 @[expose, instance_reducible] def badIntCast : NatCast Int := ⟨fun _ => 1⟩
 @[expose, instance_reducible] def badRatCast : NatCast Rat := ⟨fun _ => 1⟩
 
@@ -162,6 +164,15 @@ theorem no_characteristic_zero [ZMod64.Bounds 3] [ZMod64.PrimeModulus 3] :
   intro h
   have hn := h.natCast_ne_zero 3 (by decide)
   exact hn (ZMod64.natCast_self (p := 3))
+
+-- Direct decomposition helpers also reject positive characteristic, even
+-- when an unrelated cast sends every natural to a nonzero coefficient.
+example : True := by
+  letI : NatCast (ZMod64 3) := ⟨fun _ => 1⟩
+  fail_if_success have _ := sqfOps (R := ZMod64 3) 1
+  fail_if_success have _ := sqfStep (R := ZMod64 3) sqfBase
+  fail_if_success have _ := yunLoop (R := ZMod64 3) (cmp := Mono.lex) (n := 1) 0 1 1 1 0 []
+  trivial
 
 /-- info: 'Hex.MvPoly.CastTests.squarefree_cast' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
