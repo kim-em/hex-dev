@@ -1476,3 +1476,7 @@ lean_exe hexmanual where
 lean_exe hexlatticeenum_bench where
   srcDir := "bench"
   root := `HexLatticeEnum.Bench
+
+lean_exe tower_factor_diff where
+  srcDir := "bench"
+  root := `HexNumberFieldTower.FactorDiff

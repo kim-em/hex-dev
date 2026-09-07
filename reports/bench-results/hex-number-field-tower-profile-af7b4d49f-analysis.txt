@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Extend archived whole-thread summaries with disjoint recovery subphases."""
+import collections
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path.cwd()/'scripts/profile'))
+import factor_sampling_profile as p
+path=Path(sys.argv[1]);d=json.loads(path.read_text())
+for record in d['profiles']:
+    raw=Path(record['raw_profile']);symbols=Path(record['symbols'])
+    assert hashlib.sha256(raw.read_bytes()).hexdigest()==record['raw_sha256']
+    assert hashlib.sha256(symbols.read_bytes()).hexdigest()==record['symbols_sha256']
+    with gzip.open(raw) as f: profile=json.load(f)
+    thread=p.main_thread(profile,record['thread']);frames=p.frame_names(profile,thread,p.Symbolicator(symbols));counts=collections.Counter()
+    for stack in thread['samples']['stack']:
+        if stack is None:continue
+        names={frames[f][0] for f in p.stack_chain(thread,stack)}
+        if 'Hex.NumberTower.Factor.recover' not in names:continue
+        phase='other recovery'
+        for name,label in [('Hex.NumberTower.Factor.recoveryGcd','gcd'),('Hex.NumberTower.Factor.shiftTop','shifts'),('Hex.NumberTower.Norm.monic','normalization')]:
+            if name in names:phase=label;break
+        counts[phase]+=1
+    total=record['summary']['samples']
+    record['summary']['recovery_subphases_percent']={k:round(100*v/total,2) for k,v in counts.most_common()}
+    record['summary']['recovery_subphases_scope']='Disjoint shares of the whole sampled benchmark thread; not percentages within recovery.'
+    assert total>=5000 and record['summary']['classified_percent']>=90
+    assert record['summary']['exclusive_phase_percent'].get('target frame absent',100)<1
+    assert int(record['child_result']['result_hash'],16)==(0x3a7f4c606ce48b1b if record['kind']=='factor' else 0xb)
+d['analysis_extension_sha256']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+d['replication_phase_spread_percentage_points']={}
+for kind in ['factor','check']:
+    profiles=[r['summary']['exclusive_phase_percent'] for r in d['profiles'] if r['kind']==kind]
+    assert len(profiles)==2
+    d['replication_phase_spread_percentage_points'][kind]={k:round(abs(profiles[0].get(k,0)-profiles[1].get(k,0)),2) for k in set(profiles[0])|set(profiles[1])}
+path.with_name(path.stem+'-analysed.json').write_text(json.dumps(d,indent=2)+'\n')
+for r in d['profiles']:print(r['kind'],r['repeat'],r['summary']['recovery_subphases_percent'])
+print(d['replication_phase_spread_percentage_points'])

@@ -1,0 +1,236 @@
+{
+  "label": "combined-quadratic",
+  "attempt": 11,
+  "runs": [
+    {
+      "arm": "right",
+      "source_commit": "4209945bc",
+      "binary_sha256": "f6feab899807eb26da3310dd64497a203669505d0fa2c0d4eda3100f56576cf3",
+      "command": [
+        "taskset",
+        "-c",
+        "47",
+        "/tmp/tower-factor-experiments/combined",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-11-right.json"
+      ],
+      "export": "reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-11-right.json",
+      "preflight": {
+        "47": 0.5025125628140703,
+        "95": 0.5
+      },
+      "postflight": {
+        "47": 1.0,
+        "95": 100.0
+      },
+      "during": [
+        {
+          "47": 100.0,
+          "95": 0.4975124378109453
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.9950248756218906
+        },
+        {
+          "47": 100.0,
+          "95": 0.5025125628140703
+        },
+        {
+          "47": 100.0,
+          "95": 1.0050251256281406
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.5025125628140703
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.0
+        },
+        {
+          "47": 100.0,
+          "95": 0.4975124378109453
+        },
+        {
+          "47": 100.0,
+          "95": 0.5
+        },
+        {
+          "47": 12.56281407035176,
+          "95": 71.0
+        }
+      ],
+      "sibling_mean": {
+        "95": 4.718756250156254
+      },
+      "exit_code": 0,
+      "accepted": false,
+      "export_error": null
+    }
+  ],
+  "preflight_windows": [
+    {
+      "0": 6.565656565656566,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 11.442786069651742,
+      "5": 7.035175879396985,
+      "6": 4.0,
+      "7": 2.0,
+      "8": 4.5,
+      "9": 3.5,
+      "10": 2.985074626865672,
+      "11": 2.5,
+      "12": 3.482587064676617,
+      "13": 3.5,
+      "14": 5.5,
+      "15": 7.035175879396985,
+      "16": 5.527638190954774,
+      "17": 8.542713567839195,
+      "18": 11.616161616161616,
+      "19": 77.38693467336684,
+      "20": 2.0100502512562812,
+      "21": 3.0303030303030303,
+      "22": 4.0,
+      "23": 2.512562814070352,
+      "24": 3.5,
+      "25": 3.9800995024875623,
+      "26": 11.0,
+      "27": 2.0100502512562812,
+      "28": 1.0,
+      "29": 10.0,
+      "30": 1.5075376884422111,
+      "31": 0.5,
+      "32": 1.0050251256281406,
+      "33": 3.0150753768844223,
+      "34": 100.0,
+      "35": 1.0,
+      "36": 1.0,
+      "37": 1.9900497512437811,
+      "38": 2.0,
+      "39": 0.5,
+      "40": 4.0,
+      "41": 0.5,
+      "42": 2.5,
+      "43": 1.5,
+      "44": 0.0,
+      "45": 1.5,
+      "46": 1.4851485148514851,
+      "47": 0.5025125628140703,
+      "48": 4.975124378109452,
+      "49": 3.553299492385787,
+      "50": 2.0100502512562812,
+      "51": 1.5151515151515151,
+      "52": 3.0150753768844223,
+      "53": 3.0,
+      "54": 3.5175879396984926,
+      "55": 2.0100502512562812,
+      "56": 10.0,
+      "57": 2.512562814070352,
+      "58": 9.950248756218905,
+      "59": 31.0,
+      "60": 3.5175879396984926,
+      "61": 2.512562814070352,
+      "62": 1.5,
+      "63": 33.830845771144276,
+      "64": 1.5,
+      "65": 0.5,
+      "66": 3.0,
+      "67": 4.5,
+      "68": 2.512562814070352,
+      "69": 2.0202020202020203,
+      "70": 2.0100502512562812,
+      "71": 12.0,
+      "72": 1.492537313432836,
+      "73": 3.482587064676617,
+      "74": 8.5,
+      "75": 1.5075376884422111,
+      "76": 3.5175879396984926,
+      "77": 84.0,
+      "78": 1.0050251256281406,
+      "79": 1.0,
+      "80": 0.5,
+      "81": 1.9801980198019802,
+      "82": 1.5075376884422111,
+      "83": 2.9702970297029703,
+      "84": 0.9950248756218906,
+      "85": 1.9900497512437811,
+      "86": 0.5,
+      "87": 100.0,
+      "88": 1.0,
+      "89": 0.5,
+      "90": 3.9800995024875623,
+      "91": 0.5,
+      "92": 100.0,
+      "93": 2.5,
+      "94": 3.5,
+      "95": 0.5
+    }
+  ],
+  "protocol_commit": "4209945bcf0aab393a807d622b975c737a7e3349",
+  "script_sha256": "27a840170c5ba9851f4a7d98da1b916eb3065972c524ab79ef301b48ff6a0505",
+  "require_separated_canonical": true,
+  "hostname": "chungus2",
+  "release_quality": false,
+  "pari_provider": null,
+  "names": [
+    "Hex.NumberTowerBench.runTowerFactorPair2",
+    "Hex.NumberTowerBench.runTowerFactorPair3",
+    "Hex.NumberTowerBench.runTowerFactorPair4",
+    "Hex.NumberTowerBench.runTowerFactorPair6",
+    "Hex.NumberTowerBench.runTowerFactorPair8",
+    "Hex.NumberTowerBench.runTowerFactorPair12",
+    "Hex.NumberTowerBench.runTowerFactorLadder",
+    "Hex.NumberTowerBench.runTowerCheckFactorization"
+  ],
+  "git_status": "?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-1-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-1-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-1-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-10-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-10-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-10-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-10-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-10-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-2-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-2-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-2-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-3-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-3-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-3-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-3-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-3-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-4-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-4-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-4-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-5-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-5-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-5-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-6-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-6-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-6-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-7-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-7-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-7-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-8-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-8-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-8-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-9-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-9-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-9-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-decision.json\n",
+  "cpu": 47,
+  "siblings": [
+    47,
+    95
+  ],
+  "accepted": false
+}

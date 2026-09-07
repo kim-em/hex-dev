@@ -596,6 +596,28 @@ theorem toPolynomial_monic_associated (levels : List Level)
       (inv_ne_zero (DensePoly.leadingCoeff_ne_zero_of_pos_size f
         ((DensePoly.isZero_eq_false_iff f).mp hzero))).isUnit)
 
+/-- Monic normalisation preserves the degree, including at zero. -/
+theorem natDegree_monic (levels : List Level)
+    (hvalid : LevelsValid levels)
+    (hinjective : LevelSemantics.DenoteInjective levels)
+    (hinv : ∀ a : Arithmetic.Coeff levels,
+      LevelSemantics.coeffDenote levels a⁻¹ =
+        (LevelSemantics.coeffDenote levels a)⁻¹)
+    (f : DensePoly (Arithmetic.Coeff levels)) :
+    letI : Field (Arithmetic.Coeff levels) :=
+      Norm.coeffFieldPoly levels hvalid hinjective hinv
+    (Norm.monic f).natDegree = f.natDegree := by
+  let : Field (Arithmetic.Coeff levels) :=
+    Norm.coeffFieldPoly levels hvalid hinjective hinv
+  by_cases hf : f = 0
+  · subst f
+    simp [Norm.monic]
+  · rw [← HexPolyMathlib.natDegree_toPolynomial,
+      ← HexPolyMathlib.natDegree_toPolynomial f]
+    exact Polynomial.natDegree_eq_of_degree_eq
+      (Polynomial.degree_eq_degree_of_associated
+        (toPolynomial_monic_associated levels hvalid hinjective hinv f hf))
+
 /-- The monic normalisation of a nonzero executable polynomial interprets to
 a monic polynomial. -/
 theorem toPolynomial_monic_monic (levels : List Level)
@@ -1684,87 +1706,5 @@ theorem factorRat_mem_sound (input : DensePoly Rat)
           exact hsound (by simpa [p] using hfactor)
         · cases hresult
       · cases hresult
-
-/-- Soundness of the squarefree-component factorizer at every tower height:
-each returned factor is a canonical coordinate array interpreting to an
-irreducible polynomial, by induction through the recursive one-level Trager
-step with the Berlekamp-Zassenhaus base case. -/
-theorem factorSquarefree_mem_sound :
-    ∀ (levels : List Level) (hvalid : LevelsValid levels)
-      (hinjective : LevelSemantics.DenoteInjective levels)
-      (f : Array (Array Rat)) {factors : Array (Array (Array Rat))},
-      Factor.factorSquarefree? levels f = some factors →
-      let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-      letI : Field (Arithmetic.Coeff levels) :=
-        Norm.coeffFieldPoly levels hvalid hinjective hinv
-      ∀ factor ∈ factors,
-        Factor.polyCoords (Factor.rawPoly levels factor) = factor ∧
-          Irreducible (HexPolyMathlib.toPolynomial
-            (Factor.rawPoly levels factor)) := by
-  intro levels
-  induction levels with
-  | nil =>
-      intro hvalid hinjective f factors hresult
-      let hinv := LevelSemantics.coeffDenote_inv [] hvalid hinjective
-      let : Field (Arithmetic.Coeff []) :=
-        Norm.coeffFieldPoly [] hvalid hinjective hinv
-      have hvalidEq : hvalid = (trivial : LevelsValid []) :=
-        Subsingleton.elim _ _
-      have hinjectiveEq : hinjective = LevelSemantics.DenoteInjective.nil :=
-        Subsingleton.elim _ _
-      subst hvalid
-      subst hinjective
-      exact factorRat_mem_sound (Factor.toRatPoly f) hresult
-  | cons level lower ih =>
-      intro hvalid hinjectiveTop f factors hresult
-      let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
-      let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
-        hinjectiveLower
-      let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
-        hinjectiveTop
-      let : Field (Arithmetic.Coeff lower) :=
-        Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-      let : Field (Arithmetic.Coeff (level :: lower)) :=
-        Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-      dsimp only
-      simp only [Factor.factorSquarefree?] at hresult
-      split at hresult
-      · rename_i hinputSquarefree
-        obtain ⟨pair, hfind, hresult⟩ := Option.bind_eq_some_iff.mp hresult
-        rcases pair with ⟨shift, norm⟩
-        obtain ⟨lowerFactors, hlower, hresult⟩ :=
-          Option.bind_eq_some_iff.mp hresult
-        split at hresult
-        · cases hresult
-          intro factor hfactor
-          have hlower' : Factor.factorSquarefree? lower norm =
-              some lowerFactors := by simpa using hlower
-          have hlowerSound : ∀ lowerFactor ∈ lowerFactors,
-              Factor.polyCoords (Factor.rawPoly lower lowerFactor) =
-                  lowerFactor ∧
-                Irreducible (HexPolyMathlib.toPolynomial
-                  (Factor.rawPoly lower lowerFactor)) := by
-            exact ih hvalid.2.2 hinjectiveLower norm hlower'
-          have hnormCheck : Norm.isSquarefree lower norm :=
-            findSquarefreeShift_squarefree level lower f (by simpa using hfind)
-          have hnormSquarefree : Squarefree
-              (HexPolyMathlib.toPolynomial
-                (Factor.rawPoly lower norm)) :=
-            squarefree_toPolynomial_of_check lower hvalid.2.2
-              hinjectiveLower hinvLower norm hnormCheck
-          have hnormEq : norm = Norm.oneLevel level lower f shift :=
-            findSquarefreeShift_norm level lower f (by simpa using hfind)
-          have htragerSquarefree : Squarefree
-              (HexPolyMathlib.toPolynomial
-                (tragerNorm level lower
-                  (Factor.rawPoly (level :: lower)
-                    (Factor.shiftTop level lower f shift)))) := by
-            rw [tragerNorm_shiftTop level lower hvalid hinjectiveTop,
-              ← hnormEq]
-            exact hnormSquarefree
-          exact recover_mem_sound level lower hvalid hinjectiveTop f shift
-            lowerFactors htragerSquarefree hlowerSound factor hfactor
-        · contradiction
-      · contradiction
 
 end Hex.NumberTower

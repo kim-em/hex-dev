@@ -94,9 +94,13 @@ flattening used to prepare inputs stay outside the timed operation.
 The factor family uses Selmer trinomials `X^n - X - 1` over `ℚ(√2)`.
 Rational coefficients make the shift-zero norm a square, so the canonical
 factor case genuinely retries before accepting a squarefree degree-48 norm,
-recursively factors it over `ℚ`, recovers factors by gcd, and checks the
-result. The explicit retry anchor and independently budgeted height-two
-recursive case confirm both control-flow paths.
+recursively factors it over `ℚ`, returns the canonical component through
+singleton recovery, and checks the result. Thus the eight Hex cases in this
+comparison all use a quadratic top level and a singleton norm factor; their
+speedups do not measure the multiple-factor gcd recovery branch. Reducible
+conformance and differential cases cover that branch for correctness. The
+explicit retry anchor and independently budgeted height-two recursive case
+confirm both control-flow paths.
 
 ### Scientific ranges and host protocol
 
@@ -663,6 +667,269 @@ earlier comparison.
 
 ## Profile
 
+### Factorization after norm and recovery improvements
+
+The [fresh sampling summary](bench-results/hex-number-field-tower-profile-af7b4d49f.json)
+profiles the merged implementation at `af7b4d49f` on the canonical degree-24
+Selmer input over `ℚ(√2)`. The binary SHA-256 is
+`038b21ce95e7a3c2571d869347206ca3ab4e049633ca700490af9937d7c20b2f`.
+Two captures of each public factor/check registration run in the order
+factor, check, check, factor. Each uses samply 0.13.1 at 999 Hz and the fixed
+child's 5-second batch floor, on a separately selected idle physical core of
+`chungus2`. The recorded commands, CPU/sibling samples, child hashes, raw
+profile/symbol hashes, and exact capture/analysis scripts are in the summary.
+Raw profiles and a copy of the executable remain under
+`/tmp/tower-factor-profile-af7b4d49f*`.
+
+These are whole-main-thread shape diagnostics, including warmup, fixture
+preparation, and autotuning. Fixed dispatch does not emit timed-region
+sidecars, so calibration residuals and timed-region sensitivity tests are
+not available. The 5-second profiling batch is not a change to the registered
+2-second benchmark ceiling. Several postflight samples exceed 5% utilization;
+these captures supply no before/after timing verdict. All four expected result
+hashes match. The captures contain 16,646–17,614 sampled stacks, classify
+99.78–99.82% of leaf samples, and retain the resolved target frame on
+99.17–99.76% of stacks. No missing-target samples are renormalized away.
+
+The following are **disjoint phase shares of the whole benchmark thread**,
+with ranges across the two captures of each registration. Attribution uses
+the recorded call-stack predicates and precedence, rather than summing an
+overlapping inclusive ranking.
+
+| phase | factorization | standalone replay |
+|---|---:|---:|
+| resultant computation | 31.95–32.32% | 32.78–32.82% |
+| recovery, including shifts and gcd | 26.09–26.18% | 26.74–26.78% |
+| shifted bivariate norm construction | 19.36–19.66% | 19.82–20.00% |
+| recursive rational factorization | 10.80–10.93% | 11.30–11.38% |
+| squarefreeness outside the preceding phases | 3.98–4.01% | 5.35–5.42% |
+| Yun production and checking | 3.36–3.48% | 0% |
+| other target work | 3.29–3.52% | 3.38–3.47% |
+| target frame absent | 0.24–0.83% | 0.37–0.40% |
+
+The four largest phase shares differ by at most 0.37 percentage points
+between repeated captures of the same operation. Recovery itself splits
+into shifts (16.02–16.16% of the factorization thread), gcd (9.30–9.41%),
+normalization (0.62–0.70%), and other recovery work (0.01–0.04%). Thus the
+first-remainder optimization leaves substantial work in both shifts and gcd.
+
+The independent inclusive ranking puts `DensePoly.mulImpl` at
+roughly two thirds of the factorization thread, `Arithmetic.mulCoords` at
+50.16–50.30%, and `Arithmetic.addCoords` at 23.32–23.44%. These arithmetic
+costs occur inside several phases and must not be added to the table.
+`Factor.check` accounts for 48.41–48.80% of the factorization capture;
+the separately profiled checker has almost the same phase distribution.
+Replay therefore repeats the dominant norm and recovery work. Its share is
+an overlapping context measurement, not another phase to add to the total.
+
+Leaf categories across the four complete captures are allocation/free
+41.59–42.84%, Lean runtime/standard-library operations 28.90–29.48%, GMP
+22.30–23.51%, repository code 5.51–5.78%, and unclassified 0.18–0.22%.
+Within factorization, allocation leaves under norm construction and resultant
+work account for 23.09–23.24% of all samples; recovery contributes another
+11.24–11.26%. This points to reducing intermediate arithmetic and storage in
+those phases, rather than treating allocator cost as an unrelated phase.
+The separately retained initial captures corroborate the phase ordering but
+show more variation between allocation and runtime leaf categories; the
+initial sequence stopped at a hash-format comparison in postprocessing, not
+a failed benchmark result. The complete replication compares hashes numerically.
+
+### Profile-guided factorization changes
+
+1. **Singleton-norm recovery.** When the recursively factored accepted norm
+   has one certified irreducible factor, return the canonical monic component
+   directly. The recovery product proves exact agreement with the original
+   gcd result and transfers its irreducibility theorem to the component. This
+   removes the entire recovery phase for singleton norms, including shifting. The [independent untimed PARI check](bench-results/hex-number-field-tower-profile-af7b4d49f-norm-check.json)
+   finds one irreducible norm factor at every registered Selmer rung
+   `2, 3, 4, 6, 8, 12, 24`, so the condition applies to this family.
+   Multiple-factor norms retain ordinary recovery.
+2. **Bounded-degree norm construction.** Keep the generator degree below the
+   defining degree during Horner evaluation. For the quadratic fixture this
+   means computing `A(X) + Y B(X)` modulo `Y² - 2`, then using
+   `A² - 2B²` for the norm. The target is the combined 51.31–51.98% norm
+   construction/resultant phase. Exact norm equivalence is proved for every
+   quadratic relation `Y² + bY + a` over a validated lower tower; other degrees
+   retain the general resultant. A guard for a provably repeated shift-zero norm is
+   another possible local experiment, but these profiles do not isolate its
+   cost, so no saving is attributed to it.
+3. **Explicit irreducibility evidence.** If replay remains expensive after
+   the first two changes, retain the successful shift and recursively
+   checkable norm evidence so the checker need not repeat factorization
+   search. This requires a new certificate design, while retaining checked
+   reconstruction, multiplicities, and irreducibility.
+
+Scalar inversion and monic normalization are lower priorities on this input:
+their inclusive factorization shares are 2.77–2.94% and 1.74–1.78%, respectively.
+The previously tested already-monic shortcut remains excluded by its timing
+decision. Direct modular number-field factorization is a larger algorithmic
+project; absolute-presentation caching needs deeper-tower fixtures.
+
+The phase shares identify work to attack, not attainable speedups. The first
+two changes are implemented and measured below; explicit irreducibility evidence
+remains a possible follow-up. Independent, combined, and marginal comparisons
+cover public factorization and replay, with reducible and recursive-tower
+correctness cases and every timing attempt retained.
+The [experiment protocol](hex-number-field-tower-factor-protocol.md#singleton-recovery-and-quadratic-norm-experiments)
+requires differential correctness checks and a performance decision before
+developing correspondence proofs; only proved and verified candidates may
+merge. No new exponent or wall-time model follows from this profile.
+
+### Singleton recovery and quadratic norm comparisons
+
+The [preregistered protocol](hex-number-field-tower-factor-protocol.md#singleton-recovery-and-quadratic-norm-experiments)
+compares both prototypes independently with computational baseline
+`af7b4d49f661a23debf82960bfff3c78435ff135`. These are local, shared-host,
+fixed-input constant comparisons; they make no new complexity claim.
+
+| Isolated candidate | Source | Accepted attempts | Degree-24 factor speedup | Degree-24 replay speedup |
+|---|---|---|---|---|
+| Singleton recovery | `3ba418905` | 1, 9 | 1.347–1.348× | 1.357× |
+| Quadratic norm | `af91cca87` | 2, 10 | 1.841–1.867× | 1.889–1.894× |
+
+Both candidates pass the stronger gate: both canonical medians improve in
+both accepted, opposite-order pairs; each canonical repeat range is separated
+from its baseline in at least one pair; hashes match; and no smaller rung has
+a repeat-range-disjoint regression. The
+[singleton decision](bench-results/tower-singleton-quadratic/issue-10074-singleton-af7-decision.json)
+and [quadratic decision](bench-results/tower-singleton-quadratic/issue-10074-quadratic-af7-decision.json)
+retain all sixteen per-case comparisons. Every attempted export and host
+record is retained alongside those decisions, including rejected pairs and
+arms rejected before their paired run could start. Timing values never select
+which pairs are admitted.
+
+The singleton candidate returns the monic input only after the accepted norm
+has been recursively factored into one factor. The quadratic candidate keeps
+two lower-field polynomial accumulators modulo `Y² + bY + a` during the shift
+and computes `A² - bAB + aB²`; other top degrees retain the resultant path.
+Neither candidate removes public certificate replay.
+
+The combination at `4209945bc` also passes the stronger gate against the common
+baseline, including fresh PARI and overhead measurements. Its
+[decision](bench-results/tower-singleton-quadratic/issue-10074-combined-af7-decision.json)
+admits opposite-order attempts 1 and 9. Canonical factorization medians fall
+from 33.15–33.18 ms to 9.116–9.131 ms (3.634–3.637×); replay medians fall from
+16.14–16.40 ms to 4.171–4.199 ms (3.845–3.932×). These are directly measured
+combined gains, not products of the isolated speedups.
+
+Both marginal effects also pass the stronger gate. Adding the quadratic norm
+to singleton recovery gives a further 2.691–2.709× factorization and
+2.840–2.864× replay speedup
+([accepted attempts 5 and 6](bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-decision.json)).
+Adding singleton recovery to the quadratic norm gives a further 2.006–2.051×
+factorization and 2.119–2.154× replay speedup
+([accepted attempts 4 and 6](bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-quiet-decision.json)).
+The latter uses the preregistered sustained-quiet replication after the
+[original series](bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-decision.json)
+exhausted twelve attempts with only one admitted pair and no verdict. The
+replication tightens preflight to thirty consecutive quiet seconds; it keeps
+the binaries, cases, performance gate, and all other admission rules fixed.
+
+The [validation record](bench-results/tower-singleton-quadratic/validation.json)
+records saved executable hashes and correctness checks. Each isolated variant
+and their combination matches the frozen reference on 31 complete canonical
+factorizations and checker results, rejects corrupted multiplicities, and
+matches 750 full norm arrays. The grid includes nonzero linear terms in the
+quadratic relation, rational denominators, signed shifts, a lower quadratic
+field, and cubic fallback. All 49 benchmark checks, byte-identical fixtures,
+and the nine PARI oracle cases pass. These checks establish experimental
+correctness coverage. The companion additionally proves the quadratic Horner
+invariant and exact equality with the reference resultant, including arbitrary
+quadratic linear terms and recursive lower fields. The singleton recovery
+product identifies the returned canonical factor exactly. The existing public
+factorization soundness, completeness, monicity, and replay theorems build with
+both branches. Before rebasing, the proof-complete build at `4d6608de3` had the identical
+SHA-256 hash (`f6feab89…`) to the measured combined prototype. The integrated
+executable has hash `9c51c94c…` and its separate comparison follows below.
+
+### Integrated singleton and quadratic implementation
+
+The proof-complete implementation is rebased onto main `064902321` and
+compared with a newly built baseline from that main revision, using the
+[preregistered integrated comparison](hex-number-field-tower-factor-protocol.md#integrated-implementation-comparison).
+The [decision](bench-results/tower-singleton-quadratic/issue-10074-integrated-main-decision.json)
+admits opposite-order attempts 2 and 4 and passes the stronger gate. Attempts
+1 and 3 remain excluded by host telemetry and are retained in full. All eight
+Hex cases improve with disjoint repeat ranges in both admitted pairs, all
+hashes match, and all fifteen Hex/PARI/control registrations complete.
+
+Degree-24 factorization medians fall from 34.108–34.120 ms to 9.041–9.096 ms
+(**3.750–3.774×**). Replay falls from 16.628–16.678 ms to 4.166–4.167 ms
+(**3.991–4.002×**). These are direct comparisons of the final integrated
+executables, not products of earlier gains. Both binaries pass all 49
+benchmark checks. The restored candidate has exactly the saved measured
+binary hash; the full companion and conformance build, differential checks,
+fixture comparison, and nine PARI oracle cases pass.
+
+Fresh PARI comparisons from those same candidate runs follow. Ranges enclose
+the two admitted medians or paired ratios; they are not confidence intervals.
+The protocol-control medians are 7.251–7.262 µs, subtracted only from PARI in
+the adjusted ratio. The comparator remains informational; these local
+shared-host fixed-input results make no complexity claim.
+
+| n | Hex median (ms) | PARI median (µs) | PARI/Hex raw ratio | Overhead-adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.635–0.638 | 28.985–29.060 | 0.0455–0.0457 | 0.0342–0.0342 |
+| 3 | 0.757–0.761 | 34.372–34.662 | 0.0452–0.0458 | 0.0356–0.0362 |
+| 4 | 0.991–1.008 | 39.130–39.485 | 0.0388–0.0398 | 0.0316–0.0325 |
+| 6 | 1.391–1.396 | 121.578–121.776 | 0.0872–0.0874 | 0.0820–0.0822 |
+| 8 | 1.856–1.860 | 47.747–48.012 | 0.0257–0.0259 | 0.0218–0.0220 |
+| 12 | 3.421–3.425 | 75.060–75.139 | 0.0219–0.0220 | 0.0198–0.0198 |
+
+The subsequent merge of rational-function work at main `5ca950a2b` updates
+lean-bench to `8a37daf1…`. Both rebuilt tower binaries pass correctness checks,
+but their hashes differ, so the comparison above is not a verdict for that
+harness revision. The [first harness integration series](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-decision.json)
+ends at twelve attempts with only pair 4 admitted and **no performance
+verdict**. All attempted runs and their rejecting host telemetry are retained.
+A separately preregistered replication adds a whole-host preflight ceiling
+and two quiet minutes. Its [initial collection](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-quiet-decision.json)
+reaches the preflight deadline before any timed arm and has no verdict. Its
+[unchanged retry](bench-results/tower-singleton-quadratic/issue-10074-integrated-harness-quiet-retry-decision.json)
+admits one pair before the reverse-order preflight times out, so it also has no
+verdict. Graph-only integration at main `9fdda65ba` leaves that saved candidate
+hash unchanged, as checked by a full tower rebuild.
+
+Main `ac24c7832` subsequently adds shared `HexBasic` code, changing the tower
+executable. The final comparison therefore rebuilds both sides from this exact
+base. The baseline SHA-256 is `5700c6bd…`; the candidate built from `dbdb01ead`
+is `e01da6b4…`. The first collection rejects an arm at postflight and then
+times out in preflight, so it remains an incomplete record. The separately
+preregistered [final retry](bench-results/tower-singleton-quadratic/issue-10074-integrated-final-main-retry-decision.json)
+admits its first two attempts in opposite order and **passes** the stronger
+gate. All hashes match, every Hex median improves in both pairs, no smaller rung
+has a repeat-range-disjoint regression, and both canonical candidate ranges
+are separated below their baseline ranges.
+
+| operation | main median ms | candidate median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 0.975–0.976 | 0.640–0.642 | 1.519–1.523× |
+| factor, degree 3 | 1.284–1.287 | 0.763–0.765 | 1.679–1.687× |
+| factor, degree 4 | 1.785–1.789 | 0.991–0.998 | 1.792–1.801× |
+| factor, degree 6 | 2.880–2.884 | 1.399–1.405 | 2.052–2.059× |
+| factor, degree 8 | 4.287–4.335 | 1.874–1.877 | 2.288–2.310× |
+| factor, degree 12 | 8.802–8.805 | 3.448–3.465 | 2.540–2.554× |
+| factor, degree 24 | 33.324–33.633 | 9.129–9.212 | **3.650–3.651×** |
+| check, degree 24 | 16.259–16.390 | 4.186–4.199 | **3.872–3.915×** |
+
+Fresh PARI controls from those admitted candidate arms use PARI 2.17.3 and
+cypari2 2.2.4. Protocol-overhead medians are 7.250–7.271 µs. The comparator
+remains informational and the ratios retain the PARI/Hex convention.
+
+| n | Hex median ms | PARI median µs | raw ratio | adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.640–0.642 | 29.069–29.334 | 0.0453–0.0458 | 0.0340–0.0345 |
+| 3 | 0.763–0.765 | 34.464–34.474 | 0.0451–0.0452 | 0.0356–0.0357 |
+| 4 | 0.991–0.998 | 39.026–39.157 | 0.0391–0.0395 | 0.0318–0.0322 |
+| 6 | 1.399–1.405 | 121.994–122.490 | 0.0872–0.0872 | 0.0820–0.0820 |
+| 8 | 1.874–1.877 | 47.711–48.059 | 0.0254–0.0256 | 0.0216–0.0218 |
+| 12 | 3.448–3.465 | 75.171–75.202 | 0.0217–0.0218 | 0.0196–0.0197 |
+
+After this collection, rebasing onto main `71d7d06bf` integrates the Conway
+table work. Rebuilding both sides preserves their executable hashes exactly
+(`5700c6bd…` and `e01da6b4…`), so the comparison above applies unchanged to
+the final integrated code.
+
 ### Rational squarefreeness
 
 The [sampling summaries](bench-results/hex-number-field-tower-factor-profiles-b4a02beaf.json)
@@ -863,6 +1130,7 @@ captures.
 
 | artefact | source commit / role | host state | SHA-256 |
 |---|---|---|---|
+| [merged factor/replay profiles](bench-results/hex-number-field-tower-profile-af7b4d49f.json) | clean `af7b4d49f`; repeated degree-24 factorization/replay shapes and untimed singleton-norm check | per-capture core/sibling telemetry; whole-thread shape only | `f22f3eef9401d2956bb84d3935ee1c1ddf6fb25704d03e640409011085308d5c` |
 | [factor follow-up manifest](bench-results/hex-number-field-tower-followup-manifest.json) | original `b8602c76a`, modular `8dd0f8e15`, isolated and combined variants; all accepted/rejected exports, exact runners, and validated decisions | paired core/sibling telemetry; local comparison evidence | `0603c1f6b46b63b64ec78725c9c02ec532473fc556c1425b21f4d6a8b9a6bc09` |
 | [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
 | [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |

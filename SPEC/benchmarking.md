@@ -1241,11 +1241,25 @@ enforced figure family uses one mechanism, declared in
 - **Checked rules.** A family may also declare a rule that decides a
   difference from the two blobs themselves, which is what separates one
   from an exemption: an exemption is a claim a reviewer has to weigh,
-  a rule is a fact the check establishes. `lean_comment_only` is the
-  only one: a `.lean` path whose two versions are equal once their
-  comments are removed. Comments are all it removes, whitespace included,
-  because Lean indentation carries meaning, so it errs towards asking for
-  a sweep it does not need over missing one it does.
+  a rule is a fact the check establishes. `lean_comment_only` accepts a
+  `.lean` path whose versions are equal once comments are removed; all
+  other whitespace is preserved because Lean indentation carries meaning.
+  The factorization checker separately compares the package, dependencies,
+  measured executable, and libraries that build the Hex factor service, so
+  additions of unrelated Lake targets do not invalidate its measurement.
+  The graph-isomorphism checker also recognizes only additions of plain,
+  non-default Lake targets whose literal `srcDir` is `bench` or `conformance`
+  and whose `root`/`roots`/`globs` fields contain only literal modules. Their
+  modules must be in tracked, existing Hex library namespaces outside the
+  compiled driver's and retimed tactic's import namespaces. The check excludes
+  an entire top-level namespace: a `roots` entry owns all its submodules, while
+  a `globs` entry can have narrower build scope. It derives the import closure
+  from every matching tracked Lean source in the Git index, independent of
+  source-directory layout, and reads those exact blobs. Additions
+  must follow an existing executable's final root field and precede another
+  target or EOF, preventing attributes, scoped options, or existing fields
+  from moving onto a new declaration. Names must be new, and all remaining
+  configuration must be unchanged. Unsupported syntax fails closed.
 
 Key on content, not on the measuring commit. A commit key has to stay
 resolvable forever, which holds for data recorded on `main` by a
@@ -1270,7 +1284,11 @@ relevant set is a Lean library whose docstrings are revised far more
 often than its code. Charging a sweep for prose would either suppress
 the prose or make regeneration routine enough to stop carrying meaning,
 and the rule gives up nothing, since it reads both blobs rather than
-trusting a claim about them.
+trusting a claim about them. Its independent-target rule similarly avoids
+charging an unrelated benchmark or conformance executable a graph sweep:
+it compares both configurations and inspects the measured import namespaces,
+without admitting changes to existing targets or global build settings. Both
+the freshness verdict and the per-node sweep selector use this same rule.
 
 A relevant set also omits the test modules no measured artifact imports.
 A compiled sweep driver never links them and the retimed tactic file
