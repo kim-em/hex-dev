@@ -107,6 +107,15 @@ def Data.centre (p : Data n m) (z : Vector Int n) (i : Fin n) : Rat :=
   p.projection[i] - (List.finRange n).foldl (fun acc j =>
     if i < j then acc + p.mu[(j, i)] * (z[j] : Rat) else acc) 0
 
+/-- Allocation-free compiled centre calculation; the exposed definition remains kernel-reducible. -/
+def Data.centreImpl (p : Data n m) (z : Vector Int n) (i : Fin n) : Rat :=
+  p.projection[i] - Fin.foldl n (fun acc j =>
+    if i < j then acc + p.mu[(j, i)] * (z[j] : Rat) else acc) 0
+
+@[csimp] theorem Data.centre_eq_impl : @Data.centre = @Data.centreImpl := by
+  funext n m p z i
+  simp only [Data.centre, Data.centreImpl, Fin.foldl_eq_finRange_foldl]
+
 /-- Centre in data prepared for this basis and target. -/
 def Prepared.centre (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
   p.toData.centre z i

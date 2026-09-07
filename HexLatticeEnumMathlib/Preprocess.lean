@@ -7,6 +7,7 @@ module
 
 public import HexLatticeEnum.Preprocess
 public import HexLatticeEnumMathlib.OptimizationBudget
+public import HexLLLMathlib.Reduction
 import Mathlib.Tactic
 
 public section
@@ -24,6 +25,108 @@ theorem retarget_valid (p : Prepared b t) (hp : p.Valid) (target : Vector Rat m)
   · intro i
     simp [retarget]
   · simp [retarget]
+
+/-- A target equal to a lattice point has exactly integral nearest-plane centres. -/
+theorem centre_lattice (z : Vector Int n) (p : Prepared b (castVector (vector b z)))
+    (hp : p.Valid) (i : Fin n) : p.centre z i = (z[i] : Rat) := by
+  have hd := distance_decomposition p.toData b.rows (castVector (vector b z)) hp z
+  have hz : distance (vector b z) (castVector (vector b z)) = 0 := by
+    simp [distance, subtract_eq, Vector.normSq, HexMatrixMathlib.dotProduct_eq, dotProduct,
+      HexMatrixMathlib.vectorEquiv_apply]
+  change distance (vector b z) _ = _ at hd
+  rw [hz] at hd
+  change 0 = p.residual.normSq + ∑ i : Fin n, p.norms[i] * ((z[i] : Rat) - p.centre z i) ^ 2 at hd
+  have hr : 0 ≤ p.residual.normSq := by
+    rw [Vector.normSq, HexMatrixMathlib.dotProduct_eq]
+    exact Finset.sum_nonneg fun j _ => mul_self_nonneg _
+  have hi := Finset.single_le_sum
+    (fun (j : Fin n) (_ : j ∈ Finset.univ) => mul_nonneg (hp.1 j).1.le (sq_nonneg ((z[j] : Rat) - p.centre z j)))
+    (Finset.mem_univ i)
+  have hn := (hp.1 i).1
+  simp only [Fin.getElem_fin] at hd hi hn ⊢
+  have hprod : p.norms[i.val] * ((z[i.val] : Rat) - p.centre z i) ^ 2 ≤ 0 :=
+    hi.trans (by linarith)
+  have hsq : ((z[i.val] : Rat) - p.centre z i) ^ 2 ≤ 0 := by
+    nlinarith [sq_nonneg ((z[i.val] : Rat) - p.centre z i)]
+  have he := le_antisymm hsq (sq_nonneg ((z[i.val] : Rat) - p.centre z i))
+  exact (sub_eq_zero.mp (sq_eq_zero_iff.mp he)).symm
+
+/-- Nearest plane recovers exact integer coefficients when the target is a lattice point. -/
+theorem nearestPlane_lattice (z : Vector Int n) (p : Prepared b (castVector (vector b z)))
+    (hp : p.Valid) (k : Nat) (hk : k ≤ n) (w : Vector Int n)
+    (hw : ∀ j : Fin n, k ≤ j.val → w[j] = z[j]) : nearestPlane p k hk w = z := by
+  induction k generalizing w with
+  | zero =>
+    apply Vector.ext
+    intro i hi
+    exact hw ⟨i, hi⟩ (Nat.zero_le i)
+  | succ k ih =>
+    rw [nearestPlane]
+    apply ih
+    intro j hj
+    by_cases he : j.val = k
+    · have hc : p.centre w ⟨k, by omega⟩ = (z[k] : Rat) := by
+        exact (centre_congr p.toData w z ⟨k, by omega⟩ (by
+          intro l hl
+          apply hw l
+          change k < l.val at hl
+          omega)).trans (centre_lattice z p hp ⟨k, by omega⟩)
+      simp [Fin.getElem_fin, he, hc, nearest_int]
+    · simp only [Fin.getElem_fin, Vector.getElem_set, ite_eq_right (Ne.symm he)]
+      exact hw j (by omega)
+
+/-- Coordinate recovery reconstructs every row already belonging to the original lattice. -/
+theorem rowCoordinates_mul (p : Prepared b t) (hp : p.Valid) (rows : Hex.Matrix Int n m)
+    (hrows : ∀ i : Fin n, b.rows.memLattice (rows.getRow i)) : rowCoordinates p rows * b.rows = rows := by
+  apply Hex.Matrix.ext_getElem
+  intro i j
+  obtain ⟨z, hz⟩ := hrows i
+  have he : nearestPlane (retarget p (castVector (rows.getRow i))) n (Nat.le_refl n) 0 = z := by
+    rw [← hz]
+    exact nearestPlane_lattice z _ (retarget_valid p hp _) n (Nat.le_refl n) 0
+      (fun j hj => False.elim (by omega))
+  have hr : (rowCoordinates p rows).getRow i = z := by
+    simpa only [rowCoordinates, Hex.Matrix.getRow_ofRows, Hex.Vector.getElem_ofFn', Fin.getElem_fin] using he
+  rw [Hex.Matrix.getElem_mul]
+  have hv := congrArg (fun v : Vector Int m => v[j]) hz
+  change (b.rows.transpose * z)[j] = (rows.getRow i)[j] at hv
+  rw [Hex.Matrix.getElem_mulVec, Hex.Matrix.row_transpose] at hv
+  simpa [Hex.Matrix.row, hr, Vector.dotProduct_comm] using hv
+
+/-- LLL preprocessing accepts its recovered transformations for every positive-rank input.
+The computational rejection branches are unreachable on the certified reducer's output. -/
+theorem lllPreprocess_rows (b : Basis n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    (lllPreprocess b δ hδ hδ').working.rows = Hex.lll b.rows δ hδ hδ' hn := by
+  let rows := Hex.lll b.rows δ hδ hδ' hn
+  have hind : rows.independent := Hex.lll_independent b.rows δ hδ hδ' hn b.independent
+  let working : Basis n m := ⟨rows, hind⟩
+  have hforward := rowCoordinates_mul (prepare b 0) (prepare_valid b 0) rows (by
+    intro i
+    apply (Hex.lll_memLattice_iff b.rows δ hδ hδ' hn _).mp
+    exact Hex.Matrix.row_memLattice rows i)
+  have hreverse := rowCoordinates_mul (prepare working 0) (prepare_valid working 0) b.rows (by
+    intro i
+    apply (Hex.lll_memLattice_iff b.rows δ hδ hδ' hn _).mpr
+    exact Hex.Matrix.row_memLattice b.rows i)
+  have hc : Hex.Matrix.sameLatticeCert b.rows rows
+      (rowCoordinates (prepare b 0) rows) (rowCoordinates (prepare working 0) b.rows) = true := by
+    simp only [Hex.Matrix.sameLatticeCert, Bool.and_eq_true, Hex.Matrix.mulEqCert_iff]
+    exact ⟨hforward, hreverse⟩
+  dsimp only [rows] at hind
+  simp only [lllPreprocess, dite_eq_left hn, ofMatrix?, dite_eq_left hind]
+  change (if h : Hex.Matrix.sameLatticeCert b.rows rows
+      (rowCoordinates (prepare b 0) rows) (rowCoordinates (prepare working 0) b.rows) = true then
+      (⟨working, _, _, h⟩ : BasisChange b) else BasisChange.identity b).working.rows = rows
+  simp only [dite_eq_left hc]
+  rfl
+
+/-- The optional preprocessor actually returns an LLL-reduced working basis. -/
+theorem lllPreprocess_reduced (b : Basis n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    Hex.isLLLReduced (lllPreprocess b δ hδ hδ').working.rows δ (11 / 20) := by
+  rw [lllPreprocess_rows b δ hδ hδ' hn]
+  exact Hex.lll_isLLLReduced b.rows δ hδ hδ' hn b.independent
 
 /-- Checked basis changes carry both exact integer matrix identities. -/
 theorem change_identities (change : BasisChange b) :

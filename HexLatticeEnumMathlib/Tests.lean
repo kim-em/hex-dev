@@ -125,3 +125,7 @@ example (b : Basis n m) (a : Minimum n m) (h : shortest b = some a) (r : Real) :
 example (b : Basis n m) (a : Minimum n m) (h : shortest b = some a) :
     (contacts b (Real.sqrt (a.distanceSq : Real) / 2)).ncard = a.points.length :=
   kissing_number b a h
+
+example (b : Basis n m) (hn : 1 ≤ n) :
+    Hex.isLLLReduced (lllPreprocess b).working.rows (3/4) (11/20) :=
+  lllPreprocess_reduced b (3/4) (by norm_num) (by norm_num) hn
