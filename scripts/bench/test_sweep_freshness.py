@@ -329,13 +329,26 @@ class Families(unittest.TestCase):
         # narrowing the set is a deliberate act that costs one
         # re-measurement, as excluding the unimported test modules did.
         raw = freshness.git(
-            "ls-files", "-s", "--", "HexGraphIso/", "HexGraph/",
+            "ls-files", "-s", "--", "HexGraphIso/", "HexGraphIso.lean",
+            "HexGraph/", "HexGraph.lean", "lakefile.lean", "lean-toolchain",
             "bench/HexGraphIso/Cactus.lean",
             "scripts/plots/hexgraphiso-cactus.py",
+            "Hex/BenchOracle/Nauty.lean",
+            "Hex/BenchOracle/ffi/nauty_canon.c",
+            "vendor/nauty-2.9.3/*.c",
+            "vendor/nauty-2.9.3/*.h",
             ":!HexGraphIso/SPEC", ":!HexGraphIso/README.md",
             ":!HexGraphIso/TacticTests.lean",
             ":!HexGraphIso/ModuleBoundaryTests.lean")
         self.assertEqual(freshness.index_listing(freshness.GRAPHISO), raw)
+
+    def test_graphiso_inputs(self):
+        for path in ("HexGraphIso.lean", "HexGraph.lean", "lakefile.lean",
+                     "lean-toolchain", "Hex/BenchOracle/Nauty.lean",
+                     "Hex/BenchOracle/ffi/nauty_canon.c",
+                     "vendor/nauty-2.9.3/nauty.c"):
+            self.assertTrue(freshness.GRAPHISO.matches(path), path)
+        self.assertFalse(freshness.GRAPHISO.matches("vendor/nauty-2.9.3/README.md"))
 
     def test_factorization_source_is_lean_under_the_service_libraries(self):
         family = freshness.factor_family("hex-factor")
@@ -415,7 +428,7 @@ class CommandLine(unittest.TestCase):
 
 
 IMPORT = re.compile(
-    r"^\s*(?:public\s+|private\s+|meta\s+)*import\s+([A-Za-z_][\w.]*)",
+    r"^\s*(?:public\s+|private\s+|meta\s+)*import\s+(?:all\s+)?([A-Za-z_][\w.]*)",
     re.MULTILINE)
 
 
@@ -458,6 +471,17 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
     GRAPHISO_ROOTS = ("bench/HexGraphIso/Cactus.lean", "HexGraphIso.lean")
     # The factorization curves come from the bench service binary.
     FACTOR_ROOTS = ("bench/HexBench/FactorService.lean",)
+
+    def test_uncolored_imports(self):
+        # The basic API must not pull in the full generation proof.
+        closure = import_closure(("HexGraphIso/Uncolored.lean",))
+        self.assertNotIn("HexGraphIso/AutComplete.lean", closure)
+        self.assertNotIn(
+            "HexGraphIso/Nauty/Correct/Generation/FirstGeneration.lean", closure)
+
+    def test_import_all(self):
+        self.assertEqual(IMPORT.findall("import all HexGraphIso.Autos\n"),
+                         ["HexGraphIso.Autos"])
 
     def test_excluded_graphiso_tests_are_outside_the_measured_closure(self):
         closure = import_closure(self.GRAPHISO_ROOTS)

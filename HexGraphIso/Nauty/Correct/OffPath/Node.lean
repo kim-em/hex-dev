@@ -316,6 +316,86 @@ theorem sweepStart_frames (ctx : Ctx n) (level numcells len : Nat)
 
 /-! # A sweep at the node -/
 
+/-- Refinement and target bookkeeping establish the complete entry
+invariant used by a fresh off-path sibling sweep. -/
+theorem NodeInv.sweepHyp {G : Colored n k} {ctx : Ctx n}
+    {tcLevel sf level numcells tc len : Nat}
+    {codes bs fs : List Nat} {st : SearchSt n} {best : Option (Key n)} {trail : FrameTrail}
+    (hg : ctx.g = rowsOf G) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hcheap : st.noncheaplevel ≤ level)
+    (hdesc : CheapDesc ctx level st.noncheaplevel
+      (refine ctx level st.lab st.ptn st.active numcells))
+    (hnode : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
+    (hlive : Live ctx level st trail)
+    (hpathOk : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level st)
+    (horb : OrbSound (OrbConn st.genTrace.toList n) st.orbits n)
+    (hcoset : st.cosetindex < n)
+    (hdom : ∀ b, best = some b → keyLe (pathLeafKey ctx fs st.firstlab) b) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let full := codes ++ [rs.longcode]
+    let tcell := worksetOf n rs.lab tc (tc + len - 1)
+    let start := sweepStart ctx level numcells len st
+    LoopInv G ctx tcLevel sf level full bs fs rs.numcells rs.lab rs.ptn tc
+      len tcell none start start best trail →
+    OtherLoopHyp G ctx tcLevel sf level full bs fs rs.numcells rs.lab rs.ptn tc len
+      tcell none st.noncheaplevel start start best trail := by
+  intro rs full tcell start hloop
+  have hlen2 := hloop.lenTwo
+  have hgsz : ctx.g.size = n := by rw [hg]; exact size_rowsOf G
+  obtain ⟨hsLab, hsPtn, hsActive, hsFixed, hsFirst, hsCanon, hsCanonlab,
+    hsGen, hsOrb, hsCoset, hsFirstlab, hsShort, hsNcl, hsPark, hsKeep⟩ :=
+    sweepStart_frames ctx level numcells len st
+  have hlive' : OtherLive ctx level start trail := by
+    have := hnode.otherLive (len := len) hlive
+    exact this
+  have hpathStart : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
+      (initialPartition G).1 level start := by
+    have h1 := hpathOk.refine hn0 (by omega) hgsz hnode.run.searchOk
+      hnode.activeStarts
+    exact h1.stateEq hsLab hsPtn hsFixed
+  exact (show OtherLoopHyp G ctx tcLevel sf level full bs fs rs.numcells
+      rs.lab rs.ptn tc len tcell none st.noncheaplevel start start best
+      trail from {
+    inv := hloop
+    live := hlive'
+    path := hpathStart
+    cursorLt := fun _ h => nomatch h
+    sign := Or.inr rfl
+    start := fun _ => worksetOf_eq_windowSet rs.lab tc len (by omega)
+    guide := GuideRel.refl (by rw [hsFirst, hsCanon]; exact hlive.order)
+    baseCanon := by
+      rw [hsCanon]
+      exact Nat.le_of_lt hnode.canonBelow
+    orbits := by
+      rw [hsGen, hsOrb]
+      exact horb
+    coset := by
+      rw [hsCoset]
+      exact hcoset
+    firstDom := by
+      rw [hsFirstlab]
+      exact hdom
+    desc := by
+      intro hlt
+      rcases hsNcl with hncl | hncl
+      · rw [hncl] at hlt
+        have hsub := hdesc hlt
+        exact (hsub.setActive (a := VSet.empty)).ofFrames
+          rfl rfl rfl
+      · rw [hncl] at hlt
+        exfalso
+        omega
+    bnd := by
+      rcases hsNcl with hncl | hncl <;> rw [hncl] <;> omega
+    park := hsPark
+    keep := by
+      intro hlt
+      rcases hsNcl with hncl | hncl
+      · exact hncl
+      · rw [hncl] at hlt
+        omega })
+
 /-- An off-path internal node whose child sweep starts at `sweepStart`
 with a loop invariant, given the two state equations of the executable
 node and a common incumbent maximum for the loop bound and the node key.
@@ -390,56 +470,8 @@ theorem NodeInv.sweepNode {G : Colored n k} {ctx : Ctx n}
     (by rw [hnode.run.searchOk.ptnSize]; exact Nat.le_refl n)
     (hnode.run.searchOk.labSize.trans hnode.run.searchOk.ptnSize.symm)
     hend
-  have hlive' : OtherLive ctx level start trail := by
-    have := hnode.otherLive (len := len) hlive
-    exact this
-  have hpathStart : PathOk ctx (initPtn n (n + 2) (initialPartition G).2)
-      (initialPartition G).1 level start := by
-    have h1 := hpathOk.refine hn0 (by omega) hgsz hnode.run.searchOk
-      hnode.activeStarts
-    exact h1.stateEq hsLab hsPtn hsFixed
-  have hh : OtherLoopHyp G ctx tcLevel sf level full bs fs rs.numcells
-      rs.lab rs.ptn tc len tcell none st.noncheaplevel start start best
-      trail := {
-    inv := hloop
-    live := hlive'
-    path := hpathStart
-    cursorLt := fun _ h => nomatch h
-    sign := Or.inr rfl
-    start := fun _ => worksetOf_eq_windowSet rs.lab tc len (by omega)
-    guide := GuideRel.refl (by rw [hsFirst, hsCanon]; exact hlive.order)
-    baseCanon := by
-      rw [hsCanon]
-      exact Nat.le_of_lt hnode.canonBelow
-    orbits := by
-      rw [hsGen, hsOrb]
-      exact horb
-    coset := by
-      rw [hsCoset]
-      exact hcoset
-    firstDom := by
-      rw [hsFirstlab]
-      exact hdom
-    desc := by
-      intro hlt
-      rcases hsNcl with hncl | hncl
-      · rw [hncl] at hlt
-        have hsub := hdesc hlt
-        exact (hsub.setActive (a := VSet.empty)).ofFrames
-          rfl rfl rfl
-      · rw [hncl] at hlt
-        exfalso
-        omega
-    bnd := by
-      rcases hsNcl with hncl | hncl <;> rw [hncl] <;> omega
-    park := hsPark
-    keep := by
-      intro hlt
-      rcases hsNcl with hncl | hncl
-      · exact hncl
-      · rw [hncl] at hlt
-        omega }
-  obtain ⟨outBest, eventTrail, hrunL, hguideL, hkeepL⟩ :=
+  have hh := hnode.sweepHyp hg hn0 (by omega) hcheap hdesc hlive hpathOk horb hcoset hdom hloop
+  obtain ⟨outBest, eventTrail, hrunL, hguideL, hkeepL, _⟩ :=
     otherLoopTotal (tv1 := (tcell.nextElem none).getD 0) (tail := len - 1)
       hg hinf hn0 ih (by omega) (by omega) hpathFull hstemFull hpastFull
       hbound (by omega) (n + 1) none tcell start best trail bs hh
@@ -509,7 +541,7 @@ theorem NodeInv.plainSweep {G : Colored n k} {ctx : Ctx n}
           (otherNode ctx inf tcLevel (runFuel + 1) level numcells st).2 := by
   obtain ⟨tc, len, hmk, hprocess, hchildren, hloop⟩ :=
     LoopInv.NodeInv.otherSweep (specFuel := sf) hg hn0 (by omega) hpath hnode
-      (Nat.ne_of_lt hnum) hnonneg (by omega)
+      (Nat.ne_of_lt hnum) (Or.inr hnonneg) (by omega)
   have hlab := otherLeafSt_lab ctx level numcells st
   have hptn := otherLeafSt_ptn ctx level numcells st
   obtain ⟨-, -, -, -, -, -, -, -, -, hf10⟩ :=

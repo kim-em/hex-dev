@@ -176,25 +176,23 @@ theorem colored_iso_iff_canon_eq (eV : V ≃ Fin n) (eW : W ≃ Fin n) :
 /-- The automorphism generators found by `Hex.GraphIso.Aut.gens` on the
 encoding, decoded as colour-preserving self-isomorphisms of the Mathlib
 graph. Each entry is an automorphism, by `Hex.GraphIso.Aut.gens_isIso`
-and `isoOfIsIso`. That the list generates the whole automorphism group
-is not proved, so this is a supply of automorphisms and not a
-presentation of the group. -/
+and `isoOfIsIso`. `autos_complete` proves that this list generates the
+full automorphism group. -/
 def autos (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     List (Colored.Iso G G) :=
   (Aut.gens (encode e G)).attach.map fun p =>
     isoOfIsIso e e (Aut.gens_isIso p.property)
 
-/-- The orbit-stabilizer product computed by `Hex.GraphIso.Aut.order` on
-the encoding. It is the order of the colour-preserving automorphism
-group when the discovered generators generate that group. No theorem
-states this, and without completeness of the generators the value is
-only a lower bound. Conformance compares it with nauty's `grpsize`. -/
+/-- The full colour-preserving automorphism group order, computed by
+`Hex.GraphIso.Aut.order` on the encoding. `autOrder_card` proves its
+equality with the group's cardinality. -/
 def autOrder (e : V ≃ Fin n) (G : Colored V k) [DecidableRel G.graph.Adj] :
     Nat :=
   Aut.order (encode e G)
 
 /-- The number of vertex orbits reported by `Hex.GraphIso.Aut.numOrbits`
-on the encoding, under the same caveat as `autOrder`. -/
+on the encoding. `autNumOrbits_card` identifies it with the cardinality
+of the full automorphism orbit quotient. -/
 def autNumOrbits (e : V ≃ Fin n) (G : Colored V k)
     [DecidableRel G.graph.Adj] : Nat :=
   Aut.numOrbits (encode e G)

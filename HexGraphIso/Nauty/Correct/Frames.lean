@@ -1004,7 +1004,8 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx n}
     (h : NodeInv G ctx tcLevel level codes bs fs numcells st best trail)
     (hnum : (refine ctx level st.lab st.ptn st.active
       numcells).numcells ≠ n)
-    (hnonneg : (otherLeafSt ctx level numcells st).compCanon ≥ 0)
+    (hgate : (otherLeafSt ctx level numcells st).eqlevFirst = level ∨
+      (otherLeafSt ctx level numcells st).compCanon ≥ 0)
     (hfuel : level + 1 + specFuel ≤ n + 1) :
     let r := refine ctx level st.lab st.ptn st.active numcells
     let full := codes ++ [r.longcode]
@@ -1050,15 +1051,15 @@ theorem NodeInv.otherSweep {G : Colored n k} {ctx : Ctx n}
   have hbase : RunPrep G ctx tcLevel level full bs fs r.numcells base
       best trail := by
     exact hprep.setTctotal
-  have hpreNonneg : pre.compCanon ≥ 0 := by
-    simpa only [pre] using hnonneg
   have hprocess : processnode ctx level r.numcells base =
       (Int.ofNat level, base) := by
     apply processnode_internal
-    · intro hgate
-      have hcomp : base.compCanon = pre.compCanon := rfl
-      rw [hcomp] at hgate
-      omega
+    · intro hreject
+      rcases hgate with heq | hnonneg
+      · exact hreject.1 heq
+      · have hcomp : base.compCanon = (otherLeafSt ctx level numcells st).compCanon := rfl
+        rw [hcomp] at hreject
+        omega
     · intro heq
       exact hnum (beq_iff_eq.mp heq)
   have hrun : RunInv G ctx tcLevel level full bs fs r.numcells start

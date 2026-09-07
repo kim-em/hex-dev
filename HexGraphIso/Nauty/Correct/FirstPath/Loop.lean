@@ -709,8 +709,8 @@ theorem ShortSource.setFirst {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     ShortSource G ctx { out with gcaFirst := gcaFirst, stabvertex := stabvertex }
       trail r := by
   cases h with
-  | explicit target fix mcr returned back valid =>
-      exact .explicit target fix mcr returned back valid
+  | explicit target fix mcr returned back valid source =>
+      exact .explicit target fix mcr returned back valid source
   | implicit target returned below back root =>
       exact .implicit target returned below back root
 

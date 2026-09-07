@@ -247,12 +247,14 @@ inductive Unwind.Located (trail : FrameTrail) {ctx : Ctx n} {tcLevel target : Na
     Unwind ctx tcLevel target out best → Prop where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
+      (atFirst : target ≤ out.gcaFirst)
       (located : anchor.Located trail) :
-      Unwind.Located trail (.first anchor carrier)
+      Unwind.Located trail (.first anchor carrier atFirst)
   | canon (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
+      (atCanon : target = out.gcaCanon)
       (located : anchor.Located trail) :
-      Unwind.Located trail (.canon anchor carrier)
+      Unwind.Located trail (.canon anchor carrier atCanon)
   | orbit (payload : OrbitUnwind ctx target out) :
       Unwind.Located trail (.orbit payload)
 
@@ -265,11 +267,13 @@ inductive Unwind.FrameStable {ctx : Ctx n} {tcLevel target : Nat}
     (rsPtn : Array Nat) (level : Nat) (rsLab : Array Nat) :
     Unwind ctx tcLevel target out best → Prop where
   | first (anchor : Anchor ctx tcLevel target best)
-      (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace) :
-      Unwind.FrameStable rsPtn level rsLab (.first anchor carrier)
+      (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
+      (atFirst : target ≤ out.gcaFirst) :
+      Unwind.FrameStable rsPtn level rsLab (.first anchor carrier atFirst)
   | canon (anchor : Anchor ctx tcLevel target best)
-      (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace) :
-      Unwind.FrameStable rsPtn level rsLab (.canon anchor carrier)
+      (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
+      (atCanon : target = out.gcaCanon) :
+      Unwind.FrameStable rsPtn level rsLab (.canon anchor carrier atCanon)
   | orbit (payload : OrbitUnwind ctx target out)
       (stable : ∀ γ ∈ out.genTrace.toList,
         CellStab rsPtn level rsLab γ) :
@@ -283,10 +287,10 @@ theorem Unwind.Located.push {ctx : Ctx n} {tcLevel target level : Nat}
     (h : payload.Located trail) (hne : target ≠ level) :
     payload.Located (trail.push level entry) := by
   cases h with
-  | first anchor carrier located =>
-      exact .first anchor carrier (located.push hne)
-  | canon anchor carrier located =>
-      exact .canon anchor carrier (located.push hne)
+  | first anchor carrier atFirst located =>
+      exact .first anchor carrier atFirst (located.push hne)
+  | canon anchor carrier atCanon located =>
+      exact .canon anchor carrier atCanon (located.push hne)
   | orbit payload => exact .orbit payload
 
 /-- An unwind anchor belongs to the indicated frozen child-loop frame. -/
@@ -473,10 +477,10 @@ theorem SweepCover.unwind {ctx : Ctx n}
   have hrange' : tc + len ≤ rsLab.size := by rwa [hs]
   have hoff : tc + offset < rsLab.size := by omega
   cases hloc with
-  | first anchor carrier located =>
+  | first anchor carrier atFirst located =>
       exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
         hrange' hoff
-  | canon anchor carrier located =>
+  | canon anchor carrier atCanon located =>
       exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
         hrange' hoff
   | orbit orbitPayload =>
@@ -621,8 +625,8 @@ theorem frameStable {trail : FrameTrail} {ctx : Ctx n}
     (hentry : trail target = some entry) :
     payload.FrameStable entry.frame.rsPtn target entry.frame.rsLab := by
   cases payload with
-  | first anchor carrier => exact .first anchor carrier
-  | canon anchor carrier => exact .canon anchor carrier
+  | first anchor carrier atFirst => exact .first anchor carrier atFirst
+  | canon anchor carrier atCanon => exact .canon anchor carrier atCanon
   | orbit payload =>
       apply Unwind.FrameStable.orbit payload
       intro γ hγ

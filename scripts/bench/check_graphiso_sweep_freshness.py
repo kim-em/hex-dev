@@ -12,13 +12,11 @@ not covered by runtime-neutral exemptions, the figures are stale:
 regenerate everything with ``scripts/bench/graphiso_cactus_sweep.sh`` and
 commit the new data and figures together with the code change.
 
-The relevant-source set is deliberately tight (the hex-graph-iso
-implementation, its graph substrate, the sweep driver, and the plot
-script), so unrelated pull requests never trip this check and
-re-measuring is the cheap answer rather than writing an exemption; a
-change to a shared helper that measurably shifts these curves shows up in
-the per-library benchmarks first. It is declared, with the shared
-mechanism, in ``scripts/bench/sweep_freshness.py``.
+The relevant-source set covers the hex-graph-iso implementation and its
+umbrella, graph substrate, sweep driver, plot script, nauty comparator,
+build configuration and Lean toolchain. Vendor prose is excluded; C
+sources and headers are tracked. The set and the shared mechanism are
+declared in ``scripts/bench/sweep_freshness.py``.
 
 The family declares no exemption channel, so any difference has to be
 re-measured, with one exception the check verifies for itself: a ``.lean``

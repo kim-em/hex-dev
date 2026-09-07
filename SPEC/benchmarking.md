@@ -1261,7 +1261,9 @@ HexPolyZ and re-measuring needs a dedicated-hardware session, so
 proof-only edits are absorbed. Every other family re-measures: the
 comparator curves see three to six adapter files plus the corpus and the
 sweep driver, where every edit is aimed at the measurement itself, and
-hex-graph-iso names four paths and regenerates in minutes.
+hex-graph-iso tracks the libraries and their umbrellas, driver, plotter,
+nauty comparator sources and headers, build configuration and Lean
+toolchain, and regenerates in minutes. Vendor prose is excluded.
 
 hex-graph-iso does take the `lean_comment_only` rule, because its
 relevant set is a Lean library whose docstrings are revised far more

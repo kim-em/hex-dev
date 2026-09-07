@@ -333,7 +333,8 @@ structure CanonTrail (ctx : Ctx n) (current : Nat) (st : SearchSt n)
 
 /-- A comparison-frozen return retains the full deep code path while
 exposing any ancestor prefix through `stem`.  The floor clause says the
-return does not jump above the recorded downward divergence. -/
+return does not jump above the recorded downward divergence; the boundary
+clause retains the cheap-cell or all-same floor of the actual prune tail. -/
 inductive FrozenOut (ctx : Ctx n) (stem : List Nat) (out : SearchSt n)
     (best : Option (Key n)) (r : Int) : Prop where
   | mk (current : Nat) (codes bestCodes : List Nat)
@@ -343,7 +344,9 @@ inductive FrozenOut (ctx : Ctx n) (stem : List Nat) (out : SearchSt n)
       (stemEq : codes.take stem.length = stem)
       (installed : bestCodes ≠ [])
       (incumbent : best = some (incKey ctx bestCodes out.canonlab))
-      (floor : Int.ofNat out.eqlevCanon.toNat ≤ r) :
+      (floor : Int.ofNat out.eqlevCanon.toNat ≤ r)
+      (boundary : Int.ofNat out.noncheaplevel - 1 ≤ r ∨
+        Int.ofNat out.allsamelevel - 1 ≤ r) :
       FrozenOut ctx stem out best r
 
 namespace FrozenOut
@@ -356,7 +359,7 @@ theorem keyLe {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
     (hbelow : r < Int.ofNat level) (K : Key n) :
     ∃ b, best = some b ∧ keyLe (prefixKey stem K) b := by
   rcases h with
-    ⟨current, codes, bestCodes, hcode, hdepth, hstem, _, hinc, hfloor⟩
+    ⟨current, codes, bestCodes, hcode, hdepth, hstem, _, hinc, hfloor, _⟩
   have hM : out.eqlevCanon.toNat < level := by
     have hi : Int.ofNat out.eqlevCanon.toNat < Int.ofNat level :=
       Int.lt_of_le_of_lt hfloor hbelow
@@ -392,7 +395,7 @@ comparison to stop. -/
 theorem present {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
     {best : Option (Key n)} {r : Int} (h : FrozenOut ctx stem out best r) :
     ∃ b, best = some b := by
-  rcases h with ⟨_, _, bestCodes, _, _, _, _, hbest, _⟩
+  rcases h with ⟨_, _, bestCodes, _, _, _, _, hbest, _, _⟩
   exact ⟨incKey ctx bestCodes out.canonlab, hbest⟩
 
 /-- The concrete state read agrees with the incumbent carried by a frozen
@@ -401,7 +404,7 @@ theorem read {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
     {best : Option (Key n)} {r : Int} (h : FrozenOut ctx stem out best r) :
     stInc ctx out = best := by
   rcases h with
-    ⟨_, _, bestCodes, hcode, _, _, hbestCodes, hbest, _⟩
+    ⟨_, _, bestCodes, hcode, _, _, hbestCodes, hbest, _, _⟩
   rw [stInc_eq_ghost hcode (by decide), ghostInc]
   simp only [hbestCodes, ↓reduceIte, hbest]
 
