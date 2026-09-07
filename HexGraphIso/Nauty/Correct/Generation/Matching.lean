@@ -48,6 +48,26 @@ theorem tail {tc code : Nat} (h : Matches ctx level st (tc :: targets)
     simpa [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h.targets (i + 1) (by simp; omega)
   · exact h.rows
 
+/-- Returning from a reference child restores the enclosing code and
+hint once the recursive call's unchanged prefix supplies those entries. -/
+theorem cons {tc code : Nat} (h : Matches ctx (level + 1) st targets key)
+    (hcode : code = st.firstcode[level]!) (htc : Int.ofNat tc = st.firsttc[level]!) :
+    Matches ctx level st (tc :: targets) ⟨code :: key.codes, key.rows⟩ := by
+  constructor
+  · intro i hi
+    cases i with
+    | zero => simpa using hcode
+    | succ i =>
+      have hi' : i < key.codes.length := by simpa using hi
+      simpa [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h.codes i hi'
+  · intro i hi
+    cases i with
+    | zero => simpa using htc
+    | succ i =>
+      have hi' : i < targets.length := by simpa using hi
+      simpa [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h.targets i hi'
+  · exact h.rows
+
 /-- The head of the occurrence justifies advancing the first-reference
 comparison in the executable preparation step. -/
 theorem prep {tcLevel : Nat} {rs : RefineSt n}

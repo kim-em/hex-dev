@@ -17,6 +17,41 @@ namespace Hex.GraphIso.Nauty.Generation
 
 variable {n : Nat} {ctx : Ctx n}
 
+/-- The first discrete descent installs the exact reference occurrence
+used by subsequent matching searches. -/
+theorem first_leaf {inf tcLevel fuel level numcells : Nat} {st : SearchSt n}
+    (hnum : (refine ctx level st.lab st.ptn st.active numcells).numcells = n)
+    (hsize : st.firstcode.size = n + 2) (hlevel : level ≤ n)
+    (hdisc : ∀ q, q < n → (refine ctx level st.lab st.ptn st.active numcells).ptn[q]! ≤ level) :
+    let rs := refine ctx level st.lab st.ptn st.active numcells
+    let out := (firstPathNode ctx inf tcLevel (fuel + 1) level numcells st).2
+    let key : Key n := ⟨[rs.longcode, codeSentinel], leafRows ctx rs.lab⟩
+    HasLeaf ctx tcLevel level rs [] key ∧ Matches ctx level out [] key ∧ out.firstlab = rs.lab := by
+  dsimp only
+  rw [firstPath_discrete_state ctx inf tcLevel fuel level numcells st hnum]
+  have hfl : (firstterminal level (firstLeafSt ctx level numcells st)).firstlab =
+      (refine ctx level st.lab st.ptn st.active numcells).lab := by
+    rw [firstterminal_firstlab]
+    rfl
+  have hfc : (firstterminal level (firstLeafSt ctx level numcells st)).firstcode =
+      (st.firstcode.set! level (refine ctx level st.lab st.ptn st.active numcells).longcode).set!
+        (level + 1) codeSentinel := by
+    rw [ftF_firstcode]
+    rfl
+  refine ⟨HasLeaf.leaf hdisc, ⟨?_, ?_, ?_⟩, hfl⟩
+  · intro i hi
+    dsimp only at hi ⊢
+    have hi' : i = 0 ∨ i = 1 := by simp only [List.length_cons, List.length_nil] at hi; omega
+    rcases hi' with rfl | rfl
+    · simp only [List.getElem!_cons_zero, Nat.add_zero, hfc]
+      rw [Array.getElem!_set!_ne _ _ _ _ (by omega), Array.getElem!_set!_self _ _ _ (by omega)]
+    · simp only [List.getElem!_cons_succ, List.getElem!_cons_zero, hfc]
+      rw [Array.getElem!_set!_self _ _ _ (by rw [Array.size_set!, hsize]; omega)]
+  · intro i hi
+    simp at hi
+  · dsimp only
+    rw [hfl]
+
 /-- Both ways of returning from a discrete off-path node retain precisely
 the trace produced by its leaf event. -/
 theorem other_leaf_trace {inf tcLevel fuel level numcells : Nat} {st : SearchSt n}
