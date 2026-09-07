@@ -438,7 +438,16 @@ all 42 hashes pass in each export. **Neither attempt is accepted**:
 | [1](bench-results/intfactor-divisors-attempt-1.json) | consistent | -0.012084 | 4.8737% | rejected: contamination |
 | [2](bench-results/intfactor-divisors-attempt-2.json) | consistent | -0.011111 | 5.1226% | rejected: contamination |
 
-The fixed contamination ceiling is 0.2%. The raw exports, every subprocess
+The fixed contamination ceiling is 0.2%. The telemetry's foreign-task
+classification has a snapshot race: three allegedly foreign benchmark TGIDs
+in each attempt have that attempt's own timed-region sidecars. These are
+suspected ownership false positives, not evidence of unrelated competing
+benchmarks. Even excluding their entire contribution, SMT-sibling busy time
+alone is 0.195855/30.647598 = 0.6391% and 0.300676/30.646333 = 0.9811%, both
+above the same ceiling. The rejected dispositions therefore do not depend on
+those suspected false positives. The raw telemetry and thresholds are left
+unchanged; a subsequent campaign should repair ownership attribution before
+collection. The raw exports, every subprocess
 stdout/stderr, exact commands, source/executable hashes, host/core snapshots,
 raw telemetry and timed-region sidecars are in each artifact's adjacent
 `.json.attempt/` directory. The collector entered with a clean source tree;

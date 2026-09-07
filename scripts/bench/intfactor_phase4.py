@@ -123,6 +123,7 @@ class Attempt:
         # Files receive output as it is produced, including partial timeout output.
         with Path(entry["stdout"]).open("w") as stdout, Path(entry["stderr"]).open("w") as stderr:
             try:
+                process_started = time.monotonic_ns()
                 proc = subprocess.Popen(command, cwd=ROOT, text=True,
                     stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
                     stdout=stdout, stderr=stderr, start_new_session=True)
@@ -134,7 +135,9 @@ class Attempt:
                         os.killpg(proc.pid, signal.SIGKILL)
                     proc.wait()
                     raise
-                entry.update(returncode=proc.returncode, status="completed")
+                process_elapsed = time.monotonic_ns() - process_started
+                entry.update(returncode=proc.returncode, status="completed",
+                             elapsed_nanos=process_elapsed)
             except BaseException as error:
                 entry.update(status="failed", error_type=type(error).__name__, error=str(error))
                 raise
@@ -144,6 +147,7 @@ class Attempt:
         result = subprocess.CompletedProcess(
             command, proc.returncode, Path(entry["stdout"]).read_text(),
             Path(entry["stderr"]).read_text())
+        result.elapsed_nanos = process_elapsed
         if proc.returncode not in allowed:
             entry["status"] = "failed"
             self.save()
@@ -158,8 +162,10 @@ def run(command: list[str], *, stdin: str | None = None,
         timeout: float = 60.0, allowed: tuple[int, ...] = (0,)) -> subprocess.CompletedProcess[str]:
     if ACTIVE_ATTEMPT is not None:
         return ACTIVE_ATTEMPT.execute(command, stdin=stdin, timeout=timeout, allowed=allowed)
+    process_started = time.monotonic_ns()
     proc = subprocess.run(command, cwd=ROOT, input=stdin, capture_output=True,
                           text=True, timeout=timeout)
+    proc.elapsed_nanos = time.monotonic_ns() - process_started
     if proc.returncode not in allowed:
         raise subprocess.CalledProcessError(proc.returncode, command, proc.stdout, proc.stderr)
     return proc
@@ -361,13 +367,14 @@ def measure_pari(gp: str, n: int, rounds: int, timeout: float) -> dict[str, obje
 
 
 def ecm_batch(ecm: str, n: int, timeout: float) -> tuple[float, list[list[int]]]:
-    started = time.monotonic_ns()
     proc = run(
         [ecm, "-q", "-sigma", "0:7", "1000", "1"],
         stdin=f"{n}\n" * ECM_BATCH, timeout=timeout,
         allowed=(0, 2, 6, 8, 10, 14),
     )
-    elapsed = float(time.monotonic_ns() - started) / ECM_BATCH
+    # Only subprocess wall time belongs to the comparator protocol. Hashing
+    # executables and persisting evidence happen outside this duration.
+    elapsed = float(proc.elapsed_nanos) / ECM_BATCH
     if proc.returncode not in (0, 2, 6, 8, 10, 14):
         raise RuntimeError(f"GMP-ECM failed ({proc.returncode}) at {n}: {proc.stderr}")
     outputs = [

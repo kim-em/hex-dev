@@ -101,6 +101,15 @@ class PreservationTests(unittest.TestCase):
             record = json.loads(attempt.output.read_text())
             self.assertEqual(record['benchmark_executable_sha256'], collector.sha256(executable))
 
+    def test_ecm_excludes_evidence_bookkeeping(self):
+        result = subprocess.CompletedProcess(['ecm'], 0, '3 5\n' * collector.ECM_BATCH, '')
+        result.elapsed_nanos = 256000
+        with patch.object(collector, 'run', return_value=result), \
+             patch.object(collector.time, 'monotonic_ns', side_effect=AssertionError('outer timing')):
+            elapsed, rows = collector.ecm_batch('ecm', 15, 1)
+        self.assertEqual(elapsed, 1000)
+        self.assertEqual(rows, [[3, 5]] * collector.ECM_BATCH)
+
     def test_external_failure_preserves_export(self):
         self.exercise(lambda _: collector.ecm_batch('/nonexistent/ecm', 15, 1), FileNotFoundError)
 
