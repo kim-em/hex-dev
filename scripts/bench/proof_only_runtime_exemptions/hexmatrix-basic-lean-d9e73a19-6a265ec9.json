@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Basic.lean",
+  "baseline_blob": "d9e73a1912f20e777575abf25c03e6bfe00cc412",
+  "current_blob": "6a265ec91b0fe573eb81f12634bcfc001bde9877",
+  "reason": "Besides the already-exempt removal of no-op expose attributes on GetElem instances, rows, ofRows, col and mulVec replace Vector.ofFn with Hex.Vector.ofFn'. The existing csimp theorem Hex.Vector.ofFn'_eq_ofFn' rewrites that constant back to exactly Vector.ofFn before compilation; generated C still calls Array.ofFn for these helpers. The remaining changes adapt theorem proofs to the exposed kernel definition. Neither the compiled matrix operations nor the factorization algorithm changes."
+}

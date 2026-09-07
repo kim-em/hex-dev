@@ -869,7 +869,7 @@ theorem nullspaceArray_eq {q : UInt32} (hq : q.toNat = p)
     apply Vector.ext
     intro j hj
     rw [Vector.getElem_ofFn]
-    simp only [Matrix.col, Vector.getElem_ofFn, Matrix.IsRowReduced.nullspaceMatrix,
+    simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn, Matrix.IsRowReduced.nullspaceMatrix,
       Matrix.getElem_pair_eq_nested, Matrix.getElem_ofFn]
     rw [hgetfree]
     by_cases hjf : (⟨j, hj⟩ : Fin m) = hE.toIsEchelonForm.freeCols.get ⟨k, hklt⟩

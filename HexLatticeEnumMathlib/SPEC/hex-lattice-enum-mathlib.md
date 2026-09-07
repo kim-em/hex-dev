@@ -4,7 +4,7 @@ Correctness proofs for exact lattice enumeration and correspondence with
 integer spans in rational and real coordinate spaces. The complete contracts,
 including the headline theorems, packing radius, kissing number and proof
 examples, are specified in
-[hex-lattice-enum, Mathlib companion](hex-lattice-enum.md#mathlib-companion).
+[hex-lattice-enum, Mathlib companion](../../HexLatticeEnum/SPEC/hex-lattice-enum.md#mathlib-companion).
 
 Immediate dependencies are `HexLatticeEnum`, `HexLLLMathlib`,
 `HexGramSchmidtMathlib` and `HexMatrixMathlib`, plus Mathlib. All executable
@@ -26,8 +26,8 @@ theorems that completed native runs produce accepted certificates. Checker
 soundness applies to arbitrary accepted certificates and does not assume native
 provenance. Integer-span and real-distance correspondence and the packing-radius
 and kissing-number consequences build on these correctness results. See
-[execution and proof ownership](hex-lattice-enum.md#execution-and-proof-ownership)
-and [placement and implementation order](hex-lattice-enum.md#placement-and-implementation-order)
+[execution and proof ownership](../../HexLatticeEnum/SPEC/hex-lattice-enum.md#execution-and-proof-ownership)
+and [placement and implementation order](../../HexLatticeEnum/SPEC/hex-lattice-enum.md#placement-and-implementation-order)
 for the division of files and proof obligations.
 
 At activation set `correspondence_only: true`. The comparator absence class

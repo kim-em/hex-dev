@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/Sort.lean",
+  "baseline_blob": null,
+  "current_blob": "349ad9397c8ee2d8d27ea967fafef3e4370b8497",
+  "reason": "Adds a new kernel-reducible sorting helper. The existing factorization service has no calls to Hex.List.sort or Hex.List.merge. The new csimp theorem rewrites only the new sort constant to List.mergeSort. Import initialization occurs before the measured warm factorization requests; no existing factorization computation changes."
+}

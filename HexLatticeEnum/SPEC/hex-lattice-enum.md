@@ -424,7 +424,7 @@ Required families in `bench/HexLatticeEnum/Bench.lean`:
 State arithmetic work in visited nodes, dimension, emitted vectors and bit
 lengths. The search is exponential in general and has an output-size lower
 bound. Do not fit a universal polynomial in rank to a small easy ladder.
-Follow the ordered modes in [benchmarking](../benchmarking.md), with
+Follow the ordered modes in [benchmarking](../../SPEC/benchmarking.md), with
 independently derived models or explicit canonical hard inputs and budgets.
 The exact integer-bound routine and coefficient-order iterator get separate
 attribution when profiling identifies them as significant costs.
@@ -467,7 +467,20 @@ three-dimensional space. It has six shortest vectors of squared norm `2`,
 so the general algorithm demonstrates the hexagonal lattice without assuming
 that a regular hexagonal basis has integer coordinates in the plane.
 
-The libraries are initially planned at phase zero. Activation must preserve
-the computational/Mathlib separation and prove the full stated obligations.
+Activation preserves the computational/Mathlib separation and requires the full
+stated proof obligations. The current phase attestations live in `libraries.yml`.
 Published repositories are generated from this monorepo only after release
 readiness, using the existing manifest and guarded synchronization process.
+
+## Total-helper invariants
+
+Internal fallback values are `unreachable-by-pipeline-invariant` on completed
+native runs. `ball_complete` proves that unlimited fixed-radius traversal
+produces a tree; `optimize_spec` and `optimize_tree` establish the completed
+tie pass used by optimum certificates. `enumerationCertificate_check`,
+`closestCertificate_check` and `shortestCertificate_check` prove native
+producer acceptance. `lllPreprocess_rows` proves that every positive-rank
+LLL result passes independence and both recovered transformation checks;
+`lllPreprocess_reduced` identifies the resulting reduced basis. Its identity
+case at rank zero is the specified empty-basis operation. These total helpers
+introduce no caller-visible failure case or weakened input contract.

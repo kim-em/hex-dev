@@ -104,7 +104,7 @@ theorem mul_pairCols {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
     have hcol : Matrix.col (pairCols B i j E) i =
         Vector.ofFn fun q => E[(0, 0)] * B[q][i] + E[(0, 1)] * B[q][j] := by
       ext q hq
-      simp only [Matrix.col, Vector.getElem_ofFn]
+      simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
       rw [Matrix.getElem_pair_eq_nested]
       exact pairCols_left B i j E hij (⟨q, hq⟩ : Fin m)
     have hsplit : (Vector.ofFn fun q : Fin m =>
@@ -113,7 +113,7 @@ theorem mul_pairCols {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
       ext q hq
       rw [Vector.getElem_ofFn, Vector.getElem_add, Vector.getElem_smul,
         Vector.getElem_smul]
-      simp only [Matrix.col, Vector.getElem_ofFn]
+      simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
       change E[(0, 0)] * B[(⟨q, hq⟩ : Fin m)][i] +
         E[(0, 1)] * B[(⟨q, hq⟩ : Fin m)][j] =
@@ -129,7 +129,7 @@ theorem mul_pairCols {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
       have hcol : Matrix.col (pairCols B i j E) j =
           Vector.ofFn fun q => E[(1, 0)] * B[q][i] + E[(1, 1)] * B[q][j] := by
         ext q hq
-        simp only [Matrix.col, Vector.getElem_ofFn]
+        simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
         rw [Matrix.getElem_pair_eq_nested]
         exact pairCols_right B i j E (⟨q, hq⟩ : Fin m)
       have hsplit : (Vector.ofFn fun q : Fin m =>
@@ -138,7 +138,7 @@ theorem mul_pairCols {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
         ext q hq
         rw [Vector.getElem_ofFn, Vector.getElem_add, Vector.getElem_smul,
           Vector.getElem_smul]
-        simp only [Matrix.col, Vector.getElem_ofFn]
+        simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
         rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
         change E[(1, 0)] * B[(⟨q, hq⟩ : Fin m)][i] +
           E[(1, 1)] * B[(⟨q, hq⟩ : Fin m)][j] =
@@ -151,7 +151,7 @@ theorem mul_pairCols {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
     · rw [pairCols_other (A * B) i j c E hci hcj]
       have hcol : Matrix.col (pairCols B i j E) c = Matrix.col B c := by
         ext q hq
-        simp only [Matrix.col, Vector.getElem_ofFn]
+        simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
         rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
         exact pairCols_other B i j c E hci hcj (⟨q, hq⟩ : Fin m)
       rw [hcol, Matrix.getElem_mul]
@@ -190,7 +190,7 @@ theorem mul_colScale {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
         c • Matrix.col B j := by
       ext i hi
       rw [Vector.getElem_ofFn, Vector.getElem_smul]
-      simp only [Matrix.col, Vector.getElem_ofFn,
+      simp only [Matrix.col, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn,
         Matrix.getElem_pair_eq_nested]
       rfl
     rw [hcol, Vector.dotProduct_smul_right, Matrix.getElem_mul]

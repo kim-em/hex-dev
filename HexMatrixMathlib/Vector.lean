@@ -93,6 +93,7 @@ theorem vectorEquiv_mulVec [Semiring R] (M : Hex.Matrix R n m) (v : Vector R m) 
   simp only [vectorEquiv_apply]
   change (Hex.Matrix.mulVec M v)[i.val] = (matrixEquiv M).mulVec (vectorEquiv v) i
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct
+  rw [Hex.Vector.ofFn'_eq_ofFn]
   rw [Vector.getElem_ofFn i.isLt]
   rw [foldl_finRange_eq_sum]
   unfold _root_.Matrix.mulVec dotProduct

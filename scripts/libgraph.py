@@ -59,6 +59,7 @@ BUILD_ONLY_LIBS = {
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
     "HexSmithTests",
+    "HexLatticeEnumTests",
     "HexGraphIsoTests",
     "HexCharPolyTests",
     "HexReleaseExamples",

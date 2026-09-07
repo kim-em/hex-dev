@@ -295,6 +295,15 @@ lean_lib HexSmithMathlib where
 
 lean_lib HexGramSchmidt where
 
+lean_lib HexLatticeEnum where
+
+@[default_target]
+lean_lib HexLatticeEnumMathlib where
+
+@[default_target]
+lean_lib HexLatticeEnumTests where
+  globs := #[`HexLatticeEnumMathlib.Tests, `HexLatticeEnumMathlib.LintTests]
+
 lean_lib HexLLL where
   precompileModules := true
   extraDepTargets := #[`hexlllffi]
@@ -784,6 +793,8 @@ lean_lib HexConformance where
 
     ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains].map Glob.one
 
+    ++ #[`HexLatticeEnum.Conformance].map Glob.one
+
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntFactor.Conformance,
@@ -1029,6 +1040,10 @@ lean_exe hexgramschmidt_emit_fixtures where
 lean_exe hexlll_emit_fixtures where
   srcDir := "conformance"
   root := `HexLLL.EmitFixtures
+
+lean_exe hexlatticeenum_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexLatticeEnum.EmitFixtures
 
 lean_exe hexrealroots_emit_fixtures where
   srcDir := "conformance"
@@ -1453,3 +1468,7 @@ lean_lib HexManual where
 -- (`.github/workflows/pages.yml`) and on demand via `lake exe hexmanual`.
 lean_exe hexmanual where
   root := `Main
+
+lean_exe hexlatticeenum_bench where
+  srcDir := "bench"
+  root := `HexLatticeEnum.Bench

@@ -1,0 +1,171 @@
+{"schema_version":1,"kind":"parametric","function":"Hex.LatticeEnumBench.runCube","param":13,"inner_repeats":8,"total_nanos":957102360,"per_call_nanos":119637795.000000,"cache_mode":"warm","result_hash":"0x9037ab81f5312d53","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":79308,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexlatticeenum_bench","git_commit":"df2cbf92dbd8b810971632cb62efd6128ba0c03c","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0-rc2","lean_version":"4.34.0-rc2","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-07T15:43:58Z","timestamp_unix_ms":1788795838647}}
+
+filtered profile: /tmp/hex-lattice-samply-current/runCube.json.gz
+symbols:          /tmp/hex-lattice-samply-current/runCube.json.syms.json
+diagnostics:      /tmp/hex-lattice-samply-current/runCube.json.gz.diagnostics.json
+{
+  "schema": 2,
+  "stage": "complete",
+  "confidence": "passed",
+  "low_confidence_reasons": [],
+  "bench_pid": 1937278,
+  "bench_thread_name": "hexlatticeenum_bench",
+  "bench_thread_tid": "1937290",
+  "regions_total": 2,
+  "total_timed_ms": 1077.318996,
+  "expected_samples_bench_thread": 1076.2,
+  "retained_samples_bench_thread": 1067,
+  "rejected_samples_bench_thread": 8,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1788795838454899431,
+  "spawn_anchor_mono_ns": 20265637188782,
+  "sidecar_mono_anchor_ns": 20265829953329,
+  "samply_meta_start_time_ms": 1788795838456.5388,
+  "samply_timestamp_mode": "absolute-monotonic-ms",
+  "calibration_residual_ms": 0.9707600027322769,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": "absolute-monotonic-ms",
+    "residual_ms": 0.9707600027322769,
+    "raw_max_residual_ms": 1.0207040011882782,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": true,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 1067,
+        "regions_without_samples": 0,
+        "boundary_residual_trimmed_max_ms": 0.9707600027322769,
+        "boundary_residual_raw_max_ms": 1.0207040011882782,
+        "within_residual_limit": true
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 2,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": {
+    "shift_ms": 5.0,
+    "reported_top_function_count": 3,
+    "configured_max_total_variation_distance": 0.1,
+    "sampling_noise_coefficient": 0.6,
+    "minimum_comparison_samples": 100,
+    "maximum_sampling_noise_allowance": 0.5,
+    "verdict": "passed",
+    "leaf_function_distributions_stable": true,
+    "comparisons": {
+      "minus": {
+        "total_variation_distance": 0.004633086058911658,
+        "leaf_function_support_size": 442,
+        "comparison_samples": 1062,
+        "exchanged_samples": 5,
+        "exchanged_fraction": 0.004708097928436911,
+        "sampling_noise_allowance": 0.03756106246010093,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      },
+      "plus": {
+        "total_variation_distance": 0.0018726558832166077,
+        "leaf_function_support_size": 443,
+        "comparison_samples": 1066,
+        "exchanged_samples": 3,
+        "exchanged_fraction": 0.0028142589118198874,
+        "sampling_noise_allowance": 0.029018271117411426,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      }
+    },
+    "cases": {
+      "minus": {
+        "shift_ms": -5.0,
+        "retained_samples": 1062,
+        "top_leaf_functions": [
+          {
+            "function": 127,
+            "name": "0xaef3c",
+            "samples": 33
+          },
+          {
+            "function": 72,
+            "name": "0xae923",
+            "samples": 27
+          },
+          {
+            "function": 114,
+            "name": "0xae8e9",
+            "samples": 26
+          }
+        ]
+      },
+      "nominal": {
+        "shift_ms": 0.0,
+        "retained_samples": 1067,
+        "top_leaf_functions": [
+          {
+            "function": 127,
+            "name": "0xaef3c",
+            "samples": 33
+          },
+          {
+            "function": 72,
+            "name": "0xae923",
+            "samples": 27
+          },
+          {
+            "function": 114,
+            "name": "0xae8e9",
+            "samples": 26
+          }
+        ]
+      },
+      "plus": {
+        "shift_ms": 5.0,
+        "retained_samples": 1066,
+        "top_leaf_functions": [
+          {
+            "function": 127,
+            "name": "0xaef3c",
+            "samples": 33
+          },
+          {
+            "function": 72,
+            "name": "0xae923",
+            "samples": 27
+          },
+          {
+            "function": 114,
+            "name": "0xae8e9",
+            "samples": 26
+          }
+        ]
+      }
+    }
+  }
+}
++ samply record --save-only --no-open -o /tmp/lean-bench-samply-8rqg64rz/samply.json.gz --rate 999 --unstable-presymbolicate -- /home/kim/worktrees/hex-dev/hex-dev-pr-10089/.lake/build/bin/hexlatticeenum_bench _child --bench Hex.LatticeEnumBench.runCube --param 13 --target-nanos 1000000000 --cache-mode warm
+=== lean-bench-samply filter diagnostics ===
+bench thread:       name='hexlatticeenum_bench' tid=1937290
+calibration:        mode=absolute-monotonic-ms, residual = 0.971 ms (effective limit 5 ms)
+regions:            2, total timed = 1077.3 ms
+expected samples:   ~1076 on bench thread
+retained samples:   1067 on bench thread (8 rejected outside windows)
+other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+sensitivity ±5 ms: passed (leaf functions; configured total-variation floor 0.10)
+confidence:         passed
+filtered profile:   /tmp/hex-lattice-samply-current/runCube.json.gz

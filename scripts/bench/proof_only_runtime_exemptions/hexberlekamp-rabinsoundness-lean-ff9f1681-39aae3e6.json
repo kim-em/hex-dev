@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekamp/RabinSoundness.lean",
+  "baseline_blob": "ff9f168135b562eebc899e966737cbf23dbd14cc",
+  "current_blob": "39aae3e6e08f60508d0b60d6a8006830e9c85897",
+  "reason": "Only theorem proofs change, including the already-exempt ff9f1681-to-5be8083e proof edits and two additional rewrites by Hex.Vector.ofFn'_eq_ofFn. All changes erase during compilation; no executable definition changes."
+}
