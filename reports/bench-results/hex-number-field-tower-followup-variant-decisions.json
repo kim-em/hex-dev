@@ -1,0 +1,538 @@
+{
+  "horner2": {
+    "eligible": true,
+    "runner_exit": 0,
+    "checks": [
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0401147567431612
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.04339063954151
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0442993297197758
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.043350289665028
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.043068716797452
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0290325453281723
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0181808873579146
+      },
+      {
+        "pair": 5,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0220571206133444
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.046719920583197
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0426943011454919
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.046970975539182
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0538067677680367
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0372523659712352
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0343471391990378
+      },
+      {
+        "pair": 6,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.018277872579358
+      },
+      {
+        "pair": 6,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0191411002657726
+      }
+    ]
+  },
+  "recovery2": {
+    "eligible": true,
+    "runner_exit": 0,
+    "checks": [
+      {
+        "pair": 1,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0482915611950405
+      },
+      {
+        "pair": 1,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0621363302332305
+      },
+      {
+        "pair": 1,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0454797366945472
+      },
+      {
+        "pair": 1,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0340710459543276
+      },
+      {
+        "pair": 1,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.031626156182371
+      },
+      {
+        "pair": 1,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.034935105095249
+      },
+      {
+        "pair": 1,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0436999832138425
+      },
+      {
+        "pair": 1,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0036243180349071
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.03565585314547
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0569165551933983
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": false,
+        "disjoint_regression": false,
+        "speedup": 0.9947294612476567
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0245862432776078
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0360223441535839
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0207465052986473
+      },
+      {
+        "pair": 5,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0251535576965756
+      },
+      {
+        "pair": 5,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0186622692574423
+      }
+    ]
+  },
+  "combined2": {
+    "eligible": true,
+    "runner_exit": 0,
+    "checks": [
+      {
+        "pair": 4,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0864777685560316
+      },
+      {
+        "pair": 4,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0844249392010357
+      },
+      {
+        "pair": 4,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.097787793551796
+      },
+      {
+        "pair": 4,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0820665447749152
+      },
+      {
+        "pair": 4,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0652094846192572
+      },
+      {
+        "pair": 4,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.064610505373303
+      },
+      {
+        "pair": 4,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0170447235458508
+      },
+      {
+        "pair": 4,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0247297972218259
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0799701310246845
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0905545927209706
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0931943393818981
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0824619188010565
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0784412058463573
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0587851419025789
+      },
+      {
+        "pair": 7,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0317901162637064
+      },
+      {
+        "pair": 7,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.0329137803565198
+      }
+    ]
+  },
+  "total2": {
+    "eligible": true,
+    "runner_exit": 0,
+    "checks": [
+      {
+        "pair": 2,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.1103703788052104
+      },
+      {
+        "pair": 2,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.1398851312236928
+      },
+      {
+        "pair": 2,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.1781452459023822
+      },
+      {
+        "pair": 2,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.2541701342466802
+      },
+      {
+        "pair": 2,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.4285275869593375
+      },
+      {
+        "pair": 2,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.8743066695434196
+      },
+      {
+        "pair": 2,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 7.524807680721554
+      },
+      {
+        "pair": 2,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 7.5372029030147205
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorPair2",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.1252855468516791
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorPair3",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.1517331378345255
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorPair4",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.1796892214521475
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorPair6",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.2556140613093474
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorPair8",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.419363705445824
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorPair12",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 1.8705832633730586
+      },
+      {
+        "pair": 3,
+        "function": "runTowerFactorLadder",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 7.491791823095363
+      },
+      {
+        "pair": 3,
+        "function": "runTowerCheckFactorization",
+        "hashes_match": true,
+        "faster": true,
+        "disjoint_regression": false,
+        "speedup": 7.64198584878508
+      }
+    ]
+  }
+}

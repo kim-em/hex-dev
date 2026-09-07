@@ -120,7 +120,12 @@ Supply the registered interpreter with `--pari-python` (or the explicit
 `HEX_PARI_BENCH_PYTHON` environment variable). It records Python, cypari2,
 and PARI versions and fails before timing if the provider is unavailable.
 It validates every named case, all five raw repeats, hashes, warmup, budgets,
-and derived timing summaries, then writes a series decision. Incomplete
+and derived timing summaries, then writes a series decision. Decision
+validation also requires accepted host pairs, the same source and executable
+for each arm across pairs, and opposite arm orders. Incomplete
 series retain their accepted pairs and have no retention verdict. Full
 preflight snapshots are retained to make unavailable-core decisions auditable;
 the high-index placement is a heuristic, not a reservation against other work.
+This runner is scoped to this issue's host and fixed protocol. It fails closed
+on an invalid export or preflight timeout and refuses to overwrite a series;
+its partial artifacts remain available without an automatic resumed verdict.

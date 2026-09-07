@@ -235,7 +235,6 @@ For one squarefree component `g`:
    constants. When the shifted component is monic and smaller than the lifted
    factor, recovery uses monic remainder division for the first Euclidean
    remainder and resumes the reference gcd chain with its remaining fuel.
-   Normalization returns an already-monic polynomial unchanged.
 7. Verify that the recovered factors reconstruct the component and pass the
    tower factorization checker.
 

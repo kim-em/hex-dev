@@ -370,6 +370,18 @@ The captured rational-squarefreeness path is only 2.05% inclusive, so eliminatin
 that duplication is not needed to remove the dominant exact-gcd coefficient
 growth.
 
+### Norm construction and gcd recovery
+
+Independent fixed-case comparisons retain two additional changes. The shifted
+bivariate norm input uses a descending Horner fold, avoiding the separate
+ascending-power accumulator. Recovery uses the public remainder-only division
+worker with identity leading-coefficient scaling when the shifted component is
+monic and smaller than its lifted norm factor. Its companion theorem proves
+exact equality with the reference gcd, including the unnormalised remainder
+representative and remaining fuel. All public reconstruction, irreducibility,
+ordering, multiplicity, and certificate checks remain in place.
+
+
 ## Comparator ratios
 
 The library SPEC declares one external comparator,
@@ -499,8 +511,8 @@ source commit and SHA-256. This is local shared-host evidence, not a
 release-quality verdict or a replacement for Phase-4 model coverage.
 
 Fresh PARI measurements remain informational and variable: in the two modular
-arms, degree-12 medians were 76.277 and 97.002 µs, giving raw Hex/PARI time
-ratios of 121.9 and 95.5. The corresponding protocol-overhead medians were
+arms, degree-12 medians were 76.277 and 97.002 µs, giving raw PARI/Hex time
+ratios of 0.00820 and 0.01047. The corresponding protocol-overhead medians were
 7.585 and 7.382 µs. These pairs establish the Hex before/after improvement;
 the comparator still has a substantial gap and performs no certificate replay.
 
@@ -529,6 +541,87 @@ ratio.
 | factor, degree 24 | 253.152 | 34.443 |
 | check, degree 24 | 125.242 | 16.711 |
 
+
+### Norm and recovery comparisons
+
+
+The [artifact manifest](bench-results/hex-number-field-tower-followup-manifest.json)
+contains complete exports and telemetry for two accepted opposite-order pairs
+per variant. The eight Hex hashes match throughout. Both isolated variants
+and their combination meet the registered retention criteria. These are
+ranges of paired speedups on the unchanged canonical degree-24 inputs:
+
+| variant against modular-check baseline | factor speedup | replay speedup |
+|---|---:|---:|
+| Horner norm construction | 1.018× | 1.019–1.022× |
+| monic first recovery remainder | 1.025–1.044× | 1.004–1.019× |
+| both changes | 1.017–1.032× | 1.025–1.033× |
+
+The smaller effects are variable across local pairs and are not additive.
+The 0.36% isolated recovery replay improvement in one pair is smaller than
+its repeat spread: baseline min/median/max 16.626/16.819/17.068 ms and
+candidate 16.466/16.759/17.085 ms. The retention rule requires both canonical
+medians to improve but excludes smaller-rung regressions only when ranges
+are disjoint; it is a selection rule, not a statistical significance test.
+No minimum effect size was registered, and none is inferred afterward.
+One isolated recovery degree-4 median increased by 0.53%; its repeat ranges
+overlap, so it is not a repeat-range-disjoint regression. The combined
+implementation improves every Hex median in both accepted pairs.
+
+A separate direct comparison of the combined implementation (`8d54c7158`)
+against the original executable gives the following ranges. These speedups
+are measured directly, not multiplied from the ablations:
+
+| operation | original median ms | combined median ms | paired speedup |
+|---|---:|---:|---:|
+| factor, degree 2 | 1.073–1.074 | 0.955–0.966 | 1.11–1.13× |
+| factor, degree 3 | 1.453–1.464 | 1.271–1.275 | 1.14–1.15× |
+| factor, degree 4 | 2.077–2.080 | 1.761–1.765 | 1.18× |
+| factor, degree 6 | 3.573–3.587 | 2.849–2.857 | 1.25–1.26× |
+| factor, degree 8 | 6.098–6.121 | 4.285–4.297 | 1.42–1.43× |
+| factor, degree 12 | 16.297–16.399 | 8.695–8.767 | 1.87× |
+| factor, degree 24 | 250.251–250.794 | 33.329–33.403 | 7.49–7.52× |
+| check, degree 24 | 124.527–124.651 | 16.295–16.538 | 7.54–7.64× |
+
+
+Fresh PARI 2.17.3/cypari2 2.2.4 measurements paired with the combined binary
+remain informational. Protocol-overhead medians are 7.236 and 7.290 µs;
+all rungs pass the 50% overhead-share eligibility threshold. The adjusted
+ratio is `(PARI median − overhead median) / Hex median`, with construction
+and serialization still charged to PARI. Values below are ranges across the
+two accepted pairs; ratios retain the PARI/Hex convention above.
+
+| n | Hex median ms | PARI median µs | raw ratio | adjusted ratio |
+|---:|---:|---:|---:|---:|
+| 2 | 0.955–0.966 | 28.924–29.080 | 0.02994–0.03046 | 0.02245–0.02282 |
+| 3 | 1.271–1.275 | 34.069–34.375 | 0.02672–0.02704 | 0.02105–0.02131 |
+| 4 | 1.761–1.765 | 39.551–39.616 | 0.02241–0.02250 | 0.01831–0.01836 |
+| 6 | 2.849–2.857 | 119.987–121.588 | 0.04212–0.04256 | 0.03958–0.04001 |
+| 8 | 4.285–4.297 | 47.611–48.016 | 0.01111–0.01118 | 0.00942–0.00948 |
+| 12 | 8.695–8.767 | 74.756–75.037 | 0.00856–0.00860 | 0.00773–0.00777 |
+
+The additional already-monic normalization variant (`9c6234e8e`) is **not
+retained**. Both accepted pairs improve factorization (1.012–1.013× at degree
+24 and 1.131–1.159× at degree 2), but replay is inconsistent: 16.271 to
+16.367 ms in one pair (0.6% slower), and 16.283 to 16.074 ms in the other.
+The registered rule requires improvement in both canonical replay medians.
+The complete negative retention decision and all rejected attempts remain in
+the manifest. This is an inconclusive replay effect, not evidence of a
+repeat-range-disjoint regression, and the criterion was not relaxed afterward.
+
+The original baseline commit is an ancestor of the retained GitHub PR ref
+`refs/pull/10077/head`. Unrelated graph-isomorphism changes between source
+checkpoints are outside the tower benchmark's computational imports. Saved
+binary hashes identify the executables; harness checkout metadata is not used
+as a substitute for their source provenance.
+
+The archived runners identify the code that collected each series. The final
+validator separately rechecks all 24 accepted exports after collection and
+records six `*-validated-decision.json` artifacts, including raw min/median/max
+values, source/binary consistency, accepted host status, and opposite arm
+orders. The five original/modular/norm/recovery/combined comparisons qualify;
+the additional normalization comparison does not.
+
 ## Profile
 
 ### Rational squarefreeness
@@ -542,8 +635,8 @@ candidate, so these are not renormalized into comparable within-target shares.
 In the candidate capture, recovery occupies 26.61%, shifted norm construction
 20.54%, integer factorization 10.00%, and the modular rational squarefreeness
 predicate 2.05% of the whole thread. Checked replay is still 48.56% inclusive;
-its work overlaps those phases. This identifies recovery and norm construction
-as the next targets without attributing the original loss to certificate
+its work overlaps those phases. These shares motivate the isolated recovery and norm-construction
+comparisons above without attributing the original loss to certificate
 checking alone.
 
 The captured helper is named `Norm.ratSquarefreeFast` at source `b4a02beaf`;
@@ -731,6 +824,7 @@ captures.
 
 | artefact | source commit / role | host state | SHA-256 |
 |---|---|---|---|
+| [factor follow-up manifest](bench-results/hex-number-field-tower-followup-manifest.json) | original `b8602c76a`, modular `8dd0f8e15`, isolated and combined variants; all accepted/rejected exports, exact runners, and validated decisions | paired core/sibling telemetry; local comparison evidence | `67c134cbe8044221771f3ba4df3f741f90882ef992d8bf416f060a36625d3d99` |
 | [original mode-1 export](bench-results/hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); passing unaffected models | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `65275d1f2dfb6fd41e1a962d44d27bc843ab75ed8a2d5a305df2d2aed7c4bfbb` |
 | [superseded fixed calibration](bench-results/hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json) | clean pre-rebase `ce03eb89b` (same patch now `9a9fe1e26`); retained measurements, but the negation/division/forward-map rows are not admissible mode-3 evidence | [CPU-19 postflight](bench-results/hex-number-field-tower-phase4-host-state-ce03eb89-chungus2-cpu19.json) | `391d48365634eb9cc3b02eb8801920e13034bc537777d6ebc6d5f2834769426e` |
 | [superseded seven-case mode-3 export](bench-results/hex-number-field-tower-phase4-final-mode3-d277c583-chungus2-cpu19.json) | clean pre-rebase `d277c583` (same patch now `c720b4aca`); earlier canonical-case calibration retained for provenance | [matching postflight](bench-results/hex-number-field-tower-phase4-host-state-d277c583-chungus2-cpu19.json) | `dcae0daaac0470764794b793606a005a83c845dd9af44a80f61ddad97e593f06` |
@@ -796,7 +890,19 @@ The computational and Mathlib tower libraries build, all 49 bench checks pass,
 and emitted fixtures remain byte-for-byte identical. The PARI oracle checks
 nine cases with no failures. Added regressions cover both bad-prime branches,
 rational denominators, repeated polynomials, zero/constants, and rejection of
-corrupted public factorization scalars and multiplicities.
+corrupted public factorization scalars and multiplicities. Recovery guards
+cover exact and nonzero first remainders and each fallback condition over
+rationals and towers of heights one and two; the Mathlib proof establishes
+equality with the reference gcd, including its remaining fuel.
+
+The final selected implementation passes
+`lake build HexNumberFieldTowerMathlib HexNumberFieldTower.Conformance
+hexnumberfieldtower_emit_fixtures hexnumberfieldtower_bench` (9,698 jobs).
+Its benchmark executable is byte-identical to the verified and measured
+combined executable from `8d54c7158`, SHA-256
+`d78f6616e823004c807ebcbd343656629e43857e8a3286827cf0293a8c905034`.
+All 49 checks include the six PARI comparators using the registered provider.
+The export validator's 19 unit tests pass and run in the existing CI job.
 
 ### Reference verification
 

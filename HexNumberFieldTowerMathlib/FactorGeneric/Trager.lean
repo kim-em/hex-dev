@@ -569,23 +569,6 @@ theorem tragerNorm_not_isUnit (level : Level) (lower : List Level)
   rw [HexPolyMathlib.natDegree_toPolynomial] at hzero
   omega
 
-/-- Skipping normalization of a monic input preserves the reference rescaling. -/
-theorem monic_eq_scale (levels : List Level) (hvalid : LevelsValid levels)
-    (hinjective : LevelSemantics.DenoteInjective levels)
-    (f : DensePoly (Arithmetic.Coeff levels)) :
-    Norm.monic f = if f.isZero then 0 else DensePoly.scale f.leadingCoeff⁻¹ f := by
-  let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  let : Field (Arithmetic.Coeff levels) :=
-    Norm.coeffFieldPoly levels hvalid hinjective hinv
-  unfold Norm.monic
-  split
-  · rfl
-  · split
-    · rename_i hmonic
-      apply (HexPolyMathlib.equiv (R := Arithmetic.Coeff levels)).injective
-      simp [HexPolyMathlib.toPolynomial_scale, hmonic]
-    · rfl
-
 /-- Monic normalisation only rescales by a unit: the interpretation of
 `Norm.monic f` is associated to the interpretation of `f`. -/
 theorem toPolynomial_monic_associated (levels : List Level)
@@ -605,7 +588,7 @@ theorem toPolynomial_monic_associated (levels : List Level)
     rw [DensePoly.isZero_eq_false_iff]
     exact Nat.pos_of_ne_zero fun hsize =>
       hf ((DensePoly.size_eq_zero_iff f).mp hsize)
-  rw [monic_eq_scale levels hvalid hinjective, hzero]
+  rw [Norm.monic, hzero]
   simp only [Bool.false_eq_true, ite_false]
   rw [HexPolyMathlib.toPolynomial_scale]
   exact associated_unit_mul_left _ _
@@ -637,7 +620,7 @@ theorem toPolynomial_monic_monic (levels : List Level)
     apply (HexPolyMathlib.equiv
       (R := Arithmetic.Coeff levels)).injective
     simpa using h
-  rw [monic_eq_scale levels hvalid hinjective, hzero]
+  rw [Norm.monic, hzero]
   simp only [Bool.false_eq_true, ite_false]
   rw [HexPolyMathlib.toPolynomial_scale, mul_comm]
   simpa only [HexPolyMathlib.leadingCoeff_toPolynomial] using
