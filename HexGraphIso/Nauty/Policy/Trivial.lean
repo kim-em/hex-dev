@@ -53,7 +53,9 @@ structure State (n : Nat) where
       { lab := b.1, ptn := b.2.1, active := b.2.2, numcells := p.numcells + 1,
         hint := 0, maxpos := 0, longcode := 0 } } }
 
-/-- Restore the saved parent while retaining the child's incumbent. -/
+/-- Restore the saved parent while retaining the child's incumbent.
+The exhaustive policy returns to its immediate parent; each recovery
+therefore consumes exactly one frame pushed by `child`. -/
 @[expose] def recover (st : State n) : State n :=
   match st.parents with
   | [] => st
@@ -64,7 +66,8 @@ structure State (n : Nat) where
   { st with best := some (incMax st.best st.frame.candidate) }
 
 /-- The exhaustive policy uses the specification's target selector and
-never removes a target position or returns past its immediate parent. -/
+never removes a target position or returns past its immediate parent.
+Sweep entries are offsets in the target cell. -/
 instance policy : Policy (State n) n where
   visit ctx level numcells st :=
     let out := visit ctx level numcells st
@@ -126,8 +129,6 @@ inductive Complete (ctx : Ctx n) (tcLevel : Nat) : Nat → Nat → RefineSt n �
       Complete ctx tcLevel (fuel + 1) level p
   | branch {fuel level : Nat} {p : RefineSt n}
       (nondiscrete : discreteAt (refine ctx level p.lab p.ptn p.active p.numcells).ptn level n = false)
-      (positive : let r := refine ctx level p.lab p.ptn p.active p.numcells
-        0 < (specMaketargetcell ctx r.lab r.ptn level tcLevel).2.2)
       (bounded : let r := refine ctx level p.lab p.ptn p.active p.numcells
         (specMaketargetcell ctx r.lab r.ptn level tcLevel).2.2 ≤ n)
       (children : let r := refine ctx level p.lab p.ptn p.active p.numcells

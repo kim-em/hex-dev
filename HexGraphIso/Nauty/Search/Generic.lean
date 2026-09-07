@@ -37,7 +37,9 @@ inductive Leaf where
   deriving BEq, Repr, Inhabited
 
 /-- The local operations of an individualization-refinement search.
-The state includes the partition and any policy-specific bookkeeping. -/
+The state includes the partition and any policy-specific bookkeeping.
+Sweep entries are indices below `n`; a policy may interpret them as
+vertex labels or target-cell offsets. -/
 class Policy (σ : Type) (n : Nat) where
   /-- Refine a node and return its cell count and code. -/
   visit : Ctx n → Nat → Nat → σ → Nat × Nat × σ
@@ -45,7 +47,7 @@ class Policy (σ : Type) (n : Nat) where
   recordFirst : Nat → Nat → σ → σ
   /-- Compare an off-path refinement code with the reference paths. -/
   compareCodes : Nat → Nat → σ → σ
-  /-- Choose a target position, its vertex set, and its size. -/
+  /-- Choose a target cell, its sweep entries, and its size. -/
   chooseTarget : Bool → Ctx n → Nat → Nat → Nat → σ → Int × VSet n × Nat × σ
   /-- Install the first discrete leaf. -/
   firstterminal : Nat → σ → σ
@@ -55,17 +57,17 @@ class Policy (σ : Type) (n : Nat) where
   leafExit : Leaf → Nat → σ → Exit × σ
   /-- Update the cheap-automorphism boundary. -/
   cheapCheck : Bool → Nat → σ → σ
-  /-- Individualize a target vertex. -/
+  /-- Individualize the child identified by a sweep entry. -/
   child : Bool → Nat → Nat → Nat → σ → σ
   /-- Update first-path controls after the leftmost child. -/
   afterChildFirst : Nat → Nat → σ → σ
-  /-- Remove a child's temporary fixed vertex. -/
+  /-- Remove a child's temporary bookkeeping. -/
   leaveChild : Nat → σ → σ
-  /-- Read a vertex's orbit representative. -/
+  /-- Read the representative used to skip a sweep entry. -/
   orbit : σ → Nat → Nat
-  /-- Restrict the remaining target vertices using the newest pair. -/
+  /-- Restrict the remaining sweep entries using the newest pair. -/
   shortprune : VSet n → σ → VSet n
-  /-- Restrict the remaining target vertices using the stored pairs. -/
+  /-- Restrict the remaining sweep entries using the stored pairs. -/
   longprune : VSet n → σ → VSet n
   /-- Restore the parent partition and comparison controls. -/
   recover : Nat → Nat → σ → σ

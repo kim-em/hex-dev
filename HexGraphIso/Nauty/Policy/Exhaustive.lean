@@ -111,7 +111,7 @@ theorem node_eq {ctx : Ctx n} {tcLevel fuel level : Nat} {p : RefineSt n}
     rw [node_step]
     simp only [visit, hd, ite_true, specNode, install, prefixKey, List.append_assoc,
       List.singleton_append]
-  | @branch fuel level p hd hpos hbound hchild ih =>
+  | @branch fuel level p hd hbound hchild ih =>
     subst p
     let ready := visit ctx level st.frame.partition.numcells st
     let r := ready.frame.partition
@@ -120,7 +120,7 @@ theorem node_eq {ctx : Ctx n} {tcLevel fuel level : Nat} {p : RefineSt n}
       let p := (child level t.1 o ready).frame.partition
       specNode ctx tcLevel fuel (level + 1) p.lab p.ptn p.active p.numcells
     let key := fun o => prefixKey ready.frame.codes (tail o)
-    change 0 < t.2.2 at hpos
+    have hpos : 0 < t.2.2 := Nat.succ_pos _
     change t.2.2 ≤ n at hbound
     have hnode : ∀ o, o < t.2.2 → ∀ best,
         Generic.node false ctx inf tcLevel fuel (level + 1) (ready.frame.partition.numcells + 1)
@@ -209,7 +209,7 @@ theorem complete {ctx : Ctx n} {tcLevel fuel level : Nat} {p : RefineSt n}
           specTargetcell ctx r.lab r.ptn level tcLevel + 1 = _
         rw [htc, hce]
         omega
-      refine .branch hd (by change 0 < t.2.2; omega) (by change t.2.2 ≤ n; omega) ?_
+      refine .branch hd (by change t.2.2 ≤ n; omega) ?_
       dsimp only
       intro o ho
       change o < t.2.2 at ho

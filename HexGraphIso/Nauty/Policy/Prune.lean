@@ -101,4 +101,83 @@ theorem Comparison.prune {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n} {nu
   rw [hf, hc]
   exact h.lower
 
+/-- The shared prune tail returns below the frozen comparison's
+receiving level only when the cheap boundary supplies its target. -/
+theorem pruneReturn_target (level : Nat) (st : Search n) :
+    ∃ target short, (pruneReturn level st).1 = .unwind target short ∧
+      (st.eqlevCanon.toNat ≤ target ∨ target = st.noncheaplevel - 1) := by
+  let save : Int := if Int.ofNat st.allsamelevel > st.eqlevCanon then
+    Int.ofNat st.allsamelevel - 1 else st.eqlevCanon
+  let target : Int := if Int.ofNat st.noncheaplevel ≤ save then
+    Int.ofNat st.noncheaplevel - 1 else save
+  have he : (pruneReturn level st).1 =
+      .unwind target.toNat ((level != st.noncheaplevel) && target != Int.ofNat st.gcaFirst) := by
+    unfold pruneReturn pushAuto
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst]
+    split
+    · split <;> rfl
+    · rfl
+  refine ⟨_, _, he, ?_⟩
+  have hsave : st.eqlevCanon ≤ save := by dsimp only [save]; split <;> omega
+  dsimp only [target]
+  split
+  · right
+    change ((st.noncheaplevel : Int) - 1).toNat = st.noncheaplevel - 1
+    omega
+  · left; omega
+
+/-- A downward code prune bounds each ancestor child at and above its
+receiving level. The prefix includes that child's code, one level below
+the receiving sweep, so it retains the first unequal comparison. -/
+theorem Comparison.prune_witness {ctx : Ctx n} {cs bs fs : List Nat}
+    {st : Search n} {numcells target : Nat}
+    (h : Comparison ctx cs bs fs st) (hnc : numcells ≠ n)
+    (hbad : (classify ctx cs.length numcells st).1 = .bad)
+    (htarget : st.eqlevCanon.toNat ≤ target) :
+    let out := (leafExit .bad cs.length st).2
+    ∀ t, target ≤ t → t < cs.length → ∀ key : Key n,
+      keyLe (prefixKey (cs.take (t + 1)) key) (incKey ctx bs out.canonlab) := by
+  obtain ⟨hneg, _⟩ := classify_pruned hnc hbad
+  have hc := congrArg (fun r => r.2.2.2.2.1) (leafExit_canonical .bad cs.length st)
+  change (leafExit .bad cs.length st).2.canonlab = st.canonlab at hc
+  intro out t ht hlen key
+  change keyLe (prefixKey (cs.take (t + 1)) key)
+    (incKey ctx bs (leafExit .bad cs.length st).2.canonlab)
+  rw [hc]
+  exact h.canonical.ancestor_le hneg (by omega) (by omega) key
+
+/-- A code-supported prune has the generic fragment bound and transports
+semantic ancestor coverage through its actual nonlocal exit. The cheap
+return below the unequal code is a separate local obligation. -/
+theorem Comparison.prune_result {ctx : Ctx n} {cs bs fs : List Nat}
+    {st : Search n} {numcells target : Nat} {short : Bool}
+    (h : Comparison ctx cs bs fs st) (hnc : numcells ≠ n)
+    (hbad : (classify ctx cs.length numcells st).1 = .bad)
+    (hexit : (leafExit .bad cs.length st).1 = .unwind target short)
+    (hlevel : 0 < cs.length) (ht : target ≤ cs.length - 1)
+    (htarget : st.eqlevCanon.toNat ≤ target) (key : Key n) :
+    let out := leafExit .bad cs.length st
+    Generic.Result (prefixKey cs key) (st.key ctx bs) (out.2.key ctx bs) (cs.length - 1)
+      (fun t best => ∀ tail : Key n, Generic.Covers (prefixKey (cs.take (t + 1)) tail) best)
+      out.1 := by
+  obtain ⟨hneg, hclass⟩ := classify_pruned hnc hbad
+  have hp := h.prune hnc hbad
+  dsimp only at hp
+  rw [hclass] at hp
+  have hkey := hp.2.2.1
+  refine ⟨?_, ?_⟩
+  · rw [hkey]
+    exact Generic.Bounded.refl _ _
+  · change Generic.ExitCover _ _ _ _ (leafExit .bad cs.length st).1
+    rw [hexit]
+    refine ⟨ht, ?_⟩
+    split
+    · refine ⟨incKey ctx bs st.canonlab, ?_, h.canonical.prefix_le hneg key⟩
+      rw [hkey]
+      simp only [Search.key, h.nonempty, ↓reduceIte]
+    · intro tail
+      refine ⟨incKey ctx bs (leafExit .bad cs.length st).2.canonlab, ?_, ?_⟩
+      · simp only [Search.key, h.nonempty, ↓reduceIte]
+      · exact h.prune_witness hnc hbad htarget target (Nat.le_refl _) (by omega) tail
+
 end Hex.GraphIso.Nauty.Engine

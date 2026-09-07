@@ -46,9 +46,9 @@ theorem compareCodes_depth {last level code : Nat} {st : Search n}
         rw [hl, hs] at ha
         omega
     · exact h.1
-  have href := (referencePolicy (n := n) (ctx := { g := #[] }) 0 0).compare level code st
-  have hcodes := congrArg (fun x : Array Nat × Array Int × Array Nat => x.1) href
-  change (compareCodes level code st).firstcode = st.firstcode at hcodes
+  have hcodes : (compareCodes level code st).firstcode = st.firstcode := by
+    unfold compareCodes
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.firstcode, ite_self]
   exact ⟨he, by rw [hcodes]; exact h.2⟩
 
 /-- Target selection can only lower first-code agreement. -/
