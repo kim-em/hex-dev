@@ -1230,7 +1230,7 @@ private theorem leadingCoeff_mul_monic (levels : List Level)
   let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
-  rw [Norm.monic]
+  rw [monic_eq_scale levels hvalid hinjective]
   split
   · rename_i hzero
     have hpzero : p = 0 :=
