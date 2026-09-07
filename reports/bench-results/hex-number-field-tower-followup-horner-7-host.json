@@ -1,0 +1,184 @@
+{
+  "label": "horner",
+  "attempt": 7,
+  "cpu": 17,
+  "siblings": [
+    17,
+    65
+  ],
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "8dd0f8e155ebd9c49cb08728dde3051fb8fec4a5",
+      "binary_sha256": "ff0dc3dfce3582d45dc7fa7e8bb5cb5b92fa1cca37dc3282c929d0c568b8f0df",
+      "command": [
+        "taskset",
+        "-c",
+        "17",
+        "/tmp/issue-10074-modular",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-horner-7-left.json"
+      ],
+      "export": "/tmp/issue-10074-horner-7-left.json",
+      "preflight": {
+        "17": 4.0,
+        "65": 4.0
+      },
+      "postflight": {
+        "17": 25.628140703517587,
+        "65": 30.456852791878173
+      },
+      "during": [
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 1.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.4975124378109453
+        },
+        {
+          "17": 100.0,
+          "65": 0.5
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.5
+        },
+        {
+          "17": 100.0,
+          "65": 0.4975124378109453
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 1.5
+        },
+        {
+          "17": 100.0,
+          "65": 0.5025125628140703
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.4975124378109453
+        },
+        {
+          "17": 100.0,
+          "65": 0.4975124378109453
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.5
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 0.0
+        },
+        {
+          "17": 100.0,
+          "65": 2.0100502512562812
+        },
+        {
+          "17": 100.0,
+          "65": 16.417910447761194
+        },
+        {
+          "17": 100.0,
+          "65": 2.5
+        },
+        {
+          "17": 38.0,
+          "65": 17.5
+        }
+      ],
+      "sibling_mean": {
+        "65": 1.4973507671025108
+      },
+      "exit_code": 0,
+      "accepted": false
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "8d54c7158c907005a9578431c9f43bd743b9827f",
+  "script_sha256": "5686e67b534b1e3cf036a2f71cb3ca6a93ce97c8362cb96dfa0a304d2f74884c",
+  "accepted": false
+}

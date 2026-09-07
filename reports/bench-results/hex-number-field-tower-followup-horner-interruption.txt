@@ -1,0 +1,19 @@
+accepted pairs 0
+accepted pairs 0
+horner 3 left False post {'3': 15.577889447236181, '51': 2.030456852791878} sibling {'51': 1.6627131995098863}
+accepted pairs 0
+horner 4 left True post {'1': 4.522613065326633, '49': 4.975124378109452} sibling {'49': 2.2876562367006232}
+horner 4 right False post {'1': 2.0100502512562812, '49': 0.9950248756218906} sibling {'49': 20.01481508075959}
+accepted pairs 0
+accepted pairs 0
+accepted pairs 0
+horner 7 left False post {'17': 25.628140703517587, '65': 30.456852791878173} sibling {'65': 1.4973507671025108}
+accepted pairs 0
+accepted pairs 0
+Traceback (most recent call last):
+  File "/tmp/issue-10074-compare.py", line 12, in <module>
+    cpu=idle_core.pick(avoid=frozenset(avoid)); siblings=sorted(idle_core.sibling_map()[cpu]); avoid.update(siblings)
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10074/scripts/bench/idle_core.py", line 129, in pick
+    raise RuntimeError(
+        "no idle core: every logical CPU or one of its SMT siblings is busy")
+RuntimeError: no idle core: every logical CPU or one of its SMT siblings is busy
