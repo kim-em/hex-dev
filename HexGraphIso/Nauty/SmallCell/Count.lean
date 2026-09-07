@@ -6,18 +6,20 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Equitable.Basic
+public import HexGraphIso.Nauty.Equitable.Cells
 import all HexGraphIso.Nauty.Equitable.Basic
 
 public section
 
-/-! Neighbour counts and balanced sets of distinguishing vertices. -/
+/-!
+Neighbour counts and balanced sets of distinguishing vertices. Equal
+counts balance the two directions of disagreement. On at most three
+vertices, disagreement is empty or consists of one opposite pair.
+-/
 
 namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
-
-/-! # Counting toolkit -/
 
 /-- The adjacency bit as a count. -/
 def bitCnt (r : VSet n) (v : Nat) : Nat := if r.mem v then 1 else 0
@@ -78,8 +80,6 @@ theorem cardInter_workset {lab : Array Nat} (r : VSet n) :
     have hidx : lo + len + 1 = lo + (len + 1) := by omega
     rw [hidx, bitCnt]
 
-/-! # Small cells in an equitable partition -/
-
 /-- Adjacency-bit counts are symmetric between vertices. -/
 theorem bitCnt_symm
     (hsymm : ∀ u w, u < n → w < n →
@@ -129,8 +129,18 @@ theorem countP_bits (r : VSet n) (l : List Nat) :
     simp only [List.countP_cons, List.map_cons, List.sum_cons, bitCnt]
     cases r.mem a <;> simp_all [Nat.add_comm]
 
-/-- Equitability balances vertices adjacent to the first member alone
-and vertices adjacent to the second member alone, in every cell. -/
+/-- Counting adjacent cell members agrees with the splitter-set count. -/
+theorem countP_cell {lab ptn : Array Nat} {level d e u : Nat}
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hD : (d, e) ∈ cells ptn level n) :
+    (List.range (e + 1 - d)).countP (fun o => (ctx.g[u]!).mem lab[d + o]!) =
+      (worksetOf n lab d e).cardInter ctx.g[u]! := by
+  rw [count_into_cell hps hend hinj hD]
+  simpa only [segN, List.countP_map, List.map_map, Function.comp_def] using
+    countP_bits ctx.g[u]! (segN lab d (e + 1 - d))
+
+/-- Equitability balances the two directions of disagreement in each cell. -/
 theorem differ_balance {lab ptn : Array Nat} {level c e d de u v : Nat}
     (hE : Equitable ctx level lab ptn)
     (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
@@ -233,5 +243,184 @@ theorem differ_pair {α : Type} (p q : α → Bool) {l : List α}
       have h2 : ¬(q w && !p w) = true := fun h =>
         hwb (countP_unique (p := fun x => q x && !p x) (by omega) hw hb h hpb)
       cases hpw : p w <;> cases hqw : q w <;> simp_all
+
+/-- Swapping both pairs preserves adjacency: the bits between two pair
+cells of an equitable partition satisfy the two cross equalities, in
+every configuration (empty, complete, or either matching). -/
+theorem pair_swap_eq {lab ptn : Array Nat} {level : Nat}
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {c d : Nat} (hP : (c, c + 1) ∈ cells ptn level n)
+    (hQ : (d, d + 1) ∈ cells ptn level n) :
+    (ctx.g[lab[c]!]!).mem lab[d]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d + 1]! ∧
+    (ctx.g[lab[c]!]!).mem lab[d + 1]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d]! := by
+  have hc1 : c + 1 < n := by
+    have := cells_bound (by omega) hend _ hP
+    omega
+  have hd1 : d + 1 < n := by
+    have := cells_bound (by omega) hend _ hQ
+    omega
+  have h1 := hE _ hP _ hQ 0 1 (by omega) (by omega)
+  simp only [Nat.add_zero] at h1
+  rw [count_into_cell hps hend hinj hQ,
+    count_into_cell hps hend hinj hQ,
+    show d + 1 + 1 - d = 2 by omega, sum_range_two, sum_range_two] at h1
+  simp only [Nat.add_zero] at h1
+  have h2 := hE _ hQ _ hP 0 1 (by omega) (by omega)
+  simp only [Nat.add_zero] at h2
+  rw [count_into_cell hps hend hinj hP,
+    count_into_cell hps hend hinj hP,
+    show c + 1 + 1 - c = 2 by omega, sum_range_two, sum_range_two] at h2
+  simp only [Nat.add_zero] at h2
+  rw [bitCnt_symm hsymm (hlb d (by omega)) (hlb c (by omega)),
+    bitCnt_symm hsymm (hlb d (by omega)) (hlb (c + 1) hc1),
+    bitCnt_symm hsymm (hlb (d + 1) hd1) (hlb c (by omega)),
+    bitCnt_symm hsymm (hlb (d + 1) hd1) (hlb (c + 1) hc1)] at h2
+  exact ⟨bitCnt_inj.mp (by omega), bitCnt_inj.mp (by omega)⟩
+
+/-- The matching configuration between two pair cells: each member of
+one pair is adjacent to exactly one member of the other, in one of the
+two consistent ways. -/
+def PairMatch (g : Array (VSet n)) (x y z t : Nat) : Prop :=
+  ((g[x]!).mem z = true ∧ (g[y]!).mem t = true ∧
+    (g[x]!).mem t = false ∧ (g[y]!).mem z = false) ∨
+  ((g[x]!).mem t = true ∧ (g[y]!).mem z = true ∧
+    (g[x]!).mem z = false ∧ (g[y]!).mem t = false)
+
+/-- Between two non-matching pair cells of an equitable partition the
+bits are insensitive to swapping either pair alone. -/
+theorem pair_eq_of_not_match {lab ptn : Array Nat} {level : Nat}
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {c d : Nat} (hP : (c, c + 1) ∈ cells ptn level n)
+    (hQ : (d, d + 1) ∈ cells ptn level n)
+    (hnm : ¬ PairMatch ctx.g lab[c]! lab[c + 1]! lab[d]! lab[d + 1]!) :
+    (ctx.g[lab[c]!]!).mem lab[d]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d]! ∧
+    (ctx.g[lab[c]!]!).mem lab[d + 1]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[d + 1]! := by
+  obtain ⟨h1, h2⟩ :=
+    pair_swap_eq hE hps hend hinj hlb hsymm hP hQ
+  rw [PairMatch] at hnm
+  rcases hp : (ctx.g[lab[c]!]!).mem lab[d]! with _ | _ <;>
+    rcases hq : (ctx.g[lab[c]!]!).mem lab[d + 1]! with _ | _ <;>
+      rw [hp] at h1 <;> rw [hq] at h2 <;>
+        rw [hp, hq] at hnm <;> simp_all
+
+/-- The members of a pair cell have identical bits at every member of
+a cell of odd size: parity forces the count between them to be empty
+or complete. -/
+theorem pair_odd_eq {lab ptn : Array Nat} {level : Nat}
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    {c d e : Nat} (hP : (c, c + 1) ∈ cells ptn level n)
+    (hD : (d, e) ∈ cells ptn level n)
+    (hodd : (e + 1 - d) % 2 = 1) :
+    ∀ o, o < e + 1 - d →
+      (ctx.g[lab[c]!]!).mem lab[d + o]! =
+        (ctx.g[lab[c + 1]!]!).mem lab[d + o]! := by
+  have hc1 : c + 1 < n := by
+    have := cells_bound (by omega) hend _ hP
+    omega
+  have hde : d ≤ e := cells_le _ hD
+  have he : e < n := by
+    have := cells_bound (by omega) hend _ hD
+    omega
+  have hxy := hE _ hP _ hD 0 1 (by omega) (by omega)
+  simp only [Nat.add_zero] at hxy
+  rw [count_into_cell hps hend hinj hD,
+    count_into_cell hps hend hinj hD]
+    at hxy
+  have hB : ∀ o, o < e + 1 - d →
+      bitCnt ctx.g[lab[c]!]! lab[d + o]! +
+        bitCnt ctx.g[lab[c + 1]!]! lab[d + o]! =
+      bitCnt ctx.g[lab[c]!]! lab[d]! +
+        bitCnt ctx.g[lab[c + 1]!]! lab[d]! := by
+    intro o ho
+    have h := hE _ hD _ hP o 0 (by omega) (by omega)
+    simp only [Nat.add_zero] at h
+    rw [count_into_cell hps hend hinj hP,
+      count_into_cell hps hend hinj hP,
+      show c + 1 + 1 - c = 2 by omega, sum_range_two, sum_range_two]
+      at h
+    simp only [Nat.add_zero] at h
+    rw [bitCnt_symm hsymm (hlb (d + o) (by omega)) (hlb c (by omega)),
+      bitCnt_symm hsymm (hlb (d + o) (by omega)) (hlb (c + 1) hc1),
+      bitCnt_symm hsymm (hlb d (by omega)) (hlb c (by omega)),
+      bitCnt_symm hsymm (hlb d (by omega)) (hlb (c + 1) hc1)] at h
+    exact h
+  have hsum : ((List.range (e + 1 - d)).map fun o =>
+      bitCnt ctx.g[lab[c]!]! lab[d + o]! +
+        bitCnt ctx.g[lab[c + 1]!]! lab[d + o]!).sum =
+      (e + 1 - d) * (bitCnt ctx.g[lab[c]!]! lab[d]! +
+        bitCnt ctx.g[lab[c + 1]!]! lab[d]!) := by
+    rw [List.map_congr_left fun o ho =>
+      hB o (List.mem_range.mp ho), sum_range_const]
+  rw [sum_map_add] at hsum
+  have hcD : bitCnt ctx.g[lab[c]!]! lab[d]! +
+      bitCnt ctx.g[lab[c + 1]!]! lab[d]! ≤ 2 := by
+    have := bitCnt_le_one ctx.g[lab[c]!]! lab[d]!
+    have := bitCnt_le_one ctx.g[lab[c + 1]!]! lab[d]!
+    omega
+  intro o ho
+  have hcases : bitCnt ctx.g[lab[c]!]! lab[d]! +
+      bitCnt ctx.g[lab[c + 1]!]! lab[d]! = 0 ∨
+    bitCnt ctx.g[lab[c]!]! lab[d]! +
+      bitCnt ctx.g[lab[c + 1]!]! lab[d]! = 1 ∨
+    bitCnt ctx.g[lab[c]!]! lab[d]! +
+      bitCnt ctx.g[lab[c + 1]!]! lab[d]! = 2 := by omega
+  rcases hcases with h0 | h1 | h2
+  · rw [h0, Nat.mul_zero] at hsum
+    have hx0 : ((List.range (e + 1 - d)).map fun o =>
+        bitCnt ctx.g[lab[c]!]! lab[d + o]!).sum = 0 := by omega
+    have hy0 : ((List.range (e + 1 - d)).map fun o =>
+        bitCnt ctx.g[lab[c + 1]!]! lab[d + o]!).sum = 0 := by omega
+    rw [bitCnt_eq_zero.mp (sum_range_eq_zero _ hx0 o ho),
+      bitCnt_eq_zero.mp (sum_range_eq_zero _ hy0 o ho)]
+  · rw [h1, Nat.mul_one] at hsum
+    omega
+  · rw [h2] at hsum
+    have hx : ((List.range (e + 1 - d)).map fun o =>
+        bitCnt ctx.g[lab[c]!]! lab[d + o]!).sum = e + 1 - d := by
+      have hlx := sum_range_le
+        (fun o => bitCnt ctx.g[lab[c]!]! lab[d + o]!) (e + 1 - d)
+        fun o _ => bitCnt_le_one ..
+      have hly := sum_range_le
+        (fun o => bitCnt ctx.g[lab[c + 1]!]! lab[d + o]!) (e + 1 - d)
+        fun o _ => bitCnt_le_one ..
+      omega
+    have hy : ((List.range (e + 1 - d)).map fun o =>
+        bitCnt ctx.g[lab[c + 1]!]! lab[d + o]!).sum = e + 1 - d := by
+      have hlx := sum_range_le
+        (fun o => bitCnt ctx.g[lab[c]!]! lab[d + o]!) (e + 1 - d)
+        fun o _ => bitCnt_le_one ..
+      omega
+    rw [bitCnt_eq_one.mp (sum_range_eq_len _
+        (fun o _ => bitCnt_le_one ..) hx o ho),
+      bitCnt_eq_one.mp (sum_range_eq_len _
+        (fun o _ => bitCnt_le_one ..) hy o ho)]
+
+/-- Equal internal degrees in a four-element cell make complementary
+pairs equally adjacent. -/
+theorem reg4_comp {e01 e02 e03 e12 e13 e23 : Nat}
+    (h01 : e01 + e02 + e03 = e01 + e12 + e13)
+    (h02 : e01 + e02 + e03 = e02 + e12 + e23)
+    (h03 : e01 + e02 + e03 = e03 + e13 + e23) :
+    e01 = e23 ∧ e02 = e13 ∧ e03 = e12 := by
+  omega
 
 end Hex.GraphIso.Nauty

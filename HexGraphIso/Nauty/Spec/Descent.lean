@@ -6,41 +6,21 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCell.Branch
+public import HexGraphIso.Nauty.Equitable.Individualize
 import all HexGraphIso.Nauty.Equitable.Basic
-public import HexGraphIso.Nauty.Equitable.Step
 import all HexGraphIso.Nauty.Equitable.Step
-public import HexGraphIso.Nauty.Equitable.Fix
 import all HexGraphIso.Nauty.Equitable.Fix
 
 public section
 
 /-!
-The bisimulation carrying the branch step down a cheapautom subtree.
-
-`HexGraphIso.Nauty.SmallCell.Branch` relates the two children of a pair
-target cell by the flip at a single level. This file carries the
-relation down the subtree. The mechanism is a bisimulation: a state
-whose labelling is cell-equivalent to a renamed copy of another
-state's stays so after both individualize corresponding vertices and
-refine (`stPerm_child`), so a whole descent below one state mirrors
-below the other (`descends_transport`), and at discrete leaves the
-renaming is absorbed by `leafRows_map` (`descends_leafRows`). Gluing
-`branch_step` at the deviation level gives the single-deviation
-theorem: any leaf reached below the second child of a pair target has
-the same leaf rows as the mirrored leaf below the first child
-(`deviation_leafRows`).
+The individualize-and-refine step, its iteration invariant, and its
+equivariance under graph automorphisms and within-cell permutations.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
-
-/-! # Window effect of individualization
-
-`breakout` rotates the target value to the front of its cell window
-and touches nothing outside it; the rotated window is the value
-followed by the window with its first occurrence erased. -/
 
 /-- The rotated target window. -/
 theorem breakout_segN_target {lab ptn : Array Nat}
@@ -88,8 +68,6 @@ theorem breakout_segN_outside {lab ptn : Array Nat}
   · exact breakout_go_outside _ _ _ _ _ (by omega)
   · exact breakout_go_outside_right _ len _ _ _ hw _ (by omega)
 
-/-! # List toolkit -/
-
 /-- Erasure commutes with an injective map. -/
 private theorem map_erase_of_inj {f : Nat → Nat}
     (hinj : ∀ a b, f a = f b → a = b) :
@@ -117,13 +95,6 @@ private theorem perm_erase {l1 l2 : List Nat} (a : Nat)
   · have hm2 : a ∉ l2 := fun hx => hm (h.mem_iff.mpr hx)
     rw [List.erase_of_not_mem hm, List.erase_of_not_mem hm2]
     exact h
-
-/-! # Corresponding individualization
-
-Two labellings whose cells are equivalent up to a renaming stay so
-after individualizing corresponding vertices: the split singletons
-match by the correspondence, the remainders by erasing it, and the
-untouched cells by the parent equivalence. -/
 
 /-- Individualizing corresponding vertices preserves the renamed cell
 equivalence on the split partition. -/
@@ -256,8 +227,6 @@ theorem breakout_cellsPerm_map {σ : Renaming n}
       omega : ((breakout n labU ptn (level + 1) tc
         labU[tc + oU]!).1.map σ.toFun).size ≤ a)]
 
-/-! # Renamed and permuted labelling facts -/
-
 /-- A renaming keeps every entry a vertex. -/
 theorem labOk_map {n : Nat} (σ : Renaming n) {lab : Array Nat}
     (h : LabOk lab n) : LabOk (lab.map σ.toFun) n := by
@@ -287,8 +256,6 @@ theorem labOk_of_perm {lab lab' : Array Nat} {nn : Nat}
   obtain ⟨o, ho, hov⟩ := mem_segN_iff.mp (hp.mem_iff.mp hm)
   rw [← hov]
   exact h (0 + o) (by omega)
-
-/-! # The subtree step and its node invariant -/
 
 /-- One individualize-and-refine step of the search subtree. -/
 @[expose] def childSt (ctx : Ctx n) (level : Nat) (st : RefineSt n)
@@ -449,8 +416,6 @@ theorem iterOk_of_stPerm {σ : Renaming n} {V U : RefineSt n}
     rw [← hptn]
     exact hU.vals q hq
 
-/-! # The bisimulation step -/
-
 /-- Cell equivalence up to a row-preserving renaming survives
 individualizing corresponding vertices and refining. -/
 theorem stPerm_child {σ : Renaming n} {V U : RefineSt n}
@@ -516,8 +481,6 @@ theorem stPerm_child {σ : Renaming n} {V U : RefineSt n}
       (U.ptn.set! tc (level + 1)) (VSet.empty.insert tc) (U.numcells + 1)))
   rw [hptn, hnum]
   exact h1
-
-/-! # Descents through the subtree -/
 
 /-- A descent: a sequence of individualize-and-refine steps, each at a
 nontrivial cell of the current partition. -/

@@ -6,38 +6,24 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.SmallCell.Guard
-import all HexGraphIso.Nauty.Equitable.Basic
+public import HexGraphIso.Nauty.Equitable.Cells
 public import HexGraphIso.Nauty.Equitable.Step
-import all HexGraphIso.Nauty.Equitable.Step
 public import HexGraphIso.Nauty.Equitable.Fix
+import all HexGraphIso.Nauty.Equitable.Basic
+import all HexGraphIso.Nauty.Equitable.Step
 import all HexGraphIso.Nauty.Equitable.Fix
 
 public section
 
 /-!
-The cheapautom descent and the branch step at a pair target.
-
-`HexGraphIso.Nauty.SmallCell.Guard` proves the guard characterization
-and the flip theorem. This file carries them down the search subtree:
-the descent seed (individualize-and-refine preserves equitability),
-the guard's cell-size consequences, and the branch step, in which the
-two children of a pair target cell refine to states related by the
-flip and collapse at a discrete child to equal leaf rows.
+Individualization preserves the refinement invariant. Splitting off one
+vertex and refining from its singleton yields another equitable partition.
+The labelling remains injective, and child cells lie inside parent cells.
 -/
 
 namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
-
-/-! # The descent seed
-
-Individualizing a vertex of an equitable partition and refining with
-the singleton active produces an equitable partition again: the
-certificate invariant's entry seed is the parent's equitability, with
-the split-off singleton as the one active certificate cell. These are
-the entry facts `refine_equitable` consumes at every node of a search
-subtree. -/
 
 section Descent
 
@@ -1060,13 +1046,6 @@ theorem equitable_breakout
 
 end Package
 
-/-! # The guard's cell-size consequences
-
-In the first branch of `cheapautom`'s guard the defect is at most the
-nontrivial cell count plus one, which forces every nontrivial cell to
-a pair except at most one triple; in particular every non-pair cell
-has odd size, the `hOdd` hypothesis of the flip theorem. -/
-
 section Sizes
 
 variable {ptn : Array Nat} {level nn : Nat}
@@ -1074,14 +1053,6 @@ variable {ptn : Array Nat} {level nn : Nat}
 end Sizes
 
 end Descent
-
-/-! # The flip as a renaming
-
-The branch step transports one child's refinement to the other's
-through `refine_map`, which consumes a `Renaming` and a `RowsMap`.
-A bounded involution extends by the identity beyond the vertex range
-to a renaming, and `flip_rows`'s conclusion is exactly the rows-map
-fact for it. -/
 
 /-- A bounded involution, extended by the identity beyond the vertex
 range, as a renaming. -/
@@ -1140,13 +1111,6 @@ theorem rowsMap_of_flip_rows {f : Nat → Nat}
   exact image_congr _ fun w hw =>
     (renamingOfFlip_at hfb hinvol hw).symm
 
-/-! # Maximal runs and the cell list
-
-`cellsPerm` quantifies over `IsCell` runs; the branch-step
-classification works on the `cells` list. The conversion: an in-range
-maximal run is a member of the list, a run beyond the array bound is a
-phantom singleton, and no run crosses the bound. -/
-
 /-- Reads beyond the array bound default. -/
 theorem getElem!_oob {arr : Array Nat} {q : Nat}
     (h : arr.size ≤ q) : arr[q]! = 0 := by
@@ -1187,13 +1151,6 @@ theorem isCell_no_cross {ptn : Array Nat} {level a len : Nat}
   · exfalso
     have hop := hint (ptn.size - 1) (by omega) (by omega)
     omega
-
-/-! # The branch step: the two children of a pair target
-
-Individualizing either member of a pair target cell produces, before
-refinement, labellings that agree as cell contents of the split
-partition after composing the first child with the flip of the pair's
-matching component. -/
 
 section Branch
 

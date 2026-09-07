@@ -6,15 +6,19 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Equitable.Basic
+public import HexGraphIso.Nauty.SmallCell.Count
+public import HexGraphIso.Nauty.Spec.Descent
+import all HexGraphIso.Nauty.Equitable.Basic
+import all HexGraphIso.Nauty.Equitable.Step
+import all HexGraphIso.Nauty.Equitable.Fix
 
 public section
 
 /-!
-Adjacency preservation by disjoint transpositions. A pair relation specifies
-the two members of each transposition. Fixed vertices must have equal
-adjacency to those members, and adjacency between pairs must agree under
-simultaneous exchange.
+Disjoint transpositions preserve adjacency precisely when fixed vertices
+see the members of every pair alike and adjacency between pairs agrees
+under simultaneous exchange. Cell preservation is closed under composition
+and converts a bounded involution into a cell-stabilizing renaming.
 -/
 
 namespace Hex.GraphIso.Nauty
@@ -138,10 +142,6 @@ theorem rows_of_bits {f : Nat → Nat}
     rw [hinvol z hz] at h
     exact h
   · rw [VSet.mem_of_ge (by omega), VSet.mem_of_ge (by omega)]
-
-
-
-/-! # The single swap -/
 
 @[expose] def sw1 (u v z : Nat) : Nat :=
   if z = u then v else if z = v then u else z
@@ -317,8 +317,6 @@ theorem sw2_bits
       grind
 
 end Sw2
-
-/-! # The triple swap -/
 
 @[expose] def sw3 (u v x y a b z : Nat) : Nat :=
   if z = u then v else if z = v then u
@@ -504,5 +502,355 @@ theorem sw2_comp {n u v x y : Nat} (h : Sw2Ok n u v x y) (z : Nat) :
 theorem sw3_comp {n u v x y a b : Nat} (h : Sw3Ok n u v x y a b) (z : Nat) :
     sw3 u v x y a b z = sw2 u v x y (sw1 a b z) := by
   grind [Sw3Ok, sw1, sw2, sw3]
+
+private theorem mapNodup {f : Nat → Nat}
+    (hinj : ∀ a b, f a = f b → a = b) :
+    ∀ (l : List Nat), l.Nodup → (l.map f).Nodup
+  | [], _ => by simp
+  | a :: t, h => by
+    rw [List.map_cons, List.nodup_cons]
+    rw [List.nodup_cons] at h
+    refine ⟨fun hmem => ?_, mapNodup hinj t h.2⟩
+    obtain ⟨b, hb, hfb⟩ := List.mem_map.mp hmem
+    rw [hinj b a hfb] at hb
+    exact h.1 hb
+
+/-- A duplicate-free list included in a list of no greater length is a
+permutation of it. -/
+theorem perm_of_nodup_subset :
+    ∀ (l₁ l₂ : List Nat), l₁.Nodup → (∀ x ∈ l₁, x ∈ l₂) →
+      l₂.length ≤ l₁.length → l₁.Perm l₂
+  | [], l₂, _, _, hlen => by
+    have h0 : l₂.length = 0 := by
+      simp only [List.length_nil] at hlen
+      omega
+    rw [List.length_eq_zero_iff.mp h0]
+  | a :: t, l₂, hnd, hsub, hlen => by
+    have ha : a ∈ l₂ := hsub a List.mem_cons_self
+    have hperm2 := List.perm_cons_erase ha
+    rw [List.nodup_cons] at hnd
+    have hsub' : ∀ x ∈ t, x ∈ l₂.erase a := by
+      intro x hx
+      have hxl : x ∈ l₂ := hsub x (List.mem_cons_of_mem _ hx)
+      have hxa : x ≠ a := fun hcon => hnd.1 (hcon ▸ hx)
+      exact (List.mem_erase_of_ne hxa).mpr hxl
+    have hlen2 : l₂.length = (l₂.erase a).length + 1 :=
+      hperm2.length_eq
+    have hrec := perm_of_nodup_subset t (l₂.erase a) hnd.2 hsub'
+      (by simp only [List.length_cons] at hlen; omega)
+    exact (hrec.cons a).trans hperm2.symm
+
+/-- Sums are invariant under permutation. -/
+theorem sum_of_perm {l₁ l₂ : List Nat} (h : l₁.Perm l₂) :
+    l₁.sum = l₂.sum := by
+  induction h with
+  | nil => rfl
+  | cons a _ ih => rw [List.sum_cons, List.sum_cons, ih]
+  | swap a b l =>
+    rw [List.sum_cons, List.sum_cons, List.sum_cons, List.sum_cons]
+    omega
+  | trans _ _ ih₁ ih₂ => rw [ih₁, ih₂]
+
+private theorem countP_pos_extract {p : Nat → Bool} :
+    ∀ (l : List Nat), 0 < l.countP p → ∃ w ∈ l, p w = true
+  | a :: t, h => by
+    rw [List.countP_cons] at h
+    rcases Decidable.em (p a = true) with hpa | hpa
+    · exact ⟨a, List.mem_cons_self, hpa⟩
+    · rw [ite_eq_right hpa] at h
+      obtain ⟨w, hw, hpw⟩ := countP_pos_extract t (by omega)
+      exact ⟨w, List.mem_cons_of_mem _ hw, hpw⟩
+
+/-- A permutation of `range k` from `k` distinct bounded values. -/
+theorem range_perm_of_distinct {l : List Nat} {k : Nat}
+    (hlen : l.length = k) (hnd : l.Nodup)
+    (hbd : ∀ x ∈ l, x < k) : l.Perm (List.range k) :=
+  perm_of_nodup_subset l (List.range k) hnd
+    (fun x hx => List.mem_range.mpr (hbd x hx))
+    (by rw [List.length_range, hlen]; exact Nat.le_refl _)
+
+/-- A sum over `range k` rewritten through `k` distinct bounded
+indices. -/
+theorem sum_range_of_distinct {l : List Nat} {k : Nat}
+    (F : Nat → Nat) (hlen : l.length = k) (hnd : l.Nodup)
+    (hbd : ∀ x ∈ l, x < k) :
+    ((List.range k).map F).sum = (l.map F).sum :=
+  (sum_of_perm ((range_perm_of_distinct hlen hnd hbd).map F)).symm
+
+private theorem segN_nodup {lab : Array Nat} {n lo : Nat}
+    (hinj : LabInj lab n) :
+    ∀ len, lo + len ≤ n → (segN lab lo len).Nodup := by
+  intro len
+  induction len generalizing lo with
+  | zero => intro _; rw [segN_zero]; simp
+  | succ len ih =>
+    intro hbd
+    rw [segN_cons, List.nodup_cons]
+    refine ⟨fun hmem => ?_, ih (lo := lo + 1) (by omega)⟩
+    obtain ⟨o, ho, heq⟩ := mem_segN_iff.mp hmem
+    have := hinj (lo + 1 + o) lo (by omega) (by omega) heq
+    omega
+
+/-- A renaming permuting every cell's members within the cell is a
+cell-contents self-equivalence of the labelling. -/
+theorem cellsPerm_self_setwise {lab ptn : Array Nat} {level : Nat}
+    {σ : Renaming n}
+    (hps : ptn.size = n) (hlsz : lab.size = n)
+    (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : LabInj lab n)
+    (hset : ∀ p ∈ cells ptn level n, ∀ o, o < p.2 + 1 - p.1 →
+      ∃ o', o' < p.2 + 1 - p.1 ∧
+        σ.toFun lab[p.1 + o]! = lab[p.1 + o']!) :
+    cellsPerm ptn level lab (lab.map σ.toFun) := by
+  intro α len hIs
+  rcases Decidable.em (α < n) with han | han
+  · have hcross : α + len ≤ n := by
+      have := isCell_no_cross hend hIs (by omega)
+      omega
+    have hlen0 : 0 < len := hIs.1
+    have hmem : (α, α + len - 1) ∈ cells ptn level n :=
+      mem_cells_of_isCell (by omega) hend hIs han (by omega)
+    have hsegm : segN (lab.map σ.toFun) α len =
+        (segN lab α len).map σ.toFun := segN_map (by omega)
+    rw [hsegm]
+    refine (perm_of_nodup_subset _ _
+      (mapNodup σ.inj _ (segN_nodup hinj len hcross)) ?_ ?_).symm
+    · intro w hw
+      obtain ⟨z, hz, rfl⟩ := List.mem_map.mp hw
+      obtain ⟨o, ho, rfl⟩ := mem_segN_iff.mp hz
+      obtain ⟨o', ho', heq⟩ := hset _ hmem o (by omega)
+      rw [heq]
+      exact mem_segN_iff.mpr ⟨o', by omega, rfl⟩
+    · rw [segN_length, List.length_map, segN_length]
+      exact Nat.le_refl _
+  · have hlen1 : len = 1 := isCell_oob hIs (by omega)
+    rw [hlen1, segN_cons, segN_zero, segN_cons, segN_zero,
+      getElem!_oob (by omega : lab.size ≤ α),
+      getElem!_oob (by rw [Array.size_map]; omega :
+        (lab.map σ.toFun).size ≤ α)]
+
+/-- The setwise self-equivalence packaged as `StPerm`, for a raw
+involution. -/
+theorem stPerm_self_setwise {f : Nat → Nat} {st : RefineSt n}
+    {level : Nat}
+    (hok : StOk n level st) (hinj : LabInj st.lab n)
+    (hfb : ∀ v, v < n → f v < n)
+    (hinvol : ∀ v, v < n → f (f v) = v)
+    (hset : ∀ p ∈ cells st.ptn level n, ∀ o, o < p.2 + 1 - p.1 →
+      ∃ o', o' < p.2 + 1 - p.1 ∧
+        f st.lab[p.1 + o]! = st.lab[p.1 + o']!) :
+    StPerm level st (mapSt (renamingOfFlip f n hfb hinvol) st) := by
+  have hlb : ∀ i, i < n → st.lab[i]! < n := fun i hi =>
+    hok.labOk i (by rw [hok.labSize]; omega)
+  refine ⟨rfl, rfl, rfl, rfl, rfl, rfl, ?_, ?_⟩
+  · show (st.lab.map _).size = st.lab.size
+    rw [Array.size_map]
+  · show cellsPerm st.ptn level st.lab
+      (st.lab.map (renamingOfFlip f n hfb hinvol).toFun)
+    refine cellsPerm_self_setwise hok.ptnSize hok.labSize hok.ptnEnd
+      hinj ?_
+    intro p hp o ho
+    obtain ⟨o', ho', heq⟩ := hset p hp o ho
+    have hbd : p.2 < st.ptn.size :=
+      cells_bound (by rw [hok.ptnSize]; exact Nat.le_refl _)
+        hok.ptnEnd _ hp
+    have hle := cells_le _ hp
+    rw [hok.ptnSize] at hbd
+    refine ⟨o', ho', ?_⟩
+    rw [renamingOfFlip_at hfb hinvol (hlb (p.1 + o) (by omega))]
+    exact heq
+
+/-- A vertex map sends every cell into itself. -/
+@[expose] def CellMap (st : RefineSt n) (level : Nat) (f : Nat → Nat) : Prop :=
+  ∀ p ∈ cells st.ptn level n, ∀ o, o < p.2 + 1 - p.1 →
+    ∃ o', o' < p.2 + 1 - p.1 ∧ f st.lab[p.1 + o]! = st.lab[p.1 + o']!
+
+/-- Composing maps that preserve each cell preserves each cell. -/
+theorem CellMap.comp {st : RefineSt n} {level : Nat} {f g : Nat → Nat}
+    (hf : CellMap st level f) (hg : CellMap st level g) :
+    CellMap st level (fun v => f (g v)) := by
+  intro p hp o ho
+  obtain ⟨a, ha, he⟩ := hg p hp o ho
+  obtain ⟨b, hb, he'⟩ := hf p hp a ha
+  exact ⟨b, hb, (congrArg f he).trans he'⟩
+
+/-- Swapping two members of one cell preserves all cells. -/
+theorem sw1_cells {st : RefineSt n} {level c e a b : Nat}
+    (hok : StOk n level st) (hinj : LabInj st.lab n)
+    (hc : (c, e) ∈ cells st.ptn level n)
+    (ha : a ≤ e - c) (hb : b ≤ e - c) (hab : a ≠ b) :
+    CellMap st level (sw1 st.lab[c + a]! st.lab[c + b]!) := by
+  have hpsz := hok.ptnSize
+  have hce := cells_le _ hc
+  have he : e < n := by
+    have := cells_bound (by omega) hok.ptnEnd _ hc
+    rw [hok.ptnSize] at this
+    exact this
+  have huv : st.lab[c + a]! ≠ st.lab[c + b]! := by
+    intro h
+    have := hinj _ _ (by omega) (by omega) h
+    omega
+  intro p hp o ho
+  have hpbd : p.2 < n := by
+    have := cells_bound (by omega) hok.ptnEnd _ hp
+    rw [hok.ptnSize] at this
+    exact this
+  have hple := cells_le _ hp
+  have hsame : ∀ t, t ≤ e - c → st.lab[p.1 + o]! = st.lab[c + t]! → p = (c, e) := by
+    intro t ht h
+    have hpos := hinj _ _ (by omega) (by omega) h
+    exact cells_eq_of_shared (by omega) hok.ptnEnd hp hc
+      (j := p.1 + o) (by omega) (by omega) (by omega) (by omega)
+  by_cases hua : st.lab[p.1 + o]! = st.lab[c + a]!
+  · have hpc := hsame a ha hua
+    subst p
+    exact ⟨b, by omega, by rw [hua, sw1_u]⟩
+  by_cases hub : st.lab[p.1 + o]! = st.lab[c + b]!
+  · have hpc := hsame b hb hub
+    subst p
+    exact ⟨a, by omega, by rw [hub, sw1_v huv]⟩
+  exact ⟨o, ho, sw1_fix hua hub⟩
+
+/-- A disjoint double swap preserves cells when its two swaps do. -/
+theorem sw2_cells {st : RefineSt n} {level u v x y : Nat}
+    (h : Sw2Ok n u v x y)
+    (h1 : CellMap st level (sw1 u v)) (h2 : CellMap st level (sw1 x y)) :
+    CellMap st level (sw2 u v x y) := by
+  simpa only [CellMap, sw2_comp h] using h1.comp h2
+
+/-- A disjoint triple swap preserves cells when its three swaps do. -/
+theorem sw3_cells {st : RefineSt n} {level u v x y a b : Nat}
+    (h : Sw3Ok n u v x y a b)
+    (h1 : CellMap st level (sw1 u v)) (h2 : CellMap st level (sw1 x y))
+    (h3 : CellMap st level (sw1 a b)) : CellMap st level (sw3 u v x y a b) := by
+  have h2ok : Sw2Ok n u v x y := by
+    unfold Sw3Ok at h
+    unfold Sw2Ok
+    omega
+  simpa only [CellMap, sw3_comp h] using (sw2_cells h2ok h1 h2).comp h3
+
+section Flip
+
+variable {lab ptn : Array Nat} {level : Nat} {S : Nat → Prop}
+  {f : Nat → Nat}
+
+/-- The members of a flipped pair have identical bits at every member
+of an unflipped cell, given matching closure and odd unflipped
+sizes. -/
+private theorem flip_bit_aux
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hSclosed : ∀ p ∈ cells ptn level n,
+      ∀ q ∈ cells ptn level n, S p.1 → q.2 = q.1 + 1 →
+        PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
+        S q.1)
+    (hOdd : ∀ q ∈ cells ptn level n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1)
+    {c : Nat} (hP : (c, c + 1) ∈ cells ptn level n) (hSc : S c)
+    {q : Nat × Nat} (hq : q ∈ cells ptn level n) (hnq : ¬ S q.1)
+    {j : Nat} (hj1 : q.1 ≤ j) (hj2 : j ≤ q.2) :
+    (ctx.g[lab[c]!]!).mem lab[j]! =
+      (ctx.g[lab[c + 1]!]!).mem lab[j]! := by
+  rcases Classical.em (q.2 = q.1 + 1) with hqp | hqnp
+  · have hq' : (q.1, q.1 + 1) ∈ cells ptn level n := by
+      rw [← hqp]
+      exact hq
+    have hnm : ¬ PairMatch ctx.g lab[c]! lab[c + 1]!
+        lab[q.1]! lab[q.1 + 1]! :=
+      fun hm => hnq (hSclosed _ hP _ hq hSc hqp hm)
+    obtain ⟨h1, h2⟩ :=
+      pair_eq_of_not_match hE hps hend hinj hlb hsymm hP hq' hnm
+    rcases Decidable.em (j = q.1) with rfl | hne
+    · exact h1
+    · have : j = q.1 + 1 := by omega
+      rw [this]
+      exact h2
+  · have hodd := hOdd _ hq hqnp
+    have h := pair_odd_eq hE hps hend hinj hlb hsymm hP hq hodd
+      (j - q.1) (by omega)
+    rw [show q.1 + (j - q.1) = j by omega] at h
+    exact h
+
+/-- The flip theorem: an involution swapping the vertices of a
+matching-closed set of pair cells and fixing every other vertex
+preserves the adjacency rows. -/
+theorem flip_rows
+    (hE : Equitable ctx level lab ptn)
+    (hps : ptn.size = n) (hend : ptn[ptn.size - 1]! ≤ level)
+    (hinj : ∀ i j, i < n → j < n → lab[i]! = lab[j]! → i = j)
+    (hlb : ∀ i, i < n → lab[i]! < n)
+    (hsurj : ∀ v, v < n → ∃ i, i < n ∧ lab[i]! = v)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (_hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
+    (hfb : ∀ v, v < n → f v < n)
+    (hinvol : ∀ v, v < n → f (f v) = v)
+    (hSpair : ∀ p ∈ cells ptn level n, S p.1 → p.2 = p.1 + 1)
+    (hSswap : ∀ p ∈ cells ptn level n, S p.1 →
+      f lab[p.1]! = lab[p.1 + 1]! ∧ f lab[p.1 + 1]! = lab[p.1]!)
+    (hSfix : ∀ p ∈ cells ptn level n, ¬ S p.1 →
+      ∀ o, o < p.2 + 1 - p.1 → f lab[p.1 + o]! = lab[p.1 + o]!)
+    (hSclosed : ∀ p ∈ cells ptn level n,
+      ∀ q ∈ cells ptn level n, S p.1 → q.2 = q.1 + 1 →
+        PairMatch ctx.g lab[p.1]! lab[p.1 + 1]! lab[q.1]! lab[q.1 + 1]! →
+        S q.1)
+    (hOdd : ∀ q ∈ cells ptn level n, q.2 ≠ q.1 + 1 →
+      (q.2 + 1 - q.1) % 2 = 1) :
+    ∀ v, v < n → ctx.g[f v]! = (ctx.g[v]!).image f := by
+  let P : Nat → Nat → Prop := fun u v => ∃ c,
+    (c, c + 1) ∈ cells ptn level n ∧ S c ∧ u = lab[c]! ∧ v = lab[c + 1]!
+  have hbound : ∀ c, (c, c + 1) ∈ cells ptn level n → c + 1 < n := by
+    intro c hc
+    have := cells_bound (by omega) hend _ hc
+    omega
+  apply rows_of_bits hfb hinvol
+  apply flip_bits (P := P) hsymm hfb
+  · rintro u v ⟨c, hc, hSc, rfl, rfl⟩
+    exact hSswap _ hc hSc
+  · intro z hz
+    obtain ⟨i, hi, rfl⟩ := hsurj z hz
+    obtain ⟨p, hp, hpi, hip⟩ := cells_cover (ptn := ptn) (level := level) i hi
+    by_cases hs : S p.1
+    · have hpe := hSpair p hp hs
+      have hc : (p.1, p.1 + 1) ∈ cells ptn level n := by rw [← hpe]; exact hp
+      have hcbd := hbound _ hc
+      refine Or.inr ⟨lab[p.1]!, lab[p.1 + 1]!, hlb _ (by omega), hlb _ hcbd,
+        ⟨p.1, hc, hs, rfl, rfl⟩, ?_⟩
+      have hpos : i = p.1 ∨ i = p.1 + 1 := by omega
+      exact hpos.elim (fun h => Or.inl (congrArg (fun j => lab[j]!) h))
+        (fun h => Or.inr (congrArg (fun j => lab[j]!) h))
+    · have h := hSfix p hp hs (i - p.1) (by omega)
+      simpa only [Nat.add_sub_of_le hpi] using Or.inl h
+  · rintro z hz hf u v ⟨c, hc, hSc, rfl, rfl⟩
+    obtain ⟨j, hj, rfl⟩ := hsurj z hz
+    obtain ⟨q, hq, hqj, hjq⟩ := cells_cover (ptn := ptn) (level := level) j hj
+    have hnot : ¬ S q.1 := by
+      intro hSq
+      have hqe := hSpair q hq hSq
+      have hqc : (q.1, q.1 + 1) ∈ cells ptn level n := by rw [← hqe]; exact hq
+      have hqb := hbound _ hqc
+      have hne : lab[q.1]! ≠ lab[q.1 + 1]! := by
+        intro he
+        have := hinj _ _ (by omega) hqb he
+        omega
+      have hs := hSswap _ hqc hSq
+      have hpos : j = q.1 ∨ j = q.1 + 1 := by omega
+      rcases hpos with hpos | hpos
+      · rw [hpos, hs.1] at hf
+        exact hne hf.symm
+      · rw [hpos, hs.2] at hf
+        exact hne hf
+    have hcb := hbound _ hc
+    rw [hsymm _ _ (hlb j hj) (hlb c (by omega)),
+      hsymm _ _ (hlb j hj) (hlb (c + 1) hcb)]
+    exact flip_bit_aux hE hps hend hinj hlb hsymm hSclosed hOdd hc hSc hq hnot hqj hjq
+  · rintro u v x y ⟨c, hc, _, rfl, rfl⟩ ⟨d, hd, _, rfl, rfl⟩
+    exact pair_swap_eq hE hps hend hinj hlb hsymm hc hd
+
+end Flip
 
 end Hex.GraphIso.Nauty

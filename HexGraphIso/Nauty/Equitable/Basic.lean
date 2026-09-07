@@ -59,7 +59,7 @@ count and the certificate invariant, the output partition is
 equitable. The certificate seed is vacuous at the root, where every
 cell is active (`Equitable/Root`), and at descent it comes from the
 parent's equitability joined with the individualized singleton's
-splitter set (`SmallCell/Branch`).
+splitter set (`Equitable/Individualize`).
 -/
 
 namespace Hex.GraphIso.Nauty
