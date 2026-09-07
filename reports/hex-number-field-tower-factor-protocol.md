@@ -299,3 +299,24 @@ replication. No build or profiler overlaps timing. Verify differential
 correctness, fixtures, the oracle, and benchmark checks before timing. An
 incomplete or failing comparison does not validate the integrated performance
 claim. Do not fit an exponent or combine gains multiplicatively.
+
+### Benchmark-harness integration comparison
+
+Main `5ca950a2b` advances lean-bench from `b583ddd7…` to `8a37daf1…` and
+adds unrelated rational-function/fast-polynomial work. Resolving the CI target
+list conflict retains both `HexRationalFnKernelProbe` and `tower_factor_diff`.
+The tower build passes, but the integrated benchmark hash changes to
+`b5f7cfb214bd5e50a1a855e52c847794bbe457ea28044cb276fe3bc2cae5774d`.
+The prior comparison against main `064902321` remains valid for its recorded
+binaries; it is not the verdict for this new executable.
+
+Before measuring, repeat the integrated implementation comparison against
+main `5ca950a2b`, constructing its baseline by the same two-file restoration
+procedure. Use the same fifteen registrations, explicit PARI provider,
+five repeats, warmup and budgets, two opposite-order admitted pairs,
+`--quiet-windows 15`, stronger canonical separation gate, and twelve-attempt
+cap. Retain every attempted export and host record; an incomplete series has
+no verdict. The updated validator also re-derives the unchanged admission
+rules from raw telemetry and verifies command affinity and protocol flags.
+Build, differential, fixture, oracle, and benchmark verification precede
+measurement; no builds or profilers overlap it. No exponent is fitted.
