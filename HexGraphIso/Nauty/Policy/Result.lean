@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.FirstRun
 import all HexGraphIso.Nauty.Policy.Invariant
+import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Search.Engine
 
 public section
@@ -16,6 +17,14 @@ public section
 namespace Hex.GraphIso.Nauty.Engine
 
 variable {n k : Nat}
+
+/-- The complete engine run justifies every orbit pointer by its recorded generators. -/
+theorem runState_orbits (G : Colored n k) :
+    OrbitsOk (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by
+  rcases Nat.eq_zero_or_pos n with hn0 | hn0
+  · subst n
+    exact initial_orbits 0 (initialPartition G).1 (initialPartition G).2
+  · exact (runState_safe G hn0).orbits
 
 /-- The engine returns a full canonical labelling. -/
 theorem canonlab_size (G : Colored n k) : (runColored G).canonlab.size = n := by

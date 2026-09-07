@@ -90,7 +90,7 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hleftFrame : SearchOut G level level ready.view left.view := hframe.congr rfl rfl rfl rfl
   have hrec := (reachPolicy G ctx tcLevel hn0).recover level r.1 ready left hin.positive hcheap.ok hleftFrame
   have hstored : RunInv G ctx result :=
-    (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl).recover (n + 2) level
+    (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl).recover (n + 2) level
   have hcheapHist : CheapHistory ctx tcLevel level level r.1 result := by
     intro hc
     rw [hgr] at hc ⊢

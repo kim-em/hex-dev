@@ -49,7 +49,7 @@ theorem firstSweep_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
   obtain ⟨exit, out⟩ := result
   let left := { afterChildFirst level tv out with fixedpts := out.fixedpts.erase tv }
   let ready := recoverLevels level (recoverPtn (n + 2) level left)
-  have hleft : RunInv G ctx left := hchild.congr (out := left) rfl rfl hchild.cache rfl rfl
+  have hleft : RunInv G ctx left := hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl
   have hcontinue : ∀ smaller index, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv
         (smaller.nextElem (some tv)) smaller index ready).2.2 := by
@@ -95,7 +95,7 @@ theorem FirstPre.firstterminal {G : Colored n k} {ctx : Ctx n} {level numcells :
   have hp := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition).1
   have hs := prepareFirst_stores ctx tcLevel level numcells st
   refine ⟨isPerm_of_cellsReach hp.labSize hn0 hp.reach, ⟨hp.labSize, hp.reach⟩, ?_,
-    hs.2.2.2.1.trans h.scratch, ?_⟩
+    hs.2.2.2.1.trans h.scratch, ?_, ?_⟩
   · apply canongInv_zero
     change (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.canong.size = n
     rw [hs.2.2.1, h.cache]
@@ -103,6 +103,7 @@ theorem FirstPre.firstterminal {G : Colored n k} {ctx : Ctx n} {level numcells :
     change γ ∈ (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2.genTrace at hγ
     rw [hs.2.2.2.2] at hγ
     exact h.trace γ hγ
+  · exact h.orbits.congr hs.2.2.2.2 (prepareFirst_orbits ctx tcLevel level numcells st)
 
 /-- The first descent establishes the off-path invariant before any later sibling can be searched. -/
 theorem firstPath_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells last : Nat}
@@ -139,7 +140,8 @@ theorem initial_firstPre (G : Colored n k) (hn0 : 0 < n) :
     FirstPre G { g := rowsOf G } 1 (initialPartition G).2.length
       (initial n (initialPartition G).1 (initialPartition G).2) := by
   refine ⟨Nat.le_refl _, initial_ok G hn0, initial_equitable G hn0,
-    Array.size_replicate, ?_, Array.size_replicate, Array.size_replicate, ?_, ?_⟩
+    Array.size_replicate, ?_, Array.size_replicate, Array.size_replicate, ?_,
+    initial_orbits n (initialPartition G).1 (initialPartition G).2, ?_⟩
   · change n < (Array.replicate (n + 2) (-1 : Int)).size
     rw [Array.size_replicate]
     omega

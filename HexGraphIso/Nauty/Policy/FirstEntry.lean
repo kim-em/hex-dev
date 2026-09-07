@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.FirstCheap
+public import HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.FirstCheap
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.Leftmost
@@ -32,6 +33,8 @@ structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : 
   cache : st.canong.size = n
   scratch : st.workperm.size = n
   trace : TraceOk ctx st
+  /-- Every orbit pointer is connected by recorded generators. -/
+  orbits : OrbitsOk st
   small : st.noncheaplevel < level → SubtreeOk ctx level (st.refined ctx level numcells)
 
 /-- The chosen first child is a valid mathematical individualization step. -/
@@ -106,8 +109,12 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
       ready.canong = st.canong ∧ ready.workperm.size = st.workperm.size ∧ ready.genTrace = st.genTrace
     unfold ready cheapCheck
     split <;> exact prepareFirst_stores ctx tcLevel level numcells st
+  have horbits : ch.orbits = st.orbits := by
+    change ready.orbits = st.orbits
+    unfold ready cheapCheck
+    split <;> exact prepareFirst_orbits ctx tcLevel level numcells st
   refine ⟨by omega, firstChild_ok hn0 h.positive h.partition htv, ?_,
-    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, ?_⟩
+    hstores.1.trans h.codes, ?_, ?_, hstores.2.2.2.1.trans h.scratch, ?_, h.orbits.congr hstores.2.2.2.2 horbits, ?_⟩
   · rw [hstep]
     exact equitable_breakout hit.ok.labSize hit.ok.ptnSize hit.ok.ptnEnd hit.valsWeak
       hit.ok.labOk hit.inj hsymm h.equitable hcell hne ho hacc.symm
