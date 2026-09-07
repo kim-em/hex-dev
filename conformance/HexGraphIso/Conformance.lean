@@ -351,6 +351,12 @@ private def twinAgrees {n k : Nat} (G : Colored n k) : Bool :=
   a.result.canonlab == b.result.canonlab &&
     a.result.canong == b.result.canong &&
     a.result.numnodes == b.result.numnodes &&
+    a.result.numorbits == b.result.numorbits &&
+    a.result.numgenerators == b.result.numgenerators &&
+    a.result.numbadleaves == b.result.numbadleaves &&
+    a.result.maxlevel == b.result.maxlevel &&
+    a.result.tctotal == b.result.tctotal &&
+    a.result.canupdates == b.result.canupdates &&
     a.autos == b.autos &&
     a.bestCodes == b.bestCodes
 
@@ -359,6 +365,45 @@ private def twinAgrees {n k : Nat} (G : Colored n k) : Bool :=
 #guard twinAgrees petersen
 #guard twinAgrees kneser52
 #guard twinAgrees prism5
+
+-- Code-1 admission uses agreement at this level without testing the next sentinel.
+#guard Id.run do
+  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := { st with
+    firstlab := #[0, 1, 2], eqlevFirst := 2, compCanon := -1, gcaFirst := 1 }
+  let (leaf, _) := Nauty.Engine.classify { g := Nauty.rowsOf p3 } 2 3 st
+  return leaf == .autoFirst
+
+-- At workspace capacity the newest pair overwrites the last slot.
+#guard Id.run do
+  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let old : Nauty.VSet 3 := .ofList [0, 1, 2]
+  let newest : Nauty.VSet 3 := .ofList [1]
+  let st := { st with autos := .replicate 500 (old, old) }
+  let st := Nauty.Engine.pushAuto st (old, newest)
+  return st.autos.size == 500 && Nauty.Engine.shortprune old st == newest
+
+-- Code 2 without an orbit change still records and short-prunes.
+#guard Id.run do
+  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := { st with workperm := #[0, 1, 2], gcaFirst := 1, gcaCanon := 2 }
+  let (exit, st) := Nauty.Engine.leafExit .autoCanon 3 st
+  return exit == .unwind 2 true && st.genTrace == #[#[0, 1, 2]] &&
+    st.autos.size == 1 && st.numgenerators == 0 && st.numorbits == 3
+
+-- A changed orbit with a smaller coset representative returns without short prune.
+#guard Id.run do
+  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := { st with
+    workperm := #[1, 0, 2], cosetindex := 1, gcaFirst := 1, gcaCanon := 2 }
+  let (exit, st) := Nauty.Engine.leafExit .autoCanon 3 st
+  return exit == .unwind 1 false && st.numgenerators == 1 && st.numorbits == 2
+
+-- Exhausted recursion must remain distinguishable from a completed sweep.
+#guard (Nauty.Engine.node true { g := Nauty.rowsOf p3 } 5 100 0 1 1
+  (Nauty.Engine.initial 3 #[0, 1, 2] [2])).1 == .fuel
+#guard (Nauty.Engine.sweep true { g := Nauty.rowsOf p3 } 5 100 3 0 1 1 0 0
+  (some 0) (.ofList [0]) 0 (Nauty.Engine.initial 3 #[0, 1, 2] [2])).1 == .fuel
 
 /-! # The empty graph -/
 
@@ -373,5 +418,6 @@ private def empty0 : Colored 0 0 :=
 #guard (autos empty0).gens.isEmpty
 #guard (autos empty0).numOrbits == 0
 #guard (autos empty0).order == 1
+#guard twinAgrees empty0
 
 end Hex.GraphIso.Conformance

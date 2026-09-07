@@ -1,0 +1,7 @@
+direct mi_* targets called from outside mimalloc:
+mi_free
+mi_free_size
+mi_malloc
+mi_malloc_small
+mi_new_n
+mi_option_init(mi_option_desc_s*)

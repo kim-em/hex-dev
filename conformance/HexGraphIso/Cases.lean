@@ -23,11 +23,8 @@ driver runs the same cases in the same sequence.
 `Runner` is the search a record is read off. `canonAnswer` reads the
 label and canonical upper-triangle bits off the public `canonicalize`,
 and the node and generator counts off `Nauty.runColored`.
-`engineAnswer` reads all of them off `engine`, the second search the
-drivers compare against. As it stands `engine` calls
-`Nauty.runColoredTraced`, so the twin compares the literal port with
-itself and the emitters' `--engine` mode emits the same records as
-their default mode.
+`engineAnswer` reads all of them off the structured search
+{name}`Hex.GraphIso.Nauty.Engine.runColoredTraced`.
 -/
 
 namespace Hex.GraphIsoCases
@@ -91,12 +88,29 @@ private def triRows {n : Nat} (rows : Array (VSet n)) : String :=
 
 /-! # Searches -/
 
-/-- The search the twin runner and the `--engine` emitter modes measure
-against the literal port. It calls `Nauty.runColoredTraced`, so as it
-stands both sides run the same search. Point this definition at another
-search to compare that one instead. -/
+/-- The structured search measured by the twin and oracle emitters. -/
 def engine {n k : Nat} (G : Colored n k) : TraceRun n :=
-  runColoredTraced G
+  Engine.runColoredTraced G
+
+/-- Final orbit partition of the literal search. Initialization matches
+{name}`Hex.GraphIso.Nauty.runTraced`, whose result omits this array. -/
+def literalOrbits {n k : Nat} (G : Colored n k) : Array Nat := Id.run do
+  if n == 0 then return #[]
+  let (lab0, cellEnds) := initialPartition G
+  let st : SearchSt n :=
+    { lab := lab0
+      ptn := initPtn n (n + 2) cellEnds
+      active := initActive n cellEnds
+      orbits := .ofFn (n := n) fun i => i.val
+      firstcode := .replicate (n + 2) 0
+      canoncode := .replicate (n + 2) 0
+      firsttc := .replicate (n + 2) (-1)
+      firstlab := .replicate n 0
+      canonlab := .replicate n 0
+      canong := .replicate n .empty
+      numorbits := n }
+  return (firstPathNode { g := rowsOf G } (n + 2) 100 (n + 2)
+    1 cellEnds.length st).2.orbits
 
 /-- What a search contributes to a fixture record: the canonical label,
 the canonical upper-triangle adjacency bits, the visited-node count and

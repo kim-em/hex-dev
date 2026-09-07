@@ -49,27 +49,25 @@ private def mkInst {n : Nat} (name : String) (G : Hex.Graph n) (h : 0 < n) :
   let g0 := G.singleColor h
   { name, g0, g1 := g0.relabel (rot n h) }
 
-/-- The search the `erun` stage times against `run`. It calls
-`runColored`, so as it stands the two stages time the same search.
-Point this definition at another search to profile that one beside the
-transcribed port. -/
+/-- The structured search measured against the literal port. -/
 private def engine {n k : Nat} (G : Colored n k) : RunResult n :=
-  runColored G
+  Engine.runColored G
 
 private def countAutom : CertNode → Nat
   | .leaf | .codePrune => 0
   | .autom _ _ => 1
   | .node cs => cs.foldl (fun a c => a + countAutom c) 0
 
-/-- Time `iters` data-dependent evaluations; ns per iteration. -/
-private def timeLoop (iters : Nat) (act : Nat → Nat) : IO Nat := do
+/-- Time data-dependent evaluations, returning ns per iteration and the
+sum of results. For the search stages the sum counts visited nodes. -/
+private def timeLoop (iters : Nat) (act : Nat → Nat) : IO (Nat × Nat) := do
   let mut sink := 0
   let t0 ← IO.monoNanosNow
   for _ in [0 : iters] do
     sink := sink + act sink
   let t1 ← IO.monoNanosNow
   if sink == 42424242424242 then IO.eprintln "(unreachable)"
-  return (t1 - t0) / iters
+  return ((t1 - t0) / iters, sink)
 
 private def stageIters : String → Nat
   | "run" | "erun" => 2000
@@ -86,7 +84,7 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
     (certifyKey? G).getD (.leaf, ⟨[], []⟩)
   let (c0, b0) := certs inst.g0
   let (c1, b1) := certs inst.g1
-  let ns ← match stage with
+  let (ns, total) ← match stage with
     | "run" => timeLoop iters fun i => (runColored (pick i)).numnodes
     | "erun" => timeLoop iters fun i => (engine (pick i)).numnodes
     | "trace" => timeLoop iters fun i =>
@@ -113,11 +111,12 @@ private def runStage {n : Nat} (inst : Inst n) (stage : String)
         IO.println s!"  {inst.name} stats: nauty-nodes={r.numnodes} \
           cert-records={c0.size} autom-records={countAutom c0} \
           key-codes={b0.codes.length}"
-        pure 0
+        pure (0, 0)
     | _ => timeLoop iters fun i =>
         (rowsOf (canonicalize (pick i)).form).size
   unless stage == "stats" do
-    IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters)"
+    let nodes := if stage == "run" || stage == "erun" then s!", {total} node-visits" else ""
+    IO.println s!"  {inst.name} {stage}: {ns / 1000}us/iter ({iters} iters{nodes})"
 
 private def stages : List String :=
   ["run", "erun", "trace", "produce", "ckey", "ccanon", "canon", "stats"]

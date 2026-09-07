@@ -26,6 +26,9 @@ requires to exist), so CI never fits a sweep of some other source state.
 
 The fit needs no numpy: it is the closed-form two-parameter least-squares
 solution on the logarithms.
+
+Use ``--column eng_ns`` with an engine comparison sweep to fit the
+structured search. Its node counts must agree with the literal port's.
 """
 
 from __future__ import annotations
@@ -67,12 +70,12 @@ def geometric_mean(values: list[float]) -> float:
     return math.exp(sum(math.log(v) for v in values) / len(values))
 
 
-def load_sweep(path: Path) -> dict[str, list[dict]]:
+def load_sweep(path: Path, column: str = "fast_ns") -> dict[str, list[dict]]:
     """The timed records of one sweep by family, each sorted by ``n``.
 
-    Every record must carry positive ``fast_ns``, ``nauty_ns`` and
-    ``nodes``, and no family may record the same ``n`` twice: a duplicate
-    would reweight the fit, and a zero would break the logarithm.
+    Every record must carry a positive selected timing column,
+    ``nauty_ns`` and ``nodes``, and no family may record the same ``n`` twice:
+    a duplicate would reweight the fit, and a zero would break the logarithm.
     """
     families: dict[str, list[dict]] = defaultdict(list)
     seen: set[tuple[str, int]] = set()
@@ -82,12 +85,15 @@ def load_sweep(path: Path) -> dict[str, list[dict]]:
             if not line:
                 continue
             record = json.loads(line)
-            if "fast_ns" not in record or "nauty_ns" not in record:
+            if column not in record or "nauty_ns" not in record:
                 continue
-            for field in ("fast_ns", "nauty_ns", "nodes"):
+            for field in (column, "nauty_ns", "nodes"):
                 if not isinstance(record.get(field), int) or record[field] <= 0:
                     sys.exit(f"{path.name}: {record.get('name')}: "
                              f"{field} must be a positive integer")
+            if column == "eng_ns" and record.get("eng_nodes") != record["nodes"]:
+                sys.exit(f"{path.name}: {record.get('name')}: engine node count differs")
+            record["fast_ns"] = record[column]
             key = (record["family"], record["n"])
             if key in seen:
                 sys.exit(f"{path.name}: family {key[0]} records n = {key[1]} twice")
@@ -179,6 +185,8 @@ def main() -> int:
     parser.add_argument("--check", type=float, metavar="MARGIN",
                         help="fail if any checked family's hex exponent exceeds "
                              "nauty's by more than MARGIN")
+    parser.add_argument("--column", choices=("fast_ns", "lit_ns", "eng_ns"),
+                        default="fast_ns", help="timing column to fit")
     parser.add_argument("--min-sizes", type=int, default=5,
                         help="families with fewer distinct sizes are not checked")
     parser.add_argument("--out", type=Path,
@@ -186,10 +194,12 @@ def main() -> int:
     args = parser.parse_args()
 
     sweep = args.sweep or current_sweep()
-    families = load_sweep(sweep)
+    families = load_sweep(sweep, args.column)
     table = analyse(families)
     x_lo, x_hi = overall(families)
     text = render(sweep, table, x_lo, x_hi)
+    if args.column != "fast_ns":
+        text = f"timing column: {args.column}\n\n" + text
     print(text)
     if args.out:
         args.out.write_text(text + "\n")

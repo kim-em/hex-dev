@@ -101,12 +101,9 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
         (1x best {best}ns, 2x batch {two}ns) — measurement suspect"
   return best
 
-/-- The search the `engine` mode times against the literal port. It
-calls `Nauty.runColored`, so as it stands both columns time the same
-search. Point this definition at another search to compare that one
-instead. -/
+/-- The structured search measured against the literal port. -/
 private def engine {n k : Nat} (G : Colored n k) : Nauty.RunResult n :=
-  Nauty.runColored G
+  Nauty.Engine.runColored G
 
 /-- A cheap digest forcing full evaluation of a search result. -/
 private def runDigest {n : Nat} (r : Nauty.RunResult n) : Nat :=
