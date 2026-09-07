@@ -190,60 +190,8 @@ theorem twoTriple_sw2 {pa pb : Nat}
       ∃ o', o' < p.2 + 1 - p.1 ∧
         sw2 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[d2 + pa]!
           st.lab[d2 + pb]! st.lab[p.1 + o]! = st.lab[p.1 + o']! := by
-    intro p hp o ho
-    rcases Decidable.em (p = (tc, tc + 2)) with rfl | hpT1
-    · have ho' : o < tc + 2 + 1 - tc := ho
-      rcases Decidable.em (o = oU) with rfl | hou
-      · refine ⟨oV, show oV < tc + 2 + 1 - tc by omega, ?_⟩
-        rw [sw2_u]
-      rcases Decidable.em (o = oV) with rfl | hov
-      · refine ⟨oU, show oU < tc + 2 + 1 - tc by omega, ?_⟩
-        rw [sw2_v hOk]
-      · refine ⟨o, ho, sw2_fix (hin1 o oU (by omega) hoU hou)
-          (hin1 o oV (by omega) hoV hov)
-          (hcross o pa (by omega) hpa)
-          (hcross o pb (by omega) hpb)⟩
-    rcases Decidable.em (p = (d2, d2 + 2)) with rfl | hpT2
-    · have ho' : o < d2 + 2 + 1 - d2 := ho
-      rcases Decidable.em (o = pa) with rfl | hoa
-      · refine ⟨pb, show pb < d2 + 2 + 1 - d2 by omega, ?_⟩
-        rw [sw2_x hOk]
-      rcases Decidable.em (o = pb) with rfl | hob
-      · refine ⟨pa, show pa < d2 + 2 + 1 - d2 by omega, ?_⟩
-        rw [sw2_y hOk]
-      · refine ⟨o, ho, sw2_fix
-          (fun h => hcross oU o hoU (by omega) h.symm)
-          (fun h => hcross oV o hoV (by omega) h.symm)
-          (hin2 o pa (by omega) hpa hoa)
-          (hin2 o pb (by omega) hpb hob)⟩
-    · have hps : p.2 = p.1 := hsing p hp hpT1 hpT2
-      have ho1 : o = 0 := by omega
-      have hbd : p.1 < n := by
-        have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
-          hend _ hp
-        have h2 := cells_le _ hp
-        rw [hpsz] at h1
-        omega
-      have hother1 : ∀ w' : Nat, w' ≤ 2 →
-          st.lab[p.1 + o]! ≠ st.lab[tc + w']! := by
-        intro w' hw' hcon
-        have := hinj (p.1 + o) (tc + w') (by rw [ho1]; omega)
-          (by omega) hcon
-        rw [ho1] at this
-        exact hpT1 (cells_eq_of_shared
-          (by rw [hpsz]; exact Nat.le_refl _) hend hp hT1
-          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
-      have hother2 : ∀ w' : Nat, w' ≤ 2 →
-          st.lab[p.1 + o]! ≠ st.lab[d2 + w']! := by
-        intro w' hw' hcon
-        have := hinj (p.1 + o) (d2 + w') (by rw [ho1]; omega)
-          (by omega) hcon
-        rw [ho1] at this
-        exact hpT2 (cells_eq_of_shared
-          (by rw [hpsz]; exact Nat.le_refl _) hend hp hT2
-          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
-      exact ⟨o, ho, sw2_fix (hother1 oU hoU) (hother1 oV hoV)
-        (hother2 pa hpa) (hother2 pb hpb)⟩
+    exact sw2_cells hOk (sw1_cells hIt.ok hIt.inj hT1 (by omega) (by omega) hne)
+      (sw1_cells hIt.ok hIt.inj hT2 (by omega) (by omega) hpab)
   obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
     (f := sw2 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[d2 + pa]!
       st.lab[d2 + pb]!) hIt hgsz
@@ -425,40 +373,7 @@ theorem twoTriple_sw1
       ∃ o', o' < p.2 + 1 - p.1 ∧
         sw1 st.lab[tc + oU]! st.lab[tc + oV]! st.lab[p.1 + o]! =
           st.lab[p.1 + o']! := by
-    intro p hp o ho
-    rcases Decidable.em (p = (tc, tc + 2)) with rfl | hpT1
-    · have ho' : o < tc + 2 + 1 - tc := ho
-      rcases Decidable.em (o = oU) with rfl | hou
-      · refine ⟨oV, show oV < tc + 2 + 1 - tc by omega, ?_⟩
-        rw [sw1_u]
-      rcases Decidable.em (o = oV) with rfl | hov
-      · refine ⟨oU, show oU < tc + 2 + 1 - tc by omega, ?_⟩
-        rw [sw1_v huv]
-      · exact ⟨o, ho, sw1_fix (hin1 o oU (by omega) hoU hou)
-          (hin1 o oV (by omega) hoV hov)⟩
-    rcases Decidable.em (p = (d2, d2 + 2)) with rfl | hpT2
-    · have ho' : o < d2 + 2 + 1 - d2 := ho
-      exact ⟨o, ho, sw1_fix
-        (fun h => hcross oU o hoU (by omega) h.symm)
-        (fun h => hcross oV o hoV (by omega) h.symm)⟩
-    · have hps : p.2 = p.1 := hsing p hp hpT1 hpT2
-      have ho1 : o = 0 := by omega
-      have hbd : p.1 < n := by
-        have h1 := cells_bound (by rw [hpsz]; exact Nat.le_refl _)
-          hend _ hp
-        have h2 := cells_le _ hp
-        rw [hpsz] at h1
-        omega
-      have hother1 : ∀ w' : Nat, w' ≤ 2 →
-          st.lab[p.1 + o]! ≠ st.lab[tc + w']! := by
-        intro w' hw' hcon
-        have := hinj (p.1 + o) (tc + w') (by rw [ho1]; omega)
-          (by omega) hcon
-        rw [ho1] at this
-        exact hpT1 (cells_eq_of_shared
-          (by rw [hpsz]; exact Nat.le_refl _) hend hp hT1
-          (j := p.1) (Nat.le_refl _) (by omega) (by omega) (by omega))
-      exact ⟨o, ho, sw1_fix (hother1 oU hoU) (hother1 oV hoV)⟩
+    exact sw1_cells hIt.ok hIt.inj hT1 (by omega) (by omega) hne
   obtain ⟨σ, hrm, hsp, hat⟩ := flip_data_of_bits
     (f := sw1 st.lab[tc + oU]! st.lab[tc + oV]!) hIt hgsz
     (sw1_lt hun hvn) (fun w _ => sw1_invol huv w)
