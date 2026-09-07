@@ -1,0 +1,87 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexLatticeEnum.Basic
+
+@[expose] public section
+
+namespace Hex.LatticeEnum
+
+/-- Rational triangular coefficients recovered from a single integer pass. -/
+def coefficientsOfData (gs : GramSchmidt.Int.Data n) : Matrix Rat n n :=
+  Matrix.ofFn fun i j =>
+    if j < i then (gs.ν[(i, j)] : Rat) / gs.d[j.val + 1]
+    else if i = j then 1 else 0
+
+/-- Orthogonalize a prefix by forward substitution in the triangular matrix.
+Each orthogonal row is computed once and reused by all later rows. -/
+def orthogonalRows (rows : Matrix Int n m) (mu : Matrix Rat n n) :
+    (k : Nat) → k ≤ n → Vector (Vector Rat m) k
+  | 0, _ => #v[]
+  | k + 1, hk =>
+    let previous := orthogonalRows rows mu k (by omega)
+    let i : Fin n := ⟨k, by omega⟩
+    let projection := Fin.foldl k (fun acc j =>
+      acc + mu[(i, (⟨j.val, by omega⟩ : Fin n))] • previous[j]) 0
+    previous.push (((rows.getRow i).map fun x : Int => (x : Rat)) - projection)
+
+/-- Exact data tied to one original basis and one target. -/
+structure Prepared (b : Basis n m) (t : Vector Rat m) where
+  /-- Unit lower-triangular Gram-Schmidt coefficient matrix. -/
+  mu : Matrix Rat n n
+  /-- Rational orthogonalized rows. -/
+  orthogonal : Matrix Rat n m
+  /-- Squared norms of the orthogonal rows. -/
+  norms : Vector Rat n
+  /-- Coordinates of the target projection in the orthogonal rows. -/
+  projection : Vector Rat n
+  /-- Component of the target orthogonal to the row span. -/
+  residual : Vector Rat m
+
+/-- Prepare exact Gram-Schmidt data and retain the target's off-span component. -/
+def prepare (b : Basis n m) (t : Vector Rat m) : Prepared b t :=
+  let gs := GramSchmidt.Int.data b.rows
+  let mu := coefficientsOfData gs
+  let orthogonal := Matrix.ofRows (orthogonalRows b.rows mu n (Nat.le_refl n))
+  let norms := Vector.ofFn fun i : Fin n =>
+    (gs.d[i.val + 1] : Rat) / gs.d[i.val]
+  let projection := Vector.ofFn fun i : Fin n =>
+    t.dotProduct (orthogonal.getRow i) / norms[i]
+  ⟨mu, orthogonal, norms, projection, t - Matrix.vecMul projection orthogonal⟩
+
+variable {n m : Nat} {b : Basis n m} {t : Vector Rat m}
+
+/-- Finite rational identities checked by certificate replay. -/
+def Prepared.Valid (p : Prepared b t) : Prop :=
+  (∀ i : Fin n, 0 < p.norms[i] ∧ p.norms[i] = (p.orthogonal.getRow i).normSq) ∧
+  (∀ i j : Fin n, (i < j → p.mu[(i, j)] = 0) ∧
+    (i = j → p.mu[(i, j)] = 1) ∧
+    (i ≠ j → (p.orthogonal.getRow i).dotProduct (p.orthogonal.getRow j) = 0)) ∧
+  p.mu * p.orthogonal = GramSchmidt.castIntMatrix b.rows ∧
+  (∀ i : Fin n, p.projection[i] = t.dotProduct (p.orthogonal.getRow i) / p.norms[i]) ∧
+  p.residual = t - Matrix.vecMul p.projection p.orthogonal
+
+/-- Replay every preparation identity by exact rational arithmetic. -/
+def Prepared.check (p : Prepared b t) : Bool :=
+  have : Decidable p.Valid := by unfold Prepared.Valid; infer_instance
+  decide p.Valid
+
+/-- Centre for the next coefficient after a suffix has been chosen. -/
+def Prepared.centre (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
+  p.projection[i] - Fin.foldl n (fun acc j =>
+    if i < j then acc + p.mu[(j, i)] * (z[j] : Rat) else acc) 0
+
+/-- Exact contribution of one coefficient to the squared distance. -/
+def Prepared.cost (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
+  let a := (z[i] : Rat) - p.centre z i
+  p.norms[i] * a * a
+
+/-- Cost of the already chosen suffix, excluding the orthogonal residual. -/
+def Prepared.suffixCost (p : Prepared b t) (z : Vector Int n) (k : Nat) : Rat :=
+  Fin.foldl n (fun acc i => if k ≤ i.val then acc + p.cost z i else acc) 0
+
+end Hex.LatticeEnum

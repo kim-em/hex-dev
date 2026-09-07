@@ -295,6 +295,8 @@ lean_lib HexSmithMathlib where
 
 lean_lib HexGramSchmidt where
 
+lean_lib HexLatticeEnum where
+
 lean_lib HexLLL where
   precompileModules := true
   extraDepTargets := #[`hexlllffi]
@@ -1029,6 +1031,10 @@ lean_exe hexgramschmidt_emit_fixtures where
 lean_exe hexlll_emit_fixtures where
   srcDir := "conformance"
   root := `HexLLL.EmitFixtures
+
+lean_exe hexlatticeenum_conformance where
+  srcDir := "conformance"
+  root := `HexLatticeEnum.Conformance
 
 lean_exe hexrealroots_emit_fixtures where
   srcDir := "conformance"
