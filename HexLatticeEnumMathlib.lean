@@ -5,3 +5,4 @@ public import HexLatticeEnumMathlib.Bounds
 public import HexLatticeEnumMathlib.Distance
 public import HexLatticeEnumMathlib.Order
 public import HexLatticeEnumMathlib.Enumerate
+public import HexLatticeEnumMathlib.Traversal
