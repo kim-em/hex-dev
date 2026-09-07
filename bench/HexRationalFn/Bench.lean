@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexRationalFn
 import LeanBench
 import HexRationalFn.Scaling
+import HexRationalFn.Families
 
 /-!
 Fixed-workload latency measurements, not fitted asymptotic claims: rational
