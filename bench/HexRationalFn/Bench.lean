@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexRationalFn
 import LeanBench
+import HexRationalFn.Scaling
 
 /-!
 Fixed-workload latency measurements, not fitted asymptotic claims: rational
@@ -224,5 +225,6 @@ end Hex.RationalFnBench
 def main (args : List String) : IO UInt32 := do
   if args == ["sizes"] then
     Hex.RationalFnBench.validate
+    Hex.RationalFnScaling.validate
     return 0
   LeanBench.Cli.dispatch args

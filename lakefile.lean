@@ -1299,6 +1299,10 @@ lean_exe hexrationalfn_bench where
   srcDir := "bench"
   root := `HexRationalFn.Bench
 
+lean_lib HexRationalFnBenchSupport where
+  srcDir := "bench"
+  roots := #[`HexRationalFn.Scaling]
+
 lean_exe hexpolyfast_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyFast.EmitFixtures
