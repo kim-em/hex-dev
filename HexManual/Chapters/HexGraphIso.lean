@@ -217,16 +217,15 @@ example (p : Perm 10) (h : p ∈ (Graph.autos petersen).gens) :
 end HexGraphIsoAutomorphismExample
 ```
 
-The orbit array carries a theorem too. Two vertices with the same entry
-are carried onto each other by an automorphism
-({name Hex.Graph.autos_sameOrbit}`Graph.autos_sameOrbit`). The converse,
-that different entries mean different orbits, is what it would mean for
-the returned generators to generate the whole automorphism group, and
-that is not proved here; the orbit count and the group order are pinned
-exactly against nauty by conformance instead. So `numOrbits = 1` and
-`order = 120` are measured facts about this run of the algorithm, in the
-same standing as its visited-node count, while `Graph.autos_isIso` and
-`Graph.autos_sameOrbit` are theorems.
+The returned list generates the full automorphism group, by
+{name Hex.Graph.autos_complete}`Graph.autos_complete`. Two vertices have
+the same orbit entry if and only if an automorphism carries one onto the
+other ({name Hex.Graph.autos_sameOrbit}`Graph.autos_sameOrbit`). Thus the
+single reported orbit is the full group's vertex orbit. The Mathlib bridge
+also proves that the reported orbit count and order are the cardinalities
+of the orbit quotient and the full automorphism group, respectively.
+Here `order = 120` is the group order. Conformance independently compares
+these values against nauty.
 
 # Latin-square isotopy as graph isomorphism
 %%%

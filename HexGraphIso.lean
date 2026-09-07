@@ -92,6 +92,7 @@ public import HexGraphIso.Ops
 public import HexGraphIso.Autos
 public import HexGraphIso.AutGroup
 public import HexGraphIso.AutComplete
+public import HexGraphIso.AutIndiv
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic

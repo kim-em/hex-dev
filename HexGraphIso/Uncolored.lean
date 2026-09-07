@@ -234,7 +234,7 @@ theorem sameOrbit_singleColor_iff (G : Graph n) (u v : Fin n) (h : 0 < n) :
 
 /-- Generators of the automorphism group of a graph, with the vertex
 orbits, the orbit count and the orbit-stabilizer product for the group
-order, under the caveats of the coloured `Hex.GraphIso.autos`. -/
+order, with the guarantees of the coloured `Hex.GraphIso.autos`. -/
 @[expose] def autos (G : Graph n) (h : 0 < n := by first | decide | omega) :
     GraphIso.AutResult n :=
   GraphIso.autos (G.singleColor h)
