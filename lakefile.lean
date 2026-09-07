@@ -145,6 +145,12 @@ lean_lib HexPolyZ where
 
 lean_lib HexPolyZGcd where
 
+@[default_target]
+lean_lib HexRationalFn where
+
+@[default_target]
+lean_lib HexRationalFnMathlib where
+
 lean_lib HexRoots where
 
 lean_lib HexResultant where
@@ -776,6 +782,8 @@ lean_lib HexConformance where
 
     ++ #[`HexPolyFast.Conformance].map Glob.one
 
+    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains].map Glob.one
+
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntFactor.Conformance,
@@ -1088,6 +1096,10 @@ lean_exe hexpolysmith_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolySmith.EmitFixtures
 
+lean_exe hexrationalfn_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexRationalFn.EmitFixtures
+
 lean_exe hexmodular_bench where
   srcDir := "bench"
   root := `HexModular.Bench
@@ -1283,6 +1295,10 @@ lean_exe hextruncatedseries_bench where
 lean_exe hexpolyfast_bench where
   srcDir := "bench"
   root := `HexPolyFast.Bench
+
+lean_exe hexrationalfn_bench where
+  srcDir := "bench"
+  root := `HexRationalFn.Bench
 
 lean_exe hexpolyfast_emit_fixtures where
   srcDir := "conformance"

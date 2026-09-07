@@ -411,7 +411,7 @@ should return both the normalized expression and the hypotheses under which
 it equals the input.
 
 The univariate fraction representation and arithmetic are specified in
-[hex-rational-fn](Libraries/hex-rational-fn.md). Its normalization removes
+[hex-rational-fn](../HexRationalFn/SPEC/hex-rational-fn.md). Its normalization removes
 removable singularities, so an expression tactic must retain the original
 denominator conditions separately.
 
@@ -844,8 +844,8 @@ certification, and class-group completeness are distinct obligations.
 ### Algebraic function fields and curves
 
 The coefficient field `K(x)` is specified in
-[hex-rational-fn](Libraries/hex-rational-fn.md), with its correspondence to
-Mathlib in [hex-rational-fn-mathlib](Libraries/hex-rational-fn-mathlib.md).
+[hex-rational-fn](../HexRationalFn/SPEC/hex-rational-fn.md), with its correspondence to
+Mathlib in [hex-rational-fn-mathlib](../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md).
 
 `hex-function-field` should represent a finite separable extension of `K(x)`
 by a monic irreducible polynomial in a second variable. Elements use the power

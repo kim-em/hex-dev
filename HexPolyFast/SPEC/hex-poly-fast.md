@@ -331,6 +331,8 @@ theorem divModWith_eq [Lean.Grind.Field R] (mul : MulPlan R) (p q) :
 In particular, division by zero returns `(0, p)`, a divisor larger than the
 dividend returns `(0, p)`, and a nonzero constant divisor returns zero
 remainder. `divModMonicWith` supplies the analogous commutative-ring API.
+For `q ≠ 0`, `divModWith_size_lt` gives the strict coefficient-length bound
+`(divModWith mul p q).2.size < q.size`, including zero remainders.
 
 The declared cost for quotient length `k` is `O(M(k))` after a reciprocal of
 precision `k` is available and `O(M(k))` including construction, since the

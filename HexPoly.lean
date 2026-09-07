@@ -10,6 +10,7 @@ public import HexPoly.Dense
 public import HexPoly.Euclid
 public import HexPoly.Lcm
 public import HexPoly.Field
+public import HexPoly.Coprime
 public import HexPoly.Instances
 public import HexPoly.Monic
 public import HexPoly.Operations

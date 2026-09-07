@@ -157,8 +157,8 @@ libraries:
   HexRationalFn:
     deps: [HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
     phase4:
       comparators:
         - tool: FLINT fmpz_poly_q via a persistent C driver
@@ -183,8 +183,8 @@ libraries:
     deps: [HexRationalFn, HexPolyMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false

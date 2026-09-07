@@ -280,7 +280,7 @@ private theorem discr_mul [CommRing R] [IsDomain R]
     exact Hex.SubresultantMinor.sign_ne_zero one_ne_zero k
   have hs0 : s ≠ 0 := by
     dsimp only [s]
-    exact mul_ne_zero (mul_ne_zero (hpow _) (hpow _)) (hpow _)
+    exact _root_.mul_ne_zero (_root_.mul_ne_zero (hpow _) (hpow _)) (hpow _)
   have hcancelSign :
       f.leadingCoeff * g.leadingCoeff * Polynomial.discr (f * g) =
         f.leadingCoeff * g.leadingCoeff *
@@ -303,7 +303,7 @@ private theorem discr_mul [CommRing R] [IsDomain R]
             (Polynomial.discr f * Polynomial.discr g *
               Polynomial.resultant f g ^ 2)) := by
         ring
-  apply mul_left_cancel₀ (mul_ne_zero hlcf hlcg)
+  apply mul_left_cancel₀ (_root_.mul_ne_zero hlcf hlcg)
   exact hcancelSign
 
 /-- Discriminants multiply with the square of the cross-resultant.

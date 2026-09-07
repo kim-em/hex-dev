@@ -4,7 +4,7 @@ The correspondence between `Hex.RationalFn K` and Mathlib's `RatFunc K`,
 including canonical numerator/denominator agreement and the semantics of
 partial evaluation. Its immediate dependencies are `HexRationalFn` and
 `HexPolyMathlib`, plus Mathlib. The computational contract is in
-[hex-rational-fn](hex-rational-fn.md).
+[hex-rational-fn](../../HexRationalFn/SPEC/hex-rational-fn.md).
 
 ## Coefficient instances and representation
 
@@ -12,6 +12,24 @@ Work over `[Field K] [DecidableEq K]`, using the lightweight field instance
 induced by that same Mathlib field. Do not ask callers for two unrelated
 field structures on one carrier. As in `HexPolyMathlib`, the executable
 coefficient operations and the Mathlib operations must agree.
+
+The required `RationalFn` structure is indexed by the entire lightweight field
+instance, not just by its carrier. Choose `Field.toGrindField` before defining
+values for this companion (a local instance priority can make that explicit).
+Changing priorities afterwards does not convert previously defined values.
+In particular, values already instantiated using Lean core's separate
+`Lean.Grind.Field Rat` are not directly inputs to this equivalence. No equality
+of those two bundled structures or automatic transport between them is assumed.
+The computational conformance suite exercises the generic implementation at the
+core rational instance; companion examples separately exercise the Mathlib-induced
+instance and kernel certificate replay. This instance choice is not a second
+unrelated field hypothesis on the companion's theorems.
+
+The same choice applies at each level of an iterated rational-function field:
+for `RationalFn (RationalFn K)`, choose the Mathlib-induced lightweight field
+on the inner `RationalFn K` before defining outer values. The computational
+and Mathlib-induced bundled field instances are not automatically identified,
+even though their arithmetic, scalar multiplication, powers and casts agree.
 
 Define `HexRationalFnMathlib.toRatFunc f` by embedding
 `HexPolyMathlib.toPolynomial f.num` and `f.den` into `RatFunc K` and dividing.

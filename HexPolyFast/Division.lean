@@ -627,4 +627,20 @@ theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
         Lean.Grind.Field.mul_inv_cancel hlead, Lean.Grind.Semiring.mul_one] at hz'
       exact ha hz'
 
+/-- Fast field division leaves fewer stored coefficients than its nonzero divisor. -/
+theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (plan : MulPlan F) (p q : DensePoly F) (hq : q ≠ 0) :
+    (divModWith plan p q).2.size < q.size := by
+  let d := DivPlan.ofNonzero plan q hq (quotientLength p q)
+  have hcap : quotientLength p d.divisor ≤ d.capacity := Nat.le_refl _
+  have h := d.remainder_size_le p hcap
+  have hpos : 0 < q.size := Nat.pos_of_ne_zero (fun h => hq ((size_eq_zero_iff q).mp h))
+  have he : divModWith plan p q = d.divMod p hcap := by
+    simp only [divModWith, hq, ↓reduceDIte]
+    rfl
+  rw [he]
+  change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size < q.size
+  change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size ≤ q.size - 1 at h
+  omega
+
 end Hex.DensePoly
