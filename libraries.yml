@@ -154,6 +154,37 @@ libraries:
           description: Homogeneous and normalized Padé cases, including normalized failure.
         - name: coefficient-kernels
           description: Forced Kronecker and direct/CRT-NTT paths across degree, width, and modulus ladders.
+  HexRationalFn:
+    deps: [HexPoly, HexPolyFast]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly_q via a persistent C driver
+          class: informational
+          rationale: "FLINT uses integer polynomial pairs with scalar normalization, while Hex uses rational coefficients and a monic denominator; representation conversion is outside timed arithmetic."
+      input_families:
+        - name: normalization
+          description: Common-factor degree and nonmonic denominators, varying input degree and cancellation separately.
+        - name: addition
+          description: Coprime, equal and partially shared denominators, including partial and total cancellation.
+        - name: multiplication
+          description: Coprime and cross-cancelling pairs compared with multiply-then-normalize on identical canonical inputs.
+        - name: coefficient-height
+          description: Fixed rational polynomial shapes with increasing coefficient bit lengths and recorded intermediate sizes.
+        - name: queries
+          description: Full equality comparisons, regular and singular evaluation points, and inversion.
+        - name: calculus
+          description: Derivatives with cancellation, nonzero polynomial-division remainders, and powers measured by output size.
+        - name: certificate-replay
+          description: Separate normalization-certificate generation and replay, including rejection and witness-size variation.
+  HexRationalFnMathlib:
+    deps: [HexRationalFn, HexPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false

@@ -410,6 +410,11 @@ should emit explicit side goals, following `field_simp`, and term-level APIs
 should return both the normalized expression and the hypotheses under which
 it equals the input.
 
+The univariate fraction representation and arithmetic are specified in
+[hex-rational-fn](Libraries/hex-rational-fn.md). Its normalization removes
+removable singularities, so an expression tactic must retain the original
+denominator conditions separately.
+
 ### Holonomic functions
 
 Extend [hex-summation](Libraries/hex-summation.md) with closure operations for
@@ -838,14 +843,9 @@ certification, and class-group completeness are distinct obligations.
 
 ### Algebraic function fields and curves
 
-`hex-rational-fn` should provide normalized fractions in `K[x]`: numerator
-and denominator are coprime, the denominator is monic, and zero has denominator
-one. Arithmetic uses polynomial gcd and exact division. Correctness proves
-that normalization preserves the fraction relation and gives a unique
-representative. This library can later share code with the univariate part of
-the planned rational-expression project, but neither should depend on the
-multivariate `Together` or `Apart` tactics merely to obtain a field of
-coefficients.
+The coefficient field `K(x)` is specified in
+[hex-rational-fn](Libraries/hex-rational-fn.md), with its correspondence to
+Mathlib in [hex-rational-fn-mathlib](Libraries/hex-rational-fn-mathlib.md).
 
 `hex-function-field` should represent a finite separable extension of `K(x)`
 by a monic irreducible polynomial in a second variable. Elements use the power
