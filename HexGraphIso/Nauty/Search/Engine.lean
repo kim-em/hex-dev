@@ -280,6 +280,16 @@ def firstterminal (level : Nat) (st : Search n) : Search n := Id.run do
   canoncode := canoncode.set! (level + 1) codeSentinel
   return { st with canoncode }
 
+/-- Scatter the current labelling through a reference labelling. Detach
+the scratch field while filling it so each element update consumes just
+the array, rather than reconstructing the search record. -/
+@[inline] def scatter (refLab : Array Nat) (st : Search n) : Search n := Id.run do
+  let mut workperm := st.workperm
+  let st := { st with workperm := #[] }
+  for i in [0 : n] do
+    workperm := workperm.set! refLab[i]! st.lab[i]!
+  return { st with workperm }
+
 /-- Classify an off-path node, constructing its permutation in the
 scratch array and comparing canonical rows only after tied levels. -/
 def classify (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
@@ -290,8 +300,7 @@ def classify (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
   if numcells != n then
     return (.internal, st)
   if st.eqlevFirst == level then
-    for i in [0 : n] do
-      st := { st with workperm := st.workperm.set! st.firstlab[i]! st.lab[i]! }
+    st := scatter st.firstlab st
     if st.gcaFirst >= st.noncheaplevel || isautom ctx st.workperm then
       return (.autoFirst, st)
   let mut sr := 0
@@ -306,8 +315,7 @@ def classify (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
       st := { st with compCanon := c }
       sr := s
   if st.compCanon == 0 then
-    for i in [0 : n] do
-      st := { st with workperm := st.workperm.set! st.canonlab[i]! st.lab[i]! }
+    st := scatter st.canonlab st
     return (.autoCanon, st)
   else if st.compCanon > 0 then
     return (.better sr, st)
