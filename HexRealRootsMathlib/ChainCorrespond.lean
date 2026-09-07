@@ -1070,14 +1070,12 @@ private theorem sign_near_root {p : ℝ[X]} {r : ℝ}
   constructor
   · filter_upwards [hl.eventually_const_lt hd, self_mem_nhdsWithin] with x hx hxr
     simp only [slope_def_field, hr, sub_zero] at hx
-    rcases div_pos_iff.mp hx with ⟨_, h⟩ | ⟨h, _⟩
-    · exact False.elim ((sub_neg.mpr hxr).not_gt h)
-    · exact h
+    have hneg : x - r < 0 := sub_neg.mpr hxr
+    simpa only [div_pos_iff, hneg.not_gt, hneg,
+      and_false, and_true, false_or] using hx
   · filter_upwards [hu.eventually_const_lt hd, self_mem_nhdsWithin] with x hx hxr
     simp only [slope_def_field, hr, sub_zero] at hx
-    rcases div_pos_iff.mp hx with ⟨h, _⟩ | ⟨_, h⟩
-    · exact h
-    · exact False.elim ((sub_pos.mpr hxr).not_gt h)
+    exact (div_pos_iff_of_pos_right (sub_pos.mpr hxr)).mp hx
 
 /-- **The head-pair flank.** If `s₀` vanishes at `r`, `s₁` does not, and
 `s₀' = C γ · s₁` with `γ > 0` (the executable seeds: the primitive parts of
