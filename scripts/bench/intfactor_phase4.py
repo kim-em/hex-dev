@@ -19,7 +19,8 @@ import socket
 import statistics
 import subprocess
 import sys
-import tempfile
+import shutil
+import traceback
 import time
 
 try:
@@ -79,17 +80,106 @@ FIXED_BUDGET_NANOS = {
 }
 
 
+class Attempt:
+    """Append-only subprocess evidence; the output never implies acceptance early."""
+
+    def __init__(self, output: Path):
+        self.output = output.resolve()
+        self.directory = Path(str(self.output) + ".attempt")
+        self.output.parent.mkdir(parents=True, exist_ok=True)
+        if self.output.exists():
+            raise FileExistsError(self.output)
+        self.directory.mkdir()  # Never overwrite a previous attempt, even a partial one.
+        self.record: dict[str, object] = {
+            "schema": "hex-int-factor-attempt/1", "status": "running",
+            "command": sys.argv, "cwd": str(ROOT), "started_ns": time.time_ns(),
+            "hostname": socket.gethostname(), "platform": platform.platform(),
+            "python": platform.python_version(), "commands": [],
+        }
+        self.save()
+
+    def save(self) -> None:
+        temporary = self.directory / "status.tmp"
+        temporary.write_text(json.dumps(self.record, indent=2, sort_keys=True) + "\n")
+        temporary.replace(self.output)
+
+    def execute(self, command: list[str], *, stdin: str | None,
+                timeout: float, allowed: tuple[int, ...]) -> subprocess.CompletedProcess[str]:
+        commands = self.record["commands"]
+        index = len(commands)
+        stem = self.directory / f"command-{index:04d}"
+        executable = shutil.which(command[0])
+        entry = {
+            "command": command, "stdin": stdin, "timeout_seconds": timeout,
+            "started_ns": time.time_ns(), "status": "running",
+            "executable": executable,
+            "executable_sha256": sha256(Path(executable)) if executable else None,
+            "stdout": str(stem) + ".stdout", "stderr": str(stem) + ".stderr",
+        }
+        commands.append(entry)
+        self.save()
+        # Files receive output as it is produced, including partial timeout output.
+        with Path(entry["stdout"]).open("w") as stdout, Path(entry["stderr"]).open("w") as stderr:
+            try:
+                proc = subprocess.run(command, cwd=ROOT, input=stdin, text=True,
+                                      stdout=stdout, stderr=stderr, timeout=timeout)
+                entry.update(returncode=proc.returncode, status="completed")
+            except BaseException as error:
+                entry.update(status="failed", error_type=type(error).__name__, error=str(error))
+                raise
+            finally:
+                entry["ended_ns"] = time.time_ns()
+                self.save()
+        result = subprocess.CompletedProcess(
+            command, proc.returncode, Path(entry["stdout"]).read_text(),
+            Path(entry["stderr"]).read_text())
+        if proc.returncode not in allowed:
+            entry["status"] = "failed"
+            self.save()
+            raise subprocess.CalledProcessError(proc.returncode, command, result.stdout, result.stderr)
+        return result
+
+
+ACTIVE_ATTEMPT: Attempt | None = None
+
+
 def run(command: list[str], *, stdin: str | None = None,
-        timeout: float = 60.0) -> subprocess.CompletedProcess[str]:
+        timeout: float = 60.0, allowed: tuple[int, ...] = (0,)) -> subprocess.CompletedProcess[str]:
+    if ACTIVE_ATTEMPT is not None:
+        return ACTIVE_ATTEMPT.execute(command, stdin=stdin, timeout=timeout, allowed=allowed)
+    proc = subprocess.run(command, cwd=ROOT, input=stdin, capture_output=True,
+                          text=True, timeout=timeout)
+    if proc.returncode not in allowed:
+        raise subprocess.CalledProcessError(proc.returncode, command, proc.stdout, proc.stderr)
+    return proc
+
+
+def collect_attempt(args: argparse.Namespace) -> int:
+    global ACTIVE_ATTEMPT
+    attempt = Attempt(args.output)
+    ACTIVE_ATTEMPT = attempt
     try:
-        return subprocess.run(
-            command, cwd=ROOT, input=stdin, check=True, capture_output=True,
-            text=True, timeout=timeout,
-        )
-    except subprocess.CalledProcessError as error:
-        sys.stderr.write(error.stdout or "")
-        sys.stderr.write(error.stderr or "")
+        attempt.record["source_sha256"] = {
+            name: sha256(ROOT / name)
+            for name in git("ls-files").splitlines()
+            if (ROOT / name).is_file()
+        }
+        attempt.record["commit"] = git("rev-parse", "HEAD")
+        attempt.record["dirty_status"] = args.dirty_status
+        attempt.save()
+        return collect(args, attempt)
+    except BaseException as error:
+        attempt.record.update(status="rejected", error_type=type(error).__name__,
+                              error=str(error), traceback=traceback.format_exc())
         raise
+    finally:
+        attempt.record["ended_ns"] = time.time_ns()
+        try:
+            attempt.record["state_after"] = host_state(attempt.record.get("cpu", 0))
+        except Exception as error:
+            attempt.record["state_after_error"] = str(error)
+        attempt.save()
+        ACTIVE_ATTEMPT = None
 
 
 def git(*args: str) -> str:
@@ -120,6 +210,11 @@ def host_state(cpu: int) -> dict[str, object]:
     pressure = Path("/proc/pressure/cpu")
     return {
         "cpu": cpu,
+        "proc_stat": Path("/proc/stat").read_text(),
+        "smt_siblings": sorted(idle_core.sibling_map().get(cpu, {cpu})),
+        "frequency_khz": {p.name: p.read_text().strip() for p in
+            Path(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq").glob("scaling_*")
+            if p.is_file()},
         "affinity": sorted(os.sched_getaffinity(0)),
         "cpu_model": model,
         "load_average": list(os.getloadavg()),
@@ -247,10 +342,10 @@ def measure_pari(gp: str, n: int, rounds: int, timeout: float) -> dict[str, obje
 
 def ecm_batch(ecm: str, n: int, timeout: float) -> tuple[float, list[list[int]]]:
     started = time.monotonic_ns()
-    proc = subprocess.run(
-        [ecm, "-q", "-sigma", "0:7", "1000", "1"], cwd=ROOT,
-        input=f"{n}\n" * ECM_BATCH, capture_output=True, text=True,
-        timeout=timeout,
+    proc = run(
+        [ecm, "-q", "-sigma", "0:7", "1000", "1"],
+        stdin=f"{n}\n" * ECM_BATCH, timeout=timeout,
+        allowed=(0, 2, 6, 8, 10, 14),
     )
     elapsed = float(time.monotonic_ns() - started) / ECM_BATCH
     if proc.returncode not in (0, 2, 6, 8, 10, 14):
@@ -289,6 +384,8 @@ def measure_ecm(ecm: str, n: int, rounds: int,
 
 
 def render(record: dict[str, object]) -> None:
+    if record.get("status", "accepted") != "accepted":
+        raise RuntimeError("refusing to render unaccepted evidence")
     export = record["benchmark_export"]
     assert isinstance(export, dict)
     print("| target | harness result |")
@@ -362,21 +459,31 @@ def main() -> int:
     if dirty and not args.allow_dirty:
         parser.error("worktree is dirty; commit first or use --allow-dirty")
 
+    args.dirty_status = dirty
+    return collect_attempt(args)
+
+
+def collect(args: argparse.Namespace, attempt: Attempt) -> int:
+    dirty = args.dirty_status
     cpu = idle_core.resolve(args.cpu)
+    attempt.record["cpu"] = cpu
     idle_core.pin_self(cpu)
     before = host_state(cpu)
+    attempt.record["state_before"] = before
+    attempt.save()
     run(["lake", "build", "hexintfactor_bench", "HexIntFactorKernelProbe"],
         timeout=max(900.0, args.timeout))
     if not BENCH.exists():
         raise RuntimeError(f"missing benchmark executable: {BENCH}")
 
-    with tempfile.TemporaryDirectory(prefix="hex-int-factor-") as directory:
-        export_path = Path(directory) / "bench.json"
-        run([
-            str(BENCH), "run", "--filter", "Hex.IntFactorBench",
-            "--export-file", str(export_path),
-        ], timeout=max(1800.0, args.timeout))
-        export = json.loads(export_path.read_text())
+    export_path = attempt.directory / "bench.json"
+    run([
+        str(BENCH), "run", "--filter", "Hex.IntFactorBench",
+        "--export-file", str(export_path),
+    ], timeout=max(1800.0, args.timeout))
+    export = json.loads(export_path.read_text())
+    attempt.record["benchmark_export"] = export
+    attempt.save()
     validate_export(export)
 
     control_output = run([str(BENCH), "control-audit"], timeout=120.0).stdout
@@ -494,8 +601,9 @@ def main() -> int:
             "gmp_ecm": ecm_rows,
         },
     }
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
+    attempt.record.update(record)
+    attempt.record["status"] = "accepted"
+    attempt.save()
     render(record)
     return 0
 

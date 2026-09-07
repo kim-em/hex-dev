@@ -2,7 +2,7 @@
 
 ## Scope and acceptance
 
-This is the Phase-4 report for `HexIntFactor`. It covers the five input
+This is the incomplete Phase-4 report for `HexIntFactor`. It covers the five input
 families declared in `libraries.yml`: table and balanced semiprimes, smooth and
 unbalanced semiprimes, power forms, certificate replay and order, and
 generalized divisor sums. The exact declared comparator name is
@@ -408,10 +408,17 @@ the summarizer has SHA-256
 and its shared categorizer has SHA-256
 `f5b5ebb676b6a59188cd59145c5bec78041ceba5845a4b8b819888a552b59069`.
 
-## Concerns
+## Informational comparator trend
 
 GMP-ECM's specialized stage-1 implementation is externally faster on its one
 eligible row, and PARI's broader factorization portfolio is faster on every
 balanced rung. These are expected algorithm- and implementation-class gaps
 recorded for orientation, not missing attribution or a failed gating
 requirement.
+
+## Concerns
+
+Public `Hex.Nat.divisors` has no accepted operation-specific measurement or
+inclusive profile. Phase 4 remains incomplete for both HexIntFactor and its
+correspondence-only Mathlib bridge; the registry is at Phase 3. Existing local
+Phase-5–7 artifacts are retained, but are not acceptance of this missing gate.
