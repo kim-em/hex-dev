@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.Reach
+public import HexGraphIso.Nauty.Policy.Fuel
 public import HexGraphIso.Nauty.Policy.Effect
 public import HexGraphIso.Nauty.Policy.Engine
 public import HexGraphIso.Nauty.Invariant.Reach
@@ -243,5 +244,41 @@ theorem canonlab_or (G : Colored n k) (hn0 : 0 < n) :
     (runColored G).canonlab = Array.replicate n 0 ∨
       ((runColored G).canonlab.size = n ∧ CellsReach G (runColored G).canonlab) :=
   (runState_out G hn0).canon
+
+/-- The engine cannot exhaust a sufficient node bound on a valid partition. -/
+theorem node_noFuel {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
+    {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hok : SearchOk G level numcells st.view) (hfuel : n + 1 ≤ level + fuel) :
+    (node first ctx (n + 2) tcLevel fuel level numcells st).1 ≠ .fuel := by
+  rw [node_eq_generic]
+  exact Generic.node_noFuel (reachPolicy G ctx tcLevel hn0) leafExit_noFuel
+    first fuel level numcells st hlevel hok hfuel
+
+/-- The engine cannot exhaust sufficient node and cursor bounds in a sweep. -/
+theorem sweep_noFuel {G : Colored n k} {ctx : Ctx n}
+    {tcLevel fuel cfuel level numcells tc tv1 index : Nat}
+    {cursor : Option Nat} {cell : VSet n} {st : Search n}
+    (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hok : SearchOk G level numcells st.view)
+    (htarget : Generic.Target Search.view level tc cell st)
+    (hcursor : ∀ v, cursor = some v → cell.mem v = true)
+    (hfuel : n ≤ level + fuel) (hcfuel : Generic.CursorFuel n cfuel cursor) :
+    (sweep first ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1 cursor cell index st).1 ≠ .fuel := by
+  rw [sweep_eq_generic]
+  exact Generic.sweep_noFuel (reachPolicy G ctx tcLevel hn0) leafExit_noFuel
+    first fuel cfuel level numcells tc tv1 index cursor cell st hlevel hok htarget hcursor hfuel hcfuel
+
+/-- The root engine run never exhausts its recursion bounds. -/
+theorem runState_noFuel (G : Colored n k) :
+    (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).1 ≠ .fuel := by
+  unfold runState
+  split
+  · intro h
+    cases h
+  · rename_i hn
+    have hn0 : 0 < n := by
+      have hne : n ≠ 0 := by simpa using hn
+      omega
+    exact node_noFuel true hn0 (Nat.le_refl _) (initial_ok G hn0) (by omega)
 
 end Hex.GraphIso.Nauty.Engine

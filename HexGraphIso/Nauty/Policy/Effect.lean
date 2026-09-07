@@ -50,6 +50,23 @@ theorem leafExit_done (leaf : Leaf) (level : Nat) (st : Search n) :
   all_goals repeat' split
   all_goals simp
 
+/-- Pruning returns an ancestor level without consuming recursion fuel. -/
+theorem pruneReturn_noFuel (level : Nat) (st : Search n) :
+    (pruneReturn level st).1 ≠ .fuel := by
+  unfold pruneReturn
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst]
+  split <;> (intro h; cases h)
+
+/-- Leaf actions return control without consuming recursion fuel. -/
+theorem leafExit_noFuel (leaf : Leaf) (level : Nat) (st : Search n) :
+    (leafExit leaf level st).1 ≠ .fuel := by
+  cases leaf <;> unfold leafExit
+  all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst]
+  all_goals repeat' split
+  all_goals first
+    | exact pruneReturn_noFuel level _
+    | (intro h; cases h)
+
 /-- The internal classification is exactly a non-discrete node that has
 not failed both first-path and canonical comparison. -/
 theorem classify_internal (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
