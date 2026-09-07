@@ -18,7 +18,8 @@ NEXT = 'lean_exe next where\n  root := `Main\n'
 
 class IndependentTargetTests(unittest.TestCase):
     def allowed(self, before, after):
-        return check.independent_target_additions(before, after, {"HexOther"})
+        return check.independent_target_additions(before, after, {"HexOther"},
+                                                  {"HexGraphIso", "Init", "Lean", "Std", "Lake"})
 
     def test_plain_executable_append(self):
         self.assertTrue(self.allowed(BASE, BASE + "\n" + EXE))
@@ -27,6 +28,21 @@ class IndependentTargetTests(unittest.TestCase):
         self.assertTrue(self.allowed(BASE + "\n" + NEXT,
                                      BASE + "\n" + LIB + "\n" + NEXT))
         self.assertTrue(self.allowed(BASE, BASE + "\n" + LIB.replace("roots", "globs")))
+
+    def test_globs_do_not_override_default_roots(self):
+        for name in ("HexGraphIso", "Init", "Lean", "Std", "Lake"):
+            self.assertFalse(self.allowed(BASE, BASE + "\n" + LIB.replace("roots", "globs")
+                                          .replace("IndependentSupport", name)))
+
+    def test_sweep_selector_uses_the_same_allowance(self):
+        from scripts.bench import graphiso_pernode_fit as fit
+        from types import SimpleNamespace
+        observation = SimpleNamespace(label="covered.jsonl")
+        with patch.object(check, "observations", return_value=([observation], [])), \
+                patch.object(fit.freshness, "assess", return_value=SimpleNamespace(
+                    matched=None, baseline=observation, fresh=True)) as assess:
+            self.assertEqual(fit.current_sweep(), fit.RESULTS / observation.label)
+            self.assertIs(assess.call_args.kwargs["allow"], check.runtime_neutral)
 
     def test_multiple_new_targets(self):
         self.assertTrue(self.allowed(BASE, BASE + "\n" + LIB + "\n" + EXE))
@@ -94,7 +110,8 @@ class IndependentTargetTests(unittest.TestCase):
                 path.write_text(text)
             with patch.object(check.freshness, "ROOT", root):
                 self.assertEqual(check.graph_import_prefixes(),
-                                 {"HexGraphIso", "HexHelper", "Lean", "HexOther"})
+                                 {"HexGraphIso", "HexHelper", "Lean", "HexOther",
+                                  "Init", "Std", "Lake"})
                 (root / "HexGraphIso.lean").write_text("import HexHelper.«Core»\n")
                 self.assertIsNone(check.graph_import_prefixes())
 

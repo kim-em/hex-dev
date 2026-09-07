@@ -66,7 +66,7 @@ def graph_import_prefixes() -> set[str] | None:
     rejects an allowance. Nonlocal imports still contribute their namespace.
     Unsupported import syntax fails closed.
     """
-    prefixes = {"HexGraphIso"}
+    prefixes = {"HexGraphIso", "Init", "Lean", "Std", "Lake"}
     stack = [freshness.ROOT / "HexGraphIso.lean",
              freshness.ROOT / "bench/HexGraphIso/Cactus.lean"]
     seen = set()
@@ -94,7 +94,8 @@ def graph_import_prefixes() -> set[str] | None:
     return prefixes
 
 
-def independent_target_additions(before: str, after: str, prefixes: set[str]) -> bool:
+def independent_target_additions(before: str, after: str, prefixes: set[str],
+                                 imported: set[str]) -> bool:
     """Recognize only insertions of literal, non-default independent targets.
 
     Insertions must follow an existing executable's final `root` field and
@@ -134,6 +135,9 @@ def independent_target_additions(before: str, after: str, prefixes: set[str]) ->
                     or (field == "root") != value.startswith("`")):
                 return False
             modules = re.findall(rf"`({MODULE})", value)
+            # With explicit globs, Lake still defaults roots to #[name].
+            if field == "globs" and name in imported:
+                return False
             if any(module.split(".")[0] not in prefixes for module in modules):
                 return False
             names.add(name)
@@ -158,7 +162,8 @@ def independent_lake_targets(difference: freshness.Difference) -> bool:
     independent = {path.stem for path in freshness.ROOT.glob("Hex*.lean")
                    if path.stem not in imported}
     return independent_target_additions(freshness.blob_text(difference.baseline),
-                                        freshness.blob_text(difference.current), independent)
+                                        freshness.blob_text(difference.current), independent,
+                                        imported)
 
 
 def observations() -> tuple[list[freshness.Observation], list[str]]:
@@ -186,11 +191,15 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
     return found, errors
 
 
+def runtime_neutral(difference: freshness.Difference) -> bool:
+    """The checked allowances shared by freshness and sweep selection."""
+    return freshness.lean_comment_only(difference) or independent_lake_targets(difference)
+
+
 def main() -> int:
     found, errors = observations()
     verdict = freshness.assess(FAMILY, found,
-                               allow=lambda difference: freshness.lean_comment_only(difference)
-                               or independent_lake_targets(difference))
+                               allow=runtime_neutral)
     errors.extend(verdict.errors)
     errors.extend(freshness.missing_figures(FAMILY))
 
