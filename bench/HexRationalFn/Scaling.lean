@@ -69,7 +69,7 @@ def evaluatePole (f : RationalFn Rat) : Option Rat := eval? f 1
 
 def queryConfig : LeanBench.BenchmarkConfig :=
   { paramSchedule := .custom #[128, 256, 512, 1024, 2048, 4096, 8192, 16384],
-    targetInnerNanos := 500000000, maxSecondsPerCall := 5, outerTrials := 3 }
+    targetInnerNanos := 2000000000, maxSecondsPerCall := 10, outerTrials := 3 }
 
 -- Linear two-sided model: equal independently allocated canonical arrays require Θ(n)
 -- coefficient comparisons; all coefficients have bounded word-size values.
