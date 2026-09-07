@@ -677,22 +677,24 @@ theorem processnode_checkAutom {level numcells : Nat} {st : SearchSt n}
 /-! # The store-validity invariant -/
 
 /-- Every generator the run has recorded is a checked automorphism.
-This is the store-validity invariant, in the form the domination
-induction threads: `processnode` is the only primitive that writes
+The additional property `P` records admission facts such as initial
+colour preservation. This is the invariant the domination induction threads: `processnode` is the only primitive that writes
 `genTrace`, so every other event preserves it by its frame. -/
-def GenTraceOk (ctx : Ctx n) (st : SearchSt n) : Prop :=
-  ∀ γ ∈ st.genTrace, checkAutom ctx.g γ = true
+def GenTraceOk (ctx : Ctx n) (st : SearchSt n)
+    (P : Array Nat → Prop := fun _ => True) : Prop :=
+  ∀ γ ∈ st.genTrace, checkAutom ctx.g γ = true ∧ P γ
 
 /-- Read one checked-generator fact from the run-side store invariant. -/
 theorem GenTraceOk.check {ctx : Ctx n} {st : SearchSt n}
-    (h : GenTraceOk ctx st) {γ : Array Nat} (η : γ ∈ st.genTrace.toList) :
+    {P : Array Nat → Prop} (h : GenTraceOk ctx st P)
+    {γ : Array Nat} (η : γ ∈ st.genTrace.toList) :
     checkAutom ctx.g γ = true :=
-  h γ (Array.mem_toList_iff.mp η)
+  (h γ (Array.mem_toList_iff.mp η)).1
 
 /-- The invariant survives the admission event. The only row clause is
 the incumbent tie behind the `testcanlab` arm; code 1 is scanned. -/
 theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt n}
-    (hprev : GenTraceOk ctx st)
+    {P : Array Nat → Prop} (hprev : GenTraceOk ctx st P)
     (hsymm : ∀ u w, u < n → w < n →
       (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
@@ -705,16 +707,19 @@ theorem genTraceOk_processnode {level numcells : Nat} {st : SearchSt n}
     (harm3 : (testcanlab ctx
         (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 =
         0 →
-      leafRows ctx st.canonlab = leafRows ctx st.lab) :
-    GenTraceOk ctx (processnode ctx level numcells st).2 := by
+      leafRows ctx st.canonlab = leafRows ctx st.lab)
+    (hP : ∀ γ, checkAutom ctx.g γ = true →
+      ((∀ i, i < n → γ[st.firstlab[i]!]! = st.lab[i]!) ∨
+        (∀ i, i < n → γ[st.canonlab[i]!]! = st.lab[i]!)) → P γ) :
+    GenTraceOk ctx (processnode ctx level numcells st).2 P := by
   intro γ hγ
-  rcases processnode_checkAutom hsymm hloop hsz₁ hok₁ hinj₁ hszL
-      hokL hinjL hsz₂ hok₂ hinj₂ harm3 with heq | ⟨δ, hpush, hδ⟩
+  rcases processnode_carrier hsymm hloop hsz₁ hok₁ hinj₁ hszL
+      hokL hinjL hsz₂ hok₂ hinj₂ harm3 with heq | ⟨δ, hpush, hδ, hmap⟩
   · rw [heq] at hγ
     exact hprev γ hγ
   · rw [hpush] at hγ
     rcases Array.mem_push.mp hγ with hmem | rfl
     · exact hprev γ hmem
-    · exact hδ
+    · exact ⟨hδ, hP γ hδ hmap⟩
 
 end Hex.GraphIso.Nauty

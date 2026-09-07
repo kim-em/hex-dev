@@ -9,6 +9,8 @@ module
 public import HexGraphIso.AutGroup
 import all HexGraphIso.Perm
 import all HexGraphIso.Nauty.Cert.Cert
+import all HexGraphIso.Nauty.Invariant.Trace
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -87,13 +89,10 @@ theorem checked_perm {G : Colored n k} {γ : Array Nat}
     mem_rowOf_lt G i.isLt j.isLt] at heq
   exact heq
 
-/-- A scatter between two reached labellings preserves the initial
-colouring, so its row-check certificate passes the public filter. -/
-theorem admit_scatter {G : Colored n k} {γ ref cur : Array Nat}
-    (hn : 0 < n) (hrefSize : ref.size = n)
-    (href : CellsReach G ref) (hcur : CellsReach G cur)
-    (hcheck : checkAutom (rowsOf G) γ = true)
-    (hmap : ∀ i, i < n → γ[ref[i]!]! = cur[i]!) :
+/-- A row-checked array preserving the initial colours passes the public
+admission filter. -/
+theorem admit {G : Colored n k} {γ : Array Nat}
+    (hcheck : checkAutom (rowsOf G) γ = true) (hcolor : ColorMap G γ) :
     ∃ p, autom? G γ = some p := by
   obtain ⟨p, hval, hadj⟩ := checked_perm hcheck
   have hsize : γ.size = n := by
@@ -103,23 +102,64 @@ theorem admit_scatter {G : Colored n k} {γ ref cur : Array Nat}
     exact beq_iff_eq.mp hh.1.1.1
   refine ⟨p, autom?_eq hsize hval (IsIso.mk ?_ hadj)⟩
   intro v
-  have hm := (isPerm_of_cellsReach hrefSize hn href).mem_iff.mpr
-    (List.mem_range.mpr v.isLt)
-  obtain ⟨i, hi, hiv⟩ := List.mem_iff_getElem.mp hm
-  have hin : i < n := by simpa [hrefSize] using hi
-  have hv : ref[i]! = v.val := by
-    rw [getElem!_pos ref i (by omega)]
-    exact hiv
-  obtain ⟨hr, hrc⟩ := achieved_position_colors href i hin
-  obtain ⟨hc, hcc⟩ := achieved_position_colors hcur i hin
-  have hv' : (⟨ref[i]!, hr⟩ : Fin n) = v := Fin.ext hv
-  have hpv : p.get v = (⟨cur[i]!, hc⟩ : Fin n) := by
-    apply Fin.ext
-    rw [hval, ← hv, hmap i hin]
-  apply Fin.ext
-  change (G.coloring.cells.get (p.get v)).val = (G.coloring.cells.get v).val
-  rw [hpv, ← hv']
-  exact hcc.trans hrc.symm
+  obtain ⟨hv, hc⟩ := hcolor v
+  have he : p.get v = (⟨γ[v.val]!, hv⟩ : Fin n) := Fin.ext (hval v)
+  change G.coloring.cells.get (p.get v) = G.coloring.cells.get v
+  rw [he]
+  exact hc
+
+/-- A scatter between two reached labellings preserves the initial
+colouring, so its row-check certificate passes the public filter. -/
+theorem admit_scatter {G : Colored n k} {γ ref cur : Array Nat}
+    (hn : 0 < n) (hrefSize : ref.size = n)
+    (href : CellsReach G ref) (hcur : CellsReach G cur)
+    (hcheck : checkAutom (rowsOf G) γ = true)
+    (hmap : ∀ i, i < n → γ[ref[i]!]! = cur[i]!) :
+    ∃ p, autom? G γ = some p :=
+  admit hcheck (ColorMap.scatter hn hrefSize href hcur hmap)
+
+/-- Every array in the executable trace is admitted, including redundant
+code-two automorphisms. The proof uses the search invariant; it adds no
+work to the traversal. -/
+theorem trace_admitted (G : Colored n k) :
+    ∀ γ ∈ trace G, ∃ p, autom? G γ = some p := by
+  rcases Nat.eq_zero_or_pos n with hn | hn
+  · subst n
+    simp [trace, runColoredTraced, runTraced]
+  · obtain ⟨fs, outBest, eventTrail, hrun, -⟩ :=
+      (totalAll G { g := rowsOf G } (n + 2) 100 (n + 2)).2
+        n 1 (initialPartition G).2.length []
+        (rootSt n (initialPartition G).1 (initialPartition G).2)
+        FrameTrail.empty rfl rfl hn (Nat.le_refl 1) rfl (by omega)
+        (by omega) (Nat.le_refl 1)
+        (CheapDesc.same { g := rowsOf G } 1 _)
+        (orbSound_orbConn_init _) (FirstInv.root hn) PathOk.root
+    have hevent := hrun.proof.node.outcome.event
+    have hinv : GenTraceOk { g := rowsOf G }
+        (rootOut n (rowsOf G) (initialPartition G).1 (initialPartition G).2)
+        (ColorMap G) := by
+      cases hevent with
+      | intro _ _ _ event _ _ _ _ _ _ => exact event.genTraceOk
+    intro γ hγ
+    have hm : γ ∈ (rootOut n (rowsOf G) (initialPartition G).1
+        (initialPartition G).2).genTrace.toList := by
+      simpa only [trace, runColoredTraced, runTraced, beq_iff_eq,
+        Nat.ne_of_gt hn, ite_false, Id.run_pure, rootOut, rootSt] using hγ
+    exact admit (hinv.check hm) (hinv.colors hm)
+
+/-- The public filter retains the whole trace, in its original order. -/
+theorem raw_eq_trace (G : Colored n k) : raw G = trace G := by
+  have h : ∀ xs : List (Array Nat), (∀ γ ∈ xs, ∃ p, autom? G γ = some p) →
+      (xs.filterMap fun γ => (autom? G γ).map fun p => (γ, p)).map Prod.fst = xs := by
+    intro xs hx
+    induction xs with
+    | nil => rfl
+    | cons γ xs ih =>
+        obtain ⟨p, hp⟩ := hx γ (by simp)
+        simp only [List.filterMap_cons, hp, Option.map_some, List.map_cons]
+        congr 1
+        exact ih (fun δ hδ => hx δ (by simp [hδ]))
+  exact h (trace G) (trace_admitted G)
 
 /-- A checked automorphism recorded in the raw trace belongs to the public
 generator list. This also admits code-two generators that leave the orbit

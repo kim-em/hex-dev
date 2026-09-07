@@ -462,7 +462,7 @@ structure RunInv (G : Colored n k) (ctx : Ctx n)
     st.eqlevCanon st.compCanon
   firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
-  genTraceOk : GenTraceOk ctx st
+  genTraceOk : GenTraceOk ctx st (ColorMap G)
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
     (initialPartition G).1 1 st.autos
@@ -521,7 +521,7 @@ structure RunPrep (G : Colored n k) (ctx : Ctx n)
     st.eqlevCanon st.compCanon
   firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
-  genTraceOk : GenTraceOk ctx st
+  genTraceOk : GenTraceOk ctx st (ColorMap G)
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
     (initialPartition G).1 1 st.autos
@@ -1181,7 +1181,7 @@ structure RunEvent (G : Colored n k) (ctx : Ctx n)
       st.eqlevCanon 0)
   firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
-  genTraceOk : GenTraceOk ctx st
+  genTraceOk : GenTraceOk ctx st (ColorMap G)
   autosOk : AutosOk ctx.g
     (initPtn n (n + 2) (initialPartition G).2)
     (initialPartition G).1 1 st.autos
@@ -1282,8 +1282,8 @@ theorem LeafRefsOk.processnodeGen {G : Colored n k} {ctx : Ctx n}
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hok : SearchOk G level numcells st) (hrefs : LeafRefsOk G st)
     (hcanong : CanongInv ctx st.canong st.canonlab st.samerows)
-    (hgen : GenTraceOk ctx st) :
-    GenTraceOk ctx (processnode ctx level numcells st).2 := by
+    (hgen : GenTraceOk ctx st (ColorMap G)) :
+    GenTraceOk ctx (processnode ctx level numcells st).2 (ColorMap G) := by
   exact genTraceOk_processnode hgen hsymm hloop
     hrefs.firstSize
     (labOk_of_reach hrefs.firstSize hrefs.firstReach)
@@ -1294,6 +1294,10 @@ theorem LeafRefsOk.processnodeGen {G : Colored n k} {ctx : Ctx n}
     (labOk_of_reach hrefs.canonSize hrefs.canonReach)
     (labInj_of_reach hrefs.canonSize hn0 hrefs.canonReach)
     (fun htie => rows_eq_of_testcanlab_tie hcanong htie)
+    (fun γ _ hmap => by
+      rcases hmap with hfirst | hcanon
+      · exact ColorMap.scatter hn0 hrefs.firstSize hrefs.firstReach hok.reach hfirst
+      · exact ColorMap.scatter hn0 hrefs.canonSize hrefs.canonReach hok.reach hcanon)
 
 /-- The same correctly indexed leaf-state hypotheses identify any newly
 admitted generator as a checked carrier from the first or canonical leaf. -/
