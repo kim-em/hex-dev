@@ -248,7 +248,7 @@ def runAddEliminant : Unit → IO UInt64 := fun _ => do
 def runIsolateAdd : Unit → IO UInt64 := fun _ => do
   let input ← requireSome "lazy/isolate-add" (← isolateInputRef.get)
   let isolations ← requireSome "lazy/isolate-add"
-    (isolate? input.polynomial input.simple (input.depth : Int))
+    (ZPoly.isolateComplexRoots? input.polynomial input.simple (input.depth : Int))
   return isolations.foldl
     (fun checksum isolation =>
       mixHash checksum (squareChecksum isolation.square))
@@ -836,7 +836,7 @@ general constructor remains the fixture for ladders whose polynomial is not
 the binomial used to choose `ladderRootSeed`. -/
 private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
     Option (RefinedIsolation p) := do
-  let isolations ← isolate? p h (separationDepth p : Int)
+  let isolations ← ZPoly.isolateComplexRoots? p h (separationDepth p : Int)
   let iso ← isolations[0]?
   iso.toRefined?
 
@@ -845,9 +845,9 @@ candidate factor. This pins exactification fixtures to the intended factor
 rather than to the enclosing isolator's emission order. -/
 private def refinedFactor? (p q : ZPoly) (hp : HasOnlySimpleRoots p)
     (hq : HasOnlySimpleRoots q) : Option (RefinedIsolation p) := do
-  let pIsolations ← isolate? p hp (separationDepth p : Int)
+  let pIsolations ← ZPoly.isolateComplexRoots? p hp (separationDepth p : Int)
   let pRefined ← pIsolations.mapM DyadicRootIsolation.toRefined?
-  let qIsolations ← isolate? q hq (separationDepth q : Int)
+  let qIsolations ← ZPoly.isolateComplexRoots? q hq (separationDepth q : Int)
   let qIsolation ← qIsolations[0]?
   let qRefined ← qIsolation.toRefined?
   pRefined.toList.find? fun rep =>
@@ -2212,7 +2212,7 @@ setup_benchmark runMergeRootListLadder n => n ^ 2 * (Nat.log2 (n + 2) + 1)
 `g^2 * (X - 1)` over `ℚ(√2)`, constructs the degree-12 norm eliminant of the
 dense degree-6 repeated component, isolates it at separation depth, and
 disambiguates its six roots. The repaired inclusive profile puts 92.94% of the
-profiled process in `componentRoots?` and 85.01% in `isolate`. No tight
+profiled process in `componentRoots?` and 85.01% in `ZPoly.isolateComplexRoots?`. No tight
 scaling of the HexRoots executable on this family has been derived independently of timing,
 and BSSY's `Õ(d³ + d²·tau)` result analyzes `CIsolate`, not HexRoots' distinct
 driver. The former `n⁵ log² n` declaration instead composed HexRoots'

@@ -88,8 +88,8 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-invariant-factors-mathlib**: the characteristic-matrix module correspondence, product agreement with the independently computed characteristic polynomial, and largest-factor agreement with the independently computed minimal polynomial
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
-- **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
-- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolate?`
+- **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
+- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
 - **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
@@ -680,9 +680,9 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-z-gcd.md](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
 - [hex-cyclotomic.md](hex-cyclotomic.md): dense integer cyclotomic polynomials indexed by a checked factorization, the squarefree-kernel and divisor-recursion routes, the divisor family, and the factorization of `x^n - 1` (the Mathlib companion is specified in the same file)
 - [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
-- [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
+- [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
-- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolate?`
+- [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)

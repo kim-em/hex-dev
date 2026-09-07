@@ -189,7 +189,7 @@ theorem componentRoots?_sound [ZPoly.CheckedIrreducible p]
       next hdegree =>
         split at hrun
         next hsimple =>
-          cases hisolate : isolate? (ZPoly.squareFreeCore (normEliminant f))
+          cases hisolate : ZPoly.isolateComplexRoots? (ZPoly.squareFreeCore (normEliminant f))
               hsimple (separationDepth
                 (ZPoly.squareFreeCore (normEliminant f)) : Int) with
           | none => simp [hisolate] at hrun
@@ -285,7 +285,7 @@ theorem componentRoots?_complete [ZPoly.CheckedIrreducible p]
       next hdegree =>
         split at hrun
         next hsimple =>
-          cases hisolate : isolate? (ZPoly.squareFreeCore (normEliminant f))
+          cases hisolate : ZPoly.isolateComplexRoots? (ZPoly.squareFreeCore (normEliminant f))
               hsimple (separationDepth
                 (ZPoly.squareFreeCore (normEliminant f)) : Int) with
           | none => simp [hisolate] at hrun
@@ -302,7 +302,7 @@ theorem componentRoots?_complete [ZPoly.CheckedIrreducible p]
                   simp only [Option.bind_some] at hrun
                   rw [← Array.foldlM_toList] at hrun
                   obtain ⟨iso, hiso, hisoRoot⟩ :=
-                    HexRootsMathlib.isolate?_root_mem_of_pos
+                    HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos
                       (ZPoly.squareFreeCore (normEliminant f)) hsimple
                       (separationDepth
                         (ZPoly.squareFreeCore (normEliminant f)) : Int)

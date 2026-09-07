@@ -4,7 +4,7 @@ Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-ro
 **soundness** of the certified isolations (a `RealRootIsolation`
 witness implies a unique real root in its half-open interval, and a
 `RealRootIsolations` value captures every real root exactly once) and
-**completeness** of the driver (`ZPoly.isolate? p ≠ none` for squarefree
+**completeness** of the driver (`ZPoly.isolateRealRoots? p ≠ none` for squarefree
 `p`, through the Sturm engine). One theorem is deferred: that the
 Descartes engine alone never falls back. It is stated here, its
 prerequisite is named, and nothing else depends on it.
@@ -483,8 +483,8 @@ and cited from each. Neither companion should carry a private copy.
 theorem isolateSturm?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
     (Hex.ZPoly.isolateSturm? p).isSome
 
-theorem isolate?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
-    (Hex.ZPoly.isolate? p).isSome
+theorem isolateRealRoots?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
+    (Hex.ZPoly.isolateRealRoots? p).isSome
 ```
 
 Note this argument needs only the real-pair instances of
@@ -573,11 +573,11 @@ Status and boundaries:
   proof (Obreschkoff 1963; Krandick-Mehlhorn 2006, Eigenwillig 2008)
   runs by induction on multiplying in linear and conjugate-quadratic
   factors, with sector inequalities on coefficient sequences.
-- **Nothing else waited for it.** `isolate?_isSome`, all soundness
+- **Nothing else waited for it.** `isolateRealRoots?_isSome`, all soundness
   theorems, and hex-rcf's decision procedure were complete without it;
   its value is to retire the Sturm fallback path from the trusted
   runtime story. The executable conformance stand-ins for this
-  theorem (`ZPoly.isolateDescartes?` succeeds and agrees with `ZPoly.isolate?` per
+  theorem (`ZPoly.isolateDescartes?` succeeds and agrees with `ZPoly.isolateRealRoots?` per
   fixture) are retired in the same change now that the theorem carries
   the claim.
 - Like the Sturm slice, the sector/region/parity development is stated
@@ -607,7 +607,7 @@ HexRealRootsMathlib/
   IsolateRoots.lean    -- IsolatedRealRoots, its constructors, the
                           bridge tactic, and the isolate_roots
                           term elaborator
-  Drivers.lean         -- isolateSturm?_isSome, isolate?_isSome,
+  Drivers.lean         -- isolateSturm?_isSome, isolateRealRoots?_isSome,
                           refine1_isolates_same
   SimpleRealRoot.lean  -- overlaps_iff_same_root, toReal, sameRoot_iff
   TwoCircle.lean       -- the deferred development

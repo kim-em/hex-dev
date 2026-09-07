@@ -56,7 +56,7 @@ private theorem algebraicRoots?_eq_of_pos (p : ZPoly)
     (hdeg : 0 < (ZPoly.squareFreeCore p).natDegree)
     (hsimple : HasOnlySimpleRoots (ZPoly.squareFreeCore p)) :
     ZPoly.algebraicRoots? p =
-      (isolate? (ZPoly.squareFreeCore p) hsimple
+      (ZPoly.isolateComplexRoots? (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int)).bind fun isolations =>
         (isolations.mapM DyadicRootIsolation.toRefined?).bind fun refined =>
           (refined.mapM fun rep =>
@@ -98,14 +98,14 @@ theorem algebraicRoots?_isSome (p : ZPoly) : (ZPoly.algebraicRoots? p).isSome :=
       simp [hp]
     have hcne : ZPoly.squareFreeCore p ≠ 0 := ZPoly.squareFreeCore_ne_zero p hpne
     rw [algebraicRoots?_eq_of_pos p h0 hprim hpos hdeg hsimple]
-    have hisolateSome := isolate?_isSome (ZPoly.squareFreeCore p) hsimple hcne
+    have hisolateSome := isolateComplexRoots?_isSome (ZPoly.squareFreeCore p) hsimple hcne
       (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet
     obtain ⟨isolations, hisolate⟩ := Option.isSome_iff_exists.mp hisolateSome
     rw [hisolate, Option.bind_some]
     have hmapSome := array_mapM_isSome (xs := isolations)
       (f := DyadicRootIsolation.toRefined?) (fun iso hiso => by
         unfold DyadicRootIsolation.toRefined?
-        rw [dite_eq_left (isolate?_refined (ZPoly.squareFreeCore p) hsimple
+        rw [dite_eq_left (isolateComplexRoots?_refined (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
           iso hiso)]
         rfl)
@@ -168,14 +168,14 @@ theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
     have hcne : ZPoly.squareFreeCore p ≠ 0 := ZPoly.squareFreeCore_ne_zero p hp
     have heq := algebraicRoots?_eq p
     rw [algebraicRoots?_eq_of_pos p h0 hprim hpos hdeg hsimple] at heq
-    have hisolateSome := isolate?_isSome (ZPoly.squareFreeCore p) hsimple hcne
+    have hisolateSome := isolateComplexRoots?_isSome (ZPoly.squareFreeCore p) hsimple hcne
       (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet
     obtain ⟨isolations, hisolate⟩ := Option.isSome_iff_exists.mp hisolateSome
     rw [hisolate, Option.bind_some] at heq
     have hmapSome := array_mapM_isSome (xs := isolations)
       (f := DyadicRootIsolation.toRefined?) (fun iso hiso => by
         unfold DyadicRootIsolation.toRefined?
-        rw [dite_eq_left (isolate?_refined (ZPoly.squareFreeCore p) hsimple
+        rw [dite_eq_left (isolateComplexRoots?_refined (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
           iso hiso)]
         rfl)
@@ -222,7 +222,7 @@ theorem mem_algebraicRoots_iff (p : ZPoly) (hp : p ≠ 0) (z : ℂ) :
     · intro hz
       have hcoreRoot : (toPolyℂ (ZPoly.squareFreeCore p)).IsRoot z :=
         HexPolyZMathlib.isRoot_squareFreeCore hp hz
-      obtain ⟨iso, hiso, hisoRoot⟩ := isolate?_root_mem_of_pos (ZPoly.squareFreeCore p)
+      obtain ⟨iso, hiso, hisoRoot⟩ := isolateComplexRoots?_root_mem_of_pos (ZPoly.squareFreeCore p)
         hsimple (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hdeg
         hisolate hcoreRoot
       obtain ⟨i, hi, hidx⟩ := List.mem_iff_getElem.mp hiso
@@ -255,14 +255,14 @@ theorem algebraicRoots_nodup (p : ZPoly) :
     have hcne : ZPoly.squareFreeCore p ≠ 0 := ZPoly.squareFreeCore_ne_zero p hpne
     have heq := algebraicRoots?_eq p
     rw [algebraicRoots?_eq_of_pos p h0 hprim hpos hdeg hsimple] at heq
-    have hisolateSome := isolate?_isSome (ZPoly.squareFreeCore p) hsimple hcne
+    have hisolateSome := isolateComplexRoots?_isSome (ZPoly.squareFreeCore p) hsimple hcne
       (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet
     obtain ⟨isolations, hisolate⟩ := Option.isSome_iff_exists.mp hisolateSome
     rw [hisolate, Option.bind_some] at heq
     have hmapSome := array_mapM_isSome (xs := isolations)
       (f := DyadicRootIsolation.toRefined?) (fun iso hiso => by
         unfold DyadicRootIsolation.toRefined?
-        rw [dite_eq_left (isolate?_refined (ZPoly.squareFreeCore p) hsimple
+        rw [dite_eq_left (isolateComplexRoots?_refined (ZPoly.squareFreeCore p) hsimple
           (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
           iso hiso)]
         rfl)
@@ -304,7 +304,7 @@ theorem algebraicRoots_nodup (p : ZPoly) :
     have hj : j.1 < roots.size := by simp
     by_contra hne
     have hne' : i.1 ≠ j.1 := fun h => hne (Fin.ext h)
-    have hroot := isolate?_roots_ne (ZPoly.squareFreeCore p) hsimple
+    have hroot := isolateComplexRoots?_roots_ne (ZPoly.squareFreeCore p) hsimple
       (separationDepth (ZPoly.squareFreeCore p) : Int) .nkThenPellet hisolate
       (i := i.1) (j := j.1) (by omega) (by omega) hne'
     have hij' : roots[i.1].toComplex = roots[j.1].toComplex := by

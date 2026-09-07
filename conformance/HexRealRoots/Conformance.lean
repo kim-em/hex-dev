@@ -26,7 +26,7 @@ Covered operations:
 - `Hex.mobiusTransform`, `Hex.descartesVar`
 - `Hex.twoPow`, `Hex.ceilLog2Nat`, `Hex.ceilLog2Dyadic`
 - `Hex.rootBound`, `Hex.sepPrec`, `Hex.isolationDepth`
-- `Hex.ZPoly.isolateSturm?`, `Hex.ZPoly.isolateDescartes?`, `Hex.ZPoly.isolate?`
+- `Hex.ZPoly.isolateSturm?`, `Hex.ZPoly.isolateDescartes?`, `Hex.ZPoly.isolateRealRoots?`
 - `Hex.RealRootIsolation.refine1`, `Hex.RealRootIsolation.refineTo`
 - `Hex.RealRootIsolation.refined`
 - `Hex.RefinedRealIsolation.sameRoot` (and the `Overlaps` decidability instance)
@@ -39,12 +39,12 @@ Covered properties:
 - `ZPoly.sturmCount` is additive across a split point:
   `count (a, c] = count (a, b] + count (b, c]`.
 - `ZPoly.rootCount` equals the number of real roots and equals the isolation count of
-  `ZPoly.isolate?` (completeness certificate).
+  `ZPoly.isolateRealRoots?` (completeness certificate).
 - Every emitted isolation brackets a genuine sign change of `evalDyadic` (or a
   root exactly at the included upper endpoint), so a real root sits in each
   half-open interval.
 - Emitted isolations are ordered and pairwise disjoint (`upperᵢ ≤ lowerᵢ₊₁`).
-- The Sturm engine returns `some` and agrees with `ZPoly.isolate?` on the isolation
+- The Sturm engine returns `some` and agrees with `ZPoly.isolateRealRoots?` on the isolation
   *count* (the intervals themselves need not coincide, and do not for
   `x³ − x − 1`).
 - `mobiusTransform` produces the literal SPEC numerator on committed intervals,
@@ -62,8 +62,8 @@ Covered properties:
   square-free primitive inputs and strips repeated factors otherwise.
 
 Covered edge cases:
-- the zero polynomial (`ZPoly.isolate? = none`) and a nonzero constant
-  (`ZPoly.isolate?` is `some` with an empty isolation array).
+- the zero polynomial (`ZPoly.isolateRealRoots? = none`) and a nonzero constant
+  (`ZPoly.isolateRealRoots?` is `some` with an empty isolation array).
 - a linear polynomial whose single root is captured by the whole initial
   interval without any bisection.
 - a dyadic root that a bisection midpoint hits exactly (`2x² − 5x + 2`, and the
@@ -189,7 +189,7 @@ private def refinedSubinterval {p : ZPoly} (i : RealRootIsolation p) : Option Bo
 
 /-! # Whole-run isolation, per fixture.
 
-For each fixture: the exact interval endpoints of `ZPoly.isolate?` (a human-readable
+For each fixture: the exact interval endpoints of `ZPoly.isolateRealRoots?` (a human-readable
 regression pin, cross-checked against `python-flint` in the oracle PR); the
 independent teeth that make the pin more than a determinism check — the emitted
 count equals the mathematically known real-root count `ZPoly.rootCount`, every
@@ -203,16 +203,17 @@ re-testing it here is noise. The zero / non-square-free `ZPoly.isolateDescartes?
 none` rejections below stay: they test the engine's input-contract
 classification, not the termination theorem. -/
 
-/-- Assert the shared per-fixture invariants, given the expected `ZPoly.isolate?`
+/-- Assert the shared per-fixture invariants, given the expected `ZPoly.isolateRealRoots?`
 endpoints and the known real-root count `n`. Bundled so each fixture is one
 `#guard` block with no copy-pasted body. -/
 private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Nat) : Bool :=
-  -- `ZPoly.isolate?` yields the committed endpoints (oracle-verified in the oracle PR).
-  (endpoints (ZPoly.isolate? p) == some expected) &&
+  -- `ZPoly.isolateRealRoots?` yields the committed endpoints (oracle-verified in the oracle PR).
+  (endpoints (ZPoly.isolateRealRoots? p) == some expected) &&
   -- Completeness: one isolation per real root, matching the independent count.
-  (isoCount (ZPoly.isolate? p) == some n) && (ZPoly.rootCount p == n) &&
+  (isoCount (ZPoly.isolateRealRoots? p) == some n) && (ZPoly.rootCount p == n) &&
   -- Each interval brackets a real root; the whole run is ordered and disjoint.
-  allBracket (ZPoly.isolate? p) && ((endpoints (ZPoly.isolate? p)).elim false sortedDisjoint) &&
+  allBracket (ZPoly.isolateRealRoots? p) &&
+    ((endpoints (ZPoly.isolateRealRoots? p)).elim false sortedDisjoint) &&
   -- Sturm engine: returns `some` and agrees on the isolation count.
   (ZPoly.isolateSturm? p).isSome && (isoCount (ZPoly.isolateSturm? p) == some n)
 
@@ -233,16 +234,16 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 
 -- The Sturm engine's intervals need NOT coincide with the driver's: for
 -- `x³ − x − 1` the Sturm search emits the whole initial interval `(−4, 4]` (the
--- count is already `1`, so it never bisects) while `ZPoly.isolate?` (Descartes-first)
+-- count is already `1`, so it never bisects) while `ZPoly.isolateRealRoots?` (Descartes-first)
 -- narrows to `(0, 4]`. Only the count is invariant across engines.
 #guard endpoints (ZPoly.isolateSturm? cubicSingle) = some #[(di (-4), di 4)]
-#guard endpoints (ZPoly.isolate? cubicSingle) = some #[(di 0, di 4)]
+#guard endpoints (ZPoly.isolateRealRoots? cubicSingle) = some #[(di 0, di 4)]
 
 /-! # Edge cases: zero, constant, non-square-free. -/
 
 -- The zero polynomial is rejected by every engine (input-contract classification,
 -- independent of the termination theorem).
-#guard ZPoly.isolate? zeroPoly = none
+#guard ZPoly.isolateRealRoots? zeroPoly = none
 #guard ZPoly.isolateSturm? zeroPoly = none
 #guard ZPoly.isolateDescartes? zeroPoly = none
 
@@ -253,7 +254,7 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 -- Non-square-free rejection: both engines and the driver decline (input-contract
 -- classification), and the square-free core (`x² − 1`, from `(x − 1)²(x + 1)`)
 -- isolates its two roots through the full bundle.
-#guard ZPoly.isolate? nonSquareFree = none
+#guard ZPoly.isolateRealRoots? nonSquareFree = none
 #guard ZPoly.isolateSturm? nonSquareFree = none
 #guard ZPoly.isolateDescartes? nonSquareFree = none
 #guard (ZPoly.squareFreeCore nonSquareFree).toArray = #[(-1 : Int), 0, 1]

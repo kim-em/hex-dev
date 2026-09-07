@@ -1282,9 +1282,9 @@ private theorem array_mapM_atoms {p : Hex.ZPoly}
 /-- Every nonzero squarefree executable polynomial is successfully isolated
 by each atom strategy. Nonzero constants take the explicit empty-output
 branch; positive-degree inputs use the complete Cauchy-started driver. -/
-theorem isolate?_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
-    ∃ atoms, Hex.isolate? p h atomPrec strategy = some atoms := by
+    ∃ atoms, Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms := by
   have hpSize : p.size ≠ 0 := by
     intro hsize0
     apply hp
@@ -1308,38 +1308,38 @@ theorem isolate?_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
       (le_max_right _ _) strategy hd
     obtain ⟨atoms, hmap⟩ := array_mapM_atoms rs hatoms
     refine ⟨atoms, ?_⟩
-    rw [Hex.isolate?, dite_eq_left hd]
+    rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_left hd]
     change (Hex.isolateAll? p target #[Hex.Component.cauchy p hd] strategy).bind
       (fun rs => rs.mapM Hex.Certified.asAtom?) = some atoms
     rw [hall]
     exact hmap
   · refine ⟨#[], ?_⟩
-    rw [Hex.isolate?, dite_eq_right hd]
+    rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_right hd]
     simp [hpSize]
 
 /-- A nonzero squarefree polynomial has a successful isolation whose atoms
 enumerate its complex roots exactly, without duplicates, at the requested
 precision.  This bundles driver completeness with the principal soundness
 contracts for proof-facing clients. -/
-theorem isolate?_spec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_spec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet) :
     ∃ atoms : Array (Hex.DyadicRootIsolation p),
-      Hex.isolate? p h atomPrec strategy = some atoms ∧
+      Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms ∧
       atoms.size = (toPolyℂ p).natDegree ∧
       (atoms.toList.map HexRootsMathlib.DyadicRootIsolation.root).toFinset =
         (toPolyℂ p).roots.toFinset ∧
       ∀ iso ∈ atoms.toList, atomPrec ≤ iso.square.prec := by
-  obtain ⟨atoms, hrun⟩ := isolate?_exists p h hp atomPrec strategy
-  obtain ⟨hroots, hprec⟩ := isolate?_sound p h atomPrec strategy hrun
-  exact ⟨atoms, hrun, isolate?_count p h atomPrec strategy hrun,
+  obtain ⟨atoms, hrun⟩ := isolateComplexRoots?_exists p h hp atomPrec strategy
+  obtain ⟨hroots, hprec⟩ := isolateComplexRoots?_sound p h atomPrec strategy hrun
+  exact ⟨atoms, hrun, isolateComplexRoots?_count p h atomPrec strategy hrun,
     hroots, hprec⟩
 
 /-- Boolean `isSome` form of full driver completeness. -/
-theorem isolate?_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
-    (Hex.isolate? p h atomPrec strategy).isSome = true := by
-  obtain ⟨atoms, hatoms⟩ := isolate?_exists p h hp atomPrec strategy
+    (Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy).isSome = true := by
+  obtain ⟨atoms, hatoms⟩ := isolateComplexRoots?_exists p h hp atomPrec strategy
   rw [hatoms]
   rfl
 

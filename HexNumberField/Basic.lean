@@ -86,7 +86,7 @@ def IsCanonical (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     (p ≠ ZPoly.X ∧
       ∃ (isolations : Array (DyadicRootIsolation p))
         (refined : Array (RefinedIsolation p)),
-        isolate? p squarefree (separationDepth p : Int) = some isolations ∧
+        ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) = some isolations ∧
           isolations.mapM DyadicRootIsolation.toRefined? = some refined ∧
           rep ∈ refined.toList)
 
@@ -97,7 +97,7 @@ def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
     Option {r : RefinedIsolation p //
       IsCanonical p squarefree r ∧ r.sameRoot rep = true} :=
-  match hisolate : isolate? p squarefree (separationDepth p : Int) with
+  match hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) with
   | none => none
   | some isolations =>
       match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
@@ -193,7 +193,7 @@ private def zeroRaw : AlgebraicNumber :=
 -- Keep executable evidence that the ordinary isolator also meets its stated
 -- completeness bound on `X`; the explicit zero path makes totality independent
 -- of this bounded computation.
-#guard (isolate? ZPoly.X zero_squarefree
+#guard (ZPoly.isolateComplexRoots? ZPoly.X zero_squarefree
   (separationDepth ZPoly.X : Int)).isSome
 
 /-- The canonical algebraic number zero, represented by the fixed explicit

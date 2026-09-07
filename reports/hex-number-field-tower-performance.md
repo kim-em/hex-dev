@@ -816,7 +816,7 @@ these whole-capture shares is promoted to an exact within-target percentage.
 95.71% of the raw capture is inside `Hex.NumberTower.adjoin?`. The dominant
 phase is candidate-factor disambiguation under the fixed embedding:
 `RawEvaluation.vanishesAt?` 95.46% → `Hex.AlgebraicRoot.ofEliminant?`
-94.92% → the upstream isolation kernel `Hex.isolate?`/`isolateLoop` 95.15%,
+94.92% → the upstream isolation kernel `Hex.ZPoly.isolateComplexRoots?`/`isolateLoop` 95.15%,
 with `Hex.taylor` 69.37% and dyadic Gauss arithmetic (`GaussDyadic.mul`
 46.63%) as the leaf work; `Internal.extend?` (level validation) is 31.88%
 and factor selection `selectFactor?` 63.62%. The factorization step itself
@@ -824,7 +824,7 @@ is not visible at this input because the quartic factors immediately; the
 cost is the SPEC's embedding invariant being enforced (`adjoin?` "selects
 the unique irreducible factor that vanishes at the requested AlgebraicRoot
 under the current embedding"). The isolation kernel that dominates is the
-same `Hex.isolate?` measured by HexNumberField's and HexRoots' registered
+same `Hex.ZPoly.isolateComplexRoots?` measured by HexNumberField's and HexRoots' registered
 isolation ladders; its asymptotic evidence lives in those upstream reports,
 and the tower-level boundary is measured end to end by the registered
 `runAdjoin`/`runAdjoinIdentity` cases.
@@ -833,14 +833,14 @@ and the tower-level boundary is measured end to end by the registered
 
 `runSplit`: 99.90% inside `Hex.NumberTower.splitAux`; root retention and
 adjoining dominate through the same disambiguation path
-(`RawEvaluation.vanishesAt?` 66.97%, `Hex.isolate?` 64.55%), with the
+(`RawEvaluation.vanishesAt?` 66.97%, `Hex.ZPoly.isolateComplexRoots?` 64.55%), with the
 remainder in the tower factorization it repeats after each extension.
 `runFlatten`: 97.93% inside the target, 97.36% in
 `Hex.NumberTower.flatten?`, dominated by the primitive-element candidate
 search `Flatten.searchRecoveredAux` 90.20% whose cost is
 `Flatten.candidateAt?` → `Hex.AlgebraicPoly.Common.shift?` 83.22% (the
 integer eliminant of `θ + cα`) and the canonical exactification
-`Hex.AlgebraicRoot.exact?` 61.83%, both running the upstream `Hex.isolate?`
+`Hex.AlgebraicRoot.exact?` 61.83%, both running the upstream `Hex.ZPoly.isolateComplexRoots?`
 kernel (94.99%). The flattening components the search feeds are the
 registered `runBasisImages`, `runCertifies`, `runCoordinateMaps`,
 `runRecoverPair`, and `runRecoverSearch` cases; the eliminant/exactification

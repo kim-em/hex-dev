@@ -13,7 +13,7 @@ public import HexRealRoots.Isolate
 public import HexRealRoots.Refine
 -- `import all` on the executable modules so the non-`@[expose]` bodies of the
 -- isolation engines (`sturmChain`, `sturmVarAt`, `sturmVisit`, `refine1`,
--- `ZPoly.isolateSturm?`, `ZPoly.isolate?`, and the dyadic evaluation helpers) unfold here.
+-- `ZPoly.isolateSturm?`, `ZPoly.isolateRealRoots?`, and the dyadic evaluation helpers) unfold here.
 import all HexRealRootsMathlib.Separation
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
@@ -31,7 +31,7 @@ public section
 * `refine1_isolates_same`: one bisection refinement preserves the isolated root
   and halves the interval width (the fallback branch is unreachable for
   squarefree `p`).
-* `isolateSturm?_isSome`, `isolate?_isSome`: the Sturm engine (and hence the
+* `isolateSturm?_isSome`, `isolateRealRoots?_isSome`: the Sturm engine (and hence the
   top-level driver) succeeds on nonzero squarefree input (positive degree is
   the real content; a nonzero constant certifies through the empty chain).
 
@@ -708,12 +708,12 @@ theorem isolateSturm?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
         (by simp [Hex.DensePoly.natDegree_eq_degree?_getD, hd]) hp
 
 /-- **The top-level driver succeeds on nonzero squarefree input.** A one-liner
-over `isolateSturm?_isSome`: `ZPoly.isolate?` keeps whichever engine's certified
+over `isolateSturm?_isSome`: `ZPoly.isolateRealRoots?` keeps whichever engine's certified
 output arrives first, and the Sturm engine always has one. -/
-theorem isolate?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolate? p).isSome := by
+theorem isolateRealRoots?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateRealRoots? p).isSome := by
   have hs := isolateSturm?_isSome p hp0 hp
-  unfold Hex.ZPoly.isolate?
+  unfold Hex.ZPoly.isolateRealRoots?
   cases hD : Hex.ZPoly.isolateDescartes? p with
   | some a => rfl
   | none => rw [hD] at *; simpa using hs

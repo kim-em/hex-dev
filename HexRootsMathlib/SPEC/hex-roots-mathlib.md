@@ -20,7 +20,7 @@ its separation contract. **Completeness** proves that the actual driver either
 uses its verified Pellet-bearing all-atoms local finisher, directly emits an
 already-ready NK-only atom array, or reaches a normalized depth where every
 retained component certifies as one atom, so
-`isolate?` never returns `none` on nonzero squarefree input under any atom
+`ZPoly.isolateComplexRoots?` never returns `none` on nonzero squarefree input under any atom
 strategy. One-atom refinement is additionally total under the default mixed
 strategy whenever the selected atom has reached `mahlerPrec`; this local result
 allows repeated roots elsewhere in the ambient polynomial. The soundness
@@ -85,7 +85,7 @@ third candidate-contribution slice
 experiment in hex-roots settles on Newton-Kantorovich atoms, the
 Rouché-on-circles development below is needed only for `k ≥ 2`
 cluster soundness and the Pellet atom disjunct, and drops off the
-critical path for `isolate?` on squarefree inputs (whose soundness
+critical path for `ZPoly.isolateComplexRoots?` on squarefree inputs (whose soundness
 then rests on `T_0` coverage, a triangle inequality, plus
 Newton-Kantorovich and the Mahler separation bound).
 
@@ -363,7 +363,7 @@ developments above.
   soundness. Retained squares cover every root, output discs are pairwise
   disjoint, and each certificate has its asserted multiplicity count. Thus
   the general driver's certificate counts sum to the polynomial degree; when
-  `isolate?` successfully extracts only atoms, their distinct semantic roots
+  `ZPoly.isolateComplexRoots?` successfully extracts only atoms, their distinct semantic roots
   enumerate the root finset exactly.
   ```lean
   theorem isolateAll_count (p : ZPoly)
@@ -371,15 +371,15 @@ developments above.
       (hr : isolateAll? p target #[Component.cauchy p h] strategy = some result) :
       ∑ i : Fin result.size, Certified.count result[i] = (toPolyℂ p).natDegree
 
-  theorem isolate?_sound (p : ZPoly) (h : Hex.HasOnlySimpleRoots p)
+  theorem isolateComplexRoots?_sound (p : ZPoly) (h : Hex.HasOnlySimpleRoots p)
       (atom_prec : Int) (strategy : AtomStrategy) {atoms}
-      (ha : isolate? p h atom_prec strategy = some atoms) :
+      (ha : ZPoly.isolateComplexRoots? p h atom_prec strategy = some atoms) :
       (atoms.toList.map (·.root)).toFinset = (toPolyℂ p).roots.toFinset ∧
       ∀ a ∈ atoms, atom_prec ≤ a.square.prec
   ```
   (`HasOnlySimpleRoots p` does *not* rule out `p = 0` (the
   executable gcd of `0` and `0` is `0`, of size `0 ≤ 1`), but
-  `isolate? 0 _ _ = none` by definition, so the `ha` hypothesis
+  `ZPoly.isolateComplexRoots? 0 _ _ = none` by definition, so the `ha` hypothesis
   supplies nonzeroness; a nonzero constant returns `some #[]` and
   both sides are empty. The rational-separability correspondence in
   `HasOnlySimpleRoots.lean` carries a `p ≠ 0` hypothesis for the same reason.)
@@ -395,18 +395,18 @@ developments above.
       (strategy : Hex.AtomStrategy := .nkThenPellet) :
       Array (Hex.DyadicRootIsolation p)
   ```
-  Unlike `Hex.isolate?`, this proof-facing wrapper cannot return `none`:
+  Unlike `Hex.ZPoly.isolateComplexRoots?`, this proof-facing wrapper cannot return `none`:
   its hypotheses discharge the driver's completeness conditions and the
-  result is extracted from `isolate?_exists`. It is characterized by
-  `isolate_eq` (it is exactly the successful executable output), and
-  its behaviour is packaged by `isolate?_count` (one atom per root,
-  with multiplicity), `isolate_roots` (the selected semantic roots are
-  exactly the root finset), `isolate?_prec` (every atom meets the
-  requested precision), and `isolate?_disjoint` (distinct atoms have
+  result is extracted from `isolateComplexRoots?_exists`. It is characterized by
+  `isolateComplexRoots_eq` (it is exactly the successful executable output), and
+  its behaviour is packaged by `isolateComplexRoots?_count` (one atom per root,
+  with multiplicity), `isolateComplexRoots_roots` (the selected semantic roots are
+  exactly the root finset), `isolateComplexRoots?_prec` (every atom meets the
+  requested precision), and `isolateComplexRoots?_disjoint` (distinct atoms have
   disjoint closed circumscribed discs).
 - `HexRootsMathlib/Examples.lean`: compiled regression examples for the
   public surface (kernel-`decide` witness checks on committed dyadic
-  fixtures and `isolate?`-based root extraction). Deliberately excluded
+  fixtures and `ZPoly.isolateComplexRoots?`-based root extraction). Deliberately excluded
   from the umbrella and built through the release-tests target so CI
   cannot silently lose it.
 
@@ -490,9 +490,9 @@ and it is the analytically hardest part:
     induction for `isolateLoop`/`isolateAll?`, and proves:
 
     ```lean
-    theorem isolate?_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+    theorem isolateComplexRoots?_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
-        (Hex.isolate? p h atomPrec strategy).isSome = true
+        (Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy).isSome = true
     ```
 
     Nonzero constants take the executable empty-output branch. Positive-degree
@@ -591,14 +591,14 @@ dimensions. Polynomial and executable-witness specialization belongs in
 
 ## Headline correctness theorem
 
-`HexRootsMathlib.isolate?_sound`: a successful run of the executable
+`HexRootsMathlib.isolateComplexRoots?_sound`: a successful run of the executable
 isolator on a nonzero polynomial with only simple roots returns atoms
 whose semantic roots enumerate the root finset of the polynomial
 exactly, every atom meeting the requested precision. This is the
 end-to-end post-condition of the public API. Totality under the same
-hypotheses is `isolate?_isSome` (the completeness development's
-terminal theorem), packaged for consumers as the none-free `isolate`
-wrapper with its characterisation family (`isolate_eq`, `_count`,
+hypotheses is `isolateComplexRoots?_isSome` (the completeness development's
+terminal theorem), packaged for consumers as the none-free
+`isolateComplexRoots` wrapper with its characterisation family (`isolateComplexRoots_eq`, `_count`,
 `_roots`, `_prec`, `_disjoint`); the general-multiplicity count
 identity is `isolateAll_count`. Those are independently justified
 public API, and the correspondence and completeness theorems above are

@@ -267,13 +267,13 @@ evaluation, which is why this engine runs first.
 ## The driver
 
 ```lean
-def ZPoly.isolate? (p : ZPoly) : Option (RealRootIsolations p) :=
+def ZPoly.isolateRealRoots? (p : ZPoly) : Option (RealRootIsolations p) :=
   ZPoly.isolateDescartes? p <|> ZPoly.isolateSturm? p
 ```
 
-The companion proves `ZPoly.isolate? p ≠ none` for squarefree `p` (through
+The companion proves `ZPoly.isolateRealRoots? p ≠ none` for squarefree `p` (through
 the Sturm engine). Downstream libraries that need a total function
-(hex-rcf) obtain one by combining `ZPoly.isolate?` with that theorem.
+(hex-rcf) obtain one by combining `ZPoly.isolateRealRoots?` with that theorem.
 
 ## Termination
 
@@ -456,7 +456,7 @@ re-refine from a stored coarse representative. See
   `descartesVar`.
 - `HexRealRoots/IsolateSturm.lean`: the Sturm engine.
 - `HexRealRoots/IsolateDescartes.lean`: the Descartes engine.
-- `HexRealRoots/Isolate.lean`: `ZPoly.isolate?`.
+- `HexRealRoots/Isolate.lean`: `ZPoly.isolateRealRoots?`.
 - `HexRealRoots/Refine.lean`: `refine1`, `refineTo`.
 - `HexRealRoots/SimpleRealRoot.lean`: `RefinedRealIsolation`,
   `Overlaps`, `SimpleRealRoot`, `sameRoot`; the threading-pattern
@@ -496,7 +496,7 @@ python-flint (`fmpz_poly` real root API), FLINT/Arb.
 **Descartes-engine checks (retired).** While
 `isolateDescartes?_isSome` was open, the conformance suite asserted on
 every fixture that `ZPoly.isolateDescartes?` returns `some` and agrees with
-`ZPoly.isolate?`, standing in for the theorem. Now that
+`ZPoly.isolateRealRoots?`, standing in for the theorem. Now that
 `isolateDescartes?_isSome` is proven in the companion, those stand-ins
 are retired: the theorem carries the claim, and re-testing it per
 fixture is noise. The suite keeps only the ordinary input-contract
@@ -504,7 +504,7 @@ checks — the `ZPoly.isolateDescartes? = none` rejection of the zero and
 non-squarefree inputs (which test the engine's classification of
 inadmissible input, not the termination theorem) — and the executable
 `mobiusTransform`/`descartesVar` transform tests. `EmitFixtures` emits
-from `ZPoly.isolate?` alone; the cross-engine agreement check it once carried
+from `ZPoly.isolateRealRoots?` alone; the cross-engine agreement check it once carried
 is removed with the same change.
 
 ## Complexity contract
@@ -518,7 +518,7 @@ Write `n = deg p` and `h = log ‖p‖∞`.
   `O(n²)` dyadic operations per queried point, memoised per endpoint.
 - `mobiusTransform`: `O(n²)` integer operations per node.
 - `sepPrec p`, `rootBound p`: `O(n · h)` integer operations.
-- `ZPoly.isolate?`: the bisection tree has `O(n)` unresolved intervals per
+- `ZPoly.isolateRealRoots?`: the bisection tree has `O(n)` unresolved intervals per
   level and depth at most `isolationDepth p = O(n·(h + log n))`, so
   `O(n² · (h + log n))` Möbius transforms in the worst case,
   dominated by Mignotte-style clustered inputs. Mignotte inputs

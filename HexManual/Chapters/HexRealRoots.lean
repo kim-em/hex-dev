@@ -49,7 +49,7 @@ squarefreeness is needed at the call site.
 tag := "hex-real-roots-core"
 %%%
 
-The computational package exposes {name}`Hex.ZPoly.isolate?`, which tries Descartes
+The computational package exposes {name}`Hex.ZPoly.isolateRealRoots?`, which tries Descartes
 search before falling back to Sturm bisection. The
 {name}`Hex.ZPoly.isolateDescartes?` and {name}`Hex.ZPoly.isolateSturm?` variants select one
 engine explicitly; {name}`Hex.ZPoly.rootCount` and {name}`Hex.ZPoly.sturmCount` expose the
