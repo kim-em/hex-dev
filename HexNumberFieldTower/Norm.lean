@@ -88,9 +88,7 @@ def derivative (lower : List Level) (f : DensePoly (Coeff lower)) :
 /-- Monic normalization over the runtime-indexed lower tower. -/
 @[expose]
 def monic (f : DensePoly (Coeff lower)) : DensePoly (Coeff lower) :=
-  if f.isZero then 0
-  else if f.leadingCoeff = 1 then f
-  else DensePoly.scale f.leadingCoeff⁻¹ f
+  if f.isZero then 0 else DensePoly.scale f.leadingCoeff⁻¹ f
 
 /-- Executable squarefreeness test over a checked lower tower. The rational
 base uses the certified modular trial before exact gcd fallback. -/

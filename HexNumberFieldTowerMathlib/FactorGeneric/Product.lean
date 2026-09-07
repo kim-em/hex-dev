@@ -99,7 +99,7 @@ theorem map_monic_rawPoly_nil (f : Array (Array Rat)) :
       ← Polynomial.leadingCoeff_map_of_injective
         LevelSemantics.coeffRatEquiv.injective, hmap,
       HexPolyMathlib.leadingCoeff_toPolynomial p]
-  simp only [monic_eq_scale [] trivial LevelSemantics.DenoteInjective.nil]
+  simp only [Norm.monic]
   split
   · rename_i hrawZero
     change raw.isZero = true at hrawZero

@@ -82,24 +82,6 @@ def read_export(path, names):
 
 def decision(pairs, names):
     """Apply the registered retention rule; incomplete series have no verdict."""
-    if len(pairs) > 2 or len({p["attempt"] for p in pairs}) != len(pairs):
-        raise ValueError("expected at most two distinct accepted pairs")
-    identities = {}
-    orders = []
-    for pair in pairs:
-        runs = pair["runs"]
-        if not pair["accepted"] or len(runs) != 2 or not all(r["accepted"] for r in runs):
-            raise ValueError("rejected or incomplete host pair")
-        order = tuple(r["arm"] for r in runs)
-        if set(order) != {"left", "right"}:
-            raise ValueError("missing or duplicate arm")
-        orders.append(order)
-        for run in runs:
-            identity = (run["source_commit"], run["binary_sha256"])
-            if identities.setdefault(run["arm"], identity) != identity:
-                raise ValueError("binary or source changed between pairs")
-    if len(pairs) == 2 and set(orders) != {("left", "right"), ("right", "left")}:
-        raise ValueError("accepted pairs must use opposite arm orders")
     checks = []
     for pair in pairs:
         arms = {r["arm"]: read_export(r["export"], names) for r in pair["runs"]}
@@ -109,8 +91,6 @@ def decision(pairs, names):
                                hashes_match=left["observed_hash"] == right["observed_hash"],
                                faster=right["median_nanos"] < left["median_nanos"],
                                disjoint_regression=right["min_nanos"] > left["max_nanos"],
-                               left_nanos=[left[k] for k in ("min_nanos", "median_nanos", "max_nanos")],
-                               right_nanos=[right[k] for k in ("min_nanos", "median_nanos", "max_nanos")],
                                speedup=left["median_nanos"] / right["median_nanos"]))
     eligible = None
     if len(pairs) == 2:

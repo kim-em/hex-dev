@@ -32,7 +32,9 @@ class TowerFactorCompareTests(unittest.TestCase):
             compare.read_export(self.path, compare.NAMES)
 
     def pair(self, number, right=FAST):
-        runs = [dict(arm="left", export=str(BASE)), dict(arm="right", export=str(right))]
+        runs = [dict(arm=arm, export=str(path), accepted=True,
+                     source_commit=arm, binary_sha256=arm)
+                for arm, path in (("left", BASE), ("right", right))]
         if number == 2:
             runs.reverse()
         return dict(attempt=number, runs=runs, accepted=True)
@@ -47,6 +49,30 @@ class TowerFactorCompareTests(unittest.TestCase):
         verdict = compare.decision([self.pair(1)], compare.NAMES)
         self.assertFalse(verdict["complete"])
         self.assertIsNone(verdict["eligible"])
+
+    def test_invalid_pair_provenance(self):
+        edits = [lambda p: p.update(accepted=False),
+                 lambda p: p["runs"][0].update(accepted=False),
+                 lambda p: p["runs"][0].update(binary_sha256="changed"),
+                 lambda p: p["runs"][0].update(source_commit="changed"),
+                 lambda p: p["runs"].reverse(),
+                 lambda p: p.update(attempt=1)]
+        for edit in edits:
+            with self.subTest(edit=edit):
+                pair = self.pair(2)
+                edit(pair)
+                with self.assertRaises(ValueError):
+                    compare.decision([self.pair(1), pair], compare.NAMES)
+
+    def test_cross_arm_hash_mismatch(self):
+        candidate = json.loads(FAST.read_text())
+        row = next(r for r in candidate["results"] if r["function"] == compare.HEX_NAMES[-1])
+        row.update(observed_hash="0x0", expected_hash_check={"status": "unset"})
+        for point in row["points"]:
+            point["result_hash"] = "0x0"
+        self.path.write_text(json.dumps(candidate))
+        verdict = compare.decision([self.pair(1, self.path), self.pair(2, self.path)], compare.NAMES)
+        self.assertFalse(verdict["eligible"])
 
     def test_unchanged_canonical_cost_does_not_qualify(self):
         verdict = compare.decision([self.pair(1, BASE), self.pair(2, BASE)], compare.NAMES)
@@ -84,6 +110,21 @@ class TowerFactorCompareTests(unittest.TestCase):
     def test_disabled_warmup(self):
         self.rejected(lambda sample: sample["results"][0]["config"].update(warmup=False))
 
+    def test_registered_configuration(self):
+        for config in ({"repeats": 3}, {"min_total_seconds": 0.1}):
+            with self.subTest(config=config):
+                self.rejected(lambda sample: sample["results"][0]["config"].update(config))
+                self.sample = json.loads(BASE.read_text())
+        row = next(r for r in self.sample["results"] if r["function"] == compare.HEX_NAMES[-2])
+        self.rejected(lambda _: row["config"].update(max_seconds_per_call=60))
+
+    def test_pari_hex_hash_mismatch(self):
+        row = next(r for r in self.sample["results"] if r["function"] == compare.NAMES[8])
+        row.update(observed_hash="0x0", expected_hash_check={"status": "unset"})
+        for point in row["points"]:
+            point["result_hash"] = "0x0"
+        self.rejected(lambda _: None)
+
     def test_expected_hash_failure(self):
         self.rejected(lambda sample: sample["results"][0]["expected_hash_check"].update(status="mismatch"))
 
@@ -94,6 +135,9 @@ class TowerFactorCompareTests(unittest.TestCase):
 
     def test_busy_threshold_is_strict(self):
         self.assertIsNone(compare.select_core({24: 5, 72: 0}, {24: {24, 72}}, set()))
+
+    def test_avoided_core_is_not_selected(self):
+        self.assertIsNone(compare.select_core({24: 0, 72: 0}, {24: {24, 72}}, {24}))
 
 
 if __name__ == "__main__":
