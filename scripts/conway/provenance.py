@@ -8,7 +8,7 @@ import re
 def imports(path):
     names = []
     for match in re.finditer(
-        r"^(?:(?:public|private)\s+)?import\s+([^\n]+)",
+        r"^[ \t]*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(?:all\s+)?([^\n]+)",
         path.read_text(),
         re.MULTILINE,
     ):

@@ -104,7 +104,7 @@ def main():
             and Path(name.replace(".", "/") + ".lean").is_file()
         }
     )
-    if args.warm_dependencies:
+    if args.warm_dependencies and external_imports:
         subprocess.run(
             ["lake", "--no-cache", "build", *external_imports],
             check=True,
@@ -137,8 +137,12 @@ def main():
         targets=targets,
         commit=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         dirty=bool(
-            subprocess.check_output(["git", "status", "--porcelain"], text=True)
+            subprocess.check_output(
+                ["git", "status", "--porcelain", "--", ".", ":(exclude)reports/"],
+                text=True,
+            )
         ),
+        dirty_excludes=["reports/"],
         warmed_imports=external_imports if args.warm_dependencies else [],
         runs=[],
     )

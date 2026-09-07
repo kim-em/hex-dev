@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generate
-from provenance import dependencies, sources
+from provenance import dependencies, sources, imports
 from verify_provenance import verify
 
 
@@ -47,9 +47,31 @@ class ConwayToolsTest(unittest.TestCase):
 
     def test_dependency_closure_records_primality(self):
         paths = dependencies(sources(["HexConway"]))
+        self.assertIn(Path("HexBerlekamp/CertificateSyntax.lean"), paths)
         self.assertIn(Path("HexPrimality/Cert.lean"), paths)
         self.assertIn(Path("HexArith/Nat/Prime.lean"), paths)
         self.assertFalse(any(p.parts[0] == "HexConway" for p in paths))
+
+    def test_import_qualifiers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "Imports.lean"
+            path.write_text(
+                "\n".join(
+                    [
+                        "import A",
+                        "public import B",
+                        "private import C",
+                        "meta import D",
+                        "public meta import E",
+                        "private meta import F",
+                        "public import all G",
+                        "meta import all H",
+                        "public meta import all I",
+                        "  import J -- trailing comment",
+                    ]
+                )
+            )
+            self.assertEqual(imports(path), list("ABCDEFGHIJ"))
 
     def test_provenance_and_mismatch(self):
         content = subprocess.check_output(["git", "show", "HEAD:lean-toolchain"])

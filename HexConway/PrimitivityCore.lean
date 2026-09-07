@@ -25,8 +25,8 @@ Order `N` is established by the standard test: `α ^ N = 1`, and
 `α ^ (N / q) ≠ 1` for every prime `q` dividing `N`. Both halves are needed —
 the first alone only says the order divides `N`.
 
-Structural square-and-multiply
-keeps the multiplication count logarithmic in the exponent, independently of
+Structural square-and-multiply keeps the multiplication count logarithmic
+in the exponent, independently of
 the characteristic. The generator searches for factorizations offline;
 Pocklington certificates from `HexPrimality` prove their prime factors.
 
@@ -38,8 +38,8 @@ exponents directly before checking their power residues.
 
 The product test is what makes the prime list trustworthy, and it is worth
 saying why. If the supplied `q_i` are prime and `∏ q_i ^ e_i = N`, then by
-unique factorization the `q_i` are *exactly* the prime divisors of `N` — there
-is no room for a missing one. So checking `α ^ (N / q) ≠ 1` across the supplied
+unique factorization every prime divisor of `N` occurs among the `q_i`.
+Extra primes with zero multiplicity can only add power obligations. So checking `α ^ (N / q) ≠ 1` across the supplied
 list really does cover every prime divisor, and a caller cannot weaken the test
 by handing it a short list: the product would come out wrong.
 
@@ -59,7 +59,7 @@ namespace Conway
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- Structural modular power: `k` multiplications, each followed by reduction.
-Linear in `k`, and only ever called with `k ≤ p`. -/
+A proof helper for induction; executable certificate replay uses `powMod`. -/
 @[expose]
 def linPowMod (f : FpPoly p) (hm : DensePoly.Monic f) (x : FpPoly p) :
     Nat → FpPoly p
@@ -104,7 +104,7 @@ factorization and power data.
 structure Primitive (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (h : SupportedEntry p n) (qs es : List Nat) : Prop where
   /-- The supplied divisors are prime. Together with the product check inside
-  `primitiveCheck` this makes them exactly the prime divisors of `p^n - 1`. -/
+  `primitiveCheck` this ensures they include every prime divisor of `p^n - 1`. -/
   primes : ∀ q ∈ qs, Hex.Nat.Prime q
   /-- The arithmetic and the two power conditions, all decidable. -/
   check : primitiveCheck (conwayPoly p n h) (conwayPoly_monic p n h) n qs es = true

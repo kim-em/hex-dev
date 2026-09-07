@@ -96,8 +96,8 @@ jobs:
           sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
-          python3 -m pip install --user \
-            python-flint gmpy2 cypari2 conway-polynomials sympy==1.14.0 matplotlib==3.11.1
+          python3 -m pip install --user -r scripts/conway/requirements.txt \
+            python-flint gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
       - name: Verify performance measurements and figures are current
         run: |
@@ -201,8 +201,9 @@ jobs:
       # parallelize the Mathlib-heavy library compiles, the exe links, the
       # conformance/fixture builds, and the Verso manual all at once, whose
       # combined memory peak exhausts the runner. Sequential invocations share
-      # `.lake/build` after the initial clean Conway measurements, and cap the peak at whichever
-      # invocation is largest, each of which is known to fit.
+      # `.lake/build` after the initial clean Conway measurements, so unrelated
+      # elaboration peaks do not overlap. The RSS guard is conservative because
+      # shared mappings can be counted in several processes.
       - name: Build hex libraries + bench exes
         run: |
           # Warm external dependencies outside the measurement, then perform

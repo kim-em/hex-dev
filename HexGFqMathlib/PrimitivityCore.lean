@@ -97,9 +97,8 @@ theorem reduceMod_powerResidue (hm : Hex.DensePoly.Monic f) (k : Nat) :
 Two more ingredients. Reduction is not injective in general, so a `≠ 1` on
 representatives does not by itself give a `≠ 1` in the field — but on *reduced*
 representatives it does: `reduceMod_powerResidue` proves that `powerResidue`
-always returns a reduced representative. The
-supplied prime list has to be shown exhaustive, which is where the validated
-product does its work.
+always returns a reduced representative. The validated product proves that
+the supplied prime list includes every prime divisor of the order.
 -/
 
 /-- On reduced representatives, being one in the field is being one on the
