@@ -83,11 +83,11 @@ theorem unwind (h : Cover G base guide tcell cursor) {tv : Fin n}
     rw [hcoset] at hlt
     omega
 
-/-- The guiding child's short-prune request preserves generated orbit
-coverage once its last ledger pair has generated carriers. -/
-theorem shortprune (h : Cover G base guide tcell cursor) {st : SearchSt n}
-    (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
-      PairGenerated G fix mcr ∧ ∀ b ∈ base, fix.mem b.val = true) :
+/-- Generated descending carriers justify a short-prune filter without
+requiring its fixed-point bitset to characterize the active base. -/
+theorem shortCarriers (h : Cover G base guide tcell cursor) {st : SearchSt n}
+    (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) → ∀ v : Fin n,
+      mcr.mem v.val = false → ∃ u : Fin n, u.val < v.val ∧ Aut.Carries G base v u) :
     Cover G base guide (Nauty.shortprune tcell st) cursor := by
   apply h.filterDesc _ (fun _ hm => shortprune_subset hm)
   intro v _ hm _
@@ -99,11 +99,21 @@ theorem shortprune (h : Cover G base guide tcell cursor) {st : SearchSt n}
     split at hkeep
     · next fix mcr he =>
       rw [VSet.mem_inter, hm, Bool.true_and] at hkeep
-      obtain ⟨hpair, hbase⟩ := hlast fix mcr he
-      obtain ⟨u, hlt, hc⟩ := hpair.carries hbase hkeep
+      obtain ⟨u, hlt, hc⟩ := hlast fix mcr he v hkeep
       exact ⟨u, hc, hlt⟩
     · rw [hm] at hkeep
       cases hkeep
+
+/-- The guiding child's short-prune request preserves generated orbit
+coverage once its last ledger pair has generated carriers. -/
+theorem shortprune (h : Cover G base guide tcell cursor) {st : SearchSt n}
+    (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
+      PairGenerated G fix mcr ∧ ∀ b ∈ base, fix.mem b.val = true) :
+    Cover G base guide (Nauty.shortprune tcell st) cursor := by
+  apply h.shortCarriers
+  intro fix mcr hback v hv
+  obtain ⟨hpair, hbase⟩ := hlast fix mcr hback
+  exact hpair.carries hbase hv
 
 end Cover
 

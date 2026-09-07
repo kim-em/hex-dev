@@ -91,6 +91,7 @@ public import HexGraphIso.Nauty.Invariant.TargetCell
 public import HexGraphIso.Ops
 public import HexGraphIso.Autos
 public import HexGraphIso.AutGroup
+public import HexGraphIso.AutComplete
 public import HexGraphIso.Uncolored
 public import HexGraphIso.Random
 public import HexGraphIso.Tactic

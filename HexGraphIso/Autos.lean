@@ -408,7 +408,7 @@ theorem autos_orbits_lt (G : Colored n k) {v : Nat} (hv : v < n) :
 
 /-- Soundness of the orbits: vertices sharing a representative are
 carried onto each other by an automorphism. -/
-theorem autos_sameOrbit (G : Colored n k) (u v : Fin n)
+theorem autos_sameOrbit_of_eq (G : Colored n k) (u v : Fin n)
     (h : (autos G).orbits[u.val]! = (autos G).orbits[v.val]!) :
     SameOrbit G u v :=
   Aut.sameOrbit_of_orbits_eq G u v h

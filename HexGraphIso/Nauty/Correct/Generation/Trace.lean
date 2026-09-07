@@ -252,4 +252,31 @@ theorem first_retains (ctx : Ctx n) (inf tcLevel : Nat) :
         split <;> exact hl
       · exact hl
 
+
+/-- Every generator discovered by the guiding child remains in the
+completed sibling sweep, including when that child returns early. -/
+theorem firstGuide_retains {ctx : Ctx n} {inf tcLevel fuel cfuel level numcells tc tv index : Nat}
+    {tcell : VSet n} {st out : SearchSt n} {r : Int}
+    (hrep : (st.orbits[tv]! == tv) = true)
+    (hcall : firstPathNode ctx inf tcLevel fuel (level + 1) (numcells + 1)
+      { st with
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv
+        cosetindex := tv } = (r, out))
+    {γ : Array Nat} (hγ : γ ∈ out.genTrace) :
+    γ ∈ (firstChildLoop ctx inf tcLevel fuel (cfuel + 1) level numcells tc tv
+      (some tv) tcell index st).2.2.genTrace := by
+  by_cases hearly : r < Int.ofNat level
+  · rw [firstChildLoop_earlyGuide ctx inf tcLevel fuel cfuel level numcells tc tv tv tcell index st
+      r out hrep (by simp) hcall hearly]
+    exact hγ
+  · rw [firstChildLoop_stayGuide ctx inf tcLevel fuel cfuel level numcells tc tv tv tcell index st
+      r out hrep (by simp) hcall hearly]
+    dsimp only
+    apply firstLoop_retains (first_retains ctx inf tcLevel fuel)
+    rw [recover_genTrace]
+    cases out.needshortprune <;> exact hγ
+
 end Hex.GraphIso.Nauty.Generation

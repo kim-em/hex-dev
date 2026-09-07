@@ -508,3 +508,11 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.first_return' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.first_return
+
+/-- info: 'Hex.GraphIso.autos_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.autos_complete
+
+/-- info: 'Hex.GraphIso.autos_sameOrbit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.autos_sameOrbit

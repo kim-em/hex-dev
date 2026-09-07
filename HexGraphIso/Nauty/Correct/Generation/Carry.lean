@@ -109,6 +109,33 @@ theorem carries_word {G : Colored n k} {base : List (Fin n)} {u v : Fin n}
   intro b hb
   exact Fin.ext ((hval b).trans (word_fixes fun γ hγ => hfix γ hγ b hb))
 
+/-- The powers used by an explicit pruning pair fix the active base
+whenever its recorded generator does. No converse about the pair's fixed
+point bitset is needed. -/
+theorem carries_fmperm {G : Colored n k} {base : List (Fin n)} {γ : Array Nat}
+    (htrace : γ ∈ Aut.trace G) (hfix : ∀ b ∈ base, γ[b.val]! = b.val)
+    {v : Fin n} (hdrop : (fmperm γ n).2.mem v.val = false) :
+    ∃ u : Fin n, u.val < v.val ∧ Aut.Carries G base v u := by
+  have hraw : γ ∈ Aut.raw G := by rw [Aut.raw_eq_trace]; exact htrace
+  obtain ⟨p, hp, hval⟩ := Aut.raw_mem hraw
+  have hb : ∀ a, a < n → γ[a]! < n := by
+    intro a ha
+    rw [← hval ⟨a, ha⟩]
+    exact (p.get ⟨a, ha⟩).isLt
+  have hi : ∀ a b, a < n → b < n → γ[a]! = γ[b]! → a = b := by
+    intro a b ha hb he
+    rw [← hval ⟨a, ha⟩, ← hval ⟨b, hb⟩] at he
+    exact congrArg Fin.val (p.get_inj (Fin.ext he))
+  obtain ⟨t, ht⟩ := fmperm_mcr hb hi v.isLt hdrop
+  let u : Fin n := ⟨applyWord (List.replicate t γ) v.val, by omega⟩
+  refine ⟨u, ht, carries_word ?_ ?_ rfl⟩
+  · intro δ hδ
+    rw [List.eq_of_mem_replicate hδ]
+    exact htrace
+  · intro δ hδ
+    rw [List.eq_of_mem_replicate hδ]
+    exact hfix
+
 /-- A sound stored orbit pointer is a carrier in the generated stabilizer
 when the trace letters fix the active base. -/
 theorem carries_pointer {G : Colored n k} {base : List (Fin n)}
