@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Monitor a pinned command and grade interference in LeanBench timed regions.
 
-The monitor and command form a cancellation group. For standalone use, send
+The monitor and command form a cancellation group in a dedicated session.
+Standalone callers that are already process-group leaders must use setsid --wait.
+For standalone use, send
 SIGINT/SIGTERM to the monitor PID or signal that group; the caller's original
 process group is not the cancellation boundary. On failure the monitor writes
 partial evidence, then SIGKILLs the group, including itself and grandchildren.
@@ -256,11 +258,14 @@ def main() -> int:
     sidecar_template = f"{sidecar_stem}-%p.jsonl"
     child_env = os.environ.copy()
     child_env["LEAN_BENCH_TIMED_REGIONS_SIDECAR"] = sidecar_template
-    # Keep the collector's killpg timeout cleanup intact: when launched in its
-    # dedicated session this is already our group. Standalone invocations get
-    # a fresh group too, excluding unrelated commands in the caller's session.
-    if os.getpgrp() != os.getpid():
-        os.setpgid(0, 0)
+    # A session boundary prevents unrelated pipeline members from joining the
+    # group we will kill on failure. Reuse the collector's fresh session; make
+    # one for standalone use when POSIX permits it. A process-group leader
+    # cannot setsid, so reject that launch before creating a measured child.
+    if os.getsid(0) != os.getpid():
+        if os.getpgrp() == os.getpid():
+            parser.error("launch a process-group leader with setsid --wait")
+        os.setsid()
     owned_group = os.getpgrp()
     # A dedicated group is also the cancellation boundary for standalone use:
     # signal the monitor PID (handled below) or its group, not the caller's group.
@@ -354,6 +359,7 @@ def main() -> int:
             "schema": 3,
             "ownership": "dedicated-process-group",
             "owned_process_group": owned_group,
+            "session_id": os.getsid(0),
             "child_pid": process.pid,
             "command": command,
             "cpu": args.cpu,
@@ -393,6 +399,7 @@ def main() -> int:
             "cpu": args.cpu, "smt_siblings": sorted(siblings - {args.cpu}),
             "ownership": "dedicated-process-group",
             "owned_process_group": owned_group,
+            "session_id": os.getsid(0),
             "child_pid": process.pid if process is not None else None,
             "started_utc": started, "ended_utc": utc_now(),
             "monitor_error": {"type": type(error).__name__, "message": str(error)},

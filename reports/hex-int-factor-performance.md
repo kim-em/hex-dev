@@ -518,14 +518,18 @@ the preflight observations supply the missing scientific timings.
 The collector's subsequent infrastructure corrections do not change this
 retained campaign: monitor exceptions and explicit interruption now preserve
 partial telemetry before terminating the entire group, including grandchildren;
-nonzero command exits also clean up the group. Successful samples retain owned
+nonzero command exits also clean up the group. The group must belong to a
+dedicated session, so failure cleanup cannot include unrelated pipeline members.
+Standalone process-group leaders are rejected before child creation and must
+launch through `setsid --wait`; the collector already creates a dedicated
+session. Successful samples retain owned
 runnable tasks and the direct child PID, so ownership is auditable. The collector
 restores its original affinity after the attempt and rejects an empty observer
 CPU set. Rechecking a preflight-only artifact records unavailable raw timing
 files as diagnostic failure instead of crashing. Synthetic subprocess tests
 cover standalone and collector launch modes, monitor failure, interruption and
-nonzero runner exits. All 40 current Python tests and the phase checks pass;
-[validation logs](bench-results/intfactor-campaign-2-cleanup-validation-2.json)
+nonzero runner exits. All 41 current Python tests and the phase checks pass;
+[validation logs](bench-results/intfactor-campaign-2-cleanup-validation-3.json)
 and the [preflight-only diagnostic recheck](bench-results/intfactor-divisors-campaign-2-recheck.json)
 are retained. These are correctness tests, not new performance runs.
 

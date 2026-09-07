@@ -100,6 +100,7 @@ raise SystemExit(m.main())
                         record = json.loads(output.read_text())
                         identity = json.loads(identities.read_text())
                         self.assertEqual(record["owned_process_group"], identity["pgrp"])
+                        self.assertEqual(record["session_id"], identity["pgrp"])
                         self.assertEqual(record["child_pid"], identity["pid"])
                         self.assertEqual(record["ownership"], "dedicated-process-group")
                         self.assertEqual(result.returncode, 0 if mode == "success" else -signal.SIGKILL)
@@ -119,6 +120,27 @@ raise SystemExit(m.main())
                                     time.sleep(0.01)
                                 else:
                                     self.fail(f"owned process {pid} survived monitor failure")
+
+    def test_existing_pipeline_group_is_rejected(self):
+        if not sys.platform.startswith("linux") or len(os.sched_getaffinity(0)) < 2:
+            self.skipTest("Linux with at least two eligible CPUs is required")
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "telemetry.json"
+            child_marker = Path(directory) / "child-started"
+            code = """
+import sys
+from scripts.bench import core_telemetry as m
+m.sibling_set = lambda cpu: {cpu}
+sys.argv = ['core_telemetry.py', '--cpu', sys.argv[1], '--output', sys.argv[2],
+            '--', sys.executable, '-c', 'import sys; from pathlib import Path; Path(sys.argv[1]).touch()', sys.argv[3]]
+raise SystemExit(m.main())
+"""
+            result = subprocess.run([sys.executable, "-c", code,
+                str(min(os.sched_getaffinity(0))), str(output), str(child_marker)],
+                process_group=0, capture_output=True, text=True, timeout=15)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("setsid --wait", result.stderr)
+            self.assertFalse(child_marker.exists())
 
     def test_merge_regions(self):
         self.assertEqual(
