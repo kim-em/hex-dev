@@ -1,0 +1,43 @@
+verifying 41 benchmark(s)...
+  [ok ] Hex.IntFactorBench.runSquareFactorCount
+  [ok ] Hex.IntFactorBench.runReplay
+  [ok ] Hex.IntFactorBench.runBalancedRho
+  [ok ] Hex.IntFactorProfile.runPower
+  [ok ] Hex.IntFactorBench.runDivisors
+  [ok ] Hex.IntFactorBench.runSigmaFactorCount
+  [ok ] Hex.IntFactorBench.runTotientFactorCount
+  [ok ] Hex.IntFactorBench.runSigmaExponent
+  [ok ] Hex.IntFactorBench.runOrder
+  [ok ] Hex.IntFactorProfile.runSmooth
+  [ok ] Hex.IntFactorBench.runPowerGenericBatch  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion64  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor64  [fixed]
+  [ok ] Hex.IntFactorBench.runPMinusOneBatch  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor72  [fixed]
+  [ok ] Hex.IntFactorBench.runEcm48  [fixed]
+  [ok ] Hex.IntFactorBench.runEcmRhoBatch  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion80  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor40  [fixed]
+  [ok ] Hex.IntFactorBench.runPowerSplitBatch  [fixed]
+  [ok ] Hex.IntFactorBench.runDownstreamOrder  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor48  [fixed]
+  [ok ] Hex.IntFactorBench.runTableTrial  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor56  [fixed]
+  [ok ] Hex.IntFactorBench.runDefaultFuelSchedule  [fixed]
+  [ok ] Hex.IntFactorBench.runCyclotomicBatch  [fixed]
+  [ok ] Hex.IntFactorBench.runEcm72  [fixed]
+  [ok ] Hex.IntFactorBench.runDownstreamPrimitiveRoot  [fixed]
+  [ok ] Hex.IntFactorBench.runTableDispatch  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion56  [fixed]
+  [ok ] Hex.IntFactorBench.runEcm56  [fixed]
+  [ok ] Hex.IntFactorBench.runEcmBatch  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion32  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor32  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedFactor80  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion48  [fixed]
+  [ok ] Hex.IntFactorBench.runEcm76  [fixed]
+  [ok ] Hex.IntFactorBench.runEcm64  [fixed]
+  [ok ] Hex.IntFactorBench.runEcm80  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion72  [fixed]
+  [ok ] Hex.IntFactorBench.runBalancedCompletion40  [fixed]
+all 41 benchmark(s) passed

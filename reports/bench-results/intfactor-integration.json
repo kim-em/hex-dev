@@ -1,0 +1,226 @@
+{
+  "artifact_sha256": {
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0000.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0000.stdout": "679d2ee04da4eacc5b162823d6c09649e47cd08f697dd0cf3ded5e5c7ee56d6d",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0001.stderr": "cfd5dcba37dce358dd779f75de08580147502265b784ffe23e087eedbd2b468c",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0001.stdout": "c62b886dd504de2a72dc852ac256dcae654c083c38db2f27775ba0267202cd36",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0002.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0002.stdout": "3db2cdb1676ce8b8a814dc31ed09ab26cc65de7fded4ab41b8a1ec12d0227814",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0003.stderr": "923a2d58ceb4dba2dd1447238ed891b752bc6239a482ab106a9e467e57de22ff",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0003.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0004.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0004.stdout": "9d051a70fb605dffceb7d6b8f2d5f6115fc6602e26d647af66e837196eba5032",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0005.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0005.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0006.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0006.stdout": "446b7a1421decba55d30ae72e2cb590cf25908c5c8fdcfb8b31f2544e4a8be5b",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0007.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0007.stdout": "d8be866434d1c2c417673eeb46ec42ce978f9c52258e9b9faae508d17afa7cd4",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0008.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0008.stdout": "52501c38232299a453c631c19655a0324935c4e81135dc5eeb4fa99bfe8a03a1",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0009.stderr": "940fd0ea041b77733c7454a2df54dd8e448eb946a6eb57a81eb14b5648289b17",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0009.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "command": [
+    "-"
+  ],
+  "commands": [
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexIntFactor",
+        "HexIntFactorMathlib",
+        "HexConformance",
+        "HexManual",
+        "hexintfactor_emit_fixtures"
+      ],
+      "elapsed_nanos": 4621233893,
+      "ended_ns": 1788769050290057132,
+      "executable": "/run/current-system/sw/bin/lake",
+      "executable_sha256": "b5d4e3b117ededb2bf7d7dba11efadb669a8a198586615495f93e41ff156c4b6",
+      "returncode": 0,
+      "started_ns": 1788769045661678594,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0000.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0000.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "lake",
+        "exe",
+        "hexintfactor_bench",
+        "verify"
+      ],
+      "elapsed_nanos": 6023679792,
+      "ended_ns": 1788769056328472915,
+      "executable": "/run/current-system/sw/bin/lake",
+      "executable_sha256": "b5d4e3b117ededb2bf7d7dba11efadb669a8a198586615495f93e41ff156c4b6",
+      "returncode": 0,
+      "started_ns": 1788769050298668209,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0001.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0001.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexintfactor_emit_fixtures"
+      ],
+      "elapsed_nanos": 63742323,
+      "ended_ns": 1788769056519511245,
+      "executable": ".lake/build/bin/hexintfactor_emit_fixtures",
+      "executable_sha256": "a36a3579eff13cf165a8175a7f52a7bf717d63c729bb74135f2e28f71b943dcf",
+      "returncode": 0,
+      "started_ns": 1788769056341944303,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0002.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0002.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "scripts/bench/test_intfactor_phase4.py",
+        "scripts/profile/test_normalize_perf.py",
+        "scripts/profile/test_elf_symbols.py"
+      ],
+      "elapsed_nanos": 2267175148,
+      "ended_ns": 1788769058788618445,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788769056521159907,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0003.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0003.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase4.py"
+      ],
+      "elapsed_nanos": 113969354,
+      "ended_ns": 1788769058904323670,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788769058789872873,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0004.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0004.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "elapsed_nanos": 4371385354,
+      "ended_ns": 1788769063283938977,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788769058910994984,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0005.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0005.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase7.py"
+      ],
+      "elapsed_nanos": 63898305,
+      "ended_ns": 1788769063350118421,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788769063285768517,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0006.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0006.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bench/check_factor_sweep_freshness.py"
+      ],
+      "elapsed_nanos": 164074715,
+      "ended_ns": 1788769063515674800,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788769063351144791,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0007.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0007.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bench/check_graphiso_sweep_freshness.py"
+      ],
+      "elapsed_nanos": 63894839,
+      "ended_ns": 1788769063581845031,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788769063517453826,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0008.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0008.stdout",
+      "timeout_seconds": 900
+    },
+    {
+      "command": [
+        "nix",
+        "shell",
+        "--impure",
+        "--expr",
+        "let pkgs = import <nixpkgs> {}; in pkgs.python3.withPackages (p: [p.cypari2 p.cysignals])",
+        "--command",
+        "python3",
+        "scripts/oracle/intfactor_pari.py",
+        "--check"
+      ],
+      "elapsed_nanos": 1015645848,
+      "ended_ns": 1788769064601893641,
+      "executable": "/run/current-system/sw/bin/nix",
+      "executable_sha256": "ac984be410a0fd38442695b647e16d2e1943301590f43f1bb15fbe9ba051b6ca",
+      "returncode": 0,
+      "started_ns": 1788769063583187960,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0009.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-integration.json.attempt/command-0009.stdout",
+      "timeout_seconds": 900
+    }
+  ],
+  "commit": "28ff005c4bbf905c58bbe95de23e71b1c43b0afa",
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619",
+  "fixture_emission_matches": true,
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6",
+  "schema": "hex-int-factor-attempt/1",
+  "scope": "integration-validation",
+  "started_ns": 1788769045652974419,
+  "status": "verified"
+}

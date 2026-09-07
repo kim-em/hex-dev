@@ -1,3 +1,4 @@
+import copy
 import unittest
 from scripts.profile.normalize_perf import normalize
 
@@ -14,6 +15,17 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(result['residual_ns'], 0)
         self.assertEqual(p['meta']['startTime'], 1003000)
         self.assertEqual(p['threads'][0]['samples']['time'], [0.0, 1.25, 3.5])
+
+    def test_preserves_all_relative_timestamps(self):
+        profile = self.fixture()
+        profile['threads'][0].update(registerTime=0, unregisterTime=4,
+            processStartupTime=-2, processShutdownTime=5,
+            markers={'startTime': [1], 'endTime': [2]})
+        profile['counters'] = [{'samples': {'time': [0, 2]}}]
+        before = copy.deepcopy(profile)
+        normalize(profile, '1/1 123.0:\n1/1 123.00125:\n1/1 123.0035:\n', self.anchor)
+        self.assertEqual(profile['threads'], before['threads'])
+        self.assertEqual(profile['counters'], before['counters'])
 
     def test_drift_rejected(self):
         with self.assertRaisesRegex(ValueError, 'disagree'):

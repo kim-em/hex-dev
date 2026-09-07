@@ -436,7 +436,13 @@ retained τ=64 timing/model ratio is about 13.34, versus 11.05..11.93 on the
 first attempt's verdict range. The raw export's per-point `part_of_verdict`
 flags do not reflect that trimming; `verdict_dropped_leading=1` controls the
 verdict and is now explicitly checked. Complete output validation and
-all 42 hashes pass in each export. **Neither attempt is accepted**:
+all 42 hashes pass in each export. This was checked after rejection; the
+original collector aborted before that validation. The separate
+[attempt-1 recheck](bench-results/intfactor-divisors-recheck-1.json) and
+[attempt-2 recheck](bench-results/intfactor-divisors-recheck-2.json) retain the
+input and validator hashes, complete export/telemetry and validation outcome,
+with diagnostic status and the original rejection unchanged. **Neither
+attempt is accepted**:
 
 | Attempt | Raw harness verdict | Residual slope | Core interference | Status |
 |---|---|---:|---:|---|
@@ -478,13 +484,17 @@ provenance omission is retained explicitly and is not retroactively repaired
 in those immutable failed records. The initial `samply record`
 capture contained zero samples, and direct `samply import` of a usable perf
 capture failed clock calibration. Those failures remain archived. The
-[normalized profile summary](bench-results/intfactor-divisors-profile-normalized/summary.json)
+[reprocessed profile summary](bench-results/intfactor-divisors-profile-reprocessed.json.attempt/summary.json)
 uses the **same** perf capture, without taking another timing measurement.
 All 2981 imported sample timestamps agree exactly with raw `perf script --ns`
 timestamps after one fixed offset. `normalize_perf.py` verifies this entire
-sequence before translating to absolute monotonic time; it never uses the
-benchmark boundaries to choose an offset. Symbol intervals come from the
-captured ELF binaries via `nm`; the sidecar records their hashes and commands.
+sequence before correcting the common wall-clock origin in `meta.startTime`; it never uses the
+benchmark boundaries to choose an offset. Every relative sample, marker,
+counter and thread/process lifetime timestamp remains unchanged, preserving
+one coherent profile clock. Symbol intervals come from the
+captured ELF binaries via `nm -S`; addresses outside a symbol's recorded
+size remain unresolved. The sidecar records binary hashes, commands, and
+resolved/unresolved address counts, including any missing library.
 
 | Inclusive function | Share |
 |---|---:|
@@ -501,13 +511,14 @@ array pushes. Hashing/consumption and release remain inside the harness's
 registered loop; neither certificate checking nor factor search is present.
 Leaf categories are Lean runtime/list helpers 88.82%, allocation/free 9.32%,
 library code 1.27%, and other 0.58%; no GMP cost was observed. 99.42% is
-classified. This supports the operation-count derivation and identifies
+classified; 0.03% of leaf samples are unresolved. This supports the operation-count derivation and identifies
 allocation/runtime overhead without claiming that it explains the original
 trial instability.
 
-The unchanged timed-region filter reports: absolute-monotonic calibration,
+The unchanged timed-region filter reports: relative-to-meta-start calibration,
 0.967 ms residual against its 5 ms limit; 2911.3 ms timed duration; 2908
-retained samples (2 outside the windows); no other-thread samples inside;
+retained benchmark-thread samples (2 more on that thread are outside the
+windows, and 71 imported samples belong to other threads); no other-thread samples inside;
 ±5 ms sensitivity **passed**; confidence **passed**. Sampling was 999 Hz on
 CPU 7, AMD EPYC 9455, Linux x86-64, Lean 4.34.0-rc2, LeanBench pin
 `b583ddd7da895dabd3a6b2976a0292dbf42bc095`, samply 0.13.1. This profile passes
@@ -516,10 +527,26 @@ attribution checks but cannot make either contaminated timing run admissible.
 The [capture manifest](bench-results/intfactor-divisors-profile.json) retains
 the raw capture's original calibration rejection. Its `.json.attempt/`
 directory contains compressed `perf.data`, imported profile, sidecar,
-commands/logs and source/executable hashes. The separate
-`intfactor-divisors-profile-normalized/` directory holds the exact raw sample
-sequence, normalization, filtered profile, ELF symbol table and summary.
-A fresh capture uses:
+commands/logs and source/executable hashes. The [reprocessing manifest](bench-results/intfactor-divisors-profile-reprocessed.json)
+links the original manifest and compressed perf input by digest, records all
+commands and exits, hashes every processing source and output, and records a
+clean profiler checkout. Its `.json.attempt/` directory contains the coherent
+profile, bounded ELF symbols and summary. The earlier
+`intfactor-divisors-profile-normalized/` directory is retained as a superseded
+intermediate: its sample-only clock conversion was suitable for the filter
+but did not preserve a coherent viewer timeline, and its symbol lookup lacked
+size bounds. Use the reprocessed artifact for attribution and viewing.
+The committed pipeline was exercised end to end on the retained raw capture
+with `--reprocess`; no new samples were taken. Reproduce it using:
+
+```sh
+python3 scripts/profile/intfactor_divisors.py \
+  --reprocess reports/bench-results/intfactor-divisors-profile.json \
+  --profiler-root .lake/lean-bench-samply \
+  --output reports/bench-results/intfactor-divisors-profile-replay.json
+```
+
+A fresh attribution capture uses:
 
 ```sh
 python3 scripts/profile/intfactor_divisors.py \
@@ -535,9 +562,9 @@ artifacts, run:
 
 ```sh
 python3 scripts/profile/summarize_profile.py \
-  reports/bench-results/intfactor-divisors-profile-normalized/filtered.json.gz \
-  --symbols reports/bench-results/intfactor-divisors-profile-normalized/symbols.json \
-  --diagnostics reports/bench-results/intfactor-divisors-profile-normalized/diagnostics.json \
+  reports/bench-results/intfactor-divisors-profile-reprocessed.json.attempt/filtered.json.gz \
+  --symbols reports/bench-results/intfactor-divisors-profile-reprocessed.json.attempt/symbols.json \
+  --diagnostics reports/bench-results/intfactor-divisors-profile-reprocessed.json.attempt/diagnostics.json \
   --thread hexintfactor_be --top 25
 ```
 
@@ -554,7 +581,9 @@ the pair's Lean library sources, umbrella modules and manual chapter are
 unchanged. No `sorry`, `axiom` or `native_decide` occurs in either library's
 Lean sources. The existing proof/API review therefore has no changed library
 declaration to re-audit; this work changes benchmark drivers and evidence
-infrastructure. The combined build of `HexIntFactor HexIntFactorMathlib
+infrastructure. The [local validation record](bench-results/intfactor-integration.json) and
+its adjacent stdout/stderr files retain the commands and outcomes.
+The combined build of `HexIntFactor HexIntFactorMathlib
 HexConformance HexManual` passes, all 41 benchmark verification cases pass,
 and fresh fixture emission exactly matches the committed corpus. PARI checks
 all 415 IntFactor cases with zero failures. Collector and profile-clock tests,
