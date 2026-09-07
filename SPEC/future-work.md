@@ -949,14 +949,21 @@ the two library families.
 
 ### Permutation groups
 
-Provide finite permutation groups with orbits, stabilizers, subgroup
-containment, cosets, and the transitive-group data required by resolvent
-methods. Executable certificates should cover membership and subgroup
-relations; classification tables and their trust boundary need an explicit
-data policy.
+The initial library is specified in
+[hex-perm-group](Libraries/hex-perm-group.md) and
+[hex-perm-group-mathlib](Libraries/hex-perm-group-mathlib.md). It provides
+checked deterministic stabilizer chains, constructive membership, exact
+order, sign and cycle type, rank/unrank and supplied-index sampling,
+finite actions with images and kernels, and complete set/subgroup search.
+It includes block systems and primitivity, normal closure, core and derived
+series, direct and imprimitive wreath products, and bounded element/coset
+enumeration. It extracts the shared permutation representation from graph
+isomorphism and proves completeness of checked chains and subgroup search.
 
-This library is independently useful and is a prerequisite for certified
-Galois-group computation.
+Transitive-group data required by resolvent methods remain a later extension.
+Classification tables need versioned provenance, checked embeddings and a
+separate completeness policy. The initial computational library is useful
+independently and supplies infrastructure for certified Galois-group work.
 
 ### Matrix groups and finite-dimensional modules
 
