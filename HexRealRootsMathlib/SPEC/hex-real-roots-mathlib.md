@@ -162,8 +162,8 @@ derivative flanks, and exclusion of a common zero.
 
 The finite-point bridge `sturmVarAt_eq` and the infinity bridges
 `sturmVarNegInf_eq` / `sturmVarPosInf_eq` are public for an arbitrary
-literal `Array ZPoly`. Together with `Sturm.sturm_half_open` and
-`Sturm.sturm_line`, they turn literal executable variation reads into
+literal `Array ZPoly`. Together with `Sturm.IsSturmChain.sturm_Ioc` and
+`Sturm.IsSturmChain.sturm`, they turn literal executable variation reads into
 root counts without calling `ZPoly.sturmCount` or `ZPoly.rootCount`. The
 `ZReplay.count_eq_card_roots` and `ZReplay.total_eq_card_roots` corollaries
 perform the list-to-array alignment and compose replay, squarefreeness, and
@@ -584,12 +584,38 @@ Status and boundaries:
   against `Polynomial ℝ`/`ℂ` with no `HexRealRoots` dependence, ready
   as a Mathlib contribution in its own right.
 
+## Root-count certificates over Mathlib polynomials
+
+`SturmCertificate` checks signed remainder identities over `Polynomial ℝ`.
+`Sturm.RemainderChain.pair` terminates a certificate at a nonzero constant;
+`Sturm.RemainderChain.cons` prepends a positive scaled remainder identity.
+The derivative relation gives `RemainderChain.isSturmChain` and
+`RemainderChain.separable` separately. `RemainderChain.card_rootSet` works for
+any coefficient ring equipped with an algebra map into `ℝ`.
+
+`RealRootCount` provides the tactic `by real_root_count` and the term elaborator
+`real_root_count p`. Both accept closed squarefree integer-coefficient
+polynomials over `ℚ` of positive degree. The generator and rational division
+run at elaboration time; the emitted proof checks polynomial identities,
+nonvanishing, positivity, and the natural-number variation count.
+
+The generic Sturm statements, certificate checker, polynomial parser, and
+root-count elaborator agree with their Mathlib counterparts after module-path,
+parser-namespace, and documentation-markup translation. Run
+`python3 scripts/check_sturm_sync.py /path/to/mathlib` to check that agreement.
+Once the pinned Mathlib release contains the development, these companion
+modules can re-export the corresponding Mathlib modules.
+
 ## File organisation
 
 ```
 HexRealRootsMathlib/
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
+  SturmCertificate.lean -- certificates over Mathlib polynomials
+  RealRootCount.lean   -- checked root-count tactic and term elaborator
+  SturmTests.lean      -- endpoint conventions and constant chains
+  RealRootCountTests.lean -- root counts and elaborator diagnostics
   ChainCorrespond.lean -- executable-chain correspondence and the shared
                           recurrence/cast helpers; sturmCount_eq_card_roots;
                           compatibility aliases for HexPolyZMathlib.Squarefree

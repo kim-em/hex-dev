@@ -893,6 +893,8 @@ lean_lib HexReleaseTests where
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
+    `HexRealRootsMathlib.SturmTests,
+    `HexRealRootsMathlib.RealRootCountTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
     `HexSparsePoly.KernelTests,

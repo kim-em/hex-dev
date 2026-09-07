@@ -110,14 +110,8 @@ theorem count_eq_card_roots {f : ZPoly} {cert : SturmReplay}
     cert.count I =
       (HexRealRootsMathlib.Literal.rootsIn
         (HexRealRootsMathlib.toPolyℝ f) I).card := by
-  obtain ⟨s₁, rest, _hchain, _hrep, hnz, _hdegrees, _hpos, _hderiv, _hcount⟩ :=
-    check_sound h
-  unfold count
-  apply HexRealRootsMathlib.literalCount_eq_card_roots f cert.chain
-  · intro hf
-    exact hnz f (by simp) (HexRealRootsMathlib.toPolyℝ_eq_zero_iff.mp hf)
-  · exact squarefree_of_check h
-  · exact isChain_of_check h
+  exact HexRealRootsMathlib.literalCount_eq_card_roots f cert.chain
+    (squarefree_of_check h) (isChain_of_check h) I
 
 /-- The literal infinite-endpoint variation drop of an accepted replay counts
 exactly all real roots of its head. This acts directly on the certificate
@@ -125,14 +119,8 @@ array. -/
 theorem total_eq_card_roots {f : ZPoly} {cert : SturmReplay}
     (h : cert.check f = true) :
     cert.total = (HexRealRootsMathlib.toPolyℝ f).roots.card := by
-  obtain ⟨s₁, rest, _hchain, _hrep, hnz, _hdegrees, _hpos, _hderiv, _hcount⟩ :=
-    check_sound h
-  unfold total
-  apply HexRealRootsMathlib.literalRootCount_eq_card_roots f cert.chain
-  · intro hf
-    exact hnz f (by simp) (HexRealRootsMathlib.toPolyℝ_eq_zero_iff.mp hf)
-  · exact squarefree_of_check h
-  · exact isChain_of_check h
+  exact HexRealRootsMathlib.literalRootCount_eq_card_roots f cert.chain
+    (squarefree_of_check h) (isChain_of_check h)
 
 end SturmReplay
 
