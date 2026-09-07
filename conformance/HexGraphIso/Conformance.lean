@@ -448,3 +448,7 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.Generation.RefPath.transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.RefPath.transport
+
+/-- info: 'Hex.GraphIso.Nauty.Generation.first_path' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Nauty.Generation.first_path

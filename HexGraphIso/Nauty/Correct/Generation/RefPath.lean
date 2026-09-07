@@ -120,4 +120,46 @@ theorem RefPath.transport {σ τ : Renaming n} {tcLevel boundary level : Nat}
     have h := (hu hb).transport hU hsp hback hinv
     rwa [hcode] at h
 
+/-- A checked cell stabilizer moves a richer reference occurrence to
+another child without losing its saved uniformity boundary. Membership
+in the emitted generator group is not required. -/
+theorem RefPath.carried {tcLevel boundary level tc e oU oV : Nat}
+    {st : RefineSt n} {γ : Array Nat} {targets : List Nat} {key : Key n}
+    (hok : IterOk ctx level st) (hlvl : level < n)
+    (hgsz : ctx.g.size = n) (hcheck : checkAutom ctx.g γ = true)
+    (hstab : CellStab st.ptn level st.lab γ)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
+    (hoU : oU ≤ e - tc) (hoV : oV ≤ e - tc)
+    (hmap : γ[st.lab[tc + oU]!]! = st.lab[tc + oV]!)
+    (h : RefPath ctx tcLevel boundary (level + 1)
+      (childSt ctx level st tc st.lab[tc + oU]!) targets key) :
+    RefPath ctx tcLevel boundary (level + 1)
+      (childSt ctx level st tc st.lab[tc + oV]!) targets key := by
+  obtain ⟨σ, hσ, hrows⟩ := checkAutom_sound hgsz hcheck
+  obtain ⟨τ, hτ, hback⟩ := checkAutom_sound hgsz (checkAutom_invPerm hcheck)
+  have hs : γ.size = n := by
+    have hc := hcheck
+    rw [checkAutom] at hc
+    simp only [Bool.and_eq_true] at hc
+    exact beq_iff_eq.mp hc.1.1.1
+  have hinv : ∀ v, v < n → τ (σ v) = v := by
+    intro v hv
+    rw [hτ _ ((σ.maps v).mp hv), hσ v hv]
+    exact getElem!_invPerm γ
+      (fun a b ha hb => checkAutom_inj hcheck a b (by omega) (by omega))
+      (by omega) (by rw [hs]; exact checkAutom_bound hcheck v hv)
+  have he : st.lab.map σ.toFun = st.lab.map (fun v => γ[v]!) :=
+    map_congr_of_labOk hok.ok.labOk fun v hv => hσ v hv
+  have hsp : StPerm level st (mapSt σ st) := by
+    refine ⟨rfl, rfl, rfl, rfl, rfl, rfl, by simp, ?_⟩
+    change cellsPerm st.ptn level st.lab (st.lab.map σ.toFun)
+    rw [he]
+    exact hstab
+  have heBound := target_end_lt hok.ok.ptnSize hok.ok.ptnEnd hcell
+  have hv : st.lab[tc + oU]! < n := hok.ok.labOk _ (by rw [hok.ok.labSize]; omega)
+  have hmap' : st.lab[tc + oV]! = σ.toFun st.lab[tc + oU]! :=
+    hmap.symm.trans (hσ _ hv).symm
+  exact h.transport hrows hback hinv (iterOk_child hok hlvl hcell hne hoU)
+    (stPerm_child hrows hsp hok hcell hne hoV hoU hmap')
+
 end Hex.GraphIso.Nauty.Generation

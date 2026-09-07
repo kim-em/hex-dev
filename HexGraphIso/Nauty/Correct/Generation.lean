@@ -17,3 +17,4 @@ public import HexGraphIso.Nauty.Correct.Generation.OrbitCounter
 public import HexGraphIso.Nauty.Correct.Generation.Same
 public import HexGraphIso.Nauty.Correct.Generation.UniformVisit
 public import HexGraphIso.Nauty.Correct.Generation.RefPath
+public import HexGraphIso.Nauty.Correct.Generation.FirstPath
