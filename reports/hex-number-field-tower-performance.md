@@ -94,8 +94,8 @@ flattening used to prepare inputs stay outside the timed operation.
 The factor family uses Selmer trinomials `X^n - X - 1` over `ℚ(√2)`.
 Rational coefficients make the shift-zero norm a square, so the canonical
 factor case genuinely retries before accepting a squarefree degree-48 norm,
-recursively factors it over `ℚ`, recovers factors by gcd, and checks the
-result. The explicit retry anchor and independently budgeted height-two
+recursively factors it over `ℚ`, returns the canonical component through
+singleton recovery, and checks the result. The explicit retry anchor and independently budgeted height-two
 recursive case confirm both control-flow paths.
 
 ### Scientific ranges and host protocol
