@@ -1,0 +1,12 @@
+{
+  "horner": {
+    "eligible": false,
+    "runner_exit": 1,
+    "checks": []
+  },
+  "recovery": {
+    "eligible": false,
+    "runner_exit": 1,
+    "checks": []
+  }
+}

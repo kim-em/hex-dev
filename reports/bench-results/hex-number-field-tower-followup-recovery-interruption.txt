@@ -1,0 +1,8 @@
+accepted pairs 0
+Traceback (most recent call last):
+  File "/tmp/issue-10074-compare.py", line 12, in <module>
+    cpu=idle_core.pick(avoid=frozenset(avoid)); siblings=sorted(idle_core.sibling_map()[cpu]); avoid.update(siblings)
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10074/scripts/bench/idle_core.py", line 129, in pick
+    raise RuntimeError(
+        "no idle core: every logical CPU or one of its SMT siblings is busy")
+RuntimeError: no idle core: every logical CPU or one of its SMT siblings is busy

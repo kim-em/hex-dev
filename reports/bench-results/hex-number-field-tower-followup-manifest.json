@@ -84,6 +84,96 @@
       "artifact": "hex-number-field-tower-followup-runner.txt",
       "source": "/tmp/issue-10074-compare.py",
       "sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-1-host.json",
+      "source": "/tmp/issue-10074-horner-1-host.json",
+      "sha256": "85cc160d03eb0bf594ce0c8623aef4e330d0c34be67e38a19478b186d92b753a"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-2-host.json",
+      "source": "/tmp/issue-10074-horner-2-host.json",
+      "sha256": "966fc4fb34a6b9d4f8cc83eae0c3288a0713078b3c32c3845760f536495b0887"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-3-host.json",
+      "source": "/tmp/issue-10074-horner-3-host.json",
+      "sha256": "ec1d03ea80125ae0080baaf644d4a9f1bac945a39485688c5cb6a5819e1f0bd5"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-3-left.json",
+      "source": "/tmp/issue-10074-horner-3-left.json",
+      "sha256": "4411e28f2134b2ebcf5cd4d3b077897607fbbb7f35ed7afa4ca34b8e3a43d18f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-4-host.json",
+      "source": "/tmp/issue-10074-horner-4-host.json",
+      "sha256": "33df3a2c0687955c81c075638e25ed9b0f1c1ce4bfd88071ab2788e3a3ac1ce7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-4-left.json",
+      "source": "/tmp/issue-10074-horner-4-left.json",
+      "sha256": "a69b6ddf02b6d84a80a7ace1571f21c57f004d26f2ea4c65bb415081eeb9581e"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-4-right.json",
+      "source": "/tmp/issue-10074-horner-4-right.json",
+      "sha256": "6e98e9925bb42ef8d504f594ab1162ca5e2f5cfba5a5d87e79b1c0d9a5fed7d7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-5-host.json",
+      "source": "/tmp/issue-10074-horner-5-host.json",
+      "sha256": "9ee2a4c26dba9a084d35d9c18a96d0feb81710060ac89baab7b72cfc1f5d34b4"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-6-host.json",
+      "source": "/tmp/issue-10074-horner-6-host.json",
+      "sha256": "97ab8473ca4bd6054fc85d68d4745f09364dedf9607d952d8a01cf6eb8330d50"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-7-host.json",
+      "source": "/tmp/issue-10074-horner-7-host.json",
+      "sha256": "aaf6305621d1103367a3cd4b7c066f7af1ceca2d45beb3ebbfc26efbad4ac604"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-7-left.json",
+      "source": "/tmp/issue-10074-horner-7-left.json",
+      "sha256": "fef37c954770f9bc1c5fc81a3e7e09cf916123fa965e2ebd1331ff82a7265c2f"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-8-host.json",
+      "source": "/tmp/issue-10074-horner-8-host.json",
+      "sha256": "f88d4c2d0490d87c0471d03987323f76ff9bc23d35c160bbbabc52d0d6c74ece"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery-1-host.json",
+      "source": "/tmp/issue-10074-recovery-1-host.json",
+      "sha256": "ff14a64eab8dab24148bd397c0eedfaa2053a28b7d53186c9b5e8b58c89230d7"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-variant-runner.txt",
+      "source": "/tmp/issue-10074-compare.py",
+      "sha256": "5686e67b534b1e3cf036a2f71cb3ca6a93ce97c8362cb96dfa0a304d2f74884c"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-variant-driver.txt",
+      "source": "/tmp/issue-10074-variants.py",
+      "sha256": "c807303eb6940b6b429ca9d7a6c7ba78ea31e1739ed9742b231b6533750c4c68"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-interrupted-variant-decisions.json",
+      "source": "/tmp/issue-10074-variant-decisions.json",
+      "sha256": "23ad2ef90311c1c9a6b5c12b42d644a240a2531d63fa359ca07e2d6c5060f0f8"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-horner-interruption.txt",
+      "source": "/tmp/issue-10074-horner-comparison.log",
+      "sha256": "561e71904190720dd9e40d692be56502a9164e371e5d7399704111fab67fb971"
+    },
+    {
+      "artifact": "hex-number-field-tower-followup-recovery-interruption.txt",
+      "source": "/tmp/issue-10074-recovery-comparison.log",
+      "sha256": "1e29a6fb4181ba2e2fe5f68c4723ec07c283edd3ad185aaa58173c90add4b2db"
     }
   ]
 }
