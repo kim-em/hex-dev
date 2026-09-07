@@ -3,13 +3,16 @@
 
 First build the targets to warm dependencies. Run from the repository root.
 All Conway output directories and umbrella artifacts are removed before each
-run; --no-cache forbids Lake restoring the removed outputs from remote cache.
+run; companion measurements remove both HexGFq and HexGFqMathlib outputs.
+--no-cache forbids Lake restoring the removed outputs from remote cache.
 GNU time reports maximum child RSS; sampled process-tree RSS also captures
-simultaneous compilers. Raw verbose logs retain per-module timings.
+simultaneous compilers. Compressed verbose logs retain per-module timings.
+A measurement is rejected if it unexpectedly rebuilds an external dependency.
 """
 
 import argparse
 import hashlib
+import gzip
 import signal
 import json
 import os
@@ -66,7 +69,17 @@ def main():
         action="store_true",
         help="Record all failed or capped candidate runs",
     )
+    ap.add_argument(
+        "--max-rss-kib",
+        type=int,
+        default=0,
+        help="Stop a candidate at this aggregate memory limit; zero disables",
+    )
     args = ap.parse_args()
+    if args.runs < 1 or args.threads < 1 or args.ceiling < 0 or args.max_rss_kib < 0:
+        ap.error(
+            "runs and threads must be positive; resource limits must be nonnegative"
+        )
     prefix = "HexGFqMathlib" if args.companion else "HexConway"
     prefixes = ["HexGFq", "HexGFqMathlib"] if args.companion else [prefix]
     targets = ["HexGFqMathlib"] if args.companion else ["HexConway"]
@@ -82,11 +95,17 @@ def main():
         platform=platform.platform(),
         toolchain=Path("lean-toolchain").read_text().strip(),
         threads=args.threads,
+        scheduling="Lake default scheduling; four import chains per polynomial-proof family; compatibility follows its primitivity chain; factor-prime proofs form one chain",
         cpu_affinity=sorted(os.sched_getaffinity(0)),
-        mem_total_kib=int(re.search(r"MemTotal:\s+(\d+)", Path("/proc/meminfo").read_text())[1]),
-        lake_manifest_sha256=hashlib.sha256(Path("lake-manifest.json").read_bytes()).hexdigest(),
+        mem_total_kib=int(
+            re.search(r"MemTotal:\s+(\d+)", Path("/proc/meminfo").read_text())[1]
+        ),
+        lake_manifest_sha256=hashlib.sha256(
+            Path("lake-manifest.json").read_bytes()
+        ).hexdigest(),
         cleaned_prefixes=prefixes,
         ceiling_seconds=args.ceiling,
+        memory_ceiling_kib=args.max_rss_kib,
         rss_sampling_seconds=0.1,
         targets=targets,
         commit=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
@@ -125,6 +144,7 @@ def main():
         ]
         start, peak = time.monotonic(), 0
         capped = False
+        memory_capped = False
         with log.open("w") as f:
             proc = subprocess.Popen(
                 cmd,
@@ -136,7 +156,11 @@ def main():
             while proc.poll() is None:
                 peak = max(peak, rss_tree(proc.pid))
                 time.sleep(0.1)
-                if args.ceiling and time.monotonic() - start > args.ceiling:
+                if args.max_rss_kib and peak > args.max_rss_kib:
+                    memory_capped = True
+                    os.killpg(proc.pid, signal.SIGTERM)
+                    proc.wait()
+                elif args.ceiling and time.monotonic() - start > args.ceiling:
                     capped = True
                     os.killpg(proc.pid, signal.SIGTERM)
                     proc.wait()
@@ -149,28 +173,49 @@ def main():
                 name in p.parts or p.name.startswith(name + ".") for name in prefixes
             )
         }
+        sizes_by_suffix = {}
+        for path, size in sizes.items():
+            suffix = Path(path).suffix
+            sizes_by_suffix[suffix] = sizes_by_suffix.get(suffix, 0) + size
         rss_match = re.search(
             r"Maximum resident set size \(kbytes\): (\d+)", timing.read_text()
         )
         max_child_rss = int(rss_match[1]) if rss_match else None
+        modules = re.findall(r"Built ([^\n]+)", log.read_text())
+        dependency_builds = [
+            name
+            for name in modules
+            if name.split()[0].split(".", 1)[0].split(":", 1)[0] not in prefixes
+        ]
         row = dict(
+            dependency_builds=dependency_builds,
             capped=capped,
+            memory_capped=memory_capped,
             max_child_rss_kib=max_child_rss,
             wall_seconds=wall,
             peak_tree_rss_kib=peak,
             exit_code=proc.returncode,
             artifact_bytes=sum(sizes.values()),
-            artifacts=sizes,
-            modules=re.findall(r"Built ([^\n]+)", log.read_text()),
+            artifact_count=len(sizes),
+            artifact_bytes_by_suffix=sizes_by_suffix,
+            modules=modules,
             log=str(log),
             timing=str(timing),
         )
+        packed_log = log.with_suffix(".log.gz")
+        packed_log.write_bytes(gzip.compress(log.read_bytes(), mtime=0))
+        log.unlink()
+        row["log"] = str(packed_log)
         report["runs"].append(row)
         (out / f"{args.label}.json").write_text(json.dumps(report, indent=2) + "\n")
         print(
             f"{args.label} {i+1}: {wall:.3f}s, tree RSS {peak} KiB, exit {proc.returncode}",
             flush=True,
         )
+        if dependency_builds:
+            raise SystemExit(
+                "Dependencies were rebuilt; warm them and repeat this measurement"
+            )
         if proc.returncode and not args.keep_going:
             raise SystemExit(proc.returncode)
 

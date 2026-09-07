@@ -14,7 +14,21 @@ def main():
     raw = urllib.request.urlopen(URL, timeout=60).read()
     text = raw.decode("latin1")
     rows = ast.literal_eval(text[text.index("[") : text.rindex("]") + 1])
-    data = {(p, n): c for p, n, c in rows}
+    data = {}
+    for p, n, coeffs in rows:
+        if (p, n) in data:
+            raise ValueError(f"Duplicate source entry: {(p, n)}")
+        if (
+            not isinstance(p, int)
+            or not isinstance(n, int)
+            or p < 2
+            or n < 1
+            or len(coeffs) != n + 1
+            or coeffs[-1] != 1
+            or any(not isinstance(c, int) or not 0 <= c < p for c in coeffs)
+        ):
+            raise ValueError(f"Malformed source entry: {(p, n)}")
+        data[p, n] = coeffs
     primes = [
         p for p in range(2, 1000) if all(p % d for d in range(2, int(p**0.5) + 1))
     ]

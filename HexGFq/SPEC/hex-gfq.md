@@ -34,12 +34,12 @@ would have to invent a modulus for pairs the table does not cover, and
 `hex-conway` is explicit that `conwayPoly` should be total only for committed
 entries.
 
-**Coverage.** The committed table runs over `p` in `2, 3, 5, 7, 11, 13`, to
-degree `6` for the odd primes and to degree `8` for `p = 2`. Every one of those
-pairs has a `CommittedEntry` instance; the binary column additionally has
-`PackedGF2Entry` instances, so `GF2q n` resolves for `n` in `1` to `8`. Outside
-that range the constructors fail at instance synthesis, which is the intended
-behaviour: there is no junk field.
+**Coverage.** Every pair in `Hex.Conway.supportedPairs` has a generated
+`CommittedEntry` instance, so the generic `GFqC` constructor covers the entire
+verified table. Its generation shares `scripts/conway/scope.json` with the
+Conway certificates. The packed `GF2q` constructor has its separately verified
+`PackedGF2Entry` instances for degrees 1–8. Unsupported pairs fail instance
+synthesis.
 
 API intent:
 

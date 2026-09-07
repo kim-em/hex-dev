@@ -18,101 +18,101 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_2 : Hex.Nat.Prime 2 :=
-  Hex.Nat.prime_of_bounded 2 1 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_2 : Hex.Nat.Prime 2 := by
+  exact Hex.Nat.prime_of_bounded 2 1 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_11 : Hex.Nat.Prime 11 :=
-  Hex.Nat.prime_of_bounded 11 3 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_3 : Hex.Nat.Prime 3 := by
+  exact Hex.Nat.prime_of_bounded 3 1 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_23 : Hex.Nat.Prime 23 :=
-  Hex.Nat.prime_of_bounded 23 4 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_5 : Hex.Nat.Prime 5 := by
+  exact Hex.Nat.prime_of_bounded 5 2 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_41 : Hex.Nat.Prime 41 :=
-  Hex.Nat.prime_of_bounded 41 6 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_7 : Hex.Nat.Prime 7 := by
+  exact Hex.Nat.prime_of_bounded 7 2 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_59 : Hex.Nat.Prime 59 :=
-  Hex.Nat.prime_of_bounded 59 7 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_11 : Hex.Nat.Prime 11 := by
+  exact Hex.Nat.prime_of_bounded 11 3 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_73 : Hex.Nat.Prime 73 :=
-  Hex.Nat.prime_of_bounded 73 8 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_13 : Hex.Nat.Prime 13 := by
+  exact Hex.Nat.prime_of_bounded 13 3 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_97 : Hex.Nat.Prime 97 :=
-  Hex.Nat.prime_of_bounded 97 9 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_17 : Hex.Nat.Prime 17 := by
+  exact Hex.Nat.prime_of_bounded 17 4 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_109 : Hex.Nat.Prime 109 :=
-  Hex.Nat.prime_of_bounded 109 10 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_19 : Hex.Nat.Prime 19 := by
+  exact Hex.Nat.prime_of_bounded 19 4 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_137 : Hex.Nat.Prime 137 :=
-  Hex.Nat.prime_of_bounded 137 11 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_23 : Hex.Nat.Prime 23 := by
+  exact Hex.Nat.prime_of_bounded 23 4 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_157 : Hex.Nat.Prime 157 :=
-  Hex.Nat.prime_of_bounded 157 12 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_29 : Hex.Nat.Prime 29 := by
+  exact Hex.Nat.prime_of_bounded 29 5 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_181 : Hex.Nat.Prime 181 :=
-  Hex.Nat.prime_of_bounded 181 13 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_31 : Hex.Nat.Prime 31 := by
+  exact Hex.Nat.prime_of_bounded 31 5 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_199 : Hex.Nat.Prime 199 :=
-  Hex.Nat.prime_of_bounded 199 14 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_37 : Hex.Nat.Prime 37 := by
+  exact Hex.Nat.prime_of_bounded 37 6 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_233 : Hex.Nat.Prime 233 :=
-  Hex.Nat.prime_of_bounded 233 15 (by decide) (by decide) (by decide)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_41 : Hex.Nat.Prime 41 := by
+  exact Hex.Nat.prime_of_bounded 41 6 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_257 : Hex.Nat.Prime 257 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 257) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_43 : Hex.Nat.Prime 43 := by
+  exact Hex.Nat.prime_of_bounded 43 6 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_283 : Hex.Nat.Prime 283 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 283) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_47 : Hex.Nat.Prime 47 := by
+  exact Hex.Nat.prime_of_bounded 47 6 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_317 : Hex.Nat.Prime 317 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 317) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_53 : Hex.Nat.Prime 53 := by
+  exact Hex.Nat.prime_of_bounded 53 7 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_353 : Hex.Nat.Prime 353 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 353) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_59 : Hex.Nat.Prime 59 := by
+  exact Hex.Nat.prime_of_bounded 59 7 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_379 : Hex.Nat.Prime 379 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 379) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_61 : Hex.Nat.Prime 61 := by
+  exact Hex.Nat.prime_of_bounded 61 7 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_419 : Hex.Nat.Prime 419 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 419) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_67 : Hex.Nat.Prime 67 := by
+  exact Hex.Nat.prime_of_bounded 67 8 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_439 : Hex.Nat.Prime 439 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 439) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_71 : Hex.Nat.Prime 71 := by
+  exact Hex.Nat.prime_of_bounded 71 8 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_461 : Hex.Nat.Prime 461 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 461) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_73 : Hex.Nat.Prime 73 := by
+  exact Hex.Nat.prime_of_bounded 73 8 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_499 : Hex.Nat.Prime 499 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 499) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_79 : Hex.Nat.Prime 79 := by
+  exact Hex.Nat.prime_of_bounded 79 8 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_571 : Hex.Nat.Prime 571 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 571) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_83 : Hex.Nat.Prime 83 := by
+  exact Hex.Nat.prime_of_bounded 83 9 (by decide) (by decide) (by decide)
 
-/-- Primality of a factor of a supported multiplicative order. -/
-theorem factorPrime_631 : Hex.Nat.Prime 631 :=
-  Hex.Nat.prime_of_checkPrimeAt (c := .small 631) (by decide +kernel)
+/-- Primality of a multiplicative-order factor or a Pocklington child. -/
+theorem factorPrime_89 : Hex.Nat.Prime 89 := by
+  exact Hex.Nat.prime_of_bounded 89 9 (by decide) (by decide) (by decide)
 
 
 end Conway

@@ -365,6 +365,15 @@ arithmetic rejections before recursive certificate replay:
    `Nat.gcd ((HexArith.powModNat a ((n-1)/q) n + n - 1) % n) n = 1`.
 6. Each child is accepted by `checkPrime`, recursively.
 
+For generated libraries that already hold the child-primality proofs,
+`prime_of_pocklington` accepts `checkPockArith n factors = true` and
+`∀ x ∈ factors, Prime x.2.2.subject`. It reuses the same Pocklington
+soundness argument while sharing child proofs across parents. This API uses
+the child subjects and their supplied primality proofs; it does not assert
+that the child certificate payloads pass `checkPrime`. A `.small q` payload
+may therefore name any separately proved prime in this API. The recursive
+`checkPrime` and `CheckedPrimeCert` interfaces retain their full child checks.
+
 Step 4 is `n < F * F` rather than `n.sqrt < F`. The two are equivalent
 and the multiplication is cheaper and easier to reason about than
 `Nat.sqrt`.

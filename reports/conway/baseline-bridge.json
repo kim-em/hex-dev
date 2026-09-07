@@ -16,63 +16,26 @@
       "peak_tree_rss_kib": 2592184,
       "exit_code": 0,
       "artifact_bytes": 5386101,
-      "artifacts": {
-        ".lake/build/ir/HexGFqMathlib/Basic.setup.json": 1247369,
-        ".lake/build/ir/HexGFqMathlib/Basic.c": 18008,
-        ".lake/build/ir/HexGFqMathlib/Basic.c.hash": 16,
-        ".lake/build/ir/HexGFqMathlib/Subfield.setup.json": 1247813,
-        ".lake/build/ir/HexGFqMathlib/Subfield.c": 8486,
-        ".lake/build/ir/HexGFqMathlib/Subfield.c.hash": 16,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.setup.json": 1248272,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.c": 5507,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.c.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean": 166664,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.server": 24560,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.private": 321768,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir": 13696,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ilean": 42835,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.trace": 4591,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean": 97472,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.server": 22720,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.private": 278872,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir": 5856,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ilean": 37987,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.trace": 4793,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean": 166696,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.server": 34760,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.private": 326800,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir": 4984,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ilean": 50247,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.trace": 4481
-      },
       "modules": [
         "HexGFqMathlib.Basic (1.9s)",
         "HexGFqMathlib.Subfield (1.4s)",
         "HexGFqMathlib.Primitivity (8.5s)"
       ],
-      "log": "reports/conway/baseline-bridge-1.log",
-      "timing": "reports/conway/baseline-bridge-1.time"
+      "log": "reports/conway/baseline-bridge-1.log.gz",
+      "timing": "reports/conway/baseline-bridge-1.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 3743454,
+        ".c": 32001,
+        ".hash": 336,
+        ".olean": 430832,
+        ".server": 82040,
+        ".private": 927440,
+        ".sig": 528,
+        ".ir": 24536,
+        ".ilean": 131069,
+        ".trace": 13865
+      },
+      "artifact_count": 48
     },
     {
       "max_child_rss_kib": 1666556,
@@ -80,63 +43,26 @@
       "peak_tree_rss_kib": 2589312,
       "exit_code": 0,
       "artifact_bytes": 5386101,
-      "artifacts": {
-        ".lake/build/ir/HexGFqMathlib/Basic.setup.json": 1247369,
-        ".lake/build/ir/HexGFqMathlib/Basic.c": 18008,
-        ".lake/build/ir/HexGFqMathlib/Basic.c.hash": 16,
-        ".lake/build/ir/HexGFqMathlib/Subfield.setup.json": 1247813,
-        ".lake/build/ir/HexGFqMathlib/Subfield.c": 8486,
-        ".lake/build/ir/HexGFqMathlib/Subfield.c.hash": 16,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.setup.json": 1248272,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.c": 5507,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.c.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean": 166664,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.server": 24560,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.private": 321768,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir": 13696,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ilean": 42835,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.trace": 4591,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean": 97472,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.server": 22720,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.private": 278872,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir": 5856,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ilean": 37987,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.trace": 4793,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean": 166696,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.server": 34760,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.private": 326800,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir": 4984,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ilean": 50247,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.trace": 4481
-      },
       "modules": [
         "HexGFqMathlib.Basic (1.2s)",
         "HexGFqMathlib.Subfield (1.4s)",
         "HexGFqMathlib.Primitivity (8.5s)"
       ],
-      "log": "reports/conway/baseline-bridge-2.log",
-      "timing": "reports/conway/baseline-bridge-2.time"
+      "log": "reports/conway/baseline-bridge-2.log.gz",
+      "timing": "reports/conway/baseline-bridge-2.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 3743454,
+        ".c": 32001,
+        ".hash": 336,
+        ".olean": 430832,
+        ".server": 82040,
+        ".private": 927440,
+        ".sig": 528,
+        ".ir": 24536,
+        ".ilean": 131069,
+        ".trace": 13865
+      },
+      "artifact_count": 48
     },
     {
       "max_child_rss_kib": 1650636,
@@ -144,63 +70,26 @@
       "peak_tree_rss_kib": 2559072,
       "exit_code": 0,
       "artifact_bytes": 5386101,
-      "artifacts": {
-        ".lake/build/ir/HexGFqMathlib/Basic.setup.json": 1247369,
-        ".lake/build/ir/HexGFqMathlib/Basic.c": 18008,
-        ".lake/build/ir/HexGFqMathlib/Basic.c.hash": 16,
-        ".lake/build/ir/HexGFqMathlib/Subfield.setup.json": 1247813,
-        ".lake/build/ir/HexGFqMathlib/Subfield.c": 8486,
-        ".lake/build/ir/HexGFqMathlib/Subfield.c.hash": 16,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.setup.json": 1248272,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.c": 5507,
-        ".lake/build/ir/HexGFqMathlib/Primitivity.c.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean": 166664,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.server": 24560,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.private": 321768,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir": 13696,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ilean": 42835,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Basic.trace": 4591,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean": 97472,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.server": 22720,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.private": 278872,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir": 5856,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ilean": 37987,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Subfield.trace": 4793,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean": 166696,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.server": 34760,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.private": 326800,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.sig": 176,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir": 4984,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ilean": 50247,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.server.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.olean.private.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ilean.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.sig.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.ir.hash": 16,
-        ".lake/build/lib/lean/HexGFqMathlib/Primitivity.trace": 4481
-      },
       "modules": [
         "HexGFqMathlib.Basic (1.3s)",
         "HexGFqMathlib.Subfield (1.4s)",
         "HexGFqMathlib.Primitivity (8.6s)"
       ],
-      "log": "reports/conway/baseline-bridge-3.log",
-      "timing": "reports/conway/baseline-bridge-3.time"
+      "log": "reports/conway/baseline-bridge-3.log.gz",
+      "timing": "reports/conway/baseline-bridge-3.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 3743454,
+        ".c": 32001,
+        ".hash": 336,
+        ".olean": 430832,
+        ".server": 82040,
+        ".private": 927440,
+        ".sig": 528,
+        ".ir": 24536,
+        ".ilean": 131069,
+        ".trace": 13865
+      },
+      "artifact_count": 48
     }
   ],
   "source_sha256": {
@@ -209,5 +98,159 @@
     "HexGFqMathlib/Primitivity.lean": "f56a2bda23336f4c9a7ccd2ec48e9a8fd5c444460a106b2e71cf60d0d125095c",
     "HexGFqMathlib/Subfield.lean": "957a7e38e5ed35dcf56a3ecec899125ef6b8497e6090c64b1ab3016cc8b4e106",
     "HexGFqMathlib.lean": "7dc9f32b73b2b38c5a7f0228bb088f03b4d0f38f557251874b4850992a46ff68"
-  }
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ]
+  ]
 }

@@ -77,7 +77,8 @@ With the pinned Python dependency in `scripts/conway/requirements.txt`, it
 emits the coefficient dispatcher, literals, supported entries, Rabin
 certificates, prime-factor certificates, primitivity facts, every required
 compatibility fact, generator-order specializations and the runtime verification
-driver. `--check` checks deterministic regeneration without changing the tree.
+driver. It also emits `HexGFq.CommittedEntry` instances for the same scope.
+`--check` checks deterministic regeneration without changing the tree.
 The generator rejects missing divisor entries and loss of baseline coverage.
 Its arithmetic and searches are untrusted preparation: the generated Lean
 proofs must still pass the verified checkers.
@@ -109,8 +110,11 @@ whose soundness yields irreducibility. There is no new trust assumption.
 Primitivity validates a factorization of `N = p^n - 1`, checks that the supplied
 binary digit lists encode the full and prime-divided exponents, and verifies
 `α^N = 1` and `α^(N/q) ≠ 1` for every factor prime `q`. A factor-primality proof
-is shared across all entries using that prime. Small factors use bounded trial
-division; larger factors use the checked HexPrimality certificates. In `GF(2)`,
+is shared across all entries using that prime. Factors below 100000 use bounded
+trial division. Larger factors use `HexPrimality.checkPockArith` with separately
+proved child primes through `Hex.Nat.prime_of_pocklington`. Child proofs are
+shared in increasing-prime order, so the same table leaf or child certificate
+is not repeatedly normalized in different parents. In `GF(2)`,
 `N = 1`: an empty factor list and `α^1 = 1` explicitly certify the trivial
 multiplicative group.
 

@@ -44,7 +44,7 @@ grind_pattern luebeckConwayPolynomial?_conwayPoly => conwayPoly p n h
 
 /-- In `ZMod64 p`, `1` is nonzero when the modulus is greater than one; this
 feeds the committed Conway-table leading-coefficient checks. -/
-private theorem zmod64_one_ne_zero_of_one_lt
+private theorem one_ne_zero
     {p : Nat} [ZMod64.Bounds p] (hp : 1 < p) : (1 : ZMod64 p) ≠ 0 := by
   intro h
   have hm := (ZMod64.natCast_eq_natCast_iff (p := p) 1 0).mp h
@@ -54,7 +54,7 @@ private theorem zmod64_one_ne_zero_of_one_lt
 /-- A coefficient array of size at least two with nonzero last entry gives a
 positive degree for `DensePoly.ofCoeffs`, as used by
 `luebeckConwayPolynomial?_degree_pos`. -/
-private theorem ofCoeffs_degree_pos_of_back_ne_zero
+private theorem ofCoeffs_degree_pos
     {R : Type u} [Zero R] [DecidableEq R]
     (arr : Array R) (hsize : 2 ≤ arr.size)
     (hback : arr[arr.size - 1]'(by omega) ≠ Zero.zero) :
@@ -92,15 +92,15 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
   all_goals
     (cases hcoeffs
      all_goals
-       (refine ofCoeffs_degree_pos_of_back_ne_zero _ ?_ ?_
+       (refine ofCoeffs_degree_pos _ ?_ ?_
         · simp
         · intro hzero
           simp at hzero
-          exact absurd hzero (zmod64_one_ne_zero_of_one_lt (by decide))))
+          exact absurd hzero (one_ne_zero (by decide))))
 
 /-- A polynomial with a nonzero coefficient at `n` and no storage beyond `n`
 has degree exactly `n`. -/
-private theorem degree_eq_of_coeff_ne_zero_of_size_le
+private theorem degree_eq_of_bounds
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (hcoeff : f.coeff n ≠ 0) (hsize : f.size ≤ n + 1) :
     FpPoly.degree f = n := by
@@ -130,9 +130,9 @@ private theorem degree_eq_of_coeff_ne_zero_of_size_le
   all_goals split at hcoeffs
   all_goals
     cases hcoeffs <;>
-      (apply degree_eq_of_coeff_ne_zero_of_size_le
+      (apply degree_eq_of_bounds
        · simp [luebeckConwayPolynomialOfCoeffs]
-         exact zmod64_one_ne_zero_of_one_lt (by decide)
+         exact one_ne_zero (by decide)
        · unfold luebeckConwayPolynomialOfCoeffs
          refine Nat.le_trans (DensePoly.size_ofCoeffs_le _) ?_
          simp)

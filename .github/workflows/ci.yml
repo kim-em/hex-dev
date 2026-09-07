@@ -204,7 +204,11 @@ jobs:
       # `.lake/build` (no recompilation) but cap the peak at whichever single
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
-        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
+        run: |
+          # Complete the Conway proof chains before the rest of the graph so
+          # their memory peak does not overlap unrelated Mathlib elaboration.
+          lake build HexConway
+          lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Verify Conway generation and compiled certificates
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt

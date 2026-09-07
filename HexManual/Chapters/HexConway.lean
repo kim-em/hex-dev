@@ -128,6 +128,10 @@ namespace HexConwayChapter
 -- searching or generating certificates.
 #guard luebeckConwayPolynomial? 2 8 =
   some luebeckConwayPolynomial_2_8
+#guard luebeckConwayPolynomial? 2 16 =
+  some luebeckConwayPolynomial_2_16
+#check primitive_2_16
+#check compat_2_8_16
 #guard luebeckConwayPolynomial? 2 129 =
   (none : Option (FpPoly 2))
 #guard luebeckConwayPolynomial? 3 129 =

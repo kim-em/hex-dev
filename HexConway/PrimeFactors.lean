@@ -10,18 +10,16 @@ public import HexConway.FactorProofs.S0_0
 public import HexConway.FactorProofs.S0_1
 public import HexConway.FactorProofs.S0_2
 public import HexConway.FactorProofs.S0_3
-public import HexConway.FactorProofs.S1_0
-public import HexConway.FactorProofs.S1_1
-public import HexConway.FactorProofs.S1_2
-public import HexConway.FactorProofs.S1_3
-public import HexConway.FactorProofs.S2_0
-public import HexConway.FactorProofs.S2_1
-public import HexConway.FactorProofs.S2_2
-public import HexConway.FactorProofs.S2_3
-public import HexConway.FactorProofs.S3_0
-public import HexConway.FactorProofs.S3_1
-public import HexConway.FactorProofs.S3_2
-public import HexConway.FactorProofs.S3_3
+public import HexConway.FactorProofs.S0_4
+public import HexConway.FactorProofs.S0_5
+public import HexConway.FactorProofs.S0_6
+public import HexConway.FactorProofs.S0_7
+public import HexConway.FactorProofs.S0_8
+public import HexConway.FactorProofs.S0_9
+public import HexConway.FactorProofs.S0_10
+public import HexConway.FactorProofs.S0_11
+public import HexConway.FactorProofs.S0_12
+public import HexConway.FactorProofs.S0_13
 
 public section
 

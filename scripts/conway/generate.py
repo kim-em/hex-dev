@@ -104,19 +104,6 @@ def factors(n):
     return sorted((int(q), int(e)) for q, e in sympy.factorint(n).items())
 
 
-@lru_cache(None)
-def prime_cert(q):
-    if q < 100000:
-        return f".small {q}"
-    entries = []
-    for r, e in factors(q - 1):
-        a = 2
-        while pow(a, q - 1, q) != 1 or gcd(pow(a, (q - 1) // r, q) - 1, q) != 1:
-            a += 1
-        entries.append(f"({a}, {e-1}, {prime_cert(r)})")
-    return f".pock {q} [" + ", ".join(entries) + "]"
-
-
 def poly(p, a):
     if not a:
         return f"FpPoly.ofCoeffs (#[] : Array (ZMod64 {p}))"
@@ -377,6 +364,54 @@ def generated_imports(path, folder, names):
     path.write_text(re.sub(r"\n{3,}", "\n\n", source))
 
 
+def factor_proofs(entries):
+    """Share every Pocklington child proof; prime dependencies are smaller."""
+    needed = {q for p, n, c in entries for q, e in factors(p**n - 1)}
+    pending = list(needed)
+    while pending:
+        q = pending.pop()
+        if q >= 100000:
+            for r, e in factors(q - 1):
+                if r not in needed:
+                    needed.add(r)
+                    pending.append(r)
+    blocks = []
+    for q in sorted(needed):
+        body = f"/-- Primality of a multiplicative-order factor or a Pocklington child. -/\ntheorem factorPrime_{q} : Hex.Nat.Prime {q} := by\n"
+        if q < 100000:
+            body += f"  exact Hex.Nat.prime_of_bounded {q} {isqrt(q)} (by decide) (by decide) (by decide)\n\n"
+        else:
+            fs = factors(q - 1)
+            witnesses = []
+            for r, e in fs:
+                a = 2
+                while pow(a, q - 1, q) != 1 or gcd(pow(a, (q - 1) // r, q) - 1, q) != 1:
+                    a += 1
+                witnesses.append(f"({a}, {e-1}, .small {r})")
+            body += (
+                "  apply Hex.Nat.prime_of_pocklington (factors := ["
+                + ", ".join(witnesses)
+                + "])\n"
+            )
+            body += "  · decide +kernel\n  · intro x hx\n    simp only [List.mem_cons, List.mem_nil_iff, or_false] at hx\n"
+            body += "    rcases hx with " + " | ".join("rfl" for _ in fs) + "\n"
+            body += "".join(f"    · exact factorPrime_{r}\n" for r, e in fs) + "\n"
+        blocks.append(body)
+    directory = ROOT / "HexConway/FactorProofs"
+    directory.mkdir(parents=True, exist_ok=True)
+    for old in directory.glob("*.lean"):
+        old.unlink()
+    names = []
+    for i in range(0, len(blocks), 24):
+        name_ = f"HexConway.FactorProofs.S0_{i//24}"
+        imports = ["HexPrimality.Cert"] + names[-1:]
+        (directory / f"S0_{i//24}.lean").write_text(
+            module(imports) + "".join(blocks[i : i + 24]) + END
+        )
+        names.append(name_)
+    return names
+
+
 def companions(entries):
     """Instance-selected fields and Mathlib order specializations share the scope."""
     for library, folder, namespace, core in [
@@ -430,6 +465,10 @@ def main():
             shutil.copyfile(original_root / part, ROOT / part)
     data = json.loads((HERE / "candidates.json").read_text())
     rows = {(e["p"], e["n"]): e["coeffs"] for e in data["entries"]}
+    if data.get("coefficient_order") != "ascending":
+        raise ValueError("Expected ascending source coefficients")
+    if len(rows) != len(data["entries"]):
+        raise ValueError("Duplicate source keys")
     scope = sorted(tuple(k) for k in json.loads(args.scope.read_text()))
     assert len(scope) == len(set(scope))
     baseline = {
@@ -437,6 +476,13 @@ def main():
     }
     assert baseline <= set(scope), "The verified baseline must be preserved"
     for p, n in scope:
+        if (
+            not isinstance(p, int)
+            or not isinstance(n, int)
+            or not 1 < p < 2**31
+            or n < 1
+        ):
+            raise ValueError(f"Invalid scope key: {(p, n)}")
         assert (p, n) in rows, (p, n, "unavailable")
         assert all((p, d) in scope for d in range(1, n + 1) if n % d == 0), (
             p,
@@ -497,19 +543,7 @@ def main():
     (ROOT / "HexConway/Api.lean").write_text(
         module(["HexConway.ApiCore", *names]) + END
     )
-    prime_blocks = []
-    for q in sorted(
-        {q for p, n, c in entries for q, e in (factors(p**n - 1) if p**n > 2 else [])}
-    ):
-        proof = (
-            f"Hex.Nat.prime_of_bounded {q} {isqrt(q)} (by decide) (by decide) (by decide)"
-            if q < 256
-            else f"Hex.Nat.prime_of_checkPrimeAt (c := {prime_cert(q)}) (by decide +kernel)"
-        )
-        prime_blocks.append(
-            f"/-- Primality of a factor of a supported multiplicative order. -/\ntheorem factorPrime_{q} : Hex.Nat.Prime {q} :=\n  {proof}\n\n"
-        )
-    names = shards("FactorProofs", prime_blocks, ["HexPrimality.Cert"])
+    names = factor_proofs(entries)
     (ROOT / "HexConway/PrimeFactors.lean").write_text(module(names) + END)
     names = shards(
         "PrimitiveProofs",
