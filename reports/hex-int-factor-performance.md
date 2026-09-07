@@ -508,6 +508,17 @@ campaign, preregister a resolution-aware observation window and justify its
 host controls independently of operation timings; do not rerun this exhausted
 protocol unchanged.
 
+An additional [untimed 30-second host survey](bench-results/intfactor-divisors-core-survey-30s.json)
+checks the resolution issue without changing the ceiling. Its committed
+`scripts/bench/core_survey.py` generator retains raw counters, clock bounds,
+100 Hz tick frequency, topology, observer affinity and source hashes. The
+observer uses CPU 0, excluding its 0/48 physical core from selection. None
+of the other 47 physical-core pairs meets 0.002 on both siblings. The smallest
+maximum sibling fraction is 0.003333327 (about 0.33%); pairs 31/79 and 33/81 tie
+at that maximum. A tick in this window is about 0.033%, so the failure persists
+with finer resolution. This is host availability evidence only: no operation
+timings were taken and no subsequent acceptance campaign was registered.
+
 The rejected record retains commands, the successful build and outside-timing
 array export, stdout/stderr, all source hashes, host state and the direct
 benchmark executable hash. That hash is exactly the existing inclusive
@@ -668,8 +679,9 @@ at 3 because this campaign produced no admissible timing evidence.
 Public `Hex.Nat.divisors` still lacks an admissible scientific timing run.
 The original two attempts failed the core-interference gate. The corrected
 ownership campaign then exhausted all 150 quiet-window observations before
-any timing could start. Its precise remaining dependency is a sufficiently
-quiet physical core on designated host `chungus2` under the committed controls;
+any timing could start. The longer untimed survey also found no eligible pair among 47 physical cores.
+The precise remaining dependency is a sufficiently quiet physical core on
+designated host `chungus2` under justified, newly preregistered controls;
 this session cannot reserve a core or suppress other sessions' workloads.
 [#9619](https://github.com/kim-em/hex-dev/issues/9619) remains open, Phase 4 is
 incomplete for both libraries, and both registry counters remain at 3.
