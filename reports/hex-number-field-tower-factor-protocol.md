@@ -320,3 +320,29 @@ no verdict. The updated validator also re-derives the unchanged admission
 rules from raw telemetry and verifies command affinity and protocol flags.
 Build, differential, fixture, oracle, and benchmark verification precede
 measurement; no builds or profilers overlap it. No exponent is fitted.
+
+### Whole-host preflight replication
+
+The `integrated-harness` series exhausted twelve attempts with only pair 4
+admitted; it has no performance verdict. Its rejected telemetry includes
+large concurrent CPU bursts. Preserve that complete series and use the same
+saved main-`5ca950a2b` and candidate-`a38030daf` binaries for a fresh replication.
+
+Before selecting a core, require that **at most 16 logical CPUs are at least
+5% busy in every one of the fifteen consecutive two-second preflight
+windows**, in addition to both selected hardware threads being below 5% in
+all those windows. Missing CPU telemetry counts as busy. The whole-host
+ceiling also applies to the two-second preflight before the second arm.
+Record the complete CPU set and both whole-host preflights, and audit these
+rules from the raw samples. `--max-busy-cpus 16 --quiet-windows 15` selects
+these stricter environmental conditions. Default whole-host admission remains
+unchanged for the earlier protocols, whose verdicts are reproduced by tests.
+
+The fifteen-minute preflight deadline, twelve-attempt limit, same-core pairs,
+opposite orders, all fifteen registrations and explicit PARI provider, five
+repeats, warmup, budgets, postflight and during-run sibling thresholds, hashes,
+and stronger canonical performance gate are unchanged. Select the first two
+fully admitted opposite-order pairs without looking at their timings. No
+build or profiler overlaps collection; no exponent is fitted. This is a fresh
+replication with stricter preconditions, not an extension or reinterpretation
+of the incomplete series.
