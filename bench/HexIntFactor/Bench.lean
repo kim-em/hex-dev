@@ -571,6 +571,61 @@ def runTotientFactorCount (input : SigmaInput) : Nat × Nat :=
     let value := runTotientFactorCountOnce input
     (total.1 + value, total.2 + value % 4294967291)) (0, 0)
 
+private def divisorEntries (count : Nat) : List PrimePower :=
+  (primeTable.toList.take count).map fun p => ⟨1, .small p⟩
+
+private def divisorSubject (count : Nat) : Nat :=
+  ((divisorEntries count).map fun entry => entry.prime).prod
+
+private def divisorInput (count : Nat) (h : checkFactorization
+    ⟨divisorSubject count, divisorEntries count⟩ = true) :
+    CheckedFactorization (divisorSubject count) :=
+  ⟨⟨divisorSubject count, divisorEntries count⟩, rfl, h⟩
+
+structure DivisorInput where
+  subject : Nat
+  checked : CheckedFactorization subject
+
+instance : Hashable DivisorInput where
+  hash input := hash input.subject
+
+private opaque divisorInputDefault : DivisorInput :=
+  ⟨_, divisorInput 0 (by decide)⟩
+private opaque divisorInput64 : DivisorInput :=
+  ⟨_, divisorInput 6 (by decide)⟩
+private opaque divisorInput256 : DivisorInput :=
+  ⟨_, divisorInput 8 (by decide)⟩
+private opaque divisorInput1024 : DivisorInput :=
+  ⟨_, divisorInput 10 (by decide)⟩
+private opaque divisorInput4096 : DivisorInput :=
+  ⟨_, divisorInput 12 (by decide)⟩
+private opaque divisorInput16384 : DivisorInput :=
+  ⟨_, divisorInput 14 (by decide)⟩
+private opaque divisorInput32768 : DivisorInput :=
+  ⟨_, divisorInput 15 (by decide)⟩
+
+@[noinline]
+def divisorInputForCount : Nat → DivisorInput
+  | 64 => divisorInput64
+  | 256 => divisorInput256
+  | 1024 => divisorInput1024
+  | 4096 => divisorInput4096
+  | 16384 => divisorInput16384
+  | 32768 => divisorInput32768
+  | _ => divisorInputDefault
+
+@[noinline]
+def runDivisors (input : DivisorInput) : Array Nat :=
+  divisors input.checked
+
+def auditDivisors : IO UInt32 := do
+  for count in #[64, 256, 1024, 4096, 16384, 32768] do
+    let input := divisorInputForCount count
+    let output := runDivisors input
+    IO.println (String.intercalate "," (([count, input.subject, (hash output).toNat] ++
+      output.toList).map toString))
+  return 0
+
 /- The matched direct arm runs Brent rho with the public dispatcher's restart
 and cycle-step allocation. Each balanced least factor has `bits / 2` bits, so
 the fixed five-seed batch has `Theta(2^(bits/4))` expected cycle work. -/
@@ -700,6 +755,28 @@ setup_benchmark runTotientFactorCount n => n * n
     -- finite-range transition without changing the model.
     slopeTolerance := 0.20
     outerTrials := 3
+  }
+
+/- Cost model: the parameter `n = τ` is the exact number of divisors of a
+squarefree product of the first `log₂ n` table primes. For the registered
+ladder through 32768, the subject and every divisor fit in one machine word.
+`DivisorEnumeration.values` performs Theta(n) word multiplications.
+The compiled mergeSortTR₂ splits balanced halves down to singletons: each
+level traverses n/2 cells in splitRevAt regardless of generated order.
+Thus splitting alone is Theta(n log n); merges are bounded by the same
+order. Generation and array materialization add Theta(n), giving the SPEC's
+two-sided model without assuming worst-case comparisons for this family.
+Preparation selects the checked factorization outside the timed region. -/
+setup_benchmark runDivisors n => n * n.log2
+  with prep := divisorInputForCount
+  where {
+    paramFloor := 64
+    paramCeiling := 32768
+    paramSchedule := .custom #[64, 256, 1024, 4096, 16384, 32768]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 1000000000
+    signalFloorMultiplier := 1.0
+    outerTrials := 7
   }
 
 private def fixedConfig (bodySeconds : Float) (expected : UInt64) :
@@ -865,6 +942,7 @@ end Hex.IntFactorProfile
 
 def main (args : List String) : IO UInt32 :=
   match args with
+  | ["divisor-audit"] => Hex.IntFactorBench.auditDivisors
   | ["default-fuel"] => Hex.IntFactorBench.reportDefaultFuel
   | ["control-audit"] => Hex.IntFactorBench.reportControls
   | ["split-probe"] => Hex.IntFactorBench.reportSplits

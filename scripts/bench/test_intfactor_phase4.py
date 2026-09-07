@@ -80,5 +80,61 @@ class PreservationTests(unittest.TestCase):
         self.exercise(lambda _: collector.ecm_batch('/nonexistent/ecm', 15, 1), FileNotFoundError)
 
 
+class DivisorValidationTests(unittest.TestCase):
+    def fixture(self):
+        audit = []
+        points = []
+        for count in collector.DIVISOR_COUNTS:
+            values = [1]
+            for prime in collector.DIVISOR_PRIMES[:count.bit_length() - 1]:
+                values += [d * prime for d in values]
+            values.sort()
+            audit.append(','.join(map(str, [count, values[-1], 42, *values])))
+            points.extend(dict(param=count, status='ok', result_hash='000000000000002a')
+                          for _ in range(7))
+        export = {'results': [dict(function='Hex.IntFactorBench.runDivisors',
+            config=dict(outer_trials=7, param_floor=64, param_ceiling=32768,
+                target_inner_nanos=1000000000, max_seconds_per_call=10,
+                signal_floor_multiplier=1, slope_tolerance=0.15, cache_mode='warm'),
+            points=points, verdict='consistent_with_declared_complexity')]}
+        return export, '\n'.join(audit)
+
+    def test_complete_output_and_trials(self):
+        collector.validate_divisors(*self.fixture())
+
+    def test_corrupt_middle_divisor(self):
+        export, audit = self.fixture()
+        rows = audit.splitlines()
+        values = rows[-1].split(',')
+        values[100] = '999'
+        rows[-1] = ','.join(values)
+        with self.assertRaisesRegex(ValueError, 'audit mismatch'):
+            collector.validate_divisors(export, '\n'.join(rows))
+
+    def test_missing_trial(self):
+        export, audit = self.fixture()
+        export['results'][0]['points'].pop()
+        with self.assertRaisesRegex(ValueError, 'missing or extra'):
+            collector.validate_divisors(export, audit)
+
+    def test_changed_tolerance(self):
+        export, audit = self.fixture()
+        export['results'][0]['config']['slope_tolerance'] = .3
+        with self.assertRaisesRegex(ValueError, 'configuration'):
+            collector.validate_divisors(export, audit)
+
+    def test_bad_hash(self):
+        export, audit = self.fixture()
+        export['results'][0]['points'][-1]['result_hash'] = '0000000000000000'
+        with self.assertRaisesRegex(ValueError, 'hash failure'):
+            collector.validate_divisors(export, audit)
+
+    def test_inconclusive(self):
+        export, audit = self.fixture()
+        export['results'][0]['verdict'] = 'inconclusive'
+        with self.assertRaisesRegex(RuntimeError, 'inconclusive'):
+            collector.validate_divisors(export, audit)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -15,6 +15,7 @@ import os
 import platform
 from pathlib import Path
 import shlex
+import signal
 import socket
 import statistics
 import subprocess
@@ -121,8 +122,16 @@ class Attempt:
         # Files receive output as it is produced, including partial timeout output.
         with Path(entry["stdout"]).open("w") as stdout, Path(entry["stderr"]).open("w") as stderr:
             try:
-                proc = subprocess.run(command, cwd=ROOT, input=stdin, text=True,
-                                      stdout=stdout, stderr=stderr, timeout=timeout)
+                proc = subprocess.Popen(command, cwd=ROOT, text=True,
+                    stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+                    stdout=stdout, stderr=stderr, start_new_session=True)
+                try:
+                    proc.communicate(stdin, timeout=timeout)
+                except BaseException:
+                    # Stop descendants too: benchmark runners themselves spawn children.
+                    os.killpg(proc.pid, signal.SIGKILL)
+                    proc.wait()
+                    raise
                 entry.update(returncode=proc.returncode, status="completed")
             except BaseException as error:
                 entry.update(status="failed", error_type=type(error).__name__, error=str(error))
@@ -388,6 +397,8 @@ def render(record: dict[str, object]) -> None:
         raise RuntimeError("refusing to render unaccepted evidence")
     export = record["benchmark_export"]
     assert isinstance(export, dict)
+    if record.get("scope") == "divisors":
+        validate_divisors(export, record["divisor_audit"])
     print("| target | harness result |")
     print("|---|---|")
     for row in export["results"]:
@@ -400,6 +411,8 @@ def render(record: dict[str, object]) -> None:
         else:
             text = row["verdict"]
         print(f"| `{short}` | {text} |")
+    if record.get("scope") == "divisors":
+        return
     controls = record["internal_controls"]
     print(
         "\n| bits | full factor | raw rho split | completion | "
@@ -437,6 +450,76 @@ def render(record: dict[str, object]) -> None:
         )
 
 
+DIVISOR_COUNTS = (64, 256, 1024, 4096, 16384, 32768)
+DIVISOR_PRIMES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47)
+
+
+def validate_divisors(export: dict, audit: str) -> None:
+    """Independently reconstruct every output; check every trial and its checksum."""
+    expected_hashes = {}
+    lines = audit.splitlines()
+    if len(lines) != len(DIVISOR_COUNTS):
+        raise ValueError("divisor audit has missing or extra rows")
+    for count, line in zip(DIVISOR_COUNTS, lines):
+        param, subject, checksum, *values = map(int, line.split(","))
+        expected = [1]
+        for prime in DIVISOR_PRIMES[:count.bit_length() - 1]:
+            expected += [d * prime for d in expected]
+        expected.sort()
+        if param != count or subject != expected[-1] or values != expected:
+            raise ValueError(f"divisor audit mismatch at {count}")
+        expected_hashes[count] = checksum
+    rows = export["results"]
+    if len(rows) != 1 or rows[0]["function"] != "Hex.IntFactorBench.runDivisors":
+        raise ValueError("expected exactly the public divisor registration")
+    row = rows[0]
+    config = row["config"]
+    required = {"outer_trials": 7, "param_floor": 64, "param_ceiling": 32768,
+                "target_inner_nanos": 1000000000, "max_seconds_per_call": 10,
+                "signal_floor_multiplier": 1, "slope_tolerance": 0.15,
+                "cache_mode": "warm"}
+    if any(config.get(key) != value for key, value in required.items()):
+        raise ValueError("divisor configuration differs from preregistration")
+    points = row["points"]
+    if len(points) != 7 * len(DIVISOR_COUNTS):
+        raise ValueError("missing or extra divisor trials")
+    for count in DIVISOR_COUNTS:
+        group = [p for p in points if p["param"] == count]
+        if len(group) != 7 or any(p["status"] != "ok" or
+                int(p["result_hash"], 16) != expected_hashes[count] for p in group):
+            raise ValueError(f"divisor trial/hash failure at {count}")
+    if row["verdict"] != "consistent_with_declared_complexity":
+        raise RuntimeError(f"invalid scientific export: divisors verdict={row['verdict']}")
+
+
+def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> int:
+    if socket.gethostname() != "chungus2" or cpu != 7 or args.dirty_status:
+        raise RuntimeError("divisor acceptance requires clean chungus2 CPU 7 protocol")
+    attempt.record.update(scope="divisors", state_before=host_state(cpu))
+    attempt.save()
+    run(["lake", "build", "hexintfactor_bench"], timeout=900)
+    audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
+    attempt.record["divisor_audit"] = audit
+    attempt.save()
+    export_path = attempt.directory / "bench.json"
+    telemetry_path = attempt.directory / "telemetry.json"
+    run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
+         "--cpu", str(cpu), "--output", str(telemetry_path),
+         "--interval", "0.25", "--max-core-interference-ratio", "0.002",
+         "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
+         "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
+        timeout=900)
+    export = json.loads(export_path.read_text())
+    telemetry = json.loads(telemetry_path.read_text())
+    attempt.record.update(benchmark_export=export, telemetry=telemetry)
+    attempt.save()
+    validate_divisors(export, audit)
+    attempt.record["status"] = "accepted"
+    attempt.save()
+    render(attempt.record)
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
@@ -447,6 +530,7 @@ def main() -> int:
     parser.add_argument("--rounds", type=int, default=7)
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--allow-dirty", action="store_true")
+    parser.add_argument("--divisors", action="store_true", help="collect only the preregistered divisor supplement")
     args = parser.parse_args()
     if args.report:
         render(json.loads(args.report.read_text()))
@@ -467,6 +551,8 @@ def collect(args: argparse.Namespace, attempt: Attempt) -> int:
     dirty = args.dirty_status
     cpu = idle_core.resolve(args.cpu)
     attempt.record["cpu"] = cpu
+    if args.divisors:
+        return collect_divisors(args, attempt, cpu)
     idle_core.pin_self(cpu)
     before = host_state(cpu)
     attempt.record["state_before"] = before

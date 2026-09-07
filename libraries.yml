@@ -835,6 +835,8 @@ libraries:
           description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
         - name: certificate-replay-and-order
           description: Kernel-facing factorization replay and multiplicative-order computation.
+        - name: squarefree-divisor-enumeration
+          description: Public divisors on prechecked products of the first 6, 8, 10, 12, 14 and 15 table primes, with exact divisor counts 64 through 32768; generation, merge sort and array materialization under the two-sided tau log2 tau model.
         - name: generalized-divisor-sums
           description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
 
