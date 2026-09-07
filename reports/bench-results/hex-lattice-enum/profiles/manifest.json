@@ -1,0 +1,38 @@
+{
+  "exe_sha256": "9335da1c7fc105239f3e8631caac3a8d07c5acd4a9b14c5c281a6bcc06a6e2e9",
+  "sources": {
+    "HexLatticeEnum/Basic.lean": "ca83849f3e45153d53c36b29a0ca33ee6e874cc045043d3edabb897166a6698b",
+    "HexLatticeEnum/Bounds.lean": "c7300ab1807da3dde0340025a391c00869ce2fdd493b3c0ecee572f196ecb3f5",
+    "HexLatticeEnum/Cert.lean": "74b7026fa8aa67a92363f1daf483b2558f465f9d42212359dea220494a281fb1",
+    "HexLatticeEnum/Closest.lean": "3adc7d8ce57287f40d182c713bd171a65fd3996c1f78ea9e021a6fa1ec7918fd",
+    "HexLatticeEnum/Decode.lean": "9b9c9e856af42ad79220e29b995d9413d2d0349cf1bccd23b5d553ccf5082031",
+    "HexLatticeEnum/Enumerate.lean": "6e8cbc25b399a39a7d05764ec00d8e9d6dfc4f684b90b4a050b39ebc16c2f1e7",
+    "HexLatticeEnum/GramSchmidt.lean": "69b7976218ca9dd357c342a80b9cbdbc1c99ba59ce7c2a155d6c8eeef9328c9f",
+    "HexLatticeEnum/Preprocess.lean": "4532fb148a17797aeb3f7f985a5c068a8c0dcdb856f5f71ba573512628541142",
+    "HexLatticeEnum/Shortest.lean": "9b6904eb062ba7248ab84a6c0819d58672cffc66a1d5e8afcb61188efd7c3f74",
+    "bench/HexLatticeEnum/Bench.lean": "aef078fe0f40ddec1d2dfcc192c2511d2168545c028edc07d52befa3c66b37a0"
+  },
+  "sampler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "profiles": [
+    "Hex.LatticeEnumBench.runAmbientClosest",
+    "Hex.LatticeEnumBench.runCube",
+    "Hex.LatticeEnumBench.runAmbientRetarget",
+    "Hex.LatticeEnumBench.runAmbientReplay",
+    "Hex.LatticeEnumBench.runAmbientInput",
+    "Hex.LatticeEnumBench.runRank",
+    "Hex.LatticeEnumBench.runShear",
+    "Hex.LatticeEnumBench.runAmbientEncode",
+    "Hex.LatticeEnumBench.runAmbientDecode",
+    "Hex.LatticeEnumBench.runAmbientBabai",
+    "Hex.LatticeEnumBench.runAmbientTies",
+    "Hex.LatticeEnumBench.runRadius",
+    "Hex.LatticeEnumBench.runAmbientShortest",
+    "Hex.LatticeEnumBench.runAmbientCertificate",
+    "Hex.LatticeEnumBench.runAmbient",
+    "Hex.LatticeEnumBench.runAmbientBudget",
+    "Hex.LatticeEnumBench.runAmbientLLL",
+    "Hex.LatticeEnumBench.runAmbientPreparation",
+    "Hex.LatticeEnumBench.runAmbientOptimum",
+    "Hex.LatticeEnumBench.runHeight"
+  ]
+}

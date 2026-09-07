@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Correct.Exit.Final
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Invariant.Domination
 
 public section
 
@@ -118,7 +119,7 @@ theorem shrink {ctx : Ctx n} {stem ancestor : List Nat} {out : SearchSt n}
     FrozenOut ctx ancestor out best r := by
   rcases h with
     ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-      hfloor⟩
+      hfloor, hboundary⟩
   apply FrozenOut.mk current codes bestCodes hcode hdepth
   · have hlen := congrArg List.length hprefix
     simp only [List.length_take] at hlen
@@ -131,6 +132,7 @@ theorem shrink {ctx : Ctx n} {stem ancestor : List Nat} {out : SearchSt n}
   · exact hinstalled
   · exact hbest
   · exact hfloor
+  · exact hboundary
 
 /-- Fixed-point cleanup changes none of a frozen comparison's fields. -/
 theorem setFixed {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
@@ -139,9 +141,9 @@ theorem setFixed {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
     FrozenOut ctx stem { out with fixedpts := fixedpts } best r := by
   rcases h with
     ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-      hfloor⟩
+      hfloor, hboundary⟩
   exact .mk current codes bestCodes hcode hdepth hstem hinstalled hbest
-    hfloor
+    hfloor hboundary
 
 /-- Resetting first-path return controls changes none of a frozen
 comparison's fields. -/
@@ -152,9 +154,9 @@ theorem setFirst {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
       { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best r := by
   rcases h with
     ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-      hfloor⟩
+      hfloor, hboundary⟩
   exact .mk current codes bestCodes hcode hdepth hstem hinstalled hbest
-    hfloor
+    hfloor hboundary
 
 end FrozenOut
 
@@ -195,6 +197,9 @@ theorem frozen {G : Colored n k} {ctx : Ctx n}
     exact h.incumbent
   · rw [heq, hr]
     exact hfloor
+  · rw [processnode_noncheaplevel, processnode_allsamelevel, hr]
+    unfold pruneReturn
+    split <;> dsimp only <;> split <;> omega
 
 /-- Every negative off-path leaf prune is either comparison-frozen or a
 jump to the saved cheap-cell boundary. -/
@@ -347,6 +352,7 @@ inductive ShortSource (G : Colored n k) (ctx : Ctx n) (out : SearchSt n)
       (valid : ∀ entry, trail target = some entry →
         PairOk ctx.g entry.frame.rsPtn entry.frame.rsLab target
           fix mcr)
+      (source : ∃ γ ∈ out.genTrace, fmperm γ n = (fix, mcr))
   | implicit (target : Nat)
       (returned : r = Int.ofNat target)
       (below : target < out.noncheaplevel)
@@ -367,8 +373,8 @@ theorem setFixed {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     (h : ShortSource G ctx out trail r) (fixedpts : VSet n) :
     ShortSource G ctx { out with fixedpts := fixedpts } trail r := by
   cases h with
-  | explicit target fix mcr returned back valid =>
-      exact .explicit target fix mcr returned back valid
+  | explicit target fix mcr returned back valid source =>
+      exact .explicit target fix mcr returned back valid source
   | implicit target returned below back root =>
       exact .implicit target returned below back root
 
@@ -381,8 +387,8 @@ theorem firstFinish {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
   rw [Nauty.firstFinish]
   split
   · cases h with
-    | explicit target fix mcr returned back valid =>
-        exact .explicit target fix mcr returned back valid
+    | explicit target fix mcr returned back valid source =>
+        exact .explicit target fix mcr returned back valid source
     | implicit target returned below back root =>
         exact .implicit target returned below back root
   · exact h
@@ -438,9 +444,14 @@ theorem firstFinish {ctx : Ctx n}
       rw [Nauty.firstFinish]
       split
       · cases freeze with
-        | mk current cs bs codeInv depth stemEq installed incumbent floor =>
+        | mk current cs bs codeInv depth stemEq installed incumbent floor boundary =>
             exact .mk current cs bs codeInv depth stemEq installed incumbent
-              floor
+              floor (boundary.imp id (by
+                dsimp only
+                intro h
+                have : out.allsamelevel - 1 ≤ out.allsamelevel := Nat.sub_le _ _
+                simp only [Int.ofNat_eq_natCast] at *
+                omega))
       · exact freeze
   | cheap boundary returned positive atOrAbove saved exact =>
       apply NodeExit.cheap boundary returned positive atOrAbove
@@ -1230,7 +1241,12 @@ theorem tiedOther {G : Colored n k} {ctx : Ctx n}
           hleafClear hshort
       · exact hprep.rowTieBack hef (by simp) hcc hge htie
       · intro entry hentry
-        exact hlive'.rowTiePair hn0 hprep hcanonBelow htie hentry }
+        exact hlive'.rowTiePair hn0 hprep hcanonBelow htie hentry
+      · refine ⟨canonScatter n leaf.canonlab leaf.lab, ?_, rfl⟩
+        rw [processnode_genTrace_canon hef (by simp) hcc hge htie]
+        apply Array.mem_push.mpr
+        right
+        rw [canonScatter_eq_firstScatter, firstScatter_fold] }
   exact hnode.earlyOther hn0 hlevel hpath hnum hearly hlive hrun
 
 /-- The negative non-generator leaf, with the off-path fields needed by

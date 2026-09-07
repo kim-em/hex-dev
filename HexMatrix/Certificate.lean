@@ -63,7 +63,7 @@ materialized product. Either way the single packed comparison decides exactly
 @[expose]
 def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
   let K := packWidth M A C
-  let packs : Vector Int n := Vector.ofFn fun l => packRow K (row A l)
+  let packs : Vector Int n := Hex.Vector.ofFn' fun l => packRow K (row A l)
   (List.finRange n).all fun i =>
     (row M i).dotProduct packs == packRow K (row C i)
 
@@ -303,7 +303,7 @@ complete (`M * A = C` implies `= true`, by congruence through
 theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
     mulEqCert M A C = true ↔ M * A = C := by
   unfold mulEqCert
-  simp only [packWidth, List.all_eq_true, beq_iff_eq, dotProduct_packRow]
+  simp only [packWidth, Hex.Vector.ofFn'_eq_ofFn, List.all_eq_true, beq_iff_eq, dotProduct_packRow]
   constructor
   · intro h
     apply Hex.Matrix.ext

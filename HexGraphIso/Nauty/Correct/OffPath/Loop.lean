@@ -235,6 +235,46 @@ theorem cheapOk {G : Colored n k} {ctx : Ctx n}
 
 end OtherLoopHyp
 
+/-- A proof of the visits made by an off-path sweep, retaining each
+child's packaged return and the invariant at its receiving frame. This
+is proof-only: it adds no trace to the executable search state. -/
+inductive OtherSweep (G : Colored n k) (ctx : Ctx n)
+    (inf tcLevel specFuel runFuel level numcells tc len tv1 e : Nat)
+    (codes fs : List Nat) (rsLab rsPtn : Array Nat) (base : SearchSt n) :
+    Nat → Option Nat → VSet n → SearchSt n → Option (Key n) → FrameTrail → Prop where
+  | done {loopFuel cursor tcell st best trail bs}
+      (hyp : OtherLoopHyp G ctx tcLevel specFuel level codes bs fs numcells
+        rsLab rsPtn tc len tcell cursor e base st best trail)
+      (next : tcell.nextElem cursor = none) :
+      OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail
+  | visit {loopFuel cursor tcell st best trail bs tv offset child out r childBest eventTrail}
+      (hyp : OtherLoopHyp G ctx tcLevel specFuel level codes bs fs numcells
+        rsLab rsPtn tc len tcell cursor e base st best trail)
+      (next : tcell.nextElem cursor = some tv)
+      (offsetLt : offset < len) (atOffset : rsLab[tc + offset]! = tv)
+      (childEq : child = { st with
+        lab := (breakout n st.lab st.ptn (level + 1) tc tv).1
+        ptn := (breakout n st.lab st.ptn (level + 1) tc tv).2.1
+        active := (breakout n st.lab st.ptn (level + 1) tc tv).2.2
+        fixedpts := st.fixedpts.insert tv })
+      (call : otherNode ctx inf tcLevel runFuel (level + 1) (numcells + 1) child = (r, out))
+      (run : OtherRun G ctx tcLevel specFuel runFuel (level + 1) codes fs child out
+        (numcells + 1) best childBest
+        (trail.push level ⟨sweepFrame specFuel codes rsLab rsPtn tc numcells, offset⟩)
+        eventTrail r)
+      (keep : OtherKeep ctx (level + 1) child out)
+      (continuation : ¬ r < Int.ofNat level →
+         let cleaned := { out with fixedpts := out.fixedpts.erase tv }
+         let cleared := clearShortIf cleaned.needshortprune cleaned
+         let cell := if cleaned.needshortprune then shortprune tcell cleared else tcell
+         let cell' := if tv == tv1 then longprune cell cleared.fixedpts cleared.autos else cell
+         OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+             codes fs rsLab rsPtn base loopFuel (some tv) cell'
+             (recover n inf level cleared) childBest eventTrail) :
+      OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+        codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail
+
 /-! # The sweep induction -/
 
 set_option maxHeartbeats 3200000 in
@@ -275,7 +315,9 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
               tv1 (tcell.nextElem cursor) tcell st).2 ∧
           OtherLoopKeep ctx level e st
             (otherChildLoop ctx inf tcLevel runFuel loopFuel level numcells tc
-              tv1 (tcell.nextElem cursor) tcell st).2 := by
+              tv1 (tcell.nextElem cursor) tcell st).2 ∧
+          OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+            codes fs rsLab rsPtn base loopFuel cursor tcell st best trail := by
   intro loopFuel
   induction loopFuel with
   | zero =>
@@ -325,7 +367,7 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
           level numcells tc tv1 none tcell st).2 = st := by
         unfold otherChildLoop
         rfl
-      refine ⟨best, trail, ?_, ?_, ?_⟩
+      refine ⟨best, trail, ?_, ?_, ?_, .done hh hnext⟩
       · exact OtherLoopRun.done (inf := inf) (runFuel := runFuel)
           (loopFuel := loopFuel) (tv1 := tv1) hpath hstem hpast hnext hnp
           hbound hlen hh.inv hh.live.toLive
@@ -417,7 +459,9 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
           have hb := hboundaryChild (Nat.lt_succ_of_lt hlt)
           rw [hb] at hlt ⊢
           exact hh.keep hlt
-        refine ⟨childBest, eventTrail, ?_, hguideOut, hkeepOut⟩
+        refine ⟨childBest, eventTrail, ?_, hguideOut, hkeepOut,
+          .visit hh hnext hoffset hatFrozen rfl hcall hrunChild hkeepChild
+            (fun hn => (hn hstay).elim)⟩
         rcases hexit : hrunChild.node.exit with
           ⟨returned, exact⟩ |
           ⟨target, returned, below, sound, payload, located, control⟩ |
@@ -542,7 +586,10 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
                 OtherLoopKeep ctx level e st
                   (otherChildLoop ctx inf tcLevel runFuel loopFuel level
                     numcells tc tv1 (tcell'.nextElem (some tv)) tcell'
-                    (recover n inf level (clearShortIf clear cleaned))).2 := by
+                    (recover n inf level (clearShortIf clear cleaned))).2 ∧
+                OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+                  codes fs rsLab rsPtn base loopFuel (some tv) tcell'
+                  (recover n inf level (clearShortIf clear cleaned)) childBest eventTrail := by
           intro tcell' clear bs' hinvRec hliveRec
           obtain ⟨hfix, hcos, hcomp, hgen, horb, hfl, hncl, hgf, hgc, hcl, -⟩ :=
             clearShortIf_fields clear cleaned
@@ -624,10 +671,10 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
                 exact hh.keep hlt
           have hfuelRec : n < cursorRank (some tv) + loopFuel :=
             cursorFuel_step (nextElem_after hnext) hfuel
-          obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail⟩ :=
+          obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail, htraceTail⟩ :=
             ihLoop (some tv) tcell' recSt childBest eventTrail bs' hhRec
               hfuelRec
-          refine ⟨outBest, eventTrail', hrunTail, hguideTail, ?_⟩
+          refine ⟨outBest, eventTrail', hrunTail, hguideTail, ?_, htraceTail⟩
           refine ⟨?_, hkeepTail.orbits, hkeepTail.boundary⟩
           rw [hkeepTail.firstlab,
             show recSt = recover n inf level cleared from rfl,
@@ -653,9 +700,15 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
             hcurrent hatFrozen hat heq' hshortC
           rcases hother : (tv == tv1) with _ | _
           · -- ordinary child
-            obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail⟩ :=
+            obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail, htraceTail⟩ :=
               htail tcell false bs' hinvRec hliveRec
-            refine ⟨outBest, eventTrail', ?_, ?_, ?_⟩
+            have htrace : OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+                codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail := by
+              apply OtherSweep.visit hh hnext hoffset hatFrozen rfl hcall hrunChild hkeepChild
+              intro _
+              simpa only [cleaned, hshortC, clearShortIf, Bool.false_eq_true, ite_false,
+                ite_true, hother] using htraceTail
+            refine ⟨outBest, eventTrail', ?_, ?_, ?_, htrace⟩
             · exact (OtherLoopRun.next hnext hcall hstay hshortC hother rfl
                 (hfixedRec false) (hcosetRec false) hpre rfl hrunTail).retrail
                 htrailExt
@@ -670,10 +723,16 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
           · -- guiding child: long prune
             have hinvLong := hinvRec.longprune hgsz hpathRec.1
             rw [recover_fixedpts, (recover_store _ _ _ _).2] at hinvLong
-            obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail⟩ :=
+            obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail, htraceTail⟩ :=
               htail (longprune tcell cleaned.fixedpts cleaned.autos) false bs'
                 hinvLong hliveRec
-            refine ⟨outBest, eventTrail', ?_, ?_, ?_⟩
+            have htrace : OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+                codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail := by
+              apply OtherSweep.visit hh hnext hoffset hatFrozen rfl hcall hrunChild hkeepChild
+              intro _
+              simpa only [cleaned, hshortC, clearShortIf, Bool.false_eq_true, ite_false,
+                ite_true, hother] using htraceTail
+            refine ⟨outBest, eventTrail', ?_, ?_, ?_, htrace⟩
             · exact (OtherLoopRun.nextLong hnext hcall hstay hshortC hother
                 rfl rfl (hfixedRec false) (hcosetRec false) hpre rfl
                 hrunTail).retrail htrailExt
@@ -701,10 +760,16 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
             simpa only [clearShortIf, cleaned, ite_true] using hback
           have hinvRec := hinvRec0.shortpruneWith hgsz hlast
           rcases hother : (tv == tv1) with _ | _
-          · obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail⟩ :=
+          · obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail, htraceTail⟩ :=
               htail (shortprune tcell (clearShortIf true cleaned)) true bs'
                 hinvRec hliveRec
-            refine ⟨outBest, eventTrail', ?_, ?_, ?_⟩
+            have htrace : OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+                codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail := by
+              apply OtherSweep.visit hh hnext hoffset hatFrozen rfl hcall hrunChild hkeepChild
+              intro _
+              simpa only [cleaned, hshortC, clearShortIf, Bool.false_eq_true, ite_false,
+                ite_true, hother] using htraceTail
+            refine ⟨outBest, eventTrail', ?_, ?_, ?_, htrace⟩
             · exact (OtherLoopRun.nextShort hnext hcall hstay hshortC hother
                 rfl rfl (hfixedRec true) (hcosetRec true) hpre rfl
                 hrunTail).retrail htrailExt
@@ -722,11 +787,17 @@ theorem otherLoopTotal {G : Colored n k} {ctx : Ctx n}
             rw [← recover_clearShortIf] at hpathClear
             have hinvBoth := hinvRec.longprune hgsz hpathClear
             rw [recover_fixedpts, (recover_store _ _ _ _).2] at hinvBoth
-            obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail⟩ :=
+            obtain ⟨outBest, eventTrail', hrunTail, hguideTail, hkeepTail, htraceTail⟩ :=
               htail (longprune (shortprune tcell (clearShortIf true cleaned))
                 (clearShortIf true cleaned).fixedpts
                 (clearShortIf true cleaned).autos) true bs' hinvBoth hliveRec
-            refine ⟨outBest, eventTrail', ?_, ?_, ?_⟩
+            have htrace : OtherSweep G ctx inf tcLevel specFuel runFuel level numcells tc len tv1 e
+                codes fs rsLab rsPtn base (loopFuel + 1) cursor tcell st best trail := by
+              apply OtherSweep.visit hh hnext hoffset hatFrozen rfl hcall hrunChild hkeepChild
+              intro _
+              simpa only [cleaned, hshortC, clearShortIf, Bool.false_eq_true, ite_false,
+                ite_true, hother] using htraceTail
+            refine ⟨outBest, eventTrail', ?_, ?_, ?_, htrace⟩
             · exact (OtherLoopRun.nextBoth hnext hcall hstay hshortC hother
                 rfl rfl rfl (hfixedRec true) (hcosetRec true) hpre rfl
                 hrunTail).retrail htrailExt
@@ -1545,8 +1616,8 @@ namespace Unwind
     {best : Option (Key n)} (e : Nat) :
     Unwind ctx tcLevel target out best →
       Unwind ctx tcLevel target { out with eqlevFirst := e } best
-  | .first anchor carrier => .first anchor carrier
-  | .canon anchor carrier => .canon anchor carrier
+  | .first anchor carrier atFirst => .first anchor carrier atFirst
+  | .canon anchor carrier atCanon => .canon anchor carrier atCanon
   | .orbit payload => .orbit ⟨payload.positive, payload.bound,
       payload.currentLt, payload.smaller, payload.sound⟩
 
@@ -1556,12 +1627,12 @@ theorem Located.setEqlev {ctx : Ctx n} {tcLevel target : Nat}
     {payload : Unwind ctx tcLevel target out best} (e : Nat)
     (h : payload.Located trail) : (payload.setEqlev e).Located trail := by
   cases h with
-  | first anchor carrier located =>
+  | first anchor carrier atFirst located =>
       exact Unwind.Located.first (out := { out with eqlevFirst := e })
-        anchor carrier located
-  | canon anchor carrier located =>
+        anchor carrier atFirst located
+  | canon anchor carrier atCanon located =>
       exact Unwind.Located.canon (out := { out with eqlevFirst := e })
-        anchor carrier located
+        anchor carrier atCanon located
   | orbit payload =>
       exact Unwind.Located.orbit (out := { out with eqlevFirst := e }) _
 
@@ -1574,9 +1645,9 @@ theorem FrozenOut.setEqlev {ctx : Ctx n} {stem : List Nat} {out : SearchSt n}
     FrozenOut ctx stem { out with eqlevFirst := e } best r := by
   rcases h with
     ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-      hfloor⟩
+      hfloor, hboundary⟩
   exact ⟨current, codes, bestCodes, hcode, hdepth, hstem, hinstalled, hbest,
-    hfloor⟩
+    hfloor, hboundary⟩
 
 /-- A short-prune source does not read the agreement depth. -/
 theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
@@ -1584,8 +1655,8 @@ theorem ShortSource.setEqlev {G : Colored n k} {ctx : Ctx n} {out : SearchSt n}
     (h : ShortSource G ctx out trail r) (e : Nat) :
     ShortSource G ctx { out with eqlevFirst := e } trail r := by
   cases h with
-  | explicit target fix mcr returned back valid =>
-      exact .explicit target fix mcr returned back valid
+  | explicit target fix mcr returned back valid source =>
+      exact .explicit target fix mcr returned back valid source
   | implicit target returned below back root =>
       exact .implicit target returned below back root
 

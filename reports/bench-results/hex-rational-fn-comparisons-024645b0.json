@@ -1,0 +1,3266 @@
+{
+  "schema": "hex-rational-fn-comparisons-v1",
+  "cpu_affinity": [
+    4
+  ],
+  "groups": [
+    {
+      "label": "plans",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runSchoolbook Hex.RationalFnBench.runKaratsuba1 Hex.RationalFnBench.runKaratsuba2 Hex.RationalFnBench.runKaratsuba4 Hex.RationalFnBench.runKaratsuba8 Hex.RationalFnBench.runKaratsuba16 Hex.RationalFnBench.runKaratsuba32 Hex.RationalFnBench.runKaratsuba64 --export-file /tmp/compare-plans.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 16511740,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68876,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 18252205,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68672,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16656306,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68668,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 4127935,
+            "median_nanos": 4164076,
+            "max_nanos": 4563051,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runSchoolbook",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788126332,
+              "timestamp_iso": "2026-09-07T13:35:26Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 15127236,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68180,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 14832719,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68656,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 15076120,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68224,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 3708179,
+            "median_nanos": 3769030,
+            "max_nanos": 3781809,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba1",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788126573,
+              "timestamp_iso": "2026-09-07T13:35:26Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 11696133,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68220,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 11692958,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68816,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 11913154,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68048,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 2923239,
+            "median_nanos": 2924033,
+            "max_nanos": 2978288,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba2",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788126798,
+              "timestamp_iso": "2026-09-07T13:35:26Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 10015929,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68196,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 19628137,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68128,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 19636499,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68124,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 2453517,
+            "median_nanos": 2454562,
+            "max_nanos": 2503982,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba4",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788127000,
+              "timestamp_iso": "2026-09-07T13:35:27Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 18584227,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68240,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 18624157,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68296,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 18734761,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68920,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 2323028,
+            "median_nanos": 2328019,
+            "max_nanos": 2341845,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba8",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788127248,
+              "timestamp_iso": "2026-09-07T13:35:27Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 19855494,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68496,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 19990255,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68208,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 19588348,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68092,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 2448543,
+            "median_nanos": 2481936,
+            "max_nanos": 2498781,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba16",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788127509,
+              "timestamp_iso": "2026-09-07T13:35:27Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 11495514,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68292,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 11512650,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68260,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 11504518,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68240,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 2873878,
+            "median_nanos": 2876129,
+            "max_nanos": 2878162,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba32",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788127778,
+              "timestamp_iso": "2026-09-07T13:35:27Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 14132729,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68312,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 14236203,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68264,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16279687,
+                "status": "ok",
+                "result_hash": "0x1260c30ce6946c8a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68244,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1260c30ce6946c8a",
+            "min_nanos": 3533182,
+            "median_nanos": 3559050,
+            "max_nanos": 4069921,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsuba64",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788127978,
+              "timestamp_iso": "2026-09-07T13:35:27Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x1260c30ce6946c8a"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788126332,
+          "timestamp_iso": "2026-09-07T13:35:26Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "routes",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runMultiplication Hex.RationalFnBench.runMultiplyNormalize --export-file /tmp/compare-routes.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 11713218,
+                "status": "ok",
+                "result_hash": "0x39fe48e581013f90",
+                "repeat_index": 0,
+                "peak_rss_kb": 68656,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 11484909,
+                "status": "ok",
+                "result_hash": "0x39fe48e581013f90",
+                "repeat_index": 1,
+                "peak_rss_kb": 68696,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 11550456,
+                "status": "ok",
+                "result_hash": "0x39fe48e581013f90",
+                "repeat_index": 2,
+                "peak_rss_kb": 68516,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x39fe48e581013f90",
+            "min_nanos": 717806,
+            "median_nanos": 721903,
+            "max_nanos": 732076,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runMultiplication",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788128253,
+              "timestamp_iso": "2026-09-07T13:35:28Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x39fe48e581013f90"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 11669052,
+                "status": "ok",
+                "result_hash": "0x39fe48e581013f90",
+                "repeat_index": 0,
+                "peak_rss_kb": 68640,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12015507,
+                "status": "ok",
+                "result_hash": "0x39fe48e581013f90",
+                "repeat_index": 1,
+                "peak_rss_kb": 68244,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13338090,
+                "status": "ok",
+                "result_hash": "0x39fe48e581013f90",
+                "repeat_index": 2,
+                "peak_rss_kb": 68924,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x39fe48e581013f90",
+            "min_nanos": 1458631,
+            "median_nanos": 1501938,
+            "max_nanos": 1667261,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runMultiplyNormalize",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788128466,
+              "timestamp_iso": "2026-09-07T13:35:28Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x39fe48e581013f90"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788128253,
+          "timestamp_iso": "2026-09-07T13:35:28Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "product16",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runSchoolbook16 Hex.RationalFnBench.runKaratsubaAt16 --export-file /tmp/compare-product16.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 13035251,
+                "status": "ok",
+                "result_hash": "0xcd839a69b2fb358a",
+                "repeat_index": 0,
+                "peak_rss_kb": 68200,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13360263,
+                "status": "ok",
+                "result_hash": "0xcd839a69b2fb358a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68912,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13625016,
+                "status": "ok",
+                "result_hash": "0xcd839a69b2fb358a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68868,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xcd839a69b2fb358a",
+            "min_nanos": 50918,
+            "median_nanos": 52188,
+            "max_nanos": 53222,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runSchoolbook16",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788128719,
+              "timestamp_iso": "2026-09-07T13:35:28Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0xcd839a69b2fb358a"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 12380097,
+                "status": "ok",
+                "result_hash": "0xcd839a69b2fb358a",
+                "repeat_index": 0,
+                "peak_rss_kb": 69088,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12496891,
+                "status": "ok",
+                "result_hash": "0xcd839a69b2fb358a",
+                "repeat_index": 1,
+                "peak_rss_kb": 69052,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12784858,
+                "status": "ok",
+                "result_hash": "0xcd839a69b2fb358a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68672,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xcd839a69b2fb358a",
+            "min_nanos": 48359,
+            "median_nanos": 48815,
+            "max_nanos": 49940,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsubaAt16",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788128952,
+              "timestamp_iso": "2026-09-07T13:35:28Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0xcd839a69b2fb358a"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788128719,
+          "timestamp_iso": "2026-09-07T13:35:28Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "product32",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runSchoolbook32 Hex.RationalFnBench.runKaratsubaAt32 --export-file /tmp/compare-product32.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 14083797,
+                "status": "ok",
+                "result_hash": "0x2800282abbf42580",
+                "repeat_index": 0,
+                "peak_rss_kb": 68660,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12721434,
+                "status": "ok",
+                "result_hash": "0x2800282abbf42580",
+                "repeat_index": 1,
+                "peak_rss_kb": 69060,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12926699,
+                "status": "ok",
+                "result_hash": "0x2800282abbf42580",
+                "repeat_index": 2,
+                "peak_rss_kb": 68176,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2800282abbf42580",
+            "min_nanos": 198772,
+            "median_nanos": 201979,
+            "max_nanos": 220059,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runSchoolbook32",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788129235,
+              "timestamp_iso": "2026-09-07T13:35:29Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2800282abbf42580"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 10335643,
+                "status": "ok",
+                "result_hash": "0x2800282abbf42580",
+                "repeat_index": 0,
+                "peak_rss_kb": 68920,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 10323995,
+                "status": "ok",
+                "result_hash": "0x2800282abbf42580",
+                "repeat_index": 1,
+                "peak_rss_kb": 68720,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 10347320,
+                "status": "ok",
+                "result_hash": "0x2800282abbf42580",
+                "repeat_index": 2,
+                "peak_rss_kb": 68092,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2800282abbf42580",
+            "min_nanos": 161312,
+            "median_nanos": 161494,
+            "max_nanos": 161676,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsubaAt32",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788129468,
+              "timestamp_iso": "2026-09-07T13:35:29Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2800282abbf42580"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788129235,
+          "timestamp_iso": "2026-09-07T13:35:29Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "product64",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runSchoolbook64 Hex.RationalFnBench.runKaratsubaAt64 --export-file /tmp/compare-product64.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 13709151,
+                "status": "ok",
+                "result_hash": "0x54dc53949de9d9d5",
+                "repeat_index": 0,
+                "peak_rss_kb": 68312,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13439480,
+                "status": "ok",
+                "result_hash": "0x54dc53949de9d9d5",
+                "repeat_index": 1,
+                "peak_rss_kb": 68244,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12982262,
+                "status": "ok",
+                "result_hash": "0x54dc53949de9d9d5",
+                "repeat_index": 2,
+                "peak_rss_kb": 68276,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x54dc53949de9d9d5",
+            "min_nanos": 811391,
+            "median_nanos": 839967,
+            "max_nanos": 856821,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runSchoolbook64",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788129717,
+              "timestamp_iso": "2026-09-07T13:35:29Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x54dc53949de9d9d5"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 16603137,
+                "status": "ok",
+                "result_hash": "0x54dc53949de9d9d5",
+                "repeat_index": 0,
+                "peak_rss_kb": 68232,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16600913,
+                "status": "ok",
+                "result_hash": "0x54dc53949de9d9d5",
+                "repeat_index": 1,
+                "peak_rss_kb": 68720,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16615554,
+                "status": "ok",
+                "result_hash": "0x54dc53949de9d9d5",
+                "repeat_index": 2,
+                "peak_rss_kb": 68692,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x54dc53949de9d9d5",
+            "min_nanos": 518778,
+            "median_nanos": 518848,
+            "max_nanos": 519236,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsubaAt64",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788129944,
+              "timestamp_iso": "2026-09-07T13:35:29Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x54dc53949de9d9d5"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788129717,
+          "timestamp_iso": "2026-09-07T13:35:29Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "product128",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runSchoolbook128 Hex.RationalFnBench.runKaratsubaAt128 --export-file /tmp/compare-product128.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 12892288,
+                "status": "ok",
+                "result_hash": "0x418d85c40c381422",
+                "repeat_index": 0,
+                "peak_rss_kb": 69092,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12513506,
+                "status": "ok",
+                "result_hash": "0x418d85c40c381422",
+                "repeat_index": 1,
+                "peak_rss_kb": 68252,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12604972,
+                "status": "ok",
+                "result_hash": "0x418d85c40c381422",
+                "repeat_index": 2,
+                "peak_rss_kb": 68532,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x418d85c40c381422",
+            "min_nanos": 3128376,
+            "median_nanos": 3151243,
+            "max_nanos": 3223072,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runSchoolbook128",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788130245,
+              "timestamp_iso": "2026-09-07T13:35:30Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x418d85c40c381422"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 13012847,
+                "status": "ok",
+                "result_hash": "0x418d85c40c381422",
+                "repeat_index": 0,
+                "peak_rss_kb": 68092,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12995892,
+                "status": "ok",
+                "result_hash": "0x418d85c40c381422",
+                "repeat_index": 1,
+                "peak_rss_kb": 69088,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12700854,
+                "status": "ok",
+                "result_hash": "0x418d85c40c381422",
+                "repeat_index": 2,
+                "peak_rss_kb": 68668,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x418d85c40c381422",
+            "min_nanos": 1587606,
+            "median_nanos": 1624486,
+            "max_nanos": 1626605,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runKaratsubaAt128",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788130458,
+              "timestamp_iso": "2026-09-07T13:35:30Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x418d85c40c381422"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788130245,
+          "timestamp_iso": "2026-09-07T13:35:30Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "cancel1",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runCancel1 Hex.RationalFnBench.runNaive1 --export-file /tmp/compare-cancel1.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 18547693,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68872,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 18609805,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68184,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 18789842,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68296,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 9056,
+            "median_nanos": 9086,
+            "max_nanos": 9174,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runCancel1",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788130709,
+              "timestamp_iso": "2026-09-07T13:35:30Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 15823699,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68240,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16097837,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68048,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 15656811,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68284,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 7644,
+            "median_nanos": 7726,
+            "max_nanos": 7860,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runNaive1",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788130978,
+              "timestamp_iso": "2026-09-07T13:35:30Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788130709,
+          "timestamp_iso": "2026-09-07T13:35:30Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "cancel2",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runCancel2 Hex.RationalFnBench.runNaive2 --export-file /tmp/compare-cancel2.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 12118318,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68532,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12070387,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68656,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12164016,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68716,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 11787,
+            "median_nanos": 11834,
+            "max_nanos": 11878,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runCancel2",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788131252,
+              "timestamp_iso": "2026-09-07T13:35:31Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 12898407,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68124,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13614500,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68648,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12910084,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68508,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 12596,
+            "median_nanos": 12607,
+            "max_nanos": 13295,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runNaive2",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788131471,
+              "timestamp_iso": "2026-09-07T13:35:31Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788131252,
+          "timestamp_iso": "2026-09-07T13:35:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "cancel4",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runCancel4 Hex.RationalFnBench.runNaive4 --export-file /tmp/compare-cancel4.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 17569511,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68832,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 17921133,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68716,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 17594888,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68660,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 17157,
+            "median_nanos": 17182,
+            "max_nanos": 17501,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runCancel4",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788131747,
+              "timestamp_iso": "2026-09-07T13:35:31Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 12668025,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68652,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13182429,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68928,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12746451,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68316,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 24742,
+            "median_nanos": 24895,
+            "max_nanos": 25746,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runNaive4",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788132013,
+              "timestamp_iso": "2026-09-07T13:35:32Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788131747,
+          "timestamp_iso": "2026-09-07T13:35:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "cancel8",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runCancel8 Hex.RationalFnBench.runNaive8 --export-file /tmp/compare-cancel8.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 14360227,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68236,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 13975315,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68088,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 14131928,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68888,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 27295,
+            "median_nanos": 27601,
+            "max_nanos": 28047,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runCancel8",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788132289,
+              "timestamp_iso": "2026-09-07T13:35:32Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 16266747,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68312,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16262530,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68180,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16212086,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68668,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 63328,
+            "median_nanos": 63525,
+            "max_nanos": 63541,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runNaive8",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788132525,
+              "timestamp_iso": "2026-09-07T13:35:32Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788132289,
+          "timestamp_iso": "2026-09-07T13:35:32Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "cancel16",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnBench.runCancel16 Hex.RationalFnBench.runNaive16 --export-file /tmp/compare-cancel16.json",
+      "result": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 12661526,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68820,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12550160,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68680,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12806430,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 69096,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 49024,
+            "median_nanos": 49459,
+            "max_nanos": 50025,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runCancel16",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788132827,
+              "timestamp_iso": "2026-09-07T13:35:32Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 10495410,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 0,
+                "peak_rss_kb": 68488,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 10660695,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 1,
+                "peak_rss_kb": 68656,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 10452445,
+                "status": "ok",
+                "result_hash": "0x2785d1bb85a2c29d",
+                "repeat_index": 2,
+                "peak_rss_kb": 68184,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x2785d1bb85a2c29d",
+            "min_nanos": 163319,
+            "median_nanos": 163990,
+            "max_nanos": 166573,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.RationalFnBench.runNaive16",
+            "expected_hash_check": {
+              "status": "match"
+            },
+            "env": {
+              "timestamp_unix_ms": 1788788133053,
+              "timestamp_iso": "2026-09-07T13:35:33Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": false,
+              "warmup": true,
+              "repeats": 3,
+              "min_total_seconds": 0.01,
+              "max_seconds_per_call": 5,
+              "expected_hash": "0x2785d1bb85a2c29d"
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788132827,
+          "timestamp_iso": "2026-09-07T13:35:32Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "label": "ratio",
+      "command": "taskset -c 4 .lake/build/bin/hexrationalfn_bench compare Hex.RationalFnWorkloads.unbalanced Hex.RationalFnWorkloads.unbalancedSchoolbook --export-file /tmp/compare-ratio.json",
+      "result": {
+        "results": [
+          {
+            "verdict_dropped_leading": 1,
+            "verdict": "consistent_with_declared_complexity",
+            "trial_summaries": [
+              {
+                "relative_spread": 0.073353,
+                "param": 4,
+                "ok_count": 3,
+                "min_per_call_nanos": 4910501.207031,
+                "median_per_call_nanos": 5098124.414062,
+                "max_per_call_nanos": 5284464.941406
+              },
+              {
+                "relative_spread": 0.080116,
+                "param": 8,
+                "ok_count": 3,
+                "min_per_call_nanos": 9379608.726562,
+                "median_per_call_nanos": 10105937.585938,
+                "max_per_call_nanos": 10189260.117188
+              },
+              {
+                "relative_spread": 0.027395,
+                "param": 16,
+                "ok_count": 3,
+                "min_per_call_nanos": 19379383.140625,
+                "median_per_call_nanos": 19807280.960938,
+                "max_per_call_nanos": 19921994.492188
+              },
+              {
+                "relative_spread": 0.040719,
+                "param": 32,
+                "ok_count": 3,
+                "min_per_call_nanos": 39150137.03125,
+                "median_per_call_nanos": 39500603.1875,
+                "max_per_call_nanos": 40758543
+              },
+              {
+                "relative_spread": 0.091152,
+                "param": 64,
+                "ok_count": 3,
+                "min_per_call_nanos": 72700394.46875,
+                "median_per_call_nanos": 76466830.8125,
+                "max_per_call_nanos": 79670483.75
+              },
+              {
+                "relative_spread": 0.058054,
+                "param": 128,
+                "ok_count": 3,
+                "min_per_call_nanos": 150069458,
+                "median_per_call_nanos": 154405927.75,
+                "max_per_call_nanos": 159033317.25
+              },
+              {
+                "relative_spread": 0.11909,
+                "param": 256,
+                "ok_count": 3,
+                "min_per_call_nanos": 278383250.25,
+                "median_per_call_nanos": 307973734,
+                "max_per_call_nanos": 315059941.75
+              },
+              {
+                "relative_spread": 0.025626,
+                "param": 512,
+                "ok_count": 3,
+                "min_per_call_nanos": 585599394.5,
+                "median_per_call_nanos": 591683518,
+                "max_per_call_nanos": 600762087.5
+              }
+            ],
+            "spawn_floor_nanos": 34172116,
+            "slope": -0.017898,
+            "ratios": [
+              [
+                4,
+                1274531.103515
+              ],
+              [
+                8,
+                1263242.198242
+              ],
+              [
+                16,
+                1237955.060059
+              ],
+              [
+                32,
+                1234393.849609
+              ],
+              [
+                64,
+                1194794.231445
+              ],
+              [
+                128,
+                1206296.310547
+              ],
+              [
+                256,
+                1203022.398438
+              ],
+              [
+                512,
+                1155631.871094
+              ]
+            ],
+            "points": [
+              {
+                "trial_index": 0,
+                "total_nanos": 1352823025,
+                "status": "ok",
+                "result_hash": "0x7fba22e5fb116364",
+                "per_call_nanos": 5284464.941406,
+                "peak_rss_kb": 68072,
+                "part_of_verdict": true,
+                "param": 4,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 2608450590,
+                "status": "ok",
+                "result_hash": "0xe6af2347477f626a",
+                "per_call_nanos": 10189260.117188,
+                "peak_rss_kb": 68028,
+                "part_of_verdict": true,
+                "param": 8,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1240280521,
+                "status": "ok",
+                "result_hash": "0xc46fa39b152aa621",
+                "per_call_nanos": 19379383.140625,
+                "peak_rss_kb": 68172,
+                "part_of_verdict": true,
+                "param": 16,
+                "inner_repeats": 64,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1252804385,
+                "status": "ok",
+                "result_hash": "0x393a68e929aadd93",
+                "per_call_nanos": 39150137.03125,
+                "peak_rss_kb": 68124,
+                "part_of_verdict": true,
+                "param": 32,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1274727740,
+                "status": "ok",
+                "result_hash": "0x7b5a73da8d32e3e3",
+                "per_call_nanos": 79670483.75,
+                "peak_rss_kb": 71124,
+                "part_of_verdict": true,
+                "param": 64,
+                "inner_repeats": 16,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1200555664,
+                "status": "ok",
+                "result_hash": "0x155b1f9102e4b3c7",
+                "per_call_nanos": 150069458,
+                "peak_rss_kb": 72628,
+                "part_of_verdict": true,
+                "param": 128,
+                "inner_repeats": 8,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1260239767,
+                "status": "ok",
+                "result_hash": "0x2abbd13de4e9be83",
+                "per_call_nanos": 315059941.75,
+                "peak_rss_kb": 74304,
+                "part_of_verdict": true,
+                "param": 256,
+                "inner_repeats": 4,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1201524175,
+                "status": "ok",
+                "result_hash": "0xc640daa9db38426f",
+                "per_call_nanos": 600762087.5,
+                "peak_rss_kb": 78912,
+                "part_of_verdict": true,
+                "param": 512,
+                "inner_repeats": 2,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1305119850,
+                "status": "ok",
+                "result_hash": "0x7fba22e5fb116364",
+                "per_call_nanos": 5098124.414062,
+                "peak_rss_kb": 68604,
+                "part_of_verdict": true,
+                "param": 4,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1293560011,
+                "status": "ok",
+                "result_hash": "0xe6af2347477f626a",
+                "per_call_nanos": 10105937.585938,
+                "peak_rss_kb": 68824,
+                "part_of_verdict": true,
+                "param": 8,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 2535331963,
+                "status": "ok",
+                "result_hash": "0xc46fa39b152aa621",
+                "per_call_nanos": 19807280.960938,
+                "peak_rss_kb": 68552,
+                "part_of_verdict": true,
+                "param": 16,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1304273376,
+                "status": "ok",
+                "result_hash": "0x393a68e929aadd93",
+                "per_call_nanos": 40758543,
+                "peak_rss_kb": 68928,
+                "part_of_verdict": true,
+                "param": 32,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1223469293,
+                "status": "ok",
+                "result_hash": "0x7b5a73da8d32e3e3",
+                "per_call_nanos": 76466830.8125,
+                "peak_rss_kb": 70112,
+                "part_of_verdict": true,
+                "param": 64,
+                "inner_repeats": 16,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1272266538,
+                "status": "ok",
+                "result_hash": "0x155b1f9102e4b3c7",
+                "per_call_nanos": 159033317.25,
+                "peak_rss_kb": 73088,
+                "part_of_verdict": true,
+                "param": 128,
+                "inner_repeats": 8,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1231894936,
+                "status": "ok",
+                "result_hash": "0x2abbd13de4e9be83",
+                "per_call_nanos": 307973734,
+                "peak_rss_kb": 74284,
+                "part_of_verdict": true,
+                "param": 256,
+                "inner_repeats": 4,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1183367036,
+                "status": "ok",
+                "result_hash": "0xc640daa9db38426f",
+                "per_call_nanos": 591683518,
+                "peak_rss_kb": 78888,
+                "part_of_verdict": true,
+                "param": 512,
+                "inner_repeats": 2,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1257088309,
+                "status": "ok",
+                "result_hash": "0x7fba22e5fb116364",
+                "per_call_nanos": 4910501.207031,
+                "peak_rss_kb": 68596,
+                "part_of_verdict": true,
+                "param": 4,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1200589917,
+                "status": "ok",
+                "result_hash": "0xe6af2347477f626a",
+                "per_call_nanos": 9379608.726562,
+                "peak_rss_kb": 68560,
+                "part_of_verdict": true,
+                "param": 8,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 2550015295,
+                "status": "ok",
+                "result_hash": "0xc46fa39b152aa621",
+                "per_call_nanos": 19921994.492188,
+                "peak_rss_kb": 68168,
+                "part_of_verdict": true,
+                "param": 16,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1264019302,
+                "status": "ok",
+                "result_hash": "0x393a68e929aadd93",
+                "per_call_nanos": 39500603.1875,
+                "peak_rss_kb": 68148,
+                "part_of_verdict": true,
+                "param": 32,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 2326412623,
+                "status": "ok",
+                "result_hash": "0x7b5a73da8d32e3e3",
+                "per_call_nanos": 72700394.46875,
+                "peak_rss_kb": 70176,
+                "part_of_verdict": true,
+                "param": 64,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1235247422,
+                "status": "ok",
+                "result_hash": "0x155b1f9102e4b3c7",
+                "per_call_nanos": 154405927.75,
+                "peak_rss_kb": 72544,
+                "part_of_verdict": true,
+                "param": 128,
+                "inner_repeats": 8,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1113533001,
+                "status": "ok",
+                "result_hash": "0x2abbd13de4e9be83",
+                "per_call_nanos": 278383250.25,
+                "peak_rss_kb": 75012,
+                "part_of_verdict": true,
+                "param": 256,
+                "inner_repeats": 4,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1171198789,
+                "status": "ok",
+                "result_hash": "0xc640daa9db38426f",
+                "per_call_nanos": 585599394.5,
+                "peak_rss_kb": 79160,
+                "part_of_verdict": true,
+                "param": 512,
+                "inner_repeats": 2,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              }
+            ],
+            "kind": "parametric",
+            "hashable": true,
+            "function": "Hex.RationalFnWorkloads.unbalanced",
+            "env": {
+              "timestamp_unix_ms": 1788788678771,
+              "timestamp_iso": "2026-09-07T13:44:38Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "verdict_warmup_fraction": 0.2,
+              "target_inner_nanos": 2000000000,
+              "slope_tolerance": 0.15,
+              "signal_floor_multiplier": 10,
+              "param_schedule": {
+                "params": [
+                  4,
+                  8,
+                  16,
+                  32,
+                  64,
+                  128,
+                  256,
+                  512
+                ],
+                "kind": "custom"
+              },
+              "param_floor": 0,
+              "param_ceiling": 1073741824,
+              "outer_trials": 3,
+              "narrow_range_noise_floor": 1.5,
+              "max_seconds_per_call": 10,
+              "cache_mode": "warm"
+            },
+            "complexity_formula": "n",
+            "c_min": 1155631.871094,
+            "c_max": 1263242.198242,
+            "budget_truncated": false,
+            "advisories": []
+          },
+          {
+            "verdict_dropped_leading": 1,
+            "verdict": "consistent_with_declared_complexity",
+            "trial_summaries": [
+              {
+                "relative_spread": 0.439074,
+                "param": 4,
+                "ok_count": 3,
+                "min_per_call_nanos": 4574912.40625,
+                "median_per_call_nanos": 4666005.726562,
+                "max_per_call_nanos": 6623633.265625
+              },
+              {
+                "relative_spread": 0.545804,
+                "param": 8,
+                "ok_count": 3,
+                "min_per_call_nanos": 9038777.695312,
+                "median_per_call_nanos": 9111782.585938,
+                "max_per_call_nanos": 14012025.640625
+              },
+              {
+                "relative_spread": 0.47597,
+                "param": 16,
+                "ok_count": 3,
+                "min_per_call_nanos": 18006972.96875,
+                "median_per_call_nanos": 18704726.1875,
+                "max_per_call_nanos": 26909856.453125
+              },
+              {
+                "relative_spread": 0.494501,
+                "param": 32,
+                "ok_count": 3,
+                "min_per_call_nanos": 35418185.71875,
+                "median_per_call_nanos": 35552077.8125,
+                "max_per_call_nanos": 52998731.375
+              },
+              {
+                "relative_spread": 0.457335,
+                "param": 64,
+                "ok_count": 3,
+                "min_per_call_nanos": 71921311.3125,
+                "median_per_call_nanos": 73000120.5625,
+                "max_per_call_nanos": 105306832.5625
+              },
+              {
+                "relative_spread": 0.017906,
+                "param": 128,
+                "ok_count": 3,
+                "min_per_call_nanos": 143911350.5,
+                "median_per_call_nanos": 146264392.75,
+                "max_per_call_nanos": 146530413.125
+              },
+              {
+                "relative_spread": 0.029156,
+                "param": 256,
+                "ok_count": 3,
+                "min_per_call_nanos": 288585499.75,
+                "median_per_call_nanos": 288622640.5,
+                "max_per_call_nanos": 297000509.5
+              },
+              {
+                "relative_spread": 0.021475,
+                "param": 512,
+                "ok_count": 3,
+                "min_per_call_nanos": 568602434.5,
+                "median_per_call_nanos": 578586679.5,
+                "max_per_call_nanos": 581027561
+              }
+            ],
+            "spawn_floor_nanos": 32393926,
+            "slope": -0.003501,
+            "ratios": [
+              [
+                4,
+                1166501.43164
+              ],
+              [
+                8,
+                1138972.823242
+              ],
+              [
+                16,
+                1169045.386719
+              ],
+              [
+                32,
+                1111002.431641
+              ],
+              [
+                64,
+                1140626.883789
+              ],
+              [
+                128,
+                1142690.568359
+              ],
+              [
+                256,
+                1127432.189453
+              ],
+              [
+                512,
+                1130052.108398
+              ]
+            ],
+            "points": [
+              {
+                "trial_index": 0,
+                "total_nanos": 1695650116,
+                "status": "ok",
+                "result_hash": "0x7fba22e5fb116364",
+                "per_call_nanos": 6623633.265625,
+                "peak_rss_kb": 68596,
+                "part_of_verdict": true,
+                "param": 4,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1793539282,
+                "status": "ok",
+                "result_hash": "0xe6af2347477f626a",
+                "per_call_nanos": 14012025.640625,
+                "peak_rss_kb": 68024,
+                "part_of_verdict": true,
+                "param": 8,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1722230813,
+                "status": "ok",
+                "result_hash": "0xc46fa39b152aa621",
+                "per_call_nanos": 26909856.453125,
+                "peak_rss_kb": 68604,
+                "part_of_verdict": true,
+                "param": 16,
+                "inner_repeats": 64,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1695959404,
+                "status": "ok",
+                "result_hash": "0x393a68e929aadd93",
+                "per_call_nanos": 52998731.375,
+                "peak_rss_kb": 68176,
+                "part_of_verdict": true,
+                "param": 32,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1684909321,
+                "status": "ok",
+                "result_hash": "0x7b5a73da8d32e3e3",
+                "per_call_nanos": 105306832.5625,
+                "peak_rss_kb": 68932,
+                "part_of_verdict": true,
+                "param": 64,
+                "inner_repeats": 16,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1172243305,
+                "status": "ok",
+                "result_hash": "0x155b1f9102e4b3c7",
+                "per_call_nanos": 146530413.125,
+                "peak_rss_kb": 70876,
+                "part_of_verdict": true,
+                "param": 128,
+                "inner_repeats": 8,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1154490562,
+                "status": "ok",
+                "result_hash": "0x2abbd13de4e9be83",
+                "per_call_nanos": 288622640.5,
+                "peak_rss_kb": 72404,
+                "part_of_verdict": true,
+                "param": 256,
+                "inner_repeats": 4,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 0,
+                "total_nanos": 1157173359,
+                "status": "ok",
+                "result_hash": "0xc640daa9db38426f",
+                "per_call_nanos": 578586679.5,
+                "peak_rss_kb": 79124,
+                "part_of_verdict": true,
+                "param": 512,
+                "inner_repeats": 2,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1194497466,
+                "status": "ok",
+                "result_hash": "0x7fba22e5fb116364",
+                "per_call_nanos": 4666005.726562,
+                "peak_rss_kb": 68172,
+                "part_of_verdict": true,
+                "param": 4,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1156963545,
+                "status": "ok",
+                "result_hash": "0xe6af2347477f626a",
+                "per_call_nanos": 9038777.695312,
+                "peak_rss_kb": 69004,
+                "part_of_verdict": true,
+                "param": 8,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1197102476,
+                "status": "ok",
+                "result_hash": "0xc46fa39b152aa621",
+                "per_call_nanos": 18704726.1875,
+                "peak_rss_kb": 68412,
+                "part_of_verdict": true,
+                "param": 16,
+                "inner_repeats": 64,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1137666490,
+                "status": "ok",
+                "result_hash": "0x393a68e929aadd93",
+                "per_call_nanos": 35552077.8125,
+                "peak_rss_kb": 68568,
+                "part_of_verdict": true,
+                "param": 32,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1150740981,
+                "status": "ok",
+                "result_hash": "0x7b5a73da8d32e3e3",
+                "per_call_nanos": 71921311.3125,
+                "peak_rss_kb": 68884,
+                "part_of_verdict": true,
+                "param": 64,
+                "inner_repeats": 16,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1151290804,
+                "status": "ok",
+                "result_hash": "0x155b1f9102e4b3c7",
+                "per_call_nanos": 143911350.5,
+                "peak_rss_kb": 70228,
+                "part_of_verdict": true,
+                "param": 128,
+                "inner_repeats": 8,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1154341999,
+                "status": "ok",
+                "result_hash": "0x2abbd13de4e9be83",
+                "per_call_nanos": 288585499.75,
+                "peak_rss_kb": 72388,
+                "part_of_verdict": true,
+                "param": 256,
+                "inner_repeats": 4,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 1,
+                "total_nanos": 1137204869,
+                "status": "ok",
+                "result_hash": "0xc640daa9db38426f",
+                "per_call_nanos": 568602434.5,
+                "peak_rss_kb": 78892,
+                "part_of_verdict": true,
+                "param": 512,
+                "inner_repeats": 2,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1171177576,
+                "status": "ok",
+                "result_hash": "0x7fba22e5fb116364",
+                "per_call_nanos": 4574912.40625,
+                "peak_rss_kb": 68120,
+                "part_of_verdict": true,
+                "param": 4,
+                "inner_repeats": 256,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1166308171,
+                "status": "ok",
+                "result_hash": "0xe6af2347477f626a",
+                "per_call_nanos": 9111782.585938,
+                "peak_rss_kb": 68772,
+                "part_of_verdict": true,
+                "param": 8,
+                "inner_repeats": 128,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1152446270,
+                "status": "ok",
+                "result_hash": "0xc46fa39b152aa621",
+                "per_call_nanos": 18006972.96875,
+                "peak_rss_kb": 68600,
+                "part_of_verdict": true,
+                "param": 16,
+                "inner_repeats": 64,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1133381943,
+                "status": "ok",
+                "result_hash": "0x393a68e929aadd93",
+                "per_call_nanos": 35418185.71875,
+                "peak_rss_kb": 68176,
+                "part_of_verdict": true,
+                "param": 32,
+                "inner_repeats": 32,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1168001929,
+                "status": "ok",
+                "result_hash": "0x7b5a73da8d32e3e3",
+                "per_call_nanos": 73000120.5625,
+                "peak_rss_kb": 68648,
+                "part_of_verdict": true,
+                "param": 64,
+                "inner_repeats": 16,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1170115142,
+                "status": "ok",
+                "result_hash": "0x155b1f9102e4b3c7",
+                "per_call_nanos": 146264392.75,
+                "peak_rss_kb": 70224,
+                "part_of_verdict": true,
+                "param": 128,
+                "inner_repeats": 8,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1188002038,
+                "status": "ok",
+                "result_hash": "0x2abbd13de4e9be83",
+                "per_call_nanos": 297000509.5,
+                "peak_rss_kb": 73028,
+                "part_of_verdict": true,
+                "param": 256,
+                "inner_repeats": 4,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              },
+              {
+                "trial_index": 2,
+                "total_nanos": 1162055122,
+                "status": "ok",
+                "result_hash": "0xc640daa9db38426f",
+                "per_call_nanos": 581027561,
+                "peak_rss_kb": 79336,
+                "part_of_verdict": true,
+                "param": 512,
+                "inner_repeats": 2,
+                "error": null,
+                "below_signal_floor": false,
+                "alloc_bytes": null
+              }
+            ],
+            "kind": "parametric",
+            "hashable": true,
+            "function": "Hex.RationalFnWorkloads.unbalancedSchoolbook",
+            "env": {
+              "timestamp_unix_ms": 1788788718190,
+              "timestamp_iso": "2026-09-07T13:45:18Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": false,
+              "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+              "exe_name": "hexrationalfn_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "verdict_warmup_fraction": 0.2,
+              "target_inner_nanos": 2000000000,
+              "slope_tolerance": 0.15,
+              "signal_floor_multiplier": 10,
+              "param_schedule": {
+                "params": [
+                  4,
+                  8,
+                  16,
+                  32,
+                  64,
+                  128,
+                  256,
+                  512
+                ],
+                "kind": "custom"
+              },
+              "param_floor": 0,
+              "param_ceiling": 1073741824,
+              "outer_trials": 3,
+              "narrow_range_noise_floor": 1.5,
+              "max_seconds_per_call": 10,
+              "cache_mode": "warm"
+            },
+            "complexity_formula": "n",
+            "c_min": 1111002.431641,
+            "c_max": 1169045.386719,
+            "budget_truncated": false,
+            "advisories": []
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1788788678771,
+          "timestamp_iso": "2026-09-07T13:44:38Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": false,
+          "git_commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+          "exe_name": "hexrationalfn_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    }
+  ]
+}

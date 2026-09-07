@@ -184,3 +184,33 @@ example : Nonempty (c5a ≃g petersenDrawing) := by graph_iso
 example : Nonempty (c5a ≃g c5b) := by graph_iso (maxSearchNodes := 0)
 
 end HexGraphIsoMathlib.TacticTests
+
+/-! # Automorphism proof dependencies -/
+
+/-- info: 'Hex.GraphIso.Aut.closure_eq_group' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Aut.closure_eq_group
+
+/-- info: 'Hex.GraphIso.Aut.numOrbits_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Aut.numOrbits_card
+
+/-- info: 'Hex.GraphIso.Aut.order_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Aut.order_card
+
+/-- info: 'Hex.GraphIso.Mathlib.autos_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Mathlib.autos_complete
+
+/-- info: 'Hex.GraphIso.Mathlib.autos_sameOrbit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Mathlib.autos_sameOrbit
+
+/-- info: 'Hex.GraphIso.Mathlib.autNumOrbits_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Mathlib.autNumOrbits_card
+
+/-- info: 'Hex.GraphIso.Mathlib.autOrder_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Mathlib.autOrder_card

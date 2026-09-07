@@ -757,7 +757,7 @@ theorem shortPairAtReceiver {G : Colored n k} {ctx : Ctx n}
     (hback : out.autos.back? = some (fix, mcr)) :
     PairOk ctx.g rsPtn rsLab level fix mcr := by
   cases hsource with
-  | explicit target sourceFix sourceMcr returned back valid =>
+  | explicit target sourceFix sourceMcr returned back valid _source =>
       have htargetBelow : target < level + 1 := by
         rw [returned] at hrBelow
         exact Int.ofNat_lt.mp hrBelow

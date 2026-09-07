@@ -315,21 +315,24 @@ theorem nodeShape_child {st : RefineSt n} {level tc e o : Nat}
   rw [cells_length_eq_bcount hpsz hend] at hdef
   omega
 
-/-- The node invariant descends through one subtree step. -/
-theorem subtreeOk_child {st : RefineSt n} {level tc e o : Nat}
-    (h : SubtreeOk ctx level st) (hlvl : level < n)
+/-- Individualization and refinement preserve the refined-state invariants
+and strictly increase the number of cells. No small-cell shape is needed. -/
+theorem refined_child {st : RefineSt n} {level tc e o : Nat}
+    (hit : IterOk ctx level st) (heqt : Equitable ctx level st.lab st.ptn)
+    (hcount : bcount st.ptn level n = st.numcells) (hlvl : level < n)
     (hsymm : ∀ u w, u < n → w < n →
       (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
     (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
     (ho : o ≤ e - tc) :
-    SubtreeOk ctx (level + 1)
-      (childSt ctx level st tc st.lab[tc + o]!) := by
-  have hpsz := h.it.ok.ptnSize
-  have hlsz := h.it.ok.labSize
-  have hend := h.it.ok.ptnEnd
+    let child := childSt ctx level st tc st.lab[tc + o]!
+    IterOk ctx (level + 1) child ∧ Equitable ctx (level + 1) child.lab child.ptn ∧
+      bcount child.ptn (level + 1) n = child.numcells ∧ st.numcells < child.numcells := by
+  dsimp only
+  have hpsz := hit.ok.ptnSize
+  have hlsz := hit.ok.labSize
+  have hend := hit.ok.ptnEnd
   have hen : e < n := target_end_lt hpsz hend hcell
-  refine ⟨iterOk_child h.it hlvl hcell hne ho, ?_, ?_,
-    nodeShape_child h.it hlvl hcell hne ho h.shape⟩
+  refine ⟨iterOk_child hit hlvl hcell hne ho, ?_, ?_⟩
   · show Equitable ctx (level + 1)
       (refine ctx (level + 1)
         (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
@@ -339,13 +342,13 @@ theorem subtreeOk_child {st : RefineSt n} {level tc e o : Nat}
         (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
         (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
         (st.numcells + 1)).ptn
-    exact equitable_breakout hlsz hpsz hend h.it.valsWeak
-      h.it.ok.labOk h.it.inj hsymm h.eqt hcell hne ho h.acc
+    exact equitable_breakout hlsz hpsz hend hit.valsWeak
+      hit.ok.labOk hit.inj hsymm heqt hcell hne ho hcount
   · -- the boundary count stays accurate
     have htcopen : st.ptn[tc]! > level :=
       target_open hpsz hend hcell tc (Nat.le_refl _) hne
     have hsplit := bcount_breakout_eq (ptn := st.ptn) (level := level)
-      (tc := tc) h.it.valsWeak htcopen (by omega) n
+      (tc := tc) hit.valsWeak htcopen (by omega) n
       (Nat.le_refl _)
     have hssz : (st.ptn.set! tc (level + 1)).size = n := by
       rw [Array.size_set!, hpsz]
@@ -371,18 +374,40 @@ theorem subtreeOk_child {st : RefineSt n} {level tc e o : Nat}
       (ptn := st.ptn.set! tc (level + 1))
       (active := VSet.empty.insert tc) (numcells := st.numcells + 1)
       (by rw [hssz]) hbsz hsend
-    have hacc := h.acc
-    show bcount (refine ctx (level + 1)
-        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
-        (st.numcells + 1)).ptn (level + 1) n =
-      (refine ctx (level + 1)
-        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
-        (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
-        (st.numcells + 1)).numcells
     rw [show (if tc < n then 1 else 0) = 1 from
       ite_eq_left (by omega)] at hsplit
+    have hacc : bcount (childSt ctx level st tc st.lab[tc + o]!).ptn (level + 1) n =
+        (childSt ctx level st tc st.lab[tc + o]!).numcells := by
+      change bcount (refine ctx (level + 1)
+          (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+          (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
+          (st.numcells + 1)).ptn (level + 1) n =
+        (refine ctx (level + 1)
+          (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1
+          (st.ptn.set! tc (level + 1)) (VSet.empty.insert tc)
+          (st.numcells + 1)).numcells
+      omega
+    refine ⟨hacc, ?_⟩
+    have hmono : bcount (st.ptn.set! tc (level + 1)) (level + 1) n ≤
+        bcount (childSt ctx level st tc st.lab[tc + o]!).ptn (level + 1) n := by
+      apply bcount_mono
+      intro q hq
+      show (refine ctx (level + 1) _ _ _ _).ptn[q]! ≤ level + 1
+      rw [refine_frozen (by rw [hssz]) hbsz hsend hq]
+      exact hq
     omega
+
+/-- The node invariant descends through one subtree step. -/
+theorem subtreeOk_child {st : RefineSt n} {level tc e o : Nat}
+    (h : SubtreeOk ctx level st) (hlvl : level < n)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hcell : (tc, e) ∈ cells st.ptn level n) (hne : tc < e)
+    (ho : o ≤ e - tc) :
+    SubtreeOk ctx (level + 1)
+      (childSt ctx level st tc st.lab[tc + o]!) := by
+  obtain ⟨hit, heqt, hcount, _⟩ := refined_child h.it h.eqt h.acc hlvl hsymm hcell hne ho
+  exact ⟨hit, heqt, hcount, nodeShape_child h.it hlvl hcell hne ho h.shape⟩
 
 /-- A descent recording its target-and-offset path. -/
 inductive DescPath (ctx : Ctx n) :

@@ -184,12 +184,12 @@ noncomputable instance : GetElem (Matrix R n m) Nat (Vector R m) (fun _ i => i <
 /-- The rows of a matrix as a vector of row-vectors, materialized from the flat
 buffer. The only sanctioned way to observe the full row data; `O(n * m)`. -/
 @[expose] def rows (M : Matrix R n m) : Vector (Vector R m) n :=
-  Vector.ofFn fun i => getRow M i
+  Hex.Vector.ofFn' fun i => getRow M i
 
 /-- Build a matrix from a vector of its rows, flattening into the row-major
 backing buffer. -/
 @[expose] def ofRows (v : Vector (Vector R m) n) : Matrix R n m :=
-  ⟨Vector.ofFn fun p : Fin (n * m) => (v[p.val / m]'(row_of_lt p))[p.val % m]'(col_of_lt p)⟩
+  ⟨Hex.Vector.ofFn' fun p : Fin (n * m) => (v[p.val / m]'(row_of_lt p))[p.val % m]'(col_of_lt p)⟩
 
 /-- Build a matrix from an entry function, filling the flat backing buffer. -/
 @[expose]
@@ -251,7 +251,7 @@ The statement observes rows, not the backing buffer, so it is representation-
 independent; the flat read behind it is `getElem_pair_data` below. -/
 @[simp] theorem getElem_pair_nat (M : Matrix R n m) (p : Nat × Nat)
     (h : p.1 < n ∧ p.2 < m) : M[p]'h = (M.rows[p.1]'h.1)[p.2]'h.2 := by
-  simp only [rows, Vector.getElem_ofFn, getElem_getRow_nat]
+  simp only [rows, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn, getElem_getRow_nat]
   rfl
 
 /-- The representation-level form of `getElem_pair_nat`: a `Nat`-pair entry
@@ -292,7 +292,7 @@ theorem ext_getElem {M N : Matrix R n m}
   apply Vector.ext
   intro j hj
   rw [getElem_getRow_nat]
-  simp only [ofRows, Vector.getElem_ofFn, flatIdx_div hj, flatIdx_mod hj, Fin.getElem_fin]
+  simp only [ofRows, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn, flatIdx_div hj, flatIdx_mod hj, Fin.getElem_fin]
 
 /-- Entry access for a matrix built from a vector of rows. -/
 @[grind =] theorem getElem_ofRows (v : Vector (Vector R m) n) (i : Fin n) (j : Fin m) :
@@ -302,7 +302,7 @@ theorem ext_getElem {M N : Matrix R n m}
 @[simp, grind =] theorem rows_ofRows (v : Vector (Vector R m) n) : (ofRows v).rows = v := by
   apply Vector.ext
   intro i hi
-  simp only [rows, Vector.getElem_ofFn]
+  simp only [rows, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
   exact getRow_ofRows v ⟨i, hi⟩
 
 /-- Two matrices are equal when their rows are equal. -/
@@ -312,7 +312,7 @@ theorem ext_getElem {M N : Matrix R n m}
   rw [getElem_eq_getRow, getElem_eq_getRow]
   have hrow : getRow M i = getRow N i := by
     have := congrArg (fun v => v[i.val]'(by simp) ) h
-    simpa only [rows, Vector.getElem_ofFn] using this
+    simpa only [rows, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn] using this
   rw [hrow]
 
 /-- The `i`-th row of a matrix. -/
@@ -328,7 +328,7 @@ def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
 /-- The `j`-th column of a matrix. -/
 @[expose]
 def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
-  Vector.ofFn fun i => M[(i, j)]
+  Hex.Vector.ofFn' fun i => M[(i, j)]
 
 /-- Entry access for a selected matrix column. -/
 @[grind =] theorem getElem_col (M : Matrix R n m) (j : Fin m) (i : Fin n) :
@@ -390,7 +390,7 @@ def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' 
 `Vector (Vector R m) n` observation and the flat accessor. -/
 @[simp] theorem getElem_rows (M : Matrix R n m) (i : Nat) (hi : i < n) :
     M.rows[i]'hi = getRow M ⟨i, hi⟩ := by
-  simp only [rows, Vector.getElem_ofFn]
+  simp only [rows, Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn]
 
 /-! # Scatter characterizations of the in-place row loops
 
@@ -680,7 +680,7 @@ instance [Sub R] : Sub (Matrix R n m) where
 @[expose]
 def mulVec [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (v : Vector R m) :
     Vector R n :=
-  Vector.ofFn fun i => (row M i).dotProduct v
+  Hex.Vector.ofFn' fun i => (row M i).dotProduct v
 
 /-- The `j`-th row of `transpose M` is the `j`-th column of `M`. -/
 @[simp, grind =] theorem row_transpose (M : Matrix R n m) (j : Fin m) :

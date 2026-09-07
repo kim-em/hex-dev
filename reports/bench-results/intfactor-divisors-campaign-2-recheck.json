@@ -1,0 +1,37 @@
+{
+  "command": [
+    "scripts/bench/intfactor_phase4.py",
+    "--audit-attempt",
+    "reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json",
+    "--output",
+    "reports/bench-results/intfactor-divisors-campaign-2-recheck.json"
+  ],
+  "commands": [],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619",
+  "hostname": "chungus2",
+  "ingestion_errors": {
+    "benchmark_export": "[Errno 2] No such file or directory: 'reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json.attempt/bench.json'",
+    "telemetry": "[Errno 2] No such file or directory: 'reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json.attempt/telemetry.json'"
+  },
+  "input_sha256": {
+    "reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json": "0c3db18017206ebf33915b8c46d46e82a17be8dbdb45289d38170655bbf067f5"
+  },
+  "original_attempt": "reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json",
+  "original_status": "rejected",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6",
+  "schema": "hex-int-factor-attempt/1",
+  "scientific_validation": {
+    "error": "'results'",
+    "error_type": "KeyError",
+    "status": "failed"
+  },
+  "scope": "divisor-recheck",
+  "started_ns": 1788786332039469634,
+  "status": "diagnostic",
+  "unavailable_raw_artifacts": [
+    "reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json.attempt/bench.json",
+    "reports/bench-results/intfactor-divisors-campaign-2-attempt-1.json.attempt/telemetry.json"
+  ],
+  "validator_sha256": "67b8c5fbdc7d277438842cf6f3a42bedecb3ae1b53149925beee57d446ac2dc0"
+}

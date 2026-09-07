@@ -157,13 +157,25 @@ values, one per generator, each an automorphism by the Mathlib-free
 `Hex.GraphIso.autos_isIso` composed with the decoder; `sameOrbit_of_autos`
 turns two vertices sharing an orbit representative into a
 colour-preserving self-isomorphism carrying one to the other. `autOrder`
-and `autNumOrbits` report the group order and the orbit count. Those two
-are computed numbers rather than theorems, for the reason given in
-[the Mathlib-free SPEC](../../HexGraphIso/SPEC/hex-graph-iso.md#automorphism-generators):
-that the returned generators generate the whole automorphism group is
-not proved, so nothing here states that `autOrder` is the cardinality of
-the automorphism group of the `SimpleGraph`. That statement, and a tactic
-producing it, follow the generation theorem rather than preceding it.
+and `autNumOrbits` report the group order and the orbit count.
+`autos_complete` proves that every `Colored.Iso G G` belongs to the subgroup
+closure of the returned list. `autos_sameOrbit` upgrades the orbit statement
+to a biconditional. `autOrder_card` identifies `autOrder e G` with
+`Nat.card (Colored.Iso G G)`, and `autNumOrbits_card` identifies the reported
+count with the cardinality of the full group's vertex-orbit quotient.
+`autEquiv` and `autOrbitEquiv` transport the executable group and orbit
+quotient across the finite encoding. The corresponding executable-graph
+statements are `Hex.GraphIso.Aut.closure_eq_group`, `Aut.numOrbits_card`, and
+`Aut.order_card`. All use the unchanged computational library; these proofs
+introduce no runtime certificate construction.
+
+The bridge supplies global `Group (Hex.GraphIso.Perm n)` and
+`MulAction (Hex.GraphIso.Perm n) (Fin n)` instances, with composition acting
+as forward permutation application, plus the simp lemmas `Perm.mul_get`
+and `Perm.one_get`. Its `Fintype (Perm n)` instance is noncomputable, for
+cardinality proofs; executable permutation enumeration must provide its
+own computable enumeration. `Colored.Iso G G` also has the corresponding
+group and vertex-action instances.
 
 These are ordinary theorems, not classical choice definitions hidden behind
 an executable-looking name. The compiled algorithm remains the one in

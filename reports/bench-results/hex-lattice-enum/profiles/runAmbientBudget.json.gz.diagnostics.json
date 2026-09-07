@@ -1,0 +1,155 @@
+{
+  "schema": 2,
+  "stage": "complete",
+  "confidence": "passed",
+  "low_confidence_reasons": [],
+  "bench_pid": 1941601,
+  "bench_thread_name": "hexlatticeenum_bench",
+  "bench_thread_tid": "1941741",
+  "regions_total": 2,
+  "total_timed_ms": 920.498712,
+  "expected_samples_bench_thread": 919.6,
+  "retained_samples_bench_thread": 909,
+  "rejected_samples_bench_thread": 25,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1788795857883785181,
+  "spawn_anchor_mono_ns": 20285066074512,
+  "sidecar_mono_anchor_ns": 20285290620662,
+  "samply_meta_start_time_ms": 1788795857885.2578,
+  "samply_timestamp_mode": "absolute-monotonic-ms",
+  "calibration_residual_ms": 1.380016002804041,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": "absolute-monotonic-ms",
+    "residual_ms": 1.380016002804041,
+    "raw_max_residual_ms": 1.8740389980375767,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": true,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 909,
+        "regions_without_samples": 0,
+        "boundary_residual_trimmed_max_ms": 1.380016002804041,
+        "boundary_residual_raw_max_ms": 1.8740389980375767,
+        "within_residual_limit": true
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 2,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": {
+    "shift_ms": 5.0,
+    "reported_top_function_count": 3,
+    "configured_max_total_variation_distance": 0.1,
+    "sampling_noise_coefficient": 0.6,
+    "minimum_comparison_samples": 100,
+    "maximum_sampling_noise_allowance": 0.5,
+    "verdict": "passed",
+    "leaf_function_distributions_stable": true,
+    "comparisons": {
+      "minus": {
+        "total_variation_distance": 0.005351197371392778,
+        "leaf_function_support_size": 206,
+        "comparison_samples": 906,
+        "exchanged_samples": 7,
+        "exchanged_fraction": 0.00772626931567329,
+        "sampling_noise_allowance": 0.03556482538303987,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      },
+      "plus": {
+        "total_variation_distance": 0.0021432760016089954,
+        "leaf_function_support_size": 205,
+        "comparison_samples": 908,
+        "exchanged_samples": 3,
+        "exchanged_fraction": 0.003303964757709251,
+        "sampling_noise_allowance": 0.023174904735793193,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      }
+    },
+    "cases": {
+      "minus": {
+        "shift_ms": -5.0,
+        "retained_samples": 906,
+        "top_leaf_functions": [
+          {
+            "function": 153,
+            "name": "0x4cd95b4",
+            "samples": 38
+          },
+          {
+            "function": 143,
+            "name": "0x4cd9632",
+            "samples": 35
+          },
+          {
+            "function": 179,
+            "name": "0xaef4b",
+            "samples": 35
+          }
+        ]
+      },
+      "nominal": {
+        "shift_ms": 0.0,
+        "retained_samples": 909,
+        "top_leaf_functions": [
+          {
+            "function": 153,
+            "name": "0x4cd95b4",
+            "samples": 38
+          },
+          {
+            "function": 179,
+            "name": "0xaef4b",
+            "samples": 37
+          },
+          {
+            "function": 143,
+            "name": "0x4cd9632",
+            "samples": 35
+          }
+        ]
+      },
+      "plus": {
+        "shift_ms": 5.0,
+        "retained_samples": 908,
+        "top_leaf_functions": [
+          {
+            "function": 153,
+            "name": "0x4cd95b4",
+            "samples": 38
+          },
+          {
+            "function": 179,
+            "name": "0xaef4b",
+            "samples": 37
+          },
+          {
+            "function": 143,
+            "name": "0x4cd9632",
+            "samples": 35
+          }
+        ]
+      }
+    }
+  }
+}

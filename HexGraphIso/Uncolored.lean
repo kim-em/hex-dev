@@ -234,7 +234,7 @@ theorem sameOrbit_singleColor_iff (G : Graph n) (u v : Fin n) (h : 0 < n) :
 
 /-- Generators of the automorphism group of a graph, with the vertex
 orbits, the orbit count and the orbit-stabilizer product for the group
-order, under the caveats of the coloured `Hex.GraphIso.autos`. -/
+order, with the guarantees of the coloured `Hex.GraphIso.autos`. -/
 @[expose] def autos (G : Graph n) (h : 0 < n := by first | decide | omega) :
     GraphIso.AutResult n :=
   GraphIso.autos (G.singleColor h)
@@ -254,11 +254,9 @@ theorem autos_orbits_lt (G : Graph n) (h : 0 < n) {v : Nat} (hv : v < n) :
     (autos G h).orbits[v]! < n :=
   GraphIso.autos_orbits_lt _ hv
 
-/-- Soundness of the orbits: vertices sharing a representative are
-carried onto each other by an automorphism. -/
-theorem autos_sameOrbit (G : Graph n) (h : 0 < n) (u v : Fin n)
-    (hu : (autos G h).orbits[u.val]! = (autos G h).orbits[v.val]!) :
-    SameOrbit G u v :=
-  (sameOrbit_singleColor_iff G u v h).mp (GraphIso.autos_sameOrbit _ u v hu)
+/-- Vertices sharing a reported representative lie in the same orbit. -/
+theorem autos_sameOrbit_of_eq (G : Graph n) (h : 0 < n) (u v : Fin n)
+    (hu : (autos G h).orbits[u.val]! = (autos G h).orbits[v.val]!) : SameOrbit G u v :=
+  (sameOrbit_singleColor_iff G u v h).mp (GraphIso.autos_sameOrbit_of_eq _ u v hu)
 
 end Hex.Graph

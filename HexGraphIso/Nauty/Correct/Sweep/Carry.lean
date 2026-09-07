@@ -208,9 +208,9 @@ theorem dominated_of_firstRun {G : Colored n k} (hn0 : n ≠ 0)
       exact (Option.some.inj (hread.trans exact)).symm
   | unwind target returned below sound payload located control =>
       cases payload with
-      | first anchor carrier =>
+      | first anchor carrier atFirst =>
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
-      | canon anchor carrier =>
+      | canon anchor carrier atCanon =>
           exact ((Nat.not_lt_of_ge anchor.positive) below).elim
       | orbit payload =>
           exact ((Nat.not_lt_of_ge payload.positive) below).elim

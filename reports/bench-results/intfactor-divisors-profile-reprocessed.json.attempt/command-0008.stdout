@@ -1,0 +1,8 @@
+{
+  "sample_count": 2981,
+  "origin_ns": 3014956270688924,
+  "residual_ns": 0,
+  "original_start_time_ms": 1788768940130.5796,
+  "corrected_start_time_ms": 1788767155812.9424,
+  "method": "all raw perf timestamps equal imported timestamps plus one offset; correct the common wall-clock origin"
+}

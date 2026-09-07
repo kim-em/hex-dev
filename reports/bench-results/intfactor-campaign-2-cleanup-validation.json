@@ -1,0 +1,45 @@
+{
+  "command": [
+    "-"
+  ],
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "scripts.bench.test_core_telemetry",
+        "scripts.bench.test_intfactor_phase4",
+        "scripts.profile.test_normalize_perf",
+        "scripts.profile.test_elf_symbols"
+      ],
+      "elapsed_nanos": 3820463889,
+      "ended_ns": 1788786276970312239,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 1,
+      "started_ns": 1788786273149257883,
+      "status": "failed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation.json.attempt/command-0000.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-cleanup-validation.json.attempt/command-0000.stdout",
+      "timeout_seconds": 120
+    }
+  ],
+  "commit": "b81bec66827f302e9aace29911ed3f791cfe9591",
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619",
+  "error": "Cleanup-test observer encountered ESRCH while reading an already exiting process; corrected in the following test revision.",
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6",
+  "schema": "hex-int-factor-attempt/1",
+  "scope": "integration-validation",
+  "source_sha256": {
+    "scripts/bench/core_telemetry.py": "645211d07ff14ae99dbe129573dcc64c148dcfad9e5d615c39f31f9721d3988a",
+    "scripts/bench/intfactor_phase4.py": "67b8c5fbdc7d277438842cf6f3a42bedecb3ae1b53149925beee57d446ac2dc0",
+    "scripts/bench/test_core_telemetry.py": "542d1148d1eb796869a1dcad44dec524cd37c9167ea6ae33a7524a0ff34ebf94",
+    "scripts/bench/test_intfactor_phase4.py": "97dcd09b65f2442caa2cb2c9b30c791c6d80899066cbdb5816c45d05c91e12f0"
+  },
+  "started_ns": 1788786273140403109,
+  "status": "rejected"
+}

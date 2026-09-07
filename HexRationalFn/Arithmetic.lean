@@ -215,6 +215,9 @@ theorem mulWith_eq (plan : MulPlan K) (f g : RationalFn K) : mulWith plan f g = 
 @[expose]
 def inv (f : RationalFn K) : RationalFn K :=
   if h : f.num = 0 then 0 else
+    if hm : f.num.leadingCoeff = 1 then
+      ofCoprime f.den f.num hm f.bezout.symm
+    else
     let c := f.num.leadingCoeff⁻¹
     have hc : c ≠ 0 := inv_ne_zero (leadingCoeff_ne_zero h)
     ofCoprime (scale c f.den) (scale c f.num)
@@ -228,8 +231,11 @@ theorem inv_spec (f : RationalFn K) (hf : f.num ≠ 0) :
     f⁻¹.num * f.num = f.den * f⁻¹.den := by
   change (inv f).num * f.num = f.den * (inv f).den
   simp only [inv, hf, ↓reduceDIte, ofCoprime]
-  rw [scale_eq_C_mul, scale_eq_C_mul]
-  grind
+  split
+  · rfl
+  · dsimp only
+    rw [scale_eq_C_mul, scale_eq_C_mul]
+    grind
 
 /-- Total inversion sends zero to zero. -/
 @[simp]

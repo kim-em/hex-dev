@@ -686,7 +686,7 @@ theorem Guide.firstLocated {ctx : Ctx n} {tcLevel level numcells : Nat}
   let anchor := g.anchorCell hgsz hinc hcell ho hat
   have hanchor : anchor.Located trail := by
     exact g.locateAnchorCell trail hentry hgsz hinc hcell ho hat
-  obtain ⟨hlab, _, _, _, hfirst, _, _, _, _⟩ :=
+  obtain ⟨hlab, _, _, _, hfirst, _, hguide, _, _⟩ :=
     processnode_frames ctx level numcells st
   have hout : LabelCarrier ctx
       (processnode ctx level numcells st).2.firstlab
@@ -694,7 +694,8 @@ theorem Guide.firstLocated {ctx : Ctx n} {tcLevel level numcells : Nat}
       (processnode ctx level numcells st).2.genTrace := by
     rw [hfirst, hlab]
     exact hcarrier
-  exact ⟨Unwind.first anchor hout, .first anchor hout hanchor⟩
+  have atFirst := Nat.le_of_eq hguide.symm
+  exact ⟨Unwind.first anchor hout atFirst, .first anchor hout atFirst hanchor⟩
 
 /-- A code-two admission at a reached active child has a located direct
 canonical unwind payload. -/
@@ -748,7 +749,8 @@ theorem Guide.canonLocated {ctx : Ctx n} {tcLevel level numcells : Nat}
       (processnode ctx level numcells st).2.genTrace := by
     rw [hcanon, hframes.1]
     exact hcarrier
-  exact ⟨Unwind.canon anchor hout, .canon anchor hout hanchor⟩
+  have atCanon := (processnode_rowTie_gcaCanon hef hnc hcc hge htie).symm
+  exact ⟨Unwind.canon anchor hout atCanon, .canon anchor hout atCanon hanchor⟩
 
 /-- A row-tied code-two event carries location evidence in both return
 arms: the canonical arm uses its stored guide, while the first-ancestor

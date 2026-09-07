@@ -751,37 +751,15 @@ Lean code must be written independently.
 
 ### Discrete logarithms
 
-The first `hex-discrete-log` implementation should use the finite-field
-multiplicative group. Once elliptic-curve subgroups are also consumers, expose
-an explicit lawful finite cyclic-group interface carrying equality,
-multiplication, inversion, exponentiation, a generator, and a supplied exact
-order. The finite-field implementation depends on `hex-gfq`, `hex-int-factor`,
-and `hex-modular`. The elliptic-curve instance later adds only
-`hex-elliptic-curve`. `hex-index-calculus` additionally consumes the planned
-sparse and black-box linear algebra.
-
-Implement Shanks baby-step giant-step as the deterministic first algorithm.
-Its table covers one factor of a rectangular decomposition of the supplied
-order, and its giant-step loop covers the other. Correctness proves soundness
-of every returned exponent and completeness for every target in the generated
-subgroup. The canonical result is the least nonnegative exponent modulo the
-exact generator order. If only an upper bound on the order is supplied, the
-result type must retain that weaker input and must not assert canonicality.
-
-Pohlig-Hellman follows in the same library and depends on `hex-int-factor`.
-For every prime-power factor of the group order, it performs digit lifting by
-small discrete logarithms and combines the residues with `hex-modular`.
-Correctness proves each lifted congruence, the CRT reconstruction, and equality
-with the original target. Completeness requires a certified complete
-factorization of the exact order. Partial factorization may reduce the
-remaining problem but cannot justify a final uniqueness claim.
-
-Pollard rho supplies a lower-memory Las Vegas search. A collision is useful
-only when the resulting linear congruence is solvable and the candidate passes
-the final exponentiation check. Exhausting the walk budget returns `none`.
-There is no functional theorem promising success for a chosen budget. A
-separate probabilistic analysis may bound expected collision time for an
-explicit random-walk model.
+The finite-field library is specified in
+[hex-discrete-log](Libraries/hex-discrete-log.md) and
+[hex-discrete-log-mathlib](Libraries/hex-discrete-log-mathlib.md). It provides
+complete baby-step giant-step, Pohlig-Hellman with certified order
+factorization, and bounded Pollard rho. Exact base order, canonical
+exponents, prepared tables and the distinction between nonmembership and
+exhaustion are explicit contracts. The computational algorithms use a small
+lawful commutative-group interface, with canonical finite-field adapters;
+elliptic-curve adapters can follow without changing those proofs.
 
 `hex-index-calculus` should target prime fields. It implements factor-base
 selection, relation collection by smoothness testing, sparse
@@ -1108,9 +1086,9 @@ within the stated bounds.
 ### Exact lattice search and geometry
 
 Exact ball enumeration and all shortest/closest vectors are specified in
-[hex-lattice-enum](Libraries/hex-lattice-enum.md), with correctness proofs and
+[hex-lattice-enum](../HexLatticeEnum/SPEC/hex-lattice-enum.md), with correctness proofs and
 integer-span and Euclidean-distance correspondence in
-[hex-lattice-enum-mathlib](Libraries/hex-lattice-enum-mathlib.md).
+[hex-lattice-enum-mathlib](../HexLatticeEnumMathlib/SPEC/hex-lattice-enum-mathlib.md).
 Successive minima remain an extension: they need an independence certificate
 at each threshold and a proof that no smaller radius contains the required
 number of independent vectors.

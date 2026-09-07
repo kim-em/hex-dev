@@ -27,8 +27,10 @@ namespace Hex.MvPoly
 
 universe u
 
-/-- Mathlib-free characteristic zero. -/
-class NatNoZero (R : Type u) [Zero R] [NatCast R] : Prop where
+attribute [local instance] Lean.Grind.Semiring.natCast
+
+/-- Mathlib-free characteristic zero for the coefficient ring's own natural cast. -/
+class NatNoZero (R : Type u) [Lean.Grind.CommRing R] : Prop where
   natCast_ne_zero : ∀ m : Nat, 0 < m → (m : R) ≠ 0
 
 instance instNatNoZeroInt : NatNoZero Int := by
@@ -153,8 +155,9 @@ variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
   [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
   [GcdProducer R]
 
-/-- All partial derivatives, in variable-index order. -/
-def derivatives [NatCast R] (p : MvPoly n R cmp) : List (MvPoly n R cmp) :=
+/-- All partial derivatives, in variable-index order, using the coefficient
+ring's natural cast. -/
+def derivatives (p : MvPoly n R cmp) : List (MvPoly n R cmp) :=
   (List.finRange n).map fun i => derivative i p
 
 /-- Merge one factor into the multiplicity-sorted accumulator, multiplying
@@ -279,7 +282,7 @@ private theorem sorted_merge_fold (entries acc : List (SqfFactor n R cmp))
 /-- One decreasing Yun layer in the selected main variable.  The fuel is the
 total degree of the primitive input plus one; in characteristic zero every
 nonterminal layer removes at least one degree from `b`. -/
-def yunLoop [NatCast R] [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
+def yunLoop [NatNoZero R] [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
     (b d : MvPoly n R cmp) (acc : List (SqfFactor n R cmp)) :
     List (SqfFactor n R cmp) :=
   match fuel with
@@ -295,7 +298,7 @@ def yunLoop [NatCast R] [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
         yunLoop i fuel (k + 1) nextB nextD acc
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem positive_yunLoop [NatCast R] [IsMonomialOrder cmp]
+private theorem positive_yunLoop [NatNoZero R] [IsMonomialOrder cmp]
     (i : Fin n) (fuel k : Nat) (b d : MvPoly n R cmp)
     (acc : List (SqfFactor n R cmp)) (hk : 0 < k)
     (hacc : PositiveMultiplicities acc) :
@@ -321,7 +324,7 @@ private def ReverseSortedMultiplicities
   factors.Pairwise fun left right => right.multiplicity < left.multiplicity
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem sorted_yunLoop [NatCast R] [IsMonomialOrder cmp]
+private theorem sorted_yunLoop [NatNoZero R] [IsMonomialOrder cmp]
     (i : Fin n) (fuel k : Nat) (b d : MvPoly n R cmp)
     (acc : List (SqfFactor n R cmp))
     (hbelow : MultiplicitiesBelow k acc)
@@ -520,7 +523,7 @@ def sqfBase : SqfOpsAt R 0 where
 
 /-- One recursive content split followed by Yun in a variable which occurs in
 the normalized primitive part. -/
-def sqfStep [NatCast R] {m : Nat} (lower : SqfOpsAt R m) :
+def sqfStep [NatNoZero R] {m : Nat} (lower : SqfOpsAt R m) :
     SqfOpsAt R (m + 1) where
   decomp := fun cmp _ p =>
     let split := sqfPrimitiveSplit p
@@ -550,12 +553,12 @@ def sqfStep [NatCast R] {m : Nat} (lower : SqfOpsAt R m) :
           ⟨scalar * coefficientDecomp.content, factors⟩
 
 /-- Construct squarefree decomposition recursively in the arity. -/
-def sqfOps [NatCast R] : (m : Nat) → SqfOpsAt R m
+def sqfOps [NatNoZero R] : (m : Nat) → SqfOpsAt R m
   | 0 => sqfBase
   | m + 1 => sqfStep (sqfOps m)
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem positive_sqfOps [NatCast R] (m : Nat)
+private theorem positive_sqfOps [NatNoZero R] (m : Nat)
     (order : Mono m → Mono m → Ordering) [IsMonomialOrder order]
     (p : MvPoly m R order) :
     PositiveMultiplicities ((sqfOps (R := R) m).decomp order p).factors := by
@@ -577,7 +580,7 @@ private theorem positive_sqfOps [NatCast R] (m : Nat)
               · simp [PositiveMultiplicities]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-private theorem sorted_sqfOps [NatCast R] (m : Nat)
+private theorem sorted_sqfOps [NatNoZero R] (m : Nat)
     (order : Mono m → Mono m → Ordering) [IsMonomialOrder order]
     (p : MvPoly m R order) :
     SortedMultiplicities ((sqfOps (R := R) m).decomp order p).factors := by
@@ -597,36 +600,36 @@ private theorem sorted_sqfOps [NatCast R] (m : Nat)
 
 /-- Characteristic-zero squarefree decomposition with recursive content and
 scalar content split off. -/
-def sqfDecomp [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+def sqfDecomp [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) : SqfDecomp n R cmp :=
   (sqfOps (R := R) n).decomp cmp p
 
 /-- Product of the distinct polynomial factors; scalar content is omitted. -/
-def radical [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+def radical [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) : MvPoly n R cmp :=
   let q := polyNormalize (primPart p)
   if q == 0 then 0
   else quotient q (gcdList (q :: derivatives q))
 
 /-- Exact Boolean squarefree decision under the relative CAS convention. -/
-def isSquarefree [IsMonomialOrder cmp] [NatCast R]
+def isSquarefree [IsMonomialOrder cmp]
     (p : MvPoly n R cmp) : Bool :=
   let q := primPart p
   polyIsUnit (gcdList (q :: derivatives q))
 
-theorem isSquarefree_iff [IsMonomialOrder cmp] [NatCast R]
+theorem isSquarefree_iff [IsMonomialOrder cmp]
     [Div R] [ExactDivLaws R] [Hex.Fraction.NonzeroOne R] [PerfectFrac R]
     (p : MvPoly n R cmp) :
     isSquarefree p = true ↔ Squarefree p := by
   sorry
 
-theorem radical_squarefree [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+theorem radical_squarefree [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) (hp : p ≠ 0) : Squarefree (radical p) := by
   sorry
 
 /-- The radical divides the original input, including its scalar content
 and normalization unit. -/
-theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+theorem radical_dvd [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) : radical p ∣ p := by
   let q := polyNormalize (primPart p)
   have hrestore : C (sqfPrimitiveSplit p).1 * q = p :=
@@ -655,12 +658,12 @@ theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
           mul_comm (gcdList _) (quotient ..), hquot]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
-@[simp] theorem radical_zero [IsMonomialOrder cmp] [NatCast R] [NatNoZero R] :
+@[simp] theorem radical_zero [IsMonomialOrder cmp] [NatNoZero R] :
     radical (0 : MvPoly n R cmp) = 0 := by
   simp [radical]
 
 /-- Multiplying the scalar and factor powers reconstructs the input. -/
-theorem sqfDecomp_prod [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+theorem sqfDecomp_prod [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) :
     (sqfDecomp p).factors.foldl
       (fun acc f => acc * f.factor ^ f.multiplicity)
@@ -668,17 +671,17 @@ theorem sqfDecomp_prod [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
   sorry
 
 /-- Every polynomial returned by square-free decomposition is square-free. -/
-theorem sqfDecomp_squarefree [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+theorem sqfDecomp_squarefree [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, Squarefree f.factor := by
   sorry
 
-theorem sqfDecomp_primitive [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+theorem sqfDecomp_primitive [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, content f.factor = 1 := by
   sorry
 
-theorem sqfDecomp_coprime [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
+theorem sqfDecomp_coprime [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, ∀ g ∈ (sqfDecomp p).factors,
       f.multiplicity ≠ g.multiplicity →
@@ -687,21 +690,21 @@ theorem sqfDecomp_coprime [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 theorem sqfDecomp_multiplicity_pos [IsMonomialOrder cmp]
-    [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
+    [NatNoZero R] (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, 0 < f.multiplicity := by
   simpa [sqfDecomp, PositiveMultiplicities] using
     positive_sqfOps (R := R) n cmp p
 
 omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 theorem sqfDecomp_multiplicity_sorted [IsMonomialOrder cmp]
-    [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
+    [NatNoZero R] (p : MvPoly n R cmp) :
     List.Pairwise (fun f g => f.multiplicity < g.multiplicity)
       (sqfDecomp p).factors := by
   simpa [sqfDecomp, SortedMultiplicities] using
     sorted_sqfOps (R := R) n cmp p
 
 theorem sqfDecomp_nonconstant [IsMonomialOrder cmp]
-    [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
+    [NatNoZero R] (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, ¬ IsConst f.factor := by
   sorry
 

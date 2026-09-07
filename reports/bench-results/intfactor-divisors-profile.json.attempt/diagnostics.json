@@ -1,0 +1,53 @@
+{
+  "schema": 2,
+  "stage": "calibration",
+  "confidence": "low",
+  "low_confidence_reasons": [
+    "no matching candidate samply timestamp calibration: {\"absolute-monotonic-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 3, \"within_residual_limit\": false}, \"relative-to-meta-start-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 3, \"within_residual_limit\": false}}"
+  ],
+  "bench_pid": 2445421,
+  "bench_thread_name": null,
+  "bench_thread_tid": null,
+  "regions_total": 3,
+  "total_timed_ms": 2911.306134,
+  "expected_samples_bench_thread": null,
+  "retained_samples_bench_thread": null,
+  "rejected_samples_bench_thread": null,
+  "off_bench_thread_samples_in_window": null,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1788767155779788745,
+  "spawn_anchor_mono_ns": 3014956237535180,
+  "sidecar_mono_anchor_ns": 3014956348148345,
+  "samply_meta_start_time_ms": 1788767158972.8015,
+  "samply_timestamp_mode": null,
+  "calibration_residual_ms": null,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": null,
+    "residual_ms": null,
+    "raw_max_residual_ms": null,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": false,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 3,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 3,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": null
+}

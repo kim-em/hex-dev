@@ -157,8 +157,9 @@ libraries:
   HexRationalFn:
     deps: [HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    proof_probes: [bench/HexRationalFn/ProofProbe]
     phase4:
       comparators:
         - tool: FLINT fmpz_poly_q via a persistent C driver
@@ -183,7 +184,7 @@ libraries:
     deps: [HexRationalFn, HexPolyMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 3
+    done_through: 4
     status: active
   HexMvPoly:
     deps: [HexPoly, HexBasic]
@@ -598,8 +599,8 @@ libraries:
   HexLatticeEnum:
     deps: [HexLLL, HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 7
+    status: active
     phase4:
       comparators:
         - tool: fplll shortest_vector and closest_vector
@@ -623,8 +624,9 @@ libraries:
   HexLatticeEnumMathlib:
     deps: [HexLatticeEnum, HexLLLMathlib, HexGramSchmidtMathlib, HexMatrixMathlib]
     mathlib: true
-    done_through: 0
-    status: planned
+    correspondence_only: true
+    done_through: 7
+    status: active
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
@@ -776,6 +778,41 @@ libraries:
           description: Generic GFq and packed GF2q constructor/projection paths at the deepest committed binary entry, GFq 2 8 and GF2q 8, on deterministic dense representatives.
         - name: odd-prime-constructor-projection
           description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the widest committed odd-prime entry, GFq 13 6, on deterministic dense representatives.
+  HexDiscreteLog:
+    deps: [HexBasic, HexGFq, HexIntFactor, HexModular]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: PARI/GP fflog and znlog via a persistent process
+          class: informational
+          rationale: PARI selects a broader generic and index-calculus portfolio and does not emit Lean certificates; compare matched finite-field presentations and separate setup from repeated queries.
+      input_families:
+        - name: bsgs-order
+          description: Exact subgroup order with members, nonmembers and clipped final rectangles.
+        - name: bsgs-memory
+          description: Baby width at fixed order, separating preparation and giant-step queries.
+        - name: repeated-targets
+          description: Fresh setup versus prepared queries with varied target count.
+        - name: field-representation
+          description: Field degree and coefficient width, with packed versus generic binary arithmetic.
+        - name: prime-power-digits
+          description: Prime digit order and lifting exponent varied separately with table reuse.
+        - name: smooth-orders
+          description: Order factorization shape and largest prime factor, comparing PH and BSGS.
+        - name: rho-walks
+          description: Prime and composite orders, fixed seeds, collisions, retries and exhaustion.
+        - name: order-certification
+          description: Exact-order checks and reduction from multiples with stored factorizations.
+        - name: certificate-replay
+          description: Positive and complete negative certificates, encoding and kernel replay.
+  HexDiscreteLogMathlib:
+    deps: [HexDiscreteLog, HexGFqMathlib, HexIntFactorMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL, HexPrimality]
     mathlib: false
@@ -818,7 +855,7 @@ libraries:
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
-    done_through: 7
+    done_through: 3  # Public divisors Phase-4 evidence is pending (#9619).
     status: active
     proof_probes: [bench/HexIntFactor/ProofProbe]
     phase4:
@@ -835,6 +872,8 @@ libraries:
           description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
         - name: certificate-replay-and-order
           description: Kernel-facing factorization replay and multiplicative-order computation.
+        - name: squarefree-divisor-enumeration
+          description: Public divisors on prechecked products of the first 6, 8, 10, 12, 14 and 15 table primes, with exact divisor counts 64 through 32768; generation, merge sort and array materialization under the two-sided tau log2 tau model.
         - name: generalized-divisor-sums
           description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
 
@@ -1018,7 +1057,7 @@ libraries:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 7
+    done_through: 3  # Public divisors Phase-4 evidence is pending (#9619).
     status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]

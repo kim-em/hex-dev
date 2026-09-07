@@ -434,14 +434,14 @@ theorem SweepCover.offPathUnwind {ctx : Ctx n}
   have hrange' : tc + len ≤ rsLab.size := by rwa [hs]
   have hoff : tc + offset < rsLab.size := by omega
   cases payload with
-  | first anchor carrier =>
+  | first anchor carrier atFirst =>
       cases hloc with
-      | first _ _ located =>
+      | first _ _ _ located =>
           exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
             hrange' hoff
-  | canon anchor carrier =>
+  | canon anchor carrier atCanon =>
       cases hloc with
-      | canon _ _ located =>
+      | canon _ _ _ located =>
           exact h.locatedAnchor hinc hnext anchor located hframe htv hinj
             hrange' hoff
   | orbit orbitPayload =>
@@ -462,18 +462,18 @@ theorem Unwind.Located.setFirst {trail : FrameTrail} {ctx : Ctx n}
   change ∃ payload' : Unwind ctx tcLevel target out' best,
     payload'.Located trail
   cases h with
-  | first anchor carrier located =>
+  | first anchor carrier atFirst located =>
       have carrier' : LabelCarrier ctx out'.firstlab out'.lab
           out'.genTrace := by
         simpa only [out'] using carrier
-      refine ⟨Unwind.first anchor carrier', ?_⟩
-      exact Unwind.Located.first anchor carrier' located
-  | canon anchor carrier located =>
+      refine ⟨Unwind.first anchor carrier' hbound, ?_⟩
+      exact Unwind.Located.first anchor carrier' hbound located
+  | canon anchor carrier atCanon located =>
       have carrier' : LabelCarrier ctx out'.canonlab out'.lab
           out'.genTrace := by
         simpa only [out'] using carrier
-      refine ⟨Unwind.canon anchor carrier', ?_⟩
-      exact Unwind.Located.canon anchor carrier' located
+      refine ⟨Unwind.canon anchor carrier' atCanon, ?_⟩
+      exact Unwind.Located.canon anchor carrier' atCanon located
   | orbit orbitPayload =>
       let orbitPayload' : OrbitUnwind ctx target out' := {
         positive := orbitPayload.positive
@@ -496,18 +496,18 @@ theorem Unwind.Located.setFixed {trail : FrameTrail} {ctx : Ctx n}
   change ∃ payload' : Unwind ctx tcLevel target out' best,
     payload'.Located trail
   cases h with
-  | first anchor carrier located =>
+  | first anchor carrier atFirst located =>
       have carrier' : LabelCarrier ctx out'.firstlab out'.lab
           out'.genTrace := by
         simpa only [out'] using carrier
-      refine ⟨Unwind.first anchor carrier', ?_⟩
-      exact Unwind.Located.first anchor carrier' located
-  | canon anchor carrier located =>
+      refine ⟨Unwind.first anchor carrier' atFirst, ?_⟩
+      exact Unwind.Located.first anchor carrier' atFirst located
+  | canon anchor carrier atCanon located =>
       have carrier' : LabelCarrier ctx out'.canonlab out'.lab
           out'.genTrace := by
         simpa only [out'] using carrier
-      refine ⟨Unwind.canon anchor carrier', ?_⟩
-      exact Unwind.Located.canon anchor carrier' located
+      refine ⟨Unwind.canon anchor carrier' atCanon, ?_⟩
+      exact Unwind.Located.canon anchor carrier' atCanon located
   | orbit orbitPayload =>
       let orbitPayload' : OrbitUnwind ctx target out' := {
         positive := orbitPayload.positive
@@ -914,14 +914,18 @@ theorem Unwind.Located.firstFinish {ctx : Ctx n}
     (payload.firstFinish (level := level) (size := size)
       (index := index)).Located trail := by
   cases h with
-  | first anchor carrier located =>
+  | first anchor carrier atFirst located =>
       exact Unwind.Located.first anchor (by
         rw [Nauty.firstFinish]
-        split <;> exact carrier) located
-  | canon anchor carrier located =>
+        split <;> exact carrier) (by
+        rw [Nauty.firstFinish]
+        split <;> exact atFirst) located
+  | canon anchor carrier atCanon located =>
       exact Unwind.Located.canon anchor (by
         rw [Nauty.firstFinish]
-        split <;> exact carrier) located
+        split <;> exact carrier) (by
+        rw [Nauty.firstFinish]
+        split <;> exact atCanon) located
   | orbit orbitPayload =>
       exact .orbit {
         positive := orbitPayload.positive

@@ -96,6 +96,12 @@ theorem shift_shift (k l : Nat) (p : DensePoly R) :
       have hidx : i - k - l = i - (k + l) := by omega
       simp [hi, hil, hisum, hidx]
 
+/-- Shifting distributes over polynomial addition. -/
+theorem shift_add (k : Nat) (p q : DensePoly R) :
+    shift k (p + q) = shift k p + shift k q := by
+  simp only [← monomial_one_mul_poly_eq_shift]
+  exact mul_add_right_poly _ _ _
+
 /-- A shifted left factor shifts the product. -/
 theorem shift_mul (k : Nat) (p q : DensePoly R) :
     shift k p * q = shift k (p * q) := by
@@ -236,27 +242,125 @@ def addShift (offset : Nat) (a b : Array R) : Array R :=
   Array.ofFn (n := max a.size (offset + b.size)) fun i =>
     a.getD i 0 + if offset ≤ i then b.getD (i - offset) 0 else 0
 
+private def addAtStep (offset : Nat) (b acc : Array R) (i : Nat) : Array R :=
+  acc.set! (offset + i) (acc.getD (offset + i) 0 + b.getD i 0)
+
+/-- Visit the block support without allocating an index list. -/
+private def addAtLoop (offset : Nat) (b : Array R) : Nat → Nat → Array R → Array R
+  | _, 0, acc => acc
+  | i, count + 1, acc =>
+      addAtLoop offset b (i + 1) count (addAtStep offset b acc i)
+
+omit [DecidableEq R] in
+private theorem addAtLoop_eq (offset : Nat) (b : Array R) (count : Nat) :
+    ∀ i acc, addAtLoop offset b i count acc =
+      (List.range' i count).foldl (addAtStep offset b) acc := by
+  induction count with
+  | zero => intros; rfl
+  | succ count ih =>
+      intro i acc
+      rw [addAtLoop, List.range'_succ, List.foldl_cons]
+      exact ih _ _
+
+/-- Accumulate only the shifted block support. The undersized-buffer branch
+grows the array without dropping coefficients, preserving unrestricted inputs. -/
+def addAt (offset : Nat) (acc b : Array R) : Array R :=
+  if offset + b.size ≤ acc.size then
+    addAtLoop offset b 0 b.size acc
+  else addShift offset acc b
+
+omit [DecidableEq R] in
+private theorem size_addAtSteps (offset : Nat) (b : Array R)
+    (xs : List Nat) (acc : Array R) :
+    (xs.foldl (addAtStep offset b) acc).size = acc.size := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons i xs ih => simp [List.foldl_cons, ih, addAtStep]
+
+omit [DecidableEq R] in
+private theorem getD_set_add (a : Array R) (j : Nat) (c : R)
+    (hj : j < a.size) (i : Nat) :
+    (a.set! j (a.getD j 0 + c)).getD i 0 =
+      a.getD i 0 + if i = j then c else 0 := by
+  by_cases hi : i = j
+  · subst i
+    simp [Array.getD, hj]
+  · by_cases hia : i < a.size
+    · simp [Array.getD, Array.set!_eq_setIfInBounds, hj, hia, hi,
+        Ne.symm hi, Lean.Grind.Semiring.add_zero]
+    · simp [Array.getD, Array.set!_eq_setIfInBounds, hia, hi,
+        Lean.Grind.Semiring.add_zero]
+
+omit [DecidableEq R] in
+private theorem getD_addAtSteps (offset : Nat) (b : Array R)
+    (n : Nat) (acc : Array R) (hcap : offset + n ≤ acc.size) (i : Nat) :
+    ((List.range n).foldl (addAtStep offset b) acc).getD i 0 =
+      acc.getD i 0 + if offset ≤ i ∧ i < offset + n then b.getD (i - offset) 0 else 0 := by
+  induction n with
+  | zero =>
+    have h : ¬(offset ≤ i ∧ i < offset) := by omega
+    simp [h, Lean.Grind.Semiring.add_zero]
+  | succ n ih =>
+    rw [List.range_succ, List.foldl_append]
+    simp only [List.foldl_cons, List.foldl_nil, addAtStep]
+    rw [getD_set_add _ _ _ (by rw [size_addAtSteps]; omega), ih (by omega)]
+    by_cases hi : i = offset + n
+    · subst i
+      simp [Lean.Grind.Semiring.add_zero]
+    · have hiff : (offset ≤ i ∧ i < offset + (n + 1)) ↔
+          (offset ≤ i ∧ i < offset + n) := by omega
+      simp [hi, hiff, Lean.Grind.Semiring.add_zero]
+
+omit [DecidableEq R] in
+private theorem addAt_eq_addShift (offset : Nat) (acc b : Array R) :
+    addAt offset acc b = addShift offset acc b := by
+  unfold addAt
+  split
+  · rename_i hcap
+    rw [addAtLoop_eq, ← List.range_eq_range']
+    have hsize := size_addAtSteps offset b (List.range b.size) acc
+    apply Array.ext
+    · simp [hsize, addShift, Nat.max_eq_left hcap]
+    · intro i h₁ h₂
+      have h := getD_addAtSteps offset b b.size acc hcap i
+      have hi : i < acc.size := by omega
+      have hright : i < max acc.size (offset + b.size) := by omega
+      by_cases hoff : offset ≤ i
+      · by_cases hib : i - offset < b.size
+        · have hbound : i < offset + b.size := by omega
+          simpa [Array.getD, addShift, h₁, hi, hoff, hib, hbound] using h
+        · have hbound : ¬i < offset + b.size := by omega
+          simpa [Array.getD, addShift, h₁, hi, hoff, hib, hbound] using h
+      · simpa [Array.getD, addShift, h₁, hi, hoff] using h
+  · rfl
+
 /-- A raw coefficient segment, copied directly from the source array. -/
 private def segment (offset len : Nat) (a : Array R) : Array R :=
   Array.ofFn (n := min len (a.size - offset)) fun i => a.getD (offset + i) 0
 
 /-- Fuelled unbalanced block multiplication from an offset in the long operand. -/
-private def blocksFrom (cutoff blockSize : Nat) :
-    Nat → Nat → Array R → Array R → Array R
-  | 0, offset, long, short =>
-      let tail := segment offset long.size long
-      mulAux cutoff (max tail.size short.size) tail short
-  | fuel + 1, offset, long, short =>
-      if long.size ≤ offset then #[]
+private def blocksInto (cutoff blockSize : Nat) :
+    Nat → Nat → Array R → Array R → Array R → Array R
+  | 0, offset, acc, long, short =>
+      if long.size ≤ offset then acc
+      else
+        let tail := segment offset long.size long
+        addAt offset acc (mulAux cutoff (max tail.size short.size) tail short)
+  | fuel + 1, offset, acc, long, short =>
+      if long.size ≤ offset then acc
       else
         let head := segment offset blockSize long
-        addShift blockSize
-          (mulAux cutoff (max head.size short.size) head short)
-          (blocksFrom cutoff blockSize fuel (offset + blockSize) long short)
+        blocksInto cutoff blockSize fuel (offset + blockSize)
+          (addAt offset acc (mulAux cutoff (max head.size short.size) head short)) long short
 
-/-- Fuelled unbalanced block multiplication over raw arrays. -/
+/-- Fuelled unbalanced block multiplication over raw arrays. For ordinary
+block dispatch, each raw product has size at most twice the short length minus
+one, including recursive padding. Since every visited offset is below the long
+length, this buffer contains every shifted block support. The growing fallback
+in `addAt` also handles unrestricted block sizes and prematurely exhausted fuel. -/
 def blocks (cutoff blockSize fuel : Nat) (long short : Array R) : Array R :=
-  blocksFrom cutoff blockSize fuel 0 long short
+  blocksInto cutoff blockSize fuel 0
+    (Array.replicate (long.size + 2 * max (min blockSize long.size) short.size + 1) 0) long short
 
 /-- A clipped raw schoolbook product. -/
 def schoolbookSlice (lo len : Nat) (a b : Array R) : Array R :=
@@ -735,28 +839,30 @@ theorem ofCoeffs_squareAux (cutoff fuel : Nat) (a : Array R) :
         rw [karatsuba_combine, low_add_shift_high]
 
 /-- Raw block recursion from an offset represents the remaining dense product. -/
-private theorem ofCoeffs_blocksFrom (cutoff blockSize fuel offset : Nat)
-    (long short : Array R) :
-    (ofCoeffs (blocksFrom cutoff blockSize fuel offset long short) : DensePoly R) =
-      ofCoeffs (high offset long) * ofCoeffs short := by
-  induction fuel generalizing offset with
+private theorem ofCoeffs_blocksInto (cutoff blockSize fuel offset : Nat)
+    (acc long short : Array R) :
+    (ofCoeffs (blocksInto cutoff blockSize fuel offset acc long short) : DensePoly R) =
+      ofCoeffs acc + shift offset (ofCoeffs (high offset long) * ofCoeffs short) := by
+  have hempty (offset : Nat) (h : long.size ≤ offset) :
+      (ofCoeffs (high offset long) : DensePoly R) = 0 := by
+    apply (size_eq_zero_iff (ofCoeffs (high offset long) : DensePoly R)).mp
+    exact Nat.le_antisymm
+      (Nat.le_trans (size_ofCoeffs_le (high offset long)) (by simp [high]; omega))
+      (Nat.zero_le _)
+  induction fuel generalizing offset acc with
   | zero =>
-      rw [blocksFrom, ofCoeffs_mulAux, segment_to_end]
-  | succ fuel ih =>
-      rw [blocksFrom]
+      rw [blocksInto]
       split
-      · rename_i hempty
-        have hhigh : (ofCoeffs (high offset long) : DensePoly R) = 0 := by
-          apply (size_eq_zero_iff (ofCoeffs (high offset long) : DensePoly R)).mp
-          exact Nat.le_antisymm
-            (Nat.le_trans (size_ofCoeffs_le (high offset long)) (by
-              simp [high]
-              omega))
-            (Nat.zero_le _)
-        rw [hhigh, zero_mul]
-        rfl
-      · rw [ofCoeffs_addShift, ofCoeffs_mulAux, ih,
-          segment_eq_low_high, ← high_high, ofCoeffs_low, ofCoeffs_high,
+      · rw [hempty _ ‹_›, zero_mul, shift_zero_right, add_zero_poly]
+      · rw [addAt_eq_addShift, ofCoeffs_addShift, ofCoeffs_mulAux, segment_to_end]
+  | succ fuel ih =>
+      rw [blocksInto]
+      split
+      · rw [hempty _ ‹_›, zero_mul, shift_zero_right, add_zero_poly]
+      · rw [ih, addAt_eq_addShift, ofCoeffs_addShift, ofCoeffs_mulAux,
+          add_assoc_poly, ← shift_shift, ← shift_add]
+        congr 1
+        rw [segment_eq_low_high, ← high_high, ofCoeffs_low, ofCoeffs_high,
           ofCoeffs_high, ofCoeffs_high, ← shift_mul,
           ← mul_add_left_poly, low_add_shift_high]
 
@@ -765,7 +871,11 @@ theorem ofCoeffs_blocks (cutoff blockSize fuel : Nat) (long short : Array R) :
     (ofCoeffs (blocks cutoff blockSize fuel long short) : DensePoly R) =
       ofCoeffs long * ofCoeffs short := by
   unfold blocks
-  rw [ofCoeffs_blocksFrom, high_zero]
+  rw [ofCoeffs_blocksInto, high_zero, shift_zero_left]
+  have hrep : (ofCoeffs (Array.replicate
+      (long.size + 2 * max (min blockSize long.size) short.size + 1) (0 : R)) :
+      DensePoly R) = 0 := ofCoeffs_replicate_zero _
+  rw [hrep, zero_add]
 
 end Karatsuba.Raw
 
@@ -945,7 +1055,7 @@ theorem karatsubaBlocks_csimp : @karatsubaBlocks = @karatsubaBlocksImpl := by
 /-- Full Karatsuba multiplication.  Strongly skewed operands are processed in
 blocks near the shorter size rather than padded to the longer size. -/
 def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
-  if a.size = 0 || b.size = 0 then
+  if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
     mulImpl a b
   else if 2 * b.size < a.size then
     karatsubaBlocks cutoff b.size a.size a b

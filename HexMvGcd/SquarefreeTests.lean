@@ -11,10 +11,15 @@ public meta import HexMvGcd.Prs
 public meta import HexMvGcd.Squarefree
 public meta import HexMvPoly.Ring
 public import HexMvGcd.Squarefree
+import all HexMvGcd.Squarefree
+import all HexMvPoly.Structural
+import all HexMvPoly.Basic
+import all HexMvPoly.Ring
+import all HexMvPoly.Query
 
 public section
 
-/-! Focused finite-field squarefree decision regressions. -/
+/-! Squarefree decisions and coefficient-cast coherence regressions. -/
 
 namespace Hex.MvPoly
 
@@ -60,5 +65,131 @@ example (p : F3P1) : isSquarefree p = true ↔ Squarefree p :=
 #guard
   let x : F3P1 := X 0
   !isSquarefree (x ^ 3 + 1)
+
+namespace CastTests
+
+section Generic
+
+variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
+  [BEq R] [LawfulBEq R] [Dvd R] [BezoutOps R] [GcdProducer R]
+  {n : Nat} {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
+
+omit [BEq R] [LawfulBEq R] [Dvd R] [BezoutOps R] [GcdProducer R] in
+/-- An unrelated cast in the caller's scope cannot change differentiation. -/
+theorem derivatives_cast (cast : NatCast R) (p : MvPoly n R cmp) :
+    (letI : NatCast R := cast; derivatives p) = derivatives p := by
+  rfl
+
+/-- An unrelated cast cannot change the decision, radical, or decomposition. -/
+theorem squarefree_cast [NatNoZero R] (cast : NatCast R) (p : MvPoly n R cmp) :
+    (letI : NatCast R := cast; (isSquarefree p, radical p, sqfDecomp p)) =
+      (isSquarefree p, radical p, sqfDecomp p) := by
+  rfl
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [Dvd R] [BezoutOps R]
+    [GcdProducer R] in
+/-- Characteristic zero refers to the ring's cast even under local shadowing. -/
+theorem characteristic_cast [NatNoZero R] (cast : NatCast R) :
+    letI : NatCast R := cast
+    NatNoZero R := by
+  infer_instance
+
+end Generic
+
+/- The shadowing casts below are deliberately inert for the squarefree API.
+These checks must keep compiling and evaluating identically with them in scope. -/
+@[expose, instance_reducible] def badIntCast : NatCast Int := ⟨fun _ => 1⟩
+@[expose, instance_reducible] def badRatCast : NatCast Rat := ⟨fun _ => 1⟩
+
+abbrev P := MvPoly 1 Int Mono.lex
+abbrev Q := MvPoly 1 Rat Mono.lex
+
+@[expose] def repeated : P := (X 0 + 1) * (X 0 + 1)
+
+/-- The low-level derivative accepts a caller-selected cast. -/
+theorem explicit_derivative :
+    (letI : NatCast Int := badIntCast; derivative 0 repeated) = (X 0 + C 2 : P) := by
+  decide +kernel
+
+/-- Squarefree replay fixes the derivative's cast to the ring operations. -/
+theorem ring_derivatives :
+    (letI : NatCast Int := badIntCast; derivatives repeated) =
+      [C 2 * X 0 + C 2] := by
+  decide +kernel
+
+/-- The repeated nonconstant divisor witnesses semantic failure of squarefreeness. -/
+theorem not_squarefree : ¬ Squarefree repeated := by
+  intro h
+  have hd : (X 0 + 1 : P) * (X 0 + 1) ∣ repeated :=
+    ⟨1, by simp only [repeated, one_mul]⟩
+  have hc := h.2 (X 0 + 1) hd
+  have hn : ¬ IsConst (X 0 + 1 : P) := by
+    change (X 0 + 1 : P).vars ≠ []
+    decide +kernel
+  exact hn hc
+
+#guard
+  letI : NatCast Int := badIntCast
+  !isSquarefree repeated && radical repeated == (X 0 + 1 : P)
+
+#guard
+  letI : NatCast Int := badIntCast
+  let decomp := sqfDecomp repeated
+  decomp.content == 1 && decomp.factors.length == 1 &&
+    decomp.factors.all (fun f => f.factor == (X 0 + 1 : P) && f.multiplicity == 2)
+
+#guard
+  letI : NatCast Rat := badRatCast
+  let p : Q := C (3 / 2) * ((X 0 + 1 : Q) ^ 3)
+  let decomp := sqfDecomp p
+  !isSquarefree p && radical p == (X 0 + 1 : Q) &&
+    decomp.content == 3 / 2 && decomp.factors.length == 1 &&
+    decomp.factors.all (fun f => f.factor == (X 0 + 1 : Q) && f.multiplicity == 3)
+
+#guard
+  letI : NatCast Int := badIntCast
+  !isSquarefree (0 : P) && radical (0 : P) == 0 &&
+    isSquarefree (C 6 : P) && radical (C 6 : P) == 1 &&
+    (sqfDecomp (C 6 : P)).content == 6 && (sqfDecomp (C 6 : P)).factors.isEmpty
+
+#guard
+  letI : NatCast (ZMod64 3) := ⟨fun _ => 1⟩
+  let x : F3P1 := X 0
+  !isSquarefree (x ^ 3 + 1) && isSquarefree (x * (x + 1))
+
+/-- A nonzero but unrelated cast cannot certify characteristic zero in F₃. -/
+theorem no_characteristic_zero [ZMod64.Bounds 3] [ZMod64.PrimeModulus 3] :
+    letI : NatCast (ZMod64 3) := ⟨fun _ => 1⟩
+    ¬ NatNoZero (ZMod64 3) := by
+  intro h
+  have hn := h.natCast_ne_zero 3 (by decide)
+  exact hn (ZMod64.natCast_self (p := 3))
+
+-- Direct decomposition helpers also reject positive characteristic, even
+-- when an unrelated cast sends every natural to a nonzero coefficient.
+example : True := by
+  letI : NatCast (ZMod64 3) := ⟨fun _ => 1⟩
+  fail_if_success have _ := sqfOps (R := ZMod64 3) 1
+  fail_if_success have _ := sqfStep (R := ZMod64 3) sqfBase
+  fail_if_success have _ := yunLoop (R := ZMod64 3) (cmp := Mono.lex) (n := 1) 0 1 1 1 0 []
+  trivial
+
+/-- info: 'Hex.MvPoly.CastTests.squarefree_cast' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms squarefree_cast
+
+/-- info: 'Hex.MvPoly.CastTests.ring_derivatives' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ring_derivatives
+
+/-- info: 'Hex.MvPoly.CastTests.not_squarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms not_squarefree
+
+/-- info: 'Hex.MvPoly.CastTests.no_characteristic_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms no_characteristic_zero
+
+end CastTests
 
 end Hex.MvPoly

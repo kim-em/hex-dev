@@ -46,7 +46,14 @@ def discover_conformance_imports(root: Path) -> list[str]:
     """Library names whose Conformance module is built by the `HexConformance`
     lean_lib in ``lakefile.lean`` (parsed from its ``globs`` list)."""
     text = (root / "lakefile.lean").read_text(encoding="utf-8")
-    return sorted({m.group(1) for m in CONFORMANCE_GLOB_RE.finditer(text)})
+    declaration = re.search(
+        r"^lean_lib HexConformance where\n(.*?)(?=^(?:lean_lib|lean_exe|extern_lib|target|package|require)\b|\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if declaration is None:
+        return []
+    return sorted({m.group(1) for m in CONFORMANCE_GLOB_RE.finditer(declaration.group(1))})
 
 
 def diagnose(root: Path) -> tuple[list[str], list[str], list[str]]:

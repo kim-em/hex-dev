@@ -434,7 +434,7 @@ theorem atReceiver {G : Colored n k} {ctx : Ctx n}
   have hrBelow : r < Int.ofNat (level + 1) :=
     hexit.below (by omega)
   cases hsource with
-  | explicit target sourceFix sourceMcr returned back valid =>
+  | explicit target sourceFix sourceMcr returned back valid _source =>
       have htargetBelow : target < level + 1 := by
         rw [returned] at hrBelow
         exact Int.ofNat_lt.mp hrBelow

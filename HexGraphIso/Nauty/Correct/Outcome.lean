@@ -982,6 +982,7 @@ structure OrbitUnwind (ctx : Ctx n) (target : Nat) (out : SearchSt n) : Prop whe
 
 /-- The evidence carried by a generator unwind.  Code one and the
 ordinary code-two return retain their different reference labellings.
+The canonical constructor also retains its exact return guide.
 Code two's special `gcaFirst` return retains the sound orbit pointer that
 selected an earlier child.  Non-generator pruning instead returns a
 locally complete maximum and therefore has its own result constructor. -/
@@ -989,8 +990,10 @@ inductive Unwind (ctx : Ctx n) (tcLevel target : Nat)
     (out : SearchSt n) (best : Option (Key n)) where
   | first (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
+      (atFirst : target ≤ out.gcaFirst)
   | canon (anchor : Anchor ctx tcLevel target best)
       (carrier : LabelCarrier ctx out.canonlab out.lab out.genTrace)
+      (atCanon : target = out.gcaCanon)
   | orbit (payload : OrbitUnwind ctx target out)
 
 /-- Updating the first-path return controls changes none of the fields
@@ -1001,8 +1004,8 @@ carried by a generator unwind. -/
     Unwind ctx tcLevel target
       { out with gcaFirst := gcaFirst, stabvertex := stabvertex } best := by
   cases h with
-  | first anchor carrier => exact .first anchor carrier
-  | canon anchor carrier => exact .canon anchor carrier
+  | first anchor carrier atFirst => exact .first anchor carrier hbound
+  | canon anchor carrier atCanon => exact .canon anchor carrier atCanon
   | orbit payload =>
       apply Unwind.orbit
       refine ⟨?_, ?_, ?_, ?_, ?_⟩
@@ -1019,8 +1022,8 @@ carried by a generator unwind. -/
     (fixedpts : VSet n) :
     Unwind ctx tcLevel target { out with fixedpts := fixedpts } best := by
   cases h with
-  | first anchor carrier => exact .first anchor carrier
-  | canon anchor carrier => exact .canon anchor carrier
+  | first anchor carrier atFirst => exact .first anchor carrier atFirst
+  | canon anchor carrier atCanon => exact .canon anchor carrier atCanon
   | orbit payload =>
       apply Unwind.orbit
       refine ⟨?_, ?_, ?_, ?_, ?_⟩
@@ -1137,8 +1140,8 @@ theorem Guide.firstUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
     exact ⟨b, hb, keyLe_refl b⟩
   have hanchor := g.anchorCell hgsz hinc hcell hcur hatCur
   have hframes := processnode_frames ctx level numcells st
-  rcases hframes with ⟨hlab, _, _, _, hfirst, _, _, _, _⟩
-  refine ⟨Unwind.first hanchor ?_⟩
+  rcases hframes with ⟨hlab, _, _, _, hfirst, _, hguide, _, _⟩
+  refine ⟨Unwind.first hanchor ?_ (Nat.le_of_eq hguide.symm)⟩
   rw [hfirst, hlab]
   exact hcarrier
 
@@ -1186,7 +1189,7 @@ theorem Guide.canonUnwind {ctx : Ctx n} {tcLevel level numcells : Nat}
   obtain ⟨_, _, _, _, _, hcanon, _, _⟩ :=
     processnode_rowTie hef hnc hcc hge htie
   have hframes := processnode_frames ctx level numcells st
-  refine ⟨Unwind.canon hanchor ?_⟩
+  refine ⟨Unwind.canon hanchor ?_ (processnode_rowTie_gcaCanon hef hnc hcc hge htie).symm⟩
   rw [hcanon, hframes.1]
   exact hcarrier
 

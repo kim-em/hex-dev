@@ -1,0 +1,50 @@
+[
+  {
+    "tau": 64,
+    "subject": 30030,
+    "generation_products": 126,
+    "split_cells": 192,
+    "comparisons": 254,
+    "array_cells": 64
+  },
+  {
+    "tau": 256,
+    "subject": 9699690,
+    "generation_products": 510,
+    "split_cells": 1024,
+    "comparisons": 1494,
+    "array_cells": 256
+  },
+  {
+    "tau": 1024,
+    "subject": 6469693230,
+    "generation_products": 2046,
+    "split_cells": 5120,
+    "comparisons": 7977,
+    "array_cells": 1024
+  },
+  {
+    "tau": 4096,
+    "subject": 7420738134810,
+    "generation_products": 8190,
+    "split_cells": 24576,
+    "comparisons": 40039,
+    "array_cells": 4096
+  },
+  {
+    "tau": 16384,
+    "subject": 13082761331670030,
+    "generation_products": 32766,
+    "split_cells": 114688,
+    "comparisons": 192844,
+    "array_cells": 16384
+  },
+  {
+    "tau": 32768,
+    "subject": 614889782588491410,
+    "generation_products": 65534,
+    "split_cells": 245760,
+    "comparisons": 418426,
+    "array_cells": 32768
+  }
+]

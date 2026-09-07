@@ -118,7 +118,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
           (originalProjectionCoords b i j hi hjlt))[p] = _
     unfold Matrix.mulVec Matrix.row
-    simp only [Vector.getElem_ofFn, Fin.getElem_fin]
+    simp only [Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn, Fin.getElem_fin]
     unfold Vector.dotProduct
     apply foldl_sum_congr_simple
     intro q _hq

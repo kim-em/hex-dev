@@ -41,6 +41,7 @@ import HexManual.Chapters.HexNumberFieldTower
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
+import HexManual.Chapters.HexLatticeEnum
 import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexPolyZGcd
@@ -184,6 +185,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexPolyFast}
 
 {include 2 HexManual.Chapters.HexRationalFn}
+
+{include 2 HexManual.Chapters.HexLatticeEnum}
 
 {include 2 HexManual.Chapters.HexIntFactor}
 

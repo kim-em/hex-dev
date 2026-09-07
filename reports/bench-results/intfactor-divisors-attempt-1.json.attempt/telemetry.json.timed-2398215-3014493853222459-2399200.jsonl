@@ -1,0 +1,5 @@
+{"kind":"header","pid":2399200,"clock_source":"CLOCK_MONOTONIC","mono_anchor_ns":3014501322654389,"schema_version":1}
+{"kind":"region","mono_t0_ns":3014501322784832,"mono_t1_ns":3014501323437019,"count":1,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":3014501323441446,"mono_t1_ns":3014501324520457,"count":2,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":3014501324522240,"mono_t1_ns":3014501326708924,"count":4,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":3014501326710476,"mono_t1_ns":3014501890647853,"count":1024,"label":"warm-loop"}

@@ -10,6 +10,7 @@ public import HexGraphIso.Nauty.Invariant.Codes
 public import HexGraphIso.Nauty.Invariant.Leaves
 public import HexGraphIso.Nauty.Spec.CanonSpec
 public import HexGraphIso.Nauty.Invariant.Refine
+public import HexGraphIso.Nauty.Invariant.Trace
 public import HexGraphIso.Nauty.Invariant.Stabilize
 public import HexGraphIso.Nauty.Invariant.Autos
 public import HexGraphIso.Nauty.SmallCell.Transitive
@@ -2124,7 +2125,7 @@ structure DomOk (G : Colored n k) (ctx : Ctx n) (rlab rptn : Array Nat)
   canongInv : CanongInv ctx st.canong st.canonlab st.samerows
   stab : ∀ γ ∈ st.genTrace,
     CellStab st.ptn (cs.length + 1) st.lab γ
-  genTraceOk : GenTraceOk ctx st
+  genTraceOk : GenTraceOk ctx st (ColorMap G)
   autosOk : AutosOk ctx.g rptn rlab 1 st.autos
 
 /-! # The ledgers ride the internal steps
@@ -2136,8 +2137,9 @@ comparison step. -/
 
 /-- Store validity crosses a frame-preserving step. -/
 theorem genTraceOk_of_eq {ctx : Ctx n} {st st' : SearchSt n}
-    (h : st'.genTrace = st.genTrace) (hok : GenTraceOk ctx st) :
-    GenTraceOk ctx st' := by
+    {P : Array Nat → Prop}
+    (h : st'.genTrace = st.genTrace) (hok : GenTraceOk ctx st P) :
+    GenTraceOk ctx st' P := by
   intro γ hγ
   exact hok γ (by rwa [h] at hγ)
 

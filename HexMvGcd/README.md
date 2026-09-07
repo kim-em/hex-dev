@@ -43,6 +43,8 @@ def y : P := X 1
 - Deterministic PRS fallback plus heuristic and Brown modular producers.
 - Named-variable content through `contentIn` and `primPartIn`.
 - Square-free decomposition, radical, and square-freeness tests.
+  Differentiation uses the coefficient ring's natural-number cast;
+  decomposition and radical require characteristic zero for that ring.
 
 # Verification
 

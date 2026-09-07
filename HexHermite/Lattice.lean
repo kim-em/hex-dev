@@ -706,6 +706,7 @@ private theorem vecMul_kernelBasis (A : Matrix Int n m) (d : Vector Int n)
     apply Vector.ext
     intro i hi
     unfold Matrix.col
+    simp only [Hex.Vector.ofFn'_eq_ofFn]
     rw [Vector.getElem_ofFn]
     rw [Vector.getElem_drop, Vector.getElem_ofFn]
     rw [getElem_kernelBasis]

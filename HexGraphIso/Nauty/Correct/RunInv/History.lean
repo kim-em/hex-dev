@@ -958,13 +958,13 @@ theorem Unwind.Located.retrail {ctx : Ctx n} {tcLevel target : Nat}
     (h : payload.Located source) (heq : source target = dest target) :
     payload.Located dest := by
   cases h with
-  | first anchor carrier located =>
-      apply Unwind.Located.first anchor carrier
+  | first anchor carrier atFirst located =>
+      apply Unwind.Located.first anchor carrier atFirst
       unfold Anchor.Located at located ⊢
       rw [← heq]
       exact located
-  | canon anchor carrier located =>
-      apply Unwind.Located.canon anchor carrier
+  | canon anchor carrier atCanon located =>
+      apply Unwind.Located.canon anchor carrier atCanon
       unfold Anchor.Located at located ⊢
       rw [← heq]
       exact located

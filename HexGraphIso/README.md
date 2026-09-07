@@ -64,10 +64,10 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   discovers, in discovery order, with the vertex orbits, the orbit
   count and the group order; `Graph.autos` is the uncoloured mirror.
   Every returned generator is proved to be an automorphism
-  (`autos_isIso`) and vertices sharing an orbit representative are
-  proved to lie in one orbit (`autos_sameOrbit`). That the generators
-  generate the whole group is not yet proved, so the orbit count and
-  the group order are conformance-pinned rather than theorems.
+  (`autos_isIso`), and the list generates the full group (`autos_complete`).
+  Equality of orbit representatives is equivalent to sharing a full-group
+  orbit (`autos_sameOrbit`). The Mathlib bridge proves that `Aut.numOrbits`
+  counts these orbits and `Aut.order` is the full group's cardinality.
 - `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order` are the four
   fields on their own, for a caller who wants one of them and not the
   traversals the others cost.
