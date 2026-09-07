@@ -33,6 +33,7 @@ BUILD_ONLY_LIBS = {
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
+    "HexRationalFnBenchSupport",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",

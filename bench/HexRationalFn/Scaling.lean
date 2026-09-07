@@ -71,21 +71,21 @@ def queryConfig : LeanBench.BenchmarkConfig :=
   { paramSchedule := .custom #[128, 256, 512, 1024, 2048, 4096, 8192, 16384],
     targetInnerNanos := 500000000, maxSecondsPerCall := 5, outerTrials := 3 }
 
--- Two-sided: equal independently allocated canonical arrays require Θ(n)
+-- Linear two-sided model: equal independently allocated canonical arrays require Θ(n)
 -- coefficient comparisons; all coefficients have bounded word-size values.
 setup_benchmark equal n => n with prep := prepQuery where queryConfig
--- Two-sided: the first difference is at coefficient n, after Θ(n) comparisons.
+-- Linear two-sided model: the first difference is at coefficient n, after Θ(n) comparisons.
 setup_benchmark different n => n with prep := prepQuery where queryConfig
--- Two-sided: inversion scales both degree-n arrays by leading coefficient 1.
+-- Linear two-sided model: inversion scales both degree-n arrays by leading coefficient 1.
 -- Scaling and the harness's complete output hash each require Θ(n) work.
 setup_benchmark inverse n => n with prep := prepQuery where queryConfig
--- Two-sided: negation traverses the degree-n numerator; full output hashing is
+-- Linear two-sided model: negation traverses the degree-n numerator; full output hashing is
 -- also Θ(n). Negation does not run a gcd or change coefficient bit lengths.
 setup_benchmark negate n => n with prep := prepQuery where queryConfig
--- Two-sided: Horner at -1 visits both arrays. Alternating partial sums of the
+-- Linear two-sided model: Horner at -1 visits both arrays. Alternating partial sums of the
 -- periodic coefficients are bounded, so rational arithmetic remains word-size.
 setup_benchmark evaluate n => n with prep := prepQuery where queryConfig
--- Two-sided: the dense denominator's Horner walk at 1 has Θ(n) bounded partial
+-- Linear two-sided model: the dense denominator's Horner walk at 1 has Θ(n) bounded partial
 -- sums (telescoping coefficients); numerator evaluation is skipped at the pole.
 setup_benchmark evaluatePole n => n with prep := prepPole where queryConfig
 
@@ -115,11 +115,11 @@ def prepRejected (n : Nat) : ReplayInput :=
 
 def reject (i : ReplayInput) : Bool := check i.p i.q i.cert
 
--- Two-sided: two dense degree-n witnesses multiply fixed linear polynomials
+-- Linear two-sided model: two dense degree-n witnesses multiply fixed linear polynomials
 -- by schoolbook multiplication, then are added and compared. Θ(n) bounded
 -- coefficient operations; this is a witness-size model, not a degree-gcd model.
 setup_benchmark replay n => n with prep := prepWitness where queryConfig
--- Two-sided: rejection occurs only after the same Θ(n) witness arithmetic.
+-- Linear two-sided model: rejection occurs only after the same Θ(n) witness arithmetic.
 setup_benchmark reject n => n with prep := prepRejected where queryConfig
 
 /-- Fail on fixture drift independently of the benchmark result hashes. -/
