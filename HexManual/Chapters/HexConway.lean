@@ -61,18 +61,19 @@ through the normalizing constructor.
 {docstring Hex.Conway.luebeckConwayPolynomialOfCoeffs}
 
 The main entry point composes the two: it looks up the coefficient
-list and, on a hit, builds the polynomial. The supported coverage is
-`p ∈ {2, 3, 5, 7, 11, 13}`, running to `n = 6` for the odd primes and
-to `n = 8` for `p = 2`, so `GF(2⁸)` is a committed Conway field. Every
-other pair returns `none` rather than triggering Tier 2 compatibility
-checks or Tier 3 search.
+list and, on a hit, builds the polynomial. The table has 594 verified entries:
 
-The binary column runs further because cost decides the scope: the
-committed entries carry Rabin certificates that the kernel replays, and
-that replay is cheapest over `𝔽₂`, where every residue is one bit. The
-scope is therefore a maximum degree per prime rather than one bound for
-all of them, and widening it is a matter of measuring rather than of
-finding new mathematics.
+* characteristic 2, degrees 1–16;
+* characteristics 3, 5 and 7, degrees 1–8;
+* characteristics 11 and 13, degrees 1–6;
+* other primes below 300, degrees 1–4;
+* primes between 300 and 1000, degrees 1–3.
+
+These ranges have no holes and contain every positive divisor of each supported
+degree. Every entry has irreducibility and primitivity proofs, and the 522
+proper-divisor pairs have compatibility proofs. Other pairs return `none`.
+The scope is selected by measuring a complete rebuild against the five-minute
+ceiling; the broader source cache does not by itself establish verified support.
 
 {docstring Hex.Conway.luebeckConwayPolynomial?}
 
@@ -82,8 +83,7 @@ tag := "hex-conway-supported"
 %%%
 
 For each supported pair the library commits a {name}`Hex.Conway.SupportedEntry`,
-a record bundling the looked-up polynomial with the two facts that make
-it a genuine Conway modulus: a primality witness `prime : Hex.Nat.Prime p`
+a record bundling the looked-up polynomial with a primality witness `prime : Hex.Nat.Prime p`
 for the field characteristic, and a proof `isSupported` that
 {name}`Hex.Conway.luebeckConwayPolynomial?` actually resolves to the
 stored polynomial at `(p, n)`. The accessor reads the modulus back out.
@@ -100,8 +100,8 @@ tag := "hex-conway-worked"
 %%%
 
 The block below runs the lookup on the supported pair `(2, 3)` (the
-Conway polynomial `C(2, 3) = 1 + x + x³` over `𝔽₂`) and on two
-unsupported pairs.
+Conway polynomial `C(2, 3) = 1 + x + x³` over `𝔽₂`), further supported
+binary degrees, and unsupported pairs.
 
 ```lean
 open Hex Hex.Conway
@@ -177,7 +177,7 @@ therefore not a hand edit. The offline generator
 `scripts/conway/candidates.json`. With the pinned SymPy version installed,
 run it to regenerate coefficients, Rabin certificates, factorizations,
 primality certificates, primitivity and compatibility proofs, supported-entry
-witnesses, Mathlib generator-order specializations, and the runtime replay
+witnesses, Mathlib generator-order and subfield-embedding specializations, and the runtime replay
 driver. Its `--check` mode verifies that committed outputs match the inputs.
 
 Only `scripts/conway/import_source.py` fetches Lübeck's source. The source

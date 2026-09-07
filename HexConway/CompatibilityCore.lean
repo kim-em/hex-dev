@@ -33,27 +33,20 @@ is a root of `C(p, m)`. That is what makes the subfield of order `p ^ m` inside
 `F_p[x] / (C(p, n))` *the* canonical one, and it is what a subfield embedding
 `GFq p m → GFq p n` is built from.
 
-# Why this is cheap to check
+# How the norm is checked
 
-The exponent is enormous — for `(p, m, n) = (13, 1, 6)` it is `402234` — so a
-direct modular exponentiation is not something the kernel should be asked to
-replay. It does not have to be. Setting `k = n / m`,
+Setting `k = n / m`, the geometric-sum identity gives
 
 ```
 (p^n - 1) / (p^m - 1) = 1 + p^m + p^(2m) + ... + p^((k-1)m)
 ```
 
-so
-
-```
-N(α) = α · α^(p^m) · α^(p^(2m)) · ... · α^(p^((k-1)m))
-```
-
-and `α ↦ α^p` is the Frobenius, which on residues is composition with
-`x^p mod C(p, n)`. So the whole computation is `n` modular compositions and `k`
-modular multiplications, with `n ≤ 8` and `k ≤ 8`, rather than a modular
-exponentiation with a six-digit exponent. Everything below is structurally
-recursive for the same reason: the kernel has to run it.
+so the norm is the product of successive Frobenius images of the generator.
+The checker computes `x^p mod C(p,n)` with binary modular exponentiation,
+then uses modular composition for each Frobenius step. The product requires
+`k` modular multiplications and at most `n` compositions. All replay helpers
+are structurally recursive. The complete cost depends on the degree and
+characteristic and is measured when selecting the committed scope.
 
 # What is proved
 
@@ -78,8 +71,8 @@ namespace Conway
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- `x ^ p` reduced modulo a monic `f`, computed by the structurally recursive
-modular exponentiation so the kernel can replay it. Linear in `p`, which is at
-most `13` for the committed entries. -/
+binary modular exponentiation so the kernel can replay it in logarithmically
+many modular multiplications. -/
 @[expose]
 def frobeniusBase (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   powMod FpPoly.X f hmonic p

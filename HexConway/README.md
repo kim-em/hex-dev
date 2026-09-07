@@ -50,9 +50,19 @@ example : DensePoly.Monic f := conwayPoly_monic 3 4 supportedEntry_3_4
 # Functionality
 
 - `luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p)`
-  is the committed table, generated into ordinary Lean code. It covers 38
-  entries: `p` in `2, 3, 5, 7, 11, 13`, to degree `6` for the odd primes and to
-  degree `8` for `p = 2`.
+  is the committed table, generated into ordinary Lean code. It covers **594
+  entries** in every prime characteristic below 1000:
+
+  | Characteristic | Degrees |
+  |---|---|
+  | 2 | 1–16 |
+  | 3, 5, 7 | 1–8 |
+  | 11, 13 | 1–6 |
+  | Other primes below 300 | 1–4 |
+  | Primes from 300 to 1000 | 1–3 |
+
+  These ranges contain no holes and are closed under positive degree divisors.
+
 - `SupportedEntry p n` packages a table hit with the primality witness and the
   proof that the lookup resolves to it. It cannot be built for an uncommitted
   pair, which is how `conwayPoly p n h` stays total only where the table
@@ -92,7 +102,7 @@ theorem conwayPoly_irreducible
 ```
 
 Divisor compatibility is proved for every committed pair `(p, m, n)` with
-`m ∣ n` and `m < n`: 52 theorems `compat_p_m_n`, plus `not_compatible_11_4_6`
+`m ∣ n` and `m < n`: 522 theorems `compat_p_m_n`, plus `not_compatible_11_4_6`
 as a negative control so the check is visibly not vacuous. The `Bool` is
 promoted to a statement about field elements, which is the well-definedness
 input a subfield embedding needs:

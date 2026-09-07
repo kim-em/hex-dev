@@ -13,7 +13,6 @@ public import HexConway.Entries.S0_3
 public import HexConway.Entries.S0_4
 public import HexConway.Entries.S0_5
 public import HexConway.Entries.S0_6
-public import HexConway.Entries.S0_7
 public import HexConway.Entries.S1_0
 public import HexConway.Entries.S1_1
 public import HexConway.Entries.S1_2
@@ -21,7 +20,6 @@ public import HexConway.Entries.S1_3
 public import HexConway.Entries.S1_4
 public import HexConway.Entries.S1_5
 public import HexConway.Entries.S1_6
-public import HexConway.Entries.S1_7
 public import HexConway.Entries.S2_0
 public import HexConway.Entries.S2_1
 public import HexConway.Entries.S2_2
@@ -29,7 +27,6 @@ public import HexConway.Entries.S2_3
 public import HexConway.Entries.S2_4
 public import HexConway.Entries.S2_5
 public import HexConway.Entries.S2_6
-public import HexConway.Entries.S2_7
 public import HexConway.Entries.S3_0
 public import HexConway.Entries.S3_1
 public import HexConway.Entries.S3_2
@@ -37,7 +34,6 @@ public import HexConway.Entries.S3_3
 public import HexConway.Entries.S3_4
 public import HexConway.Entries.S3_5
 public import HexConway.Entries.S3_6
-public import HexConway.Entries.S3_7
 
 public section
 

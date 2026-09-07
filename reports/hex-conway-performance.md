@@ -1,205 +1,350 @@
-# HexConway Performance Report
+# HexConway performance and coverage
 
-## Bench Targets
+## Verified coverage
 
-- `Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum`: mode 1,
-  two-sided affine lookup/materialization/checksum cost over all 38 committed
-  table keys.
-- `Hex.ConwayBench.runTier1Irreducibility_13_6Checksum`: mode 3, fixed Rabin
-  verification of `C(13, 6)` under a 2 ms operation-scoped ceiling.
-- `Hex.ConwayBench.runTier2Compat_13_1_6Checksum`: mode 3, fixed compatibility
-  verification of `C(13, 1)` inside `C(13, 6)` under a 1 ms
-  operation-scoped ceiling.
-- `runConwayPolySupported_2_1Checksum`, the other six fixed Tier 1 checks, and
-  the other two fixed Tier 2 checks are expected-hash anchors. They make no
-  complexity claim and do not discharge performance coverage.
+The committed scope contains **594 entries**, preserving all 38 original entries:
 
-`HexConway` advertises the implemented `tier1-committed-table` and
-`tier2-divisor-compatibility` input families. Tier 3 on-demand Conway search
-is unimplemented. Tier 2 primitivity exists, but is not a separate declared
-Phase-4 input family; the Tier 2 family here is specifically compatibility.
+| Characteristic | Degrees |
+|---|---|
+| 2 | 1–16 |
+| 3, 5, 7 | 1–8 |
+| 11, 13 | 1–6 |
+| Other primes below 300 | 1–4 |
+| Primes between 300 and 1000 | 1–3 |
 
-## Tier 1 proof budget
+There are no holes in these ranges. They are closed under positive degree
+divisors, cover all 168 prime characteristics below 1000, and include 426
+entries of degree at least two. Every entry has an irreducibility proof and a
+primitivity proof, including the trivial group at `(2,1)`. All **522** supported
+proper-divisor pairs have compatibility proofs. Exact keys are exported as
+`supportedPairs` and committed in `scripts/conway/scope.json`.
 
-`HexConway/SPEC/hex-conway.md` sizes the committed slice by proof-checking cost:
-include as much of the Luebeck table as possible while the generated Tier 1
-correctness theorems still check in only a few minutes. That elaboration and
-kernel-replay cost is separate from runtime benchmarking.
+Generated `HexGFq.CommittedEntry` instances cover the same entries. The Mathlib
+companion specializes generator orders for every entry and canonical embeddings
+for every supported proper-divisor pair. Unselected source rows do not count
+as verified coverage.
 
-On a warm dependency tree, after deleting the built `HexConway` Lean and IR
-outputs, one `lake build HexConway` on AMD EPYC 9455, Linux x86-64, and Lean
-4.33.0-rc1 gave:
+## Measurement contract
 
-| Scope | Entries | `Table` | `Certificates` | `Api` |
-|---|---:|---:|---:|---:|
-| `2:6, 3:6, 5:6, 7:6, 11:6, 13:6` | 36 | 2.6 s | 28 s | 2.8 s |
-| `2:8, 3:6, 5:6, 7:6, 11:6, 13:6` | 38 | 2.7 s | 31 s | 3.0 s |
+The designated machine is **chungus2**, an AMD EPYC 9455 (48 physical cores,
+96 logical CPUs), Linux x86-64, with approximately 125 GiB RAM. The toolchain
+is `leanprover/lean4:v4.34.0-rc2`. Controlled builds set
+`LEAN_NUM_THREADS=8`, with Lake's default scheduling. The final generator
+uses four serial import chains per polynomial-proof family; each compatibility
+chain follows its primitivity chain. Factor-prime proofs form one serial chain.
+The study launches no overlapping Lake builds or runtime benchmarks. This is
+a shared machine: unrelated users can run other work. The selected scope must
+pass all repeats despite that variability; new measurement records also include
+the system load averages at each run's start and finish.
 
-These are single scope measurements, not distributions. They establish that
-the committed 38-entry scope remains affordable; they do not claim that degree
-8 is a measured maximal frontier. The binary column was extended to 8 because
-the proof cost was small and `GF(2^8)` is relevant to the packed
-representation. A true frontier study would measure successive candidates per
-prime.
+The acceptance ceiling is **300 seconds of wall time**, including table
+compilation, generated APIs, irreducibility, primitivity, compatibility, and
+all normal `lake build HexConway` outputs. Dependencies are already built.
+`scripts/conway/measure.py` deletes every Conway output under `.lake/build`
+(including Lean, IR, and umbrella outputs), retains dependency outputs, and
+passes `--no-cache` to Lake. It rejects a measurement that rebuilt an external
+dependency. Each scope has three controlled runs. A terminated run is an
+unfinished rebuild and cannot establish verified coverage.
 
-## Verdicts
+Every linked JSON contains the exact pair list, toolchain, machine, thread
+settings, source and input hashes, wall time, per-module timings, output sizes
+by suffix, and links to compressed verbose logs and GNU time output. Lake's
+module times include elaboration, kernel checking and output generation;
+they are rounded by Lake and their sum is **not** build wall time.
 
-### Ordered mode selection
+Memory has two distinct measures: GNU time's maximum child RSS and the maximum
+sampled sum of RSS over the process tree (sample interval 0.1 seconds). The
+latter captures simultaneous compiler processes but can count shared mappings
+more than once. The original baseline records only maximum child RSS because
+the first tree sampler did not traverse children belonging to other threads.
+Artifact sizes include every retained Conway output, not just `.olean` files.
+The source hashes of the accepted Conway and companion runs match the committed
+library sources; later runtime-driver batching does not change those modules.
+For capped runs these are incomplete artifacts, not the size of a full library.
 
-The committed lookup selects mode 1 with model `degree + 2`. An ordinal lookup
-performs fixed finite-key dispatch, materializes `degree + 1` coefficients, and
-`checksumPoly` walks those coefficients. The benchmark therefore recovers the
-entry degree from each ordinal and uses the independently derived affine model
-rather than calling the ordinal itself constant-sized. The 38-rung acceptance
-run passes in both directions.
+## Candidate measurements
 
-Tier 1 irreducibility and Tier 2 compatibility select mode 3. Controlled mode-1
-ladders were attempted first from a clean source state at commit `bab1fa3c6`:
+| Scope / raw evidence | Entries | Wall seconds, three runs | Peak RSS GiB | Output MiB | Result |
+|---|---:|---|---:|---:|---|
+| [baseline](conway/baseline.json) | 38 | 118.506, 124.945, 146.494 | 5.3 (child) | 10.7 | complete |
+| [optimized-38](conway/optimized-38.json) | 38 | 42.942, 35.544, 33.342 | 3.2 | 11.5 | complete |
+| [candidate-90](conway/candidate-90.json) | 90 | 64.722, 64.241, 62.820 | 16.4 | 27.6 | complete |
+| [wide-414](conway/wide-414.json) | 414 | 119.673, 107.784, 107.633 | 16.5 | 134.6 | complete |
+| [envelope-820](conway/envelope-820.json) | 820 | 300.091, 300.091, 300.054 | 44.6 | 72.1 | capped; incomplete |
+| [wide-700](conway/wide-700.json) | 700 | 300.057, 300.057, 300.041 | 10.9 | 202.9 | capped; incomplete |
+| [control-38](conway/control-38.json) | 38 | 20.933, 21.940, 22.646 | 5.6 | 14.3 | complete |
+| [binary32-closure](conway/binary32-closure.json) | 40 | 300.078, 300.088, 300.081 | 73.9 | 16.6 | capped; incomplete |
+| [binary64-closure](conway/binary64-closure.json) | 41 | 240.816, 300.030, 300.037 | 80.0 | 11.4 | capped; incomplete |
+| [shared-700](conway/shared-700.json) | 700 | 300.086, 300.071, 300.033 | 10.8 | 205.7 | capped; incomplete |
+| [quartic-500](conway/quartic-500.json) | 627 | 258.782, 300.048, 264.111 | 10.6 | 190.4 | one capped; rejected |
+| [quartic-300](conway/quartic-300.json) | 594 | 251.817, 252.737, 270.963 | 10.8 | 180.9 | complete |
 
-- Tier 1 used `C(2, n)` for `n = 1..8`. At fixed prime, the Rabin test's
-  degree-many dense Frobenius/remainder work supplies a cubic degree model.
-  Five outer trials were inconclusive (`cMin=34.371`, `cMax=227.532`; beta
-  unavailable).
-- Tier 2 used compatibility of `C(2, 1)` inside `C(2, n)` for `n = 2..8`.
-  `normX` takes `n` Frobenius/product steps and each dense modular operation is
-  quadratic in degree, again giving a cubic model. Five outer trials were
-  inconclusive (`cMin=114.169`, `cMax=260.906`; beta unavailable).
+These measure several implementations, not just different row counts. The
+baseline is the original 38-entry implementation at `b7f4d6200`; its Tier 1
+certificate module alone takes 28–35 seconds, while primitivity takes
+82–102 seconds. The earlier report's approximately 31 seconds was therefore
+not a measurement of the full library. `optimized-38` measures intermediate
+binary replay before full sharding. `candidate-90` matches the Lean sources
+at `cb9da4fa5`. The first wide scopes use binary replay and four proof chains;
+`wide-700` matches `684f0d1ac`. `shared-700` additionally shares Pocklington
+child proofs. Historical dirty measurements identify measured files by SHA-256;
+the `commit` field alone is not a claim that all measured sources were committed
+at that revision. Reproduction of an intermediate variant requires its stated
+implementation as well as its pair list.
 
-The clean audit artifact is
-`reports/bench-results/hex-conway-mode-audit-bab1fa3c6-chungus2.json`
-(SHA-256 `51ea7b4033f076be278b04c8dd4b1fe5c097a990b8869dcb6841420c58fae770`).
-The temporary ladder registrations exist at that cited commit and were removed
-after the audit because an inconclusive ladder cannot remain advertised as
-Phase-4 performance evidence. Their complete schedules and benchmark
-configuration remain in the commit and artifact.
+All broad reduced scopes keep degrees 1–16 at characteristic 2, 1–8 at
+3, 5 and 7, and 1–6 at 11 and 13. The 90-entry scope adds degrees 1–2 at
+other primes below 100. The 414-entry scope extends those primes to degree 4
+and adds degrees 1–2 at every prime between 100 and 1000. The 700-entry scope
+extends every prime above 13 to degree 4. The 627-entry scope retains degree 4
+only below characteristic 500 and degree 3 at the remaining primes. These are divisor-closed scopes.
+The 820-entry envelope is exactly the issue's proposed envelope, without holes.
 
-Mode 2 is unavailable: HexConway has no external executable comparator and no
-published dominant-phase wall-time bound for compiled Rabin verification or
-modular composition. Mathematical operation counts alone do not provide the
-cited wall-time bound that mode 2 requires.
+The 594-entry scope narrows quartic coverage to primes below 300, retaining
+cubic coverage above that boundary. All three runs complete below the ceiling
+(251.817, 252.737, 270.963 seconds). The nearest larger measured scope, 627 entries, fails one
+of its three runs; it is not accepted on the strength of its two successful runs.
 
-Mode 3 therefore uses the canonical hard committed inputs. `C(13, 6)` combines
-the largest committed prime with degree 6 for Tier 1. Compatibility of
-`C(13, 1)` inside `C(13, 6)` additionally uses the deepest six-factor
-Frobenius chain for Tier 2. With `HEXCONWAY_ENFORCE_BUDGETS=1`, `withBudget`
-times every auto-tuned invocation and throws immediately if the operation
-exceeds 2 ms or 1 ms. The scientific run sets this variable; CI `verify`
-deliberately leaves it unset so a noisy hosted runner does not assert timing.
-`expectedHash = hash true` separately fails correctness regressions, and
-`maxSecondsPerCall = 2 s` remains only the child-process safety cap.
+For the 594-entry scope, summed module times (seconds) are:
 
-The current conservative margins use the largest per-call value in the clean
-acceptance run: the Tier 1 ceiling is 15.3 times 130.692 us, and the Tier 2
-ceiling is 13.0 times 77.218 us. No invocation threw, so the operation-scoped
-ceiling held throughout every auto-tuned batch, including iterations whose
-result is not retained as the repeat hash.
-
-### Current scientific run
-
-The clean acceptance source commit is `ba8d354f8` on `chungus2` (AMD EPYC
-9455, Linux x86-64, Lean 4.34.0-rc2). It ran every HexConway registration with
-five outer trials for the parametric lookup and the registrations' five fixed
-repeats:
-
-```sh
-HEXCONWAY_ENFORCE_BUDGETS=1 \
-  ./.lake/build/bin/hexconway_bench run \
-  --filter Hex.ConwayBench --outer-trials 5 \
-  --export-file \
-    reports/bench-results/hex-conway-mode3-ba8d354f8-chungus2.json
-```
-
-The lookup is consistent with its declared affine complexity over all 38
-entries (`cMin=59.109`, `cMax=63.621`, `beta=-0.015`). Ordinal 38, `C(13, 6)`,
-had a 484 ns median; every row's hash agreed across its five trials.
-
-The fixed registrations measured:
-
-| Target suffix | Median | Maximum | Expected hash |
+| Module or generated family | Run 1 | Run 2 | Run 3 |
 |---|---:|---:|---:|
-| `runConwayPolySupported_2_1Checksum` | 87 ns | 87 ns | `0x8d105cfbb68da744` |
-| `runTier1Irreducibility_2_1Checksum` | 1.176 us | 1.217 us | `0xb` |
-| `runTier1Irreducibility_2_6Checksum` | 19.057 us | 19.375 us | `0xb` |
-| `runTier1Irreducibility_3_6Checksum` | 37.676 us | 38.821 us | `0xb` |
-| `runTier1Irreducibility_5_6Checksum` | 68.489 us | 70.289 us | `0xb` |
-| `runTier1Irreducibility_7_6Checksum` | 93.672 us | 98.116 us | `0xb` |
-| `runTier1Irreducibility_11_6Checksum` | 113.984 us | 115.828 us | `0xb` |
-| `runTier1Irreducibility_13_6Checksum` | 130.367 us | 130.692 us | `0xb` |
-| `runTier2Compat_2_3_6Checksum` | 25.698 us | 25.981 us | `0xb` |
-| `runTier2Compat_2_4_8Checksum` | 47.836 us | 49.098 us | `0xb` |
-| `runTier2Compat_13_1_6Checksum` | 75.997 us | 77.218 us | `0xb` |
+| Table data | 42.37 | 40.00 | 68.53 |
+| Rabin certificates | 143.90 | 139.64 | 182.97 |
+| Generated API | 66.72 | 63.49 | 86.71 |
+| Factor-prime proofs | 5.10 | 4.98 | 11.32 |
+| Primitivity | 430.81 | 402.23 | 393.58 |
+| Compatibility | 176.34 | 197.37 | 151.44 |
+| Power helpers and generation commands | 1.94 | 1.85 | 3.80 |
 
-All repeats agreed with their expected hashes. The artifact is
-`reports/bench-results/hex-conway-mode3-ba8d354f8-chungus2.json` (SHA-256
-`9849ef75a1eb01ce0f902b8e560f7fe12ced86f33fe1fdb6c4999fa7384f3bc2`).
+Every completed run produces 180.95 MiB of Conway outputs. Peak sampled
+process-tree RSS is 10.81, 10.51 and 10.31 GiB. The module sums exceed wall
+time because the four chains run concurrently. The raw JSON retains each
+individual shard's timing and artifact totals by suffix.
 
-`lake exe hexconway_bench verify` also passes all 12 shipped registrations.
-Verification is a deterministic registration/hash smoke gate; the scientific
-command above is the operation-budget evidence.
+### Expensive and unavailable candidates
 
-## Comparator Ratios
+The full 820-entry envelope exceeds the ceiling: its first Rabin shards alone
+take approximately 251–254 seconds. Binary degree 32 is a useful, expensive
+case even outside the whole envelope. Adding `(2,16)` and `(2,32)` to the
+baseline adds two entries and **nine** compatibility obligations (61 total);
+all three complete-closure rebuild attempts exceed 300 seconds. Binary degree
+64 adds `(2,16)`, `(2,32)` and `(2,64)` to the baseline, with **15** new
+compatibility obligations (67 total). Its Rabin replay remains unfinished in
+all three runs: one is stopped at the 80 GiB process-tree RSS guard after
+240.816 seconds, two at the wall-time ceiling. Thus the additional degree-64
+entry alone introduces six further compatibility obligations, not one proof.
+The [38-entry control](conway/control-38.json) uses the same polynomial checker
+and scheduling as these closure probes and takes 20.933–22.646 seconds.
+These marginal experiments measure the entry, missing divisor entries and
+all new obligations together; they do not subtract an isolated certificate
+microbenchmark from a whole-library time.
 
-`HexConway/SPEC/hex-conway.md` names no external Phase-4 performance comparator
-for the Tier 1 committed-table surface, so there are no
-`phase4.comparators` ratios. The Luebeck table is an input source, not an
-executable comparator, and the current API has no alternative Tier 1
-implementation to register as a `compare` group.
+Binary degree 128 is **unavailable** in the pinned Lübeck import. The
+[characteristic-2 source page](https://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/CP2.html)
+also skips it, and the optional `conway-polynomials` 0.10 package has no such
+entry. Its closure would require degrees 16, 32 and 64 in addition to existing
+binary degrees. No unavailable entry is synthesized or advertised.
 
-## Profile
+### Verification bottlenecks and changes
 
-### `tier1-committed-table`
+Binary square-and-multiply replaces characteristic-linear power replay, and
+structural Horner composition avoids kernel reduction into an opaque packed
+runtime implementation. Equality proofs connect both structural checkers to
+the existing soundness theorems. A compiler simplification theorem retains
+packed composition for compiled clients. Generated table dispatch is nested by
+characteristic and degree; large flat tuple matches exceeded elaboration limits.
+Four serial proof chains bound concurrent proof heaps. Compatibility waits for
+the corresponding primitivity chain so these two expensive families do not
+start eight large proof heaps together.
 
-The Tier 1 lookup profile was captured at commit
-`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
-macOS 14.6.1, arm64), using `samply 0.13.1` at 999 Hz and the
-lean-bench-samply timed-region filter at commit
-`602da96df3537341b50de9add2f137b0a75a68df`. The recorded `git_dirty=true`
-was caused by an unrelated pre-existing `.claude/CLAUDE.md` modification:
+`HexPrimality` is Mathlib-free but was not wired into Conway verification.
+The new `Hex.Nat.prime_of_pocklington` bridge proves a checked parent from
+separately proved child primes, using the existing Pocklington soundness proof.
+The generator shares these proofs in increasing-prime order. Small primes use
+bounded trial division below 100000; larger primes use checked Pocklington
+arithmetic. Child certificate payloads carry subjects, and the bridge requires
+actual primality proofs for every child: a `.small` payload by itself is not
+claimed to pass the recursive certificate checker. In the 700-entry experiment,
+sharing reduces summed factor-prime module time from 370–454 seconds to under
+ten seconds. Polynomial power and compatibility replay still push the full
+700-entry build above the ceiling. This is a measured limitation of the current
+checkers, not a mathematical limit on Conway polynomials.
+
+The [all-candidate factor check](conway/all-factor-primes.json) also builds the
+407 distinct multiplicative-order factor primes from all 821 available source
+rows, including the 39-bit prime 502628805631. The target completes successfully
+in 11.36 seconds with warmed unchanged factor shards (maximum child RSS
+872592 KiB). This verifies the actual large-factor API path; it is an incremental
+factor-only check, not a complete Conway rebuild or accepted coverage claim.
+To reproduce it, form a scope from every `(p,n)` in `candidates.json`, regenerate
+with that `--scope`, build `HexConway.PrimeFactors`, then regenerate the accepted
+scope. The recorded hashes identify the generated factor modules.
+
+## Reproducibility and source conformance
+
+The expansion input is `scripts/conway/candidates.json`: 821 available rows
+(the 820-entry envelope plus binary degree 64), with `(2,128)` explicitly
+listed as unavailable. The imported source is
+[Lübeck's CPimport.txt](https://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/CPimport.txt),
+SHA-256 `fb8938b43c1a988c70ed1638a31bb86f571a7af363852513e839b4f172b2f108`.
+Coefficients are ascending. The existing 186-row shared Lübeck cache is
+unchanged, preserving its factorization-corpus consumer and benchmark inputs.
+
+The offline generator emits coefficient tables, literals, Rabin certificates,
+factorizations and prime certificates, primitivity and compatibility proofs,
+supported-entry APIs, `HexGFq` instances, Mathlib order and embedding
+specializations, and
+a compiled all-entry replay driver. It validates the exact divisor-closed scope
+and preserves baseline support. Ordinary builds do not fetch data or search for
+factorizations or certificates. Irreducibility, primitivity and compatibility
+do not prove lexicographic minimality; the polynomial choice is imported.
+
+The [Python preflight](conway/preflight.json) checks all 821 source candidates,
+including factorization, power conditions, norm compatibility and agreement
+with the shared cache. It is preparation evidence, **not Lean certification**
+of unselected entries. Source conformance requires exactly the selected scope:
+missing, extra and duplicate emitted rows fail, in addition to coefficient
+mismatches.
 
 ```sh
-scripts/profile/run_profile.sh \
-  ./.lake/build/bin/hexconway_bench \
-  Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
-  36 1000000000
+python3 -m venv .venv-conway
+.venv-conway/bin/pip install -r scripts/conway/requirements.txt
+.venv-conway/bin/python scripts/conway/generate.py --check
+LEAN_NUM_THREADS=8 lake build HexConway
+python3 scripts/conway/measure.py accepted --ceiling 300
+LEAN_NUM_THREADS=8 lake build HexGFqMathlib
+python3 scripts/conway/measure.py accepted-bridge --companion
 ```
 
-The representative `C(13, 6)` case retained 924 bench-thread samples. Flat
-cost was 66.2% Lean runtime/outlined helpers, 26.3% allocation/free, and 7.5%
-Hex own code. Inclusive attribution was the registered lookup (57.9%), table
-lookup (57.4%), checksum (39.0%), and dense-polynomial trimming (10.0%). This
-is the expected stored-row materialization and checksum path; no attribution
-follow-up is needed.
+`--scope` accepts an explicit candidate pair list for regeneration. It does not
+change `scope.json`: copy the measured input there before invoking the measurement
+script so the report records the actual scope. Regenerate and verify the accepted
+scope again after experiments. Network refresh is a separate explicit operation,
+`scripts/conway/import_source.py`.
 
-### `tier2-divisor-compatibility`
+## Additional field and Mathlib build cost
 
-The canonical Tier 2 profile was captured from clean commit `045ffb12e` on
-`chungus2` with `samply` at 999 Hz and lean-bench-samply commit
-`9356baa2f5757ee40320a897bd284914d5bb9f5e`. The profile-only pure probe used a
-runtime-derived zero constant term at parameter one. This preserves the exact
-`C(13, 1)` in `C(13, 6)` operation while preventing native compilation from
-reducing the closed successful check. The probe was removed after capture and
-is not part of the shipped registration surface.
+The [full companion measurements](conway/quartic-300-bridge.json) remove all
+`HexGFq` and `HexGFqMathlib` outputs and rebuild the complete `HexGFqMathlib`
+umbrella, retaining Conway and external dependencies. This includes field
+instances, generic field proofs, the packed-field bridge, generator orders,
+subfield soundness, and every generated embedding. No Conway proof obligation
+is moved into this measurement to satisfy the Conway ceiling.
+
+| Run | Wall seconds | Peak tree RSS GiB | Outputs MiB |
+|---|---:|---:|---:|
+| 1 | 24.830 | 9.98 | 32.34 |
+| 2 | 22.698 | 9.99 | 32.34 |
+| 3 | 22.574 | 9.95 | 32.34 |
+
+The [original companion observations](conway/baseline-bridge.json) were
+13.602, 12.298 and 12.602 seconds, but cleaned only `HexGFqMathlib` and targeted
+`Primitivity` and `Subfield`. They exclude rebuilding `HexGFq` and the full
+umbrella, so subtracting them from the expanded full-companion measurements
+would not be a controlled estimate of marginal cost. The new measurements
+report the entire additional user-facing build instead.
+
+## Compiled runtime evidence
+
+The advertised Phase-4 families remain `tier1-committed-table` and
+`tier2-divisor-compatibility`. Runtime measurements are distinct from Lean
+elaboration and kernel replay. The all-entry replay driver checks irreducibility,
+primitivity, and all proper-divisor compatibilities for every supported entry,
+using mutable polynomial inputs to prevent compile-time evaluation. With
+`HEXCONWAY_ENFORCE_BUDGETS=1`, its operation ceilings are 2 ms for irreducibility,
+5 ms for primitivity, and 5 ms for an entry's aggregate compatibility obligations.
+Hosted CI checks values and records times without asserting these machine-specific
+runtime ceilings.
+
+The [five complete replay passes](conway/runtime-594.json) cover every selected
+entry and all 522 compatibility obligations, with exact emitted-key coverage
+checked on every pass. Maxima over these passes are:
+
+| Operation | Entry at maximum | Maximum | Ceiling |
+|---|---|---:|---:|
+| Irreducibility | `C(263,4)` | 1.178 ms | 2 ms |
+| Primitivity | `C(269,4)` | 2.026 ms | 5 ms |
+| Aggregate compatibility | `C(2,16)` | 2.455 ms | 5 ms |
+
+The development replay executable is built separately from the library target.
+Splitting its generated `main` into functions of 24 entries reduces its Lean
+module compilation from 151 seconds to 8.5 seconds; C compilation takes another
+1.7 seconds and linking 0.571 seconds in that incremental build. This is
+benchmark-driver build cost, not certificate kernel replay. The complete field
+and Mathlib rebuild measurements remain separate above.
+
+The fixture emitter writes 594 records and corresponding results. The source
+oracle passes 1188 coefficient comparisons against the pinned input and
+`conway-polynomials` 0.10. Lean conformance for Conway, generic fields and
+primality, the Mathlib bridge build, the manual chapter, and all 14 deterministic
+LeanBench verification registrations also pass.
+
+The initial [unpinned full scientific run](bench-results/hex-conway-594-unpinned-chungus2.json)
+is retained as a failed measurement: lookup is inconclusive (`cMin=59.347`,
+`cMax=120.196`, `beta=+0.322`), and one fixed binary-irreducibility child reports
+an error. It is not counted as passing evidence. Repeats of identical lookup
+inputs vary substantially: ordinal 16 ranges from 1068 to 1817 ns across its
+five trials. A [CPU-load sample](conway/runtime-cpu-selection.json) selects
+idle physical core 21 (SMT sibling 69), and subsequent runtime measurements
+inherit affinity to CPU 21. This pins execution but does not reserve the core
+against unrelated users. The [pinned diagnostic repeats](conway/lookup-pinned-probe-594.json)
+range from 1066 to 1084 ns at ordinal 16 and 308 to 313 ns at ordinal 594.
+No runtime budget or lookup implementation is changed to accommodate the
+initial inconclusive result. Proof rebuilds retain the eight-thread protocol
+specified above; CPU affinity is a separate runtime-benchmark control.
+
+The [pinned full run with the default runtime thread count](bench-results/hex-conway-594-pinned-chungus2.json)
+passes every fixed operation ceiling, but its lookup fit remains inconclusive
+(`cMin=60.635`, `cMax=108.092`, `beta=+0.201`). It too is retained without
+counting the lookup as passing. Fixing `LEAN_NUM_THREADS=1` in addition to
+CPU affinity gives a [passing diagnostic ladder](conway/lookup-single-thread-probe.json)
+on binary degrees 1, 2, 4, 8 and 16, with five trials each (`cMin=61.669`,
+`cMax=63.697`, `beta=-0.002`). The full scientific command uses these explicit
+runtime controls; no system governor, other process, or global CPU setting
+is changed.
+
+### Accepted scientific run
+
+The [complete controlled scientific run](bench-results/hex-conway-594-chungus2.json)
+uses `LEAN_NUM_THREADS=1` and CPU 21 affinity on chungus2. All 594 lookup keys
+have five successful trials (2970 observations); the fit is consistent with
+`degree + 2` (`cMin=59.811`, `cMax=65.366`, `beta=-0.002`). Every fixed repeat
+succeeds, all expected hashes match, and no operation ceiling is exceeded.
+The implementation and ceilings are identical to the earlier runs; the runtime
+thread count and CPU affinity are explicit measurement controls.
 
 ```sh
-LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply-9813 \
-  scripts/profile/run_profile.sh \
-  ./.lake/build/bin/hexconway_bench \
-  Hex.ConwayBench.profileTier2Compat 1 1000000000
+LEAN_NUM_THREADS=1 HEXCONWAY_ENFORCE_BUDGETS=1 taskset -c 21 \
+  .lake/build/bin/hexconway_bench run --filter Hex.ConwayBench \
+  --outer-trials 5 \
+  --export-file reports/bench-results/hex-conway-594-chungus2.json
 ```
 
-The child ran 8192 inner repeats at 80.642 us per call with hash `0xb`.
-Filtering retained 654 of approximately 665 expected bench-thread samples,
-rejected 7 outside timed regions, found no other-thread samples in the windows,
-and passed both calibration (0.746 ms residual under the 5 ms limit) and the
-plus/minus 5 ms sensitivity test.
+| Fixed target suffix | Median µs | Maximum µs |
+|---|---:|---:|
+| `runIrreducibility_2_16` | 138.076 | 140.596 |
+| `runTier2Compat_2_3_6Checksum` | 27.391 | 29.075 |
+| `runTier1Irreducibility_11_6Checksum` | 116.077 | 116.900 |
+| `runTier2Compat_13_1_6Checksum` | 77.548 | 77.676 |
+| `runConwayPolySupported_2_1Checksum` | 0.089 | 0.092 |
+| `runTier1Irreducibility_2_6Checksum` | 19.200 | 19.623 |
+| `runTier1Irreducibility_5_6Checksum` | 69.138 | 72.309 |
+| `runCompat_2_1_16` | 401.147 | 416.214 |
+| `runTier1Irreducibility_2_1Checksum` | 1.220 | 1.239 |
+| `runTier2Compat_2_4_8Checksum` | 51.208 | 51.732 |
+| `runTier1Irreducibility_7_6Checksum` | 96.610 | 98.778 |
+| `runTier1Irreducibility_3_6Checksum` | 39.934 | 40.456 |
+| `runTier1Irreducibility_13_6Checksum` | 131.994 | 136.866 |
 
-Flat samples were 32.42% allocation, 28.59% Lean/Hex own code, 34.56% Lean
-runtime, and 4.43% other. Inclusive Hex attribution was
-`Hex.Conway.compatCheck` (99.85%), `Hex.Conway.normX` (99.54%),
-`Hex.Conway.normAux` (90.21%), `Hex.FpPoly.composeModMonicImpl` (76.30%),
-`Hex.Conway.frobeniusIter` (75.99%), and `Hex.DensePoly.mulImpl` (48.32%). The
-dominant samples are therefore inside the registered compatibility operation,
-principally norm construction, modular composition, dense multiplication, and
-reduction. No attribution-rule follow-up is required.
+The lookup registration derives its exact key schedule from `supportedPairs`.
+Its mode-1 model is `degree + 2`, accounting for coefficient materialization and
+checksum traversal. Retained fixed registrations check expected hashes; the
+`C(13,6)` and binary degree-16 registrations additionally enforce operation
+budgets. Fixed runtime budgets do not establish asymptotic scaling.
 
-## Concerns
+The [historical 38-entry report](hex-conway-performance-38.md) preserves the
+original mode-selection experiments and profiles, including source commits and
+raw artifact links. Those profiles describe the original implementation and
+are not claimed as coverage or timings for the expanded table. Lübeck's table
+and the optional package adapter are input sources, not performance comparators.

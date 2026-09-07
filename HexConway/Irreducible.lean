@@ -19,8 +19,6 @@ public import HexConway.Transport.S0_9
 public import HexConway.Transport.S0_10
 public import HexConway.Transport.S0_11
 public import HexConway.Transport.S0_12
-public import HexConway.Transport.S0_13
-public import HexConway.Transport.S0_14
 public import HexConway.Transport.S1_0
 public import HexConway.Transport.S1_1
 public import HexConway.Transport.S1_2
@@ -34,8 +32,6 @@ public import HexConway.Transport.S1_9
 public import HexConway.Transport.S1_10
 public import HexConway.Transport.S1_11
 public import HexConway.Transport.S1_12
-public import HexConway.Transport.S1_13
-public import HexConway.Transport.S1_14
 public import HexConway.Transport.S2_0
 public import HexConway.Transport.S2_1
 public import HexConway.Transport.S2_2
@@ -49,8 +45,6 @@ public import HexConway.Transport.S2_9
 public import HexConway.Transport.S2_10
 public import HexConway.Transport.S2_11
 public import HexConway.Transport.S2_12
-public import HexConway.Transport.S2_13
-public import HexConway.Transport.S2_14
 public import HexConway.Transport.S3_0
 public import HexConway.Transport.S3_1
 public import HexConway.Transport.S3_2
@@ -64,8 +58,6 @@ public import HexConway.Transport.S3_9
 public import HexConway.Transport.S3_10
 public import HexConway.Transport.S3_11
 public import HexConway.Transport.S3_12
-public import HexConway.Transport.S3_13
-public import HexConway.Transport.S3_14
 
 public section
 
@@ -491,637 +483,531 @@ namespace Conway
     · cases hcoeffs; exact ofCoeffs_307_1_irreducible
     · cases hcoeffs; exact ofCoeffs_307_2_irreducible
     · cases hcoeffs; exact ofCoeffs_307_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_307_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_311_1_irreducible
     · cases hcoeffs; exact ofCoeffs_311_2_irreducible
     · cases hcoeffs; exact ofCoeffs_311_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_311_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_313_1_irreducible
     · cases hcoeffs; exact ofCoeffs_313_2_irreducible
     · cases hcoeffs; exact ofCoeffs_313_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_313_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_317_1_irreducible
     · cases hcoeffs; exact ofCoeffs_317_2_irreducible
     · cases hcoeffs; exact ofCoeffs_317_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_317_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_331_1_irreducible
     · cases hcoeffs; exact ofCoeffs_331_2_irreducible
     · cases hcoeffs; exact ofCoeffs_331_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_331_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_337_1_irreducible
     · cases hcoeffs; exact ofCoeffs_337_2_irreducible
     · cases hcoeffs; exact ofCoeffs_337_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_337_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_347_1_irreducible
     · cases hcoeffs; exact ofCoeffs_347_2_irreducible
     · cases hcoeffs; exact ofCoeffs_347_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_347_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_349_1_irreducible
     · cases hcoeffs; exact ofCoeffs_349_2_irreducible
     · cases hcoeffs; exact ofCoeffs_349_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_349_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_353_1_irreducible
     · cases hcoeffs; exact ofCoeffs_353_2_irreducible
     · cases hcoeffs; exact ofCoeffs_353_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_353_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_359_1_irreducible
     · cases hcoeffs; exact ofCoeffs_359_2_irreducible
     · cases hcoeffs; exact ofCoeffs_359_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_359_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_367_1_irreducible
     · cases hcoeffs; exact ofCoeffs_367_2_irreducible
     · cases hcoeffs; exact ofCoeffs_367_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_367_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_373_1_irreducible
     · cases hcoeffs; exact ofCoeffs_373_2_irreducible
     · cases hcoeffs; exact ofCoeffs_373_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_373_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_379_1_irreducible
     · cases hcoeffs; exact ofCoeffs_379_2_irreducible
     · cases hcoeffs; exact ofCoeffs_379_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_379_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_383_1_irreducible
     · cases hcoeffs; exact ofCoeffs_383_2_irreducible
     · cases hcoeffs; exact ofCoeffs_383_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_383_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_389_1_irreducible
     · cases hcoeffs; exact ofCoeffs_389_2_irreducible
     · cases hcoeffs; exact ofCoeffs_389_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_389_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_397_1_irreducible
     · cases hcoeffs; exact ofCoeffs_397_2_irreducible
     · cases hcoeffs; exact ofCoeffs_397_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_397_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_401_1_irreducible
     · cases hcoeffs; exact ofCoeffs_401_2_irreducible
     · cases hcoeffs; exact ofCoeffs_401_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_401_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_409_1_irreducible
     · cases hcoeffs; exact ofCoeffs_409_2_irreducible
     · cases hcoeffs; exact ofCoeffs_409_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_409_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_419_1_irreducible
     · cases hcoeffs; exact ofCoeffs_419_2_irreducible
     · cases hcoeffs; exact ofCoeffs_419_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_419_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_421_1_irreducible
     · cases hcoeffs; exact ofCoeffs_421_2_irreducible
     · cases hcoeffs; exact ofCoeffs_421_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_421_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_431_1_irreducible
     · cases hcoeffs; exact ofCoeffs_431_2_irreducible
     · cases hcoeffs; exact ofCoeffs_431_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_431_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_433_1_irreducible
     · cases hcoeffs; exact ofCoeffs_433_2_irreducible
     · cases hcoeffs; exact ofCoeffs_433_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_433_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_439_1_irreducible
     · cases hcoeffs; exact ofCoeffs_439_2_irreducible
     · cases hcoeffs; exact ofCoeffs_439_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_439_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_443_1_irreducible
     · cases hcoeffs; exact ofCoeffs_443_2_irreducible
     · cases hcoeffs; exact ofCoeffs_443_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_443_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_449_1_irreducible
     · cases hcoeffs; exact ofCoeffs_449_2_irreducible
     · cases hcoeffs; exact ofCoeffs_449_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_449_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_457_1_irreducible
     · cases hcoeffs; exact ofCoeffs_457_2_irreducible
     · cases hcoeffs; exact ofCoeffs_457_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_457_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_461_1_irreducible
     · cases hcoeffs; exact ofCoeffs_461_2_irreducible
     · cases hcoeffs; exact ofCoeffs_461_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_461_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_463_1_irreducible
     · cases hcoeffs; exact ofCoeffs_463_2_irreducible
     · cases hcoeffs; exact ofCoeffs_463_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_463_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_467_1_irreducible
     · cases hcoeffs; exact ofCoeffs_467_2_irreducible
     · cases hcoeffs; exact ofCoeffs_467_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_467_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_479_1_irreducible
     · cases hcoeffs; exact ofCoeffs_479_2_irreducible
     · cases hcoeffs; exact ofCoeffs_479_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_479_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_487_1_irreducible
     · cases hcoeffs; exact ofCoeffs_487_2_irreducible
     · cases hcoeffs; exact ofCoeffs_487_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_487_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_491_1_irreducible
     · cases hcoeffs; exact ofCoeffs_491_2_irreducible
     · cases hcoeffs; exact ofCoeffs_491_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_491_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_499_1_irreducible
     · cases hcoeffs; exact ofCoeffs_499_2_irreducible
     · cases hcoeffs; exact ofCoeffs_499_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_499_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_503_1_irreducible
     · cases hcoeffs; exact ofCoeffs_503_2_irreducible
     · cases hcoeffs; exact ofCoeffs_503_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_503_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_509_1_irreducible
     · cases hcoeffs; exact ofCoeffs_509_2_irreducible
     · cases hcoeffs; exact ofCoeffs_509_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_509_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_521_1_irreducible
     · cases hcoeffs; exact ofCoeffs_521_2_irreducible
     · cases hcoeffs; exact ofCoeffs_521_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_521_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_523_1_irreducible
     · cases hcoeffs; exact ofCoeffs_523_2_irreducible
     · cases hcoeffs; exact ofCoeffs_523_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_523_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_541_1_irreducible
     · cases hcoeffs; exact ofCoeffs_541_2_irreducible
     · cases hcoeffs; exact ofCoeffs_541_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_541_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_547_1_irreducible
     · cases hcoeffs; exact ofCoeffs_547_2_irreducible
     · cases hcoeffs; exact ofCoeffs_547_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_547_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_557_1_irreducible
     · cases hcoeffs; exact ofCoeffs_557_2_irreducible
     · cases hcoeffs; exact ofCoeffs_557_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_557_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_563_1_irreducible
     · cases hcoeffs; exact ofCoeffs_563_2_irreducible
     · cases hcoeffs; exact ofCoeffs_563_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_563_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_569_1_irreducible
     · cases hcoeffs; exact ofCoeffs_569_2_irreducible
     · cases hcoeffs; exact ofCoeffs_569_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_569_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_571_1_irreducible
     · cases hcoeffs; exact ofCoeffs_571_2_irreducible
     · cases hcoeffs; exact ofCoeffs_571_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_571_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_577_1_irreducible
     · cases hcoeffs; exact ofCoeffs_577_2_irreducible
     · cases hcoeffs; exact ofCoeffs_577_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_577_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_587_1_irreducible
     · cases hcoeffs; exact ofCoeffs_587_2_irreducible
     · cases hcoeffs; exact ofCoeffs_587_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_587_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_593_1_irreducible
     · cases hcoeffs; exact ofCoeffs_593_2_irreducible
     · cases hcoeffs; exact ofCoeffs_593_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_593_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_599_1_irreducible
     · cases hcoeffs; exact ofCoeffs_599_2_irreducible
     · cases hcoeffs; exact ofCoeffs_599_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_599_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_601_1_irreducible
     · cases hcoeffs; exact ofCoeffs_601_2_irreducible
     · cases hcoeffs; exact ofCoeffs_601_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_601_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_607_1_irreducible
     · cases hcoeffs; exact ofCoeffs_607_2_irreducible
     · cases hcoeffs; exact ofCoeffs_607_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_607_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_613_1_irreducible
     · cases hcoeffs; exact ofCoeffs_613_2_irreducible
     · cases hcoeffs; exact ofCoeffs_613_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_613_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_617_1_irreducible
     · cases hcoeffs; exact ofCoeffs_617_2_irreducible
     · cases hcoeffs; exact ofCoeffs_617_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_617_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_619_1_irreducible
     · cases hcoeffs; exact ofCoeffs_619_2_irreducible
     · cases hcoeffs; exact ofCoeffs_619_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_619_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_631_1_irreducible
     · cases hcoeffs; exact ofCoeffs_631_2_irreducible
     · cases hcoeffs; exact ofCoeffs_631_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_631_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_641_1_irreducible
     · cases hcoeffs; exact ofCoeffs_641_2_irreducible
     · cases hcoeffs; exact ofCoeffs_641_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_641_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_643_1_irreducible
     · cases hcoeffs; exact ofCoeffs_643_2_irreducible
     · cases hcoeffs; exact ofCoeffs_643_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_643_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_647_1_irreducible
     · cases hcoeffs; exact ofCoeffs_647_2_irreducible
     · cases hcoeffs; exact ofCoeffs_647_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_647_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_653_1_irreducible
     · cases hcoeffs; exact ofCoeffs_653_2_irreducible
     · cases hcoeffs; exact ofCoeffs_653_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_653_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_659_1_irreducible
     · cases hcoeffs; exact ofCoeffs_659_2_irreducible
     · cases hcoeffs; exact ofCoeffs_659_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_659_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_661_1_irreducible
     · cases hcoeffs; exact ofCoeffs_661_2_irreducible
     · cases hcoeffs; exact ofCoeffs_661_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_661_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_673_1_irreducible
     · cases hcoeffs; exact ofCoeffs_673_2_irreducible
     · cases hcoeffs; exact ofCoeffs_673_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_673_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_677_1_irreducible
     · cases hcoeffs; exact ofCoeffs_677_2_irreducible
     · cases hcoeffs; exact ofCoeffs_677_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_677_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_683_1_irreducible
     · cases hcoeffs; exact ofCoeffs_683_2_irreducible
     · cases hcoeffs; exact ofCoeffs_683_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_683_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_691_1_irreducible
     · cases hcoeffs; exact ofCoeffs_691_2_irreducible
     · cases hcoeffs; exact ofCoeffs_691_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_691_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_701_1_irreducible
     · cases hcoeffs; exact ofCoeffs_701_2_irreducible
     · cases hcoeffs; exact ofCoeffs_701_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_701_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_709_1_irreducible
     · cases hcoeffs; exact ofCoeffs_709_2_irreducible
     · cases hcoeffs; exact ofCoeffs_709_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_709_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_719_1_irreducible
     · cases hcoeffs; exact ofCoeffs_719_2_irreducible
     · cases hcoeffs; exact ofCoeffs_719_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_719_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_727_1_irreducible
     · cases hcoeffs; exact ofCoeffs_727_2_irreducible
     · cases hcoeffs; exact ofCoeffs_727_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_727_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_733_1_irreducible
     · cases hcoeffs; exact ofCoeffs_733_2_irreducible
     · cases hcoeffs; exact ofCoeffs_733_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_733_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_739_1_irreducible
     · cases hcoeffs; exact ofCoeffs_739_2_irreducible
     · cases hcoeffs; exact ofCoeffs_739_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_739_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_743_1_irreducible
     · cases hcoeffs; exact ofCoeffs_743_2_irreducible
     · cases hcoeffs; exact ofCoeffs_743_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_743_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_751_1_irreducible
     · cases hcoeffs; exact ofCoeffs_751_2_irreducible
     · cases hcoeffs; exact ofCoeffs_751_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_751_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_757_1_irreducible
     · cases hcoeffs; exact ofCoeffs_757_2_irreducible
     · cases hcoeffs; exact ofCoeffs_757_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_757_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_761_1_irreducible
     · cases hcoeffs; exact ofCoeffs_761_2_irreducible
     · cases hcoeffs; exact ofCoeffs_761_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_761_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_769_1_irreducible
     · cases hcoeffs; exact ofCoeffs_769_2_irreducible
     · cases hcoeffs; exact ofCoeffs_769_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_769_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_773_1_irreducible
     · cases hcoeffs; exact ofCoeffs_773_2_irreducible
     · cases hcoeffs; exact ofCoeffs_773_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_773_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_787_1_irreducible
     · cases hcoeffs; exact ofCoeffs_787_2_irreducible
     · cases hcoeffs; exact ofCoeffs_787_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_787_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_797_1_irreducible
     · cases hcoeffs; exact ofCoeffs_797_2_irreducible
     · cases hcoeffs; exact ofCoeffs_797_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_797_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_809_1_irreducible
     · cases hcoeffs; exact ofCoeffs_809_2_irreducible
     · cases hcoeffs; exact ofCoeffs_809_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_809_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_811_1_irreducible
     · cases hcoeffs; exact ofCoeffs_811_2_irreducible
     · cases hcoeffs; exact ofCoeffs_811_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_811_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_821_1_irreducible
     · cases hcoeffs; exact ofCoeffs_821_2_irreducible
     · cases hcoeffs; exact ofCoeffs_821_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_821_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_823_1_irreducible
     · cases hcoeffs; exact ofCoeffs_823_2_irreducible
     · cases hcoeffs; exact ofCoeffs_823_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_823_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_827_1_irreducible
     · cases hcoeffs; exact ofCoeffs_827_2_irreducible
     · cases hcoeffs; exact ofCoeffs_827_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_827_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_829_1_irreducible
     · cases hcoeffs; exact ofCoeffs_829_2_irreducible
     · cases hcoeffs; exact ofCoeffs_829_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_829_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_839_1_irreducible
     · cases hcoeffs; exact ofCoeffs_839_2_irreducible
     · cases hcoeffs; exact ofCoeffs_839_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_839_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_853_1_irreducible
     · cases hcoeffs; exact ofCoeffs_853_2_irreducible
     · cases hcoeffs; exact ofCoeffs_853_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_853_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_857_1_irreducible
     · cases hcoeffs; exact ofCoeffs_857_2_irreducible
     · cases hcoeffs; exact ofCoeffs_857_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_857_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_859_1_irreducible
     · cases hcoeffs; exact ofCoeffs_859_2_irreducible
     · cases hcoeffs; exact ofCoeffs_859_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_859_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_863_1_irreducible
     · cases hcoeffs; exact ofCoeffs_863_2_irreducible
     · cases hcoeffs; exact ofCoeffs_863_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_863_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_877_1_irreducible
     · cases hcoeffs; exact ofCoeffs_877_2_irreducible
     · cases hcoeffs; exact ofCoeffs_877_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_877_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_881_1_irreducible
     · cases hcoeffs; exact ofCoeffs_881_2_irreducible
     · cases hcoeffs; exact ofCoeffs_881_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_881_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_883_1_irreducible
     · cases hcoeffs; exact ofCoeffs_883_2_irreducible
     · cases hcoeffs; exact ofCoeffs_883_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_883_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_887_1_irreducible
     · cases hcoeffs; exact ofCoeffs_887_2_irreducible
     · cases hcoeffs; exact ofCoeffs_887_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_887_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_907_1_irreducible
     · cases hcoeffs; exact ofCoeffs_907_2_irreducible
     · cases hcoeffs; exact ofCoeffs_907_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_907_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_911_1_irreducible
     · cases hcoeffs; exact ofCoeffs_911_2_irreducible
     · cases hcoeffs; exact ofCoeffs_911_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_911_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_919_1_irreducible
     · cases hcoeffs; exact ofCoeffs_919_2_irreducible
     · cases hcoeffs; exact ofCoeffs_919_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_919_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_929_1_irreducible
     · cases hcoeffs; exact ofCoeffs_929_2_irreducible
     · cases hcoeffs; exact ofCoeffs_929_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_929_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_937_1_irreducible
     · cases hcoeffs; exact ofCoeffs_937_2_irreducible
     · cases hcoeffs; exact ofCoeffs_937_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_937_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_941_1_irreducible
     · cases hcoeffs; exact ofCoeffs_941_2_irreducible
     · cases hcoeffs; exact ofCoeffs_941_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_941_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_947_1_irreducible
     · cases hcoeffs; exact ofCoeffs_947_2_irreducible
     · cases hcoeffs; exact ofCoeffs_947_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_947_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_953_1_irreducible
     · cases hcoeffs; exact ofCoeffs_953_2_irreducible
     · cases hcoeffs; exact ofCoeffs_953_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_953_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_967_1_irreducible
     · cases hcoeffs; exact ofCoeffs_967_2_irreducible
     · cases hcoeffs; exact ofCoeffs_967_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_967_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_971_1_irreducible
     · cases hcoeffs; exact ofCoeffs_971_2_irreducible
     · cases hcoeffs; exact ofCoeffs_971_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_971_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_977_1_irreducible
     · cases hcoeffs; exact ofCoeffs_977_2_irreducible
     · cases hcoeffs; exact ofCoeffs_977_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_977_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_983_1_irreducible
     · cases hcoeffs; exact ofCoeffs_983_2_irreducible
     · cases hcoeffs; exact ofCoeffs_983_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_983_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_991_1_irreducible
     · cases hcoeffs; exact ofCoeffs_991_2_irreducible
     · cases hcoeffs; exact ofCoeffs_991_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_991_4_irreducible
     · cases hcoeffs
   · split at hcoeffs
     · cases hcoeffs; exact ofCoeffs_997_1_irreducible
     · cases hcoeffs; exact ofCoeffs_997_2_irreducible
     · cases hcoeffs; exact ofCoeffs_997_3_irreducible
-    · cases hcoeffs; exact ofCoeffs_997_4_irreducible
     · cases hcoeffs
   · cases hcoeffs
 

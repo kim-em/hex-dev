@@ -17,9 +17,6 @@ public import HexConway.FactorProofs.S0_7
 public import HexConway.FactorProofs.S0_8
 public import HexConway.FactorProofs.S0_9
 public import HexConway.FactorProofs.S0_10
-public import HexConway.FactorProofs.S0_11
-public import HexConway.FactorProofs.S0_12
-public import HexConway.FactorProofs.S0_13
 
 public section
 

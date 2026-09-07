@@ -14,32 +14,24 @@ public import HexConway.CompatibilityProofs.S0_2
 public import HexConway.CompatibilityProofs.S0_3
 public import HexConway.CompatibilityProofs.S0_4
 public import HexConway.CompatibilityProofs.S0_5
-public import HexConway.CompatibilityProofs.S0_6
-public import HexConway.CompatibilityProofs.S0_7
 public import HexConway.CompatibilityProofs.S1_0
 public import HexConway.CompatibilityProofs.S1_1
 public import HexConway.CompatibilityProofs.S1_2
 public import HexConway.CompatibilityProofs.S1_3
 public import HexConway.CompatibilityProofs.S1_4
 public import HexConway.CompatibilityProofs.S1_5
-public import HexConway.CompatibilityProofs.S1_6
-public import HexConway.CompatibilityProofs.S1_7
 public import HexConway.CompatibilityProofs.S2_0
 public import HexConway.CompatibilityProofs.S2_1
 public import HexConway.CompatibilityProofs.S2_2
 public import HexConway.CompatibilityProofs.S2_3
 public import HexConway.CompatibilityProofs.S2_4
 public import HexConway.CompatibilityProofs.S2_5
-public import HexConway.CompatibilityProofs.S2_6
-public import HexConway.CompatibilityProofs.S2_7
 public import HexConway.CompatibilityProofs.S3_0
 public import HexConway.CompatibilityProofs.S3_1
 public import HexConway.CompatibilityProofs.S3_2
 public import HexConway.CompatibilityProofs.S3_3
 public import HexConway.CompatibilityProofs.S3_4
 public import HexConway.CompatibilityProofs.S3_5
-public import HexConway.CompatibilityProofs.S3_6
-public import HexConway.CompatibilityProofs.S3_7
 
 public section
 

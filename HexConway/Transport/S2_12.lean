@@ -19,173 +19,68 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-theorem ofCoeffs_787_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 787 [2, 786, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_787_2
-  change luebeckConwayPolynomialOfCoeffs 787 [2, 786, 1] = luebeckConwayPolynomial_787_2 at heq
+theorem ofCoeffs_967_2_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 967 [5, 965, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_967_2
+  change luebeckConwayPolynomialOfCoeffs 967 [5, 965, 1] = luebeckConwayPolynomial_967_2 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_787_2_irreducible
+  exact luebeckConwayPolynomial_967_2_irreducible
 
-theorem ofCoeffs_787_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 787 [2, 605, 11, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_787_4
-  change luebeckConwayPolynomialOfCoeffs 787 [2, 605, 11, 0, 1] = luebeckConwayPolynomial_787_4 at heq
+theorem ofCoeffs_971_1_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 971 [965, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_971_1
+  change luebeckConwayPolynomialOfCoeffs 971 [965, 1] = luebeckConwayPolynomial_971_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_787_4_irreducible
+  exact luebeckConwayPolynomial_971_1_irreducible
 
-theorem ofCoeffs_797_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 797 [2, 793, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_797_2
-  change luebeckConwayPolynomialOfCoeffs 797 [2, 793, 1] = luebeckConwayPolynomial_797_2 at heq
+theorem ofCoeffs_971_3_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 971 [965, 3, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_971_3
+  change luebeckConwayPolynomialOfCoeffs 971 [965, 3, 0, 1] = luebeckConwayPolynomial_971_3 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_797_2_irreducible
+  exact luebeckConwayPolynomial_971_3_irreducible
 
-theorem ofCoeffs_797_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 797 [2, 717, 1, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_797_4
-  change luebeckConwayPolynomialOfCoeffs 797 [2, 717, 1, 0, 1] = luebeckConwayPolynomial_797_4 at heq
+theorem ofCoeffs_977_2_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 977 [3, 972, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_977_2
+  change luebeckConwayPolynomialOfCoeffs 977 [3, 972, 1] = luebeckConwayPolynomial_977_2 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_797_4_irreducible
+  exact luebeckConwayPolynomial_977_2_irreducible
 
-theorem ofCoeffs_809_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 809 [3, 799, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_809_2
-  change luebeckConwayPolynomialOfCoeffs 809 [3, 799, 1] = luebeckConwayPolynomial_809_2 at heq
+theorem ofCoeffs_983_1_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 983 [978, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_983_1
+  change luebeckConwayPolynomialOfCoeffs 983 [978, 1] = luebeckConwayPolynomial_983_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_809_2_irreducible
+  exact luebeckConwayPolynomial_983_1_irreducible
 
-theorem ofCoeffs_809_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 809 [3, 644, 4, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_809_4
-  change luebeckConwayPolynomialOfCoeffs 809 [3, 644, 4, 0, 1] = luebeckConwayPolynomial_809_4 at heq
+theorem ofCoeffs_983_3_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 983 [978, 1, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_983_3
+  change luebeckConwayPolynomialOfCoeffs 983 [978, 1, 0, 1] = luebeckConwayPolynomial_983_3 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_809_4_irreducible
+  exact luebeckConwayPolynomial_983_3_irreducible
 
-theorem ofCoeffs_811_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 811 [3, 806, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_811_2
-  change luebeckConwayPolynomialOfCoeffs 811 [3, 806, 1] = luebeckConwayPolynomial_811_2 at heq
+theorem ofCoeffs_991_2_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 991 [6, 989, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_991_2
+  change luebeckConwayPolynomialOfCoeffs 991 [6, 989, 1] = luebeckConwayPolynomial_991_2 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_811_2_irreducible
+  exact luebeckConwayPolynomial_991_2_irreducible
 
-theorem ofCoeffs_811_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 811 [3, 453, 3, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_811_4
-  change luebeckConwayPolynomialOfCoeffs 811 [3, 453, 3, 0, 1] = luebeckConwayPolynomial_811_4 at heq
+theorem ofCoeffs_997_1_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 997 [990, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_997_1
+  change luebeckConwayPolynomialOfCoeffs 997 [990, 1] = luebeckConwayPolynomial_997_1 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_811_4_irreducible
+  exact luebeckConwayPolynomial_997_1_irreducible
 
-theorem ofCoeffs_821_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 821 [2, 816, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_821_2
-  change luebeckConwayPolynomialOfCoeffs 821 [2, 816, 1] = luebeckConwayPolynomial_821_2 at heq
+theorem ofCoeffs_997_3_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 997 [990, 2, 0, 1]) := by
+  have heq := Option.some.inj luebeckConwayPolynomial?_hit_997_3
+  change luebeckConwayPolynomialOfCoeffs 997 [990, 2, 0, 1] = luebeckConwayPolynomial_997_3 at heq
   rw [heq]
-  exact luebeckConwayPolynomial_821_2_irreducible
-
-theorem ofCoeffs_821_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 821 [2, 662, 15, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_821_4
-  change luebeckConwayPolynomialOfCoeffs 821 [2, 662, 15, 0, 1] = luebeckConwayPolynomial_821_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_821_4_irreducible
-
-theorem ofCoeffs_823_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 823 [3, 821, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_823_2
-  change luebeckConwayPolynomialOfCoeffs 823 [3, 821, 1] = luebeckConwayPolynomial_823_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_823_2_irreducible
-
-theorem ofCoeffs_823_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 823 [3, 819, 4, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_823_4
-  change luebeckConwayPolynomialOfCoeffs 823 [3, 819, 4, 0, 1] = luebeckConwayPolynomial_823_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_823_4_irreducible
-
-theorem ofCoeffs_827_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 827 [2, 821, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_827_2
-  change luebeckConwayPolynomialOfCoeffs 827 [2, 821, 1] = luebeckConwayPolynomial_827_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_827_2_irreducible
-
-theorem ofCoeffs_827_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 827 [2, 605, 18, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_827_4
-  change luebeckConwayPolynomialOfCoeffs 827 [2, 605, 18, 0, 1] = luebeckConwayPolynomial_827_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_827_4_irreducible
-
-theorem ofCoeffs_829_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 829 [2, 828, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_829_2
-  change luebeckConwayPolynomialOfCoeffs 829 [2, 828, 1] = luebeckConwayPolynomial_829_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_829_2_irreducible
-
-theorem ofCoeffs_829_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 829 [2, 604, 9, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_829_4
-  change luebeckConwayPolynomialOfCoeffs 829 [2, 604, 9, 0, 1] = luebeckConwayPolynomial_829_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_829_4_irreducible
-
-theorem ofCoeffs_839_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 839 [11, 838, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_839_2
-  change luebeckConwayPolynomialOfCoeffs 839 [11, 838, 1] = luebeckConwayPolynomial_839_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_839_2_irreducible
-
-theorem ofCoeffs_839_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 839 [11, 609, 2, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_839_4
-  change luebeckConwayPolynomialOfCoeffs 839 [11, 609, 2, 0, 1] = luebeckConwayPolynomial_839_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_839_4_irreducible
-
-theorem ofCoeffs_853_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 853 [2, 852, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_853_2
-  change luebeckConwayPolynomialOfCoeffs 853 [2, 852, 1] = luebeckConwayPolynomial_853_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_853_2_irreducible
-
-theorem ofCoeffs_853_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 853 [2, 623, 3, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_853_4
-  change luebeckConwayPolynomialOfCoeffs 853 [2, 623, 3, 0, 1] = luebeckConwayPolynomial_853_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_853_4_irreducible
-
-theorem ofCoeffs_857_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 857 [3, 850, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_857_2
-  change luebeckConwayPolynomialOfCoeffs 857 [3, 850, 1] = luebeckConwayPolynomial_857_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_857_2_irreducible
-
-theorem ofCoeffs_857_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 857 [3, 528, 0, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_857_4
-  change luebeckConwayPolynomialOfCoeffs 857 [3, 528, 0, 0, 1] = luebeckConwayPolynomial_857_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_857_4_irreducible
-
-theorem ofCoeffs_859_2_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 859 [2, 858, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_859_2
-  change luebeckConwayPolynomialOfCoeffs 859 [2, 858, 1] = luebeckConwayPolynomial_859_2 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_859_2_irreducible
-
-theorem ofCoeffs_859_4_irreducible :
-    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 859 [2, 530, 2, 0, 1]) := by
-  have heq := Option.some.inj luebeckConwayPolynomial?_hit_859_4
-  change luebeckConwayPolynomialOfCoeffs 859 [2, 530, 2, 0, 1] = luebeckConwayPolynomial_859_4 at heq
-  rw [heq]
-  exact luebeckConwayPolynomial_859_4_irreducible
+  exact luebeckConwayPolynomial_997_3_irreducible
 
 
 end Conway

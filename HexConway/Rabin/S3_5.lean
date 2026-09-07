@@ -20,340 +20,340 @@ set_option maxHeartbeats 80000000
 namespace Hex
 namespace Conway
 
-/-- Rabin certificate for C(157, 2). -/
-private def cert_157_2 : Berlekamp.IrreducibilityCertificate where
-  p := 157
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 157), 1], FpPoly.ofCoeffs #[(5 : ZMod64 157), 156], FpPoly.ofCoeffs #[(0 : ZMod64 157), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(62 : ZMod64 157)], right := FpPoly.ofCoeffs #[(1 : ZMod64 157), 31] }]
+/-- Rabin certificate for C(947, 1). -/
+private def cert_947_1 : Berlekamp.IrreducibilityCertificate where
+  p := 947
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 947)], FpPoly.ofCoeffs #[(2 : ZMod64 947)]]
+  bezout := #[]
 
-/-- Irreducibility of the imported C(157, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_157_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_157_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_157_2 luebeckConwayPolynomial_157_2_monic
+/-- Irreducibility of the imported C(947, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_947_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_947_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_947_1 luebeckConwayPolynomial_947_1_monic
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_157_2 luebeckConwayPolynomial_157_2_monic cert_157_2
+      luebeckConwayPolynomial_947_1 luebeckConwayPolynomial_947_1_monic cert_947_1
       (by rw [← checkRabin_eq]; decide +kernel))
 
-/-- Rabin certificate for C(191, 2). -/
-private def cert_191_2 : Berlekamp.IrreducibilityCertificate where
-  p := 191
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 191), 1], FpPoly.ofCoeffs #[(1 : ZMod64 191), 190], FpPoly.ofCoeffs #[(0 : ZMod64 191), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(79 : ZMod64 191)], right := FpPoly.ofCoeffs #[(28 : ZMod64 191), 135] }]
+/-- Rabin certificate for C(271, 1). -/
+private def cert_271_1 : Berlekamp.IrreducibilityCertificate where
+  p := 271
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(6 : ZMod64 271)], FpPoly.ofCoeffs #[(6 : ZMod64 271)]]
+  bezout := #[]
 
-/-- Irreducibility of the imported C(191, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_191_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_191_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_191_2 luebeckConwayPolynomial_191_2_monic
+/-- Irreducibility of the imported C(271, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_271_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_271_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_271_1 luebeckConwayPolynomial_271_1_monic
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_191_2 luebeckConwayPolynomial_191_2_monic cert_191_2
+      luebeckConwayPolynomial_271_1 luebeckConwayPolynomial_271_1_monic cert_271_1
       (by rw [← checkRabin_eq]; decide +kernel))
 
-/-- Rabin certificate for C(227, 2). -/
-private def cert_227_2 : Berlekamp.IrreducibilityCertificate where
+/-- Rabin certificate for C(307, 1). -/
+private def cert_307_1 : Berlekamp.IrreducibilityCertificate where
+  p := 307
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 307)], FpPoly.ofCoeffs #[(5 : ZMod64 307)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(307, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_307_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_307_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_307_1 luebeckConwayPolynomial_307_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_307_1 luebeckConwayPolynomial_307_1_monic cert_307_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(349, 1). -/
+private def cert_349_1 : Berlekamp.IrreducibilityCertificate where
+  p := 349
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 349)], FpPoly.ofCoeffs #[(2 : ZMod64 349)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(349, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_349_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_349_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_349_1 luebeckConwayPolynomial_349_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_349_1 luebeckConwayPolynomial_349_1_monic cert_349_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(397, 1). -/
+private def cert_397_1 : Berlekamp.IrreducibilityCertificate where
+  p := 397
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 397)], FpPoly.ofCoeffs #[(5 : ZMod64 397)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(397, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_397_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_397_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_397_1 luebeckConwayPolynomial_397_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_397_1 luebeckConwayPolynomial_397_1_monic cert_397_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(439, 1). -/
+private def cert_439_1 : Berlekamp.IrreducibilityCertificate where
+  p := 439
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(15 : ZMod64 439)], FpPoly.ofCoeffs #[(15 : ZMod64 439)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(439, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_439_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_439_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_439_1 luebeckConwayPolynomial_439_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_439_1 luebeckConwayPolynomial_439_1_monic cert_439_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(491, 1). -/
+private def cert_491_1 : Berlekamp.IrreducibilityCertificate where
+  p := 491
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 491)], FpPoly.ofCoeffs #[(2 : ZMod64 491)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(491, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_491_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_491_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_491_1 luebeckConwayPolynomial_491_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_491_1 luebeckConwayPolynomial_491_1_monic cert_491_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(151, 1). -/
+private def cert_151_1 : Berlekamp.IrreducibilityCertificate where
+  p := 151
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(6 : ZMod64 151)], FpPoly.ofCoeffs #[(6 : ZMod64 151)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(151, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_151_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_151_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_151_1 luebeckConwayPolynomial_151_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_151_1 luebeckConwayPolynomial_151_1_monic cert_151_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(199, 1). -/
+private def cert_199_1 : Berlekamp.IrreducibilityCertificate where
+  p := 199
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 199)], FpPoly.ofCoeffs #[(3 : ZMod64 199)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(199, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_199_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_199_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_199_1 luebeckConwayPolynomial_199_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_199_1 luebeckConwayPolynomial_199_1_monic cert_199_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(241, 1). -/
+private def cert_241_1 : Berlekamp.IrreducibilityCertificate where
+  p := 241
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(7 : ZMod64 241)], FpPoly.ofCoeffs #[(7 : ZMod64 241)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(241, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_241_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_241_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_241_1 luebeckConwayPolynomial_241_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_241_1 luebeckConwayPolynomial_241_1_monic cert_241_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(103, 1). -/
+private def cert_103_1 : Berlekamp.IrreducibilityCertificate where
+  p := 103
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 103)], FpPoly.ofCoeffs #[(5 : ZMod64 103)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(103, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_103_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_103_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_103_1 luebeckConwayPolynomial_103_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_103_1 luebeckConwayPolynomial_103_1_monic cert_103_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(569, 1). -/
+private def cert_569_1 : Berlekamp.IrreducibilityCertificate where
+  p := 569
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 569)], FpPoly.ofCoeffs #[(3 : ZMod64 569)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(569, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_569_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_569_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_569_1 luebeckConwayPolynomial_569_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_569_1 luebeckConwayPolynomial_569_1_monic cert_569_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(641, 1). -/
+private def cert_641_1 : Berlekamp.IrreducibilityCertificate where
+  p := 641
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 641)], FpPoly.ofCoeffs #[(3 : ZMod64 641)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(641, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_641_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_641_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_641_1 luebeckConwayPolynomial_641_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_641_1 luebeckConwayPolynomial_641_1_monic cert_641_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(769, 1). -/
+private def cert_769_1 : Berlekamp.IrreducibilityCertificate where
+  p := 769
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(11 : ZMod64 769)], FpPoly.ofCoeffs #[(11 : ZMod64 769)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(769, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_769_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_769_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_769_1 luebeckConwayPolynomial_769_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_769_1 luebeckConwayPolynomial_769_1_monic cert_769_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(839, 1). -/
+private def cert_839_1 : Berlekamp.IrreducibilityCertificate where
+  p := 839
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(11 : ZMod64 839)], FpPoly.ofCoeffs #[(11 : ZMod64 839)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(839, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_839_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_839_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_839_1 luebeckConwayPolynomial_839_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_839_1 luebeckConwayPolynomial_839_1_monic cert_839_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(929, 1). -/
+private def cert_929_1 : Berlekamp.IrreducibilityCertificate where
+  p := 929
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 929)], FpPoly.ofCoeffs #[(3 : ZMod64 929)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(929, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_929_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_929_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_929_1 luebeckConwayPolynomial_929_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_929_1 luebeckConwayPolynomial_929_1_monic cert_929_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(61, 1). -/
+private def cert_61_1 : Berlekamp.IrreducibilityCertificate where
+  p := 61
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 61)], FpPoly.ofCoeffs #[(2 : ZMod64 61)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(61, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_61_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_61_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_61_1 luebeckConwayPolynomial_61_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_61_1 luebeckConwayPolynomial_61_1_monic cert_61_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(317, 1). -/
+private def cert_317_1 : Berlekamp.IrreducibilityCertificate where
+  p := 317
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 317)], FpPoly.ofCoeffs #[(2 : ZMod64 317)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(317, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_317_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_317_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_317_1 luebeckConwayPolynomial_317_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_317_1 luebeckConwayPolynomial_317_1_monic cert_317_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(383, 1). -/
+private def cert_383_1 : Berlekamp.IrreducibilityCertificate where
+  p := 383
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 383)], FpPoly.ofCoeffs #[(5 : ZMod64 383)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(383, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_383_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_383_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_383_1 luebeckConwayPolynomial_383_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_383_1 luebeckConwayPolynomial_383_1_monic cert_383_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(449, 1). -/
+private def cert_449_1 : Berlekamp.IrreducibilityCertificate where
+  p := 449
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 449)], FpPoly.ofCoeffs #[(3 : ZMod64 449)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(449, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_449_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_449_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_449_1 luebeckConwayPolynomial_449_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_449_1 luebeckConwayPolynomial_449_1_monic cert_449_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(503, 1). -/
+private def cert_503_1 : Berlekamp.IrreducibilityCertificate where
+  p := 503
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 503)], FpPoly.ofCoeffs #[(5 : ZMod64 503)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(503, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_503_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_503_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_503_1 luebeckConwayPolynomial_503_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_503_1 luebeckConwayPolynomial_503_1_monic cert_503_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(137, 1). -/
+private def cert_137_1 : Berlekamp.IrreducibilityCertificate where
+  p := 137
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 137)], FpPoly.ofCoeffs #[(3 : ZMod64 137)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(137, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_137_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_137_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_137_1 luebeckConwayPolynomial_137_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_137_1 luebeckConwayPolynomial_137_1_monic cert_137_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(173, 1). -/
+private def cert_173_1 : Berlekamp.IrreducibilityCertificate where
+  p := 173
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 173)], FpPoly.ofCoeffs #[(2 : ZMod64 173)]]
+  bezout := #[]
+
+/-- Irreducibility of the imported C(173, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_173_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_173_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_173_1 luebeckConwayPolynomial_173_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_173_1 luebeckConwayPolynomial_173_1_monic cert_173_1
+      (by rw [← checkRabin_eq]; decide +kernel))
+
+/-- Rabin certificate for C(227, 1). -/
+private def cert_227_1 : Berlekamp.IrreducibilityCertificate where
   p := 227
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 227), 1], FpPoly.ofCoeffs #[(7 : ZMod64 227), 226], FpPoly.ofCoeffs #[(0 : ZMod64 227), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(166 : ZMod64 227)], right := FpPoly.ofCoeffs #[(50 : ZMod64 227), 83] }]
-
-/-- Irreducibility of the imported C(227, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_227_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_227_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_227_2 luebeckConwayPolynomial_227_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_227_2 luebeckConwayPolynomial_227_2_monic cert_227_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(2, 5). -/
-private def cert_2_5 : Berlekamp.IrreducibilityCertificate where
-  p := 2
-  n := 5
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 2), 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 0, 0, 1], FpPoly.ofCoeffs #[(1 : ZMod64 2), 0, 1, 1], FpPoly.ofCoeffs #[(1 : ZMod64 2), 1, 0, 1, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(1 : ZMod64 2)], right := FpPoly.ofCoeffs #[(0 : ZMod64 2), 1, 1, 1] }]
-
-/-- Irreducibility of the imported C(2, 5). -/
-@[grind .] theorem luebeckConwayPolynomial_2_5_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_2_5 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_2_5 luebeckConwayPolynomial_2_5_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_2_5 luebeckConwayPolynomial_2_5_monic cert_2_5
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(71, 2). -/
-private def cert_71_2 : Berlekamp.IrreducibilityCertificate where
-  p := 71
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 71), 1], FpPoly.ofCoeffs #[(2 : ZMod64 71), 70], FpPoly.ofCoeffs #[(0 : ZMod64 71), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(12 : ZMod64 71)], right := FpPoly.ofCoeffs #[(65 : ZMod64 71), 6] }]
-
-/-- Irreducibility of the imported C(71, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_71_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_71_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_71_2 luebeckConwayPolynomial_71_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_71_2 luebeckConwayPolynomial_71_2_monic cert_71_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(89, 2). -/
-private def cert_89_2 : Berlekamp.IrreducibilityCertificate where
-  p := 89
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 89), 1], FpPoly.ofCoeffs #[(7 : ZMod64 89), 88], FpPoly.ofCoeffs #[(0 : ZMod64 89), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(48 : ZMod64 89)], right := FpPoly.ofCoeffs #[(5 : ZMod64 89), 24] }]
-
-/-- Irreducibility of the imported C(89, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_89_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_89_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_89_2 luebeckConwayPolynomial_89_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_89_2 luebeckConwayPolynomial_89_2_monic cert_89_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(113, 2). -/
-private def cert_113_2 : Berlekamp.IrreducibilityCertificate where
-  p := 113
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 113), 1], FpPoly.ofCoeffs #[(12 : ZMod64 113), 112], FpPoly.ofCoeffs #[(0 : ZMod64 113), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(89 : ZMod64 113)], right := FpPoly.ofCoeffs #[(72 : ZMod64 113), 101] }]
-
-/-- Irreducibility of the imported C(113, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_113_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_113_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_113_2 luebeckConwayPolynomial_113_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_113_2 luebeckConwayPolynomial_113_2_monic cert_113_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(43, 2). -/
-private def cert_43_2 : Berlekamp.IrreducibilityCertificate where
-  p := 43
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 43), 1], FpPoly.ofCoeffs #[(1 : ZMod64 43), 42], FpPoly.ofCoeffs #[(0 : ZMod64 43), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(16 : ZMod64 43)], right := FpPoly.ofCoeffs #[(39 : ZMod64 43), 8] }]
-
-/-- Irreducibility of the imported C(43, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_43_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_43_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_43_2 luebeckConwayPolynomial_43_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_43_2 luebeckConwayPolynomial_43_2_monic cert_43_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(163, 2). -/
-private def cert_163_2 : Berlekamp.IrreducibilityCertificate where
-  p := 163
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 163), 1], FpPoly.ofCoeffs #[(4 : ZMod64 163), 162], FpPoly.ofCoeffs #[(0 : ZMod64 163), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(81 : ZMod64 163)], right := FpPoly.ofCoeffs #[(82 : ZMod64 163), 122] }]
-
-/-- Irreducibility of the imported C(163, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_163_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_163_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_163_2 luebeckConwayPolynomial_163_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_163_2 luebeckConwayPolynomial_163_2_monic cert_163_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(127, 2). -/
-private def cert_127_2 : Berlekamp.IrreducibilityCertificate where
-  p := 127
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 127), 1], FpPoly.ofCoeffs #[(1 : ZMod64 127), 126], FpPoly.ofCoeffs #[(0 : ZMod64 127), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(35 : ZMod64 127)], right := FpPoly.ofCoeffs #[(23 : ZMod64 127), 81] }]
-
-/-- Irreducibility of the imported C(127, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_127_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_127_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_127_2 luebeckConwayPolynomial_127_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_127_2 luebeckConwayPolynomial_127_2_monic cert_127_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(53, 2). -/
-private def cert_53_2 : Berlekamp.IrreducibilityCertificate where
-  p := 53
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 53), 1], FpPoly.ofCoeffs #[(4 : ZMod64 53), 52], FpPoly.ofCoeffs #[(0 : ZMod64 53), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(26 : ZMod64 53)], right := FpPoly.ofCoeffs #[(27 : ZMod64 53), 13] }]
-
-/-- Irreducibility of the imported C(53, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_53_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_53_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_53_2 luebeckConwayPolynomial_53_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_53_2 luebeckConwayPolynomial_53_2_monic cert_53_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(31, 2). -/
-private def cert_31_2 : Berlekamp.IrreducibilityCertificate where
-  p := 31
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 31), 1], FpPoly.ofCoeffs #[(2 : ZMod64 31), 30], FpPoly.ofCoeffs #[(0 : ZMod64 31), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(16 : ZMod64 31)], right := FpPoly.ofCoeffs #[(23 : ZMod64 31), 8] }]
-
-/-- Irreducibility of the imported C(31, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_31_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_31_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_31_2 luebeckConwayPolynomial_31_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_31_2 luebeckConwayPolynomial_31_2_monic cert_31_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(17, 2). -/
-private def cert_17_2 : Berlekamp.IrreducibilityCertificate where
-  p := 17
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 17), 1], FpPoly.ofCoeffs #[(1 : ZMod64 17), 16], FpPoly.ofCoeffs #[(0 : ZMod64 17), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(5 : ZMod64 17)], right := FpPoly.ofCoeffs #[(3 : ZMod64 17), 11] }]
-
-/-- Irreducibility of the imported C(17, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_17_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_17_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_17_2 luebeckConwayPolynomial_17_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_17_2 luebeckConwayPolynomial_17_2_monic cert_17_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(7, 2). -/
-private def cert_7_2 : Berlekamp.IrreducibilityCertificate where
-  p := 7
-  n := 2
-  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 7), 1], FpPoly.ofCoeffs #[(1 : ZMod64 7), 6], FpPoly.ofCoeffs #[(0 : ZMod64 7), 1]]
-  bezout := #[{ left := FpPoly.ofCoeffs #[(1 : ZMod64 7)], right := FpPoly.ofCoeffs #[(5 : ZMod64 7), 4] }]
-
-/-- Irreducibility of the imported C(7, 2). -/
-@[grind .] theorem luebeckConwayPolynomial_7_2_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_7_2 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_7_2 luebeckConwayPolynomial_7_2_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_7_2 luebeckConwayPolynomial_7_2_monic cert_7_2
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(661, 1). -/
-private def cert_661_1 : Berlekamp.IrreducibilityCertificate where
-  p := 661
   n := 1
-  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 661)], FpPoly.ofCoeffs #[(2 : ZMod64 661)]]
+  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 227)], FpPoly.ofCoeffs #[(2 : ZMod64 227)]]
   bezout := #[]
 
-/-- Irreducibility of the imported C(661, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_661_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_661_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_661_1 luebeckConwayPolynomial_661_1_monic
+/-- Irreducibility of the imported C(227, 1). -/
+@[grind .] theorem luebeckConwayPolynomial_227_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_227_1 :=
+  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_227_1 luebeckConwayPolynomial_227_1_monic
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_661_1 luebeckConwayPolynomial_661_1_monic cert_661_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(967, 1). -/
-private def cert_967_1 : Berlekamp.IrreducibilityCertificate where
-  p := 967
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 967)], FpPoly.ofCoeffs #[(5 : ZMod64 967)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(967, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_967_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_967_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_967_1 luebeckConwayPolynomial_967_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_967_1 luebeckConwayPolynomial_967_1_monic cert_967_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(463, 1). -/
-private def cert_463_1 : Berlekamp.IrreducibilityCertificate where
-  p := 463
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 463)], FpPoly.ofCoeffs #[(3 : ZMod64 463)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(463, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_463_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_463_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_463_1 luebeckConwayPolynomial_463_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_463_1 luebeckConwayPolynomial_463_1_monic cert_463_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(599, 1). -/
-private def cert_599_1 : Berlekamp.IrreducibilityCertificate where
-  p := 599
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(7 : ZMod64 599)], FpPoly.ofCoeffs #[(7 : ZMod64 599)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(599, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_599_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_599_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_599_1 luebeckConwayPolynomial_599_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_599_1 luebeckConwayPolynomial_599_1_monic cert_599_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(617, 1). -/
-private def cert_617_1 : Berlekamp.IrreducibilityCertificate where
-  p := 617
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(3 : ZMod64 617)], FpPoly.ofCoeffs #[(3 : ZMod64 617)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(617, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_617_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_617_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_617_1 luebeckConwayPolynomial_617_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_617_1 luebeckConwayPolynomial_617_1_monic cert_617_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(659, 1). -/
-private def cert_659_1 : Berlekamp.IrreducibilityCertificate where
-  p := 659
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 659)], FpPoly.ofCoeffs #[(2 : ZMod64 659)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(659, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_659_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_659_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_659_1 luebeckConwayPolynomial_659_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_659_1 luebeckConwayPolynomial_659_1_monic cert_659_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(709, 1). -/
-private def cert_709_1 : Berlekamp.IrreducibilityCertificate where
-  p := 709
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 709)], FpPoly.ofCoeffs #[(2 : ZMod64 709)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(709, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_709_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_709_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_709_1 luebeckConwayPolynomial_709_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_709_1 luebeckConwayPolynomial_709_1_monic cert_709_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(743, 1). -/
-private def cert_743_1 : Berlekamp.IrreducibilityCertificate where
-  p := 743
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(5 : ZMod64 743)], FpPoly.ofCoeffs #[(5 : ZMod64 743)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(743, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_743_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_743_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_743_1 luebeckConwayPolynomial_743_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_743_1 luebeckConwayPolynomial_743_1_monic cert_743_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(787, 1). -/
-private def cert_787_1 : Berlekamp.IrreducibilityCertificate where
-  p := 787
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 787)], FpPoly.ofCoeffs #[(2 : ZMod64 787)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(787, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_787_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_787_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_787_1 luebeckConwayPolynomial_787_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_787_1 luebeckConwayPolynomial_787_1_monic cert_787_1
-      (by rw [← checkRabin_eq]; decide +kernel))
-
-/-- Rabin certificate for C(827, 1). -/
-private def cert_827_1 : Berlekamp.IrreducibilityCertificate where
-  p := 827
-  n := 1
-  powChain := #[FpPoly.ofCoeffs #[(2 : ZMod64 827)], FpPoly.ofCoeffs #[(2 : ZMod64 827)]]
-  bezout := #[]
-
-/-- Irreducibility of the imported C(827, 1). -/
-@[grind .] theorem luebeckConwayPolynomial_827_1_irreducible : FpPoly.Irreducible luebeckConwayPolynomial_827_1 :=
-  Berlekamp.rabinTest_imp_irreducible luebeckConwayPolynomial_827_1 luebeckConwayPolynomial_827_1_monic
-    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      luebeckConwayPolynomial_827_1 luebeckConwayPolynomial_827_1_monic cert_827_1
+      luebeckConwayPolynomial_227_1 luebeckConwayPolynomial_227_1_monic cert_227_1
       (by rw [← checkRabin_eq]; decide +kernel))
 
 

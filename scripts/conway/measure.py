@@ -142,6 +142,7 @@ def main():
             "build",
             *targets,
         ]
+        load_start = os.getloadavg()
         start, peak = time.monotonic(), 0
         capped = False
         memory_capped = False
@@ -188,6 +189,8 @@ def main():
             if name.split()[0].split(".", 1)[0].split(":", 1)[0] not in prefixes
         ]
         row = dict(
+            load_average_start=load_start,
+            load_average_end=os.getloadavg(),
             dependency_builds=dependency_builds,
             capped=capped,
             memory_capped=memory_capped,

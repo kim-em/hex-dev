@@ -11,6 +11,5 @@ public import HexGFqMathlib.GeneratorOrder.S1
 public import HexGFqMathlib.GeneratorOrder.S2
 public import HexGFqMathlib.GeneratorOrder.S3
 public import HexGFqMathlib.GeneratorOrder.S4
-public import HexGFqMathlib.GeneratorOrder.S5
 
 public section

@@ -12,150 +12,6 @@ public section
 
 namespace Hex.GFq
 
-/-- Instance-selected field for C(463, 1). -/
-instance committedEntry_463_1 : CommittedEntry 463 1 where
-  entry := Hex.Conway.supportedEntry_463_1
-
-/-- Instance-selected field for C(463, 2). -/
-instance committedEntry_463_2 : CommittedEntry 463 2 where
-  entry := Hex.Conway.supportedEntry_463_2
-
-/-- Instance-selected field for C(463, 3). -/
-instance committedEntry_463_3 : CommittedEntry 463 3 where
-  entry := Hex.Conway.supportedEntry_463_3
-
-/-- Instance-selected field for C(463, 4). -/
-instance committedEntry_463_4 : CommittedEntry 463 4 where
-  entry := Hex.Conway.supportedEntry_463_4
-
-/-- Instance-selected field for C(467, 1). -/
-instance committedEntry_467_1 : CommittedEntry 467 1 where
-  entry := Hex.Conway.supportedEntry_467_1
-
-/-- Instance-selected field for C(467, 2). -/
-instance committedEntry_467_2 : CommittedEntry 467 2 where
-  entry := Hex.Conway.supportedEntry_467_2
-
-/-- Instance-selected field for C(467, 3). -/
-instance committedEntry_467_3 : CommittedEntry 467 3 where
-  entry := Hex.Conway.supportedEntry_467_3
-
-/-- Instance-selected field for C(467, 4). -/
-instance committedEntry_467_4 : CommittedEntry 467 4 where
-  entry := Hex.Conway.supportedEntry_467_4
-
-/-- Instance-selected field for C(479, 1). -/
-instance committedEntry_479_1 : CommittedEntry 479 1 where
-  entry := Hex.Conway.supportedEntry_479_1
-
-/-- Instance-selected field for C(479, 2). -/
-instance committedEntry_479_2 : CommittedEntry 479 2 where
-  entry := Hex.Conway.supportedEntry_479_2
-
-/-- Instance-selected field for C(479, 3). -/
-instance committedEntry_479_3 : CommittedEntry 479 3 where
-  entry := Hex.Conway.supportedEntry_479_3
-
-/-- Instance-selected field for C(479, 4). -/
-instance committedEntry_479_4 : CommittedEntry 479 4 where
-  entry := Hex.Conway.supportedEntry_479_4
-
-/-- Instance-selected field for C(487, 1). -/
-instance committedEntry_487_1 : CommittedEntry 487 1 where
-  entry := Hex.Conway.supportedEntry_487_1
-
-/-- Instance-selected field for C(487, 2). -/
-instance committedEntry_487_2 : CommittedEntry 487 2 where
-  entry := Hex.Conway.supportedEntry_487_2
-
-/-- Instance-selected field for C(487, 3). -/
-instance committedEntry_487_3 : CommittedEntry 487 3 where
-  entry := Hex.Conway.supportedEntry_487_3
-
-/-- Instance-selected field for C(487, 4). -/
-instance committedEntry_487_4 : CommittedEntry 487 4 where
-  entry := Hex.Conway.supportedEntry_487_4
-
-/-- Instance-selected field for C(491, 1). -/
-instance committedEntry_491_1 : CommittedEntry 491 1 where
-  entry := Hex.Conway.supportedEntry_491_1
-
-/-- Instance-selected field for C(491, 2). -/
-instance committedEntry_491_2 : CommittedEntry 491 2 where
-  entry := Hex.Conway.supportedEntry_491_2
-
-/-- Instance-selected field for C(491, 3). -/
-instance committedEntry_491_3 : CommittedEntry 491 3 where
-  entry := Hex.Conway.supportedEntry_491_3
-
-/-- Instance-selected field for C(491, 4). -/
-instance committedEntry_491_4 : CommittedEntry 491 4 where
-  entry := Hex.Conway.supportedEntry_491_4
-
-/-- Instance-selected field for C(499, 1). -/
-instance committedEntry_499_1 : CommittedEntry 499 1 where
-  entry := Hex.Conway.supportedEntry_499_1
-
-/-- Instance-selected field for C(499, 2). -/
-instance committedEntry_499_2 : CommittedEntry 499 2 where
-  entry := Hex.Conway.supportedEntry_499_2
-
-/-- Instance-selected field for C(499, 3). -/
-instance committedEntry_499_3 : CommittedEntry 499 3 where
-  entry := Hex.Conway.supportedEntry_499_3
-
-/-- Instance-selected field for C(499, 4). -/
-instance committedEntry_499_4 : CommittedEntry 499 4 where
-  entry := Hex.Conway.supportedEntry_499_4
-
-/-- Instance-selected field for C(503, 1). -/
-instance committedEntry_503_1 : CommittedEntry 503 1 where
-  entry := Hex.Conway.supportedEntry_503_1
-
-/-- Instance-selected field for C(503, 2). -/
-instance committedEntry_503_2 : CommittedEntry 503 2 where
-  entry := Hex.Conway.supportedEntry_503_2
-
-/-- Instance-selected field for C(503, 3). -/
-instance committedEntry_503_3 : CommittedEntry 503 3 where
-  entry := Hex.Conway.supportedEntry_503_3
-
-/-- Instance-selected field for C(503, 4). -/
-instance committedEntry_503_4 : CommittedEntry 503 4 where
-  entry := Hex.Conway.supportedEntry_503_4
-
-/-- Instance-selected field for C(509, 1). -/
-instance committedEntry_509_1 : CommittedEntry 509 1 where
-  entry := Hex.Conway.supportedEntry_509_1
-
-/-- Instance-selected field for C(509, 2). -/
-instance committedEntry_509_2 : CommittedEntry 509 2 where
-  entry := Hex.Conway.supportedEntry_509_2
-
-/-- Instance-selected field for C(509, 3). -/
-instance committedEntry_509_3 : CommittedEntry 509 3 where
-  entry := Hex.Conway.supportedEntry_509_3
-
-/-- Instance-selected field for C(509, 4). -/
-instance committedEntry_509_4 : CommittedEntry 509 4 where
-  entry := Hex.Conway.supportedEntry_509_4
-
-/-- Instance-selected field for C(521, 1). -/
-instance committedEntry_521_1 : CommittedEntry 521 1 where
-  entry := Hex.Conway.supportedEntry_521_1
-
-/-- Instance-selected field for C(521, 2). -/
-instance committedEntry_521_2 : CommittedEntry 521 2 where
-  entry := Hex.Conway.supportedEntry_521_2
-
-/-- Instance-selected field for C(521, 3). -/
-instance committedEntry_521_3 : CommittedEntry 521 3 where
-  entry := Hex.Conway.supportedEntry_521_3
-
-/-- Instance-selected field for C(521, 4). -/
-instance committedEntry_521_4 : CommittedEntry 521 4 where
-  entry := Hex.Conway.supportedEntry_521_4
-
 /-- Instance-selected field for C(523, 1). -/
 instance committedEntry_523_1 : CommittedEntry 523 1 where
   entry := Hex.Conway.supportedEntry_523_1
@@ -167,10 +23,6 @@ instance committedEntry_523_2 : CommittedEntry 523 2 where
 /-- Instance-selected field for C(523, 3). -/
 instance committedEntry_523_3 : CommittedEntry 523 3 where
   entry := Hex.Conway.supportedEntry_523_3
-
-/-- Instance-selected field for C(523, 4). -/
-instance committedEntry_523_4 : CommittedEntry 523 4 where
-  entry := Hex.Conway.supportedEntry_523_4
 
 /-- Instance-selected field for C(541, 1). -/
 instance committedEntry_541_1 : CommittedEntry 541 1 where
@@ -184,10 +36,6 @@ instance committedEntry_541_2 : CommittedEntry 541 2 where
 instance committedEntry_541_3 : CommittedEntry 541 3 where
   entry := Hex.Conway.supportedEntry_541_3
 
-/-- Instance-selected field for C(541, 4). -/
-instance committedEntry_541_4 : CommittedEntry 541 4 where
-  entry := Hex.Conway.supportedEntry_541_4
-
 /-- Instance-selected field for C(547, 1). -/
 instance committedEntry_547_1 : CommittedEntry 547 1 where
   entry := Hex.Conway.supportedEntry_547_1
@@ -199,10 +47,6 @@ instance committedEntry_547_2 : CommittedEntry 547 2 where
 /-- Instance-selected field for C(547, 3). -/
 instance committedEntry_547_3 : CommittedEntry 547 3 where
   entry := Hex.Conway.supportedEntry_547_3
-
-/-- Instance-selected field for C(547, 4). -/
-instance committedEntry_547_4 : CommittedEntry 547 4 where
-  entry := Hex.Conway.supportedEntry_547_4
 
 /-- Instance-selected field for C(557, 1). -/
 instance committedEntry_557_1 : CommittedEntry 557 1 where
@@ -216,10 +60,6 @@ instance committedEntry_557_2 : CommittedEntry 557 2 where
 instance committedEntry_557_3 : CommittedEntry 557 3 where
   entry := Hex.Conway.supportedEntry_557_3
 
-/-- Instance-selected field for C(557, 4). -/
-instance committedEntry_557_4 : CommittedEntry 557 4 where
-  entry := Hex.Conway.supportedEntry_557_4
-
 /-- Instance-selected field for C(563, 1). -/
 instance committedEntry_563_1 : CommittedEntry 563 1 where
   entry := Hex.Conway.supportedEntry_563_1
@@ -231,10 +71,6 @@ instance committedEntry_563_2 : CommittedEntry 563 2 where
 /-- Instance-selected field for C(563, 3). -/
 instance committedEntry_563_3 : CommittedEntry 563 3 where
   entry := Hex.Conway.supportedEntry_563_3
-
-/-- Instance-selected field for C(563, 4). -/
-instance committedEntry_563_4 : CommittedEntry 563 4 where
-  entry := Hex.Conway.supportedEntry_563_4
 
 /-- Instance-selected field for C(569, 1). -/
 instance committedEntry_569_1 : CommittedEntry 569 1 where
@@ -248,10 +84,6 @@ instance committedEntry_569_2 : CommittedEntry 569 2 where
 instance committedEntry_569_3 : CommittedEntry 569 3 where
   entry := Hex.Conway.supportedEntry_569_3
 
-/-- Instance-selected field for C(569, 4). -/
-instance committedEntry_569_4 : CommittedEntry 569 4 where
-  entry := Hex.Conway.supportedEntry_569_4
-
 /-- Instance-selected field for C(571, 1). -/
 instance committedEntry_571_1 : CommittedEntry 571 1 where
   entry := Hex.Conway.supportedEntry_571_1
@@ -263,10 +95,6 @@ instance committedEntry_571_2 : CommittedEntry 571 2 where
 /-- Instance-selected field for C(571, 3). -/
 instance committedEntry_571_3 : CommittedEntry 571 3 where
   entry := Hex.Conway.supportedEntry_571_3
-
-/-- Instance-selected field for C(571, 4). -/
-instance committedEntry_571_4 : CommittedEntry 571 4 where
-  entry := Hex.Conway.supportedEntry_571_4
 
 /-- Instance-selected field for C(577, 1). -/
 instance committedEntry_577_1 : CommittedEntry 577 1 where
@@ -280,10 +108,6 @@ instance committedEntry_577_2 : CommittedEntry 577 2 where
 instance committedEntry_577_3 : CommittedEntry 577 3 where
   entry := Hex.Conway.supportedEntry_577_3
 
-/-- Instance-selected field for C(577, 4). -/
-instance committedEntry_577_4 : CommittedEntry 577 4 where
-  entry := Hex.Conway.supportedEntry_577_4
-
 /-- Instance-selected field for C(587, 1). -/
 instance committedEntry_587_1 : CommittedEntry 587 1 where
   entry := Hex.Conway.supportedEntry_587_1
@@ -295,10 +119,6 @@ instance committedEntry_587_2 : CommittedEntry 587 2 where
 /-- Instance-selected field for C(587, 3). -/
 instance committedEntry_587_3 : CommittedEntry 587 3 where
   entry := Hex.Conway.supportedEntry_587_3
-
-/-- Instance-selected field for C(587, 4). -/
-instance committedEntry_587_4 : CommittedEntry 587 4 where
-  entry := Hex.Conway.supportedEntry_587_4
 
 /-- Instance-selected field for C(593, 1). -/
 instance committedEntry_593_1 : CommittedEntry 593 1 where
@@ -312,10 +132,6 @@ instance committedEntry_593_2 : CommittedEntry 593 2 where
 instance committedEntry_593_3 : CommittedEntry 593 3 where
   entry := Hex.Conway.supportedEntry_593_3
 
-/-- Instance-selected field for C(593, 4). -/
-instance committedEntry_593_4 : CommittedEntry 593 4 where
-  entry := Hex.Conway.supportedEntry_593_4
-
 /-- Instance-selected field for C(599, 1). -/
 instance committedEntry_599_1 : CommittedEntry 599 1 where
   entry := Hex.Conway.supportedEntry_599_1
@@ -327,10 +143,6 @@ instance committedEntry_599_2 : CommittedEntry 599 2 where
 /-- Instance-selected field for C(599, 3). -/
 instance committedEntry_599_3 : CommittedEntry 599 3 where
   entry := Hex.Conway.supportedEntry_599_3
-
-/-- Instance-selected field for C(599, 4). -/
-instance committedEntry_599_4 : CommittedEntry 599 4 where
-  entry := Hex.Conway.supportedEntry_599_4
 
 /-- Instance-selected field for C(601, 1). -/
 instance committedEntry_601_1 : CommittedEntry 601 1 where
@@ -344,10 +156,6 @@ instance committedEntry_601_2 : CommittedEntry 601 2 where
 instance committedEntry_601_3 : CommittedEntry 601 3 where
   entry := Hex.Conway.supportedEntry_601_3
 
-/-- Instance-selected field for C(601, 4). -/
-instance committedEntry_601_4 : CommittedEntry 601 4 where
-  entry := Hex.Conway.supportedEntry_601_4
-
 /-- Instance-selected field for C(607, 1). -/
 instance committedEntry_607_1 : CommittedEntry 607 1 where
   entry := Hex.Conway.supportedEntry_607_1
@@ -359,10 +167,6 @@ instance committedEntry_607_2 : CommittedEntry 607 2 where
 /-- Instance-selected field for C(607, 3). -/
 instance committedEntry_607_3 : CommittedEntry 607 3 where
   entry := Hex.Conway.supportedEntry_607_3
-
-/-- Instance-selected field for C(607, 4). -/
-instance committedEntry_607_4 : CommittedEntry 607 4 where
-  entry := Hex.Conway.supportedEntry_607_4
 
 /-- Instance-selected field for C(613, 1). -/
 instance committedEntry_613_1 : CommittedEntry 613 1 where
@@ -376,10 +180,6 @@ instance committedEntry_613_2 : CommittedEntry 613 2 where
 instance committedEntry_613_3 : CommittedEntry 613 3 where
   entry := Hex.Conway.supportedEntry_613_3
 
-/-- Instance-selected field for C(613, 4). -/
-instance committedEntry_613_4 : CommittedEntry 613 4 where
-  entry := Hex.Conway.supportedEntry_613_4
-
 /-- Instance-selected field for C(617, 1). -/
 instance committedEntry_617_1 : CommittedEntry 617 1 where
   entry := Hex.Conway.supportedEntry_617_1
@@ -391,10 +191,6 @@ instance committedEntry_617_2 : CommittedEntry 617 2 where
 /-- Instance-selected field for C(617, 3). -/
 instance committedEntry_617_3 : CommittedEntry 617 3 where
   entry := Hex.Conway.supportedEntry_617_3
-
-/-- Instance-selected field for C(617, 4). -/
-instance committedEntry_617_4 : CommittedEntry 617 4 where
-  entry := Hex.Conway.supportedEntry_617_4
 
 /-- Instance-selected field for C(619, 1). -/
 instance committedEntry_619_1 : CommittedEntry 619 1 where
@@ -408,10 +204,6 @@ instance committedEntry_619_2 : CommittedEntry 619 2 where
 instance committedEntry_619_3 : CommittedEntry 619 3 where
   entry := Hex.Conway.supportedEntry_619_3
 
-/-- Instance-selected field for C(619, 4). -/
-instance committedEntry_619_4 : CommittedEntry 619 4 where
-  entry := Hex.Conway.supportedEntry_619_4
-
 /-- Instance-selected field for C(631, 1). -/
 instance committedEntry_631_1 : CommittedEntry 631 1 where
   entry := Hex.Conway.supportedEntry_631_1
@@ -423,10 +215,6 @@ instance committedEntry_631_2 : CommittedEntry 631 2 where
 /-- Instance-selected field for C(631, 3). -/
 instance committedEntry_631_3 : CommittedEntry 631 3 where
   entry := Hex.Conway.supportedEntry_631_3
-
-/-- Instance-selected field for C(631, 4). -/
-instance committedEntry_631_4 : CommittedEntry 631 4 where
-  entry := Hex.Conway.supportedEntry_631_4
 
 /-- Instance-selected field for C(641, 1). -/
 instance committedEntry_641_1 : CommittedEntry 641 1 where
@@ -440,10 +228,6 @@ instance committedEntry_641_2 : CommittedEntry 641 2 where
 instance committedEntry_641_3 : CommittedEntry 641 3 where
   entry := Hex.Conway.supportedEntry_641_3
 
-/-- Instance-selected field for C(641, 4). -/
-instance committedEntry_641_4 : CommittedEntry 641 4 where
-  entry := Hex.Conway.supportedEntry_641_4
-
 /-- Instance-selected field for C(643, 1). -/
 instance committedEntry_643_1 : CommittedEntry 643 1 where
   entry := Hex.Conway.supportedEntry_643_1
@@ -455,10 +239,6 @@ instance committedEntry_643_2 : CommittedEntry 643 2 where
 /-- Instance-selected field for C(643, 3). -/
 instance committedEntry_643_3 : CommittedEntry 643 3 where
   entry := Hex.Conway.supportedEntry_643_3
-
-/-- Instance-selected field for C(643, 4). -/
-instance committedEntry_643_4 : CommittedEntry 643 4 where
-  entry := Hex.Conway.supportedEntry_643_4
 
 /-- Instance-selected field for C(647, 1). -/
 instance committedEntry_647_1 : CommittedEntry 647 1 where
@@ -472,10 +252,6 @@ instance committedEntry_647_2 : CommittedEntry 647 2 where
 instance committedEntry_647_3 : CommittedEntry 647 3 where
   entry := Hex.Conway.supportedEntry_647_3
 
-/-- Instance-selected field for C(647, 4). -/
-instance committedEntry_647_4 : CommittedEntry 647 4 where
-  entry := Hex.Conway.supportedEntry_647_4
-
 /-- Instance-selected field for C(653, 1). -/
 instance committedEntry_653_1 : CommittedEntry 653 1 where
   entry := Hex.Conway.supportedEntry_653_1
@@ -487,10 +263,6 @@ instance committedEntry_653_2 : CommittedEntry 653 2 where
 /-- Instance-selected field for C(653, 3). -/
 instance committedEntry_653_3 : CommittedEntry 653 3 where
   entry := Hex.Conway.supportedEntry_653_3
-
-/-- Instance-selected field for C(653, 4). -/
-instance committedEntry_653_4 : CommittedEntry 653 4 where
-  entry := Hex.Conway.supportedEntry_653_4
 
 /-- Instance-selected field for C(659, 1). -/
 instance committedEntry_659_1 : CommittedEntry 659 1 where
@@ -504,10 +276,6 @@ instance committedEntry_659_2 : CommittedEntry 659 2 where
 instance committedEntry_659_3 : CommittedEntry 659 3 where
   entry := Hex.Conway.supportedEntry_659_3
 
-/-- Instance-selected field for C(659, 4). -/
-instance committedEntry_659_4 : CommittedEntry 659 4 where
-  entry := Hex.Conway.supportedEntry_659_4
-
 /-- Instance-selected field for C(661, 1). -/
 instance committedEntry_661_1 : CommittedEntry 661 1 where
   entry := Hex.Conway.supportedEntry_661_1
@@ -520,8 +288,240 @@ instance committedEntry_661_2 : CommittedEntry 661 2 where
 instance committedEntry_661_3 : CommittedEntry 661 3 where
   entry := Hex.Conway.supportedEntry_661_3
 
-/-- Instance-selected field for C(661, 4). -/
-instance committedEntry_661_4 : CommittedEntry 661 4 where
-  entry := Hex.Conway.supportedEntry_661_4
+/-- Instance-selected field for C(673, 1). -/
+instance committedEntry_673_1 : CommittedEntry 673 1 where
+  entry := Hex.Conway.supportedEntry_673_1
+
+/-- Instance-selected field for C(673, 2). -/
+instance committedEntry_673_2 : CommittedEntry 673 2 where
+  entry := Hex.Conway.supportedEntry_673_2
+
+/-- Instance-selected field for C(673, 3). -/
+instance committedEntry_673_3 : CommittedEntry 673 3 where
+  entry := Hex.Conway.supportedEntry_673_3
+
+/-- Instance-selected field for C(677, 1). -/
+instance committedEntry_677_1 : CommittedEntry 677 1 where
+  entry := Hex.Conway.supportedEntry_677_1
+
+/-- Instance-selected field for C(677, 2). -/
+instance committedEntry_677_2 : CommittedEntry 677 2 where
+  entry := Hex.Conway.supportedEntry_677_2
+
+/-- Instance-selected field for C(677, 3). -/
+instance committedEntry_677_3 : CommittedEntry 677 3 where
+  entry := Hex.Conway.supportedEntry_677_3
+
+/-- Instance-selected field for C(683, 1). -/
+instance committedEntry_683_1 : CommittedEntry 683 1 where
+  entry := Hex.Conway.supportedEntry_683_1
+
+/-- Instance-selected field for C(683, 2). -/
+instance committedEntry_683_2 : CommittedEntry 683 2 where
+  entry := Hex.Conway.supportedEntry_683_2
+
+/-- Instance-selected field for C(683, 3). -/
+instance committedEntry_683_3 : CommittedEntry 683 3 where
+  entry := Hex.Conway.supportedEntry_683_3
+
+/-- Instance-selected field for C(691, 1). -/
+instance committedEntry_691_1 : CommittedEntry 691 1 where
+  entry := Hex.Conway.supportedEntry_691_1
+
+/-- Instance-selected field for C(691, 2). -/
+instance committedEntry_691_2 : CommittedEntry 691 2 where
+  entry := Hex.Conway.supportedEntry_691_2
+
+/-- Instance-selected field for C(691, 3). -/
+instance committedEntry_691_3 : CommittedEntry 691 3 where
+  entry := Hex.Conway.supportedEntry_691_3
+
+/-- Instance-selected field for C(701, 1). -/
+instance committedEntry_701_1 : CommittedEntry 701 1 where
+  entry := Hex.Conway.supportedEntry_701_1
+
+/-- Instance-selected field for C(701, 2). -/
+instance committedEntry_701_2 : CommittedEntry 701 2 where
+  entry := Hex.Conway.supportedEntry_701_2
+
+/-- Instance-selected field for C(701, 3). -/
+instance committedEntry_701_3 : CommittedEntry 701 3 where
+  entry := Hex.Conway.supportedEntry_701_3
+
+/-- Instance-selected field for C(709, 1). -/
+instance committedEntry_709_1 : CommittedEntry 709 1 where
+  entry := Hex.Conway.supportedEntry_709_1
+
+/-- Instance-selected field for C(709, 2). -/
+instance committedEntry_709_2 : CommittedEntry 709 2 where
+  entry := Hex.Conway.supportedEntry_709_2
+
+/-- Instance-selected field for C(709, 3). -/
+instance committedEntry_709_3 : CommittedEntry 709 3 where
+  entry := Hex.Conway.supportedEntry_709_3
+
+/-- Instance-selected field for C(719, 1). -/
+instance committedEntry_719_1 : CommittedEntry 719 1 where
+  entry := Hex.Conway.supportedEntry_719_1
+
+/-- Instance-selected field for C(719, 2). -/
+instance committedEntry_719_2 : CommittedEntry 719 2 where
+  entry := Hex.Conway.supportedEntry_719_2
+
+/-- Instance-selected field for C(719, 3). -/
+instance committedEntry_719_3 : CommittedEntry 719 3 where
+  entry := Hex.Conway.supportedEntry_719_3
+
+/-- Instance-selected field for C(727, 1). -/
+instance committedEntry_727_1 : CommittedEntry 727 1 where
+  entry := Hex.Conway.supportedEntry_727_1
+
+/-- Instance-selected field for C(727, 2). -/
+instance committedEntry_727_2 : CommittedEntry 727 2 where
+  entry := Hex.Conway.supportedEntry_727_2
+
+/-- Instance-selected field for C(727, 3). -/
+instance committedEntry_727_3 : CommittedEntry 727 3 where
+  entry := Hex.Conway.supportedEntry_727_3
+
+/-- Instance-selected field for C(733, 1). -/
+instance committedEntry_733_1 : CommittedEntry 733 1 where
+  entry := Hex.Conway.supportedEntry_733_1
+
+/-- Instance-selected field for C(733, 2). -/
+instance committedEntry_733_2 : CommittedEntry 733 2 where
+  entry := Hex.Conway.supportedEntry_733_2
+
+/-- Instance-selected field for C(733, 3). -/
+instance committedEntry_733_3 : CommittedEntry 733 3 where
+  entry := Hex.Conway.supportedEntry_733_3
+
+/-- Instance-selected field for C(739, 1). -/
+instance committedEntry_739_1 : CommittedEntry 739 1 where
+  entry := Hex.Conway.supportedEntry_739_1
+
+/-- Instance-selected field for C(739, 2). -/
+instance committedEntry_739_2 : CommittedEntry 739 2 where
+  entry := Hex.Conway.supportedEntry_739_2
+
+/-- Instance-selected field for C(739, 3). -/
+instance committedEntry_739_3 : CommittedEntry 739 3 where
+  entry := Hex.Conway.supportedEntry_739_3
+
+/-- Instance-selected field for C(743, 1). -/
+instance committedEntry_743_1 : CommittedEntry 743 1 where
+  entry := Hex.Conway.supportedEntry_743_1
+
+/-- Instance-selected field for C(743, 2). -/
+instance committedEntry_743_2 : CommittedEntry 743 2 where
+  entry := Hex.Conway.supportedEntry_743_2
+
+/-- Instance-selected field for C(743, 3). -/
+instance committedEntry_743_3 : CommittedEntry 743 3 where
+  entry := Hex.Conway.supportedEntry_743_3
+
+/-- Instance-selected field for C(751, 1). -/
+instance committedEntry_751_1 : CommittedEntry 751 1 where
+  entry := Hex.Conway.supportedEntry_751_1
+
+/-- Instance-selected field for C(751, 2). -/
+instance committedEntry_751_2 : CommittedEntry 751 2 where
+  entry := Hex.Conway.supportedEntry_751_2
+
+/-- Instance-selected field for C(751, 3). -/
+instance committedEntry_751_3 : CommittedEntry 751 3 where
+  entry := Hex.Conway.supportedEntry_751_3
+
+/-- Instance-selected field for C(757, 1). -/
+instance committedEntry_757_1 : CommittedEntry 757 1 where
+  entry := Hex.Conway.supportedEntry_757_1
+
+/-- Instance-selected field for C(757, 2). -/
+instance committedEntry_757_2 : CommittedEntry 757 2 where
+  entry := Hex.Conway.supportedEntry_757_2
+
+/-- Instance-selected field for C(757, 3). -/
+instance committedEntry_757_3 : CommittedEntry 757 3 where
+  entry := Hex.Conway.supportedEntry_757_3
+
+/-- Instance-selected field for C(761, 1). -/
+instance committedEntry_761_1 : CommittedEntry 761 1 where
+  entry := Hex.Conway.supportedEntry_761_1
+
+/-- Instance-selected field for C(761, 2). -/
+instance committedEntry_761_2 : CommittedEntry 761 2 where
+  entry := Hex.Conway.supportedEntry_761_2
+
+/-- Instance-selected field for C(761, 3). -/
+instance committedEntry_761_3 : CommittedEntry 761 3 where
+  entry := Hex.Conway.supportedEntry_761_3
+
+/-- Instance-selected field for C(769, 1). -/
+instance committedEntry_769_1 : CommittedEntry 769 1 where
+  entry := Hex.Conway.supportedEntry_769_1
+
+/-- Instance-selected field for C(769, 2). -/
+instance committedEntry_769_2 : CommittedEntry 769 2 where
+  entry := Hex.Conway.supportedEntry_769_2
+
+/-- Instance-selected field for C(769, 3). -/
+instance committedEntry_769_3 : CommittedEntry 769 3 where
+  entry := Hex.Conway.supportedEntry_769_3
+
+/-- Instance-selected field for C(773, 1). -/
+instance committedEntry_773_1 : CommittedEntry 773 1 where
+  entry := Hex.Conway.supportedEntry_773_1
+
+/-- Instance-selected field for C(773, 2). -/
+instance committedEntry_773_2 : CommittedEntry 773 2 where
+  entry := Hex.Conway.supportedEntry_773_2
+
+/-- Instance-selected field for C(773, 3). -/
+instance committedEntry_773_3 : CommittedEntry 773 3 where
+  entry := Hex.Conway.supportedEntry_773_3
+
+/-- Instance-selected field for C(787, 1). -/
+instance committedEntry_787_1 : CommittedEntry 787 1 where
+  entry := Hex.Conway.supportedEntry_787_1
+
+/-- Instance-selected field for C(787, 2). -/
+instance committedEntry_787_2 : CommittedEntry 787 2 where
+  entry := Hex.Conway.supportedEntry_787_2
+
+/-- Instance-selected field for C(787, 3). -/
+instance committedEntry_787_3 : CommittedEntry 787 3 where
+  entry := Hex.Conway.supportedEntry_787_3
+
+/-- Instance-selected field for C(797, 1). -/
+instance committedEntry_797_1 : CommittedEntry 797 1 where
+  entry := Hex.Conway.supportedEntry_797_1
+
+/-- Instance-selected field for C(797, 2). -/
+instance committedEntry_797_2 : CommittedEntry 797 2 where
+  entry := Hex.Conway.supportedEntry_797_2
+
+/-- Instance-selected field for C(797, 3). -/
+instance committedEntry_797_3 : CommittedEntry 797 3 where
+  entry := Hex.Conway.supportedEntry_797_3
+
+/-- Instance-selected field for C(809, 1). -/
+instance committedEntry_809_1 : CommittedEntry 809 1 where
+  entry := Hex.Conway.supportedEntry_809_1
+
+/-- Instance-selected field for C(809, 2). -/
+instance committedEntry_809_2 : CommittedEntry 809 2 where
+  entry := Hex.Conway.supportedEntry_809_2
+
+/-- Instance-selected field for C(809, 3). -/
+instance committedEntry_809_3 : CommittedEntry 809 3 where
+  entry := Hex.Conway.supportedEntry_809_3
+
+/-- Instance-selected field for C(811, 1). -/
+instance committedEntry_811_1 : CommittedEntry 811 1 where
+  entry := Hex.Conway.supportedEntry_811_1
+
+/-- Instance-selected field for C(811, 2). -/
+instance committedEntry_811_2 : CommittedEntry 811 2 where
+  entry := Hex.Conway.supportedEntry_811_2
 
 end Hex.GFq

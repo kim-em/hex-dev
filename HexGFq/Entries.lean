@@ -11,6 +11,5 @@ public import HexGFq.Entries.S1
 public import HexGFq.Entries.S2
 public import HexGFq.Entries.S3
 public import HexGFq.Entries.S4
-public import HexGFq.Entries.S5
 
 public section

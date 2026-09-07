@@ -20,100 +20,100 @@ namespace Hex
 namespace Conway
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6037 : Hex.Nat.Prime 6037 := by
-  exact Hex.Nat.prime_of_bounded 6037 77 (by decide) (by decide) (by decide)
+theorem factorPrime_14401 : Hex.Nat.Prime 14401 := by
+  exact Hex.Nat.prime_of_bounded 14401 120 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6343 : Hex.Nat.Prime 6343 := by
-  exact Hex.Nat.prime_of_bounded 6343 79 (by decide) (by decide) (by decide)
+theorem factorPrime_14713 : Hex.Nat.Prime 14713 := by
+  exact Hex.Nat.prime_of_bounded 14713 121 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6367 : Hex.Nat.Prime 6367 := by
-  exact Hex.Nat.prime_of_bounded 6367 79 (by decide) (by decide) (by decide)
+theorem factorPrime_15217 : Hex.Nat.Prime 15217 := by
+  exact Hex.Nat.prime_of_bounded 15217 123 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6529 : Hex.Nat.Prime 6529 := by
-  exact Hex.Nat.prime_of_bounded 6529 80 (by decide) (by decide) (by decide)
+theorem factorPrime_16381 : Hex.Nat.Prime 16381 := by
+  exact Hex.Nat.prime_of_bounded 16381 127 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6577 : Hex.Nat.Prime 6577 := by
-  exact Hex.Nat.prime_of_bounded 6577 81 (by decide) (by decide) (by decide)
+theorem factorPrime_16651 : Hex.Nat.Prime 16651 := by
+  exact Hex.Nat.prime_of_bounded 16651 129 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6619 : Hex.Nat.Prime 6619 := by
-  exact Hex.Nat.prime_of_bounded 6619 81 (by decide) (by decide) (by decide)
+theorem factorPrime_17293 : Hex.Nat.Prime 17293 := by
+  exact Hex.Nat.prime_of_bounded 17293 131 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6733 : Hex.Nat.Prime 6733 := by
-  exact Hex.Nat.prime_of_bounded 6733 82 (by decide) (by decide) (by decide)
+theorem factorPrime_17923 : Hex.Nat.Prime 17923 := by
+  exact Hex.Nat.prime_of_bounded 17923 133 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6793 : Hex.Nat.Prime 6793 := by
-  exact Hex.Nat.prime_of_bounded 6793 82 (by decide) (by decide) (by decide)
+theorem factorPrime_19441 : Hex.Nat.Prime 19441 := by
+  exact Hex.Nat.prime_of_bounded 19441 139 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_6917 : Hex.Nat.Prime 6917 := by
-  exact Hex.Nat.prime_of_bounded 6917 83 (by decide) (by decide) (by decide)
+theorem factorPrime_19501 : Hex.Nat.Prime 19501 := by
+  exact Hex.Nat.prime_of_bounded 19501 139 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_7027 : Hex.Nat.Prime 7027 := by
-  exact Hex.Nat.prime_of_bounded 7027 83 (by decide) (by decide) (by decide)
+theorem factorPrime_19531 : Hex.Nat.Prime 19531 := by
+  exact Hex.Nat.prime_of_bounded 19531 139 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_7193 : Hex.Nat.Prime 7193 := by
-  exact Hex.Nat.prime_of_bounded 7193 84 (by decide) (by decide) (by decide)
+theorem factorPrime_19801 : Hex.Nat.Prime 19801 := by
+  exact Hex.Nat.prime_of_bounded 19801 140 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_7369 : Hex.Nat.Prime 7369 := by
-  exact Hex.Nat.prime_of_bounded 7369 85 (by decide) (by decide) (by decide)
+theorem factorPrime_21673 : Hex.Nat.Prime 21673 := by
+  exact Hex.Nat.prime_of_bounded 21673 147 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_7433 : Hex.Nat.Prime 7433 := by
-  exact Hex.Nat.prime_of_bounded 7433 86 (by decide) (by decide) (by decide)
+theorem factorPrime_23029 : Hex.Nat.Prime 23029 := by
+  exact Hex.Nat.prime_of_bounded 23029 151 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_7673 : Hex.Nat.Prime 7673 := by
-  exact Hex.Nat.prime_of_bounded 7673 87 (by decide) (by decide) (by decide)
+theorem factorPrime_23971 : Hex.Nat.Prime 23971 := by
+  exact Hex.Nat.prime_of_bounded 23971 154 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_7789 : Hex.Nat.Prime 7789 := by
-  exact Hex.Nat.prime_of_bounded 7789 88 (by decide) (by decide) (by decide)
+theorem factorPrime_24571 : Hex.Nat.Prime 24571 := by
+  exact Hex.Nat.prime_of_bounded 24571 156 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_8009 : Hex.Nat.Prime 8009 := by
-  exact Hex.Nat.prime_of_bounded 8009 89 (by decide) (by decide) (by decide)
+theorem factorPrime_26041 : Hex.Nat.Prime 26041 := by
+  exact Hex.Nat.prime_of_bounded 26041 161 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_8011 : Hex.Nat.Prime 8011 := by
-  exact Hex.Nat.prime_of_bounded 8011 89 (by decide) (by decide) (by decide)
+theorem factorPrime_26893 : Hex.Nat.Prime 26893 := by
+  exact Hex.Nat.prime_of_bounded 26893 163 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_8191 : Hex.Nat.Prime 8191 := by
-  exact Hex.Nat.prime_of_bounded 8191 90 (by decide) (by decide) (by decide)
+theorem factorPrime_28057 : Hex.Nat.Prime 28057 := by
+  exact Hex.Nat.prime_of_bounded 28057 167 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_8269 : Hex.Nat.Prime 8269 := by
-  exact Hex.Nat.prime_of_bounded 8269 90 (by decide) (by decide) (by decide)
+theorem factorPrime_28099 : Hex.Nat.Prime 28099 := by
+  exact Hex.Nat.prime_of_bounded 28099 167 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_8389 : Hex.Nat.Prime 8389 := by
-  exact Hex.Nat.prime_of_bounded 8389 91 (by decide) (by decide) (by decide)
+theorem factorPrime_30103 : Hex.Nat.Prime 30103 := by
+  exact Hex.Nat.prime_of_bounded 30103 173 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_8581 : Hex.Nat.Prime 8581 := by
-  exact Hex.Nat.prime_of_bounded 8581 92 (by decide) (by decide) (by decide)
+theorem factorPrime_30941 : Hex.Nat.Prime 30941 := by
+  exact Hex.Nat.prime_of_bounded 30941 175 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_9277 : Hex.Nat.Prime 9277 := by
-  exact Hex.Nat.prime_of_bounded 9277 96 (by decide) (by decide) (by decide)
+theorem factorPrime_33457 : Hex.Nat.Prime 33457 := by
+  exact Hex.Nat.prime_of_bounded 33457 182 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_9391 : Hex.Nat.Prime 9391 := by
-  exact Hex.Nat.prime_of_bounded 9391 96 (by decide) (by decide) (by decide)
+theorem factorPrime_36721 : Hex.Nat.Prime 36721 := by
+  exact Hex.Nat.prime_of_bounded 36721 191 (by decide) (by decide) (by decide)
 
 /-- Primality of a multiplicative-order factor or a Pocklington child. -/
-theorem factorPrime_9439 : Hex.Nat.Prime 9439 := by
-  exact Hex.Nat.prime_of_bounded 9439 97 (by decide) (by decide) (by decide)
+theorem factorPrime_39217 : Hex.Nat.Prime 39217 := by
+  exact Hex.Nat.prime_of_bounded 39217 198 (by decide) (by decide) (by decide)
 
 
 end Conway

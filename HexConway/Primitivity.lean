@@ -16,7 +16,6 @@ public import HexConway.PrimitiveProofs.S0_3
 public import HexConway.PrimitiveProofs.S0_4
 public import HexConway.PrimitiveProofs.S0_5
 public import HexConway.PrimitiveProofs.S0_6
-public import HexConway.PrimitiveProofs.S0_7
 public import HexConway.PrimitiveProofs.S1_0
 public import HexConway.PrimitiveProofs.S1_1
 public import HexConway.PrimitiveProofs.S1_2
@@ -24,7 +23,6 @@ public import HexConway.PrimitiveProofs.S1_3
 public import HexConway.PrimitiveProofs.S1_4
 public import HexConway.PrimitiveProofs.S1_5
 public import HexConway.PrimitiveProofs.S1_6
-public import HexConway.PrimitiveProofs.S1_7
 public import HexConway.PrimitiveProofs.S2_0
 public import HexConway.PrimitiveProofs.S2_1
 public import HexConway.PrimitiveProofs.S2_2
@@ -32,7 +30,6 @@ public import HexConway.PrimitiveProofs.S2_3
 public import HexConway.PrimitiveProofs.S2_4
 public import HexConway.PrimitiveProofs.S2_5
 public import HexConway.PrimitiveProofs.S2_6
-public import HexConway.PrimitiveProofs.S2_7
 public import HexConway.PrimitiveProofs.S3_0
 public import HexConway.PrimitiveProofs.S3_1
 public import HexConway.PrimitiveProofs.S3_2
@@ -40,7 +37,6 @@ public import HexConway.PrimitiveProofs.S3_3
 public import HexConway.PrimitiveProofs.S3_4
 public import HexConway.PrimitiveProofs.S3_5
 public import HexConway.PrimitiveProofs.S3_6
-public import HexConway.PrimitiveProofs.S3_7
 
 public section
 

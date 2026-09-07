@@ -449,6 +449,28 @@ def companions(entries):
         )
 
 
+def embeddings(entries):
+    """Specialize the canonical embedding at every supported divisor pair."""
+    directory = ROOT / "HexGFqMathlib/Embeddings"
+    directory.mkdir(parents=True, exist_ok=True)
+    for old in directory.glob("*.lean"):
+        old.unlink()
+    pairs = [(p, m, n) for p, n, _ in entries for m in range(1, n) if n % m == 0]
+    names = []
+    for i in range(0, len(pairs), 128):
+        names.append(f"HexGFqMathlib.Embeddings.S{i//128}")
+        body = (
+            HEADER
+            + "public import HexGFqMathlib.Subfield\n\npublic section\n\nnamespace HexGFqMathlib.Conway\n\n"
+        )
+        for p, m, n in pairs[i : i + 128]:
+            body += f"/-- The canonical embedding of GF({p}^{m}) into GF({p}^{n}). -/\nnoncomputable def embed_{p}_{m}_{n} :\n    Hex.GFq {p} {m} Hex.Conway.supportedEntry_{p}_{m} →+*\n      Hex.GFq {p} {n} Hex.Conway.supportedEntry_{p}_{n} :=\n  conwayEmbed {p} {m} {n} _ _ Hex.Conway.compat_{p}_{m}_{n}\n\n"
+        (directory / f"S{i//128}.lean").write_text(body + "end HexGFqMathlib.Conway\n")
+    (ROOT / "HexGFqMathlib/Embeddings.lean").write_text(
+        HEADER + "".join(f"public import {n}\n" for n in names) + "\npublic section\n"
+    )
+
+
 def main():
     global ROOT
     ap = argparse.ArgumentParser(description=__doc__)
@@ -570,13 +592,19 @@ def main():
         ROOT / "HexConway/Compatibility.lean", "CompatibilityProofs", names
     )
     companions(entries)
+    embeddings(entries)
     runtime = (HERE / "Replay.lean.in").read_text()
-    for p, n, c in entries:
+    for i, (p, n, c) in enumerate(entries):
+        if i % 24 == 0:
+            runtime += f"\nprivate def run{i//24} : IO Unit := do\n"
         fs = factors(p**n - 1) if p**n > 2 else []
         qs = [q for q, e in fs]
         es = [e for q, e in fs]
         divisors = ", ".join(f"({m}, {name(p,m)})" for m in range(1, n) if n % m == 0)
         runtime += f"  measureEntry {p} {n} ⟨{name(p,n)}, {name(p,n)}_monic⟩ {qs} {es} {digits(p**n-1)} {[digits((p**n-1)//q) for q in qs]} [{divisors}]\n"
+    runtime += "\ndef main : IO Unit := do\n" + "".join(
+        f"  run{i}\n" for i in range((len(entries) + 23) // 24)
+    )
     (ROOT / "bench/HexConway").mkdir(parents=True, exist_ok=True)
     (ROOT / "bench/HexConway/Replay.lean").write_text(runtime)
     if temp:
@@ -597,7 +625,11 @@ def main():
             }
             if actual_names != expected_names:
                 raise SystemExit(f"Generated file set differs: HexConway/{folder}")
-        for folder in ["HexGFq/Entries", "HexGFqMathlib/GeneratorOrder"]:
+        for folder in [
+            "HexGFq/Entries",
+            "HexGFqMathlib/GeneratorOrder",
+            "HexGFqMathlib/Embeddings",
+        ]:
             if {p.name for p in (ROOT / folder).glob("*.lean")} != {
                 p.name for p in (original_root / folder).glob("*.lean")
             }:

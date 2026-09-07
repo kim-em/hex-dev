@@ -412,7 +412,7 @@ noncomputable example :
       Hex.GFq 2 6 Hex.Conway.supportedEntry_2_6 :=
   conwayEmbed 2 3 6 _ _ Hex.Conway.compat_2_3_6
 
-/-- `GF(13) →+* GF(13^6)`, the largest committed case. -/
+/-- `GF(13) →+* GF(13^6)`, a retained compatibility example. -/
 noncomputable example :
     Hex.GFq 13 1 Hex.Conway.supportedEntry_13_1 →+*
       Hex.GFq 13 6 Hex.Conway.supportedEntry_13_6 :=

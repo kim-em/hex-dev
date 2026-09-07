@@ -1,0 +1,29 @@
+{
+  "entries": 821,
+  "order_factor_primes": 407,
+  "largest_factor": 502628805631,
+  "largest_factor_bits": 39,
+  "source_sha256": {
+    "HexConway/FactorProofs/S0_0.lean": "20d3b7356e9537b368652c108ec627b818116b389eebbe8494a72b94fb96e2c3",
+    "HexConway/FactorProofs/S0_1.lean": "b1d21976b285f568702a7b4e6f0d50ddb851f4a4217eaa0a1e88ea3f4e2dcc25",
+    "HexConway/FactorProofs/S0_10.lean": "780a2c451c763d4a60d07d62e7b2f7394afb7c1381ef13b865b41f99e3d6eb77",
+    "HexConway/FactorProofs/S0_11.lean": "f5cff9be9404775394724726c350607aff06b04b22f623b5cf738c6031aabc2b",
+    "HexConway/FactorProofs/S0_12.lean": "852333c0e3311ded522d9b8e54163bf6a6b8b5f3b3db64f120e82e9fc0e19eec",
+    "HexConway/FactorProofs/S0_13.lean": "7a454b3abcef74ebeb62082f963043cdbf47da146285b2fa1f44191050c7be5d",
+    "HexConway/FactorProofs/S0_14.lean": "bea48c931bbbc1b7c8efd882ca7c52b9127d5b2b07092c87295d10677e0a1bdd",
+    "HexConway/FactorProofs/S0_15.lean": "c464b96d24a6afd8b30c3a76f484841827b7fa849b999f94bb622ed54770a025",
+    "HexConway/FactorProofs/S0_16.lean": "f27c8d797d55405bbf060de1a0c8da0f06073189b560b9e644aa3ddb3952ac53",
+    "HexConway/FactorProofs/S0_17.lean": "bb9def11c224e3674216413cc35b7d83996f2744c75b80893c84233924f25645",
+    "HexConway/FactorProofs/S0_2.lean": "9f74ff30fa62cad1e29f6c231e4db24a66cea7f8c4579cc7bc0f14016dea69e5",
+    "HexConway/FactorProofs/S0_3.lean": "dd5f26422937580bdca773fa8f157ee05a43124d62189bb0699bb90f1533ff45",
+    "HexConway/FactorProofs/S0_4.lean": "5c98ae6ccba0d08bcbb1bdccf0e56964700c96b313a478c1e520b278e8f782a5",
+    "HexConway/FactorProofs/S0_5.lean": "4ac6149b4df4e782b992a95037588d829378ea0366cae61718021a557abbe70f",
+    "HexConway/FactorProofs/S0_6.lean": "554b011aac08797cfbc226cbd4375c4ff839c052904468848761e80b68680751",
+    "HexConway/FactorProofs/S0_7.lean": "23c25798678186dc143b77b14641f459fc21824131e8aaeb788861bce169df39",
+    "HexConway/FactorProofs/S0_8.lean": "66ef83e2d0149670ad168d17baaa90f5232f97f82c63d4f4f0b1b857b4bdd401",
+    "HexConway/FactorProofs/S0_9.lean": "155f60c2929d44dedac10452470d90011d109c680a7a8af7ee775298a8138530"
+  },
+  "exit_code": 0,
+  "log": "reports/conway/all-factor-primes.log.gz",
+  "timing": "reports/conway/all-factor-primes.time"
+}
