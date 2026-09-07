@@ -128,6 +128,12 @@ theorem lllPreprocess_reduced (b : Basis n m) (δ : Rat)
   rw [lllPreprocess_rows b δ hδ hδ' hn]
   exact Hex.lll_isLLLReduced b.rows δ hδ hδ' hn b.independent
 
+/-- Rank-zero preprocessing is exactly the checked identity change. -/
+@[simp] theorem lllPreprocess_zero (b : Basis 0 m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) :
+    lllPreprocess b δ hδ hδ' = BasisChange.identity b := by
+  simp [lllPreprocess]
+
 /-- Checked basis changes carry both exact integer matrix identities. -/
 theorem change_identities (change : BasisChange b) :
     change.forward * b.rows = change.working.rows ∧ change.reverse * change.working.rows = b.rows := by

@@ -208,12 +208,21 @@ private def decoding : IO Unit := do
   require (checkEnumeration (matrix 0 0 []) #v[] 0 empty) "rank-zero decode replay failed"
   let cvp := closestCertificate b #v[1/2, 1/2, 1/2]
   require (checkClosest b.rows #v[1/2, 1/2, 1/2] cvp) "native closest certificate rejected"
+  require (checkClosestWith cvp.enumeration.tree.nodes b.rows #v[1/2, 1/2, 1/2] cvp)
+    "bounded closest replay rejected exact limit"
+  require (!checkClosestWith 0 b.rows #v[1/2, 1/2, 1/2] cvp) "closest replay ignored zero budget"
+  require (!checkClosestWith (cvp.enumeration.tree.nodes - 1) b.rows #v[1/2, 1/2, 1/2] cvp)
+    "closest replay ignored insufficient budget"
   let cvpText := encodeOptimumCertificate cvp
   let .ok cvpDecoded := decodeOptimumCertificate {} 2 3 cvpText |
     throw (IO.userError "closest certificate decode failed")
   require (checkClosest b.rows #v[1/2, 1/2, 1/2] cvpDecoded) "decoded closest replay failed"
   let some svp := shortestCertificate b | throw (IO.userError "missing native shortest certificate")
   require (checkShortest b.rows svp) "native shortest certificate rejected"
+  require (checkShortestWith svp.enumeration.tree.nodes b.rows svp) "bounded shortest replay rejected exact limit"
+  require (!checkShortestWith 0 b.rows svp) "shortest replay ignored zero budget"
+  require (!checkShortestWith (svp.enumeration.tree.nodes - 1) b.rows svp)
+    "shortest replay ignored insufficient budget"
   let .ok svpDecoded := decodeOptimumCertificate {} 2 3 (encodeOptimumCertificate svp) |
     throw (IO.userError "shortest certificate decode failed")
   require (checkShortest b.rows svpDecoded) "decoded shortest replay failed"

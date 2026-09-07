@@ -102,6 +102,7 @@ theorem matches_set (k : Nat) (hk : k < n) (z w : Vector Int n) (a : Int) :
     (z : Vector Int n) (q : Point n m) : Prop :=
   q = point b t q.coefficients ∧ Matches k z q.coefficients ∧ q.distanceSq ≤ r
 
+/-- Fixing the next coordinate reduces feasibility to the extended suffix and that coordinate. -/
 theorem feasible_set (b : Basis n m) (t : Vector Rat m) (r : Rat) (k : Nat) (hk : k < n)
     (z : Vector Int n) (a : Int) (q : Point n m) :
     Feasible b t r k (z.set k a hk) q ↔
@@ -109,6 +110,7 @@ theorem feasible_set (b : Basis n m) (t : Vector Rat m) (r : Rat) (k : Nat) (hk 
   simp only [Feasible, matches_set]
   tauto
 
+/-- A fully fixed suffix admits exactly its directly reconstructed point within the radius. -/
 theorem feasible_zero (b : Basis n m) (t : Vector Rat m) (r : Rat)
     (z : Vector Int n) (q : Point n m) :
     Feasible b t r 0 z q ↔ q = point b t z ∧ (point b t z).distanceSq ≤ r := by
@@ -308,5 +310,45 @@ theorem sortPoints_sorted (ps : List (Point n m)) :
 theorem enumerate_sorted (b : Basis n m) (t : Vector Rat m) (r : Rat) :
     (enumerate b t r).Pairwise (fun p q => compare p.ambient.toList q.ambient.toList ≠ .gt) :=
   sortPoints_sorted _
+
+/-- The sorted ambient answer list depends only on the integer lattice, even
+when its two presentations use different index types for their rows. -/
+theorem enumerate_lattice {n' : Nat} (b : Basis n m) (c : Basis n' m)
+    (h : ∀ v, b.rows.memLattice v ↔ c.rows.memLattice v) (t : Vector Rat m) (r : Rat) :
+    (enumerate b t r).map Point.ambient = (enumerate c t r).map Point.ambient := by
+  have hp : ((enumerate b t r).map Point.ambient).Perm
+      ((enumerate c t r).map Point.ambient) := by
+    apply (List.perm_ext_iff_of_nodup (enumerate_ambient_nodup b t r)
+      (enumerate_ambient_nodup c t r)).mpr
+    intro v
+    simp only [enumerate_spec, h]
+  apply hp.eq_of_pairwise (le := fun v w => compare v.toList w.toList ≠ .gt)
+    ?_ ((List.pairwise_map).mpr (enumerate_sorted b t r))
+    ((List.pairwise_map).mpr (enumerate_sorted c t r))
+  intro v w _ _ hvw hwv
+  apply Vector.toList_inj.mp
+  apply Std.LawfulEqOrd.eq_of_compare
+  exact Std.OrientedCmp.isLE_antisymm
+    (Ordering.isLE_iff_ne_gt.mpr hvw) (Ordering.isLE_iff_ne_gt.mpr hwv)
+
+/-- Exact distances are determined by the ambient answer, independently of its coordinates. -/
+theorem enumerate_distances (b : Basis n m) (t : Vector Rat m) (r : Rat) :
+    (enumerate b t r).map (fun q => (q.ambient, q.distanceSq)) =
+      ((enumerate b t r).map Point.ambient).map (fun v => (v, distance v t)) := by
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro q hq
+  obtain ⟨ha, hd⟩ := enumerate_reconstruct b t r q hq
+  simp only [Function.comp_apply, Prod.mk.injEq, true_and]
+  rw [hd, ha]
+  rfl
+
+/-- Changing any independent presentation of the same lattice preserves the
+entire ordered list of ambient points and squared distances. -/
+theorem enumerate_lattice_distances {n' : Nat} (b : Basis n m) (c : Basis n' m)
+    (h : ∀ v, b.rows.memLattice v ↔ c.rows.memLattice v) (t : Vector Rat m) (r : Rat) :
+    (enumerate b t r).map (fun q => (q.ambient, q.distanceSq)) =
+      (enumerate c t r).map (fun q => (q.ambient, q.distanceSq)) := by
+  rw [enumerate_distances, enumerate_distances, enumerate_lattice b c h]
 
 end HexLatticeEnumMathlib

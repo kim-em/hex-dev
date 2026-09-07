@@ -48,7 +48,7 @@
 - **hex-berlekamp**: Berlekamp factoring, distinct-degree and equal-degree factorization (Cantor-Zassenhaus), and the Rabin irreducibility test over any `F_q`; the `factor_poly` / `irreducibility` tactic drivers (native `FpPoly p` arms plus extensions for other input types)
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll**: LLL lattice basis reduction
-- **hex-lattice-enum** (planned): exact closed-ball enumeration, all shortest and closest vectors, and checked completeness certificates
+- **hex-lattice-enum**: exact closed-ball enumeration, all shortest and closest vectors, and checked completeness certificates
 - **hex-berlekamp-zassenhaus**: complete factoring of `Z[x]`; the `Hex.ZPoly` extension for `factor_poly` / `irreducibility`
 - **hex-summation**: certificate-checked hypergeometric summation: Gosper, Zeilberger, and Petkovšek's Hyper, as untrusted searches whose certificates are verified by `MvPoly` identity checkers
 - **hex-conway**: Conway polynomial database
@@ -99,7 +99,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
-- **hex-lattice-enum-mathlib** (planned): preparation, search and certificate correctness proofs, integer-span and Euclidean-distance correspondence, packing radius and kissing number
+- **hex-lattice-enum-mathlib**: preparation, search and certificate correctness proofs, integer-span and Euclidean-distance correspondence, packing radius and kissing number
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-discrete-log-mathlib** (planned): exact generator order, canonical logarithms and complete subgroup-membership decisions
@@ -627,8 +627,6 @@ hex-berlekamp-zassenhaus ┘
 
 ## Index
 
-- [hex-lattice-enum](hex-lattice-enum.md): exact lattice enumeration, shortest and closest vectors, completeness certificates and geometric consequences
-- [hex-lattice-enum-mathlib](hex-lattice-enum-mathlib.md): correctness proofs for preparation, search and certificates, and integer-span and Euclidean-distance correspondence
 
 Libraries marked **(released)** are published as standalone
 repositories; see
@@ -713,6 +711,8 @@ for developments whose source-local move has not happened yet.
 - [hex-gram-schmidt-mathlib](https://github.com/leanprover/hex-gram-schmidt-mathlib/blob/main/SPEC/hex-gram-schmidt-mathlib.md) (released): correspondence with Mathlib's `gramSchmidt`
 - [hex-lll](https://github.com/leanprover/hex-lll/blob/main/SPEC/hex-lll.md) (released): LLL lattice basis reduction algorithm and proofs
 - [hex-lll-mathlib](https://github.com/leanprover/hex-lll-mathlib/blob/main/SPEC/hex-lll-mathlib.md) (released): lattice = `Submodule Z`, short vector bound
+- [hex-lattice-enum](../../HexLatticeEnum/SPEC/hex-lattice-enum.md): exact lattice enumeration, shortest and closest vectors, completeness certificates and geometric consequences
+- [hex-lattice-enum-mathlib](../../HexLatticeEnumMathlib/SPEC/hex-lattice-enum-mathlib.md): correctness proofs for preparation, search and certificates, and integer-span and Euclidean-distance correspondence
 - [hex-berlekamp-zassenhaus](../../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md): complete factoring of `Z[x]`, and the `Hex.ZPoly` tactic extension
 - [hex-berlekamp-zassenhaus-mathlib](../../HexBerlekampZassenhausMathlib/SPEC/hex-berlekamp-zassenhaus-mathlib.md): unconditional factoring correctness, and the `Polynomial ℤ` tactic extension
 - [hex-summation.md](hex-summation.md): certificate-checked hypergeometric summation (Gosper, Zeilberger, Hyper) and the `gosper` / `zeilberger` / `hyper` tactics (the Mathlib companion is specified in the same file)

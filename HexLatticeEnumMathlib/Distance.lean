@@ -61,6 +61,24 @@ private theorem vecMul_sub (a c : Vector Rat n) (rows : Hex.Matrix Rat n m) :
   rw [Hex.Matrix.getElem_mulVec, Hex.Matrix.getElem_mulVec,
     Hex.Matrix.getElem_mulVec, Vector.dotProduct_sub_right]
 
+/-- The residual is also orthogonal to each original basis row. -/
+theorem residual_basis (p : Data n m) (rows : Hex.Matrix Int n m)
+    (t : Vector Rat m) (hp : p.Valid rows t) (i : Fin n) :
+    p.residual.dotProduct (castVector (rows.getRow i)) = 0 := by
+  have hr : castVector (rows.getRow i) = Hex.Matrix.vecMul (p.mu.getRow i) p.orthogonal := by
+    apply Vector.ext
+    intro j hj
+    have he := congrArg (fun M : Hex.Matrix Rat n m => M[i][(⟨j, hj⟩ : Fin m)]) hp.2.2.1
+    rw [Hex.Matrix.getElem_mul] at he
+    simp only [castVector, Hex.Vector.getElem_ofFn']
+    change ((rows.getRow i)[j] : Rat) = (p.orthogonal.transpose * p.mu.getRow i)[(⟨j, hj⟩ : Fin m)]
+    rw [Hex.Matrix.getElem_mulVec, Hex.Matrix.row_transpose]
+    simpa [Hex.GramSchmidt.castIntMatrix, Hex.Matrix.row, Vector.dotProduct_comm] using he.symm
+  rw [hr, Vector.dotProduct_comm, dot_vecMul]
+  apply Finset.sum_eq_zero
+  intro j _
+  rw [Vector.dotProduct_comm, residual_orthogonal p rows t hp j, mul_zero]
+
 /-- Pythagoras retains the target's residual outside the row span. -/
 theorem norm_difference (p : Data n m) (rows : Hex.Matrix Int n m)
     (t : Vector Rat m) (hp : p.Valid rows t) (a : Vector Rat n) :

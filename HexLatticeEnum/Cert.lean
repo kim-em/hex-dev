@@ -142,18 +142,27 @@ def shortestCertificate (b : Basis n m) : Option (OptimumCertificate n m) :=
     let p := prepare b 0
     optimumCertificate b p (optimize {} b 0 p .shortest seed)
 
+/-- Replay a global closest-vector certificate with a limit on visited certificate nodes. -/
+def checkClosestWith (maxNodes : Nat) (rows : Matrix Int n m) (t : Vector Rat m)
+    (cert : OptimumCertificate n m) : Bool :=
+  checkPoint rows t cert.candidate &&
+    checkEnumerationWith maxNodes rows t cert.candidate.distanceSq cert.enumeration &&
+    cert.enumeration.points.all (fun p => p.distanceSq == cert.candidate.distanceSq)
+
 /-- Replay a global closest-vector certificate, including every tie. -/
 def checkClosest (rows : Matrix Int n m) (t : Vector Rat m) (cert : OptimumCertificate n m) : Bool :=
-  checkPoint rows t cert.candidate &&
-    checkEnumeration rows t cert.candidate.distanceSq cert.enumeration &&
-    cert.enumeration.points.all (fun p => p.distanceSq == cert.candidate.distanceSq)
+  checkClosestWith cert.enumeration.tree.nodes rows t cert
+
+/-- Replay a global nonzero shortest-vector certificate with a limit on visited certificate nodes. -/
+def checkShortestWith (maxNodes : Nat) (rows : Matrix Int n m) (cert : OptimumCertificate n m) : Bool :=
+  decide (cert.candidate.ambient ≠ Vector.replicate m 0) &&
+    checkPoint rows (Vector.replicate m 0) cert.candidate &&
+    checkEnumerationWith maxNodes rows (Vector.replicate m 0) cert.candidate.distanceSq cert.enumeration &&
+    cert.enumeration.points.all (fun p => decide (p.ambient = Vector.replicate m 0) ||
+      p.distanceSq == cert.candidate.distanceSq)
 
 /-- Replay a global nonzero shortest-vector certificate, including both signs. -/
 def checkShortest (rows : Matrix Int n m) (cert : OptimumCertificate n m) : Bool :=
-  decide (cert.candidate.ambient ≠ Vector.replicate m 0) &&
-    checkPoint rows (Vector.replicate m 0) cert.candidate &&
-    checkEnumeration rows (Vector.replicate m 0) cert.candidate.distanceSq cert.enumeration &&
-    cert.enumeration.points.all (fun p => decide (p.ambient = Vector.replicate m 0) ||
-      p.distanceSq == cert.candidate.distanceSq)
+  checkShortestWith cert.enumeration.tree.nodes rows cert
 
 end Hex.LatticeEnum

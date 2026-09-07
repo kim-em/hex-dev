@@ -120,13 +120,5 @@ def Data.centreImpl (p : Data n m) (z : Vector Int n) (i : Fin n) : Rat :=
 def Prepared.centre (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
   p.toData.centre z i
 
-/-- Exact contribution of one coefficient to the squared distance. -/
-def Prepared.cost (p : Prepared b t) (z : Vector Int n) (i : Fin n) : Rat :=
-  let a := (z[i] : Rat) - p.centre z i
-  p.norms[i] * a * a
-
-/-- Cost of the already chosen suffix, excluding the orthogonal residual. -/
-def Prepared.suffixCost (p : Prepared b t) (z : Vector Int n) (k : Nat) : Rat :=
-  Fin.foldl n (fun acc i => if k ≤ i.val then acc + p.cost z i else acc) 0
 
 end Hex.LatticeEnum

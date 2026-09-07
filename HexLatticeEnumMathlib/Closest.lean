@@ -69,6 +69,7 @@ theorem children_optimum (b : Basis n m) (t : Vector Rat m) (mode : SearchMode)
     (k : Nat) (z : Vector Int n) (q : Point n m) : Prop :=
   q = point b t q.coefficients ∧ Matches k z q.coefficients ∧ Eligible mode q
 
+/-- Fixing the next coordinate reduces eligible answers to the extended suffix. -/
 theorem possible_set (b : Basis n m) (t : Vector Rat m) (mode : SearchMode)
     (k : Nat) (hk : k < n) (z : Vector Int n) (a : Int) (q : Point n m) :
     Possible b t mode k (z.set k a hk) q ↔
@@ -76,6 +77,7 @@ theorem possible_set (b : Basis n m) (t : Vector Rat m) (mode : SearchMode)
   simp only [Possible, matches_set]
   tauto
 
+/-- A fully fixed suffix admits only its reconstructed eligible point. -/
 theorem possible_zero (b : Basis n m) (t : Vector Rat m) (mode : SearchMode)
     (z : Vector Int n) (q : Point n m) :
     Possible b t mode 0 z q ↔ q = point b t z ∧ Eligible mode q := by
@@ -90,6 +92,7 @@ theorem possible_zero (b : Basis n m) (t : Vector Rat m) (mode : SearchMode)
   · rintro ⟨rfl, he⟩
     exact ⟨rfl, fun _ _ => rfl, he⟩
 
+/-- The exact child intervals cover every eligible completion within the current bound. -/
 theorem possible_children (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
     (hp : p.Valid) (mode : SearchMode) (r : Rat) (k : Nat) (hk : k < n)
     (z : Vector Int n) (q : Point n m) (hq : Possible b t mode (k + 1) z q)

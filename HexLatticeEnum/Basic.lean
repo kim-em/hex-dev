@@ -24,6 +24,27 @@ structure Basis (n m : Nat) where
 def ofMatrix? (rows : Matrix Int n m) : Option (Basis n m) :=
   if h : Matrix.independent rows then some ⟨rows, h⟩ else none
 
+/-- Input checking succeeds exactly for independent rows. -/
+@[simp] theorem ofMatrix?_isSome (rows : Matrix Int n m) :
+    (ofMatrix? rows).isSome = decide rows.independent := by
+  unfold ofMatrix?
+  split <;> simp_all
+
+/-- An accepted basis retains exactly the supplied matrix. -/
+@[simp] theorem ofMatrix?_eq_some (rows : Matrix Int n m) (b : Basis n m) :
+    ofMatrix? rows = some b ↔ b.rows = rows := by
+  constructor
+  · intro h
+    unfold ofMatrix? at h
+    split at h
+    · cases Option.some.inj h
+      rfl
+    · cases h
+  · intro h
+    subst rows
+    cases b
+    simp [ofMatrix?, *]
+
 /-- Reconstruct an ambient integer vector from original-basis coefficients. -/
 def vector (b : Basis n m) (z : Vector Int n) : Vector Int m :=
   Matrix.vecMul z b.rows

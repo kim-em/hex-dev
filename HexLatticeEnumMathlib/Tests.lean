@@ -77,6 +77,18 @@ example : checkEnumeration (Matrix.ofRows #v[#v[1]]) #v[1/2] (1/4) halfCertifica
 example : checkClosest (Matrix.ofRows #v[#v[1]]) #v[1/2]
     ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ = true := by decide +kernel
 
+example : checkClosestWith 3 (Matrix.ofRows #v[#v[1]]) #v[1/2]
+    ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ = true := by decide +kernel
+
+example : checkClosestWith 2 (Matrix.ofRows #v[#v[1]]) #v[1/2]
+    ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ = false := by decide +kernel
+
+example (b : Basis 1 1) (hb : b.rows = Matrix.ofRows #v[#v[1]]) :
+    Optimal b #v[1/2] .closest (⟨#v[0], #v[0], 1/4⟩ : Point 1 1) := by
+  apply (checkClosestWith_sound 3 b #v[1/2] ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ ?_).1
+  rw [hb]
+  decide +kernel
+
 example (b : Basis 1 1) (hb : b.rows = Matrix.ofRows #v[#v[1]]) :
     Optimal b #v[1/2] .closest (⟨#v[0], #v[0], 1/4⟩ : Point 1 1) := by
   apply (checkClosest_sound b #v[1/2] ⟨⟨#v[0], #v[0], 1/4⟩, halfCertificate⟩ ?_).1
@@ -101,6 +113,12 @@ private def unitCertificate : Certificate 1 1 where
 
 example : checkShortest (Matrix.ofRows #v[#v[1]])
     ⟨⟨#v[1], #v[1], 1⟩, unitCertificate⟩ = true := by decide +kernel
+
+example : checkShortestWith 4 (Matrix.ofRows #v[#v[1]])
+    ⟨⟨#v[1], #v[1], 1⟩, unitCertificate⟩ = true := by decide +kernel
+
+example : checkShortestWith 3 (Matrix.ofRows #v[#v[1]])
+    ⟨⟨#v[1], #v[1], 1⟩, unitCertificate⟩ = false := by decide +kernel
 
 example : checkEnumeration (Matrix.ofRows #v[#v[1]]) #v[0] 1
     { unitCertificate with tree := .node ⟨-1, 1⟩ [(0, .leaf), (1, .leaf)] } = false := by

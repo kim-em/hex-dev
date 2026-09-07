@@ -135,20 +135,5 @@ theorem prune_suffix (p : Data n m) (rows : Hex.Matrix Int n m) (t : Vector Rat 
   rw [suffix_congr p w z k hs] at h
   exact lt_of_lt_of_le hr h
 
-/-- The executable accumulator model agrees with the finite-sum invariant. -/
-theorem suffixCost_eq (b : Basis n m) (t : Vector Rat m) (p : Prepared b t)
-    (z : Vector Int n) (k : Nat) : p.suffixCost z k = suffix p.toData z k := by
-  unfold Prepared.suffixCost
-  have hf : (fun (acc : Rat) (i : Fin n) => if k ≤ i.val then acc + p.cost z i else acc) =
-      (fun acc i => acc + (if k ≤ i.val then p.cost z i else 0)) := by
-    funext acc i
-    split_ifs <;> simp
-  rw [hf, Fin.foldl_eq_finRange_foldl, HexMatrixMathlib.foldl_finRange_eq_sum]
-  apply Finset.sum_congr rfl
-  intro i _
-  split_ifs
-  · simp only [Prepared.cost, Prepared.centre]
-    ring
-  · rfl
 
 end HexLatticeEnumMathlib

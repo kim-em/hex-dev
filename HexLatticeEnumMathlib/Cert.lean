@@ -327,13 +327,13 @@ theorem checkEnumeration_nodup (b : Basis n m) (t : Vector Rat m) (r : Rat)
   have hz : q.coefficients = q'.coefficients := vector_injective b (ha.symm.trans (he.trans ha'))
   rw [hr, hr', hz]
 
-/-- A checked closest certificate attains a global minimum and includes every tie. -/
-theorem checkClosest_sound (b : Basis n m) (t : Vector Rat m) (cert : OptimumCertificate n m)
-    (h : checkClosest b.rows t cert = true) :
+/-- A bounded checked closest certificate attains a global minimum and includes every tie. -/
+theorem checkClosestWith_sound (maxNodes : Nat) (b : Basis n m) (t : Vector Rat m) (cert : OptimumCertificate n m)
+    (h : checkClosestWith maxNodes b.rows t cert = true) :
     Optimal b t .closest cert.candidate ∧
       ∀ q, q ∈ cert.enumeration.points ↔
         q = point b t q.coefficients ∧ q.distanceSq = cert.candidate.distanceSq := by
-  simp only [checkClosest, Bool.and_eq_true, checkPoint, decide_eq_true_eq, List.all_eq_true,
+  simp only [checkClosestWith, Bool.and_eq_true, checkPoint, decide_eq_true_eq, List.all_eq_true,
     beq_iff_eq] at h
   have hpoint : cert.candidate = point b t cert.candidate.coefficients := h.1.1
   have hoptimal : Optimal b t .closest cert.candidate := by
@@ -341,7 +341,7 @@ theorem checkClosest_sound (b : Basis n m) (t : Vector Rat m) (cert : OptimumCer
     intro q hq _
     by_contra hn
     have hlt := lt_of_not_ge hn
-    have hmem := (checkEnumeration_point_spec b t cert.candidate.distanceSq cert.enumeration h.1.2 q).mpr
+    have hmem := ((checkEnumerationWith_spec b t cert.candidate.distanceSq cert.enumeration maxNodes h.1.2).2.1 q).mpr
       ⟨hq, le_of_lt hlt⟩
     have he := h.2 q hmem
     linarith
@@ -349,21 +349,29 @@ theorem checkClosest_sound (b : Basis n m) (t : Vector Rat m) (cert : OptimumCer
   intro q
   constructor
   · intro hq
-    exact ⟨((checkEnumeration_point_spec b t cert.candidate.distanceSq cert.enumeration h.1.2 q).mp hq).1,
+    exact ⟨(((checkEnumerationWith_spec b t cert.candidate.distanceSq cert.enumeration maxNodes h.1.2).2.1 q).mp hq).1,
       h.2 q hq⟩
   · rintro ⟨hq, hd⟩
-    exact (checkEnumeration_point_spec b t cert.candidate.distanceSq cert.enumeration h.1.2 q).mpr
+    exact ((checkEnumerationWith_spec b t cert.candidate.distanceSq cert.enumeration maxNodes h.1.2).2.1 q).mpr
       ⟨hq, le_of_eq hd⟩
 
-/-- A checked shortest certificate attains the global nonzero minimum and retains every nonzero tie. -/
-theorem checkShortest_sound (b : Basis n m) (cert : OptimumCertificate n m)
-    (h : checkShortest b.rows cert = true) :
+/-- A checked closest certificate attains a global minimum and includes every tie. -/
+theorem checkClosest_sound (b : Basis n m) (t : Vector Rat m) (cert : OptimumCertificate n m)
+    (h : checkClosest b.rows t cert = true) :
+    Optimal b t .closest cert.candidate ∧
+      ∀ q, q ∈ cert.enumeration.points ↔
+        q = point b t q.coefficients ∧ q.distanceSq = cert.candidate.distanceSq :=
+  checkClosestWith_sound cert.enumeration.tree.nodes b t cert h
+
+/-- A bounded checked shortest certificate attains the global nonzero minimum and retains every nonzero tie. -/
+theorem checkShortestWith_sound (maxNodes : Nat) (b : Basis n m) (cert : OptimumCertificate n m)
+    (h : checkShortestWith maxNodes b.rows cert = true) :
     Optimal b 0 .shortest cert.candidate ∧
       ∀ q, q ∈ minimumPoints .shortest cert.enumeration.points ↔
         q = point b 0 q.coefficients ∧ q.ambient ≠ 0 ∧ q.distanceSq = cert.candidate.distanceSq := by
   have hz : (Vector.replicate m (0 : Int)) = 0 := by ext i hi; simp
   have ht : (Vector.replicate m (0 : Rat)) = 0 := by ext i hi; simp
-  simp only [checkShortest, hz, ht, Bool.and_eq_true, checkPoint, decide_eq_true_eq,
+  simp only [checkShortestWith, hz, ht, Bool.and_eq_true, checkPoint, decide_eq_true_eq,
     List.all_eq_true, Bool.or_eq_true, beq_iff_eq] at h
   have hpoint : cert.candidate = point b 0 cert.candidate.coefficients := h.1.1.2
   have hoptimal : Optimal b 0 .shortest cert.candidate := by
@@ -372,7 +380,7 @@ theorem checkShortest_sound (b : Basis n m) (cert : OptimumCertificate n m)
     have hnonzero : q.ambient ≠ 0 := by simpa [Eligible] using he
     by_contra hn
     have hlt := lt_of_not_ge hn
-    have hmem := (checkEnumeration_point_spec b 0 cert.candidate.distanceSq cert.enumeration h.1.2 q).mpr
+    have hmem := ((checkEnumerationWith_spec b 0 cert.candidate.distanceSq cert.enumeration maxNodes h.1.2).2.1 q).mpr
       ⟨hq, le_of_lt hlt⟩
     rcases h.2 q hmem with hzero | heq
     · exact hnonzero hzero
@@ -383,10 +391,17 @@ theorem checkShortest_sound (b : Basis n m) (cert : OptimumCertificate n m)
     bne_self_eq_false, Bool.false_or, bne_iff_ne]
   constructor
   · rintro ⟨hq, hn⟩
-    have he := ((checkEnumeration_point_spec b 0 cert.candidate.distanceSq cert.enumeration h.1.2 q).mp hq).1
+    have he := (((checkEnumerationWith_spec b 0 cert.candidate.distanceSq cert.enumeration maxNodes h.1.2).2.1 q).mp hq).1
     exact ⟨he, hn, (h.2 q hq).resolve_left hn⟩
   · rintro ⟨hq, hn, hd⟩
-    exact ⟨(checkEnumeration_point_spec b 0 cert.candidate.distanceSq cert.enumeration h.1.2 q).mpr
+    exact ⟨((checkEnumerationWith_spec b 0 cert.candidate.distanceSq cert.enumeration maxNodes h.1.2).2.1 q).mpr
       ⟨hq, le_of_eq hd⟩, hn⟩
+/-- A checked shortest certificate attains the global nonzero minimum and retains every nonzero tie. -/
+theorem checkShortest_sound (b : Basis n m) (cert : OptimumCertificate n m)
+    (h : checkShortest b.rows cert = true) :
+    Optimal b 0 .shortest cert.candidate ∧
+      ∀ q, q ∈ minimumPoints .shortest cert.enumeration.points ↔
+        q = point b 0 q.coefficients ∧ q.ambient ≠ 0 ∧ q.distanceSq = cert.candidate.distanceSq :=
+  checkShortestWith_sound cert.enumeration.tree.nodes b cert h
 
 end HexLatticeEnumMathlib

@@ -402,7 +402,7 @@ theorem closestCertificate_check (b : Basis n m) (t : Vector Rat m) :
   obtain ⟨ho, _, hb⟩ := optimize_spec b t p (prepare_valid b t) .closest (by decide) seed rfl (Or.inl rfl)
   have hc := optimumCertificate_check b t p (prepare_valid b t) .closest (by decide) seed rfl (Or.inl rfl)
   change checkClosest b.rows t (optimumCertificate b p run) = true
-  simp only [checkClosest, Bool.and_eq_true]
+  simp only [checkClosest, checkClosestWith, Bool.and_eq_true]
   refine ⟨⟨?_, hc⟩, ?_⟩
   · exact (decide_eq_true_eq).mpr ho.1
   · obtain ⟨fresh, hf, _, hm⟩ := hb.2.2.2
@@ -428,7 +428,7 @@ theorem shortestCertificate_check (b : Basis n m) (cert : OptimumCertificate n m
   have hz : (Vector.replicate m (0 : Int)) = 0 := by ext i hi; simp
   have ht : (Vector.replicate m (0 : Rat)) = 0 := by ext i hi; simp
   change checkShortest b.rows (optimumCertificate b p run) = true
-  simp only [checkShortest, hz, ht, Bool.and_eq_true]
+  simp only [checkShortest, checkShortestWith, hz, ht, Bool.and_eq_true]
   refine ⟨⟨⟨?_, ?_⟩, hc⟩, ?_⟩
   · apply decide_eq_true_eq.mpr
     simpa [Eligible, optimumCertificate, run] using ho.2.1

@@ -77,13 +77,13 @@ theorem change_closest_accepts (change : BasisChange b) (t : Vector Rat m) (c : 
     (hb : checkEnumeration b.rows t c.candidate.distanceSq
       (change.optimumCertificate t c).enumeration = true) :
     checkClosest b.rows t (change.optimumCertificate t c) = true := by
-  simp only [checkClosest, Bool.and_eq_true] at hc ⊢
+  simp only [checkClosest, checkClosestWith, Bool.and_eq_true] at hc ⊢
   have hq : c.candidate = point change.working t c.candidate.coefficients := by
     exact decide_eq_true_eq.mp hc.1.1
   have hd := (change_point change t c.candidate hq).2
   refine ⟨⟨?_, ?_⟩, ?_⟩
   · exact decide_eq_true_eq.mpr rfl
-  · simpa only [BasisChange.optimumCertificate, hd] using hb
+  · simpa only [BasisChange.optimumCertificate, checkEnumeration, hd] using hb
   · simp only [BasisChange.optimumCertificate, BasisChange.points, sortPoints,
       Hex.List.sort_eq, List.all_eq_true, List.mem_mergeSort, List.mem_map, beq_iff_eq] at hc ⊢
     rintro _ ⟨q, hmem, rfl⟩
@@ -107,14 +107,14 @@ theorem change_shortest_accepts (change : BasisChange b) (c : OptimumCertificate
     checkShortest b.rows (change.optimumCertificate 0 c) = true := by
   have hz : (Vector.replicate m (0 : Int)) = 0 := by ext i hi; simp
   have ht : (Vector.replicate m (0 : Rat)) = 0 := by ext i hi; simp
-  simp only [checkShortest, hz, ht, Bool.and_eq_true] at hc ⊢
+  simp only [checkShortest, checkShortestWith, hz, ht, Bool.and_eq_true] at hc ⊢
   have hq : c.candidate = point change.working 0 c.candidate.coefficients :=
     decide_eq_true_eq.mp hc.1.1.2
   have hpoint := change_point change 0 c.candidate hq
   refine ⟨⟨⟨?_, ?_⟩, ?_⟩, ?_⟩
   · simpa only [BasisChange.optimumCertificate, hpoint.1] using hc.1.1.1
   · exact decide_eq_true_eq.mpr rfl
-  · simpa only [BasisChange.optimumCertificate, hpoint.2] using hb
+  · simpa only [BasisChange.optimumCertificate, checkEnumeration, hpoint.2] using hb
   · simp only [BasisChange.optimumCertificate, BasisChange.points, sortPoints,
       Hex.List.sort_eq, List.all_eq_true, List.mem_mergeSort, List.mem_map,
       Bool.or_eq_true, decide_eq_true_eq, beq_iff_eq] at hc ⊢

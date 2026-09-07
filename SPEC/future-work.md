@@ -1086,9 +1086,9 @@ within the stated bounds.
 ### Exact lattice search and geometry
 
 Exact ball enumeration and all shortest/closest vectors are specified in
-[hex-lattice-enum](Libraries/hex-lattice-enum.md), with correctness proofs and
+[hex-lattice-enum](../HexLatticeEnum/SPEC/hex-lattice-enum.md), with correctness proofs and
 integer-span and Euclidean-distance correspondence in
-[hex-lattice-enum-mathlib](Libraries/hex-lattice-enum-mathlib.md).
+[hex-lattice-enum-mathlib](../HexLatticeEnumMathlib/SPEC/hex-lattice-enum-mathlib.md).
 Successive minima remain an extension: they need an independence certificate
 at each threshold and a proof that no smaller radius contains the required
 number of independent vectors.

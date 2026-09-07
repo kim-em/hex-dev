@@ -599,8 +599,8 @@ libraries:
   HexLatticeEnum:
     deps: [HexLLL, HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 7
+    status: active
     phase4:
       comparators:
         - tool: fplll shortest_vector and closest_vector
@@ -624,8 +624,9 @@ libraries:
   HexLatticeEnumMathlib:
     deps: [HexLatticeEnum, HexLLLMathlib, HexGramSchmidtMathlib, HexMatrixMathlib]
     mathlib: true
-    done_through: 0
-    status: planned
+    correspondence_only: true
+    done_through: 7
+    status: active
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
