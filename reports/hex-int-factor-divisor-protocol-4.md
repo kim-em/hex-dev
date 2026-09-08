@@ -45,9 +45,11 @@ contamination retry. The telemetry sidecar is descriptive even if its legacy
 summary field labels the run contaminated.
 
 Take one complete run. If its scientific verdict is inconclusive, one unchanged
-rerun is allowed; retain both attempts. Validation errors, subprocess failures
-and timeouts remain rejected and retained because they do not produce complete
-scientific evidence. A bad verdict is never discarded or relabelled.
+rerun is allowed at
+`reports/bench-results/intfactor-divisors-shared-attempt-2.json`; retain both
+attempts. Validation errors, subprocess failures and timeouts remain rejected
+and retained because they do not produce complete scientific evidence. A bad
+verdict is never discarded or relabelled.
 
 From the clean commit containing this protocol and collector:
 
@@ -78,7 +80,10 @@ The collector independently validated every complete divisor array and every
 timed checksum. Timed telemetry observed 0.287004 seconds of SMT-sibling
 activity over 30.514898 timed seconds (0.9405%), no foreign runnable samples,
 and complete sidecars for all 42 trials. That activity is retained as context
-and does not alter the raw measurements or verdict. The accepted record has
+and does not alter the raw measurements or verdict. SMT contention can only
+inflate wall time, so it limits interpretation of the normalized-constant band;
+over the 128-fold verdict range it does not explain the observed flat residual
+slope. The accepted record has
 SHA-256 `eca5c70876bce7e5fe1ad9417c3383eef643d6560515a1291e0cba6b698963af`;
 its raw LeanBench export and telemetry sidecar have SHA-256
 `052e9f9835731af41bd95e928d70ff487e176691d7a37227e81a2b6ca3cbd31f` and

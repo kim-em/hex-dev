@@ -1111,9 +1111,9 @@ the refreshed record supersedes its timings for the current fuel policy.
 They reproduce with:
 
 ```bash
-python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-  --warm-timeout 600 --max-pair-retries 32 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+  --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
   --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
 ```
 
@@ -1337,9 +1337,9 @@ Policy-selection evidence, retained as input to but not a claim about Phase 4:
   ```bash
   python3 scripts/bench/primality_fuel_sweep.py --rounds 6 --repeats 3 \
     --output reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json
-  python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-    --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-    --warm-timeout 600 --max-pair-retries 32 \
+  cpu=$(python3 scripts/bench/idle_core.py)
+  taskset -c "$cpu" python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+    --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
     --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
   ```
 

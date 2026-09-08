@@ -350,9 +350,9 @@ envelope. The baseline and elevated null controls had robust spread/build
 ratios of 12.51% and 2.69%, respectively. The record reproduces with:
 
 ```bash
-python3 scripts/bench/primality_negative_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-  --warm-timeout 600 --max-pair-retries 32 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/primality_negative_sweep.py --samples 6 \
+  --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
   --output reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json
 ```
 

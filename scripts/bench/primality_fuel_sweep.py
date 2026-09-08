@@ -14,9 +14,9 @@ Scientific run::
 The companion fresh-module evidence uses the already registered end-to-end
 policy suite::
 
-    python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-      --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-      --warm-timeout 600 --max-pair-retries 32 \
+    cpu=$(python3 scripts/bench/idle_core.py)
+    taskset -c "$cpu" python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+      --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
       --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
 
 Use ``--report FILE`` to reproduce the native summary without measuring.

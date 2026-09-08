@@ -34,9 +34,6 @@ from pathlib import Path
 import sys
 import time
 
-# Retained for CLI compatibility. Activity is ranked, not admitted or rejected.
-BUSY_PERCENT = 5.0
-
 # Core 0 additionally services interrupts and is the historical default of
 # every recipe here, so it is the one core most likely to be contended.
 AVOID = frozenset({0})
@@ -100,24 +97,21 @@ def busy_by_cpu(window: float = 0.3) -> dict[int, float]:
     return busy
 
 
-def pick(avoid: frozenset[int] = AVOID,
-         busy_percent: float = BUSY_PERCENT) -> int:
+def pick(avoid: frozenset[int] = AVOID) -> int:
     """Return the least-active available logical CPU and SMT core.
 
-    ``busy_percent`` is accepted for compatibility with older commands but is
-    not an admission threshold. A busy host still gets a placement; callers
-    record activity as context and retain the run.
+    A busy host still gets a placement; callers record activity as context and
+    retain the run.
     """
-    del busy_percent
     busy = busy_by_cpu()
     siblings = sibling_map()
     candidates = siblings or {cpu: {cpu} for cpu in sorted(busy)}
     ranked = []
     for cpu, group in candidates.items():
-        if cpu in avoid or not group or not group.issubset(busy):
+        if cpu in avoid or not group or cpu not in busy:
             continue
         group = siblings.get(cpu, {cpu})
-        ranked.append((max(busy[other] for other in group), cpu))
+        ranked.append((max(busy.get(other, 0.0) for other in group), cpu))
     if not ranked and avoid:
         return pick(avoid=frozenset())
     if not ranked:
@@ -141,16 +135,12 @@ def main() -> int:
     p = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--busy-percent", type=float, default=BUSY_PERCENT,
-                   help="legacy compatibility option; activity is ranked, "
-                        "not used as an admission threshold")
     p.add_argument("--allow-cpu0", action="store_true",
                    help="consider core 0, which recipes historically default "
                         "to and which also services interrupts")
     args = p.parse_args()
     try:
-        print(pick(avoid=frozenset() if args.allow_cpu0 else AVOID,
-                   busy_percent=args.busy_percent))
+        print(pick(avoid=frozenset() if args.allow_cpu0 else AVOID))
     except RuntimeError as error:
         print(error, file=sys.stderr)
         return 1

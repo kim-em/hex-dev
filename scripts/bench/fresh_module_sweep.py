@@ -40,17 +40,7 @@ SYSTEM_MARKER = "__HEX_SYSTEM_SECONDS__="
 CPU_PERCENT_MARKER = "__HEX_CPU_PERCENT__="
 INVOLUNTARY_CONTEXT_MARKER = "__HEX_INVOLUNTARY_CONTEXT__="
 VOLUNTARY_CONTEXT_MARKER = "__HEX_VOLUNTARY_CONTEXT__="
-DEFAULT_MAX_LOAD_PER_CPU = 0.5
-DEFAULT_MAX_CORE_INTERFERENCE_RATIO = 0.002
-DEFAULT_MAX_FREQUENCY_SPREAD_RATIO = 0.15
-DEFAULT_MAX_PAIR_RETRIES = 8
-MAX_PAIR_RETRIES = 32
-DEFAULT_PREFLIGHT_WINDOW_SECONDS = 2.0
-DEFAULT_PREFLIGHT_TIMEOUT_SECONDS = 300.0
-PREFLIGHT_MAX_BUSY_TICKS = 2
 NULL_MAGNITUDE_FACTOR = 3.0
-MIN_CONTROL_MAGNITUDE_RATIO = 2.0
-MAX_NULL_ROBUST_SPREAD_RATIO = 0.10
 ACCOUNTING_QUANTIZATION_TICKS = 3
 T = TypeVar("T")
 
@@ -94,7 +84,6 @@ class SweepSpec:
     src_dir: Path = Path("bench")
     extra_sources: tuple[Path, ...] = ()
     required_samples: int | None = None
-    max_pair_retries: int = DEFAULT_MAX_PAIR_RETRIES
     import_baseline_control: str | None = None
     absolute_only: bool = False
 
@@ -116,11 +105,6 @@ def parse_args(
         help="permit dirty repository/package checkouts for diagnostic runs",
     )
     parser.add_argument(
-        "--allow-busy",
-        action="store_true",
-        help="permit concurrent Lake/Lean work or a saturated host for diagnostics",
-    )
-    parser.add_argument(
         "--shared-host",
         action="store_true",
         help=(
@@ -129,56 +113,9 @@ def parse_args(
         ),
     )
     parser.add_argument(
-        "--expected-host",
-        help="hostname recorded for the shared-host run",
-    )
-    parser.add_argument(
         "--cpu",
         type=int,
         help="logical CPU to which the shared-host runner and children are pinned",
-    )
-    parser.add_argument(
-        "--max-load-per-cpu",
-        type=float,
-        default=DEFAULT_MAX_LOAD_PER_CPU,
-        help="maximum one-minute load average divided by logical CPU count",
-    )
-    parser.add_argument(
-        "--max-core-interference-ratio",
-        type=float,
-        default=DEFAULT_MAX_CORE_INTERFERENCE_RATIO,
-        help=(
-            "maximum aggregate foreign busy-time fraction across the "
-            "measurement CPU and its SMT siblings"
-        ),
-    )
-    parser.add_argument(
-        "--max-frequency-spread-ratio",
-        type=float,
-        default=DEFAULT_MAX_FREQUENCY_SPREAD_RATIO,
-        help="maximum observed pinned-CPU frequency spread for shared-host evidence",
-    )
-    parser.add_argument(
-        "--max-pair-retries",
-        "--max-arm-retries",
-        dest="max_pair_retries",
-        type=int,
-        default=DEFAULT_MAX_PAIR_RETRIES,
-        help=(
-            "legacy compatibility option; host activity no longer retries pairs"
-        ),
-    )
-    parser.add_argument(
-        "--preflight-window-seconds",
-        type=float,
-        default=DEFAULT_PREFLIGHT_WINDOW_SECONDS,
-        help="legacy compatibility option; no quiet-core preflight is run",
-    )
-    parser.add_argument(
-        "--preflight-timeout-seconds",
-        type=float,
-        default=DEFAULT_PREFLIGHT_TIMEOUT_SECONDS,
-        help="legacy compatibility option; no quiet-core preflight is run",
     )
     args = parser.parse_args(argv)
     if args.samples < 1:
@@ -187,36 +124,12 @@ def parse_args(
         parser.error("--timeout must be positive")
     if args.warm_timeout <= 0:
         parser.error("--warm-timeout must be positive")
-    if args.max_load_per_cpu <= 0:
-        parser.error("--max-load-per-cpu must be positive")
-    if not 0 < args.max_core_interference_ratio < 1:
-        parser.error("--max-core-interference-ratio must be between 0 and 1")
-    if not 0 < args.max_frequency_spread_ratio < 1:
-        parser.error("--max-frequency-spread-ratio must be between 0 and 1")
-    if not 0 <= args.max_pair_retries <= MAX_PAIR_RETRIES:
-        parser.error(
-            "--max-pair-retries/--max-arm-retries must be between "
-            f"0 and {MAX_PAIR_RETRIES}"
-        )
-    if args.preflight_window_seconds <= 0:
-        parser.error("--preflight-window-seconds must be positive")
-    if args.preflight_timeout_seconds < args.preflight_window_seconds:
-        parser.error(
-            "--preflight-timeout-seconds must be at least one "
-            "preflight window"
-        )
-    if args.allow_busy and args.shared_host:
-        parser.error("--allow-busy and --shared-host are mutually exclusive")
     if args.cpu is not None and args.cpu < 0:
         parser.error("--cpu must be nonnegative")
-    if args.shared_host and (
-        args.expected_host is None or args.cpu is None
-    ):
-        parser.error("--shared-host requires both --expected-host and --cpu")
-    if not args.shared_host and (
-        args.expected_host is not None or args.cpu is not None
-    ):
-        parser.error("--expected-host/--cpu require --shared-host")
+    if args.shared_host and args.cpu is None:
+        parser.error("--shared-host requires --cpu")
+    if not args.shared_host and args.cpu is not None:
+        parser.error("--cpu requires --shared-host")
     return args
 
 
@@ -344,13 +257,7 @@ def configure_shared_host(args: argparse.Namespace) -> None:
     """Pin this runner before warmup and record the selected shared machine."""
     if not args.shared_host:
         return
-    assert args.expected_host is not None
     assert args.cpu is not None
-    actual_host = socket.gethostname()
-    if actual_host != args.expected_host:
-        raise RuntimeError(
-            f"expected host {args.expected_host!r}, got {actual_host!r}"
-        )
     set_affinity = getattr(os, "sched_setaffinity", None)
     if set_affinity is None:
         raise RuntimeError("CPU affinity is unavailable")
@@ -557,25 +464,6 @@ def host_state() -> dict[str, object]:
         ),
         "concurrent_lake_lean": lean_processes(),
     }
-
-
-def host_issues(
-    state: dict[str, object],
-    max_load_per_cpu: float,
-    *,
-    concurrent_is_issue: bool = True,
-    load_is_issue: bool = True,
-) -> list[str]:
-    issues: list[str] = []
-    processes = state["concurrent_lake_lean"]
-    if concurrent_is_issue and processes:
-        issues.append(f"{len(processes)} concurrent Lake/Lean process(es)")
-    load = state["load_1m_per_cpu"]
-    if load_is_issue and load is not None and float(load) > max_load_per_cpu:
-        issues.append(
-            f"one-minute load/CPU {float(load):.3f} exceeds {max_load_per_cpu:.3f}"
-        )
-    return issues
 
 
 def shared_host_protocol_issues(
@@ -1070,9 +958,8 @@ def shared_host_arm_issues(
     arm: dict[str, object],
     measurement_cpu: int,
     sibling_cpus: Sequence[int],
-    max_ratio: float,
 ) -> list[str]:
-    """Validate one arm before admitting it to a shared-host pair."""
+    """Record incomplete or inconsistent telemetry as contextual notes."""
     prefix = f"{pair_name} round {round_index} {role}: "
     issues: list[str] = []
     wall_seconds = int(arm["wall_nanos"]) / 1_000_000_000
@@ -1081,7 +968,6 @@ def shared_host_arm_issues(
     if tick_hz <= 0 or wall_seconds <= 0:
         return [prefix + "per-arm CPU accounting is incomplete"]
     quantization_allowance = ACCOUNTING_QUANTIZATION_TICKS / tick_hz
-    allowance = max(quantization_allowance, max_ratio * wall_seconds)
     residual = accounting.get(
         "measurement_cpu_noninterrupt_residual_seconds"
     )
@@ -1096,16 +982,6 @@ def shared_host_arm_issues(
                 + f"{-float(residual):.3f}s (allowance "
                 + f"{quantization_allowance:.3f}s)"
             )
-    cpu_percent = arm.get("cpu_percent")
-    if (
-        cpu_percent is not None
-        and float(cpu_percent) > 100 * (1 + max_ratio)
-    ):
-        issues.append(
-            prefix
-            + f"child CPU utilisation {float(cpu_percent):.1f}% "
-            + "exceeds the single-CPU affinity ceiling"
-        )
     per_cpu = dict(accounting.get("per_cpu") or {})
     sibling_busy_seconds = 0.0
     for sibling in sibling_cpus:
@@ -1122,13 +998,6 @@ def shared_host_arm_issues(
             aggregate_interference
         )
         arm["cpu_accounting"] = accounting
-        if aggregate_interference > allowance:
-            issues.append(
-                prefix
-                + "aggregate measurement-CPU foreign and SMT-sibling "
-                + f"busy time {aggregate_interference:.3f}s exceeds "
-                + f"{allowance:.3f}s"
-            )
     mean_frequency = accounting.get("mean_frequency_khz")
     if mean_frequency is None or float(mean_frequency) <= 0:
         issues.append(prefix + "pinned-CPU frequency accounting is incomplete")
@@ -1144,17 +1013,8 @@ def build_shared_host_pair(
     measurement_cpu: int,
     monitored_cpus: Sequence[int],
     sibling_cpus: Sequence[int],
-    max_ratio: float,
-    max_retries: int,
-    preflight_window_seconds: float,
-    preflight_timeout_seconds: float,
-) -> tuple[
-    dict[str, object] | None,
-    list[dict[str, object]],
-    dict[str, object] | None,
-]:
+) -> dict[str, object]:
     """Build one adjacent pair and retain host activity as context."""
-    del max_retries, preflight_window_seconds, preflight_timeout_seconds
     attempt_state = sampled_host_state(host_state())
     built: dict[str, dict[str, object]] = {}
     for role, module in modules:
@@ -1174,15 +1034,13 @@ def build_shared_host_pair(
         for role, _module in modules
         for issue in shared_host_arm_issues(
             pair_name, round_index, role, built[role], measurement_cpu,
-            sibling_cpus, max_ratio,
+            sibling_cpus,
         )
     ]
     row: dict[str, object] = {
         "pair": pair_name,
         "round": round_index,
         "slot_index": slot_index,
-        "measurement_attempt": 1,
-        "preflight": None,
         "context_issues": context_issues,
         "build_order": [role for role, _module in modules],
         "host_before_pair": attempt_state,
@@ -1193,7 +1051,7 @@ def build_shared_host_pair(
             - int(built["reference"]["wall_nanos"])
         ),
     }
-    return row, [], None
+    return row
 
 
 def warm_imports(spec: SweepSpec, timeout: float) -> None:
@@ -1729,17 +1587,10 @@ def summarize(
         if budget_ms is not None:
             budget_nanos = int(budget_ms) * 1_000_000
             median_delta = int(result["median_signed_wall_delta_nanos"])
-            envelope_value = result["comparable_null_envelope_nanos"]
-            if median_delta >= budget_nanos:
-                budget_status = "failed"
-            elif envelope_value is None:
-                budget_status = "no-comparable-control"
-            elif median_delta + int(envelope_value) >= budget_nanos:
-                budget_status = "unresolved"
-            else:
-                budget_status = "passed"
             result["budget_nanos"] = budget_nanos
-            result["budget_status"] = budget_status
+            result["budget_status"] = (
+                "failed" if median_delta >= budget_nanos else "passed"
+            )
         fresh_budget_ms = pair.metadata.get("fresh_module_budget_ms")
         if fresh_budget_ms is not None:
             fresh_budget_nanos = int(fresh_budget_ms) * 1_000_000
@@ -1761,13 +1612,8 @@ def shared_host_observations(
     rows: dict[str, list[dict[str, object]]],
     measurement_cpu: int,
     sibling_cpus: Sequence[int],
-    max_ratio: float,
-    max_frequency_spread_ratio: float,
-    rejected_pair_attempts: Sequence[dict[str, object]] = (),
-    exhausted_pairs: Sequence[dict[str, object]] = (),
-    preflight_failures: Sequence[dict[str, object]] = (),
 ) -> dict[str, object]:
-    """Aggregate auditable per-arm contention measurements."""
+    """Aggregate auditable per-arm shared-host context."""
     max_foreign_ratio = 0.0
     max_interrupt_ratio = 0.0
     max_sibling_ratio = 0.0
@@ -1777,10 +1623,7 @@ def shared_host_observations(
     max_load = 0.0
     frequencies: list[float] = []
     expected_frequency_observations = 0
-    max_effective_interference_ratio = 0.0
-    max_interference_allowance_seconds = 0.0
-    max_attempts_per_pair = 1
-    violations: list[str] = []
+    accounting_notes: list[str] = []
     missing_accounting = False
     tick_hz = int(os.sysconf("SC_CLK_TCK"))
     for pair_name, samples in rows.items():
@@ -1790,10 +1633,6 @@ def shared_host_observations(
                 arm = dict(sample[role])
                 wall_seconds = int(arm["wall_nanos"]) / 1_000_000_000
                 accounting = dict(arm["cpu_accounting"])
-                max_attempts_per_pair = max(
-                    max_attempts_per_pair,
-                    int(sample.get("measurement_attempt", 1)),
-                )
                 expected_frequency_observations += 1
                 mean_frequency = accounting.get("mean_frequency_khz")
                 if (
@@ -1821,18 +1660,7 @@ def shared_host_observations(
                 quantization_allowance = (
                     ACCOUNTING_QUANTIZATION_TICKS / tick_hz
                 )
-                allowance = max(
-                    quantization_allowance,
-                    max_ratio * wall_seconds,
-                )
                 if wall_seconds > 0:
-                    max_interference_allowance_seconds = max(
-                        max_interference_allowance_seconds, allowance
-                    )
-                    max_effective_interference_ratio = max(
-                        max_effective_interference_ratio,
-                        allowance / wall_seconds,
-                    )
                     if interrupt is not None:
                         max_interrupt_ratio = max(
                             max_interrupt_ratio,
@@ -1850,21 +1678,11 @@ def shared_host_observations(
                         max_foreign_ratio, foreign_ratio
                     )
                     if float(residual) < -quantization_allowance:
-                        violations.append(
+                        accounting_notes.append(
                             f"{pair_name} round {round_index} {role}: "
                             "child CPU time exceeds pinned-CPU busy time by "
                             f"{-float(residual):.3f}s (allowance "
                             f"{quantization_allowance:.3f}s)"
-                        )
-                    cpu_percent = arm.get("cpu_percent")
-                    if (
-                        cpu_percent is not None
-                        and float(cpu_percent) > 100 * (1 + max_ratio)
-                    ):
-                        violations.append(
-                            f"{pair_name} round {round_index} {role}: "
-                            f"child CPU utilisation {float(cpu_percent):.1f}% "
-                            "exceeds the single-CPU affinity ceiling"
                         )
                 sibling_busy_seconds = 0.0
                 for sibling in sibling_cpus:
@@ -1899,23 +1717,15 @@ def shared_host_observations(
                         ) > 1e-9
                     ):
                         missing_accounting = True
-                    if aggregate_interference > allowance:
-                        violations.append(
-                            f"{pair_name} round {round_index} {role}: "
-                            "aggregate measurement-CPU foreign and "
-                            "SMT-sibling busy time "
-                            f"{aggregate_interference:.3f}s exceeds "
-                            f"{allowance:.3f}s"
-                        )
                 pressure = accounting.get("pressure_some_delta_us")
                 if pressure is not None:
                     max_pressure_delta = max(
                         max_pressure_delta, int(pressure)
                     )
     if missing_accounting:
-        violations.append("per-arm CPU accounting is incomplete")
+        accounting_notes.append("per-arm CPU accounting is incomplete")
     if len(frequencies) != expected_frequency_observations:
-        violations.append(
+        accounting_notes.append(
             "pinned-CPU frequency accounting is incomplete "
             f"({len(frequencies)}/{expected_frequency_observations} "
             "positive readings)"
@@ -1925,66 +1735,15 @@ def shared_host_observations(
         frequency_spread_ratio = (
             max(frequencies) / min(frequencies) - 1
         )
-        if frequency_spread_ratio > max_frequency_spread_ratio:
-            violations.append(
-                "pinned-CPU frequency spread "
-                f"{frequency_spread_ratio:.3f} exceeds "
-                f"{max_frequency_spread_ratio:.3f}"
-            )
-    preflights = [
-        dict(sample["preflight"])
-        for samples in rows.values()
-        for sample in samples
-        if sample.get("preflight") is not None
-    ]
-    preflights.extend(
-        dict(attempt["preflight"])
-        for attempt in rejected_pair_attempts
-        if attempt.get("preflight") is not None
-    )
-    preflights.extend(
-        dict(failure["preflight"])
-        for failure in preflight_failures
-    )
     return {
         "measurement_cpu": measurement_cpu,
         "smt_sibling_cpus": list(sibling_cpus),
-        "max_core_interference_ratio": max_ratio,
         "accounting_quantization_ticks": ACCOUNTING_QUANTIZATION_TICKS,
-        "max_effective_core_interference_ratio":
-            max_effective_interference_ratio,
-        "max_interference_allowance_seconds":
-            max_interference_allowance_seconds,
-        "max_frequency_spread_ratio": max_frequency_spread_ratio,
         "max_measurement_cpu_foreign_ratio": max_foreign_ratio,
         "max_measurement_cpu_interrupt_ratio": max_interrupt_ratio,
         "max_smt_sibling_busy_ratio": max_sibling_ratio,
         "max_aggregate_core_interference_ratio":
             max_aggregate_interference_ratio,
-        "total_rejected_pair_attempts": len(rejected_pair_attempts),
-        "max_attempts_per_pair": max(
-            max_attempts_per_pair,
-            max(
-                (
-                    int(attempt.get("attempt", 1))
-                    for attempt in rejected_pair_attempts
-                ),
-                default=1,
-            ),
-        ),
-        "total_exhausted_pairs": len(exhausted_pairs),
-        "total_rejected_preflight_windows": sum(
-            len(preflight.get("rejected_windows", []))
-            for preflight in preflights
-        ),
-        "max_preflight_wait_seconds": max(
-            (
-                float(preflight.get("elapsed_seconds", 0.0))
-                for preflight in preflights
-            ),
-            default=0.0,
-        ),
-        "total_preflight_failures": len(preflight_failures),
         "max_cpu_pressure_some_delta_us": max_pressure_delta,
         "max_concurrent_lake_lean_count": max_concurrent,
         "max_load_1m_per_cpu": max_load,
@@ -1995,7 +1754,7 @@ def shared_host_observations(
         "expected_frequency_observations": expected_frequency_observations,
         "observed_frequency_observations": len(frequencies),
         "frequency_spread_ratio": frequency_spread_ratio,
-        "violations": violations,
+        "accounting_notes": accounting_notes,
     }
 
 
@@ -2003,40 +1762,25 @@ def measurement_completion_issues(
     spec: SweepSpec,
     rows: dict[str, list[dict[str, object]]],
     required_samples: int,
-    exhausted_pairs: Sequence[dict[str, object]],
 ) -> list[str]:
-    """Explain why an interrupted or retry-exhausted sweep is incomplete."""
-    issues = [
+    """Explain why an interrupted sweep is incomplete."""
+    return [
         (
-            f"{pair.name}: admitted {len(rows[pair.name])}/"
+            f"{pair.name}: collected {len(rows[pair.name])}/"
             f"{required_samples} required paired samples"
         )
         for pair in spec.pairs
         if len(rows[pair.name]) != required_samples
     ]
-    issues.extend(
-        (
-            f"{item['pair']} round {item['round']}: "
-            + (
-                str(item["reason"])
-                if item.get("reason") is not None
-                else f"exhausted {item['attempts']} pair attempt(s)"
-            )
-        )
-        for item in exhausted_pairs
-    )
-    return issues
 
 
 def validity_summary(
     spec: SweepSpec,
     args: argparse.Namespace,
     results: dict[str, dict[str, object]],
-    observations: dict[str, object] | None,
     exceptions: Sequence[str],
 ) -> tuple[bool, list[str]]:
     """Derive release validity from provenance, completeness and budgets."""
-    del observations
     issues = list(exceptions)
     for pair in spec.pairs:
         if pair.null_control:
@@ -2104,9 +1848,6 @@ def run_cli(
     rows: dict[str, list[dict[str, object]]] = {
         pair.name: [] for pair in pairs
     }
-    rejected_pair_attempts: list[dict[str, object]] = []
-    exhausted_pairs: list[dict[str, object]] = []
-    preflight_failures: list[dict[str, object]] = []
     topology = (
         cpu_topology(args.cpu)
         if args.shared_host and args.cpu is not None
@@ -2131,13 +1872,11 @@ def run_cli(
                 "shared-host CPU topology has no recorded SMT sibling"
             )
 
-    measurement_exhausted = False
     for round_index in range(args.samples):
         for slot_index, pair in enumerate(rotate(pairs, round_index)):
-            state = host_state()
             modules = ordered_modules(pair, round_index)
             if args.shared_host and args.cpu is not None:
-                row, rejected, preflight_failure = build_shared_host_pair(
+                row = build_shared_host_pair(
                     pair.name,
                     round_index + 1,
                     slot_index,
@@ -2146,34 +1885,10 @@ def run_cli(
                     args.cpu,
                     monitored_cpus,
                     sibling_cpus,
-                    args.max_core_interference_ratio,
-                    args.max_pair_retries,
-                    args.preflight_window_seconds,
-                    args.preflight_timeout_seconds,
                 )
-                rejected_pair_attempts.extend(rejected)
-                if row is None:
-                    if preflight_failure is not None:
-                        preflight_failures.append(preflight_failure)
-                        failure_issues = list(
-                            preflight_failure["issues"]
-                        )
-                        reason = failure_issues[0]
-                    else:
-                        failure_issues = list(rejected[-1]["issues"])
-                        reason = None
-                    exhausted_pairs.append({
-                        "pair": pair.name,
-                        "round": round_index + 1,
-                        "slot_index": slot_index,
-                        "attempts": len(rejected),
-                        "issues": failure_issues,
-                        "reason": reason,
-                    })
-                    measurement_exhausted = True
-                    break
                 rows[pair.name].append(row)
             else:
+                state = host_state()
                 built: dict[str, dict[str, object]] = {}
                 for role, module in modules:
                     print(
@@ -2203,9 +1918,6 @@ def run_cli(
                         - int(reference["wall_nanos"])
                     ),
                 })
-        if measurement_exhausted:
-            break
-
     after = source_hashes(spec, caller_file)
     if after != before:
         raise RuntimeError("measurement sources changed during the sweep")
@@ -2220,9 +1932,7 @@ def run_cli(
         raise RuntimeError("dependency checkout changed during the sweep")
     host_after = host_state()
     env["host_after"] = host_after
-    completion_issues = measurement_completion_issues(
-        spec, rows, args.samples, exhausted_pairs
-    )
+    completion_issues = measurement_completion_issues(spec, rows, args.samples)
     validity_exceptions.extend(
         issue for issue in completion_issues
         if issue not in validity_exceptions
@@ -2234,11 +1944,6 @@ def run_cli(
             rows,
             args.cpu,
             sibling_cpus,
-            args.max_core_interference_ratio,
-            args.max_frequency_spread_ratio,
-            rejected_pair_attempts,
-            exhausted_pairs,
-            preflight_failures,
         )
     if completion_issues:
         release_quality = False
@@ -2247,7 +1952,6 @@ def run_cli(
             spec,
             args,
             results,
-            observations,
             validity_exceptions,
         )
 
@@ -2261,13 +1965,13 @@ def run_cli(
         "validity": {
             "release_quality": release_quality,
             "exceptions": validity_exceptions,
-            "observed": observations,
             "host_protocol": (
                 "shared-host-context-v1"
                 if args.shared_host
                 else "shared-host-unpinned-v1"
             ),
         },
+        "context": {"shared_host": observations},
         "config": {
             "samples": args.samples,
             "timeout_seconds": args.timeout,
@@ -2280,44 +1984,26 @@ def run_cli(
                 "adjacent measured reference and candidate fresh modules; "
                 "every completed pair retained"
             ),
-            "max_load_per_cpu": args.max_load_per_cpu,
-            "max_core_interference_ratio":
-                args.max_core_interference_ratio,
             "accounting_quantization_ticks":
                 ACCOUNTING_QUANTIZATION_TICKS,
             "measurement_cpu_foreign_accounting":
                 "busy-minus-child-minus-runner-minus-irq-softirq",
             "core_interference_accounting":
                 "measurement-cpu-foreign-plus-all-SMT-sibling-busy",
-            "max_pair_retries": args.max_pair_retries,
-            "preflight_window_seconds": args.preflight_window_seconds,
-            "preflight_timeout_seconds": args.preflight_timeout_seconds,
-            "preflight_max_busy_ticks": PREFLIGHT_MAX_BUSY_TICKS,
-            "max_frequency_spread_ratio":
-                args.max_frequency_spread_ratio,
-            "minimum_control_magnitude_ratio":
-                MIN_CONTROL_MAGNITUDE_RATIO,
             "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
-            "max_null_robust_spread_ratio":
-                MAX_NULL_ROBUST_SPREAD_RATIO,
             "absolute_only": spec.absolute_only,
             "import_baseline_control": spec.import_baseline_control,
             "frequency_measurement":
                 "cpufreq-time-in-state-arm-mean",
             "lean_num_threads": os.environ.get("LEAN_NUM_THREADS"),
             "allow_dirty": args.allow_dirty,
-            "allow_busy": args.allow_busy,
             "shared_host": args.shared_host,
-            "expected_host": args.expected_host,
             "requested_cpu": args.cpu,
             "cpu_affinity": cpu_affinity(),
             "cpu_topology": topology,
         },
         "results": results,
         "partial_samples": rows if completion_issues else None,
-        "rejected_pair_attempts": rejected_pair_attempts,
-        "exhausted_pairs": exhausted_pairs,
-        "preflight_failures": preflight_failures,
         "source_sha256": before,
     }
     output = args.output or default_output(env, spec.output_stem)

@@ -428,7 +428,7 @@ A canonical shared-host invocation selects a CPU for placement and records it:
 cpu=$(python3 scripts/bench/idle_core.py)
 taskset -c "$cpu" python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
   --timeout 180 --warm-timeout 600 \
-  --shared-host --expected-host "$(hostname)" --cpu "$cpu"
+  --shared-host --cpu "$cpu"
 ```
 
 The six balanced rounds retain every adjacent pair. Scheduler and SMT activity

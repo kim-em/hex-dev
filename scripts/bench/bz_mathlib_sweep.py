@@ -166,16 +166,6 @@ SPEC = SweepSpec(
     ),
     output_stem="hex-berlekamp-zassenhaus-mathlib",
     required_samples=6,
-    # Preregistered long-arm retry bound (`SPEC/benchmarking.md`: a suite with
-    # preregistered long arms may explicitly request at most 32). These arms
-    # run 6.65 s to 16.60 s, roughly 3x the sibling `HexBerlekampMathlib`
-    # suite's, so each one spends proportionally longer exposed to a stray
-    # scheduler tick on the pinned core or its SMT sibling and is rejected
-    # correspondingly more often. Raising the retry bound buys more
-    # clean-pair opportunities at the unchanged admission threshold; it is
-    # the lever for a shared host that stays busy, and deliberately not the
-    # interference ratio, which would instead admit dirtier arms.
-    max_pair_retries=32,
 )
 
 

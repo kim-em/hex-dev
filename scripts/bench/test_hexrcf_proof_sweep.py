@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import re
-import shlex
 import unittest
 
 from scripts.bench import fresh_module_sweep as sweep
@@ -85,29 +84,15 @@ class ManifestTests(unittest.TestCase):
             "paired-fresh-module-olean-wall-robust-null-v2",
         )
 
-    def test_shared_host_recipe_requests_retry_headroom(self) -> None:
+    def test_shared_host_recipe_uses_one_pinned_attempt(self) -> None:
         source = (sweep.ROOT / "HexRCF/SPEC/hex-rcf.md").read_text(
             encoding="utf-8"
         )
-        match = re.search(
-            r"```bash\n(?P<command>python3 "
-            r"scripts/bench/hexrcf_proof_sweep\.py.*?\n)```",
-            source,
-            re.DOTALL,
-        )
-        self.assertIsNotNone(match)
-        assert match is not None
-        command = match.group("command").replace("\\\n", " ")
-        argv = shlex.split(command)[2:]
-        args = sweep.parse_args(rcf.SPEC.description, argv)
-        self.assertEqual(args.samples, rcf.SPEC.required_samples)
-        self.assertTrue(args.shared_host)
-        self.assertEqual(args.expected_host, "chungus2")
-        self.assertEqual(args.cpu, 22)
-        self.assertEqual(args.timeout, 300)
-        self.assertEqual(args.warm_timeout, 600)
-        self.assertEqual(args.max_pair_retries, rcf.SPEC.max_pair_retries)
-        self.assertEqual(rcf.SPEC.max_pair_retries, 32)
+        self.assertIn("cpu=$(python3 scripts/bench/idle_core.py)", source)
+        self.assertIn('taskset -c "$cpu" python3 scripts/bench/hexrcf_proof_sweep.py', source)
+        self.assertIn('--shared-host --cpu "$cpu"', source)
+        self.assertNotIn("--max-pair-retries", source)
+        self.assertNotIn("--expected-host", source)
 
     def test_substantive_pairs_remain_five_per_case(self) -> None:
         substantive = [pair for pair in rcf.SPEC.pairs if not pair.null_control]

@@ -129,6 +129,7 @@ class Family:
     include: tuple[str, ...]
     exclude: tuple[str, ...] = ()
     exemptions: Path | None = None
+    exemption_paths: tuple[str, ...] = ()
     figures: tuple[str, ...] = ()
     regenerate: str = ""
 
@@ -160,6 +161,12 @@ class Family:
         family never stages documentation the author had not staged.
         """
         return list(self.include) + [f":!{entry}" for entry in self.exclude]
+
+    def permits_exemption(self, path: str) -> bool:
+        """Whether a recorded runtime-neutral transition may cover ``path``."""
+        return not self.exemption_paths or any(
+            _entry_matches(entry, path) for entry in self.exemption_paths
+        )
 
 
 def unquote(path: str) -> str:
@@ -481,7 +488,8 @@ def assess(family: Family, observations: list[Observation],
     unexplained = []
     for difference in differences(baseline, listing):
         key = (difference.path, difference.baseline, difference.current)
-        if key in exemptions or (allow is not None and allow(difference)):
+        if ((key in exemptions and family.permits_exemption(difference.path))
+                or (allow is not None and allow(difference))):
             verdict.exempted.append(difference)
         else:
             unexplained.append(difference)
@@ -616,6 +624,10 @@ def factor_family(system: str) -> Family:
         # modules to leave out; a comparator's adapter files have none.
         exclude=FACTOR_TESTS if system == "hex-factor" else (),
         exemptions=FACTOR_EXEMPTIONS,
+        exemption_paths=(
+            () if system == "hex-factor"
+            else ("scripts/bench/factor_sweep.py",)
+        ),
         regenerate=(
             "scripts/bench/factor_sweep.py on the shared host"),
     )

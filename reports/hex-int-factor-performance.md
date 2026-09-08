@@ -668,10 +668,25 @@ per-rung trial spread is 4.84%. The accepted record has SHA-256
 Timed telemetry is complete and records 0.9405% aggregate activity, entirely
 on the SMT sibling, with no foreign runnable sample on the measurement CPU.
 This is context under the repository policy and neither changes nor filters a
-measurement. The existing inclusive profile remains applicable: the public
+measurement. SMT contention can inflate the normalized constant, so that band
+is host-specific; it does not explain the flat residual slope over the 128-fold
+verdict range. The existing inclusive profile remains applicable: the public
 operation, timed body, family and measured Lean sources are unchanged. Its
-executable hash differs because collector and benchmark bookkeeping changed;
-that difference does not change the attributed code path.
+executable hash differs because the LeanBench revision and surrounding Lake
+declarations changed after the profile; the profile is used for coverage and
+shape, not timing. The source premise is reproducible with:
+
+```sh
+git diff --exit-code \
+  823576960eea242d16beaffd1a73840528fee5ea \
+  3d5e24b620a758c44a379b430fb45aa10488ba5b -- \
+  HexIntFactor bench/HexIntFactor/Bench.lean HexPrimality/Table.lean lean-toolchain
+```
+
+That comparison is empty. The profile's recorded SHA-256 for
+`bench/HexIntFactor/Bench.lean`, `b0926418...`, also matches the accepted
+campaign's file. Thus the public divisor implementation and profiled operation
+are byte-for-byte unchanged even though the enclosing executable is not.
 
 ### Integration audit
 
@@ -692,8 +707,9 @@ the release manifest remain outside this work.
 The final local audit builds `HexIntFactor`, `HexIntFactorMathlib`,
 `HexConformance`, and `HexManual` together (11,480 jobs); verifies all 41
 IntFactor benchmark registrations; regenerates the fixture byte-for-byte; and
-checks all 415 fixture cases with PARI. The 113 affected collector tests,
-phase/DAG/Phase-7 checks, Mathlib-free and persistent-comparator lints, and
+checks all 415 fixture cases with PARI. The 226 affected collector, telemetry,
+freshness, and proof-sweep tests; the phase, DAG, and Phase-7 checks; the
+Mathlib-free and persistent-comparator lints; and the
 factorization/graph-isomorphism source and figure freshness checks also pass.
 
 ## Concerns
