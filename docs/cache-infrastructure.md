@@ -4,10 +4,10 @@ Where the build cache lives, who owns it, and which knob feeds which workflow.
 
 ## Cloudflare account
 
-This table records the required destination. During the 2026 account migration,
-the live cache and repository variables remain on the older personal account
-until the destination copy has passed verification and both the upload and
-newly allocated `r2.dev` endpoints are changed together.
+The 2026 account migration is complete. The live bucket, repository variables,
+public endpoint, and publisher credential are all in the dedicated Hex account.
+The source bucket in the personal account was deleted after anonymous reads and
+an authenticated trusted publication succeeded.
 
 | | |
 |---|---|
@@ -35,6 +35,20 @@ to sign them, so the read host must be public; only uploads use a key.
 | `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml` upload only |
 
 Lake service names: `hex-public` for reads, `hex-r2` for uploads.
+
+## Publisher credential
+
+The GitHub Actions secret `LAKE_CACHE_KEY` contains the S3 access-key pair for
+the non-expiring Cloudflare token named **Hex Lake cache R2 publisher**. The
+token belongs to the `hex` account and is restricted to object read/write/list
+access in `hex-cache`; it has no bucket-administration, Worker, DNS, Registrar,
+or billing authority.
+
+When rotating it, create the replacement in the `hex` account, install the new
+`<ACCESS_KEY_ID>:<SECRET_ACCESS_KEY>` pair as `LAKE_CACHE_KEY`, and let a fully
+verified `main` run publish an exact revision before revoking the old token. Do
+not put the token value in a repository variable or expose it to pull-request
+code.
 
 ## Read path and the interim `r2.dev` host
 
