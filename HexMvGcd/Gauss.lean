@@ -254,6 +254,16 @@ theorem dvdTrans [GcdDomainLaws R] {a b c : R}
     _ = (a * x) * y := by rw [hb]
     _ = a * (x * y) := Lean.Grind.Semiring.mul_assoc a x y
 
+/-- Divisibility is preserved by multiplying two divisible pairs. -/
+theorem dvdMul [GcdDomainLaws R] {a b c d : R}
+    (hac : a ∣ c) (hbd : b ∣ d) : a * b ∣ c * d := by
+  rcases (GcdDomainLaws.dvd_iff a c).mp hac with ⟨x, hx⟩
+  rcases (GcdDomainLaws.dvd_iff b d).mp hbd with ⟨y, hy⟩
+  apply (GcdDomainLaws.dvd_iff (a * b) (c * d)).mpr
+  refine ⟨x * y, ?_⟩
+  rw [hx, hy]
+  grind
+
 /-- Every finite coefficient list admits a greatest common divisor, including
 the empty list whose gcd is chosen as zero. -/
 theorem coeffGcd_nonempty [GcdDomainLaws R] (xs : List R) :
@@ -1852,7 +1862,7 @@ private theorem toUnivariate_dvd_zero
   calc
     toUnivariate 0 cmp' q = toUnivariate 0 cmp' (r * p) := by rw [hr]
     _ = toUnivariate 0 cmp' r * toUnivariate 0 cmp' p :=
-      toUnivariate_mul r p
+      toUnivariate_mul 0 r p
     _ = toUnivariate 0 cmp' p * toUnivariate 0 cmp' r :=
       DensePoly.mul_comm_poly _ _
 
@@ -1963,6 +1973,42 @@ theorem cancelCommonFactor
   exact CoprimeCancelLaws.cancel_coprime g a b d hcop hda hdb
 
 end Lift
+
+section NormalizeAssoc
+
+variable [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [Dvd R] [GcdOps R] [LawfulGcdOps R] [IsMonomialOrder cmp]
+
+/-- Mutually divisible polynomials have the same canonical normalization. -/
+theorem eq_polyNormalize_of_dvd (a b : MvPoly n R cmp)
+    (ha : polyNormalize a = a) (hab : a ∣ b) (hba : b ∣ a) :
+    a = polyNormalize b := by
+  rcases hab with ⟨q, hbq⟩
+  by_cases hazero : a = 0
+  · have hbzero : b = 0 := by
+      calc
+        b = q * a := hbq
+        _ = 0 := by rw [hazero, MvPoly.mul_zero]
+    rw [hazero, hbzero, polyNormalize_zero]
+  · rcases hba with ⟨r, har⟩
+    have hqr : q * r = 1 := by
+      have hzero : (q * r - 1) * a = 0 := by
+        rw [har, hbq]
+        grind
+      rcases GcdDomainLaws.no_zero_div (q * r - 1) a hzero with
+        hrest | haz
+      · grind
+      · exact False.elim (hazero haz)
+    have hqunit : polyIsUnit q = true :=
+      (polyIsUnit_iff q).mpr ⟨r, hqr⟩
+    symm
+    calc
+      polyNormalize b = polyNormalize (q * a) := congrArg polyNormalize hbq
+      _ = polyNormalize q * polyNormalize a := polyNormalize_mul q a
+      _ = 1 * a := by rw [polyNormalize_unit q hqunit, ha]
+      _ = a := MvPoly.one_mul a
+
+end NormalizeAssoc
 
 end MvPoly
 
