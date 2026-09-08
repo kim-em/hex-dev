@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyZ
+public import HexPolyZ.IntegerPolynomial
 
 public section
 
