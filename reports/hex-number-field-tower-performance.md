@@ -295,6 +295,48 @@ measured-batch margins are 9.63×, 3.46×, 7.89×, 8.02×, 8.01×, 3.67×,
 not these process-level deadlines; the inclusive ceilings are enforced by the
 recorded `run` export protocol.
 
+### Contended-host refresh of the mode-3 cases
+
+The nine mode-3 medians above were exported before the Trager work of #10077,
+#10085 and #10110 landed. `chungus2` has no quiet window available, so a
+refresh at main `b2f90bc4` uses repetition instead of quiescence: fourteen
+attempts of the same registered command, each pinning to a freshly chosen
+`idle_core.py` core, each retaining its own load, SMT-sibling busy fraction
+measured across the run, and postflight busy on the pinned core and its
+sibling. All fourteen attempts and their contexts are retained in
+[the ledger](bench-results/hex-number-field-tower-mode3-refresh-attempts.json);
+attempts 1, 8, 9, 11 and 12 exceed the 5% sibling or 8% postflight thresholds
+and are excluded. Attempt 13 supplies the
+[committed export](bench-results/hex-number-field-tower-mode3-refresh-b2f90bc4-chungus2-cpu14.json)
+and its
+[division/dense companion](bench-results/hex-number-field-tower-mode3-refresh-divdense-b2f90bc4-chungus2-cpu14.json).
+
+The argument this protocol rests on is that contention inflates a timing and
+never deflates it, so the minimum across attempts bounds the uncontended cost
+from above. Across the nine admitted attempts every target's spread is at most
+4.1%, and every observed hash agrees with the registered expectation. This is
+a shared-host refresh of recorded medians, not a release-quality verdict, and
+it changes no registered ceiling or complexity claim.
+
+| target | recorded median | refreshed median | change |
+|---|---:|---:|---|
+| `runAdjoin` | 311.405 ms | 313.072 ms | unchanged |
+| `runAdjoinIdentity` | 18.084 ms | 17.760 ms | unchanged |
+| `runFactorRecursive` | 7.919 ms | 5.163 ms | 1.53× faster |
+| `runTowerCheckFactorization` | 124.730 ms | 4.163 ms | 30.0× faster |
+| `runTowerFactorLadder` | 249.758 ms | 9.102 ms | 27.4× faster |
+| `runSplit` | 68.203 ms | 59.770 ms | 1.14× faster |
+| `runFlatten` | 20.819 ms | 20.873 ms | unchanged |
+| `runTowerDivRecursive` | 8.737 ms | 8.742 ms | unchanged |
+| `runToPrimitiveDense` | 45.139 µs | 46.000 µs | unchanged |
+
+`runTowerFactorLadder` at 9.102 ms independently reproduces the 9.129–9.212 ms
+that #10110's own preregistered paired protocol admitted, which is the main
+reason to trust the rest of the column. The two composite surfaces that moved
+without being the direct target of that work, `runFactorRecursive` and
+`runSplit`, both factor over quadratic towers and so run through the reduced
+quadratic norm path.
+
 ### Ordered Trager assessment
 
 The canonical raw profile uses one whole-thread denominator: 58.24% lies inside
