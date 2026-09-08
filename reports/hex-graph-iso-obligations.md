@@ -125,3 +125,25 @@ cheap admission, both short flags, and canonical/coset return cases. Root
 axiom guards check key equality and generation through the standard logical
 axioms. Delivery also requires the fresh chungus2 sweep and CI checks; the
 mathematical results do not substitute for performance validation.
+
+## Performance validation
+
+The chungus2 cactus sweep is recorded under fingerprint `4a7c8747f686`,
+including runtime and pairs data, tactic timings, manifest, metadata, figures,
+and the per-node fit. It passes the existing exponent margin of 0.2.
+The tactic leg solves every previously solved case; `neg-circ96-vs-2circ48`
+retains its timeout, while `neg-paley61-vs-circulant61` finishes in 81.47 s.
+
+The [direct-engine timing run](bench-results/hexgraphiso-engine-4a7c8747f686-chungus2.jsonl)
+uses CPU 91 and the same 98 cases as the spike's stored three-trial median
+`hexgraphiso-engine-ddc22cf4b645-chungus2.jsonl`. Every node count is unchanged.
+The geometric mean of current/spike `eng_ns` is 1.0012; the largest individual
+ratio is 1.0243. This is one current run against archived measurements, with
+observed engine costs effectively unchanged. The current engine also passes
+the per-node exponent check against nauty with margin 0.2.
+
+The benchmark retains its historical `lit_ns` and `eng_ns` columns. They now
+measure public and direct wrappers around the same engine. Their comparison
+is a wrapper check; the archived `eng_ns` values provide the comparison with
+the spike. The nauty timing baseline differs between these records, so ratios
+to nauty are not used to infer a change in the engine's execution time.

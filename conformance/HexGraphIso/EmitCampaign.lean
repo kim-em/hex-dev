@@ -25,8 +25,8 @@ operations against real nauty. Only failures are retained as replay
 records (the oracle reports the failing case identifier).
 
 `--engine` emits the same cases with the label, canonical bits and node
-count read off `Cases.engine` instead, so the oracle pins that search
-against real nauty on its own.
+count read off `Cases.engine` instead, so the oracle also checks the direct entry point.
+Both modes use the same structured engine.
 -/
 
 def main (args : List String) : IO Unit := do
