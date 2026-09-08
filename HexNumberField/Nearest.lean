@@ -210,4 +210,15 @@ instance : Repr AlgebraicNumber where
 
 end AlgebraicNumber
 
+/-- An element of `ℚ(a)` prints as the expression that rebuilds it: the
+generating number, which prints round-trippably itself, and the reduced
+coordinates. This is why `QAdjoin` is a `def` rather than an `abbrev`: the
+`PolyQuot` instance would otherwise win, and that one can only name the root
+by its isolating square. Carrying the number instead of a square, this form
+also leaves no `decide` side conditions to discharge when it is pasted back. -/
+instance (a : AlgebraicNumber) : Repr (QAdjoin a) where
+  reprPrec e _ :=
+    Std.Format.text
+      s!"QAdjoin.ofCoeffs ({repr a}) {repr (e : PolyQuot a.p a.x).coeffs}"
+
 end Hex
