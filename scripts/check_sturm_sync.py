@@ -22,7 +22,10 @@ MODULES = {
 
 
 # Mathlib master has moved the Sign modules since Hex's pinned Mathlib release.
-RENAMES = MODULES | {"Mathlib.Data.Sign.Basic": "Mathlib.Basic.Sign.Basic"}
+RENAMES = MODULES | {
+    "HexRealRootsMathlib.Sign": "Mathlib.Topology.Instances.Sign.Connected",
+    "Mathlib.Data.Sign.Basic": "Mathlib.Basic.Sign.Basic",
+}
 
 
 def mathlib_text(text: str) -> str:

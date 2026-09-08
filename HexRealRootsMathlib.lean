@@ -13,6 +13,7 @@ public import HexRealRootsMathlib.RealRootCount
 public import HexRealRootsMathlib.Hadamard
 public import HexRealRootsMathlib.Discr
 public import HexRealRootsMathlib.Separation
+public import HexRealRootsMathlib.Sign
 public import HexRealRootsMathlib.ChainCorrespond
 public import HexRealRootsMathlib.LiteralChain
 public import HexRealRootsMathlib.LiteralIsolations
