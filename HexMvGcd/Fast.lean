@@ -229,6 +229,39 @@ def checkedCandidate? {n : Nat} {R : Type u}
     let cert := GcdCert.mk normalized cofL cofR coprime
     if checkGcd f h cert then some cert else none
 
+/-- Every candidate returned by `checkedCandidate?` has passed the complete
+multivariate certificate checker. -/
+theorem checkedCandidate?_checks {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R]
+    {f h candidate : MvPoly n R cmp} {cert : GcdCert n R cmp}
+    (hcert : checkedCandidate? f h candidate = some cert) :
+    checkGcd f h cert = true := by
+  by_cases hzero : candidate == 0
+  · simp only [checkedCandidate?, hzero, ↓reduceIte] at hcert
+    contradiction
+  · simp only [checkedCandidate?, hzero, Bool.false_eq_true, ↓reduceIte] at hcert
+    let normalized := polyNormalize candidate
+    let cofL := quotient f normalized
+    let cofR := quotient h normalized
+    let coprime := match unitDiffCert? cofL cofR with
+      | some witness => witness
+      | none => match unitRemainderCert? cofL cofR with
+        | some witness => witness
+        | none => (prsCert cofL cofR).coprime
+    let proposed := GcdCert.mk normalized cofL cofR coprime
+    change (if checkGcd f h proposed then some proposed else none) =
+      some cert at hcert
+    by_cases hcheck : checkGcd f h proposed = true
+    · rw [ite_eq_left hcheck] at hcert
+      have heq : proposed = cert := Option.some.inj hcert
+      rw [← heq]
+      exact hcheck
+    · rw [ite_eq_right hcheck] at hcert
+      contradiction
+
 /-- Offer a strict one-step polynomial remainder as a gcd candidate.  Exact
 division and coprimality replay remain the acceptance gate; a division which
 makes no progress is skipped, and exact divisibility offers the divisor. -/

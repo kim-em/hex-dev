@@ -1362,7 +1362,12 @@ Recursion on the arity.
 - Pick a variable `i` with `degreeOf i p > 0`.
 - Split `p = contentIn i p * primPartIn i p` and decompose the content
   recursively with `i` removed.
-- Run Yun's algorithm on `primPartIn i p` with the derivative in `xᵢ`.
+- Normalize `primPartIn i p`, move its normalization unit into the scalar
+  content, and run Yun's algorithm on that normalized polynomial with the
+  derivative in `xᵢ`. Yun's initial invariant requires this primitive part to
+  be normalized in the caller's monomial order. Factors lifted from recursive
+  content remain canonical only up to units and may retain the normalization
+  chosen by `Mono.lex`.
 - Merge by multiplying factors of equal multiplicity.
 
 ```

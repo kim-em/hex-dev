@@ -1761,6 +1761,115 @@ private theorem densePrimitivePart_dvd [GcdDomainLaws R] (p : DensePoly R) :
     _ = densePrimitivePart p * DensePoly.C (denseContent p) :=
       DensePoly.mul_comm_poly _ _
 
+/-- The primitive part of a nonzero dense polynomial descends any divisibility
+of that polynomial from the coefficient fraction field. -/
+theorem densePrimPart_descent [GcdDomainLaws R]
+    {p f : DensePoly R} (hp : p ≠ 0)
+    (hdiv : DensePoly.Fraction.map p ∣ DensePoly.Fraction.map f) :
+    densePrimitivePart p ∣ f := by
+  have hpart : DensePoly.Fraction.map (densePrimitivePart p) ∣
+      DensePoly.Fraction.map p := by
+    rcases densePrimitivePart_dvd p with ⟨q, hq⟩
+    refine ⟨DensePoly.Fraction.map q, ?_⟩
+    calc
+      DensePoly.Fraction.map p = DensePoly.Fraction.map
+          (densePrimitivePart p * q) := congrArg DensePoly.Fraction.map hq
+      _ = DensePoly.Fraction.map (densePrimitivePart p) *
+          DensePoly.Fraction.map q := DensePoly.Fraction.map_mul _ _
+  exact primitive_dvd_of_fraction_dvd (densePrimitivePart_primitive hp)
+    (denseDvdTrans hpart hdiv)
+
+/-- A primitive integral representative of a fraction-field gcd combines
+with any certified gcd of the two coefficient contents to give an integral
+gcd.  The content hypotheses are deliberately semantic so executable
+content folds can use the theorem without being identified with the
+proof-only `denseContent`. -/
+theorem denseGcd_of_fraction [GcdDomainLaws R]
+    {f g p : DensePoly R} {cf cg c : R}
+    (hcf : ∀ k, cf ∣ f.coeff k)
+    (hcfGreat : ∀ d, (∀ k, d ∣ f.coeff k) → d ∣ cf)
+    (hcg : ∀ k, cg ∣ g.coeff k)
+    (hcgGreat : ∀ d, (∀ k, d ∣ g.coeff k) → d ∣ cg)
+    (hcF : c ∣ cf) (hcG : c ∣ cg)
+    (hcGreat : ∀ d, d ∣ cf → d ∣ cg → d ∣ c)
+    (hf0 : f ≠ 0) (hg0 : g ≠ 0)
+    (hpPrim : ∀ d, (∀ k, d ∣ p.coeff k) → ∃ u, d * u = 1)
+    (hpF : DensePoly.Fraction.map p ∣ DensePoly.Fraction.map f)
+    (hpG : DensePoly.Fraction.map p ∣ DensePoly.Fraction.map g)
+    (hpGreat : ∀ e, e ∣ DensePoly.Fraction.map f →
+      e ∣ DensePoly.Fraction.map g → e ∣ DensePoly.Fraction.map p) :
+    let candidate := DensePoly.scale c p
+    candidate ∣ f ∧ candidate ∣ g ∧
+      ∀ e, e ∣ f → e ∣ g → e ∣ candidate := by
+  let candidate := DensePoly.scale c p
+  have hpart : ∀ (q : DensePoly R), q ≠ 0 →
+      DensePoly.Fraction.map p ∣ DensePoly.Fraction.map q →
+      p ∣ densePrimitivePart q := by
+    intro q hq hpq
+    have hpqPart := fractionGcd_dvd_primitivePart hq hpq
+    exact primitive_dvd_of_fraction_dvd hpPrim hpqPart
+  have candidateDvd : ∀ (q : DensePoly R),
+      c ∣ denseContent q → p ∣ densePrimitivePart q → candidate ∣ q := by
+    intro q hcq hpq
+    rcases (GcdDomainLaws.dvd_iff c (denseContent q)).mp hcq with ⟨x, hx⟩
+    rcases hpq with ⟨y, hy⟩
+    refine ⟨DensePoly.scale x y, ?_⟩
+    calc
+      q = DensePoly.scale (denseContent q) (densePrimitivePart q) :=
+        (denseContent_mul_primitivePart q).symm
+      _ = DensePoly.scale (c * x) (p * y) := by rw [hx, hy]
+      _ = DensePoly.scale c (DensePoly.scale x (p * y)) :=
+        (DensePoly.scale_scale c x (p * y)).symm
+      _ = DensePoly.scale c (p * DensePoly.scale x y) := by
+        rw [DensePoly.mul_scale]
+      _ = DensePoly.scale c p * DensePoly.scale x y :=
+        DensePoly.scale_mul c p (DensePoly.scale x y)
+      _ = candidate * DensePoly.scale x y := rfl
+  have hcContentF : c ∣ denseContent f :=
+    dvdTrans hcF (dvd_denseContent f cf hcf)
+  have hcContentG : c ∣ denseContent g :=
+    dvdTrans hcG (dvd_denseContent g cg hcg)
+  refine ⟨candidateDvd f hcContentF (hpart f hf0 hpF),
+    candidateDvd g hcContentG (hpart g hg0 hpG), ?_⟩
+  intro e hef heg
+  have he0 : e ≠ 0 := by
+    intro he
+    subst e
+    rcases hef with ⟨q, hq⟩
+    rw [DensePoly.zero_mul] at hq
+    exact hf0 hq
+  let ce := denseContent e
+  let ep := densePrimitivePart e
+  have hep : DensePrimitive ep := densePrimitivePart_primitive he0
+  have hceF : ce ∣ cf :=
+    dvdTrans (denseContent_dvd_of_dvd hef)
+      (hcfGreat (denseContent f) (denseContent_dvd_coeff f))
+  have hceG : ce ∣ cg :=
+    dvdTrans (denseContent_dvd_of_dvd heg)
+      (hcgGreat (denseContent g) (denseContent_dvd_coeff g))
+  have hce : ce ∣ c := hcGreat ce hceF hceG
+  have hepE : ep ∣ e := densePrimitivePart_dvd e
+  have hepF : ep ∣ f := denseDvdTrans hepE hef
+  have hepG : ep ∣ g := denseDvdTrans hepE heg
+  have hmapEpP : DensePoly.Fraction.map ep ∣ DensePoly.Fraction.map p :=
+    hpGreat (DensePoly.Fraction.map ep)
+      (fractionMap_dvd hepF) (fractionMap_dvd hepG)
+  have hepP : ep ∣ p := primitive_dvd_of_fraction_dvd hep hmapEpP
+  rcases (GcdDomainLaws.dvd_iff ce c).mp hce with ⟨x, hx⟩
+  rcases hepP with ⟨y, hy⟩
+  refine ⟨DensePoly.scale x y, ?_⟩
+  calc
+    candidate = DensePoly.scale c p := rfl
+    _ = DensePoly.scale (ce * x) (ep * y) := by rw [hx, hy]
+    _ = DensePoly.scale ce (DensePoly.scale x (ep * y)) :=
+      (DensePoly.scale_scale ce x (ep * y)).symm
+    _ = DensePoly.scale ce (ep * DensePoly.scale x y) := by
+      rw [DensePoly.mul_scale]
+    _ = DensePoly.scale ce ep * DensePoly.scale x y :=
+      DensePoly.scale_mul ce ep (DensePoly.scale x y)
+    _ = e * DensePoly.scale x y := by
+      rw [denseContent_mul_primitivePart]
+
 omit [BEq R] [LawfulBEq R] in
 /-- Dense univariate polynomials over a gcd domain admit gcds. -/
 theorem densePolyGcd_nonempty [GcdDomainLaws R]
@@ -2189,7 +2298,7 @@ private theorem C_mul_C (a b : R) :
 
 /-- Every nonzero multivariate polynomial over the fraction field is
 associated to the image of a primitive integral polynomial. -/
-private theorem fractionMv_primitive_rep
+theorem fraction_primitive_rep
     {H : MvPoly n (Hex.Fraction R) cmp} (hH : H ≠ 0) :
     ∃ h : MvPoly n R cmp, Primitive h ∧
       H ∣ fractionMap h ∧ fractionMap h ∣ H := by
@@ -2267,7 +2376,7 @@ private theorem fractionMv_primitive_rep
 
 /-- A primitive integral multivariate polynomial that divides an integral
 polynomial after extending scalars already divides it integrally. -/
-private theorem primitive_dvd_of_fraction_dvd_mv
+theorem primitive_dvd_fraction
     {h f : MvPoly n R cmp} (hh : Primitive h)
     (hdiv : fractionMap h ∣ fractionMap f) : h ∣ f := by
   rcases hdiv with ⟨z, hz⟩
@@ -2329,7 +2438,7 @@ theorem coprimeOverFraction_of_coprime
     rcases hcop 0 ⟨0, rfl⟩ ⟨0, rfl⟩ with ⟨u, hu⟩
     rw [MvPoly.zero_mul] at hu
     exact False.elim (GcdDomainLaws.one_ne_zero hu.symm)
-  · rcases fractionMv_primitive_rep hD0 with
+  · rcases fraction_primitive_rep hD0 with
       ⟨h, hh, hDMap, hMapD⟩
     have hMapF : fractionMap h ∣ fractionMap f := by
       rcases hMapD with ⟨a, ha⟩
@@ -2347,8 +2456,8 @@ theorem coprimeOverFraction_of_coprime
         fractionMap g = b * D := hb
         _ = b * (a * fractionMap h) := by rw [ha]
         _ = (b * a) * fractionMap h := (MvPoly.mul_assoc _ _ _).symm
-    have hhf : h ∣ f := primitive_dvd_of_fraction_dvd_mv hh hMapF
-    have hhg : h ∣ g := primitive_dvd_of_fraction_dvd_mv hh hMapG
+    have hhf : h ∣ f := primitive_dvd_fraction hh hMapF
+    have hhg : h ∣ g := primitive_dvd_fraction hh hMapG
     rcases hcop h hhf hhg with ⟨u, hu⟩
     have hMapUnit : fractionMap h * fractionMap u = 1 := by
       calc
