@@ -14,7 +14,7 @@ MODULES = {
     "HexRealRootsMathlib.SturmChainDefs": "Mathlib.Analysis.Polynomial.Sturm.Defs",
     "HexRealRootsMathlib.SturmTheorem": "Mathlib.Analysis.Polynomial.Sturm.Basic",
     "HexRealRootsMathlib.SturmCertificate": "Mathlib.Analysis.Polynomial.Sturm.Certificate",
-    "HexPolyZMathlib.PolyParse": "Mathlib.Tactic.RealRootCount.Parse",
+    "HexPolyZMathlib.PolyParse": "Mathlib.Tactic.HexPolyZ.Parse",
     "HexRealRootsMathlib.RealRootCount": "Mathlib.Tactic.RealRootCount",
     "HexRealRootsMathlib.RealRootCountTests": "MathlibTest.RealRootCount",
     "HexRealRootsMathlib.SturmTests": "MathlibTest.Sturm",
