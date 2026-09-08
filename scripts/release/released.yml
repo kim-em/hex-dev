@@ -6,8 +6,9 @@
 # and its unmanaged skeleton, overwrites the managed paths from here, enables
 # native Verso docstrings in each managed-source repo's lakefile, copies the
 # monorepo's Lean toolchain, synchronizes exact external dependency locks,
-# rewrites cross-repo Hex pins to the commits just synced, and commits to the
-# released repo's `main`.
+# rewrites cross-repo Hex requirements to the shared release version, commits
+# to the released repo's `main`, and tags that commit. The lockfiles retain the
+# exact commits resolved by those tags.
 #
 # A released repo ships the library and nothing else: its Lean source, umbrella,
 # SPEC and README. Benchmarks, conformance drivers, fixtures and oracles are
@@ -25,8 +26,8 @@
 # a second workflow beside its build-only one; nor do `reports/` or `.claude/`,
 # beyond the figures an entry names below.
 #
-# Order is topological (upstream first) so each repo's freshly-pushed SHA is
-# known before its downstream consumers are processed.
+# Order is topological (upstream first) so each version tag exists and its exact
+# commit is known before downstream consumers are processed.
 #
 # ADDING A REPO HERE IS ONLY HALF THE JOB. Each publishing token is scoped to
 # an explicit list of repositories (and a fine-grained token caps that list,
@@ -48,8 +49,8 @@
 # the library and nothing else, and the driver applies the same divergence guard
 # as every other managed path.
 # `test_modules` lists verification-only modules copied with the source but
-# intentionally absent from the public umbrella; released CI builds them via a
-# non-public `lean_lib` target.
+# intentionally absent from the public umbrella; the sync maintains their
+# non-public `<Lib>Tests` target and released CI builds it.
 # `keep_paths` is the escape hatch out of that sweep: explicit relative paths a
 # mirror owns that are neither managed nor part of the common skeleton. One
 # entry uses it, for `hex-test-kit`'s fixed `HexTestKit.lean` umbrella. It can

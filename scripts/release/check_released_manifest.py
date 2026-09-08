@@ -132,7 +132,7 @@ def parse_sync_baseline(text: str, source: str) -> set[str]:
         fail(f"{source}: sync baseline must be a JSON object")
     published: set[str] = set()
     for repo, revision in document.items():
-        if repo == "_comment":
+        if isinstance(repo, str) and repo.startswith("_"):
             continue
         if (
             not isinstance(repo, str)

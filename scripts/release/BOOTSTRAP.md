@@ -98,20 +98,21 @@ on the closest already released package. The initial `main` must contain:
 - one Lake project, at the root: a mirror has no sidecar projects, and a
   skeleton that still declares a `lean_lib` reading from `bench/` or
   `conformance/` should drop it;
-- a non-public regression-test `lean_lib` containing every module named by the
-  manifest entry's `test_modules` list. These modules are intentionally absent
-  from the public umbrella, and the released repository's CI must build this
-  target explicitly;
+- the public library target. The sync creates and maintains the conventional
+  non-public `<Lib>Tests` target from the manifest entry's `test_modules` list;
+  these modules remain absent from the public umbrella, and the released
+  repository's CI builds that target explicitly;
 - a separate `lean_lib` for every complete development umbrella in
   `build_modules`, so a curated public umbrella cannot hide a broken proof
   module; and
 - every executable in the manifest's `executables` map, with exactly the named
   root module.
 
-Publication validates these declarations in the unmanaged Lake skeleton before
-copying source. It also validates that every `scripts/ci` helper named by the
-managed workflow exists in the mirror. A stale target or missing helper
-therefore stops the sync before it can partially update that repository.
+Publication updates the release-test target, then validates the remaining
+declarations in the unmanaged Lake skeleton before copying source. It also
+validates that every `scripts/ci` helper named by the managed workflow exists
+in the mirror. A stale target or missing helper therefore stops the sync before
+it can partially update that repository.
 
 Source, the umbrella module, README, SPEC, and `.github/workflows/ci.yml` are
 managed by the sync. Do not duplicate or hand-edit those files in a released
@@ -174,7 +175,18 @@ required because the sync publishes `.github/workflows/ci.yml`. Then:
 5. Watch each mirror's own CI on the sync push; a build-only workflow on the
    published tree is what establishes that the mirror is coherent.
 
+Some libraries used `v0.1.0` before releases were coordinated, so the first
+shared release is `v0.2.0` across every released repository.
+Each later complete release increments the shared minor version and resets its
+patch component to zero. Lake files use that tag as their cross-Hex input
+revision; manifests record both the tag and its exact resolved commit.
+
 The real workflow advances the `release-sync-baseline` branch in the same run.
+It records a pending version before the first push and each repository as its
+tag is published. If a later mirror fails, rerun the workflow at the same
+hex-dev commit: it resumes that version, and only marks the release complete
+after every mirror carries the tag. A staged `--only` publish likewise remains
+pending until all repositories have joined the release.
 Future out-of-band changes to a released `main` must be re-seeded into this
 monorepo before publication continues; never bypass that reconciliation with
 `--force` merely to make a release proceed.

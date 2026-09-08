@@ -2,8 +2,8 @@
 
 `hex-dev` is the development monorepo where new Hex sublibraries are
 incubated before they are split out for release. `hex` is the released
-aggregate repo; it depends on released split libraries at exact Lake
-revisions.
+aggregate repo; it depends on one shared semantic version of the released
+split libraries.
 
 The authoritative list of split repos published from `hex-dev` is
 [`scripts/release/released.yml`](scripts/release/released.yml), which
@@ -17,7 +17,7 @@ Two structural things the manifest encodes:
 - `hex-test-kit` is the shared conformance/bench helper library
   (source: `Hex/`), not user-facing Hex API.
 - `leanprover/hex` is `pins_only`: it publishes no library source and is
-  re-pinned to the SHAs synced each run, so it is listed last. Its README
+  re-pinned to the shared version synced each run, so it is listed last. Its README
   is generated from `scripts/release/hex-README.md` plus the manifest's
   `component:` labels (see [SPEC/readme.md](SPEC/readme.md)).
 
@@ -32,7 +32,8 @@ development happens in this one tree; a single `lake build` (plus the
 `bench/` and `conformance/` sub-projects) builds everything together.
 The split repos are **published mirrors**: a dispatchable CI
 workflow regenerates each one from the matching content in `hex-dev`,
-rewriting their cross-repo Lake pins and committing to their `main`.
+rewriting their cross-repo Lake requirements, committing to their `main`, and
+tagging every mirror with the same release version.
 Never hand-edit a released repo; change it here and let the sync publish.
 
 Every library uses the same per-library layout (so the publish step is a
@@ -51,10 +52,11 @@ The publish mechanism is `scripts/release/released.yml` (the per-repo
 managed-path + pin manifest), `scripts/release/released-ci.yml` (the managed
 mirror CI workflows), `scripts/release/sync_released.py` (the
 driver; supports `--dry-run`), `scripts/release/synced.json` (the
-per-repo `main` baseline this monorepo corresponds to), and
+per-repo `main` baseline and shared release version), and
 `.github/workflows/sync-released.yml` (manual dispatch, dry by default).
-A real sync overwrites each released repo's managed paths and rewrites
-its Lake pins, so it must only run once this monorepo is at or ahead of
+A real sync overwrites each released repo's managed paths, rewrites its Hex
+requirements to the next shared minor version, and tags the resulting commit,
+so it must only run once this monorepo is at or ahead of
 every released repo's `main`. Run `--dry-run` first.
 
 **Uncoordinated-commit guard.** The sync refuses to overwrite a released
@@ -70,7 +72,9 @@ that), then re-run the sync.
 The baseline lives on a dedicated, unprotected `release-sync-baseline`
 branch that the workflow reads and advances on every real run, so a single
 `workflow_dispatch` (dry-run first, then `dry_run=false`) drives the whole
-publish through with no follow-up. `scripts/release/synced.json` is the
+publish through with no follow-up. A partial failure leaves a pending release
+bound to its source commit, and the retry completes that version rather than
+incrementing again. `scripts/release/synced.json` is the
 bootstrap seed used only before that branch exists.
 
 # hex — agent-specific conventions
