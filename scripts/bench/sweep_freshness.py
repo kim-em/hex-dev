@@ -544,6 +544,7 @@ GRAPHISO = Family(
         "HexGraph.lean",
         "lakefile.lean",
         "lean-toolchain",
+        "HexPermGroup/Perm.lean",
         "bench/HexGraphIso/Cactus.lean",
         "scripts/plots/hexgraphiso-cactus.py",
         "Hex/BenchOracle/Nauty.lean",

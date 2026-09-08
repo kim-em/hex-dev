@@ -271,6 +271,16 @@ lean_lib HexIntFactorMathlib where
 lean_lib HexMatrix where
   precompileModules := true
 
+@[default_target]
+lean_lib HexPermGroup where
+
+@[default_target]
+lean_lib HexPermGroupMathlib where
+
+@[default_target]
+lean_lib HexPermGroupTests where
+  globs := #[`HexPermGroupMathlib.Tests]
+
 lean_lib HexGraph where
 
 lean_lib HexGraphIso where
@@ -849,7 +859,7 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
-    ++ #[`HexGraphIso.Cases].map Glob.one
+    ++ #[`HexGraphIso.Cases, `HexPermGroup.Conformance, `HexPermGroup.Limits].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
@@ -927,6 +937,7 @@ lean_lib HexReleaseTests where
     `HexGraphIso.TacticTests,
     `HexGraphIso.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
+    `HexPermGroupMathlib.Tests,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
@@ -1109,6 +1120,10 @@ lean_exe hexgraphiso_emit_fixtures where
   srcDir := "conformance"
   root := `HexGraphIso.EmitFixtures
 
+lean_exe hexpermgroup_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexPermGroup.EmitFixtures
+
 lean_exe hexgraphiso_emit_campaign where
   srcDir := "conformance"
   root := `HexGraphIso.EmitCampaign
@@ -1201,6 +1216,10 @@ lean_lib HexGraphIsoMathlibProofProbe where
 lean_exe hexgraphiso_bench where
   srcDir := "bench"
   root := `HexGraphIso.Bench
+
+lean_exe hexpermgroup_bench where
+  srcDir := "bench"
+  root := `HexPermGroup.Bench
 
 -- Local/scheduled per-instance sweep for the cactus plots
 -- (scripts/plots/hexgraphiso-cactus.py); not part of merge CI.

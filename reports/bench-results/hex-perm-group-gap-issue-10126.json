@@ -1,0 +1,80 @@
+{
+  "cases": [
+    {
+      "checksum": 4800,
+      "gap_runtime_ms": 21,
+      "operation": "construct",
+      "per_call_ns": 107401,
+      "repeats": 200,
+      "round_trip_ns": 21480257
+    },
+    {
+      "checksum": 20000,
+      "gap_runtime_ms": 7,
+      "operation": "membership",
+      "per_call_ns": 344,
+      "repeats": 20000,
+      "round_trip_ns": 6891274
+    },
+    {
+      "checksum": 480000,
+      "gap_runtime_ms": 1,
+      "operation": "order",
+      "per_call_ns": 32,
+      "repeats": 20000,
+      "round_trip_ns": 650174
+    },
+    {
+      "checksum": 12000,
+      "gap_runtime_ms": 25,
+      "operation": "stabilizer",
+      "per_call_ns": 12801,
+      "repeats": 2000,
+      "round_trip_ns": 25603828
+    },
+    {
+      "checksum": 8000,
+      "gap_runtime_ms": 3,
+      "operation": "intersection",
+      "per_call_ns": 2663,
+      "repeats": 1000,
+      "round_trip_ns": 2663057
+    },
+    {
+      "checksum": 2000,
+      "gap_runtime_ms": 3,
+      "operation": "blocks",
+      "per_call_ns": 2715,
+      "repeats": 1000,
+      "round_trip_ns": 2715615
+    },
+    {
+      "checksum": 18000,
+      "gap_runtime_ms": 60,
+      "operation": "normal",
+      "per_call_ns": 121561,
+      "repeats": 500,
+      "round_trip_ns": 60780797
+    },
+    {
+      "checksum": 2400,
+      "gap_runtime_ms": 6,
+      "operation": "products",
+      "per_call_ns": 28957,
+      "repeats": 200,
+      "round_trip_ns": 5791434
+    }
+  ],
+  "methods": {
+    "construction": "Group followed by StabChain with GAP defaults",
+    "prepared_queries": "cached Group and StabChain; Size, reversed-product membership, Stabilizer",
+    "products": "DirectProduct and WreathProductImprimitiveAction",
+    "subgroups": "Intersection, Blocks, NormalClosure, DerivedSubgroup; GAP attributes may cache after the first prepared query"
+  },
+  "options": [
+    "-q",
+    "--quitonbreak"
+  ],
+  "protocol": "one persistent GAP process; line requests; process startup excluded",
+  "tool": "GAP"
+}

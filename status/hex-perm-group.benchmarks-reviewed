@@ -1,0 +1,15 @@
+Reviewed against HexPermGroup/SPEC/hex-perm-group.md for issue #10126.
+
+The Mathlib-free driver registers every required family and checks all listed
+operations: degree and redundant-generator construction; cyclic, dihedral,
+symmetric, alternating, and intransitive chains; early and late membership
+failure; stabilizers and containment; bounded element and coset enumeration;
+rank, sampling, sign, cycle type, and an order above 64 bits; tuple, subset,
+and partition actions with images and kernels; every subgroup-search API;
+blocks and primitivity; soluble and perfect normal structure; varied direct
+and wreath products; and chain, program, and kernel replay.
+
+The committed scientific run, persistent GAP comparison, representative
+profiles, result hashes, CI ceilings, report coverage, and Mathlib-free import
+closure were reviewed. The comparator is informational and records its
+methods, options, prepared-group boundary, and right-action conversion.

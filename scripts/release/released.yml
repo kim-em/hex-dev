@@ -474,6 +474,22 @@ repos:
     pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib]
     lakefile: lean
 
+  - repo: leanprover/hex-perm-group
+    component: Permutation groups
+    lib: HexPermGroup
+    umbrella: true
+    spec: hex-perm-group
+    pins: [hex-basic]
+    lakefile: toml
+
+  - repo: leanprover/hex-perm-group-mathlib
+    lib: HexPermGroupMathlib
+    test_modules: [HexPermGroupMathlib.Tests]
+    umbrella: true
+    spec: hex-perm-group-mathlib
+    pins: [hex-basic, hex-perm-group]
+    lakefile: toml
+
   # `HexGraph` is a one-file graph representation with no SPEC surface of its
   # own, and `hex-graph-iso` is its only consumer, so it rides into this
   # repository through `extra_paths` rather than becoming a repository, a CI
@@ -501,7 +517,7 @@ repos:
     extra_paths:
       - { src: "HexGraph", dest: "HexGraph" }
       - { src: "HexGraph.lean", dest: "HexGraph.lean" }
-    pins: [hex-basic, hex-matrix]
+    pins: [hex-basic, hex-matrix, hex-perm-group]
     lakefile: toml
 
   - repo: leanprover/hex-graph-iso-mathlib
@@ -509,7 +525,7 @@ repos:
     test_modules: [HexGraphIsoMathlib.TacticTests]
     umbrella: true
     spec: hex-graph-iso-mathlib
-    pins: [hex-basic, hex-matrix, hex-graph-iso]
+    pins: [hex-basic, hex-matrix, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso]
     lakefile: toml
 
   - repo: leanprover/hex-resultant
@@ -584,5 +600,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
+    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
     lakefile: toml

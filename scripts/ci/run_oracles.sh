@@ -27,6 +27,10 @@ set -uo pipefail
 # Preflight the required oracle dependency families before emitting any fixtures so a
 # broken installation fails early and unambiguously.
 if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+  if ! command -v gap >/dev/null 2>&1; then
+    echo "FAIL: required GAP oracle is unavailable" >&2
+    exit 1
+  fi
   if ! python3 - <<'PY'
 import flint
 import cypari2
@@ -88,6 +92,8 @@ ORACLES=(
   "HexConway|hexconway_emit_fixtures|scripts/oracle/conway_luebeck.py|conformance-fixtures/HexConway/conway.jsonl"
   # pinned external nauty 2.9.3 backed (vendored source, project shim)
   "HexGraphIso|hexgraphiso_emit_fixtures|scripts/oracle/graphiso_nauty.py|conformance-fixtures/HexGraphIso/graphiso.jsonl"
+  # GAP 4.x, required for permutation-group conformance
+  "HexPermGroup|hexpermgroup_emit_fixtures|scripts/oracle/perm_group_gap.py|conformance-fixtures/HexPermGroup/permgroup.jsonl"
 )
 
 failed=0

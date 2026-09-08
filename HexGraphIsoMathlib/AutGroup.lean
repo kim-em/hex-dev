@@ -17,15 +17,6 @@ namespace Hex.GraphIso
 
 variable {n k : Nat}
 
-instance : Group (Perm n) where
-  mul := Perm.comp
-  one := Perm.id n
-  inv := Perm.inv
-  mul_assoc := Perm.comp_assoc
-  one_mul := Perm.id_comp
-  mul_one := Perm.comp_id
-  inv_mul_cancel := Perm.inv_comp_self
-
 @[simp] theorem Perm.mul_get (p q : Perm n) (v : Fin n) :
     (p * q).get v = p.get (q.get v) := Perm.get_comp p q v
 

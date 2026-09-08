@@ -51,6 +51,8 @@ public import HexLLL
 public import HexBerlekampZassenhaus
 public import HexLLLMathlib
 public import HexBerlekampZassenhausMathlib
+public import HexPermGroup
+public import HexPermGroupMathlib
 public import HexGraphIso
 public import HexGraphIsoMathlib
 public import HexResultant

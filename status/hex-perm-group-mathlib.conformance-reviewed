@@ -1,0 +1,14 @@
+HexPermGroupMathlib satisfies the correspondence-only Phase 3 and Phase 4
+contracts. The complete source, umbrella, import, SPEC, and public-declaration
+audit found no executable reifier, certificate checker, tactic, proof-producing
+operation, IO/unsafe entry point, or independent kernel-cost surface.
+
+The SPEC names HexPermGroup as both computational conformance and performance
+owner. Its core conformance module checks the executable API with an independent
+small-degree reference, and the required GAP fixture oracle is wired through
+scripts/ci/run_oracles.sh. Its Mathlib-free benchmark executable and headline
+report carry the corresponding performance evidence.
+
+No HexPermGroupMathlib conformance or benchmark directory, executable, headline
+report, or proof-probe root exists. The explicit `correspondence_only: true`
+classification therefore remains accurate.
