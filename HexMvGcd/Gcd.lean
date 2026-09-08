@@ -1060,7 +1060,7 @@ instance instLawfulGcdOpsMvPoly [IsMonomialOrder cmp]
     rw [coeff_one, coeff_zero, ite_eq_left rfl] at hcoeff
     exact LawfulGcdOps.one_ne_zero hcoeff
   · intro a b hab
-    exact GcdDomainLaws.no_zero_div a b hab
+    exact MvPoly.zero_product LawfulGcdOps.no_zero_div hab
   · intro a b hb
     change quotient (a * b) b = a
     unfold quotient

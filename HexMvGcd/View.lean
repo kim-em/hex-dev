@@ -23,7 +23,7 @@ by applying `ofUnivariate` to a dense constant polynomial.
 
 namespace Hex.MvPoly
 
-universe u
+universe u v
 
 variable {n : Nat} {R : Type u}
   {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
@@ -437,6 +437,73 @@ theorem constIn_mul (i : Fin (n + 1)) (a b : MvPoly n R cmp') :
           DensePoly.coeff_C, ite_eq_right hright]
         exact coeff_zero _
       rw [hz, Lean.Grind.Semiring.mul_zero]
+
+private theorem insertVar_zero_eq_prepend (e : Nat) (m : Mono n) :
+    insertVar (0 : Fin (n + 1)) e m = Mono.prepend e m := by
+  rfl
+
+private theorem coeff_foldl_add_term
+    {cmp0 : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp0] [Std.LawfulEqCmp cmp0]
+    {A : Type v} (m : Mono n) (xs : List A)
+    (f : A → MvPoly n R cmp0) (z : MvPoly n R cmp0) :
+    coeff m (xs.foldl (fun acc x => acc + f x) z) =
+      xs.foldl (fun acc x => acc + coeff m (f x)) (coeff m z) := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih, coeff_add]
+
+/-- The recursive view at the first variable preserves multiplication. -/
+theorem toUnivariate_mul (p q : MvPoly (n + 1) R cmp) :
+    toUnivariate 0 cmp' (p * q) =
+      toUnivariate 0 cmp' p * toUnivariate 0 cmp' q := by
+  apply DensePoly.ext_coeff
+  intro e
+  apply MvPoly.ext
+  intro m
+  rw [toUnivariate_coeff, DensePoly.coeff_mul]
+  have hdiag := DensePoly.mulCoeffSum_eq_diagonal
+    (S := MvPoly n R cmp')
+    (toUnivariate 0 cmp' p) (toUnivariate 0 cmp' q) e
+  have hdegree := DensePoly.diagonalSum_eq_degree_bound
+    (S := MvPoly n R cmp')
+    (toUnivariate 0 cmp' p) (toUnivariate 0 cmp' q) e
+  have hdiagCoeff := congrArg (coeff m) (hdiag.trans hdegree)
+  rw [hdiagCoeff]
+  rw [MvPoly.coeff_mul, insertVar_zero_eq_prepend]
+  have hhead : (Mono.prepend e m).head = e := by
+    exact Mono.getElem_prepend_zero e m
+  simp only [Mono.splits, Mono.dropHead_prepend, hhead]
+  rw [List.foldl_add_flatMap]
+  rw [coeff_foldl_add_term, coeff_zero]
+  apply List.foldl_congr
+  intro acc d hd
+  rw [List.foldl_map]
+  simp only [DensePoly.diagonalMulCoeffTerm]
+  have hde : ¬ e < d := by
+    exact Nat.not_lt_of_ge (Nat.le_of_lt_succ (List.mem_range.mp hd))
+  rw [ite_eq_right hde]
+  rw [List.foldl_add_eq_add_foldl]
+  apply congrArg (fun x => acc + x)
+  calc
+    m.splits.foldl
+        (fun acc x => acc +
+          coeff (Mono.prepend d x.1) p *
+            coeff (Mono.prepend (e - d) x.2) q) 0 =
+        m.splits.foldl
+          (fun acc x => acc +
+            coeff x.1 ((toUnivariate 0 cmp' p).coeff d) *
+              coeff x.2 ((toUnivariate 0 cmp' q).coeff (e - d))) 0 := by
+      apply List.foldl_congr
+      intro z x _
+      rw [toUnivariate_coeff, toUnivariate_coeff,
+        insertVar_zero_eq_prepend, insertVar_zero_eq_prepend]
+    _ = coeff m
+          ((toUnivariate 0 cmp' p).coeff d *
+            (toUnivariate 0 cmp' q).coeff (e - d)) :=
+      (MvPoly.coeff_mul _ _ _).symm
 
 omit [BEq R] [LawfulBEq R] in
 /-- Constant embedding is injective. -/

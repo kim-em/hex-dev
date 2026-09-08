@@ -193,7 +193,7 @@ private theorem fold_diagonal_truncate_degree {S : Type _}
 /-- The diagonal sum over `List.range p.size` equals the sum over
 `List.range (n + 1)`; the canonical degree-`n` truncation of the convolution,
 independent of `p.size`. -/
-private theorem diagonalSum_eq_degree_bound {S : Type _}
+theorem diagonalSum_eq_degree_bound {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
     (List.range p.size).foldl (fun acc i => acc + diagonalMulCoeffTerm p q n i) 0 =
