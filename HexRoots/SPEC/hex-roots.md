@@ -713,6 +713,19 @@ def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
 
 def SimpleRoot.mk (iso : RefinedIsolation p) : SimpleRoot p := Quot.mk _ iso
 
+/-- The simple root of `p` isolated by the square `s`. Both side conditions
+    are decidable checks on printable data, so a caller holding only a square
+    rebuilds the certificate with `decide`. -/
+def SimpleRoot.ofSquare (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) : SimpleRoot p
+
+`ofSquare` is the entry point for callers who have a square and nothing else:
+a `Repr` output, a committed fixture, a literal in a test. `Intersects`
+compares stored squares, so the rebuilt certificate need not match the one the
+isolator produced; the companion's `ofSquare_mk` records that rebuilding from
+an isolation's own square names that isolation's root.
+
 /-- A represented simple root forces its defining polynomial to have positive
     degree. -/
 theorem SimpleRoot.posDegree (x : SimpleRoot p) :

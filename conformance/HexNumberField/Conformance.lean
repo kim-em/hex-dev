@@ -567,4 +567,46 @@ private def algebraicRepeated? : Option AlgebraicPoly := do
     (repr s2).pretty == "ZPoly.rootNear #p[-2, 0, 1] 1.414" &&
     (repr (s2 + s3)).pretty == "ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369"
 
+/-! # Round-tripping display of fixed-presentation elements
+
+`PolyQuot`'s `Repr` prints the expression that rebuilds the element:
+coordinates, plus the polynomial and isolating square that name the field and
+select the root. These pin the printed text, check that rebuilding from a
+square agrees with rebuilding from the stored root, and cover the branches of
+the dyadic and square printers.
+-/
+
+private def rtCoeffs : List (DensePoly Rat) :=
+  [DensePoly.ofList [0, 1], DensePoly.ofList [2, 0], DensePoly.ofList [-3, 7],
+   DensePoly.ofList [], DensePoly.ofList [1, -1]]
+
+-- Rebuilding from the square reproduces the coordinates that rebuilding from
+-- the stored root gives, on every fixture presentation.
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare c).coeffs =
+      (PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot c).coeffs
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare sqrtThreePoly sqrtThreeSquare c).coeffs =
+      (PolyQuot.reduce sqrtThreePoly (SimpleRoot.mk sqrtThreeRep) c).coeffs
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare tinyPoly tinySquare c).coeffs =
+      (PolyQuot.reduce tinyPoly (SimpleRoot.mk tinyRep) c).coeffs
+
+-- The negative-root presentation of the same polynomial is a distinct square,
+-- and rebuilding from it stays on that root's side.
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare sqrtTwoPoly negSqrtTwoSquare c).coeffs =
+      (PolyQuot.reduce sqrtTwoPoly (SimpleRoot.mk negSqrtTwoRep) c).coeffs
+
+-- Reduction is idempotent through the square-based constructor: printing an
+-- element and rebuilding it lands on the same coordinates again.
+#guard
+  rtCoeffs.all fun c =>
+    let a := PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare c
+    (PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare a.coeffs).coeffs = a.coeffs
+
 end Hex.NumberFieldConformance

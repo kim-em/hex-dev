@@ -211,8 +211,27 @@ so numerals such as `2 : PolyQuot p x` denote `(2 : Rat) • 1`, and the
 companion's field structure reuses these casts rather than defining its own.
 `instance : Coe (DensePoly Rat) (PolyQuot p x)` reduces a rational polynomial,
 so `#p[0, 0, 2]` denotes `2x²` at that type, and
-`instance : Repr (PolyQuot p x)` prints an element as exactly that reduced
-coordinate polynomial, so a printed value can be pasted back. Inversion requires
+`instance : Repr (PolyQuot p x)` prints an element as the expression that
+rebuilds it, `PolyQuot.ofSquare p s f`: the reduced coordinates `f`, together
+with the polynomial and the isolating square that name the field and select
+the root.
+
+```lean
+def PolyQuot.ofSquare (p : ZPoly) (s : DyadicSquare) (f : DensePoly Rat)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) :
+    PolyQuot p (SimpleRoot.ofSquare p s hw hp)
+```
+
+Pasting the output back reproduces the element and prints identically; the two
+side conditions on the square are decidable and discharged by the auto-params.
+The instance is `unsafe` and takes the square from the `Quot` with `unquot`, as
+Mathlib's `Multiset` and `Finset` instances do. Which representative it finds
+is invisible in the result, because `Intersects` compares stored squares, so
+every representative of the root rebuilds the same element. The resulting type
+is propositionally, not definitionally, the original: a pasted value is an
+element of `PolyQuot p (SimpleRoot.ofSquare …)`, so comparing it with the
+original spelling needs a transport. Inversion requires
 `[ZPoly.CheckedIrreducible p]` and uses a monic-normalized polynomial extended
 gcd over `ℚ` to control rational coefficient growth. For the presentation a
 canonical number induces, that evidence is an instance:

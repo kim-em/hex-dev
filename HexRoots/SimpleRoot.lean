@@ -88,6 +88,16 @@ instance {p : ZPoly} {i₁ i₂ : RefinedIsolation p} : Decidable (Intersects i�
 @[expose] def SimpleRoot.mk {p : ZPoly} (iso : RefinedIsolation p) : SimpleRoot p :=
   Quot.mk _ iso
 
+/-- The simple root of `p` isolated by the square `s`. Both side conditions are
+    decidable checks on printable data, so a caller who has only a square --
+    a `Repr` output, a fixture, a literal -- rebuilds the certificate with
+    `decide` and recovers the root. The companion's `ofSquare_mk` identifies
+    the result with the root that any isolation on that square witnesses. -/
+@[expose] def SimpleRoot.ofSquare (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) : SimpleRoot p :=
+  SimpleRoot.mk ⟨⟨s, .ofWitness hw⟩, hp⟩
+
 /-- Boolean form of `Intersects`, used for equality tests on data containing
     roots (see `hex-number-field`). -/
 @[expose] def RefinedIsolation.sameRoot {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Bool :=

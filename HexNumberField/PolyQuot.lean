@@ -114,6 +114,17 @@ instance : SMul Rat (PolyQuot p x) := ⟨smul⟩
 def ofRat (q : Rat) : PolyQuot p x :=
   q • (1 : PolyQuot p x)
 
+/-- The element of `ℚ(root of `p` isolated by `s`)` with coordinates `f`.
+This is the self-contained form `Repr` emits: every argument is printable
+data, and the two root side conditions are `decide`-discharged auto-params
+of `SimpleRoot.ofSquare`. -/
+@[expose]
+def ofSquare (p : ZPoly) (s : DyadicSquare) (f : DensePoly Rat)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) :
+    PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
+  reduce p (SimpleRoot.ofSquare p s hw hp) f
+
 /-- A rational polynomial denotes its reduction, so `#p[0, 0, 2]` names the
 element `2x²` when the expected type is `PolyQuot p x`. -/
 instance : Coe (DensePoly Rat) (PolyQuot p x) := ⟨reduce p x⟩
