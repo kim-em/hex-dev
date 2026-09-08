@@ -598,9 +598,14 @@ def imageAt (P : ZMod64.Prime)
   letI := P.bounds
   letI := ZMod64.primeModulusOfPrime P.prime
   let q := toUnivariate i cmp' f
-  DensePoly.ofList <| (List.range q.size).map fun k =>
-    MvPoly.eval a (MvPoly.mapCoeffs φ_R.toField (q.coeff k))
+  denseMapCoeffs
+    (fun c => evalAt n cmp' a (MvPoly.mapCoeffs φ_R.toField c)) q
 ```
+
+Here `evalAt` is recursive evaluation through univariate views.  Its zero,
+addition, and multiplication laws are proved from the corresponding view and
+dense-evaluation laws, so the checker replays the image homomorphism without
+assuming unproved laws for `MvPoly.eval`.
 
 If the degrees of `toUnivariate i cmp' f'` and
 `imageAt P φ_R a i cmp' f'` agree, and likewise for `h'`, and

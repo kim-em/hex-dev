@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexMvGcd.Cert
+public meta import HexMvGcd.Instances
+public meta import HexMvPoly.Operations
 import all HexMvGcd.Cert
 import all HexMvGcd.CertData
 import all HexMvGcd.Normalize
@@ -114,6 +116,44 @@ theorem repeated_rejected :
     checkCoprime (X 0 + 1) (X 0 + 1) repeatedLift = false := by
   decide +kernel
 
+/-! Direct regressions for the modular `split` constructor. -/
+
+def prime3 : ZMod64.Prime where
+  m := 3
+  bounds := { pPos := by omega, pLtR := by decide }
+  prime := Hex.Nat.isPrimeTrial_isPrime (by decide)
+
+def intMod3 : @CoeffHom Int prime3.m _ _ _ _ prime3.bounds := by
+  letI : ZMod64.Bounds prime3.m := prime3.bounds
+  exact
+    { toField := ZMod64.intCast prime3.m
+      map_zero := by exact Lean.Grind.Ring.intCast_zero
+      map_one := by exact Lean.Grind.Ring.intCast_one
+      map_add := by intro a b; exact Lean.Grind.Ring.intCast_add a b
+      map_mul := by intro a b; exact Lean.Grind.Ring.intCast_mul a b }
+
+private abbrev P0 := MvPoly 0 Int Mono.lex
+
+def gcd00 : GcdCert 0 Int Mono.lex := .mk 0 1 1 .unit
+def gcd01 : GcdCert 0 Int Mono.lex := .mk 1 0 1 .unit
+def gcd11 : GcdCert 0 Int Mono.lex := .mk 1 1 1 .unit
+
+def xContent : ContentCert 0 Int Mono.lex :=
+  .ofSteps 1 [gcd00, gcd01]
+
+def xPlusOneContent : ContentCert 0 Int Mono.lex :=
+  .ofSteps 1 [gcd01, gcd11]
+
+def directSplit : CoprimeCert 1 Int Mono.lex :=
+  .split 0 Mono.lex prime3 intMod3 (fun j => nomatch j)
+    (-1) 1 xContent xPlusOneContent .unit
+
+#guard checkCoprime (X 0 : P) (X 0 + 1) directSplit
+
+-- A modular Bézout identity cannot compensate for a vanished leading
+-- coefficient: the checked recursive and image degrees must agree.
+#guard !checkCoprime (C 3 * X 0 + 1 : P) (X 0) directSplit
+
 abbrev TestLeaves : Cert.Leaves := fun _ _ _ _ => Unit
 
 def nestedLeaf : Cert.Coprime Int TestLeaves 1 Mono.lex :=
@@ -149,5 +189,17 @@ theorem no_integer_lift (model : RatModel Int) : False := model.not_int
 /-- info: 'Hex.MvPoly.CertTests.no_integer_lift' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms no_integer_lift
+
+/-- info: 'Hex.MvPoly.checkCoprime_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.checkCoprime_sound
+
+/-- info: 'Hex.MvPoly.checkContent_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.checkContent_sound
+
+/-- info: 'Hex.MvPoly.checkGcd_greatest' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.checkGcd_greatest
 
 end Hex.MvPoly.CertTests
