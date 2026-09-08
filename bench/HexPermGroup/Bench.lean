@@ -56,10 +56,10 @@ private def cycleImages (lengths : List Nat) : List Nat :=
 private def largeCycleLengths : List Nat :=
   [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]
 
-private initialize largeRef : IO.Ref (Option (Group 381)) ← do
+private initialize largePermRef : IO.Ref (Option (Perm 381)) ← do
   let some p := Perm.ofNatArray? 381 (cycleImages largeCycleLengths).toArray
     | throw (IO.userError "large cyclic benchmark input rejected")
-  IO.mkRef (some (Group.ofGenerators #[p]))
+  IO.mkRef (some p)
 
 @[noinline] private def readGroup (ref : IO.Ref (Option (Group n))) : IO (Group n) := do
   let some G ← ref.get | throw (IO.userError "missing prepared benchmark group")
@@ -137,15 +137,14 @@ def enumeration : Unit → IO Nat := fun _ => do
 /-- `element-access`: rank/unrank and supplied-index access. -/
 def elementAccess : Unit → IO Nat := fun _ => do
   let G ← readGroup s4Ref
-  let large ← readGroup largeRef
+  let some largeGenerator ← largePermRef.get
+    | throw (IO.userError "element-access: missing large cyclic generator")
   let some p := G.unrank? 17
     | throw (IO.userError "element-access: index rejected")
   let samples : List (Element G) := Group.sampleWith (fun bound _ => List.finRange bound) G
-  let some largeGenerator := large.generators[0]?
-    | throw (IO.userError "element-access: missing large cyclic generator")
   require ((G.rank p).val == 17 && samples.map (fun q => (G.rank q).val) == List.range 24 &&
       swap4.sign == -1 && (swap4.comp cycle4).sign == swap4.sign * cycle4.sign &&
-      swap4.cycleType == #[1, 1, 2] && large.order > 18446744073709551615 &&
+      swap4.cycleType == #[1, 1, 2] && largeGenerator.order > 18446744073709551615 &&
       largeGenerator.cycleType.toList == largeCycleLengths)
     "element-access: rank, sampling, cycle, sign, or large-order contract"
   return (G.rank p).val + samples.length + largeGenerator.cycleType.size
