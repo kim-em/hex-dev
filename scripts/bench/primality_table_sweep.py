@@ -337,7 +337,7 @@ def main() -> int:
     parser.add_argument("--samples", type=int, default=3)
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--cpu", default="auto",
-                        help="logical CPU to pin, or auto for an idle core")
+                        help="logical CPU to pin, or auto for low-activity placement")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--allow-dirty", action="store_true")

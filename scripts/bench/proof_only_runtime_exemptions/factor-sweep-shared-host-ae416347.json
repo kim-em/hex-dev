@@ -1,0 +1,6 @@
+{
+  "path": "scripts/bench/factor_sweep.py",
+  "baseline_blob": "eea8558779362cc28c65934d3108328622933a32",
+  "current_blob": "ae416347447b5406f6c51b592c0bb6e4241d658a",
+  "reason": "Updates the module documentation from the unavailable dedicated host to the repository's shared-host policy. The executable comparator sweep, inputs, timing boundaries, and result processing are unchanged."
+}

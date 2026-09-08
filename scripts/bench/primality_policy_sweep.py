@@ -192,7 +192,7 @@ def main() -> int:
     parser.add_argument("--rounds", type=int, default=8)
     parser.add_argument("--repeats", type=int, default=200)
     parser.add_argument("--cpu", default="auto",
-                        help="logical CPU to pin, or auto for an idle core")
+                        help="logical CPU to pin, or auto for low-activity placement")
     parser.add_argument("--timeout", type=float, default=30.0,
                         help="per build/probe command timeout in seconds")
     parser.add_argument("--output", type=Path)

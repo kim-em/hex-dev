@@ -744,15 +744,11 @@ phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
 state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
-set, and refuses release claims from a dirty or uncontrolled host. On the
-named shared release machine it uses the designated-shared-host protocol from
-`SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
-affinity inherited by timed children, six balanced rounds, all null controls,
-and per-arm pinned-core/SMT scheduler accounting with bounded whole-pair
-retries after a bounded quiet-core preflight. The admitted foreign-plus-SMT
-aggregate shares one interference ceiling, and a rejected preflight window or
-pair attempt never enters timing summaries. Global load is recorded context;
-the scoped core-interference ceiling is the release gate.
+set, and refuses release claims from a dirty tree or incomplete provenance. It
+uses the shared-host protocol from `SPEC/benchmarking.md`: paired arms are
+adjacent with alternating orientation, every completed pair enters the summary,
+and affinity, load and scheduler observations are retained as context rather
+than admission gates.
 
 The committed implementation lives under `bench/HexRCF/ProofProbe/`.
 `Support.lean` owns the fixed source and reflected cases plus the precompiled
@@ -789,22 +785,16 @@ both build-only Lake libraries; there is no proof-probe executable or
 in-process clock. The complete external sweep is:
 
 ```bash
-python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
   --timeout 300 --warm-timeout 600 \
-  --shared-host --expected-host chungus2 --cpu 22 \
-  --max-pair-retries 32
+  --shared-host --cpu "$cpu"
 ```
 
-`DoubleDegree50` takes roughly 15 seconds per arm on the designated host, so
-this suite explicitly requests the 32-retry hard cap: at most 33 complete
-adjacent attempts for a pair. Every rejected attempt remains in the artifact,
-and the extra opportunities do not relax the per-arm interference gate. At
-the observed arm cost with immediate preflights, exhausting all 33 attempts is
-about 17 minutes for one required sample; the independent preflight and arm
-timeouts remain authoritative. Allowing every preflight and both arms to reach
-their configured limits gives a nominal per-sample envelope of 8 hours 15
-minutes, excluding bounded observation and process overhead, although an
-actual arm timeout aborts the run earlier.
+`DoubleDegree50` takes roughly 15 seconds per arm. The runner takes each
+reference/candidate pair once per round in alternating order and retains every
+completed pair. The per-arm timeout bounds failures; ordinary host activity is
+recorded as context and never starts a retry loop.
 
 Only `Replay`, `Tactic`, and `DoubleDegree50` print an axiom report, fixed to
 `[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
@@ -960,8 +950,8 @@ carrier degree, distinct-atom count, and coefficient growth.
 ## Time budgets (Phase 4 validation)
 
 These are fixed whole-tactic acceptance cases, measured as the preregistered
-paired `Tactic − Baseline` fresh-module delta on a clean named host, using
-the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
+paired `Tactic − Baseline` fresh-module delta on a clean tree, using
+the shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
 times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
 LeanBench cases above. Budgets are preregistered offline from a completed

@@ -2,7 +2,7 @@
 
 ## Scope and acceptance
 
-This is the incomplete Phase-4 report for `HexIntFactor`. It covers the six input
+This is the accepted Phase-4 report for `HexIntFactor`. It covers the six input
 families declared in `libraries.yml`: table and balanced semiprimes, smooth and
 unbalanced semiprimes, power forms, certificate replay and order, and
 generalized divisor sums, and squarefree divisor enumeration. The exact declared comparator name is
@@ -10,8 +10,8 @@ generalized divisor sums, and squarefree divisor enumeration. The exact declared
 factorization portfolio, while GMP-ECM is a separately tuned C implementation.
 
 The previously accepted compiled package contains seven parametric and 31 fixed targets.
-The additional `runDivisors` registration has no admissible timing evidence.
-Every previously accepted parametric target returned the exact harness verdict
+The additional `runDivisors` registration has accepted two-sided shared-host
+evidence. Every accepted parametric target returned the exact harness verdict
 `consistent_with_declared_complexity`; every fixed target completed its
 preregistered repeats, agreed across hashes, matched its canonical expected
 hash, and passed its collector-owned scientific budget. The benchmark bodies
@@ -31,7 +31,7 @@ performance owner.
 | power-forms | `runCyclotomicBatch`, `runPowerGenericBatch`, `runPowerSplitBatch` | structural split plus same-seed complete-factorization comparison |
 | certificate-replay-and-order | `runReplay`, `HexIntFactorKernelProbe`, `runOrder`, `runDownstreamOrder`, `runDownstreamPrimitiveRoot` | compiled scaling, actual kernel replay, and opaque fixed operands |
 | generalized-divisor-sums | `runSigmaExponent`, `runSigmaFactorCount`, `runSquareFactorCount`, `runTotientFactorCount` | prepared certified inputs with independently derived models |
-| squarefree-divisor-enumeration | `runDivisors` | public generation, sorting and array materialization; mode 1 registered, timing acceptance blocked by contamination |
+| squarefree-divisor-enumeration | `runDivisors` | public generation, sorting and array materialization; accepted mode-1 `τ log₂ τ` evidence |
 | cross-family default fuel | `runDefaultFuelSchedule` | exact public schedule over all 49 committed cases |
 
 `Hex.IntFactorProfile.runSmooth` (ECM stage 1) and
@@ -426,8 +426,8 @@ The [committed protocol](hex-int-factor-divisor-protocol.md) registers mode 1:
 order. Generation, array materialization and the complete consuming checksum
 add linear work. No implementation or public complexity contract changed.
 The bridge's `divisors_eq`, `divisors_list_eq` and `numDivisors_eq_card` map
-explicitly to `Hex.IntFactorBench.runDivisors`; this pending owner target
-cannot yet discharge bridge Phase 4.
+explicitly to `Hex.IntFactorBench.runDivisors`. The accepted owner target
+discharges the transported divisor API's Phase-4 performance coverage.
 
 Preregistration is `de6e13c5c`. Both prescribed attempts ran on `chungus2`,
 CPU 7, with seven trials at each of six rungs. The preregistered default warmup trim
@@ -643,72 +643,75 @@ python3 scripts/profile/summarize_profile.py \
   --thread hexintfactor_be --top 25
 ```
 
+### Accepted shared-host campaign
+
+The [shared-host protocol](hex-int-factor-divisor-protocol-4.md) retains the
+operation, family, model, seven-trial schedule, tolerance and complete-result
+validation from the earlier protocols. It removes host-activity admission:
+automatic CPU selection is placement, while CPU/SMT/process telemetry is
+recorded context. The old inconclusive diagnostic, two rejected timed attempts,
+and two preflight-only campaigns remain retained under their original
+verdicts. They are contrary and diagnostic evidence rather than discarded
+samples.
+
+The sole fresh
+[accepted attempt](bench-results/intfactor-divisors-shared-attempt-1.json) ran
+from clean preregistration commit `3d5e24b620a758c44a379b430fb45aa10488ba5b`
+on automatically selected CPU 1 with SMT sibling 49. All 42 trials and all six
+rungs completed; every checksum and the independently reconstructed complete
+arrays agree. LeanBench returned exact verdict
+`consistent_with_declared_complexity`, residual slope `-0.014231`, and
+normalized constants `10.990153..12.008666` over `τ=256..32768`. The largest
+per-rung trial spread is 4.84%. The accepted record has SHA-256
+`eca5c70876bce7e5fe1ad9417c3383eef643d6560515a1291e0cba6b698963af`.
+
+Timed telemetry is complete and records 0.9405% aggregate activity, entirely
+on the SMT sibling, with no foreign runnable sample on the measurement CPU.
+This is context under the repository policy and neither changes nor filters a
+measurement. SMT contention can inflate the normalized constant, so that band
+is host-specific; it does not explain the flat residual slope over the 128-fold
+verdict range. The existing inclusive profile remains applicable: the public
+operation, timed body, family and measured Lean sources are unchanged. Its
+executable hash differs because the LeanBench revision and surrounding Lake
+declarations changed after the profile; the profile is used for coverage and
+shape, not timing. The source premise is reproducible with:
+
+```sh
+git diff --exit-code \
+  823576960eea242d16beaffd1a73840528fee5ea \
+  3d5e24b620a758c44a379b430fb45aa10488ba5b -- \
+  HexIntFactor bench/HexIntFactor/Bench.lean HexPrimality/Table.lean lean-toolchain
+```
+
+That comparison is empty. The profile's recorded SHA-256 for
+`bench/HexIntFactor/Bench.lean`, `b0926418...`, also matches the accepted
+campaign's file. Thus the public divisor implementation and profiled operation
+are byte-for-byte unchanged even though the enclosing executable is not.
+
 ### Integration audit
 
-Rolling the counters back makes the Phase-4 report/family/comparator presence
-gate, proof-probe nonemptiness gate and bridge-owner report gate dormant for
-this pair. The report, declared family/comparator names and nonempty core
-proof-probe root have been checked explicitly here; recheck all three before
-recertification. The all-benchmark Mathlib-free scan remains active.
+The core public `Hex.Nat.divisors` implementation maps directly to
+`Hex.IntFactorBench.runDivisors`. The bridge transports `divisors_eq`,
+`divisors_list_eq`, and `numDivisors_eq_card` to that same computational-owner
+registration. The declared squarefree-divisor-enumeration family names the
+exact measured ladder. This explicit mapping closes the API-to-benchmark gap
+that the mechanical checks alone cannot establish.
 
-Compared with the local Phase-5–7 join `a98ea38b5b2dd1323084fd1d7f4d5db492e717c2`,
-the pair's Lean library sources, umbrella modules and manual chapter are
-unchanged. No `sorry`, `axiom` or `native_decide` occurs in either library's
-Lean sources. The existing proof/API review therefore has no changed library
-declaration to re-audit; this work changes benchmark drivers and evidence
-infrastructure. The [local validation record](bench-results/intfactor-integration.json) and
-its adjacent stdout/stderr files retain the commands and outcomes.
-The combined build of `HexIntFactor HexIntFactorMathlib
-HexConformance HexManual` passes, all 41 benchmark verification cases pass,
-and fresh fixture emission exactly matches the committed corpus. PARI checks
-all 415 IntFactor cases with zero failures. Collector and profile-clock tests,
-phase/DAG checks and applicable source-freshness checks pass. This retains the
-local later-phase work while leaving dependency-ordered recertification
-blocked on Phase 4.
+The pair's library sources, umbrella modules and manual chapter are unchanged
+from the accepted Phase-5--7 work. No new public declaration or proof changed,
+and the representative profile still covers divisor generation, merge sorting,
+array materialization and result consumption. The later-phase proof/API review,
+conformance and documentation evidence therefore remain fresh. Publication and
+the release manifest remain outside this work.
 
-The [corrected campaign validation record](bench-results/intfactor-campaign-2-integration.json)
-retains the fresh 11122-job build, all 41 benchmark verification cases, all 37
-collector/telemetry/profile tests, matching fixture emission, the 415-case PARI
-oracle, phase/DAG/freshness checks, and the Mathlib-free scan of 43 executables
-and 191 proof probes. The pair's library declarations and manual chapter are
-still unchanged from the accepted local Phase-5–7 join. Both counters remain
-at 3 because this campaign produced no admissible timing evidence.
+The final local audit builds `HexIntFactor`, `HexIntFactorMathlib`,
+`HexConformance`, and `HexManual` together (11,480 jobs); verifies all 41
+IntFactor benchmark registrations; regenerates the fixture byte-for-byte; and
+checks all 415 fixture cases with PARI. The 226 affected collector, telemetry,
+freshness, and proof-sweep tests; the phase, DAG, and Phase-7 checks; the
+Mathlib-free and persistent-comparator lints; and the
+factorization/graph-isomorphism source and figure freshness checks also pass.
 
 ## Concerns
 
-Public `Hex.Nat.divisors` still lacks an admissible scientific timing run.
-The original two attempts failed the core-interference gate. The corrected
-ownership campaign then exhausted all 150 quiet-window observations before
-any timing could start. The longer untimed survey also found no eligible pair among 47 physical cores.
-The precise remaining dependency is a sufficiently quiet physical core on
-designated host `chungus2` under justified, newly preregistered controls;
-this session cannot reserve a core or suppress other sessions' workloads.
-[#9619](https://github.com/kim-em/hex-dev/issues/9619) remains open, Phase 4 is
-incomplete for both libraries, and both registry counters remain at 3.
-The inclusive profile and complete result validation remain available for
-integration once admissible timing evidence exists. The existing local
-Phase-5–7 work remains preserved; it does not discharge Phase 4.
-
-The [third campaign protocol](hex-int-factor-divisor-protocol-3.md) raised the
-host-interference ceiling to 0.5%, used a resolution-aware 30-second preflight
-on surveyed pair 33/81, and preserved the model and all scientific settings.
-The issue owner authorized that ceiling; only four of 47 pairs met it during
-the retained untimed survey.
-Its sole [retained attempt](bench-results/intfactor-divisors-campaign-3-attempt-1.json)
-was made from clean preregistration commit
-`0fac6714191c290fd60c5fdb910f11d7fab1875a`. The build and divisor-audit export
-completed, but independent complete-result validation did not run before the
-preflight failed. The complete arrays remain retained. The later
-[diagnostic recheck](bench-results/intfactor-divisors-campaign-3-recheck.json)
-independently validates every retained array and still reports the absent
-timing export. All ten preflight windows exceeded 0.5% on at least one sibling.
-The closest window measured CPU 81 at 0.29999% and CPU 33 at 0.73332%; the
-other near miss measured CPU 33 at 0.49999% and CPU 81 at 1.03331%. The
-collector therefore rejected the attempt before operation timing and retained
-the exact windows, commands, stdout/stderr, hashes and host state.
-Preflight exhaustion does not authorize the protocol's contamination-only
-replacement, so the third campaign is exhausted. It reclassifies no earlier
-result. Phase 4 remains incomplete and both registry counters remain at 3.
-The campaign executable hash `a83c5712...` differs from the existing inclusive
-profile's `64991c51...` hash, despite unchanged measured sources and toolchain,
-so any future admissible timing package will require a fresh inclusive profile.
+None.

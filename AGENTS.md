@@ -185,15 +185,31 @@ wallclock cap; see
 and the "Time budget" subsection of
 [SPEC/benchmarking.md §CI integration](../SPEC/benchmarking.md).
 
+## Performance measurements use the shared host
+
+There is no dedicated performance machine. Treat host activity as recorded
+context, never as a reason to discard a completed sample or wait for a quiet
+core. Pin a measurement to one automatically selected CPU when the runner
+supports it, to avoid two Hex measurements choosing the same CPU; the selected
+CPU need not be idle. Ordinary complexity evidence uses lean-bench's fixed,
+trial-major schedule. Before/after comparisons run adjacent arms and alternate
+`AB`/`BA` order. Retain every completed run and allow at most one unchanged
+rerun after an inconclusive result. Do not add quiet-core preflights,
+contamination thresholds, retry-until-clean loops, mandatory null controls, or
+per-change profiles. Profile only to explain an unexpected result or to supply
+one required representative Phase-4 attribution. Absolute wall-clock values
+are host-specific observations; CI timeouts are operational safeguards, not
+scientific budgets.
+
 GitHub-hosted Actions on a personal account is concurrency-capped at
 ~20 parallel ubuntu runners across all repositories the account
 owns; a 10-entry matrix saturates the cap, a 40-entry matrix
 produces 24-hour queue waits. Per-target parallelism does not
 amortise the fixed Mathlib cache fetch and startup cost on this
 project, so the rule is "no parallelism in CI." Routine timing-
-sensitive runs live on a separate scheduled workflow on dedicated
-hardware (per [SPEC/benchmarking.md](../SPEC/benchmarking.md)),
-not on the merge-gating workflows.
+sensitive runs are collected manually on the shared host (per
+[SPEC/benchmarking.md](../SPEC/benchmarking.md)), not on the
+merge-gating workflows.
 
 
 # Pod Agent Session

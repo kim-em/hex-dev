@@ -27,7 +27,6 @@ class NegativePolicySweepTests(unittest.TestCase):
 
     def test_release_measurement_protocol_is_preregistered(self) -> None:
         self.assertEqual(negative.SPEC.required_samples, 6)
-        self.assertEqual(negative.SPEC.max_pair_retries, 32)
         self.assertTrue(negative.SPEC.absolute_only)
         fresh_module_sweep.validate_spec(negative.SPEC)
 

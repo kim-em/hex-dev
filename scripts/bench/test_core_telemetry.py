@@ -202,7 +202,7 @@ raise SystemExit(m.main())
             with self.assertRaises(ValueError):
                 core_telemetry.load_timed_regions([path])
 
-    def test_interference_verdict(self):
+    def test_interference_context(self):
         samples = [
             {
                 "busy_seconds": {"3": 0.9, "51": 0.01},
@@ -220,20 +220,12 @@ raise SystemExit(m.main())
             },
         ]
         summary = core_telemetry.interference_summary(
-            samples, 3, [51], True, 0.6
+            samples, 3, [51]
         )
         self.assertEqual(summary["smt_sibling_busy_seconds"], 0.005)
         self.assertEqual(summary["measurement_cpu_foreign_seconds_estimate"], 5.0)
         self.assertEqual(summary["aggregate_core_interference_ratio"], 0.5005)
-        self.assertFalse(summary["contaminated"])
-        summary = core_telemetry.interference_summary(
-            samples, 3, [51], True, 0.5
-        )
-        self.assertTrue(summary["contaminated"])
-
-    def test_incomplete_regions_fail_closed(self):
-        summary = core_telemetry.interference_summary([], 3, [51], False, 0.002)
-        self.assertTrue(summary["contaminated"])
+        self.assertNotIn("contaminated", summary)
 
 
 if __name__ == "__main__":

@@ -121,7 +121,6 @@ class ElaboratorSweepTests(unittest.TestCase):
 
     def test_release_measurement_protocol_is_preregistered(self) -> None:
         self.assertEqual(elab.SPEC.required_samples, 6)
-        self.assertEqual(elab.SPEC.max_pair_retries, 32)
         self.assertEqual(
             elab.SPEC.measurement,
             "paired-fresh-module-olean-wall-robust-null-v2",

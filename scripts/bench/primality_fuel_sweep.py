@@ -14,9 +14,9 @@ Scientific run::
 The companion fresh-module evidence uses the already registered end-to-end
 policy suite::
 
-    python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-      --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-      --warm-timeout 600 --max-pair-retries 32 \
+    cpu=$(python3 scripts/bench/idle_core.py)
+    taskset -c "$cpu" python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+      --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
       --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
 
 Use ``--report FILE`` to reproduce the native summary without measuring.
@@ -260,7 +260,7 @@ def main() -> int:
     parser.add_argument("--rounds", type=int, default=6)
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--cpu", default="auto",
-                        help="logical CPU to pin, or auto for an idle core")
+                        help="logical CPU to pin, or auto for low-activity placement")
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--report", type=Path)

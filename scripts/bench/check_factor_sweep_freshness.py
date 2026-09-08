@@ -11,9 +11,9 @@ merge and any rebase that rewrites the commit but not the content.
 
 The relevant set here is honestly broad -- the Hex factor service call
 graph spans HexBasic through HexPolyZ -- and re-measuring needs a
-dedicated-hardware session, so runtime-neutral edits are absorbed instead
-of re-measured: when the fingerprint has moved, every path whose blob
-differs from the manifest must carry a blob-transition exemption under
+manual shared-host session, so reviewed runtime-neutral edits are absorbed
+instead of re-measured: when the fingerprint has moved, every path whose blob
+differs from the manifest must carry an exact blob-transition exemption under
 ``scripts/bench/proof_only_runtime_exemptions/``. The relevant sets, the
 fingerprinting and the exemption machinery are shared with the other
 figure families in ``scripts/bench/sweep_freshness.py``.
@@ -125,8 +125,7 @@ def record(report_path: Path, ref: str | None) -> int:
 
     The sweep driver deliberately does not do this itself: it is a shared
     relevant path for all six systems, so editing it would mark every
-    comparator record stale, and the comparators have no exemption
-    channel. Run this straight after a sweep instead.
+    comparator record stale. Run this straight after a sweep instead.
 
     The listing is read from the commit the sweep recorded, which is the
     source it actually measured, and falls back to the index when the
@@ -237,7 +236,7 @@ def main() -> int:
         print("factorization performance data is stale:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
-        print("re-measure the affected systems on the benchmarking host, or, "
+        print("re-measure the affected systems on the shared host, or, "
               "for an edit that cannot change what was measured, add one JSON "
               "file naming the exact blob transition under "
               "scripts/bench/proof_only_runtime_exemptions/", file=sys.stderr)

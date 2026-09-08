@@ -92,8 +92,7 @@ Concretely:
   **Bench verify runs on ubuntu**: per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
   smoke gate (does the bench module compile and run?), not a timing
-  measurement; timing-relevant runs live on a separate scheduled
-  workflow on dedicated hardware.
+  measurement; timing-relevant runs are collected manually on the shared host.
 - Conformance used to be a second workflow (`conformance.yml`). It was
   folded into this job because a separate workflow re-elaborated the
   entire hex graph on a second runner — pure duplicated compute. Sharing

@@ -30,7 +30,7 @@ the file changes again, and they live one-per-file so that concurrent
 pull requests never collide on a shared list.
 
 The pay-off is that a broad relevant set (the Hex factor service spans
-HexBasic through HexPolyZ, and re-measuring needs a dedicated-hardware
+HexBasic through HexPolyZ, and re-measuring needs a manual shared-host
 session) stays enforceable, while a tight one re-measures instead. So a
 family opts into the exemption channel only when its relevant set is
 broad enough to need one: today that is Hex's own factorization curve,
@@ -129,6 +129,7 @@ class Family:
     include: tuple[str, ...]
     exclude: tuple[str, ...] = ()
     exemptions: Path | None = None
+    exemption_paths: tuple[str, ...] = ()
     figures: tuple[str, ...] = ()
     regenerate: str = ""
 
@@ -160,6 +161,12 @@ class Family:
         family never stages documentation the author had not staged.
         """
         return list(self.include) + [f":!{entry}" for entry in self.exclude]
+
+    def permits_exemption(self, path: str) -> bool:
+        """Whether a recorded runtime-neutral transition may cover ``path``."""
+        return not self.exemption_paths or any(
+            _entry_matches(entry, path) for entry in self.exemption_paths
+        )
 
 
 def unquote(path: str) -> str:
@@ -481,7 +488,8 @@ def assess(family: Family, observations: list[Observation],
     unexplained = []
     for difference in differences(baseline, listing):
         key = (difference.path, difference.baseline, difference.current)
-        if key in exemptions or (allow is not None and allow(difference)):
+        if ((key in exemptions and family.permits_exemption(difference.path))
+                or (allow is not None and allow(difference))):
             verdict.exempted.append(difference)
         else:
             unexplained.append(difference)
@@ -604,13 +612,10 @@ FACTOR_SYSTEMS = (
 def factor_family(system: str) -> Family:
     """The source one comparator system's factorization curve depends on.
 
-    Only Hex's own curve carries an exemption channel. Its relevant set is
-    the whole factor service call graph, where proof-only edits land
-    constantly; a comparator's is three to six adapter files plus the
-    corpus and the sweep driver, and every edit there is a deliberate one
-    aimed at the measurement itself. Widening the channel to the
-    comparators would let a single exemption advance five records that
-    only dedicated hardware can re-measure.
+    Every system uses exact blob-transition exemptions for reviewed edits
+    that cannot affect runtime. The shared driver belongs to every relevant
+    set, so one documentation-only transition may correctly cover all six
+    records without forcing six identical remeasurements.
     """
     return Family(
         name=f"hexbz-factor-{system}",
@@ -618,9 +623,13 @@ def factor_family(system: str) -> Family:
         # Only Hex's own set spans Lean libraries, so only it has test
         # modules to leave out; a comparator's adapter files have none.
         exclude=FACTOR_TESTS if system == "hex-factor" else (),
-        exemptions=FACTOR_EXEMPTIONS if system == "hex-factor" else None,
+        exemptions=FACTOR_EXEMPTIONS,
+        exemption_paths=(
+            () if system == "hex-factor"
+            else ("scripts/bench/factor_sweep.py",)
+        ),
         regenerate=(
-            "scripts/bench/factor_sweep.py on the benchmarking host"),
+            "scripts/bench/factor_sweep.py on the shared host"),
     )
 
 

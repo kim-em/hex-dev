@@ -412,6 +412,16 @@ class Families(unittest.TestCase):
         isabelle = freshness.factor_family("isabelle-bz")
         self.assertTrue(isabelle.matches("scripts/oracle/bz-isabelle/ROOT"))
 
+    def test_comparator_exemptions_cover_only_the_shared_driver(self):
+        flint = freshness.factor_family("flint")
+        self.assertTrue(flint.permits_exemption("scripts/bench/factor_sweep.py"))
+        self.assertFalse(flint.permits_exemption("scripts/oracle/bz_flint_service.py"))
+        self.assertTrue(
+            freshness.factor_family("hex-factor").permits_exemption(
+                "HexIntFactor/Factor.lean"
+            )
+        )
+
     def test_every_family_is_registered_under_its_own_name(self):
         for name, family in freshness.FAMILIES.items():
             self.assertEqual(name, family.name)

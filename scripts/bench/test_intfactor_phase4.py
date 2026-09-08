@@ -11,6 +11,15 @@ from unittest.mock import Mock, patch
 from scripts.bench import intfactor_phase4 as collector
 
 
+class SharedHostPlacementTests(unittest.TestCase):
+    def test_auto_placement_does_not_reject_a_busy_host(self):
+        activity = {1: 90.0, 49: 95.0, 2: 50.0, 50: 50.0}
+        topology = {1: {1, 49}, 49: {1, 49}, 2: {2, 50}, 50: {2, 50}}
+        with patch.object(collector.idle_core, 'busy_by_cpu', return_value=activity), \
+                patch.object(collector.idle_core, 'sibling_map', return_value=topology):
+            self.assertEqual(collector.idle_core.pick(), 2)
+
+
 class PreservationTests(unittest.TestCase):
     def exercise(self, action, error):
         with tempfile.TemporaryDirectory() as directory:
@@ -96,8 +105,9 @@ class PreservationTests(unittest.TestCase):
                 raise RuntimeError('audit failed')
             with patch.object(collector, 'BENCH', executable), \
                  patch.object(collector, 'run', run), \
-                 patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
                  patch.object(collector, 'host_state', return_value={}), \
+                 patch.object(collector.os, 'sched_getaffinity', return_value={0, 81}), \
+                 patch.object(collector.os, 'sched_setaffinity'), \
                  patch.object(collector.core_telemetry, 'sibling_set',
                               return_value={33, 81}):
                 with self.assertRaisesRegex(RuntimeError, 'audit failed'):
@@ -105,16 +115,7 @@ class PreservationTests(unittest.TestCase):
             record = json.loads(attempt.output.read_text())
             self.assertEqual(record['benchmark_executable_sha256'], collector.sha256(executable))
 
-    def test_registered_cpu_guard(self):
-        args = argparse.Namespace(dirty_status='')
-        attempt = Mock(record={})
-        with patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
-             patch.object(collector.os, 'sched_getaffinity', return_value={0, 33, 81}), \
-             patch.object(collector.os, 'sched_setaffinity'):
-            with self.assertRaisesRegex(RuntimeError, 'CPU 81 protocol'):
-                collector.collect_divisors(args, attempt, 80)
-
-    def test_audit_is_validated_before_preflight(self):
+    def test_audit_is_validated_before_timed_failure(self):
         _, audit = DivisorValidationTests().fixture()
         with tempfile.TemporaryDirectory() as directory:
             executable = Path(directory) / 'bench'
@@ -122,20 +123,23 @@ class PreservationTests(unittest.TestCase):
             attempt = collector.Attempt(Path(directory) / 'result.json')
             args = argparse.Namespace(dirty_status='')
             def run(command, **kwargs):
-                stdout = audit if command[-1] == 'divisor-audit' else ''
-                return subprocess.CompletedProcess(command, 0, stdout, '')
+                if command[-1] == 'divisor-audit':
+                    return subprocess.CompletedProcess(command, 0, audit, '')
+                if 'core_telemetry.py' in command[1]:
+                    raise RuntimeError('timing failed')
+                return subprocess.CompletedProcess(command, 0, '', '')
             with patch.object(collector, 'BENCH', executable), \
                  patch.object(collector, 'run', run), \
-                 patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
                  patch.object(collector, 'host_state', return_value={}), \
-                 patch.object(collector.core_telemetry, 'sibling_set', return_value={33, 81}), \
-                 patch.object(collector, 'quiet_core', side_effect=RuntimeError('preflight failed')):
-                with self.assertRaisesRegex(RuntimeError, 'preflight failed'):
-                    collector.collect_divisors(args, attempt, 81)
+                 patch.object(collector.os, 'sched_getaffinity', return_value={0, 80}), \
+                 patch.object(collector.os, 'sched_setaffinity'), \
+                 patch.object(collector.core_telemetry, 'sibling_set', return_value={32, 80}):
+                with self.assertRaisesRegex(RuntimeError, 'timing failed'):
+                    collector.collect_divisors(args, attempt, 80)
             record = json.loads(attempt.output.read_text())
             self.assertEqual(record['audit_validation'], {'status': 'passed'})
 
-    def test_timed_interference_ceiling_is_pinned(self):
+    def test_shared_host_activity_is_context_only(self):
         _, audit = DivisorValidationTests().fixture()
         with tempfile.TemporaryDirectory() as directory:
             executable = Path(directory) / 'bench'
@@ -149,65 +153,23 @@ class PreservationTests(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, stdout, '')
             def inspect(attempt, directory, audit):
                 attempt.record['scientific_validation'] = {'status': 'passed'}
-                attempt.record['telemetry'] = {'summary': {'contaminated': False}}
+                attempt.record['telemetry'] = {'summary': {'contaminated': True}}
             with patch.object(collector, 'BENCH', executable), \
                  patch.object(collector, 'run', run), \
-                 patch.object(collector.socket, 'gethostname', return_value='chungus2'), \
                  patch.object(collector, 'host_state', return_value={}), \
-                 patch.object(collector.core_telemetry, 'sibling_set', return_value={33, 81}), \
-                 patch.object(collector, 'quiet_core'), \
+                 patch.object(collector.os, 'sched_getaffinity', return_value={0, 80}), \
+                 patch.object(collector.os, 'sched_setaffinity'), \
+                 patch.object(collector.core_telemetry, 'sibling_set', return_value={32, 80}), \
                  patch.object(collector, 'inspect_divisors', inspect), \
                  patch.object(collector, 'verify_sources'), \
                  patch.object(collector, 'render'):
-                self.assertEqual(collector.collect_divisors(args, attempt, 81), 0)
+                self.assertEqual(collector.collect_divisors(args, attempt, 80), 0)
             telemetry = next(c for c in commands if 'core_telemetry.py' in c[1])
-            index = telemetry.index('--max-core-interference-ratio')
-            self.assertEqual(telemetry[index + 1], '0.005')
-
-    def test_quiet_preflight_retains_busy_and_quiet_windows(self):
-        attempt = Mock(record={})
-        ticks = [{81: (0, 3000), 33: (0, 3000)},
-                 {81: (16, 6000), 33: (0, 6000)},
-                 {81: (16, 6000), 33: (0, 6000)},
-                 {81: (31, 9000), 33: (15, 9000)}]
-        with patch.object(collector.core_telemetry, "sibling_set", return_value={81, 33}), \
-             patch.object(collector.core_telemetry, "cpu_counters", side_effect=ticks), \
-             patch.object(collector.os, "sched_setaffinity") as affinity, \
-             patch.object(collector.os, "sched_getaffinity", side_effect=[{1, 33, 81}, {1}]), \
-             patch.object(collector.os, "sysconf", return_value=100), \
-             patch.object(collector.time, "sleep"), \
-             patch.object(collector.time, "monotonic_ns",
-                          side_effect=[0, 30_000_000_000,
-                                       30_000_000_000, 60_000_000_000]):
-            collector.quiet_core(81, attempt)
-        self.assertEqual([r["quiet"] for r in attempt.record["quiet_core_preflight"]], [False, True])
-        self.assertEqual(attempt.save.call_count, 2)
-        affinity.assert_called_once_with(0, {1})
-        self.assertEqual(attempt.record["observer_affinity"], [1])
-        self.assertEqual(attempt.record["quiet_core_config"], {
-            "window_seconds": 30, "max_windows": 10,
-            "max_busy_fraction_per_sibling": 0.005, "tick_hz": 100})
-
-    def test_quiet_preflight_exhaustion(self):
-        attempt = Mock(record={})
-        with patch.object(collector.core_telemetry, "sibling_set", return_value={81, 33}), \
-             patch.object(collector.core_telemetry, "cpu_counters", return_value={81: (0, 0), 33: (0, 0)}), \
-             patch.object(collector.core_telemetry, "busy_seconds", return_value=0.2), \
-             patch.object(collector.os, "sched_setaffinity") as affinity, \
-             patch.object(collector.os, "sched_getaffinity", side_effect=[{1, 33, 81}, {1}]), \
-             patch.object(collector.time, "sleep"), \
-             patch.object(collector.time, "monotonic_ns",
-                          side_effect=[i * 30_000_000_000 for i in range(20)]):
-            with self.assertRaisesRegex(RuntimeError, "10 preflight"):
-                collector.quiet_core(81, attempt)
-        self.assertEqual(len(attempt.record["quiet_core_preflight"]), 10)
-        self.assertFalse(any(r["quiet"] for r in attempt.record["quiet_core_preflight"]))
-
-    def test_quiet_preflight_requires_observer_cpu(self):
-        with patch.object(collector.core_telemetry, "sibling_set", return_value={33, 81}), \
-             patch.object(collector.os, "sched_getaffinity", return_value={33, 81}):
-            with self.assertRaisesRegex(RuntimeError, "no CPU remains"):
-                collector.quiet_core(81, Mock(record={}))
+            self.assertNotIn('--fail-on-contamination', telemetry)
+            self.assertNotIn('--max-core-interference-ratio', telemetry)
+            self.assertEqual(attempt.record['host_activity_policy'], 'context-only')
+            self.assertEqual(attempt.record['smt_siblings'], [32, 80])
+            self.assertEqual(attempt.record['status'], 'accepted')
 
     def test_recheck_without_timing_artifacts(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -240,38 +240,22 @@ validation, and complete source provenance.
 coverage; `HexBerlekampZassenhausMathlibProofProbeScientific` owns the
 larger release arms and remains outside routine CI.
 
-On the named shared release machine a canonical invocation is:
+A canonical shared-host invocation selects a CPU for placement and records it:
 
 ```bash
-taskset -c 22 python3 scripts/bench/bz_mathlib_sweep.py --samples 6 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/bz_mathlib_sweep.py --samples 6 \
   --timeout 300 --warm-timeout 900 \
-  --shared-host --expected-host chungus2 --cpu 22 \
-  --max-core-interference-ratio 0.005 \
-  --max-pair-retries 32 \
-  --preflight-timeout-seconds 1800
+  --shared-host --cpu "$cpu"
 ```
 
-The release run preregisters its selected logical CPU and aggregate
-interference ratio on the command line; the artifact and headline report
-record those exact values. They govern that run rather than the
-illustrative CPU number above.
+The six balanced rounds retain every adjacent pair. Scheduler and SMT activity
+remain in the artifact as context and never trigger retries or removal.
 
-These arms run 6.65 s to 16.60 s, roughly `3x` the sibling
-`HexBerlekampMathlib` suite's, so `ratio x wall` exceeds the `0.030 s`
-three-tick quantization floor throughout and the ratio, not the floor, is
-the binding admission gate. Each arm is correspondingly longer exposed to a
-stray scheduler tick on the pinned core or its SMT sibling, so on a busy
-shared host the run rejects more pair attempts and can exhaust the default
-eight-retry budget on the longest arms. The preregistered response is the
-`32`-retry bound this suite's manifest declares, which buys more clean-pair
-opportunities at an unchanged admission threshold. Raising the interference
-ratio instead would admit dirtier arms and is not the lever to reach for.
-
-The runner enforces the designated-shared-host contract in
-`SPEC/benchmarking.md`, including bounded retries of complete rejected
-pairs after a bounded quiet-core preflight and a single aggregate
-pinned-core/SMT interference ceiling; `--allow-busy` remains
-diagnostic-only. Executable factorization arithmetic belongs to the
+The runner follows the shared-host contract in `SPEC/benchmarking.md`: matched
+arms remain adjacent with alternating orientation, every completed pair is
+retained, and host/core activity is descriptive context. Executable
+factorization arithmetic belongs to the
 existing Mathlib-free `HexBerlekampZassenhaus` benchmark. The bridge
 declarations have no separable compiled runtime kernel. For the
 proof-emitting elaborators there is

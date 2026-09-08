@@ -1,0 +1,3 @@
+{"kind":"header","pid":1053177,"clock_source":"CLOCK_MONOTONIC","mono_anchor_ns":57956562836789,"schema_version":1}
+{"kind":"region","mono_t0_ns":57956562945701,"mono_t1_ns":57956565678101,"count":1,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57956565683669,"mono_t1_ns":57957221913159,"count":256,"label":"warm-loop"}

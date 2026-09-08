@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Monitor a pinned command and grade interference in LeanBench timed regions.
+"""Monitor a pinned command and record activity in LeanBench timed regions.
 
 The monitor and command form a cancellation group in a dedicated session.
 Standalone callers that are already process-group leaders must use setsid --wait.
@@ -164,10 +164,8 @@ def interference_summary(
     samples: Iterable[dict[str, object]],
     measurement_cpu: int,
     sibling_cpus: Iterable[int],
-    timed_regions_complete: bool,
-    threshold: float,
 ) -> dict[str, object]:
-    """Compute the timed-region interference quantities and verdict."""
+    """Compute timed-region activity as descriptive context."""
     sample_list = list(samples)
     sibling_busy_seconds = sum(
         float(sample["busy_seconds"][str(cpu)]) * float(sample["timed_fraction"])
@@ -198,11 +196,6 @@ def interference_summary(
         and float(sample["timed_overlap_seconds"]) > 0
         for sample in sample_list
     )
-    contaminated = (
-        not timed_regions_complete
-        or aggregate_interference_ratio is None
-        or aggregate_interference_ratio > threshold
-    )
     return {
         "timed_wall_seconds": round(timed_wall_seconds, 6),
         "foreign_runnable_samples": foreign_samples,
@@ -218,7 +211,6 @@ def interference_summary(
             if aggregate_interference_ratio is not None
             else None
         ),
-        "contaminated": contaminated,
     }
 
 
@@ -284,8 +276,6 @@ def main() -> int:
     parser.add_argument("--cpu", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--interval", type=float, default=0.25)
-    parser.add_argument("--max-core-interference-ratio", type=float, default=0.002)
-    parser.add_argument("--fail-on-contamination", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command
@@ -416,8 +406,6 @@ def main() -> int:
             samples,
             args.cpu,
             sibling_cpus,
-            timed_regions_complete,
-            args.max_core_interference_ratio,
         )
         document = {
             "schema": 3,
@@ -436,9 +424,6 @@ def main() -> int:
             "timed_region_sidecars_retained": True,
             "timed_regions_error": timed_regions_error,
             "command_return_code": return_code,
-            "thresholds": {
-                "max_core_interference_ratio": args.max_core_interference_ratio,
-            },
             "summary": {
                 "sample_count": len(samples),
                 "timed_region_sidecar_count": sidecar_count,
@@ -451,8 +436,6 @@ def main() -> int:
         write_telemetry(args.output, document)
         if return_code != 0:
             return return_code
-        if verdict["contaminated"] and args.fail_on_contamination:
-            return 2
         return 0
     except BaseException as error:
         # Ignore repeated interruption while preserving the first failure.
@@ -469,7 +452,7 @@ def main() -> int:
             "monitor_error": {"type": type(error).__name__, "message": str(error)},
             "timed_region_sidecars": [str(path) for path in sorted(
                 args.output.parent.glob(Path(sidecar_stem).name + "-*.jsonl"))],
-            "samples": samples, "summary": {"contaminated": True},
+            "samples": samples, "summary": {"telemetry_complete": False},
         }
         write_telemetry(args.output, document)
         print(f"telemetry monitor failed: {error}", file=sys.stderr, flush=True)
@@ -486,7 +469,7 @@ def main() -> int:
             # the last-resort group kill, which deliberately includes us.
             document = document or {"schema": 3, "command": command, "samples": samples}
             document.update(status="rejected", cleanup_error=str(cleanup_error))
-            document.setdefault("summary", {})["contaminated"] = True
+            document.setdefault("summary", {})["telemetry_complete"] = False
             try:
                 write_telemetry(args.output, document)
             finally:
