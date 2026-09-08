@@ -26,6 +26,8 @@ namespace Hex
 
 universe u
 
+attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
+
 section Domain
 
 variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
@@ -221,7 +223,78 @@ theorem dvd_chooseCoeffGcd [GcdDomainLaws R] (xs : List R) (d : R)
     (hd : ∀ x, x ∈ xs → d ∣ x) : d ∣ chooseCoeffGcd xs :=
   (chooseCoeffGcdData xs).greatest d hd
 
+/-- Proof-only exact quotient selected from a divisibility witness. -/
+noncomputable def divideDvd [GcdDomainLaws R] (a d : R) : R := by
+  classical
+  exact if a = 0 then 0 else if h : d ∣ a then
+    Classical.choose ((GcdDomainLaws.dvd_iff d a).mp h) else 0
+
+theorem mul_divideDvd [GcdDomainLaws R] {a d : R} (h : d ∣ a) :
+    d * divideDvd a d = a := by
+  by_cases ha : a = 0
+  · rw [divideDvd, ite_eq_left ha, ha]
+    grind
+  · rw [divideDvd, ite_eq_right ha, dite_eq_left h]
+    exact (Classical.choose_spec ((GcdDomainLaws.dvd_iff d a).mp h)).symm
+
 end CoeffFold
+
+section DenseContent
+
+variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R] [Dvd R]
+  [GcdDomainLaws R]
+
+/-- Proof-only content of a dense polynomial over a gcd domain. -/
+noncomputable def denseContent (p : DensePoly R) : R :=
+  chooseCoeffGcd p.toList
+
+/-- Proof-only primitive part of a dense polynomial over a gcd domain. -/
+noncomputable def densePrimitivePart (p : DensePoly R) : DensePoly R :=
+  DensePoly.ofList <| p.toList.map fun a => divideDvd a (denseContent p)
+
+private theorem getD_map_divideDvd (p : DensePoly R) (k : Nat) :
+    (p.toList.map fun a => divideDvd a (denseContent p)).getD k
+        (Zero.zero : R) = divideDvd (p.coeff k) (denseContent p) := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_map]
+  cases h : p.toList[k]? with
+  | some a =>
+      have hk : k < p.toList.length := (List.getElem?_eq_some_iff.mp h).1
+      have ha : a = p.coeff k := by
+        rw [← DensePoly.toList_getD_eq_coeff p k,
+          List.getD_eq_getElem?_getD, h, Option.getD_some]
+      simp [ha]
+  | none =>
+      have hk : p.toList.length ≤ k := List.getElem?_eq_none_iff.mp h
+      have hpzero : p.coeff k = 0 :=
+        DensePoly.coeff_eq_zero_of_size_le p (by
+          simpa [DensePoly.length_toList] using hk)
+      simp only [Option.map_none, Option.getD_none, hpzero]
+      have hzero : (Zero.zero : R) = 0 := rfl
+      rw [hzero]
+      rw [divideDvd, ite_eq_left rfl]
+
+/-- Dense content times the proof-only primitive part reconstructs the input. -/
+theorem denseContent_mul_primitivePart (p : DensePoly R) :
+    DensePoly.scale (denseContent p) (densePrimitivePart p) = p := by
+  apply DensePoly.ext_coeff
+  intro k
+  rw [DensePoly.coeff_scale_semiring, densePrimitivePart,
+    DensePoly.coeff_ofList, getD_map_divideDvd]
+  by_cases hk : k < p.toList.length
+  · apply mul_divideDvd
+    apply chooseCoeffGcd_divides
+    have hcoeff : p.toList[k] = p.coeff k := by
+      have hget := DensePoly.toList_getD_eq_coeff p k
+      exact (List.getElem_eq_getD (h := hk) (Zero.zero : R)).trans hget
+    exact hcoeff ▸ List.getElem_mem hk
+  · have hpzero : p.coeff k = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le p (by
+        simpa [DensePoly.length_toList] using Nat.le_of_not_gt hk)
+    rw [hpzero]
+    rw [divideDvd, ite_eq_left rfl]
+    exact Lean.Grind.Semiring.mul_zero (denseContent p)
+
+end DenseContent
 
 namespace MvPoly
 
@@ -275,6 +348,78 @@ theorem fractionMap_injective :
   apply Hex.Fraction.ofCoeff_injective
   have hcoeff := congrArg (coeff m) hpq
   simpa [fractionMap, Hex.Fraction.ofCoeff_zero] using hcoeff
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [Dvd R]
+    [Hex.Fraction.NonzeroOne R] in
+private theorem fraction_exists_rep (x : Hex.Fraction R) :
+    ∃ r : Hex.Fraction.Rep R, Hex.Fraction.ofRep r = x := by
+  induction x using Quotient.inductionOn with
+  | _ r => exact ⟨r, rfl⟩
+
+omit [BEq R] [LawfulBEq R] [Dvd R] in
+private theorem clearFractions (xs : List (Hex.Fraction R)) :
+    ∃ d : R, d ≠ 0 ∧ ∃ ys : List R, ys.length = xs.length ∧
+      ∀ k, Hex.Fraction.ofCoeff (ys.getD k (Zero.zero : R)) =
+        Hex.Fraction.ofCoeff d *
+          xs.getD k (Zero.zero : Hex.Fraction R) := by
+  classical
+  induction xs with
+  | nil =>
+      refine ⟨1, Hex.Fraction.NonzeroOne.one_ne_zero, [], rfl, ?_⟩
+      intro k
+      change Hex.Fraction.ofCoeff 0 =
+        Hex.Fraction.ofCoeff 1 * Hex.Fraction.ofCoeff 0
+      rw [← Hex.Fraction.ofCoeff_mul]
+      exact congrArg Hex.Fraction.ofCoeff
+        (Lean.Grind.Semiring.one_mul (0 : R)).symm
+  | cons x xs ih =>
+      rcases fraction_exists_rep x with ⟨r, hr⟩
+      rcases ih with ⟨d, hd, ys, hlen, hys⟩
+      let zs := (r.num * d) :: ys.map (fun y => r.den * y)
+      refine ⟨r.den * d, ExactDivLaws.mul_ne_zero r.den_ne hd,
+        zs, ?_, ?_⟩
+      · simp [zs, hlen]
+      · intro k
+        cases k with
+        | zero =>
+            simp only [zs, List.getD_cons_zero]
+            rw [Hex.Fraction.ofCoeff_mul, Hex.Fraction.ofCoeff_mul, ← hr]
+            calc
+              Hex.Fraction.ofCoeff r.num * Hex.Fraction.ofCoeff d =
+                  (Hex.Fraction.ofRep r * Hex.Fraction.ofCoeff r.den) *
+                    Hex.Fraction.ofCoeff d := by
+                    rw [Hex.Fraction.ofRep_mul_den]
+              _ = (Hex.Fraction.ofCoeff r.den * Hex.Fraction.ofCoeff d) *
+                    Hex.Fraction.ofRep r := by grind
+        | succ k =>
+            simp only [zs, List.getD_cons_succ]
+            have hmap : (ys.map (fun y => r.den * y)).getD k
+                  (Zero.zero : R) =
+                r.den * ys.getD k (Zero.zero : R) := by
+              rw [List.getD_eq_getElem?_getD, List.getElem?_map,
+                List.getD_eq_getElem?_getD]
+              cases h : ys[k]? with
+              | none =>
+                  simp only [Option.map_none, Option.getD_none]
+                  exact (Lean.Grind.Semiring.mul_zero r.den).symm
+              | some y => simp
+            rw [hmap]
+            rw [Hex.Fraction.ofCoeff_mul, Hex.Fraction.ofCoeff_mul, hys]
+            grind
+
+omit [BEq R] [LawfulBEq R] [Dvd R] in
+/-- Every fraction polynomial becomes coefficientwise integral after
+multiplication by one nonzero embedded denominator. -/
+theorem clearFractionPoly (p : DensePoly (Hex.Fraction R)) :
+    ∃ d : R, d ≠ 0 ∧ ∃ q : DensePoly R, ∀ k,
+      Hex.Fraction.ofCoeff (q.coeff k) =
+        Hex.Fraction.ofCoeff d * p.coeff k := by
+  classical
+  rcases clearFractions p.toList with ⟨d, hd, ys, _, hys⟩
+  refine ⟨d, hd, DensePoly.ofList ys, ?_⟩
+  intro k
+  simpa only [DensePoly.coeff_ofList,
+    DensePoly.toList_getD_eq_coeff] using hys k
 
 /-- Coprimality after embedding the coefficients into the fraction field. -/
 def CoprimeOverFraction (f g : MvPoly n R cmp) : Prop :=
