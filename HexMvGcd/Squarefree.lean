@@ -483,6 +483,28 @@ private theorem natCast_choose_prime_eq_zero {S : Type u}
     Lean.Grind.Semiring.zero_mul] at hcast
   exact hcast
 
+private def sqfPow {S : Type u} [One S] [Mul S] (a : S) : Nat → S
+  | 0 => 1
+  | k + 1 => sqfPow a k * a
+
+private theorem sqfPow_add {S : Type u} [Lean.Grind.CommRing S]
+    (a : S) (j k : Nat) : sqfPow a (j + k) = sqfPow a j * sqfPow a k := by
+  induction k with
+  | zero => rw [Nat.add_zero, sqfPow, Lean.Grind.Semiring.mul_one]
+  | succ k ih =>
+      rw [Nat.add_succ, sqfPow, ih, sqfPow,
+        Lean.Grind.Semiring.mul_assoc]
+
+private def sqfBinomTerm {S : Type u} [Lean.Grind.CommRing S]
+    (a b : S) (degree k : Nat) : S :=
+  (Hex.Nat.choose degree k : S) *
+    (sqfPow a (degree - k) * sqfPow b k)
+
+private def sqfBinomSum {S : Type u} [Lean.Grind.CommRing S]
+    (a b : S) (degree : Nat) : Nat → S
+  | 0 => 0
+  | k + 1 => sqfBinomSum a b degree k + sqfBinomTerm a b degree k
+
 /-- In characteristic zero, the all-partials gcd criterion is equivalent to
 relative squarefreeness for a primitive polynomial. -/
 private theorem gcdList_unit_iff_squarefree_charZero [IsMonomialOrder cmp]
