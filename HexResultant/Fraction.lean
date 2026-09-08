@@ -557,6 +557,18 @@ omit [NonzeroOne R] [DecidableEq R] in
 theorem mul_ofRep (a b : Fraction.Rep R) :
     ofRep a * ofRep b = ofRep (Fraction.Rep.mul a b) := rfl
 
+omit [DecidableEq R] in
+/-- Multiplying a represented fraction by its embedded denominator recovers
+its embedded numerator. -/
+theorem ofRep_mul_den (a : Fraction.Rep R) :
+    ofRep a * ofCoeff a.den = ofCoeff a.num := by
+  change ofRep a * ofRep ⟨a.den, 1, one_ne_zero⟩ =
+    ofRep ⟨a.num, 1, one_ne_zero⟩
+  rw [mul_ofRep]
+  apply rep_eq
+  unfold Fraction.Rep.Rel Fraction.Rep.mul
+  grind
+
 /-- Inverting an embedded representative applies `invRep`. -/
 @[simp]
 theorem inv_ofRep (a : Fraction.Rep R) : (ofRep a)⁻¹ = invRep a := rfl
