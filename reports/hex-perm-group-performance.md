@@ -78,8 +78,9 @@ and form the CI smoke gate.
 
 ## GAP comparator
 
-GAP 4.15.1 is an informational comparator. The driver starts one persistent
-process, warms the line protocol, prepares query groups once, and measures fresh
+`GAP permutation groups via a persistent process` is the informational
+comparator, using GAP 4.15.1. The driver warms the line protocol, prepares query
+groups once, and measures fresh
 `Group`/`StabChain` construction separately. It records the exact GAP methods
 and options alongside the data. The command is:
 

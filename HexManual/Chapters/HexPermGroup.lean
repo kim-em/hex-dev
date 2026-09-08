@@ -131,8 +131,8 @@ def baseCopy :=
 def topCopy :=
   WreathProduct.inr c2 (by decide) c2Element
 #guard baseCopy != topCopy
-def baseTopIsId :=
-  WreathProduct.top (by decide) baseCopy = Element.id c2
+def baseTopIsId : Bool :=
+  WreathProduct.top (by decide) baseCopy == Element.id c2
 #guard baseTopIsId
 #guard WreathProduct.top (by decide) topCopy = c2Element
 
