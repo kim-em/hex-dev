@@ -8,6 +8,7 @@ module
 
 public import HexRealRootsMathlib.SturmChainDefs
 public import Mathlib.Analysis.Polynomial.Order
+public import HexRealRootsMathlib.Sign
 
 /-!
 # Sturm's theorem
@@ -80,9 +81,8 @@ private theorem SignRelation.signVariations_eq {L M : List ℝ} (h : SignRelatio
         firstSign_cons_ne (y :: l) hX, signVariations_cons (y :: l) hX,
         firstSign_cons_ne l hy]
       rw [signVariations_cons (0 :: y' :: m) hx',
-        firstSign_cons_zero (y' :: m) rfl, firstSign_cons_ne m hy',
+        firstSign_cons_zero (y' :: m), firstSign_cons_ne m hy',
         signVariations_cons_zero]
-      simp only [Option.elim_some]
       rw [← add_assoc, ih.1]
       congr 1
       rw [← hsx, ← hsy, ite_eq_left hopp]
@@ -91,27 +91,11 @@ private theorem SignRelation.signVariations_eq {L M : List ℝ} (h : SignRelatio
 
 
 /-- A real polynomial with no roots on an interval has equal signs at its endpoints. -/
-theorem eval_sign_eq_of_no_zero {q : Polynomial ℝ} {a b : ℝ} (hab : a ≤ b)
+private theorem eval_sign_eq_of_no_zero {q : Polynomial ℝ} {a b : ℝ} (hab : a ≤ b)
     (hz : ∀ x ∈ Set.Icc a b, q.eval x ≠ 0) :
-    SignType.sign (q.eval a) = SignType.sign (q.eval b) := by
-  have hna : q.eval a ≠ 0 := hz a ⟨le_refl a, hab⟩
-  have hnb : q.eval b ≠ 0 := hz b ⟨hab, le_refl b⟩
-  have hpos : 0 < q.eval a * q.eval b := by
-    rcases lt_or_gt_of_ne (mul_ne_zero hna hnb) with hlt | hgt
-    · exfalso
-      have hmem : (0 : ℝ) ∈ Set.uIcc (q.eval a) (q.eval b) := by
-        rcases mul_neg_iff.mp hlt with ⟨hx, hy⟩ | ⟨hx, hy⟩
-        · exact Set.mem_uIcc.mpr (Or.inr ⟨hy.le, hx.le⟩)
-        · exact Set.mem_uIcc.mpr (Or.inl ⟨hx.le, hy.le⟩)
-      have hsub := intermediate_value_uIcc (a := a) (b := b)
-        (f := fun x => q.eval x) q.continuousOn
-      obtain ⟨c, hc, hc0⟩ := hsub hmem
-      rw [Set.uIcc_of_le hab] at hc
-      exact hz c hc hc0
-    · exact hgt
-  rcases mul_pos_iff.mp hpos with ⟨h1, h2⟩ | ⟨h1, h2⟩
-  · rw [sign_pos h1, sign_pos h2]
-  · rw [sign_neg h1, sign_neg h2]
+    SignType.sign (q.eval a) = SignType.sign (q.eval b) :=
+  isPreconnected_Icc.sign_eq_of_continuousOn q.continuousOn hz
+    ⟨le_refl a, hab⟩ ⟨hab, le_refl b⟩
 
 /-- Build the sign-pattern relation `SignRelation` between the evaluations of a
 polynomial list at a "generic" point `a` (where every element is nonzero) and a
@@ -336,13 +320,13 @@ theorem sturmVar_root_cross (hchain : IsSturmChain p chain) (r : ℝ) (hr : p.Is
       = 1 + signVariations ((q :: tail).map (Polynomial.eval a))
     rw [signVariations_cons _ hpa]
     simp only [List.map_cons]
-    rw [firstSign_cons_ne _ hqa, Option.elim_some, ite_eq_left hsignA]
+    rw [firstSign_cons_ne _ hqa, ite_eq_left hsignA]
   have hSVb : sturmVar (p :: q :: tail) b = sturmVar (q :: tail) b := by
     change signVariations (p.eval b :: (q :: tail).map (Polynomial.eval b))
       = signVariations ((q :: tail).map (Polynomial.eval b))
     rw [signVariations_cons _ hpb]
     simp only [List.map_cons]
-    rw [firstSign_cons_ne _ hqb, Option.elim_some, ite_eq_right hsignB, zero_add]
+    rw [firstSign_cons_ne _ hqb, ite_eq_right hsignB, zero_add]
   have hSVr : sturmVar (p :: q :: tail) r = sturmVar (q :: tail) r := by
     change signVariations (p.eval r :: (q :: tail).map (Polynomial.eval r))
       = signVariations ((q :: tail).map (Polynomial.eval r))

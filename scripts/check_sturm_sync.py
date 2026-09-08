@@ -14,7 +14,7 @@ MODULES = {
     "HexRealRootsMathlib.SturmChainDefs": "Mathlib.Analysis.Polynomial.Sturm.Defs",
     "HexRealRootsMathlib.SturmTheorem": "Mathlib.Analysis.Polynomial.Sturm.Basic",
     "HexRealRootsMathlib.SturmCertificate": "Mathlib.Analysis.Polynomial.Sturm.Certificate",
-    "HexPolyZMathlib.PolyParse": "Mathlib.Tactic.RealRootCount.Parse",
+    "HexPolyZMathlib.PolyParse": "Mathlib.Tactic.HexPolyZ.Parse",
     "HexRealRootsMathlib.RealRootCount": "Mathlib.Tactic.RealRootCount",
     "HexRealRootsMathlib.RealRootCountTests": "MathlibTest.RealRootCount",
     "HexRealRootsMathlib.SturmTests": "MathlibTest.Sturm",
@@ -22,7 +22,10 @@ MODULES = {
 
 
 # Mathlib master has moved the Sign modules since Hex's pinned Mathlib release.
-RENAMES = MODULES | {"Mathlib.Data.Sign.Basic": "Mathlib.Basic.Sign.Basic"}
+RENAMES = MODULES | {
+    "HexRealRootsMathlib.Sign": "Mathlib.Topology.Instances.Sign.Connected",
+    "Mathlib.Data.Sign.Basic": "Mathlib.Basic.Sign.Basic",
+}
 
 
 def mathlib_text(text: str) -> str:

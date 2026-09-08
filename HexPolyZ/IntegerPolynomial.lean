@@ -169,7 +169,7 @@ theorem dilate_neg_one_ne_zero {p : ZPoly} (hp : p ≠ 0) :
 /-- Reflection in the origin preserves the optional degree. -/
 @[simp] theorem degree?_dilate_neg_one (p : ZPoly) :
     (dilate (-1) p).degree? = p.degree? := by
-  simp [DensePoly.natDegree, DensePoly.degree?, size_dilate_neg_one]
+  simp [DensePoly.degree?, size_dilate_neg_one]
 
 /-- The reflected leading coefficient differs only by the degree-parity sign. -/
 theorem leadingCoeff_dilate_neg_one (p : ZPoly) :

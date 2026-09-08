@@ -140,7 +140,7 @@ meta def evalRat (e : Expr) : MetaM Rat :=
 
 /-! # The integer-polynomial interpreter
 
-The interpreter itself (`getNat`/`evalIntLit`/`evalCoeff`/`parsePoly`) is
+The interpreter itself (`getNat`/`evalIntCoeff`/`evalCoeff`/`parsePoly`) is
 hoisted to `HexPolyZMathlib.PolyParse`, shared with the
 `factor_poly`/`irreducibility` `Polynomial ℤ` provider. -/
 
