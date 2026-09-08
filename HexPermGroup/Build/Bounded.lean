@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Build
-public import HexPermGroup.Budget
+public import HexPermGroup.Chain.Bounded
 
 public section
 
@@ -35,15 +35,18 @@ The recursive builder uses the caller's meter, including discarded suffixes. -/
     reserve .pairs 1
     reserve .images (3 * n)
     let candidate := family i
-    reserve .sifts (n - base + 1)
-    reserve .images (2 * n * (n - base) + n)
-    if hm : s.result.chain.accepts base candidate.value = true then
+    let sifted ← s.result.chain.siftWith base candidate.value
+    have he : sifted.val.accepted = s.result.chain.accepts base candidate.value :=
+      congrArg SiftResult.accepted sifted.property
+    if hm : sifted.val.accepted = true then
+      have hm : s.result.chain.accepts base candidate.value = true := he.symm.trans hm
       let result ← scanWith build bounded family wordSize s is
       return ⟨result.val, by
         simpa only [hlist, State.scan, State.insert, candidate, hm, Bool.true_eq, ↓reduceIte] using result.property⟩
     else
+      have hm : s.result.chain.accepts base candidate.value ≠ true := fun h => hm (he.trans h)
       reserve .certificates (wordSize i)
-      reserve .images n
+      reserve .storage (2 * (s.seeds.generators.size + 1))
       let seeds := s.seeds.push candidate.value (candidate.word ()) candidate.valid candidate.fixed
       let child ← bounded seeds.generators seeds.fixed
       let next : State S base := ⟨seeds, child.val, s.rebuilds + 1 + child.val.rebuilds⟩
@@ -59,13 +62,28 @@ allowance covers the full degree, including declared fixed points. -/
 @[expose] def bounded {n : Nat} {budget : Budget} (base : Nat) (hb : base ≤ n)
     (S : Array (Perm n)) (hf : Chain.Fixed base S) : Computation budget (build base hb S hf) := do
   reserve .certificates (4 * S.size + 1)
-  reserve .images (64 * n * (S.size + 1) ^ 2)
+  -- Normalization orders the signed candidates three times. Each pass has
+  -- r inverses, at most 2*r identity comparisons, and at most (2*r)^2
+  -- ordering comparisons. An ordering comparison constructs four n-lists.
+  let r := S.size
+  reserve .images (3 * n * (3 * r + 4 * (2 * r) ^ 2))
+  -- Signed expansion, filtering, compaction and output conversion use at
+  -- most 20*r auxiliary slots per pass. Reserve four lists at each of at
+  -- most 2*r merge levels, with at most 2*r entries per level.
+  reserve .storage (3 * (20 * r + 4 * (2 * r) ^ 2))
   let normal := normalize S
   if hbase : base < n then
-    reserve .points (n * (normal.generators.size + 1))
-    reserve .certificates (2 * n)
-    reserve .images (2 * n * n + 4 * n)
-    let orbit := Orbit.ofSymmetric normal.generators ⟨base, hbase⟩ normal.symmetric
+    reserve .points (n * normal.generators.size + 1)
+    reserve .storage (8 * n * (n + 1))
+    let tree := Orbit.breadthFirst normal.generators ⟨base, hbase⟩
+    -- Discovery allocates no permutations. Compile only the discovered points:
+    -- one identity at the root and one composition per remaining point.
+    let q := tree.val.points.size
+    reserve .certificates (2 * q)
+    reserve .images (n * q)
+    let programs := (Orbit.Tree.Certificates.empty tree.val).finish
+    let orbit : {c : Orbit n // c.Valid normal.generators ⟨base, hbase⟩} :=
+      ⟨programs.orbit, programs.valid tree.property normal.symmetric⟩
     let family := fun (pair : Fin normal.generators.size × Fin orbit.val.points.size) =>
       let p := Orbit.schreier orbit.property normal.generators[pair.1.val]
         (.generator (Array.getElem_mem pair.1.isLt)) pair.2
@@ -82,7 +100,7 @@ allowance covers the full degree, including declared fixed points. -/
           · exact Chain.fixed_generated (normal.fixed hf)
               (Orbit.schreier_generated orbit.property _ _) x (by omega) }
     let pairCount := normal.generators.size * orbit.val.points.size
-    reserve .certificates pairCount
+    reserve .storage (normal.generators.size + 3 * pairCount)
     let pairs := (List.finRange normal.generators.size).flatMap fun i =>
       (List.finRange orbit.val.points.size).map fun x => (i, x)
     let recurse := fun T h => build (base + 1) hbase T h
@@ -90,10 +108,11 @@ allowance covers the full degree, including declared fixed points. -/
     let trivial ← limited #[] (Seeds.empty normal.generators (base + 1)).fixed
     let initial : State normal.generators (base + 1) :=
       ⟨Seeds.empty normal.generators (base + 1), trivial.val, trivial.val.rebuilds⟩
-    -- Both transporter programs have at most 2*n nodes. The nested products,
-    -- inversion and generator literal add four; copying both intermediate DAGs
-    -- allocates at most twice the final size.
-    let result ← scanWith recurse limited family (fun _ => 8 * n + 8) initial pairs
+    -- Each transporter has at most 2*q nodes. Inversion reserves 2*q+1;
+    -- the generator literal reserves 1. A product of sizes a,b reserves
+    -- b + (a+b) + (a+b+1) for map, append, and push respectively.
+    -- The inner product therefore reserves 6*q+3, the outer 10*q+9.
+    let result ← scanWith recurse limited family (fun _ => 18 * q + 14) initial pairs
     -- Reword only the top level of the completed suffix. Signed source
     -- references select one retained program, possibly adding an inverse node.
     let words := result.val.seeds.words

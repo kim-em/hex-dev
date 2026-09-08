@@ -49,3 +49,7 @@ public import HexPermGroup.Normal.SeriesBounded
 public import HexPermGroup.Product.Order
 public import HexPermGroup.Product.WreathOrder
 public import HexPermGroup.Word.Build
+public import HexPermGroup.Product.Bounded
+
+public import HexPermGroup.Normal.Bounded
+public import HexPermGroup.Normal.SeriesMetered

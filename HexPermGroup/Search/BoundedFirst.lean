@@ -114,7 +114,7 @@ inductive AnswerOutcome {G : Group n} {test : Perm n → Bool} (C : Pruner G tes
 
 @[expose] def firstWith (budget : Budget) {G : Group n} {test : Perm n → Bool} (C : Pruner G test)
     (Q : Evaluator test budget) : AnswerOutcome C budget :=
-  match BoundedFirst.visit C Q (Node.root G) (Meter.empty budget) with
+  match BoundedFirst.visit C Q (Node.root G) (_root_.Hex.PermGroup.Execution.Meter.empty budget) with
   | .incomplete failure => .incomplete failure
   | .absent certificate checked meter => .complete (.absent certificate checked) meter
   | .found p _ hp meter =>

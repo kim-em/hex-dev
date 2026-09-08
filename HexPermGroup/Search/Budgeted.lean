@@ -23,12 +23,12 @@ allowance. The second direction is skipped after a failed forward test. -/
 @[expose] def Tester.normalizer {budget : Budget} (H : Group n) : Tester (Predicate.normalizer H) budget :=
   fun p m =>
     match m.allSifts H H.generators.size
-        (fun i : Fin H.generators.size => p.conj (H.generators[i.val]'i.isLt)) with
+        (fun i : Fin H.generators.size => p.conj (H.generators[i.val]'i.isLt)) (3 * n) with
     | .exhausted failure => .exhausted failure
     | .ok forward meter =>
       if hf : forward.val = true then
         match meter.allSifts H H.generators.size
-            (fun i : Fin H.generators.size => p.inv.conj (H.generators[i.val]'i.isLt)) with
+            (fun i : Fin H.generators.size => p.inv.conj (H.generators[i.val]'i.isLt)) (4 * n) with
         | .exhausted failure => .exhausted failure
         | .ok backward meter => .ok ⟨backward.val, by
             have he := forward.property.symm.trans hf

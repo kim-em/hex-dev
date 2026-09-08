@@ -35,6 +35,28 @@ namespace Hex.Perm.Wreath
     (fun i j he => by simpa using congrArg (act hn (inverse f h) h.inv) he)
     (fun i => ⟨act hn (inverse f h) h.inv i, act_inv hn f h i⟩)
 
+/-- Cache each base permutation once before materializing the point action.
+In particular, identity base factors in copies and lifts are not rebuilt at
+every point of their block. -/
+@[expose] def permImpl (hn : 0 < n) (f : Fin m → Perm n) (h : Perm m) : Perm (n * m) :=
+  let factors := Hex.Vector.ofFn' f
+  let action := act hn (fun j => factors[j.val]) h
+  have agrees (x : Fin (n * m)) : action x = (perm hn f h).get x := by
+    simp [action, factors, act, perm]
+  Perm.ofFn action
+    (fun i j he => (perm hn f h).get_inj (by simpa only [agrees] using he))
+    (fun i => by
+      obtain ⟨j, hj⟩ := (perm hn f h).get_surj i
+      exact ⟨j, (agrees j).trans hj⟩)
+
+/-- Native materialization caches the supplied base functions; kernel reduction
+retains the original point-action definition. -/
+@[csimp] theorem perm_eq : @perm = @permImpl := by
+  funext n m hn f h
+  apply Perm.ext
+  intro x
+  simp [perm, permImpl, act]
+
 @[simp] theorem perm_index (hn : 0 < n) (f : Fin m → Perm n) (h : Perm m) (i : Fin n) (j : Fin m) :
     (perm hn f h).get (index i j) = index ((f (h.get j)).get i) (h.get j) := by simp [perm]
 

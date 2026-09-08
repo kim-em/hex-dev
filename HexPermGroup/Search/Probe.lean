@@ -8,6 +8,7 @@ module
 
 public import HexPermGroup.Search.Budget
 public import HexPermGroup.Search.Predicate
+public import HexPermGroup.Chain.Bounded
 
 public section
 
@@ -17,45 +18,57 @@ variable {budget : Budget}
 
 abbrev CheckedBool (expected : Bool) := {value : Bool // value = expected}
 
-/-- Charge a membership query before sifting through its complete chain. -/
-@[expose] def Meter.sift (m : Meter budget) (G : Group n) (p : Perm n) :
-    Measured budget (CheckedBool (G.contains p)) :=
-  match m.spend .sifts 1 with
-  | .error failure => .exhausted failure
-  | .ok meter => .ok ⟨G.contains p, rfl⟩ meter
+/-- Charge each visited level and permutation allocation in a membership query. -/
+@[expose] def _root_.Hex.PermGroup.Execution.Meter.sift (m : Meter budget) (G : Group n) (p : Perm n) :
+    Measured budget (CheckedBool (G.contains p)) := m.execute do
+  let result ← G.chain.siftWith 0 p
+  return ⟨result.val.accepted, congrArg SiftResult.accepted result.property⟩
 
-/-- Check a finite generator family, stopping at the first failed membership
-query or before the next query when the sift allowance is exhausted. -/
-@[expose] def Meter.allSifts (m : Meter budget) (G : Group n) (size : Nat) (values : Fin size → Perm n) :
-    Measured budget (CheckedBool (decide (∀ i : Fin size, G.contains (values i) = true))) :=
-  let run := (Trials.range size).scan (fun i => !G.contains (values i)) 0 (m.available .sifts)
-  let meter := m.charge .sifts run.used run.bounded
-  match hr : run.result with
-  | .found i _ hi _ =>
-    .ok ⟨false, by
-      apply Eq.symm
-      apply decide_eq_false
-      intro h
-      let j : Fin size := ⟨i.val, i.isLt⟩
-      have hj : (Trials.range size).get i = j := rfl
-      rw [hj] at hi
-      have he := h j
-      simp only [he, Bool.not_true, Bool.false_eq_true] at hi⟩ meter
-  | .clear checked =>
-    .ok ⟨true, by
-      apply Eq.symm
+/-- Query a finite family without materializing it. The caller supplies the
+permutation-image reservation needed to evaluate one entry of the family. -/
+@[expose] def siftFrom (G : Group n) (size : Nat) (values : Fin size → Perm n)
+    (imageCost start : Nat) : Execution.Run budget
+      (CheckedBool (decide (∀ i : Fin size, start ≤ i.val → G.contains (values i) = true))) := do
+  if hi : start < size then
+    Execution.reserve .images imageCost
+    let result ← G.chain.siftWith 0 (values ⟨start, hi⟩)
+    have he : result.val.accepted = G.contains (values ⟨start, hi⟩) :=
+      congrArg SiftResult.accepted result.property
+    if hm : result.val.accepted = true then
+      let tail ← siftFrom G size values imageCost (start + 1)
+      return ⟨tail.val, by
+        rw [tail.property]
+        apply decide_eq_decide.mpr
+        constructor
+        · intro h i hstart
+          by_cases hs : i.val = start
+          · have hj : i = ⟨start, hi⟩ := Fin.ext hs
+            simpa only [hj] using he.symm.trans hm
+          · exact h i (by omega)
+        · intro h i hs
+          exact h i (by omega)⟩
+    else
+      return ⟨false, by
+        symm
+        apply decide_eq_false
+        intro h
+        exact hm (he.trans (h ⟨start, hi⟩ (Nat.le_refl _)))⟩
+  else
+    return ⟨true, by
+      symm
       apply decide_eq_true
-      intro i
-      let j : Fin (Trials.range size).size := ⟨i.val, i.isLt⟩
-      have hj : (Trials.range size).get j = i := Fin.ext rfl
-      have he := checked j (Nat.zero_le _)
-      rw [hj] at he
-      simpa only [Bool.not_eq_false'] using he⟩ meter
-  | .incomplete =>
-    .exhausted ⟨meter, .sifts, 1, by
-      change (m.charge .sifts run.used run.bounded).available .sifts < 1
-      rw [Meter.available_charge, run.depleted hr]
-      simp⟩
+      intro i hs
+      omega⟩
+termination_by size - start
+
+/-- Check a finite generator family, stopping at its first failed membership
+query or exhausted reservation. Image costs cover any generated query values. -/
+@[expose] def _root_.Hex.PermGroup.Execution.Meter.allSifts (m : Meter budget) (G : Group n)
+    (size : Nat) (values : Fin size → Perm n) (imageCost : Nat := 0) :
+    Measured budget (CheckedBool (decide (∀ i : Fin size, G.contains (values i) = true))) :=
+  m.execute do
+    let result ← siftFrom G size values imageCost 0
+    return ⟨result.val, by simpa only [Nat.zero_le, forall_const] using result.property⟩
 
 variable {G : Group n}
 
@@ -105,7 +118,7 @@ without finding a reason allows traversal to continue; exhausting it does not. -
   | .clear _ => .ok none meter
   | .incomplete => .exhausted ⟨meter, .refinements, 1, by
       change (m.charge .refinements run.used run.bounded).available .refinements < 1
-      rw [Meter.available_charge, run.depleted hr]
+      rw [_root_.Hex.PermGroup.Execution.Meter.available_charge, run.depleted hr]
       simp⟩
 
 end Hex.PermGroup.Search

@@ -69,7 +69,7 @@ inductive Outcome {G : Group n} {P : Predicate n} (C : Constraint G P) (budget :
 counter with prefix coverage and redundant-generator checks. -/
 @[expose] def solveWith (budget : Budget) {G : Group n} {P : Predicate n} (C : Constraint G P)
     (Q : Tester P budget) : Outcome C budget :=
-  let r := Bounded.visit C Q (Node.root G) (Accumulator.empty G P) (Meter.empty budget)
+  let r := Bounded.visit C Q (Node.root G) (Accumulator.empty G P) (_root_.Hex.PermGroup.Execution.Meter.empty budget)
   match r.status with
   | .incomplete failure => .incomplete r.acc failure
   | .complete certificate checked meter =>

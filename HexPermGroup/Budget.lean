@@ -14,7 +14,12 @@ public section
 
 namespace Hex.PermGroup.Execution
 
-/-- Independent cumulative work allowances. -/
+/-- Independent cumulative work allowances. These count logical operations and
+slots, not bytes or elapsed time. `sifts` counts visited chain levels (including
+terminal levels); `points` counts point visits; `pairs` counts Schreier pairs.
+`images` counts permutation-image slots. `certificates` counts program and
+certificate nodes, including reserved copies. `storage` counts auxiliary
+container slots. Search nodes and refinement tests have their own counters. -/
 inductive Resource where
   | nodes
   | refinements
@@ -23,6 +28,7 @@ inductive Resource where
   | points
   | pairs
   | images
+  | storage
   deriving DecidableEq, BEq, Repr
 
 /-- Cumulative producer reservations. Batches may reserve an upper bound before
@@ -37,6 +43,7 @@ structure Work where
   points : Nat := 0
   pairs : Nat := 0
   images : Nat := 0
+  storage : Nat := 0
   deriving DecidableEq, BEq, Repr
 
 abbrev Budget := Work
@@ -51,6 +58,7 @@ namespace Work
   | .points => w.points
   | .pairs => w.pairs
   | .images => w.images
+  | .storage => w.storage
 
 @[expose] def add (w : Work) (r : Resource) (k : Nat) : Work :=
   match r with
@@ -61,6 +69,7 @@ namespace Work
   | .points => { w with points := w.points + k }
   | .pairs => { w with pairs := w.pairs + k }
   | .images => { w with images := w.images + k }
+  | .storage => { w with storage := w.storage + k }
 
 @[simp] theorem get_add (w : Work) (r s : Resource) (k : Nat) :
     (w.add r k).get s = w.get s + if s = r then k else 0 := by
@@ -132,6 +141,14 @@ inductive Measured (budget : Budget) (α : Type) where
 retains the counters at the first reservation that could not be met. -/
 abbrev Run (budget : Budget) (α : Type) := StateT (Meter budget) (Except (Exhausted budget)) α
 
+/-- Continue an operation with an existing meter; nested work never receives
+fresh allowances. -/
+@[expose] def Meter.execute {budget : Budget} (meter : Meter budget)
+    (computation : Run budget α) : Measured budget α :=
+  match computation.run meter with
+  | .error failure => .exhausted failure
+  | .ok (value, meter) => .ok value meter
+
 /-- Reserve work before invoking the operation that uses it. -/
 @[expose] def reserve {budget : Budget} (r : Resource) (k : Nat) : Run budget Unit := do
   let meter ← get
@@ -142,8 +159,6 @@ abbrev Run (budget : Budget) (α : Type) := StateT (Meter budget) (Except (Exhau
 /-- Evaluate a producer from zero usage. Replay uses a separate invocation and
 its own allowances; it cannot consume a producer's remaining budget. -/
 @[expose] def run (budget : Budget) (computation : Run budget α) : Measured budget α :=
-  match computation.run (Meter.empty budget) with
-  | .error failure => .exhausted failure
-  | .ok (value, meter) => .ok value meter
+  (Meter.empty budget).execute computation
 
 end Hex.PermGroup.Execution

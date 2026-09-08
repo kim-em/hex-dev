@@ -869,7 +869,8 @@ private def checkBlocks (G : Group n) (reference : Array (Array Nat)) : IO Nat :
   return 2 ^ edges.size
 
 private def searchBudget : Search.Budget :=
-  { nodes := 100000, refinements := 1000000, sifts := 1000000, certificates := 100000 }
+  { nodes := 100000, refinements := 1000000, sifts := 1000000, certificates := 100000,
+    images := 10000000, storage := 10000000 }
 
 private def checkBudget {G : Group n} {P : Search.Predicate n} (C : Search.Constraint G P)
     (budget : Search.Budget) (answer : Search.Outcome C budget) (expected : Group n) : IO Search.Work := do
@@ -880,7 +881,7 @@ private def checkBudget {G : Group n} {P : Search.Predicate n} (C : Search.Const
       throw (IO.userError "budgeted subgroup search changed its exact result or failed certificate replay")
     unless meter.used.certificates == result.certificate.nodes && meter.used.nodes == result.certificate.nodes do
       throw (IO.userError "completed search miscounted visited or certificate nodes")
-    for resource in [Search.Resource.nodes, .refinements, .sifts, .certificates] do
+    for resource in [Execution.Resource.nodes, .refinements, .sifts, .certificates] do
       unless meter.used.get resource <= budget.get resource do
         throw (IO.userError "completed search exceeded a resource allowance")
     return meter.used
@@ -891,7 +892,7 @@ private def checkAnswerBudget {G : Group n} {test : Perm n → Bool} (C : Search
   match answer with
   | .incomplete _ => throw (IO.userError "transporter search exhausted a generous budget")
   | .complete result meter =>
-    for resource in [Search.Resource.nodes, .refinements, .sifts, .certificates] do
+    for resource in [Execution.Resource.nodes, .refinements, .sifts, .certificates] do
       unless meter.used.get resource <= budget.get resource do
         throw (IO.userError "completed transporter search exceeded a resource allowance")
     match result with
@@ -1619,7 +1620,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
 #eval do
   let constraint := Search.Intersection.constraint indexedGroup swapGroup
   let used ← checkBudget constraint searchBudget (indexedGroup.intersectionWith searchBudget swapGroup) swapGroup
-  for resource in [Search.Resource.nodes, .refinements, .sifts, .certificates] do
+  for resource in [Execution.Resource.nodes, .refinements, .sifts, .certificates] do
     unless used.get resource > 0 do throw (IO.userError "budget regression did not exercise every resource")
     let capacity := used.get resource - 1
     let budget : Search.Budget := match resource with
@@ -1627,6 +1628,10 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
       | .refinements => { searchBudget with refinements := capacity }
       | .sifts => { searchBudget with sifts := capacity }
       | .certificates => { searchBudget with certificates := capacity }
+      | .points => { searchBudget with points := capacity }
+      | .pairs => { searchBudget with pairs := capacity }
+      | .images => { searchBudget with images := capacity }
+      | .storage => { searchBudget with storage := capacity }
     match indexedGroup.intersectionWith budget swapGroup with
     | .complete _ _ => throw (IO.userError "subgroup search ignored a resource limit")
     | .incomplete lowerBound failure =>
@@ -1634,23 +1639,23 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
           failure.requested == 1 && lowerBound.group.isSubgroup swapGroup &&
           checkChain lowerBound.group.generators lowerBound.group.chain do
         throw (IO.userError "subgroup exhaustion lost its counters or verified lower bound")
-      if resource == Search.Resource.certificates then
+      if resource == Execution.Resource.certificates then
         unless lowerBound.group.sameGroup swapGroup do
           throw (IO.userError "certificate exhaustion discarded the subgroup found before the final node")
   let zeroNodes : Search.Budget := { searchBudget with nodes := 0 }
   match indexedGroup.intersectionWith zeroNodes swapGroup with
   | .complete _ _ => throw (IO.userError "zero-node search claimed completion")
   | .incomplete lowerBound failure =>
-    unless failure.resource == Search.Resource.nodes && failure.meter.used == ({} : Search.Work) && lowerBound.group.order == 1 do
+    unless failure.resource == Execution.Resource.nodes && failure.meter.used == ({} : Search.Work) && lowerBound.group.order == 1 do
       throw (IO.userError "zero-node search performed work or returned an invalid initial lower bound")
-  for capacity in [1, 2] do
-    let budget : Search.Budget := { sifts := capacity }
-    match Search.Tester.normalizer swapGroup (Perm.id 3) (Search.Meter.empty budget) with
+  for capacity in [0, 3, 4, 7, 8] do
+    let budget : Search.Budget := { searchBudget with sifts := capacity }
+    match Search.Tester.normalizer swapGroup (Perm.id 3) (Execution.Meter.empty budget) with
     | .exhausted failure =>
-      unless capacity == 1 && failure.resource == Search.Resource.sifts && failure.meter.used.sifts == 1 do
+      unless capacity < 8 && failure.resource == Execution.Resource.sifts && failure.meter.used.sifts == capacity do
         throw (IO.userError "normalizer leaf exhaustion did not preserve the completed forward sift")
     | .ok result meter =>
-      unless capacity == 2 && result.val && meter.used.sifts == 2 do
+      unless capacity == 8 && result.val && meter.used.sifts == 8 && meter.used.images == 63 do
         throw (IO.userError "normalizer leaf omitted a conjugation direction or miscounted sifts")
 
 #eval do
@@ -1661,7 +1666,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   let (used, wordSize) ← checkAnswerBudget constraint searchBudget
     (indexedGroup.setTransporterWith searchBudget A B) expected
   unless wordSize > 0 do throw (IO.userError "positive transporter did not retain its word size")
-  for resource in [Search.Resource.nodes, .refinements, .sifts, .certificates] do
+  for resource in [Execution.Resource.nodes, .refinements, .sifts, .certificates] do
     unless used.get resource > 0 do throw (IO.userError "positive transporter did not exercise every budget")
     let capacity := used.get resource - 1
     let budget : Search.Budget := match resource with
@@ -1669,12 +1674,16 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
       | .refinements => { searchBudget with refinements := capacity }
       | .sifts => { searchBudget with sifts := capacity }
       | .certificates => { searchBudget with certificates := capacity }
+      | .points => { searchBudget with points := capacity }
+      | .pairs => { searchBudget with pairs := capacity }
+      | .images => { searchBudget with images := capacity }
+      | .storage => { searchBudget with storage := capacity }
     match indexedGroup.setTransporterWith budget A B with
     | .complete _ _ => throw (IO.userError "positive transporter ignored a resource limit")
     | .incomplete failure =>
       unless failure.resource == resource && failure.meter.used.get resource <= capacity do
         throw (IO.userError "positive transporter lost the exhausted resource or exceeded its allowance")
-      if resource == Search.Resource.certificates then
+      if resource == Execution.Resource.certificates then
         unless failure.requested == wordSize && failure.meter.used.certificates == used.certificates - wordSize do
           throw (IO.userError "positive transporter allocated a partial word before checking its exact size")
   let target : Vector Bool 3 := #v[false, false, true]
@@ -1686,7 +1695,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   let short : Search.Budget := { budget with refinements := 3 }
   match swapGroup.setTransporterWith short A target with
   | .incomplete failure =>
-    unless failure.resource == Search.Resource.refinements && failure.meter.used.refinements == 3 do
+    unless failure.resource == Execution.Resource.refinements && failure.meter.used.refinements == 3 do
       throw (IO.userError "negative transporter failed to stop before its unavailable orbit test")
   | .complete _ _ => throw (IO.userError "unfinished negative transporter was reported as complete")
 
