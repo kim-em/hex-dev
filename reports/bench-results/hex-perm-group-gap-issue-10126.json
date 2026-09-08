@@ -1,0 +1,80 @@
+{
+  "cases": [
+    {
+      "checksum": 4800,
+      "gap_runtime_ms": 29,
+      "operation": "construct",
+      "per_call_ns": 145101,
+      "repeats": 200,
+      "round_trip_ns": 29020328
+    },
+    {
+      "checksum": 20000,
+      "gap_runtime_ms": 8,
+      "operation": "membership",
+      "per_call_ns": 397,
+      "repeats": 20000,
+      "round_trip_ns": 7949964
+    },
+    {
+      "checksum": 480000,
+      "gap_runtime_ms": 1,
+      "operation": "order",
+      "per_call_ns": 35,
+      "repeats": 20000,
+      "round_trip_ns": 719076
+    },
+    {
+      "checksum": 12000,
+      "gap_runtime_ms": 32,
+      "operation": "stabilizer",
+      "per_call_ns": 16180,
+      "repeats": 2000,
+      "round_trip_ns": 32360399
+    },
+    {
+      "checksum": 8000,
+      "gap_runtime_ms": 4,
+      "operation": "intersection",
+      "per_call_ns": 4164,
+      "repeats": 1000,
+      "round_trip_ns": 4164573
+    },
+    {
+      "checksum": 2000,
+      "gap_runtime_ms": 3,
+      "operation": "blocks",
+      "per_call_ns": 3218,
+      "repeats": 1000,
+      "round_trip_ns": 3218841
+    },
+    {
+      "checksum": 18000,
+      "gap_runtime_ms": 72,
+      "operation": "normal",
+      "per_call_ns": 146156,
+      "repeats": 500,
+      "round_trip_ns": 73078497
+    },
+    {
+      "checksum": 2400,
+      "gap_runtime_ms": 7,
+      "operation": "products",
+      "per_call_ns": 35902,
+      "repeats": 200,
+      "round_trip_ns": 7180484
+    }
+  ],
+  "methods": {
+    "construction": "Group followed by StabChain with GAP defaults",
+    "prepared_queries": "cached Group and StabChain; Size, membership, Stabilizer",
+    "products": "DirectProduct and WreathProductImprimitiveAction",
+    "subgroups": "Intersection, Blocks, NormalClosure, DerivedSubgroup"
+  },
+  "options": [
+    "-q",
+    "--quitonbreak"
+  ],
+  "protocol": "one persistent GAP process; line requests; process startup excluded",
+  "tool": "GAP"
+}
