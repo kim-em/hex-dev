@@ -175,7 +175,8 @@ required because the sync publishes `.github/workflows/ci.yml`. Then:
 5. Watch each mirror's own CI on the sync push; a build-only workflow on the
    published tree is what establishes that the mirror is coherent.
 
-The first complete real workflow tags every released repository `v0.1.0`.
+Some libraries used `v0.1.0` before releases were coordinated, so the first
+shared release is `v0.2.0` across every released repository.
 Each later complete release increments the shared minor version and resets its
 patch component to zero. Lake files use that tag as their cross-Hex input
 revision; manifests record both the tag and its exact resolved commit.

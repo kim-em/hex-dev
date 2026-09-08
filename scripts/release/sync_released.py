@@ -121,9 +121,11 @@ SEMVER = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 
 
 def next_release_version(current: object = None) -> str:
-    """Increment the shared minor version, starting with ``v0.1.0``."""
+    """Increment the shared minor version, starting with ``v0.2.0``."""
     if current is None:
-        return "v0.1.0"
+        # A few libraries published independent v0.1.0 tags before releases
+        # were coordinated. Treat that version as the historical floor.
+        return "v0.2.0"
     if not isinstance(current, str) or (match := SEMVER.fullmatch(current)) is None:
         raise ValueError(f"invalid completed release version: {current!r}")
     major, minor, _patch = map(int, match.groups())

@@ -35,7 +35,7 @@ class SyncReleasedTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def test_release_versions_start_at_point_one_and_increment_minor(self) -> None:
-        self.assertEqual(sync_released.next_release_version(), "v0.1.0")
+        self.assertEqual(sync_released.next_release_version(), "v0.2.0")
         self.assertEqual(sync_released.next_release_version("v0.1.0"), "v0.2.0")
         self.assertEqual(sync_released.next_release_version("v2.9.7"), "v2.10.0")
         with self.assertRaisesRegex(ValueError, "invalid completed release"):
@@ -732,7 +732,7 @@ class SyncReleasedTests(unittest.TestCase):
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
                     _baseline, _force, _dep_owner, _pins, version, resuming):
-            self.assertEqual(version, "v0.1.0")
+            self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             if entry["repo"].endswith("/first"):
                 synced["first"] = "new-first"
@@ -761,7 +761,7 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["first"], "new-first")
         self.assertEqual(advanced["second"], "old-second")
         self.assertEqual(advanced["_pending_release"], {
-            "version": "v0.1.0", "source": "source-sha", "repos": ["first"]})
+            "version": "v0.2.0", "source": "source-sha", "repos": ["first"]})
         self.assertNotIn("_version", advanced)
 
     def test_completed_publication_advances_the_shared_version(self) -> None:
@@ -818,8 +818,9 @@ class SyncReleasedTests(unittest.TestCase):
         baseline.write_text(json.dumps({
             "first": "new-first",
             "second": "old-second",
+            "_version": "v0.1.0",
             "_pending_release": {
-                "version": "v0.1.0",
+                "version": "v0.2.0",
                 "source": "source-sha",
                 "repos": ["first"],
             },
@@ -827,7 +828,7 @@ class SyncReleasedTests(unittest.TestCase):
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
                     _baseline, _force, _dep_owner, _pins, version, resuming):
-            self.assertEqual(version, "v0.1.0")
+            self.assertEqual(version, "v0.2.0")
             self.assertTrue(resuming)
             short = entry["repo"].split("/")[-1]
             synced[short] = f"new-{short}"
@@ -847,7 +848,7 @@ class SyncReleasedTests(unittest.TestCase):
             self.assertEqual(sync_released.main(), 0)
 
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
-        self.assertEqual(advanced["_version"], "v0.1.0")
+        self.assertEqual(advanced["_version"], "v0.2.0")
         self.assertNotIn("_pending_release", advanced)
 
     def test_only_sync_seeds_dependency_pins_from_baseline(self) -> None:
@@ -866,7 +867,7 @@ class SyncReleasedTests(unittest.TestCase):
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
                     _baseline, _force, _dep_owner, _pins, version, resuming):
-            self.assertEqual(version, "v0.1.0")
+            self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             self.assertEqual(entry["repo"], "leanprover/downstream")
             self.assertEqual(synced["upstream"], "new-upstream")
@@ -934,13 +935,13 @@ class SyncReleasedTests(unittest.TestCase):
         ):
             self.assertTrue(sync_released.sync_repo(
                 entry, "source-sha", None, False, synced, {"probe": old}, False,
-                {}, {}, "v0.1.0", False))
+                {}, {}, "v0.2.0", False))
 
         main = subprocess.run(
             ["git", "-C", str(remote), "rev-parse", "refs/heads/main"], check=True,
             capture_output=True, text=True).stdout.strip()
         tag = subprocess.run(
-            ["git", "-C", str(remote), "rev-parse", "refs/tags/v0.1.0"], check=True,
+            ["git", "-C", str(remote), "rev-parse", "refs/tags/v0.2.0"], check=True,
             capture_output=True, text=True).stdout.strip()
         self.assertEqual(main, tag)
         self.assertEqual(synced["probe"], main)
@@ -1218,7 +1219,7 @@ class TokenPreflightTests(unittest.TestCase):
         def publish(entry, _source_sha, token, _dry_run, synced,
                     _baseline, _force, _dep_owner, _pins, version, resuming):
             seen_tokens.append(token)
-            self.assertEqual(version, "v0.1.0")
+            self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             return False
 
