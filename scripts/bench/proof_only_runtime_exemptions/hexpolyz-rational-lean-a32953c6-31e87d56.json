@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/Rational.lean",
+  "baseline_blob": "a32953c66adbff4207d98a982e5420d5505fa91b",
+  "current_blob": "31e87d568af118aeeb91d9122b18ebf49da5f76b",
+  "reason": "Removes an unused simp argument from the proof of degree?_normalizePrimitiveSign; no definition or factorization-service runtime path changes."
+}

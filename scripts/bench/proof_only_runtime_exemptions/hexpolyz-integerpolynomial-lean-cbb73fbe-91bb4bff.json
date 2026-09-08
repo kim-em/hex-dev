@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/IntegerPolynomial.lean",
+  "baseline_blob": "cbb73fbeea543a0c31b529b31fb9454a250ead07",
+  "current_blob": "91bb4bff0d721850693af1eecaba1b04c9b514a9",
+  "reason": "Removes an unused simp argument from the proof of degree?_dilate_neg_one; no definition or factorization-service runtime path changes."
+}
