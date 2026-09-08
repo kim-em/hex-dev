@@ -32,8 +32,8 @@ external nauty, so the fixture pins the public operations, not only the
 transcribed search.
 
 `--engine` emits the same cases with the label, canonical bits and node
-count read off `Cases.engine` instead, so the oracle pins that search
-against real nauty on its own. The committed fixture uses the default
+count read off `Cases.engine` instead, so the oracle also checks the direct entry point.
+Both modes use the same structured engine. The committed fixture uses the default
 mode. CI compares the engine with that search through the full twin corpus.
 -/
 

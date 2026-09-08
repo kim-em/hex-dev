@@ -92,25 +92,10 @@ private def triRows {n : Nat} (rows : Array (VSet n)) : String :=
 def engine {n k : Nat} (G : Colored n k) : TraceRun n :=
   Engine.runColoredTraced G
 
-/-- Final orbit partition of the literal search. Initialization matches
-{name}`Hex.GraphIso.Nauty.runTraced`, whose result omits this array. -/
-def literalOrbits {n k : Nat} (G : Colored n k) : Array Nat := Id.run do
-  if n == 0 then return #[]
+/-- Final orbit partition, which the public result omits. -/
+def searchOrbits {n k : Nat} (G : Colored n k) : Array Nat :=
   let (lab0, cellEnds) := initialPartition G
-  let st : SearchSt n :=
-    { lab := lab0
-      ptn := initPtn n (n + 2) cellEnds
-      active := initActive n cellEnds
-      orbits := .ofFn (n := n) fun i => i.val
-      firstcode := .replicate (n + 2) 0
-      canoncode := .replicate (n + 2) 0
-      firsttc := .replicate (n + 2) (-1)
-      firstlab := .replicate n 0
-      canonlab := .replicate n 0
-      canong := .replicate n .empty
-      numorbits := n }
-  return (firstPathNode { g := rowsOf G } (n + 2) 100 (n + 2)
-    1 cellEnds.length st).2.orbits
+  (Engine.runState n (rowsOf G) lab0 cellEnds).2.orbits
 
 /-- What a search contributes to a fixture record: the canonical label,
 the canonical upper-triangle adjacency bits, the visited-node count and

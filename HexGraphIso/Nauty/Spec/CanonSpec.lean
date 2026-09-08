@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Search.Search
+public import HexGraphIso.Nauty.Search.State
 public import HexGraphIso.Nauty.Spec.Equivariance
 public import HexGraphIso.Nauty.Spec.CellPermLoop
 

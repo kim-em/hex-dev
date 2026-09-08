@@ -10,7 +10,7 @@ public import HexGraphIso.Nauty.Cert.CertAutom
 public import HexGraphIso.Nauty.Cert.Translator
 public import HexGraphIso.Nauty.Spec.Achieved
 public import HexGraphIso.Nauty.Spec.SpecIso
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Refine
 
 public section

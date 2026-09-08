@@ -627,10 +627,11 @@ The `Nauty` namespace is organized by the part each concept plays:
 
 | directory | content |
 | --- | --- |
-| `Nauty/Search/` | the executable transcription: packed vertex sets (`VSet`), `refine`, `processnode`, and the four mutually recursive functions `firstPathNode`, `firstChildLoop`, `otherNode` and `otherChildLoop`. This is the hot path and the only part a caller's run touches. |
+| `Nauty/Search/` | the structured executable: packed vertex sets (`VSet`), refinement, a flat `Engine.Search` state, and mutually recursive `node` and `sweep`. The direct engine is proved equal to the policy-parameterized `Generic.node` and `Generic.sweep`. `Search.lean` retains the nauty correspondence table; `State.lean` holds primitive transitions and their mathematical state view. |
 | `Nauty/Spec/` | the declarative canonical form `canonSpecKey` and `specCanon`, its invariance under isomorphism (`specCanon_invariant`, `iso_iff_specCanon_eq`) and its achievement by a reachable labelling (`specCanon_iso`), with the equivariance and cell-permutation theory both proofs use. |
 | `Nauty/Cert/` | the certificate data, the trusted `checkCanon` replay with `checkCanon_sound`, the untrusted trace-driven producer, and the replay spine proving the producer's certificate is accepted whenever the claimed key dominates the subtree and every recorded generator is a checked automorphism. |
-| `Nauty/Correct/` | the induction proving `canonSpecKey_eq_tracedKey`. It runs over the executable recursion's fuel, with the first-path and off-path node statements proved together, and it carries the unwinding and sweep-coverage bookkeeping the imperative return codes need. |
+| `Nauty/Policy/` | generic recursion contracts and their engine instances. The maximum contract transports nonlocal witnesses to their receivers; generation combines actual sibling coverage with smaller point-stabilizer generation. `KeyComplete` and `Complete` export unconditional whole-engine correctness. |
+| `Nauty/Generation/` | reusable reference occurrences, uniform subtrees, checked transport, cursor coverage, and stabilizer mathematics, independent of a particular recursive search. |
 | `Nauty/Invariant/` | the per-event facts about the search state the induction applies at each arm: refinement-code comparison, leaf faithfulness, domination, orbit soundness, generator-store validity, cell reachability, and target-cell agreement. |
 | `Nauty/Equitable/` | `refine` returns a partition equitable with respect to the exhausted active set. |
 | `Nauty/SmallCell/` | the `cheapautom` theory: for an equitable partition passing nauty's cheap guard, the cell stabilizer in the automorphism group acts transitively on every cell (`stabilizer_transitive`), and every leaf of the subtree below such a node realizes an automorphism with the first leaf (`descPath_leafRows_all`). |
@@ -981,19 +982,20 @@ The emitters and the twin runner read one shared corpus,
 cases in the same order. `conformance/HexGraphIso/EmitFixtures.lean`
 writes the committed fixture, `conformance/HexGraphIso/EmitCampaign.lean`
 streams the campaign, and both take an `--engine` mode that reads each
-record off the second canonical search instead of the transcription, so
-the external nauty oracle pins either search on the same cases.
+record directly from the engine. The public answer and certificate producer
+use that same engine, so the external nauty oracle checks both entry points
+on the same cases.
 `conformance/HexGraphIso/EngineTwin.lean` builds the executable
-`hexgraphiso_engine_twin`, which runs both searches on every fixture,
+`hexgraphiso_engine_twin`, which runs both wrappers on every fixture,
 automorphism and campaign case and compares the whole traversal rather
 than only its answer: the label, the canonical graph, the seven run
 statistics, the accepted automorphisms in discovery order, the best
 path's refinement codes, and the final orbit partition. It also checks
 that the engine finishes with a normal root unwind. The first disagreement
 is printed with the differing fields and the case, and the run exits
-non-zero. The second search is `Nauty.Engine`, whose flat state and two
-fuel-recursive functions implement nauty's node and target-cell sweep.
-The public answer and certificate producer still use the transcription.
+non-zero. `Nauty.Engine` supplies both wrappers; the twin checks their
+agreement and normal termination, while the pinned external oracle provides
+the independent implementation comparison.
 The existing CI conformance job runs the twin on the fixture,
 automorphism, and campaign corpora. External `--engine` oracle comparisons
 are also recorded in [the engine report](../../reports/hex-graph-iso-engine.md).
@@ -1007,9 +1009,8 @@ Property checks independent of nauty include:
   sizes: `Nauty.specCanon G = canon G` and the isomorphism verdict read
   off `Nauty.canonSpecKey`, which is the only cross-check of the public
   answer this library still carries;
-- agreement between the transcription and the second canonical search on
-  every case of the fixture corpus and the campaign, through the twin
-  runner above;
+- agreement between the public and direct engine entry points on every
+  case of the fixture corpus and campaign, through the twin runner above;
 - rejection of a changed edge, colour, permutation entry, refinement record,
   automorphism, prune record, leaf comparison, or difference position in a
   certificate;
@@ -1176,18 +1177,22 @@ bench's business. The vertex sets of the search are packed sixty-three
 vertices to a word (`Nauty.VSet`), so every set operation is a loop
 over `⌈n/63⌉` limbs, the same shape as nauty's `setword` loops.
 
-The `engine` mode of `hexgraphiso_cactus` times the two canonical
-searches against each other on the same materialized instance and
-records `lit_ns`, `eng_ns`, `nauty_ns`, `nodes` and `eng_nodes` for
-every instance of the sweep corpus.
-`scripts/bench/graphiso_engine_compare.py` reads that run and prints,
-per family, the geometric mean of `eng_ns/lit_ns` and of
-`eng_ns/nauty_ns` together with each search's per-node cost exponent,
-so a constant-factor difference and a difference that grows with `n`
-are reported apart. Two searches with the same traversal visit the
-same nodes, so any instance whose `eng_nodes` differs from its `nodes`
-fails the run whatever the timings say. This is how a replacement
-search is measured before any proof about it is written.
+The `engine` mode of `hexgraphiso_cactus` times the public and direct
+wrappers of the same structured search on each materialized instance.
+It retains the historical columns `lit_ns`, `eng_ns`, `nauty_ns`, `nodes`
+and `eng_nodes`. `scripts/bench/graphiso_engine_compare.py` reports their
+within-run timing ratios and per-node exponents, and checks agreement of
+the two node counts. With the public search using the engine, this is a
+wrapper check; `eng_ns/lit_ns` does not measure improvement over the
+superseded search. The script also remains usable on archived spike runs,
+where those columns measured distinct implementations.
+
+Compare current `eng_ns` and node counts with archived `eng_ns` on the
+same corpus to measure changes since the spike. Keep the recorded host,
+trial count and timing baseline explicit; changes in nauty's measured
+time do not establish changes in engine time. The required cactus sweep
+and per-node exponent check continue to compare the public search with
+nauty.
 `bench/HexGraphIso/Profile.lean` times the same pair as its `run` and
 `erun` stages on the paley61, kneser72 and circulant64 instances, next
 to the certificate stages, and

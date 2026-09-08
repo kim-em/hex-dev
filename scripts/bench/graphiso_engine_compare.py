@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Compare the two canonical searches from one ``hexgraphiso_cactus engine`` run.
+"""Compare recorded entry points from a ``hexgraphiso_cactus engine`` run.
 
-The ``engine`` mode of the cactus driver times the literal port and the
-second search on the same materialized instance and records both node
-counts, one JSON line per instance::
+The ``engine`` mode times public and direct wrappers of the same engine.
+Archived spike runs instead timed the literal port and its replacement.
+Within-run ratios on current data check wrapper overhead, not improvement
+over the old implementation; compare archived and current ``eng_ns`` for
+that purpose. The mode records both node counts, one JSON line per instance::
 
     {"family": ..., "name": ..., "n": ..., "lit_ns": ..., "eng_ns": ...,
      "nauty_ns": ..., "nodes": ..., "eng_nodes": ...}

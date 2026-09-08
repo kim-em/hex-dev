@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert.CanonForm
-public import HexGraphIso.Nauty.Invariant.Reach
-public import HexGraphIso.Nauty.Cert.TraceAgree
+public import HexGraphIso.Nauty.Policy.PublicResult
+public import HexGraphIso.Nauty.Cert.Translator
 import all HexGraphIso.Nauty.Cert.CertAutom
 import all HexGraphIso.Nauty.Cert.CanonForm
 
@@ -26,137 +26,7 @@ produced certificate against the traced key.
 
 namespace Hex.GraphIso.Nauty
 
-/-- Charging with no budget is free. -/
-private theorem charge_none {st : AutState} (h : st.budget = none) :
-    st.charge = st := by
-  rw [AutState.charge, h]
-
-/-- Admission never touches the budget. -/
-private theorem admit_budget (ctx : Ctx n) (st : AutState)
-    (γ : Array Nat) : (st.admit ctx γ).budget = st.budget := by
-  rw [AutState.admit]
-  simp only [Id.run_pure, apply_ite Id.run]
-  repeat' split
-  all_goals rfl
-
-/-- Admission never exhausts. -/
-private theorem admit_exhausted (ctx : Ctx n) (st : AutState)
-    (γ : Array Nat) : (st.admit ctx γ).exhausted = st.exhausted := by
-  rw [AutState.admit]
-  simp only [Id.run_pure, apply_ite Id.run]
-  repeat' split
-  all_goals rfl
-
-/-- Harvesting never touches the budget. -/
-private theorem harvest_budget (ctx : Ctx n) (st : AutState)
-    (lab : Array Nat) : (st.harvest ctx lab).budget = st.budget := by
-  rw [AutState.harvest]
-  simp only []
-  repeat' split
-  all_goals try simp only [admit_budget]
-  all_goals rfl
-
-/-- Harvesting never exhausts. -/
-private theorem harvest_exhausted (ctx : Ctx n) (st : AutState)
-    (lab : Array Nat) :
-    (st.harvest ctx lab).exhausted = st.exhausted := by
-  rw [AutState.harvest]
-  simp only []
-  repeat' split
-  all_goals try simp only [admit_exhausted]
-  all_goals rfl
-
-/-- Fold steps that preserve a state predicate preserve it over the
-whole fold. -/
-private theorem foldl_pres {α β : Type} (f : β → α → β)
-    (P : β → Prop) :
-    ∀ (l : List α) (b : β), P b → (∀ b a, P b → P (f b a)) →
-      P (l.foldl f b)
-  | [], _, hb, _ => hb
-  | a :: l, b, hb, hstep => foldl_pres f P l (f b a) (hstep b a hb) hstep
-
-/-- With no budget, the certificate pass never exhausts and keeps no
-budget: the two fields the totality of `produceCand` reads. -/
-private theorem certifyNodeAutom_nobudget (ctx : Ctx n) (tcLevel : Nat) :
-    ∀ (fuel level : Nat) (lab ptn : Array Nat)
-      (active : VSet n) (numcells : Nat) (bcodes : List Nat) (st : AutState),
-      st.budget = none → st.exhausted = false →
-      (certifyNodeAutom ctx tcLevel fuel level lab ptn active numcells
-          bcodes st).2.budget = none ∧
-        (certifyNodeAutom ctx tcLevel fuel level lab ptn active
-          numcells bcodes st).2.exhausted = false
-  | 0, _, _, _, _, _, _, st, hb, he => ⟨hb, he⟩
-  | fuel + 1, level, lab, ptn, active, numcells, bcodes, st, hb, he => by
-    rw [certifyNodeAutom.eq_def]
-    dsimp only
-    rw [charge_none hb]
-    rw [ite_eq_right (by rw [he]; exact Bool.false_ne_true)]
-    match bcodes with
-    | [] => exact ⟨hb, he⟩
-    | bc :: brest =>
-      dsimp only
-      split
-      · exact ⟨hb, he⟩
-      · exact ⟨hb, he⟩
-      · split
-        · exact ⟨(harvest_budget ctx st _).trans hb,
-            (harvest_exhausted ctx st _).trans he⟩
-        · dsimp only
-          refine foldl_pres _
-            (fun (acc : List CertNode × AutState ×
-                Option (Nat × Array (Array Nat × Array Nat))) =>
-              acc.2.1.budget = none ∧ acc.2.1.exhausted = false)
-            (List.range _) ([], st, none) ?_ ?_
-          · exact ⟨hb, he⟩
-          intro acc o hacc
-          split
-          · split
-            · exact hacc
-            · dsimp only
-              exact certifyNodeAutom_nobudget ctx tcLevel fuel _ _ _
-                _ _ _ _ hacc.1 hacc.2
-          · dsimp only
-            exact certifyNodeAutom_nobudget ctx tcLevel fuel _ _ _
-              _ _ _ _ hacc.1 hacc.2
-
 variable {n k : Nat}
-
-/-- With no node budget, the candidate producer always returns a
-candidate. -/
-theorem produceCand_none_isSome (G : Colored n k) :
-    (produceCand G none).isSome := by
-  rw [produceCand]
-  dsimp only
-  rw [ite_eq_right (by simp [Option.any])]
-  have hst1 : ((runColoredTraced G).autos.foldl
-      (fun st γ => st.admit { g := rowsOf G } γ)
-      (AutState.init n none)).budget = none ∧
-      ((runColoredTraced G).autos.foldl
-      (fun st γ => st.admit { g := rowsOf G } γ)
-      (AutState.init n none)).exhausted = false := by
-    rw [← Array.foldl_toList]
-    refine foldl_pres _
-      (fun (st : AutState) => st.budget = none ∧
-        st.exhausted = false) _ _ ⟨rfl, rfl⟩ ?_
-    intro st γ hst
-    exact ⟨(admit_budget _ st γ).trans hst.1,
-      (admit_exhausted _ st γ).trans hst.2⟩
-  have h3 := certifyNodeAutom_nobudget { g := rowsOf G } 100
-    n 1 (initialPartition G).1
-    (initPtn n (n + 2) (initialPartition G).2)
-    (initActive n (initialPartition G).2)
-    (initialPartition G).2.length
-    (((runColoredTraced G).bestCodes ++ [codeSentinel]))
-    { ((runColoredTraced G).autos.foldl
-        (fun st γ => st.admit { g := rowsOf G } γ)
-        (AutState.init n none)) with
-      refLeaf := some (runColoredTraced G).result.canonlab }
-    hst1.1 hst1.2
-  split
-  · next hcond =>
-    rw [h3.2] at hcond
-    cases hcond
-  · rfl
 
 /-- The key of every produced candidate is read off the traced run:
 the recorded code chain with the sentinel, and the spec rows of the

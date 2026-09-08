@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Ops
+public import HexGraphIso.Autom
 public import HexGraphIso.Nauty.Invariant.Orbits
 import all HexGraphIso.Nauty.Invariant.Orbits
 
@@ -84,50 +85,6 @@ theorem trans {G : Colored n k} {u v w : Fin n} (h₁ : SameOrbit G u v)
 end SameOrbit
 
 /-! # The checked generator list -/
-
-/-- The entries of a checked raw permutation array. -/
-theorem Perm.val_get_of_ofNatArray? {a : Array Nat} {p : Perm n}
-    (h : Perm.ofNatArray? n a = some p) (i : Fin n) :
-    (p.get i).val = a[i.val]! := by
-  rw [Perm.ofNatArray?] at h
-  split at h
-  · rename_i hc
-    have hsz : i.val < a.size := hc.1.symm ▸ i.isLt
-    rw [Perm.get, Perm.vec_of_ofVector? h]
-    rw [getElem!_pos a i.val hsz]
-    simp
-  · simp at h
-
-/-- Accept one raw generator array from the traversal: rebuild it as a
-permutation of `Fin n` and check that it is an automorphism. This is
-the only step that admits a generator, and the admission test is
-`checkIso`. -/
-@[expose] def autom? (G : Colored n k) (γ : Array Nat) : Option (Perm n) :=
-  match Perm.ofNatArray? n γ with
-  | some p => if checkIso G G p then some p else none
-  | none => none
-
-theorem autom?_isIso {G : Colored n k} {γ : Array Nat} {p : Perm n}
-    (h : autom? G γ = some p) : IsIso G G p := by
-  rw [autom?] at h
-  split at h
-  · split at h
-    · rename_i hchk
-      rw [← Option.some.inj h]
-      exact (checkIso_iff G G _).mp hchk
-    · simp at h
-  · simp at h
-
-theorem autom?_val_get {G : Colored n k} {γ : Array Nat} {p : Perm n}
-    (h : autom? G γ = some p) (i : Fin n) : (p.get i).val = γ[i.val]! := by
-  rw [autom?] at h
-  split at h
-  · rename_i q hq
-    split at h
-    · rw [← Option.some.inj h]
-      exact Perm.val_get_of_ofNatArray? hq i
-    · simp at h
-  · simp at h
 
 namespace Aut
 

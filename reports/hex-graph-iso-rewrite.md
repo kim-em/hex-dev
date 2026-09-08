@@ -382,11 +382,19 @@ so the two designs converge:
   refactor and re-run the sweep to confirm the compiler specialises the
   typeclass away (`trace.compiler.ir.result`). If it regresses, keep the
   direct engine and prove `Engine.node = Generic.node` by unfolding.
-- Trivial policy (`σ := Unit`, never prunes) reduces `Generic.node` to
-  `specNode` (`CanonSpec.lean:155`): `generic_trivial_eq_specNode`.
+- A policy that never prunes reduces `Generic.node` to `specNode`:
+  `generic_trivial_eq_specNode`, with sufficient node and sweep fuel.
+  Its state retains the labelling, partition, path codes, and incumbent.
+  Only additional pruning bookkeeping is trivial. Exhausted generic
+  calls stop the traversal, so equality with the specification's
+  truncated whole-tree fold is not asserted for insufficient fuel.
 - Generic soundness, in the shape of `searchNode_eq` and `searchNodeG_eq`:
-  under `SoundPolicy`, `incKey σ' = keyMax (incKey σ) (prefixKey cs
-  (specNode ..))`, the invariant is preserved, and `unwind t` below the
+  under `SoundPolicy`, `best' = some (incMax best (prefixKey cs
+  (specNode ..)))`, where `best : Option (Key n)` is `none` before
+  the first leaf. Carry the semantic incumbent through the temporary
+  `compCanon = 1` overwrite window, and read it from the executable
+  state when the comparison is stable. The invariant is preserved,
+  and `unwind t` below the
   level carries `Witness t σ'` (the current child subtree at level `t+1`
   is bounded by the incumbent), which intermediate loops transport and the
   loop at `t` turns into ordinary coverage.
@@ -396,20 +404,39 @@ so the two designs converge:
   `codeInv_keyCmp_lt`, `specNode_keyLe_of_code_lt`; leaf verdicts via
   `tied_full_keyCmp`, `leafEvent_faithful`, `updatecan_inv`; unwinds via
   `cellStab_of_scatter`, `orbjoin_orbSound`, the frozen machine for
-  `eqlevCanon`, and the small-cell subtree for `noncheaplevel - 1`
-  (`descPath_leafRows_all`, `leafRows_eq_of_descPaths`, `CheapDesc`);
-  store validity via the small-cell theorem for the restored admission test and
-  `checkAutom_scatter_of_leafRows_eq` for code 2; invariant maintenance
+  `eqlevCanon`, and the small-cell subtree for the cheap return
+  (the subtree starts at `noncheaplevel`, not at the preceding
+  failed-guard level; reuse `CheapDesc` and the small-cell theorems);
+  store validity for the restored admission test requires new run-history
+  bookkeeping: retain `SubtreeOk` at the `gcaFirst` ancestor, construct
+  `DescPath`s from that frame to the first and current leaves, and prove
+  their target-position paths equal. The existing `CheapDesc` only
+  describes the current node and `Guide.refReach` only records cell
+  permutation, so neither supplies this history. With these facts,
+  `descPath_leafRows_all`, `leafRows_eq_of_descPaths`, and
+  `checkAutom_scatter_of_descPaths` justify the cheap admission.
+  Code 2 uses `checkAutom_scatter_of_leafRows_eq`; invariant maintenance
   via `CodeCmpInv`, `FirstCodeInv`, `recover_machines`,
   `otherNodePrep_frames`, `firstterminal_*`, `AutosOk`/`PairOk`,
   `OrbSound`, `refine_equitable`. Keeping `recover`, `firstterminal`,
   `compareCodes`, `pushAuto` as the same functions on a record with the
   same field names makes those lemmas transfer by renaming.
 - The invariant is one record of about ten clauses (sizes and reach,
-  `CodeCmpInv`, `FirstCodeInv`, `CanongInv`, `CellStab` of `genTrace`,
+  `CodeCmpInv`, `FirstCodeInv`, `CanongInv`,
   `GenTraceOk`, `AutosOk`, `OrbSound`, `gcaFirst/gcaCanon < level`,
   `noncheaplevel ≤ level`, `cosetindex < n`) instead of 68 types, because
   unwinding and sweep coverage live in the theorem's conclusion.
+  Do not require every stored generator to stabilize the current
+  partition: this fails on reachable states, already for the empty graph
+  on four vertices. Generator validity is global. Cell stabilization is
+  required for the particular carrier or composed orbit witness at the
+  frozen ancestor partition where it is consumed. The invariant and
+  soundness contracts must retain the ancestor frame and prior-child
+  coverage needed to construct and interpret `Witness`; these facts
+  cannot be inferred from comparison counters or automorphism validity
+  alone. Use `RunInv.otherLeaf`, `Guide`, `Anchor.ofCellCarrier`, and
+  `Unwind.Located` as the reference for those obligations. The clause
+  count is an estimate, not a requirement to omit necessary hypotheses.
 - Reach facts consumed by `CertTotal` (`canonlab_cellsReach`,
   `runColoredTraced_result`) re-proved on the generic recursion as
   policy-independent lemmas from `refine_reachAt`/`breakout_reachAt`.

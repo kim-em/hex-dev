@@ -15,7 +15,11 @@ public import HexGraphIso.Nauty.Search.VSet
 public import HexGraphIso.Nauty.Search.Refine
 public import HexGraphIso.Nauty.Spec.Equivariance
 public import HexGraphIso.Nauty.Search.Search
-public import HexGraphIso.Nauty.Search.Engine
+public import HexGraphIso.Nauty.Policy.Result
+public import HexGraphIso.Nauty.Policy.Complete
+public import HexGraphIso.Nauty.Policy.CheapKey
+public import HexGraphIso.Nauty.Policy.Prune
+public import HexGraphIso.Nauty.Policy.Exhaustive
 public import HexGraphIso.Nauty.Spec.CanonSpec
 public import HexGraphIso.Nauty.Spec.CellPerm
 public import HexGraphIso.Nauty.Spec.CellPermLoop
@@ -31,7 +35,6 @@ public import HexGraphIso.Nauty.Invariant.Refine
 public import HexGraphIso.Nauty.Invariant.Leaves
 public import HexGraphIso.Nauty.Invariant.Codes
 public import HexGraphIso.Nauty.Invariant.Refine
-public import HexGraphIso.Nauty.Cert.TraceAgree
 public import HexGraphIso.Nauty.Invariant.Store
 public import HexGraphIso.Nauty.Equitable.Cells
 public import HexGraphIso.Nauty.Equitable.Individualize
@@ -43,30 +46,9 @@ public import HexGraphIso.Nauty.SmallCell.Shapes
 public import HexGraphIso.Nauty.SmallCell.Transitive
 public import HexGraphIso.Nauty.Cert.CertTotal
 public import HexGraphIso.Nauty.Cert.CertReplay
+public import HexGraphIso.Nauty.Cert.Certify
 public import HexGraphIso.Nauty.Cert.CertStore
 public import HexGraphIso.Nauty.Invariant.Coverage
-public import HexGraphIso.Nauty.Correct.Outcome
-public import HexGraphIso.Nauty.Correct.Base
-public import HexGraphIso.Nauty.Correct.Unwind.Target
-public import HexGraphIso.Nauty.Correct.Unwind.Located
-public import HexGraphIso.Nauty.Correct.Unwind.Trail
-public import HexGraphIso.Nauty.Correct.State.Induction
-public import HexGraphIso.Nauty.Correct.State.Ledger
-public import HexGraphIso.Nauty.Correct.Frames
-public import HexGraphIso.Nauty.Correct.RunInv.History
-public import HexGraphIso.Nauty.Correct.RunInv.Mutual
-public import HexGraphIso.Nauty.Correct.RunInv.Coset
-public import HexGraphIso.Nauty.Correct.Exit.Final
-public import HexGraphIso.Nauty.Correct.Exit.Classify
-public import HexGraphIso.Nauty.Correct.Sweep.Base
-public import HexGraphIso.Nauty.Correct.Sweep.Carry
-public import HexGraphIso.Nauty.Correct.Sweep.Node
-public import HexGraphIso.Nauty.Correct.OffPath.Loop
-public import HexGraphIso.Nauty.Correct.OffPath.Node
-public import HexGraphIso.Nauty.Correct.FirstPath.Loop
-public import HexGraphIso.Nauty.Correct.FirstPath.Hyp
-public import HexGraphIso.Nauty.Correct.FirstPath.Sweep
-public import HexGraphIso.Nauty.Correct.Certify
 public import HexGraphIso.Nauty.Equitable.Root
 public import HexGraphIso.Nauty.Invariant.Reach
 public import HexGraphIso.Nauty.Cert.Translator
@@ -79,9 +61,6 @@ public import HexGraphIso.Nauty.Invariant.Orbits
 public import HexGraphIso.Nauty.Invariant.Stabilize
 public import HexGraphIso.Nauty.Invariant.Autos
 public import HexGraphIso.Nauty.Invariant.Domination
-public import HexGraphIso.Nauty.Invariant.Incumbent
-public import HexGraphIso.Nauty.Invariant.Closure
-public import HexGraphIso.Nauty.Invariant.Incumbent
 public import HexGraphIso.Nauty.Invariant.Orbits
 public import HexGraphIso.Nauty.Equitable.Basic
 public import HexGraphIso.Nauty.Equitable.Step
@@ -89,6 +68,7 @@ public import HexGraphIso.Nauty.Equitable.Fix
 public import HexGraphIso.Nauty.Invariant.TargetCell
 public import HexGraphIso.Ops
 public import HexGraphIso.Autos
+public import HexGraphIso.AutTrace
 public import HexGraphIso.AutComplete
 public import HexGraphIso.AutIndiv
 public import HexGraphIso.Uncolored
@@ -125,11 +105,11 @@ goals, coloured or uncoloured, with a kernel-checked proof. Importing
 goals.
 
 `Hex.GraphIso.Nauty` is the verified search and its proof, organized by
-concept: `Search` is the executable transcription, `Spec` the
+concept: `Search` is the structured executable, `Spec` the
 declarative canonical form, `Cert` the certificates and the trusted
-`checkCanon` replay, `Correct` the induction identifying the two, and
-`Invariant`, `Equitable`, `SmallCell` and `Model` the supporting
-theories. The umbrella exports the canonicalization theory for proofs
+`checkCanon` replay, and `Policy` the generic recursion contracts and
+engine correctness. `Generation`, `Invariant`, `Equitable`, `SmallCell`
+and `Model` supply the supporting theories. The umbrella exports the canonicalization theory for proofs
 that need it. Generation exposes its public contracts and small witness
 types, keeping the larger implementation behind private imports.
 

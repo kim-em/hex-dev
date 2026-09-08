@@ -534,7 +534,7 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
         closure = import_closure(("HexGraphIso/Uncolored.lean",))
         self.assertNotIn("HexGraphIso/AutComplete.lean", closure)
         self.assertNotIn(
-            "HexGraphIso/Nauty/Correct/Generation/FirstGeneration.lean", closure)
+            "HexGraphIso/Nauty/Policy/GeneratedComplete.lean", closure)
 
     def test_import_all(self):
         self.assertEqual(IMPORT.findall("import all HexGraphIso.Autos\n"),
