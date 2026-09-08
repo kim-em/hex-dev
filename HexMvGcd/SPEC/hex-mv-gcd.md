@@ -1242,9 +1242,6 @@ deliberately so. -/
 def Squarefree (p : MvPoly n R cmp) : Prop :=
   p ≠ 0 ∧ ∀ d, d * d ∣ p → IsConst d
 
--- The surrounding context includes the coefficient ring's explicit
--- `[BEq R] [LawfulBEq R]`, as required by `MvPoly` multiplication.
-
 attribute [local instance] Lean.Grind.Semiring.natCast
 
 /-- Mathlib-free characteristic zero: every positive natural remains
@@ -1367,10 +1364,10 @@ Recursion on the arity.
   recursively with `i` removed.
 - Normalize `primPartIn i p`, move its normalization unit into the scalar
   content, and run Yun's algorithm on that normalized polynomial with the
-  derivative in `xᵢ`. This second normalization is required because recursive
-  content uses `Mono.lex`, while the caller may use another monomial order;
-  embedding a lower polynomial can change which coefficient supplies its
-  normalization unit.
+  derivative in `xᵢ`. Yun's initial invariant requires this primitive part to
+  be normalized in the caller's monomial order. Factors lifted from recursive
+  content remain canonical only up to units and may retain the normalization
+  chosen by `Mono.lex`.
 - Merge by multiplying factors of equal multiplicity.
 
 ```

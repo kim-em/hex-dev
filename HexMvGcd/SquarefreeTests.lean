@@ -207,11 +207,41 @@ def input : P :=
 
 #guard
   let decomp := sqfDecomp input
-  decomp.factors.foldl
-    (fun acc factor => acc * factor.factor ^ factor.multiplicity)
-    (C decomp.content) == input
+  decomp.content == -1 &&
+    decomp.factors.length == 1 &&
+    decomp.factors.all (fun factor => factor.multiplicity == 1)
+
+/-- Recursive content has multiplicity two and is inserted after the
+main-variable factor. -/
+def contentAfter : P :=
+  let x : P := X 0
+  let y : P := X 1
+  let z : P := X 2
+  (y - z ^ 2) ^ 2 * (x + 1)
+
+#guard
+  (sqfDecomp contentAfter).factors.map (·.multiplicity) == [1, 2]
+
+/-- Recursive content has multiplicity one and is inserted before the
+main-variable factor. -/
+def contentBefore : P :=
+  let x : P := X 0
+  let y : P := X 1
+  let z : P := X 2
+  (y - z ^ 2) * (x + 1) ^ 2
+
+#guard
+  (sqfDecomp contentBefore).factors.map (·.multiplicity) == [1, 2]
 
 end OrderRegression
+
+/-- info: 'Hex.MvPoly.isSquarefree_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms isSquarefree_iff
+
+/-- info: 'Hex.MvPoly.radical_squarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms radical_squarefree
 
 /-- info: 'Hex.MvPoly.sqfDecomp_prod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

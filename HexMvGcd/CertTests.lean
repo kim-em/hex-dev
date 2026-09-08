@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMvGcd.Cert
+public meta import HexMvGcd.Brown
 public meta import HexMvGcd.Instances
 public meta import HexMvPoly.Operations
 import all HexMvGcd.Cert
@@ -201,5 +202,13 @@ theorem no_integer_lift (model : RatModel Int) : False := model.not_int
 /-- info: 'Hex.MvPoly.checkGcd_greatest' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.MvPoly.checkGcd_greatest
+
+/-- info: 'Hex.MvPoly.prsCert_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.prsCert_checks
+
+/-- info: 'Hex.MvPoly.intArityOneCert_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.intArityOneCert_checks
 
 end Hex.MvPoly.CertTests

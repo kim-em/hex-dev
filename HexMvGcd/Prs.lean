@@ -1349,7 +1349,6 @@ private theorem checkedContent_greatest_coeff {n : Nat} {R : Type u}
   rcases List.mem_map.mp hq with ⟨k, _, rfl⟩
   exact hd k
 
-set_option maxHeartbeats 4000000 in
 private theorem producedContent_const_dvd {n : Nat} {R : Type u}
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -1364,7 +1363,7 @@ private theorem producedContent_const_dvd {n : Nat} {R : Type u}
     (hd : d ∣ (contentCertWith produce
       (toUnivariate i Mono.lex p).toArray.toList).value) :
     constIn (cmp := cmp) i Mono.lex d ∣ p := by
-  apply constIn_dvd i d p
+  apply constIn_dvd (cmp := cmp) i d p
   intro k
   exact Hex.dvdTrans hd
     (producedContent_dvd_coeff produce hproduce
