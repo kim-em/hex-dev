@@ -30,7 +30,7 @@ the file changes again, and they live one-per-file so that concurrent
 pull requests never collide on a shared list.
 
 The pay-off is that a broad relevant set (the Hex factor service spans
-HexBasic through HexPolyZ, and re-measuring needs a dedicated-hardware
+HexBasic through HexPolyZ, and re-measuring needs a manual shared-host
 session) stays enforceable, while a tight one re-measures instead. So a
 family opts into the exemption channel only when its relevant set is
 broad enough to need one: today that is Hex's own factorization curve,
@@ -610,7 +610,7 @@ def factor_family(system: str) -> Family:
     corpus and the sweep driver, and every edit there is a deliberate one
     aimed at the measurement itself. Widening the channel to the
     comparators would let a single exemption advance five records that
-    only dedicated hardware can re-measure.
+    require a manual shared-host sweep to re-measure.
     """
     return Family(
         name=f"hexbz-factor-{system}",

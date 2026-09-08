@@ -1137,8 +1137,7 @@ vertex, permutation-entry, and adjacency-word visits.
 
 Merge CI runs a small deterministic subset and keeps the complete `Bench
 verify` invocation inside its existing time limit. Hard families and full
-nauty timing comparisons run in the existing scheduled performance workflow
-on dedicated hardware.
+nauty timing comparisons are collected manually under the shared-host policy.
 
 The published cactus figures must stay current with the code. The
 per-instance sweep data lives under `reports/bench-results/` keyed by

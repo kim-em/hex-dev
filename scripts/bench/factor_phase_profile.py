@@ -45,7 +45,7 @@ that the repeats agree on all of it before replacing the durations.
   cardinalities, and the factor-degree multiset it returns, and the profile
   total must track the untimed end-to-end `factor` call.
 
-This is a diagnostic driver run manually on dedicated hardware, not a CI job
+This is a diagnostic driver run manually on the shared host, not a CI job
 and not a hex-internal benchmark harness, so the one-harness rule stays intact
 (see SPEC/benchmarking.md addendum).
 

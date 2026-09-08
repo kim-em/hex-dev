@@ -13,11 +13,10 @@ inflating roughly a quarter of a sweep's rows by about 1.9x, with the affected
 rows differing from run to run because they depend on when the siblings
 happened to be busy. `ps -eo pid,psr` shows it immediately; nothing else does.
 
-This module picks a core that is currently free, so concurrent measurements on
-the same host do not collide. It is a heuristic about *scheduling*, not about
-correctness: a caller that needs a preregistered CPU for a release-quality
-verdict (see SPEC/benchmarking.md, designated-shared-host protocol) should
-still name one explicitly and record it.
+This module picks a core with low recent activity so concurrent measurements on
+the same host are less likely to collide. It is a placement heuristic, not an
+acceptance test. Callers record the selected CPU and retain whatever activity
+occurs during the run as context.
 
 Run::
 

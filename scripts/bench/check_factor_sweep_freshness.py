@@ -11,7 +11,7 @@ merge and any rebase that rewrites the commit but not the content.
 
 The relevant set here is honestly broad -- the Hex factor service call
 graph spans HexBasic through HexPolyZ -- and re-measuring needs a
-dedicated-hardware session, so runtime-neutral edits are absorbed instead
+manual shared-host session, so runtime-neutral edits are absorbed instead
 of re-measured: when the fingerprint has moved, every path whose blob
 differs from the manifest must carry a blob-transition exemption under
 ``scripts/bench/proof_only_runtime_exemptions/``. The relevant sets, the

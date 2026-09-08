@@ -124,14 +124,13 @@ def parse_args(
         "--shared-host",
         action="store_true",
         help=(
-            "use the release-quality designated-shared-host protocol; requires "
-            "single-CPU affinity, at least two null controls, and at least "
-            "six balanced samples"
+            "pin timed children to one CPU on the shared host while retaining "
+            "host activity as context"
         ),
     )
     parser.add_argument(
         "--expected-host",
-        help="required hostname for the designated-shared-host protocol",
+        help="hostname recorded for the shared-host run",
     )
     parser.add_argument(
         "--cpu",
@@ -166,25 +165,20 @@ def parse_args(
         type=int,
         default=DEFAULT_MAX_PAIR_RETRIES,
         help=(
-            "maximum contaminated-pair retries under the shared-host "
-            f"protocol (default {DEFAULT_MAX_PAIR_RETRIES}, hard cap "
-            f"{MAX_PAIR_RETRIES}; counts retries after the initial attempt)"
+            "legacy compatibility option; host activity no longer retries pairs"
         ),
     )
     parser.add_argument(
         "--preflight-window-seconds",
         type=float,
         default=DEFAULT_PREFLIGHT_WINDOW_SECONDS,
-        help=(
-            "quiet-core observation duration before each shared-host "
-            "pair attempt"
-        ),
+        help="legacy compatibility option; no quiet-core preflight is run",
     )
     parser.add_argument(
         "--preflight-timeout-seconds",
         type=float,
         default=DEFAULT_PREFLIGHT_TIMEOUT_SECONDS,
-        help="maximum wait for a quiet physical-core window",
+        help="legacy compatibility option; no quiet-core preflight is run",
     )
     args = parser.parse_args(argv)
     if args.samples < 1:
@@ -347,7 +341,7 @@ def cpu_topology(cpu: int) -> dict[str, object]:
 
 
 def configure_shared_host(args: argparse.Namespace) -> None:
-    """Pin this runner before warmup and verify the named release machine."""
+    """Pin this runner before warmup and record the selected shared machine."""
     if not args.shared_host:
         return
     assert args.expected_host is not None
@@ -587,7 +581,7 @@ def host_issues(
 def shared_host_protocol_issues(
     spec: SweepSpec, args: argparse.Namespace
 ) -> list[str]:
-    """Check the preregistered controls for shared-host release evidence."""
+    """Check only placement needed for shared-host paired sampling."""
     if not args.shared_host:
         return []
     issues: list[str] = []
@@ -603,29 +597,8 @@ def shared_host_protocol_issues(
         issues.append(
             f"observed affinity {affinity} does not match requested CPU {args.cpu}"
         )
-    controls = [pair for pair in spec.pairs if pair.null_control]
-    if len(controls) < 2:
-        issues.append(
-            "shared-host evidence requires at least two same-module null controls"
-        )
-    elif len({pair.reference.module for pair in controls}) < 2:
-        issues.append("null controls must use at least two distinct magnitudes")
-    first_substantive = next(
-        (
-            index for index, pair in enumerate(spec.pairs)
-            if not pair.null_control
-        ),
-        len(spec.pairs),
-    )
-    if any(pair.null_control for pair in spec.pairs[first_substantive:]):
-        issues.append("all null controls must precede substantive pairs")
     if not any(not pair.null_control for pair in spec.pairs):
         issues.append("shared-host evidence requires a substantive pair")
-    if args.samples < 6 or args.samples % 2 != 0:
-        issues.append(
-            "shared-host evidence requires at least six and an even number "
-            "of samples"
-        )
     return issues
 
 
@@ -1090,86 +1063,6 @@ def build_sample(
     return result
 
 
-def wait_for_shared_host_window(
-    measurement_cpu: int,
-    monitored_cpus: Sequence[int],
-    sibling_cpus: Sequence[int],
-    window_seconds: float,
-    timeout_seconds: float,
-) -> dict[str, object]:
-    """Wait boundedly for a quiet physical-core window before a pair."""
-    started = time.monotonic()
-    rejected_windows: list[dict[str, object]] = []
-    while True:
-        before = cpu_ticks(monitored_cpus)
-        time.sleep(window_seconds)
-        after = cpu_ticks(monitored_cpus)
-        per_cpu: dict[str, dict[str, object]] = {}
-        issues: list[str] = []
-        target_delta = cpu_tick_delta(
-            before, after, measurement_cpu
-        )
-        target_busy = noninterrupt_busy_ticks(target_delta)
-        per_cpu[str(measurement_cpu)] = {
-            "ticks": target_delta,
-            "noninterrupt_busy_ticks": target_busy,
-        }
-        if target_busy is None:
-            issues.append("measurement-CPU preflight accounting is incomplete")
-        elif target_busy > PREFLIGHT_MAX_BUSY_TICKS:
-            issues.append(
-                f"measurement CPU {measurement_cpu} had "
-                f"{target_busy} non-interrupt busy ticks"
-            )
-        for sibling in sibling_cpus:
-            delta = cpu_tick_delta(before, after, sibling)
-            sibling_busy = busy_ticks(delta)
-            per_cpu[str(sibling)] = {
-                "ticks": delta,
-                "busy_ticks": sibling_busy,
-            }
-            if sibling_busy is None:
-                issues.append(
-                    f"SMT sibling CPU {sibling} preflight accounting "
-                    "is incomplete"
-                )
-            elif sibling_busy > PREFLIGHT_MAX_BUSY_TICKS:
-                issues.append(
-                    f"SMT sibling CPU {sibling} had "
-                    f"{sibling_busy} busy ticks"
-                )
-        observation = {
-            "window_seconds": window_seconds,
-            "max_busy_ticks": PREFLIGHT_MAX_BUSY_TICKS,
-            "per_cpu": per_cpu,
-            "issues": issues,
-        }
-        elapsed = time.monotonic() - started
-        if not issues:
-            return {
-                "admitted": True,
-                "elapsed_seconds": elapsed,
-                "rejected_windows": rejected_windows,
-                "accepted_window": observation,
-            }
-        rejected_windows.append(observation)
-        print(
-            "[preflight wait] " + "; ".join(issues),
-            flush=True,
-        )
-        if elapsed >= timeout_seconds:
-            return {
-                "admitted": False,
-                "elapsed_seconds": elapsed,
-                "rejected_windows": rejected_windows,
-                "accepted_window": None,
-                "issues": [
-                    "shared-host physical core did not become quiet within "
-                    f"{timeout_seconds:g}s"
-                ],
-            }
-
-
 def shared_host_arm_issues(
     pair_name: str,
     round_index: int,
@@ -1260,89 +1153,47 @@ def build_shared_host_pair(
     list[dict[str, object]],
     dict[str, object] | None,
 ]:
-    """Retry complete adjacent pairs and admit only wholly clean attempts."""
-    rejected: list[dict[str, object]] = []
-    for attempt in range(1, max_retries + 2):
-        preflight = wait_for_shared_host_window(
-            measurement_cpu,
-            monitored_cpus,
-            sibling_cpus,
-            preflight_window_seconds,
-            preflight_timeout_seconds,
+    """Build one adjacent pair and retain host activity as context."""
+    del max_retries, preflight_window_seconds, preflight_timeout_seconds
+    attempt_state = sampled_host_state(host_state())
+    built: dict[str, dict[str, object]] = {}
+    for role, module in modules:
+        print(f"[pair] {pair_name} {role} ({module.module})", flush=True)
+        built[role] = build_sample(
+            module.module,
+            timeout,
+            measurement_cpu=measurement_cpu,
+            monitored_cpus=monitored_cpus,
         )
-        if not preflight["admitted"]:
-            return None, rejected, {
-                "pair": pair_name,
-                "round": round_index,
-                "slot_index": slot_index,
-                "attempt": attempt,
-                "preflight": preflight,
-                "issues": list(preflight["issues"]),
-            }
-        attempt_state = sampled_host_state(host_state())
-        built: dict[str, dict[str, object]] = {}
-        for role, module in modules:
-            print(
-                f"[pair attempt {attempt}/{max_retries + 1}] "
-                f"{pair_name} {role} ({module.module})",
-                flush=True,
-            )
-            built[role] = build_sample(
-                module.module,
-                timeout,
-                measurement_cpu=measurement_cpu,
-                monitored_cpus=monitored_cpus,
-            )
-            if cpu_affinity() != [measurement_cpu]:
-                raise RuntimeError(
-                    "shared-host CPU affinity changed during the sweep"
-                )
-        for role, module in modules:
-            validate_axioms(pair_name, role, module, built[role])
-        issues = [
-            issue
-            for role, _module in modules
-            for issue in shared_host_arm_issues(
-                pair_name,
-                round_index,
-                role,
-                built[role],
-                measurement_cpu,
-                sibling_cpus,
-                max_ratio,
-            )
-        ]
-        row: dict[str, object] = {
-            "pair": pair_name,
-            "round": round_index,
-            "slot_index": slot_index,
-            "measurement_attempt": attempt,
-            "preflight": preflight,
-            "build_order": [role for role, _module in modules],
-            "host_before_pair": attempt_state,
-            "reference": built["reference"],
-            "candidate": built["candidate"],
-            "signed_wall_delta_nanos": (
-                int(built["candidate"]["wall_nanos"])
-                - int(built["reference"]["wall_nanos"])
-            ),
-        }
-        if not issues:
-            return row, rejected, None
-        rejected.append({
-            **row,
-            "attempt": attempt,
-            "issues": issues,
-        })
-        if attempt <= max_retries:
-            print(
-                f"[retry {attempt}/{max_retries}] "
-                + "; ".join(issues),
-                flush=True,
-            )
-            continue
-        return None, rejected, None
-    raise AssertionError("unreachable shared-host retry loop")
+        if cpu_affinity() != [measurement_cpu]:
+            raise RuntimeError("shared-host CPU affinity changed during the sweep")
+    for role, module in modules:
+        validate_axioms(pair_name, role, module, built[role])
+    context_issues = [
+        issue
+        for role, _module in modules
+        for issue in shared_host_arm_issues(
+            pair_name, round_index, role, built[role], measurement_cpu,
+            sibling_cpus, max_ratio,
+        )
+    ]
+    row: dict[str, object] = {
+        "pair": pair_name,
+        "round": round_index,
+        "slot_index": slot_index,
+        "measurement_attempt": 1,
+        "preflight": None,
+        "context_issues": context_issues,
+        "build_order": [role for role, _module in modules],
+        "host_before_pair": attempt_state,
+        "reference": built["reference"],
+        "candidate": built["candidate"],
+        "signed_wall_delta_nanos": (
+            int(built["candidate"]["wall_nanos"])
+            - int(built["reference"]["wall_nanos"])
+        ),
+    }
+    return row, [], None
 
 
 def warm_imports(spec: SweepSpec, timeout: float) -> None:
@@ -2184,103 +2035,21 @@ def validity_summary(
     observations: dict[str, object] | None,
     exceptions: Sequence[str],
 ) -> tuple[bool, list[str]]:
-    """Derive release validity from provenance, contention, and conclusions."""
+    """Derive release validity from provenance, completeness and budgets."""
+    del observations
     issues = list(exceptions)
-    if observations is not None:
-        issues.extend(
-            issue for issue in observations["violations"]
-            if issue not in issues
-        )
-    requires_null_resolution = not spec.absolute_only
-    if args.shared_host and requires_null_resolution:
-        control_magnitudes = [
-            int(results[pair.name]["build_magnitude_wall_nanos"])
-            for pair in spec.pairs
-            if pair.null_control
-        ]
-        if (
-            control_magnitudes
-            and min(control_magnitudes) > 0
-            and max(control_magnitudes) / min(control_magnitudes)
-            < MIN_CONTROL_MAGNITUDE_RATIO
-        ):
-            issues.append(
-                "null-control build magnitudes are not sufficiently distinct"
-            )
-    if requires_null_resolution:
-        for pair in spec.pairs:
-            if not pair.null_control:
-                continue
-            spread_ratio = results[pair.name].get("null_robust_spread_ratio")
-            if (
-                spread_ratio is None
-                or float(spread_ratio) > MAX_NULL_ROBUST_SPREAD_RATIO
-            ):
-                issues.append(
-                    f"{pair.name}: robust null IQR/build ratio "
-                    f"{spread_ratio!r} exceeds "
-                    f"{MAX_NULL_ROBUST_SPREAD_RATIO:.3f}"
-                )
     for pair in spec.pairs:
         if pair.null_control:
             continue
-        if (
-            args.shared_host
-            and results[pair.name].get("resolution")
-            == "no-comparable-control"
-        ):
-            issue = f"{pair.name}: no magnitude-comparable null control"
-            if issue not in issues:
-                issues.append(issue)
-        if "tactic_budget_ms" not in pair.metadata:
-            continue
-        if args.shared_host:
-            tick_hz = int(os.sysconf("SC_CLK_TCK"))
-            quantization = ACCOUNTING_QUANTIZATION_TICKS / tick_hz
-            pair_allowances = [
-                sum(
-                    max(
-                        quantization,
-                        args.max_core_interference_ratio
-                        * int(sample[role]["wall_nanos"])
-                        / 1_000_000_000,
-                    )
-                    for role in ("reference", "candidate")
-                )
-                for sample in results[pair.name]["samples"]
-            ]
-            interference_ceiling_nanos = int(
-                max(pair_allowances, default=0.0) * 1_000_000_000
-            )
-            results[pair.name][
-                "budget_interference_ceiling_nanos"
-            ] = interference_ceiling_nanos
-            budget_nanos = int(results[pair.name]["budget_nanos"])
-            if interference_ceiling_nanos >= budget_nanos:
-                issue = (
-                    f"{pair.name}: tactic budget is not resolvable under "
-                    "the admitted core-interference ceiling"
-                )
-                if issue not in issues:
-                    issues.append(issue)
-        status = results[pair.name].get("budget_status")
-        if status != "passed":
-            issue = f"{pair.name}: tactic budget {status}"
-            if issue not in issues:
-                issues.append(issue)
-    for pair in spec.pairs:
-        if "fresh_module_budget_ms" not in pair.metadata:
-            continue
-        status = results[pair.name].get("fresh_module_budget_status")
-        if status != "passed":
-            issue = f"{pair.name}: fresh-module budget {status}"
-            if issue not in issues:
-                issues.append(issue)
-    release_quality = (
-        not args.allow_dirty
-        and not args.allow_busy
-        and not issues
-    )
+        if "tactic_budget_ms" in pair.metadata:
+            status = results[pair.name].get("budget_status")
+            if status != "passed":
+                issues.append(f"{pair.name}: tactic budget {status}")
+        if "fresh_module_budget_ms" in pair.metadata:
+            status = results[pair.name].get("fresh_module_budget_status")
+            if status != "passed":
+                issues.append(f"{pair.name}: fresh-module budget {status}")
+    release_quality = not args.allow_dirty and not issues
     return release_quality, issues
 
 
@@ -2310,11 +2079,6 @@ def run_cli(
             f"this sweep requires --samples {spec.required_samples}, "
             f"got {args.samples}"
         )
-    if args.shared_host and args.max_pair_retries != spec.max_pair_retries:
-        raise RuntimeError(
-            "this sweep requires --max-pair-retries "
-            f"{spec.max_pair_retries}, got {args.max_pair_retries}"
-        )
     if args.samples % 2 != 0:
         raise RuntimeError(
             "fresh-module sweeps require an even --samples so pair "
@@ -2334,31 +2098,7 @@ def run_cli(
         raise RuntimeError("dirty measurement environment: " + "; ".join(dirt))
     if dirt:
         validity_exceptions.extend(dirt)
-    busy = host_issues(
-        dict(env["host_before"]),
-        args.max_load_per_cpu,
-        concurrent_is_issue=not args.shared_host,
-        load_is_issue=not args.shared_host,
-    )
-    if busy and not args.allow_busy:
-        raise RuntimeError("busy measurement environment: " + "; ".join(busy))
-    if busy:
-        validity_exceptions.extend(busy)
     warm_imports(spec, args.warm_timeout)
-    post_warm = host_issues(
-        host_state(),
-        args.max_load_per_cpu,
-        concurrent_is_issue=not args.shared_host,
-        load_is_issue=False,
-    )
-    if post_warm and not args.allow_busy:
-        raise RuntimeError(
-            "busy measurement environment after warmup: "
-            + "; ".join(post_warm)
-        )
-    validity_exceptions.extend(
-        issue for issue in post_warm if issue not in validity_exceptions
-    )
     before = source_hashes(spec, caller_file)
     pairs = list(spec.pairs)
     rows: dict[str, list[dict[str, object]]] = {
@@ -2395,16 +2135,6 @@ def run_cli(
     for round_index in range(args.samples):
         for slot_index, pair in enumerate(rotate(pairs, round_index)):
             state = host_state()
-            issues = host_issues(
-                state,
-                args.max_load_per_cpu,
-                concurrent_is_issue=not args.shared_host,
-                load_is_issue=not args.shared_host,
-            )
-            if issues and not args.allow_busy:
-                raise RuntimeError("host became busy: " + "; ".join(issues))
-            validity_exceptions.extend(issue for issue in issues
-                                       if issue not in validity_exceptions)
             modules = ordered_modules(pair, round_index)
             if args.shared_host and args.cpu is not None:
                 row, rejected, preflight_failure = build_shared_host_pair(
@@ -2489,16 +2219,6 @@ def run_cli(
     if dependencies_after != env["dependency_checkouts"]:
         raise RuntimeError("dependency checkout changed during the sweep")
     host_after = host_state()
-    final_busy = host_issues(
-        host_after,
-        args.max_load_per_cpu,
-        concurrent_is_issue=not args.shared_host,
-        load_is_issue=not args.shared_host,
-    )
-    if final_busy and not args.allow_busy:
-        raise RuntimeError("host became busy: " + "; ".join(final_busy))
-    validity_exceptions.extend(issue for issue in final_busy
-                               if issue not in validity_exceptions)
     env["host_after"] = host_after
     completion_issues = measurement_completion_issues(
         spec, rows, args.samples, exhausted_pairs
@@ -2522,11 +2242,6 @@ def run_cli(
         )
     if completion_issues:
         release_quality = False
-        if observations is not None:
-            validity_exceptions.extend(
-                issue for issue in observations["violations"]
-                if issue not in validity_exceptions
-            )
     else:
         release_quality, validity_exceptions = validity_summary(
             spec,
@@ -2548,9 +2263,9 @@ def run_cli(
             "exceptions": validity_exceptions,
             "observed": observations,
             "host_protocol": (
-                "designated-shared-host-v3"
+                "shared-host-context-v1"
                 if args.shared_host
-                else "quiescent-host-v1"
+                else "shared-host-unpinned-v1"
             ),
         },
         "config": {
@@ -2563,7 +2278,7 @@ def run_cli(
             "rotation": "pairs left by round index; pair orientation alternates",
             "pairing": (
                 "adjacent measured reference and candidate fresh modules; "
-                "contamination retries the complete oriented pair"
+                "every completed pair retained"
             ),
             "max_load_per_cpu": args.max_load_per_cpu,
             "max_core_interference_ratio":

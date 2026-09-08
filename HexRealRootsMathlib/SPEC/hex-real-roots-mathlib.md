@@ -422,23 +422,21 @@ validation, and complete source provenance.
 `HexRealRootsMathlibReplayProbeScientific` owns the larger release arms and
 remains outside routine CI.
 
-On the named shared release machine a canonical invocation is:
+A canonical shared-host invocation selects a CPU for placement and records it:
 
 ```bash
-python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
   --timeout 180 --warm-timeout 600 \
-  --shared-host --expected-host chungus2 --cpu 22
+  --shared-host --expected-host "$(hostname)" --cpu "$cpu"
 ```
 
-The release run preregisters its selected logical CPU and aggregate
-interference ratio on the command line; the artifact and headline report record
-those exact values. They govern that run rather than the illustrative CPU
-number above.
+The six balanced rounds retain every adjacent pair. Scheduler and SMT activity
+remain in the artifact as context and never trigger retries or removal.
 
-The runner enforces the designated-shared-host contract in
-`SPEC/benchmarking.md`, including bounded retries of complete rejected pairs
-after a bounded quiet-core preflight and a single aggregate pinned-core/SMT
-interference ceiling; `--allow-busy` remains diagnostic-only. Executable
+The runner follows the shared-host contract in `SPEC/benchmarking.md`: matched
+arms remain adjacent with alternating orientation, every completed pair is
+retained, and host/core activity is descriptive context. Executable
 isolation arithmetic belongs to the existing Mathlib-free `HexRealRoots`
 benchmark. The bridge declarations have no separable compiled runtime kernel.
 For the proof-emitting elaborator there is

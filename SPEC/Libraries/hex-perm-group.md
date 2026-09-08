@@ -835,7 +835,7 @@ Use [benchmarking](../benchmarking.md)'s ordered complexity modes, named
 hardware and complete output checks. Profile orbit construction, full-array
 composition, sifting, suffix rebuilding and word storage. Benches remain
 Mathlib-free. Extend existing conformance/oracle scripts and the single CI
-job, with scientific timing on the existing dedicated hardware workflow.
+job, with scientific timing collected manually under the shared-host policy.
 
 Implement in this order:
 

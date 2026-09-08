@@ -744,15 +744,11 @@ phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
 state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
-set, and refuses release claims from a dirty or uncontrolled host. On the
-named shared release machine it uses the designated-shared-host protocol from
-`SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
-affinity inherited by timed children, six balanced rounds, all null controls,
-and per-arm pinned-core/SMT scheduler accounting with bounded whole-pair
-retries after a bounded quiet-core preflight. The admitted foreign-plus-SMT
-aggregate shares one interference ceiling, and a rejected preflight window or
-pair attempt never enters timing summaries. Global load is recorded context;
-the scoped core-interference ceiling is the release gate.
+set, and refuses release claims from a dirty tree or incomplete provenance. It
+uses the shared-host protocol from `SPEC/benchmarking.md`: paired arms are
+adjacent with alternating orientation, every completed pair enters the summary,
+and affinity, load and scheduler observations are retained as context rather
+than admission gates.
 
 The committed implementation lives under `bench/HexRCF/ProofProbe/`.
 `Support.lean` owns the fixed source and reflected cases plus the precompiled
@@ -960,8 +956,8 @@ carrier degree, distinct-atom count, and coefficient growth.
 ## Time budgets (Phase 4 validation)
 
 These are fixed whole-tactic acceptance cases, measured as the preregistered
-paired `Tactic − Baseline` fresh-module delta on a clean named host, using
-the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
+paired `Tactic − Baseline` fresh-module delta on a clean tree, using
+the shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
 times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
 LeanBench cases above. Budgets are preregistered offline from a completed

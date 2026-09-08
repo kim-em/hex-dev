@@ -8,7 +8,7 @@ JSON record per sweep (deliverable 5). Each successful result retains its
 sorted ``factor_degrees`` so separately recorded system sweeps can also be
 cross-checked post hoc.
 
-This is a comparator sweep, run manually on dedicated hardware (carica) -- NOT a
+This is a comparator sweep, run manually on the shared host -- NOT a
 CI job and NOT a hex-internal benchmark harness, so the one-harness rule stays
 intact (see SPEC/benchmarking.md addendum).
 
