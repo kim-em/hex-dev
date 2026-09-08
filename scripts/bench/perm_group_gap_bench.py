@@ -35,7 +35,8 @@ while true do
   elif op = "construct" then
     for i in [1..count] do H := Group([s,c,s,()]);; StabChain(H);; checksum := checksum + Size(H);; od;
   elif op = "membership" then
-    for i in [1..count] do if s*c in G then checksum := checksum + 1; fi; od;
+    # GAP acts on the right: c*s represents Hex s.comp c.
+    for i in [1..count] do if c*s in G then checksum := checksum + 1; fi; od;
   elif op = "order" then
     for i in [1..count] do checksum := checksum + Size(G);; od;
   elif op = "stabilizer" then
@@ -133,8 +134,8 @@ def main() -> int:
         "protocol": "one persistent GAP process; line requests; process startup excluded",
         "methods": {
             "construction": "Group followed by StabChain with GAP defaults",
-            "prepared_queries": "cached Group and StabChain; Size, membership, Stabilizer",
-            "subgroups": "Intersection, Blocks, NormalClosure, DerivedSubgroup",
+            "prepared_queries": "cached Group and StabChain; Size, reversed-product membership, Stabilizer",
+            "subgroups": "Intersection, Blocks, NormalClosure, DerivedSubgroup; GAP attributes may cache after the first prepared query",
             "products": "DirectProduct and WreathProductImprimitiveAction",
         },
         "options": ["-q", "--quitonbreak"],

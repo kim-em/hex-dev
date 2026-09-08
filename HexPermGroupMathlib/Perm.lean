@@ -15,6 +15,21 @@ namespace Hex
 
 variable {n : Nat}
 
+/-- Mathlib's group structure uses the computational permutation operations,
+including the same left-recursive natural power implementation. -/
+instance : Group (Perm n) where
+  mul := Perm.comp
+  one := Perm.id n
+  inv := Perm.inv
+  npow k p := p.pow k
+  npow_zero _ := rfl
+  npow_succ := fun k p => by
+    simpa [Perm.pow_def, Perm.mul_def] using Perm.pow_add p k 1
+  mul_assoc := Perm.comp_assoc
+  one_mul := Perm.id_comp
+  mul_one := Perm.comp_id
+  inv_mul_cancel := Perm.inv_comp_self
+
 /-- The equivalence of `Fin n` given by a forward permutation: `p.get`
 one way, `p.inv.get` the other. -/
 @[expose] def Perm.toEquiv (p : Perm n) : Fin n ≃ Fin n where

@@ -53,6 +53,11 @@ subgroups rather than by generator-array equality. Left cosets are used
 throughout; for a nonnormal subgroup they must not be interchanged with right
 cosets.
 
+For graph automorphisms, constructing a group from known automorphism
+generators proves only that subgroup. The graph-isomorphism completeness
+certificate is the additional boundary needed to identify it with the whole
+automorphism group.
+
 ```lean
 def cyclicA : Group 4 := Group.ofGenerators #[rotation]
 def cyclicB : Group 4 := Group.ofGenerators #[rotation.inv]
@@ -113,11 +118,23 @@ def derivedOrders :=
   symmetric4.derivedSeries.certificate.orders symmetric4
 #guard derivedOrders = [24, 12, 4, 1]
 
-def c2 : Group 2 :=
-  Group.ofGenerators #[⟨#v[1, 0], by decide, by decide⟩]
+def c2Swap : Perm 2 := ⟨#v[1, 0], by decide, by decide⟩
+def c2 : Group 2 := Group.ofGenerators #[c2Swap]
 def c2wr2 := c2.wreathProduct c2 (by decide)
 #guard c2wr2.order = 8
 #guard c2wr2.generators.size = 3
+
+def c2Element : Element c2 :=
+  ⟨c2Swap, .generator (by simp [c2])⟩
+def baseCopy :=
+  WreathProduct.copy c2 (by decide) 0 c2Element
+def topCopy :=
+  WreathProduct.inr c2 (by decide) c2Element
+#guard baseCopy != topCopy
+def baseTopIsId :=
+  WreathProduct.top (by decide) baseCopy = Element.id c2
+#guard baseTopIsId
+#guard WreathProduct.top (by decide) topCopy = c2Element
 
 end HexPermGroupChapter
 ```
