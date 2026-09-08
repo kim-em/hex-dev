@@ -93,7 +93,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
+          sudo apt-get install -y gap libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \

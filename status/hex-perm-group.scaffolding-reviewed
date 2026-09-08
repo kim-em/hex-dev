@@ -1,0 +1,14 @@
+Reviewed against HexPermGroup/SPEC/hex-perm-group.md for issue #10126.
+
+The review covered the full public executable surface and its algorithmic
+shape: explicit-degree permutations, checked programs and chains, constructive
+membership, subgroups and cosets, element access, finite actions, search,
+blocks, normal structure, products, cycles, and bounded producer/replay paths.
+No data-level placeholder, fake extern, native-type detour, new axiom,
+native_decide use, or deferred SPEC declaration remains. The bounded follow-up
+was also independently reviewed by Claude Opus; its accounting concerns were
+resolved by the shared execution meter, pre-work reservations, literal
+boundary tests, and nested-rebuild statistics.
+
+No additional downstream-facing Phase 2 gap was identified. HexGraphIso uses
+the shared permutation representation without adding a reverse dependency.

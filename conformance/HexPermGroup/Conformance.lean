@@ -84,7 +84,29 @@ import HexPermGroup.Word.Build
 meta import HexPermGroup.Word.Codec
 import HexPermGroup.Word.Codec
 
-/-! Kernel-replayed permutation and membership-program regressions. -/
+/-!
+HexPermGroup conformance suite.
+
+Oracle: independent small-degree closure enumeration in this module and the
+required GAP oracle in `scripts/oracle/perm_group_gap.py`. Mode: core checks
+always elaborate; fixture replay against GAP is required in the oracle profile.
+
+Covered operations: permutation construction/composition/inversion/cycles,
+program replay, stabilizer-chain construction and checking, constructive
+membership, subgroup operations, left cosets, rank/unrank and indexed sampling,
+finite actions/images/kernels, complete and limited search, blocks/primitivity,
+normal closure/core/derived series/solvability, direct products and imprimitive
+wreath products, and bounded construction/rebuild/replay.
+
+Covered properties: left-action composition, independently enumerated
+membership/order/orbits/stabilizers/coset partitions, rank/unrank inverse laws,
+action and kernel specifications, complete-search witness validation, minimal
+invariant partitions, normal-series certificates, and product embedding/order
+laws. Edge cases include degrees zero and one, declared fixed points, duplicate
+and noncommuting generators, alternative presentations, nonnormal cosets,
+orders above 64 bits, zero and exact resource boundaries, incomplete results,
+and corrupt programs/chains/action/search/block/normal certificates.
+-/
 
 namespace Hex.PermGroup.Conformance
 

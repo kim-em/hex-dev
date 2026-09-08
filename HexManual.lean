@@ -52,6 +52,7 @@ import HexManual.Chapters.HexPolySmith
 import HexManual.Chapters.HexSmith
 import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexMinPoly
+import HexManual.Chapters.HexPermGroup
 import HexManual.Chapters.HexGraphIso
 import HexManual.Chapters.NautyAlgorithm
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
@@ -146,6 +147,8 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexNumberField}
 
 {include 0 HexManual.Chapters.HexNumberFieldTower}
+
+{include 0 HexManual.Chapters.HexPermGroup}
 
 {include 0 HexManual.Chapters.HexGraphIso}
 

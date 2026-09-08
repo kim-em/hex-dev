@@ -27,6 +27,10 @@ set -uo pipefail
 # Preflight the required oracle dependency families before emitting any fixtures so a
 # broken installation fails early and unambiguously.
 if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+  if ! command -v gap >/dev/null 2>&1; then
+    echo "FAIL: required GAP oracle is unavailable" >&2
+    exit 1
+  fi
   if ! python3 - <<'PY'
 import flint
 import cypari2

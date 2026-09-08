@@ -1,0 +1,11 @@
+Reviewed against HexPermGroupMathlib/SPEC/hex-perm-group-mathlib.md for issue
+#10126.
+
+The library is a correspondence-only layer. Its public declarations transport
+the checked computational objects to Equiv.Perm (Fin n), subgroup membership,
+cardinality, actions, kernels, blocks, normal structure, rank/unrank, and
+products. It owns no executable producer, checker, reifier, or tactic and keeps
+the declared dependency direction HexPermGroupMathlib -> HexPermGroup.
+
+No data-level placeholder, new axiom, native_decide use, or missing bridge
+contract was identified.

@@ -137,28 +137,34 @@ def products : Unit → IO Nat := fun _ => do
 
 /-- `certificate-replay`: construction and replay are separate operations. -/
 def certificateReplay : Unit → IO Nat := fun _ => do
-  let generators ← generatorsRef.get
-  let G := Group.ofGenerators generators
+  let G ← readGroup s4Ref
   require (checkChain G.generators G.chain) "certificate-replay: rejected chain"
   return G.chain.length
 
-private def config : LeanBench.FixedBenchmarkConfig where
-  repeats := 1
-  maxSecondsPerCall := 4.0
+/- The group degree is part of the Lean type, while the other families vary
+several independent dimensions. These are mode-3 canonical cases: each checks
+its complete mathematical result and carries an operation-specific ceiling.
+The scientific report records the controlled dimensions and separate profiles.
+The ceilings exceed the clean calibration medians by at least 100x while still
+rejecting an order-of-magnitude algorithmic regression. -/
+private def fixed (expected : UInt64) (cap : Float) : LeanBench.FixedBenchmarkConfig where
+  repeats := 5
+  maxSecondsPerCall := cap
+  expectedHash := some expected
 
-setup_fixed_benchmark degreeGenerators where config
-setup_fixed_benchmark chainShape where config
-setup_fixed_benchmark membership where config
-setup_fixed_benchmark stabilizers where config
-setup_fixed_benchmark containment where config
-setup_fixed_benchmark enumeration where config
-setup_fixed_benchmark elementAccess where config
-setup_fixed_benchmark finiteActions where config
-setup_fixed_benchmark subgroupSearch where config
-setup_fixed_benchmark blocks where config
-setup_fixed_benchmark normalStructure where config
-setup_fixed_benchmark products where config
-setup_fixed_benchmark certificateReplay where config
+setup_fixed_benchmark degreeGenerators where fixed 0x18 0.01
+setup_fixed_benchmark chainShape where fixed 0x8 0.01
+setup_fixed_benchmark membership where fixed 0x18 0.01
+setup_fixed_benchmark stabilizers where fixed 0x8 0.02
+setup_fixed_benchmark containment where fixed 0x2 0.01
+setup_fixed_benchmark enumeration where fixed 0x18 0.01
+setup_fixed_benchmark elementAccess where fixed 0x11 0.01
+setup_fixed_benchmark finiteActions where fixed 0x8 0.01
+setup_fixed_benchmark subgroupSearch where fixed 0x8 0.1
+setup_fixed_benchmark blocks where fixed 0x2 0.01
+setup_fixed_benchmark normalStructure where fixed 0x24 0.05
+setup_fixed_benchmark products where fixed 0xc 0.02
+setup_fixed_benchmark certificateReplay where fixed 0x4 0.01
 
 end Hex.PermGroupBench
 
