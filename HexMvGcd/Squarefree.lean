@@ -181,8 +181,7 @@ theorem toUnivariate_derivative {m : Nat}
     apply Vector.ext
     intro j hj
     by_cases hjval : j = i.val
-    · have hfin : (⟨j, hj⟩ : Fin (m + 1)) = i := Fin.ext hjval
-      simp [Mono.succAt, Mono.mul, Mono.unit, insertVar, hjval, hfin]
+    · simp [Mono.succAt, Mono.mul, Mono.unit, insertVar, hjval]
     · have hfin : (⟨j, hj⟩ : Fin (m + 1)) ≠ i := by
         intro h
         exact hjval (congrArg Fin.val h)
@@ -232,6 +231,7 @@ omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
   intro m
   rw [coeff_derivative, coeff_zero, Lean.Grind.Semiring.mul_zero, coeff_zero]
 
+omit [LawfulBezoutOps R] [GcdProducer R] in
 /-- A nonzero polynomial cannot divide a nonzero partial derivative of
 itself: the selected-variable degree drops strictly. -/
 private theorem derivative_eq_zero_of_dvd (i : Fin n)
@@ -368,6 +368,7 @@ private theorem C_mul_C (a b : R) :
   · rw [ite_eq_right hm, ite_eq_right hm,
       Lean.Grind.Semiring.mul_zero]
 
+omit [LawfulBezoutOps R] [GcdProducer R] in
 /-- Removing scalar content preserves the relative squarefree predicate. -/
 private theorem squarefree_primPart (p : MvPoly n R cmp) :
     Squarefree (primPart p) ↔ Squarefree p := by
@@ -405,6 +406,7 @@ private theorem squarefree_primPart (p : MvPoly n R cmp) :
         _ = (C (content p) * a) * (d * d) :=
           (MvPoly.mul_assoc ..).symm
 
+omit [LawfulBezoutOps R] [GcdProducer R] in
 private theorem isConst_of_unit [IsMonomialOrder cmp]
     (d : MvPoly n R cmp)
     (hd : polyIsUnit d = true) : IsConst d := by
@@ -414,6 +416,7 @@ private theorem isConst_of_unit [IsMonomialOrder cmp]
   rw [hc]
   exact isConst_C c
 
+omit [LawfulBezoutOps R] [GcdProducer R] in
 private theorem unit_of_const_dvd_primitive [IsMonomialOrder cmp]
     {q d : MvPoly n R cmp} (hq : Primitive q)
     (hdconst : IsConst d) (hdq : d ∣ q) : polyIsUnit d = true := by
@@ -438,6 +441,8 @@ private theorem unit_of_const_dvd_primitive [IsMonomialOrder cmp]
   rw [hdc, C_mul_C, hv]
   rfl
 
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
 private theorem derivative_dvd_of_square_dvd (i : Fin n)
     {d q : MvPoly n R cmp} (h : d * d ∣ q) : d ∣ derivative i q := by
   rcases h with ⟨a, ha⟩
@@ -463,6 +468,20 @@ private theorem derivative_dvd_of_square_dvd (i : Fin n)
   intro x hx
   rcases List.mem_map.mp hx with ⟨i, _, rfl⟩
   exact mvDerivative_zero i
+
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
+/-- Interior binomial coefficients vanish in a ring of prime
+characteristic. -/
+private theorem natCast_choose_prime_eq_zero {S : Type u}
+    [Lean.Grind.CommRing S] {prime : Nat} (hprime : Hex.Nat.Prime prime)
+    (hchar : (prime : S) = 0) {k : Nat} (hk0 : 0 < k)
+    (hkp : k < prime) : (Hex.Nat.choose prime k : S) = 0 := by
+  rcases Hex.Nat.choose_prime_dvd hprime hk0 hkp with ⟨a, ha⟩
+  have hcast := congrArg (fun m : Nat => (m : S)) ha
+  rw [Lean.Grind.Semiring.natCast_mul, hchar,
+    Lean.Grind.Semiring.zero_mul] at hcast
+  exact hcast
 
 /-- In characteristic zero, the all-partials gcd criterion is equivalent to
 relative squarefreeness for a primitive polynomial. -/
