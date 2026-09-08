@@ -223,13 +223,13 @@ on fixed inputs rather than as asymptotics.
   * 18 ms
 * * `factor?`
   * `X² − X − 1` over `ℚ(√2, √3)`
-  * 7.9 ms
+  * 5.2 ms
 * * `factor?`
   * `X²⁴ − X − 1` over `ℚ(√2)`
   * 9.2 ms
 * * `split?`
   * `(X² − 2)(X² − 3)` over `ℚ`
-  * 68 ms
+  * 60 ms
 * * `flatten?`
   * `ℚ(√2, √3)`
   * 21 ms
