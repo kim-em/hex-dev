@@ -1,0 +1,12 @@
+{"kind":"header","pid":1052215,"clock_source":"CLOCK_MONOTONIC","mono_anchor_ns":57943905356571,"schema_version":1}
+{"kind":"region","mono_t0_ns":57943905459574,"mono_t1_ns":57943905470640,"count":1,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943905473635,"mono_t1_ns":57943905484681,"count":2,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943905485392,"mono_t1_ns":57943905506133,"count":4,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943905506524,"mono_t1_ns":57943905547194,"count":8,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943905547555,"mono_t1_ns":57943905629055,"count":16,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943905629376,"mono_t1_ns":57943905792147,"count":32,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943905792548,"mono_t1_ns":57943906123168,"count":64,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943906123538,"mono_t1_ns":57943906778339,"count":128,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943906778769,"mono_t1_ns":57943908105145,"count":256,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943908105666,"mono_t1_ns":57943910879047,"count":512,"label":"warm-loop"}
+{"kind":"region","mono_t0_ns":57943910880499,"mono_t1_ns":57944586830828,"count":131072,"label":"warm-loop"}

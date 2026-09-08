@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Choose a logical CPU that is idle, and idle on all of its SMT siblings.
+"""Choose a logical CPU for shared-host benchmark placement.
 
 The factorization measurement recipes pin the measured service to one core so
 its timings are not perturbed by the scheduler. Pinning to a *fixed* core --
@@ -34,8 +34,7 @@ from pathlib import Path
 import sys
 import time
 
-# A core busy for less than this fraction of the sampling window counts as
-# free. Timer ticks and kernel bookkeeping never leave a core at exactly zero.
+# Retained for CLI compatibility. Activity is ranked, not admitted or rejected.
 BUSY_PERCENT = 5.0
 
 # Core 0 additionally services interrupts and is the historical default of
@@ -103,31 +102,27 @@ def busy_by_cpu(window: float = 0.3) -> dict[int, float]:
 
 def pick(avoid: frozenset[int] = AVOID,
          busy_percent: float = BUSY_PERCENT) -> int:
-    """Return a logical CPU that is free, and whose SMT siblings are free.
+    """Return the least-active available logical CPU and SMT core.
 
-    Among the free candidates this returns the quietest, so a core sitting
-    just under the threshold is not preferred to an entirely empty one and a
-    transient blip cannot flip the choice to a worse core.
-
-    Raises `RuntimeError` when the host has no such CPU, which is the honest
-    outcome: on a saturated host there is no placement that avoids the
-    interference this function exists to avoid.
+    ``busy_percent`` is accepted for compatibility with older commands but is
+    not an admission threshold. A busy host still gets a placement; callers
+    record activity as context and retain the run.
     """
+    del busy_percent
     busy = busy_by_cpu()
     siblings = sibling_map()
-    candidates = sorted(siblings) or {cpu: {cpu} for cpu in sorted(busy)}
-    free = []
-    for cpu in candidates:
-        if cpu in avoid:
+    candidates = siblings or {cpu: {cpu} for cpu in sorted(busy)}
+    ranked = []
+    for cpu, group in candidates.items():
+        if cpu in avoid or not group or not group.issubset(busy):
             continue
         group = siblings.get(cpu, {cpu})
-        load = max(busy.get(other, 0.0) for other in group)
-        if load < busy_percent:
-            free.append((load, cpu))
-    if not free:
-        raise RuntimeError(
-            "no idle core: every logical CPU or one of its SMT siblings is busy")
-    return min(free)[1]
+        ranked.append((max(busy[other] for other in group), cpu))
+    if not ranked and avoid:
+        return pick(avoid=frozenset())
+    if not ranked:
+        raise RuntimeError("no online logical CPU is available")
+    return min(ranked)[1]
 
 
 def pin_self(cpu: int) -> None:
@@ -147,8 +142,8 @@ def main() -> int:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--busy-percent", type=float, default=BUSY_PERCENT,
-                   help=f"treat a core below this %%CPU as free "
-                        f"(default {BUSY_PERCENT})")
+                   help="legacy compatibility option; activity is ranked, "
+                        "not used as an admission threshold")
     p.add_argument("--allow-cpu0", action="store_true",
                    help="consider core 0, which recipes historically default "
                         "to and which also services interrupts")

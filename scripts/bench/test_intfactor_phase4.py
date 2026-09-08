@@ -11,6 +11,15 @@ from unittest.mock import Mock, patch
 from scripts.bench import intfactor_phase4 as collector
 
 
+class SharedHostPlacementTests(unittest.TestCase):
+    def test_auto_placement_does_not_reject_a_busy_host(self):
+        activity = {1: 90.0, 49: 95.0, 2: 50.0, 50: 50.0}
+        topology = {1: {1, 49}, 49: {1, 49}, 2: {2, 50}, 50: {2, 50}}
+        with patch.object(collector.idle_core, 'busy_by_cpu', return_value=activity), \
+                patch.object(collector.idle_core, 'sibling_map', return_value=topology):
+            self.assertEqual(collector.idle_core.pick(), 2)
+
+
 class PreservationTests(unittest.TestCase):
     def exercise(self, action, error):
         with tempfile.TemporaryDirectory() as directory:

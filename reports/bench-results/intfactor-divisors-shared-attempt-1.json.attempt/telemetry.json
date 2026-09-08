@@ -1,0 +1,2344 @@
+{
+  "schema": 3,
+  "ownership": "dedicated-process-group",
+  "owned_process_group": 1048369,
+  "session_id": 1048369,
+  "child_pid": 1048370,
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/bin/hexintfactor_bench",
+    "run",
+    "--filter",
+    "Hex.IntFactorBench.runDivisors",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/bench.json"
+  ],
+  "cpu": 1,
+  "smt_siblings": [
+    49
+  ],
+  "interval_seconds": 0.25,
+  "started_utc": "2026-09-08T02:11:37.878305Z",
+  "ended_utc": "2026-09-08T02:12:10.861203Z",
+  "elapsed_seconds": 32.983,
+  "timed_region_sidecars": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1048433.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1049035.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050021.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050598.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050715.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050772.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050782.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050885.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1050950.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051006.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051084.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051206.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051228.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051284.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051336.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051448.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051496.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051691.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051843.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051899.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051920.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1051979.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052004.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052087.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052215.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052221.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052282.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052328.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052345.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052375.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052497.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052525.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052581.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052616.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052662.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052680.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1052908.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1053039.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1053111.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1053132.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1053177.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-shared-attempt-1.json.attempt/telemetry.json.timed-1048369-57925060601682-1053203.jsonl"
+  ],
+  "timed_region_sidecars_retained": true,
+  "timed_regions_error": null,
+  "command_return_code": 0,
+  "thresholds": {
+    "max_core_interference_ratio": 0.002
+  },
+  "summary": {
+    "sample_count": 75,
+    "timed_region_sidecar_count": 42,
+    "timed_region_count_after_union": 245,
+    "timed_regions_complete": true,
+    "timed_wall_seconds": 30.514898,
+    "foreign_runnable_samples": 0,
+    "measurement_cpu_foreign_seconds_estimate": 0,
+    "smt_sibling_busy_seconds": 0.287004,
+    "aggregate_core_interference_seconds": 0.287004,
+    "aggregate_core_interference_ratio": 0.009405,
+    "contaminated": true
+  },
+  "samples": [
+    {
+      "mono_t0_ns": 57925060601682,
+      "mono_t1_ns": 57925312809533,
+      "elapsed_seconds": 0.252,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.25,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.252208,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1048433,
+          "tid": 1048456,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.285,
+        2.914,
+        6.435
+      ],
+      "timed_overlap_seconds": 0.078836,
+      "timed_fraction": 0.312582
+    },
+    {
+      "mono_t0_ns": 57925312809533,
+      "mono_t1_ns": 57925749151420,
+      "elapsed_seconds": 0.689,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.436342,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1048433,
+          "tid": 1048456,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.285,
+        2.914,
+        6.435
+      ],
+      "timed_overlap_seconds": 0.436342,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57925749151420,
+      "mono_t1_ns": 57926164842798,
+      "elapsed_seconds": 1.104,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.415691,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1049035,
+          "tid": 1049038,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.285,
+        2.914,
+        6.435
+      ],
+      "timed_overlap_seconds": 0.361802,
+      "timed_fraction": 0.870362
+    },
+    {
+      "mono_t0_ns": 57926164842798,
+      "mono_t1_ns": 57926582856228,
+      "elapsed_seconds": 1.522,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.42,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.418013,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1049035,
+          "tid": 1049038,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.285,
+        2.914,
+        6.435
+      ],
+      "timed_overlap_seconds": 0.418013,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57926582856228,
+      "mono_t1_ns": 57927011483240,
+      "elapsed_seconds": 1.951,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.42,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.428627,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050021,
+          "tid": 1050030,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.378259,
+      "timed_fraction": 0.88249
+    },
+    {
+      "mono_t0_ns": 57927011483240,
+      "mono_t1_ns": 57927449902388,
+      "elapsed_seconds": 2.389,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438419,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050021,
+          "tid": 1050030,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.438419,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57927449902388,
+      "mono_t1_ns": 57927891213581,
+      "elapsed_seconds": 2.831,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.441311,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050598,
+          "tid": 1050603,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.391125,
+      "timed_fraction": 0.886278
+    },
+    {
+      "mono_t0_ns": 57927891213581,
+      "mono_t1_ns": 57928331576480,
+      "elapsed_seconds": 3.271,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440363,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.440363,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57928331576480,
+      "mono_t1_ns": 57928775794272,
+      "elapsed_seconds": 3.715,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.444218,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050715,
+          "tid": 1050725,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.390881,
+      "timed_fraction": 0.879931
+    },
+    {
+      "mono_t0_ns": 57928775794272,
+      "mono_t1_ns": 57929215308673,
+      "elapsed_seconds": 4.155,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.222
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.439514,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050772,
+          "tid": 1050776,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.389175,
+      "timed_fraction": 0.885466
+    },
+    {
+      "mono_t0_ns": 57929215308673,
+      "mono_t1_ns": 57929657306174,
+      "elapsed_seconds": 4.597,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.441998,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.441998,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57929657306174,
+      "mono_t1_ns": 57930095765041,
+      "elapsed_seconds": 5.035,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438459,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050782,
+          "tid": 1050834,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.388014,
+      "timed_fraction": 0.88495
+    },
+    {
+      "mono_t0_ns": 57930095765041,
+      "mono_t1_ns": 57930533663787,
+      "elapsed_seconds": 5.473,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.437899,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.437899,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57930533663787,
+      "mono_t1_ns": 57930974523813,
+      "elapsed_seconds": 5.914,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.44086,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050885,
+          "tid": 1050888,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.389685,
+      "timed_fraction": 0.883921
+    },
+    {
+      "mono_t0_ns": 57930974523813,
+      "mono_t1_ns": 57931416662053,
+      "elapsed_seconds": 6.356,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.442138,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.343,
+        2.932,
+        6.421
+      ],
+      "timed_overlap_seconds": 0.442138,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57931416662053,
+      "mono_t1_ns": 57931859324771,
+      "elapsed_seconds": 6.799,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.442663,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1050950,
+          "tid": 1050954,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.387709,
+      "timed_fraction": 0.875857
+    },
+    {
+      "mono_t0_ns": 57931859324771,
+      "mono_t1_ns": 57932298237401,
+      "elapsed_seconds": 7.238,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438913,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.438913,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57932298237401,
+      "mono_t1_ns": 57932739349991,
+      "elapsed_seconds": 7.679,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.441113,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051006,
+          "tid": 1051016,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.388684,
+      "timed_fraction": 0.881145
+    },
+    {
+      "mono_t0_ns": 57932739349991,
+      "mono_t1_ns": 57933180288073,
+      "elapsed_seconds": 8.12,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440938,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051084,
+          "tid": 1051087,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.390588,
+      "timed_fraction": 0.885811
+    },
+    {
+      "mono_t0_ns": 57933180288073,
+      "mono_t1_ns": 57933620103922,
+      "elapsed_seconds": 8.56,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.439816,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.439816,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57933620103922,
+      "mono_t1_ns": 57934060988414,
+      "elapsed_seconds": 9.0,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440884,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051206,
+          "tid": 1051216,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.390204,
+      "timed_fraction": 0.885047
+    },
+    {
+      "mono_t0_ns": 57934060988414,
+      "mono_t1_ns": 57934499223260,
+      "elapsed_seconds": 9.439,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438235,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051228,
+          "tid": 1051231,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.435154,
+      "timed_fraction": 0.992969
+    },
+    {
+      "mono_t0_ns": 57934499223260,
+      "mono_t1_ns": 57934938144482,
+      "elapsed_seconds": 9.878,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438921,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051228,
+          "tid": 1051231,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.391523,
+      "timed_fraction": 0.892012
+    },
+    {
+      "mono_t0_ns": 57934938144482,
+      "mono_t1_ns": 57935378985411,
+      "elapsed_seconds": 10.318,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440841,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051284,
+          "tid": 1051287,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.383675,
+      "timed_fraction": 0.870325
+    },
+    {
+      "mono_t0_ns": 57935378985411,
+      "mono_t1_ns": 57935818035665,
+      "elapsed_seconds": 10.757,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.43905,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051284,
+          "tid": 1051287,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.43905,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57935818035665,
+      "mono_t1_ns": 57936261428185,
+      "elapsed_seconds": 11.201,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.443393,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051336,
+          "tid": 1051340,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.235,
+        2.917,
+        6.397
+      ],
+      "timed_overlap_seconds": 0.393347,
+      "timed_fraction": 0.887131
+    },
+    {
+      "mono_t0_ns": 57936261428185,
+      "mono_t1_ns": 57936702355822,
+      "elapsed_seconds": 11.642,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440928,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051336,
+          "tid": 1051340,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.440928,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57936702355822,
+      "mono_t1_ns": 57937143557886,
+      "elapsed_seconds": 12.083,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.441202,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051448,
+          "tid": 1051458,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.387082,
+      "timed_fraction": 0.877334
+    },
+    {
+      "mono_t0_ns": 57937143557886,
+      "mono_t1_ns": 57937582334756,
+      "elapsed_seconds": 12.522,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438777,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.438775,
+      "timed_fraction": 0.999996
+    },
+    {
+      "mono_t0_ns": 57937582334756,
+      "mono_t1_ns": 57938020967632,
+      "elapsed_seconds": 12.96,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438633,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051496,
+          "tid": 1051499,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.388354,
+      "timed_fraction": 0.885374
+    },
+    {
+      "mono_t0_ns": 57938020967632,
+      "mono_t1_ns": 57938462104129,
+      "elapsed_seconds": 13.402,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.441136,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051691,
+          "tid": 1051745,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.390663,
+      "timed_fraction": 0.885584
+    },
+    {
+      "mono_t0_ns": 57938462104129,
+      "mono_t1_ns": 57938902933601,
+      "elapsed_seconds": 13.842,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440829,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051691,
+          "tid": 1051745,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.440829,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57938902933601,
+      "mono_t1_ns": 57939341778081,
+      "elapsed_seconds": 14.281,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438844,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051843,
+          "tid": 1051846,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.388178,
+      "timed_fraction": 0.884547
+    },
+    {
+      "mono_t0_ns": 57939341778081,
+      "mono_t1_ns": 57939779553706,
+      "elapsed_seconds": 14.719,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.437776,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.437776,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57939779553706,
+      "mono_t1_ns": 57940217063858,
+      "elapsed_seconds": 15.156,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.43751,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051899,
+          "tid": 1051902,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.386981,
+      "timed_fraction": 0.884508
+    },
+    {
+      "mono_t0_ns": 57940217063858,
+      "mono_t1_ns": 57940657627106,
+      "elapsed_seconds": 15.597,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440563,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.440563,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57940657627106,
+      "mono_t1_ns": 57941095876494,
+      "elapsed_seconds": 16.035,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.438249,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051920,
+          "tid": 1051923,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.387808,
+      "timed_fraction": 0.884903
+    },
+    {
+      "mono_t0_ns": 57941095876494,
+      "mono_t1_ns": 57941533513255,
+      "elapsed_seconds": 16.473,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.437637,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051920,
+          "tid": 1051923,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.296,
+        2.935,
+        6.384
+      ],
+      "timed_overlap_seconds": 0.437637,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57941533513255,
+      "mono_t1_ns": 57941970270100,
+      "elapsed_seconds": 16.91,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.436757,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1051979,
+          "tid": 1051982,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.385963,
+      "timed_fraction": 0.883703
+    },
+    {
+      "mono_t0_ns": 57941970270100,
+      "mono_t1_ns": 57942408979731,
+      "elapsed_seconds": 17.348,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.43871,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052004,
+          "tid": 1052007,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.410382,
+      "timed_fraction": 0.93543
+    },
+    {
+      "mono_t0_ns": 57942408979731,
+      "mono_t1_ns": 57942847441454,
+      "elapsed_seconds": 17.787,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.438462,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052004,
+          "tid": 1052007,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.4155,
+      "timed_fraction": 0.947632
+    },
+    {
+      "mono_t0_ns": 57942847441454,
+      "mono_t1_ns": 57943286152447,
+      "elapsed_seconds": 18.226,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 4.651
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.02
+      },
+      "interval_wall_seconds": 0.438711,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052087,
+          "tid": 1052090,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.387626,
+      "timed_fraction": 0.883557
+    },
+    {
+      "mono_t0_ns": 57943286152447,
+      "mono_t1_ns": 57943724261498,
+      "elapsed_seconds": 18.664,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.438109,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.438109,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57943724261498,
+      "mono_t1_ns": 57944163558269,
+      "elapsed_seconds": 19.103,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.326
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.439297,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052215,
+          "tid": 1052218,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.388788,
+      "timed_fraction": 0.885024
+    },
+    {
+      "mono_t0_ns": 57944163558269,
+      "mono_t1_ns": 57944605720618,
+      "elapsed_seconds": 19.545,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.442162,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052221,
+          "tid": 1052224,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.423273,
+      "timed_fraction": 0.957279
+    },
+    {
+      "mono_t0_ns": 57944605720618,
+      "mono_t1_ns": 57945043978038,
+      "elapsed_seconds": 19.983,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 4.444
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.02
+      },
+      "interval_wall_seconds": 0.438257,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052221,
+          "tid": 1052224,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.40636,
+      "timed_fraction": 0.927217
+    },
+    {
+      "mono_t0_ns": 57945043978038,
+      "mono_t1_ns": 57945483020443,
+      "elapsed_seconds": 20.422,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.439042,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052282,
+          "tid": 1052285,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.429948,
+      "timed_fraction": 0.979286
+    },
+    {
+      "mono_t0_ns": 57945483020443,
+      "mono_t1_ns": 57945921670396,
+      "elapsed_seconds": 20.861,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 6.667
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.03
+      },
+      "interval_wall_seconds": 0.43865,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052282,
+          "tid": 1052285,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.396871,
+      "timed_fraction": 0.904754
+    },
+    {
+      "mono_t0_ns": 57945921670396,
+      "mono_t1_ns": 57946360196745,
+      "elapsed_seconds": 21.3,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438526,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.833,
+        3.052,
+        6.404
+      ],
+      "timed_overlap_seconds": 0.438526,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57946360196745,
+      "mono_t1_ns": 57946797743934,
+      "elapsed_seconds": 21.737,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.437547,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052328,
+          "tid": 1052331,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.387184,
+      "timed_fraction": 0.884897
+    },
+    {
+      "mono_t0_ns": 57946797743934,
+      "mono_t1_ns": 57947236952395,
+      "elapsed_seconds": 22.176,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.439208,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052345,
+          "tid": 1052348,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.388062,
+      "timed_fraction": 0.883548
+    },
+    {
+      "mono_t0_ns": 57947236952395,
+      "mono_t1_ns": 57947676940071,
+      "elapsed_seconds": 22.616,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.439988,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.439988,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57947676940071,
+      "mono_t1_ns": 57948122113694,
+      "elapsed_seconds": 23.062,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.445174,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052375,
+          "tid": 1052378,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.394197,
+      "timed_fraction": 0.885489
+    },
+    {
+      "mono_t0_ns": 57948122113694,
+      "mono_t1_ns": 57948563600552,
+      "elapsed_seconds": 23.503,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.222
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.441487,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.441487,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57948563600552,
+      "mono_t1_ns": 57949007128617,
+      "elapsed_seconds": 23.947,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.222
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.443528,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052497,
+          "tid": 1052500,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.393318,
+      "timed_fraction": 0.886794
+    },
+    {
+      "mono_t0_ns": 57949007128617,
+      "mono_t1_ns": 57949448021705,
+      "elapsed_seconds": 24.387,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440893,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052525,
+          "tid": 1052528,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.390345,
+      "timed_fraction": 0.88535
+    },
+    {
+      "mono_t0_ns": 57949448021705,
+      "mono_t1_ns": 57949888542662,
+      "elapsed_seconds": 24.828,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.440521,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052525,
+          "tid": 1052528,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.440521,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57949888542662,
+      "mono_t1_ns": 57950330683330,
+      "elapsed_seconds": 25.27,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.442141,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052581,
+          "tid": 1052584,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.391707,
+      "timed_fraction": 0.885932
+    },
+    {
+      "mono_t0_ns": 57950330683330,
+      "mono_t1_ns": 57950774086970,
+      "elapsed_seconds": 25.713,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.443404,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052581,
+          "tid": 1052584,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.443404,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57950774086970,
+      "mono_t1_ns": 57951214501680,
+      "elapsed_seconds": 26.154,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440415,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052616,
+          "tid": 1052619,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.687,
+        3.035,
+        6.38
+      ],
+      "timed_overlap_seconds": 0.408739,
+      "timed_fraction": 0.928079
+    },
+    {
+      "mono_t0_ns": 57951214501680,
+      "mono_t1_ns": 57951653666317,
+      "elapsed_seconds": 26.593,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 4.545
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.02
+      },
+      "interval_wall_seconds": 0.439165,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1048370,
+          "tid": 1048386,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.419922,
+      "timed_fraction": 0.956183
+    },
+    {
+      "mono_t0_ns": 57951653666317,
+      "mono_t1_ns": 57952093313909,
+      "elapsed_seconds": 27.033,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.326
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.439648,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052662,
+          "tid": 1052665,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.388827,
+      "timed_fraction": 0.884406
+    },
+    {
+      "mono_t0_ns": 57952093313909,
+      "mono_t1_ns": 57952531886599,
+      "elapsed_seconds": 27.471,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.438573,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052680,
+          "tid": 1052683,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.437904,
+      "timed_fraction": 0.998476
+    },
+    {
+      "mono_t0_ns": 57952531886599,
+      "mono_t1_ns": 57952969122478,
+      "elapsed_seconds": 27.909,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.437236,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052680,
+          "tid": 1052683,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.387268,
+      "timed_fraction": 0.885718
+    },
+    {
+      "mono_t0_ns": 57952969122478,
+      "mono_t1_ns": 57953409507654,
+      "elapsed_seconds": 28.349,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440385,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1052908,
+          "tid": 1052911,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.389829,
+      "timed_fraction": 0.885201
+    },
+    {
+      "mono_t0_ns": 57953409507654,
+      "mono_t1_ns": 57953854386992,
+      "elapsed_seconds": 28.794,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.222
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.444879,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.444879,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57953854386992,
+      "mono_t1_ns": 57954298113471,
+      "elapsed_seconds": 29.238,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.443726,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053039,
+          "tid": 1053042,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.393246,
+      "timed_fraction": 0.886236
+    },
+    {
+      "mono_t0_ns": 57954298113471,
+      "mono_t1_ns": 57954742135229,
+      "elapsed_seconds": 29.682,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.46,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.444022,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.444022,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57954742135229,
+      "mono_t1_ns": 57955185766617,
+      "elapsed_seconds": 30.125,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.443631,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053111,
+          "tid": 1053114,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.393424,
+      "timed_fraction": 0.886826
+    },
+    {
+      "mono_t0_ns": 57955185766617,
+      "mono_t1_ns": 57955630783520,
+      "elapsed_seconds": 30.57,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.222
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.445017,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053111,
+          "tid": 1053114,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.445017,
+      "timed_fraction": 1.0
+    },
+    {
+      "mono_t0_ns": 57955630783520,
+      "mono_t1_ns": 57956071122818,
+      "elapsed_seconds": 31.011,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.43,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.440339,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053132,
+          "tid": 1053135,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.389932,
+      "timed_fraction": 0.885527
+    },
+    {
+      "mono_t0_ns": 57956071122818,
+      "mono_t1_ns": 57956512694374,
+      "elapsed_seconds": 31.452,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.441572,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053177,
+          "tid": 1053189,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.551,
+        3.017,
+        6.356
+      ],
+      "timed_overlap_seconds": 0.441452,
+      "timed_fraction": 0.999729
+    },
+    {
+      "mono_t0_ns": 57956512694374,
+      "mono_t1_ns": 57956956084445,
+      "elapsed_seconds": 31.895,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 2.273
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.01
+      },
+      "interval_wall_seconds": 0.44339,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053177,
+          "tid": 1053189,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.347,
+        2.983,
+        6.327
+      ],
+      "timed_overlap_seconds": 0.393133,
+      "timed_fraction": 0.886653
+    },
+    {
+      "mono_t0_ns": 57956956084445,
+      "mono_t1_ns": 57957401731342,
+      "elapsed_seconds": 32.341,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 6.522
+      },
+      "busy_seconds": {
+        "1": 0.45,
+        "49": 0.03
+      },
+      "interval_wall_seconds": 0.445647,
+      "foreign_runnable": [],
+      "owned_runnable": [
+        {
+          "tgid": 1053203,
+          "tid": 1053210,
+          "state": "R",
+          "pgrp": 1048369,
+          "cpu": 1,
+          "comm": "hexintfactor_be"
+        }
+      ],
+      "load_average": [
+        3.347,
+        2.983,
+        6.327
+      ],
+      "timed_overlap_seconds": 0.394169,
+      "timed_fraction": 0.884487
+    },
+    {
+      "mono_t0_ns": 57957401731342,
+      "mono_t1_ns": 57957846121125,
+      "elapsed_seconds": 32.786,
+      "busy_percent": {
+        "1": 100.0,
+        "49": 0.0
+      },
+      "busy_seconds": {
+        "1": 0.44,
+        "49": 0.0
+      },
+      "interval_wall_seconds": 0.44439,
+      "foreign_runnable": [],
+      "owned_runnable": [],
+      "load_average": [
+        3.347,
+        2.983,
+        6.327
+      ],
+      "timed_overlap_seconds": 0.44439,
+      "timed_fraction": 1.0
+    }
+  ]
+}

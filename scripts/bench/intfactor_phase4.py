@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Collect and render reproducible HexIntFactor Phase-4 evidence.
 
-All children run on one idle CPU. PARI uses calibrated in-process batches.
+All children run on one pinned shared-host CPU. PARI uses calibrated in-process batches.
 GMP-ECM uses one fixed 256-input batch shape with sigma 0:7, B1 1000, and B2 1
 (B2 < B1 disables stage 2) for both the overhead control and every operand.
 """

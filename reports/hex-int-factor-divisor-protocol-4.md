@@ -62,3 +62,24 @@ protocol and benchmark-executable bookkeeping changes do not require a new
 profile. A successful run then requires report and owner-mapping reconciliation,
 the Phase-5–7 freshness audit, the requested builds and checks, and honest
 registry status for both libraries. Publication remains outside #9619.
+
+## Result
+
+The preregistration commit is
+`3d5e24b620a758c44a379b430fb45aa10488ba5b`. The sole shared-host
+[attempt](bench-results/intfactor-divisors-shared-attempt-1.json) is accepted.
+It ran on `chungus2`, automatically selected CPU 1 with SMT sibling 49, and
+retained all 42 trial-major measurements. LeanBench returned exact verdict
+`consistent_with_declared_complexity`, residual slope `-0.014231`, and
+normalized constants `10.990153..12.008666` on the verdict range. Per-rung
+trial spreads were 1.28% to 4.84%.
+
+The collector independently validated every complete divisor array and every
+timed checksum. Timed telemetry observed 0.287004 seconds of SMT-sibling
+activity over 30.514898 timed seconds (0.9405%), no foreign runnable samples,
+and complete sidecars for all 42 trials. That activity is retained as context
+and does not alter the raw measurements or verdict. The accepted record has
+SHA-256 `eca5c70876bce7e5fe1ad9417c3383eef643d6560515a1291e0cba6b698963af`;
+its raw LeanBench export and telemetry sidecar have SHA-256
+`052e9f9835731af41bd95e928d70ff487e176691d7a37227e81a2b6ca3cbd31f` and
+`7eb077947190a4e5e9ab016366ad6fd5219d1026a075d4ea898f2077a79539d3`.

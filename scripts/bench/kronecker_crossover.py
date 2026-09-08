@@ -12,7 +12,7 @@ benchmark harness, so the one-harness rule stays intact (see
 SPEC/benchmarking.md addendum).
 
 The driver pins the measured process to one core. `--cpu auto` (the default)
-picks a core that is currently idle on itself and on its SMT siblings, because
+picks a core with low recent activity on itself and its SMT siblings, because
 several measurement drivers may run at once on a shared host and pinning them
 all to a fixed core makes each measure the others. See
 `scripts/bench/idle_core.py`.
@@ -90,7 +90,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--cpu", default="auto",
-                        help="core to pin to, or 'auto' (default) to pick an idle one")
+                        help="core to pin to, or 'auto' (default) to pick a low-activity one")
     args = parser.parse_args()
 
     if not EXE.exists():

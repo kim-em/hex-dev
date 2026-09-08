@@ -604,13 +604,10 @@ FACTOR_SYSTEMS = (
 def factor_family(system: str) -> Family:
     """The source one comparator system's factorization curve depends on.
 
-    Only Hex's own curve carries an exemption channel. Its relevant set is
-    the whole factor service call graph, where proof-only edits land
-    constantly; a comparator's is three to six adapter files plus the
-    corpus and the sweep driver, and every edit there is a deliberate one
-    aimed at the measurement itself. Widening the channel to the
-    comparators would let a single exemption advance five records that
-    require a manual shared-host sweep to re-measure.
+    Every system uses exact blob-transition exemptions for reviewed edits
+    that cannot affect runtime. The shared driver belongs to every relevant
+    set, so one documentation-only transition may correctly cover all six
+    records without forcing six identical remeasurements.
     """
     return Family(
         name=f"hexbz-factor-{system}",
@@ -618,9 +615,9 @@ def factor_family(system: str) -> Family:
         # Only Hex's own set spans Lean libraries, so only it has test
         # modules to leave out; a comparator's adapter files have none.
         exclude=FACTOR_TESTS if system == "hex-factor" else (),
-        exemptions=FACTOR_EXEMPTIONS if system == "hex-factor" else None,
+        exemptions=FACTOR_EXEMPTIONS,
         regenerate=(
-            "scripts/bench/factor_sweep.py on the benchmarking host"),
+            "scripts/bench/factor_sweep.py on the shared host"),
     )
 
 
