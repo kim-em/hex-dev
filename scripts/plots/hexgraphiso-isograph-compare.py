@@ -54,15 +54,43 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # Categorical slots 1-3 of the reference palette, assigned by entity and
 # never by rank: the C reference, then the two Lean implementations.
+# Categorical slots of the reference palette, assigned by entity and never
+# by rank. Slots 1-3 keep the colours the earlier three-series figures
+# used for nauty, hex and IsoGraph; the two further nauty engines take
+# slots 4 and 7. The draw order below is the one the palette validator
+# was run on -- it checks *adjacent* pairs for a line chart, so reordering
+# the legend needs a re-run.
 NAUTY, HEX, ISO = "#2a78d6", "#eb6834", "#1baf7a"
+SPARSE, TRACES = "#eda100", "#4a3aa7"
 
 PUBLIC = [
-    ("nauty 2.9.3 (C)", "nauty_ns", NAUTY, "o"),
+    ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
+    ("nauty 2.9.3 sparse (C)", "sparse_ns", SPARSE, "D"),
+    ("Traces 2.9.3 (C)", "traces_ns", TRACES, "v"),
+    ("HexGraphIso canonicalize", "fast_ns", HEX, "s"),
+    ("IsoGraph canonical", "iso_ns", ISO, "^"),
+]
+
+# The three C engines on their own. Dense nauty is what HexGraphIso
+# transcribes and therefore the like-for-like reference, but it is the
+# wrong tool on a sparse graph and the other two are what the nauty and
+# Traces literature points at for those classes.
+ENGINES = [
+    ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
+    ("nauty 2.9.3 sparse (C)", "sparse_ns", SPARSE, "D"),
+    ("Traces 2.9.3 (C)", "traces_ns", TRACES, "v"),
+]
+
+# The like-for-like trio, for the per-family breakdown: five series do not
+# clear the palette's all-pairs floor, which is the pairlist a small
+# multiple is read on, so that figure is faceted into this and ENGINES.
+LIKE_FOR_LIKE = [
+    ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
     ("HexGraphIso canonicalize", "fast_ns", HEX, "s"),
     ("IsoGraph canonical", "iso_ns", ISO, "^"),
 ]
 LIKE = [
-    ("nauty 2.9.3 + dense conversion", "nauty_whole_ns", NAUTY, "o"),
+    ("nauty 2.9.3 dense + conversion", "nauty_whole_ns", NAUTY, "o"),
     ("HexGraphIso runColored", "lit_ns", HEX, "s"),
     ("IsoGraph canonical + graph build", "iso_whole_ns", ISO, "^"),
 ]
@@ -133,8 +161,9 @@ def _families(axes, rows: list[dict], series) -> list[str]:
 def _table(rows: list[dict]) -> str:
     head = ("| family | n | nauty (median) | Hex `canonicalize` | "
             "IsoGraph `canonical` | IsoGraph / Hex | Hex `runColored` | "
-            "IsoGraph + build | Hex nodes | IsoGraph nodes |")
-    out = [head, "|---|---|---|---|---|---|---|---|---|---|"]
+            "IsoGraph + build | sparse | Traces | Hex nodes | "
+            "IsoGraph nodes |")
+    out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|"]
 
     def row(label: str, group: list[dict], span: str) -> str:
         med = statistics.median(r["nauty_ns"] for r in group
@@ -152,6 +181,8 @@ def _table(rows: list[dict]) -> str:
                 f"| {f('iso_ns', 'fast_ns'):.2f}× "
                 f"| {f('lit_ns', 'nauty_ns'):.0f}× "
                 f"| {f('iso_whole_ns', 'nauty_whole_ns'):.1f}× "
+                f"| {f('sparse_ns', 'nauty_ns'):.2f}× "
+                f"| {f('traces_ns', 'nauty_ns'):.2f}× "
                 f"| {f('nodes', 'nauty_nodes'):.2f}× "
                 f"| {f('iso_nodes', 'nauty_nodes'):.2f}× |")
 
@@ -175,7 +206,8 @@ def _table(rows: list[dict]) -> str:
 def _solved(rows: list[dict]) -> str:
     """How far each implementation got in each family before the sweep's
     per-instance budget cut it off."""
-    cols = [("nauty", "nauty_ns"), ("Hex `canonicalize`", "fast_ns"),
+    cols = [("nauty dense", "nauty_ns"), ("nauty sparse", "sparse_ns"),
+            ("Traces", "traces_ns"), ("Hex `canonicalize`", "fast_ns"),
             ("IsoGraph `canonical`", "iso_ns")]
     out = ["| family | instances | " +
            " | ".join(f"{c} largest n solved" for c, _ in cols) + " |",
@@ -218,7 +250,7 @@ def main() -> int:
             if line]
     caption = ("best of several reps after warm-up, over two passes, one "
                "process per instance per implementation; the identical "
-               "adjacency matrix is handed to all three;\ncompiled binaries "
+               "adjacency matrix is handed to every one;\ncompiled binaries "
                "only, no tactic or kernel replay; a curve stops where its "
                "implementation first exceeded the per-instance budget")
     if args.machine:
@@ -243,28 +275,36 @@ def main() -> int:
         plt.close(fig)
         written.append(path)
 
-    families = _order(rows)
-    cols = 4 if len(families) > 12 else 3
-    nrows = (len(families) + cols - 1) // cols
-    fig, axs = plt.subplots(nrows, cols, figsize=(3.6 * cols, 2.9 * nrows),
-                            sharey=True)
-    axes = list(axs.flat)
-    _families(axes, rows, PUBLIC)
-    for ax in axes[::cols]:
-        ax.set_ylabel("time (s)")
-    for ax in axes[-cols:]:
-        ax.set_xlabel("n (vertices)")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center",
-               bbox_to_anchor=(0.5, 0.048), ncol=3, fontsize=9, frameon=False)
-    fig.suptitle("canonical labelling by family, against vertex count",
-                 fontsize=12)
-    fig.text(0.5, 0.006, caption, ha="center", fontsize=6.5, style="italic")
-    path = args.out_dir / "hexgraphiso-isograph-families.svg"
-    fig.tight_layout(rect=(0, 0.10, 1, 0.97))
-    fig.savefig(path)
-    plt.close(fig)
-    written.append(path)
+    def family_figure(series, stem: str, title: str):
+        families = _order(rows)
+        cols = 4 if len(families) > 12 else 3
+        nrows = (len(families) + cols - 1) // cols
+        fig, axs = plt.subplots(nrows, cols, figsize=(3.6 * cols, 2.9 * nrows),
+                                sharey=True)
+        axes = list(axs.flat)
+        _families(axes, rows, series)
+        for ax in axes[::cols]:
+            ax.set_ylabel("time (s)")
+        for ax in axes[-cols:]:
+            ax.set_xlabel("n (vertices)")
+        handles, labels = axes[0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="lower center",
+                   bbox_to_anchor=(0.5, 0.048), ncol=len(series), fontsize=9,
+                   frameon=False)
+        fig.suptitle(title, fontsize=12)
+        fig.text(0.5, 0.006, caption, ha="center", fontsize=6.5,
+                 style="italic")
+        path = args.out_dir / f"{stem}.svg"
+        fig.tight_layout(rect=(0, 0.10, 1, 0.97))
+        fig.savefig(path)
+        plt.close(fig)
+        written.append(path)
+
+    family_figure(LIKE_FOR_LIKE, "hexgraphiso-isograph-families",
+                  "canonical labelling by family, against vertex count")
+    family_figure(ENGINES, "hexgraphiso-nauty-engines",
+                  "the three nauty 2.9.3 engines by family, "
+                  "against vertex count")
 
     table = _table(rows) + "\n\n" + _solved(rows)
     table_path = args.out_dir / "hexgraphiso-isograph-table.md"
