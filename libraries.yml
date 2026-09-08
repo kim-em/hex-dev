@@ -481,7 +481,7 @@ libraries:
   HexPermGroup:
     deps: [HexBasic]
     mathlib: false
-    done_through: 0
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -519,7 +519,7 @@ libraries:
     deps: [HexPermGroup]
     mathlib: true
     correspondence_only: true
-    done_through: 0
+    done_through: 7
     status: active
   HexGraphIso:
     deps: [HexBasic, HexMatrix, HexPermGroup]

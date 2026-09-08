@@ -1,0 +1,3024 @@
+[
+  {
+    "allocation_share_percent": 29.86,
+    "classified_percent": 98.96,
+    "diagnostics": {
+      "bench_pid": 324863,
+      "bench_thread_name": "hexpermgroup_bench",
+      "bench_thread_tid": "324890",
+      "calibration": {
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "boundary_residual_raw_max_ms": 0.04403600096702576,
+            "boundary_residual_trimmed_max_ms": 0.02923300862312317,
+            "hit_count": 767,
+            "regions_without_samples": 32256,
+            "within_residual_limit": true
+          },
+          "relative-to-meta-start-ms": {
+            "boundary_residual_raw_max_ms": null,
+            "boundary_residual_trimmed_max_ms": null,
+            "hit_count": 0,
+            "regions_without_samples": 33023,
+            "within_residual_limit": false
+          }
+        },
+        "configured_max_residual_ms": 5.0,
+        "effective_max_residual_ms": 5.0,
+        "raw_max_residual_ms": 0.04403600096702576,
+        "residual_ms": 0.02923300862312317,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "sample_interval_ms": 1.001001,
+        "selected_mode": "absolute-monotonic-ms",
+        "within_residual_limit": true
+      },
+      "calibration_max_residual_ms": 5.0,
+      "calibration_residual_ms": 0.02923300862312317,
+      "confidence": "passed",
+      "expected_samples_bench_thread": 777.8,
+      "low_confidence_reasons": [],
+      "minimum_retained_samples": 100,
+      "off_bench_thread_samples_in_window": 0,
+      "regions_total": 33023,
+      "rejected_samples_bench_thread": 20,
+      "retained_samples_bench_thread": 767,
+      "samply_interval_ms": 1.001001,
+      "samply_meta_start_time_ms": 1788863213979.609,
+      "samply_timestamp_mode": "absolute-monotonic-ms",
+      "schema": 2,
+      "sensitivity": {
+        "cases": {
+          "minus": {
+            "retained_samples": 765,
+            "shift_ms": -5.0,
+            "top_leaf_functions": [
+              {
+                "function": 112,
+                "name": "0x4cec508",
+                "samples": 44
+              },
+              {
+                "function": 97,
+                "name": "0x4cec651",
+                "samples": 43
+              },
+              {
+                "function": 198,
+                "name": "0x4cec31c",
+                "samples": 22
+              }
+            ]
+          },
+          "nominal": {
+            "retained_samples": 767,
+            "shift_ms": 0.0,
+            "top_leaf_functions": [
+              {
+                "function": 112,
+                "name": "0x4cec508",
+                "samples": 46
+              },
+              {
+                "function": 97,
+                "name": "0x4cec651",
+                "samples": 45
+              },
+              {
+                "function": 198,
+                "name": "0x4cec31c",
+                "samples": 23
+              }
+            ]
+          },
+          "plus": {
+            "retained_samples": 769,
+            "shift_ms": 5.0,
+            "top_leaf_functions": [
+              {
+                "function": 112,
+                "name": "0x4cec508",
+                "samples": 45
+              },
+              {
+                "function": 97,
+                "name": "0x4cec651",
+                "samples": 44
+              },
+              {
+                "function": 198,
+                "name": "0x4cec31c",
+                "samples": 23
+              }
+            ]
+          }
+        },
+        "comparisons": {
+          "minus": {
+            "comparison_samples": 765,
+            "effective_max_total_variation_distance": 0.10085676803562985,
+            "exchanged_fraction": 0.03398692810457516,
+            "exchanged_samples": 26,
+            "failure_reasons": [],
+            "leaf_function_support_size": 318,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.10085676803562985,
+            "total_variation_distance": 0.017768915475794823,
+            "verdict": "passed"
+          },
+          "plus": {
+            "comparison_samples": 767,
+            "effective_max_total_variation_distance": 0.1,
+            "exchanged_fraction": 0.03129074315514994,
+            "exchanged_samples": 24,
+            "failure_reasons": [],
+            "leaf_function_support_size": 318,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.0966473755086133,
+            "total_variation_distance": 0.016823691175149154,
+            "verdict": "passed"
+          }
+        },
+        "configured_max_total_variation_distance": 0.1,
+        "leaf_function_distributions_stable": true,
+        "maximum_sampling_noise_allowance": 0.5,
+        "minimum_comparison_samples": 100,
+        "reported_top_function_count": 3,
+        "sampling_noise_coefficient": 0.6,
+        "shift_ms": 5.0,
+        "verdict": "passed"
+      },
+      "sidecar_mono_anchor_ns": 87641350687601,
+      "spawn_anchor_mono_ns": 87641160491898,
+      "spawn_anchor_wall_ns": 1788863213978202528,
+      "stage": "complete",
+      "total_timed_ms": 778.575019
+    },
+    "inclusive_hex": [
+      {
+        "function": "Hex.PermGroupBench.degreeGenerators",
+        "percent": 99.87
+      },
+      {
+        "function": "Hex.PermGroup.Build.build",
+        "percent": 97.26
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 97.26
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.scan",
+        "percent": 78.49
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.insert",
+        "percent": 69.62
+      },
+      {
+        "function": "Hex.PermGroup.Chain.accepts",
+        "percent": 30.51
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 29.6
+      },
+      {
+        "function": "Hex.PermGroup.normalize",
+        "percent": 21.64
+      },
+      {
+        "function": "Hex.PermGroup.Generator.ordered",
+        "percent": 16.17
+      },
+      {
+        "function": "Hex.Perm.invVec",
+        "percent": 13.82
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreier",
+        "percent": 9.26
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.ofSymmetric",
+        "percent": 8.21
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.orbit",
+        "percent": 6.91
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.finish",
+        "percent": 5.74
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 4.95
+      },
+      {
+        "function": "Hex.PermGroup.Generator.le",
+        "percent": 4.82
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.next",
+        "percent": 4.04
+      },
+      {
+        "function": "Hex.PermGroup.Generator.compact",
+        "percent": 2.61
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.finish",
+        "percent": 1.69
+      },
+      {
+        "function": "Hex.PermGroup.Program.comp",
+        "percent": 1.43
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.append",
+        "percent": 1.43
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 1.43
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreierWord",
+        "percent": 1.3
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.lookup",
+        "percent": 1.3
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.id",
+        "percent": 1.17
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.scan",
+        "percent": 1.17
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.push",
+        "percent": 1.04
+      },
+      {
+        "function": "Hex.PermGroup.SiftResult.prepend",
+        "percent": 0.91
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.comp",
+        "percent": 0.91
+      },
+      {
+        "function": "Hex.PermGroup.Normalized.wordsFrom",
+        "percent": 0.91
+      },
+      {
+        "function": "Hex.PermGroup.Chain.reword",
+        "percent": 0.78
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.act",
+        "percent": 0.65
+      },
+      {
+        "function": "Hex.PermGroup.Program.inv",
+        "percent": 0.65
+      },
+      {
+        "function": "Hex.PermGroup.Generator.program",
+        "percent": 0.65
+      },
+      {
+        "function": "Hex.Perm.instDecidableEq",
+        "percent": 0.52
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.push",
+        "percent": 0.52
+      }
+    ],
+    "leaf_categories": {
+      "allocation": 29.86,
+      "lean-own-code": 15.12,
+      "lean-runtime": 53.98,
+      "other": 1.04
+    },
+    "profile": "/tmp/hex-profile-degreeGenerators-0.json.gz",
+    "samples": 767,
+    "symbols": "/tmp/hex-profile-degreeGenerators-0.json.syms.json",
+    "top_inclusive": [
+      {
+        "function": "lean_apply_2",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.autoTune",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.Cli.runChildCmd",
+        "percent": 100.0
+      },
+      {
+        "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.runChildMode",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.kernelLoop",
+        "percent": 100.0
+      },
+      {
+        "function": "lean::lthread::imp::_main(void*)",
+        "percent": 100.0
+      },
+      {
+        "function": "fun_124075",
+        "percent": 100.0
+      },
+      {
+        "function": "start_thread",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroupBench.degreeGenerators",
+        "percent": 99.87
+      },
+      {
+        "function": "Hex.PermGroup.Build.build",
+        "percent": 97.26
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 97.26
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.scan",
+        "percent": 78.49
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.insert",
+        "percent": 69.62
+      }
+    ],
+    "top_self": [
+      {
+        "function": "mi_free",
+        "percent": 9.78
+      },
+      {
+        "function": "mi_malloc_small",
+        "percent": 9.39
+      },
+      {
+        "function": "lean_apply_1",
+        "percent": 9.0
+      },
+      {
+        "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+        "percent": 8.6
+      },
+      {
+        "function": "mi_malloc",
+        "percent": 8.34
+      },
+      {
+        "function": "lean_array_push",
+        "percent": 7.43
+      },
+      {
+        "function": "lean_dec_ref_cold",
+        "percent": 5.74
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+        "percent": 5.48
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 3.0
+      },
+      {
+        "function": "List.foldl",
+        "percent": 3.0
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 2.61
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 1.96
+      },
+      {
+        "function": "Fin.foldr.loop",
+        "percent": 1.43
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 1.43
+      },
+      {
+        "function": "lean_alloc_object",
+        "percent": 1.04
+      }
+    ],
+    "top_self_undecorated": [
+      {
+        "percent": 9.78,
+        "symbol": "mi_free"
+      },
+      {
+        "percent": 9.39,
+        "symbol": "mi_malloc_small"
+      },
+      {
+        "percent": 9.0,
+        "symbol": "lean_apply_1"
+      },
+      {
+        "percent": 8.6,
+        "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+      },
+      {
+        "percent": 8.34,
+        "symbol": "mi_malloc"
+      },
+      {
+        "percent": 7.43,
+        "symbol": "lean_array_push"
+      },
+      {
+        "percent": 5.74,
+        "symbol": "lean_dec_ref_cold"
+      },
+      {
+        "percent": 5.48,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+      },
+      {
+        "percent": 2.74,
+        "symbol": "Hex.Perm.comp_.lam_0_.boxed"
+      },
+      {
+        "percent": 2.74,
+        "symbol": "List.foldl_.at_.00Hex.Perm.invVec.spec_0_.redArg"
+      },
+      {
+        "percent": 2.61,
+        "symbol": "lean_apply_2"
+      },
+      {
+        "percent": 1.96,
+        "symbol": "Hex.PermGroup.Chain.sift"
+      },
+      {
+        "percent": 1.43,
+        "symbol": "Fin.foldr.loop_.at_.00List.ofFn.spec_0_.redArg"
+      },
+      {
+        "percent": 1.43,
+        "symbol": "Hex.Perm.id_.lam_0_.boxed"
+      },
+      {
+        "percent": 1.04,
+        "symbol": "lean_alloc_object"
+      }
+    ],
+    "unresolved_leaf_percent": 0.0
+  },
+  {
+    "allocation_share_percent": 27.94,
+    "classified_percent": 96.13,
+    "diagnostics": {
+      "bench_pid": 325605,
+      "bench_thread_name": "hexpermgroup_bench",
+      "bench_thread_tid": "325609",
+      "calibration": {
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "boundary_residual_raw_max_ms": 0.04256299138069153,
+            "boundary_residual_trimmed_max_ms": 0.042152002453804016,
+            "hit_count": 569,
+            "regions_without_samples": 15942,
+            "within_residual_limit": true
+          },
+          "relative-to-meta-start-ms": {
+            "boundary_residual_raw_max_ms": null,
+            "boundary_residual_trimmed_max_ms": null,
+            "hit_count": 0,
+            "regions_without_samples": 16511,
+            "within_residual_limit": false
+          }
+        },
+        "configured_max_residual_ms": 5.0,
+        "effective_max_residual_ms": 5.0,
+        "raw_max_residual_ms": 0.04256299138069153,
+        "residual_ms": 0.042152002453804016,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "sample_interval_ms": 1.001001,
+        "selected_mode": "absolute-monotonic-ms",
+        "within_residual_limit": true
+      },
+      "calibration_max_residual_ms": 5.0,
+      "calibration_residual_ms": 0.042152002453804016,
+      "confidence": "passed",
+      "expected_samples_bench_thread": 581.7,
+      "low_confidence_reasons": [],
+      "minimum_retained_samples": 100,
+      "off_bench_thread_samples_in_window": 0,
+      "regions_total": 16511,
+      "rejected_samples_bench_thread": 19,
+      "retained_samples_bench_thread": 569,
+      "samply_interval_ms": 1.001001,
+      "samply_meta_start_time_ms": 1788863220497.7617,
+      "samply_timestamp_mode": "absolute-monotonic-ms",
+      "schema": 2,
+      "sensitivity": {
+        "cases": {
+          "minus": {
+            "retained_samples": 563,
+            "shift_ms": -5.0,
+            "top_leaf_functions": [
+              {
+                "function": 206,
+                "name": "0x4cec651",
+                "samples": 32
+              },
+              {
+                "function": 106,
+                "name": "0x4cec508",
+                "samples": 25
+              },
+              {
+                "function": 89,
+                "name": "0x4cad01a",
+                "samples": 14
+              }
+            ]
+          },
+          "nominal": {
+            "retained_samples": 569,
+            "shift_ms": 0.0,
+            "top_leaf_functions": [
+              {
+                "function": 206,
+                "name": "0x4cec651",
+                "samples": 33
+              },
+              {
+                "function": 106,
+                "name": "0x4cec508",
+                "samples": 26
+              },
+              {
+                "function": 89,
+                "name": "0x4cad01a",
+                "samples": 15
+              }
+            ]
+          },
+          "plus": {
+            "retained_samples": 570,
+            "shift_ms": 5.0,
+            "top_leaf_functions": [
+              {
+                "function": 206,
+                "name": "0x4cec651",
+                "samples": 32
+              },
+              {
+                "function": 106,
+                "name": "0x4cec508",
+                "samples": 25
+              },
+              {
+                "function": 89,
+                "name": "0x4cad01a",
+                "samples": 14
+              }
+            ]
+          }
+        },
+        "comparisons": {
+          "minus": {
+            "comparison_samples": 563,
+            "effective_max_total_variation_distance": 0.14057803863168294,
+            "exchanged_fraction": 0.05328596802841918,
+            "exchanged_samples": 30,
+            "failure_reasons": [],
+            "leaf_function_support_size": 290,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.14057803863168294,
+            "total_variation_distance": 0.029536721118037654,
+            "verdict": "passed"
+          },
+          "plus": {
+            "comparison_samples": 569,
+            "effective_max_total_variation_distance": 0.12179147741003228,
+            "exchanged_fraction": 0.040421792618629174,
+            "exchanged_samples": 23,
+            "failure_reasons": [],
+            "leaf_function_support_size": 290,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.12179147741003228,
+            "total_variation_distance": 0.020997132550180354,
+            "verdict": "passed"
+          }
+        },
+        "configured_max_total_variation_distance": 0.1,
+        "leaf_function_distributions_stable": true,
+        "maximum_sampling_noise_allowance": 0.5,
+        "minimum_comparison_samples": 100,
+        "reported_top_function_count": 3,
+        "sampling_noise_coefficient": 0.6,
+        "shift_ms": 5.0,
+        "verdict": "passed"
+      },
+      "sidecar_mono_anchor_ns": 87647855100408,
+      "spawn_anchor_mono_ns": 87647678495702,
+      "spawn_anchor_wall_ns": 1788863220496206301,
+      "stage": "complete",
+      "total_timed_ms": 582.237329
+    },
+    "inclusive_hex": [
+      {
+        "function": "Hex.PermGroupBench.certificateReplay",
+        "percent": 99.82
+      },
+      {
+        "function": "Hex.PermGroup.Chain.checkFrom",
+        "percent": 87.35
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.instDecidableValid_.aux_1",
+        "percent": 39.37
+      },
+      {
+        "function": "Hex.PermGroup.Chain.accepts",
+        "percent": 20.91
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 20.56
+      },
+      {
+        "function": "Hex.Perm.invVec",
+        "percent": 14.94
+      },
+      {
+        "function": "Hex.PermGroup.checkWord",
+        "percent": 13.53
+      },
+      {
+        "function": "Hex.PermGroup.Program.eval",
+        "percent": 13.36
+      },
+      {
+        "function": "Hex.PermGroup.Program.evalCertified",
+        "percent": 13.36
+      },
+      {
+        "function": "Hex.PermGroup.Program.evalNodes",
+        "percent": 12.13
+      },
+      {
+        "function": "Hex.PermGroup.checkChain",
+        "percent": 12.13
+      },
+      {
+        "function": "Hex.PermGroup.Chain.instDecidableWorking_.aux_1",
+        "percent": 11.42
+      },
+      {
+        "function": "Hex.PermGroup.Chain.instDecidableNormalized_.aux_1",
+        "percent": 10.37
+      },
+      {
+        "function": "Hex.PermGroup.Program.evalNode",
+        "percent": 9.14
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.stabilizerGens",
+        "percent": 8.61
+      },
+      {
+        "function": "Hex.PermGroup.checkWords",
+        "percent": 7.38
+      },
+      {
+        "function": "Hex.Perm.instDecidableEq",
+        "percent": 6.68
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreier",
+        "percent": 5.8
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 2.81
+      },
+      {
+        "function": "Hex.PermGroup.Chain.instDecidableBefore_.aux_1",
+        "percent": 1.23
+      },
+      {
+        "function": "Hex.PermGroup.Chain.instDecidableBefore",
+        "percent": 1.23
+      },
+      {
+        "function": "Hex.PermGroup.Chain.instDecidableFixed_.aux_1",
+        "percent": 1.05
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 0.88
+      },
+      {
+        "function": "Hex.PermGroup.SiftResult.prepend",
+        "percent": 0.53
+      }
+    ],
+    "leaf_categories": {
+      "allocation": 27.94,
+      "lean-own-code": 10.37,
+      "lean-runtime": 57.82,
+      "other": 3.87
+    },
+    "profile": "/tmp/hex-profile-certificateReplay-0.json.gz",
+    "samples": 569,
+    "symbols": "/tmp/hex-profile-certificateReplay-0.json.syms.json",
+    "top_inclusive": [
+      {
+        "function": "lean_apply_2",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+        "percent": 100.0
+      },
+      {
+        "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+        "percent": 100.0
+      },
+      {
+        "function": "fun_124075",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.Cli.runChildCmd",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.kernelLoop",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.autoTune",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.runChildMode",
+        "percent": 100.0
+      },
+      {
+        "function": "lean::lthread::imp::_main(void*)",
+        "percent": 100.0
+      },
+      {
+        "function": "start_thread",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroupBench.certificateReplay",
+        "percent": 99.82
+      },
+      {
+        "function": "Hex.PermGroup.Chain.checkFrom",
+        "percent": 87.35
+      },
+      {
+        "function": "lean_apply_1",
+        "percent": 83.66
+      },
+      {
+        "function": "_private.Init.Data.Nat.Lemmas.0_Nat.allLTTR.loop",
+        "percent": 82.78
+      },
+      {
+        "function": "Nat.decidableBallLTTR",
+        "percent": 79.96
+      }
+    ],
+    "top_self": [
+      {
+        "function": "lean_apply_1",
+        "percent": 10.02
+      },
+      {
+        "function": "mi_malloc",
+        "percent": 9.84
+      },
+      {
+        "function": "mi_malloc_small",
+        "percent": 7.56
+      },
+      {
+        "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+        "percent": 7.38
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 7.21
+      },
+      {
+        "function": "mi_free",
+        "percent": 5.62
+      },
+      {
+        "function": "lean_array_push",
+        "percent": 5.45
+      },
+      {
+        "function": "lean_dec_ref_cold",
+        "percent": 5.1
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.anyMUnsafe.any",
+        "percent": 4.04
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+        "percent": 4.04
+      },
+      {
+        "function": "List.foldl",
+        "percent": 2.64
+      },
+      {
+        "function": "lean_free_object",
+        "percent": 2.28
+      },
+      {
+        "function": "lean_alloc_object",
+        "percent": 2.11
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 1.93
+      },
+      {
+        "function": "Hex.PermGroup.Program.evalNodes",
+        "percent": 1.93
+      }
+    ],
+    "top_self_undecorated": [
+      {
+        "percent": 10.02,
+        "symbol": "lean_apply_1"
+      },
+      {
+        "percent": 9.84,
+        "symbol": "mi_malloc"
+      },
+      {
+        "percent": 7.56,
+        "symbol": "mi_malloc_small"
+      },
+      {
+        "percent": 7.38,
+        "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+      },
+      {
+        "percent": 7.21,
+        "symbol": "lean_apply_2"
+      },
+      {
+        "percent": 5.62,
+        "symbol": "mi_free"
+      },
+      {
+        "percent": 5.45,
+        "symbol": "lean_array_push"
+      },
+      {
+        "percent": 5.1,
+        "symbol": "lean_dec_ref_cold"
+      },
+      {
+        "percent": 4.04,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+      },
+      {
+        "percent": 2.28,
+        "symbol": "lean_free_object"
+      },
+      {
+        "percent": 2.28,
+        "symbol": "List.foldl_.at_.00Hex.Perm.invVec.spec_0_.redArg"
+      },
+      {
+        "percent": 2.28,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.anyMUnsafe.any_.redArg"
+      },
+      {
+        "percent": 2.11,
+        "symbol": "lean_alloc_object"
+      },
+      {
+        "percent": 1.93,
+        "symbol": "Hex.PermGroup.Program.evalNodes"
+      },
+      {
+        "percent": 1.93,
+        "symbol": "instDecidableEqFin_.boxed"
+      }
+    ],
+    "unresolved_leaf_percent": 0.0
+  },
+  {
+    "allocation_share_percent": 36.59,
+    "classified_percent": 96.63,
+    "diagnostics": {
+      "bench_pid": 326026,
+      "bench_thread_name": "hexpermgroup_bench",
+      "bench_thread_tid": "326033",
+      "calibration": {
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "boundary_residual_raw_max_ms": 0.028762996196746826,
+            "boundary_residual_trimmed_max_ms": 0.014010995626449585,
+            "hit_count": 563,
+            "regions_without_samples": 99442,
+            "within_residual_limit": true
+          },
+          "relative-to-meta-start-ms": {
+            "boundary_residual_raw_max_ms": null,
+            "boundary_residual_trimmed_max_ms": null,
+            "hit_count": 0,
+            "regions_without_samples": 100000,
+            "within_residual_limit": false
+          }
+        },
+        "configured_max_residual_ms": 5.0,
+        "effective_max_residual_ms": 5.0,
+        "raw_max_residual_ms": 0.028762996196746826,
+        "residual_ms": 0.014010995626449585,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "sample_interval_ms": 1.001001,
+        "selected_mode": "absolute-monotonic-ms",
+        "within_residual_limit": true
+      },
+      "calibration_max_residual_ms": 5.0,
+      "calibration_residual_ms": 0.014010995626449585,
+      "confidence": "passed",
+      "expected_samples_bench_thread": 575.7,
+      "low_confidence_reasons": [],
+      "minimum_retained_samples": 100,
+      "off_bench_thread_samples_in_window": 0,
+      "regions_total": 100000,
+      "rejected_samples_bench_thread": 46,
+      "retained_samples_bench_thread": 563,
+      "samply_interval_ms": 1.001001,
+      "samply_meta_start_time_ms": 1788863223556.225,
+      "samply_timestamp_mode": "absolute-monotonic-ms",
+      "schema": 2,
+      "sensitivity": {
+        "cases": {
+          "minus": {
+            "retained_samples": 553,
+            "shift_ms": -5.0,
+            "top_leaf_functions": [
+              {
+                "function": 59,
+                "name": "0x4cec508",
+                "samples": 32
+              },
+              {
+                "function": 77,
+                "name": "0x4cec31c",
+                "samples": 20
+              },
+              {
+                "function": 91,
+                "name": "0x4cec651",
+                "samples": 20
+              }
+            ]
+          },
+          "nominal": {
+            "retained_samples": 563,
+            "shift_ms": 0.0,
+            "top_leaf_functions": [
+              {
+                "function": 59,
+                "name": "0x4cec508",
+                "samples": 33
+              },
+              {
+                "function": 77,
+                "name": "0x4cec31c",
+                "samples": 20
+              },
+              {
+                "function": 91,
+                "name": "0x4cec651",
+                "samples": 20
+              }
+            ]
+          },
+          "plus": {
+            "retained_samples": 577,
+            "shift_ms": 5.0,
+            "top_leaf_functions": [
+              {
+                "function": 59,
+                "name": "0x4cec508",
+                "samples": 33
+              },
+              {
+                "function": 77,
+                "name": "0x4cec31c",
+                "samples": 21
+              },
+              {
+                "function": 91,
+                "name": "0x4cec651",
+                "samples": 21
+              }
+            ]
+          }
+        },
+        "comparisons": {
+          "minus": {
+            "comparison_samples": 553,
+            "effective_max_total_variation_distance": 0.2378383335619454,
+            "exchanged_fraction": 0.14828209764918626,
+            "exchanged_samples": 82,
+            "failure_reasons": [],
+            "leaf_function_support_size": 293,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.2378383335619454,
+            "total_variation_distance": 0.06577075149595776,
+            "verdict": "passed"
+          },
+          "plus": {
+            "comparison_samples": 563,
+            "effective_max_total_variation_distance": 0.20673856886079672,
+            "exchanged_fraction": 0.11367673179396093,
+            "exchanged_samples": 64,
+            "failure_reasons": [],
+            "leaf_function_support_size": 294,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.20673856886079672,
+            "total_variation_distance": 0.05396012325650839,
+            "verdict": "passed"
+          }
+        },
+        "configured_max_total_variation_distance": 0.1,
+        "leaf_function_distributions_stable": true,
+        "maximum_sampling_noise_allowance": 0.5,
+        "minimum_comparison_samples": 100,
+        "reported_top_function_count": 3,
+        "sampling_noise_coefficient": 0.6,
+        "shift_ms": 5.0,
+        "verdict": "passed"
+      },
+      "sidecar_mono_anchor_ns": 87650928695225,
+      "spawn_anchor_mono_ns": 87650737091896,
+      "spawn_anchor_wall_ns": 1788863223554802585,
+      "stage": "complete",
+      "total_timed_ms": 576.256877
+    },
+    "inclusive_hex": [
+      {
+        "function": "Hex.PermGroupBench.finiteActions",
+        "percent": 99.64
+      },
+      {
+        "function": "Hex.PermGroup.Action.breadthFirst",
+        "percent": 82.42
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.finish",
+        "percent": 81.17
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.scan",
+        "percent": 73.36
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.visit",
+        "percent": 72.29
+      },
+      {
+        "function": "Hex.PermGroup.Group.orbit",
+        "percent": 15.1
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.ofSymmetric",
+        "percent": 8.35
+      },
+      {
+        "function": "Hex.Perm.invVec",
+        "percent": 7.99
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.push",
+        "percent": 7.1
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.finish",
+        "percent": 6.04
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.comp",
+        "percent": 5.68
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.next",
+        "percent": 5.15
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.orbit",
+        "percent": 3.02
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.push",
+        "percent": 2.31
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.finish",
+        "percent": 1.95
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.orbit",
+        "percent": 1.78
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 1.6
+      },
+      {
+        "function": "Hex.PermGroup.Action.Step.advance",
+        "percent": 1.42
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.act",
+        "percent": 1.24
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.root",
+        "percent": 1.07
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.inv",
+        "percent": 1.07
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.scan",
+        "percent": 1.07
+      },
+      {
+        "function": "Hex.PermGroup.Action.Step.all",
+        "percent": 1.07
+      },
+      {
+        "function": "Hex.PermGroup.Action.natural",
+        "percent": 1.07
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.push",
+        "percent": 0.89
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.append",
+        "percent": 0.89
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.lookup",
+        "percent": 0.89
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.id",
+        "percent": 0.71
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.program",
+        "percent": 0.53
+      }
+    ],
+    "leaf_categories": {
+      "allocation": 36.59,
+      "lean-own-code": 7.99,
+      "lean-runtime": 52.04,
+      "other": 3.37
+    },
+    "profile": "/tmp/hex-profile-finiteActions-0.json.gz",
+    "samples": 563,
+    "symbols": "/tmp/hex-profile-finiteActions-0.json.syms.json",
+    "top_inclusive": [
+      {
+        "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.autoTune",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.Cli.runChildCmd",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.kernelLoop",
+        "percent": 100.0
+      },
+      {
+        "function": "lean::lthread::imp::_main(void*)",
+        "percent": 100.0
+      },
+      {
+        "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+        "percent": 100.0
+      },
+      {
+        "function": "fun_124075",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.runChildMode",
+        "percent": 100.0
+      },
+      {
+        "function": "start_thread",
+        "percent": 100.0
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroupBench.finiteActions",
+        "percent": 99.64
+      },
+      {
+        "function": "Hex.PermGroup.Action.breadthFirst",
+        "percent": 82.42
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.finish",
+        "percent": 81.17
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.scan",
+        "percent": 73.36
+      },
+      {
+        "function": "Hex.PermGroup.Action.Queue.visit",
+        "percent": 72.29
+      }
+    ],
+    "top_self": [
+      {
+        "function": "mi_free",
+        "percent": 12.26
+      },
+      {
+        "function": "mi_malloc_small",
+        "percent": 11.19
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 8.35
+      },
+      {
+        "function": "mi_malloc",
+        "percent": 7.28
+      },
+      {
+        "function": "lean_apply_1",
+        "percent": 6.04
+      },
+      {
+        "function": "lean_dec_ref_cold",
+        "percent": 6.04
+      },
+      {
+        "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+        "percent": 5.15
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.anyMUnsafe.any",
+        "percent": 4.62
+      },
+      {
+        "function": "lean_array_push",
+        "percent": 4.26
+      },
+      {
+        "function": "lean_alloc_object",
+        "percent": 2.84
+      },
+      {
+        "function": "Array.isEqvAux",
+        "percent": 2.31
+      },
+      {
+        "function": "List.foldl",
+        "percent": 2.31
+      },
+      {
+        "function": "Array.instDecidableEqImpl",
+        "percent": 2.31
+      },
+      {
+        "function": "instDecidableEqFin",
+        "percent": 2.31
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.mapMUnsafe.map",
+        "percent": 2.13
+      }
+    ],
+    "top_self_undecorated": [
+      {
+        "percent": 12.26,
+        "symbol": "mi_free"
+      },
+      {
+        "percent": 11.19,
+        "symbol": "mi_malloc_small"
+      },
+      {
+        "percent": 8.35,
+        "symbol": "lean_apply_2"
+      },
+      {
+        "percent": 7.28,
+        "symbol": "mi_malloc"
+      },
+      {
+        "percent": 6.04,
+        "symbol": "lean_apply_1"
+      },
+      {
+        "percent": 6.04,
+        "symbol": "lean_dec_ref_cold"
+      },
+      {
+        "percent": 5.15,
+        "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+      },
+      {
+        "percent": 4.26,
+        "symbol": "lean_array_push"
+      },
+      {
+        "percent": 2.84,
+        "symbol": "lean_alloc_object"
+      },
+      {
+        "percent": 2.49,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.anyMUnsafe.any_.redArg"
+      },
+      {
+        "percent": 2.31,
+        "symbol": "Array.isEqvAux_.redArg"
+      },
+      {
+        "percent": 2.31,
+        "symbol": "instDecidableEqFin_.boxed"
+      },
+      {
+        "percent": 2.13,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.mapMUnsafe.map_.at_.00Hex.PermGroup.Action.vectors.spec_0_.redArg"
+      },
+      {
+        "percent": 2.13,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+      },
+      {
+        "percent": 1.78,
+        "symbol": "Array.instDecidableEqImpl_.redArg_.lam_0_.boxed"
+      }
+    ],
+    "unresolved_leaf_percent": 0.0
+  },
+  {
+    "allocation_share_percent": 33.75,
+    "classified_percent": 99.42,
+    "diagnostics": {
+      "bench_pid": 327365,
+      "bench_thread_name": "hexpermgroup_bench",
+      "bench_thread_tid": "327400",
+      "calibration": {
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "boundary_residual_raw_max_ms": 0.5529490113258362,
+            "boundary_residual_trimmed_max_ms": 0.5142920017242432,
+            "hit_count": 1034,
+            "regions_without_samples": 1021,
+            "within_residual_limit": true
+          },
+          "relative-to-meta-start-ms": {
+            "boundary_residual_raw_max_ms": null,
+            "boundary_residual_trimmed_max_ms": null,
+            "hit_count": 0,
+            "regions_without_samples": 2055,
+            "within_residual_limit": false
+          }
+        },
+        "configured_max_residual_ms": 5.0,
+        "effective_max_residual_ms": 5.0,
+        "raw_max_residual_ms": 0.5529490113258362,
+        "residual_ms": 0.5142920017242432,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "sample_interval_ms": 1.001001,
+        "selected_mode": "absolute-monotonic-ms",
+        "within_residual_limit": true
+      },
+      "calibration_max_residual_ms": 5.0,
+      "calibration_residual_ms": 0.5142920017242432,
+      "confidence": "passed",
+      "expected_samples_bench_thread": 1043.3,
+      "low_confidence_reasons": [],
+      "minimum_retained_samples": 100,
+      "off_bench_thread_samples_in_window": 0,
+      "regions_total": 2055,
+      "rejected_samples_bench_thread": 8,
+      "retained_samples_bench_thread": 1034,
+      "samply_interval_ms": 1.001001,
+      "samply_meta_start_time_ms": 1788863237132.296,
+      "samply_timestamp_mode": "absolute-monotonic-ms",
+      "schema": 2,
+      "sensitivity": {
+        "cases": {
+          "minus": {
+            "retained_samples": 1028,
+            "shift_ms": -5.0,
+            "top_leaf_functions": [
+              {
+                "function": 38,
+                "name": "0x4cec508",
+                "samples": 74
+              },
+              {
+                "function": 158,
+                "name": "0x4cec651",
+                "samples": 63
+              },
+              {
+                "function": 173,
+                "name": "0x4cec31c",
+                "samples": 35
+              }
+            ]
+          },
+          "nominal": {
+            "retained_samples": 1034,
+            "shift_ms": 0.0,
+            "top_leaf_functions": [
+              {
+                "function": 38,
+                "name": "0x4cec508",
+                "samples": 75
+              },
+              {
+                "function": 158,
+                "name": "0x4cec651",
+                "samples": 62
+              },
+              {
+                "function": 173,
+                "name": "0x4cec31c",
+                "samples": 35
+              }
+            ]
+          },
+          "plus": {
+            "retained_samples": 1033,
+            "shift_ms": 5.0,
+            "top_leaf_functions": [
+              {
+                "function": 38,
+                "name": "0x4cec508",
+                "samples": 74
+              },
+              {
+                "function": 158,
+                "name": "0x4cec651",
+                "samples": 63
+              },
+              {
+                "function": 173,
+                "name": "0x4cec31c",
+                "samples": 35
+              }
+            ]
+          }
+        },
+        "comparisons": {
+          "minus": {
+            "comparison_samples": 1028,
+            "effective_max_total_variation_distance": 0.1,
+            "exchanged_fraction": 0.007782101167315175,
+            "exchanged_samples": 8,
+            "failure_reasons": [],
+            "leaf_function_support_size": 396,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.046458557374628166,
+            "total_variation_distance": 0.006024731126146804,
+            "verdict": "passed"
+          },
+          "plus": {
+            "comparison_samples": 1033,
+            "effective_max_total_variation_distance": 0.1,
+            "exchanged_fraction": 0.002904162633107454,
+            "exchanged_samples": 3,
+            "failure_reasons": [],
+            "leaf_function_support_size": 396,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.02831223451760838,
+            "total_variation_distance": 0.0018471672711544173,
+            "verdict": "passed"
+          }
+        },
+        "configured_max_total_variation_distance": 0.1,
+        "leaf_function_distributions_stable": true,
+        "maximum_sampling_noise_allowance": 0.5,
+        "minimum_comparison_samples": 100,
+        "reported_top_function_count": 3,
+        "sampling_noise_coefficient": 0.6,
+        "shift_ms": 5.0,
+        "verdict": "passed"
+      },
+      "sidecar_mono_anchor_ns": 87664539449701,
+      "spawn_anchor_mono_ns": 87664313145283,
+      "spawn_anchor_wall_ns": 1788863237130855943,
+      "stage": "complete",
+      "total_timed_ms": 1044.328474
+    },
+    "inclusive_hex": [
+      {
+        "function": "Hex.PermGroupBench.subgroupSearch",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroup.Search.solve",
+        "percent": 99.81
+      },
+      {
+        "function": "Hex.PermGroup.Group.intersectionSearch",
+        "percent": 99.81
+      },
+      {
+        "function": "Hex.PermGroup.Group.intersection",
+        "percent": 99.81
+      },
+      {
+        "function": "Hex.PermGroup.Search.Children.collect",
+        "percent": 99.42
+      },
+      {
+        "function": "Hex.PermGroup.Search.visit",
+        "percent": 99.42
+      },
+      {
+        "function": "Hex.PermGroup.Search.Trials.find",
+        "percent": 93.91
+      },
+      {
+        "function": "Hex.PermGroup.Search.Trials.scan",
+        "percent": 93.62
+      },
+      {
+        "function": "Hex.PermGroup.Search.Intersection.reject",
+        "percent": 93.42
+      },
+      {
+        "function": "Hex.PermGroup.Search.Constraint.ofTest",
+        "percent": 93.42
+      },
+      {
+        "function": "Hex.PermGroup.Search.transport",
+        "percent": 92.07
+      },
+      {
+        "function": "Hex.PermGroup.Search.Transporter.extend",
+        "percent": 82.01
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 64.22
+      },
+      {
+        "function": "Hex.PermGroup.Build.build",
+        "percent": 63.73
+      },
+      {
+        "function": "Hex.PermGroup.normalize",
+        "percent": 36.46
+      },
+      {
+        "function": "Hex.PermGroup.Generator.ordered",
+        "percent": 32.69
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.scan",
+        "percent": 21.18
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.insert",
+        "percent": 19.54
+      },
+      {
+        "function": "Hex.PermGroup.Group.stabilizer",
+        "percent": 18.47
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.ofSymmetric",
+        "percent": 13.73
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.stabilizerGens",
+        "percent": 12.38
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.orbit",
+        "percent": 9.67
+      },
+      {
+        "function": "Hex.Perm.invVec",
+        "percent": 9.38
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreier",
+        "percent": 8.9
+      },
+      {
+        "function": "Hex.PermGroup.Group.transporter?",
+        "percent": 8.32
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.finish",
+        "percent": 8.03
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.next",
+        "percent": 7.16
+      },
+      {
+        "function": "Hex.PermGroup.Chain.accepts",
+        "percent": 6.19
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 6.09
+      },
+      {
+        "function": "Hex.PermGroup.Generator.le",
+        "percent": 6.0
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 3.97
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.finish",
+        "percent": 3.77
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.scan",
+        "percent": 3.0
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.push",
+        "percent": 2.61
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.comp",
+        "percent": 2.22
+      },
+      {
+        "function": "Hex.PermGroup.Generator.compact",
+        "percent": 2.03
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.id",
+        "percent": 1.93
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.lookup",
+        "percent": 1.84
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.push",
+        "percent": 1.74
+      },
+      {
+        "function": "Hex.PermGroup.Search.Node.covered",
+        "percent": 1.55
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.root",
+        "percent": 1.45
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.breadthFirst",
+        "percent": 1.45
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 1.35
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.act",
+        "percent": 1.26
+      },
+      {
+        "function": "Hex.Perm.instDecidableEq",
+        "percent": 0.97
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.append",
+        "percent": 0.77
+      },
+      {
+        "function": "Hex.PermGroup.Normalized.wordsFrom",
+        "percent": 0.68
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreierWord",
+        "percent": 0.68
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.visit",
+        "percent": 0.68
+      }
+    ],
+    "leaf_categories": {
+      "allocation": 33.75,
+      "lean-own-code": 14.8,
+      "lean-runtime": 50.87,
+      "other": 0.58
+    },
+    "profile": "/tmp/hex-profile-subgroupSearch-0.json.gz",
+    "samples": 1034,
+    "symbols": "/tmp/hex-profile-subgroupSearch-0.json.syms.json",
+    "top_inclusive": [
+      {
+        "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroupBench.subgroupSearch",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.runChildMode",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.autoTune",
+        "percent": 100.0
+      },
+      {
+        "function": "start_thread",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+        "percent": 100.0
+      },
+      {
+        "function": "fun_124075",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.Cli.runChildCmd",
+        "percent": 100.0
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.kernelLoop",
+        "percent": 100.0
+      },
+      {
+        "function": "lean::lthread::imp::_main(void*)",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroup.Search.solve",
+        "percent": 99.81
+      },
+      {
+        "function": "Hex.PermGroup.Group.intersectionSearch",
+        "percent": 99.81
+      },
+      {
+        "function": "Hex.PermGroup.Group.intersection",
+        "percent": 99.81
+      },
+      {
+        "function": "Hex.PermGroup.Search.Children.collect",
+        "percent": 99.42
+      }
+    ],
+    "top_self": [
+      {
+        "function": "mi_free",
+        "percent": 11.12
+      },
+      {
+        "function": "mi_malloc_small",
+        "percent": 10.83
+      },
+      {
+        "function": "mi_malloc",
+        "percent": 10.06
+      },
+      {
+        "function": "lean_dec_ref_cold",
+        "percent": 8.9
+      },
+      {
+        "function": "lean_apply_1",
+        "percent": 7.06
+      },
+      {
+        "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+        "percent": 6.77
+      },
+      {
+        "function": "lean_array_push",
+        "percent": 5.42
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+        "percent": 4.64
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 3.19
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 2.71
+      },
+      {
+        "function": "List.reverseAux",
+        "percent": 1.84
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.lookup",
+        "percent": 1.45
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 1.35
+      },
+      {
+        "function": "List.foldl",
+        "percent": 1.35
+      },
+      {
+        "function": "Fin.foldr.loop",
+        "percent": 1.26
+      }
+    ],
+    "top_self_undecorated": [
+      {
+        "percent": 11.12,
+        "symbol": "mi_free"
+      },
+      {
+        "percent": 10.83,
+        "symbol": "mi_malloc_small"
+      },
+      {
+        "percent": 10.06,
+        "symbol": "mi_malloc"
+      },
+      {
+        "percent": 8.9,
+        "symbol": "lean_dec_ref_cold"
+      },
+      {
+        "percent": 7.06,
+        "symbol": "lean_apply_1"
+      },
+      {
+        "percent": 6.77,
+        "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+      },
+      {
+        "percent": 5.42,
+        "symbol": "lean_array_push"
+      },
+      {
+        "percent": 4.64,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+      },
+      {
+        "percent": 3.19,
+        "symbol": "lean_apply_2"
+      },
+      {
+        "percent": 2.22,
+        "symbol": "Hex.Perm.comp_.lam_0_.boxed"
+      },
+      {
+        "percent": 1.84,
+        "symbol": "List.reverseAux_.redArg"
+      },
+      {
+        "percent": 1.26,
+        "symbol": "Hex.Perm.id_.lam_0_.boxed"
+      },
+      {
+        "percent": 1.26,
+        "symbol": "Fin.foldr.loop_.at_.00List.ofFn.spec_0_.redArg"
+      },
+      {
+        "percent": 1.26,
+        "symbol": "Array.isEqvAux_.redArg"
+      },
+      {
+        "percent": 1.16,
+        "symbol": "lean_alloc_object"
+      }
+    ],
+    "unresolved_leaf_percent": 0.1
+  },
+  {
+    "allocation_share_percent": 31.36,
+    "classified_percent": 99.47,
+    "diagnostics": {
+      "bench_pid": 327570,
+      "bench_thread_name": "hexpermgroup_bench",
+      "bench_thread_tid": "327575",
+      "calibration": {
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "boundary_residual_raw_max_ms": 0.11986801028251648,
+            "boundary_residual_trimmed_max_ms": 0.11982700228691101,
+            "hit_count": 947,
+            "regions_without_samples": 7308,
+            "within_residual_limit": true
+          },
+          "relative-to-meta-start-ms": {
+            "boundary_residual_raw_max_ms": null,
+            "boundary_residual_trimmed_max_ms": null,
+            "hit_count": 0,
+            "regions_without_samples": 8255,
+            "within_residual_limit": false
+          }
+        },
+        "configured_max_residual_ms": 5.0,
+        "effective_max_residual_ms": 5.0,
+        "raw_max_residual_ms": 0.11986801028251648,
+        "residual_ms": 0.11982700228691101,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "sample_interval_ms": 1.001001,
+        "selected_mode": "absolute-monotonic-ms",
+        "within_residual_limit": true
+      },
+      "calibration_max_residual_ms": 5.0,
+      "calibration_residual_ms": 0.11982700228691101,
+      "confidence": "passed",
+      "expected_samples_bench_thread": 952.9,
+      "low_confidence_reasons": [],
+      "minimum_retained_samples": 100,
+      "off_bench_thread_samples_in_window": 0,
+      "regions_total": 8255,
+      "rejected_samples_bench_thread": 8,
+      "retained_samples_bench_thread": 947,
+      "samply_interval_ms": 1.001001,
+      "samply_meta_start_time_ms": 1788863239090.961,
+      "samply_timestamp_mode": "absolute-monotonic-ms",
+      "schema": 2,
+      "sensitivity": {
+        "cases": {
+          "minus": {
+            "retained_samples": 938,
+            "shift_ms": -5.0,
+            "top_leaf_functions": [
+              {
+                "function": 72,
+                "name": "0x4cec508",
+                "samples": 62
+              },
+              {
+                "function": 186,
+                "name": "0x4cec651",
+                "samples": 61
+              },
+              {
+                "function": 146,
+                "name": "0x4cad01a",
+                "samples": 26
+              }
+            ]
+          },
+          "nominal": {
+            "retained_samples": 947,
+            "shift_ms": 0.0,
+            "top_leaf_functions": [
+              {
+                "function": 186,
+                "name": "0x4cec651",
+                "samples": 63
+              },
+              {
+                "function": 72,
+                "name": "0x4cec508",
+                "samples": 62
+              },
+              {
+                "function": 146,
+                "name": "0x4cad01a",
+                "samples": 26
+              }
+            ]
+          },
+          "plus": {
+            "retained_samples": 945,
+            "shift_ms": 5.0,
+            "top_leaf_functions": [
+              {
+                "function": 186,
+                "name": "0x4cec651",
+                "samples": 63
+              },
+              {
+                "function": 72,
+                "name": "0x4cec508",
+                "samples": 62
+              },
+              {
+                "function": 146,
+                "name": "0x4cad01a",
+                "samples": 26
+              }
+            ]
+          }
+        },
+        "comparisons": {
+          "minus": {
+            "comparison_samples": 938,
+            "effective_max_total_variation_distance": 0.1,
+            "exchanged_fraction": 0.011727078891257996,
+            "exchanged_samples": 11,
+            "failure_reasons": [],
+            "leaf_function_support_size": 317,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.05341821645060886,
+            "total_variation_distance": 0.009556606768540771,
+            "verdict": "passed"
+          },
+          "plus": {
+            "comparison_samples": 945,
+            "effective_max_total_variation_distance": 0.1,
+            "exchanged_fraction": 0.004232804232804233,
+            "exchanged_samples": 4,
+            "failure_reasons": [],
+            "leaf_function_support_size": 317,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.03197378618924234,
+            "total_variation_distance": 0.00312543649396872,
+            "verdict": "passed"
+          }
+        },
+        "configured_max_total_variation_distance": 0.1,
+        "leaf_function_distributions_stable": true,
+        "maximum_sampling_noise_allowance": 0.5,
+        "minimum_comparison_samples": 100,
+        "reported_top_function_count": 3,
+        "sampling_noise_coefficient": 0.6,
+        "shift_ms": 5.0,
+        "verdict": "passed"
+      },
+      "sidecar_mono_anchor_ns": 87666449249600,
+      "spawn_anchor_mono_ns": 87666271902614,
+      "spawn_anchor_wall_ns": 1788863239089613324,
+      "stage": "complete",
+      "total_timed_ms": 953.847171
+    },
+    "inclusive_hex": [
+      {
+        "function": "Hex.PermGroupBench.normalStructure",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroup.Group.derived",
+        "percent": 95.04
+      },
+      {
+        "function": "Hex.PermGroup.Group.derivedCert",
+        "percent": 93.88
+      },
+      {
+        "function": "Hex.PermGroup.Normal.close",
+        "percent": 84.69
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 76.24
+      },
+      {
+        "function": "Hex.PermGroup.Build.build",
+        "percent": 75.71
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.scan",
+        "percent": 55.97
+      },
+      {
+        "function": "Hex.PermGroup.Normal.iterate",
+        "percent": 51.74
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.insert",
+        "percent": 46.15
+      },
+      {
+        "function": "Hex.PermGroup.Chain.accepts",
+        "percent": 45.93
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 45.09
+      },
+      {
+        "function": "Hex.PermGroup.Normal.Closure.prepend",
+        "percent": 32.95
+      },
+      {
+        "function": "Hex.Perm.invVec",
+        "percent": 20.06
+      },
+      {
+        "function": "Hex.PermGroup.Normal.failure?",
+        "percent": 18.27
+      },
+      {
+        "function": "Hex.PermGroup.normalize",
+        "percent": 10.98
+      },
+      {
+        "function": "Hex.PermGroup.Generator.ordered",
+        "percent": 9.08
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 7.39
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreier",
+        "percent": 7.07
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.ofSymmetric",
+        "percent": 6.34
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.orbit",
+        "percent": 5.28
+      },
+      {
+        "function": "Hex.PermGroup.Group.normalClosure",
+        "percent": 4.12
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.finish",
+        "percent": 3.59
+      },
+      {
+        "function": "Hex.Perm.conj",
+        "percent": 3.06
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.next",
+        "percent": 2.96
+      },
+      {
+        "function": "Hex.PermGroup.Derived.seeds",
+        "percent": 2.32
+      },
+      {
+        "function": "Hex.PermGroup.Generator.le",
+        "percent": 2.11
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.finish",
+        "percent": 1.8
+      },
+      {
+        "function": "Hex.Perm.comm",
+        "percent": 1.58
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 1.37
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.lookup",
+        "percent": 1.27
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.push",
+        "percent": 1.16
+      },
+      {
+        "function": "Hex.Perm.instDecidableEq",
+        "percent": 1.06
+      },
+      {
+        "function": "Hex.PermGroup.SiftResult.prepend",
+        "percent": 0.95
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.scan",
+        "percent": 0.84
+      },
+      {
+        "function": "Hex.PermGroup.Generator.compact",
+        "percent": 0.74
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.breadthFirst",
+        "percent": 0.74
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.root",
+        "percent": 0.74
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.act",
+        "percent": 0.74
+      },
+      {
+        "function": "Hex.PermGroup.Group.adjoin",
+        "percent": 0.74
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.comp",
+        "percent": 0.74
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.id",
+        "percent": 0.63
+      },
+      {
+        "function": "Hex.PermGroup.Program.comp",
+        "percent": 0.53
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.append",
+        "percent": 0.53
+      }
+    ],
+    "leaf_categories": {
+      "allocation": 31.36,
+      "lean-own-code": 16.37,
+      "lean-runtime": 51.74,
+      "other": 0.53
+    },
+    "profile": "/tmp/hex-profile-normalStructure-0.json.gz",
+    "samples": 947,
+    "symbols": "/tmp/hex-profile-normalStructure-0.json.syms.json",
+    "top_inclusive": [
+      {
+        "function": "lean-bench.LeanBench.Cli.runChildCmd",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.kernelLoop",
+        "percent": 100.0
+      },
+      {
+        "function": "fun_124075",
+        "percent": 100.0
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 100.0
+      },
+      {
+        "function": "start_thread",
+        "percent": 100.0
+      },
+      {
+        "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.runChildMode",
+        "percent": 100.0
+      },
+      {
+        "function": "lean::lthread::imp::_main(void*)",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.autoTune",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroupBench.normalStructure",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroup.Group.derived",
+        "percent": 95.04
+      },
+      {
+        "function": "Hex.PermGroup.Group.derivedCert",
+        "percent": 93.88
+      },
+      {
+        "function": "Hex.PermGroup.Normal.close",
+        "percent": 84.69
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 76.24
+      }
+    ],
+    "top_self": [
+      {
+        "function": "lean_apply_1",
+        "percent": 11.51
+      },
+      {
+        "function": "mi_malloc_small",
+        "percent": 10.35
+      },
+      {
+        "function": "mi_free",
+        "percent": 9.61
+      },
+      {
+        "function": "mi_malloc",
+        "percent": 9.5
+      },
+      {
+        "function": "lean_array_push",
+        "percent": 7.6
+      },
+      {
+        "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+        "percent": 7.5
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+        "percent": 5.49
+      },
+      {
+        "function": "lean_dec_ref_cold",
+        "percent": 4.65
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 4.22
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 4.01
+      },
+      {
+        "function": "List.foldl",
+        "percent": 3.17
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 2.11
+      },
+      {
+        "function": "Array.ofFn",
+        "percent": 1.37
+      },
+      {
+        "function": "lean_alloc_object",
+        "percent": 1.37
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 1.37
+      }
+    ],
+    "top_self_undecorated": [
+      {
+        "percent": 11.51,
+        "symbol": "lean_apply_1"
+      },
+      {
+        "percent": 10.35,
+        "symbol": "mi_malloc_small"
+      },
+      {
+        "percent": 9.61,
+        "symbol": "mi_free"
+      },
+      {
+        "percent": 9.5,
+        "symbol": "mi_malloc"
+      },
+      {
+        "percent": 7.6,
+        "symbol": "lean_array_push"
+      },
+      {
+        "percent": 7.5,
+        "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+      },
+      {
+        "percent": 5.49,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+      },
+      {
+        "percent": 4.65,
+        "symbol": "lean_dec_ref_cold"
+      },
+      {
+        "percent": 4.01,
+        "symbol": "Hex.PermGroup.Chain.sift"
+      },
+      {
+        "percent": 3.8,
+        "symbol": "Hex.Perm.comp_.lam_0_.boxed"
+      },
+      {
+        "percent": 3.06,
+        "symbol": "List.foldl_.at_.00Hex.Perm.invVec.spec_0_.redArg"
+      },
+      {
+        "percent": 2.11,
+        "symbol": "lean_apply_2"
+      },
+      {
+        "percent": 1.37,
+        "symbol": "Array.ofFn_.redArg"
+      },
+      {
+        "percent": 1.37,
+        "symbol": "lean_alloc_object"
+      },
+      {
+        "percent": 1.37,
+        "symbol": "Hex.Perm.id_.lam_0_.boxed"
+      }
+    ],
+    "unresolved_leaf_percent": 0.0
+  },
+  {
+    "allocation_share_percent": 36.44,
+    "classified_percent": 99.54,
+    "diagnostics": {
+      "bench_pid": 327908,
+      "bench_thread_name": "hexpermgroup_bench",
+      "bench_thread_tid": "327920",
+      "calibration": {
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "boundary_residual_raw_max_ms": 0.05783599615097046,
+            "boundary_residual_trimmed_max_ms": 0.03862699866294861,
+            "hit_count": 870,
+            "regions_without_samples": 32159,
+            "within_residual_limit": true
+          },
+          "relative-to-meta-start-ms": {
+            "boundary_residual_raw_max_ms": null,
+            "boundary_residual_trimmed_max_ms": null,
+            "hit_count": 0,
+            "regions_without_samples": 33023,
+            "within_residual_limit": false
+          }
+        },
+        "configured_max_residual_ms": 5.0,
+        "effective_max_residual_ms": 5.0,
+        "raw_max_residual_ms": 0.05783599615097046,
+        "residual_ms": 0.03862699866294861,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "sample_interval_ms": 1.001001,
+        "selected_mode": "absolute-monotonic-ms",
+        "within_residual_limit": true
+      },
+      "calibration_max_residual_ms": 5.0,
+      "calibration_residual_ms": 0.03862699866294861,
+      "confidence": "passed",
+      "expected_samples_bench_thread": 888.1,
+      "low_confidence_reasons": [],
+      "minimum_retained_samples": 100,
+      "off_bench_thread_samples_in_window": 0,
+      "regions_total": 33023,
+      "rejected_samples_bench_thread": 22,
+      "retained_samples_bench_thread": 870,
+      "samply_interval_ms": 1.001001,
+      "samply_meta_start_time_ms": 1788863242075.3394,
+      "samply_timestamp_mode": "absolute-monotonic-ms",
+      "schema": 2,
+      "sensitivity": {
+        "cases": {
+          "minus": {
+            "retained_samples": 868,
+            "shift_ms": -5.0,
+            "top_leaf_functions": [
+              {
+                "function": 102,
+                "name": "0x4cec651",
+                "samples": 59
+              },
+              {
+                "function": 50,
+                "name": "0x4cec508",
+                "samples": 57
+              },
+              {
+                "function": 57,
+                "name": "0x4cec31c",
+                "samples": 29
+              }
+            ]
+          },
+          "nominal": {
+            "retained_samples": 870,
+            "shift_ms": 0.0,
+            "top_leaf_functions": [
+              {
+                "function": 102,
+                "name": "0x4cec651",
+                "samples": 59
+              },
+              {
+                "function": 50,
+                "name": "0x4cec508",
+                "samples": 58
+              },
+              {
+                "function": 57,
+                "name": "0x4cec31c",
+                "samples": 29
+              }
+            ]
+          },
+          "plus": {
+            "retained_samples": 861,
+            "shift_ms": 5.0,
+            "top_leaf_functions": [
+              {
+                "function": 102,
+                "name": "0x4cec651",
+                "samples": 60
+              },
+              {
+                "function": 50,
+                "name": "0x4cec508",
+                "samples": 57
+              },
+              {
+                "function": 57,
+                "name": "0x4cec31c",
+                "samples": 29
+              }
+            ]
+          }
+        },
+        "comparisons": {
+          "minus": {
+            "comparison_samples": 868,
+            "effective_max_total_variation_distance": 0.10419231528894067,
+            "exchanged_fraction": 0.03686635944700461,
+            "exchanged_samples": 32,
+            "failure_reasons": [],
+            "leaf_function_support_size": 355,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.10419231528894067,
+            "total_variation_distance": 0.015880078393982738,
+            "verdict": "passed"
+          },
+          "plus": {
+            "comparison_samples": 861,
+            "effective_max_total_variation_distance": 0.11596036583321026,
+            "exchanged_fraction": 0.04529616724738676,
+            "exchanged_samples": 39,
+            "failure_reasons": [],
+            "leaf_function_support_size": 355,
+            "maximum_sampling_noise_allowance": 0.5,
+            "noise_allowance_discriminating": true,
+            "sample_count_adequate": true,
+            "sampling_noise_allowance": 0.11596036583321026,
+            "total_variation_distance": 0.022612038928271058,
+            "verdict": "passed"
+          }
+        },
+        "configured_max_total_variation_distance": 0.1,
+        "leaf_function_distributions_stable": true,
+        "maximum_sampling_noise_allowance": 0.5,
+        "minimum_comparison_samples": 100,
+        "reported_top_function_count": 3,
+        "sampling_noise_coefficient": 0.6,
+        "shift_ms": 5.0,
+        "verdict": "passed"
+      },
+      "sidecar_mono_anchor_ns": 87669433429754,
+      "spawn_anchor_mono_ns": 87669256268363,
+      "spawn_anchor_wall_ns": 1788863242073979062,
+      "stage": "complete",
+      "total_timed_ms": 889.038603
+    },
+    "inclusive_hex": [
+      {
+        "function": "Hex.PermGroupBench.products",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroup.Build.build",
+        "percent": 93.1
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 93.1
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.scan",
+        "percent": 65.17
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.insert",
+        "percent": 55.98
+      },
+      {
+        "function": "Hex.PermGroup.Chain.accepts",
+        "percent": 23.68
+      },
+      {
+        "function": "Hex.PermGroup.normalize",
+        "percent": 22.53
+      },
+      {
+        "function": "Hex.PermGroup.Chain.sift",
+        "percent": 22.18
+      },
+      {
+        "function": "Hex.PermGroup.Generator.ordered",
+        "percent": 16.21
+      },
+      {
+        "function": "Hex.Perm.invVec",
+        "percent": 10.69
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.ofSymmetric",
+        "percent": 9.31
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.orbit",
+        "percent": 8.97
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreier",
+        "percent": 7.36
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.finish",
+        "percent": 5.86
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.next",
+        "percent": 5.06
+      },
+      {
+        "function": "Hex.PermGroup.Generator.le",
+        "percent": 4.14
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 3.1
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.finish",
+        "percent": 2.64
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.schreierWord",
+        "percent": 2.64
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.push",
+        "percent": 2.53
+      },
+      {
+        "function": "Hex.PermGroup.Program.comp",
+        "percent": 2.53
+      },
+      {
+        "function": "Hex.PermGroup.Group.wreathProduct",
+        "percent": 2.53
+      },
+      {
+        "function": "Hex.PermGroup.Generator.compact",
+        "percent": 2.53
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.scan",
+        "percent": 1.61
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.id",
+        "percent": 1.49
+      },
+      {
+        "function": "Hex.PermGroup.Normalized.wordsFrom",
+        "percent": 1.38
+      },
+      {
+        "function": "Hex.PermGroup.Program.inv",
+        "percent": 1.15
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.lookup",
+        "percent": 0.92
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.push",
+        "percent": 0.92
+      },
+      {
+        "function": "Hex.Perm.instDecidableEq",
+        "percent": 0.8
+      },
+      {
+        "function": "Hex.PermGroup.Orbit.Tree.Certificates.append",
+        "percent": 0.8
+      },
+      {
+        "function": "Hex.Perm.id",
+        "percent": 0.8
+      },
+      {
+        "function": "Hex.PermGroup.Group.directProduct",
+        "percent": 0.8
+      },
+      {
+        "function": "Hex.PermGroup.Program.Builder.comp",
+        "percent": 0.69
+      },
+      {
+        "function": "Hex.PermGroup.Generator.program",
+        "percent": 0.69
+      },
+      {
+        "function": "Hex.Perm.Wreath.permImpl",
+        "percent": 0.69
+      },
+      {
+        "function": "Hex.PermGroup.Chain.reword",
+        "percent": 0.57
+      },
+      {
+        "function": "Hex.Perm.Wreath.act",
+        "percent": 0.57
+      },
+      {
+        "function": "Hex.PermGroup.SiftResult.prepend",
+        "percent": 0.57
+      }
+    ],
+    "leaf_categories": {
+      "allocation": 36.44,
+      "lean-own-code": 10.8,
+      "lean-runtime": 52.3,
+      "other": 0.46
+    },
+    "profile": "/tmp/hex-profile-products-0.json.gz",
+    "samples": 870,
+    "symbols": "/tmp/hex-profile-products-0.json.syms.json",
+    "top_inclusive": [
+      {
+        "function": "fun_124075",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.kernelLoop",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroupBench.products",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.autoTune",
+        "percent": 100.0
+      },
+      {
+        "function": "lean::lthread::imp::_main(void*)",
+        "percent": 100.0
+      },
+      {
+        "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.runChildMode",
+        "percent": 100.0
+      },
+      {
+        "function": "lean-bench.LeanBench.Cli.runChildCmd",
+        "percent": 100.0
+      },
+      {
+        "function": "start_thread",
+        "percent": 100.0
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 100.0
+      },
+      {
+        "function": "Hex.PermGroup.Build.build",
+        "percent": 93.1
+      },
+      {
+        "function": "Hex.PermGroup.Group.ofGenerators",
+        "percent": 93.1
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.scan",
+        "percent": 65.17
+      },
+      {
+        "function": "Hex.PermGroup.Build.State.insert",
+        "percent": 55.98
+      }
+    ],
+    "top_self": [
+      {
+        "function": "mi_malloc",
+        "percent": 11.15
+      },
+      {
+        "function": "mi_free",
+        "percent": 10.92
+      },
+      {
+        "function": "mi_malloc_small",
+        "percent": 10.57
+      },
+      {
+        "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+        "percent": 8.51
+      },
+      {
+        "function": "lean_dec_ref_cold",
+        "percent": 7.36
+      },
+      {
+        "function": "lean_apply_1",
+        "percent": 6.78
+      },
+      {
+        "function": "lean_array_push",
+        "percent": 6.44
+      },
+      {
+        "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+        "percent": 3.56
+      },
+      {
+        "function": "List.foldl",
+        "percent": 2.99
+      },
+      {
+        "function": "lean_alloc_object",
+        "percent": 2.18
+      },
+      {
+        "function": "Fin.foldr.loop",
+        "percent": 1.95
+      },
+      {
+        "function": "lean_apply_2",
+        "percent": 1.84
+      },
+      {
+        "function": "Hex.Perm.comp",
+        "percent": 1.72
+      },
+      {
+        "function": "lean_copy_expand_array",
+        "percent": 1.72
+      },
+      {
+        "function": "List.mapTR.loop",
+        "percent": 1.61
+      }
+    ],
+    "top_self_undecorated": [
+      {
+        "percent": 11.15,
+        "symbol": "mi_malloc"
+      },
+      {
+        "percent": 10.92,
+        "symbol": "mi_free"
+      },
+      {
+        "percent": 10.57,
+        "symbol": "mi_malloc_small"
+      },
+      {
+        "percent": 8.51,
+        "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+      },
+      {
+        "percent": 7.36,
+        "symbol": "lean_dec_ref_cold"
+      },
+      {
+        "percent": 6.78,
+        "symbol": "lean_apply_1"
+      },
+      {
+        "percent": 6.44,
+        "symbol": "lean_array_push"
+      },
+      {
+        "percent": 3.56,
+        "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+      },
+      {
+        "percent": 2.53,
+        "symbol": "List.foldl_.at_.00Hex.Perm.invVec.spec_0_.redArg"
+      },
+      {
+        "percent": 2.18,
+        "symbol": "lean_alloc_object"
+      },
+      {
+        "percent": 1.95,
+        "symbol": "Fin.foldr.loop_.at_.00List.ofFn.spec_0_.redArg"
+      },
+      {
+        "percent": 1.84,
+        "symbol": "lean_apply_2"
+      },
+      {
+        "percent": 1.72,
+        "symbol": "Hex.Perm.comp_.lam_0_.boxed"
+      },
+      {
+        "percent": 1.72,
+        "symbol": "lean_copy_expand_array"
+      },
+      {
+        "percent": 1.38,
+        "symbol": "Hex.PermGroup.Chain.sift"
+      }
+    ],
+    "unresolved_leaf_percent": 0.0
+  }
+]
