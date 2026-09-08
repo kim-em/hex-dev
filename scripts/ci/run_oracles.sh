@@ -88,6 +88,8 @@ ORACLES=(
   "HexConway|hexconway_emit_fixtures|scripts/oracle/conway_luebeck.py|conformance-fixtures/HexConway/conway.jsonl"
   # pinned external nauty 2.9.3 backed (vendored source, project shim)
   "HexGraphIso|hexgraphiso_emit_fixtures|scripts/oracle/graphiso_nauty.py|conformance-fixtures/HexGraphIso/graphiso.jsonl"
+  # GAP 4.x, required for permutation-group conformance
+  "HexPermGroup|hexpermgroup_emit_fixtures|scripts/oracle/perm_group_gap.py|conformance-fixtures/HexPermGroup/permgroup.jsonl"
 )
 
 failed=0

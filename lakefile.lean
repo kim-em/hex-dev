@@ -1119,6 +1119,10 @@ lean_exe hexgraphiso_emit_fixtures where
   srcDir := "conformance"
   root := `HexGraphIso.EmitFixtures
 
+lean_exe hexpermgroup_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexPermGroup.EmitFixtures
+
 lean_exe hexgraphiso_emit_campaign where
   srcDir := "conformance"
   root := `HexGraphIso.EmitCampaign
@@ -1211,6 +1215,10 @@ lean_lib HexGraphIsoMathlibProofProbe where
 lean_exe hexgraphiso_bench where
   srcDir := "bench"
   root := `HexGraphIso.Bench
+
+lean_exe hexpermgroup_bench where
+  srcDir := "bench"
+  root := `HexPermGroup.Bench
 
 -- Local/scheduled per-instance sweep for the cactus plots
 -- (scripts/plots/hexgraphiso-cactus.py); not part of merge CI.
