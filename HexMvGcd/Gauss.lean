@@ -448,6 +448,70 @@ section Lift
 variable [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
   [Dvd R] [GcdDomainLaws R]
 
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [Dvd R]
+    [GcdDomainLaws R] in
+private theorem vars_eq_nil_zero
+    {cmp0 : Mono 0 → Mono 0 → Ordering}
+    [Std.TransCmp cmp0] [Std.LawfulEqCmp cmp0]
+    (p : MvPoly 0 R cmp0) : p.vars = [] := by
+  cases h : p.vars with
+  | nil => rfl
+  | cons i is => exact Fin.elim0 i
+
+/-- At arity zero, coefficient gcds are polynomial gcds. -/
+theorem gcdExists_zero
+    {cmp0 : Mono 0 → Mono 0 → Ordering}
+    [Std.TransCmp cmp0] [Std.LawfulEqCmp cmp0]
+    (a b : MvPoly 0 R cmp0) : ∃ g : MvPoly 0 R cmp0,
+    g ∣ a ∧ g ∣ b ∧ ∀ d, d ∣ a → d ∣ b → d ∣ g := by
+  let ca := coeff Mono.zero a
+  let cb := coeff Mono.zero b
+  rcases GcdDomainLaws.gcd_exists ca cb with ⟨c, hca, hcb, hgreat⟩
+  have ha : a = C ca := eq_C_of_vars_eq_nil a (vars_eq_nil_zero a)
+  have hb : b = C cb := eq_C_of_vars_eq_nil b (vars_eq_nil_zero b)
+  refine ⟨C c, ?_, ?_, ?_⟩
+  · rcases (GcdDomainLaws.dvd_iff c ca).mp hca with ⟨q, hq⟩
+    refine ⟨C q, ?_⟩
+    rw [ha, hq]
+    unfold C
+    rw [monomial_mul_monomial, Mono.zero_mul]
+    exact congrArg (monomial Mono.zero)
+      (Lean.Grind.CommSemiring.mul_comm c q)
+  · rcases (GcdDomainLaws.dvd_iff c cb).mp hcb with ⟨q, hq⟩
+    refine ⟨C q, ?_⟩
+    rw [hb, hq]
+    unfold C
+    rw [monomial_mul_monomial, Mono.zero_mul]
+    exact congrArg (monomial Mono.zero)
+      (Lean.Grind.CommSemiring.mul_comm c q)
+  · intro d hda hdb
+    have hd : d = C (coeff Mono.zero d) :=
+      eq_C_of_vars_eq_nil d (vars_eq_nil_zero d)
+    rcases hda with ⟨qa, hqa⟩
+    rcases hdb with ⟨qb, hqb⟩
+    have hdca : coeff Mono.zero d ∣ ca := by
+      apply (GcdDomainLaws.dvd_iff _ _).mpr
+      refine ⟨coeff Mono.zero qa, ?_⟩
+      have hcoeff := congrArg (coeff Mono.zero) hqa
+      rw [ha, coeff_C, ite_eq_left rfl, hd,
+        MvPoly.mul_comm qa, coeff_C_mul] at hcoeff
+      exact hcoeff
+    have hdcb : coeff Mono.zero d ∣ cb := by
+      apply (GcdDomainLaws.dvd_iff _ _).mpr
+      refine ⟨coeff Mono.zero qb, ?_⟩
+      have hcoeff := congrArg (coeff Mono.zero) hqb
+      rw [hb, coeff_C, ite_eq_left rfl, hd,
+        MvPoly.mul_comm qb, coeff_C_mul] at hcoeff
+      exact hcoeff
+    rcases (GcdDomainLaws.dvd_iff _ _).mp
+        (hgreat (coeff Mono.zero d) hdca hdcb) with ⟨q, hq⟩
+    refine ⟨C q, ?_⟩
+    rw [hd, hq]
+    unfold C
+    rw [monomial_mul_monomial, Mono.zero_mul]
+    exact congrArg (monomial Mono.zero)
+      (Lean.Grind.CommSemiring.mul_comm (coeff Mono.zero d) q)
+
 /-- Gauss's lemma lifts proof-only gcd-domain structure through every finite
 multivariate arity. -/
 theorem gcdDomainLaws : GcdDomainLaws (MvPoly n R cmp) := by
@@ -468,7 +532,10 @@ theorem gcdDomainLaws : GcdDomainLaws (MvPoly n R cmp) := by
     exact GcdDomainLaws.one_ne_zero hcoeff
   · intro a b hab
     exact MvPoly.zero_product GcdDomainLaws.no_zero_div hab
-  · sorry
+  · intro a b
+    cases n with
+    | zero => exact gcdExists_zero a b
+    | succ n => sorry
 
 instance (priority := 100) instGcdDomainLawsMvPoly :
     GcdDomainLaws (MvPoly n R cmp) :=
