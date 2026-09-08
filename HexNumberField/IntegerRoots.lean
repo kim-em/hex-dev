@@ -146,10 +146,40 @@ namespace AlgebraicNumber
 
 end AlgebraicNumber
 
-/-- A fixed-field element prints as its reduced coordinate polynomial,
-`#p[a₀, a₁, ...]`, which rebuilds it through the coercion from
-`DensePoly Rat`. -/
-instance {p : ZPoly} {x : SimpleRoot p} : Repr (PolyQuot p x) where
-  reprPrec a prec := reprPrec a.coeffs prec
+namespace Display
+
+/-- A dyadic as the expression that rebuilds it. `Dyadic` is a core inductive
+with no `Repr`; `ofOdd n k` denotes `n · 2⁻ᵏ`, which is `ofIntWithPrec n k`. -/
+def dyadic : Dyadic → String
+  | .zero => "0"
+  | .ofOdd n k _ =>
+      -- Core's `>>>` on `Dyadic` is exact division by `2ᵏ`. The ascription is
+      -- load-bearing: without it the mantissa elaborates as `Nat`, takes
+      -- `Nat`'s truncating shift, and is coerced -- a silently wrong value.
+      if k ≥ 0 then s!"(({n} : Dyadic) >>> {k})"
+      else s!"(({n} : Dyadic) >>> ({k} : Int))"
+
+/-- A square as the anonymous constructor its three fields rebuild. -/
+def square (s : DyadicSquare) : String :=
+  s!"⟨{dyadic s.re}, {dyadic s.im}, {s.prec}⟩"
+
+end Display
+
+/-- A fixed-field element prints as the expression that rebuilds it:
+its reduced coordinates ascribed to the presentation they live in, with the
+root named by the square that isolates it
+(`SimpleRoot.ofSquare`, whose two side conditions are `decide`-discharged
+auto-parameters).
+
+The representative comes out of the `Quot` by `unquot`, as Mathlib's `Multiset`
+and `Finset` instances do, so the instance is `unsafe` and the printed square is
+whichever representative the value happens to carry. That choice is invisible in
+the result: `Intersects` compares stored squares, so every representative of the
+root rebuilds the same element. -/
+unsafe instance {p : ZPoly} {x : SimpleRoot p} : Repr (PolyQuot p x) where
+  reprPrec a _ :=
+    let s := (unsafeCast x : RefinedIsolation p).1.square
+    Std.Format.text
+      s!"PolyQuot.ofSquare {repr p} {Display.square s} {repr a.coeffs}"
 
 end Hex
