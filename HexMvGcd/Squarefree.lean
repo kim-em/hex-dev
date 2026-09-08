@@ -445,6 +445,25 @@ private theorem derivative_dvd_of_square_dvd (i : Fin n)
   rw [ha, derivative_mul, derivative_mul]
   grind
 
+@[simp] private theorem gcdList_derivatives_zero [IsMonomialOrder cmp] :
+    gcdList ((0 : MvPoly n R cmp) :: derivatives 0) = 0 := by
+  unfold gcdList derivatives
+  simp only [mvDerivative_zero, List.foldl_cons, gcd_zero_zero]
+  have fold_zero : ∀ (xs : List (MvPoly n R cmp)),
+      (∀ x ∈ xs, x = 0) → xs.foldl gcd 0 = 0 := by
+    intro xs hall
+    induction xs with
+    | nil => rfl
+    | cons head tail ih =>
+        rw [List.foldl_cons, hall head (by simp), gcd_zero_zero]
+        apply ih
+        intro x hx
+        exact hall x (by simp [hx])
+  apply fold_zero
+  intro x hx
+  rcases List.mem_map.mp hx with ⟨i, _, rfl⟩
+  exact mvDerivative_zero i
+
 /-- In characteristic zero, the all-partials gcd criterion is equivalent to
 relative squarefreeness for a primitive polynomial. -/
 private theorem gcdList_unit_iff_squarefree_charZero [IsMonomialOrder cmp]
@@ -456,24 +475,7 @@ private theorem gcdList_unit_iff_squarefree_charZero [IsMonomialOrder cmp]
     refine ⟨?_, ?_⟩
     · intro hq0
       subst q
-      have hg : gcdList ((0 : MvPoly n R cmp) :: derivatives 0) = 0 := by
-        unfold gcdList derivatives
-        simp only [mvDerivative_zero, List.foldl_cons, gcd_zero_zero]
-        have fold_zero : ∀ (xs : List (MvPoly n R cmp)),
-            (∀ x ∈ xs, x = 0) → xs.foldl gcd 0 = 0 := by
-          intro xs hall
-          induction xs with
-          | nil => rfl
-          | cons head tail ih =>
-              rw [List.foldl_cons, hall head (by simp), gcd_zero_zero]
-              apply ih
-              intro x hx
-              exact hall x (by simp [hx])
-        apply fold_zero
-        intro x hx
-        rcases List.mem_map.mp hx with ⟨i, _, rfl⟩
-        exact mvDerivative_zero i
-      rw [hg] at hunit
+      rw [gcdList_derivatives_zero] at hunit
       rcases (polyIsUnit_iff (0 : MvPoly n R cmp)).mp hunit with ⟨u, hu⟩
       rw [MvPoly.zero_mul] at hu
       exact LawfulGcdOps.one_ne_zero hu.symm
@@ -1006,7 +1008,38 @@ theorem isSquarefree_iff [IsMonomialOrder cmp]
     [Div R] [ExactDivLaws R] [Hex.Fraction.NonzeroOne R] [PerfectFrac R]
     (p : MvPoly n R cmp) :
     isSquarefree p = true ↔ Squarefree p := by
-  sorry
+  rcases PerfectFrac.charZeroOrPerfect (R := R) with hchar | hperfect
+  · let q := primPart p
+    by_cases hp : p = 0
+    · subst p
+      simp only [isSquarefree, primPart_zero, gcdList_derivatives_zero]
+      constructor
+      · intro hunit
+        rcases (polyIsUnit_iff (0 : MvPoly n R cmp)).mp hunit with ⟨u, hu⟩
+        rw [MvPoly.zero_mul] at hu
+        exact False.elim (LawfulGcdOps.one_ne_zero hu.symm)
+      · intro hsq
+        exact False.elim (hsq.1 rfl)
+    · have hq0 : q ≠ 0 := by
+        intro hzero
+        apply hp
+        rw [← content_mul_primPart p]
+        change C (content p) * q = 0
+        rw [hzero, MvPoly.mul_zero]
+      letI charZero : NatNoZero R := ⟨by
+        intro m hm hzero
+        apply hchar m hm
+        change Hex.Fraction.ofCoeff (m : R) = 0
+        rw [Hex.Fraction.ofCoeff_eq_zero_iff]
+        exact hzero⟩
+      have hprimitive : Primitive q := by
+        apply primitive_of_scalarContent_one
+        change content q = 1
+        exact content_primPart hp
+      change polyIsUnit (gcdList (q :: derivatives q)) = true ↔ Squarefree p
+      rw [gcdList_unit_iff_squarefree_charZero q hprimitive,
+        squarefree_primPart p]
+  · sorry
 
 theorem radical_squarefree [IsMonomialOrder cmp] [NatNoZero R]
     (p : MvPoly n R cmp) (hp : p ≠ 0) : Squarefree (radical p) := by
