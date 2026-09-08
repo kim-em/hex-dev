@@ -123,24 +123,50 @@ def readBlock (h : IO.FS.Handle) : IO (Option Inst) := do
     return some { family, name, n, bits }
   | _ => throw <| IO.userError s!"corpus: bad header {header}"
 
-def run (i : Inst) : IO Unit := do
+/-- Which column to measure. A sweep under a per-instance time budget
+runs one process per column, so an instance's budget is spent on the one
+measurement it is being judged on. -/
+inductive Column where
+  /-- `canonical` on an already-built graph. -/
+  | canon
+  /-- `canonical` charged the dense-to-native conversion too, which is
+  what the hex column pays inside its own timer through `rowsOf`. -/
+  | whole
+  /-- Both, plus the graph construction on its own. -/
+  | all
+  deriving BEq
+
+def Column.ofString? : String → Option Column
+  | "canon" => some .canon
+  | "whole" => some .whole
+  | "all" => some .all
+  | _ => none
+
+def run (col : Column) (i : Inst) : IO Unit := do
   let bits := i.bits
-  -- the adjacency is materialized outside the timed region, as it is on
-  -- the hex side: what is timed is the canonical search, not the family
-  -- generator
-  let buildNs ← timeMinNs fun _ => do
+  let mut fields : List String := []
+  if col == .all then
+    -- the adjacency is materialized outside the timed region, as it is on
+    -- the hex side: what is timed is the canonical search, not the family
+    -- generator
+    let buildNs ← timeMinNs fun _ => do
+      let G := Graph.ofOracle i.n fun v w => (bits[v]!)[w]!
+      pure (G.adj.size + G.nbr.size)
+    fields := s!"\"iso_build_ns\": {buildNs}" :: fields
+  if col == .whole || col == .all then
+    -- the same search charged the dense-to-native conversion, which is what
+    -- the hex column pays inside its own timed region (`rowsOf`)
+    let wholeNs ← timeMinNs fun _ =>
+      pure (digest (canonical (Graph.ofOracle i.n fun v w => (bits[v]!)[w]!)))
+    fields := s!"\"iso_whole_ns\": {wholeNs}" :: fields
+  if col == .canon || col == .all then
     let G := Graph.ofOracle i.n fun v w => (bits[v]!)[w]!
-    pure (G.adj.size + G.nbr.size)
-  -- the same search charged the dense-to-native conversion, which is what
-  -- the hex column pays inside its own timed region (`rowsOf`)
-  let wholeNs ← timeMinNs fun _ =>
-    pure (digest (canonical (Graph.ofOracle i.n fun v w => (bits[v]!)[w]!)))
-  let G := Graph.ofOracle i.n fun v w => (bits[v]!)[w]!
-  blackBox (G.adj.size + G.nbr.size)
-  let isoNs ← timeMinNs fun _ => pure (digest (canonical G))
-  IO.println <| "{\"name\": \"" ++ i.name ++ s!"\", \"n\": {i.n}" ++
-    s!", \"iso_ns\": {isoNs}, \"iso_nodes\": {(canonical G).nodes}" ++
-    s!", \"iso_build_ns\": {buildNs}, \"iso_whole_ns\": {wholeNs}}"
+    blackBox (G.adj.size + G.nbr.size)
+    let isoNs ← timeMinNs fun _ => pure (digest (canonical G))
+    fields := s!"\"iso_nodes\": {(canonical G).nodes}" :: fields
+    fields := s!"\"iso_ns\": {isoNs}" :: fields
+  IO.println <| "{\"name\": \"" ++ i.name ++ s!"\", \"n\": {i.n}, " ++
+    String.intercalate ", " fields.reverse ++ "}"
   (← IO.getStdout).flush
 
 end HexCompare
@@ -229,6 +255,13 @@ def checkPair (p : Pair) : IO Bool := do
 
 end HexCompare
 
+def runFile (path : String) (c : HexCompare.Column) : IO Unit := do
+  let h ← IO.FS.Handle.mk path .read
+  repeat
+    match ← HexCompare.readBlock h with
+    | none => break
+    | some i => HexCompare.run c i
+
 def main (args : List String) : IO Unit := do
   match args with
   | ["--check", path] =>
@@ -251,11 +284,11 @@ def main (args : List String) : IO Unit := do
         unless (← HexCompare.checkPair (← IO.ofExcept (HexCompare.parsePair line))) do
           ok := false
     IO.println s!"pairs: {count} decisions, {if ok then "all agree with hex" else "DISAGREEMENTS"}"
-  | [path] =>
-    let h ← IO.FS.Handle.mk path .read
-    repeat
-      match ← HexCompare.readBlock h with
-      | none => break
-      | some i => HexCompare.run i
+  | [path] => runFile path .all
+  | [path, col] =>
+    let some c := HexCompare.Column.ofString? col
+      | throw <| IO.userError s!"unknown column {col}"
+    runFile path c
   | _ =>
-    throw <| IO.userError "usage: hexcompare [--check|--pairs] <file.jsonl>"
+    throw <| IO.userError
+      "usage: hexcompare [--check|--pairs] <file> | <corpus> [canon|whole|all]"

@@ -35,6 +35,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -50,25 +52,44 @@ COLUMNS = [
     ("iso-canon", ["iso_ns", "iso_nodes"]),
     ("iso-whole", ["iso_whole_ns"]),
     ("nauty", ["nauty_ns", "nauty_whole_ns", "nauty_nodes"]),
+    ("sparse", ["sparse_ns", "sparse_whole_ns", "sparse_nodes"]),
+    ("traces", ["traces_ns", "traces_whole_ns", "traces_nodes"]),
 ]
 
 # the field each column is judged on, for the budget test
 JUDGED = {
     "hex-canon": "fast_ns", "hex-run": "lit_ns", "hex-ffi": "nauty_ffi_ns",
     "iso-canon": "iso_ns", "iso-whole": "iso_whole_ns", "nauty": "nauty_ns",
+    "sparse": "sparse_ns", "traces": "traces_ns",
 }
+
+
+def _pin(args) -> list[str]:
+    """`taskset` prefix pinning a measurement to one CPU.
+
+    SPEC/benchmarking.md asks for a measurement to be pinned to one
+    automatically selected CPU where the runner supports it, so that two
+    Hex measurements running at once do not land on the same one. The
+    CPU is chosen once per sweep from the process id; it need not be
+    idle."""
+    if args.cpu is None or not shutil.which("taskset"):
+        return []
+    return ["taskset", "-c", str(args.cpu)]
 
 
 def _command(column: str, path: Path, args) -> list[str]:
     hexbin = REPO_ROOT / ".lake/build/bin/hexgraphiso_cactus"
     isobin = Path(args.isograph) / ".lake/build/bin/hexcompare"
-    return {
+    prefix = _pin(args)
+    return prefix + {
         "hex-canon": [str(hexbin), "read", str(path), "canon"],
         "hex-run": [str(hexbin), "read", str(path), "run"],
         "hex-ffi": [str(hexbin), "read", str(path), "ffi"],
         "iso-canon": [str(isobin), str(path), "canon"],
         "iso-whole": [str(isobin), str(path), "whole"],
-        "nauty": [str(args.nauty), str(path)],
+        "nauty": [str(args.nauty), str(path), "dense"],
+        "sparse": [str(args.nauty), str(path), "sparse"],
+        "traces": [str(args.nauty), str(path), "traces"],
     }[column]
 
 
@@ -125,6 +146,11 @@ def main() -> int:
                              "n = 3072 a flat 25 s killed searches taking "
                              "4.7 s.")
     parser.add_argument("--passes", type=int, default=2)
+    parser.add_argument("--cpu", type=int, default=None,
+                        help="pin every measurement to this CPU; the "
+                             "default picks one from the process id")
+    parser.add_argument("--no-pin", action="store_true",
+                        help="do not pin to a CPU")
     parser.add_argument("--only", default=None,
                         help="comma-separated `column:family` pairs to run, "
                              "for re-measuring part of a sweep")
@@ -132,6 +158,12 @@ def main() -> int:
                         help="an existing merged file to update in place "
                              "rather than starting from nothing")
     args = parser.parse_args()
+
+    if args.no_pin:
+        args.cpu = None
+    elif args.cpu is None:
+        args.cpu = os.getpid() % (os.cpu_count() or 1)
+        print(f"pinning measurements to CPU {args.cpu}", file=sys.stderr)
 
     index = [json.loads(l) for l in
              (args.corpus / "index.jsonl").read_text().splitlines() if l]
