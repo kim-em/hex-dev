@@ -1092,6 +1092,128 @@ def Primitive [Lean.Grind.CommRing R] [Dvd R]
     (p : MvPoly n R cmp) : Prop :=
   ∀ d, (∀ c, c ∈ coefficientList p → d ∣ c) → ∃ u, d * u = 1
 
+private theorem commonCoeff [Lean.Grind.CommRing R] [DecidableEq R]
+    [BEq R] [LawfulBEq R] [Dvd R] [GcdDomainLaws R]
+    {p : MvPoly n R cmp} {d : R}
+    (hd : ∀ c, c ∈ coefficientList p → d ∣ c) :
+    ∀ m, d ∣ coeff m p := by
+  intro m
+  by_cases hm : m ∈ p.monomials
+  · rcases List.mem_map.mp hm with ⟨term, hterm, hmono⟩
+    rcases term with ⟨termMono, termCoeff⟩
+    simp only at hmono
+    subst termMono
+    rw [coeff_eq_of_mem_terms p hterm]
+    apply hd termCoeff
+    exact List.mem_map.mpr ⟨(m, termCoeff), hterm, rfl⟩
+  · rw [coeff_eq_zero_of_not_mem m p hm]
+    apply (GcdDomainLaws.dvd_iff d 0).mpr
+    exact ⟨0, (Lean.Grind.Semiring.mul_zero d).symm⟩
+
+/-- Unit scalar content is the producer-free certificate that a polynomial
+is primitive. -/
+theorem primitive_of_scalarContent_one
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [LawfulGcdOps R]
+    {p : MvPoly n R cmp} (hp : scalarContent p = 1) : Primitive p := by
+  intro d hd
+  have hdiv := dvd_scalarContent p d (commonCoeff hd)
+  rw [hp] at hdiv
+  rcases (GcdDomainLaws.dvd_iff d 1).mp hdiv with ⟨u, hu⟩
+  exact ⟨u, hu.symm⟩
+
+/-- Proof-side primitive part used to transport fraction-field divisibility.
+It uses the producer-free scalar content and never calls a polynomial gcd
+producer. -/
+private def primitivePart [Lean.Grind.CommRing R] [DecidableEq R]
+    [BEq R] [LawfulBEq R] [Dvd R] [GcdOps R]
+    (p : MvPoly n R cmp) : MvPoly n R cmp :=
+  let c := scalarContent p
+  if c = 0 then 0 else mapCoeffs (fun a => GcdOps.exactDiv a c) p
+
+private theorem scalarContent_mul_primitivePart
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [LawfulGcdOps R] (p : MvPoly n R cmp) :
+    C (scalarContent p) * primitivePart p = p := by
+  by_cases hc : scalarContent p = 0
+  · have hp : p = 0 := by
+      apply ext
+      intro m
+      have hdiv := scalarContent_dvd_coeff p m
+      rw [hc] at hdiv
+      rcases (LawfulGcdOps.dvd_iff 0 (coeff m p)).mp hdiv with ⟨q, hq⟩
+      rw [hq, Lean.Grind.Semiring.zero_mul, coeff_zero]
+    subst p
+    rw [scalarContent_zero, primitivePart, scalarContent_zero,
+      ite_eq_left rfl, C_zero]
+    exact MvPoly.zero_mul 0
+  · apply ext
+    intro m
+    have hzero : GcdOps.exactDiv (0 : R) (scalarContent p) = 0 := by
+      simpa only [Lean.Grind.Semiring.zero_mul] using
+        LawfulGcdOps.exactDiv_cancel (0 : R) (scalarContent p) hc
+    rw [coeff_C_mul, primitivePart, ite_eq_right hc,
+      coeff_mapCoeffs hzero]
+    have hdiv := scalarContent_dvd_coeff p m
+    rcases (LawfulGcdOps.dvd_iff (scalarContent p) (coeff m p)).mp hdiv with
+      ⟨q, hq⟩
+    rw [hq, Lean.Grind.CommSemiring.mul_comm (scalarContent p) q,
+      LawfulGcdOps.exactDiv_cancel q (scalarContent p) hc,
+      Lean.Grind.CommSemiring.mul_comm]
+
+private theorem scalarContent_primitivePart
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [LawfulGcdOps R]
+    {p : MvPoly n R cmp} (hp : p ≠ 0) :
+    scalarContent (primitivePart p) = 1 := by
+  let c := scalarContent p
+  let q := primitivePart p
+  let d := scalarContent q
+  have hc : c ≠ 0 := by
+    intro hc
+    apply hp
+    rw [← scalarContent_mul_primitivePart p]
+    change C c * q = 0
+    rw [hc, C_zero, MvPoly.zero_mul]
+  have hcoeff : ∀ m, coeff m p = c * coeff m q := by
+    intro m
+    rw [← scalarContent_mul_primitivePart p]
+    exact coeff_C_mul c q m
+  have hcd : c * d ∣ c := by
+    have hcommon : ∀ m, c * d ∣ coeff m p := by
+      intro m
+      have hd := scalarContent_dvd_coeff q m
+      change d ∣ coeff m q at hd
+      rcases (LawfulGcdOps.dvd_iff d (coeff m q)).mp hd with ⟨a, ha⟩
+      apply (LawfulGcdOps.dvd_iff (c * d) (coeff m p)).mpr
+      refine ⟨a, ?_⟩
+      rw [hcoeff, ha, Lean.Grind.Semiring.mul_assoc]
+    have := dvd_scalarContent p (c * d) hcommon
+    change c * d ∣ c at this
+    exact this
+  rcases (LawfulGcdOps.dvd_iff (c * d) c).mp hcd with ⟨u, hu⟩
+  have hunit : d * u = 1 := by
+    have hzero : c * (1 - d * u) = 0 := by
+      calc
+        c * (1 - d * u) = c - (c * d) * u := by grind
+        _ = 0 := by rw [← hu]; grind
+    rcases LawfulGcdOps.no_zero_div c (1 - d * u) hzero with hczero | hrest
+    · exact False.elim (hc hczero)
+    · grind
+  have hisUnit : GcdOps.isUnit d = true :=
+    (LawfulGcdOps.isUnit_iff d).mpr ⟨u, hunit⟩
+  have hnorm : normalize d = d := normalize_scalarContent q
+  calc
+    scalarContent (primitivePart p) = d := rfl
+    _ = normalize d := hnorm.symm
+    _ = 1 := LawfulGcdOps.normalize_unit d hisUnit
+
+private theorem primitivePart_primitive
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [LawfulGcdOps R]
+    {p : MvPoly n R cmp} (hp : p ≠ 0) : Primitive (primitivePart p) :=
+  primitive_of_scalarContent_one (scalarContent_primitivePart hp)
+
 section Fraction
 
 variable [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -1114,10 +1236,27 @@ theorem fractionMap_add (f g : MvPoly n R cmp) :
   exact mapCoeffs_add Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_add f g
 
 omit [Dvd R] in
+@[simp] theorem fractionMap_one :
+    fractionMap (1 : MvPoly n R cmp) = 1 := by
+  exact mapCoeffs_one Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_one
+
+omit [Dvd R] in
 theorem fractionMap_mul (f g : MvPoly n R cmp) :
     fractionMap (f * g) = fractionMap f * fractionMap g := by
   exact mapCoeffs_mul Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_add
     Hex.Fraction.ofCoeff_mul f g
+
+omit [Dvd R] in
+theorem fractionMap_C (c : R) :
+    fractionMap (C c : MvPoly n R cmp) = C (Hex.Fraction.ofCoeff c) := by
+  apply ext
+  intro m
+  rw [fractionMap, coeff_mapCoeffs Hex.Fraction.ofCoeff_zero,
+    coeff_C, coeff_C]
+  by_cases hm : m = Mono.zero
+  · rw [ite_eq_left hm, ite_eq_left hm]
+  · rw [ite_eq_right hm, ite_eq_right hm]
+    exact Hex.Fraction.ofCoeff_zero
 
 omit [BEq R] [LawfulBEq R] [Dvd R] in
 theorem fractionMap_injective :
@@ -1186,6 +1325,67 @@ private theorem clearFractions (xs : List (Hex.Fraction R)) :
             rw [hmap]
             rw [Hex.Fraction.ofCoeff_mul, Hex.Fraction.ofCoeff_mul, hys]
             grind
+
+omit [BEq R] [LawfulBEq R] [Dvd R] in
+/-- Multiplying a multivariate fraction polynomial by one nonzero embedded
+scalar clears all of its finitely many coefficient denominators. -/
+theorem clearFractionMvPoly (p : MvPoly n (Hex.Fraction R) cmp) :
+    ∃ d : R, d ≠ 0 ∧ ∃ q : MvPoly n R cmp,
+      fractionMap q = C (Hex.Fraction.ofCoeff d) * p := by
+  classical
+  rcases clearFractions (coefficientList p) with ⟨d, hd, ys, hlen, hys⟩
+  have hex : ∀ x, x ∈ coefficientList p → ∃ y : R,
+      Hex.Fraction.ofCoeff y = Hex.Fraction.ofCoeff d * x := by
+    intro x hx
+    rw [List.mem_iff_getElem] at hx
+    rcases hx with ⟨k, hk, hx⟩
+    refine ⟨ys.getD k Zero.zero, ?_⟩
+    have hs := hys k
+    have hget : (coefficientList p).getD k Zero.zero = x :=
+      (List.getElem_eq_getD (h := hk) (0 : Hex.Fraction R)).symm.trans hx
+    calc
+      Hex.Fraction.ofCoeff (ys.getD k Zero.zero) =
+          Hex.Fraction.ofCoeff d * (coefficientList p).getD k Zero.zero := hs
+      _ = Hex.Fraction.ofCoeff d * x := congrArg _ hget
+  have hzeroMem : (0 : Hex.Fraction R) ∉ coefficientList p := by
+    intro hmem
+    rcases List.mem_map.mp hmem with ⟨term, hterm, hcoeff⟩
+    rcases term with ⟨m, c⟩
+    simp only at hcoeff
+    subst c
+    have hget :=
+      (Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some).mp hterm
+    exact p.nonzeroInternal m hget
+  let liftCoeff (x : Hex.Fraction R) : R :=
+    if hx : x ∈ coefficientList p then Classical.choose (hex x hx) else 0
+  have hliftZero : liftCoeff 0 = 0 := by
+    simp [liftCoeff, hzeroMem]
+  let q : MvPoly n R cmp := mapCoeffs liftCoeff p
+  refine ⟨d, hd, q, ?_⟩
+  apply ext
+  intro m
+  dsimp only [q]
+  rw [fractionMap, coeff_mapCoeffs Hex.Fraction.ofCoeff_zero,
+    coeff_mapCoeffs hliftZero, coeff_C_mul]
+  by_cases hm : m ∈ p.monomials
+  · rcases List.mem_map.mp hm with ⟨term, hterm, hmono⟩
+    rcases term with ⟨termMono, termCoeff⟩
+    simp only at hmono
+    subst termMono
+    have hcoeff := coeff_eq_of_mem_terms p hterm
+    have hmem : termCoeff ∈ coefficientList p :=
+      List.mem_map.mpr ⟨(m, termCoeff), hterm, rfl⟩
+    rw [hcoeff]
+    dsimp only [liftCoeff]
+    rw [dite_eq_left hmem]
+    exact Classical.choose_spec (hex termCoeff hmem)
+  · rw [coeff_eq_zero_of_not_mem m p hm]
+    dsimp only [liftCoeff]
+    rw [dite_eq_right hzeroMem]
+    calc
+      Hex.Fraction.ofCoeff (0 : R) = 0 := Hex.Fraction.ofCoeff_zero
+      _ = Hex.Fraction.ofCoeff d * 0 :=
+        (Lean.Grind.Semiring.mul_zero _).symm
 
 omit [BEq R] [LawfulBEq R] [Dvd R] in
 /-- Every fraction polynomial becomes coefficientwise integral after
@@ -1973,6 +2173,197 @@ theorem cancelCommonFactor
   exact CoprimeCancelLaws.cancel_coprime g a b d hcop hda hdb
 
 end Lift
+
+section FractionCoprime
+
+variable [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [Dvd R] [GcdOps R] [LawfulGcdOps R] [Div R] [ExactDivLaws R]
+  [Hex.Fraction.NonzeroOne R]
+
+omit [Dvd R] [GcdOps R] [LawfulGcdOps R] [Div R] [ExactDivLaws R]
+    [Hex.Fraction.NonzeroOne R] in
+private theorem C_mul_C (a b : R) :
+    (C a : MvPoly n R cmp) * C b = C (a * b) := by
+  change monomial Mono.zero a * monomial Mono.zero b = monomial Mono.zero (a * b)
+  rw [monomial_mul_monomial, Mono.zero_mul]
+
+/-- Every nonzero multivariate polynomial over the fraction field is
+associated to the image of a primitive integral polynomial. -/
+private theorem fractionMv_primitive_rep
+    {H : MvPoly n (Hex.Fraction R) cmp} (hH : H ≠ 0) :
+    ∃ h : MvPoly n R cmp, Primitive h ∧
+      H ∣ fractionMap h ∧ fractionMap h ∣ H := by
+  rcases clearFractionMvPoly H with ⟨d, hd, q, hq⟩
+  have hdF : Hex.Fraction.ofCoeff d ≠ 0 := fun hz =>
+    hd ((Hex.Fraction.ofCoeff_eq_zero_iff d).mp hz)
+  have hCd : (C (Hex.Fraction.ofCoeff d) :
+      MvPoly n (Hex.Fraction R) cmp) ≠ 0 := by
+    intro hz
+    have hc := congrArg (coeff Mono.zero) hz
+    rw [coeff_C, ite_eq_left rfl, coeff_zero] at hc
+    exact hdF hc
+  have hq0 : q ≠ 0 := by
+    intro hzero
+    have hprod : C (Hex.Fraction.ofCoeff d) * H = 0 := by
+      rw [← hq, hzero, fractionMap_zero]
+    rcases MvPoly.zero_product
+        (fun a b hab => by
+          by_cases ha : a = 0
+          · exact Or.inl ha
+          · exact Or.inr (by
+              by_cases hb : b = 0
+              · exact hb
+              · exact False.elim ((ExactDivLaws.mul_ne_zero ha hb) hab)))
+        hprod with hzero | hzero
+    · exact hCd hzero
+    · exact hH hzero
+  let c := scalarContent q
+  let h := primitivePart q
+  have hc : c ≠ 0 := by
+    intro hzero
+    apply hq0
+    rw [← scalarContent_mul_primitivePart q]
+    change C c * h = 0
+    rw [hzero, C_zero, MvPoly.zero_mul]
+  have hcF : Hex.Fraction.ofCoeff c ≠ 0 := fun hz =>
+    hc ((Hex.Fraction.ofCoeff_eq_zero_iff c).mp hz)
+  have hmaps :
+      C (Hex.Fraction.ofCoeff c) * fractionMap h =
+        C (Hex.Fraction.ofCoeff d) * H := by
+    calc
+      C (Hex.Fraction.ofCoeff c) * fractionMap h =
+          fractionMap (C c) * fractionMap h := by rw [fractionMap_C]
+      _ = fractionMap (C c * h) := (fractionMap_mul _ _).symm
+      _ = fractionMap q := by rw [scalarContent_mul_primitivePart]
+      _ = C (Hex.Fraction.ofCoeff d) * H := hq
+  let α := (Hex.Fraction.ofCoeff d)⁻¹ * Hex.Fraction.ofCoeff c
+  let β := (Hex.Fraction.ofCoeff c)⁻¹ * Hex.Fraction.ofCoeff d
+  have hH : H = C α * fractionMap h := by
+    have hdinv : (Hex.Fraction.ofCoeff d)⁻¹ * Hex.Fraction.ofCoeff d = 1 := by
+      rw [Hex.Fraction.mul_comm, Hex.Fraction.mul_inv_cancel hdF]
+    calc
+      H = C ((Hex.Fraction.ofCoeff d)⁻¹) *
+          (C (Hex.Fraction.ofCoeff d) * H) := by
+            rw [← MvPoly.mul_assoc, C_mul_C, hdinv]
+            exact (MvPoly.one_mul H).symm
+      _ = C ((Hex.Fraction.ofCoeff d)⁻¹) *
+          (C (Hex.Fraction.ofCoeff c) * fractionMap h) := by rw [← hmaps]
+      _ = C α * fractionMap h := by
+        rw [← MvPoly.mul_assoc, C_mul_C]
+  have hh : fractionMap h = C β * H := by
+    have hcinv : (Hex.Fraction.ofCoeff c)⁻¹ * Hex.Fraction.ofCoeff c = 1 := by
+      rw [Hex.Fraction.mul_comm, Hex.Fraction.mul_inv_cancel hcF]
+    calc
+      fractionMap h = C ((Hex.Fraction.ofCoeff c)⁻¹) *
+          (C (Hex.Fraction.ofCoeff c) * fractionMap h) := by
+            rw [← MvPoly.mul_assoc, C_mul_C, hcinv]
+            exact (MvPoly.one_mul (fractionMap h)).symm
+      _ = C ((Hex.Fraction.ofCoeff c)⁻¹) *
+          (C (Hex.Fraction.ofCoeff d) * H) := by rw [hmaps]
+      _ = C β * H := by rw [← MvPoly.mul_assoc, C_mul_C]
+  refine ⟨h, primitivePart_primitive hq0, ?_, ?_⟩
+  · exact ⟨C β, hh⟩
+  · exact ⟨C α, hH⟩
+
+/-- A primitive integral multivariate polynomial that divides an integral
+polynomial after extending scalars already divides it integrally. -/
+private theorem primitive_dvd_of_fraction_dvd_mv
+    {h f : MvPoly n R cmp} (hh : Primitive h)
+    (hdiv : fractionMap h ∣ fractionMap f) : h ∣ f := by
+  rcases hdiv with ⟨z, hz⟩
+  rcases clearFractionMvPoly z with ⟨d, hd, q, hq⟩
+  have hmapEq : fractionMap (C d * f) = fractionMap (q * h) := by
+    rw [fractionMap_mul, fractionMap_C, fractionMap_mul, hz, hq]
+    exact (MvPoly.mul_assoc
+      (C (Hex.Fraction.ofCoeff d) : MvPoly n (Hex.Fraction R) cmp)
+      z (fractionMap h)).symm
+  have heq : C d * f = q * h := fractionMap_injective hmapEq
+  have hcop : ∀ e : MvPoly n R cmp, e ∣ h → e ∣ C d →
+      ∃ u, e * u = 1 := by
+    intro e heh heCd
+    apply primitive_descent hh ?_ heh heCd
+    intro e _ heCd
+    rcases heCd with ⟨a, ha⟩
+    have hdF : Hex.Fraction.ofCoeff d ≠ 0 := fun hz =>
+      hd ((Hex.Fraction.ofCoeff_eq_zero_iff d).mp hz)
+    let inv : MvPoly n (Hex.Fraction R) cmp :=
+      C ((Hex.Fraction.ofCoeff d)⁻¹)
+    refine ⟨a * inv, ?_⟩
+    calc
+      e * (a * inv) = (a * e) * inv := by grind
+      _ = fractionMap (C d) * inv := by rw [← ha]
+      _ = C (Hex.Fraction.ofCoeff d) *
+          C ((Hex.Fraction.ofCoeff d)⁻¹) := by rw [fractionMap_C]
+      _ = C (Hex.Fraction.ofCoeff d *
+          (Hex.Fraction.ofCoeff d)⁻¹) := C_mul_C _ _
+      _ = C 1 := by rw [Hex.Fraction.mul_inv_cancel hdF]
+      _ = 1 := rfl
+  apply cancelCommonFactor f (C d) h h (fun e heCd heh => hcop e heh heCd)
+  · refine ⟨q, ?_⟩
+    calc
+      f * C d = C d * f := MvPoly.mul_comm _ _
+      _ = q * h := heq
+  · exact ⟨f, rfl⟩
+
+/-- Coprimality in a gcd domain is preserved by extending coefficients to
+its fraction field. -/
+theorem coprimeOverFraction_of_coprime
+    {f g : MvPoly n R cmp}
+    (hcop : ∀ d, d ∣ f → d ∣ g → ∃ u, d * u = 1) :
+    CoprimeOverFraction f g := by
+  intro D hDf hDg
+  by_cases hD0 : D = 0
+  · subst D
+    have hf0 : f = 0 := by
+      apply fractionMap_injective
+      rw [fractionMap_zero]
+      rcases hDf with ⟨q, hq⟩
+      simpa only [MvPoly.mul_zero] using hq
+    have hg0 : g = 0 := by
+      apply fractionMap_injective
+      rw [fractionMap_zero]
+      rcases hDg with ⟨q, hq⟩
+      simpa only [MvPoly.mul_zero] using hq
+    subst f
+    subst g
+    rcases hcop 0 ⟨0, rfl⟩ ⟨0, rfl⟩ with ⟨u, hu⟩
+    rw [MvPoly.zero_mul] at hu
+    exact False.elim (GcdDomainLaws.one_ne_zero hu.symm)
+  · rcases fractionMv_primitive_rep hD0 with
+      ⟨h, hh, hDMap, hMapD⟩
+    have hMapF : fractionMap h ∣ fractionMap f := by
+      rcases hMapD with ⟨a, ha⟩
+      rcases hDf with ⟨b, hb⟩
+      refine ⟨b * a, ?_⟩
+      calc
+        fractionMap f = b * D := hb
+        _ = b * (a * fractionMap h) := by rw [ha]
+        _ = (b * a) * fractionMap h := (MvPoly.mul_assoc _ _ _).symm
+    have hMapG : fractionMap h ∣ fractionMap g := by
+      rcases hMapD with ⟨a, ha⟩
+      rcases hDg with ⟨b, hb⟩
+      refine ⟨b * a, ?_⟩
+      calc
+        fractionMap g = b * D := hb
+        _ = b * (a * fractionMap h) := by rw [ha]
+        _ = (b * a) * fractionMap h := (MvPoly.mul_assoc _ _ _).symm
+    have hhf : h ∣ f := primitive_dvd_of_fraction_dvd_mv hh hMapF
+    have hhg : h ∣ g := primitive_dvd_of_fraction_dvd_mv hh hMapG
+    rcases hcop h hhf hhg with ⟨u, hu⟩
+    have hMapUnit : fractionMap h * fractionMap u = 1 := by
+      calc
+        fractionMap h * fractionMap u = fractionMap (h * u) :=
+          (fractionMap_mul h u).symm
+        _ = fractionMap 1 := by rw [hu]
+        _ = 1 := fractionMap_one
+    rcases hDMap with ⟨a, ha⟩
+    refine ⟨a * fractionMap u, ?_⟩
+    calc
+      D * (a * fractionMap u) = (a * D) * fractionMap u := by grind
+      _ = fractionMap h * fractionMap u := by rw [← ha]
+      _ = 1 := hMapUnit
+
+end FractionCoprime
 
 section NormalizeAssoc
 

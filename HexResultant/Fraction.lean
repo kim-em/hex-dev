@@ -103,11 +103,13 @@ instance [DecidableEq R] (a b : Fraction.Rep R) : Decidable (Rel a b) :=
     infer_instance
 
 /-- Product of two representatives. -/
+@[expose]
 def mul (a b : Fraction.Rep R) : Fraction.Rep R :=
   ⟨a.num * b.num, a.den * b.den,
     ExactDivLaws.mul_ne_zero a.den_ne b.den_ne⟩
 
 /-- Sum of two representatives. -/
+@[expose]
 def add (a b : Fraction.Rep R) : Fraction.Rep R :=
   ⟨a.num * b.den + b.num * a.den, a.den * b.den,
     ExactDivLaws.mul_ne_zero a.den_ne b.den_ne⟩

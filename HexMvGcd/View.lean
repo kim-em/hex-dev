@@ -47,6 +47,24 @@ omit [BEq R] [LawfulBEq R] in
     toUnivariate i cmp' (constIn (cmp := cmp) i cmp' c) = DensePoly.C c := by
   exact toUnivariate_ofUnivariate i (DensePoly.C c)
 
+@[simp] theorem toUnivariate_zero (i : Fin (n + 1)) :
+    toUnivariate i cmp' (0 : MvPoly (n + 1) R cmp) = 0 := by
+  apply DensePoly.ext_coeff
+  intro k
+  apply MvPoly.ext
+  intro m
+  simp only [toUnivariate_coeff, coeff_zero, DensePoly.coeff_zero]
+
+theorem toUnivariate_add (i : Fin (n + 1))
+    (p q : MvPoly (n + 1) R cmp) :
+    toUnivariate i cmp' (p + q) =
+      toUnivariate i cmp' p + toUnivariate i cmp' q := by
+  apply DensePoly.ext_coeff
+  intro k
+  apply MvPoly.ext
+  intro m
+  simp only [toUnivariate_coeff, coeff_add, DensePoly.coeff_add_semiring]
+
 /-- The degree-`k` recursive coefficient of `constIn c` is `c` at zero and
 zero elsewhere. -/
 @[simp] theorem coeff_constIn (i : Fin (n + 1))
