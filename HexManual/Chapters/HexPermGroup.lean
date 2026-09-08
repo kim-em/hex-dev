@@ -34,9 +34,12 @@ open Hex Hex.PermGroup
 
 namespace HexPermGroupChapter
 
-def rotation : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
-def reflection : Perm 4 := ⟨#v[0, 3, 2, 1], by decide, by decide⟩
-def polygon : Group 4 := Group.ofGenerators #[rotation, reflection]
+def rotation : Perm 4 :=
+  ⟨#v[1, 2, 3, 0], by decide, by decide⟩
+def reflection : Perm 4 :=
+  ⟨#v[0, 3, 2, 1], by decide, by decide⟩
+def polygon : Group 4 :=
+  Group.ofGenerators #[rotation, reflection]
 
 #guard polygon.order = 8
 #guard (polygon.orbit 0).size = 4
@@ -57,7 +60,8 @@ def cyclicB : Group 4 := Group.ofGenerators #[rotation.inv]
 
 def swap3 : Perm 3 := ⟨#v[1, 0, 2], by decide, by decide⟩
 def cycle3 : Perm 3 := ⟨#v[1, 2, 0], by decide, by decide⟩
-def symmetric3 : Group 3 := Group.ofGenerators #[swap3, cycle3]
+def symmetric3 : Group 3 :=
+  Group.ofGenerators #[swap3, cycle3]
 def pointFixer : Group 3 := symmetric3.stabilizer 2
 
 example : pointFixer.IsSubgroup symmetric3 := by
@@ -105,9 +109,12 @@ has order eight.
 ```lean
 def symmetric4 : Group 4 := Group.ofGenerators
   #[⟨#v[1, 0, 2, 3], by decide, by decide⟩, rotation]
-#guard symmetric4.derivedSeries.certificate.orders symmetric4 = [24, 12, 4, 1]
+def derivedOrders :=
+  symmetric4.derivedSeries.certificate.orders symmetric4
+#guard derivedOrders = [24, 12, 4, 1]
 
-def c2 : Group 2 := Group.ofGenerators #[⟨#v[1, 0], by decide, by decide⟩]
+def c2 : Group 2 :=
+  Group.ofGenerators #[⟨#v[1, 0], by decide, by decide⟩]
 def c2wr2 := c2.wreathProduct c2 (by decide)
 #guard c2wr2.order = 8
 #guard c2wr2.generators.size = 3

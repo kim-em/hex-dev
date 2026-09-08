@@ -25,6 +25,8 @@ instance : Group (Perm n) where
   one_mul := Perm.id_comp
   mul_one := Perm.comp_id
   inv_mul_cancel := Perm.inv_comp_self
+  npow_succ := fun k p => by
+    simpa [Perm.pow_def, Perm.mul_def] using Perm.pow_add p k 1
 
 @[simp] theorem Perm.mul_get (p q : Perm n) (v : Fin n) :
     (p * q).get v = p.get (q.get v) := Perm.get_comp p q v
