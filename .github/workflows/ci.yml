@@ -291,7 +291,7 @@ jobs:
             hexrealroots_bench hexrcf_bench hexroots_bench \
             hexresultant_bench hexnumberfield_bench \
             hexnumberfieldtower_bench hexinterval_decision_bench \
-            hexgraphiso_bench
+            hexgraphiso_bench \
             hexpermgroup_bench
           # These two interval scheduler spikes are exact logical-count
           # canaries rather than lean-bench timing registrations. Build them
