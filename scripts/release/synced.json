@@ -1,5 +1,6 @@
 {
-  "_comment": "Bootstrap per-repo `main` HEADs used only until the dedicated `release-sync-baseline` branch exists. The publish sync refuses to overwrite a released repo whose main has moved off the live baseline, and every real workflow run advances that branch even when a later mirror fails.",
+  "_comment": "Bootstrap release ledger used only until the dedicated `release-sync-baseline` branch exists. _version is the last shared release; per-repo values are main HEADs. A real sync records a pending release before publishing and advances the ledger after every repository so retries are safe.",
+  "_version": "v0.0.0",
   "hex-test-kit": "610207eec0ca214928eec42a6dd2084d859bf94d",
   "hex-matrix": "42c865718206dc1c2e63e3fc0ebb94db8174bd12",
   "hex-matrix-mathlib": "a0ae2639613d29f73a5fe5abccd7749af8f9a67c",

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -32,6 +33,23 @@ class SyncReleasedTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
+
+    def test_release_versions_start_at_point_one_and_increment_minor(self) -> None:
+        self.assertEqual(sync_released.next_release_version(), "v0.1.0")
+        self.assertEqual(sync_released.next_release_version("v0.1.0"), "v0.2.0")
+        self.assertEqual(sync_released.next_release_version("v2.9.7"), "v2.10.0")
+        with self.assertRaisesRegex(ValueError, "invalid completed release"):
+            sync_released.next_release_version("0.1.0")
+
+    def test_pending_release_is_bound_to_its_source_commit(self) -> None:
+        document = {"_version": "v0.2.0", "_pending_release": {
+            "version": "v0.3.0", "source": "abc", "repos": ["hex-basic"]}}
+        self.assertEqual(
+            sync_released.release_transaction(document, "abc"),
+            ("v0.3.0", {"hex-basic"}, True),
+        )
+        with self.assertRaisesRegex(RuntimeError, "rerun the sync at that commit"):
+            sync_released.release_transaction(document, "def")
 
     def test_toolchain_reaches_side_projects(self) -> None:
         notes = sync_released.rewrite_toolchains(self.repo)
@@ -410,6 +428,33 @@ class SyncReleasedTests(unittest.TestCase):
             (self.repo / "bench" / "lakefile.lean").read_text(),
         )
 
+    def test_hex_pins_use_one_release_version(self) -> None:
+        sha = "a" * 40
+        (self.repo / "lakefile.toml").write_text(
+            '[[require]]\nname = "HexBasic"\n'
+            'git = "https://github.com/kim-em/hex-basic.git"\n'
+            f'rev = "{sha}"\n',
+            encoding="utf-8",
+        )
+        (self.repo / "bench" / "lakefile.lean").write_text(
+            'require HexBasic from git\n'
+            '  "https://github.com/kim-em/hex-basic.git" @ "v0.1.0"\n',
+            encoding="utf-8",
+        )
+        notes = sync_released.rewrite_pins(
+            {}, self.repo, {"hex-basic": sha},
+            {"hex-basic": "leanprover"}, "v0.2.0")
+        self.assertEqual(len(notes), 2)
+        self.assertIn(
+            'git = "https://github.com/leanprover/hex-basic.git"\n'
+            'rev = "v0.2.0"',
+            (self.repo / "lakefile.toml").read_text(),
+        )
+        self.assertIn(
+            '"https://github.com/leanprover/hex-basic.git" @ "v0.2.0"',
+            (self.repo / "bench" / "lakefile.lean").read_text(),
+        )
+
     def test_reservoir_toml_pin_rewrites_by_package_name(self) -> None:
         (self.repo / "lakefile.toml").write_text(
             'name = "consumer"\n'
@@ -474,6 +519,37 @@ class SyncReleasedTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
             sync_released.validate_skeleton({"lakefile": "toml"}, self.repo)
 
+    def test_release_test_target_tracks_manifest_in_toml(self) -> None:
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(
+            '[[lean_lib]]\nname = "HexProbe"\n\n'
+            '[[lean_lib]]\nname = "HexProbeTests"\n'
+            'globs = ["HexProbe.OldTest"]\n',
+            encoding="utf-8",
+        )
+        entry = {"lib": "HexProbe", "lakefile": "toml",
+                 "test_modules": ["HexProbe.FirstTest", "HexProbe.SecondTest"]}
+        self.assertEqual(sync_released.rewrite_test_target(entry, self.repo),
+                         ["  release tests on lean_lib HexProbeTests (lakefile.toml)"])
+        self.assertIn(
+            'globs = ["HexProbe.FirstTest", "HexProbe.SecondTest"]',
+            lakefile.read_text(encoding="utf-8"),
+        )
+        self.assertEqual(sync_released.rewrite_test_target(entry, self.repo), [])
+
+    def test_release_test_target_is_created_in_lean(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text("import Lake\n\nlean_lib HexProbe\n", encoding="utf-8")
+        entry = {"lib": "HexProbe", "lakefile": "lean",
+                 "test_modules": ["HexProbe.FirstTest", "HexProbe.SecondTest"]}
+        sync_released.rewrite_test_target(entry, self.repo)
+        self.assertIn(
+            "lean_lib HexProbeTests where\n"
+            "  globs := #[`HexProbe.FirstTest, `HexProbe.SecondTest]\n",
+            lakefile.read_text(encoding="utf-8"),
+        )
+        sync_released.validate_skeleton(entry, self.repo)
+
     def test_manifest_uses_exact_external_commit(self) -> None:
         manifest = {
             "version": "1.1.0",
@@ -487,7 +563,7 @@ class SyncReleasedTests(unittest.TestCase):
         path = self.repo / "lake-manifest.json"
         path.write_text(json.dumps(manifest), encoding="utf-8")
         sync_released.rewrite_manifest(
-            {}, self.repo, {}, {}, self.pins)
+            {}, self.repo, {}, {}, self.pins, "v0.1.0")
         package = json.loads(path.read_text())["packages"][0]
         self.assertEqual(package["rev"], self.mathlib["rev"])
         self.assertEqual(package["inputRev"], self.mathlib["inputRev"])
@@ -515,15 +591,16 @@ class SyncReleasedTests(unittest.TestCase):
                    "hex-arith": {"lib": "HexArith", "lakefile": "lean"}}
         notes = sync_released.rewrite_manifest(
             {"pins": ["hex-basic", "hex-arith", "hex-poly"]}, self.repo,
-            synced, {}, self.pins, catalog)
+            synced, {}, self.pins, "v0.1.0", catalog)
         packages = {pkg["name"]: pkg
                     for pkg in json.loads(path.read_text())["packages"]}
         self.assertEqual(set(packages), {"HexPoly", "HexBasic", "HexArith"})
         self.assertEqual(packages["HexPoly"]["rev"], "b" * 40)
+        self.assertEqual(packages["HexPoly"]["inputRev"], "v0.1.0")
         basic = packages["HexBasic"]
         self.assertEqual(basic["url"], "https://github.com/leanprover/hex-basic.git")
         self.assertEqual(basic["rev"], "a" * 40)
-        self.assertEqual(basic["inputRev"], "a" * 40)
+        self.assertEqual(basic["inputRev"], "v0.1.0")
         self.assertTrue(basic["inherited"])
         self.assertEqual(basic["configFile"], "lakefile.toml")
         self.assertEqual(packages["HexArith"]["configFile"], "lakefile.lean")
@@ -531,7 +608,7 @@ class SyncReleasedTests(unittest.TestCase):
         # A second pass finds everything present and adds nothing.
         again = sync_released.rewrite_manifest(
             {"pins": ["hex-basic", "hex-arith", "hex-poly"]}, self.repo,
-            synced, {}, self.pins, catalog)
+            synced, {}, self.pins, "v0.1.0", catalog)
         self.assertFalse(any("manifest +" in note for note in again))
 
     def test_manifest_records_direct_pins_as_not_inherited(self) -> None:
@@ -547,7 +624,8 @@ class SyncReleasedTests(unittest.TestCase):
                         encoding="utf-8")
         sync_released.rewrite_manifest(
             {"pins": ["hex-basic"]}, self.repo, {"hex-basic": "a" * 40}, {},
-            self.pins, {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
+            self.pins, "v0.1.0",
+            {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"}})
         package = json.loads(path.read_text())["packages"][0]
         self.assertFalse(package["inherited"])
 
@@ -594,18 +672,19 @@ class SyncReleasedTests(unittest.TestCase):
                    "hex-arith": {"lib": "HexArith", "lakefile": "lean"},
                    "hex-matrix": {"lib": "HexMatrix", "lakefile": "toml"}}
         notes = sync_released.rewrite_requires(
-            entry, self.repo, synced, {}, catalog)
+            entry, self.repo, synced, {}, "v0.1.0", catalog)
         text = (self.repo / "lakefile.toml").read_text()
         self.assertEqual(notes, [
-            f'  require + hex-arith (HexArith) -> {"b" * 12} (lakefile.toml)'])
+            '  require + hex-arith (HexArith) -> v0.1.0 (lakefile.toml)'])
         self.assertNotIn("hex-basic.git", text)
         block = ('[[require]]\nname = "HexArith"\n'
                  'git = "https://github.com/leanprover/hex-arith.git"\n'
-                 f'rev = "{"b" * 40}"\n\n[[lean_lib]]')
+                 'rev = "v0.1.0"\n\n[[lean_lib]]')
         self.assertIn(block, text)
         self.assertEqual(text.count("[[require]]"), 2)
         self.assertEqual(
-            sync_released.rewrite_requires(entry, self.repo, synced, {}, catalog),
+            sync_released.rewrite_requires(
+                entry, self.repo, synced, {}, "v0.1.0", catalog),
             [])
 
     def test_direct_imports_gain_direct_requires_in_lean(self) -> None:
@@ -623,12 +702,13 @@ class SyncReleasedTests(unittest.TestCase):
                  "pins": ["hex-basic", "hex-arith"]}
         sync_released.rewrite_requires(
             entry, self.repo, {"hex-basic": "a" * 40, "hex-arith": "b" * 40}, {},
+            "v0.1.0",
             {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
              "hex-arith": {"lib": "HexArith", "lakefile": "lean"}})
         text = (self.repo / "lakefile.lean").read_text()
         self.assertIn(
             '@ "0"\n\nrequire HexBasic from git\n'
-            f'  "https://github.com/leanprover/hex-basic.git" @ "{"a" * 40}"\n\n'
+            '  "https://github.com/leanprover/hex-basic.git" @ "v0.1.0"\n\n'
             "@[default_target]", text)
 
     def test_missing_root_toolchain_fails_closed(self) -> None:
@@ -651,7 +731,9 @@ class SyncReleasedTests(unittest.TestCase):
         )
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins):
+                    _baseline, _force, _dep_owner, _pins, version, resuming):
+            self.assertEqual(version, "v0.1.0")
+            self.assertFalse(resuming)
             if entry["repo"].endswith("/first"):
                 synced["first"] = "new-first"
                 return True
@@ -667,6 +749,7 @@ class SyncReleasedTests(unittest.TestCase):
         with (
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
             patch.object(sync_released, "selection_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
@@ -677,6 +760,95 @@ class SyncReleasedTests(unittest.TestCase):
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertEqual(advanced["first"], "new-first")
         self.assertEqual(advanced["second"], "old-second")
+        self.assertEqual(advanced["_pending_release"], {
+            "version": "v0.1.0", "source": "source-sha", "repos": ["first"]})
+        self.assertNotIn("_version", advanced)
+
+    def test_completed_publication_advances_the_shared_version(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n"
+            "  - repo: leanprover/first\n"
+            "  - repo: leanprover/second\n",
+            encoding="utf-8",
+        )
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(json.dumps({
+            "_version": "v0.1.0",
+            "first": "old-first",
+            "second": "old-second",
+        }), encoding="utf-8")
+
+        def publish(entry, _source_sha, _token, _dry_run, synced,
+                    _baseline, _force, _dep_owner, _pins, version, resuming):
+            self.assertEqual(version, "v0.2.0")
+            self.assertFalse(resuming)
+            short = entry["repo"].split("/")[-1]
+            synced[short] = f"new-{short}"
+            return True
+
+        argv = ["sync_released.py", "--token", "secret-token",
+                "--baseline", str(baseline)]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "selection_check", return_value=None),
+            patch.object(sync_released, "sync_repo", side_effect=publish),
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 0)
+
+        advanced = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(advanced["_version"], "v0.2.0")
+        self.assertNotIn("_pending_release", advanced)
+        self.assertEqual(advanced["first"], "new-first")
+        self.assertEqual(advanced["second"], "new-second")
+
+    def test_pending_publication_resumes_same_version(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n"
+            "  - repo: leanprover/first\n"
+            "  - repo: leanprover/second\n",
+            encoding="utf-8",
+        )
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(json.dumps({
+            "first": "new-first",
+            "second": "old-second",
+            "_pending_release": {
+                "version": "v0.1.0",
+                "source": "source-sha",
+                "repos": ["first"],
+            },
+        }), encoding="utf-8")
+
+        def publish(entry, _source_sha, _token, _dry_run, synced,
+                    _baseline, _force, _dep_owner, _pins, version, resuming):
+            self.assertEqual(version, "v0.1.0")
+            self.assertTrue(resuming)
+            short = entry["repo"].split("/")[-1]
+            synced[short] = f"new-{short}"
+            return True
+
+        argv = ["sync_released.py", "--token", "secret-token",
+                "--baseline", str(baseline)]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "selection_check", return_value=None),
+            patch.object(sync_released, "sync_repo", side_effect=publish),
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 0)
+
+        advanced = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(advanced["_version"], "v0.1.0")
+        self.assertNotIn("_pending_release", advanced)
 
     def test_only_sync_seeds_dependency_pins_from_baseline(self) -> None:
         manifest = self.repo / "released.yml"
@@ -693,7 +865,9 @@ class SyncReleasedTests(unittest.TestCase):
         )
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins):
+                    _baseline, _force, _dep_owner, _pins, version, resuming):
+            self.assertEqual(version, "v0.1.0")
+            self.assertFalse(resuming)
             self.assertEqual(entry["repo"], "leanprover/downstream")
             self.assertEqual(synced["upstream"], "new-upstream")
             self.assertEqual(synced["downstream"], "old-downstream")
@@ -712,6 +886,7 @@ class SyncReleasedTests(unittest.TestCase):
         with (
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
             patch.object(sync_released, "selection_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
@@ -722,6 +897,53 @@ class SyncReleasedTests(unittest.TestCase):
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertEqual(advanced["upstream"], "new-upstream")
         self.assertEqual(advanced["downstream"], "new-downstream")
+        self.assertEqual(advanced["_pending_release"]["repos"], ["downstream"])
+
+    def test_repo_push_updates_main_and_tag_atomically(self) -> None:
+        remote = self.repo / "remote.git"
+        seed = self.repo / "seed"
+        subprocess.run(["git", "init", "-q", "--bare", str(remote)], check=True)
+        subprocess.run(["git", "clone", "-q", str(remote), str(seed)], check=True)
+        (seed / "managed.txt").write_text("old\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(seed), "add", "managed.txt"], check=True)
+        subprocess.run([
+            "git", "-C", str(seed), "-c", "user.name=Test",
+            "-c", "user.email=test@example.com", "commit", "-qm", "seed",
+        ], check=True)
+        subprocess.run(["git", "-C", str(seed), "push", "-q", "origin", "HEAD:main"],
+                       check=True)
+        subprocess.run(["git", "-C", str(remote), "symbolic-ref", "HEAD",
+                        "refs/heads/main"], check=True)
+        old = subprocess.run(
+            ["git", "-C", str(seed), "rev-parse", "HEAD"], check=True,
+            capture_output=True, text=True).stdout.strip()
+
+        def apply(_entry, clone):
+            (clone / "managed.txt").write_text("new\n", encoding="utf-8")
+            return ["  managed.txt"]
+
+        synced: dict[str, str] = {}
+        entry = {"repo": "leanprover/probe", "pins_only": True,
+                 "lakefile": "toml"}
+        with (
+            patch.object(sync_released, "clone_url", return_value=str(remote)),
+            patch.object(sync_released, "validate_skeleton"),
+            patch.object(sync_released, "validate_ci_helpers"),
+            patch.object(sync_released, "apply_paths", side_effect=apply),
+            patch.object(sync_released, "rewrite_toolchains", return_value=[]),
+        ):
+            self.assertTrue(sync_released.sync_repo(
+                entry, "source-sha", None, False, synced, {"probe": old}, False,
+                {}, {}, "v0.1.0", False))
+
+        main = subprocess.run(
+            ["git", "-C", str(remote), "rev-parse", "refs/heads/main"], check=True,
+            capture_output=True, text=True).stdout.strip()
+        tag = subprocess.run(
+            ["git", "-C", str(remote), "rev-parse", "refs/tags/v0.1.0"], check=True,
+            capture_output=True, text=True).stdout.strip()
+        self.assertEqual(main, tag)
+        self.assertEqual(synced["probe"], main)
 
 
 class LakeDeclarationTests(unittest.TestCase):
@@ -994,8 +1216,10 @@ class TokenPreflightTests(unittest.TestCase):
         seen_tokens: list = []
 
         def publish(entry, _source_sha, token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins):
+                    _baseline, _force, _dep_owner, _pins, version, resuming):
             seen_tokens.append(token)
+            self.assertEqual(version, "v0.1.0")
+            self.assertFalse(resuming)
             return False
 
         argv = ["sync_released.py", "--dry-run", "--baseline", str(baseline)]
@@ -1003,6 +1227,7 @@ class TokenPreflightTests(unittest.TestCase):
         with (
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch.dict(sync_released.os.environ, env),
@@ -1073,7 +1298,28 @@ class TokenPreflightTests(unittest.TestCase):
         with (
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "sync_repo") as publish,
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 1)
+        publish.assert_not_called()
+
+    def test_existing_tag_stops_a_new_release_before_publication(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n  - repo: leanprover/hex-basic\n", encoding="utf-8")
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(
+            json.dumps({"hex-basic": "a" * 40}), encoding="utf-8")
+        argv = ["sync_released.py", "--dry-run", "--baseline", str(baseline)]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "version_tag_collisions", return_value={
+                "leanprover/hex-basic": "b" * 40}),
             patch.object(sync_released, "sync_repo") as publish,
             patch("sys.argv", argv),
         ):
@@ -1091,6 +1337,7 @@ class TokenPreflightTests(unittest.TestCase):
         with (
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "version_tag_collisions", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
             patch.object(sync_released, "selection_check", return_value="HTTP 404"),
             patch.object(sync_released, "sync_repo") as publish,
