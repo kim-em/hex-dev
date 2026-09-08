@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.KeyComplete
+public import HexGraphIso.Nauty.Policy.FirstRoot
 public import HexGraphIso.Nauty.Policy.GeneratedRoot
 public import HexGraphIso.Nauty.Policy.Result
 import all HexGraphIso.Nauty.Policy.MaxCombine

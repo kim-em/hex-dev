@@ -128,11 +128,11 @@ mathematical results do not substitute for performance validation.
 
 ## Performance validation
 
-The chungus2 cactus sweep is recorded under fingerprint `4a7c8747f686`,
+The chungus2 cactus sweep is recorded under fingerprint `4fa1958f160d`,
 including runtime and pairs data, tactic timings, manifest, metadata, figures,
 and the per-node fit. It passes the existing exponent margin of 0.2.
 The tactic leg solves every previously solved case; `neg-circ96-vs-2circ48`
-retains its timeout, while `neg-paley61-vs-circulant61` finishes in 81.47 s.
+retains its timeout, while `neg-paley61-vs-circulant61` finishes in 85.91 s.
 
 The [direct-engine timing run](bench-results/hexgraphiso-engine-4a7c8747f686-chungus2.jsonl)
 uses CPU 91 and the same 98 cases as the spike's stored three-trial median

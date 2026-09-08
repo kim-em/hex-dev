@@ -68,6 +68,7 @@ public import HexGraphIso.Nauty.Equitable.Fix
 public import HexGraphIso.Nauty.Invariant.TargetCell
 public import HexGraphIso.Ops
 public import HexGraphIso.Autos
+public import HexGraphIso.AutTrace
 public import HexGraphIso.AutComplete
 public import HexGraphIso.AutIndiv
 public import HexGraphIso.Uncolored
