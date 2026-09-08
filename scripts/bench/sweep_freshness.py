@@ -494,6 +494,7 @@ GRAPHISO = Family(
     include=(
         "HexGraphIso/",
         "HexGraph/",
+        "HexPermGroup/Perm.lean",
         "bench/HexGraphIso/Cactus.lean",
         "scripts/plots/hexgraphiso-cactus.py",
     ),

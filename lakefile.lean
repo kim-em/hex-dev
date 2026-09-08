@@ -251,6 +251,16 @@ lean_lib HexIntFactorMathlib where
 lean_lib HexMatrix where
   precompileModules := true
 
+@[default_target]
+lean_lib HexPermGroup where
+
+@[default_target]
+lean_lib HexPermGroupMathlib where
+
+@[default_target]
+lean_lib HexPermGroupTests where
+  globs := #[`HexPermGroupMathlib.Tests]
+
 lean_lib HexGraph where
 
 lean_lib HexGraphIso where
@@ -816,7 +826,7 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
-    ++ #[`HexGraphIso.Cases].map Glob.one
+    ++ #[`HexGraphIso.Cases, `HexPermGroup.Conformance].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,

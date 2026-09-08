@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIsoMathlib.Basic
+public import HexPermGroupMathlib.Perm
 
 public section
 
@@ -23,32 +24,9 @@ both `encode_iso_iff` and `colored_iso_iff_canon_eq` hold for every
 choice of `e`.
 -/
 
-namespace Hex.GraphIso
-
-variable {n : Nat}
-
-/-- The equivalence of `Fin n` given by a forward permutation: `p.get`
-one way, `p.inv.get` the other. -/
-@[expose] def Perm.toEquiv (p : Perm n) : Fin n ≃ Fin n where
-  toFun := p.get
-  invFun := p.inv.get
-  left_inv := p.inv_get_get
-  right_inv := p.get_inv_get
-
-@[simp] theorem Perm.toEquiv_apply (p : Perm n) (i : Fin n) :
-    p.toEquiv i = p.get i := rfl
-
-/-- The forward permutation with the same action as an equivalence of
-`Fin n`. -/
-@[expose] def Perm.ofEquiv (e : Fin n ≃ Fin n) : Perm n :=
-  Perm.ofFn e (fun _ _ h => e.injective h)
-    (fun i => ⟨e.symm i, e.apply_symm_apply i⟩)
-
-@[simp] theorem Perm.get_ofEquiv (e : Fin n ≃ Fin n) (i : Fin n) :
-    (Perm.ofEquiv e).get i = e i :=
-  Perm.get_ofFn ..
-
-end Hex.GraphIso
+namespace Hex.GraphIso.Perm
+export Hex.Perm (toEquiv toEquiv_apply ofEquiv get_ofEquiv)
+end Hex.GraphIso.Perm
 
 namespace Hex.GraphIso.Mathlib
 

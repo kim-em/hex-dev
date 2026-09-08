@@ -330,6 +330,7 @@ class Families(unittest.TestCase):
         # re-measurement, as excluding the unimported test modules did.
         raw = freshness.git(
             "ls-files", "-s", "--", "HexGraphIso/", "HexGraph/",
+            "HexPermGroup/Perm.lean",
             "bench/HexGraphIso/Cactus.lean",
             "scripts/plots/hexgraphiso-cactus.py",
             ":!HexGraphIso/SPEC", ":!HexGraphIso/README.md",

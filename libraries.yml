@@ -481,7 +481,7 @@ libraries:
     deps: [HexBasic]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
     phase4:
       comparators:
         - tool: GAP permutation groups via a persistent process
@@ -517,10 +517,11 @@ libraries:
   HexPermGroupMathlib:
     deps: [HexPermGroup]
     mathlib: true
+    correspondence_only: true
     done_through: 0
-    status: planned
+    status: active
   HexGraphIso:
-    deps: [HexBasic, HexMatrix]
+    deps: [HexBasic, HexMatrix, HexPermGroup]
     mathlib: false
     done_through: 7
     status: active
@@ -542,7 +543,7 @@ libraries:
         - name: decision-pairs
           description: Positive and negative isomorphism pairs spanning cycle splittings, irregular cross-family negatives, and same-degree vertex-transitive negatives, carrying the two decision tiers and the kernel-checked tactic tier.
   HexGraphIsoMathlib:
-    deps: [HexGraphIso]
+    deps: [HexGraphIso, HexPermGroupMathlib]
     mathlib: true
     done_through: 7
     status: active
