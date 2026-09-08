@@ -324,6 +324,59 @@ theorem unit_eq_C
             _ = if m = Mono.zero then cp else 0 := by rw [hpC', coeff_C]
             _ = coeff m (C cp : MvPoly n R cmp) := (coeff_C m cp).symm
 
+omit [Dvd R] [GcdOps R] in
+/-- A coefficient domain makes the polynomial ring a domain for every storage
+comparator. -/
+theorem zero_product
+    (noZeroDiv : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0)
+    {p q : MvPoly n R cmp} (hpq : p * q = 0) : p = 0 ∨ q = 0 := by
+  by_cases hp : p = 0
+  · exact Or.inl hp
+  by_cases hq : q = 0
+  · exact Or.inr hq
+  let p' : MvPoly n R Mono.lex := reorder Mono.lex p
+  let q' : MvPoly n R Mono.lex := reorder Mono.lex q
+  have hp' : p' ≠ 0 := by
+    intro hzero
+    apply hp
+    apply ext
+    intro m
+    calc
+      coeff m p = coeff m p' := (coeff_reorder Mono.lex m p).symm
+      _ = 0 := by rw [hzero, coeff_zero]
+      _ = coeff m (0 : MvPoly n R cmp) := (coeff_zero m).symm
+  have hq' : q' ≠ 0 := by
+    intro hzero
+    apply hq
+    apply ext
+    intro m
+    calc
+      coeff m q = coeff m q' := (coeff_reorder Mono.lex m q).symm
+      _ = 0 := by rw [hzero, coeff_zero]
+      _ = coeff m (0 : MvPoly n R cmp) := (coeff_zero m).symm
+  have hpq' : p' * q' = 0 := by
+    calc
+      p' * q' = reorder Mono.lex (p * q) :=
+        (reorder_mul (R := R) (cmp := cmp) (cmp' := Mono.lex) p q).symm
+      _ = reorder Mono.lex (0 : MvPoly n R cmp) := by rw [hpq]
+      _ = 0 := by
+        apply ext
+        intro m
+        rw [coeff_reorder, coeff_zero, coeff_zero]
+  cases hpLead : p'.leadingTerm with
+  | none => exact False.elim (hp' ((leadingTerm_eq_none_iff p').mp hpLead))
+  | some pterm =>
+      rcases pterm with ⟨mp, cp⟩
+      cases hqLead : q'.leadingTerm with
+      | none => exact False.elim (hq' ((leadingTerm_eq_none_iff q').mp hqLead))
+      | some qterm =>
+          rcases qterm with ⟨mq, cq⟩
+          have hlead := leadingTerm_mul_of_no_zero_div noZeroDiv hpLead hqLead
+          have hnone : (p' * q').leadingTerm = none :=
+            (leadingTerm_eq_none_iff (p' * q')).mpr hpq'
+          rw [hlead] at hnone
+          cases hnone
+
 /-- Unit recognition is sound and complete under the coefficient gcd laws. -/
 theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
     (p : MvPoly n R cmp) :

@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Euclid/MulRing.lean",
+  "baseline_blob": "ac64178be71e2a335ca904cef0b9510751c7562d",
+  "current_blob": "ccc4934e98c5f244cf2385cd5a6770eaeb68be63",
+  "reason": "Covers the already exempted import and proof-script cleanup from ac64178b to 166ec622, then removes `private` from the existing `diagonalSum_eq_degree_bound` proof so the GCD library can reuse it. No executable definition body changes."
+}

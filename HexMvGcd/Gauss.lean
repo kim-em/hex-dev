@@ -451,7 +451,24 @@ variable [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
 /-- Gauss's lemma lifts proof-only gcd-domain structure through every finite
 multivariate arity. -/
 theorem gcdDomainLaws : GcdDomainLaws (MvPoly n R cmp) := by
-  sorry
+  refine {
+    dvd_iff := ?_
+    one_ne_zero := ?_
+    no_zero_div := ?_
+    gcd_exists := ?_ }
+  · intro a b
+    constructor
+    · rintro ⟨q, hq⟩
+      exact ⟨q, hq.trans (MvPoly.mul_comm q a)⟩
+    · rintro ⟨q, hq⟩
+      exact ⟨q, hq.trans (MvPoly.mul_comm a q)⟩
+  · intro hone
+    have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hone
+    rw [coeff_one, coeff_zero, ite_eq_left rfl] at hcoeff
+    exact GcdDomainLaws.one_ne_zero hcoeff
+  · intro a b hab
+    exact MvPoly.zero_product GcdDomainLaws.no_zero_div hab
+  · sorry
 
 instance (priority := 100) instGcdDomainLawsMvPoly :
     GcdDomainLaws (MvPoly n R cmp) :=
