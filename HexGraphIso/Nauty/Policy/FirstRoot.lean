@@ -19,16 +19,13 @@ import all HexGraphIso.Nauty.Search.Search
 
 public section
 
-/-!
-The root reference contract is an entry point for reasoning about first-path
-matches without importing generator completeness. The library umbrella builds
-it alongside the complete key and generation interfaces.
--/
-
 namespace Hex.GraphIso.Nauty.Engine.Max
 
 /-- The actual nonempty root initializes the complete first-path
-contract. Only strictly smaller maximum and trace calls remain premises. -/
+contract. Only strictly smaller maximum and trace calls remain premises.
+This entry point supports reasoning about first-path matches without importing
+generator completeness; the umbrella builds it alongside the complete key
+and generation interfaces. -/
 theorem root_first {n k : Nat} (G : Colored n k) (hn0 : 0 < n)
     (hn : ∀ f, f < n + 2 → (contract G 100).nodeValid f
       (Generic.nodeCall { g := rowsOf G } (n + 2) 100 f)) :

@@ -18,12 +18,6 @@ import all HexGraphIso.Nauty.Search.Search
 
 public section
 
-/-!
-Public trace lemmas connect emitted arrays, checked generators, and generated
-carriers. They remain available to downstream trace consumers even though
-whole-group completeness now follows directly from the engine theorem.
--/
-
 namespace Hex.GraphIso
 
 variable {n k : Nat}
@@ -34,7 +28,9 @@ open Nauty
 
 /-- Every array in the executable trace is admitted, including redundant
 code-two automorphisms. The proof uses the search invariant; it adds no
-work to the traversal. -/
+work to the traversal. These public trace lemmas remain available to
+downstream consumers even though whole-group completeness now follows
+directly from the engine theorem. -/
 theorem trace_admitted (G : Colored n k) :
     ∀ γ ∈ trace G, ∃ p, autom? G γ = some p := by
   intro γ hγ
