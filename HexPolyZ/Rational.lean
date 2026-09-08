@@ -187,7 +187,7 @@ theorem primitive_normalizePrimitiveSign {p : ZPoly} (hp : Primitive p) :
 /-- Sign normalization preserves optional degree. -/
 @[simp] theorem degree?_normalizePrimitiveSign (p : ZPoly) :
     (normalizePrimitiveSign p).degree? = p.degree? := by
-  simp [DensePoly.natDegree, DensePoly.degree?, size_normalizePrimitiveSign]
+  simp [DensePoly.degree?, size_normalizePrimitiveSign]
 
 /-- The rational primitive part is primitive when its content is nonzero. -/
 theorem ratPolyPrimitivePart_primitive (f : DensePoly Rat)
