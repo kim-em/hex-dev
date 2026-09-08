@@ -159,7 +159,7 @@ def recoverPairFast? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
     Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) := do
   if shift = 0 then none else
   letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
-  let gammaCoordinate := gamma.toQAdjoin
+  let gammaCoordinate : PolyQuot gamma.p gamma.x := gamma.toQAdjoin
   let affine : DensePoly (PolyQuot gamma.p gamma.x) :=
     DensePoly.ofList
       [gammaCoordinate, (-(shift : Rat)) • (1 : PolyQuot gamma.p gamma.x)]
