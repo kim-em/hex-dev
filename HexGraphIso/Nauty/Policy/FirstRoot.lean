@@ -19,6 +19,12 @@ import all HexGraphIso.Nauty.Search.Search
 
 public section
 
+/-!
+The root reference contract is an entry point for reasoning about first-path
+matches without importing generator completeness. The library umbrella builds
+it alongside the complete key and generation interfaces.
+-/
+
 namespace Hex.GraphIso.Nauty.Engine.Max
 
 /-- The actual nonempty root initializes the complete first-path

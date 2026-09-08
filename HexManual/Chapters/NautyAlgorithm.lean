@@ -622,7 +622,7 @@ reuses the rows already known to be equal.
 
 {docstring Hex.GraphIso.Nauty.updatecan}
 
-The transcribed search is exposed as
+The structured search is exposed as
 {name Hex.GraphIso.Nauty.searchResult?}`Hex.GraphIso.Nauty.searchResult?`.
 The public entry point is
 {name Hex.GraphIso.canonicalize}`Hex.GraphIso.canonicalize`; the

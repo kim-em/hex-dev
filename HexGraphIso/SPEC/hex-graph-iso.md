@@ -1177,18 +1177,22 @@ bench's business. The vertex sets of the search are packed sixty-three
 vertices to a word (`Nauty.VSet`), so every set operation is a loop
 over `⌈n/63⌉` limbs, the same shape as nauty's `setword` loops.
 
-The `engine` mode of `hexgraphiso_cactus` times the two canonical
-searches against each other on the same materialized instance and
-records `lit_ns`, `eng_ns`, `nauty_ns`, `nodes` and `eng_nodes` for
-every instance of the sweep corpus.
-`scripts/bench/graphiso_engine_compare.py` reads that run and prints,
-per family, the geometric mean of `eng_ns/lit_ns` and of
-`eng_ns/nauty_ns` together with each search's per-node cost exponent,
-so a constant-factor difference and a difference that grows with `n`
-are reported apart. Two searches with the same traversal visit the
-same nodes, so any instance whose `eng_nodes` differs from its `nodes`
-fails the run whatever the timings say. This is how a replacement
-search is measured before any proof about it is written.
+The `engine` mode of `hexgraphiso_cactus` times the public and direct
+wrappers of the same structured search on each materialized instance.
+It retains the historical columns `lit_ns`, `eng_ns`, `nauty_ns`, `nodes`
+and `eng_nodes`. `scripts/bench/graphiso_engine_compare.py` reports their
+within-run timing ratios and per-node exponents, and checks agreement of
+the two node counts. With the public search using the engine, this is a
+wrapper check; `eng_ns/lit_ns` does not measure improvement over the
+superseded search. The script also remains usable on archived spike runs,
+where those columns measured distinct implementations.
+
+Compare current `eng_ns` and node counts with archived `eng_ns` on the
+same corpus to measure changes since the spike. Keep the recorded host,
+trial count and timing baseline explicit; changes in nauty's measured
+time do not establish changes in engine time. The required cactus sweep
+and per-node exponent check continue to compare the public search with
+nauty.
 `bench/HexGraphIso/Profile.lean` times the same pair as its `run` and
 `erun` stages on the paley61, kneser72 and circulant64 instances, next
 to the certificate stages, and

@@ -96,6 +96,20 @@ changes. The legacy proof needs equally local changes: this establishes
 locality parity for this experiment, not an exclusive advantage or speedup.
 The delivered production filter remains the full scan.
 
+This locality result concerns operations below the policy interface. The direct
+engine and generic recursion have the same control flow, with equality proved
+by unfolding. Reordering recursive calls, fusing sweeps, or adding exits must
+preserve that equality or change both recursions and the affected call rules.
+Such changes can require new return and generation arguments. The policy
+boundary does not make changes to recursion shape local.
+
+The primitive-state view also remains a maintenance cost: `Engine.Search` and
+`SearchSt` are separate records, with agreement lemmas for shared operations.
+Changes to fields used by those operations must update the view and its lemmas.
+The current design preserves existing primitive proofs and the measured hot
+loop; it does not establish that every future optimization will be cheaper to
+prove than in the legacy design.
+
 ## Public integration
 
 The public canonicalization and generation APIs use the structured engine.
