@@ -51,7 +51,7 @@ structure PolyQuot (p : ZPoly) (x : SimpleRoot p) where
 instance : DecidableEq (PolyQuot p x)
 
 /-- The fixed field `ℚ(a)` of a canonical number. -/
-abbrev QAdjoin (a : AlgebraicNumber) : Type := PolyQuot a.p a.x
+def QAdjoin (a : AlgebraicNumber) : Type := PolyQuot a.p a.x  -- implicit_reducible
 
 /-- A factorization-lazy algebraic number. -/
 structure AlgebraicRoot where
@@ -239,6 +239,22 @@ canonical number induces, that evidence is an instance:
 ```lean
 instance (a : AlgebraicNumber) : ZPoly.CheckedIrreducible a.p
 ```
+
+`QAdjoin` is `implicit_reducible` rather than an abbreviation, so it keeps its
+own head symbol for instance search while still unfolding to `PolyQuot a.p a.x`
+everywhere else. That buys it one instance `PolyQuot` cannot have:
+
+```lean
+def QAdjoin.ofCoeffs (a : AlgebraicNumber) (f : DensePoly Rat) : QAdjoin a
+instance (a : AlgebraicNumber) : Repr (QAdjoin a)
+```
+
+An element of `ℚ(a)` prints as `QAdjoin.ofCoeffs (a) f`, naming the generating
+number -- which prints round-trippably itself -- instead of an isolating
+square, and so leaves no `decide` side conditions to discharge when it is
+pasted back. The presentation-ring instances are re-exported for the new head
+symbol, each `inferInstanceAs` of the `PolyQuot` one. The type of a pasted
+value is still only propositionally the original.
 
 so `a.toQAdjoin : QAdjoin a` inverts and divides without any evidence
 registered by hand. `QAdjoin a` abbreviates `PolyQuot a.p a.x` reducibly, so

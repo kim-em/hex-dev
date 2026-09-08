@@ -40,7 +40,45 @@ end AlgebraicNumber
 ring on its minimal polynomial, with the embedding fixed by the root it
 denotes. Reducible, so every `PolyQuot` operation, instance and theorem
 applies unchanged. -/
-abbrev QAdjoin (a : AlgebraicNumber) : Type := PolyQuot a.p a.x
+@[expose, implicit_reducible]
+def QAdjoin (a : AlgebraicNumber) : Type := PolyQuot a.p a.x
+
+section Instances
+variable {a : AlgebraicNumber}
+
+/-! `QAdjoin` is a `def`, not an `abbrev`, so it carries its own head symbol
+and can hold instances `PolyQuot` must not have -- notably `Repr`, which
+names the generating number rather than an isolating square. The price is
+that the presentation-ring instances no longer arrive by unfolding, so they
+are re-exported here. Each is the `PolyQuot` instance unchanged. -/
+
+instance : DecidableEq (QAdjoin a) := inferInstanceAs (DecidableEq (PolyQuot a.p a.x))
+instance : Zero (QAdjoin a) := inferInstanceAs (Zero (PolyQuot a.p a.x))
+instance : One (QAdjoin a) := inferInstanceAs (One (PolyQuot a.p a.x))
+instance : Add (QAdjoin a) := inferInstanceAs (Add (PolyQuot a.p a.x))
+instance : Sub (QAdjoin a) := inferInstanceAs (Sub (PolyQuot a.p a.x))
+instance : Neg (QAdjoin a) := inferInstanceAs (Neg (PolyQuot a.p a.x))
+instance : Mul (QAdjoin a) := inferInstanceAs (Mul (PolyQuot a.p a.x))
+instance : SMul Rat (QAdjoin a) := inferInstanceAs (SMul Rat (PolyQuot a.p a.x))
+instance : Coe (DensePoly Rat) (QAdjoin a) := inferInstanceAs (Coe _ (PolyQuot a.p a.x))
+instance : NatCast (QAdjoin a) := inferInstanceAs (NatCast (PolyQuot a.p a.x))
+instance : IntCast (QAdjoin a) := inferInstanceAs (IntCast (PolyQuot a.p a.x))
+instance (priority := 90) (n : Nat) : OfNat (QAdjoin a) (n + 2) :=
+  inferInstanceAs (OfNat (PolyQuot a.p a.x) (n + 2))
+instance : Inv (QAdjoin a) := inferInstanceAs (Inv (PolyQuot a.p a.x))
+instance : Div (QAdjoin a) := inferInstanceAs (Div (PolyQuot a.p a.x))
+instance : Pow (QAdjoin a) Nat := inferInstanceAs (Pow (PolyQuot a.p a.x) Nat)
+instance : Pow (QAdjoin a) Int := inferInstanceAs (Pow (PolyQuot a.p a.x) Int)
+
+/-- The element of `ℚ(a)` with coordinates `f` in the power basis of `a`.
+Unlike `PolyQuot.ofSquare` this needs no square and no side conditions: the
+generating number already carries its own root. -/
+@[expose]
+def QAdjoin.ofCoeffs (a : AlgebraicNumber) (f : DensePoly Rat) : QAdjoin a :=
+  PolyQuot.reduce a.p a.x f
+
+end Instances
+
 
 namespace AlgebraicNumber
 

@@ -220,25 +220,23 @@ def c : QAdjoin cbrt2 := cbrt2.toQAdjoin
 #guard c.toAlgebraicNumber = cbrt2
 ```
 
-An element prints as the expression that rebuilds it: the coordinates, here
-`c⁵ = 2c²`, together with the polynomial and the isolating square that name
-the field and pick out the root. Pasting the output back reproduces the
-element, and the two side conditions on the square are discharged by
-`decide`:
+An element prints as the expression that rebuilds it: the generating number,
+which prints round-trippably itself, and the coordinates, here `c⁵ = 2c²`.
+Pasting the output back reproduces the element:
 
 ```lean (name := cbrt2Pow)
 #eval c ^ 5
 ```
 ```leanOutput cbrt2Pow
-PolyQuot.ofSquare #p[-2, 0, 0, 1] ⟨((1385297844439 : Dyadic) >>> 40), 0, 37⟩ #p[0, 0, 2]
+QAdjoin.ofCoeffs (ZPoly.rootNear #p[-2, 0, 0, 1] 1.25992) #p[0, 0, 2]
 ```
 ```lean (name := pasted)
 -- the printed form, pasted back
-#eval PolyQuot.ofSquare #p[-2, 0, 0, 1]
-  ⟨((1385297844439 : Dyadic) >>> 40), 0, 37⟩ #p[0, 0, 2]
+#eval QAdjoin.ofCoeffs
+  (ZPoly.rootNear #p[-2, 0, 0, 1] 1.25992) #p[0, 0, 2]
 ```
 ```leanOutput pasted
-PolyQuot.ofSquare #p[-2, 0, 0, 1] ⟨((1385297844439 : Dyadic) >>> 40), 0, 37⟩ #p[0, 0, 2]
+QAdjoin.ofCoeffs (ZPoly.rootNear #p[-2, 0, 0, 1] 1.25992) #p[0, 0, 2]
 ```
 ```lean
 #guard (c ^ 5).coeffs = #p[0, 0, 2]
