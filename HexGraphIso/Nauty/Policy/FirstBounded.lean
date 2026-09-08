@@ -66,7 +66,7 @@ theorem FirstPath.bounded {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → Pr
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
     {fuel level numcells last : Nat} {st leaf : σ}
     (path : FirstPath ctx tcLevel fuel level numcells st last leaf)
-    (hlevel : bound < level)
+    (hlevel : bound ≤ level)
     (hterminal : P (Policy.firstterminal (n := n) last leaf)) :
     P (node true ctx inf tcLevel fuel level numcells st).2 := by
   induction path with
@@ -108,6 +108,6 @@ theorem FirstPath.bounded {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → Pr
     cases exit with
     | fuel => exact href
     | unwind => exact href
-    | done => exact h.afterSweep true level _ index out href
+    | done => exact h.afterSweep true level _ index out (by omega) href
 
 end Hex.GraphIso.Nauty.Generic

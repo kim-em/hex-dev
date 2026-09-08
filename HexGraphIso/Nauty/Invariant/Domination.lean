@@ -16,7 +16,7 @@ public import HexGraphIso.Nauty.Invariant.Autos
 public import HexGraphIso.Nauty.SmallCell.Transitive
 import all HexGraphIso.Nauty.Invariant.Store
 import all HexGraphIso.Nauty.SmallCell.Transitive
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 

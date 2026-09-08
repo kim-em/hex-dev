@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Search.Engine
+public import HexGraphIso.Nauty.Search.Search
 public import HexGraphIso.Nauty.Invariant.Store
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Invariant.Store
 
 public section

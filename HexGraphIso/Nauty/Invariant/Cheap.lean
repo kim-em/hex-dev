@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Invariant.Autos
 public import HexGraphIso.Nauty.Invariant.Reach
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 

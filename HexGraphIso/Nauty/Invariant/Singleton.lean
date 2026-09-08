@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Invariant.Refine
 public import HexGraphIso.Nauty.Equitable.Individualize
 public import HexGraphIso.Nauty.Equitable.Fix
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 

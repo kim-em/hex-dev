@@ -11,7 +11,7 @@ public import HexGraphIso.Nauty.Policy.Recovery
 public import HexGraphIso.Nauty.Policy.Partition
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

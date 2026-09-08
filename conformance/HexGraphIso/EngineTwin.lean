@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexGraphIso.Cases
 
 /-!
-Twin conformance for the second canonical search: `hexgraphiso_engine_twin`
+Wrapper conformance for the canonical search: `hexgraphiso_engine_twin`
 runs `Nauty.runColoredTraced` and `Cases.engine` on every case of the
 committed fixture corpus, of its automorphism records and of the
 extended campaign, and compares the
@@ -15,7 +15,7 @@ whole traversal rather than only its answer: `canonlab`, `canong`, the
 seven statistics of `Nauty.RunResult`, the accepted automorphisms in
 discovery order, the best path's refinement codes, and the final orbit partition.
 
-The first case on which the two disagree is printed with the differing
+Both wrappers use the same engine. The first case on which they disagree is printed with the differing
 fields, the vertex count, the colour vector and the edge list, and the
 run exits non-zero. With no argument every corpus runs; `fixtures`,
 `autos` and `campaign` select one.
@@ -54,7 +54,7 @@ private def check (seen : IO.Ref Nat) (case : Case) : IO Unit := do
   let (lab0, cellEnds) := initialPartition G
   let (exit, st) := Engine.runState case.n (rowsOf G) lab0 cellEnds
   let ds := diffs (runColoredTraced G) (engine G)
-  let ds := if literalOrbits G == st.orbits then ds else ds ++ ["orbits"]
+  let ds := if searchOrbits G == st.orbits then ds else ds ++ ["orbits"]
   let ds := if exit == .unwind 0 false then ds else ds ++ ["exit"]
   match ds with
   | [] => seen.modify (· + 1)

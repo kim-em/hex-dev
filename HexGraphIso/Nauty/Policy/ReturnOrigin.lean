@@ -23,7 +23,7 @@ import all HexGraphIso.Nauty.Policy.Effect
 import all HexGraphIso.Nauty.Policy.Partition
 import all HexGraphIso.Nauty.Policy.Fixed
 import all HexGraphIso.Nauty.Policy.Scratch
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

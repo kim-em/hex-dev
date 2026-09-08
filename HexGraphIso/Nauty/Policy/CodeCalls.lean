@@ -17,7 +17,7 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Search.Generic
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

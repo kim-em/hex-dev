@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.FirstRef
 import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

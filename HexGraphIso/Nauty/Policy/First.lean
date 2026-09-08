@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.Reference
 public import HexGraphIso.Nauty.Policy.Engine
 public import HexGraphIso.Nauty.Policy.Target
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Policy.Engine
 
 public section

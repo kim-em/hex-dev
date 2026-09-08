@@ -12,7 +12,7 @@ import all HexGraphIso.Nauty.Policy.RouteState
 import all HexGraphIso.Nauty.Policy.Route
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

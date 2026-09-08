@@ -11,8 +11,8 @@ public import HexGraphIso.Uncolored
 public import HexGraphIso.Kernel.IsoLit
 public import HexGraphIso.Kernel.CheckKey
 public import HexGraphIso.Kernel.RootCode
-public import HexGraphIso.Nauty.Search.Search
-public meta import HexGraphIso.Nauty.Search.Search
+public import HexGraphIso.Nauty.Search.State
+public meta import HexGraphIso.Nauty.Search.State
 public meta import HexGraphIso.Nauty.Cert.CanonForm
 public meta import HexGraphIso.Kernel.CheckKey
 public meta import Lean

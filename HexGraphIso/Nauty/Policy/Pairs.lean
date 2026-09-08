@@ -10,7 +10,7 @@ public import HexGraphIso.Nauty.Policy.Boundary
 public import HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

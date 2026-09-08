@@ -31,16 +31,16 @@ while recovery may return to the ancestor itself. -/
 structure BoundedPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) (P : σ → Prop) : Prop where
   visit : ∀ level numcells st, P st → P (Policy.visit ctx level numcells st).2.2
   compare : ∀ level code st, bound < level → P st → P (Policy.compareCodes (n := n) level code st)
-  target : ∀ level numcells st, P st →
+  target : ∀ level numcells st, bound < level → P st →
     P (Policy.chooseTarget false ctx tcLevel level numcells st).2.2.2
   classify : ∀ level numcells st, P st →
     P (Policy.classify ctx level numcells st).2
-  leaf : ∀ leaf level st, P st → P (Policy.leafExit (n := n) leaf level st).2
+  leaf : ∀ leaf level st, bound < level → P st → P (Policy.leafExit (n := n) leaf level st).2
   cheap : ∀ first level st, bound ≤ level → P st → P (Policy.cheapCheck (n := n) first level st)
   child : ∀ first level tc tv st, P st → P (Policy.child (n := n) first level tc tv st)
   leave : ∀ tv st, P st → P (Policy.leaveChild (n := n) tv st)
   recover : ∀ level st, bound ≤ level → P st → P (Policy.recover (n := n) inf level st)
-  afterSweep : ∀ first level size index st, P st →
+  afterSweep : ∀ first level size index st, bound ≤ level → P st →
     P (Policy.afterSweep (n := n) first level size index st)
 
 variable {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → Prop}
@@ -58,13 +58,13 @@ theorem BoundedPolicy.node_step (h : BoundedPolicy ctx inf tcLevel bound P)
   simp only [Bool.false_eq_true, ite_false]
   let compared := Policy.compareCodes (n := n) level code refined
   have hcomp : P compared := h.compare level code refined hlevel hv
-  have ht := h.target level nc compared hcomp
+  have ht := h.target level nc compared hlevel hcomp
   generalize htval : Policy.chooseTarget false ctx tcLevel level nc compared = t at ht ⊢
   obtain ⟨tc, cell, size, targeted⟩ := t
   have hcl := h.classify level nc targeted ht
   generalize hcval : Policy.classify ctx level nc targeted = c at hcl ⊢
   obtain ⟨leaf, classified⟩ := c
-  have hle := h.leaf leaf level classified hcl
+  have hle := h.leaf leaf level classified hlevel hcl
   generalize hlval : Policy.leafExit (n := n) leaf level classified = result at hle ⊢
   obtain ⟨exit, out⟩ := result
   have hproject : P out := hle
@@ -82,7 +82,7 @@ theorem BoundedPolicy.node_step (h : BoundedPolicy ctx inf tcLevel bound P)
     cases exit with
     | fuel => exact hn
     | unwind => exact hn
-    | done => exact h.afterSweep false level size index result hn
+    | done => exact h.afterSweep false level size index result (by omega) hn
 
 /-- Once past the first child, all later recursive calls are off-path. -/
 theorem BoundedPolicy.sweep_step (h : BoundedPolicy ctx inf tcLevel bound P)

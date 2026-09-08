@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Invariant.Domination
 public import HexGraphIso.Nauty.Invariant.Refine
 public import HexGraphIso.Nauty.Spec.Descent
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 

@@ -10,7 +10,7 @@ public import HexGraphIso.Nauty.Policy.FirstPath
 import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

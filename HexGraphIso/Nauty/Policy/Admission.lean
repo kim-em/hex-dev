@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Scatter
 public import HexGraphIso.Nauty.SmallCell.Prefix
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

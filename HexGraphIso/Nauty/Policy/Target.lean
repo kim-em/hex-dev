@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Selection
 public import HexGraphIso.Nauty.Invariant.TargetCell
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

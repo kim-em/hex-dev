@@ -11,7 +11,7 @@ public import HexGraphIso.Nauty.Invariant.Stabilize
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Scatter
 import all HexGraphIso.Nauty.Policy.Trace
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

@@ -19,7 +19,7 @@ import all HexGraphIso.Nauty.Policy.Fuel
 import all HexGraphIso.Nauty.Policy.ReturnCodes
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

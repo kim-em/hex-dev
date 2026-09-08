@@ -14,7 +14,7 @@ import all HexGraphIso.Nauty.Policy.CanonFrame
 import all HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -96,6 +96,31 @@ def CanonGuide (level tc : Nat) (base : Search n) (key : Nat → Key n)
     (best : Option (Key n)) (st : Search n) : Prop :=
   st.gcaCanon = level → ∃ v, Generic.Covers (key v) best ∧ st.canonlab[tc]! = v ∧
     cellsPerm base.ptn level base.lab st.canonlab
+
+/-- Before any child has installed a reference at this level, the guide
+has no coverage obligation. -/
+theorem CanonGuide.vacuous {level tc : Nat} {base st : Search n}
+    {key : Nat → Key n} {best : Option (Key n)} (h : st.gcaCanon < level) :
+    CanonGuide level tc base key best st := by
+  intro he
+  omega
+
+/-- A reference expressed in a frozen frame also belongs to the current
+frame's cells after labels have been permuted within those cells. -/
+theorem CanonGuide.rebase {G : Colored n k} {level tc : Nat} {base st : Search n}
+    {key : Nat → Key n} {best : Option (Key n)}
+    (h : CanonGuide level tc base key best st)
+    (hf : SearchOut G level level base.view st.view) :
+    CanonGuide level tc st key best st := by
+  intro he
+  obtain ⟨v, hv, hat, hp⟩ := h he
+  refine ⟨v, hv, hat, ?_⟩
+  have hperm := cellsPerm_trans (cellsPerm_symm hf.perm) hp
+  intro a len hc
+  apply hperm a len
+  apply isCell_of_low (ptn := st.ptn) (ptn' := base.ptn) _ hc
+  intro q hq
+  exact (hf.low q hq.symm).symm
 
 /-- The guide's reference vertex belongs to the original target window,
 even if a filter has removed it from the mutable target set. -/

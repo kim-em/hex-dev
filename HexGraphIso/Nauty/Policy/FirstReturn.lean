@@ -28,7 +28,7 @@ import all HexGraphIso.Nauty.Policy.Descent
 import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Cert.Translator
 public import HexGraphIso.Nauty.Equitable.Step
 import all HexGraphIso.Nauty.Equitable.Step
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 

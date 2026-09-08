@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.FilterCover
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

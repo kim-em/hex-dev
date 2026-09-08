@@ -10,7 +10,7 @@ public import HexGraphIso.Nauty.Policy.ChildKey
 public import HexGraphIso.Nauty.Policy.Filters
 public import HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.Bounded
 public import HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -35,7 +35,7 @@ theorem divergencePolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     rw [compareCodes_eqlev, ite_eq_right (by omega)]
     exact h
   target := by
-    intro level numcells st h
+    intro level numcells st _ h
     exact Nat.lt_of_le_of_lt (chooseTarget_le ctx tcLevel level numcells st) h
   classify := by
     intro level numcells st h
@@ -43,7 +43,7 @@ theorem divergencePolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     rw [classify_eqlev]
     exact h
   leaf := by
-    intro leaf level st h
+    intro leaf level st _ h
     change (leafExit leaf level st).2.eqlevFirst < bound
     rw [leafExit_eqlev]
     exact h
@@ -58,7 +58,7 @@ theorem divergencePolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     intro level st _ h
     exact Nat.lt_of_le_of_lt (recover_le inf level st) h
   afterSweep := by
-    intro first level size index st h
+    intro first level size index st _ h
     change (afterSweep first level size index st).eqlevFirst < bound
     unfold afterSweep
     split <;> exact h
@@ -123,7 +123,7 @@ theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
     exact h
   target := by
-    intro level numcells st h
+    intro level numcells st _ h
     change bound < (chooseTarget false ctx tcLevel level numcells st).2.2.2.noncheaplevel
     rw [chooseTarget_fields]
     exact h
@@ -135,7 +135,7 @@ theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
       apply_ite Search.noncheaplevel, ite_self]
     exact h
   leaf := by
-    intro leaf level st h
+    intro leaf level st _ h
     change bound < (leafExit leaf level st).2.noncheaplevel
     rw [leafExit_noncheap]
     exact h
@@ -155,7 +155,7 @@ theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     rw [recover_noncheap]
     split <;> omega
   afterSweep := by
-    intro first level size index st h
+    intro first level size index st _ h
     change bound < (afterSweep first level size index st).noncheaplevel
     unfold afterSweep
     split <;> exact h

@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.SmallCell.Key
 public import HexGraphIso.Nauty.Policy.Selection
 import all HexGraphIso.Nauty.Policy.Selection
-import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 

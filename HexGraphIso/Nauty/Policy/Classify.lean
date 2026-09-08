@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.Depth
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Policy.State
 
 public section

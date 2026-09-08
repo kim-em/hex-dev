@@ -19,7 +19,7 @@ import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.Pairs
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

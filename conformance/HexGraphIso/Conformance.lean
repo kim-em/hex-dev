@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGraphIso.Cases
-import HexGraphIso.Nauty.Correct.Generation.FirstGeneration
+import HexGraphIso.Nauty.Policy.Complete
 
 /-!
 Core conformance for `HexGraphIso`.
@@ -423,91 +423,35 @@ private def empty0 : Colored 0 0 :=
 
 end Hex.GraphIso.Conformance
 
-/-! The search-generation proofs must remain independent of unfinished declarations. -/
+/-! The search proofs depend only on the standard logical axioms. -/
 
-/-- info: 'Hex.GraphIso.Nauty.Generation.first_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Engine.canonSpecKey_eq_tracedKey' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.first_reference
+#print axioms Hex.GraphIso.Nauty.Engine.canonSpecKey_eq_tracedKey
 
-/-- info: 'Hex.GraphIso.Nauty.Generation.cheap_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Engine.generators_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.cheap_reference
+#print axioms Hex.GraphIso.Nauty.Engine.generators_complete
 
-/-- info: 'Hex.GraphIso.Nauty.Generation.firstTail_counted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Engine.Max.firstPath_generates' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.firstTail_counted
+#print axioms Hex.GraphIso.Nauty.Engine.Max.firstPath_generates
 
-/-- info: 'Hex.GraphIso.Nauty.Generation.first_uniform' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Engine.Max.firstPath_cover' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.first_uniform
+#print axioms Hex.GraphIso.Nauty.Engine.Max.firstPath_cover
 
-/-- info: 'Hex.GraphIso.Nauty.Generation.uniform_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Engine.Max.reference_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.uniform_reference
+#print axioms Hex.GraphIso.Nauty.Engine.Max.reference_complete
 
 /-- info: 'Hex.GraphIso.Nauty.Generation.RefPath.transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.RefPath.transport
 
-/-- info: 'Hex.GraphIso.Nauty.Generation.first_path' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.first_path
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.other_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.other_agreement
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.RefReturn.ofEarly' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.RefReturn.ofEarly
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.PathCover.canon' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.PathCover.canon
-
-/-- info: 'Hex.GraphIso.Nauty.otherLoopTotal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.otherLoopTotal
-
-/-- info: 'Hex.GraphIso.Nauty.OtherSweep.reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.OtherSweep.reference
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.other_reference' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.other_reference
-
 /-- info: 'Hex.GraphIso.Nauty.Generation.RefPath.smallChild' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.RefPath.smallChild
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.firstTail_trace' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.firstTail_trace
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.Cover.receipt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.Cover.receipt
-
-/-- info: 'Hex.GraphIso.Nauty.FirstSweepHyp.visitLevel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.FirstSweepHyp.visitLevel
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.FirstTail.complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.FirstTail.complete
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.first_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.first_agreement
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.FirstTail.cover' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.FirstTail.cover
-
-/-- info: 'Hex.GraphIso.Nauty.Generation.first_return' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Generation.first_return
 
 /-- info: 'Hex.GraphIso.autos_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -54,7 +54,7 @@ theorem firstPath_noncheap {ctx : Ctx n} {inf tcLevel fuel level numcells last b
     (hlevel : bound < level) (hin : bound < st.noncheaplevel) :
     bound < (node true ctx inf tcLevel fuel level numcells st).2.noncheaplevel := by
   rw [node_eq_generic]
-  apply hpath.bounded (noncheapPolicy ctx inf tcLevel bound) (fun _ _ _ h => h) hlevel
+  apply hpath.bounded (noncheapPolicy ctx inf tcLevel bound) (fun _ _ _ h => h) (Nat.le_of_lt hlevel)
   change bound < leaf.noncheaplevel
   exact firstLeaf_noncheap hpath hlevel hin
 

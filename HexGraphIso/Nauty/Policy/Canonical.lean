@@ -11,7 +11,7 @@ public import HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Invariant.Domination
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.CodeState
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 

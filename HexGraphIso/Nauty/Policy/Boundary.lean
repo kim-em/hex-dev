@@ -15,7 +15,7 @@ import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.Reach
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -34,7 +34,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
     exact h
   target := by
-    intro level numcells st h
+    intro level numcells st _ h
     change (chooseTarget false ctx tcLevel level numcells st).2.2.2.noncheaplevel = saved ∨ bound < (chooseTarget false ctx tcLevel level numcells st).2.2.2.noncheaplevel
     rw [chooseTarget_fields]
     exact h
@@ -46,7 +46,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
       apply_ite Search.noncheaplevel, ite_self]
     exact h
   leaf := by
-    intro leaf level st h
+    intro leaf level st _ h
     change (leafExit leaf level st).2.noncheaplevel = saved ∨ bound < (leafExit leaf level st).2.noncheaplevel
     rw [leafExit_noncheap]
     exact h
@@ -69,7 +69,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
     · exact Or.inr (by omega)
     · exact h
   afterSweep := by
-    intro first level size index st h
+    intro first level size index st _ h
     change (afterSweep first level size index st).noncheaplevel = saved ∨ bound < (afterSweep first level size index st).noncheaplevel
     unfold afterSweep
     split <;> exact h

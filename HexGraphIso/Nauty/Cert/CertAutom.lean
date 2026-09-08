@@ -8,6 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Cert.Cert
 
+public import HexGraphIso.Nauty.Search.Search
+
 public section
 
 /-!

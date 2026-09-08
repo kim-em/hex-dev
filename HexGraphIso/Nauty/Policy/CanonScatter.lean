@@ -12,7 +12,7 @@ public import HexGraphIso.Nauty.Policy.Scratch
 import all HexGraphIso.Nauty.Policy.Effect
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Scatter
-import all HexGraphIso.Nauty.Search.Engine
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
