@@ -17,6 +17,7 @@ public import HexPermGroup.Orbit.Build
 public import HexPermGroup.Group
 public import HexPermGroup.Normalize
 public import HexPermGroup.Build
+public import HexPermGroup.Build.Bounded
 public import HexPermGroup.Subgroup
 public import HexPermGroup.Conjugate
 public import HexPermGroup.Predicates

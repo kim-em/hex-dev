@@ -859,7 +859,7 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
-    ++ #[`HexGraphIso.Cases, `HexPermGroup.Conformance].map Glob.one
+    ++ #[`HexGraphIso.Cases, `HexPermGroup.Conformance, `HexPermGroup.Limits].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
