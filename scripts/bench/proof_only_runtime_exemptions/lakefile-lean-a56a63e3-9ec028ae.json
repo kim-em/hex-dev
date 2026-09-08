@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "9ec028ae099185db9071b02603f300604c2f512b",
+  "reason": "The HexArith and HexModArith compiler recipes retain the same cc executable, source paths, object paths, include directory, -fPIC and -O3 flags, and static linking. They only set TMPDIR to the object directory for the compiler process so Mathlib can build inside its existing sandbox. Rebuilding wide_arith.o, mpz_gcdext.o and zmod64_mul.o produced byte-for-byte identical objects. The other changes since the measurement register independent libraries, conformance drivers and test targets; none changes hexbz_factor_service or its runtime dependency graph."
+}

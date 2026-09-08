@@ -217,6 +217,30 @@ theorem coeff_reorder [Lean.Grind.Semiring R] [DecidableEq R]
   unfold reorder
   rw [coeff_ofTerms, coeff_terms]
 
+/-- Reordering preserves multiplication while changing only the term order. -/
+theorem reorder_mul [Lean.Grind.CommRing R] [DecidableEq R]
+    [BEq R] [LawfulBEq R]
+    {cmp' : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (p q : MvPoly n R cmp) :
+    reorder cmp' (p * q) = reorder cmp' p * reorder cmp' q := by
+  apply ext
+  intro m
+  rw [coeff_reorder, coeff_mul, coeff_mul]
+  apply List.foldl_add_congr (Mono.splits m)
+  intro ab _
+  rw [coeff_reorder, coeff_reorder]
+
+/-- Reordering preserves the multiplicative identity. -/
+theorem reorder_one [Lean.Grind.CommRing R] [DecidableEq R]
+    [BEq R] [LawfulBEq R]
+    {cmp' : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp'] :
+    reorder cmp' (1 : MvPoly n R cmp) = 1 := by
+  apply ext
+  intro m
+  rw [coeff_reorder, coeff_one, coeff_one]
+
 /-- Renaming variables sums coefficients whose target monomials coincide. -/
 theorem coeff_rename [Lean.Grind.Semiring R] [DecidableEq R]
     (cmp' : Mono k → Mono k → Ordering)

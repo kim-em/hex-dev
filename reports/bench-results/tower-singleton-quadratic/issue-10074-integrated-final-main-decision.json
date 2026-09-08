@@ -1,0 +1,12 @@
+{
+  "label": "integrated-final-main",
+  "status": "preflight_timeout",
+  "attempts": 2,
+  "accepted_pairs": [],
+  "require_separated_canonical": true,
+  "quiet_windows": 60,
+  "max_busy_cpus": 16,
+  "complete": false,
+  "eligible": null,
+  "checks": []
+}

@@ -143,3 +143,242 @@ criteria. The candidate SHA-256 is
 `c3e2de0cb83c2ab3e7fb68997c06778ed8a2369f63c4f21878ec88d7ce3c10a6`.
 The tag `bench/issue-10074-measured` preserves all pre-rebase source commits
 and preregistrations referenced by the earlier artifacts.
+
+## Singleton recovery and quadratic norm experiments
+
+The [fresh profiles](hex-number-field-tower-performance.md#factorization-after-norm-and-recovery-improvements)
+identify two independent targets: recovery including shifts (about 26% of
+factorization), and shifted norm construction plus resultants (about 52%).
+These shares motivate experiments; they are not predicted speedups. The
+execution order is **prototype, differential checks, timing decision, then
+correspondence proofs**. No prototype is eligible to merge before its proofs
+and final verification pass.
+
+### Baseline and independent prototypes
+
+Use the computational source at `af7b4d49f661a23debf82960bfff3c78435ff135`
+as the common baseline for both prototypes. Its saved benchmark executable is
+`/tmp/tower-factor-profile-af7b4d49f/hexnumberfieldtower_bench`, SHA-256
+`038b21ce95e7a3c2571d869347206ca3ab4e049633ca700490af9937d7c20b2f`.
+Record candidate source commits and saved binary hashes before measuring.
+Keep each prototype isolated from the other and from unrelated upstream
+runtime changes. Any necessary baseline change requires a new recorded
+baseline before candidate measurements.
+
+1. **Singleton recovery.** In `Factor.factorSquarefree?`, after the accepted
+   norm has been recursively factored, use the singleton case to return the
+   canonical monic input component instead of calling `Factor.recover`.
+   Retain squarefreeness, recursive norm factorization, reconstruction,
+   positive-degree, and public certificate checks. Do not put an unconditional
+   singleton shortcut in `recover`: an arbitrary one-element lower-factor
+   array does not establish that it factors the accepted norm. Empty and
+   multiple-factor cases keep the existing recovery behavior.
+2. **Quadratic norm.** Dispatch in `Norm.oneLevel` when the top defining
+   polynomial has degree two; retain the current resultant path for other
+   degrees. For `m(Y) = Y² + bY + a`, maintain `A(X) + Y B(X)` during Horner
+   evaluation modulo `m`. Multiplication by `X - cY` sends `(A, B)` to
+   `(XA + caB, XB - cA + cbB)`; add the two blocks of the next input
+   coefficient afterward. Return `A² - bAB + aB²`. For `Y² - 2` this is
+   `A² - 2B²`. This supports quadratic coefficients over a lower tower,
+   rather than recognizing the particular Selmer fixture. Preserve canonical
+   output encoding, shifts, zero/constants, and rational denominators.
+
+Build prototypes through `lake build` on the Mathlib-free computational and
+benchmark targets. During this stage the companion proofs may need updates;
+do not replace them with axioms or sorries or count stale proof artifacts as
+validation. First inspect the existing norm and recovery theorem statements
+for a plausible proof route, but defer constructing those proofs until the
+performance decision. A mathematical counterexample ends the candidate even
+if benchmark outputs happen to agree.
+
+### Correctness checks before timing
+
+Compare against the reference implementation, not only against a checksum of
+factor degrees. Require equality of the full canonical factorization output
+and checker results, byte-identical conformance fixtures, and all 49 registered
+benchmark checks with the explicit PARI provider. Check corrupted certificates
+still fail. Exercise irreducible and reducible inputs, repeated factors,
+nonmonic inputs, denominators, zero/constants, and a height-two tower.
+
+For the quadratic norm, additionally compare the entire norm coefficient
+array against the existing resultant on a deterministic grid of small inputs
+with both generator-coordinate blocks populated, shifts `0, 1, -1, 2, -2`,
+quadratic relations with nonzero linear term, and coefficients over a lower
+quadratic field. Include nonquadratic fallback cases. Confirm the intended
+fast branches actually execute in the public factor and replay benchmarks.
+
+### Timing gate before proof development
+
+Use the eight existing Hex fixed cases: degrees `2, 3, 4, 6, 8, 12`, canonical
+degree-24 factorization, and canonical degree-24 replay. Reuse the five repeats,
+0.2-second batch floor, registered warmup, unchanged canonical 2-second
+budgets, quiet high-core placement, pre/postflight and sibling-utilization
+thresholds, opposite pair orders, and twelve-attempt limit above. No local
+build or profiler overlaps timing. Preserve every attempted export and its
+telemetry; an incomplete series has no performance verdict. Fit no exponent.
+
+Compare each isolated prototype against the common baseline. Advance to proof
+development only if both canonical medians improve in both accepted pairs,
+all hashes match, and no smaller rung has a repeat-range-disjoint regression.
+For these new experiments, additionally require each canonical operation's
+candidate maximum to be below the baseline minimum in at least one accepted
+pair. This stricter effect-separation gate is fixed before measurement; it
+does not revise earlier experiments or constitute a significance test. Extend
+the artifact validator to enforce it before running these series.
+
+If both isolated variants qualify, measure the combination against the common
+baseline and against each isolated variant. Apply the same timing gate to
+all three comparisons so that both changes must contribute when combined.
+If an isolated or marginal effect is inconclusive, retain its investigation
+artifacts and defer its proof work; do not relax the gate after seeing results.
+Use Hex-only comparisons for the isolated and marginal experiments. The final
+candidate-versus-baseline comparison includes all fifteen registrations,
+including fresh PARI and its overhead control with the explicitly recorded
+provider. Measure combined effects directly, not by multiplying speedups.
+
+### Proof and integration stage
+
+For each retained implementation, prove the singleton norm's implication for
+component irreducibility and the correspondence of the returned canonical
+factor, or prove the quadratic Horner invariant and exact norm identity,
+respectively. Preserve the existing public soundness/completeness statements.
+Build the tower Mathlib companion and rerun conformance, oracle, and benchmark
+checks. If a proof obligation forces a runtime change, remeasure the changed
+candidate before treating the earlier performance decision as final.
+
+Record measured results and source provenance before opening the implementation
+PR. Obtain the requested independent second opinion while CI runs, resolve
+integration conflicts, and require green CI before merging. After any rebase
+that changes the measured executable, validate performance on the integrated
+binary again. The accepted prototype is a reason to invest in proofs, not a
+substitute for them.
+
+### Sustained-quiet marginal replication
+
+The `combined-quadratic` series exhausted twelve attempts with only one
+host-admitted pair (attempt 10), so it has no performance verdict. Preserve
+the entire series. A fresh replication of this marginal comparison uses the
+same saved quadratic and combined binaries (`af91cca87`, SHA-256
+`28701e063ccb1667223fdd56eb899c84afc3571e3efd05a372a1f7822ce4c4d9`, and
+`4209945bc`, SHA-256
+`f6feab899807eb26da3310dd64497a203669505d0fa2c0d4eda3100f56576cf3`).
+
+Before selecting a core for each attempted pair, require fifteen consecutive
+two-second windows in which both the core and its SMT sibling are each below
+5% busy. An absent CPU makes its core unavailable. Keep the fifteen-minute
+preflight deadline and twelve-attempt limit per series. Between-arm preflight,
+postflight, during-run sibling admission, same-core pairing, opposite orders,
+all eight Hex cases, repeat counts, warmup, budgets, hashes, and the stronger
+performance gate are unchanged. The runner's `--quiet-windows 15` selects this
+stricter preflight; its default preserves the earlier protocols.
+
+This is an environmental replication of an incomplete series, not an
+extension of its attempt limit or a reclassification of any rejected arm.
+Select the first two host-admitted opposite-order pairs without inspecting
+their timings, and retain every attempt. Do not develop the combined
+correspondence proofs until the complete marginal comparison passes.
+
+### Integrated implementation comparison
+
+The proof-complete implementation rebased onto main
+`064902321b7674a3993270e0f437d2f2149a10b8` without conflicts. Before measuring
+that integrated build, compare it against a new baseline whose complete
+benchmark import closure is main at that commit. Build the baseline by
+restoring main's `Norm.lean` and `FactorRaw.lean`, the only computational
+modules changed by this implementation; the untimed differential driver and
+Mathlib proofs are outside the benchmark import closure. Save and hash both
+executables, then restore and rebuild the candidate and its companion.
+Record the candidate source commit and both binary hashes with the exports.
+
+Use all fifteen registrations, the explicit PARI provider, five repeats,
+registered warmup and budgets, two admitted opposite-order pairs, the stronger
+canonical range-separation gate, and the twelve-attempt cap. Select high cores
+with `--quiet-windows 15`; retain all attempts and use the same preflight,
+postflight and sibling-utilization admission rules as the sustained-quiet
+replication. No build or profiler overlaps timing. Verify differential
+correctness, fixtures, the oracle, and benchmark checks before timing. An
+incomplete or failing comparison does not validate the integrated performance
+claim. Do not fit an exponent or combine gains multiplicatively.
+
+### Benchmark-harness integration comparison
+
+Main `5ca950a2b` advances lean-bench from `b583ddd7…` to `8a37daf1…` and
+adds unrelated rational-function/fast-polynomial work. Resolving the CI target
+list conflict retains both `HexRationalFnKernelProbe` and `tower_factor_diff`.
+The tower build passes, but the integrated benchmark hash changes to
+`b5f7cfb214bd5e50a1a855e52c847794bbe457ea28044cb276fe3bc2cae5774d`.
+The prior comparison against main `064902321` remains valid for its recorded
+binaries; it is not the verdict for this new executable.
+
+Before measuring, repeat the integrated implementation comparison against
+main `5ca950a2b`, constructing its baseline by the same two-file restoration
+procedure. Use the same fifteen registrations, explicit PARI provider,
+five repeats, warmup and budgets, two opposite-order admitted pairs,
+`--quiet-windows 15`, stronger canonical separation gate, and twelve-attempt
+cap. Retain every attempted export and host record; an incomplete series has
+no verdict. The updated validator also re-derives the unchanged admission
+rules from raw telemetry and verifies command affinity and protocol flags.
+Build, differential, fixture, oracle, and benchmark verification precede
+measurement; no builds or profilers overlap it. No exponent is fitted.
+
+### Whole-host preflight replication
+
+The `integrated-harness` series exhausted twelve attempts with only pair 4
+admitted; it has no performance verdict. Its rejected telemetry includes
+large concurrent CPU bursts. Preserve that complete series and use the same
+saved main-`5ca950a2b` and candidate-`a38030daf` binaries for a fresh replication.
+
+Before selecting a core, require that **at most 16 logical CPUs are at least
+5% busy in every one of sixty consecutive two-second preflight
+windows**, in addition to both selected hardware threads being below 5% in
+all those windows. Missing CPU telemetry counts as busy. The whole-host
+ceiling also applies to the two-second preflight before the second arm.
+Record the complete CPU set and both whole-host preflights, and audit these
+rules from the raw samples. The two quiet minutes avoid starting in short gaps between large CPU bursts.
+`--max-busy-cpus 16 --quiet-windows 60` selects
+these stricter environmental conditions. Default whole-host admission remains
+unchanged for the earlier protocols, whose verdicts are reproduced by tests.
+
+The fifteen-minute preflight deadline, twelve-attempt limit, same-core pairs,
+opposite orders, all fifteen registrations and explicit PARI provider, five
+repeats, warmup, budgets, postflight and during-run sibling thresholds, hashes,
+and stronger canonical performance gate are unchanged. Select the first two
+fully admitted opposite-order pairs without looking at their timings. No
+build or profiler overlaps collection; no exponent is fitted. This is a fresh
+replication with stricter preconditions, not an extension or reinterpretation
+of the incomplete series.
+
+The initial whole-host replication (`integrated-harness-quiet`) reaches its
+fifteen-minute preflight deadline before any timed arm, with no verdict.
+Preserve that complete preflight record. The `integrated-harness-quiet-retry`
+series retries the identical protocol after the integration checks, using the
+same two saved binaries and first-two-admitted-pairs rule. Graph-only changes
+at main `9fdda65ba` leave the candidate binary hash unchanged after rebuilding.
+
+### Final main integration comparison
+
+The whole-host retry admitted pair 1, then timed out during pair 2's preflight;
+it remains incomplete and has no verdict. Rebasing onto main `ac24c7832` changes
+the benchmark executable because that release adds shared `HexBasic` code.
+Before any further timing, build both sides from that exact base and save them:
+baseline `ac24c7832`, SHA-256
+`5700c6bd98f656eb1157e430cf57a7e4d566293b86aa853c0c17345a9016fa50`, and
+candidate `dbdb01ead`, SHA-256
+`e01da6b4ee9b8aa175824ad184262f01a23545e3e303ce8a49620457383920a7`.
+
+Run a new `integrated-final-main` series under the identical final protocol:
+all fifteen registrations, explicit recorded PARI provider, five repeats,
+registered warmup and budgets, the first two fully admitted opposite-order
+pairs, twelve-attempt cap, `--quiet-windows 60 --max-busy-cpus 16`, complete
+raw host telemetry, hash agreement, and the stronger canonical range-separation
+gate. No build or profiler may overlap collection. Retain every attempted
+export. An incomplete series has no verdict; do not combine it with a previous
+series or relax the environmental or performance gates.
+
+The first `integrated-final-main` series rejects its first arm at postflight
+and reaches the fifteen-minute preflight deadline on its second attempt, so it
+admits no pair and has no verdict. Retain it unchanged. The
+`integrated-final-main-retry` series repeats the identical frozen binaries,
+two-minute whole-host admission, first-two-opposite-order-pairs rule, gates,
+and limits. It is a separate environmental replication, not an extension or
+reinterpretation of the incomplete series.

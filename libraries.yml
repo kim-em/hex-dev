@@ -751,7 +751,7 @@ libraries:
         - name: multifactor-lifting
           description: Ordered multifactor products on branch-isolated schedules, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures at fixed high precision.
   HexConway:
-    deps: [HexBerlekamp]
+    deps: [HexBerlekamp, HexPrimality]
     mathlib: false
     done_through: 7
     status: active
@@ -775,9 +775,9 @@ libraries:
         - name: packed-generic-shared-bridge
           description: Shared binary representative family exercising both packed GF2q and generic GFq constructor/projection paths on the common p = 2 API surface.
         - name: deep-binary-constructor-projection
-          description: Generic GFq and packed GF2q constructor/projection paths at the deepest committed binary entry, GFq 2 8 and GF2q 8, on deterministic dense representatives.
+          description: Generic GFq and packed GF2q constructor/projection paths at the retained binary degree-8 anchor, GFq 2 8 and GF2q 8, on deterministic dense representatives.
         - name: odd-prime-constructor-projection
-          description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the widest committed odd-prime entry, GFq 13 6, on deterministic dense representatives.
+          description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the retained odd-prime anchor, GFq 13 6, on deterministic dense representatives.
   HexDiscreteLog:
     deps: [HexBasic, HexGFq, HexIntFactor, HexModular]
     mathlib: false

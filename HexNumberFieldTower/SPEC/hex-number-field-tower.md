@@ -225,18 +225,30 @@ For one squarefree component `g`:
    `0, 1, -1, 2, -2, ...`.
 3. For each `c`, substitute `X - c * αₙ` and compute only the one-level norm
    `Res_Y(mₙ(Y), g(X - cY))`, a polynomial over `K`. The shifted
-   bivariate input is constructed by descending Horner evaluation.
+   bivariate input is constructed by descending Horner evaluation. At a
+   quadratic level `mₙ(Y) = Y² + bY + a`, keep two accumulators `A(X), B(X)`
+   modulo this relation throughout the shift and compute the exact norm as
+   `A² - bAB + aB²`. Other degrees use the general resultant.
 4. Accept the first shift whose one-level norm is squarefree over `K`. Among the
    `N` conjugate shifted roots, each unordered pair excludes at most one integer
    shift, so `tragerShiftCount` proves that the bounded search succeeds.
 5. Recursively call the same factorization algorithm on that norm over `K`.
-6. Embed each returned lower-tower factor into `Poly T`, take its gcd with the
+6. If the norm has one irreducible factor, return the canonical monic component:
+   the singleton recovery product proves that this is exactly the factor that
+   gcd recovery would return. Otherwise embed each lower-tower factor into
+   `Poly T`, take its gcd with the
    shifted component, undo the shift, normalize monically, and discard
    constants. When the shifted component is monic and smaller than the lifted
    factor, recovery uses monic remainder division for the first Euclidean
    remainder and resumes the reference gcd chain with its remaining fuel.
 7. Verify that the recovered factors reconstruct the component and pass the
-   tower factorization checker.
+   tower factorization checker. For a singleton norm the returned component
+   reconstructs by construction; irreducibility follows from the recursively
+   checked norm and the proved recovery product. Public tower operations use
+   validated `NumberTower` values. The raw helpers taking `List Level` do not
+   validate arbitrary presentations and do not certify that their input list
+   defines a tower of fields. In particular, `Internal.extend?` checks a new
+   relation over its already validated parent tower.
 
 Each recursive step uses a one-level executable resultant, not a determinant
 materialized as a dense matrix. It is intentionally not replaced by one absolute

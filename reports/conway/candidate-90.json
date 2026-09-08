@@ -1,0 +1,657 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "targets": [
+    "HexConway"
+  ],
+  "commit": "fbe00b3553f8985a74d2bf49d471a2d14101b0fd",
+  "runs": [
+    {
+      "max_child_rss_kib": 3709524,
+      "wall_seconds": 64.72175709484145,
+      "peak_tree_rss_kib": 17144676,
+      "exit_code": 0,
+      "artifact_bytes": 28895847,
+      "modules": [
+        "HexConway.Power (453ms)",
+        "HexConway.Rebuild (633ms)",
+        "HexConway.Coefficients (681ms)",
+        "HexConway.FactorProofs.S3_0 (2.0s)",
+        "HexConway.FactorProofs.S0_0 (2.1s)",
+        "HexConway.Entries.S0_0 (1.6s)",
+        "HexConway.Entries.S1_0 (1.8s)",
+        "HexConway.Entries.S2_0 (1.9s)",
+        "HexConway.Entries.S3_0 (1.9s)",
+        "HexConway.FactorProofs.S2_0 (2.8s)",
+        "HexConway.Table (270ms)",
+        "HexConway.FactorProofs.S1_0 (3.0s)",
+        "HexConway.PrimeFactors (265ms)",
+        "HexConway.EntrySource (809ms)",
+        "HexConway.Rabin.S0_0 (8.6s)",
+        "HexConway.Rabin.S1_0 (11s)",
+        "HexConway.Rabin.S3_0 (11s)",
+        "HexConway.Rabin.S2_0 (12s)",
+        "HexConway.Certificates (275ms)",
+        "HexConway.Transport.S0_0 (349ms)",
+        "HexConway.Transport.S1_0 (356ms)",
+        "HexConway.Transport.S2_0 (356ms)",
+        "HexConway.Transport.S3_0 (368ms)",
+        "HexConway.Transport.S0_1 (327ms)",
+        "HexConway.Transport.S1_1 (336ms)",
+        "HexConway.Transport.S2_1 (323ms)",
+        "HexConway.Transport.S3_1 (339ms)",
+        "HexConway.Irreducible (580ms)",
+        "HexConway.Monic (607ms)",
+        "HexConway.ApiCore (3.5s)",
+        "HexConway.Supported.S0_0 (324ms)",
+        "HexConway.Supported.S1_0 (330ms)",
+        "HexConway.Supported.S2_0 (331ms)",
+        "HexConway.Supported.S3_0 (324ms)",
+        "HexConway.Api (272ms)",
+        "HexConway.PrimitivityCore (373ms)",
+        "HexConway.CompatibilityCore (640ms)",
+        "HexConway.CompatibilityProofs.S2_0 (24s)",
+        "HexConway.CompatibilityProofs.S2_1 (499ms)",
+        "HexConway.PrimitiveProofs.S1_0 (26s)",
+        "HexConway.PrimitiveProofs.S3_0 (28s)",
+        "HexConway.CompatibilityProofs.S3_0 (29s)",
+        "HexConway.CompatibilityProofs.S3_1 (412ms)",
+        "HexConway.PrimitiveProofs.S0_0 (30s)",
+        "HexConway.CompatibilityProofs.S1_0 (30s)",
+        "HexConway.CompatibilityProofs.S1_1 (340ms)",
+        "HexConway.PrimitiveProofs.S2_0 (33s)",
+        "HexConway.Primitivity (263ms)",
+        "HexConway.CompatibilityProofs.S0_0 (41s)",
+        "HexConway.CompatibilityProofs.S0_1 (343ms)",
+        "HexConway.Compatibility (311ms)",
+        "HexConway (530ms)"
+      ],
+      "log": "reports/conway/candidate-90-1.log.gz",
+      "timing": "reports/conway/candidate-90-1.time",
+      "artifact_bytes_by_suffix": {
+        ".hash": 5824,
+        ".json": 2311884,
+        ".c": 4411319,
+        ".olean": 4432688,
+        ".server": 629208,
+        ".private": 13913832,
+        ".sig": 9152,
+        ".ilean": 1084993,
+        ".ir": 1878720,
+        ".trace": 218227
+      },
+      "artifact_count": 832
+    },
+    {
+      "max_child_rss_kib": 3710388,
+      "wall_seconds": 64.24139142083004,
+      "peak_tree_rss_kib": 17028908,
+      "exit_code": 0,
+      "artifact_bytes": 28895847,
+      "modules": [
+        "HexConway.Rebuild (881ms)",
+        "HexConway.Coefficients (846ms)",
+        "HexConway.Power (807ms)",
+        "HexConway.Entries.S0_0 (1.6s)",
+        "HexConway.Entries.S1_0 (1.8s)",
+        "HexConway.Entries.S2_0 (1.8s)",
+        "HexConway.Entries.S3_0 (1.8s)",
+        "HexConway.FactorProofs.S0_0 (2.8s)",
+        "HexConway.FactorProofs.S3_0 (2.9s)",
+        "HexConway.Table (275ms)",
+        "HexConway.FactorProofs.S1_0 (3.4s)",
+        "HexConway.FactorProofs.S2_0 (3.5s)",
+        "HexConway.EntrySource (884ms)",
+        "HexConway.PrimeFactors (373ms)",
+        "HexConway.Rabin.S0_0 (8.7s)",
+        "HexConway.Rabin.S1_0 (10s)",
+        "HexConway.Rabin.S3_0 (10s)",
+        "HexConway.Rabin.S2_0 (11s)",
+        "HexConway.Certificates (269ms)",
+        "HexConway.Transport.S0_0 (347ms)",
+        "HexConway.Transport.S1_0 (354ms)",
+        "HexConway.Transport.S2_0 (354ms)",
+        "HexConway.Transport.S3_0 (365ms)",
+        "HexConway.Transport.S0_1 (321ms)",
+        "HexConway.Transport.S1_1 (335ms)",
+        "HexConway.Transport.S2_1 (336ms)",
+        "HexConway.Transport.S3_1 (324ms)",
+        "HexConway.Irreducible (583ms)",
+        "HexConway.Monic (594ms)",
+        "HexConway.ApiCore (3.5s)",
+        "HexConway.Supported.S0_0 (306ms)",
+        "HexConway.Supported.S1_0 (323ms)",
+        "HexConway.Supported.S2_0 (331ms)",
+        "HexConway.Supported.S3_0 (327ms)",
+        "HexConway.Api (264ms)",
+        "HexConway.PrimitivityCore (383ms)",
+        "HexConway.CompatibilityCore (642ms)",
+        "HexConway.CompatibilityProofs.S2_0 (24s)",
+        "HexConway.CompatibilityProofs.S2_1 (628ms)",
+        "HexConway.PrimitiveProofs.S3_0 (26s)",
+        "HexConway.PrimitiveProofs.S1_0 (27s)",
+        "HexConway.CompatibilityProofs.S3_0 (29s)",
+        "HexConway.CompatibilityProofs.S3_1 (346ms)",
+        "HexConway.PrimitiveProofs.S0_0 (31s)",
+        "HexConway.CompatibilityProofs.S1_0 (32s)",
+        "HexConway.CompatibilityProofs.S1_1 (310ms)",
+        "HexConway.PrimitiveProofs.S2_0 (34s)",
+        "HexConway.Primitivity (281ms)",
+        "HexConway.CompatibilityProofs.S0_0 (41s)",
+        "HexConway.CompatibilityProofs.S0_1 (344ms)",
+        "HexConway.Compatibility (303ms)",
+        "HexConway (541ms)"
+      ],
+      "log": "reports/conway/candidate-90-2.log.gz",
+      "timing": "reports/conway/candidate-90-2.time",
+      "artifact_bytes_by_suffix": {
+        ".hash": 5824,
+        ".json": 2311884,
+        ".c": 4411319,
+        ".olean": 4432688,
+        ".server": 629208,
+        ".private": 13913832,
+        ".sig": 9152,
+        ".ilean": 1084993,
+        ".ir": 1878720,
+        ".trace": 218227
+      },
+      "artifact_count": 832
+    },
+    {
+      "max_child_rss_kib": 3710948,
+      "wall_seconds": 62.81958339223638,
+      "peak_tree_rss_kib": 17003856,
+      "exit_code": 0,
+      "artifact_bytes": 28895847,
+      "modules": [
+        "HexConway.Power (484ms)",
+        "HexConway.Rebuild (694ms)",
+        "HexConway.Coefficients (681ms)",
+        "HexConway.FactorProofs.S3_0 (2.2s)",
+        "HexConway.Entries.S0_0 (1.6s)",
+        "HexConway.FactorProofs.S0_0 (2.3s)",
+        "HexConway.Entries.S1_0 (1.9s)",
+        "HexConway.Entries.S2_0 (1.8s)",
+        "HexConway.Entries.S3_0 (1.8s)",
+        "HexConway.Table (265ms)",
+        "HexConway.FactorProofs.S2_0 (2.9s)",
+        "HexConway.FactorProofs.S1_0 (3.2s)",
+        "HexConway.PrimeFactors (250ms)",
+        "HexConway.EntrySource (850ms)",
+        "HexConway.Rabin.S0_0 (8.1s)",
+        "HexConway.Rabin.S3_0 (9.7s)",
+        "HexConway.Rabin.S1_0 (10s)",
+        "HexConway.Rabin.S2_0 (11s)",
+        "HexConway.Certificates (270ms)",
+        "HexConway.Transport.S0_0 (325ms)",
+        "HexConway.Transport.S1_0 (334ms)",
+        "HexConway.Transport.S2_0 (393ms)",
+        "HexConway.Transport.S3_0 (348ms)",
+        "HexConway.Transport.S0_1 (339ms)",
+        "HexConway.Transport.S1_1 (368ms)",
+        "HexConway.Transport.S2_1 (310ms)",
+        "HexConway.Transport.S3_1 (372ms)",
+        "HexConway.Irreducible (569ms)",
+        "HexConway.Monic (602ms)",
+        "HexConway.ApiCore (3.4s)",
+        "HexConway.Supported.S0_0 (321ms)",
+        "HexConway.Supported.S1_0 (321ms)",
+        "HexConway.Supported.S2_0 (309ms)",
+        "HexConway.Supported.S3_0 (330ms)",
+        "HexConway.Api (279ms)",
+        "HexConway.PrimitivityCore (355ms)",
+        "HexConway.CompatibilityCore (635ms)",
+        "HexConway.CompatibilityProofs.S2_0 (24s)",
+        "HexConway.CompatibilityProofs.S2_1 (462ms)",
+        "HexConway.PrimitiveProofs.S1_0 (25s)",
+        "HexConway.PrimitiveProofs.S3_0 (26s)",
+        "HexConway.CompatibilityProofs.S3_0 (27s)",
+        "HexConway.CompatibilityProofs.S3_1 (332ms)",
+        "HexConway.PrimitiveProofs.S0_0 (30s)",
+        "HexConway.CompatibilityProofs.S1_0 (31s)",
+        "HexConway.CompatibilityProofs.S1_1 (312ms)",
+        "HexConway.PrimitiveProofs.S2_0 (32s)",
+        "HexConway.Primitivity (264ms)",
+        "HexConway.CompatibilityProofs.S0_0 (40s)",
+        "HexConway.CompatibilityProofs.S0_1 (350ms)",
+        "HexConway.Compatibility (302ms)",
+        "HexConway (506ms)"
+      ],
+      "log": "reports/conway/candidate-90-3.log.gz",
+      "timing": "reports/conway/candidate-90-3.time",
+      "artifact_bytes_by_suffix": {
+        ".hash": 5824,
+        ".json": 2311884,
+        ".c": 4411319,
+        ".olean": 4432688,
+        ".server": 629208,
+        ".private": 13913832,
+        ".sig": 9152,
+        ".ilean": 1084993,
+        ".ir": 1878720,
+        ".trace": 218227
+      },
+      "artifact_count": 832
+    }
+  ],
+  "source_sha256": {
+    "HexConway/Api.lean": "069c69321e5b99501d43ba4cf4aa793286f674911296a509d29340f31bc3943d",
+    "HexConway/ApiCore.lean": "662b050d5178358e80baf4e01f256bef87c0fff425038f3dcb0ed2bc522345c8",
+    "HexConway/Certificates.lean": "e5ff5fa55a0e55843f599f7951d0fb5b0838e117d89893c97b504c22bb51fd68",
+    "HexConway/Coefficients.lean": "50888e33e44eadaccd131155d3e9d583d5ece6712f9c824ece33882772fe33fd",
+    "HexConway/Compatibility.lean": "71ac707a06a8d5905b539d4e12e20857871e2ae0ceff6339a0d4167e76fe6553",
+    "HexConway/CompatibilityCore.lean": "22dd173ec02dff763e69d5d3e6ba86a408dea4099b29829a34d2a4d636da610a",
+    "HexConway/CompatibilityProofs/S0_0.lean": "71ceae857e796f22b4eb8d269922c6758611ef870b1d239df3cd4213b359345e",
+    "HexConway/CompatibilityProofs/S0_1.lean": "20a7f6bc9293952037b23ec3da834c3f9dbef780e4eb3e4ac8f04cf4c1b063cb",
+    "HexConway/CompatibilityProofs/S1_0.lean": "dccbc8f4379be62c6e59fd234afc1ae3c6f1fe81f9ae06922a2405b5e83f6e9c",
+    "HexConway/CompatibilityProofs/S1_1.lean": "8268f6254b3f35c28304686f5ff023f328b8e27790d840af80750f6975929276",
+    "HexConway/CompatibilityProofs/S2_0.lean": "0396d9d9de6ee5f53660f8658338e38b4aa09e1a7740f5617a657aa3b15ddc8e",
+    "HexConway/CompatibilityProofs/S2_1.lean": "5e8ed4a80fb473fdad2edd58cf162d78f15698518be97e9e1d036ee540415484",
+    "HexConway/CompatibilityProofs/S3_0.lean": "a47a027cee35884b42cec88d30448801572203f76caeed9146f90f4e96a8c129",
+    "HexConway/CompatibilityProofs/S3_1.lean": "e74cddefd8e32242392d3875a0a34d4f2684c8c11a656e2cdaddebf9ec40d9a2",
+    "HexConway/Entries/S0_0.lean": "bdf9bd52710b5a194724e8eaf6403539d7d5984e2b00a259b51c24b7643766ba",
+    "HexConway/Entries/S1_0.lean": "eb0f406ecd12ec0311195f3a7088af4b34f50f052b682d7a0dd1ed0f2bee1bb8",
+    "HexConway/Entries/S2_0.lean": "5a90af028e67259718129bfb75001870840ed244ba9008767c1178d1e9e0f3d1",
+    "HexConway/Entries/S3_0.lean": "5de056d4a11b698423faffcd127370cb23a2b3ad5fe53d09e0ea811d397dd609",
+    "HexConway/EntrySource.lean": "ad9943f80a4eb66197e68100cb23ce7b3bee0685a08503552a2426884dfe7471",
+    "HexConway/FactorProofs/S0_0.lean": "eefa0df86b843fb8288ee4d9a9a18397fdfc71afeb5f3d9d421165da67734ece",
+    "HexConway/FactorProofs/S1_0.lean": "fcb280a33095b4bcd4b1f410b8e8c01cde777f389c31fed7cc30a1083f871ee8",
+    "HexConway/FactorProofs/S2_0.lean": "6c6c27543c0b0bc13c7797fa569a5af4914775b691941abf8d9c8af82797e6ef",
+    "HexConway/FactorProofs/S3_0.lean": "b426f147462a43bb30fe589a7814fd691862253f15ddb1850c6000cb23cd6496",
+    "HexConway/Irreducible.lean": "7102fe92cd391ccab386788e27b44eb46ea91bc76abe855f2067979f80ebe040",
+    "HexConway/Monic.lean": "083213a2b74dbd540fed84af906d61c81d8b70c02af1cb484d05898b78f0e976",
+    "HexConway/Power.lean": "9cd0359f6a71987695ab0795ca05da24f404091d7eb99aab88c09a6e896cae58",
+    "HexConway/PrimeFactors.lean": "30ca303b90a2c615ab46dde81b4ddc6865ddf329144cfde30e9f596a6927dd2b",
+    "HexConway/PrimitiveProofs/S0_0.lean": "c30f6a4ebfa03ebe94f3663e4f0beb945d9763f132de4c220bc71977ec8b1f3a",
+    "HexConway/PrimitiveProofs/S1_0.lean": "c86e6ba6ff1cea17224753457219a5e6838c538b88504c2acb9256e899b78b55",
+    "HexConway/PrimitiveProofs/S2_0.lean": "237f319e8d638faf4ba7446635d8df87261e39cc00c68dfb75f335a298ba28fa",
+    "HexConway/PrimitiveProofs/S3_0.lean": "8fa53c6f235993762fde6fddfd00085499e3ff7cfad32c46fad864686477fea1",
+    "HexConway/Primitivity.lean": "c56a91d4293e3492c91f9bf33945d79085367e931150c8b9cdaad75696857a03",
+    "HexConway/PrimitivityCore.lean": "93226a7d37b1d4c4a7b47dd4f04e6c9f5446053ba3da923bd308cfc3dc257a9a",
+    "HexConway/Rabin/S0_0.lean": "edba726fc0e9bc33fa7cb1dd92729aa5509c080ec5f04f0bb90fba4b6d93accf",
+    "HexConway/Rabin/S1_0.lean": "151f4fc05eac34eac15991c2c42287a2aaa37ca12c8fc7e4af6022cc177a95ef",
+    "HexConway/Rabin/S2_0.lean": "17947e65ecf011dc9340c7cfc7bba19b095b7d2125776d647f50b293fc944a32",
+    "HexConway/Rabin/S3_0.lean": "8d4a85d4f69cba58150042a2c5265b18d20337140f447120c2f0923860237c67",
+    "HexConway/Rebuild.lean": "c8d1bcbeebf3009fb945d6f0ba3e5cca9101a3b161209440bd5da50db171ae02",
+    "HexConway/Supported/S0_0.lean": "cf4ed407c46f00b96b59a894ffc86c6a02f14bbe5bed212d4dd9ed76ad770fbf",
+    "HexConway/Supported/S1_0.lean": "f187b008c829179481205020168057a91203864f0606a4e4eb738da67f068ef0",
+    "HexConway/Supported/S2_0.lean": "8de99360c25bf8e60729f1b4d92eb8e1d74d3e8982075c9d614acad79adf1cbf",
+    "HexConway/Supported/S3_0.lean": "76db063ddb2c3bc2636c0692229a7226cdc810e3e7165663643e3f9e596c0a5a",
+    "HexConway/Table.lean": "2df88755ec6368efde8173d558527c388e2cdb283fa34812980abd3162e21088",
+    "HexConway/Transport/S0_0.lean": "f21c69e44baf827d1f04df51b5687a02d8492b2443df67033b0fe617d79eaf30",
+    "HexConway/Transport/S0_1.lean": "9517a679e11d7e0a8556d07e7976978adce131d987f3b3ae59a213e9b4bf5307",
+    "HexConway/Transport/S1_0.lean": "dabfdbda12629786f07668c6b81bc985f6a2bb116a301547460469ec150284f5",
+    "HexConway/Transport/S1_1.lean": "b718b45282b89872e2a796f04f23b11d42b716b665e32a051538eed03254e6ea",
+    "HexConway/Transport/S2_0.lean": "4c9034232af841a42f4952ef477342ad4c8c242f5fe1f4ff34ecf4292057f9b1",
+    "HexConway/Transport/S2_1.lean": "a6eb814045a3c9b99e34c75283ddd1b43bb37fd1b8374780c9b43fd63ce4f231",
+    "HexConway/Transport/S3_0.lean": "e254edd83c6dfdd861395fd1305631bfcc241306b72c93acc1f31d7ba2780243",
+    "HexConway/Transport/S3_1.lean": "9744181ee79125cd79e16694abdae3236efe31e19323b284464f2b2ef6baf51b",
+    "HexConway.lean": "316997004af59ec6f7c8fc12ef8d2b52afbf2c7fb031c5bfd38a0bc1d0232355"
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      2,
+      9
+    ],
+    [
+      2,
+      10
+    ],
+    [
+      2,
+      11
+    ],
+    [
+      2,
+      12
+    ],
+    [
+      2,
+      13
+    ],
+    [
+      2,
+      14
+    ],
+    [
+      2,
+      15
+    ],
+    [
+      2,
+      16
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      3,
+      7
+    ],
+    [
+      3,
+      8
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      5,
+      8
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      19,
+      1
+    ],
+    [
+      19,
+      2
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      23,
+      2
+    ],
+    [
+      29,
+      1
+    ],
+    [
+      29,
+      2
+    ],
+    [
+      31,
+      1
+    ],
+    [
+      31,
+      2
+    ],
+    [
+      37,
+      1
+    ],
+    [
+      37,
+      2
+    ],
+    [
+      41,
+      1
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      43,
+      1
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      47,
+      1
+    ],
+    [
+      47,
+      2
+    ],
+    [
+      53,
+      1
+    ],
+    [
+      53,
+      2
+    ],
+    [
+      59,
+      1
+    ],
+    [
+      59,
+      2
+    ],
+    [
+      61,
+      1
+    ],
+    [
+      61,
+      2
+    ],
+    [
+      67,
+      1
+    ],
+    [
+      67,
+      2
+    ],
+    [
+      71,
+      1
+    ],
+    [
+      71,
+      2
+    ],
+    [
+      73,
+      1
+    ],
+    [
+      73,
+      2
+    ],
+    [
+      79,
+      1
+    ],
+    [
+      79,
+      2
+    ],
+    [
+      83,
+      1
+    ],
+    [
+      83,
+      2
+    ],
+    [
+      89,
+      1
+    ],
+    [
+      89,
+      2
+    ],
+    [
+      97,
+      1
+    ],
+    [
+      97,
+      2
+    ]
+  ]
+}

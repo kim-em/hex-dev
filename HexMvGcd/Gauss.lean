@@ -54,10 +54,98 @@ section Cancel
 variable {R : Type u} [Lean.Grind.CommRing R] [Dvd R]
   [GcdDomainLaws R]
 
+/-- Multiplication transports a chosen gcd to a gcd of the two products. -/
+private theorem mulGcd
+    (m a b c : R) (hca : c ∣ a) (hcb : c ∣ b)
+    (hc : ∀ d, d ∣ a → d ∣ b → d ∣ c) :
+    m * c ∣ m * a ∧ m * c ∣ m * b ∧
+      ∀ d, d ∣ m * a → d ∣ m * b → d ∣ m * c := by
+  have hleft : m * c ∣ m * a := by
+    rcases (GcdDomainLaws.dvd_iff c a).mp hca with ⟨q, hq⟩
+    apply (GcdDomainLaws.dvd_iff (m * c) (m * a)).mpr
+    refine ⟨q, ?_⟩
+    rw [hq]
+    grind
+  have hright : m * c ∣ m * b := by
+    rcases (GcdDomainLaws.dvd_iff c b).mp hcb with ⟨q, hq⟩
+    apply (GcdDomainLaws.dvd_iff (m * c) (m * b)).mpr
+    refine ⟨q, ?_⟩
+    rw [hq]
+    grind
+  refine ⟨hleft, hright, ?_⟩
+  intro d hdma hdmb
+  by_cases hm : m = 0
+  · apply (GcdDomainLaws.dvd_iff d (m * c)).mpr
+    refine ⟨0, ?_⟩
+    rw [hm, Lean.Grind.Semiring.zero_mul, Lean.Grind.Semiring.mul_zero]
+  rcases GcdDomainLaws.gcd_exists (m * a) (m * b) with
+    ⟨x, hxa, hxb, hxgreat⟩
+  have hmcx : m * c ∣ x := hxgreat (m * c) hleft hright
+  rcases (GcdDomainLaws.dvd_iff (m * c) x).mp hmcx with ⟨t, hxt⟩
+  let n := c * t
+  have hxn : x = m * n := by
+    change x = m * (c * t)
+    rw [hxt]
+    grind
+  have hna : n ∣ a := by
+    rcases (GcdDomainLaws.dvd_iff x (m * a)).mp hxa with ⟨q, hq⟩
+    apply (GcdDomainLaws.dvd_iff n a).mpr
+    refine ⟨q, ?_⟩
+    have heq : m * a = m * (n * q) := by
+      calc
+        m * a = x * q := hq
+        _ = (m * n) * q := by rw [hxn]
+        _ = m * (n * q) := by grind
+    have hzero : m * (a - n * q) = 0 := by grind
+    rcases GcdDomainLaws.no_zero_div m (a - n * q) hzero with hz | hz
+    · exact False.elim (hm hz)
+    · grind
+  have hnb : n ∣ b := by
+    rcases (GcdDomainLaws.dvd_iff x (m * b)).mp hxb with ⟨q, hq⟩
+    apply (GcdDomainLaws.dvd_iff n b).mpr
+    refine ⟨q, ?_⟩
+    have heq : m * b = m * (n * q) := by
+      calc
+        m * b = x * q := hq
+        _ = (m * n) * q := by rw [hxn]
+        _ = m * (n * q) := by grind
+    have hzero : m * (b - n * q) = 0 := by grind
+    rcases GcdDomainLaws.no_zero_div m (b - n * q) hzero with hz | hz
+    · exact False.elim (hm hz)
+    · grind
+  have hnc : n ∣ c := hc n hna hnb
+  rcases (GcdDomainLaws.dvd_iff n c).mp hnc with ⟨q, hq⟩
+  have hxmc : x ∣ m * c := by
+    apply (GcdDomainLaws.dvd_iff x (m * c)).mpr
+    refine ⟨q, ?_⟩
+    rw [hq, hxn]
+    grind
+  rcases (GcdDomainLaws.dvd_iff d x).mp (hxgreat d hdma hdmb) with ⟨r, hr⟩
+  rcases (GcdDomainLaws.dvd_iff x (m * c)).mp hxmc with ⟨s, hs⟩
+  apply (GcdDomainLaws.dvd_iff d (m * c)).mpr
+  refine ⟨r * s, ?_⟩
+  calc
+    m * c = x * s := hs
+    _ = (d * r) * s := by rw [hr]
+    _ = d * (r * s) := by grind
+
 /-- Ordinary gcd-domain arithmetic gives Euclid cancellation in the exact
 form consumed by certificate maximality. -/
 theorem coprimeCancelOfGcdDomain : CoprimeCancelLaws R := by
-  sorry
+  constructor
+  intro g a b d hcop hda hdb
+  rcases GcdDomainLaws.gcd_exists a b with ⟨c, hca, hcb, hc⟩
+  rcases hcop c hca hcb with ⟨u, hcu⟩
+  have hdgc : d ∣ g * c := (mulGcd g a b c hca hcb hc).2.2 d hda hdb
+  rcases (GcdDomainLaws.dvd_iff d (g * c)).mp hdgc with ⟨q, hq⟩
+  apply (GcdDomainLaws.dvd_iff d g).mpr
+  refine ⟨q * u, ?_⟩
+  calc
+    g = g * 1 := (Lean.Grind.Semiring.mul_one g).symm
+    _ = g * (c * u) := by rw [hcu]
+    _ = (g * c) * u := by grind
+    _ = (d * q) * u := by rw [hq]
+    _ = d * (q * u) := by grind
 
 instance (priority := 100) instCoprimeCancelLawsOfGcdDomain :
     CoprimeCancelLaws R :=
@@ -136,8 +224,6 @@ theorem dvd_chooseCoeffGcd [GcdDomainLaws R] (xs : List R) (d : R)
 end CoeffFold
 
 namespace MvPoly
-
-universe v
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -292,11 +378,68 @@ theorem fractionPolyGcd_nonempty
 out every nonunit common divisor back in the coefficient ring. -/
 theorem primitive_descent [GcdDomainLaws R]
     {f g d : MvPoly n R cmp}
-    (hf : Primitive f) (hg : Primitive g)
+    (hf : Primitive f)
     (hcop : CoprimeOverFraction f g)
     (hdf : d ∣ f) (hdg : d ∣ g) :
     ∃ u, d * u = 1 := by
-  sorry
+  have hmapDvdF : fractionMap d ∣ fractionMap f := by
+    rcases hdf with ⟨q, hq⟩
+    refine ⟨fractionMap q, ?_⟩
+    calc
+      fractionMap f = fractionMap (q * d) := congrArg fractionMap hq
+      _ = fractionMap q * fractionMap d := fractionMap_mul q d
+  have hmapDvdG : fractionMap d ∣ fractionMap g := by
+    rcases hdg with ⟨q, hq⟩
+    refine ⟨fractionMap q, ?_⟩
+    calc
+      fractionMap g = fractionMap (q * d) := congrArg fractionMap hq
+      _ = fractionMap q * fractionMap d := fractionMap_mul q d
+  rcases hcop (fractionMap d) hmapDvdF hmapDvdG with ⟨q, hdq⟩
+  have hFracOne : (1 : Hex.Fraction R) ≠ 0 :=
+    fun h => Hex.Fraction.zero_ne_one h.symm
+  have hFracNoZero : ∀ a b : Hex.Fraction R,
+      a * b = 0 → a = 0 ∨ b = 0 := by
+    intro a b hab
+    by_cases ha : a = 0
+    · exact Or.inl ha
+    · right
+      by_cases hb : b = 0
+      · exact hb
+      · exact False.elim ((ExactDivLaws.mul_ne_zero ha hb) hab)
+  rcases unit_eq_C hFracOne hFracNoZero hdq with ⟨_, _, hdConst, _⟩
+  let c := coeff Mono.zero d
+  have hdc : d = C c := by
+    apply ext
+    intro m
+    by_cases hm : m = Mono.zero
+    · subst m
+      rw [coeff_C]
+      simp only [ite_true]
+      rfl
+    · rw [coeff_C, ite_eq_right hm]
+      have hcoeff := congrArg (coeff m) hdConst
+      rw [fractionMap, coeff_mapCoeffs Hex.Fraction.ofCoeff_zero,
+        coeff_C, ite_eq_right hm] at hcoeff
+      exact (Hex.Fraction.ofCoeff_eq_zero_iff (coeff m d)).mp hcoeff
+  rcases hdf with ⟨a, ha⟩
+  have hcommon : ∀ x, x ∈ coefficientList f → c ∣ x := by
+    intro x hx
+    rcases List.mem_map.mp hx with ⟨term, hterm, rfl⟩
+    rcases term with ⟨m, x⟩
+    have hcoeff : coeff m f = x := coeff_eq_of_mem_terms f hterm
+    apply (GcdDomainLaws.dvd_iff c x).mpr
+    refine ⟨coeff m a, ?_⟩
+    calc
+      x = coeff m f := hcoeff.symm
+      _ = coeff m (a * d) := congrArg (coeff m) ha
+      _ = coeff m (C c * a) := by rw [hdc, MvPoly.mul_comm]
+      _ = c * coeff m a := coeff_C_mul c a m
+  rcases hf c hcommon with ⟨u, hcu⟩
+  refine ⟨C u, ?_⟩
+  rw [hdc]
+  change monomial Mono.zero c * monomial Mono.zero u = 1
+  rw [monomial_mul_monomial, Mono.zero_mul, hcu]
+  rfl
 
 end Fraction
 

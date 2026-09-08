@@ -76,7 +76,11 @@ Concretely:
   libraries, the bench exes, the conformance `#guard` drivers, and the
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
   bridge required by integer-factorization correctness — followed by a
-  separate memory-bounded `lake build HexManual`). It then runs the two
+  separate memory-bounded `lake build HexManual`). Conway and its companion
+  first warm external imports, then clean their restored outputs and measure
+  their initial builds; the remaining targets reuse those outputs. These
+  hosted observations use explicit resource limits and do not enforce the
+  designated-machine Conway ceiling. It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
@@ -112,9 +116,9 @@ polynomial factorization comparison:
   own curve can instead record a runtime-neutral exemption for the paths that
   moved. `scripts/bench/
   check_graphiso_sweep_freshness.py` applies the same mechanism to the
-  hex-graph-iso cactus figures, where a `.lean` path differing only inside
-  its comments is the one difference the check clears without a
-  measurement, on evidence it reads rather than a recorded claim; both are
+  hex-graph-iso cactus figures, where mechanically checked comment-only edits
+  and independent literal Lake target additions can clear without a new
+  measurement, on evidence the check reads rather than a recorded claim; both are
   built from `scripts/bench/sweep_freshness.py`, whose unit tests run in
   the same step.
   See [benchmarking.md](benchmarking.md) §Figure freshness.

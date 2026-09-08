@@ -89,5 +89,6 @@ surface.
 The public divisor-enumeration transports (`divisors_eq`, `divisors_list_eq`,
 `numDivisors_eq_card`) map to the core registration
 `Hex.IntFactorBench.runDivisors`. Its acceptance protocol and unresolved gate
-are recorded in `reports/hex-int-factor-divisor-protocol.md`; a registration
+are recorded in `reports/hex-int-factor-divisor-protocol-3.md`, which links the
+two exhausted predecessor protocols and all retained evidence; a registration
 alone does not establish the owner's Phase-4 performance evidence.

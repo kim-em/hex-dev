@@ -1,0 +1,289 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "targets": [
+    "HexConway"
+  ],
+  "commit": "fbe00b3553f8985a74d2bf49d471a2d14101b0fd",
+  "runs": [
+    {
+      "max_child_rss_kib": 1437816,
+      "wall_seconds": 42.94199292734265,
+      "peak_tree_rss_kib": 3245960,
+      "exit_code": 0,
+      "artifact_bytes": 12089154,
+      "modules": [
+        "HexConway.Power (1.1s)",
+        "HexConway.Rebuild (1.3s)",
+        "HexConway.Table (2.9s)",
+        "HexConway.PrimeFactors (3.9s)",
+        "HexConway.EntrySource (1.4s)",
+        "HexConway.Certificates (11s)",
+        "HexConway.Api (3.2s)",
+        "HexConway.PrimitivityCore (514ms)",
+        "HexConway.CompatibilityCore (914ms)",
+        "HexConway.Compatibility (17s)",
+        "HexConway.Primitivity (22s)",
+        "HexConway (912ms)"
+      ],
+      "log": "reports/conway/optimized-38-1.log.gz",
+      "timing": "reports/conway/optimized-38-1.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 433529,
+        ".c": 1723979,
+        ".hash": 1344,
+        ".ir": 879280,
+        ".olean": 2646560,
+        ".server": 316800,
+        ".private": 5557064,
+        ".ilean": 478773,
+        ".sig": 2112,
+        ".trace": 49713
+      },
+      "artifact_count": 192
+    },
+    {
+      "max_child_rss_kib": 1476328,
+      "wall_seconds": 35.54389988211915,
+      "peak_tree_rss_kib": 3370172,
+      "exit_code": 0,
+      "artifact_bytes": 12089154,
+      "modules": [
+        "HexConway.Power (712ms)",
+        "HexConway.Rebuild (985ms)",
+        "HexConway.Table (2.6s)",
+        "HexConway.PrimeFactors (3.8s)",
+        "HexConway.EntrySource (1.1s)",
+        "HexConway.Certificates (10s)",
+        "HexConway.Api (2.5s)",
+        "HexConway.PrimitivityCore (345ms)",
+        "HexConway.CompatibilityCore (630ms)",
+        "HexConway.Compatibility (14s)",
+        "HexConway.Primitivity (17s)",
+        "HexConway (494ms)"
+      ],
+      "log": "reports/conway/optimized-38-2.log.gz",
+      "timing": "reports/conway/optimized-38-2.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 433529,
+        ".c": 1723979,
+        ".hash": 1344,
+        ".ir": 879280,
+        ".olean": 2646560,
+        ".server": 316800,
+        ".private": 5557064,
+        ".ilean": 478773,
+        ".sig": 2112,
+        ".trace": 49713
+      },
+      "artifact_count": 192
+    },
+    {
+      "max_child_rss_kib": 1476580,
+      "wall_seconds": 33.34209837159142,
+      "peak_tree_rss_kib": 3382728,
+      "exit_code": 0,
+      "artifact_bytes": 12089154,
+      "modules": [
+        "HexConway.Power (443ms)",
+        "HexConway.Rebuild (611ms)",
+        "HexConway.Table (2.1s)",
+        "HexConway.PrimeFactors (2.4s)",
+        "HexConway.EntrySource (769ms)",
+        "HexConway.Certificates (9.2s)",
+        "HexConway.Api (2.6s)",
+        "HexConway.PrimitivityCore (345ms)",
+        "HexConway.CompatibilityCore (604ms)",
+        "HexConway.Compatibility (14s)",
+        "HexConway.Primitivity (17s)",
+        "HexConway (495ms)"
+      ],
+      "log": "reports/conway/optimized-38-3.log.gz",
+      "timing": "reports/conway/optimized-38-3.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 433529,
+        ".c": 1723979,
+        ".hash": 1344,
+        ".ir": 879280,
+        ".olean": 2646560,
+        ".server": 316800,
+        ".private": 5557064,
+        ".ilean": 478773,
+        ".sig": 2112,
+        ".trace": 49713
+      },
+      "artifact_count": 192
+    }
+  ],
+  "source_sha256": {
+    "HexConway/Api.lean": "a220415143e6e2176dbe93ac551b9128549e62134fa68941b2eeca46cf2bb9d2",
+    "HexConway/Certificates.lean": "ae2903525a7624060bade36c843b7db1b5e7da22cd4ac758b81e4bc9f5e9342c",
+    "HexConway/Compatibility.lean": "4c58049050531234e78beaec5c7ba133dd4f9f9ad700afd2235769021af11aa3",
+    "HexConway/CompatibilityCore.lean": "f20d073aaa9cba40a80362022e8bd53077a80eb0accd8f144ade90d1531a83e9",
+    "HexConway/EntrySource.lean": "ad9943f80a4eb66197e68100cb23ce7b3bee0685a08503552a2426884dfe7471",
+    "HexConway/Power.lean": "b8e1825d5a5b338617e81a46511560ae615fd1e611b84d67a2003c9e17d4f4c7",
+    "HexConway/PrimeFactors.lean": "7bef9d55f8fdc84b99d4fda53b20392501ec41e1c05b9540c1501f27e1ec8bfe",
+    "HexConway/Primitivity.lean": "4a957203a8c9da6ebf1b95dcf64761a9fb3b8e63f3ca7a03f9156a8f30a6f46f",
+    "HexConway/PrimitivityCore.lean": "93226a7d37b1d4c4a7b47dd4f04e6c9f5446053ba3da923bd308cfc3dc257a9a",
+    "HexConway/Rebuild.lean": "c8d1bcbeebf3009fb945d6f0ba3e5cca9101a3b161209440bd5da50db171ae02",
+    "HexConway/Table.lean": "5662c3864400ca7a8eb62e43461e0b90b66db6b354ba4f1d519d9b4a1d6e5b54",
+    "HexConway.lean": "316997004af59ec6f7c8fc12ef8d2b52afbf2c7fb031c5bfd38a0bc1d0232355"
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ]
+  ]
+}

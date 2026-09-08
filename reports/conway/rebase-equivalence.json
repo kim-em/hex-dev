@@ -1,0 +1,35 @@
+{
+  "measurement": "reports/conway/accepted-594.json",
+  "matching_sources_commit": "8b511516d05072328859eb749c36f72939646e12",
+  "source_hashes_verified": 312,
+  "package_changes": [
+    {
+      "name": "\u00ablean-bench\u00bb",
+      "old": {
+        "url": "https://github.com/kim-em/lean-bench.git",
+        "type": "git",
+        "subDir": null,
+        "scope": "",
+        "rev": "b583ddd7da895dabd3a6b2976a0292dbf42bc095",
+        "name": "\u00ablean-bench\u00bb",
+        "manifestFile": "lake-manifest.json",
+        "inputRev": "master",
+        "inherited": false,
+        "configFile": "lakefile.toml"
+      },
+      "new": {
+        "url": "https://github.com/kim-em/lean-bench.git",
+        "type": "git",
+        "subDir": null,
+        "scope": "",
+        "rev": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+        "name": "\u00ablean-bench\u00bb",
+        "manifestFile": "lake-manifest.json",
+        "inputRev": "master",
+        "inherited": false,
+        "configFile": "lakefile.toml"
+      }
+    }
+  ],
+  "conway_imports_leanbench": false
+}

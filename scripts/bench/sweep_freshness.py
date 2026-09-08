@@ -39,10 +39,15 @@ until they are re-measured.
 
 A family may also pass ``assess`` an ``allow`` rule, which differs from
 an exemption in what it costs to trust. An exemption is an assertion a
-reviewer has to weigh; a rule decides from the two blobs themselves. The
-rules read both versions to recognize comment-only Lean edits and lakefile
-edits outside a measured executable's declarations. No file records a
-claim that could go stale.
+reviewer has to weigh; a rule decides from the two blobs themselves.
+``lean_comment_only`` is one such rule: it reads both versions
+of a ``.lean`` path and accepts the difference when they are equal with
+their comments removed. Editing a docstring therefore does not force a
+sweep, and no file records a claim that could go stale. The graph checker
+also verifies narrowly defined additions of independent literal Lake targets;
+it additionally compares the declarations that build the measured executable
+so unrelated compiler helpers cannot invalidate its measurements. Those
+family-specific rules live in ``check_graphiso_sweep_freshness.py``.
 """
 
 from __future__ import annotations

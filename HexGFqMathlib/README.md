@@ -59,11 +59,13 @@ example {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 - `conwayEmbed`, the embedding of the degree-`m` Conway field into the
   degree-`n` one for a committed divisor pair, instantiated at `GF(2^2)` and
   `GF(2^3)` inside `GF(2^6)`, `GF(13)` inside `GF(13^6)`, and `GF(2^4)` inside
-  `GF(2^8)`.
+  `GF(2^8)`. Generated `embed_p_m_n` definitions specialize it at every
+  supported proper-divisor pair.
 - `orderOf_gen_of_primitive`, which moves
   [`hex-conway`](https://github.com/leanprover/hex-conway)'s executable
   primitivity certificates into Mathlib's `orderOf` vocabulary, with named
-  corollaries for all 37 committed nontrivial entries.
+  generated corollaries for every committed entry, including the trivial
+  multiplicative group of `GF(2)`.
 
 # Verification
 
@@ -127,13 +129,12 @@ embedding sends the source generator to `conwayGen`, and
 `conwayGen_eq_norm` identifies that target with the same explicit power;
 `conwayEmbed_X_eq_norm` combines them into the direct canonicality statement.
 
-The primitivity transport is assembled from `ofPolyHom_linPowMod`,
-`ofPolyHom_digitPowMod`, `ofPolyHom_eq_one_iff`, `mathlibPrime_of_hexPrime` and
+The primitivity transport uses `ofPolyHom_powerResidue`, `ofPolyHom_eq_one_iff`, `mathlibPrime_of_hexPrime` and
 `mem_of_prime_dvd_primePowerProduct`. `orderOf_gen_of_primitive` consumes a
 `Conway.Primitive` witness, builds the per-prime hypothesis function required by
 Mathlib's `orderOf_eq_of_pow_and_pow_div_prime`, and concludes
 `orderOf α = p ^ n - 1`. The `orderOf_gen_p_n` corollaries specialize this to
-all 37 committed entries with nontrivial multiplicative group.
+every supported entry, including `GF(2)`.
 
 Use [`hex-gfq`](https://github.com/leanprover/hex-gfq) alone for computation;
 this package is for theorem statements and interoperability involving Mathlib.

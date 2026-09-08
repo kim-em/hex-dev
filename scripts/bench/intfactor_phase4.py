@@ -489,10 +489,18 @@ def render(record: dict[str, object]) -> None:
 
 DIVISOR_COUNTS = (64, 256, 1024, 4096, 16384, 32768)
 DIVISOR_PRIMES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47)
+DIVISOR_CAMPAIGN = 3
+DIVISOR_PROTOCOL = "reports/hex-int-factor-divisor-protocol-3.md"
+DIVISOR_CPU = 81
+DIVISOR_SIBLINGS = frozenset({33, 81})
+DIVISOR_PREFLIGHT_RATIO = 0.005
+DIVISOR_TIMED_INTERFERENCE_RATIO = 0.005
+DIVISOR_PREFLIGHT_SECONDS = 30
+DIVISOR_PREFLIGHT_WINDOWS = 10
 
 
-def validate_divisors(export: dict, audit: str) -> None:
-    """Independently reconstruct every output; check every trial and its checksum."""
+def validate_divisor_audit(audit: str) -> dict[int, int]:
+    """Independently reconstruct and compare every complete divisor array."""
     expected_hashes = {}
     lines = audit.splitlines()
     if len(lines) != len(DIVISOR_COUNTS):
@@ -506,6 +514,12 @@ def validate_divisors(export: dict, audit: str) -> None:
         if param != count or subject != expected[-1] or values != expected:
             raise ValueError(f"divisor audit mismatch at {count}")
         expected_hashes[count] = checksum
+    return expected_hashes
+
+
+def validate_divisors(export: dict, audit: str) -> None:
+    """Independently reconstruct every output; check every trial and its checksum."""
+    expected_hashes = validate_divisor_audit(audit)
     if "results" not in export:
         raise ValueError("no benchmark export")
     rows = export["results"]
@@ -548,6 +562,12 @@ def inspect_divisors(attempt: Attempt, directory: Path, audit: str) -> None:
             errors[name] = str(error)
     attempt.record["ingestion_errors"] = errors
     try:
+        validate_divisor_audit(audit)
+        attempt.record["audit_validation"] = {"status": "passed"}
+    except Exception as error:
+        attempt.record["audit_validation"] = {
+            "status": "failed", "error_type": type(error).__name__, "error": str(error)}
+    try:
         validate_divisors(attempt.record.get("benchmark_export", {}), audit)
         attempt.record["scientific_validation"] = {"status": "passed"}
     except Exception as error:
@@ -583,42 +603,59 @@ def quiet_core(cpu: int, attempt: Attempt) -> None:
     attempt.record["observer_affinity"] = sorted(os.sched_getaffinity(0))
     observations = []
     attempt.record["quiet_core_preflight"] = observations
-    # Fixed campaign-2 rule: at most 150 two-second windows (five minutes).
-    for _ in range(150):
+    attempt.record["quiet_core_config"] = {
+        "window_seconds": DIVISOR_PREFLIGHT_SECONDS,
+        "max_windows": DIVISOR_PREFLIGHT_WINDOWS,
+        "max_busy_fraction_per_sibling": DIVISOR_PREFLIGHT_RATIO,
+        "tick_hz": os.sysconf("SC_CLK_TCK"),
+    }
+    for _ in range(DIVISOR_PREFLIGHT_WINDOWS):
         before = core_telemetry.cpu_counters()
         start = time.monotonic_ns()
-        time.sleep(2)
+        time.sleep(DIVISOR_PREFLIGHT_SECONDS)
         after = core_telemetry.cpu_counters()
         end = time.monotonic_ns()
         elapsed = (end - start) / 1e9
         busy = {str(c): core_telemetry.busy_seconds(before[c], after[c],
                     os.sysconf("SC_CLK_TCK")) for c in siblings}
-        # At 100 Hz and two seconds this requires zero busy ticks on both
-        # siblings. Preserve the exhausted preregistration; do not loosen it.
-        quiet = all(0 <= seconds / elapsed <= 0.002 for seconds in busy.values())
+        quiet = all(0 <= seconds / elapsed <= DIVISOR_PREFLIGHT_RATIO
+                    for seconds in busy.values())
         observations.append(dict(mono_t0_ns=start, mono_t1_ns=end,
                                  busy_seconds=busy, quiet=quiet))
         attempt.save()
         if quiet:
             return
-    raise RuntimeError("no quiet physical-core window in 150 preflight observations")
+    raise RuntimeError(
+        f"no quiet physical-core window in {DIVISOR_PREFLIGHT_WINDOWS} "
+        "preflight observations")
 
 
 def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> int:
     original_affinity = os.sched_getaffinity(0)
     try:
-        if socket.gethostname() != "chungus2" or cpu != 62 or args.dirty_status:
-            raise RuntimeError("divisor acceptance requires clean chungus2 CPU 62 protocol")
-        if core_telemetry.sibling_set(cpu) != {14, 62}:
-            raise RuntimeError("divisor protocol requires SMT pair 14/62")
-        attempt.record.update(scope="divisors", campaign=2,
-            protocol="reports/hex-int-factor-divisor-protocol-2.md", state_before=host_state(cpu))
+        if socket.gethostname() != "chungus2" or cpu != DIVISOR_CPU or args.dirty_status:
+            raise RuntimeError(
+                f"divisor acceptance requires clean chungus2 CPU {DIVISOR_CPU} protocol")
+        if core_telemetry.sibling_set(cpu) != DIVISOR_SIBLINGS:
+            raise RuntimeError(
+                f"divisor protocol requires SMT pair {sorted(DIVISOR_SIBLINGS)}")
+        attempt.record.update(scope="divisors", campaign=DIVISOR_CAMPAIGN,
+            protocol=DIVISOR_PROTOCOL, state_before=host_state(cpu))
         attempt.save()
         run(["lake", "build", "hexintfactor_bench"], timeout=900)
         attempt.record["benchmark_executable_sha256"] = sha256(BENCH)
         attempt.save()
         audit = run(["taskset", "-c", str(cpu), str(BENCH), "divisor-audit"], timeout=60).stdout
         attempt.record["divisor_audit"] = audit
+        try:
+            validate_divisor_audit(audit)
+            attempt.record["audit_validation"] = {"status": "passed"}
+        except Exception as error:
+            attempt.record["audit_validation"] = {
+                "status": "failed", "error_type": type(error).__name__,
+                "error": str(error)}
+            attempt.save()
+            raise
         attempt.save()
         # Gate only on independent host counters, before starting any timed run.
         quiet_core(cpu, attempt)
@@ -627,7 +664,8 @@ def collect_divisors(args: argparse.Namespace, attempt: Attempt, cpu: int) -> in
         try:
             run([sys.executable, str(ROOT / "scripts/bench/core_telemetry.py"),
                  "--cpu", str(cpu), "--output", str(telemetry_path),
-                 "--interval", "0.25", "--max-core-interference-ratio", "0.002",
+                 "--interval", "0.25", "--max-core-interference-ratio",
+                 str(DIVISOR_TIMED_INTERFERENCE_RATIO),
                  "--fail-on-contamination", "--", str(BENCH), "run", "--filter",
                  "Hex.IntFactorBench.runDivisors", "--export-file", str(export_path)],
                 timeout=900)

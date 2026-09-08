@@ -621,6 +621,20 @@ private theorem checkPock3Arith_spec {n r s w : Nat}
     · exact Or.inr (Or.inl hlt)
     · exact Or.inr (Or.inr (not_square_of_sqrt_witness hw1 hw2))
 
+/-- Pocklington replay with separately proved child primes. This permits a
+certificate generator to share child proofs across many parent certificates.
+Only each child's subject is used; `checkPockArith` validates the parent
+arithmetic, factor ordering and witnesses. The `PrimeCert` payload is ignored
+apart from its subject: a `.small q` here is not checked against the table.
+The separate `hprimes` hypothesis must prove that `q` is prime. -/
+theorem prime_of_pocklington {n : Nat}
+    {factors : List (Nat × Nat × PrimeCert)}
+    (hcheck : checkPockArith n factors = true)
+    (hprimes : ∀ x ∈ factors, Prime x.2.2.subject) : Prime n := by
+  obtain ⟨h2, hodd, hsub, F, hFprod, hFdvd, hFF, hwit⟩ :=
+    checkPockArith_spec hcheck
+  exact pocklington h2 hodd hFdvd hFF hprimes hsub hFprod hwit
+
 private theorem prime_of_checkPrime_aux :
     ∀ N c, PrimeCert.subject c = N → checkPrime c = true → Prime N := by
   intro N

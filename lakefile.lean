@@ -1472,6 +1472,10 @@ lean_exe hexstrassen_compare where
   srcDir := "bench"
   root := `HexStrassen.Compare
 
+lean_exe hexconway_replay where
+  srcDir := "bench"
+  root := `HexConway.Replay
+
 lean_exe hexconway_bench where
   srcDir := "bench"
   root := `HexConway.Bench
@@ -1488,3 +1492,7 @@ lean_exe hexmanual where
 lean_exe hexlatticeenum_bench where
   srcDir := "bench"
   root := `HexLatticeEnum.Bench
+
+lean_exe tower_factor_diff where
+  srcDir := "bench"
+  root := `HexNumberFieldTower.FactorDiff

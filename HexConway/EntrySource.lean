@@ -36,18 +36,12 @@ carries no soundness claim of its own: a wrong certificate makes the committed
 does *not* establish is that the entry is the Conway polynomial for its pair,
 which is why the coefficients are read from the cache rather than supplied.
 
-Two limits on the emitted block, both of which need a human rather than a
-retry:
-
-* It assumes the prime already has its `ZMod64.Bounds`, `Hex.Nat.Prime`, and
-  `ZMod64.PrimeModulus` instances, and it refers to `supportedEntry_{p}_1` for
-  the primality witness. Adding a prime the table does not yet carry, such as
-  the cache's 97, 521, or 65537, needs those prerequisites written first, and
-  the `n = 1` entry cannot take its witness from itself.
-* It emits a fixed 8M heartbeat budget, which suits the entries committed so
-  far but not all of them: four existing certificates need 20M. A generated
-  block that fails to elaborate on heartbeats wants its budget raised, not its
-  certificate regenerated.
+This command renders an individual Tier 1 block for inspection. The complete
+regeneration path is `scripts/conway/generate.py`: it also supplies new prime
+instances, factor-prime certificates, primitivity, compatibility and companion
+APIs, and shards the generated files. The inspection block assumes the prime
+instances already exist and uses a fixed heartbeat budget; it is not the
+complete generated library.
 -/
 
 namespace Hex.Conway.EntrySource
@@ -84,8 +78,10 @@ meta def entryCertData (p : Nat) (coeffs : List Nat) : Option CertData :=
 
 /-- Re-check a generated certificate the way the committed `decide` will.
 
-This is the same predicate the emitted kernel check uses, so a `true` here means
-the emitted entry will elaborate, and a `false` means it will not. -/
+This is the predicate used by the inspection block. A `false` rejects the
+certificate; `true` checks its arithmetic in compiled code but does not establish
+that kernel replay fits the elaboration budget. The complete generator uses the
+proved-equivalent binary checker in `HexConway.Power`. -/
 meta def entryCertValidates (p : Nat) (coeffs : List Nat) (cert : CertData) : Bool :=
   if h0 : 0 < p then
     if h1 : p < 2 ^ 31 then
@@ -272,8 +268,9 @@ matters because Tier 1 proves only that a committed entry is monic,
 irreducible, and of the requested degree; nothing in Lean says it is *the*
 Conway polynomial, so a mislabelled entry would typecheck.
 
-Widen the cache first with `scripts/oracle/update_luebeck_conway_cache.py` if
-the pair is missing. -/
+Refresh the expansion input with `scripts/conway/import_source.py` if needed,
+and check whether the requested source entry is available. The shared
+factorization corpus cache is separate. -/
 syntax (name := conwayEntrySource)
   "#conway_entry_source" num num (&"from" str)? : command
 
@@ -282,13 +279,13 @@ meta def elabEntrySource : CommandElab := fun stx => do
   let p := stx[1].isNatLit?.getD 0
   let n := stx[2].isNatLit?.getD 0
   let pathArg := stx[3]
-  let defaultPath := "scripts/oracle/luebeck_conway_cache.json"
+  let defaultPath := "scripts/conway/candidates.json"
   let path :=
     if pathArg.isNone then defaultPath else pathArg[0][1].isStrLit?.getD defaultPath
   let entries ← Rebuild.readCache path
   let some entry := entries.find? (fun e => e.p = p && e.n = n)
     | throwError "the cache at '{path}' has no row for C({p}, {n}); widen it with \
-                  scripts/oracle/update_luebeck_conway_cache.py first."
+                  scripts/conway/import_source.py first."
   let coeffs := entry.coeffs
   -- Shape checks the cache itself does not enforce. A row that fails any of
   -- these would still produce a certificate for *something*, so reject it here

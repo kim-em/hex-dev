@@ -1,0 +1,256 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "targets": [
+    "HexGFqMathlib.Primitivity",
+    "HexGFqMathlib.Subfield"
+  ],
+  "commit": "b7f4d6200bc20cbadf29ab4b3d9009334a4d6de9",
+  "runs": [
+    {
+      "max_child_rss_kib": 1666928,
+      "wall_seconds": 13.602021835744381,
+      "peak_tree_rss_kib": 2592184,
+      "exit_code": 0,
+      "artifact_bytes": 5386101,
+      "modules": [
+        "HexGFqMathlib.Basic (1.9s)",
+        "HexGFqMathlib.Subfield (1.4s)",
+        "HexGFqMathlib.Primitivity (8.5s)"
+      ],
+      "log": "reports/conway/baseline-bridge-1.log.gz",
+      "timing": "reports/conway/baseline-bridge-1.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 3743454,
+        ".c": 32001,
+        ".hash": 336,
+        ".olean": 430832,
+        ".server": 82040,
+        ".private": 927440,
+        ".sig": 528,
+        ".ir": 24536,
+        ".ilean": 131069,
+        ".trace": 13865
+      },
+      "artifact_count": 48
+    },
+    {
+      "max_child_rss_kib": 1666556,
+      "wall_seconds": 12.29790835082531,
+      "peak_tree_rss_kib": 2589312,
+      "exit_code": 0,
+      "artifact_bytes": 5386101,
+      "modules": [
+        "HexGFqMathlib.Basic (1.2s)",
+        "HexGFqMathlib.Subfield (1.4s)",
+        "HexGFqMathlib.Primitivity (8.5s)"
+      ],
+      "log": "reports/conway/baseline-bridge-2.log.gz",
+      "timing": "reports/conway/baseline-bridge-2.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 3743454,
+        ".c": 32001,
+        ".hash": 336,
+        ".olean": 430832,
+        ".server": 82040,
+        ".private": 927440,
+        ".sig": 528,
+        ".ir": 24536,
+        ".ilean": 131069,
+        ".trace": 13865
+      },
+      "artifact_count": 48
+    },
+    {
+      "max_child_rss_kib": 1650636,
+      "wall_seconds": 12.60198398400098,
+      "peak_tree_rss_kib": 2559072,
+      "exit_code": 0,
+      "artifact_bytes": 5386101,
+      "modules": [
+        "HexGFqMathlib.Basic (1.3s)",
+        "HexGFqMathlib.Subfield (1.4s)",
+        "HexGFqMathlib.Primitivity (8.6s)"
+      ],
+      "log": "reports/conway/baseline-bridge-3.log.gz",
+      "timing": "reports/conway/baseline-bridge-3.time",
+      "artifact_bytes_by_suffix": {
+        ".json": 3743454,
+        ".c": 32001,
+        ".hash": 336,
+        ".olean": 430832,
+        ".server": 82040,
+        ".private": 927440,
+        ".sig": 528,
+        ".ir": 24536,
+        ".ilean": 131069,
+        ".trace": 13865
+      },
+      "artifact_count": 48
+    }
+  ],
+  "source_sha256": {
+    "HexGFqMathlib/Basic.lean": "a6fc3f1022658cae2ffe8194034b5156af715df44ef48538fe291c1d0e428c0d",
+    "HexGFqMathlib/GF2q.lean": "0c891b7bab641a8460113f34e81b30aa9ee161d12ebbae6d1c0c64087e51e4be",
+    "HexGFqMathlib/Primitivity.lean": "f56a2bda23336f4c9a7ccd2ec48e9a8fd5c444460a106b2e71cf60d0d125095c",
+    "HexGFqMathlib/Subfield.lean": "957a7e38e5ed35dcf56a3ecec899125ef6b8497e6090c64b1ab3016cc8b4e106",
+    "HexGFqMathlib.lean": "7dc9f32b73b2b38c5a7f0228bb088f03b4d0f38f557251874b4850992a46ff68"
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ]
+  ]
+}
