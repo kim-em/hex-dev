@@ -495,6 +495,13 @@ private theorem sqfPow_add {S : Type u} [Lean.Grind.CommRing S]
       rw [Nat.add_succ, sqfPow, ih, sqfPow,
         Lean.Grind.Semiring.mul_assoc]
 
+private theorem sqfPow_succ_left {S : Type u} [Lean.Grind.CommRing S]
+    (a : S) (k : Nat) : sqfPow a (k + 1) = a * sqfPow a k := by
+  rw [sqfPow, Lean.Grind.CommSemiring.mul_comm]
+
+private theorem sqfPow_zero {S : Type u} [Lean.Grind.CommRing S]
+    (a : S) : sqfPow a 0 = 1 := rfl
+
 private def sqfBinomTerm {S : Type u} [Lean.Grind.CommRing S]
     (a b : S) (degree k : Nat) : S :=
   (Hex.Nat.choose degree k : S) *
