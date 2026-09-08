@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 import HexBasic.Fold
+import HexBasic.List
 public import HexMvGcd.Divide
 public import HexMvPoly.Recursive
 
@@ -138,11 +139,6 @@ private theorem insertVar_mul (i : Fin (n + 1)) (ea eb : Nat)
   · by_cases hlt : j < i.val <;>
       simp [insertVar, Mono.mul, heq, hlt]
 
-private theorem insertVar_mul_zero (i : Fin (n + 1)) (a b : Mono n) :
-    insertVar i 0 (Mono.mul a b) =
-      Mono.mul (insertVar i 0 a) (insertVar i 0 b) := by
-  simpa using insertVar_mul i 0 0 a b
-
 private theorem removeVar_mul (i : Fin (n + 1)) (a b : Mono (n + 1)) :
     removeVar i (Mono.mul a b) =
       Mono.mul (removeVar i a) (removeVar i b) := by
@@ -150,52 +146,72 @@ private theorem removeVar_mul (i : Fin (n + 1)) (a b : Mono (n + 1)) :
   intro j hj
   by_cases hlt : j < i.val <;> simp [removeVar, Mono.mul, hlt]
 
+private theorem splits_insertVar_perm (i : Fin (n + 1)) (e : Nat)
+    (m : Mono n) :
+    ((List.range (e + 1)).flatMap fun d =>
+      (Mono.splits m).map fun ab =>
+        (insertVar i d ab.1, insertVar i (e - d) ab.2)).Perm
+      (Mono.splits (insertVar i e m)) := by
+  have hleft :
+      ((List.range (e + 1)).flatMap fun d =>
+        (Mono.splits m).map fun ab =>
+          (insertVar i d ab.1, insertVar i (e - d) ab.2)).Nodup := by
+    apply List.nodup_flatMap_of_disjoint List.nodup_range
+    · intro d _
+      apply (Mono.splits_nodup m).map
+      intro ab cd hne heq
+      apply hne
+      apply Prod.ext
+      · exact ((insertVar_inj i d d ab.1 cd.1).mp
+          (congrArg Prod.fst heq)).2
+      · exact ((insertVar_inj i (e - d) (e - d) ab.2 cd.2).mp
+          (congrArg Prod.snd heq)).2
+    · intro d _ k _ hdk z hzd hzk
+      rcases List.mem_map.mp hzd with ⟨ab, _, hab⟩
+      rcases List.mem_map.mp hzk with ⟨cd, _, hcd⟩
+      have hfirst : insertVar i d ab.1 = insertVar i k cd.1 := by
+        exact (congrArg Prod.fst hab).trans (congrArg Prod.fst hcd).symm
+      have hdegree := congrArg (Mono.degreeOf i) hfirst
+      rw [degreeOf_insertVar, degreeOf_insertVar] at hdegree
+      exact hdk hdegree
+  apply (List.perm_ext_iff_of_nodup hleft
+    (Mono.splits_nodup (insertVar i e m))).mpr
+  intro z
+  constructor
+  · intro hz
+    rcases List.mem_flatMap.mp hz with ⟨d, hd, hrow⟩
+    rcases List.mem_map.mp hrow with ⟨ab, hab, rfl⟩
+    have hde : d ≤ e := Nat.le_of_lt_succ (List.mem_range.mp hd)
+    apply (Mono.splits_mem_iff ..).mpr
+    rw [← insertVar_mul, (Mono.splits_mem_iff ..).mp hab,
+      Nat.add_sub_of_le hde]
+  · intro hz
+    have hmul : Mono.mul z.1 z.2 = insertVar i e m :=
+      (Mono.splits_mem_iff ..).mp hz
+    let d := Mono.degreeOf i z.1
+    have hsum : d + Mono.degreeOf i z.2 = e := by
+      have hdegree := congrArg (Mono.degreeOf i) hmul
+      rw [degreeOf_mul, degreeOf_insertVar] at hdegree
+      exact hdegree
+    have hde : d ≤ e := by omega
+    apply List.mem_flatMap.mpr
+    refine ⟨d, List.mem_range.mpr (Nat.lt_succ_of_le hde), ?_⟩
+    apply List.mem_map.mpr
+    refine ⟨(removeVar i z.1, removeVar i z.2), ?_, ?_⟩
+    · apply (Mono.splits_mem_iff ..).mpr
+      rw [← removeVar_mul, hmul, removeVar_insertVar]
+    · apply Prod.ext
+      · exact insertVar_removeVar i z.1
+      · have hrest : e - d = Mono.degreeOf i z.2 := by omega
+        rw [hrest]
+        exact insertVar_removeVar i z.2
+
+
 private theorem splits_insertVar_zero_perm (i : Fin (n + 1)) (m : Mono n) :
     ((Mono.splits m).map fun ab =>
       (insertVar i 0 ab.1, insertVar i 0 ab.2)).Perm
         (Mono.splits (insertVar i 0 m)) := by
-  let lift : Mono n × Mono n → Mono (n + 1) × Mono (n + 1) :=
-    fun ab => (insertVar i 0 ab.1, insertVar i 0 ab.2)
-  have hinj : Function.Injective lift := by
-    rintro ⟨a, b⟩ ⟨c, d⟩ h
-    apply Prod.ext
-    · exact ((insertVar_inj i 0 0 a c).mp (congrArg Prod.fst h)).2
-    · exact ((insertVar_inj i 0 0 b d).mp (congrArg Prod.snd h)).2
-  have hnodup : ((Mono.splits m).map lift).Nodup := by
-    apply (Mono.splits_nodup m).map
-    intro a b hne heq
-    exact hne (hinj heq)
-  apply (List.perm_ext_iff_of_nodup hnodup
-    (Mono.splits_nodup (insertVar i 0 m))).mpr
-  rintro ⟨a, b⟩
-  constructor
-  · intro hmem
-    rcases List.mem_map.mp hmem with ⟨⟨c, d⟩, hcd, hab⟩
-    cases hab
-    apply (Mono.splits_mem_iff ..).mpr
-    rw [← insertVar_mul_zero, (Mono.splits_mem_iff ..).mp hcd]
-  · intro hmem
-    have hmul : Mono.mul a b = insertVar i 0 m :=
-      (Mono.splits_mem_iff ..).mp hmem
-    have hdegree : Mono.degreeOf i a + Mono.degreeOf i b = 0 := by
-      calc
-        Mono.degreeOf i a + Mono.degreeOf i b =
-            Mono.degreeOf i (Mono.mul a b) := (degreeOf_mul i a b).symm
-        _ = Mono.degreeOf i (insertVar i 0 m) := by rw [hmul]
-        _ = 0 := degreeOf_insertVar i 0 m
-    have ha0 : Mono.degreeOf i a = 0 := by omega
-    have hb0 : Mono.degreeOf i b = 0 := by omega
-    have ha : insertVar i 0 (removeVar i a) = a := by
-      rw [← ha0]
-      exact insertVar_removeVar i a
-    have hb : insertVar i 0 (removeVar i b) = b := by
-      rw [← hb0]
-      exact insertVar_removeVar i b
-    apply List.mem_map.mpr
-    refine ⟨(removeVar i a, removeVar i b), ?_, ?_⟩
-    · apply (Mono.splits_mem_iff ..).mpr
-      rw [← removeVar_mul, hmul, removeVar_insertVar]
-    · exact Prod.ext ha hb
+  simpa using splits_insertVar_perm i 0 m
 
 /-- The full coefficient of a constant embedding is supported exactly on
 monomials having selected-variable degree zero. -/
@@ -455,10 +471,11 @@ private theorem coeff_foldl_add_term
       simp only [List.foldl_cons]
       rw [ih, coeff_add]
 
-/-- The recursive view at the first variable preserves multiplication. -/
-theorem toUnivariate_mul (p q : MvPoly (n + 1) R cmp) :
-    toUnivariate 0 cmp' (p * q) =
-      toUnivariate 0 cmp' p * toUnivariate 0 cmp' q := by
+/-- The recursive view at a selected variable preserves multiplication. -/
+theorem toUnivariate_mul (i : Fin (n + 1))
+    (p q : MvPoly (n + 1) R cmp) :
+    toUnivariate i cmp' (p * q) =
+      toUnivariate i cmp' p * toUnivariate i cmp' q := by
   apply DensePoly.ext_coeff
   intro e
   apply MvPoly.ext
@@ -466,16 +483,16 @@ theorem toUnivariate_mul (p q : MvPoly (n + 1) R cmp) :
   rw [toUnivariate_coeff, DensePoly.coeff_mul]
   have hdiag := DensePoly.mulCoeffSum_eq_diagonal
     (S := MvPoly n R cmp')
-    (toUnivariate 0 cmp' p) (toUnivariate 0 cmp' q) e
+    (toUnivariate i cmp' p) (toUnivariate i cmp' q) e
   have hdegree := DensePoly.diagonalSum_eq_degree_bound
     (S := MvPoly n R cmp')
-    (toUnivariate 0 cmp' p) (toUnivariate 0 cmp' q) e
+    (toUnivariate i cmp' p) (toUnivariate i cmp' q) e
   have hdiagCoeff := congrArg (coeff m) (hdiag.trans hdegree)
   rw [hdiagCoeff]
-  rw [MvPoly.coeff_mul, insertVar_zero_eq_prepend]
-  have hhead : (Mono.prepend e m).head = e := by
-    exact Mono.getElem_prepend_zero e m
-  simp only [Mono.splits, Mono.dropHead_prepend, hhead]
+  rw [MvPoly.coeff_mul]
+  let term : Mono (n + 1) × Mono (n + 1) → R := fun ab =>
+    coeff ab.1 p * coeff ab.2 q
+  rw [← List.foldl_add_perm term (splits_insertVar_perm i e m) 0]
   rw [List.foldl_add_flatMap]
   rw [coeff_foldl_add_term, coeff_zero]
   apply List.foldl_congr
@@ -490,19 +507,18 @@ theorem toUnivariate_mul (p q : MvPoly (n + 1) R cmp) :
   calc
     m.splits.foldl
         (fun acc x => acc +
-          coeff (Mono.prepend d x.1) p *
-            coeff (Mono.prepend (e - d) x.2) q) 0 =
+          coeff (insertVar i d x.1) p *
+            coeff (insertVar i (e - d) x.2) q) 0 =
         m.splits.foldl
           (fun acc x => acc +
-            coeff x.1 ((toUnivariate 0 cmp' p).coeff d) *
-              coeff x.2 ((toUnivariate 0 cmp' q).coeff (e - d))) 0 := by
+            coeff x.1 ((toUnivariate i cmp' p).coeff d) *
+              coeff x.2 ((toUnivariate i cmp' q).coeff (e - d))) 0 := by
       apply List.foldl_congr
       intro z x _
-      rw [toUnivariate_coeff, toUnivariate_coeff,
-        insertVar_zero_eq_prepend, insertVar_zero_eq_prepend]
+      rw [toUnivariate_coeff, toUnivariate_coeff]
     _ = coeff m
-          ((toUnivariate 0 cmp' p).coeff d *
-            (toUnivariate 0 cmp' q).coeff (e - d)) :=
+          ((toUnivariate i cmp' p).coeff d *
+            (toUnivariate i cmp' q).coeff (e - d)) :=
       (MvPoly.coeff_mul _ _ _).symm
 
 omit [BEq R] [LawfulBEq R] in
