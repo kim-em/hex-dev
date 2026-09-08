@@ -23,10 +23,11 @@ re-measured, with checked exceptions: a ``.lean`` path whose two blobs are equal
 comments are removed, and additions of plain literal Lake targets in existing
 Hex library namespaces outside the measured import closure. Target additions
 cannot change existing declarations, build options, defaults, or module
-ownership within that closure. Prose under the library tree is edited often
-enough, and cannot move a curve, that making every docstring cost a sweep
-would either stop the prose being written or make regeneration routine
-enough to stop meaning anything.
+ownership within that closure. The check also compares the Lake declarations
+that build the cactus executable, allowing edits confined to unrelated build
+helpers. Prose under the library tree is edited often enough, and cannot move
+a curve, that making every docstring cost a sweep would either stop the prose
+being written or make regeneration routine enough to stop meaning anything.
 """
 
 from __future__ import annotations
@@ -45,6 +46,50 @@ FAMILY = freshness.GRAPHISO
 RESULTS = freshness.RESULTS
 
 SWEEP_RE = re.compile(r"^hexgraphiso-cactus-([0-9a-f]{12})-[^.]+\.jsonl$")
+LAKEFILE = "lakefile.lean"
+
+GRAPHISO_LIBRARIES = {"Hex", "HexBasic", "HexGraph", "HexGraphIso"}
+GRAPHISO_EXECUTABLE = "hexgraphiso_cactus"
+GRAPHISO_EXTERN_LIBRARY = "hexnautyffi"
+GRAPHISO_BUILD_DEFS = {"nautyVendorOTarget", "nautyCanonOTarget"}
+
+
+def graphiso_blocks(text: str) -> dict[str, str]:
+    """The lakefile declarations that can affect the cactus executable."""
+    relevant = {}
+    for name, body in freshness.lakefile_blocks(text).items():
+        kind, _, declaration = name.partition(" ")
+        if kind in ("package", "require"):
+            relevant[name] = body
+        elif kind == "lean_lib" and declaration in GRAPHISO_LIBRARIES:
+            relevant[name] = body
+        elif kind == "lean_exe" and declaration == GRAPHISO_EXECUTABLE:
+            relevant[name] = body
+        elif kind == "extern_lib" and declaration == GRAPHISO_EXTERN_LIBRARY:
+            relevant[name] = body
+        elif kind == "def" and declaration in GRAPHISO_BUILD_DEFS:
+            relevant[name] = body
+    return relevant
+
+
+def lakefile_texts_differ(before: str, after: str) -> bool:
+    """Whether a lakefile edit changes the cactus executable's build."""
+    old_blocks = graphiso_blocks(before)
+    new_blocks = graphiso_blocks(after)
+    if set(old_blocks) != set(new_blocks):
+        return True
+    return any(new_blocks[name] != body for name, body in old_blocks.items())
+
+
+def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
+    """A lakefile transition outside the cactus executable's build graph."""
+    if difference.path != LAKEFILE:
+        return False
+    if difference.baseline is None or difference.current is None:
+        return False
+    return not lakefile_texts_differ(
+        freshness.blob_text(difference.baseline),
+        freshness.blob_text(difference.current))
 
 
 NAME = r"[A-Za-z_][A-Za-z0-9_]*"
@@ -229,7 +274,9 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
 
 def runtime_neutral(difference: freshness.Difference) -> bool:
     """The checked allowances shared by freshness and sweep selection."""
-    return freshness.lean_comment_only(difference) or independent_lake_targets(difference)
+    return (freshness.lean_comment_only(difference)
+            or independent_lake_targets(difference)
+            or build_only_lakefile_edit(difference))
 
 
 def main() -> int:

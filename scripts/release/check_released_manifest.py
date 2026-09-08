@@ -20,6 +20,7 @@ from release.sync_released import (  # noqa: E402
     MANIFEST,
     SKELETON,
     keep_paths,
+    lake_declaration,
     managed_paths,
     released_ci_workflows,
     source_build_settings,
@@ -492,6 +493,17 @@ def main() -> int:
                 fail(f"duplicate released library {lib}")
             library_names.add(lib)
             check_build_settings(entry)
+            helpers = entry.get("lake_declarations", [])
+            if (not isinstance(helpers, list)
+                    or not all(isinstance(name, str) for name in helpers)
+                    or len(helpers) != len(set(helpers))
+                    or (helpers and entry.get("lakefile") != "lean")):
+                fail(f"{repo}: lake_declarations requires unique names and a Lean Lake file")
+            for name in helpers:
+                try:
+                    lake_declaration((REPO_ROOT / "lakefile.lean").read_text(), name)
+                except RuntimeError as exc:
+                    fail(f"{repo}: {exc}")
             test_modules = entry.get("test_modules", [])
             if (
                 not isinstance(test_modules, list)

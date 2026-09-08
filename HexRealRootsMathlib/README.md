@@ -33,6 +33,33 @@ example : roots.intervals =
     #v[((0 : ℚ), (2 : ℚ)), ((2 : ℚ), (4 : ℚ))] := rfl
 ```
 
+# Root counts
+
+For a closed squarefree polynomial over `ℚ` with integer coefficients and positive
+degree, `real_root_count` proves the exact number of distinct real roots:
+
+```lean
+import HexRealRootsMathlib.RealRootCount
+
+open Polynomial
+
+example : Fintype.card ((X ^ 5 - 4 * X + 2 : ℚ[X]).rootSet ℝ) = 3 := by
+  real_root_count
+```
+
+The term form `real_root_count (X ^ 5 - 4 * X + 2 : ℚ[X])` is also available.
+Hex proposes a signed remainder chain. Polynomial identities, positive scalar
+factors, and sign variations are checked in Lean. A nonzero constant at the end
+of the chain certifies separability as well as the root count.
+
+The general Sturm theorems use only Mathlib types. `Sturm.IsSturmChain.sturm_Ioc`
+counts roots on `(a, b]`, including equal endpoints, and `Sturm.IsSturmChain.sturm`
+counts roots on the real line. Their hypothesis is that the multiset of real
+roots has no duplicates.
+
+The corresponding Mathlib sources can be checked with
+`python3 scripts/check_sturm_sync.py /path/to/mathlib` from `hex-dev`.
+
 # Functionality
 
 The input may be a closed `Hex.ZPoly` or a closed integer-coefficient

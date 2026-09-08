@@ -25,7 +25,6 @@ from collections import Counter
 import hashlib
 import json
 from pathlib import Path
-import re
 import subprocess
 import sys
 
@@ -40,42 +39,9 @@ SYSTEMS = freshness.FACTOR_SYSTEMS
 
 LAKEFILE = "lakefile.lean"
 
-# Lines that begin a top-level Lake declaration. Anything before one of these
-# (comments, docstrings, `@[default_target]`) belongs to the declaration that
-# follows it.
-LAKE_DECL = re.compile(
-    r"^(package|require|lean_lib|lean_exe|extern_lib|target|script"
-    r"|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
-
-
-def lakefile_blocks(text: str) -> dict[str, str]:
-    """Split a lakefile into top-level declaration blocks, keyed by decl name."""
-    blocks: dict[str, str] = {}
-    key: str | None = None
-    pending: list[str] = []
-    current: list[str] = []
-    for line in text.splitlines():
-        match = LAKE_DECL.match(line)
-        if match:
-            if key is not None:
-                blocks[key] = "\n".join(current).rstrip()
-            key = f"{match.group(1)} {match.group(2)}"
-            current = pending + [line]
-            pending = []
-        elif key is None:
-            pending.append(line)
-        elif line.strip() == "" or line.startswith((" ", "\t")):
-            current.append(line)
-        else:
-            # A bare top-level line (comment, attribute, `open ...`) starts a
-            # run that attaches to whatever declaration comes next.
-            pending.append(line)
-    if key is not None:
-        blocks[key] = "\n".join(current).rstrip()
-    return blocks
-
 
 FACTOR_SERVICE_EXE = "hexbz_factor_service"
+FACTOR_BUILD_DEFS = {"hexArithOTarget", "zmod64MulOTarget"}
 
 
 def factorization_blocks(text: str) -> dict[str, str]:
@@ -88,13 +54,15 @@ def factorization_blocks(text: str) -> dict[str, str]:
     """
     libs = set(freshness.FACTOR_LIBRARIES)
     relevant = {}
-    for name, body in lakefile_blocks(text).items():
+    for name, body in freshness.lakefile_blocks(text).items():
         kind, _, decl = name.partition(" ")
         if kind in ("package", "require"):
             relevant[name] = body
         elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
             relevant[name] = body
         elif kind == "lean_lib" and decl in libs:
+            relevant[name] = body
+        elif kind == "def" and decl in FACTOR_BUILD_DEFS:
             relevant[name] = body
     return relevant
 

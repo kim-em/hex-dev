@@ -45,7 +45,9 @@ of a ``.lean`` path and accepts the difference when they are equal with
 their comments removed. Editing a docstring therefore does not force a
 sweep, and no file records a claim that could go stale. The graph checker
 also verifies narrowly defined additions of independent literal Lake targets;
-that family-specific rule lives in ``check_graphiso_sweep_freshness.py``.
+it additionally compares the declarations that build the measured executable
+so unrelated compiler helpers cannot invalidate its measurements. Those
+family-specific rules live in ``check_graphiso_sweep_freshness.py``.
 """
 
 from __future__ import annotations
@@ -54,6 +56,7 @@ from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -63,6 +66,39 @@ FIGURES = ROOT / "reports" / "figures"
 
 MANIFEST_SUFFIX = ".manifest"
 FINGERPRINT_DIGITS = 12
+
+# Lines that begin a top-level Lake declaration. Text between declarations
+# belongs to the declaration that follows it, including attributes and helper
+# definitions used by that declaration.
+LAKE_DECL = re.compile(
+    r"^(?:(?:private|protected|public)\s+)?"
+    r"(package|require|lean_lib|lean_exe|extern_lib|target|script|def"
+    r"|input_file|module_facet|library_facet|package_facet)\s+(\S+)")
+
+
+def lakefile_blocks(text: str) -> dict[str, str]:
+    """Split a lakefile into top-level declaration blocks, keyed by name."""
+    blocks: dict[str, str] = {}
+    key: str | None = None
+    pending: list[str] = []
+    current: list[str] = []
+    for line in text.splitlines():
+        match = LAKE_DECL.match(line)
+        if match:
+            if key is not None:
+                blocks[key] = "\n".join(current).rstrip()
+            key = f"{match.group(1)} {match.group(2)}"
+            current = pending + [line]
+            pending = []
+        elif key is None:
+            pending.append(line)
+        elif line.strip() == "" or line.startswith((" ", "\t")):
+            current.append(line)
+        else:
+            pending.append(line)
+    if key is not None:
+        blocks[key] = "\n".join(current).rstrip()
+    return blocks
 
 
 def git(*args: str) -> str:

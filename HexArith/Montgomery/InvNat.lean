@@ -5,8 +5,6 @@ Authors: Kim Morrison
 -/
 
 module
-public meta import Std.Tactic.BVDecide
-
 public import HexArith.Montgomery.RedcNat
 
 public section
@@ -23,22 +21,6 @@ resulting modular-inverse properties.
 @[expose]
 def montPosInvStep (p x : UInt64) : UInt64 :=
   x * (2 - p * x)
-
-/-- The executable wrapping Newton step lifts a 3-bit inverse to 6 bits. -/
-private theorem montPosInvStep_mod_3_to_6 (p x : UInt64)
-    (hx : p * x % 8 = 1) :
-    p * montPosInvStep p x % 64 = 1 := by
-  unfold montPosInvStep
-  bv_decide (config := { timeout := 120 })
-
-set_option maxHeartbeats 1000000 in
-/-- The executable wrapping Newton step lifts a 6-bit inverse to 12 bits.
-The bit-vector decision procedure needs this theorem-local elaboration budget. -/
-private theorem montPosInvStep_mod_6_to_12 (p x : UInt64)
-    (hx : p * x % 64 = 1) :
-    p * montPosInvStep p x % 4096 = 1 := by
-  unfold montPosInvStep
-  bv_decide (config := { timeout := 120 })
 
 /-- Every power of two up to `2^64` divides the `UInt64` modulus `2^64`. -/
 private theorem two_pow_dvd_uint64_word {t : Nat} (ht : t ≤ 64) :

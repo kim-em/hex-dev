@@ -226,7 +226,7 @@ proved equivalences.
    which must be `0` or `1`. Count `0` means the root is greater than
    `e`. Count `1` means the root is at most `e`; exact evaluation of
    `P(e)` distinguishes equality from strict inequality.
-   `Sturm.sturm_half_open` has no endpoint-nonroot premise, so this is
+   `Sturm.IsSturmChain.sturm_Ioc` has no endpoint-nonroot premise, so this is
    valid even when the dyadic lower endpoint `l` is itself a root.
 
 6. **Build cells.** With `k` isolations `I₀ < … < Iₖ₋₁` (roots
@@ -416,7 +416,7 @@ literal cast chain satisfies `Sturm.IsSturmChain`; in particular `f`
 is squarefree. Its interval count is the variation difference of
 this literal chain, not a call to `ZPoly.sturmCount f`, and its total count
 is the corresponding `−∞/+∞` difference. The proof factors through
-`Sturm.sturm_half_open` and `Sturm.sturm_line`. Constants are handled
+`Sturm.IsSturmChain.sturm_Ioc` and `Sturm.IsSturmChain.sturm`. Constants are handled
 separately because the interval-count theorem requires positive
 degree.
 

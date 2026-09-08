@@ -37,7 +37,14 @@ private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
-    compileO oFile srcFile flags
+    -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
+    -- Set TMPDIR for this compiler process only, including compiler wrappers.
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString] ++ flags
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
 
 extern_lib hexgf2ffi (pkg) := do
   let name := nameToStaticLib "hexgf2ffi"
@@ -50,7 +57,14 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
   let srcTarget ← inputTextFile <| pkg.dir / "HexArith" / "ffi" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
-    compileO oFile srcFile flags
+    -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
+    -- Set TMPDIR for this compiler process only, including compiler wrappers.
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString] ++ flags
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
 
 extern_lib hexarithffi (pkg) := do
   let name := nameToStaticLib "hexarithffi"
@@ -904,6 +918,8 @@ lean_lib HexReleaseTests where
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
+    `HexRealRootsMathlib.SturmTests,
+    `HexRealRootsMathlib.RealRootCountTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
     `HexSparsePoly.KernelTests,

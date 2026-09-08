@@ -724,6 +724,59 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["downstream"], "new-downstream")
 
 
+class LakeDeclarationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.source = self.root / "source.lean"
+        self.clone = self.root / "clone"
+        self.clone.mkdir()
+        self.target = self.clone / "lakefile.lean"
+        self.entry = {"lakefile": "lean", "lake_declarations": ["compileTarget"]}
+        self.definition = (
+            "private def compileTarget (pkg : Package) : FetchM (Job FilePath) := do\n"
+            "  let flags := #[\"-pipe\"]\n"
+            "  compileO output source flags\n\n"
+        )
+        self.source.write_text("import Lake\n\n" + self.definition + "lean_lib Other\n")
+        self.original = (
+            "import Lake\n\n"
+            "private def compileTarget (pkg : Package) : FetchM (Job FilePath) := do\n"
+            "  compileO output source #[]\n\n"
+            "@[default_target]\nlean_lib Consumer where\n  precompileModules := true\n"
+        )
+        self.target.write_text(self.original)
+
+    def rewrite(self) -> list[str]:
+        with patch.object(sync_released, "LAKEFILE", self.source):
+            return sync_released.rewrite_lake_declarations(self.entry, self.clone)
+
+    def test_copies_recipe_preserving_skeleton_and_is_idempotent(self) -> None:
+        self.assertEqual(len(self.rewrite()), 1)
+        self.assertEqual(self.target.read_text(),
+            "import Lake\n\n" + self.definition
+            + "@[default_target]\nlean_lib Consumer where\n  precompileModules := true\n")
+        self.assertEqual(self.rewrite(), [])
+
+    def test_missing_helper_does_not_write_partial_result(self) -> None:
+        self.entry["lake_declarations"].append("missing")
+        with self.assertRaisesRegex(RuntimeError, "expected one Lake build helper missing"):
+            self.rewrite()
+        self.assertEqual(self.target.read_text(), self.original)
+
+    def test_duplicate_declarations_are_rejected(self) -> None:
+        self.source.write_text(self.definition * 2)
+        with self.assertRaisesRegex(RuntimeError, "found 2"):
+            self.rewrite()
+        self.assertEqual(self.target.read_text(), self.original)
+
+    def test_toml_target_is_rejected(self) -> None:
+        self.entry["lakefile"] = "toml"
+        with self.assertRaisesRegex(RuntimeError, "requires a Lean Lake file"):
+            self.rewrite()
+
+
 class LibBuildSettingTests(unittest.TestCase):
     """The mirror's `lean_lib` must be built the way hex-dev builds it.
 

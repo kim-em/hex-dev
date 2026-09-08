@@ -46,7 +46,7 @@ Every downstream consumer supplies a nonzero (indeed positive-degree) input.
 
 namespace HexRealRootsMathlib
 
-open Polynomial HexPolyZMathlib
+open Polynomial HexPolyZMathlib Filter Topology
 
 noncomputable section
 
@@ -992,23 +992,13 @@ private theorem chainList_last_unit :
 `C c₀ · a = Q · b − C k · c'` (with `k ≠ 0`) transports `IsCoprime b c'` *back* to
 `IsCoprime a b`: solving the relation for `c'` and substituting into a Bezout
 combination for `(b, c')` yields one for `(a, b)`. -/
-theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
-    (hk : k ≠ 0)
-    (hrel : Polynomial.C c₀ * a = Q * b - Polynomial.C k * c')
-    (h : IsCoprime b c') : IsCoprime a b := by
-  obtain ⟨u, v, huv⟩ := h
-  have hCk : Polynomial.C k⁻¹ * Polynomial.C k = 1 := by
-    rw [← Polynomial.C_mul, inv_mul_cancel₀ hk, Polynomial.C_1]
-  have hc' : c' = Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a) := by
-    have hkc' : Polynomial.C k * c' = Q * b - Polynomial.C c₀ * a := by rw [hrel]; ring
-    calc c' = Polynomial.C k⁻¹ * (Polynomial.C k * c') := by rw [← mul_assoc, hCk, one_mul]
-      _ = Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a) := by rw [hkc']
-  refine ⟨-(v * Polynomial.C k⁻¹ * Polynomial.C c₀), u + v * Polynomial.C k⁻¹ * Q, ?_⟩
-  calc -(v * Polynomial.C k⁻¹ * Polynomial.C c₀) * a
-        + (u + v * Polynomial.C k⁻¹ * Q) * b
-      = u * b + v * (Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a)) := by ring
-    _ = u * b + v * c' := by rw [← hc']
-    _ = 1 := huv
+theorem coprime_step_rev {p q r : ℝ[X]} {a b : ℝ} {d : ℝ[X]}
+    (hb : b ≠ 0) (hid : C a * p = d * q - C b * r) (h : IsCoprime q r) :
+    IsCoprime p q := by
+  apply IsCoprime.of_mul_left_right (x := C a)
+  rw [hid, IsCoprime.mul_sub_right_left_iff,
+    isCoprime_mul_unit_left_left (isUnit_C.mpr (isUnit_iff_ne_zero.mpr hb))]
+  exact h.symm
 
 /-- **A terminal-constant chain has coprime seeds.** If the last element of
 `prev :: cur :: chainList fuel prev cur` is a unit of `ℝ[X]` (its real cast), then
@@ -1073,41 +1063,19 @@ negative on a punctured left neighbourhood of `r` and positive on a punctured
 right neighbourhood: the difference quotient tends to the positive derivative,
 so it is eventually positive, and the sign of `f x = slope · (x − r)` follows
 the sign of `x − r`. -/
-private theorem eventually_flank_of_deriv_pos {f : Polynomial ℝ} {r : ℝ}
-    (h0 : f.eval r = 0) (hd : 0 < f.derivative.eval r) :
-    (∀ᶠ x in nhdsWithin r (Set.Iio r), f.eval x < 0) ∧
-      (∀ᶠ x in nhdsWithin r (Set.Ioi r), 0 < f.eval x) := by
-  have hder : HasDerivAt (fun y => f.eval y) (f.derivative.eval r) r :=
-    f.hasDerivAt r
-  have hslope : Filter.Tendsto (slope (fun y => f.eval y) r) (nhdsWithin r {r}ᶜ)
-      (nhds (f.derivative.eval r)) := hasDerivAt_iff_tendsto_slope.mp hder
-  have hpos : ∀ᶠ x in nhdsWithin r {r}ᶜ, slope (fun y => f.eval y) r x ∈ Set.Ioi 0 :=
-    hslope (Ioi_mem_nhds hd)
+private theorem sign_near_root {p : ℝ[X]} {r : ℝ}
+    (hr : p.eval r = 0) (hd : 0 < p.derivative.eval r) :
+    (∀ᶠ x in 𝓝[<] r, p.eval x < 0) ∧ (∀ᶠ x in 𝓝[>] r, 0 < p.eval x) := by
+  obtain ⟨hl, hu⟩ := hasDerivAt_iff_tendsto_slope_left_right.mp (p.hasDerivAt r)
   constructor
-  · have hmono : nhdsWithin r (Set.Iio r) ≤ nhdsWithin r {r}ᶜ :=
-      nhdsWithin_mono r (fun x hx => ne_of_lt hx)
-    filter_upwards [hpos.filter_mono hmono, self_mem_nhdsWithin] with x hx hxr
-    have hx' : 0 < (f.eval x - f.eval r) / (x - r) := by
-      have := Set.mem_Ioi.mp hx
-      rwa [slope_def_field] at this
-    rw [h0, sub_zero] at hx'
-    have hxr' : x - r < 0 := sub_neg.mpr (Set.mem_Iio.mp hxr)
-    have h2 : f.eval x = f.eval x / (x - r) * (x - r) :=
-      (div_mul_cancel₀ _ (ne_of_lt hxr')).symm
-    rw [h2]
-    exact mul_neg_of_pos_of_neg hx' hxr'
-  · have hmono : nhdsWithin r (Set.Ioi r) ≤ nhdsWithin r {r}ᶜ :=
-      nhdsWithin_mono r (fun x hx => (ne_of_lt (Set.mem_Ioi.mp hx)).symm)
-    filter_upwards [hpos.filter_mono hmono, self_mem_nhdsWithin] with x hx hxr
-    have hx' : 0 < (f.eval x - f.eval r) / (x - r) := by
-      have := Set.mem_Ioi.mp hx
-      rwa [slope_def_field] at this
-    rw [h0, sub_zero] at hx'
-    have hxr' : 0 < x - r := sub_pos.mpr (Set.mem_Ioi.mp hxr)
-    have h2 : f.eval x = f.eval x / (x - r) * (x - r) :=
-      (div_mul_cancel₀ _ (ne_of_gt hxr')).symm
-    rw [h2]
-    exact mul_pos hx' hxr'
+  · filter_upwards [hl.eventually_const_lt hd, self_mem_nhdsWithin] with x hx hxr
+    simp only [slope_def_field, hr, sub_zero] at hx
+    have hneg : x - r < 0 := sub_neg.mpr hxr
+    simpa only [div_pos_iff, hneg.not_gt, hneg,
+      and_false, and_true, false_or] using hx
+  · filter_upwards [hu.eventually_const_lt hd, self_mem_nhdsWithin] with x hx hxr
+    simp only [slope_def_field, hr, sub_zero] at hx
+    exact (div_pos_iff_of_pos_right (sub_pos.mpr hxr)).mp hx
 
 /-- **The head-pair flank.** If `s₀` vanishes at `r`, `s₁` does not, and
 `s₀' = C γ · s₁` with `γ > 0` (the executable seeds: the primitive parts of
@@ -1118,7 +1086,7 @@ theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
     {r : ℝ} (h0 : s₀.eval r = 0) (h1 : s₁.eval r ≠ 0) :
     (∀ᶠ x in nhdsWithin r (Set.Iio r), (s₀ * s₁).eval x < 0) ∧
       (∀ᶠ x in nhdsWithin r (Set.Ioi r), 0 < (s₀ * s₁).eval x) := by
-  apply eventually_flank_of_deriv_pos
+  apply sign_near_root
   · rw [Polynomial.eval_mul, h0, zero_mul]
   · rw [Polynomial.derivative_mul, Polynomial.eval_add, Polynomial.eval_mul,
       Polynomial.eval_mul, h0, zero_mul, add_zero, hkey, Polynomial.eval_mul,
@@ -1130,12 +1098,8 @@ theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
 /-- Coprime polynomials never vanish together. -/
 theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
     {x : ℝ} (ha : a.eval x = 0) : b.eval x ≠ 0 := by
-  obtain ⟨u, v, huv⟩ := h
-  intro hb
-  have h2 := congrArg (Polynomial.eval x) huv
-  rw [Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_mul, ha, hb,
-    mul_zero, mul_zero, add_zero, Polynomial.eval_one] at h2
-  exact zero_ne_one h2
+  have hc := h.map (evalRingHom x)
+  simpa [ha, isCoprime_zero_left, isUnit_iff_ne_zero] using hc
 
 /-- Unpack an indexed read of the mapped chain into a read of the executable
 chain. -/
@@ -1166,8 +1130,8 @@ private theorem isSturmChain_of_seeds (s₀ s₁ : Hex.ZPoly) (fuel : ℕ)
     (γ : ℝ) (hγ : 0 < γ)
     (hkey : Polynomial.derivative (toPolyℝ s₀) = Polynomial.C γ * toPolyℝ s₁) :
     Sturm.IsSturmChain (toPolyℝ s₀) ((s₀ :: s₁ :: chainList fuel s₀ s₁).map toPolyℝ) := by
-  refine { nonempty := by simp, head := rfl, root_flank := ?_, nonzero_mem := ?_,
-           consec_coprime := ?_, interior_alternates := ?_, last_no_root := ?_ }
+  refine { head := rfl, root_flank := ?_, nonzero_mem := ?_,
+           interior_alternates := ?_, last_no_root := ?_ }
   · -- root_flank
     intro r hr
     have hs₁r : (toPolyℝ s₁).eval r ≠ 0 := eval_ne_zero_of_isCoprime hcop hr
@@ -1178,12 +1142,6 @@ private theorem isSturmChain_of_seeds (s₀ s₁ : Hex.ZPoly) (fuel : ℕ)
     rw [List.mem_map] at hq
     obtain ⟨z, hz, rfl⟩ := hq
     exact fun hh => chainList_nonzero fuel s₀ s₁ hs₀ hs₁ z hz (toPolyℝ_eq_zero_iff.mp hh)
-  · -- consec_coprime
-    intro i x a b ha hb hax
-    obtain ⟨za, hza, rfl⟩ := getElem?_map_toPolyℝ ha
-    obtain ⟨zb, hzb, rfl⟩ := getElem?_map_toPolyℝ hb
-    exact eval_ne_zero_of_isCoprime
-      (chainList_pairs_coprime fuel s₀ s₁ hs₁ hcop i za zb hza hzb) hax
   · -- interior_alternates
     intro i x a b c ha hb hc hbx
     obtain ⟨za, hza, rfl⟩ := getElem?_map_toPolyℝ ha
@@ -1453,15 +1411,15 @@ theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     simp only [Hex.DensePoly.degree?_zero_getD] at hp
     omega
   have hchain := sturmChain_isSturmChain p hp hsq
-  have hs₀0 : toPolyℝ (Hex.ZPoly.primitivePart p) ≠ 0 :=
-    fun hh => primitivePart_ne_zero hp0 (toPolyℝ_eq_zero_iff.mp hh)
   have hsf := squarefree_toPolyℝ_primitivePart p hp0 hsq
   have hab : Dyadic.toReal I.lower < Dyadic.toReal I.upper := toReal_lt_toReal I.lt
-  have hkey := Sturm.sturm_half_open hs₀0 hsf hchain hab
+  have hkey := hchain.sturm_Ioc (Polynomial.nodup_roots
+    (PerfectField.separable_iff_squarefree.mpr hsf)) hab.le
   show (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) I.lower : Int)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) I.upper = _
   rw [sturmVarAt_eq, sturmVarAt_eq, roots_toPolyℝ_eq_primitivePart p hp0]
-  exact hkey
+  simp only [Set.mem_Ioc] at hkey
+  omega
 
 /-- Casting an integer's sign to `ℝ` preserves `SignType.sign`. -/
 private theorem sign_intCast_sign (n : Int) :
@@ -1518,10 +1476,9 @@ theorem rootCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     simp only [Hex.DensePoly.degree?_zero_getD] at hp
     omega
   have hchain := sturmChain_isSturmChain p hp hsq
-  have hs₀0 : toPolyℝ (Hex.ZPoly.primitivePart p) ≠ 0 :=
-    fun hh => primitivePart_ne_zero hp0 (toPolyℝ_eq_zero_iff.mp hh)
   have hsf := squarefree_toPolyℝ_primitivePart p hp0 hsq
-  have hkey := Sturm.sturm_line hs₀0 hsf hchain
+  have hkey := hchain.sturm (Polynomial.nodup_roots
+    (PerfectField.separable_iff_squarefree.mpr hsf))
   rw [← roots_toPolyℝ_eq_primitivePart p hp0] at hkey
   show Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
       - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) = _

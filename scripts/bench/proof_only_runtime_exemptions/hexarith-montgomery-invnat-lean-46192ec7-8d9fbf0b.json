@@ -1,0 +1,6 @@
+{
+  "path": "HexArith/Montgomery/InvNat.lean",
+  "baseline_blob": "46192ec785ce77951aca7bbcee2932fc7a599fdf",
+  "current_blob": "8d9fbf0bf282af9fdc45c8bc64c8c5a32a66633d",
+  "reason": "Deletes two unused private bv_decide lemmas and their tactic import. The executable definitions, public theorems and every dependency of hexbz_factor_service are unchanged."
+}

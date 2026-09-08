@@ -59,6 +59,8 @@
 # skeleton must build separately from the curated public umbrella.
 # `executables` maps an unmanaged released executable name to its mathematical
 # root module. The sync refuses to publish when the skeleton is stale.
+# `lake_declarations` lists build helper declarations copied from the monorepo
+# Lake file into the corresponding declarations in a Lean mirror skeleton.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
@@ -112,6 +114,7 @@ repos:
     spec: hex-arith
     pins: []
     lakefile: lean
+    lake_declarations: [hexArithOTarget]
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -152,6 +155,7 @@ repos:
     spec: hex-mod-arith
     pins: [hex-arith]
     lakefile: lean
+    lake_declarations: [zmod64MulOTarget]
 
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib
@@ -270,7 +274,7 @@ repos:
 
   - repo: leanprover/hex-real-roots-mathlib
     lib: HexRealRootsMathlib
-    test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests]
+    test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests, HexRealRootsMathlib.SturmTests, HexRealRootsMathlib.RealRootCountTests]
     umbrella: true
     spec: hex-real-roots-mathlib
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots]
