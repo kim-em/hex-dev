@@ -260,7 +260,7 @@ private def sqfContract {n : Nat} (p : MvPoly n Int Mono.lex) : Bool :=
     divExact? p (radical p) == some (C (1 / 2 : Rat) * (x + 1) ^ 2 * (y + 2))
 
 -- Divisibility still inherits the unfinished GCD checker and producer proofs.
-/-- info: 'Hex.MvPoly.radical_dvd' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.MvPoly.radical_dvd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.MvPoly.radical_dvd
 
