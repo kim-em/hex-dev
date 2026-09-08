@@ -1242,6 +1242,9 @@ deliberately so. -/
 def Squarefree (p : MvPoly n R cmp) : Prop :=
   p ≠ 0 ∧ ∀ d, d * d ∣ p → IsConst d
 
+-- The surrounding context includes the coefficient ring's explicit
+-- `[BEq R] [LawfulBEq R]`, as required by `MvPoly` multiplication.
+
 attribute [local instance] Lean.Grind.Semiring.natCast
 
 /-- Mathlib-free characteristic zero: every positive natural remains

@@ -130,7 +130,7 @@ def IsConst {n : Nat} {R : Type u} [Zero R]
 def Squarefree {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     (p : MvPoly n R cmp) : Prop :=
   p ≠ 0 ∧ ∀ d, d * d ∣ p → IsConst d
 
@@ -159,6 +159,391 @@ variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 ring's natural cast. -/
 def derivatives (p : MvPoly n R cmp) : List (MvPoly n R cmp) :=
   (List.finRange n).map fun i => derivative i p
+
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
+/-- Differentiation commutes with the recursive univariate view in the
+selected variable. -/
+theorem toUnivariate_derivative {m : Nat}
+    {cmp0 : Mono (m + 1) → Mono (m + 1) → Ordering}
+    {cmp' : Mono m → Mono m → Ordering}
+    [Std.TransCmp cmp0] [Std.LawfulEqCmp cmp0]
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (i : Fin (m + 1)) (p : MvPoly (m + 1) R cmp0) :
+    toUnivariate i cmp' (derivative i p) =
+      DensePoly.derivative (toUnivariate i cmp' p) := by
+  apply DensePoly.ext_coeff
+  intro e
+  apply MvPoly.ext
+  intro a
+  have hsucc : Mono.succAt i (insertVar i e a) =
+      insertVar i (e + 1) a := by
+    apply Vector.ext
+    intro j hj
+    by_cases hjval : j = i.val
+    · have hfin : (⟨j, hj⟩ : Fin (m + 1)) = i := Fin.ext hjval
+      simp [Mono.succAt, Mono.mul, Mono.unit, insertVar, hjval, hfin]
+    · have hfin : (⟨j, hj⟩ : Fin (m + 1)) ≠ i := by
+        intro h
+        exact hjval (congrArg Fin.val h)
+      simp [Mono.succAt, Mono.mul, Mono.unit, insertVar, hjval, hfin]
+  have hcast : ((e + 1 : Nat) : MvPoly m R cmp') =
+      C ((e + 1 : Nat) : R) := by
+    apply MvPoly.ext
+    intro b
+    simp only [coeff_natCast, coeff_C]
+  rw [toUnivariate_coeff, coeff_derivative,
+    DensePoly.coeff_derivative_semiring, degreeOf_insertVar, hsucc,
+    hcast, coeff_C_mul, toUnivariate_coeff]
+
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
+/-- Formal partial differentiation satisfies the product rule. -/
+theorem derivative_mul (i : Fin n) (p q : MvPoly n R cmp) :
+    derivative i (p * q) =
+      derivative i p * q + p * derivative i q := by
+  cases n with
+  | zero => exact Fin.elim0 i
+  | succ m =>
+      have hview :
+          toUnivariate i Mono.lex (derivative i (p * q)) =
+            toUnivariate i Mono.lex
+              (derivative i p * q + p * derivative i q) := by
+        rw [toUnivariate_derivative, toUnivariate_mul,
+          DensePoly.derivative_mul, toUnivariate_add,
+          toUnivariate_mul, toUnivariate_mul,
+          toUnivariate_derivative, toUnivariate_derivative]
+      calc
+        derivative i (p * q) =
+            ofUnivariate i Mono.lex
+              (toUnivariate i Mono.lex (derivative i (p * q))) :=
+          (ofUnivariate_toUnivariate i _).symm
+        _ = ofUnivariate i Mono.lex
+              (toUnivariate i Mono.lex
+                (derivative i p * q + p * derivative i q)) := by rw [hview]
+        _ = derivative i p * q + p * derivative i q :=
+          ofUnivariate_toUnivariate i _
+
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
+@[simp] private theorem mvDerivative_zero (i : Fin n) :
+    derivative i (0 : MvPoly n R cmp) = 0 := by
+  apply MvPoly.ext
+  intro m
+  rw [coeff_derivative, coeff_zero, Lean.Grind.Semiring.mul_zero, coeff_zero]
+
+/-- A nonzero polynomial cannot divide a nonzero partial derivative of
+itself: the selected-variable degree drops strictly. -/
+private theorem derivative_eq_zero_of_dvd (i : Fin n)
+    (p : MvPoly n R cmp) (hp : p ≠ 0) (hdiv : p ∣ derivative i p) :
+    derivative i p = 0 := by
+  cases n with
+  | zero => exact Fin.elim0 i
+  | succ m =>
+      by_cases hderiv : derivative i p = 0
+      · exact hderiv
+      exfalso
+      rcases hdiv with ⟨q, hq⟩
+      have hq0 : q ≠ 0 := by
+        intro hzero
+        apply hderiv
+        rw [hq, hzero, MvPoly.zero_mul]
+      let pv := toUnivariate i Mono.lex p
+      let qv := toUnivariate i Mono.lex q
+      have hpv0 : pv ≠ 0 := by
+        intro hzero
+        apply hp
+        calc
+          p = ofUnivariate i Mono.lex pv :=
+            (ofUnivariate_toUnivariate i p).symm
+          _ = 0 := by rw [hzero]; rfl
+      have hqv0 : qv ≠ 0 := by
+        intro hzero
+        apply hq0
+        calc
+          q = ofUnivariate i Mono.lex qv :=
+            (ofUnivariate_toUnivariate i q).symm
+          _ = 0 := by rw [hzero]; rfl
+      have hpvPos : 0 < pv.size := by
+        exact Nat.pos_of_ne_zero (fun h => hpv0 ((DensePoly.size_eq_zero_iff pv).mp h))
+      have hqvPos : 0 < qv.size := by
+        exact Nat.pos_of_ne_zero (fun h => hqv0 ((DensePoly.size_eq_zero_iff qv).mp h))
+      have htop : qv.leadingCoeff * pv.leadingCoeff ≠
+          (0 : MvPoly m R Mono.lex) := by
+        intro hzero
+        rcases MvPoly.zero_product GcdDomainLaws.no_zero_div hzero with
+          hqlead | hplead
+        · exact (DensePoly.leadingCoeff_ne_zero_of_pos_size qv hqvPos) hqlead
+        · exact (DensePoly.leadingCoeff_ne_zero_of_pos_size pv hpvPos) hplead
+      have hproduct :
+          (toUnivariate i Mono.lex (derivative i p)).size =
+            qv.size + pv.size - 1 := by
+        rw [hq, toUnivariate_mul]
+        exact DensePoly.size_mul_of_top_ne qv pv hqvPos hpvPos htop
+      have hdrop :
+          (toUnivariate i Mono.lex (derivative i p)).size ≤ pv.size - 1 := by
+        rw [toUnivariate_derivative]
+        exact DensePoly.size_derivative_le pv
+      omega
+
+omit [LawfulBezoutOps R] [GcdProducer R] in
+/-- In characteristic zero, vanishing of every partial derivative forces a
+polynomial to be constant. -/
+private theorem isConst_of_derivatives_zero [NatNoZero R]
+    (p : MvPoly n R cmp) (hderiv : ∀ i, derivative i p = 0) :
+    IsConst p := by
+  have hmono : ∀ m ∈ p.monomials, m = Mono.zero := by
+    intro m hm
+    apply Vector.ext
+    intro j hj
+    let i : Fin n := ⟨j, hj⟩
+    change m[i] = (Mono.zero : Mono n)[i]
+    rw [Mono.getElem_zero]
+    change Mono.degreeOf i m = 0
+    by_cases he : Mono.degreeOf i m = 0
+    · exact he
+    exfalso
+    have hsucc : Mono.succAt i (predAt i m) = m := by
+      exact ((predAt_eq_iff i (predAt i m) m he).mp rfl).symm
+    have hdegree := congrArg (Mono.degreeOf i) hsucc
+    rw [degreeOf_succAt] at hdegree
+    have hcoeff := congrArg (coeff (predAt i m)) (hderiv i)
+    rw [coeff_derivative, coeff_zero, hsucc] at hcoeff
+    have hcast : ((Mono.degreeOf i (predAt i m) + 1 : Nat) : R) ≠ 0 :=
+      NatNoZero.natCast_ne_zero _ (by omega)
+    have hmcoeff : coeff m p ≠ 0 := (mem_monomials_iff m p).mp hm
+    rcases LawfulGcdOps.no_zero_div
+        (((Mono.degreeOf i (predAt i m) + 1 : Nat) : R))
+        (coeff m p) hcoeff with hzero | hzero
+    · exact hcast hzero
+    · exact hmcoeff hzero
+  apply List.eq_nil_iff_forall_not_mem.mpr
+  intro i hi
+  have hdegree : degreeOf i p = 0 := by
+    rw [degreeOf_eq]
+    unfold foldTerms
+    rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+    have hterm : ∀ term ∈ p.termsList, Mono.degreeOf i term.1 = 0 := by
+      intro term ht
+      have hm : term.1 ∈ p.monomials := by
+        exact List.mem_map.mpr ⟨term, ht, rfl⟩
+      rw [hmono term.1 hm]
+      exact Mono.getElem_zero i
+    have fold_zero : ∀ (terms : List (Mono n × R)),
+        (∀ term ∈ terms, Mono.degreeOf i term.1 = 0) →
+          terms.foldl (fun d term => max d (Mono.degreeOf i term.1)) 0 = 0 := by
+      intro terms hall
+      induction terms with
+      | nil => rfl
+      | cons head tail ih =>
+          rw [List.foldl_cons, hall head (by simp), Nat.max_zero]
+          apply ih
+          intro term ht
+          exact hall term (by simp [ht])
+    exact fold_zero p.termsList hterm
+  exact ((mem_vars_iff i p).mp hi) hdegree
+
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
+private theorem isConst_C (c : R) : IsConst (C c : MvPoly n R cmp) := by
+  apply List.eq_nil_iff_forall_not_mem.mpr
+  intro i hi
+  have hne := (mem_vars_iff i (C c : MvPoly n R cmp)).mp hi
+  apply hne
+  change degreeOf i (monomial Mono.zero c : MvPoly n R cmp) = 0
+  rw [degreeOf_monomial]
+  split
+  · rfl
+  · exact Mono.getElem_zero i
+
+omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R] in
+private theorem C_mul_C (a b : R) :
+    (C a : MvPoly n R cmp) * C b = C (a * b) := by
+  apply MvPoly.ext
+  intro m
+  rw [coeff_C_mul, coeff_C, coeff_C]
+  by_cases hm : m = Mono.zero
+  · simp [hm]
+  · rw [ite_eq_right hm, ite_eq_right hm,
+      Lean.Grind.Semiring.mul_zero]
+
+/-- Removing scalar content preserves the relative squarefree predicate. -/
+private theorem squarefree_primPart (p : MvPoly n R cmp) :
+    Squarefree (primPart p) ↔ Squarefree p := by
+  constructor
+  · intro hq
+    refine ⟨?_, ?_⟩
+    · intro hp0
+      subst p
+      exact hq.1 primPart_zero
+    · intro d hd
+      rcases hd with ⟨a, ha⟩
+      have hparts := congrArg primPart ha
+      rw [primPart_mul a (d * d), primPart_mul d d] at hparts
+      have hsquare : primPart d * primPart d ∣ primPart p :=
+        ⟨primPart a, hparts⟩
+      have hconst := hq.2 (primPart d) hsquare
+      have hdrec := content_mul_primPart d
+      have hpartC := eq_C_of_vars_eq_nil (primPart d) hconst
+      rw [hpartC, C_mul_C] at hdrec
+      rw [← hdrec]
+      exact isConst_C _
+  · intro hp
+    refine ⟨?_, ?_⟩
+    · intro hq0
+      apply hp.1
+      rw [← content_mul_primPart p, hq0, MvPoly.mul_zero]
+    · intro d hd
+      apply hp.2 d
+      rcases hd with ⟨a, ha⟩
+      refine ⟨C (content p) * a, ?_⟩
+      calc
+        p = C (content p) * primPart p := (content_mul_primPart p).symm
+        _ = C (content p) * (a * (d * d)) :=
+          congrArg (fun q => C (content p) * q) ha
+        _ = (C (content p) * a) * (d * d) :=
+          (MvPoly.mul_assoc ..).symm
+
+private theorem isConst_of_unit [IsMonomialOrder cmp]
+    (d : MvPoly n R cmp)
+    (hd : polyIsUnit d = true) : IsConst d := by
+  rcases (polyIsUnit_iff d).mp hd with ⟨u, hu⟩
+  rcases unit_eq_C LawfulGcdOps.one_ne_zero LawfulGcdOps.no_zero_div hu with
+    ⟨c, _, hc, _⟩
+  rw [hc]
+  exact isConst_C c
+
+private theorem unit_of_const_dvd_primitive [IsMonomialOrder cmp]
+    {q d : MvPoly n R cmp} (hq : Primitive q)
+    (hdconst : IsConst d) (hdq : d ∣ q) : polyIsUnit d = true := by
+  let c := coeff Mono.zero d
+  have hdc : d = C c := eq_C_of_vars_eq_nil d hdconst
+  rcases hdq with ⟨a, ha⟩
+  have hcommon : ∀ x, x ∈ coefficientList q → c ∣ x := by
+    intro x hx
+    rcases List.mem_map.mp hx with ⟨term, hterm, rfl⟩
+    rcases term with ⟨m, x⟩
+    have hcoeff : coeff m q = x := coeff_eq_of_mem_terms q hterm
+    apply (LawfulGcdOps.dvd_iff c x).mpr
+    refine ⟨coeff m a, ?_⟩
+    calc
+      x = coeff m q := hcoeff.symm
+      _ = coeff m (a * d) := congrArg (coeff m) ha
+      _ = coeff m (C c * a) := by rw [hdc, MvPoly.mul_comm]
+      _ = c * coeff m a := coeff_C_mul c a m
+  rcases hq c hcommon with ⟨v, hv⟩
+  apply (polyIsUnit_iff d).mpr
+  refine ⟨C v, ?_⟩
+  rw [hdc, C_mul_C, hv]
+  rfl
+
+private theorem derivative_dvd_of_square_dvd (i : Fin n)
+    {d q : MvPoly n R cmp} (h : d * d ∣ q) : d ∣ derivative i q := by
+  rcases h with ⟨a, ha⟩
+  refine ⟨derivative i a * d + a * (derivative i d + derivative i d), ?_⟩
+  rw [ha, derivative_mul, derivative_mul]
+  grind
+
+/-- In characteristic zero, the all-partials gcd criterion is equivalent to
+relative squarefreeness for a primitive polynomial. -/
+private theorem gcdList_unit_iff_squarefree_charZero [IsMonomialOrder cmp]
+    [NatNoZero R]
+    (q : MvPoly n R cmp) (hprimitive : Primitive q) :
+    polyIsUnit (gcdList (q :: derivatives q)) = true ↔ Squarefree q := by
+  constructor
+  · intro hunit
+    refine ⟨?_, ?_⟩
+    · intro hq0
+      subst q
+      have hg : gcdList ((0 : MvPoly n R cmp) :: derivatives 0) = 0 := by
+        unfold gcdList derivatives
+        simp only [mvDerivative_zero, List.foldl_cons, gcd_zero_zero]
+        have fold_zero : ∀ (xs : List (MvPoly n R cmp)),
+            (∀ x ∈ xs, x = 0) → xs.foldl gcd 0 = 0 := by
+          intro xs hall
+          induction xs with
+          | nil => rfl
+          | cons head tail ih =>
+              rw [List.foldl_cons, hall head (by simp), gcd_zero_zero]
+              apply ih
+              intro x hx
+              exact hall x (by simp [hx])
+        apply fold_zero
+        intro x hx
+        rcases List.mem_map.mp hx with ⟨i, _, rfl⟩
+        exact mvDerivative_zero i
+      rw [hg] at hunit
+      rcases (polyIsUnit_iff (0 : MvPoly n R cmp)).mp hunit with ⟨u, hu⟩
+      rw [MvPoly.zero_mul] at hu
+      exact LawfulGcdOps.one_ne_zero hu.symm
+    · intro d hd
+      have hdq : d ∣ q := by
+        rcases hd with ⟨a, ha⟩
+        refine ⟨a * d, ?_⟩
+        calc
+          q = a * (d * d) := ha
+          _ = (a * d) * d := (MvPoly.mul_assoc ..).symm
+      have hdall : ∀ p ∈ q :: derivatives q, d ∣ p := by
+        intro p hp
+        rcases List.mem_cons.mp hp with rfl | hp
+        · exact hdq
+        · rcases List.mem_map.mp hp with ⟨i, hi, rfl⟩
+          exact derivative_dvd_of_square_dvd i hd
+      have hdg : d ∣ gcdList (q :: derivatives q) := dvd_gcdList hdall
+      rcases hdg with ⟨a, ha⟩
+      rcases (polyIsUnit_iff _).mp hunit with ⟨u, hu⟩
+      apply isConst_of_unit d
+      apply (polyIsUnit_iff d).mpr
+      refine ⟨a * u, ?_⟩
+      calc
+        d * (a * u) = (a * d) * u := by grind
+        _ = gcdList (q :: derivatives q) * u := by rw [← ha]
+        _ = 1 := hu
+  · intro hsq
+    let g := gcdList (q :: derivatives q)
+    have hgq : g ∣ q := gcdList_dvd (by simp)
+    by_cases hq0 : q = 0
+    · exact False.elim (hsq.1 hq0)
+    have hg0 : g ≠ 0 := by
+      intro hgzero
+      rcases hgq with ⟨a, ha⟩
+      rw [hgzero, MvPoly.mul_zero] at ha
+      exact hq0 ha
+    rcases hgq with ⟨e, hqe⟩
+    have hcop : ∀ k, k ∣ e → k ∣ g → ∃ u, k * u = 1 := by
+      intro k hke hkg
+      rcases hke with ⟨a, hea⟩
+      rcases hkg with ⟨b, hgb⟩
+      have hsqdiv : k * k ∣ q := by
+        refine ⟨a * b, ?_⟩
+        rw [hqe, hea, hgb]
+        grind
+      have hkconst := hsq.2 k hsqdiv
+      have hkq : k ∣ q := by
+        refine ⟨g * a, ?_⟩
+        rw [hqe, hea]
+        grind
+      have hkunit := unit_of_const_dvd_primitive hprimitive hkconst hkq
+      exact (polyIsUnit_iff k).mp hkunit
+    have hgd : ∀ i, g ∣ derivative i g := by
+      intro i
+      have hgDerivQ : g ∣ derivative i q := by
+        apply gcdList_dvd
+        apply List.mem_cons_of_mem
+        exact List.mem_map.mpr ⟨i, List.mem_finRange i, rfl⟩
+      rcases hgDerivQ with ⟨x, hx⟩
+      have hged : g ∣ derivative i g * e := by
+        refine ⟨x - derivative i e, ?_⟩
+        rw [hqe, derivative_mul] at hx
+        grind
+      exact CoprimeCancelLaws.cancel_coprime (derivative i g) e g g hcop hged
+        ⟨derivative i g, by grind⟩
+    have hgDeriv : ∀ i, derivative i g = 0 :=
+      fun i => derivative_eq_zero_of_dvd i g hg0 (hgd i)
+    exact unit_of_const_dvd_primitive hprimitive
+      (isConst_of_derivatives_zero g hgDeriv)
+      (gcdList_dvd (by simp))
 
 /-- Merge one factor into the multiplicity-sorted accumulator, multiplying
 factors when the recursive content decomposition and the main-variable Yun
