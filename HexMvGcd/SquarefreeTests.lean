@@ -192,4 +192,45 @@ example : True := by
 
 end CastTests
 
+namespace OrderRegression
+
+abbrev P := MvPoly 3 Int Mono.grlex
+
+/-- Recursive content normalization and the caller's monomial order may choose
+different leading coefficients. The main-part unit must remain in the scalar
+output so exact replay retains its sign. -/
+def input : P :=
+  let x : P := X 0
+  let y : P := X 1
+  let z : P := X 2
+  polyNormalize ((y - z ^ 2) * (x + 1))
+
+#guard
+  let decomp := sqfDecomp input
+  decomp.factors.foldl
+    (fun acc factor => acc * factor.factor ^ factor.multiplicity)
+    (C decomp.content) == input
+
+end OrderRegression
+
+/-- info: 'Hex.MvPoly.sqfDecomp_prod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sqfDecomp_prod
+
+/-- info: 'Hex.MvPoly.sqfDecomp_squarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sqfDecomp_squarefree
+
+/-- info: 'Hex.MvPoly.sqfDecomp_primitive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sqfDecomp_primitive
+
+/-- info: 'Hex.MvPoly.sqfDecomp_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sqfDecomp_coprime
+
+/-- info: 'Hex.MvPoly.sqfDecomp_nonconstant' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sqfDecomp_nonconstant
+
 end Hex.MvPoly

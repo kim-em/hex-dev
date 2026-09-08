@@ -2298,7 +2298,7 @@ private theorem C_mul_C (a b : R) :
 
 /-- Every nonzero multivariate polynomial over the fraction field is
 associated to the image of a primitive integral polynomial. -/
-private theorem fractionMv_primitive_rep
+theorem fraction_primitive_rep
     {H : MvPoly n (Hex.Fraction R) cmp} (hH : H ≠ 0) :
     ∃ h : MvPoly n R cmp, Primitive h ∧
       H ∣ fractionMap h ∧ fractionMap h ∣ H := by
@@ -2376,7 +2376,7 @@ private theorem fractionMv_primitive_rep
 
 /-- A primitive integral multivariate polynomial that divides an integral
 polynomial after extending scalars already divides it integrally. -/
-private theorem primitive_dvd_of_fraction_dvd_mv
+theorem primitive_dvd_fraction
     {h f : MvPoly n R cmp} (hh : Primitive h)
     (hdiv : fractionMap h ∣ fractionMap f) : h ∣ f := by
   rcases hdiv with ⟨z, hz⟩
@@ -2438,7 +2438,7 @@ theorem coprimeOverFraction_of_coprime
     rcases hcop 0 ⟨0, rfl⟩ ⟨0, rfl⟩ with ⟨u, hu⟩
     rw [MvPoly.zero_mul] at hu
     exact False.elim (GcdDomainLaws.one_ne_zero hu.symm)
-  · rcases fractionMv_primitive_rep hD0 with
+  · rcases fraction_primitive_rep hD0 with
       ⟨h, hh, hDMap, hMapD⟩
     have hMapF : fractionMap h ∣ fractionMap f := by
       rcases hMapD with ⟨a, ha⟩
@@ -2456,8 +2456,8 @@ theorem coprimeOverFraction_of_coprime
         fractionMap g = b * D := hb
         _ = b * (a * fractionMap h) := by rw [ha]
         _ = (b * a) * fractionMap h := (MvPoly.mul_assoc _ _ _).symm
-    have hhf : h ∣ f := primitive_dvd_of_fraction_dvd_mv hh hMapF
-    have hhg : h ∣ g := primitive_dvd_of_fraction_dvd_mv hh hMapG
+    have hhf : h ∣ f := primitive_dvd_fraction hh hMapF
+    have hhg : h ∣ g := primitive_dvd_fraction hh hMapG
     rcases hcop h hhf hhg with ⟨u, hu⟩
     have hMapUnit : fractionMap h * fractionMap u = 1 := by
       calc
