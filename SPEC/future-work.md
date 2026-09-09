@@ -1055,6 +1055,30 @@ resolvent values, and certified non-containment at rejected branches.
 
 ## Lattices and real algebra
 
+### Ordered real algebraic numbers
+
+[hex-real-algebraic](Libraries/hex-real-algebraic.md) specifies the real subtype
+of canonical `AlgebraicNumber`, with exact comparison, field arithmetic,
+square roots, ordered polynomial real roots, floor and ceil, rational
+recognition, and dyadic approximation. Its companion supplies the ordered-field
+structure, the order embedding into `ℝ`, and `IsRealClosed`. The design reuses
+`hex-number-field` and fixes `realCompare` as the comparison semantics. It also
+uses Mathlib-free core instances parameterized by a law package proved in the
+companion, and identifies the real-root sortedness bridges still needed.
+Companion proofs do not become computational dependencies.
+
+Faster comparison by refinement on overlap, comparison of lazy roots, and
+Tarski queries remain separate extensions behind the same order contract.
+An unconditional Mathlib-free law witness additionally needs proof
+infrastructure for exactification, canonical equality, and root separation.
+The existing `hex-number-field` SPEC's claim that `ZPoly.algebraicRoots` is
+sorted by real value also needs an audit: exactification reselects stored
+representatives at each minimal polynomial's precision before sorting their
+centres, and no value-sortedness theorem establishes that cross-factor order.
+The new real-root API explicitly sorts with `realCompare`.
+This library provides exact real values for later sign determination and
+algebraic sample points without depending on a quantifier-elimination tactic.
+
 ### Lattice applications beyond factor recombination
 
 Build certified APIs on top of `hex-lll` for:
@@ -1123,7 +1147,8 @@ variable, exact algebraic sample points, and sign determination for
 polynomials with algebraic coefficients.
 
 Dependencies include `hex-mv-poly`, `hex-mv-factor`, `hex-resultant`,
-`hex-real-roots`, `hex-number-field`, and `hex-number-field-tower`. Scope the
+`hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, and
+`hex-number-field-tower`. Scope the
 first version to two or three variables. Before fixing a public API, prototype
 the projection phase and a certificate that carries a complete cell
 decomposition with the sign-invariance evidence needed for a negative as well
