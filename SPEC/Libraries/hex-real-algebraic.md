@@ -244,8 +244,9 @@ zero. The proof-taking total form uses the same computation; classify its
 fallback as unreachable by `sqrt?_isSome` under `0 ≤ a`. Also name and prove
 the internal root-selection success lemma `sqrtRoot?_isSome` under that
 hypothesis, so a failed root search cannot masquerade as a negative argument.
-Require `sqrt_nonneg`, `sqrt_sq` (`sqrt a h * sqrt a h = a`), uniqueness, and
-`sqrt_square` (`sqrt (a*a) h = abs a` for any `h : 0 ≤ a*a`).
+Require `sqrt_nonneg`, `sqrt_sq` (`(sqrt a h) ^ 2 = a`), uniqueness, and
+`sqrt_square` (`sqrt (a ^ 2) (sq_nonneg a) = abs a`). Proof irrelevance
+makes the latter independent of the chosen nonnegativity witness.
 
 Represent `RealAlgebraicPoly` as an `AlgebraicPoly` with an erased proof that
 each stored coefficient passes `isReal`. Its array constructor accepts only
@@ -457,7 +458,12 @@ FLINT's `qqbar_roots_fmpz_poly` can additionally construct general scalar root
 inputs directly. General algebraic-coefficient root solving uses `gr_poly_roots` through the
 [test-only adapter](../../scripts/oracle/real_algebraic_qqbar.py).
 `gr_poly_roots_other` constructs scalar root inputs across the integer and
-qqbar contexts; the special `X²-√2` fixture can already be
+qqbar contexts. The fixture checker keeps these exact values in the wheel's
+public C contexts for scalar operations too: python-flint exposes no supported
+transfer of an arbitrary selected polynomial root into a Python `_gr` element.
+No Python object layout is inspected. The `_gr` scalar API is independently
+probed, and general-root availability is checked separately from scalar root
+identity. The special `X²-√2` fixture can already be
 checked with iterated `sqrt` in `gr_real_qqbar_ctx`. Certified enclosures are
 admissible for integer-root matching; uncertified numerical approximations are not an
 equality or ordering oracle.

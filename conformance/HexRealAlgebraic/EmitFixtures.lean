@@ -155,6 +155,7 @@ def reprChecks : IO Unit := do
       ("-((ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0)", -s)].zipIdx do
     if i > 0 then IO.println ""
     IO.println ("#guard (" ++ reprStr a ++ ") == (" ++ expr ++ ")")
+    IO.println ("#guard (" ++ reprStr (some a) ++ ") == some (" ++ expr ++ ")")
 
 end Hex.RealAlgebraicEmit
 

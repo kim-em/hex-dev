@@ -30,6 +30,7 @@ variable (a b : RealAlgebraicNumber) (n : Nat) (z : Int) (q : Rat) (u : ℚ≥0)
 
 example : (0 : RealAlgebraicNumber) = zero := rfl
 example : (1 : RealAlgebraicNumber) = ofRat 1 := rfl
+example : (2 : RealAlgebraicNumber) = ofRat 2 := rfl
 example : a + b = add a b := rfl
 example : a - b = sub a b := rfl
 example : a * b = mul a b := rfl

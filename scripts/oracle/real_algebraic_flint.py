@@ -26,10 +26,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.oracle.common import OracleMismatch, read_fixtures, write_failure
-from scripts.oracle.real_algebraic_qqbar import QQBar, Unavailable
+from scripts.oracle.real_algebraic_qqbar import (
+    QQBar, Unavailable, PYTHON_FLINT_VERSION, FLINT_VERSION, VERSION,
+)
 
 DEFAULT = ROOT / "conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
-VERSION = "python-flint 0.9.0 / FLINT 3.6.0"
 
 
 def require(condition: bool, message: str) -> None:
@@ -49,7 +50,7 @@ def versions() -> None:
         import flint
     except ImportError as exc:
         raise Unavailable("python-flint is not installed") from exc
-    if (flint.__version__, flint.__FLINT_VERSION__) != ("0.9.0", "3.6.0"):
+    if (flint.__version__, flint.__FLINT_VERSION__) != (PYTHON_FLINT_VERSION, FLINT_VERSION):
         raise Unavailable(f"required version is {VERSION}")
 
 
@@ -268,7 +269,13 @@ class Checker:
 
 
 def integer_roots(d: dict[str, Any]) -> None:
-    """Certified ball bijection on irreducible factors, never on repeated inputs."""
+    """Certified ball bijection on irreducible factors, never on repeated inputs.
+
+    Hex guarantees containment in the circumscribed disc, not in the square:
+    see RefinedIsolation.root_mem_closedDisc. Every true root is in its disc;
+    requiring a unique disc per root and a bijection prevents reassignment.
+    Ambiguous discs fail even if an approximate ordering could distinguish them.
+    """
     from flint import fmpz_poly, ctx
     p = fmpz_poly(d["poly"])
     if p.degree() <= 0:

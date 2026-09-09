@@ -149,8 +149,8 @@ instance : SMul Int RealAlgebraicNumber := ⟨fun n a => smul (n : Rat) a⟩
   (a.approxBall prec).re
 
 instance : Repr RealAlgebraicNumber where
-  reprPrec a _ := Std.Format.text
-    s!"(RealAlgebraicNumber.ofAlgebraic? ({repr a.toAlgebraic})).getD (Hex.panicWith RealAlgebraicNumber.zero \"RealAlgebraicNumber.repr: nonreal result\")"
+  reprPrec a prec := Repr.addAppParen (Std.Format.text
+    s!"(RealAlgebraicNumber.ofAlgebraic? ({repr a.toAlgebraic})).getD (Hex.panicWith RealAlgebraicNumber.zero \"RealAlgebraicNumber.repr: nonreal result\")") prec
 
 end RealAlgebraicNumber
 end Hex

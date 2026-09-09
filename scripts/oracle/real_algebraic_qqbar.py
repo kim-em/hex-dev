@@ -19,6 +19,11 @@ from fractions import Fraction
 from typing import Any
 
 
+PYTHON_FLINT_VERSION = "0.9.0"
+FLINT_VERSION = "3.6.0"
+VERSION = f"python-flint {PYTHON_FLINT_VERSION} / FLINT {FLINT_VERSION}"
+
+
 class Unavailable(RuntimeError):
     """The pinned oracle or its required C capability is unavailable."""
 
@@ -43,9 +48,9 @@ class QQBar:
         try:
             import flint
         except ImportError as exc:
-            raise Unavailable("python-flint 0.9.0 is required") from exc
-        if (flint.__version__, flint.__FLINT_VERSION__) != ("0.9.0", "3.6.0"):
-            raise Unavailable("supported oracle is python-flint 0.9.0 / FLINT 3.6.0")
+            raise Unavailable(f"{VERSION} is required") from exc
+        if (flint.__version__, flint.__FLINT_VERSION__) != (PYTHON_FLINT_VERSION, FLINT_VERSION):
+            raise Unavailable(f"supported oracle is {VERSION}")
         if C.sizeof(C.c_long) != 8 or C.sizeof(C.c_void_p) != 8:
             raise Unavailable("qqbar adapter requires the pinned 64-bit LP64 wheel ABI")
         directory = Path(flint.__file__).resolve().parent.parent / "python_flint.libs"
@@ -68,9 +73,9 @@ class QQBar:
             "gr_cmp": (integer, [ptr, ptr, ptr, ptr]),
             "gr_poly_init": (None, [ptr, ptr]), "gr_poly_clear": (None, [ptr, ptr]),
             "gr_poly_set_coeff_scalar": (integer, [ptr, signed, ptr, ptr]),
-            "gr_poly_roots": (integer, [ptr, ptr, ptr, integer, ptr]),
             "gr_poly_roots_other": (integer, [ptr, ptr, ptr, ptr, integer, ptr]),
             "gr_vec_init": (None, [ptr, signed, ptr]), "gr_vec_clear": (None, [ptr, ptr]),
+            # v3.6.0 fmpz_vec.h: resizable-vector API, distinct from _fmpz_vec_*.
             "fmpz_vec_init": (None, [ptr, signed]), "fmpz_vec_clear": (None, [ptr]),
             "fmpz_get_si": (signed, [ptr]), "qqbar_is_rational": (integer, [ptr]),
         }
@@ -84,6 +89,12 @@ class QQBar:
                 func.restype, func.argtypes = result, args
         except AttributeError as exc:
             raise Unavailable(f"missing FLINT capability: {exc}") from exc
+        # Scalar root identity needs only roots_other. A missing general-root
+        # entry point must not disable scalar comparisons or integer root balls.
+        self.general_roots = getattr(self.lib, "gr_poly_roots", None)
+        if self.general_roots is not None:
+            self.general_roots.restype = integer
+            self.general_roots.argtypes = [ptr, ptr, ptr, integer, ptr]
         for name in ("real_qqbar", "complex_qqbar", "fmpz"):
             ctx = _Context()
             getattr(self.lib, f"gr_ctx_init_{name}")(C.byref(ctx))
@@ -156,6 +167,8 @@ class QQBar:
         General real algebraic coefficients use gr_poly_roots directly.
         The zero polynomial is handled by the caller's universal-set convention.
         """
+        if not integer and self.general_roots is None:
+            raise Unavailable("FLINT general algebraic-coefficient roots are unavailable")
         output = self.complex if complex_output else self.real
         source = self.integer if integer else output
         poly, roots, mult = _Vector(), _Vector(), _Vector()
@@ -170,7 +183,7 @@ class QQBar:
                 status = self.lib.gr_poly_roots_other(C.byref(roots), C.byref(mult),
                     C.byref(poly), C.byref(source), 0, C.byref(output))
             else:
-                status = self.lib.gr_poly_roots(C.byref(roots), C.byref(mult),
+                status = self.general_roots(C.byref(roots), C.byref(mult),
                     C.byref(poly), 0, C.byref(output))
             self.check(status, "polynomial roots")
             if roots.length != mult.length:

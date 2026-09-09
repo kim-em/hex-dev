@@ -206,6 +206,13 @@ section Regression
 
 variable [Laws]
 
+example (a b : RealAlgebraicNumber) : a + b = add a b := rfl
+example (a b : RealAlgebraicNumber) : a * b = mul a b := rfl
+example (a : RealAlgebraicNumber) (n : Nat) : a ^ n = natPow a n := rfl
+example (a : RealAlgebraicNumber) (n : Int) : a ^ n = intPow a n := rfl
+example (a b : RealAlgebraicNumber) : Ord.compare a b = compare a b := rfl
+example (a b : RealAlgebraicNumber) : (a ≤ b) = (compare a b ≠ .gt) := rfl
+
 example : Std.LawfulOrderMin RealAlgebraicNumber := inferInstance
 example : Std.LawfulOrderMax RealAlgebraicNumber := inferInstance
 example : Std.LawfulEqOrd RealAlgebraicNumber := inferInstance

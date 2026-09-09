@@ -12,9 +12,13 @@ open Hex
 open Hex.RealAlgebraicNumber (ofRat ofAlgebraic?)
 
 #guard ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[0, 1] 0)).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result")) == (ofRat 0)
+#guard (some ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[0, 1] 0)).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result"))) == some (ofRat 0)
 
 #guard ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[3, 2] (-1.50))).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result")) == (ofRat (-3 / 2))
+#guard (some ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[3, 2] (-1.50))).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result"))) == some (ofRat (-3 / 2))
 
 #guard ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] 1.414)).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result")) == ((ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0)
+#guard (some ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] 1.414)).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result"))) == some ((ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0)
 
 #guard ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (-1.414))).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result")) == (-((ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0))
+#guard (some ((RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (-1.414))).getD (Hex.panicWith RealAlgebraicNumber.zero "RealAlgebraicNumber.repr: nonreal result"))) == some (-((ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0))

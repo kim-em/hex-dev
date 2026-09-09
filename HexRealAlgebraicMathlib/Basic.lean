@@ -259,18 +259,42 @@ theorem beq_iff (a b : RealAlgebraicNumber) : (a == b) = true ↔ a = b := by
     Complex.ofReal_ratCast]
   exact AlgebraicNumber.smul_toComplex q a.toAlgebraic
 
+/-- The real interpretation preserves powers written with notation. -/
+@[simp] theorem pow_toReal (a : RealAlgebraicNumber) (n : Nat) :
+    (a ^ n).toReal = a.toReal ^ n := natPow_toReal a n
+
+/-- The real interpretation preserves integer powers written with notation. -/
+@[simp] theorem zpow_toReal (a : RealAlgebraicNumber) (n : Int) :
+    (a ^ n).toReal = a.toReal ^ n := intPow_toReal a n
+
+/-- The real interpretation preserves rational scalar notation. -/
+@[simp] theorem qsmul_toReal (q : Rat) (a : RealAlgebraicNumber) :
+    (q • a).toReal = (q : ℝ) * a.toReal := smul_toReal q a
+
+/-- The real interpretation preserves natural scalar notation. -/
+@[simp] theorem nsmul_toReal (n : Nat) (a : RealAlgebraicNumber) :
+    (n • a).toReal = (n : ℝ) * a.toReal := by
+  change (smul (n : Rat) a).toReal = _
+  simpa only [Rat.cast_natCast] using smul_toReal (n : Rat) a
+
+/-- The real interpretation preserves integer scalar notation. -/
+@[simp] theorem zsmul_toReal (n : Int) (a : RealAlgebraicNumber) :
+    (n • a).toReal = (n : ℝ) * a.toReal := by
+  change (smul (n : Rat) a).toReal = _
+  simpa only [Rat.cast_intCast] using smul_toReal (n : Rat) a
+
 /-- Exact comparison agrees with comparison of real values. -/
 theorem compare_eq (a b : RealAlgebraicNumber) :
     compare a b = Ord.compare a.toReal b.toReal :=
   AlgebraicNumber.realCompare_eq _ _ a.property b.property
 
 /-- Strict order is the strict order on real values. -/
-@[simp] theorem lt_iff (a b : RealAlgebraicNumber) : a < b ↔ a.toReal < b.toReal := by
+theorem lt_iff (a b : RealAlgebraicNumber) : a < b ↔ a.toReal < b.toReal := by
   change compare a b = .lt ↔ _
   rw [compare_eq, compare_lt_iff_lt]
 
 /-- Non-strict order is the non-strict order on real values. -/
-@[simp] theorem le_iff (a b : RealAlgebraicNumber) : a ≤ b ↔ a.toReal ≤ b.toReal := by
+theorem le_iff (a b : RealAlgebraicNumber) : a ≤ b ↔ a.toReal ≤ b.toReal := by
   change compare a b ≠ .gt ↔ _
   simp only [compare_eq, ne_eq, compare_gt_iff_gt, not_lt]
 

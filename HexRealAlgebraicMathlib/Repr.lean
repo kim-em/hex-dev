@@ -79,7 +79,9 @@ open HexRootsMathlib AlgebraicNumber.Display
 
 /-- The algebraic value of the nearest-root term emitted by the canonical real representation.
 The rational coordinate is exactly the signed scaled integer used by `Display.decimal`;
-the imaginary coordinate is omitted by the real branch of the printer. -/
+the imaginary coordinate is omitted by the real branch of the printer.
+This models the numeric term, not Lean string parsing. Generated `ReprChecks`
+compile actual printed expressions to test that separate syntax boundary. -/
 @[expose] noncomputable def reprTerm (a : RealAlgebraicNumber) : AlgebraicNumber :=
   a.toAlgebraic.p.rootNear
     (decimalValue a.toAlgebraic.rep.1.square.re.toRat (digitsFor (mahlerPrec a.toAlgebraic.p)))

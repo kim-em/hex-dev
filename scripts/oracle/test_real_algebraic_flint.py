@@ -52,6 +52,12 @@ class ExactOracle(unittest.TestCase):
         self.checker = oracle.Checker(self.q)
         self.addCleanup(self.q.close)
 
+    def test_missing_general_roots_preserves_scalar_identity(self):
+        self.q.general_roots = None
+        self.assertEqual(self.q.compare(self.checker.value(rat(1)), self.q.number(1)), 0)
+        with self.assertRaises(Unavailable):
+            self.q.roots([self.q.number(-2), self.q.number(0), self.q.number(1)])
+
     def test_versions_are_pinned(self):
         import flint
         with mock.patch.object(flint, "__FLINT_VERSION__", "unsupported"):

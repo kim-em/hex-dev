@@ -100,10 +100,10 @@ theorem abs_eq (a : RealAlgebraicNumber) : abs a = |a| := by
   split
   · rename_i h
     rw [neg_toReal, abs_of_neg]
-    simpa using h
+    simpa only [lt_iff, zero_toReal] using h
   · rename_i h
     rw [abs_of_nonneg]
-    simpa using h
+    simpa only [le_iff, zero_toReal] using (le_of_not_gt h)
 
 /-- The executable sign agrees with the sign of the represented real value. -/
 theorem sign_eq (a : RealAlgebraicNumber) :
