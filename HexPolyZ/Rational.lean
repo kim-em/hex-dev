@@ -689,10 +689,8 @@ private theorem rat_dvd_scale_of_dvd (u : Rat) {d p : DensePoly Rat} :
 nonzero leading coefficient, identifying it with the last stored coefficient. -/
 private theorem rat_leadingCoeff_ne_zero_of_pos_size (p : DensePoly Rat) (hpos : 0 < p.size) :
     p.leadingCoeff ≠ 0 := by
-  have hidx : p.coeffs.size - 1 < p.coeffs.size := by
-    simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
   have hlead_eq : p.leadingCoeff = p.coeff (p.size - 1) := by
-    simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+    exact DensePoly.leadingCoeff_eq_coeff_last p hpos
   rw [hlead_eq]
   exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 

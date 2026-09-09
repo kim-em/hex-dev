@@ -84,10 +84,8 @@ private theorem divMod_spec [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
       have hcoeffs : g.coeffs.size ≠ 0 := by
         simpa [DensePoly.isZero, Array.isEmpty_iff_size_eq_zero] using hgzero
       simpa [DensePoly.size, Nat.pos_iff_ne_zero] using hcoeffs
-    have hidx : g.coeffs.size - 1 < g.coeffs.size := by
-      simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hgpos
     have hlead_eq : g.leadingCoeff = g.coeff (g.size - 1) := by
-      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+      exact DensePoly.leadingCoeff_eq_coeff_last g hgpos
     have hlead_ne : g.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
       rw [hlead_eq]
       exact DensePoly.coeff_last_ne_zero_of_pos_size g hgpos
@@ -172,10 +170,7 @@ private theorem divMod_remainder_degree_lt
       omega
     · exact Nat.pos_of_ne_zero hzero
   have hlead_eq : lead = m.coeff (m.size - 1) := by
-    unfold lead DensePoly.leadingCoeff DensePoly.coeff
-    have hidx : m.coeffs.size - 1 < m.coeffs.size := by
-      simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos_size
-    simp [DensePoly.size]
+    exact DensePoly.leadingCoeff_eq_coeff_last m hpos_size
   have hlead_ne : lead ≠ (Zero.zero : ZMod64 p) := by
     rw [hlead_eq]
     exact DensePoly.coeff_last_ne_zero_of_pos_size m hpos_size
@@ -554,10 +549,8 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
       omega
     have hlead_ne : m.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
       have hpos : 0 < m.size := by omega
-      have hidx : m.coeffs.size - 1 < m.coeffs.size := by
-        simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
       have hlead_eq : m.leadingCoeff = m.coeff (m.size - 1) := by
-        simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+        exact DensePoly.leadingCoeff_eq_coeff_last m hpos
       have hcoeff_ne := DensePoly.coeff_last_ne_zero_of_pos_size m hpos
       rw [hlead_eq]
       exact hcoeff_ne
@@ -681,10 +674,8 @@ theorem zmod_div_one [PrimeModulus p] (a : ZMod64 p) :
 private theorem cancel_lead_at_pos_size [PrimeModulus p]
     (m : DensePoly (ZMod64 p)) (hsize : 0 < m.size) (a : ZMod64 p) :
     a - (a / m.leadingCoeff) * m.leadingCoeff = (Zero.zero : ZMod64 p) := by
-  have hidx : m.coeffs.size - 1 < m.coeffs.size := by
-    simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hsize
   have hlead_eq : m.leadingCoeff = m.coeff (m.size - 1) := by
-    simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+    exact DensePoly.leadingCoeff_eq_coeff_last m hsize
   have hlead_ne : m.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
     rw [hlead_eq]
     exact DensePoly.coeff_last_ne_zero_of_pos_size m hsize

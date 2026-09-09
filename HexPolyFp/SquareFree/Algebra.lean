@@ -1143,7 +1143,7 @@ theorem fpPoly_leadingCoeff_ne_zero_of_isZero_false
       Nat.pos_iff_ne_zero] using hzero
   have hlast := DensePoly.coeff_last_ne_zero_of_pos_size f hpos
   have hlead : DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-    simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+    exact DensePoly.leadingCoeff_eq_coeff_last f hpos
   rw [hlead]
   exact hlast
 

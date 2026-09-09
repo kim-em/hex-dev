@@ -352,11 +352,7 @@ private theorem divModMonicModSquare_reconstruct_congr
 /-- `coeff_last_eq_leadingCoeff` identifies the last coefficient of a nonempty polynomial with its leading coefficient. -/
 private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
     f.coeff (f.size - 1) = f.leadingCoeff := by
-  cases f with
-  | mk coeffs normalized =>
-      have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
-      have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
-      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+  exact (DensePoly.leadingCoeff_eq_coeff_last f hpos).symm
 
 /-- `monic_of_coeff_eq_one_and_high_coeff_zero` builds monicity from a coefficient equal to one with all higher coefficients zero. -/
 private theorem monic_of_coeff_eq_one_and_high_coeff_zero

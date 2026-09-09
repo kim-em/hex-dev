@@ -1441,11 +1441,7 @@ whenever `f` has positive size. This identifies the array `back?` slot with
 `leadingCoeff`, the workhorse for reading monicity off the top entry. -/
 private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
     f.coeff (f.size - 1) = f.leadingCoeff := by
-  cases f with
-  | mk coeffs normalized =>
-      have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
-      have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
-      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+  exact (DensePoly.leadingCoeff_eq_coeff_last f hpos).symm
 
 /-- A monic polynomial is nonempty: its `size` is positive. A zero-size `f` would
 have leading coefficient `0`, contradicting `leadingCoeff = 1`. This rules out the
