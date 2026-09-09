@@ -46,7 +46,9 @@ is the best of several repetitions after a warm-up; results are routed
 through an opaque sink and a doubled-batch scaling self-check guards
 against the compiler hoisting the timed call. Measured on chungus2 (AMD
 EPYC 9455) on 2026-09-07; raw data in
-`reports/bench-results/hexgraphiso-isograph-chungus2.jsonl`.
+`reports/bench-results/hexgraphiso-comparison-chungus2.jsonl`. Each figure is
+written as an SVG, which is what the manual publishes, and as a PNG
+beside it for pasting into a thread.
 
 The nauty columns come from the standalone driver, not the in-process
 FFI comparator. That distinction used to matter enormously and no longer
@@ -62,7 +64,7 @@ Traces 308, dense nauty 307,
 `IsoGraph.Canon.canonical` 296, and
 `Hex.GraphIso.canonicalize` 281.
 
-![five-way cactus](figures/hexgraphiso-isograph-cactus.svg)
+![five-way cactus](figures/hexgraphiso-comparison-cactus.svg)
 
 ### Dense nauty is the weakest of the three C engines
 
@@ -97,8 +99,6 @@ constant on the families that matter:
 | tree | 0.52× | 0.04× | 538× | 240× |
 | union | 0.17× | 0.25× | 100× | 37× |
 
-![the three nauty engines by family](figures/hexgraphiso-nauty-engines.svg)
-
 Sparse nauty is never worse than dense — same algorithm, better data
 structure. Traces is dramatically better on the sparse and the
 WL-hard families (0.02× on the Cai-Fürer-Immerman graphs and the
@@ -118,31 +118,31 @@ same two numbers are 29× and
 the first is the honest answer to "how far from the state of the art",
 the second to "how far from the algorithm this is a transcription of".
 
-| family | n | nauty (median) | Hex `canonicalize` | IsoGraph `canonical` | IsoGraph / Hex | Hex `runColored` | IsoGraph + build | sparse | Traces | Hex nodes | IsoGraph nodes |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| random | 10–3072 | 0.041 ms | 70× | 16.9× | 0.24× | 41× | 19.2× | 0.46× | 0.32× | 1.00× | 1.00× |
-| sparse-random | 32–3072 | 0.067 ms | 98× | 14.3× | 0.13× | 32× | 18.2× | 0.21× | 0.20× | 1.00× | 1.00× |
-| paley | 13–1181 | 0.070 ms | 35× | 20.6× | 0.61× | 24× | 21.6× | 0.55× | 1.36× | 1.00× | 1.00× |
-| grid | 9–2304 | 0.076 ms | 32× | 4.5× | 0.15× | 18× | 6.7× | 0.15× | 0.24× | 1.00× | 1.50× |
-| hypercube | 8–2048 | 0.142 ms | 28× | 4.9× | 0.24× | 26× | 5.6× | 0.23× | 0.54× | 1.00× | 1.25× |
-| circulant-12 | 8–3072 | 0.166 ms | 33× | 2.9× | 0.10× | 26× | 4.3× | 0.11× | 0.31× | 1.00× | 1.00× |
-| circulant-1248 | 17–2049 | 0.242 ms | 32× | 2.9× | 0.09× | 26× | 4.4× | 0.13× | 0.31× | 1.00× | 1.00× |
-| tree | 16–3072 | 0.252 ms | 40× | 15.1× | 0.39× | 28× | 16.3× | 0.52× | 0.04× | 1.00× | 1.00× |
-| projective-plane | 14–1986 | 0.354 ms | 24× | 28.8× | 1.00× | 16× | 29.6× | 0.21× | 0.41× | 1.00× | 1.87× |
-| hadamard | 16–2048 | 1.103 ms | 21× | 9.2× | 0.47× | 21× | 9.3× | 0.62× | 0.36× | 1.00× | 1.13× |
-| union | 32–3072 | 1.173 ms | 19× | 6.8× | 0.35× | 15× | 7.1× | 0.17× | 0.25× | 1.00× | 1.00× |
-| lattice | 25–1849 | 1.363 ms | 18× | 5.4× | 0.30× | 17× | 5.7× | 0.35× | 0.26× | 1.00× | 0.57× |
-| johnson | 10–2016 | 4.801 ms | 17× | 7.9× | 0.47× | 16× | 8.0× | 0.33× | 0.27× | 1.00× | 0.99× |
-| latin | 25–2025 | 4.912 ms | 24× | 8.4× | 0.38× | 21× | 9.0× | 0.42× | 0.18× | 1.00× | 0.53× |
-| shrunken-multipede | 36–1956 | 6.107 ms | 17× | 27.8× | 1.29× | 17× | 26.8× | 0.12× | 1.48× | 1.00× | 1.72× |
-| kneser | 10–2016 | 11.746 ms | 17× | 7.9× | 0.51× | 16× | 7.9× | 0.70× | 0.27× | 1.00× | 1.49× |
-| cubic | 16–2048 | 22.253 ms | 9× | 1.7× | 0.28× | 9× | 1.7× | 0.23× | 0.00× | 1.00× | 0.03× |
-| steiner | 50–1716 | 48.744 ms | 15× | 8.3× | 0.57× | 15× | 8.6× | 0.15× | 0.04× | 1.00× | 0.27× |
-| cfi | 42–1946 | 213.814 ms | 22× | 0.8× | 0.07× | 23× | 0.8× | 0.03× | 0.02× | 1.00× | 1.00× |
-| multipede | 66–2046 | 285.840 ms | 17× | 1.0× | 0.09× | 17× | 1.0× | 0.06× | 0.02× | 1.00× | 0.42× |
-| **all 333** | 8–3072 | 0.659 ms | 29× | 7.6× | 0.29× | 23× | 8.3× | 0.36× | 0.27× | 1.00× | 1.00× |
+| family | n | nauty (median) | Hex `canonicalize` | IsoGraph `canonical` | IsoGraph / Hex | Hex `runColored` | IsoGraph + build | IsoGraph / Hex, matched | sparse | Traces | Hex nodes | IsoGraph nodes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| random | 10–3072 | 0.041 ms | 70× | 16.9× | 0.24× | 41× | 19.2× | 0.61× | 0.46× | 0.32× | 1.00× | 1.00× |
+| sparse-random | 32–3072 | 0.067 ms | 98× | 14.3× | 0.13× | 32× | 18.2× | 0.83× | 0.21× | 0.20× | 1.00× | 1.00× |
+| paley | 13–1181 | 0.070 ms | 35× | 20.6× | 0.61× | 24× | 21.6× | 0.95× | 0.55× | 1.36× | 1.00× | 1.00× |
+| grid | 9–2304 | 0.076 ms | 32× | 4.5× | 0.15× | 18× | 6.7× | 0.45× | 0.15× | 0.24× | 1.00× | 1.50× |
+| hypercube | 8–2048 | 0.142 ms | 28× | 4.9× | 0.24× | 26× | 5.6× | 0.33× | 0.23× | 0.54× | 1.00× | 1.25× |
+| circulant-12 | 8–3072 | 0.166 ms | 33× | 2.9× | 0.10× | 26× | 4.3× | 0.21× | 0.11× | 0.31× | 1.00× | 1.00× |
+| circulant-1248 | 17–2049 | 0.242 ms | 32× | 2.9× | 0.09× | 26× | 4.4× | 0.20× | 0.13× | 0.31× | 1.00× | 1.00× |
+| tree | 16–3072 | 0.252 ms | 40× | 15.1× | 0.39× | 28× | 16.3× | 0.53× | 0.52× | 0.04× | 1.00× | 1.00× |
+| projective-plane | 14–1986 | 0.354 ms | 24× | 28.8× | 1.00× | 16× | 29.6× | 1.26× | 0.21× | 0.41× | 1.00× | 1.87× |
+| hadamard | 16–2048 | 1.103 ms | 21× | 9.2× | 0.47× | 21× | 9.3× | 0.58× | 0.62× | 0.36× | 1.00× | 1.13× |
+| union | 32–3072 | 1.173 ms | 19× | 6.8× | 0.35× | 15× | 7.1× | 0.50× | 0.17× | 0.25× | 1.00× | 1.00× |
+| lattice | 25–1849 | 1.363 ms | 18× | 5.4× | 0.30× | 17× | 5.7× | 0.34× | 0.35× | 0.26× | 1.00× | 0.57× |
+| johnson | 10–2016 | 4.801 ms | 17× | 7.9× | 0.47× | 16× | 8.0× | 0.52× | 0.33× | 0.27× | 1.00× | 0.99× |
+| latin | 25–2025 | 4.912 ms | 24× | 8.4× | 0.38× | 21× | 9.0× | 0.46× | 0.42× | 0.18× | 1.00× | 0.53× |
+| shrunken-multipede | 36–1956 | 6.107 ms | 17× | 27.8× | 1.29× | 17× | 26.8× | 1.45× | 0.12× | 1.48× | 1.00× | 1.72× |
+| kneser | 10–2016 | 11.746 ms | 17× | 7.9× | 0.51× | 16× | 7.9× | 0.60× | 0.70× | 0.27× | 1.00× | 1.49× |
+| cubic | 16–2048 | 22.253 ms | 9× | 1.7× | 0.28× | 9× | 1.7× | 0.29× | 0.23× | 0.00× | 1.00× | 0.03× |
+| steiner | 50–1716 | 48.744 ms | 15× | 8.3× | 0.57× | 15× | 8.6× | 0.60× | 0.15× | 0.04× | 1.00× | 0.27× |
+| cfi | 42–1946 | 213.814 ms | 22× | 0.8× | 0.07× | 23× | 0.8× | 0.08× | 0.03× | 0.02× | 1.00× | 1.00× |
+| multipede | 66–2046 | 285.840 ms | 17× | 1.0× | 0.09× | 17× | 1.0× | 0.09× | 0.06× | 0.02× | 1.00× | 0.42× |
+| **all 333** | 8–3072 | 0.659 ms | 29× | 7.6× | 0.29× | 23× | 8.3× | 0.49× | 0.36× | 0.27× | 1.00× | 1.00× |
 
-Ratios are per-instance medians against standalone nauty 2.9.3 on the same instance; the sixth column is the head-to-head. The last two are search-tree sizes against nauty's: `canonicalize` transcribes nauty's search and visits exactly its nodes on every instance, so its whole distance from nauty is per-node cost, while IsoGraph is a different search and its node count is what varies.
+Ratios are per-instance medians against standalone nauty 2.9.3 on the same instance; the sixth column is the head-to-head on the public entry points and the ninth the same head-to-head with the result shapes matched — `runColored` against `canonical` charged the dense-to-native conversion, neither of them building a canonical graph to hand back. The last two are search-tree sizes against nauty's: `canonicalize` transcribes nauty's search and visits exactly its nodes on every instance, so its whole distance from nauty is per-node cost, while IsoGraph is a different search and its node count is what varies.
 
 | family | instances | nauty dense largest n solved | nauty sparse largest n solved | Traces largest n solved | Hex `canonicalize` largest n solved | IsoGraph `canonical` largest n solved |
 |---|---|---|---|---|---|---|
@@ -169,21 +169,28 @@ Ratios are per-instance medians against standalone nauty 2.9.3 on the same insta
 
 Largest instance each implementation canonicalized inside the sweep's per-instance budget; a parenthesised size is the largest the corpus offered, so the family was cut off there.
 
-![per-family scaling](figures/hexgraphiso-isograph-families.svg)
+![per-family scaling](figures/hexgraphiso-comparison-families.svg)
 
-A cross marks where an implementation first went over budget. On the
+All five on one axis per family. A cross marks where an implementation
+first went over budget. On the
 projective planes IsoGraph stops at 114 vertices while everything else
 runs to 1986. On the shrunken multipedes — the hardest family published
 — everyone stops, IsoGraph first and sparse nauty last. On random cubic
 graphs dense nauty stops before IsoGraph does, while Traces never breaks
 a sweat.
 
-The two Lean libraries' entry points do not return the same thing, so
-the comparison is drawn again with the shapes matched: `runColored`
-against `canonical` charged the dense-to-native conversion, and dense
-nauty charged the dense-to-bitset fill.
-
-![matched result shapes](figures/hexgraphiso-isograph-cactus-likeforlike.svg)
+The two Lean libraries' entry points do not return the same thing, and
+that is worth a column rather than a shrug. `canonicalize` returns the
+canonical *graph* and pays a dense relabelling to build it; `canonical`
+returns the packed certificate, the label and the automorphisms found.
+Matching the shapes — `Nauty.runColored` against `canonical` charged the
+dense-to-native conversion, neither of them handing back a graph — moves
+the head-to-head from **0.29×** to **0.49×**. Both are in the table: on
+the entry points a user actually calls, IsoGraph is about 3.4× faster;
+on equal work returned, about 2×. The gap between those two numbers is
+the price of `canonicalize` returning a graph, and it is largest exactly
+where the search is cheap and the relabelling is not — 0.13× against
+0.83× on sparse random graphs, 0.15× against 0.45× on grids.
 
 ## The node-count column
 
