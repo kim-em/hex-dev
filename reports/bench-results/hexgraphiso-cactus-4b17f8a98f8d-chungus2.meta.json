@@ -1,0 +1,18 @@
+{
+  "fingerprint": "4b17f8a98f8d",
+  "host": "chungus2",
+  "date": "2026-09-09T01:39:01Z",
+  "describe": "dcc5e8c221a0",
+  "label": "graphiso-state-cleanup",
+  "cpu": 1,
+  "load_after": [
+    1.1806640625,
+    5.58056640625,
+    41.43994140625
+  ],
+  "command": "taskset -c 1 scripts/bench/graphiso_cactus_sweep.sh graphiso-state-cleanup",
+  "context": "Concurrent source review. Tactic timeouts retained; only orphaned timed-out Lean children were terminated after the plotter advanced. Compilation was allowed to use host CPUs; measurements retained CPU 1.",
+  "terminated_timeout_orphans": [
+    1681466
+  ]
+}
