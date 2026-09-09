@@ -1057,7 +1057,7 @@ variable {n k : Nat}
 /-- The per-node invariant of the transcribed search at `level` with
 claimed cell count `numcells`. -/
 structure SearchOk (G : Colored n k) (level numcells : Nat)
-    (st : SearchSt n) : Prop where
+    (st : Search n) : Prop where
   labSize : st.lab.size = n
   ptnSize : st.ptn.size = n
   reach : CellsReach G st.lab
@@ -1075,7 +1075,7 @@ the partition preserved exactly wherever it is (or becomes) closed at
 `B`, the labelling permuted only within cells of the entry partition
 at `lev`, and `canonlab` kept or installed reached. -/
 structure SearchOut (G : Colored n k) (B lev : Nat)
-    (st st' : SearchSt n) : Prop where
+    (st st' : Search n) : Prop where
   labSize : st'.lab.size = st.lab.size
   ptnSize : st'.ptn.size = st.ptn.size
   reach : CellsReach G st'.lab
@@ -1092,21 +1092,21 @@ structure SearchOut (G : Colored n k) (B lev : Nat)
     (st'.canonlab.size = n ∧ CellsReach G st'.canonlab)
 
 theorem SearchOut.refl (G : Colored n k) (B lev : Nat)
-    {st : SearchSt n} (hreach : CellsReach G st.lab) :
+    {st : Search n} (hreach : CellsReach G st.lab) :
     SearchOut G B lev st st :=
   ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _,
     Or.inl rfl, Or.inl rfl, Or.inl rfl⟩
 
 /-- A quartet call cannot move the entry of a singleton cell. -/
 theorem SearchOut.atSingleton {G : Colored n k} {B lev : Nat}
-    {st st' : SearchSt n} (h : SearchOut G B lev st st') {a : Nat}
+    {st st' : Search n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1) : st'.lab[a]! = st.lab[a]! :=
   (cellsPerm_singleton h.perm hc).symm
 
 /-- A stored first leaf keeps the entry of a singleton cell, provided the
 incoming stored leaf already has that entry. -/
 theorem SearchOut.firstAtSingleton {G : Colored n k} {B lev : Nat}
-    {st st' : SearchSt n} (h : SearchOut G B lev st st') {a : Nat}
+    {st st' : Search n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1)
     (hold : st.firstlab[a]! = st.lab[a]!) :
     st'.firstlab[a]! = st.lab[a]! := by
@@ -1118,7 +1118,7 @@ theorem SearchOut.firstAtSingleton {G : Colored n k} {B lev : Nat}
 /-- A stored canonical leaf keeps the entry of a singleton cell, provided
 the incoming stored leaf already has that entry. -/
 theorem SearchOut.canonAtSingleton {G : Colored n k} {B lev : Nat}
-    {st st' : SearchSt n} (h : SearchOut G B lev st st') {a : Nat}
+    {st st' : Search n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1)
     (hold : st.canonlab[a]! = st.lab[a]!) :
     st'.canonlab[a]! = st.lab[a]! := by
@@ -1234,7 +1234,7 @@ theorem bcount_succ_of_vals {ptn : Array Nat} {lev nn : Nat}
 
 /-- Compose two call effects at matching bounds. -/
 theorem SearchOut.trans {G : Colored n k} {B : Nat}
-    {st1 st2 st3 : SearchSt n} (h12 : SearchOut G B B st1 st2)
+    {st1 st2 st3 : Search n} (h12 : SearchOut G B B st1 st2)
     (h23 : SearchOut G B B st2 st3) : SearchOut G B B st1 st3 := by
   refine ⟨h23.labSize.trans h12.labSize,
     h23.ptnSize.trans h12.ptnSize, h23.reach, ?_, ?_, ?_, ?_, ?_⟩
@@ -1271,7 +1271,7 @@ theorem SearchOut.trans {G : Colored n k} {B : Nat}
 
 /-- Weaken the preservation bound. -/
 theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
-    {st st' : SearchSt n} (h : SearchOut G B lev st st')
+    {st st' : Search n} (h : SearchOut G B lev st st')
     (hB : B' ≤ B) : SearchOut G B' lev st st' :=
   ⟨h.labSize, h.ptnSize, h.reach,
     fun q hq => h.low q (by omega), h.perm, h.firstStore, h.canonStore,
@@ -1308,7 +1308,7 @@ theorem breakout_lab_size (lab ptn : Array Nat)
 /-- The end of the partition stays closed: position `n - 1` is an
 initial boundary. -/
 theorem searchOk_end {G : Colored n k}
-    {level numcells : Nat} {st : SearchSt n} (hn0 : 0 < n)
+    {level numcells : Nat} {st : Search n} (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (h1 : 1 ≤ level) :
     st.ptn[st.ptn.size - 1]! ≤ level := by
   have hinitEnd := (initial_nodeOk G hn0).ptnEnd
@@ -1321,7 +1321,7 @@ theorem searchOk_end {G : Colored n k}
 the closed positions, provided the final partition satisfies the
 level dichotomy (which `recover` restores unconditionally). -/
 theorem searchOk_of_out {G : Colored n k}
-    {level numcells : Nat} {st st' : SearchSt n}
+    {level numcells : Nat} {st st' : Search n}
     (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
     (hout : SearchOut G level level st st')
     (hvals : ∀ q : Nat, q < n →
@@ -1344,7 +1344,7 @@ theorem searchOk_of_out {G : Colored n k}
 /-- Individualizing a target-cell vertex yields the child invariant
 one level down with one more cell. -/
 theorem breakout_searchOk {G : Colored n k}
-    {level numcells tc len o : Nat} {st st' : SearchSt n} (hn0 : 0 < n)
+    {level numcells tc len o : Nat} {st st' : Search n} (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen2 : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len)
@@ -1404,7 +1404,7 @@ theorem breakout_searchOk {G : Colored n k}
 /-- The effect of individualization followed by a child call, in the
 parent loop's frame. -/
 theorem breakout_child_out {G : Colored n k}
-    {level numcells tc len o : Nat} {st stC stD : SearchSt n}
+    {level numcells tc len o : Nat} {st stC stD : Search n}
     (hn0 : 0 < n) (hok : SearchOk G level numcells st) (h1 : 1 ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen2 : 2 ≤ len)
     (hrange : tc + len ≤ n) (ho : o < len)
@@ -1478,7 +1478,7 @@ theorem breakout_child_out {G : Colored n k}
     · exact Or.inr h
 
 theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
-    {st st' st'' : SearchSt n} (h : SearchOut G B lev st st')
+    {st st' st'' : Search n} (h : SearchOut G B lev st st')
     (hl : st''.lab = st'.lab) (hp : st''.ptn = st'.ptn)
     (hf : st''.firstlab = st'.firstlab)
     (hc : st''.canonlab = st'.canonlab) : SearchOut G B lev st st'' :=
@@ -1493,7 +1493,7 @@ theorem SearchOut.congr {G : Colored n k} {B lev : Nat}
     by rw [hc]; exact h.canon⟩
 
 theorem searchOut_id {G : Colored n k} (B lev : Nat)
-    {stX : SearchSt n} {labR : Array Nat} (hl : stX.lab = labR)
+    {stX : Search n} {labR : Array Nat} (hl : stX.lab = labR)
     (hreach : CellsReach G labR) : SearchOut G B lev stX stX :=
   SearchOut.refl G B lev (by rw [hl]; exact hreach)
 
@@ -1509,7 +1509,7 @@ theorem match_option_or {α γ : Type} {P : γ → Prop}
 labelling and partition. -/
 theorem refine_searchOk {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) {level numcells : Nat}
-    {st st2 : SearchSt n} (hok : SearchOk G level numcells st)
+    {st st2 : Search n} (hok : SearchOk G level numcells st)
     (h1 : 1 ≤ level)
     (hl : st2.lab =
       (refine ctx level st.lab st.ptn st.active numcells).lab)
@@ -1565,7 +1565,7 @@ theorem refine_searchOk {G : Colored n k} {ctx : Ctx n}
 /-- Compose the refine step with the rest of a node's work. -/
 theorem refine_loop_out {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) {level numcells : Nat}
-    {st STL stX : SearchSt n} (hok : SearchOk G level numcells st)
+    {st STL stX : Search n} (hok : SearchOk G level numcells st)
     (h1 : 1 ≤ level)
     (hl : STL.lab =
       (refine ctx level st.lab st.ptn st.active numcells).lab)
@@ -1652,7 +1652,7 @@ theorem refine_loop_out {G : Colored n k} {ctx : Ctx n}
 `SearchOut` low-boundary contract identifies their partitions exactly.
 The labelling may still differ by a within-cell permutation. -/
 theorem SearchOut.ptnEq {G : Colored n k} {level numcells : Nat}
-    {st out : SearchSt n} (h : SearchOut G level level st out)
+    {st out : Search n} (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out) : out.ptn = st.ptn := by
   apply Array.ext h.ptnSize

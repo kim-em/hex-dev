@@ -510,21 +510,13 @@ The first release keeps `schreier = false`, matching the pinned defaults. A
 later complete automorphism-group API may add a permutation-group dependency,
 but it must not silently change `canon` or `label`.
 
-One known divergence from the pinned source remains, and it is to be
-removed rather than adopted. At a discrete node whose refinement codes
-agree with the first leaf's along the whole path, `nauty.c:934-940`
-admits the code-1 automorphism when
-`gca_first >= noncheaplevel || isautom(..)`, skipping the `isautom` scan
-inside a subtree the cheap guard has already cleared. The Lean search
-(`Nauty.processnode` in `HexGraphIso/Nauty/Search/Search.lean`) instead
-requires the refinement code at the next level to be `codeSentinel`, and
-always runs `isautom`. The two tests admit the same leaves except on a
-collision of the fifteen-bit refinement code, which neither the committed
-fixture corpus nor the campaign exercises, so no conformance run
-distinguishes them. The Lean search pays one `isautom` scan per code-1
-leaf inside a cheap subtree for the difference. Restoring nauty's test
-needs the all-leaves theorem for a cheap subtree, which is proved
-(`Nauty.descPath_leafRows_all`).
+At a discrete node whose refinement codes agree with the first leaf,
+`Nauty.classify` implements nauty's code-1 admission test:
+`gcaFirst >= noncheaplevel || isautom ctx st.workperm`. Within a subtree
+covered by the cheap guard, `descPath_leafRows_all` supplies the leaf-row
+equality that validates the scatter permutation. The other branch checks
+the permutation with `isautom` before admission. The accepted permutation
+is recorded in the full generator trace and the bounded pruning workspace.
 
 ## Canonical certificates
 
@@ -627,7 +619,7 @@ The `Nauty` namespace is organized by the part each concept plays:
 
 | directory | content |
 | --- | --- |
-| `Nauty/Search/` | the structured executable: packed vertex sets (`VSet`), refinement, a flat `Engine.Search` state, and mutually recursive `node` and `sweep`. The direct engine is proved equal to the policy-parameterized `Generic.node` and `Generic.sweep`. `Search.lean` retains the nauty correspondence table; `State.lean` holds primitive transitions and their mathematical state view. |
+| `Nauty/Search/` | the structured executable: packed vertex sets (`VSet`), refinement, one flat `Search` state, and mutually recursive `node` and `sweep`. The direct engine is proved equal to the policy-parameterized `Generic.node` and `Generic.sweep`. `Search.lean` retains the nauty correspondence table; `State.lean` holds that state and the primitive transitions used directly by both executable and proofs. |
 | `Nauty/Spec/` | the declarative canonical form `canonSpecKey` and `specCanon`, its invariance under isomorphism (`specCanon_invariant`, `iso_iff_specCanon_eq`) and its achievement by a reachable labelling (`specCanon_iso`), with the equivariance and cell-permutation theory both proofs use. |
 | `Nauty/Cert/` | the certificate data, the trusted `checkCanon` replay with `checkCanon_sound`, the untrusted trace-driven producer, and the replay spine proving the producer's certificate is accepted whenever the claimed key dominates the subtree and every recorded generator is a checked automorphism. |
 | `Nauty/Policy/` | generic recursion contracts and their engine instances. The maximum contract transports nonlocal witnesses to their receivers; generation combines actual sibling coverage with smaller point-stabilizer generation. `KeyComplete` and `Complete` export unconditional whole-engine correctness. |
@@ -635,7 +627,6 @@ The `Nauty` namespace is organized by the part each concept plays:
 | `Nauty/Invariant/` | the per-event facts about the search state the induction applies at each arm: refinement-code comparison, leaf faithfulness, domination, orbit soundness, generator-store validity, cell reachability, and target-cell agreement. |
 | `Nauty/Equitable/` | `refine` returns a partition equitable with respect to the exhausted active set. |
 | `Nauty/SmallCell/` | the `cheapautom` theory: for an equitable partition passing nauty's cheap guard, the cell stabilizer in the automorphism group acts transitively on every cell (`stabilizer_transitive`), and every leaf of the subtree below such a node realizes an automorphism with the first leaf (`descPath_leafRows_all`). |
-| `Nauty/Model/` | an abstract pruned evaluator of `canonSpecKey`, proved to compute the pairwise maximum of an incumbent and an unpruned subtree key. No declaration on the theorem path uses it. It is kept as a source of lemmas about pruning stated without the imperative state. |
 
 The public surface is then total with no fallback arm anywhere:
 

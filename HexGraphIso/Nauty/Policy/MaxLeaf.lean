@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.RouteKey
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -49,7 +50,7 @@ theorem NodeInput.leaf_best {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   have hhistory : History ctx tcLevel (f.codes ++ [p.2.1]).length
       (f.codes ++ [p.2.1]).length n p.2.2.2.2.2 := by
     simpa only [hlength, hd] using hh
-  have hpartition : SearchOk G (f.codes ++ [p.2.1]).length n p.2.2.2.2.2.view := by
+  have hpartition : SearchOk G (f.codes ++ [p.2.1]).length n p.2.2.2.2.2 := by
     simpa only [hlength, hd] using hok
   have hbest := hhistory.leaf_best hi hn0 (by rw [hlength]; exact h.frame.positive)
     hpartition hcomparison.canonical hcomparison.first hcomparison.nonempty hcomparison.lower
@@ -85,4 +86,4 @@ theorem NodeInput.leaf_best {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   rw [hd, hbest, ← hkey]
   exact congrArg (fun best => some (incMax best (f.key ctx tcLevel))) hm.2
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

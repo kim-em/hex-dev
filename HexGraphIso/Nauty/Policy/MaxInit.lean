@@ -25,15 +25,16 @@ import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
 /-- A node refinement preserves every strictly older ancestor frame. -/
-theorem extend_refinement {G : Colored n k} {t level nc mc : Nat} {base st out : SearchSt n}
+theorem extend_refinement {G : Colored n k} {t level nc mc : Nat} {base st out : Search n}
     (ht : 1 ≤ t) (htl : t < level) (hb : SearchOk G t nc base)
     (hs : SearchOk G level mc st) (he : SearchOut G t t base st)
     (ho : SearchOut G (level - 1) level st out) :
@@ -102,14 +103,14 @@ theorem NodeInput.prepare_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : 
   let v := visit ctx f.level f.numcells f.entry
   let c := if first then recordFirst f.level v.2.1 v.2.2 else compareCodes f.level v.2.1 v.2.2
   have hv := R.visit f.level f.numcells f.entry h.frame.positive h.frame.partition
-  have hc : Generic.Local G Search.view f.level v.1 v.2.2 c := by
+  have hc : Generic.Local G (fun st => st) f.level v.1 v.2.2 c := by
     dsimp only [c]
     split
     · exact R.record _ _ _ _ hv.1
     · exact R.compare _ _ _ _ hv.1
   have ht := R.target first f.level v.1 c h.frame.positive hc.ok
   have hh := R.cheap first f.level _ _ ht.1.ok
-  have ho : SearchOut G (f.level - 1) f.level f.entry.view out.view :=
+  have ho : SearchOut G (f.level - 1) f.level f.entry out :=
     hv.2 _ (hc.effect.trans (ht.1.effect.trans hh.effect))
   have hfirst : out.firstlab = f.entry.firstlab := by
     dsimp only [out, Loop.prepare, l]
@@ -445,7 +446,7 @@ theorem NodeInput.other_input {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Na
   have hcomp := l.comparison h.frame rfl h.entry
   have href := h.references
   change p.2.2.2.2.gcaFirst < f.level ∧ _ at href
-  change Engine.SweepPre G ctx tcLevel false f.level p.1 p.2.1.toNat
+  change Nauty.SweepPre G ctx tcLevel false f.level p.1 p.2.1.toNat
     ((p.2.2.1.nextElem none).getD 0) (p.2.2.1.nextElem none) p.2.2.1 p.2.2.2.2 at hp
   refine ⟨h.frame, rfl, rfl, rfl, rfl, rfl, ⟨bs, fs, h.entry⟩, hok, hok,
     SearchOut.refl G _ _ hok.reach, hp.equitable, hp.target, hcell, hlen, hr, ?_,
@@ -480,4 +481,4 @@ theorem NodeInput.other_input {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Na
   · intro _
     exact ⟨(by intro hf; cases hf), fun _ => href.1⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

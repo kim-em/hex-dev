@@ -36,11 +36,12 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Generation.Frame
 import all HexGraphIso.Nauty.Generation.RefPath
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -58,7 +59,7 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
     {base : List (Fin n)} {gs : List (Perm n)}
     (hbase : ∀ b : Fin n, st.fixedpts.mem b.val = true ↔ b ∈ base)
     (htrace : Generation.Realizes G gs
-      (Engine.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.genTrace.toList)
+      (Nauty.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.genTrace.toList)
     (hopen : (Generic.prepareFirst { g := rowsOf G } tcLevel level numcells st).1 ≠ n) :
     ∃ guide : Fin n,
       guide.val = (((Generic.prepareFirst { g := rowsOf G } tcLevel level numcells st).2.2.1.nextElem none).getD 0) ∧
@@ -72,7 +73,7 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
     let l : Loop n := ⟨⟨level, numcells, cs, st⟩, true⟩
     let ready := cheapCheck true level r.2.2.2.2
     let ch := child true level r.2.1.toNat tv ready
-    let raw := Engine.node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1) ch
+    let raw := Nauty.node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1) ch
     let left := { afterChildFirst level tv raw.2 with fixedpts := raw.2.fixedpts.erase tv }
     let restored := recoverLevels level (recoverPtn (n + 2) level left)
     let parent : Parent n := ⟨l, ready, tv, bs, fs⟩
@@ -94,7 +95,7 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
         Bool.true_and, beq_self_eq_true, ↓reduceIte] using hh
     have hret : raw.1 = .unwind level false := by
       simpa only [raw, ch, ready, r, ctx, policy, Generic.Policy.child, Generic.Policy.cheapCheck, Nat.add_sub_cancel] using firstPath_returns tail (fun f hf => hn f (by omega)) hc
-    have hcall : Engine.node (true && tv == tv) ctx (n + 2) tcLevel fuel
+    have hcall : Nauty.node (true && tv == tv) ctx (n + 2) tcLevel fuel
         (level + 1) (r.1 + 1) (child true level r.2.1.toNat tv ready) =
           (.unwind level false, raw.2) := by
       simp only [Bool.true_and, beq_self_eq_true]
@@ -125,7 +126,7 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
     obtain ⟨targets, key, href, hm⟩ := firstPath_witness tail (fun q hq => hn q (by omega)) hc
     change Nauty.Generation.RefPath ctx tcLevel raw.2.allsamelevel (level + 1)
       (ch.refined ctx (level + 1) (r.1 + 1)) targets key at href
-    change Nauty.Generation.Matches ctx (level + 1) raw.2.view targets key at hm
+    change Nauty.Generation.Matches ctx (level + 1) raw.2 targets key at hm
     have hrefChild := href
     rw [firstChild_refined, ← hat] at hrefChild
     have hleaf : Nauty.Generation.HasLeaf ctx tcLevel level R (r.2.1.toNat :: targets)
@@ -245,13 +246,13 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
       exact hh)) htv'
     rw [hcall] at hcanon
     simp only [Bool.true_and, beq_self_eq_true, ↓reduceIte] at hcanon
-    have htraceLoop : Generation.Realizes G gs (Engine.sweep true ctx (n + 2) tcLevel fuel (n + 1)
+    have htraceLoop : Generation.Realizes G gs (Nauty.sweep true ctx (n + 2) tcLevel fuel (n + 1)
         level r.1 r.2.1.toNat tv (some tv) r.2.2.1 0 ready).2.2.genTrace.toList := by
       apply htrace.mono
       intro γ hγ
       rw [node_first]
       simp only [beq_eq_false_iff_ne.mpr hopen, Bool.false_eq_true, ↓reduceIte, htv, Option.getD_some]
-      generalize hx : Engine.sweep true ctx (n + 2) tcLevel fuel (n + 1)
+      generalize hx : Nauty.sweep true ctx (n + 2) tcLevel fuel (n + 1)
         level r.1 r.2.1.toNat tv (some tv) r.2.2.1 0 ready = result at hγ ⊢
       obtain ⟨exit, index, result⟩ := result
       cases exit <;> dsimp only
@@ -271,4 +272,4 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
     dsimp only [restored, left, afterChildFirst] at htraceLoop ⊢
     exact htraceLoop
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

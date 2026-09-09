@@ -16,10 +16,11 @@ import all HexGraphIso.Nauty.Policy.MaxContract
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 /-- The actual nonempty root initializes the complete first-path
 contract. Only strictly smaller maximum and trace calls remain premises.
@@ -31,12 +32,12 @@ theorem root_first {n k : Nat} (G : Colored n k) (hn0 : 0 < n)
       (Generic.nodeCall { g := rowsOf G } (n + 2) 100 f)) :
     let ctx : Ctx n := { g := rowsOf G }
     let f := root G
-    let out := Engine.node true ctx (n + 2) 100 (n + 2) f.level f.numcells f.entry
+    let out := Nauty.node true ctx (n + 2) 100 (n + 2) f.level f.numcells f.entry
     out.1 = .unwind 0 false ∧
       ∃ targets key, Generation.RefPath ctx 100 out.2.allsamelevel 1
         (f.entry.refined ctx 1 f.numcells) targets key ∧
-        Generation.Matches ctx 1 out.2.view targets key := by
+        Generation.Matches ctx 1 out.2 targets key := by
   obtain ⟨last, leaf, hp⟩ := initial_path G hn0
   exact firstPath_complete hp hn (root_input G hn0)
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

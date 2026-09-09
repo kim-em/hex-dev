@@ -22,7 +22,7 @@ import all HexGraphIso.Nauty.Generation.Matching
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -52,7 +52,7 @@ including the terminal sentinel. Neither conclusion assumes key maximality. -/
 theorem FirstRef.occurs {ctx : Ctx n} {tcLevel level : Nat}
     {root : RefineSt n} {st : Search n} (h : FirstRef ctx tcLevel level root st) :
     ∃ targets key, Generation.HasLeaf ctx tcLevel level root targets key ∧
-      Generation.Matches ctx level st.view targets key := by
+      Generation.Matches ctx level st targets key := by
   let codes := pathCodes ctx level root h.path
   refine ⟨h.path.map Prod.fst, ⟨codes ++ [codeSentinel], leafRows ctx st.firstlab⟩,
     ⟨h.path, h.last, h.leaf, h.descent, Selects.reference h.selects, h.discrete, rfl, ?_⟩, ?_⟩
@@ -89,7 +89,7 @@ theorem FirstPre.occurs {G : Colored n k} {ctx : Ctx n}
     (hempty : st.genTrace = #[]) (hfuel : n + 1 ≤ level + fuel) :
     ∃ targets key,
       Generation.HasLeaf ctx tcLevel level (st.refined ctx level numcells) targets key ∧
-      Generation.Matches ctx level (node true ctx inf tcLevel fuel level numcells st).2.view
+      Generation.Matches ctx level (node true ctx inf tcLevel fuel level numcells st).2
         targets key := by
   obtain ⟨last, leaf, hp⟩ := firstPath_exists (ctx := ctx) (tcLevel := tcLevel)
     hn0 h.positive h.partition (Max.empty_orbits h.orbits hempty) hfuel
@@ -97,4 +97,4 @@ theorem FirstPre.occurs {G : Colored n k} {ctx : Ctx n}
     h.equitable h.targets h.codes
   exact href.occurs
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

@@ -16,7 +16,7 @@ import all HexGraphIso.Nauty.Policy.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -26,7 +26,7 @@ theorem Aligned.first_leaf {G : Colored n k} {ctx : Ctx n} {tcLevel level : Nat}
     {root : RefineSt n} {st : Search n}
     (h : Aligned ctx st.gcaFirst root level level n st)
     (href : FirstRef ctx tcLevel st.gcaFirst root st) (hdepth : Depth href.last st)
-    (hsmall : SubtreeOk ctx st.gcaFirst root) (hok : SearchOk G level n st.view)
+    (hsmall : SubtreeOk ctx st.gcaFirst root) (hok : SearchOk G level n st)
     (heq : st.eqlevFirst = level) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
@@ -52,7 +52,7 @@ theorem History.first_key {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     {cs fs : List Nat} {st : Search n}
     (h : History ctx tcLevel cs.length cs.length n st)
     (hcheap : st.noncheaplevel ≤ st.gcaFirst)
-    (hok : SearchOk G cs.length n st.view)
+    (hok : SearchOk G cs.length n st)
     (hcodes : FirstCodeInv n cs fs st.firstcode st.eqlevFirst)
     (heq : st.eqlevFirst = cs.length) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
@@ -76,4 +76,4 @@ theorem Codes.leaf_le {ctx : Ctx n} {cs bs : List Nat} {st : Search n}
   rw [keyLe, frozen_lt_keyCmp hm]
   decide
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

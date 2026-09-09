@@ -18,13 +18,8 @@ variable {n k : Nat}
 
 /-! # Cheap-automorphism ledger boundary -/
 
-/-- The implicit automorphism pair remains valid while search stays
-strictly below the level at which that pair was frozen.  At the frozen
-level itself the implication is dormant: `processnode` does not insert an
-implicit pair there, and a failed cheap-automorphism guard will move the
-boundary before the next descent. -/
 structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
-    (st : SearchSt n) : Prop where
+    (st : Search n) : Prop where
   positive : 0 < st.noncheaplevel
   labSize : st.lab.size = n
   ptnSize : st.ptn.size = n
@@ -34,10 +29,8 @@ structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
       (fmptn st.lab st.ptn st.noncheaplevel n).1
       (fmptn st.lab st.ptn st.noncheaplevel n).2
 
-/-- At a node entry, the runtime bound turns the strict-boundary ledger
-invariant into the premise consumed by `processnode`. -/
 theorem CheapOk.ready {ctx : Ctx n} {rlab rptn : Array Nat} {level : Nat}
-    {st : SearchSt n} (h : CheapOk ctx rlab rptn level st)
+    {st : Search n} (h : CheapOk ctx rlab rptn level st)
     (hbound : st.noncheaplevel ≤ level) (hne : level ≠ st.noncheaplevel) :
     PairOk ctx.g rptn rlab 1
       (fmptn st.lab st.ptn st.noncheaplevel n).1
@@ -47,7 +40,7 @@ theorem CheapOk.ready {ctx : Ctx n} {rlab rptn : Array Nat} {level : Nat}
 /-- The cheap-boundary invariant depends only on the current labelling,
 partition, and boundary level. -/
 theorem CheapOk.ofFrames {ctx : Ctx n} {rlab rptn : Array Nat}
-    {level : Nat} {st out : SearchSt n}
+    {level : Nat} {st out : Search n}
     (h : CheapOk ctx rlab rptn level st)
     (hlab : out.lab = st.lab) (hptn : out.ptn = st.ptn)
     (hncl : out.noncheaplevel = st.noncheaplevel) :
@@ -68,7 +61,7 @@ theorem CheapOk.ofFrames {ctx : Ctx n} {rlab rptn : Array Nat}
 
 /-- Reopening below `level` preserves every `fmptn` frozen at or above
 the root and at or below `level`. -/
-theorem recover_fmptn {st : SearchSt n} {inf level saved : Nat}
+theorem recover_fmptn {st : Search n} {inf level saved : Nat}
     (hsize : n ≤ st.ptn.size)
     (hend : st.ptn[st.ptn.size - 1]! ≤ saved)
     (hsaved : saved ≤ level) (hinf : level < inf) :
@@ -97,16 +90,16 @@ theorem recover_fmptn {st : SearchSt n} {inf level saved : Nat}
 /-- Recovery either parks the boundary just below the next child, where
 the strict pair condition is dormant, or retains an older frozen pair. -/
 theorem CheapOk.recover {ctx : Ctx n} {rlab rptn : Array Nat}
-    {current level inf : Nat} {st : SearchSt n}
+    {current level inf : Nat} {st : Search n}
     (h : CheapOk ctx rlab rptn current st) (hle : level ≤ current)
     (hlevel : 1 ≤ level) (hinf : level < inf) :
     CheapOk ctx rlab rptn level (Nauty.recover n inf level st) := by
   have hncl : (Nauty.recover n inf level st).noncheaplevel =
       if level < st.noncheaplevel then level + 1
       else st.noncheaplevel := by
-    rw [Nauty.recover]
+    rw [Nauty.recover, recoverLevels, recoverPtn]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-      apply_ite SearchSt.noncheaplevel, ite_self]
+      apply_ite Search.noncheaplevel, ite_self]
   constructor
   · rw [hncl]
     split
@@ -142,7 +135,7 @@ theorem CheapOk.recover {ctx : Ctx n} {rlab rptn : Array Nat}
 /-- Writing a boundary at or above the logical level suspends the pair
 condition without changing the partition facts needed to revive it. -/
 theorem CheapOk.park {ctx : Ctx n} {rlab rptn : Array Nat}
-    {old current boundary : Nat} {st : SearchSt n}
+    {old current boundary : Nat} {st : Search n}
     (h : CheapOk ctx rlab rptn old st) (hpos : 0 < boundary)
     (hcurrent : current ≤ boundary) :
     CheapOk ctx rlab rptn current
@@ -154,7 +147,7 @@ theorem CheapOk.park {ctx : Ctx n} {rlab rptn : Array Nat}
 /-- A valid pair at the current boundary extends the invariant through
 the next logical level. -/
 theorem CheapOk.next {ctx : Ctx n} {rlab rptn : Array Nat}
-    {level : Nat} {st : SearchSt n}
+    {level : Nat} {st : Search n}
     (h : CheapOk ctx rlab rptn level st)
     (hpair : st.noncheaplevel = level →
       PairOk ctx.g rptn rlab 1
@@ -171,7 +164,7 @@ theorem CheapOk.next {ctx : Ctx n} {rlab rptn : Array Nat}
 old current cells, so every pair frozen at a strictly smaller level is
 unchanged. -/
 theorem CheapOk.refine {ctx : Ctx n} {rlab rptn : Array Nat}
-    {level numcells : Nat} {st out : SearchSt n}
+    {level numcells : Nat} {st out : Search n}
     (h : CheapOk ctx rlab rptn level st) (hlevel : 1 ≤ level)
     (hlab : out.lab =
       (Nauty.refine ctx level st.lab st.ptn st.active numcells).lab)
@@ -237,7 +230,7 @@ theorem CheapOk.refine {ctx : Ctx n} {rlab rptn : Array Nat}
 /-- Individualizing inside a current cell does not change the implicit
 pair frozen at an older cheap boundary. -/
 theorem CheapOk.breakout {ctx : Ctx n} {rlab rptn : Array Nat}
-    {level tc len o : Nat} {st out : SearchSt n}
+    {level tc len o : Nat} {st out : Search n}
     (h : CheapOk ctx rlab rptn (level + 1) st)
     (hlevel : 1 ≤ level)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
@@ -304,7 +297,7 @@ theorem CheapOk.breakout {ctx : Ctx n} {rlab rptn : Array Nat}
 /-- The initial search boundary is one, so its strict pair condition is
 empty at the root. -/
 theorem CheapOk.root {G : Colored n k} {ctx : Ctx n} {numcells : Nat}
-    {st : SearchSt n} (hn0 : 0 < n)
+    {st : Search n} (hn0 : 0 < n)
     (hok : SearchOk G 1 numcells st) (hncl : st.noncheaplevel = 1) :
     CheapOk ctx (initialPartition G).1
       (initPtn n (n + 2) (initialPartition G).2) 1 st := by

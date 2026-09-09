@@ -15,10 +15,11 @@ import all HexGraphIso.Nauty.Policy.Target
 import all HexGraphIso.Nauty.Policy.FirstEntry
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -76,7 +77,7 @@ theorem Loop.choice {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     rw [hm]
     rfl
   | false =>
-    have hin : Engine.NodePre G ctx tcLevel l.node.level l.node.numcells l.node.entry ∧
+    have hin : Nauty.NodePre G ctx tcLevel l.node.level l.node.numcells l.node.entry ∧
         Comparison ctx l.node.codes bs fs l.node.entry := by
       simpa only [Entry, he, Bool.false_eq_true, ↓reduceIte] using h
     let c := compareCodes l.node.level v.2.1 v.2.2
@@ -133,4 +134,4 @@ theorem Parent.collapse {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     exact p.cheap_key h hb (p.small h hb hcheap) hs hgsz hsymm hloop
   · exact Or.inl hd
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

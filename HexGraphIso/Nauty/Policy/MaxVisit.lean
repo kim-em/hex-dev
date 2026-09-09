@@ -17,10 +17,11 @@ import all HexGraphIso.Nauty.Policy.MaxSuspend
 import all HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -36,8 +37,8 @@ theorem SweepInput.received_result {G : Colored n k} {tcLevel fuel cfuel : Nat}
     (hs : (contract G tcLevel).sweepValid fuel cfuel
       (Generic.sweepCall { g := rowsOf G } (n + 2) tcLevel fuel cfuel))
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
-    (hcall : Engine.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind level short, out)) :
+    (hcall : Nauty.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind level short, out)) :
     let ctx : Ctx n := { g := rowsOf G }
     let middle := if first && tv == tv1 then afterChildFirst level tv1 out else out
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
@@ -92,8 +93,8 @@ theorem SweepInput.visit {G : Colored n k} {tcLevel fuel cfuel : Nat}
       (Generic.sweepCall { g := rowsOf G } (n + 2) tcLevel fuel cfuel))
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
     (hreturn : ∀ short out,
-      Engine.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-        (level + 1) (numcells + 1) (Engine.child first level tc tv st) =
+      Nauty.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
+        (level + 1) (numcells + 1) (Nauty.child first level tc tv st) =
           (.unwind level short, out) →
       let ctx : Ctx n := { g := rowsOf G }
       let middle := if first && tv == tv1 then afterChildFirst level tv1 out else out
@@ -125,4 +126,4 @@ theorem SweepInput.visit {G : Colored n k} {tcLevel fuel cfuel : Nat}
     obtain ⟨hgen, hanc⟩ := hreturn short out hcall
     exact h.received_result hn hs hvisit hcall hgen hanc
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

@@ -26,10 +26,11 @@ import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -42,7 +43,7 @@ theorem firstPath_returns {G : Colored n k} {tcLevel fuel level numcells last : 
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel f))
     {cs bs fs : List Nat} {parents : Parents n}
     (hi : NodeInput G { g := rowsOf G } tcLevel fuel true ⟨level, numcells, cs, st⟩ bs fs parents) :
-    (Engine.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).1 =
+    (Nauty.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).1 =
       .unwind (level - 1) false := by
   induction hp generalizing cs bs fs parents with
   | leaf fuel level numcells st hdisc =>
@@ -55,7 +56,7 @@ theorem firstPath_returns {G : Colored n k} {tcLevel fuel level numcells last : 
     let l : Loop n := ⟨⟨level, numcells, cs, st⟩, true⟩
     let ready := cheapCheck true level r.2.2.2.2
     let ch := child true level r.2.1.toNat tv ready
-    let raw := Engine.node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1) ch
+    let raw := Nauty.node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1) ch
     let left := { afterChildFirst level tv raw.2 with fixedpts := raw.2.fixedpts.erase tv }
     let restored := recoverLevels level (recoverPtn (n + 2) level left)
     let parent : Parent n := ⟨l, ready, tv, bs, fs⟩
@@ -77,7 +78,7 @@ theorem firstPath_returns {G : Colored n k} {tcLevel fuel level numcells last : 
         Bool.true_and, beq_self_eq_true, ↓reduceIte] using hh
     have hret : raw.1 = .unwind level false := by
       simpa only [raw, ch, ready, r, ctx, policy, Generic.Policy.child, Generic.Policy.cheapCheck, Nat.add_sub_cancel] using ih (fun f hf => hn f (by omega)) hc
-    have hcall : Engine.node (true && tv == tv) ctx (n + 2) tcLevel fuel
+    have hcall : Nauty.node (true && tv == tv) ctx (n + 2) tcLevel fuel
         (level + 1) (r.1 + 1) (child true level r.2.1.toNat tv ready) =
           (.unwind level false, raw.2) := by
       simp only [Bool.true_and, beq_self_eq_true]
@@ -94,9 +95,9 @@ theorem firstPath_returns {G : Colored n k} {tcLevel fuel level numcells last : 
       (r.2.2.1.nextElem (some tv)) r.2.2.1
       (if restored.orbits[tv]! == tv then 0 + 1 else 0) restored l bs' fs' parents at hs'
     obtain ⟨targets, key, href, hm⟩ := firstPath_witness hp hn hi
-    have hr : restored.reference = (Engine.node true ctx (n + 2) tcLevel
+    have hr : restored.reference = (Nauty.node true ctx (n + 2) tcLevel
         (fuel + 1) level numcells st).2.reference := by
-      have hraw : raw.2.reference = (Engine.node true ctx (n + 2) tcLevel
+      have hraw : raw.2.reference = (Nauty.node true ctx (n + 2) tcLevel
           (fuel + 1) level numcells st).2.reference :=
         (firstPath_reference tail).trans (firstPath_reference hp).symm
       exact ((referencePolicy ctx (n + 2) tcLevel).recover level left).trans hraw
@@ -122,7 +123,7 @@ theorem firstPath_returns {G : Colored n k} {tcLevel fuel level numcells last : 
     have hd := hs'.tail_done (hn fuel (Nat.lt_succ_self _)) hpast hit
       hfields.2.1.symm hfields.2.2.symm (show R.numcells = r.1 from rfl)
       href.occurs hm' hg heq hsame
-    have hsweep : (Engine.sweep true ctx (n + 2) tcLevel fuel (n + 1) level r.1
+    have hsweep : (Nauty.sweep true ctx (n + 2) tcLevel fuel (n + 1) level r.1
         r.2.1.toNat tv (some tv) r.2.2.1 0 ready).1 = .done := by
       have he := (hs.receive_call (hn fuel (Nat.lt_succ_self _)) hv hcall
         (Generic.sweepCall ctx (n + 2) tcLevel fuel n)).1
@@ -147,11 +148,11 @@ theorem firstPath_complete {G : Colored n k} {tcLevel fuel level numcells last :
     {cs bs fs : List Nat} {parents : Parents n}
     (hi : NodeInput G { g := rowsOf G } tcLevel fuel true ⟨level, numcells, cs, st⟩ bs fs parents) :
     let ctx : Ctx n := { g := rowsOf G }
-    let out := Engine.node true ctx (n + 2) tcLevel fuel level numcells st
+    let out := Nauty.node true ctx (n + 2) tcLevel fuel level numcells st
     out.1 = .unwind (level - 1) false ∧
       ∃ targets key, Generation.RefPath ctx tcLevel out.2.allsamelevel level
         (st.refined ctx level numcells) targets key ∧
-        Generation.Matches ctx level out.2.view targets key :=
+        Generation.Matches ctx level out.2 targets key :=
   ⟨firstPath_returns hp hn hi, firstPath_witness hp hn hi⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

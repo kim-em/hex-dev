@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Policy.History
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -83,4 +83,4 @@ theorem Guided.depth {ctx : Ctx n} {tcLevel base last₁ last₂ : Nat}
         exact ih (iterOk_child hok hlvl hcell hne ho) hselect.2 htargets
           htail₂ hguided.2 hdisc₁ hdisc₂ hlab
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

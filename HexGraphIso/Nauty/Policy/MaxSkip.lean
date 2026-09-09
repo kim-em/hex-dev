@@ -21,11 +21,12 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Invariant.Orbits
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -37,7 +38,7 @@ theorem SweepInput.skip_phase {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
     (h : SweepInput G ctx tcLevel fuel cfuel first level numcells tc tv1 (some tv) cell index
       st l bs fs parents)
     (hskip : (!first || st.orbits[tv]! == tv) = false) :
-    first = true ∧ Engine.SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st ∧
+    first = true ∧ Nauty.SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st ∧
       Comparison ctx (l.codes ctx) bs fs st ∧ st.compCanon ≤ 0 := by
   have hf : first = true := by cases first <;> simp_all
   have hne : st.orbits[tv]! ≠ tv := by simpa only [hf, Bool.not_true, Bool.false_or, beq_eq_false_iff_ne] using hskip
@@ -141,4 +142,4 @@ theorem skip (G : Colored n k) (tcLevel : Nat) : SweepRule G tcLevel false := by
   simpa only [Generic.sweepStep, policy, Generic.Policy.orbit, hskip,
     Bool.false_eq_true, ↓reduceIte, Id.run_pure] using hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

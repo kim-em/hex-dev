@@ -26,10 +26,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Invariant.Orbits
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -72,7 +73,7 @@ theorem Parent.orbit_cover {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   change p.state.ptn = (p.loop.prepare ctx tcLevel).2.2.2.2.ptn at he
   have hv := h.chosen
   have hw := h.effect.window_eq h.cell
-  dsimp only [Search.view] at hw
+
   rw [← hw] at hv
   have hchosen : p.chosen < n := VSet.mem_lt h.chosen
   obtain ⟨_, _, w, hword, hend⟩ := (hi.orbits.2 p.chosen hchosen).2
@@ -91,7 +92,7 @@ theorem Parent.orbit_cover {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   have hk := hok.vertex_key hn0 h.node.positive hgsz ha hs h.cell h.range hv
     (by have := h.node.depth; omega : p.loop.node.level + 1 + (n - p.loop.node.level) ≤ n + 1) tcLevel
   have hc := h.earlier (wordPerm n w)[p.chosen]! hm (by rw [(hmap p.chosen hchosen).trans hend]; exact hlt)
-  dsimp only [Search.view] at hk
+
   rw [p.key h, Loop.key, hk]
   exact hc.grow hg
 
@@ -173,4 +174,4 @@ theorem auto_canon (G : Colored n k) (tcLevel : Nat) :
         have hd : level ≤ n := h.frame.depth
         omega
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

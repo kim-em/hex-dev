@@ -21,11 +21,12 @@ import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -117,4 +118,4 @@ theorem node_trace (G : Colored n k) (tcLevel : Nat) : NodeTraceRule G tcLevel :
       rw [f.emit_step _ hd]
       exact h.emit_keeps (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G)
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

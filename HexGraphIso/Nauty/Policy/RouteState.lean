@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.Recovery
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -40,8 +41,8 @@ theorem GuidedAt.congr {ctx : Ctx n} {store : Array Int} {tcLevel base level num
 theorem GuidedAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     {tcLevel base level numcells : Nat} {root : RefineSt n} {st out : Search n}
     (h : GuidedAt ctx tcLevel store base root level numcells st)
-    (hok : SearchOk G level numcells st.view)
-    (hout : SearchOut G level level st.view out.view) :
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOut G level level st out) :
     GuidedAt ctx tcLevel store base root level numcells
       (recoverLevels level (recoverPtn (n + 2) level out)) := by
   obtain ⟨current, hh, hl, hp, hc⟩ := h
@@ -50,7 +51,7 @@ theorem GuidedAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     rw [hl, hp]
     exact hout.perm
   refine ⟨{ current with lab := out.lab }, hh.setLab hsize hperm, ?_, ?_, hc⟩
-  · have he := congrArg SearchSt.lab (view_recover (n + 2) level out)
+  · have he := congrArg Search.lab (recover_eq (n + 2) level out)
     change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at he
     rw [Nauty.recover_lab] at he
     exact he.symm
@@ -85,4 +86,4 @@ theorem GuidedAt.equitable {ctx : Ctx n} {store : Array Int} {tcLevel base level
   obtain ⟨current, hg, hl, hp, _⟩ := h
   simpa only [hl, hp] using hg.equitable hok heq hacc hsymm
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

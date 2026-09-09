@@ -188,7 +188,7 @@ theorem shortprune {ctx : Ctx n} {level : Nat} {st : RefineSt n} (h : VisitCover
     (hcell : (tc, e) ∈ cells st.ptn level n)
     (hne : tc < e) (hlen : len = e + 1 - tc)
     (hcarry : ∀ {γ o j}, checkAutom ctx.g γ = true → CellStab st.ptn level st.lab γ →
-      o < len → j < len → γ[st.lab[tc + o]!]! = st.lab[tc + j]! → (P o ↔ P j)) {out : SearchSt n}
+      o < len → j < len → γ[st.lab[tc + o]!]! = st.lab[tc + j]! → (P o ↔ P j)) {out : Search n}
     (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
       PairOk ctx.g st.ptn st.lab level fix mcr) :
     VisitCover P st.lab tc len (Nauty.shortprune tcell out) cursor := by

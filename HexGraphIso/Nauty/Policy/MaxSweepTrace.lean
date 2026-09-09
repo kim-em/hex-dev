@@ -22,11 +22,12 @@ import all HexGraphIso.Nauty.Policy.MaxRules
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -41,8 +42,8 @@ theorem SweepInput.unwind_keeps {G : Colored n k} {tcLevel fuel cfuel : Nat}
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel))
     (next : Generic.SweepFn (Search n) n)
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
-    (hcall : Engine.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind target short, out))
+    (hcall : Nauty.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind target short, out))
     (ht : target < level) :
     let result := Generic.sweepStep (n + 2)
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel) next
@@ -52,7 +53,7 @@ theorem SweepInput.unwind_keeps {G : Colored n k} {tcLevel fuel cfuel : Nat}
   let middle := if first && tv == tv1 then afterChildFirst level tv1 out else out
   let cleaned := { middle with fixedpts := middle.fixedpts.erase tv }
   have hc : Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel (first && tv == tv1)
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind target short, out) := by
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind target short, out) := by
     simpa only [Generic.nodeCall, ← node_eq_generic] using hcall
   have hstep : Generic.sweepStep (n + 2)
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel) next
@@ -88,8 +89,8 @@ theorem SweepInput.received_keeps {G : Colored n k} {tcLevel fuel cfuel : Nat}
     (hs : (contract G tcLevel).sweepValid fuel cfuel
       (Generic.sweepCall { g := rowsOf G } (n + 2) tcLevel fuel cfuel))
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
-    (hcall : Engine.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind level short, out)) :
+    (hcall : Nauty.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind level short, out)) :
     let result := Generic.sweepStep (n + 2)
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel)
       (Generic.sweepCall { g := rowsOf G } (n + 2) tcLevel fuel cfuel)
@@ -134,4 +135,4 @@ theorem sweep_trace (G : Colored n k) (tcLevel : Nat) : SweepTraceRule G tcLevel
     simpa only [Generic.sweepStep, policy, Generic.Policy.orbit, hskip,
       Bool.false_eq_true, ↓reduceIte, Id.run_pure] using hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

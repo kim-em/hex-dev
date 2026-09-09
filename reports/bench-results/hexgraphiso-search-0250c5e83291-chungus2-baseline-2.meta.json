@@ -1,0 +1,28 @@
+{
+  "source": "e1e94bf2f0b6fdb1bc513f437ce21abb17406bba",
+  "cpu": 3,
+  "host": "chungus2",
+  "trial": 2,
+  "order": [
+    "candidate",
+    "baseline"
+  ],
+  "arm": "baseline",
+  "command": [
+    "/tmp/graphiso-cleanup-baseline/hexgraphiso_cactus",
+    "engine"
+  ],
+  "executable_sha256": "9df67b06a0b90d87a3609921577d81373cf04dc950a3ac4add66c8af743eaef0",
+  "started": "2026-09-09T00:34:19.745778+00:00",
+  "load_before": [
+    4.806640625,
+    4.0634765625,
+    4.1083984375
+  ],
+  "finished": "2026-09-09T00:34:24.081292+00:00",
+  "load_after": [
+    4.74169921875,
+    4.06201171875,
+    4.107421875
+  ]
+}

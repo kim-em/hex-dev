@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Reach
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -24,8 +25,8 @@ variable {n k : Nat}
 child and its refinement; it depends only on the parent partition. -/
 theorem child_shape {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Nat}
     {st : Search n} {cell : VSet n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (hshape : NodeShape n level st.ptn) :
     NodeShape n (level + 1)
       ((child first level tc tv st).refined ctx (level + 1) (numcells + 1)).ptn := by
@@ -35,7 +36,7 @@ theorem child_shape {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Nat}
     hlevel hok htarget htv
   have hlevel' : level < n := by
     have := hchild.1.bc
-    have := bcount_le (Generic.Policy.child (n := n) first level tc tv st).view.ptn (level + 1) n
+    have := bcount_le (Generic.Policy.child (n := n) first level tc tv st).ptn (level + 1) n
     omega
   obtain ⟨len, hcell, hmem⟩ := htarget
   obtain ⟨hc, hlen, hrange⟩ := hcell (mem_ne_empty htv)
@@ -52,7 +53,7 @@ theorem child_shape {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Nat}
 cheap-cell test at the current partition. -/
 theorem cheap_shape {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (heq : Equitable ctx level st.lab st.ptn)
+    (hok : SearchOk G level numcells st) (heq : Equitable ctx level st.lab st.ptn)
     (hcheap : (cheapCheck false level st).noncheaplevel ≤ level) : NodeShape n level st.ptn := by
   have hguard : cheapautom st.ptn level n = true := by
     unfold cheapCheck at hcheap
@@ -67,8 +68,8 @@ theorem cheap_shape {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
 /-- Recovery retains a parent's small-cell shape whenever the returning
 child has not replaced its saved boundary by a deeper one. -/
 theorem recover_shape {G : Colored n k} {level numcells : Nat} {st out : Search n}
-    (hok : SearchOk G level numcells st.view)
-    (hout : SearchOut G level level st.view out.view)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOut G level level st out)
     (hs : st.noncheaplevel ≤ level → NodeShape n level st.ptn)
     (hb : out.noncheaplevel = st.noncheaplevel ∨ level + 1 ≤ out.noncheaplevel)
     (hr : (recoverLevels level (recoverPtn (n + 2) level out)).noncheaplevel ≤ level) :
@@ -78,4 +79,4 @@ theorem recover_shape {G : Colored n k} {level numcells : Nat} {st out : Search 
   rw [recover_noncheap] at hr
   split at hr <;> omega
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

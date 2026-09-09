@@ -48,7 +48,6 @@ theorem DescPath.selected {σ : Renaming n} (hg : RowsMap σ ctx.g ctx.g) (tcLev
       ⟨(stPerm_target hg hU hsp).trans hs.1, hselect⟩, ?_, hleaf⟩
     simp only [List.map_cons, ht]
 
-namespace Engine
 
 /-- A checked row-preserving renaming relating the final labellings
 identifies descent depths whenever it stabilizes the common ancestor. -/
@@ -77,6 +76,5 @@ theorem Guided.depth_map {σ : Renaming n} {tcLevel base last₁ last₂ : Nat}
     exact he.symm.trans hlab
   exact Guided.depth hd hok hs (ht ▸ htarget) hcurrent hguided hdisc hdisc₂ hlabels
 
-end Engine
 
 end Hex.GraphIso.Nauty

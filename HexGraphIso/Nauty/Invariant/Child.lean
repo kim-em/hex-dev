@@ -30,7 +30,7 @@ theorem vertexKey_offset (ctx : Ctx n) (tcLevel fuel level : Nat)
 /-- A checked cell stabilizer identifies the child keys at the vertices
 it carries, independently of their offsets in the target cell. -/
 theorem SearchOk.vertex_key {G : Colored n k} {ctx : Ctx n}
-    {st : SearchSt n} {level numcells tc len v fuel : Nat} {γ : Array Nat}
+    {st : Search n} {level numcells tc len v fuel : Nat} {γ : Array Nat}
     (h : SearchOk G level numcells st) (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hgsz : ctx.g.size = n) (ha : checkAutom ctx.g γ = true)
     (hstab : CellStab st.ptn level st.lab γ)
@@ -66,7 +66,7 @@ theorem SearchOk.vertex_key {G : Colored n k} {ctx : Ctx n}
 entry frame, possibly at a different offset within the target cell.  The
 two resulting child labellings remain cell-equivalent. -/
 theorem SearchOut.breakoutPerm {G : Colored n k} {level numcells tc len o : Nat}
-    {st out : SearchSt n} (h : SearchOut G level level st out)
+    {st out : Search n} (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
@@ -160,7 +160,7 @@ theorem split_starts {ptn : Array Nat} {level tc len : Nat}
 the specification child key unchanged, despite within-cell label movement. -/
 theorem SearchOut.child_key {G : Colored n k} {ctx : Ctx n}
     {level numcells tc len o specFuel tcLevel : Nat}
-    {st out child : SearchSt n}
+    {st out child : Search n}
     (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st)
     (hout : SearchOk G level numcells out)
@@ -191,7 +191,7 @@ theorem SearchOut.child_key {G : Colored n k} {ctx : Ctx n}
     rw [hcptn, breakout_ptn]
   have hchildOk := breakout_searchOk (st' := child) hn0 hout hlevel
     hcellOut hlen hrange hoCur hclab' hcptn' hcanon
-  let refChild : SearchSt n :=
+  let refChild : Search n :=
     { st with
       lab := (breakout n st.lab st.ptn (level + 1) tc
         st.lab[tc + o]!).1
@@ -241,7 +241,7 @@ theorem SearchOut.child_key {G : Colored n k} {ctx : Ctx n}
 
 /-- Recovery preserves each target vertex's child specification. -/
 theorem SearchOut.vertex_key {G : Colored n k} {ctx : Ctx n}
-    {level numcells tc len v fuel tcLevel : Nat} {st out : SearchSt n}
+    {level numcells tc len v fuel tcLevel : Nat} {st out : Search n}
     (h : SearchOut G level level st out)
     (hok : SearchOk G level numcells st) (hout : SearchOk G level numcells out)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
@@ -252,7 +252,7 @@ theorem SearchOut.vertex_key {G : Colored n k} {ctx : Ctx n}
       vertexKey ctx tcLevel fuel level out.lab out.ptn tc numcells v := by
   obtain ⟨o, ho, he⟩ := mem_segN_iff.mp (mem_windowSet.mp hv).2
   let b := breakout n out.lab out.ptn (level + 1) tc v
-  let child : SearchSt n := { out with lab := b.1, ptn := b.2.1, active := b.2.2 }
+  let child : Search n := { out with lab := b.1, ptn := b.2.1, active := b.2.2 }
   have hchild := h.child_key (ctx := ctx) (tcLevel := tcLevel) (child := child) hok hout hn0 hlevel hc hlen hr ho
     (by change b.1 = _; rw [he]) (by change b.2.1 = _; rw [he])
     (by change b.2.2 = _; rw [he]) rfl hfuel
@@ -263,7 +263,7 @@ theorem SearchOut.vertex_key {G : Colored n k} {ctx : Ctx n}
   exact heq.trans hchild
 
 /-- The recovered labelling has the same target-cell vertex set. -/
-theorem SearchOut.window_eq {G : Colored n k} {level tc len : Nat} {st out : SearchSt n}
+theorem SearchOut.window_eq {G : Colored n k} {level tc len : Nat} {st out : Search n}
     (h : SearchOut G level level st out) (hc : IsCell st.ptn level tc len) :
     windowSet n st.lab tc len = windowSet n out.lab tc len := by
   apply VSet.ext

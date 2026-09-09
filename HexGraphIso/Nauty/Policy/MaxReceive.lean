@@ -23,10 +23,11 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Invariant.Stabilize
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -106,7 +107,6 @@ theorem SweepInput.pair {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
   intro i hi
   have hsz : st.lab.size = n := h.partition.labSize
   rw [getElem!_map_of_lt _ _ (by rw [hsz]; exact hi)]
-  rfl
 
 /-- A received short return supplies a valid pair in the frozen parent
 frame from its actual checked output and the parent's reference guide. -/
@@ -118,8 +118,8 @@ theorem SweepInput.short_pair {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
-    (hcall : Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st) = (.unwind level true, out)) :
+    (hcall : Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (Nauty.child first level tc tv st) = (.unwind level true, out)) :
     ∀ fix mcr, out.autos.back? = some (fix, mcr) →
       PairOk ctx.g (l.prepare ctx tcLevel).2.2.2.2.ptn
         (l.prepare ctx tcLevel).2.2.2.2.lab level fix mcr := by
@@ -146,8 +146,8 @@ theorem SweepInput.short_cover {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
-    (hcall : Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st) = (.unwind level true, out))
+    (hcall : Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (Nauty.child first level tc tv st) = (.unwind level true, out))
     (hr : let p : Parent n := ⟨l, st, tv, bs, fs⟩
       Generic.Result ((p.child ctx tcLevel).key ctx tcLevel)
         ((p.child ctx tcLevel).entry.key ctx bs) (out.best ctx) level
@@ -177,8 +177,8 @@ theorem SweepInput.long_cover {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
-    (hcall : Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st) = (exit, out))
+    (hcall : Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (Nauty.child first level tc tv st) = (exit, out))
     (hc : CellCover ctx tcLevel (n - level) level numcells tc (l.prepare ctx tcLevel).2.2.2.1
       (l.codes ctx) (l.prepare ctx tcLevel).2.2.2.2 live best)
     (hsub : ∀ v, live v →
@@ -200,7 +200,7 @@ theorem SweepInput.long_cover {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
   rw [hcall] at hf
   have hfixed : out.fixedpts.erase tv = st.fixedpts := hf.2
   apply ChildCover.pruned hc (labOk_of_reach h.base.labSize h.base.reach)
-    h.window (by change tc + _ ≤ (l.prepare ctx tcLevel).2.2.2.2.view.lab.size
+    h.window (by change tc + _ ≤ (l.prepare ctx tcLevel).2.2.2.2.lab.size
                  rw [h.base.labSize]; exact h.range) hsub
   · intro γ ha hs v hv
     exact congrArg (prefixKey (l.codes ctx))
@@ -228,8 +228,8 @@ theorem SweepInput.filtered {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel 
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
-    (hcall : Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st) = (.unwind level short, out))
+    (hcall : Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+      (Nauty.child first level tc tv st) = (.unwind level short, out))
     (hr : let p : Parent n := ⟨l, st, tv, bs, fs⟩
       Generic.Result ((p.child ctx tcLevel).key ctx tcLevel)
         ((p.child ctx tcLevel).entry.key ctx bs) (out.best ctx) level
@@ -287,8 +287,8 @@ theorem SweepInput.receive_call {G : Colored n k} {tcLevel fuel cfuel : Nat}
     (hn : (contract G tcLevel).nodeValid fuel
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel))
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
-    (hcall : Engine.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind level short, out))
+    (hcall : Nauty.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind level short, out))
     (next : Generic.SweepFn (Search n) n) :
     let ctx : Ctx n := { g := rowsOf G }
     let middle := if first && tv == tv1 then afterChildFirst level tv1 out else out
@@ -306,7 +306,7 @@ theorem SweepInput.receive_call {G : Colored n k} {tcLevel fuel cfuel : Nat}
       (Remaining (filtered.nextElem (some tv)) filtered) (ready.best ctx) := by
   intro ctx middle left small filtered ready nextIndex
   have hc : Generic.nodeCall ctx (n + 2) tcLevel fuel (first && tv == tv1)
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) =
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) =
         (.unwind level short, out) := by
     simpa only [Generic.nodeCall, ← node_eq_generic] using hcall
   constructor
@@ -331,7 +331,7 @@ theorem SweepInput.receive_call {G : Colored n k} {tcLevel fuel cfuel : Nat}
       split <;> rfl
     rw [hb]
     dsimp only [filtered, small]
-    simp only [Engine.shortprune, ha, hf]
-    simpa only [Engine.shortprune] using hcover
+    simp only [Nauty.shortprune, ha, hf]
+    simpa only [Nauty.shortprune] using hcover
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

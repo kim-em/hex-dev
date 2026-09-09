@@ -22,7 +22,7 @@ import all HexGraphIso.Nauty.Invariant.Orbits
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Generation
+namespace Hex.GraphIso.Nauty.Generation
 
 variable {n k : Nat}
 
@@ -138,4 +138,4 @@ theorem carries_label {G : Colored n k} {gs : List (Perm n)} {base : List (Fin n
     exact hfix γ hmem
   · simpa only [applyWord, List.foldl_cons, List.foldl_nil, href, hcur] using hmap pos hpos
 
-end Hex.GraphIso.Nauty.Engine.Generation
+end Hex.GraphIso.Nauty.Generation

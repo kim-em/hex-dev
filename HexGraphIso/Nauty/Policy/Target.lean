@@ -9,10 +9,11 @@ module
 public import HexGraphIso.Nauty.Policy.Selection
 public import HexGraphIso.Nauty.Invariant.TargetCell
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -88,4 +89,4 @@ theorem chooseTarget_cast {ctx : Ctx n} {tcLevel level numcells : Nat} {st : Sea
     Id.run_pure, apply_ite Id.run, apply_ite Prod.fst, ite_self]
   rfl
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

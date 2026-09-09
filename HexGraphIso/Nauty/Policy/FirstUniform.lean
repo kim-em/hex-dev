@@ -23,10 +23,11 @@ import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -173,4 +174,4 @@ theorem firstPath_uniform {G : Colored n k} {tcLevel fuel level numcells last : 
     rw [hpptn, hplab] at hstab
     exact ⟨γ, hg, hstab, hmap.trans hat.symm⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

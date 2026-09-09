@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -144,4 +145,4 @@ theorem NodeInput.canon_return {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : N
       have := h.frame.depth
       omega
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

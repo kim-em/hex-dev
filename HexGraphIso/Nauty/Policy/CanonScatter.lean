@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Effect
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Scatter
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -67,4 +68,4 @@ theorem classify_canon_out {ctx : Ctx n} {level numcells : Nat} {st : Search n}
   rw [hc, hl]
   exact classify_canon_map he hw hs hp
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

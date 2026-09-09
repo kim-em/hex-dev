@@ -16,10 +16,11 @@ import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -27,12 +28,12 @@ variable {n k : Nat}
 by singleton cells at each individualization site. -/
 def fixedContract (G : Colored n k) : Generic.Contract (Search n) n where
   nodePre _ _ level numcells st :=
-    1 ≤ level ∧ SearchOk G level numcells st.view ∧ FixedCells level st.view
+    1 ≤ level ∧ SearchOk G level numcells st ∧ FixedCells level st
   nodePost _ _ _ _ st result := result.2.fixedpts = st.fixedpts
   sweepPre _ _ _ level numcells tc _ cursor cell _ st :=
-    1 ≤ level ∧ SearchOk G level numcells st.view ∧
-      Generic.Target Search.view level tc cell st ∧
-      (∀ v, cursor = some v → cell.mem v = true) ∧ FixedCells level st.view
+    1 ≤ level ∧ SearchOk G level numcells st ∧
+      Generic.Target (fun st => st) level tc cell st ∧
+      (∀ v, cursor = some v → cell.mem v = true) ∧ FixedCells level st
   sweepPost _ _ _ _ _ _ _ _ _ _ st result := result.2.2.fixedpts = st.fixedpts
 
 /-- The local node operations preserve fixed vertices, and its child
@@ -41,8 +42,8 @@ theorem fixed_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     {next : Generic.SweepFn (Search n) n} (hn0 : 0 < n)
     (hnext : (fixedContract G).sweepValid fuel (n + 1) next)
     (first : Bool) (level numcells : Nat) (st : Search n)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (hfixed : FixedCells level st.view) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (hfixed : FixedCells level st) :
     (Generic.nodeStep ctx tcLevel next first level numcells st).2.fixedpts = st.fixedpts := by
   let reach := reachPolicy G ctx tcLevel hn0
   have hv := reach.visit level numcells st hlevel hok
@@ -50,13 +51,13 @@ theorem fixed_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   have hve : (Generic.Policy.visit ctx level numcells st).2.2.fixedpts = st.fixedpts := rfl
   unfold Generic.nodeStep
   generalize hr : Generic.Policy.visit ctx level numcells st = r at hv hve ⊢
-  change FixedCells level (Generic.Policy.visit ctx level numcells st).2.2.view at hvf
+  change FixedCells level (Generic.Policy.visit ctx level numcells st).2.2 at hvf
   rw [hr] at hvf
   obtain ⟨nc, code, refined⟩ := r
   obtain ⟨hokR, _⟩ := hv
   let compared := if first then Generic.Policy.recordFirst (n := n) level code refined
     else Generic.Policy.compareCodes (n := n) level code refined
-  have hcomp : Generic.Local G Search.view level nc refined compared := by
+  have hcomp : Generic.Local G (fun st => st) level nc refined compared := by
     cases first
     · exact reach.compare level code nc refined hokR
     · exact reach.record level code nc refined hokR
@@ -93,8 +94,8 @@ theorem fixed_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   obtain ⟨htlocal, htarget⟩ := ht
   have htf := hcf.ofSearchOut hte hcomp.ok htlocal.ok htlocal.effect
   have htargetEq := hte.trans (hce.trans hve)
-  have hfinish : ∀ prepared, SearchOk G level nc prepared.view →
-      Generic.Target Search.view level tc.toNat cell prepared → FixedCells level prepared.view →
+  have hfinish : ∀ prepared, SearchOk G level nc prepared →
+      Generic.Target (fun st => st) level tc.toNat cell prepared → FixedCells level prepared →
       prepared.fixedpts = st.fixedpts →
       (let ready := Generic.Policy.cheapCheck (n := n) first level prepared
        let tv := cell.nextElem none
@@ -154,10 +155,10 @@ theorem fixed_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (hnext : (fixedContract G).sweepValid fuel cfuel next)
     (first : Bool) (level numcells tc tv1 tv index : Nat)
     (cell : VSet n) (base out : Search n) (exit : Exit)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base.view)
-    (htarget : Generic.Target Search.view level tc cell base)
-    (hfixed : FixedCells level base.view)
-    (hout : SearchOut G level level base.view out.view) (hf : out.fixedpts = base.fixedpts) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base)
+    (htarget : Generic.Target (fun st => st) level tc cell base)
+    (hfixed : FixedCells level base)
+    (hout : SearchOut G level level base out) (hf : out.fixedpts = base.fixedpts) :
     (Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit).2.2.fixedpts =
       base.fixedpts := by
   unfold Generic.advance
@@ -219,9 +220,9 @@ theorem fixed_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (hdescend : (fixedContract G).nodeValid fuel (Generic.nodeCall ctx (n + 2) tcLevel fuel))
     (hnext : (fixedContract G).sweepValid fuel cfuel next)
     (first : Bool) (level numcells tc tv1 tv index : Nat) (cell : VSet n) (st : Search n)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
-    (hfixed : FixedCells level st.view) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
+    (hfixed : FixedCells level st) :
     (Generic.sweepStep (n + 2) (Generic.nodeCall ctx (n + 2) tcLevel fuel) next
       first level numcells tc tv1 tv cell index st).2.2.fixedpts = st.fixedpts := by
   let reach := reachPolicy G ctx tcLevel hn0
@@ -245,8 +246,8 @@ theorem fixed_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     have hrestore : out.fixedpts.erase tv = st.fixedpts := by
       apply fixed_restore (base := st) (out := out) _ hcf.1
       exact hd.trans (by cases first <;> rfl)
-    have hleave : ∀ returned : Search n, SearchOut G level level st.view returned.view →
-        SearchOut G level level st.view (Generic.Policy.leaveChild (n := n) tv returned).view :=
+    have hleave : ∀ returned : Search n, SearchOut G level level st returned →
+        SearchOut G level level st (Generic.Policy.leaveChild (n := n) tv returned) :=
       fun returned hr => (reach.leave tv returned).out hr
     split
     · apply fixed_advance (ctx := ctx) (tcLevel := tcLevel) hn0 hnext first level numcells tc tv1 tv index cell st _ exit
@@ -273,10 +274,10 @@ theorem fixedPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
 it returns past several ancestors or exhausts operational fuel. -/
 theorem node_fixed {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (hfixed : FixedCells level st.view) :
+    (hok : SearchOk G level numcells st) (hfixed : FixedCells level st) :
     (node first ctx (n + 2) tcLevel fuel level numcells st).2.fixedpts = st.fixedpts := by
   rw [node_eq_generic]
   exact Generic.node_calls (fixedPolicy G ctx tcLevel hn0) first fuel level numcells st
     ⟨hlevel, hok, hfixed⟩
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

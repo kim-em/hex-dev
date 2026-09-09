@@ -29,10 +29,11 @@ import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -98,9 +99,9 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
   have hbout := hentry.boundary.firstPath hn0 (by have := hin.positive; omega) hentry.partition hpath
   have hbleft : Boundary G ctx (level + 1) left := hbout.congr rfl rfl rfl
   have ho := node_out (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) true hn0 (by omega) hch.1
-  have hframe : SearchOut G level level ready.view out.view := hch.2 _
+  have hframe : SearchOut G level level ready out := hch.2 _
     (by simpa only [Nat.add_sub_cancel, policy, Generic.Policy.child] using ho)
-  have hleftFrame : SearchOut G level level ready.view left.view := hframe.congr rfl rfl rfl rfl
+  have hleftFrame : SearchOut G level level ready left := hframe.congr rfl rfl rfl rfl
   have hrec := (reachPolicy G ctx tcLevel hn0).recover level r.1 ready left hin.positive hcheap.ok hleftFrame
   have hstored : RunInv G ctx result :=
     (hchild.congr (out := left) rfl rfl hchild.cache rfl rfl rfl rfl rfl).recover (n + 2) level
@@ -214,4 +215,4 @@ theorem firstChild_ready {G : Colored n k} {ctx : Ctx n}
     hbleft.recover_child hin.positive (by have := Nat.le_trans hcheap.ok.bc (bcount_le _ _ _); omega),
     recover_bound level left, hpathReady.recover hn0 hin.positive hcheap.ok hleftFrame hrestore, hsmall⟩
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

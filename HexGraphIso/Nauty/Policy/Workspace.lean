@@ -9,30 +9,31 @@ module
 public import HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
 /-- Engine insertion obeys the bounded workspace invariant. -/
-theorem workspace_push {st : Search n} (h : WorkspaceOk st.view)
-    (pair : VSet n × VSet n) : WorkspaceOk (pushAuto st pair).view := by
-  rw [view_pushAuto]
+theorem workspace_push {st : Search n} (h : WorkspaceOk st)
+    (pair : VSet n × VSet n) : WorkspaceOk (pushAuto st pair) := by
+
   exact h.push
 
 /-- Explicit generator admission keeps the capacity and bounded pair array. -/
-theorem workspace_admit {st : Search n} (h : WorkspaceOk st.view) :
-    WorkspaceOk (admit st).view := by
+theorem workspace_admit {st : Search n} (h : WorkspaceOk st) :
+    WorkspaceOk (admit st) := by
   unfold admit
   simp only [Id.run_pure]
   apply workspace_push
   exact h
 
 /-- Inserting the frozen implicit pair preserves workspace bounds. -/
-theorem workspace_prune {st : Search n} (h : WorkspaceOk st.view) (level : Nat) :
-    WorkspaceOk (pruneReturn level st).2.view := by
+theorem workspace_prune {st : Search n} (h : WorkspaceOk st) (level : Nat) :
+    WorkspaceOk (pruneReturn level st).2 := by
   unfold pruneReturn
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
   split
@@ -41,8 +42,8 @@ theorem workspace_prune {st : Search n} (h : WorkspaceOk st.view) (level : Nat) 
 
 /-- Every leaf action preserves the bounded workspace, independently of
 the automorphism and subtree proofs that justify its admitted pair. -/
-theorem workspace_leaf {st : Search n} (h : WorkspaceOk st.view) (leaf : Leaf) (level : Nat) :
-    WorkspaceOk (leafExit leaf level st).2.view := by
+theorem workspace_leaf {st : Search n} (h : WorkspaceOk st) (leaf : Leaf) (level : Nat) :
+    WorkspaceOk (leafExit leaf level st).2 := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
   all_goals repeat' split
@@ -83,4 +84,4 @@ theorem classify_capacity (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
     apply_ite Search.wsCap, ite_self]
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

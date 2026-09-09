@@ -9,11 +9,12 @@ module
 public import HexGraphIso.Nauty.Policy.State
 public import HexGraphIso.Nauty.Invariant.Refine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Policy.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -129,10 +130,10 @@ theorem leafExit_frame (leaf : Leaf) (level : Nat) (st : Search n) :
 /-- Changing bookkeeping and optionally installing the current labelling
 preserves the partition invariant. -/
 theorem frame_ok {G : Colored n k} {level numcells : Nat} {st out : Search n}
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (hl : out.lab = st.lab) (hp : out.ptn = st.ptn)
     (hc : out.canonlab = st.canonlab ∨ out.canonlab = st.lab) :
-    SearchOk G level numcells out.view := by
+    SearchOk G level numcells out := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · change out.lab.size = n
     rw [hl]
@@ -170,11 +171,11 @@ theorem frame_ok {G : Colored n k} {level numcells : Nat} {st out : Search n}
 /-- A local operation with unchanged partition and only current-leaf
 installations satisfies the call's frame effect. -/
 theorem frame_out {G : Colored n k} {B level numcells : Nat} {st out : Search n}
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (hl : out.lab = st.lab) (hp : out.ptn = st.ptn)
     (hf : out.firstlab = st.firstlab ∨ out.firstlab = st.lab)
     (hc : out.canonlab = st.canonlab ∨ out.canonlab = st.lab) :
-    SearchOut G B level st.view out.view := by
+    SearchOut G B level st out := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact congrArg Array.size hl
   · exact congrArg Array.size hp
@@ -208,9 +209,9 @@ theorem frame_out {G : Colored n k} {B level numcells : Nat} {st out : Search n}
 /-- Classification and the resulting leaf action preserve the partition
 invariant, independently of whether the classification is sound. -/
 theorem leaf_ok {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
-    {st : Search n} (hok : SearchOk G level numcells st.view) :
+    {st : Search n} (hok : SearchOk G level numcells st) :
     let verdict := classify ctx level numcells st
-    SearchOk G level numcells (leafExit verdict.1 level verdict.2).2.view := by
+    SearchOk G level numcells (leafExit verdict.1 level verdict.2).2 := by
   obtain ⟨hl, hp, _, hc⟩ := classify_frame ctx level numcells st
   have hmid := frame_ok hok hl hp (Or.inl hc)
   obtain ⟨hl', hp', _, hc'⟩ := leafExit_frame (classify ctx level numcells st).1
@@ -219,9 +220,9 @@ theorem leaf_ok {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
 
 /-- The combined leaf operations have only the permitted frame effect. -/
 theorem leaf_out {G : Colored n k} {ctx : Ctx n} {B level numcells : Nat}
-    {st : Search n} (hok : SearchOk G level numcells st.view) :
+    {st : Search n} (hok : SearchOk G level numcells st) :
     let verdict := classify ctx level numcells st
-    SearchOut G B level st.view (leafExit verdict.1 level verdict.2).2.view := by
+    SearchOut G B level st (leafExit verdict.1 level verdict.2).2 := by
   obtain ⟨hl, hp, hf, hc⟩ := classify_frame ctx level numcells st
   obtain ⟨hl', hp', hf', hc'⟩ := leafExit_frame (classify ctx level numcells st).1
     level (classify ctx level numcells st).2
@@ -230,4 +231,4 @@ theorem leaf_out {G : Colored n k} {ctx : Ctx n} {B level numcells : Nat}
   · exact Or.inl (hc'.trans hc)
   · exact Or.inr (hc'.trans hl)
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

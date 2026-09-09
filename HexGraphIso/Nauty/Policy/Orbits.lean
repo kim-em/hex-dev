@@ -10,10 +10,11 @@ public import HexGraphIso.Nauty.Policy.Trace
 public import HexGraphIso.Nauty.Invariant.Orbits
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -44,7 +45,7 @@ theorem admit_orbits (st : Search n) :
 /-- Joining a checked admission preserves connectivity in the enlarged trace. -/
 theorem OrbitsOk.admit {ctx : Ctx n} {st : Search n} (h : OrbitsOk st)
     (ht : TraceOk ctx st) (hwork : checkAutom ctx.g st.workperm = true) :
-    OrbitsOk (Engine.admit st) := by
+    OrbitsOk (Nauty.admit st) := by
   have hv : ∀ γ ∈ (st.genTrace.push st.workperm).toList, checkAutom ctx.g γ = true := by
     intro γ hγ
     have hm : γ ∈ st.genTrace.push st.workperm := by simpa using hγ
@@ -112,4 +113,4 @@ theorem initial_orbits (n : Nat) (lab0 : Array Nat) (cellEnds : List Nat) :
     OrbitsOk (initial n lab0 cellEnds) :=
   orbSound_orbConn_init []
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

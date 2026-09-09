@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -81,4 +82,4 @@ theorem sweep_contains (ctx : Ctx n) (inf tcLevel fuel cfuel : Nat) (first : Boo
   exact Generic.sweep_stable (tracePolicy ctx inf tcLevel γ) first fuel cfuel level numcells tc tv1
     index cursor cell st hpast h
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

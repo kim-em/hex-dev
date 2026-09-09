@@ -9,10 +9,11 @@ module
 public import HexGraphIso.Nauty.Policy.Recovery
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -178,4 +179,4 @@ theorem sweep_gca (first : Bool) (ctx : Ctx n)
   exact Generic.sweep_reference (gcaPolicy ctx inf tcLevel) first fuel cfuel level numcells tc tv1
     index cursor cell st hpast
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

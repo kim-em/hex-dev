@@ -10,10 +10,11 @@ public import HexGraphIso.Nauty.Policy.FirstRef
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -163,4 +164,4 @@ theorem firstPath_depth {ctx : Ctx n} {inf tcLevel fuel level numcells last : Na
   exact ⟨Nat.le_refl _, Array.getElem!_set!_self _ _ _
     (by rw [firstPath_codeSize hpath, hsize]; omega)⟩
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

@@ -11,6 +11,7 @@ public import HexGraphIso.Generated
 -- Export the contract without exporting the traversal proof implementation.
 import HexGraphIso.Nauty.Policy.Complete
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Autos
 import all HexGraphIso.Generated
 
@@ -24,8 +25,8 @@ variable {n k : Nat}
 theorem Aut.complete (G : Colored n k) {p : Perm n} (hp : IsIso G G p) :
     Perm.Generated (Aut.gens G) p := by
   simpa [Aut.gens, Aut.checked, Aut.trace, List.map_filterMap, Option.map_map,
-    Function.comp_def, Nauty.runColoredTraced, Nauty.runTraced, Nauty.Engine.runColoredTraced]
-    using Nauty.Engine.generators_complete hp
+    Function.comp_def, Nauty.runColoredTraced, Nauty.runTraced, Nauty.runColoredTraced]
+    using Nauty.generators_complete hp
 
 /-- Completeness: every automorphism is a word in the returned generators. -/
 theorem autos_complete (G : Colored n k) {p : Perm n} (hp : IsIso G G p) :

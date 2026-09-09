@@ -54,9 +54,7 @@ public import HexGraphIso.Nauty.Invariant.Reach
 public import HexGraphIso.Nauty.Cert.Translator
 public import HexGraphIso.Nauty.Spec.SpecCanon
 public import HexGraphIso.Nauty.Spec.Achieved
-public import HexGraphIso.Nauty.Model.Node
-public import HexGraphIso.Nauty.Model.Autom
-public import HexGraphIso.Nauty.Model.Store
+public import HexGraphIso.Nauty.Spec.KeyMax
 public import HexGraphIso.Nauty.Invariant.Orbits
 public import HexGraphIso.Nauty.Invariant.Stabilize
 public import HexGraphIso.Nauty.Invariant.Autos

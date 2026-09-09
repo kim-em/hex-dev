@@ -16,10 +16,11 @@ import all HexGraphIso.Nauty.Policy.Reach
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -41,7 +42,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
   classify := by
     intro level numcells st h
     change (classify ctx level numcells st).2.noncheaplevel = saved ∨ bound < (classify ctx level numcells st).2.noncheaplevel
-    unfold Engine.classify
+    unfold Nauty.classify
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
       apply_ite Search.noncheaplevel, ite_self]
     exact h
@@ -88,7 +89,7 @@ theorem node_boundary {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
 
 /-- The saved implicit pair is meaningful only strictly below its admission boundary. -/
 abbrev Boundary (G : Colored n k) (ctx : Ctx n) (level : Nat) (st : Search n) : Prop :=
-  CheapOk ctx (initialPartition G).1 (initPtn n (n + 2) (initialPartition G).2) level st.view
+  CheapOk ctx (initialPartition G).1 (initPtn n (n + 2) (initialPartition G).2) level st
 
 /-- Bookkeeping preserves the frozen pair when its defining fields agree. -/
 theorem Boundary.congr {G : Colored n k} {ctx : Ctx n} {level : Nat} {st out : Search n}
@@ -110,7 +111,7 @@ theorem initial_boundary (G : Colored n k) (hn0 : 0 < n) (ctx : Ctx n) :
 /-- A call's partition receipt transports every still-active frozen pair. -/
 theorem Boundary.of_out {G : Colored n k} {ctx : Ctx n} {level : Nat} {st out : Search n}
     (h : Boundary G ctx level st) (hlevel : 1 < level)
-    (hout : SearchOut G (level - 1) level st.view out.view)
+    (hout : SearchOut G (level - 1) level st out)
     (hpos : 0 < out.noncheaplevel)
     (hn : out.noncheaplevel = st.noncheaplevel ∨ level ≤ out.noncheaplevel) :
     Boundary G ctx level out := by
@@ -159,7 +160,7 @@ theorem Boundary.of_out {G : Colored n k} {ctx : Ctx n} {level : Nat} {st out : 
 /-- An off-path child returns with the implicit pair at every surviving older boundary. -/
 theorem Boundary.node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (h : Boundary G ctx level st) (hn0 : 0 < n) (hlevel : 1 < level)
-    (hok : SearchOk G level numcells st.view) :
+    (hok : SearchOk G level numcells st) :
     Boundary G ctx level (node false ctx (n + 2) tcLevel fuel level numcells st).2 := by
   exact h.of_out hlevel (node_out false hn0 (by omega) hok)
     (node_noncheap (bound := 0) (by omega) h.positive) (node_boundary (by omega))
@@ -170,7 +171,7 @@ theorem Boundary.recover {G : Colored n k} {ctx : Ctx n} {current level : Nat} {
     (hinf : level < n + 2) :
     Boundary G ctx level (recoverLevels level (recoverPtn (n + 2) level st)) := by
   have hr := CheapOk.recover h hle hlevel hinf
-  rw [← view_recover] at hr
+  rw [← recover_eq] at hr
   exact hr
 
 /-- Comparing codes preserves the boundary level. -/
@@ -187,7 +188,7 @@ theorem target_noncheap (first : Bool) (ctx : Ctx n) (tcLevel level numcells : N
 /-- Classification preserves the boundary level. -/
 theorem classify_noncheap (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.noncheaplevel = st.noncheaplevel := by
-  unfold classify
+  unfold Nauty.classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
     apply_ite Search.noncheaplevel, ite_self]
 
@@ -226,7 +227,7 @@ theorem Boundary.classify {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Se
     (h : Boundary G ctx level st) (numcells : Nat) :
     Boundary G ctx level (classify ctx level numcells st).2 := by
   apply h.congr (classify_frame ctx level numcells st).1 (classify_frame ctx level numcells st).2.1
-  unfold Engine.classify
+  unfold Nauty.classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
     apply_ite Search.noncheaplevel, ite_self]
 
@@ -263,15 +264,15 @@ theorem Boundary.cheap {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Searc
 /-- Individualizing within the current cell preserves the frozen ancestor pair. -/
 theorem Boundary.child {G : Colored n k} {ctx : Ctx n} {level tc tv : Nat}
     {st : Search n} {cell : VSet n} (h : Boundary G ctx (level + 1) st)
-    (first : Bool) (hlevel : 1 ≤ level) (htarget : Generic.Target Search.view level tc cell st)
+    (first : Bool) (hlevel : 1 ≤ level) (htarget : Generic.Target (fun st => st) level tc cell st)
     (htv : cell.mem tv = true) : Boundary G ctx (level + 1) (child first level tc tv st) := by
   obtain ⟨len, hcell, hmem⟩ := htarget
   obtain ⟨hc, hlen, hrange⟩ := hcell (mem_ne_empty htv)
   obtain ⟨o, ho, hv⟩ := mem_segN_iff.mp (hmem tv htv)
   change st.lab[tc + o]! = tv at hv
   apply h.breakout hlevel hc hlen hrange ho
-  · change (Engine.child first level tc tv st).lab = _
-    dsimp only [Search.view]
+  · change (Nauty.child first level tc tv st).lab = _
+
     rw [hv]
     cases first <;> rfl
   · cases first <;> rfl
@@ -279,7 +280,7 @@ theorem Boundary.child {G : Colored n k} {ctx : Ctx n} {level tc tv : Nat}
 
 /-- A refined equitable node passing the cheap guard supplies the root ledger pair. -/
 theorem refined_pair {G : Colored n k} {ctx : Ctx n} {level numcells : Nat} {st : Search n}
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab (st.refined ctx level numcells).ptn)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
@@ -302,17 +303,17 @@ theorem Boundary.recover_child {G : Colored n k} {ctx : Ctx n} {level : Nat} {st
   change (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel = level at heq
   have hs : st.noncheaplevel = level := by rw [recover_noncheap] at heq; split at heq <;> omega
   change PairOk ctx.g _ _ _
-    (fmptn (recoverLevels level (recoverPtn (n + 2) level st)).view.lab
-      (recoverLevels level (recoverPtn (n + 2) level st)).view.ptn
+    (fmptn (recoverLevels level (recoverPtn (n + 2) level st)).lab
+      (recoverLevels level (recoverPtn (n + 2) level st)).ptn
       (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel n).1
-    (fmptn (recoverLevels level (recoverPtn (n + 2) level st)).view.lab
-      (recoverLevels level (recoverPtn (n + 2) level st)).view.ptn
+    (fmptn (recoverLevels level (recoverPtn (n + 2) level st)).lab
+      (recoverLevels level (recoverPtn (n + 2) level st)).ptn
       (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel n).2
-  rw [heq, view_recover, recover_fmptn (Nat.le_of_eq h.ptnSize.symm)
+  rw [heq, recover_eq, recover_fmptn (Nat.le_of_eq h.ptnSize.symm)
     (Nat.le_trans h.rootEnd hlevel) (Nat.le_refl _) hinf]
-  have hp := h.pair (show st.view.noncheaplevel < level + 1 from by change st.noncheaplevel < level + 1; omega)
-  change PairOk ctx.g _ _ _ (fmptn st.view.lab st.view.ptn st.noncheaplevel n).1
-    (fmptn st.view.lab st.view.ptn st.noncheaplevel n).2 at hp
+  have hp := h.pair (show st.noncheaplevel < level + 1 from by change st.noncheaplevel < level + 1; omega)
+  change PairOk ctx.g _ _ _ (fmptn st.lab st.ptn st.noncheaplevel n).1
+    (fmptn st.lab st.ptn st.noncheaplevel n).2 at hp
   rwa [hs] at hp
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

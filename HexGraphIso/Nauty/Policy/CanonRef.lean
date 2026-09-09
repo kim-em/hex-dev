@@ -15,10 +15,11 @@ import all HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -27,9 +28,9 @@ its ancestor, or installs a reference through the chosen vertex. -/
 theorem child_canon {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {first : Bool}
     {cell : VSet n} {st : Search n}
-    (h : SearchOk G level numcells st.view)
+    (h : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (ht : cell.mem tv = true)
     (childFirst : Bool) :
     let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
@@ -51,9 +52,9 @@ reference held by the receiving parent before the child was entered. -/
 theorem child_canon_old {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {first : Bool}
     {cell : VSet n} {st : Search n}
-    (h : SearchOk G level numcells st.view)
+    (h : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (ht : cell.mem tv = true)
     (childFirst : Bool) :
     let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
@@ -110,7 +111,7 @@ frame's cells after labels have been permuted within those cells. -/
 theorem CanonGuide.rebase {G : Colored n k} {level tc : Nat} {base st : Search n}
     {key : Nat → Key n} {best : Option (Key n)}
     (h : CanonGuide level tc base key best st)
-    (hf : SearchOut G level level base.view st.view) :
+    (hf : SearchOut G level level base st) :
     CanonGuide level tc st key best st := by
   intro he
   obtain ⟨v, hv, hat, hp⟩ := h he
@@ -166,7 +167,7 @@ theorem CanonGuide.recover {G : Colored n k} {level tc tv : Nat}
     (h : CanonGuide level tc base key before st)
     (hbound : st.gcaCanon ≤ level) (hgrows : Generic.Grows before after)
     (hdone : Generic.Covers (key tv) after)
-    (hframe : SearchOut G level level base.view st.view)
+    (hframe : SearchOut G level level base st)
     (hreturn : (out.gcaCanon ≤ st.gcaCanon ∧ out.canonlab = st.canonlab) ∨
       (out.canonlab.size = st.lab.size ∧ cellsPerm st.ptn level st.lab out.canonlab ∧
         out.canonlab[tc]! = tv)) (inf : Nat) :
@@ -197,12 +198,12 @@ theorem child_canon_guide {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv1 tv : Nat} {first : Bool}
     {cell : VSet n} {base st : Search n} {key : Nat → Key n}
     {before after : Option (Key n)}
-    (h : SearchOk G level numcells st.view)
+    (h : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (ht : cell.mem tv = true)
     (hbound : st.gcaCanon ≤ level)
     (hguide : CanonGuide level tc base key before st)
-    (hframe : SearchOut G level level base.view st.view)
+    (hframe : SearchOut G level level base st)
     (hgrows : Generic.Grows before after) (hdone : Generic.Covers (key tv) after) :
     let childFirst := first && tv == tv1
     let raw := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
@@ -220,4 +221,4 @@ theorem child_canon_guide {G : Colored n k} {ctx : Ctx n}
   dsimp only [out, left]
   cases childFirst <;> exact hr
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

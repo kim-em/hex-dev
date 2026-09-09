@@ -20,10 +20,11 @@ import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -112,4 +113,4 @@ theorem runTraced_result (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat) (cell
 theorem runColoredTraced_result (G : Colored n k) :
     (runColoredTraced G).result = runColored G := by rw [runColored]
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

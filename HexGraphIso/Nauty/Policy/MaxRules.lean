@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -136,4 +137,4 @@ theorem Rules.calls {G : Colored n k} {tcLevel : Nat} (h : Rules G tcLevel) :
     | true => exact h.visit fuel cfuel hn hs first level numcells tc tv1 tv cell index st he
     | false => exact h.skip fuel cfuel hn hs first level numcells tc tv1 tv cell index st he
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

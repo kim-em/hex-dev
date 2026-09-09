@@ -11,20 +11,13 @@ import HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
-
-/-- Positive capacity makes the newest slot readable even when insertion
-overwrites the last slot of a full workspace. -/
-theorem pushAuto_back {st : Search n} (hcap : 0 < st.wsCap) (pair : VSet n × VSet n) :
-    (pushAuto st pair).autos.back? = some pair := by
-  change (pushAuto st pair).view.autos.back? = some pair
-  rw [view_pushAuto]
-  exact Nauty.pushAuto_back hcap
 
 /-- The shared prune tail requests a short filter only after admitting
 its implicit pair at a level different from the saved boundary. -/
@@ -125,17 +118,17 @@ theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
   | autoCanon =>
     refine Or.inl ⟨rfl, ?_⟩
     rw [leafExit_autos, admit_autos]
-    exact pushAuto_back hcap _
+    exact pushAuto_back hcap
   | bad =>
     have hne := leafExit_cheap_short (Or.inl rfl) hexit
     refine Or.inr ⟨Or.inl rfl, ?_⟩
     rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
-    exact pushAuto_back hcap _
+    exact pushAuto_back hcap
   | better sr =>
     have hne := leafExit_cheap_short (Or.inr ⟨sr, rfl⟩) hexit
     refine Or.inr ⟨Or.inr ⟨sr, rfl⟩, ?_⟩
     rw [leafExit_autos, pruneReturn_autos, ite_eq_left (by simpa using hne)]
-    exact pushAuto_back hcap _
+    exact pushAuto_back hcap
 
 /-- Recovery retains the pruning workspace seen by the just-completed child. -/
 theorem recover_autos (inf level : Nat) (st : Search n) :
@@ -157,4 +150,4 @@ theorem recover_filters (inf level : Nat) (cell : VSet n) (st : Search n) :
   · unfold shortprune
     rw [recover_autos]
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

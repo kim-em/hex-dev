@@ -12,10 +12,11 @@ import all HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -93,4 +94,4 @@ theorem Witness.below {ctx : Ctx n} {tcLevel target : Nat} {frames : Frames n}
       Witness ctx tcLevel frames target best := by
   simp only [Witness, Frames.insert, ite_eq_right (by omega : target ≠ f.level - 1)]
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

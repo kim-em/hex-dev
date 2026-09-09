@@ -15,10 +15,11 @@ import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -140,4 +141,4 @@ theorem node_coset (ctx : Ctx n) (inf tcLevel fuel level numcells : Nat) (st : S
   rw [node_eq_generic]
   exact Generic.node_calls (cosetPolicy ctx inf tcLevel) false fuel level numcells st rfl
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

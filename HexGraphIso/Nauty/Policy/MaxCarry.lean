@@ -9,10 +9,11 @@ module
 public import HexGraphIso.Nauty.Policy.MaxContext
 import all HexGraphIso.Nauty.Policy.MaxContext
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -37,4 +38,4 @@ theorem Keeps.congr {parents : Parents n} {exit : Exit} {st out : Search n}
   rw [he] at hγ
   exact h t p hp hf ht γ hγ
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

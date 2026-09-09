@@ -19,10 +19,11 @@ import all HexGraphIso.Nauty.Generation.Matching
 import all HexGraphIso.Nauty.Invariant.Cursor
 import all HexGraphIso.Nauty.Invariant.Carrier
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -68,7 +69,7 @@ theorem matching_leaf {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
     (hit : IterOk ctx level (st.refined ctx level numcells))
     (hnum : (st.refined ctx level numcells).numcells = n)
     (hdisc : ∀ q, q < n → (st.refined ctx level numcells).ptn[q]! ≤ level)
-    (hm : Generation.Matches ctx level st.view targets key)
+    (hm : Generation.Matches ctx level st targets key)
     (hp : Generation.HasLeaf ctx tcLevel level (st.refined ctx level numcells) targets key)
     (heq : st.eqlevFirst = level - 1) :
     let out := node false ctx inf tcLevel (fuel + 1) level numcells st
@@ -84,10 +85,10 @@ theorem matching_leaf {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
     simp only [Id.run_pure, apply_ite Id.run]
     repeat' split
     all_goals exact ⟨rfl, rfl, rfl, rfl⟩
-  have hm' : Generation.Matches ctx level visited.view targets key := hm.stateEq rfl rfl rfl
+  have hm' : Generation.Matches ctx level visited targets key := hm.stateEq rfl rfl rfl
   have hc : compared.eqlevFirst = level := by
     have h := hm'.prep hp heq
-    rw [← view_compareCodes] at h
+
     exact h
   have hr : leafRows ctx compared.firstlab = leafRows ctx compared.lab := by
     rw [hfields.1, hfields.2.1]
@@ -126,4 +127,4 @@ theorem matching_leaf {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
   rw [hcall]
   exact ⟨hret, hfields.2.1 ▸ emit.2.2⟩
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

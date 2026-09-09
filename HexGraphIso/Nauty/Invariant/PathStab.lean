@@ -18,14 +18,14 @@ namespace Hex.GraphIso.Nauty
 /-- Every vertex recorded as fixed occupies a singleton cell of the
 current partition.  This is the executable path fact that makes erasing a
 completed child's temporary fixed vertex restore its parent set exactly. -/
-@[expose] def FixedCells (level : Nat) (st : SearchSt n) : Prop :=
+@[expose] def FixedCells (level : Nat) (st : Search n) : Prop :=
   ∀ v, v < n → st.fixedpts.mem v = true →
     ∃ q, q < n ∧ st.lab[q]! = v ∧ IsCell st.ptn level q 1
 
 namespace FixedCells
 
 /-- A vertex in a non-singleton target cell is not already fixed. -/
-theorem fresh {level tc len o : Nat} {st : SearchSt n}
+theorem fresh {level tc len o : Nat} {st : Search n}
     (h : FixedCells level st) (hok : LabOk st.lab n)
     (hinj : LabInj st.lab n) (hsize : st.lab.size = n)
     (hcell : IsCell st.ptn level tc len) (hlen : 2 ≤ len)
@@ -46,7 +46,7 @@ theorem fresh {level tc len o : Nat} {st : SearchSt n}
 
 /-- Reordering vertices within unchanged cells preserves fixed
 singletons. -/
-theorem ofCellsPerm {level : Nat} {st out : SearchSt n}
+theorem ofCellsPerm {level : Nat} {st out : Search n}
     (h : FixedCells level st) (hfixed : out.fixedpts = st.fixedpts)
     (hptn : out.ptn = st.ptn)
     (hperm : cellsPerm st.ptn level st.lab out.lab) :
@@ -62,7 +62,7 @@ theorem ofCellsPerm {level : Nat} {st out : SearchSt n}
 
 /-- A parent-level search effect preserves fixed singletons when it
 preserves the fixed-point bitset. -/
-theorem ofEffect {G : Colored n k} {level : Nat} {st out : SearchSt n}
+theorem ofEffect {G : Colored n k} {level : Nat} {st out : Search n}
     (h : FixedCells level st) (hfixed : out.fixedpts = st.fixedpts)
     (heffect : SearchOut G level level st out) : FixedCells level out := by
   intro v hv hm
@@ -72,7 +72,7 @@ theorem ofEffect {G : Colored n k} {level : Nat} {st out : SearchSt n}
 
 /-- Fixed singleton cells are present in the implicit pair at every
 deeper comparison level. -/
-theorem fmptn {level saved : Nat} {st : SearchSt n}
+theorem fmptn {level saved : Nat} {st : Search n}
     (h : FixedCells level st) (hsize : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level) (hsaved : level ≤ saved) :
     st.fixedpts.subset (Nauty.fmptn st.lab st.ptn saved n).1 = true := by
@@ -88,7 +88,7 @@ theorem fmptn {level saved : Nat} {st : SearchSt n}
 /-- A parent-level search effect preserves fixed singletons between
 valid partition states. -/
 theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
-    {st out : SearchSt n} (h : FixedCells level st)
+    {st out : Search n} (h : FixedCells level st)
     (hfixed : out.fixedpts = st.fixedpts)
     (_hok : SearchOk G level numcells st)
     (_hout : SearchOk G level numcells out)
@@ -97,7 +97,7 @@ theorem ofSearchOut {G : Colored n k} {level numcells : Nat}
   h.ofEffect hfixed heffect
 
 /-- Refinement preserves every existing fixed singleton. -/
-theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {st : SearchSt n}
+theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {st : Search n}
     (h : FixedCells level st) (hsize : st.lab.size = n)
     (hpsize : st.ptn.size = n)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
@@ -116,7 +116,7 @@ theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {s
 
 /-- Individualizing a fresh target vertex adds exactly one fixed
 singleton and preserves every older fixed singleton. -/
-theorem breakout {level tc len o : Nat} {st : SearchSt n}
+theorem breakout {level tc len o : Nat} {st : Search n}
     (h : FixedCells level st) (hinj : LabInj st.lab n)
     (hsize : st.lab.size = n)
     (hpsize : st.ptn.size = n)
@@ -170,7 +170,7 @@ theorem fixTest_mono {small large fix : VSet n}
 
 /-- The bounded automorphism workspace is valid at the current frame for
 every entry whose fixed set covers the current search path. -/
-@[expose] def LocalAutos (ctx : Ctx n) (level : Nat) (st : SearchSt n) : Prop :=
+@[expose] def LocalAutos (ctx : Ctx n) (level : Nat) (st : Search n) : Prop :=
   ∀ p ∈ st.autos.toList,
     st.fixedpts.subset p.1 = true →
       PairOk ctx.g st.ptn st.lab level p.1 p.2
@@ -178,7 +178,7 @@ every entry whose fixed set covers the current search path. -/
 namespace LocalAutos
 
 /-- An empty workspace is locally valid. -/
-theorem empty {ctx : Ctx n} {level : Nat} {st : SearchSt n}
+theorem empty {ctx : Ctx n} {level : Nat} {st : Search n}
     (h : st.autos = #[]) : LocalAutos ctx level st := by
   intro p hp
   rw [h] at hp
@@ -215,7 +215,7 @@ theorem reindexPair {ctx : Ctx n} {ptn lab lab' : Array Nat}
 
 /-- Local ledger validity transports across unchanged partition cells and
 a within-cell labelling permutation. -/
-theorem ofCellsPerm {ctx : Ctx n} {level : Nat} {st out : SearchSt n}
+theorem ofCellsPerm {ctx : Ctx n} {level : Nat} {st out : Search n}
     (h : LocalAutos ctx level st) (hautos : out.autos = st.autos)
     (hfixed : out.fixedpts = st.fixedpts) (hptn : out.ptn = st.ptn)
     (hperm : cellsPerm st.ptn level st.lab out.lab)
@@ -233,7 +233,7 @@ theorem ofCellsPerm {ctx : Ctx n} {level : Nat} {st out : SearchSt n}
 /-- The conditional local ledger descends through one
 individualization.  A pair applicable to the enlarged fixed set fixes the
 selected vertex, exactly the premise needed by `cellStab_breakout`. -/
-theorem breakout {ctx : Ctx n} {level tc len o : Nat} {st : SearchSt n}
+theorem breakout {ctx : Ctx n} {level tc len o : Nat} {st : Search n}
     (h : LocalAutos ctx level st)
     (hcell : IsCell st.ptn level tc len)
     (hrange : tc + len ≤ st.ptn.size) (hsize : st.lab.size = st.ptn.size)
@@ -269,7 +269,7 @@ theorem breakout {ctx : Ctx n} {level tc len o : Nat} {st : SearchSt n}
       (hfixes _ hselectedBound hselected), hlt⟩
 
 /-- The conditional local ledger is preserved by equitable refinement. -/
-theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {st : SearchSt n}
+theorem refine {ctx : Ctx n} {level : Nat} {active : VSet n} {numcells : Nat} {st : Search n}
     (h : LocalAutos ctx level st) (hgsz : ctx.g.size = n)
     (hsize : st.lab.size = n) (hlab : LabOk st.lab n)
     (hpsize : st.ptn.size = n)
@@ -296,7 +296,7 @@ current individualized path stabilizes the current partition.  Keeping the
 root frame explicit lets the existing root autos ledger supply the same
 witness at every pruning site. -/
 @[expose] def PathStab (ctx : Ctx n) (rootPtn rootLab : Array Nat)
-    (level : Nat) (st : SearchSt n) : Prop :=
+    (level : Nat) (st : Search n) : Prop :=
   ∀ gamma, checkAutom ctx.g gamma = true →
     CellStab rootPtn 1 rootLab gamma →
     (∀ u, u < n → st.fixedpts.mem u = true → gamma[u]! = u) →
@@ -305,7 +305,7 @@ witness at every pruning site. -/
 namespace PathStab
 
 /-- A frame is its own path-stabilization seed. -/
-theorem same {ctx : Ctx n} {st : SearchSt n} :
+theorem same {ctx : Ctx n} {st : Search n} :
     PathStab ctx st.ptn st.lab 1 st := by
   intro gamma _ hstab _
   exact hstab
@@ -313,7 +313,7 @@ theorem same {ctx : Ctx n} {st : SearchSt n} :
 /-- Reordering the current labelling within unchanged cells preserves path
 stabilization. -/
 theorem ofCellsPerm {ctx : Ctx n} {rootPtn rootLab : Array Nat}
-    {level : Nat} {st out : SearchSt n}
+    {level : Nat} {st out : Search n}
     (h : PathStab ctx rootPtn rootLab level st)
     (hfixed : out.fixedpts = st.fixedpts) (hptn : out.ptn = st.ptn)
     (hperm : cellsPerm st.ptn level st.lab out.lab)
@@ -331,7 +331,7 @@ theorem ofCellsPerm {ctx : Ctx n} {rootPtn rootLab : Array Nat}
 restores the parent's fixed-point set. -/
 theorem ofSearchOut {G : Colored n k} {ctx : Ctx n}
     {rootPtn rootLab : Array Nat} {level numcells : Nat}
-    {st out : SearchSt n}
+    {st out : Search n}
 
     (h : PathStab ctx rootPtn rootLab level st)
     (hfixed : out.fixedpts = st.fixedpts)
@@ -345,7 +345,7 @@ theorem ofSearchOut {G : Colored n k} {ctx : Ctx n}
 
 /-- Equitable refinement preserves path stabilization. -/
 theorem refine {ctx : Ctx n} {rootPtn rootLab : Array Nat}
-    {level : Nat} {active : VSet n} {numcells : Nat} {st : SearchSt n}
+    {level : Nat} {active : VSet n} {numcells : Nat} {st : Search n}
     (h : PathStab ctx rootPtn rootLab level st)
     (hgsz : ctx.g.size = n)
     (hsize : st.lab.size = n) (hlab : LabOk st.lab n)
@@ -366,7 +366,7 @@ theorem refine {ctx : Ctx n} {rootPtn rootLab : Array Nat}
 /-- Individualization extends path stabilization because an automorphism
 fixing the enlarged path fixes the selected target vertex. -/
 theorem breakout {ctx : Ctx n} {rootPtn rootLab : Array Nat}
-    {level tc len o : Nat} {st : SearchSt n}
+    {level tc len o : Nat} {st : Search n}
     (h : PathStab ctx rootPtn rootLab level st)
     (hcell : IsCell st.ptn level tc len)
     (hrange : tc + len ≤ st.ptn.size)
@@ -397,7 +397,7 @@ theorem breakout {ctx : Ctx n} {rootPtn rootLab : Array Nat}
 /-- The root autos ledger and path stabilization reconstruct the
 conditional ledger consumed by the two pruning filters. -/
 theorem toLocal {ctx : Ctx n} {rootPtn rootLab : Array Nat}
-    {level : Nat} {st : SearchSt n}
+    {level : Nat} {st : Search n}
     (h : PathStab ctx rootPtn rootLab level st)
     (hroot : AutosOk ctx.g rootPtn rootLab 1 st.autos) :
     LocalAutos ctx level st := by
@@ -415,7 +415,7 @@ end PathStab
 singleton cells, and root-valid automorphisms fixing them stabilize the
 current cells. -/
 structure PathOk (ctx : Ctx n) (rootPtn rootLab : Array Nat)
-    (level : Nat) (st : SearchSt n) : Prop where
+    (level : Nat) (st : Search n) : Prop where
   fixed : FixedCells level st
   stab : PathStab ctx rootPtn rootLab level st
 
@@ -424,7 +424,7 @@ namespace PathOk
 /-- Node-entry refinement preserves both path facts. -/
 theorem refine {G : Colored n k} {ctx : Ctx n}
     {rootPtn rootLab : Array Nat} {level : Nat} {active : VSet n} {numcells : Nat}
-    {st : SearchSt n}
+    {st : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hgsz : ctx.g.size = n)
     (hok : SearchOk G level numcells st)
@@ -449,7 +449,7 @@ theorem refine {G : Colored n k} {ctx : Ctx n}
 restores the parent's fixed-point set. -/
 theorem ofSearchOut {G : Colored n k} {ctx : Ctx n}
     {rootPtn rootLab : Array Nat} {level numcells : Nat}
-    {st out : SearchSt n}
+    {st out : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (h : PathOk ctx rootPtn rootLab level st)
     (hfixed : out.fixedpts = st.fixedpts)

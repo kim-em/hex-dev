@@ -14,6 +14,7 @@ import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.RouteKey
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public import HexGraphIso.Nauty.Policy.MaxNodeTrace
 import all HexGraphIso.Nauty.Policy.MaxNodeTrace
@@ -27,7 +28,7 @@ import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -93,4 +94,4 @@ theorem first_leaf (G : Colored n k) (tcLevel : Nat) :
     simp only [↓reduceIte]
     exact ⟨_, rfl, keyLe_refl _⟩⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

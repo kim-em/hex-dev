@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.Partition
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Invariant.Stabilize
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -37,7 +38,7 @@ theorem SweepInput.stabilizes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
   have he := h.effect.ptn_eq h.base h.partition
   change st.ptn = (l.prepare ctx tcLevel).2.2.2.2.ptn at he
   have hperm := h.effect.perm
-  dsimp only [Search.view] at hperm
+
   have hstab := h.generators hf γ hγ
   rw [← he] at hperm hstab
   apply cellStab_of_scatter h.partition.ptnSize h.partition.labSize h.base.labSize
@@ -46,7 +47,6 @@ theorem SweepInput.stabilizes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
   intro i hi
   have hsz : (l.prepare ctx tcLevel).2.2.2.2.lab.size = n := h.base.labSize
   rw [getElem!_map_of_lt _ _ (by rw [hsz]; exact hi)]
-  rfl
 
 /-- Suspending the current sweep constructs every field of the child's
 ancestor scope at the actual individualization. -/
@@ -57,28 +57,28 @@ theorem SweepInput.child_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
       st l bs fs parents) :
     let p : Parent n := ⟨l, st, tv, bs, fs⟩
     Scope G ctx tcLevel (level + 1) (l.codes ctx) bs
-      (Engine.child first level tc tv st) (parents.push p) := by
+      (Nauty.child first level tc tv st) (parents.push p) := by
   intro p
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
   have hl : 1 ≤ level := by rw [h.level_eq]; exact h.node.positive
   have hch := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
     hl h.partition h.target (h.cursor_mem tv rfl)
   dsimp only [policy, Generic.Policy.child] at hch
-  have hout : SearchOut G level level st.view (Engine.child first level tc tv st).view :=
+  have hout : SearchOut G level level st (Nauty.child first level tc tv st) :=
     hch.2 _ ((SearchOut.refl G (level + 1) (level + 1) hch.1.reach).mono (by omega))
   have hlen : (l.codes ctx).length = level := by
     simp only [Loop.codes, List.length_append, List.length_singleton]
     rw [h.node.length, ← h.level_eq]
   have hchild : p.child ctx tcLevel =
-      ⟨level + 1, numcells + 1, l.codes ctx, Engine.child first level tc tv st⟩ := by
+      ⟨level + 1, numcells + 1, l.codes ctx, Nauty.child first level tc tv st⟩ := by
     simp only [p, Parent.child, h.first_eq, h.level_eq, h.numcells_eq, h.tc_eq]
-  have hkey : (Engine.child first level tc tv st).key ctx bs = st.key ctx bs := by
+  have hkey : (Nauty.child first level tc tv st).key ctx bs = st.key ctx bs := by
     cases first <;> rfl
-  have hf : (Engine.child first level tc tv st).firstlab = st.firstlab := by cases first <;> rfl
-  have hc : (Engine.child first level tc tv st).canonlab = st.canonlab := by cases first <;> rfl
-  have hgc : (Engine.child first level tc tv st).gcaCanon = st.gcaCanon := by cases first <;> rfl
-  have hgf : (Engine.child first level tc tv st).gcaFirst = st.gcaFirst := by cases first <;> rfl
-  have htrace : (Engine.child first level tc tv st).genTrace = st.genTrace := by cases first <;> rfl
+  have hf : (Nauty.child first level tc tv st).firstlab = st.firstlab := by cases first <;> rfl
+  have hc : (Nauty.child first level tc tv st).canonlab = st.canonlab := by cases first <;> rfl
+  have hgc : (Nauty.child first level tc tv st).gcaCanon = st.gcaCanon := by cases first <;> rfl
+  have hgf : (Nauty.child first level tc tv st).gcaFirst = st.gcaFirst := by cases first <;> rfl
+  have htrace : (Nauty.child first level tc tv st).genTrace = st.genTrace := by cases first <;> rfl
   constructor
   · intro t ht htl
     by_cases he : t = level
@@ -189,4 +189,4 @@ theorem SweepInput.child_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
       simpa only [Parents.push, p, ← h.level_eq,
         show t - 1 ≠ level by omega, ↓reduceIte] using hp
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

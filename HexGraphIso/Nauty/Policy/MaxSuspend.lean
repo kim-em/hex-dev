@@ -15,7 +15,7 @@ import all HexGraphIso.Nauty.Policy.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -30,12 +30,12 @@ theorem Parent.key {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat} {p : Parent n
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
   have hv := h.chosen
   have hw := h.effect.window_eq h.cell
-  dsimp only [Search.view] at hw
+
   rw [← hw] at hv
   have he := h.effect.vertex_key (ctx := ctx) (tcLevel := tcLevel)
     (p.loop.prepare_ok h.node) h.partition hn0 h.node.positive h.cell h.len h.range hv
     (fuel := n - p.loop.node.level) (by have := h.node.depth; omega)
-  dsimp only [Search.view] at he
+
   rw [Loop.key, he]
   unfold Frame.key Parent.child
   simp only [show n + 1 - (p.loop.node.level + 1) = n - p.loop.node.level by omega]
@@ -66,7 +66,7 @@ theorem Parent.key_le {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat} {p : Paren
   rw [p.key h]
   apply Loop.key_le
   have he := h.effect.window_eq h.cell
-  dsimp only [Search.view] at he
+
   rw [he]
   exact h.chosen
 
@@ -84,7 +84,7 @@ theorem SweepInput.suspend {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel :
     ?_, h.path, h.choice, h.canonical, h.first_ref, h.small, ?_⟩
   · have hv := h.subset tv (h.cursor_mem tv rfl)
     have he := h.effect.window_eq h.window
-    dsimp only [Search.view] at he
+
     rwa [he] at hv
   · intro v hv hlt
     rcases h.coverage v hv with hd | ⟨w, hw, _, hrank⟩
@@ -119,4 +119,4 @@ theorem Parents.push_frames {ctx : Ctx n} {tcLevel target : Nat}
     · simp only [hz, ↓reduceIte, show 1 ≠ p.loop.node.level by omega]
     · simp only [hz, ↓reduceIte, show target ≠ p.loop.node.level by omega]
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

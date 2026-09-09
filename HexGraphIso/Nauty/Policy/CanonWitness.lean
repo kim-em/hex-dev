@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -27,8 +28,8 @@ theorem CanonGuide.frame {G : Colored n k} {ctx : Ctx n}
     {base st : Search n} {best : Option (Key n)}
     (h : CanonGuide level tc base
       (fun v => prefixKey cs (vertexKey ctx tcLevel fuel level base.lab base.ptn tc numcells v)) best st)
-    (hf : SearchOut G level level base.view st.view)
-    (hbase : SearchOk G level numcells base.view) (hst : SearchOk G level numcells st.view)
+    (hf : SearchOut G level level base st)
+    (hbase : SearchOk G level numcells base) (hst : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hc : IsCell base.ptn level tc len) (hlen : 2 ≤ len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1) :
@@ -38,7 +39,7 @@ theorem CanonGuide.frame {G : Colored n k} {ctx : Ctx n}
   obtain ⟨v, hv, hat, hp⟩ := h.rebase hf he
   have hm : (windowSet n base.lab tc len).mem v = true := by
     obtain ⟨w, _, hw, hm⟩ := h.mem (labOk_of_reach hbase.labSize hbase.reach) hc
-      (by change tc + len ≤ base.view.lab.size; rw [hbase.labSize]; exact hr) he
+      (by change tc + len ≤ base.lab.size; rw [hbase.labSize]; exact hr) he
     have hwv : w = v := hw.symm.trans hat
     rwa [hwv] at hm
   refine ⟨v, ?_, hat, hp⟩
@@ -55,15 +56,15 @@ The emitting leaf may lie below arbitrarily many intermediate sweeps. -/
 theorem child_canon_cover {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel runFuel level numcells tc tv len : Nat} {first childFirst : Bool}
     {cell : VSet n} {st : Search n} {cs : List Nat} {best : Option (Key n)}
-    (h : SearchOk G level numcells st.view) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hpath : FixedCells level st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (h : SearchOk G level numcells st) (hn0 : 0 < n) (hlevel : 1 ≤ level)
+    (hpath : FixedCells level st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (hgsz : ctx.g.size = n) (hc : IsCell st.ptn level tc len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
     (hguide : CanonGuide level tc st
       (fun v => prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells v)) best st) :
     let out := (node childFirst ctx (n + 2) tcLevel runFuel (level + 1) (numcells + 1)
-      (child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     out.gcaCanon = level → out.canonlab.size = n → checkAutom ctx.g out.workperm = true →
       (∀ i, i < n → out.workperm[out.canonlab[i]!]! = out.lab[i]!) →
       Generic.Covers (prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells tv)) best := by
@@ -73,13 +74,13 @@ theorem child_canon_cover {G : Colored n k} {ctx : Ctx n}
   have hparent : st.gcaCanon = level := hold.1.symm.trans hg
   obtain ⟨v, hv, hat, href⟩ := hguide hparent
   obtain ⟨v', _, hat', hmem⟩ := hguide.mem (labOk_of_reach h.labSize h.reach) hc
-    (by change tc + len ≤ st.view.lab.size; rw [h.labSize]; exact hr) hparent
+    (by change tc + len ≤ st.lab.size; rw [h.labSize]; exact hr) hparent
   have hvv : v' = v := hat'.symm.trans hat
   rw [hvv] at hmem
   rw [← hold.2] at hat href
   have hcframe := child_frame (ctx := ctx) (tcLevel := tcLevel) (fuel := runFuel) (first := first)
     h hn0 hlevel hpath htarget htv childFirst
-  have hout : SearchOut G level level st.view out.view := hcframe.1.congr rfl rfl rfl rfl
+  have hout : SearchOut G level level st out := hcframe.1.congr rfl rfl rfl rfl
   have hend := searchOk_end hn0 h hlevel
   have hstab := cellStab_of_scatter h.ptnSize h.labSize hs hend href hout.perm hmap
   have hchild := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
@@ -108,24 +109,24 @@ theorem SweepPre.short_witness {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (he : (node false ctx (n + 2) tcLevel runFuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).1 = .unwind target true)
+      (Nauty.child first level tc tv st)).1 = .unwind target true)
     (hi : RunInv G ctx (node false ctx (n + 2) tcLevel runFuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2)
+      (Nauty.child first level tc tv st)).2)
     (hreceive : level ≤ target)
-    (hbase : SearchOk G level numcells base.view)
-    (hframe : SearchOut G level level base.view st.view)
+    (hbase : SearchOk G level numcells base)
+    (hframe : SearchOut G level level base st)
     (hc : IsCell base.ptn level tc len) (hlen : 2 ≤ len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
     (hguide : CanonGuide level tc base
       (fun v => prefixKey cs (vertexKey ctx tcLevel fuel level base.lab base.ptn tc numcells v)) best st) :
     let out := (node false ctx (n + 2) tcLevel runFuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     Generic.Covers (prefixKey cs (vertexKey ctx tcLevel fuel level st.lab st.ptn tc numcells tv)) best ∨
       target ≤ out.noncheaplevel - 1 := by
   intro out
   have ht := h.child_target hn0 hgsz hsymm he hreceive
   have horigin := node_origin false ctx (n + 2) tcLevel runFuel (level + 1) (numcells + 1)
-    (Engine.child first level tc tv st) he
+    (Nauty.child first level tc tv st) he
   rcases horigin.admission hi.workspace.1 with ⟨_, hg, htrace, hmap⟩ | ⟨_, hcheap⟩
   · left
     apply child_canon_cover h.partition hn0 h.positive h.path.fixed h.target (h.cursor_mem tv rfl)
@@ -135,4 +136,4 @@ theorem SweepPre.short_witness {G : Colored n k} {ctx : Ctx n}
     exact hmap hi.scratch hi.canonical.1 (isPerm_of_cellsReach hi.canonical.1 hn0 hi.canonical.2)
   · exact Or.inr hcheap
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

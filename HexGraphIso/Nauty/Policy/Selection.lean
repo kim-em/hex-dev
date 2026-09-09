@@ -96,7 +96,6 @@ theorem Selects.append {ctx : Ctx n} {tcLevel base level tc o : Nat}
   | refl => exact ⟨htc, trivial⟩
   | step _ _ _ _ _ _ _ _ ih => exact ⟨hs.1, ih hs.2 htc⟩
 
-namespace Engine
 
 /-- A suffix of the target history starts at the corresponding deeper level. -/
 theorem Targets.drop {store : Array Int} {base : Nat} {xs : List Nat}
@@ -180,6 +179,5 @@ theorem FollowsPerm.target {ctx : Ctx n} {store : Array Int}
     rw [hcurrenttc, htc, hsel.1]
     exact hread.symm
 
-end Engine
 
 end Hex.GraphIso.Nauty

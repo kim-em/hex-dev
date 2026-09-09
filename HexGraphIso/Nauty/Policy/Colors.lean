@@ -12,10 +12,11 @@ import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Scatter
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -114,4 +115,4 @@ theorem TraceStab.leaf {G : Colored n k} {st : Search n} (h : TraceStab G st)
   | better sr => rw [leafExit_trace] at hp; exact h perm hp
   | bad => rw [leafExit_trace] at hp; exact h perm hp
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

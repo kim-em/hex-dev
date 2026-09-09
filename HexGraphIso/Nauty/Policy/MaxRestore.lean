@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.FirstReturn
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -36,11 +37,11 @@ theorem SweepInput.restore {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel :
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hvisit : (!first || st.orbits[tv]! == tv) = true) :
-    let raw := (Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)).2
+    let raw := (Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)).2
     let middle := if first && tv == tv1 then afterChildFirst level tv1 raw else raw
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
-    Engine.SweepPre G ctx tcLevel first level numcells tc tv1 none cell
+    Nauty.SweepPre G ctx tcLevel first level numcells tc tv1 none cell
       (recoverLevels level (recoverPtn (n + 2) level left)) := by
   intro raw middle left
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
@@ -65,7 +66,7 @@ theorem SweepInput.restore {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel :
     obtain ⟨bs₀, fs₀, hentry⟩ := h.origin
     obtain ⟨hpre, _, _, _, ht, _⟩ := hentry
     have hentryChild := hpre.child hn0 hsymm htv hgsz hloop
-    have htrace : (Engine.child true l.node.level r.2.1.toNat tv
+    have htrace : (Nauty.child true l.node.level r.2.1.toNat tv
         (cheapCheck true l.node.level r.2.2.2.2)).genTrace = #[] := by
       change (cheapCheck true l.node.level r.2.2.2.2).genTrace = #[]
       unfold cheapCheck
@@ -101,4 +102,4 @@ theorem SweepInput.restore {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel :
       (by intro v hv; cases hv), hr.stored, hr.ancestor, hr.canonAncestor,
       hr.history, hr.recorded, hr.equitable, hr.boundary, hr.cheapBound, hr.path, hr.small⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

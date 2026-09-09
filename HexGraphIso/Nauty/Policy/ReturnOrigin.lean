@@ -24,6 +24,7 @@ import all HexGraphIso.Nauty.Policy.Partition
 import all HexGraphIso.Nauty.Policy.Fixed
 import all HexGraphIso.Nauty.Policy.Scratch
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -31,7 +32,7 @@ public section
 loop consumes them. Explicit pairs use the frozen canonical ancestor to
 justify the receiving fix test. -/
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -184,14 +185,14 @@ every vertex of the parent path, even before partition recovery. -/
 theorem short_implicit_fix {k : Nat} {G : Colored n k}
     {level numcells : Nat} {base out : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells base.view) (hfixed : FixedCells level base.view)
-    (hframe : SearchOut G level level base.view out.view) (hf : out.fixedpts = base.fixedpts)
+    (hok : SearchOk G level numcells base) (hfixed : FixedCells level base)
+    (hframe : SearchOut G level level base out) (hf : out.fixedpts = base.fixedpts)
     (hsaved : level ≤ out.noncheaplevel) :
     out.fixedpts.subset (fmptn out.lab out.ptn out.noncheaplevel n).1 = true := by
-  have hsize : out.view.ptn.size = n := hframe.ptnSize.trans hok.ptnSize
+  have hsize : out.ptn.size = n := hframe.ptnSize.trans hok.ptnSize
   have hend := searchOk_end hn0 hok hlevel
-  have hlow := hframe.low (base.view.ptn.size - 1) (Or.inl hend)
-  have heout : out.view.ptn[out.view.ptn.size - 1]! ≤ level := by
+  have hlow := hframe.low (base.ptn.size - 1) (Or.inl hend)
+  have heout : out.ptn[out.ptn.size - 1]! ≤ level := by
     rw [hframe.ptnSize, hlow]
     exact hend
   exact (hfixed.ofEffect hf hframe).fmptn hsize heout hsaved
@@ -218,4 +219,4 @@ theorem sweep_origin (first : Bool) (ctx : Ctx n)
   exact Generic.sweep_short shortPolicy first ctx inf tcLevel fuel cfuel level numcells tc tv1
     cursor cell index st target he
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

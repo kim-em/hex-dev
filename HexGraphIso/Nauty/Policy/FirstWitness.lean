@@ -24,19 +24,20 @@ import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
 /-- Stored matching depends only on the three first-reference fields. -/
 theorem matches_reference {ctx : Ctx n} {level : Nat} {st out : Search n}
     {targets : List Nat} {key : Key n}
-    (h : Generation.Matches ctx level st.view targets key)
+    (h : Generation.Matches ctx level st targets key)
     (he : out.reference = st.reference) :
-    Generation.Matches ctx level out.view targets key :=
+    Generation.Matches ctx level out targets key :=
   h.stateEq (congrArg Prod.fst he) (congrArg (fun r => r.2.1) he)
     (congrArg (fun r => r.2.2) he)
 
@@ -54,7 +55,7 @@ theorem firstPath_witness {G : Colored n k} {tcLevel fuel level numcells last : 
     ∃ targets key,
       Generation.RefPath ctx tcLevel out.allsamelevel level
         (st.refined ctx level numcells) targets key ∧
-      Generation.Matches ctx level out.view targets key := by
+      Generation.Matches ctx level out targets key := by
   have uniformCase : ∀ {fuel level numcells last st leaf cs bs fs parents},
       (hp : Generic.FirstPath { g := rowsOf G } tcLevel fuel level numcells st last leaf) →
       (∀ f, f < fuel → (contract G tcLevel).nodeValid f
@@ -66,7 +67,7 @@ theorem firstPath_witness {G : Colored n k} {tcLevel fuel level numcells last : 
           (node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.allsamelevel
           level (st.refined { g := rowsOf G } level numcells) targets key ∧
         Generation.Matches { g := rowsOf G } level
-          (node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.view targets key := by
+          (node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2 targets key := by
     intro fuel level numcells last st leaf cs bs fs parents hp hn hi hb
     have hn0 : 0 < n := by have := hi.frame.positive; have := hi.frame.depth; omega
     obtain ⟨href, _⟩ := firstRef_of_path (inf := n + 2) hn0 (rowsOf_symm G) hp
@@ -148,7 +149,7 @@ theorem firstPath_witness {G : Colored n k} {tcLevel fuel level numcells last : 
         · exact hsame
     have hr : out.reference = childOut.reference :=
       (firstPath_reference hp).trans (firstPath_reference tail).symm
-    have hm' : Generation.Matches ctx (level + 1) out.view targets key :=
+    have hm' : Generation.Matches ctx (level + 1) out targets key :=
       matches_reference hm hr
     obtain ⟨e, o, hlt, hcell, hne, ho, hat⟩ :=
       firstChild_offset hn0 hi.frame.positive hi.frame.partition htv
@@ -191,4 +192,4 @@ theorem firstPath_witness {G : Colored n k} {tcLevel fuel level numcells last : 
     exact ⟨r.2.1.toNat :: targets, ⟨R.longcode :: key.codes, key.rows⟩,
       .step hlt hcell hne ho ht href (fun h => (hb h).elim), hm'.cons hcode.symm htarget.symm⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

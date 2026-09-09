@@ -17,10 +17,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.History
 import all HexGraphIso.Nauty.Policy.Selection
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -129,7 +130,7 @@ theorem firstPath_size {ctx : Ctx n} {tcLevel fuel level numcells last : Nat}
 /-- A valid node's refinement has the state invariant used by descent paths. -/
 theorem refined_iter {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) :
+    (hok : SearchOk G level numcells st) :
     IterOk ctx level (st.refined ctx level numcells) := by
   have hend := searchOk_end hn0 hok hlevel
   have hr := refine_stOk (ctx := ctx) (active := st.active) (numcells := numcells)
@@ -146,7 +147,7 @@ theorem refined_iter {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     · change (refine ctx level st.lab st.ptn st.active numcells).ptn[q]! = _ at he
       exact Or.inl (Nat.le_of_eq he)
   · have := hok.bc
-    have := bcount_le st.view.ptn level n
+    have := bcount_le st.ptn level n
     omega
 
 /-- A first-path target uses the unhinted specification rule. -/
@@ -176,11 +177,11 @@ theorem prepareFirst_choice {ctx : Ctx n} {tcLevel level numcells : Nat} {st : S
 /-- A selected child of the prepared first path has a valid entry partition. -/
 theorem firstChild_ok {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells tv : Nat} {st : Search n}
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
     (htv : (Generic.prepareFirst ctx tcLevel level numcells st).2.2.1.nextElem none = some tv) :
     let r := Generic.prepareFirst ctx tcLevel level numcells st
     SearchOk G (level + 1) (r.1 + 1)
-      (child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)).view := by
+      (child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)) := by
   let r := Generic.prepareFirst ctx tcLevel level numcells st
   obtain ⟨hr, ht⟩ := prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 hlevel hok
   have hc := (reachPolicy G ctx tcLevel hn0).cheap true level r.1 r.2.2.2.2 hr
@@ -206,7 +207,7 @@ theorem firstPath_history {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab
       (st.refined ctx level numcells).ptn)
     (hsize : n < st.firsttc.size) (hcodeSize : n < st.firstcode.size) :
@@ -245,13 +246,13 @@ theorem firstPath_history {G : Colored n k} {ctx : Ctx n}
     obtain ⟨hr, ht⟩ := prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 hlevel hok
     obtain ⟨hl, hp, hstore⟩ := prepareFirst_fields ctx tcLevel level numcells st
     have hnc : r.1 < n := by
-      have hc : r.1 = bcount r.2.2.2.2.view.ptn level n := hr.count
-      have hb := bcount_le r.2.2.2.2.view.ptn level n
+      have hc : r.1 = bcount r.2.2.2.2.ptn level n := hr.count
+      have hb := bcount_le r.2.2.2.2.ptn level n
       change r.1 ≠ n at hopen
       omega
     have hlt : level < n := by
-      have hc : r.1 = bcount r.2.2.2.2.view.ptn level n := hr.count
-      have hb : level ≤ bcount r.2.2.2.2.view.ptn level n := hr.bc
+      have hc : r.1 = bcount r.2.2.2.2.ptn level n := hr.count
+      have hb : level ≤ bcount r.2.2.2.2.ptn level n := hr.bc
       omega
     have hmem := VSet.nextElem_mem htv
     obtain ⟨len, htcell, hseg⟩ := ht
@@ -280,7 +281,7 @@ theorem firstPath_history {G : Colored n k} {ctx : Ctx n}
       exact h.symm
     have heqchild := equitable_breakout hit.ok.labSize hit.ok.ptnSize hit.ok.ptnEnd
       hit.valsWeak hit.ok.labOk hit.inj hsymm heq hc hne ho' hacc
-    let child := Engine.child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)
+    let child := Nauty.child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)
     have hchild := firstChild_ok hn0 hlevel hok htv
     have hstep : child.refined ctx (level + 1) (r.1 + 1) =
         childSt ctx level R r.2.1.toNat R.lab[r.2.1.toNat + o]! := by
@@ -339,7 +340,7 @@ theorem firstPath_saved {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab
       (st.refined ctx level numcells).ptn)
     (hsize : n < st.firsttc.size) (hcodeSize : n < st.firstcode.size) :
@@ -447,4 +448,4 @@ theorem firstPath_sentinel {ctx : Ctx n} {inf tcLevel fuel level numcells last :
     leaf.firstcode.set! (last + 1) codeSentinel at hcode
   rw [hcode, Array.getElem!_set!_self _ _ _ (by rw [firstPath_codeSize hpath, hsize]; omega)]
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

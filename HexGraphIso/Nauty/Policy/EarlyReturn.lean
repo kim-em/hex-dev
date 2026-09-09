@@ -19,10 +19,11 @@ import all HexGraphIso.Nauty.Policy.ReturnOrigin
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -275,4 +276,4 @@ theorem NodePre.return_eq {k : Nat} {G : Colored n k} {ctx : Ctx n}
   have hhigh := h.node_bound inf target short he
   omega
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

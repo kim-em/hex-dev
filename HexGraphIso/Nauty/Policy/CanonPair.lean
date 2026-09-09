@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.CanonRef
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -26,12 +27,12 @@ at that parent, independently of the current ordering of labels. -/
 theorem child_pair {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {first : Bool}
     {cell : VSet n} {base st : Search n} {key : Nat → Key n} {best : Option (Key n)}
-    (h : SearchOk G level numcells st.view)
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hpath : FixedCells level st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (h : SearchOk G level numcells st)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hpath : FixedCells level st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (ht : cell.mem tv = true)
     (childFirst : Bool)
-    (hbase : SearchOk G level numcells base.view)
-    (hframe : SearchOut G level level base.view st.view)
+    (hbase : SearchOk G level numcells base)
+    (hframe : SearchOut G level level base st)
     (hguide : CanonGuide level tc base key best st) :
     let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
@@ -45,7 +46,7 @@ theorem child_pair {G : Colored n k} {ctx : Ctx n}
   rw [← hold.2] at href
   have hc := child_frame (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel) (first := first)
     h hn0 hlevel hpath htarget ht childFirst
-  have hp : SearchOut G level level base.view out.view :=
+  have hp : SearchOut G level level base out :=
     hframe.trans (hc.1.congr rfl rfl rfl rfl)
   have hend := searchOk_end hn0 hbase hlevel
   apply pairOk_fmperm (labOk_of_reach hbase.labSize hbase.reach)
@@ -58,8 +59,8 @@ theorem SweepPre.canon_pair {G : Colored n k} {ctx : Ctx n}
     {cell : VSet n} {base st : Search n} {key : Nat → Key n} {best : Option (Key n)}
     (h : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st)
     (hn0 : 0 < n) (childFirst : Bool)
-    (hbase : SearchOk G level numcells base.view)
-    (hframe : SearchOut G level level base.view st.view)
+    (hbase : SearchOk G level numcells base)
+    (hframe : SearchOut G level level base st)
     (hguide : CanonGuide level tc base key best st) :
     let out := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
@@ -69,4 +70,4 @@ theorem SweepPre.canon_pair {G : Colored n k} {ctx : Ctx n}
   child_pair h.partition hn0 h.positive h.path.fixed h.target (h.cursor_mem tv rfl)
     childFirst hbase hframe hguide
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

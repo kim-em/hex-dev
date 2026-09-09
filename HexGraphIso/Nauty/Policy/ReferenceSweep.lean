@@ -27,7 +27,7 @@ import all HexGraphIso.Nauty.Search.Search
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -38,14 +38,14 @@ theorem SweepInput.canon_past {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
     {st : Search n} {l : Loop n} {bs fs : List Nat} {parents : Parents n}
     (h : SweepInput G ctx tcLevel fuel cfuel first level numcells tc tv1 (some tv)
       cell index st l bs fs parents) {previous : Option Nat}
-    (hp : Generation.CanonPast level tc previous st.view)
+    (hp : Generation.CanonPast level tc previous st)
     (hnext : cell.nextElem previous = some tv) :
-    let raw := (Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+    let raw := (Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
       (level + 1) (numcells + 1) (child first level tc tv st)).2
     let middle := if first && tv == tv1 then afterChildFirst level tv1 raw else raw
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
     Generation.CanonPast level tc (some tv)
-      (recoverLevels level (recoverPtn (n + 2) level left)).view := by
+      (recoverLevels level (recoverPtn (n + 2) level left)) := by
   intro raw middle left
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
   have hl : 1 ≤ level := by rw [h.level_eq]; exact h.node.positive
@@ -83,9 +83,9 @@ theorem SweepInput.canon_earlier {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
     {st : Search n} {l : Loop n} {bs fs : List Nat} {parents : Parents n}
     (h : SweepInput G ctx tcLevel fuel cfuel first level numcells tc tv1 (some tv)
       cell index st l bs fs parents) {previous : Option Nat}
-    (hp : Generation.CanonPast level tc previous st.view)
+    (hp : Generation.CanonPast level tc previous st)
     (hnext : cell.nextElem previous = some tv) :
-    let out := (Engine.node childFirst ctx (n + 2) tcLevel fuel
+    let out := (Nauty.node childFirst ctx (n + 2) tcLevel fuel
       (level + 1) (numcells + 1) (child first level tc tv st)).2
     out.gcaCanon = level →
       ∃ o, o < (l.prepare ctx tcLevel).2.2.2.1 ∧
@@ -116,7 +116,7 @@ theorem SweepInput.return_chosen {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
     {st : Search n} {l : Loop n} {bs fs : List Nat} {parents : Parents n}
     (h : SweepInput G ctx tcLevel fuel cfuel first level numcells tc tv1 (some tv)
       cell index st l bs fs parents) :
-    (Engine.node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+    (Nauty.node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2.lab[tc]! = tv := by
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
   have hl : 1 ≤ level := by rw [h.level_eq]; exact h.node.positive
@@ -143,10 +143,10 @@ theorem SweepInput.reference_visit {G : Colored n k} {ctx : Ctx n} {tcLevel fuel
     (hptn : R.ptn = (l.prepare ctx tcLevel).2.2.2.2.ptn)
     (hcover : Generation.PathCover ctx tcLevel boundary level R tc
       (l.prepare ctx tcLevel).2.2.2.1 targets key cell previous)
-    (hpast : Generation.CanonPast level tc previous st.view)
+    (hpast : Generation.CanonPast level tc previous st)
     (hnext : cell.nextElem previous = some tv)
     (hguide : st.gcaFirst < level)
-    (hcall : Engine.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+    (hcall : Nauty.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child false level tc tv st) = (.unwind level short, out))
     (hsize : out.canonlab.size = n) (hgsz : ctx.g.size = n)
     (hreceipt : ∀ o, o < (l.prepare ctx tcLevel).2.2.2.1 → R.lab[tc + o]! = tv →
@@ -189,7 +189,7 @@ theorem SweepInput.reference_visit {G : Colored n k} {ctx : Ctx n} {tcLevel fuel
           hl h.partition h.target (h.cursor_mem tv rfl)
         dsimp only [policy, Generic.Policy.child] at hc
         have := hc.1.bc
-        have := bcount_le (child false level tc tv st).view.ptn (level + 1) n
+        have := bcount_le (child false level tc tv st).ptn (level + 1) n
         omega
       have hcc : CellCarrier ctx R.ptn level R.lab out.canonlab out.lab out.genTrace := by
         obtain ⟨γ, hmem, hcheck, hmap⟩ := carrier
@@ -222,7 +222,7 @@ theorem SweepInput.reference_filters {G : Colored n k} {ctx : Ctx n}
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
-    (hcall : Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+    (hcall : Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
       (level + 1) (numcells + 1) (child first level tc tv st) = (.unwind level short, out)) :
     let middle := if first && tv == tv1 then afterChildFirst level tv1 out else out
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
@@ -263,7 +263,7 @@ theorem SweepInput.reference_filters {G : Colored n k} {ctx : Ctx n}
       have hc : short = true := hshort
       subst short
       change Generation.PathCover ctx tcLevel boundary level R tc
-        (l.prepare ctx tcLevel).2.2.2.1 targets key (Nauty.shortprune cell left.view) (some tv)
+        (l.prepare ctx tcLevel).2.2.2.1 targets key (Nauty.shortprune cell left) (some tv)
       apply hcover.shortprune hit hlt hgsz hcell (by have := h.len; omega) (by have := h.len; omega)
       intro fix mcr hb
       have hb' : out.autos.back? = some (fix, mcr) := by
@@ -312,7 +312,7 @@ theorem SweepInput.reference_child {G : Colored n k} {ctx : Ctx n}
     hl h.partition h.target (h.cursor_mem tv rfl)
   have hlt : level < n := by
     have := hch.1.bc
-    have := bcount_le (Generic.Policy.child (n := n) first level tc tv st).view.ptn (level + 1) n
+    have := bcount_le (Generic.Policy.child (n := n) first level tc tv st).ptn (level + 1) n
     omega
   have hr := h.range
   have hlen := h.len
@@ -343,4 +343,4 @@ theorem SweepInput.reference_child {G : Colored n k} {ctx : Ctx n}
   rw [he]
   exact hh
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

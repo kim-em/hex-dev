@@ -20,10 +20,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -66,7 +67,7 @@ theorem Parent.scatter_cover {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   have hk := hok.vertex_key hn0 h.node.positive hgsz hcheck hs h.cell h.range hmem
     (by have := h.node.depth; omega : p.loop.node.level + 1 + (n - p.loop.node.level) ≤ n + 1) tcLevel
   rw [hat] at hk
-  dsimp only [Search.view] at hk
+
   rw [p.key h, Loop.key, ← hk]
   exact hcover
 
@@ -75,7 +76,7 @@ node call, whether or not it changes the incumbent. -/
 theorem NodeInput.emit_out {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     {f : Frame n} {bs fs : List Nat} {parents : Parents n}
     (h : NodeInput G ctx tcLevel fuel false f bs fs parents) :
-    SearchOut G (f.level - 1) f.level f.entry.view (f.emit ctx tcLevel).2.view := by
+    SearchOut G (f.level - 1) f.level f.entry (f.emit ctx tcLevel).2 := by
   have hn0 : 0 < n := by have := h.frame.positive; have := h.frame.depth; omega
   let rp := reachPolicy G ctx tcLevel hn0
   have hv := rp.visit f.level f.numcells f.entry h.frame.positive h.frame.partition
@@ -232,4 +233,4 @@ theorem auto_first (G : Colored n k) (tcLevel : Nat) :
   rw [f.emit_step _ hdone]
   exact hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

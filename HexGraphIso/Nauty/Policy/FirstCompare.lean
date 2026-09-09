@@ -20,6 +20,7 @@ import all HexGraphIso.Nauty.Policy.ReturnCodes
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -42,7 +43,6 @@ theorem StoredCodes.push {store : Array Nat} {base : Nat} {cs : List Nat}
     rw [Array.getElem!_set!_ne _ _ _ _ (by omega), getElem!_append_left hilt]
     exact h i hilt
 
-namespace Engine
 
 /-- First-path preparation leaves canonical code storage allocated. -/
 theorem prepareFirst_canoncode (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
@@ -62,7 +62,7 @@ theorem FirstPre.code_prefix {G : Colored n k} {ctx : Ctx n} {tcLevel level numc
   rw [prepareFirst_code, ← hlen, Nat.add_comm cs.length 1]
   apply hcs.push
   have hbc := h.partition.bc
-  have hb := bcount_le st.view.ptn level n
+  have hb := bcount_le st.ptn level n
   rw [h.codes]
   omega
 
@@ -128,7 +128,7 @@ theorem firstSweep_codes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : N
       | false => exact hcontinue cell _ (fun _ hv => hv)
       | true =>
         exact hcontinue (shortprune cell left) _
-          (fun _ hv => Nauty.shortprune_subset (st := left.view) hv)
+          (fun _ hv => Nauty.shortprune_subset (st := left) hv)
 
 /-- The actual first descent initializes the code machines; each ancestor
 then uses the same off-path comparison theorem for its remaining siblings. -/
@@ -148,7 +148,7 @@ theorem firstPath_codes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numc
     have hlength : codes.length = level := by simp only [codes, List.length_append, List.length_singleton]; omega
     have hbound : codes.length ≤ n := by
       have := hin.partition.bc
-      have := bcount_le st.view.ptn level n
+      have := bcount_le st.ptn level n
       omega
     have hnonempty : codes ≠ [] := by simp [codes]
     have hstored := hin.code_prefix (tcLevel := tcLevel) hlen hstore
@@ -238,5 +238,4 @@ theorem runState_incumbent (G : Colored n k) (hn0 : 0 < n) :
   simp only [Search.key, hr.nonempty, ite_false]
   exact ⟨_, rfl⟩
 
-end Engine
 end Hex.GraphIso.Nauty

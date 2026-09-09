@@ -16,10 +16,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -27,7 +28,7 @@ variable {n k : Nat}
 passed cheap guard supplies the small-cell invariant at its current node. -/
 structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : Search n) : Prop where
   positive : 1 ≤ level
-  partition : SearchOk G level numcells st.view
+  partition : SearchOk G level numcells st
   equitable : Equitable ctx level (st.refined ctx level numcells).lab (st.refined ctx level numcells).ptn
   codes : st.firstcode.size = n + 2
   targets : n < st.firsttc.size
@@ -42,14 +43,14 @@ structure FirstPre (G : Colored n k) (ctx : Ctx n) (level numcells : Nat) (st : 
   boundary : Boundary G ctx level st
   cheapBound : st.noncheaplevel ≤ level
   pairs : PairsOk G ctx st
-  workspace : WorkspaceOk st.view
+  workspace : WorkspaceOk st
   path : PathInv G ctx level st
   starts : ∀ v, st.active.mem v = true → v = 0 ∨ st.ptn[v - 1]! ≤ level
 
 /-- The chosen first child is a valid mathematical individualization step. -/
 theorem firstChild_offset {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tv : Nat}
     {st : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (htv : (Generic.prepareFirst ctx tcLevel level numcells st).2.2.1.nextElem none = some tv) :
     let r := Generic.prepareFirst ctx tcLevel level numcells st
     let R := st.refined ctx level numcells
@@ -74,9 +75,9 @@ theorem firstChild_offset {G : Colored n k} {ctx : Ctx n} {tcLevel level numcell
   have hchild := firstChild_ok hn0 hlevel hok htv
   have hbc := hchild.bc
   have hb := bcount_le (Generic.Policy.child (n := n) true level r.2.1.toNat tv
-    (Generic.Policy.cheapCheck (n := n) true level r.2.2.2.2)).view.ptn (level + 1) n
+    (Generic.Policy.cheapCheck (n := n) true level r.2.2.2.2)).ptn (level + 1) n
   change level + 1 ≤ bcount (Generic.Policy.child (n := n) true level r.2.1.toNat tv
-    (Generic.Policy.cheapCheck (n := n) true level r.2.2.2.2)).view.ptn (level + 1) n at hbc
+    (Generic.Policy.cheapCheck (n := n) true level r.2.2.2.2)).ptn (level + 1) n at hbc
   exact ⟨r.2.1.toNat + len - 1, o, by omega, hc, by omega, by omega, hlabel⟩
 
 /-- First-path preparation preserves allocation sizes and the existing generator trace. -/
@@ -150,11 +151,11 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
     let r := Generic.prepareFirst ctx tcLevel level numcells st
     FirstPre G ctx (level + 1) (r.1 + 1)
-      (Engine.child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)) := by
+      (Nauty.child true level r.2.1.toNat tv (cheapCheck true level r.2.2.2.2)) := by
   intro r
   let R := st.refined ctx level numcells
   let ready := cheapCheck true level r.2.2.2.2
-  let ch := Engine.child true level r.2.1.toNat tv ready
+  let ch := Nauty.child true level r.2.1.toNat tv ready
   have hit := refined_iter (ctx := ctx) hn0 h.positive h.partition
   obtain ⟨e, o, hlevel, hcell, hne, ho, hlabel⟩ := firstChild_offset hn0 h.positive h.partition htv
   have hstep : ch.refined ctx (level + 1) (r.1 + 1) =
@@ -223,4 +224,4 @@ theorem FirstPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     have hc := (reachPolicy G ctx tcLevel hn0).cheap true level r.1 r.2.2.2.2 hp.1
     exact child_starts true (hp.2.of_out hc.effect) (VSet.nextElem_mem htv)
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

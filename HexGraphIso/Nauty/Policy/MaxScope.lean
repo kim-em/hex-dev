@@ -21,10 +21,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Bounds
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -39,8 +40,8 @@ theorem SweepInput.restore_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    let raw := (Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)).2
+    let raw := (Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)).2
     let middle := if first && tv == tv1 then afterChildFirst level tv1 raw else raw
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
     let ready := recoverLevels level (recoverPtn (n + 2) level left)
@@ -53,7 +54,7 @@ theorem SweepInput.restore_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
   have hl : 1 ≤ level := by rw [h.level_eq]; exact h.node.positive
   have hf := child_frame (first := first) h.partition hn0 hl h.path.fixed h.target
     (h.cursor_mem tv rfl) (first && tv == tv1) (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
-  have hout : SearchOut G level level st.view left.view := by
+  have hout : SearchOut G level level st left := by
     dsimp only [left, middle]
     split <;> exact hf.1.congr rfl rfl rfl rfl
   have he := (reachPolicy G ctx tcLevel hn0).recover level numcells st left hl h.partition hout
@@ -111,7 +112,7 @@ theorem SweepInput.restore_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
         rw [hfalse]
         have hr := congrArg (fun r => r.2.2)
           (node_reference ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-            (Engine.child first level tc tv st))
+            (Nauty.child first level tc tv st))
         cases first <;> exact hr
       have hhg : raw.gcaFirst = st.gcaFirst := by
         dsimp only [raw]
@@ -168,4 +169,4 @@ theorem SweepInput.restore_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
       rw [hf]
       exact hh.2
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

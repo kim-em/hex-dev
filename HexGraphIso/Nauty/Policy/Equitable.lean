@@ -56,7 +56,6 @@ theorem DescPath.equitable {base last : Nat} {root leaf : RefineSt n}
         hok.ok.labOk hok.inj hsymm heq hcell hne ho hacc)
       (childSt_count hok hcell hne hacc)
 
-namespace Engine
 
 /-- Reordering within cells preserves the equitability of a guided endpoint. -/
 theorem GuidedPerm.equitable {store : Array Int} {tcLevel base level : Nat}
@@ -69,6 +68,5 @@ theorem GuidedPerm.equitable {store : Array Int} {tcLevel base level : Nat}
   have hleaf := descends_iterOk hd.descends hok
   exact hp.equitable (hd.equitable hok heq hacc hsymm).1 hleaf.ok.ptnSize hleaf.ok.ptnEnd
 
-end Engine
 
 end Hex.GraphIso.Nauty

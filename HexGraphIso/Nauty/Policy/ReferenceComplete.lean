@@ -24,10 +24,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Generation.RefPath
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -41,13 +42,13 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
       NodeInput G { g := rowsOf G } tcLevel fuel false f bs fs parents →
       Generation.RefPath { g := rowsOf G } tcLevel boundary f.level
         (f.entry.refined { g := rowsOf G } f.level f.numcells) targets key →
-      Generation.Matches { g := rowsOf G } f.level f.entry.view targets key →
+      Generation.Matches { g := rowsOf G } f.level f.entry targets key →
       f.entry.eqlevFirst = f.level - 1 → boundary ≤ f.entry.allsamelevel →
       ∀ target short,
-        (Engine.node false { g := rowsOf G } (n + 2) tcLevel fuel f.level f.numcells f.entry).1 =
+        (Nauty.node false { g := rowsOf G } (n + 2) tcLevel fuel f.level f.numcells f.entry).1 =
           .unwind target short →
         RefReturn { g := rowsOf G } target
-          (Engine.node false { g := rowsOf G } (n + 2) tcLevel fuel f.level f.numcells f.entry).2 := by
+          (Nauty.node false { g := rowsOf G } (n + 2) tcLevel fuel f.level f.numcells f.entry).2 := by
   intro fuel
   induction fuel with
   | zero =>
@@ -65,13 +66,13 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
     have hg := h.entry.1.ancestor
     have hbudget : n < f.level + (fuel + 1) := by have := h.fuel; omega
     have hfirst :
-        ((Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).1 =
+        ((Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).1 =
           .unwind f.entry.gcaFirst false ∧
           LabelCarrier ctx f.entry.firstlab
-            (Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2.lab
-            (Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2.genTrace) →
+            (Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2.lab
+            (Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2.genTrace) →
         RefReturn ctx target
-          (Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2 := by
+          (Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2 := by
       intro hh
       rw [hret] at hh
       cases hh.1
@@ -79,12 +80,12 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
       · rw [node_gca]
       · have hr := node_reference ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry
         have hl := congrArg (fun r => r.2.2) hr
-        change (Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2.firstlab = f.entry.firstlab at hl
+        change (Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2.firstlab = f.entry.firstlab at hl
         rw [hl]
         exact hh.2
     have emit : Generation.Uniform ctx tcLevel f.level rs targets key →
         RefReturn ctx target
-          (Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2 := by
+          (Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).2 := by
       intro hu
       exact hfirst (uniform_reference (size_rowsOf G) (rowsOf_symm G) ht hu
         hi.scratch hi.firstSize hi.first hm heq hg hbudget)
@@ -147,9 +148,9 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
         dsimp only [p, Loop.prepare, l]
         unfold cheapCheck
         have hptn : (chooseTarget false ctx tcLevel f.level
-            (Engine.visit ctx f.level f.numcells f.entry).1
-            (compareCodes f.level (Engine.visit ctx f.level f.numcells f.entry).2.1
-              (Engine.visit ctx f.level f.numcells f.entry).2.2)).2.2.2.ptn = rs.ptn := by
+            (Nauty.visit ctx f.level f.numcells f.entry).1
+            (compareCodes f.level (Nauty.visit ctx f.level f.numcells f.entry).2.1
+              (Nauty.visit ctx f.level f.numcells f.entry).2.2)).2.2.2.ptn = rs.ptn := by
           rw [chooseTarget_fields, (compareCodes_frame ..).2.1]
           rfl
         simp only [Bool.false_eq_true, ↓reduceIte, hptn,
@@ -158,11 +159,11 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
       have hvisit : ∀ {cfuel tv index cell st bs fs},
           SweepInput G ctx tcLevel fuel cfuel false f.level p.1 tc
             ((p.2.2.1.nextElem none).getD 0) (some tv) cell index st l bs fs parents →
-          Generation.Matches ctx (f.level + 1) st.view rest tail → st.eqlevFirst = f.level →
+          Generation.Matches ctx (f.level + 1) st rest tail → st.eqlevFirst = f.level →
           boundary ≤ st.allsamelevel → st.gcaFirst < f.level →
           ∀ j, j < (l.prepare ctx tcLevel).2.2.2.1 → rs.lab[tc + j]! = tv →
           Generation.ChildPath ctx tcLevel boundary f.level rs tc rest tail j →
-          let out := Engine.node false ctx (n + 2) tcLevel fuel (f.level + 1) (p.1 + 1)
+          let out := Nauty.node false ctx (n + 2) tcLevel fuel (f.level + 1) (p.1 + 1)
             (child false f.level tc tv st)
           ∀ target short, out.1 = .unwind target short → RefReturn ctx target out.2 := by
         intro cfuel tv index cell st bs fs hh hmatch heq' hsame' hg' j hj hat hp
@@ -189,7 +190,7 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
         change o < p.2.2.2.1
         rw [hlen]
         omega
-      have hpast : Generation.CanonPast f.level tc none p.2.2.2.2.view := by
+      have hpast : Generation.CanonPast f.level tc none p.2.2.2.2 := by
         apply Generation.CanonPast.start
         change p.2.2.2.2.gcaCanon < f.level
         rw [hcanonPrep]
@@ -200,8 +201,8 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
       have hstep := l.node_step (Generic.sweepCall ctx (n + 2) tcLevel fuel (n + 1))
         (fun he => by cases he) (fun _ => hclass)
       unfold Generic.sweepCall at hstep
-      change (Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).1 = _ at hret
-      have he : Engine.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry =
+      change (Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry).1 = _ at hret
+      have he : Nauty.node false ctx (n + 2) tcLevel (fuel + 1) f.level f.numcells f.entry =
           (.unwind t s, result.2) := by
         rw [node_eq_generic, Generic.node, hstep]
         change (match (Generic.sweep false ctx (n + 2) tcLevel fuel (n + 1) f.level p.1
@@ -212,4 +213,4 @@ theorem reference_complete (G : Colored n k) (tcLevel : Nat) :
       cases hret
       exact hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

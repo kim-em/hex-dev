@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.FirstRef
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -60,7 +61,7 @@ theorem RouteHistory.target {ctx : Ctx n} {tcLevel level numcells : Nat} {st : S
 /-- Classification retains the guided current partition. -/
 theorem RouteHistory.classify {ctx : Ctx n} {tcLevel level numcells : Nat} {st : Search n}
     (h : RouteHistory ctx tcLevel level level numcells st) :
-    RouteHistory ctx tcLevel level level numcells (Engine.classify ctx level numcells st).2 :=
+    RouteHistory ctx tcLevel level level numcells (Nauty.classify ctx level numcells st).2 :=
   h.transport (classify_reference ctx level numcells st)
     ((gcaPolicy ctx 0 tcLevel).classify level numcells st) (fun _ ha => ha.classify)
 
@@ -92,9 +93,9 @@ theorem RouteHistory.child {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells tc tv : Nat} {st : Search n} {cell : VSet n}
     (h : RouteHistory ctx tcLevel level level numcells st)
     (hchoice : Choice ctx tcLevel level tc st) (first : Bool)
-    (hsize : ctx.g.size = n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
-    let next := Engine.child first level tc tv st
+    (hsize : ctx.g.size = n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
+    let next := Nauty.child first level tc tv st
     let r := visit ctx (level + 1) (numcells + 1) next
     RouteHistory ctx tcLevel (level + 1) level r.1 r.2.2 := by
   intro next r
@@ -111,15 +112,15 @@ canonical-or-saved target, using the independent frame and divergence proofs. -/
 theorem RouteHistory.child_return {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {st : Search n} {cell : VSet n}
     (h : RouteHistory ctx tcLevel level level numcells st) (first : Bool)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     let result := recoverLevels level (recoverPtn (n + 2) level
       { out with fixedpts := out.fixedpts.erase tv })
     RouteHistory ctx tcLevel level level numcells result ∧
       (Choice ctx tcLevel level tc st → Choice ctx tcLevel level tc result) := by
-  let ch := Engine.child first level tc tv st
+  let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   let left := { out with fixedpts := out.fixedpts.erase tv }
   let result := recoverLevels level (recoverPtn (n + 2) level left)
@@ -142,4 +143,4 @@ theorem RouteHistory.child_return {G : Colored n k} {ctx : Ctx n}
   · intro hchoice
     exact hchoice.child_return ha.bound first hlevel hok htarget htv
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

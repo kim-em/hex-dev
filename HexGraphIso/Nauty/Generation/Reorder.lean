@@ -54,7 +54,7 @@ theorem HasLeaf.reorderChild {tcLevel level tc e oU oV : Nat} {st : RefineSt n}
 /-- The child reference statement follows the arrays passed to the
 executable refinement; bookkeeping fields of its input state play no role. -/
 theorem HasLeaf.childFields {tcLevel level tc tv : Nat} {st : RefineSt n}
-    {child : SearchSt n} {targets : List Nat} {key : Key n}
+    {child : Search n} {targets : List Nat} {key : Key n}
     (hlab : child.lab = (breakout n st.lab st.ptn (level + 1) tc tv).1)
     (hptn : child.ptn = st.ptn.set! tc (level + 1))
     (hactive : child.active = VSet.empty.insert tc) :
@@ -93,7 +93,7 @@ theorem RefPath.reorderChild {tcLevel boundary level tc e oU oV : Nat} {st : Ref
 /-- The child reference statement follows the arrays passed to the
 executable refinement; bookkeeping fields of its input state play no role. -/
 theorem RefPath.childFields {tcLevel boundary level tc tv : Nat} {st : RefineSt n}
-    {child : SearchSt n} {targets : List Nat} {key : Key n}
+    {child : Search n} {targets : List Nat} {key : Key n}
     (hlab : child.lab = (breakout n st.lab st.ptn (level + 1) tc tv).1)
     (hptn : child.ptn = st.ptn.set! tc (level + 1))
     (hactive : child.active = VSet.empty.insert tc) :

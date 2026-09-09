@@ -13,8 +13,8 @@ private def emitTrace (corpus : String) (c : Case) : IO Unit := do
   let some G := coloredOf? c.n c.k c.colors c.edges
     | throw (IO.userError s!"trace: invalid graph {corpus}/{c.name}")
   let (lab, ends) := initialPartition G
-  let (exit, st) := Engine.runState c.n (rowsOf G) lab ends
-  let tr := Engine.finish { g := rowsOf G } st
+  let (exit, st) := runState c.n (rowsOf G) lab ends
+  let tr := finish { g := rowsOf G } st
   let r := tr.result
   let output := Json.mkObj [
     ("canonlab", toJson r.canonlab),

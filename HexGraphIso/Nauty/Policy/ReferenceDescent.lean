@@ -21,10 +21,11 @@ import all HexGraphIso.Nauty.Generation.Matching
 import all HexGraphIso.Nauty.Generation.Cheap
 import all HexGraphIso.Nauty.Generation.Uniform
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -34,7 +35,7 @@ theorem matching_target {ctx : Ctx n} {tcLevel level numcells tc : Nat}
     {st : Search n} {rs : RefineSt n} {targets : List Nat} {key : Key n}
     (hit : IterOk ctx level rs) (heqt : Equitable ctx level rs.lab rs.ptn)
     (hlab : st.lab = rs.lab) (hptn : st.ptn = rs.ptn) (hn : numcells < n)
-    (hm : Generation.Matches ctx level st.view (tc :: targets) key)
+    (hm : Generation.Matches ctx level st (tc :: targets) key)
     (hp : Generation.HasLeaf ctx tcLevel level rs (tc :: targets) key)
     (heq : st.eqlevFirst = level) :
     let t := specMaketargetcell ctx rs.lab rs.ptn level tcLevel
@@ -80,7 +81,7 @@ theorem descent_reference {ctx : Ctx n} (inf tcLevel : Nat)
     ∀ fuel level numcells (st : Search n) targets key,
       P level (st.refined ctx level numcells) targets key →
       st.workperm.size = n → st.firstlab.size = n → st.firstlab.toList.Perm (List.range n) →
-      Generation.Matches ctx level st.view targets key →
+      Generation.Matches ctx level st targets key →
       Generation.HasLeaf ctx tcLevel level (st.refined ctx level numcells) targets key →
       st.eqlevFirst = level - 1 → st.gcaFirst < level → n < level + fuel →
       let out := node false ctx inf tcLevel fuel level numcells st
@@ -123,10 +124,10 @@ theorem descent_reference {ctx : Ctx n} (inf tcLevel : Nat)
       repeat' split
       all_goals exact ⟨rfl, rfl, rfl, rfl, rfl⟩
     have he : compared.eqlevFirst = level := by
-      have h := (hm.stateEq (out := (visit ctx level numcells st).2.2.view) rfl rfl rfl).prep hp heq
-      rw [← view_compareCodes] at h
+      have h := (hm.stateEq (out := (visit ctx level numcells st).2.2) rfl rfl rfl).prep hp heq
+
       exact h
-    have hmcomp : Generation.Matches ctx level compared.view (tc :: rest)
+    have hmcomp : Generation.Matches ctx level compared (tc :: rest)
         ⟨rs.longcode :: tail.codes, tail.rows⟩ :=
       hm.stateEq (congrArg Prod.fst hfields.2.2.1)
         (congrArg (fun x => x.2.1) hfields.2.2.1) (congrArg (fun x => x.2.2) hfields.2.2.1)
@@ -152,15 +153,15 @@ theorem descent_reference {ctx : Ctx n} (inf tcLevel : Nat)
     rw [hat] at hsmall hocc
     let targeted := { compared with tctotal := compared.tctotal + len }
     let ready := cheapCheck false level targeted
-    let child := Engine.child false level tc tv ready
+    let child := Nauty.child false level tc tv ready
     have hcfields : child.reference = st.reference ∧ child.workperm = st.workperm ∧
         child.gcaFirst = st.gcaFirst ∧ child.eqlevFirst = level := by
-      dsimp only [child, Engine.child, ready]
+      dsimp only [child, Nauty.child, ready]
       simp only [Bool.false_eq_true, ite_false]
       unfold cheapCheck
       split <;> exact ⟨hfields.2.2.1, hfields.2.2.2.1, hfields.2.2.2.2, he⟩
     have hcref : child.refined ctx (level + 1) (rs.numcells + 1) = childSt ctx level rs tc tv := by
-      dsimp only [child, Engine.child, ready]
+      dsimp only [child, Nauty.child, ready]
       simp only [Bool.false_eq_true, ite_false]
       unfold cheapCheck
       split
@@ -170,7 +171,7 @@ theorem descent_reference {ctx : Ctx n} (inf tcLevel : Nat)
           (breakout n compared.lab compared.ptn (level + 1) tc tv).2.2 (rs.numcells + 1) = _
         rw [hfields.1, hfields.2.1, breakout_ptn]
         rfl
-    have hmchild : Generation.Matches ctx (level + 1) child.view rest tail :=
+    have hmchild : Generation.Matches ctx (level + 1) child rest tail :=
       hm.tail.stateEq (congrArg Prod.fst hcfields.1)
         (congrArg (fun x => x.2.1) hcfields.1) (congrArg (fun x => x.2.2) hcfields.1)
     have hfchild : child.firstlab = st.firstlab := congrArg (fun x => x.2.2) hcfields.1
@@ -227,7 +228,7 @@ theorem cheap_reference {ctx : Ctx n} (inf tcLevel : Nat)
     ∀ fuel level numcells (st : Search n) targets key,
       SubtreeOk ctx level (st.refined ctx level numcells) →
       st.workperm.size = n → st.firstlab.size = n → st.firstlab.toList.Perm (List.range n) →
-      Generation.Matches ctx level st.view targets key →
+      Generation.Matches ctx level st targets key →
       Generation.HasLeaf ctx tcLevel level (st.refined ctx level numcells) targets key →
       st.eqlevFirst = level - 1 → st.gcaFirst < level → n < level + fuel →
       let out := node false ctx inf tcLevel fuel level numcells st
@@ -249,7 +250,7 @@ theorem uniform_reference {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
     (hU : Generation.Uniform ctx tcLevel level (st.refined ctx level numcells) targets key)
     (hw : st.workperm.size = n) (hf : st.firstlab.size = n)
     (hfp : st.firstlab.toList.Perm (List.range n))
-    (hm : Generation.Matches ctx level st.view targets key)
+    (hm : Generation.Matches ctx level st targets key)
     (heq : st.eqlevFirst = level - 1) (hg : st.gcaFirst < level) (hbudget : n < level + fuel) :
     let out := node false ctx inf tcLevel fuel level numcells st
     out.1 = .unwind st.gcaFirst false ∧ LabelCarrier ctx st.firstlab out.2.lab out.2.genTrace := by
@@ -269,4 +270,4 @@ theorem uniform_reference {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
   obtain ⟨rfl, rfl⟩ := hU' targets' key' hp
   exact ⟨⟨hT', hU'⟩, hp⟩
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

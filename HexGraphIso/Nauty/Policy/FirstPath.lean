@@ -15,10 +15,11 @@ import all HexGraphIso.Nauty.Policy.Reach
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -45,7 +46,7 @@ theorem prepareFirst_orbits (ctx : Ctx n) (tcLevel level numcells : Nat) (st : S
 theorem chooseFirst_nonempty {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {st : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (hnc : numcells < n) :
+    (hok : SearchOk G level numcells st) (hnc : numcells < n) :
     (chooseTarget true ctx tcLevel level numcells st).2.1 ≠ VSet.empty := by
   have hlive : bcount st.ptn level n < n := by
     have hc := hok.count
@@ -68,10 +69,10 @@ theorem chooseFirst_nonempty {G : Colored n k} {ctx : Ctx n}
 theorem prepareFirst_ok {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {st : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) :
+    (hok : SearchOk G level numcells st) :
     let r := Generic.prepareFirst ctx tcLevel level numcells st
-    SearchOk G level r.1 r.2.2.2.2.view ∧
-      Generic.Target Search.view level r.2.1.toNat r.2.2.1 r.2.2.2.2 := by
+    SearchOk G level r.1 r.2.2.2.2 ∧
+      Generic.Target (fun st => st) level r.2.1.toNat r.2.2.1 r.2.2.2.2 := by
   let h := reachPolicy G ctx tcLevel hn0
   have hv := (h.visit level numcells st hlevel hok).1
   have hr := (h.record level (visit ctx level numcells st).2.1 _ _ hv).1
@@ -83,14 +84,14 @@ within the same depth bound used by the executable engine. -/
 theorem firstPath_exists {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells : Nat} {st : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (horbit : ∀ v, v < n → st.orbits[v]! = v)
     (hfuel : n + 1 ≤ level + fuel) :
     ∃ last leaf, Generic.FirstPath ctx tcLevel fuel level numcells st last leaf := by
   induction fuel generalizing level numcells st with
   | zero =>
     have := hok.bc
-    have := bcount_le st.view.ptn level n
+    have := bcount_le st.ptn level n
     omega
   | succ fuel ih =>
     let r := Generic.prepareFirst ctx tcLevel level numcells st
@@ -98,8 +99,8 @@ theorem firstPath_exists {G : Colored n k} {ctx : Ctx n}
     by_cases hdisc : r.1 = n
     · exact ⟨level, r.2.2.2.2, .leaf fuel level numcells st hdisc⟩
     · have hnc : r.1 < n := by
-        have hc : r.1 = bcount r.2.2.2.2.view.ptn level n := hr.count
-        have hb := bcount_le r.2.2.2.2.view.ptn level n
+        have hc : r.1 = bcount r.2.2.2.2.ptn level n := hr.count
+        have hb := bcount_le r.2.2.2.2.ptn level n
         omega
       have hv := ((reachPolicy G ctx tcLevel hn0).visit level numcells st hlevel hok).1
       have hrec := ((reachPolicy G ctx tcLevel hn0).record level (visit ctx level numcells st).2.1 _ _ hv).1
@@ -109,7 +110,7 @@ theorem firstPath_exists {G : Colored n k} {ctx : Ctx n}
       have hmem : r.2.2.1.mem tv = true := VSet.nextElem_mem htv
       let ready := cheapCheck true level r.2.2.2.2
       have hc := (reachPolicy G ctx tcLevel hn0).cheap true level r.1 r.2.2.2.2 hr
-      have htarget : Generic.Target Search.view level r.2.1.toNat r.2.2.1 ready :=
+      have htarget : Generic.Target (fun st => st) level r.2.1.toNat r.2.2.1 ready :=
         ht.of_out hc.2
       have hchild := ((reachPolicy G ctx tcLevel hn0).child true level r.1 r.2.1.toNat tv
         r.2.2.1 ready hlevel hc.1 htarget hmem).1
@@ -150,4 +151,4 @@ theorem initial_path (G : Colored n k) (hn0 : 0 < n) :
     rw [getElem!_pos _ _ (by simpa using hv), Array.getElem_ofFn]
   · omega
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

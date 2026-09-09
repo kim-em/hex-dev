@@ -20,10 +20,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -32,8 +33,8 @@ cells, with the same boundary convention as a complete node call. -/
 theorem firstPath_frame {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells last : Nat} {st leaf : Search n}
     (path : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
-    (hn0 : 0 < n) (hl : 1 ≤ level) (hok : SearchOk G level numcells st.view) :
-    SearchOut G (level - 1) level st.view leaf.view := by
+    (hn0 : 0 < n) (hl : 1 ≤ level) (hok : SearchOk G level numcells st) :
+    SearchOut G (level - 1) level st leaf := by
   induction path with
   | leaf fuel level numcells st hdisc =>
     let h := reachPolicy G ctx tcLevel hn0
@@ -64,8 +65,8 @@ theorem SweepInput.first_reference {G : Colored n k} {ctx : Ctx n} {tcLevel fuel
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    let raw := (Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)).2
+    let raw := (Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)).2
     let middle := if first && tv == tv1 then afterChildFirst level tv1 raw else raw
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
     let ready := recoverLevels level (recoverPtn (n + 2) level left)
@@ -94,7 +95,7 @@ theorem SweepInput.first_reference {G : Colored n k} {ctx : Ctx n} {tcLevel fuel
       hn0 hi.frame.positive hi.frame.partition (empty_orbits hp.orbits htrace) hi.fuel
     have he := firstPath_frame path hn0 hi.frame.positive hi.frame.partition
     have hr := congrArg (fun r => r.2.2) (firstPath_reference (inf := n + 2) path)
-    change (Engine.node true ctx (n + 2) tcLevel fuel _ _ _).2.firstlab = leaf.lab at hr
+    change (Nauty.node true ctx (n + 2) tcLevel fuel _ _ _).2.firstlab = leaf.lab at hr
     dsimp only [Parent.child] at he hr
     rw [← h.first_eq, ← h.level_eq, ← h.tc_eq] at he hr
     rw [← h.numcells_eq] at hr
@@ -123,7 +124,7 @@ theorem SweepInput.first_reference {G : Colored n k} {ctx : Ctx n} {tcLevel fuel
       rw [hfalse]
       have hh := congrArg (fun r => r.2.2)
         (node_reference ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-          (Engine.child first level tc tv st))
+          (Nauty.child first level tc tv st))
       cases first <;> exact hh
     have hgc : ready.gcaFirst = st.gcaFirst := by
       have hh := (gcaPolicy ctx (n + 2) tcLevel).recover level left
@@ -136,4 +137,4 @@ theorem SweepInput.first_reference {G : Colored n k} {ctx : Ctx n} {tcLevel fuel
     rw [href, hr]
     exact ⟨hp.1.grow hg, hp.2⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

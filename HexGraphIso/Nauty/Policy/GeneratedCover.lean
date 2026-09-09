@@ -13,7 +13,7 @@ import all HexGraphIso.Generated
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Generation
+namespace Hex.GraphIso.Nauty.Generation
 
 variable {n k : Nat} {gs : List (Perm n)}
 
@@ -140,4 +140,4 @@ theorem stabilizer (h : Cover G gs base guide tcell cursor)
 
 end Cover
 
-end Hex.GraphIso.Nauty.Engine.Generation
+end Hex.GraphIso.Nauty.Generation

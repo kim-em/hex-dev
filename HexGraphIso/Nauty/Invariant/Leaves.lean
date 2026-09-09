@@ -10,36 +10,7 @@ public import HexGraphIso.Nauty.Spec.CanonSpec
 
 public section
 
-/-!
-Leaf-comparison faithfulness: the transcription's `testcanlab` /
-`updatecan` leaf handling implements model-level key comparison.
-
-At a leaf tied on codes, `processnode` brings the stored canonical
-graph up to date (`updatecan` overwrites rows `samerows..n-1` with
-the incumbent `canonlab`'s rows) and compares the fresh leaf against
-it row by row (`testcanlab`). This file characterizes both against
-the specification's `leafRows`:
-
-- `updatecan_inv`: under the store invariant `CanongInv`, the updated
-  store holds exactly the leaf rows of `canonlab`;
-- `testcanlab_fst` / `testcanlab_prefix` / `testcanlab_snd_le`:
-  `testcanlab` returns the trichotomy of the lexicographic `VSet.rowCmp`
-  comparison of `leafRows ctx lab` against the stored rows, and its
-  second component is a leading-agreement count;
-- `leafEvent_faithful`: the packaged per-leaf clause. The comparison
-  outcome is `listCmp VSet.rowCmp (leafRows ctx lab) (leafRows ctx
-  canonlab)`, and the out-state store satisfies the invariant both at
-  `n` against the incumbent and at the returned prefix length against
-  the fresh leaf, re-establishing `CanongInv` whichever way the leaf
-  resolves (code `3` installs `lab` with `samerows := sr`, the other
-  codes keep `canonlab` with `samerows = n`);
-- `keyCmp_codes_eq`: on equal code lists the key comparison is the
-  row comparison, connecting the trichotomy to `keyCmp` on leaf keys.
-
-`CanongInv` is stated as an explicit hypothesis. The simulation
-induction proves that it propagates across the non-leaf events of the
-search.
--/
+/-! Leaf comparisons and updates of the stored canonical rows. -/
 
 namespace Hex.GraphIso.Nauty
 
@@ -423,13 +394,6 @@ theorem testcanlab_snd_le (ctx : Ctx n) (canong : Array (VSet n)) (lab : Array N
 
 /-! **The packaged per-leaf clause** -/
 
-/-- The per-leaf clause for the simulation induction: at a code-tied
-leaf, `processnode` updates the store and compares. Under the store
-invariant, the comparison outcome is the model row comparison of the
-two leaf keys, and the updated store satisfies the invariant both at
-`n` against the incumbent and at the returned prefix length against
-the fresh leaf, so `CanongInv` holds again whichever way the leaf
-resolves. -/
 theorem leafEvent_faithful {ctx : Ctx n} {canong : Array (VSet n)} {canonlab lab : Array Nat}
     {samerows : Nat}
     (hinv : CanongInv ctx canong canonlab samerows) :

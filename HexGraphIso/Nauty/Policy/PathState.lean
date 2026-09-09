@@ -13,17 +13,18 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
 /-- The individualized path consists of singleton cells and transports
 root-stabilizing automorphisms to the current partition. -/
 abbrev PathInv (G : Colored n k) (ctx : Ctx n) (level : Nat) (st : Search n) : Prop :=
-  PathOk ctx (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st.view
+  PathOk ctx (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st
 
 /-- Bookkeeping that preserves the partition and fixed vertices preserves the path. -/
 theorem PathInv.fields {G : Colored n k} {ctx : Ctx n} {level : Nat} {st out : Search n}
@@ -43,7 +44,7 @@ theorem PathInv.fields {G : Colored n k} {ctx : Ctx n} {level : Nat} {st out : S
 /-- Refinement transports the path when its active positions are cell starts. -/
 theorem PathInv.visit {G : Colored n k} {ctx : Ctx n} {level numcells : Nat} {st : Search n}
     (h : PathInv G ctx level st) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hgsz : ctx.g.size = n) (hok : SearchOk G level numcells st.view)
+    (hgsz : ctx.g.size = n) (hok : SearchOk G level numcells st)
     (hstarts : ∀ v, st.active.mem v = true → v = 0 ∨ st.ptn[v - 1]! ≤ level) :
     PathInv G ctx level (visit ctx level numcells st).2.2 := by
   have hr := h.refine hn0 hlevel hgsz hok hstarts
@@ -85,8 +86,8 @@ theorem PathInv.cheap {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Search
 condition to automorphisms fixing that vertex. -/
 theorem PathInv.child {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Nat}
     {st : Search n} {cell : VSet n} (h : PathInv G ctx level st) (first : Bool)
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     PathInv G ctx (level + 1) (child first level tc tv st) := by
   have hfixed := (fixed_child first hn0 hok h.fixed htarget htv).2
   obtain ⟨len, hcell, hmem⟩ := htarget
@@ -107,14 +108,14 @@ theorem PathInv.child {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Na
   have hs := h.stab.breakout hc (by rw [hok.ptnSize]; exact hrange)
     (hok.labSize.trans hok.ptnSize.symm) (labOk_of_reach hok.labSize hok.reach) ho hlen
     (searchOk_end hn0 hok hlevel) hvals
-  dsimp only [Search.view] at hs
+
   rw [hv] at hs
   refine ⟨hfixed, ?_⟩
   cases first <;> exact hs
 
 /-- A child's singleton active set names a cell start in its new partition. -/
 theorem child_starts {level tc tv : Nat} {st : Search n} {cell : VSet n}
-    (first : Bool) (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (first : Bool) (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := child first level tc tv st
     ∀ v, out.active.mem v = true → v = 0 ∨ out.ptn[v - 1]! ≤ level + 1 := by
   intro out v hv
@@ -135,7 +136,7 @@ theorem child_starts {level tc tv : Nat} {st : Search n} {cell : VSet n}
 /-- A recovered parent keeps its path once cleanup restores its fixed set. -/
 theorem PathInv.recover {G : Colored n k} {ctx : Ctx n} {level numcells : Nat} {st out : Search n}
     (h : PathInv G ctx level st) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (hout : SearchOut G level level st.view out.view)
+    (hok : SearchOk G level numcells st) (hout : SearchOut G level level st out)
     (hf : out.fixedpts = st.fixedpts) :
     PathInv G ctx level (recoverLevels level (recoverPtn (n + 2) level out)) := by
   have hr := (reachPolicy G ctx 0 hn0).recover level numcells st out hlevel hok hout
@@ -144,7 +145,7 @@ theorem PathInv.recover {G : Colored n k} {ctx : Ctx n} {level numcells : Nat} {
 /-- The path and root ledger give precisely the conditional pair ledger
 read by long and short pruning at the current partition. -/
 theorem PathInv.pairs {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Search n}
-    (h : PathInv G ctx level st) (hp : PairsOk G ctx st) : LocalAutos ctx level st.view :=
+    (h : PathInv G ctx level st) (hp : PairsOk G ctx st) : LocalAutos ctx level st :=
   h.stab.toLocal hp
 
 /-- The initial partition is its own stabilization frame and has no fixed vertices. -/
@@ -155,6 +156,6 @@ theorem initial_pathInv (G : Colored n k) (ctx : Ctx n) :
     change VSet.empty.mem v = true at hm
     simp at hm
   · exact PathStab.same (ctx := ctx)
-      (st := (initial n (initialPartition G).1 (initialPartition G).2).view)
+      (st := (initial n (initialPartition G).1 (initialPartition G).2))
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

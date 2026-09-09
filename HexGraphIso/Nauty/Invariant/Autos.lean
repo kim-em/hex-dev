@@ -126,13 +126,13 @@ subtree theorem. -/
 
 /-- The bounded automorphism workspace has a positive capacity and has
 not grown beyond it. -/
-@[expose] def WorkspaceOk (st : SearchSt n) : Prop :=
+@[expose] def WorkspaceOk (st : Search n) : Prop :=
   0 < st.wsCap ∧ st.autos.size ≤ st.wsCap
 
 namespace WorkspaceOk
 
 /-- Workspace validity depends only on the capacity and pair array. -/
-theorem ofFields {st out : SearchSt n} (h : WorkspaceOk st)
+theorem ofFields {st out : Search n} (h : WorkspaceOk st)
     (hcap : out.wsCap = st.wsCap) (hautos : out.autos = st.autos) :
     WorkspaceOk out := by
   unfold WorkspaceOk at h ⊢
@@ -140,7 +140,7 @@ theorem ofFields {st out : SearchSt n} (h : WorkspaceOk st)
   exact h
 
 /-- Admitting one pair preserves the bounded workspace invariant. -/
-theorem push {st : SearchSt n} {pair : VSet n × VSet n} (h : WorkspaceOk st) :
+theorem push {st : Search n} {pair : VSet n × VSet n} (h : WorkspaceOk st) :
     WorkspaceOk (pushAuto st pair) := by
   rcases h with ⟨hcap, hsize⟩
   constructor
@@ -158,34 +158,27 @@ theorem push {st : SearchSt n} {pair : VSet n × VSet n} (h : WorkspaceOk st) :
       exact hsize
 
 /-- `pushAuto` does not change the configured workspace capacity. -/
-theorem pushCap (st : SearchSt n) (pair : VSet n × VSet n) :
+theorem pushCap (st : Search n) (pair : VSet n × VSet n) :
     (pushAuto st pair).wsCap = st.wsCap := by
   unfold pushAuto
   split <;> rfl
 
-/-- `processnode` never changes the configured workspace capacity. -/
-theorem processCap (ctx : Ctx n) (level numcells : Nat) (st : SearchSt n) :
-    (processnode ctx level numcells st).2.wsCap = st.wsCap := by
-  rw [processnode]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite (fun x : Int × SearchSt n => x.2.wsCap), pushCap, ite_self]
-
-/-- Comparison preparation does not change workspace capacity. -/
-theorem prepCap (level code : Nat) (st : SearchSt n) :
-    (otherNodePrep level code st).wsCap = st.wsCap := by
-  rw [otherNodePrep]
+/-- Code comparison preserves the workspace capacity. -/
+theorem prepCap (level code : Nat) (st : Search n) :
+    (compareCodes level code st).wsCap = st.wsCap := by
+  rw [compareCodes]
   simp only [Id.run_pure, apply_ite Id.run,
-    apply_ite SearchSt.wsCap, ite_self]
+    apply_ite Search.wsCap, ite_self]
 
 /-- Parent recovery does not change workspace capacity. -/
-theorem recoverCap (n inf level : Nat) (st : SearchSt n) :
+theorem recoverCap (n inf level : Nat) (st : Search n) :
     (recover n inf level st).wsCap = st.wsCap := by
-  rw [recover]
+  rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite SearchSt.wsCap, ite_self]
+    apply_ite Search.wsCap, ite_self]
 
 /-- First-leaf installation does not change workspace capacity. -/
-theorem firstCap (level : Nat) (st : SearchSt n) :
+theorem firstCap (level : Nat) (st : Search n) :
     (firstterminal level st).wsCap = st.wsCap := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure, 
@@ -196,7 +189,7 @@ end WorkspaceOk
 /-- Recording a valid pair keeps the ledger, in both the push and the
 cap-slot overwrite branch. -/
 theorem autosOk_pushAuto {g : Array (VSet n)} {ptn lab : Array Nat} {level : Nat}
-    {st : SearchSt n} {pair : VSet n × VSet n}
+    {st : Search n} {pair : VSet n × VSet n}
     (hok : AutosOk g ptn lab level st.autos)
     (hp : PairOk g ptn lab level pair.1 pair.2) :
     AutosOk g ptn lab level (pushAuto st pair).autos := by
@@ -215,7 +208,7 @@ theorem autosOk_pushAuto {g : Array (VSet n)} {ptn lab : Array Nat} {level : Nat
 
 /-- With a positive bounded workspace, `pushAuto` leaves the admitted
 pair in the slot read by `shortprune`, both before and at capacity. -/
-theorem pushAuto_back {st : SearchSt n} {pair : VSet n × VSet n}
+theorem pushAuto_back {st : Search n} {pair : VSet n × VSet n}
     (hcap : 0 < st.wsCap) :
     (pushAuto st pair).autos.back? = some pair := by
   unfold pushAuto
@@ -402,7 +395,7 @@ theorem longprune_subset {tcell fixedpts : VSet n}
   exact (Bool.and_eq_true _ _).mp h |>.1
 
 /-- `shortprune` only removes set members. -/
-theorem shortprune_subset {tcell : VSet n} {st : SearchSt n} {v : Nat}
+theorem shortprune_subset {tcell : VSet n} {st : Search n} {v : Nat}
     (h : (shortprune tcell st).mem v = true) : tcell.mem v = true := by
   rw [shortprune] at h
   split at h
@@ -412,7 +405,7 @@ theorem shortprune_subset {tcell : VSet n} {st : SearchSt n} {v : Nat}
 /-- If `shortprune` removes a current member, the last ledger pair carries
 it strictly downward while stabilizing the node's cells. -/
 theorem shortprune_drop {g : Array (VSet n)} {ptn lab : Array Nat} {level v : Nat} {tcell : VSet n}
-    {st : SearchSt n}
+    {st : Search n}
     (hv : v < n) (hmem : tcell.mem v = true)
     (hdrop : (shortprune tcell st).mem v = false)
     (hlast : ∀ fix mcr, st.autos.back? = some (fix, mcr) →
@@ -470,7 +463,7 @@ pair and its fix test (which is what the `needshortprune` protocol
 requires), every vertex of the target cell is carried onto a
 survivor. -/
 theorem shortprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
-    {level tc len : Nat} {st : SearchSt n}
+    {level tc len : Nat} {st : Search n}
     (hok : LabOk lab n) (hs : lab.size = n) (hsp : ptn.size = n)
     (hend : ptn[ptn.size - 1]! ≤ level)
     (hic : IsCell ptn level tc len) (hsz : tc + len ≤ n)
@@ -494,7 +487,6 @@ theorem shortprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
       fun w _ hw => mem_of_subset htest hw⟩
   · rw [hW] at hR
     exact absurd hR (by simp)
-
 
 /-! # The explicit pairs: `fmperm` of an admitted generator
 
@@ -755,7 +747,6 @@ private theorem fmperm_eq_go (perm : Array Nat) (nn : Nat) :
   rw [forIn_range_eq, forIn_outerF_eq]
   rfl
 
-
 /-! # Invariants of the mirrors -/
 
 private theorem iter_succ_right (perm : Array Nat) (a v : Nat) :
@@ -990,7 +981,6 @@ theorem pairOk_fmperm {g : Array (VSet n)} {ptn lab perm : Array Nat} {level : N
     exact applyWord_replicate_fixed hfixed k
   · rw [hact v hv]
     exact hk
-
 
 /-! # The implicit pairs: `fmptn` of a cheapautom partition
 
@@ -1235,7 +1225,7 @@ theorem fmptn_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
 /-- A quartet receipt preserves the implicit cheap-automorphism pair at
 its frozen boundary. -/
 theorem SearchOut.fmptn {G : Colored n k} {level nn : Nat}
-    {st out : SearchSt n} (h : SearchOut G level level st out)
+    {st out : Search n} (h : SearchOut G level level st out)
     (hnn : nn ≤ st.ptn.size)
     (hend : st.ptn[st.ptn.size - 1]! ≤ level) :
     fmptn out.lab out.ptn level nn = fmptn st.lab st.ptn level nn :=

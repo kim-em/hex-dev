@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Route
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -76,7 +77,7 @@ its labels were reordered by the child. -/
 theorem Choice.recover {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tc : Nat}
     {st out : Search n} (h : Choice ctx tcLevel level tc st)
     (hb : st.eqlevFirst ≤ level) (hlevel : 1 ≤ level) (hn0 : 0 < n)
-    (hok : SearchOk G level numcells st.view) (hout : SearchOut G level level st.view out.view)
+    (hok : SearchOk G level numcells st) (hout : SearchOut G level level st out)
     (ht : out.firsttc = st.firsttc) (hd : st.eqlevFirst < level → out.eqlevFirst < level) :
     Choice ctx tcLevel level tc (recoverLevels level (recoverPtn (n + 2) level out)) := by
   intro hkeep
@@ -92,13 +93,13 @@ theorem Choice.recover {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
   rcases h hold with hcanonical | hsaved
   · left
     have hl : (recoverLevels level (recoverPtn (n + 2) level out)).lab = out.lab := by
-      have he := congrArg SearchSt.lab (view_recover (n + 2) level out)
+      have he := congrArg Search.lab (recover_eq (n + 2) level out)
       change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at he
       rw [Nauty.recover_lab] at he
       exact he
     rw [hl, recover_ptn_eq hok hout]
     have hperm : cellsPerm st.ptn level st.lab out.lab := hout.perm
-    exact (specTargetcell_perm hperm (by change n ≤ st.view.ptn.size; rw [hok.ptnSize]; omega)
+    exact (specTargetcell_perm hperm (by change n ≤ st.ptn.size; rw [hok.ptnSize]; omega)
       (searchOk_end hn0 hok hlevel)).symm.trans hcanonical
   · right
     rw [htc]
@@ -109,19 +110,19 @@ needed to retain its parent's choice after recovery. -/
 theorem Choice.child_return {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {st : Search n} {cell : VSet n}
     (h : Choice ctx tcLevel level tc st) (hb : st.eqlevFirst ≤ level) (first : Bool)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     Choice ctx tcLevel level tc (recoverLevels level (recoverPtn (n + 2) level
       { out with fixedpts := out.fixedpts.erase tv })) := by
-  let ch := Engine.child first level tc tv st
+  let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   have hn0 : 0 < n := by have := VSet.mem_lt htv; omega
   have hch := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
     hlevel hok htarget htv
   have ho := node_out false hn0 (by omega) hch.1 (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
-  have hout : SearchOut G level level st.view out.view := hch.2 _
+  have hout : SearchOut G level level st out := hch.2 _
     (by simpa only [Nat.add_sub_cancel, policy, Generic.Policy.child] using ho)
   have ht : out.firsttc = st.firsttc := by
     have hr := node_reference ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch
@@ -134,4 +135,4 @@ theorem Choice.child_return {G : Colored n k} {ctx : Ctx n}
     cases first <;> exact hlow
   exact h.recover hb hlevel hn0 hok (hout.congr rfl rfl rfl rfl) ht hd
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

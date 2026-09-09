@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Search.Generic
 public import HexGraphIso.Nauty.Invariant.Domination
-public import HexGraphIso.Nauty.Model.Autom
+public import HexGraphIso.Nauty.Spec.KeyMax
 import all HexGraphIso.Nauty.Search.Generic
 
 public section

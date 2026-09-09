@@ -9,11 +9,12 @@ module
 public import HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Policy.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -68,7 +69,7 @@ private theorem canonVerdict_checked {ctx : Ctx n} {level : Nat} {st out : Searc
     · simp [canonVerdict, hcomp, hlevel] at hauto
     · have hrows : (testcanlab ctx (updatecan ctx st.canong st.canonlab st.samerows) st.lab).1 = 0 →
           leafRows ctx st.canonlab = leafRows ctx st.lab :=
-        rows_eq_of_testcanlab_tie (st := st.view) hinv
+        rows_eq_of_testcanlab_tie (st := st) hinv
       simp only [canonVerdict, hcomp, beq_self_eq_true, ite_true, hlevel, ite_false] at hauto
       split at hauto
       · rename_i htie
@@ -245,4 +246,4 @@ theorem leafExit_store {ctx : Ctx n} {leaf : Leaf} {level : Nat} {st : Search n}
     | exact pruneReturn_store h.1
     | exact pruneReturn_store (h.2 _ rfl)
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

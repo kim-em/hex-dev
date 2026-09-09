@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -18,7 +19,7 @@ equalities identify every fuelled node and sweep with the generic
 recursion, including exhausted calls and nonlocal exits.
 -/
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 instance policy : Generic.Policy (Search n) n where
   visit := visit
@@ -87,4 +88,4 @@ termination_by (fuel, 1, cfuel)
 
 end
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

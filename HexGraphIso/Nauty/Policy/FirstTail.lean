@@ -33,10 +33,11 @@ import all HexGraphIso.Nauty.Policy.MaxControl
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -46,7 +47,7 @@ theorem SweepInput.past_phase {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
     {l : Loop n} {bs fs : List Nat} {parents : Parents n}
     (h : SweepInput G ctx tcLevel fuel cfuel true level numcells tc tv1 (some tv)
       cell index st l bs fs parents) (hpast : tv1 < tv) :
-    Engine.SweepPre G ctx tcLevel true level numcells tc tv1 (some tv) cell st ∧
+    Nauty.SweepPre G ctx tcLevel true level numcells tc tv1 (some tv) cell st ∧
       Comparison ctx (l.codes ctx) bs fs st := by
   rcases h.phase with ⟨_, _, _, _, hcell, hcursor, _⟩ | ⟨hp, hc, _⟩
   · have he : tv1 = tv := by rw [h.tv1_eq, ← hcell, ← hcursor]; rfl
@@ -65,13 +66,13 @@ theorem SweepInput.cheap_visit {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
     (hlab : R.lab = (l.prepare ctx tcLevel).2.2.2.2.lab)
     (hptn : R.ptn = (l.prepare ctx tcLevel).2.2.2.2.ptn) (hnc : R.numcells = numcells)
     (href : Generation.HasLeaf ctx tcLevel level R targets key)
-    (hm : Generation.Matches ctx level st.view targets key)
+    (hm : Generation.Matches ctx level st targets key)
     (hg : st.gcaFirst = level) (heq : st.eqlevFirst = level)
     (hcheap : st.noncheaplevel ≤ level)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    (Engine.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+    (Nauty.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child true level tc tv st)).1 = .unwind level false := by
   have hp := (h.past_phase hpast).1
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
@@ -88,7 +89,7 @@ theorem SweepInput.cheap_visit {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
   have hc := hp.child hn0 hgsz hsymm
   have hlt : level < n := by
     have hh := hc.partition.bc
-    have hh' := bcount_le (child true level tc tv st).view.ptn (level + 1) n
+    have hh' := bcount_le (child true level tc tv st).ptn (level + 1) n
     omega
   obtain ⟨len, htcell, hseg⟩ := h.target
   obtain ⟨hcell, hlen, hrange⟩ := htcell (mem_ne_empty (h.cursor_mem tv rfl))
@@ -127,7 +128,7 @@ theorem SweepInput.cheap_visit {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
       rw [hat, childSt]
       dsimp only [U]
       rw [← hcurrent, hnc]
-    have hr := Engine.cheap_reference (n + 2) tcLevel hgsz hsymm hloop
+    have hr := Nauty.cheap_reference (n + 2) tcLevel hgsz hsymm hloop
       fuel (level + 1) (numcells + 1) (child true level tc tv st) rest tail
       (by rw [hfields]; exact hs') hp.stored.scratch hp.stored.firstSize hp.stored.first
       (hm.tail.stateEq rfl rfl rfl) (by rw [hfields]; exact href')
@@ -147,12 +148,12 @@ theorem SweepInput.visit_level {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
     (hlab : R.lab = (l.prepare ctx tcLevel).2.2.2.2.lab)
     (hptn : R.ptn = (l.prepare ctx tcLevel).2.2.2.2.ptn) (hnc : R.numcells = numcells)
     (href : Generation.HasLeaf ctx tcLevel level R targets key)
-    (hm : Generation.Matches ctx level st.view targets key)
+    (hm : Generation.Matches ctx level st targets key)
     (hg : st.gcaFirst = level) (heq : st.eqlevFirst = level) (hsame : level < st.allsamelevel)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
-    (he : (Engine.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+    (he : (Nauty.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child true level tc tv st)).1 = .unwind target short) : target = level := by
   by_cases hc : st.noncheaplevel ≤ level
   · have hr := h.cheap_visit hpast hit hlab hptn hnc href hm hg heq hc hgsz hsymm hloop
@@ -184,21 +185,21 @@ theorem SweepInput.tail_done {G : Colored n k} {tcLevel fuel cfuel : Nat}
     (hlab : R.lab = (l.prepare { g := rowsOf G } tcLevel).2.2.2.2.lab)
     (hptn : R.ptn = (l.prepare { g := rowsOf G } tcLevel).2.2.2.2.ptn) (hnc : R.numcells = numcells)
     (href : Generation.HasLeaf { g := rowsOf G } tcLevel level R targets key)
-    (hm : Generation.Matches { g := rowsOf G } level st.view targets key)
+    (hm : Generation.Matches { g := rowsOf G } level st targets key)
     (hg : st.gcaFirst = level) (heq : st.eqlevFirst = level) (hsame : level < st.allsamelevel) :
-    (Engine.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
+    (Nauty.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
       level numcells tc tv1 cursor cell index st).1 = .done := by
   induction cfuel generalizing cursor cell index st bs fs with
   | zero =>
     cases cursor with
-    | none => rw [Engine.sweep]
+    | none => rw [Nauty.sweep]
     | some tv =>
       have hh := h.cursor_fuel tv rfl
       have ht := VSet.mem_lt (h.cursor_mem tv rfl)
       omega
   | succ cfuel ih =>
     cases cursor with
-    | none => rw [Engine.sweep]
+    | none => rw [Nauty.sweep]
     | some tv =>
       have htv := hpast rfl tv rfl
       have hf : (true && tv == tv1) = false := by simp only [Bool.true_and, beq_eq_false_iff_ne]; omega
@@ -225,7 +226,7 @@ theorem SweepInput.tail_done {G : Colored n k} {tcLevel fuel cfuel : Nat}
         change SweepInput G ctx tcLevel fuel cfuel true level numcells tc tv1
           (filtered.nextElem (some tv)) filtered
           (if ready.orbits[tv]! == tv1 then index + 1 else index) ready l bs' fs' parents at hi
-        have hc : Engine.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+        have hc : Nauty.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
             (child true level tc tv st) = (.unwind level short, out) := by
           simpa only [hf] using hcall
         have hr : ready.reference = st.reference := by
@@ -263,7 +264,7 @@ theorem SweepInput.tail_done {G : Colored n k} {tcLevel fuel cfuel : Nat}
       · have hs : (!true || st.orbits[tv]! == tv) = false := Bool.eq_false_iff.mpr hv
         have hi := h.skip_input (size_rowsOf G) hs
         have hh := ih hi (hnext cell) hm hg heq hsame
-        rw [Engine.sweep]
+        rw [Nauty.sweep]
         simpa only [hs, Bool.false_eq_true, ↓reduceIte, Id.run_pure, Bool.true_and] using hh
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

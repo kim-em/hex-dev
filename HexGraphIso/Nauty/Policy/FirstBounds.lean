@@ -17,10 +17,11 @@ import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -183,4 +184,4 @@ theorem firstSweep_same {ctx : Ctx n} {inf tcLevel fuel cfuel level numcells tc 
     · rfl
     · cases short <;> exact hh _ _
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

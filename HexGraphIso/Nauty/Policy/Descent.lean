@@ -83,7 +83,6 @@ theorem rowsMap_id {ctx : Ctx n} (hsize : ctx.g.size = n) :
   intro v _
   exact (image_id _).symm
 
-namespace Engine
 
 /-- A stored-target descent whose endpoint agrees with the current
 state up to label order inside cells. -/
@@ -214,6 +213,5 @@ theorem scatter_of_permHistory {ctx : Ctx n} {st : Search n} {level : Nat}
   · exact hcurrent.trans hVlab.symm
   · exact hwork
 
-end Engine
 
 end Hex.GraphIso.Nauty

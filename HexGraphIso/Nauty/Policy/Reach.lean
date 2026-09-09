@@ -25,14 +25,14 @@ namespace Hex.GraphIso.Nauty.Generic
 variable {n k : Nat} {σ : Type}
 
 /-- The four arrays read by the partition-effect contract are unchanged. -/
-structure FrameEq (view : σ → SearchSt n) (st out : σ) : Prop where
+structure FrameEq (view : σ → Search n) (st out : σ) : Prop where
   lab : (view out).lab = (view st).lab
   ptn : (view out).ptn = (view st).ptn
   first : (view out).firstlab = (view st).firstlab
   canon : (view out).canonlab = (view st).canonlab
 
 /-- Bookkeeping changes preserve an already established call effect. -/
-theorem FrameEq.out {view : σ → SearchSt n} {G : Colored n k}
+theorem FrameEq.out {view : σ → Search n} {G : Colored n k}
     {B level : Nat} {base st out : σ} (h : FrameEq view st out)
     (hbefore : SearchOut G B level (view base) (view st)) :
     SearchOut G B level (view base) (view out) :=
@@ -40,13 +40,13 @@ theorem FrameEq.out {view : σ → SearchSt n} {G : Colored n k}
 
 /-- A local operation preserves the live partition and moves labels only
 within its current cells, including any newly installed leaf references. -/
-structure Local (G : Colored n k) (view : σ → SearchSt n)
+structure Local (G : Colored n k) (view : σ → Search n)
     (level numcells : Nat) (st out : σ) : Prop where
   ok : SearchOk G level numcells (view out)
   effect : SearchOut G level level (view st) (view out)
 
 /-- Compose two local operations. -/
-theorem Local.trans {G : Colored n k} {view : σ → SearchSt n}
+theorem Local.trans {G : Colored n k} {view : σ → Search n}
     {level numcells : Nat} {st middle out : σ}
     (h₁ : Local G view level numcells st middle)
     (h₂ : Local G view level numcells middle out) :
@@ -54,13 +54,13 @@ theorem Local.trans {G : Colored n k} {view : σ → SearchSt n}
 
 /-- A surviving target set consists of vertices in one nontrivial cell.
 The empty set needs no target-cell witness. -/
-def Target (view : σ → SearchSt n) (level tc : Nat) (cell : VSet n) (st : σ) : Prop :=
+def Target (view : σ → Search n) (level tc : Nat) (cell : VSet n) (st : σ) : Prop :=
   ∃ len, (cell ≠ VSet.empty →
       IsCell (view st).ptn level tc len ∧ 2 ≤ len ∧ tc + len ≤ n) ∧
     ∀ v, cell.mem v = true → v ∈ segN (view st).lab tc len
 
 /-- Removing target vertices preserves the target-cell witness. -/
-theorem Target.subset {view : σ → SearchSt n} {level tc : Nat}
+theorem Target.subset {view : σ → Search n} {level tc : Nat}
     {cell smaller : VSet n} {st : σ} (h : Target view level tc cell st)
     (hsub : ∀ v, smaller.mem v = true → cell.mem v = true) :
     Target view level tc smaller st := by
@@ -82,7 +82,7 @@ theorem Target.subset {view : σ → SearchSt n} {level tc : Nat}
 
 /-- A sweep's frame effect transports membership of every remaining
 target vertex into the returned labelling. -/
-theorem Target.of_out {view : σ → SearchSt n} {G : Colored n k}
+theorem Target.of_out {view : σ → Search n} {G : Colored n k}
     {level tc : Nat} {cell : VSet n} {st out : σ}
     (h : Target view level tc cell st)
     (hout : SearchOut G level level (view st) (view out)) :
@@ -100,7 +100,7 @@ variable [Policy σ n]
 refinement rules compose their own changes with the finer recursive
 effect; recovery restores the parent's level convention. -/
 structure ReachPolicy (G : Colored n k) (ctx : Ctx n) (inf tcLevel : Nat)
-    (view : σ → SearchSt n) : Prop where
+    (view : σ → Search n) : Prop where
   visit : ∀ level numcells st, 1 ≤ level → SearchOk G level numcells (view st) →
     let r := Policy.visit ctx level numcells st
     SearchOk G level r.1 (view r.2.2) ∧
@@ -142,7 +142,7 @@ structure ReachPolicy (G : Colored n k) (ctx : Ctx n) (inf tcLevel : Nat)
 
 /-- Entry and exit assertions for partition reachability. They apply
 also to truncated searches: exhaustion preserves all frame facts. -/
-def reachContract (G : Colored n k) (view : σ → SearchSt n) : Contract σ n where
+def reachContract (G : Colored n k) (view : σ → Search n) : Contract σ n where
   nodePre _ _ level numcells st := 1 ≤ level ∧ SearchOk G level numcells (view st)
   nodePost _ _ level _ st result := SearchOut G (level - 1) level (view st) (view result.2)
   sweepPre _ _ _ level numcells tc _ cursor cell _ st :=
@@ -152,7 +152,7 @@ def reachContract (G : Colored n k) (view : σ → SearchSt n) : Contract σ n w
     SearchOut G level level (view st) (view result.2.2)
 
 variable {G : Colored n k} {ctx : Ctx n} {inf tcLevel : Nat}
-  {view : σ → SearchSt n}
+  {view : σ → Search n}
 
 /-- Finishing a node's child sweep preserves its frame for every exit. -/
 theorem ReachPolicy.finish (h : ReachPolicy G ctx inf tcLevel view)

@@ -14,29 +14,30 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
 /-- Partition effects and canonical-reference effects share the same
 entry conditions, including calls truncated by fuel exhaustion. -/
 def canonContract (G : Colored n k) : Generic.Contract (Search n) n :=
-  { Generic.reachContract G Search.view with
+  { Generic.reachContract G (fun st => st) with
     nodePost := fun _ _ level _ st result =>
-      SearchOut G (level - 1) level st.view result.2.view ∧ CanonOut level st result.2
+      SearchOut G (level - 1) level st result.2 ∧ CanonOut level st result.2
     sweepPost := fun _ _ _ level _ _ _ _ _ _ st result =>
-      SearchOut G level level st.view result.2.2.view ∧ CanonOut level st result.2.2 }
+      SearchOut G level level st result.2.2 ∧ CanonOut level st result.2.2 }
 
 /-- A node's completed sweep retains or installs its canonical reference. -/
 theorem canon_finish {G : Colored n k} {fuel : Nat}
     {next : Generic.SweepFn (Search n) n}
     (hnext : (canonContract G).sweepValid fuel (n + 1) next)
     (first : Bool) (level numcells tc size : Nat) (cell : VSet n) (st : Search n)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) :
     let tv := cell.nextElem none
     let r := next first level numcells tc (tv.getD 0) tv cell 0 st
     CanonOut level st (Id.run (match r.1 with
@@ -59,7 +60,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
     {next : Generic.SweepFn (Search n) n}
     (hn0 : 0 < n) (hnext : (canonContract G).sweepValid fuel (n + 1) next)
     (first : Bool) (level numcells : Nat) (st : Search n)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st) :
     CanonOut level st (Generic.nodeStep ctx tcLevel next first level numcells st).2 := by
   let rp := reachPolicy G ctx tcLevel hn0
   have hv := rp.visit level numcells st hlevel hok
@@ -73,7 +74,7 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   generalize hr : visit ctx level numcells st = r at hv hvcanon ⊢
   obtain ⟨nc, code, refined⟩ := r
   let compared := if first then recordFirst level code refined else compareCodes level code refined
-  have hcomp : Generic.Local G Search.view level nc refined compared := by
+  have hcomp : Generic.Local G (fun st => st) level nc refined compared := by
     cases first
     · exact rp.compare level code nc refined hv.1
     · exact rp.record level code nc refined hv.1
@@ -114,8 +115,8 @@ theorem canon_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
   obtain ⟨htlocal, htarget⟩ := ht
   have hprepared := hcomp.trans htlocal
   have hcanPrepared : CanonOut level refined targeted := hcan.fields htc htg
-  have hfinish : ∀ prepared, Generic.Local G Search.view level nc refined prepared →
-      CanonOut level refined prepared → Generic.Target Search.view level tc.toNat cell prepared →
+  have hfinish : ∀ prepared, Generic.Local G (fun st => st) level nc refined prepared →
+      CanonOut level refined prepared → Generic.Target (fun st => st) level tc.toNat cell prepared →
       CanonOut level st (let ready := cheapCheck first level prepared
         let tv := cell.nextElem none
         let r := next first level nc tc.toNat (tv.getD 0) tv cell 0 ready
@@ -165,9 +166,9 @@ theorem canon_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (hn0 : 0 < n) (hnext : (canonContract G).sweepValid fuel cfuel next)
     (first : Bool) (level numcells tc tv1 tv index : Nat)
     (cell : VSet n) (base out : Search n) (exit : Exit)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base.view)
-    (htarget : Generic.Target Search.view level tc cell base)
-    (hout : SearchOut G level level base.view out.view) (hcanon : CanonOut level base out) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells base)
+    (htarget : Generic.Target (fun st => st) level tc cell base)
+    (hout : SearchOut G level level base out) (hcanon : CanonOut level base out) :
     CanonOut level base (Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit).2.2 := by
   let rp := reachPolicy G ctx tcLevel hn0
   have hr := rp.recover level numcells base out hlevel hok hout
@@ -203,7 +204,7 @@ theorem canon_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
       | false => exact hresume cell (fun _ hv => hv)
       | true =>
         exact hresume (shortprune cell out)
-          (fun _ hv => Nauty.shortprune_subset (st := out.view) hv)
+          (fun _ hv => Nauty.shortprune_subset (st := out) hv)
 
 /-- One child and the remaining sweep compose their canonical effects,
 including first-child bookkeeping and all non-local exits. -/
@@ -212,8 +213,8 @@ theorem canon_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (hn0 : 0 < n) (hdescend : (canonContract G).nodeValid fuel descend)
     (hnext : (canonContract G).sweepValid fuel cfuel next)
     (first : Bool) (level numcells tc tv1 tv index : Nat) (cell : VSet n) (st : Search n)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     CanonOut level st (Generic.sweepStep (n + 2) descend next first level numcells tc tv1 tv cell index st).2.2 := by
   let rp := reachPolicy G ctx tcLevel hn0
   have hc := rp.child first level numcells tc tv cell st hlevel hok htarget htv
@@ -248,7 +249,7 @@ theorem canonPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
     ⟨SearchOut.refl G (level - 1) level hin.2.reach, CanonOut.refl level st⟩
   node_step := by
     intro fuel next hnext first level numcells st hin
-    have hr : (Generic.reachContract G Search.view).sweepValid fuel (n + 1) next :=
+    have hr : (Generic.reachContract G (fun st => st)).sweepValid fuel (n + 1) next :=
       fun first level numcells tc tv1 cursor cell index st hin =>
         (hnext first level numcells tc tv1 cursor cell index st hin).1
     exact ⟨(reachPolicy G ctx tcLevel hn0).node_step hr first level numcells st hin.1 hin.2,
@@ -259,9 +260,9 @@ theorem canonPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
     ⟨SearchOut.refl G level level hin.2.1.reach, CanonOut.refl level st⟩
   sweep_step := by
     intro fuel cfuel descend next hdescend hnext first level numcells tc tv1 tv cell index st hin
-    have hd : (Generic.reachContract G Search.view).nodeValid fuel descend :=
+    have hd : (Generic.reachContract G (fun st => st)).nodeValid fuel descend :=
       fun first level numcells st hin => (hdescend first level numcells st hin).1
-    have hr : (Generic.reachContract G Search.view).sweepValid fuel cfuel next :=
+    have hr : (Generic.reachContract G (fun st => st)).sweepValid fuel cfuel next :=
       fun first level numcells tc tv1 cursor cell index st hin =>
         (hnext first level numcells tc tv1 cursor cell index st hin).1
     exact ⟨(reachPolicy G ctx tcLevel hn0).sweep_step hd hr first level numcells tc tv1 tv index cell st
@@ -272,7 +273,7 @@ theorem canonPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
 /-- A whole node couples the stored canonical labelling to its ancestor counter. -/
 theorem node_canon {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) :
+    (hok : SearchOk G level numcells st) :
     CanonOut level st (node first ctx (n + 2) tcLevel fuel level numcells st).2 := by
   rw [node_eq_generic]
   exact (Generic.node_sound (canonPolicy G ctx tcLevel hn0) first fuel level numcells st ⟨hlevel, hok⟩).2
@@ -281,12 +282,12 @@ theorem node_canon {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells 
 theorem sweep_canon {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel level numcells tc tv1 index : Nat}
     {cursor : Option Nat} {cell : VSet n} {st : Search n}
     (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st)
+    (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st)
     (hcursor : ∀ v, cursor = some v → cell.mem v = true) :
     CanonOut level st (sweep first ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1 cursor cell index st).2.2 := by
   rw [sweep_eq_generic]
   exact (Generic.sweep_sound (canonPolicy G ctx tcLevel hn0) first fuel cfuel level numcells tc tv1 cursor cell index st
     ⟨hlevel, hok, htarget, hcursor⟩).2
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

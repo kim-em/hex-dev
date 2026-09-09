@@ -21,11 +21,12 @@ import all HexGraphIso.Nauty.Policy.MaxUnwind
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -76,17 +77,17 @@ theorem SweepInput.counted {G : Colored n k} {tcLevel fuel : Nat}
       l.Count { g := rowsOf G } tcLevel tv1 previous index →
       (∀ tv, cursor = some tv → After previous tv) →
       ∃ last, l.Count { g := rowsOf G } tcLevel tv1 last
-        (Engine.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
+        (Nauty.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
           level numcells tc tv1 cursor cell index st).2.1 := by
   intro cfuel
   induction cfuel with
   | zero =>
     intro level numcells tc tv1 cursor cell index st l bs fs parents previous h hc _
-    cases cursor <;> simp only [Engine.sweep] <;> exact ⟨previous, hc⟩
+    cases cursor <;> simp only [Nauty.sweep] <;> exact ⟨previous, hc⟩
   | succ cfuel ih =>
     intro level numcells tc tv1 cursor cell index st l bs fs parents previous h hc ha
     cases cursor with
-    | none => simp only [Engine.sweep]; exact ⟨previous, hc⟩
+    | none => simp only [Nauty.sweep]; exact ⟨previous, hc⟩
     | some tv =>
       have hafter : ∀ cell : VSet n, ∀ v, cell.nextElem (some tv) = some v → After (some tv) v := by
         intro cell v hv
@@ -102,7 +103,7 @@ theorem SweepInput.counted {G : Colored n k} {tcLevel fuel : Nat}
         rw [hcall] at hr
         have ht : target ≤ level := hr.coverage.1
         by_cases hlt : target < level
-        · rw [Engine.sweep]
+        · rw [Nauty.sweep]
           simp only [hv, ↓reduceIte, hcall, hlt, Id.run_pure, apply_ite Id.run]
           split <;> exact ⟨previous, hc⟩
         · have he : target = level := by omega
@@ -116,7 +117,7 @@ theorem SweepInput.counted {G : Colored n k} {tcLevel fuel : Nat}
           obtain ⟨bs', fs', hi, _, _⟩ := h.received_input hn hv hcall hgen hanc
           have hp := h.restore (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G) hv
           rw [hcall] at hp
-          change Engine.SweepPre G ctx tcLevel true level numcells tc tv1 none cell ready at hp
+          change Nauty.SweepPre G ctx tcLevel true level numcells tc tv1 none cell ready at hp
           have hc' := h.mark hc (ha tv rfl) hp.stored.orbits hp.stored.trace (hgen rfl)
           have hh := ih level numcells tc tv1 (filtered.nextElem (some tv)) filtered
             (if ready.orbits[tv]! == tv1 then index + 1 else index) ready l bs' fs' parents
@@ -134,7 +135,7 @@ theorem SweepInput.counted {G : Colored n k} {tcLevel fuel : Nat}
         have hh := ih level numcells tc tv1 (cell.nextElem (some tv)) cell
           (if st.orbits[tv]! == tv1 then index + 1 else index) st l bs fs parents
           (some tv) hi hc' (hafter cell)
-        rw [Engine.sweep]
+        rw [Nauty.sweep]
         simpa only [hskip, Bool.false_eq_true, ↓reduceIte, Id.run_pure, Bool.true_and] using hh
 
 /-- A complete orbit count supplies a checked frozen-cell carrier for
@@ -147,7 +148,7 @@ theorem SweepInput.full {G : Colored n k} {tcLevel fuel cfuel : Nat}
     (hn : (contract G tcLevel).nodeValid fuel
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel))
     (hcount : (l.prepare { g := rowsOf G } tcLevel).2.2.2.1 ≤
-      (Engine.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
+      (Nauty.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
         level numcells tc tv1 cursor cell 0 st).2.1) :
     ∀ v ∈ segN (l.prepare { g := rowsOf G } tcLevel).2.2.2.2.lab tc
       (l.prepare { g := rowsOf G } tcLevel).2.2.2.1,
@@ -163,4 +164,4 @@ theorem SweepInput.full {G : Colored n k} {tcLevel fuel cfuel : Nat}
   rw [← h.tc_eq, ← h.level_eq] at hc
   exact hc.full (by rw [segN_length]; exact hcount)
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max
