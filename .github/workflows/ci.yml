@@ -97,7 +97,7 @@ jobs:
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
-            python-flint gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
+            python-flint==0.9.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
       - name: Verify performance measurements and figures are current
         run: |
@@ -253,7 +253,7 @@ jobs:
             hexlll_emit_fixtures hexrealroots_emit_fixtures \
             hexrcf_emit_fixtures \
             hexroots_emit_fixtures hexresultant_emit_fixtures \
-            hexnumberfield_emit_fixtures \
+            hexnumberfield_emit_fixtures hexrealalgebraic_emit_fixtures \
             hexnumberfieldtower_emit_fixtures hexgraphiso_emit_trace hexgraphiso_emit_campaign
       - name: Build HexManual
         run: lake build HexManual

@@ -1225,13 +1225,13 @@ libraries:
   HexRealAlgebraic:
     deps: [HexNumberField]
     mathlib: false
-    done_through: 0
+    done_through: 1
     status: active
   HexRealAlgebraicMathlib:
     deps: [HexRealAlgebraic, HexNumberFieldMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 0
+    done_through: 1
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]

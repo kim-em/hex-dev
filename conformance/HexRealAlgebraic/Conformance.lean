@@ -6,7 +6,21 @@ Authors: Kim Morrison
 
 import HexRealAlgebraic
 
-/-! Compiled checks of the executable real algebraic API, without Mathlib. -/
+/-!
+Core profile: oracle none, mode always; this module and `ReprChecks` elaborate in CI.
+The emitter also runs `Checks.run`, including the larger Mignotte and degree-eight fixtures.
+CI profile: exact python-flint qqbar arithmetic and certified FLINT root balls,
+mode `if_available` (required under `HEX_REQUIRE_ORACLES=1`). Local profile requires
+those oracles and adds degree-twelve roots and deterministic randomized construction paths.
+
+Operations: checked and proof-taking construction, casts, arithmetic, powers and scalar
+multiplication, comparison and extrema, sign, abs, conjugation, square roots, polynomial
+roots, rounding, rational recognition, and dyadic approximation.
+Properties: exact order, arithmetic identities, equal construction paths, positive-root
+selection, root multiplicities, and approximation enclosures.
+Edges: zero, division by zero, negative rationals, empty and constant polynomials,
+nonreal roots and coefficients, close roots, irrational coefficients, and repeated roots.
+-/
 
 open Hex
 open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
@@ -59,3 +73,24 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
 #guard
   (sqrt? (-1)).isNone && sqrt? 0 == some 0 &&
     sqrt? (ofRat (9 / 4)) == some (ofRat (3 / 2))
+
+#guard
+  let z : RealAlgebraicNumber := 0
+  RealAlgebraicNumber.ofAlgebraic z.toAlgebraic z.property == z &&
+    RealAlgebraicNumber.ofRoot? z.toAlgebraic.toRoot == some z &&
+    (RealAlgebraicNumber.ofRoot? AlgebraicNumber.I.toRoot).isNone
+
+#guard
+  let a := ofRat (9 / 4)
+  let checked := if h : 0 ≤ a then some (a.sqrt h) else none
+  checked == some (ofRat (3 / 2)) && checked == a.sqrt? &&
+    (RealAlgebraicNumber.sqrt 0 (by decide)) == 0
+
+#guard
+  let a := ofRat (-3 / 2)
+  let c := ofRat (a.approx 8).toRat
+  let e := ofRat (Dyadic.ofIntWithPrec 1 8).toRat
+  decide (c - e ≤ a) && decide (a ≤ c + e) &&
+    (ZPoly.realAlgebraicRoots #p[-1, 1]) == #[1] &&
+    (ZPoly.realAlgebraicRoots #p[]).isEmpty &&
+    (RealAlgebraicPoly.ofArray #[1, 0, 0]).roots.toArray.isEmpty
