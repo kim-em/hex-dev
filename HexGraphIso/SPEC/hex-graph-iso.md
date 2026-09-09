@@ -510,21 +510,13 @@ The first release keeps `schreier = false`, matching the pinned defaults. A
 later complete automorphism-group API may add a permutation-group dependency,
 but it must not silently change `canon` or `label`.
 
-One known divergence from the pinned source remains, and it is to be
-removed rather than adopted. At a discrete node whose refinement codes
-agree with the first leaf's along the whole path, `nauty.c:934-940`
-admits the code-1 automorphism when
-`gca_first >= noncheaplevel || isautom(..)`, skipping the `isautom` scan
-inside a subtree the cheap guard has already cleared. The Lean search
-(`Nauty.processnode` in `HexGraphIso/Nauty/Search/Search.lean`) instead
-requires the refinement code at the next level to be `codeSentinel`, and
-always runs `isautom`. The two tests admit the same leaves except on a
-collision of the fifteen-bit refinement code, which neither the committed
-fixture corpus nor the campaign exercises, so no conformance run
-distinguishes them. The Lean search pays one `isautom` scan per code-1
-leaf inside a cheap subtree for the difference. Restoring nauty's test
-needs the all-leaves theorem for a cheap subtree, which is proved
-(`Nauty.descPath_leafRows_all`).
+At a discrete node whose refinement codes agree with the first leaf,
+`Nauty.classify` implements nauty's code-1 admission test:
+`gcaFirst >= noncheaplevel || isautom ctx st.workperm`. Within a subtree
+covered by the cheap guard, `descPath_leafRows_all` supplies the leaf-row
+equality that validates the scatter permutation. The other branch checks
+the permutation with `isautom` before admission. The accepted permutation
+is recorded in the full generator trace and the bounded pruning workspace.
 
 ## Canonical certificates
 
