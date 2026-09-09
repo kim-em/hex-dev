@@ -66,6 +66,11 @@ def ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly :=
 def coeffs (f : AlgebraicPoly) : Array AlgebraicNumber :=
   f.data
 
+/-- Normalization removes exactly the trailing semantic zero coefficients. -/
+@[simp] theorem coeffs_ofArray (coeffs : Array AlgebraicNumber) :
+    (ofArray coeffs).coeffs = coeffs.popWhile (fun a => a.isZero) := by
+  rfl
+
 /-- Number of stored coefficients. -/
 @[expose]
 def size (f : AlgebraicPoly) : Nat :=
