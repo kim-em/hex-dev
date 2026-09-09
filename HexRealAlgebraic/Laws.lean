@@ -100,27 +100,27 @@ class Laws : Prop where
   /-- Positive right multiplication preserves strict order. -/
   mul_lt_right : ∀ {a b c : RealAlgebraicNumber}, a < b → 0 < c → a * c < b * c
 
-instance [Laws] : LawfulBEq RealAlgebraicNumber where
+instance (priority := 1100) [Laws] : LawfulBEq RealAlgebraicNumber where
   eq_of_beq := (Laws.beq_iff _ _).mp
   rfl := (Laws.beq_iff _ _).mpr rfl
 
-instance [Laws] : DecidableEq RealAlgebraicNumber := instDecidableEqOfLawfulBEq
+instance (priority := 1100) [Laws] : DecidableEq RealAlgebraicNumber := instDecidableEqOfLawfulBEq
 
-instance [Laws] : Std.IsLinearOrder RealAlgebraicNumber where
+instance (priority := 1100) [Laws] : Std.IsLinearOrder RealAlgebraicNumber where
   le_refl := Laws.le_refl
   le_trans := Laws.le_trans
   le_antisymm := Laws.le_antisymm
   le_total := Laws.le_total
 
-instance [Laws] : Std.LawfulOrderLT RealAlgebraicNumber := ⟨Laws.lt_iff⟩
+instance (priority := 1100) [Laws] : Std.LawfulOrderLT RealAlgebraicNumber := ⟨Laws.lt_iff⟩
 
-instance [Laws] : Std.LawfulOrderBEq RealAlgebraicNumber where
+instance (priority := 1100) [Laws] : Std.LawfulOrderBEq RealAlgebraicNumber where
   beq_iff_le_and_ge a b := by
     rw [Laws.beq_iff]
     exact ⟨fun h => by subst b; exact ⟨Laws.le_refl a, Laws.le_refl a⟩,
       fun h => Laws.le_antisymm _ _ h.1 h.2⟩
 
-instance [Laws] : Std.LawfulOrderOrd RealAlgebraicNumber where
+instance (priority := 1100) [Laws] : Std.LawfulOrderOrd RealAlgebraicNumber where
   isLE_compare a b := by
     change (compare a b).isLE = true ↔ compare a b ≠ .gt
     cases compare a b <;> decide
@@ -134,7 +134,7 @@ instance : Std.LawfulOrderLeftLeaningMax RealAlgebraicNumber where
   max_eq_left _ _ h := ite_eq_left h
   max_eq_right _ _ h := ite_eq_right h
 
-instance [Laws] : Lean.Grind.Field RealAlgebraicNumber where
+instance (priority := 1100) [Laws] : Lean.Grind.Field RealAlgebraicNumber where
   add := (· + ·)
   mul := (· * ·)
   natCast := inferInstance
@@ -196,10 +196,32 @@ instance [Laws] : Lean.Grind.Field RealAlgebraicNumber where
   zpow_succ := Laws.zpow_succ
   zpow_neg := Laws.zpow_neg
 
-instance [Laws] : Lean.Grind.OrderedRing RealAlgebraicNumber where
+instance (priority := 1100) [Laws] : Lean.Grind.OrderedRing RealAlgebraicNumber where
   add_le_left_iff c := Laws.add_le_iff _ _ c
   zero_lt_one := Laws.zero_lt_one
   mul_lt_mul_of_pos_left := Laws.mul_lt_left
   mul_lt_mul_of_pos_right := Laws.mul_lt_right
+
+section Regression
+
+variable [Laws]
+
+example : Std.LawfulOrderMin RealAlgebraicNumber := inferInstance
+example : Std.LawfulOrderMax RealAlgebraicNumber := inferInstance
+example : Std.LawfulEqOrd RealAlgebraicNumber := inferInstance
+example : Std.TransOrd RealAlgebraicNumber := inferInstance
+
+example (a b : RealAlgebraicNumber) (ha : 0 < a) (hb : 0 < b) : 0 < a * b := by
+  have := Lean.Grind.OrderedRing.mul_lt_mul_of_pos_left hb ha
+  grind
+
+example (a b c : RealAlgebraicNumber) (h : a ≤ b) : a + c ≤ b + c := by
+  grind
+
+-- The law dictionaries can be passed to executable generic code.
+private def fieldCube [Lean.Grind.Field K] (a : K) : K := a ^ (3 : Nat)
+private def cube (a : RealAlgebraicNumber) : RealAlgebraicNumber := fieldCube a
+
+end Regression
 
 end Hex.RealAlgebraicNumber
