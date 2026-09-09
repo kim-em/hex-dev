@@ -7,3 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexRealAlgebraic.Basic
+public import HexRealAlgebraic.Order
+public import HexRealAlgebraic.Laws
+public import HexRealAlgebraic.Roots
