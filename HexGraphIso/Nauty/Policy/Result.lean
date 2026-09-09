@@ -55,7 +55,7 @@ theorem runState_pairs (G : Colored n k) :
     exact initial_pairs G { g := rowsOf G }
   · exact (runState_safe G hn0).pairs
 
-/-- The structured engine's reported generators preserve the ordered colour cells. -/
+/-- The search's reported generators preserve the ordered colour cells. -/
 theorem runColoredTraced_stab (G : Colored n k) {perm : Array Nat}
     (hp : perm ∈ (runColoredTraced G).autos) : ColorStab G perm :=
   runState_colors G perm hp

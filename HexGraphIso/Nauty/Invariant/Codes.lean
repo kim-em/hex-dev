@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Search.Refine
 public section
 
 /-!
-Code-comparison faithfulness: the transcription's lazily threaded
+Code-comparison faithfulness: the search's lazily threaded
 level-code comparison (`compCanon` / `eqlevCanon` / `canoncode`)
 implements lexicographic comparison of the current path's refinement
 codes against the incumbent leaf's code list. This is the code-side
@@ -883,7 +883,7 @@ theorem install_codeInv {nn : Nat} {cs bs : List Nat}
 
 /-! # The first-path comparison thread
 
-The transcription threads a second lazy comparison: `eqlevFirst`
+The search threads a second lazy comparison: `eqlevFirst`
 records how deep the current path agrees with the leftmost (first)
 path, whose codes live in `firstcode`. Agreement here is what makes
 an off-path leaf a candidate automorphism (`classify` returning `.autoFirst`),

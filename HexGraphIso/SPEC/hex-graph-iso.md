@@ -995,8 +995,8 @@ Property checks independent of nauty include:
   sizes: `Nauty.specCanon G = canon G` and the isomorphism verdict read
   off `Nauty.canonSpecKey`, which is the only cross-check of the public
   answer this library still carries;
-- agreement between the public and direct engine entry points on every
-  case of the fixture corpus and campaign, through the twin runner above;
+- agreement of the public traced output and internal return control with
+  the frozen records on every fixture, campaign and pruning-regression case;
 - rejection of a changed edge, colour, permutation entry, refinement record,
   automorphism, prune record, leaf comparison, or difference position in a
   certificate;

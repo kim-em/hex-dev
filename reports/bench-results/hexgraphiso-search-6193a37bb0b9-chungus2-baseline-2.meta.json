@@ -1,0 +1,28 @@
+{
+  "source": "dcc5e8c221a0c252a91ae55091891b7197c08583",
+  "cpu": 6,
+  "host": "chungus2",
+  "trial": 2,
+  "order": [
+    "candidate",
+    "baseline"
+  ],
+  "arm": "baseline",
+  "command": [
+    "/tmp/graphiso-final-cleanup/state-cactus",
+    "search"
+  ],
+  "executable_sha256": "d7bfd4ebb6c6ce6f4d332641166173a5c7ba7dcebec2e07c037c82d8576c2a8c",
+  "started": "2026-09-09T01:35:06.262410+00:00",
+  "load_before": [
+    2.658203125,
+    13.47607421875,
+    57.87158203125
+  ],
+  "finished": "2026-09-09T01:35:08.975282+00:00",
+  "load_after": [
+    3.24658203125,
+    13.41796875,
+    57.6142578125
+  ]
+}

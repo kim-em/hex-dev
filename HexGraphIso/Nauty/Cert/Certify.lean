@@ -89,7 +89,7 @@ theorem certifyCanon?_isSome (G : Colored n k) : (certifyCanon? G).isSome := by
 
 /-! # Total certificate-checked canonicalization -/
 
-/-- Certificate-checked canonicalization: the structured search's
+/-- Certificate-checked canonicalization: the search's
 answer, accepted through the single trusted `checkCanon` replay, which
 always succeeds. -/
 @[expose] def certifyCanon (G : Colored n k) : CanonResult n k :=
@@ -115,13 +115,13 @@ theorem certifyCanon_relabel (G : Colored n k) :
   · cases h
   · exact (checkCanon_sound h).2.1.symm
 
-/-- The structured search agrees with the certificate-checked answer on
+/-- The search agrees with the certificate-checked answer on
 every input. -/
 theorem searchResult?_eq (G : Colored n k) :
     searchResult? G = some (certifyCanon G) :=
   searchResult?_eq_of_certifyCanon (certifyCanon?_eq G)
 
-/-- The structured search always answers. -/
+/-- The search always answers. -/
 theorem searchResult?_isSome (G : Colored n k) :
     (searchResult? G).isSome := by
   rw [searchResult?_eq]

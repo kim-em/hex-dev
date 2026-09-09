@@ -30,9 +30,9 @@ the specification's `leafRows`:
   outcome is `listCmp VSet.rowCmp (leafRows ctx lab) (leafRows ctx
   canonlab)`, and the out-state store satisfies the invariant both at
   `n` against the incumbent and at the returned prefix length against
-  the fresh leaf, re-establishing `CanongInv` whichever way the leaf
-  resolves (code `3` installs `lab` with `samerows := sr`, the other
-  codes keep `canonlab` with `samerows = n`);
+  the fresh leaf, re-establishing `CanongInv` after this row comparison
+  (`.better sr` installs `lab` with `samerows := sr`; the tied and worse
+  row verdicts retain `canonlab` with `samerows = n`);
 - `keyCmp_codes_eq`: on equal code lists the key comparison is the
   row comparison, connecting the trichotomy to `keyCmp` on leaf keys.
 

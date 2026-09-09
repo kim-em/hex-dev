@@ -182,7 +182,7 @@ theorem runState_checked (G : Colored n k) :
     simp at hγ
   · exact (runState_safe G (by omega)).trace
 
-/-- Every automorphism reported by the structured engine passes the certificate check. -/
+/-- Every automorphism reported by the search passes the certificate check. -/
 theorem runColoredTraced_checked (G : Colored n k) {γ : Array Nat}
     (hγ : γ ∈ (runColoredTraced G).autos) : checkAutom (rowsOf G) γ = true :=
   runState_checked G γ hγ

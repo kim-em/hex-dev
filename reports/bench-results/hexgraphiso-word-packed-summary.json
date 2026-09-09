@@ -1,0 +1,57 @@
+{
+  "provenance": {
+    "report_path": "reports/graphiso-word-packed-design.md",
+    "report_git_blob": "97b64991f454f00d6da30aac9e91c8bd68cfdf5f",
+    "host": "chungus2",
+    "method": "Same-process A/B; two passes for the operation table. Original report provides rounded summaries, no individual samples or source revision."
+  },
+  "operation_summary_ns": [
+    {
+      "operation": "intersection popcount",
+      "bits": 61,
+      "nat": 22,
+      "fused64": 124,
+      "two_limb": 25
+    },
+    {
+      "operation": "intersection popcount",
+      "bits": 96,
+      "nat": 438,
+      "fused64": 322,
+      "two_limb": 32
+    },
+    {
+      "operation": "intersection popcount",
+      "bits": 126,
+      "nat": 750,
+      "fused64": 328,
+      "two_limb": 32
+    },
+    {
+      "operation": "16-position insert fold",
+      "bits": 61,
+      "nat": 575,
+      "fused64": null,
+      "two_limb": 578
+    },
+    {
+      "operation": "16-position insert fold",
+      "bits": 96,
+      "nat": 3175,
+      "fused64": null,
+      "two_limb": 635
+    }
+  ],
+  "search_summary_us": [
+    {
+      "n": 96,
+      "limbs_csimp_on": 863,
+      "baseline": 890
+    },
+    {
+      "n": 64,
+      "limbs_csimp_on": 185.4,
+      "baseline": 185.6
+    }
+  ]
+}

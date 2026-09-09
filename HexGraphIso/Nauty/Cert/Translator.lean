@@ -609,7 +609,7 @@ theorem isautom_iff (ctx : Ctx n) (γ : Array Nat) :
 `certifyCanon?_isSome` in `Correct/Certify.lean` is the statement
 that certified canonicalization always succeeds. Besides the results
 above it rests on the rows equality (definitional from
-`produceCand`'s key), `labelColorSorted` of the transcription's
+`produceCand`'s key), `labelColorSorted` of the search's
 output labelling, and the maximality of the traced key,
 `canonSpecKey_eq_tracedKey`.
 -/

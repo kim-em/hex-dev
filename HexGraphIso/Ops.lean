@@ -43,7 +43,7 @@ which is how every theorem below reaches it. -/
 @[expose] def label (G : Colored n k) : Label n :=
   (canonicalize G).label
 
-/-- The transcription's answer is the certificate-checked one. -/
+/-- The search's answer is the certificate-checked one. -/
 theorem canonicalize_eq_certifyCanon (G : Colored n k) :
     canonicalize G = Nauty.certifyCanon G := by
   rw [canonicalize]

@@ -85,10 +85,10 @@ theorem checkCanon_sound {G : Colored n k} {cert : CertNode} {B : Key n}
     · cases h
 
 /-- Produce a checked `CanonResult`: run the untrusted key search and
-validate its candidate together with the transcribed search's
+validate its candidate together with the search's
 canonical labelling in ONE trusted `checkCanon` replay (which contains
 the `checkKey` certificate replay: validating through `certifyKey?`
-first would replay the certificate twice). The transcription supplies
+first would replay the certificate twice). The search supplies
 nauty's exact label tie-breaking. Every ingredient stays untrusted
 until the single replay accepts. -/
 @[expose] def certifyCanon? (G : Colored n k) :
@@ -99,8 +99,8 @@ until the single replay accepts. -/
   | none => none
   | some (cert, B) => checkCanon G cert B (runColored G).canonlab
 
-/-- A successful `checkCanon` on the transcribed search's own
-labelling forces the transcription to succeed with the same result:
+/-- A successful `checkCanon` on the search's own
+labelling forces the search to succeed with the same result:
 both build the `CanonResult` from `(runColored G).canonlab` by the
 same checked construction. -/
 theorem searchResult?_eq_of_checkCanon {G : Colored n k}
@@ -119,7 +119,7 @@ theorem searchResult?_eq_of_checkCanon {G : Colored n k}
     · cases h
 
 /-- Whenever the single trusted replay accepts (`certifyCanon?`
-succeeds), the fast transcription agrees with it exactly. -/
+succeeds), the search agrees with it exactly. -/
 theorem searchResult?_eq_of_certifyCanon {G : Colored n k}
     {res : CanonResult n k} (h : certifyCanon? G = some res) :
     searchResult? G = some res := by

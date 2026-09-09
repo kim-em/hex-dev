@@ -248,22 +248,22 @@ def finish (ctx : Ctx n) (st : Search n) : TraceRun n :=
     bestCodes := if n == 0 then [] else
       (List.range' 1 st.canonlevel).map fun i => st.canoncode[i]! }
 
-/-- Run the structured search with the certificate producer's result type. -/
+/-- Run the search with the certificate producer's result type. -/
 def runTraced (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : TraceRun n :=
   finish { g } (runState n g lab0 cellEnds).2
 
-/-- Run the structured search, discarding the trace. -/
+/-- Run the search, discarding the trace. -/
 def run (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat)
     (cellEnds : List Nat) : RunResult n :=
   (runTraced n g lab0 cellEnds).result
 
-/-- Run the structured search on a coloured graph, retaining the trace. -/
+/-- Run the search on a coloured graph, retaining the trace. -/
 def runColoredTraced {k : Nat} (G : Colored n k) : TraceRun n :=
   let (lab0, cellEnds) := initialPartition G
   runTraced n (rowsOf G) lab0 cellEnds
 
-/-- Run the structured search on a coloured graph. -/
+/-- Run the search on a coloured graph. -/
 def runColored {k : Nat} (G : Colored n k) : RunResult n :=
   (runColoredTraced G).result
 

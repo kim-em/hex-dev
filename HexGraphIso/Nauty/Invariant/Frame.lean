@@ -15,7 +15,7 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- Under the search invariant, the transcription's refined cell-count
+/-- Under the search invariant, the search's refined cell-count
 guard agrees with the specification's discreteness guard. -/
 theorem refine_discrete_iff {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) {level numcells : Nat}

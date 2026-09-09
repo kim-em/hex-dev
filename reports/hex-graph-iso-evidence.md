@@ -20,6 +20,7 @@ are interpreted by `scripts/bench/graphiso_archive.py`; new runs use
 | [Search measurements, ddc22cf4b645](bench-results/hexgraphiso-engine-ddc22cf4b645-chungus2.meta.json) | Initial structured-search measurements; three trial files, allocation profiles, admission and oracle logs retain this prefix. |
 | [Search measurements, 4a7c8747f686](bench-results/hexgraphiso-engine-4a7c8747f686-chungus2.meta.json) | Source `7a536cad3b41`, chungus2 CPU 91; the adopted structured search. |
 | [Replay measurements, 7e28eb7ddb6c](bench-results/hexgraphiso-kernel-7e28eb7ddb6c-chungus2.json), [d78dade3633a](bench-results/hexgraphiso-kernel-d78dade3633a-chungus2.json) | Kernel replay observations retain their own source and input metadata. |
+| [Packed-operation summaries](bench-results/hexgraphiso-word-packed-summary.json) | Rounded tables from the archived design report, identified by its Git blob; individual samples and execution revision were not recorded. |
 | [Mathlib proof probes](bench-results/hexgraphiso-mathlib-20260903-chungus2.json) | Raw samples from the September 3 report; the report's Git blob identifies their provenance. These are shared-host observations without CPU pinning. |
 | [Full traversal baseline](../conformance-fixtures/HexGraphIso/trace.meta.json) | 39,032 records from `e1e94bf2f0b6fdb1bc513f437ce21abb17406bba`; input and output digests accompany the compressed records. |
 
@@ -31,3 +32,18 @@ were 168 nodes with the full stored-pair scan and 712 with the newest 32
 pairs, with 11 accepted generators and identical canonical rows and path
 codes. These are traversal observations, not timing measurements. The
 production regression uses the full scan.
+
+Some historical tactic metadata cites the
+[negative-route report at f45ccab8](https://github.com/kim-em/hex-dev/blob/f45ccab8fed20616c89ae5da785b5c63d2bd4bc1/reports/hex-graph-iso-negative-routes.md).
+Those labels identify carried-over tactic timings; the original metadata
+is retained verbatim.
+
+Allocation profiles use `scripts/bench/graphiso_dhat.c` for mimalloc
+request counts, `graphiso_alloc_calls.py` to audit direct allocator calls,
+and ordinary DHAT separately for libc/GMP allocations. Ordinary DHAT
+misses the statically linked mimalloc heap and is not a total-allocation
+bound. The ad-hoc events count requests, not bytes or live blocks; the
+call audit does not rule out inlined or indirect allocators.
+`scripts/bench/graphiso_admissions.c` counts classification and code-1
+admission branches in the fixture and campaign emitters. Its header pins
+the generated C ABI and field indices; a run with no wrapped calls fails.

@@ -13,12 +13,12 @@ public section
 
 /-!
 The cell-reachability clause on the search labelling with its two
-transcription residuals, and the write-site invariants of `refine`
+certification consequences, and the write-site invariants of `refine`
 the clause's induction consumes.
 -/
 
 /-!
-Labelling invariants of the transcribed search: label
+Labelling invariants of the search: label
 well-formedness and the `labelColorSorted` residual of
 `certifyCanon?_isSome`.
 
@@ -29,14 +29,14 @@ labelling relative to the initial partition: `CellsReach G lab` below.
 `refine` splits cells into finer cells, and both are permutations
 within the initial colour classes, so every leaf the search reaches,
 `canonlab` in particular, satisfies it. From that one clause the
-two transcription-side residuals follow immediately through the
+two certification consequences follow immediately through the
 existing achievement lemmas: `achieved_perm_range` turns it into
 permutation-ness (`canonlab` is a bijection of `Fin n`) and
 `achieved_position_colors` turns it into `labelColorSorted`.
 
 These lemmas prove those two reductions in full. The search
-induction that establishes the clause for the transcribed `canonlab`
-is `canonlab_cellsReach` in `Invariant/Reach`, and the rest of the
+induction that establishes the clause for the stored `canonlab`
+is `canonlab_cellsReach` in `Policy/Result`, and the rest of the
 correctness argument shares that clause.
 -/
 
@@ -70,7 +70,7 @@ theorem cellsReach_lt {G : Colored n k} {lab : Array Nat}
     (h : CellsReach G lab) (i : Nat) (hi : i < n) : lab[i]! < n :=
   (achieved_position_colors (G := G) (llab := lab) h i hi).choose
 
-/-- A reached labelling passes `labelColorSorted`: the transcription
+/-- A reached labelling passes `labelColorSorted`: the search
 output's colours are nondecreasing, the `certifyCanon?_isSome`
 residual. The colour at each position matches `sortedColorSeq`
 (`achieved_position_colors`), which is sorted
@@ -1048,13 +1048,13 @@ theorem bcount_initPtn {n k : Nat} (G : Colored n k) :
 /-! # The partition invariants
 
 The per-node invariant (`SearchOk`) and per-call effect (`SearchOut`)
-of the transcribed search, with the lemmas that compose them.
+of the search, with the lemmas that compose them.
 `Invariant/Reach` and `Invariant/Domination` use these in the
 induction over the four search functions. -/
 
 variable {n k : Nat}
 
-/-- The per-node invariant of the transcribed search at `level` with
+/-- The per-node invariant of the search at `level` with
 claimed cell count `numcells`. -/
 structure SearchOk (G : Colored n k) (level numcells : Nat)
     (st : Search n) : Prop where

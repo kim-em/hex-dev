@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 
 Count code-1 admission branches without changing the search. This Valgrind
-wrapper targets the Lean 4.34.0-rc2 C ABI of Engine.classify in the fixture
+wrapper targets the Lean 4.34.0-rc2 C ABI of Nauty.classify in the fixture
 and campaign emitters. Its five arguments are n, ctx, level, numcells, st.
 Search.firstcode, gcaFirst and noncheaplevel are fields 7, 17 and 20.
 The returned pair's first component is Leaf.autoFirst exactly when it is
@@ -14,8 +14,8 @@ layout or compiler changes. The small-Nat checks fail closed.
 Build with the Lean and Valgrind include directories, then run:
   LD_PRELOAD=./admissions.so valgrind --tool=none \
     .lake/build/bin/hexgraphiso_emit_fixtures > /dev/null
-Repeat with hexgraphiso_emit_campaign. Each emitter calls the engine once
-per case. The twin calls it twice and must not be used for these counts.
+Repeat with hexgraphiso_emit_campaign. Each emitter calls the search once
+per case. A run with no wrapped calls exits with status 2.
 */
 #include <lean/lean.h>
 #include <valgrind/valgrind.h>
@@ -29,7 +29,7 @@ static size_t small_nat(lean_object *v) {
     return lean_unbox(v);
 }
 
-lean_object *I_WRAP_SONAME_FNNAME_ZU(NONE, lp_Hex_Hex_GraphIso_Nauty_Engine_classify)(
+lean_object *I_WRAP_SONAME_FNNAME_ZU(NONE, lp_Hex_Hex_GraphIso_Nauty_classify)(
         lean_object *n, lean_object *ctx, lean_object *level,
         lean_object *numcells, lean_object *st) {
     size_t next = small_nat(level) + 1;

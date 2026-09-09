@@ -79,8 +79,7 @@ theorem root_best (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
   change _ = some ((root G).key { g := rowsOf G } 100) at hbest
   rwa [root_key G hn0] at hbest
 
-/-- The local maximum rules imply exactly the public nonempty key equality,
-with the traced search replaced by the structured engine. -/
+/-- The local maximum rules imply the public nonempty key equality. -/
 theorem key_eq (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
     canonSpecKey G = Nauty.tracedKey G := by
   let out := (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2

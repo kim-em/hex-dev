@@ -15,7 +15,7 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- The full key read from the structured engine's trace. -/
+/-- The full key read from the search's trace. -/
 @[expose] def tracedKey (G : Colored n k) : Key n :=
   ⟨(runColoredTraced G).bestCodes ++ [codeSentinel],
     leafRows { g := rowsOf G } (runColoredTraced G).result.canonlab⟩
