@@ -13,3 +13,5 @@ public import HexRealAlgebraicMathlib.Laws
 public import HexRealAlgebraicMathlib.Instances
 public import HexRealAlgebraicMathlib.Algebraic
 public import HexRealAlgebraicMathlib.Approx
+public import HexRealAlgebraicMathlib.Rational
+public import HexRealAlgebraicMathlib.Rounding

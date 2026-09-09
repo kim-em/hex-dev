@@ -105,4 +105,11 @@ theorem abs_eq (a : RealAlgebraicNumber) : abs a = |a| := by
     rw [abs_of_nonneg]
     simpa using h
 
+/-- The executable sign agrees with the sign of the represented real value. -/
+theorem sign_eq (a : RealAlgebraicNumber) :
+    a.sign = if a.toReal < 0 then -1 else if a.toReal = 0 then 0 else 1 := by
+  simp only [sign, compare_eq, zero_toReal,
+    LinearOrder.compare_eq_compareOfLessAndEq, compareOfLessAndEq]
+  split <;> simp_all
+
 end Hex.RealAlgebraicNumber
