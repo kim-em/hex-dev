@@ -10,5 +10,6 @@ public import HexRealAlgebraic.Basic
 public import HexRealAlgebraic.Order
 public import HexRealAlgebraic.Laws
 public import HexRealAlgebraic.Roots
+public import HexRealAlgebraic.Complex
 
 /-! Executable canonical real algebraic numbers and exact order. -/

@@ -71,6 +71,11 @@ namespace Hex
 @[expose] def RefinedIsolation (p : ZPoly) :=
   {iso : DyadicRootIsolation p // (mahlerPrec p : Int) ≤ iso.square.prec}
 
+/-- Reflect an isolation, transporting its certificate without numerical checks. -/
+@[expose] def RefinedIsolation.conj {p : ZPoly} (r : RefinedIsolation p) :
+    RefinedIsolation p :=
+  ⟨⟨r.1.square.conj, .conj r.1.witness⟩, r.2⟩
+
 /-- The circumscribed discs intersect. A single exact dyadic comparison
     (squared centre distance against squared radius sum). -/
 @[expose] def Intersects {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Prop :=
@@ -127,6 +132,7 @@ theorem AtomCertificate.size_gt_one {p : ZPoly} {s : DyadicSquare}
   | normalize certificate ih =>
       rw [ZPoly.size_normalizePrimitiveSign]
       exact ih
+  | conj certificate ih => exact ih
 
 /-- A certified atom needs at least two stored coefficients. -/
 theorem DyadicRootIsolation.size_gt_one {p : ZPoly} (i : DyadicRootIsolation p) :

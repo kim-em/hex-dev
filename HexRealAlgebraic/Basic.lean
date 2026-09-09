@@ -63,7 +63,7 @@ namespace RealAlgebraicNumber
 
 /-- Zero uses the explicit stored zero isolation, without any root search. -/
 @[expose] def zero : RealAlgebraicNumber := ⟨0, by
-  rw [AlgebraicNumber.isReal, AlgebraicNumber.zero_square]
+  rw [AlgebraicNumber.isReal, AlgebraicNumber.zero_side]
   decide⟩
 
 instance : Zero RealAlgebraicNumber := ⟨zero⟩
@@ -132,13 +132,15 @@ instance : SMul Int RealAlgebraicNumber := ⟨fun n a => smul (n : Rat) a⟩
 /-- Conjugation reuses the real branch of canonical conjugation. -/
 @[expose] def conj (a : RealAlgebraicNumber) : RealAlgebraicNumber :=
   ⟨a.toAlgebraic.conj, by
-    have h := a.property
-    simp [AlgebraicNumber.conj, toAlgebraic, h]⟩
+    change a.val.conj.isReal = true
+    rw [AlgebraicNumber.conj_of_isReal _ a.property]
+    exact a.property⟩
 
 /-- Conjugation fixes a real algebraic number. -/
 @[simp] theorem conj_eq (a : RealAlgebraicNumber) : a.conj = a := by
   apply ext
-  simp [conj, toAlgebraic, AlgebraicNumber.conj, a.property]
+  change a.val.conj = a.val
+  exact AlgebraicNumber.conj_of_isReal _ a.property
 
 /-- A complex enclosure from the canonical approximation algorithm. -/
 @[expose] def approxBall (a : RealAlgebraicNumber) (prec : Int := 64) :

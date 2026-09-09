@@ -160,13 +160,17 @@ theorem beq_iff (a b : RealAlgebraicNumber) : (a == b) = true ↔ a = b := by
 
 /-- Canonical neg passes its closure check. -/
 @[simp] theorem neg_toAlgebraic (a : RealAlgebraicNumber) :
-    (-a).toAlgebraic = -a.toAlgebraic :=
-  pack_val _ (AlgebraicNumber.neg_isReal _ a.property)
+    (-a).toAlgebraic = -a.toAlgebraic := by
+  dsimp only [Neg.neg, instNeg, neg]
+  apply pack_val
+  exact AlgebraicNumber.neg_isReal _ a.property
 
 /-- Canonical inv passes its closure check. -/
 @[simp] theorem inv_toAlgebraic (a : RealAlgebraicNumber) :
-    (a⁻¹).toAlgebraic = a.toAlgebraic⁻¹ :=
-  pack_val _ (AlgebraicNumber.inv_isReal _ a.property)
+    (a⁻¹).toAlgebraic = a.toAlgebraic⁻¹ := by
+  dsimp only [Inv.inv, instInv, inv]
+  apply pack_val
+  exact AlgebraicNumber.inv_isReal _ a.property
 
 /-- Canonical nat powers pass their closure check. -/
 @[simp] theorem natPow_toAlgebraic (a : RealAlgebraicNumber) (n : Nat) :

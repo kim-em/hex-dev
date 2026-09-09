@@ -354,63 +354,13 @@ theorem isRoot_conj {p : ZPoly} {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
     RingHom.ext_int _ _
   rw [← hcomp, ← Polynomial.hom_eval₂, hz, map_zero]
 
-/-- The imaginary part of a stored isolation's centre. -/
-private theorem center_im (s : DyadicSquare) :
-    (HexRootsMathlib.DyadicSquare.center s).im = Dyadic.toReal s.im := by
-  simp [HexRootsMathlib.DyadicSquare.center_eq, Hex.DyadicSquare.center]
-
 /-- The reality test is exact at the stored separation precision. -/
 theorem isReal_iff (a : AlgebraicNumber) : a.isReal = true ↔ a.toComplex.im = 0 := by
-  have hpne : a.p ≠ 0 := RefinedIsolation.poly_ne_zero a.rep
-  set s := a.rep.1.square with hs
-  have hmem : a.toComplex ∈ DyadicSquare.closedDisc s :=
-    RefinedIsolation.root_mem_closedDisc a.rep
-  have hdist : dist a.toComplex (HexRootsMathlib.DyadicSquare.center s) ≤
-      DyadicSquare.radius s := by
-    simpa only [DyadicSquare.closedDisc, Metric.mem_closedBall] using hmem
-  have hradiusHi : DyadicSquare.radius s < Dyadic.toReal s.radiusHi := by
-    rw [DyadicSquare.radius_eq, DyadicSquare.radiusHi_eq, DyadicSquare.halfWidth_eq]
-    exact mul_lt_mul_of_pos_left sqrt_two_lt_sqrt2Hi (zpow_pos (by norm_num) _)
-  have himDist : |a.toComplex.im - Dyadic.toReal s.im| ≤ DyadicSquare.radius s := by
-    have h := Complex.abs_im_le_norm (a.toComplex - HexRootsMathlib.DyadicSquare.center s)
-    rw [Complex.sub_im, center_im] at h
-    rw [dist_eq_norm] at hdist
-    exact h.trans hdist
-  have hHiSep : Dyadic.toReal s.radiusHi ≤
-      (2 : ℝ) ^ (-(mahlerPrec a.p : ℤ)) * (1449 / 1024 : ℝ) := by
-    rw [DyadicSquare.radiusHi_eq, DyadicSquare.halfWidth_eq]
-    have hsqrt : Dyadic.toReal Hex.sqrt2Hi = (1449 / 1024 : ℝ) := by
-      norm_num [Hex.sqrt2Hi, Dyadic.toReal_ofIntWithPrec]
-    rw [hsqrt]
-    apply mul_le_mul_of_nonneg_right _ (by norm_num)
-    apply zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2)
-    have hprop := a.rep.property
-    rw [← hs] at hprop
-    omega
-  unfold AlgebraicNumber.isReal DyadicSquare.meetsRealAxis
-  rw [← hs]
-  simp only [Bool.and_eq_true, decide_eq_true_eq, ← Dyadic.toReal_le_toReal_iff,
-    Dyadic.toReal_neg]
   constructor
-  · rintro ⟨hlo, hhi⟩
-    by_contra hne
-    have hconj := isRoot_conj (RefinedIsolation.isRoot a.rep)
-    have hne' : a.toComplex ≠ starRingEnd ℂ a.toComplex := by
-      intro h
-      exact hne (Complex.conj_eq_iff_im.mp h.symm)
-    have hsep := mahlerPrec_separates a.p hpne a.toComplex (starRingEnd ℂ a.toComplex)
-      (RefinedIsolation.isRoot a.rep) hconj hne'
-    rw [Complex.sub_conj, norm_mul, Complex.norm_real, Complex.norm_I, mul_one,
-      Real.norm_eq_abs, abs_mul, abs_two] at hsep
-    have himLarge : 2 * Dyadic.toReal s.radiusHi < |a.toComplex.im| := by
-      linarith
-    have hcenter : |Dyadic.toReal s.im| ≤ Dyadic.toReal s.radiusHi := abs_le.mpr ⟨hlo, hhi⟩
-    have htri := abs_sub_abs_le_abs_sub a.toComplex.im (Dyadic.toReal s.im)
-    linarith
-  · intro him
-    have : |Dyadic.toReal s.im| ≤ DyadicSquare.radius s := by
-      simpa [him] using himDist
-    exact abs_le.mp (this.trans hradiusHi.le)
+  · intro h
+    exact a.isolation.real_iff.mp (of_decide_eq_true h)
+  · intro h
+    exact decide_eq_true (a.isolation.real_iff.mpr h)
 
 end AlgebraicNumber
 

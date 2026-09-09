@@ -16,23 +16,13 @@ test on stored isolations, and display.
 
 `ZPoly.algebraicRoots` is the entry point a user reaches for first: it turns
 an integer polynomial into its distinct complex roots, each a canonical
-`AlgebraicNumber`, real roots first in increasing order. The reality test
-compares the centre of a stored isolation with the dyadic upper bound of its
-disc radius; at separation precision that decides reality exactly, as the
-companion proves.
+`AlgebraicNumber`, real roots first by centre order and conjugate pairs adjacent.
+The reality test reads the orientation tag. Construction establishes that tag
+by comparing the isolation centre with its rounded disc radius; separation
+precision makes this exact, as the companion proves.
 -/
 
 namespace Hex
-
-namespace DyadicSquare
-
-/-- The closed circumscribed disc, with its radius rounded up to `radiusHi`,
-meets the real axis. -/
-@[expose]
-def meetsRealAxis (s : DyadicSquare) : Bool :=
-  -s.radiusHi ≤ s.im && s.im ≤ s.radiusHi
-
-end DyadicSquare
 
 namespace AlgebraicRoot
 
@@ -48,26 +38,36 @@ namespace AlgebraicNumber
 /-- The represented number is real. Exact at the stored separation precision. -/
 @[expose]
 def isReal (a : AlgebraicNumber) : Bool :=
-  a.rep.1.square.meetsRealAxis
+  decide (a.side = .real)
 
-/-- The output order of `ZPoly.algebraicRoots`: real roots first, in
-increasing order of their isolation centres, which is their order as real
-numbers; then the nonreal roots ordered lexicographically by isolation
-centre, real part first, then imaginary part, then precision. That order is
-deterministic, but it depends on the isolations rather than on the roots
-alone, so no client should rely on more than its determinism. -/
+/-- A successful reality test makes conjugation the identity. -/
+@[simp] theorem conj_of_isReal (a : AlgebraicNumber) (h : a.isReal = true) : a.conj = a :=
+  conj_of_side_real a (of_decide_eq_true h)
+
+/-- Deterministic root enumeration: real roots first by their isolation centres;
+then adjacent conjugate pairs, ordered by the upper base's height and real
+coordinate. Precision and minimal polynomial distinguish pairs before the
+negative-imaginary member is placed first. This is an order of stored data,
+not exact lexicographic comparison of the complex coordinates. -/
 @[expose]
 def rootLe (a b : AlgebraicNumber) : Bool :=
   match a.isReal, b.isReal with
   | true, false => true
   | false, true => false
-  | _, _ =>
-    let s := a.rep.1.square
-    let t := b.rep.1.square
+  | true, true =>
+    let s := a.isolation.base.1.square
+    let t := b.isolation.base.1.square
     if s.re = t.re then
       if s.im = t.im then decide (s.prec ≤ t.prec) else decide (s.im < t.im)
-    else
-      decide (s.re < t.re)
+    else decide (s.re < t.re)
+  | false, false =>
+    let s := a.isolation.base.1.square
+    let t := b.isolation.base.1.square
+    if s.im ≠ t.im then decide (s.im < t.im)
+    else if s.re ≠ t.re then decide (s.re < t.re)
+    else if s.prec ≠ t.prec then decide (s.prec < t.prec)
+    else if a.p ≠ b.p then compare a.p.toArray.toList b.p.toArray.toList != .gt
+    else decide (a.side = .lower) || decide (b.side ≠ .lower)
 
 /-- A dyadic complex ball of radius at most `2^(-prec)` around the value,
 evaluated on the stored representative. -/
@@ -142,9 +142,6 @@ def algebraicRoots (p : ZPoly) : Array AlgebraicNumber :=
 
 end ZPoly
 
-namespace AlgebraicNumber
-
-end AlgebraicNumber
 
 namespace Display
 
@@ -163,13 +160,27 @@ def dyadic : Dyadic → String
 def square (s : DyadicSquare) : String :=
   s!"⟨{dyadic s.re}, {dyadic s.im}, {s.prec}⟩"
 
+/-- Replay a certificate's actual constructors; transported certificates need
+not pass a fresh numerical check at their final square. -/
+def certificate {p : ZPoly} {s : DyadicSquare} : AtomCertificate p s → String
+  | @AtomCertificate.nk p s _ =>
+    s!"(@Hex.AtomCertificate.nk ({repr p}) ({square s}) (by decide))"
+  | @AtomCertificate.pellet p s _ =>
+    s!"(@Hex.AtomCertificate.pellet ({repr p}) ({square s}) (by decide))"
+  | @AtomCertificate.neg p s _ c =>
+    s!"(@Hex.AtomCertificate.neg ({repr p}) ({square s}) (by decide) {certificate c})"
+  | @AtomCertificate.normalize p s c =>
+    s!"(@Hex.AtomCertificate.normalize ({repr p}) ({square s}) {certificate c})"
+  | @AtomCertificate.conj p s c =>
+    s!"(@Hex.AtomCertificate.conj ({repr p}) ({square s}) {certificate c})"
+
 end Display
 
 /-- A fixed-field element prints as the expression that rebuilds it:
-its reduced coordinates ascribed to the presentation they live in, with the
-root named by the square that isolates it
-(`SimpleRoot.ofSquare`, whose two side conditions are `decide`-discharged
-auto-parameters).
+`PolyQuot.ofSquare` replays a direct NK/Pellet certificate;
+`PolyQuot.ofIsolation` replays the actual certificate constructors when the
+representative was transported. Both include the reduced coordinates and
+select the same root. A transported square need not pass a fresh checker.
 
 The representative comes out of the `Quot` by `unquot`, as Mathlib's `Multiset`
 and `Finset` instances do, so the instance is `unsafe` and the printed square is
@@ -178,8 +189,12 @@ the result: `Intersects` compares stored squares, so every representative of the
 root rebuilds the same element. -/
 unsafe instance {p : ZPoly} {x : SimpleRoot p} : Repr (PolyQuot p x) where
   reprPrec a _ :=
-    let s := (unsafeCast x : RefinedIsolation p).1.square
-    Std.Format.text
-      s!"PolyQuot.ofSquare {repr p} {Display.square s} {repr a.coeffs}"
+    let r := (unsafeCast x : RefinedIsolation p)
+    let s := r.1.square
+    Std.Format.text <| match r.1.witness with
+      | .nk _ | .pellet _ =>
+        s!"PolyQuot.ofSquare {repr p} {Display.square s} {repr a.coeffs}"
+      | _ =>
+        s!"PolyQuot.ofIsolation (p := {repr p}) ⟨⟨{Display.square s}, {Display.certificate r.1.witness}⟩, by decide⟩ {repr a.coeffs}"
 
 end Hex

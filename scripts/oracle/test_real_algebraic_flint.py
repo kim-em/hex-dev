@@ -87,6 +87,18 @@ class ExactOracle(unittest.TestCase):
         with self.assertRaises(oracle.OracleMismatch):
             self.checker.value(imaginary)
 
+    def test_complex_branch_and_order_mismatches(self):
+        i = {"poly": [1, 0, 1], "re": [0, 1], "im": [1, 1], "prec": 8}
+        minus_i = {**i, "im": [-1, 1]}
+        d = {"a": rat(-1), "b": i, "conj": rat(-1), "re": rat(-1), "im": rat(0),
+             "sqrt": i, "n": 2, "nthRoot": i, "lt": False, "le": False}
+        self.checker.check("complex", d)
+        for key, value in (("sqrt", minus_i), ("nthRoot", minus_i), ("le", True)):
+            wrong = copy.deepcopy(d)
+            wrong[key] = value
+            with self.subTest(key=key), self.assertRaises(oracle.OracleMismatch):
+                self.checker.check("complex", wrong)
+
     def test_general_algebraic_coefficients(self):
         sqrt2 = {"poly": [-2, 0, 1], "re": [3, 2], "im": [0, 1], "prec": 2}
         neg_sqrt2 = dict(sqrt2, re=[-3, 2])

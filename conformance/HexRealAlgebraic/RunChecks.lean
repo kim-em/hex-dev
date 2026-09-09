@@ -5,8 +5,15 @@ Authors: Kim Morrison
 -/
 
 import HexRealAlgebraic.Checks
+import HexNumberField.ComplexChecks
 
 /-! Standalone compiled runner for the larger real algebraic fixtures. -/
 
 /-- Execute all larger Mathlib-free conformance cases. -/
-def main : IO Unit := Hex.RealAlgebraicChecks.run true
+def main (args : List String) : IO Unit := do
+  match args with
+  | [] =>
+    Hex.RealAlgebraicChecks.run true
+    Hex.ComplexAlgebraicChecks.run
+  | ["--complex"] => Hex.ComplexAlgebraicChecks.run
+  | _ => throw (IO.userError "usage: hexrealalgebraic_conformance [--complex]")

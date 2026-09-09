@@ -93,7 +93,7 @@ def IsCanonical (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
 /-- Run the deterministic representative-selection pipeline and retain its
 provenance together with the match against the supplied root. -/
 @[expose]
-def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+def rawRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
     Option {r : RefinedIsolation p //
       IsCanonical p squarefree r ∧ r.sameRoot rep = true} :=
@@ -111,6 +111,74 @@ def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
               by
                 exact List.find?_some
                   (p := fun r : RefinedIsolation p => r.sameRoot rep) hfind⟩
+
+/-- The real axis or one of the two open half planes. -/
+inductive RootSide where
+  | real | upper | lower
+  deriving DecidableEq, BEq
+
+/-- An isolation with a canonical upper or real base and an orientation. -/
+structure OrientedIsolation (p : ZPoly) where
+  base : RefinedIsolation p
+  side : RootSide
+  valid : match side with
+    | .real => base.1.square.meetsRealAxis = true
+    | .upper | .lower => base.1.square.radiusHi < base.1.square.im
+
+/-- The effective isolation of an oriented root. -/
+@[expose] def OrientedIsolation.rep {p : ZPoly} (r : OrientedIsolation p) :
+    RefinedIsolation p :=
+  match r.side with
+  | .lower => r.base.conj
+  | _ => r.base
+
+/-- Reflect an oriented root without changing its base isolation. -/
+@[expose] def OrientedIsolation.conj {p : ZPoly} (r : OrientedIsolation p) :
+    OrientedIsolation p :=
+  match r with
+  | ⟨base, .real, h⟩ => ⟨base, .real, h⟩
+  | ⟨base, .upper, h⟩ => ⟨base, .lower, h⟩
+  | ⟨base, .lower, h⟩ => ⟨base, .upper, h⟩
+
+@[simp] theorem OrientedIsolation.conj_base {p : ZPoly} (r : OrientedIsolation p) :
+    r.conj.base = r.base := by
+  rcases r with ⟨base, side, h⟩
+  cases side <;> rfl
+
+/-- Determine the half plane of a refined isolation. -/
+@[expose] def sideOf {p : ZPoly} (r : RefinedIsolation p) : RootSide :=
+  if r.1.square.meetsRealAxis then .real
+  else if r.1.square.radiusHi < r.1.square.im then .upper else .lower
+
+/-- Check that the base lies in the required half plane. -/
+@[expose] def orient? {p : ZPoly} (base : RefinedIsolation p) (side : RootSide) :
+    Option (OrientedIsolation p) :=
+  match side with
+  | .real => if h : base.1.square.meetsRealAxis = true then some ⟨base, .real, h⟩ else none
+  | .upper => if h : base.1.square.radiusHi < base.1.square.im then some ⟨base, .upper, h⟩ else none
+  | .lower => if h : base.1.square.radiusHi < base.1.square.im then some ⟨base, .lower, h⟩ else none
+
+/-- Successful orientation preserves the base. -/
+theorem orient?_base {p : ZPoly} {base : RefinedIsolation p} {side : RootSide}
+    {r : OrientedIsolation p} (h : orient? base side = some r) : r.base = base := by
+  cases side <;> simp only [orient?] at h <;> split at h <;>
+    simp only [Option.some.injEq, reduceCtorEq] at h <;> cases h <;> rfl
+
+/-- Select the canonical upper representative and restore the requested orientation. -/
+@[expose]
+def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
+    Option {r : OrientedIsolation p //
+      IsCanonical p squarefree r.base ∧ r.rep.sameRoot rep = true} := do
+  let side := sideOf rep
+  let target := if side = .lower then rep.conj else rep
+  let base ← rawRep? p squarefree target hzero
+  match horient : orient? base.1 side with
+  | none => none
+  | some r =>
+    if hmatch : r.rep.sameRoot rep = true then
+      some ⟨r, by rw [orient?_base horient]; exact base.2.1, hmatch⟩
+    else none
 
 end AlgebraicNumber
 
@@ -130,13 +198,40 @@ structure AlgebraicNumber where
   checked : ZPoly.CheckedIrreducible p
   /-- `p` has only simple roots. -/
   squarefree : HasOnlySimpleRoots p
-  /-- The certified refined isolation of the represented root. -/
-  rep : RefinedIsolation p
-  /-- The stored representative comes from the deterministic canonical
-  isolation pipeline (or is the fixed representative of zero). -/
-  canonical : AlgebraicNumber.IsCanonical p squarefree rep
+  /-- The canonical base isolation and the selected orientation. -/
+  isolation : AlgebraicNumber.OrientedIsolation p
+  /-- The base comes from the deterministic isolation pipeline or explicit zero. -/
+  canonical : AlgebraicNumber.IsCanonical p squarefree isolation.base
 
 namespace AlgebraicNumber
+
+/-- The certified isolation of the selected complex root. -/
+@[expose] def rep (a : AlgebraicNumber) : RefinedIsolation a.p := a.isolation.rep
+
+/-- The half plane of the represented number. -/
+@[expose] def side (a : AlgebraicNumber) : RootSide := a.isolation.side
+
+/-- Complex conjugation shares the canonical base and only changes orientation. -/
+def conj (a : AlgebraicNumber) : AlgebraicNumber :=
+  .mk a.p a.prim a.pos_lc a.pos_degree a.checked a.squarefree a.isolation.conj
+    (by rw [OrientedIsolation.conj_base]; exact a.canonical)
+
+/-- Conjugation is an involution on the stored data. -/
+@[simp] theorem conj_conj (a : AlgebraicNumber) : a.conj.conj = a := by
+  rcases a with ⟨p, prim, pos, degree, checked, squarefree, ⟨base, side, valid⟩, hc⟩
+  cases side <;> rfl
+
+@[simp] theorem conj_p (a : AlgebraicNumber) : a.conj.p = a.p := by rfl
+
+/-- Conjugation exposes the reflected isolation without exposing the sealed constructor. -/
+theorem conj_rep (a : AlgebraicNumber) : HEq a.conj.rep a.isolation.conj.rep := by rfl
+
+/-- Real values are fixed by conjugation. -/
+theorem conj_of_side_real (a : AlgebraicNumber) (h : a.side = .real) : a.conj = a := by
+  rcases a with ⟨p, prim, pos, degree, checked, squarefree, ⟨base, side, valid⟩, hc⟩
+  change side = .real at h
+  cases h
+  rfl
 
 /-- The selected simple root is determined by the canonical representative. -/
 @[expose]
@@ -187,7 +282,7 @@ private theorem zero_squarefree : HasOnlySimpleRoots ZPoly.X := by
 
 private def zeroRaw : AlgebraicNumber :=
   .mk ZPoly.X (by rfl) (by decide) (by decide)
-    ⟨zero_isIrreducible, by decide⟩ zero_squarefree zeroRep
+    ⟨zero_isIrreducible, by decide⟩ zero_squarefree ⟨zeroRep, .real, by decide⟩
     (Or.inl ⟨rfl, HEq.rfl⟩)
 
 -- Keep executable evidence that the ordinary isolator also meets its stated
@@ -214,6 +309,9 @@ theorem zero_eq_zero : AlgebraicNumber.zero = (0 : AlgebraicNumber) := rfl
 @[simp] theorem zero_square : (0 : AlgebraicNumber).rep.1.square =
     ⟨0, 0, (separationDepth ZPoly.X : Int)⟩ := by
   rfl
+
+/-- Zero lies on the real axis. -/
+@[simp] theorem zero_side : (0 : AlgebraicNumber).side = .real := by rfl
 
 /-- Re-isolate an already normalized irreducible polynomial with the fixed
 default strategy and retain the unique canonical disc matching `rep`.
@@ -300,11 +398,11 @@ instance : Inhabited AlgebraicNumber := ⟨zero⟩
 representatives agree. The remaining fields are propositions, and the selected
 `SimpleRoot` is forced by `rep_mk`. -/
 theorem ext (a b : AlgebraicNumber) (hp : a.p = b.p)
-    (hrep : HEq a.rep b.rep) : a = b := by
+    (hisolation : HEq a.isolation b.isolation) : a = b := by
   cases a
   cases b
   cases hp
-  cases eq_of_heq hrep
+  cases eq_of_heq hisolation
   rfl
 
 end AlgebraicNumber

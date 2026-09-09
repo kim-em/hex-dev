@@ -38,6 +38,7 @@ import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
+import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
@@ -200,6 +201,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexPolyZGcd}
 
 {include 2 HexManual.Chapters.HexMvGcd}
+
+{include 2 HexManual.Chapters.HexRealAlgebraic}
 
 {include 2 HexManual.Chapters.HexMvHensel}
 

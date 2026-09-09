@@ -409,3 +409,32 @@ high-level arithmetic and root ladders and its PARI/GP comparator.
   1993.
 - Lang, S. *Algebra.* Springer, 3rd ed., for finite separable extensions,
   primitive elements, and quotient-field semantics.
+
+## Complex API and algebraic closure
+
+The canonical representation is interpreted through `OrientedIsolation`:
+`sign`, `real_iff`, and `conj_root` justify the orientation tag and reflected
+certificate. Injectivity combines uniqueness of the raw canonical base with
+uniqueness of the orientation. `conj_toComplex` uses certificate transport;
+`StarRing` and `conjRingEquiv` expose its algebraic laws.
+
+`partialCompare_eq`, `le_iff`, and `lt_iff` characterize the global complex
+partial order, with a `PartialOrder`, `IsStrictOrderedRing`, and
+`toComplexOrder`. These retain the core executable comparison data. They do
+not provide a total order on complex algebraic values.
+
+`Radical.select_value` proves the candidate selector succeeds and chooses
+Mathlib's principal power. `PrincipalRoot.eq_of_max` characterizes that branch
+by maximal real part and the nonnegative imaginary side on ties.
+`nthRoot_toComplex`, `nthRoot_pow`, `sqrt_toComplex`, and `sqrt_sq` provide
+the public contracts. `nthRoot_conj` requires exclusion of the negative real
+branch cut. The real companion proves agreement with the nonnegative real
+square root and the typed real/imaginary projection identities.
+
+`QAdjoin.ofAlgebraic?_isSome_iff` is an exact field-membership decision;
+`ofAlgebraic?_sound`, `common_size`, and `common_get` prove coordinate recovery.
+`AlgebraicPoly.ofPolynomial` bridges arbitrary Mathlib polynomials to the
+existing complete algebraic-coefficient solver. This supplies `IsAlgClosed`;
+the minimal-polynomial theorem supplies `Algebra.IsAlgebraic ℚ`, and together
+they give `IsAlgClosure ℚ AlgebraicNumber`. Axiom audits include the principal
+radical and algebraic-closedness instances.

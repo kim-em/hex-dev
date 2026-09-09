@@ -57,6 +57,15 @@ The proof-facing API interprets each executable representation in `ℂ`:
 - Root-API correctness for the fixed-field and algebraic-coefficient
   `roots?` functions.
 
+- `StarRing`, `conjRingEquiv`, `PartialOrder`, and `toComplexOrder` describe
+  conjugation and Mathlib's complex partial order over the executable data.
+- `sqrt_toComplex` and `nthRoot_toComplex` prove principal-branch agreement;
+  `nthRoot_pow` proves the positive-index root equation.
+- `QAdjoin.ofAlgebraic?_isSome_iff` characterizes chosen-field membership,
+  and `QAdjoin.common_get` proves common-field coordinates recover each input.
+- `IsAlgClosed AlgebraicNumber` and `IsAlgClosure ℚ AlgebraicNumber` expose
+  algebraic closedness through completeness of the polynomial root solver.
+
 # Verification
 
 Everything in this package is proved; it adds no executable operations. The

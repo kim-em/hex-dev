@@ -141,41 +141,8 @@ open HexRootsMathlib Polynomial
 /-- `conj` is complex conjugation. -/
 theorem conj_toComplex (a : AlgebraicNumber) :
     a.conj.toComplex = starRingEnd ℂ a.toComplex := by
-  unfold conj
-  split
-  · rename_i hreal
-    exact (Complex.conj_eq_iff_im.mpr ((isReal_iff a).mp hreal)).symm
-  · rename_i hreal
-    have hpne : a.p ≠ 0 := RefinedIsolation.poly_ne_zero a.rep
-    have hroot : (toPolyℂ a.p).IsRoot a.toComplex := RefinedIsolation.isRoot a.rep
-    have hconj := isRoot_conj hroot
-    obtain ⟨c, hcmem, hcval⟩ := (ZPoly.mem_algebraicRoots_iff a.p hpne _).mpr hconj
-    have hconjmem : starRingEnd ℂ a.toComplex ∈
-        (mirrorBall (a.approx (separationPrec a.p))).set :=
-      conj_mem_mirrorBall (approx_mem a (separationPrec a.p))
-    have hpredc : (c.approx (separationPrec a.p)).meets
-        (mirrorBall (a.approx (separationPrec a.p))) = true :=
-      DyadicComplexBall.meets_of_mem_set (z := starRingEnd ℂ a.toComplex)
-        (hcval ▸ approx_mem c (separationPrec a.p)) hconjmem
-    have hsome : ((ZPoly.algebraicRoots a.p).find? fun c =>
-        (c.approx (separationPrec a.p)).meets
-          (mirrorBall (a.approx (separationPrec a.p)))).isSome = true :=
-      Array.find?_isSome.mpr ⟨c, by simpa using hcmem, hpredc⟩
-    obtain ⟨c', hc'⟩ := Option.isSome_iff_exists.mp hsome
-    show (((ZPoly.algebraicRoots a.p).find? fun c =>
-        (c.approx (separationPrec a.p)).meets
-          (mirrorBall (a.approx (separationPrec a.p)))).getD _).toComplex = _
-    rw [hc', Option.getD_some]
-    have hmem' : c' ∈ ZPoly.algebraicRoots a.p := Array.mem_of_find?_eq_some hc'
-    have hpred' := Array.find?_some hc'
-    have hroot' : (toPolyℂ a.p).IsRoot c'.toComplex :=
-      (ZPoly.mem_algebraicRoots_iff a.p hpne _).mp ⟨c', by simpa using hmem', rfl⟩
-    have hrootc : (toPolyℂ a.p).IsRoot c.toComplex := hcval ▸ hconj
-    have hcmirror : c.toComplex ∈ (mirrorBall (a.approx (separationPrec a.p))).set :=
-      hcval ▸ hconjmem
-    have := eq_of_meets hpne hroot' hrootc (approx_mem c' (separationPrec a.p)) hcmirror
-      (approx_radius_separationPrec c' a.p) (approx_radius_separationPrec a a.p) hpred'
-    exact this.trans hcval
+  exact (RefinedIsolation.root_heq (conj_p a) (conj_rep a)).trans
+    (OrientedIsolation.conj_root a.isolation)
 
 /-- A root of the product of two minimal polynomials. -/
 theorem isRoot_mul_left (a b : AlgebraicNumber) :

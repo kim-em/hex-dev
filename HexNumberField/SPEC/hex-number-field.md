@@ -79,7 +79,7 @@ def AlgebraicNumber.rep (a : AlgebraicNumber) : RefinedIsolation a.p
 def AlgebraicNumber.IsCanonical (p : ZPoly)
     (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p) : Prop
 def AlgebraicNumber.canonical (a : AlgebraicNumber) :
-    AlgebraicNumber.IsCanonical a.p a.squarefree a.rep
+    AlgebraicNumber.IsCanonical a.p a.squarefree a.isolation.base
 def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
 def AlgebraicNumber.rep_mk (a : AlgebraicNumber) :
     SimpleRoot.mk a.rep = a.x
@@ -87,10 +87,10 @@ def AlgebraicNumber.zeroRep : RefinedIsolation ZPoly.X
 def AlgebraicNumber.canonicalRep? (p : ZPoly)
     (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p)
     (hzero : p ≠ ZPoly.X) :
-    Option {r : RefinedIsolation p //
-      AlgebraicNumber.IsCanonical p squarefree r ∧ r.sameRoot rep = true}
+    Option {r : AlgebraicNumber.OrientedIsolation p //
+      AlgebraicNumber.IsCanonical p squarefree r.base ∧ r.rep.sameRoot rep = true}
 theorem AlgebraicNumber.ext (a b : AlgebraicNumber) (hp : a.p = b.p)
-    (hrep : HEq a.rep b.rep) : a = b
+    (hrep : HEq a.isolation b.isolation) : a = b
 def AlgebraicNumber.zero : AlgebraicNumber
 instance : Zero AlgebraicNumber
 instance : Inhabited AlgebraicNumber
@@ -130,21 +130,29 @@ requirement that the implementation literally use an `opaque` Lean declaration.
 Implementations use representation-private structures where constructors or
 recursors are needed internally.
 
-Every `AlgebraicNumber` smart constructor normalizes the primitive polynomial.
-The normalized polynomial `X` uses one fixed explicit certified representative;
-this makes canonical zero total without depending on success of the bounded
-isolation driver. Every other polynomial is re-isolated with the fixed default
-strategy at `separationDepth`, storing the unique matching disc. Thus equal
-complex values have identical hidden data, not merely a semantic `BEq`; this
-representation can support field laws stated with Lean equality. User-supplied
-alternative refined discs cannot enter the private constructor. The sealed
-record retains provenance that its representative belongs to the deterministic
-isolation/refinement array (or is the fixed `X` representative); the companion
-uses pairwise root separation in that array to prove this invariant unique.
-The certificate stored inside `RefinedIsolation` is proof-relevant, so this
-canonical-provenance field is load-bearing: every constructor path must use the
-fixed `zeroRep` or `canonicalRep?`, never insert an independently transported
-certificate directly.
+Every smart constructor normalizes the primitive polynomial. Zero uses the
+fixed certified `zeroRep`. Other values use `rawRep?` to re-isolate the
+polynomial with the fixed strategy at `separationDepth`. The private record
+stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
+and a `RootSide` tag (`real`, `upper`, or `lower`). The `valid` field proves
+that the base meets the real axis for `real`, or that its centre is above
+`radiusHi` for either nonreal tag. `rep` returns the base except for `lower`,
+where it returns `base.conj`.
+
+`canonicalRep?` reflects a lower input before selecting the unique raw base,
+checks its orientation, and checks that the selected oriented representative
+matches the original input. The companion proves these checks succeed.
+Canonical provenance belongs to the **base**, and together with the side
+makes equal complex values have identical hidden data. An arbitrary
+proof-relevant certificate cannot be inserted as a new canonical base.
+
+`conj` fixes real values and flips the two nonreal tags, sharing the base,
+polynomial and certificates. Repeated conjugation does not grow a certificate
+chain. Accessing a lower `rep` transports the base certificate through the
+`AtomCertificate.conj` constructor, whose soundness follows by reflection;
+it does not rerun an NK or Pellet checker. `PolyQuot` display must preserve
+such transported certificates with `ofIsolation`, rather than printing an
+`ofSquare` term whose fresh checker need not succeed.
 
 Do not instantiate `DensePoly AlgebraicNumber` in the Mathlib-free layer.
 `DensePoly` requires a kernel `DecidableEq` on coefficients so trailing-zero
@@ -527,12 +535,14 @@ constant, including zero, returns the empty array, and the correspondence
 theorem is stated for nonzero `p`, matching `Polynomial.roots 0 = 0`. `none`
 is reserved for certificate failure, and `algebraicRoots?_isSome` retires it.
 
-The array is sorted by `AlgebraicNumber.rootLe`: real roots first, in
-increasing order, then the nonreal roots ordered by isolation centre (real
-part, then imaginary part, then precision). The order of the real roots is a
-theorem about the values. The order among nonreal roots is deterministic,
-because isolation is deterministic, but it is not determined by the roots
-alone and no client may rely on it beyond determinism.
+The array is sorted by `AlgebraicNumber.rootLe`: real roots first by their
+canonical dyadic centres, then nonreal conjugate pairs with the lower member
+first. Pair keys are the canonical upper base's `(im, re, precision)`, followed
+by the integer minimal-polynomial coefficient list to break ties between
+factors. This keeps a pair together without exact coordinate extraction.
+It is a deterministic centre order, not exact lexicographic `(abs im, re, im)`.
+Use `ZPoly.realAlgebraicRoots` in the real library when exact value ordering
+of real roots from different irreducible factors is required.
 
 `meetsRealAxis` tests whether the closed circumscribed disc meets the real
 axis, with the disc radius rounded up to the dyadic `radiusHi`: the centre's
@@ -543,7 +553,7 @@ closed disc, so its centre is within the true radius, which is below
 of the same integer polynomial, so `radiusHi` itself is less than a quarter
 of their distance `2 |im z|` (the separation bound carries the `1449/1024`
 slack), and the centre is more than `radiusHi` from the axis. `isReal`
-applies it to the stored representative; the companion proves `isReal_iff`.
+reads the orientation tag established by this test; the companion proves `isReal_iff`.
 
 `approx a prec` is `PolyQuot.approx` applied to `a.toQAdjoin` with the stored
 representative; its ball contains `a.toComplex` and has radius at most
@@ -874,3 +884,43 @@ Absence declarations, all with reason
   des Nombres de Bordeaux 16 (2004), 19-63.
 - Bostan, A.; Flajolet, P.; Salvy, B.; Schost, É. *Fast computation of
   special resultants.* JSC 41 (2006), 1-29.
+
+## Complex operations and common fields
+
+`AlgebraicNumber.partialCompare : AlgebraicNumber → AlgebraicNumber → Option Ordering`
+returns `none` exactly for unequal imaginary parts. Global executable `LT`,
+`LE` and their decisions match Mathlib's complex partial order: equal imaginary
+parts and ordered real parts. Structural equality and real-real comparisons
+are direct paths; differing orientation tags reject immediately; remaining
+cases test whether the difference is real and use `realCompare`. There is no
+`Ord` or `LinearOrder` instance on the complex type. The companion supplies
+`PartialOrder`, `IsStrictOrderedRing`, `StarRing`, `conjRingEquiv` and an order
+embedding into the scoped complex order.
+
+`AlgebraicNumber.nthRoot a n` agrees with `a.toComplex ^ ((n : ℂ)⁻¹)`;
+`sqrt a` is `nthRoot a 2`. Index zero returns one; positive indices at zero
+return zero. The general path solves `X^n - a`, caches each candidate's
+`a + a.conj`, then chooses maximal real part with nonnegative imaginary side
+preferred on a tie. Root completeness proves selection succeeds, and the
+companion proves the result lies in the principal argument sector
+`(-π/n, π/n]`. General radicals can be expensive. Conjugation commutes with
+this branch away from the negative real axis, not unconditionally.
+
+`QAdjoin.ofAlgebraic? a b` returns coordinates exactly when `b ∈ ℚ(a)`.
+`ofAlgebraics? a bs` shares the power table and preserves one option per input.
+`QAdjoin.common bs` returns a `Presentation` with one `generator` and an
+`entries : Array (QAdjoin generator)`, preserving input values, order and
+duplicates. Empty and all-zero inputs use generator zero. These wrappers
+reuse the existing certified primitive-element search and coordinate recovery;
+no independent field-search implementation is added.
+
+The real library owns `AlgebraicNumber.re`, `im`, and `ofReal`, with both
+projections returning `RealAlgebraicNumber`. It computes them through
+conjugation and exact arithmetic, with direct paths for real values. Keeping
+the projections there avoids a dependency from number fields to their real
+subtype. The companion proves projection arithmetic and reconstruction.
+
+The number-field companion provides `IsAlgClosed AlgebraicNumber` and
+`IsAlgClosure ℚ AlgebraicNumber`, using the complete algebraic-coefficient
+root solver and algebraicity of every represented value. Neither instance
+introduces new axioms or admits unfinished proofs.

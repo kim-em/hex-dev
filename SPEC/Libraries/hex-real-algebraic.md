@@ -546,3 +546,15 @@ conditional law adapters and their proved companion witness, import-DAG checks,
 and compilable examples before and after importing the companion as specified
 above. No benchmark result or implementation is
 claimed by this SPEC.
+
+## Complex coordinate projections
+
+The computational real library exports `AlgebraicNumber.re` and `im` with
+codomain `RealAlgebraicNumber`, and `AlgebraicNumber.ofReal` with its coercion.
+The formulas `(a + a.conj)/2` and `(a - a.conj)/(2I)` reuse exact arithmetic;
+real inputs return the existing value and zero directly. The real companion
+proves coordinate correspondence, reconstruction, extensionality, arithmetic,
+and conjugation laws, and packages inclusion as a ring homomorphism and order
+embedding. `AlgebraicNumber.sqrt_ofReal` identifies the principal complex
+square root with the nonnegative real square root. Owning these declarations
+here avoids a dependency from `hex-number-field` back to the real subtype.

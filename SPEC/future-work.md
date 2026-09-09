@@ -1066,14 +1066,19 @@ structure, the order embedding into `ℝ`, and `IsRealClosed`. The design reuses
 uses Mathlib-free core instances parameterized by a law package proved in the
 companion. Root completeness, multiplicities, strict ordering, and representation
 round trips are proved in the companion.
-Companion proofs do not become computational dependencies.
+Companion proofs do not become computational dependencies. The number-field
+layer also provides tag-based conjugation, the complex partial order, principal
+complex radicals, common-field coordinate recovery, and `IsAlgClosure ℚ`
+in the companion. Typed real and imaginary projections belong to the real
+library, keeping this dependency graph acyclic. These APIs are covered in the
+manual's number-field and real-algebraic chapters.
 
 Faster comparison by refinement on overlap, comparison of lazy roots, and
 Tarski queries remain separate extensions behind the same order contract.
 An unconditional Mathlib-free law witness additionally needs proof
 infrastructure for exactification, canonical equality, and root separation.
-The existing `hex-number-field` SPEC's claim that `ZPoly.algebraicRoots` is
-sorted by real value also needs an audit: exactification reselects stored
+Exact value ordering of the real prefix of `ZPoly.algebraicRoots` remains
+a separate improvement: exactification reselects stored
 representatives at each minimal polynomial's precision before sorting their
 centres, and no value-sortedness theorem establishes that cross-factor order.
 The new real-root API explicitly sorts with `realCompare`.

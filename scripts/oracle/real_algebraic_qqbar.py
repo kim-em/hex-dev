@@ -77,9 +77,10 @@ class QQBar:
             "gr_vec_init": (None, [ptr, signed, ptr]), "gr_vec_clear": (None, [ptr, ptr]),
             # v3.6.0 fmpz_vec.h: resizable-vector API, distinct from _fmpz_vec_*.
             "fmpz_vec_init": (None, [ptr, signed]), "fmpz_vec_clear": (None, [ptr]),
+            "qqbar_root_ui": (None, [ptr, ptr, C.c_ulong]),
             "fmpz_get_si": (signed, [ptr]), "qqbar_is_rational": (integer, [ptr]),
         }
-        for name in ("neg", "inv", "sqrt", "floor", "ceil", "abs", "re", "im"):
+        for name in ("neg", "inv", "sqrt", "floor", "ceil", "abs", "re", "im", "conj"):
             signatures[f"gr_{name}"] = (integer, [ptr, ptr, ptr])
         for name in ("add", "sub", "mul", "div"):
             signatures[f"gr_{name}"] = (integer, [ptr, ptr, ptr, ptr])
@@ -143,6 +144,16 @@ class QQBar:
     def binary(self, operation: str, left: int, right: int) -> int:
         result = self.allocate()
         self.check(getattr(self.lib, f"gr_{operation}")(result, left, right, C.byref(self.real)), operation)
+        return result
+
+    def nth_root(self, value: int, n: int) -> int:
+        """FLINT's principal root; our index-zero convention is the constant one."""
+        if not 0 <= n < 2 ** (8 * C.sizeof(C.c_ulong)):
+            raise ValueError("root index outside unsigned-long range")
+        if n == 0:
+            return self.number(1, self.complex)
+        result = self.allocate(self.complex)
+        self.lib.qqbar_root_ui(result, value, n)
         return result
 
     def compare(self, left: int, right: int, ctx: _Context | None = None) -> int:
