@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+  "baseline_blob": "53f062d0adf2cd9d53b427ed37fa3a155bffe4ad",
+  "current_blob": "fde38178743eab8ee03f015f030f09298905bb38",
+  "reason": "Replaces two representation-unfolding empty-polynomial proofs with DensePoly.size_eq_zero_iff and DensePoly.leadingCoeff_zero. No executable definition or measured branch changes."
+}

@@ -1069,7 +1069,9 @@ where the degree is. -/
         exact hcoeff
       · have hsize : s.toDense.size = 0 := Nat.eq_zero_of_not_pos hpos
         have hs : s.toDense = 0 := (DensePoly.size_eq_zero_iff s.toDense).mp hsize
-        rw [hs, DensePoly.leadingCoeff_zero]
+        have hempty : (#[] : Array (Nat × R)).back? = none := by
+          rw [Array.back?_eq_none_iff]
+        rw [hs, DensePoly.leadingCoeff_zero, hempty]
   | some t =>
       have hsize := size_toDense_eq hback
       have : s.toDense.leadingCoeff = s.toDense.coeff (s.toDense.size - 1) :=

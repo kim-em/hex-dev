@@ -654,7 +654,7 @@ private theorem denseContent_lead (p : DensePoly R) :
   have ha_coeff : a = p.coeff p.natDegree := by
     by_cases hpos : 0 < p.size
     · rw [DensePoly.natDegree_eq_size_sub_one]
-      exact (DensePoly.leadingCoeff_eq_coeff_last p hpos).symm
+      exact DensePoly.leadingCoeff_eq_coeff_last p hpos
     · have hsize : p.size = 0 := Nat.eq_zero_of_not_pos hpos
       have hp : p = 0 := (DensePoly.size_eq_zero_iff p).mp hsize
       simp [a, hp]
