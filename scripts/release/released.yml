@@ -509,6 +509,9 @@ repos:
   # shipped library.
   - repo: leanprover/hex-graph-iso
     component: Graph canonical labelling
+    announcements:
+      blog: https://kim-em.github.io/blog/2026-9-5-certified-graph-isomorphism-in-lean/
+      zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex.3A.20graph.20isomorphism.20via.20a.20formalization.20of.20.60nauty.60/near/621968237
     lib: HexGraphIso
     test_modules: [HexGraphIso.TestGraphs, HexGraphIso.TacticTests,
       HexGraphIso.ModuleBoundaryTests]
@@ -545,6 +548,10 @@ repos:
 
   - repo: leanprover/hex-number-field
     component: Algebraic numbers
+    announcements:
+      blog: https://kim-em.github.io/blog/2026-9-8-exact-algebraic-numbers-and-number-fields-in-lean/
+      zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex.3A.20algebraic.20numbers/near/622699726
+      linkedin: https://www.linkedin.com/posts/kim-morrison-219962b_lean-p-p-share-7503266578889601024-Cwtx/
     lib: HexNumberField
     umbrella: true
     spec: hex-number-field
