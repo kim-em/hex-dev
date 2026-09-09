@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Euclid/Reconstruction.lean",
+  "baseline_blob": "3ad989cbaaaf31f3ce9fe35998c23bb3a5968ec0",
+  "current_blob": "56075f0d4d4ecdf0223495ae45007f562d27d384",
+  "reason": "Updates a proof to bridge Array.back? through Array.back?_eq_getElem? and Array.getD_eq_getD_getElem?. No executable definition or measured branch changes."
+}

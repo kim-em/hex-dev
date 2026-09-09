@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekamp/DistinctDegree.lean",
+  "baseline_blob": "445d82bd0b7b0785e5db88650f372b44ad1e804d",
+  "current_blob": "a1917611f7ad3aae6b52e152093c4ee6d8afb7ad",
+  "reason": "Replaces a representation-unfolding proof that the leading coefficient is the final stored coefficient with the existing DensePoly.leadingCoeff_eq_coeff_last theorem. No executable definition or measured branch changes."
+}
