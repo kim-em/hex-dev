@@ -10,8 +10,8 @@ import HexGraphIso
 /-!
 The `HexGraphIso` conformance corpus and the searches a record is read
 off, shared by the fixture emitter (`HexGraphIso.EmitFixtures`), the
-campaign emitter (`HexGraphIso.EmitCampaign`) and the twin runner
-(`HexGraphIso.EngineTwin`).
+campaign emitter (`HexGraphIso.EmitCampaign`) and the full-trace emitter
+(`HexGraphIso.EmitTrace`).
 
 A `Case` is a coloured graph as the emitters describe it: a name, the
 vertex count, the colour count, the colour vector and the edge list.
@@ -23,8 +23,6 @@ driver runs the same cases in the same sequence.
 `Runner` is the search a record is read off. `canonAnswer` reads the
 label and canonical upper-triangle bits off the public `canonicalize`,
 and the node and generator counts off `Nauty.runColored`.
-`engineAnswer` reads all of them off the structured search
-{name}`Hex.GraphIso.Nauty.Engine.runColoredTraced`.
 -/
 
 namespace Hex.GraphIsoCases
@@ -79,24 +77,6 @@ private def triBits {n k : Nat} (G : Colored n k) : String :=
     ((List.finRange n).filter fun j => decide (i.val < j.val)).map fun j =>
       if G.graph.adj i j then '1' else '0'
 
-/-- The upper-triangle adjacency bits of dense rows in row-major order,
-for reading the canonical form off a search's `canong`. -/
-private def triRows {n : Nat} (rows : Array (VSet n)) : String :=
-  String.ofList <| (List.range n).flatMap fun i =>
-    ((List.range n).filter fun j => decide (i < j)).map fun j =>
-      if rows[i]!.mem j then '1' else '0'
-
-/-! # Searches -/
-
-/-- The structured search measured by the twin and oracle emitters. -/
-def engine {n k : Nat} (G : Colored n k) : TraceRun n :=
-  Engine.runColoredTraced G
-
-/-- Final orbit partition, which the public result omits. -/
-def searchOrbits {n k : Nat} (G : Colored n k) : Array Nat :=
-  let (lab0, cellEnds) := initialPartition G
-  (Engine.runState n (rowsOf G) lab0 cellEnds).2.orbits
-
 /-- What a search contributes to a fixture record: the canonical label,
 the canonical upper-triangle adjacency bits, the visited-node count and
 the number of accepted generators. -/
@@ -123,17 +103,6 @@ def canonAnswer : Runner := fun n _k G =>
   some
     { label := (List.finRange n).map fun i => (res.label.get i).val
       tri := triBits res.form
-      numnodes := r.numnodes
-      numgens := r.numgenerators }
-
-/-- The second search: the label, canonical form and both counts come
-from `engine`, so an external oracle pins that search independently of
-the public pipeline. -/
-def engineAnswer : Runner := fun n _k G =>
-  let r := (engine G).result
-  (Label.ofArray? n r.canonlab).map fun l =>
-    { label := (List.finRange n).map fun i => (l.get i).val
-      tri := triRows r.canong
       numnodes := r.numnodes
       numgens := r.numgenerators }
 
@@ -476,11 +445,10 @@ def eachCampaign (act : Case → IO Unit) : IO Unit := do
     act ⟨s!"campaign/g{n}-seed2", n, 1, .replicate n 0, edgesOfMask n mask⟩
 
 /-- The search an emitter reads its records off, from its command line:
-no argument is the public pipeline, `--engine` the second search. -/
+no arguments are required. -/
 def runnerOfArgs (args : List String) : IO Runner :=
   match args with
   | [] => pure canonAnswer
-  | ["--engine"] => pure engineAnswer
   | _ => throw (IO.userError s!"emit: unknown arguments {args}")
 
 end Hex.GraphIsoCases
