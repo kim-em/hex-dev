@@ -1069,6 +1069,13 @@ Companion proofs do not become computational dependencies.
 
 Faster comparison by refinement on overlap, comparison of lazy roots, and
 Tarski queries remain separate extensions behind the same order contract.
+An unconditional Mathlib-free law witness additionally needs proof
+infrastructure for exactification, canonical equality, and root separation.
+The existing `hex-number-field` SPEC's claim that `ZPoly.algebraicRoots` is
+sorted by real value also needs an audit: exactification reselects stored
+representatives at each minimal polynomial's precision before sorting their
+centres, and no value-sortedness theorem establishes that cross-factor order.
+The new real-root API explicitly sorts with `realCompare`.
 This library provides exact real values for later sign determination and
 algebraic sample points without depending on a quantifier-elimination tactic.
 
