@@ -58,6 +58,13 @@ def compare(baseline: dict, candidate: dict, column: str) -> tuple[list, list]:
             for family, rs in sorted(ratios.items())], sorted(changed)
 
 
+def provenance(path: Path, rows: dict, column: str) -> str:
+    fields = sorted({row["search_column"] for row in rows.values()}) if column == "search_ns" else [column]
+    meta = path.with_suffix(".meta.json")
+    detail = json.dumps(json.loads(meta.read_text()), sort_keys=True) if meta.exists() else "no sibling metadata; verify source and host separately"
+    return f"{path}\n  Recorded columns: {', '.join(fields)}\n  Provenance: {detail}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("baseline", type=Path)
@@ -68,7 +75,7 @@ def main() -> int:
     try:
         before, after = load(args.baseline, args.column), load(args.candidate, args.column)
         table, changed = compare(before, after, args.column)
-        print(f"Baseline: {args.baseline}\nCandidate: {args.candidate}\nOperation: {args.column}\n")
+        print(f"Baseline: {provenance(args.baseline, before, args.column)}\nCandidate: {provenance(args.candidate, after, args.column)}\nOperation: {args.column}\n")
         print("| Family | Cases | Mean time ratio | Worst time ratio |\n|---|---:|---:|---:|")
         for family, count, mean, worst in table:
             print(f"| {family} | {count} | {mean:.4f} | {worst:.4f} |")

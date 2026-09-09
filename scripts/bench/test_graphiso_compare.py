@@ -14,9 +14,14 @@ from scripts.bench.graphiso_compare import compare, load
 class CompareTest(unittest.TestCase):
     def test_archive(self):
         self.assertEqual(normalize({"eng_ns": 10, "eng_nodes": 2, "lit_ns": 20,
-                                    "nodes": 3})["search_ns"], 10)
+                                    "nodes": 2})["search_ns"], 10)
         self.assertEqual(normalize({"lit_ns": 20})["search_ns"], 20)
         self.assertEqual(normalize({"search_ns": 30, "eng_ns": 10})["search_ns"], 30)
+
+    def test_archive_disagreement(self):
+        with self.assertRaisesRegex(ValueError, "traversal counts differ"):
+            normalize({"eng_ns": 10, "eng_nodes": 2, "nodes": 3})
+        self.assertEqual(normalize({"lit_ns": 10})["search_column"], "lit_ns")
 
     def test_time_and_traversal_are_separate(self):
         before = {("f", "g", 3): {"search_ns": 100, "nodes": 2}}
