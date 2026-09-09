@@ -8,11 +8,11 @@ module
 
 public import HexGraphIso.Nauty.Policy.ReturnOrigin
 public import HexGraphIso.Nauty.Policy.FilterPair
-public import HexGraphIso.Nauty.Policy.CanonPair
+public import HexGraphIso.Nauty.Policy.Canon.Pair
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 

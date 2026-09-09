@@ -6,10 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.FirstPath
-import all HexGraphIso.Nauty.Policy.Leftmost
-import all HexGraphIso.Nauty.Policy.First
-import all HexGraphIso.Nauty.Policy.Engine
+public import HexGraphIso.Nauty.Policy.First.Path
+import all HexGraphIso.Nauty.Policy.Generic.Leftmost
+import all HexGraphIso.Nauty.Policy.First.State
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -80,8 +80,8 @@ theorem scratchPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
   leave := fun _ _ => rfl
   recover := by
     intro level st
-    change (recoverLevels level (recoverPtn inf level st)).workperm.size = st.workperm.size
-    unfold recoverLevels recoverPtn
+    change (Nauty.recover inf level st).workperm.size = st.workperm.size
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
       apply_ite (fun s : Search n => s.workperm.size), ite_self]
   afterSweep := by

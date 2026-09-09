@@ -172,7 +172,7 @@ theorem prepCap (level code : Nat) (st : Search n) :
 
 /-- Parent recovery does not change workspace capacity. -/
 theorem recoverCap (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).wsCap = st.wsCap := by
+    (recover inf level st).wsCap = st.wsCap := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.wsCap, ite_self]
@@ -459,8 +459,7 @@ theorem longprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
     fun w _ hw => mem_of_subset htest hw⟩
 
 /-- `shortprune` soundness: given the ledger reading of the most recent
-pair and its fix test (which is what the `needshortprune` protocol
-requires), every vertex of the target cell is carried onto a
+pair and the fix test required by a short-prune return, every vertex of the target cell is carried onto a
 survivor. -/
 theorem shortprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
     {level tc len : Nat} {st : Search n}
@@ -1222,7 +1221,7 @@ theorem fmptn_cellsPerm {lab lab' ptn : Array Nat} {level nn : Nat}
     fmptn lab ptn level nn = fmptn lab' ptn level nn :=
   fmptn_congr hnn hend rfl hperm
 
-/-- A quartet receipt preserves the implicit cheap-automorphism pair at
+/-- A search receipt preserves the implicit cheap-automorphism pair at
 its frozen boundary. -/
 theorem SearchOut.fmptn {G : Colored n k} {level nn : Nat}
     {st out : Search n} (h : SearchOut G level level st out)

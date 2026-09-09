@@ -1736,7 +1736,6 @@ theorem card_image (σ : Renaming n) (s : VSet n) : (s.image σ).card = s.card :
         exact ⟨(σ.maps v).mp hv.1, by rw [mem_image_apply σ s hv.1]; exact hv.2⟩
   rw [hperm.length_eq, List.length_map]
 
-
 end VSet
 
 end Hex.GraphIso.Nauty

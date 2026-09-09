@@ -44,10 +44,4 @@ theorem ColorMap.scatter {G : Colored n k} {γ ref cur : Array Nat}
   rw [hγ', ← hv']
   exact Fin.ext (hcc.trans hrc.symm)
 
-/-- Read colour preservation from the strengthened trace invariant. -/
-theorem GenTraceOk.colors {G : Colored n k} {ctx : Ctx n} {st : Search n}
-    (h : GenTraceOk ctx st (ColorMap G)) {γ : Array Nat}
-    (hγ : γ ∈ st.genTrace.toList) : ColorMap G γ :=
-  (h γ (Array.mem_toList_iff.mp hγ)).2
-
 end Hex.GraphIso.Nauty

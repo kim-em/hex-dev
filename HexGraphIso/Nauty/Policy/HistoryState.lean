@@ -6,16 +6,16 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.CheapHistory
+public import HexGraphIso.Nauty.Policy.Cheap.History
 public import HexGraphIso.Nauty.Policy.RouteHistory
-import all HexGraphIso.Nauty.Policy.CheapHistory
+import all HexGraphIso.Nauty.Policy.Cheap.History
 import all HexGraphIso.Nauty.Policy.RouteHistory
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Alignment
-import all HexGraphIso.Nauty.Policy.First
+import all HexGraphIso.Nauty.Policy.First.State
 import all HexGraphIso.Nauty.Policy.Depth
-import all HexGraphIso.Nauty.Policy.FirstRef
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.First.Ref
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -107,8 +107,7 @@ theorem History.child_return {G : Colored n k} {ctx : Ctx n}
     (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (Nauty.child first level tc tv st)).2
-    let result := recoverLevels level (recoverPtn (n + 2) level
-      { out with fixedpts := out.fixedpts.erase tv })
+    let result := Nauty.recover (n + 2) level { out with fixedpts := out.fixedpts.erase tv }
     History ctx tcLevel level level numcells result ∧ (Recorded ctx tcLevel level tc st → Recorded ctx tcLevel level tc result) := by
   have hc := h.cheapHistory.child_return (fuel := fuel) first hg hlevel hok htarget htv
   have hr := h.route.child_return (fuel := fuel) first hlevel hok htarget htv

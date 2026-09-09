@@ -6,14 +6,14 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.FirstKey
+public import HexGraphIso.Nauty.Policy.First.Key
 public import HexGraphIso.Nauty.Policy.PathFrame
 import all HexGraphIso.Nauty.Policy.HistoryState
 import all HexGraphIso.Nauty.Policy.RouteHistory
 import all HexGraphIso.Nauty.Policy.Tracking
 import all HexGraphIso.Nauty.Policy.RouteState
 import all HexGraphIso.Nauty.Policy.Route
-import all HexGraphIso.Nauty.Policy.FirstRef
+import all HexGraphIso.Nauty.Policy.First.Ref
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Scatter
 import all HexGraphIso.Nauty.Policy.State

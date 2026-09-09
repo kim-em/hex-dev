@@ -14,7 +14,7 @@ private def emitTrace (corpus : String) (c : Case) : IO Unit := do
     | throw (IO.userError s!"trace: invalid graph {corpus}/{c.name}")
   let (lab, ends) := initialPartition G
   let (exit, st) := runState c.n (rowsOf G) lab ends
-  let tr := finish { g := rowsOf G } st
+  let tr := runColoredTraced G
   let r := tr.result
   let output := Json.mkObj [
     ("canonlab", toJson r.canonlab),

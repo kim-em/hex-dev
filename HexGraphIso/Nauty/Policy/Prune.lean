@@ -8,9 +8,9 @@ module
 
 public import HexGraphIso.Nauty.Policy.Comparison
 import all HexGraphIso.Nauty.Policy.Comparison
-import all HexGraphIso.Nauty.Policy.Canonical
+import all HexGraphIso.Nauty.Policy.Canon.Verdict
 import all HexGraphIso.Nauty.Policy.Classify
-import all HexGraphIso.Nauty.Policy.First
+import all HexGraphIso.Nauty.Policy.First.State
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State

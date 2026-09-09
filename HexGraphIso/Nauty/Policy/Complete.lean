@@ -7,14 +7,14 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.KeyComplete
-public import HexGraphIso.Nauty.Policy.FirstRoot
-public import HexGraphIso.Nauty.Policy.GeneratedRoot
+public import HexGraphIso.Nauty.Policy.First.Root
+public import HexGraphIso.Nauty.Policy.Generated.Root
 public import HexGraphIso.Nauty.Policy.Result
-import all HexGraphIso.Nauty.Policy.MaxCombine
-import all HexGraphIso.Nauty.Policy.MaxRules
-import all HexGraphIso.Nauty.Policy.MaxContract
-import all HexGraphIso.Nauty.Policy.Calls
-import all HexGraphIso.Nauty.Policy.GeneratedRoot
+import all HexGraphIso.Nauty.Policy.Max.Combine
+import all HexGraphIso.Nauty.Policy.Max.Rules
+import all HexGraphIso.Nauty.Policy.Max.Contract
+import all HexGraphIso.Nauty.Policy.Generic.Calls
+import all HexGraphIso.Nauty.Policy.Generated.Root
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 

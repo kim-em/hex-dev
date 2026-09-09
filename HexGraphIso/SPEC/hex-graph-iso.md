@@ -21,7 +21,7 @@ of nauty and remains a theorem even if a later release deliberately changes
 the compatibility target.
 
 The two requirements share one refinement-code coordinate system: the
-specification's tree, the certificate checker, and the transcribed search
+specification's tree, the certificate checker, and the search
 all seed a child node's refinement code with the parent's recomputed cell
 count, exactly as nauty does. The declarative characterization behind
 requirement 1 (the canonical key is the maximum leaf key of the unpruned
@@ -164,7 +164,7 @@ structure CanonResult (n k : Nat) where
 ```
 
 The public surface is one tier. The names in `Hex.GraphIso` are the
-checked-label transcription of the pinned nauty search, run directly
+checked result of the pinned nauty-compatible search, run directly
 with no certificate replay on the answer path, and they carry the
 whole theorem surface.
 
@@ -180,10 +180,10 @@ def isIso (G H : Colored n k) : Bool
 increasing number of singleton cells along each individualization
 path and finite branching, and worst-case running time can still be
 factorial. The theorems reach it through the certificate checker
-without running it: the proven replay accepts the transcription's own
+without running it: the proven replay accepts the search's own
 answer on every input (`Nauty.certifyCanon?_isSome`, the theorem of
 [Verified search refinement](#verified-search-refinement)), the
-transcription is `Option`-valued only in its executable spelling and
+search is `Option`-valued only in its executable spelling and
 answers on every input (`Nauty.searchResult?_isSome`), and
 `canonicalize` is that answer with no fallback match
 (`canonicalize_eq_certifyCanon`). The declarative canonical form
@@ -463,10 +463,10 @@ canonical form, so the conformance fixtures, the benchmark corpus and
 the nauty compatibility target are stated on the coloured surface only;
 nothing about the uncoloured names needs separate pinning.
 
-The public `canon` is the checked-label transcription of the nauty
+The public `canon` is the checked result of the nauty-compatible
 search. Its theorems come from the certificate replay, which is proved
-to accept the transcription's answer on every input. The `Nauty`
-namespace holds that transcription and the declarative `canonSpecKey`
+to accept the search's answer on every input. The `Nauty`
+namespace holds that search and the declarative `canonSpecKey`
 alongside it, and `canonSpecKey` is also the executable cross-check at
 factorially feasible sizes.
 
@@ -506,9 +506,8 @@ for exact `canonlab` compatibility. Orbit data may omit true orbit relations,
 which only loses pruning. It must never join vertices without a checked
 automorphism proving the relation.
 
-The first release keeps `schreier = false`, matching the pinned defaults. A
-later complete automorphism-group API may add a permutation-group dependency,
-but it must not silently change `canon` or `label`.
+The search keeps `schreier = false`, matching the pinned defaults. Complete
+generator and orbit APIs are proved over its emitted automorphism trace.
 
 At a discrete node whose refinement codes agree with the first leaf,
 `Nauty.classify` implements nauty's code-1 admission test:
@@ -554,7 +553,7 @@ theorem Nauty.checkCanon_sound
 ```
 
 `Nauty.certifyKey?` is the producer. It takes an optional node budget and
-returns `none` on exhaustion. It does not search: the transcribed search
+returns `none` on exhaustion. It does not search: the search
 already makes every decision a certificate records, so the producer
 records the walk's decisions and translates that record, and its cost is
 one traversal rather than two. Everything the producer does is untrusted.
@@ -601,9 +600,9 @@ theorem Nauty.certifyCanon?_isSome (G : Colored n k) :
 ```
 
 where `Nauty.certifyCanon?` is the unbudgeted producer followed by the
-single `Nauty.checkCanon` replay of the transcription's labelling. Its
+single `Nauty.checkCanon` replay of the search's labelling. Its
 content is the equality of the declarative key with the key the
-transcription installs:
+search installs:
 
 ```lean
 theorem Nauty.canonSpecKey_eq_tracedKey (G : Colored n k) (hn0 : 0 < n) :
@@ -622,7 +621,7 @@ The `Nauty` namespace is organized by the part each concept plays:
 | `Nauty/Search/` | the structured executable: packed vertex sets (`VSet`), refinement, one flat `Search` state, and mutually recursive `node` and `sweep`. The direct engine is proved equal to the policy-parameterized `Generic.node` and `Generic.sweep`. `Search.lean` retains the nauty correspondence table; `State.lean` holds that state and the primitive transitions used directly by both executable and proofs. |
 | `Nauty/Spec/` | the declarative canonical form `canonSpecKey` and `specCanon`, its invariance under isomorphism (`specCanon_invariant`, `iso_iff_specCanon_eq`) and its achievement by a reachable labelling (`specCanon_iso`), with the equivariance and cell-permutation theory both proofs use. |
 | `Nauty/Cert/` | the certificate data, the trusted `checkCanon` replay with `checkCanon_sound`, the untrusted trace-driven producer, and the replay spine proving the producer's certificate is accepted whenever the claimed key dominates the subtree and every recorded generator is a checked automorphism. |
-| `Nauty/Policy/` | generic recursion contracts and their engine instances. The maximum contract transports nonlocal witnesses to their receivers; generation combines actual sibling coverage with smaller point-stabilizer generation. `KeyComplete` and `Complete` export unconditional whole-engine correctness. |
+| `Nauty/Policy/` | `Generic/` contains the recursion contracts. `Max/`, `First/`, `Reference/`, `Generated/`, `Canon/` and `Cheap/` contain their search-specific proofs; shared transition lemmas stay at the root. `Instance.lean` supplies the policy and the direct-recursion equalities. `KeyComplete` and `Complete` export unconditional key equality and generator completeness. See the [policy guide](../Nauty/Policy/README.md). |
 | `Nauty/Generation/` | reusable reference occurrences, uniform subtrees, checked transport, cursor coverage, and stabilizer mathematics, independent of a particular recursive search. |
 | `Nauty/Invariant/` | the per-event facts about the search state the induction applies at each arm: refinement-code comparison, leaf faithfulness, domination, orbit soundness, generator-store validity, cell reachability, and target-cell agreement. |
 | `Nauty/Equitable/` | `refine` returns a partition equitable with respect to the exhausted active set. |
@@ -647,7 +646,7 @@ theorem canon_eq_specCanon (G : Colored n k) :
     canon G = Nauty.specCanon G
 ```
 
-Totality transports from the certificate pipeline to the transcription
+Totality transports from the certificate pipeline to the search
 through `Nauty.searchResult?_eq_of_certifyCanon`, and the theorem
 surface of [Public operations](#public-operations) is the declarative
 form's theorem surface transported along `canon_eq_specCanon`. No
@@ -658,12 +657,12 @@ tactic, whose kernel obligations must stay certificate-sized.
 Label-level agreement is available only along this route. The checker
 pins a labelling's rows, not the labelling itself, so an exhaustive
 fallback that selects some other member of the automorphism coset
-could not be identified with the transcription's label. The fallback
+could not be identified with the search's label. The fallback
 has to be proven unreachable, which is exactly the theorem.
 
-No theorem in this library depends on the transcription being faithful
+No theorem in this library depends on the search being faithful
 to nauty. `canonSpecKey` is a Lean definition, every statement above is
-about it, and replacing the transcription with any other search that
+about it, and replacing the search with any other search that
 computes the same key would leave all of them true. Faithfulness to
 nauty 2.9.3 is requirement 2 at the top of this SPEC, and it is
 established by conformance testing alone.
@@ -917,7 +916,7 @@ carries every field of a `graphiso` record, so a consumer reading the
 whole stream for canonical forms needs no knowledge of the second kind
 and the canonical comparisons above run on it too, and it adds the
 recorded generator list,
-the generator count the transcribed search reports, the orbit array, the
+the generator count the search reports, the orbit array, the
 orbit count and the group order. The shim collects nauty's own generators
 through `options.userautomproc`, so the comparison is against the
 traversal's emissions rather than a recomputation, and it also reports
@@ -1229,7 +1228,7 @@ examples alone do not complete the tactic milestone.
 
 ## Release conditions
 
-The first release requires all of the following:
+Each release preserves the following guarantees and checks:
 
 1. No `sorry`, axiom, or `native_decide` occurs in the library or tactic
    correctness path.
@@ -1237,22 +1236,20 @@ The first release requires all of the following:
    public biconditional `iso_iff_canon_eq` are both complete.
 3. `Nauty.checkCanon_sound` has the conclusion stated above.
 4. The pruned search is proved to compute the declarative canonical key
-   (`Nauty.canonSpecKey_eq_tracedKey`), so every prune it performs
-   preserves the selected form and the selected label.
+   (`Nauty.canonSpecKey_eq_tracedKey`). Operational output agreement is
+   checked separately by the frozen trace and nauty corpora.
 5. The exhaustive merge fixture and extended `n = 6` campaign agree exactly
-   with nauty 2.9.3. The fixture leg runs in merge CI. The campaign leg is
-   recorded in
-   [reports/hex-graph-iso-campaign.md](../../reports/hex-graph-iso-campaign.md).
+   with nauty 2.9.3. Both legs run in merge CI, together with the complete
+   frozen traversal records. Historical measurements retain their provenance
+   in the [evidence archive](../../reports/hex-graph-iso-evidence.md).
 6. The non-toy positive and negative tactic cases replay through the kernel.
 7. The benchmark driver reports the declarative key, the public
    operations, the automorphism surface, the certificate stages and the
    nauty comparator without importing Mathlib.
 
-Complete automorphism generators are not a release condition. If later work
-adds them, checking that each permutation is an automorphism is only
-soundness. A completeness theorem must show that the reported generators
-generate every automorphism, using the same canonical search tree or an
-equivalent complete argument.
+The generator API is both sound and complete. Each emitted permutation is
+an automorphism, and `autos_complete` proves that the returned generators
+generate every colour-preserving automorphism, including for empty graphs.
 
 ## References
 

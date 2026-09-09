@@ -66,7 +66,6 @@ theorem DescPath.split {ctx : Ctx n} {base level : Nat}
       rw [hlevel] at hpre hpost
       exact ⟨middle, .step tc e o hlvl hcell hne ho hpre, hpost⟩
 
-
 /-- A list of target positions is stored at consecutive ancestor levels. -/
 def Targets (store : Array Int) (base : Nat) (positions : List Nat) : Prop :=
   ∀ i, i < positions.length → store[base + i]! = Int.ofNat positions[i]!
@@ -195,6 +194,5 @@ theorem scatter_of_history {ctx : Ctx n} {st : Search n} {level : Nat}
   have hbound := hcodes.elev_fs
   simp only [List.length_map]
   omega
-
 
 end Hex.GraphIso.Nauty

@@ -8,13 +8,13 @@ module
 
 import HexGraphIso.Nauty.Policy.ShortPair
 public import HexGraphIso.Nauty.Policy.ChildKey
-public import HexGraphIso.Nauty.Policy.FirstCompare
+public import HexGraphIso.Nauty.Policy.First.Compare
 public import HexGraphIso.Nauty.Policy.Filters
 public import HexGraphIso.Nauty.Policy.FilterCover
 public import HexGraphIso.Nauty.Policy.ReturnOrigin
 
-public import HexGraphIso.Nauty.Policy.FirstRun
-import all HexGraphIso.Nauty.Policy.FirstRun
+public import HexGraphIso.Nauty.Policy.First.Run
+import all HexGraphIso.Nauty.Policy.First.Run
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.Colors

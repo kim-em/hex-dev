@@ -11,7 +11,6 @@ Piperno, released under the Apache 2.0 license.
 module
 
 public import HexGraphIso.Nauty.Search.State
-public import HexGraphIso.Nauty.Search.Generic
 
 public section
 
@@ -62,7 +61,7 @@ any of the seven returned statistics.
 | 670-679 | recurse off first path | `sweep`, `node false` | child count omitted |
 | 680-682 | erase fixed point; early return | `sweep` | transport the whole unwind |
 | 683-687 | consume short prune | `sweep`, `shortprune` | only at the receiving level |
-| 688-689 | `recover` | `recoverPtn`, `recoverLevels` | before next child |
+| 688-689 | `recover` | `recover` | partition rescan and level clamps before the next child |
 | 690-692 | `orbits[tv] == tv1`: increment index | `sweep true` | includes skipped vertices |
 | 693-694 | multiply group size | none | group-size output omitted |
 | 695-697 | decrement `allsamelevel` | `afterSweep true` | only complete sweep, both equalities required |
@@ -90,7 +89,7 @@ any of the seven returned statistics.
 | 840-845 | consume short prune | `sweep`, `shortprune` | read most recent pair |
 | 846-848 | long prune iff `tv == tv1` | `sweep false`, `longprune` | after short prune |
 | 849 | Schreier prune | none | pinned-out options: no Schreier machinery |
-| 850-853 | recover | `recoverPtn`, `recoverLevels` | before next child |
+| 850-853 | recover | `recover` | partition rescan and level clamps before the next child |
 | 854-856 | `return level-1` | `node` | complete sweep |
 | 857-870 | first-terminal documentation and locals | `firstterminal` | no decisions |
 | 871-876 | maximum level, first levels, sentinels, labelling | `firstterminal` | install first leaf |
@@ -197,7 +196,7 @@ Nodes return an unwind or fuel, so the `done` arm after a child is unreachable. 
       | .done => pure ()
       if !first && tv == tv1 then
         tcell := longprune tcell st.fixedpts st.autos
-      st := recoverLevels level (recoverPtn inf level st)
+      st := Nauty.recover inf level st
     let index := if first && st.orbits[tv]! == tv1 then index + 1 else index
     return sweep first ctx inf tcLevel fuel cfuel level numcells tc tv1
       (tcell.nextElem (some tv)) tcell index st

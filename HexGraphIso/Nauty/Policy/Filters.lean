@@ -132,8 +132,8 @@ theorem leafExit_short_pair {st : Search n} (hcap : 0 < st.wsCap)
 
 /-- Recovery retains the pruning workspace seen by the just-completed child. -/
 theorem recover_autos (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).autos = st.autos := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).autos = st.autos := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
   repeat' split
   all_goals rfl
@@ -141,7 +141,7 @@ theorem recover_autos (inf level : Nat) (st : Search n) :
 /-- Both filters read the same workspace before and after parent recovery.
 This lets the restored partition justify the filter that ran just before it. -/
 theorem recover_filters (inf level : Nat) (cell : VSet n) (st : Search n) :
-    let out := recoverLevels level (recoverPtn inf level st)
+    let out := Nauty.recover inf level st
     Nauty.longprune cell out.fixedpts out.autos = Nauty.longprune cell st.fixedpts st.autos ∧
       shortprune cell out = shortprune cell st := by
   dsimp only

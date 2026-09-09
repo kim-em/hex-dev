@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.MaxCombine
+public import HexGraphIso.Nauty.Policy.Max.Combine
 public import HexGraphIso.Nauty.Policy.Result
-import all HexGraphIso.Nauty.Policy.MaxCombine
+import all HexGraphIso.Nauty.Policy.Max.Combine
 
 public section
 

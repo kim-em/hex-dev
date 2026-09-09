@@ -8,8 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Policy.Prune
 import all HexGraphIso.Nauty.Policy.Classify
-import all HexGraphIso.Nauty.Policy.Canonical
-import all HexGraphIso.Nauty.Policy.First
+import all HexGraphIso.Nauty.Policy.Canon.Verdict
+import all HexGraphIso.Nauty.Policy.First.State
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
@@ -32,7 +32,6 @@ theorem prefix_witness {n : Nat} {cs ds : List Nat} {target : Nat} {best : Optio
     (h : ∀ tail : Key n, Generic.Covers (prefixKey (ds.take (target + 1)) tail) best) :
     ∀ tail : Key n, Generic.Covers (prefixKey (cs.take (target + 1)) tail) best := by
   rwa [prefix_take hp (by omega)] at h
-
 
 variable {n k : Nat}
 
@@ -148,8 +147,8 @@ theorem ReturnCodes.afterSweep {ctx : Ctx n} {stem bs fs : List Nat} {st : Searc
 
 /-- Recovery changes no semantic incumbent labelling. -/
 theorem recover_key (ctx : Ctx n) (bs : List Nat) (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).key ctx bs = st.key ctx bs := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).key ctx bs = st.key ctx bs := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run]
   repeat' split
   all_goals rfl
@@ -163,8 +162,8 @@ theorem afterSweep_key (ctx : Ctx n) (bs : List Nat) (first : Bool)
 
 /-- Parent recovery keeps a completed comparison nonpositive. -/
 theorem recover_nonpos {st : Search n} (h : st.compCanon ≤ 0) (inf level : Nat) :
-    (recoverLevels level (recoverPtn inf level st)).compCanon ≤ 0 := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).compCanon ≤ 0 := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.compCanon]
   repeat' split
   all_goals first | exact h | omega
@@ -173,7 +172,7 @@ theorem recover_nonpos {st : Search n} (h : st.compCanon ≤ 0) (inf level : Nat
 ancestor's exact code path, however deep the return originated. -/
 theorem ReturnCodes.recover {ctx : Ctx n} {stem bs fs : List Nat} {st : Search n}
     (h : ReturnCodes ctx stem bs fs st) (inf : Nat) :
-    Comparison ctx stem bs fs (recoverLevels stem.length (recoverPtn inf stem.length st)) := by
+    Comparison ctx stem bs fs (Nauty.recover inf stem.length st) := by
   obtain ⟨cs, hp, hm, hf⟩ := h.machine
   have hr := comparison_recover hm hf h.nonempty h.lower hp.length_le inf
   have ht : cs.take stem.length = stem := by
@@ -183,7 +182,7 @@ theorem ReturnCodes.recover {ctx : Ctx n} {stem bs fs : List Nat} {st : Search n
 /-- Recovery supplies a settled receipt at the shortened path for the next sibling. -/
 theorem ReturnCodes.resumed {ctx : Ctx n} {stem bs fs : List Nat} {st : Search n}
     (h : ReturnCodes ctx stem bs fs st) (inf : Nat) :
-    ReturnCodes ctx stem bs fs (recoverLevels stem.length (recoverPtn inf stem.length st)) :=
+    ReturnCodes ctx stem bs fs (Nauty.recover inf stem.length st) :=
   (h.recover inf).returned (recover_nonpos h.nonpos inf stem.length)
 
 end Hex.GraphIso.Nauty

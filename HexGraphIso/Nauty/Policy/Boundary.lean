@@ -10,10 +10,10 @@ public import HexGraphIso.Nauty.Invariant.Cheap
 public import HexGraphIso.Nauty.SmallCell.Pairs
 public import HexGraphIso.Nauty.Policy.Partition
 public import HexGraphIso.Nauty.Policy.Bounds
-public import HexGraphIso.Nauty.Policy.FirstHistory
-import all HexGraphIso.Nauty.Policy.FirstHistory
-import all HexGraphIso.Nauty.Policy.Reach
-import all HexGraphIso.Nauty.Policy.Engine
+public import HexGraphIso.Nauty.Policy.First.History
+import all HexGraphIso.Nauty.Policy.First.History
+import all HexGraphIso.Nauty.Policy.Generic.Reach
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -64,7 +64,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
   leave := fun _ _ h => h
   recover := by
     intro level st hlevel h
-    change (recoverLevels level (recoverPtn inf level st)).noncheaplevel = saved ∨ bound < (recoverLevels level (recoverPtn inf level st)).noncheaplevel
+    change (Nauty.recover inf level st).noncheaplevel = saved ∨ bound < (Nauty.recover inf level st).noncheaplevel
     rw [recover_noncheap]
     split
     · exact Or.inr (by omega)
@@ -169,9 +169,9 @@ theorem Boundary.node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcel
 theorem Boundary.recover {G : Colored n k} {ctx : Ctx n} {current level : Nat} {st : Search n}
     (h : Boundary G ctx current st) (hle : level ≤ current) (hlevel : 1 ≤ level)
     (hinf : level < n + 2) :
-    Boundary G ctx level (recoverLevels level (recoverPtn (n + 2) level st)) := by
+    Boundary G ctx level (Nauty.recover (n + 2) level st) := by
   have hr := CheapOk.recover h hle hlevel hinf
-  rw [← recover_eq] at hr
+
   exact hr
 
 /-- Comparing codes preserves the boundary level. -/
@@ -202,7 +202,7 @@ theorem cheap_bound {level : Nat} {st : Search n} (first : Bool)
 
 /-- Recovery parks a deeper boundary at the next child's level. -/
 theorem recover_bound (level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel ≤ level + 1 := by
+    (Nauty.recover (n + 2) level st).noncheaplevel ≤ level + 1 := by
   rw [recover_noncheap]
   split <;> omega
 
@@ -296,20 +296,20 @@ theorem refined_pair {G : Colored n k} {ctx : Ctx n} {level numcells : Nat} {st 
 /-- Returning to a parent preserves its boundary pair for the next child, including equality. -/
 theorem Boundary.recover_child {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Search n}
     (h : Boundary G ctx (level + 1) st) (hlevel : 1 ≤ level) (hinf : level < n + 2) :
-    Boundary G ctx (level + 1) (recoverLevels level (recoverPtn (n + 2) level st)) := by
+    Boundary G ctx (level + 1) (Nauty.recover (n + 2) level st) := by
   have hr := h.recover (Nat.le_succ _) hlevel hinf
   apply hr.next
   intro heq
-  change (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel = level at heq
+  change (Nauty.recover (n + 2) level st).noncheaplevel = level at heq
   have hs : st.noncheaplevel = level := by rw [recover_noncheap] at heq; split at heq <;> omega
   change PairOk ctx.g _ _ _
-    (fmptn (recoverLevels level (recoverPtn (n + 2) level st)).lab
-      (recoverLevels level (recoverPtn (n + 2) level st)).ptn
-      (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel n).1
-    (fmptn (recoverLevels level (recoverPtn (n + 2) level st)).lab
-      (recoverLevels level (recoverPtn (n + 2) level st)).ptn
-      (recoverLevels level (recoverPtn (n + 2) level st)).noncheaplevel n).2
-  rw [heq, recover_eq, recover_fmptn (Nat.le_of_eq h.ptnSize.symm)
+    (fmptn (Nauty.recover (n + 2) level st).lab
+      (Nauty.recover (n + 2) level st).ptn
+      (Nauty.recover (n + 2) level st).noncheaplevel n).1
+    (fmptn (Nauty.recover (n + 2) level st).lab
+      (Nauty.recover (n + 2) level st).ptn
+      (Nauty.recover (n + 2) level st).noncheaplevel n).2
+  rw [heq, recover_fmptn (Nat.le_of_eq h.ptnSize.symm)
     (Nat.le_trans h.rootEnd hlevel) (Nat.le_refl _) hinf]
   have hp := h.pair (show st.noncheaplevel < level + 1 from by change st.noncheaplevel < level + 1; omega)
   change PairOk ctx.g _ _ _ (fmptn st.lab st.ptn st.noncheaplevel n).1

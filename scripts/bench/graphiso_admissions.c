@@ -13,7 +13,7 @@ layout or compiler changes. The small-Nat checks fail closed.
 
 Build with the Lean and Valgrind include directories, then run:
   LD_PRELOAD=./admissions.so valgrind --tool=none \
-    .lake/build/bin/hexgraphiso_emit_fixtures --engine > /dev/null
+    .lake/build/bin/hexgraphiso_emit_fixtures > /dev/null
 Repeat with hexgraphiso_emit_campaign. Each emitter calls the engine once
 per case. The twin calls it twice and must not be used for these counts.
 */

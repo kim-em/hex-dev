@@ -8,8 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Classify
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Leftmost
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Leftmost
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -55,10 +55,10 @@ theorem storePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
   leave := fun _ _ h => h
   recover := by
     intro level st h
-    change CanongInv ctx (recoverLevels level (recoverPtn inf level st)).canong
-      (recoverLevels level (recoverPtn inf level st)).canonlab
-      (recoverLevels level (recoverPtn inf level st)).samerows
-    unfold recoverLevels recoverPtn
+    change CanongInv ctx (Nauty.recover inf level st).canong
+      (Nauty.recover inf level st).canonlab
+      (Nauty.recover inf level st).samerows
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canong,
       apply_ite Search.canonlab, apply_ite Search.samerows, ite_self]
     exact h

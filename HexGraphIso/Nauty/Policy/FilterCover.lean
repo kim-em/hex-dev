@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Policy.ChildKey
 public import HexGraphIso.Nauty.Policy.Filters
-public import HexGraphIso.Nauty.Policy.Maximum
+public import HexGraphIso.Nauty.Policy.Generic.Maximum
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -43,7 +43,6 @@ theorem ChildCover.pruned {n : Nat} {g : Array (VSet n)}
       obtain ⟨γ, ha, hs, hlt⟩ := hdrop v hv hf
       exact Or.inr ⟨γ[v]!, windowSet_carry hs hc hr hok (hsub v hv),
         hkey γ ha hs v (hsub v hv), hlt⟩
-
 
 variable {n k : Nat}
 

@@ -15,7 +15,7 @@ public import HexGraphIso.Limits
 
 public section
 
-/-! State and primitive transitions used by the structured search and its mathematical view. -/
+/-! Search state and primitive transitions. -/
 
 namespace Hex.GraphIso.Nauty
 
@@ -363,13 +363,8 @@ def longprune (tcell fixedpts : VSet n)
   | none => tcell
 
 /-- Restore the partition and comparison levels after a child returns. -/
-@[inline] def recover (n inf level : Nat) (st : Search n) : Search n :=
+@[inline] def recover (inf level : Nat) (st : Search n) : Search n :=
   recoverLevels level (recoverPtn inf level st)
-
-/-- Recovery consists of the partition rescan followed by the level clamps. -/
-theorem recover_eq (inf level : Nat) (st : Search n) :
-    recoverLevels level (recoverPtn inf level st) = recover n inf level st := by
-  simp only [recover]
 
 /-- The result of a canonical search on `n` vertices: the canonical
 labelling `canonlab` and the adjacency rows `canong` under it, together

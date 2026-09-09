@@ -355,9 +355,8 @@ theorem checkAutom_range {g : Array (VSet n)} :
 `isautom` into the replay's `checkAutom`. It consumes `isautom_iff`,
 the `rowsOf` lemmas above and the `PopCount` comparison lemmas.
 It is applied in `Invariant/Store`, where `scatter_isPerm` supplies
-its permutation hypothesis: both admission sites in `processnode`
-push a scatter of one discrete leaf labelling over another, which is
-a permutation by construction.
+its permutation hypothesis. `classify` prepares a scatter of one discrete
+leaf labelling over another, and `leafExit` records each admitted scatter.
 
 `checkAutom_compose` and `checkAutom_range` above are used by
 `Invariant/Autos` and `Invariant/Orbits`.

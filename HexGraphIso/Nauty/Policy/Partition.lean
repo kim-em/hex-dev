@@ -6,15 +6,15 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.Reach
-public import HexGraphIso.Nauty.Policy.Fuel
+public import HexGraphIso.Nauty.Policy.Generic.Reach
+public import HexGraphIso.Nauty.Policy.Generic.Fuel
 public import HexGraphIso.Nauty.Policy.Effect
-public import HexGraphIso.Nauty.Policy.Engine
+public import HexGraphIso.Nauty.Policy.Instance
 public import HexGraphIso.Nauty.Invariant.Reach
 public import HexGraphIso.Nauty.Invariant.Autos
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Reach
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Reach
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -176,17 +176,15 @@ theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
       omega
     have hr := hout.trans (recover_out hbound hout.reach)
     change Generic.Local G (fun st => st) level numcells st
-      (recoverLevels level (recoverPtn (n + 2) level out))
+      (Nauty.recover (n + 2) level out)
     constructor
-    · rw [recover_eq]
-      apply searchOk_of_out hok hlevel hr
+    · apply searchOk_of_out hok hlevel hr
       intro q hq
       rw [recover_ptn]
       split
       · exact Or.inr rfl
       · exact Or.inl (by omega)
-    · rw [recover_eq]
-      exact hr
+    · exact hr
   afterSweep := by
     intro first level size index st
     change Generic.FrameEq (fun st => st) st (afterSweep first level size index st)

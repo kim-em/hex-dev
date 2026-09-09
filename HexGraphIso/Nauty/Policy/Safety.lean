@@ -8,9 +8,9 @@ module
 
 public import HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.Prepared
-import all HexGraphIso.Nauty.Policy.Calls
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Sound
+import all HexGraphIso.Nauty.Policy.Generic.Calls
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -85,7 +85,7 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
     (first : Bool) (level numcells tc tv1 tv index : Nat) (cell : VSet n) (out : Search n) (exit : Exit)
     (hstored : RunInv G ctx out)
     (hready : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
-      (recoverLevels level (recoverPtn (n + 2) level out))) :
+      (Nauty.recover (n + 2) level out)) :
     RunInv G ctx (Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit).2.2 := by
   unfold Generic.advance
   dsimp only [policy, Generic.Policy.shortprune, Generic.Policy.longprune, Generic.Policy.recover,
@@ -93,9 +93,9 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
   have htv : first = true → tv1 < tv := fun hf => hready.past hf tv rfl
   have hcontinue : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
       RunInv G ctx (next first level numcells tc tv1 (smaller.nextElem (some tv)) smaller
-        (if first && (recoverLevels level (recoverPtn (n + 2) level out)).orbits[tv]! == tv1
+        (if first && (Nauty.recover (n + 2) level out).orbits[tv]! == tv1
           then index + 1 else index)
-        (recoverLevels level (recoverPtn (n + 2) level out))).2.2 := by
+        (Nauty.recover (n + 2) level out)).2.2 := by
     intro smaller hsub
     exact hnext first level numcells tc tv1 (smaller.nextElem (some tv)) smaller _ _
       ⟨Generic.Past.next htv, hready.positive, hready.partition, hready.target.subset hsub,

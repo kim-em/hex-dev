@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.Equitable
 public import HexGraphIso.Nauty.Policy.Recovery
 public import HexGraphIso.Nauty.Policy.Partition
-import all HexGraphIso.Nauty.Policy.FirstHistory
+import all HexGraphIso.Nauty.Policy.First.History
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -33,7 +33,6 @@ theorem Equitable.reorder {ctx : Ctx n} {level : Nat} {lab out ptn : Array Nat}
   have hwork : worksetOf n lab de.1 de.2 = worksetOf n out de.1 de.2 := worksetOf_perm hdePerm
   rw [splitDone_iff_constOn, ← hwork]
   exact (splitDone_iff_constOn.mp (h cd hcd de hde)).perm hcdPerm.symm
-
 
 /-- An actual target-cell child refines to an equitable partition. -/
 theorem child_equitable {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Nat}
@@ -64,13 +63,13 @@ theorem recover_equitable {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st out : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hok : SearchOk G level numcells st) (heq : Equitable ctx level st.lab st.ptn)
     (hout : SearchOut G level level st out) :
-    let result := recoverLevels level (recoverPtn (n + 2) level out)
+    let result := Nauty.recover (n + 2) level out
     Equitable ctx level result.lab result.ptn := by
   dsimp only
   rw [recover_ptn_eq hok hout]
-  have hl := congrArg Search.lab (recover_eq (n + 2) level out)
-  change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at hl
-  rw [Nauty.recover_lab] at hl
+  have hl := Nauty.recover_lab n (n + 2) level out
+  change (Nauty.recover (n + 2) level out).lab = _ at hl
+
   rw [hl]
   exact heq.reorder hout.perm hok.ptnSize (searchOk_end hn0 hok hlevel)
 

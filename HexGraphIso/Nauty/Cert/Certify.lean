@@ -80,7 +80,6 @@ theorem certifyCanon?_isSome_zero (G : Colored 0 k) :
       rfl
     · exact labelColorSorted_canonlab G
 
-
 /-- The certified canonicalization always succeeds. -/
 theorem certifyCanon?_isSome (G : Colored n k) : (certifyCanon? G).isSome := by
   rcases Nat.eq_zero_or_pos n with hn0 | hn0

@@ -16,30 +16,6 @@ namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
-theorem keyCmp_bot_ne_gt (b : Key n) : keyCmp ⟨[], []⟩ b ≠ .gt := by
-  rw [keyCmp]
-  rcases b with ⟨codes, rows⟩
-  rcases codes with _ | ⟨c, cs⟩
-  · rcases rows with _ | ⟨r, rs⟩ <;> simp [listCmp]
-  · simp [listCmp]
-
-theorem keyMax_bot_left (b : Key n) : keyMax ⟨[], []⟩ b = b := by
-  rw [keyMax]
-  split
-  · rfl
-  · next h =>
-    rcases hc : keyCmp ⟨[], []⟩ b with _ | _ | _
-    · exact absurd hc h
-    · exact keyCmp_eq_iff.mp hc
-    · exact absurd hc (keyCmp_bot_ne_gt b)
-
-theorem keyMax_bot_right (b : Key n) : keyMax b ⟨[], []⟩ = b := by
-  rw [keyMax]
-  split
-  · next h =>
-    exact absurd (keyCmp_gt_iff_lt.mpr h) (keyCmp_bot_ne_gt b)
-  · rfl
-
 /-- Taking the maximum of specification keys is associative. -/
 theorem keyMax_assoc (x y z : Key n) :
     keyMax (keyMax x y) z = keyMax x (keyMax y z) := by

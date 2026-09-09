@@ -9,9 +9,9 @@ module
 public import HexGraphIso.Nauty.Policy.Choice
 import all HexGraphIso.Nauty.Policy.Choice
 import all HexGraphIso.Nauty.Policy.Tracking
-import all HexGraphIso.Nauty.Policy.FirstRef
-import all HexGraphIso.Nauty.Policy.First
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.First.Ref
+import all HexGraphIso.Nauty.Policy.First.State
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -116,14 +116,13 @@ theorem RouteHistory.child_return {G : Colored n k} {ctx : Ctx n}
     (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (Nauty.child first level tc tv st)).2
-    let result := recoverLevels level (recoverPtn (n + 2) level
-      { out with fixedpts := out.fixedpts.erase tv })
+    let result := Nauty.recover (n + 2) level { out with fixedpts := out.fixedpts.erase tv }
     RouteHistory ctx tcLevel level level numcells result ∧
       (Choice ctx tcLevel level tc st → Choice ctx tcLevel level tc result) := by
   let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   let left := { out with fixedpts := out.fixedpts.erase tv }
-  let result := recoverLevels level (recoverPtn (n + 2) level left)
+  let result := Nauty.recover (n + 2) level left
   have hrch : ch.reference = st.reference := by cases first <;> rfl
   have hrout : out.reference = st.reference :=
     (node_reference ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).trans hrch

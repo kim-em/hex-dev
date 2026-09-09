@@ -8,8 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Policy.Fixed
 public import HexGraphIso.Nauty.Policy.Pairs
-import all HexGraphIso.Nauty.Policy.Reach
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Generic.Reach
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Search.Search
@@ -138,7 +138,7 @@ theorem PathInv.recover {G : Colored n k} {ctx : Ctx n} {level numcells : Nat} {
     (h : PathInv G ctx level st) (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hok : SearchOk G level numcells st) (hout : SearchOut G level level st out)
     (hf : out.fixedpts = st.fixedpts) :
-    PathInv G ctx level (recoverLevels level (recoverPtn (n + 2) level out)) := by
+    PathInv G ctx level (Nauty.recover (n + 2) level out) := by
   have hr := (reachPolicy G ctx 0 hn0).recover level numcells st out hlevel hok hout
   exact h.ofSearchOut hn0 hlevel ((recover_fixed (n + 2) level out).trans hf) hok hr.ok hr.effect
 

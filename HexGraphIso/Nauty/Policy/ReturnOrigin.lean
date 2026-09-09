@@ -6,17 +6,17 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.CanonScatter
-public import HexGraphIso.Nauty.Policy.ExitBound
-public import HexGraphIso.Nauty.Policy.Short
+public import HexGraphIso.Nauty.Policy.Canon.Scatter
+public import HexGraphIso.Nauty.Policy.Generic.ExitBound
+public import HexGraphIso.Nauty.Policy.Generic.Short
 public import HexGraphIso.Nauty.Policy.Filters
 public import HexGraphIso.Nauty.Policy.Prepared
-import all HexGraphIso.Nauty.Policy.ExitBound
+import all HexGraphIso.Nauty.Policy.Generic.ExitBound
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Policy.Controls
-import all HexGraphIso.Nauty.Policy.Short
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Generic.Short
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Workspace
 import all HexGraphIso.Nauty.Policy.Effect
