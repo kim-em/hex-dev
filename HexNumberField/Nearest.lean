@@ -167,12 +167,21 @@ namespace AlgebraicNumber
 
 namespace Display
 
+/-- The unsigned scaled integer used to print a truncated decimal. -/
+@[expose] def decimalNumerator (q : Rat) (digits : Nat) : Nat :=
+  (q.num.natAbs * 10 ^ digits) / q.den
+
+/-- The exact rational denoted by the decimal display helper. -/
+@[expose] def decimalValue (q : Rat) (digits : Nat) : Rat :=
+  let v : Rat := (decimalNumerator q digits : Rat) / (10 ^ digits : Nat)
+  if q.num < 0 then -v else v
+
 /-- `q` truncated toward zero to `digits` decimal places, as a Lean literal:
 an integer when the fraction is zero, otherwise `d.ddd`, negatives in
-parentheses. A display helper; it carries no contract. -/
+parentheses. Its rational value is `decimalValue q digits`. -/
 def decimal (q : Rat) (digits : Nat) : String :=
   let scale : Nat := 10 ^ digits
-  let n : Nat := (q.num.natAbs * scale) / q.den
+  let n : Nat := decimalNumerator q digits
   let whole := n / scale
   let frac := n % scale
   let body :=
@@ -187,7 +196,7 @@ def decimal (q : Rat) (digits : Nat) : String :=
 root: `10 ^ -digits ≤ 2 ^ -mahlerPrec`, so the printed point is within
 `(1 + √2) · 2 ^ -mahlerPrec` of the root, less than half the root
 separation. -/
-def digitsFor (mahler : Nat) : Nat :=
+@[expose] def digitsFor (mahler : Nat) : Nat :=
   mahler / 3 + 1
 
 end Display

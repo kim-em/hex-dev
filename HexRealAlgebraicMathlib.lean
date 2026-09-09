@@ -19,3 +19,5 @@ public import HexRealAlgebraicMathlib.Polynomial
 public import HexRealAlgebraicMathlib.Roots
 public import HexRealAlgebraicMathlib.Sqrt
 public import HexRealAlgebraicMathlib.RealClosed
+public import HexRealAlgebraicMathlib.IntegerRoots
+public import HexRealAlgebraicMathlib.Repr

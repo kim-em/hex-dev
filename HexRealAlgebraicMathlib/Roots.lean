@@ -123,4 +123,45 @@ theorem roots_sorted (f : RealAlgebraicPoly) :
     (realRoots_noDuplicates f.toAlgebraic.roots (AlgebraicPoly.roots_noDuplicates _))).imp
       (fun h => lt_of_le_of_ne h.1 h.2)
 
+private theorem findMultiplicity_mem (entries : List RootCount)
+    (hn : entries.Pairwise (fun a b => a.root.toComplex ≠ b.root.toComplex))
+    (r : RootCount) (hr : r ∈ entries) :
+    ((entries.find? fun s => s.root.toComplex = r.root.toComplex).map
+      RootCount.multiplicity).getD 0 = r.multiplicity := by
+  classical
+  induction entries with
+  | nil => simp at hr
+  | cons s entries ih =>
+    obtain ⟨hne, htail⟩ := List.pairwise_cons.mp hn
+    rcases List.mem_cons.mp hr with rfl | hr
+    · simp [List.find?]
+    · simpa [List.find?, hne r hr] using ih htail hr
+
+/-- Each stored multiplicity is the real polynomial's root multiplicity. -/
+theorem roots_multiplicity (f : RealAlgebraicPoly) (s : RealRootCount)
+    (hs : s ∈ f.roots.toArray) :
+    s.multiplicity = f.toPolynomial.rootMultiplicity s.root.toReal := by
+  cases hroots : f.toAlgebraic.roots with
+  | all => simp [roots, hroots, realRoots, RealRootSet.toArray, RealRootSet.finite?] at hs
+  | finite entries =>
+    simp only [roots, hroots, realRoots, RealRootSet.toArray, RealRootSet.finite?,
+      Option.getD_some, List.mem_toArray, List.mem_mergeSort, Array.toList_filterMap,
+      List.mem_filterMap] at hs
+    obtain ⟨r, hr, hrs⟩ := hs
+    obtain ⟨hv, hm⟩ := realRoot?_sound r s hrs
+    have hn := AlgebraicPoly.roots_noDuplicates f.toAlgebraic
+    rw [hroots, RootSet.NoDuplicates] at hn
+    have hlookup : (RootSet.finite entries).multiplicityOf r.root.toComplex = r.multiplicity := by
+      unfold RootSet.multiplicityOf
+      exact findMultiplicity_mem entries.toList hn r hr
+    have hmult := AlgebraicPoly.multiplicity_roots f.toAlgebraic r.root.toComplex
+    rw [hroots, hlookup] at hmult
+    rw [hm, hmult, ← RealAlgebraicPoly.map_toPolynomial,
+      ← AlgebraicRoot.exact_toComplex, ← hv, ← RealAlgebraicNumber.ofReal_toReal]
+    exact (Polynomial.eq_rootMultiplicity_map Complex.ofReal_injective s.root.toReal).symm
+
+/-- The representation carries a positive multiplicity for every finite root. -/
+theorem roots_positive (f : RealAlgebraicPoly) (s : RealRootCount)
+    (_hs : s ∈ f.roots.toArray) : 0 < s.multiplicity := s.multiplicity_pos
+
 end Hex.RealAlgebraicPoly
