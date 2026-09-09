@@ -1,0 +1,15 @@
+{
+  "fingerprint": "0250c5e83291",
+  "host": "chungus2",
+  "date": "2026-09-09T00:40:08Z",
+  "describe": "886cf91a03c8",
+  "label": "graphiso-state-cleanup",
+  "cpu": 3,
+  "measurement_context": {
+    "timeout_orphan": {
+      "pid": 526318,
+      "file": "tmpglc5cxv3.lean",
+      "action": "terminated after lake lean timeout; all completed measurements retained"
+    }
+  }
+}
