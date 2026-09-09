@@ -17,3 +17,7 @@ completed sample is retained. These shared-host observations show no
 material slowdown in this corpus; they do not establish a small speed
 improvement. The full frozen trace regression separately checks all
 39,032 operational outputs, including generator order and return control.
+
+The candidate’s measured Lean sources match the final sweep sources after
+removing comments. The `6193a37bb0b9` manifest records the measured source
+blobs independently of the measuring checkout’s commit across rebases.

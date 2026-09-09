@@ -1,0 +1,24 @@
+{
+  "fingerprint": "b7f887df560b",
+  "host": "chungus2",
+  "date": "2026-09-09T01:51:15Z",
+  "describe": "8611c1fd0646",
+  "label": "graphiso-final-cleanup",
+  "cpu": 1,
+  "started": "2026-09-09T01:45:34.070890+00:00",
+  "load_before": [
+    2.2939453125,
+    3.3671875,
+    30.2431640625
+  ],
+  "load_after": [
+    3.068359375,
+    2.74609375,
+    21.67138671875
+  ],
+  "command": "taskset -c 1 scripts/bench/graphiso_cactus_sweep.sh graphiso-final-cleanup",
+  "terminated_timeout_orphans": [
+    1753617
+  ],
+  "context": "Concurrent CI monitoring. Every completed measurement and tactic timeout retained; only orphaned timed-out Lean children were terminated after the plotter advanced."
+}

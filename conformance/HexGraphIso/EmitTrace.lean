@@ -12,6 +12,8 @@ open Lean Hex.GraphIso Hex.GraphIso.Nauty Hex.GraphIsoCases
 private def emitTrace (corpus : String) (c : Case) : IO Unit := do
   let some G := coloredOf? c.n c.k c.colors c.edges
     | throw (IO.userError s!"trace: invalid graph {corpus}/{c.name}")
+  -- Check the public runner on every case; a separate run records
+  -- the internal return control and orbit state.
   let (lab, ends) := initialPartition G
   let (exit, st) := runState c.n (rowsOf G) lab ends
   let tr := runColoredTraced G
