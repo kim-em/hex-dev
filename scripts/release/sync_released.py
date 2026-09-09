@@ -100,21 +100,24 @@ LAKEFILE = REPO_ROOT / "lakefile.lean"
 # hex-dev is the source of truth for how a library is built and a second,
 # hand-maintained copy of that decision drifts.
 #
-# `precompileModules` is the one the sync writes: it decides whether Lake builds
-# and ships the module dynlib carrying a library's `@[extern]` symbols, so a
-# mirror that drops it still compiles yet fails in any downstream package that
-# evaluates the library during elaboration ("Could not find native
+# `precompileModules` is one setting the sync writes: it decides whether Lake
+# builds and ships the module dynlib carrying a library's `@[extern]` symbols,
+# so a mirror that drops it still compiles yet fails in any downstream package
+# that evaluates the library during elaboration ("Could not find native
 # implementation of external declaration"). It is a self-contained Boolean,
 # expressible in both Lake file flavours, so the sync can insert it.
 #
-# `extraDepTargets` and `moreLinkArgs` are validated but never written: they
-# name targets defined only in the mirror's own (unmanaged) Lake skeleton, such
-# as `hexlllffi`, and hex-dev spells `moreLinkArgs` as an arbitrary Lean
-# expression (HexLLL's is a platform conditional) that has no `lakefile.toml`
-# form. Synthesizing either would produce a Lake file that does not elaborate,
-# which is worse than the divergence, so the sync reports it and refuses to
-# publish instead.
-WRITTEN_LIB_SETTINGS = ("precompileModules",)
+# `moreLinkObjs` is also written for Lean Lake files. It attaches a managed
+# native target to the library that uses it, without exporting the target to
+# every executable in a downstream package.
+#
+# `extraDepTargets` and `moreLinkArgs` are validated but never written.
+# The former can name targets defined only in the mirror's own unmanaged Lake
+# skeleton, while the latter may be an arbitrary Lean expression (HexLLL's is
+# a platform conditional) with no `lakefile.toml` form. Synthesizing either
+# could produce a Lake file that does not elaborate, so the sync reports a
+# missing setting and refuses to publish instead.
+WRITTEN_LIB_SETTINGS = ("precompileModules", "moreLinkObjs")
 CHECKED_LIB_SETTINGS = ("extraDepTargets", "moreLinkArgs")
 BUILD_LIB_SETTINGS = WRITTEN_LIB_SETTINGS + CHECKED_LIB_SETTINGS
 SEMVER = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
@@ -748,10 +751,10 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
     The mirror's Lake skeleton is otherwise unmanaged, and a library built one
     way here and another way there is a defect its own CI cannot see: the mirror
     builds, and only a downstream consumer discovers the difference. So the sync
-    writes `precompileModules` into the mirror's `lean_lib` when this monorepo
-    sets it and the mirror does not, exactly as it rewrites pins, and refuses to
-    publish when a setting it cannot safely synthesize has gone missing. See
-    `BUILD_LIB_SETTINGS`.
+    writes `precompileModules` and Lean `moreLinkObjs` into the mirror's
+    `lean_lib` when this monorepo sets them and the mirror does not, exactly as
+    it rewrites pins, and refuses to publish when a setting it cannot safely
+    synthesize has gone missing. See `BUILD_LIB_SETTINGS`.
     """
     if entry.get("pins_only"):
         return []
@@ -786,28 +789,49 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
                 "own Lake skeleton"
             )
     notes: list[str] = []
-    for setting in WRITTEN_LIB_SETTINGS:
-        if setting not in required:
-            continue
+    if "precompileModules" in required:
+        setting = "precompileModules"
         if required[setting] != "true":
             raise RuntimeError(
                 f"hex-dev's lakefile.lean sets {setting} on lean_lib {lib} to "
                 f"{required[setting]!r}; only `true` can be published"
             )
-        if present.get(setting) == "true":
-            continue
-        if setting in present:
+        if present.get(setting) != "true":
+            if setting in present:
+                raise RuntimeError(
+                    f"released Lake file {lakefile} sets {setting} on lean_lib "
+                    f"{lib} to {present[setting]!r}, contradicting hex-dev's `true`"
+                )
+            if toml:
+                insert_at = body_start + len(body.rstrip())
+                text = f"{text[:insert_at]}\n{setting} = true{text[insert_at:]}"
+            else:
+                opener = "" if block.group("where") else " where"
+                text = f"{text[:body_start]}{opener}\n  {setting} := true{text[body_start:]}"
+            notes.append(f"  {setting} on lean_lib {lib} ({lakefile.name})")
+    if "moreLinkObjs" in required:
+        setting = "moreLinkObjs"
+        expected = required[setting]
+        if toml:
+            raise RuntimeError(
+                f"hex-dev's lakefile.lean sets {setting} on lean_lib {lib}, but "
+                "the sync only publishes managed target references to Lean Lake files"
+            )
+        if setting in present and present[setting] != expected:
             raise RuntimeError(
                 f"released Lake file {lakefile} sets {setting} on lean_lib "
-                f"{lib} to {present[setting]!r}, contradicting hex-dev's `true`"
+                f"{lib} to {present[setting]!r}, contradicting hex-dev's "
+                f"{expected!r}"
             )
-        if toml:
+        if setting not in present:
+            block = _lean_lib_header(text, lib)
+            assert block is not None
+            body_start = block.end()
+            body_end = _block_end(text, body_start)
+            body = text[body_start:body_end]
             insert_at = body_start + len(body.rstrip())
-            text = f"{text[:insert_at]}\n{setting} = true{text[insert_at:]}"
-        else:
-            opener = "" if block.group("where") else " where"
-            text = f"{text[:body_start]}{opener}\n  {setting} := true{text[body_start:]}"
-        notes.append(f"  {setting} on lean_lib {lib} ({lakefile.name})")
+            text = f"{text[:insert_at]}\n  {setting} := {expected}{text[insert_at:]}"
+            notes.append(f"  {setting} on lean_lib {lib} ({lakefile.name})")
     if notes:
         if toml:
             try:
@@ -822,26 +846,29 @@ def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
 
 
 def lake_declaration(text: str, name: str) -> tuple[int, int]:
-    """Locate an unindented build helper and its indented body.
+    """Locate an unindented named Lake declaration and its indented body.
 
-    Managed helpers use ordinary `def` declarations without attributes. Refuse
+    Managed declarations use `def`, `target`, or `extern_lib` without
+    attributes. Supporting both target forms lets the sync migrate an old
+    package-wide `extern_lib` into a library-scoped custom `target`. Refuse
     missing or ambiguous declarations rather than modifying the wrong recipe.
     """
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
-        raise RuntimeError(f"invalid Lake build helper name: {name!r}")
+        raise RuntimeError(f"invalid Lake declaration name: {name!r}")
     matches = list(re.finditer(
-        r"(?m)^(?:private |public )?def " + re.escape(name) + r"(?=\s|\()[^\n]*\n",
+        r"(?m)^(?:private |public )?(?:def|target|extern_lib) "
+        + re.escape(name) + r"(?=\s|\()[^\n]*\n",
         text,
     ))
     if len(matches) != 1:
-        raise RuntimeError(f"expected one Lake build helper {name}, found {len(matches)}")
+        raise RuntimeError(f"expected one Lake declaration {name}, found {len(matches)}")
     start = matches[0].start()
     end = _block_end(text, matches[0].end())
     return start, end
 
 
 def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
-    """Copy selected C build recipes from the source-of-truth Lake file."""
+    """Copy selected build declarations from the source-of-truth Lake file."""
     names = entry.get("lake_declarations", [])
     if not names:
         return []
@@ -859,7 +886,7 @@ def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
         definition = source[src_start:src_end].rstrip() + "\n\n"
         if text[dst_start:dst_end] != definition:
             text = text[:dst_start] + definition + text[dst_end:]
-            notes.append(f"  build helper {name} (lakefile.lean)")
+            notes.append(f"  build declaration {name} (lakefile.lean)")
     if notes:
         path.write_text(text, encoding="utf-8")
     return notes

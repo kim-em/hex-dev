@@ -131,8 +131,10 @@ commits in an existing mirror.
 
 ### Native-library skeletons
 
-Copy the matching `extern_lib` configuration as well as the Lean target for
-packages that ship native code. In particular:
+Copy the matching custom native target and attach it to the Lean library with
+`moreLinkObjs` for packages that ship native code. Do not use a package-level
+`extern_lib`: Lake exports it to every downstream executable, including ones
+whose module graph never imports the library. In particular:
 
 - `hex-arith` builds the wide-word arithmetic implementation under
   `HexArith/c`;
@@ -149,11 +151,11 @@ time, so a standalone `lake build` is required before the first real publish.
 The `lean_lib` build settings themselves are not part of the skeleton to
 maintain: this monorepo's `lakefile.lean` decides how a library is built, and
 the sync carries that decision across. It writes `precompileModules` into the
-mirror's `lean_lib` when the monorepo sets it, so a skeleton may omit it.
-`extraDepTargets` and `moreLinkArgs` name the mirror's own `extern_lib` targets
-and system libraries, so those the skeleton must still declare; the sync
-validates them against the monorepo and refuses to publish a library that has
-lost one.
+mirror's `lean_lib` when the monorepo sets it and writes `moreLinkObjs` when a
+Lean Lake file attaches a managed native target, so a skeleton may omit both.
+`extraDepTargets` and `moreLinkArgs` can name unmanaged targets and system
+libraries, so those the skeleton must still declare; the sync validates them
+against the monorepo and refuses to publish a library that has lost one.
 
 ## Baseline and first publish
 

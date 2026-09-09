@@ -66,12 +66,12 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
       env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
     }
 
-extern_lib hexarithffi (pkg) := do
+target hexarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexarithffi"
   let oTargets ← #[ "wide_arith.c", "mpz_gcdext.c" ].mapM (hexArithOTarget pkg)
   buildStaticLib (pkg.staticLibDir / name) oTargets
 
-extern_lib hexmodarithffi (pkg) := do
+target hexmodarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexmodarithffi"
   let oTarget ← zmod64MulOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
@@ -126,12 +126,7 @@ lean_lib HexTruncatedSeriesMathlib where
 
 lean_lib HexArith where
   precompileModules := true
-  -- The `hexarithffi` extern_lib is linked into this precompiled library's
-  -- dynlib automatically (as with `hexgf2ffi` and `HexGF2`); we only need to
-  -- add the system GMP library. Passing the static lib by an explicit path
-  -- broke consumers: that path was relative to the *root* package's build dir,
-  -- so when hex is a dependency it resolved against the wrong project and the
-  -- dynlink failed.
+  moreLinkObjs := #[hexarithffi]
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexPoly where
@@ -146,8 +141,7 @@ lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
   precompileModules := true
-  -- See `HexArith`: the `hexmodarithffi` extern_lib links in automatically, so
-  -- we pass only the system GMP library rather than an explicit static-lib path.
+  moreLinkObjs := #[hexmodarithffi]
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexModular where
