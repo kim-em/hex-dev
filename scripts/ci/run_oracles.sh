@@ -41,6 +41,10 @@ PY
     echo "FAIL: required oracle dependencies are unavailable" >&2
     exit 1
   fi
+  if ! python3 scripts/oracle/real_algebraic_flint.py --preflight --require-oracles; then
+    echo "FAIL: required real-algebraic oracle capabilities are unavailable" >&2
+    exit 1
+  fi
 fi
 
 # Tuples are encoded as `lib|emit_exe|oracle_script|fixture_path`.
@@ -67,6 +71,7 @@ ORACLES=(
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
+  "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # SymPy backed
   "HexRationalFn|hexrationalfn_emit_fixtures|scripts/oracle/rationalfn_sympy.py|conformance-fixtures/HexRationalFn/rationalfn.jsonl"
   "HexMvPoly|hexmvpoly_emit_fixtures|scripts/oracle/mvpoly_sympy.py|conformance-fixtures/HexMvPoly/mvpoly.jsonl"
@@ -131,6 +136,19 @@ run_one() {
     if ! diff -u "$fixture" "$fresh"; then
       echo "FAIL: $lib :: fresh emission diverges from committed fixture"
       return 1
+    fi
+
+    if [ "$lib" = "HexRealAlgebraic" ]; then
+      local repr_fresh="/tmp/HexRealAlgebraic-ReprChecks.lean"
+      if ! ".lake/build/bin/$emit" --repr >"$repr_fresh" ||
+          ! diff -u conformance/HexRealAlgebraic/ReprChecks.lean "$repr_fresh"; then
+        echo "FAIL: $lib :: generated Lean Repr checks differ from the compiled fixture"
+        return 1
+      fi
+      if ! python3 -m unittest scripts.oracle.test_real_algebraic_flint; then
+        echo "FAIL: $lib :: oracle rejection tests failed"
+        return 1
+      fi
     fi
 
     local oracle_args=()

@@ -4,7 +4,8 @@
 canonical `AlgebraicNumber`, with executable field arithmetic and exact order.
 `hex-real-algebraic-mathlib` identifies its values with the algebraic reals and
 proves that it is a real closed ordered field. This document specifies both
-libraries; it does not introduce their implementation or release entries.
+libraries. Their implementations live in `HexRealAlgebraic` and
+`HexRealAlgebraicMathlib`; release entries are added separately at publication.
 
 ## Library boundary
 
@@ -48,7 +49,7 @@ The carrier is exactly the subtype, with no additional root representation:
 def RealAlgebraicNumber := {a : AlgebraicNumber // a.isReal = true}
 ```
 
-Use `RealAlgebraicNumber` as the namespace for the following proposed names.
+Use `RealAlgebraicNumber` as the namespace for the following names.
 `toAlgebraic` projects the underlying canonical value. `ofAlgebraic?` performs
 one stored-precision `isReal` test, returning `some ⟨a, h⟩` precisely on success
 and `none` on nonreal input. A proof-taking `ofAlgebraic a h` packages an already
@@ -70,7 +71,9 @@ powers, and scalar multiplication by `Nat`, `Int`, and `Rat`. Each operation
 runs the corresponding `AlgebraicNumber` operation and rechecks `isReal` once
 on the canonical result. Powers reuse `natPow` and `intPow`, including repeated
 squaring, and check their final result. Inversion and division are total with
-`0⁻¹ = 0` and `a / 0 = 0`, as in the underlying field.
+`0⁻¹ = 0` and `a / 0 = 0`, as in the underlying field. `ofRat` is the
+Mathlib-free rational constructor; the `RatCast` class lives in Mathlib, and
+the companion's `Field.ratCast` uses this same executable constructor.
 
 The internal total packer uses `ofAlgebraic?` with
 `Hex.panicWith zero "RealAlgebraicNumber: nonreal operation result"` as the
@@ -241,8 +244,9 @@ zero. The proof-taking total form uses the same computation; classify its
 fallback as unreachable by `sqrt?_isSome` under `0 ≤ a`. Also name and prove
 the internal root-selection success lemma `sqrtRoot?_isSome` under that
 hypothesis, so a failed root search cannot masquerade as a negative argument.
-Require `sqrt_nonneg`, `sqrt_sq` (`sqrt a h * sqrt a h = a`), uniqueness, and
-`sqrt_square` (`sqrt (a*a) h = abs a` for any `h : 0 ≤ a*a`).
+Require `sqrt_nonneg`, `sqrt_sq` (`(sqrt a h) ^ 2 = a`), uniqueness, and
+`sqrt_square` (`sqrt (a ^ 2) (sq_nonneg a) = abs a`). Proof irrelevance
+makes the latter independent of the chosen nonnegativity witness.
 
 Represent `RealAlgebraicPoly` as an `AlgebraicPoly` with an erased proof that
 each stored coefficient passes `isReal`. Its array constructor accepts only
@@ -367,7 +371,7 @@ The following are existing dependencies, with their actual source locations:
 | Approximation | `AlgebraicNumber.approx_mem`, `approx_radius`, [IntegerRoots](../../HexNumberFieldMathlib/IntegerRoots.lean) |
 | Minimal polynomial | `AlgebraicNumber.p_eq_minpoly`, [Basic](../../HexNumberFieldMathlib/Basic.lean) |
 
-Missing facts must be supplied, not presumed:
+The inherited ordering contract has the following limits:
 
 - No value-sortedness theorem for `ZPoly.algebraicRoots` is present in these
   sources. The implementation sorts by `AlgebraicNumber.rootLe`, which uses
@@ -379,16 +383,29 @@ Missing facts must be supplied, not presumed:
   therefore overstates the established theorem contract: it needs either a
   proof or a correction following a separate correctness audit;
   the new wrapper's explicit `realCompare` sort avoids assuming it.
-- `AlgebraicPoly.roots_ordered` exists, but describes `RootSet.Ordered`, a
-  deterministic representation order, not the increasing real-value order.
-  Prove the new `RealAlgebraicPoly.roots_sorted` after exactification and sorting.
-- The subtype closure lemmas, the proof of `Laws`, real
-  coefficient normalization and evaluation bridges, `toRat?_eq_some`, the
-  rounding lemmas, `range_toReal`, and the real-closedness construction are
-  new companion work. The Mathlib-free conditional instance adapters and
-  real `Repr` wrapper are new computational work. The distinction
-  between a conditional adapter and a concrete law witness is part of the
-  dependency contract.
+- `AlgebraicPoly.roots_ordered` describes `RootSet.Ordered`, a deterministic
+  representation order. `RealAlgebraicPoly.roots_sorted` instead proves
+  strict real-value order after exactification, filtering, and `realCompare` sorting.
+
+The real companion supplies the additional bridges:
+
+| Contract | Declarations and source |
+| --- | --- |
+| Subtype closure and real semantics | `ofReal_re`, the `*_isReal` closure lemmas, `toReal_injective`, `compare_eq`, `lt_iff`, `le_iff`, [Basic](../../HexRealAlgebraicMathlib/Basic.lean) |
+| Executable dictionaries | `Field`, `LinearOrder`, `IsStrictOrderedRing`, [Field](../../HexRealAlgebraicMathlib/Field.lean), [Order](../../HexRealAlgebraicMathlib/Order.lean); `instLaws`, [Laws](../../HexRealAlgebraicMathlib/Laws.lean); definitional coherence in [Instances](../../HexRealAlgebraicMathlib/Instances.lean) |
+| Algebraic reals | `isAlgebraic`, `range_toReal`, [Algebraic](../../HexRealAlgebraicMathlib/Algebraic.lean) |
+| Real polynomial normalization and conversion | `toPolynomial_ofArray`, `map_toPolynomial`, `ofReal_eval`, `ofPolynomial`, `toPolynomial_ofPolynomial`, [Polynomial](../../HexRealAlgebraicMathlib/Polynomial.lean) |
+| Real roots | `contains_roots_iff`, `roots_all_iff`, `roots_sorted`, `roots_multiplicity`, `roots_positive`, [Roots](../../HexRealAlgebraicMathlib/Roots.lean) |
+| Integer real roots | `mem_realAlgebraicRoots_iff`, `realAlgebraicRoots_nodup`, `realAlgebraicRoots_sorted`, `realAlgebraicRoots_eq_empty`, [IntegerRoots](../../HexRealAlgebraicMathlib/IntegerRoots.lean) |
+| Square roots | `sqrt?_isSome`, `sqrt?_eq_none`, `sqrt_nonneg`, `sqrt_sq`, `sqrt_unique`, `sqrt_square`, `sqrt_toReal`, [Sqrt](../../HexRealAlgebraicMathlib/Sqrt.lean) |
+| Real-closedness | `isSquare_of_nonneg`, `exists_isRoot_of_odd_natDegree`, `instIsRealClosed`, [RealClosed](../../HexRealAlgebraicMathlib/RealClosed.lean) |
+| Rational recognition and rounding | `toRat?_eq_some`, [Rational](../../HexRealAlgebraicMathlib/Rational.lean); `floor_bounds`, `ceil_bounds`, `floor_toReal`, `ceil_toReal`, `FloorRing`, [Rounding](../../HexRealAlgebraicMathlib/Rounding.lean) |
+| Approximation | `approx_error`, `approx_bound`, `approx_enclosure`, [Approx](../../HexRealAlgebraicMathlib/Approx.lean) |
+| Representation | `Display.decimalValue_error`, `Display.digitsFor_bound`, `reprTerm_eq`, `repr_isSome`, `repr_roundtrip`, [Repr](../../HexRealAlgebraicMathlib/Repr.lean) |
+
+The Mathlib-free conditional adapters and the real `Repr` wrapper remain in
+the computational library. A conditional adapter and a concrete law witness
+have different dependency contracts; only the companion supplies the latter.
 
 ## Complexity
 
@@ -438,9 +455,15 @@ never prove equality, and rounded centres never decide order.
 
 Keep `qqbar` as the scalar arithmetic/equality/comparison oracle. A binding to
 FLINT's `qqbar_roots_fmpz_poly` can additionally construct general scalar root
-inputs directly. General algebraic-coefficient root solving needs
-`gr_poly_roots_other` through python-flint or a test-only adapter before that
-part of conformance is complete; the special `X²-√2` fixture can already be
+inputs directly. General algebraic-coefficient root solving uses `gr_poly_roots` through the
+[test-only adapter](../../scripts/oracle/real_algebraic_qqbar.py).
+`gr_poly_roots_other` constructs scalar root inputs across the integer and
+qqbar contexts. The fixture checker keeps these exact values in the wheel's
+public C contexts for scalar operations too: python-flint exposes no supported
+transfer of an arbitrary selected polynomial root into a Python `_gr` element.
+No Python object layout is inspected. The `_gr` scalar API is independently
+probed, and general-root availability is checked separately from scalar root
+identity. The special `X²-√2` fixture can already be
 checked with iterated `sqrt` in `gr_real_qqbar_ctx`. Certified enclosures are
 admissible for integer-root matching; uncertified numerical approximations are not an
 equality or ordering oracle.
@@ -456,6 +479,8 @@ Profiles and oracle modes:
 
 - *core*: Oracle `none`, Mode `always`. Run deterministic Lean checks covering
   every operation and the fixtures below, including the order sanity table.
+  Small cases and generated `Repr` expressions elaborate as `#guard` checks;
+  the fixture emitter runs the larger compiled checks before emitting JSONL.
 - *ci*: Oracle python-flint `qqbar` for scalar operations and certified FLINT
   root balls for integer polynomials, Mode `if_available` for both. Missing
   optional components produce explicit skips; an available oracle reporting
@@ -468,12 +493,13 @@ Profiles and oracle modes:
 When implementing conformance, extend the existing preflight in
 `scripts/ci/run_oracles.sh` to probe `gr_real_qqbar_ctx`, comparison and
 `sqrt`/`floor`/`ceil`, `gr_complex_qqbar_ctx` rejection, and
-`fmpz_poly.complex_roots`. Add the general algebraic-coefficient root adapter
-to that probe when its fixtures are admitted. Pin `python-flint==0.9.0` in the
+`fmpz_poly.complex_roots`. Include the general algebraic-coefficient root adapter
+in that probe alongside its fixtures. Pin `python-flint==0.9.0` in the
 existing installation step and check the supported FLINT version (`3.6.0` for
 that tested wheel). A required component's missing capability fails preflight;
-an optional missing capability skips only its component. This document does
-not change the workflow or implement the probes.
+an optional missing capability skips only its component. The probes live in
+[real_algebraic_flint.py](../../scripts/oracle/real_algebraic_flint.py), and
+the existing single CI job pins the wheel and invokes them.
 
 Required deterministic core fixtures, also exported to the CI oracle:
 

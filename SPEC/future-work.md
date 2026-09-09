@@ -1057,14 +1057,15 @@ resolvent values, and certified non-containment at rejected branches.
 
 ### Ordered real algebraic numbers
 
-[hex-real-algebraic](Libraries/hex-real-algebraic.md) specifies the real subtype
+[hex-real-algebraic](Libraries/hex-real-algebraic.md) implements the real subtype
 of canonical `AlgebraicNumber`, with exact comparison, field arithmetic,
 square roots, ordered polynomial real roots, floor and ceil, rational
 recognition, and dyadic approximation. Its companion supplies the ordered-field
 structure, the order embedding into `ℝ`, and `IsRealClosed`. The design reuses
 `hex-number-field` and fixes `realCompare` as the comparison semantics. It also
 uses Mathlib-free core instances parameterized by a law package proved in the
-companion, and identifies the real-root sortedness bridges still needed.
+companion. Root completeness, multiplicities, strict ordering, and representation
+round trips are proved in the companion.
 Companion proofs do not become computational dependencies.
 
 Faster comparison by refinement on overlap, comparison of lazy roots, and
