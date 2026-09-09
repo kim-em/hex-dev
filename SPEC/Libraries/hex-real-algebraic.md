@@ -61,8 +61,8 @@ of `toAlgebraic`, and `BEq` delegates to its existing Boolean equality. Proof
 fields are erased. Do not introduce approximate equality or an additional
 quotient. The existing Boolean algorithm compares minimal polynomials and
 tests the stored discs; its agreement with structural Lean equality currently
-has its proof in the companion. Supplying Mathlib-free `LawfulBEq` and
-`DecidableEq` is an explicit proof obligation below.
+has its proof in the companion. The Mathlib-free `LawfulBEq` and `DecidableEq`
+adapters below take an explicit law package, which the companion proves.
 
 Provide `0`, `1`, natural and integer casts, `ofRat`, rational casts, negation,
 addition, subtraction, multiplication, inversion, division, natural and integer
@@ -88,9 +88,8 @@ Prove `ofAlgebraic?_isSome` from `a.isReal = true`. The companion supplies
 reduce to `ofRat_isReal`. Their hypotheses are reality of the operands, with
 no nonzero hypothesis for inversion. Together with the underlying arithmetic
 correspondence and `isReal_iff`, these prove every packer call succeeds and
-that `toAlgebraic` commutes with every operation. The analogous Mathlib-free
-closure laws are also needed for the core law instances; a companion theorem
-alone cannot inhabit an instance in a computational module.
+that `toAlgebraic` commutes with every operation. These proofs also discharge
+the law package used by the conditional core instances below.
 
 Threading closure proofs through each operation is an alternative. It would
 remove the runtime check but require all closure proofs in the computational
@@ -100,11 +99,19 @@ existing `exact` / `exact?_isSome` design. It is the chosen implementation.
 
 Reuse `conj` on the underlying value and prove `conj_eq : a.conj = a`; its real
 branch already returns its argument. Reuse `AlgebraicNumber.approx` for complex
-balls. Delegate display to the canonical value. `Repr` emits a checked real
-constructor around the underlying round-trip representation, with no printed
-proof terms; elaborating it must recover the same subtype value. It must not
-use a decimal approximation or a partial `Option.get!` requiring a new
-unreachability assumption.
+balls. Delegate display to the canonical value. `Repr` emits
+`real_algebraic% (<underlying Repr term>)`, using a public checked term
+elaborator for closed `AlgebraicNumber` expressions. The elaborator rejects
+nonreal values and generates `ofAlgebraic a h`, with a kernel-checked proof
+`h : a.isReal = true` for the parsed expression `a`. It must explicitly unfold
+the underlying `rootNear` and `algebraicRoots` definitions when checking that
+proof: they are irreducible, so bare `by decide` is not a sufficient design.
+Evaluation may propose a result, but may not supply trusted proof evidence;
+no `native_decide` or unchecked cast is permitted. Bound elaboration work and
+report resource exhaustion as a diagnostic. Require round trips on the
+committed fixtures within that budget and value preservation for every
+successful elaboration. This adds no public total packer accepting arbitrary
+nonreal values and no `Option.get!` fallback.
 
 ## Order and core instances
 
@@ -134,8 +141,9 @@ carrier. Nonreal input is rejected before any order operation is called.
 In the pinned Lean `v4.34.0-rc2`, the core law classes are in namespace `Std`.
 Provide `Std.IsLinearOrder` (and its preorder and partial-order parents),
 `Std.LawfulOrderLT`, `Std.LawfulOrderBEq`, `Std.LawfulOrderOrd`,
-`Std.LawfulEqOrd`, `Std.TransOrd`, `Std.LawfulOrderMin`, and
-`Std.LawfulOrderMax`, with the left-leaning min/max laws. They relate all the
+`Std.LawfulEqOrd`, `Std.TransOrd`, `Std.LawfulOrderMin`,
+`Std.LawfulOrderMax`, `Std.LawfulOrderLeftLeaningMin`, and
+`Std.LawfulOrderLeftLeaningMax`. They relate all the
 operations above to one order; a bare `Ord` instance is not enough.
 
 Provide `Lean.Grind.Field RealAlgebraicNumber` and
@@ -145,26 +153,50 @@ of strict inequalities by positive multiplication on each side. The core
 field and linear-order packages together let `grind` use ordered-field laws.
 They must remain executable when passed as dictionaries to generic code.
 
-These are **new Mathlib-free proof obligations**, not automatic consequences
-of having Mathlib-free class definitions. The existing
+Use a proof-only `RealAlgebraicNumber.Laws : Prop` class to parameterize the
+Mathlib-free instance definitions. Its fields state canonical Boolean equality,
+the field equations for the executable operations, reflexivity, transitivity,
+antisymmetry and totality of `≤`, compatibility of `<` and `compare` with `≤`,
+and the ordered-addition and positive-multiplication laws. Fields must mention
+the executable data definitions and contain only proofs; they must not choose
+replacement operations or assume a `Field` or order instance on this carrier.
+The computational module constructs the core dictionaries under `[Laws]`.
+
+The companion proves an unconditional `Laws` instance by the injective real
+interpretation and the closure and comparison theorems. This is the same
+dependency pattern as Mathlib-free algorithms parameterized by
+`[Lean.Grind.Field K]`: consumers and dictionary constructors remain
+Mathlib-free, while the concrete law witness can come from a companion.
+All executable operations work without `[Laws]`. Core `grind` examples in a
+Mathlib-free module take `[Laws]`; after importing the companion the instance
+is synthesized without a user hypothesis. There is no unproved concrete law
+assumption at a companion use site.
+
+This distinction matters because the existing
 [field proof](../../HexNumberFieldMathlib/Field.lean) and
 [equality proof](../../HexNumberFieldMathlib/Basic.lean) import Mathlib;
 the `Field.toGrindField` bridge available there does not provide a
-Mathlib-free field instance. A computational `Laws` module must prove the
-closure, canonical equality, field, comparison transitivity, and arithmetic
-monotonicity laws from the executable algorithms and their certificates.
-Place reusable underlying laws in `hex-number-field` when appropriate. No
-axiom, assumed law typeclass, imported companion proof, or `native_decide`
-may stand in for these proofs. This work is required before claiming the
-Mathlib-free ordered-field interface complete.
+Mathlib-free proof of field laws. An unconditional law witness with no
+Mathlib dependency would require new proof infrastructure for exactification,
+canonical equality, and root separation. It is separate follow-up work, not
+an implicit prerequisite of this wrapper. No axiom or `native_decide` may
+replace the required companion proof of `Laws`.
 
 Keep the executable definitions independent of the law module. In the
 companion, build `LinearOrder`, `Field`, and `IsStrictOrderedRing` using the
-same data fields and the real interpretation. The pinned Mathlib expresses an
-ordered field with these separate classes. Its generic core bridges must
-agree with the explicit core instances. Regression examples must compile
-both with only the computational umbrella and after importing the companion;
-check arithmetic, numerals, comparisons, extrema, and small `grind` proofs.
+same data fields and the real interpretation, independently of `[Laws]` so
+proving that package is not circular. Set `LinearOrder`'s `le`, `lt`,
+`compare`, `min`, `max`, `decidableLE`, `decidableLT`, and `decidableEq` fields
+explicitly to the executable definitions. The pinned Mathlib expresses an
+ordered field with these separate classes. Give the explicit core adapters
+priority over Mathlib's generic bridges, and require definitional-equality
+regressions for the inferred `Lean.Grind.Field`, `Lean.Grind.OrderedRing`,
+and `Ord` dictionaries against the named adapters (`... = ... := rfl`).
+Also check the data projections of `LinearOrder`, arithmetic, numerals,
+comparisons, extrema, and small `grind` proofs, both in a computational module
+under `[Laws]` and without that hypothesis in a companion module. The data
+dictionaries must compile; proof erasure must not conceal noncomputable
+replacement data.
 
 ## Square roots and polynomial roots
 
@@ -182,7 +214,7 @@ fallback as unreachable by `sqrt?_isSome` under `0 ≤ a`. Also name and prove
 the internal root-selection success lemma `sqrtRoot?_isSome` under that
 hypothesis, so a failed root search cannot masquerade as a negative argument.
 Require `sqrt_nonneg`, `sqrt_sq` (`sqrt a h * sqrt a h = a`), uniqueness, and
-`sqrt_square` (`sqrt (a*a) h = abs a`, independent of the proof `h`).
+`sqrt_square` (`sqrt (a*a) h = abs a` for any `h : 0 ≤ a*a`).
 
 Represent `RealAlgebraicPoly` as an `AlgebraicPoly` with an erased proof that
 each stored coefficient passes `isReal`. Its array constructor accepts only
@@ -202,8 +234,9 @@ contain **lazy** `AlgebraicRoot`s, not `AlgebraicNumber`s. Exactify each entry,
 then filter and package it through `ofAlgebraic?`, preserving multiplicity.
 Finally sort the retained entries by the real comparison. The result has
 distinct roots in strictly increasing order; multiplicities are attached,
-not repeated array entries. Prove membership iff polynomial evaluation is
-zero, multiplicity agreement, positivity, no duplicates, and sortedness.
+not repeated array entries. For every `a : RealAlgebraicNumber`, prove
+membership iff evaluation at `a.toReal` of the interpreted real polynomial is
+zero; also prove multiplicity agreement, positivity, no duplicates, and sortedness.
 The sum of multiplicities is the number of real roots counted with
 multiplicity; it need not equal the degree when nonreal roots exist.
 
@@ -211,7 +244,8 @@ For integer inputs, provide `ZPoly.realAlgebraicRoots : ZPoly →
 Array RealAlgebraicNumber` by filtering `ZPoly.algebraicRoots` and sorting by
 the same real comparison. This convenience API returns distinct roots and
 inherits the empty-array convention for every constant, including zero;
-state its membership theorem only for `p ≠ 0`. Use `RealAlgebraicPoly.roots`
+state its membership theorem for real algebraic values and `p ≠ 0` only.
+Use `RealAlgebraicPoly.roots`
 when the universal root set or multiplicities matter.
 
 ## Rational recognition, rounding, and approximation
@@ -313,17 +347,37 @@ Missing facts must be supplied, not presumed:
   would need to establish strict increase of the real values in its filtered
   output. Canonicalization selects representatives for individual minimal
   polynomials, so their stored precisions are not a common separation bound
-  for different factors. This property needs a separate correctness audit;
+  for different factors. The existing docstring's assertion of value order
+  therefore overstates the established theorem contract: it needs either a
+  proof or a correction following a separate correctness audit;
   the new wrapper's explicit `realCompare` sort avoids assuming it.
 - `AlgebraicPoly.roots_ordered` exists, but describes `RootSet.Ordered`, a
   deterministic representation order, not the increasing real-value order.
   Prove the new `RealAlgebraicPoly.roots_sorted` after exactification and sorting.
-- The subtype closure lemmas, Mathlib-free equality/field/order laws, real
+- The subtype closure lemmas, the proof of `Laws`, real
   coefficient normalization and evaluation bridges, `toRat?_eq_some`, the
   rounding lemmas, `range_toReal`, and the real-closedness construction are
-  new work. Existing semantic proofs can guide the core proofs but cannot
-  be imported into them. A Mathlib-free class signature does not remove
-  this dependency constraint.
+  new companion work. The Mathlib-free conditional instance adapters and
+  checked real-literal elaborator are new computational work. The distinction
+  between a conditional adapter and a concrete law witness is part of the
+  dependency contract.
+
+## Complexity
+
+Canonical equality uses the underlying polynomial/disc test. Each unequal
+comparison forms `a.p * b.p`, computes its separation precision, and refines
+both operands to that precision. If `C(a,b)` denotes this cost, no constant-time
+comparison bound is claimed. Close roots and large degrees or coefficient
+heights can force high precision. Sorting `r` real roots uses `O(r log r)`
+comparisons, in addition to the existing root driver and exactification costs.
+
+Arithmetic retains the eliminant, factorization, and exactification costs
+of `AlgebraicNumber`, plus one stored-precision reality test per wrapper call.
+`toRat?` inspects degree and coefficients; rounding adds one bounded-precision
+approximation and at most one exact comparison. Size the committed fixtures
+to fit the existing conformance job's wallclock cap. Larger Mignotte parameters,
+degree products, and literal-elaboration costs belong in separately reported
+local measurements under the [benchmarking policy](../benchmarking.md).
 
 ## Conformance and acceptance
 
@@ -332,7 +386,7 @@ The [generic-ring interface](https://python-flint.readthedocs.io/en/latest/_gr.h
 exposes `gr_real_qqbar_ctx` and `gr_complex_qqbar_ctx`; do not assume a
 top-level `flint.qqbar` class. Pin the tested binding and FLINT versions and
 probe construction, comparison, and root support before running fixtures.
-An unavailable exact operation is an explicit oracle failure/skip under the
+An unavailable exact operation follows the profile's mode under the
 [testing policy](../testing.md), never a successful decimal comparison.
 The [FLINT comparison contract](https://flintlib.org/doc/qqbar.html#comparisons)
 provides exact equality and real-part comparison; check reality before using
@@ -341,12 +395,23 @@ examples are informational only, following the rule that Sage is not an oracle.
 
 python-flint `0.9.0` with FLINT `3.6.0` supports the required scalar comparisons,
 square roots, and floor/ceil through `_gr`, but its polynomial context exposes
-no `roots` method. General root fixtures therefore need a binding for FLINT's
-`qqbar_roots_fmpz_poly` and, for algebraic coefficients, `gr_poly_roots_other`
-before conformance is complete. Supply this through python-flint or a test-only
-binding adapter; do not substitute numerical `acb` root approximations as
-the equality/order oracle. The scalar fixtures can run independently, but
-passing them alone does not cover the polynomial-root requirement.
+no `roots` method. For integer polynomials, reuse the certified-ball method in
+[realroots_flint.py](../../scripts/oracle/realroots_flint.py): independent
+`fmpz_poly` factorization identifies rational roots, and certified complex-root
+balls with exact imaginary zero identify the remaining real roots. Escalate
+precision until exact rational endpoint tests establish a bijection with the
+selected isolations and strict order of distinct roots. This covers integer
+root fixtures without a new `qqbar_roots_fmpz_poly` binding. Overlapping balls
+never prove equality, and rounded centres never decide order.
+
+Keep `qqbar` as the scalar arithmetic/equality/comparison oracle. A binding to
+FLINT's `qqbar_roots_fmpz_poly` can additionally construct general scalar root
+inputs directly. General algebraic-coefficient root solving needs
+`gr_poly_roots_other` through python-flint or a test-only adapter before that
+part of conformance is complete; the special `X²-√2` fixture can already be
+checked with iterated `qqbar.sqrt`. Certified enclosures are admissible for
+integer-root matching; uncertified numerical approximations are not an
+equality or ordering oracle.
 
 Serialize rationals as integer numerator/positive denominator and roots by
 integer polynomial plus certified isolating data. The oracle independently
@@ -355,7 +420,20 @@ producer's array index as a cross-system root identity. Record exact ordering,
 construction rejection, roots with multiplicities, and operation results.
 Check a returned dyadic error bound by exact algebraic inequalities.
 
-Required deterministic fixtures:
+Profiles and oracle modes:
+
+- *core*: Oracle `none`, Mode `always`. Run deterministic Lean checks covering
+  every operation and the fixtures below, including the order sanity table.
+- *ci*: Oracle python-flint `qqbar` for scalar operations and certified FLINT
+  root balls for integer polynomials, Mode `required` for both. Install pinned
+  dependencies and require the capabilities exercised by each fixture;
+  missing bindings or inconclusive root matching fail the job. Include the
+  algebraic-coefficient root adapter when its general fixtures are admitted.
+- *local*: the same oracles, Mode `if_available`, with larger degrees, close
+  roots, and randomized construction paths. Report unavailable components as
+  explicit skips; these runs do not replace required CI coverage.
+
+Required deterministic core fixtures, also exported to the CI oracle:
 
 - `-√2 < √2`, and both roots against the exact rationals `7071/5000`
   (`1.4142`) and `14143/10000` (`1.4143`), including reversed comparisons.
@@ -395,7 +473,8 @@ Conformance drivers and fixture emitters belong under `conformance/HexRealAlgebr
 fixtures under `conformance-fixtures/HexRealAlgebraic/`, and the oracle under
 `scripts/oracle/real_algebraic_flint.py` when implementation starts. Extend
 the existing oracle runner and its single CI job. Acceptance also requires
-the named totality and correspondence proofs, `IsRealClosed`, the independent
-Mathlib-free law instances, import-DAG checks, and compilable examples before
-and after importing the companion. No benchmark result or implementation is
+the named totality and correspondence proofs, `IsRealClosed`, the Mathlib-free
+conditional law adapters and their proved companion witness, import-DAG checks,
+and compilable examples before and after importing the companion as specified
+above. No benchmark result or implementation is
 claimed by this SPEC.

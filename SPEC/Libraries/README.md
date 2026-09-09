@@ -158,7 +158,7 @@ Each library with its immediate dependencies:
 - **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
-- **hex-real-algebraic** (planned): hex-number-field
+- **hex-real-algebraic** (planned): hex-number-field, plus its existing computational dependencies where directly imported (see the SPEC's library boundary)
 - **hex-number-field-tower**: hex-number-field, hex-resultant, hex-berlekamp-zassenhaus, hex-row-reduce
 - **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-row-reduce, hex-gfq-ring, hex-basic, hex-finite-field
 - **hex-hensel**: hex-poly-fp, hex-poly-z, hex-basic
