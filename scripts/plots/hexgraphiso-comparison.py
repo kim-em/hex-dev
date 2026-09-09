@@ -39,7 +39,7 @@ in-process comparator, for the marshalling column of the table).
 
 Usage:
 
-    python3 scripts/plots/hexgraphiso-isograph-compare.py \\
+    python3 scripts/plots/hexgraphiso-comparison.py \\
         --data merged.jsonl --machine "chungus2 (AMD EPYC 9455)"
 """
 from __future__ import annotations
@@ -57,13 +57,22 @@ from scripts.bench.graphiso_archive import normalize  # noqa: E402
 # Categorical slots 1-3 of the reference palette, assigned by entity and
 # never by rank: the C reference, then the two Lean implementations.
 # Categorical slots of the reference palette, assigned by entity and never
-# by rank. Slots 1-3 keep the colours the earlier three-series figures
-# used for nauty, hex and IsoGraph; the two further nauty engines take
-# slots 4 and 7. The draw order below is the one the palette validator
-# was run on -- it checks *adjacent* pairs for a line chart, so reordering
-# the legend needs a re-run.
-NAUTY, HEX, ISO = "#2a78d6", "#eb6834", "#1baf7a"
-SPARSE, TRACES = "#eda100", "#4a3aa7"
+# by rank. Five series is past the point where any slot order clears the
+# palette's all-pairs separation floor, which is the pairlist a small
+# multiple is read on, so the set is chosen rather than taken in order:
+# of the eleven five-subsets of the eight slots that pass, this is the
+# only one whose worst pair is above the CVD *target* rather than inside
+# the floor band, so no series needs secondary encoding to be legible.
+# It excludes orange, which is why HexGraphIso is not the colour it was
+# in the earlier three-series figures. Re-run
+# `validate_palette.js "<these five>" --pairs all` before changing any
+# of them. Within that set the assignment is chosen too: its closest pair
+# is aqua against green, so those go either side of the C/Lean boundary
+# where the curves are an order of magnitude apart anyway, rather than
+# onto HexGraphIso against IsoGraph, which is the comparison a reader
+# most needs to separate.
+NAUTY, SPARSE, TRACES = "#2a78d6", "#eda100", "#008300"
+HEX, ISO = "#4a3aa7", "#1baf7a"
 
 PUBLIC = [
     ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
@@ -73,24 +82,7 @@ PUBLIC = [
     ("IsoGraph canonical", "iso_ns", ISO, "^"),
 ]
 
-# The three C engines on their own. Dense nauty is what HexGraphIso
-# transcribes and therefore the like-for-like reference, but it is the
-# wrong tool on a sparse graph and the other two are what the nauty and
-# Traces literature points at for those classes.
-ENGINES = [
-    ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
-    ("nauty 2.9.3 sparse (C)", "sparse_ns", SPARSE, "D"),
-    ("Traces 2.9.3 (C)", "traces_ns", TRACES, "v"),
-]
 
-# The like-for-like trio, for the per-family breakdown: five series do not
-# clear the palette's all-pairs floor, which is the pairlist a small
-# multiple is read on, so that figure is faceted into this and ENGINES.
-LIKE_FOR_LIKE = [
-    ("nauty 2.9.3 dense (C)", "nauty_ns", NAUTY, "o"),
-    ("HexGraphIso canonicalize", "fast_ns", HEX, "s"),
-    ("IsoGraph canonical", "iso_ns", ISO, "^"),
-]
 LIKE = [
     ("nauty 2.9.3 dense + conversion", "nauty_whole_ns", NAUTY, "o"),
     ("HexGraphIso runColored", "search_ns", HEX, "s"),
@@ -160,12 +152,24 @@ def _families(axes, rows: list[dict], series) -> list[str]:
     return families
 
 
+def _save(fig, out_dir, stem: str) -> list:
+    """Write both an SVG and a PNG.
+
+    The SVG is what the manual publishes and what scales; the PNG is what
+    you can paste into a Zulip thread or an issue, and rendering it here
+    rather than by hand is what keeps the two from drifting apart."""
+    paths = [out_dir / f"{stem}.svg", out_dir / f"{stem}.png"]
+    for path in paths:
+        fig.savefig(path, dpi=110 if path.suffix == ".png" else None)
+    return paths
+
+
 def _table(rows: list[dict]) -> str:
     head = ("| family | n | nauty (median) | Hex `canonicalize` | "
             "IsoGraph `canonical` | IsoGraph / Hex | Hex `runColored` | "
-            "IsoGraph + build | sparse | Traces | Hex nodes | "
-            "IsoGraph nodes |")
-    out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+            "IsoGraph + build | IsoGraph / Hex, matched | sparse | Traces "
+            "| Hex nodes | IsoGraph nodes |")
+    out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
 
     def row(label: str, group: list[dict], span: str) -> str:
         med = statistics.median(r["nauty_ns"] for r in group
@@ -183,6 +187,7 @@ def _table(rows: list[dict]) -> str:
                 f"| {f('iso_ns', 'fast_ns'):.2f}× "
                 f"| {f('search_ns', 'nauty_ns'):.0f}× "
                 f"| {f('iso_whole_ns', 'nauty_whole_ns'):.1f}× "
+                f"| {f('iso_whole_ns', 'lit_ns'):.2f}× "
                 f"| {f('sparse_ns', 'nauty_ns'):.2f}× "
                 f"| {f('traces_ns', 'nauty_ns'):.2f}× "
                 f"| {f('nodes', 'nauty_nodes'):.2f}× "
@@ -197,7 +202,11 @@ def _table(rows: list[dict]) -> str:
     out.append("")
     out.append("Ratios are per-instance medians against standalone nauty "
                "2.9.3 on the same instance; the sixth column is the "
-               "head-to-head. The last two are search-tree sizes against "
+               "head-to-head on the public entry points and the ninth the "
+               "same head-to-head with the result shapes matched — "
+               "`runColored` against `canonical` charged the "
+               "dense-to-native conversion, neither of them building a "
+               "canonical graph to hand back. The last two are search-tree sizes against "
                "nauty's: `canonicalize` transcribes nauty's search and "
                "visits exactly its nodes on every instance, so its whole "
                "distance from nauty is per-node cost, while IsoGraph is a "
@@ -260,22 +269,17 @@ def main() -> int:
 
     written = []
     for stem, series, title in [
-            ("hexgraphiso-isograph-cactus", PUBLIC,
+            ("hexgraphiso-comparison-cactus", PUBLIC,
              "canonical labelling: cactus over "
-             f"{len(rows)} family instances"),
-            ("hexgraphiso-isograph-cactus-likeforlike", LIKE,
-             "canonical labelling, matched result shapes: cactus over "
              f"{len(rows)} family instances")]:
         fig, ax = plt.subplots(figsize=(8, 5.5))
         _cactus(ax, rows, series)
         ax.set_title(title, fontsize=11)
         fig.text(0.5, 0.012, caption, ha="center", fontsize=6.5,
                  style="italic", wrap=True)
-        path = args.out_dir / f"{stem}.svg"
         fig.tight_layout(rect=(0, 0.06, 1, 1))
-        fig.savefig(path)
+        written.extend(_save(fig, args.out_dir, stem))
         plt.close(fig)
-        written.append(path)
 
     def family_figure(series, stem: str, title: str):
         families = _order(rows)
@@ -296,20 +300,15 @@ def main() -> int:
         fig.suptitle(title, fontsize=12)
         fig.text(0.5, 0.006, caption, ha="center", fontsize=6.5,
                  style="italic")
-        path = args.out_dir / f"{stem}.svg"
         fig.tight_layout(rect=(0, 0.10, 1, 0.97))
-        fig.savefig(path)
+        written.extend(_save(fig, args.out_dir, stem))
         plt.close(fig)
-        written.append(path)
 
-    family_figure(LIKE_FOR_LIKE, "hexgraphiso-isograph-families",
+    family_figure(PUBLIC, "hexgraphiso-comparison-families",
                   "canonical labelling by family, against vertex count")
-    family_figure(ENGINES, "hexgraphiso-nauty-engines",
-                  "the three nauty 2.9.3 engines by family, "
-                  "against vertex count")
 
     table = _table(rows) + "\n\n" + _solved(rows)
-    table_path = args.out_dir / "hexgraphiso-isograph-table.md"
+    table_path = args.out_dir / "hexgraphiso-comparison-table.md"
     table_path.write_text(table + "\n")
     written.append(table_path)
 

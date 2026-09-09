@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+ "current_blob": "b90ea948027e0fe88f063ab0e758c30c36dd6896",
+ "reason": "Three build-description edits, none of which changes a byte of the code the factorization service runs. (1) #10135 turns the `hexarithffi` and `hexmodarithffi` `extern_lib`s into `target`s attached to their libraries through `moreLinkObjs`: the same C sources are compiled with the same flags into the same archive, and the same archive reaches the same binaries, only by an explicit edge rather than Lake's implicit one. (2) The `hexArithOTarget` and `zmod64MulOTarget` compile steps replace `compileO oFile srcFile flags` with the `proc` that `compileO` is defined to run -- `cc -c -o <o> <src> <flags>`, argument for argument (Lake `Build/Actions.lean`) -- adding only a `TMPDIR` in the child's environment so the compiler writes its scratch files under the build directory. Compiler, inputs and flags are unchanged, so the objects are. (3) Two `lean_lib HexRationalFn*` declarations are added; they are not in the factorization call graph and nothing existing links them. Written on behalf of #10135, which changed `lakefile.lean` without re-measuring or exempting the factorization sweep and so left `main` failing this check."
+}

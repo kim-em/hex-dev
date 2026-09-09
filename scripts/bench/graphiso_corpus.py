@@ -470,7 +470,7 @@ def corpus(max_n: int, max_hard_n: int):
     # sparse ones, and they do not agree about which of them is expensive.
     # `projective-plane` is capped hardest because IsoGraph does not
     # terminate within twenty minutes on PG(2,11) on 266 vertices, where
-    # nauty needs 0.3 ms; see reports/graphiso-isograph-comparison.md.
+    # nauty needs 0.3 ms; see reports/graphiso-comparison.md.
     # The caps are the corpus's outer edge, not a difficulty judgement:
     # the sweep's per-instance time budget is what actually decides where
     # each family stops, and it stops each implementation separately.

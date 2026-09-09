@@ -18,7 +18,7 @@ root = "testing.HexCompare"
 ```
 
 to its `lakefile.toml`. It is kept here so the comparison in
-`reports/graphiso-isograph-comparison.md` can be rerun; IsoGraph is a
+`reports/graphiso-comparison.md` can be rerun; IsoGraph is a
 separate repository and nothing here is published into it.
 
 Measured against IsoGraph 7cfa2370 (2026-09-02), Lean v4.34.0-rc2.
