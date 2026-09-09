@@ -254,10 +254,11 @@ theorem AlgebraicNumber.realCompare_eq (a b : AlgebraicNumber)
     a.realCompare b = compare a.toComplex.re b.toComplex.re
 ```
 
-Each rests on `mahlerPrec_separates` and `approx_mem`: at `separationPrec`
-the balls of distinct roots of one polynomial are disjoint, so the root whose
-ball meets a given point's ball is unique, and the order of ball centres is
-the order of real roots.
+`conj_toComplex` follows from orientation and certificate transport. `I` is
+selected by its exact upper tag. `realCompare_eq` uses `mahlerPrec_separates`
+and `approx_mem` for the product polynomial: its separated ball centres have
+the order of the two real values. The public mirror-ball geometry helpers
+remain available for compatibility independently of the tag implementation.
 
 ## The nearest root
 
@@ -438,3 +439,19 @@ existing complete algebraic-coefficient solver. This supplies `IsAlgClosed`;
 the minimal-polynomial theorem supplies `Algebra.IsAlgebraic ℚ`, and together
 they give `IsAlgClosure ℚ AlgebraicNumber`. Axiom audits include the principal
 radical and algebraic-closedness instances.
+
+### Enumeration order
+
+`AlgebraicNumber.rootKey` maps to a lexicographic centre key;
+`rootLe_iff`, `rootLe_trans`, and `rootLe_total` prove the computational
+comparator's total-preorder laws. `ZPoly.algebraicRoots_sorted` proves the
+actual output is sorted by that comparator. `rootLe_conj` places the lower
+member before the upper one, and `between_conjugates` proves any value
+between them equals one of the endpoints. Together with
+`ZPoly.conj_mem_algebraicRoots` and `algebraicRoots_nodup`, these give adjacent
+nonreal conjugate pairs. The key is injective on nonreal canonical values
+(`eq_of_rootKey`); no cross-factor real-value ordering is inferred from
+centre ordering.
+
+`nthRoot_conj_of_not_lt` restates the branch-cut condition using the executable
+complex partial order: `¬ a < 0` excludes exactly the negative real axis.

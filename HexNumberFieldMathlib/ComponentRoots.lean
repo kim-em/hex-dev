@@ -22,7 +22,8 @@ namespace Hex.PolyQuot.Roots
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
-private theorem intListLe_iff (as bs : List Int) :
+/-- The executable coefficient-list comparison is the lexicographic order. -/
+theorem intListLe_iff (as bs : List Int) :
     intListLe as bs ↔ as ≤ bs := by
   induction as generalizing bs with
   | nil =>

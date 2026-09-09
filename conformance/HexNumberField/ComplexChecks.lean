@@ -22,6 +22,7 @@ private def conjugation (_ : Unit) : Bool :=
     RealAlgebraicNumber.ofAlgebraic? i == none &&
     decide ((0 : AlgebraicNumber) ≤ 0) && !decide ((0 : AlgebraicNumber) < 0) &&
     decide (i < z) && decide (i ≤ z) && !decide (z ≤ i) &&
+    !decide (i ≤ 2 * i) && !decide (2 * i ≤ i) && !decide (i < 2 * i) &&
     !decide (i ≤ 0) && !decide ((0 : AlgebraicNumber) ≤ i) &&
     decide (s ≤ (s + 1) - 1) && !decide (s < (s + 1) - 1)
 

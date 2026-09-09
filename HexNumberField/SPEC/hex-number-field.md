@@ -516,7 +516,6 @@ def AlgebraicRoot.ofRefined (q : ZPoly) (prim : ZPoly.content q = 1)
 def ZPoly.algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber)
 def ZPoly.algebraicRoots  (p : ZPoly) : Array AlgebraicNumber
 
-def DyadicSquare.meetsRealAxis (s : DyadicSquare) : Bool
 def AlgebraicRoot.isReal (a : AlgebraicRoot) : Bool
 def AlgebraicNumber.isReal (a : AlgebraicNumber) : Bool
 def AlgebraicNumber.rootLe (a b : AlgebraicNumber) : Bool
@@ -540,6 +539,8 @@ canonical dyadic centres, then nonreal conjugate pairs with the lower member
 first. Pair keys are the canonical upper base's `(im, re, precision)`, followed
 by the integer minimal-polynomial coefficient list to break ties between
 factors. This keeps a pair together without exact coordinate extraction.
+The companion proves the comparator is a total preorder, the output is
+sorted by it, and no other canonical value lies between conjugate endpoints.
 It is a deterministic centre order, not exact lexicographic `(abs im, re, im)`.
 Use `ZPoly.realAlgebraicRoots` in the real library when exact value ordering
 of real roots from different irreducible factors is required.
@@ -565,7 +566,6 @@ representative; its ball contains `a.toComplex` and has radius at most
 def AlgebraicNumber.separationPrec (p : ZPoly) : Int
 def AlgebraicNumber.I : AlgebraicNumber
 def AlgebraicNumber.mirrorBall (b : DyadicComplexBall) : DyadicComplexBall
-def AlgebraicNumber.conj (a : AlgebraicNumber) : AlgebraicNumber
 def AlgebraicNumber.realCompare (a b : AlgebraicNumber) : Ordering
 ```
 
@@ -575,16 +575,15 @@ distinct roots by more than four ball radii, and the two extra bits absorb the
 centre errors. Every operation here works at a fixed such precision; none
 refines without bound.
 
-`I` is the root of `X² + 1` whose stored isolation centre has positive
-imaginary part. `conj a` is `a` when `a.isReal`; otherwise it is the root of
-`a.p` whose approximation ball at `separationPrec a.p` meets the mirror image
-in the real axis of `a`'s ball, `mirrorBall`, which contains the conjugate.
-That root is unique at that precision. `realCompare a b`, for real `a` and
-`b`, is `.eq` when `a == b` and otherwise orders the centres of the two
-approximation balls at `separationPrec (a.p * b.p)`, at which the balls of
-the two distinct numbers are disjoint. The companion proves `I` is the
-imaginary unit, `conj` is complex conjugation, and `realCompare` is the order
-of the real parts.
+`I` selects the upper root of `X² + 1`. Conjugation is the tag operation
+specified with the canonical representation below; it uses no approximation
+balls. `mirrorBall` remains a public geometric helper for compatibility and
+for the retained search-strategy benchmark arm.
+
+`realCompare a b`, for real `a` and `b`, is `.eq` when `a == b` and otherwise
+orders the centres of the two approximation balls at
+`separationPrec (a.p * b.p)`, where the balls of distinct values are disjoint.
+The companion proves this is the order of their real parts.
 
 ## The nearest root
 
@@ -606,7 +605,7 @@ instance : Repr AlgebraicNumber
 `rootNear p re im` is the root of `p` nearest to the point `re + im·i`; among
 roots at exactly the same distance it is the first in `algebraicRoots` order,
 so for instance `rootNear #p[-2, 0, 1] 0` is `-√2` and, from a real point,
-a conjugate pair resolves to the member with the smaller isolation centre.
+a conjugate pair resolves to the lower-imaginary member in enumeration order.
 Scientific literals are rationals, so `rootNear #p[-2, 0, 1] 1.4` and
 `rootNear #p[1, 0, 1] 0 0.9` read as written. A constant polynomial has no
 roots and yields `0`. Like `algebraicRoots` it is irreducible, so that a type
@@ -887,12 +886,77 @@ Absence declarations, all with reason
 
 ## Complex operations and common fields
 
+```lean
+inductive AlgebraicNumber.RootSide where
+  | real | upper | lower
+  deriving DecidableEq, BEq
+
+structure AlgebraicNumber.OrientedIsolation (p : ZPoly) where
+  base : RefinedIsolation p
+  side : AlgebraicNumber.RootSide
+  valid : match side with
+    | .real => base.1.square.meetsRealAxis = true
+    | .upper | .lower => base.1.square.radiusHi < base.1.square.im
+
+def AlgebraicNumber.OrientedIsolation.rep {p : ZPoly}
+    (r : AlgebraicNumber.OrientedIsolation p) : RefinedIsolation p
+def AlgebraicNumber.OrientedIsolation.conj {p : ZPoly}
+    (r : AlgebraicNumber.OrientedIsolation p) : AlgebraicNumber.OrientedIsolation p
+def AlgebraicNumber.sideOf {p : ZPoly} (r : RefinedIsolation p) : AlgebraicNumber.RootSide
+def AlgebraicNumber.orient? {p : ZPoly} (base : RefinedIsolation p)
+    (side : AlgebraicNumber.RootSide) : Option (AlgebraicNumber.OrientedIsolation p)
+def AlgebraicNumber.rawRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
+    Option {r : RefinedIsolation p //
+      AlgebraicNumber.IsCanonical p squarefree r ∧ r.sameRoot rep = true}
+def AlgebraicNumber.isolation (a : AlgebraicNumber) : AlgebraicNumber.OrientedIsolation a.p
+def AlgebraicNumber.side (a : AlgebraicNumber) : AlgebraicNumber.RootSide
+def AlgebraicNumber.conj (a : AlgebraicNumber) : AlgebraicNumber
+
+def PolyQuot.ofIsolation {p : ZPoly} (r : RefinedIsolation p) (f : DensePoly Rat) :
+    PolyQuot p (SimpleRoot.mk r)
+
+def AlgebraicNumber.partialCompare (a b : AlgebraicNumber) : Option Ordering
+instance : LT AlgebraicNumber
+instance : LE AlgebraicNumber
+instance (a b : AlgebraicNumber) : Decidable (a < b)
+instance (a b : AlgebraicNumber) : Decidable (a ≤ b)
+def AlgebraicNumber.nthRoot (a : AlgebraicNumber) (n : Nat) : AlgebraicNumber
+def AlgebraicNumber.sqrt (a : AlgebraicNumber) : AlgebraicNumber
+
+namespace AlgebraicNumber.Radical
+structure Candidate where
+  value : AlgebraicNumber
+  twiceRe : AlgebraicNumber
+  correct : twiceRe = value + value.conj
+def rank (a : AlgebraicNumber) : Int
+def candidate (r : RootCount) : Candidate
+def choose (a b : Candidate) : Candidate
+def select (roots : Array RootCount) : Option Candidate
+def polynomial (a : AlgebraicNumber) (n : Nat) : AlgebraicPoly
+end AlgebraicNumber.Radical
+
+namespace QAdjoin
+def powerTable (a : AlgebraicNumber) : Array AlgebraicNumber
+def ofAlgebraic? (a b : AlgebraicNumber) : Option (QAdjoin a)
+def ofAlgebraics? (a : AlgebraicNumber) (bs : Array AlgebraicNumber) :
+    Array (Option (QAdjoin a))
+structure Presentation where
+  generator : AlgebraicNumber
+  entries : Array (QAdjoin generator)
+def common (bs : Array AlgebraicNumber) : Presentation
+end QAdjoin
+```
+
+
 `AlgebraicNumber.partialCompare : AlgebraicNumber → AlgebraicNumber → Option Ordering`
 returns `none` exactly for unequal imaginary parts. Global executable `LT`,
 `LE` and their decisions match Mathlib's complex partial order: equal imaginary
 parts and ordered real parts. Structural equality and real-real comparisons
 are direct paths; differing orientation tags reject immediately; remaining
-cases test whether the difference is real and use `realCompare`. There is no
+cases test whether the difference is real and use `realCompare`. This last
+path performs an exact subtraction, including resultant construction,
+factorization and root isolation; it can cost as much as field arithmetic. There is no
 `Ord` or `LinearOrder` instance on the complex type. The companion supplies
 `PartialOrder`, `IsStrictOrderedRing`, `StarRing`, `conjRingEquiv` and an order
 embedding into the scoped complex order.

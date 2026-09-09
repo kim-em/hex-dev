@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "cfeee74741e7f59ef1bd3b949463db7a87aee62b",
+  "reason": "Retains the inherited build-only transitions reviewed in lakefile-lean-a56a63e3-b90ea948.json. Relative to that b90ea948 lakefile, this change only declares HexRealAlgebraic and its Mathlib companion, registers their independent conformance modules, and adds the real-algebraic fixture and check executables. No factorization-service declaration, dependency, native recipe, compiler flag, link argument, or runtime source changes. The new libraries depend on the measured libraries; the factorization service does not import either new library, so these registrations cannot change the measured executable. The additional transition from f2d2db5a only registers HexNumberField.ComplexChecks in the independent HexConformance target. The measured factorization service and its runtime imports do not include that target."
+}

@@ -15,7 +15,8 @@ public section
 /-!
 The exact primitives of `HexNumberField/Nearest.lean` do what their names say:
 `I` is the imaginary unit, `conj` is complex conjugation, and `realCompare`
-orders real algebraic numbers. Each proof is the same argument: at
+orders real algebraic numbers. Conjugation follows by certificate transport.
+The comparison and nearest-root proofs use separation: at
 `separationPrec` the approximation balls of two distinct roots of one
 polynomial are disjoint, because `mahlerPrec` separates the roots by more
 than four radii, so a ball that meets a given point's ball belongs to a
@@ -88,7 +89,8 @@ end DyadicComplexBall
 
 namespace AlgebraicNumber
 
-/-- The mirror ball contains the conjugates of the ball's points. -/
+/-- The mirror ball contains conjugates of its points. This public geometric
+helper is retained for compatibility; tag conjugation does not need it. -/
 theorem conj_mem_mirrorBall {b : DyadicComplexBall} {z : ℂ} (h : z ∈ b.set) :
     starRingEnd ℂ z ∈ (mirrorBall b).set := by
   have hre : (mirrorBall b).re = b.re := rfl
@@ -115,7 +117,8 @@ theorem approx_radius_separationPrec (a : AlgebraicNumber) (p : ZPoly) :
   rw [this] at h
   exact h
 
-/-- Two roots of `p` whose balls at `separationPrec p` meet are equal. -/
+/-- Two roots of `p` whose balls at `separationPrec p` meet are equal.
+This public separation helper remains available independently of tag conjugation. -/
 theorem eq_of_meets {p : ZPoly} (hp : p ≠ 0) {a b : AlgebraicNumber}
     (ha : (toPolyℂ p).IsRoot a.toComplex) (hb : (toPolyℂ p).IsRoot b.toComplex)
     {ballA ballB : DyadicComplexBall}
@@ -252,11 +255,9 @@ theorem toPolyℂ_xsq_add_one : toPolyℂ #p[1, 0, 1] = X ^ 2 + 1 := by
 theorem three_le_mahlerPrec (p : ZPoly) : 3 ≤ mahlerPrec p :=
   Nat.le_add_right 3 _
 
-/-- A root of `X² + 1` has a stored isolation centre in the upper half plane
-exactly when it is the imaginary unit. -/
-theorem square_im_pos_iff {d : AlgebraicNumber}
+private theorem root_I_or_neg_I {d : AlgebraicNumber}
     (hd : d ∈ ZPoly.algebraicRoots #p[1, 0, 1]) :
-    0 < d.rep.1.square.im ↔ d.toComplex = Complex.I := by
+    d.toComplex = Complex.I ∨ d.toComplex = -Complex.I := by
   have hp : (#p[1, 0, 1] : ZPoly) ≠ 0 := by decide
   have hroot : (toPolyℂ #p[1, 0, 1]).IsRoot d.toComplex :=
     (ZPoly.mem_algebraicRoots_iff _ hp _).mp ⟨d, by simpa using hd, rfl⟩
@@ -266,7 +267,14 @@ theorem square_im_pos_iff {d : AlgebraicNumber}
     have := hroot
     simp only [IsRoot.def, eval_add, eval_pow, eval_X, eval_one] at this
     linear_combination this
-  have hcases := sq_eq_sq_iff_eq_or_eq_neg.mp hsq
+  exact sq_eq_sq_iff_eq_or_eq_neg.mp hsq
+
+/-- A root of `X² + 1` has a stored isolation centre in the upper half plane
+exactly when it is the imaginary unit. -/
+theorem square_im_pos_iff {d : AlgebraicNumber}
+    (hd : d ∈ ZPoly.algebraicRoots #p[1, 0, 1]) :
+    0 < d.rep.1.square.im ↔ d.toComplex = Complex.I := by
+  have hcases := root_I_or_neg_I hd
   set s := d.rep.1.square with hs
   have hmem : d.toComplex ∈ HexRootsMathlib.DyadicSquare.closedDisc s :=
     RefinedIsolation.root_mem_closedDisc d.rep
@@ -322,13 +330,17 @@ theorem I_toComplex : I.toComplex = Complex.I := by
   obtain ⟨c, hcmem, hcval⟩ := (ZPoly.mem_algebraicRoots_iff _ hp _).mpr hrootI
   have hcmem' : c ∈ ZPoly.algebraicRoots #p[1, 0, 1] := by simpa using hcmem
   have hsome : ((ZPoly.algebraicRoots #p[1, 0, 1]).find? fun a =>
-      0 < a.rep.1.square.im).isSome = true :=
-    Array.find?_isSome.mpr ⟨c, hcmem', decide_eq_true ((square_im_pos_iff hcmem').mpr hcval)⟩
+      decide (a.side = .upper)).isSome = true :=
+    Array.find?_isSome.mpr ⟨c, hcmem', decide_eq_true ((side_upper_iff c).mpr
+      (by rw [hcval]; exact zero_lt_one))⟩
   obtain ⟨c', hc'⟩ := Option.isSome_iff_exists.mp hsome
   rw [hc', Option.getD_some]
   have hmem' := Array.mem_of_find?_eq_some hc'
   have hpred := Array.find?_some hc'
-  exact (square_im_pos_iff hmem').mp (of_decide_eq_true hpred)
+  have hpos := (side_upper_iff c').mp (of_decide_eq_true hpred)
+  rcases root_I_or_neg_I hmem' with h | h
+  · exact h
+  · norm_num [h] at hpos
 
 /--
 info: 'Hex.AlgebraicNumber.I_toComplex' depends on axioms: [propext, Classical.choice, Quot.sound]

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexNumberField.Radical
 public import HexNumberFieldMathlib.Conjugate
+public import HexNumberFieldMathlib.Order
 public import HexNumberFieldMathlib.Polynomial
 public import HexNumberFieldMathlib.AlgebraicRoots
 public import HexNumberFieldMathlib.PrincipalRoot
@@ -220,6 +221,15 @@ theorem nthRoot_conj (a : AlgebraicNumber) (n : Nat) (ha : a.toComplex.arg ≠ R
   apply toComplex_injective
   simp only [nthRoot_toComplex, conj_toComplex]
   simpa using Complex.conj_cpow a.toComplex ((n : ℂ)⁻¹) ha
+
+/-- A decidable branch-cut condition for conjugating principal radicals. -/
+theorem nthRoot_conj_of_not_lt (a : AlgebraicNumber) (n : Nat) (ha : ¬ a < 0) :
+    a.conj.nthRoot n = (a.nthRoot n).conj := by
+  apply nthRoot_conj a n
+  intro harg
+  apply ha
+  rw [lt_iff, zero_toComplex]
+  simpa only [Complex.zero_re, Complex.zero_im] using Complex.arg_eq_pi_iff.mp harg
 
 /-- info: 'Hex.AlgebraicNumber.nthRoot_toComplex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

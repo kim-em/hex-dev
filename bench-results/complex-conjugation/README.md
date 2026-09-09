@@ -19,6 +19,9 @@ The command constructs each input once, records construction separately, checks
 that the two algorithms agree, and runs eight adjacent AB/BA blocks. Search
 uses two calls per block; tag conjugation uses 100000. Both arms alternate a
 number and its conjugate and consume the output orientation in a checksum.
+Alternating inputs adds one extra tag conjugation on half the iterations;
+its overhead is visible in the tag timing and negligible beside the search.
+The reported tag number therefore includes about 1.5 conjugations per iteration.
 Every completed block is retained in `samples.jsonl`; metadata records CPU,
 load, host, toolchain and base revision. No rerun or sample exclusion was used.
 

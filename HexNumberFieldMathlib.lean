@@ -17,6 +17,7 @@ public import HexNumberFieldMathlib.Order
 public import HexNumberFieldMathlib.Conjugate
 public import HexNumberFieldMathlib.AlgebraicallyClosed
 public import HexNumberFieldMathlib.Radical
+public import HexNumberFieldMathlib.RootOrder
 
 public section
 

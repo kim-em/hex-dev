@@ -355,7 +355,7 @@ OPERATIONS = {"complex", "order", "scalar", "arithmetic", "approx", "integerRoot
 REQUIRED_CASES = {
     **{op: names for op, names in [
         ("complex", {"complex-zero", "complex-rational", "complex-cut", "complex-upper",
-                     "complex-lower", "complex-fourth", "complex-above-cut", "complex-below-cut"}),
+                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut"}),
         ("order", {"zero", "rational", "sqrt-signs", "sqrt-lower", "sqrt-upper", "negative-lower",
                    "negative-upper", "equal-sqrt", "equal-square", "equal-cancel", "cross-factor",
                    "mignotte-close", "mignotte-left-rational", "mignotte-right-rational"}),

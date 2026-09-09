@@ -83,7 +83,7 @@ private def emitComplex : IO Unit := do
   for (case, a, b, n) in #[
       ("complex-zero", 0, 0, 0), ("complex-rational", 4, 5, 2),
       ("complex-cut", -8, 0, 3), ("complex-upper", i, 1 + i, 3), ("complex-fourth", -1, 0, 4),
-      ("complex-lower", -i, i, 2),
+      ("complex-lower", -i, i, 2), ("complex-same-side", i, 2 * i, 2),
       ("complex-above-cut", -1 + i / 16, -1, 2),
       ("complex-below-cut", -1 - i / 16, -1, 2)] do
     emit case "complex" [("a", algebraic a), ("b", algebraic b),

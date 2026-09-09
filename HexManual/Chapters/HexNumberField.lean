@@ -361,12 +361,16 @@ breaking remaining ties. This is a cheap deterministic enumeration order;
 it is not lexicographic comparison of exact complex coordinates. Root indices
 and nearest-root ties involving nonreal values may change when the isolation
 algorithm changes. A printed `rootNear` expression still names its original
-mathematical value.
+mathematical value. The companion proves sorting with
+{name}`Hex.ZPoly.algebraicRoots_sorted` and the absence of intervening values
+with {name}`Hex.AlgebraicNumber.between_conjugates`.
 
 The global `<` and `≤` operations instead match Mathlib's complex partial
 order: imaginary parts must be equal, and real parts are compared. Thus
 `I < 1 + I`, while neither `0 ≤ I` nor `I ≤ 0`. There is no total `Ord` or
-`LinearOrder` instance on algebraic numbers. Use the real algebraic type for
+`LinearOrder` instance on algebraic numbers. Comparing unequal nonreal values
+on the same side of the real axis computes an exact subtraction, so it can
+cost as much as a field operation. Use the real algebraic type for
 sorting real values by exact comparison. The companion's
 {name}`Hex.AlgebraicNumber.toComplexOrder` preserves and reflects this order.
 
@@ -409,7 +413,9 @@ example (a : AlgebraicNumber) : a.sqrt.toComplex = a.toComplex.sqrt :=
 
 Conjugation commutes with these branches away from the negative real axis;
 {name}`Hex.AlgebraicNumber.nthRoot_conj` states the necessary argument
-hypothesis. On the cut, both `sqrt (-1)` and `sqrt (conj (-1))` are `I`,
+hypothesis. The corollary {name}`Hex.AlgebraicNumber.nthRoot_conj_of_not_lt`
+uses the executable condition `¬ a < 0`, which holds exactly away from the
+negative real axis in the complex partial order. On the cut, both `sqrt (-1)` and `sqrt (conj (-1))` are `I`,
 whereas `conj (sqrt (-1))` is `-I`.
 
 # Choosing a field for several values

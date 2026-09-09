@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField.Convert
+public import HexNumberField.Roots
 
 public section
 
@@ -66,7 +67,7 @@ def rootLe (a b : AlgebraicNumber) : Bool :=
     if s.im ≠ t.im then decide (s.im < t.im)
     else if s.re ≠ t.re then decide (s.re < t.re)
     else if s.prec ≠ t.prec then decide (s.prec < t.prec)
-    else if a.p ≠ b.p then compare a.p.toArray.toList b.p.toArray.toList != .gt
+    else if a.p ≠ b.p then PolyQuot.Roots.intListLe a.p.toArray.toList b.p.toArray.toList
     else decide (a.side = .lower) || decide (b.side ≠ .lower)
 
 /-- A dyadic complex ball of radius at most `2^(-prec)` around the value,
@@ -131,8 +132,9 @@ def algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber) :=
 
 /-- Every distinct complex root of `p` as a canonical algebraic number: the
 squarefree primitive part of `p` is isolated, and each isolated root is
-exactified. Real roots come first, in increasing order, then the nonreal
-roots in a deterministic order set by their isolations. Multiplicities are
+exactified. Real roots come first by isolation centre, then adjacent nonreal
+conjugate pairs with the lower member first. For exact value ordering of real
+roots use `ZPoly.realAlgebraicRoots` from `HexRealAlgebraic`. Multiplicities are
 not returned; use `AlgebraicPoly.roots` for them. A constant polynomial,
 including zero, has no roots here. Irreducible for the reason given at
 `algebraicRoots?`. -/

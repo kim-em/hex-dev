@@ -32,7 +32,7 @@ def separationPrec (p : ZPoly) : Int :=
 the upper half plane. -/
 @[expose]
 def I : AlgebraicNumber :=
-  ((ZPoly.algebraicRoots #p[1, 0, 1]).find? fun a => 0 < a.rep.1.square.im).getD
+  ((ZPoly.algebraicRoots #p[1, 0, 1]).find? fun a => decide (a.side = .upper)).getD
     (Hex.panicWith 0 "AlgebraicNumber.I: imaginary unit not found")
 
 /-- The mirror image of a ball in the real axis. -/

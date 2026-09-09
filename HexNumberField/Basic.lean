@@ -226,6 +226,18 @@ def conj (a : AlgebraicNumber) : AlgebraicNumber :=
 /-- Conjugation exposes the reflected isolation without exposing the sealed constructor. -/
 theorem conj_rep (a : AlgebraicNumber) : HEq a.conj.rep a.isolation.conj.rep := by rfl
 
+/-- Conjugation preserves the canonical base square. -/
+@[simp] theorem conj_base_square (a : AlgebraicNumber) :
+    a.conj.isolation.base.1.square = a.isolation.base.1.square := by
+  rcases a with ⟨p, prim, pos, degree, checked, squarefree, ⟨base, side, valid⟩, hc⟩
+  cases side <;> rfl
+
+/-- Conjugation flips precisely the two nonreal sides. -/
+@[simp] theorem conj_side (a : AlgebraicNumber) : a.conj.side =
+    match a.side with | .real => .real | .upper => .lower | .lower => .upper := by
+  rcases a with ⟨p, prim, pos, degree, checked, squarefree, ⟨base, side, valid⟩, hc⟩
+  cases side <;> rfl
+
 /-- Real values are fixed by conjugation. -/
 theorem conj_of_side_real (a : AlgebraicNumber) (h : a.side = .real) : a.conj = a := by
   rcases a with ⟨p, prim, pos, degree, checked, squarefree, ⟨base, side, valid⟩, hc⟩

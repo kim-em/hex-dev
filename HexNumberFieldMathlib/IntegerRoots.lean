@@ -346,13 +346,9 @@ theorem approx_radius (a : AlgebraicNumber) (prec : Int) :
     (a.approx prec).realRadius ≤ (2 : ℝ) ^ (-prec) :=
   PolyQuot.approx_radius a.toQAdjoin a.rep a.rep_mk prec
 
-/-- Complex roots of an integer polynomial are closed under conjugation. -/
+/-- Compatibility name for conjugate closure, now proved in `HexRootsMathlib`. -/
 theorem isRoot_conj {p : ZPoly} {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
-    (toPolyℂ p).IsRoot (starRingEnd ℂ z) := by
-  simp only [Polynomial.IsRoot.def, toPolyℂ, Polynomial.eval_map] at hz ⊢
-  have hcomp : (starRingEnd ℂ).comp (Int.castRingHom ℂ) = Int.castRingHom ℂ :=
-    RingHom.ext_int _ _
-  rw [← hcomp, ← Polynomial.hom_eval₂, hz, map_zero]
+    (toPolyℂ p).IsRoot (starRingEnd ℂ z) := HexRootsMathlib.ZPoly.isRoot_conj hz
 
 /-- The reality test is exact at the stored separation precision. -/
 theorem isReal_iff (a : AlgebraicNumber) : a.isReal = true ↔ a.toComplex.im = 0 := by
@@ -395,3 +391,16 @@ info: 'Hex.AlgebraicNumber.approx_mem' depends on axioms: [propext, Classical.ch
 #print axioms AlgebraicNumber.approx_mem
 
 end Hex
+
+namespace Hex.AlgebraicNumber
+
+/-- The upper tag is exactly positivity of the imaginary coordinate. -/
+theorem side_upper_iff (a : AlgebraicNumber) : a.side = .upper ↔ 0 < a.toComplex.im := by
+  have h := a.isolation.sign
+  change match a.side with
+    | .real => a.toComplex.im = 0
+    | .upper => 0 < a.toComplex.im
+    | .lower => a.toComplex.im < 0 at h
+  cases hs : a.side <;> simp_all <;> linarith
+
+end Hex.AlgebraicNumber

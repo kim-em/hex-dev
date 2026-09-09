@@ -31,7 +31,9 @@ The output preserves input order and records nonmembership separately for each e
   bs.map fun b => if a.isReal && !b.isReal then none
     else AlgebraicPoly.Common.coordinates? a b powers
 
-/-- One primitive generator and the input values in its rational power basis. -/
+/-- One primitive generator and the input values in its rational power basis.
+The public `entries` name describes arbitrary input collections independently of
+`AlgebraicPoly.Common.Presentation`, whose `coefficients` field serves polynomial construction. -/
 structure Presentation where
   generator : AlgebraicNumber
   entries : Array (QAdjoin generator)
