@@ -15,3 +15,7 @@ public import HexRealAlgebraicMathlib.Algebraic
 public import HexRealAlgebraicMathlib.Approx
 public import HexRealAlgebraicMathlib.Rational
 public import HexRealAlgebraicMathlib.Rounding
+public import HexRealAlgebraicMathlib.Polynomial
+public import HexRealAlgebraicMathlib.Roots
+public import HexRealAlgebraicMathlib.Sqrt
+public import HexRealAlgebraicMathlib.RealClosed
