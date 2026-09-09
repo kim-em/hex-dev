@@ -1,6 +1,0 @@
-{
-  "path": "HexHensel/Linear.lean",
-  "baseline_blob": "f4f9fc7a4f3902ed354a67309dde7e50a3a3a120",
-  "current_blob": "3d0eecf200bd1f6c369280521d22877ebaf2af26",
-  "reason": "Replaces a representation-unfolding proof that the final stored coefficient is the leading coefficient with the existing DensePoly.leadingCoeff_eq_coeff_last theorem. No executable definition or measured branch changes."
-}

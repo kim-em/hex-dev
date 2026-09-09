@@ -1055,7 +1055,7 @@ where the degree is. -/
   cases hback : s.terms.back? with
   | none =>
       rw [Array.back?_eq_none_iff] at hback
-      unfold leadingCoeff DensePoly.leadingCoeff
+      unfold leadingCoeff
       rw [hback]
       have hcoeff : s.toDense.coeff (s.toDense.size - 1) = 0 := by
         rw [coeff_toDense]
@@ -1064,11 +1064,16 @@ where the degree is. -/
         have : u ∈ s.terms := Array.mem_def.mpr hu
         rw [hback] at this
         simp at this
-      exact hcoeff
+      by_cases hpos : 0 < s.toDense.size
+      · rw [DensePoly.leadingCoeff_eq_coeff_last s.toDense hpos]
+        exact hcoeff
+      · have hsize : s.toDense.size = 0 := Nat.eq_zero_of_not_pos hpos
+        have hs : s.toDense = 0 := (DensePoly.size_eq_zero_iff s.toDense).mp hsize
+        rw [hs, DensePoly.leadingCoeff_zero]
   | some t =>
       have hsize := size_toDense_eq hback
       have : s.toDense.leadingCoeff = s.toDense.coeff (s.toDense.size - 1) :=
-        rfl
+        DensePoly.leadingCoeff_eq_coeff_last s.toDense (by rw [hsize]; omega)
       rw [this, hsize, coeff_toDense,
         show t.1 + 1 - 1 = t.1 from by omega,
         ← leadingCoeff_eq_coeff hback]

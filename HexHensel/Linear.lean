@@ -1452,10 +1452,8 @@ private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
   · exact hpos
   · have hsize : f.size = 0 := Nat.eq_zero_of_not_pos hpos
     have hlead : f.leadingCoeff = 0 := by
-      cases f with
-      | mk coeffs normalized =>
-          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize, Array.getD] <;> rfl
+      have hf : f = 0 := (DensePoly.size_eq_zero_iff f).mp hsize
+      rw [hf, DensePoly.leadingCoeff_zero]
     have hlead_one : f.leadingCoeff = 1 :=
       DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one

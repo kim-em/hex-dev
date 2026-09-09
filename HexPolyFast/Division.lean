@@ -208,7 +208,7 @@ def DivPlan.ofMonic (mul : MulPlan R) (q : DensePoly R)
         exact hqne ((size_eq_zero_iff q).mp hs)
       simp only [Nat.sub_zero]
       have hlead : q.coeff (q.size - 1) = q.leadingCoeff := by
-        rfl
+        exact (DensePoly.leadingCoeff_eq_coeff_last q hqpos).symm
       rw [hlead, leadingCoeff_eq_one_of_monic hq]
       grind
     reciprocal_spec := by
@@ -253,13 +253,13 @@ def DivPlan.ofNonzero {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
           exact hqne ((size_eq_zero_iff q).mp hs)
         omega)]
       simp only [Nat.sub_zero]
-      have hlead : q.coeff (q.size - 1) = q.leadingCoeff := by
-        rfl
-      rw [hlead]
       have hqpos : 0 < q.size := by
         apply Nat.pos_of_ne_zero
         intro hs
         exact hqne ((size_eq_zero_iff q).mp hs)
+      have hlead : q.coeff (q.size - 1) = q.leadingCoeff := by
+        exact (DensePoly.leadingCoeff_eq_coeff_last q hqpos).symm
+      rw [hlead]
       have hne : q.leadingCoeff ≠ 0 := leadingCoeff_ne_zero_of_pos_size q hqpos
       dsimp [u]
       exact Lean.Grind.Field.mul_inv_cancel hne

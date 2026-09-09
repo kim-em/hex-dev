@@ -395,10 +395,8 @@ private theorem leadingCoeff_zero_mod_base
     simpa [Int.sub_zero] using hcoeff
   · have hsize : f.size = 0 := Nat.eq_zero_of_not_pos hpos
     have hlead : f.leadingCoeff = 0 := by
-      cases f with
-      | mk coeffs normalized =>
-          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize, Array.getD] <;> rfl
+      have hf : f = 0 := (DensePoly.size_eq_zero_iff f).mp hsize
+      rw [hf, DensePoly.leadingCoeff_zero]
     simp [hlead]
 
 /-- `canonicalMod_congr_self` says canonical reduction differs from the original integer by a multiple of the modulus. -/
@@ -629,10 +627,8 @@ private theorem monic_size_pos (q : ZPoly) (hmonic : DensePoly.Monic q) :
   · exact hpos
   · have hsize : q.size = 0 := Nat.eq_zero_of_not_pos hpos
     have hlead : q.leadingCoeff = 0 := by
-      cases q with
-      | mk coeffs normalized =>
-          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize, Array.getD] <;> rfl
+      have hq : q = 0 := (DensePoly.size_eq_zero_iff q).mp hsize
+      rw [hq, DensePoly.leadingCoeff_zero]
     have hlead_one : q.leadingCoeff = 1 :=
       DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one
@@ -2336,10 +2332,8 @@ private theorem addModSquare_monic_of_high_remainder_zero
     · exact hpos
     · have hsize : g.size = 0 := Nat.eq_zero_of_not_pos hpos
       have hlead : g.leadingCoeff = 0 := by
-        cases g with
-        | mk coeffs normalized =>
-            simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-            simp [hsize, Array.getD] <;> rfl
+        have hg : g = 0 := (DensePoly.size_eq_zero_iff g).mp hsize
+        rw [hg, DensePoly.leadingCoeff_zero]
       have hmonicLead : g.leadingCoeff = 1 :=
         DensePoly.leadingCoeff_eq_one_of_monic hmonic
       rw [hlead] at hmonicLead

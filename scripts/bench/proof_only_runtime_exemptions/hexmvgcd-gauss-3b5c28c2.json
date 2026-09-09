@@ -1,0 +1,6 @@
+{
+  "path": "HexMvGcd/Gauss.lean",
+  "baseline_blob": "f9a3cd9786d8ac87d064e703de9c4191c2972361",
+  "current_blob": "3b5c28c26bf659225ceb02d36a164c8671b47243",
+  "reason": "Replaces a representation-unfolding leading-coefficient proof with DensePoly.leadingCoeff_eq_coeff_last and handles the empty polynomial through existing extensional theorems. No executable definition or measured branch changes."
+}
