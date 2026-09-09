@@ -8,13 +8,13 @@ module
 
 import HexGraphIso.Nauty.Policy.ShortPair
 public import HexGraphIso.Nauty.Policy.ChildKey
-public import HexGraphIso.Nauty.Policy.FirstCompare
+public import HexGraphIso.Nauty.Policy.First.Compare
 public import HexGraphIso.Nauty.Policy.Filters
 public import HexGraphIso.Nauty.Policy.FilterCover
 public import HexGraphIso.Nauty.Policy.ReturnOrigin
 
-public import HexGraphIso.Nauty.Policy.FirstRun
-import all HexGraphIso.Nauty.Policy.FirstRun
+public import HexGraphIso.Nauty.Policy.First.Run
+import all HexGraphIso.Nauty.Policy.First.Run
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.Colors
@@ -28,7 +28,7 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- The complete engine run justifies every orbit pointer by its recorded generators. -/
+/-- The complete search run justifies every orbit pointer by its recorded generators. -/
 theorem runState_orbits (G : Colored n k) :
     OrbitsOk (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by
   rcases Nat.eq_zero_or_pos n with hn0 | hn0
@@ -55,19 +55,19 @@ theorem runState_pairs (G : Colored n k) :
     exact initial_pairs G { g := rowsOf G }
   · exact (runState_safe G hn0).pairs
 
-/-- The structured engine's reported generators preserve the ordered colour cells. -/
+/-- The search's reported generators preserve the ordered colour cells. -/
 theorem runColoredTraced_stab (G : Colored n k) {perm : Array Nat}
     (hp : perm ∈ (runColoredTraced G).autos) : ColorStab G perm :=
   runState_colors G perm hp
 
-/-- The engine returns a full canonical labelling. -/
+/-- The search returns a full canonical labelling. -/
 theorem canonlab_size (G : Colored n k) : (runColored G).canonlab.size = n := by
   rcases Nat.eq_zero_or_pos n with hn0 | hn0
   · subst n
     rfl
   · exact (runState_safe G hn0).canonical.1
 
-/-- The engine's canonical labelling fills each initial colour cell with its own vertices. -/
+/-- The search's canonical labelling fills each initial colour cell with its own vertices. -/
 theorem canonlab_cellsReach (G : Colored n k) : CellsReach G (runColored G).canonlab := by
   rcases Nat.eq_zero_or_pos n with hn0 | hn0
   · subst n
@@ -79,12 +79,12 @@ theorem canonlab_cellsReach (G : Colored n k) : CellsReach G (runColored G).cano
     rw [he]
   · exact (runState_safe G hn0).canonical.2
 
-/-- The engine's canonical labelling respects the initial colour order. -/
+/-- The search's canonical labelling respects the initial colour order. -/
 theorem labelColorSorted_canonlab (G : Colored n k) :
     labelColorSorted G (runColored G).canonlab = true :=
   labelColorSorted_of_cellsReach (canonlab_size G) (canonlab_cellsReach G)
 
-/-- The engine's canonical labelling is a permutation of the vertices. -/
+/-- The search's canonical labelling is a permutation of the vertices. -/
 theorem canonlab_perm_range (G : Colored n k) :
     (runColored G).canonlab.toList.Perm (List.range n) := by
   rcases Nat.eq_zero_or_pos n with hn0 | hn0
@@ -95,17 +95,17 @@ theorem canonlab_perm_range (G : Colored n k) :
     rw [List.length_eq_zero_iff.mp this]
   · exact isPerm_of_cellsReach (canonlab_size G) hn0 (canonlab_cellsReach G)
 
-/-- Finishing the engine fills every canonical row from the installed labelling. -/
+/-- Finishing the search fills every canonical row from the installed labelling. -/
 theorem canong_inv (G : Colored n k) :
     CanongInv { g := rowsOf G } (runColored G).canong (runColored G).canonlab n :=
   updatecan_inv (runState_store G)
 
-/-- The returned row array encodes the engine's returned labelling. -/
+/-- The returned row array encodes the search's returned labelling. -/
 theorem canong_rows (G : Colored n k) :
     (List.range n).map ((runColored G).canong[·]!) = leafRows { g := rowsOf G } (runColored G).canonlab :=
   rows_of_canongInv (canong_inv G)
 
-/-- Discarding the trace gives the engine's ordinary result. -/
+/-- Discarding the trace gives the search's ordinary result. -/
 theorem runTraced_result (n : Nat) (g : Array (VSet n)) (lab0 : Array Nat) (cellEnds : List Nat) :
     (runTraced n g lab0 cellEnds).result = run n g lab0 cellEnds := by rw [run]
 

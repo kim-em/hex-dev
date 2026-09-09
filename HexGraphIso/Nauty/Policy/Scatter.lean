@@ -15,7 +15,7 @@ import all HexGraphIso.Nauty.Invariant.Store
 public section
 
 /-!
-The engine's reusable permutation workspace has the same scatter
+The search's reusable permutation workspace has the same scatter
 equations as a fresh workspace. The previous entries are irrelevant
 when the reference labelling is a permutation.
 -/

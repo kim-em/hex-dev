@@ -6,20 +6,20 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.CheapShape
+public import HexGraphIso.Nauty.Policy.Cheap.Shape
 public import HexGraphIso.Nauty.Policy.HistoryState
-public import HexGraphIso.Nauty.Policy.Calls
+public import HexGraphIso.Nauty.Policy.Generic.Calls
 public import HexGraphIso.Nauty.Policy.EquitableState
 public import HexGraphIso.Nauty.Policy.PathState
-import all HexGraphIso.Nauty.Policy.FirstHistory
-import all HexGraphIso.Nauty.Policy.Calls
+import all HexGraphIso.Nauty.Policy.First.History
+import all HexGraphIso.Nauty.Policy.Generic.Calls
 import all HexGraphIso.Nauty.Policy.HistoryState
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Sound
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State

@@ -6,12 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.Stable
+public import HexGraphIso.Nauty.Policy.Generic.Stable
 public import HexGraphIso.Nauty.Policy.Trace
-import all HexGraphIso.Nauty.Policy.Stable
+import all HexGraphIso.Nauty.Policy.Generic.Stable
 import all HexGraphIso.Nauty.Policy.Trace
-import all HexGraphIso.Nauty.Policy.First
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.First.State
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -56,8 +56,8 @@ theorem tracePolicy (ctx : Ctx n) (inf tcLevel : Nat) (γ : Array Nat) :
   leave := by intros; assumption
   recover := by
     intro level st h
-    change γ ∈ (recoverLevels level (recoverPtn inf level st)).genTrace
-    unfold recoverLevels recoverPtn
+    change γ ∈ (Nauty.recover inf level st).genTrace
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, ite_self]
     exact h
   afterSweep := by

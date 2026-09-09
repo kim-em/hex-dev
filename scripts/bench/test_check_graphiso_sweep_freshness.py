@@ -98,6 +98,29 @@ class IndependentTargetTests(unittest.TestCase):
         self.assertNotIn("HexNumberFieldTower", prefixes)
         self.assertNotIn("HexRationalFn", prefixes)
 
+    def test_nested_init_keeps_toolchain_imports_external(self):
+        sources = {
+            Path("HexGraphIso.lean"): ["root"],
+            Path("HexGraphIso/Cactus.lean"): ["driver"],
+            Path("Init/Present.lean"): ["shadow"],
+            Path("Hidden/Local.lean"): ["local"],
+        }
+        blobs = {
+            "root": "import Init.Data.List.Sort.Basic\nimport Init.Present\n",
+            "driver": "",
+            "shadow": "import Hidden.Local\n",
+            "local": "",
+        }
+        with patch.object(check, "index_lean_sources", return_value=(
+                sources, {"HexGraphIso", "Init", "Hidden"})), \
+                patch.object(check.freshness, "blob_text", side_effect=blobs.__getitem__):
+            prefixes = check.graph_import_prefixes()
+            self.assertIsNotNone(prefixes)
+            self.assertIn("Hidden", prefixes)
+            self.assertIn("Init", prefixes)
+            blobs["root"] = "import Hidden.Missing\n"
+            self.assertIsNone(check.graph_import_prefixes())
+
     def test_lake_allowance_guards_and_imported_namespace(self):
         old, new = "old-lake", "new-lake"
         difference = check.freshness.Difference(

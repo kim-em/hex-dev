@@ -21,7 +21,7 @@ followed by the leaf's `g^lab` adjacency rows. Keys compare
 lexicographically, codes numerically and rows in nauty's row order. The
 canonical leaf of the production search is the leaf of greatest key.
 The specification states three ingredients differently from the
-transcribed search, without changing which leaf is greatest.
+search, without changing which leaf is greatest.
 
 - A node whose chain is dominated (`compCanon < 0`) can never supply the
   canonical leaf, and those are exactly the nodes where nauty's

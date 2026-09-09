@@ -6,17 +6,17 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.Calls
+public import HexGraphIso.Nauty.Policy.Generic.Calls
 public import HexGraphIso.Nauty.Policy.Prepared
 public import HexGraphIso.Nauty.Policy.ReturnOrigin
-import all HexGraphIso.Nauty.Policy.Calls
+import all HexGraphIso.Nauty.Policy.Generic.Calls
 import all HexGraphIso.Nauty.Policy.Prepared
-import all HexGraphIso.Nauty.Policy.First
+import all HexGraphIso.Nauty.Policy.First.State
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Bounds
-import all HexGraphIso.Nauty.Policy.MaxAncestors
+import all HexGraphIso.Nauty.Policy.Max.Ancestors
 import all HexGraphIso.Nauty.Policy.ReturnOrigin
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -62,8 +62,8 @@ private theorem leafExit_same (leaf : Leaf) (level : Nat) (st : Search n) :
   all_goals rfl
 
 private theorem recover_same (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).allsamelevel = st.allsamelevel := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).allsamelevel = st.allsamelevel := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.allsamelevel, ite_self]
 
 private def earlyContract (ctx : Ctx n) : Generic.Contract (Search n) n where
@@ -147,20 +147,20 @@ private theorem earlyPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     have hh : ∀ cell, ∀ target short,
         (Generic.sweepCall ctx inf tcLevel fuel cfuel false level numcells tc tv1
           (cell.nextElem (some tv)) cell index
-          (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }))).1 =
+          (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })).1 =
             .unwind target short → (target < level ∨ short = true) → EarlyReturn ctx target short
         (Generic.sweepCall ctx inf tcLevel fuel cfuel false level numcells tc tv1
           (cell.nextElem (some tv)) cell index
-          (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }))).2.2 := by
+          (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })).2.2 := by
       intro cell
       exact (hs false level numcells tc tv1 (cell.nextElem (some tv)) cell index
-        (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })) rfl).2
+        (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }) rfl).2
     have hhs : ∀ cell, (Generic.sweepCall ctx inf tcLevel fuel cfuel false level numcells tc tv1
         (cell.nextElem (some tv)) cell index
-        (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }))).2.2.allsamelevel = st.allsamelevel := by
+        (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })).2.2.allsamelevel = st.allsamelevel := by
       intro cell
       have hr := (hs false level numcells tc tv1 (cell.nextElem (some tv)) cell index
-        (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })) rfl).1
+        (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }) rfl).1
       exact hr.trans ((recover_same inf level _).trans hds)
     change (Generic.sweepStep inf _ _ false level numcells tc tv1 tv cell index st).2.2.allsamelevel = st.allsamelevel ∧
       ∀ target short, (Generic.sweepStep inf _ _ false level numcells tc tv1 tv cell index st).1 =

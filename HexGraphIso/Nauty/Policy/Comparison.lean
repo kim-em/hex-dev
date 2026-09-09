@@ -9,7 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.RouteKey
 import all HexGraphIso.Nauty.Policy.RouteKey
 import all HexGraphIso.Nauty.Policy.CodeState
-import all HexGraphIso.Nauty.Policy.First
+import all HexGraphIso.Nauty.Policy.First.State
 import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.Target
 import all HexGraphIso.Nauty.Policy.State
@@ -72,10 +72,8 @@ theorem FirstCodes.leaf {cs fs : List Nat} {st : Search n}
 /-- Recovery truncates the current path at the receiving ancestor. -/
 theorem FirstCodes.recover {cs fs : List Nat} {st : Search n} {level : Nat}
     (h : FirstCodes cs fs st) (hlen : level ≤ cs.length) (inf : Nat) :
-    FirstCodes (cs.take level) fs (recoverLevels level (recoverPtn inf level st)) := by
-  have hm := recover_firstCodeInv (st := st) (inf := inf) h hlen
-  rw [← recover_eq] at hm
-  exact hm
+    FirstCodes (cs.take level) fs (Nauty.recover inf level st) := by
+  exact recover_firstCodeInv (st := st) (inf := inf) h hlen
 
 /-- The two comparisons and the saved first leaf's incumbent bound. -/
 structure Comparison (ctx : Ctx n) (cs bs fs : List Nat) (st : Search n) : Prop where
@@ -194,13 +192,13 @@ theorem comparison_recover {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
     (hc : Settled cs bs st) (hf : FirstCodes cs fs st) (hne : bs ≠ [])
     (hlower : keyLe (incKey ctx fs st.firstlab) (incKey ctx bs st.canonlab))
     {level : Nat} (hlen : level ≤ cs.length) (inf : Nat) :
-    Comparison ctx (cs.take level) bs fs (recoverLevels level (recoverPtn inf level st)) := by
+    Comparison ctx (cs.take level) bs fs (Nauty.recover inf level st) := by
   refine ⟨hc.recover hlen inf, hf.recover hlen inf, hne, ?_⟩
   have hfirst := congrArg (fun r => r.2.2) ((referencePolicy ctx inf 0).recover level st)
-  have hcanon : (recoverLevels level (recoverPtn inf level st)).canonlab = st.canonlab := by
-    unfold recoverLevels recoverPtn
+  have hcanon : (Nauty.recover inf level st).canonlab = st.canonlab := by
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab, ite_self]
-  change (recoverLevels level (recoverPtn inf level st)).firstlab = st.firstlab at hfirst
+  change (Nauty.recover inf level st).firstlab = st.firstlab at hfirst
   rw [hfirst, hcanon]
   exact hlower
 

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.Recovery
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -79,8 +79,8 @@ theorem pruneReturn_canon (level : Nat) (st : Search n) :
 
 /-- Parent recovery retains the stored canonical labelling. -/
 theorem recover_ref (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).canonlab = st.canonlab := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).canonlab = st.canonlab := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab]
   repeat' split
   all_goals rfl
@@ -111,16 +111,16 @@ theorem cheap_canon (first : Bool) (level : Nat) (st : Search n) :
   split <;> rfl
 
 /-- Recovery clamps the canonical ancestor to the receiving sweep. -/
-theorem recover_canon (level : Nat) (st : Search n) :
-    (recoverLevels level st).gcaCanon = min level st.gcaCanon := by
-  unfold recoverLevels
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon]
+theorem recover_canon {inf : Nat} (level : Nat) (st : Search n) :
+    (Nauty.recover inf level st).gcaCanon = min level st.gcaCanon := by
+  unfold Nauty.recover recoverLevels recoverPtn
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon]
   repeat' split
   all_goals omega
 
 /-- The recovered canonical ancestor is no deeper than its sweep. -/
-theorem recover_canon_le (level : Nat) (st : Search n) :
-    (recoverLevels level st).gcaCanon ≤ level := by
+theorem recover_canon_le {inf : Nat} (level : Nat) (st : Search n) :
+    (Nauty.recover inf level st).gcaCanon ≤ level := by
   rw [recover_canon]
   exact Nat.min_le_left _ _
 
@@ -153,8 +153,8 @@ theorem gcaPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
   leave := fun _ _ => rfl
   recover := by
     intro level st
-    change (recoverLevels level (recoverPtn inf level st)).gcaFirst = st.gcaFirst
-    unfold recoverLevels recoverPtn
+    change (Nauty.recover inf level st).gcaFirst = st.gcaFirst
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.gcaFirst, ite_self]
   afterSweep := by
     intro first level size index st

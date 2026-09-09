@@ -7,19 +7,19 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.CallState
-public import HexGraphIso.Nauty.Policy.Calls
+public import HexGraphIso.Nauty.Policy.Generic.Calls
 public import HexGraphIso.Nauty.Policy.EquitableState
 public import HexGraphIso.Nauty.Policy.PathState
 import all HexGraphIso.Nauty.Policy.Controls
-import all HexGraphIso.Nauty.Policy.FirstHistory
-import all HexGraphIso.Nauty.Policy.Calls
+import all HexGraphIso.Nauty.Policy.First.History
+import all HexGraphIso.Nauty.Policy.Generic.Calls
 import all HexGraphIso.Nauty.Policy.HistoryState
 import all HexGraphIso.Nauty.Policy.Invariant
 import all HexGraphIso.Nauty.Policy.Trace
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Sound
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -271,7 +271,7 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
       (Nauty.child first level tc tv st)).2
     let left := { out with fixedpts := out.fixedpts.erase tv }
     SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
-      (recoverLevels level (recoverPtn (n + 2) level left)) := by
+      (Nauty.recover (n + 2) level left) := by
   have htv := hin.cursor_mem tv rfl
   have hnodePre := hin.child hn0 hgsz hsymm
   have hch := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
@@ -304,10 +304,10 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
   have hr := (reachPolicy G ctx tcLevel hn0).recover level numcells st left
     hin.positive hin.partition hleftFrame
   have hready : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
-      (recoverLevels level (recoverPtn (n + 2) level left)) :=
+      (Nauty.recover (n + 2) level left) :=
     ⟨hin.past, hin.positive, hr.ok, hin.target.of_out hr.effect, hin.cursor_mem,
       hleft.recover (n + 2) level,
-      (by rw [show (recoverLevels level (recoverPtn (n + 2) level left)).gcaFirst = left.gcaFirst from
+      (by rw [show (Nauty.recover (n + 2) level left).gcaFirst = left.gcaFirst from
             (gcaPolicy ctx (n + 2) tcLevel).recover level left]
           change out.gcaFirst ≤ level
           change out.gcaFirst = st.gcaFirst at hgca

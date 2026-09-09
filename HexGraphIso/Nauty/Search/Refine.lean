@@ -1099,7 +1099,6 @@ private theorem segmentOf_getElem!_placement (lab counts : Array Nat)
   exact grouped_getElem! counts.toList (fun j => lab[cell1 + j]!) bmin W
     (counts[o]! - bmin) o hmem hlt holen hqo hr
 
-
 /-! # The concrete `ntcPass` at the `nontrivialCellFast` call -/
 
 /-- Prepending `f cell1` to the shifted window map reconstructs the full

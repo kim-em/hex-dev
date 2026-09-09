@@ -13,8 +13,9 @@ import all HexGraphIso.Nauty.Search.State
 
 public section
 
-/-! Permutation and graph-preservation facts for scatter arrays. The policy
-combines these with reached leaf labellings to validate emitted generators. -/
+/-! Scattering one permutation labelling through another produces a
+permutation. Equal leaf rows, or an explicit automorphism check, prove
+that the scatter preserves adjacency. -/
 
 namespace Hex.GraphIso.Nauty
 
@@ -197,26 +198,7 @@ theorem checkAutom_scatter_of_leafRows_eq {ctx : Ctx n}
     simp only [beq_iff_eq]
     exact htrans v (List.mem_range.mp hv)
 
-private theorem id_run_eq {α : Type} (x : Id α) : x.run = x := rfl
-
-private theorem forIn_range_toList {β : Type} (n : Nat) (init : β)
-    (f : Nat → β → Id (ForInStep β)) :
-    (forIn [0:n] init f : Id β) = forIn (List.range n) init f := by
-  rw [Std.Legacy.Range.forIn_eq_forIn_range']
-  have hrange : List.range' [0:n].start [0:n].size [0:n].step
-      = List.range n := by simp [List.range_eq_range']
-  rw [hrange]
-
-private theorem forIn_scatter_eq (lab₁ lab₂ : Array Nat) :
-    ∀ (l : List Nat) (base : Array Nat),
-      (forIn l base (fun i r =>
-        pure (ForInStep.yield (r.set! lab₁[i]! lab₂[i]!))) :
-          Id (Array Nat)) =
-      l.foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base
-  | [], _ => rfl
-  | i :: l, base => by
-    rw [List.forIn_cons]
-    exact forIn_scatter_eq lab₁ lab₂ l _
+/-! Scatter array bounds and entries. -/
 
 /-- A scatter fold preserves the size of its workspace. -/
 theorem foldl_scatter_size (lab₁ lab₂ : Array Nat) :
@@ -252,11 +234,6 @@ theorem foldl_scatter_getElem {lab₁ lab₂ : Array Nat}
     · have hlne : lab₁[p]! ≠ lab₁[j]! := fun h =>
         hne (hinj j p (by omega) (by omega) h.symm)
       rw [Array.getElem!_set!_ne _ _ _ _ hlne, ih (by omega) (by omega)]
-
-private theorem pushAuto_genTrace (st : Search n) (pair : VSet n × VSet n) :
-    (pushAuto st pair).genTrace = st.genTrace := by
-  rw [pushAuto]
-  split <;> rfl
 
 end Hex.GraphIso.Nauty
 
@@ -303,19 +280,5 @@ theorem labInj_perm_range {lab : Array Nat} {n : Nat}
         have hjn := List.mem_range.mp hj
         have : j = a := by simpa using hpj
         omega]
-
-/-! # Store validity, assembled per admission event -/
-
-/-- Every emitted generator passes the automorphism checker. -/
-def GenTraceOk (ctx : Ctx n) (st : Search n)
-    (P : Array Nat → Prop := fun _ => True) : Prop :=
-  ∀ γ ∈ st.genTrace, checkAutom ctx.g γ = true ∧ P γ
-
-/-- Read one checked-generator fact from the run-side store invariant. -/
-theorem GenTraceOk.check {ctx : Ctx n} {st : Search n}
-    {P : Array Nat → Prop} (h : GenTraceOk ctx st P)
-    {γ : Array Nat} (η : γ ∈ st.genTrace.toList) :
-    checkAutom ctx.g γ = true :=
-  (h γ (Array.mem_toList_iff.mp η)).1
 
 end Hex.GraphIso.Nauty

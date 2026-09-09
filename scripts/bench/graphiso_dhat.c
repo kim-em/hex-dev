@@ -13,8 +13,7 @@ Build as a shared library and pass its path in LD_PRELOAD to Valgrind:
   cc -shared -fPIC -O2 $(pkg-config --cflags valgrind) graphiso_dhat.c -o wrapper.so
   LD_PRELOAD=./wrapper.so valgrind --tool=dhat --mode=ad-hoc \
     .lake/build/bin/hexgraphiso_profile run
-Repeat with erun. Events count successful allocation requests, not bytes or
-live blocks. Use ordinary DHAT separately for libc/GMP allocations.
+Events count successful allocation requests, not bytes or live blocks. Use ordinary DHAT separately for libc/GMP allocations.
 
 With -DGRAPHISO_DHAT_CHECK, compile an executable instead of a shared library.
 Running that executable under DHAT ad-hoc mode must report exactly three

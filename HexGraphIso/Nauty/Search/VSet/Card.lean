@@ -311,7 +311,6 @@ theorem insert_of_mem {s : VSet n} {v : Nat} (h : s.mem v = true) : s.insert v =
     · rw [h, Bool.true_or]
     · rw [show (v == w) = false from by simp [hne], Bool.false_and, Bool.or_false]
 
-
 end VSet
 
 end Hex.GraphIso.Nauty

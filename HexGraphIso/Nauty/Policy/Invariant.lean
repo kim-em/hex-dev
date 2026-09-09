@@ -12,9 +12,9 @@ public import HexGraphIso.Nauty.Policy.Store
 public import HexGraphIso.Nauty.Policy.Workspace
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Trace
-import all HexGraphIso.Nauty.Policy.First
+import all HexGraphIso.Nauty.Policy.First.State
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -147,15 +147,15 @@ theorem RunInv.leave {G : Colored n k} {ctx : Ctx n} {st : Search n}
 /-- Recovering the parent partition does not alter saved leaves or generator data. -/
 theorem RunInv.recover {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : RunInv G ctx st) (inf level : Nat) :
-    RunInv G ctx (recoverLevels level (recoverPtn inf level st)) := by
+    RunInv G ctx (Nauty.recover inf level st) := by
   have hr := (referencePolicy ctx inf 0).recover level st
   have hf := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.2) hr
-  have hc : (recoverLevels level (recoverPtn inf level st)).canonlab = st.canonlab := by
-    unfold recoverLevels recoverPtn
+  have hc : (Nauty.recover inf level st).canonlab = st.canonlab := by
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab, ite_self]
-  apply h.congr (out := recoverLevels level (recoverPtn inf level st)) hf hc ((storePolicy ctx inf 0).recover level st h.cache)
+  apply h.congr (out := Nauty.recover inf level st) hf hc ((storePolicy ctx inf 0).recover level st h.cache)
     ((scratchPolicy ctx inf 0).recover level st)
-  all_goals unfold recoverLevels recoverPtn
+  all_goals unfold Nauty.recover recoverLevels recoverPtn
   all_goals simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, apply_ite Search.orbits, apply_ite Search.autos, apply_ite Search.wsCap, ite_self]
 
 /-- Completing a sweep changes only its symmetry counter. -/

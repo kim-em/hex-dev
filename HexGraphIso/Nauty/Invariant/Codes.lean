@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Search.Refine
 public section
 
 /-!
-Code-comparison faithfulness: the transcription's lazily threaded
+Code-comparison faithfulness: the search's lazily threaded
 level-code comparison (`compCanon` / `eqlevCanon` / `canoncode`)
 implements lexicographic comparison of the current path's refinement
 codes against the incumbent leaf's code list. This is the code-side
@@ -357,19 +357,19 @@ private theorem compareCodes_canoncode (level code : Nat)
   all_goals rfl
 
 private theorem recover_canoncode (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canoncode = st.canoncode := by
+    (recover inf level st).canoncode = st.canoncode := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.canoncode, ite_self]
 
 private theorem recover_canonlevel (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canonlevel = st.canonlevel := by
+    (recover inf level st).canonlevel = st.canonlevel := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.canonlevel, ite_self]
 
 private theorem recover_eqlevCanon (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).eqlevCanon =
+    (recover inf level st).eqlevCanon =
       if Int.ofNat level ≤ st.eqlevCanon then Int.ofNat level
       else st.eqlevCanon := by
   rw [recover, recoverLevels, recoverPtn]
@@ -377,7 +377,7 @@ private theorem recover_eqlevCanon (n inf level : Nat) (st : Search n) :
     apply_ite Search.eqlevCanon, ite_self]
 
 private theorem recover_compCanon (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).compCanon =
+    (recover inf level st).compCanon =
       if Int.ofNat level ≤ st.eqlevCanon then 0
       else st.compCanon := by
   rw [recover, recoverLevels, recoverPtn]
@@ -598,10 +598,10 @@ theorem recover_codeInv {nn N inf : Nat} {cs bs : List Nat}
     (hcc : st.compCanon ≤ 0)
     (hlvl : lvl ≤ cs.length) :
     CodeCmpInv nn (cs.take lvl) bs
-      (recover N inf lvl st).canoncode
-      (recover N inf lvl st).canonlevel
-      (recover N inf lvl st).eqlevCanon
-      (recover N inf lvl st).compCanon := by
+      (recover inf lvl st).canoncode
+      (recover inf lvl st).canonlevel
+      (recover inf lvl st).eqlevCanon
+      (recover inf lvl st).compCanon := by
   have hlen : (cs.take lvl).length = lvl := by
     rw [List.length_take]
     omega
@@ -674,10 +674,10 @@ theorem recover_codeInv_reset {nn N inf : Nat} {cs bs : List Nat}
       st.eqlevCanon 0)
     (hlvl : lvl ≤ cs.length) :
     CodeCmpInv nn (cs.take lvl) bs
-      (recover N inf lvl st).canoncode
-      (recover N inf lvl st).canonlevel
-      (recover N inf lvl st).eqlevCanon
-      (recover N inf lvl st).compCanon := by
+      (recover inf lvl st).canoncode
+      (recover inf lvl st).canonlevel
+      (recover inf lvl st).eqlevCanon
+      (recover inf lvl st).compCanon := by
   have hlen : (cs.take lvl).length = lvl := by
     rw [List.length_take]
     omega
@@ -883,10 +883,10 @@ theorem install_codeInv {nn : Nat} {cs bs : List Nat}
 
 /-! # The first-path comparison thread
 
-The transcription threads a second lazy comparison: `eqlevFirst`
+The search threads a second lazy comparison: `eqlevFirst`
 records how deep the current path agrees with the leftmost (first)
 path, whose codes live in `firstcode`. Agreement here is what makes
-an off-path leaf a candidate automorphism (`processnode` code `1`),
+an off-path leaf a candidate automorphism (`classify` returning `.autoFirst`),
 so the domination induction needs the same faithfulness clause: the
 recorded depth really is a code-prefix agreement with the first
 leaf's codes. Unlike the incumbent thread there is no overwrite
@@ -1036,7 +1036,7 @@ private theorem compareCodes_eqlevFirst (level code : Nat)
 
 private theorem recover_eqlevFirst (n inf level : Nat)
     (st : Search n) :
-    (recover n inf level st).eqlevFirst =
+    (recover inf level st).eqlevFirst =
       if level < st.eqlevFirst then level else st.eqlevFirst := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
@@ -1044,7 +1044,7 @@ private theorem recover_eqlevFirst (n inf level : Nat)
 
 private theorem recover_firstcode (n inf level : Nat)
     (st : Search n) :
-    (recover n inf level st).firstcode = st.firstcode := by
+    (recover inf level st).firstcode = st.firstcode := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.firstcode, ite_self]
@@ -1116,8 +1116,8 @@ theorem recover_firstCodeInv {nn N inf : Nat} {cs fs : List Nat}
     (hinv : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
     (hlvl : lvl ≤ cs.length) :
     FirstCodeInv nn (cs.take lvl) fs
-      (recover N inf lvl st).firstcode
-      (recover N inf lvl st).eqlevFirst := by
+      (recover inf lvl st).firstcode
+      (recover inf lvl st).eqlevFirst := by
   rw [recover_firstcode, recover_eqlevFirst]
   have h := firstCodeInv_take hinv hlvl
   rcases Decidable.em (lvl < st.eqlevFirst) with hc | hc

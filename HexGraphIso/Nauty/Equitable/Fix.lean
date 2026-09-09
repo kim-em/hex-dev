@@ -813,4 +813,3 @@ theorem refine_equitable {ctx : Ctx n} {level : Nat}
 
 end Hex.GraphIso.Nauty
 
-

@@ -6,13 +6,13 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.Calls
+public import HexGraphIso.Nauty.Policy.Generic.Calls
 public import HexGraphIso.Nauty.Policy.Controls
-import all HexGraphIso.Nauty.Policy.Calls
+import all HexGraphIso.Nauty.Policy.Generic.Calls
 import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Prepared
-import all HexGraphIso.Nauty.Policy.First
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.First.State
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -46,8 +46,8 @@ theorem classify_coset (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
 
 /-- Recovery preserves the current coset index. -/
 theorem recover_coset (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).cosetindex = st.cosetindex := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).cosetindex = st.cosetindex := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.cosetindex, ite_self]
 
 private def cosetContract : Generic.Contract (Search n) n where
@@ -107,13 +107,13 @@ private theorem cosetPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     change raw.2.cosetindex = st.cosetindex at hd
     have hh : ∀ cell, (Generic.sweepCall ctx inf tcLevel fuel cfuel false level numcells tc tv1
         (cell.nextElem (some tv)) cell index
-        (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }))).2.2.cosetindex = st.cosetindex := by
+        (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })).2.2.cosetindex = st.cosetindex := by
       intro cell
       have hr := hs false level numcells tc tv1 (cell.nextElem (some tv)) cell index
-        (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })) rfl
+        (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }) rfl
       change (Generic.sweepCall ctx inf tcLevel fuel cfuel false level numcells tc tv1
         (cell.nextElem (some tv)) cell index
-        (recoverLevels level (recoverPtn inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv }))).2.2.cosetindex = _ at hr
+        (Nauty.recover inf level { raw.2 with fixedpts := raw.2.fixedpts.erase tv })).2.2.cosetindex = _ at hr
       rw [recover_coset] at hr
       exact hr.trans hd
     change (Generic.sweepStep inf _ _ false level numcells tc tv1 tv cell index st).2.2.cosetindex = _

@@ -39,7 +39,7 @@ The cell-stabilization hypothesis is per node. It holds for the
 generators nauty's bookkeeping admits at a node, since automorphisms
 found below fix the node's cells setwise. Propagating it through
 `refine` and descent, and filtering the store as the individualized
-base grows, is transcription-side accounting, so no recursive
+base grows, is search accounting, so no recursive
 orbit-pruned evaluator is defined here.
 -/
 
@@ -469,7 +469,7 @@ theorem childKey_of_orbPruned {ctx : Ctx n}
 end Hex.GraphIso.Nauty
 
 /-!
-Soundness of the transcription's orbit bookkeeping. The search keeps
+Soundness of the search's orbit bookkeeping. The search keeps
 one global union-find array `st.orbits`, joined with every admitted
 generator through `orbjoin`; prune sites consult its parent pointers
 directly. The lemmas below prove that every parent pointer is justified by
@@ -946,7 +946,7 @@ theorem orbSound_orbConn_mono {gens gens' : List (Array Nat)}
     OrbSound (OrbConn gens' n) orbits n :=
   orbSound_mono (orbConn_mono hsub) h
 
-/-- The consumption form at the transcription's prune sites: a
+/-- The consumption form at the search's prune sites: a
 consulted parent pointer is a forward word of stored generators,
 with both endpoints in range. -/
 theorem orbConn_of_ptr {gens : List (Array Nat)} {orbits : Array Nat}

@@ -532,9 +532,10 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
     def test_uncolored_imports(self):
         # The basic API must not pull in the full generation proof.
         closure = import_closure(("HexGraphIso/Uncolored.lean",))
-        self.assertNotIn("HexGraphIso/AutComplete.lean", closure)
-        self.assertNotIn(
-            "HexGraphIso/Nauty/Policy/GeneratedComplete.lean", closure)
+        for module in ("HexGraphIso/AutComplete.lean",
+                       "HexGraphIso/Nauty/Policy/Generated/Complete.lean"):
+            self.assertTrue((freshness.ROOT / module).is_file(), module)
+            self.assertNotIn(module, closure)
 
     def test_import_all(self):
         self.assertEqual(IMPORT.findall("import all HexGraphIso.Autos\n"),

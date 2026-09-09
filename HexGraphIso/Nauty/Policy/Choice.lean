@@ -10,7 +10,7 @@ public import HexGraphIso.Nauty.Policy.Tracking
 import all HexGraphIso.Nauty.Policy.Tracking
 import all HexGraphIso.Nauty.Policy.RouteState
 import all HexGraphIso.Nauty.Policy.Route
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -33,7 +33,7 @@ theorem Choice.cheap {ctx : Ctx n} {tcLevel level tc : Nat} {st : Search n}
   unfold cheapCheck
   split <;> exact h
 
-/-- An equitable guided endpoint makes the engine's retained target
+/-- An equitable guided endpoint makes the search's retained target
 canonical or equal to the saved first target. -/
 theorem GuidedState.choice {ctx : Ctx n} {tcLevel base level numcells : Nat}
     {root : RefineSt n} {st : Search n}
@@ -79,7 +79,7 @@ theorem Choice.recover {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     (hb : st.eqlevFirst ≤ level) (hlevel : 1 ≤ level) (hn0 : 0 < n)
     (hok : SearchOk G level numcells st) (hout : SearchOut G level level st out)
     (ht : out.firsttc = st.firsttc) (hd : st.eqlevFirst < level → out.eqlevFirst < level) :
-    Choice ctx tcLevel level tc (recoverLevels level (recoverPtn (n + 2) level out)) := by
+    Choice ctx tcLevel level tc (Nauty.recover (n + 2) level out) := by
   intro hkeep
   have hold : st.eqlevFirst = level := by
     by_cases he : st.eqlevFirst = level
@@ -88,15 +88,12 @@ theorem Choice.recover {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
       rw [recover_eqlev] at hkeep
       omega
   have hr := (referencePolicy ctx (n + 2) tcLevel).recover level out
-  have htc : (recoverLevels level (recoverPtn (n + 2) level out)).firsttc = st.firsttc :=
+  have htc : (Nauty.recover (n + 2) level out).firsttc = st.firsttc :=
     (congrArg (fun r : Array Nat × Array Int × Array Nat => r.2.1) hr).trans ht
   rcases h hold with hcanonical | hsaved
   · left
-    have hl : (recoverLevels level (recoverPtn (n + 2) level out)).lab = out.lab := by
-      have he := congrArg Search.lab (recover_eq (n + 2) level out)
-      change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at he
-      rw [Nauty.recover_lab] at he
-      exact he
+    have hl : (Nauty.recover (n + 2) level out).lab = out.lab := by
+      exact Nauty.recover_lab (n + 2) level out
     rw [hl, recover_ptn_eq hok hout]
     have hperm : cellsPerm st.ptn level st.lab out.lab := hout.perm
     exact (specTargetcell_perm hperm (by change n ≤ st.ptn.size; rw [hok.ptnSize]; omega)
@@ -114,8 +111,7 @@ theorem Choice.child_return {G : Colored n k} {ctx : Ctx n}
     (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (Nauty.child first level tc tv st)).2
-    Choice ctx tcLevel level tc (recoverLevels level (recoverPtn (n + 2) level
-      { out with fixedpts := out.fixedpts.erase tv })) := by
+    Choice ctx tcLevel level tc (Nauty.recover (n + 2) level { out with fixedpts := out.fixedpts.erase tv }) := by
   let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   have hn0 : 0 < n := by have := VSet.mem_lt htv; omega

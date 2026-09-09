@@ -425,9 +425,6 @@ end Hex.GraphIso.Conformance
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.Generation.RefPath.smallChild
 
-/-- info: 'Hex.GraphIso.Nauty.canonSpecKey_eq_tracedKey' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.GraphIso.Nauty.canonSpecKey_eq_tracedKey
 
 /-- info: 'Hex.GraphIso.Nauty.certifyCanon?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

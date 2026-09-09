@@ -25,7 +25,7 @@ variable {n k : Nat}
 theorem Aut.complete (G : Colored n k) {p : Perm n} (hp : IsIso G G p) :
     Perm.Generated (Aut.gens G) p := by
   simpa [Aut.gens, Aut.checked, Aut.trace, List.map_filterMap, Option.map_map,
-    Function.comp_def, Nauty.runColoredTraced, Nauty.runTraced, Nauty.runColoredTraced]
+    Function.comp_def, Nauty.runColoredTraced, Nauty.runTraced]
     using Nauty.generators_complete hp
 
 /-- Completeness: every automorphism is a word in the returned generators. -/

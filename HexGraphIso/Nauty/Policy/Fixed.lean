@@ -7,13 +7,13 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.FixedState
-public import HexGraphIso.Nauty.Policy.Calls
+public import HexGraphIso.Nauty.Policy.Generic.Calls
 import all HexGraphIso.Nauty.Policy.FixedState
-import all HexGraphIso.Nauty.Policy.Reach
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Generic.Reach
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Sound
-import all HexGraphIso.Nauty.Policy.Calls
+import all HexGraphIso.Nauty.Policy.Generic.Sound
+import all HexGraphIso.Nauty.Policy.Generic.Calls
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State

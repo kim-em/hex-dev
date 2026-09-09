@@ -18,6 +18,7 @@ variable {n k : Nat}
 
 /-! # Cheap-automorphism ledger boundary -/
 
+/-- A saved cheap boundary and its implicit automorphism pair. -/
 structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
     (st : Search n) : Prop where
   positive : 0 < st.noncheaplevel
@@ -29,6 +30,7 @@ structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
       (fmptn st.lab st.ptn st.noncheaplevel n).1
       (fmptn st.lab st.ptn st.noncheaplevel n).2
 
+/-- The saved boundary supplies a valid pair when its guard permits pruning. -/
 theorem CheapOk.ready {ctx : Ctx n} {rlab rptn : Array Nat} {level : Nat}
     {st : Search n} (h : CheapOk ctx rlab rptn level st)
     (hbound : st.noncheaplevel ≤ level) (hne : level ≠ st.noncheaplevel) :
@@ -65,13 +67,13 @@ theorem recover_fmptn {st : Search n} {inf level saved : Nat}
     (hsize : n ≤ st.ptn.size)
     (hend : st.ptn[st.ptn.size - 1]! ≤ saved)
     (hsaved : saved ≤ level) (hinf : level < inf) :
-    fmptn (Nauty.recover n inf level st).lab
-        (Nauty.recover n inf level st).ptn
+    fmptn (Nauty.recover inf level st).lab
+        (Nauty.recover inf level st).ptn
         saved n =
       fmptn st.lab st.ptn saved n := by
-  have hcells : cells (Nauty.recover n inf level st).ptn saved n =
+  have hcells : cells (Nauty.recover inf level st).ptn saved n =
       cells st.ptn saved n := by
-    apply cells_eq_of_low (recover_ptn_size n inf level st)
+    apply cells_eq_of_low (recover_ptn_size inf level st)
     intro q hq
     rw [recover_ptn]
     rcases Decidable.em (q < n ∧ st.ptn[q]! > level) with hc | hc
@@ -93,8 +95,8 @@ theorem CheapOk.recover {ctx : Ctx n} {rlab rptn : Array Nat}
     {current level inf : Nat} {st : Search n}
     (h : CheapOk ctx rlab rptn current st) (hle : level ≤ current)
     (hlevel : 1 ≤ level) (hinf : level < inf) :
-    CheapOk ctx rlab rptn level (Nauty.recover n inf level st) := by
-  have hncl : (Nauty.recover n inf level st).noncheaplevel =
+    CheapOk ctx rlab rptn level (Nauty.recover inf level st) := by
+  have hncl : (Nauty.recover inf level st).noncheaplevel =
       if level < st.noncheaplevel then level + 1
       else st.noncheaplevel := by
     rw [Nauty.recover, recoverLevels, recoverPtn]
@@ -123,7 +125,7 @@ theorem CheapOk.recover {ctx : Ctx n} {rlab rptn : Array Nat}
     rcases Decidable.em (level < st.noncheaplevel) with hc | hc
     · rw [hncl, ite_eq_left hc] at hlt
       omega
-    · have heq : (Nauty.recover n inf level st).noncheaplevel =
+    · have heq : (Nauty.recover inf level st).noncheaplevel =
           st.noncheaplevel := by rw [hncl, ite_eq_right hc]
       rw [heq] at hlt ⊢
       have hpos := h.positive

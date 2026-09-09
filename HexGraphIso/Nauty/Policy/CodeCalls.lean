@@ -8,14 +8,14 @@ module
 
 public import HexGraphIso.Nauty.Policy.ReturnCodes
 public import HexGraphIso.Nauty.Policy.Safety
-import all HexGraphIso.Nauty.Policy.Fuel
+import all HexGraphIso.Nauty.Policy.Generic.Fuel
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.ReturnCodes
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Calls
-import all HexGraphIso.Nauty.Policy.Sound
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Calls
+import all HexGraphIso.Nauty.Policy.Generic.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -166,20 +166,20 @@ theorem codes_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
     (hcodes : ReturnCodes ctx cs bs fs out) (hgrows : Generic.Grows before (out.key ctx bs))
     (hfuel : n ≤ level + fuel) (hcursor : n ≤ tv + (cfuel + 1))
     (hready : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
-      (recoverLevels level (recoverPtn (n + 2) level out))) :
+      (Nauty.recover (n + 2) level out)) :
     let result := Generic.advance (n + 2) next first level numcells tc tv1 tv cell index out exit
     ∃ bs', ReturnCodes ctx cs bs' fs result.2.2 ∧ Generic.Grows before (result.2.2.key ctx bs') := by
   unfold Generic.advance
   dsimp only [policy, Generic.Policy.shortprune]
-  have hcomp : Comparison ctx cs bs fs (recoverLevels level (recoverPtn (n + 2) level out)) := by
+  have hcomp : Comparison ctx cs bs fs (Nauty.recover (n + 2) level out) := by
     simpa only [hlen] using hcodes.recover (n + 2)
-  have hnonpos : (recoverLevels level (recoverPtn (n + 2) level out)).compCanon ≤ 0 :=
+  have hnonpos : (Nauty.recover (n + 2) level out).compCanon ≤ 0 :=
     recover_nonpos hcodes.nonpos (n + 2) level
   have hcontinue : ∀ smaller, (∀ v, smaller.mem v = true → cell.mem v = true) →
       let result := next first level numcells tc tv1 (smaller.nextElem (some tv)) smaller
-        (if first && (recoverLevels level (recoverPtn (n + 2) level out)).orbits[tv]! == tv1
+        (if first && (Nauty.recover (n + 2) level out).orbits[tv]! == tv1
           then index + 1 else index)
-        (recoverLevels level (recoverPtn (n + 2) level out))
+        (Nauty.recover (n + 2) level out)
       ∃ bs', ReturnCodes ctx cs bs' fs result.2.2 ∧ Generic.Grows before (result.2.2.key ctx bs') := by
     intro smaller hsub
     obtain ⟨bs', hr, hg⟩ := hnext first level numcells tc tv1 (smaller.nextElem (some tv)) smaller _ _

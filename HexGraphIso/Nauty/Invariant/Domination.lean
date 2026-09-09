@@ -28,8 +28,6 @@ namespace Hex.GraphIso.Nauty
 set_option maxHeartbeats 1600000
 set_option linter.unusedSimpArgs false
 
-/-! # The incumbent key -/
-
 /-- The incumbent's key: the ghost code list with the sentinel
 stamped, and the stored best leaf's rows. -/
 @[expose] def incKey (ctx : Ctx n) (bs : List Nat)
@@ -40,8 +38,6 @@ stamped, and the stored best leaf's rows. -/
 @[expose] def pathLeafKey (ctx : Ctx n) (cs : List Nat)
     (lab : Array Nat) : Key n :=
   ⟨cs ++ [codeSentinel], leafRows ctx lab⟩
-
-/-! # The tied verdicts -/
 
 /-- Under full agreement the path is never deeper than the
 incumbent. -/
@@ -122,176 +118,13 @@ private theorem pushAuto_ptn (st : Search n) (p : VSet n × VSet n) :
     (pushAuto st p).ptn = st.ptn := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_compCanon (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).compCanon = st.compCanon := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_eqlevCanon (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).eqlevCanon = st.eqlevCanon := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_canoncode (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).canoncode = st.canoncode := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_canonlevel (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).canonlevel = st.canonlevel := by
-  rw [pushAuto]; split <;> rfl
-
 private theorem pushAuto_canonlab (st : Search n) (p : VSet n × VSet n) :
     (pushAuto st p).canonlab = st.canonlab := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_canong (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).canong = st.canong := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_samerows (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).samerows = st.samerows := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_eqlevFirst (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).eqlevFirst = st.eqlevFirst := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_gcaFirst (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).gcaFirst = st.gcaFirst := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_noncheaplevel (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).noncheaplevel = st.noncheaplevel := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_allsamelevel (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).allsamelevel = st.allsamelevel := by
-  rw [pushAuto]; split <;> rfl
-
-@[expose] def pruneLevel (noncheaplevel allsamelevel : Nat)
-    (eqlevCanon : Int) : Int :=
-  let save : Int :=
-    if Int.ofNat allsamelevel > eqlevCanon then
-      Int.ofNat allsamelevel - 1
-    else
-      eqlevCanon
-  if Int.ofNat noncheaplevel ≤ save then
-    Int.ofNat noncheaplevel - 1
-  else
-    save
-
-/-- A faithful comparison machine records its agreement or divergence at
-a genuine path level. -/
-theorem CodeCmpInv.eqlev_nonneg {nn : Nat} {cs bs : List Nat}
-    {canoncode : Array Nat} {canonlevel : Nat} {eqlevCanon compCanon : Int}
-    (h : CodeCmpInv nn cs bs canoncode canonlevel eqlevCanon compCanon) :
-    0 ≤ eqlevCanon := by
-  rcases h.tri with ⟨_, heq, _⟩ | ⟨j, _, _, _, heq, _⟩
-  · rw [heq]
-    exact Int.natCast_nonneg _
-  · rw [heq]
-    exact Int.natCast_nonneg _
-
-/-- The shared prune tail either returns no lower than the frozen code
-divergence or jumps to the level immediately above the saved cheap-cell
-boundary.  These are the two logically different early-return modes. -/
-theorem pruneLevel_split {noncheaplevel allsamelevel : Nat}
-    {eqlevCanon : Int} (heqlev : 0 ≤ eqlevCanon) :
-    Int.ofNat eqlevCanon.toNat ≤
-        pruneLevel noncheaplevel allsamelevel eqlevCanon ∨
-      pruneLevel noncheaplevel allsamelevel eqlevCanon =
-        Int.ofNat noncheaplevel - 1 := by
-  have heqCast : Int.ofNat eqlevCanon.toNat = eqlevCanon := by
-    change (eqlevCanon.toNat : Int) = eqlevCanon
-    exact Int.toNat_of_nonneg heqlev
-  unfold pruneLevel
-  split <;> rename_i hsave
-  · dsimp only
-    split <;> rename_i hboundary
-    · exact Or.inr rfl
-    · left
-      rw [heqCast]
-      omega
-  · dsimp only
-    split <;> rename_i hboundary
-    · exact Or.inr rfl
-    · left
-      rw [heqCast]
-      omega
-
-/-- The shared prune tail always returns below its positive saved
-cheap-cell boundary. -/
-theorem pruneLevel_lt {noncheaplevel allsamelevel : Nat}
-    {eqlevCanon : Int} :
-    pruneLevel noncheaplevel allsamelevel eqlevCanon <
-      Int.ofNat noncheaplevel := by
-  unfold pruneLevel
-  split <;> dsimp only <;> split <;>
-    simp only [Int.ofNat_eq_natCast] at * <;> omega
-
-/-- A nonnegative comparison depth and positive saved boundary make the
-shared prune return a genuine natural-number level. -/
-theorem pruneLevel_nonneg {noncheaplevel allsamelevel : Nat}
-    {eqlevCanon : Int} (hpositive : 0 < noncheaplevel)
-    (heqlev : 0 ≤ eqlevCanon) :
-    0 ≤ pruneLevel noncheaplevel allsamelevel eqlevCanon := by
-  unfold pruneLevel
-  split <;> dsimp only <;> split <;>
-    simp only [Int.ofNat_eq_natCast] at * <;> omega
-
-/-- The frozen-downward fast arm: the comparison state is untouched
-and the shared prune tail decides the unwind level. -/
-private theorem pushAuto_gcaCanon (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).gcaCanon = st.gcaCanon := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_firstcode (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).firstcode = st.firstcode := by
   rw [pushAuto]; split <;> rfl
 
 private theorem pushAuto_firstlab (st : Search n) (p : VSet n × VSet n) :
     (pushAuto st p).firstlab = st.firstlab := by
   rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_firsttc (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).firsttc = st.firsttc := by
-  rw [pushAuto]; split <;> rfl
-
-theorem recover_machines {nn inf : Nat} {cs bs fs : List Nat}
-    {st : Search n} {lvl : Nat}
-    (hc : (st.compCanon ≤ 0 ∧
-        CodeCmpInv nn cs bs st.canoncode st.canonlevel st.eqlevCanon
-          st.compCanon) ∨
-      CodeCmpInv nn cs bs st.canoncode st.canonlevel st.eqlevCanon 0)
-    (hf : FirstCodeInv nn cs fs st.firstcode st.eqlevFirst)
-    (hlvl : lvl ≤ cs.length) :
-    CodeCmpInv nn (cs.take lvl) bs
-        (recover n inf lvl st).canoncode
-        (recover n inf lvl st).canonlevel
-        (recover n inf lvl st).eqlevCanon
-        (recover n inf lvl st).compCanon ∧
-      FirstCodeInv nn (cs.take lvl) fs
-        (recover n inf lvl st).firstcode
-        (recover n inf lvl st).eqlevFirst := by
-  refine ⟨?_, recover_firstCodeInv hf hlvl⟩
-  rcases hc with ⟨hle, hinv⟩ | hinv
-  · exact recover_codeInv hinv hle hlvl
-  · exact recover_codeInv_reset hinv hlvl
-
-/-! # The first-path-agreeing leaf: the code-`1` admission test -/
-
-/-- nauty's `workperm` at a first-path-agreeing leaf: the scatter of
-the current leaf's labelling over the first leaf's. -/
-@[expose] def firstScatter (n : Nat) (firstlab lab : Array Nat) :
-    Array Nat :=
-  (List.range n).foldl (fun w i => w.set! firstlab[i]! lab[i]!)
-    (Array.replicate n 0)
-
-private theorem forIn_range_eq3 {β : Type} (n : Nat) (init : β)
-    (f : Nat → β → Id (ForInStep β)) :
-    (forIn [0:n] init f : Id β) = forIn (List.range n) init f := by
-  rw [Std.Legacy.Range.forIn_eq_forIn_range']
-  have hrange : List.range' [0:n].start [0:n].size [0:n].step
-      = List.range n := by simp [List.range_eq_range']
-  rw [hrange]
 
 private theorem forIn_scatter_eq {flab lab : Array Nat} :
     ∀ (l : List Nat) (w : Array Nat),
@@ -304,373 +137,17 @@ private theorem forIn_scatter_eq {flab lab : Array Nat} :
     rw [List.forIn_cons, List.foldl_cons]
     exact forIn_scatter_eq l _
 
-private theorem firstScatter_fold (n : Nat) (flab lab : Array Nat) :
-    (List.range n).foldl (fun w i => w.set! flab[i]! lab[i]!)
-      (Array.replicate n 0) = firstScatter n flab lab := rfl
-
-/-- A first-to-current scatter preserves its fixed `n`-slot workspace
-size. -/
-theorem firstScatter_size (n : Nat) (lab₁ lab₂ : Array Nat) :
-    (firstScatter n lab₁ lab₂).size = n := by
-  rw [firstScatter, foldl_scatter_size, Array.size_replicate]
-
-/-- A full scatter from a permutation labelling overwrites every slot,
-so its result is independent of the initial workspace contents. -/
-theorem scatter_eq_of_full {lab₁ lab₂ base base' : Array Nat} {nn : Nat}
-    (hbase : base.size = nn) (hbase' : base'.size = nn)
-    (hsize : lab₁.size = nn) (hok : LabOk lab₁ nn)
-    (hinj : LabInj lab₁ nn) :
-    (List.range nn).foldl (fun r i => r.set! lab₁[i]! lab₂[i]!) base =
-      (List.range nn).foldl
-        (fun r i => r.set! lab₁[i]! lab₂[i]!) base' := by
-  have hs := foldl_scatter_size lab₁ lab₂ (List.range nn) base
-  have hs' := foldl_scatter_size lab₁ lab₂ (List.range nn) base'
-  apply Array.ext
-  · rw [hs, hs', hbase, hbase']
-  · intro v hv hv'
-    have hvn : v < nn := by rw [hs, hbase] at hv; exact hv
-    obtain ⟨i, hi, hiv⟩ := labInj_surj
-      (Nat.le_of_eq hsize.symm) hok hinj v hvn
-    have hget := foldl_scatter_getElem (lab₂ := lab₂) hinj
-      (base := base) (fun j hj => by
-        rw [hbase]
-        exact hok j (by rw [hsize]; exact hj))
-      (m := nn) (Nat.le_refl _) hi
-    have hget' := foldl_scatter_getElem (lab₂ := lab₂) hinj
-      (base := base') (fun j hj => by
-        rw [hbase']
-        exact hok j (by rw [hsize]; exact hj))
-      (m := nn) (Nat.le_refl _) hi
-    rw [hiv] at hget hget'
-    simpa only [
-      getElem!_pos ((List.range nn).foldl
-        (fun r i => r.set! lab₁[i]! lab₂[i]!) base) v hv,
-      getElem!_pos ((List.range nn).foldl
-        (fun r i => r.set! lab₁[i]! lab₂[i]!) base') v hv'] using
-        hget.trans hget'.symm
-
 private theorem id_run_eq {α : Type} (x : Id α) : Id.run x = x := rfl
 
 private theorem pushAuto_orbits (st : Search n) (p : VSet n × VSet n) :
     (pushAuto st p).orbits = st.orbits := by
   rw [pushAuto]; split <;> rfl
 
-private theorem pushAuto_numorbits (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).numorbits = st.numorbits := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_cosetindex (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).cosetindex = st.cosetindex := by
-  rw [pushAuto]; split <;> rfl
-
-private theorem pushAuto_maxlevel (st : Search n) (p : VSet n × VSet n) :
-    (pushAuto st p).maxlevel = st.maxlevel := by
-  rw [pushAuto]; split <;> rfl
-
-/-- The code-`1` arm: a first-path-agreeing leaf passing the
-admission test records a generator and unwinds to `gcaFirst` with
-the whole comparison state untouched. -/
-@[expose] def canonScatter (n : Nat) (canonlab lab : Array Nat) :
-    Array Nat := Id.run do
-  let mut workperm := Array.replicate n 0
-  for i in [0 : n] do
-    workperm := workperm.set! canonlab[i]! lab[i]!
-  return workperm
-
-theorem canonScatter_eq_firstScatter (n : Nat)
-    (canonlab lab : Array Nat) :
-    canonScatter n canonlab lab = firstScatter n canonlab lab := by
-  rw [canonScatter, firstScatter]
-  simp only [Id.run_bind, Id.run_pure]
-  rw [forIn_range_eq3, forIn_scatter_eq]
-  exact id_run_eq _
-
-/-- The bounded-ledger effect of the shared code-three/code-four tail. -/
-@[expose] def pruneAutos (level : Nat)
-    (st : Search n) : Array (VSet n × VSet n) :=
-  if level = st.noncheaplevel then st.autos
-  else (pushAuto st
-    (fmptn st.lab st.ptn st.noncheaplevel n)).autos
-
-/-- Whenever the shared tail admits its implicit pair, bounded workspace
-capacity makes that pair the exact newest entry read by `shortprune`. -/
-theorem pruneAutos_back {level : Nat} {st : Search n}
-    (hworkspace : WorkspaceOk st) (hne : level ≠ st.noncheaplevel) :
-    (pruneAutos level st).back? =
-      some (fmptn st.lab st.ptn st.noncheaplevel n) := by
-  unfold pruneAutos
-  rw [ite_eq_right hne]
-  exact pushAuto_back hworkspace.1
-
-/-- The frozen-downward fast arm has exactly the shared prune-tail ledger
-effect. -/
-theorem auto_keyMax {ctx : Ctx n} {cs fs bs : List Nat}
-    {lab firstlab canonlab : Array Nat}
-    (hcs : cs = fs)
-    (hrows : leafRows ctx lab = leafRows ctx firstlab)
-    (hfirst : keyLe (pathLeafKey ctx fs firstlab)
-      (incKey ctx bs canonlab)) :
-    keyMax (incKey ctx bs canonlab) (pathLeafKey ctx cs lab) =
-      incKey ctx bs canonlab := by
-  have hkey : pathLeafKey ctx cs lab =
-      pathLeafKey ctx fs firstlab := by
-    rw [pathLeafKey, pathLeafKey, hcs, hrows]
-  rw [hkey]
-  exact keyMax_eq_left hfirst
-
-/-! # Frames of the internal-node steps -/
-
 section Frames
-
-private theorem prepF_canonlab (level code : Nat) (st : Search n) :
-    (compareCodes level code st).canonlab = st.canonlab := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlab, ite_self]
-private theorem prepF_canong (level code : Nat) (st : Search n) :
-    (compareCodes level code st).canong = st.canong := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canong, ite_self]
-private theorem prepF_samerows (level code : Nat) (st : Search n) :
-    (compareCodes level code st).samerows = st.samerows := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.samerows, ite_self]
-private theorem prepF_canonlevel (level code : Nat) (st : Search n) :
-    (compareCodes level code st).canonlevel = st.canonlevel := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlevel, ite_self]
-private theorem prepF_firstlab (level code : Nat) (st : Search n) :
-    (compareCodes level code st).firstlab = st.firstlab := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firstlab, ite_self]
-private theorem prepF_firsttc (level code : Nat) (st : Search n) :
-    (compareCodes level code st).firsttc = st.firsttc := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firsttc, ite_self]
-private theorem prepF_gcaFirst (level code : Nat) (st : Search n) :
-    (compareCodes level code st).gcaFirst = st.gcaFirst := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.gcaFirst, ite_self]
-private theorem prepF_gcaCanon (level code : Nat) (st : Search n) :
-    (compareCodes level code st).gcaCanon = st.gcaCanon := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.gcaCanon, ite_self]
-private theorem prepF_noncheaplevel (level code : Nat) (st : Search n) :
-    (compareCodes level code st).noncheaplevel = st.noncheaplevel := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.noncheaplevel, ite_self]
-private theorem prepF_allsamelevel (level code : Nat) (st : Search n) :
-    (compareCodes level code st).allsamelevel = st.allsamelevel := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.allsamelevel, ite_self]
-private theorem prepF_orbits (level code : Nat) (st : Search n) :
-    (compareCodes level code st).orbits = st.orbits := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.orbits, ite_self]
-private theorem prepF_lab (level code : Nat) (st : Search n) :
-    (compareCodes level code st).lab = st.lab := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.lab, ite_self]
-private theorem prepF_ptn (level code : Nat) (st : Search n) :
-    (compareCodes level code st).ptn = st.ptn := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.ptn, ite_self]
-
-/-- The fields `compareCodes` never writes: everything the store
-invariant, the first-path data, and the unwind bookkeeping read. -/
-theorem compareCodes_frames (level code : Nat) (st : Search n) :
-    (compareCodes level code st).canonlab = st.canonlab ∧
-    (compareCodes level code st).canong = st.canong ∧
-    (compareCodes level code st).samerows = st.samerows ∧
-    (compareCodes level code st).canonlevel = st.canonlevel ∧
-    (compareCodes level code st).firstlab = st.firstlab ∧
-    (compareCodes level code st).firsttc = st.firsttc ∧
-    (compareCodes level code st).gcaFirst = st.gcaFirst ∧
-    (compareCodes level code st).gcaCanon = st.gcaCanon ∧
-    (compareCodes level code st).noncheaplevel = st.noncheaplevel ∧
-    (compareCodes level code st).allsamelevel = st.allsamelevel ∧
-    (compareCodes level code st).orbits = st.orbits ∧
-    (compareCodes level code st).lab = st.lab ∧
-    (compareCodes level code st).ptn = st.ptn :=
-  ⟨prepF_canonlab level code st,
-    prepF_canong level code st,
-    prepF_samerows level code st,
-    prepF_canonlevel level code st,
-    prepF_firstlab level code st,
-    prepF_firsttc level code st,
-    prepF_gcaFirst level code st,
-    prepF_gcaCanon level code st,
-    prepF_noncheaplevel level code st,
-    prepF_allsamelevel level code st,
-    prepF_orbits level code st,
-    prepF_lab level code st,
-    prepF_ptn level code st⟩
-
-private theorem recF_canonlab (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canonlab = st.canonlab := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlab, ite_self]
-private theorem recF_canong (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canong = st.canong := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canong, ite_self]
-private theorem recF_samerows (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).samerows = st.samerows := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.samerows, ite_self]
-private theorem recF_canonlevel (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canonlevel = st.canonlevel := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlevel, ite_self]
-private theorem recF_firstlab (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).firstlab = st.firstlab := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firstlab, ite_self]
-private theorem recF_firsttc (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).firsttc = st.firsttc := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firsttc, ite_self]
-private theorem recF_gcaFirst (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).gcaFirst = st.gcaFirst := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.gcaFirst, ite_self]
-private theorem recF_allsamelevel (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).allsamelevel = st.allsamelevel := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.allsamelevel, ite_self]
-private theorem recF_orbits (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).orbits = st.orbits := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.orbits, ite_self]
-private theorem recF_lab (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).lab = st.lab := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.lab, ite_self]
-
-/-- The fields `recover` never writes: the store invariant's data,
-the first-path arrays, and the unwind targets. -/
-theorem recover_frames (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canonlab = st.canonlab ∧
-    (recover n inf level st).canong = st.canong ∧
-    (recover n inf level st).samerows = st.samerows ∧
-    (recover n inf level st).canonlevel = st.canonlevel ∧
-    (recover n inf level st).firstlab = st.firstlab ∧
-    (recover n inf level st).firsttc = st.firsttc ∧
-    (recover n inf level st).gcaFirst = st.gcaFirst ∧
-    (recover n inf level st).allsamelevel = st.allsamelevel ∧
-    (recover n inf level st).orbits = st.orbits ∧
-    (recover n inf level st).lab = st.lab :=
-  ⟨recF_canonlab n inf level st,
-    recF_canong n inf level st,
-    recF_samerows n inf level st,
-    recF_canonlevel n inf level st,
-    recF_firstlab n inf level st,
-    recF_firsttc n inf level st,
-    recF_gcaFirst n inf level st,
-    recF_allsamelevel n inf level st,
-    recF_orbits n inf level st,
-    recF_lab n inf level st⟩
-
-/-- `CanongInv` passes through `compareCodes` untouched. -/
-theorem canongInv_compareCodes {ctx : Ctx n} {level code : Nat}
-    {st : Search n}
-    (h : CanongInv ctx st.canong st.canonlab st.samerows) :
-    CanongInv ctx (compareCodes level code st).canong
-      (compareCodes level code st).canonlab
-      (compareCodes level code st).samerows := by
-  rw [prepF_canong, prepF_canonlab, prepF_samerows]
-  exact h
-
-/-- `CanongInv` passes through `recover` untouched. -/
-theorem canongInv_recover {ctx : Ctx n} {inf level : Nat}
-    {st : Search n}
-    (h : CanongInv ctx st.canong st.canonlab st.samerows) :
-    CanongInv ctx (recover n inf level st).canong
-      (recover n inf level st).canonlab
-      (recover n inf level st).samerows := by
-  rw [recF_canong, recF_canonlab, recF_samerows]
-  exact h
-
-private theorem prepF_genTrace (level code : Nat) (st : Search n) :
-    (compareCodes level code st).genTrace = st.genTrace := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.genTrace, ite_self]
-
-private theorem prepF_autos (level code : Nat) (st : Search n) :
-    (compareCodes level code st).autos = st.autos := by
-  rw [compareCodes]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.autos, ite_self]
-
-private theorem recF_genTrace (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).genTrace = st.genTrace := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.genTrace, ite_self]
-
-private theorem recF_autos (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).autos = st.autos := by
-  rw [recover, recoverLevels, recoverPtn]
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.autos, ite_self]
-
-/-- The store fields no internal step writes: the generator trace and
-the bounded autos workspace pass through `compareCodes` and
-`recover` untouched, so both ledger clauses ride the unwind and the
-comparison step by frame. -/
-theorem compareCodes_store (level code : Nat) (st : Search n) :
-    (compareCodes level code st).genTrace = st.genTrace ∧
-    (compareCodes level code st).autos = st.autos :=
-  ⟨prepF_genTrace level code st, prepF_autos level code st⟩
-
-theorem recover_store (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).genTrace = st.genTrace ∧
-    (recover n inf level st).autos = st.autos :=
-  ⟨recF_genTrace n inf level st, recF_autos n inf level st⟩
 
 end Frames
 
-/-! # The seed: `firstterminal` starts every thread -/
-
 section Seed
-
-private theorem ftF_canonlab (level : Nat) (st : Search n) :
-    (firstterminal level st).canonlab = st.lab := by
-  rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure]
-
-private theorem ftF_canong (level : Nat) (st : Search n) :
-    (firstterminal level st).canong = st.canong := by
-  rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure]
-
-private theorem ftF_samerows (level : Nat) (st : Search n) :
-    (firstterminal level st).samerows = 0 := by
-  rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure]
 
 private theorem ftF_eqlevFirst (level : Nat) (st : Search n) :
     (firstterminal level st).eqlevFirst = level := by
@@ -703,36 +180,7 @@ theorem firstterminal_firstCodeInv {nn : Nat} {cs : List Nat}
     exact hfc i h1 h2
   · rw [Array.getElem!_set!_self _ _ _ (by rw [hsize]; omega)]
 
-/-- `firstterminal` seeds the store invariant: the installed
-`canonlab` with `samerows = 0` is vacuously consistent. -/
-theorem firstterminal_canongInv {ctx : Ctx n} {level : Nat}
-    {st : Search n} (hg : st.canong.size = n) :
-    CanongInv ctx (firstterminal level st).canong
-      (firstterminal level st).canonlab
-      (firstterminal level st).samerows := by
-  rw [ftF_canong, ftF_canonlab, ftF_samerows]
-  exact canongInv_zero st.lab hg
-
-private theorem ftF_genTrace (level : Nat) (st : Search n) :
-    (firstterminal level st).genTrace = st.genTrace := by
-  rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure]
-
-private theorem ftF_autos (level : Nat) (st : Search n) :
-    (firstterminal level st).autos = st.autos := by
-  rw [firstterminal]
-  simp only [Id.run_bind, Id.run_pure]
-
-/-- `firstterminal` installs the first leaf without touching either
-store, so both ledger clauses are carried across the seed. -/
-theorem firstterminal_store (level : Nat) (st : Search n) :
-    (firstterminal level st).genTrace = st.genTrace ∧
-    (firstterminal level st).autos = st.autos :=
-  ⟨ftF_genTrace level st, ftF_autos level st⟩
-
 end Seed
-
-/-! # The subtree key under a path prefix -/
 
 /-- The absolute key of a spec subtree below the path codes `cs`. -/
 @[expose] def prefixKey (cs : List Nat) (kk : Key n) : Key n :=
@@ -756,29 +204,6 @@ theorem prefixKey_keyMax :
     have ih := prefixKey_keyMax cs k1 k2
     rw [prefixKey, prefixKey, prefixKey] at ih
     rw [← ih]
-
-/-- A spec leaf's key under the path prefix is the path leaf key of
-the extended path. -/
-theorem prefixKey_leafKey (ctx : Ctx n) (cs : List Nat) (code : Nat)
-    (r : Array Nat) :
-    prefixKey cs ⟨[code, codeSentinel], leafRows ctx r⟩ =
-      pathLeafKey ctx (cs ++ [code]) r := by
-  rw [prefixKey, pathLeafKey, List.append_assoc]
-  rfl
-
-/-- The discrete arm of `specNode`, isolated: at a node whose
-refinement is discrete, the subtree key is the leaf key. -/
-theorem specNode_discrete {ctx : Ctx n} {tcLevel fuel level : Nat}
-    {lab ptn : Array Nat} {active : VSet n} {numcells : Nat}
-    (hdisc : discreteAt (refine ctx level lab ptn active
-      numcells).ptn level n = true) :
-    specNode ctx tcLevel (fuel + 1) level lab ptn active numcells =
-      ⟨[(refine ctx level lab ptn active numcells).longcode,
-          codeSentinel],
-        leafRows ctx (refine ctx level lab ptn active
-          numcells).lab⟩ := by
-  rw [specNode]
-  simp only [hdisc, ite_true]
 
 /-- Prefixing a common code moves it into the path. -/
 theorem prefixKey_cons (cs : List Nat) (code : Nat) (K : Key n) :
@@ -839,13 +264,6 @@ theorem specNode_internal {ctx : Ctx n} {tcLevel fuel level : Nat}
   rw [prefixKey_cons, prefixKey_keysMax, List.map_map]
   rfl
 
-/-! # The leaf-guard agreement
-
-The imperative search branches on `numcells == n` where the
-specification branches on `discreteAt`; under the boundary-count
-accuracy the search invariant carries (`SearchOk.count`), the two
-guards agree. -/
-
 /-- Discreteness is exactly a full boundary count. -/
 theorem discreteAt_iff_bcount {ptn : Array Nat} {level nn : Nat}
     (hnn : nn = ptn.size) (hend : ptn[ptn.size - 1]! ≤ level) :
@@ -899,46 +317,6 @@ theorem discreteAt_iff_bcount {ptn : Array Nat} {level nn : Nat}
 
 variable {n k : Nat}
 
-/-- The entry invariant of the maximality induction at a node about
-to refine at `level = cs.length + 1`: the search skeleton, both
-comparison machines, the store invariant, cell stabilization of every
-recorded generator at this node, and the two ledgers the pruning arms
-consume.
-
-`genTraceOk` is store validity: every recorded generator is a checked
-automorphism, which is what `childKey_of_carried` needs of the
-carriers the gca returns hand up. `autosOk` is the `(fix, mcr)`
-ledger of `Invariant/Autos`, anchored at the root partition `rptn`/`rlab`
-where it is unconditional; the `shortprune`/`longprune` arms move a
-single pair down the path with `pairOk_descend` at the point of
-use. -/
-structure DomOk (G : Colored n k) (ctx : Ctx n) (rlab rptn : Array Nat)
-    (cs bs fs : List Nat) (numcells : Nat) (st : Search n) : Prop where
-  searchOk : SearchOk G (cs.length + 1) numcells st
-  codeInv : CodeCmpInv n cs bs st.canoncode st.canonlevel
-    st.eqlevCanon st.compCanon
-  firstInv : FirstCodeInv n cs fs st.firstcode st.eqlevFirst
-  canongInv : CanongInv ctx st.canong st.canonlab st.samerows
-  stab : ∀ γ ∈ st.genTrace,
-    CellStab st.ptn (cs.length + 1) st.lab γ
-  genTraceOk : GenTraceOk ctx st (ColorMap G)
-  autosOk : AutosOk ctx.g rptn rlab 1 st.autos
-
-/-- Store validity crosses a frame-preserving step. -/
-theorem genTraceOk_of_eq {ctx : Ctx n} {st st' : Search n}
-    {P : Array Nat → Prop}
-    (h : st'.genTrace = st.genTrace) (hok : GenTraceOk ctx st P) :
-    GenTraceOk ctx st' P := by
-  intro γ hγ
-  exact hok γ (by rwa [h] at hγ)
-
-/-- The `(fix, mcr)` ledger crosses a frame-preserving step. -/
-theorem autosOk_of_eq {g : Array (VSet n)} {rptn rlab : Array Nat}
-    {st st' : Search n} (h : st'.autos = st.autos)
-    (hok : AutosOk g rptn rlab 1 st.autos) :
-    AutosOk g rptn rlab 1 st'.autos := by
-  rw [h]; exact hok
-
 /-- Equal canonical-row comparison identifies the two leaf-row lists. -/
 theorem rows_eq_of_testcanlab_tie {ctx : Ctx n} {st : Search n}
     (hinv : CanongInv ctx st.canong st.canonlab st.samerows)
@@ -955,12 +333,6 @@ theorem rows_eq_of_testcanlab_tie {ctx : Ctx n} {st : Search n}
     · rfl
     · rw [hcc] at h; exact absurd h (by decide)
   exact ((listCmp_eq_iff (fun _ _ => VSet.rowCmp_eq_iff) _ _).mp hc).symm
-
-/-! # Labelling facts of a reached state
-
-The row equalities and the scatter exits are stated over `LabOk` and
-`LabInj`. A reached labelling supplies both, so the induction never
-carries them separately from `SearchOk`. -/
 
 /-- A reached labelling lands in the vertex range. -/
 theorem labOk_of_reach {G : Colored n k} {lab : Array Nat}
@@ -982,19 +354,6 @@ theorem labInj_of_reach {G : Colored n k} {lab : Array Nat}
     at he
   have hg : lab.toList[i] = lab.toList[j] := by simpa using he
   exact (List.Nodup.getElem_inj hnd).mp hg
-
-/-! # Absorption of dominated sibling suffixes
-
-An early unwind leaves the remaining siblings of every loop strictly
-between the return level and the leaf unvisited. Suppose the leaf
-event left the comparison machine frozen downward. The recorded
-divergence sits at level `eqlevCanon + 1`, and the `pruneLevel`
-forms that fire in that mode (`eqlevCanon` itself, or
-`allsamelevel - 1` above it) never return below the divergence. The
-path prefix of every skipped loop therefore still contains the
-divergence, so the whole subtree of every skipped sibling compares
-below the incumbent, and the key maximum absorbs the suffix locally,
-loop by loop. -/
 
 private theorem getElem!_take'' {l : List Nat} {m i : Nat}
     (him : i < m) (hil : i < l.length) : (l.take m)[i]! = l[i]! := by
@@ -1091,21 +450,6 @@ theorem frozen_keyLe {nn : Nat} {cs bs : List Nat} {ctx : Ctx n}
   have h := frozen_take_keyLe (ctx := ctx) (canonlab := canonlab)
     hinv hM (Nat.le_refl cs.length) K
   rwa [List.take_length] at h
-
-/-! # One child against its node's subtree key -/
-
-/-! # The generator-return transport
-
-At the loop where a generator return lands (`gcaFirst` for a code-1
-admission, `gcaCanon` for a code-2 admission), the whole partially
-explored child subtree is absorbed at once: the admitted scatter is a
-checked automorphism that stabilizes the loop's cells and carries the
-guiding sibling's individualized vertex onto the current child's, so
-the two children's subtree keys are equal, and the guiding sibling's
-key is already folded into the incumbent. The intermediate loops
-below need no local justification in this mode. The return level being
-the gca is exactly what lets their whole enclosing child subtree be
-absorbed here. -/
 
 /-- A checked automorphism stabilizing the refined node's cells and
 carrying one target-cell vertex onto another identifies the two

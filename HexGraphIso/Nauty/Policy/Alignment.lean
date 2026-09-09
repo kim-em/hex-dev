@@ -8,10 +8,10 @@ module
 
 public import HexGraphIso.Nauty.Policy.Bounds
 import all HexGraphIso.Nauty.Policy.Recovery
-import all HexGraphIso.Nauty.Policy.First
-import all HexGraphIso.Nauty.Policy.FirstHistory
+import all HexGraphIso.Nauty.Policy.First.State
+import all HexGraphIso.Nauty.Policy.First.History
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -166,8 +166,8 @@ theorem Aligned.child {G : Colored n k} {ctx : Ctx n} {base level numcells tc tv
 
 /-- Recovery bounds first-code agreement by the receiving frame. -/
 theorem recover_eqlev (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).eqlevFirst = min st.eqlevFirst level := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).eqlevFirst = min st.eqlevFirst level := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.eqlevFirst, ite_self]
   split <;> omega
 
@@ -180,7 +180,7 @@ theorem Aligned.recover {G : Colored n k} {ctx : Ctx n} {base level numcells : N
     (htc : out.firsttc = st.firsttc)
     (hdiv : st.eqlevFirst < level → out.eqlevFirst < level) :
     Aligned ctx base root level level numcells
-      (recoverLevels level (recoverPtn (n + 2) level out)) := by
+      (Nauty.recover (n + 2) level out) := by
   constructor
   · rw [recover_eqlev]
     omega
@@ -192,7 +192,7 @@ theorem Aligned.recover {G : Colored n k} {ctx : Ctx n} {base level numcells : N
         have hd := hdiv (by omega)
         rw [recover_eqlev] at hmatch
         omega
-    have hs : (recoverLevels level (recoverPtn (n + 2) level out)).firsttc = st.firsttc := by
+    have hs : (Nauty.recover (n + 2) level out).firsttc = st.firsttc := by
       have href := (referencePolicy ctx (n + 2) 0).recover level out
       have h := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.1) href
       exact h.trans htc
@@ -210,8 +210,7 @@ theorem Aligned.child_return {G : Colored n k} {ctx : Ctx n}
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (Nauty.child first level tc tv st)).2
     Aligned ctx base root level level numcells
-      (recoverLevels level (recoverPtn (n + 2) level
-        { out with fixedpts := out.fixedpts.erase tv })) := by
+      (Nauty.recover (n + 2) level { out with fixedpts := out.fixedpts.erase tv }) := by
   let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   have hn0 : 0 < n := by have := VSet.mem_lt htv; omega

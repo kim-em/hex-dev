@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Policy.CallState
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Policy.Fixed
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search

@@ -53,8 +53,7 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   surjective colouring by `Fin k`; an isomorphism preserves each colour index
   and never permutes cells.
 - `canonicalize`, `canon`, `label`, `findIso`, and `isIso` are the
-  public surface: the checked-label transcription of the pinned nauty
-  search, carrying the full theorem surface.
+  public surface: the checked result of the nauty-compatible search, carrying the full theorem surface.
 - Every operation and every theorem is available uncoloured, on a bare
   `Graph n`: `Graph.Isomorphic`, `Graph.canon`, `Graph.findIso`,
   `Graph.isIso` and the rest. `Graph.singleColor` is the one-cell view

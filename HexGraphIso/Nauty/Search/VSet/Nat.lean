@@ -281,7 +281,6 @@ theorem ofNat_toNat (s : VSet n) : ofNat s.toNat = s :=
 
 instance : Repr (VSet n) := ⟨fun s _ => repr s.toNat⟩
 
-
 end VSet
 
 end Hex.GraphIso.Nauty

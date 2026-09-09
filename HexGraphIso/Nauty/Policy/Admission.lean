@@ -25,7 +25,7 @@ namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
-/-- Compatible descents below a cheap ancestor validate the engine's
+/-- Compatible descents below a cheap ancestor validate the search's
 first-reference scatter without an automorphism scan. -/
 theorem scatter_of_descPaths {ctx : Ctx n} {st : Search n}
     (hgsz : ctx.g.size = n)

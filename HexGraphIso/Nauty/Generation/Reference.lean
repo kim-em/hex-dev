@@ -94,7 +94,6 @@ theorem reference_transport {tcLevel : Nat} {σ : Renaming n}
     simp only [referenceCodes, hcodes]
     rw [show V.longcode = U.longcode from hsp.longcode.symm]
 
-
 /-- At a discrete reference leaf, transport gives the exact renamed
 labelling, as well as every refinement code and target-cell position.
 Keeping the labelling is essential for identifying the automorphism. -/

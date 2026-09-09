@@ -18,7 +18,7 @@ public section
 Totality of the trace-driven candidate producer, and the reduction of
 `certifyCanon?` totality to the certificate replay. With no node
 budget the producer never exhausts, and its key is read off the
-traced run. The transcription-side results discharge every conjunct
+traced run. The search results discharge every conjunct
 of `checkCanon` except the `checkKey` replay. What remains to prove
 for `(certifyCanon? G).isSome` is that the replay accepts the
 produced certificate against the traced key.
@@ -91,7 +91,7 @@ private theorem label_ofArray?_isSome {lab : Array Nat}
 
 /-- The reduction of `certifyCanon?` totality to the certificate
 replay: if the produced certificate replays against the traced key,
-the transcription-side results discharge every other conjunct of the
+the search results discharge every other conjunct of the
 single trusted validation, so the certified canonicalization
 succeeds. -/
 theorem certifyCanon?_isSome_of_checkKey (G : Colored n k)

@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.Bounded
+public import HexGraphIso.Nauty.Policy.Generic.Bounded
 public import HexGraphIso.Nauty.Policy.Controls
-import all HexGraphIso.Nauty.Policy.Engine
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -108,9 +108,9 @@ theorem leafExit_noncheap (leaf : Leaf) (level : Nat) (st : Search n) :
 
 /-- Recovery leaves a failed guard strictly below the recovered parent. -/
 theorem recover_noncheap (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).noncheaplevel =
+    (Nauty.recover inf level st).noncheaplevel =
       if level < st.noncheaplevel then level + 1 else st.noncheaplevel := by
-  unfold recoverLevels recoverPtn
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
 
 /-- Searching below a noncheap ancestor cannot turn that ancestor cheap. -/
@@ -152,7 +152,7 @@ theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
   leave := fun _ _ h => h
   recover := by
     intro level st hlevel h
-    change bound < (recoverLevels level (recoverPtn inf level st)).noncheaplevel
+    change bound < (Nauty.recover inf level st).noncheaplevel
     rw [recover_noncheap]
     split <;> omega
   afterSweep := by

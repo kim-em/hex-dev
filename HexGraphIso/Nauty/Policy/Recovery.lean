@@ -11,7 +11,7 @@ import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Descent
 import all HexGraphIso.Nauty.Policy.History
-import all HexGraphIso.Nauty.Policy.FirstHistory
+import all HexGraphIso.Nauty.Policy.First.History
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -40,18 +40,15 @@ theorem DescentAt.congr {ctx : Ctx n} {store : Array Int} {base level numcells :
 theorem recover_ptn_eq {G : Colored n k} {level numcells : Nat} {st out : Search n}
     (hok : SearchOk G level numcells st)
     (hout : SearchOut G level level st out) :
-    (recoverLevels level (recoverPtn (n + 2) level out)).ptn = st.ptn := by
-  have hview := recover_eq (n + 2) level out
-  have hs : (recoverLevels level (recoverPtn (n + 2) level out)).ptn.size = st.ptn.size := by
-    change (recoverLevels level (recoverPtn (n + 2) level out)).ptn.size = _
-    rw [hview, recover_ptn_size]
+    (Nauty.recover (n + 2) level out).ptn = st.ptn := by
+  have hs : (Nauty.recover (n + 2) level out).ptn.size = st.ptn.size := by
+    rw [recover_ptn_size]
     exact hout.ptnSize
   apply Array.ext hs
   intro i hi₁ hi₂
-  rw [← getElem!_pos (recoverLevels level (recoverPtn (n + 2) level out)).ptn i hi₁,
+  rw [← getElem!_pos (Nauty.recover (n + 2) level out).ptn i hi₁,
     ← getElem!_pos st.ptn i hi₂]
-  change (recoverLevels level (recoverPtn (n + 2) level out)).ptn[i]! = _
-  rw [hview, recover_ptn]
+  rw [recover_ptn]
   change (if i < n ∧ out.ptn[i]! > level then n + 2 else out.ptn[i]!) = st.ptn[i]!
   have hi : i < n := by rw [← hok.ptnSize]; exact hi₂
   by_cases hclosed : st.ptn[i]! ≤ level
@@ -75,17 +72,14 @@ theorem DescentAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     (hok : SearchOk G level numcells st)
     (hout : SearchOut G level level st out) :
     DescentAt ctx store base root level numcells
-      (recoverLevels level (recoverPtn (n + 2) level out)) := by
+      (Nauty.recover (n + 2) level out) := by
   obtain ⟨current, hh, hl, hp, hc⟩ := h
   have hsize : out.lab.size = current.lab.size := by rw [hl]; exact hout.labSize
   have hperm : cellsPerm current.ptn level current.lab out.lab := by
     rw [hl, hp]
     exact hout.perm
   refine ⟨{ current with lab := out.lab }, hh.setLab hsize hperm, ?_, ?_, hc⟩
-  · have he := congrArg Search.lab (recover_eq (n + 2) level out)
-    change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at he
-    rw [Nauty.recover_lab] at he
-    exact he.symm
+  · exact (Nauty.recover_lab (n + 2) level out).symm
   · exact hp.trans (recover_ptn_eq hok hout).symm
 
 /-- Individualizing a vertex in the recorded target and refining it

@@ -27,7 +27,6 @@ namespace Hex.GraphIso.Nauty
 
 variable {ctx : Ctx n}
 
-
 /-! # Splitter-set stability across a pass
 
 The pass permutes members within each processed cell, so every cell's

@@ -13,12 +13,12 @@ public section
 
 /-!
 The cell-reachability clause on the search labelling with its two
-transcription residuals, and the write-site invariants of `refine`
+certification consequences, and the write-site invariants of `refine`
 the clause's induction consumes.
 -/
 
 /-!
-Labelling invariants of the transcribed search: label
+Labelling invariants of the search: label
 well-formedness and the `labelColorSorted` residual of
 `certifyCanon?_isSome`.
 
@@ -29,14 +29,14 @@ labelling relative to the initial partition: `CellsReach G lab` below.
 `refine` splits cells into finer cells, and both are permutations
 within the initial colour classes, so every leaf the search reaches,
 `canonlab` in particular, satisfies it. From that one clause the
-two transcription-side residuals follow immediately through the
+two certification consequences follow immediately through the
 existing achievement lemmas: `achieved_perm_range` turns it into
 permutation-ness (`canonlab` is a bijection of `Fin n`) and
 `achieved_position_colors` turns it into `labelColorSorted`.
 
-These lemmas prove those two reductions in full. The quartet
-induction that establishes the clause for the transcribed `canonlab`
-is `canonlab_cellsReach` in `Invariant/Reach`, and the rest of the
+These lemmas prove those two reductions in full. The search
+induction that establishes the clause for the stored `canonlab`
+is `canonlab_cellsReach` in `Policy/Result`, and the rest of the
 correctness argument shares that clause.
 -/
 
@@ -70,7 +70,7 @@ theorem cellsReach_lt {G : Colored n k} {lab : Array Nat}
     (h : CellsReach G lab) (i : Nat) (hi : i < n) : lab[i]! < n :=
   (achieved_position_colors (G := G) (llab := lab) h i hi).choose
 
-/-- A reached labelling passes `labelColorSorted`: the transcription
+/-- A reached labelling passes `labelColorSorted`: the search
 output's colours are nondecreasing, the `certifyCanon?_isSome`
 residual. The colour at each position matches `sortedColorSeq`
 (`achieved_position_colors`), which is sorted
@@ -108,7 +108,7 @@ theorem labelColorSorted_of_cellsReach {G : Colored n k}
 The two labelling-mutating search operations, `refine` and `breakout`,
 permute labels only within cells of the current partition, which
 refines the initial partition, so both preserve `CellsReach`. The
-quartet induction composes these two lemmas: each takes the threaded
+search induction composes these two lemmas: each takes the threaded
 fact that the initial cell boundaries persist in the current partition
 (`hcoarse`) and preserves the clause. -/
 
@@ -202,7 +202,7 @@ theorem breakout_cellsReach {G : Colored n k} {lab ptn : Array Nat}
 end Hex.GraphIso.Nauty
 
 /-!
-Write-site invariants of `refine` for the quartet induction
+Write-site invariants of `refine` for the search induction
 (`canonlab_cellsReach`): `refine` writes partition boundaries only at
 positions that are open at its level, so closed positions keep their
 exact values (`refine_frozen`), and every write is paired with a
@@ -1045,16 +1045,16 @@ theorem bcount_initPtn {n k : Nat} (G : Colored n k) :
       decide_eq_false (p := n + 2 ≤ 1) (by omega),
       decide_eq_false hm]
 
-/-! # The quartet invariants
+/-! # The partition invariants
 
 The per-node invariant (`SearchOk`) and per-call effect (`SearchOut`)
-of the transcribed search, with the lemmas that compose them.
+of the search, with the lemmas that compose them.
 `Invariant/Reach` and `Invariant/Domination` use these in the
 induction over the four search functions. -/
 
 variable {n k : Nat}
 
-/-- The per-node invariant of the transcribed search at `level` with
+/-- The per-node invariant of the search at `level` with
 claimed cell count `numcells`. -/
 structure SearchOk (G : Colored n k) (level numcells : Nat)
     (st : Search n) : Prop where
@@ -1070,7 +1070,7 @@ structure SearchOk (G : Colored n k) (level numcells : Nat)
   canon : st.canonlab = Array.replicate n 0 ∨
     (st.canonlab.size = n ∧ CellsReach G st.canonlab)
 
-/-- What a quartet call leaves behind: sizes kept, reachability kept,
+/-- What a search call leaves behind: sizes kept, reachability kept,
 the partition preserved exactly wherever it is (or becomes) closed at
 `B`, the labelling permuted only within cells of the entry partition
 at `lev`, and `canonlab` kept or installed reached. -/
@@ -1097,7 +1097,7 @@ theorem SearchOut.refl (G : Colored n k) (B lev : Nat)
   ⟨rfl, rfl, hreach, fun _ _ => rfl, cellsPerm_refl _ _ _,
     Or.inl rfl, Or.inl rfl, Or.inl rfl⟩
 
-/-- A quartet call cannot move the entry of a singleton cell. -/
+/-- A search call cannot move the entry of a singleton cell. -/
 theorem SearchOut.atSingleton {G : Colored n k} {B lev : Nat}
     {st st' : Search n} (h : SearchOut G B lev st st') {a : Nat}
     (hc : IsCell st.ptn lev a 1) : st'.lab[a]! = st.lab[a]! :=
@@ -1277,7 +1277,7 @@ theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
     fun q hq => h.low q (by omega), h.perm, h.firstStore, h.canonStore,
     h.canon⟩
 
-/-! # Quartet step helpers -/
+/-! # Search step helpers -/
 
 theorem mem_ne_empty {s : VSet n} {v : Nat} (h : s.mem v = true) :
     s ≠ VSet.empty := by

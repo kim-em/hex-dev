@@ -52,6 +52,7 @@ GRAPHISO_LIBRARIES = {"Hex", "HexBasic", "HexGraph", "HexGraphIso"}
 GRAPHISO_EXECUTABLE = "hexgraphiso_cactus"
 GRAPHISO_EXTERN_LIBRARY = "hexnautyffi"
 GRAPHISO_BUILD_DEFS = {"nautyVendorOTarget", "nautyCanonOTarget"}
+TOOLCHAIN_NAMESPACES = {"Init", "Lean", "Std", "Lake"}
 
 
 def graphiso_blocks(text: str) -> dict[str, str]:
@@ -138,7 +139,7 @@ def graph_import_prefixes() -> set[str] | None:
     Nonlocal imports still contribute their namespace. Unsupported import
     syntax and unresolved local modules fail closed.
     """
-    prefixes = {"HexGraphIso", "Init", "Lean", "Std", "Lake"}
+    prefixes = {"HexGraphIso"} | TOOLCHAIN_NAMESPACES
     try:
         sources, local_prefixes = index_lean_sources()
     except ValueError:
@@ -153,7 +154,10 @@ def graph_import_prefixes() -> set[str] | None:
         relative = Path(*module.split(".")).with_suffix(".lean")
         blobs = sources.get(relative, [])
         if not blobs:
-            if module.split(".")[0] in local_prefixes:
+            prefix = module.split(".")[0]
+            # A nested Init.lean does not make the toolchain Init namespace
+            # local. Tracked sources in these namespaces are still followed.
+            if prefix in local_prefixes and prefix not in TOOLCHAIN_NAMESPACES:
                 return None
             continue
         for blob in blobs:

@@ -83,7 +83,6 @@ theorem rowsMap_id {ctx : Ctx n} (hsize : ctx.g.size = n) :
   intro v _
   exact (image_id _).symm
 
-
 /-- A stored-target descent whose endpoint agrees with the current
 state up to label order inside cells. -/
 def FollowsPerm (ctx : Ctx n) (store : Array Int) (base : Nat)
@@ -212,6 +211,5 @@ theorem scatter_of_permHistory {ctx : Ctx n} {st : Search n} {level : Nat}
   · exact hfirst.trans hUlab.symm
   · exact hcurrent.trans hVlab.symm
   · exact hwork
-
 
 end Hex.GraphIso.Nauty

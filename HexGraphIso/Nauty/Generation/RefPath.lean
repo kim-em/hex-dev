@@ -202,7 +202,6 @@ theorem RefPath.carried_iff {tcLevel boundary level tc e oU oV : Nat}
     exact h.carried hok hlvl hgsz hca hst hcell hne hoV hoU
       ((hval _ hv).trans hact)
 
-
 /-- Every image of a reference child under the true path stabilizer
 contains the same reference occurrence. This supplies the matching-search
 premise before any generation theorem has been established. -/

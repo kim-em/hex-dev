@@ -31,7 +31,7 @@ open Nauty
 code-two automorphisms. The proof uses the search invariant; it adds no
 work to the traversal. These public trace lemmas remain available to
 downstream consumers even though whole-group completeness now follows
-directly from the engine theorem. -/
+directly from the search theorem. -/
 theorem trace_admitted (G : Colored n k) :
     ∀ γ ∈ trace G, ∃ p, autom? G γ = some p := by
   intro γ hγ

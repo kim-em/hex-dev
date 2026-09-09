@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Invariant.Refine
 import all HexGraphIso.Nauty.Search.State
+import all HexGraphIso.Nauty.Search.Search
 
 public section
 
@@ -139,25 +140,25 @@ private theorem ite_or {α : Type} {P : α → Prop} {c : Prop}
   · exact hb
 
 /-- `recover` never changes the current labelling. -/
-theorem recover_lab (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).lab = st.lab := by
+theorem recover_lab {n : Nat} (inf level : Nat) (st : Search n) :
+    (recover inf level st).lab = st.lab := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.lab, ite_self]
 
-private theorem recover_canonlab (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).canonlab = st.canonlab := by
+private theorem recover_canonlab {n : Nat} (inf level : Nat) (st : Search n) :
+    (recover inf level st).canonlab = st.canonlab := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.canonlab, ite_self]
 
-private theorem recover_ptn_foldl (n inf level : Nat)
+private theorem recover_ptn_foldl {n : Nat} (inf level : Nat)
     (st : Search n) :
-    (recover n inf level st).ptn =
+    (recover inf level st).ptn =
       (List.range n).foldl
         (fun r i => if r[i]! > level then r.set! i inf else r)
         st.ptn := by
-  have h1 : (recover n inf level st).ptn =
+  have h1 : (recover inf level st).ptn =
       (forIn [0:n] st.ptn (fun i r =>
         if r[i]! > level then
           pure (ForInStep.yield (r.set! i inf))
@@ -170,15 +171,15 @@ private theorem recover_ptn_foldl (n inf level : Nat)
   rw [h1, forIn_range_eq', forIn_reopen_eq]
 
 /-- `recover` reopens exactly the entries above its receiving level. -/
-theorem recover_ptn (n inf level : Nat) (st : Search n)
+theorem recover_ptn {n : Nat} (inf level : Nat) (st : Search n)
     (q : Nat) :
-    (recover n inf level st).ptn[q]! =
+    (recover inf level st).ptn[q]! =
       if q < n ∧ st.ptn[q]! > level then inf else st.ptn[q]! := by
   rw [recover_ptn_foldl, foldl_reopen_getElem]
 
 /-- Reopening a partition preserves its array size. -/
-theorem recover_ptn_size (n inf level : Nat) (st : Search n) :
-    (recover n inf level st).ptn.size = st.ptn.size := by
+theorem recover_ptn_size {n : Nat} (inf level : Nat) (st : Search n) :
+    (recover inf level st).ptn.size = st.ptn.size := by
   rw [recover_ptn_foldl, foldl_reopen_size]
 
 private theorem mem_inter_left {a b : VSet n} {v : Nat}
@@ -226,7 +227,7 @@ private theorem nextElem_some_ne_empty {s : VSet n} {pos : Option Nat}
   rw [VSet.mem_empty] at this
   cases this
 
-/-! # The quartet induction -/
+/-! # The search induction -/
 
 variable {n k : Nat}
 
@@ -235,8 +236,8 @@ level. -/
 theorem recover_out {G : Colored n k} {level : Nat}
     {st : Search n} (hlev : level + 1 < n + 2)
     (hreach : CellsReach G st.lab) :
-    SearchOut G level level st (recover n (n + 2) level st) := by
-  refine ⟨by rw [recover_lab], recover_ptn_size _ _ _ _, ?_, ?_, ?_,
+    SearchOut G level level st (recover (n + 2) level st) := by
+  refine ⟨by rw [recover_lab], recover_ptn_size _ _ _, ?_, ?_, ?_,
     ?_, ?_, ?_⟩
   · rw [recover_lab]
     exact hreach
@@ -286,23 +287,12 @@ private theorem compareCodes_firstlab (level code : Nat)
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.firstlab, ite_self]
 
-set_option maxHeartbeats 3200000 in
-
+/-- The production initial state satisfies the partition invariant. -/
 theorem root_searchOk {k : Nat} (G : Colored n k)
     (hn0 : 0 < n) :
     SearchOk G 1 (initialPartition G).2.length
-      { lab := (initialPartition G).1
-        ptn := initPtn n (n + 2) (initialPartition G).2
-        active := initActive n (initialPartition G).2
-        orbits := .ofFn (n := n) fun i => i.val
-        firstcode := .replicate (n + 2) 0
-        canoncode := .replicate (n + 2) 0
-        firsttc := .replicate (n + 2) (-1)
-        firstlab := .replicate n 0
-        canonlab := .replicate n 0
-        canong := .replicate n .empty
-        numorbits := n
-        workperm := .replicate n 0 } := by
+      (initial n (initialPartition G).1 (initialPartition G).2) := by
+  unfold initial
   have hinitEnd := (initial_nodeOk G hn0).ptnEnd
   rw [size_initPtn] at hinitEnd
   refine ⟨size_initialPartition G, size_initPtn _ _ _,

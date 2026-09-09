@@ -11,7 +11,7 @@ public import HexGraphIso.Nauty.Policy.Alignment
 import all HexGraphIso.Nauty.Policy.Equitable
 import all HexGraphIso.Nauty.Policy.Route
 import all HexGraphIso.Nauty.Policy.Recovery
-import all HexGraphIso.Nauty.Policy.FirstHistory
+import all HexGraphIso.Nauty.Policy.First.History
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -44,17 +44,14 @@ theorem GuidedAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     (hok : SearchOk G level numcells st)
     (hout : SearchOut G level level st out) :
     GuidedAt ctx tcLevel store base root level numcells
-      (recoverLevels level (recoverPtn (n + 2) level out)) := by
+      (Nauty.recover (n + 2) level out) := by
   obtain ⟨current, hh, hl, hp, hc⟩ := h
   have hsize : out.lab.size = current.lab.size := by rw [hl]; exact hout.labSize
   have hperm : cellsPerm current.ptn level current.lab out.lab := by
     rw [hl, hp]
     exact hout.perm
   refine ⟨{ current with lab := out.lab }, hh.setLab hsize hperm, ?_, ?_, hc⟩
-  · have he := congrArg Search.lab (recover_eq (n + 2) level out)
-    change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at he
-    rw [Nauty.recover_lab] at he
-    exact he.symm
+  · exact (Nauty.recover_lab (n + 2) level out).symm
   · exact hp.trans (recover_ptn_eq hok hout).symm
 
 /-- A canonical or saved target extends the executable guided descent. -/

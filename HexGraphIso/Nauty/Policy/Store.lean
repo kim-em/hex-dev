@@ -8,8 +8,8 @@ module
 
 public import HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Classify
-import all HexGraphIso.Nauty.Policy.Engine
-import all HexGraphIso.Nauty.Policy.Leftmost
+import all HexGraphIso.Nauty.Policy.Instance
+import all HexGraphIso.Nauty.Policy.Generic.Leftmost
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -55,10 +55,10 @@ theorem storePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
   leave := fun _ _ h => h
   recover := by
     intro level st h
-    change CanongInv ctx (recoverLevels level (recoverPtn inf level st)).canong
-      (recoverLevels level (recoverPtn inf level st)).canonlab
-      (recoverLevels level (recoverPtn inf level st)).samerows
-    unfold recoverLevels recoverPtn
+    change CanongInv ctx (Nauty.recover inf level st).canong
+      (Nauty.recover inf level st).canonlab
+      (Nauty.recover inf level st).samerows
+    unfold Nauty.recover recoverLevels recoverPtn
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canong,
       apply_ite Search.canonlab, apply_ite Search.samerows, ite_self]
     exact h
@@ -69,7 +69,7 @@ theorem storePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     unfold afterSweep
     split <;> exact h
 
-/-- An off-path engine call preserves the canonical row-store invariant. -/
+/-- An off-path search call preserves the canonical row-store invariant. -/
 theorem node_store {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat} {st : Search n}
     (h : CanongInv ctx st.canong st.canonlab st.samerows) :
     let out := (node false ctx inf tcLevel fuel level numcells st).2
@@ -88,7 +88,7 @@ theorem sweep_store {ctx : Ctx n} {first : Bool}
   exact Generic.sweep_stable (storePolicy ctx inf tcLevel) first fuel cfuel level numcells
     tc tv1 index cursor cell st hpast h
 
-/-- Before its first leaf the engine has not changed the canonical row array. -/
+/-- Before its first leaf the search has not changed the canonical row array. -/
 theorem firstPath_canong {ctx : Ctx n} {tcLevel fuel level numcells last : Nat}
     {st leaf : Search n}
     (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf) :
@@ -122,7 +122,7 @@ theorem firstPath_store {ctx : Ctx n} {inf tcLevel fuel level numcells last : Na
   apply canongInv_zero
   rw [firstPath_canong hpath, hsize]
 
-/-- The complete engine run has a valid canonical row cache. -/
+/-- The complete search run has a valid canonical row cache. -/
 theorem runState_store {k : Nat} (G : Colored n k) :
     let out := (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2
     CanongInv { g := rowsOf G } out.canong out.canonlab out.samerows := by

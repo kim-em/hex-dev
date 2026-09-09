@@ -72,7 +72,6 @@ theorem DescPath.frame {base last : Nat} {root leaf : RefineSt n}
     · intro q hq
       rw [htailClosed q (by rw [hclosed q hq]; omega), hclosed q hq]
 
-
 /-- A checked scatter between the leaves stabilizes their common
 ancestor, and hence forces equal depth for guided descents. -/
 theorem Guided.leaf_checked {tcLevel base last₁ last₂ : Nat}
@@ -127,6 +126,5 @@ theorem Guided.depth_checked {tcLevel base last₁ last₂ : Nat}
     (hmap : ∀ i, i < n → perm[first.lab[i]!]! = current.lab[i]!) : last₂ = last₁ := by
   exact (Guided.leaf_checked hfirst hok hselect htarget hcurrent hguided hdisc₁ hdisc₂
     hgsz hcheck hmap).1
-
 
 end Hex.GraphIso.Nauty

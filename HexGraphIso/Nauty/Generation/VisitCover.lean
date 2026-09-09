@@ -206,7 +206,6 @@ theorem finish (h : VisitCover P lab tc len tcell cursor)
     ∀ o, o < len → ¬ P o :=
   h.cover.finish (fun o ho => no_child_after hnext lab[tc + o]! ho.2.1 ho.2.2)
 
-
 end VisitCover
 
 end Hex.GraphIso.Nauty.Generation

@@ -33,7 +33,7 @@ theorem match_prep {st : Search n} {level code : Nat}
 live at precisely that ancestor. -/
 theorem match_recover {st : Search n} {level inf : Nat}
     (hlevel : level ≤ st.eqlevFirst) :
-    (recover n inf level st).eqlevFirst = level := by
+    (recover inf level st).eqlevFirst = level := by
   rw [recover_eqlevFirst]
   split <;> omega
 

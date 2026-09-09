@@ -107,7 +107,6 @@ theorem cellStep {n level guide tv : Nat} {g : Array (VSet n)} {ptn lab orbits :
   obtain ⟨hc, hst, hval⟩ := wordPerm_spec hok hsp hs hend hcheck hstab w hw
   exact ⟨wordPerm n w, hc, hst, (hval tv htv).trans (hmap.trans (beq_iff_eq.mp heq))⟩
 
-
 end Counted
 
 end Hex.GraphIso.Nauty.Generation

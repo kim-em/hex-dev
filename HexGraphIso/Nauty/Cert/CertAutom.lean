@@ -274,7 +274,7 @@ revalidates everything. -/
               ([], st, none)
             (.node children.reverse, st')
 
-/-- Trace-driven candidate production: the transcribed search runs
+/-- Trace-driven candidate production: the search runs
 once with tracing on, and the certificate pass translates its trace
 into a certificate against the traced key. The trace supplies the
 harvested generators, the achieving labelling, and the recorded code

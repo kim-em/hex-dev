@@ -8,7 +8,7 @@ module
 
 public import HexGraphIso.Nauty.Invariant.Domination
 public import HexGraphIso.Nauty.Policy.State
-public import HexGraphIso.Nauty.Policy.Maximum
+public import HexGraphIso.Nauty.Policy.Generic.Maximum
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
@@ -128,15 +128,11 @@ theorem Settled.congr {cs bs : List Nat} {st out : Search n}
 and restores the ordinary canonical comparison invariant. -/
 theorem Settled.recover {cs bs : List Nat} {st : Search n} {level : Nat}
     (h : Settled cs bs st) (hlen : level ≤ cs.length) (inf : Nat) :
-    Codes (cs.take level) bs (recoverLevels level (recoverPtn inf level st)) := by
+    Codes (cs.take level) bs (Nauty.recover inf level st) := by
   cases h with
   | codes hm hn =>
-    have h' := recover_codeInv (st := st) (inf := inf) hm hn hlen
-    rw [← recover_eq] at h'
-    exact h'
+    exact recover_codeInv (st := st) (inf := inf) hm hn hlen
   | rows hm _ =>
-    have h' := recover_codeInv_reset (st := st) (inf := inf) hm hlen
-    rw [← recover_eq] at h'
-    exact h'
+    exact recover_codeInv_reset (st := st) (inf := inf) hm hlen
 
 end Hex.GraphIso.Nauty

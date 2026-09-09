@@ -1,0 +1,39 @@
+{
+  "provenance": {
+    "report_path": "reports/hex-graph-iso-mathlib-performance.md",
+    "report_blob": "24b2d52677462b1539bff9823632ba610032264e",
+    "observation_date": "2026-09-03",
+    "host": "chungus2",
+    "cpu": "not pinned",
+    "toolchain": "Lean 4.34.0-rc2",
+    "schedule": "three interleaved fresh-module builds per probe",
+    "units": "seconds"
+  },
+  "samples": {
+    "MathlibBaseline": [
+      1.775,
+      2.47,
+      2.378
+    ],
+    "MathlibPositive10": [
+      2.807,
+      2.804,
+      2.777
+    ],
+    "MathlibNegative10": [
+      2.779,
+      2.779,
+      2.785
+    ],
+    "MathlibPositive12": [
+      3.187,
+      3.189,
+      3.172
+    ],
+    "MathlibNegative12": [
+      3.197,
+      3.189,
+      3.171
+    ]
+  }
+}

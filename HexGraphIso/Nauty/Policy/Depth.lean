@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexGraphIso.Nauty.Policy.FirstRef
-import all HexGraphIso.Nauty.Policy.First
-import all HexGraphIso.Nauty.Policy.Engine
+public import HexGraphIso.Nauty.Policy.First.Ref
+import all HexGraphIso.Nauty.Policy.First.State
+import all HexGraphIso.Nauty.Policy.Instance
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -95,13 +95,13 @@ theorem leafExit_eqlev (leaf : Leaf) (level : Nat) (st : Search n) :
 
 /-- Recovery can only lower first-code agreement. -/
 theorem recover_le (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).eqlevFirst ≤ st.eqlevFirst := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).eqlevFirst ≤ st.eqlevFirst := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.eqlevFirst, ite_self]
   repeat' split
   all_goals omega
 
-/-- The engine preserves the sentinel depth bound on off-path calls and later siblings. -/
+/-- The search preserves the sentinel depth bound on off-path calls and later siblings. -/
 theorem depthPolicy (ctx : Ctx n) (inf tcLevel last : Nat) :
     Generic.StablePolicy ctx inf tcLevel (Depth (n := n) last) (fun code => code < codeSentinel) where
   code := fun level numcells st => refine_longcode_lt ctx level st.lab st.ptn st.active numcells

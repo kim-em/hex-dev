@@ -10,7 +10,7 @@ public import HexGraphIso.Nauty.Invariant.PathStab
 public import HexGraphIso.Nauty.Policy.Partition
 public import HexGraphIso.Nauty.Policy.EquitableState
 import all HexGraphIso.Nauty.Policy.State
-import all HexGraphIso.Nauty.Policy.Reach
+import all HexGraphIso.Nauty.Policy.Generic.Reach
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -28,7 +28,6 @@ theorem FixedCells.fields {level : Nat} {st out : Search n}
   rw [hf] at hm
   obtain ⟨q, hq, hlabel, hcell⟩ := h v hv hm
   exact ⟨q, hq, by rw [hl]; exact hlabel, by rw [hp]; exact hcell⟩
-
 
 /-- Refinement leaves every recorded fixed vertex in a singleton cell. -/
 theorem fixed_visit {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
@@ -85,8 +84,8 @@ theorem cheap_fixed (first : Bool) (level : Nat) (st : Search n) :
 
 /-- Partition recovery keeps the caller's fixed-point bitset. -/
 theorem recover_fixed (inf level : Nat) (st : Search n) :
-    (recoverLevels level (recoverPtn inf level st)).fixedpts = st.fixedpts := by
-  unfold recoverLevels recoverPtn
+    (Nauty.recover inf level st).fixedpts = st.fixedpts := by
+  unfold Nauty.recover recoverLevels recoverPtn
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.fixedpts, ite_self]
 
 /-- Sweep completion changes only counters. -/
@@ -120,7 +119,7 @@ theorem fixed_recover {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st out : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hok : SearchOk G level numcells st) (h : FixedCells level st)
     (hout : SearchOut G level level st out) (hf : out.fixedpts = st.fixedpts) :
-    FixedCells level (recoverLevels level (recoverPtn (n + 2) level out)) := by
+    FixedCells level (Nauty.recover (n + 2) level out) := by
   have hr := (reachPolicy G ctx 0 hn0).recover level numcells st out hlevel hok hout
   apply h.ofSearchOut ((recover_fixed (n + 2) level out).trans hf) hok hr.ok hr.effect
 

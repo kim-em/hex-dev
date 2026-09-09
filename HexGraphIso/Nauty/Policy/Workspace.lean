@@ -17,7 +17,7 @@ namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
-/-- Engine insertion obeys the bounded workspace invariant. -/
+/-- Search insertion obeys the bounded workspace invariant. -/
 theorem workspace_push {st : Search n} (h : WorkspaceOk st)
     (pair : VSet n × VSet n) : WorkspaceOk (pushAuto st pair) := by
 
