@@ -11,10 +11,11 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Fixed
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -23,14 +24,14 @@ its partition frame, before any pruning or partition recovery occurs. -/
 theorem child_frame {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {first : Bool}
     {cell : VSet n} {st : Search n}
-    (h : SearchOk G level numcells st.view)
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hpath : FixedCells level st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (ht : cell.mem tv = true)
+    (h : SearchOk G level numcells st)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hpath : FixedCells level st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (ht : cell.mem tv = true)
     (childFirst : Bool) :
     let raw := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
     let out := { raw with fixedpts := raw.fixedpts.erase tv }
-    SearchOut G level level st.view out.view ∧ out.fixedpts = st.fixedpts := by
+    SearchOut G level level st out ∧ out.fixedpts = st.fixedpts := by
   intro raw out
   have hc := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
     hlevel h htarget ht
@@ -54,7 +55,7 @@ theorem SweepPre.child_frame {G : Colored n k} {ctx : Ctx n}
     let raw := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child first level tc tv st)).2
     let out := { raw with fixedpts := raw.fixedpts.erase tv }
-    SearchOut G level level st.view out.view ∧ out.fixedpts = st.fixedpts :=
-  Engine.child_frame h.partition hn0 h.positive h.path.fixed h.target (h.cursor_mem tv rfl) childFirst
+    SearchOut G level level st out ∧ out.fixedpts = st.fixedpts :=
+  Nauty.child_frame h.partition hn0 h.positive h.path.fixed h.target (h.cursor_mem tv rfl) childFirst
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

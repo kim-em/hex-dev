@@ -32,7 +32,7 @@ theorem CursorFuel.next {cfuel tv : Nat} {cell : VSet n}
 
 /-- Partition reachability together with conditional absence of exhaustion.
 The partition assertions hold even when the bounds are insufficient. -/
-def fuelContract (G : Colored n k) (view : σ → SearchSt n) : Contract σ n where
+def fuelContract (G : Colored n k) (view : σ → Search n) : Contract σ n where
   nodePre := (reachContract G view).nodePre
   nodePost fuel first level numcells st result :=
     (reachContract G view).nodePost fuel first level numcells st result ∧
@@ -43,20 +43,20 @@ def fuelContract (G : Colored n k) (view : σ → SearchSt n) : Contract σ n wh
       (n ≤ level + fuel → CursorFuel n cfuel cursor → result.1 ≠ .fuel)
 
 /-- Forget the node exhaustion guarantee while retaining its frame effect. -/
-theorem fuel_node_reach {G : Colored n k} {view : σ → SearchSt n}
+theorem fuel_node_reach {G : Colored n k} {view : σ → Search n}
     {fuel : Nat} {f : NodeFn σ} (h : (fuelContract G view).nodeValid fuel f) :
     (reachContract G view).nodeValid fuel f :=
   fun first level numcells st hin => (h first level numcells st hin).1
 
 /-- Forget the sweep exhaustion guarantee while retaining its frame effect. -/
-theorem fuel_sweep_reach {G : Colored n k} {view : σ → SearchSt n}
+theorem fuel_sweep_reach {G : Colored n k} {view : σ → Search n}
     {fuel cfuel : Nat} {f : SweepFn σ n}
     (h : (fuelContract G view).sweepValid fuel cfuel f) :
     (reachContract G view).sweepValid fuel cfuel f :=
   fun first level numcells tc tv1 cursor cell index st hin =>
     (h first level numcells tc tv1 cursor cell index st hin).1
 
-variable {G : Colored n k} {ctx : Ctx n} {inf tcLevel : Nat} {view : σ → SearchSt n}
+variable {G : Colored n k} {ctx : Ctx n} {inf tcLevel : Nat} {view : σ → Search n}
   [Policy σ n]
 
 /-- Completing a child sweep cannot create exhaustion. -/

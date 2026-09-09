@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.Calls
 import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -34,16 +35,16 @@ theorem Comparison.prepare {ctx : Ctx n} {tcLevel numcells : Nat}
     Comparison ctx (cs ++ [p.2.1]) bs fs p.2.2.2.2.2 ∧
       p.2.2.2.2.2.key ctx bs = st.key ctx bs := by
   have hc := refine_longcode_lt ctx (cs.length + 1) st.lab st.ptn st.active numcells
-  change (Engine.visit ctx (cs.length + 1) numcells st).2.1 < codeSentinel at hc
+  change (Nauty.visit ctx (cs.length + 1) numcells st).2.1 < codeSentinel at hc
   refine ⟨?_, ?_⟩
   · have hm := ((h.visit (cs.length + 1) numcells).compare hc hlen).target tcLevel
-      (Engine.visit ctx (cs.length + 1) numcells st).1
+      (Nauty.visit ctx (cs.length + 1) numcells st).1
     simpa only [prepareOther, List.length_append, List.length_singleton] using hm
   · unfold prepareOther
     rw [chooseTarget_fields]
     have hl := (compareCodes_frame (cs.length + 1)
-      (Engine.visit ctx (cs.length + 1) numcells st).2.1
-      (Engine.visit ctx (cs.length + 1) numcells st).2.2).2.2.2
+      (Nauty.visit ctx (cs.length + 1) numcells st).2.1
+      (Nauty.visit ctx (cs.length + 1) numcells st).2.2).2.2.2
     simp only [Search.key, hl]
     rfl
 
@@ -137,7 +138,7 @@ theorem codes_node {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
              ((afterSweep false (cs.length + 1) size index out).key ctx bs'); rwa [afterSweep_key]⟩
   · have hh' : History ctx tcLevel (cs ++ [code]).length (cs ++ [code]).length nc targeted := by
       simpa only [List.length_append, List.length_singleton] using hh
-    have hok' : SearchOk G (cs ++ [code]).length nc targeted.view := by
+    have hok' : SearchOk G (cs ++ [code]).length nc targeted := by
       simpa only [List.length_append, List.length_singleton] using hok
     have hl' : (classify ctx (cs ++ [code]).length nc targeted).1 ≠ .internal := by
       simpa only [List.length_append, List.length_singleton] using hleaf
@@ -208,7 +209,7 @@ theorem codes_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
       | true =>
         simpa only [ite_true, Id.run_pure, apply_ite Id.run,
           apply_ite Prod.snd] using hlong (shortprune cell out)
-          (fun v hv => Nauty.shortprune_subset (st := out.view) hv)
+          (fun v hv => Nauty.shortprune_subset (st := out) hv)
 
 /-- The actual off-path child settles both comparisons. Skipping an
 orbit representative is allowed only after a preceding child settled them. -/
@@ -342,4 +343,4 @@ theorem sweep_codes {G : Colored n k} {ctx : Ctx n} {first : Bool}
   exact Generic.sweep_calls (codePolicy G ctx tcLevel hn0 hgsz hsymm hloop)
     first fuel cfuel level numcells tc tv1 cursor cell index st ⟨hin, hfuel, hcursor⟩ cs bs fs hlen hc hphase
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

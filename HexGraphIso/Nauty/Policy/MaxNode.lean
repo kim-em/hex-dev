@@ -24,11 +24,12 @@ import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -176,4 +177,4 @@ theorem other_branch (G : Colored n k) (tcLevel : Nat) :
   intro fuel hs level numcells st hn cs bs fs parents hi
   exact hi.internal_result hs (by intro hf; cases hf) (fun _ => hn)
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

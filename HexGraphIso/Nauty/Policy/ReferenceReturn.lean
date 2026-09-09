@@ -21,10 +21,11 @@ import all HexGraphIso.Nauty.Policy.Short
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -213,4 +214,4 @@ theorem node_short_first {ctx : Ctx n} {inf tcLevel fuel level numcells target :
   change (leafExit (classify ctx depth cells before).1 depth (classify ctx depth cells before).2).2.gcaFirst = st.gcaFirst at hg
   rwa [hg] at hh
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

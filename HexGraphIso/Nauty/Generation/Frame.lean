@@ -24,7 +24,7 @@ theorem cellStab_fixes {ptn lab γ : Array Nat} {level pos : Nat}
 
 /-- Stabilizing a reached frame fixes the individualized base because
 those vertices are singleton cells in that frame. -/
-theorem frame_fixes {level : Nat} {st : SearchSt n} {γ : Array Nat}
+theorem frame_fixes {level : Nat} {st : Search n} {γ : Array Nat}
     (hfixed : FixedCells level st) (hsize : st.lab.size = n)
     (hbase : ∀ b ∈ base, st.fixedpts.mem b.val = true)
     (hstab : CellStab st.ptn level st.lab γ) :

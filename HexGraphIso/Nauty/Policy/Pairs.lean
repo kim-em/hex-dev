@@ -11,10 +11,11 @@ public import HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.Colors
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -34,8 +35,8 @@ theorem PairsOk.push {G : Colored n k} {ctx : Ctx n} {st : Search n} {pair : VSe
     (h : PairsOk G ctx st)
     (hp : PairOk ctx.g (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 1 pair.1 pair.2) :
     PairsOk G ctx (pushAuto st pair) := by
-  have ha := autosOk_pushAuto (st := st.view) h hp
-  rw [← view_pushAuto] at ha
+  have ha := autosOk_pushAuto (st := st) h hp
+
   exact ha
 
 /-- Admission records the scratch permutation's explicit pair. -/
@@ -49,7 +50,7 @@ theorem admit_autos (st : Search n) :
 theorem PairsOk.admit {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : PairsOk G ctx st) (hn0 : 0 < n)
     (hc : checkAutom ctx.g st.workperm = true) (hs : ColorStab G st.workperm) :
-    PairsOk G ctx (Engine.admit st) := by
+    PairsOk G ctx (Nauty.admit st) := by
   have hr := initial_nodeOk G hn0
   exact (h.push (pairOk_fmperm hr.labOk hr.labSize hr.ptnSize hr.ptnEnd hc hs)).congr
     (admit_autos st)
@@ -120,4 +121,4 @@ theorem initial_pairs (G : Colored n k) (ctx : Ctx n) :
   change pair ∈ ([] : List (VSet n × VSet n)) at hp
   simp at hp
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

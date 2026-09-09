@@ -11,6 +11,7 @@ public import HexGraphIso.Nauty.Policy.Filters
 public import HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -43,7 +44,6 @@ theorem ChildCover.pruned {n : Nat} {g : Array (VSet n)}
       exact Or.inr ⟨γ[v]!, windowSet_carry hs hc hr hok (hsub v hv),
         hkey γ ha hs v (hsub v hv), hlt⟩
 
-namespace Engine
 
 variable {n k : Nat}
 
@@ -139,8 +139,8 @@ theorem CellCover.frame {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc len : Nat} {cs : List Nat}
     {st out : Search n} {live : Nat → Prop} {best : Option (Key n)}
     (h : CellCover ctx tcLevel fuel level numcells tc len cs st live best)
-    (hf : SearchOut G level level st.view out.view)
-    (hok : SearchOk G level numcells st.view) (hout : SearchOk G level numcells out.view)
+    (hf : SearchOut G level level st out)
+    (hok : SearchOk G level numcells st) (hout : SearchOk G level numcells out)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hc : IsCell st.ptn level tc len) (hlen : 2 ≤ len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
@@ -179,7 +179,7 @@ theorem SweepPre.long_cover {G : Colored n k} {ctx : Ctx n}
     CellCover ctx tcLevel fuel level numcells tc len cs st
       (fun v => live v ∧ (Nauty.longprune cell st.fixedpts st.autos).mem v = true) best := by
   apply ChildCover.pruned hcover (labOk_of_reach h.partition.labSize h.partition.reach)
-    hc (by change tc + len ≤ st.view.lab.size; rw [h.partition.labSize]; exact hr) hsub
+    hc (by change tc + len ≤ st.lab.size; rw [h.partition.labSize]; exact hr) hsub
   · intro γ ha hs v hv
     exact congrArg (prefixKey cs)
       (h.partition.vertex_key hn0 h.positive hgsz ha hs hc hr hv hfuel tcLevel)
@@ -202,15 +202,14 @@ theorem SweepPre.short_cover {G : Colored n k} {ctx : Ctx n}
     CellCover ctx tcLevel fuel level numcells tc len cs st
       (fun v => live v ∧ (shortprune cell st).mem v = true) best := by
   apply ChildCover.pruned hcover (labOk_of_reach h.partition.labSize h.partition.reach)
-    hc (by change tc + len ≤ st.view.lab.size; rw [h.partition.labSize]; exact hr) hsub
+    hc (by change tc + len ≤ st.lab.size; rw [h.partition.labSize]; exact hr) hsub
   · intro γ ha hs v hv
     exact congrArg (prefixKey cs)
       (h.partition.vertex_key hn0 h.positive hgsz ha hs hc hr hv hfuel tcLevel)
   · intro v hv hd
-    apply Nauty.shortprune_drop (st := st.view) (windowSet_lt (hsub v hv)) (hmem v hv) hd
+    apply Nauty.shortprune_drop (st := st) (windowSet_lt (hsub v hv)) (hmem v hv) hd
     intro fix mcr he
     apply h.local_pairs (fix, mcr) ?_ (hfix fix mcr he)
     simpa using Array.mem_of_back? he
 
-end Engine
 end Hex.GraphIso.Nauty

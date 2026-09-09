@@ -11,10 +11,11 @@ import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -141,4 +142,4 @@ theorem runState_workSize (G : Colored n k) :
     rw [runState, ite_eq_right (by simpa using hn0), firstPath_workSize hpath]
     exact Array.size_replicate
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

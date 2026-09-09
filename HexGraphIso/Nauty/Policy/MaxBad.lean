@@ -21,10 +21,11 @@ import all HexGraphIso.Nauty.Policy.Prune
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -199,4 +200,4 @@ theorem bad_rule (G : Colored n k) (tcLevel : Nat) :
   rw [f.emit_step _ hdone]
   exact hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

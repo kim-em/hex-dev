@@ -13,6 +13,7 @@ import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -20,7 +21,7 @@ public section
 ancestors below its first differing code. A code prune retains the
 incumbent and returns a comparison machine that recovery can truncate. -/
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -180,4 +181,4 @@ theorem Comparison.prune_result {ctx : Ctx n} {cs bs fs : List Nat}
       · simp only [Search.key, h.nonempty, ↓reduceIte]
       · exact h.prune_witness hnc hbad htarget target (Nat.le_refl _) (by omega) tail
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

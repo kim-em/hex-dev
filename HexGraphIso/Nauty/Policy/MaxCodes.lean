@@ -17,10 +17,11 @@ import all HexGraphIso.Nauty.Policy.ReturnCodes
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -80,4 +81,4 @@ theorem NodeInput.recovered_codes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel 
     (hl.resumed (n + 2)).read, ?_⟩
   rw [hr.read, recover_key, hk]
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -44,8 +45,8 @@ theorem firstLeaf_boundary {ctx : Ctx n} {tcLevel fuel level numcells last bound
 theorem firstPath_boundary {ctx : Ctx n} {inf tcLevel fuel level numcells last : Nat}
     {st leaf : Search n} (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
     (hlevel : 0 < level) :
-    (Engine.node true ctx inf tcLevel fuel level numcells st).2.noncheaplevel = st.noncheaplevel ∨
-      level ≤ (Engine.node true ctx inf tcLevel fuel level numcells st).2.noncheaplevel := by
+    (Nauty.node true ctx inf tcLevel fuel level numcells st).2.noncheaplevel = st.noncheaplevel ∨
+      level ≤ (Nauty.node true ctx inf tcLevel fuel level numcells st).2.noncheaplevel := by
   have hterminal := firstLeaf_boundary hpath (bound := level - 1) (by omega) (Or.inl rfl)
   have h := hpath.bounded (boundaryPolicy ctx inf tcLevel (level - 1) st.noncheaplevel)
     (fun _ _ _ h => h) (by omega) hterminal
@@ -57,10 +58,10 @@ theorem firstPath_boundary {ctx : Ctx n} {inf tcLevel fuel level numcells last :
 /-- A first child returns with the implicit pair at every surviving older boundary. -/
 theorem Boundary.firstPath {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells last : Nat}
     {st leaf : Search n} (h : Boundary G ctx level st) (hn0 : 0 < n) (hlevel : 1 < level)
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf) :
-    Boundary G ctx level (Engine.node true ctx (n + 2) tcLevel fuel level numcells st).2 :=
+    Boundary G ctx level (Nauty.node true ctx (n + 2) tcLevel fuel level numcells st).2 :=
   h.of_out hlevel (node_out true hn0 (by omega) hok)
     (firstPath_noncheap hpath (bound := 0) (by omega) h.positive) (firstPath_boundary hpath (by omega))
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

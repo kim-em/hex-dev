@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Invariant.Orbits
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -107,4 +108,4 @@ theorem NodeInput.recovered_boundaries {G : Colored n k} {ctx : Ctx n}
   · exact Or.inr (by omega)
   · exact hb
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

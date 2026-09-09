@@ -22,10 +22,11 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -33,7 +34,7 @@ variable {n k : Nat}
 structure NodePre (G : Colored n k) (ctx : Ctx n) (tcLevel level numcells : Nat)
     (st : Search n) : Prop where
   positive : 1 ≤ level
-  partition : SearchOk G level numcells st.view
+  partition : SearchOk G level numcells st
   stored : RunInv G ctx st
   ancestor : st.gcaFirst < level
   canonAncestor : st.gcaCanon < level
@@ -51,8 +52,8 @@ structure SweepPre (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool
     (level numcells tc tv1 : Nat) (cursor : Option Nat) (cell : VSet n) (st : Search n) : Prop where
   past : Generic.Past first tv1 cursor
   positive : 1 ≤ level
-  partition : SearchOk G level numcells st.view
-  target : Generic.Target Search.view level tc cell st
+  partition : SearchOk G level numcells st
+  target : Generic.Target (fun st => st) level tc cell st
   cursor_mem : ∀ v, cursor = some v → cell.mem v = true
   stored : RunInv G ctx st
   ancestor : st.gcaFirst ≤ level
@@ -90,6 +91,6 @@ theorem SweepPre.local_pairs {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells tc tv1 : Nat} {first : Bool} {cursor : Option Nat}
     {cell : VSet n} {st : Search n}
     (h : SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st) :
-    LocalAutos ctx level st.view := h.path.pairs h.stored.pairs
+    LocalAutos ctx level st := h.path.pairs h.stored.pairs
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

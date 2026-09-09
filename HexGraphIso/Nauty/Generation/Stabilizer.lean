@@ -35,7 +35,7 @@ theorem initial_stab {G : Colored n k} {p : Perm n}
 
 /-- A true automorphism fixing the individualized path stabilizes the
 current cells in the raw representation used by search pruning. -/
-theorem path_stab {G : Colored n k} {st : SearchSt n} {level : Nat}
+theorem path_stab {G : Colored n k} {st : Search n} {level : Nat}
     (hn : 0 < n)
     (hpath : PathStab { g := rowsOf G }
       (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st)
@@ -49,7 +49,7 @@ theorem path_stab {G : Colored n k} {st : SearchSt n} {level : Nat}
 
 /-- Every target cell is invariant under the true point stabilizer of the
 current individualized path. -/
-theorem window_stable {G : Colored n k} {st : SearchSt n} {level tc len : Nat}
+theorem window_stable {G : Colored n k} {st : Search n} {level tc len : Nat}
     (hpath : PathStab { g := rowsOf G }
       (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st)
     (hlab : LabOk st.lab n) (hcell : IsCell st.ptn level tc len)
@@ -82,7 +82,7 @@ theorem discrete_fixes {ptn lab γ : Array Nat} {level : Nat}
 
 /-- The pointwise stabilizer of an individualized path is trivial once
 refinement is discrete. This is the terminal case of the stabilizer chain. -/
-theorem terminal {G : Colored n k} {st : SearchSt n} {level : Nat}
+theorem terminal {G : Colored n k} {st : Search n} {level : Nat}
     (hpath : PathStab { g := rowsOf G }
       (initPtn n (n + 2) (initialPartition G).2) (initialPartition G).1 level st)
     (hsize : st.lab.size = n) (hperm : st.lab.toList.Perm (List.range n))

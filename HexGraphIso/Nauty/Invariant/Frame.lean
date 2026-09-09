@@ -19,7 +19,7 @@ variable {n k : Nat}
 guard agrees with the specification's discreteness guard. -/
 theorem refine_discrete_iff {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) {level numcells : Nat}
-    {st : SearchSt n} (hok : SearchOk G level numcells st)
+    {st : Search n} (hok : SearchOk G level numcells st)
     (hlevel : 1 ≤ level) :
     (refine ctx level st.lab st.ptn st.active numcells).numcells =
         n ↔

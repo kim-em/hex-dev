@@ -22,10 +22,11 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -38,7 +39,7 @@ variable {n k : Nat}
 /-- A target selected from a non-discrete reached partition contains a vertex. -/
 theorem maketargetcell_nonempty {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {st : Search n} (hint : Int)
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
     (hnc : numcells < n) :
     (maketargetcell ctx st.lab st.ptn level tcLevel hint).2.1 ≠ VSet.empty := by
   have hend := searchOk_end hn0 hok hlevel
@@ -64,7 +65,7 @@ theorem maketargetcell_nonempty {G : Colored n k} {ctx : Ctx n}
 settle that comparison before any sibling filter can run. -/
 theorem chooseTarget_phase {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {st : Search n}
-    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view) :
+    (hn0 : 0 < n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st) :
     let t := chooseTarget false ctx tcLevel level numcells st
     (classify ctx level numcells t.2.2.2).1 = .internal →
       t.2.2.2.compCanon ≤ 0 ∨ (t.2.1.nextElem none).isSome := by
@@ -113,7 +114,7 @@ theorem NodePre.prepare {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells 
     let p := prepareOther ctx tcLevel level numcells st
     let t := p.2.2
     let state := t.2.2.2
-    SearchOk G level p.1 state.view ∧ RunInv G ctx state ∧
+    SearchOk G level p.1 state ∧ RunInv G ctx state ∧
       History ctx tcLevel level level p.1 state ∧
       (let c := classify ctx level p.1 state
        RunInv G ctx (leafExit c.1 level c.2).2) ∧
@@ -228,12 +229,12 @@ theorem SweepPre.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
     (hin : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st)
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u) :
-    NodePre G ctx tcLevel (level + 1) (numcells + 1) (Engine.child first level tc tv st) := by
+    NodePre G ctx tcLevel (level + 1) (numcells + 1) (Nauty.child first level tc tv st) := by
   have htv := hin.cursor_mem tv rfl
   have hch := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
     hin.positive hin.partition hin.target htv
   dsimp only [policy, Generic.Policy.child] at hch
-  have hnodePre : NodePre G ctx tcLevel (level + 1) (numcells + 1) (Engine.child first level tc tv st) :=
+  have hnodePre : NodePre G ctx tcLevel (level + 1) (numcells + 1) (Nauty.child first level tc tv st) :=
     ⟨(by have := hin.positive; omega), hch.1, hin.stored.child first level tc tv,
       (by cases first <;> change st.gcaFirst < level + 1 <;> have := hin.ancestor <;> omega),
       (by cases first <;> change st.gcaCanon < level + 1 <;> have := hin.canonAncestor <;> omega),
@@ -265,9 +266,9 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hstored : RunInv G ctx (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2) :
+      (Nauty.child first level tc tv st)).2) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     let left := { out with fixedpts := out.fixedpts.erase tv }
     SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
       (recoverLevels level (recoverPtn (n + 2) level left)) := by
@@ -288,18 +289,18 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
     hin.partition hin.target htv
   dsimp only at hhist
   have hgca : (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2.gcaFirst = st.gcaFirst := by
+      (Nauty.child first level tc tv st)).2.gcaFirst = st.gcaFirst := by
     rw [node_gca]
     cases first <;> rfl
   generalize hcall : node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-    (Engine.child first level tc tv st) = result at hstored hframe hhist hgca hbout hfixout ⊢
+    (Nauty.child first level tc tv st) = result at hstored hframe hhist hgca hbout hfixout ⊢
   obtain ⟨exit, out⟩ := result
   let left := { out with fixedpts := out.fixedpts.erase tv }
   have hleft : RunInv G ctx left := hstored.leave tv
   have hrestore : left.fixedpts = st.fixedpts := by
     apply fixed_restore (base := st) (out := out) _ hfresh
     exact hfixout.trans (by cases first <;> rfl)
-  have hleftFrame : SearchOut G level level st.view left.view := hframe.congr rfl rfl rfl rfl
+  have hleftFrame : SearchOut G level level st left := hframe.congr rfl rfl rfl rfl
   have hr := (reachPolicy G ctx tcLevel hn0).recover level numcells st left
     hin.positive hin.partition hleftFrame
   have hready : SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell
@@ -320,9 +321,9 @@ theorem SweepPre.restore {G : Colored n k} {ctx : Ctx n}
           apply recover_shape hin.partition hleftFrame hin.small ?_ hs
           have hb := node_boundary (ctx := ctx) (inf := n + 2) (tcLevel := tcLevel)
             (fuel := fuel) (level := level + 1) (numcells := numcells + 1)
-            (st := Engine.child first level tc tv st) (by omega)
+            (st := Nauty.child first level tc tv st) (by omega)
           rw [hcall] at hb
           cases first <;> exact hb)⟩
   exact hready
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

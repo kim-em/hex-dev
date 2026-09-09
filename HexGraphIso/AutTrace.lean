@@ -15,6 +15,7 @@ import all HexGraphIso.Perm
 import all HexGraphIso.Nauty.Cert.Cert
 import all HexGraphIso.Nauty.Invariant.Trace
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -34,11 +35,11 @@ directly from the engine theorem. -/
 theorem trace_admitted (G : Colored n k) :
     ∀ γ ∈ trace G, ∃ p, autom? G γ = some p := by
   intro γ hγ
-  have hm : γ ∈ (Engine.runColoredTraced G).autos := by
-    simpa only [trace, runColoredTraced, runTraced, Engine.runColoredTraced,
+  have hm : γ ∈ (Nauty.runColoredTraced G).autos := by
+    simpa only [trace, runColoredTraced, runTraced, Nauty.runColoredTraced,
       Array.mem_toList_iff] using hγ
-  exact admit_root (Engine.runColoredTraced_checked G hm)
-    (Engine.runColoredTraced_stab G hm)
+  exact admit_root (Nauty.runColoredTraced_checked G hm)
+    (Nauty.runColoredTraced_stab G hm)
 
 /-- The public filter retains the whole trace, in its original order. -/
 theorem raw_eq_trace (G : Colored n k) : raw G = trace G := by

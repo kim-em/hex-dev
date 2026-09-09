@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Cert.CanonForm
-public import HexGraphIso.Nauty.Policy.PublicResult
+public import HexGraphIso.Nauty.Policy.Result
 public import HexGraphIso.Nauty.Cert.Translator
 import all HexGraphIso.Nauty.Cert.CertAutom
 import all HexGraphIso.Nauty.Cert.CanonForm

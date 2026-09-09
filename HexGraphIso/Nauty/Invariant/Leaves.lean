@@ -423,13 +423,7 @@ theorem testcanlab_snd_le (ctx : Ctx n) (canong : Array (VSet n)) (lab : Array N
 
 /-! **The packaged per-leaf clause** -/
 
-/-- The per-leaf clause for the simulation induction: at a code-tied
-leaf, `processnode` updates the store and compares. Under the store
-invariant, the comparison outcome is the model row comparison of the
-two leaf keys, and the updated store satisfies the invariant both at
-`n` against the incumbent and at the returned prefix length against
-the fresh leaf, so `CanongInv` holds again whichever way the leaf
-resolves. -/
+
 theorem leafEvent_faithful {ctx : Ctx n} {canong : Array (VSet n)} {canonlab lab : Array Nat}
     {samerows : Nat}
     (hinv : CanongInv ctx canong canonlab samerows) :

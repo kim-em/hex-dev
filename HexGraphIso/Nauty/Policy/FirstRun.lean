@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -73,7 +74,7 @@ theorem firstSweep_safe {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
       | false => exact hcontinue cell _ (fun _ hv => hv)
       | true =>
         exact hcontinue (shortprune cell left) _
-          (fun _ hv => Nauty.shortprune_subset (st := left.view) hv)
+          (fun _ hv => Nauty.shortprune_subset (st := left) hv)
 
 /-- A first-path node consists of its prepared partition and the sweep of its chosen target. -/
 theorem node_first (ctx : Ctx n) (inf tcLevel fuel level numcells : Nat) (st : Search n) :
@@ -92,7 +93,7 @@ theorem node_first (ctx : Ctx n) (inf tcLevel fuel level numcells : Nat) (st : S
 /-- Installing the first leaf establishes the persistent invariant. -/
 theorem FirstPre.firstterminal {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st : Search n} (h : FirstPre G ctx level numcells st) (hn0 : 0 < n) (tcLevel : Nat) :
-    RunInv G ctx (Engine.firstterminal level (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2) := by
+    RunInv G ctx (Nauty.firstterminal level (Generic.prepareFirst ctx tcLevel level numcells st).2.2.2.2) := by
   have hp := (prepareFirst_ok (ctx := ctx) (tcLevel := tcLevel) hn0 h.positive h.partition).1
   have hs := prepareFirst_stores ctx tcLevel level numcells st
   refine ⟨isPerm_of_cellsReach hp.labSize hn0 hp.reach, ⟨hp.labSize, hp.reach⟩, ?_,
@@ -186,4 +187,4 @@ theorem runColoredTraced_checked (G : Colored n k) {γ : Array Nat}
     (hγ : γ ∈ (runColoredTraced G).autos) : checkAutom (rowsOf G) γ = true :=
   runState_checked G γ hγ
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

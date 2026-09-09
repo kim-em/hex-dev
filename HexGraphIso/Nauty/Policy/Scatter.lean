@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Search.Search
 public import HexGraphIso.Nauty.Invariant.Store
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Invariant.Store
 
 public section
@@ -19,7 +20,7 @@ equations as a fresh workspace. The previous entries are irrelevant
 when the reference labelling is a permutation.
 -/
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -108,4 +109,4 @@ theorem scatter_isautom {ctx : Ctx n} {ref : Array Nat} {st : Search n}
   checkAutom_scatter_of_isautom (by rw [scatter_size, hwork])
     href hrefPerm hlab hlabPerm (scatter_map hwork href hrefPerm) hsymm hloop hcheck
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

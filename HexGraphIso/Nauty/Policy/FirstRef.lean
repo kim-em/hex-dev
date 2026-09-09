@@ -31,7 +31,6 @@ theorem FirstCodeInv.sentinel_bound {n slot elev : Nat} {cs fs : List Nat}
   have hlt := h.flt _ hm
   omega
 
-namespace Engine
 
 variable {n k : Nat}
 
@@ -84,7 +83,7 @@ theorem firstRef_of_path {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hpath : Generic.FirstPath ctx tcLevel fuel level numcells st last leaf)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab
       (st.refined ctx level numcells).ptn)
     (htsize : n < st.firsttc.size) (hcsize : st.firstcode.size = n + 2) :
@@ -173,6 +172,5 @@ theorem FirstRef.scatter {ctx : Ctx n} {tcLevel level : Nat}
   simp only [List.length_map]
   omega
 
-end Engine
 
 end Hex.GraphIso.Nauty

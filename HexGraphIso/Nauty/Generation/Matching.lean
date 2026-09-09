@@ -23,7 +23,7 @@ variable {n : Nat} {ctx : Ctx n}
 
 /-- A reference occurrence agrees with the stored first-leaf comparison
 at this level, including every target hint and the terminal row array. -/
-structure Matches (ctx : Ctx n) (level : Nat) (st : SearchSt n)
+structure Matches (ctx : Ctx n) (level : Nat) (st : Search n)
     (targets : List Nat) (key : Key n) : Prop where
   codes : ∀ i, i < key.codes.length → key.codes[i]! = st.firstcode[level + i]!
   targets : ∀ i, i < targets.length → Int.ofNat targets[i]! = st.firsttc[level + i]!
@@ -31,10 +31,10 @@ structure Matches (ctx : Ctx n) (level : Nat) (st : SearchSt n)
 
 namespace Matches
 
-variable {level : Nat} {st : SearchSt n} {targets : List Nat} {key : Key n}
+variable {level : Nat} {st : Search n} {targets : List Nat} {key : Key n}
 
 /-- The comparison witness depends only on the stored first reference. -/
-theorem stateEq (h : Matches ctx level st targets key) {out : SearchSt n}
+theorem stateEq (h : Matches ctx level st targets key) {out : Search n}
     (hcode : out.firstcode = st.firstcode) (htc : out.firsttc = st.firsttc)
     (hlab : out.firstlab = st.firstlab) : Matches ctx level out targets key := by
   constructor
@@ -78,7 +78,7 @@ theorem prep {tcLevel : Nat} {rs : RefineSt n}
     (h : Matches ctx level st targets key)
     (hleaf : HasLeaf ctx tcLevel level rs targets key)
     (hlevel : st.eqlevFirst = level - 1) :
-    (otherNodePrep level rs.longcode st).eqlevFirst = level := by
+    (compareCodes level rs.longcode st).eqlevFirst = level := by
   obtain ⟨tail, hhead⟩ := hleaf.head
   have hc := h.codes 0 (by rw [hhead]; simp)
   rw [hhead] at hc
@@ -135,38 +135,5 @@ theorem discrete {tcLevel : Nat} {rs : RefineSt n}
   exact ⟨(h.codes 1 (by simp)).symm, h.rows.symm⟩
 
 end Matches
-
-/-- Equal first-reference rows at a matching discrete leaf force a code-one
-emission. The argument does not need an a priori choice of automorphism
-between the two leaf labellings. -/
-theorem rows_emit {level : Nat} {st : SearchSt n}
-    (hgsz : ctx.g.size = n)
-    (hfirstSize : st.firstlab.size = n)
-    (hfirst : st.firstlab.toList.Perm (List.range n))
-    (hsize : st.lab.size = n) (hperm : st.lab.toList.Perm (List.range n))
-    (hrows : leafRows ctx st.firstlab = leafRows ctx st.lab)
-    (hlevel : st.eqlevFirst = level) (hsent : st.firstcode[level + 1]! = codeSentinel) :
-    (processnode ctx level n st).2.genTrace = st.genTrace.push (firstScatter n st.firstlab st.lab) ∧
-      LabelCarrier ctx st.firstlab st.lab (processnode ctx level n st).2.genTrace ∧
-      (processnode ctx level n st).1 = Int.ofNat st.gcaFirst := by
-  have hmap : ∀ i, i < n → (firstScatter n st.firstlab st.lab)[st.firstlab[i]!]! = st.lab[i]! :=
-    fun _ hi => by
-      rw [firstScatter]
-      exact foldl_scatter_getElem
-        (fun _ _ ha hb he => perm_inj hfirstSize hfirst _ _ (by omega) (by omega) he)
-        (base := Array.replicate n 0)
-        (fun _ hi => by simpa using perm_getElem!_lt hfirstSize hfirst hi)
-        (Nat.le_refl n) hi
-  have hcheck := checkAutom_scatter_of_leafRows_eq (firstScatter_size _ _ _)
-    hfirstSize hfirst hsize hperm hmap hrows
-  have hscan := isautom_of_checked hgsz hcheck
-  have hpush := processnode_genTrace_first (ctx := ctx) (st := st) (level := level)
-    (numcells := n) (by simp [hlevel]) hsent (by simp)
-    (by simpa only [firstScatter_fold] using hscan)
-  rw [firstScatter_fold] at hpush
-  refine ⟨hpush, ⟨firstScatter n st.firstlab st.lab, ?_, hcheck, hmap⟩,
-    (processnode_auto (by simp [hlevel]) hsent (by simp) hscan).1⟩
-  rw [hpush]
-  exact Array.mem_push_self
 
 end Hex.GraphIso.Nauty.Generation

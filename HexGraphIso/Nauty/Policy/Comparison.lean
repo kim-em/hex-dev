@@ -14,6 +14,7 @@ import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.Target
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -21,7 +22,7 @@ public section
 by the first leaf. Canonical codes remain semantic values until the
 completed leaf verdict restores readable code storage. -/
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -40,8 +41,8 @@ theorem FirstCodes.congr {cs fs : List Nat} {st out : Search n}
 theorem FirstCodes.compare {cs fs : List Nat} {st : Search n} {code : Nat}
     (h : FirstCodes cs fs st) (hc : code < codeSentinel) :
     FirstCodes (cs ++ [code]) fs (compareCodes (cs.length + 1) code st) := by
-  have hm := otherNodePrep_firstCodeInv (st := st.view) h hc
-  rw [← view_compareCodes] at hm
+  have hm := compareCodes_firstCodeInv (st := st) h hc
+
   exact hm
 
 /-- Target selection can lower first-path agreement without changing its codes. -/
@@ -57,7 +58,7 @@ theorem FirstCodes.target {ctx : Ctx n} {cs fs : List Nat} {st : Search n}
 /-- Classification preserves the first-reference code comparison. -/
 theorem FirstCodes.classify {ctx : Ctx n} {cs fs : List Nat} {st : Search n}
     (h : FirstCodes cs fs st) (numcells : Nat) :
-    FirstCodes cs fs (Engine.classify ctx cs.length numcells st).2 :=
+    FirstCodes cs fs (Nauty.classify ctx cs.length numcells st).2 :=
   h.congr (congrArg Prod.fst (classify_reference ctx cs.length numcells st))
     (classify_eqlev ctx cs.length numcells st)
 
@@ -72,8 +73,8 @@ theorem FirstCodes.leaf {cs fs : List Nat} {st : Search n}
 theorem FirstCodes.recover {cs fs : List Nat} {st : Search n} {level : Nat}
     (h : FirstCodes cs fs st) (hlen : level ≤ cs.length) (inf : Nat) :
     FirstCodes (cs.take level) fs (recoverLevels level (recoverPtn inf level st)) := by
-  have hm := recover_firstCodeInv (st := st.view) (inf := inf) h hlen
-  rw [← view_recover] at hm
+  have hm := recover_firstCodeInv (st := st) (inf := inf) h hlen
+  rw [← recover_eq] at hm
   exact hm
 
 /-- The two comparisons and the saved first leaf's incumbent bound. -/
@@ -105,7 +106,7 @@ theorem Comparison.congr {ctx : Ctx n} {cs bs fs : List Nat} {st out : Search n}
 /-- Refinement changes neither saved reference nor either comparison machine. -/
 theorem Comparison.visit {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
     (h : Comparison ctx cs bs fs st) (level numcells : Nat) :
-    Comparison ctx cs bs fs (Engine.visit ctx level numcells st).2.2 :=
+    Comparison ctx cs bs fs (Nauty.visit ctx level numcells st).2.2 :=
   h.congr rfl rfl rfl rfl rfl rfl rfl rfl
 
 /-- The next refinement code advances both comparison machines. -/
@@ -130,7 +131,7 @@ theorem Comparison.target {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
 /-- Individualization changes no saved code or labelling. -/
 theorem Comparison.child {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
     (h : Comparison ctx cs bs fs st) (first : Bool) (level tc tv : Nat) :
-    Comparison ctx cs bs fs (Engine.child first level tc tv st) := by
+    Comparison ctx cs bs fs (Nauty.child first level tc tv st) := by
   cases first <;> exact h.congr rfl rfl rfl rfl rfl rfl rfl rfl
 
 /-- The cheap guard preserves both comparisons and both references. -/
@@ -148,8 +149,8 @@ theorem comparison_firstterminal {ctx : Ctx n} {cs : List Nat} {st : Search n}
     (hlt : ∀ c ∈ cs, c < codeSentinel) :
     Comparison ctx cs cs cs (firstterminal cs.length st) := by
   refine ⟨firstterminal_codes hcsize hlen hcodes hlt, ?_, hne, keyLe_refl _⟩
-  have hm := firstterminal_firstCodeInv (st := st.view) hfsize hlen hcodes hlt
-  rw [← view_firstterminal] at hm
+  have hm := firstterminal_firstCodeInv (st := st) hfsize hlen hcodes hlt
+
   exact hm
 
 /-- A resolved leaf keeps both comparisons recoverable, retains the
@@ -159,15 +160,15 @@ theorem Comparison.leaf {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     (h : Comparison ctx cs bs fs st)
     (hh : History ctx tcLevel cs.length cs.length n st)
     (hinv : RunInv G ctx st) (hn0 : 0 < n) (hlevel : 1 ≤ cs.length)
-    (hok : SearchOk G cs.length n st.view) (hgsz : ctx.g.size = n)
+    (hok : SearchOk G cs.length n st) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    let verdict := Engine.classify ctx cs.length n st
+    let verdict := Nauty.classify ctx cs.length n st
     let out := (leafExit verdict.1 cs.length verdict.2).2
     ∃ bs', Settled cs bs' out ∧ FirstCodes cs fs out ∧ bs' ≠ [] ∧
       keyLe (incKey ctx fs out.firstlab) (incKey ctx bs' out.canonlab) ∧
       out.key ctx bs' = some (incMax (st.key ctx bs) (pathLeafKey ctx cs st.lab)) := by
-  let verdict := Engine.classify ctx cs.length n st
+  let verdict := Nauty.classify ctx cs.length n st
   let out := (leafExit verdict.1 cs.length verdict.2).2
   obtain ⟨bs', hm, hk⟩ := hh.leaf_max hinv hn0 hlevel hok h.canonical h.first
     h.nonempty h.lower hgsz hsymm hloop
@@ -203,4 +204,4 @@ theorem comparison_recover {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
   rw [hfirst, hcanon]
   exact hlower
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

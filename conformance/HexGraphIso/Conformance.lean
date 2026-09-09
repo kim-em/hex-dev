@@ -342,42 +342,42 @@ private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
 
 -- Code-1 admission uses agreement at this level without testing the next sentinel.
 #guard Id.run do
-  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := Nauty.initial 3 #[0, 1, 2] [2]
   let st := { st with
     firstlab := #[0, 1, 2], eqlevFirst := 2, compCanon := -1, gcaFirst := 1 }
-  let (leaf, _) := Nauty.Engine.classify { g := Nauty.rowsOf p3 } 2 3 st
+  let (leaf, _) := Nauty.classify { g := Nauty.rowsOf p3 } 2 3 st
   return leaf == .autoFirst
 
 -- At workspace capacity the newest pair overwrites the last slot.
 #guard Id.run do
-  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := Nauty.initial 3 #[0, 1, 2] [2]
   let old : Nauty.VSet 3 := .ofList [0, 1, 2]
   let newest : Nauty.VSet 3 := .ofList [1]
   let st := { st with autos := .replicate 500 (old, old) }
-  let st := Nauty.Engine.pushAuto st (old, newest)
-  return st.autos.size == 500 && Nauty.Engine.shortprune old st == newest
+  let st := Nauty.pushAuto st (old, newest)
+  return st.autos.size == 500 && Nauty.shortprune old st == newest
 
 -- Code 2 without an orbit change still records and short-prunes.
 #guard Id.run do
-  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := Nauty.initial 3 #[0, 1, 2] [2]
   let st := { st with workperm := #[0, 1, 2], gcaFirst := 1, gcaCanon := 2 }
-  let (exit, st) := Nauty.Engine.leafExit .autoCanon 3 st
+  let (exit, st) := Nauty.leafExit .autoCanon 3 st
   return exit == .unwind 2 true && st.genTrace == #[#[0, 1, 2]] &&
     st.autos.size == 1 && st.numgenerators == 0 && st.numorbits == 3
 
 -- A changed orbit with a smaller coset representative returns without short prune.
 #guard Id.run do
-  let st := Nauty.Engine.initial 3 #[0, 1, 2] [2]
+  let st := Nauty.initial 3 #[0, 1, 2] [2]
   let st := { st with
     workperm := #[1, 0, 2], cosetindex := 1, gcaFirst := 1, gcaCanon := 2 }
-  let (exit, st) := Nauty.Engine.leafExit .autoCanon 3 st
+  let (exit, st) := Nauty.leafExit .autoCanon 3 st
   return exit == .unwind 1 false && st.numgenerators == 1 && st.numorbits == 2
 
 -- Exhausted recursion must remain distinguishable from a completed sweep.
-#guard (Nauty.Engine.node true { g := Nauty.rowsOf p3 } 5 100 0 1 1
-  (Nauty.Engine.initial 3 #[0, 1, 2] [2])).1 == .fuel
-#guard (Nauty.Engine.sweep true { g := Nauty.rowsOf p3 } 5 100 3 0 1 1 0 0
-  (some 0) (.ofList [0]) 0 (Nauty.Engine.initial 3 #[0, 1, 2] [2])).1 == .fuel
+#guard (Nauty.node true { g := Nauty.rowsOf p3 } 5 100 0 1 1
+  (Nauty.initial 3 #[0, 1, 2] [2])).1 == .fuel
+#guard (Nauty.sweep true { g := Nauty.rowsOf p3 } 5 100 3 0 1 1 0 0
+  (some 0) (.ofList [0]) 0 (Nauty.initial 3 #[0, 1, 2] [2])).1 == .fuel
 
 /-! # The empty graph -/
 
@@ -397,25 +397,25 @@ end Hex.GraphIso.Conformance
 
 /-! The search proofs depend only on the standard logical axioms. -/
 
-/-- info: 'Hex.GraphIso.Nauty.Engine.canonSpecKey_eq_tracedKey' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.canonSpecKey_eq_tracedKey' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Engine.canonSpecKey_eq_tracedKey
+#print axioms Hex.GraphIso.Nauty.canonSpecKey_eq_tracedKey
 
-/-- info: 'Hex.GraphIso.Nauty.Engine.generators_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.generators_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Engine.generators_complete
+#print axioms Hex.GraphIso.Nauty.generators_complete
 
-/-- info: 'Hex.GraphIso.Nauty.Engine.Max.firstPath_generates' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Max.firstPath_generates' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Engine.Max.firstPath_generates
+#print axioms Hex.GraphIso.Nauty.Max.firstPath_generates
 
-/-- info: 'Hex.GraphIso.Nauty.Engine.Max.firstPath_cover' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Max.firstPath_cover' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Engine.Max.firstPath_cover
+#print axioms Hex.GraphIso.Nauty.Max.firstPath_cover
 
-/-- info: 'Hex.GraphIso.Nauty.Engine.Max.reference_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.GraphIso.Nauty.Max.reference_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.GraphIso.Nauty.Engine.Max.reference_complete
+#print axioms Hex.GraphIso.Nauty.Max.reference_complete
 
 /-- info: 'Hex.GraphIso.Nauty.Generation.RefPath.transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

@@ -13,7 +13,7 @@ import all HexGraphIso.Nauty.Policy.History
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -114,4 +114,4 @@ theorem GuidedPerm.child {ctx : Ctx n} {store : Array Int} {tcLevel base level t
   rw [mapSt_id] at hp'
   exact ⟨leaf', path ++ [(tc, o')], hd.append hq, hg.append hd hchoice, hp'.symm⟩
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

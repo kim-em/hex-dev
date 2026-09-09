@@ -14,6 +14,7 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -42,7 +43,7 @@ theorem node_ne_done (first : Bool) (ctx : Ctx n) (inf tcLevel fuel level numcel
 
 end Hex.GraphIso.Nauty.Generic
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -55,22 +56,22 @@ theorem SweepInput.child_exit {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfue
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    ∃ target short out, Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind target short, out) := by
+    ∃ target short out, Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind target short, out) := by
   have hi := h.push hgsz hsymm hloop
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
   have hf := node_noFuel (ctx := ctx) (tcLevel := tcLevel) (first && tv == tv1) hn0 hi.frame.positive hi.frame.partition hi.fuel
   dsimp only [Parent.child] at hf
   rw [← h.first_eq, ← h.level_eq, ← h.numcells_eq, ← h.tc_eq] at hf
   have hd := Generic.node_ne_done (first && tv == tv1) ctx (n + 2) tcLevel fuel
-    (level + 1) (numcells + 1) (Engine.child first level tc tv st)
+    (level + 1) (numcells + 1) (Nauty.child first level tc tv st)
   rw [← node_eq_generic] at hd
-  generalize he : Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-    (level + 1) (numcells + 1) (Engine.child first level tc tv st) = result at hf hd ⊢
+  generalize he : Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+    (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = result at hf hd ⊢
   obtain ⟨exit, out⟩ := result
   cases exit with
   | fuel => exact (hf rfl).elim
   | done => exact (hd rfl).elim
   | unwind target short => exact ⟨target, short, out, rfl⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

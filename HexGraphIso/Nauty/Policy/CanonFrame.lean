@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.Effect
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -48,7 +49,7 @@ theorem CanonOut.fields {level : Nat} {st out result : Search n}
 /-- Canonical effects compose using the partition effect of the first call. -/
 theorem CanonOut.trans {G : Colored n k} {level : Nat} {st mid out : Search n}
     (h : CanonOut level st mid) (hnext : CanonOut level mid out)
-    (he : SearchOut G level level st.view mid.view) : CanonOut level st out := by
+    (he : SearchOut G level level st mid) : CanonOut level st out := by
   have hf := h.floor
   have hn := hnext.floor
   refine ⟨by omega, ?_⟩
@@ -99,9 +100,9 @@ theorem CanonOut.old {level : Nat} {st out : Search n}
 /-- Refinement transports a canonical effect to the node's entry partition. -/
 theorem CanonOut.visit {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st out : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (h : CanonOut level (visit ctx level numcells st).2.2 out) : CanonOut level st out := by
-  let mid := (Engine.visit ctx level numcells st).2.2
+  let mid := (Nauty.visit ctx level numcells st).2.2
   have hend := searchOk_end hn0 hok hlevel
   change st.ptn[st.ptn.size - 1]! ≤ level at hend
   have hs : st.lab.size = st.ptn.size := hok.labSize.trans hok.ptnSize.symm
@@ -128,13 +129,13 @@ the target position and lies within the parent's cells. -/
 theorem child_store {G : Colored n k} {ctx : Ctx n}
     {level numcells tc tv : Nat} {st : Search n} {lab : Array Nat} {cell : VSet n}
     (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
-    (hsaved : lab.size = (Engine.child first level tc tv st).lab.size ∧
-      cellsPerm (Engine.child first level tc tv st).ptn (level + 1)
-        (Engine.child first level tc tv st).lab lab) :
+    (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
+    (hsaved : lab.size = (Nauty.child first level tc tv st).lab.size ∧
+      cellsPerm (Nauty.child first level tc tv st).ptn (level + 1)
+        (Nauty.child first level tc tv st).lab lab) :
     lab.size = st.lab.size ∧ cellsPerm st.ptn level st.lab lab ∧ lab[tc]! = tv := by
-  let mid := Engine.child first level tc tv st
+  let mid := Nauty.child first level tc tv st
   have hc := (reachPolicy G ctx 0 hn0).child first level numcells tc tv cell st hlevel hok htarget htv
   have he := hc.2 mid (SearchOut.refl G level (level + 1) hc.1.reach)
   have hp : mid.ptn.size = st.ptn.size := he.ptnSize
@@ -172,12 +173,12 @@ theorem child_store {G : Colored n k} {ctx : Ctx n}
 theorem CanonOut.child {G : Colored n k} {ctx : Ctx n}
     {level numcells tc tv : Nat} {st out : Search n} {cell : VSet n}
     (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
-    (h : CanonOut (level + 1) (Engine.child first level tc tv st) out) :
+    (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
+    (h : CanonOut (level + 1) (Nauty.child first level tc tv st) out) :
     CanonOut level st out := by
   have hf := h.floor
-  have hg : (Engine.child first level tc tv st).gcaCanon = st.gcaCanon := by cases first <;> rfl
+  have hg : (Nauty.child first level tc tv st).gcaCanon = st.gcaCanon := by cases first <;> rfl
   rw [hg] at hf
   refine ⟨by omega, ?_⟩
   rcases h.source with hs | hs
@@ -223,7 +224,7 @@ theorem CanonOut.recover {level : Nat} {st out : Search n}
 theorem CanonOut.afterSweep {level : Nat} {st out : Search n}
     (h : CanonOut level st out) (first : Bool) (size index : Nat) :
     CanonOut level st (afterSweep first level size index out) := by
-  unfold Engine.afterSweep
+  unfold Nauty.afterSweep
   split <;> exact h.fields rfl rfl
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

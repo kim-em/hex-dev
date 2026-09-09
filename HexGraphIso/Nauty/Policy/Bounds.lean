@@ -10,10 +10,11 @@ public import HexGraphIso.Nauty.Policy.Bounded
 public import HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -178,4 +179,4 @@ theorem sweep_noncheap {ctx : Ctx n} {first : Bool}
   exact Generic.sweep_bounded (noncheapPolicy ctx inf tcLevel bound) first fuel cfuel level numcells
     tc tv1 index cursor cell st hpast hlevel h
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

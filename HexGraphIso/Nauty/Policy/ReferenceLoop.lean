@@ -26,10 +26,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -51,11 +52,11 @@ theorem SweepInput.reference {G : Colored n k} {tcLevel fuel cfuel boundary : Na
     (hvisit : ∀ {cfuel tv index cell st bs fs},
       SweepInput G { g := rowsOf G } tcLevel fuel cfuel false level numcells tc tv1 (some tv)
         cell index st l bs fs parents →
-      Generation.Matches { g := rowsOf G } (level + 1) st.view targets key →
+      Generation.Matches { g := rowsOf G } (level + 1) st targets key →
       st.eqlevFirst = level → boundary ≤ st.allsamelevel → st.gcaFirst < level →
       ∀ o, o < (l.prepare { g := rowsOf G } tcLevel).2.2.2.1 → R.lab[tc + o]! = tv →
       Generation.ChildPath { g := rowsOf G } tcLevel boundary level R tc targets key o →
-      let out := Engine.node false { g := rowsOf G } (n + 2) tcLevel fuel
+      let out := Nauty.node false { g := rowsOf G } (n + 2) tcLevel fuel
         (level + 1) (numcells + 1) (child false level tc tv st)
       ∀ target short, out.1 = .unwind target short → RefReturn { g := rowsOf G } target out.2)
     {previous : Option Nat}
@@ -64,12 +65,12 @@ theorem SweepInput.reference {G : Colored n k} {tcLevel fuel cfuel boundary : Na
       (l.prepare { g := rowsOf G } tcLevel).2.2.2.1 targets key cell previous)
     (hocc : ∃ o, o < (l.prepare { g := rowsOf G } tcLevel).2.2.2.1 ∧
       Generation.ChildPath { g := rowsOf G } tcLevel boundary level R tc targets key o)
-    (hpast : Generation.CanonPast level tc previous st.view)
-    (hm : Generation.Matches { g := rowsOf G } (level + 1) st.view targets key)
+    (hpast : Generation.CanonPast level tc previous st)
+    (hm : Generation.Matches { g := rowsOf G } (level + 1) st targets key)
     (heq : st.eqlevFirst = level) (hsame : boundary ≤ st.allsamelevel)
     (hguide : st.gcaFirst < level) (hcheap : level < st.noncheaplevel) :
     ∃ target short out,
-      Engine.sweep false { g := rowsOf G } (n + 2) tcLevel fuel cfuel
+      Nauty.sweep false { g := rowsOf G } (n + 2) tcLevel fuel cfuel
         level numcells tc tv1 cursor cell index st = (.unwind target short, out) ∧
       target < level ∧ RefReturn { g := rowsOf G } target out.2 := by
   induction cfuel generalizing cursor cell index st bs fs previous with
@@ -116,7 +117,7 @@ theorem SweepInput.reference {G : Colored n k} {tcLevel fuel cfuel boundary : Na
         rw [hcall] at hr
         have href := hr.reference hn0 hi ht hnoncheap (by rw [hsameOut]; omega)
         refine ⟨target, short, (index, { out with fixedpts := out.fixedpts.erase tv }), ?_, ht, href.fixed _⟩
-        rw [Engine.sweep]
+        rw [Nauty.sweep]
         simp only [Bool.not_false, Bool.true_or, ↓reduceIte, Bool.false_and, hcall,
           Bool.false_eq_true, ht, Id.run_pure]
       · have hresult := h.child_result hn
@@ -129,7 +130,7 @@ theorem SweepInput.reference {G : Colored n k} {tcLevel fuel cfuel boundary : Na
         let ready := recoverLevels level (recoverPtn (n + 2) level left)
         let small := if short then shortprune cell left else cell
         let filtered := if tv == tv1 then Nauty.longprune small left.fixedpts left.autos else small
-        have hc : Engine.node (false && tv == tv1) ctx (n + 2) tcLevel fuel
+        have hc : Nauty.node (false && tv == tv1) ctx (n + 2) tcLevel fuel
             (level + 1) (numcells + 1) (child false level tc tv st) = (.unwind level short, out) := hcall
         obtain ⟨hgen, hanc⟩ := h.received_generators hn hc
         obtain ⟨bs', fs', hs, _, _⟩ := h.received_input hn (by simp) hc hgen hanc
@@ -149,7 +150,7 @@ theorem SweepInput.reference {G : Colored n k} {tcLevel fuel cfuel boundary : Na
         have hp := h.canon_past hpast hnext
         simp only [Bool.false_and, Bool.false_eq_true, ↓reduceIte] at hp
         rw [hcall] at hp
-        change Generation.CanonPast level tc (some tv) ready.view at hp
+        change Generation.CanonPast level tc (some tv) ready at hp
         have hr : ready.reference = st.reference := by
           have hh := node_reference ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
             (child false level tc tv st)
@@ -189,4 +190,4 @@ theorem SweepInput.reference {G : Colored n k} {tcLevel fuel cfuel boundary : Na
         dsimp only [ready, left, filtered, small] at he ⊢
         exact he
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

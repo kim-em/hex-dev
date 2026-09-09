@@ -6,6 +6,9 @@ Authors: Kim Morrison
 
 module
 
+public import HexGraphIso.Nauty.Spec.Traced
+import all HexGraphIso.Nauty.Spec.Traced
+
 public import HexGraphIso.Nauty.Cert.CertTotal
 import all HexGraphIso.Nauty.Cert.CertAutom
 import all HexGraphIso.Nauty.Cert.Cert
@@ -1053,13 +1056,6 @@ theorem certifyNode_replays {ctx : Ctx n}
           exact hlt
 
 /-! # The replay at the root -/
-
-/-- The traced key of the candidate producer, as `produceCand`
-claims it. -/
-@[expose] def tracedKey (G : Colored n k) : Key n :=
-  ⟨(runColoredTraced G).bestCodes ++ [codeSentinel],
-    leafRows { g := rowsOf G }
-      (runColoredTraced G).result.canonlab⟩
 
 /-- The produced certificate replays: under domination (the traced
 key is the spec key) and store validity (every record's generator is

@@ -11,6 +11,7 @@ public import HexGraphIso.Nauty.Policy.KeyComplete
 import all HexGraphIso.Nauty.Cert.CertAutom
 import all HexGraphIso.Nauty.Cert.CanonForm
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -79,10 +80,6 @@ theorem certifyCanon?_isSome_zero (G : Colored 0 k) :
       rfl
     · exact labelColorSorted_canonlab G
 
-
-/-- The specification key is the key installed by the structured search. -/
-theorem canonSpecKey_eq_tracedKey (G : Colored n k) (hn0 : 0 < n) :
-    canonSpecKey G = tracedKey G := Engine.canonSpecKey_eq_tracedKey G hn0
 
 /-- The certified canonicalization always succeeds. -/
 theorem certifyCanon?_isSome (G : Colored n k) : (certifyCanon? G).isSome := by

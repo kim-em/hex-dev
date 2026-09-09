@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Alignment
 import all HexGraphIso.Nauty.Policy.Recovery
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -81,8 +82,8 @@ theorem Aligned.first_checked {G : Colored n k} {ctx : Ctx n} {tcLevel level num
     (h : Aligned ctx st.gcaFirst root level level numcells st)
     (href : FirstRef ctx tcLevel st.gcaFirst root st) (hdepth : Depth href.last st)
     (hsmall : SubtreeOk ctx st.gcaFirst root)
-    (hok : SearchOk G level numcells st.view)
-    (hauto : Engine.classify ctx level numcells st = (.autoFirst, out))
+    (hok : SearchOk G level numcells st)
+    (hauto : Nauty.classify ctx level numcells st = (.autoFirst, out))
     (hwork : st.workperm.size = n)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
@@ -107,7 +108,7 @@ theorem Aligned.first_checked {G : Colored n k} {ctx : Ctx n} {tcLevel level num
 
 /-- A code-one admission outside a cheap ancestor is justified by its explicit scan. -/
 theorem classify_first_scanned {ctx : Ctx n} {level numcells : Nat} {st out : Search n}
-    (hauto : Engine.classify ctx level numcells st = (.autoFirst, out))
+    (hauto : Nauty.classify ctx level numcells st = (.autoFirst, out))
     (hnoncheap : st.gcaFirst < st.noncheaplevel)
     (hwork : st.workperm.size = n)
     (hfirst : st.firstlab.size = n) (hfirstPerm : st.firstlab.toList.Perm (List.range n))
@@ -120,4 +121,4 @@ theorem classify_first_scanned {ctx : Ctx n} {level numcells : Nat} {st out : Se
   rw [hout] at hscan ⊢
   exact scatter_isautom hwork hfirst hfirstPerm hlab hlabPerm hsymm hloop hscan
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

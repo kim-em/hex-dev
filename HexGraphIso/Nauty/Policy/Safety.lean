@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Sound
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -120,7 +121,7 @@ theorem safety_advance {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat
           apply_ite Prod.snd] using hlong cell (fun _ hv => hv)
       | true =>
         simpa only [ite_true, Id.run_pure, apply_ite Id.run,
-          apply_ite Prod.snd] using hlong (shortprune cell out) (fun v hv => Nauty.shortprune_subset (st := out.view) hv)
+          apply_ite Prod.snd] using hlong (shortprune cell out) (fun v hv => Nauty.shortprune_subset (st := out) hv)
 
 /-- Each later sibling calls an off-path child and resumes with the parent's recovered history. -/
 theorem safety_sweep {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Nat}
@@ -206,4 +207,4 @@ theorem sweep_safe {G : Colored n k} {ctx : Ctx n} {first : Bool}
   exact Generic.sweep_calls (safetyPolicy G ctx tcLevel hn0 hgsz hsymm hloop)
     first fuel cfuel level numcells tc tv1 cursor cell index st hin
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

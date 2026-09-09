@@ -33,10 +33,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -57,7 +58,7 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
     (hptn : R.ptn = (l.prepare { g := rowsOf G } tcLevel).2.2.2.2.ptn) (hnc : R.numcells = numcells)
     (hleaf : Nauty.Generation.HasLeaf { g := rowsOf G } tcLevel level R (tc :: targets)
       ⟨R.longcode :: key.codes, key.rows⟩)
-    (hm : Nauty.Generation.Matches { g := rowsOf G } level st.view (tc :: targets)
+    (hm : Nauty.Generation.Matches { g := rowsOf G } level st (tc :: targets)
       ⟨R.longcode :: key.codes, key.rows⟩)
     (hg : st.gcaFirst = level) (heq : st.eqlevFirst = level)
     (hboundary : level < boundary) (hsame : boundary ≤ st.allsamelevel)
@@ -67,11 +68,11 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
       Nauty.Generation.ChildPath { g := rowsOf G } tcLevel boundary level R tc targets key o)
     (hfixFrame : ∀ γ, CellStab R.ptn level R.lab γ → ∀ b ∈ base, γ[b.val]! = b.val)
     {previous : Option Nat} (hnext : cell.nextElem previous = cursor)
-    (hcanon : Nauty.Generation.CanonPast level tc previous st.view)
+    (hcanon : Nauty.Generation.CanonPast level tc previous st)
     (hcover : Generation.Cover G gs base guide cell previous)
     (hfirst : st.firstlab[tc]! = guide.val)
     (htrace : Generation.Realizes G gs
-      (Engine.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
+      (Nauty.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
         level numcells tc tv1 cursor cell index st).2.2.genTrace.toList) :
     ∀ v, Aut.Orbit G base guide v → Generation.Carries G gs base guide v := by
   induction cfuel generalizing cursor cell index st bs fs previous with
@@ -116,7 +117,7 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
         let left := { out with fixedpts := out.fixedpts.erase tv }
         let ready := recoverLevels level (recoverPtn (n + 2) level left)
         let nextIndex := if ready.orbits[tv]! == tv1 then index + 1 else index
-        have hc : Engine.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+        have hc : Nauty.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
             (child true level tc tv st) = (.unwind level false, out) := by simpa only [hf] using hcall
         obtain ⟨hgen, hanc⟩ := h.received_generators (hn fuel (Nat.le_refl _)) hcall
         obtain ⟨bs', fs', hs, _, _⟩ := h.received_input (hn fuel (Nat.le_refl _)) hv hcall hgen hanc
@@ -126,9 +127,9 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
         have hstep := (h.receive_call (hn fuel (Nat.le_refl _)) hv hcall
           (Generic.sweepCall ctx (n + 2) tcLevel fuel cfuel)).1
         unfold Generic.nodeCall Generic.sweepCall at hstep
-        have hsweep : Engine.sweep true ctx (n + 2) tcLevel fuel (cfuel + 1)
+        have hsweep : Nauty.sweep true ctx (n + 2) tcLevel fuel (cfuel + 1)
             level numcells tc tv1 (some tv) cell index st =
-            Engine.sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1
+            Nauty.sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1
               (cell.nextElem (some tv)) cell nextIndex ready := by
           rw [sweep_eq_generic, Generic.sweep, hstep]
           simp only [hf, Bool.false_eq_true, ↓reduceIte, Bool.not_true, Bool.false_and, Bool.true_and]
@@ -158,7 +159,7 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
         have hi : NodeInput G ctx tcLevel fuel false ch bs fs (parents.push ⟨l, st, tv, bs, fs⟩) := by
           simpa only [Parent.child, ← h.first_eq, ← h.level_eq, ← h.numcells_eq, ← h.tc_eq] using hchild
         have hstored := hi.stored (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G)
-        change RunInv G ctx (Engine.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
+        change RunInv G ctx (Nauty.node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
           (child true level tc tv st)).2 at hstored
         rw [hc] at hstored
         have hreference : out.reference = st.reference := by
@@ -177,7 +178,7 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
               boundary targets key (fun q hq => hn q (by omega)) hi href
               (hm.tail.stateEq rfl rfl rfl) (by change st.eqlevFirst = level + 1 - 1; omega)
               hsame level false (congrArg Prod.fst hc)
-            change RefReturn ctx level (Engine.node false ctx (n + 2) tcLevel fuel
+            change RefReturn ctx level (Nauty.node false ctx (n + 2) tcLevel fuel
               (level + 1) (numcells + 1) (child true level tc tv st)).2 at hr
             rw [hc] at hr
             apply hcover.receipt (tv := v) h hnext hcanon hc hr hstored.orbits htout hfix
@@ -223,11 +224,11 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
       · have hskip : (!true || st.orbits[tv]! == tv) = false := Bool.eq_false_iff.mpr hv
         have hs := h.skip_input (size_rowsOf G) hskip
         let nextIndex := if st.orbits[tv]! == tv1 then index + 1 else index
-        have he : Engine.sweep true ctx (n + 2) tcLevel fuel (cfuel + 1)
+        have he : Nauty.sweep true ctx (n + 2) tcLevel fuel (cfuel + 1)
             level numcells tc tv1 (some tv) cell index st =
-            Engine.sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1
+            Nauty.sweep true ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1
               (cell.nextElem (some tv)) cell nextIndex st := by
-          rw [Engine.sweep]
+          rw [Nauty.sweep]
           simp only [hskip, Bool.false_eq_true, ↓reduceIte, Id.run_pure, Bool.true_and]
           rfl
         rw [he] at htrace
@@ -242,4 +243,4 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
         exact ih hs (hnextPast cell) hm hg heq hsame rfl
           (hcanon.advance (nextElem_after hnext)) hadv hfirst htrace
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

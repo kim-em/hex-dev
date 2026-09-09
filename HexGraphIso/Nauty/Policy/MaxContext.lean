@@ -15,10 +15,11 @@ import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -27,7 +28,7 @@ structure Frame.Valid (G : Colored n k) (f : Frame n) : Prop where
   positive : 1 ≤ f.level
   depth : f.level ≤ n
   length : f.codes.length + 1 = f.level
-  partition : SearchOk G f.level f.numcells f.entry.view
+  partition : SearchOk G f.level f.numcells f.entry
 
 /-- A frozen node's target selection, before its children are visited. -/
 structure Loop (n : Nat) where
@@ -75,15 +76,15 @@ def Parent.child (ctx : Ctx n) (tcLevel : Nat) (p : Parent n) : Frame n :=
   { level := p.loop.node.level + 1
     numcells := r.1 + 1
     codes := p.loop.codes ctx
-    entry := Engine.child p.loop.first p.loop.node.level r.2.1.toNat p.chosen p.state }
+    entry := Nauty.child p.loop.first p.loop.node.level r.2.1.toNat p.chosen p.state }
 
 /-- Reference and geometric facts retained at a suspended parent. -/
 structure Parent.Valid (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat)
     (p : Parent n) : Prop where
   node : p.loop.node.Valid G
-  partition : SearchOk G p.loop.node.level (p.loop.prepare ctx tcLevel).1 p.state.view
+  partition : SearchOk G p.loop.node.level (p.loop.prepare ctx tcLevel).1 p.state
   effect : SearchOut G p.loop.node.level p.loop.node.level
-    (p.loop.prepare ctx tcLevel).2.2.2.2.view p.state.view
+    (p.loop.prepare ctx tcLevel).2.2.2.2 p.state
   equitable : Equitable ctx p.loop.node.level p.state.lab p.state.ptn
   cell : IsCell (p.loop.prepare ctx tcLevel).2.2.2.2.ptn p.loop.node.level
     (p.loop.prepare ctx tcLevel).2.1.toNat (p.loop.prepare ctx tcLevel).2.2.2.1
@@ -128,7 +129,7 @@ structure Scope (G : Colored n k) (ctx : Ctx n) (tcLevel level : Nat)
   code : ∀ t p, parents t = some p → t < cs.length →
     (p.child ctx tcLevel).code ctx = cs[t]!
   grows : ∀ t p, parents t = some p → Generic.Grows (p.state.key ctx p.bs) (st.key ctx bs)
-  effect : ∀ t p, parents t = some p → SearchOut G t t p.state.view st.view
+  effect : ∀ t p, parents t = some p → SearchOut G t t p.state st
   chosen : ∀ t p, parents t = some p → st.lab[(p.loop.prepare ctx tcLevel).2.1.toNat]! = p.chosen
   canonical : ∀ t p, parents t = some p → st.gcaCanon ≤ t →
     st.gcaCanon = p.state.gcaCanon ∧ st.canonlab = p.state.canonlab
@@ -161,7 +162,7 @@ def Entry (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (first : Bool)
       (∀ code ∈ f.codes, code < codeSentinel) ∧
       f.entry.gcaFirst < f.level ∧ f.entry.gcaCanon < f.level
   else
-    Engine.NodePre G ctx tcLevel f.level f.numcells f.entry ∧
+    Nauty.NodePre G ctx tcLevel f.level f.numcells f.entry ∧
       Comparison ctx f.codes bs fs f.entry
 
 /-- A node contract is quantified over its actual semantic context. -/
@@ -176,4 +177,4 @@ structure NodeInput (G : Colored n k) (ctx : Ctx n) (tcLevel fuel : Nat)
   counters : 0 < f.entry.canonlevel →
     0 < f.entry.gcaFirst ∧ f.entry.gcaFirst ≤ f.entry.gcaCanon
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

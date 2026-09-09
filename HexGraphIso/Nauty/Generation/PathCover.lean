@@ -91,7 +91,7 @@ including when the last pair is implicit. -/
 theorem shortprune (h : PathCover ctx tcLevel boundary level st tc len targets key tcell cursor)
     {e : Nat} (hok : IterOk ctx level st) (hlvl : level < n)
     (hgsz : ctx.g.size = n) (hcell : (tc, e) ∈ cells st.ptn level n)
-    (hne : tc < e) (hlen : len = e + 1 - tc) {out : SearchSt n}
+    (hne : tc < e) (hlen : len = e + 1 - tc) {out : Search n}
     (hlast : ∀ fix mcr, out.autos.back? = some (fix, mcr) →
       PairOk ctx.g st.ptn st.lab level fix mcr) :
     PathCover ctx tcLevel boundary level st tc len targets key (Nauty.shortprune tcell out) cursor := by

@@ -87,7 +87,7 @@ theorem Uniform.carriers {tcLevel level tc e oGuide : Nat} {rs : RefineSt n}
 all children. The carriers need only be true automorphisms fixing the
 current path; no completeness theorem is used. -/
 theorem Uniform.orbit {k : Nat} {G : Colored n k} {base : List (Fin n)}
-    {rs : RefineSt n} {st : SearchSt n} {tcLevel level tc e oGuide : Nat}
+    {rs : RefineSt n} {st : Search n} {tcLevel level tc e oGuide : Nat}
     {targets : List Nat} {key : Key n} {guide : Fin n}
     (hok : IterOk { g := rowsOf G } level rs) (hlvl : level < n)
     (hpath : PathStab { g := rowsOf G }

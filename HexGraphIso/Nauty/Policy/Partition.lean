@@ -16,20 +16,21 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Reach
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
 /-- A frame-preserving engine operation satisfies the local reach rules. -/
 theorem frame_local {G : Colored n k} {level numcells : Nat} {st out : Search n}
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (hl : out.lab = st.lab) (hp : out.ptn = st.ptn)
     (hf : out.firstlab = st.firstlab ∨ out.firstlab = st.lab)
     (hc : out.canonlab = st.canonlab ∨ out.canonlab = st.lab) :
-    Generic.Local G Search.view level numcells st out :=
+    Generic.Local G (fun st => st) level numcells st out :=
   ⟨frame_ok hok hl hp hc, frame_out hok hl hp hf hc⟩
 
 /-- A target constructed from a live partition has the cell membership
@@ -37,9 +38,9 @@ required by the generic sweep, for any target hint. -/
 theorem maketargetcell_target {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {st : Search n} (hint : Int)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (hnc : numcells < n) :
+    (hok : SearchOk G level numcells st) (hnc : numcells < n) :
     let r := maketargetcell ctx st.lab st.ptn level tcLevel hint
-    Generic.Target Search.view level r.1 r.2.1 st := by
+    Generic.Target (fun st => st) level r.1 r.2.1 st := by
   have hend := searchOk_end hn0 hok hlevel
   have hlive : bcount st.ptn level n < n := by
     have hcount := hok.count
@@ -61,7 +62,7 @@ theorem maketargetcell_target {G : Colored n k} {ctx : Ctx n}
 
 /-- The empty target set requires no cell witness. -/
 theorem target_empty (level tc : Nat) (st : Search n) :
-    Generic.Target Search.view level tc VSet.empty st :=
+    Generic.Target (fun st => st) level tc VSet.empty st :=
   ⟨0, fun h => (h rfl).elim, fun _ h => by simp at h⟩
 
 /-- Any selected target is a nontrivial cell of the current partition.
@@ -69,12 +70,12 @@ Bookkeeping performed while selecting it does not change that partition. -/
 theorem chooseTarget_target {G : Colored n k} {ctx : Ctx n}
     {tcLevel level numcells : Nat} {st : Search n} (first : Bool)
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) :
+    (hok : SearchOk G level numcells st) :
     let r := chooseTarget first ctx tcLevel level numcells st
-    Generic.Target Search.view level r.1.toNat r.2.1 r.2.2.2 := by
+    Generic.Target (fun st => st) level r.1.toNat r.2.1 r.2.2.2 := by
   obtain ⟨hl, hp, hf, hc⟩ := chooseTarget_frame first ctx tcLevel level numcells st
-  have hout : SearchOut G level level st.view
-      (chooseTarget first ctx tcLevel level numcells st).2.2.2.view :=
+  have hout : SearchOut G level level st
+      (chooseTarget first ctx tcLevel level numcells st).2.2.2 :=
     frame_out hok hl hp (Or.inl hf) (Or.inl hc)
   apply Generic.Target.of_out (hout := hout)
   unfold chooseTarget
@@ -88,7 +89,6 @@ theorem chooseTarget_target {G : Colored n k} {ctx : Ctx n}
     · have hnc : numcells < n := by
         have hbound := bcount_le st.ptn level n
         have hcount := hok.count
-        simp only [Search.view] at hcount
         rename_i hne
         have := bne_iff_ne.mp hne
         omega
@@ -105,13 +105,13 @@ theorem chooseTarget_target {G : Colored n k} {ctx : Ctx n}
 /-- The concrete engine meets every local partition rule of the generic
 search. No automorphism or comparison-correctness premise is needed. -/
 theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n) :
-    Generic.ReachPolicy G ctx (n + 2) tcLevel Search.view where
+    Generic.ReachPolicy G ctx (n + 2) tcLevel (fun st => st) where
   visit := by
     intro level numcells st hlevel hok
     constructor
-    · exact refine_searchOk hn0 hok hlevel rfl rfl (Or.inl rfl)
+    · exact refine_searchOk (st := st) hn0 hok hlevel rfl rfl (Or.inl rfl)
     · intro out hout
-      exact refine_loop_out (ctx := ctx) (STL := (visit ctx level numcells st).2.2.view)
+      exact refine_loop_out (ctx := ctx) (STL := (visit ctx level numcells st).2.2)
         hn0 hok hlevel rfl rfl
         (Or.inl rfl) (Or.inl rfl) (Or.inl rfl) hout
   record := by
@@ -139,7 +139,7 @@ theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
     exact frame_local hok hl hp (Or.inl hf) hc
   cheap := by
     intro first level numcells st hok
-    change Generic.Local G Search.view level numcells st (cheapCheck first level st)
+    change Generic.Local G (fun st => st) level numcells st (cheapCheck first level st)
     unfold cheapCheck
     split <;> exact frame_local hok rfl rfl (Or.inl rfl) (Or.inl rfl)
   child := by
@@ -147,15 +147,15 @@ theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
     obtain ⟨len, hcell, hmem⟩ := htarget
     obtain ⟨hic, hlen, hrange⟩ := hcell (mem_ne_empty htv)
     obtain ⟨o, ho, heq⟩ := mem_segN_iff.mp (hmem tv htv)
-    have hl : (child first level tc tv st).view.lab =
-        (breakout n st.view.lab st.view.ptn (level + 1) tc st.view.lab[tc + o]!).1 := by
+    have hl : (child first level tc tv st).lab =
+        (breakout n st.lab st.ptn (level + 1) tc st.lab[tc + o]!).1 := by
       rw [← heq]
       cases first <;> rfl
-    have hp : (child first level tc tv st).view.ptn = st.view.ptn.set! tc (level + 1) := by
+    have hp : (child first level tc tv st).ptn = st.ptn.set! tc (level + 1) := by
       cases first <;> rfl
-    have hf : (child first level tc tv st).view.firstlab = st.view.firstlab := by
+    have hf : (child first level tc tv st).firstlab = st.firstlab := by
       cases first <;> rfl
-    have hc : (child first level tc tv st).view.canonlab = st.view.canonlab := by
+    have hc : (child first level tc tv st).canonlab = st.canonlab := by
       cases first <;> rfl
     refine ⟨breakout_searchOk hn0 hok hlevel hic hlen hrange ho hl hp hc, ?_⟩
     intro out hout
@@ -164,7 +164,7 @@ theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
   leave := fun _ _ => ⟨rfl, rfl, rfl, rfl⟩
   short := by
     intro cell st v hv
-    exact Nauty.shortprune_subset (st := st.view) hv
+    exact Nauty.shortprune_subset (st := st) hv
   long := by
     intro cell st v hv
     exact Nauty.longprune_subset hv
@@ -172,33 +172,33 @@ theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
     intro level numcells st out hlevel hok hout
     have hbound : level + 1 < n + 2 := by
       have := hok.bc
-      have := bcount_le st.view.ptn level n
+      have := bcount_le st.ptn level n
       omega
     have hr := hout.trans (recover_out hbound hout.reach)
-    change Generic.Local G Search.view level numcells st
+    change Generic.Local G (fun st => st) level numcells st
       (recoverLevels level (recoverPtn (n + 2) level out))
     constructor
-    · rw [view_recover]
+    · rw [recover_eq]
       apply searchOk_of_out hok hlevel hr
       intro q hq
       rw [recover_ptn]
       split
       · exact Or.inr rfl
       · exact Or.inl (by omega)
-    · rw [view_recover]
+    · rw [recover_eq]
       exact hr
   afterSweep := by
     intro first level size index st
-    change Generic.FrameEq Search.view st (afterSweep first level size index st)
+    change Generic.FrameEq (fun st => st) st (afterSweep first level size index st)
     unfold afterSweep
     split <;> exact ⟨rfl, rfl, rfl, rfl⟩
 
 /-- Every engine node preserves the caller's partition frame. -/
 theorem node_out {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) :
-    SearchOut G (level - 1) level st.view
-      (node first ctx (n + 2) tcLevel fuel level numcells st).2.view := by
+    (hok : SearchOk G level numcells st) :
+    SearchOut G (level - 1) level st
+      (node first ctx (n + 2) tcLevel fuel level numcells st).2 := by
   rw [node_eq_generic]
   exact Generic.node_reach (reachPolicy G ctx tcLevel hn0) first fuel level numcells st hlevel hok
 
@@ -207,11 +207,11 @@ theorem sweep_out {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel cfuel level numcells tc tv1 index : Nat}
     {cursor : Option Nat} {cell : VSet n} {st : Search n}
     (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st)
+    (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st)
     (hcursor : ∀ v, cursor = some v → cell.mem v = true) :
-    SearchOut G level level st.view
-      (sweep first ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1 cursor cell index st).2.2.view := by
+    SearchOut G level level st
+      (sweep first ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1 cursor cell index st).2.2 := by
   rw [sweep_eq_generic]
   exact Generic.sweep_reach (reachPolicy G ctx tcLevel hn0) first fuel cfuel level numcells tc tv1
     index cursor cell st hlevel hok htarget hcursor
@@ -219,15 +219,15 @@ theorem sweep_out {G : Colored n k} {ctx : Ctx n}
 /-- The engine's nonempty initial state has the coloured root partition. -/
 theorem initial_ok (G : Colored n k) (hn0 : 0 < n) :
     SearchOk G 1 (initialPartition G).2.length
-      (initial n (initialPartition G).1 (initialPartition G).2).view :=
+      (initial n (initialPartition G).1 (initialPartition G).2) :=
   root_searchOk G hn0
 
 /-- Running the engine preserves the root partition frame and stores
 only labellings reached from its original colour cells. -/
 theorem runState_out (G : Colored n k) (hn0 : 0 < n) :
     SearchOut G 0 1
-      (initial n (initialPartition G).1 (initialPartition G).2).view
-      (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2.view := by
+      (initial n (initialPartition G).1 (initialPartition G).2)
+      (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by
   unfold runState
   rw [ite_eq_right (show (n == 0) ≠ true by simp; omega)]
   exact node_out true hn0 (Nat.le_refl _) (initial_ok G hn0)
@@ -248,7 +248,7 @@ theorem canonlab_or (G : Colored n k) (hn0 : 0 < n) :
 /-- The engine cannot exhaust a sufficient node bound on a valid partition. -/
 theorem node_noFuel {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (hfuel : n + 1 ≤ level + fuel) :
+    (hok : SearchOk G level numcells st) (hfuel : n + 1 ≤ level + fuel) :
     (node first ctx (n + 2) tcLevel fuel level numcells st).1 ≠ .fuel := by
   rw [node_eq_generic]
   exact Generic.node_noFuel (reachPolicy G ctx tcLevel hn0) leafExit_noFuel
@@ -259,8 +259,8 @@ theorem sweep_noFuel {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel cfuel level numcells tc tv1 index : Nat}
     {cursor : Option Nat} {cell : VSet n} {st : Search n}
     (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st)
+    (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st)
     (hcursor : ∀ v, cursor = some v → cell.mem v = true)
     (hfuel : n ≤ level + fuel) (hcfuel : Generic.CursorFuel n cfuel cursor) :
     (sweep first ctx (n + 2) tcLevel fuel cfuel level numcells tc tv1 cursor cell index st).1 ≠ .fuel := by
@@ -281,4 +281,4 @@ theorem runState_noFuel (G : Colored n k) :
       omega
     exact node_noFuel true hn0 (Nat.le_refl _) (initial_ok G hn0) (by omega)
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

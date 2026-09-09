@@ -12,7 +12,7 @@ import all HexGraphIso.Nauty.Policy.MaxFrame
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -68,4 +68,4 @@ theorem NodeInput.code_witness {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : N
   rw [hp]
   exact hb tail
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

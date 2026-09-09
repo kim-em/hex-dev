@@ -21,10 +21,11 @@ import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.Comparison
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -48,7 +49,7 @@ theorem SweepInput.child_entry {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfu
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
     Entry G ctx tcLevel (first && tv == tv1)
-      ⟨level + 1, numcells + 1, l.codes ctx, Engine.child first level tc tv st⟩ bs fs := by
+      ⟨level + 1, numcells + 1, l.codes ctx, Nauty.child first level tc tv st⟩ bs fs := by
   have hn0 : 0 < n := by have := h.node.positive; have := h.node.depth; omega
   rcases h.phase with hphase | ⟨hp, hcmp, _⟩
   · obtain ⟨hf, hbs, hfs, hst, hcell, hcursor, _⟩ := hphase
@@ -144,13 +145,13 @@ theorem SweepInput.push {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel : Na
     hl h.partition h.target (h.cursor_mem tv rfl)
   dsimp only [policy, Generic.Policy.child] at hch
   have hchild : p.child ctx tcLevel =
-      ⟨level + 1, numcells + 1, l.codes ctx, Engine.child first level tc tv st⟩ := by
+      ⟨level + 1, numcells + 1, l.codes ctx, Nauty.child first level tc tv st⟩ := by
     simp only [p, Parent.child, h.first_eq, h.level_eq, h.numcells_eq, h.tc_eq]
   rw [hchild]
   refine ⟨⟨by dsimp; omega, ?_, ?_, hch.1⟩, ?_,
     h.child_entry hgsz hsymm hloop, h.child_scope, ?_, ?_⟩
   · have hb := hch.1.bc
-    have hh := bcount_le (Engine.child first level tc tv st).view.ptn (level + 1) n
+    have hh := bcount_le (Nauty.child first level tc tv st).ptn (level + 1) n
     dsimp
     omega
   · dsimp only [Loop.codes]
@@ -183,4 +184,4 @@ theorem NodeInput.stored {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat}
       hn0 h.frame.positive h.frame.partition (empty_orbits hp.orbits ht) h.fuel
     exact firstPath_safe hn0 hgsz hsymm hloop path hp
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

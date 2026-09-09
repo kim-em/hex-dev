@@ -11,10 +11,11 @@ public import HexGraphIso.Nauty.Policy.State
 public import HexGraphIso.Nauty.Policy.Maximum
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -57,8 +58,8 @@ theorem best_eq_key {ctx : Ctx n} {cs bs : List Nat} {st : Search n}
 theorem Codes.compare {cs bs : List Nat} {st : Search n} {code : Nat}
     (h : Codes cs bs st) (hc : code < codeSentinel) (hlen : cs.length ≤ n) :
     Codes (cs ++ [code]) bs (compareCodes (cs.length + 1) code st) := by
-  have h' := otherNodePrep_codeInv (st := st.view) h hc (by omega)
-  rw [← view_compareCodes] at h'
+  have h' := compareCodes_codeInv (st := st) h hc (by omega)
+
   exact h'
 
 /-- Installing a leaf makes its path the canonical code sequence. The
@@ -75,8 +76,8 @@ theorem firstterminal_codes {cs : List Nat} {st : Search n}
     (hcodes : ∀ i, 1 ≤ i → i ≤ cs.length → st.firstcode[i]! = cs[i - 1]!)
     (hlt : ∀ c ∈ cs, c < codeSentinel) :
     Codes cs cs (firstterminal cs.length st) := by
-  have h := firstterminal_codeInv (st := st.view) hsize hlen hcodes hlt
-  rw [← view_firstterminal] at h
+  have h := firstterminal_codeInv (st := st) hsize hlen hcodes hlt
+
   exact h
 
 /-- The first installed incumbent is the reached leaf, with no placeholder
@@ -130,12 +131,12 @@ theorem Settled.recover {cs bs : List Nat} {st : Search n} {level : Nat}
     Codes (cs.take level) bs (recoverLevels level (recoverPtn inf level st)) := by
   cases h with
   | codes hm hn =>
-    have h' := recover_codeInv (st := st.view) (inf := inf) hm hn hlen
-    rw [← view_recover] at h'
+    have h' := recover_codeInv (st := st) (inf := inf) hm hn hlen
+    rw [← recover_eq] at h'
     exact h'
   | rows hm _ =>
-    have h' := recover_codeInv_reset (st := st.view) (inf := inf) hm hlen
-    rw [← view_recover] at h'
+    have h' := recover_codeInv_reset (st := st) (inf := inf) hm hlen
+    rw [← recover_eq] at h'
     exact h'
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

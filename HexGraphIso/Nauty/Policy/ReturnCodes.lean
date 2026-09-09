@@ -13,6 +13,7 @@ import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -32,7 +33,6 @@ theorem prefix_witness {n : Nat} {cs ds : List Nat} {target : Nat} {best : Optio
     ∀ tail : Key n, Generic.Covers (prefixKey (cs.take (target + 1)) tail) best := by
   rwa [prefix_take hp (by omega)] at h
 
-namespace Engine
 
 variable {n k : Nat}
 
@@ -53,11 +53,11 @@ theorem Comparison.returned {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
 theorem Comparison.leaf_returned {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     {cs bs fs : List Nat} {st : Search n} (h : Comparison ctx cs bs fs st)
     (hh : History ctx tcLevel cs.length cs.length n st) (hinv : RunInv G ctx st)
-    (hn0 : 0 < n) (hlevel : 1 ≤ cs.length) (hok : SearchOk G cs.length n st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ cs.length) (hok : SearchOk G cs.length n st)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    let verdict := Engine.classify ctx cs.length n st
+    let verdict := Nauty.classify ctx cs.length n st
     let out := (leafExit verdict.1 cs.length verdict.2).2
     ∃ bs', ReturnCodes ctx cs bs' fs out ∧
       out.key ctx bs' = some (incMax (st.key ctx bs) (pathLeafKey ctx cs st.lab)) := by
@@ -79,7 +79,7 @@ or increases the incumbent, including rejection before a discrete leaf. -/
 theorem Comparison.exit_returned {G : Colored n k} {ctx : Ctx n} {tcLevel numcells : Nat}
     {cs bs fs : List Nat} {st : Search n} (h : Comparison ctx cs bs fs st)
     (hh : History ctx tcLevel cs.length cs.length numcells st) (hinv : RunInv G ctx st)
-    (hn0 : 0 < n) (hlevel : 1 ≤ cs.length) (hok : SearchOk G cs.length numcells st.view)
+    (hn0 : 0 < n) (hlevel : 1 ≤ cs.length) (hok : SearchOk G cs.length numcells st)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
@@ -142,8 +142,8 @@ theorem ReturnCodes.leave {ctx : Ctx n} {stem bs fs : List Nat} {st : Search n}
 /-- Completing a node's symmetry counter preserves its returned comparison. -/
 theorem ReturnCodes.afterSweep {ctx : Ctx n} {stem bs fs : List Nat} {st : Search n}
     (h : ReturnCodes ctx stem bs fs st) (first : Bool) (level size index : Nat) :
-    ReturnCodes ctx stem bs fs (Engine.afterSweep first level size index st) := by
-  unfold Engine.afterSweep
+    ReturnCodes ctx stem bs fs (Nauty.afterSweep first level size index st) := by
+  unfold Nauty.afterSweep
   split <;> exact h.fields rfl rfl rfl
 
 /-- Recovery changes no semantic incumbent labelling. -/
@@ -158,7 +158,7 @@ theorem recover_key (ctx : Ctx n) (bs : List Nat) (inf level : Nat) (st : Search
 theorem afterSweep_key (ctx : Ctx n) (bs : List Nat) (first : Bool)
     (level size index : Nat) (st : Search n) :
     (afterSweep first level size index st).key ctx bs = st.key ctx bs := by
-  unfold afterSweep
+  unfold Nauty.afterSweep
   split <;> rfl
 
 /-- Parent recovery keeps a completed comparison nonpositive. -/
@@ -186,5 +186,4 @@ theorem ReturnCodes.resumed {ctx : Ctx n} {stem bs fs : List Nat} {st : Search n
     ReturnCodes ctx stem bs fs (recoverLevels stem.length (recoverPtn inf stem.length st)) :=
   (h.recover inf).returned (recover_nonpos h.nonpos inf stem.length)
 
-end Engine
 end Hex.GraphIso.Nauty

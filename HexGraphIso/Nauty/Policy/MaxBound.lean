@@ -21,10 +21,11 @@ import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Invariant.Domination
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -195,4 +196,4 @@ theorem Loop.node_bound {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     rw [← l.bound_eq h hcell hlen hrange hs, hbefore] at hb
     exact hb
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

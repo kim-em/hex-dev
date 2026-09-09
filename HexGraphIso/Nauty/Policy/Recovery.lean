@@ -13,10 +13,11 @@ import all HexGraphIso.Nauty.Policy.Descent
 import all HexGraphIso.Nauty.Policy.History
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -37,19 +38,19 @@ theorem DescentAt.congr {ctx : Ctx n} {store : Array Int} {base level numcells :
 
 /-- Reopening after a child restores exactly the parent's partition array. -/
 theorem recover_ptn_eq {G : Colored n k} {level numcells : Nat} {st out : Search n}
-    (hok : SearchOk G level numcells st.view)
-    (hout : SearchOut G level level st.view out.view) :
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOut G level level st out) :
     (recoverLevels level (recoverPtn (n + 2) level out)).ptn = st.ptn := by
-  have hview := view_recover (n + 2) level out
+  have hview := recover_eq (n + 2) level out
   have hs : (recoverLevels level (recoverPtn (n + 2) level out)).ptn.size = st.ptn.size := by
-    change (recoverLevels level (recoverPtn (n + 2) level out)).view.ptn.size = _
+    change (recoverLevels level (recoverPtn (n + 2) level out)).ptn.size = _
     rw [hview, recover_ptn_size]
     exact hout.ptnSize
   apply Array.ext hs
   intro i hi₁ hi₂
   rw [← getElem!_pos (recoverLevels level (recoverPtn (n + 2) level out)).ptn i hi₁,
     ← getElem!_pos st.ptn i hi₂]
-  change (recoverLevels level (recoverPtn (n + 2) level out)).view.ptn[i]! = _
+  change (recoverLevels level (recoverPtn (n + 2) level out)).ptn[i]! = _
   rw [hview, recover_ptn]
   change (if i < n ∧ out.ptn[i]! > level then n + 2 else out.ptn[i]!) = st.ptn[i]!
   have hi : i < n := by rw [← hok.ptnSize]; exact hi₂
@@ -71,8 +72,8 @@ order within its cells, even though the child's labelling is kept. -/
 theorem DescentAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     {base level numcells : Nat} {root : RefineSt n} {st out : Search n}
     (h : DescentAt ctx store base root level numcells st)
-    (hok : SearchOk G level numcells st.view)
-    (hout : SearchOut G level level st.view out.view) :
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOut G level level st out) :
     DescentAt ctx store base root level numcells
       (recoverLevels level (recoverPtn (n + 2) level out)) := by
   obtain ⟨current, hh, hl, hp, hc⟩ := h
@@ -81,7 +82,7 @@ theorem DescentAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     rw [hl, hp]
     exact hout.perm
   refine ⟨{ current with lab := out.lab }, hh.setLab hsize hperm, ?_, ?_, hc⟩
-  · have he := congrArg SearchSt.lab (view_recover (n + 2) level out)
+  · have he := congrArg Search.lab (recover_eq (n + 2) level out)
     change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at he
     rw [Nauty.recover_lab] at he
     exact he.symm
@@ -135,4 +136,4 @@ theorem DescentAt.target {ctx : Ctx n} {tcLevel base level numcells : Nat}
   · simpa only [hp] using hs.it.ok.ptnSize
   · simpa only [hp] using hs.it.ok.ptnEnd
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

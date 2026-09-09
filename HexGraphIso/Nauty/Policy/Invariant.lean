@@ -16,10 +16,11 @@ import all HexGraphIso.Nauty.Policy.First
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -39,7 +40,7 @@ structure RunInv (G : Colored n k) (ctx : Ctx n) (st : Search n) : Prop where
   colors : TraceStab G st
   /-- Every pruning pair has checked colour-preserving realizers. -/
   pairs : PairsOk G ctx st
-  workspace : WorkspaceOk st.view
+  workspace : WorkspaceOk st
 
 /-- The saved first permutation has exactly one entry for every vertex. -/
 theorem RunInv.firstSize {G : Colored n k} {ctx : Ctx n} {st : Search n}
@@ -49,12 +50,12 @@ theorem RunInv.firstSize {G : Colored n k} {ctx : Ctx n} {st : Search n}
 /-- Frame receipts preserve the installed canonical labelling; reference,
 cache and scratch facts assemble the persistent invariant at a return. -/
 theorem RunInv.of_out {G : Colored n k} {ctx : Ctx n} {B level : Nat} {st out : Search n}
-    (h : RunInv G ctx st) (hout : SearchOut G B level st.view out.view)
+    (h : RunInv G ctx st) (hout : SearchOut G B level st out)
     (hfirst : out.firstlab = st.firstlab)
     (hcache : CanongInv ctx out.canong out.canonlab out.samerows)
     (hscratch : out.workperm.size = st.workperm.size) (htrace : TraceOk ctx out)
     (horbits : OrbitsOk out) (hcolors : TraceStab G out) (hpairs : PairsOk G ctx out)
-    (hworkspace : WorkspaceOk out.view) :
+    (hworkspace : WorkspaceOk out) :
     RunInv G ctx out := by
   refine ⟨by rw [hfirst]; exact h.first, ?_, hcache, hscratch.trans h.scratch, htrace, horbits,
     by rw [hfirst]; exact h.firstReach, hcolors, hpairs, hworkspace⟩
@@ -81,7 +82,7 @@ theorem RunInv.congr {G : Colored n k} {ctx : Ctx n} {st out : Search n}
 /-- Node refinement preserves the persistent state. -/
 theorem RunInv.visit {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : RunInv G ctx st) (level numcells : Nat) :
-    RunInv G ctx (Engine.visit ctx level numcells st).2.2 :=
+    RunInv G ctx (Nauty.visit ctx level numcells st).2.2 :=
   h.congr rfl rfl h.cache rfl rfl rfl rfl rfl
 
 /-- Code comparison changes only comparison counters and the in-progress canonical codes. -/
@@ -104,7 +105,7 @@ theorem RunInv.target {G : Colored n k} {ctx : Ctx n} {st : Search n}
 /-- Classification updates the canonical row cache and retains the persistent state. -/
 theorem RunInv.classify {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : RunInv G ctx st) (level numcells : Nat) :
-    RunInv G ctx (Engine.classify ctx level numcells st).2 := by
+    RunInv G ctx (Nauty.classify ctx level numcells st).2 := by
   obtain ⟨_, _, hf, hc⟩ := classify_frame ctx level numcells st
   exact h.congr hf hc (classify_store h.cache).1 (classify_workSize ctx level numcells st)
     (classify_trace ctx level numcells st) (classify_orbits ctx level numcells st) (classify_autos ctx level numcells st) (classify_capacity ctx level numcells st)
@@ -112,7 +113,7 @@ theorem RunInv.classify {G : Colored n k} {ctx : Ctx n} {st : Search n}
 /-- Acting on a classification preserves the persistent state once admissions are checked. -/
 theorem RunInv.leaf {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st : Search n} (h : RunInv G ctx st) (leaf : Leaf)
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (hnew : ∀ sr, leaf = .better sr → CanongInv ctx st.canong st.lab sr)
     (hcheck : leaf = .autoFirst ∨ leaf = .autoCanon → checkAutom ctx.g st.workperm = true)
     (hcolor : leaf = .autoFirst ∨ leaf = .autoCanon → ColorStab G st.workperm)
@@ -134,7 +135,7 @@ theorem RunInv.cheap {G : Colored n k} {ctx : Ctx n} {st : Search n}
 /-- Individualizing a vertex changes no saved leaf or generator data. -/
 theorem RunInv.child {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : RunInv G ctx st) (first : Bool) (level tc tv : Nat) :
-    RunInv G ctx (Engine.child first level tc tv st) := by
+    RunInv G ctx (Nauty.child first level tc tv st) := by
   cases first <;> exact h.congr rfl rfl h.cache rfl rfl rfl rfl rfl
 
 /-- Removing the temporary fixed point preserves persistent data. -/
@@ -160,8 +161,8 @@ theorem RunInv.recover {G : Colored n k} {ctx : Ctx n} {st : Search n}
 /-- Completing a sweep changes only its symmetry counter. -/
 theorem RunInv.afterSweep {G : Colored n k} {ctx : Ctx n} {st : Search n}
     (h : RunInv G ctx st) (first : Bool) (level size index : Nat) :
-    RunInv G ctx (Engine.afterSweep first level size index st) := by
-  unfold Engine.afterSweep
+    RunInv G ctx (Nauty.afterSweep first level size index st) := by
+  unfold Nauty.afterSweep
   split <;> exact h.congr rfl rfl h.cache rfl rfl rfl rfl rfl
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

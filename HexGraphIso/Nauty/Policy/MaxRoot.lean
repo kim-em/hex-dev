@@ -6,6 +6,9 @@ Authors: Kim Morrison
 
 module
 
+public import HexGraphIso.Nauty.Spec.Traced
+import all HexGraphIso.Nauty.Spec.Traced
+
 public import HexGraphIso.Nauty.Policy.MaxRules
 import all HexGraphIso.Nauty.Policy.MaxRules
 import all HexGraphIso.Nauty.Policy.MaxContract
@@ -20,17 +23,13 @@ import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
-
-/-- The full key read from the structured engine's trace. -/
-@[expose] def tracedKey (G : Colored n k) : Key n :=
-  ⟨(runColoredTraced G).bestCodes ++ [codeSentinel],
-    leafRows { g := rowsOf G } (runColoredTraced G).result.canonlab⟩
 
 namespace Max
 
@@ -83,7 +82,7 @@ theorem root_best (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
 /-- The local maximum rules imply exactly the public nonempty key equality,
 with the traced search replaced by the structured engine. -/
 theorem key_eq (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
-    canonSpecKey G = Engine.tracedKey G := by
+    canonSpecKey G = Nauty.tracedKey G := by
   let out := (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2
   have hb := root_best G hn0 rules
   change out.best { g := rowsOf G } = some (canonSpecKey G) at hb
@@ -93,7 +92,7 @@ theorem key_eq (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
     cases hb
   rw [Search.best, ite_eq_right hn] at hb
   have hk := (Option.some.inj hb).symm
-  simpa only [Engine.tracedKey, runColoredTraced, runTraced, finish,
+  simpa only [Nauty.tracedKey, runColoredTraced, runTraced, finish,
     beq_eq_false_iff_ne.mpr (Nat.ne_of_gt hn0), Bool.false_eq_true, ↓reduceIte, out] using hk
 
 /-- The empty specification has no refinement code. -/
@@ -101,8 +100,8 @@ theorem spec_zero (G : Colored 0 k) : canonSpecKey G = ⟨[], []⟩ := rfl
 
 /-- The empty trace still appends the sentinel, so its certificate uses
 the separate empty-graph case rather than nonempty key equality. -/
-theorem traced_zero (G : Colored 0 k) : Engine.tracedKey G = ⟨[codeSentinel], []⟩ := by
-  simp [Engine.tracedKey, runColoredTraced, runTraced, finish, runState, leafRows]
+theorem traced_zero (G : Colored 0 k) : Nauty.tracedKey G = ⟨[codeSentinel], []⟩ := by
+  simp [Nauty.tracedKey, runColoredTraced, runTraced, finish, runState, leafRows]
 
 end Max
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

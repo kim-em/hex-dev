@@ -13,6 +13,7 @@ import all HexGraphIso.Nauty.Policy.MaxFrame
 import all HexGraphIso.Nauty.Policy.Effect
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -21,7 +22,7 @@ namespace Hex.GraphIso.Nauty
 /-- Two valid states at the same sweep level agree on their whole partition
 when their search effect preserves every closed boundary. -/
 theorem SearchOut.ptn_eq {n k level numcells : Nat} {G : Colored n k}
-    {st out : SearchSt n} (h : SearchOut G level level st out)
+    {st out : Search n} (h : SearchOut G level level st out)
     (hs : SearchOk G level numcells st) (ho : SearchOk G level numcells out) :
     out.ptn = st.ptn := by
   apply Array.ext h.ptnSize
@@ -36,7 +37,7 @@ theorem SearchOut.ptn_eq {n k level numcells : Nat} {G : Colored n k}
 
 end Hex.GraphIso.Nauty
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -44,15 +45,15 @@ variable {n k : Nat}
 theorem Loop.prepare_ok {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     {l : Loop n} (h : l.node.Valid G) :
     SearchOk G l.node.level (l.prepare ctx tcLevel).1
-      (l.prepare ctx tcLevel).2.2.2.2.view := by
+      (l.prepare ctx tcLevel).2.2.2.2 := by
   have hn0 : 0 < n := by have := h.positive; have := h.depth; omega
   let R := reachPolicy G ctx tcLevel hn0
   let v := visit ctx l.node.level l.node.numcells l.node.entry
   let c := if l.first then recordFirst l.node.level v.2.1 v.2.2
     else compareCodes l.node.level v.2.1 v.2.2
-  have hv : SearchOk G l.node.level v.1 v.2.2.view :=
+  have hv : SearchOk G l.node.level v.1 v.2.2 :=
     (R.visit _ _ _ h.positive h.partition).1
-  have hc : SearchOk G l.node.level v.1 c.view := by
+  have hc : SearchOk G l.node.level v.1 c := by
     dsimp only [c]
     split
     · exact (R.record _ _ _ _ hv).ok
@@ -86,7 +87,7 @@ invariant at its frozen refined entry. -/
 theorem Parent.small {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     {p : Parent n} (h : p.Valid G ctx tcLevel)
     (hbase : SearchOk G p.loop.node.level (p.loop.prepare ctx tcLevel).1
-      (p.loop.prepare ctx tcLevel).2.2.2.2.view)
+      (p.loop.prepare ctx tcLevel).2.2.2.2)
     (hcheap : p.state.noncheaplevel ≤ p.loop.node.level) :
     SubtreeOk ctx p.loop.node.level
       (p.loop.node.entry.refined ctx p.loop.node.level p.loop.node.numcells) := by
@@ -95,7 +96,7 @@ theorem Parent.small {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   have he := h.effect.ptn_eq hbase h.partition
   change p.state.ptn = (p.loop.prepare ctx tcLevel).2.2.2.2.ptn at he
   have hperm := h.effect.perm
-  dsimp only [Search.view] at hperm
+
   have heq := h.equitable
   have hshape := (h.small hcheap).shape
   rw [he] at heq hshape
@@ -108,7 +109,7 @@ key of its actual selected child, even after the parent was reordered. -/
 theorem Parent.cheap_key {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     {p : Parent n} (h : p.Valid G ctx tcLevel)
     (hbase : SearchOk G p.loop.node.level (p.loop.prepare ctx tcLevel).1
-      (p.loop.prepare ctx tcLevel).2.2.2.2.view)
+      (p.loop.prepare ctx tcLevel).2.2.2.2)
     (hsmall : SubtreeOk ctx p.loop.node.level
       (p.loop.node.entry.refined ctx p.loop.node.level p.loop.node.numcells))
     (hselected : specTargetcell ctx
@@ -169,10 +170,10 @@ theorem Parent.cheap_key {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   have hkey := h.effect.vertex_key (ctx := ctx) (tcLevel := tcLevel)
     hbase h.partition hn0 h.node.positive h.cell h.len h.range hv
     (fuel := n - p.loop.node.level) (by omega)
-  dsimp only [Search.view] at hkey
+
   rw [hnode, Loop.key, hkey]
   unfold Frame.key Parent.child
   simp only [show n + 1 - (p.loop.node.level + 1) = n - p.loop.node.level by omega]
   cases hf : p.loop.first <;> rfl
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

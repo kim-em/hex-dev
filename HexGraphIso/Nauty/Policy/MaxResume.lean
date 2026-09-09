@@ -25,10 +25,11 @@ import all HexGraphIso.Nauty.Policy.CanonRef
 import all HexGraphIso.Nauty.Policy.Fuel
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -42,8 +43,8 @@ theorem SweepInput.received_input {G : Colored n k} {tcLevel fuel cfuel : Nat}
     (hn : (contract G tcLevel).nodeValid fuel
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel))
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
-    (hcall : Engine.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind level short, out)) :
+    (hcall : Nauty.node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind level short, out)) :
     let ctx : Ctx n := { g := rowsOf G }
     let middle := if first && tv == tv1 then afterChildFirst level tv1 out else out
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
@@ -95,7 +96,7 @@ theorem SweepInput.received_input {G : Colored n k} {tcLevel fuel cfuel : Nat}
   have hg' : Generic.Grows (st.key ctx bs) (ready.key ctx bs') := hout ▸ hg
   have hpre := h.restore (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G) hvisit
   rw [hcall] at hpre
-  change Engine.SweepPre G ctx tcLevel first level numcells tc tv1 none cell ready at hpre
+  change Nauty.SweepPre G ctx tcLevel first level numcells tc tv1 none cell ready at hpre
   have hsub : ∀ v, filtered.mem v = true → cell.mem v = true := by
     intro v hv
     have hs : small.mem v = true := by
@@ -105,7 +106,7 @@ theorem SweepInput.received_input {G : Colored n k} {tcLevel fuel cfuel : Nat}
       · exact hv
     dsimp only [small] at hs
     split at hs
-    · exact Nauty.shortprune_subset (st := left.view) hs
+    · exact Nauty.shortprune_subset (st := left) hs
     · exact hs
   have hpast : Generic.Past first tv1 (filtered.nextElem (some tv)) := by
     intro hf v hv
@@ -116,7 +117,7 @@ theorem SweepInput.received_input {G : Colored n k} {tcLevel fuel cfuel : Nat}
       omega
     · have hh := hp.past hf tv rfl
       omega
-  have hnext : Engine.SweepPre G ctx tcLevel first level numcells tc tv1
+  have hnext : Nauty.SweepPre G ctx tcLevel first level numcells tc tv1
       (filtered.nextElem (some tv)) filtered ready :=
     ⟨hpast, hpre.positive, hpre.partition, hpre.target.subset hsub,
       (fun _ hv => VSet.nextElem_mem hv), hpre.stored, hpre.ancestor, hpre.canonAncestor,
@@ -125,7 +126,7 @@ theorem SweepInput.received_input {G : Colored n k} {tcLevel fuel cfuel : Nat}
   have hframe := child_frame (first := first) h.partition hn0 hl h.path.fixed h.target
     (h.cursor_mem tv rfl) (first && tv == tv1) (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
   rw [hcall] at hframe
-  have hleft : SearchOut G level level st.view left.view := by
+  have hleft : SearchOut G level level st left := by
     dsimp only [left, middle]
     split <;> exact hframe.1.congr rfl rfl rfl rfl
   have he := (reachPolicy G ctx tcLevel hn0).recover level numcells st left hl h.partition hleft
@@ -169,4 +170,4 @@ theorem SweepInput.received_input {G : Colored n k} {tcLevel fuel cfuel : Nat}
     hcover, hcanon, (fun ht => by rw [← hread]; exact hfirst hgReady hcReady ht), hgen,
     hscope hg' hanc, h.parent, (fun _ => hcounter), (fun _ => hcontrol)⟩
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

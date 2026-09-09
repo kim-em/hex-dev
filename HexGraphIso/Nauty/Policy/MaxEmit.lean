@@ -19,10 +19,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -98,7 +99,7 @@ theorem better_rule (G : Colored n k) (tcLevel sr : Nat) :
     | done => exact (hdone he).elim
     | fuel => exact (hnf he).elim
     | unwind target short => exact ⟨target, short, rfl⟩
-  have hin : Engine.NodePre G ctx tcLevel level numcells st := h.entry.1
+  have hin : Nauty.NodePre G ctx tcLevel level numcells st := h.entry.1
   have ht := hin.leaf_bound hexit
   have hcheap : target = (f.emit ctx tcLevel).2.noncheaplevel - 1 := by
     change target = (leafExit c.1 level c.2).2.noncheaplevel - 1
@@ -111,4 +112,4 @@ theorem better_rule (G : Colored n k) (tcLevel sr : Nat) :
   rw [f.emit_step _ hdone]
   exact hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

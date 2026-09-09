@@ -206,7 +206,7 @@ theorem RefPath.carried_iff {tcLevel boundary level tc e oU oV : Nat}
 /-- Every image of a reference child under the true path stabilizer
 contains the same reference occurrence. This supplies the matching-search
 premise before any generation theorem has been established. -/
-theorem RefPath.orbit {k : Nat} {G : Colored n k} {base : List (Fin n)} {rs : RefineSt n} {st : SearchSt n}
+theorem RefPath.orbit {k : Nat} {G : Colored n k} {base : List (Fin n)} {rs : RefineSt n} {st : Search n}
     {tcLevel boundary level tc e oU oV : Nat} {u v : Fin n} {targets : List Nat} {key : Key n}
     (hok : IterOk { g := rowsOf G } level rs) (hlvl : level < n)
     (hpath : PathStab { g := rowsOf G }

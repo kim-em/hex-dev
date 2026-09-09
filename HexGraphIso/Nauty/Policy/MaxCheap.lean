@@ -15,10 +15,11 @@ import all HexGraphIso.Nauty.Policy.Boundary
 import all HexGraphIso.Nauty.Policy.Prepared
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -102,7 +103,7 @@ theorem NodeInput.cheap_leaf {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat
       (f.level - 1) (Witness ctx tcLevel (parents.frames ctx tcLevel)) (f.emit ctx tcLevel).1 := by
   have hb := h.leaf_best hd hgsz hsymm hloop
   change (f.emit ctx tcLevel).2.best ctx = some (incMax (f.entry.key ctx bs) (f.key ctx tcLevel)) at hb
-  have hin : Engine.NodePre G ctx tcLevel f.level f.numcells f.entry := h.entry.1
+  have hin : Nauty.NodePre G ctx tcLevel f.level f.numcells f.entry := h.entry.1
   have ht := hin.leaf_bound hexit
   have hc : Generic.Covers (f.key ctx tcLevel) ((f.emit ctx tcLevel).2.best ctx) := by
     rw [hb]
@@ -118,4 +119,4 @@ theorem NodeInput.cheap_leaf {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat
   · have hn := f.emit_noncheap ctx tcLevel
     apply h.cheap_witness (by omega) (by omega) hc hg hgsz hsymm hloop
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

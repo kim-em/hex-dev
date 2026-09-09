@@ -23,15 +23,15 @@ variable {n k : Nat}
 
 /-- A matching next refinement code advances the first-reference
 comparison, regardless of the canonical-incumbent comparison. -/
-theorem match_prep {st : SearchSt n} {level code : Nat}
+theorem match_prep {st : Search n} {level code : Nat}
     (hlevel : st.eqlevFirst = level - 1) (hcode : code = st.firstcode[level]!) :
-    (otherNodePrep level code st).eqlevFirst = level := by
-  rw [otherNodePrep_eqlevFirst]
+    (compareCodes level code st).eqlevFirst = level := by
+  rw [compareCodes_eqlevFirst]
   simp only [hlevel, hcode, beq_self_eq_true, and_self, ↓reduceIte]
 
 /-- Recovering a matching ancestor keeps the first-reference comparison
 live at precisely that ancestor. -/
-theorem match_recover {st : SearchSt n} {level inf : Nat}
+theorem match_recover {st : Search n} {level inf : Nat}
     (hlevel : level ≤ st.eqlevFirst) :
     (recover n inf level st).eqlevFirst = level := by
   rw [recover_eqlevFirst]

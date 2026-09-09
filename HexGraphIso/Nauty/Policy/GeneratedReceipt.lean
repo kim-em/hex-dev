@@ -16,10 +16,11 @@ import all HexGraphIso.Nauty.Policy.Orbits
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Orbit
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Generation
+namespace Hex.GraphIso.Nauty.Generation
 
 variable {n k : Nat} {G : Colored n k} {gs : List (Perm n)} {base : List (Fin n)}
 
@@ -46,7 +47,7 @@ theorem Cover.receipt {ctx : Ctx n} {tcLevel fuel cfuel level numcells tc tv1 in
     (hs : Max.SweepInput G ctx tcLevel fuel cfuel true level numcells tc tv1 (some tv.val)
       cell index st l bs fs parents)
     (hnext : cell.nextElem previous = some tv.val)
-    (hpast : Nauty.Generation.CanonPast level tc previous st.view)
+    (hpast : Nauty.Generation.CanonPast level tc previous st)
     (hcall : node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
       (child true level tc tv.val st) = (.unwind level short, out))
     (hreceipt : RefReturn ctx level out) (horbits : OrbitsOk out)
@@ -73,4 +74,4 @@ theorem Cover.receipt {ctx : Ctx n} {tcLevel fuel cfuel level numcells tc tv1 in
     rw [hcoset] at smaller
     omega
 
-end Hex.GraphIso.Nauty.Engine.Generation
+end Hex.GraphIso.Nauty.Generation

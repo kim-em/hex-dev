@@ -12,10 +12,11 @@ import all HexGraphIso.Nauty.Invariant.Domination
 import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -314,4 +315,4 @@ theorem leaf_best {ctx : Ctx n} {cs bs : List Nat} {st : Search n}
   obtain ⟨bs', hm, hk⟩ := leaf_max h hlen hcs hbs hcache hfirst
   exact hm.read.trans hk
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

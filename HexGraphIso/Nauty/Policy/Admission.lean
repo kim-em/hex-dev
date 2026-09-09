@@ -9,6 +9,7 @@ module
 public import HexGraphIso.Nauty.Policy.Scatter
 public import HexGraphIso.Nauty.SmallCell.Prefix
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -20,7 +21,7 @@ run invariant supplies this history at the first greatest common
 ancestor, independently of the finite refinement codes.
 -/
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -56,4 +57,4 @@ theorem scatter_of_descPaths {ctx : Ctx n} {st : Search n}
     exact (descPath_prefix hgsz hsymm hloop (p₁.map Prod.fst)
       hsmall hU rfl hUd hV htargets hVd).2.symm
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

@@ -36,6 +36,7 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Generation.Frame
 import all HexGraphIso.Nauty.Generation.RefPath
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Search.Generic
 
 import all HexGraphIso.Nauty.Policy.FirstEntry
@@ -44,7 +45,7 @@ import all HexGraphIso.Nauty.Generation.Stabilizer
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -83,4 +84,4 @@ theorem first_terminal {G : Colored n k} {tcLevel fuel level numcells : Nat} {st
   rw [← hok.count]
   exact hdisc
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

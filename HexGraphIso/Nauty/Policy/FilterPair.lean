@@ -9,10 +9,11 @@ module
 public import HexGraphIso.Nauty.Policy.FilterCover
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -23,7 +24,7 @@ theorem filter_pair {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc len : Nat}
     {cell : VSet n} {st filter : Search n} {cs : List Nat}
     {live : Nat → Prop} {best : Option (Key n)}
-    (h : SearchOk G level numcells st.view)
+    (h : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level) (hgsz : ctx.g.size = n)
     (hc : IsCell st.ptn level tc len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + fuel ≤ n + 1)
@@ -35,11 +36,11 @@ theorem filter_pair {G : Colored n k} {ctx : Ctx n}
     CellCover ctx tcLevel fuel level numcells tc len cs st
       (fun v => live v ∧ (shortprune cell filter).mem v = true) best := by
   apply ChildCover.pruned hcover (labOk_of_reach h.labSize h.reach)
-    hc (by change tc + len ≤ st.view.lab.size; rw [h.labSize]; exact hr) hsub
+    hc (by change tc + len ≤ st.lab.size; rw [h.labSize]; exact hr) hsub
   · intro γ ha hs v hv
     exact congrArg (prefixKey cs)
       (h.vertex_key hn0 hlevel hgsz ha hs hc hr hv hfuel tcLevel)
   · intro v hv hd
-    exact Nauty.shortprune_drop (st := filter.view) (windowSet_lt (hsub v hv)) (hmem v hv) hd hlast
+    exact Nauty.shortprune_drop (st := filter) (windowSet_lt (hsub v hv)) (hmem v hv) hd hlast
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

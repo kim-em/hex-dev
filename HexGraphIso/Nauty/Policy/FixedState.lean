@@ -12,6 +12,7 @@ public import HexGraphIso.Nauty.Policy.EquitableState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Reach
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -20,7 +21,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- Bookkeeping on other fields preserves the fixed singleton cells. -/
-theorem FixedCells.fields {level : Nat} {st out : SearchSt n}
+theorem FixedCells.fields {level : Nat} {st out : Search n}
     (h : FixedCells level st) (hl : out.lab = st.lab) (hp : out.ptn = st.ptn)
     (hf : out.fixedpts = st.fixedpts) : FixedCells level out := by
   intro v hv hm
@@ -28,13 +29,12 @@ theorem FixedCells.fields {level : Nat} {st out : SearchSt n}
   obtain ⟨q, hq, hlabel, hcell⟩ := h v hv hm
   exact ⟨q, hq, by rw [hl]; exact hlabel, by rw [hp]; exact hcell⟩
 
-namespace Engine
 
 /-- Refinement leaves every recorded fixed vertex in a singleton cell. -/
 theorem fixed_visit {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (h : FixedCells level st.view) :
-    FixedCells level (visit ctx level numcells st).2.2.view :=
+    (hok : SearchOk G level numcells st) (h : FixedCells level st) :
+    FixedCells level (visit ctx level numcells st).2.2 :=
   h.refine hok.labSize hok.ptnSize (searchOk_end hn0 hok hlevel)
 
 /-- Comparison changes no fixed vertex or partition field. -/
@@ -99,9 +99,9 @@ theorem afterSweep_fixed (first : Bool) (level size index : Nat) (st : Search n)
 fixed singleton cells by exactly that vertex. -/
 theorem fixed_child {G : Colored n k} {level numcells tc tv : Nat}
     {st : Search n} {cell : VSet n} (first : Bool) (hn0 : 0 < n)
-    (hok : SearchOk G level numcells st.view) (h : FixedCells level st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
-    st.fixedpts.mem tv = false ∧ FixedCells (level + 1) (child first level tc tv st).view := by
+    (hok : SearchOk G level numcells st) (h : FixedCells level st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
+    st.fixedpts.mem tv = false ∧ FixedCells (level + 1) (child first level tc tv st) := by
   obtain ⟨len, hcell, hmem⟩ := htarget
   obtain ⟨hc, hlen, hrange⟩ := hcell (mem_ne_empty htv)
   obtain ⟨o, ho, hv⟩ := mem_segN_iff.mp (hmem tv htv)
@@ -109,7 +109,7 @@ theorem fixed_child {G : Colored n k} {level numcells tc tv : Nat}
   have hinj := labInj_of_reach hok.labSize hn0 hok.reach
   have hf := h.fresh (labOk_of_reach hok.labSize hok.reach) hinj hok.labSize hc hlen hrange ho
   have hch := h.breakout hinj hok.labSize hok.ptnSize hc hlen hrange ho
-  dsimp only [Search.view] at hf hch
+
   rw [hv] at hf hch
   refine ⟨hf, ?_⟩
   cases first <;> exact hch
@@ -118,11 +118,10 @@ theorem fixed_child {G : Colored n k} {level numcells tc tv : Nat}
 the parent's fixed-point bitset has been restored. -/
 theorem fixed_recover {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st out : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (h : FixedCells level st.view)
-    (hout : SearchOut G level level st.view out.view) (hf : out.fixedpts = st.fixedpts) :
-    FixedCells level (recoverLevels level (recoverPtn (n + 2) level out)).view := by
+    (hok : SearchOk G level numcells st) (h : FixedCells level st)
+    (hout : SearchOut G level level st out) (hf : out.fixedpts = st.fixedpts) :
+    FixedCells level (recoverLevels level (recoverPtn (n + 2) level out)) := by
   have hr := (reachPolicy G ctx 0 hn0).recover level numcells st out hlevel hok hout
   apply h.ofSearchOut ((recover_fixed (n + 2) level out).trans hf) hok hr.ok hr.effect
 
-end Engine
 end Hex.GraphIso.Nauty

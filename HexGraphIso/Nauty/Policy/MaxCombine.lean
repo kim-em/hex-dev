@@ -20,7 +20,7 @@ import all HexGraphIso.Nauty.Policy.Engine
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -40,4 +40,4 @@ theorem rules (G : Colored n k) (tcLevel : Nat) : Rules G tcLevel where
   node_trace := node_trace G tcLevel
   sweep_trace := sweep_trace G tcLevel
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

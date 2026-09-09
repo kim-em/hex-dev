@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Invariant.Singleton
 import all HexGraphIso.Nauty.Invariant.Autos
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -58,13 +59,13 @@ theorem Parent.picked {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   constructor
   · have hh := isCell_breakout_target (n := n) (lab := p.state.lab) (tv := p.chosen) hs hc.2.1
     dsimp only [ch, Parent.child]
-    cases hf : p.loop.first <;> simpa only [Engine.child, hf, Bool.false_eq_true,
+    cases hf : p.loop.first <;> simpa only [Nauty.child, hf, Bool.false_eq_true,
       ↓reduceIte] using hh
   · have hh := breakout_at_target (n := n) (ptn := p.state.ptn)
       (level := p.loop.node.level) hi ht
     rw [hv] at hh
     dsimp only [ch, Parent.child]
-    cases hf : p.loop.first <;> simpa only [Engine.child, hf, Bool.false_eq_true,
+    cases hf : p.loop.first <;> simpa only [Nauty.child, hf, Bool.false_eq_true,
       ↓reduceIte] using hh
 
 /-- A saved child singleton remains present when its node's sweep resumes. -/
@@ -110,7 +111,7 @@ theorem SweepInput.child_chosen {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cf
     {st : Search n} {l : Loop n} {bs fs : List Nat} {parents : Parents n}
     (h : SweepInput G ctx tcLevel fuel cfuel first level numcells tc tv1 (some tv) cell index
       st l bs fs parents) {t : Nat} {p : Parent n} (hp : parents t = some p) :
-    (Engine.child first level tc tv st).lab[(p.loop.prepare ctx tcLevel).2.1.toNat]! = p.chosen := by
+    (Nauty.child first level tc tv st).lab[(p.loop.prepare ctx tcLevel).2.1.toNat]! = p.chosen := by
   have hs := h.singletons hp
   obtain ⟨len, hc, hm⟩ := h.target
   obtain ⟨hc, hlen, hr⟩ := hc (mem_ne_empty (h.cursor_mem tv rfl))
@@ -128,14 +129,14 @@ theorem SweepInput.child_chosen {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cf
   have hh := breakout_misses_singleton (n := n) (ptn := st.ptn) (level := level)
     hi (by rw [hsz]; omega) (singleton_outside_cell hs hc hne ho)
   rw [hv] at hh
-  have he : (Engine.child first level tc tv st).lab[(p.loop.prepare ctx tcLevel).2.1.toNat]! =
+  have he : (Nauty.child first level tc tv st).lab[(p.loop.prepare ctx tcLevel).2.1.toNat]! =
       st.lab[(p.loop.prepare ctx tcLevel).2.1.toNat]! := by
     cases first <;> exact hh
   exact he.trans (h.scope.chosen t p hp)
 
 /-- A finer partition effect composes with a saved ancestor's effect,
 including references installed within the finer partition. -/
-theorem extend_effect {G : Colored n k} {t level nc mc : Nat} {base st out : SearchSt n}
+theorem extend_effect {G : Colored n k} {t level nc mc : Nat} {base st out : Search n}
     (ht : 1 ≤ t) (htl : t ≤ level) (hb : SearchOk G t nc base)
     (hs : SearchOk G level mc st) (he : SearchOut G t t base st)
     (ho : SearchOut G level level st out) :
@@ -167,4 +168,4 @@ theorem extend_effect {G : Colored n k} {t level nc mc : Nat} {base st out : Sea
     · rw [hc]; exact he.canon
     · exact Or.inr hc
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

@@ -20,10 +20,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -128,4 +129,4 @@ theorem NodeInput.emit_keeps {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Nat
       obtain ⟨q, hq⟩ := h.scope.complete f.entry.gcaCanon (by omega) h.entry.1.canonAncestor
       exact h.scope.stab_below hp hq hle (h.canon_stab hgsz hsymm hloop hc hq)
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

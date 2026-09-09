@@ -11,10 +11,11 @@ import all HexGraphIso.Nauty.Policy.Classify
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Policy.Leftmost
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -136,4 +137,4 @@ theorem runState_store {k : Nat} (G : Colored n k) :
     obtain ⟨last, leaf, hpath⟩ := initial_path G hn0
     exact firstPath_store hpath (by simp [initial])
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

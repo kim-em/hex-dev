@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.CodeState
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -49,11 +50,11 @@ structure SweepInput (G : Colored n k) (ctx : Ctx n) (tcLevel fuel cfuel : Nat)
   tc_eq : tc = (l.prepare ctx tcLevel).2.1.toNat
   tv1_eq : tv1 = ((l.prepare ctx tcLevel).2.2.1.nextElem none).getD 0
   origin : ∃ bs₀ fs₀, Entry G ctx tcLevel first l.node bs₀ fs₀
-  base : SearchOk G level numcells (l.prepare ctx tcLevel).2.2.2.2.view
-  partition : SearchOk G level numcells st.view
-  effect : SearchOut G level level (l.prepare ctx tcLevel).2.2.2.2.view st.view
+  base : SearchOk G level numcells (l.prepare ctx tcLevel).2.2.2.2
+  partition : SearchOk G level numcells st
+  effect : SearchOut G level level (l.prepare ctx tcLevel).2.2.2.2 st
   equitable : Equitable ctx level st.lab st.ptn
-  target : Generic.Target Search.view level tc cell st
+  target : Generic.Target (fun st => st) level tc cell st
   window : IsCell (l.prepare ctx tcLevel).2.2.2.2.ptn level tc (l.prepare ctx tcLevel).2.2.2.1
   len : 2 ≤ (l.prepare ctx tcLevel).2.2.2.1
   range : tc + (l.prepare ctx tcLevel).2.2.2.1 ≤ n
@@ -69,7 +70,7 @@ structure SweepInput (G : Colored n k) (ctx : Ctx n) (tcLevel fuel cfuel : Nat)
   phase :
     (first = true ∧ bs = [] ∧ fs = [] ∧ st = (l.prepare ctx tcLevel).2.2.2.2 ∧
       cell = (l.prepare ctx tcLevel).2.2.1 ∧ cursor = cell.nextElem none ∧ index = 0) ∨
-    (Engine.SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st ∧
+    (Nauty.SweepPre G ctx tcLevel first level numcells tc tv1 cursor cell st ∧
       Comparison ctx (l.codes ctx) bs fs st ∧
       (st.compCanon ≤ 0 ∨ first = false ∧ cursor.isSome))
   coverage : CellCover ctx tcLevel (n - level) level numcells tc
@@ -147,4 +148,4 @@ theorem sweep_zero (G : Colored n k) (tcLevel fuel : Nat) (first : Bool)
     have hf := h.cursor_fuel tv rfl
     omega
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

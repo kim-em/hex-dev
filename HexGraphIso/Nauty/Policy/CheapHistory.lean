@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.Depth
 import all HexGraphIso.Nauty.Policy.FirstRef
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -75,10 +76,10 @@ theorem CheapHistory.target {ctx : Ctx n} {tcLevel level numcells : Nat} {st : S
 /-- Classification preserves the live first-path history. -/
 theorem CheapHistory.classify {ctx : Ctx n} {tcLevel level numcells : Nat} {st : Search n}
     (h : CheapHistory ctx tcLevel level level numcells st) :
-    CheapHistory ctx tcLevel level level numcells (Engine.classify ctx level numcells st).2 := by
+    CheapHistory ctx tcLevel level level numcells (Nauty.classify ctx level numcells st).2 := by
   apply h.transport (classify_reference ctx level numcells st)
     ((gcaPolicy ctx 0 tcLevel).classify level numcells st)
-  · unfold Engine.classify
+  · unfold Nauty.classify
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
       apply_ite Search.noncheaplevel, ite_self]
     exact id
@@ -164,10 +165,10 @@ theorem CheapHistory.recorded {ctx : Ctx n} {tcLevel level numcells : Nat} {st :
 theorem CheapHistory.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells tc tv : Nat}
     {st : Search n} {cell : VSet n}
     (h : CheapHistory ctx tcLevel level level numcells st) (first : Bool)
-    (hsize : ctx.g.size = n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (hsize : ctx.g.size = n) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (hrecord : CheapRecorded level tc st) :
-    let next := Engine.child first level tc tv st
+    let next := Nauty.child first level tc tv st
     let r := visit ctx (level + 1) (numcells + 1) next
     CheapHistory ctx tcLevel (level + 1) level r.1 r.2.2 := by
   intro next r hcheap
@@ -185,14 +186,14 @@ theorem CheapHistory.child {G : Colored n k} {ctx : Ctx n} {tcLevel level numcel
 theorem CheapHistory.child_return {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv : Nat} {st : Search n} {cell : VSet n}
     (h : CheapHistory ctx tcLevel level level numcells st) (first : Bool)
-    (hg : st.gcaFirst ≤ level) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (hg : st.gcaFirst ≤ level) (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     let result := recoverLevels level (recoverPtn (n + 2) level
       { out with fixedpts := out.fixedpts.erase tv })
     CheapHistory ctx tcLevel level level numcells result ∧ (CheapRecorded level tc st → CheapRecorded level tc result) := by
-  let ch := Engine.child first level tc tv st
+  let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   let left := { out with fixedpts := out.fixedpts.erase tv }
   let result := recoverLevels level (recoverPtn (n + 2) level left)
@@ -247,8 +248,8 @@ theorem CheapHistory.child_return {G : Colored n k} {ctx : Ctx n}
 /-- The live history supplies the restored first-leaf admission test at every prepared node. -/
 theorem CheapHistory.first_checked {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells : Nat}
     {st out : Search n} (h : CheapHistory ctx tcLevel level level numcells st)
-    (hinv : RunInv G ctx st) (hn0 : 0 < n) (hok : SearchOk G level numcells st.view)
-    (hauto : Engine.classify ctx level numcells st = (.autoFirst, out))
+    (hinv : RunInv G ctx st) (hn0 : 0 < n) (hok : SearchOk G level numcells st)
+    (hauto : Nauty.classify ctx level numcells st = (.autoFirst, out))
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
@@ -262,11 +263,11 @@ theorem CheapHistory.first_checked {G : Colored n k} {ctx : Ctx n} {tcLevel leve
 /-- Both automorphism classifications produce a checked scratch permutation. -/
 theorem CheapHistory.checked {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells : Nat}
     {st : Search n} (h : CheapHistory ctx tcLevel level level numcells st)
-    (hinv : RunInv G ctx st) (hn0 : 0 < n) (hok : SearchOk G level numcells st.view)
+    (hinv : RunInv G ctx st) (hn0 : 0 < n) (hok : SearchOk G level numcells st)
     (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false) :
-    let r := Engine.classify ctx level numcells st
+    let r := Nauty.classify ctx level numcells st
     r.1 = .autoFirst ∨ r.1 = .autoCanon → checkAutom ctx.g r.2.workperm = true := by
   intro r hauto
   rcases hauto with hf | hc
@@ -275,4 +276,4 @@ theorem CheapHistory.checked {G : Colored n k} {ctx : Ctx n} {tcLevel level numc
       (isPerm_of_cellsReach hinv.canonical.1 hn0 hinv.canonical.2)
       hok.labSize (isPerm_of_cellsReach hok.labSize hn0 hok.reach)
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

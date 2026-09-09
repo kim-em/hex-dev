@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -61,7 +62,7 @@ theorem firstPath_noncheap {ctx : Ctx n} {inf tcLevel fuel level numcells last b
 /-- A first-path node that is cheap after the guard supplies the small-cell ancestor invariant. -/
 theorem firstCheap_small {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells : Nat}
     {st : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view)
+    (hok : SearchOk G level numcells st)
     (heq : Equitable ctx level (st.refined ctx level numcells).lab (st.refined ctx level numcells).ptn)
     (hsmall : st.noncheaplevel < level → SubtreeOk ctx level (st.refined ctx level numcells))
     (hcheap : (cheapCheck true level
@@ -86,4 +87,4 @@ theorem firstCheap_small {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells
   rw [hp] at hacc
   exact subtreeOk_of_cheapautom (refined_iter hn0 hlevel hok) heq hacc.symm hc
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

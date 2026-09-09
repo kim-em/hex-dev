@@ -12,6 +12,7 @@ public import HexGraphIso.Nauty.Policy.Partition
 import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
@@ -33,13 +34,12 @@ theorem Equitable.reorder {ctx : Ctx n} {level : Nat} {lab out ptn : Array Nat}
   rw [splitDone_iff_constOn, ← hwork]
   exact (splitDone_iff_constOn.mp (h cd hcd de hde)).perm hcdPerm.symm
 
-namespace Engine
 
 /-- An actual target-cell child refines to an equitable partition. -/
 theorem child_equitable {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : Nat}
     {st : Search n} {cell : VSet n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (heq : Equitable ctx level st.lab st.ptn)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (hok : SearchOk G level numcells st) (heq : Equitable ctx level st.lab st.ptn)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u) :
     let R := (child first level tc tv st).refined ctx (level + 1) (numcells + 1)
     Equitable ctx (level + 1) R.lab R.ptn := by
@@ -50,29 +50,28 @@ theorem child_equitable {G : Colored n k} {ctx : Ctx n} {level numcells tc tv : 
   have hend : st.ptn[st.ptn.size - 1]! ≤ level := searchOk_end hn0 hok hlevel
   have hlvl : level ≤ n := Nat.le_trans hok.bc (bcount_le _ _ _)
   have hc' : (tc, tc + len - 1) ∈ cells st.ptn level n :=
-    isCell_mem_cells hc (by change n ≤ st.view.ptn.size; rw [hok.ptnSize]; exact Nat.le_refl _) hend (by omega)
+    isCell_mem_cells hc (by change n ≤ st.ptn.size; rw [hok.ptnSize]; exact Nat.le_refl _) hend (by omega)
   have hp := equitable_breakout hok.labSize hok.ptnSize hend
     (fun q hq => (hok.vals q hq).imp id (fun he => by rw [he]; omega))
     (labOk_of_reach hok.labSize hok.reach) (labInj_of_reach hok.labSize hn0 hok.reach)
     hsymm heq hc' (by omega) (by omega : o ≤ tc + len - 1 - tc) hok.count.symm
-  dsimp only [Search.view] at hp
+
   rw [hv] at hp
   cases first <;> exact hp
 
 /-- Recovering a parent retains its equitability despite the child's labelling order. -/
 theorem recover_equitable {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     {st out : Search n} (hn0 : 0 < n) (hlevel : 1 ≤ level)
-    (hok : SearchOk G level numcells st.view) (heq : Equitable ctx level st.lab st.ptn)
-    (hout : SearchOut G level level st.view out.view) :
+    (hok : SearchOk G level numcells st) (heq : Equitable ctx level st.lab st.ptn)
+    (hout : SearchOut G level level st out) :
     let result := recoverLevels level (recoverPtn (n + 2) level out)
     Equitable ctx level result.lab result.ptn := by
   dsimp only
   rw [recover_ptn_eq hok hout]
-  have hl := congrArg SearchSt.lab (view_recover (n + 2) level out)
+  have hl := congrArg Search.lab (recover_eq (n + 2) level out)
   change (recoverLevels level (recoverPtn (n + 2) level out)).lab = _ at hl
   rw [Nauty.recover_lab] at hl
   rw [hl]
   exact heq.reorder hout.perm hok.ptnSize (searchOk_end hn0 hok hlevel)
 
-end Engine
 end Hex.GraphIso.Nauty

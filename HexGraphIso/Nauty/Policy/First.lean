@@ -10,11 +10,12 @@ public import HexGraphIso.Nauty.Policy.Reference
 public import HexGraphIso.Nauty.Policy.Engine
 public import HexGraphIso.Nauty.Policy.Target
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 import all HexGraphIso.Nauty.Policy.Engine
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n : Nat}
 
@@ -122,4 +123,4 @@ theorem sweep_reference (first : Bool) (ctx : Ctx n)
   exact Generic.sweep_reference (referencePolicy ctx inf tcLevel) first fuel cfuel level numcells tc tv1
     index cursor cell st hpast
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

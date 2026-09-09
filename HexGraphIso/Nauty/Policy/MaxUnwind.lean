@@ -19,10 +19,11 @@ import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Generic
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -36,7 +37,7 @@ theorem SweepInput.unwind {G : Colored n k} {ctx : Ctx n} {tcLevel fuel cfuel in
       st l bs fs parents)
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
     (hcall : descend (first && tv == tv1) (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st) = (.unwind target short, out))
+      (Nauty.child first level tc tv st) = (.unwind target short, out))
     (ht : target < level)
     (hr : let p : Parent n := ⟨l, st, tv, bs, fs⟩
       Generic.Result ((p.child ctx tcLevel).key ctx tcLevel)
@@ -103,8 +104,8 @@ theorem SweepInput.child_result {G : Colored n k} {tcLevel fuel cfuel : Nat}
       (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel fuel)) :
     let ctx : Ctx n := { g := rowsOf G }
     let p : Parent n := ⟨l, st, tv, bs, fs⟩
-    let result := Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)
+    let result := Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)
     Generic.Result ((p.child ctx tcLevel).key ctx tcLevel)
       ((p.child ctx tcLevel).entry.key ctx bs) (result.2.best ctx) level
       (Witness ctx tcLevel ((parents.push p).frames ctx tcLevel)) result.1 := by
@@ -113,11 +114,11 @@ theorem SweepInput.child_result {G : Colored n k} {tcLevel fuel cfuel : Nat}
   change NodeInput G ctx tcLevel fuel (first && tv == tv1)
     (p.child ctx tcLevel) bs fs (parents.push p) at hp
   have he : p.child ctx tcLevel =
-      ⟨level + 1, numcells + 1, l.codes ctx, Engine.child first level tc tv st⟩ := by
+      ⟨level + 1, numcells + 1, l.codes ctx, Nauty.child first level tc tv st⟩ := by
     simp only [p, ctx, Parent.child, h.first_eq, h.level_eq, h.numcells_eq, h.tc_eq]
   rw [he] at hp ⊢
   have hr := (hn (first && tv == tv1) (level + 1) (numcells + 1)
-    (Engine.child first level tc tv st) trivial).1 (l.codes ctx) bs fs (parents.push p) hp
+    (Nauty.child first level tc tv st) trivial).1 (l.codes ctx) bs fs (parents.push p) hp
   simpa only [result, Generic.nodeCall, ← node_eq_generic, Nat.add_sub_cancel] using hr
 
 /-- An actual visited child returning past this sweep supplies the
@@ -129,7 +130,7 @@ theorem visit_unwind (G : Colored n k) (tcLevel fuel cfuel : Nat)
     (cell : VSet n) (st out : Search n)
     (hvisit : (!first || st.orbits[tv]! == tv) = true)
     (hcall : node (first && tv == tv1) { g := rowsOf G } (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) = (.unwind target short, out))
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) = (.unwind target short, out))
     (ht : target < level) :
     (keyContract G tcLevel).sweepPost fuel (cfuel + 1) first level numcells tc tv1 (some tv) cell index st
       (Generic.sweepStep (n + 2)
@@ -140,7 +141,7 @@ theorem visit_unwind (G : Colored n k) (tcLevel fuel cfuel : Nat)
   let ctx : Ctx n := { g := rowsOf G }
   let p : Parent n := ⟨l, st, tv, bs, fs⟩
   have hc : Generic.nodeCall ctx (n + 2) tcLevel fuel (first && tv == tv1)
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st) =
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st) =
         (.unwind target short, out) := by
     simpa only [Generic.nodeCall, ← node_eq_generic] using hcall
   have hr := h.child_result hn
@@ -148,4 +149,4 @@ theorem visit_unwind (G : Colored n k) (tcLevel fuel cfuel : Nat)
   rw [hcall] at hr
   exact h.unwind hvisit hc ht hr
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max

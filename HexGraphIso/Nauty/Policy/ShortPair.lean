@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.Pairs
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -30,7 +31,7 @@ theorem SweepPre.child_target {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (he : (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).1 = .unwind target true)
+      (Nauty.child first level tc tv st)).1 = .unwind target true)
     (hreceive : level ≤ target) : target = level := by
   have hb := (h.child hn0 hgsz hsymm).node_bound (n + 2) target true he
   omega
@@ -41,24 +42,24 @@ fix the parent path and use its root-stabilization invariant. -/
 theorem return_pair {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv target : Nat} {first childFirst : Bool}
     {cell : VSet n} {st : Search n} {key : Nat → Key n} {best : Option (Key n)}
-    (h : SearchOk G level numcells st.view)
+    (h : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level) (hpath : PathInv G ctx level st)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (hbound : target < level + 1)
     (he : (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).1 = .unwind target true)
+      (Nauty.child first level tc tv st)).1 = .unwind target true)
     (hi : RunInv G ctx (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2)
+      (Nauty.child first level tc tv st)).2)
     (hreceive : level ≤ target) (hguide : CanonGuide level tc st key best st) :
     let raw := (node childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     let out := { raw with fixedpts := raw.fixedpts.erase tv }
     ∀ pair, out.autos.back? = some pair → PairOk ctx.g st.ptn st.lab level pair.1 pair.2 := by
   intro raw out pair hpair
   have ht : target = level := by omega
   have horigin : LeafReturn target out := shortPolicy.leave tv target raw
     (node_origin childFirst ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st) he)
+      (Nauty.child first level tc tv st) he)
   rcases horigin.admission hi.workspace.1 with ⟨hb, hg, htrace, hmap⟩ | ⟨hb, hcheap⟩
   · have hp : pair = fmperm out.workperm n := Option.some.inj (hpair.symm.trans hb)
     subst pair
@@ -92,15 +93,15 @@ theorem SweepPre.return_pair {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (he : (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).1 = .unwind target true)
+      (Nauty.child first level tc tv st)).1 = .unwind target true)
     (hi : RunInv G ctx (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2)
+      (Nauty.child first level tc tv st)).2)
     (hreceive : level ≤ target) (hguide : CanonGuide level tc st key best st) :
     let raw := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     let out := { raw with fixedpts := raw.fixedpts.erase tv }
     ∀ pair, out.autos.back? = some pair → PairOk ctx.g st.ptn st.lab level pair.1 pair.2 :=
-  Engine.return_pair h.partition hn0 h.positive h.path h.target (h.cursor_mem tv rfl)
+  Nauty.return_pair h.partition hn0 h.positive h.path h.target (h.cursor_mem tv rfl)
     ((h.child hn0 hgsz hsymm).node_bound (n + 2) target true he) he hi hreceive hguide
 
 /-- The leftmost first-path child has the same local pair guarantee after
@@ -109,21 +110,21 @@ precondition is needed at this first entry. -/
 theorem first_return_pair {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells tc tv target : Nat}
     {cell : VSet n} {st : Search n} {key : Nat → Key n} {best : Option (Key n)}
-    (h : SearchOk G level numcells st.view)
+    (h : SearchOk G level numcells st)
     (hn0 : 0 < n) (hlevel : 1 ≤ level) (hpath : PathInv G ctx level st)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (he : (node true ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child true level tc tv st)).1 = .unwind target true)
+      (Nauty.child true level tc tv st)).1 = .unwind target true)
     (hi : RunInv G ctx (node true ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child true level tc tv st)).2)
+      (Nauty.child true level tc tv st)).2)
     (hreceive : level ≤ target) (hguide : CanonGuide level tc st key best st) :
     let raw := (node true ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child true level tc tv st)).2
+      (Nauty.child true level tc tv st)).2
     let out := { afterChildFirst level tv raw with fixedpts := raw.fixedpts.erase tv }
     ∀ pair, out.autos.back? = some pair → PairOk ctx.g st.ptn st.lab level pair.1 pair.2 :=
   return_pair h hn0 hlevel hpath htarget htv
     (first_node_bound ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child true level tc tv st) (by omega) target true he) he hi hreceive hguide
+      (Nauty.child true level tc tv st) (by omega) target true he) he hi hreceive hguide
 
 /-- Applying a received short return preserves coverage of the parent's
 original target cell, using the pair justified by that actual child call. -/
@@ -135,9 +136,9 @@ theorem SweepPre.return_cover {G : Colored n k} {ctx : Ctx n}
     (hn0 : 0 < n) (hgsz : ctx.g.size = n)
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (he : (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).1 = .unwind target true)
+      (Nauty.child first level tc tv st)).1 = .unwind target true)
     (hi : RunInv G ctx (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2)
+      (Nauty.child first level tc tv st)).2)
     (hreceive : level ≤ target) (hguide : CanonGuide level tc st key best st)
     (hc : IsCell st.ptn level tc len) (hr : tc + len ≤ n)
     (hfuel : level + 1 + specFuel ≤ n + 1)
@@ -145,7 +146,7 @@ theorem SweepPre.return_cover {G : Colored n k} {ctx : Ctx n}
     (hsub : ∀ v, live v → (windowSet n st.lab tc len).mem v = true)
     (hmem : ∀ v, live v → cell.mem v = true) :
     let raw := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     let out := { raw with fixedpts := raw.fixedpts.erase tv }
     CellCover ctx tcLevel specFuel level numcells tc len cs st
       (fun v => live v ∧ (shortprune cell out).mem v = true) best := by
@@ -154,4 +155,4 @@ theorem SweepPre.return_cover {G : Colored n k} {ctx : Ctx n}
   intro fix mcr hp
   exact h.return_pair hn0 hgsz hsymm he hi hreceive hguide (fix, mcr) hp
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

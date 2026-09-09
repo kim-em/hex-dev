@@ -14,10 +14,11 @@ import all HexGraphIso.Nauty.Policy.FirstHistory
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine
+namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
@@ -110,8 +111,8 @@ theorem GuidedState.child {G : Colored n k} {ctx : Ctx n} {tcLevel base level nu
     {root : RefineSt n} {st : Search n} {cell : VSet n}
     (h : GuidedState ctx tcLevel base root level level numcells st) (first : Bool)
     (hsize : ctx.g.size = n) (hroot : IterOk ctx base root)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true)
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true)
     (hrecord : st.eqlevFirst = level →
       specTargetcell ctx st.lab st.ptn level tcLevel = tc ∨ st.firsttc[level]! = Int.ofNat tc) :
     let next := child first level tc tv st
@@ -130,16 +131,16 @@ theorem GuidedState.child {G : Colored n k} {ctx : Ctx n} {tcLevel base level nu
     obtain ⟨o, ho, he⟩ := mem_segN_iff.mp (hmem tv htv)
     have hltn : level < n := by
       have hbc := hnext.bc
-      have hb := bcount_le (Engine.child first level tc tv st).ptn (level + 1) n
-      change level + 1 ≤ bcount (Engine.child first level tc tv st).ptn (level + 1) n at hbc
+      have hb := bcount_le (Nauty.child first level tc tv st).ptn (level + 1) n
+      change level + 1 ≤ bcount (Nauty.child first level tc tv st).ptn (level + 1) n at hbc
       omega
     have hcell' : (tc, tc + len - 1) ∈ cells st.ptn level n := by
-      exact isCell_mem_cells hic (by change n ≤ st.view.ptn.size; rw [hok.ptnSize]; exact Nat.le_refl _) (searchOk_end hn0 hok hlevel) (by omega)
+      exact isCell_mem_cells hic (by change n ≤ st.ptn.size; rw [hok.ptnSize]; exact Nat.le_refl _) (searchOk_end hn0 hok hlevel) (by omega)
     have hh := (h.descent heq').child (o := o) hsize hroot hltn hcell' (by omega) (by omega)
       (hrecord heq')
     change st.lab[tc + o]! = tv at he
     rw [he] at hh
-    let current := (Engine.child false level tc tv st).refined ctx (level + 1) (numcells + 1)
+    let current := (Nauty.child false level tc tv st).refined ctx (level + 1) (numcells + 1)
     refine ⟨current, ?_, ?_, ?_, ?_⟩
     · cases first <;> exact hh
     · cases first <;> rfl
@@ -150,8 +151,8 @@ theorem GuidedState.child {G : Colored n k} {ctx : Ctx n} {tcLevel base level nu
 theorem GuidedState.recover {G : Colored n k} {ctx : Ctx n} {tcLevel base level numcells : Nat}
     {root : RefineSt n} {st out : Search n}
     (h : GuidedState ctx tcLevel base root level level numcells st)
-    (hok : SearchOk G level numcells st.view)
-    (hout : SearchOut G level level st.view out.view)
+    (hok : SearchOk G level numcells st)
+    (hout : SearchOut G level level st out)
     (htc : out.firsttc = st.firsttc)
     (hdiv : st.eqlevFirst < level → out.eqlevFirst < level) :
     GuidedState ctx tcLevel base root level level numcells
@@ -180,20 +181,20 @@ theorem GuidedState.child_return {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel base level numcells tc tv : Nat}
     {root : RefineSt n} {st : Search n} {cell : VSet n}
     (h : GuidedState ctx tcLevel base root level level numcells st) (first : Bool)
-    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st.view)
-    (htarget : Generic.Target Search.view level tc cell st) (htv : cell.mem tv = true) :
+    (hlevel : 1 ≤ level) (hok : SearchOk G level numcells st)
+    (htarget : Generic.Target (fun st => st) level tc cell st) (htv : cell.mem tv = true) :
     let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1)
-      (Engine.child first level tc tv st)).2
+      (Nauty.child first level tc tv st)).2
     GuidedState ctx tcLevel base root level level numcells
       (recoverLevels level (recoverPtn (n + 2) level
         { out with fixedpts := out.fixedpts.erase tv })) := by
-  let ch := Engine.child first level tc tv st
+  let ch := Nauty.child first level tc tv st
   let out := (node false ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch).2
   have hn0 : 0 < n := by have := VSet.mem_lt htv; omega
   have hch := (reachPolicy G ctx tcLevel hn0).child first level numcells tc tv cell st
     hlevel hok htarget htv
   have hresult := node_out false hn0 (by omega) hch.1 (ctx := ctx) (tcLevel := tcLevel) (fuel := fuel)
-  have hout : SearchOut G level level st.view out.view := hch.2 _ (by simpa only [Nat.add_sub_cancel, policy, Generic.Policy.child] using hresult)
+  have hout : SearchOut G level level st out := hch.2 _ (by simpa only [Nat.add_sub_cancel, policy, Generic.Policy.child] using hresult)
   have htc : out.firsttc = st.firsttc := by
     have hr := node_reference ctx (n + 2) tcLevel fuel (level + 1) (numcells + 1) ch
     have hc := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.1) hr
@@ -208,4 +209,4 @@ theorem GuidedState.child_return {G : Colored n k} {ctx : Ctx n}
   · exact htc
   · exact hd
 
-end Hex.GraphIso.Nauty.Engine
+end Hex.GraphIso.Nauty

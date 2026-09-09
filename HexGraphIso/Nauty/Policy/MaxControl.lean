@@ -18,10 +18,11 @@ import all HexGraphIso.Nauty.Policy.Controls
 import all HexGraphIso.Nauty.Policy.State
 import all HexGraphIso.Nauty.Policy.Engine
 import all HexGraphIso.Nauty.Search.Search
+import all HexGraphIso.Nauty.Search.State
 
 public section
 
-namespace Hex.GraphIso.Nauty.Engine.Max
+namespace Hex.GraphIso.Nauty.Max
 
 variable {n k : Nat}
 
@@ -74,8 +75,8 @@ theorem SweepInput.recovered_counters {G : Colored n k} {ctx : Ctx n} {tcLevel f
     (hsymm : ∀ u v, u < n → v < n → (ctx.g[u]!).mem v = (ctx.g[v]!).mem u)
     (hloop : ∀ v, v < n → (ctx.g[v]!).mem v = false)
     (hcounter : 0 < st.canonlevel → 0 < st.gcaFirst ∧ st.gcaFirst ≤ st.gcaCanon) :
-    let raw := (Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)).2
+    let raw := (Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)).2
     let middle := if first && tv == tv1 then afterChildFirst level tv1 raw else raw
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
     let ready := recoverLevels level (recoverPtn (n + 2) level left)
@@ -99,14 +100,14 @@ theorem SweepInput.recovered_counters {G : Colored n k} {ctx : Ctx n} {tcLevel f
       (by dsimp only [Parent.child]; rw [← h.level_eq]; omega)
     dsimp only [Parent.child] at hc
     rw [← h.first_eq, ← h.level_eq, ← h.numcells_eq, ← h.tc_eq] at hc
-    change level ≤ (Engine.node true ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)).2.gcaCanon at hc
+    change level ≤ (Nauty.node true ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)).2.gcaCanon at hc
     have hr : level ≤ raw.gcaCanon := by dsimp only [raw]; rwa [hcf]
     have hleft : left.gcaFirst = level := by simp only [left, middle, hcf, ↓reduceIte]; rfl
     rw [hgf, hleft, hgc]
     exact ⟨hl, by omega⟩
   · have hfalse : (first && tv == tv1) = false := Bool.eq_false_iff.mpr hcf
-    have hp : Engine.SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st ∧
+    have hp : Nauty.SweepPre G ctx tcLevel first level numcells tc tv1 (some tv) cell st ∧
         Comparison ctx (l.codes ctx) bs fs st := by
       rcases h.phase with ⟨hf, _, _, _, hcell, hcursor, _⟩ | ⟨hp, hc, _⟩
       · have he : tv1 = tv := by rw [h.tv1_eq, ← hcell, ← hcursor]; rfl
@@ -136,8 +137,8 @@ theorem SweepInput.recovered_control {G : Colored n k} {ctx : Ctx n} {tcLevel fu
     {l : Loop n} {bs fs : List Nat} {parents : Parents n}
     (h : SweepInput G ctx tcLevel fuel cfuel first level numcells tc tv1 (some tv) cell index
       st l bs fs parents) :
-    let raw := (Engine.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
-      (level + 1) (numcells + 1) (Engine.child first level tc tv st)).2
+    let raw := (Nauty.node (first && tv == tv1) ctx (n + 2) tcLevel fuel
+      (level + 1) (numcells + 1) (Nauty.child first level tc tv st)).2
     let middle := if first && tv == tv1 then afterChildFirst level tv1 raw else raw
     let left := { middle with fixedpts := middle.fixedpts.erase tv }
     let ready := recoverLevels level (recoverPtn (n + 2) level left)
@@ -163,4 +164,4 @@ theorem SweepInput.recovered_control {G : Colored n k} {ctx : Ctx n} {tcLevel fu
       simp [hf, ht] at hc
     · exact h.control (comparison_positive hcmp)
 
-end Hex.GraphIso.Nauty.Engine.Max
+end Hex.GraphIso.Nauty.Max
