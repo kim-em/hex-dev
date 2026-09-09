@@ -26,15 +26,11 @@ Each record carries the *public* answer: the canonical label and
 canonical upper-triangle bits are read off `canonicalize` (the
 production pipeline behind `canon` and `label`), with the coloured
 graph built through the public checked constructors.
-The search-node count comes from the transcribed search
+The search-node count comes from the canonical search
 (`Nauty.runColored`). The oracle recomputes all of them with the pinned
 external nauty, so the fixture pins the public operations, not only the
-transcribed search.
+canonical search.
 
-`--engine` emits the same cases with the label, canonical bits and node
-count read off `Cases.engine` instead, so the oracle also checks the direct entry point.
-Both modes use the same structured engine. The committed fixture uses the default
-mode. CI compares the engine with that search through the full twin corpus.
 -/
 
 def main (args : List String) : IO Unit := do

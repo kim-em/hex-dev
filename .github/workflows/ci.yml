@@ -254,7 +254,7 @@ jobs:
             hexrcf_emit_fixtures \
             hexroots_emit_fixtures hexresultant_emit_fixtures \
             hexnumberfield_emit_fixtures \
-            hexnumberfieldtower_emit_fixtures hexgraphiso_engine_twin
+            hexnumberfieldtower_emit_fixtures hexgraphiso_emit_trace hexgraphiso_emit_campaign
       - name: Build HexManual
         run: lake build HexManual
       # --- Parallel verification tails (single job, in-job parallel steps) ---
@@ -314,7 +314,10 @@ jobs:
           # Missing comparator packages are release failures, not green skips.
           HEX_REQUIRE_ORACLES: "1"
         run: |
-          .lake/build/bin/hexgraphiso_engine_twin
+          python3 -m unittest scripts/oracle/test_graphiso_trace.py scripts/bench/test_graphiso_compare.py
+          .lake/build/bin/hexgraphiso_emit_trace > /tmp/graphiso-trace.jsonl
+          python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl
+          .lake/build/bin/hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py
           .lake/build/bin/tower_factor_diff
           bash scripts/ci/run_oracles.sh
           # Deterministic anti-regression gate: a recombination blow-up,

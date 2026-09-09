@@ -338,34 +338,7 @@ private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
 #guard (Graph.autos (Families.hypercube 3)).order == 48
 #guard (Graph.autos (Families.path 5)).numOrbits == 3
 
-/-! # The second search
-
-`Cases.engine` is the search `hexgraphiso_engine_twin` compares with the
-literal port over the whole fixture corpus and the campaign. These
-checks pin the same agreement on the named cases: the canonical label
-and rows, the visited-node count, the accepted automorphisms in
-discovery order, and the best path's refinement codes. -/
-
-private def twinAgrees {n k : Nat} (G : Colored n k) : Bool :=
-  let a := Nauty.runColoredTraced G
-  let b := Hex.GraphIsoCases.engine G
-  a.result.canonlab == b.result.canonlab &&
-    a.result.canong == b.result.canong &&
-    a.result.numnodes == b.result.numnodes &&
-    a.result.numorbits == b.result.numorbits &&
-    a.result.numgenerators == b.result.numgenerators &&
-    a.result.numbadleaves == b.result.numbadleaves &&
-    a.result.maxlevel == b.result.maxlevel &&
-    a.result.tctotal == b.result.tctotal &&
-    a.result.canupdates == b.result.canupdates &&
-    a.autos == b.autos &&
-    a.bestCodes == b.bestCodes
-
-#guard twinAgrees p3
-#guard twinAgrees c4
-#guard twinAgrees petersen
-#guard twinAgrees kneser52
-#guard twinAgrees prism5
+/-! # Search decisions -/
 
 -- Code-1 admission uses agreement at this level without testing the next sentinel.
 #guard Id.run do
@@ -419,7 +392,6 @@ private def empty0 : Colored 0 0 :=
 #guard (autos empty0).gens.isEmpty
 #guard (autos empty0).numOrbits == 0
 #guard (autos empty0).order == 1
-#guard twinAgrees empty0
 
 end Hex.GraphIso.Conformance
 

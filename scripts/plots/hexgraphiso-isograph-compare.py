@@ -32,7 +32,7 @@ dense-to-native conversion that ``runColored`` pays through ``rowsOf``.
 
 Input is one merged JSON line per instance, with ``nauty_ns`` and
 ``nauty_whole_ns`` (densenauty, without and with the dense-to-bitset
-conversion), ``fast_ns`` (``canonicalize``), ``lit_ns``
+conversion), ``fast_ns`` (``canonicalize``), ``search_ns``
 (``runColored``), ``iso_ns`` and ``iso_whole_ns`` (``canonical``,
 without and with the graph construction), and ``nauty_ffi_ns`` (the
 in-process comparator, for the marshalling column of the table).
@@ -51,6 +51,8 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+from scripts.bench.graphiso_archive import normalize  # noqa: E402
 
 # Categorical slots 1-3 of the reference palette, assigned by entity and
 # never by rank: the C reference, then the two Lean implementations.
@@ -91,7 +93,7 @@ LIKE_FOR_LIKE = [
 ]
 LIKE = [
     ("nauty 2.9.3 dense + conversion", "nauty_whole_ns", NAUTY, "o"),
-    ("HexGraphIso runColored", "lit_ns", HEX, "s"),
+    ("HexGraphIso runColored", "search_ns", HEX, "s"),
     ("IsoGraph canonical + graph build", "iso_whole_ns", ISO, "^"),
 ]
 
@@ -179,7 +181,7 @@ def _table(rows: list[dict]) -> str:
                 f"| {f('fast_ns', 'nauty_ns'):.0f}× "
                 f"| {f('iso_ns', 'nauty_ns'):.1f}× "
                 f"| {f('iso_ns', 'fast_ns'):.2f}× "
-                f"| {f('lit_ns', 'nauty_ns'):.0f}× "
+                f"| {f('search_ns', 'nauty_ns'):.0f}× "
                 f"| {f('iso_whole_ns', 'nauty_whole_ns'):.1f}× "
                 f"| {f('sparse_ns', 'nauty_ns'):.2f}× "
                 f"| {f('traces_ns', 'nauty_ns'):.2f}× "
@@ -246,7 +248,7 @@ def main() -> int:
     global ScalarFormatter, NullFormatter
     from matplotlib.ticker import ScalarFormatter, NullFormatter
 
-    rows = [json.loads(line) for line in args.data.read_text().splitlines()
+    rows = [normalize(json.loads(line)) for line in args.data.read_text().splitlines()
             if line]
     caption = ("best of several reps after warm-up, over two passes, one "
                "process per instance per implementation; the identical "

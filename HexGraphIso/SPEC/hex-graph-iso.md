@@ -967,38 +967,34 @@ The committed merge-CI fixture is at most 16 MiB and contains:
 The counts include labelled graphs. The 1,044 commonly listed graphs on seven
 vertices are unlabelled isomorphism classes and are not this fixture count.
 
-The scheduled and local campaign adds all 32,768 labelled graphs at `n = 6`,
-larger deterministic random cases, and the hard families below. These cases
-stream directly to the oracle. Only failures are retained as replay records.
-`conformance/HexGraphIso/EmitCampaign.lean` is the emitter, and
-[reports/hex-graph-iso-campaign.md](../../reports/hex-graph-iso-campaign.md)
-records the current run: machine, date, toolchain, comparator version, case
-count, what was compared, runtime, and outcome. A campaign re-run replaces
-that report in place. Conformance runs in the existing single Ubuntu job. It
-does not add a job, matrix, or workflow.
+The campaign adds all 32,768 labelled graphs at `n = 6`, larger
+deterministic random cases, and the hard families below. The existing CI
+oracle step runs it against the pinned nauty comparator on every change.
+The emitters share the corpus in `conformance/HexGraphIso/Cases.lean` and
+read labels and canonical forms from the public operations.
 
-The emitters and the twin runner read one shared corpus,
-`conformance/HexGraphIso/Cases.lean`, so every driver runs the same
-cases in the same order. `conformance/HexGraphIso/EmitFixtures.lean`
-writes the committed fixture, `conformance/HexGraphIso/EmitCampaign.lean`
-streams the campaign, and both take an `--engine` mode that reads each
-record directly from the engine. The public answer and certificate producer
-use that same engine, so the external nauty oracle checks both entry points
-on the same cases.
-`conformance/HexGraphIso/EngineTwin.lean` builds the executable
-`hexgraphiso_engine_twin`, which runs both wrappers on every fixture,
-automorphism and campaign case and compares the whole traversal rather
-than only its answer: the label, the canonical graph, the seven run
-statistics, the accepted automorphisms in discovery order, the best
-path's refinement codes, and the final orbit partition. It also checks
-that the engine finishes with a normal root unwind. The first disagreement
-is printed with the differing fields and the case, and the run exits
-non-zero. `Nauty.Engine` supplies both wrappers; the twin checks their
-agreement and normal termination, while the pinned external oracle provides
-the independent implementation comparison.
-The existing CI conformance job runs the twin on the fixture,
-automorphism, and campaign corpora. External `--engine` oracle comparisons
-are also recorded in [the engine report](../../reports/hex-graph-iso-engine.md).
+`hexgraphiso_emit_trace` records the full traversal for the fixture,
+automorphism and campaign corpora, plus the 120-vertex pruning regression.
+`scripts/oracle/graphiso_trace.py` compares those records with the committed
+`conformance-fixtures/HexGraphIso/trace.jsonl.gz`. It checks labels, canonical
+rows, all seven statistics, generators in discovery order, path codes, final
+orbits and normal root exit. Missing, duplicate, additional and changed cases
+fail with the case and differing field. The metadata records the source
+commit, case counts, corpus digest and trace digest.
+
+CI checks the expected records without rewriting them. To review an intentional
+traversal change, emit a candidate and run:
+
+```sh
+lake exe hexgraphiso_emit_trace > /tmp/graphiso-trace.jsonl
+python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl
+# Explicitly replace expectations only alongside the intended change:
+python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl \
+  --record --source "$(git rev-parse HEAD)"
+```
+
+The committed trace records are a regression baseline. The nauty oracle
+independently checks the canonical answer and graph-isomorphism results.
 
 Property checks independent of nauty include:
 
@@ -1177,29 +1173,24 @@ bench's business. The vertex sets of the search are packed sixty-three
 vertices to a word (`Nauty.VSet`), so every set operation is a loop
 over `⌈n/63⌉` limbs, the same shape as nauty's `setword` loops.
 
-The `engine` mode of `hexgraphiso_cactus` times the public and direct
-wrappers of the same structured search on each materialized instance.
-It retains the historical columns `lit_ns`, `eng_ns`, `nauty_ns`, `nodes`
-and `eng_nodes`. `scripts/bench/graphiso_engine_compare.py` reports their
-within-run timing ratios and per-node exponents, and checks agreement of
-the two node counts. With the public search using the engine, this is a
-wrapper check; `eng_ns/lit_ns` does not measure improvement over the
-superseded search. The script also remains usable on archived spike runs,
-where those columns measured distinct implementations.
+The `search` mode of `hexgraphiso_cactus` measures raw canonical search
+on the same instances as the public-pipeline sweep. Its columns are
+`search_ns`, `nauty_ns` and `nodes`. The `read run` mode uses the same search
+timing column for external corpora. `scripts/bench/graphiso_compare.py`
+compares explicitly supplied baseline and candidate files for the same
+operation. It requires matching family names, case names and vertex counts,
+reports candidate/baseline time ratios, and lists changed node counts
+separately. `--require-same-nodes` rejects traversal changes. Historical
+column interpretation is confined to `graphiso_archive.py`, which does not
+rewrite the recorded evidence. Named-case agreement assumes the same corpus
+generator; source provenance must accompany comparisons across revisions.
 
-Compare current `eng_ns` and node counts with archived `eng_ns` on the
-same corpus to measure changes since the spike. Keep the recorded host,
-trial count and timing baseline explicit; changes in nauty's measured
-time do not establish changes in engine time. The required cactus sweep
-and per-node exponent check continue to compare the public search with
-nauty.
-`bench/HexGraphIso/Profile.lean` times the same pair as its `run` and
-`erun` stages on the paley61, kneser72 and circulant64 instances, next
-to the certificate stages, and
-`scripts/bench/graphiso_perf_side_by_side.sh` attributes the samples of
-one `perf record` of `hexgraphiso_cactus` to compiled Lean search code,
-instance construction, bignum arithmetic, the Lean runtime and the
-vendored nauty.
+`bench/HexGraphIso/Profile.lean` profiles raw search, trace production,
+certificate translation, replay and public canonicalization separately on
+paley61, kneser72 and circulant64. The allocation and CPU profiling tools
+remain available for investigating unexpected results. Comparisons on the
+shared host retain every completed sample and record placement and activity
+as context. They do not wait for a quiet machine.
 
 Recorded sweeps accumulate: each regeneration adds its data,
 tactic-timing snapshot, and a `.meta.json` (fingerprint, host, date,

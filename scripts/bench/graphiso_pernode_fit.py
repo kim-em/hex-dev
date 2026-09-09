@@ -27,8 +27,8 @@ requires to exist), so CI never fits a sweep of some other source state.
 The fit needs no numpy: it is the closed-form two-parameter least-squares
 solution on the logarithms.
 
-Use ``--column eng_ns`` with an engine comparison sweep to fit the
-structured search. Its node counts must agree with the literal port's.
+Use ``--column search_ns`` to fit a raw-search sweep. Historical records
+are interpreted by ``graphiso_archive``.
 """
 
 from __future__ import annotations
@@ -44,6 +44,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.bench import sweep_freshness as freshness  # noqa: E402
+from scripts.bench.graphiso_archive import normalize  # noqa: E402
 
 RESULTS = freshness.RESULTS
 
@@ -84,15 +85,13 @@ def load_sweep(path: Path, column: str = "fast_ns") -> dict[str, list[dict]]:
             line = line.strip()
             if not line:
                 continue
-            record = json.loads(line)
+            record = normalize(json.loads(line))
             if column not in record or "nauty_ns" not in record:
                 continue
             for field in (column, "nauty_ns", "nodes"):
                 if not isinstance(record.get(field), int) or record[field] <= 0:
                     sys.exit(f"{path.name}: {record.get('name')}: "
                              f"{field} must be a positive integer")
-            if column == "eng_ns" and record.get("eng_nodes") != record["nodes"]:
-                sys.exit(f"{path.name}: {record.get('name')}: engine node count differs")
             record["fast_ns"] = record[column]
             key = (record["family"], record["n"])
             if key in seen:
@@ -185,7 +184,7 @@ def main() -> int:
     parser.add_argument("--check", type=float, metavar="MARGIN",
                         help="fail if any checked family's hex exponent exceeds "
                              "nauty's by more than MARGIN")
-    parser.add_argument("--column", choices=("fast_ns", "lit_ns", "eng_ns"),
+    parser.add_argument("--column", choices=("fast_ns", "search_ns"),
                         default="fast_ns", help="timing column to fit")
     parser.add_argument("--min-sizes", type=int, default=5,
                         help="families with fewer distinct sizes are not checked")

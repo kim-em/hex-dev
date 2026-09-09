@@ -24,15 +24,9 @@ The driver runs in local and scheduled sweeps, not in merge CI.
 `scripts/plots/hexgraphiso-cactus.py` renders the plots from its
 output.
 
-The `engine` mode times the two canonical searches against each other
-on the same materialized instances, emitting
-
-```
-{"family": "...", "name": "...", "n": N, "lit_ns": ..., "eng_ns": ...,
- "nauty_ns": ..., "nodes": ..., "eng_nodes": ...}
-```
-
-which `scripts/bench/graphiso_engine_compare.py` reads.
+The `search` mode measures raw canonical search on the same instances.
+It records `search_ns`, `nauty_ns`, and `nodes`. Compare explicitly named
+baseline and candidate files with `scripts/bench/graphiso_compare.py`.
 -/
 
 namespace Hex.GraphIsoCactus
@@ -101,10 +95,6 @@ private def timeMinNs (act : Unit → IO Nat) : IO Nat := do
         (1x best {best}ns, 2x batch {two}ns) — measurement suspect"
   return best
 
-/-- The structured search measured against the literal port. -/
-private def engine {n k : Nat} (G : Colored n k) : Nauty.RunResult n :=
-  Nauty.Engine.runColored G
-
 /-- A cheap digest forcing full evaluation of a search result. -/
 private def runDigest {n : Nat} (r : Nauty.RunResult n) : Nat :=
   r.canong.foldl (fun a row => a + row.card) 0 +
@@ -126,22 +116,18 @@ private def runInst (i : Inst) : IO Unit := do
     s!", \"nauty_ns\": {nautyNs}, \"nodes\": {nodes}}" ++ ""
   (← IO.getStdout).flush
 
-/-- One instance of the `engine` mode: the two searches and the nauty
-comparator on the same materialized instance, with both node counts. -/
-private def runEngine (i : Inst) : IO Unit := do
+/-- Raw search and nauty on one materialized instance. -/
+private def runSearch (i : Inst) : IO Unit := do
   let ⟨n, G⟩ := i.packed
-  let litNs ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
-  let engNs ← timeMinNs fun _ => pure (runDigest (engine G))
+  let searchNs ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
   let prep ← Hex.BenchOracle.Nauty.prepare n 1 (List.replicate n 0)
     (adjStrings G)
   let nautyNs ← timeMinNs fun _ => do
     let r ← Hex.BenchOracle.Nauty.canonPrepared prep
     pure (r.lab.foldl (· + ·) 0)
   IO.println <| "{\"family\": \"" ++ i.family ++ "\", \"name\": \"" ++
-    i.name ++ s!"\", \"n\": {n}, \"lit_ns\": {litNs}" ++
-    s!", \"eng_ns\": {engNs}, \"nauty_ns\": {nautyNs}" ++
-    s!", \"nodes\": {(Nauty.runColored G).numnodes}" ++
-    s!", \"eng_nodes\": {(engine G).numnodes}}"
+    i.name ++ s!"\", \"n\": {n}, \"search_ns\": {searchNs}" ++
+    s!", \"nauty_ns\": {nautyNs}, \"nodes\": {(Nauty.runColored G).numnodes}}"
   (← IO.getStdout).flush
 
 private def instances : List Inst := Id.run do
@@ -470,7 +456,7 @@ private def runRead (col : Column) (name family : String)
       fields := s!"\"fast_ns\": {ns}" :: fields
     if want .run then
       let ns ← timeMinNs fun _ => pure (runDigest (Nauty.runColored G))
-      fields := s!"\"lit_ns\": {ns}" :: fields
+      fields := s!"\"search_ns\": {ns}" :: fields
     if want .ffi then
       -- marshalled once, outside the timer
       let prep ← Hex.BenchOracle.Nauty.prepare n 1 (List.replicate n 0)
@@ -496,7 +482,7 @@ private def runCorpus (col : Column) (path : String) : IO Unit := do
 def main (args : List String) : IO Unit := do
   match args with
   | ["pairs"] => for p in pairInstances do runPair p
-  | ["engine"] => for i in instances do runEngine i
+  | ["search"] => for i in instances do runSearch i
   | ["dump"] => for i in instances do dumpInst i
   | ["dumppairs"] => for p in pairInstances do dumpPair p
   | ["read", path] => runCorpus .all path

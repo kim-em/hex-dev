@@ -47,7 +47,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 # (column key, produced fields, how to build the command)
 COLUMNS = [
     ("hex-canon", ["fast_ns", "nodes"]),
-    ("hex-run", ["lit_ns"]),
+    ("hex-run", ["search_ns"]),
     ("hex-ffi", ["nauty_ffi_ns"]),
     ("iso-canon", ["iso_ns", "iso_nodes"]),
     ("iso-whole", ["iso_whole_ns"]),
@@ -58,7 +58,7 @@ COLUMNS = [
 
 # the field each column is judged on, for the budget test
 JUDGED = {
-    "hex-canon": "fast_ns", "hex-run": "lit_ns", "hex-ffi": "nauty_ffi_ns",
+    "hex-canon": "fast_ns", "hex-run": "search_ns", "hex-ffi": "nauty_ffi_ns",
     "iso-canon": "iso_ns", "iso-whole": "iso_whole_ns", "nauty": "nauty_ns",
     "sparse": "sparse_ns", "traces": "traces_ns",
 }

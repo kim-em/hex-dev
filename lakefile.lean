@@ -1128,12 +1128,6 @@ lean_exe hexgraphiso_emit_campaign where
   srcDir := "conformance"
   root := `HexGraphIso.EmitCampaign
 
--- Twin conformance for the second canonical search: runs both searches
--- over the fixture and campaign corpora and compares the traversals.
-lean_exe hexgraphiso_engine_twin where
-  srcDir := "conformance"
-  root := `HexGraphIso.EngineTwin
-
 lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyZGcd.EmitFixtures
@@ -1515,3 +1509,7 @@ lean_exe hexlatticeenum_bench where
 lean_exe tower_factor_diff where
   srcDir := "bench"
   root := `HexNumberFieldTower.FactorDiff
+
+lean_exe hexgraphiso_emit_trace where
+  srcDir := "conformance"
+  root := `HexGraphIso.EmitTrace

@@ -19,14 +19,11 @@ lake exe hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py
 ```
 
 Records carry the public `canonicalize` answer (label and canonical
-upper-triangle bits) with the node count from the transcribed search,
+upper-triangle bits) with the node count from the canonical search,
 as in `HexGraphIso.EmitFixtures`, so the campaign pins the public
 operations against real nauty. Only failures are retained as replay
 records (the oracle reports the failing case identifier).
 
-`--engine` emits the same cases with the label, canonical bits and node
-count read off `Cases.engine` instead, so the oracle also checks the direct entry point.
-Both modes use the same structured engine.
 -/
 
 def main (args : List String) : IO Unit := do
