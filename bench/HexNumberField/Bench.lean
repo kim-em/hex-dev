@@ -9,6 +9,57 @@ import Hex.BenchOracle.Pari
 import Lean.Data.Json
 import LeanBench
 
+/-! Fixed AB/BA comparison of tag conjugation and the former root-search algorithm.
+Construction is timed separately; all eight blocks are retained. -/
+namespace Hex.ConjugateBench
+open Lean
+
+@[noinline] private def searchConj (a : AlgebraicNumber) : AlgebraicNumber :=
+  if a.isReal then a
+  else
+    let prec := AlgebraicNumber.separationPrec a.p
+    let mirror := AlgebraicNumber.mirrorBall (a.approx prec)
+    ((ZPoly.algebraicRoots a.p).find? fun c => (c.approx prec).meets mirror).getD
+      (Hex.panicWith 0 "conjugation benchmark: search failed")
+
+@[noinline] private def tagConj (a : AlgebraicNumber) : AlgebraicNumber := a.conj
+
+private def checksum (a : AlgebraicNumber) : UInt64 :=
+  match a.side with
+  | .real => 1
+  | .upper => 2
+  | .lower => 3
+
+private def measure (degree block : Nat) (arm : String) (iterations : Nat)
+    (f : AlgebraicNumber → AlgebraicNumber) (a : AlgebraicNumber) : IO Unit := do
+  let start ← IO.monoNanosNow
+  let mut sum : UInt64 := 0
+  for j in [:iterations] do
+    let input := if j % 2 == 0 then a else a.conj
+    sum := sum + checksum (f input)
+  let elapsed := (← IO.monoNanosNow) - start
+  IO.println (Json.mkObj [("degree", toJson degree), ("block", toJson block),
+    ("arm", toJson arm), ("iterations", toJson iterations),
+    ("nanoseconds", toJson elapsed), ("checksum", toJson sum.toNat)]).compress
+
+/-- Measure shared preconstructed inputs, alternating adjacent arm order. -/
+def run : IO Unit := do
+  for (degree, p) in #[(2, (#p[1, 0, 1] : ZPoly)), (3, #p[-2, 0, 0, 1]),
+      (4, #p[1, 0, 0, 0, 1]), (6, #p[2, 0, 0, 0, 0, 0, 1])] do
+    let start ← IO.monoNanosNow
+    let some a := (ZPoly.algebraicRoots p).find? (fun a => !a.isReal)
+      | throw (IO.userError "benchmark polynomial has no nonreal root")
+    let elapsed := (← IO.monoNanosNow) - start
+    IO.println (Json.mkObj [("degree", toJson degree), ("arm", toJson "construction"),
+      ("nanoseconds", toJson elapsed)]).compress
+    unless searchConj a == tagConj a do throw (IO.userError "conjugation arms disagree")
+    for block in [:8] do
+      let old := measure degree block "search" 2 searchConj a
+      let new := measure degree block "tag" 100000 tagConj a
+      if block % 2 == 0 then old *> new else new *> old
+
+end Hex.ConjugateBench
+
 /-!
 Benchmark registrations for `HexNumberField`.
 
@@ -1458,7 +1509,7 @@ private def canonicalRepChecksum (input : Option CanonicalInput) : UInt64 :=
   | some input =>
     match AlgebraicNumber.canonicalRep? input.p input.squarefree input.rep
         input.nonzero with
-    | some rep => squareChecksum rep.1.1.square
+    | some rep => squareChecksum rep.1.rep.1.square
     | none => 1
   | none => 0
 
@@ -1643,7 +1694,8 @@ setup_fixed_benchmark runExactFactorLadder where {
   maxSecondsPerCall := 2.0
   killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0xe5c33ee70736a0fb
+  -- The lower representative is reflected from the canonical upper base.
+  expectedHash := some 0xc54907e8cdc91172
 }
 
 setup_fixed_benchmark runCanonicalRepLadder where {
@@ -1651,7 +1703,8 @@ setup_fixed_benchmark runCanonicalRepLadder where {
   maxSecondsPerCall := 1.1
   killGraceMs := 0
   warmupFirstIter := true
-  expectedHash := some 0x1d7ae08962f9292c
+  -- Hash the selected oriented representative, including its reflected centre.
+  expectedHash := some 0xc69e659e41dbc24f
 }
 
 /-! # Root-API ladders -/
@@ -2434,6 +2487,9 @@ end Hex.NumberFieldBench
 
 def main (args : List String) : IO UInt32 := do
   match args with
+  | ["conjugation-compare"] =>
+      Hex.ConjugateBench.run
+      return 0
   | ["isolation-stats"] =>
       Hex.NumberFieldBench.printIsolationStats
       return 0

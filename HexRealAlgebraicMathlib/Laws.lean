@@ -32,7 +32,7 @@ instance instLaws : Laws where
   natCast_zero := Nat.cast_zero
   natCast_one := Nat.cast_one
   natCast_succ := Nat.cast_succ
-  nsmul_eq_mul := nsmul_eq_mul
+  nsmul_eq_mul := fun n a => nsmul_eq_mul n a
   neg_add_cancel := neg_add_cancel
   sub_eq_add_neg := sub_eq_add_neg
   neg_zsmul := fun n a => neg_zsmul a n

@@ -259,6 +259,7 @@ inductive AtomCertificate : (p : ZPoly) → (s : DyadicSquare) → Type
       AtomCertificate p.negRoots s.neg
   | normalize (h : AtomCertificate p s) :
       AtomCertificate (ZPoly.normalizePrimitiveSign p) s
+  | conj (h : AtomCertificate p s) : AtomCertificate p s.conj
 
 def AtomCertificate.ofWitness : atomWitness p s → AtomCertificate p s
 def AtomCertificate.isNK : AtomCertificate p s → Bool
@@ -1020,3 +1021,19 @@ performance comparator is python-flint, whose measured ratios are recorded in
   (`CertifyingLmfdbData/Polynomial/NewtonKantorovich.lean`,
   Apache 2.0). The formalisation the Mathlib companion ports for
   the `nkWitness` soundness theorem.
+
+### Conjugated certificates
+
+```lean
+def DyadicSquare.meetsRealAxis (s : DyadicSquare) : Bool
+def DyadicSquare.conj (s : DyadicSquare) : DyadicSquare
+def RefinedIsolation.conj {p : ZPoly} (r : RefinedIsolation p) : RefinedIsolation p
+```
+
+`DyadicSquare.conj` reflects the imaginary centre. `AtomCertificate.conj`
+transports any accepted certificate for an integer polynomial to the reflected
+square; soundness follows from evaluation commuting with complex conjugation.
+`RefinedIsolation.conj` retains its separation depth and reflects the selected
+root. It does not rerun an NK or Pellet test. The companion's `root_conj` and
+exact `meetsRealAxis_iff` / `upper_iff` support canonical orientation in the
+number-field library.

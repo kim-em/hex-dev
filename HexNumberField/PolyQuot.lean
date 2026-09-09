@@ -125,6 +125,12 @@ def ofSquare (p : ZPoly) (s : DyadicSquare) (f : DensePoly Rat)
     PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
   reduce p (SimpleRoot.ofSquare p s hw hp) f
 
+/-- Reduced coordinates at a certified isolation, including transported certificates. -/
+@[expose]
+def ofIsolation {p : ZPoly} (r : RefinedIsolation p) (f : DensePoly Rat) :
+    PolyQuot p (SimpleRoot.mk r) :=
+  reduce p (SimpleRoot.mk r) f
+
 /-- A rational polynomial denotes its reduction, so `#p[0, 0, 2]` names the
 element `2x²` when the expected type is `PolyQuot p x`. -/
 instance : Coe (DensePoly Rat) (PolyQuot p x) := ⟨reduce p x⟩

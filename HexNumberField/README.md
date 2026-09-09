@@ -51,10 +51,10 @@ def sqrt3 : AlgebraicNumber :=
 
 Three complementary exact representations:
 
-- `Hex.QAdjoin p x`: rational power-basis coordinates in a fixed
-  irreducible presentation `ℚ(x)`, with `Hex.QAdjoin.reduce`, arithmetic,
+- `Hex.QAdjoin a`: rational power-basis coordinates in a fixed
+  irreducible presentation `ℚ(a)`, with `Hex.QAdjoin.ofCoeffs`, arithmetic,
   extended-gcd inversion, and threaded dyadic approximation
-  (`Hex.QAdjoin.approx`).
+  (inherited `PolyQuot.approx`).
 - `Hex.AlgebraicRoot`: a certified selected root of a squarefree integer
   polynomial that need not be minimal. Arithmetic (`add?`, `mul?`, `inv?`,
   `div?`) builds resultant eliminants and postpones factoring until
@@ -65,10 +65,22 @@ Three complementary exact representations:
 
 `Hex.ZPoly.algebraicRoots` turns an integer polynomial into its distinct
 complex roots as canonical algebraic numbers, real roots first in increasing
-order, with `isReal`, a dyadic `approx`, and a `Repr` that prints the minimal
-polynomial and twelve decimals. `Hex.AlgebraicPoly` supplies polynomials with
+centre order, followed by adjacent conjugate pairs (lower member first).
+`isReal` is exact, `approx` is dyadic, and `Repr` prints a `rootNear` expression
+with enough digits to reconstruct the value. `Hex.AlgebraicPoly` supplies polynomials with
 algebraic coefficients and semantic trailing-zero normalization, with root
 APIs (`roots?`) for both fixed-field and algebraic-coefficient polynomials.
+
+- `AlgebraicNumber.conj` shares a canonical upper isolation and flips an
+  orientation tag. It requires no root search. Global `<` and `≤` use
+  Mathlib's complex partial order (equal imaginary parts, ordered real parts).
+- `AlgebraicNumber.sqrt` and `nthRoot` use principal complex branches, with
+  verified correspondence to Mathlib. General radicals invoke the complete
+  algebraic-coefficient root solver.
+- `QAdjoin.ofAlgebraic?` and `ofAlgebraics?` recover coordinates in a chosen
+  field; `QAdjoin.common` returns one generator and coordinates for a collection.
+- The incubating `HexRealAlgebraic` extension supplies typed `.re` and `.im`
+  projections and exact total order on the real subtype.
 
 # Verification
 

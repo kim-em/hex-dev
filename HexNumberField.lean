@@ -16,6 +16,9 @@ public import HexNumberField.AlgebraicPoly
 public import HexNumberField.Roots
 public import HexNumberField.IntegerRoots
 public import HexNumberField.Nearest
+public import HexNumberField.CommonField
+public import HexNumberField.Order
+public import HexNumberField.Radical
 
 public section
 

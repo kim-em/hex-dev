@@ -314,6 +314,11 @@ end ZPoly
 def DyadicSquare.neg (s : DyadicSquare) : DyadicSquare :=
   ⟨-s.re, -s.im, s.prec⟩
 
+/-- Reflect a square across the real axis. -/
+@[expose]
+def DyadicSquare.conj (s : DyadicSquare) : DyadicSquare :=
+  ⟨s.re, -s.im, s.prec⟩
+
 /-- Structural evidence that an atom is certified. Checker-produced atoms
 retain their original NK/Pellet form; exact reflection transports an existing
 certificate without re-running either checker. -/
@@ -324,6 +329,8 @@ inductive AtomCertificate : (p : ZPoly) → (s : DyadicSquare) → Type
       AtomCertificate p.negRoots s.neg
   | normalize {p s} (certificate : AtomCertificate p s) :
       AtomCertificate (ZPoly.normalizePrimitiveSign p) s
+  | conj {p s} (certificate : AtomCertificate p s) :
+      AtomCertificate p s.conj
 
 namespace AtomCertificate
 
@@ -339,6 +346,7 @@ circumscribed disc (Pellet). Reflection preserves this region choice. -/
   | .pellet _ => false
   | .neg _ certificate => certificate.isNK
   | .normalize certificate => certificate.isNK
+  | .conj certificate => certificate.isNK
 
 end AtomCertificate
 

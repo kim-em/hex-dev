@@ -169,9 +169,32 @@ class Checker:
     def equal(self, record: dict[str, Any], expected: int, name: str) -> None:
         require(self.q.compare(self.value(record), expected) == 0, f"incorrect {name}")
 
+    def complex_equal(self, record: dict[str, Any], expected: int, name: str) -> None:
+        actual = self.complex_value(record)
+        for part in ("re", "im"):
+            left = self.q.to_real(self.q.unary(part, actual, self.q.complex))
+            right = self.q.to_real(self.q.unary(part, expected, self.q.complex))
+            require(left is not None and right is not None and self.q.compare(left, right) == 0,
+                    f"incorrect {name}.{part}")
+
     def check(self, operation: str, d: dict[str, Any]) -> None:
         q = self.q
         zero = q.number(0)
+        if operation == "complex":
+            a, b = self.complex_value(d["a"]), self.complex_value(d["b"])
+            self.complex_equal(d["conj"], q.unary("conj", a, q.complex), "conj")
+            for part in ("re", "im"):
+                self.complex_equal(d[part], q.unary(part, a, q.complex), part)
+            self.complex_equal(d["sqrt"], q.unary("sqrt", a, q.complex), "sqrt")
+            self.complex_equal(d["nthRoot"], q.nth_root(a, d["n"]), "nthRoot")
+            parts = [[q.to_real(q.unary(part, value, q.complex)) for part in ("re", "im")]
+                     for value in (a, b)]
+            require(all(x is not None for pair in parts for x in pair), "nonreal coordinate")
+            re_cmp = q.compare(parts[0][0], parts[1][0])
+            im_eq = q.compare(parts[0][1], parts[1][1]) == 0
+            require(d["lt"] is (im_eq and re_cmp < 0), "incorrect complex <")
+            require(d["le"] is (im_eq and re_cmp <= 0), "incorrect complex <=")
+            return
         if operation == "reject":
             require(d["accepted"] is (q.to_real(self.complex_value(d["a"])) is not None),
                     "incorrect real construction acceptance")
@@ -327,10 +350,12 @@ def integer_roots(d: dict[str, Any]) -> None:
         ctx.prec = saved
 
 
-OPERATIONS = {"order", "scalar", "arithmetic", "approx", "integerRoots", "algebraicRoots",
+OPERATIONS = {"complex", "order", "scalar", "arithmetic", "approx", "integerRoots", "algebraicRoots",
               "reject", "rejectPolynomial", "repr"}
 REQUIRED_CASES = {
     **{op: names for op, names in [
+        ("complex", {"complex-zero", "complex-rational", "complex-cut", "complex-upper",
+                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut"}),
         ("order", {"zero", "rational", "sqrt-signs", "sqrt-lower", "sqrt-upper", "negative-lower",
                    "negative-upper", "equal-sqrt", "equal-square", "equal-cancel", "cross-factor",
                    "mignotte-close", "mignotte-left-rational", "mignotte-right-rational"}),

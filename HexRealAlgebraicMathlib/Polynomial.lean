@@ -9,35 +9,13 @@ module
 public import HexRealAlgebraic.Roots
 public import HexRealAlgebraicMathlib.Order
 public import HexNumberFieldMathlib.AlgebraicRoots
+public import HexNumberFieldMathlib.Polynomial
 
 public section
 
 /-! Real polynomial interpretation and normalization correspondence. -/
 
-namespace Hex.AlgebraicPoly
 
-private theorem horner_normalize (l : List AlgebraicNumber) :
-    ((l.reverse.dropWhile AlgebraicNumber.isZero).reverse.foldr
-      (fun (a : AlgebraicNumber) (p : Polynomial ℂ) => Polynomial.C a.toComplex + Polynomial.X * p) 0) =
-    l.foldr (fun (a : AlgebraicNumber) (p : Polynomial ℂ) => Polynomial.C a.toComplex + Polynomial.X * p) 0 := by
-  induction l using List.reverseRecOn with
-  | nil => simp
-  | append_singleton l a ih =>
-    by_cases ha : a.isZero = true
-    · have hz := (AlgebraicNumber.isZero_iff a).mp ha
-      simpa [List.reverse_append, ha, List.foldr_append, hz] using ih
-    · simp [List.reverse_append, ha]
-
-/-- Removing trailing canonical zero coefficients preserves the polynomial. -/
-theorem toPolynomial_ofArray (coeffs : Array AlgebraicNumber) :
-    (ofArray coeffs).toPolynomial = coeffs.foldr
-      (fun (a : AlgebraicNumber) (p : Polynomial ℂ) => Polynomial.C a.toComplex + Polynomial.X * p) 0 := by
-  rw [toPolynomial, coeffs_ofArray]
-  rcases coeffs with ⟨l⟩
-  simpa only [List.popWhile_toArray, ← Array.foldr_toList, List.toList_toArray]
-    using horner_normalize l
-
-end Hex.AlgebraicPoly
 
 namespace Hex.RealAlgebraicPoly
 

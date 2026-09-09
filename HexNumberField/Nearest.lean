@@ -32,26 +32,13 @@ def separationPrec (p : ZPoly) : Int :=
 the upper half plane. -/
 @[expose]
 def I : AlgebraicNumber :=
-  ((ZPoly.algebraicRoots #p[1, 0, 1]).find? fun a => 0 < a.rep.1.square.im).getD
+  ((ZPoly.algebraicRoots #p[1, 0, 1]).find? fun a => decide (a.side = .upper)).getD
     (Hex.panicWith 0 "AlgebraicNumber.I: imaginary unit not found")
 
 /-- The mirror image of a ball in the real axis. -/
 @[expose]
 def mirrorBall (b : DyadicComplexBall) : DyadicComplexBall :=
   { b with im := -b.im }
-
-/-- Complex conjugation. A real number is its own conjugate. Otherwise the
-conjugate is a root of the same minimal polynomial, and at `separationPrec`
-it is the unique root whose approximation ball meets the mirror image of this
-number's ball. -/
-@[expose]
-def conj (a : AlgebraicNumber) : AlgebraicNumber :=
-  if a.isReal then a
-  else
-    let prec := separationPrec a.p
-    let mirror := mirrorBall (a.approx prec)
-    ((ZPoly.algebraicRoots a.p).find? fun c => (c.approx prec).meets mirror).getD
-      (Hex.panicWith 0 "AlgebraicNumber.conj: conjugate root not found")
 
 /-- Exact comparison of two real algebraic numbers. Equal numbers compare
 equal; distinct ones are distinct roots of the product of their minimal

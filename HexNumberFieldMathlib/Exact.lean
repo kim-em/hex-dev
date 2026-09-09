@@ -29,77 +29,99 @@ theorem toRoot_toComplex (a : AlgebraicNumber) :
     a.toRoot.toComplex = a.toComplex := by
   rfl
 
-/-- Canonicalization of an already normalized polynomial is total. -/
+/-- The original deterministic representative selector is total. -/
+theorem rawRep?_isSome (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
+    (rawRep? p squarefree rep hzero).isSome := by
+  have hpne := HexRootsMathlib.RefinedIsolation.poly_ne_zero rep
+  have pos_degree := rep.1.posDegree
+  have hisolate := HexRootsMathlib.isolateComplexRoots?_isSome p squarefree hpne
+    (separationDepth p : Int) .nkThenPellet
+  cases hrun : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) with
+  | none => simp [hrun] at hisolate
+  | some isolations =>
+      have hmapSome := HexRootsMathlib.array_mapM_isSome
+        (xs := isolations) (f := DyadicRootIsolation.toRefined?)
+        (fun iso hiso => by
+          unfold DyadicRootIsolation.toRefined?
+          rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined p squarefree
+            (separationDepth p : Int) .nkThenPellet hrun iso hiso)]
+          rfl)
+      cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
+      | none => simp [hmap] at hmapSome
+      | some refined =>
+          obtain ⟨iso, hiso, hisoRoot⟩ :=
+            HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos p squarefree
+              (separationDepth p : Int) .nkThenPellet pos_degree hrun
+              (HexRootsMathlib.RefinedIsolation.isRoot rep)
+          obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
+          have hi : i < isolations.size := by simpa using hiList
+          obtain ⟨hsize, hget⟩ :=
+            HexRootsMathlib.array_mapM_some_get hmap
+          have hj : i < refined.size := by simpa [← hsize] using hi
+          have hto := hget i hi hj
+          have hraw : refined[i].1 = isolations[i] := by
+            rw [DyadicRootIsolation.toRefined?] at hto
+            split at hto
+            · exact (congrArg Subtype.val (Option.some.inj hto)).symm
+            · simp at hto
+          have harrIso : isolations[i] = iso := by
+            rw [← hidx]
+            exact (Array.getElem_toList hi).symm
+          have hroot :
+              HexRootsMathlib.RefinedIsolation.root refined[i] = rep.root := by
+            change HexRootsMathlib.DyadicRootIsolation.root refined[i].1 =
+              HexRootsMathlib.RefinedIsolation.root rep
+            rw [hraw, harrIso]
+            exact hisoRoot
+          have hsame : refined[i].sameRoot rep = true :=
+            HexRootsMathlib.RefinedIsolation.sameRoot_eq_true_iff
+              refined[i] rep |>.mpr <|
+              (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq
+                refined[i] rep).mpr hroot
+          have hfindSome :
+              (refined.toList.find? fun r => r.sameRoot rep).isSome = true := by
+            rw [List.find?_isSome]
+            exact ⟨refined[i], by simp, hsame⟩
+          unfold AlgebraicNumber.rawRep?
+          split
+          · simp_all
+          · split
+            · simp_all
+            · split
+              · simp_all
+              · rfl
+
+/-- Canonicalization with shared conjugate representatives is total. -/
 theorem ofNormalized?_isSome
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
     (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) :
-    (AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked
-      squarefree rep).isSome := by
-  rw [AlgebraicNumber.ofNormalized?_isSome_eq]
+    (ofNormalized? p prim pos_lc pos_degree checked squarefree rep).isSome := by
+  rw [ofNormalized?_isSome_eq]
   split
-  · simp
-  · have hpne : p ≠ 0 := by
-      intro hp
-      rw [hp] at pos_degree
-      simp at pos_degree
-    have hisolate := HexRootsMathlib.isolateComplexRoots?_isSome p squarefree hpne
-      (separationDepth p : Int) .nkThenPellet
-    cases hrun : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) with
-    | none => simp [hrun] at hisolate
-    | some isolations =>
-        have hmapSome := HexRootsMathlib.array_mapM_isSome
-          (xs := isolations) (f := DyadicRootIsolation.toRefined?)
-          (fun iso hiso => by
-            unfold DyadicRootIsolation.toRefined?
-            rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined p squarefree
-              (separationDepth p : Int) .nkThenPellet hrun iso hiso)]
-            rfl)
-        cases hmap : isolations.mapM DyadicRootIsolation.toRefined? with
-        | none => simp [hmap] at hmapSome
-        | some refined =>
-            obtain ⟨iso, hiso, hisoRoot⟩ :=
-              HexRootsMathlib.isolateComplexRoots?_root_mem_of_pos p squarefree
-                (separationDepth p : Int) .nkThenPellet pos_degree hrun
-                (HexRootsMathlib.RefinedIsolation.isRoot rep)
-            obtain ⟨i, hiList, hidx⟩ := List.getElem_of_mem hiso
-            have hi : i < isolations.size := by simpa using hiList
-            obtain ⟨hsize, hget⟩ :=
-              HexRootsMathlib.array_mapM_some_get hmap
-            have hj : i < refined.size := by simpa [← hsize] using hi
-            have hto := hget i hi hj
-            have hraw : refined[i].1 = isolations[i] := by
-              rw [DyadicRootIsolation.toRefined?] at hto
-              split at hto
-              · exact (congrArg Subtype.val (Option.some.inj hto)).symm
-              · simp at hto
-            have harrIso : isolations[i] = iso := by
-              rw [← hidx]
-              exact (Array.getElem_toList hi).symm
-            have hroot :
-                HexRootsMathlib.RefinedIsolation.root refined[i] = rep.root := by
-              change HexRootsMathlib.DyadicRootIsolation.root refined[i].1 =
-                HexRootsMathlib.RefinedIsolation.root rep
-              rw [hraw, harrIso]
-              exact hisoRoot
-            have hsame : refined[i].sameRoot rep = true :=
-              HexRootsMathlib.RefinedIsolation.sameRoot_eq_true_iff
-                refined[i] rep |>.mpr <|
-                (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq
-                  refined[i] rep).mpr hroot
-            have hfindSome :
-                (refined.toList.find? fun r => r.sameRoot rep).isSome = true := by
-              rw [List.find?_isSome]
-              exact ⟨refined[i], by simp, hsame⟩
-            unfold AlgebraicNumber.canonicalRep?
-            split
-            · simp_all
-            · split
-              · simp_all
-              · split
-                · simp_all
-                · rfl
+  · rfl
+  · rename_i hzero
+    let target := if sideOf rep = .lower then rep.conj else rep
+    obtain ⟨base, hbase⟩ := Option.isSome_iff_exists.mp
+      (rawRep?_isSome p squarefree target hzero)
+    have hb : base.1.root = target.root :=
+      (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq _ _).mp base.2.2
+    obtain ⟨r, horient, hr⟩ := orient?_exists rep base.1 hb
+    have hmatch : r.rep.sameRoot rep = true :=
+      (HexRootsMathlib.RefinedIsolation.sameRoot_eq_true_iff _ _).mpr
+        ((HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq _ _).mpr hr)
+    dsimp only [target] at hbase
+    simp [canonicalRep?, hbase]
+    split
+    · rename_i hnone
+      rw [horient] at hnone
+      contradiction
+    · rename_i rr hrr
+      have heq := Option.some.inj (horient.symm.trans hrr)
+      subst rr
+      simp [hmatch]
 
 end AlgebraicNumber
 

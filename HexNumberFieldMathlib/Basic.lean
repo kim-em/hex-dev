@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField
+public import HexNumberFieldMathlib.Orientation
 public import HexResultantMathlib
 public import HexBerlekampZassenhausMathlib
 public import HexRootsMathlib
@@ -312,6 +313,21 @@ private theorem AlgebraicNumber.eq_polynomial {a b : AlgebraicNumber}
     HexBerlekampZassenhausMathlib.zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading
         a.prim b.prim a.pos_lc b.pos_lc hint
 
+private def AlgebraicNumber.OrientedIsolation.castPoly {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) : AlgebraicNumber.OrientedIsolation p :=
+  h.symm ▸ r
+
+private theorem AlgebraicNumber.OrientedIsolation.castPoly_base {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) :
+    (r.castPoly h).base = r.base.castPoly h := by cases h; rfl
+
+private theorem AlgebraicNumber.OrientedIsolation.castPoly_root {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) :
+    (r.castPoly h).rep.root = r.rep.root := by cases h; rfl
+
+private theorem AlgebraicNumber.OrientedIsolation.castPoly_heq {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) : HEq (r.castPoly h) r := by cases h; rfl
+
 /-- Canonical algebraic numbers are determined by their represented complex
 value. -/
 theorem AlgebraicNumber.toComplex_injective :
@@ -319,18 +335,19 @@ theorem AlgebraicNumber.toComplex_injective :
   intro a b hroot
   have hp := AlgebraicNumber.eq_polynomial hroot
   apply AlgebraicNumber.ext a b hp
-  let brep : RefinedIsolation a.p := b.rep.castPoly hp
-  have hbcanonical :
-      AlgebraicNumber.IsCanonical a.p a.squarefree brep :=
-    AlgebraicNumber.IsCanonical.castPoly hp b.canonical
-  have hbrepRoot : brep.root = b.rep.root :=
-    RefinedIsolation.castPoly_root hp b.rep
-  have hroot' : a.rep.root = brep.root := by
-    change a.rep.root = b.rep.root at hroot
-    exact hroot.trans hbrepRoot.symm
-  have hrep : a.rep = brep :=
-    RefinedIsolation.eq_of_canonical a.canonical hbcanonical hroot'
-  exact (heq_of_eq hrep).trans (RefinedIsolation.castPoly_heq hp b.rep)
+  let s := b.isolation.castPoly hp
+  have hs : AlgebraicNumber.IsCanonical a.p a.squarefree s.base := by
+    rw [AlgebraicNumber.OrientedIsolation.castPoly_base]
+    exact AlgebraicNumber.IsCanonical.castPoly hp b.canonical
+  have heq : a.isolation.rep.root = s.rep.root := by
+    rw [AlgebraicNumber.OrientedIsolation.castPoly_root]
+    exact hroot
+  have hb := RefinedIsolation.eq_of_canonical a.canonical hs
+    (AlgebraicNumber.OrientedIsolation.base_root_eq _ _ heq)
+  have hi : a.isolation = s := AlgebraicNumber.OrientedIsolation.ext _ _ hb
+    (AlgebraicNumber.OrientedIsolation.side_eq _ _ heq)
+  have hcast : HEq s b.isolation := b.isolation.castPoly_heq hp
+  exact (heq_of_eq hi).trans hcast
 
 /--
 info: 'Hex.AlgebraicNumber.toComplex_injective' depends on axioms: [propext, Classical.choice, Quot.sound]

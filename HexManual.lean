@@ -38,6 +38,7 @@ import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
+import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
@@ -182,6 +183,8 @@ These libraries are still incubating in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo and have not been
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
+
+{include 2 HexManual.Chapters.HexRealAlgebraic}
 
 {include 2 HexManual.Chapters.HexTruncatedSeries}
 
