@@ -210,6 +210,11 @@ theorem zero_eq_zero : AlgebraicNumber.zero = (0 : AlgebraicNumber) := rfl
 @[simp] theorem zero_p : (0 : AlgebraicNumber).p = ZPoly.X := by
   rfl
 
+/-- The canonical zero carries its explicit square centred on the real axis. -/
+@[simp] theorem zero_square : (0 : AlgebraicNumber).rep.1.square =
+    ⟨0, 0, (separationDepth ZPoly.X : Int)⟩ := by
+  rfl
+
 /-- Re-isolate an already normalized irreducible polynomial with the fixed
 default strategy and retain the unique canonical disc matching `rep`.
 

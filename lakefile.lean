@@ -165,6 +165,11 @@ lean_lib HexResultant where
 
 lean_lib HexNumberField where
 
+lean_lib HexRealAlgebraic where
+
+@[default_target]
+lean_lib HexRealAlgebraicMathlib where
+
 lean_lib HexNumberFieldTower where
 
 lean_lib HexPolyFp where

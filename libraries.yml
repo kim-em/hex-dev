@@ -1222,6 +1222,17 @@ libraries:
     correspondence_only: true
     done_through: 7
     status: active
+  HexRealAlgebraic:
+    deps: [HexNumberField]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexRealAlgebraicMathlib:
+    deps: [HexRealAlgebraic, HexNumberFieldMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
