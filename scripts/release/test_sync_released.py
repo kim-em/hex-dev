@@ -984,7 +984,7 @@ class LakeDeclarationTests(unittest.TestCase):
 
     def test_missing_helper_does_not_write_partial_result(self) -> None:
         self.entry["lake_declarations"].append("missing")
-        with self.assertRaisesRegex(RuntimeError, "expected one Lake build helper missing"):
+        with self.assertRaisesRegex(RuntimeError, "expected one Lake declaration missing"):
             self.rewrite()
         self.assertEqual(self.target.read_text(), self.original)
 
@@ -998,6 +998,22 @@ class LakeDeclarationTests(unittest.TestCase):
         self.entry["lakefile"] = "toml"
         with self.assertRaisesRegex(RuntimeError, "requires a Lean Lake file"):
             self.rewrite()
+
+    def test_migrates_an_extern_lib_to_a_custom_target(self) -> None:
+        self.entry["lake_declarations"] = ["compileArchive"]
+        replacement = (
+            "target compileArchive pkg : FilePath := do\n"
+            "  buildStaticLib (pkg.staticLibDir / \"libffi.a\") #[]\n\n"
+        )
+        self.source.write_text("import Lake\n\n" + replacement)
+        self.target.write_text(
+            "import Lake\n\n"
+            "extern_lib compileArchive (pkg) := do\n"
+            "  buildStaticLib (pkg.staticLibDir / \"libffi.a\") #[]\n"
+        )
+        self.assertEqual(self.rewrite(),
+                         ["  build declaration compileArchive (lakefile.lean)"])
+        self.assertEqual(self.target.read_text(), "import Lake\n\n" + replacement)
 
 
 class LibBuildSettingTests(unittest.TestCase):
@@ -1014,6 +1030,10 @@ class LibBuildSettingTests(unittest.TestCase):
         "lean_lib Consumer where\n"
         "  -- comment lines are not settings\n"
         "  precompileModules := true\n"
+        "\n"
+        "lean_lib Scoped where\n"
+        "  precompileModules := true\n"
+        "  moreLinkObjs := #[scopedffi]\n"
         "\n"
         "lean_lib Linked where\n"
         "  precompileModules := true\n"
@@ -1048,6 +1068,10 @@ class LibBuildSettingTests(unittest.TestCase):
     def test_settings_are_read_from_the_monorepo_lakefile(self) -> None:
         self.assertEqual(self.settings("Plain"), {})
         self.assertEqual(self.settings("Consumer"), {"precompileModules": "true"})
+        self.assertEqual(self.settings("Scoped"), {
+            "precompileModules": "true",
+            "moreLinkObjs": "#[scopedffi]",
+        })
         self.assertEqual(self.settings("Linked"), {
             "precompileModules": "true",
             "extraDepTargets": "#[`consumerffi]",
@@ -1097,6 +1121,29 @@ class LibBuildSettingTests(unittest.TestCase):
         self.rewrite({"lib": "Consumer", "lakefile": "lean"})
         self.assertIn("lean_lib Consumer where\n  precompileModules := true\n",
                       lakefile.read_text(encoding="utf-8"))
+
+    def test_lean_mirror_gains_scoped_link_objects(self) -> None:
+        lakefile = self.repo / "lakefile.lean"
+        lakefile.write_text(
+            "lean_lib Scoped where\n  precompileModules := true\n",
+            encoding="utf-8")
+        entry = {"lib": "Scoped", "lakefile": "lean"}
+        self.assertEqual(self.rewrite(entry),
+                         ["  moreLinkObjs on lean_lib Scoped (lakefile.lean)"])
+        self.assertIn(
+            "lean_lib Scoped where\n"
+            "  precompileModules := true\n"
+            "  moreLinkObjs := #[scopedffi]\n",
+            lakefile.read_text(encoding="utf-8"))
+        self.assertEqual(self.rewrite(entry), [])
+
+    def test_toml_mirror_rejects_scoped_link_objects(self) -> None:
+        lakefile = self.repo / "lakefile.toml"
+        lakefile.write_text(
+            '[[lean_lib]]\nname = "Scoped"\nprecompileModules = true\n',
+            encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "only publishes managed target references"):
+            self.rewrite({"lib": "Scoped", "lakefile": "toml"})
 
     def test_a_library_without_settings_is_left_alone(self) -> None:
         lakefile = self.repo / "lakefile.toml"

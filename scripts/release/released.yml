@@ -60,16 +60,18 @@
 # skeleton must build separately from the curated public umbrella.
 # `executables` maps an unmanaged released executable name to its mathematical
 # root module. The sync refuses to publish when the skeleton is stale.
-# `lake_declarations` lists build helper declarations copied from the monorepo
-# Lake file into the corresponding declarations in a Lean mirror skeleton.
+# `lake_declarations` lists named build declarations copied from the monorepo
+# Lake file into the corresponding declarations in a Lean mirror skeleton. It
+# can migrate a package-wide `extern_lib` to a library-scoped custom `target`.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
 # this monorepo's `lakefile.lean` is the source of truth for how a library is
 # built, so the sync reads the `lean_lib <lib>` block and carries the settings
-# across itself, writing `precompileModules` into the mirror when it is missing
-# and refusing to publish when a setting it cannot synthesize has gone. A second
-# copy of a build decision in this manifest only gives it somewhere to drift.
+# across itself, writing `precompileModules` and Lean `moreLinkObjs` into the
+# mirror when they are missing and refusing to publish when a setting it cannot
+# synthesize has gone. A second copy of a build decision in this manifest only
+# gives it somewhere to drift.
 # `announcements` maps a venue (`blog`, `zulip`, `linkedin`) to the https URL
 # where this library was announced; it renders as one line per library in the
 # aggregate README's Announcements section. Deliberately not a table column:
@@ -115,7 +117,7 @@ repos:
     spec: hex-arith
     pins: []
     lakefile: lean
-    lake_declarations: [hexArithOTarget]
+    lake_declarations: [hexArithOTarget, hexarithffi]
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -156,7 +158,7 @@ repos:
     spec: hex-mod-arith
     pins: [hex-arith]
     lakefile: lean
-    lake_declarations: [zmod64MulOTarget]
+    lake_declarations: [zmod64MulOTarget, hexmodarithffi]
 
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib

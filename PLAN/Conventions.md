@@ -196,9 +196,11 @@ not `monicisedCoreTransportPackage`. See
 Libraries that use `@[extern]` (e.g. `hex-arith` for GMP wrappers,
 `hex-gf2` for CLMUL) keep their C shims in a `ffi/` subdirectory
 within the library (e.g. `HexArith/ffi/wide_arith.c`). Compile those
-sources in `lakefile.lean` via an `extern_lib` block; use
-`moreLinkArgs` only for system linker flags such as `-lgmp`, never for
-listing `.c` sources.
+sources in `lakefile.lean` with a custom `target` attached to the
+corresponding `lean_lib` through `moreLinkObjs`. A package-level
+`extern_lib` leaks into every downstream executable even when its module
+graph never imports that library. Use `moreLinkArgs` only for system linker
+flags such as `-lgmp`, never for listing `.c` sources.
 
 For ad hoc interpreter smoke tests of extern-backed declarations, use
 `lake lean <file>` (or pass the module dynlibs explicitly via
