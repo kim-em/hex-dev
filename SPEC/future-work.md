@@ -1073,7 +1073,8 @@ in the companion. Typed real and imaginary projections belong to the real
 library, keeping this dependency graph acyclic. These APIs are covered in the
 manual's number-field and real-algebraic chapters.
 
-Faster comparison by refinement on overlap, comparison of lazy roots, and
+Stored-interval comparison and bounded refinement fast paths are specified in
+the number-field library. General comparison of lazy roots and
 Tarski queries remain separate extensions behind the same order contract.
 An unconditional Mathlib-free law witness additionally needs proof
 infrastructure for exactification, canonical equality, and root separation.
@@ -1174,3 +1175,7 @@ The SPEC must decide content addressing, version skew, storage location, and
 resource limits for decoding and replay. `hex-conway`'s stored database and
 the interval certificate schema are useful first consumers, but neither
 should become a universal payload representation.
+
+Direct radical extraction, certified principal-root approximation, cyclotomic
+construction and recognition, and reduction of canonicalization's all-roots
+isolation cost are scoped by [issue #10147](https://github.com/kim-em/hex-dev/issues/10147).

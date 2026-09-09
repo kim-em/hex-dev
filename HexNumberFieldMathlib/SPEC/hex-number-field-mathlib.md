@@ -455,3 +455,22 @@ centre ordering.
 
 `nthRoot_conj_of_not_lt` restates the branch-cut condition using the executable
 complex partial order: `¬ a < 0` excludes exactly the negative real axis.
+
+## Isolation fast paths
+
+Coordinate interval tests have soundness theorems for all enclosed complex
+values. The bounded pair-refinement search preserves those theorems by
+`RefinedIsolation.refineTo_root`. `realCompare_eq`, `partialCompare_eq`,
+`lt_iff`, and `le_iff` retain their statements; failed probes invoke the exact
+reference algorithms. The real search has a product-separation cap; complex
+probes have two fixed rounds. Neither establishes equality from overlap.
+
+Lazy principal-root filtering preserves the principal root. On each retained
+half circle, distinct candidates have distinct real coordinates; positive real
+inputs retain their real roots and choose the largest. Interval selection is
+sound independently of its refinement budget. A failed fast selection invokes
+the existing exact selector, preserving `nthRoot_toComplex` and `sqrt_toComplex`.
+The roots-of-unity constructor agrees with `Complex.exp (2 * π * I * q)` and
+`Complex.isPrimitiveRoot_exp_rat` gives its exact order. Its selector uses the
+least positive argument among integer roots of unity, equivalently the largest
+real part on the upper half circle.

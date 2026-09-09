@@ -572,8 +572,8 @@ def AlgebraicNumber.realCompare (a b : AlgebraicNumber) : Ordering
 `separationPrec p` is `mahlerPrec p + 2`. At that precision the approximation
 balls of two distinct roots of `p` are disjoint: `mahlerPrec p` separates
 distinct roots by more than four ball radii, and the two extra bits absorb the
-centre errors. Every operation here works at a fixed such precision; none
-refines without bound.
+centre errors. The reference comparison uses that fixed precision. Fast paths use bounded
+refinement and certified coordinate intervals; none refines without bound.
 
 `I` selects the upper root of `X² + 1`. Conjugation is the tag operation
 specified with the canonical representation below; it uses no approximation
@@ -581,9 +581,14 @@ balls. `mirrorBall` remains a public geometric helper for compatibility and
 for the retained search-strategy benchmark arm.
 
 `realCompare a b`, for real `a` and `b`, is `.eq` when `a == b` and otherwise
-orders the centres of the two approximation balls at
-`separationPrec (a.p * b.p)`, where the balls of distinct values are disjoint.
-The companion proves this is the order of their real parts.
+first compares the stored real-coordinate intervals. Only overlap triggers
+computation of the product-polynomial separation bound and geometric refinement,
+threading the refined representatives. Targets double from the smaller stored
+precision (clamped to one), capped at `separationPrec (a.p * b.p) + 1`.
+Structural fuel bounds the search; failure or inconclusive final intervals use
+the reference centre comparison at `separationPrec (a.p * b.p)`.
+The companion proves every successful interval decision and the complete
+operation agree with the order of the real parts. Canonical data is unchanged.
 
 ## The nearest root
 
@@ -954,7 +959,13 @@ returns `none` exactly for unequal imaginary parts. Global executable `LT`,
 `LE` and their decisions match Mathlib's complex partial order: equal imaginary
 parts and ordered real parts. Structural equality and real-real comparisons
 are direct paths; differing orientation tags reject immediately; remaining
-cases test whether the difference is real and use `realCompare`. This last
+cases first reject disjoint imaginary-coordinate intervals. Unresolved cases
+try 16 and 64 additional bits relative to each stored precision, then test
+whether the exact difference is real and use `realCompare`. The `<` and `≤`
+decisions also reject impossible real-coordinate inequalities before asking
+whether imaginary parts are equal: `a.lower ≥ b.upper` rejects `<`, and
+`a.lower > b.upper` rejects `≤`. Inconclusive interval tests are distinct from
+incomparability; overlap never establishes equality. The exact fallback
 path performs an exact subtraction, including resultant construction,
 factorization and root isolation; it can cost as much as field arithmetic. There is no
 `Ord` or `LinearOrder` instance on the complex type. The companion supplies
@@ -963,9 +974,16 @@ embedding into the scoped complex order.
 
 `AlgebraicNumber.nthRoot a n` agrees with `a.toComplex ^ ((n : ℂ)⁻¹)`;
 `sqrt a` is `nthRoot a 2`. Index zero returns one; positive indices at zero
-return zero. The general path solves `X^n - a`, caches each candidate's
-`a + a.conj`, then chooses maximal real part with nonnegative imaginary side
-preferred on a tie. Root completeness proves selection succeeds, and the
+return zero. The general path still solves `X^n - a`, but branch selection
+works on lazy roots. Positive real inputs retain real candidates; negative real
+inputs retain upper candidates; nonreal inputs retain their own imaginary side.
+Among retained candidates, certified real intervals select the maximum. Stored
+intervals precede two refinement rounds at 16 and 64 additional bits, with
+representatives threaded and cached. Only the winner is canonicalized on this
+path. Inconclusive selection uses the existing exact selector, which caches
+each candidate's doubled real part and prefers the upper side on a tie.
+Square roots usually have one candidate after the side test; positive real
+inputs select the positive real root. The real square-root API shares this path. Root completeness proves selection succeeds, and the
 companion proves the result lies in the principal argument sector
 `(-π/n, π/n]`. General radicals can be expensive. Conjugation commutes with
 this branch away from the negative real axis, not unconditionally.
@@ -988,3 +1006,37 @@ The number-field companion provides `IsAlgClosed AlgebraicNumber` and
 `IsAlgClosure ℚ AlgebraicNumber`, using the complete algebraic-coefficient
 root solver and algebraicity of every represented value. Neither instance
 introduces new axioms or admits unfinished proofs.
+
+## Roots of unity and complex norms
+
+```lean
+def AlgebraicNumber.rootOfUnity (q : Rat) : AlgebraicNumber
+-- Owned by hex-real-algebraic:
+def AlgebraicNumber.normSq (a : AlgebraicNumber) : RealAlgebraicNumber
+def AlgebraicNumber.abs (a : AlgebraicNumber) : RealAlgebraicNumber
+```
+
+`rootOfUnity q` denotes `exp (2 * π * I * q)` and has exact order `q.den`.
+Reduce the numerator modulo the positive denominator. Denominators 1, 2, and 4
+use constants. For other denominators `n`, isolate `X^n - 1` when `n` is odd,
+or `X^(n/2) + 1` when even. The upper root with greatest real part is
+`exp (2πI/n)`; select it lazily, then compute the requested power in its
+`QAdjoin`, converting once. Generator and conjugate cases reuse existing values.
+No generic algebraic-coefficient solver or integer-index factorization is used.
+The polynomial degree is still linear in the denominator; the cyclotomic route
+and general recognition belong to [the direct radical design issue](https://github.com/kim-em/hex-dev/issues/10147).
+Radicals of `-1`, `I`, and `-I` use their principal rational angles divided by
+the positive index. No representation metadata or global cache is added.
+
+`normSq` packs `a * a.conj` as a real value. `abs` uses its nonnegative square
+root, with the existing real absolute value for real inputs. The companion
+proves the norm correspondences, nonnegativity, zero characterization,
+conjugation invariance, multiplicativity, and `abs² = normSq`. These are named
+real-valued functions, not an `Abs AlgebraicNumber` instance.
+
+Conformance includes separated and touching intervals, close cross-factor and
+Mignotte pairs, same-imaginary nonreal pairs, unequal imaginary coordinates,
+forced fallback, branch-cut radicals, rational-angle periodicity and orders,
+and complex norm identities. FLINT qqbar supplies exact expected values.
+Benchmarks separate construction, selection, and complete extraction, retaining
+eight adjacent AB/BA blocks under the shared-host measurement policy.
