@@ -28,8 +28,47 @@ abbrev Exit := Generic.Exit
 /-- The five node classifications. -/
 abbrev Leaf := Generic.Leaf
 
-/-- The search globals, stored in one record so array updates need only
-consume one constructor. Level and target-cell data are call arguments. -/
+/-- Search state: what nauty keeps in file-scope variables for the
+duration of one `nauty()` call on `n` vertices. Every field is named
+for the nauty global or `statsblk` member it mirrors, except `wsCap`,
+`genTrace`, and `workperm`.
+
+`lab` and `ptn` are the partition nest: position `i` ends a cell at
+level `l` exactly when `ptn[i] ≤ l`. `active` holds the positions of
+the cells still to be used as splitters by `refine`. `fixedpts` holds
+the vertices individualized on the path from the root to this node.
+
+`firstlab` and `canonlab` are the labellings of the first leaf and of
+the best-so-far leaf. `firstcode` and `canoncode` hold the refinement
+code of their ancestor at each level, terminated by `codeSentinel`.
+`firsttc` holds the target-cell position chosen at each level of the
+first path, or `-1` where there is none. `canong` holds the adjacency
+rows of the best-so-far leaf, correct in its first `samerows` rows,
+and `canonlevel` is that leaf's level.
+
+`eqlevFirst` (`eqlev_first`) and `eqlevCanon` (`eqlev_canon`) are the
+deepest levels to which this node's codes agree with the first leaf's
+and with the best-so-far leaf's. `compCanon` (`comp_canon`) is `-1`,
+`0` or `1` as this node's code at level `eqlevCanon + 1` is less than,
+equal to, or greater than the best-so-far leaf's. `gcaFirst`
+(`gca_first`) and `gcaCanon` (`gca_canon`) are the levels of the
+greatest common ancestors of this node with those two leaves, and
+`cosetindex` and `stabvertex` are the vertices individualized there.
+
+`orbits` sends each vertex to the least vertex of its orbit under the
+automorphisms found so far. `noncheaplevel` is one past the level of
+the deepest ancestor for which `cheapautom` is false. `allsamelevel`
+is the level of the least ancestor of the first leaf all of whose
+descendant leaves are known to be equivalent. The reusable `workperm`
+array holds the scatter permutation prepared at a leaf. Return levels
+and short-prune requests are carried by `Exit`.
+
+`numnodes`, `numorbits`, `numgenerators`, `numbadleaves`, `maxlevel`,
+`tctotal` and `canupdates` are the members of nauty's `statsblk`: the
+nodes visited, the orbits, the generators reported, the leaves that
+were neither an automorphism nor an improvement, the greatest depth
+reached, the total size of the target cells chosen, and the number of
+times the best-so-far leaf was replaced. -/
 structure Search (n : Nat) where
   lab : Array Nat
   ptn : Array Nat
@@ -77,8 +116,7 @@ deriving Inhabited
 
 variable {n : Nat}
 
-/-- Record an automorphism pair in the bounded workspace. This is
-{name}`Hex.GraphIso.Nauty.pushAuto` on the flat engine state. -/
+/-- Record an automorphism pair in the bounded workspace. -/
 def pushAuto (st : Search n) (pair : VSet n × VSet n) : Search n :=
   if st.autos.size == st.wsCap then
     { st with autos := st.autos.set! (st.wsCap - 1) pair }
@@ -140,8 +178,7 @@ canonically smaller off-path node uses the first path's target hint. -/
   return (tc, tcell, size, st)
 
 /-- nauty's `firstterminal`: install the first leaf as both the first-path
-data and the initial best-so-far leaf. This retains the updates of
-{name}`Hex.GraphIso.Nauty.firstterminal`. -/
+data and the initial best-so-far leaf. -/
 def firstterminal (level : Nat) (st : Search n) : Search n := Id.run do
   let mut st := st
   st := { st with
@@ -319,8 +356,7 @@ def longprune (tcell fixedpts : VSet n)
       if fixedpts.subset fix then tcell.inter mcr else tcell)
     tcell
 
-/-- Intersect with the most recently written workspace pair, as in
-{name}`Hex.GraphIso.Nauty.shortprune`. -/
+/-- Intersect with the most recently written workspace pair, as in nauty’s `shortprune`. -/
 @[inline] def shortprune (tcell : VSet n) (st : Search n) : VSet n :=
   match st.autos.back? with
   | some (_, mcr) => tcell.inter mcr

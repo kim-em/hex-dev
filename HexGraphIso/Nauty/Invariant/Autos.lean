@@ -163,7 +163,7 @@ theorem pushCap (st : Search n) (pair : VSet n × VSet n) :
   unfold pushAuto
   split <;> rfl
 
-
+/-- Code comparison preserves the workspace capacity. -/
 theorem prepCap (level code : Nat) (st : Search n) :
     (compareCodes level code st).wsCap = st.wsCap := by
   rw [compareCodes]
@@ -488,7 +488,6 @@ theorem shortprune_carried {g : Array (VSet n)} {ptn lab : Array Nat}
   · rw [hW] at hR
     exact absurd hR (by simp)
 
-
 /-! # The explicit pairs: `fmperm` of an admitted generator
 
 The pair recorded for an explicit generator reads validly through the
@@ -748,7 +747,6 @@ private theorem fmperm_eq_go (perm : Array Nat) (nn : Nat) :
   rw [forIn_range_eq, forIn_outerF_eq]
   rfl
 
-
 /-! # Invariants of the mirrors -/
 
 private theorem iter_succ_right (perm : Array Nat) (a v : Nat) :
@@ -983,7 +981,6 @@ theorem pairOk_fmperm {g : Array (VSet n)} {ptn lab perm : Array Nat} {level : N
     exact applyWord_replicate_fixed hfixed k
   · rw [hact v hv]
     exact hk
-
 
 /-! # The implicit pairs: `fmptn` of a cheapautom partition
 

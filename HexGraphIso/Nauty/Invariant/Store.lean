@@ -13,42 +13,8 @@ import all HexGraphIso.Nauty.Search.State
 
 public section
 
-/-!
-Store validity: every generator `processnode` admits passes
-`checkAutom`, per admission arm and as the `GenTraceOk` invariant
-the domination induction threads.
--/
-
-/-!
-Store validity for the admitted automorphisms, which is what the
-replay hypothesis needs of `genTrace`.
-
-The traced run's `genTrace` feeds the certificate producer: every
-`.autom` record carries one of its entries, and the replay's
-`validGammas` keeps only entries passing `checkAutom`, so a replayed
-certificate needs every admitted entry to pass.
-
-Both admission sites in `processnode` push the same shape of array: a
-scatter `γ` with `γ[lab₁[i]!]! = lab₂[i]!` connecting two discrete
-leaf labellings (code 1 scatters `lab` over `firstlab`, code 2
-scatters `lab` over `canonlab`). The lemmas below prove the per-admission
-facts about that shape: `scatter_isPerm` shows a scatter of one
-permutation labelling over another is itself a permutation of
-`[0, n)`; `checkAutom_scatter_of_isautom` closes the code-1 arm under
-its explicit `isautom` guard; and `checkAutom_scatter_of_leafRows_eq`
-closes the code-2 arm outright, with no `isautom` scan: the
-`testcanlab` equality outcome (transported to `leafRows` equality by
-`leafEvent_faithful` and `updatecan_inv`) means the two relabelled
-graphs coincide, which forces the connecting scatter to preserve
-every row.
-
-The code-1 arm's other guard, `gcaFirst ≥ noncheaplevel` with no
-`isautom` scan, admits on the strength of `cheapautom`: an equitable
-partition whose nontrivial cells are small enough forces every leaf
-below to realize an automorphism. `SmallCell/Transitive` proves that
-arm (`checkAutom_scatter_of_descPaths`), from the two same-target
-descents below the greatest common ancestor.
--/
+/-! Permutation and graph-preservation facts for scatter arrays. The policy
+combines these with reached leaf labellings to validate emitted generators. -/
 
 namespace Hex.GraphIso.Nauty
 
@@ -231,15 +197,6 @@ theorem checkAutom_scatter_of_leafRows_eq {ctx : Ctx n}
     simp only [beq_iff_eq]
     exact htrans v (List.mem_range.mp hv)
 
-/-! # The admission event
-
-`processnode` is the only search step that grows `genTrace`. The
-lemmas below characterize the grown entry: the scatter loops become
-folds, and the event lemma records which guard admitted each push.
-The run-level induction consumes them together with the per-admission
-theorems above.
--/
-
 private theorem id_run_eq {α : Type} (x : Id α) : x.run = x := rfl
 
 private theorem forIn_range_toList {β : Type} (n : Nat) (init : β)
@@ -301,7 +258,6 @@ private theorem pushAuto_genTrace (st : Search n) (pair : VSet n × VSet n) :
   rw [pushAuto]
   split <;> rfl
 
-
 end Hex.GraphIso.Nauty
 
 namespace Hex.GraphIso.Nauty
@@ -350,7 +306,7 @@ theorem labInj_perm_range {lab : Array Nat} {n : Nat}
 
 /-! # Store validity, assembled per admission event -/
 
-
+/-- Every emitted generator passes the automorphism checker. -/
 def GenTraceOk (ctx : Ctx n) (st : Search n)
     (P : Array Nat → Prop := fun _ => True) : Prop :=
   ∀ γ ∈ st.genTrace, checkAutom ctx.g γ = true ∧ P γ

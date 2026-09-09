@@ -318,5 +318,4 @@ theorem root_searchOk {k : Nat} (G : Colored n k)
   · exact (bcount_initPtn G).symm
   · exact bcount_pos_of_boundary (q := n - 1) (by omega) hinitEnd
 
-
 end Hex.GraphIso.Nauty

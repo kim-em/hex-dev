@@ -18,7 +18,6 @@ variable {n k : Nat}
 
 /-! # Cheap-automorphism ledger boundary -/
 
-
 structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
     (st : Search n) : Prop where
   positive : 0 < st.noncheaplevel
@@ -29,7 +28,6 @@ structure CheapOk (ctx : Ctx n) (rlab rptn : Array Nat) (level : Nat)
     PairOk ctx.g rptn rlab 1
       (fmptn st.lab st.ptn st.noncheaplevel n).1
       (fmptn st.lab st.ptn st.noncheaplevel n).2
-
 
 theorem CheapOk.ready {ctx : Ctx n} {rlab rptn : Array Nat} {level : Nat}
     {st : Search n} (h : CheapOk ctx rlab rptn level st)

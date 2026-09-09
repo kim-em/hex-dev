@@ -40,6 +40,7 @@ theorem keyMax_bot_right (b : Key n) : keyMax b ⟨[], []⟩ = b := by
     exact absurd (keyCmp_gt_iff_lt.mpr h) (keyCmp_bot_ne_gt b)
   · rfl
 
+/-- Taking the maximum of specification keys is associative. -/
 theorem keyMax_assoc (x y z : Key n) :
     keyMax (keyMax x y) z = keyMax x (keyMax y z) := by
   refine keyCmp_antisym ?_ ?_
