@@ -86,18 +86,13 @@ maximum-flow algorithm. `hex-graph-matching` should provide Hopcroft-Karp
 bipartite matching. `hex-graph-assignment` should provide the Hungarian
 algorithm for weighted bipartite assignment. `hex-graph-spanning-tree` should
 contain Kruskal minimum spanning forests, `hex-graph-planarity` should contain
-Boyer-Myrvold planarity testing, and `hex-graph-iso` should contain
-individualization-refinement graph canonical labelling. Add Mathlib
+Boyer-Myrvold planarity testing. Add Mathlib
 companions where correspondence or abstract mathematical theorems require
 them, rather than automatically creating one for every algorithm library.
 
 The base representation should not depend on matrices or permutation groups.
 All the graph algorithms above depend on `hex-graph`. The Hungarian algorithm
 uses the base bipartite representation but does not depend on Hopcroft-Karp.
-`hex-graph-iso` initially depends only on `hex-graph`. An implementation using
-complete stabilizer or group operations may later add the permutation-group
-library. The first canonical-labelling release does not require that
-dependency.
 
 The initial representation uses sorted duplicate-free adjacency arrays. An
 edge-list builder checks bounds, removes duplicate edges, and freezes to that
@@ -184,22 +179,14 @@ biconditional: two finite graphs have equal canonical forms exactly when they
 are isomorphic. Checking a proposed relabelling proves only the forward
 isomorphism claim.
 
-The first `hex-graph-iso` release exposes a canonical form, its canonical
-label, a checked isomorphism when one exists, and positive and negative
-`graph_iso` tactic proofs. The canonical-form theorem is for ordered-coloured
-graphs. Two such graphs are isomorphic exactly when their canonical forms are
-equal. The detailed computational and Mathlib-facing contracts are in
+Canonical labelling and complete automorphism generators are covered by
 [hex-graph-iso](../HexGraphIso/SPEC/hex-graph-iso.md) and
 [hex-graph-iso-mathlib](../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
-
-Complete automorphism-group generators are a later extension. Rather than
-enumerate every isomorphism between two graphs, that extension returns one
-transporter and the source automorphism group. It proves that every
-isomorphism is uniquely the transporter composed with an automorphism. A
-request for an explicit list expands that coset only under a caller-supplied
-cardinality budget. Automorphism-group completeness uses the same canonical
-search tree, not merely verification that each reported permutation preserves
-edges.
+Explicit isomorphism cosets remain a further extension: return one
+transporter and the source automorphism group, and prove that every
+isomorphism is uniquely the transporter composed with an automorphism.
+A request for an explicit list expands that coset only under a
+caller-supplied cardinality budget.
 
 The first graph chapter should analyse a data pipeline containing one
 accidental dependency cycle, then return both its strongly connected

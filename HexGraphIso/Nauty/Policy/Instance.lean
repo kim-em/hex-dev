@@ -14,7 +14,7 @@ import all HexGraphIso.Nauty.Search.State
 public section
 
 /-!
-The nauty policy uses the direct engine's local operations. The mutual
+The nauty policy uses the direct search's local operations. The mutual
 equalities identify every fuelled node and sweep with the generic
 recursion, including exhausted calls and nonlocal exits.
 -/

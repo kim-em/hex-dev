@@ -61,7 +61,7 @@ theorem root_key (G : Colored n k) (hn0 : 0 < n) :
   simp only [Frame.key, root, initial, prefixKey_nil, Nat.add_sub_cancel,
     canonSpecKey, canonSpec, beq_eq_false_iff_ne.mpr (Nat.ne_of_gt hn0), Bool.false_eq_true, ↓reduceIte]
 
-/-- The conditional local rules determine the engine's final incumbent.
+/-- The conditional local rules determine the search's final incumbent.
 No root invariant or final-state identification is an assumed parameter. -/
 theorem root_best (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
     (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2.best

@@ -41,16 +41,13 @@ theorem recover_ptn_eq {G : Colored n k} {level numcells : Nat} {st out : Search
     (hok : SearchOk G level numcells st)
     (hout : SearchOut G level level st out) :
     (Nauty.recover (n + 2) level out).ptn = st.ptn := by
-
   have hs : (Nauty.recover (n + 2) level out).ptn.size = st.ptn.size := by
-    change (Nauty.recover (n + 2) level out).ptn.size = _
     rw [recover_ptn_size]
     exact hout.ptnSize
   apply Array.ext hs
   intro i hi₁ hi₂
   rw [← getElem!_pos (Nauty.recover (n + 2) level out).ptn i hi₁,
     ← getElem!_pos st.ptn i hi₂]
-  change (Nauty.recover (n + 2) level out).ptn[i]! = _
   rw [recover_ptn]
   change (if i < n ∧ out.ptn[i]! > level then n + 2 else out.ptn[i]!) = st.ptn[i]!
   have hi : i < n := by rw [← hok.ptnSize]; exact hi₂
@@ -82,10 +79,7 @@ theorem DescentAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     rw [hl, hp]
     exact hout.perm
   refine ⟨{ current with lab := out.lab }, hh.setLab hsize hperm, ?_, ?_, hc⟩
-  · have he := Nauty.recover_lab n (n + 2) level out
-    change (Nauty.recover (n + 2) level out).lab = _ at he
-
-    exact he.symm
+  · exact (Nauty.recover_lab (n + 2) level out).symm
   · exact hp.trans (recover_ptn_eq hok hout).symm
 
 /-- Individualizing a vertex in the recorded target and refining it

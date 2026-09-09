@@ -21,7 +21,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- A discrete aligned endpoint reaches the first depth. Its sentinel is
-therefore the saved sentinel, even though the engine does not test it. -/
+therefore the saved sentinel, even though the search does not test it. -/
 theorem Aligned.first_leaf {G : Colored n k} {ctx : Ctx n} {tcLevel level : Nat}
     {root : RefineSt n} {st : Search n}
     (h : Aligned ctx st.gcaFirst root level level n st)

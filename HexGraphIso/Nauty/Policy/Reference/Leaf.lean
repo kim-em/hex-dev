@@ -61,7 +61,7 @@ theorem rows_emit {ctx : Ctx n} {level : Nat} {st : Search n}
       exact hm
 
 /-- A discrete matching node emits its first-reference carrier in the
-actual engine call, including refinement and comparison preparation. -/
+actual search call, including refinement and comparison preparation. -/
 theorem matching_leaf {ctx : Ctx n} {inf tcLevel fuel level numcells : Nat}
     {st : Search n} {targets : List Nat} {key : Key n}
     (hgsz : ctx.g.size = n) (hwork : st.workperm.size = n)

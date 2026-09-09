@@ -170,9 +170,7 @@ theorem Boundary.recover {G : Colored n k} {ctx : Ctx n} {current level : Nat} {
     (h : Boundary G ctx current st) (hle : level ≤ current) (hlevel : 1 ≤ level)
     (hinf : level < n + 2) :
     Boundary G ctx level (Nauty.recover (n + 2) level st) := by
-  have hr := CheapOk.recover h hle hlevel hinf
-
-  exact hr
+  exact CheapOk.recover h hle hlevel hinf
 
 /-- Comparing codes preserves the boundary level. -/
 theorem compare_noncheap (level code : Nat) (st : Search n) :

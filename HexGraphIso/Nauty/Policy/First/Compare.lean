@@ -214,7 +214,7 @@ theorem firstPath_codes {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numc
     | unwind => exact ⟨bs', hp.trans hpref, hlast, hr.prefix hp⟩
     | done => exact ⟨bs', hp.trans hpref, hlast, (hr.afterSweep true level r.2.2.2.1 index).prefix hp⟩
 
-/-- Every nonempty coloured engine run returns settled code comparisons,
+/-- Every nonempty coloured search run returns settled code comparisons,
 with the first reference and incumbent supplied by its actual descent. -/
 theorem runState_codes (G : Colored n k) (hn0 : 0 < n) :
     ∃ fs bs, ReturnCodes { g := rowsOf G } [] bs fs

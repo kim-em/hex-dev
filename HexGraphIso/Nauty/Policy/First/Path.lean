@@ -80,7 +80,7 @@ theorem prepareFirst_ok {G : Colored n k} {ctx : Ctx n}
   exact ⟨ht.1.1, ht.2⟩
 
 /-- Every valid first-path state with identity orbits reaches a first leaf
-within the same depth bound used by the executable engine. -/
+within the same depth bound used by the executable search. -/
 theorem firstPath_exists {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel level numcells : Nat} {st : Search n}
     (hn0 : 0 < n) (hlevel : 1 ≤ level)
@@ -130,7 +130,7 @@ theorem firstPath_exists {G : Colored n k} {ctx : Ctx n}
       rw [hoready]
       exact horbit tv (VSet.mem_lt hmem)
 
-/-- A valid first-path engine call returns the reference installed at its
+/-- A valid first-path search call returns the reference installed at its
 actual first leaf; subsequent sibling search cannot replace it. -/
 theorem firstPath_reference {ctx : Ctx n} {inf tcLevel fuel level numcells last : Nat}
     {st leaf : Search n}

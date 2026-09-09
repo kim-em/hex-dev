@@ -131,12 +131,8 @@ theorem Settled.recover {cs bs : List Nat} {st : Search n} {level : Nat}
     Codes (cs.take level) bs (Nauty.recover inf level st) := by
   cases h with
   | codes hm hn =>
-    have h' := recover_codeInv (st := st) (inf := inf) hm hn hlen
-
-    exact h'
+    exact recover_codeInv (st := st) (inf := inf) hm hn hlen
   | rows hm _ =>
-    have h' := recover_codeInv_reset (st := st) (inf := inf) hm hlen
-
-    exact h'
+    exact recover_codeInv_reset (st := st) (inf := inf) hm hlen
 
 end Hex.GraphIso.Nauty

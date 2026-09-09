@@ -162,7 +162,7 @@ theorem initial_firstPre (G : Colored n k) (hn0 : 0 < n) :
     change 1 < 1 at hsmall
     omega
 
-/-- Every nonempty engine run installs valid leaf data and only checked generators. -/
+/-- Every nonempty search run installs valid leaf data and only checked generators. -/
 theorem runState_safe (G : Colored n k) (hn0 : 0 < n) :
     RunInv G { g := rowsOf G }
       (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by
@@ -171,7 +171,7 @@ theorem runState_safe (G : Colored n k) (hn0 : 0 < n) :
   exact firstPath_safe hn0 (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G)
     hpath (initial_firstPre G hn0)
 
-/-- The complete engine's generator trace is valid, including the empty graph. -/
+/-- The complete search's generator trace is valid, including the empty graph. -/
 theorem runState_checked (G : Colored n k) :
     TraceOk { g := rowsOf G }
       (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2 := by

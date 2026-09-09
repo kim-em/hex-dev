@@ -14,8 +14,9 @@ layout or compiler changes. The small-Nat checks fail closed.
 Build with the Lean and Valgrind include directories, then run:
   LD_PRELOAD=./admissions.so valgrind --tool=none \
     .lake/build/bin/hexgraphiso_emit_fixtures > /dev/null
-Repeat with hexgraphiso_emit_campaign. Each emitter calls the search once
-per case. A run with no wrapped calls exits with status 2.
+Repeat with hexgraphiso_emit_campaign. Counts cover every production search performed by the emitter,
+including canonicalization and the separate statistics run. They are not
+per-case counts. A run with no wrapped calls exits with status 2.
 */
 #include <lean/lean.h>
 #include <valgrind/valgrind.h>

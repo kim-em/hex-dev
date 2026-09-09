@@ -101,7 +101,7 @@ theorem recover_le (inf level : Nat) (st : Search n) :
   repeat' split
   all_goals omega
 
-/-- The engine preserves the sentinel depth bound on off-path calls and later siblings. -/
+/-- The search preserves the sentinel depth bound on off-path calls and later siblings. -/
 theorem depthPolicy (ctx : Ctx n) (inf tcLevel last : Nat) :
     Generic.StablePolicy ctx inf tcLevel (Depth (n := n) last) (fun code => code < codeSentinel) where
   code := fun level numcells st => refine_longcode_lt ctx level st.lab st.ptn st.active numcells

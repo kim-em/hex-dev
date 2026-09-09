@@ -95,7 +95,7 @@ returns a label the checked constructor rejects. -/
 abbrev Runner := (n k : Nat) → Colored n k → Option Answer
 
 /-- The public pipeline: the label and canonical form come from
-`canonicalize`, the node and generator counts from the transcribed
+`canonicalize`, the node and generator counts from the
 search. -/
 def canonAnswer : Runner := fun n _k G =>
   let res := canonicalize G

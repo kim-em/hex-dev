@@ -24,7 +24,7 @@ namespace Hex.GraphIso.Nauty
 
 variable {n k : Nat}
 
-/-- A frame-preserving engine operation satisfies the local reach rules. -/
+/-- A frame-preserving search operation satisfies the local reach rules. -/
 theorem frame_local {G : Colored n k} {level numcells : Nat} {st out : Search n}
     (hok : SearchOk G level numcells st)
     (hl : out.lab = st.lab) (hp : out.ptn = st.ptn)
@@ -102,7 +102,7 @@ theorem chooseTarget_target {G : Colored n k} {ctx : Ctx n}
       exact maketargetcell_target _ hn0 hlevel hok hnc
     · exact target_empty level _ st
 
-/-- The concrete engine meets every local partition rule of the generic
+/-- The concrete search meets every local partition rule of the generic
 search. No automorphism or comparison-correctness premise is needed. -/
 theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n) :
     Generic.ReachPolicy G ctx (n + 2) tcLevel (fun st => st) where
@@ -191,7 +191,7 @@ theorem reachPolicy (G : Colored n k) (ctx : Ctx n) (tcLevel : Nat) (hn0 : 0 < n
     unfold afterSweep
     split <;> exact ⟨rfl, rfl, rfl, rfl⟩
 
-/-- Every engine node preserves the caller's partition frame. -/
+/-- Every search node preserves the caller's partition frame. -/
 theorem node_out {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hok : SearchOk G level numcells st) :
@@ -200,7 +200,7 @@ theorem node_out {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : 
   rw [node_eq_generic]
   exact Generic.node_reach (reachPolicy G ctx tcLevel hn0) first fuel level numcells st hlevel hok
 
-/-- Every engine sweep preserves its parent partition frame. -/
+/-- Every search sweep preserves its parent partition frame. -/
 theorem sweep_out {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel cfuel level numcells tc tv1 index : Nat}
     {cursor : Option Nat} {cell : VSet n} {st : Search n}
@@ -214,13 +214,13 @@ theorem sweep_out {G : Colored n k} {ctx : Ctx n}
   exact Generic.sweep_reach (reachPolicy G ctx tcLevel hn0) first fuel cfuel level numcells tc tv1
     index cursor cell st hlevel hok htarget hcursor
 
-/-- The engine's nonempty initial state has the coloured root partition. -/
+/-- The search's nonempty initial state has the coloured root partition. -/
 theorem initial_ok (G : Colored n k) (hn0 : 0 < n) :
     SearchOk G 1 (initialPartition G).2.length
       (initial n (initialPartition G).1 (initialPartition G).2) :=
   root_searchOk G hn0
 
-/-- Running the engine preserves the root partition frame and stores
+/-- Running the search preserves the root partition frame and stores
 only labellings reached from its original colour cells. -/
 theorem runState_out (G : Colored n k) (hn0 : 0 < n) :
     SearchOut G 0 1
@@ -243,7 +243,7 @@ theorem canonlab_or (G : Colored n k) (hn0 : 0 < n) :
       ((runColored G).canonlab.size = n ∧ CellsReach G (runColored G).canonlab) :=
   (runState_out G hn0).canon
 
-/-- The engine cannot exhaust a sufficient node bound on a valid partition. -/
+/-- The search cannot exhaust a sufficient node bound on a valid partition. -/
 theorem node_noFuel {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells : Nat}
     {st : Search n} (first : Bool) (hn0 : 0 < n) (hlevel : 1 ≤ level)
     (hok : SearchOk G level numcells st) (hfuel : n + 1 ≤ level + fuel) :
@@ -252,7 +252,7 @@ theorem node_noFuel {G : Colored n k} {ctx : Ctx n} {tcLevel fuel level numcells
   exact Generic.node_noFuel (reachPolicy G ctx tcLevel hn0) leafExit_noFuel
     first fuel level numcells st hlevel hok hfuel
 
-/-- The engine cannot exhaust sufficient node and cursor bounds in a sweep. -/
+/-- The search cannot exhaust sufficient node and cursor bounds in a sweep. -/
 theorem sweep_noFuel {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel cfuel level numcells tc tv1 index : Nat}
     {cursor : Option Nat} {cell : VSet n} {st : Search n}
@@ -266,7 +266,7 @@ theorem sweep_noFuel {G : Colored n k} {ctx : Ctx n}
   exact Generic.sweep_noFuel (reachPolicy G ctx tcLevel hn0) leafExit_noFuel
     first fuel cfuel level numcells tc tv1 index cursor cell st hlevel hok htarget hcursor hfuel hcfuel
 
-/-- The root engine run never exhausts its recursion bounds. -/
+/-- The root search run never exhausts its recursion bounds. -/
 theorem runState_noFuel (G : Colored n k) :
     (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).1 ≠ .fuel := by
   unfold runState

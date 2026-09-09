@@ -132,7 +132,7 @@ theorem firstPath_workSize {ctx : Ctx n} {inf tcLevel fuel level numcells last :
     unfold cheapCheck
     split <;> exact hprepare level numcells st
 
-/-- Every scratch scatter in a complete engine run has its initial allocation size. -/
+/-- Every scratch scatter in a complete search run has its initial allocation size. -/
 theorem runState_workSize (G : Colored n k) :
     (runState n (rowsOf G) (initialPartition G).1 (initialPartition G).2).2.workperm.size = n := by
   by_cases hn0 : n = 0

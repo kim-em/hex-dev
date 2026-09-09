@@ -11,7 +11,7 @@ public import HexGraphIso.Nauty.Cert.Certify
 public section
 
 /-!
-Public canonical-form operations: the checked-label transcription of
+Public canonical-form operations: the checked result of
 nauty's search, total because the certificate replay accepts its
 answer on every input (`Nauty.searchResult?_isSome`). Every theorem
 stated here descends from the Lean-proved `specCanon` equivalence
@@ -28,7 +28,7 @@ variable {n k : Nat}
 /-! # Canonical forms -/
 
 /-- Compute the canonical form of a coloured graph together with the
-label producing it: the checked-label transcription of the pinned
+label producing it: the checked result of the pinned
 nauty search. Total; worst-case cost is factorial. Its answer is the
 one the certificate replay validates (`canonicalize_eq_certifyCanon`),
 which is how every theorem below reaches it. -/

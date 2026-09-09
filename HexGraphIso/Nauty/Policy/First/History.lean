@@ -334,7 +334,7 @@ theorem firstPath_history {G : Colored n k} {ctx : Ctx n}
     rfl
 
 /-- The saved first reference carries the selected descent history even
-after the full engine call has searched later siblings. -/
+after the full search call has searched later siblings. -/
 theorem firstPath_saved {G : Colored n k} {ctx : Ctx n}
     {inf tcLevel fuel level numcells last : Nat} {st leaf : Search n}
     (hn0 : 0 < n)
@@ -387,7 +387,7 @@ theorem initial_equitable (G : Colored n k) (hn0 : 0 < n) :
     (initial_nodeOk G hn0).starts
     (rowsOf_symm G) hok.count.symm (certInv_initial G hn0)
 
-/-- A nonempty engine run stores the leaf of a selected descent from the
+/-- A nonempty search run stores the leaf of a selected descent from the
 refined colour partition, together with its complete target history. -/
 theorem runState_history (G : Colored n k) (hn0 : 0 < n) :
     let st := initial n (initialPartition G).1 (initialPartition G).2

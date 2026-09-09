@@ -290,7 +290,7 @@ theorem SweepInput.reference_filters {G : Colored n k} {ctx : Ctx n}
   · exact hs
 
 /-- Reordering the receiving frame transports its frozen child reference
-to the exact arrays individualized by the engine. -/
+to the exact arrays individualized by the search. -/
 theorem SweepInput.reference_child {G : Colored n k} {ctx : Ctx n}
     {tcLevel fuel cfuel boundary : Nat} {first : Bool}
     {level numcells tc tv1 tv index o : Nat} {cell : VSet n}

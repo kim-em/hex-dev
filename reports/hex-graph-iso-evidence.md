@@ -47,3 +47,9 @@ call audit does not rule out inlined or indirect allocators.
 `scripts/bench/graphiso_admissions.c` counts classification and code-1
 admission branches in the fixture and campaign emitters. Its header pins
 the generated C ABI and field indices; a run with no wrapped calls fails.
+
+The historical compiled run did **not** validate `runDenseConvert`'s declared
+quadratic model. Two middle sizes were below that harness's spawn floor;
+the sink also summed growing bitsets, so the measurements did not isolate
+conversion cost. This remains a limitation of that observation, detailed in
+[the performance report at f45ccab8](https://github.com/kim-em/hex-dev/blob/f45ccab8fed20616c89ae5da785b5c63d2bd4bc1/reports/hex-graph-iso-performance.md#concerns).

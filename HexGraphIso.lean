@@ -106,7 +106,7 @@ goals.
 concept: `Search` is the structured executable, `Spec` the
 declarative canonical form, `Cert` the certificates and the trusted
 `checkCanon` replay, and `Policy` the generic recursion contracts and
-engine correctness. `Generation`, `Invariant`, `Equitable`, `SmallCell`
+search correctness. `Generation`, `Invariant`, `Equitable`, `SmallCell`
 and `Model` supply the supporting theories. The umbrella exports the canonicalization theory for proofs
 that need it. Generation exposes its public contracts and small witness
 types, keeping the larger implementation behind private imports.

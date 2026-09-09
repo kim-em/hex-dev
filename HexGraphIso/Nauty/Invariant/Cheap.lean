@@ -73,7 +73,7 @@ theorem recover_fmptn {st : Search n} {inf level saved : Nat}
       fmptn st.lab st.ptn saved n := by
   have hcells : cells (Nauty.recover inf level st).ptn saved n =
       cells st.ptn saved n := by
-    apply cells_eq_of_low (recover_ptn_size n inf level st)
+    apply cells_eq_of_low (recover_ptn_size inf level st)
     intro q hq
     rw [recover_ptn]
     rcases Decidable.em (q < n ∧ st.ptn[q]! > level) with hc | hc

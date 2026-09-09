@@ -73,9 +73,7 @@ theorem FirstCodes.leaf {cs fs : List Nat} {st : Search n}
 theorem FirstCodes.recover {cs fs : List Nat} {st : Search n} {level : Nat}
     (h : FirstCodes cs fs st) (hlen : level ≤ cs.length) (inf : Nat) :
     FirstCodes (cs.take level) fs (Nauty.recover inf level st) := by
-  have hm := recover_firstCodeInv (st := st) (inf := inf) h hlen
-
-  exact hm
+  exact recover_firstCodeInv (st := st) (inf := inf) h hlen
 
 /-- The two comparisons and the saved first leaf's incumbent bound. -/
 structure Comparison (ctx : Ctx n) (cs bs fs : List Nat) (st : Search n) : Prop where

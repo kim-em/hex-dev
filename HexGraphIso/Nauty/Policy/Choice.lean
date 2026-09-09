@@ -33,7 +33,7 @@ theorem Choice.cheap {ctx : Ctx n} {tcLevel level tc : Nat} {st : Search n}
   unfold cheapCheck
   split <;> exact h
 
-/-- An equitable guided endpoint makes the engine's retained target
+/-- An equitable guided endpoint makes the search's retained target
 canonical or equal to the saved first target. -/
 theorem GuidedState.choice {ctx : Ctx n} {tcLevel base level numcells : Nat}
     {root : RefineSt n} {st : Search n}
@@ -93,10 +93,7 @@ theorem Choice.recover {G : Colored n k} {ctx : Ctx n} {tcLevel level numcells t
   rcases h hold with hcanonical | hsaved
   · left
     have hl : (Nauty.recover (n + 2) level out).lab = out.lab := by
-      have he := Nauty.recover_lab n (n + 2) level out
-      change (Nauty.recover (n + 2) level out).lab = _ at he
-
-      exact he
+      exact Nauty.recover_lab (n + 2) level out
     rw [hl, recover_ptn_eq hok hout]
     have hperm : cellsPerm st.ptn level st.lab out.lab := hout.perm
     exact (specTargetcell_perm hperm (by change n ≤ st.ptn.size; rw [hok.ptnSize]; omega)

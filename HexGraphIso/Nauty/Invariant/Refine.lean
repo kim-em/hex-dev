@@ -1277,7 +1277,7 @@ theorem SearchOut.mono {G : Colored n k} {B B' lev : Nat}
     fun q hq => h.low q (by omega), h.perm, h.firstStore, h.canonStore,
     h.canon⟩
 
-/-! # Quartet step helpers -/
+/-! # Search step helpers -/
 
 theorem mem_ne_empty {s : VSet n} {v : Nat} (h : s.mem v = true) :
     s ≠ VSet.empty := by

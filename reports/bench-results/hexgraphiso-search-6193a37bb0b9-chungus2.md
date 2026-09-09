@@ -18,6 +18,8 @@ material slowdown in this corpus; they do not establish a small speed
 improvement. The full frozen trace regression separately checks all
 39,032 operational outputs, including generator order and return control.
 
-The candidate’s measured Lean sources match the final sweep sources after
-removing comments. The `6193a37bb0b9` manifest records the measured source
-blobs independently of the measuring checkout’s commit across rebases.
+The candidate’s production search, refinement, graph substrate and cactus
+driver match the final sweep sources after removing comments. Subsequent
+proof cleanup removes redundant theorem arguments and proof steps. The
+`6193a37bb0b9` manifest records the measured source blobs independently of
+the measuring checkout’s commit across rebases.

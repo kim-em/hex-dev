@@ -35,7 +35,7 @@ structure Loop (n : Nat) where
   node : Frame n
   first : Bool
 
-/-- The engine's common preparation of an internal node's sweep. -/
+/-- The search's common preparation of an internal node's sweep. -/
 def Loop.prepare (ctx : Ctx n) (tcLevel : Nat) (l : Loop n) :
     Nat × Int × VSet n × Nat × Search n :=
   let f := l.node

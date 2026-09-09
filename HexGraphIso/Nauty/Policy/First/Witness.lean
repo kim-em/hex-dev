@@ -42,7 +42,7 @@ theorem matches_reference {ctx : Ctx n} {level : Nat} {st out : Search n}
     (congrArg (fun r => r.2.2) he)
 
 /-- The saved first reference retains uniformity along its actual descent,
-at precisely the all-same boundary returned by the complete engine call. -/
+at precisely the all-same boundary returned by the complete search call. -/
 theorem firstPath_witness {G : Colored n k} {tcLevel fuel level numcells last : Nat}
     {st leaf : Search n}
     (hp : Generic.FirstPath { g := rowsOf G } tcLevel fuel level numcells st last leaf)

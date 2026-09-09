@@ -67,7 +67,7 @@ theorem leafExit_reference (leaf : Leaf) (level : Nat) (st : Search n) :
     | exact admit_reference _
     | exact pruneReturn_reference level _
 
-/-- The engine's off-path operations preserve all first-path reference fields. -/
+/-- The search's off-path operations preserve all first-path reference fields. -/
 theorem referencePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     Generic.ReferencePolicy ctx inf tcLevel (Search.reference (n := n)) where
   visit := fun _ _ _ => rfl

@@ -64,7 +64,7 @@ theorem Realizes.mono {G : Colored n k} {gs : List (Perm n)} {before after : Lis
     (h : Realizes G gs after) (hsub : ∀ γ ∈ before, γ ∈ after) : Realizes G gs before :=
   fun γ hγ => h γ (hsub γ hγ)
 
-/-- A checked engine output realizes its own filtered trace. This uses
+/-- A checked search output realizes its own filtered trace. This uses
 only array admission and its initial-colour invariant. -/
 theorem realized_trace {G : Colored n k} {st : Search n}
     (h : RunInv G { g := rowsOf G } st) :

@@ -51,10 +51,7 @@ theorem GuidedAt.recover {G : Colored n k} {ctx : Ctx n} {store : Array Int}
     rw [hl, hp]
     exact hout.perm
   refine ⟨{ current with lab := out.lab }, hh.setLab hsize hperm, ?_, ?_, hc⟩
-  · have he := Nauty.recover_lab n (n + 2) level out
-    change (Nauty.recover (n + 2) level out).lab = _ at he
-
-    exact he.symm
+  · exact (Nauty.recover_lab (n + 2) level out).symm
   · exact hp.trans (recover_ptn_eq hok hout).symm
 
 /-- A canonical or saved target extends the executable guided descent. -/

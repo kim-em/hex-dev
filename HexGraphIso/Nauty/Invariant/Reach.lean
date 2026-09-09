@@ -140,19 +140,19 @@ private theorem ite_or {α : Type} {P : α → Prop} {c : Prop}
   · exact hb
 
 /-- `recover` never changes the current labelling. -/
-theorem recover_lab (n inf level : Nat) (st : Search n) :
+theorem recover_lab {n : Nat} (inf level : Nat) (st : Search n) :
     (recover inf level st).lab = st.lab := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.lab, ite_self]
 
-private theorem recover_canonlab (n inf level : Nat) (st : Search n) :
+private theorem recover_canonlab {n : Nat} (inf level : Nat) (st : Search n) :
     (recover inf level st).canonlab = st.canonlab := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
     apply_ite Search.canonlab, ite_self]
 
-private theorem recover_ptn_foldl (n inf level : Nat)
+private theorem recover_ptn_foldl {n : Nat} (inf level : Nat)
     (st : Search n) :
     (recover inf level st).ptn =
       (List.range n).foldl
@@ -171,14 +171,14 @@ private theorem recover_ptn_foldl (n inf level : Nat)
   rw [h1, forIn_range_eq', forIn_reopen_eq]
 
 /-- `recover` reopens exactly the entries above its receiving level. -/
-theorem recover_ptn (n inf level : Nat) (st : Search n)
+theorem recover_ptn {n : Nat} (inf level : Nat) (st : Search n)
     (q : Nat) :
     (recover inf level st).ptn[q]! =
       if q < n ∧ st.ptn[q]! > level then inf else st.ptn[q]! := by
   rw [recover_ptn_foldl, foldl_reopen_getElem]
 
 /-- Reopening a partition preserves its array size. -/
-theorem recover_ptn_size (n inf level : Nat) (st : Search n) :
+theorem recover_ptn_size {n : Nat} (inf level : Nat) (st : Search n) :
     (recover inf level st).ptn.size = st.ptn.size := by
   rw [recover_ptn_foldl, foldl_reopen_size]
 
@@ -237,7 +237,7 @@ theorem recover_out {G : Colored n k} {level : Nat}
     {st : Search n} (hlev : level + 1 < n + 2)
     (hreach : CellsReach G st.lab) :
     SearchOut G level level st (recover (n + 2) level st) := by
-  refine ⟨by rw [recover_lab], recover_ptn_size _ _ _ _, ?_, ?_, ?_,
+  refine ⟨by rw [recover_lab], recover_ptn_size _ _ _, ?_, ?_, ?_,
     ?_, ?_, ?_⟩
   · rw [recover_lab]
     exact hreach

@@ -3,7 +3,8 @@
     "report_path": "reports/graphiso-word-packed-design.md",
     "report_git_blob": "97b64991f454f00d6da30aac9e91c8bd68cfdf5f",
     "host": "chungus2",
-    "method": "Same-process A/B; two passes for the operation table. Original report provides rounded summaries, no individual samples or source revision."
+    "method": "Same-process A/B; two passes for the operation table. Original report provides rounded summaries, no individual samples or source revision.",
+    "report_url": "https://github.com/kim-em/hex-dev/blob/f45ccab8fed20616c89ae5da785b5c63d2bd4bc1/reports/graphiso-word-packed-design.md"
   },
   "operation_summary_ns": [
     {

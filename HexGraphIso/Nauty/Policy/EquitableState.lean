@@ -67,10 +67,7 @@ theorem recover_equitable {G : Colored n k} {ctx : Ctx n} {level numcells : Nat}
     Equitable ctx level result.lab result.ptn := by
   dsimp only
   rw [recover_ptn_eq hok hout]
-  have hl := Nauty.recover_lab n (n + 2) level out
-  change (Nauty.recover (n + 2) level out).lab = _ at hl
-
-  rw [hl]
+  rw [Nauty.recover_lab]
   exact heq.reorder hout.perm hok.ptnSize (searchOk_end hn0 hok hlevel)
 
 end Hex.GraphIso.Nauty
