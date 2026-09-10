@@ -438,8 +438,8 @@ private theorem splitIntegerRootFactorsAux_factors_distinct_roots
 
 /-- Public wrapper of the splitter distinct-roots invariant: factors emitted
 by `splitIntegerRootFactorsAux` are `linearFactorForRoot rᵢ` for some sublist
-`rs` of the input `roots`. Composed with `roots.Nodup` (e.g. via
-`integerRootCandidates_nodup`) to read off pairwise distinctness of the
+`rs` of the input `roots`. Composed with `roots.Nodup` to read off pairwise
+distinctness of the
 factor roots, used by the linear-vs-linear pairwise non-association
 case. -/
 theorem splitIntegerRootFactorsAux_factors_form

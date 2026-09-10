@@ -184,7 +184,7 @@ class Checker:
             # Exact qqbar roots selected by the emitted canonical discs must
             # have precisely the reported issue's rational coordinates.
             roots = d["roots"]
-            require(len(roots) == 2, "quadratic must have two distinct roots")
+            require(len(roots) == 2, "quadratic must return two roots")
             for record, sign in zip([*roots, d["arithmetic"]], [-1, 1, 1]):
                 require(record["poly"] == [1099513724929, 0, 1099511627776],
                         "unexpected quadratic minimal polynomial")

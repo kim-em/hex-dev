@@ -85,8 +85,12 @@ all `(2B+1)^(d+1)` coefficient vectors for candidate degree `d` before
 `trialDivisionPeelAux` can test its first polynomial. Exhaustiveness requires
 the search space, but does not require retaining that whole space in memory.
 Streaming these searches is separate work with corresponding trial-division
-proof changes. These allocations are behind the general modular routes;
-the repaired quadratic shortcut ran before those routes.
+proof changes. `ZPoly.factorTrial` reaches them directly: on the issue's
+negative-discriminant quadratic, the shortcut declines and the divisor-range
+allocation remains. `ZPoly.factorize` can also reach this backstop when modular
+planning or checked recovery fails. This fix removes the allocation from the
+quadratic shortcut used by ordinary canonical construction; it does not make
+the explicit trial API or its backstop resource-efficient.
 
 `ZPoly.algebraicRoots?` also exactifies roots individually. Each `exact?`
 factors the same enclosing polynomial again, and `exactFactor?` isolates a

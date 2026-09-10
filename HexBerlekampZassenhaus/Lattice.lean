@@ -162,7 +162,8 @@ def splitIntegerRootFactorsAux :
           (#[factor] ++ rest.1, rest.2)
       | none => splitIntegerRootFactorsAux target roots fuel
 
-/-- At most two integer roots from the quadratic formula. The integer square
+/-- For a polynomial of degree two, its at most two integer roots from the
+quadratic formula. Callers must establish `core.natDegree = 2`. The integer square
 root is computed by Newton iteration, so this does not enumerate divisors of
 the constant coefficient. Exact evaluation rejects nonintegral quotients;
 exact polynomial division in the caller checks every proposed factor. -/
@@ -171,10 +172,12 @@ def quadraticRootCandidates (core : ZPoly) : List Int :=
   let b := core.coeff 1
   let d := b * b - 4 * a * core.coeff 0
   if d < 0 then [] else
+    -- Candidate discovery is executable: core Nat.sqrt does not kernel-reduce.
     let s : Int := Nat.sqrt d.toNat
     if s * s ≠ d then [] else
       let r := (-b + s) / (2 * a)
       let t := (-b - s) / (2 * a)
+      -- Also handle repeated roots for callers outside squarefree normalization.
       (if r = t then [r] else [r, t]).filter fun x => core.eval x == 0
 
 /-- Factor a quadratic using its integer roots from the quadratic formula.

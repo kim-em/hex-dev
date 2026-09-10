@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/Lattice.lean",
+  "baseline_blob": "6f2c2b5929354ca36165003ce7766fdea2315753",
+  "current_blob": "acd18c2fdfc081a395f63884b2cd4c086f8429a8",
+  "reason": "Documentation-only clarification of the quadratic candidate precondition and reduction behavior, or removal of a stale lemma reference. No declaration, executable expression, proof, or benchmark input changes."
+}
