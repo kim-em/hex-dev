@@ -121,7 +121,17 @@ def _det_ideal_gens(record: dict[str, Any]) -> list[Any]:
 
 
 def _point_map(record: dict[str, Any], op: str, generators: tuple[Any, ...]):
+    """The integer point named by a ``rankAt/`` or ``inLocus/`` op.
+
+    Points are integer tuples (the emit driver reads them as integers of the
+    field); anything else is a malformed stream, not a value to coerce.
+    """
     point = json.loads(op.split("/", 1)[1])
+    if not isinstance(point, list) or not all(
+        isinstance(coordinate, int) and not isinstance(coordinate, bool)
+        for coordinate in point
+    ):
+        raise OracleMismatch(f"{op!r}: point must be a JSON list of integers")
     return dict(zip(generators, point, strict=True))
 
 
@@ -131,7 +141,7 @@ def _rank_at(record: dict[str, Any], op: str) -> list[int]:
     matrix, generators = _matrix(record)
     assignments = _point_map(record, op, generators)
     specialised = matrix.subs(assignments) if assignments else matrix
-    entries = [Rational(int(entry)) for entry in specialised]
+    entries = [Rational(entry) for entry in specialised]
     return [int(Matrix(record["rows"], record["cols"], entries).rank())]
 
 

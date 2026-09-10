@@ -31,7 +31,7 @@ universe u v
 namespace Matrix
 
 /-- A fold of additions from `0` with a nonzero total has a nonzero summand. -/
-theorem exists_ne_zero_of_foldl_add_ne_zero {α : Type v} {R : Type u} [Lean.Grind.Semiring R]
+private theorem exists_ne_zero_of_foldl_add_ne_zero {α : Type v} {R : Type u} [Lean.Grind.Semiring R]
     (xs : List α) (f : α → R) (h : xs.foldl (fun acc x => acc + f x) 0 ≠ 0) :
     ∃ x ∈ xs, f x ≠ 0 := by
   induction xs with
@@ -60,7 +60,7 @@ theorem selectCols_mul [Mul R] [Add R] [OfNat R 0] {q k : Nat}
 
 variable {K : Type u} [Lean.Grind.Field K] [DecidableEq K]
 
-/-- Vanishing direction: below the rank, every minor is zero. -/
+/-- Vanishing direction: once the minor size exceeds the rank, every minor is zero. -/
 theorem minors_eq_zero_of_rank_lt (A : Matrix K n m) {r : Nat} (h : rowReduce_rank A < r) :
     ∀ M ∈ minors r A, M = 0 := by
   intro M hM
@@ -76,7 +76,7 @@ private theorem vector_get_eq {α : Type v} {k : Nat} (v : Vector α k) (i : Fin
 
 /-- The pivot columns of the reduced echelon form, restricted to the pivot
 rows, form the identity. -/
-private theorem takeRows_selectCols_echelon_pivotCols (A : Matrix K n m) :
+private theorem pivotBlock_eq_identity (A : Matrix K n m) :
     takeRows (selectCols (rowReduce A).echelon (rowReduce A).pivotCols) (rowReduce A).rank
         (rowReduce_isRowReduced A).toIsEchelonForm.rank_le_n =
       Matrix.identity (R := K) (rowReduce A).rank := by
@@ -118,7 +118,7 @@ theorem exists_minor_ne_zero_rank (A : Matrix K n m) :
   let T₀ : Matrix K (rowReduce A).rank n := takeRows (rowReduce A).transform (rowReduce A).rank hρn
   have hTC : T₀ * C = Matrix.identity (R := K) (rowReduce A).rank := by
     rw [← takeRows_mul, ← selectCols_mul, E.toIsEchelonForm.transform_mul]
-    exact takeRows_selectCols_echelon_pivotCols A
+    exact pivotBlock_eq_identity A
   have hdet : det (T₀ * C) = 1 := by rw [hTC, det_identity]
   have hsum := det_mul_rectangular T₀ C
   rw [hdet] at hsum

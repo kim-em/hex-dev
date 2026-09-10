@@ -36,9 +36,8 @@ Matrix construction is hoisted into `prep`, so the timed region is the minor
 enumeration alone. Each target folds the resulting list into a structural hash,
 which forces every minor and gives LeanBench a conformance signal.
 
-Entries come from a fixed linear congruential generator seeded by the
-coordinate, so the inputs are identical on every host and no randomness is
-drawn at run time.
+Entries come from a fixed multiply-xorshift hash of the coordinate, so the
+inputs are identical on every host and no randomness is drawn at run time.
 
 The SPEC classifies SymPy, the same `combinations` and `det` loop the
 conformance oracle runs, as an `informational` comparator, so it is not a
@@ -75,15 +74,19 @@ def minorsCost (n r : Nat) : Nat :=
 
 /-! # Deterministic entries -/
 
-/-- One step of a linear congruential generator. The bench inputs are fixed at
-compile time; nothing is drawn from a source of randomness at run time. -/
-def lcg (state : Nat) : Nat :=
-  (1664525 * state + 1013904223) % 4294967296
+/-- One round of a 32-bit multiply-xorshift hash. The bench inputs are fixed at
+compile time; nothing is drawn from a source of randomness at run time. The
+multipliers are odd, so residues modulo the small moduli used below are not
+degenerate. -/
+def mix (x : Nat) : Nat :=
+  let y := (x * 2654435761) % 4294967296
+  let z := ((y ^^^ (y >>> 15)) * 2246822519) % 4294967296
+  z ^^^ (z >>> 13)
 
 /-- A deterministic pseudo-random `Nat` for the coordinate `(salt, row, col)`,
-mixed through two `lcg` steps so neighbouring coordinates do not correlate. -/
+mixed through two hash rounds so neighbouring coordinates do not correlate. -/
 def draw (salt row col : Nat) : Nat :=
-  lcg (lcg (8191 * salt + 97 * row + col + 1))
+  mix (mix (8191 * salt + 97 * row + col + 1) + salt)
 
 /-- A deterministic small integer entry in `[-9, 9]`. Small entries keep the
 intermediates inside machine words, so the registration measures the

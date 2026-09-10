@@ -119,6 +119,11 @@ def bordered2 : Matrix (P 5) 3 3 :=
 def invarBase : Matrix (P 2) 2 3 :=
   polyMatrix #v[#v[X 0, X 1, 1], #v[1, X 0, X 1]]
 
+/-- Columns `e_0, e_1, e_0, e_1`: the minors `1, 0, -1, 1, 0, 1` repeat, so the
+generating list must keep the first occurrences in order. -/
+def repeatCols : Matrix (P 0) 2 4 :=
+  intMatrix #v[#v[1, 0, 1, 0], #v[0, 1, 0, 1]]
+
 /-- An explicit unimodular integer matrix, of determinant `1`. -/
 def unimodular : Matrix (P 2) 2 2 :=
   polyMatrix #v[#v[1, 1], #v[1, 2]]
@@ -153,15 +158,16 @@ def case {k n m : Nat} (id : String) (A : Matrix (P k) n m) (r : Nat)
 
 /-- Every committed case, in stream order. -/
 def cases : List Case := [
-  case "empty/0x0/r0" empty00 0,
-  case "empty/0x2/r0" empty02 0,
-  case "empty/2x0/r0" empty20 0,
-  case "small/2x3/r0" small23 0,
-  case "square/2x2/r3" square22 3,
-  case "small/2x3/r3" small23 3,
-  case "small/3x2/r3" small32 3,
+  case "empty/0x0/r0" empty00 0 [#v[]],
+  case "empty/0x2/r0" empty02 0 [#v[]],
+  case "empty/2x0/r0" empty20 0 [#v[]],
+  case "small/2x3/r0" small23 0 [#v[]],
+  case "square/2x2/r3" square22 3 [#v[]],
+  case "small/2x3/r3" small23 3 [#v[]],
+  case "small/3x2/r3" small32 3 [#v[]],
   case "zero/2x2/r1" zero22 1 [#v[]],
   case "distinct/2x4/r2" distinct24 2 [#v[]],
+  case "repeat/2x4/r2" repeatCols 2 [#v[]],
   case "singular/3x3/r2" singular33 2 [#v[]],
   case "singular/3x3/r3" singular33 3 [#v[]],
   case "generic/2x3/r2" generic23 2,

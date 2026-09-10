@@ -36,9 +36,10 @@ Covered properties:
   minors, the Vandermonde determinants `∏_{i<j} (x_j - x_i)`, and the
   bordered identity's single generator `t - v · u`;
 - `detIdealGens r A` keeps one copy of a repeated minor while `minors r A`
-  keeps both;
+  keeps both, and keeps first occurrences in enumeration order;
 - the rank-versus-minors theorem, executably: `rankAt A p < r` agrees with
-  the decision of `InLocus r A p`, and `rank_eq_iff_minors` applied to a
+  the decision of `InLocus r A p`, including at `r = 0` and above the shape,
+  and `rank_eq_iff_minors` applied to a
   `3 × 3` matrix over `Rat` of rank `2`;
 - invariance under an explicit unimodular integer left factor: the rank and
   the locus decision at two points are unchanged.
@@ -121,6 +122,11 @@ transpose swaps the outer and inner loops. -/
 
 /-! The zero minor is dropped and the repeated minor keeps one copy. -/
 #guard Matrix.detIdealGens 2 equalCols = [X 0 * X 3 - X 1 * X 2]
+
+/-! Repeats among several distinct values keep the first occurrences, in
+enumeration order. -/
+#guard Matrix.minors 2 repeatCols = [C 1, 0, C (-1), C 1, 0, C 1]
+#guard Matrix.detIdealGens 2 repeatCols = [C 1, C (-1)]
 
 /-! `I_0(A)` is the unit ideal and `I_r(A)` above the shape is the zero
 ideal. -/
@@ -229,6 +235,21 @@ private def rankLocusAgrees {k n m : Nat} (r : Nat) (A : Matrix (P k) n m)
 #guard rankLocusAgrees 3 bordered2 #v[2, 3, 5, 7, 30]
 #guard rankLocusAgrees 1 zero22 #v[]
 #guard rankLocusAgrees 2 distinct24 #v[]
+
+/-! The boundaries: at `r = 0` the minor `1` never vanishes and the rank is
+never below `0`; above the shape the vacuous locus holds and the rank is below
+`r`, on the empty shapes and on both rectangular orientations. -/
+#guard rankLocusAgrees 0 empty00 #v[]
+#guard rankLocusAgrees 0 empty02 #v[]
+#guard rankLocusAgrees 0 empty20 #v[]
+#guard rankLocusAgrees 0 small23 #v[]
+#guard rankLocusAgrees 3 square22 #v[]
+#guard rankLocusAgrees 3 small23 #v[]
+#guard rankLocusAgrees 3 small32 #v[]
+#guard !decide (Matrix.InLocus 0 (toRat empty02) (pointOf #v[]))
+#guard decide (Matrix.InLocus 3 (toRat small32) (pointOf #v[]))
+#guard Matrix.rankAt (toRat empty20) (pointOf #v[]) = 0
+#guard Matrix.rankAt (toRat small32) (pointOf #v[]) = 2
 
 /-- A `3 × 3` matrix over `Rat` with integer entries. -/
 def ratSingular : Matrix Rat 3 3 :=
