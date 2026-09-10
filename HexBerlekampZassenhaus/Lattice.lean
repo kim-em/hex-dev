@@ -28,6 +28,7 @@ public import HexBasic.ArrayDecEq
 
 public import HexBerlekampZassenhaus.FactorizationResult
 public meta import HexBerlekampZassenhaus.FactorizationResult
+import all HexPolyZ.Mignotte
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
@@ -172,8 +173,8 @@ def quadraticRootCandidates (core : ZPoly) : List Int :=
   let b := core.coeff 1
   let d := b * b - 4 * a * core.coeff 0
   if d < 0 then [] else
-    -- Candidate discovery is executable: core Nat.sqrt does not kernel-reduce.
-    let s : Int := Nat.sqrt d.toNat
+    -- Keep candidate discovery reducible for ordinary kernel proofs.
+    let s : Int := ZPoly.floorSqrt d.toNat
     if s * s ≠ d then [] else
       let r := (-b + s) / (2 * a)
       let t := (-b - s) / (2 * a)
@@ -197,6 +198,9 @@ def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
       none
   else
     none
+
+-- Kernel reduction of the positive-discriminant shortcut is part of its API.
+example : quadraticRootCandidates (DensePoly.ofCoeffs #[-6, 1, 1]) = [2, -3] := by decide
 
 /-- Integer values in `[-B, B]`, listed in increasing order. -/
 private def boundedIntegerList (B : Nat) : List Int :=

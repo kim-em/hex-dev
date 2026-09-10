@@ -1,6 +1,0 @@
-{
-  "path": "HexBerlekampZassenhaus/TrialFactorization.lean",
-  "baseline_blob": "a9aa21aa14a4b2c55b1819010488b6e7723e9db2",
-  "current_blob": "c887e0f8366ee05f6f5634149e6926ac0ec69dc2",
-  "reason": "Documentation-only clarification of the quadratic candidate precondition and reduction behavior, or removal of a stale lemma reference. No declaration, executable expression, proof, or benchmark input changes."
-}

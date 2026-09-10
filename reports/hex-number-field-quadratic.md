@@ -8,7 +8,8 @@ Here that requested over a trillion list entries. Isolation and squarefree
 normalization were inexpensive; comparison was never invoked.
 
 `quadraticIntegerRootFactors?` now obtains at most two candidates from the
-quadratic formula, using Newton integer square root on the discriminant.
+quadratic formula, using the existing kernel-reducible `ZPoly.floorSqrt`
+Newton iteration on the discriminant.
 Negative and nonsquare discriminants yield no integer candidates. Exact
 polynomial evaluation rejects rounded nonintegral quotients, and the existing
 exact-division splitter validates each proposed linear factor. A declined
