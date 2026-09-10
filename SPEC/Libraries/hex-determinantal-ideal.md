@@ -82,8 +82,13 @@ determinant of `selectedSubmatrix A rows cols` for strictly increasing
 `rows : Vector (Fin n) r` and `cols : Vector (Fin m) r`. The strictly
 increasing tuples are exactly the members of `selectedColumnTuples r n` and
 `selectedColumnTuples r m` (`mem_selectedColumnTuples_iff` in
-`HexDeterminant/Gram.lean`), so every row set and column set is listed once,
-in lexicographic order of the tuples.
+`HexDeterminant/Gram.lean`), so every row set and column set is listed once.
+The order is the one `selectedColumnTuplesUpTo` produces: tuples are grouped
+by their last entry in increasing order, and within a group the prefixes
+recur in the same order, so `selectedColumnTuples 2 4` is
+`01, 02, 12, 03, 13, 23`. This is colexicographic order, not the
+lexicographic order `itertools.combinations` produces, and the oracle
+below sorts its combinations by reversed tuple to match.
 
 The two boundary cases are fixed by the definitions rather than by special
 cases in the code:
@@ -109,14 +114,16 @@ hold with no side conditions, and they make the main theorem true at
 ## API
 
 All definitions are executable and `@[expose]`d so that `decide +kernel`
-can evaluate them on closed inputs.
+can evaluate them on closed inputs. The `MvPoly` rows assume the instances
+every `HexMvPoly` operation assumes: `[Std.TransCmp cmp]`,
+`[Std.LawfulEqCmp cmp]` and `[DecidableEq R]` on the coefficient ring.
 
 | Operation | Type and contract |
 | --- | --- |
 | `minors r A` | `[Lean.Grind.Ring R] (A : Matrix R n m) (r : Nat) : List R`. Every `r × r` minor of `A`, rows outer and columns inner, both in the order of `selectedColumnTuples`. Length `n.choose r * m.choose r`. |
 | `detIdealGens r A` | `[Lean.Grind.Ring R] [DecidableEq R] : List R`. `minors r A` with the zero entries removed and exact duplicates removed, keeping first occurrences. A generating list for `I_r(A)`. |
 | `Matrix.map A f` | `(A : Matrix R n m) (f : R → S) : Matrix S n m`, entrywise. Added to `HexMatrix/Basic.lean` if still absent when this library is implemented (at the time of writing `HexMatrix` has `mapRows` and `mapRowsIdx` but no entrywise map), with `getElem_map`. |
-| `specialize A p` | `[Lean.Grind.CommRing R] [DecidableEq R] (A : Matrix (MvPoly k R cmp) n m) (p : Vector R k) : Matrix R n m`, defined as `A.map (MvPoly.eval p)`. |
+| `specialize A p` | `[Lean.Grind.CommRing R] (A : Matrix (MvPoly k R cmp) n m) (p : Fin k → R) : Matrix R n m`, defined as `A.map (MvPoly.eval p)`. The point is a function, as `MvPoly.eval` takes it. |
 | `rankAt A p` | `[Lean.Grind.Field F] [DecidableEq F] : Nat`, defined as `rowReduce_rank (specialize A p)`. The rank of the polynomial matrix at the point `p`. |
 | `InLocus r A p` | `Prop`, `∀ M ∈ minors r A, MvPoly.eval p M = 0`, with a `Decidable` instance. The point `p` lies in the zero set of `I_r(A)`. |
 
@@ -160,7 +167,7 @@ swaps the roles of the outer and inner loops. It comes from
 ## The rank-versus-minors theorem
 
 Proved in `Rank.lean`, over a `Lean.Grind.Field K` with `DecidableEq K`,
-about the rank computed by `HexRowReduce.rowReduce`:
+about the rank computed by `Hex.Matrix.rowReduce` (library `HexRowReduce`):
 
 ```lean
 theorem rank_lt_iff_minors_eq_zero (A : Matrix K n m) (r : Nat) :
@@ -193,7 +200,8 @@ unnecessary, and so that the conformance suite tests them.
 ### Proof route
 
 The proof is Mathlib-free and uses three existing results: the row-reduced
-echelon certificate (`rowReduce_isRowReduced`, giving `IsRowReduced A D`),
+echelon certificate (`rowReduce_isRowReduced`, giving
+`IsRowReduced A (Hex.Matrix.rowReduce A)`),
 rectangular Cauchy-Binet (`det_mul_rectangular` and `det_minor_mul` in
 `HexDeterminant/Gram.lean`) and the Laplace expansion
 (`det_eq_foldl_laplace_col`). Mathlib's
@@ -215,34 +223,36 @@ over `middle ∈ selectedColumnTuples r ρ`. Since `ρ < r`, that list is empty
 **Nonzero-minor direction (`r ≤ ρ` implies some `r × r` minor is
 nonzero).** First a nonzero `ρ × ρ` minor, then a descent to size `r`.
 
-1. *The pivot columns of `A` are the first `ρ` columns of `T⁻¹`.*
+1. *The pivot columns of `A` are sent to a padded identity by `T`.*
    `pivotCols_sorted` says `J` is strictly increasing, so
-   `J ∈ selectedColumnTuples ρ m`. In the reduced echelon form,
-   `selectCols E J = pad (identity ρ) n ρ`: rows below `ρ` are zero
-   (`zero_row`), and within the first `ρ` rows the pivot entries are `1`
-   (`pivot_one`) and the other entries of a pivot column are `0`
-   (`above_pivot_zero`, `below_pivot_zero`). From `transform_mul`
-   (`T * A = E`) and `transform_inv` (`Tinv * T = identity n`),
-   `A = Tinv * E`, so `selectCols A J = Tinv * pad (identity ρ) n ρ`, which
-   is the `n × ρ` matrix `C` formed by the first `ρ` columns of `Tinv`
-   (a new lemma `selectCols_mul`, the column analogue of
-   `selectedSubmatrix_mul`).
-2. *The first `ρ` rows of `T` are a left inverse of `C`.*
-   `mul_eq_one_comm` turns `Tinv * T = identity n` into
-   `T * Tinv = identity n`, and `takeRows_mul` with `pad_identity_mul` give
-   `takeRows T ρ * C = identity ρ`, so `det (takeRows T ρ * C) = 1`.
+   `J ∈ selectedColumnTuples ρ m`. Let `C := selectCols A J : Matrix K n ρ`.
+   Column selection commutes with left multiplication
+   (a new lemma `selectCols_mul : selectCols (P * X) cols = P * selectCols X cols`,
+   the column analogue of `selectedSubmatrix_mul`), so `transform_mul`
+   (`T * A = E`) gives `T * C = selectCols E J`. In the reduced echelon
+   form, `selectCols E J = pad (identity ρ) n ρ`: rows at or below `ρ` are
+   zero (`zero_row`), and within the first `ρ` rows the pivot entries are
+   `1` (`pivot_one`) and the other entries of a pivot column are `0`
+   (`above_pivot_zero`, `below_pivot_zero`). No inverse of `T` is used.
+2. *The first `ρ` rows of `T` are a left inverse of `C`.* With
+   `hρ : ρ ≤ n` from `rank_le_n`, `takeRows_mul` gives
+   `takeRows T ρ hρ * C = takeRows (T * C) ρ hρ = takeRows (pad (identity ρ) n ρ) ρ hρ`,
+   and the last matrix is `identity ρ` (a new lemma
+   `takeRows_pad_identity`; the private `pad_identity_mul` in
+   `HexRowReduce/Api.lean` is about a padded identity on the left and does
+   not apply). Hence `det (takeRows T ρ hρ * C) = 1`.
 3. *Cauchy-Binet produces a nonzero `ρ × ρ` minor of `A`.*
-   `det_mul_rectangular` applied to `takeRows T ρ : Matrix K ρ n` and
+   `det_mul_rectangular` applied to `takeRows T ρ hρ : Matrix K ρ n` and
    `C : Matrix K n ρ` writes `1` as a `foldl` sum over
    `I ∈ selectedColumnTuples ρ n` of
-   `det (columnTupleMatrix C.transpose I) * det (columnTupleMatrix (takeRows T ρ) I)`.
+   `det (columnTupleMatrix C.transpose (columnTupleVectorFn I)) * det (columnTupleMatrix (takeRows T ρ hρ) (columnTupleVectorFn I))`.
    Since `1 ≠ 0`, some summand is nonzero (a small lemma: a `foldl` of
    additions from `0` whose summands are all zero is zero), hence
-   `det (columnTupleMatrix C.transpose I) ≠ 0` for some strictly increasing
-   `I`. Entrywise, `columnTupleMatrix C.transpose I` is the transpose of
-   `selectedSubmatrix A I J`, so by `det_transpose`
-   `det (selectedSubmatrix A I J) ≠ 0`, and this value is a member of
-   `minors ρ A` by `mem_minors_iff`.
+   `det (columnTupleMatrix C.transpose (columnTupleVectorFn I)) ≠ 0` for
+   some strictly increasing `I`. Entrywise, that matrix is the transpose of
+   `selectedSubmatrix A I J` (its `(i, j)` entry is `C[I[j]][i] = A[I[j]][J[i]]`),
+   so by `det_transpose` `det (selectedSubmatrix A I J) ≠ 0`, and this
+   value is a member of `minors ρ A` by `mem_minors_iff`.
 4. *Descent by one.* If `det (selectedSubmatrix A rows cols) ≠ 0` with
    `rows, cols` strictly increasing of length `k + 1`, then Laplace
    expansion along column `0` (`det_eq_foldl_laplace_col`) writes the
@@ -300,8 +310,9 @@ rankAt A p < r  ↔  InLocus r A p
 This requires that `MvPoly.eval p` commutes with `det`, which is a ring
 homomorphism property. `HexMvPoly` does not state `eval_add`/`eval_mul` in
 the Mathlib-free layer, so the theorem `rankAt_lt_iff_inLocus` is proved in
-the companion through `HexMvPolyMathlib.aeval_eq_eval` and
-`RingHom.map_det`. The Mathlib-free layer ships the definitions, the
+the companion: `HexMvPolyMathlib.aeval p` is an `AlgHom` whose underlying
+function is `MvPoly.eval p` (`HexMvPolyMathlib.aeval_eq_eval`), and
+`RingHom.map_det` applies to its `toRingHom`. The Mathlib-free layer ships the definitions, the
 `Decidable` instance, and the unfolding lemmas `specialize_getElem`,
 `rankAt_eq` and `inLocus_iff`, so that a kernel evaluation of
 `InLocus r A p` on closed inputs is available without Mathlib.
@@ -315,7 +326,8 @@ with a particular `r`:
 - "rank drops below the generic rank" is `InLocus g A p` where `g` is the
   rank of `A` over the fraction field of the coefficient ring. Computing
   `g` is the job of `hex-rank` (over a general domain) or
-  `HexPolySmith.snfRank` (over `F[x]`); this library takes `g` as an input.
+  `Hex.PolyMatrix.snfRank` in `hex-poly-smith` (over `F[x]`); this library
+  takes `g` as an input.
   The companion proves that no specialisation has rank above `g`.
 
 Nothing here asserts that the complement of the locus is nonempty. Over a
@@ -378,8 +390,9 @@ Checked against the pinned Mathlib, `v4.34.0-rc2` (Mathlib commit
     `rank_of_det_ne_zero` and `rank_submatrix_le`. That is the
     nonzero-minor direction for an echelon matrix, with no theorem
     producing an echelon form of an arbitrary matrix.
-  - `Matrix.Echelon.Decomposition.rank_eq`
-    (`Mathlib/LinearAlgebra/Matrix/Echelon/Decomposition.lean`): rank from
+  - `Echelon.Decomposition.rank_eq`
+    (`Mathlib/LinearAlgebra/Matrix/Echelon/Decomposition.lean`, in the
+    top-level namespace `Echelon`, not `Matrix.Echelon`): rank from
     a certificate `L * A.submatrix σ id` pivoted, over `[CommRing R]
     [IsDomain R]`; this is the checker `norm_rank` uses, and the
     certificate is produced by meta code, not by a theorem.
@@ -449,9 +462,9 @@ both.
 
 | `op` | Lean value | Oracle recomputation and comparison |
 | --- | --- | --- |
-| `minors` | the list `minors r A` in enumeration order | `itertools.combinations` of rows and of columns in lexicographic order, `Matrix.extract(...).det()`, compared polynomial by polynomial after `expand`, in the same order |
+| `minors` | the list `minors r A` in enumeration order | `itertools.combinations` of rows and of columns, each sorted by reversed tuple to reproduce the colexicographic order of `selectedColumnTuples`, `Matrix.extract(...).det()`, compared polynomial by polynomial after `expand`, in the same order |
 | `detIdealGens` | `detIdealGens r A` | the nonzero distinct minors, compared as sets of expanded polynomials |
-| `rankAt` | `rankAt A p` for a point `p` over `ℚ` | `Matrix.subs(...).rank()` |
+| `rankAt` | `rankAt A p` for a point `p` over `Rat` | `Matrix.subs(...).rank()` over `QQ` |
 | `inLocus` | `decide (InLocus r A p)` | every minor evaluates to zero at `p` |
 
 **Cases that must be present**, since these are what a plausible
@@ -463,6 +476,10 @@ implementation gets wrong:
   rectangular orientations;
 - the zero matrix at `r = 1`, checking that `minors` is a list of zeros of
   the right length and `detIdealGens` is empty;
+- a `2 × 4` matrix of eight distinct integers at `r = 2`, whose six minors
+  are pairwise distinct, so that the colexicographic order of the column
+  selections is checked against the oracle and a lexicographic enumeration
+  fails;
 - the generic `2 × 3` matrix of six indeterminates at `r = 2`, whose three
   minors are the classical generators, and its transpose, checking
   `minors_transpose` as a permutation;
@@ -478,9 +495,11 @@ implementation gets wrong:
   no point is in the locus at `r = k` and `rankAt ≥ k` everywhere, while
   `detIdealGens (k + 1)` is the single polynomial `t - v · u` up to sign,
   with points on and off the hypersurface `t = v · u`;
-- a `3 × 3` matrix over `Int` of rank `2`, checking `rank_eq_iff_minors` by
-  `decide +kernel` in `Conformance.lean`: some `2 × 2` minor is nonzero and
-  the determinant is zero;
+- a `3 × 3` matrix over `Rat` with integer entries and rank `2`, checking
+  `rank_eq_iff_minors` by `decide +kernel` in `Conformance.lean`: some
+  `2 × 2` minor is nonzero and the determinant is zero. `Int` is not a
+  `Lean.Grind.Field`, so the rank theorem is exercised over `Rat` here and
+  over `Int.castRingHom ℚ` in the companion's tests;
 - invariance on one fixture: for an explicit unimodular integer `P`,
   `rankAt (P * A) p = rankAt A p` and `InLocus r (P * A) p ↔ InLocus r A p`
   at two points.
@@ -510,11 +529,18 @@ runs, `informational`: SymPy chooses its own per-minor determinant
 algorithm (Bareiss or Berkowitz) and a ratio against a Leibniz sum compares
 algorithms, not implementations.
 
-**Decision rule written in advance.** Within a family, the wallclock ratio
-between consecutive `r` must be within a constant factor of the ratio of
-the operation counts above. A ratio that grows faster than the count
-indicates that the enumeration allocates per minor more than the `r × r`
-submatrix it needs, which is a bug rather than a benchmark result.
+**What the curve is for.** The operation count above is the model the
+measurements are compared with, not an acceptance threshold. The
+`dense-int-minors` family isolates the enumeration, since integer
+operations at these sizes cost about the same at every `r`; the
+`symbolic-2var` family adds polynomial arithmetic whose per-operation cost
+grows with the supports, so its curve is expected to rise faster than the
+count. A `dense-int-minors` curve that departs from the model by more than
+the noise between adjacent arms is a result to explain by profiling
+(per-minor allocation beyond the `r × r` submatrix, permutation-sign
+computation, host activity recorded as context), per
+[SPEC/benchmarking.md](../benchmarking.md); it is not by itself a bug
+verdict.
 
 ## File organisation
 
@@ -548,10 +574,11 @@ bench/HexDeterminantalIdeal/Bench.lean
   rank certificate. It is not required to.
 - `hex-smith` and `hex-poly-smith` keep their `noncomputable`
   determinantal-divisor copies. Replacing them by an import of this
-  library would add `hex-row-reduce` and `hex-mv-poly` to their dependency
-  closures for the sake of a specification function, which is not worth it
-  until this library is released and the module split above lets
-  `Minors.lean` be imported alone.
+  library would add the whole package, and with it `hex-row-reduce` and
+  `hex-mv-poly`, to their dependency closures for the sake of a
+  specification function. Importing only `Minors.lean` avoids the Lean
+  imports but not the package requirement, so the duplication stays until
+  the enumeration is worth its own package.
 
 ## Open questions
 

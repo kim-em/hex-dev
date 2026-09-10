@@ -95,26 +95,31 @@ Proof: by `le_rank_iff_exists_minor_map_ne_zero` twice. A nonzero
 `φ M` forces `M ≠ 0`, and `algebraMap R (FractionRing R)` is injective on a
 domain, so `algebraMap M ≠ 0`. This is the statement "no specialisation has
 rank above the generic rank". The generic rank itself is computed
-elsewhere (`hex-rank`, or `HexPolySmith.snfRank` with
+elsewhere (`hex-rank`, or `Hex.PolyMatrix.snfRank` in `hex-poly-smith` with
 `rank_eq_ratFunc_rank` over `F[x]`) and enters only as the right side.
 
-For polynomial matrices, over `[Field F]`, `A : Hex.Matrix (MvPoly k F cmp) n m`
-and a point `p : Vector F k`:
+For polynomial matrices, over `[Field F] [DecidableEq F]` with
+`[Std.TransCmp cmp] [Std.LawfulEqCmp cmp]` (the instances `HexMvPoly` and
+`HexMvPolyMathlib.equiv` assume), `A : Hex.Matrix (MvPoly k F cmp) n m` and
+a point `p : Fin k → F`:
 
 ```lean
 theorem rankAt_lt_iff_inLocus (A) (p) (r : Nat) :
     Hex.Matrix.rankAt A p < r ↔ Hex.Matrix.InLocus r A p
-theorem mem_zeroLocus_iff_rank_lt (A) (p : Fin k → F) (r : Nat) :
+theorem mem_zeroLocus_iff_rank_lt (A) (p) (r : Nat) :
     p ∈ MvPolynomial.zeroLocus F
         (Ideal.span (HexMvPolyMathlib.equiv '' {M | M ∈ Hex.Matrix.minors r A})) ↔
-      ((matrixEquiv A).map (HexMvPolyMathlib.aevalMathlib p)).rank < r
+      ((matrixEquiv A).map (HexMvPolyMathlib.aeval p)).rank < r
 ```
 
-Both are the headline theorem with `φ` the evaluation homomorphism at `p`.
-`HexMvPolyMathlib.aeval_eq_eval` identifies the executable `MvPoly.eval p`
-with `MvPolynomial.aeval p` composed with `HexMvPolyMathlib.equiv`, which
-is how `rankAt` and `InLocus`, defined through `MvPoly.eval`, meet the
-ring-homomorphism hypothesis. `mem_zeroLocus_iff_rank_lt` uses
+Both are the headline theorem with `φ := (HexMvPolyMathlib.aeval p).toRingHom`,
+the executable evaluation as an `AlgHom` (`HexMvPolyMathlib/Aeval.lean`).
+`HexMvPolyMathlib.aeval_eq_eval` says its underlying function is
+`MvPoly.eval p`, which is how `rankAt` and `InLocus`, defined through
+`MvPoly.eval`, meet the ring-homomorphism hypothesis, and
+`HexMvPolyMathlib.aeval_apply` rewrites it as `MvPolynomial.aeval p` after
+`HexMvPolyMathlib.equiv`, which is how the zero-locus membership condition
+meets it. `mem_zeroLocus_iff_rank_lt` uses
 `MvPolynomial.zeroLocus` from `Mathlib/RingTheory/Nullstellensatz.lean`,
 whose membership condition `∀ q ∈ I, aeval p q = 0` reduces to the
 generators by `Ideal.span_induction`.
