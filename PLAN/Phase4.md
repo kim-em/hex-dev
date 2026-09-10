@@ -266,9 +266,8 @@ As of the merge of the PR introducing the new exit criteria above
 (profile coverage, headline report, gating-comparator wiring,
 Attribution rule, empty-Concerns), every library currently at
 `done_through ≥ 4` is re-evaluated under those criteria. The
-re-evaluation is queued via a single umbrella `directive`
-issue with a checkbox per library; per-library follow-on issues
-are filed only when the audit identifies actual gaps. Libraries
+re-evaluation is tracked in a single audit issue with a checkbox per
+library; actual gaps are recorded in the affected SPEC's issue. Libraries
 already passing all new criteria stay at `done_through: 4`
 unchanged.
 
@@ -276,7 +275,7 @@ The ordered complexity-mode rule is likewise an audit reset. Its merge queues
 one umbrella audit of every library at `done_through ≥ 4`; existing passing
 two-sided registrations need no relabelling until their report is revised, but
 an inconclusive result or non-empty Concern is not grandfathered. The audit
-files per-library remediation issues only where the ordered rule exposes an
+records remediation work in each affected SPEC's issue where the rule exposes an
 actual gap, and applies the normal rollback rule there.
 
 Record completion by bumping `libraries.yml[L].done_through` to `4`.
