@@ -375,7 +375,9 @@ prove incomparability, and `<`/`≤` also reject impossible real inequalities.
 Real-real comparisons try stored intervals before computing a product
 separation bound and refining geometrically. Inconclusive complex comparisons
 compute an exact subtraction, so that fallback can
-cost as much as a field operation. Use the real algebraic type for
+cost as much as a field operation. Equal imaginary parts pay for inconclusive
+refinement before subtraction; the recorded same-imaginary benchmark was about
+9% slower than the former comparison on the measured host. Use the real algebraic type for
 sorting real values by exact comparison. The companion's
 {name}`Hex.AlgebraicNumber.toComplexOrder` preserves and reflects this order.
 

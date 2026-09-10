@@ -13,11 +13,11 @@ public import HexNumberField.Interval
 public section
 
 /-!
-Exact primitives on canonical algebraic numbers that only need the stored
-isolations: the imaginary unit, complex conjugation, and the exact order on
-real numbers. Each works at a fixed precision derived from `mahlerPrec`, at
-which the approximation balls of two distinct roots of one polynomial are
-disjoint, so no API here refines without bound.
+Exact primitives on canonical algebraic numbers: the imaginary unit, real
+comparison, distances, and nearest-root selection. Real comparison first uses
+stored isolations, then bounded geometric refinement up to a precision derived
+from the product polynomial's separation bound. Inconclusive refinement uses
+the exact comparison at fixed separation precision; no API refines without bound.
 -/
 
 namespace Hex.AlgebraicNumber

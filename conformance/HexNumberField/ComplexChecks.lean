@@ -83,7 +83,9 @@ private def fastPaths (_ : Unit) : Bool :=
     (RootSelection.select? roots).isNone && RootSelection.maximum? roots == some i &&
     (#[i, s + i, 2 * i, t + i]).all (fun a =>
       (#[i, s + i, 2 * i, t + i]).all (fun b =>
-        a.partialCompare b == a.partialCompareExact b))
+        a.partialCompare b == a.partialCompareExact b &&
+        decide (a < b) == AlgebraicNumber.ordered true (a.partialCompareExact b) &&
+        decide (a ≤ b) == AlgebraicNumber.ordered false (a.partialCompareExact b)))
 
 private def unityAndNorms (_ : Unit) : Bool :=
   let i := AlgebraicNumber.I

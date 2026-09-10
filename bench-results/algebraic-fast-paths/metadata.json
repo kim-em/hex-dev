@@ -18,5 +18,6 @@
     "HexNumberField/RootSelection.lean": "438a361c636dc7e8677f69f596f25ee009ab70b1b5db35083f9e94fce1af4092",
     "HexNumberField/Radical.lean": "f637f576d2eb0c749600406c4c16adb4f246bf2dbe9ae7a47d0d4ae7b1a27bcc",
     "HexNumberField/Unity.lean": "8530fa6a55fc025964996299b1c93dab3f648983b636e197d43321f17f6412ba"
-  }
+  },
+  "source_commit": "d5f2f0344211b633f75f855f2cf53addd74fa8c7"
 }

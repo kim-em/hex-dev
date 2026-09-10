@@ -13,7 +13,7 @@ Stored intervals substantially reduce work on separated values. The same-imagina
 | unity-eighth/selection | 1981821.928 | 10966.548 | 180.72 |
 | unity-eighth/complete | 1545769.055 | 15565.326 | 99.31 |
 
-Build with `lake build hexnumberfield_bench` and run `.lake/build/bin/hexnumberfield_bench algebraic-fast-compare` on an automatically selected CPU. `metadata.json` records placement, host load, toolchain, base revision and source hashes; `samples.jsonl` retains every completed observation. There was no rerun or sample exclusion.
+Build with `lake build hexnumberfield_bench` and run `.lake/build/bin/hexnumberfield_bench algebraic-fast-compare` on an automatically selected CPU. `metadata.json` records placement, host load, toolchain, base revision, measurement source revision and source hashes; `samples.jsonl` retains every completed observation. There was no rerun or sample exclusion.
 
 Each case has eight adjacent blocks, alternating reference/new and new/reference. Both arms use 64 calls per comparison block or two per selection/extraction block. Inputs are preconstructed, and operands or enumeration order alternate within a block. Construction is recorded separately. The driver checks exact agreement before measurement. The old real comparison always uses the product separation precision. The old complex comparison uses exact subtraction when its cheap equality/reality/side tests cannot decide. The selection reference canonicalizes all candidates and computes their real coordinates; it shares the current real comparator with the new selector. These compare operation strategies on the same representation, not two historical executables.
 

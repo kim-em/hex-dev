@@ -86,7 +86,7 @@ private def emitComplex : IO Unit := do
       ("complex-lower", -i, i, 2), ("complex-same-side", i, 2 * i, 2),
       ("complex-above-cut", -1 + i / 16, -1, 2),
       ("complex-below-cut", -1 - i / 16, -1, 2),
-      ("complex-sixteenth", i, -i, 4)] do
+      ("complex-sixteenth", i, -i, 4), ("complex-reverse-line", 1 + i, i, 1)] do
     IO.eprintln s!"emitting {case}"
     emit case "complex" [("a", algebraic a), ("b", algebraic b),
       ("conj", algebraic a.conj), ("re", real a.re), ("im", real a.im),

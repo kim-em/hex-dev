@@ -368,7 +368,7 @@ REQUIRED_CASES = {
                    "unity/2/5", "unity/-1/6", "unity/7/6", "unity/1/8", "unity/1/16"}),
         ("norm", {"zero", "negative", "unit", "gaussian", "irrational"}),
         ("complex", {"complex-zero", "complex-rational", "complex-cut", "complex-upper",
-                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut", "complex-sixteenth", "complex-close-imag"}),
+                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut", "complex-sixteenth", "complex-close-imag", "complex-reverse-line"}),
         ("order", {"zero", "rational", "sqrt-signs", "sqrt-lower", "sqrt-upper", "negative-lower",
                    "negative-upper", "equal-sqrt", "equal-square", "equal-cancel", "cross-factor",
                    "mignotte-close", "mignotte-left-rational", "mignotte-right-rational"}),
