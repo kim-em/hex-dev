@@ -481,3 +481,102 @@ real part on the upper half circle.
 laws. `RootSelection.integerRoots?_mem` derives completeness of the lazy
 integer isolations from the canonical solver, while `maximum?_spec` covers
 both interval selection and the exact fallback.
+
+## Direct radical proof obligations
+
+The [direct radical design](../../HexNumberField/SPEC/hex-number-field.md#direct-certified-radicals-and-cyclotomic-embeddings) is a
+future replacement for the general solver route. The following inventory is
+against Lean `v4.34.0-rc2` and Mathlib revision
+`85e3a25e006c35636f0e53b0e9296caca2685bc0` from `lake-manifest.json`.
+Names in the missing-obligation table are proposed declarations, not existing
+infrastructure. A proof of an approximate residual or of `b^n = a` alone does
+not establish the public principal-root contract.
+
+### Available bridges and their limits
+
+- [HexNumberFieldMathlib/PrincipalRoot.lean](../PrincipalRoot.lean) contains
+  `PrincipalRoot.arg_root`, `sector`, and `eq_of_max`. They characterize the
+  branch and selector, but do not give executable interval bounds or iteration
+  counts. `Radical.lean` already proves `nthRoot_toComplex`, `nthRoot_pow`,
+  `sqrt_toComplex`, and `sqrt_sq`; those statements remain unchanged.
+- [HexRootsMathlib/MahlerPrec.lean](../../HexRootsMathlib/MahlerPrec.lean)
+  supplies `mahlerPrec_separates` and `root_eq_of_discsMeet`.
+  [Refinement.lean](../../HexRootsMathlib/Refinement.lean) supplies
+  `RefinedIsolation.refineTo_root`; the completeness proof supplies
+  `RefinedIsolation.refineTo?_isSome_mixed`. These justify refinement of an
+  existing selected root, but do not certify a new principal enclosure or
+  define its canonical representative.
+- [HexNumberField/Basic.lean](../../HexNumberField/Basic.lean) defines
+  `IsCanonical` by a deterministic all-roots run. `rawRep?`,
+  `canonicalRep?`, and `AlgebraicRoot.exactFactor?` still enumerate isolations.
+  [Basic.lean](../Basic.lean)'s private `RefinedIsolation.eq_of_canonical`
+  and public `AlgebraicNumber.toComplex_injective` depend on that provenance.
+  They must be replaced, not applied to arbitrary new certificates.
+- [FactorSoundness.lean](../../HexBerlekampZassenhausMathlib/FactorSoundness.lean)
+  supplies `factorize_irreducible_of_nonUnit` and `ZPoly.isIrreducible_iff`.
+  `CheckedIrreducible.irreducibleRat` currently consumes the Boolean field;
+  it needs cases for retained-factor and cyclotomic evidence after migration.
+- [Unity.lean](../Unity.lean) has `Unity.generator?_value`,
+  `rootOfUnity_toComplex`, and `rootOfUnity_primitive`. It uses integer
+  binomials and `QAdjoin` powers. It does not recognize arbitrary roots of
+  unity or reuse a minimal polynomial for arbitrary coprime powers.
+- The pinned Mathlib
+  [complex powers](https://github.com/leanprover-community/mathlib4/blob/85e3a25e006c35636f0e53b0e9296caca2685bc0/Mathlib/Analysis/SpecialFunctions/Pow/Complex.lean)
+  provide `Complex.cpow_nat_inv_pow` and `Complex.cpow_mul`; the latter has
+  argument hypotheses. The
+  [cyclotomic root API](https://github.com/leanprover-community/mathlib4/blob/85e3a25e006c35636f0e53b0e9296caca2685bc0/Mathlib/RingTheory/Polynomial/Cyclotomic/Roots.lean)
+  provides `Polynomial.isRoot_cyclotomic_iff_charZero`,
+  `Polynomial.cyclotomic.irreducible_rat`, and
+  `IsPrimitiveRoot.minpoly_eq_cyclotomic_of_irreducible`.
+  `IsPrimitiveRoot.pow_of_coprime` is in `RingTheory/RootsOfUnity/PrimitiveRoots`.
+  These do not manufacture Hex runtime certificates.
+- Dense `substPow` and `toPolynomial_substPow`, `HexCyclotomic`, and its
+  companion are still prerequisites specified by the
+  [cyclotomic SPEC](../../SPEC/Libraries/hex-cyclotomic.md). Their existence
+  must not be inferred from Mathlib's `Polynomial.expand` or Hex's separate
+  sparse substitution API. The recognition bound `N ≤ 2*φ(N)^2` also needs a
+  new proof; no such bridge is supplied by the existing unity implementation.
+
+### Missing lemmas and ownership
+
+Every budget below is computed by the executable definition in the design,
+including the final full-precision attempt. `_isSome` must use those actual
+budgets and strategies, not a larger existential amount of fuel.
+
+| Owner / proposed declaration | Required statement and proof inputs |
+| --- | --- |
+| HexPolyMathlib: `toPolynomial_substPow` | Coefficient spread maps to `Polynomial.expand`, including index zero; derive evaluation at `z` as evaluation at `z^n` |
+| HexNumberFieldMathlib.Radical: `annihilator_root`, `annihilator_squarefree` | For `a ≠ 0`, `n > 0`, substitution vanishes at the principal root and is primitive, positive-leading, degree `n*degree(a.p)`, and squarefree; use the derivative and nonzero constant coefficient |
+| HexRootsMathlib: `root_bounds` | Cauchy and reciprocal-Cauchy rational bounds for nonzero roots; no reciprocal of `p[0]=0` |
+| HexNumberFieldMathlib.Radical: `enclose_contains`, `enclose_radius` | Tagged `atan2`, bisection, series remainders and outward rounding contain `cpow` with radius `≤ 2^-bits` at the stated computed precision; handle every convention and the closed one-sided cut |
+| HexNumberFieldMathlib.Radical: `sqrt_enclose` | Stable component formulas, safe-denominator coverage after the computed refinement, division soundness, and the same radius bound; agreement with `Complex.sqrt` |
+| HexRootsMathlib: `certifyNear_sound`, `certifyNear_isSome` | Three-radius linear Pellet soundness plus quantitative success for centre error `≤ s/32`, half-width `s`, and the stated separation slack; connect the certified root to the supplied enclosure |
+| HexNumberFieldMathlib.Radical: `factorRoot_sound`, `factorRoot_isSome` | Product and irreducibility evidence imply precisely one factor passes the shared-centre test; its root equals the principal root; at most the number of factors is tested |
+| HexNumberFieldMathlib: `IrreducibleEvidence.sound` | Each Boolean, retained factor-output, and checked-positive-index cyclotomic evidence constructor yields rational irreducibility; transport primitive normalization and positive degree |
+| HexNumberFieldMathlib: `Canonical.exists`, `Canonical.unique` | Fixed fine-grid successful certificates form a finite nonempty set for the selected root; local enumeration contains exactly all relevant successes; equal roots yield the same square and deterministic certificate data |
+| HexNumberFieldMathlib: `ofCertified_isSome`, `ofCertified_toComplex` | Normalized irreducible input plus selected certified root produces the local canonical form at computed refinement budget and preserves its value |
+| HexNumberFieldMathlib: injectivity, equality and orientation migration | Reprove `toComplex_injective`, lawful Boolean/structural equality, orientation, constant-time `conj`, `conj_conj`, and root enumeration/nearest ties for the new base; input refinement histories cannot affect equality |
+| HexNumberFieldMathlib.Radical: `rational_root`, `reduce_binomial` | Exact integer-power witnesses justify rational and partial-power routes; a negative rational retains principal turn `1/(2*n)` |
+| HexNumberFieldMathlib.Radical: `nthRoot_mul` | For positive `r,s`, iterated principal roots equal the principal `(r*s)`th root, including zero and the cut; discharge `cpow_mul`'s hypotheses using divided arguments |
+| HexCyclotomicMathlib | The existing cyclotomic SPEC's polynomial correspondence, degree/totient, rational irreducibility, and checked-factorization transport; no algebraic-number dependency |
+| HexNumberFieldMathlib.Unity: `ofChecked_value`, `power_minpoly` | Rational-angle enclosure selects the primitive embedding; a coprime power retains the exact normalized `Φ_N`; a noncoprime power uses `Φ_(N/gcd(j,N))` |
+| Mathlib-facing number theory: `order_le_totient_sq` | Prove `N ≤ 2*φ(N)^2` for positive `N`, from prime-power totient formulas; the factor at prime 2 contributes at most 2 and each odd prime contributes at most 1 to `N/φ(N)^2` |
+| HexNumberFieldMathlib.Unity: `unityOrder_spec`, `unity_spec` | Exact positive order and exhaustive negative decision through `2*d²`; angle recovery covers all reduced residues and uniquely matches the supplied embedding without canonicalizing candidates |
+| HexNumberFieldMathlib.Unity: `radical_value` | Normalize the turn to `(-1/2,1/2]` before dividing; the result equals the principal `cpow`, including negative-axis endpoint handling |
+| HexNumberFieldMathlib: representation round trips | Generated checked constructors preserve polynomial and selected root and return the identical canonical value; old raw/reflected isolations normalize faithfully |
+
+For factorization, reuse the existing complete integer factorizer and its
+bounded `factorTrial` fallback; near-root certification does not assume a
+fast modular split always exists. Each specialized route composes its value
+lemma with `ofCertified_toComplex` and canonical injectivity, establishing
+structural equality with the general route. Budgeted helpers are sound for
+any budget and report unknown when incomplete; only exhaustive recognition
+may prove a negative answer.
+
+The headline proof remains `AlgebraicNumber.nthRoot_toComplex`, now proved
+through the direct annihilator/enclosure/factor/canonical chain and every
+specialized dispatch arm. `sqrt_toComplex` follows with its dedicated
+component-formula bridge. Complete these proofs and their axiom audit before
+replacing the public implementation. Compatibility verification includes the
+real-algebraic and number-field-tower companions; broad complex comparison
+algorithms remain outside this work.

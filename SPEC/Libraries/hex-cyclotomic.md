@@ -9,7 +9,7 @@ irreducibility, the degree formula, and the factorization from Mathlib.
 This SPEC expands the "Cyclotomic polynomials" bullet of
 [future-work](../future-work.md). The index is always a
 `CheckedFactorization` from
-[hex-int-factor](hex-int-factor.md), never a bare `Nat`, for the reasons
+[hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md), never a bare `Nat`, for the reasons
 in "The index is a checked factorization" below.
 
 ## Why this library exists
@@ -43,7 +43,7 @@ result recorded under "Complexity" says. Generating these inputs from an
 index rather than from a table is what makes the family extensible.
 
 **`xⁿ − 1` is the identity two other libraries want.**
-[hex-int-factor](hex-int-factor.md) splits `bⁿ ± 1` before factoring it
+[hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) splits `bⁿ ± 1` before factoring it
 and needs the *values* `Φ_d(b)`, which it computes in `Nat` by its own
 recursion. The two computations are independent, so they cross-check
 each other, and the conformance boundary below is where that happens.
@@ -70,7 +70,7 @@ Not in scope: cyclotomic polynomials over coefficient rings other than
 `ℤ` (reducing `Φₙ` mod `p` is `DensePoly`'s coefficient map at the call
 site, and the result is generally reducible, so there is nothing to
 specify here); the values `Φ_d(b)` in `Nat`, which stay in
-[hex-int-factor](hex-int-factor.md); cyclotomic fields and their rings
+[hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md); cyclotomic fields and their rings
 of integers, which are Mathlib's `NumberTheory.Cyclotomic` and have no
 executable content here; irreducibility *proofs* in the Mathlib-free
 layer, which are not available and are not claimed; and sparse output,
@@ -280,7 +280,7 @@ It needs a truncated series division, which is
 dependency for a route whose advantage over the ladder has not been
 measured is premature. The bench families below are what decide it. Note
 that the term-by-term form is only valid as a single final quotient, the
-same caveat [hex-int-factor](hex-int-factor.md) records for the `Nat`
+same caveat [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) records for the `Nat`
 version.
 
 **The sparse power-series route** of Arnold and Monagan, which computes
@@ -599,7 +599,7 @@ an open question and not taken here.
 
 ## Agreement with hex-int-factor's `cyclotomicSplit?`
 
-[hex-int-factor](hex-int-factor.md) splits `bⁿ ± 1` using
+[hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) splits `bⁿ ± 1` using
 
 ```
 bⁿ − 1 = ∏_{d ∣ n} Φ_d(b)        bⁿ + 1 = ∏_{d ∣ 2n, d ∤ n} Φ_d(b)
@@ -1162,3 +1162,28 @@ until those entries land.
   property it does not have. If the Berlekamp benchmark inputs end up
   wanting it, it belongs in the benchmark driver rather than in the
   library.
+
+## Algebraic-number consumer
+
+The [direct radical design](../../HexNumberField/SPEC/hex-number-field.md#cyclotomic-construction-and-coprime-powers)
+specifies the consumer of this polynomial API. `HexNumberField` will depend on
+`HexCyclotomic`, and its companion on `HexCyclotomicMathlib`; neither edge is
+reversed. This SPEC's checked-factorization input, prime ladder, direct spread,
+positive-index restriction, and companion irreducibility theorem remain the
+polynomial construction contract. Algebraic embedding selection and order
+recognition belong to number fields, not to this library.
+
+The rational-angle `AlgebraicNumber.rootOfUnity q` front end reduces the turn
+and constructs the selected embedding of `Φ_(q.den)` directly. Coprime powers
+reuse that polynomial and its evidence, certifying only the new embedding;
+noncoprime powers reduce the order first. A new executable irreducibility
+evidence interface is necessary to avoid calling the existing Boolean
+factorizer again. The companion bridge must supply evidence soundness, not
+just polynomial equality. The construction must not assume an arbitrary
+certified enclosure is the canonical algebraic-number representative.
+
+The consumer owns exact qqbar embedding/radical conformance and benchmarks
+separating index factorization, cyclotomic polynomial generation, selected-root
+certification and local canonicalization. This library retains its existing
+polynomial oracles and benchmarks. No current Lake or release dependency is
+added until the specified implementations exist.
