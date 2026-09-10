@@ -1,6 +1,6 @@
 {
   "path": "HexBasic/ModuleBoundaryTests.lean",
-  "baseline_blob": "1d5cde78b8b5c3ca7dbef22780ec9a041d938c87",
+  "baseline_blob": "1dd93f922eb3a038047ccf03936c070fb66cc723",
   "current_blob": "baf5160104823c81e6c7d16ebecdc9e5ec929727",
   "reason": "Adds one `example` checking that Hex.Vector.map' reduces under `decide +kernel` across a module boundary, plus a matching line in the module docstring. The file contains only `example`s, which bind no name, are referenced by nothing, and emit no compiled code; the new check runs during compilation. No factorization service computation is reachable from this module."
 }
