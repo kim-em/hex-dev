@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Basic.lean",
+  "baseline_blob": "6a265ec91b0fe573eb81f12634bcfc001bde9877",
+  "current_blob": "9c1e435194f4fad800a5722b43dc8253873d7e3a",
+  "reason": "Adds the entrywise Matrix.map definition and its getElem_map entry lemma. No preexisting definition is changed, and no integer-factorization service computation calls Matrix.map, so the runtime call graph of the measured sweep is unchanged."
+}
