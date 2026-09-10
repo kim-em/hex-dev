@@ -297,9 +297,9 @@ theorem scale_degree?_getD_eq_of_ne_zero [ZMod64.PrimeModulus p]
 top index `size - 1`. Gives callers a concrete index for the leading
 coefficient when they need to compute or rewrite it. -/
 theorem leadingCoeff_eq_coeff_pred
-    (f : FpPoly p) (_hpos : 0 < f.size) :
+    (f : FpPoly p) (hpos : 0 < f.size) :
     DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-  simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+  exact DensePoly.leadingCoeff_eq_coeff_last f hpos
 
 /-- A polynomial of positive degree has a nonzero leading coefficient. The
 nondegeneracy fact that justifies inverting the leading coefficient during

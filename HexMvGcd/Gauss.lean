@@ -652,11 +652,12 @@ private theorem denseContent_lead (p : DensePoly R) :
   let a := p.leadingCoeff
   let g := pairGcd a (denseContent e)
   have ha_coeff : a = p.coeff p.natDegree := by
-    unfold a DensePoly.leadingCoeff DensePoly.coeff
-    rw [DensePoly.natDegree_eq_size_sub_one]
-    change p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R) =
-      p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R)
-    rfl
+    by_cases hpos : 0 < p.size
+    · rw [DensePoly.natDegree_eq_size_sub_one]
+      exact DensePoly.leadingCoeff_eq_coeff_last p hpos
+    · have hsize : p.size = 0 := Nat.eq_zero_of_not_pos hpos
+      have hp : p = 0 := (DensePoly.size_eq_zero_iff p).mp hsize
+      simp [a, hp]
   have herase : ∀ k, denseContent p ∣ e.coeff k := by
     intro k
     change denseContent p ∣

@@ -29,12 +29,7 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 /-- The leading coefficient, or `0` for the zero polynomial. -/
 @[expose]
 def leadingCoeff (p : DensePoly R) : R :=
-  -- Written as `getD (size - 1)` rather than the more natural `back?.getD 0`
-  -- because `Array.back?` does not reduce in the kernel under the module
-  -- system (lean4 Array.back? reducibility issue), which would break the
-  -- `decide`/`rfl` defeq proofs downstream. Revert to `coeffs.back?.getD 0`
-  -- once the upstream fix lands.
-  p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R)
+  p.coeffs.back?.getD (Zero.zero : R)
 
 /-- The zero polynomial has leading coefficient `0`. Registered as a `simp`
 normal form so callers reasoning about {name}`leadingCoeff` discharge the zero case
@@ -94,7 +89,8 @@ theorem monic_iff_leadingCoeff_eq_one [One R] {p : DensePoly R} :
 at the last stored index. -/
 theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (_hpos : 0 < p.size) :
     p.leadingCoeff = p.coeff (p.size - 1) := by
-  simp only [leadingCoeff, coeff, size]
+  rw [leadingCoeff, coeff, Array.back?_eq_getElem?, ← Array.getD_eq_getD_getElem?]
+  rfl
 
 /-- The leading coefficient of a nonzero normalized dense polynomial is nonzero. -/
 theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
@@ -950,7 +946,8 @@ theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
     have hlead : q.toArray.getD qDegree (Zero.zero : R) = q.leadingCoeff := by
       unfold leadingCoeff toArray
       dsimp [qDegree]
-      simp [size]
+      rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?]
+      rfl
     have hzero_start :
         ∀ i, qDegree + p.size ≤ i → p.toArray.getD i (Zero.zero : R) = (Zero.zero : R) := by
       intro i hi
@@ -1087,8 +1084,8 @@ theorem divMod_remainder_eq_zero_of_degree_zero_of_cancel [One R] [Add R] [Sub R
   have hlead : q.toArray.getD qDegree (Zero.zero : R) = q.leadingCoeff := by
     unfold leadingCoeff toArray
     rw [hqDegree_zero]
-    have hlast : q.coeffs.size - 1 = 0 := by omega
-    rw [hlast]
+    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?]
+    simp [hcoeffs_size]
   have hzero_start :
       ∀ i, qDegree + p.size ≤ i → p.toArray.getD i (Zero.zero : R) = (Zero.zero : R) := by
     intro i hi

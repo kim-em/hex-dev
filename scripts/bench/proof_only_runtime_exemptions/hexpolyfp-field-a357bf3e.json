@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyFp/Field.lean",
+  "baseline_blob": "42dd2bbf8c328cf81416effa08e6163f0ee7dbea",
+  "current_blob": "a357bf3ecbb39d23a097b275754a7cdd5fe475f9",
+  "reason": "Replaces representation-unfolding leading-coefficient proofs with the existing DensePoly.leadingCoeff_eq_coeff_last theorem and removes their now-unused index facts. No executable definition or measured branch changes."
+}

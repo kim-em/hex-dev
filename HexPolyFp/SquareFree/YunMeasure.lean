@@ -196,7 +196,7 @@ private theorem constant_nonzero_dvd
     | zero =>
         have hlead : unit = g.coeff 0 := by
           have hlead_last : DensePoly.leadingCoeff g = g.coeff (g.size - 1) := by
-            simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+            exact DensePoly.leadingCoeff_eq_coeff_last g hg_pos
           simpa [unit, hg_size] using hlead_last
         rw [← hlead]
         exact (DensePoly.coeff_C unit 0).symm

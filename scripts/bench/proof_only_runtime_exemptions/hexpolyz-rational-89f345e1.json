@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/Rational.lean",
+  "baseline_blob": "a32953c66adbff4207d98a982e5420d5505fa91b",
+  "current_blob": "89f345e1cf84eb4ee4e710a584a70b52aafe2657",
+  "reason": "Replaces a representation-unfolding proof that the leading coefficient is the final stored coefficient with the existing DensePoly.leadingCoeff_eq_coeff_last theorem and removes its now-unused index fact. No executable definition or measured branch changes."
+}

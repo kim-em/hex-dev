@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyFast/Division.lean",
+  "baseline_blob": "959161f7d847e4dd4ef3ce84567ed993c5e5f361",
+  "current_blob": "bc8201f5eb7ff3ee0b1bc73d5abcaa8f3916b31b",
+  "reason": "Replaces two definitional leading-coefficient proofs with DensePoly.leadingCoeff_eq_coeff_last. No executable definition or measured branch changes."
+}

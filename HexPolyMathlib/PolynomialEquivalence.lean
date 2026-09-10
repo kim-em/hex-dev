@@ -627,7 +627,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
   · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
     rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     show p.coeff (p.size - 1) = p.leadingCoeff
-    simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeff, Hex.DensePoly.size]
+    exact (Hex.DensePoly.leadingCoeff_eq_coeff_last p hpos).symm
 
 /-- {name}`toPolynomial` preserves divisibility: a divisibility in the executable
 representation transfers to the corresponding Mathlib polynomials. -/

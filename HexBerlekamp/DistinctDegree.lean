@@ -662,10 +662,8 @@ private theorem unitPolynomial_dvd_any
     · exact hu_size
     · intro a
       have hpos : 0 < u.size := by omega
-      have hidx : u.coeffs.size - 1 < u.coeffs.size := by
-        simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
       have hlead_eq : u.leadingCoeff = u.coeff (u.size - 1) := by
-        simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
+        exact DensePoly.leadingCoeff_eq_coeff_last u hpos
       have hlead_ne : u.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
         rw [hlead_eq]
         exact DensePoly.coeff_last_ne_zero_of_pos_size u hpos
