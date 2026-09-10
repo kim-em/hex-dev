@@ -1145,8 +1145,9 @@ To enclose `β` to radius `2^-k`, use rational outward arithmetic throughout:
    `C = 256*(1+R)^2*(1+1/ρ)^2`. Retain the exact real/upper/lower tag;
    a ball crossing the cut never changes that tag. Input refinement uses
    `RefinedIsolation.refineTo?` with its existing input-computable depth/fuel.
-2. Enclose `r = |a|` by rational bisection of `x²+y²`, and enclose the
-   nonnegative real `t = r^(1/n)` by bisection on `[0,max 1 R]` using exact
+2. Enclose `r = |a|` by rational bisection of `x²+y²`, intersecting the
+   squared-modulus bounds with `[ρ²,R²]` and the result with `[ρ,R]`.
+   Enclose the nonnegative real `t = r^(1/n)` by bisection on `[0,max 1 R]` using exact
    comparisons of rational `n`th powers. Bisect at most
    `ceilLog2(ceil(max 1 R)) + b + 4` times for absolute endpoint width
    `2^(-b-4)`. Bound uncertainty in `r` using the same `ρ` lower bound;
@@ -1181,8 +1182,9 @@ without floating-point logarithms. In particular `C` bounds the radial and
 angular error amplification on each tagged half plane with `|z| ≥ ρ/2`;
 there is no claim of continuity across the cut. Increasing precision doubles
 bits up to the explicit `b` cap, then runs that final precision once.
-An approximate Newton iterate may seed this algorithm; it cannot replace
-these guarantees or supply a branch certificate by its residual alone.
+At most eight approximate Newton iterations may seed this algorithm; only
+checked enclosures are accepted. They cannot replace these guarantees or
+supply a branch certificate by a residual alone.
 
 #### Square-root specialization
 
@@ -1289,14 +1291,18 @@ structurally, including lower roots and double conjugation.
 #### Reusing irreducibility evidence
 
 `ZPoly.CheckedIrreducible` currently stores `isIrreducible p = true`, whose
-runtime producer factorizes `p`. Introduce a Mathlib-free evidence type with
+runtime producer factorizes `p`. Introduce a Mathlib-free evidence predicate in `Prop` with
 three checked constructors: the existing Boolean check; membership in a
-retained certified factorization output; and equality with `cyclotomic F`
+retained certified factorization output (membership in the actual
+`factorize` result, not merely a list with the correct product); and equality
+with `cyclotomic F`
 for positive checked index `F`. Each requires positive polynomial degree.
 Replace the class's Boolean field with this evidence, retaining the class name
 and an adapter for old Boolean callers. The Boolean equality becomes a
 companion consequence, not a field all executable producers must compute.
 Audit every projection and constructor use across the library graph.
+Runtime work records hold the polynomial and factor data; the class stores
+only proof evidence, which is never eliminated into executable data.
 The companion proves each evidence constructor implies rational
 irreducibility; computational code does not import that companion.
 Do not simply assert that a modular irreducibility test will succeed on every
@@ -1356,21 +1362,24 @@ A checked index is positive; index zero is rejected by the checked entry point
 and does not inherit Mathlib's polynomial convention `Φ₀ = 1`.
 
 For rational `q`, reduce to numerator `k` modulo denominator `N = q.den`.
-Then `gcd(k,N)=1` (including the order-one case). Enclose
-`exp(2πi*k/N)` using the bounded rational-angle sine/cosine algorithm above,
-certify it as one root of `Φ_N`, and canonicalize locally. The cyclotomic
+Then `gcd(k,N)=1` (including the order-one case). Reduce the turn to
+`(-1/2,1/2]` for trigonometric evaluation, so the angle has absolute value
+at most `π < 4`. Enclose `exp(2πi*k/N)` using the bounded rational-angle
+sine/cosine algorithm above, certify it as one root of `Φ_N`, and canonicalize locally. The cyclotomic
 irreducibility evidence directly supplies the minimal polynomial. No
 `QAdjoin` power conversion or Krylov minimal-polynomial computation is needed.
 The exported `rootOfUnity q` remains this constructor's rational-angle front
 end, with the same exponential value, periodicity, addition and order laws.
 Constants of orders 1, 2, 4 remain direct paths.
 
-To power a certified primitive `N`th root, retain its reduced angle and checked
-index in a **separate witness**, not in the canonical number. For a coprime
+To power a certified primitive `N`th root, retain its reduced angle and exact
+order in a **separate witness**, not in the canonical number. A checked index
+factorization is optional acceleration data in that witness. For a coprime
 power `j`, replace the angle by `j*k/N`, share `Φ_N` and its irreducibility
 evidence, and certify only the new embedding. For a noncoprime power reduce
-to order `M = N/gcd(j,N)`, project the checked factorization to `M`, and build
-`Φ_M`; do not claim the old polynomial is still minimal. Exponent zero gives
+to order `M = N/gcd(j,N)`. If a checked factorization is available, project
+it to `M` and build `Φ_M`; otherwise use the total construction below.
+Do not claim the old polynomial is still minimal. Exponent zero gives
 one. The companion proves both the same-minimal-polynomial coprime theorem
 and the general order formula.
 
@@ -1379,34 +1388,53 @@ divide by positive `n`, reduce the fraction, and construct that embedding.
 In particular `I.nthRoot 4 = rootOfUnity (1/16)`. A residue in `[0,1)` must
 not be divided before moving a lower-half-plane input to its principal turn.
 
-If no checked index is supplied, attempt the existing bounded integer factor
-search, then finish by deterministic trial division up to the residual index,
-with primality certificates for remaining primes. This is a total but possibly
-expensive positive-index construction. The budgeted variant reports index
-factorization exhaustion instead; it must not interpret exhaustion as a
-non-unity result. Record index factorization separately from polynomial work.
+If no checked index is supplied, attempt the existing integer-factor search
+with its input-computable `defaultFuel N` budget and a fixed deterministic
+random seed. It is a partial search: `Hex.Nat.factor?` has no totality theorem, and `PrimeCert.small`
+only accepts stored table entries. A successful search supplies the checked
+input to cyclotomic construction. On exhaustion, construct `X^N-1` directly,
+enclose the requested rational-angle embedding, and run the one-factor
+certification and local canonicalization pipeline above with degree `N` and
+height one. Its squarefreeness follows from `N > 0`. This is a complete
+integer-polynomial fallback, with the same computed separation, factorization,
+and certification bounds; it uses no common field or algebraic-coefficient
+solver. The selected factor is `Φ_N` for a reduced turn, by its semantic
+primitive order. A budgeted cyclotomic-only entry point instead reports index
+factorization exhaustion. Neither entry point invents prime certificates or
+interprets exhaustion as non-unity. Measure the potentially large degree-`N`
+fallback and index-factor search separately; checked-index callers bypass it.
 
 #### Exact recognition
 
 `unityOrder? a` is a total decision returning the exact order or `none` for a
-non-root-of-unity. Reject zero and nonmonic minimal polynomials. Enumerate
-`1 ≤ N ≤ 2*d²`, test `φ(N)=d`, construct `Φ_N`, and compare normalized
-integer coefficients with `a.p`. Trial division bounded by `N` supplies
-checked factorizations; a sieve may share that work. The proof uses the new
-bound `N ≤ 2*φ(N)^2` for positive `N` and irreducibility/minimal-polynomial
-uniqueness. Thus a negative result is exhaustive, not a timeout. Equality of
-polynomials proves every embedding has order `N`; no floating proximity to the
-unit circle and no search through powers of `a` proves a negative result.
+non-root-of-unity. Reject zero and nonmonic minimal polynomials. For the
+remaining monic `p = a.p`, compute `R₀ = 1` and
+`R_(j+1) = (X*R_j) mod p` using exact integer monic division. Search
+`1 ≤ j ≤ 2*d²` for the first `R_j = 1`. Retain only the current remainder,
+whose degree is less than `d`; never construct canonical powers of `a`.
+Polynomial evaluation and minimality give
+`R_j = 1 ↔ a.toComplex^j = 1`. The first success is its exact order.
+The negative result uses the new bound `N ≤ 2*φ(N)^2` for positive `N`:
+a primitive `N`th root has minimal polynomial `Φ_N` and degree `φ(N)=d`.
+Thus a negative answer is exhaustive, not a timeout or an approximate failure
+to lie on the unit circle. There are at most `2*d²` updates with degree at
+most `d` before reduction. This test needs no integer-index factorization or
+cyclotomic polynomial generation. Checked-index polynomial comparisons may
+accelerate positive recognition, but must retain the bounded modular fallback
+for a complete negative decision.
 
 If a rational angle witness is wanted, enumerate reduced `k` modulo this
-known `N`, enclose each corresponding root of `Φ_N` to the precision in
-one-embedding certification, and use separation from the supplied root to
-select its unique numerator. This takes at most `N` bounded enclosure tests,
-constructing no canonical candidates. `unity?` returns that reduced turn and
-checked order in an external witness tied to `a`. A budgeted recognition
-returns `found`, `notUnity` only after exhaustion of the mathematical range,
-or `unknown` on resource exhaustion. Default `nthRoot` must not silently pay
-this exhaustive recognition cost on every general algebraic input.
+known `N`, enclose each corresponding root to the precision in one-embedding
+certification, and use separation against the supplied root of `a.p` to
+select its unique numerator. The order proof establishes `a.p = Φ_N`
+semantically; there is no need to generate that polynomial again. This takes
+at most `N` bounded enclosure tests, constructing no canonical candidates.
+`unity?` returns the reduced turn and exact order in an external witness tied
+to `a`. Its original irreducibility evidence suffices for coprime powers.
+Obtaining an optional checked integer factorization remains a partial search.
+A budgeted recognition returns `found`, `notUnity` only after exhaustion of
+the mathematical range, or `unknown` on resource exhaustion. Default `nthRoot`
+must not silently pay exhaustive recognition on every general algebraic input.
 
 ### APIs, failures, and proof composition
 
@@ -1422,7 +1450,7 @@ by their contracts, not by pretending these schematic signatures compile now.
 | HexNumberField | `Radical.factorRoot? work` | One selected irreducible factor and transported root, retaining evidence |
 | HexNumberField | `AlgebraicNumber.ofCertified?` | Normalized irreducible polynomial plus selected root to the new canonical form |
 | HexNumberField | `AlgebraicNumber.nthRoot`, `sqrt` | Existing total signatures and branches |
-| HexNumberField | `Unity.Witness a`, `Unity.power`, `Unity.radical` | External reduced-angle/order witness; reuse polynomial where justified |
+| HexNumberField | `Unity.Witness a`, `Unity.power`, `Unity.radical` | External reduced-angle/order witness, optional checked factorization; reuse polynomial where justified |
 | HexNumberField | `Unity.ofChecked F k` | Positive checked index, arbitrary residue; reduce order before construction |
 | HexNumberField | `unityOrder?`, `unity?` | Total exact recognition, then optionally the selected angle |
 | HexNumberField | Budgeted counterparts | Typed exhaustion/unknown, never a fabricated value or false negative |
@@ -1461,7 +1489,7 @@ substitute `h` for `h_f` without a proof. Root separation requires
 | Certification/selection | At most the number of factors in linear Pellet tests; exact Taylor shift is quadratic in each factor degree using the current kernel; separation precision and temporary coefficient bit lengths included |
 | Canonicalization | One-root refinement plus fewer than `400²` fixed local tests of the selected degree `e`; current exact Taylor kernel gives `O(e²)` arithmetic per centre, at `O(h_f+e*(m(f)+log(1+R_f)))` coefficient bits; stream centres using one workspace |
 | Cyclotomic | Checked integer-index factorization, `Φ_N` generation at output degree `φ(N)` and actual coefficient height, one embedding certificate, one local canonicalization; coprime powers reuse generation and evidence |
-| Recognition/composite plans | Include all bounded negative probes, index factorizations, rejected plans, and intermediate exactification costs |
+| Recognition/composite plans | Recognition uses at most `2*d²` degree-`d` monic remainder updates, `O(d)` coefficient operations per update and one retained remainder; bound its coefficient bits by `O(d²*(h+log(d+1)))`. Include optional index factorizations, rejected plans, and intermediate exactification costs |
 
 Bounds involving `m(f)` are precision bounds, not permission to allocate a
 Cauchy grid of `4^m` squares. Local canonicalization has a constant-sized

@@ -1170,7 +1170,10 @@ specifies the consumer of this polynomial API. `HexNumberField` will depend on
 `HexCyclotomic`, and its companion on `HexCyclotomicMathlib`; neither edge is
 reversed. This SPEC's checked-factorization input, prime ladder, direct spread,
 positive-index restriction, and companion irreducibility theorem remain the
-polynomial construction contract. Algebraic embedding selection and order
+polynomial construction contract. The existing index search remains partial;
+the total algebraic-number front end uses a certified `X^N-1` fallback when
+checked factorization is unavailable. Exact order recognition uses bounded
+monic remainders and needs no index-factor search. Algebraic embedding selection and order
 recognition belong to number fields, not to this library.
 
 The rational-angle `AlgebraicNumber.rootOfUnity q` front end reduces the turn

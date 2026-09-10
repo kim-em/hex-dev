@@ -534,7 +534,12 @@ not establish the public principal-root contract.
   companion are still prerequisites specified by the
   [cyclotomic SPEC](../../SPEC/Libraries/hex-cyclotomic.md). Their existence
   must not be inferred from Mathlib's `Polynomial.expand` or Hex's separate
-  sparse substitution API. The recognition bound `N ≤ 2*φ(N)^2` also needs a
+  sparse substitution API. `Hex.Nat.factor?` is explicitly partial.
+  `Hex.Nat.PrimeCert` offers `small`, `pock`, and `pock3`, not a general
+  trial-division certificate constructor. The total rational-angle constructor
+  therefore uses a direct integer-binomial fallback if checked index search
+  fails; it does not assume complete prime-certificate generation.
+  The recognition bound `N ≤ 2*φ(N)^2` also needs a
   new proof; no such bridge is supplied by the existing unity implementation.
 
 ### Missing lemmas and ownership
@@ -561,7 +566,8 @@ budgets and strategies, not a larger existential amount of fuel.
 | HexCyclotomicMathlib | The existing cyclotomic SPEC's polynomial correspondence, degree/totient, rational irreducibility, and checked-factorization transport; no algebraic-number dependency |
 | HexNumberFieldMathlib.Unity: `ofChecked_value`, `power_minpoly` | Rational-angle enclosure selects the primitive embedding; a coprime power retains the exact normalized `Φ_N`; a noncoprime power uses `Φ_(N/gcd(j,N))` |
 | Mathlib-facing number theory: `order_le_totient_sq` | Prove `N ≤ 2*φ(N)^2` for positive `N`, from prime-power totient formulas; the factor at prime 2 contributes at most 2 and each odd prime contributes at most 1 to `N/φ(N)^2` |
-| HexNumberFieldMathlib.Unity: `unityOrder_spec`, `unity_spec` | Exact positive order and exhaustive negative decision through `2*d²`; angle recovery covers all reduced residues and uniquely matches the supplied embedding without canonicalizing candidates |
+| HexNumberFieldMathlib.Unity: `unityOrder_spec`, `unity_spec` | For monic `a.p`, prove the bounded integer remainder recurrence satisfies `R_j = 1 ↔ a.toComplex^j = 1`; justify rejecting nonmonic inputs, minimal positive order, and exhaustive failure through `2*d²`. Angle recovery covers all reduced residues and uniquely matches the supplied embedding without canonicalizing candidates |
+| HexNumberFieldMathlib.Unity: `binomial_value` | For positive order, `X^N-1` is squarefree; rational-angle enclosure and selected-factor construction give the same canonical value as `ofChecked`, using the degree-`N` computed bounds on index-search failure |
 | HexNumberFieldMathlib.Unity: `radical_value` | Normalize the turn to `(-1/2,1/2]` before dividing; the result equals the principal `cpow`, including negative-axis endpoint handling |
 | HexNumberFieldMathlib: representation round trips | Generated checked constructors preserve polynomial and selected root and return the identical canonical value; old raw/reflected isolations normalize faithfully |
 
