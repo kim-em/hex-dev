@@ -1105,8 +1105,8 @@ product equality, multiplicities, and per-factor irreducibility evidence.
 Since `P` is squarefree the multiplicities are one. Use the existing bounded
 factorizer, including `factorTrial` with `defaultFactorCoeffBound` as its
 unconditional fallback. An independent conservative candidate bound is
-`B = 2^D*(D+1)*H`: enumerating coefficients in `[-B,B]` for degrees at most
-`D`, testing exact division, and recursing on strictly smaller degrees. At most
+`B = 2^D*(D+1)*H`. Consider enumerating coefficients in `[-B,B]` for degrees
+at most `D`, testing exact division, and recursing on strictly smaller degrees. At most
 `D²*(2*B+1)^(D+1)` candidate tests bound such a fallback. This is a totality
 bound explaining finite search size, not a second executable fallback to
 implement alongside `factorTrial`; retain the production
@@ -1144,9 +1144,10 @@ To enclose `β` to radius `2^-k`, use rational outward arithmetic throughout:
 1. Refine the input to radius at most `2^-b`, where
    `b = k + ceilLog2(ceil C) + 16` and
    `C = 256*(1+R)^2*(1+1/ρ)^2`. Retain the exact real/upper/lower tag;
-   since `ρ ≤ 1`, this gives `2^-b ≤ ρ/2^24`, so every point in the
+   a ball crossing the cut never changes that tag.
+   Since `ρ ≤ 1`, the precision bound gives `2^-b ≤ ρ/2^24`, so every point in the
    refined ball has modulus at least `ρ/2` and the chart coverage below applies.
-   a ball crossing the cut never changes that tag. Input refinement uses
+   Input refinement uses
    `RefinedIsolation.refineTo?` with its existing input-computable depth/fuel.
 2. Enclose `r = |a|` by rational bisection of `x²+y²`, intersecting the
    squared-modulus bounds with `[ρ²,R²]` and the result with `[ρ,R]`.
@@ -1350,10 +1351,10 @@ The retained-factor producer has the following schematic shape:
 
 ```
 structure FactorWork (P : ZPoly) where
-  result : ZPoly.Factorization
+  result : Hex.Factorization
   result_eq : result = ZPoly.factorize P
 
-def factorWork P := ⟨ZPoly.factorize P, rfl⟩
+def factorWork (P : ZPoly) : FactorWork P := ⟨ZPoly.factorize P, rfl⟩
 ```
 
 Bind `work := factorWork P` once. The evidence constructor takes this work,
