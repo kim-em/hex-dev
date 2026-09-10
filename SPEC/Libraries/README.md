@@ -190,7 +190,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-reflect-mathlib** (planned): hex-reflect, hex-mv-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
 - **hex-mv-hensel-mathlib**: hex-mv-hensel, hex-mv-poly-mathlib, hex-poly-mathlib, hex-poly-z-mathlib
-- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib
+- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib, hex-reflect-mathlib
 - **hex-truncated-series-mathlib**: hex-truncated-series
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib

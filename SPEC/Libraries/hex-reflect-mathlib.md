@@ -8,12 +8,26 @@ It contains no symbolic algorithm.
 
 This is a specification. It does not add an implementation.
 
+This is a correspondence-only-layer.
+
+Computational conformance owner: `HexReflect`.
+
+Computational performance owner: `HexReflect`.
+
 ## Dependencies
 
 The companion depends on `hex-reflect`, `hex-mv-poly-mathlib`, and Mathlib.
 It obtains `hex-mv-poly` and `hex-basic` transitively. No matrix,
 row-reduction, determinant, characteristic-polynomial, gcd, or factorization
 library is an implementation dependency.
+
+## Module layout
+
+The Lake library is `HexReflectMathlib`, its namespace is
+`HexReflectMathlib`, and `HexReflectMathlib.lean` is its umbrella. The initial
+modules are `Carrier.lean` for registrations and `Correspondence.lean` for
+theorems. It has no independent conformance, benchmark, or proof-probe target;
+the computational owner tests each registration and conversion path.
 
 ## Carrier translations
 
@@ -28,31 +42,42 @@ frontends. Adding a carrier does not add syntax to `Lean.Meta.Sym.Arith` and
 does not alter atom allocation. Unsupported operations in a supported carrier
 remain atoms.
 
+Importing this companion does not open the `HexMvPolyMathlib` scope globally.
+A frontend re-synthesizes and canonicalizes its requested structures in its
+actual scope. Open- and closed-scope Grind instances are distinct exact
+instance identities; a registration may support both explicitly, but provider
+lookup and caches never identify them solely from the carrier type.
+
 ## `MvPolynomial` correspondence
 
-`HexMvPolyMathlib.equiv` already has type
+For a coefficient type `C`, `HexMvPolyMathlib.equiv` already has type
 
 ```lean
-Hex.MvPoly n R cmp ≃+* MvPolynomial (Fin n) R
+Hex.MvPoly n C cmp ≃+* MvPolynomial (Fin n) C
 ```
 
-and `HexMvPolyMathlib.algEquiv` supplies the corresponding algebra
-equivalence. This companion reuses those declarations. It does not define a
-second conversion between the polynomial types.
+under `[CommSemiring C] [DecidableEq C]`, `Std.TransCmp cmp`, and
+`Std.LawfulEqCmp cmp`; `HexMvPolyMathlib.algEquiv` supplies the corresponding
+algebra equivalence. This companion reuses those declarations. It does not
+define a second conversion between the polynomial types.
 
 For a sealed reflection environment, the companion proves that applying
 `HexMvPolyMathlib.equiv` to the converted `Hex.MvPoly` gives the
 `MvPolynomial` whose coefficients and `Fin n` variables are the translated
-reflected coefficients and atoms. Evaluating that `MvPolynomial` with
-`MvPolynomial.aeval` gives the same source value as the
-`Hex.Reflect` interpretation theorem.
+reflected coefficients and atoms. If the source carrier is `R`, its provider
+supplies a coefficient homomorphism `C →+* R`. Evaluation uses
+`MvPolynomial.eval₂` (or `eval₂Hom`) with that homomorphism and the atom
+valuation. The corresponding executable statement uses
+`HexMvPolyMathlib.eval₂MathlibHom` and
+`HexMvPolyMathlib.eval₂MathlibHom_apply`. `MvPolynomial.aeval` is used only in
+the special case where an `Algebra C R` supplies the coefficient map.
 
 The proof is a composition of:
 
 1. the Mathlib-free conversion soundness theorem from `hex-reflect`;
 2. `HexMvPolyMathlib.equiv_apply` or `algEquiv_apply`;
-3. the existing evaluation correspondence, including
-   `HexMvPolyMathlib.evalHorner_eq_aeval` where the Horner form is used.
+3. `HexMvPolyMathlib.eval₂MathlibHom_apply`, or the existing algebra-evaluation
+   correspondence when an `Algebra C R` is part of the provider.
 
 It does not reify the source expression again and does not use Mathlib's
 `ring` tactic to certify each converted input.
@@ -72,6 +97,8 @@ the Mathlib-free `hex-reflect` library depend on Mathlib.
 
 - Every carrier registration includes the exact instance expressions in its
   lookup identity.
+- Open- and closed-`HexMvPolyMathlib`-scope instances cannot share a cache
+  entry; both are accepted only when separately supported.
 - The `MvPolynomial` theorem follows from the existing equivalence and the
   Mathlib-free soundness theorem.
 - No source parser, computational algebra algorithm, or `native_decide` use is
