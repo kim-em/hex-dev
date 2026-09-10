@@ -1209,9 +1209,21 @@ to the grid of spacing `s/64`. Run the existing exact three-radius,
 linear-term Pellet checker on the square of half-width `s` at that centre.
 The new quantitative completeness lemma must show this succeeds: the centre
 is within `s/32` of a simple root and every other root is more than `δ(P)`
-away. Taylor coefficients divided by the derivative are bounded by the
-coefficients of `(1+T/(δ(P)-s/32))^(D-1)`; the slack of 16 accommodates
-three radii, the `lo`/`hi` modulus bounds, and centre error. This supplies a
+away. For the quantitative proof, write `P(X) = (X-β) Q(X)`, let
+`E = s/32`, `L = δ(P)-E`, and `A_i = binom(D-1,i)/L^i` (zero for
+`i > D-1`). At the chosen centre `c`, the Taylor coefficients of
+`Q(c+T)/Q(c)` have modulus at most `A_i`. With
+`η = E*A_1 < 1`, the constant coefficient of `P(c+T)/P'(c)` has
+modulus at most `E/(1-η)`; for `i ≥ 2` its coefficient has modulus at
+most `(A_(i-1)+E*A_i)/(1-η)`, while the linear coefficient is exactly one.
+The denominator correction is necessary because `P'(c)` differs from
+`Q(c)` when `c ≠ β`. For each tested upper radius `t < 6s`, use
+`A_i ≤ A_1^i` to bound the sum of the non-linear normalized terms by
+`(A_1*t² + E*(A_1*t)²)/((1-η)*(1-A_1*t))`. Together with the constant
+term, twice their total is less than `s`, hence less than the tested lower
+radius. The factor two accounts for the executable `lo`/`hi` estimates
+relative to complex modulus. Prove these rational inequalities from
+`s/δ(P) ≤ 1/(2^16*max 2 D)`. This supplies a
 `RefinedIsolation P` and identifies its root with the enclosed principal root.
 A root count without this overlap/separation argument would not identify the
 input embedding.
@@ -1279,7 +1291,12 @@ Mathematical partial order, structural equality of equal values within the
 new version, and the represented values must not change. Byte-identical old
 hidden records and old enumeration indices are not promised.
 
-`Repr` emits a checked constructor for normalized polynomial, canonical grid
+The current `AlgebraicNumber` printer in `Nearest.lean` emits `ZPoly.rootNear`
+with a rounded centre, and `QAdjoin` embeds that expression in `ofCoeffs`.
+Retaining this printer requires re-establishing its strict nearest-root
+margin from the new canonical square and `digitsFor` rounding bound, so
+ties cannot affect either new or previously emitted expressions.
+Alternatively, `Repr` emits a checked constructor for normalized polynomial, canonical grid
 square, side, and canonical evidence, or re-normalizes a checked supplied
 isolation. Never use an unchecked arbitrary enclosure or an old root index
 as provenance. Keep `PolyQuot.ofIsolation` for reflected raw roots. Old printed
@@ -1346,7 +1363,12 @@ a binomial minimal polynomial may combine exponents directly, but still need
 the input embedding in the principal enclosure. For `n = r*s`, `r,s > 0`,
 principal extraction obeys `(a.nthRoot r).nthRoot s = a.nthRoot (r*s)`:
 prove this via argument division and magnitude, not unrestricted `cpow_mul`.
-Bound any decomposition search by the finite divisor list of `n`. Estimate
+For executable decomposition of `n > 1`, only admit proper factors
+`r,s ≥ 2`; factors equal to one belong to the identity theorem, not a
+recursive planning step. Enumerate the finite divisor list of `n`, and bound
+the chosen plan by at most `floorLog2 n` nontrivial root extractions, with
+each leaf calling the direct core. Prime indices use the direct core.
+Estimate
 all intermediate degrees, heights, factorization and canonicalization costs;
 repeated canonicalization can erase the benefit. Rational perfect powers,
 reduced binomials, and composite plans each require route-agreement theorems
@@ -1504,15 +1526,21 @@ Include the canonical integer-root construction
 `(#p[1099513724929, 0, 1099511627776] : ZPoly).algebraicRoots`, whose exact roots
 are `±(1048577/1048576)*I`. In
 [#10156](https://github.com/kim-em/hex-dev/issues/10156) this exhausted an 8 GiB
-process cap before comparison; the responsible phase was not localized.
+process cap before comparison. The
+[quadratic construction report](../../reports/hex-number-field-quadratic.md)
+localizes that failure to the integer-root factorization shortcut's
+coefficient-sized divisor list and records the shipped quadratic-formula fix.
+The general trial-factorization backstop still allocates divisor lists and
+whole coefficient-vector search spaces; account for those allocations when
+the direct route reaches it. A finite search bound alone is not a memory bound.
 Measure squarefree normalization, factorization, all-roots isolation and each
 canonical construction separately, and heights around the smaller completing
 `#p[1050625, 0, 1048576]`. Include arithmetic construction of the same values
 as a separate arm. Reproduce only in a process-tree 8 GiB memory cap with swap
 disabled and one-CPU quota; retain failures and peak RSS/cgroup memory, not
 just successful runtimes. The new single-root route and the ordinary
-integer-root route must both be measured: this design does not declare the
-independent integer-root bug fixed.
+integer-root route must both be measured against the fixed baseline; retain
+the existing bounded-memory quadratic regression when replacing constructors.
 
 Use exact python-flint qqbar conformance, following the existing
 [oracle policy](../../SPEC/testing.md); Sage is not an oracle. Encode an output

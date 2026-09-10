@@ -42,7 +42,8 @@ and explanations covering:
 
 Do not present proposed identifiers as available APIs. Link performance claims
 to phase-separated measurements including input construction and peak memory;
-the high-height quadratic in #10156 must not be advertised as fixed merely
-because a new approximation routine is fast. The real-algebraic chapter must
+use the [quadratic construction report](../reports/hex-number-field-quadratic.md)
+as the fixed baseline for the high-height regression in #10156, including
+the remaining trial-factorization allocation costs. The real-algebraic chapter must
 retain the nonnegative real square-root contract. Build the affected chapters
 with `lake build HexManual` and render the manual when those chapters change.
