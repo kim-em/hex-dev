@@ -866,21 +866,21 @@ fast-BHKS-monic-lift migration issue.
 
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
-A `feature` issue that says "instantiate `HenselFactorData` / `…Evidence`
+An implementation issue that says "instantiate `HenselFactorData` / `…Evidence`
 constructed by the prerequisite issues" is only a token-swap if a theorem
 *concludes* that structure. A closed feeder issue does **not** prove its
 producer landed: these substrate issues are sometimes closed COMPLETED on a
-replan-triage comment whose claim contradicts the source (e.g. #6773 was closed
+triage comment whose claim contradicts the source (e.g. #6773 was closed
 asserting `liftedFactorSubsetPartition_of_choosePrimeData` "does not assume" the
 evidence, but it takes `hinitial : InitialLiftedFactorSubsetPartitionEvidence`
-as a hypothesis and only projects fields out of it). Before claiming such an
+as a hypothesis and only projects fields out of it). Before starting such an
 integration, grep for an actual producer: `grep -rn ": <StructureName>"` should
 find a `theorem … : <StructureName> …` whose body builds it (or a `{ field := … }`
 literal), not just `(h : <StructureName>)` binders and `…_fields h` projections.
 If every occurrence is a hypothesis or destructor, the substrate is unproduced —
-diagnose on the issue (per the CLAUDE.md "Directives are hypotheses" rule) and
-`coordination skip` rather than attempting the integration. **But before
-concluding a transport/producer is genuinely missing, grep producer proof
+document the missing producer on the issue (per the AGENTS.md
+"Directives are hypotheses" rule) and leave it open for an updated directive.
+**But before concluding a transport/producer is genuinely missing, grep producer proof
 *bodies*, not just signatures: a needed construction is frequently performed
 *inline inside a larger producer's proof* and can be lifted to a top-level
 lemma, even when no theorem states it.** #8068 was nearly skipped a 5th time on
@@ -1278,7 +1278,7 @@ the `#guard`/oracle steps. Run the full target once at the end.
 Do **not** launch a second `lake build` in the same worktree while one is still
 running its tail jobs — they serialize on lake's per-worktree build lock, so the
 second just blocks and looks "stuck". (This machine also runs concurrent builds
-from *other* pod worktrees; `pgrep lake` showing many processes is normal and
+from *other* worktrees; `pgrep lake` showing many processes is normal and
 not your build.)
 
 **Numerically checking executable behavior in a scratch file: `#eval`/`#guard`

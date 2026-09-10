@@ -73,9 +73,8 @@ Intermediate lemmas are admissible when they are either
 (b) independently justified as public API, executable checker, or
 regression guard with stated rationale; collections of intermediate
 lemmas that don't compose into the headline theorem are dead
-weight and block the `done_through` bump. The orchestrator
-dispatches the headline theorem as the critical-path artefact, not
-arbitrary bags of per-function obligations that contribute to it.
+weight and block the `done_through` bump. Implementation work should
+prioritize the headline theorem and the obligations that contribute to it.
 
 ### Read the SPEC, not just the issue body
 
@@ -95,10 +94,6 @@ Every PR gets auto-merge at creation:
 gh pr create --title "…" --body "…"
 gh pr merge "$(gh pr view --json number --jq .number)" --auto --squash
 ```
-
-At the start of every planner cycle, merge all mergeable+green open
-PRs before creating new work. Downstream agents are blocked on `main`
-until merged PRs land.
 
 `main` is branch-protected: auto-merge only fires once every required
 status check is green. CI
@@ -249,35 +244,13 @@ opens with a module docstring, placed immediately after `public section`.
 
 ## Issue creation
 
-The project stays **GitHub-native** for orchestration. The canonical
-task tracker is GitHub issues plus whatever structured fields GitHub
-Projects or issue forms can provide. Do not introduce a separate
-committed task-graph file that has to be kept in sync with issues.
+Work is assigned by hand, one GitHub issue per SPEC. The issue body
+records the scope, deliverables, dependencies, and verification for that
+SPEC. Keep implementation steps in the issue rather than creating an
+automatically dispatched queue of smaller work items.
 
-Prefer the **issue body** over custom GitHub metadata unless there
-is a clear need for the metadata. The issue body should contain the
-canonical task description in a stable, easy-to-scan format.
-
-### Narrow, not umbrella
-
-- Use **many narrow issues** rather than a few large umbrella issues.
-- Prefer issues scoped to one API surface, one proof cluster, one
-  algorithmic subcomponent, or one benchmark/conformance target.
-- Large umbrella issues are fine for human orientation, but
-  execution should happen in smaller child or blocking issues.
-
-Good issue sizes include:
-
-- one major structure plus its immediate API;
-- one SPEC subsection with a coherent implementation target;
-- one theorem cluster that obviously belongs together;
-- one conformance or benchmark slice for a single subsystem.
-
-Avoid issues that mix:
-
-- multiple libraries with weak coupling;
-- implementation plus broad cleanup across unrelated files;
-- an entire library's worth of declarations unless the library is tiny.
+GitHub issues are the canonical task tracker. Do not introduce a separate
+committed task graph that has to be kept in sync with issues.
 
 ### Canonical issue body shape
 
@@ -313,8 +286,7 @@ depends-on: #123
 depends-on: #124
 ```
 
-Keep these lines literal and easy to grep. They are the only
-dependency syntax the orchestration layer should rely on by default.
+Keep these lines literal and easy to grep when checking dependencies.
 The `library:` line is the PascalCase `libraries.yml` key for the file
 named in **Library placement**; it lets `depends-on:` edges be checked
 against the import DAG (see
@@ -326,8 +298,8 @@ Every issue that adds or modifies a Lean declaration names its target
 file *and justifies it*. Decomposition inherits the parent's
 placement only if the parent's placement was justified; otherwise
 re-justify in the child. A worker who picks up an issue whose Library
-placement is missing or wrong stops, fixes the issue, and re-queues —
-they do not "fix it in the PR".
+placement is missing or wrong documents the problem on the issue before
+starting implementation.
 
 Answer all four. One line each is enough.
 
@@ -357,21 +329,18 @@ Answer all four. One line each is enough.
    Type-class instances the statement quantifies over (`HPow`,
    `Module`, `Algebra`), helper definitions, kernel-reducible
    evaluators. If yes, file the infrastructure issue first and
-   `depends-on:` it here. A claim against a non-statable theorem is
-   churn, not progress.
+   `depends-on:` it here. An issue for a theorem that cannot be stated
+   needs its premise corrected.
 
 A `depends-on:` answer to any of (1)–(4) is healthy. An unanswered
 question is the failure shape.
 
-### Replan loops are a SPEC-violation signal
+### Repeated decomposition can signal a SPEC violation
 
-If three or more `depends-on:` generations in a chain share a
-single recurring deliverable shape, and at least one worker has
-filed a "needs replan" skip on that shape, the chain is at a
-SPEC wall: the result being decomposed toward does not exist at
-this layer. Triage closes the chain (parent and all sub-issues),
-citing the SPEC § that pins the layer. Cutting the decomposition
-thinner is the failure mode.
+If repeated attempts to split an issue keep reaching the same missing
+result, check whether that result belongs in the proposed library at all.
+Document the SPEC clause and the infrastructure gap on the original issue
+before attempting more decomposition.
 
 ### Inverted dependencies are rejected
 
@@ -385,13 +354,10 @@ upstream proof cannot consume a downstream artefact, so it is never a
 real blocker, only a mis-scoped issue or a "needed downstream too"
 note mis-filed as one.
 
-The guard keeps inverted edges out of issue bodies, so the plain
-"blocked iff an open `depends-on:` remains" logic needs no special
-case. Before writing a `depends-on:`, an agent checks `may_import`
-(`scripts/libgraph.py`) and refuses an inverted one. The maintenance
-sweep scrubs any that predate the guard or slip through: it drops the
-line (with a comment), clears the stale `blocked`, and routes the
-issue to [replan](#replan-loops-are-a-spec-violation-signal).
+Before recording a `depends-on:` edge, check `may_import`
+(`scripts/libgraph.py`) and reject an inverted dependency. If an existing
+edge is inverted, correct the issue body and explain the library-placement
+problem in a comment.
 
 ### Bench-found, conformance-found, and audit-found issues
 
@@ -460,35 +426,8 @@ When an audit finding occurs while writing a headline report:
 The library cannot **remain** at `done_through: 4` while the
 Concern is unresolved (per
 [PLAN/Phase4.md §Exit criteria](Phase4.md#exit-criteria)).
-Resolution available to the orchestrator: act on the HO issue
-tied to the Concern until the underlying problem is fixed and
-the Concern entry is removed from the report.
-
-### Decomposition is normal
-
-If an agent is assigned an issue and concludes that it is too large
-for one session, that is a normal outcome, not a failure.
-
-Expected behavior:
-
-- decompose the issue into smaller GitHub issues itself when it has
-  enough context to do so well;
-- link the new issues clearly as follow-up, blocking, or child work;
-- add `depends-on: #N` lines where ordering matters;
-- narrow the original issue if some subset is still tractable;
-- if appropriate, stop after opening the smaller issues rather than
-  attempting an oversized implementation.
-
-Worker-created follow-up issues are encouraged when they improve
-queue quality. Do not require a separate planning round-trip just
-to split an issue that is clearly too large.
-
-### Skipping a previously-skipped issue is forbidden
-
-A worker that finds its claimed issue already carries one or more
-`Skipped by session ...` comments must close it with a specific
-reason, `coordination add-dep` on a concrete open blocker, or
-decompose. A second `coordination skip` is not permitted.
+Resolve the issue tied to the Concern and remove the Concern entry
+from the report once the underlying problem is fixed.
 
 ### Visual artefacts require visual verification
 
@@ -498,70 +437,21 @@ and inspect it. Data-level verification (the script runs, the
 numbers match, the output is byte-stable) does not catch failures
 visible only at the rendered layer.
 
-### Directives never enter the replan queue
+### Directives are hypotheses, not specs
 
-`directive`-labelled issues encode SPEC/PLAN-mandated outcomes whose
-satisfaction is judgment-laden and is evaluated by the worker who
-publishes the satisfying PR. They cannot be rejected, overturned, or
-closed as "stale" by triage — only by a PR that satisfies them or by
-a SPEC change that removes the underlying obligation.
+Before implementing a directive, check that its statement admits a proof,
+that the necessary infrastructure exists, and that the proposed decomposition
+matches the executable operations. Follow
+[AGENTS.md](../AGENTS.md#directives-are-hypotheses-not-specs).
+If the premise is wrong, document concrete evidence on the issue and leave it
+open for an updated directive. Do not weaken the theorem, invent proof gaps,
+or create a chain of sub-issues to work around an unsound premise.
 
-This project is autonomous. Agents do **not** ask humans to break
-ties, choose between options, or unblock stuck issues. There is no
-human gate. A `directive` + `replan` combination implies "wait for a
-human to decide what's next," which has no resolver in this project
-and would lock the issue out indefinitely.
+### Recording incomplete work
 
-Rules:
-
-1. **Workers must not flag a directive for replan.** `coordination
-   skip --replan` on a `directive` issue is forbidden. A worker that
-   cannot progress a directive in its session releases the claim
-   without applying the `replan` label, so the issue returns to the
-   claimable queue for the next worker.
-2. **Replan triage skips directives by design.** This filter stays as
-   it is — there is nothing for replan to do here, because directives
-   cannot be retired by triage. The behaviour is correct; what would
-   be wrong is for a directive to *be* in the replan queue.
-3. **Valid worker outcomes on a directive:** (a) full closure via a
-   PR satisfying the remaining deliverables; (b) partial PR plus an
-   issue-body update recording the residual scope, claim released;
-   (c) `blocked` label with `depends-on:` link to a prerequisite,
-   claim released; (d) no-progress claim release with an optional
-   note explaining what blocked the session, no labels changed
-   beyond removing `claimed`.
-4. **The only ways a directive closes:** a PR satisfying its
-   remaining deliverables, or a SPEC PR removing the underlying
-   obligation (in which case the closing comment links to the SPEC
-   PR).
-
-If you find yourself wanting to "decompose this directive into
-sub-issues so a planner can re-route" — stop. That path requires a
-human to break a tie that doesn't exist. Make whatever partial
-progress your session permits, publish it, update the residual on the
-parent directive, and release the claim.
-
-### Partial progress is valuable
-
-Agents should not wait for total completion before contributing
-useful work. Partial progress is encouraged when it leaves the
-repository in a better state and makes follow-up work easier.
-
-Good partial-progress outputs include:
-
-- a PR that lands a coherent subset of the intended work;
-- scaffolded declarations with correct boundaries and notes about
-  what remains;
-- proof skeletons or helper lemmas that unblock later work;
-- benchmark or conformance harnesses without full coverage yet.
-
-When an issue is only partially completed, the agent should
-normally:
-
-- open a PR for the finished subset if it is mergeable;
-- open one or more follow-up issues for the remainder;
-- record the new boundaries clearly so later agents can resume
-  without re-discovering the decomposition.
+If a PR completes only part of an assigned issue, describe the completed
+subset and update the original issue with the remaining deliverables and
+any concrete blockers. Keep the issue open until its scope is complete.
 
 ---
 
@@ -666,8 +556,9 @@ structural DAG data (`deps`, `mathlib`). Other state mechanisms:
 - **`status/hex-foo.<milestone>` tokens** — immutable point-in-time
   attestations (currently: `scaffolding-reviewed` for Phase 2
   sign-off). Complementary to `libraries.yml`, not subsumed by it.
-- **`progress/` directory** — per-turn agent session notes (see
-  [.claude/CLAUDE.md](../.claude/CLAUDE.md)).
+- **`progress/` directory** — historical session notes and technical
+  investigations. Preserve existing entries and links; record current work
+  in the issue and PR instead of adding session notes.
 - **`PLAN/` and `PLAN.md`** — reference material, not progress state.
   Do not modify them for progress tracking.
 
@@ -677,14 +568,14 @@ Every entry in `libraries.yml` carries an explicit `status` field
 with exactly one of three values:
 
 - **`active`** — implementation is in progress or complete. The
-  orchestrator dispatches Phase work against this library.
+  phase rules apply to work on this library.
 - **`planned`** — SPEC is finished and ready for implementation,
   but implementation is deferred. The library appears in the dep
   graph as informational structure but no work is dispatched.
   Activation is a one-line edit (`status: planned → active`).
 - **`draft`** — SPEC is a work-in-progress; ideas captured but the
   contract is not yet stable enough to implement against. Same
-  orchestration treatment as `planned`. Promote to `planned` (or
+  implementation treatment as `planned`. Promote to `planned` (or
   `active`) when the SPEC firms up.
 
 The following invariants are normative and enforced at yml-load

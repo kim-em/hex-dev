@@ -111,7 +111,7 @@ proof — fix the proof or fix the API. For unfinished proofs use
 
 ## Directives are hypotheses, not specs
 
-When you claim a directive issue, the body is the author's *current
+When you work on a directive issue, the body is the author's *current
 best understanding* of what the work looks like. It is not gospel.
 Before opening a PR, sanity-check the premise:
 
@@ -126,7 +126,7 @@ Before opening a PR, sanity-check the premise:
 If the premise is sound: execute. If the premise is wrong: **stop,
 comment on the issue explaining what's wrong with concrete
 evidence (counterexample, missing-lemma shape, infrastructure
-gap), and leave the directive claimable for an updated version.**
+gap), and leave the issue open for an updated directive.**
 Do *not* file a sub-decomposition issue as a workaround; that
 escalates the problem rather than fixing it. Do *not* invent
 sorries or axioms to bash through. Do *not* silently weaken the
@@ -211,36 +211,11 @@ sensitive runs are collected manually on the shared host (per
 [SPEC/benchmarking.md](../SPEC/benchmarking.md)), not on the
 merge-gating workflows.
 
+## Work assignment
 
-# Pod Agent Session
+Work is assigned by hand through GitHub issues, one issue per SPEC.
+Use the assigned issue and its linked SPEC to determine the scope.
 
-You are running as an autonomous agent launched by `pod`. This is a
-non-interactive session via `claude -p` — there is no human to answer
-questions. Never ask for confirmation or approval. Just do the work.
+## Off-limits files
 
-Each agent runs in its own git worktree on its own branch, coordinating
-via GitHub issues, labels, and PRs. The `coordination` script is already
-on your PATH — just run it directly (e.g. `coordination orient`,
-`coordination claim 42`). Do NOT search for it or try to locate it.
-
-Session UUID is available as `$POD_SESSION_ID`.
-
-## Agent Types
-
-- **Planners** (`/plan`): create work items as GitHub issues, then exit
-- **Workers** (`/feature`, `/review`, `/summarize`, `/meditate`): claim
-  and execute issues using the `agent-worker-flow` skill
-- **Repair** (`/repair`): salvage unhealthy PRs (merge conflicts, failed
-  CI, stuck CI) using the `pr-repair-flow` skill. Dispatched by pod ahead
-  of planners and workers whenever `coordination list-pr-repair` reports
-  candidates. Two outcomes only: salvaged or abandoned (→ `replan` on the
-  linked issue). No escalation to humans.
-
-See your `/command` file and the relevant skill (`agent-worker-flow` or
-`pr-repair-flow`) for the full workflow.
-
-## Off-limits Files
-
-Agents must not modify the project's top-level CLAUDE.md (`.claude/CLAUDE.md`)
-or roadmap file (`PLAN.md`). PRs touching these files are rejected by
-`coordination create-pr`. Update skills and commands instead.
+Agents must not modify `.claude/CLAUDE.md` or the roadmap file `PLAN.md`.

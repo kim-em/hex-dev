@@ -2632,7 +2632,7 @@ success through exact square completion/SOS or a certified symbolic rational
 critical-point partition. Bernstein remains a comparison method; by itself on
 finite dyadic cells it is not promised to attain the sharp nondyadic maximum.
 
-Additional coordination and handoff cases are:
+Additional tactic interaction and handoff cases are:
 
 - `[D4]` `x^2 + y^2 = 1 ⟹ x^4 + y^4 ≤ 1`, using a certified contextual
   alternate such as `x^4 + y^4 = 1 - 2*x^2*y^2`; this is not advertised as a

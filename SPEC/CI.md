@@ -6,9 +6,8 @@ adding a new one.
 
 The rules in this file are tight on purpose. CI for this repository
 is shared with several other repositories under the same personal
-account (`kim-em/pod`, `kim-em/bubble`, …); a fan-out here pushes
-queue waits up to a day across all of them. The rules below cap that
-exposure at the source.
+account; a fan-out here pushes queue waits up to a day across all
+of them. The rules below cap that exposure at the source.
 
 ## Triggers
 
@@ -295,9 +294,8 @@ Anti-patterns:
 ## Branch protection
 
 `main` requires the status check produced by `ci.yml` to pass before
-merge. The pod auto-merger
-(`gh pr merge --auto`) respects branch protection, so this is the
-mechanism that gates merges on CI.
+merge. GitHub auto-merge (`gh pr merge --auto`) respects branch
+protection, so this is the mechanism that gates merges on CI.
 
 Required contexts (kept in sync with the actual job names in the
 workflow files):
