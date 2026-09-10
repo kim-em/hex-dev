@@ -52,6 +52,19 @@ class ExactOracle(unittest.TestCase):
         self.checker = oracle.Checker(self.q)
         self.addCleanup(self.q.close)
 
+    def test_quadratic_roots(self):
+        upper = {"poly": [1099513724929, 0, 1099511627776], "re": [0, 1],
+                 "im": [1048577, 1048576], "prec": 60}
+        lower = copy.deepcopy(upper)
+        lower["im"][0] *= -1
+        data = {"roots": [lower, upper], "arithmetic": upper}
+        self.checker.check("quadraticRoots", data)
+        for roots in ([upper, upper], [lower], [upper, lower]):
+            with self.subTest(roots=roots), self.assertRaises(oracle.OracleMismatch):
+                self.checker.check("quadraticRoots", {**data, "roots": roots})
+        with self.assertRaises(oracle.OracleMismatch):
+            self.checker.check("quadraticRoots", {**data, "arithmetic": lower})
+
     def test_missing_general_roots_preserves_scalar_identity(self):
         self.q.general_roots = None
         self.assertEqual(self.q.compare(self.checker.value(rat(1)), self.q.number(1)), 0)

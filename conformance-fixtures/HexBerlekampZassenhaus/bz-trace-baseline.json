@@ -399,6 +399,46 @@
     "primeProbes": 1,
     "r": 1
   },
+  "quadratic/imaginary_40bit": {
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
+  },
+  "quadratic/integer_40bit": {
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "quadratic",
+    "primeProbes": 0,
+    "r": 0
+  },
+  "quadratic/mixed": {
+    "candidatesTried": 0,
+    "decline": null,
+    "henselLifts": 0,
+    "method": "quadratic",
+    "primeProbes": 0,
+    "r": 0
+  },
+  "quadratic/nonintegral": {
+    "candidatesTried": 2,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 2
+  },
+  "quadratic/nonsquare": {
+    "candidatesTried": 1,
+    "decline": null,
+    "henselLifts": 1,
+    "method": "classical",
+    "primeProbes": 1,
+    "r": 1
+  },
   "red/cyclo11_cyclo22": {
     "candidatesTried": 4,
     "decline": null,
